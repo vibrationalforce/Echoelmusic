@@ -520,6 +520,37 @@ public extension MusicStyle {
                 delayWow: 0.26, delayDrive: 0.28,
                 saturation: 0.27,
                 reverbEnabled: true, reverbMix: 0.19, reverbRoom: 0.58, reverbDamping: 0.43)
+        case .slowedGothPop:
+            // #1354 G15b-2. A PING-PONG DOTTED EIGHTH, and the combination is the decision.
+            // Measured across every arm before writing it: `tape` + half note already carries
+            // THREE offered genres (`dubEcho` 0.52, `sciFi` 0.50, `selfObservation` 0.45), and
+            // `sciFi` is the genre this one is otherwise closest to — a fourth half-note tape
+            // echo would have been one echo with two labels, which is exactly what #1350 moved
+            // `loFiHipHop` off `boomBapHipHop`'s dotted eighth to avoid.
+            //
+            // `pingPong` + dotted eighth has exactly ONE other arm in the file, `synthwave`,
+            // which is not offered — so among the genres a player can choose, this is the first.
+            // It is also the idiomatic one: the alternating dotted-eighth delay IS the goth
+            // guitar sound, and at 66 BPM it resolves to 0.682 s, well clear of the 2.0 s
+            // ceiling at every tempo in the 60…76 window (0.750 s at the slow end, 0.592 at the
+            // fast). No clamp anywhere, so the echo tracks the body's tempo across the whole
+            // range.
+            //
+            // ⚠️ `delayFeedback: 0.44` takes no rank and none is claimed — it sits between
+            // `synthwave`'s 0.38 on the same combination and `dubTechno`'s 0.58 on the same
+            // mode. The wide `delaySpread` is what a ping-pong is FOR; the dark `delayTone`
+            // keeps the repeats behind the chord instead of on top of it.
+            //
+            // Reverb: a long, damped plate. `reverbDamping: 0.62` is dark but not the file's
+            // darkest (`deepDrone` 0.68), and `reverbRoom: 0.90` is large but not the largest
+            // (`contemplation` 0.96) — the room has to be big enough to hold an 0.85 s release
+            // without smearing the semitone between the seventh and the octave.
+            return GenreFXPreset(
+                delayEnabled: true, delayMode: .pingPong,
+                delaySync: TempoSyncOption(.eighth, .dotted),
+                delayMix: 0.34, delayFeedback: 0.44, delayTone: 0.24, delaySpread: 0.56,
+                saturation: 0.18,
+                reverbEnabled: true, reverbMix: 0.30, reverbRoom: 0.90, reverbDamping: 0.62)
         case .rootsReggae:
             // #1289 G6b — THE LONG ECHO, and it is the genre rather than a decoration: a QUARTER
             // on tape with high feedback and audible wow. At the fastest allowed 84 BPM that is

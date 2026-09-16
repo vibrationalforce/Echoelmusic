@@ -258,6 +258,37 @@ public extension MusicStyle {
                 cutoff: 1950, res: 0.20, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
                 revMix: 0.10, revDecay: 1.40, vibRate: 0, vibDepth: 0,
                 uni: 2, det: 8)
+        case .slowedGothPop:
+            // #1354 G15b-2 — DRAGGED CHOIR. The voice that carries the minor-major seventh, so
+            // it has to SUSTAIN rather than strike: this is the opposite envelope to the dub
+            // stab two arms up. Every number below is from
+            // `genre-prebatch.py --patch "Dragged Choir"` at full coverage (77 of 77 blocks),
+            // never from reading neighbouring arms (#1350).
+            //
+            // Attack 0.055 and release 0.85 are each SOLE HOLDERS, and together they are what
+            // "dragged" means here — at 66 BPM a half note is 1.82 s, so a 55 ms swell and an
+            // 0.85 s tail let each chord arrive late and leave slowly without overlapping the
+            // next. The envelope total 2.155 is also free (nearest below `Driven Lead` 2.012,
+            // nearest above `Air Reed` 2.17); no rank is claimed, only that it takes no one
+            // else's value.
+            //
+            // ⭐ `det: 18` IS THE FILE MAXIMUM — the widest detune of any patch here, two cents
+            // past `Chamber Strings` and `Cold Stack` at 16. That is the claim this patch makes
+            // and the one to re-measure if a later patch goes wider: a chorus broad enough to
+            // blur three unison voices into one wavering choir is the goth-pop sound, and on a
+            // chord whose third and seventh are a semitone apart in inversion it is also what
+            // keeps the stack from beating harshly.
+            //
+            // `cutoff: 1250` (free) with `res: 0.16` keeps the top dull without closing it —
+            // the major seventh lives up there and a darker filter would hide the interval the
+            // genre is named for. `vibRate: 3.4` / `vibDepth: 0.14`: slow enough to read as a
+            // voice rather than a modulation.
+            return patch("73", "Dragged Choir",
+                a: 0.055, d: 0.70, s: 0.55, r: 0.85,
+                harm: 0.72, hl: 0.46, bright: 0.26, noise: 0.06, color: "Pink", shape: "Natural",
+                cutoff: 1250, res: 0.16, lfoAmt: 0.08, lfoRate: 0.22, lfoDepth: 0.07,
+                revMix: 0.30, revDecay: 2.20, vibRate: 3.4, vibDepth: 0.14,
+                uni: 3, det: 18)
         case .rootsReggae:
             // #1289 G6b — ROOTS ORGAN. ⚠️ NOT "Skank Organ": `ska` (un-offered) already ships
             // that name, and the pre-batch check caught it — the third name collision in three
@@ -887,6 +918,28 @@ public extension MusicStyle {
                 a: 0.014, d: 0.62, s: 0.80, r: 0.32,
                 harm: 0.96, hl: 0.34, bright: 0.13, noise: 0.0, color: "Pink", shape: "Dark",
                 cutoff: 545, res: 0.14, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
+        case .slowedGothPop:
+            // #1354 G15b-2 — DRAG SUB. The half-time root: long, round, no top at all. The SIXTH
+            // owner of `sparseSub` — figure shared, voice never. Numbers from
+            // `--patch "Drag Sub"` at full coverage.
+            //
+            // `s: 0.74` and the envelope total 1.86 are both SOLE HOLDERS. The sustain is the
+            // point: a half-time bass plays perhaps two notes a bar, so the note has to HOLD
+            // through the gap rather than decay into it — that is what separates this from the
+            // dub sub one arm up, which is written to be re-struck on every offbeat.
+            //
+            // ⚠️ `cutoff: 580` IS NOT FREE — `Dust Sub` has it too, and this comment names it
+            // rather than claiming a darkness it does not own. Checked with the tool before
+            // writing the sentence (#1352, where a first draft defended a separation from a
+            // patch it had also mis-named): the two part on everything else, and by a wide
+            // margin — attack 0.020 vs 0.008, decay 0.70 vs 0.45, sustain 0.74 vs 0.64, release
+            // 0.40 vs 0.18, envelope 1.86 vs 1.278. Same corner frequency, different note.
+            return patch("74", "Drag Sub",
+                a: 0.020, d: 0.70, s: 0.74, r: 0.40,
+                harm: 0.90, hl: 0.30, bright: 0.16, noise: 0.0, color: "Pink", shape: "Dark",
+                cutoff: 580, res: 0.10, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
                 revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
                 uni: 1, det: 0)
         case .rootsReggae:

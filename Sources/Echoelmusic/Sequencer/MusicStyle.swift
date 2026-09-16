@@ -169,6 +169,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         .loFiHipHop,
         // #1352 G15b-1 — the FIRST resident of the new `Dub & Echo` shelf.
         .dubEcho,
+        .slowedGothPop,
         .selfObservation, .stillMeditation, .drift, .contemplation,
         .vaporwave, .sciFi, .classical, .dubTechno,
         // #254 batch 1 (founder 2026-07-30: "mehr Genres der elektronischen Musik benötigt,
@@ -411,6 +412,17 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         /// reads. `droneMetal` is blocked on the `PadGrammar.pedalDrone` mechanism debut
         /// anyway, and it belongs beside the other pedal-drone genres rather than beside dub.
         case dubEchoes
+        /// #1354 G15b-2. Added TOGETHER with `slowedGothPop`, its only resident, for the reason
+        /// `.gospelSpiritual` (#1349) and `.dubEchoes` (#1352) were: an empty shelf is SKIPPED by
+        /// the picker, so nothing looks wrong and the next session plans out of a drawer it
+        /// cannot see. Declared directly after `.dubEchoes` because claim 6 of
+        /// `GenreSubcategoryTests` requires a rubric's shelves to be CONTIGUOUS.
+        ///
+        /// The title names a KIND, not a count — one dark synth genre stands here today, and
+        /// `darkwave`/`coldwave`/`witchHouse` are the catalog lines it was opened for. That is
+        /// the line #1352 drew: a shelf may be roomier than its contents, it may not promise a
+        /// DIFFERENT thing than it holds (there its name promised a drone it did not have).
+        case darkSynthScenes
 
         public var id: String { rawValue }
 
@@ -427,7 +439,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             case .classicalRomantic:                                return .classical
             case .gospelSpiritual:                                  return .chant
             case .europeanFolk, .nearEastCentralAsia:               return .folk
-            case .loFiHazy, .dubEchoes:                             return .underground
+            case .loFiHazy, .dubEchoes, .darkSynthScenes:           return .underground
             }
         }
 
@@ -458,6 +470,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             case .nearEastCentralAsia:  return "Near East & C. Asia"
             case .loFiHazy:             return "Lo-Fi & Hazy"
             case .dubEchoes:            return "Dub & Echo"
+            case .darkSynthScenes:      return "Dark Synth Scenes"
             }
         }
 
@@ -524,6 +537,8 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             return .loFiHazy
         case .dubEcho:
             return .dubEchoes
+        case .slowedGothPop:
+            return .darkSynthScenes
         case .sciFi:
             return .cinematicAtmospheres
         case .dubTechno, .minimalTechno, .detroitTechno, .acidTechno, .deepTech, .darkMinimal:
@@ -1120,6 +1135,46 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// ⚠️ `defaultMode` takes NO arm — it inherits `default: .studioLocked`, right for a
     /// loop-based music and the omission a compiler cannot catch, so the batch guard asserts it.
     case dubEcho
+    /// #1354 G15b-2. Slowed goth pop: a dragged half-time pulse under a MINOR-MAJOR seventh.
+    ///
+    /// ⭐ THE SEPARATION IS THE TONIC CHORD, AND IT IS THE ONLY ONE IN THE ROSTER. `[0, 2, 4, 6]`
+    /// on `.harmonicMinor` `[0,2,3,5,7,8,11]` resolves to `[0, 3, 7, 11]` — minor third, fifth,
+    /// MAJOR seventh. Measured across all 54 genres' tonic stacks: **nobody else has it**. The
+    /// ten ordinary minor-seventh genres sit on `[0, 3, 7, 10]` and the four major-seventh ones
+    /// on `[0, 4, 7, 11]`; this is the chord between them, and it is what a goth record sounds
+    /// like. The stack is a CONSEQUENCE of the scale, not a second decision: the same
+    /// `[0, 2, 4, 6]` that eight other arms carry produces a different chord here.
+    ///
+    /// `progression: [0, 5, 4]` — roots i → ♭VI → V, FREE across the roster (no other arm returns
+    /// it). It is chosen for the same reason as the stack: on harmonic minor degree 4 voices
+    /// `[0, 4, 7]`, a MAJOR dominant, where natural minor gives `[0, 3, 7]`. Only four genres in
+    /// the file pair a minor tonic with a major V, and the other three are `blackMetal` and
+    /// `balkanModal` (both `.hungarianMinor`) and the un-offered `trap`/`klezmer`. ⚠️
+    /// `composeHarmonic` ROTATES over `progressionPhase`, so this is a set of three roots opening
+    /// on the tonic, not a notated cadence (#1290).
+    ///
+    /// ⚠️ FIRST OFFERED GENRE ON `.harmonicMinor`. `trap` and `klezmer` hold it and neither is
+    /// offered — checked before writing this, because #1295b had to RETRACT `blackMetal`'s
+    /// "used by no other genre" when a second `hungarianMinor` arm arrived. Neither `trap`'s nor
+    /// `klezmer`'s doc claims exclusivity, so nothing is retracted here; if a third arm takes
+    /// this scale, this sentence is the one to correct.
+    ///
+    /// ⚠️ THE NEAREST NEIGHBOURS SHARE 3 OF 6 AXES, AND ALL THREE OF THEM ARE SUSTAINED
+    /// FLÄCHEN. Measured, not guessed, and deliberately not phrased as a superlative because it
+    /// is a TIE: `sciFi` shares `beatArchetype`/`leadPatchName`/`padOctave`, while
+    /// `stillMeditation` and `selfObservation` share `leadPatchName`/`chordTones`/`padOctave`
+    /// and are `.none`-archetype, a different class again. The `"Choir Vox"` overlap in all
+    /// three is NOMINAL: every one of them is `sustained`, so none ever voices that patch (their
+    /// arms say `// sustained — unused`). This genre BEARS it, which is why the lead ceiling
+    /// counts it. Against `sciFi`, the only one sharing the archetype, the separation is
+    /// measured: scale (`.harmonicMinor` vs `.phrygian`), progression (`[0, 5, 4]` vs `[0, 1]`),
+    /// tonic stack (`[0, 3, 7, 11]` vs a bare triad) and the echo (ping-pong dotted eighth vs a
+    /// tape half note).
+    ///
+    /// ⚠️ `swing: 0.16` ties `deepHouse`, `boomBapHipHop` and `nordicFiddle` exactly. A tie
+    /// claims nothing and none is written. ⚠️ `defaultMode` takes NO arm — it inherits
+    /// `default: .studioLocked`, which the batch guard asserts because a compiler cannot.
+    case slowedGothPop
     /// #983 S5 (same founder sentence: "psy prog House"). The roster has `psytrance` (un-offered,
     /// ~145, phrygian, ARPEGGIATED, padOctave 2) and nothing between it and house. This is the
     /// house-tempo, non-arpeggiated relative — progressive, not Goa — and it is separated from
@@ -1336,6 +1391,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #1350 G15a — Lo-Fi & Hazy.
         case .loFiHipHop:         return "Lo-Fi Hip-Hop"
         case .dubEcho:            return "Dub Echo"
+        case .slowedGothPop:      return "Slowed Goth Pop"
         case .blackMetal:         return "Black Metal"
         case .modalJazz:          return "Modal Jazz"
         case .soulBallad:         return "Soul Ballad"
@@ -1426,6 +1482,11 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // list bans claims about states, not spaces).
         case .dubEcho:
             return "Offbeat sevenths dissolving in tape echo"
+        // #1354 G15b-2. The chord IS the lineage, so it is named: a minor triad under a
+        // major seventh. "Dragged" is the groove, not a mood — the vocabulary guard bans
+        // claims about a listener's state, never a description of the beat.
+        case .slowedGothPop:
+            return "Dragged half-time minor-major sevenths"
         case .blackMetal:
             return "Tremolo-cold raised-fourth minor"
         case .modalJazz:
@@ -1587,7 +1648,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case .rock, .punk, .rocknroll, .heavyMetal,
              .jazz, .oriental, .detroitTechno:                  return .backbeat
         case .ska, .rocksteady, .klezmer:                       return .offbeat
-        case .doom, .vaporwave, .sciFi:                         return .halfTime
+        case .doom, .vaporwave, .sciFi, .slowedGothPop:         return .halfTime
         case .classical, .stillMeditation, .selfObservation, .drift, .contemplation,
              .deepDrone, .ambientPulse:                         return .none
         }
@@ -1805,6 +1866,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // Both overlaps are named at the case doc rather than engineered away.
         case .loFiHipHop:         return 72...88
         case .dubEcho:            return 66...82
+        case .slowedGothPop:      return 60...76
         case .blackMetal:         return 160...200
         case .modalJazz:          return 100...160
         case .soulBallad:         return 64...86
@@ -1945,6 +2007,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case .gospelChoir:        return 96
         case .loFiHipHop:         return 80
         case .dubEcho:            return 72
+        case .slowedGothPop:      return 66
         case .blackMetal:         return 180
         case .modalJazz:          return 120
         case .soulBallad:         return 72
@@ -2029,6 +2092,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // keeps the largest-offered pin, and this must stay under it.
         case .loFiHipHop:                         return 0.22
         case .dubEcho:                            return 0.18
+        case .slowedGothPop:                      return 0.16
         case .boomBapHipHop:                      return 0.16
         case .electroFunk:                        return 0.08
         case .modalJazz:                          return 0.30
@@ -2189,6 +2253,9 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // against `rootsReggae`. The reed bucket is also the honest one: dub comps on an
         // organ or a melodica.
         case .dubEcho:            return "Hollow Reed"
+        // #1354 G15b-2. BORNE, not decorative — `sustained` is false, so this patch is the
+        // voice a player hears. `sciFi` names the same patch and never sounds it.
+        case .slowedGothPop:      return "Choir Vox"
         case .blackMetal:         return "Warm Strings"
         case .modalJazz:          return "Soft Keys"
         case .soulBallad:         return "Choir Vox"
@@ -2323,6 +2390,11 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // stab present rather than dominant. The triple is FREE (no other arm returns
         // these three); no single value takes a rank, and none is claimed.
         case .dubEcho:                            return (1.16, 1.04, 0.88)
+        // #1354 G15b-2. Pad furthest forward of the three, because the minor-major seventh
+        // is the genre and it lives in the chord, not in the lead line. The triple is FREE
+        // (no other arm returns these three); no single value takes a rank, and none is
+        // claimed.
+        case .slowedGothPop:                      return (1.08, 1.02, 0.90)
         case .blackMetal:                         return (1.10, 1.04, 0.88)
         case .modalJazz:                          return (1.00, 1.08, 0.88)
         case .soulBallad:                         return (1.00, 1.10, 0.88)
@@ -2376,6 +2448,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // claimed as nothing, and the reason this genre needed three other separations.
         case .loFiHipHop:         return .dorian
         case .dubEcho:            return .minor
+        case .slowedGothPop:      return .harmonicMinor
         case .blackMetal:         return .hungarianMinor
         case .modalJazz:          return .dorian
         case .soulBallad:         return .major
@@ -2628,6 +2701,30 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             // correct here: the skank is about WHEN the chord lands, never about what it is. Two
             // roots, low register, so the echo has room above it.
             return HarmonicProfile(progression: [0, 3], chordTones: [0, 2, 4],
+                                   padOctave: 3, leadOctave: 5, arpeggiated: false,
+                                   leadDensity: 0.0)
+        case .slowedGothPop:
+            // #1354 G15b-2 — DEGREES, never semitones. `[0, 2, 4, 6]` on harmonic minor
+            // `[0,2,3,5,7,8,11]` resolves to 0, 3, 7, 11. That is the
+            // MINOR-MAJOR seventh, and it is the only one in the file: ten arms voice the plain
+            // minor seventh `[0, 3, 7, 10]`, four the major seventh `[0, 4, 7, 11]`, and nobody
+            // else lands between them. The chord is the genre.
+            //
+            // ⚠️ THE SHAPE IS NOT THE DECISION — THE SCALE IS. `[0, 2, 4, 6]` is the same four
+            // degrees eight other arms carry (`GenreBatchFourVoicingTests` requires exactly that
+            // shape for every four-note genre but Detroit); harmonic minor's raised seventh is
+            // what turns it into this chord. Change the scale and the identity goes with it.
+            //
+            // `progression: [0, 5, 4]` — i → ♭VI → V, free across the roster. Its point is
+            // degree 4: on this scale it voices a MAJOR triad, where natural minor voices a
+            // minor one. ⚠️ `composeHarmonic` ROTATES over `progressionPhase`, so these are
+            // three roots with a tonic opening, not a score (#1290).
+            //
+            // `padOctave: 3` is the shared floor, not a low one — `deepDrone` at 2 is the lowest
+            // offered and nothing here tries to take that. `leadDensity: 0.0` and
+            // `arpeggiated: false`: the half-time drag is the whole gesture, and an arpeggio
+            // would undo it.
+            return HarmonicProfile(progression: [0, 5, 4], chordTones: [0, 2, 4, 6],
                                    padOctave: 3, leadOctave: 5, arpeggiated: false,
                                    leadDensity: 0.0)
         case .blackMetal:

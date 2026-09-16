@@ -194,6 +194,10 @@ public extension MusicStyle {
         // those is a near neighbour, and the VOICE is where they part ("Wobble Sub" against
         // "Dust Sub"), exactly as every arm in this file argues.
         case .loFiHipHop:       return .sparseSub
+        // #1354 G15b-2: SIXTH `sparseSub` owner. A half-time bass plays perhaps two notes
+        // a bar, which is the sparsest reading this figure has — the voice (`Drag Sub`)
+        // is its own, as always here: figure shared, voice never.
+        case .slowedGothPop:    return .sparseSub
         // #1352 G15b-1 — the FIFTH owner of `offbeatEighths`, and the sheet's own choice:
         // the skank IS the figure, and dub inherits it from reggae unchanged. Shared with
         // `deepHouse`, `soulBallad`, `rootsReggae` and `afroHouse`. ⚠️ `rootsReggae` is the one
