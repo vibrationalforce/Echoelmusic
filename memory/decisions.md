@@ -2155,3 +2155,25 @@ Zahl, und die ist plausibel genug, um geglaubt zu werden.** Für jeden neuen Par
 ANKERN (Property/Block/Zeile, nie die Datei), Kommentare zuerst strippen, Ergebnis gegen einen
 unabhängigen Weg gegenprüfen (hier `scripts/genre-prebatch.py`). Playbook:
 `HARNESS_LEDGER.md` #1295b.
+
+### 2026-09-16 — #1346: der Blindfleck eines Wächters ist öfter seine SCOPE als seine Nadelliste
+
+`scratchpads/FOUNDER_DEVICE_SESSION.md` nannte in seinem ersten Abschnitt einen BLOCKER
+(„Mix-Panel → ‚Choose input…' → Live monitoring"), den der Founder am 2026-09-12 selbst
+gelöscht hat (#1302/#1305). Der Wächter `TheDeviceChecklistOnlyAsksWhatExistsTests` konnte ihn
+nicht sehen: er scannt `- [ ]`-Ankreuzzeilen, und die Faulstelle war eine ÜBERSCHRIFT.
+
+- **Ein Wächter hat ZWEI Begrenzungen — Nadeln und Scope.** Kopf-Kommentare nennen fast immer nur
+  die erste. Beim Lesen eines Blindflecks beide fragen.
+- **Überschriften sind die richtige zweite Scope** für ein Dokument, das seine eigenen Rücknahmen
+  zitiert: eine Zeile, zuerst gelesen, nie Träger einer Rücknahme — also #491-sicher.
+- **Drei Behandlungen, nicht eine:** Fläche weg = streichen · Zeiger veraltet = reparieren ·
+  Tür weg, Maschine da = `BLOCKED-BY-#NNNN` · Founder-Antwort neben widerrufenem Auftrag = die
+  Antwort bleibt (ein Datum überlebt, ein Auftrag hing an einer Fähigkeit).
+- **Der Geräte-Zettel ist das Zuhause, an das beim Löschen niemand denkt** — er kompiliert nicht,
+  steht in keinem `paths:`-Filter, und die Nadel-Checker lesen per Konstruktion nur `Sources/`.
+- **Nicht repariert, gemessen:** ~13 der 139 offenen Bitten sind Prosa über den Marker. Das
+  Werkzeug bevorzugt ausdrücklich Über- vor Unterzählung; eine Verengung müsste erst als eng
+  bewiesen werden. Review 2026-11-16.
+
+Ergebnis für den Founder: die Geräte-Sitzung hat **keinen Blocker mehr**; §2–§5 sind ausführbar.

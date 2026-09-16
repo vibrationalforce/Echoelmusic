@@ -32295,3 +32295,72 @@ Problemen scheitern.
 Die nächste Sitzung, die dieselbe Frage stellt, zahlt sie dann noch einmal. **Ein negatives
 Ergebnis gehört ins Log wie ein positives** — und `CLAIMS.md` trägt bewusst KEINE Genre-Zahl,
 sie verweist, was nach #1295b genau richtig ist.
+
+## 2026-09-16 (Fortsetzung) — #1346: der Geräte-Zettel nannte als Blocker einen Handgriff, den der Founder selbst gelöscht hat
+
+**Auslöser.** Die #1343-Lehre („ein unerfüllbares Abnahmekriterium kostet eine Geräte-Sitzung,
+und beide offenen Ship-Gate-Checks sind sensorisch") auf die Warteschlange selbst angewandt:
+sind unter den 139 offenen `NEEDS-FOUNDER-VERIFY`-Bitten welche, die auf entfernten Code zeigen?
+
+**Erster Messweg — und er ging ins Leere, das gehört ins Log.** Ich habe zuerst die
+KLASSIFIKATOR-Präzision gemessen: 139 offene Bitten, davon 88 mit dem Marker am
+Kommentaranfang, 22 mit einem verdächtigen Vorwort. Von diesen 22 sind rund 13 Prosa ÜBER den
+Marker („(NEEDS-FOUNDER-VERIFY in the plan)", „(… at the constant)", ein `XCTSkip`-Text, eine
+`ANCHOR MISSING`-Meldung). **Nicht repariert, und zwar mit Absicht:** `founder-verify.py` sagt
+in `is_reference` seine eigene stehende Richtung — *„hiding one costs a device session while
+over-counting costs a glance"*. 13 Blicke gegen das Risiko, eine echte Bitte zu verstecken, ist
+die falsche Seite. Die Präzision war die falsche Frage.
+
+**Die richtige Frage war die nach entferntem Code — und die Antwort stand im Kopf des
+Wächters.** `TheDeviceChecklistOnlyAsksWhatExistsTests` (#816) nennt seinen Blindfleck selbst:
+*„Die Nadelliste ist FEST … eine veraltete Bitte über irgendeine SECHSTE gelöschte Fläche geht
+ungesehen durch."* Seit dem 2026-08-25 hat der Founder VIER Flächen gelöscht (#1069, #1301,
+#1302, #1305). Gemessen:
+
+| Posten | Messung | Behandlung |
+|---|---|---|
+| **§1 „Der eine Handgriff — er blockiert die ganze Vokal-Kette"** — Mix-Panel → „Choose input…" → Live monitoring | `MonitorInsertAU.swift` als Datei weg (#1302); `EchoelHarmonizer`/`EchoelGranular`/`DiatonicHarmony`/`HarmonyInterval` weg (#1305) | GESTRICHEN |
+| Zeiger `AudioConfiguration.swift:300` | die Bitte sitzt bei **:343** — 43 Zeilen Drift | im Strich mit |
+| **§4b „aus dem Vollbild-Visual"** | `.fullScreenCover($showVisual)` mit #1069 gelöscht; `FloatingVisualWindow` hat eine eigene `.fullscreen`-Größe | **REPARIERT**, nicht gestrichen |
+| **§6 Auftrag** („Monitoring … mit Harmonizer- und Granular-Strategie auf der Stimme") | vom Founder am 2026-09-12 wörtlich widerrufen | Auftrag zurückgenommen, **ANTWORT bleibt** |
+| **`AudioConfiguration.swift:343`** (einzige im WERKZEUG) | `upgradeToPlayAndRecord()` hat null Produktions-Aufrufer ⇒ `.playAndRecord` wird nie betreten ⇒ `recordOptions` nie angewandt | `BLOCKED-BY-#1302` |
+
+**Das Ergebnis ist eine gute Nachricht und stand als ihr Gegenteil da:** die Geräte-Sitzung hat
+**keinen Blocker mehr**, §2–§5 sind heute vollständig ausführbar. Wer die Datei von oben las,
+plante um ein Bedienelement herum, das seit vier Tagen nicht existiert.
+
+**Erste lebende BLOCKED-Bitte überhaupt.** Der Pfad existiert seit #1053 und war vakant — die
+zehn `BLOCKED-BY-#1024`-Bitten gingen mit ihren Dateien in #1302. `founder-verify.py` liest
+jetzt 138 offen / 1 blockiert, und der eigene LIMITS-Text des Werkzeugs beschreibt exakt, was
+hier passiert ist: *„Nothing here can tell that a door was removed; somebody has to notice."*
+
+**Der Wächter wächst um eine zweite SCOPE, nicht um eine längere Nadelliste** — und das ist der
+eigentliche Befund. Claim 1 scannt `- [ ]`-Zeilen; §1 war nie eine Ankreuz-Zeile, sondern eine
+ÜBERSCHRIFT. Eine längere Nadelliste hätte nichts gefunden. Claim 7 scannt deshalb Überschriften:
+eine Zeile, das Erste was der Founder liest, und die einzige Textsorte, in der nie eine Rücknahme
+steht — also #491-sicher, während ein dateiweiter Negativ-Scan an den zitierenden ⛔-Tabellen
+scheitern würde. Claim 8 pinnt die BLOCKED-Marke samt zwei Gegengewichten (`recordOptions`,
+`routeCodec` müssen dableiben — BLOCKED heißt „die Tür ist weg", nie „die Maschine ist weg"),
+Claim 9 die Null-Aufrufer-Tatsache, auf der Claim 8 ruht.
+
+**§0-Benotung (Eltern = `a814c91`, beide Bäume transkribiert):** Claim 7 ROT auf dem Eltern,
+genau EIN Treffer (die Vokal-Ketten-Überschrift), grün im Arbeitsbaum — **eine echte
+Regression**. Claim 8 rot auf dem Eltern, aber als **FORWARD** gebucht (sie pinnt eine Marke,
+die dieser Commit anlegt; als Regression zu zählen wäre #433). Claim-8-Gegengewichte und Claim 9
+grün auf beiden — GEGENGEWICHTE, und sie sind der Inhalt (#343). Nadel „Face" vor dem Schreiben
+auf „Face-Tracking"/„Gesichts" verengt: als Teilstring hätte sie case-insensitiv auf „Interface"
+gefeuert. Sieben Checker exit 0.
+
+**Gate-Lesung, die den offenen Posten der Vorrunde schließt.** `47a91a6` (Balkan Modal):
+`Compile (iOS device SDK, no signing)` = **success**, und im CI/CD-Job Schritt 9
+**`Build for Testing` = success** (Schritt 10 „Print build log on failure" = skipped). Damit
+kompilieren `GenreBatchElevenDTests`, `TheGenreListsMatchTheirOwnCountTests` und die drei
+Wächter aus `55dc34d` nachweislich; Ausführung bleibt unbelegt (#445/#807). `55dc34d`s
+Compile-Lauf war `cancelled` — von `47a91a6` verdrängt (`cancel-in-progress: true`), kein Rot.
+`2617559` (nur `scripts/`) und `a814c91` (nur Prosa) haben erwartungsgemäß **gar keinen** Lauf
+ausgelöst — der vierte Zustand, weder grün noch rot.
+
+**LEHRE, und sie ist nicht „Nadelliste pflegen":** eine Founder-Löschung ist ein Ereignis mit
+mehreren Zuhausen (#456), und der Geräte-Zettel ist das Zuhause, an das beim Löschen niemand
+denkt — er kompiliert nicht und steht in keinem `paths:`-Filter. Wer eine Fläche entfernt,
+greppt im selben Commit diese Datei UND `python3 scripts/founder-verify.py` nach ihrem Namen.

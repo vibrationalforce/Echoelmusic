@@ -3947,3 +3947,46 @@ druckt.
 in Richtung falsch-grün irrt, hätte nichts gesagt — und ein Checker mit überwiegend Lärm ist
 schlimmer als keiner (#665), aber ein Checker, der still das Falsche bestätigt, ist die
 teuerste Sorte (#937).
+
+## PLAYBOOK #1346 (2026-09-16) — der Blindfleck eines Wächters ist öfter seine SCOPE als seine Nadelliste
+
+**Lage.** `TheDeviceChecklistOnlyAsksWhatExistsTests` (#816) bewacht den Geräte-Zettel des
+Founders und nennt in seinem Kopf einen ehrlichen Blindfleck: *„Die Nadelliste ist FEST … eine
+veraltete Bitte über irgendeine SECHSTE gelöschte Fläche geht ungesehen durch."* Drei Wochen
+später war er eingetreten — und aus einem Grund, den der Kopf NICHT nannte.
+
+**Der Reflex, der nicht funktioniert hätte.** „Blindfleck = feste Liste" ⇒ Liste verlängern.
+Hätte nichts gefunden. Die teuerste Faulstelle war `## 1 · Der eine Handgriff — er blockiert die
+ganze Vokal-Kette`, also eine **Überschrift**, und Claim 1 scannt `- [ ]`-Ankreuzzeilen. Die
+Nadel fehlte nicht; der SCANNER schaute woanders hin.
+
+**Das Muster, verallgemeinert.** Ein Wächter hat zwei unabhängige Begrenzungen — WAS er sucht
+(Nadeln) und WO er sucht (Scope). Ein Kopf-Kommentar nennt fast immer nur die erste, weil sie
+sichtbar im Quelltext steht. **Frage beim Lesen eines Blindflecks immer beide:** „welche Nadel
+fehlt?" UND „welche Textsorte dieser Datei sieht der Scanner nie?" Hier: Überschriften, Prosa,
+Tabellen und `- [x]`-Zeilen waren alle unsichtbar.
+
+**Die Reparatur, und warum sie eine ÜBERSCHRIFT ist.** Eine zweite Scope, nicht eine längere
+Liste. Überschriften sind die richtige zweite Scope für ein Dokument, das seine eigenen
+Rücknahmen zitiert: eine Überschrift ist eine Zeile, sie ist das Erste was gelesen wird, und
+**in einer Überschrift steht nie eine Rücknahme** — also trägt sie einen Negativ-Scan, ohne über
+#491 zu stolpern, während ein dateiweiter Scan an den ⛔-Tabellen scheitert.
+
+**Zweite Lehre, aus demselben Commit — die Dreiteilung, die ein Aufräumen gern verliert.** Vier
+Posten, drei Behandlungen: §1 GESTRICHEN (Fläche weg), §4b REPARIERT (Fläche da, ZEIGER veraltet),
+§6 Auftrag ZURÜCKGENOMMEN bei stehender ANTWORT (ein Datum überlebt, ein Auftrag hing an einer
+Fähigkeit), und die Code-Bitte BLOCKED statt gelöscht (Tür weg, Maschine da). **Wer alle vier
+gleich behandelt, verliert entweder eine ausführbare Bitte oder eine Founder-Entscheidung.**
+
+**Drittens, für die nächste Founder-Löschung.** Der Geräte-Zettel ist das Zuhause, an das beim
+Löschen niemand denkt: er kompiliert nicht, steht in keinem `paths:`-Filter, und `dead-needles`/
+`moved-needles` lesen ihn per Konstruktion nicht (sie diffen `-- Sources`). Beim Entfernen einer
+Fläche im selben Commit greppen: `scratchpads/FOUNDER_DEVICE_SESSION.md` UND
+`python3 scripts/founder-verify.py`.
+
+**Was NICHT repariert wurde, und warum das die Entscheidung war.** Rund 13 der 139 offenen Bitten
+sind Prosa ÜBER den Marker („(NEEDS-FOUNDER-VERIFY in the plan)", ein `XCTSkip`-Text, eine
+`ANCHOR MISSING`-Meldung), die der Determiner-Regel entgehen. `founder-verify.py` trägt seine
+stehende Richtung in `is_reference`: *„hiding one costs a device session while over-counting
+costs a glance."* 13 Blicke sind billiger als das Risiko, eine echte Bitte zu verstecken. **Eine
+gemessene Nicht-Reparatur gehört ins Log, sonst zahlt die nächste Sitzung dieselbe Messung.**
