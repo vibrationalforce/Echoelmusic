@@ -35,9 +35,18 @@ import Foundation
 /// buffer afterwards, so the guard is DOWNSTREAM of the limiter, not upstream of it.)
 ///
 /// ── COVERAGE ────────────────────────────────────────────────────────────────
-/// All seven of the app's `AVAudioSourceNode` render blocks are wired. WHICH ENTRY
-/// POINT each needs is decided by where the last write happens, not by whether the
-/// voice uses a scratch array:
+/// EVERY `AVAudioSourceNode` render block in the app is wired, and the bullets below
+/// are the WHOLE set — stated as a set, not as a figure. ⛔ #1328: this line said
+/// "All seven" while its own list named six. The seventh was `DrumSynthVoice`, deleted
+/// with #167 on 2026-07-27, and the `SamplerVoice` bullet below already said so — the
+/// count and its own evidence sat four lines apart for seven weeks. A number in prose
+/// is a date, not a fact (#818). Re-derive the set, never a count:
+///     grep -rln "AVAudioSourceNode(" --include=*.swift Sources/
+/// `TheRenderBlockCoverageIsASetNotACountTests` compares that set against these
+/// bullets AND against the guard's own call sites, and prints the DIFFERENCE per file
+/// — two equal totals cannot answer a set question (`.claude/rules/context.md` §2).
+/// WHICH ENTRY POINT each needs is decided by where the last write happens, not by
+/// whether the voice uses a scratch array:
 /// * `PolySynthVoice`, `BioReactiveSynthVoice` — buffer form. The copy out of
 ///   scratch IS the last write, so the sweep folds into it.
 /// * `SubBassVoice`, `MetronomeVoice`, `SessionEngine` — scalar form. No scratch;
