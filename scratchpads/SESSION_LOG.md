@@ -32160,3 +32160,80 @@ Geschwister-Punkten, und den Bereich aufs Blockzitat auszuweiten wäre genau der
 Regressionen**, 3 nach vorn gerichtet; 2 grün auf beiden.
 · Gates: `Xcode Compile Check` auf `e32dd3d` **grün** (Nordic Fiddle). `Build for Testing` für
 alle drei neuen Wächter: **UNBELEGT**, der Lauf auf `f8acafb` deckt sie zusammen ab.
+
+## 2026-09-16 (Fortsetzung) — #1295b G11d: Balkan Modal, und beide geplanten Risiken aufgelöst statt umgangen
+
+Die G11d-Zeile war die einzige, die MIT benannten Risiken in den Plan geschrieben wurde (#1295
+hat sie dort abgelegt, statt sie in einem Feature zu verstecken). Beide sind aufgelöst, keines
+umgangen — und **eines davon dissolvierte durch eine Messung statt durch einen Bau**, was das
+bessere Ergebnis ist.
+
+### Risiko 1 — `additive332`: nicht gebaut, weil die Figur schon da ist
+
+`PadGrammar.tresilloChops` **IST** 3+3+2 (Phasen 0·3·6, dann 8·11·14). *Aksak* ist der
+Balkan-Name derselben Zelle. Ein `additive332` wäre eine zweite Implementierung EINES
+`hits`-Arrays gewesen, getrennt nur durch das Wort — #416. Der Vermerk steht jetzt **am Case
+selbst**, damit die nächste Tradition ihn nicht als dritte Kopie anlegt; er nennt auch, was ein
+ECHTER neuer Fall wäre (3+2+3, 2+3+3) und was nur eine Umbenennung ist.
+
+⭐ **Und dabei fiel etwas auf, das der Plan nie genannt hatte:** `MusicStyle.padGrammar` gibt für
+**jedes** Genre `nil` zurück. Der erste Arm dort ist also das **Debüt eines ganzen Mechanismus**,
+keine Eigenschaft dieses Genres. Ein Mechanismus-Debüt in eine Genre-Einführung zu falten macht
+ein Hör-Problem und ein Verdrahtungs-Problem auf dem Gerät ununterscheidbar. Anspruch 5 pinnt das
+`nil` — **als Absicht, nicht als Verbot** (#364): der Tag, an dem eine Scheibe den ersten Arm
+setzt, wird rot, und die Fehlermeldung sagt, welche Prosa mitzuziehen ist.
+
+### Risiko 2 — das zweite `hungarianMinor`: die Rücknahme steht am ALTEN Arm
+
+`blackMetal`s Doc sagte „used by no other genre". Die Rücknahme steht jetzt **dort**, nicht nur
+am neuen Genre — das ist das Doc, das eine Sitzung liest, wenn sie fragt, ob eine Skala frei ist.
+Vier Achsen ersetzen das Unique-Argument: **Voicing auf DERSELBEN Skala** (`[0,2,4]` → 0, 3, 7
+Halbtöne = schlichter Moll-Dreiklang, gegen `[0,4,7]` → 0, 7, 12 = Powerchord ohne Terz — eines
+stellt den Modus fest, das andere verweigert ihn) · Progression `[0,4,3]` gegen `[0,1,6]` ·
+Lead-Stimme · Register. Der **Tempo-ÜBERLAPP** (120…170 gegen 160…200) ist benannt und als
+NICHT-Achse mitgepinnt, dieselbe Disziplin, die `blackMetal`s Doc auf `punk` anwendet.
+
+### Der Nebenbefund, und er ist meiner
+
+**#1295 hat die ZAHL auf allen sieben Anspruchsflächen bewegt und alle VIER Listen stehen
+lassen.** Vier Flächen sagten „thirty-three" über zweiunddreißig Namen; eine davon ist die
+App-Store-Beschreibung, wo das eine 2.3-Ablehnung ist. Das ist **genau der #1343-Defekt eine
+Ebene weiter draußen** — eine zweite Abschrift von `MusicStyle.offered`, diesmal in
+nutzersichtbarer Kopie.
+
+⭐ **Die Ursache ist allgemein und gehört aufgeschrieben: die Zahl ist EIN Token, das ein `grep`
+in jedem Zuhause findet; eine Liste ist keins.** Wer ein Genre hinzufügt, sucht das Zahlwort,
+findet alle sieben Stellen und hört auf. Neuer Wächter
+`TheGenreListsMatchTheirOwnCountTests` hält **beide** Hälften: jeder angebotene Anzeigename muss
+auf jeder aufzählenden Fläche vorkommen, UND die ausgeschriebene Zahl muss die Roster-Zahl sein.
+
+### Drei Parser-Fehler, alle mit selbstbewusster falscher Antwort
+
+Der ERSTE Entwurf dieses Wächters war ein Listen-Parser und auf **BEIDEN** Bäumen falsch: 49/50
+für die zwei Release Notes (der Stop traf nie, also verschluckte er spätere Bullets), 34/36 für
+die zwei Seiten (die geklammerten Regal-Listen und ein inneres „ and " splitteten falsch). Ein so
+brüchiger Checker ist schlimmer als keiner (#665) — er fiel nur auf, weil er in Richtung
+**FALSCH-ROT** irrte.
+
+Zwei weitere starben im Neubau und stehen am Helfer, weil jeder eine **selbstbewusste falsche
+Antwort** lieferte statt eines Fehlers:
+1. Ein `.case`-Zähler über das `offered`-Array **ohne Kommentar-Stripping** liegt eins zu hoch —
+   mehrere Kommentare dort zitieren einen Case-Namen (`` `.folk` ``) in Prosa.
+2. Ein **dateiweiter** `case .x: return "Y"`-Scan löst jedes Genre auf den LETZTEN solchen
+   `switch` auf, und das ist `leadPatchName`: jedes Genre kam als „Warm Strings" oder „Deep Sub"
+   zurück, und jede Fläche las sich dann als „alle 34 Namen fehlen".
+
+⭐ **GESETZ (§2, von der scharfen Seite): ein Regex, der etwas PLAUSIBLES trifft, ist schlimmer
+als einer, der nichts trifft.** „Matched nothing" ist ein Befund und meldet sich; „matched the
+wrong switch" liefert 34 Fehlalarme, die wie ein echter Befund aussehen.
+
+### Gemessen, nicht geschätzt
+
+`scripts/genre-prebatch.py` vor und nach dem Schnitt: **50 → 51 Genres, 33 → 34 angeboten,
+67 → 69 Patches**; Hollow Reed 6 → 7, **exakt an der Decke**; kein angebotenes Paar teilt einen
+Fingerabdruck; freie Patch-IDs 65/66 exakt belegt; Delay 0,75 Viertel bei 170 BPM = 0,26 s unter
+der 2,0-s-Decke.
+
+Wächter: `GenreBatchElevenDTests` (30 Ansprüche, 5 Behauptungen) und
+`TheGenreListsMatchTheirOwnCountTests` (11 Ansprüche; Elternteil `8db9256`: **4 rot und das ist
+EIN Befund** (#486) — alle vier nennen dieselbe Abwesenheit, `Nordic Fiddle`).

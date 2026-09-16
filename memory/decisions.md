@@ -2122,3 +2122,36 @@ reserved but undrained" wurde am 2026-08-28 in DREI Dateien zugleich repariert �
 der Liste, deren Überschrift „review every session" lautet. **Die Zuhause eines Satzes werden
 GEMESSEN** (`git grep` auf die unterscheidende Phrase über das ganze Repo), nicht erinnert.
 Playbook: `HARNESS_LEDGER.md` #1344.
+
+### 2026-09-16 — #1295b G11d: Balkan Modal, und die zwei Regeln über Aufzählungen und Parser
+
+**Entscheidung A — `balkanModal` bekommt KEINEN Pad-Figur-Arm, obwohl der Entwurf einen vorsah.**
+Zwei Messungen: `PadGrammar.tresilloChops` **IST** bereits 3+3+2 (*aksak* ist der Balkan-Name
+derselben Zelle, ein `additive332` wäre #416); und `MusicStyle.padGrammar` gibt für **jedes**
+Genre `nil` zurück — der erste Arm dort ist das Debüt eines ganzen Mechanismus, keine
+Eigenschaft dieses Genres. Ein Mechanismus-Debüt in eine Genre-Einführung zu falten macht ein
+Hör-Problem und ein Verdrahtungs-Problem auf dem Gerät ununterscheidbar. Der Wächter pinnt das
+`nil` als **Absicht, nicht als Verbot** (#364).
+
+**Entscheidung B — die `blackMetal`-Rücknahme steht an `blackMetal`s eigenem Arm.** Das ist das
+Doc, das eine Sitzung liest, wenn sie fragt, ob eine Skala frei ist. Vier Achsen ersetzen das
+Unique-Argument; der Tempo-Überlapp ist als NICHT-Achse mitgepinnt.
+
+⭐ **REGEL A, allgemein: eine Kopie, die eine Menge AUFZÄHLT, braucht einen Wächter auf die
+ELEMENTE, nicht auf die Zahl.** #1295 bewegte die Genre-Zahl auf allen sieben nutzersichtbaren
+Flächen — korrekt und vollständig — und ließ alle VIER Listen stehen. Vier Sätze sagten
+„thirty-three" über zweiunddreißig Namen, einer davon in der App-Store-Beschreibung, wo das eine
+2.3-Ablehnung ist. **Die Zahl ist EIN Token, das ein `grep` in jedem Zuhause findet; eine Liste
+hat kein solches Token** — und der Suchvorgang selbst erzeugt das Gefühl von Vollständigkeit.
+
+⭐ **REGEL B, teuer gelernt: ein Regex, der etwas PLAUSIBLES trifft, ist schlimmer als einer,
+der nichts trifft.** Drei Parser starben in dieser Scheibe, alle mit selbstbewusster falscher
+Antwort — ein Listen-Parser (49/50/34/36 statt 33), ein `.case`-Zähler ohne Kommentar-Stripping
+(eins zu hoch, weil Kommentare Case-Namen zitieren), und ein **dateiweiter** `case .x: return
+"Y"`-Scan, der jedes Genre auf den LETZTEN solchen `switch` auflöste (`leadPatchName` statt
+`displayName`), sodass jede Fläche als „alle 34 Namen fehlen" las. **„Matched nothing" ist ein
+Befund und meldet sich (§2); „matched the wrong thing" meldet sich nicht — es liefert eine
+Zahl, und die ist plausibel genug, um geglaubt zu werden.** Für jeden neuen Parser: Bereich
+ANKERN (Property/Block/Zeile, nie die Datei), Kommentare zuerst strippen, Ergebnis gegen einen
+unabhängigen Weg gegenprüfen (hier `scripts/genre-prebatch.py`). Playbook:
+`HARNESS_LEDGER.md` #1295b.

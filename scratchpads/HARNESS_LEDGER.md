@@ -3902,3 +3902,48 @@ wurde am 2026-08-28 in DREI Dateien zugleich repariert — und nicht in der List
 erinnert:** `git grep` auf die unterscheidende Phrase über das ganze Repo, bevor man „alle drei
 Stellen gefixt" schreibt. „Alle" heißt sonst „alle, die mir eingefallen sind" (#766/#768, hier
 auf Prosa statt auf Fähigkeitsflächen).
+
+## PLAYBOOK #1295b (2026-09-16) — eine Zahl ist EIN Token, eine Liste ist keins; und ein Regex, der etwas PLAUSIBLES trifft, ist schlimmer als einer, der nichts trifft
+
+**Anlass, zwei Befunde in einer Scheibe.**
+
+**(1) Zahl vs. Liste.** #1295 fügte ein Genre hinzu und bewegte die Zahl auf allen SIEBEN
+nutzersichtbaren Anspruchsflächen — korrekt, vollständig, vom Website-Wächter erzwungen. Vier
+dieser Flächen ZÄHLEN die Genres nicht nur, sie NENNEN sie. Alle vier Listen blieben stehen.
+Vier Sätze sagten „thirty-three" über zweiunddreißig Namen; einer davon ist die
+App-Store-Beschreibung, wo das eine 2.3-Ablehnung ist.
+
+Die Ursache ist mechanisch und wiederholbar: **die Zahl ist ein Token, das ein `grep` in jedem
+Zuhause findet. Eine Liste hat kein solches Token.** Wer die Zahl sucht, findet alle Stellen,
+ändert sie und ist überzeugt, fertig zu sein — der Suchvorgang selbst erzeugt das Gefühl von
+Vollständigkeit.
+
+**Rezept:** Sobald eine Kopie eine Menge AUFZÄHLT, ist die Aufzählung eine zweite
+Implementierung dieser Menge (#416). Sie braucht einen Wächter, der die ELEMENTE prüft, nicht
+die Zahl — die Zahl repariert sich von selbst, die Liste nie. Der Wächter hier liest die
+Anzeigenamen aus der Quelle und verlangt jeden auf jeder aufzählenden Fläche; die Zahl ist die
+zweite, billigere Hälfte.
+
+**(2) Der plausible Regex.** Drei Parser starben in derselben Scheibe, und alle drei lieferten
+eine SELBSTBEWUSSTE FALSCHE ANTWORT statt eines Fehlers:
+· Ein Listen-Parser (Marker → Stop → Komma-Split) gab 49/50/34/36 statt 33 — der Stop traf bei
+  den Release Notes nie, also verschluckte er spätere Bullets; bei den HTML-Seiten splitteten
+  geklammerte Regal-Listen und ein inneres „ and " falsch.
+· Ein `.case`-Zähler über ein Swift-Array **ohne Kommentar-Stripping** liegt eins zu hoch,
+  sobald ein Kommentar dort einen Case-Namen in Backticks zitiert.
+· Ein **dateiweiter** `case .x: return "Y"`-Scan löst auf den LETZTEN passenden `switch` auf.
+  Hier war das `leadPatchName` statt `displayName`: jedes Genre kam als „Warm Strings" zurück,
+  jede Fläche las sich als „alle 34 Namen fehlen".
+
+⭐ **GESETZ: „matched nothing" ist ein Befund und meldet sich (§2). „Matched the wrong thing"
+meldet sich nicht — es liefert eine Zahl.** Und die Zahl ist plausibel genug, um geglaubt zu
+werden. Deshalb gilt für jeden neuen Parser: **den Bereich ANKERN** (auf die Property, den
+Block, die Zeile — nicht auf die Datei), **Kommentare vor allem anderen strippen**, und das
+Ergebnis gegen einen unabhängigen Weg gegenprüfen, bevor man es als Messung verwendet. Hier war
+der unabhängige Weg `scripts/genre-prebatch.py`, das dieselbe Zahl aus einer anderen Richtung
+druckt.
+
+**Und das Gute daran:** alle drei fielen in Richtung FALSCH-ROT auf. Ein Parser dieser Art, der
+in Richtung falsch-grün irrt, hätte nichts gesagt — und ein Checker mit überwiegend Lärm ist
+schlimmer als keiner (#665), aber ein Checker, der still das Falsche bestätigt, ist die
+teuerste Sorte (#937).
