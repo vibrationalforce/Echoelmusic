@@ -2209,3 +2209,35 @@ das Symbol löschte.
   der Fehler, nicht die Rettung.
 - **Eine Betreffzeile, die das Gegenteil ihres Körpers sagt, ist teuer** (`v10.79.470`: „der
   Monitoring-Absturz war nie in einem Build" meint „der FIX war nie in einem Build").
+
+### 2026-09-16 — #1349 G10a: Gospel Choir, und die Rubrik, die ihre eigene Freigabebedingung schon trug
+
+- **Ein ⛔-Sperrvermerk, der seine eigene Freigabebedingung formuliert, ist eine Anweisung —
+  er wird ERFÜLLT, nicht überstimmt.** `MusicStyle.Category` hielt `.chant` fern und schrieb
+  daneben, wann das endet: ein Fall kommt nur zusammen mit seiner Tür, und `.chant` komme in
+  der Scheibe, die sein erstes Genre schreibt. Also Rubrik `.chant`, Regal `.gospelSpiritual`
+  und `gospelChoir` in EINEM Commit; der Block bleibt als Rücknahme stehen, weil die REGEL
+  lebt (`GenreSubcategoryTests` Anspruch 4).
+- **G10 ist geteilt, gemessen statt gewählt:** `overtoneDrone` und `lowBreathDrone` tragen JE
+  ZWEI unabhängige Blocker (`just-major` = Plan §5-2, und `pedalDrone` = ein `PadGrammar`-Fall,
+  den es nicht gibt, in einer Tabelle die für jedes Genre `nil` liefert). Keiner berührt
+  `gospelChoir`. Plan-Zeile in G10a (gebaut) / G10b (blockiert) geteilt.
+- **Der Fingerabdruck-Test ist die Untergrenze, nicht die Frage.** Er war grün, während der
+  nächste Nachbar `soulBallad` vier Achsen teilte und sich auf dem schwächeren Schlüssel in
+  genau einer unterschied. Drei gemessene Abweichungen vom Katalog kauften die Trennung:
+  Tempo 88…112@96 (disjunkt von 64…86), `drivingEighths` statt der Nachbarfigur, Lead „Warm
+  Strings" statt Choir Vox (Schubfach-Arithmetik: 7 bei Decke 7).
+- **`MusicStyle.Category.title` hat NULL Produktions-Leser** — der Picker rendert nur das
+  Regal. Der unvollständige Rubrik-Titel „Chant, Choir & Drone" ist damit eine Ablage-Schuld,
+  keine ausgelieferte Über-Behauptung. Bewusst OHNE Wächter (#364).
+- **Ein Vermerk, der ein grep-Rezept zitiert, kann seine eigene Behauptung sofort widerlegen**
+  — mein erstes Rezept zum Punkt darüber traf diesen Satz selbst. Bei Negativ-Behauptungen
+  über den eigenen Baum: Tatsache hinschreiben, kein kurzes Kommando.
+- **Ein Ordinal wird gezählt, nie von der Nachbarzeile geerbt** (`BassGrammar`: „SIXTH owner"
+  war der siebte). Ersatz ist kein korrigierter Zahlwert, sondern ein Befehl, der NAMEN druckt.
+- **Wer über „das ganze File" behauptet, misst das ganze File:** drei Patch-Kommentar-Zahlen
+  waren falsch, weil ich nur die 27 Helfer-Voices gemessen hatte statt aller 69 — die älteren
+  Literal-Voices halten drei der vier Extreme. Vor dem Commit korrigiert.
+- **Founder-Bestätigung schließt die #1348-Frage:** „Alles läuft einwandfrei" — der 2592-Teil
+  des Logs war ein Export-Schnappschuss, kein Tod bei `init e`. Der Absturz im Log stammt aus
+  v10.79.469/2589 und liegt auf einem mit #1302 gelöschten Pfad.

@@ -4062,3 +4062,50 @@ Mein erster Entwurf las den Leiter-Präfix am ZEILENANFANG, während `ladder_ver
 IRGENDWO in der Zeile sucht — also meldete er `engine: start 1/2` als fremd, während die
 Tabelle zwei Zeilen darüber dieselbe Zeile korrekt auflöste. Die Regel ist die alte (#416):
 **die vorhandene Regel FRAGEN, nie eine zweite formulieren.**
+
+---
+
+## PLAYBOOK #1349 (2026-09-16) — ein Sperrvermerk, der seine eigene Freigabebedingung nennt, ist eine Anweisung; und der nächste NACHBAR ist teurer als der Fingerabdruck-Test
+
+**Lage.** G10a: `gospelChoir`, Genre 52, angeboten Nummer 35 — und mit ihm die Rubrik `.chant`
+und das Regal `.gospelSpiritual`.
+
+**PLAYBOOK: ein ⛔-Block, der seine Freigabebedingung selbst formuliert, wird ERFÜLLT statt
+überstimmt.** `MusicStyle.Category` hielt `.chant` fern und schrieb daneben, wann das endet:
+ein Fall kommt NUR zusammen mit seiner Tür, und `.chant` komme „in der Scheibe, die sein
+erstes Genre schreibt". Es gab also nie eine Entscheidung zu treffen, nur eine Bedingung zu
+prüfen. Der Block ist **zurückgenommen, nicht gelöscht** — die REGEL lebt weiter und wird von
+`GenreSubcategoryTests` Anspruch 4 für jede künftige Rubrik erzwungen. Ein Vermerk, der seine
+eigene Ablaufbedingung trägt, ist die billigste Form von Gesetz, die dieses Repo kennt: er
+kann nicht veralten, ohne dass jemand ihn dabei liest.
+
+**PLAYBOOK: der Fingerabdruck-Test ist die Untergrenze, nicht die Frage.**
+`genre-prebatch.py` meldete für `gospelChoir` sauber „kein Paar teilt einen Fingerabdruck" —
+und der nächste Nachbar `soulBallad` teilte trotzdem VIER Achsen (`major`, `[0, 2, 4, 6]`,
+`.backbeat`, `padOctave 4`) und unterschied sich auf dem schwächeren Schlüssel von
+`MusicStyleTests` in GENAU EINER. Das Katalog-Tempofenster lag INNERHALB des Nachbarfensters
+und die Katalog-Bassfigur WAR die des Nachbarn. **Vor dem Schreiben den nächsten Nachbarn
+ausrechnen, nicht nach dem grünen Fingerabdruck annehmen, es sei genug.** Drei gemessene
+Abweichungen kauften die Trennung: disjunktes Tempo, andere Figur, anderer Lead-Eimer (der
+letzte war reine Schubfach-Arithmetik).
+
+**PLAYBOOK: ein Vermerk, der ein grep-Rezept zitiert, kann seine eigene Behauptung SOFORT
+widerlegen.** Der Befund „`MusicStyle.Category.title` hat null Produktions-Leser" stimmt. Mein
+erstes Rezept dazu traf jedoch DIESEN SATZ — zwei Treffer neben einer Prosa, die „nichts"
+sagt. Das ist die `EchoelModalBank`-Falle, aber nicht gealtert, sondern von Anfang an falsch.
+**Bei einer NEGATIV-Behauptung über den eigenen Baum kein kurzes Rezept zitieren:** jede
+Nadel, die kurz genug zum Hinschreiben ist, matcht den Hinweis selbst. Die Tatsache hinschreiben
+und sagen, welche zwei Aufrufstellen man liest.
+
+**PLAYBOOK: ein Ordinal wird gezählt, nie von der Nachbarzeile geerbt.** `BassGrammar`s
+`balkanModal`-Kommentar sagte „the SIXTH owner" und war der siebte — die Formulierung kam von
+zwei Zeilen darüber, wo sie stimmte. Kein Werkzeug dieses Repos sieht so etwas. Der Ersatz ist
+nicht eine korrigierte Zahl, sondern ein Befehl daneben, der die **Namen** der Besitzer druckt.
+
+**PLAYBOOK: drei Zahlen-Behauptungen in Kommentaren waren beim Gegenmessen falsch, alle drei
+in der schmeichelnden Richtung.** Besitzer von Cutoff 2450 und 2600, Besitzer von 760, und
+eine „softeste Attack"-Behauptung, die schlicht unwahr war (0.14 ist die sechstlangsamste).
+Alle drei entstanden beim Schreiben aus einer Teil-Messung (nur die 27 `patch()`-Helfer-Voices
+statt aller 69 — die älteren Literal-Voices halten drei der vier Extreme). **Wer über „das
+ganze File" behauptet, misst das ganze File, auch wenn die neue Nachbarschaft nur einen Teil
+davon benutzt.**

@@ -32495,3 +32495,81 @@ klärt es: lief die App weiter?
 
 **Gate:** `01ae54f` Compile = success, **`Build for Testing` = success** (Schritt 10 skipped,
 Schritt 11 `Run Tests` = failure = #396). Die drei #1346-Ansprüche kompilieren nachweislich.
+
+## 2026-09-16 · #1349 G10a — Gospel Choir, und die Rubrik, die ihre eigene Freigabebedingung schon aufgeschrieben hatte
+
+⭐ **Zuerst die OFFENE FRAGE aus #1348 — sie ist GESCHLOSSEN, und zwar vom Founder.** Der
+Eintrag darüber fragte, ob der 2592-Teil des Logs bei `init e: midi + osc` ENDET oder nur
+dort exportiert wurde (647 ms im Nachbarlauf, mit Abstand der längste Schritt; ein Export
+mitten im Fenster sieht aus wie ein Tod darin). Antwort des Founders, wörtlich: *„Alles läuft
+einwandfrei."* Also ein EXPORT-Schnappschuss, kein Tod. ⚠️ Die Lehre bleibt trotzdem stehen
+und wird durch die Auflösung nicht schwächer: aus dem Log allein war es nicht entscheidbar,
+und genau deshalb war die Frage richtig gestellt statt weggeklärt. Der Absturz im Log ist
+DREI Builds alt (v10.79.469 / 2589) und liegt auf einem mit #1302 gelöschten Codepfad.
+
+**Gebaut: EIN Genre — und drei Ebenen, weil die Datei das so verlangt.** `gospelChoir` ist
+Genre 52 der Taxonomie und Nummer 35 im Picker. Mit ihm kommen die Rubrik `.chant` und das
+Regal `.gospelSpiritual`. Das ist keine Ausweitung der Scheibe: `MusicStyle.Category` trug
+einen ⛔-Block, der `.chant` ausdrücklich fernhielt UND seine eigene Freigabebedingung nannte
+— ein Fall wird NUR zusammen mit seiner Tür angelegt, und `.chant` komme „in der Scheibe, die
+sein erstes Genre schreibt". Der Block ist **zurückgenommen statt gelöscht**, weil die REGEL
+lebt und `GenreSubcategoryTests` Anspruch 4 sie für jede künftige Rubrik erzwingt.
+
+**G10 des Plans nennt drei Genres, ausgeliefert ist eines, und die Teilung ist gemessen.**
+`overtoneDrone` und `lowBreathDrone` tragen JE ZWEI unabhängige Blocker — `just-major`
+(Plan §5-2, unbeantwortet) UND `pedalDrone`, ein `PadGrammar`-Fall, den es nicht gibt, in
+einer Tabelle, die für JEDES Genre `nil` liefert. Keiner berührt dieses Genre. Plan-Zeile in
+G10a (gebaut) und G10b (blockiert) geteilt.
+
+⚠️ **DAS RISIKO WAR NICHT DIE RUBRIK, SONDERN `soulBallad`.** Vor dem Schreiben gemessen:
+gemeinsame `major`, gemeinsame `[0, 2, 4, 6]`, gemeinsamer `.backbeat`, gemeinsame
+`padOctave: 4` — auf dem schwächeren Identitätsschlüssel von `MusicStyleTests` unterscheiden
+sich die beiden in GENAU EINER Achse. Drei bewusste Abweichungen vom Entwurfsblatt, jede
+einzeln gemessen: Tempo **88…112@96** statt 72…100@84 (das Katalogfenster liegt INNERHALB
+64…86; das neue ist davon disjunkt — die einzige saubere Trennung im Satz, und sie wird
+ausdrücklich nur gegen dieses eine Genre behauptet) · **`drivingEighths`** statt
+`offbeatEighths`, was `soulBallad`s eigene Figur ist · Lead **„Warm Strings"** statt Choir
+Vox, und das ist ARITHMETIK: Choir Vox stand schon auf 7 bei Decke 7, die Palette ist auf
+sechs Namen festgelegt, Warm Strings auf 6 war der einzige freie Platz.
+
+⭐ **ZWEI FREMDBEFUNDE, beide durch Messen statt Erinnern — und der erste hätte eine falsche
+Marketing-Zeile erzeugen können.**
+1. **`MusicStyle.Category.title` hat NULL Produktions-Leser.** Der Genre-Picker loopt
+   `Subcategory.allCases` und rendert nur das REGAL; der einzige andere betitelte Abschnitt
+   auf dem Schirm gehört `Scale.Family`. Mein erster Entwurf schrieb in den Doc-Block, ein
+   Rubrik-Titel sei „ein Picker-Header, den ein Spieler liest" — falsch, und es ist genau die
+   Sorte Satz, aus der eine spätere Sitzung eine Store-Zeile ableitet. Folge für diese
+   Scheibe: der unvollständige Titel „Chant, Choir & Drone" (drei Familien, eine besetzt) ist
+   eine **Ablage-Schuld, keine ausgelieferte Über-Behauptung**. Die alte Zeile „Picker section
+   header." ist ebenfalls zurückgenommen.
+   ⚠️ **Und der erste Reparaturversuch war die `EchoelModalBank`-Falle:** ich schrieb ein
+   `grep`-Rezept dazu, das SICH SELBST traf — zwei Treffer neben einer Prosa, die „nichts"
+   sagt. Ersetzt durch die TATSACHE plus der Anweisung, die zwei `Section(`-Aufrufstellen zu
+   lesen. **Ein Vermerk, der ein Kommando zitiert, altert schneller als einer, der eine
+   Tatsache behauptet** — und im Grenzfall wird er sofort falsch, nicht später.
+2. **`BassGrammar`s `balkanModal`-Kommentar sagte „SIXTH owner" und war der SIEBTE.** Ein
+   Ordinal, von der Nachbarzeile geerbt statt gezählt (`andalusianCadence` WAR die sechste).
+   Korrigiert, und der Befehl daneben druckt NAMEN statt einer Zahl, also kann er nicht
+   genauso altern.
+
+**Gemessen nach dem Schnitt:** 52 Genres, 35 angeboten, 71 Patches; alle sechs Lead-Namen auf
+7 bei Decke 7 — das nächste lead-tragende Genre hebt die Decke auf ceil(43/6)=8, also frei,
+kein Blocker. Kein Fingerabdruck-Paar. Kollisions-Sweep auf dem schwächeren Schlüssel über
+ALLE Genres: LEER. Drei Zahlen-Behauptungen in den Patch-Kommentaren wurden beim Gegenmessen
+korrigiert, bevor sie committet wurden (Besitzer von 2450/2600, Besitzer von 760, und eine
+„softeste Attack"-Behauptung, die schlicht falsch war — 0.14 ist die sechstlangsamste).
+
+**Wächter:** `Tests/CISmoke/GenreBatchTenATests.swift`, 31 Zusicherungen in sechs Ansprüchen.
+Gegen den Elternbaum kompiliert die Datei nicht (drei neue Symbole), also hat dort KEINE
+Zusicherung ein Urteil — **eine** Abwesenheit, nicht einunddreißig (#486). Jede Zusicherung
+ist gegen den Arbeitsbaum transkribiert und grün. Sieben Checker exit 0.
+
+**Sieben nutzersichtbare Flächen mitgezogen:** beide `release_notes`, `tools.html`,
+`brainstorming.html`, `press.html` (zweimal), `APP_STORE_LISTING_v1.md`, `architecture.html`
+(40 von 51 → 41 von 52). Die vier AUFZÄHLENDEN hält `TheGenreListsMatchTheirOwnCountTests` —
+Zahl UND Liste, im selben Commit; genau der #1295-Defekt, der dort dokumentiert steht.
+
+**NEEDS-FOUNDER-VERIFY:** Gospel Choir bei 96 im Loop-Modus, A/B gegen Soul Ballad bei 72.
+Zwei Ohrfragen, und es sind die zwei, die keine Arithmetik beantwortet.
+
+**Commit:** `d18f13c`. Gate-Lesung offen.
