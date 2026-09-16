@@ -67,6 +67,15 @@
 // into Python and driven against the working tree: 41 green, 0 red — unusually complete for a §0
 // pass, because this file's claims are values and set memberships rather than engine behaviour.
 //
+// ⛔ AND THE FIRST PUSH OF THIS FILE DID NOT COMPILE, WHILE THAT §0 PASS READ 41 GREEN. Both
+// statements are true at once, and the pair is the lesson: `bassPatch` is `SynthPatch?`, and this
+// file dereferenced it twice without unwrapping (`style.bassPatch.name`). A source-text mirror
+// evaluates the CLAIM — "the bass patch is named Drag Sub", a fact about the tree, and correct —
+// and can say nothing about the TYPE of the expression that asks the question.
+// **A §0 transcription is evidence about the roster, never a compile verdict**, and printing it
+// beside one invites exactly the reading that "41 green" retired the gate. It did not: CI/CD's
+// `Build for Testing` on 10dd909 went RED and named this file. That is the gate working.
+//
 // ⛔ AND THE TRANSCRIPTION PRODUCED ONE FALSE RED, WHICH IS WORTH MORE THAN THE FORTY-ONE GREENS.
 // It reported `progression [0, 5]` for an arm whose source says `[0, 5, 4]`. The code was right;
 // the mirror was wrong — it anchored on the FIRST `case .slowedGothPop:` in the file, which is
@@ -239,7 +248,15 @@ final class GenreBatchFifteenBTwoTests: XCTestCase {
     func testTheTwoPatchesAreThisGenresOwn() {
         let style = MusicStyle.slowedGothPop
         XCTAssertEqual(style.synthPatch.name, "Dragged Choir")
-        XCTAssertEqual(style.bassPatch.name, "Drag Sub")
+
+        // `bassPatch` is OPTIONAL — a genre may carry none. Unwrapped rather than forced: a
+        // `sparseSub` owner with no bass patch would fall back to another genre's voice, which
+        // is precisely what the rest of this claim exists to forbid.
+        guard let bass = style.bassPatch else {
+            return XCTFail("slowedGothPop has no bassPatch — `sparseSub` would then play on a "
+                           + "voice this genre does not own")
+        }
+        XCTAssertEqual(bass.name, "Drag Sub")
 
         // Figure shared, voice never: the sixth `sparseSub` owner, on a bass nobody else plays.
         XCTAssertEqual(style.bassGrammar, .sparseSub)
@@ -248,7 +265,7 @@ final class GenreBatchFifteenBTwoTests: XCTestCase {
         }
         XCTAssertFalse(otherSparse.isEmpty, "the figure is meant to be shared")
         for sibling in otherSparse {
-            XCTAssertNotEqual(sibling.bassPatch.name, style.bassPatch.name,
+            XCTAssertNotEqual(sibling.bassPatch?.name, bass.name,
                               "\(sibling.rawValue) now plays this genre's bass VOICE — the "
                               + "grammar is shareable, the patch is not")
         }
