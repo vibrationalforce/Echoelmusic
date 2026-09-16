@@ -305,7 +305,9 @@ Sources/Echoelmusic/
                           behauptet — jeder Kommentar über die Sache verfälscht den eigenen
                           Beleg.** Herleitung: `memory/LEDGER_COUNTS.md` §W.
   Sync/                ← OSCSender, ADMOSCSender, Art-Net/sACN (EchoelLux), CloudSync
-  Tools/               ← PolySynthVoice, SubBassVoice, breath/vocal tools
+  Tools/               ← PolySynthVoice, SubBassVoice, BioReactiveSynthVoice,
+                          FXBioModulator — ⛔ #1330: „breath/vocal tools" stand hier und
+                          der Vokal-Pfad ging mit #1302; `ls` liefert genau diese vier
   Views/               ← MetalBioView + OnboardingView ONLY (the old deprecated-view list is deleted)
 Tests/EchoelmusicTests/ ← die NICHT-blockierende Suite. **MESSEN, nicht zitieren:**
                           `git ls-files 'Tests/EchoelmusicTests/*.swift' | wc -l`.

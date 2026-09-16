@@ -42,7 +42,9 @@ The root view is `WorkspaceView` — brand header and one surface below it, `Ech
 | **Field** | The immersive visual's look controls, plus the touch-playable surface below them — quantized with micro-timing, and able to play itself (self-play + arpeggiator) |
 | **Save/Export** | Save/open the project, loop length, WAV loop render, Standard MIDI File (.mid) export, reset sound, and the diagnostics log (share it after a device problem) |
 
-**Two more panels open without a chip:** Bio (HR · HRV · Breath · Coherence with tap-to-learn — tap the pulse pill in the header, or long-press it) and Video (recorded clips, inline playback, mp4 share — the header tile). The immersive visual itself is the floating window toggled from the header monitor, with a full-screen door inside the Field panel.
+**One more panel opens without a chip:** Bio (HR · HRV · Breath · Coherence with tap-to-learn — tap the pulse pill in the header, or long-press it). The immersive visual is the floating window toggled from the header monitor.
+
+> ⛔ **#1330 — this paragraph sold two surfaces that are gone.** It said “TWO more panels” and described a **Video** panel (recorded clips, inline playback, mp4 share, header tile); video capture and its library were deleted by #1304 on the founder’s “Kein Video Capture”, and the edit had already gone with #121 Slice 3. It also promised “a full-screen door inside the Field panel”; that `showVisual` cover was deleted by #1069 and the floating window is the only mount left. Measured, not assumed: `git grep -n "videoPanel\|showVisual" -- Sources` finds only tombstones.
 
 Network routing (OSC · ADM-OSC · Art-Net · sACN · MIDI out) is a patchbay reached from the Master panel, the Bio panel and the header lighting tile.
 
@@ -110,12 +112,18 @@ Sources/Echoelmusic/
   DSP/           EchoelDDSP, EchoelCellular, EchoelModalBank, EchoelVDSPKit,
                  EchoelSVFilter, EchoelLFO, EchoelEntrainment, EchoelDynamics
   Audio/         AudioEngine, AudioConfiguration, MIDIInput, RetroCapture,
-                 AutoMixChain, SingleExport, MultiTrackRecorder (flag-gated off)
+                 AutoMixChain, SingleExport
+                 (⛔ MultiTrackRecorder stood here “flag-gated off” and was DELETED with
+                  the microphone, #1302 — the type is not in the tree)
   Sequencer/     PatternEngine (transport clock), FieldAutoPlay, ArpFigure,
                  RoleRhythm, NoteNaming, SamplerVoice, BeatPlayer
-  Tools/         PolySynthVoice, SubBassVoice, BioReactiveSynthVoice, breath/vocal tools
-  Video/         CameraCapture, CameraAnalyzer, RPPGConditioning (the rPPG path),
-                 VideoRecorder, VisualRecorder, VideoMuxer  — capture only, no editing
+  Tools/         PolySynthVoice, SubBassVoice, BioReactiveSynthVoice, FXBioModulator
+  Video/         CameraCapture, CameraAnalyzer, RPPGConditioning, PulsePeriodEstimator
+                 — the rPPG PULSE path and nothing else. The directory name lies: no
+                 video is recorded here, a heartbeat is measured. (⛔ VideoRecorder,
+                 VisualRecorder and VideoMuxer stood here “capture only, no editing” and
+                 were deleted with #1304.) Anyone tidying this directory BY NAME deletes
+                 the flagship bio source.
   Sync/          OSCSender, ADMOSCSender, ArtNetSender, SACNSender, MIDIBusPublisher
   Studio/        WorkspaceView (root), EchoelStudioView (the surface), BioStripView,
                  EchoelFXView,
