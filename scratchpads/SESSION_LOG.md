@@ -32910,3 +32910,46 @@ Moll-Dur-Septakkord als Spannung oder als Fehler, und ist `det: 18` — die brei
 der Datei — ein Chor oder ein Schwebungsfehler?
 
 **Commit:** `10dd909`. **Gate-Lesung steht aus** (Wecker 22:20 UTC, zusammen mit `6cb88b4`).
+
+**GATE-LESUNG `6cb88b4` und `10dd909` — und die erste ROTE dieser Serie.**
+
+**`6cb88b4` (#1353): KEIN Lauf, und das ist der erwartete Befund.** `Xcode Compile Check` führt
+`10dd909` (#2646) und `88fc25a` (#2645) als AUFEINANDERFOLGENDE Läufe — dazwischen liegt nichts.
+Der Commit fasst nur `scripts/` und `scratchpads/` an, fällt also durch den `paths:`-Filter. Das
+ist dieselbe Klasse wie #1176 und kein Defekt; es heißt nur, dass für #1353 kein Kompilat-Urteil
+existiert, und es braucht auch keines — die Datei ist Python und wird von ihrem eigenen
+`--selftest` benotet (neun Fälle, grün).
+
+**`10dd909` (#1354): Compile GRÜN, `Build for Testing` ROT.** `Xcode Compile Check` #2646 (Run
+35155937811) = `success` — `Sources/` baut mit dem neuen Genre, dem neuen Regal, den zwei Patches
+und dem FX-Arm. CI/CD #6111 (Run 35155937815) Schritt 9 **`Build for Testing` = `failure`**
+(22:08:21 → 22:12:33), Schritt 11 `Run Tests` `skipped`. Das Build-Log nennt genau eine Datei:
+`Tests/CISmoke/GenreBatchFifteenBTwoTests.swift` (drei gemeldete Fehler, EIN Grund — die
+Einzeldatei, ihr Batch, und das Projekt).
+
+⚠️ **Der `tail -200 test.log`-Schritt lief in `No such file or directory`** — bei einem
+BUILD-Fehler entsteht gar kein `test.log`. Genau die #807-Lage: wer nur diesen Schritt liest,
+sieht einen Dateifehler und nicht den Compile-Fehler. Der Befund steht im Log des
+`Build for Testing`-Schritts selbst.
+
+**Ursache:** `MusicStyle.bassPatch` ist `SynthPatch?` — eine Gattung darf keinen eigenen Bass
+tragen —, und Anspruch 7 griff zweimal ohne Auspacken darauf zu. Repariert mit `guard let`
+(#1355, `5936452`) in der Form, die `GenreBatchFifteenBOneTests` schon nimmt.
+
+⛔ **UND DAS IST DIE LEHRE DES ABENDS, weil zwei Sätze gleichzeitig wahr sind: die
+§0-Transkription meldete 41 von 41 GRÜN für eine Datei, die nicht kompiliert.** Kein Widerspruch —
+ein Quelltext-Spiegel prüft die BEHAUPTUNG („das Bass-Patch heißt Drag Sub", eine Tatsache über
+den Baum, und sie stimmte) und kann über den TYP des Ausdrucks, der die Frage stellt, nichts
+sagen. **Eine §0-Transkription ist ein Beleg über den Roster, NIE ein Kompilat-Urteil.** Sie neben
+einem zu drucken lädt genau die Lesart ein, „41 grün" habe das Gate erledigt. Der Satz steht jetzt
+im Dateikopf des Wächters, neben der Notiz über das falsche Rot — dieselbe Datei trägt damit beide
+Richtungen desselben Irrtums: ein Spiegel, der zu viel behauptet, und einer, der zu wenig sieht.
+
+⚠️ Vor dem zweiten Push geprüft statt geraten: jeder weitere Typ der Datei gegen die Quelle
+gelesen (`subcategory` nicht optional, `tempoRange: ClosedRange<Double>`, `degree(_:octave:)`,
+`EchoelDelay.Mode` als String-Enum implizit `Equatable`, `fxPreset`/`bassGrammar` intern und per
+`@testable` erreichbar, `sustainedFlächen: [MusicStyle]`). Ein validierter Push ist billiger als
+drei spekulative.
+
+**Offen:** die Gate-Lesung für `5936452` (#1355) — der Beweis steht aus, bis
+`Build for Testing` dort grün meldet.
