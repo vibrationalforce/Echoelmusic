@@ -329,11 +329,28 @@ struct PatchbayView: View {
     /// `EchoelValueField` for the NUMERIC depth and smoothing · curve Picker · Invert.
     /// Every edit persists via `save()`; the engine reads `matrix.routes` on its next
     /// applied frame, so a new route is live within ~1 s with no restart.
-    /// Tempo routes stay under the BPM lock and glide (`EchoelmusicApp`'s handler, T1).
-    /// NEEDS-FOUNDER-VERIFY: Master → Routing → „Body → parameter" → Add route → Coherence →
-    /// „Voice · harmony mix", Depth 1, Harmony im Input-Sheet AN: der Harmony-Mix muss dem
-    /// Körper folgen (Log: `/echoelmusic/mod/voice.harmony.mix` bei OSC an); App neu
-    /// starten — die Route ist noch da.
+    ///
+    /// ⛔ #1324 — THREE REFERENCES HERE OUTLIVED THE THINGS THEY NAMED, and the worst of them
+    /// was on SCREEN. #1249 registered four VOICE-STAGE destinations beside the tempo; #1302
+    /// deleted the monitor insert they wrote to, so `ModDestinationKey.all` has read `[tempo]`
+    /// ever since — measured, not assumed:
+    ///   grep -n "static let all" Sources/Echoelmusic/Core/ModulationEngine.swift
+    /// Yet the empty state still offered „or a stage on your voice", the footer still told the
+    /// player that „voice stages need their switch on in Audio input" (a surface deleted by the
+    /// same commit, tombstoned at `EchoelStudioView.swift`), and the verify note below asked the
+    /// founder for a device session that CANNOT be run: it routes to „Voice · harmony mix" with
+    /// „Harmony im Input-Sheet AN", and the harmonizer went with #1305, the sheet with #1302.
+    /// The empty state is what a first-run player reads (nothing in production constructs a
+    /// `ModRoute`, so it IS the default state), and the footer renders UNCONDITIONALLY.
+    ///
+    /// A tempo route is SUPPRESSED while the BPM lock is on and glides otherwise — the guard is
+    /// the first line of `EchoelmusicApp`'s `register(ModDestinationKey.tempo)` handler, and this
+    /// is the T1 source `.modulationRoute`. (⚠️ The OSC `bpm` cue is the MIRROR of this: applied
+    /// ONLY under the lock. Two inbound tempo paths, opposite gates — do not „unify" them.)
+    /// NEEDS-FOUNDER-VERIFY: Master → Routing → „Body → parameter" → Add route → Tempo,
+    /// Quelle Coherence, Depth 1, BPM-Lock AUS: das Tempo muss der Kohärenz folgen (Log:
+    /// `/echoelmusic/mod/seq.tempo` bei OSC an). Lock AN: das Tempo darf sich NICHT bewegen.
+    /// App neu starten — die Route ist noch da.
     @ViewBuilder
     private var modulationSection: some View {
         @Bindable var engine = modulationEngine
@@ -341,7 +358,7 @@ struct PatchbayView: View {
             Text("Body → parameter").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
             VStack(alignment: .leading, spacing: 10) {
                 if engine.matrix.routes.isEmpty {
-                    Text("No routes yet. A route lets one measured channel of your body move one parameter — the tempo, or a stage on your voice.")
+                    Text("No routes yet. A route lets one measured channel of your body move one parameter. This build offers one: the tempo.")
                         .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -367,7 +384,7 @@ struct PatchbayView: View {
                             .strokeBorder(EchoelTheme.border, lineWidth: 1))
                 }
                 .accessibilityHint("Adds a route from your coherence to the chosen parameter; change the source in the row.")
-                Text("Routes apply about once a second from the measured body and are kept across launches. Tempo obeys the BPM lock and glides; voice stages need their switch on in Audio input. Every applied value also leaves as /echoelmusic/mod/<key> when OSC out is routed.")
+                Text("Routes apply about once a second from the measured body and are kept across launches. A tempo route glides, and does nothing while the BPM lock is on. Every applied value also leaves as /echoelmusic/mod/<key> when OSC out is routed.")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }

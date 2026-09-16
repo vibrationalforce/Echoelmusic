@@ -93,7 +93,8 @@ public final class ModulationEngine {
     /// whose channel the current frame does not carry (a foreign publisher's frame in the
     /// shared slot, #1015) keeps its last smoothed value for `FXModulation
     /// .channelBridgeSeconds` instead of reading the frame's 0 — the same bridge the FX
-    /// driver has, on the matrix side (tempo and the voice stages).
+    /// driver has, on the matrix side (every registered destination — since #1302 that is
+    /// the tempo alone; ⛔ #1324: this line read "tempo and the voice stages").
     private var lastMeasuredAt: [ModSource: TimeInterval] = [:]
     /// The value each route last contributed (smoothed or not) — what the bridge holds.
     private var lastRouteValue: [UUID: Float] = [:]
