@@ -190,9 +190,20 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
     /// restate the field name. Motion exists only here.
     ///
     /// Breath is the channel whose gate reads a DIFFERENT field than its value:
-    /// `breathPhase` has no unknown sentinel (0 is a real position, exhale start), so
-    /// both breath sources ride `BioSampleFrame.hasMeasuredBreath`, which gates on
-    /// `breathRate`. That band (`3...40`) and `ModSource.breathRate.range` (`3...30`) now
+    /// `breathPhase` has no unknown sentinel (0 is a real position, exhale start), so it
+    /// cannot answer for itself.
+    ///
+    /// ⛔ #1323 — AND THIS PARAGRAPH SAID "BOTH BREATH SOURCES RIDE `hasMeasuredBreath`",
+    /// WHICH WAS TRUE OF THE CODE AND WRONG. That predicate gates on the RATE, and HealthKit
+    /// measures a real rate while leaving `breathPhase` at the 0.5 placeholder its engine
+    /// writes only in fallback mode. A unipolar `.breathPhase` route on a Watch frame
+    /// therefore sat at a permanent half-depth offset off a placeholder — the exact failure
+    /// the `.isMeasured` paragraph below claims is closed. The two cases are SPLIT now:
+    /// `.breathRate` keeps `hasMeasuredBreath` (that half was always right), `.breathPhase`
+    /// takes `hasMeasuredBreathWaveform` (#1140), which is the predicate written for this
+    /// question and whose own doc says to use it wherever the PHASE is asserted outward.
+    ///
+    /// The rate band (`3...40`) and `ModSource.breathRate.range` (`3...30`) now
     /// share a LOW bound, which is the point of #429: a 3.5/min resonance breather used to
     /// pass this gate and still normalize to exactly 0 — the same full excursion, surviving
     /// INSIDE the gate. They still differ at the TOP (40 vs 30) and that half is deliberate;
@@ -210,7 +221,9 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
         case .heartRate:   return frame.hasMeasuredHeartRate
         case .hrv:         return frame.hrvNormalized > 0
         case .coherence:   return frame.coherence > 0
-        case .breathRate, .breathPhase: return frame.hasMeasuredBreath
+        case .breathRate:  return frame.hasMeasuredBreath
+        // Two measurements, two gates (#1323) — see the ⛔ block above.
+        case .breathPhase: return frame.hasMeasuredBreathWaveform
         // Motion has NO producer: all six `BioSampleFrame` construction sites in
         // `Sources/` hardcode `motionEnergy: 0`, and the last CoreMotion provider was
         // removed in the 2026-06-19 cleanup. So nothing measures it, and `false` is the

@@ -73,16 +73,29 @@ public enum BioModulationMap {
     /// two — which any display of a body signal must — this is the gate.
     ///
     /// Note `breath` is the one driver whose gate reads a DIFFERENT field than `amount`:
-    /// the amount comes from `breathPhase`, but only `breathRate` can say whether any
-    /// respiration was measured at all (0 is a meaningful phase, so `breathPhase` cannot
-    /// answer for itself — and the HealthKit path leaves it at a 0.5 placeholder that
-    /// would otherwise render as a confident half-scale reading). The other three encode
+    /// the amount comes from `breathPhase`, which has no unknown sentinel of its own (0 is a
+    /// meaningful phase — the start of an exhale), so it cannot answer for itself.
+    ///
+    /// ⛔ #1323 — AND THE ANSWER IT ASKED FOR WAS THE WRONG ONE. This gate read
+    /// `hasMeasuredBreath`, which gates on the RATE, and the paragraph above used to argue
+    /// that was correct because "only `breathRate` can say whether any respiration was
+    /// measured at all". HealthKit measures a genuine respiratory RATE and leaves
+    /// `breathPhase` at the literal 0.5 placeholder its engine never writes outside fallback
+    /// mode — so on a Watch frame this returned `true` for a number nothing had measured, and
+    /// the guide row printed a confident `0.50` in accent colour while the sound did not move.
+    /// The predicate that answers the PHASE question already existed
+    /// (`BioSampleFrame.hasMeasuredBreathWaveform`, #1140) and says so in its own doc: "Use
+    /// this — not `hasMeasuredBreath` — wherever the PHASE itself is asserted outward." Three
+    /// readers were migrated then and three were not; this was one of them.
+    ///
+    /// ⚠️ The RATE gate stays `hasMeasuredBreath` wherever the RATE is the subject — two
+    /// measurements, two gates. The other three drivers encode
     /// "unavailable" as 0 directly — heart rate is non-zero only on a confident lock, and
     /// coherence is 0 on any source without beat-to-beat RR (HealthKit, which does
     /// provide a real HRV from SDNN — it is coherence alone that it cannot compute).
     public static func isMeasured(_ driver: Driver, in frame: BioSampleFrame) -> Bool {
         switch driver {
-        case .breath:    return frame.hasMeasuredBreath
+        case .breath:    return frame.hasMeasuredBreathWaveform
         case .coherence: return frame.coherence > 0
         case .hrv:       return frame.hrvNormalized > 0
         case .heartRate: return frame.hasMeasuredHeartRate

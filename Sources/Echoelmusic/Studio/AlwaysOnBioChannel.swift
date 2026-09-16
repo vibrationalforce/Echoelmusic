@@ -282,7 +282,12 @@ public enum AlwaysOnBioChannel: String, CaseIterable, Identifiable, Sendable {
         case .coherence:   return frame.hasMeasuredCoherence
         case .hrv:         return frame.hasMeasuredHRV
         case .heartRate:   return frame.hasMeasuredHeartRate
-        case .breathPhase: return frame.hasMeasuredBreath
+        // ⛔ #1323 — THIS READ `hasMeasuredBreath`, WHICH GATES THE RATE. The value one
+        // switch up is `breathPhaseForSound`, and HealthKit measures a real respiratory rate
+        // while leaving the PHASE at the 0.5 placeholder — so this said "measured" about a
+        // number nothing had measured, and the always-on row drew it as a confident half.
+        // `hasMeasuredBreathWaveform` (#1140) is the predicate for the phase and says so.
+        case .breathPhase: return frame.hasMeasuredBreathWaveform
         }
     }
 
@@ -637,9 +642,15 @@ public enum BioPanelRowCopy {
         default:    head = "A held tone whose colour will follow a heart and coherence once "
                          + "something is measured."
         }
-        guard frame?.hasMeasuredBreath == true else {
-            return head + " No breathing measured yet — once it is, the inhale and exhale take "
-                + "over the note."
+        // ⛔ #1323 — GATE AND WORDING BOTH MOVED, AND THEY HAD TO MOVE TOGETHER. The gate read
+        // `hasMeasuredBreath` (the RATE), so a Watch frame promised "your inhale opens it" for
+        // a phase that is a frozen 0.5. Switching to the waveform gate alone would then have
+        // told a user whose Watch just measured their respiratory rate that "No breathing
+        // measured yet" — trading one false sentence for another. What this caption is about
+        // is the MOVEMENT the note follows, so it now says so.
+        guard frame?.hasMeasuredBreathWaveform == true else {
+            return head + " No breath movement measured yet — once it is traced, the inhale "
+                + "and exhale take over the note."
         }
         guard frame?.source.isSynthetic == true else {
             return head + " Your inhale opens it, your exhale closes it."

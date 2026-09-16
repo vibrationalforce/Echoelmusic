@@ -154,7 +154,13 @@ final class TheBioPanelRowsSayWhoseBodyTests: XCTestCase {
             move.
             """)
         let noBreath = BioPanelRowCopy.breathVoiceCaption(for: Self.frameNoBreath(.cameraPPG))
-        XCTAssertTrue(noBreath.contains("No breathing measured yet"), """
+        // ⛔ #1323 — THE NEEDLE MOVED WITH THE SENTENCE, AND THE REASON IS NOT COSMETIC. The
+        // caption's gate was the RATE (`hasMeasuredBreath`); HealthKit measures a real rate and
+        // leaves the PHASE frozen, so the branch had to move to `hasMeasuredBreathWaveform` —
+        // and at that point "No breathing measured yet" would have been false for a Watch user
+        // whose rate IS measured. Gate and wording moved together; pinning one without the
+        // other is how a caption ends up contradicting the surface beside it.
+        XCTAssertTrue(noBreath.contains("No breath movement measured yet"), """
             The no-breath caption stopped saying so. Without onsets nothing closes the \
             envelope, so a caption promising inhale/exhale gating would describe a permanent \
             drone — the class this row's own doc says the repo keeps paying for.
