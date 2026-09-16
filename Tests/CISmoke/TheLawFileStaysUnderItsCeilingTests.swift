@@ -43,14 +43,20 @@
 // same quantity the doctor prints or the two instruments disagree — the exact defect §D of
 // that file already paid for, where a stated threshold did not test the quantity it named.
 //
-// ⚠️ HONEST LIMITS. 5 tests, 13 assertion statements (1+1+7+2+2; counted in Python over lines
-// whose first token is XCTAssert), and the count moved TWICE inside #746 while I wrote this
-// line. ⛔ I first put "8 (1+1+4+2)" here from the SHAPE of the edit — claim 5's two literal
-// assertions had become a loop, and I read that as "fewer". Measured, it was still 10: the
-// same two statements now run over three witnesses, so the statements held while the checks
-// went from two to six. Then extending claim 3 to §E and §F made it 12. Both retractions stay
-// visible in the header whose neighbour says `measure; do not recite`, because this is that
-// defect in its smallest form. The number that means something is what a claim PROVES; the
+// ⚠️ HONEST LIMITS. ⛔ #1327 — TWO LITERALS STOOD HERE AND BOTH HAD ROTTED, in the header of
+// the guard that enforces `measure; do not recite`. It read "5 tests, 13 assertion statements";
+// measured on 2026-09-16 the file had SEVEN and TWENTY-ONE. Nothing went red, because a number
+// in a comment is watched by nothing. Deleted, not refreshed — the repair this repo has made
+// three times (#803, #810, #818): ship the COMMAND, not the figure.
+//     grep -c "    func test" <this file>
+//     grep -c "^ *XCTAssert"  <this file>
+// The earlier retractions stay, because they are the reason the literals were doomed: inside
+// #746 the count moved TWICE while the line was being written. ⛔ I first put "8 (1+1+4+2)"
+// from the SHAPE of the edit — claim 5's two literal assertions had become a loop, and I read
+// that as "fewer". Measured, it was still 10: the same two statements now ran over three
+// witnesses, so the statements held while the checks went from two to six. Then extending
+// claim 3 to §E and §F made it 12. That is the defect in its smallest form, three times over,
+// in one header. The number that means something is what a claim PROVES; the
 // statement count tracks neither coverage nor strength. It measures SIZE, never quality: a file stuffed with 149 KB
 // of nonsense passes. And it cannot see the rest of the always-loaded surface — the three
 // `.claude/rules/*.md` files add ~13.7 KB that no assertion here bounds, deliberately, because
@@ -354,6 +360,17 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
              + "(#912), and no paraphrase of the block survives it. The LAW stayed in "
              + "CLAUDE.md: the decision, its reason, and that re-enabling iPad is four "
              + "settings + a guard + two prose blocks, never \"one line\""),
+            ("kann eine Nutzer-Eingabe nie überschreiben", "memory/LEDGER_COUNTS.md", "§Z",
+             "the `PatchEditorView` provenance (#132 Slice 6, moved by #1327) — 1,995 B of "
+             + "back-story about a file that no longer exists, in a law file that was 504 B "
+             + "under its ceiling. This needle is the MEASUREMENT that refuted the blocking "
+             + "argument: a source comment held `outputLevel` hostage for a month by claiming "
+             + "a manual trim was incompatible with `loudnessNormalized()`, which runs once "
+             + "at `static let factory` construction and can never overwrite a user entry. No "
+             + "paraphrase of the block survives it and it carries no caps that ordinary "
+             + "de-shouting could touch (#912). The LAW stayed in CLAUDE.md: that `soundPanel` "
+             + "IS the live timbre editor, and that a founder-owned note with a CHECKABLE "
+             + "reason gets checked before it blocks a cleanup"),
             ("RUN_DESTINATION_DEVICE_NAME", "Tests/CISmoke/CLAUDE.md", "§5b",
              "the Clone-2 evidence from the #763 gate-discriminator move — the log line that "
              + "settled which simulator clone dies under #396")

@@ -6710,3 +6710,45 @@ gemessen sind): `git grep -lF` auf „VIERTE UND FÜNFTE AUFLAGE", „3,75", „
 „SCHREIB-Rate gegen LESE-Rate" und den Regelsatz über `Tests/CISmoke` und `scripts` liefert
 NICHTS — kein Wächter las ein Literal aus diesem Segment. Quelle 974 B, Ersatz 383 B,
 Netto −591 B in der immer geladenen Datei.
+
+
+## Z — `PatchEditorView` (#132 Slice 6): was die Löschung einen Monat blockierte (verschoben aus CLAUDE.md, #1327)
+
+Verschoben am 2026-09-16, weil `CLAUDE.md` bei 149.496 B stand und die harte Decke 150.000 B
+ist (`TheLawFileStaysUnderItsCeilingTests`) — also 504 B Kopfraum, während dieser Eintrag
+1.995 B wog und bis auf die LEHRE und zwei Wächternamen reine Vorgeschichte einer Datei ist,
+die es nicht mehr gibt. In `CLAUDE.md` steht die TATSACHE plus die Lehre; hier steht, wie es
+dazu kam. Nichts ist gelöscht.
+
+**Der Eintrag im Wortlaut, wie er bis #1327 in `CLAUDE.md` stand:**
+
+> · **`PatchEditorView.swift` IST GELÖSCHT (#132 Slice 6, 2026-07-31).** Die Vorgeschichte
+> gehört hierher, weil sie zweimal in die falsche Richtung gelesen wurde: die Datei war seit
+> dem Tools-Grid-Removal türlos, und meine frühere Behauptung, das Instrument könne „keinen
+> Klang formen oder speichern", war FALSCH — `soundPanel` (an `dropdownContent` `.sound`,
+> erreichbar über den Sound-Chip) IST der lebende Timbre-Editor und war es die ganze Zeit.
+> Blockiert war die Löschung von fünf persistierten Parametern, deren einzige Zeile in der
+> türlosen Datei stand; sie sind portiert (**`unisonVoices`/`unisonDetuneCents` mit #281,
+> `spectralShape`/`noiseColor` und `outputLevel` mit #286**), jeder mit gerenderter Zeile UND
+> Wächter im blockierenden Bundle (`Tests/CISmoke/UnisonRowDefaultsTests.swift`). Die
+> **Preview-Tastatur** war kein Parameter, sondern eine Urteilsfrage — entschieden: die
+> Spielfläche deckt sie ab, nicht portiert. Die **Preset-Leiste** (laden · favorisieren ·
+> speichern · Save-as · löschen · einreichen) ist da (⛔ hier stand „fehlte nie“ — in diesem
+> SHALLOW-Klon, gepfropft auf `24e9420`, liefert `git log -S` auf die Aufrufstellen nur den
+> Graft; die Gegenwart ist belegbar, die Vorgeschichte nicht, und genau solche unbelegten
+> „schon immer“-Sätze streicht diese Datei an anderer Stelle selbst): `presetRow` hält alle
+> sechs, seit `Tests/CISmoke/SoundPanelPresetBarTests.swift` auch nachweislich — und DAS ist
+> der Grund, warum die Löschung nichts gekostet hat. ⚠️ Die `outputLevel`-Hälfte hing einen
+> Monat an einer Begründung, die faktisch falsch war (ein Quellkommentar erklärte einen
+> manuellen Trim für unvereinbar mit `loudnessNormalized()`; das läuft **einmal** beim Bau der
+> `static let factory`-Liste und kann eine Nutzer-Eingabe nie überschreiben, was das Feld-Doc
+> seit dem ersten Tag sagt). **Lehre: ein „gehört dem Founder"-Vermerk mit prüfbarer
+> Begründung gehört geprüft, bevor er eine Aufräumarbeit blockiert.**
+
+**Was in `CLAUDE.md` geblieben ist und warum:** die Tatsache der Löschung (ein Register-Eintrag),
+die Korrektur „`soundPanel` IST der Editor“ (eine Sitzung, die sie nicht liest, baut einen
+zweiten Editor), die zwei Wächternamen (`TheLawFileCitesGuardsThatExistTests` verlangt, dass
+jeder dort in Backticks zitierte `…Tests`-Name zu einer Datei auflöst) und die LEHRE. Was
+gegangen ist: welcher Parameter mit welcher Scheibe portiert wurde, die Shallow-Klon-Rücknahme
+und die Widerlegung des `loudnessNormalized()`-Arguments — drei Geschichten, die eine Sitzung
+nur dann braucht, wenn sie genau diese Entscheidung nachvollzieht.
