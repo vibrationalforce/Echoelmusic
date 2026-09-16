@@ -88,9 +88,14 @@ Eine Session, die hieraus Kontext restaurierte, plante gegen ein Repo, das es ni
   Founder-Entscheidung entfernt.
 - Ship-Gate „Instrument-Complete v1": die offenen Checks sind SENSORISCH (Founder-Ohr /
   Gerät). Der Geräte-Einkaufszettel: `python3 scripts/founder-verify.py`.
-- Vokal-Kette auf dem Monitorpfad: neutrale FX-Kette + schaltbarer Harmonizer
-  ausgeliefert (#839–#841); Granular auf der Stimme ist die benannte nächste Scheibe;
-  v426-Deploy wartet auf das v425-Geräte-Log des Founders.
+- ⛔ **Die Vokal-Ketten-Zeile ist gestrichen (#1302/#1305, Founder 2026-09-12).** Sie sagte
+  „neutrale FX-Kette + schaltbarer Harmonizer ausgeliefert (#839–#841); Granular auf der
+  Stimme ist die benannte NÄCHSTE SCHEIBE“ — und war damit in einer vom Hook bei JEDEM
+  Sitzungsstart gelesenen Datei ein Bauauftrag auf einen Pfad, den es nicht mehr gibt. Der
+  Founder wörtlich: „Kein audioninout kein Autotune, Harmonizer, granularsynthese. Das hat
+  leider nicht geklappt.“ Monitorpfad, `EchoelHarmonizer` und `EchoelGranular` sind als
+  Dateien gelöscht. Die FX-Kette selbst lebt — sie liegt auf der GENERIERTEN Stimme, wo sie
+  immer gelegen hat.
 
 ---
 
@@ -99,7 +104,9 @@ Was Michael glücklich macht, ist NICHT der nächste Feature-Commit — es ist *
 in dem der Körper klingt** (Puls → Klang → der Raum bewegt sich mit) und **dass fremde
 Menschen es benutzen**. Daraus folgt die Haltung für jede künftige Session:
 - **Weniger bauen, mehr FERTIGSTELLEN.** v1.0-Launch schützen; neue Ideen (One-View,
-  Granular, basic-pitch, GEMA-Metadaten, Cymatics) warten HINTER dem Launch, nie davor.
+  basic-pitch, GEMA-Metadaten, Cymatics) warten HINTER dem Launch, nie davor. ⛔ „Granular“
+  stand in dieser Warteliste und wartet NICHT — es ist mit #1305 zurückgenommen; eine
+  Warteliste ist ein Versprechen, eine Rücknahme nicht.
 - **Ehrlich bleiben** (science-first, kein Hype/Wellness) — sein bester Instinkt, sein Schutz.
 - **Nicht verbrennen, die Menschen behalten** (Roman/Bolle/Felix/Tyler/Tester; ein Leben,
   nicht acht Fronten — Parkhaus-Ideen bleiben im Parkhaus).

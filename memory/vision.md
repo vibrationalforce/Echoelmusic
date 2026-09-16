@@ -58,9 +58,16 @@ no zone parser — naming either in the spine re-sold two struck capabilities.)
 - ⛔ **Live RTMP/SRT broadcast — CUT, not roadmap** (Editor ≠ Workstation, 2026-07-25;
   "broadcast" struck from the identity line 2026-07-31). HaishinKit stays unlinked.
   Honest tier per `inspiration_intake.md`: WATCH. Re-entry needs a founder ask, not a plan.
-- **AUDIOVISUAL VOCODER (flagship)** — voice+body → sound+visual+light at once; pure cores
-  built 2026-06-18 (`VocoderCore`/`FeedbackGuard`/`BioModulation`), wiring next. The unique,
-  inclusive edge (no competitor does bio/voice-driven AV vocoding).
+- ⛔ **AUDIOVISUAL VOCODER — CUT, not roadmap** (#1301/#1302, founder 2026-09-12, wörtlich
+  „Face und Audio Input komplett entfernen“). It stood here as the **flagship** with
+  „wiring next“ — and that is the most expensive sentence shape this file can carry: the
+  hook `cat`s `vision.md` at EVERY session start, so a deleted type was being named as the
+  next thing to build, to every future session, for four days. `VocoderCore` and
+  `FeedbackGuard` are gone as FILES; the vocoder's INPUT half (the microphone) no longer
+  exists, so there is nothing to vocode. `BioModulation` survives, still unwired, and is
+  listed as such in CLAUDE.md — it was never the vocoder. Re-entry needs a founder ask, like
+  RTMP above it, not a plan. The bio→sound+visual+light claim itself is UNAFFECTED and
+  shipping: that is the output stage, driven by the BODY, which is what the product is.
   **⛔ The 2026-06-20 "full all-in-one professional production environment" pivot that stood
   here is ITSELF SUPERSEDED (2026-07-24, #121; decisions.csv rows 84/101/102/190/191).** The
   canonical boundary is now `docs/dev/PRODUCT_DEFINITION.md`: **Editor ≠ Workstation** — the
@@ -130,8 +137,11 @@ if the website disagrees, the code wins.**
    Workstation) and struck from the identity line. WATCH tier; no longer an oscillation.
 2. **CLAUDE.md "v10 Target" diagram describes an app never built** (Beat/Record/Video/
    Share tabs); the as-built is one `EchoelStudioView`. Same file contradicts itself.
-3. **(RESOLVED 2026-06-18)** FEATURE_MATRIX reconciled to code (MetalBioView LIVE, 23 genres,
-   sACN unicast live, new vocoder/biomod cores flagged not-yet-wired).
+3. **(RESOLVED 2026-06-18, then DRIFTED AGAIN — re-resolved #1340, 2026-09-16)** FEATURE_MATRIX
+   reconciled to code (MetalBioView LIVE, 23 genres, sACN unicast live). ⛔ The clause „new
+   vocoder/biomod cores flagged not-yet-wired“ is void with the cores (#1302). ⭐ **A register
+   does not stay reconciled** — four days after the founder deletions it again claimed a live
+   microphone, one line below its own tombstone. „Resolved“ is a date on this row, not a state.
 4. **Bus topic `bioFrames` is reserved but undrained** (`bioEvents` IS drained — sole consumer `OSCSender.drainAndSendEvents`, OSC egress only; ⛔ both stood here as undrained, audit 2026-08-28); bio flows over the
    snapshot (per-RR heartbeat events have no synth sink). Lock-free design partly aspirational.
 5. **North-Star concepts have no written bridge** to the roadmap — auto-driving stays
