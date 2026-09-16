@@ -32953,3 +32953,18 @@ drei spekulative.
 
 **Offen:** die Gate-Lesung für `5936452` (#1355) — der Beweis steht aus, bis
 `Build for Testing` dort grün meldet.
+
+**GATE-LESUNG `5936452` (#1355) — GRÜN, und damit ist #1354 bewiesen.** CI/CD #6112 (Run
+35157512286) Schritt 9 **`Build for Testing` = `success`** (22:25:42 → 22:30:19), Schritt 10
+„Print build log on failure" = `skipped`. `Tests/CISmoke/GenreBatchFifteenBTwoTests.swift`
+kompiliert jetzt nachweislich; die Dateien der Sitzung sind damit vollständig durch beide echten
+Gates. Security Scan und Code Quality & Linting ebenfalls grün. Schritt 11 `Run Tests` lief beim
+Lesen noch und sagt wegen #396 ohnehin nichts (§5).
+
+⭐ **Die Runde im Ganzen, weil sie die sauberste Demonstration dieser Sitzung ist, wofür die zwei
+Gates DA sind:** `Xcode Compile Check` war auf `10dd909` grün und blieb es — der Produktionscode
+war nie kaputt. Rot war ausschließlich `Build for Testing`, also genau das Gate, das als einziges
+über `Tests/CISmoke` urteilt. Ein Blick auf die Conclusion des CI/CD-Laufs hätte nichts verraten
+(sie ist wegen #396 auf JEDEM Push `failure`), und der `tail -200 test.log`-Schritt zeigte einen
+Dateifehler statt der Ursache. Die Kette, die trägt, ist: Schritt 9 lesen → bei rot das Log
+DIESES Schritts holen → die genannte Datei reparieren.
