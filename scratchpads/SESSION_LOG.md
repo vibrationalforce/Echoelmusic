@@ -32012,3 +32012,71 @@ Monate lang als Flaggschiff-NEXT mitgetragen.** Ein Posten, dessen Notiz eine fe
 Abhängigkeit benennt, ist BLOCKIERT, nicht nächster — und nichts in diesem Repo liest eine ✅-
 oder NEXT-Zeile noch einmal. Gleiches gilt für „resolved" in `memory/vision.md` und für die
 ✅-DONE-Zeile auf `SampleBrowserView`, die drei Löschungen überlebt hat.
+
+## 2026-09-16 (Fortsetzung) — #1295 G11c: Nordic Fiddle, und `heldRoot` bekommt seinen ersten Besitzer
+
+**Eine Scheibe, nicht zwei — und das ist der eigentliche Ertrag.** Die Plan-Zeile G11c nannte
+`nordicFiddle` UND `balkanModal` und erklärte im selben Atemzug, warum das zweite nicht
+dazugehört: es nennt `additive332` (ein `PadGrammar`-Case, den es nicht gibt) und es wäre ein
+ZWEITES `hungarianMinor`-Genre — also eine stillschweigende Rücknahme des `blackMetal`-Docs aus
+#1288, das „used by no other genre" behauptet. **Eine Rücknahme, die man in einem Feature
+versteckt, ist die teuerste Sorte** (die Register-Lehre dieser Sitzung, eine Ebene tiefer):
+niemand liest sie noch einmal. `balkanModal` ist als G11d mit BEIDEN Risiken in die Planzeile
+geschrieben und nicht gebaut.
+
+### Was Nordic Fiddle ist, und woran es gemessen wurde
+
+Offene Quinten/Quarten über einem gestrichenen Bordun — `progression: [0, 6, 5]`,
+`chordTones: [0, 3, 7]`, `.minor`, 108–136 BPM, Swing 0.16. Die fünf Trennachsen zu seinem
+nächsten Nachbarn `celticAir` stehen im Doc am Case, nicht im Commit-Text: Bordun statt
+Arpeggio (`arpeggiated: false`, `leadDensity: 0.0`), `.backbeat` statt der frei atmenden Air,
+tieferes `padOctave: 3`, andere Mischgewichte `(1.12, 1.02, 0.88)`, und eine eigene
+Patch-Familie.
+
+Zwei neue Patches, `63 Sympathetic Bow` und `64 Drone Sub`. Der Bass nimmt bewusst ZWEI neue
+Superlative, und sie sind AM ARM dokumentiert statt im Log: längste Bass-Hüllkurve (1.09,
+vorher „Velvet Sub" 0.834) und höchster Sustain (0.92, vorher „Roll Sub" 0.72). Unberührt
+bleiben „Psy Bass" (kürzeste Hüllkurve 0.222), „Minimal Sub" (tiefster Cutoff 520) und
+„Drone Bed" (dateiweit langsamster Attack 1.8 / längstes Release 7.5).
+
+`scripts/genre-prebatch.py` ist der mechanische Beleg, vorher und nachher gefahren:
+**49 → 50 Genres, 32 → 33 angeboten, 65 → 67 Patches**, „Warm Strings" 5 → 6 unter der Decke 7,
+kein angebotenes Paar teilt einen hörbaren Fingerabdruck, die freien Patch-IDs 63/64 exakt
+belegt.
+
+### `heldRoot` — die Vorhersage aus #1294 ist eingetreten, wörtlich
+
+`GenreBassGrammarTests` trug `let authoredAhead: Set<BassGrammar> = [.heldRoot]` — eine
+Grammatik, die gebaut war und auf ihren ersten Besitzer wartete. `BassGrammar.swift` sagte
+voraus, dass ein Bordun-Genre sie nimmt. Genau das ist passiert; die Menge ist jetzt leer, mit
+einem ⭐-Vermerk, dass die Vorhersage exakt hielt.
+
+⚠️ **Und damit ist die zweite Behauptung des Wächters VAKUUM (#926) — bewusst behalten.** Eine
+Schleife über die leere Menge behauptet nichts mehr. Sie bleibt stehen, weil sie beim NÄCHSTEN
+Eintrag sofort wieder trägt und weil ein Löschen die Mechanik verlöre, die gerade bewiesen hat,
+dass sie funktioniert. **Das GESETZ, das daraus fällt: eine „authored-ahead"-Eigenschaft ist
+nur so ehrlich wie das, was das Warten SICHTBAR macht.** Ohne die Menge wäre `heldRoot` eine
+tote Grammatik gewesen, die niemand vermisst — dieselbe Klasse wie jeder türlose Kern in
+CLAUDE.md, nur mit einem Zähler daneben.
+
+### Sieben Anspruchsflächen, die ein Wächter erzwungen hat
+
+`WebsitePagesAreFindableAndHonestTests` hat die Zahl in sieben nutzersichtbaren Dateien
+mitgezogen: `docs/press.html` (×2), `docs/brainstorming.html`, `docs/tools.html`,
+`docs/dev/APP_STORE_LISTING_v1.md`, beide `release_notes.txt` („thirty-two" → „thirty-three",
+„Zweiunddreißig" → „Dreiunddreißig") und `docs/architecture.html` („38 of 49 genres" → „39 of
+50", Rest 11 unverändert, Summe stimmt weiter). **Das ist der Wächter, der genau das tut,
+wofür er da ist** — ohne ihn wäre die App-Store-Zeile eine 2.3-Ablehnung im Wartezustand.
+
+### Ehrliche Benotung (§0)
+
+`GenreBatchElevenCTests`, 29 Ansprüche / 5 Behauptungen. **Keine Python-Transkription möglich,
+und das steht im Dateikopf** statt als stillschweigende Auslassung: ein Python-Nachbau von
+`MusicalKey.degree` wäre eine ZWEITE Implementierung der Sache, die geprüft wird (#416). Die
+mechanische Prüfung war stattdessen `scripts/genre-prebatch.py`. Behauptung 5 existiert nur,
+weil ein Compiler sie nicht machen kann: `defaultMode` bekommt für `nordicFiddle` ABSICHTLICH
+keinen Arm und erbt `default: .studioLocked` — ein fehlender Arm ist in Swift kein Fehler,
+also braucht die Absicht einen Zeugen.
+
+Kompilat: sieben Checker exit 0; `Xcode Compile Check` + CI/CD `Build for Testing` zum
+Zeitpunkt des Commits noch offen.

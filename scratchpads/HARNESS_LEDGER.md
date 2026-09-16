@@ -3836,3 +3836,34 @@ solcher Checker eine Mehrheit korrekter Dateien rot gemacht — #665/#364.
    und soll sie nicht bekommen.
 4. Beleg ist `Build for Testing` des TEST-Commits selbst (`Tests/CISmoke/CLAUDE.md` §5) —
    `Xcode Compile Check` baut `Sources/` allein und sagt über eine Testdatei NICHTS.
+
+## PLAYBOOK #1295 (2026-09-16) — eine „authored-ahead"-Eigenschaft ist nur so ehrlich wie das, was das WARTEN sichtbar macht
+
+**Anlass.** `BassGrammar.heldRoot` war gebaut, getestet und hatte NULL Besitzer. Nicht als
+Versehen: `GenreBassGrammarTests` trug `let authoredAhead: Set<BassGrammar> = [.heldRoot]`, und
+`BassGrammar.swift` sagte am Case voraus, welche Sorte Genre sie nehmen würde (ein Bordun).
+G11c (Nordic Fiddle) hat sie genommen — die Vorhersage hielt wörtlich, die Menge ist leer.
+
+**Warum das ein Playbook ist und keine Anekdote.** Dieses Repo hat ein ganzes Register türloser
+Kerne in `CLAUDE.md` — `BioTempoDirector`, `VBAPPanner`, `EchoelWSOLA`, `AudioFeatureChannel`.
+Jeder einzelne ist derselbe Zustand wie `heldRoot` vor G11c: gebaut, korrekt, ohne Aufrufer.
+Der Unterschied ist NUR, dass `heldRoot` einen **Zähler** neben sich hatte, der bei jedem Lauf
+des blockierenden Bündels sagte „dieser wartet noch". Ohne ihn wäre es eine tote Grammatik
+gewesen, die eine spätere Aufräum-Sitzung plausibel gelöscht hätte.
+
+**Rezept, wenn eine Scheibe etwas VOR seinem ersten Benutzer baut:**
+1. Der Wächter trägt eine **explizite Menge** der Vorausgebauten, nicht eine Ausnahme im Code.
+   Eine Ausnahme verschwindet im Rauschen; eine benannte Menge ist eine Warteschlange.
+2. Am Typ selbst steht die **Vorhersage**, wer sie nehmen wird — prüfbar, also widerlegbar.
+   Trifft sie nicht ein, ist das ein Befund über den Entwurf, kein Schönheitsfehler.
+3. Beim ersten Besitzer wird die Menge geleert **und der Treffer vermerkt** (⭐), nicht still
+   entfernt. Eine eingetroffene Vorhersage ist der einzige Beleg, dass die Mechanik trägt.
+4. **Die dann vakuum gewordene Schleife bleibt stehen (#926, bewusst).** Sie trägt beim
+   nächsten Eintrag sofort wieder, und das ist im Wächter-Doc als VAKUUM auszuschreiben —
+   sonst liest die nächste Sitzung eine grüne Behauptung, die nichts behauptet.
+
+**Gegenprobe, die diese Scheibe NICHT gemacht hat und die dazugehört:** die Plan-Zeile nannte
+ZWEI Genres und erklärte im selben Satz, warum das zweite nicht dazugehört (es nennt einen
+`PadGrammar`-Case, den es nicht gibt, und wäre eine stillschweigende Rücknahme eines Docs aus
+#1288). Gebaut wurde eins. **Eine Rücknahme, die in einem Feature versteckt wird, liest
+niemand nach** — sie gehört als eigene Zeile in den Plan, mit beiden Risiken benannt.

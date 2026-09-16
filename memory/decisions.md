@@ -2056,3 +2056,29 @@ Posten, dessen Notiz eine fehlende Abhängigkeit nennt, ist blockiert, nicht nä
 niemand liest eine ✅- oder NEXT-Zeile noch einmal.
 
 **Review:** 2026-10-16.
+
+### 2026-09-16 — #1295 G11c: eine Scheibe statt zwei, und `heldRoot` bekommt seinen ersten Besitzer
+
+**Entscheidung A — G11c liefert NUR `nordicFiddle`.** Die Plan-Zeile nannte zusätzlich
+`balkanModal` und erklärte im selben Satz, warum es nicht dazugehört: es nennt `additive332`
+(einen `PadGrammar`-Case, den es nicht gibt), und es wäre ein ZWEITES `hungarianMinor`-Genre —
+also eine stillschweigende Rücknahme des `blackMetal`-Docs aus #1288, das „used by no other
+genre" behauptet. **Begründung: eine Rücknahme, die man in einem Feature versteckt, liest
+niemand nach.** `balkanModal` steht jetzt als eigene Zeile G11d im Plan, mit beiden Risiken
+benannt; wer sie baut, entscheidet sie, statt sie zu überschreiben.
+
+**Entscheidung B — die vakuum gewordene `authoredAhead`-Schleife bleibt stehen (#926).**
+`heldRoot` war gebaut und ohne Besitzer, und `GenreBassGrammarTests` trug genau dafür eine
+benannte Menge; `BassGrammar.swift` sagte am Case voraus, welche Sorte Genre sie nimmt (ein
+Bordun). Nordic Fiddle hat sie genommen, die Vorhersage hielt wörtlich, die Menge ist leer.
+Die Schleife behauptet damit nichts mehr — und bleibt, weil sie beim nächsten Eintrag sofort
+wieder trägt. Das VAKUUM ist im Wächter-Doc ausgeschrieben, damit niemand eine grüne
+Behauptung liest, die keine ist.
+
+⭐ **Das GESETZ dahinter, und es reicht über Genres hinaus: eine „authored-ahead"-Eigenschaft
+ist nur so ehrlich wie das, was das WARTEN sichtbar macht.** `CLAUDE.md` führt ein ganzes
+Register türloser Kerne — `BioTempoDirector`, `VBAPPanner`, `EchoelWSOLA`,
+`AudioFeatureChannel`. Jeder ist derselbe Zustand, in dem `heldRoot` war. Der einzige
+Unterschied: `heldRoot` hatte einen Zähler neben sich, der bei jedem Lauf des blockierenden
+Bündels sagte „dieser wartet noch". Ohne ihn wäre es eine tote Grammatik gewesen, die eine
+spätere Aufräum-Sitzung plausibel gelöscht hätte. Playbook: `HARNESS_LEDGER.md` #1295.
