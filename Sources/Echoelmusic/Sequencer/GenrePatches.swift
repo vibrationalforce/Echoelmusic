@@ -157,12 +157,26 @@ public extension MusicStyle {
             // ⚠️ Every number against a measured neighbour; nothing takes a file-wide claim:
             // cutoff 2500 is FREE, between "Chamber Strings" (2450) and the pair that shares
             // 2600 ("Iron Stab", "Clarinet Reed"), and nowhere near "Glacier Pad"'s 4200 (the
-            // brightest) · attack 0.14 is FREE and takes NOTHING — it is the sixth-slowest onset
-            // in the file, just over "Air Reed"'s 0.12, well under "Chamber Strings"' 0.35, and
-            // an order of magnitude under "Drone Bed"/"Still Pad"'s 1.8, which hold the
-            // file-wide slowest-attack claim · the envelope sums to 2.24, a FREE
-            // value between "Berlin Seq"'s 2.12 and "Neon Lead"'s 2.32, and far from "Glacier
-            // Pad"'s 15.60 · noise 0.03 is choir breath, under "Brass Reed"'s 0.08 (the most)
+            // brightest) · attack 0.14 is FREE and takes NOTHING — just over "Air Reed"'s 0.12,
+            // well under "Chamber Strings"' 0.35, and an order of magnitude under "Drone Bed"/
+            // "Still Pad"'s 1.8, which hold the file-wide slowest-attack claim · the envelope
+            // sums to 3.10, a FREE value between "Neon Lead"'s 3.04 and "Cold Stack"'s 3.27,
+            // and far from "Glacier Pad"'s 16.50 · noise 0.03 is choir breath, under "Brass
+            // Reed"'s 0.08 (the most)
+            //
+            // ⛔ FIVE OF THE NUMBERS IN THE LINES ABOVE WERE WRONG WHEN #1349 SHIPPED, AND THE
+            // CAUSE IS WORTH MORE THAN THE FIX. The envelope was quoted as 2.24 (it is 3.10),
+            // its two neighbours as "Berlin Seq 2.12" and "Neon Lead 2.32" (Berlin Seq is 2.67,
+            // and 2.32 is nobody's), "Glacier Pad"'s as 15.60 (16.50), and the attack as "the
+            // sixth-slowest" (it is the eleventh). Every one of them came from a throwaway
+            // parser that silently matched 31 of the file's 73 `patch(` blocks and reported
+            // only what it found. The #1349 lesson was "measure the WHOLE file"; this is the
+            // half that lesson did not cover. ⭐ LAW: **a measurement that cannot state its own
+            // COVERAGE is not a measurement.** A parser over this file prints `parsed N of M`
+            // and no number derived from it is written down until N == M — the same discipline
+            // `.claude/rules/context.md` §2 states for a grep that can silently return less
+            // than the truth. The ordinal is gone rather than corrected, per #1349: an implied
+            // rank ages, a free value does not
             // · `uni: 4` is the one number that is about the WORD "choir": a stack of detuned
             // voices is what a massed sound is. It stays under the file's maximum of 5.
             return patch("67", "Church Choir",
@@ -171,6 +185,49 @@ public extension MusicStyle {
                 cutoff: 2500, res: 0.10, lfoAmt: 0.04, lfoRate: 4.6, lfoDepth: 0.03,
                 revMix: 0.28, revDecay: 2.90, vibRate: 4.8, vibDepth: 0.05,
                 uni: 4, det: 12)
+        case .loFiHipHop:
+            // #1350 G15a — WOBBLE KEYS. The whole identity of this voice is DEGRADATION, and
+            // it is spread over three parameters rather than loaded onto one: a slow filter
+            // wobble (`lfoRate: 0.32`, well inside the 0.04…5.4 span of the patches that run an
+            // LFO at all — a 0.0 there means OFF, not slow), a light vibrato (`vibDepth: 0.11`,
+            // under "Clarinet Reed"'s 0.15 which is the deepest) and a two-voice detune
+            // (`det: 13`, under the 16 held by "Cold Stack" AND "Chamber Strings" — a tie, so
+            // neither of them is "the most"). None of the three takes a rank; the tape character
+            // is their SUM, which is also why no one of them can be tuned alone.
+            //
+            // ⚠️ THE SEPARATION FROM `modalJazz` IS HALF IN THIS FILE, and the case doc says
+            // which half. Both genres comp a minor seventh in dorian; this voice is dark
+            // (cutoff 1550 against "Warm Comp Keys"' 2000), soft-edged (`s: 0.30` with a long
+            // decay, so the chord sags) and dirty (`noise: 0.03`, tape hiss). That one plays
+            // clean keys in a room; this one plays a worn loop.
+            //
+            // ⭐ AND THE SHARPEST SEPARATION IS NOT IN THE NUMBERS ABOVE BUT IN A ZERO.
+            // `boomBapHipHop`'s keys patch, "Dust Keys", sits 50 Hz away in cutoff (1500) and
+            // one tenth away in brightness (0.22) — close enough that the two would blur. It
+            // runs NO modulation at all: `lfoAmt`, `lfoRate`, `vibRate` and `vibDepth` are all
+            // 0.0 and its detune is 6. Dust is a STATIC filter choice there; here the dust is
+            // MOVEMENT. That is the difference a listener hears, and it is the reason the three
+            // parameters above are the identity rather than the cutoff.
+            //
+            // ⚠️ Every number measured over ALL the file's patches and not only the
+            // `patch()`-helper ones (the #1349 lesson — the older literal voices hold the
+            // extremes). ⛔ THE FIRST DRAFT OF THIS PARAGRAPH CARRIED THREE WRONG ENVELOPE
+            // NUMBERS, because it was written from a parser that silently read 31 of the 73
+            // blocks; the count is not quoted here for the same reason it is not quoted in
+            // CLAUDE.md (#818). Corrected: cutoff 1550 is FREE and the sole holder, between
+            // the 1500 pair ("Dust Keys", "Vapor Pad") and "Drift Pad" (1650), far above
+            // "Minimal Sub"'s 520 (the lowest) and far under "Glacier Pad"'s 4200 (the
+            // brightest) · the envelope sums to 1.762, FREE between the 1.76 pair ("Brass
+            // Reed", "Metal Rig") and "Twang" (1.812) · `a: 0.012` is an ordinary fast onset
+            // shared with five other voices, and claims nothing next to "Drone Bed"/"Still
+            // Pad"'s 1.8 (the slowest) · `noise: 0.03` is shared with "Church Choir", far
+            // under "Brass Reed"'s 0.08 (the most).
+            return patch("69", "Wobble Keys",
+                a: 0.012, d: 0.85, s: 0.30, r: 0.60,
+                harm: 0.86, hl: 0.32, bright: 0.20, noise: 0.03, color: "Pink", shape: "Natural",
+                cutoff: 1550, res: 0.12, lfoAmt: 0.11, lfoRate: 0.32, lfoDepth: 0.09,
+                revMix: 0.18, revDecay: 1.10, vibRate: 4.2, vibDepth: 0.11,
+                uni: 2, det: 13)
         case .rootsReggae:
             // #1289 G6b — ROOTS ORGAN. ⚠️ NOT "Skank Organ": `ska` (un-offered) already ships
             // that name, and the pre-batch check caught it — the third name collision in three
@@ -729,6 +786,38 @@ public extension MusicStyle {
                 a: 0.006, d: 0.36, s: 0.58, r: 0.20,
                 harm: 0.92, hl: 0.36, bright: 0.20, noise: 0.0, color: "Pink", shape: "Natural",
                 cutoff: 780, res: 0.12, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
+        case .loFiHipHop:
+            // #1350 G15a — WOBBLE SUB. `sparseSub` under a dragged backbeat at 80: the note has
+            // room, so it may be round and slow rather than clipped. That is the opposite of
+            // "Brass Sub" (envelope 0.41, built to clear its eighth) and close in SHAPE to
+            // "Dust Sub", which is the point of the next paragraph.
+            //
+            // ⚠️ THE NEAREST SIBLING SHARES THE FIGURE, SO THE VOICE CARRIES THE DIFFERENCE.
+            // `boomBapHipHop` also walks `sparseSub`, also comps a seventh, and sits at the
+            // same `padOctave: 3`; its bass is "Dust Sub" (cutoff 580, envelope 1.278). This
+            // one is LONGER underneath (1.45) and a shade darker in tone (`bright` 0.11 against
+            // 0.12) while its filter sits 30 Hz higher — a sub that HANGS where that one is
+            // dusty and short. ⛔ The first draft of this paragraph said "darker at the top",
+            // which is backwards: 610 is a HIGHER cutoff than 580. It also quoted 0.638 and
+            // 0.770 as the two envelopes, and both were fabrications of a parser that read 31
+            // of the 73 patch blocks. The direction that survives measurement is LENGTH, not
+            // darkness, and that is the one the figure needs. Two genres this close must not
+            // share a voice.
+            //
+            // ⚠️ Nothing takes a claim anyone holds: cutoff 610 is FREE and the sole holder,
+            // between "Iron Sub" (600) and the 620 pair ("Drone Bed", "Velvet Sub"), well clear
+            // of "Minimal Sub"'s 520 (the LOWEST) · the envelope sums to 1.45, FREE between
+            // "Detroit Keys" (1.398) and "Roll Sub" (1.452) — adjacent but un-tied — and
+            // nowhere near "Psy Bass"'s 0.322 (the SHORTEST) · brightness 0.11 is the sole
+            // holder and stays just above the 0.10 pair ("Drone Bed", "Roll Sub"), so the
+            // darkest rank does not move · `uni: 1` like every bass here except "Drone Bed",
+            // which is 4.
+            return patch("70", "Wobble Sub",
+                a: 0.010, d: 0.50, s: 0.68, r: 0.26,
+                harm: 0.94, hl: 0.28, bright: 0.11, noise: 0.0, color: "Pink", shape: "Natural",
+                cutoff: 610, res: 0.08, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
                 revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
                 uni: 1, det: 0)
         case .rootsReggae:

@@ -188,6 +188,12 @@ public extension MusicStyle {
         // figure is shareable; two genres that close must not share THIS one. The voice is its
         // own ("Church Sub"), which is the half that never shares.
         case .gospelChoir:      return .drivingEighths
+        // #1350 G15a — the FIFTH owner of `sparseSub`, and the sheet's own choice for once:
+        // a sub that lands sparsely under a dragged backbeat is the figure. Shared with
+        // `minimalTechno`, `darkMinimal`, `industrialTechno` and `boomBapHipHop` — the last of
+        // those is a near neighbour, and the VOICE is where they part ("Wobble Sub" against
+        // "Dust Sub"), exactly as every arm in this file argues.
+        case .loFiHipHop:       return .sparseSub
         case .andalusianCadence: return .drivingEighths
         case .blackMetal:       return .drivingEighths
         case .modalJazz:        return .drivingEighths

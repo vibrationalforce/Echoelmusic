@@ -430,6 +430,49 @@ public extension MusicStyle {
                 chorusEnabled: true, chorusRate: 0.18, chorusDepth: 0.32, chorusMix: 0.23,
                 saturation: 0.21,
                 reverbEnabled: true, reverbMix: 0.36, reverbRoom: 0.84, reverbDamping: 0.36)
+        case .loFiHipHop:
+            // #1350 G15a — A QUARTER-TRIPLET TAPE ECHO, AND THE CHAIN IS BUILT AGAINST ITS OWN
+            // NEAREST RELATIVE. `boomBapHipHop` is the genre this one is closest to by name, and
+            // it already owns the hip-hop tape slap: `.tape` on a DOTTED EIGHTH. Taking the same
+            // pair would have given the two arms one echo with two labels — the #1349 lesson that
+            // a green fingerprint test is the FLOOR, not the question. So the division moves: a
+            // QUARTER TRIPLET, which is the same 3-against-2 ratio one level SLOWER, and that is
+            // the dragging figure the lineage line already promises ("dragged minor sevenths").
+            // 0.500 s at the 80 BPM default, 0.556 s at the slowest allowed 72, 0.455 s at the
+            // fastest 88 — the whole window resolves un-clamped under the 2.0 s ceiling.
+            //
+            // ⚠️ NO CHORUS, AND THAT IS THE DELIBERATE HALF. The wobble this genre lives on is
+            // already IN the patch: "Wobble Keys" runs a 0.32 Hz LFO with vibrato depth 0.11 and
+            // two detuned voices. A chain chorus on top would be a second implementation of one
+            // effect (#416) and would smear the only thing left holding the chord together.
+            //
+            // ⚠️ Every number against a named neighbour, measured over the whole file — and the
+            // ones that matter are the ones that separate it from `boomBapHipHop`, whose values
+            // are in brackets: tone 0.18 [0.26] is FREE and the darkest delay tone of any GENRE
+            // except `deepDrone`'s 0.14, whose "darkest in the roster" rank therefore stands;
+            // it sits below `underwater`'s 0.20, which is an FXCharacter and not in the roster,
+            // so no roster rank moves · wow 0.38 [0.30] is FREE between `rocksteady`'s 0.35 and
+            // the 0.40 group (`sciFi`, `oriental`, `doom`), far under `vaporwave`'s 0.5 · drive
+            // 0.22 [0.14] is FREE between the 0.20 group and `cassette`'s 0.25 · saturation 0.23
+            // [0.28] is FREE between `soulBallad`'s 0.22 and `nordicFiddle`'s 0.24, and clears
+            // `minimalTechno`'s 0.14 ("the cleanest chain of the BEAT-DRIVEN offered genres"),
+            // which it must — this genre is `.backbeat`, so that claim's scope covers it ·
+            // damping 0.63 [0.54] is FREE between `doom`'s 0.62 and `acidTechno`'s 0.64, so
+            // `deepDrone`'s 0.68 keeps the most-damped rank AND acidTechno keeps the runner-up
+            // rank its own doc names · room 0.50 [0.40] is FREE between `balkanModal`'s 0.48 and
+            // `rootsReggae`'s 0.52 · mix 0.21 [0.16] is FREE between the 0.20 group and the 0.22
+            // group · delay mix 0.19 [0.16] and feedback 0.21 [0.24] are both FREE.
+            //
+            // The shape of the separation, stated so it is not re-derived: this echo is LONGER,
+            // DARKER, WETTER and WOBBLIER than the boom-bap slap, and its chain saturation is
+            // LOWER because the drive moved into the tape stage instead.
+            return GenreFXPreset(
+                delayEnabled: true, delayMode: .tape,
+                delaySync: TempoSyncOption(.quarter, .triplet),
+                delayMix: 0.19, delayFeedback: 0.21, delayTone: 0.18, delaySpread: 0.22,
+                delayWow: 0.38, delayDrive: 0.22,
+                saturation: 0.23,
+                reverbEnabled: true, reverbMix: 0.21, reverbRoom: 0.50, reverbDamping: 0.63)
         case .rootsReggae:
             // #1289 G6b — THE LONG ECHO, and it is the genre rather than a decoration: a QUARTER
             // on tape with high feedback and audible wow. At the fastest allowed 84 BPM that is
@@ -849,7 +892,9 @@ public extension MusicStyle {
             // a founder decision.
             //
             // Beyond time, this preset separates on: mode (tape, with wow), the
-            // darkest tone in the roster (0.14 < contemplation's 0.24), and the most DAMPED hall
+            // darkest tone in the roster (0.14; the runner-up is deliberately NOT named here — it was
+            // contemplation's 0.24 until #1350 put loFiHipHop's 0.18 between them, and an implied
+            // second place is the ordinal that ages while the superlative stays true), and the most DAMPED hall
             // in the roster (0.68; next is acidTechno 0.64). ⚠️ NOT the biggest — that claim stood
             // for one commit and is false: contemplation is 0.96 and drift 0.95 against this
             // preset's 0.94. Damping is what makes it dark; size is shared with its siblings. Feedback stays below 0.5 like the whole family so the
