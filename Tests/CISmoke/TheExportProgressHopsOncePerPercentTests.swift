@@ -50,6 +50,13 @@
 
 import Foundation
 import XCTest
+// `@testable` IS LOAD-BEARING HERE, unlike in the pure source-text guards next door: claim 3
+// calls `clamped(to:)`, an INTERNAL extension in `Core/FloatingPointClamp.swift`. Without this
+// line it is `cannot find member` → `** TEST BUILD FAILED **` → the whole blocking bundle stops
+// running, which is the `f489a6e` defect recorded in `Tests/CISmoke/CLAUDE.md` §5b. Caught by
+// reading the file's imports against the symbols it uses, NOT by any of the seven checkers —
+// they all read needles as DATA and are blind to Swift that will not compile (#1280).
+@testable import Echoelmusic
 
 final class TheExportProgressHopsOncePerPercentTests: XCTestCase {
 
