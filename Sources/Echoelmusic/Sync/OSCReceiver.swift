@@ -131,19 +131,44 @@ public enum OSCControlCommand: Equatable, Sendable {
     /// The whitelist gate. Bounds are checked HERE so a value the app cannot hold never reaches
     /// a `UserDefaults` write: a key of 12, a look of 10, a scale name no enum knows, a NaN
     /// tempo — all nil, all counted as ignored by the receiver.
+    ///
+    /// ⛔ #1321 — AND FOR THREE OF THE SIX ADDRESSES THAT SENTENCE WAS A DESCRIPTION OF WHAT THE
+    /// CODE MEANT, NOT OF WHAT IT DID. `key` and `visualStyle` converted with `Int(v.rounded())`
+    /// ONE LINE BEFORE their range test, and `Int(_:)` TRAPS in Swift for anything past
+    /// `Int.max` — a finite `1e30` passes `isFinite` and kills the app. `bpm` had no upper bound
+    /// at all and handed the unbounded value to `summary`, which converts on every accepted cue.
+    /// The value comes off the wire as `Float(bitPattern:)` of four raw bytes from ANY sender on
+    /// the network when the allowlist is empty (the documented default), so this was one
+    /// datagram from a remote kill mid-performance.
+    ///
+    /// ⭐ THE SHAPE OF THE FIX IS THE LESSON: **bound in the DOUBLE, then convert.** A range test
+    /// after a lossy conversion is not a range test — the conversion is where the program dies.
+    /// `.claude/rules/swift-audio.md` already bans force-unwraps and unguarded division for the
+    /// same reason; `Int(someDouble)` belongs in that family and was not named.
+    ///
+    /// ⚠️ ONE BEHAVIOUR CHANGE, DELIBERATE AND NOT A SIDE EFFECT. `bpm` now also has an UPPER
+    /// bound, and its lower bound rises from `> 0` to `Transport.minTempo`. A console sending
+    /// 10 or 500 BPM used to parse and be silently CLAMPED by the consumer
+    /// (`EchoelmusicApp`); it is now IGNORED and counted as ignored, which is what this doc
+    /// block claims and what a performer can actually see and fix. The consumer's clamp stays —
+    /// it owns its own contract and is now a no-op for this path.
     public nonisolated static func parse(_ message: OSCDecoder.Message) -> OSCControlCommand? {
         guard message.address.hasPrefix(prefix) else { return nil }
         let name = String(message.address.dropFirst(prefix.count))
         let first = message.arguments.first
         switch name {
         case "bpm":
-            guard let v = first?.number, v.isFinite, v > 0 else { return nil }
+            // Bounded HERE, in the Double, and against the transport's own constants rather
+            // than a second spelling of them (#416).
+            guard let v = first?.number, v.isFinite,
+                  v >= Transport.minTempo, v <= Transport.maxTempo else { return nil }
             return .tempo(v)
         case "key":
-            guard let v = first?.number, v.isFinite else { return nil }
-            let root = Int(v.rounded())
-            guard (0...11).contains(root) else { return nil }
-            return .key(root)
+            // The bound is tested on the DOUBLE — `Int(_:)` after it can no longer see a value
+            // outside `Int`. Comparing integral bounds in `Double` is exact at this magnitude.
+            guard let v = first?.number, v.isFinite,
+                  (0...11).contains(v.rounded()) else { return nil }
+            return .key(Int(v.rounded()))
         case "scale":
             guard case .string(let raw)? = first, Scale(rawValue: raw) != nil else { return nil }
             return .scale(raw)
@@ -151,10 +176,10 @@ public enum OSCControlCommand: Equatable, Sendable {
             guard case .string(let raw)? = first, MusicStyle(rawValue: raw) != nil else { return nil }
             return .genre(raw)
         case "visualStyle":
-            guard let v = first?.number, v.isFinite else { return nil }
-            let look = Int(v.rounded())
-            guard (0...9).contains(look) else { return nil }
-            return .visualStyle(look)
+            // Same shape as `key` above: bound the Double, then convert.
+            guard let v = first?.number, v.isFinite,
+                  (0...9).contains(v.rounded()) else { return nil }
+            return .visualStyle(Int(v.rounded()))
         case "blackout":
             guard let v = first?.number, v.isFinite else { return nil }
             return .blackout(v != 0)
@@ -166,7 +191,12 @@ public enum OSCControlCommand: Equatable, Sendable {
     /// One line for the routing card and the diag log.
     public var summary: String {
         switch self {
-        case .tempo(let bpm):     return "bpm \(Int(bpm.rounded()))"
+        // ⚠️ CLAMPED, NOT BECAUSE `parse` CAN STILL HAND THIS A HUGE VALUE — it cannot since
+        // #1321 — but because this enum is `public` and any caller can construct
+        // `.tempo(1e30)` directly. A diagnostic line is the last place that may take the app
+        // down; `clamped(to:)` is the NaN-safe one (`Core/FloatingPointClamp`).
+        case .tempo(let bpm):
+            return "bpm \(Int(bpm.clamped(to: Transport.minTempo...Transport.maxTempo).rounded()))"
         case .key(let root):      return "key \(root)"
         case .scale(let raw):     return "scale \(raw)"
         case .genre(let raw):     return "genre \(raw)"

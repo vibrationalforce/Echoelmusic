@@ -461,6 +461,13 @@ private func bioLine(name: String, bpm: Float, coherence: Float, highlight: Bool
     // #629: the marker goes FIRST, the same ordering law the header pill's
     // `accessibilityText` follows — a trailing "simulated" is heard as a measurement with
     // an addendum.
-    .accessibilityLabel("\(synthetic == true ? "Simulated demo, " : "")\(name): \(bpm > 0 ? "\(Int(bpm)) beats per minute" : "no pulse yet"), coherence \(coherence > 0 ? EchoelDecimalText.string(coherence, decimals: 2) : "not available")")
+    // ⛔ #1321 — THIS SPOKE THE NUMBER THROUGH `Int(bpm)` WHILE THE VISIBLE CELL ELEVEN
+    // LINES UP ALREADY USED THE SAFE FORMATTER FOR THE SAME VALUE. `bpm` is PEER data, and
+    // `BioPeek`'s sanitizer answers finiteness only — it says so itself and calls the
+    // magnitude gap a live hole. A peer sending `1e20` (finite, JSON-legal) trapped
+    // `Int(_:)` here, during BODY EVALUATION, so it fired for every user and not only with
+    // VoiceOver on, while the cell beside it drew the same value fine. Spoken and drawn now
+    // come from one formatter, which is also this file's "legible numbers first" law.
+    .accessibilityLabel("\(synthetic == true ? "Simulated demo, " : "")\(name): \(bpm > 0 ? "\(EchoelDecimalText.string(bpm, decimals: 0)) beats per minute" : "no pulse yet"), coherence \(coherence > 0 ? EchoelDecimalText.string(coherence, decimals: 2) : "not available")")
 }
 #endif
