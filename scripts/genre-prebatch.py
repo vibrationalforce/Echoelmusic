@@ -6,7 +6,17 @@ from the SHIPPED tree plus a JSON spec of the candidates. Written after #1286, w
 five false prose claims were found by measuring what had been remembered.
 
     python3 scripts/genre-prebatch.py <candidates.json>
+    python3 scripts/genre-prebatch.py --patch "<Patch Name>"
     python3 scripts/genre-prebatch.py --selftest
+
+⭐ THE `--patch` MODE EXISTS BECAUSE OF #1350, AND IT IS THE CHEAPEST LESSON IN THIS FILE.
+Ten wrong numbers reached TWO shipped doc comments in `GenrePatches.swift` — five of them in
+code that had already merged — because a throwaway parser silently matched 31 of the file's
+73 `patch(` blocks and reported only what it found. Every claim derived from it ("FREE
+between X and Y", "the darkest", "the sixth-slowest") was a coin flip on whether the real
+neighbour happened to be inside the 31. **A measurement that cannot state its own COVERAGE
+is not a measurement**; this mode prints `parsed N of M` and REFUSES to report when N != M.
+Write a patch doc comment from ITS output, never from a parser typed for the occasion.
 
 ⭐ WHY THIS FILE IS IN THE REPO (#1320). It was authored inside a SESSION SCRATCHPAD and
 lived there through G6a…G11b, while `scratchpads/PLAN_GENRE_WELT_2026-09-11.md` cited it
@@ -246,8 +256,103 @@ def selftest():
         if not ok:
             failures += 1
             print(f"        exit={r.returncode} needle={needle!r} not found in output")
+    # #1350 — the `--patch` mode's two refusals, both driven rather than asserted in prose.
+    for title, argv, needle in [
+        ("--patch must refuse a name that is not shipped",
+         ["--patch", "ThisPatchIsNotShipped"], "no shipped patch is named"),
+        ("--patch must refuse with no name at all", ["--patch"], "needs a patch name"),
+    ]:
+        r = subprocess.run([sys.executable, os.path.abspath(__file__)] + argv,
+                           capture_output=True, text=True)
+        ok = r.returncode != 0 and needle in r.stdout
+        print(("   ok   " if ok else "   FAIL ") + title)
+        if not ok:
+            failures += 1
+            print(f"        exit={r.returncode} needle={needle!r} not found in output")
+
+    # And its POSITIVE case, derived from the tree so it cannot age: the first shipped patch
+    # name must report, and the report must state full coverage. A mode that only ever
+    # refuses is not verified either (#808, the other direction).
+    first = PNAMES[0]
+    r = subprocess.run([sys.executable, os.path.abspath(__file__), "--patch", first],
+                       capture_output=True, text=True)
+    want = f"parsed {len(PATCHES)} of {len(PATCHES)}"
+    ok = r.returncode == 0 and want in r.stdout
+    print(("   ok   " if ok else "   FAIL ") + f'--patch "{first}" reports at full coverage')
+    if not ok:
+        failures += 1
+        print(f"        exit={r.returncode} expected {want!r} in output")
+
     print(f"SELFTEST (cloned from .{twin}):", "OK" if failures == 0 else f"{failures} BROKEN CHECK(S)")
     return 1 if failures else 0
+
+PATCH_FIELDS=['a','d','s','r','harm','hl','bright','noise','cutoff','res',
+              'lfoAmt','lfoRate','lfoDepth','revMix','revDecay','vibRate','vibDepth','uni','det']
+
+def patch_table():
+    """Every shipped patch's numeric fields, WITH the block count it was derived from.
+
+    Returns (table, blocks_seen). A caller that does not compare `len(table)` against
+    `blocks_seen` has reproduced the #1350 defect exactly.
+    """
+    ms=list(re.finditer(r'patch\(\s*"([^"]*)"\s*,\s*"([^"]*)"', gp))
+    out={}
+    for i,m in enumerate(ms):
+        end = ms[i+1].start() if i+1 < len(ms) else len(gp)
+        b = gp[m.start():end]
+        vals={}
+        for f in PATCH_FIELDS:
+            mm=re.search(r'\b%s:\s*(-?[0-9]+\.?[0-9]*)' % f, b)
+            if mm: vals[f]=float(mm.group(1))
+        adsr=[vals.get(k) for k in ('a','d','s','r')]
+        if all(v is not None for v in adsr): vals['env(a+d+s+r)']=round(sum(adsr),4)
+        out[m.group(2)]=vals
+    return out, len(ms)
+
+def patch_report(name):
+    T, blocks = patch_table()
+    print(f"PATCH NEIGHBOURHOOD \u2014 parsed {len(T)} of {blocks} `patch(` blocks")
+    if len(T) != blocks:
+        print(f"   REFUSED: the parser covered {len(T)} of {blocks} blocks. Nothing below "
+              f"would be trustworthy, and a partial answer is the #1350 defect itself.")
+        return 2
+    if name not in T:
+        near=[n for n in T if name.lower() in n.lower() or n.lower() in name.lower()]
+        print(f'   no shipped patch is named "{name}".'
+              + (f" Did you mean: {near}?" if near else f" {len(T)} names are shipped."))
+        return 2
+    me=T[name]
+    print(f'   "{name}" \u2014 {len(me)} numeric fields\n')
+    for f in list(PATCH_FIELDS)+['env(a+d+s+r)']:
+        if f not in me: continue
+        v=me[f]
+        xs=sorted((o[f], n) for n, o in T.items() if f in o)
+        same=[n for val, n in xs if val == v and n != name]
+        below=[(n, val) for val, n in xs if val < v][-2:]
+        above=[(n, val) for val, n in xs if val > v][:2]
+        tag = f"TIED with {same}" if same else "SOLE HOLDER"
+        pad = ' ' * 16
+        lo_txt = below if below else '\u2014 (this is the file minimum)'
+        hi_txt = above if above else '\u2014 (this is the file maximum)'
+        print(f"   {f:16s} {v:<10g} {tag}")
+        print(f"   {pad} below {lo_txt}")
+        print(f"   {pad} above {hi_txt}")
+    print("\n   File-wide extremes, for the \"the darkest / the longest\" kind of claim:")
+    for f in list(PATCH_FIELDS)+['env(a+d+s+r)']:
+        xs=sorted((o[f], n) for n, o in T.items() if f in o)
+        if not xs: continue
+        lo=[n for val, n in xs if val == xs[0][0]]; hi=[n for val, n in xs if val == xs[-1][0]]
+        print(f"   {f:16s} min {xs[0][0]:<10g} {lo}   max {xs[-1][0]:<10g} {hi}")
+    print("\n\u26a0 A free value is not a good value. This mode answers \"does this number take "
+          "a rank\", never \"does the patch sound right\" \u2014 that is an ear.")
+    return 0
+
+if "--patch" in sys.argv:
+    i=sys.argv.index("--patch")
+    if i+1 >= len(sys.argv):
+        print('--patch needs a patch name, e.g. --patch "Wobble Keys"')
+        sys.exit(2)
+    sys.exit(patch_report(sys.argv[i+1]))
 
 if "--selftest" in sys.argv:
     sys.exit(selftest())

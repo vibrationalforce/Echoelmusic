@@ -631,6 +631,16 @@ sieht seine eigenen Kollisionen nicht.
 `allCases.filter { !sustained }` und welcher Name DARUNTER liegt — heute 27/5, Deep Sub/Soft Keys/Pluck VOLL;
 `leadPatchName` ist das einzige Feld, das ohne Plan-Änderung wandern darf · (b) voller 7-Tupel-Sweep inkl. der
 nicht angebotenen Arme · (c) `delaySync` bei `tempoRange.upperBound` · (d) zwei freie Hex-Suffixe je Genre.
+⭐ **(e) JEDE Zahl in einem Patch-Kommentar kommt aus `python3 scripts/genre-prebatch.py --patch "<Name>"`,
+nie aus einem für die Gelegenheit getippten Parser (#1350).** Der Modus druckt für jedes numerische Feld
+SOLE HOLDER / TIED-mit, die zwei nächsten Nachbarn nach unten und oben, und eine Tabelle der dateiweiten
+Extreme — also genau die vier Formen, die ein Doc-Kommentar behauptet. **Er verweigert die Auskunft, wenn
+seine eigene Abdeckung nicht `N von N` ist.** Grund: zehn falsche Zahlen erreichten ZWEI Doc-Kommentare
+(fünf davon schon gemerged), weil ein Wegwerf-Parser still 31 von 73 `patch(`-Blöcken las. **Eine Messung,
+die ihre eigene ABDECKUNG nicht nennen kann, ist keine Messung.** ⚠️ Und die Umkehrung, am selben Tag
+zweimal fast bezahlt: wer einen BESTEHENDEN Vermerk widerlegen will, misst zuerst sein eigenes Werkzeug —
+ein `$`-Anker verwarf eine Zeile mit Trailing-Kommentar und hätte beinahe eine RICHTIGE Notiz
+(„fünfter `sparseSub`-Besitzer“) „korrigiert“.
 **Nicht antasten (sichere Richtung):** `GenreSwingReachesTheClock` · `GenreFamilyDistinctness:318` ·
 `TheOfferedRosterIsTheRoster`. **Design-Zwänge statt Wächter-Edits:** ≤3 Progressionswurzeln · kein Mixolydisch ·
 keine Dyade · kein `.signature` · kein `filterEnabled` · jede vierstimmige Stimmführung ist `[0,2,4,6]` UND
