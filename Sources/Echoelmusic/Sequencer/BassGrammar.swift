@@ -194,6 +194,13 @@ public extension MusicStyle {
         // those is a near neighbour, and the VOICE is where they part ("Wobble Sub" against
         // "Dust Sub"), exactly as every arm in this file argues.
         case .loFiHipHop:       return .sparseSub
+        // #1352 G15b-1 — the FIFTH owner of `offbeatEighths`, and the sheet's own choice:
+        // the skank IS the figure, and dub inherits it from reggae unchanged. Shared with
+        // `deepHouse`, `soulBallad`, `rootsReggae` and `afroHouse`. ⚠️ `rootsReggae` is the one
+        // that matters — same figure, same mode, same register, overlapping tempo — and the
+        // VOICE is where they part ("Dub Sub" against "Roll Sub"), which the patch arm measures
+        // rather than asserts.
+        case .dubEcho:          return .offbeatEighths
         case .andalusianCadence: return .drivingEighths
         case .blackMetal:       return .drivingEighths
         case .modalJazz:        return .drivingEighths

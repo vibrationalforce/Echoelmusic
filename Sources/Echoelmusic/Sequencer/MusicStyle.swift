@@ -167,6 +167,8 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #1350 G15a — the SECOND resident of the existing `Lo-Fi & Hazy` shelf, which had
         // `vaporwave` to itself. No new taxonomy in this slice: shelf and rubric both exist.
         .loFiHipHop,
+        // #1352 G15b-1 — the FIRST resident of the new `Dub & Echo` shelf.
+        .dubEcho,
         .selfObservation, .stillMeditation, .drift, .contemplation,
         .vaporwave, .sciFi, .classical, .dubTechno,
         // #254 batch 1 (founder 2026-07-30: "mehr Genres der elektronischen Musik benötigt,
@@ -393,6 +395,22 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case nearEastCentralAsia
         // 9 · Underground & Fringe
         case loFiHazy
+        /// #1352 G15b-1. Added TOGETHER with `dubEcho`, its only resident — the same law
+        /// `.gospelSpiritual` (#1349) was added under: a shelf with nothing on it is skipped
+        /// by the picker, so nothing LOOKS wrong and the next session plans from an empty
+        /// drawer. Declared HERE, directly after `.loFiHazy`, because `Category.subcategories`
+        /// filters `allCases` and claim 6 of `GenreSubcategoryTests` requires each rubric's
+        /// shelves to be CONTIGUOUS.
+        ///
+        /// ⭐ THE TITLE IS "Dub & Echo" AND THE PLAN SAID "Dub & Drone" — the change is
+        /// deliberate and it is the #1349 lesson applied one level down. That slice shipped a
+        /// RUBRIC titled "Chant, Choir & Drone" holding one gospel choir, and the only reason
+        /// that was tolerable is that `Category.title` has zero production readers.
+        /// `Subcategory.title` is the OPPOSITE: the genre picker renders it as a section
+        /// header, so a shelf named for a drone it does not hold is an over-claim a player
+        /// reads. `droneMetal` is blocked on the `PadGrammar.pedalDrone` mechanism debut
+        /// anyway, and it belongs beside the other pedal-drone genres rather than beside dub.
+        case dubEchoes
 
         public var id: String { rawValue }
 
@@ -409,7 +427,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             case .classicalRomantic:                                return .classical
             case .gospelSpiritual:                                  return .chant
             case .europeanFolk, .nearEastCentralAsia:               return .folk
-            case .loFiHazy:                                         return .underground
+            case .loFiHazy, .dubEchoes:                             return .underground
             }
         }
 
@@ -439,6 +457,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             case .europeanFolk:         return "European Folk"
             case .nearEastCentralAsia:  return "Near East & C. Asia"
             case .loFiHazy:             return "Lo-Fi & Hazy"
+            case .dubEchoes:            return "Dub & Echo"
             }
         }
 
@@ -503,6 +522,8 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // the case doc and is NOT the rubric.
         case .loFiHipHop:
             return .loFiHazy
+        case .dubEcho:
+            return .dubEchoes
         case .sciFi:
             return .cinematicAtmospheres
         case .dubTechno, .minimalTechno, .detroitTechno, .acidTechno, .deepTech, .darkMinimal:
@@ -1021,18 +1042,24 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     ///
     /// THREE measured deviations from the sheet, each one bought a separation:
     ///
-    ///   · **`padOctave: 3`**, not 4. This is the one that does the work: it drops BOTH 4-of-4
-    ///     ties to 3 of 4 in a single change, and it is also the more honest register — the
-    ///     sibling `boomBapHipHop` already sits at 3, and a warm low Rhodes voicing IS this
-    ///     music. ⚠️ It must not drift back up: at 4 this genre is one array away from two
-    ///     others, which no guard outside `MusicStyleTests` would notice.
-    ///   · **`leadPatchName: "Pluck"`**, not Soft Keys. Soft Keys is the bucket of all THREE
-    ///     of this genre's nearest relatives (`modalJazz`, `jazz`, `boomBapHipHop`). The
-    ///     ceiling had room for any of the six, so sharing with the neighbourhood would have
-    ///     been carelessness rather than arithmetic — the opposite of `gospelChoir` (#1349),
-    ///     where the bucket was FORCED. ⚠️ `Pluck` is shared with `dubTechno`, which is 3 of 4
-    ///     — named, not hidden. That pair separates on the loudest axis there is: `.backbeat`
-    ///     derives `.comp`, `.signature` derives `.sustained`. One comps, the other holds.
+    ///   · **`padOctave: 3`**, not 4. ⛔ THE FIRST DRAFT OF THIS BULLET SAID IT "drops BOTH
+    ///     4-of-4 ties to 3 of 4", AND THE MEASUREMENT SAYS SOMETHING NARROWER. Over the seven
+    ///     identity axes against all 53 genres the MAXIMUM is four either way; what changes is
+    ///     the CROWD at that maximum — at `padOctave 4` it is FOUR genres (`modalJazz`, `jazz`,
+    ///     `electroFunk`, `detroitTechno`), at 3 it is TWO (`dubTechno`, `boomBapHipHop`).
+    ///     Halved, not lowered. It is also the more honest register: the sibling
+    ///     `boomBapHipHop` already sits at 3, and a warm low Rhodes voicing IS this music.
+    ///     ⚠️ It must not drift back up — the crowd doubles and no guard outside
+    ///     `MusicStyleTests` would notice.
+    ///   · **`leadPatchName: "Pluck"`**, not Soft Keys. The ceiling had room for any of the
+    ///     six, so nothing was FORCED here — the opposite of `gospelChoir` (#1349). What the
+    ///     arithmetic does is VETO exactly one: of the six names, five hold the maximum at four
+    ///     shared axes and the sheet's own "Soft Keys" alone raises it to FIVE, against
+    ///     `boomBapHipHop` — the one relative this genre most needs to stay apart from. Which
+    ///     of the remaining five is an EAR call and is written as one. ⚠️ `Pluck` is shared
+    ///     with `dubTechno`, which is 4 of 7 — named, not hidden. That pair separates on the
+    ///     loudest axis there is: `.backbeat` derives `.comp`, `.signature` derives
+    ///     `.sustained`. One comps, the other holds.
     ///   · the `bassGrammar` stays `sparseSub` from the sheet, and that is deliberate: the
     ///     sparse sub under a dragged backbeat is the figure. It is shared with four genres
     ///     and nothing is claimed about it.
@@ -1057,6 +1084,42 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// ⚠️ `defaultMode` takes NO arm — it inherits `default: .studioLocked`, right for a
     /// loop-based music and the omission a compiler cannot catch, so the batch guard asserts it.
     case loFiHipHop
+    /// #1352 G15b-1 (plan §2 rubric 9, "Dub & Drone"). Chord fragments thrown into a feedback
+    /// chamber: an offbeat skank at 66…82, a minor seventh stabbed rather than held, and a
+    /// HALF-note tape echo deep enough that the third repeat is still audible under the next
+    /// stab. The echo is not a decoration on this genre — it is the instrument.
+    ///
+    /// ⚠️ THE NEAREST TWO ARE `rootsReggae` AND `deepHouse`, BOTH AT FOUR OF SEVEN AXES, and
+    /// they are the same four: `minor`, `.offbeat`, `offbeatEighths`, `padOctave 3`. That
+    /// quartet IS dub — a minor skank over an offbeat bass, in a low register — so it is
+    /// shared on purpose and no attempt is made to break it. What separates them:
+    ///   · `rootsReggae` voices `[0, 2, 4]`, a plain triad, against this one's `[0, 2, 4, 6]`,
+    ///     and runs `[0, 3]` against `[0, 6]`. Its echo is a QUARTER at feedback 0.46; this
+    ///     one is a HALF at 0.52. Same family, one generation apart, and the tempo windows
+    ///     overlap almost completely (68…84 against 66…82) — named here, never claimed away.
+    ///   · `deepHouse` sits at `padOctave 4` and runs 120…126, which is a different music at
+    ///     twice the tempo; it shares the mode and the groove and nothing else that matters.
+    ///
+    /// TWO measured deviations from the design sheet, each one bought a separation:
+    ///   · **`leadPatchName: "Hollow Reed"`**, not the sheet's "Soft Keys". This one IS
+    ///     forced, and by two independent constraints at once — the `gospelChoir` case rather
+    ///     than the `loFiHipHop` one. "Soft Keys" puts this genre at FIVE of seven against
+    ///     `deepHouse`; "Pluck", the other musical fit, stands at 8 against a pigeonhole
+    ///     ceiling of 8 and would break it. "Deep Sub" lands at five against `rootsReggae`.
+    ///     Of what remains, the reed bucket is also the honest one: the chord voice of dub is
+    ///     an organ or a melodica, never a piano.
+    ///   · **`progression: [0, 6]`**, not the sheet's `[0, 5]`. Degrees resolving to roots
+    ///     i → ♭VII, which is the idiomatic dub turnaround, and `[0, 5]` is `boomBapHipHop`'s
+    ///     own — keeping it would have put a third genre on four shared axes for nothing.
+    ///     ⚠️ `composeHarmonic` ROTATES over `progressionPhase`, so this is a PAIR of roots
+    ///     opening on the tonic, not a score (#1290).
+    ///
+    /// ⚠️ `swing: 0.18` ties `celticAir`, `soulBallad` and `ska` exactly. A tie claims nothing
+    /// and none is written; the only swing ordering that matters is that it stays under
+    /// `modalJazz`'s pinned 0.30.
+    /// ⚠️ `defaultMode` takes NO arm — it inherits `default: .studioLocked`, right for a
+    /// loop-based music and the omission a compiler cannot catch, so the batch guard asserts it.
+    case dubEcho
     /// #983 S5 (same founder sentence: "psy prog House"). The roster has `psytrance` (un-offered,
     /// ~145, phrygian, ARPEGGIATED, padOctave 2) and nothing between it and house. This is the
     /// house-tempo, non-arpeggiated relative — progressive, not Goa — and it is separated from
@@ -1272,6 +1335,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case .gospelChoir:        return "Gospel Choir"
         // #1350 G15a — Lo-Fi & Hazy.
         case .loFiHipHop:         return "Lo-Fi Hip-Hop"
+        case .dubEcho:            return "Dub Echo"
         case .blackMetal:         return "Black Metal"
         case .modalJazz:          return "Modal Jazz"
         case .soulBallad:         return "Soul Ballad"
@@ -1357,6 +1421,11 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // tape colour — and all three are things the generator and the patch actually produce.
         case .loFiHipHop:
             return "Dragged minor sevenths · warm tape haze"
+        // #1352 G15b-1. The echo is named because it IS the genre, not a decoration — and
+        // "chamber" is the room, never a state of mind (the `TheGenreVocabularyStaysNeutral`
+        // list bans claims about states, not spaces).
+        case .dubEcho:
+            return "Offbeat sevenths dissolving in tape echo"
         case .blackMetal:
             return "Tremolo-cold raised-fourth minor"
         case .modalJazz:
@@ -1477,6 +1546,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // nearest relatives, which is why the separation had to be bought on register,
         // lead bucket and tempo instead (see the case doc).
         case .loFiHipHop:                           return .backbeat
+        case .dubEcho:                              return .offbeat
         case .industrialTechno, .darkPsyTrance:   return .fourOnFloor
         case .afroHouse:                          return .offbeat
         // #1285 G5 — both are drum-free by design; `.none` also derives `.sustained`
@@ -1734,6 +1804,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // OVERLAPS `boomBapHipHop` (84…96) and the un-offered `jazz` (80…150) on purpose.
         // Both overlaps are named at the case doc rather than engineered away.
         case .loFiHipHop:         return 72...88
+        case .dubEcho:            return 66...82
         case .blackMetal:         return 160...200
         case .modalJazz:          return 100...160
         case .soulBallad:         return 64...86
@@ -1873,6 +1944,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case .balkanModal:        return 140
         case .gospelChoir:        return 96
         case .loFiHipHop:         return 80
+        case .dubEcho:            return 72
         case .blackMetal:         return 180
         case .modalJazz:          return 120
         case .soulBallad:         return 72
@@ -1956,6 +2028,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #1350 G15a — 0.22, the drag. Second-largest offered swing; `modalJazz`'s 0.30
         // keeps the largest-offered pin, and this must stay under it.
         case .loFiHipHop:                         return 0.22
+        case .dubEcho:                            return 0.18
         case .boomBapHipHop:                      return 0.16
         case .electroFunk:                        return 0.08
         case .modalJazz:                          return 0.30
@@ -2110,6 +2183,12 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // "Pluck" is an EAR call and is written as one. Its own collision is with `dubTechno`,
         // across the `.backbeat`/`.signature` boundary and a tempo window 30 BPM away.
         case .loFiHipHop:         return "Pluck"
+        // #1352 G15b-1. FORCED, and by two independent constraints at once — see the case
+        // doc: "Soft Keys" (the sheet) lands at five of seven against `deepHouse`, "Pluck"
+        // stands at 8 against a ceiling of 8 and would break it, "Deep Sub" lands at five
+        // against `rootsReggae`. The reed bucket is also the honest one: dub comps on an
+        // organ or a melodica.
+        case .dubEcho:            return "Hollow Reed"
         case .blackMetal:         return "Warm Strings"
         case .modalJazz:          return "Soft Keys"
         case .soulBallad:         return "Choir Vox"
@@ -2240,6 +2319,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // No ordinal replaces it: the triple is FREE (no other arm returns these three), and
         // that is the whole claim.
         case .loFiHipHop:                         return (1.10, 1.06, 0.86)
+        // #1352 G15b-1. Bass furthest forward of this pair — dub is bass music — with the
+        // stab present rather than dominant. The triple is FREE (no other arm returns
+        // these three); no single value takes a rank, and none is claimed.
+        case .dubEcho:                            return (1.16, 1.04, 0.88)
         case .blackMetal:                         return (1.10, 1.04, 0.88)
         case .modalJazz:                          return (1.00, 1.08, 0.88)
         case .soulBallad:                         return (1.00, 1.10, 0.88)
@@ -2292,6 +2375,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #1350 G15a. `dorian` is the most-shared mode in the offered roster (six others);
         // claimed as nothing, and the reason this genre needed three other separations.
         case .loFiHipHop:         return .dorian
+        case .dubEcho:            return .minor
         case .blackMetal:         return .hungarianMinor
         case .modalJazz:          return .dorian
         case .soulBallad:         return .major
@@ -2508,6 +2592,27 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             // ⚠️ `arpeggiated: false`, `leadDensity: 0.0` — the loop is a held comped stack.
             // A rolled figure would turn a background music into a foreground one.
             return HarmonicProfile(progression: [0, 5, 3], chordTones: [0, 2, 4, 6],
+                                   padOctave: 3, leadOctave: 5, arpeggiated: false,
+                                   leadDensity: 0.0)
+        case .dubEcho:
+            // #1352 G15b-1 — DEGREES, never semitones. `[0, 2, 4, 6]` on minor
+            // `[0,2,3,5,7,9,10]` resolves to 0, 3, 7, 10: the MINOR seventh, the same stack
+            // fourteen other arms carry. It is emphatically NOT what separates this genre, and
+            // saying so here is the point — the separation is the echo and the turnaround.
+            //
+            // `progression: [0, 6]` — roots i → ♭VII, the dub turnaround. Shared with
+            // `celticAir` and `contemplation`, neither of which is on this scale or this
+            // archetype. ⚠️ `composeHarmonic` ROTATES over `progressionPhase`, so this is a
+            // PAIR of roots with a tonic opening, not a score (#1290).
+            //
+            // ⚠️ `padOctave: 3` is shared with `rootsReggae` and `boomBapHipHop` on purpose:
+            // a dub chord sits LOW, between the sub and the voice. It is not the lowest
+            // offered — `deepDrone` keeps 2 strictly (plan §2b-12).
+            //
+            // ⚠️ `arpeggiated: false`, `leadDensity: 0.0` — the stab is a struck block, and
+            // the echo is what turns one block into a figure. A rolled stack would compete
+            // with the repeats for the same rhythmic space.
+            return HarmonicProfile(progression: [0, 6], chordTones: [0, 2, 4, 6],
                                    padOctave: 3, leadOctave: 5, arpeggiated: false,
                                    leadDensity: 0.0)
         case .andalusianCadence:

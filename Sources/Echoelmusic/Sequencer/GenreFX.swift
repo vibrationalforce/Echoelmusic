@@ -473,6 +473,53 @@ public extension MusicStyle {
                 delayWow: 0.38, delayDrive: 0.22,
                 saturation: 0.23,
                 reverbEnabled: true, reverbMix: 0.21, reverbRoom: 0.50, reverbDamping: 0.63)
+        case .dubEcho:
+            // #1352 G15b-1 — THE ECHO IS THE GENRE, so this arm is the genre. A HALF note on
+            // tape at feedback 0.52: 1.463 s at the fastest allowed 82 BPM and 1.818 s at the
+            // slowest 66, both un-clamped under the 2.0 s ceiling that
+            // `GenreDelaySyncResolvabilityTests` sweeps. At that depth the third repeat is
+            // still audible under the next stab, which is the whole point of the patch's short
+            // release — the tail lives HERE, not in the voice.
+            //
+            // ⚠️ THE DIVISION IS SHARED AND THE DEPTH IS NOT. `.tape` on a plain `.half` is
+            // already carried by `sciFi`, `doom` and `selfObservation`; none of the three is a
+            // near neighbour of this genre on any identity axis, so the division claims nothing
+            // and no first-use is asserted (the #1350 lesson, applied to a case where the
+            // answer came out the other way). What separates this arm is the FEEDBACK.
+            //
+            // ⚠️ THE TWO NEIGHBOURS ON THE FEEDBACK AXIS, both named so no rank moves:
+            // `rootsReggae` is the same family one generation earlier — a QUARTER on tape at
+            // 0.46, and its own doc explains why that is legal above `minimalTechno`'s 0.44.
+            // This one is deeper AND longer, which is what dub did to reggae. And `dubTechno`'s
+            // **0.58 remains the roster maximum** — that claim is written at `rootsReggae` and
+            // this arm deliberately stops short of it, because a ping-pong at 0.58 is a
+            // different instrument from a mono tape line at 0.52.
+            //
+            // ⚠️ NO CHORUS, and that is the second separator from `dubTechno`, which takes a
+            // slow one. The width here is the delay's own `delaySpread`; a chorus on top of a
+            // half-note feedback line smears the one thing that has to stay legible — where
+            // the repeat lands against the next offbeat.
+            //
+            // ⚠️ Every number FREE, measured over the whole file: mix 0.38 between the 0.36
+            // pair (`vaporwave`, `drift`) and the 0.40 pair (`futuristic`, `stillMeditation`) ·
+            // feedback 0.52 between the 0.50 pair (`doom`, `blurry`) and `dubTechno`'s 0.58 ·
+            // tone 0.32 between the 0.30 group and the 0.34 pair, well above `deepDrone`'s 0.14
+            // (the darkest in the roster) · spread 0.42 between the 0.40 pair and `afroHouse`'s
+            // 0.44, under `detroitTechno`'s 0.60 (the widest) · wow 0.26 between
+            // `selfObservation`'s 0.25 and `deepDrone`'s 0.28 · drive 0.28 between
+            // `loFiHipHop`'s 0.22 and `doom`'s 0.30 · saturation 0.27 between the 0.26 pair
+            // (`balkanModal`, `modalJazz`) and `boomBapHipHop`'s 0.28, clear of
+            // `minimalTechno`'s 0.14 whose claim is scoped to BEAT-DRIVEN chains · reverb mix
+            // 0.19 between `synthwave`'s 0.18 and the 0.20 group · room 0.58 between the 0.56
+            // pair and `psyProgHouse`'s 0.60 · damping 0.43 between the 0.42 pair and the 0.44
+            // group, so `deepDrone`'s 0.68 keeps the most-damped rank.
+            return GenreFXPreset(
+                delayEnabled: true, delayMode: .tape,
+                delaySync: TempoSyncOption(.half),
+                delayMix: 0.38, delayFeedback: 0.52, delayTone: 0.32, delaySpread: 0.42,
+                delayWow: 0.26, delayDrive: 0.28,
+                saturation: 0.27,
+                reverbEnabled: true, reverbMix: 0.19, reverbRoom: 0.58, reverbDamping: 0.43)
         case .rootsReggae:
             // #1289 G6b — THE LONG ECHO, and it is the genre rather than a decoration: a QUARTER
             // on tape with high feedback and audible wow. At the fastest allowed 84 BPM that is

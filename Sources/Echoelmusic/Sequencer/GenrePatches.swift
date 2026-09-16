@@ -228,6 +228,36 @@ public extension MusicStyle {
                 cutoff: 1550, res: 0.12, lfoAmt: 0.11, lfoRate: 0.32, lfoDepth: 0.09,
                 revMix: 0.18, revDecay: 1.10, vibRate: 4.2, vibDepth: 0.11,
                 uni: 2, det: 13)
+        case .dubEcho:
+            // #1352 G15b-1 — ECHO STAB. A dub chord is STRUCK and let go into the delay, so
+            // the envelope is the opposite of every pad in this file: a fast onset, a short
+            // decay into a LOW sustain (0.22) and a release just long enough that the stab has
+            // an edge to catch. The tail of this voice is not in the patch at all — it is the
+            // half-note tape echo in `GenreFX`, and that is the whole design. Tuning this
+            // release UP would put the patch and the chain in competition for one gesture.
+            //
+            // ⚠️ `hl: 0.58` with `harm: 0.80` is the reed/organ colour the lead bucket
+            // promises and the case doc argues for: upper partials present, fundamental not
+            // dominant. Dub comps on an organ or a melodica, never on a piano, and this is the
+            // half of that claim the patch can actually carry.
+            //
+            // ⚠️ Every number from `python3 scripts/genre-prebatch.py --patch "Echo Stab"`,
+            // which reports over ALL the file's `patch(` blocks and refuses when its own
+            // coverage is partial (#1350/#1351 — the tool exists because ten remembered
+            // numbers reached two shipped doc comments): cutoff 1950 is FREE and the sole
+            // holder, between the 1900 pair ("Nebula", "Warm Keys") and `modalJazz`'s "Warm
+            // Comp Keys" (2000), far above "Minimal Sub"'s 520 (the lowest) and far under
+            // "Glacier Pad"'s 4200 (the brightest) · the envelope sums to 0.876, FREE between
+            // "Brass Sub" (0.85) and "Nylon Pluck" (0.883), well clear of "Psy Bass"'s 0.322
+            // (the shortest) · `harm: 0.80`, `bright: 0.34`, `res: 0.20`, `uni: 2` and
+            // `det: 8` are all TIED with several voices and claim nothing — stated, because
+            // a tie is exactly the shape a "the most" sentence gets written about by mistake.
+            return patch("71", "Echo Stab",
+                a: 0.006, d: 0.30, s: 0.22, r: 0.35,
+                harm: 0.80, hl: 0.58, bright: 0.34, noise: 0.0, color: "Pink", shape: "Natural",
+                cutoff: 1950, res: 0.20, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.10, revDecay: 1.40, vibRate: 0, vibDepth: 0,
+                uni: 2, det: 8)
         case .rootsReggae:
             // #1289 G6b — ROOTS ORGAN. ⚠️ NOT "Skank Organ": `ska` (un-offered) already ships
             // that name, and the pre-batch check caught it — the third name collision in three
@@ -818,6 +848,45 @@ public extension MusicStyle {
                 a: 0.010, d: 0.50, s: 0.68, r: 0.26,
                 harm: 0.94, hl: 0.28, bright: 0.11, noise: 0.0, color: "Pink", shape: "Natural",
                 cutoff: 610, res: 0.08, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
+        case .dubEcho:
+            // #1352 G15b-1 — DUB SUB. The skanking sub: round, long and almost without top.
+            //
+            // ⛔ THE FIRST DRAFT OF THIS ARM WAS A NEAR-DUPLICATE AND THE COMMENT NAMED THE
+            // WRONG PATCH. It said the figure is shared with `rootsReggae`'s "Roots Sub" — the
+            // patch is called "Roll Sub" — and it argued "this one sustains where a roots bass
+            // plucks", while that patch sustains at 0.72 too. Worse, the draft's envelope was
+            // a: 0.012, d: 0.42, s: 0.72, r: 0.22 against Roll Sub's 0.012 / 0.50 / 0.72 /
+            // 0.22: THREE of four values identical, for the one other genre that walks the same
+            // `offbeatEighths` figure. `--patch "Roll Sub"` printed all of it in one call; the
+            // draft was written from memory of a name. **Check the sibling with the tool BEFORE
+            // arguing a separation from it** — that is the #1350 law pointed sideways.
+            //
+            // What the two actually are, measured: this sub is LONGER (envelope 1.754 against
+            // 1.452) and much darker at the filter (cutoff 545 against 700), because a dub sub
+            // holds the bar while the chord is off in the echo, where a roots bass re-articulates
+            // every offbeat. ⚠️ It is NOT darker in `bright`: Roll Sub is 0.10 and this is 0.13.
+            // Two different words for "dark" in one patch type, which is how that draft went
+            // wrong in the first place.
+            //
+            // ⚠️ Every number from `python3 scripts/genre-prebatch.py --patch "Dub Sub"`, which
+            // reports over ALL the file's `patch(` blocks and refuses when its own coverage is
+            // partial (#1350/#1351): `harm: 0.96` is the SOLE HOLDER, directly under "Drone
+            // Bed"'s 0.98 which keeps the file-wide maximum — nearly all fundamental is the
+            // point, and stopping one step short of the drone is deliberate · `bright: 0.13` is
+            // the SOLE HOLDER between "Dust Sub"/"Walk Sub" (0.12) and "Drone Sub"/"Minimal
+            // Sub" (0.14), so the darkest rank stays with the 0.10 pair ("Drone Bed", "Roll
+            // Sub") · cutoff 545 is the SOLE HOLDER between "Walk Sub" (540) and "Dark Sub"
+            // (560), and "Minimal Sub" keeps its 520 ("lowest cutoff, darkest in the file")
+            // un-tied · `d: 0.62` and `r: 0.32` are SOLE HOLDERS, `s: 0.80` ties only "Chamber
+            // Strings", and the envelope sums to 1.754, FREE between "Walk Sub" (1.51) and the
+            // 1.76 pair ("Brass Reed", "Metal Rig") · `uni: 1`, `det: 0`, dry and mono like
+            // every bass patch here except "Drone Bed", which is 4.
+            return patch("72", "Dub Sub",
+                a: 0.014, d: 0.62, s: 0.80, r: 0.32,
+                harm: 0.96, hl: 0.34, bright: 0.13, noise: 0.0, color: "Pink", shape: "Dark",
+                cutoff: 545, res: 0.14, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
                 revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
                 uni: 1, det: 0)
         case .rootsReggae:
