@@ -412,8 +412,13 @@ enum AudioConfiguration {
     /// change their isolation" — FALSE in both halves. There is ONE such closure (the other is
     /// `await MainActor.run`, which IS isolated), and neither callback touches this set at all:
     /// they call `upgradeToPlayAndRecord()`, which writes `recordingRouteNeeded`. Every one of
-    /// the seven real claim/release sites lives in a `@MainActor` type, so `@MainActor` here
+    /// the seven real claim/release sites LIVED in a `@MainActor` type, so `@MainActor` here
     /// would have compiled.
+    /// ⛔ #1336 — PAST TENSE SINCE #1302, and it read as present for four days. All seven went
+    /// with the audio input; the enum's own doc above is the ONE home of that fact (#416) and
+    /// was the only place #1302 updated. Measure, never quote:
+    /// `git grep -n "claimRecordRoute(\|releaseRecordRoute(" -- Sources` — today the
+    /// declarations and this prose, no call site.
     ///
     /// The real reason is consistency of OWNERSHIP, not of compilation: the two flags above
     /// genuinely ARE written from that non-isolated path (via `upgradeToPlayAndRecord`), and
@@ -451,8 +456,16 @@ enum AudioConfiguration {
     /// log could not tell ONE mic owner from TWO — the first claim raises the route and prints
     /// `session: raise`, a second claim raises nothing and printed NOTHING. Two owners on the
     /// one HAL input is exactly the shape `AudioEngine` names for the `isInputConnToConverter`
-    /// family (seven device logs deep, still unnamed), and it is reachable today: voice capture
-    /// (`microphoneManager`) can run while input monitoring holds the route.
+    /// family (seven device logs deep, still unnamed), and it WAS reachable until #1302: voice
+    /// capture (`microphoneManager`) could run while input monitoring holds the route.
+    ///
+    /// ⛔ #1336 — "IT IS REACHABLE TODAY" STOOD HERE AND IS FALSE SINCE #1302. Both features
+    /// named are deleted files; nothing claims the route, so two owners cannot co-exist and
+    /// this breadcrumb cannot fire. The LINE stays for the reason the enum above stays: the day
+    /// anything records again, one-owner-versus-two is the shape that localises the
+    /// `isInputConnToConverter` family, and a breadcrumb added back later would be added back
+    /// blind. ⚠️ A doc claiming present reachability is the expensive half — it invites the next
+    /// session to debug a two-owner race that no build can produce.
     ///
     /// ⚠️ THESE LINES ARE DELIBERATELY NOT NUMBERED `n/N`. The rungs elsewhere in this file
     /// (`session: configure 1/4` …) are a LADDER — a fixed sequence whose silence localises a
@@ -481,8 +494,10 @@ enum AudioConfiguration {
         // ONE read, used by BOTH the branch and the message (audio-thread review of #888,
         // finding 3). The first draft read `recordRouteOwners.isEmpty` for the guard and then
         // re-read the set inside the breadcrumb — two reads of `nonisolated(unsafe)` storage.
-        // Unreachable today (every one of the seven claim/release sites is on a `@MainActor`
-        // type), but the failure mode is the one this file least tolerates: under a future
+        // Unreachable today — and MORE so than the parenthetical that stood here said. It read
+        // "(every one of the seven claim/release sites is on a `@MainActor` type)"; since #1302
+        // there are NO call sites at all (#1336). The verdict survives, its reason changed.
+        // The failure mode is still the one this file least tolerates: under a future
         // non-isolated caller the printed holders could DISAGREE with the branch actually
         // taken, so the log would LIE rather than crash. `Set` is a value type, so this
         // snapshot makes "the line describes the branch" structural instead of argued —
@@ -495,16 +510,22 @@ enum AudioConfiguration {
         }
         EchoelCrashLog.breadcrumb("route: release \(String(describing: owner)) → holders none, lowering")
         // #902 — THE THROWN OUTCOME. #888 gave this method two lines for two exits; a THROWN
-        // downgrade shared the "lowering" line with the successful one, and **nine of the twelve
-        // release call sites are `try?`** (every #299 failure path), so the error was swallowed
-        // and the log showed "lowering" followed by whatever came next — indistinguishable from
-        // a lowering that worked.
+        // downgrade shared the "lowering" line with the successful one, and MOST release call
+        // sites were `try?` (every #299 failure path), so the error was swallowed and the log
+        // showed "lowering" followed by whatever came next — indistinguishable from a lowering
+        // that worked. That reasoning is why the outcome is still SAID here, and it does not
+        // depend on a count.
         //
-        // ⛔ #903 — "EIGHT OF THIRTEEN" STOOD HERE AND BOTH NUMBERS WERE INVENTED. Measured:
-        // `git grep -c "releaseRecordRoute(" -- Sources` gives 14 HITS = 12 call sites + this
-        // declaration + one doc mention; of the 12, NINE are `try?` and three are `do`/`catch`.
-        // Neither 13 nor 8 matches any counting convention. The argument only got stronger, and
-        // that is exactly why it went unchecked.
+        // ⛔ #903 SAID "EIGHT OF THIRTEEN" AND BOTH NUMBERS WERE INVENTED; IT REPLACED THEM WITH
+        // "14 HITS = 12 call sites … NINE are `try?`", AND #1336 FOUND THAT STALE TOO. Since
+        // #1302 the grep it quoted returns THREE hits and ZERO call sites — the twelve went with
+        // the audio input. **A correction ages exactly like the claim it corrected** (#1326):
+        // nothing re-checks a ⛔ note the way it re-checks an original sentence, and this one
+        // survived a founder deletion that removed its entire subject.
+        // ⭐ AND THE SHARPER RULE, which this file has now paid for twice: **a note that QUOTES
+        // a `grep` ages faster than one that states a fact** — it pins an output, and every
+        // later edit (including this one) changes the output. The command stays, the number
+        // does not: `git grep -n "releaseRecordRoute(" -- Sources`.
         //
         // ⚠️ WHAT THIS DOES *NOT* DO, deliberately:
         // · It does NOT re-insert the owner. The owner is genuinely gone (its engine is torn
@@ -690,8 +711,13 @@ enum AudioConfiguration {
         // claim sites configures first (`MicrophoneManager`; `AudioEngine.setInputMonitoring`
         // and `MultiTrackRecorder` do not)". Since #975 the monitoring path DOES configure
         // first, and since #981 `MultiTrackRecorder` CHECKS but deliberately does not configure
-        // — it is reached with a running engine, so it refuses. Today: all three CHECK, two
-        // configure, one refuses. `upgradeToPlayAndRecord` still does not read this flag at all,
+        // — it was reached with a running engine, so it refused. At that point all three
+        // CHECKED, two configured, one refused.
+        // ⛔ #1336 — THAT SENTENCE BEGAN "Today:" AND IS THE THIRD CORRECTION IN THIS CHAIN TO
+        // GO STALE. All three claim sites are deleted (#1302); there is no "all three" left to
+        // check anything. Kept in the past tense because the CONCLUSION below is about
+        // `upgradeToPlayAndRecord`, which is still here and still does not read this flag.
+        // `upgradeToPlayAndRecord` still does not read this flag at all,
         // which is the part that made the stranding possible in the first place. So: configure
         // throws → a later claim raises the category anyway → release writes "holders none,
         // lowering" → this returns in silence → the session stays on `.playAndRecord` with
