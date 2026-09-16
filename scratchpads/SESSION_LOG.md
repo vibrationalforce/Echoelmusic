@@ -31951,3 +31951,64 @@ jeden, der in diesem Fenster gezogen hat, bis `a68e289` zehn Commits später rep
 genau die #926-Vakuum-Grün-Lage, nur auf Repo-Ebene statt auf Wächter-Ebene. Der Befund bleibt
 founder-gated (`.github/workflows/**` = berichten, nicht editieren), aber er ist ab heute
 **gemessen statt hypothetisch** — mit Laufnummer und Log-Zitat.
+
+## 2026-09-16 (Fortsetzung) — Der Register-Sweep: #1340–#1342
+
+**Frage der Runde:** die Founder-Löschungen #1301/#1302/#1304/#1305 sind vier Tage alt. Welche
+REGISTER behaupten die gelöschten Fähigkeiten noch als Gegenwart? Nicht der Quelltext — den hat
+#1339 abgeräumt —, sondern die Dokumente, aus denen eine Sitzung ableitet, was existiert.
+
+### Gemessen, Fläche für Fläche
+
+| Fläche | Befund |
+|---|---|
+| `fastlane/metadata` (Store) | **SAUBER.** Vier Treffer, alle echt: „Harmonizität" (DSP-Parameter), zweimal VoiceOver, algorithmischer Reverb |
+| `docs/*.html` (Website) | **SAUBER.** Ein „Autotune"-Treffer, und der beschreibt auf `artist.html` das Musikprojekt Nia9ara |
+| `docs/dev/FEATURE_MATRIX.md` | **VIER Gegenwarts-Behauptungen** → #1340 |
+| `memory/vision.md` + `memory/user.md` (Hook liest sie GANZ) | **ZWEI Bauaufträge** → #1341 |
+| `docs/dev/ROADMAP.md` + `ContentPipeline/CLAIMS.md` | **DREI Posten** → #1342 |
+| `.claude/**` (369 md-Dateien) | **SAUBER.** Die zwei Kandidaten sind korrekt geschriebene Rücknahmen in anderer Notation (`_golden-goal.md` streicht `CircadianClock` im `>`-Block; `HilbertAnalyticSignal` ist eine Namensnotiz über ein KÜNFTIGES Modul) |
+
+⭐ **Die schärfste Einzelstelle saß EINE ZEILE UNTER IHREM EIGENEN GRABSTEIN.**
+`FEATURE_MATRIX.md:182` las bereits „⛔ `MicrophoneManager.swift` stood here and was deleted with
+the audio input — #1302"; Zeile 183 nannte „mic FFT (1024-pt)" als **Live**. Gemessen: die
+einzigen zwei `installTap` unter `Audio/` sitzen auf `meterNode` und `masterMixer`, und der Ring
+ist in `AudioEngine` als „for the immersive FFT visual" dokumentiert. **Die FFT ist echt, die
+RICHTUNG war falsch** — und die Richtung IST die Behauptung. Dieselbe Form wie die CLAUDE.md-H1.
+
+### Was die Transkription am Entwurf widerlegte — zweimal, und das ist der Ertrag
+
+Der #1341-Wächter pinnt eine GENERELLE Regel (ein backtick-zitierter Großbuchstaben-Name in den
+fünf hook-geladenen Dateien muss unter `Sources/` auflösen, außer ein ⛔ steht früher im selben
+Bullet). Zwei Entwurfsfehler überlebten ein sorgfältiges Lesen und starben beim ersten Lauf
+gegen den ELTERNTEIL:
+1. **Absatz-Bereich war falsch.** Leerzeilen-Blöcke machen eine ganze Markdown-Bulletliste zu
+   EINER Einheit — das ⛔ des RTMP-Bullets entschuldigte die toten Namen drei Bullets weiter
+   unten. Der Wächter kam auf dem Elternteil **grün** zurück, auf genau dem Defekt, für den er
+   geschrieben war (#937, von innen). Einheit ist das **Bullet**.
+2. **Ein Marker darf nur entschuldigen, was ihm FOLGT.** Position vergleichen, nicht Anwesenheit.
+
+⭐ **GESETZ: ein Wächter, der auf dem Baum grün ist, den er fangen sollte, ist weniger wert als
+keiner** — er meldet zusätzlich, die Klasse sei abgedeckt. §0-Benotung gegen den Elternteil ist
+genau dafür da, und sie hat hier zum zweiten Mal in dieser Sitzung mehr gefunden als das Lesen.
+
+### Warum die Regel NICHT ausgeweitet wurde
+
+Vor #1342 über `docs/dev/` + `ContentPipeline/` gemessen: **104 nackte Namen in 21 Dateien**,
+fast alle korrekt (Testbündel-Namen, `Codable`, `HaishinKit` in einem ausdrücklich unverlinkten
+Plan, Verbotswortlisten in einem Triage-Dokument, Tabellenmarker wie `LIVE`/`ROADMAP` in
+Backticks). Über `.claude/**`: **250 in 369 Dateien**, fast alle aus den gevendorten
+`gstack`/`marketing`-Paketen und aus JSON-LD-/API-Feldnamen. Eine Ausweitung hätte einen Checker
+ausgeliefert, dessen Ausgabe überwiegend Lärm ist — schlimmer als keiner (#665). **Die
+generelle Regel bleibt auf den fünf immer geladenen Dateien; die zwei Planungs-Register bekommen
+benannte Pins. Die Asymmetrie IST der Befund, kein Kompromiss.**
+
+### Ein Posten, der über diesen Zyklus hinausreicht
+
+ROADMAP-Posten 7 („Audiovisual Vocoder wiring") trug **in seiner eigenen Notiz** den Blocker:
+*„`VocoderCore` also needs a voice analyzer (mic pitch/energy/brightness) which was removed in
+the soundscape refactor"* — datiert 2026-06-19. **Eine bereits fehlende Voraussetzung wurde drei
+Monate lang als Flaggschiff-NEXT mitgetragen.** Ein Posten, dessen Notiz eine fehlende
+Abhängigkeit benennt, ist BLOCKIERT, nicht nächster — und nichts in diesem Repo liest eine ✅-
+oder NEXT-Zeile noch einmal. Gleiches gilt für „resolved" in `memory/vision.md` und für die
+✅-DONE-Zeile auf `SampleBrowserView`, die drei Löschungen überlebt hat.

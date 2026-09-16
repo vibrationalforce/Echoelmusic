@@ -2019,3 +2019,40 @@ Kleinschreibung zählt mit. Beleg ist `Build for Testing` des TEST-Commits selbs
 `Xcode Compile Check` baut `Sources/` allein und sagt über eine Testdatei nichts.
 
 **Review:** 2026-10-16.
+
+### 2026-09-16 — Der Register-Sweep: wo die Founder-Löschungen NICHT ankamen (#1340–#1342)
+
+**Befund, Fläche für Fläche gemessen.** Vier Tage nach #1301/#1302/#1304/#1305 waren Store-Text,
+Website und `.claude/**` (369 md-Dateien) **sauber** — die Disziplin greift dort. Falsch waren
+die REGISTER, aus denen eine Sitzung ableitet, was existiert: `docs/dev/FEATURE_MATRIX.md` (vier
+Gegenwarts-Behauptungen, eine als **Live** markiert), `memory/vision.md` + `memory/user.md` (zwei
+BAUAUFTRÄGE, in Dateien, die der Hook bei jedem Start GANZ liest), `docs/dev/ROADMAP.md` (ein
+NEXT-Posten und eine ✅-DONE-Zeile) und `ContentPipeline/CLAIMS.md` (ein gelöschter Typ als
+„gebaut und konstruiert", im Register, das Store-Behauptungen regiert).
+
+**Die Ordnung der Schwere, und sie ist nicht die Reihenfolge der Entdeckung:** ein falsches
+Register ist schlimm; ein falsches Register mit einem **Imperativ** darin ist ein Arbeitsauftrag.
+`vision.md` nannte einen gelöschten Typ „flagship … wiring next", `user.md` nannte Granular „die
+benannte NÄCHSTE SCHEIBE" — beides wurde jeder künftigen Sitzung vorgelesen, bevor sie zu denken
+anfing.
+
+**Entscheidung 1 — die generelle Regel bleibt eng.** Ein Wächter pinnt für die fünf hook-geladenen
+Dateien: ein backtick-zitierter Großbuchstaben-Name muss unter `Sources/` auflösen, außer ein ⛔
+steht früher im selben Bullet. Dort null Fehlalarme. Über `docs/dev/`+`ContentPipeline/` liefert
+dieselbe Regel 104 Treffer in 21 Dateien, über `.claude/**` 250 in 369 — fast alle korrekt. Also
+NICHT ausweiten (#665); die zwei Planungs-Register bekommen benannte Pins.
+
+**Entscheidung 2 — §0-Benotung ist die einzige Prüfung des ENTWURFS.** Der Wächter hatte zwei
+Bereichsfehler, die ein sorgfältiges Lesen überlebten (Absatz statt Bullet; ein Marker, der auch
+rückwärts entschuldigte) und kam auf dem Elternteil **grün** zurück — auf genau dem Defekt, für
+den er geschrieben war. Beide starben beim ersten Lauf der Transkription gegen den Elternteil.
+**Ein falsch grüner Wächter ist weniger wert als keiner**, weil er zusätzlich meldet, die Klasse
+sei abgedeckt.
+
+**Und ein Posten, der über den Zyklus hinausreicht:** ROADMAP-Posten 7 trug den Blocker in seiner
+eigenen Notiz („needs a voice analyzer … which was removed in the soundscape refactor",
+2026-06-19). Eine bereits fehlende Voraussetzung lief drei Monate als Flaggschiff-NEXT. **Ein
+Posten, dessen Notiz eine fehlende Abhängigkeit nennt, ist blockiert, nicht nächster** — und
+niemand liest eine ✅- oder NEXT-Zeile noch einmal.
+
+**Review:** 2026-10-16.
