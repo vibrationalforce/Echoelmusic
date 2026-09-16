@@ -15,6 +15,22 @@
 //
 //  STALENESS. A frame older than `maxAgeSeconds` reads as silent even if nobody called
 //  `reset()` — monitoring can end through a route loss (#612) without passing the OFF ladder.
+//
+//  ⛔ #1325 — THIS CHANNEL HAS HAD NO PRODUCER SINCE #1302, AND THE FIRST LINE OF THIS FILE
+//  SAID OTHERWISE FOR FOUR DAYS. The producer was the audio-input guard tick, deleted with the
+//  microphone (founder 2026-09-12). Measured, not assumed:
+//    git grep -n "AudioFeatureChannel.shared" -- Sources   → 1, the renderer's READ
+//    git grep -n "AudioFeatureExtractor" -- Sources        → its own file only
+//  So `publish(` and `reset()` have zero callers, `snapshot(now:)` returns `.silent` on every
+//  rendered frame, and the two values the renderer derives from it — `audioHueBias` and
+//  `bassSwing` in `MetalBioView` — are permanently 0.
+//
+//  ⚠️ DO NOT DELETE, and the reason is not sentiment. This is the shape a future audio input
+//  rebuilds against: one lock-guarded leaf, zero actor hops, read once per frame — the same
+//  shape as the three LIVE touch channels beside it in `MetalBioView`. Deleting it would also
+//  delete the renderer's MOUNTING POINT, which is the expensive half: a restored input would
+//  then need a renderer change too, in a body governed by the 10.76.41/50 churn law.
+//  The honest label is PRODUCERLESS, not dead — the register in `CLAUDE.md` carries it.
 
 import Foundation
 

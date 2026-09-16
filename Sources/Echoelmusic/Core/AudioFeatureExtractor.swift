@@ -23,6 +23,11 @@
 //  WHERE IT RUNS. `@MainActor` context, on a COPY of the tap window, at the guard tick's rate.
 //  Never in the tap and never on the render thread — it holds arrays and may allocate once
 //  when the FFT size changes. Foundation only, so the arithmetic is testable end-to-end.
+//
+//  ⛔ #1325 — NO CALLER SINCE #1302. `git grep -n "AudioFeatureExtractor" -- Sources` returns
+//  this file alone; the microphone that fed it is gone (founder 2026-09-12). Kept for the same
+//  reason as `AudioFeatureChannel`, whose header states it: this is what a future audio input
+//  rebuilds against. Do not cite it as a live analysis stage.
 
 import Foundation
 

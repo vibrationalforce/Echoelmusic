@@ -146,7 +146,13 @@ Deprecated from main flow: the old SoundscapeEngine, ClipEngine, MomentCaptureVi
   **`Core/VisualModulation`** (nicht mit dem verdrahteten `BioVisualParams` verwechseln;
   Wächter `TheVisualModulationCoreHasNoCallerTests`). Dazu — #1230 — **`DSP/EchoelWSOLA`**
   (`git grep -n "EchoelWSOLA(" -- Sources` → 0; `StretchMode.beats.isImplemented` bleibt
-  bewusst `true`, Regionen persistieren `stretchMode`). Dazu — nachgetragen 2026-09-02 (Audit) —
+  bewusst `true`, Regionen persistieren `stretchMode`). Dazu — #1325 — **`Core/AudioFeatureChannel`
+  + `Core/AudioFeatureExtractor`** (der Erzeuger war der Audio-Guard-Tick, mit #1302 gelöscht:
+  `publish(`/`reset()` null Aufrufer, der Extractor nur die eigene Datei). ⚠️ Der Kanal wird
+  trotzdem PRO BILD gelesen — `MetalBioView` bekommt jedes Mal `.silent`, `audioHueBias` und
+  `bassSwing` sind dauerhaft 0. Die Lese-Stelle IST der Montagepunkt eines künftigen Eingangs;
+  wer sie „aufräumt", verlegt die teure Hälfte in den churn-empfindlichen Rumpf.
+  Dazu — nachgetragen 2026-09-02 (Audit) —
   **VIER `Sync/`-Kerne mit null Code-Aufrufern außerhalb der eigenen Datei:** `VBAPPanner`,
   `AmbisonicsEncode`, `LightFixtureGroup` (+`LightFixture`), `BioPhaser` (+`BioPhaserSource`) —
   je 1–2 Testdateien, sonst nur Kommentar-Nennungen. Befehl und Zähl-Kette:

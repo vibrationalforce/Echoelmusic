@@ -1250,8 +1250,17 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             let touchE = TouchVisualEnergy.shared.value(now: nowGov)
             // #1248 — THE INPUT, physically associated (founder 2026-09-11: concerts, clubs,
             // festivals, "andere Audio Inputs"). One lock-read per frame, off the SwiftUI
-            // graph, like the three touch channels above it. The features arrive at the
-            // guard tick (~15 Hz) and are EXACT ZERO in silence, so the #1244 skip survives:
+            // graph, like the three touch channels above it.
+            //
+            // ⛔ #1325 — THE SENTENCE THAT STOOD HERE SAID "The features arrive at the guard
+            // tick (~15 Hz)", AND THE GUARD TICK WAS DELETED WITH THE MICROPHONE (#1302).
+            // `AudioFeatureChannel` has no producer: `snapshot(now:)` returns `.silent` every
+            // frame, so `musicLevel` takes its own value, `liveE` is the finger energy alone,
+            // and `bassSwing` and `audioHueBias` below are permanently 0. The read STAYS — it
+            // is the mounting point a restored input plugs into, and re-opening this body to
+            // add one back is the expensive half (the 10.76.41/50 churn law). What each line
+            // WOULD do, once something publishes again, and why the #1244 skip survives
+            // (every field is the EXACT zero in silence):
             //   · `level`  joins `musicLevel` (max, not sum — the louder of room and music
             //     drives intensity and the water dish, no double counting when both play);
             //   · `onsetEnergy` joins the finger energy: a kick drum jolts the picture the
