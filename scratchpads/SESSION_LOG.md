@@ -32585,3 +32585,100 @@ ein `tail -200`, und ein Testname darin beweist einen Lauf, sein Fehlen beweist 
 Buchführungs-Commit `0234a89` fasst nur `scratchpads/`, `memory/` und `decisions.csv` an und
 erzeugt daher KEINEN Lauf (#1176) — er fährt als Passagier mit dem nächsten Code-Commit nach
 `main` (#697/#698/#699).
+
+## 2026-09-16 — #1350 G15a: Lo-Fi Hip-Hop, und die Messung, die fünf ausgelieferte Zahlen widerlegt
+
+Die erste Scheibe der Genre-Welt-Epik, die KEINE Taxonomie anlegt: `.loFiHazy` und
+`.underground` existierten, `loFiHipHop` stellt sich neben `vaporwave`. Damit ist jede
+Entscheidung dieser Scheibe über die Musik und keine über die Ablage — der Gegenfall zu
+G10a, das eine Rubrik debütieren musste.
+
+**Die Gefahr lag nicht beim Regal-Nachbarn.** Über die sieben Identitätsachsen (scale ·
+beatArchetype · leadPatchName · progression · chordTones · padOctave · bassGrammar) gegen
+ALLE 53 Genres gemessen sitzen genau zwei auf dem Maximum von VIER geteilten Achsen:
+`dubTechno` (scale, chordTones, leadPatchName, padOctave) und `boomBapHipHop`
+(beatArchetype, bassGrammar, chordTones, padOctave). `vaporwave`, der Regal-Nachbar, teilt
+zwei. Der Fingerabdruck-Test war die ganze Zeit grün — die #1349-Lehre, dass er der BODEN
+ist und nicht die Frage.
+
+**Drei gemessene Abweichungen vom Katalog:**
+1. `padOctave: 3` statt 4. ⛔ Mein erster Entwurf schrieb „senkt die Vier-Achsen-Bindungen
+   mit `modalJazz` und `jazz` auf drei" — die Messung sagt etwas ENGERES: das Maximum
+   bleibt bei vier, was sich halbiert ist die MENGE darauf (bei `padOctave 4`:
+   `modalJazz`, `jazz`, `electroFunk`, `detroitTechno`; bei 3: `dubTechno`,
+   `boomBapHipHop`). Der Arm sagt das jetzt so, samt der Rücknahme.
+2. Lead „Pluck" statt „Soft Keys". Die Pigeonhole-Decke hatte Platz für alle sechs Namen
+   (bearing 42 → 43, Decke 7 → 8), die Arithmetik ZWINGT also nichts — sie VERBIETET genau
+   einen: „Soft Keys" höbe das Maximum auf FÜNF gegen `boomBapHipHop`. Fünf der sechs
+   halten es bei vier; welcher davon ist eine Ohr-Entscheidung und steht als solche im Arm.
+   Das ist der exakte Gegenfall zu G10as „Warm Strings", das von der Decke erzwungen war.
+3. FX-Teilung `(.quarter, .triplet)` statt der Katalog-Punktachtel. `boomBapHipHop` ist
+   SCHON Tape auf punktierter Achtel; dasselbe Paar hätte den beiden Hip-Hop-Armen EIN Echo
+   mit zwei Etiketten gegeben. Erste Verwendung dieses Paares in `GenreFX` überhaupt;
+   0,455–0,556 s über das ganze Tempofenster, weit unter der 2,0-s-Decke.
+
+**⭐ DER TEUERSTE TEIL: DREI FREMDBEFUNDE, EINE URSACHE.** Fünf Zahlen im AUSGELIEFERTEN
+`Church Choir`-Doc aus #1349 waren falsch — Envelope 2,24 statt 3,10, zwei erfundene
+Nachbarn („Berlin Seq 2.12", „Neon Lead 2.32"; die echten sind `Neon Lead` 3,04 und
+`Cold Stack` 3,27), `Glacier Pad` 15,60 statt 16,50, und „sechst-langsamster" Attack statt
+elft-. Fünf weitere in diesem Batch' eigenem ersten Entwurf (beide Envelopes frei erfunden,
+„darker at the top" schlicht verkehrt herum — 610 ist ein HÖHERER Cutoff als 580). Dazu ein
+falscher Superlativ in `MusicStyle.mixLevels` („der Lead am weitesten zurückgenommen" —
+0,86 gegen `glacialField`/`slowBloom`s 0,85).
+
+**Alles aus EINEM Wegwerf-Parser, der still 31 von 73 `patch(`-Blöcken las** und nur
+meldete, was er fand. #1349 hatte gelernt „die GANZE Datei messen"; das war die Hälfte, die
+diese Lehre nicht abdeckte.
+
+⭐ **GESETZ, jetzt am `Church Choir`-Arm, weil es teurer war als der Fehler selbst: eine
+Messung, die ihre eigene ABDECKUNG nicht nennen kann, ist keine Messung.** Ein Parser über
+diese Datei druckt `parsed N of M`, und keine daraus abgeleitete Zahl wird geschrieben, bis
+N == M. Das ist dieselbe Klasse, die `.claude/rules/context.md` §2 für ein grep festhält,
+das still weniger als die Wahrheit liefern kann — eine Datei weiter. Die Ordinale sind
+GESTRICHEN statt korrigiert (#1349: ein impliziter Rang altert, ein freier Wert nicht).
+
+⚠️ Und derselbe Parser-Defekt traf beim Messen ein zweites Mal, in einer anderen Datei:
+eine Zeile `case .darkMinimal:   return .sparseSub   // #983 S4: …` fiel durch ein `$`-Anker
+am Zeilenende, und die erste Auswertung meldete vier `sparseSub`-Besitzer statt fünf. Der
+BassGrammar-Kommentar sagt „FÜNFTER Besitzer" und war die ganze Zeit richtig; beinahe hätte
+ich einen korrekten Vermerk „korrigiert". **Wer einen Vermerk widerlegen will, misst zuerst
+sein eigenes Werkzeug.**
+
+**Gemessen nach dem Schnitt** (`scripts/genre-prebatch.py`): 53 Genres, 36 angeboten, 73
+Patches; „Pluck" steht auf 8 bei Decke 8, also genau AUF ihr — das nächste lead-tragende
+Genre hebt sie auf ceil(49/6) = 9. Fingerabdruck-Sweep über die angebotenen: keine
+Kollision. Schwachschlüssel-Sweep (`scale|progression|chordTones|beatArchetype`) über alle
+53, durch DENSELBEN geprüften Parser: LEER.
+
+**Wächter:** `Tests/CISmoke/GenreBatchFifteenATests.swift`, 45 Zusicherungen in sieben
+Ansprüchen (8 · 6 · 7 · 7 · 5 · 5 · 7). Gegen den Elternbaum kompiliert die Datei nicht
+(`MusicStyle.loFiHipHop` existiert dort nicht), also hat dort KEINE Zusicherung ein Urteil —
+**eine** Abwesenheit, nicht fünfundvierzig (#486). Nach §0 gegen den Arbeitsbaum
+transkribiert: **36 der 45 grün**, die restlichen neun brauchen Swift-Typen
+(`category`/`offeredGenres`-Mitgliedschaft, `synthPatch`/`bassPatch`, `padGrammar`,
+`defaultMode`, der `fxPreset`-Wrapper). Sieben Checker exit 0, Doctor 0 CRITICAL.
+
+**Sieben nutzersichtbare Flächen mitgezogen:** beide `release_notes` (Thirty-five →
+Thirty-six, Fünfunddreißig → Sechsunddreißig, Name in beiden Listen), `tools.html`,
+`brainstorming.html`, `press.html` (zweimal), `APP_STORE_LISTING_v1.md`,
+`architecture.html` (41 von 52 → 42 von 53 — **gemessen, nicht hochgezählt**: 42 Arme
+setzen eigene Reverb-Werte, 11 fallen auf den geteilten Raum-Boden, Abdeckung 53 von 53).
+Die vier AUFZÄHLENDEN sind gegen `TheGenreListsMatchTheirOwnCountTests` transkribiert und
+grün.
+
+**NEEDS-FOUNDER-VERIFY:** Lo-Fi Hip-Hop bei 80 im Loop-Modus, A/B gegen Boom Bap bei 90.
+Zwei Ohrfragen, beide über das Wobbeln: liest „Wobble Keys" als abgenutztes Band oder als
+verstimmter Synth, und ist das Viertel-Triolen-Echo ein Schleppen oder klingt es nur zu spät?
+
+**Commit:** `36ae2df`.
+
+**GATE-LESUNG `36ae2df` — beide echten Gates grün.** `Xcode Compile Check` #2644 (Run
+35149224776) = `success`, Schritt 7 „Compile (iOS device SDK, no signing)" 3 min 04 s:
+`Sources/` baut mit dem neuen Genre, den zwei neuen Patches und dem neuen FX-Arm. CI/CD
+#6109 (Run 35149224815) Schritt 9 **`Build for Testing` = `success`** (20:55:37 → 21:00:28;
+Schritt 10 „Print build log on failure" = `skipped`) — damit kompiliert `Tests/CISmoke`
+nachweislich, also auch `GenreBatchFifteenATests.swift` mit seinen 45 Zusicherungen.
+Schritt 11 `Run Tests` lief beim Lesen noch; seine Conclusion sagt wegen #396 ohnehin
+nichts (§5). ⚠️ Ehrliche Formulierung, unverändert: **kompiliert nachweislich, Ausführung
+unbelegt** (#445/#807). ⚠️ `Xcode Compile Check` #2643 steht als `cancelled` — zwei Läufe
+auf demselben SHA, der zweite (#2644) gewann die Concurrency-Gruppe; das ist kein Befund.
