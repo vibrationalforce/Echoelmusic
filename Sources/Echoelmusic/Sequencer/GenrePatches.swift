@@ -119,9 +119,15 @@ public extension MusicStyle {
                 uni: 3, det: 9)
         case .balkanModal:
             // #1295b G11d — BRASS REED. The reed edge the genre's own description claims: a
-            // narrow, buzzy double-reed rather than the soft `Air Reed` it shares a lead PATCH
-            // NAME bucket with. The identity is harmonics 0.78 against a low harmonic level
-            // (0.62) — bright partials that do not sit on a fat body.
+            // narrow, buzzy double reed. The identity is harmonics 0.78 against a low
+            // harmonic level (0.62) — bright partials that do not sit on a fat body.
+            //
+            // ⚠️ TWO DIFFERENT THINGS ARE CALLED "the patch" here and this comment used to
+            // run them together. `leadPatchName` is the CEILING BUCKET — this genre shares
+            // "Hollow Reed" with `celticAir` and five others, which is what the pre-batch
+            // counts (6 → 7, exactly the ceiling). `synthPatch` is THIS, the actual voice,
+            // and it is its own: `celticAir`'s is the soft "Air Reed" (patch 60). Sharing a
+            // bucket is not sharing a sound.
             //
             // ⚠️ Every number against a measured neighbour, and nothing takes a file-wide claim:
             // cutoff 2350 is FREE and sits exactly between "Warm Rhodes" (2300, taken by
