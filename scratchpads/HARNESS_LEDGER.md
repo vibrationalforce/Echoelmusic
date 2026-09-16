@@ -3867,3 +3867,38 @@ ZWEI Genres und erklärte im selben Satz, warum das zweite nicht dazugehört (es
 `PadGrammar`-Case, den es nicht gibt, und wäre eine stillschweigende Rücknahme eines Docs aus
 #1288). Gebaut wurde eins. **Eine Rücknahme, die in einem Feature versteckt wird, liest
 niemand nach** — sie gehört als eigene Zeile in den Plan, mit beiden Risiken benannt.
+
+## PLAYBOOK #1344 (2026-09-16) — ein Wächter, der auf dem EIGENEN Baum rot ist, ist derselbe Entwurfsfehler wie einer, der auf dem fremden grün ist
+
+**Anlass.** Der erste Entwurf von `TheRoadmapHonestyLedgerIsHonestTests` verbot vier Phrasen mit
+`XCTAssertFalse(text.contains(...))`. Er kam auf dem Baum, den er absichern sollte, **rot**
+zurück — weil die Rücknahmen desselben Commits den Wortlaut ZITIEREN. So streicht dieses Repo:
+der alte Satz bleibt lesbar, damit die Rücknahme prüfbar ist. Ein nackter Negativ-Scan trifft
+also seine eigene Rücknahme. Das ist die **#491-Falle von innen** — #491 verbietet den
+Negativ-Scan auf `CLAUDE.md` aus exakt demselben Grund, und niemand hatte gemerkt, dass er für
+JEDE Datei gilt, die mit ⛔-Zitaten arbeitet, also inzwischen für die meisten.
+
+**Das Gesetz, beidseitig.** Die Sitzung hatte tags zuvor gelernt: *ein Wächter, der auf dem Baum
+GRÜN ist, den er fangen sollte, ist weniger wert als keiner.* Das hier ist das Spiegelbild:
+**rot auf dem eigenen Baum ist derselbe Entwurfsfehler.** Beide sind unsichtbar beim Lesen und
+beide fallen in der ersten Sekunde der §0-Transkription — aber nur, wenn sie gegen **BEIDE**
+Bäume läuft. Gegen nur einen gefahren, sieht jeweils einer der zwei Fehler wie Erfolg aus.
+
+**Rezept für jeden Wächter, der Prosa verbietet:**
+1. **Nie ein nackter Negativ-Scan** auf eine Datei, die Rücknahmen als Zitat führt. Die Frage
+   ist nie „kommt die Phrase vor", sondern „steht sie UNGESTRICHEN da".
+2. Bereich = **das Bullet**, nie der Leerzeilen-Absatz (#1341), und der Marker entschuldigt nur,
+   was ihm FOLGT — Position vergleichen, nicht Anwesenheit.
+3. Die **Granularität in den Kopf schreiben**: ein Marker entschuldigt alles nach ihm IN DIESEM
+   Bullet. Liegen zwei verbotene Phrasen im selben langen Bullet, deckt ein ⛔ beide. Das ist
+   hier richtig (ein Autor, ein Edit) und die bekannte Grenze des Verfahrens.
+4. Gegen **beide** Bäume fahren und die roten aufteilen: echte Regressionen (je eine ABWESENHEIT,
+   sonst greift #486) gegen nach vorn gerichtete Ansprüche, die nur die eigene neue Prosa nennen.
+
+**Der zweite Befund derselben Runde, weil er die Suchstrategie ändert: #456 kann an seiner
+eigenen Korrektur scheitern.** Der Satz „Bus `bioFrames`/`bioEvents` reserved but undrained"
+wurde am 2026-08-28 in DREI Dateien zugleich repariert — und nicht in der Liste, deren
+Überschrift „review every session" lautet. **Die Zuhause eines Satzes werden GEMESSEN, nicht
+erinnert:** `git grep` auf die unterscheidende Phrase über das ganze Repo, bevor man „alle drei
+Stellen gefixt" schreibt. „Alle" heißt sonst „alle, die mir eingefallen sind" (#766/#768, hier
+auf Prosa statt auf Fähigkeitsflächen).

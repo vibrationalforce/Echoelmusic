@@ -32080,3 +32080,83 @@ also braucht die Absicht einen Zeugen.
 
 Kompilat: sieben Checker exit 0; `Xcode Compile Check` + CI/CD `Build for Testing` zum
 Zeitpunkt des Commits noch offen.
+
+## 2026-09-16 (Fortsetzung) — #1343/#1344: die zwei Planungs-Register, aus denen geplant wird
+
+Der Register-Sweep #1340–#1342 war nicht zu Ende. Er hatte `docs/dev/FEATURE_MATRIX.md` nur auf
+das MIKROFON geprüft und `docs/dev/ROADMAP.md` nur auf zwei Posten. Beide Dateien trugen mehr.
+
+### #1343 — das Feature-Register trug den gestrichenen Workstation-Rückstand als offene Posten
+
+Die Datei nennt sich selbst „Truth-source for status: this file + the code." Sie trug als
+lebenden Text: einen 2026-07-13-Block über **„ONE tracks-centric, bio-reactive DAW"** mit einem
+nummerierten Rückstand (B03 · B07 · B08 · B11 · B13–B16 · B18–B20 · B23–B26 · B29 · B30); einen
+Punkt, der die Clips/Arrangement-Oberfläche **„the open gap (#1)"** nennt; **zwei**
+TestFlight-Abnahmekriterien, die auf dem Gerät nicht bestehen KÖNNEN (`BeatTab` — nie gebaut,
+Pads/Samples mit #166/#167 gelöscht; und „fullscreen + record work" — #1304, **zwei Zeilen unter
+dem eigenen ⛔ der Datei, dass es keine Aufnahme gibt**); und die Genre-Zahl zweimal, beide um 14
+daneben, einmal samt vollständiger Namensliste.
+
+⭐ **Der schärfste Einzelbefund ist keine veraltete Zahl, sondern ein veraltetes PAAR.** Die
+Zeile sagte „the enum holds 36 cases, so **17** are not offered". Heute druckt
+`scripts/genre-prebatch.py` **50 Genres, 33 angeboten** — und 50−33 ist **ebenfalls 17**. Die
+DIFFERENZ blieb richtig, während BEIDE Operanden um 14 danebenlagen; genau die Zahl, die ein
+Prüfer als Bestätigung überfliegt, war die einzige, die hielt. Das ist
+`.claude/rules/context.md` §2 („zwei Zahlen, die zueinander passen, sind kein Mengenvergleich")
+aus einer Richtung, aus der diese Regel noch nicht gebissen wurde.
+
+⭐ **Und die teuerste Klasse ist das unprüfbare Abnahmekriterium**, weil sie nicht Prosa kostet,
+sondern eine **GERÄTE-Sitzung** — das knappste Gut dieses Projekts, seit beide offenen
+Ship-Gate-Checks sensorisch sind. Wer die Liste abarbeitet, meldet einen Fehlschlag gegen einen
+Maßstab, den der Founder selbst entfernt hat.
+
+⚠️ **Eine Unterscheidung, bei der eine unachtsame Reparatur in die ANDERE Richtung fällt:**
+Vollbild als **GRÖSSE** des schwebenden Fensters lebt (`FloatingVisualWindow.WindowSize`);
+gestorben ist mit #1069 die **zweite, getrennte** Vollbild-Chrome samt VJ-Overlay. Wer den Satz
+ganz streicht, nimmt eine Fläche zurück, die es gibt. Und der naheliegende Beleg-Befehl
+(`git grep -c "visualVJOverlay"`) liefert **5** — lauter Grabstein-Kommentare; die Sache misst
+`git grep -c "var visualVJOverlay"` → **0** (die `EchoelModalBank`-Lehre).
+
+### #1344 — die Ehrlichkeits-Liste war an vier Stellen nicht ehrlich
+
+`ROADMAP.md` trägt einen Abschnitt, der wörtlich „Honesty ledger (review every session)" heißt.
+Darin: NOW-Posten 1 als **Gate auf jede weitere Arbeit** („do before adding more") für einen
+Deploy, der seit zwei Monaten jede grüne Runde passiert · „Bus `bioFrames`/`bioEvents` reserved
+but undrained" · „Xcode/**Tuist**-only build errors … `Project.swift` issues" (dieses Repo
+benutzt XcodeGen, und `Project.swift` ist eine LEBENDE Echoel-Datei unter `Core/` — wer dem
+Vermerk folgt, öffnet die falsche Datei) · und eine Begründung für die `DSP/`-Regel
+(„keeps the DSP layer portable"), die einer **immer geladenen** Regeldatei widerspricht:
+`.claude/rules/swift-audio.md` sagt „Reason = hygiene + one-way dependency, **not** portability".
+
+⭐ **Der Befund, der die Datei trägt, handelt nicht vom Bus.** `bioEvents` HAT einen Verbraucher
+(`EngineBus.swift` sagt selbst „the SOLE consumer (`OSCSender.drainAndSendEvents`)"), und genau
+diese Falschstelle wurde am **2026-08-28 in DREI Dateien zugleich** korrigiert — `CLAUDE.md`
+schreibt das wörtlich so hin. Das eine Zuhause, das die Reparatur nicht erreichte, war die
+Liste, deren eigene Überschrift „review every session" sagt. **Das ist #456, das an seiner
+eigenen Korrektur scheitert.** Regel daraus: **die Zuhause eines Satzes werden GEMESSEN**
+(`git grep` auf die unterscheidende Phrase über das ganze Repo), nicht erinnert.
+
+### Das Gesetz dieser Runde — das Spiegelbild des gestrigen
+
+Der ERSTE Entwurf von #1344s Anspruch 1 kam auf dem **EIGENEN** Baum rot zurück. Er suchte die
+vier Phrasen mit einem nackten `XCTAssertFalse(text.contains(...))` — und die Rücknahmen
+desselben Commits **ZITIEREN den Wortlaut**, weil dieses Repo so streicht. Der Wächter traf
+seine eigene Rücknahme: die **#491-Falle, von innen**.
+
+⭐ **GESETZ: ein Wächter, der auf dem Baum ROT ist, für den er geschrieben wurde, ist derselbe
+Entwurfsfehler wie einer, der auf dem Baum GRÜN ist, den er fangen sollte.** Beide Male ist es
+die §0-Transkription gegen BEIDE Bäume, die es zeigt, und nur sie. Die Reparatur ist nie
+schwächere Prosa, sondern **Bullet-Bereich mit Positionsvergleich** — die Mechanik, die #1341
+bezahlt hat, hier zum dritten Mal wiederverwendet.
+
+### Benotung, ehrlich
+
+· #1343 — 12 Ansprüche, 5 Behauptungen. Elternteil `9c431ed`: **9 rot**, davon **4 echte
+Regressionen mit vier VERSCHIEDENEN Abwesenheiten** (#486 fasst sie nicht zusammen), 5 nach
+vorn gerichtet; 3 grün auf beiden als Gegengewichte. **Ausdrücklich NICHT abgedeckt** und im
+Kopf so benannt (#1338): die vier toten Namen INNERHALB des 2026-07-13-Blocks — sie sitzen in
+Geschwister-Punkten, und den Bereich aufs Blockzitat auszuweiten wäre genau der #1341-Defekt.
+· #1344 — 10 Ansprüche, 3 Behauptungen. Elternteil `a578342`: **7 rot**, davon **4 echte
+Regressionen**, 3 nach vorn gerichtet; 2 grün auf beiden.
+· Gates: `Xcode Compile Check` auf `e32dd3d` **grün** (Nordic Fiddle). `Build for Testing` für
+alle drei neuen Wächter: **UNBELEGT**, der Lauf auf `f8acafb` deckt sie zusammen ab.

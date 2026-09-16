@@ -2082,3 +2082,43 @@ Register türloser Kerne — `BioTempoDirector`, `VBAPPanner`, `EchoelWSOLA`,
 Unterschied: `heldRoot` hatte einen Zähler neben sich, der bei jedem Lauf des blockierenden
 Bündels sagte „dieser wartet noch". Ohne ihn wäre es eine tote Grammatik gewesen, die eine
 spätere Aufräum-Sitzung plausibel gelöscht hätte. Playbook: `HARNESS_LEDGER.md` #1295.
+
+### 2026-09-16 — #1343/#1344: die zwei Planungs-Register, und das Spiegelbild des Wächter-Gesetzes
+
+**Entscheidung A — ein unprüfbares Abnahmekriterium wird gestrichen, nicht stehen gelassen.**
+`docs/dev/FEATURE_MATRIX.md` trug ZWEI: `BeatTab` (nie gebaut; Pads/Samples mit #166/#167
+gelöscht) und „fullscreen + record work" (#1304) — letzteres **zwei Zeilen unter dem eigenen
+⛔ der Datei**, dass es keine Aufnahme gibt. Diese Klasse kostet keine Prosa, sondern eine
+**GERÄTE-Sitzung**: das knappste Gut des Projekts, seit beide offenen Ship-Gate-Checks
+sensorisch sind.
+
+**Entscheidung B — datierte Historie behält ihren Wortlaut und bekommt einen Marker; Zahlen
+werden gelöscht und durch den Befehl ersetzt (#818).** Der 2026-07-13-Block beschreibt eine
+„tracks-centric DAW" mit nummeriertem Rückstand (B03…B30) — die vom Founder gestrichene
+Workstation-Hälfte. Er bleibt lesbar, weil Teile davon wahr sind (`RPPGConditioning` ist heute
+der rPPG-Pfad); der ⛔ am Kopf verhindert, dass ein nummerierter Rückstand als Auftrag gelesen
+wird.
+
+⭐ **BEFUND, der über das Register hinausreicht — ein veraltetes PAAR.** „the enum holds 36
+cases, so **17** are not offered": heute 50 Genres, 33 angeboten, **50−33 = 17**. Die DIFFERENZ
+blieb richtig, während beide Operanden um 14 danebenlagen. Genau die Zahl, die ein Prüfer als
+Bestätigung überfliegt, war die einzige, die hielt — `.claude/rules/context.md` §2 aus einer
+neuen Richtung.
+
+**Entscheidung C — ein Wächter, der auf dem EIGENEN Baum rot ist, wird nicht durch schwächere
+Prosa repariert.** Der erste Entwurf von `TheRoadmapHonestyLedgerIsHonestTests` verbot vier
+Phrasen mit nacktem `XCTAssertFalse(contains)` und traf seine eigenen Rücknahmen, die den
+Wortlaut zitieren — die **#491-Falle von innen**, und sie gilt für jede Datei, die mit
+Streich-Zitaten arbeitet, also inzwischen für die meisten. Reparatur: **Bullet-Bereich mit
+Positionsvergleich** (#1341), drittes Mal wiederverwendet.
+
+⭐ **GESETZ, beidseitig: rot auf dem eigenen Baum ist derselbe Entwurfsfehler wie grün auf dem
+fremden.** Beide sind beim Lesen unsichtbar und fallen in der ersten Sekunde der
+§0-Transkription — aber nur gegen **BEIDE** Bäume; gegen einen gefahren sieht jeweils einer der
+zwei wie Erfolg aus.
+
+⭐ **Und #456 kann an seiner eigenen Korrektur scheitern.** „Bus `bioFrames`/`bioEvents`
+reserved but undrained" wurde am 2026-08-28 in DREI Dateien zugleich repariert — und nicht in
+der Liste, deren Überschrift „review every session" lautet. **Die Zuhause eines Satzes werden
+GEMESSEN** (`git grep` auf die unterscheidende Phrase über das ganze Repo), nicht erinnert.
+Playbook: `HARNESS_LEDGER.md` #1344.
