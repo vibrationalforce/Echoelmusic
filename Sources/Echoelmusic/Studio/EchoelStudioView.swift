@@ -4924,6 +4924,21 @@ struct EchoelStudioView: View {
                 .accessibilityHint("Clear the integrated loudness and peak hold")
             }
 
+            // #1331 — THE BUFFER TIER GOT ITS DOOR BACK. `StudioDefaultKeys.audioLatencyMode`
+            // is PERSISTED and re-applied at launch (`AudioConfiguration.applyStoredLatencyMode`),
+            // and its only control was MASTER → "Audio input", deleted with the microphone
+            // (#1302). That left a stored audio setting with no reachable off-switch — the exact
+            // shape `083cec8` had to repair for the Apple-Health opt-in, and the reason this
+            // file's own law says to check WHICH MODELS a UI block is the sole writer of before
+            // deleting it. A player stuck on Ultra after a route change could not get back, and
+            // a player feeling the play surface lag could not get down.
+            //
+            // It sits directly ABOVE `AudioTimingRow` on purpose: choose the buffer, read the
+            // gap tally the choice produces. `AudioConfiguration.LatencyMode`'s own doc makes
+            // that argument ("The number it moves is already on screen directly above the
+            // control, so the loop closes without anyone having to believe a label").
+            AudioLatencyRow()
+
             // #408: the render-timing meter (#193) has existed for a week and speaks only into
             // `echoel_diag.log`, a file the founder has to export and send. The v10.79.369
             // "teilweise extremes Knacken" report arrived without one, leaving six candidate
@@ -5010,6 +5025,71 @@ struct EchoelStudioView: View {
     /// audio path perfectly on time, and this meter is blind to all three (`RenderGapDetector`'s
     /// header says so at length). A caveat shown only on dirty windows would let "Nothing late"
     /// read as "the crackling is fixed" — the one sentence this row must never say.
+    /// The buffer tier, as a NAMED choice (#1331). A `Picker`, not an `EchoelValueField`:
+    /// the values have names, which is the documented exception in the parameter-row law.
+    ///
+    /// ⭐ IT SHOWS WHAT THE SESSION GRANTED, NOT WHAT WAS REQUESTED, and that is why the
+    /// selection is `@State` seeded from `AudioConfiguration.currentLatencyMode` rather than
+    /// `@AppStorage`. `setLatencyMode` PERSISTS LAST — only after the session granted the
+    /// request — precisely so a refused tier cannot come back on the next launch as if it had
+    /// worked (#674/#675). An `@AppStorage` binding here would write FIRST and reinstate that
+    /// defect one layer up. The selection is optional because `currentLatencyMode` is: a
+    /// buffer size outside the three tiers means "no named mode", which renders as no
+    /// selection rather than an invented nearest match.
+    ///
+    /// ⚠️ The guard against re-entry is not decoration: the catch reverts `selected`, which
+    /// re-enters `.onChange`; comparing against the tier the session is actually in makes that
+    /// second pass a no-op instead of a redundant request.
+    ///
+    /// NEEDS-FOUNDER-VERIFY: Master → Audio latency → Ultra while the instrument is playing.
+    /// The "Audio timing" line directly below must not start reporting late blocks, and there
+    /// must be no crackle; then relaunch — the tier must still read Ultra. On a Bluetooth
+    /// route iOS may refuse it, in which case the row must snap BACK to the granted tier
+    /// rather than showing a choice the session never honoured (`echoel_diag.log` carries
+    /// `session: buffer ... refused`).
+    private struct AudioLatencyRow: View {
+        @State private var selected: AudioConfiguration.LatencyMode?
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Text("Audio latency")
+                        .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
+                    Spacer()
+                    Picker("Audio latency", selection: $selected) {
+                        ForEach(AudioConfiguration.LatencyMode.allCases) { mode in
+                            Text(mode.shortName).tag(Optional(mode))
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .fixedSize()
+                    .accessibilityLabel("Audio latency tier")
+                    .accessibilityHint("Smaller buffers respond sooner and cost more CPU")
+                }
+                Text("Smaller buffers respond sooner and cost more CPU. iOS may refuse a tier — "
+                     + "hardest on Bluetooth — so the row shows what the session granted.")
+                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // Seeded here rather than in the property's initialiser so the row reflects the
+            // tier the session is in EVERY time it appears — a route change or a
+            // media-services reset re-applies the buffer without telling this view.
+            .onAppear { selected = AudioConfiguration.currentLatencyMode }
+            .onChange(of: selected) { _, mode in
+                guard let mode, mode != AudioConfiguration.currentLatencyMode else { return }
+                do {
+                    try AudioConfiguration.setLatencyMode(mode)
+                } catch {
+                    // The refusal goes in the EXPORTABLE file, not only to `os_log` (#859):
+                    // this is the line that tells the founder why a tier did not stick.
+                    EchoelCrashLog.breadcrumb("session: buffer \(mode.shortName) refused")
+                    selected = AudioConfiguration.currentLatencyMode
+                }
+            }
+        }
+    }
+
     private struct AudioTimingRow: View {
         let engine: AudioEngine
 

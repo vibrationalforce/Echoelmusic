@@ -93,7 +93,7 @@ final class MasterPanelReflowsTests: XCTestCase {
         let body = try masterPanelBody()
         let ranges = gridRanges(in: body)
         for fragment in ["MasterVolumeField()", "MasterLoudnessGrid()", "AudioTimingRow(",
-                         "panicAllNotesOff()", "masterDoorButton"] {
+                         "AudioLatencyRow()", "panicAllNotesOff()", "masterDoorButton"] {
             let hits = body.indices.filter { body[$0].contains(fragment) }
             guard !hits.isEmpty else {
                 XCTFail("`\(fragment)` is gone from `masterPanel`. If it moved on purpose, move "
