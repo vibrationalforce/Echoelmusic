@@ -32791,3 +32791,122 @@ seinen 46 Zusicherungen. Schritt 11 `Run Tests` lief beim Lesen noch; seine Conc
 wegen #396 ohnehin nichts (§5). Ehrliche Formulierung, unverändert: **kompiliert nachweislich,
 Ausführung unbelegt** (#445/#807). Die drei übrigen Jobs: Security Scan `success`, Code Quality
 & Linting `success`, Generate Documentation `skipped`.
+
+---
+
+## 2026-09-16 — #1353: Abschnitt 5 nannte das schmeichelnde Ende des Tempofensters
+
+**Der Befund kam aus der Vorbereitung einer anderen Scheibe.** Beim Messen von
+`slowedGothPop` druckte `genre-prebatch.py` Abschnitt 5: „delay 2.0 q at hi=76 = 1.58s ok". Die
+halbe Note bei 76 BPM ist die KÜRZESTE, die dieses Genre je erreicht — am eigenen Boden (60 BPM)
+sind es 2,000 s, genau auf der Decke. Der Abschnitt beantwortete die ausgelieferte Invariante
+(`testEveryGenresDivisionResolvesAtItsFastestAllowedTempo`: eine Teilung, die NIRGENDS auflöst,
+ist eine Lüge im Quelltext) und las sich wie die Antwort auf eine andere Frage.
+
+⚠️ **Der Wächter war nicht falsch — das Werkzeug war UNVOLLSTÄNDIG, und das ist die feinere
+Sorte.** Die schnelle Seite ist genau richtig für die Frage, die sie stellt; sie als „ok" zu
+drucken beantwortet eine zweite, die niemand gestellt hat.
+
+**Gebaut:** ein Arm-Parser über `GenreFX.swift`s `fxPreset`-`switch` (Blockschnitt `case` → `case`,
+dieselbe Form wie `--patch`) mit Abdeckungszeile `arms parsed N of M` und REFUSED bei N != M —
+das #1350-Gesetz in seiner zweiten Datei. Abschnitt 5 druckt jetzt langsames Ende · Default ·
+schnelles Ende, benennt das BINDENDE, und misst den Kandidaten gegen die drei Budgets aus
+`GenreDelaySyncResolvabilityTests`.
+
+⭐ **UND ALLE DREI STEHEN EXAKT AUF IHRER GRENZE:** Abschneide-Budget 1 von 1 verbraucht
+(`selfObservation`, 2,069 s bei 46 BPM) · schlagzeugfrei-mit-Echo 7 von 7 · Cluster 5 von 5 bei
+5 %. Das schärfste ist das dritte, und es ist nicht offensichtlich: eine eingefügte Echozeit kann
+zwei Cluster VERSCHMELZEN, die vorher weit genug auseinander lagen — **ein neues Genre kann eine
+Ratsche nach UNTEN bewegen.** Das findet keine Lektüre eines einzelnen Kandidaten; es braucht die
+Nachbarn, und das ist #1352s Gesetz eine Datei weiter.
+
+⚠️ **Hart verweigert wird weiterhin nur das schnelle Ende.** Klemmen am langsamen ist gewollt —
+`stillMeditation` sitzt bei 60 BPM exakt auf der Decke und klemmt gar nicht; ein Fehlschlag darauf
+verböte richtige Arbeit (#364).
+
+**Vier neue Selbsttest-Fälle, jetzt neun, alle grün.** Zwei als Unterprozess getrieben (#808), die
+Cluster-Verschmelzung als Arithmetik auf synthetischer Basis — aus dem ausgelieferten Baum ist sie
+NICHT provozierbar (jede Lücke der schlagzeugfreien Achse ist weiter als 10 %), eine CLI-Nadel
+darauf könnte also nie treffen, und das steht als Begründung im Code. Der Budget-Fall wählt seine
+erwartete Meldung aus dem gemessenen Baum: dasselbe Draft muss FEHLSCHLAGEN, solange ein Genre das
+Budget verbraucht, und nur WARNEN, wenn keins es tut.
+
+**Commit:** `6cb88b4`. Berührt nur `scripts/` und den Plan (Punkt (f) der Batch-Vorlage).
+
+---
+
+## 2026-09-16 — #1354 G15b-2: Slowed Goth Pop, und der eine Akkord, den niemand sonst hat
+
+**Das Genre.** `slowedGothPop` — 13 Arme, drei Subcategory-Edits, zwei Patches, ein FX-Arm, ein
+BassGrammar-Arm, neues Regal „Dark Synth Scenes" unter `.underground`. `.harmonicMinor`,
+`.halfTime`, 60…76 @66, Swing 0,16, Lead „Choir Vox", `padOctave` 3, `sparseSub` als sechster
+Besitzer.
+
+⭐ **DIE TRENNUNG IST EIN AKKORD.** `[0, 2, 4, 6]` auf harmonisch Moll ergibt `[0, 3, 7, 11]` —
+Mollterz, Quinte, GROSSE Septime. Über alle 55 Tonika-Stapel gemessen: **den hat niemand sonst.**
+Zehn Arme liegen auf dem gewöhnlichen Mollseptakkord `[0, 3, 7, 10]`, vier auf `[0, 4, 7, 11]`;
+dieser liegt dazwischen, und er ist, wie eine Goth-Platte klingt.
+
+⚠️ **Und die FORM ist nicht die Entscheidung, die SKALA ist es.** `[0, 2, 4, 6]` tragen acht
+andere Arme — `GenreBatchFourVoicingTests` VERLANGT genau diese Form für jedes vierstimmige Genre
+außer Detroit. Ein späterer Wechsel auf `.minor` ließe die `chordTones` unberührt, ließe jenen
+Wächter grün und löschte die Identität still. Anspruch 2 des neuen Wächters sichert deshalb beide
+Hälften: den Stapel als SWEEP über `allCases`, und dass dieselbe Form auf natürlichem Moll
+`[0, 3, 7, 10]` ergibt.
+
+**Zwei Abweichungen vom Entwurfsblatt, jede gemessen erkauft:** `progression` `[0, 5, 4]` statt
+`[0, 1]` (das meistbesetzte Paar der Datei — sechs Genres, vier angeboten, `sciFi` darunter, das
+einzige mit demselben Archetyp); ihr Punkt ist Stufe 4, die auf dieser Skala DUR klingt und auf
+natürlichem Moll moll. Und `chordTones` vierstimmig statt dreistimmig, siehe oben.
+
+**Echo:** `pingPong` + punktiertes Achtel. `tape` + halbe Note trägt schon DREI angebotene Genres
+(`dubEcho` 0,52, `sciFi` 0,50, `selfObservation` 0,45) — ein viertes wäre ein Echo mit zwei
+Etiketten gewesen, genau der #1350-Fehler. Der einzige andere Arm auf dieser Kombination ist
+`synthwave`, nicht angeboten. 0,750…0,592 s über das ganze Fenster, nirgends geklemmt — gewählt
+aus Abschnitt 5 in seiner #1353-Fassung, also vom bindenden Ende her.
+
+⚠️ **Die nächsten Nachbarn sind ein GLEICHSTAND, und der Kopf sagt das statt einen Nächsten zu
+nennen.** 3 von 6 Achsen: `sciFi` teilt Archetyp/Lead/Register, `stillMeditation` und
+`selfObservation` teilen Lead/chordTones/Register. Alle drei sind `sustained` Flächen — keine
+lässt „Choir Vox" je klingen, die Namensüberschneidung ist also NOMINELL, und Anspruch 4 pinnt
+genau das. Bewusst kein Superlativ: #1350 lieferte einen falschen aus.
+
+**Gemessen nach dem Schnitt:** 55 Genres, 38 angeboten, 77 Patches, GenreFX-Arme 55 von 55,
+Choir Vox 7→8 exakt an der Decke (Tragweite 45, ceil(45/6)=8), kein Fingerabdruck-Paar,
+Schwachschlüssel-Sweep leer. ⚠️ **Damit stehen DREI Lead-Namen gleichzeitig auf der Decke**
+(Pluck, Hollow Reed, Choir Vox) — das nächste lead-tragende Genre muss einen der drei bei 7
+nehmen. Acht Checker exit 0.
+
+**Patches:** jede Zahl aus `--patch` bei voller Abdeckung (77 von 77). Dabei gefunden, dass
+`Drag Sub`s `cutoff: 580` NICHT frei ist — `Dust Sub` hat ihn auch. Der Arm nennt die Bindung und
+begründet die Trennung auf den vier gemessenen Hüllkurvenwerten (1,86 gegen 1,278), statt eine
+Dunkelheit zu behaupten, die er nicht besitzt.
+
+**Wächter:** `Tests/CISmoke/GenreBatchFifteenBTwoTests.swift`, 41 Zusicherungen in sieben
+Ansprüchen (7 · 6 · 5 · 5 · 6 · 7 · 5), Tally mechanisch gezählt statt geschätzt. **Alle 41 nach
+§0 transkribiert und gegen den Arbeitsbaum getrieben: 41 grün, 0 rot** — ungewöhnlich vollständig,
+weil die Ansprüche Werte und Mengenzugehörigkeiten sind statt Engine-Verhalten. Gegen den
+Elternbaum kompiliert die Datei nicht: EINE Abwesenheit, nicht 41 (#486).
+
+⛔ **UND DIE TRANSKRIPTION ERZEUGTE EIN FALSCHES ROT, DAS MEHR WERT IST ALS DIE 41 GRÜN.** Sie
+meldete `progression [0, 5]` für einen Arm, dessen Quelltext `[0, 5, 4]` sagt. Der Code war
+richtig, der Spiegel falsch: er ankerte am ERSTEN `case .slowedGothPop:` der Datei — dem
+Subcategory-`switch` — und lief non-greedy in das `HarmonicProfile` eines fremden Genres. **Zwei
+seiner drei geparsten Werte stimmten zufällig**, also sah es nach einem Einzelfehler aus statt
+nach einem kaputten Anker. Das ist der DRITTE Anker-Fehler dieser Sitzung (ein `$`, das einen
+Trailing-Kommentar verwarf; ein Blockschnitt, der 31 von 73 Patches las) — und der erste, bei dem
+die Teiltreffer den Bruch getarnt haben. **Gesetz, jetzt im Wächter-Kopf statt im Scratchpad:
+miss dein eigenes Werkzeug, bevor du den Quelltext widerlegst, und behandle zwei übereinstimmende
+Werte als Zufall, bis der dritte geprüft ist** (`.claude/rules/context.md` §2).
+
+**Sieben nutzersichtbare Flächen mitgezogen:** Thirty-seven → Thirty-eight, Siebenunddreißig →
+Achtunddreißig, Name in allen vier Listen, `architecture.html` 43/54 → 44/55 bei Abdeckung 55 von
+55 (gemessen, nicht hochgezählt). Surface-Wächter transkribiert: 9 grün, 0 rot.
+
+**NEEDS-FOUNDER-VERIFY:** Slowed Goth Pop bei 66 im Loop-Modus, A/B gegen Vaporwave bei 70 — die
+Fenster überlappen fast vollständig, absichtlich, und Anspruch 5 pinnt die Überlappung, damit
+niemand später eine Trennung behauptet, die es nicht gibt. Zwei Ohrfragen: liest der
+Moll-Dur-Septakkord als Spannung oder als Fehler, und ist `det: 18` — die breiteste Verstimmung
+der Datei — ein Chor oder ein Schwebungsfehler?
+
+**Commit:** `10dd909`. **Gate-Lesung steht aus** (Wecker 22:20 UTC, zusammen mit `6cb88b4`).
