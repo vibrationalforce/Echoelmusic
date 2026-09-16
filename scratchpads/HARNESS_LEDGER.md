@@ -3801,3 +3801,38 @@ Zweige, auch die, die für den alten Aufrufer richtig und für den neuen falsch 
    Besonders bei Zuständen, die die alte Fläche nie erreichen konnte (hier: „Instrument steht").
 3. Was nicht passt, wird am AUFRUFER abgefangen, nicht am Besitzer — sonst ändert man das
    Verhalten der alten Tür mit.
+
+## PLAYBOOK #1337 (2026-09-16) — ein Wächter, der ein INTERNES Member ruft, tötet ohne `@testable` das GANZE blockierende Bündel — und kein Checker sieht es
+
+**Anlass, und diesmal mit beiden Hälften des Beweises.** `TheExportProgressHopsOncePerPercentTests`
+importierte nur `Foundation` und `XCTest` und rief in Anspruch 3 `clamped(to:)` — eine INTERNE
+Extension aus `Core/FloatingPointClamp.swift`. Das ist kein Fehler in dieser einen Datei: es ist
+`cannot find member` ⇒ `** TEST BUILD FAILED **` ⇒ **kein einziger Wächter des Repos läuft**.
+
+**Das Paar ist geschlossen, nicht geschätzt** (die seltene Gelegenheit: `auto-merge-claude.yml`
+merged ohne Gate, CI/CD fährt NICHT cancel-in-progress, also liefen beide Bäume wirklich):
+· `d78b249` — **OHNE** die Zeile → `Build for Testing` = **failure**, `** TEST BUILD FAILED **`,
+  „(3 failures)", die scheiternde Build-Kommandozeile nennt die Datei zweimal; `tail: test.log:
+  No such file or directory` (es gibt kein Testlog, weil nichts lief).
+· `a68e289` — **MIT** ihr, sonst identischer Baum → `Build for Testing` = **success**.
+· `797bc98` (Kopf der ganzen Kette) → `Build for Testing` = success, und im Fenster steht
+  `TheExportProgressHopsOncePerPercentTests.testTheClampCannotHandANaNToTheIntConversion()
+  passed` — also läuft genau der Anspruch, der das Symbol braucht, beobachtet grün (§5b/#445).
+
+**Warum kein Checker das findet — und warum hier bewusst keiner gebaut wurde (#1338).** Die
+sieben Checker lesen Wächter als DATEN (Nadeln, Pins, Anker); der Swift-Compiler ist das
+einzige Werkzeug, das Symbol-Auflösung macht, und den gibt es in einer Web-Sitzung nicht.
+Schlimmer: **ein Grep auf GENANNTE TYPEN kann die Frage gar nicht stellen.** `clamped` ist ein
+KLEIN geschriebenes Member — jede Scan-Heuristik über Großbuchstaben-Bezeichner läuft daran
+vorbei. Und eine Pauschalregel „immer `@testable`" wäre Lärm: von sechs neuen Wächtern dieser
+Kette brauchten fünf sie zu Recht NICHT (reine Quelltext-Scans über `String`), also hätte ein
+solcher Checker eine Mehrheit korrekter Dateien rot gemacht — #665/#364.
+
+**Rezept, vor jedem Commit mit einem NEUEN Wächter:**
+1. Nicht die genannten TYPEN lesen, sondern die **benutzten SYMBOLE** — jeden Aufruf, jedes
+   Member, jede Konstante, die nicht aus `Foundation`/`XCTest` kommt. Kleinschreibung zählt mit.
+2. Kommt eines davon aus `Sources/` und ist es nicht `public` → `@testable import Echoelmusic`.
+3. Ein Wächter, der NUR Dateitext liest (`SourceText.codeOnly`, `contains`), braucht sie nicht
+   und soll sie nicht bekommen.
+4. Beleg ist `Build for Testing` des TEST-Commits selbst (`Tests/CISmoke/CLAUDE.md` §5) —
+   `Xcode Compile Check` baut `Sources/` allein und sagt über eine Testdatei NICHTS.

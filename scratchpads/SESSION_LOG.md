@@ -31913,3 +31913,41 @@ ist „sieben Checker exit 0, Kompilat unbelegt" (#445).
 
 `Core/AudioFeatureChannel.swift` — Sperre + `exp()` pro Rahmen, gemessen ~1,5 µs/s. Eine
 Optimierung ohne messbaren Nutzen ist Churn; stattdessen in #1325 dokumentiert.
+
+### Das Paar ist geschlossen — und es beweist mehr, als ich zu messen hoffte
+
+⭐ **NACHTRAG, 17:05.** Die zwei ausstehenden CI/CD-Läufe sind da, und sie bilden das saubere
+Bekannt-Negativ/Bekannt-Positiv, das sich absichtlich nicht herstellen ließe:
+
+| Baum | `Build for Testing` | Beleg im Log |
+|---|---|---|
+| `d78b249` — Wächter **OHNE** `@testable` | **failure** | `** TEST BUILD FAILED **`, „(3 failures)", die scheiternde Build-Kommandozeile nennt `TheExportProgressHopsOncePerPercentTests.swift` zweimal; `tail: test.log: No such file or directory` |
+| `a68e289` — **MIT** ihr, sonst identisch | **success** | — |
+| `797bc98` — Kopf der ganzen Kette #1321–#1339 | **success** | `Print test log on failure: success`, also existiert ein Testlog |
+
+Auf dem Kopf steht zusätzlich im Fenster:
+`TheExportProgressHopsOncePerPercentTests.testTheClampCannotHandANaNToTheIntConversion() passed`
+und `…testTheHopIsInsideTheThrottle() passed`. Nach §5b/#445 beweist ein Name im Log, dass er
+GELAUFEN ist — und der erste der beiden ist genau der Anspruch, der `clamped(to:)` ruft, also
+das interne Symbol, für das die Zeile da ist. Verdikt-Parser auf dem Kopf: `Build for Testing
+Succeeded`, **165 Tests beobachtet grün**, 0 Fehler, 0 Skips, 0 Compile-Fehler-Zeilen.
+
+⚠️ **Zwei Grenzen, damit das nicht als „die Suite ist grün" gelesen wird.** Das Job-Log ist
+`tail -200 test.log` (#807), und der Parser meldet zusätzlich **894 s Stille** im geholten Log —
+ein Fehler kann schlicht im Loch liegen. Drei der vier neuen Wächter dieser Kette
+(`TheNoiseBankIsAFilterBankNotAnFFTTests`, `TheRecordRouteHasNoClaimantTests`,
+`TheVoiceProfilerInstanceHalfHasNoProducerTests`) kommen im Fenster NICHT vor — nach #445 und
+#1079b ist das **kein Befund**: ein neuer Wächter ist im Fenster grundsätzlich unsichtbar,
+Abwesenheit beweist nichts. Belegt ist, dass das Bündel BAUT (und damit alle vier kompilieren),
+plus ein beobachteter grüner Lauf für einen davon.
+
+### Korrektur an meiner eigenen Schwere-Einschätzung von #683
+
+Ich hatte #683 als geringe Schwere eingeordnet mit der Begründung, der TestFlight-Dispatch stehe
+auf `if: false`, es erreiche also kein Nutzer einen ungetesteten Merge. **Das gilt für NUTZER
+und unterschätzt die Entwickler-Seite.** `d78b249` hat ein Test-Bündel auf `main` gestellt, das
+NICHT BAUT — und ein nicht bauendes Bündel heißt: **kein einziger Wächter des Repos lief**, für
+jeden, der in diesem Fenster gezogen hat, bis `a68e289` zehn Commits später reparierte. Das ist
+genau die #926-Vakuum-Grün-Lage, nur auf Repo-Ebene statt auf Wächter-Ebene. Der Befund bleibt
+founder-gated (`.github/workflows/**` = berichten, nicht editieren), aber er ist ab heute
+**gemessen statt hypothetisch** — mit Laufnummer und Log-Zitat.

@@ -1983,4 +1983,39 @@ Gate-Bedingung im Auto-Merge. ⚠️ Schwere heute gedämpft, weil der TestFligh
 Workflow auf `if: false` steht — ein ungetesteter Merge erreicht `main`, aber nie einen Nutzer.
 Fällt dieses `if: false`, ändert sich die Schwere sofort.
 
+⛔ **DIESER DÄMPFER IST AM SELBEN TAG WIDERLEGT WORDEN — und die Korrektur steht HIER, nicht nur
+in der neuen Eintragung, weil eine Reparatur in JEDES Zuhause reist (#456).** Der Satz gilt für
+NUTZER und unterschlägt die Entwickler-Seite: `d78b249` stellte ein **nicht bauendes**
+Test-Bündel auf `main` (`** TEST BUILD FAILED **`, kein `test.log`), also lief für jeden, der
+in diesem Fenster zog, **kein einziger Wächter des Repos** — bis `a68e289` zehn Commits später
+reparierte. Das ist die #926-Vakuum-Grün-Lage auf Repo-Ebene. Die Schwere hängt also NICHT
+allein an `if: false`.
+
+**Review:** 2026-10-16.
+
+
+### 2026-09-16 — Ein Wächter ohne `@testable` tötet das ganze blockierende Bündel (#1337/#1338)
+
+**Befund.** `TheExportProgressHopsOncePerPercentTests` importierte nur `Foundation` und `XCTest`
+und rief in Anspruch 3 `clamped(to:)` — eine INTERNE Extension aus `Core/FloatingPointClamp.swift`.
+Folge ist nicht ein roter Wächter, sondern `cannot find member` ⇒ `** TEST BUILD FAILED **`
+⇒ **das gesamte blockierende Bündel läuft nicht**.
+
+**Der Beweis ist ein geschlossenes Paar, kein Argument** (möglich nur, weil der Auto-Merge auf
+kein Gate wartet und CI/CD *nicht* cancel-in-progress fährt, also beide Bäume wirklich liefen):
+`d78b249` ohne die Zeile → `Build for Testing` **failure**, die scheiternde Build-Kommandozeile
+nennt die Datei zweimal; `a68e289` mit ihr, sonst identisch → **success**. Auf dem Kopf
+`797bc98` steht der Anspruch, der das Symbol braucht, mit `passed` im Log (§5b/#445).
+
+**Entscheidung: Gesetz als Absatz, bewusst KEIN Checker.** Die sieben Checker lesen Wächter als
+DATEN; Symbol-Auflösung kann nur der Compiler, den es in einer Web-Sitzung nicht gibt. Und ein
+Grep könnte die Frage gar nicht stellen: `clamped` ist KLEIN geschrieben und für jede
+Großbuchstaben-Heuristik unsichtbar. Eine Pauschalregel „immer `@testable`" wäre Lärm —
+fünf von sechs neuen Wächtern dieser Kette brauchen sie zu Recht nicht (#665/#364).
+
+**Rezept** (in `Tests/CISmoke/CLAUDE.md` und `HARNESS_LEDGER.md`): vor jedem Commit mit einem
+neuen Wächter die **benutzten SYMBOLE** gegen die Importe lesen, nicht die genannten TYPEN;
+Kleinschreibung zählt mit. Beleg ist `Build for Testing` des TEST-Commits selbst —
+`Xcode Compile Check` baut `Sources/` allein und sagt über eine Testdatei nichts.
+
 **Review:** 2026-10-16.
