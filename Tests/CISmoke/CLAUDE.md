@@ -280,6 +280,31 @@ correct). Validated against the tree that carried the defect — exactly 1 findi
 the repair. ⚠️ **A clean run is NOT evidence that the bundle compiles**; it checks one error
 class, and only `Build for Testing` answers the other question (§5).
 
+⛔ **AND THE FIFTH SHAPE HAS A SECOND MEMBER THAT NO TOOL COVERS — A MISSING
+`@testable import Echoelmusic` (#1337, and `f489a6e` before it).** A guard that calls anything
+declared in `Sources/` needs that import; `SourceText` does not, because it lives in this
+directory. Get it wrong and it is `cannot find member` → `** TEST BUILD FAILED **` → **the whole
+blocking bundle stops running**, so the cost is never one guard. #1337 shipped a file importing
+only `Foundation` and `XCTest` while claim 3 called `clamped(to:)`, an internal extension in
+`Core/FloatingPointClamp.swift`. All seven checkers were clean, for the reason stated one
+paragraph up: they read needles as DATA.
+
+⚠️ **THE CHECK IS A QUESTION, NOT A GREP, and the obvious grep does not answer it.** "Which
+TYPES does this file name" misses the defect entirely — `clamped` is a lowercase MEMBER, so a
+capitalised-identifier scan returns nothing while the file fails to build. The question is
+**which SYMBOLS does this file use, and where is each declared**. A pure source-text guard that
+touches only `SourceText`, `XCTest` and Foundation is correct WITHOUT the import, and five of
+the six no-`@testable` files in the #1337 sweep were exactly that — so a blanket "always add it"
+rule would be noise, not a fix.
+
+⚠️ **NO CHECKER IS SHIPPED FOR THIS, ON PURPOSE (#665).** A capitalised-name scan cannot see the
+known positive — and #937 is explicit that a checker which misses the second instance of the
+defect it was written for is the most expensive kind, because its green run then counts as
+evidence. Resolving arbitrary member calls to declaration sites is the #666 prototype again
+(59 false positives on a correct tree, and receiver-type attribution lost every real one). The
+honest output is this paragraph. **Read the imports of every guard you ADD against the symbols
+it uses; `Xcode Compile Check` cannot help — it builds `Sources/` alone (§5b).**
+
 **A count pin is the other shape that rots silently, and it rots the same way (#903/#904).**
 `XCTAssertEqual(occurrences(of: "…", in: code), N)` goes stale when the CODE changes
 CORRECTLY and the number does not follow. Three measured cases, none of them noticed by CI:
