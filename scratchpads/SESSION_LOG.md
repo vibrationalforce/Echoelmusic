@@ -32572,4 +32572,16 @@ Zahl UND Liste, im selben Commit; genau der #1295-Defekt, der dort dokumentiert 
 **NEEDS-FOUNDER-VERIFY:** Gospel Choir bei 96 im Loop-Modus, A/B gegen Soul Ballad bei 72.
 Zwei Ohrfragen, und es sind die zwei, die keine Arithmetik beantwortet.
 
-**Commit:** `d18f13c`. Gate-Lesung offen.
+**Commit:** `d18f13c`.
+
+**GATE-LESUNG `d18f13c` — beide echten Gates grün.** `Xcode Compile Check` #2642 = `success`
+(Schritt 7, 3 min 40 s): `Sources/` baut mit dem neuen Genre, der neuen Rubrik und dem neuen
+Regal. CI/CD #6107 Schritt 9 **`Build for Testing` = `success`** (Schritt 10 „Print build log
+on failure" = `skipped`) — damit kompiliert `Tests/CISmoke` nachweislich, also auch
+`GenreBatchTenATests.swift` mit seinen 31 Zusicherungen. Schritt 11 `Run Tests` lief beim
+Lesen noch; seine Conclusion sagt wegen #396 ohnehin nichts (§5). ⚠️ Ehrliche Formulierung,
+unverändert: **kompiliert nachweislich, Ausführung unbelegt** (#445/#807) — der Job-Log ist
+ein `tail -200`, und ein Testname darin beweist einen Lauf, sein Fehlen beweist nichts. Der
+Buchführungs-Commit `0234a89` fasst nur `scratchpads/`, `memory/` und `decisions.csv` an und
+erzeugt daher KEINEN Lauf (#1176) — er fährt als Passagier mit dem nächsten Code-Commit nach
+`main` (#697/#698/#699).
