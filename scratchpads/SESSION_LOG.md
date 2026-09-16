@@ -32237,3 +32237,61 @@ der 2,0-s-Decke.
 Wächter: `GenreBatchElevenDTests` (30 Ansprüche, 5 Behauptungen) und
 `TheGenreListsMatchTheirOwnCountTests` (11 Ansprüche; Elternteil `8db9256`: **4 rot und das ist
 EIN Befund** (#486) — alle vier nennen dieselbe Abwesenheit, `Nordic Fiddle`).
+
+## 2026-09-16 (Fortsetzung) — Gate-Lesung, #1345, und ZWEI Sweeps, die sauber ausgingen
+
+### Gate-Lesung `e32dd3d` (Nordic Fiddle) — und was daran die Conclusion NICHT sagt
+
+`Xcode Compile Check` **success**. `Echoelmusic CI/CD Pipeline` meldet `failure` — wie auf
+JEDEM Push (#396), also sagt die Conclusion nichts. Gelesen wurden die **Job-Schritte**:
+
+| Schritt | Ergebnis |
+|---|---|
+| 9 `Build for Testing` | **success** ⇒ das blockierende Bündel KOMPILIERT, `GenreBatchElevenCTests` eingeschlossen |
+| 11 `Run Tests` | failure, und im Log steht `** TEST EXECUTE FAILED **` — das ist #396 (ein Simulator-Klon stirbt), founder-gated, harmlos. **NICHT** `** TEST BUILD FAILED **`, und genau diese eine Zeile ist der Unterschied (`Tests/CISmoke/CLAUDE.md` §5) |
+
+⚠️ **Was damit NICHT belegt ist, nach §5b/#807:** das Job-Log ist `tail -200`; im sichtbaren
+Fenster steht kein einziges `failed`, aber ein Fehlschlag FRÜHER im Lauf hinterlässt dort keine
+Spur. Die AUSFÜHRUNG des neuen Wächters bleibt also unbelegt — die KOMPILIERUNG ist belegt, und
+die war die Frage.
+
+### #1345 — der Phantom-Nadel-Scan meldete seinen eigenen Fehlermeldungstext als Nadel
+
+`scripts/doctor.py` §B suchte Nadeln mit `"(?:func|struct|enum|class|protocol) [A-Za-z_]…"` —
+also JEDEN Quoted-String, der mit einem dieser Wörter BEGINNT. Live getroffen:
+`TheRecordRouteHasNoClaimantTests.swift:79` trägt die Fortsetzung einer Fehlermeldung,
+`+ "enum is what makes adding a case the obvious move later."`, gemeldet als „declared nowhere".
+**Das Cry-Wolf, vor dem der Abschnitt selbst warnt, erzeugt vom Abschnitt selbst** (#665).
+
+Reparatur, VOR dem Schreiben gemessen: nach einem TYP-Schlüsselwort muss ein PascalCase-Bezeichner
+folgen — das Namensgesetz des Repos, also kostenlos: über `Tests/CISmoke/*.swift` behält es
+**346 von 347** Treffern und lässt genau den einen Fehlalarm fallen. Die naheliegende Alternative
+(nur Literale direkt hinter `contains(`) hätte **225** echte Nadeln verloren — so viele stehen in
+ARRAYS, nicht an einem Aufruf. Gemessen statt geraten.
+
+⭐ **Zweiter Befund im selben Code, und es ist die #456-Form eine Stunde nachdem ich sie
+aufgeschrieben hatte:** die Nadel-Form stand an ZWEI Stellen derselben Datei — im Scan und in
+`selftest_negated_needle`s eigener Kopie. **Der Selftest pinnte also eine KOPIE der Regel statt
+der Regel.** Sie waren zufällig identisch; nichts hielt sie so. Jetzt EINE Definition
+(`NEEDLE_SHAPE`, #416). Vier neue Selftest-Fälle in der PAAR-Disziplin, die die Docstring selbst
+verlangt; **Kontrolle bewiesen**: eine zurückgedrehte Kopie lässt den Selftest mit genau 2
+Problemen scheitern.
+
+### ZWEI Sweeps, die NICHTS fanden — und das ist ein Ergebnis, kein Leerlauf
+
+1. **Die öffentliche Website gegen alle vier Founder-Löschungen** (Mikrofon #1302, Video #1304,
+   Harmonizer/Granular/Autotune #1305, Face #1301). Alle Treffer geprüft, alle legitim:
+   `autotune`/`vocals` in `artist.html` beschreiben die ANDEREN Musikprojekte des Founders ·
+   `vocals` in der FAQ ist die ausdrücklich als „on the roadmap, not in the app today"
+   gekennzeichnete EchoelAI-Zeile · `face tracking` in `privacy.html` steht in einer
+   VERNEINUNG („There is no face tracking") · RTMP/multitrack/AUv3 sind als cut/not-planned
+   benannt · `microphone` steht in `privacy.html`, `security.html` und `architecture.html`
+   durchweg als Abwesenheit mit Datum. **Die Website ist ehrlich.**
+2. **Die „57 Skalen"-Behauptung**, die auf `press.html`, in der FAQ und in `CLAIMS.md` steht.
+   Mit verankertem Parser gemessen (`Scale.Family.scales`, Kommentare zuerst gestrippt):
+   7+9+5+11+8+3+7+7 = **57**. Exakt.
+
+⭐ **Warum das hier steht:** ein Sweep, der nichts findet, sieht von außen aus wie kein Sweep.
+Die nächste Sitzung, die dieselbe Frage stellt, zahlt sie dann noch einmal. **Ein negatives
+Ergebnis gehört ins Log wie ein positives** — und `CLAIMS.md` trägt bewusst KEINE Genre-Zahl,
+sie verweist, was nach #1295b genau richtig ist.
