@@ -19,7 +19,16 @@
 //    /echoelmusic/bio/heart/hrv     float [0..1]     — pulse AND its own sentinel (both halves
 //        are required and neither is redundant — see the block at `bioMessages`)
 //    /echoelmusic/bio/heart/rmssd   float ms         — pulse AND its own sentinel
-//    /echoelmusic/bio/heart/pnn50   float [0..1]     — rides the RMSSD gate (same RR record)
+//    /echoelmusic/bio/heart/pnn50   float [0..100] % — rides the RMSSD gate (same RR record).
+//        ⛔ #1329: this line said `[0..1]` and the wire has always carried a PERCENTAGE —
+//        `HRVMetrics.pnn50` ends in `* 100.0`, `BioSampleFrame.hrvPNN50`'s doc says
+//        "percentage [0…100]", and `BioMetricInfo` renders the unit as `%`. Four
+//        witnesses for percent against three prose claims of 0–1 (here,
+//        `BioEgressPolicy.FieldClass.clinical`, `docs/integrations.html`). The WIRE is
+//        correct and unchanged: this address sits with `/rmssd` and `/sdnn`, which are
+//        MEDICAL UNITS (ms) by the same rule — the docs' own next sentence says so. An
+//        integrator who believed the prose and normalised by 1 pinned every pNN50 above
+//        1 % at full scale. Prose fixed, contract untouched.
 //    /echoelmusic/bio/heart/sdnn    float ms         — pulse AND its own sentinel
 //    /echoelmusic/bio/breath/rate   float [3..40]    — on the plausibility band (3…40/min)
 //    /echoelmusic/bio/breath/phase  float [0..1]     — with the RATE, never gated on itself:

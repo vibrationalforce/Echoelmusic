@@ -95,7 +95,9 @@ public enum BioEgressPolicy {
         case derived
 
         /// Un-normalized time-domain HRV statistics in medical units — rMSSD and SDNN
-        /// in milliseconds, pNN50 as a proportion of successive NN intervals. They are
+        /// in milliseconds, pNN50 as a PERCENTAGE [0…100] of successive NN intervals
+        /// (⛔ #1329: this read "as a proportion", which in a UNIT sentence reads as 0–1;
+        /// `HRVMetrics.pnn50` ends in `* 100.0`). They are
         /// derived, not raw, so they are not forbidden — but they are the numbers a
         /// cardiology paper reports, they drive no light and no object position, and a
         /// default that streams them to a user-typed UDP host claims more of a body
