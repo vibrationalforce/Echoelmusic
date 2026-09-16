@@ -375,6 +375,34 @@ def tracked(pattern: str) -> list[Path]:
 # `xcodebuild test` COMPILES before it runs, so masking it hides a build failure just as
 # completely as masking `build-for-testing`. Leaving it out was a real blind spot: three such
 # steps in ci.yml were invisible.
+# ONE definition of "what a guard needle looks like" (#416). It lived in TWO places — the
+# section-B phantom scan and `selftest_negated_needle`'s own copy — and the selftest therefore
+# pinned a COPY of the rule rather than the rule. They happened to be identical; nothing made
+# them stay that way, and a selftest that cannot see a change to its subject is decoration.
+#
+# ⛔ THE TYPE KEYWORDS REQUIRE A PascalCase IDENTIFIER, and that is a REPAIR, not a tightening
+# (#1345). The old shape was `(?:func|struct|enum|class|protocol) [A-Za-z_]…`, which matches any
+# quoted string OPENING with one of those words — including ordinary English inside a failure
+# message. Measured live: `TheRecordRouteHasNoClaimantTests.swift:79` carries the continuation
+# `+ "enum is what makes adding a case the obvious move later."`, and the scan reported it as a
+# needle "declared nowhere". That is the cry-wolf this very section warns about, produced by the
+# section itself — and a checker with false alarms is worse than none (#665).
+#
+# The rule is the repo's own naming law (`.claude/rules/swift-audio.md`: "Types: PascalCase"), so
+# it costs nothing real: measured over `Tests/CISmoke/*.swift` it keeps **346** of the 347 current
+# matches and drops exactly the one false alarm. `func` deliberately still accepts either case —
+# a needle for `func Foo` would be a typo worth reporting, and lowerCamelCase is the norm there.
+#
+# ⚠️ What this does NOT fix, stated so nobody reads more into it: a prose string that opens with
+# `struct AudioEngine …` would still be picked up AND would still resolve, so it passes silently.
+# That is a false GREEN in the detector, it predates this change, and it is not made worse by it.
+DECL_MODIFIER = (r"(?:(?:private|fileprivate|internal|public|open|static|final|class"
+                 r"|override|mutating|nonisolated|indirect|convenience|required)\s+)*")
+NEEDLE_SHAPE = re.compile(
+    r'"(' + DECL_MODIFIER
+    + r'(?:func [A-Za-z_][A-Za-z0-9_]*'
+    + r'|(?:struct|enum|class|protocol) [A-Z][A-Za-z0-9_]*)[^"]*)"')
+
 BUILD_CMD = re.compile(r"xcodebuild\b[^\n]*\b(?:build|build-for-testing|test|archive)\b"
                        r"|^\s*swift\s+(?:build|test)\b", re.M)
 # Any key may open a step — `.github/workflows/testflight.yml` has one starting with `- if:`.
@@ -831,10 +859,7 @@ def section_b() -> Section:
     # `@`: 0. The other alternatives cost nothing (only `private` 126, `public` 43, `static` 15
     # and `nonisolated` 1 actually head a live needle) — an unmatchable branch is not the same as
     # an unused one.
-    _decl_modifier = (r"(?:(?:private|fileprivate|internal|public|open|static|final|class"
-                      r"|override|mutating|nonisolated|indirect|convenience|required)\s+)*")
-    needle_shape = re.compile(r'"(' + _decl_modifier
-                              + r'(?:func|struct|enum|class|protocol) [A-Za-z_][A-Za-z0-9_]*[^"]*)"')
+    needle_shape = NEEDLE_SHAPE
     # A needle used in an ABSENCE assertion names something that must NOT exist. Flagging it is
     # the cry-wolf failure in its purest form. Same-line only, for the reason the path check
     # above learned the hard way: a neighbourhood exemption exempts live things by accident.
@@ -1638,19 +1663,25 @@ def section_d() -> Section:
 # --------------------------------------------------------------------------------------- report
 
 def selftest_negated_needle() -> int:
-    """Pin the ONE rule #754 added: a needle inside a negated `contains(` is an exclusion.
+    """Pin TWO rules of section B's phantom scan: the #754 negated-`contains(` exclusion, and
+    (since #1345) the shape of a needle itself.
 
-    ⚠️ THIS IS NOT A SELFTEST OF THE DOCTOR. It covers one regex in section B and nothing
-    else — the other checks in this file still have no control, which is worth saying out
-    loud in a tool whose whole subject is instruments that overstate what they measured.
+    ⚠️ THIS IS STILL NOT A SELFTEST OF THE DOCTOR. It covers `NEEDLE_SHAPE` and the negation
+    rule, both in section B, and nothing else — the other checks in this file still have no
+    control, which is worth saying out loud in a tool whose whole subject is instruments that
+    overstate what they measured.
+
+    ⛔ THE NAME NOW DESCRIBES LESS THAN THE FUNCTION DOES, and it is kept rather than renamed
+    only because a rename would break every prose pointer at it; this docstring is the
+    correction. #1334's lesson is that the DESCRIPTION is the expensive half — a reader who
+    trusts "negated needle" would not think to add a shape case here, which is exactly the
+    control #1345 needed.
 
     ⛔ IT IS WRITTEN AS A PAIR ON PURPOSE (#739). A check that only feeds its own positive is
     not a check: the exemption must fire on the negated shape AND must NOT fire on a positive
     needle sitting on the SAME line, or it silently disarms the phantom scan it lives inside.
     """
-    dm = (r"(?:(?:private|fileprivate|internal|public|open|static|final|class"
-          r"|override|mutating|nonisolated|indirect|convenience|required)\s+)*")
-    shape = re.compile(r'"(' + dm + r'(?:func|struct|enum|class|protocol) [A-Za-z_][A-Za-z0-9_]*[^"]*)"')
+    shape = NEEDLE_SHAPE
     negated = re.compile(r"!\s*[A-Za-z0-9_$.\[\]]*\.contains\(\s*$")
     cases = [
         # (line, exempt-per-needle) — the first three are transcribed from Tests/CISmoke.
@@ -1662,6 +1693,18 @@ def selftest_negated_needle() -> int:
         # The one that matters: mixed on one line. Exempting per LINE would read [True, True]
         # and stop checking the positive needle.
         ('line.contains("func a(") && !line.contains("func b(")', [False, True]),
+        # ⭐ #1345 — THE PROSE CASE, which is the reason `NEEDLE_SHAPE` now demands PascalCase
+        # after a type keyword. Transcribed from the live false alarm
+        # (`TheRecordRouteHasNoClaimantTests.swift:79`): an ordinary English sentence inside a
+        # failure message, opening with `enum `. It must produce NO needle at all, so the
+        # expected list is empty. Without this case the repair has no control, which is the
+        # same defect the docstring above calls out for the negation rule.
+        ('+ "enum is what makes adding a case the obvious move later.")', []),
+        ('+ "struct is not a word this scan should care about here.")', []),
+        # …and the counterweight, in the same PAIR discipline: a real type needle still
+        # registers, or the fix above would have disarmed the whole phantom scan.
+        ('lines.contains("enum RecordRouteOwner: Hashable, CaseIterable, Sendable {}")', [False]),
+        ('lines.contains("struct EchoelStudioView: View")', [False]),
     ]
     bad = []
     for line, want in cases:
