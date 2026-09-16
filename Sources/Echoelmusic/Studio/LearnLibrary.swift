@@ -101,8 +101,25 @@ public enum LearnLibrary {
                     // offence (#491) — which is exactly what the first draft of this comment
                     // did, and the transcription caught it.
                     + "playable at every window size. With Reduce Motion on, the picture "
-                    + "stops its motion; the small header monitors keep following the music. "
-                    + "You can record it as a share-ready video."
+                    + "stops its motion; the small header monitors keep following the music."
+                    // ⛔ SAID "You can record it as a share-ready video." UNTIL #1318 — a
+                    // capability #1304 DELETED (founder 2026-09-12, "Kein Video Capture").
+                    // Nothing under `Sources/` can write one: the only `AVAssetWriter` is in
+                    // `Audio/SingleExport.swift` with `mediaType: .audio`, and there is no
+                    // ReplayKit and no `AVCaptureMovieFileOutput` anywhere. This entry renders
+                    // unconditionally behind a LIVE door (`LearnView` `Text(entry.detail)`;
+                    // `.guide` is the first section; the Learn sheet hangs off `quickDoorRow`),
+                    // so it was the retracted claim's most reachable home in the whole product.
+                    // ⚠️ AND NO GUARD COULD MATCH IT. `TheStoreTextClaimsOnlyWhatShipsTests`
+                    // reads `fastlane/metadata/**` and never `Sources/`; its #1304 needles
+                    // ("video capture", "video recording", "record the visual", "share-ready
+                    // mp4") are none of them substrings of the sentence above; and this file
+                    // sat in NO retracted-capability scan at all: the guide guard only
+                    // asserts that the controls it NAMES exist. The repair is one
+                    // list over all four copy surfaces (#416):
+                    // `TheShareReadyClipIsNotSoldAnywhereTests`. It scans this file through
+                    // `SourceText.codeOnly`, which is why this retraction may quote the
+                    // sentence it retracts without becoming the offence (#491).
             ),
             LearnEntry(
                 id: "guide.feel", section: .guide,

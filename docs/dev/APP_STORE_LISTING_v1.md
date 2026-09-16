@@ -97,7 +97,8 @@ TAKE IT TO YOUR STUDIO AND YOUR SHOW
 
 SEE YOUR PULSE
 • An immersive, GPU-rendered visual breathes with your body — flash-safe,
-  Reduce-Motion aware, and recordable as share-ready video clips.
+  Reduce-Motion aware, and playable: touch it and your fingers become
+  in-key notes.
 
 PLAY TOGETHER, NEARBY
 • Two iPhones on the same Wi-Fi share a session with one tap, and can show
