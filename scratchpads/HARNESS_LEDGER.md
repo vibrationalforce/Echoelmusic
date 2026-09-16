@@ -3990,3 +3990,37 @@ sind Prosa ÜBER den Marker („(NEEDS-FOUNDER-VERIFY in the plan)", ein `XCTSki
 stehende Richtung in `is_reference`: *„hiding one costs a device session while over-counting
 costs a glance."* 13 Blicke sind billiger als das Risiko, eine echte Bitte zu verstecken. **Eine
 gemessene Nicht-Reparatur gehört ins Log, sonst zahlt die nächste Sitzung dieselbe Messung.**
+
+## PLAYBOOK #1347 (2026-09-16) — ein Positionstest braucht ein NÄCHSTES, kein IRGENDEIN; und eine veraltete ERLAUBNIS liest sich als Plan
+
+**Defekt A — die Prosa.** Eine zurückgenommene Behauptung kann eine BEDINGUNG tragen („bleibt
+gestrichen, bis X"). Stirbt X, ist die Bedingung unerfüllbar — und der Satz liest sich nicht als
+falsch, sondern als **geplant**. Eine veraltete Behauptung wird korrigiert; eine veraltete
+Erlaubnis wird BEFOLGT. Beim Streichen einer Fähigkeit also nicht nur die Behauptungen suchen,
+sondern die Sätze, die eine Rückkehr in Aussicht stellen: `bis ein`, `sobald`, `darf wieder`,
+`bleibt … bis`.
+
+**Defekt B — der Wächter, und der ist der teurere.** Die naheliegende Form
+„ein ⛔ steht VOR der Phrase" ist in einem Dokument mit sehr langen Zeilen **zufällig erfüllt**:
+diese Tabellenzeilen sind 1 500–2 500 Zeichen lang, BEGINNEN mit einem ⛔ und hängen später
+alles Mögliche an. Gemessen auf dem Baum, der den Defekt trug: 4 Fundstellen, **0** Verstöße —
+ein Wächter, der für seinen genannten Grund nie feuern kann (#367).
+
+**Die Form, die trägt: der NÄCHSTE Marker vor der Phrase entscheidet.** `range(of:
+options: .backwards)` auf beide Marker, vergleichen. Eltern ⛔@527 vs ⭐@1030 → Verstoß;
+Arbeitsbaum ⛔@1089, kein ⭐ danach → sauber. **Verallgemeinert: wenn das Ziel-Dokument eine
+Marker-GRAMMATIK hat (hier ⛔ = zurückgenommen, ⭐ = lebende Tatsache), ist der Wächter diese
+Grammatik — nicht eine Textsuche daneben.**
+
+**Und wie man es merkt:** gar nicht beim Lesen. Beide Fassungen sehen richtig aus, beide sind
+auf dem eigenen Baum grün. Nur §0 — transkribieren und gegen BEIDE Bäume fahren — trennt sie.
+Das ist die dritte Instanz dieses Musters in einer Sitzung (#1344: rot auf dem EIGENEN Baum;
+#1295b: ein Regex, der etwas Plausibles trifft; hier: grün auf dem FREMDEN). **Alle drei sind
+unsichtbar beim Lesen und alle drei sterben an derselben Prozedur.**
+
+**Sweep-Ergebnis, damit es niemand wiederholt:** 31 gelöschte Typnamen gegen `docs/dev/`,
+`ContentPipeline/` und alle `scratchpads/PLAN_*` (169 Dateien). Nur CLAIMS.md war echt.
+`FEATURE_MATRIX`/`ROADMAP` sauber (⛔-Rücknahmen bzw. als gegenstandslos markierte Historie),
+`PLAN_*` ist datierte Historie per Konvention, `fastlane/metadata` und `docs/*.html` sauber
+(„Harmonizität" = DSP-Parameter · „Autotune" = das Nia9ara-Projekt · „face tracking" ×2 =
+Verneinungen).

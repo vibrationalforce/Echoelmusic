@@ -2177,3 +2177,22 @@ nicht sehen: er scannt `- [ ]`-Ankreuzzeilen, und die Faulstelle war eine ÜBERS
   bewiesen werden. Review 2026-11-16.
 
 Ergebnis für den Founder: die Geräte-Sitzung hat **keinen Blocker mehr**; §2–§5 sind ausführbar.
+
+### 2026-09-16 — #1347: eine veraltete ERLAUBNIS liest sich als Plan, nicht als Ruine
+
+`ContentPipeline/CLAIMS.md` — die Datei, aus der jede Caption und Store-Zeile geschrieben wird —
+trug in vier gestrichenen Zeilen eine Bedingung auf `setInputMonitoring`, einen Tag bevor #1302
+das Symbol löschte.
+
+- **Eine veraltete Behauptung wird korrigiert; eine veraltete Erlaubnis wird BEFOLGT.** Beim
+  Streichen einer Fähigkeit auch nach `bis ein` / `sobald` / `darf wieder` suchen.
+- **Ein Positionstest in langer Prosa braucht ein NÄCHSTES, kein IRGENDEIN.** Der erste
+  Wächter-Entwurf war grün auf dem Baum, der den Defekt trug (4 Fundstellen, 0 Verstöße), weil
+  jede Zeile ohnehin mit einem ⛔ beginnt.
+- **Hat ein Dokument eine Marker-Grammatik, IST der Wächter diese Grammatik** (⛔ =
+  zurückgenommen, ⭐ = lebende Tatsache).
+- **Dritte Instanz eines Musters in einer Sitzung** (#1344 rot auf dem eigenen Baum, #1295b ein
+  Regex mit plausiblem Treffer, #1347 grün auf dem fremden): alle drei sind beim Lesen
+  unsichtbar und sterben an §0 gegen BEIDE Bäume.
+- **Sweep negativ sonst:** 31 gelöschte Typnamen gegen 169 Dateien in `docs/dev/`,
+  `ContentPipeline/` und `scratchpads/PLAN_*` — nur CLAIMS.md war echt.

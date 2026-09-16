@@ -32364,3 +32364,57 @@ ausgelöst — der vierte Zustand, weder grün noch rot.
 mehreren Zuhausen (#456), und der Geräte-Zettel ist das Zuhause, an das beim Löschen niemand
 denkt — er kompiliert nicht und steht in keinem `paths:`-Filter. Wer eine Fläche entfernt,
 greppt im selben Commit diese Datei UND `python3 scripts/founder-verify.py` nach ihrem Namen.
+
+## 2026-09-16 (Fortsetzung) — #1347: eine BEDINGTE Erlaubnis auf eine Bedingung, die nie eintreten kann
+
+**Der Sweep, der dahin führte.** Nach #1346 dieselbe Klasse systematisch: 31 durch
+Founder-Löschungen entfernte Typnamen gegen `docs/dev/`, `ContentPipeline/` und alle
+`scratchpads/PLAN_*` (169 Dateien, 35 mit Treffern). **Ergebnis überwiegend NEGATIV, und das
+gehört ins Log:** `FEATURE_MATRIX.md` und `ROADMAP.md` sind sauber — jede Fundstelle trägt eine
+⛔-Rücknahme oder liegt in einem Historien-Blockquote, dessen Kopf sie als GEGENSTANDSLOS
+markiert (#1343). `scratchpads/PLAN_*` sind datierte Historie per Repo-Konvention (`CLAUDE.md`:
+„session-specific logs and plans"; `founder-verify.py` schließt sie deshalb aus).
+`fastlane/metadata` und `docs/*.html` ebenfalls sauber (die drei Treffer sind „Harmonizität" =
+der DSP-Parameter, „Autotune" = das Nia9ara-Projekt des Founders, „face tracking" ×2 =
+Verneinungen).
+
+**Die eine echte Fundstelle war `ContentPipeline/CLAIMS.md`** — und das ist die Datei, die
+CLAUDE.md als Pflichtlektüre vor JEDER Caption, Seiten-Kopie und Store-Zeile nennt, wo eine
+falsche Behauptung eine 2.3-Ablehnung ist. Vier gestrichene Zeilen trugen seit dem 2026-09-11
+(#1247) denselben Satz: *„die Zeile bleibt gestrichen, bis ein `VERIFIED-`Datum an
+`setInputMonitoring` steht."* Einen Tag später löschte #1302 den Audio-Eingang. Gemessen in
+kommentar-gestrippten `Sources/` (354 Dateien): `setInputMonitoring` · `showInput` ·
+`AudioInputPickerView` · `VoicePitchCorrector` · `isInputMonitoring` je **0**.
+
+⭐ **Der Defekt ist eine RICHTUNG, kein Datum, und die Datei nennt ihn zwei Zeilen weiter oben
+selbst:** *„eine Ausnahme in dieser Datei zeigt auf einen Codepfad und muss mitsterben, wenn der
+Pfad stirbt. Ein überlebender ‚… darf weiter behauptet werden'-Satz ist die 2.3-Klasse und liest
+sich wie eine Erlaubnis, nicht wie eine Ruine."* Eine BEDINGTE Erlaubnis ist dieser Satz im
+Futur — **eine veraltete Behauptung liest sich als falsch, eine veraltete ERLAUBNIS als Plan.**
+Die Datei stellte das Gesetz auf und brach es viermal.
+
+Mit repariert, gleiche Ursache: „Der Code lebt (`VoicePitchCorrector` …)" (Präsens über eine
+gelöschte Datei) · 3× „während `AudioInputPickerView()` weiterhin in einem `.sheet` konstruiert
+wird" · 3× „Der Code lebt und ist unangetastet; Wieder-Betüren sind drei Aufrufstellen" —
+Wieder-Betüren heißt hier neu BAUEN.
+
+⛔ **MEIN ERSTER WÄCHTER-ENTWURF WAR GRÜN AUF DEM BAUM, DER DEN DEFEKT TRUG — die teuerste
+Sorte, weil sie beim Lesen unsichtbar ist.** Er fragte nur „steht irgendwo VOR dem Symbol ein
+⛔" — und das tut es beim Eltern auch: jede dieser Zeilen BEGINNT mit `⛔ **GESTRICHEN
+2026-09-12 …**`, und die abgelaufene Erlaubnis wurde 500–1500 Zeichen SPÄTER angehängt.
+Gemessen: 4 Zeilen nennen das Symbol, **0** Verstöße. Erst die NÄCHSTER-Marker-Form trennt sie
+(Eltern ⛔@527 gegen ⭐@1030; Arbeitsbaum ⛔@1089, danach kein ⭐).
+
+⭐ **LEHRE, allgemein: in einem Dokument mit 2 000 Zeichen langen Zeilen und einem Dutzend
+Markern ist „der Marker steht VOR der Phrase" ZUFÄLLIG erfüllt. Ein Positionstest braucht ein
+NÄCHSTES, kein IRGENDEIN.** Und die Regel selbst ist die Marker-Grammatik der Datei: ⛔ =
+zurückgenommen, ⭐ = lebende, wichtige Tatsache. Nur §0 gegen BEIDE Bäume hat das gesagt.
+
+**§0-Benotung (Eltern = `dd2b89a`).** Claim 1 ROT auf dem Eltern, 4 Verstöße — echte
+Regression; die vier sind EIN Befund viermal berichtet (#486). Claim 2 (die Zeilen sind
+weiterhin GESTRICHEN) und Claim 3 (die fünf Symbole sind wirklich aus dem CODE weg, 354 Dateien
+gelaufen) grün auf beiden — Gegengewichte und der Inhalt (#343): ohne Claim 2 bliebe der Wächter
+grün auf einem Baum, der den Widerspruch durch ENT-Streichen auflöst. Sieben Checker exit 0;
+`foreign-needles.py` ist der zuständige und ist grün. Kein `@testable import` nötig (#1337).
+
+**Gate:** `01ae54f` Compile = success.
