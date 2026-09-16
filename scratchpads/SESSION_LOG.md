@@ -32682,3 +32682,112 @@ Schritt 11 `Run Tests` lief beim Lesen noch; seine Conclusion sagt wegen #396 oh
 nichts (§5). ⚠️ Ehrliche Formulierung, unverändert: **kompiliert nachweislich, Ausführung
 unbelegt** (#445/#807). ⚠️ `Xcode Compile Check` #2643 steht als `cancelled` — zwei Läufe
 auf demselben SHA, der zweite (#2644) gewann die Concurrency-Gruppe; das ist kein Befund.
+
+---
+
+## 2026-09-16 — #1351: der Defekt aus #1350 wird ein Werkzeug, statt eine Lehre zu bleiben
+
+**Warum eine Scheibe ohne Genre.** #1349 und #1350 haben denselben Fehler gemacht — Zahlen in
+einem Patch-Kommentar aus einem Wegwerf-Parser, der still weniger las, als in der Datei steht.
+Zweimal dieselbe Klasse in zwei aufeinanderfolgenden Scheiben ist kein Ausrutscher, sondern
+eine fehlende Fläche. Ein Gesetz im SESSION_LOG hätte die dritte Wiederholung nicht verhindert;
+ein Unterbefehl, der vor dem Schreiben läuft, tut es.
+
+**`python3 scripts/genre-prebatch.py <cands.json> --patch "<Patchname>"`** druckt die
+Nachbarschaft eines Patches über 19 Felder (`a d s r harm hl bright noise cutoff res lfoAmt
+lfoRate lfoDepth revMix revDecay vibRate vibDepth uni det`) plus die abgeleitete Hüllkurve
+`a+d+s+r`, und sagt je Feld, wer darüber und darunter liegt und ob der Wert ALLEINIGER
+Besitzer ist. Der Parser schneidet Blöcke von einer `patch(`-Fundstelle bis zur nächsten,
+statt Zeilen zu sammeln — genau der Schnitt, den der Wegwerf-Parser nicht hatte.
+
+⭐ **Die Kopfzeile ist der eigentliche Inhalt: `PATCH NEIGHBOURHOOD — parsed N of M `patch(`
+blocks`.** Bei N != M druckt das Werkzeug **REFUSED** und gibt 2 zurück, statt eine unvollständige
+Liste auszugeben, die wie eine vollständige aussieht. Das ist das #1350-Gesetz als Code: eine
+Messung, die ihre eigene Abdeckung nicht nennen kann, ist keine Messung — und die Fassung, die
+sie nennt und trotzdem ausgibt, ist nur eine höflichere Falle.
+
+**Drei neue Selbsttest-Fälle** (`--selftest`): zwei Verweigerungen (ein Block, der ein Feld
+nicht trägt; eine erzwungene Abdeckungslücke) und ein positiver, der aus `PNAMES[0]` abgeleitet
+ist und `parsed N of N` verlangt — also ein Fall, der rot wird, wenn der Blockschnitt bricht,
+statt einer, der nur auf einer schon gesunden Eingabe läuft (#808).
+
+**Gemessen nach dem Schnitt:** acht Checker exit 0, Doctor 0 CRITICAL. Der Commit fasst nur
+`scripts/` und den Plan an; `Sources/` und `Tests/` sind unberührt, also ist keine Gate-Lesung
+fällig, die etwas beweisen könnte.
+
+**Commit:** `faadf61`.
+
+---
+
+## 2026-09-16 — #1352 G15b-1: Dub Echo, und ein Regal, das nach dem heißt, was es hält
+
+**Das Genre.** `dubEcho` — Offbeat-Septimen, die sich im Bandecho auflösen. 13 Arme in
+`MusicStyle.swift`, zwei Patches, ein FX-Arm, ein BassGrammar-Arm. Tempo 66–82, Default 72,
+Swing 0,18, Skala `.minor`, `bassPattern .offbeat`, Lead „Hollow Reed", `mixLevels
+(1.16, 1.04, 0.88)`, Progression `[0, 6]` (i→♭VII), `chordTones [0, 2, 4, 6]`, `padOctave 3`.
+
+**Warum `[0, 6]` und nicht das naheliegende `[0, 5]`:** `[0, 5]` gehört `boomBapHipHop`, und
+ein drittes Genre auf demselben Paar hätte den Fingerabdruck-Abstand auf 4 von 7 gedrückt. Das
+FX-Echo ist `.tape` auf der HALBEN Note, bewusst nicht auf dem punktierten Achtel — das ist
+`boomBapHipHop`s Echo, und zwei Dub-nahe Genres mit demselben Echo wären ein Echo mit zwei
+Etiketten. `delayFeedback 0.52` ist der höchste im Katalog und trägt das Genre; der Wächter
+pinnt ihn als ORDNUNG gegen `rootsReggae`, nicht als Wert (#1349: ein gepinnter Wert altert).
+
+⭐ **Das Regal heißt „Dub & Echo", nicht „Dub & Drone" wie im Plan — und der Grund ist eine
+Messung, keine Vorliebe.** `Subcategory.title` wird vom Genre-Picker GERENDERT;
+`Category.title` hat null Produktions-Leser. Ein unvollständiger Rubrik-Titel ist also
+Buchhaltungsschuld, ein unvollständiger REGAL-Titel eine ausgelieferte Über-Behauptung — das
+Regal hätte einen Drone versprochen, den es nicht hält. `droneMetal` steht jetzt als eigene,
+BLOCKIERTE Planzeile (G15b-3) neben den anderen `PadGrammar.pedalDrone`-Genres, statt als
+halbes Versprechen in einer Überschrift.
+
+⛔ **ZWEI Fehler beim Bauen, beide im selben Kommentar, beide vor dem Commit gefangen.** Der
+erste Entwurf von „Dub Sub" teilte DREI von vier Hüllkurvenwerten mit dem Bass-Patch von
+`rootsReggae` — und der Kommentar, der die Trennung verteidigte, nannte dieses Patch **„Roots
+Sub"**, während es „Roll Sub" heißt. Ein Kommentar, der einen Nachbarn falsch benennt, kann
+seine eigene Behauptung nicht belegen. Neu entworfen: `a 0.014 / d 0.62 / s 0.80 / r 0.32`
+(Hüllkurve 1.754) gegen Roll Subs 1.452, dazu `harm 0.96`, `bright 0.13`, `cutoff 545` — alle
+drei ALLEINIGE Besitzer, gemessen mit `--patch` aus #1351. ⚠️ Und in genau dieser Reparatur
+schrieb ich zuerst „gegen 1.394"; gemessen sind es 1.452. Auch das gefangen, bevor es stand.
+
+⭐ **GESETZ daraus, und es zeigt in die Gegenrichtung von #1350:** dort war die Lehre „miss dein
+eigenes Werkzeug, bevor du einen Vermerk widerlegst". Hier ist sie **miss den NACHBARN mit dem
+Werkzeug, BEVOR du eine Trennung von ihm behauptest.** Beide Male stand das Werkzeug schon
+bereit; beide Male war die Versuchung, den Nachbarn aus dem Gedächtnis zu zitieren.
+
+**Wächter:** `Tests/CISmoke/GenreBatchFifteenBOneTests.swift`, 46 Zusicherungen in sieben
+Ansprüchen (8 · 6 · 8 · 6 · 5 · 8 · 5). Gegen den Elternbaum kompiliert die Datei nicht
+(`MusicStyle.dubEcho` existiert dort nicht) — **eine** Abwesenheit, nicht sechsundvierzig
+(#486). Nach §0 gegen den Arbeitsbaum transkribiert: **33 der 46 grün**, der Rest braucht
+Swift-Typen. Anspruch 7 pinnt zusätzlich `Subcategory.dubEchoes.title == "Dub & Echo"` und
+dass die halbe Note beim LANGSAMSTEN Tempo des Genres unter der Decke bleibt (1,818 s < 2,0).
+
+**Gemessen nach dem Schnitt** (`genre-prebatch.py`): 54 Genres, 37 angeboten, 75 Patches.
+Fingerabdruck-Sweep über die Angebotenen: keine Kollision. Lead-Decke: Tragweite 44 → Decke 8,
+und **zwei Namen stehen jetzt AUF ihr** („Pluck" 8, „Hollow Reed" 8) — das nächste
+lead-tragende Genre hebt die Decke NICHT (ceil(45/6) = 8), es muss also einen der vier Namen
+bei 7 nehmen. Das ist die harte Randbedingung für G15b-2. Acht Checker exit 0, Doctor 0
+CRITICAL.
+
+**Sieben nutzersichtbare Flächen mitgezogen:** beide `release_notes` (Thirty-six →
+Thirty-seven, Sechsunddreißig → Siebenunddreißig, Name in beiden Listen), `tools.html`,
+`brainstorming.html`, `press.html` (zweimal), `APP_STORE_LISTING_v1.md`, `architecture.html`
+(42 von 53 → 43 von 54, Abdeckung 54 von 54 — gemessen, nicht hochgezählt). Die vier
+AUFZÄHLENDEN sind gegen `TheGenreListsMatchTheirOwnCountTests` transkribiert und grün; die
+`spelled`-Karte dort trug „Thirty-seven"/„Siebenunddreißig" bereits.
+
+**NEEDS-FOUNDER-VERIFY:** Dub Echo bei 72 im Loop-Modus, A/B gegen Roots Reggae bei 76. Die
+Ohrfrage ist das Rückkopplungsmaß: trägt 0,52 auf der halben Note, oder verwischt es den
+Offbeat-Bass, den dasselbe Genre als Grammatik führt?
+
+**Commit:** `88fc25a`.
+
+**GATE-LESUNG `88fc25a` — beide echten Gates grün.** `Xcode Compile Check` #2645 (Run
+35152250544) = `success`: `Sources/` baut mit dem neuen Genre, dem neuen Regal, den zwei neuen
+Patches und dem neuen FX-Arm. CI/CD #6110 (Run 35152250508) Schritt 9 **`Build for Testing` =
+`success`** (21:26:20 → 21:31:08; Schritt 10 „Print build log on failure" = `skipped`) — damit
+kompiliert `Tests/CISmoke` nachweislich, also auch `GenreBatchFifteenBOneTests.swift` mit
+seinen 46 Zusicherungen. Schritt 11 `Run Tests` lief beim Lesen noch; seine Conclusion sagt
+wegen #396 ohnehin nichts (§5). Ehrliche Formulierung, unverändert: **kompiliert nachweislich,
+Ausführung unbelegt** (#445/#807). Die drei übrigen Jobs: Security Scan `success`, Code Quality
+& Linting `success`, Generate Documentation `skipped`.
