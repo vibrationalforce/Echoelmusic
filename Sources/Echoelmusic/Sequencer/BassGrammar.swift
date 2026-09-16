@@ -163,6 +163,14 @@ public extension MusicStyle {
         // was. ⛔ The design sheet gave `nordicFiddle` a `pedalDrone` figure; that case does not
         // exist in this enum, and authoring a figure is its own slice (one case, one `hits` arm,
         // one map arm, one guard) — so that genre is NOT in this batch.
+        //   ⭐ #1294 G11c DID that slice, and the prediction held exactly: the case was authored
+        //   ahead as `heldRoot` (NOT `pedalDrone` — that spelling is reserved for a planned
+        //   `PadGrammar` case, and one spelling for two enums is the #416 shape), and this arm
+        //   is the map half that finally claims it. `GenreBassGrammarTests` moves it from
+        //   `authoredAhead` to `owned` in the same commit, which is what makes an authored-ahead
+        //   figure safe to leave sitting: the day someone takes it, the list goes red on the
+        //   right line rather than the figure quietly acquiring an owner.
+        case .nordicFiddle:     return .heldRoot
         case .andalusianCadence: return .drivingEighths
         case .blackMetal:       return .drivingEighths
         case .modalJazz:        return .drivingEighths

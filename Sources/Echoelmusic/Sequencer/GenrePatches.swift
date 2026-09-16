@@ -99,6 +99,24 @@ public extension MusicStyle {
                 cutoff: 3200, res: 0.12, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
                 revMix: 0.14, revDecay: 1.10, vibRate: 5.6, vibDepth: 0.05,
                 uni: 2, det: 8)
+        case .nordicFiddle:
+            // #1294 G11c — SYMPATHETIC BOW. A bowed string with the neighbouring strings ringing
+            // along: unison 3 at detune 9 IS the sympathetic pair, not an ensemble effect, and it
+            // takes no claim (`uni: 5, det: 16` is the widest in the file and stays that way).
+            //
+            // ⚠️ Every number against a measured neighbour: cutoff 2300 is FREE and sits between
+            // "Warm Rhodes" (2250) and "House Shell" (2400) · attack 0.11 sits deliberately
+            // BETWEEN "Velvet Strings" (0.10) and "Air Reed" (0.12) rather than tying either —
+            // this genre shares a shelf with the reed and must not share its onset · the envelope
+            // sums to 2.01, clear of "Berlin Seq"'s 2.12 and nowhere near "Drone Bed"'s 15.30,
+            // which holds the slowest-attack and longest-release claims in this file ·
+            // noise 0.05 is bow hair, under "Air Reed"'s 0.06.
+            return patch("63", "Sympathetic Bow",
+                a: 0.11, d: 0.70, s: 0.82, r: 1.20,
+                harm: 0.62, hl: 0.48, bright: 0.34, noise: 0.05, color: "Pink", shape: "Natural",
+                cutoff: 2300, res: 0.14, lfoAmt: 0.05, lfoRate: 2.8, lfoDepth: 0.04,
+                revMix: 0.24, revDecay: 2.60, vibRate: 5.2, vibDepth: 0.06,
+                uni: 3, det: 9)
         case .rootsReggae:
             // #1289 G6b — ROOTS ORGAN. ⚠️ NOT "Skank Organ": `ska` (un-offered) already ships
             // that name, and the pre-batch check caught it — the third name collision in three
@@ -597,6 +615,27 @@ public extension MusicStyle {
                 a: 0.006, d: 0.22, s: 0.38, r: 0.10,
                 harm: 0.88, hl: 0.30, bright: 0.16, noise: 0.0, color: "Pink", shape: "Natural",
                 cutoff: 820, res: 0.16, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
+        case .nordicFiddle:
+            // #1294 G11c — DRONE SUB, and the FIRST voice on `heldRoot`. The figure covers all
+            // sixteen steps, so this patch is the opposite of every other bass here: it is built
+            // to NEVER finish inside a bar.
+            //
+            // ⚠️ It takes TWO new superlatives and both are stated rather than discovered later:
+            // the envelope sums to **1.09**, the LONGEST of any bass patch (previous longest
+            // "Velvet Sub" 0.834), and sustain **0.92** is the HIGHEST (previous "Roll Sub"
+            // 0.72). Both are the bordun's identity — a bowed drone does not decay — and neither
+            // touches a claim anyone else holds: "Psy Bass" keeps the SHORTEST envelope (0.222),
+            // "Minimal Sub" keeps the LOWEST cutoff (520), and "Drone Bed" keeps the file-wide
+            // slowest attack (1.8) and longest release (7.5), which 0.09 and 0.60 do not
+            // approach. Cutoff 660 is FREE, between "House Sub" (640) and "Round Sub" (680).
+            // ⚠️ `uni: 1` like every bass here — a detuned unison smears the fundamental, and a
+            // drone is the one voice that would show it for the whole bar.
+            return patch("64", "Drone Sub",
+                a: 0.09, d: 0.40, s: 0.92, r: 0.60,
+                harm: 0.94, hl: 0.34, bright: 0.14, noise: 0.0, color: "Pink", shape: "Natural",
+                cutoff: 660, res: 0.10, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
                 revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
                 uni: 1, det: 0)
         case .rootsReggae:

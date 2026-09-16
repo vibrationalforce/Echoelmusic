@@ -355,6 +355,25 @@ public extension MusicStyle {
                 delayEnabled: false, delayTone: 0.52, delaySpread: 0.28,
                 saturation: 0.22,
                 reverbEnabled: true, reverbMix: 0.22, reverbRoom: 0.44, reverbDamping: 0.40)
+        case .nordicFiddle:
+            // #1294 G11c — WOODEN HALL, NO DELAY. A bordun already fills every sixteenth; an
+            // echo on top of a continuous drone is mud, not space. The room is mid-sized because
+            // a dance tune has to stay danceable — this is the beat-driven member of the
+            // European Folk shelf, not the air.
+            //
+            // ⚠️ Every number against a named neighbour, measured against the whole file:
+            // room 0.56 is mid-field, far under `contemplation`'s 0.96 (the biggest hall) and
+            // well above `darkPsyTrance`'s 0.32 (the smallest) · damping 0.50 sits between
+            // `upliftingTrance`'s 0.30 (least-damped) and `deepDrone`'s 0.68 (most damped) ·
+            // saturation 0.24 clears `minimalTechno`'s 0.14 — REQUIRED here and NOT for
+            // `celticAir`, because that claim is scoped to beat-driven chains and this genre is
+            // `.backbeat` while the air is `.none` — and stays far under `doom`'s 0.55 ·
+            // tone 0.46 is a FREE value between 0.45 and 0.48, under `futuristic`'s 0.82 and
+            // above `deepDrone`'s 0.14 (the darkest) · spread 0.26 under `detroitTechno`'s 0.60.
+            return GenreFXPreset(
+                delayEnabled: false, delayTone: 0.46, delaySpread: 0.26,
+                saturation: 0.24,
+                reverbEnabled: true, reverbMix: 0.20, reverbRoom: 0.56, reverbDamping: 0.50)
         case .rootsReggae:
             // #1289 G6b — THE LONG ECHO, and it is the genre rather than a decoration: a QUARTER
             // on tape with high feedback and audible wow. At the fastest allowed 84 BPM that is

@@ -153,6 +153,8 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #1290 G11a — `.folk` was the LAST rubric with no offered genre. `klezmer` had the
         // European Folk shelf to itself and was dark; these two are the doors.
         .celticAir, .andalusianCadence,
+        // #1294 G11c — the THIRD door on the European Folk shelf, and the one that closes it.
+        .nordicFiddle,
         .selfObservation, .stillMeditation, .drift, .contemplation,
         .vaporwave, .sciFi, .classical, .dubTechno,
         // #254 batch 1 (founder 2026-07-30: "mehr Genres der elektronischen Musik benötigt,
@@ -433,7 +435,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case .rootsReggae:
             return .caribbean
         // #1290 G11a — both join `klezmer` on the existing European Folk shelf; no new shelf.
-        case .celticAir, .andalusianCadence:
+        case .celticAir, .andalusianCadence, .nordicFiddle:
             return .europeanFolk
         case .sciFi:
             return .cinematicAtmospheres
@@ -827,6 +829,33 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     ///     on five axes: arpeggiated (yes/no), archetype (four-on-floor/offbeat), tempo
     ///     (145…155 / 90…130), register (3 / 4) and progression.
     case andalusianCadence
+    /// #1294 G11c. The BORDUN TUNE — a fiddle line over a bowed drone, and the third genre on
+    /// the European Folk shelf (`klezmer` dark, `celticAir` and `andalusianCadence` offered).
+    /// It is what CLOSES that shelf rather than a fourth idea on it.
+    ///
+    ///   · **`bassGrammar: .heldRoot`** — the FIRST owner of the figure #1294 authored ahead in
+    ///     `BassGrammar`. The bordun covers all sixteen steps: root for three quarters, fifth
+    ///     for the last one, no silence. That is the genre's identity, not a detail — a bowed
+    ///     drone does not stop between notes, and the patch below is built to match it.
+    ///   · **`chordTones: [0, 3, 7]` on `minor`** = 0, 5, 12 semitones — root, perfect FOURTH,
+    ///     octave, resolved through `MusicalKey.degree` and never read as semitones. Shared with
+    ///     `celticAir`, which is the shelf-mate it must NOT be confused with: that one is
+    ///     `dorian`, `.none`-archetype, `.flowFree`, 60…84 and has no bass of its own. This one
+    ///     is `minor`, `.backbeat`, `.studioLocked`, 108…136 and carries a drone. Same open
+    ///     voicing, opposite everything else — which is exactly the separation the fingerprint
+    ///     guard measures.
+    ///   · **`progression: [0, 6, 5]`** — i → VII → VI. ⚠️ NOT unique and not claimed as such:
+    ///     `deepHouse` and `psyProgHouse` carry the same shape, measured before writing. What
+    ///     separates this arm from both is the scale-degree VOICING above it and the drone under
+    ///     it, never the progression.
+    ///   · **`padOctave: 3`** — a register lower than `celticAir`'s 4, because a drone that sits
+    ///     in the same octave as the tune stops being a floor.
+    ///   · **`.studioLocked` by DEFAULT, deliberately.** The `defaultMode` switch ends in
+    ///     `default: .studioLocked`, so this genre takes no arm there — a dance tune has a fixed
+    ///     tempo, which is the opposite of the air beside it. The omission is the one a compiler
+    ///     cannot catch, so the batch guard asserts it rather than trusting it (the `celticAir`
+    ///     arm above says the same thing from the other side).
+    case nordicFiddle
     /// #983 S5 (same founder sentence: "psy prog House"). The roster has `psytrance` (un-offered,
     /// ~145, phrygian, ARPEGGIATED, padOctave 2) and nothing between it and house. This is the
     /// house-tempo, non-arpeggiated relative — progressive, not Goa — and it is separated from
@@ -1035,6 +1064,8 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #1290 G11a — European Folk.
         case .celticAir:          return "Celtic Air"
         case .andalusianCadence:  return "Andalusian Cadence"
+        // #1294 G11c — European Folk, third door.
+        case .nordicFiddle:       return "Nordic Fiddle"
         case .blackMetal:         return "Black Metal"
         case .modalJazz:          return "Modal Jazz"
         case .soulBallad:         return "Soul Ballad"
@@ -1106,6 +1137,8 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             return "Open-fourth dorian air · body-paced"
         case .andalusianCadence:
             return "Descending phrygian-dominant cadence"
+        case .nordicFiddle:
+            return "Open-fourth minor tune over a bowed drone"
         case .blackMetal:
             return "Tremolo-cold raised-fourth minor"
         case .modalJazz:
@@ -1214,6 +1247,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // the beats. ⚠️ `.offbeat` is a 4/4 placement, never a compás — see the case doc.
         case .celticAir:                            return .none
         case .andalusianCadence:                    return .offbeat
+        // #1294 G11c. `.backbeat` → `.struck` articulation and `isBeatDriven == true`: a dance
+        // tune, unlike the air on the same shelf. That is also why its saturation must clear
+        // `minimalTechno`'s "cleanest beat-driven chain" floor, which `celticAir` sat outside.
+        case .nordicFiddle:                         return .backbeat
         case .industrialTechno, .darkPsyTrance:   return .fourOnFloor
         case .afroHouse:                          return .offbeat
         // #1285 G5 — both are drum-free by design; `.none` also derives `.sustained`
@@ -1458,6 +1495,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // on purpose — an air and a reggae at 76 are told apart by everything except the number.
         case .celticAir:          return 60...84
         case .andalusianCadence:  return 90...130
+        // #1294 G11c. 108…136 overlaps `electroFunk` 112…124 and `andalusianCadence` 90…130 on
+        // purpose — the same rule as `celticAir` two lines up: two genres at 120 are told apart
+        // by everything except the number.
+        case .nordicFiddle:       return 108...136
         case .blackMetal:         return 160...200
         case .modalJazz:          return 100...160
         case .soulBallad:         return 64...86
@@ -1593,6 +1634,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case .rootsReggae:        return 76
         case .celticAir:          return 70
         case .andalusianCadence:  return 108
+        case .nordicFiddle:       return 120
         case .blackMetal:         return 180
         case .modalJazz:          return 120
         case .soulBallad:         return 72
@@ -1663,6 +1705,9 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #1290 G11a — both under `modalJazz`'s 0.30 (the largest offered swing, pinned).
         case .celticAir:                          return 0.18
         case .andalusianCadence:                  return 0.10
+        // #1294 G11c — 0.16, the fiddler's lilt, well under `modalJazz`'s 0.30 (the largest
+        // offered swing, pinned by a blocking guard). Ties `boomBapHipHop`; nothing is claimed.
+        case .nordicFiddle:                       return 0.16
         case .boomBapHipHop:                      return 0.16
         case .electroFunk:                        return 0.08
         case .modalJazz:                          return 0.30
@@ -1795,6 +1840,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // RENAME removed from the title, not from the sound design.
         case .celticAir:          return "Hollow Reed"
         case .andalusianCadence:  return "Choir Vox"
+        // #1294 G11c. Measured before writing (`scripts/genre-prebatch.py`): "Warm Strings"
+        // goes 5 → 6 lead-bearing genres and the pigeonhole ceiling stays 7, so no
+        // voicing guard moves. A bowed tune wants the string name; nothing else was close.
+        case .nordicFiddle:       return "Warm Strings"
         case .blackMetal:         return "Warm Strings"
         case .modalJazz:          return "Soft Keys"
         case .soulBallad:         return "Choir Vox"
@@ -1905,6 +1954,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // driving bass the way every other `drivingEighths` owner does.
         case .celticAir:                          return (0.98, 1.08, 0.88)
         case .andalusianCadence:                  return (1.10, 1.04, 0.88)
+        // #1294 G11c. Bass-led, like every genre whose identity is its drone: the bordun is the
+        // floor the tune stands on, so it is NOT pushed down the way `celticAir`'s (0.98) is —
+        // that genre has no bass patch at all.
+        case .nordicFiddle:                       return (1.12, 1.02, 0.88)
         case .blackMetal:                         return (1.10, 1.04, 0.88)
         case .modalJazz:                          return (1.00, 1.08, 0.88)
         case .soulBallad:                         return (1.00, 1.10, 0.88)
@@ -1947,6 +2000,9 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // `phrygianDominant` only with `darkPsyTrance`. Neither is claimed as unique.
         case .celticAir:          return .dorian
         case .andalusianCadence:  return .phrygianDominant
+        // #1294 G11c. `minor` is the most-shared scale in the file and is claimed as nothing;
+        // the separation from its shelf-mates is archetype, mode, register and the drone.
+        case .nordicFiddle:       return .minor
         case .blackMetal:         return .hungarianMinor
         case .modalJazz:          return .dorian
         case .soulBallad:         return .major
@@ -2080,6 +2136,21 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             // phrasing (the `ambientPulse` / `slowBloom` shape).
             return HarmonicProfile(progression: [0, 6], chordTones: [0, 3, 7],
                                    padOctave: 4, leadOctave: 5, arpeggiated: false,
+                                   leadDensity: 0.0)
+        case .nordicFiddle:
+            // #1294 G11c — the SAME open voicing as `celticAir` above, one octave lower and on
+            // `minor` instead of `dorian`. DEGREES resolved through `MusicalKey.degree`:
+            // `[0, 3, 7]` on minor `[0,2,3,5,7,8,10]` = 0, 5, 12 — root, perfect FOURTH, octave.
+            // No third, so the drone underneath never pre-announces the mode of the tune above.
+            //
+            // ⚠️ `padOctave: 3` is the ONE number that must not drift up: the bordun lives in
+            // this register, and a chord voiced in the tune's own octave stops reading as a
+            // floor. It is still well above the lowest offered register (`deepDrone`'s 2).
+            // ⚠️ `arpeggiated: false` — a bordun is held, not rolled. `sustained` is likewise
+            // false: this is `.backbeat`, so the articulation is `.struck` and the breath-onset
+            // generator keeps its phrasing, exactly as every other beat-driven arm here.
+            return HarmonicProfile(progression: [0, 6, 5], chordTones: [0, 3, 7],
+                                   padOctave: 3, leadOctave: 5, arpeggiated: false,
                                    leadDensity: 0.0)
         case .andalusianCadence:
             // `[0, 2, 4]` on phrygianDominant `[0,1,4,5,7,8,10]` = 0, 4, 7 — a MAJOR triad over

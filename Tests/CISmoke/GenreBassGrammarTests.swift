@@ -89,16 +89,22 @@ final class GenreBassGrammarTests: XCTestCase {
 
     /// Every figure is either owned by an OFFERED genre or authored ahead for a planned one.
     /// `rollingSixteenths` waited for S5 (`psyProgHouse`) and is owned since that landed.
-    /// `heldRoot` is the one waiting today (#1294, for `nordicFiddle` in G11b of the Genre-Welt
-    /// plan). A figure nobody will ever own is dead code with a name.
     ///
-    /// ⚠️ The second assertion is the one that fires when the wait ENDS: the day `nordicFiddle`
-    /// ships with `bassGrammar: .heldRoot`, this list is stale and goes red HERE rather than
-    /// somewhere confusing. That is the point of naming the waiting figure instead of widening
-    /// the first assertion to `allCases`.
+    /// ⭐ **THE WAIT ENDED AND THIS TEST IS WHAT ENDED IT (#1294 G11c).** `heldRoot` was the one
+    /// figure on this list, authored ahead for `nordicFiddle`; that genre now ships with
+    /// `bassGrammar: .heldRoot`, so the list is EMPTY and the entry moved to `owned` in the same
+    /// commit. The mechanism worked exactly as its own doc predicted: a figure does not quietly
+    /// acquire an owner, the stale list goes red HERE first.
+    ///
+    /// ⚠️ **AN EMPTY `authoredAhead` MAKES THE SECOND ASSERTION VACUOUS, and that is said rather
+    /// than hidden** (#926): `Set().isDisjoint(with:)` is true for everything. It is kept because
+    /// the next authored-ahead figure re-arms it the moment a name goes back in the list — and
+    /// because deleting it would take the retraction with it. The FIRST assertion is doing the
+    /// whole job today, and it is stronger now than it was: with the list empty it reads "every
+    /// shipped figure has an offered owner", with no escape hatch at all.
     func testEveryGrammarIsOwnedOrAuthoredAhead() {
         let owned = Set(MusicStyle.offered.compactMap(\.bassGrammar))
-        let authoredAhead: Set<BassGrammar> = [.heldRoot]
+        let authoredAhead: Set<BassGrammar> = []
         XCTAssertEqual(owned.union(authoredAhead), Set(BassGrammar.allCases),
                        "a figure is neither owned by an offered genre nor listed as authored ahead")
         XCTAssertTrue(owned.isDisjoint(with: authoredAhead),
