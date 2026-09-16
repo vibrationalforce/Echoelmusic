@@ -1900,3 +1900,24 @@ wirkt, bevor irgendetwas signiert oder eingebettet wird. Risiko benannt: ein ein
 Watch-Target kann den heute grünen iPhone-Upload brechen.
 
 **Review:** 2026-10-13.
+
+### 2026-09-16 — Ehrlichkeits-Wächter werden über die MENGE der Kopie-Flächen definiert (#1318)
+
+**Entscheidung:** Eine zurückgenommene Fähigkeit bekommt EINE Nadel-Liste, die über ALLE
+Kopie-Flächen läuft (In-App-Kopie, `docs/*.html`, `fastlane/metadata/**`, der
+Store-Listing-Entwurf) — nicht je Fläche eine eigene.
+
+**Begründung:** Der Satz „You can record it as a share-ready video." stand in der Learn-Karte,
+in `docs/overview.html` und in `docs/dev/APP_STORE_LISTING_v1.md` gleichzeitig, während drei
+Wächter je eine eigene handgetippte Liste hielten — die Store-Liste liest `Sources/` nie, die
+Website-Liste verbot die ADJEKTIV-Form (`overview.html` trug die VERB-Form), und der
+Guide-Wächter prüfte nur, dass genannte Bedienelemente EXISTIEREN. Drei Listen, die einander
+fast decken, sind der Weg, auf dem eine Behauptung drei Wächter überlebt.
+
+**Erwartetes Ergebnis:** Die nächste Rücknahme kostet eine Zeile in `soldAsVideo`-Form statt
+drei Listen-Pflegen, und eine Fläche kann nicht mehr durch die Lücke zwischen zwei Korpora
+fallen. Grenze benannt: das Verbot trifft die VIDEO-Nomen, nicht die Wortgruppe „share-ready" —
+der WAV/MIDI-Export nennt sich zu Recht so, und ein Wächter, der das mitverböte, würde korrekte
+Arbeit rot machen (#364).
+
+**Review:** 2026-10-16.

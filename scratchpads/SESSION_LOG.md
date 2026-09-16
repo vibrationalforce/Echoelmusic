@@ -31643,3 +31643,91 @@ Puls-Pillen-Menü (`BioSourceKind` kennt heute nur `camera, ble, sim`). iPhone-�
 neues Framework, keine founder-gated Datei. B misst die Kadenz, bevor jemand sie erhöht.
 C (Target einbetten) / D (`HKWorkoutSession`) / E (`WCSession`) sind HOLD-FOR-FOUNDER; C kann
 den heute grünen iPhone-Upload brechen.
+
+## 2026-09-16 — #1318: der In-App-Guide verkaufte ein Video, und DREI Wächter konnten es nicht sehen
+
+**Fundweg:** der abgebrochene Ultracode-Sweep (`wf_fb43c0f4-512`, 72 Agenten, 55 davon am
+Wochenlimit gestorben) hatte genau EINEN Befund, dessen beide Skeptiker vor dem Limit fertig
+wurden. Dieser hier. Die 28 übrigen Titel waren damit **Spuren, keine Befunde** — und sind
+heute, nach dem Limit-Reset (Sep 16, 08:00 UTC), als Fortsetzung desselben Laufs neu gestartet.
+
+### Der Satz
+
+`LearnLibrary.swift:105`, Eintrag `guide.see` („See it"), endete mit
+„You can record it as a share-ready video." — eine Fähigkeit, die der Founder am 2026-09-12
+zurückgenommen hat (#1304, wörtlich „Kein Video Capture"). Gemessen: unter `Sources/` gibt es
+genau einen `AVAssetWriter`, in `Audio/SingleExport.swift` mit `mediaType: .audio`;
+`RPScreenRecorder` und `AVCaptureMovieFileOutput` kommen nullmal vor.
+
+Die Karte rendert **bedingungslos** (`LearnView` `Text(entry.detail)`), `.guide` ist die ERSTE
+Sektion, und die Tür ist live (`quickDoorRow` → Learn-Sheet). Kein Flag, kein `#if`. Das war
+die erreichbarste Falschbehauptung im ganzen Produkt.
+
+### Der eigentliche Defekt: DREI Listen, die alle knapp danebenlagen
+
+Dieselbe Wortfamilie stand gleichzeitig in DREI Kopie-Flächen, und jede der drei zuständigen
+Wächter-Listen verfehlte sie:
+
+| Wächter | Korpus | warum er nicht treffen konnte |
+|---|---|---|
+| `TheStoreTextClaimsOnlyWhatShipsTests` | `fastlane/metadata/**` | liest `Sources/` nie; seine #1304-Nadeln („video capture", „video recording", „record the visual", „share-ready mp4") sind keine Teilkette des Satzes |
+| `WebsitePagesAreFindableAndHonestTests` | `docs/*.html` | verbietet die ADJEKTIV-Form; `overview.html:168` trug die VERB-Form, ein Wort daneben. `docs/dev/**` liegt ganz ausserhalb seines Seiten-Satzes |
+| `TheGuideNamesOnlyRealControlsTests` | die Learn-Kopie | prüft NUR, dass genannte Bedienelemente EXISTIEREN. Eine Prüfung auf zurückgenommene Fähigkeiten hatte er nie |
+
+⭐ **GESETZ: drei Listen, die einander fast decken, sind der Weg, auf dem eine Behauptung drei
+Wächter überlebt.** Die Reparatur ist keine vierte handgetippte Liste, sondern EINE Liste über
+ALLE VIER Flächen (#416) — In-App-Guide, veröffentlichte Seiten, eingereichte Store-Metadaten
+und der Listing-Entwurf, aus dem die Metadaten entstehen.
+
+### Drei Sätze korrigiert
+
+- `LearnLibrary.swift` — Satz gelöscht, Grabstein mit der Messung.
+- `docs/overview.html` — EchoelVid folgt jetzt der Formulierung, die `architecture.html:354`
+  schon trug („Nothing of it remains … never captured"). **Die zwei Seiten widersprachen
+  einander**, und die falsche war die, die ein Besucher zuerst öffnet.
+- `docs/dev/APP_STORE_LISTING_v1.md` — „recordable as share-ready video clips" durch die WAHRE
+  Eigenschaft ersetzt (das Bild ist spielbar). ⚠️ Die ausgelieferten `fastlane`-Metadaten
+  trugen den Satz **nie**; der Entwurf, aus dem man einfügt, war davon abgedriftet.
+
+### Was BLEIBEN musste
+
+`EchoelStudioView.swift:10944` sagt zu Recht „share-ready **file**" über den WAV/MIDI-Export.
+Das Verbot trifft darum die VIDEO-Nomen („share-ready video/clip/mp4"), nicht die Wortgruppe —
+ein Wächter, der die ehrliche Schreibweise mitverböte, würde korrekte Arbeit rot machen (#364).
+Anspruch 3 pinnt sie als Gegengewicht: ein Baum, der das „repariert", indem er die Wortgruppe
+überall tilgt, wird rot.
+
+### Wächter
+
+`Tests/CISmoke/TheShareReadyClipIsNotSoldAnywhereTests.swift` — **11 Behauptungen in vier
+Ansprüchen**, alle in Python gegen BEIDE Bäume gefahren (§0). Elternbaum `016c5b3`: **2 rot**,
+die **drei verschiedene falsche Sätze** in drei Dateien abdecken (kein #486-Fall — das sind
+unabhängige Sätze, nicht eine Abwesenheit aus mehreren Blickwinkeln). Dieser Baum: 0 rot. Die
+neun übrigen sind Gegengewichte (#343).
+
+⭐ **`SourceText.codeOnly` ist auf BEIDEN Scan-Ansprüchen TRAGEND, und gemessen:** je 1 von 4
+bzw. 1 von 3 Verdikten kippt — und beide Kipps hat DIESE Scheibe erzeugt, weil der Grabstein
+den gelöschten Satz UND `AVCaptureMovieFileOutput` beim Namen nennt. Ohne den Stripper wäre
+der Wächter **auf seiner eigenen Rücknahme rot** (#491). Genau das, wovor der ältere
+⛔-Kommentar zwei Zeilen höher in derselben Datei warnt — dort konnte er die Wortwahl, die er
+zurücknahm, NICHT zitieren. Seit #1318 kann er es, weil der Scan durch den Stripper geht.
+
+### Gate-Lesung
+
+- `Xcode Compile Check` auf `016c5b3` = **success** (deckt #1314/#1315/#1316/#1317 mit ab;
+  #1312 lief als `cancelled`, #1313 `9e906f1` war grün).
+- CI/CD auf `016c5b3` = `failure` wie auf jedem Push (#396). Schrittweise gelesen: **nur
+  `Run Tests` rot**, `Build for Testing` grün — also **kompiliert das blockierende Bundle**.
+  Im Fenster (`tail -200`, #807) kein einziger fehlgeschlagener Testname, Abschluss
+  `** TEST EXECUTE FAILED **` = die bekannte #396-Lage.
+- `main` steht auf `05f1e92` — der Zweig ist per Auto-Merge komplett angekommen.
+
+⚠️ **NEUE BEOBACHTUNG, founder-gated (`.github/workflows/**` = berichten, nicht editieren):**
+`Auto-Merge Docs` ist auf `c2007c0` **rot** gelaufen —
+`CONFLICT (add/add): Merge conflict in docs/CLAUDE.md`, Job 103804740093. Ursache ist
+strukturell: der Docs-Pfad **cherry-picked**, während `auto-merge-claude.yml` denselben Inhalt
+schon als `${{ github.sha }}` nach `main` geschoben hatte — also findet der Cherry-Pick die
+Datei „auf beiden Seiten hinzugefügt". **Kein Datenverlust:** gemessen ist
+`git diff origin/main HEAD -- docs/CLAUDE.md` heute leer. Der rote Lauf ist Rauschen auf einem
+Zweig, dessen Code-Auto-Merge die `docs/` ohnehin mitträgt — aber er ist ein rotes Häkchen, das
+niemand erklären kann, und das ist die Sorte, die man beim nächsten echten Fehler übersieht.
