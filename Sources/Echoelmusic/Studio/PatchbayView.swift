@@ -482,17 +482,24 @@ struct PatchbayView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Divider().overlay(EchoelTheme.border)
+            // ⛔ #1333 — BOTH LINES BELOW LISTED `gesture` AS PART OF THE DEFAULT STREAM, and
+            // #1301 deleted every producer of it (the face/body channels, founder 2026-09-12,
+            // "Face und Audio Input komplett entfernen"). Measured: `git grep -n "/gesture"
+            // -- Sources` finds nothing. One of the two was the VoiceOver hint, so the claim
+            // was also the only version a non-sighted operator got. They now name
+            // `/echoelmusic/bio/synthetic` instead — an address that really does accompany
+            // every value-carrying tick (#639) — and the pNN50 unit, per #1329.
             Toggle(isOn: $oscClinicalDetail) {
                 Text("Send clinical HRV detail")
                     .font(EchoelTheme.font(14, .semibold)).foregroundStyle(EchoelTheme.text)
             }
             .tint(EchoelTheme.accent)
             .accessibilityHint(oscClinicalDetail
-                ? "On. rMSSD and SDNN in milliseconds and pNN50 ride the OSC stream alongside the musical controls."
-                : "Off. The OSC stream carries the musical controls only — heart rate, normalized HRV, coherence, breath and gesture.")
+                ? "On. rMSSD and SDNN in milliseconds and pNN50 as a percentage ride the OSC stream alongside the musical controls."
+                : "Off. The OSC stream carries the musical controls only — heart rate, normalized HRV, coherence and breath, each tagged with whether the body is real or the demo.")
             Text(oscClinicalDetail
-                 ? "On: /echoelmusic/bio/heart/rmssd and /sdnn (milliseconds) and /pnn50 are sent as well. Use this for analysis in TouchDesigner, Max or a research patch — turn it off on a network you do not control."
-                 : "Off: the stream carries what the instrument plays — /heart/bpm, /heart/hrv (0–1), /coherence, /breath/*, /gesture/*. The three time-domain HRV statistics in medical units stay on this device until you ask for them.")
+                 ? "On: /echoelmusic/bio/heart/rmssd and /sdnn (milliseconds) and /pnn50 (0–100 %) are sent as well. Use this for analysis in TouchDesigner, Max or a research patch — turn it off on a network you do not control."
+                 : "Off: the stream carries what the instrument plays — /heart/bpm, /heart/hrv (0–1), /coherence, /breath/*, /synthetic. The three time-domain HRV statistics in medical units stay on this device until you ask for them.")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
             Text("Target IP + port per output — changes take effect immediately while the output is running. OSC/ADM default to 'localhost' (this device); for Resolume · TouchDesigner · MadMapper enter the target computer's IP. Art-Net and sACN send unicast to the node IP you enter (default 192.168.1.100) — the app holds no broadcast entitlement, so 255.255.255.255 reaches nothing on iOS.")
