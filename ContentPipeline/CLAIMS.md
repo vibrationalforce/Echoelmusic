@@ -128,13 +128,18 @@ richtiges Verbot** — wer sie prüft und kippen sieht, kippt das Verbot gleich 
   (`SampleBrowserView` mit #167 gelöscht), Video-SCHNITT (#121 Slice 3).
 - **Im Code, aber nicht verlinkt:** RTMP — `BroadcastPublisher` ist ein
   `#if canImport(HaishinKit)`-Gerüst, `Package.swift` hat `dependencies: []`.
-- **Gebaut und konstruiert, aber für den Nutzer TÜRLOS:** `MultiTrackRecorder`
-  (`Audio/MultiTrackRecorder.swift`, in `AudioEngine` bedingungslos angelegt;
-  durchgereicht nur hinter `FeatureFlags.audioLaneRecording`, und dieser Key wird nie
-  an `UserDefaults.register(defaults:)` übergeben — registriert sind nur `multiRoll`,
-  `voiceKindRouting`, `instrumentHome` —, löst also zu `false` auf. Offen als #204).
-  Ebenso `SamplerVoice` (in `BeatPlayer` und `LaneVoiceRack` angelegt) — es gibt eine
-  Sampler-Stimme, nur keine Oberfläche, die dem Nutzer Samples in die Hand gibt.
+- **Gebaut und konstruiert, aber für den Nutzer TÜRLOS:** `SamplerVoice` (in `BeatPlayer`
+  und `LaneVoiceRack` angelegt) — es gibt eine Sampler-Stimme, nur keine Oberfläche, die dem
+  Nutzer Samples in die Hand gibt.
+  ⛔ **`MultiTrackRecorder` stand hier an erster Stelle und ist GELÖSCHT** (#1302, Founder
+  2026-09-12, „Face und Audio Input komplett entfernen"). Der Eintrag beschrieb ihn als „in
+  `AudioEngine` bedingungslos angelegt" — die Datei existiert nicht mehr, und mit dem
+  Mikrofon ist auch das weg, was er aufgenommen hätte. `FeatureFlags.audioLaneRecording`
+  lebt weiter und hat seit #1302 KEINEN Zweig. ⚠️ **Für Content ändert das nichts am
+  Verbot und alles an seiner BEGRÜNDUNG**, und genau dafür ist die Liste da: der Absatz
+  unten sagt, „nie gebaut" lade eine Sitzung ein, etwas neu zu bauen, das schon da sei —
+  bei diesem Posten ist heute das Gegenteil wahr, es ist wirklich weg, und wer ihn nach
+  dieser Zeile wieder anfassen will, fängt bei null an und braucht eine Founder-Frage.
 
 **Für Content heißt das dasselbe wie vorher: nicht behaupten.** Der Unterschied liegt
 nicht im Verbot, sondern in seiner Haltbarkeit — und darin, dass „nie gebaut" eine

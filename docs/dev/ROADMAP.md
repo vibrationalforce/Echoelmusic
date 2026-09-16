@@ -71,10 +71,13 @@ Each item: **[dimension]** description → *plan doc if any*. Pick from **Now** 
    (appended) + a "Community" section in the Sound editor. Best-effort (empty on failure → no
    regression). **CI-verified** via `CommunityLibraryTests` (a seeded `Aurora Drift` proves the
    bundling, so a resource-flatten fails in CI, not silently on device). Triage now writes here.
-3. ✅ **[Sound]** ~~Wire the orphaned `SampleBrowserView`~~ — DONE 2026-06-19: reachable via
-   Tools → **Drum Samples** (per-track). Device files now **preview-before-assign** (audition
-   with ▶, then "Use"). *(Note: no manual drum-pad grid exists in the single view; samples are
-   the drum-kit sounds used by generative playback. A pad grid is a separate, larger feature.)*
+3. ⛔ **VOID — the item, the door and the view are all gone.** It read „✅ ~~Wire the orphaned
+   `SampleBrowserView`~~ — DONE 2026-06-19: reachable via Tools → **Drum Samples** (per-track),
+   preview-before-assign". Measured: the Tools grid went 2026-07-02, the drums with #166/#167,
+   and `SampleBrowserView` itself is deleted (#167, 2026-07-27) together with the 73 bundled
+   WAVs. ⭐ **A ✅ DONE row is the LAST place anyone re-checks** — it reads as settled, so it
+   outlived three deletions that each removed part of what it claimed. Done is a date here, not
+   a state, exactly like „resolved" in `memory/vision.md`.
 4. ✅ **[Body/Apple]** ~~HealthKit write~~ — DONE 2026-06-19 (v10.34.8): Tools → "Save to Apple
    Health" (off by default) writes the HR + respiratory rate Echoel measures (camera rPPG / BLE)
    as `HKQuantitySample`s. Non-circular (only self-measured sources), trustworthy units only (no
@@ -89,12 +92,20 @@ Each item: **[dimension]** description → *plan doc if any*. Pick from **Now** 
 ### NEXT (authorized direction, needs a deliberate cycle)
 5. **[Body/Apple]** **AccessorySetupKit** pairing flow for BLE sensors (privacy + featuring), additive next to Core Bluetooth. → audit §6.
 6. **[Body]** **Head-tracking** (`CMHeadphoneMotionManager`) as a new bio/modulation source on the one instrument — AirPods as sensor. → audit §5.
-7. **[Sound/flagship]** **Audiovisual Vocoder** wiring (`VocoderCore`/`FeedbackGuard`/`BioModulation` cores exist). → *PLAN_CREATIVE_EXPANSION, vision Tier-2*.
-   - **Note (2026-06-19 audit):** these 4 cores are *unifying refactors of already-working, sensitive
-     paths* (synth bio→timbre; MetalBioView tone→light colour), not clean additions — so they need
-     **device-in-the-loop** cycles, not blind wiring. `BioVisualParams` is now **partially wired**
-     (heartbeat pulse / WCAG flash-safety via FlashGuard; v10.34.6). `VocoderCore` also needs a voice
-     analyzer (mic pitch/energy/brightness) which was removed in the soundscape refactor.
+7. ⛔ **CUT — [Sound/flagship] Audiovisual Vocoder wiring** (#1301/#1302, founder 2026-09-12,
+   verbatim *„Face und Audio Input komplett entfernen"*). It stood here as a NEXT item with
+   *„cores exist"*, and `VocoderCore`/`FeedbackGuard` are gone as FILES. Its input half — the
+   microphone — no longer exists, so there is nothing to vocode; re-entry needs a founder ask,
+   not a plan. **`BioVisualParams` is the one core of that group that made it and it is WIRED**
+   (`MetalBioView`); `BioModulation` survives, unwired, and was never the vocoder.
+   - ⭐ **The struck note was RIGHT about the thing that mattered and it did not save the item.**
+     It said (2026-06-19 audit) these were *unifying refactors of already-working, sensitive
+     paths*, needing **device-in-the-loop** cycles rather than blind wiring — and it named the
+     exact blocker: *„`VocoderCore` also needs a voice analyzer (mic pitch/energy/brightness)
+     which was removed in the soundscape refactor"*. **A dependency that was already missing in
+     June was carried for three months as a flagship NEXT.** Keep that as the lesson: a roadmap
+     item whose own note names an absent prerequisite is not „next", it is blocked, and it
+     should have been tiered as such long before a founder deleted the whole branch.
 8. **[Sound]** Replicate the preset/community pattern to **Mood** + **Sound & texture** surfaces.
    - ✅ **Mood** — DONE 2026-06-19 (v10.34.4): `MoodPreset`/`MoodPresetStore` mirror `PatchStore`
      (15 curated factory moods as of 2026-07-29 — `git grep -c 'MoodPreset(id: Self.uid'
