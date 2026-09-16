@@ -247,7 +247,12 @@ struct EchoelStudioView: View {
     /// `BioSourceOption` mirrors (#616) — a case added here needs its twin there, or the new
     /// source has no menu entry. (⛔ #1301 — `case face` stood here and is gone by founder
     /// order, 2026-09-12, together with the front-camera publisher behind it.)
-    private enum BioSourceKind: String { case camera, ble, sim }
+    ///
+    /// ⚠️ FOUR CASES, THREE PUBLISHERS (#1319). `health` is deliberately the odd one: this
+    /// picker owns no HealthKit publisher — the app does — so selecting it starts nothing and
+    /// stops the other three. See the `.health` arm of `startBioSource` for why that is the
+    /// whole mechanism and not an omission.
+    private enum BioSourceKind: String { case camera, ble, sim, health }
 
     /// Drives Siri/Shortcuts intent consumption (start/stop/keep loop) when the
     /// app becomes active after an intent opens it.
@@ -9545,6 +9550,11 @@ struct EchoelStudioView: View {
     /// (universal 0x180D) or the deterministic Simulation demo if the user picked those,
     /// so the instrument always plays. Failures are swallowed — generation falls back to
     /// neutral defaults.
+    ///
+    /// ⚠️ THE FOURTH ENTRY, `health`, STARTS NOTHING HERE AND IS STILL A REAL SOURCE (#1319):
+    /// the HealthKit publisher is app-level, so picking it means the three publishers this
+    /// function owns all stay down and the wrist is the only writer left. The arm carries the
+    /// full reasoning; do not add a start call to it.
     private func startBioSource() async {
         // #604: starting ANY bio source is the instrument hint's lesson, learned — the
         // user found Start, which is step 1 of the hint's own first sentence ("Start the
@@ -9570,6 +9580,25 @@ struct EchoelStudioView: View {
         case .sim:
             EchoelCrashLog.breadcrumb("bio simulation starting")
             demoSource.start(publishing: bus) // deterministic demo frames; source == .fallback
+        case .health:
+            // #1319 — THE ONE ARM THAT STARTS NOTHING, AND THAT IS THE WHOLE POINT.
+            // `HealthKitBioPublisher` is owned at APP level, not by this picker
+            // (`EchoelmusicApp`: `startIfAlreadyAuthorized` on launch, `start` on the first
+            // `.echoelBioSourceStarted` of the run, which every start path above posts). It
+            // has been writing `EngineBus.latestBio` for any Health-authorised user all
+            // along — the interleave the ⛔ blocks on `stopBioSource`/`selectBioSource`
+            // measure. Choosing Health does not ADD a publisher; it REMOVES the other three,
+            // so the wrist becomes the only writer instead of an unannounced co-writer.
+            // ⚠️ Therefore do NOT "fix" this arm by calling a start here. A second lifecycle
+            // owner on one publisher is the BLE-3 class of bug this file already paid for.
+            // ⚠️ OPEN AND NAMED: the wrist's CADENCE is the Watch's, not ours — at rest it
+            // writes minutes apart (`HealthKitBioPublisher` header), so the music moves
+            // slowly. `HKWorkoutSession`, which would raise it, needs a Watch target and is
+            // HOLD-FOR-FOUNDER (`scratchpads/PLAN_WATCH_2026-09-13.md` slices C/D).
+            // NEEDS-FOUNDER-VERIFY: Apple Watch tragen, im Puls-Pillen-Menü „Play with Apple
+            // Health" wählen, Health-Zugriff erlauben — der Puls im Kopf-Monitor muss der
+            // Uhr folgen (langsam), und die Taschenlampe darf NICHT angehen.
+            EchoelCrashLog.breadcrumb("bio source health (app-level publisher; picker starts nothing)")
         }
     }
 
@@ -9641,10 +9670,16 @@ struct EchoelStudioView: View {
     /// "camera light · Search for Bluetooth Device · Simulation"): the pill's long-press
     /// menu posts `.echoelSelectBioSource` into the receiver on `menuBar`; `bioPanel`'s
     /// "Bio source" row (#616) calls this directly.
-    /// Only one of the THREE SOURCES THIS PICKER OWNS feeds the bus at a time. If the
+    /// Only one of the THREE PUBLISHERS THIS PICKER OWNS feeds the bus at a time. If the
     /// instrument is already running we hot-swap (drop the old publisher, bring up the new one,
     /// keeping the music going); if it's idle, picking a source activates the instrument with
     /// it — same as a tap.
+    ///
+    /// ⚠️ SINCE #1319 THE MENU HAS FOUR ENTRIES AND THIS PICKER STILL OWNS THREE PUBLISHERS.
+    /// `health` selects the app-level `HealthKitBioPublisher` by ELIMINATION — it stops the
+    /// three above and starts nothing — which is why the sentence counts publishers, not menu
+    /// entries. A future reader counting entries here would look for a fourth `start` call
+    /// that must never exist.
     ///
     /// ⛔ #1015 — THIS SAID "ONLY ONE SOURCE FEEDS THE BUS AT A TIME", FULL STOP, AND THAT IS
     /// FALSE FOR ANY HEALTH-AUTHORISED USER. The app-level `HealthKitBioPublisher` writes the

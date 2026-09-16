@@ -28,8 +28,18 @@
 //  ⚠️ `rawValue`s are the on-the-wire ids `selectBioSource` parses (its private
 //  `BioSourceKind(rawValue:)` guard drops anything else SILENTLY — a mismatched
 //  id here would be a menu entry that does nothing, the #135 lying-control
-//  class). The guard pins the literal set {"camera","ble","sim"} behaviourally;
-//  it cannot name the private enum, so the LITERALS are the contract.
+//  class). The guard pins the literal set behaviourally; it cannot name the
+//  private enum, so the LITERALS are the contract.
+//
+//  ⭐ #1319 — A FOURTH ENTRY, `health`, AND IT IS THE ONLY ONE THE PICKER DOES NOT
+//  OWN A PUBLISHER FOR. `HealthKitBioPublisher` runs at APP level for any
+//  Health-authorised user and has been co-writing `EngineBus.latestBio` all along
+//  (the interleave the ⛔ blocks on `stopBioSource`/`selectBioSource` measure).
+//  Selecting Health does not add a publisher — it stops the other three, so the
+//  wrist stops being an unannounced co-writer and becomes the chosen one. The
+//  label says "at its own pace" for the same reason the BLE one says "scans for
+//  one": the Watch writes minutes apart at rest, so the music moves slowly, and a
+//  label that hid that would promise a responsiveness we cannot deliver.
 //
 
 import Foundation
@@ -45,7 +55,7 @@ import Foundation
 /// surfaces iterate, because the day a source needs withholding again there must be exactly
 /// ONE place that decides it, not two surfaces guessing.
 enum BioSourceOption: String, CaseIterable, Identifiable {
-    case camera, ble, sim
+    case camera, ble, sim, health
 
     /// The entries the two chooser surfaces iterate. ⚠️ Both surfaces MUST iterate THIS, not
     /// `allCases` (`TheBioSourceChooserHasOneDefinitionTests` pins the needle) — see the ⛔
@@ -61,6 +71,7 @@ enum BioSourceOption: String, CaseIterable, Identifiable {
         case .camera: return "Play with camera light"
         case .ble:    return "Play with a Bluetooth strap — scans for one"
         case .sim:    return "Play with the simulation"
+        case .health: return "Play with Apple Health — your Watch, at its own pace"
         }
     }
 
@@ -69,6 +80,7 @@ enum BioSourceOption: String, CaseIterable, Identifiable {
         case .camera: return "camera.fill"
         case .ble:    return "dot.radiowaves.left.and.right"
         case .sim:    return "waveform.path"
+        case .health: return "heart.text.square"
         }
     }
 
@@ -78,6 +90,7 @@ enum BioSourceOption: String, CaseIterable, Identifiable {
         case .camera: return "Camera light"
         case .ble:    return "Bluetooth strap"
         case .sim:    return "Simulation"
+        case .health: return "Apple Health"
         }
     }
 }

@@ -48,11 +48,20 @@
 // class §2 documents three of; the numbers above are from the run.
 //
 // ⛔ #1301 — THE FOURTH SOURCE IS GONE BY FOUNDER ORDER (2026-09-12). `face` left both
-// enums with the front-camera publisher, so the parser's literal set is back to
-// {"camera","ble","sim"} and its label leaves the list below. `BioSourceOption.offered`
+// enums with the front-camera publisher, so the parser's literal set went back to
+// {"camera","ble","sim"} and its label left the list below. `BioSourceOption.offered`
 // STAYS the member both surfaces iterate even though it is now plain `allCases`: it was
 // added (#1257) as the ONE place that decides what is withheld, and the day a source needs
 // withholding again there must not be two surfaces guessing. The needle is unchanged.
+//
+// ⭐ #1319 — AND A DIFFERENT FOURTH SOURCE SHIPPED: `health`. Claim 1's count went 3 → 4
+// DELIBERATELY, which is what that assertion is for — its message says a new source is a
+// product decision, not a menu edit, and this one is: the Council's slice A
+// (`scratchpads/PLAN_WATCH_2026-09-13.md`). ⚠️ It is unlike the other three in a way this
+// file must not paper over: the picker owns NO publisher for it. `HealthKitBioPublisher`
+// runs at app level, so selecting Health starts nothing and stops the other three. The
+// mechanism is pinned in its own file (`TheHealthSourceIsOwnedByTheAppTests`); here it is
+// only an entry with a label, and claim 2's new needle holds the label's second half.
 
 import Foundation
 import XCTest
@@ -68,18 +77,20 @@ final class TheBioSourceChooserHasOneDefinitionTests: XCTestCase {
 
     func testTheIdsMatchTheParsersLiterals() {
         XCTAssertEqual(Set(BioSourceOption.allCases.map(\.rawValue)),
-                       ["camera", "ble", "sim"], """
+                       ["camera", "ble", "sim", "health"], """
             `BioSourceOption`'s raw values no longer match the literal set \
             `selectBioSource` parses (its private `BioSourceKind(rawValue:)` guard \
             drops unknown ids SILENTLY). A mismatched id is a menu entry that does \
             nothing — the #135 lying-control class. If a fourth source ships, add \
             its case to BOTH enums, this set, and the chooser surfaces together.
             """)
-        XCTAssertEqual(BioSourceOption.allCases.count, 3, """
+        XCTAssertEqual(BioSourceOption.allCases.count, 4, """
             The chooser offers \(BioSourceOption.allCases.count) entries instead of \
-            three. A new source is a product decision (sensor + publisher + \
+            four. A new source is a product decision (sensor + publisher + \
             lifecycle owner), not a menu edit — wire the publisher first, then \
-            widen this count in the same commit.
+            widen this count in the same commit. #1319's `health` is the one case \
+            where the LIFECYCLE OWNER is the app rather than this picker; that is a \
+            decision too, and it has its own file.
             """)
     }
 
@@ -99,6 +110,12 @@ final class TheBioSourceChooserHasOneDefinitionTests: XCTestCase {
             The BLE label lost "scans for one". The music starts from neutral \
             defaults immediately, whether or not a strap is ever found — the label \
             must carry both halves or it promises a measurement it may never get.
+            """)
+        XCTAssertTrue(BioSourceOption.health.menuLabel.contains("at its own pace"), """
+            The Health label lost "at its own pace". Same law as the BLE entry, \
+            different half: the wrist's cadence is the WATCH's, not ours — at rest it \
+            writes minutes apart, so the music moves slowly. A label that hides that \
+            promises a responsiveness this source cannot deliver (#1319).
             """)
     }
 
@@ -123,7 +140,8 @@ final class TheBioSourceChooserHasOneDefinitionTests: XCTestCase {
         // else is the drift this file exists to prevent.
         for label in ["Play with camera light",
                       "Play with a Bluetooth strap — scans for one",
-                      "Play with the simulation"] {
+                      "Play with the simulation",
+                      "Play with Apple Health — your Watch, at its own pace"] {
             var hits = optionFile.components(separatedBy: label).count - 1
             hits += studio.components(separatedBy: label).count - 1
             hits += header.components(separatedBy: label).count - 1
