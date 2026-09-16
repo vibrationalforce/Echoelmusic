@@ -31731,3 +31731,67 @@ Datei „auf beiden Seiten hinzugefügt". **Kein Datenverlust:** gemessen ist
 `git diff origin/main HEAD -- docs/CLAUDE.md` heute leer. Der rote Lauf ist Rauschen auf einem
 Zweig, dessen Code-Auto-Merge die `docs/` ohnehin mitträgt — aber er ist ein rotes Häkchen, das
 niemand erklären kann, und das ist die Sorte, die man beim nächsten echten Fehler übersieht.
+
+## 2026-09-16 — #1319: die Uhr ist WÄHLBAR (Watch Scheibe A), und der Arm startet absichtlich nichts
+
+Council-Beschluss aus `scratchpads/PLAN_WATCH_2026-09-13.md`: **PROCEED nur für Scheibe A.**
+Das Handgelenk erreichte schon vor dieser Scheibe klingenden Ton — `HealthKitBioPublisher`
+läuft auf APP-Ebene und schreibt `EngineBus.latestBio` für jeden Health-autorisierten Nutzer
+mit. Was fehlte, war die **ABSICHT**: der Nutzer konnte die Uhr nicht WÄHLEN, sie lief
+unangekündigt nebenher (die Interleave-Lage, die die ⛔-Blöcke an `stopBioSource` und
+`selectBioSource` messen und die drei Scheiben nacheinander neu entdecken mussten).
+
+Vierter Eintrag in beiden Chooser-Oberflächen (Puls-Pille · Bio-Panel-Zeile):
+**„Play with Apple Health — your Watch, at its own pace"**.
+
+⭐ **Der `.health`-Arm in `startBioSource` startet NICHTS, und das IST der Mechanismus.**
+Dieser Picker besitzt für HealthKit keinen Publisher — die App tut es
+(`startIfAlreadyAuthorized` beim Start, `start` beim ersten `.echoelBioSourceStarted` des
+Laufs, das **beide** Startpfade posten). „Health" wählen heisst: die anderen DREI werden
+gestoppt, und das Handgelenk hört auf, Mit-Schreiber zu sein, und wird der gewählte.
+
+⚠️ **Die naheliegende „Reparatur" ist der Fehler.** Ein Arm, der nichts startet, liest sich
+wie eine Auslassung, und der offensichtliche Griff — einen Start von hier aus — installiert
+einen ZWEITEN Lebenszyklus-Besitzer auf einem Publisher. Das ist die BLE-3-Klasse, für die
+dieses Repo schon bezahlt hat (ein Patchbay-Edit tötete einen laufenden Gurt mitten in der
+Performance). Deshalb ZÄHLT Anspruch 1 die Start-Aufrufe, statt dem Kommentar darüber zu
+glauben.
+
+**Das Etikett trägt „at its own pace" aus demselben Grund, aus dem das BLE-Etikett „scans for
+one" trägt** — nur die andere Hälfte: die Uhr schreibt im Ruhezustand minutenweit, die Musik
+bewegt sich also langsam. Ein Etikett, das das verschweigt, verspricht eine
+Reaktionsfähigkeit, die diese Quelle nicht hat. Die KADENZ zu erhöhen bräuchte
+`HKWorkoutSession` und damit ein Watch-Target — Scheiben C/D, HOLD-FOR-FOUNDER.
+
+### Wächter
+
+`TheBioSourceChooserHasOneDefinitionTests`: Anspruch 1 geht bewusst von drei auf **vier** —
+genau wofür die Behauptung da ist; ihre eigene Meldung sagt „eine neue Quelle ist eine
+Produktentscheidung, kein Menü-Edit". Neue Nadel auf die zweite Etiketten-Hälfte.
+
+`TheHealthSourceIsOwnedByTheAppTests` (neu) — **11 Behauptungen in fünf Ansprüchen**, alle in
+Python gegen BEIDE Bäume gefahren (§0). Elternbaum `665f763`: **3 rot = EINE Abwesenheit aus
+drei Blickwinkeln** (#486). Dieser Baum: 0 rot. **Acht sind Gegengewichte** (#343) — die App
+startet den Publisher noch, `stopBioSource` greift ihn NICHT an, beide Startpfade posten die
+Benachrichtigung, an der die Autorisierungsfrage hängt. Ohne die drei wäre der Eintrag eine
+tote Menüzeile (#135) bei sonst grünem Wächter.
+
+⚠️ **Die Grenze von Anspruch 1 steht im Kopf statt in einer impliziten Behauptung:** er zählt
+die Start-Spellings im brace-gematchten Rumpf, fängt also einen HINZUGEFÜGTEN Start, aber
+keinen VERSCHOBENEN. Und die Extraktion prüft sich selbst (#367): sie verlangt, dass der Rumpf
+noch die Geschwister-Arme enthält UND kein `private func` — sonst hätte ein Brace in einem
+String-Literal (die eine Sorte, die `SourceText.codeOnly` stehen lässt) den Scan still
+verschoben.
+
+NEEDS-FOUNDER-VERIFY am Arm: Uhr tragen, „Play with Apple Health" wählen, Health erlauben —
+der Puls im Kopf-Monitor muss der Uhr folgen (langsam), und die Taschenlampe darf NICHT
+angehen.
+
+### Nebenbei gemessen, ohne Befund
+
+`python3 scripts/doctor.py` meldet weiterhin genau **2 CRITICAL**, beide founder-gated
+(`.github/workflows/**`): eine maskierte Build-Failure und ein Test-Filter auf die nicht
+existierende Suite `ComprehensiveTestSuite`. Die C-Liste — **9 türlose View-Typen** und **2
+tote Modal-Flaggen** — ist vollständig im Register von `CLAUDE.md` verzeichnet; kein neuer
+undokumentierter Waise. „Unerreichbar" ist dort kein Defekt, „unerreichbar UND nicht
+aufgeschrieben" wäre einer.

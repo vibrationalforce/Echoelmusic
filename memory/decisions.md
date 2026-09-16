@@ -1921,3 +1921,21 @@ der WAV/MIDI-Export nennt sich zu Recht so, und ein Wächter, der das mitverböt
 Arbeit rot machen (#364).
 
 **Review:** 2026-10-16.
+
+### 2026-09-16 — Die Uhr wird gewählt, nicht gestartet (#1319, Watch Scheibe A)
+
+**Entscheidung:** „Apple Health" ist der vierte Eintrag beider Chooser-Oberflächen. Sein Arm in
+`startBioSource` startet NICHTS — er lässt die drei Publisher, die der Picker besitzt, unten,
+und die app-eigene `HealthKitBioPublisher` ist damit der einzige Schreiber.
+
+**Begründung:** Der Publisher läuft ohnehin auf App-Ebene und schrieb `EngineBus.latestBio`
+für jeden Health-autorisierten Nutzer mit. Es fehlte nicht der Kanal, sondern die ABSICHT. Ein
+Start aus dem Picker wäre ein zweiter Lebenszyklus-Besitzer auf einem Publisher — die
+BLE-3-Klasse, für die dieses Repo schon einmal bezahlt hat.
+
+**Erwartetes Ergebnis:** Der Founder kann die Uhr absichtlich einschalten und hören, dass sie
+wirkt, bevor ein Watch-Target eingebettet oder signiert wird. Grenze benannt: die KADENZ
+gehört der Uhr (im Ruhezustand minutenweit), das Etikett sagt „at its own pace", und
+`HKWorkoutSession` bleibt HOLD-FOR-FOUNDER.
+
+**Review:** 2026-10-16.
