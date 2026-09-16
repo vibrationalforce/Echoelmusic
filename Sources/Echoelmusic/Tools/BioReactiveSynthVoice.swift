@@ -282,9 +282,16 @@ public final class BioReactiveSynthVoice {
     ///
     /// ⚠️ WHAT IT STILL DOES NOT DO: follow the composition's KEY. This voice has no notion of
     /// one — `git grep` finds no `MusicalKey` in this file — so an armed breath drone sounds A
-    /// under a piece in any key, while `VoicePitchCorrector` snaps the SINGER into the session
-    /// key. That is a musical decision (tonic? nearest in-key note? deliberate pedal point?),
-    /// not a tidy-up, and it is not made here.
+    /// under a piece in any key. That is a musical decision (tonic? nearest in-key note?
+    /// deliberate pedal point?), not a tidy-up, and it is not made here.
+    ///
+    /// ⛔ #1339 — THIS SENTENCE ENDED "…while `VoicePitchCorrector` snaps the SINGER into the
+    /// session key", and that type went with the audio input (#1302). Measured: one line in
+    /// all of `Sources/`, this one. The clause is struck rather than reworded because of WHERE
+    /// it sat — inside the NEEDS-FOUNDER-VERIFY below, i.e. in the text that tells the founder
+    /// what to listen for. A device probe framed against a capability the build does not have
+    /// cannot be answered, and it costs a session on the phone to find that out. **The
+    /// question itself is untouched and still real**: the drone is A regardless of key.
     /// NEEDS-FOUNDER-VERIFY: Musik in einer Tonart ohne A laufen lassen, "Body voice"
     /// einschalten und atmen — klingt die Atem-Drohne auf A falsch, oder trägt sie als
     /// Orgelpunkt? Wenn falsch: Grundton der Tonart, oder nächstgelegener Ton in der Skala?

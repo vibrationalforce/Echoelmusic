@@ -9,15 +9,37 @@
 // SHIPPED path is `PolySynthVoice.applyVoiceProfile` → `EchoelPolyDDSP.setCustomTimbre`
 // (#591a staging); `EchoelDDSP.loadTimbreProfile` shares the same contract but has
 // zero production callers (kept deliberately, its own doc says for whom).
-// What leaves this type is a spectral envelope — parameters, not audio — which is what
-// lets the capture flow ship under the mic-permission promise "Audio is not recorded".
-// It cannot store or replay speech: no phases, no time structure, one envelope.
+// What leaves this type is a spectral envelope — parameters, not audio. It cannot store
+// or replay speech: no phases, no time structure, one envelope.
 //
-// Inputs come from the two existing halves it joins: `EchoelRealFFT.forward` (whose
-// `magnitudes` array is `size/2` bins at `sampleRate/size` Hz spacing — the bin maths
-// below derives `fftSize = 2 × magnitudes.count` from exactly that contract) and
-// `VoiceAnalyzer` (F0 + voicing). CONTROL THREAD ONLY: `add` appends to an array; this
-// type must never be called from a render block.
+// ⛔ #1339 — TWO SENTENCES HERE DESCRIBED A LIVE CAPTURE PATH THAT #1302 DELETED, and they
+// were the FIRST thing a reader met. (a) "…which is what lets the capture flow ship under
+// the mic-permission promise" — there is no capture flow and no microphone; the
+// `NSMicrophoneUsageDescription` key that promise refers to is ORPHANED and founder-gated
+// (report, do not edit). (b) The inputs sentence named `VoiceAnalyzer` (F0 + voicing) as a
+// live producer; it went with the audio input. Measured: `git grep -n VoiceAnalyzer -- Sources`
+// returned exactly ONE line — this one.
+//
+// ⭐ WHAT IS ACTUALLY TRUE, AND THE SPLIT MATTERS BEFORE ANYONE "TIDIES" THIS FILE.
+// `git grep -n "VoiceTimbreProfiler(" -- Sources` → **0 constructions**, so the INSTANCE half
+// (`add`, `profile()`) is unreachable in the app: its F0/voicing producer is gone. The STATIC
+// half is LIVE — `colorDescriptors(taps:)` is called by `MetalBioView`, on the taps a SAVED
+// PATCH carries (#95/#527/#1293). **So this file is load-bearing through a DIFFERENT entry
+// point than the one its header used to describe**, and deleting it as "unused" breaks the
+// visual. The instance half stays for the same reason the empty `RecordRouteOwner` stays: it
+// is the socket a returning input plugs into, and it is still exercised by
+// `TheVoiceProfileIsMeasuredNotRecordedTests`, which drives the algorithm directly.
+//
+// ⚠️ A NAME COLLISION MAKES THE OBVIOUS GREP LIE, the `BioModulation` shape (#1165):
+// `VoiceTimbreProfiler.harmonicAmplitudes` (static, no external caller) shares its name with
+// `EchoelDDSP.harmonicAmplitudes`, a LIVE stored property read on the render path. A bare
+// `git grep harmonicAmplitudes` returns a dozen hits that belong to the other type. Qualify
+// with the type name, or measure the CONSTRUCTION instead.
+//
+// The FFT contract is unchanged and still the reason the bin maths works: `EchoelRealFFT
+// .forward`'s `magnitudes` array is `size/2` bins at `sampleRate/size` Hz spacing, which is
+// where `fftSize = 2 × magnitudes.count` below comes from. CONTROL THREAD ONLY: `add`
+// appends to an array; this type must never be called from a render block.
 //
 // ⛔ The sentence that stood here — "the default tap count mirrors `EchoelDDSP.init`'s
 // default (64) … the defaults are kept equal" — was the false-rationale comment class
