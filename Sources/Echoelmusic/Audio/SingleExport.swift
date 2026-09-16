@@ -265,6 +265,16 @@ final class SingleExport {
         let totalFrames = Int(durationSeconds * 44_100)
         let fadeFrames = edgeFadeSeconds > 0 ? Int(edgeFadeSeconds * 44_100) : 0
         var framesWritten = 0
+        // ONE main-actor hop per PERCENT, not per sample buffer (#1335). The pull loop
+        // below is OFFLINE — `expectsMediaDataInRealTime = false`, so it runs as fast as
+        // the encoder accepts data and a few minutes of audio arrive as thousands of
+        // buffers within seconds. A `Task { @MainActor }` per buffer is the 10.76.48
+        // shape CLAUDE.md names: a flood of tiny main-actor submissions starves the
+        // SwiftUI executor, and an open `.menu` Picker stops responding while it runs.
+        // A progress bar cannot show more than 100 steps, so every submission past the
+        // hundredth carried no information. Captured like `framesWritten` above — the
+        // block runs on ONE serial queue, so this is not a race.
+        var lastProgressPercent = -1
 
         await withCheckedContinuation { continuation in
             writerInput.requestMediaDataWhenReady(on: DispatchQueue(label: "com.echoelmusic.export")) {
@@ -329,9 +339,19 @@ final class SingleExport {
                     let pts = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
                     let progress = durationSeconds > 0
                         ? Float((pts - windowStartSeconds) / durationSeconds) : 0
-                    Task { @MainActor [weak self] in
-                        if case .exporting = self?.exportState {
-                            self?.exportState = .exporting(progress: Swift.min(Swift.max(progress, 0), 0.99))
+                    // `clamped(to:)` and NOT `min(max(…))`: an invalid PTS makes `progress`
+                    // NaN, and `Swift.max(NaN, 0)` returns NaN (the argument-order law in
+                    // CLAUDE.md). The old spelling let that NaN reach the progress bar —
+                    // cosmetic there, but `Int(NaN * 100)` one line down is a TRAP that kills
+                    // the test host without an assertion message (#1174). NaN maps to 0 here.
+                    let shown = progress.clamped(to: 0...0.99)
+                    let percent = Int(shown * 100)
+                    if percent != lastProgressPercent {
+                        lastProgressPercent = percent
+                        Task { @MainActor [weak self] in
+                            if case .exporting = self?.exportState {
+                                self?.exportState = .exporting(progress: shown)
+                            }
                         }
                     }
 
