@@ -333,6 +333,17 @@ python3 scripts/diag-ladder.py --source          # every announced rung has an e
 python3 scripts/diag-ladder.py <echoel_diag.log> # where a ladder stopped in a real run
 ```
 
+⛔ **AND THERE IS A THIRD MODE THE ROUTINE NEVER RUNS, WHICH IS HOW IT ROTTED (#1348,
+measured 2026-09-16).** The standing seven-checker sweep runs `diag-ladder.py --source`;
+`--selftest` is run only "after touching it". #1302 deleted the audio input, and with it the
+`on`/`off`/`mic: stop` ladders — which were the SUBJECTS of twelve selftest checks, three of
+them asserting those ladders exist in `Sources/`. **The selftest of one of the seven checkers
+was RED for four days and `--source` stayed green the whole time**, because the two modes ask
+different questions. The fixtures now use the four surviving ladders and the selftest is green
+again. **The durable rule: a deletion can kill a CHECKER'S FIXTURES, and no other mode of that
+checker will say so. When a slice removes a subsystem, run every tool's `--selftest`, not only
+the mode the routine names.**
+
 **DRIVE BOTH MODES, ALWAYS — #907 is the whole argument.** The two modes read DIFFERENT
 things and disagree: `--source` walks the emitters in `Sources/`, the log mode walks the
 lines a device actually wrote. #906 added a breadcrumb for a skipped step and wrote it

@@ -612,6 +612,56 @@ def unowned_failures(lines: list[str],
     return out
 
 
+def foreign_rungs(lines: list[str], known: set[tuple[str, int]]) -> list[tuple[int, str]]:
+    """Rungs in the LOG whose ladder this TREE does not emit (#1348).
+
+    ⛔ WHY THIS EXISTS, and it is a measured miss rather than a hypothetical. `known` comes
+    from `ladders_in_source(root)`, so a ladder whose emitters were DELETED is invisible to
+    every verdict below. On 2026-09-16 the founder sent a real `echoel_diag.log` whose
+    retained crash reads:
+
+        monitor: on 1/5: stopping engine + claiming record route
+        …
+        monitor: on 3/5: connecting input → notch (edge 48000.0 Hz/1 ch, …)
+        CRASH exception: com.apple.coreaudio.avfaudio: Input HW format is invalid
+
+    #1302 deleted the whole audio input, so `monitor: on N/5` is gone from `Sources/`. The
+    tool printed FOUR healthy-looking ladders, none of them the one that died, and **exited
+    0 over a SIGABRT**. The `last │` line saved the reader; the TABLE — which is what a
+    triager scans — was reassuring by omission. That is the shape this repo calls the most
+    expensive kind: a green run that then counts as evidence (#937/#665).
+
+    ⚠️ WHAT A FINDING HERE DOES *NOT* MEAN. It is a statement about the LOG, never about the
+    code: the log is from a build this checkout no longer matches — older, newer, or one
+    whose ladder was removed. Nothing is broken because this fires. What it DOES mean is
+    that the ladder named here has NO outcome in the table, so its death cannot be seen.
+
+    ⚠️ IT REPORTS A CHANGED TOTAL TOO, and that is deliberate. `on 4/5` against a tree that
+    now says `/6` is a different ladder for verdict purposes, and reading the old log with
+    the new totals is exactly how a triager mis-reads a death as a tidy exit.
+    """
+    out: list[tuple[int, str]] = []
+    for idx, line in enumerate(lines):
+        literal = line.split("  ", 1)[-1].strip() if "  " in line else line.strip()
+        m = RUNG.match(literal)
+        if not m:
+            continue
+        total = int(m.group("total"))
+        # ⚠️ ASK `ladder_verdicts`' OWN RULE, NEVER A SECOND ONE (#416, and it bit here). The
+        # first draft compared `RUNG`'s `prefix` group against `known` directly and reported
+        # `engine: start 1/2` as foreign — while the table two lines above was resolving that
+        # SAME line to the known ladder `('start', 2)`, because the verdict scan searches the
+        # prefix ANYWHERE in the line (`\bstart\s+1/2`) rather than anchoring it at the
+        # start. Two extractions of one fact, disagreeing: the `slice(…)`-with-two-semantics
+        # defect (#926) in a new costume, and it fails in the PLAUSIBLE direction — a wrong
+        # finding reads as a real one.
+        if any(re.search(rf"\b{re.escape(prefix)}\s+\d{{1,2}}/{tot}\b", line)
+               for (prefix, tot) in known if tot == total):
+            continue
+        out.append((idx, line))
+    return out
+
+
 def read_log(path: str, root: str) -> int:
     try:
         text = open(path, encoding="utf-8", errors="replace").read()
@@ -700,6 +750,32 @@ def report_segment(lines: list[str], known: set[tuple[str, int]], offset: int,
 
     verdicts = ladder_verdicts(lines, known, announced)
     orphans = unowned_failures(lines, known)
+    foreign = foreign_rungs(lines, known)
+
+    def print_foreign() -> None:
+        """#1348. Printed from BOTH exits, for the #970 reason one branch above: the early
+        return happens first, and a log carrying ONLY foreign rungs takes it — so putting
+        this after the table would swallow the finding in exactly the case it is for."""
+        if not foreign:
+            return
+        labels = set()
+        for _i, ln in foreign:
+            mm = RUNG.match(ln.split("  ", 1)[-1].strip())
+            if mm:
+                labels.add(f"{mm.group('prefix')} …/{mm.group('total')}")
+        names = sorted(labels)
+        print()
+        print(f"  ❌ {len(foreign)} rung(s) belong to a ladder THIS TREE DOES NOT EMIT: "
+              f"{', '.join(names)}")
+        print("     Those ladders have NO row in the table above, so their outcome — including")
+        print("     a death — is invisible here. This says the LOG is from a build this")
+        print("     checkout no longer matches (older, newer, or a ladder since deleted); it")
+        print("     does NOT say anything is broken. Check out the build the log came from,")
+        print("     or read those lines by hand:")
+        for idx, line in foreign[:8]:
+            print(f"       line {idx + 1 + offset}: {line[:104]}")
+        if len(foreign) > 8:
+            print(f"       … {len(foreign) - 8} more")
 
     if not any(v["step"] > 0 for v in verdicts.values()):
         print("  No ladder rung appears in this log.")
@@ -709,6 +785,7 @@ def report_segment(lines: list[str], known: set[tuple[str, int]], offset: int,
         # rung-less log would be swallowed by the one exit that already knows it is a finding.
         for idx, line in orphans:
             print(f"  ⚠️ line {idx + 1 + offset}: {line[:110]}")
+        print_foreign()
         return 1
 
     findings = 0
@@ -788,7 +865,10 @@ def report_segment(lines: list[str], known: set[tuple[str, int]], offset: int,
         print("   `--source` lists which ladders are complete in today's tree.")
     elif not ended and not failed and not orphans and not masked and not unterminated:
         print("✅ Every ladder that appears reached its last step.")
-    return 1 if findings or orphans or masked else 0
+    print_foreign()
+    # #1348: a foreign rung is a finding about the LOG, and it must move the exit code —
+    # the founder's 2026-09-16 export ended in a SIGABRT and this tool exited 0 on it.
+    return 1 if findings or orphans or masked or foreign else 0
 
 
 def selftest(root: str) -> int:
@@ -829,7 +909,16 @@ def selftest(root: str) -> int:
     except RuntimeError as exc:
         print(f"  FAIL could not read Sources/: {exc}")
         return 2
-    for prefix, total in (("on", 5), ("off", 5), ("mic: stop", 3), ("session: configure", 4)):
+    # ⛔ #1348 — THIS TUPLE NAMED THREE LADDERS #1302 DELETED, and it is why the selftest
+    # of one of the seven checkers had been RED for four days without anyone seeing it: the
+    # standing routine runs `--source`, never `--selftest`. `on`/`off` (monitoring) and
+    # `mic: stop` went with the audio input; the four below are every ladder `Sources/`
+    # still emits, measured rather than remembered:
+    #     python3 -c "import importlib.util,os; …ladders_in_source(os.getcwd())"
+    # ⚠️ The check is unchanged in KIND — it is still the end-to-end claim that
+    # derived-from-source sees complete ladders. Only its subjects moved.
+    for prefix, total in (("session: configure", 4), ("session: raise", 2),
+                          ("start", 2), ("startup", 4)):
         steps = ladders.get((prefix, total), {})
         check(f"source ladder {prefix!r} 1..{total} is complete",
               all(n in steps for n in range(1, total + 1)))
@@ -1016,9 +1105,13 @@ def selftest(root: str) -> int:
         # rename of that Swift constant shows up as a RED fixture rather than as a silent
         # return to reading two processes as one.
         EchoelRetainedHeader = "=== RETAINED CRASH (an earlier run that ended badly) ==="
-        # A complete, NON-announcing ladder: `on` has no success terminator in Sources/, so it
-        # is the counterweight to every claim about the announcing kind (#973).
-        good_on = "".join(f"on {n}/5: step {n}\n" for n in range(1, 6))
+        # A complete, NON-announcing ladder — the counterweight to every claim about the
+        # announcing kind (#973). ⛔ #1348: this was `on …/5` until #1302 deleted the
+        # monitoring ladder. `session: configure` is the surviving non-announcing one
+        # (its only terminator in Sources/ is FAILED, never a SUCCESS word), so the
+        # property the fixture exists for is preserved. It is FOUR rungs, not five —
+        # every asserted line number below moved with it.
+        good_on = "".join(f"session: configure {n}/4: step {n}\n" for n in range(1, 5))
         SHORT = "did not reach their last step"
         rc, out = verdict_text("complete_then_failed.log",
                                "engine: start 1/2: starting master engine\n"
@@ -1072,8 +1165,8 @@ def selftest(root: str) -> int:
         check("the REAL happy path (one rung, then OK) is not accused of dying",
               SHORT not in out and "SAID WHY" in out and rc == 0)
         rc, out = verdict_text("deliberate_short_exit.log",
-                               "mic: start 1/3 — configuring the capture engine\n"
-                               "mic: start REFUSED — input format not ready\n")
+                               "session: raise 1/2 — setCategory(.playAndRecord)\n"
+                               "session: raise SKIPPED — category already .playAndRecord\n")
         check("a documented tidy exit is NOT also accused of stopping short",
               SHORT not in out and "SAID WHY" in out and rc == 0)
 
@@ -1091,8 +1184,9 @@ def selftest(root: str) -> int:
         check("a FAILURE belonging to no ladder is a finding, not a green run",
               ORPHAN in out and GREEN not in out and rc == 1)
         rc, out = verdict_text("owned_failure.log",
-                               "mic: stop 1/3 — a\nmic: stop 2/3 — b\nmic: stop 3/3 — c\n"
-                               "mic: stop FAILED — the record route was not released (e)\n")
+                               "session: configure 1/4 — a\nsession: configure 2/4 — b\n"
+                               "session: configure 3/4 — c\n"
+                               "session: configure FAILED — the option set was refused (e)\n")
         check("a failure its ladder OWNS is not double-reported as an orphan",
               ORPHAN not in out and "ended on a FAILED line" in out and rc == 1)
         rc, out = verdict_text("orphan_benign.log",
@@ -1115,14 +1209,19 @@ def selftest(root: str) -> int:
         # Same class as the numbered-skip fixture #971 already had to repair: a fixture must
         # REACH the branch it names.
         rc, out = verdict_text("failure_masked_by_retry.log",
-                               good_on + "on FAILED — the first one died\n" + good_on
-                               + "on FAILED — and so did the second\n" + good_on)
+                               good_on + "session: configure FAILED — the first one died\n"
+                               + good_on
+                               + "session: configure FAILED — and so did the second\n"
+                               + good_on)
         check("EVERY hidden FAILURE is printed, not just the last one",
               MASKED in out and GREEN not in out
-              and "line 6" in out and "line 12" in out and rc == 1)
+              # ⛔ #1348: 6/12 while `good_on` was five rungs; it is four now (the
+              # five-rung `on` ladder is deleted), so the failures sit at 5 and 10.
+              and "line 5" in out and "line 10" in out and rc == 1)
         rc, out = verdict_text("single_failure_not_masked.log",
-                               "mic: stop 1/3 — a\nmic: stop 2/3 — b\nmic: stop 3/3 — c\n"
-                               "mic: stop FAILED — the record route was not released (e)\n")
+                               "session: configure 1/4 — a\nsession: configure 2/4 — b\n"
+                               "session: configure 3/4 — c\n"
+                               "session: configure FAILED — the option set was refused (e)\n")
         check("the failure that DECIDED the verdict is not also listed as masked",
               MASKED not in out and "ended on a FAILED line" in out and rc == 1)
         # ⛔ #971 — THIS FIXTURE'S FIRST DRAFT USED `on 4/5 SKIPPED`, A NUMBERED SKIP, AND THE
@@ -1131,7 +1230,7 @@ def selftest(root: str) -> int:
         # — it graded nothing while looking like it graded the case in its own name. The
         # terminator has to be UNNUMBERED to be one.
         rc, out = verdict_text("benign_before_a_good_run.log",
-                               "on REFUSED — the route was already raised\n" + good_on)
+                               "session: configure SKIPPED — nothing to do\n" + good_on)
         check("a BENIGN terminator earlier in the log is not reported as a masked failure",
               MASKED not in out and rc == 0)
 
@@ -1141,17 +1240,57 @@ def selftest(root: str) -> int:
         # about a process that had already died.
         TWO = "holds 2 RUNS"
         rc, out = verdict_text("export_with_retained_crash.log",
-                               "mic: stop 1/3 — a\n"
-                               "mic: stop FAILED — the record route was not released (e)\n"
+                               "session: configure 1/4 — a\n"
+                               "session: configure FAILED — the option set was refused (e)\n"
                                "\n" + EchoelRetainedHeader + "\n"
-                               "mic: stop 1/3 — a\nmic: stop 2/3 — b\nmic: stop 3/3 — c\n")
+                               "session: configure 1/4 — a\nsession: configure 2/4 — b\n"
+                               "session: configure 3/4 — c\nsession: configure 4/4 — d\n")
         check("a two-run export is split, and the CURRENT run's failure is not demoted",
               TWO in out and "ended on a FAILED line" in out and MASKED not in out and rc == 1)
         check("...and the appended run's line numbers still point at the whole file",
-              "line 6" in out)
+              # ⛔ #1348: `line 6` while the appended run was a three-rung `mic: stop`
+              # ladder. `session: configure` is four rungs and blank lines are filtered
+              # out before numbering, so the appended run's last rung is line 7. The
+              # CLAIM is unchanged — the offset must point into the whole file, not into
+              # the segment.
+              "line 7" in out)
         rc, out = verdict_text("ordinary_single_run.log", good_on)
         check("an ordinary one-run log is NOT announced as multi-run",
               TWO not in out and GREEN in out and rc == 0)
+
+        # ⭐ #1348 — THE FOREIGN-RUNG BLOCK, DRIVEN END TO END RATHER THAN AS A PURE CALL.
+        # The known positive is the founder's real 2026-09-16 export: its retained crash ends
+        # in `Input HW format is invalid` two rungs into `monitor: on 1..5`, a ladder #1302
+        # deleted — so every verdict below was blind to it and the tool exited 0 over a
+        # SIGABRT. Driving `read_log` is the point (#914/#941: what bites is the COMPOSITION,
+        # not the pure function, which was already correct in the draft that shipped a false
+        # alarm).
+        FOREIGN = "THIS TREE DOES NOT EMIT"
+        rc, out = verdict_text("foreign_ladder_died.log",
+                               "monitor: on 1/5: stopping engine + claiming record route\n"
+                               "monitor: on 2/5: attaching monitor nodes\n"
+                               "monitor: on 3/5: connecting input → notch\n"
+                               "CRASH exception: Input HW format is invalid\n")
+        check("a log whose ladder this tree no longer emits is a FINDING, not a green run",
+              FOREIGN in out and "monitor: on …/5" in out and rc == 1)
+        # ⛔ THE FALSE ALARM THE DRAFT SHIPPED, PINNED SO IT CANNOT RETURN. `engine: start 1/2`
+        # IS the known ladder `('start', 2)` — the verdict scan finds the prefix ANYWHERE in
+        # the line, it does not anchor it — so comparing `RUNG`'s own prefix group against
+        # `known` reported a healthy rung as foreign. Two extractions of one fact (#926).
+        rc, out = verdict_text("prefixed_known_rung_is_not_foreign.log",
+                               "engine: start 1/2: starting master engine\n"
+                               "engine: start OK — audio output active\n")
+        # ⚠️ NOT `GREEN in out`: this is the REAL happy path and it is a ONE-rung ladder
+        # (`start 2/2` is the retry), so its verdict is `ended`, not `done`, and the green
+        # line is correctly absent — `healthy_first_attempt.log` above asserts the same
+        # shape. My first draft asserted GREEN here and went red against correct code;
+        # driving the fixture said so, reading it did not.
+        check("a KNOWN rung carrying a source prefix is not called foreign",
+              FOREIGN not in out and "SAID WHY" in out and rc == 0)
+        # And the counterweight that makes the two above mean something: an ordinary log of
+        # surviving ladders must not trip the block at all.
+        check("a log of surviving ladders reports no foreign rung",
+              FOREIGN not in verdict_text("all_known.log", good_on)[1])
 
     print("\n" + ("selftest OK" if ok else "selftest FAILED"))
     return 0 if ok else 1
