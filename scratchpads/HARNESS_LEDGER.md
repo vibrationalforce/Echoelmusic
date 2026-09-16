@@ -4024,3 +4024,41 @@ unsichtbar beim Lesen und alle drei sterben an derselben Prozedur.**
 `PLAN_*` ist datierte Historie per Konvention, `fastlane/metadata` und `docs/*.html` sauber
 („Harmonizität" = DSP-Parameter · „Autotune" = das Nia9ara-Projekt · „face tracking" ×2 =
 Verneinungen).
+
+## PLAYBOOK #1348 (2026-09-16) — eine Löschung tötet auch die FIXTURES eines Checkers, und kein anderer Modus desselben Checkers sagt es
+
+**DEAD END: `diag-ladder.py --source` grün ⇒ „das Werkzeug ist in Ordnung".** Falsch, und es
+hat vier Tage gehalten. `--source` prüft die Emitter in `Sources/`; der SELBSTTEST prüft die
+Regeln gegen Fixtures. #1302 löschte den Audio-Eingang, damit die Leitern `on`/`off`/
+`mic: stop` — und damit die Subjekte von ZWÖLF Selbsttest-Ansprüchen. `--source` blieb grün.
+**DO THIS INSTEAD: wenn eine Scheibe ein Subsystem entfernt, `--selftest` JEDES Werkzeugs
+fahren, nicht nur den Modus, den die Routine nennt.**
+
+**DEAD END: ein Log-Leser, dessen bekannte Leitern aus `Sources/` kommen, kann eine gestorbene
+Leiter nicht sehen.** Der Founder schickte ein `echoel_diag.log`, dessen Retained Crash zwei
+Sprossen in `monitor: on 1..5` mit `Input HW format is invalid` endet. Das Werkzeug druckte
+vier gesunde Leitern, keine davon diese, **exit 0 über einen SIGABRT**. Ein aus dem Baum
+abgeleitetes Vokabular ist an einem Log aus einem ANDEREN Build blind — und zwar beruhigend
+blind. **DO THIS INSTEAD: melde jede Sprossen-Gestalt, die das Vokabular nicht kennt, als
+Befund ÜBER DAS LOG** („dieses Log stammt aus einem Build, den dieser Checkout nicht trifft"),
+niemals als Aussage über den Code.
+
+**PLAYBOOK: der Absturz selbst, als Rezept für den Tag, an dem ein Eingang zurückkommt.** Die
+Ursache stand eine Sprosse VOR dem Absturz: `input format from session fallback (node
+unusable — node 0.0 Hz/2 ch, session 48000.0 Hz/1 ch)`. Der Knoten hatte kein
+Hardware-Format; der Code setzte ersatzweise das SITZUNGS-Format ein und verband trotzdem.
+`AVAudioEngine.connect` validiert gegen das ECHTE HW-Format, nicht gegen das übergebene.
+**Der Fallback war der Fehler, nicht die Rettung.** Richtig ist abbrechen und es SAGEN — die
+Leiter hat dafür eine unnummerierte `REFUSED`-Sprosse, und `diag-ladder` liest sie als
+`⏹ ended` statt `❌ died`.
+
+**PLAYBOOK: eine Betreffzeile, die das Gegenteil ihres Körpers sagt, ist teuer.**
+`chore(deploy): v10.79.470 — der Monitoring-Absturz war nie in einem Build` meint „der FIX war
+nie in einem Build"; der Körper sagt es korrekt. `git log --oneline` zeigt nur die Betreffzeile,
+und sie behauptet genau das, was dieses Geräte-Log widerlegt. Gleiche Klasse wie #1334.
+
+**PLAYBOOK: zwei Extraktionen einer Tatsache widersprechen sich, und der Fehler ist plausibel.**
+Mein erster Entwurf las den Leiter-Präfix am ZEILENANFANG, während `ladder_verdicts` ihn
+IRGENDWO in der Zeile sucht — also meldete er `engine: start 1/2` als fremd, während die
+Tabelle zwei Zeilen darüber dieselbe Zeile korrekt auflöste. Die Regel ist die alte (#416):
+**die vorhandene Regel FRAGEN, nie eine zweite formulieren.**

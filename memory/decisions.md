@@ -2196,3 +2196,16 @@ das Symbol löschte.
   unsichtbar und sterben an §0 gegen BEIDE Bäume.
 - **Sweep negativ sonst:** 31 gelöschte Typnamen gegen 169 Dateien in `docs/dev/`,
   `ContentPipeline/` und `scratchpads/PLAN_*` — nur CLAIMS.md war echt.
+
+### 2026-09-16 — #1348: der Founder schickt ein Absturz-Log, das Werkzeug dafür sagt „alles gut"
+
+- **Eine Löschung tötet auch die FIXTURES eines Checkers.** `diag-ladder.py --selftest` war vier
+  Tage rot (12 FAILs), `--source` durchgehend grün. Bei jedem Subsystem-Abriss `--selftest`
+  jedes Werkzeugs fahren.
+- **Ein Log-Leser mit aus `Sources/` abgeleitetem Vokabular ist an einem Log aus einem anderen
+  Build blind — beruhigend blind.** Vier gesunde Leitern, exit 0, über einem SIGABRT.
+- **Der Absturz selbst ist gegenstandslos** (Pfad mit #1302 gelöscht, in kommentar-gestrippten
+  `Sources/` je 0) und die #1269-Analyse ist damit **geräte-bestätigt**: der 0-Hz-Fallback war
+  der Fehler, nicht die Rettung.
+- **Eine Betreffzeile, die das Gegenteil ihres Körpers sagt, ist teuer** (`v10.79.470`: „der
+  Monitoring-Absturz war nie in einem Build" meint „der FIX war nie in einem Build").

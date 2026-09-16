@@ -32418,3 +32418,80 @@ grün auf einem Baum, der den Widerspruch durch ENT-Streichen auflöst. Sieben C
 `foreign-needles.py` ist der zuständige und ist grün. Kein `@testable import` nötig (#1337).
 
 **Gate:** `01ae54f` Compile = success.
+
+## 2026-09-16 (Fortsetzung) — #1348: der Founder schickt ein Absturz-Log, und das Werkzeug dafür sagt „alles gut"
+
+**Was im Log steht, gemessen.** Der aktuelle Lauf ist **v10.79.472 (2592)**, `LaunchGuard:
+normal launch`, `init a`–`init e` sauber. Der RETAINED-CRASH-Block darunter ist ein **anderer,
+älterer Lauf: v10.79.469 (2589)** — drei Builds alt:
+
+```
+monitor: on 1/5: stopping engine + claiming record route
+session: raise 1/2 → 2/2 (setActive)
+monitor: on: input format from session fallback (node unusable — #823: node 0.0 Hz/2 ch, session 48000.0 Hz/1 ch)
+monitor: on 2/5: attaching monitor nodes
+monitor: on 3/5: connecting input → notch (edge 48000.0 Hz/1 ch, …)
+CRASH exception: com.apple.coreaudio.avfaudio: Input HW format is invalid  → SIGABRT
+```
+
+⭐ **DIE URSACHE STEHT EINE SPROSSE VOR DEM ABSTURZ, IM KLARTEXT: der FALLBACK war der
+Fehler.** Der Eingangsknoten meldete **0 Hz**; der Code setzte ersatzweise das SITZUNGS-Format
+ein (48 kHz/1 ch) und verband trotzdem. `AVAudioEngine.connect` prüft aber gegen das ECHTE
+HW-Format des Knotens, nicht gegen das übergebene — 0 Hz ist ungültig, also wirft es.
+
+⭐ **DAMIT IST #1269 GERÄTE-BESTÄTIGT.** Dessen Commit-Körper sagte: *„The fix for it has
+existed since 2026-09-11 and has never shipped"*, belegt mit
+`git merge-base --is-ancestor eecf800 101055f` → true. Das Log ist der fehlende Beleg der
+anderen Hälfte: der Absturz war in einem AUSGELIEFERTEN Build, nämlich genau dem (2589 =
+`eecf800` = v10.79.469). ⚠️ Die Betreffzeile jenes Deploys — *„der Monitoring-Absturz war nie
+in einem Build"* — meint „der FIX war nie in einem Build" und liest sich isoliert als das
+Gegenteil; `git log --oneline` ist das, was eine Sitzung liest. Klasse: eine Überschrift, die
+das Gegenteil ihres Körpers sagt (#1334).
+
+**Und der Absturzpfad ist heute gegenstandslos, gemessen statt erinnert:** in
+kommentar-gestrippten `Sources/` je **0** für `inputNode`, `AVAudioInputNode`, `monitor: on`,
+`claim inputMonitoring`; `upgradeToPlayAndRecord()` hat null Aufrufer; die drei überlebenden
+`installTap`-Stellen tappen `meterNode`, `masterMixer` und den EIGENEN Ausgang, nie einen
+Eingang. Der Founder hält 2592 = **den Aufräum-Build**, in dem es den Pfad nicht gibt.
+
+⛔ **WAS DAS WERKZEUG DARAUS MACHTE — und das ist der eigentliche Zyklus.**
+`python3 scripts/diag-ladder.py <log>` druckte VIER gesund aussehende Leitern, KEINE davon die
+gestorbene, und gab **exit 0 über einen SIGABRT**. `known` kommt aus `ladders_in_source(root)`,
+und #1302 hat die Monitoring-Leiter gelöscht — eine Leiter, die dieser Baum nicht mehr
+emittiert, hat keine Zeile in der Tabelle, und die Tabelle ist das, was ein Triager scannt.
+
+⛔ **UND DER SELBSTTEST DESSELBEN WERKZEUGS WAR SEIT #1302 ROT — ZWÖLF FAILs, vier Tage
+lang.** Drei davon behaupten, `on`/`off`/`mic: stop` gäbe es in `Sources/`; die anderen neun
+bauen ihre Fixtures daraus. **Warum es niemand sah:** die stehende Sieben-Checker-Runde fährt
+`--source`, nicht `--selftest`, und die zwei Modi stellen verschiedene Fragen — `--source`
+blieb die ganze Zeit grün. `Tests/CISmoke/CLAUDE.md` sagt in Fettdruck „DRIVE BOTH MODES,
+ALWAYS" und meint `--source` und den LOG-Modus; der dritte stand nirgends. Steht jetzt dort.
+
+**Gebaut:** `foreign_rungs()` (meldet jede Sprosse einer Leiter, die dieser Baum nicht
+emittiert, und zählt in den Exit-Code; die Meldung sagt ausdrücklich, dass sie eine Aussage
+über das LOG ist, nicht über den Code) · alle Selbsttest-Fixtures auf die vier überlebenden
+Leitern umgezogen, Ansprüche unverändert in ihrer Art, zwei Zeilennummern mitgezogen · drei
+neue Fälle für den neuen Block, END TO END durch `read_log`.
+
+⛔ **ZWEI EIGENE FEHLER, BEIDE NUR DURCHS FAHREN GEFUNDEN.** (1) Der erste Entwurf verglich
+`RUNG`s eigene `prefix`-Gruppe gegen `known` und meldete `engine: start 1/2` als fremd —
+während die Tabelle zwei Zeilen darüber dieselbe Zeile korrekt auf `('start', 2)` auflöste,
+weil der Verdikt-Scan den Präfix IRGENDWO in der Zeile sucht. Zwei Extraktionen einer Tatsache
+(#926), Fehler in der PLAUSIBLEN Richtung. (2) Mein neuer Anspruch verlangte `GREEN in out`
+für den Fehlalarm-Fixture — falsch: das ist der echte Happy Path und eine EIN-Sprossen-Leiter,
+also `ended` statt `done`, die grüne Zeile fehlt zu Recht. Der Nachbar-Fixture sagte das die
+ganze Zeit.
+
+**Gemessen:** 12 FAIL → 0. Sieben Checker exit 0, `--selftest` exit 0, `--source` exit 0, auf
+dem Founder-Log exit 1 mit `monitor: on …/5` namentlich.
+
+⚠️ **EINE FRAGE BLEIBT OFFEN und ich kann sie aus dem Log nicht entscheiden:** der 2592-Teil
+endet bei `init e: midi + osc`. Zwischen `init e` und `init f` stehen `MIDIInput()`,
+`MIDIBusPublisher` und `OSCSender()` — im 2589-Lauf hat genau dieser Schritt **647 ms**
+gebraucht, mit Abstand der längste (alle anderen 1–40 ms). Ein Export MITTEN in diesem Fenster
+sieht identisch aus wie ein Tod darin. CLAUDE.mds eigenes Gesetz — „Stille zwischen zwei
+Sprossen ist ein BEFUND" — verlangt, dass ich das nicht wegerkläre. Eine Frage an den Founder
+klärt es: lief die App weiter?
+
+**Gate:** `01ae54f` Compile = success, **`Build for Testing` = success** (Schritt 10 skipped,
+Schritt 11 `Run Tests` = failure = #396). Die drei #1346-Ansprüche kompilieren nachweislich.

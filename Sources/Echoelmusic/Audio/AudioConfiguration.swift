@@ -356,6 +356,18 @@ enum AudioConfiguration {
     /// laufen muss. Die `BLOCKED-BY-`-Konvention des Werkzeugs hält sie sichtbar
     /// und aus der offenen Warteschlange heraus; wer den Eingang zurückbaut,
     /// entfernt die Marke im selben Commit.
+    /// ⭐ #1348 — UND ES GIBT JETZT EINEN GERÄTE-BELEG DAFÜR, WIE DER EINGANG ZULETZT
+    /// GESTORBEN IST, also lies ihn, BEVOR du einen zurückbaust. Founder-Log vom
+    /// 2026-09-16, Build v10.79.469 (2589): `monitor: on 3/5: connecting input → notch`
+    /// → `CRASH … Input HW format is invalid` → SIGABRT. Eine Sprosse davor steht die
+    /// Ursache im Klartext: `input format from session fallback (node unusable — #823:
+    /// node 0.0 Hz/2 ch, session 48000.0 Hz/1 ch)`. Der Eingangsknoten meldete 0 Hz, der
+    /// Code setzte das SITZUNGS-Format ein und verband trotzdem — und `connect` prüft
+    /// gegen das ECHTE HW-Format des Knotens, nicht gegen das übergebene. **Der Fallback
+    /// WAR der Fehler.** #1269 (`101055f`) hat das repariert (nicht verbinden, wenn der
+    /// Knoten kein Format hat) und ist nie in einem Build gelandet, den der Founder hielt
+    /// — die Analyse von #1269 ist damit geräte-bestätigt, nicht nur plausibel.
+    /// Herleitung: `scratchpads/HARNESS_LEDGER.md`, PLAYBOOK #1348.
     /// NEEDS-FOUNDER-VERIFY BLOCKED-BY-#1302: Bluetooth-Kopfhörer verbinden, spielen,
     /// Monitoring EINschalten — die Musik muss Stereo/voll bleiben und der
     /// Routen-Marker darf kein [HFP] zeigen. (Kein Simulator hat
