@@ -10,9 +10,22 @@ import Accelerate
 //   1. Harmonic Synthesizer: Bank of N sinusoidal partials at integer multiples of f0
 //      - Per-partial amplitude control (spectral envelope)
 //      - Phase-coherent additive synthesis via vDSP (SIMD-vectorized)
-//   2. Noise Synthesizer: Multi-band FIR-filtered noise with spectral shaping
-//      - 65-band frequency-domain multiplication via vDSP_DFT
+//   2. Noise Synthesizer: Multi-band spectral shaping of white noise
+//      - A bank of `noiseBandCount` (default 65) ONE-POLE IIR filters, one state and one
+//        pre-computed alpha per band, summed with the per-band magnitudes and normalised by
+//        the band count. Time domain, sample by sample — see the loop in `render`.
 //      - Colored noise presets + custom spectral curves
+//
+//      ⛔ #1334 — THIS SAID "Multi-band FIR-filtered noise" AND "65-band frequency-domain
+//      multiplication via vDSP_DFT", AND NEITHER HAS EVER EXISTED HERE. The filters are IIR,
+//      not FIR, and there is no transform: `git grep -n vDSP_DFT -- Sources` finds
+//      `EchoelVDSPKit` and, until this commit, that one comment. Three arrays sized for the
+//      overlap-add that the header described — `noiseFFTBuffer`, `noiseOutputBuffer`,
+//      `noiseOverlapBuffer` — were allocated per voice and then never read or written
+//      (exactly two occurrences each: the declaration and the initialiser). They are deleted.
+//      A header that describes a DIFFERENT ALGORITHM than the code is the expensive kind: a
+//      session optimising "the DFT" would go looking for a transform that is not there, and
+//      one extending the noise path would build against a shape the render loop does not use.
 //   3. Mix: Harmonic + Noise blend controlled by harmonicity parameter
 //   4. Global amplitude envelope (exponential ADSR curves)
 //   5. Spectral Morphing: Smooth interpolation between spectral shapes
@@ -753,10 +766,8 @@ public final class EchoelDDSP: @unchecked Sendable {
     /// Pre-computed noise filter coefficients (avoids exp() on audio thread)
     private var noiseFilterAlphas: [Float]
 
-    /// Multi-band noise: FIR-filtered noise via overlap-add
-    private var noiseFFTBuffer: [Float]
-    private var noiseOutputBuffer: [Float]
-    private var noiseOverlapBuffer: [Float]
+    /// Per-band one-pole filter state, one entry per noise band (⛔ #1334: three overlap-add
+    /// buffers stood here for an FFT path this file has never had — see the header).
     private var noiseFilterState: [Float]
 
     /// Lock-free PRNG for audio-thread noise generation
@@ -901,11 +912,8 @@ public final class EchoelDDSP: @unchecked Sendable {
         self.vdspSinBuffer = [Float](repeating: 0, count: self.harmonicCount)
         self.vdspCosBuffer = [Float](repeating: 0, count: self.harmonicCount)
 
-        // Multi-band noise buffers
-        let fftSize = self.noiseBandCount * 2
-        self.noiseFFTBuffer = [Float](repeating: 0, count: fftSize)
-        self.noiseOutputBuffer = [Float](repeating: 0, count: self.frameSize + fftSize)
-        self.noiseOverlapBuffer = [Float](repeating: 0, count: fftSize)
+        // Multi-band noise: one filter state per band. (⛔ #1334 — three overlap-add buffers
+        // were allocated here for an FFT path that does not exist; they had no reader.)
         self.noiseFilterState = [Float](repeating: 0, count: self.noiseBandCount)
 
         // Pre-compute noise filter coefficients (avoids exp() on audio thread)
