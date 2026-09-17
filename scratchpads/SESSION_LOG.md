@@ -33219,3 +33219,12 @@ beide echte Chips (2) · „Diagnostics" steht drin (3) · `founder-verify.py --
 `testflight.yml` triggert auf `push: paths: ['.deploy/release']`, also auf JEDE Änderung.
 Wer diese Datei nach dem Deploy noch einmal anfasst, schickt einen zweiten Build mit
 identischem App-Code (belegt an `35193c43`/Lauf 2583). Alle acht Checker grün.
+
+**Deploy-Lesung, nachgetragen:** TestFlight-Lauf **35230042971 = success**, alle vier Jobs
+(Preflight · Compile Check · iOS · Summary) grün, einschließlich Schritt 13 **„Verify build
+landed in App Store Connect"**. `BUILD_NUMBER` ist `github.run_number`, also liegt
+**v10.79.473 als Build 2593** in TestFlight. Laufzeit 13:54:09 → 14:02:37 UTC (8,5 min —
+deutlich unter den 30+, die CLAUDE.md für einen Kaltbau nennt; beide Caches griffen).
+⚠️ Der Push hat **genau EINEN** Lauf ausgelöst: der Commit fasste nur `.deploy/release`,
+`scratchpads/` und `decisions.csv` an, und die Pfad-Filter der anderen Workflows schließen das
+aus — kein Doppelbuild, `.deploy/release` bleibt ab hier unberührt.
