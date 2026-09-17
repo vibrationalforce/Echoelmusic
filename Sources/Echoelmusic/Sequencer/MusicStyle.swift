@@ -174,6 +174,9 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // first commit for the reason every batch above gives: a genre left only in the
         // taxonomy is a doorless genre.
         .cumbia,
+        // #1358 G14b — the SECOND resident of `Latin America`, so this shelf stops being a
+        // one-genre drawer. Offered from the first commit for the reason every batch gives.
+        .tangoMarcato,
         .selfObservation, .stillMeditation, .drift, .contemplation,
         .vaporwave, .sciFi, .classical, .dubTechno,
         // #254 batch 1 (founder 2026-07-30: "mehr Genres der elektronischen Musik benötigt,
@@ -566,7 +569,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             return .darkSynthScenes
         // #1357 G14 — the shelf is new and arrives here with this one genre. Filed under
         // `.folk` and not `.caribbean`; the argument is at the `Subcategory` case doc.
-        case .cumbia:
+        case .cumbia, .tangoMarcato:
             return .latinAmerica
         case .sciFi:
             return .cinematicAtmospheres
@@ -1246,6 +1249,40 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// `default: .studioLocked`, right for a loop-based music and an omission a compiler
     /// cannot catch, so the batch guard asserts it.
     case cumbia
+    /// #1358 G14b. Tango marcato: a stomped minor comp under a falling ♭VII and a MAJOR V.
+    ///
+    /// ⭐ THE CHORD IS A TRIAD ON PURPOSE, AND THAT DECISION HAS A MEASURED REASON (#33). The
+    /// design sheet asked for `[0, 2, 4, 6]` on this scale — which resolves to `[0, 3, 7, 11]`,
+    /// the minor-major seventh that IS `slowedGothPop`'s entire separation and is pinned there as
+    /// a sweep over `allCases` (#1354). The obvious escape, "give this genre a different
+    /// four-note voicing", DOES NOT EXIST: `GenreBatchFourVoicingTests` pins the four-note field
+    /// to exactly TWO shapes — `detroitTechno`'s fifth-less `[0, 2, 6, 8]` and the plain
+    /// `[0, 2, 4, 6]` the other eight carry — so a third shape would have rewritten that guard
+    /// and Detroit's doc as well. The TRIAD `[0, 2, 4]` clears the collision without retracting
+    /// anything, and the harmonic-minor colour is not lost: it moves into the PROGRESSION.
+    ///
+    /// `progression: [0, 6, 4]` — roots i → ♭VII → V, FREE across the roster. Degree 4 on
+    /// harmonic minor voices `[0, 4, 7]`, a MAJOR dominant, which is the colour the sheet wanted
+    /// from the seventh; degree 6 is the ♭VII that starts tango's falling line. ⚠️ THE FULL
+    /// DESCENT `[0, 6, 5, 4]` — the bandoneón tetrachord — IS ALSO FREE AND IS STILL NOT
+    /// AVAILABLE: it has FOUR distinct roots, and `upliftingTrance` is today the only offered
+    /// genre with four, holding the STRICT claim in `GenreBatchThreeVoicingTests` that it visits
+    /// more than every other offered genre. Four here would be a TIE, so a true sentence would
+    /// have become false. ⚠️ `composeHarmonic` ROTATES over `progressionPhase`, so this is a set
+    /// of three roots opening on the tonic, not a notated cadence (#1290).
+    ///
+    /// ⚠️ THE LEAD NAME IS FORCED, NOT CHOSEN, and by the pigeonhole ceiling alone. The sheet
+    /// said "Hollow Reed" — the bandoneón is a reed — and that name stood at 8 against a ceiling
+    /// of 8, so it would have been 9 of 47. Only "Deep Sub" and "Warm Strings" had headroom.
+    /// `"Warm Strings"` is also the honest one of those two: an orquesta típica is bandoneón AND
+    /// a string section. `leadDensity` is 0.0, so the name resolves a factory voice rather than
+    /// sounding a line. Re-derive the ceiling; do not quote it.
+    ///
+    /// ⚠️ `swing: 0.10` ties FOUR arms (`detroitTechno`, `andalusianCadence`, `afroHouse` and the
+    /// un-offered `oriental`). A tie claims nothing and none is written. ⚠️ `defaultMode` takes NO arm — it inherits `default: .studioLocked`,
+    /// right for a fixed-tempo dance music and an omission a compiler cannot catch, so the batch
+    /// guard asserts it.
+    case tangoMarcato
     /// #983 S5 (same founder sentence: "psy prog House"). The roster has `psytrance` (un-offered,
     /// ~145, phrygian, ARPEGGIATED, padOctave 2) and nothing between it and house. This is the
     /// house-tempo, non-arpeggiated relative — progressive, not Goa — and it is separated from
@@ -1465,6 +1502,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case .slowedGothPop:      return "Slowed Goth Pop"
         // #1357 G14 — Latin America.
         case .cumbia:             return "Cumbia"
+        case .tangoMarcato:       return "Tango Marcato"
         case .blackMetal:         return "Black Metal"
         case .modalJazz:          return "Modal Jazz"
         case .soulBallad:         return "Soul Ballad"
@@ -1566,6 +1604,12 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // list bans claims about a listener's state, not descriptions of a groove).
         case .cumbia:
             return "Offbeat keys chuck · minor tonic, major V"
+        // #1358 G14b. Names the articulation and the two roots that make the colour. No
+        // instrument is claimed — "marcato" is how the chord is struck, not who strikes it, and
+        // the `TheGenreVocabularyStaysNeutral` list bans claims about a listener's state, never
+        // a description of an attack.
+        case .tangoMarcato:
+            return "Marcato minor comp · falling ♭VII, major V"
         case .blackMetal:
             return "Tremolo-cold raised-fourth minor"
         case .modalJazz:
@@ -1725,7 +1769,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // ⚠️ IF DRUMS EVER RETURN, revisit this line together with deepHouse's: the drum grid would
         // then be a rock backbeat, which is wrong for techno. Today it reaches no voice.
         case .rock, .punk, .rocknroll, .heavyMetal,
-             .jazz, .oriental, .detroitTechno:                  return .backbeat
+             .jazz, .oriental, .detroitTechno, .tangoMarcato:   return .backbeat
         case .ska, .rocksteady, .klezmer, .cumbia:              return .offbeat
         case .doom, .vaporwave, .sciFi, .slowedGothPop:         return .halfTime
         case .classical, .stillMeditation, .selfObservation, .drift, .contemplation,
@@ -1955,6 +1999,13 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // `klezmer`, which shares this scale and this register, it is lead voice,
         // progression and bass figure.
         case .cumbia:             return 88...104
+        // #1358 G14b. OVERLAPS `cumbia` (88…104) on its own shelf and `gospelChoir` (88…112),
+        // and both overlaps are named rather than engineered away — what separates this from
+        // its shelf-mate is archetype, lead voice, progression, register and bass figure, five
+        // of seven axes, and from `gospelChoir` the scale and the chord. Measured, not guessed:
+        // the first draft of `cumbia`'s neighbouring comment claimed a disjointness that did
+        // not hold, which is why this one enumerates instead.
+        case .tangoMarcato:       return 92...128
         case .blackMetal:         return 160...200
         case .modalJazz:          return 100...160
         case .soulBallad:         return 64...86
@@ -2097,6 +2148,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case .dubEcho:            return 72
         case .slowedGothPop:      return 66
         case .cumbia:             return 96
+        case .tangoMarcato:       return 112
         case .blackMetal:         return 180
         case .modalJazz:          return 120
         case .soulBallad:         return 72
@@ -2186,6 +2238,12 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // claimed. Well under `modalJazz`'s 0.30, the largest offered swing (pinned by a
         // blocking guard).
         case .cumbia:                             return 0.12
+        // #1358 G14b — 0.10, barely swung: the marcato is a STRAIGHT stomp and a larger value
+        // would round off the very articulation the genre is named for. Ties FOUR arms —
+        // `detroitTechno`, `andalusianCadence`, `afroHouse` and the un-offered `oriental`.
+        // Measured, because the first draft of this line named `disco`, which is not among
+        // them; nothing is claimed either way.
+        case .tangoMarcato:                       return 0.10
         case .boomBapHipHop:                      return 0.16
         case .electroFunk:                        return 0.08
         case .modalJazz:                          return 0.30
@@ -2354,6 +2412,11 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // music). `leadDensity` is 0.0, so the name resolves a factory voice rather than
         // sounding a line.
         case .cumbia:             return "Soft Keys"
+        // #1358 G14b. FORCED by the ceiling, not chosen: the sheet's "Hollow Reed" stood at 8
+        // against a ceiling of 8 and would have been 9 of 47. Of the two names with headroom
+        // this is the honest one — an orquesta típica is bandoneón AND strings. `leadDensity`
+        // is 0.0, so it resolves a factory voice rather than sounding a line.
+        case .tangoMarcato:       return "Warm Strings"
         case .blackMetal:         return "Warm Strings"
         case .modalJazz:          return "Soft Keys"
         case .soulBallad:         return "Choir Vox"
@@ -2498,6 +2561,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // (no other arm returns these three); no single value takes a rank, and none is
         // claimed.
         case .cumbia:                             return (1.10, 1.08, 0.92)
+        // #1358 G14b. Bass furthest forward of any genre on this shelf — the marcato stomp is
+        // the engine and the comp answers it. The triple is FREE (no other arm returns these
+        // three); no single value takes a rank, and none is claimed.
+        case .tangoMarcato:                       return (1.14, 1.06, 0.88)
         case .blackMetal:                         return (1.10, 1.04, 0.88)
         case .modalJazz:                          return (1.00, 1.08, 0.88)
         case .soulBallad:                         return (1.00, 1.10, 0.88)
@@ -2556,6 +2623,9 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // chosen for the major V that natural minor cannot give (see the case doc), not
         // for scarcity, and nothing is claimed about it.
         case .cumbia:             return .harmonicMinor
+        // #1358 G14b. The FIFTH arm on this scale and the THIRD offered one. Chosen for the
+        // major V that the progression needs (see the case doc); nothing is claimed about it.
+        case .tangoMarcato:       return .harmonicMinor
         case .blackMetal:         return .hungarianMinor
         case .modalJazz:          return .dorian
         case .soulBallad:         return .major
@@ -2817,6 +2887,19 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             // point, and `sustained: true` would suppress it.
             return HarmonicProfile(progression: [0, 4], chordTones: [0, 2, 4],
                                    padOctave: 4, leadOctave: 5, arpeggiated: false,
+                                   leadDensity: 0.0)
+        case .tangoMarcato:
+            // #1358 G14b — DEGREES, never semitones. `[0, 2, 4]` on harmonic minor resolves to
+            // 0, 3, 7 on the tonic: a plain minor triad, shared with twenty-three arms and
+            // claiming nothing. ⭐ THE TRIAD IS THE DECISION AND ITS REASON IS AT THE CASE DOC —
+            // the four-note field holds exactly two shapes, and on this scale the available one
+            // IS `slowedGothPop`'s minor-major seventh. The colour lives in the ROOTS instead:
+            // degree 6 is the ♭VII the tango line falls through, degree 4 the MAJOR dominant
+            // harmonic minor exists for. Low register, because the marcato bass needs the space
+            // above it and the comp has to sit under, not over, the stomp. NOT arpeggiated and
+            // NOT sustained — a marcato that sustains is no longer a marcato.
+            return HarmonicProfile(progression: [0, 6, 4], chordTones: [0, 2, 4],
+                                   padOctave: 3, leadOctave: 5, arpeggiated: false,
                                    leadDensity: 0.0)
         case .rootsReggae:
             // A plain minor triad `[0, 2, 4]` = 0, 3, 7 — eighteen arms carry it, and that is

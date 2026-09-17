@@ -313,6 +313,30 @@ public extension MusicStyle {
                 cutoff: 2420, res: 0.22, lfoAmt: 0.05, lfoRate: 5.6, lfoDepth: 0.045,
                 revMix: 0.14, revDecay: 1.15, vibRate: 4.8, vibDepth: 0.05,
                 uni: 2, det: 10)
+        case .tangoMarcato:
+            // #1358 G14b — MARCATO REED. The bandoneón's job in a tango is to STRIKE the chord
+            // and hold it just long enough to be a chord: at 112 BPM a quarter is 0.536 s, and
+            // 0.006 + 0.22 + 0.28 fits inside it, so every marcato re-articulates. Every number
+            // below is from `genre-prebatch.py --patch` at full coverage (79 of 79 blocks),
+            // never from reading neighbouring arms (#1350).
+            //
+            // `r: 0.28`, `cutoff: 2150`, `revMix: 0.20`, `revDecay: 1.45`, `vibRate: 5.1` and the
+            // envelope total 0.966 are each SOLE HOLDERS (nearest envelopes: `Nylon Pluck` 0.883
+            // below, `Roots Organ` 1.028 above). No rank is claimed, only that they take no one
+            // else's value.
+            //
+            // The reed is in `harm: 0.94` with `hl: 0.70` — a high partial count that stays tilted
+            // toward the low end, which is what a bellows sounds like against a plucked string.
+            // `uni: 2` / `det: 7` is a narrow pair, deliberately narrower than `Lilt Keys`' 10 on
+            // the same shelf: a bandoneón beats against itself, a sonidero keyboard chorusses.
+            // ⚠️ `det: 7` is a TIE (`Brass Reed`, `Iron Stab`, `Pulse Bell`, `Still Pad`) and no
+            // separation is claimed on it.
+            return patch("77", "Marcato Reed",
+                a: 0.006, d: 0.22, s: 0.46, r: 0.28,
+                harm: 0.94, hl: 0.70, bright: 0.40, noise: 0.0, color: "Pink", shape: "Natural",
+                cutoff: 2150, res: 0.26, lfoAmt: 0.04, lfoRate: 4.4, lfoDepth: 0.035,
+                revMix: 0.20, revDecay: 1.45, vibRate: 5.1, vibDepth: 0.09,
+                uni: 2, det: 7)
         case .rootsReggae:
             // #1289 G6b — ROOTS ORGAN. ⚠️ NOT "Skank Organ": `ska` (un-offered) already ships
             // that name, and the pre-batch check caught it — the third name collision in three
@@ -991,6 +1015,31 @@ public extension MusicStyle {
                 a: 0.010, d: 0.42, s: 0.60, r: 0.26,
                 harm: 0.92, hl: 0.26, bright: 0.11, noise: 0.0, color: "Pink", shape: "Dark",
                 cutoff: 660, res: 0.08, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
+        case .tangoMarcato:
+            // #1358 G14b — MARCATO SUB. The NINTH owner of `drivingEighths` — counted, not
+            // inherited from the line above (#1295b shipped an ordinal that was off by one
+            // exactly that way). Figure shared, voice never. Numbers from `--patch` at full
+            // coverage.
+            //
+            // The envelope total 0.765 is a SOLE HOLDER and NO RANK IS CLAIMED — a first draft
+            // called it "the shortest sub", and measured it is the fifth-shortest of twenty-one
+            // (`Void Sub` 0.373, `Snap Sub` 0.494, `Cold Sub` 0.538, `Cadence Sub` 0.706 are all
+            // below it; `House Sub` 0.806 is the nearest above). What IS the point is the
+            // contrast on this shelf: `Lilt Sub` two arms up totals 1.29 and is written to ring
+            // THROUGH the gap between two offbeats, while this one has to STOP so the next stomp
+            // reads as a separate attack. Same shelf, opposite envelopes, and that is the
+            // marcato.
+            //
+            // ⚠️ `cutoff: 720` IS NOT FREE — `Dub Chord` holds it too — and this comment names
+            // the tie rather than claiming a darkness it does not own (#1352). The two are not
+            // even the same role: that is a chord patch with `s: 0.45` and a reverb, this is a
+            // dry mono sub. Checked with the tool before the sentence was written.
+            return patch("78", "Marcato Sub",
+                a: 0.005, d: 0.24, s: 0.38, r: 0.14,
+                harm: 0.93, hl: 0.36, bright: 0.15, noise: 0.0, color: "Pink", shape: "Dark",
+                cutoff: 720, res: 0.12, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
                 revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
                 uni: 1, det: 0)
         case .rootsReggae:

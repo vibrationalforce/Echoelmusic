@@ -217,6 +217,12 @@ public extension MusicStyle {
         // against `afroHouse` it is scale, lead voice and a window 14 BPM clear. The case doc
         // measures all of it rather than asserting it.
         case .cumbia:           return .offbeatEighths
+        // #1358 G14b — the NINTH owner of `drivingEighths`, counted over the file rather than
+        // inherited from a neighbouring comment (#1295b shipped an ordinal that was off by one
+        // exactly that way). The figure's on-beat hits held to the "&" ARE the marcato stomp,
+        // which is why the sheet's choice survived measurement unchanged. Voice is its own
+        // ("Marcato Sub"), as always here.
+        case .tangoMarcato:     return .drivingEighths
         case .andalusianCadence: return .drivingEighths
         case .blackMetal:       return .drivingEighths
         case .modalJazz:        return .drivingEighths

@@ -582,6 +582,24 @@ public extension MusicStyle {
                 delayWow: 0.18, delayDrive: 0.22,
                 saturation: 0.20,
                 reverbEnabled: true, reverbMix: 0.16, reverbRoom: 0.34, reverbDamping: 0.30)
+        case .tangoMarcato:
+            // #1358 G14b — NO DELAY, AND THE REASON IS THE ARTICULATION. A marcato is defined by
+            // silence between attacks; an echo fills exactly that silence, so any repeat here
+            // would erase the one thing the genre is named for. This is not a convention — it is
+            // the same shape of argument `gospelChoir` and `soulBallad` make for their own
+            // no-delay arms, and `delayEnabled: false` is written EXPLICITLY rather than left to
+            // the default, because a preset must SETTLE a stage's state (the type's own law) or
+            // a delay switched on by the previous character stays sticky-on.
+            //
+            // The room does the work instead: `reverbRoom: 0.30` is a small hall, `reverbMix:
+            // 0.14` keeps it behind the stomp, and the light damping leaves the reed's top open.
+            // `saturation: 0.26` gives the strike some body — an additive sine stack struck hard
+            // is thin without it. None of the four takes a rank and none is claimed.
+            return GenreFXPreset(
+                delayEnabled: false,
+                delayMix: 0.0, delayFeedback: 0.0,
+                saturation: 0.26,
+                reverbEnabled: true, reverbMix: 0.14, reverbRoom: 0.30, reverbDamping: 0.38)
         case .rootsReggae:
             // #1289 G6b — THE LONG ECHO, and it is the genre rather than a decoration: a QUARTER
             // on tape with high feedback and audible wow. At the fastest allowed 84 BPM that is

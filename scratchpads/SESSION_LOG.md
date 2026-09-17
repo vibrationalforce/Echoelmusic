@@ -33119,3 +33119,48 @@ ehrliche (die Orquesta típica ist Bandoneón UND Streicher). Voller Kandidat: `
 
 **Bau ist die nächste Scheibe (G14b).** Von den drei G14-Blockern ist jetzt nur noch
 `gnawaGuembri` offen (Kultur-Zuschreibung + `pedalDrone`). Zwei Zeilen in `decisions.csv`.
+
+## 2026-09-17 — #1358 G14b: `tangoMarcato`, und vier Gedächtnis-Behauptungen in zwei Scheiben
+
+**Ausgeliefert:** Genre Nr. 57, angeboten Nr. 40, zweiter Bewohner des Regals „Latin America" —
+damit ist es keine Ein-Genre-Schublade mehr. 13 `MusicStyle`-Eingriffe (kein neuer
+`Subcategory`-Fall, das Regal stand schon), 2 `GenrePatches`-Arme (77 „Marcato Reed", 78 „Marcato
+Sub"), 1 `GenreFX`-Arm, 1 `BassGrammar`-Arm, Wächter `GenreBatchFourteenBTests` (39
+Zusicherungen), sieben Claim-Flächen, Plan-Zeile.
+
+⭐ **DER DREIKLANG IST DIE ENTSCHEIDUNG, UND DER PLAN BOT EINE OPTION AN, DIE ES NICHT GIBT.**
+Vollständig in der #33-Notiz oben; was hier zählt, ist der Wächter-Anspruch, den bisher NIEMAND
+besaß: auf `.harmonicMinor` ergibt die einzige vom Roster erlaubte Vierstimmigkeit
+`[0, 2, 4, 6]` genau `[0, 3, 7, 11]` — den Akkord des Nachbarn. Anspruch 2 pinnt diesen
+Kontrafaktus, nicht nur den Dreiklang: er ist der Grund, warum ein späteres „Aufräumen" zurück
+auf vier Stufen keine kosmetische Änderung ist.
+
+⭐ **DER DRITTE BLOCKER WAR EIN SUPERLATIV, KEIN SWEEP — und das ist die dauerhafte Lehre.** Die
+idiomatische Tango-Progression `[0, 6, 5, 4]` (der fallende Tetrachord) ist roster-FREI; ein
+Fingerabdruck-Sweep hätte sie durchgewunken. `GenreBatchThreeVoicingTests` wäre rot geworden:
+`upliftingTrance` hält dort die STRIKTE Behauptung, mehr verschiedene Wurzeln zu besuchen als
+jedes andere angebotene Genre, und vier wären ein GLEICHSTAND. `prebatch.py` prüft Sweeps; ein
+Superlativ im Wächter eines Nachbarn muss GELESEN werden. Anspruch 4 trägt Trance' Vorsprung
+jetzt als ausdrückliches Gegengewicht (#343), damit der Grund in DIESER Datei steht.
+
+⛔ **VIER EIGENE FALSCHBEHAUPTUNGEN ÜBER ZWEI SCHEIBEN, ALLE VOR DEM COMMIT GEMESSEN, KEINE
+DAVON HÄTTE EINEN WÄCHTER ROT GEMACHT.** Sie sind EIN Befund, nicht vier — jede war eine Aussage
+über einen NACHBARN aus dem Gedächtnis: (1) `cumbia`s Tempo-Kommentar nannte eine Überlappung, wo
+drei sind, und `andalusianCadence`s Fenster falsch; (2) `Lilt Sub`s Arm gab `Drone Sub`s
+Hüllkurve als 0.030/0.90/0.88/0.55 an — sie ist 0.09/0.40/0.92/0.60; (3) der Swing-Kommentar
+nannte `disco` als Gleichstand, `disco` ist nicht dabei (es sind `detroitTechno`,
+`andalusianCadence`, `afroHouse`, `oriental`); (4) `Marcato Sub`s Arm nannte seine Hüllkurve „die
+kürzeste Sub" — sie ist die FÜNFTKÜRZESTE von einundzwanzig. ⭐ **Die Regel, die diese Klasse
+fängt, ist eine Zeile: ein Satz über einen Nachbarn ist eine MESSUNG, und `--patch` oder ein
+Zwei-Zeilen-Sweep beantwortet ihn in Sekunden.** Steht jetzt im Wächter-Kopf.
+
+⚠️ **`delayEnabled: false` steht AUSDRÜCKLICH im Arm**, nicht als Default — die Datei-eigene
+Regel: ein Preset muss den Zustand einer Stufe SETTLEN, sonst bleibt ein vom vorigen Charakter
+eingeschalteter Delay klebrig an. Anspruch 6 pinnt beide Hälften plus das Gegengewicht, dass der
+Regal-Nachbar sehr wohl ein Echo trägt.
+
+**Gates:** alle acht Checker grün. Nach dem Schnitt **57 Genres, 40 angeboten, 81 Patches**,
+GenreFX-Arme 57 von 57, Fingerabdruck-Sweep leer. §0: 39 von 39 gegen den Arbeitsbaum grün, auf
+dem Elternbaum EINE gemeldete Abwesenheit (#486). ⚠️ **Die Lead-Decke ist jetzt fast zu: fünf der
+sechs Namen stehen auf 8 bei Decke 8**, nur „Deep Sub" hat Kopfraum, bis Tragweite 49 die Decke
+auf 9 hebt. Das nächste lead-tragende Genre hat keine Wahl mehr.
