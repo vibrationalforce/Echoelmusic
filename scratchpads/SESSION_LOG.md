@@ -33081,3 +33081,41 @@ ist jetzt bestätigt (besonders `bassPatch: SynthPatch?` und das `zip(…).filte
 das im Entwurf noch als `{ $0 == $1 }` dastand und nicht kompiliert hätte — vor dem Push beim
 Typ-Durchgang gefangen). `Run Tests` lief zum Lesezeitpunkt noch und trägt ohnehin kein Verdikt
 (#396). **AUSFÜHRUNG bleibt unbelegt, nicht grün** (#445/#807).
+
+## 2026-09-17 — #33 entschieden: `tangoMarcato` bekommt einen Dreiklang, und der Plan bot eine Option an, die es nicht gibt
+
+**Die Frage:** das Entwurfsblatt gibt `tangoMarcato` `harmonicMinor` + `[0,2,4,6]` + `padOctave 3`,
+das ergibt `[0,3,7,11]` — den Moll-Dur-Septakkord, den Anspruch 2 von
+`GenreBatchFifteenBTwoTests` als SWEEP über `allCases` für `slowedGothPop` reserviert (#1354).
+Der Plan bot zwei Auswege: andere Vierstimmigkeit ODER Rücknahme der Eindeutigkeit.
+
+⛔ **DIE ERSTE EXISTIERT NICHT, und das ist der eigentliche Befund.** `GenreBatchFourVoicingTests`
+pinnt das vierstimmige Feld auf **genau zwei** Formen: `detroitTechno`s `[0,2,6,8]` (die einzige
+ohne Quinte) und den schlichten `[0,2,4,6]`, den alle acht anderen tragen. Auf `.harmonicMinor`
+IST der schlichte `[0,3,7,11]`. Eine dritte Vierstimmigkeit hätte also **jenen Wächter und
+`detroitTechno`s Doc mit umgeschrieben** — aus „gib Tango eine andere Vierstimmigkeit" wird damit
+eine Scheibe, die zwei fremde Behauptungen anfasst. **Der Dreiklang `[0,2,4]` löst dieselbe
+Kollision ohne jede Rücknahme**, und die harmonisch-Moll-Farbe trägt die PROGRESSION: Stufe 4
+klingt dort DUR — derselbe Mechanismus, den #1354 und #1357 beide benutzen.
+
+⛔ **UND DA WAR EIN DRITTER BLOCKER, den der Plan nicht kannte — gefunden, bevor er Code wurde.**
+Die naheliegende Tango-Progression ist `[0,6,5,4]`, der absteigende Tetrachord i→♭VII→♭VI→V, die
+Bandoneón-Linie. Sie ist roster-frei und hätte den Fingerabdruck-Sweep bestanden. Sie hätte
+`GenreBatchThreeVoicingTests` rot gemacht: `upliftingTrance` ist das EINZIGE angebotene Genre mit
+vier verschiedenen Wurzeln und hält dort die STRIKTE Behauptung, mehr zu besuchen als jedes
+andere angebotene — vier Wurzeln wären ein GLEICHSTAND, also eine falsch gewordene Behauptung.
+⭐ **GESETZ: ein Sweep fängt GLEICHHEIT, ein Superlativ fängt GLEICHSTAND.** `prebatch.py` prüft
+Sweeps; die Superlativ-Pins der nächsten Nachbarn im blockierenden Bundle muss man LESEN. Das ist
+die #1356-Lehre eine Ebene tiefer: die Vorab-Messung gehört an den Anfang, und sie ist nicht nur
+das Werkzeug.
+
+⭐ **Gewählt und gemessen:** `[0,6,4]` (i→♭VII→V — roster-frei, DREI Wurzeln, Kopf des Abstiegs,
+Dur-V erhalten). **Der Lead ist ERZWUNGEN, nicht gewählt:** „Hollow Reed" stünde auf 9 von 47 bei
+Decke 8; Kopfraum haben nur „Deep Sub" und „Warm Strings", und letzteres ist zusätzlich das
+ehrliche (die Orquesta típica ist Bandoneón UND Streicher). Voller Kandidat: `.harmonicMinor` ·
+`.backbeat` · 92…128@112 · swing 0.10 · Warm Strings · `[0,6,4]` · `[0,2,4]` · padOctave 3 ·
+`drivingEighths` · Patches 77/78 · kein Delay — **PRE-BATCH OK**, schlimmster angebotener Nachbar
+3 von 7 (`blackMetal`: archetype, lead, bass).
+
+**Bau ist die nächste Scheibe (G14b).** Von den drei G14-Blockern ist jetzt nur noch
+`gnawaGuembri` offen (Kultur-Zuschreibung + `pedalDrone`). Zwei Zeilen in `decisions.csv`.
