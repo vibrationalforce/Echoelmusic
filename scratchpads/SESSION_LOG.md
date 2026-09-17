@@ -33279,3 +33279,27 @@ kein Eintrag ohne Werkzeug (#343).
 Zeilen** — Index 108 mit 9 Spalten (unmaskiertes Komma in einem Quellenfeld), 140–151 mit 7
 statt 8. Das ist die Datei, die `vision-gate` liest, und `decisions.csv` hat dafür einen Wächter,
 `inspiration.csv` nicht. Eigene Scheibe, eigener Wächter.
+
+**Gate-Lesung `72eb6ba` (#1359):** `Xcode Compile Check` Lauf **35272000838 = success** · CI/CD
+Lauf **35272000891**, Schritt 9 **`Build for Testing` = success**. Damit ist
+`Tests/CISmoke/TheToolboxHasAnIndexTests.swift` **kompiliert** — das Verdikt (#1355).
+`Run Tests` = failure wie auf jedem Push (#396).
+
+⚠️ **Ob die zehn Zusicherungen GRÜN gelaufen sind, ist aus diesem Lauf NICHT belegbar, und das
+wird hier gesagt statt weggelassen.** Das Job-Log ist `tail -200 test.log` (#807); die 60 Zeilen,
+die durchkommen, tragen ausschließlich `passed`-Zeilen fremder Suiten und keinen einzigen
+fehlgeschlagenen Namen — der Wächter selbst steht nicht im Fenster. Belegt ist: er KOMPILIERT,
+und er läuft gegen denselben Baum, auf dem die §0-Transkription 10 von 10 grün war.
+⛔ Der direkte Log-Abruf über `api.github.com/.../jobs/<id>/logs` ist aus dieser Sandbox NICHT
+möglich: die Umleitung zeigt auf `productionresultssa10.blob.core.windows.net`, und der
+Egress-Proxy lehnt den CONNECT ab (403). Für Job-LOGS bleibt `mcp__github__get_job_logs` der
+einzige Weg; die unauthentifizierte Route trägt nur Läufe, Jobs und Schritte.
+
+⛔ **UND DER POLLER HAT DABEI STILL NICHTS GEMELDET — die #1350-Form, diesmal im Werkzeug.**
+Er bekam die KURZE sha (`72eb6ba`); `GET /actions/runs?head_sha=` filtert exakt und liefert bei
+einer Kurzform **null Läufe**. Die Schleife sah „noch nicht zwei fertige Läufe", wartete die
+volle halbe Stunde ab und druckte `TIMEOUT` ohne eine einzige Zeile — **ununterscheidbar von
+„die Gates laufen noch"**, während sie längst fertig waren. Genau das, was `.claude/rules/
+context.md` §2 meint: *eine Messung, die still WENIGER zurückgeben kann als die Wahrheit, ist
+keine Messung.* Regel: **`git rev-parse HEAD`, nie die Kurzform**, und ein Poller, der null
+Zeilen findet, muss das als BEFUND drucken, nicht als Geduld.
