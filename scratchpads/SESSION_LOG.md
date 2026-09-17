@@ -33071,3 +33071,13 @@ weiter). §0: 39 der 40 Zusicherungen transkribiert und gegen BEIDE Bäume gefah
 rot auf dem Arbeitsbaum, auf dem Elternbaum EINE gemeldete Abwesenheit statt 39 Rots (#486). Das
 Compile-Verdikt bleibt `Build for Testing`; bis dahin ist die Datei UNBEWIESEN, nicht grün
 (#1355).
+
+**Gate-Lesung `ab70f2d` (#1357), 2026-09-17 11:05 UTC.** `Xcode Compile Check` Lauf 2648 =
+`success` (baut `Sources/` allein). CI/CD Lauf 6113, Job „Build & Test (iOS)", **Schritt 9
+`Build for Testing` = `success`** (10:50:28→10:53:56) — das ist der EINZIGE Beleg, dass
+`Tests/CISmoke` kompiliert, und damit ist `GenreBatchFourteenTests.swift` bewiesen baubar. Genau
+das Verdikt, das #1355 verlangt: die §0-Transkription prüft die BEHAUPTUNG, nie den TYP; der Typ
+ist jetzt bestätigt (besonders `bassPatch: SynthPatch?` und das `zip(…).filter { $0.0 == $0.1 }`,
+das im Entwurf noch als `{ $0 == $1 }` dastand und nicht kompiliert hätte — vor dem Push beim
+Typ-Durchgang gefangen). `Run Tests` lief zum Lesezeitpunkt noch und trägt ohnehin kein Verdikt
+(#396). **AUSFÜHRUNG bleibt unbelegt, nicht grün** (#445/#807).
