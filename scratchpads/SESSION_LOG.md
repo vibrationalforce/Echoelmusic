@@ -33228,3 +33228,54 @@ deutlich unter den 30+, die CLAUDE.md für einen Kaltbau nennt; beide Caches gri
 ⚠️ Der Push hat **genau EINEN** Lauf ausgelöst: der Commit fasste nur `.deploy/release`,
 `scratchpads/` und `decisions.csv` an, und die Pfad-Filter der anderen Workflows schließen das
 aus — kein Doppelbuild, `.deploy/release` bleibt ab hier unberührt.
+
+## 2026-09-17 — #1359 `scripts/INDEX.md`, aus einem Founder-Clip, der kein Bug-Report war
+
+**Der Clip war KEIN Gerätemitschnitt.** 30,8 s, 480×1042, Hochformat, mit Ton — also genau die
+Form, die nach einer Ohrprobe aussieht. Der Kontaktbogen sagt: Instagram-Reel (cooper.simson,
+„I Don't Think You Should Build AI Agents Anymore"). ⚠️ **Hochformat heißt nicht Echoel** — die
+`watch-clip`-Skill warnt davor, weil das am 2026-08-12 schon einmal drei Clips gekostet hat, und
+die Warnung hat heute gegriffen: gelesen wurde VOR dem Weiterleiten, also ist nichts als Defekt
+gelaufen. ⛔ `ffmpeg` ist im Container NICHT auf dem PATH; `pip install imageio-ffmpeg` liefert
+das Binary als Wheel-Payload, und `ffprobe` gibt es darin nicht — `"$FF" -i … 2>&1 | grep
+Duration` ersetzt es. Beides steht schon in der Skill; die Skill hatte recht.
+
+**Das Tor-Urteil steht in `memory/inspiration_intake.md`: ADOPT-PIPELINE, größtenteils schon
+da.** Die „AI Delegation Loop" des Reels (playbook → toolbox → proof → Korrektur) IST der
+Betrieb dieses Repos, strenger als dort. ⭐ **Genau EIN Teil fehlte: das Inhaltsverzeichnis der
+Toolbox.**
+
+**Gemessen, und die Messung ist der Befund:** `scripts/` hatte **24** Werkzeuge. Acht laufen in
+jedem Zyklus, weil sie namentlich in den Anweisungsdateien stehen. **ZWEI standen in KEINER** —
+`window-margins.py` und `doorless-state.py`, `git grep` über `CLAUDE.md`, `.claude/**` und
+`Tests/CISmoke/CLAUDE.md`, null Treffer. Beide habe ich in diesem Zyklus zum ersten Mal
+gefahren; beide melden sauber (`window-margins`: kleinste Marge 332 von 400 — nichts eng).
+
+⛔ **DIE ERSTE FASSUNG DES VERZEICHNISSES SAGTE „DREI" UND ZÄHLTE `needle-reachability.py` MIT.**
+Das steht sehr wohl in `Tests/CISmoke/CLAUDE.md` §#808, mit Befehl und Auslöser. **Das ist
+dasselbe Gesetz, das #1358 sich Stunden vorher in den Wächter-Kopf geschrieben hat — eine
+Aussage über einen NACHBARN ist eine MESSUNG — und es ist am selben Tag noch einmal fällig
+geworden, in der Datei, deren ganzer Zweck das Nicht-Verlieren von Werkzeugen ist.** Zwei
+`git grep` haben es vor dem Commit widerlegt. Die Rücknahme steht in der Datei, im Wächter-Kopf
+und hier; Anspruch 5 pinnt nur noch die zwei gemessenen.
+
+⭐ **DIE ABWEICHUNG VOM REEL IST DER EIGENTLICHE INHALT.** Dessen `INDEX.md` nennt Dateiname +
+Zweck + Datum. Hier ist die tragende Spalte **WANN** — denn ein Verzeichnis wird von jemandem
+gelesen, der das Werkzeug NICHT kennt; eine Beschreibung findet nur, wer schon weiß, wonach er
+sucht. Anspruch 4 pinnt genau diese Trennung (Acht-Satz gegen enge Auslöser), nicht den
+Wortlaut der Überschriften.
+
+**Der Auslöser war ein eigener Fehler im Kleinen, im selben Zyklus:** für einen Patch-Kommentar
+hätte ich fast einen Wegwerf-Parser getippt, obwohl `genre-prebatch.py --patch` seit #1351
+existiert und seine eigene Abdeckung druckt. Das IST #1350, nur kleiner.
+
+**Gates:** alle acht Checker grün, dazu `needle-reachability` (0) und `window-margins`
+(unverändert). §0: **10 von 10** gegen den Arbeitsbaum grün; auf dem Elternbaum EINE gemeldete
+Abwesenheit (`scripts/INDEX.md` existiert dort nicht, #486). Wächter
+`TheToolboxHasAnIndexTests`, 10 Zusicherungen, beide Richtungen — kein Werkzeug ohne Eintrag,
+kein Eintrag ohne Werkzeug (#343).
+
+⚠️ **NEBENBEFUND, ABSICHTLICH NICHT IN DIESER SCHEIBE:** `inspiration.csv` hat **13 defekte
+Zeilen** — Index 108 mit 9 Spalten (unmaskiertes Komma in einem Quellenfeld), 140–151 mit 7
+statt 8. Das ist die Datei, die `vision-gate` liest, und `decisions.csv` hat dafür einen Wächter,
+`inspiration.csv` nicht. Eigene Scheibe, eigener Wächter.

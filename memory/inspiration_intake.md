@@ -804,3 +804,51 @@ stimmt, ist die Watch-App **Anzeige plus Latenz, keine Fähigkeit**, und der Umf
 ändert sich um den Faktor zehn. Das wird im Code verifiziert, bevor irgendetwas geplant wird.
 
 `WCSession` ist ein **neues Framework** ⇒ Council/Founder **vor** der ersten Zeile.
+
+---
+
+## 2026-09-17 — Instagram-Reel „I Don't Think You Should Build AI Agents Anymore" (cooper.simson)
+
+**Eingang:** Founder-Upload, 30,8 s, 480×1042, ohne Begleittext, direkt nach dem
+TestFlight-Deploy v10.79.473. ⚠️ **Hochformat heißt NICHT Echoel** — genau die Falle, vor der
+`watch-clip` warnt und die am 2026-08-12 schon einmal drei Clips gekostet hat. Die Kontaktbogen-
+Lesung kam VOR jeder Weiterleitung; es ist ein Reel, kein Gerätemitschnitt, also Inspiration
+und kein Defekt.
+
+**Die These:** statt Agenten zu bauen, eine **AI Delegation Loop** — `playbook` (ein `SKILL.md`
+je wiederkehrendem Job) → `toolbox` (`files/`, einmal gebaut, jedes Mal wiederverwendet) →
+`proof` (das Ergebnis prüft sich selbst, bevor es Dich erreicht) → **Deine Korrektur** zurück
+ins Playbook. Zwei Betriebs-Details im Volltext lesbar: ein `files/INDEX.md` mit Dateiname +
+Zweck + Datum, und die Prüffrage *„fahr den Job noch einmal von null und sag mir, welche
+gespeicherten Dateien Du benutzt und welche Teile Du neu gebaut hast — alles Neugebaute ist ein
+Kandidat für die Toolbox."*
+
+**Tor-Urteil: ADOPT-PIPELINE, größtenteils schon da — und das ist die ehrliche Antwort, nicht
+die bescheidene.** Die Schleife IST der Betrieb dieses Repos, und zwar strenger als im Reel:
+Playbook = `CLAUDE.md` + zwanzig eigene `.claude/skills/*/SKILL.md` · Toolbox = `scripts/` mit
+24 Werkzeugen · Proof = die acht Prüfer, das blockierende `Tests/CISmoke`-Bündel und
+`doctor.py`, das fragt, ob die Messgeräte selbst lügen · Korrektur-Rückfluss = die
+⛔-Rücknahme-Konvention, die den Irrtum **in das Gesetz zurückschreibt**, statt ihn zu löschen.
+CLAUDE.md sagt das über sich selbst bereits: „Die zwei Muster, die schon unser Standard sind:
+skill-architecture + markdown memory."
+
+⭐ **GENAU EIN TEIL FEHLTE, und er ist übernommen (#1359): das `INDEX.md`.** Gemessen standen
+**zwei** der 24 Werkzeuge in KEINER Anweisungsdatei — `window-margins.py` und
+`doorless-state.py`, `git grep` über `CLAUDE.md`, `.claude/**` und `Tests/CISmoke/CLAUDE.md`,
+null Treffer für beide. ⛔ Die erste Fassung sagte DREI und zählte `needle-reachability.py` mit;
+das steht sehr wohl in `Tests/CISmoke/CLAUDE.md` §#808. **Eine Aussage über einen Nachbarn ist
+eine MESSUNG** — dasselbe Gesetz, das #1358 sich gerade in den Wächter-Kopf geschrieben hat, und
+es ist im selben Tag noch einmal fällig geworden.
+
+⚠️ **Bewusste Abweichung vom Reel:** dessen Index nennt Dateiname + Zweck + Datum. Hier ist die
+tragende Spalte **WANN man das Werkzeug holt**, denn man sucht ein Werkzeug, das man nicht
+kennt — eine Beschreibung findet nur, wer schon weiß, wonach er sucht.
+
+**Was ausdrücklich NICHT übernommen wird:** die Agenten-Rhetorik und das „delegiere den ganzen
+Job"-Framing. Dieses Repo delegiert keine Entscheidungen an eine Schleife; es schreibt sie
+begründet auf und lässt sie prüfen. Kein Byte in `Sources/`, keine Abhängigkeit, kein
+Agent-Framework — Pipeline-only, wie jede Skill-Inspiration davor.
+
+**Nebenbefund, NICHT in dieser Scheibe repariert:** `inspiration.csv` hat **13 fehlerhafte
+Zeilen** (Index 108 mit 9 Spalten, 140–151 mit 7 statt 8) — ein unmaskiertes Komma und eine
+fehlende Spalte. Die Datei ist die, die `vision-gate` liest. Eigene Scheibe.
