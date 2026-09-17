@@ -1,4 +1,4 @@
-build: v10.79.472 — Der Aufräum-Build: Gesicht, Mikrofon, Video-Aufnahme, Harmonizer und Granular sind raus (#1301–#1305b), sechs Wächter-Reparaturen dahinter (#1306–#1311)
+build: v10.79.473 — Der Genre-Build: acht neue Genres (32 → 40 angeboten), die Uhr als Bio-Quelle, und die Atem-PHASE hängt nicht mehr an der Atem-RATE (#1312–#1358)
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -51,174 +51,228 @@ notes: |
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
 
-  Der Vorgänger ist 10.79.471 (und davor 10.79.470).
+  Der Vorgänger ist 10.79.472 (und davor 10.79.471).
 
-  ── WAS IN DIESEM BUILD NEU IST (v10.79.472) ──────────────────────────────
+  ── WAS IN DIESEM BUILD NEU IST (v10.79.473) ──────────────────────────────
 
-  ⭐ DAS IST DER BUILD, IN DEM DEINE DREI ANSAGEN VOM 12.09. WIRKLICH DRIN SIND.
-  Alles, was Du gestrichen hast, war bis 471 noch im Telefon — die Löschungen kamen
-  NACH diesem Deploy in den Baum. Hier sind sie zum ersten Mal in einem Build.
+  ⭐ DAS IST DER GENRE-BUILD. Seit dem letzten Deploy sind 76 Commits gelaufen;
+  das Meiste davon siehst Du an EINER Stelle: im Genre-Menü.
 
-  RAUS, auf Deine Ansage, als DATEIEN gelöscht:
+  ── ACHT NEUE GENRES — das Menü geht von 32 auf 40 ────────────────────────
 
-  #1301 · #1302 — „Face und Audio Input komplett entfernen. Keine Tests davon
-  sollen im Repo bleiben." Weg sind die Gesichts-Quelle mit allen Kanälen, der
-  Kamera-Layer im Feld, und der GANZE Audio-Eingang: Mikrofon-Verwaltung,
-  Eingangs-Auswahl, Monitoring, Rückkopplungsschutz, Stimm-Analyse, Vocoder,
-  Tonhöhen-Korrektur. Dazu rund fünfzig Wächter.
+  Gemessen, nicht gezählt: die Liste `MusicStyle.offered` hatte auf dem letzten
+  Deploy-Commit 32 Einträge und hat jetzt 40. Keiner ist weggefallen. Insgesamt
+  kennt die Datei 57 Genres, 40 davon werden Dir angeboten.
 
-  ⚠️ DAS HEISST FÜR DICH KONKRET: der Absturz, den Du gemeldet hast — Master-Panel,
-  „Audio input", Live monitoring an, App weg — kann nicht mehr passieren, weil es
-  den Weg nicht mehr gibt. Das ist keine Reparatur des Fehlers, das ist die
-  Entfernung seines Gegenstands. Die `isInputConnToConverter`-Absturzfamilie ist
-  damit GEGENSTANDSLOS, nicht GELÖST; wer je wieder einen Eingang baut, erbt sie.
+    Nordic Fiddle     120  Open-fourth minor tune over a bowed drone
+    Balkan Modal      140  Raised-fourth minor runs with a reed edge
+    Gospel Choir       96  Stacked major sevenths · rising church cadence
+    Lo-Fi Hip-Hop      80  Dragged minor sevenths · warm tape haze
+    Dub Echo           72  Offbeat sevenths dissolving in tape echo
+    Slowed Goth Pop    66  Dragged half-time minor-major sevenths
+    Cumbia             96  Offbeat keys chuck · minor tonic, major V
+    Tango Marcato     112  Marcato minor comp · falling ♭VII, major V
 
-  #1304 — „Kein Video Capture". Die Aufnahme des Visuals und der mp4-Export sind
-  weg, samt REC-Taste, Still-Auslöser, Video-Bibliothek und dem Eintrag „Video" in
-  der Menüleiste. Der SCHNITT war schon seit Juli weg; jetzt ist auch die Aufnahme weg.
-  ⚠️ WAS BLEIBT UND BLEIBEN MUSS: der Kamera-Puls (rPPG). Er wohnt nur zufällig im
-  selben Verzeichnis. Finger auf die Linse funktioniert unverändert.
+  Jedes trägt sieben eigene Achsen (Skala · Beat-Archetyp · Lead-Patch · Progression ·
+  Akkordtöne · Pad-Oktave · Bass-Grammatik), und vor jedem Schnitt läuft ein Sweep über
+  ALLE angebotenen Paare: kein Genre darf denselben Fingerabdruck haben wie ein anderes.
+  Der Sweep ist leer. Dazu sind SECHZEHN neue Klang-Patches entstanden — je zwei pro
+  Genre, ein Lead und ein Bass, weil keiner der vorhandenen gepasst hat; insgesamt
+  liegen jetzt 81 im Baum (gemessen mit `genre-prebatch.py --patch`, das seine eigene
+  Abdeckung druckt: 81 von 81 gelesen).
 
-  #1305 — „Kein audioninout kein Autotune, Harmonizer, granularsynthese."
-  Beide FX-Stufen sind weg, dazu der „Follow the key"-Schalter, die zwei
-  Intervall-Zeilen und die zwei Presets „Octave Lead" und „Fifth Stack".
-  Autotune war schon mit dem Audio-Eingang gegangen.
-  ⚠️ Die Stimmung der App (Kammerton, Skalen, Mikrotonalität) ist NICHT betroffen —
-  die Datei nennt sich im eigenen Kopf „das Autotune-Ziel" und ist in Wahrheit das
-  Tonsystem jeder gestimmten Stimme. Sie bleibt.
+  ⚠️ WAS DAS NICHT BEWEIST: dass sie GUT klingen. Der Sweep beweist, dass sie
+  VERSCHIEDEN sind — die strukturelle Hälfte. Ob ein Genre trägt, entscheidet Dein
+  Ohr; vier A/B-Paare dazu stehen unten in der Prüfliste.
 
-  ── WAS DAS FÜR DIE FLÄCHEN HEISST, DIE DU ANFASST ────────────────────────
+  ── DIE UHR IST EINE WÄHLBARE BIO-QUELLE (#1319) ──────────────────────────
 
-  · Die Menüleiste hat einen Chip WENIGER: der Eintrag „Video" ist weg. Neun statt
-    zehn.
-  · Das Master-Panel hat den Knopf „Audio input" nicht mehr.
-  · Das FX-Panel hat zwei Abschnitte weniger, und sein Untertitel heißt jetzt nur
-    noch „Production character".
-  · Das schwebende Visual hat keine REC-Taste und keinen Still-Auslöser mehr —
-    die Leiste ist dadurch zwei Icon-Tasten leichter und passt in jeder Breite.
-  · Ein Projekt, das ein ÄLTERER Build gespeichert hat, öffnet weiterhin: alle
-    gelöschten Einstellungen werden beim Laden still ignoriert, ein gespeicherter
-    Harmonizer-Charakter fällt auf „Auto" zurück. Das ist geprüft worden, nicht
-    gehofft — aber am Gerät unbestätigt.
+  Im Menü der Puls-Pille steht jetzt ein vierter Eintrag:
+  „Play with Apple Health — your Watch, at its own pace".
 
-  ── DIE SECHS REPARATUREN DAHINTER (#1306–#1311) ──────────────────────────
+  ⚠️ ZWEI DINGE, DIE DIESER EINTRAG BEWUSST NICHT TUT. Er startet NICHTS — der
+  HealthKit-Publisher gehört der App und läuft ohnehin; das Anwählen STOPPT nur die
+  anderen drei (Kamera, Gurt, Simulation), damit sich zwei Quellen nicht überschreiben.
+  Und die Taschenlampe darf dabei nicht angehen: ein Schalter in einer Bio-Fläche, der
+  die Kamera startet, wäre genau der Fehler, den #1300 reparieren musste.
 
-  Sie ändern nichts, was Du siehst. Sie stehen hier, weil sechs Wächter
-  betroffen sind, die auf einem KORREKTEN Baum rot waren, ohne dass es jemand
-  sehen konnte.
+  ⚠️ DIE HARTE GRENZE BLEIBT: die Uhr liefert mit ~4–5 s LATENZ. Das reicht für
+  Anzeige, Trend und langsame Modulation — niemals für Beat-Sync. Das ist Physik,
+  keine Einstellung.
 
-  #1306 — Ein Wächter las das Verzeichnis, in dem er selbst liegt, und fand darin
-    seine EIGENE Liste angeblich gelöschter Namen. Er konnte auf keinem Baum grün
-    sein. Dazu fünf Anweisungsdateien, die eine künftige Sitzung zu zwei Dateien
-    schickten, die es nicht mehr gibt.
-  #1307 — Das Privacy-Manifest erklärte Apple gegenüber eine Datei-Zeitstempel-
-    Nutzung, deren einziger Aufrufer mit dem Video gelöscht wurde. Entfernt.
-  #1308 — Der Mikrofon-Nachweis war `AVAudioSession.sharedInstance()` — das ruft
-    jede Wiedergabe. Der Wächter bewies das Mikrofon also aus Code ohne Mikrofon.
-    Und das Compile-Gate hätte DICH rot gemacht, sobald Du die Info.plist-
-    Bereinigung machst, um die es selbst bittet. Beides repariert.
-  #1309 — Die gepinnte Chip-Liste stand noch auf zehn.
-  #1310 — Die Website verkaufte auf Start- und Übersichtsseite eine Videoaufnahme,
-    die es nicht mehr gibt. Korrigiert, mit einem Wächter dagegen.
-  #1311 — Vier WEITERE Wächter, die Deine vier Löschungen rot hinterlassen haben:
-    die Feature-Flaggen-Zählung (`audioLaneRecording` hat keinen Leser mehr), ein
-    Zahlen-Boden über der FX-Fläche, der noch die gelöschten Stufen mitzählte,
-    die Menü-Prüfung, deren einzige inhaltliche Zusicherung auf dem Video-Fall
-    saß, und zwei Wächter-Namen in den Regeldateien, die ins Leere zeigten.
-    Dazu 1,8 KB datierte Changelog-Historie aus der Datei, die jede Sitzung
-    zuerst liest, ins Zähl-Ledger verschoben.
+  ── DREI ECHTE FEHLER, DIE DU HÄTTEST MERKEN KÖNNEN ───────────────────────
 
-  ⚠️ Das Muster hinter ALLEN sechs, weil es die nächste Löschung wieder trifft:
-  eine hand-geschriebene LISTE, die gegen etwas aus dem Baum Geparstes gehalten
-  wird, ist für jeden meiner Prüf-Skripte unsichtbar — die lesen Zeichenketten
-  und Zahlen, keine Mitgliedschaft. Nach jeder Löschung gehört jede solche
-  Erwartung neu hergeleitet.
+  #1323 — DIE ATEM-PHASE HING AN DER ATEM-RATE. Das Gate, das entscheidet, ob ein
+    Atem-Kanal als „gemessen" gilt, prüfte für die PHASE die RATE mit. Eine Quelle,
+    die die Phase liefert, aber keine Rate, galt damit als ungemessen — die
+    Atem-Schwelle (das Anschwellen der Lautstärke im Atem) blieb auf dem Neutralwert
+    stehen, statt Deinem Atem zu folgen. #1140 hatte das an der Hälfte der Leser schon
+    repariert, an der anderen nicht.
+  #1321 — DREI Int(Float)-FALLEN AN EINGÄNGEN VON AUSSEN. Eine davon war ein
+    Ferntötungs-Datagramm: ein OSC-Paket mit einem Wert außerhalb des Int-Bereichs
+    hätte die App beim Umwandeln zum Absturz gebracht. Wer im selben Netz ist, hätte
+    Dir mitten in der Performance die App abschießen können — ohne Passwort, ohne
+    Absicht nachweisen zu müssen. Jetzt wird geklammert statt umgewandelt.
+  #1335 — DER EXPORT WARF EINEN MainActor-TASK PRO SAMPLE-PUFFER. Das ist exakt die
+    10.76.48-Form, die die Menü-Picker einfrieren ließ — nur auf dem Export-Pfad.
+    Jetzt wird gebündelt.
+
+  ── EINE TÜR IST ZURÜCK (#1331) ───────────────────────────────────────────
+
+  Master-Panel → „Audio latency". Die Puffer-Stufe war seit Langem persistiert und
+  hatte keinen Schalter mehr; jetzt hat sie einen. Er zeigt, was die Sitzung GEWÄHRT
+  hat, nicht was angefragt wurde — lehnt iOS die Ultra-Stufe auf einer Bluetooth-Route
+  ab, springt die Zeile zurück auf die gewährte Stufe, statt eine Wahl anzuzeigen, die
+  nie stattgefunden hat.
+
+  ── WAS DU NICHT SIEHST, WAS ABER DER GRUND FÜR DIE HÄLFTE DER COMMITS IST ─
+
+  Rund dreißig Reparaturen an Behauptungen, die nach Deinen Löschungen vom 12.09.
+  stehen geblieben waren: die Routing-Karte bot Ziele und OSC-Adressen an, deren
+  Erzeuger gelöscht war (#1324, #1333); der In-App-Guide verkaufte ein Video, das es
+  nicht mehr gibt (#1318); die Social-Card der Website behauptete AUv3 — als PIXEL,
+  also in jeder Link-Vorschau (#1312); die PWA-Beschreibung verkaufte „film" und zehn
+  Werkzeuge (#1313). Dazu pNN50, das als PROZENT über den Draht geht, während drei
+  Integrator-Dokumente 0–1 sagten (#1329).
+
+  Das sind keine Kosmetik-Commits. Jede dieser Zeilen ist eine Stelle, an der die App
+  oder die Website etwas versprochen hat, das es nicht gibt — und eine falsche
+  Behauptung im Store-Text ist eine 2.3-Ablehnung.
 
   ── WAS ICH VON DIR BRAUCHE ───────────────────────────────────────────────
 
-  Diesmal geht es um ABWESENHEIT — also darum, ob das Entfernen etwas mitgerissen
-  hat. Zehn Minuten reichen.
+  Diesmal geht es ums OHR. Fünfzehn Minuten.
 
   1. App starten. Läuft sie sauber hoch, kein schwarzer Bildschirm?
-  2. Generate + Play. Klingt es wie vorher? (Die FX-Kette hat zwei Stufen weniger,
-     die Genres sind unberührt.)
-  3. Finger auf die Kamera, Puls-Pille. Rastet der Puls wie gewohnt ein?
-  4. Durch alle neun Chips gehen. Öffnet jedes Panel, hängt keins?
-  5. FX-Panel aufmachen. Sieht es ohne seine zwei Abschnitte noch stimmig aus,
-     oder klafft eine Lücke?
-  6. Das schwebende Visual in allen Größen. Sitzt die Leiste richtig ohne die
-     zwei Icon-Tasten?
-  7. Ein ÄLTERES Projekt öffnen, falls Du eins hast. Kommt es sauber hoch?
+  2. Genre-Menü aufmachen. Sind es 40 Einträge, und lässt sich durchscrollen,
+     ohne dass das Menü abreißt?
+  3. VIER A/B-PAARE, jeweils Generate + Play, im Loop-Modus. Die Frage ist immer
+     dieselbe: hörst Du zwei verschiedene Genres oder zwei Varianten desselben?
+       · Gospel Choir 96  gegen  Soul Ballad 72
+       · Lo-Fi Hip-Hop 80 gegen  Boom Bap 90
+       · Dub Echo 72      gegen  Roots Reggae 76
+       · Slowed Goth Pop 66 gegen Vaporwave 70
+  4. Cumbia 96 und Tango Marcato 112 einzeln. Beide stehen auf harmonisch Moll;
+     die Frage ist, ob die DUR-Dominante trägt (die i→V-Wendung) oder ob es
+     nach Kirchentonart klingt.
+  5. Finger auf die Kamera, Puls-Pille. Rastet der Puls wie gewohnt ein?
+  6. Puls-Pillen-Menü → „Play with Apple Health". Mit getragener Uhr: kommt eine
+     Herzrate an? Und geht die Taschenlampe dabei NICHT an?
+  7. Master-Panel → „Audio latency" → Ultra, während gespielt wird. Kein Knistern,
+     die Zeile „Audio timing" meldet keine späten Blöcke; dann Neustart — die Stufe
+     muss weiterhin Ultra lesen.
   8. Wenn irgendetwas hakt: Save/Export-Chip → „Diagnostics" → Teilen.
      Im Log ist STILLE zwischen zwei Sprossen der Befund, nicht das Fehlen einer
      Fehlermeldung.
 
   ── STAND DER GATES, ehrlich ──────────────────────────────────────────────
 
-  Gemessen auf `0c66337` — dem Commit, den DIESER Build trägt, nicht auf einem
-  früheren: `Xcode Compile Check` **grün** (`Sources/` kompiliert) und CI/CD
-  `Build for Testing` **grün** (das blockierende Wächter-Bundle kompiliert, also
-  auch alle sechs Reparaturen). Beide Häkchen stehen auf demselben Baum, der hier
+  Gemessen auf `2ddbb5a` — dem Commit, den DIESER Build trägt, nicht auf einem
+  früheren: `Xcode Compile Check` Lauf 2649 **grün** (`Sources/` kompiliert), und
+  CI/CD Lauf 35227821760 Schritt 9 `Build for Testing` **grün** (das blockierende
+  Wächter-Bündel kompiliert). Beide Häkchen stehen auf demselben Baum, der hier
   hochgeladen wird.
+
   `Run Tests` meldet bei JEDEM Push „failure" (#396) — die Conclusion sagt nichts,
-  und das Job-Log ist nur die letzten 200 Zeilen (#807), in denen kein einziger
-  fehlgeschlagener Name steht. Genau deshalb waren die sechs roten Wächter
-  tagelang unsichtbar: ich habe sie durch Transkription gefunden, nicht durch ein
-  rotes Häkchen. Nach der letzten Reparatur habe ich den Sweep zu Ende gefahren —
-  acht Wächter dieser Bauart im Bundle, vier waren rot, vier sind nachweislich
-  sauber. Kein fünfter offen.
+  und das Job-Log ist nur die letzten 200 Zeilen (#807). In dieser Web-Sitzung gibt
+  es KEINE Swift-Toolchain: ich habe hier nichts kompiliert und keinen Test
+  ausgeführt. Neue Wächter werden durch Transkription gegen beide Bäume benotet,
+  und die acht Prüfer beenden mit 0.
 
-  In dieser Web-Sitzung gibt es KEINE Swift-Toolchain. Ich habe hier nichts
-  kompiliert und keinen Test ausgeführt; benotet wird durch Transkription gegen
-  beide Bäume, und die sechs Prüfer beenden mit 0.
+  ⚠️ FOUNDER-GATED, unverändert berichtet (`.github/workflows/**`,
+  `Resources/iOS/Info.plist` und `project.yml` darf ich nicht editieren):
 
-  ⚠️ FOUNDER-GATED, unverändert berichtet (`Resources/iOS/Info.plist` darf ich
-  nicht editieren): `NSMicrophoneUsageDescription` hat seit #1302 keinen Code mehr
-  und ist nachweislich UNERREICHBAR — die Abfrage kann nie erscheinen.
-  `NSPhotoLibraryAddUsageDescription` hat seit #1304 keinen Code.
-  `NSCameraUsageDescription` nennt weiterhin BEIDE Linsen, obwohl die Frontkamera
-  mit #1301 gegangen ist. Dazu nennt `NSLocalNetworkUsageDescription` „external
-  audio interfaces" ohne Code dahinter, und `NSBonjourServices` führt sieben von
-  neun Einträgen ohne Backing. Keiner davon ist eine Ablehnung; alle sind
-  Ehrlichkeit. Das Compile-Gate geht seit #1308 NICHT mehr rot, wenn Du sie löschst.
+  · `auto-merge-claude.yml` wartet auf KEIN Gate — kein `needs:`, kein
+    `workflow_run:`, keine fremde Conclusion. Der Merge nach `main` läuft parallel
+    zu den Checks und gewinnt. Ein nicht kompilierender Commit kann auf `main`
+    stehen; belegt an #681 und an `d78b249`.
+  · `ci.yml` maskiert an fünf Stellen einen BUILD-Fehler (`|| true`, fehlendes
+    `set -o pipefail`, Job-weites `continue-on-error`), `benchmark.yml` an einer,
+    `full-tests.yml` an zweien. Ein grünes Häkchen dieser Schritte beweist nichts.
+  · `ci.yml:290/291` filtert auf eine Test-Suite `ComprehensiveTestSuite`, die es
+    nicht gibt — der Schritt testet nichts.
+  · `Resources/iOS/Info.plist`: `NSMicrophoneUsageDescription` hat seit #1302
+    keinen Code mehr, `NSPhotoLibraryAddUsageDescription` seit #1304 („Finished
+    visual recordings" — die gibt es nicht mehr), und `NSCameraUsageDescription`
+    nennt weiterhin BEIDE Linsen, obwohl die Frontkamera mit #1301 gegangen ist.
+    Das Compile-Gate geht seit #1308 NICHT mehr rot, wenn Du sie löschst.
+  · `project.yml:296` trägt eine veraltete Ein-Richtungs-Route für die Watch.
 
   GERÄTEVERIFIZIERT IST NICHTS DAVON.
 
   ── PRÜF-BITTEN, DIE DIESER BUILD NEU BEANTWORTBAR MACHT ──────────────────
-  (gedruckt mit `python3 scripts/founder-verify.py --since 27acabe`, nicht von Hand)
-
-  Founder device-session checklist — 1 NEW or REWORDED since `27acabe`, of 132 open, none answered yet
+  (gedruckt mit `python3 scripts/founder-verify.py --since d1bcaba`, nicht von Hand)
+  Founder device-session checklist — 11 NEW or REWORDED since `d1bcaba`, of 141 open, none answered yet
      'New' means the marker LINE was added or changed. An ask that only moved (lines edited above it) is deliberately NOT here — it did not change.
      ⚠️ It sees TEXT, not capability: a REWORDED ask is an old ask whose sentence was polished, not one that became newly answerable. Read the sentence.
-  
-  ── OTHER  (1)
-     CLAUDE.md:40
-        - Live pipeline: HealthKit + camera rPPG (live, locks on device) + Demo → bio snapshot. ( Universal BLE HR (0x…
-  
-  ── NOT ASKS (15) — the marker used as a noun, nobody can perform these
+
+  ── AUDIO  (7)
+     Studio/PatchbayView.swift:350
+        NEEDS-FOUNDER-VERIFY: Master → Routing → „Body → parameter" → Add route → Tempo, Quelle Coherence, Depth 1, BP…
+     CISmoke/GenreBatchElevenCTests.swift:42
+        NEEDS-FOUNDER-VERIFY: Nordic Fiddle at 120 in Loop mode. Two ear questions, and they are about the drone, not …
+     CISmoke/GenreBatchElevenDTests.swift:44
+        NEEDS-FOUNDER-VERIFY: Balkan Modal at 140 in Loop mode. Two ear questions, both about the raised fourth. (1) D…
+     CISmoke/GenreBatchFifteenATests.swift:65
+        NEEDS-FOUNDER-VERIFY: Lo-Fi Hip-Hop at 80 in Loop mode, A/B against Boom Bap at 90. Two ear questions, both ab…
+     CISmoke/GenreBatchFifteenBOneTests.swift:63
+        NEEDS-FOUNDER-VERIFY: Dub Echo at 72 in Loop mode, A/B against Roots Reggae at 76. Two ear questions, both abo…
+     CISmoke/GenreBatchTenATests.swift:61
+        NEEDS-FOUNDER-VERIFY: Gospel Choir at 96 in Loop mode, A/B against Soul Ballad at 72. Two ear questions, and t…
+     CISmoke/TheBufferTierHasADoorAgainTests.swift:28
+        (`NEEDS-FOUNDER-VERIFY`). What is proven here is that the control exists, is mounted, drives the one owner, an…
+
+  ── UI  (2)
+     Studio/EchoelStudioView.swift:5044
+        NEEDS-FOUNDER-VERIFY: Master → Audio latency → Ultra while the instrument is playing. The "Audio timing" line …
+     Studio/EchoelStudioView.swift:9678
+        NEEDS-FOUNDER-VERIFY: Apple Watch tragen, im Puls-Pillen-Menü „Play with Apple Health" wählen, Health-Zugriff …
+
+  ── OTHER  (2)
+     CISmoke/TheRoutingCardOffersOnlyDestinationsThatExistTests.swift:101
+        "ANCHOR MISSING: no NEEDS-FOUNDER-VERIFY note in \(Self.patchbay) (#454). "
+     CISmoke/TheRoutingCardOffersOnlyDestinationsThatExistTests.swift:179
+        throw XCTSkip("NEEDS-FOUNDER-VERIFY occurs \(marked.count)× in this file — this "
+
+  ── NOT ASKS (22) — the marker used as a noun, nobody can perform these
+     Tools/BioReactiveSynthVoice.swift:291   ("the" in front of it — prose about the backlog)
      CISmoke/GenreBassGrammarTests.swift:12   ("the" in front of it — prose about the backlog)
      CISmoke/GenreDeepTechTests.swift:26   ("the" in front of it — prose about the backlog)
      CISmoke/OnboardingPagesScrollTests.swift:15   ("the" in front of it — prose about the backlog)
      CISmoke/SoundRowsCanReachTheShippedPatchesTests.swift:74   ("the" in front of it — prose about the backlog)
      CISmoke/TheADMOSCLeavesAreTheSpecsTests.swift:29   ("the" in front of it — prose about the backlog)
      CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:40   ("the" in front of it — prose about the backlog)
-     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:166   (the marker IS the whole string literal — a guard asserting the convention)
-     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:185   (the marker IS the whole string literal — a guard asserting the convention)
-     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:198   (the marker IS the whole string literal — a guard asserting the convention)
-     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:247   (the marker IS the whole string literal — a guard asserting the convention)
+     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:187   (the marker IS the whole string literal — a guard asserting the convention)
+     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:206   (the marker IS the whole string literal — a guard asserting the convention)
+     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:219   (the marker IS the whole string literal — a guard asserting the convention)
+     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:268   (the marker IS the whole string literal — a guard asserting the convention)
+     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:347   (the marker IS the whole string literal — a guard asserting the convention)
      CISmoke/TheExportFailureSpeaksAtTheButtonTests.swift:15   ("the" in front of it — prose about the backlog)
+     CISmoke/TheHealthSourceIsOwnedByTheAppTests.swift:6   ("a" in front of it — prose about the backlog)
      CISmoke/TheLockNeedsFramesTests.swift:19   ("the" in front of it — prose about the backlog)
+     CISmoke/TheRoutingCardOffersOnlyDestinationsThatExistTests.swift:15   ("the" in front of it — prose about the backlog)
+     CISmoke/TheRoutingCardOffersOnlyDestinationsThatExistTests.swift:45   ("the" in front of it — prose about the backlog)
+     CISmoke/TheRoutingCardOffersOnlyDestinationsThatExistTests.swift:172   ("the" in front of it — prose about the backlog)
+     CISmoke/TheRoutingCardOffersOnlyDestinationsThatExistTests.swift:177   (the marker IS the whole string literal — a guard asserting the convention)
      CISmoke/TheVariationNarrowsAsTheBodySettlesTests.swift:110   (the marker IS the whole string literal — a guard asserting the convention)
      CISmoke/VisualFineTuneReflowsTests.swift:109   ("the" in front of it — prose about the backlog)
      CLAUDE.md:35   ("jeden" in front of it — prose about the backlog)
-  
+
+  ── BLOCKED (1) — the door these instruct you to open was removed
+     By slice #1302. NOT open, NOT answered, NOT deleted: the
+     engine behind them is untouched, so the day the door comes back these are
+     exactly the probes that must run. They are held out of the count above so
+     the queue is jobs you can actually do with a phone in your hand.
+     #1302  audio   Audio/AudioConfiguration.swift:371
+            NEEDS-FOUNDER-VERIFY BLOCKED-BY-#1302: Bluetooth-Kopfhörer verbinden, spielen, Monitoring EINschalten — die Mu…
+
   ── HOW TO RETIRE AN ASK once you have done it on a device
      Put the date on the SAME line as the marker, then commit:
        // NEEDS-FOUNDER-VERIFY VERIFIED-YYYY-MM-DD: <the original instruction>
      Keep the instruction. The line stays as the record of WHAT was confirmed and
        WHEN — deleting it also deletes the date, which is the first thing you want
        back when the behaviour regresses.
-  
+
   ── LIMITS (read before treating this as a work queue)
      ANSWERED depends on somebody writing the mark. An ask you did on a device but
        never marked stays in the open list — the tool reads the tree, not your
@@ -237,6 +291,7 @@ notes: |
        still shown as open, which is the safe direction and not a clean bill.
 
   ── VORGÄNGER ─────────────────────────────────────────────────────────────
+  10.79.472 — Der Aufräum-Build: Gesicht, Mikrofon, Video, Harmonizer, Granular raus (#1301–#1311)
   10.79.471 — Das Gesicht wird im Field angeschaltet (#1296–#1300)
   10.79.470 — Der Monitoring-Absturz war nie in einem Build (#1269–#1295)
   10.79.469 — Der Audio-Eingang, sauber aufgesetzt (#1246–#1256)

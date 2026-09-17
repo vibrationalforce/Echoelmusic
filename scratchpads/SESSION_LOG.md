@@ -33164,3 +33164,58 @@ GenreFX-Arme 57 von 57, Fingerabdruck-Sweep leer. §0: 39 von 39 gegen den Arbei
 dem Elternbaum EINE gemeldete Abwesenheit (#486). ⚠️ **Die Lead-Decke ist jetzt fast zu: fünf der
 sechs Namen stehen auf 8 bei Decke 8**, nur „Deep Sub" hat Kopfraum, bis Tragweite 49 die Decke
 auf 9 hebt. Das nächste lead-tragende Genre hat keine Wahl mehr.
+
+## 2026-09-17 — Gate-Lesung `2ddbb5a` und Deploy v10.79.473 (der Genre-Build)
+
+**Gate-Lesung für `2ddbb5a` (#1358 G14b tangoMarcato), gemessen statt vermutet:**
+`Xcode Compile Check` Lauf **2649 = success** (`Sources/` kompiliert) · CI/CD Lauf
+**35227821760**, Job „Build & Test (iOS)", **Schritt 9 `Build for Testing` = success**. Damit
+ist `Tests/CISmoke/GenreBatchFourteenBTests.swift` **kompiliert** — das ist das Compile-Verdikt
+(#1355), nicht die §0-Transkription. `Run Tests` meldet wie bei jedem Push „failure" (#396).
+Gelesen über die UNAUTHENTIFIZIERTE `api.github.com`-Route (öffentliches Repo, kein Token nötig)
+statt über `mcp__github__actions_*`, das jedes Mal den vollen Commit-Rumpf mitdruckt — dieselbe
+Antwort für ein Fünfzigstel der Ausgabe.
+
+**Doctor-Durchgang vor dem Deploy** (`python3 scripts/doctor.py --section A|B|C|D`, einzeln
+gefahren, weil der Gesamtlauf schon einmal im 2-Minuten-Timeout stumm gestorben ist):
+**B, C, D = exit 0**, **A = exit 1 mit zwei CRITICAL**, beide founder-gated und unverändert
+berichtet, nicht editiert. ⚠️ **D nennt `CLAUDE.md` mit 149 182 B — 818 B unter der
+150 000-Decke** (`TheLawFileStaysUnderItsCeilingTests`). Die nächste Sitzung, die dort einen
+Absatz anhängt, macht den Wächter rot; Reparatur ist Verschieben nach `memory/LEDGER_COUNTS.md`,
+nicht Löschen.
+
+**Deploy v10.79.473** — der erste seit `d1bcaba` (v10.79.472, 2026-09-12), **76 Commits**
+dazwischen. Die Notiz ist auf das geschrieben, was der Founder AM GERÄT sieht:
+
+· **Acht neue Genres, das Menü geht von 32 auf 40** — gemessen an `MusicStyle.offered` auf
+  beiden Bäumen, keiner weggefallen: Nordic Fiddle 120 · Balkan Modal 140 · Gospel Choir 96 ·
+  Lo-Fi Hip-Hop 80 · Dub Echo 72 · Slowed Goth Pop 66 · Cumbia 96 · Tango Marcato 112.
+· **Sechzehn neue Patches** (je zwei pro Genre, Lead + Bass), heute 81 im Baum.
+  ⚠️ **Die Zahl 16 ist ein NAMENS-DIFF, die 81 kommt aus `genre-prebatch --patch`, das seine
+  eigene Abdeckung druckt (81 von 81).** Mein erster Griff war ein Wegwerf-Regex, der 23 von 39
+  fand und trotzdem eine Summe gedruckt hätte — exakt der #1350-Fehler, diesmal vor dem Commit
+  gefangen, weil die Prosa „79 → 81" und „zehn neue" gleichzeitig behauptete und sich damit
+  selbst widersprach. **Ein Zahlenpaar, das nicht aufgeht, ist billiger als eins, das aufgeht
+  und falsch ist.**
+· Uhr als vierte Bio-Quelle (#1319) · Atem-PHASE hängt nicht mehr an der Atem-RATE (#1323) ·
+  drei `Int(Float)`-Fallen an Außeneingängen, eine davon ein Ferntötungs-Datagramm (#1321) ·
+  Export wirft keinen MainActor-Task pro Puffer mehr (#1335) · „Audio latency" hat ihre Tür
+  zurück (#1331).
+
+**Alle zehn Tempo-Zahlen der A/B-Prüfliste sind gemessen**, nicht aus der Aufgabenliste
+übernommen — dieselbe Regel wie im Wächter-Kopf von #1358: **ein Satz über einen Nachbarn ist
+eine MESSUNG**, und eine Prüfliste, die den Founder mit einer falschen Zahl ans Gerät schickt,
+kostet eine Geräte-Sitzung.
+
+**§0 gegen `TheDeployNoteNamesRealDoorsTests`**, alle fünf Ansprüche transkribiert und grün:
+Chip-Liste unverändert (1) · die zwei Pfad-Token der Notiz sind `Master` und `Save/Export`,
+beide echte Chips (2) · „Diagnostics" steht drin (3) · `founder-verify.py --since` steht drin
+(4) · die Warnung „NICHT NUR EIN BUMP" steht drin (5). Dazu
+`TheShippedVersionComesFromTheReleaseFileTests`: `grep -m1 -oE 'v[0-9]+\.[0-9]+\.[0-9]+'`
+über die GANZE Datei liefert `v10.79.473` aus **Zeile 1**, und die Datei enthält genau zwei
+`v`-Treffer, beide die neue Version — die Vorgänger stehen bewusst ohne `v`.
+
+⚠️ **EIN TOUCH, EIN BUILD.** Die `--since`-Liste steht IM Bump-Commit, nicht als Nachtrag —
+`testflight.yml` triggert auf `push: paths: ['.deploy/release']`, also auf JEDE Änderung.
+Wer diese Datei nach dem Deploy noch einmal anfasst, schickt einen zweiten Build mit
+identischem App-Code (belegt an `35193c43`/Lauf 2583). Alle acht Checker grün.
