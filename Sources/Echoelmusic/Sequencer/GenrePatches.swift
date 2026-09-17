@@ -289,6 +289,30 @@ public extension MusicStyle {
                 cutoff: 1250, res: 0.16, lfoAmt: 0.08, lfoRate: 0.22, lfoDepth: 0.07,
                 revMix: 0.30, revDecay: 2.20, vibRate: 3.4, vibDepth: 0.14,
                 uni: 3, det: 18)
+        case .cumbia:
+            // #1357 G14 — LILT KEYS. The offbeat chuck, so this patch has to STRIKE and get out
+            // of the way again: at 96 BPM an eighth is 0.313 s, and 0.004 + 0.26 + 0.24 fits
+            // inside it, so every chuck re-articulates instead of smearing into the next. Every
+            // number below is from `genre-prebatch.py --patch` at full coverage (77 of 77
+            // blocks), never from reading neighbouring arms (#1350).
+            //
+            // The envelope total 0.844 is a SOLE HOLDER (nearest below `Brass Sub` 0.85 — which
+            // is ABOVE it; nearest below is `House Sub` 0.806). No rank is claimed, only that it
+            // takes no one else's value. `cutoff: 2420` is also free, and it is placed where it
+            // is on purpose: brighter than `Roots Organ`'s neighbours want but well under that
+            // patch's 2700, because a cumbia keyboard is a cheap bright organ and not a warm
+            // one. `res: 0.22` gives the corner a little edge without a whistle.
+            //
+            // `uni: 2` / `det: 10` is the detuned-pair chorus a sonidero keyboard has built in.
+            // It is a TIE on both fields (`det: 10` with five other patches) and nothing is
+            // claimed about either. `lfoRate: 5.6` and `lfoDepth: 0.045` are free; together with
+            // `vibRate: 4.8` they give the sustain a shimmer rather than a wobble.
+            return patch("75", "Lilt Keys",
+                a: 0.004, d: 0.26, s: 0.34, r: 0.24,
+                harm: 0.86, hl: 0.66, bright: 0.44, noise: 0.0, color: "Pink", shape: "Natural",
+                cutoff: 2420, res: 0.22, lfoAmt: 0.05, lfoRate: 5.6, lfoDepth: 0.045,
+                revMix: 0.14, revDecay: 1.15, vibRate: 4.8, vibDepth: 0.05,
+                uni: 2, det: 10)
         case .rootsReggae:
             // #1289 G6b — ROOTS ORGAN. ⚠️ NOT "Skank Organ": `ska` (un-offered) already ships
             // that name, and the pre-batch check caught it — the third name collision in three
@@ -940,6 +964,33 @@ public extension MusicStyle {
                 a: 0.020, d: 0.70, s: 0.74, r: 0.40,
                 harm: 0.90, hl: 0.30, bright: 0.16, noise: 0.0, color: "Pink", shape: "Dark",
                 cutoff: 580, res: 0.10, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
+        case .cumbia:
+            // #1357 G14 — LILT SUB. The SIXTH owner of `offbeatEighths` — figure shared, voice
+            // never. Numbers from `--patch` at full coverage.
+            //
+            // `d: 0.42` and the envelope total 1.29 are both SOLE HOLDERS. The decay is the
+            // point and it is measured against the two subs this figure puts it beside: at 96
+            // BPM the gap between two offbeats is 0.313 s, so a bass that decays over 0.42 s
+            // rings THROUGH the gap and reads as a lilt rather than a pump. `deepHouse`'s
+            // "House Sub" is built the opposite way (envelope 0.806, sustain 0.30 — it stops
+            // inside its own eighth so the hole stays open), and `rootsReggae`'s "Roll Sub"
+            // decays over 0.50 in a bar 20 BPM slower. Same figure, three different notes.
+            //
+            // ⚠️ `cutoff: 660` IS NOT FREE — `Drone Sub` (`nordicFiddle`) has it too, and this
+            // comment names it rather than claiming a darkness it does not own. Checked with the
+            // tool before writing the sentence (#1352, where a first draft defended a separation
+            // from a patch it had also mis-named). The two part on everything else, and by a
+            // wide margin: attack 0.010 against 0.09, sustain 0.60 against 0.92, release 0.26
+            // against 0.60, envelope 1.29 against 2.01 — a bordun is written never to finish
+            // inside a bar, this one has to finish inside half a beat. ⚠️ The DECAYS are the
+            // one pair that nearly meet (0.42 against 0.40) and no separation is claimed there.
+            // Same corner frequency, different note.
+            return patch("76", "Lilt Sub",
+                a: 0.010, d: 0.42, s: 0.60, r: 0.26,
+                harm: 0.92, hl: 0.26, bright: 0.11, noise: 0.0, color: "Pink", shape: "Dark",
+                cutoff: 660, res: 0.08, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
                 revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
                 uni: 1, det: 0)
         case .rootsReggae:

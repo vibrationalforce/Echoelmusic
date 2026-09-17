@@ -205,6 +205,18 @@ public extension MusicStyle {
         // VOICE is where they part ("Dub Sub" against "Roll Sub"), which the patch arm measures
         // rather than asserts.
         case .dubEcho:          return .offbeatEighths
+        // #1357 G14 — the SIXTH owner of `offbeatEighths`, joining `deepHouse`, `soulBallad`,
+        // `rootsReggae`, `dubEcho` and `afroHouse`. The chuck lands between the beats in this
+        // music exactly as it does in the other five; what differs is the voice, and that is
+        // the licence this file grants — figure shared, voice never ("Lilt Sub" is its own
+        // patch). ⚠️ TWO of those five sit at four of seven with this genre and it is a TIE,
+        // not a nearest: `deepHouse` shares this figure, archetype, register and lead name;
+        // `afroHouse` shares this figure, archetype, register and chord tones. Against
+        // `deepHouse` the parting is scale (`.harmonicMinor` against `.minor`, so the V is
+        // major here and minor there), progression, and a tempo window 16 BPM clear of it;
+        // against `afroHouse` it is scale, lead voice and a window 14 BPM clear. The case doc
+        // measures all of it rather than asserting it.
+        case .cumbia:           return .offbeatEighths
         case .andalusianCadence: return .drivingEighths
         case .blackMetal:       return .drivingEighths
         case .modalJazz:        return .drivingEighths

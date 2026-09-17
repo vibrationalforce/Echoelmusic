@@ -33008,3 +33008,66 @@ Vorab-Messung gehört deshalb an den ANFANG jeder Scheibe, nicht ans Ende**, und
 Kandidaten GEMEINSAM messen: einzeln wäre die Decken-Sprengung nicht aufgefallen.
 
 Beide Blocker stehen jetzt in der G14-Zeile des Plans, nicht nur hier.
+
+## 2026-09-17 — #1357 G14a: `cumbia`, und die Lead-Zeile des Plans war falsch
+
+**Ausgeliefert:** Genre Nr. 56, angeboten Nr. 39, auf dem neuen Regal **„Latin America"** unter
+der Rubrik `.folk` — Regal + erstes Genre in EINER Scheibe (G10a/G15b-2-Form). 16 `MusicStyle`-
+Eingriffe, 2 `GenrePatches`-Arme („Lilt Keys" 75, „Lilt Sub" 76), 1 `GenreFX`-Arm, 1
+`BassGrammar`-Arm, Wächter `GenreBatchFourteenTests` (40 Zusicherungen), sieben nutzersichtbare
+Claim-Flächen, Plan-Zeile.
+
+⛔ **DER PLAN SAGTE „Lead ‚Soft Keys' 7→8" UND DAS WAR DIE FALSCHE MESSUNG.** Die Decke stimmte;
+was niemand gerechnet hatte, sind die IDENTITÄTSACHSEN. „Soft Keys" auf `.minor` ergibt **FÜNF
+von sieben** gegen `deepHouse` (scale · archetype · lead name · padOctave · bassGrammar) — exakt
+die Lage, die #1352 `dubEcho` von diesem Namen weggezwungen hat, gegen denselben Nachbarn, drei
+Scheiben vorher. Ein Plan-Eintrag, der nur die Decke prüft, prüft die billigere Hälfte.
+
+⭐ **GEKAUFT WURDE NICHT DER LEAD, SONDERN DIE SKALA — und das ist der Punkt.** `.harmonicMinor`
+statt `.minor` senkt den Wert auf vier UND ist musikalisch das Richtige: `progression: [0, 4]`
+voiced Stufe 4 auf harmonisch Moll als `[0, 4, 7]`, eine DUR-Dominante; auf natürlichem Moll
+wäre dieselbe Wendung `[0, 3, 7]`, die moll-v von Deep House und Dub. Die i→V7-Wendung IST
+Cumbia. „Soft Keys" bleibt damit als OHR-Entscheidung (Cumbia sonidera ist Orgel- und
+Keyboard-Musik), nicht als Arithmetik — alle drei Namen mit Kopfraum landen auf vier.
+
+⭐ **VIER IST DIE GEWÖHNLICHE BANDBREITE, NICHT EIN ZUGESTÄNDNIS — gemessen statt geschätzt.**
+Über alle **703** angebotenen Paare des Elternbaums: 3 Paare auf 5 von 7, 23 auf 4. Je Genre
+sein ärgster Nachbar: **25 von 38 auf vier**, sechs auf fünf. Fünf wäre der Schwanz gewesen.
+Und bei vier ist es ein GLEICHSTAND (`deepHouse` UND `afroHouse`), kein Nächster — als solcher
+geschrieben, weil #1350 „am weitesten getrimmt" schrieb, während zwei Arme tiefer saßen.
+
+⭐ **ZWEITE ABWEICHUNG: `tape` + gerade Sechzehntel, erste Verwendung des Paares in `GenreFX`.**
+`tape` steht dort mit Halben, Vierteln und Achteln, nie mit Sechzehnteln. Beide Beinahe-Treffer
+sind besetzt: `digital`+Sechzehntel trägt fünf Arme, darunter `ska` mit DEMSELBEN Archetyp, und
+`pingPong`+Sechzehntel ist `psyProgHouse`s. 0,170 s am langsamen Ende (das bindende), weit unter
+der 2,0-s-Decke.
+
+⭐ **MITGEZOGEN: ZWEI SÄTZE IN `slowedGothPop`s DOC, und einer war schon vor mir falsch.** Der
+erste sagte selbst „wenn ein dritter Arm diese Skala nimmt, ist dieser Satz zu korrigieren" —
+#1357 ist der vierte Arm und der zweite angebotene, also korrigiert im selben Commit (die
+#1295b-Form). Der zweite sagte „Nur vier Genres paaren eine Moll-Tonika mit einer Dur-V" und
+nannte dann VIER andere bei „die anderen drei" — und `blackMetal` gehört gar nicht dazu: seine
+`chordTones` `[0, 4, 7]` (STUFEN) ergeben `[0, 7, 12]`, eine leere Quinte ohne Terz. Neu
+gemessen durch Auflösung jeder Tonika und jeder Stufe-4-Schichtung: **fünf** Genres, und cumbia
+ist eines davon.
+
+⛔ **ZWEI EIGENE FALSCHBEHAUPTUNGEN, BEIDE IN EINE DATEI GESCHRIEBEN UND VOR DEM COMMIT
+GEMESSEN.** (1) Der `tempoRange`-Kommentar sagte, das Fenster „räumt jedes andere `.offbeat`-
+Fenster außer `andalusianCadence` (96…120)" — dessen Fenster ist 90…130, und es sind DREI
+Überlappungen, nicht eine. (2) Der „Lilt Sub"-Arm begründete seine Trennung von `Drone Sub` mit
+0.030/0.90/0.88/0.55 — die echten Werte sind 0.09/0.40/0.92/0.60, alle vier falsch. **Keine der
+beiden hätte irgendeinen Wächter rot gemacht.** Das ist das Argument für Anspruch 5 und für
+#1352s Gesetz, zwei Scheiben später: den Geschwister-Patch MIT dem Werkzeug prüfen, BEVOR man
+eine Trennung von ihm behauptet.
+
+⭐ **DIE #1356-LEHRE HAT SOFORT GETRAGEN:** die Vorab-Messung lief am ANFANG dieser Scheibe, und
+sie ist es, die die Fünf-von-sieben gefunden hat — nicht der Wächter, nicht der Review. Der Plan
+hatte die Scheibe bereits als „baubar" abgesegnet.
+
+**Gates:** alle acht Checker grün, Vorab-Messung nach dem Schnitt **56 Genres, 39 angeboten, 79
+Patches**, GenreFX-Arme 56 von 56, Fingerabdruck-Sweep leer, Soft Keys 7→8 exakt an der Decke
+(vier der sechs Namen stehen jetzt dort — die nächste Scheibe der Rubrik ist dadurch ENGER, nicht
+weiter). §0: 39 der 40 Zusicherungen transkribiert und gegen BEIDE Bäume gefahren — 39 grün / 0
+rot auf dem Arbeitsbaum, auf dem Elternbaum EINE gemeldete Abwesenheit statt 39 Rots (#486). Das
+Compile-Verdikt bleibt `Build for Testing`; bis dahin ist die Datei UNBEWIESEN, nicht grün
+(#1355).

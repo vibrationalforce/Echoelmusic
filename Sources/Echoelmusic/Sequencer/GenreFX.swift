@@ -551,6 +551,37 @@ public extension MusicStyle {
                 delayMix: 0.34, delayFeedback: 0.44, delayTone: 0.24, delaySpread: 0.56,
                 saturation: 0.18,
                 reverbEnabled: true, reverbMix: 0.30, reverbRoom: 0.90, reverbDamping: 0.62)
+        case .cumbia:
+            // #1357 G14 — A TAPE SLAPBACK ON A STRAIGHT SIXTEENTH, and the COMBINATION is the
+            // decision. Measured across every arm in this switch before writing it (55 of 55
+            // parsed): `tape` appears with the half, the quarter and the eighth, never with a
+            // sixteenth — so this pair is the FIRST use in the file, the way #1350 opened
+            // `(.quarter, .triplet)` for `loFiHipHop`. Both near misses were already crowded:
+            // `digital` + straight sixteenth carries five arms (`electroFunk` offered, plus the
+            // un-offered `ska`, which shares this genre's archetype), and `pingPong` + straight
+            // sixteenth is `psyProgHouse`'s.
+            //
+            // It is also the honest one. A sonidero rig's echo is an analogue slap with wow on
+            // it, not a clean digital repeat — and at a sixteenth the repeat lands on the NEXT
+            // offbeat, so the echo thickens the chuck instead of answering it. 0.156 s at 96
+            // BPM, 0.170 s at the slow end of the window and 0.144 s at the fast; the slow end
+            // binds, and it is more than a decimal order under the 2.0 s ceiling, so no clamp
+            // anywhere and the echo tracks the body's tempo across the whole range.
+            //
+            // ⚠️ `delayFeedback: 0.30` takes no rank and none is claimed — a slapback wants two
+            // or three repeats, not a tail. The dry-leaning `delayMix: 0.22` is the same
+            // decision from the other side: this echo is a thickener, and past about a quarter
+            // it would start competing with the chuck it is doubling.
+            //
+            // Reverb: a small, live room rather than a plate — `reverbRoom: 0.34` with light
+            // damping, so the top of the keys stays open. Neither value takes a rank.
+            return GenreFXPreset(
+                delayEnabled: true, delayMode: .tape,
+                delaySync: TempoSyncOption(.sixteenth),
+                delayMix: 0.22, delayFeedback: 0.30, delayTone: 0.42, delaySpread: 0.30,
+                delayWow: 0.18, delayDrive: 0.22,
+                saturation: 0.20,
+                reverbEnabled: true, reverbMix: 0.16, reverbRoom: 0.34, reverbDamping: 0.30)
         case .rootsReggae:
             // #1289 G6b — THE LONG ECHO, and it is the genre rather than a decoration: a QUARTER
             // on tape with high feedback and audible wow. At the fastest allowed 84 BPM that is

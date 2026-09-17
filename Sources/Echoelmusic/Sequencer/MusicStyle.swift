@@ -170,6 +170,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #1352 G15b-1 — the FIRST resident of the new `Dub & Echo` shelf.
         .dubEcho,
         .slowedGothPop,
+        // #1357 G14 — the FIRST resident of the new `Latin America` shelf, offered from the
+        // first commit for the reason every batch above gives: a genre left only in the
+        // taxonomy is a doorless genre.
+        .cumbia,
         .selfObservation, .stillMeditation, .drift, .contemplation,
         .vaporwave, .sciFi, .classical, .dubTechno,
         // #254 batch 1 (founder 2026-07-30: "mehr Genres der elektronischen Musik benötigt,
@@ -394,6 +398,25 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // 8 · Folk & Regional
         case europeanFolk
         case nearEastCentralAsia
+        /// #1357 G14. Added TOGETHER with `cumbia`, its only resident, for the reason
+        /// `.gospelSpiritual` (#1349), `.dubEchoes` (#1352) and `.darkSynthScenes` (#1354)
+        /// were: an empty shelf is SKIPPED by the picker, so nothing looks wrong and the next
+        /// session plans out of a drawer it cannot see. Declared directly after
+        /// `.nearEastCentralAsia` because claim 6 of `GenreSubcategoryTests` requires a
+        /// rubric's shelves to be CONTIGUOUS.
+        ///
+        /// ⚠️ FILED UNDER `.folk`, NOT `.caribbean`, AND THE ARGUMENT IS STRUCTURAL. `.folk`
+        /// already holds two REGION shelves (`europeanFolk`, `nearEastCentralAsia`), so a third
+        /// region is the shape that rubric already has. `.caribbean` reads as one lineage, not
+        /// a map: its three residents (`rootsReggae`, `ska`, `rocksteady`) are all Jamaican
+        /// sound-system music, and filing a Colombian genre there would make the shelf name
+        /// mean something it does not mean today.
+        ///
+        /// The title names a REGION, not a count — one genre stands here, and `tangoMarcato`
+        /// and `andeanHighland` are the catalog lines it is opened for. Same line as #1352
+        /// drew: a shelf may be roomier than its contents, it may not promise a DIFFERENT
+        /// thing than it holds.
+        case latinAmerica
         // 9 · Underground & Fringe
         case loFiHazy
         /// #1352 G15b-1. Added TOGETHER with `dubEcho`, its only resident — the same law
@@ -438,7 +461,8 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             case .hipHop, .rnbPop, .caribbean:                      return .popular
             case .classicalRomantic:                                return .classical
             case .gospelSpiritual:                                  return .chant
-            case .europeanFolk, .nearEastCentralAsia:               return .folk
+            case .europeanFolk, .nearEastCentralAsia,
+                 .latinAmerica:                                     return .folk
             case .loFiHazy, .dubEchoes, .darkSynthScenes:           return .underground
             }
         }
@@ -468,6 +492,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             case .gospelSpiritual:      return "Gospel & Spiritual"
             case .europeanFolk:         return "European Folk"
             case .nearEastCentralAsia:  return "Near East & C. Asia"
+            case .latinAmerica:         return "Latin America"
             case .loFiHazy:             return "Lo-Fi & Hazy"
             case .dubEchoes:            return "Dub & Echo"
             case .darkSynthScenes:      return "Dark Synth Scenes"
@@ -539,6 +564,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             return .dubEchoes
         case .slowedGothPop:
             return .darkSynthScenes
+        // #1357 G14 — the shelf is new and arrives here with this one genre. Filed under
+        // `.folk` and not `.caribbean`; the argument is at the `Subcategory` case doc.
+        case .cumbia:
+            return .latinAmerica
         case .sciFi:
             return .cinematicAtmospheres
         case .dubTechno, .minimalTechno, .detroitTechno, .acidTechno, .deepTech, .darkMinimal:
@@ -1147,17 +1176,24 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     ///
     /// `progression: [0, 5, 4]` — roots i → ♭VI → V, FREE across the roster (no other arm returns
     /// it). It is chosen for the same reason as the stack: on harmonic minor degree 4 voices
-    /// `[0, 4, 7]`, a MAJOR dominant, where natural minor gives `[0, 3, 7]`. Only four genres in
-    /// the file pair a minor tonic with a major V, and the other three are `blackMetal` and
-    /// `balkanModal` (both `.hungarianMinor`) and the un-offered `trap`/`klezmer`. ⚠️
+    /// `[0, 4, 7]`, a MAJOR dominant, where natural minor gives `[0, 3, 7]`. ⛔ THIS SENTENCE
+    /// NAMED FIVE GENRES WHILE SAYING "three", AND ONE OF THEM DID NOT HAVE THE PROPERTY —
+    /// `blackMetal`'s `chordTones` are `[0, 4, 7]` (DEGREES), which voice 0, 7, 12: an open
+    /// fifth with no third at all, so it has neither a minor tonic nor a major V. Re-measured
+    /// 2026-09-17 by resolving every arm's tonic and fifth-degree stack through
+    /// `MusicalKey.degree`: **five** genres pair a minor tonic with a major V — this one,
+    /// `balkanModal` (`.hungarianMinor`), `cumbia` (#1357) and the un-offered `trap` and
+    /// `klezmer`. ⚠️
     /// `composeHarmonic` ROTATES over `progressionPhase`, so this is a set of three roots opening
     /// on the tonic, not a notated cadence (#1290).
     ///
-    /// ⚠️ FIRST OFFERED GENRE ON `.harmonicMinor`. `trap` and `klezmer` hold it and neither is
-    /// offered — checked before writing this, because #1295b had to RETRACT `blackMetal`'s
-    /// "used by no other genre" when a second `hungarianMinor` arm arrived. Neither `trap`'s nor
-    /// `klezmer`'s doc claims exclusivity, so nothing is retracted here; if a third arm takes
-    /// this scale, this sentence is the one to correct.
+    /// ⚠️ FIRST OFFERED GENRE ON `.harmonicMinor`, and no longer the only one — `cumbia`
+    /// (#1357) is the fourth arm on this scale and the second offered. This sentence said
+    /// "if a third arm takes this scale, this sentence is the one to correct", and #1357
+    /// corrected it in the same commit that added the arm; "first" still holds, "only" was
+    /// never written, and the un-offered `trap`/`klezmer` are unchanged. The reason the
+    /// instruction was here at all: #1295b had to RETRACT `blackMetal`'s "used by no other
+    /// genre" when a second `hungarianMinor` arm arrived.
     ///
     /// ⚠️ THE NEAREST NEIGHBOURS SHARE 3 OF 6 AXES, AND ALL THREE OF THEM ARE SUSTAINED
     /// FLÄCHEN. Measured, not guessed, and deliberately not phrased as a superlative because it
@@ -1175,6 +1211,41 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// claims nothing and none is written. ⚠️ `defaultMode` takes NO arm — it inherits
     /// `default: .studioLocked`, which the batch guard asserts because a compiler cannot.
     case slowedGothPop
+    /// #1357 G14. Cumbia: an offbeat keys chuck between a minor tonic and a MAJOR dominant.
+    ///
+    /// ⭐ THE SCALE IS THE DECISION, AND IT IS MUSICAL BEFORE IT IS ARITHMETIC. `progression:
+    /// [0, 4]` — roots i → V — on `.harmonicMinor` `[0,2,3,5,7,8,11]` voices degree 4 as
+    /// `[0, 4, 7]`, a MAJOR dominant; on natural minor the same two roots give `[0, 3, 7]`, a
+    /// minor v, which is the deep-house/dub sound and not this one. The i → V7 turn IS cumbia,
+    /// so the scale follows the harmony rather than the other way round. Measured across the
+    /// roster: FIVE genres now pair a minor tonic with a major V — `balkanModal`
+    /// (`.hungarianMinor`), `slowedGothPop`, the un-offered `trap` and `klezmer`, and this one.
+    ///
+    /// ⚠️ THE ARITHMETIC AGREES, AND THAT IS A CONSEQUENCE, NOT THE REASON. On `.minor` this
+    /// genre would share FIVE of seven identity axes with `deepHouse` (scale, archetype, lead
+    /// name, register, bass figure) — the same five-of-seven that forced `dubEcho` off "Soft
+    /// Keys" in #1352, against the same neighbour. Measured over all 703 offered pairs in the
+    /// shipped tree, 25 of 38 genres sit at a worst neighbour of four and only six at five, so
+    /// four is the ordinary band and five is the tail. `.harmonicMinor` puts this genre at four
+    /// without spending a lead name — and at four it is a TIE, deliberately not written as a
+    /// nearest: `deepHouse` shares archetype, lead name, register and bass figure, `afroHouse`
+    /// shares archetype, chord tones, register and bass figure. The nearest un-offered arm is
+    /// `klezmer`, also at four, which shares this scale, this archetype and this register — a
+    /// player never meets it in the picker, and the two part on lead voice, progression and
+    /// bass figure.
+    ///
+    /// ⚠️ THE LEAD NAME IS NOT FORCED AND IS NOT A SOUND HERE. `leadDensity` is 0.0, so
+    /// "Soft Keys" is a factory-resolution requirement rather than a line a player hears; all
+    /// three names with ceiling headroom land at four, so the arithmetic picks none of them.
+    /// It is chosen by ear: cumbia sonidera is built on cheap organ and keyboard, which is the
+    /// same bucket. After this genre "Soft Keys" stands at 8 against a ceiling of 8 —
+    /// re-derive that, do not quote it.
+    ///
+    /// ⚠️ `swing: 0.12` ties `techHouse` and the un-offered `trap` exactly. A tie claims
+    /// nothing and none is written. ⚠️ `defaultMode` takes NO arm — it inherits
+    /// `default: .studioLocked`, right for a loop-based music and an omission a compiler
+    /// cannot catch, so the batch guard asserts it.
+    case cumbia
     /// #983 S5 (same founder sentence: "psy prog House"). The roster has `psytrance` (un-offered,
     /// ~145, phrygian, ARPEGGIATED, padOctave 2) and nothing between it and house. This is the
     /// house-tempo, non-arpeggiated relative — progressive, not Goa — and it is separated from
@@ -1392,6 +1463,8 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case .loFiHipHop:         return "Lo-Fi Hip-Hop"
         case .dubEcho:            return "Dub Echo"
         case .slowedGothPop:      return "Slowed Goth Pop"
+        // #1357 G14 — Latin America.
+        case .cumbia:             return "Cumbia"
         case .blackMetal:         return "Black Metal"
         case .modalJazz:          return "Modal Jazz"
         case .soulBallad:         return "Soul Ballad"
@@ -1487,6 +1560,12 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // claims about a listener's state, never a description of the beat.
         case .slowedGothPop:
             return "Dragged half-time minor-major sevenths"
+        // #1357 G14. Names the two things the generator actually produces — WHEN the chord
+        // lands and WHAT the two roots are. No instrument is claimed beyond the patch bucket,
+        // and "chuck" is an articulation, never a state (the `TheGenreVocabularyStaysNeutral`
+        // list bans claims about a listener's state, not descriptions of a groove).
+        case .cumbia:
+            return "Offbeat keys chuck · minor tonic, major V"
         case .blackMetal:
             return "Tremolo-cold raised-fourth minor"
         case .modalJazz:
@@ -1647,7 +1726,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // then be a rock backbeat, which is wrong for techno. Today it reaches no voice.
         case .rock, .punk, .rocknroll, .heavyMetal,
              .jazz, .oriental, .detroitTechno:                  return .backbeat
-        case .ska, .rocksteady, .klezmer:                       return .offbeat
+        case .ska, .rocksteady, .klezmer, .cumbia:              return .offbeat
         case .doom, .vaporwave, .sciFi, .slowedGothPop:         return .halfTime
         case .classical, .stillMeditation, .selfObservation, .drift, .contemplation,
              .deepDrone, .ambientPulse:                         return .none
@@ -1867,6 +1946,15 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case .loFiHipHop:         return 72...88
         case .dubEcho:            return 66...82
         case .slowedGothPop:      return 60...76
+        // #1357 G14. DISJOINT from `deepHouse` (120…126), the four-of-seven neighbour, and
+        // from the other three offered `.offbeat` windows (`rootsReggae` 68…84, `dubEcho`
+        // 66…82, `afroHouse` 118…124). It OVERLAPS three: `andalusianCadence` (90…130) and
+        // the un-offered `klezmer` (90…170) and `rocksteady` (80…110) — measured, not
+        // guessed, and named here rather than engineered away. Against `andalusianCadence`
+        // the separation is scale, lead voice, progression and bass figure; against
+        // `klezmer`, which shares this scale and this register, it is lead voice,
+        // progression and bass figure.
+        case .cumbia:             return 88...104
         case .blackMetal:         return 160...200
         case .modalJazz:          return 100...160
         case .soulBallad:         return 64...86
@@ -2008,6 +2096,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case .loFiHipHop:         return 80
         case .dubEcho:            return 72
         case .slowedGothPop:      return 66
+        case .cumbia:             return 96
         case .blackMetal:         return 180
         case .modalJazz:          return 120
         case .soulBallad:         return 72
@@ -2093,6 +2182,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case .loFiHipHop:                         return 0.22
         case .dubEcho:                            return 0.18
         case .slowedGothPop:                      return 0.16
+        // #1357 G14 — the lilt. Ties `techHouse` and the un-offered `trap`; nothing is
+        // claimed. Well under `modalJazz`'s 0.30, the largest offered swing (pinned by a
+        // blocking guard).
+        case .cumbia:                             return 0.12
         case .boomBapHipHop:                      return 0.16
         case .electroFunk:                        return 0.08
         case .modalJazz:                          return 0.30
@@ -2256,6 +2349,11 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #1354 G15b-2. BORNE, not decorative — `sustained` is false, so this patch is the
         // voice a player hears. `sciFi` names the same patch and never sounds it.
         case .slowedGothPop:      return "Choir Vox"
+        // #1357 G14. NOT forced — all three names with headroom land at four of seven, so
+        // this is an ear call and is written as one (cumbia sonidera is organ-and-keyboard
+        // music). `leadDensity` is 0.0, so the name resolves a factory voice rather than
+        // sounding a line.
+        case .cumbia:             return "Soft Keys"
         case .blackMetal:         return "Warm Strings"
         case .modalJazz:          return "Soft Keys"
         case .soulBallad:         return "Choir Vox"
@@ -2395,6 +2493,11 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // (no other arm returns these three); no single value takes a rank, and none is
         // claimed.
         case .slowedGothPop:                      return (1.08, 1.02, 0.90)
+        // #1357 G14. Harmony nearly level with the bass, because the offbeat chuck IS the
+        // genre and it has to sit beside the root rather than behind it. The triple is FREE
+        // (no other arm returns these three); no single value takes a rank, and none is
+        // claimed.
+        case .cumbia:                             return (1.10, 1.08, 0.92)
         case .blackMetal:                         return (1.10, 1.04, 0.88)
         case .modalJazz:                          return (1.00, 1.08, 0.88)
         case .soulBallad:                         return (1.00, 1.10, 0.88)
@@ -2449,6 +2552,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case .loFiHipHop:         return .dorian
         case .dubEcho:            return .minor
         case .slowedGothPop:      return .harmonicMinor
+        // #1357 G14. The FOURTH arm on this scale and the SECOND offered one — it is
+        // chosen for the major V that natural minor cannot give (see the case doc), not
+        // for scarcity, and nothing is claimed about it.
+        case .cumbia:             return .harmonicMinor
         case .blackMetal:         return .hungarianMinor
         case .modalJazz:          return .dorian
         case .soulBallad:         return .major
@@ -2694,6 +2801,21 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             // the file and starts on the tonic deliberately (see the case doc: `composeHarmonic`
             // rotates, so an authored descent is never played as authored).
             return HarmonicProfile(progression: [0, 2, 1], chordTones: [0, 2, 4],
+                                   padOctave: 4, leadOctave: 5, arpeggiated: false,
+                                   leadDensity: 0.0)
+        case .cumbia:
+            // #1357 G14 — DEGREES, never semitones. `[0, 2, 4]` on harmonic minor
+            // `[0,2,3,5,7,8,11]` resolves to 0, 3, 7 on the tonic — a plain minor triad,
+            // which twenty-two arms carry and which claims nothing. The identity is what the
+            // SECOND root does: degree 4 on this scale voices 0, 4, 7, a MAJOR dominant,
+            // where the same two roots on natural minor give another minor triad. Two roots
+            // only, so the i ⇄ V rock is the character. ⚠️ `composeHarmonic` ROTATES over
+            // `progressionPhase`, so this is a set of two roots opening on the tonic, not a
+            // notated cadence (#1290). Mid register: the chuck has to sit above the bass and
+            // below the lead, and `padOctave: 4` is where the other offbeat comp genres put
+            // it. NOT arpeggiated and NOT sustained — the offbeat articulation is the whole
+            // point, and `sustained: true` would suppress it.
+            return HarmonicProfile(progression: [0, 4], chordTones: [0, 2, 4],
                                    padOctave: 4, leadOctave: 5, arpeggiated: false,
                                    leadDensity: 0.0)
         case .rootsReggae:
