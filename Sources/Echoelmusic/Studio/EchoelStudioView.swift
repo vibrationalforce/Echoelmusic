@@ -1639,7 +1639,19 @@ struct EchoelStudioView: View {
                          fxEnabled: { synth.isFXEnabled },
                          // The gate travels with the parameters, or the take goes dry while the
                          // played notes stay wet — the same split reach, one control higher.
-                         setFXEnabled: { synth.setFXEnabled($0); touchSynth?.setFXEnabled($0) })
+                         setFXEnabled: { synth.setFXEnabled($0); touchSynth?.setFXEnabled($0) },
+                         // #1364 — DIE VIERTE CHARACTER-STEMPELSTELLE BEKOMMT IHR
+                         // `applyDelaySync` ZURÜCK. `applyFX()`, der Re-Seed- und der
+                         // Open-Take-Pfad rufen es alle drei unmittelbar nach ihrem Stempel;
+                         // die FX-Fläche war die einzige, die es nicht tat, also zeigte der
+                         // Delay-Teiler-Picker nach einem Tap auf „Cassette“ eine Notenteilung
+                         // an, die keine Kette hielt (#240s eigenes Gesetz, an der einen Stelle
+                         // verletzt, die #318 nicht mit abgedeckt hat).
+                         //
+                         // `currentTempo`, nicht das bei `init` eingefrorene `pattern.tempo` der
+                         // FX-Fläche: EINE autoritative Zahl, dieselbe Regel, die der
+                         // Open-Take-Pfad drei Zeilen über seinem eigenen Aufruf aufschreibt.
+                         resyncDelayDivision: { applyDelaySync(bpm: currentTempo) })
                 .echoelSheetPanel())
         }
         .sheet(isPresented: $showRouting) { AnyView(PatchbayView().echoelSheetPanel()) }
@@ -8258,7 +8270,9 @@ struct EchoelStudioView: View {
     /// Stamp the chosen effect character on every live FX chain (independent of genre).
     /// ⚠️ #695 — THIS RE-STAMP DOES NOT REFRESH THE FX PANEL'S MIRRORS, AND TODAY ONLY THE
     /// MODAL SAVES IT. `FXViewModel` mirrors all fifteen chain enables and resyncs solely
-    /// through `reseed()`; `EchoelFXView.applyCharacter` calls it, this function does not. So a
+    /// through `reseed()`; `EchoelFXView.applyCharacter` calls it, this function does not. (Since
+    /// #1364 `applyCharacter` ALSO re-syncs the delay division through an injected closure, which
+    /// is the reverse direction — panel → Studio — and does not narrow this finding by a word.) So a
     /// character stamped from HERE while a live `EchoelFXView` existed would leave up to
     /// fourteen switches reading ON over a chain that is off — the `applyDelaySync` failure
     /// shape one panel over, multiplied.

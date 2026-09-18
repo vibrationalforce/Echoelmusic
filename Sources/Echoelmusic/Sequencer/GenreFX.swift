@@ -195,9 +195,12 @@ public struct GenreFXPreset: Sendable, Equatable {
     ///
     /// ⚠️ "So the picker is the last writer, ALWAYS" was the first version's wording and it is
     /// FALSE. `EchoelFXView.applyCharacter` is a FOURTH stamp site, reachable from the FX
-    /// panel's character menu, and NO `applyDelaySync` follows it — so after tapping Cassette or
-    /// Dream the CHARACTER's division is the last writer and the Studio picker displays a time
-    /// the chain does not hold. ⛔ THE SECOND HALF OF THIS PARAGRAPH IS SPENT — it read "It also
+    /// panel's character menu. ⭐ **#1364 CLOSED IT** — it now calls an injected
+    /// `resyncDelayDivision` closure that runs the Studio's `applyDelaySync(bpm: currentTempo)`,
+    /// so all FOUR sites end on the picker. The absolute is true again, and it is written as a
+    /// REPAIR rather than restored as if it had always held: between #240 and #1364 this one
+    /// path let the CHARACTER's division be the last writer, and the Studio picker displayed a
+    /// time the chain did not hold. Guard: `TheDelayDivisionTellsTheTruthTests`. ⛔ THE SECOND HALF OF THIS PARAGRAPH IS SPENT — it read "It also
     /// writes only the injected chain (`synth.fxChain`), never `touchSynth?.fxChain` — #240's
     /// other half, on a surface #240 did not reach", and #318 closed exactly that: `FXViewModel`
     /// now writes an `allChains` inventory built from `characterFXChains`, so the fourth stamp

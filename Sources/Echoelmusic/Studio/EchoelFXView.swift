@@ -41,10 +41,12 @@ final class FXViewModel {
     /// panel's character menu is the FOURTH stamp site and "writes only the injected chain
     /// (`synth.fxChain`), never `touchSynth?.fxChain`".
     ///
-    /// ⚠️ WHAT IS STILL NOT FIXED, so nobody reads this as more than it is: `applyCharacter`
-    /// stamps a character's own delay TIME and no `applyDelaySync(bpm:)` follows it, so the
-    /// Studio's division picker can still display a time the chains do not hold. That is the
-    /// other half of the same doc note and it is a Studio-side call, not a reach problem.
+    /// ⭐ THE OTHER HALF IS CLOSED TOO (#1364). `applyCharacter` stamped a character's own
+    /// delay TIME and no `applyDelaySync(bpm:)` followed it, so the Studio's division picker
+    /// displayed a time the chains did not hold. It was a Studio-side call, not a reach problem
+    /// — and it is now made through the injected `resyncDelayDivision` closure, with the
+    /// Studio's own `currentTempo` rather than this type's frozen `bpm`. See that property's
+    /// doc for WHY the chain follows the picker and not the reverse, and for what it costs.
     ///
     /// Every write goes `for c in allChains { c.<field> = <mirror> }` — field by field, never a
     /// whole stage. ⛔ THE FIRST VERSION OF THIS LINE GAVE A MECHANISM THAT DOES NOT EXIST: it
@@ -58,12 +60,47 @@ final class FXViewModel {
     /// ⚠️ THIS SURFACE CONVERGES LAZILY, PER PARAMETER, and that is worth knowing before
     /// trusting what it shows. `init` and `reseed()` seed the UI from `chain` alone, and only a
     /// row the user actually moves fans out. So if the chains have already drifted apart — via
-    /// the bio modulator above, or via the missing `applyDelaySync` after a character stamp —
-    /// opening this panel displays the composer chain and converges only the rows that get
-    /// dragged. Stamping the primary's whole state onto the mirrors on open would fix that in
+    /// the bio modulator above — opening this panel displays the composer chain and converges
+    /// only the rows that get dragged. (⛔ "or via the missing `applyDelaySync` after a
+    /// character stamp" stood here as the second example and is spent since #1364: that stamp
+    /// now re-syncs. The bio modulator is the one remaining drift source, so the paragraph is
+    /// narrowed rather than deleted — the lazy convergence itself is unchanged.)
+    /// Stamping the primary's whole state onto the mirrors on open would fix that in
     /// one line, and it would also make merely OPENING the panel change what the Field sounds
     /// like. That is a product decision, not a cleanup, so it is named here rather than taken.
     @ObservationIgnored private let allChains: [EchoelFXChain]
+
+    /// #1364 — DER STUDIO-PICKER MUSS NACH EINEM CHARACTER-STEMPEL NACHGEZOGEN WERDEN.
+    ///
+    /// `applyCharacter` schreibt die EIGENE Delay-ZEIT des Characters auf jede Kette. Der
+    /// Studio hat daneben einen sichtbaren Teiler-Picker (`delaySync`, `@State`, Default
+    /// punktierte 1/8), der davon nichts mitbekommt — also zeigte er nach einem Tap auf
+    /// „Cassette“ oder „Dream“ eine Notenteilung an, die keine Kette hält. Genau das
+    /// verbietet das #240-Gesetz: **ein sichtbares Bedienelement darf nicht eine Teilung
+    /// anzeigen, während die Kette eine andere spielt.**
+    ///
+    /// ⭐ WARUM DIE KETTE DEM PICKER FOLGT UND NICHT UMGEKEHRT: das Repo hat diese Frage
+    /// bereits DREIMAL beantwortet. `applyFX()`, der Re-Seed-Pfad und der Open-Take-Pfad
+    /// rufen alle unmittelbar nach ihrem Character-Stempel `applyDelaySync(bpm:)` — der
+    /// Open-Pfad sagt es in seinem eigenen ⛔-Block wörtlich: „die Kette zu dem zu machen,
+    /// was der Picker ZEIGT, ist das, was das Lügen beendet“. Diese vierte Stelle anders zu
+    /// lösen (den Picker auf die Character-Zeit zu ziehen) wäre die Inkonsistenz, vor der
+    /// derselbe Absatz warnt: „half of #240 fixed is a new inconsistency, not a smaller one“.
+    ///
+    /// ⚠️ WAS DAS KOSTET, und es wird hier GENANNT statt versteckt: die vom Character
+    /// AUTORISIERTE Delay-Zeit geht verloren — auf dieser Stelle ab jetzt genauso wie auf
+    /// den drei anderen. Ein Produktions-Character ist damit in seiner Echo-ZEIT nicht mehr
+    /// eigenständig; seine sieben übrigen Delay-Felder (Modus, Mix, Feedback, Ton, Spread,
+    /// Wow, Drive) bleiben unangetastet und tragen weiterhin seinen Charakter. Wer das
+    /// zurückdrehen will, dreht es an ALLEN VIER Stellen zurück, nicht an dieser einen.
+    ///
+    /// ⚠️ OHNE `bpm`-ARGUMENT, mit Absicht: dieser Typ hält ein bei `init` EINGEFRORENES
+    /// `bpm` (`pattern.tempo` zum Konstruktionszeitpunkt), der Studio sein lebendes
+    /// `currentTempo`. Ein Tempo von hier mitzugeben hätte die Character-Zeit an einem
+    /// veralteten Tempo aufgelöst — genau der Fehler, den der Open-Take-Pfad in seinem
+    /// Kommentar als „computed from a tempo the app never actually plays at“ beschreibt.
+    /// EINE autoritative Zahl, und sie gehört dem Studio.
+    @ObservationIgnored private let resyncDelayDivision: () -> Void
 
     /// Master insert-FX gate, injected as a setter so the view-model stays
     /// voice-agnostic (each voice exposes its own `setFXEnabled`). The setter is what carries
@@ -155,11 +192,19 @@ final class FXViewModel {
     /// test bundles — keep compiling unchanged; the app's one door passes the real inventory.
     init(chain: EchoelFXChain, mirrors: [EchoelFXChain] = [], bpm: Double = 120,
          masterEnabled: @escaping () -> Bool,
-         setMasterEnabled: @escaping (Bool) -> Void) {
+         setMasterEnabled: @escaping (Bool) -> Void,
+         // #1364 — siehe `resyncDelayDivision`. Defaulted auf ein No-op, weil dieser
+         // Typ auch aus Tests und aus dem Vorschau-Pfad ohne Studio konstruiert wird;
+         // die PRODUKTIONS-Aufrufstelle schreibt sie, und `TheDelayDivisionTellsTheTruthTests`
+         // pinnt genau das. (Kein #431/#440-Verstoß: das Default ist hier eine echte
+         // Bedeutung — „es gibt keinen Studio-Picker, der lügen könnte“ — und nicht
+         // die stille Wiederholung eines vergessenen Arguments.)
+         resyncDelayDivision: @escaping () -> Void = {}) {
         self.chain = chain
         self.allChains = [chain] + mirrors
         self.bpm = bpm
         self.setMaster = setMasterEnabled
+        self.resyncDelayDivision = resyncDelayDivision
         let c = chain
         fxEnabled = masterEnabled()
         // Seed mirrors from the live chain so the UI reflects current state.
@@ -315,6 +360,11 @@ final class FXViewModel {
         // the only one that used to write a single chain.
         for c in allChains { character.apply(to: c, bpm: bpm, genre: .selfObservation) }
         fxEnabled = true
+        // #1364 — VOR `reseed()`, und die Reihenfolge ist das ganze Gesetz: `reseed()` liest
+        // `c.delay.timeSeconds` in den `delayTime`-Spiegel dieser Fläche zurück. Liefe die
+        // Nachführung danach, zeigte der FX-Regler die Character-Zeit und die Kette hielte die
+        // Picker-Zeit — dieselbe Lüge, nur eine Fläche weiter. Siehe `resyncDelayDivision`.
+        resyncDelayDivision()
         reseed()
     }
 
@@ -438,11 +488,13 @@ struct EchoelFXView: View {
     /// `FXViewModel.allChains` for why a second list is the defect, not the fix.
     init(chain: EchoelFXChain, mirrors: [EchoelFXChain] = [], pattern: PatternEngine,
          fxEnabled: @escaping () -> Bool,
-         setFXEnabled: @escaping (Bool) -> Void) {
+         setFXEnabled: @escaping (Bool) -> Void,
+         resyncDelayDivision: @escaping () -> Void = {}) {
         self.pattern = pattern
         _vm = State(wrappedValue: FXViewModel(chain: chain, mirrors: mirrors, bpm: pattern.tempo,
                                               masterEnabled: fxEnabled,
-                                              setMasterEnabled: setFXEnabled))
+                                              setMasterEnabled: setFXEnabled,
+                                              resyncDelayDivision: resyncDelayDivision))
     }
 
     // #599b review M1 — the two repair halves of "the chain is the follower's
