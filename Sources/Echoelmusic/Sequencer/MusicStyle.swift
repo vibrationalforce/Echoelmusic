@@ -2787,14 +2787,36 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             // middle root is the tritone over the tonic, and it is the whole colour: it arrives
             // as a chord root rather than only as a passing note in the lead.
             //
-            // ⚠️ `arpeggiated: true` with `leadDensity: 0.55` — this is a tune with runs, so
-            // the lead has to move; it is the only European Folk arm that arpeggiates
-            // (`celticAir` false, `andalusianCadence` false, `nordicFiddle` false). `sustained`
-            // stays false: `.backbeat` means `.struck`, so the breath-onset generator keeps its
-            // phrasing, as in every other beat-driven arm here.
+            // ⛔ `leadDensity: 0.55` STOOD HERE AND IS RETRACTED (#1360). It shipped with
+            // #1295b as "this is a tune with runs, so the lead has to move" — a sound musical
+            // instinct that nobody checked against two standing facts, and it made the
+            // BLOCKING bundle red on a correct tree for two days without anyone being able to
+            // see it (`Run Tests` reports failure on every push, #396, and the job log is
+            // `tail -200`, #807).
+            //
+            //  1. `Tests/CISmoke/LeadRoleAbsenceTests` sweeps `MusicStyle.allCases` and asserts
+            //     that NO genre asks for a lead. Its own failure message lists the five dormant
+            //     paths a non-zero value wakes — `leadVoice`, the Mixer's Lead fader,
+            //     `IntroAttenuation.leadFactor`, `tameLeadPitch`, the reverted Lead-rhythm row —
+            //     none of which has ever been heard on a device.
+            //  2. The founder removed the genre melodies on 2026-07-09 with a reason, not a
+            //     shrug: "die Melodie in den Genres war zu laut und zu unnatürlich" (#255).
+            //     Re-opening that is HIS call; a genre batch is not the place it gets made.
+            //
+            // ⭐ THE RUNS SURVIVE, which is why this is a retraction and not a loss:
+            // `arpeggiated: true` STAYS. That drives `arpStep` on the PAD, so the tune still
+            // moves in figures — it is the separate `.lead` ROLE that is off. This arm remains
+            // the only European Folk one that arpeggiates (`celticAir`, `andalusianCadence`,
+            // `nordicFiddle` all false). `sustained` stays false: `.backbeat` means `.struck`,
+            // so the breath-onset generator keeps its phrasing, as in every beat-driven arm.
+            //
+            // ⚠️ AND A LEAD HERE WOULD HAVE BEEN THE ONLY ONE IN THE PRODUCT, which makes a
+            // second, invisible consequence: `BioComposer`'s lead branch carries the ONLY
+            // continuous consumer of `tempoDensityScale`. This genre was silently the one and
+            // only genre whose density thinned with tempo. Nobody decided that either.
             return HarmonicProfile(progression: [0, 4, 3], chordTones: [0, 2, 4],
                                    padOctave: 4, leadOctave: 5, arpeggiated: true,
-                                   leadDensity: 0.55)
+                                   leadDensity: 0.0)
         case .gospelChoir:
             // #1349 G10a — DEGREES, never semitones (the #1286 trap). `[0, 2, 4, 6]` on `major`
             // `[0,2,4,5,7,9,11]` resolves to 0, 4, 7, 11: the MAJOR seventh. Twelve arms carry
