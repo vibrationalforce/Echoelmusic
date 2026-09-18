@@ -2218,6 +2218,13 @@ public enum BioComposer {
     /// Benannt statt eingestreut, damit der Wächter die Zahl LIEST statt sie zu wiederholen
     /// (#416): eine zweite Fassung derselben Entscheidung in `Tests/` wäre genau die Doppelung,
     /// die dieses Repo teuer gelernt hat.
+    ///
+    /// NEEDS-FOUNDER-VERIFY: einen Take mit Pad und Bass laufen lassen (ein gehaltenes Genre wie
+    /// `.selfObservation`, dann ein gestochenes wie `.tangoMarcato`) und auf die TIEFE hören —
+    /// liest sich die unterste Pad-Stimme jetzt als eigene Stimme über dem Bass, oder ist die
+    /// kleine Terz zu eng (dann 5) bzw. unnötig (dann 2)? Kein Test kann das entscheiden: alle
+    /// sechs Ansprüche in `ThePadStaysClearOfTheBassTests` pinnen, dass der Leader das Unisono
+    /// nicht mehr DARF, keiner, dass das Ergebnis besser klingt.
     static let padBassClearance = 3
 
     /// #1362 — Die unterste Tonhöhe, die das Voice-Leading-Fenster eines Pad-Akkords haben darf.
