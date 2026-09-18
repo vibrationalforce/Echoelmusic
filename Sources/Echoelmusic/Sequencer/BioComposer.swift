@@ -2208,6 +2208,32 @@ public enum BioComposer {
         return Swift.max(0, p)
     }
 
+    /// #1362 — WIE WEIT ÜBER DEM BASS DIE UNTERSTE PAD-STIMME MINDESTENS LIEGT, in Halbtönen.
+    ///
+    /// Eine kleine Terz, und die Wahl ist musikalisch, nicht numerisch: ein HALBTON über einem
+    /// gehaltenen Bass ist das schlechtere Intervall als das Unisono, nicht das bessere, und eine
+    /// Quarte kostet Bewegung — Bewegungsarmut IST der Zweck des `VoiceLeader`. Die kleine Terz
+    /// ist der kleinste Abstand, der die unterste Pad-Stimme als EIGENE Stimme lesbar macht.
+    ///
+    /// Benannt statt eingestreut, damit der Wächter die Zahl LIEST statt sie zu wiederholen
+    /// (#416): eine zweite Fassung derselben Entscheidung in `Tests/` wäre genau die Doppelung,
+    /// die dieses Repo teuer gelernt hat.
+    static let padBassClearance = 3
+
+    /// #1362 — Die unterste Tonhöhe, die das Voice-Leading-Fenster eines Pad-Akkords haben darf.
+    ///
+    /// `padBottom` ist die Grundstellung des Akkords (`basePitches.min()`), `bassRoot` die Note,
+    /// die `appendBass` im SELBEN Abschnitt in die Tiefe legt. Ohne den zweiten Term war der Boden
+    /// exakt `bassRoot` — siehe den ⛔-Block an der Aufrufstelle — und der Leader durfte die
+    /// unterste Pad-Stimme auf die Bassnote legen; Bewegungsminimierung zog sie genau dahin.
+    ///
+    /// Rein, deterministisch, ohne RNG. Die Deckelung gegen die OBERGRENZE gehört bewusst NICHT
+    /// hierher (siehe Aufrufstelle). Das `Swift.max(0, …)` ist die MIDI-Untergrenze, kein
+    /// Musik-Argument.
+    static func padRegisterFloor(padBottom: Int, bassRoot: Int) -> Int {
+        Swift.max(0, Swift.max(padBottom - 12, bassRoot + padBassClearance))
+    }
+
     private static func composeHarmonic(key: MusicalKey, profile: HarmonicProfile,
                                         calm: Float, busy: Float,
                                         breathPhase: Float, breathDepth: Float,
@@ -2534,9 +2560,46 @@ public enum BioComposer {
                     voiced = basePitches
                 } else {
                     // Register = the SAME window the legacy shift path can reach:
-                    // the chord's root position ± one whole octave ({−12,0,+12}).
-                    let lo = Swift.max(0, (basePitches.min() ?? 0) - 12)
+                    // the chord's root position ± one whole octave ({−12,0,+12}) —
+                    // MINUS the bass's own note (#1362, below).
                     let hi = Swift.min(127, (basePitches.max() ?? 0) + 12)
+                    // ⛔ #1362 — DER BODEN DIESES FENSTERS WAR EXAKT DIE BASSNOTE, in JEDEM
+                    // Genre und JEDEM Abschnitt, und das ist strukturell beweisbar statt
+                    // geschätzt: `lo` war `basePitches.min() - 12`; `basePitches[0]` ist
+                    // `key.degree(rootDegree, octave: profile.padOctave + octShift) + alt(0)`,
+                    // weil JEDES authored `chordTones` mit 0 beginnt (und der Fallback oben
+                    // [0,2,4] ist); `MusicalKey.degree` rechnet `base = (octave+1)*12 + root`,
+                    // also liegen zwei Oktaven exakt 12 auseinander; und `bassOct` ist
+                    // `padOctave - 1 + octShift` mit padOctave >= 2, so dass sein `max(0, …)`
+                    // nie greift. Also war `lo` IDENTISCH `key.degree(rootDegree, octave:
+                    // bassOct) + alt(0)` — also `bassRoot` unten, die Note, die `appendBass`
+                    // eine Zeile weiter oben in DENSELBEN Abschnitt legt. Der Leader DARF die
+                    // unterste Pad-Stimme dorthin legen, und Bewegungsminimierung zieht sie
+                    // genau dahin: zwei verschiedene Synth-Stimmen auf demselben Grundton, was
+                    // die Tiefe matschig macht und den Akkord seiner Basis beraubt.
+                    //   Nachzurechnen (die Prämisse, nicht die Folge):
+                    //     grep -o "chordTones: \[[^]]*\]" Sources/Echoelmusic/Sequencer/MusicStyle.swift \
+                    //       | sed 's/chordTones: \[//' | cut -d, -f1 | sort | uniq -c
+                    //     grep -o "padOctave: [0-9]*" Sources/Echoelmusic/Sequencer/MusicStyle.swift | sort | uniq -c
+                    // ⚠️ WIE OFT der Leader den Boden tatsächlich WÄHLT, wurde in #1362 nur
+                    // SIMULIERT und ist aus dem Repo nicht re-derivierbar — die Zahl steht
+                    // deshalb bewusst nirgends (#818). Beweisbar ist, dass er es DARF.
+                    // ⭐ WARUM eine kleine Terz und nicht ein Halbton oder eine Quarte, steht
+                    // EINMAL — am `padBassClearance` selbst (#416), nicht hier.
+                    // Sicher für `VoiceLeader`: ein um drei Halbtöne verengtes Fenster bleibt
+                    // über eine Oktave breit, und `candidateVoicings` fällt ohnehin auf
+                    // `fullPool` zurück, `rankedCandidates` auf `fallbackStack`.
+                    let bassRoot = key.degree(rootDegree, octave: bassOct)
+                        + ChordSuggest.alteration(forToneOffset: 0,
+                                                  degreesPerOctave: key.degreesPerOctave,
+                                                  in: secAlts)
+                    // `Swift.min(…, hi)`: die Untergrenze darf die Obergrenze nie überholen —
+                    // `lo...hi` würde sonst fallen (fatalError), und ein Stürzen ist in einer
+                    // Live-Performance die teuerste Sorte Fehler. Sie steht HIER und nicht in
+                    // `padRegisterFloor`, weil die Obergrenze nicht zur Bodenfrage gehört: der
+                    // Boden ist eine Aussage über den Bass, die Deckelung eine über den Bereich.
+                    let lo = Swift.min(padRegisterFloor(padBottom: basePitches.min() ?? 0,
+                                                        bassRoot: bassRoot), hi)
                     // Per-chord skeleton seed, derived WITHOUT consuming either
                     // RNG stream (same golden-ratio mix as humanizeVelocity) so
                     // progression/lead structure stays identical to the OFF path.
