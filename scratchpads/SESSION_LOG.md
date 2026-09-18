@@ -33695,3 +33695,41 @@ Eigenschaften von `MusicStyle`) war das Instrument, das einen echten Befund lief
 breite nicht. **Das wird hier notiert, damit die nächste Sitzung den Sweep nicht noch einmal
 fährt und für eine Fundgrube hält.** `HarmonicProfile` wurde ebenfalls vollständig geprüft:
 alle sieben Felder haben echte Verbraucher — sauber.
+
+## 2026-09-18 — Gate-Lesung für #1367 bis #1370, gesammelt
+
+| Scheibe | Lauf | Beleg |
+|---|---|---|
+| #1366 | `f005a1d` 35395618707 | `Build for Testing` = success |
+| #1367 | `f8cf213` 35396049349 | `Build for Testing` = success |
+| #1368 | `9e86075` 35396418070 | `Build for Testing` = success — die einzige der vier mit neuem ausführbarem Swift |
+| #1369 | `786acbe` 35397667461 | `Xcode Compile Check` = success — Doc-Kommentare in `Sources/`, und das ist genau das Gate, das `Sources/` baut |
+| #1370 | — | reines Markdown in `Tests/CISmoke/CLAUDE.md`; **es gibt nichts zu kompilieren**, und das wird gesagt statt ein Gate dafür zu zitieren |
+
+⭐ **WELCHES GATE WELCHE AUSSAGE TRÄGT — #1370 auf sich selbst angewandt, eine Stunde nachdem
+es geschrieben wurde.** Die zwei Doc-Scheiben (#1367, #1369) ändern `Sources/`, also trägt sie
+der **Compile Check** (Release/Gerät). Die Testcode-Scheibe (#1368) ändert `Tests/CISmoke`,
+also trägt sie **`Build for Testing`** (Debug/Simulator) — der Compile Check könnte über sie
+gar nichts sagen. Und #1370 ändert Markdown, also trägt sie **keines von beiden**, und das ist
+kein Mangel, sondern die richtige Antwort. Vor #1370 hätte ich hier plausibel „beide Gates
+grün" geschrieben und damit vier verschiedene Belege zu einem verrührt.
+
+`Run Tests` meldet auf jedem Lauf `failure` (#396). Ehrlich für alle vier:
+**kompiliert nachweislich, Ausführung unbelegt** (#445/#807).
+
+⭐ **ZWEI BEOBACHTUNGEN ÜBER DIE INSTRUMENTE, beide heute zum ersten Mal selbst gemessen:**
+
+**(1) Die stale-page-Lage aus §5, live gesehen.** Eine Monitor-Meldung nannte Lauf
+35395618707 noch `queued`, während ein direkter Lauf-Abruf denselben Lauf als `in_progress`
+mit `Build for Testing = success` zeigte. Genau das Phänomen, vor dem §5 warnt: eine
+Listen-Abfrage kann eine veraltete Replik treffen, und **nichts in der Antwort sagt das**. Der
+dort genannte Diskriminator hat funktioniert — **den LAUF direkt lesen, nicht die Liste**.
+
+**(2) Die Push-Folge kostet Compile-Check-Lesungen, und das ist jetzt aufgeschrieben (#1370).**
+Drei Compile Checks dieser Runde wurden von einem jeweils folgenden Push abgebrochen
+(`f005a1d`, `f8cf213`, `9e86075`, `c28da59`), weil `xcode-compile-check.yml`
+`cancel-in-progress` setzt und `ci.yml` nicht. Die `Build for Testing`-Lesungen gingen
+deshalb ALLE ein, die Compile Checks nur der jeweils letzte. Für diese Runde folgenlos — alle
+vier Scheiben sind Kommentare oder Testcode, keine berührt einen Release- oder
+geräte-only-Pfad —, aber die Bedingung, unter der es NICHT folgenlos wäre, steht jetzt in §5
+statt in niemandes Kopf.
