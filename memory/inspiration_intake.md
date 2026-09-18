@@ -852,3 +852,54 @@ Agent-Framework — Pipeline-only, wie jede Skill-Inspiration davor.
 **Nebenbefund, NICHT in dieser Scheibe repariert:** `inspiration.csv` hat **13 fehlerhafte
 Zeilen** (Index 108 mit 9 Spalten, 140–151 mit 7 statt 8) — ein unmaskiertes Komma und eine
 fehlende Spalte. Die Datei ist die, die `vision-gate` liest. Eigene Scheibe.
+
+## 2026-09-18 — „Code Guardian repo skill installieren?" (Founder-Frage)
+
+**Erstes Ergebnis der Recherche: „Code Guardian" ist nicht EIN Ding.** Mindestens fünf
+verschiedene Projekte tragen den Namen — `dam-agents/code-guardian` (PR-Review-Agent auf der
+Claude-Code-Harness), `Nitishjha7/code-guardian`, ein CodeGuardian-**MCP-Server** (11 Werkzeuge,
+Qualität + Security), **Code Guardian Studio** (113+ MCP-Werkzeuge, „AI safety layer", open-core),
+und **Project CodeGuard** (CoSAI/OASIS, Security-Regelwerk). „Installieren wir Code Guardian" ist
+also keine wohldefinierte Handlung, und das ist der erste Befund, nicht die Einleitung.
+
+**⚠️ ABDECKUNG, weil eine Empfehlung ohne sie keine ist:** von fünf Kandidaten konnte ich DREI
+lesen. `codeguardian.studio` und der InfoQ-Artikel über den MCP-Server sind vom Egress-Proxy
+blockiert (`EGRESS_BLOCKED`) — über diese zwei weiß ich nur, was Suchtreffer-Schnipsel sagen, und
+darauf gründet hier keine Empfehlung.
+
+**Der entscheidende Befund ist aber gar keiner ÜBER Code Guardian, sondern über dieses Repo:**
+der wahrscheinlichste Kandidat reviewt PULL REQUESTS, und **dieses Repo hat keinen PR-Fluss
+mehr.** Gemessen: neuester PR **#419, geschlossen 2026-08-26**; einziger offener **#399 vom
+2026-02-17** (sieben Monate alt); **233 Commits** sind seither auf `main` gelandet, jeder einzelne
+per `auto-merge-claude.yml` DIREKT gepusht. Ein PR-Reviewer hätte null Gegenstand. Das ist keine
+Geschmacksfrage und kein Vorwurf an das Werkzeug — es ist die Frage, ob der Haken in die Wand
+passt, und sie wird mit zwei API-Aufrufen beantwortet.
+
+**Was das Repo statt dessen schon hat**, und warum die Lücke woanders liegt: 526 blockierende
+Wächter, 16 Prüfskripte, und die `doctor`-Skill, die etwas prüft, das KEINER der fünf Kandidaten
+anbietet — ob die MESSGERÄTE ehrlich sind (maskierte Gates, veraltete Kommandos, türlose Flächen,
+gedriftete Zahlen). Ein externer Reviewer prüft den Code. Dieses Repo hat bereits zweimal teuer
+gelernt, dass sein Problem die Ebene DARÜBER ist.
+
+⭐ **Und die Kosten, die kein Anbieter nennt: KONTEXT ist hier die knappste Ressource.** Die
+immer geladene Fläche ist **166 414 B** (`CLAUDE.md` 149 182 + drei Regeldateien), Autocompact
+feuert bei 50 %, und `TheLawFileStaysUnderItsCeilingTests` hat eine Decke von 150 000 B auf
+`CLAUDE.md` allein — 818 B Kopfraum. Ein MCP-Server mit 11 oder gar 113 Werkzeugen schreibt seine
+Schemata in JEDE künftige Anfrage JEDER künftigen Sitzung. Das ist der Posten, der in keiner
+README steht und der hier am meisten wehtut.
+
+**Verdikte** (Zeilen in `inspiration.csv`): `dam-agents/code-guardian` = **REJECT** (kein
+Gegenstand; dazu 1 Stern, 0 Forks, und er verlangt ein Bot-Konto mit `repo`-scope als
+Collaborator). `cosai-oasis/project-codeguard` = **WATCH** (echte Governance, 338 Sterne,
+CC BY 4.0, Markdown-Regeln statt Abhängigkeit — aber seine Themen sind Krypto, Auth,
+Supply-Chain, Cloud, und Echoel hat null Server, null externe Deps, keine Auth und genau EINEN
+Netz-Eingang. Als LESESTOFF für den OSC-Steuerempfänger und die Entitlements wertvoll, nicht als
+Installation.)
+
+⚠️ **Was WIRKLICH fehlt, und es ist nicht das, was Code Guardian verkauft:** `auto-merge-claude
+.yml` wartet auf KEIN Gate (#683) — kein `needs:`, kein `workflow_run:`, keine fremde Conclusion.
+#681 ist am `Xcode Compile Check` gescheitert und stand trotzdem auf `main`; `d78b249` stellte ein
+nicht bauendes Test-Bündel dort ab (#1337). Das repariert kein Reviewer, sondern eine Zeile
+`needs:` — und die ist **founder-gated** (`.github/workflows/**` = berichten, nicht editieren).
+Ein PR-Review-Agent auf einen Fluss ohne PRs zu setzen, während der eigentliche Defekt eine
+ungeprüfte Direkt-Push-Route ist, wäre ein Schloss an einer Tür neben dem offenen Fenster.
