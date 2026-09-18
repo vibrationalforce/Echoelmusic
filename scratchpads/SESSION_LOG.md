@@ -33548,9 +33548,9 @@ und musikalisch der größte bisher. Gemessen über 354 Quelldateien, kommentarf
 Per-Genre-Eigenschaften haben **drei NULL Leser in ganz `Sources/`**: `lineage`, `isBeatDriven`,
 `defaultMode`. (`subcategory` hat einen internen Leser, `category` leitet daraus ab.)
 
-`defaultMode` ist über **neun** Genres auskurier — acht Pad/Drone/Ambient plus `celticAir` →
-`.flowFree`, alles andere über den `default:`-Arm `.studioLocked` — und trägt **drei ⛔-Blöcke
-aus drei Scheiben** (#254, #1285, #1290), die künftige Sitzungen warnen, ein Auslassen sei „die
+`defaultMode` ist über **neun von 40 angebotenen** Genres auskurier — acht Pad/Drone/Ambient
+plus `celticAir` → `.flowFree`, die anderen 31 über den `default:`-Arm `.studioLocked` — und
+trägt **drei ⛔-Blöcke aus drei Scheiben** (#254, #1285, #1290), die künftige Sitzungen warnen, ein Auslassen sei „die
 Sorte falscher Default, die ein Compiler nicht fangen kann". ⭐ **Die WÄCHTER lesen es wirklich**
 — `GenreBatchElevenATests.swift:264` reicht sogar `mode: style.defaultMode` in einen
 Komponisten-Aufruf. **Der Test fährt also den Modus, den das Genre will; die App kann es nicht.**
@@ -33581,3 +33581,36 @@ UNSICHTBARKEIT des Defekts ist meine, billig und reversibel. Nächste Scheibe is
 Wächter nach dem #527/#541-Muster (`TheAudioLanesHaveNoProducerTests`,
 `TheTempoDestinationHasNoRouteTests`): er verbietet nichts (#364), er macht die Abwesenheit
 sichtbar und nennt die Prosa, die am Tag der Verdrahtung mitzuziehen ist.
+
+## 2026-09-18 — #1365: der `defaultMode`-Befund bekommt einen Wächter (die Verhaltens-Hälfte bleibt beim Founder)
+
+`Tests/CISmoke/TheGenreDefaultModeHasNoReaderTests.swift`, fünf Ansprüche, Bauform #527/#541:
+er **verbietet die Verdrahtung ausdrücklich nicht** (#364), er macht die Abwesenheit sichtbar
+und nennt in der Fehlermeldung von Anspruch 1 die vier Prosa-Stellen, die am Tag der
+Verdrahtung mitzuziehen sind. Anspruch 5 ist der, der die FALSCHE Reparatur fängt: heute wird
+`ComposerMode` in `Sources/` nur auf zwei Arten gebaut — `(locked:)` aus dem sichtbaren Schloss
+und `(rawValue:)` aus einem geöffneten Projekt, beides T1-(a)-Nutzer-Gesten. Eine dritte Form
+wäre ein Modus-Schreiber, den der Spieler nicht sieht. Gezählt wird eine GLEICHHEIT, keine Zahl.
+
+**Gradierung, ehrlich (§3): reiner FORWARD/GEGENGEWICHT-Wächter — ZERO Regressionen.** #1365
+ändert keinen Code, also sind alle fünf Ansprüche auf BEIDEN Bäumen grün, von Bauart wegen.
+Einen davon als Regression zu buchen wäre #433. Der Wert liegt vollständig darin, was sie
+SPÄTER rot machen. Fünf Mutanten gefahren, alle gefangen (Produktions-Leser → 1 · Test-Lesungen
+weg → 2 · `.flowFree`-Arm gekürzt → 3 · `default:`-Arm gedreht → 3 und 4 · dritte
+`ComposerMode(`-Form → 5).
+
+**ZWEI EIGENE ZAHL-FEHLER, beide beim Messen gefangen, beide in der beruhigenden Richtung:**
+1. **Ich schrieb „9 von 42 angebotenen Genres"; es sind 40.** Die 42 kam aus einem Zählen OHNE
+   Kommentar-Stripper — zwei Genre-Namen, die INNERHALB der `offered`-Liste in Kommentaren
+   stehen, wurden mitgezählt. Aufgefallen ist es nur, weil 9 + 31 ≠ 42 war: **die Kontrollsumme
+   war die Messung, nicht der Zähler.** Die Zeile oben ist korrigiert; 40 ist auch die Zahl, die
+   der S1-Befund desselben Tages benutzt.
+2. **Der Wächter-Kopf behauptete, `SourceText.codeOnly` sei hier TRAGEND — er ist
+   PROPHYLAKTISCH, 0 von 1 Verdikten kippen.** `.defaultMode` kommt in `Sources/` roh NULL Mal
+   vor; die neun Kommentartreffer sind `defaultMode` OHNE den Punkt. §5 dieses Verzeichnisses
+   sagt, drei Scheiben hätten „tragend" ohne Messung behauptet und zurückziehen müssen — das
+   wäre die vierte gewesen. ⭐ Und die Messung hat etwas gerettet, das die Falschbehauptung
+   verdeckte: **der PUNKT in der Nadel ist das, was Anspruch 1 überhaupt sinnvoll macht.** Ohne
+   ihn träfe die Nadel die neun Prosa-Stellen UND die Deklaration, und der Anspruch wäre vom
+   ersten Tag an rot — auf korrektem Baum, für seine eigene Dokumentation. Der Stripper allein
+   hätte das nicht gerettet: die Deklaration ist Code.
