@@ -85,8 +85,30 @@ final class TheGenreDefaultModeHasNoReaderTests: XCTestCase {
 
     // MARK: - claim 1 — NULL Produktions-Leser
 
+    /// ⛔ **DIE NADEL WAR ZUERST `".defaultMode"` — MIT PUNKT — UND DAS IST ZU ENG (#1368).**
+    /// Ein Leser INNERHALB von `MusicStyle.swift` schreibt `defaultMode` ohne Punkt (implizites
+    /// `self`), und eine punkt-verlangende Nadel sieht ihn nicht. Heute ändert das nichts —
+    /// gemessen ohne Punkt kommt `defaultMode` in ganz `Sources/` **genau einmal** vor, nämlich
+    /// in seiner eigenen Deklaration —, aber die Zusicherung wäre ab dem Tag still grün, an dem
+    /// jemand die Eigenschaft eine Zeile unter ihr benutzt.
+    ///
+    /// ⭐ **GEFUNDEN DURCH EINEN FEHLALARM AN ANDERER STELLE, und deshalb steht er hier:**
+    /// derselbe punkt-verlangende Zensus meldete `GenreFXPreset.delaySync` als „nirgends
+    /// gelesen". Es wird sehr wohl gelesen — `GenreFX.swift:237`,
+    /// `chain.delay.timeSeconds = delaySync.clampedSeconds(bpm:in:)`, implizites `self`, und
+    /// **63 Genres schreiben dort eine Notenteilung**. Ein Instrument, das in EINE Richtung
+    /// falsch liegt, liegt auch in die andere falsch; der Fehlalarm war die billige Hälfte, die
+    /// stille Grüne wäre die teure gewesen.
+    ///
+    /// ⚠️ Deshalb zählt dieser Anspruch jetzt die WORTGRENZE und erlaubt genau EIN Vorkommen in
+    /// der Datei, die die Eigenschaft deklariert. Das ist absichtlich eine Zahl und trotzdem
+    /// kein #903-Zählpin: sie ist nicht aus dem Baum ABGELESEN, sondern strukturell — eine
+    /// Deklaration —, und jedes zweite Vorkommen ist genau das Ereignis, für das der Wächter
+    /// existiert. `SourceText.codeOnly` hält Prosa draußen; ein String-Literal mit dem Wort
+    /// würde treffen, und das ist die einzige bekannte Fehlalarm-Form (heute keine).
+
     func testNothingUnderSourcesReadsTheGenresDefaultMode() throws {
-        let hits = try sourceFilesWith(".defaultMode")
+        let hits = try sourceSitesNaming("defaultMode", declaredIn: "MusicStyle.swift")
         XCTAssertTrue(hits.isEmpty, """
             `MusicStyle.defaultMode` hat jetzt einen Leser in `Sources/`: \(hits).
 
@@ -223,14 +245,45 @@ final class TheGenreDefaultModeHasNoReaderTests: XCTestCase {
         return out
     }
 
-    /// Dateinamen unter `Sources/`, deren KOMMENTARFREIER Text die Nadel trägt.
-    private func sourceFilesWith(_ needle: String) throws -> [String] {
+    /// Jede Stelle unter `Sources/`, die `name` als GANZES WORT nennt — mit oder ohne Punkt,
+    /// also auch ein implizites `self` —, außer der einen Deklaration in `declaredIn`.
+    ///
+    /// Siehe den ⛔-Block über Anspruch 1: die punkt-verlangende Vorgängerin konnte einen Leser
+    /// in der deklarierenden Datei nicht sehen, und derselbe Zensus hatte an anderer Stelle
+    /// schon in die Gegenrichtung geirrt.
+    private func sourceSitesNaming(_ name: String, declaredIn owner: String) throws -> [String] {
         var out: [String] = []
         for f in try swiftFiles(under: "Sources") {
             let code = SourceText.codeOnly(try String(contentsOf: f, encoding: .utf8))
-            if code.contains(needle) { out.append(f.lastPathComponent) }
+            let n = wordOccurrences(of: name, in: code)
+            let allowed = f.lastPathComponent == owner ? 1 : 0
+            if n > allowed { out.append("\(f.lastPathComponent) (\(n), erlaubt \(allowed))") }
         }
         return out.sorted()
+    }
+
+    /// Vorkommen von `word` mit Wortgrenzen auf BEIDEN Seiten. Ein `.` links ist KEINE
+    /// Wortgrenze im Sinn dieser Frage — `style.defaultMode` soll treffen —, ein Buchstabe,
+    /// eine Ziffer oder `_` schon: `defaultModeRaw` ist ein anderer Bezeichner.
+    ///
+    /// ⚠️ **HEISST ABSICHTLICH NICHT `occurrences(of:in:)`**, obwohl acht Dateien dieses Bündels
+    /// genau so eine private Hilfe deklarieren: die zählen TEILKETTEN, diese zählt WÖRTER. Das
+    /// ist die `slice(…, from:, to:)`-Falle aus `Tests/CISmoke/CLAUDE.md` §2 — zwei Familien
+    /// unter einem Namen, und wer die Nachbarin nach ihrem NAMEN kopiert statt nach ihrem
+    /// Rumpf, bekommt die andere Bedeutung. Der abweichende Name ist hier die Absicherung, und
+    /// er ist billiger als eine Migration von acht Dateien.
+    private func wordOccurrences(of word: String, in text: String) -> Int {
+        func isIdent(_ c: Character) -> Bool { c.isLetter || c.isNumber || c == "_" }
+        var count = 0
+        var idx = text.startIndex
+        while let r = text.range(of: word, range: idx..<text.endIndex) {
+            let beforeOK = r.lowerBound == text.startIndex
+                || !isIdent(text[text.index(before: r.lowerBound)])
+            let afterOK = r.upperBound == text.endIndex || !isIdent(text[r.upperBound])
+            if beforeOK && afterOK { count += 1 }
+            idx = r.upperBound
+        }
+        return count
     }
 
     /// Dasselbe über das blockierende Bündel — ohne DIESE Datei, deren eigener Text die Nadel
