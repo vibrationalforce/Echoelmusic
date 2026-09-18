@@ -165,6 +165,16 @@ public struct IdiomControl: Equatable, Sendable {
     public var rootOffset: Int { pick(envelope.rootOffsets, channel: 0x1) }
 
     /// How far this take leans in register, in octaves, inside the envelope's range.
+    ///
+    /// ⛔ **KEIN VERBRAUCHER — gemessen 2026-09-18 über alle `Sources/`-Dateien, kommentarfrei:
+    /// `.registerOffset` hat NULL Leser, `.cellIndex` ebenfalls, `.rootOffset` genau einen
+    /// (`BioComposer`).** Der Hüllkurven-Typ bietet also DREI Variationsachsen an und genau
+    /// EINE landet. Heute folgenlos, weil `idiomProfile` für jedes Genre `nil` gibt (siehe
+    /// dessen eigenen ⚠️-Block, der das ausdrücklich als Opt-in-Entwurf benennt) — **aber
+    /// genau deshalb steht es hier und nicht in einer Notiz:** wer für G5…G15 die erste echte
+    /// Hüllkurve schreibt, schreibt sie mit `registerDrift:` und `cellChoices:` in der Hand,
+    /// bekommt ein Drittel davon, und nichts sagt ihm warum. Wer eine dieser beiden Achsen
+    /// verdrahtet, zieht diesen Block mit (#456) und den `cellIndex`-Block darunter.
     public var registerOffset: Int {
         let lo = envelope.registerDrift.lowerBound
         let hi = envelope.registerDrift.upperBound
@@ -173,6 +183,9 @@ public struct IdiomControl: Equatable, Sendable {
     }
 
     /// Which authored cell this take plays.
+    ///
+    /// ⛔ **KEIN VERBRAUCHER**, dieselbe Messung und derselbe Grund wie bei `registerOffset`
+    /// darüber — dort steht die Herleitung, hier steht sie NICHT noch einmal (#416).
     public var cellIndex: Int { pick(envelope.cellChoices, channel: 0x3) }
 }
 
