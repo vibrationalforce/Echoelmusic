@@ -33492,3 +33492,92 @@ Register hinweg gleich laut klingen, ist eine eigene Frage — #1361 hat die PAT
 angeglichen (`loudnessNormalized()`), nicht die REGISTER-Lautheit (dieselbe Stimme auf C2 gegen
 C6). Das ist eine Ohrfrage und wird hier NICHT als Scheibe erfunden; wenn der Founder sie hört,
 bekommt sie ihre eigene Messung.
+
+## 2026-09-18 — #1364: die vierte Character-Stempelstelle zieht den Delay-Teiler nach (`303ec22`)
+
+**Der Defekt, gemessen.** Vier Stellen stempeln einen FX-Character auf jede Kette, und jeder
+Stempel setzt eine Delay-ZEIT. Drei rufen unmittelbar danach `applyDelaySync(bpm:)` und machen
+die Kette zu dem, was der sichtbare Teiler-Picker ANZEIGT. Die vierte — `FXViewModel
+.applyCharacter` in der FX-Fläche — tat es nicht. Nach einem Tap auf „Cassette" zeigte der
+Studio-Picker (`delaySync`, `@State`, Default punktierte 1/8) eine Notenteilung an, die keine
+Kette hielt. Der Defekt war in VIER Zuhausen als UNBEHOBEN dokumentiert; alle vier sind im
+selben Commit zurückgenommen (#456).
+
+**Die Reparatur.** Eine injizierte `resyncDelayDivision`-Closure, vom Studio mit
+`applyDelaySync(bpm: currentTempo)` gefüllt — `currentTempo`, nicht das bei `init` eingefrorene
+`pattern.tempo` der FX-Fläche (EINE autoritative Zahl, dieselbe Regel, die der Open-Take-Pfad
+über seinem eigenen Aufruf notiert). Sie läuft **VOR** `reseed()`, und das ist das ganze Gesetz:
+`reseed()` liest `c.delay.timeSeconds` in den `delayTime`-Spiegel zurück, andersherum wäre die
+Lüge nur eine Fläche weiter gewandert.
+
+**Der Preis, genannt statt versteckt:** die vom Character AUTORISIERTE Delay-Zeit geht hier
+jetzt genauso verloren wie an den drei anderen Stellen. Seine sieben übrigen Delay-Felder
+tragen weiterhin seinen Charakter.
+
+**DREI EIGENE FEHLER, im selben Durchgang gefunden und repariert — alle drei in der
+beruhigenden Richtung:**
+1. **Die neue Property saß ZWISCHEN `allChains`' Doc-Block und `allChains`.** Der ganze
+   #318-Absatz hätte damit meine Closure dokumentiert, und `allChains` — die Zeile, aus der
+   eine Sitzung die Reichweite dieser Fläche liest — wäre undokumentiert gewesen. **Ein
+   eingefügtes Member erbt den Doc-Block seines Nachbarn, und nichts wird davon rot.**
+2. **Anspruch 3 rechnete zweimal falsch, beide Male zu einer ZU NIEDRIGEN Schwelle.**
+   (a) „die Deklaration zählt nicht mit" — doch, `applyDelaySync(bpm: Double)` enthält die
+   Nadel als Teilkette. (b) „drei alte" verwechselte Character-STEMPEL mit AUFRUFSTELLEN; es
+   sind vier (die Delay-Einschaltzeile aus #240 ist keine Stempelstelle). Gemessen: Eltern 5,
+   heute 6. **Zwei verschiedene Fragen, und ich hatte die Antwort der einen auf die andere
+   gelegt** — die Prosa („die drei anderen") war die ganze Zeit richtig.
+3. **Die Mutanten-Tabelle war GESCHÄTZT statt gefahren** und lag bei zweien daneben. Eine
+   Mutanten-Tabelle aus dem Kopf behauptet Deckung, die niemand geprüft hat.
+
+**Gradierung (§0).** Vier Ansprüche, gegen BEIDE Bäume gefahren, mit einer zeilengetreuen
+Portierung von `SourceText.codeOnly` und der klammermatchenden Rumpf-Hilfe — nicht mit einem
+Nachbau davon (die #1362-Lehre). Am Eltern-Stand `5f24b28` **alle vier ROT**. Sechs Mutanten
+gelandet und gemessen, keiner entkam. Acht Checker plus `needle-reachability`,
+`window-margins`, `doorless-state`: alle Exit 0.
+
+**Gate-Lesung `303ec22`.** `Xcode Compile Check` 35392853326 = **success** (`Sources/`).
+CI/CD 35392853405, Schritt **`Build for Testing` = success** — also kompiliert
+`Tests/CISmoke` und damit der neue Wächter. `Run Tests` meldet wie auf jedem Push `failure`
+(#396); die Conclusion sagt darüber nichts. Ehrlich formuliert: **kompiliert nachweislich,
+Ausführung nach #445/#807 unbelegt**, solange kein Testname im `tail -200`-Fenster steht.
+
+### BEFUND für die nächste Scheibe (gemessen, read-only): `MusicStyle.defaultMode` erreicht die App nie
+
+Dieselbe Gattung wie #1363 — ein von Hand auskurierter Per-Genre-Wert, der auf nichts landet —
+und musikalisch der größte bisher. Gemessen über 354 Quelldateien, kommentarfrei: von 17
+Per-Genre-Eigenschaften haben **drei NULL Leser in ganz `Sources/`**: `lineage`, `isBeatDriven`,
+`defaultMode`. (`subcategory` hat einen internen Leser, `category` leitet daraus ab.)
+
+`defaultMode` ist über **neun** Genres auskurier — acht Pad/Drone/Ambient plus `celticAir` →
+`.flowFree`, alles andere über den `default:`-Arm `.studioLocked` — und trägt **drei ⛔-Blöcke
+aus drei Scheiben** (#254, #1285, #1290), die künftige Sitzungen warnen, ein Auslassen sei „die
+Sorte falscher Default, die ein Compiler nicht fangen kann". ⭐ **Die WÄCHTER lesen es wirklich**
+— `GenreBatchElevenATests.swift:264` reicht sogar `mode: style.defaultMode` in einen
+Komponisten-Aufruf. **Der Test fährt also den Modus, den das Genre will; die App kann es nicht.**
+Ihre einzige Modus-Quelle ist `ComposerMode(locked: lockBPM)` (`EchoelStudioView.swift:10188`
+und `:11186`), also der sichtbare BPM-Schloss-Knopf; `.meditative` kommt außerhalb von
+`MusicStyle.swift` NIRGENDS vor, es gibt also auch keinen zweiten Sonderweg. **Konsequenz in
+Klang:** „Still Meditation" oder „Glacial Field" bei eingeschaltetem Schloss ergibt einen
+grid-gelockten 50-BPM-Pad — exakt das, was der #1285-Kommentar für verhindert hält.
+
+⛔ **WAS DIE REPARATUR NICHT SEIN DARF:** `defaultMode` über das Schloss gewinnen zu lassen wäre
+#240/#1364 in Reinform — ein verborgener Wert, der ein sichtbares Bedienelement überstimmt — und
+T1 zählt die Tempo-Quellen auf, ein stiller Schreiber wäre eine sechste, unbenannte.
+
+**Council (Kurzform).** Vision-Keeper dafür (neun Genres sind atem-getaktet, die App gittert sie
+fest — das Instrument widerspricht seiner eigenen Prämisse) · Skeptiker gegen die UNBEDINGTE
+Form (wer live bei 124 gelockt hat und ein Pad-Genre antippt, verliert sein Tempo an die
+Herzrate) · Architect: ein weiterer `lockBPM`-Schreiber — gemessen hat der Flag aber **bereits
+drei Türen** (`EchoelStudioView.swift:4760`), ein vierter ist also keine neue Gattung ·
+Shipper: es ist KEINE Zeile — es gibt **kein `onChange(of: style)`**, und der #356-Präzedenzfall
+verlangt für jeden Lock-Umschlag zusätzlich einen Recompose-Post und einen sichtbaren Hinweis.
+→ **Empfehlung ASYMMETRISCH**, die #1300-Lehre, die schon im Gesetz steht: ein `.flowFree`-Genre
+ENTSPERRT, ein `.studioLocked`-Genre sperrt NICHT zurück — dann kostet es niemanden seinen selbst
+gesetzten Lock außer bei den neun Genres, die genau das wollen.
+
+⚠️ **Gate: die VERHALTENS-Hälfte ist founder-gated und wird berichtet, nicht gebaut.** Wie sich
+das Instrument mitten in einer Performance anfühlt, ist eine Entscheidung des Founders; die
+UNSICHTBARKEIT des Defekts ist meine, billig und reversibel. Nächste Scheibe ist deshalb der
+Wächter nach dem #527/#541-Muster (`TheAudioLanesHaveNoProducerTests`,
+`TheTempoDestinationHasNoRouteTests`): er verbietet nichts (#364), er macht die Abwesenheit
+sichtbar und nennt die Prosa, die am Tag der Verdrahtung mitzuziehen ist.
