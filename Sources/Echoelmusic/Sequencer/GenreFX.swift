@@ -204,23 +204,39 @@ public struct GenreFXPreset: Sendable, Equatable {
     /// writes only the injected chain (`synth.fxChain`), never `touchSynth?.fxChain` — #240's
     /// other half, on a surface #240 did not reach", and #318 closed exactly that: `FXViewModel`
     /// now writes an `allChains` inventory built from `characterFXChains`, so the fourth stamp
-    /// site reaches every sounding chain like the other three. What survives is the FIRST half —
-    /// no `applyDelaySync` follows `applyCharacter`, so the picker can still display a division
-    /// the chains do not hold. (The commit that fixed the reach quoted THIS sentence as its
-    /// evidence and would have left it standing as a present-tense claim; a doc cited as proof
-    /// of a defect has to be re-read the moment the defect is gone.) A genre preset is not
-    /// involved (`.auto` is filtered out of that menu), so the claim below about GENRE divisions
-    /// still stands; the absolute did not. Whoever finishes the DIVISION fix must cover four
-    /// sites, not three.
+    /// site reaches every sounding chain like the other three.
+    ///
+    /// ⛔ **AND THE FIRST HALF IS SPENT TOO, SINCE #1364 — which is the same trap one turn
+    /// later, sprung by the commit that repaired it.** It read: "no `applyDelaySync` follows
+    /// `applyCharacter`, so the picker can still display a division the chains do not hold …
+    /// Whoever finishes the DIVISION fix must cover four sites, not three." #1364 IS that fix
+    /// for this path — one does follow now — and it rewrote the ⭐ paragraph above while leaving
+    /// these two sentences asserting the defect as present tense, **in the same paragraph whose
+    /// own warning is that "a doc cited as proof of a defect has to be re-read the moment the
+    /// defect is gone".** Quoting that warning is not the same as obeying it. The durable rule
+    /// is narrower than #456 and worth stating on its own: **a repair travels to every home,
+    /// and a long paragraph is more than one home.**
+    ///
+    /// A genre preset is not involved in that menu (`.auto` is filtered out), so the claim below
+    /// about GENRE divisions never depended on any of this and still stands unchanged.
     ///
     /// That is DELIBERATE, not a bug to undo here: it is the resolution of #240, guarded by
     /// `Tests/CISmoke/DelayReachesEveryChainTests` — a visible control must not display one
     /// division while the chain plays another, and `delaySync` is not part of the saved
     /// `Project`, so restoring a genre's division would be a schema change.
     ///
-    /// The consequence is nonetheless a real, unfixed defect: **29 authored per-genre delay
-    /// divisions never reach the audio, and every genre shares whatever one division the picker
-    /// holds.** That is a far bigger delay-axis collapse than any preset-level tuning, and it is
+    /// The consequence is nonetheless a real, unfixed defect: **every authored delay division in
+    /// this file never reaches the audio, and every genre shares whatever one division the
+    /// picker holds.** ⛔ A COUNT STOOD HERE ("29 authored per-genre delay divisions") AND HAS
+    /// AGED — measured 2026-09-18 there are **53** `delaySync:` construction sites in this file.
+    /// Deleted rather than refreshed (#818): a number in prose is a date, nothing re-derives it,
+    /// and the *shape* of the defect never depended on it. Re-derive, and note that the second
+    /// command is the one that says how much curation collapses:
+    ///     grep -c "delaySync: TempoSyncOption(" Sources/Echoelmusic/Sequencer/GenreFX.swift
+    ///     grep -o "delaySync: TempoSyncOption([^)]*)" Sources/…/GenreFX.swift | sort -u | wc -l
+    /// The second returned **10 distinct note divisions** — dotted eighth through half-triplet —
+    /// and all ten resolve to the single value the picker holds. That is a far bigger delay-axis
+    /// collapse than any preset-level tuning, and it is
     /// tracked separately as a founder decision (the honest fix is for a genre change to SET
     /// `delaySync` so the picker shows the genre's own division and then stamps it — making both
     /// true instead of picking a winner).
