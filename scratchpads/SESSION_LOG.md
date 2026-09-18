@@ -33367,3 +33367,80 @@ der Leader das Unisono nicht mehr DARF. NEEDS-FOUNDER-VERIFY an `padBassClearanc
 beantwortbaren Frage (zu eng → 5, unnötig → 2) statt „klingt es gut".
 
 Commits: `ccf0c47` (#1362), `e5b3157` (#1362b). Alle elf Prüfer exit 0.
+
+## 2026-09-18 — Gate-Lesung e5b3157 (#1362/#1362b)
+
+`Xcode Compile Check` **35318945198 = success** · `CI/CD` **35318945163, Schritt 9
+`Build for Testing` = success** — also kompiliert `Tests/CISmoke/ThePadStaysClearOfTheBassTests
+.swift` im blockierenden Bündel. `Run Tests` endet auf `** TEST EXECUTE FAILED **`, die
+bekannte #396-Klon-Abschaltung (NICHT `TEST BUILD FAILED`); im `tail -200`-Fenster ist jeder
+sichtbare Fall `passed`, und mehr sagt dieses Fenster nach #807 nicht.
+
+⛔ **UND DER POLLER, DER DAS MESSEN SOLLTE, STARB STILL — zum ZWEITEN Mal in dieser Sitzung,
+mit einem anderen Mechanismus und demselben Ergebnis.** Er schrieb sechsmal
+`NameError: name 'false' is not defined` und **endete mit Exit 0**. Ursache: das Heredoc
+interpolierte, das eingebettete `python3 -c` bekam den JSON-Körper als Python-Quelltext, und
+`false` ist dort kein Literal. Die Schleife brach nie ab, der Hintergrundlauf meldete
+„completed (exit code 0)", und die Datei enthielt keine einzige Statuszeile.
+
+⭐ **Der erste Fehlschlag (kurze SHA → null Zeilen → TIMEOUT) und dieser sehen für den Leser
+IDENTISCH aus: ein Werkzeug, das nichts gemessen hat, meldet Erfolg.** Die Lehre ist deshalb
+schärfer als „Heredoc quoten": **ein Poller braucht eine POSITIVE Abschlussbedingung, die er
+drucken muss, sonst ist sein Exit-Code bedeutungslos.** Der Ersatz druckt je SHA eine
+`### <sha>`-Zeile plus die zwei Workflow-Zeilen; fehlt sie, ist das ein BEFUND. Dieselbe
+Familie wie `continue-on-error` in `full-tests.yml` und wie Exit 2 in `scripts/doctor.py` —
+nur diesmal in einem Wegwerf-Skript, das ich selbst in derselben Sitzung zweimal gebaut habe.
+
+## 2026-09-18 — #1363: der Swing swingte das 16tel und traf damit nichts
+
+**Gemessen mit gedruckter Abdeckung (40 von 40 angebotenen Genres auf `swing`,
+`beatArchetype` und `harmonicProfile`): 22 tragen einen `swing > 0`, und bei 21 davon
+verschob er KEINE EINZIGE Akkord-Note.** `PatternEngine.swingGap` verlängerte den Gap nach
+GERADEN Schritten, verschob also die UNGERADEN — und jedes lebende Akkord-Raster sitzt auf
+geraden: `chordOnsets` skank `phase % 4 == 2`, stab `phase % 4 == 0` (aroused `% 2 == 0`),
+comp `phase % 8 == 4` (aroused `% 4 == 2`); jede `BassGrammar`-Phase (0, 2, 6, 10, 12, 14)
+ebenso. `PadGrammar` TRÄGT ungerade Phasen (3, 7, 11, 13, 15), aber kein Genre besitzt eine.
+Einzige Ausnahme: `slowedGothPop` — bei 3 Akkorden schneidet `composeHarmonic` den Takt in
+5/5/6, die Abschnitte beginnen auf 0/5/11, und Arp und Innenpuls erben deren Parität. (Für
+die 18 Chop-Genres gilt dasselbe für ihren INNEREN PULS bei prog 3 und `calm <= 0.5`, nie für
+die Akkorde.)
+
+**Fix:** `((k % 4) + 4) % 4 < 2` statt `k % 2 == 0`. Beide Gaps der geraden Achtel werden
+lang, beide der ungeraden kurz; jede VIERTEL bleibt längentreu (vorher das 16tel-Paar), und
+die Offbeat-Achtel kommt um `2 · swing · base` zu spät. Bei swing 0.33 ist das
+Achtel-Verhältnis 2,66 zu 1,34 — **genau das ~2:1-Triolengefühl, das der Doc-Kommentar an
+`MusicStyle.swing` seit jeher behauptet. Die ABSICHT stand im Text, die Umsetzung war eine
+Ebene zu fein.**
+
+**Preis**, und er steht im `tickToTime`-Doc statt im Commit, weil das die Stelle ist, die eine
+Sitzung liest, BEVOR sie der Karte glaubt: `Transport.tickToTime` modelliert Swing nicht
+(#328). Der Fehler PRO SCHRITT ist unverändert, die KUMULATIVE Versetzung an der
+Offbeat-Achtel geht von 0 auf `2 · swing · base` — bei swing 0.30 und 120 BPM auf 75 ms. Der
+generierte Take ist nicht betroffen (er reitet diesen Gap selbst); betroffen ist die
+Field-Fläche.
+
+⭐ **DIE ZWEI LEHREN, die über Swing hinausgehen:**
+· **Ein Wächter kann ein Gesetz KORREKT pinnen und es auf NICHTS pinnen.**
+`GenreSwingReachesTheClockTests` prüfte seit #327 zwei Hälften — „der Wert erreicht die Uhr"
+und „die Uhr biegt sich" — und beide waren die ganze Zeit grün, während sich keine Note
+bewegte. Die fehlende dritte Hälfte ist jetzt drin: **die verschobenen Schritte müssen die
+sein, auf denen der Komponist Akkorde legt.** „Der Wert erreicht die Uhr" und „die Uhr bewegt
+die Musik" sind zwei Fragen.
+· **Eine Gesetzesänderung kann einen Wächter GRÜN lassen und ihm trotzdem den GEGENSTAND
+nehmen.** `PatternEngineSwingGapTests`' Inversions-Regression maß den
+`currentStep`-statt-`justPlayed`-Fehler an Schritt 0 → 1. Unter dem Achtel-Swing tragen diese
+zwei denselben Gap, der Fehler wäre dort also unsichtbar geworden — grün, ohne noch etwas zu
+messen. Anker umgehängt auf `currentStep == 2`.
+
+**Grading (§0):** die Transkription LIEST den `swingGap`-Rumpf aus dem Quelltext statt ihn
+nachzubauen (Lehre aus #1362) **und übersetzt `%` auf Swifts truncating-Rest** — ohne das
+hätte sie still gefaltet (Pythons `-1 % 4` ist 3, Swifts ist −1) und eine FEHLENDE Faltung
+gar nicht sehen können. Am Eltern-Stand rot: Ansprüche A, B, C, E (52 Fehler). Vier Mutanten,
+alle gefangen: Faltung entfernt · `phase < 3` · `% 8` statt `% 4` · Klemmung weg.
+
+**Nicht bewiesen:** dass es besser GROOVT. NEEDS-FOUNDER-VERIFY am `swingGap`-Doc, mit der
+eigentlichen Folgefrage: **ein Regler, der nichts tat, wird erfahrungsgemäß zu weit
+aufgedreht — sind die 22 Werte noch richtig, jetzt wo sie wirken?**
+
+`.deploy/release` bewusst NICHT angefasst: kein neuer Build, bevor der Founder #1362 und
+#1363 zusammen gehört hat. Commit `9745d8b`. Alle zehn Prüfer exit 0.
