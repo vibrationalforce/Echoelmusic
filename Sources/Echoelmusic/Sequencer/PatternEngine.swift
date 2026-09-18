@@ -651,10 +651,11 @@ public final class PatternEngine {
             transport?.setTempo(tempo)
         }
 
-        // Gap to the NEXT step. Swing lengthens the gap that follows a downbeat
-        // (even step), delaying the off-beat; the following gap shortens to keep
-        // each beat-pair the same total length (tempo preserved). Shared with the
-        // setTempo re-arm via swingGap so the two paths can never diverge again.
+        // Gap to the NEXT step. Swing lengthens both gaps inside an even EIGHTH,
+        // delaying the off-beat eighth (steps 2, 6, 10, 14); the two following gaps
+        // shorten so each QUARTER keeps its nominal length (tempo preserved).
+        // Shared with the setTempo re-arm via swingGap so the two paths can never
+        // diverge again — und die Parität steht NUR dort (#1363/#416).
         let base = Transport.stepDuration(atTempo: tempo)
         // From the GRID, not from now (#1223): this handler ran δ late, and `.now() + gap`
         // would make δ permanent. See `nextTickUptime`.
@@ -681,15 +682,60 @@ public final class PatternEngine {
     }
 
     /// The gap (seconds) that FOLLOWS `justPlayedStep` — the wait before the next
-    /// step. Swing lengthens the gap after an EVEN step (delaying the off-beat) and
-    /// shortens the one after an odd step, so each even/odd pair keeps the same
-    /// total length (tempo preserved). Pure + `nonisolated` — the single source of
+    /// step. Swing lengthens both gaps inside an EVEN eighth (steps 0–1, 4–5, 8–9,
+    /// 12–13) and shortens both inside the odd eighth, so every QUARTER keeps its
+    /// nominal length (tempo preserved) and the off-beat eighth — steps 2, 6, 10, 14
+    /// — arrives `2 · swing · base` late. Pure + `nonisolated` — the single source of
     /// truth for both `advance()` and the `setTempo` re-arm. `swing` is clamped to
     /// [0, 0.5]. The re-arm MUST pass the JUST-PLAYED step (currentStep − 1),
     /// because between ticks `currentStep` already points at the NEXT step.
+    ///
+    /// ⛔ #1363 — BIS HIERHER SWINGTE DAS SECHZEHNTEL (`justPlayedStep % 2 == 0`), UND
+    /// DAS VERSCHOB IN 21 VON 22 GESCHWUNGENEN GENRES KEINE EINZIGE AKKORD-NOTE.
+    /// Der alte Ausdruck verlängerte den Gap nach GERADEN Schritten, verschob also die
+    /// UNGERADEN — und jedes lebende Akkord-Raster des Komponisten sitzt auf GERADEN:
+    /// `BioComposer.chordOnsets` skank `phase % 4 == 2`, stab `phase % 4 == 0` (aroused
+    /// zusätzlich `% 2 == 0`), comp `phase % 8 == 4` (aroused `% 4 == 2`); jede
+    /// `BassGrammar`-Phase (0, 2, 6, 10, 12, 14) ebenso. `PadGrammar` TRÄGT ungerade
+    /// Phasen — aber kein Genre besitzt eine (`MusicStyle.padGrammar` ist für alle `nil`),
+    /// sie sind vorausgeschrieben. Die einzige Ausnahme war `slowedGothPop`: bei einer
+    /// 3-Akkord-Progression schneidet `composeHarmonic` den Takt in 5/5/6, die
+    /// Abschnittsanfänge sind 0/5/11, und Arp und Innenpuls erben deren Parität.
+    ///   Gemessen 2026-09-18 mit gedruckter Abdeckung (40 von 40 angebotenen Genres auf
+    ///   `swing`, `beatArchetype` und `harmonicProfile`): 22 von 40 tragen einen
+    ///   `swing > 0`, 18 davon ein Chop-Raster, 3 gehalten mit prog != 3, EINES betroffen.
+    /// ⭐ Und der Doc-Kommentar an `MusicStyle.swing` hatte die ganze Zeit RECHT: er nennt
+    /// 0.33 ein „~2:1-Triolen"-Gefühl, und das ist die ACHTEL-Rechnung — unter dem neuen
+    /// Prädikat dauert die erste Achtel `2(1 + s)` und die zweite `2(1 - s)`, bei s = 0.33
+    /// also 2,66 zu 1,34. Die Absicht stand im Text, die Umsetzung war eine Ebene zu fein.
+    /// ⚠️ PREIS, und er gehört hierher, weil er eine ANDERE Datei trifft: `Transport
+    /// .tickToTime` modelliert Swing nicht (#328). Die größte kumulative Abweichung dieses
+    /// Modells verdoppelt sich von `swing · base` auf `2 · swing · base` — bei swing 0.30
+    /// und 120 BPM von 37 auf 75 ms, und zwar genau auf der Offbeat-Achtel. Der GENERIERTE
+    /// Take ist nicht betroffen (er reitet diesen Gap selbst); betroffen ist die
+    /// Field-Fläche, die `tickToTime` für ihre Verspätungs-Toleranz liest.
+    ///
+    /// NEEDS-FOUNDER-VERIFY: ein geschwungenes Genre fahren (`modalJazz` 0.30 ist der
+    /// größte angebotene Wert, `loFiHipHop` 0.22 der zweitgrößte) und hören, ob der Groove
+    /// jetzt SCHLEPPT statt gerade zu laufen. Wenn er schleppt: sind die 22 kurierten
+    /// Werte in der richtigen Größenordnung, oder wurden sie damals nach oben gedreht,
+    /// WEIL nichts passierte? Das ist die eigentliche Folgefrage — ein Regler, der nichts
+    /// tat, wird erfahrungsgemäß zu weit aufgedreht.
     nonisolated static func swingGap(afterStep justPlayedStep: Int,
                                      base: Double, swing: Double) -> Double {
         let s = Swift.min(Swift.max(swing, 0), 0.5)
-        return (justPlayedStep % 2 == 0) ? base * (1 + s) : base * (1 - s)
+        // Faltung in [0, 4), und sie ist NEU nötig, nicht mitgeschleppt: Swifts `%` ist
+        // vorzeichenerhaltend, `-1 % 4` ist `-1`, und `-1 < 2` wäre ein LANGER Gap, wo ein
+        // kurzer gehört. Die alte `% 2 == 0`-Form war gegen dasselbe Vorzeichen IMMUN
+        // (`-1 % 2 == -1`, also ungerade, also kurz — dieselbe Antwort wie die Faltung);
+        // das Prädikat `< 2` ist es nicht. ⚠️ Gemessen: KEINE heutige Aufrufstelle kann
+        // negativ werden — `setTempo` faltet mit `(currentStep + stepCount - 1) %
+        // stepCount`, `advance()` reicht `currentStep` durch, beide in [0, 16). Die
+        // Faltung schuldet ihre Existenz also der Erreichbarkeit dieses `static`, nicht
+        // einem gemessenen Fehler; das wird hier gesagt statt als Bugfix ausgegeben.
+        // (`stepCount` ist 16, ein Vielfaches von 4 — die Achtel-Paarung überlebt den
+        // Takt-Überlauf. Wäre sie es nicht, bräche die Faltung an der Taktgrenze.)
+        let phase = ((justPlayedStep % 4) + 4) % 4
+        return (phase < 2) ? base * (1 + s) : base * (1 - s)
     }
 }

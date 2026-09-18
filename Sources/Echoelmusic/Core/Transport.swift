@@ -72,8 +72,9 @@ public final class Transport {
     /// moment step 0 SOUNDS.
     ///
     /// ⚠️ It is the BASE of the inter-tick gap, not the gap itself: `PatternEngine` feeds it
-    /// to `swingGap(afterStep:base:swing:)`, which lengthens the gap after an even step and
-    /// shortens the next one. The two are equal only while `swing == 0`.
+    /// to `swingGap(afterStep:base:swing:)`, which lengthens both gaps inside an even EIGHTH
+    /// and shortens both inside the odd one (#1363 — it swung the SIXTEENTH until then, which
+    /// displaced nothing the composer writes). The two are equal only while `swing == 0`.
     ///
     /// ⛔ AND THAT USED TO BE EVERY SHIPPING PATH. This doc said so, added that writing "the
     /// gap between ticks" would "make this doc false the day swing returns" — and then #327
@@ -284,10 +285,17 @@ public final class Transport {
     /// every open `.menu` Picker popover is torn down under the finger.
     ///
     /// SWING IS NOT MODELLED, AND UNDER SWING THIS CLOCK IS WRONG ENOUGH TO MATTER.
-    /// `PatternEngine.swingGap` makes an even step last `base × (1 + swing)` and the
-    /// following odd step `base × (1 − swing)`; this map assumes both last the nominal
-    /// `60 / bpm / 4`. `MusicStyle.swing` ships real values, so the LONG step overruns
-    /// the map and the SHORT one leaves its last ticks unreachable.
+    /// `PatternEngine.swingGap` makes the two steps of an even EIGHTH last
+    /// `base × (1 + swing)` each and the two of the odd eighth `base × (1 − swing)`; this
+    /// map assumes all four last the nominal `60 / bpm / 4`. `MusicStyle.swing` ships real
+    /// values, so the LONG steps overrun the map and the SHORT ones leave their last ticks
+    /// unreachable.
+    ///
+    /// ⚠️ #1363 DOUBLED THE WORST CASE, and that is stated here rather than in the commit
+    /// that caused it, because THIS is the doc a session reads before trusting the map. The
+    /// per-STEP error is unchanged (`swing · base` either way), but the CUMULATIVE offset at
+    /// the off-beat eighth went from 0 to `2 · swing · base` — at swing 0.30 and 120 BPM from
+    /// 37 ms to 75 ms. Modelling swing here is the real repair and is a slice of its own.
     ///
     /// The consequence is specific, which is why it is spelled out rather than hedged: on a
     /// short swung step this clock UNDERSTATES lateness, so a touch that was late enough to

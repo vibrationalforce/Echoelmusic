@@ -402,8 +402,9 @@ public final class MIDIOutput {
     ///
     /// ⭐ AND THE THIRD REASON IS LIVE AGAIN SINCE #327: deriving pulses from the step tick
     /// would export SWING as a TEMPO WOBBLE to every slaved device. `PatternEngine.swingGap`
-    /// lengthens the gap after an even step and shortens the next; a receiver counting 24 PPQN
-    /// off that gap reads it as the tempo speeding up and slowing down twice per beat.
+    /// lengthens both gaps inside an even EIGHTH and shortens both inside the odd one (#1363;
+    /// it swung the sixteenth until then); a receiver counting 24 PPQN off that gap reads it
+    /// as the tempo speeding up and slowing down — once per beat now, twice before.
     ///
     /// ⛔ THE HISTORY IS KEPT BECAUSE IT IS THE REPO'S NAMED FAILURE MODE, TWICE OVER. The
     /// FIRST version of this comment called the wobble "the whole musical argument of the
