@@ -554,6 +554,28 @@ is isolated.
 - Step **"Build for Testing" = `success`** ⇒ this bundle **compiles**. That is the claim a
   compile-only gate can support; `Xcode Compile Check` builds `Sources/` **only** and proves
   nothing about a test file.
+  ⛔ **AND THE REVERSE INFERENCE IS ALSO FALSE, WHICH IS THE TEMPTING ONE (#1370, measured
+  2026-09-18).** `build-for-testing` builds the test bundle, and `project.yml:360-361` gives
+  that bundle `dependencies: - target: Echoelmusic` plus a `TEST_HOST`, so it *does* compile
+  `Sources/` on the way. From there it is one short step to "a green `Build for Testing` makes
+  the Compile Check redundant — stop waiting for it". **It does not.** The two gates are not
+  nested, they are **CROSSED**:
+
+  | | `Xcode Compile Check` | CI/CD `Build for Testing` |
+  |---|---|---|
+  | destination | `generic/platform=iOS` (**device**) | `generic/platform=iOS Simulator` |
+  | configuration | **Release** | **Debug** |
+
+  (`xcode-compile-check.yml:57-66` against `ci.yml:175-181`.) A `#if DEBUG` branch compiles in
+  ONLY ONE of them; a device-only path in only the other; and Release versus Debug is `-O`
+  against `-Onone`, which changes which diagnostics fire at all. **Each gate can be red while
+  the other is green, and neither is a superset.** Say which one carried your evidence.
+  ⚠️ The practical consequence is about PUSH ORDER, since `xcode-compile-check.yml` sets
+  `concurrency: cancel-in-progress: true` while `ci.yml` does not: pushing again cancels the
+  older Compile Check but never the older CI/CD. So a rapid series of pushes yields every
+  `Build for Testing` reading and only the LAST Compile Check. That is usually fine — the last
+  one covers the whole tree — but it is not fine when an intermediate commit is the only one
+  that touches a Release-or-device-only path, and nothing announces that case.
 - `** TEST EXECUTE FAILED **` = **#396**, founder-gated, harmless — a simulator clone dies
   mid-suite. CI/CD reports `failure` on **every** push because of it, so the conclusion alone
   says nothing.
