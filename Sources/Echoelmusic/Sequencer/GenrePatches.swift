@@ -40,9 +40,49 @@ import Foundation
 
 public extension MusicStyle {
 
-    /// The synth voice sound this genre is generated through. Applied to the
-    /// polyphonic voice on Generate so the take sounds like its reference.
-    var synthPatch: SynthPatch {
+    /// The synth voice sound this genre is generated through, LOUDNESS-MATCHED.
+    /// Applied to the polyphonic voice on Generate so the take sounds like its reference.
+    ///
+    /// ⭐ #1361 — THE FOUNDER ALREADY GAVE THIS INSTRUCTION, AND IT REACHED ONE ROSTER OF TWO.
+    /// `SynthPatch.factory` carries `rawFactory.map { $0.loudnessNormalized() }` with the note
+    /// "founder 2026-07-11 `angleichen`". The GENRE roster never got it: `patch(...)` below
+    /// never calls `loudnessNormalized()` and never writes `outputLevel`, so all 81 genre
+    /// patches shipped at `level == 1.0`. This is the #456 shape — a repair travels to EVERY
+    /// home, not only to the one being edited that day.
+    ///
+    /// MEASURED over all 81 `return patch(` blocks (brace-matched, coverage printed and checked
+    /// at 81 of 81 before any number was believed — a partial parser is the #1350 defect):
+    /// the 57 pad/lead patches span **15.61 dB** from `Dust Keys` to `Church Choir`, while
+    /// `MusicStyle.mixLevels.harmony` spans 2.34 dB. The fader that looks like the level control
+    /// has an order of magnitude less authority than the spread it is supposed to ride. After
+    /// this wrap the spread is **5.75 dB**, and the residue is the normaliser's own 0.45…1.4
+    /// clamp, not a flaw in the rule.
+    ///
+    /// ⚠️ THE WRAP SITS HERE AND NOT ON `patch(...)`, AND THAT IS THE ONE DESIGN DECISION IN
+    /// THIS SLICE. Measured: all **24 of 24** bass patches land past the 1.4 ceiling, so wrapping
+    /// the helper would hand every one of them a uniform ×1.4 with their 6.19 dB spread
+    /// UNCHANGED — a level CHANGE dressed as a level MATCH. The bass roster is its own slice and
+    /// needs its own reference, because a sub is not supposed to read as loud as a pad.
+    ///
+    /// ⚠️ DERIVED, NOT HAND-TUNED — which is the point. `loudnessNormalized()` computes the trim
+    /// from the patch's own `harmonicLevel · brightness · sustain · noiseLevel · √unison`, so a
+    /// genre authored tomorrow is matched on the day it is written and nobody has to remember.
+    ///
+    /// ⚠️ COMPILE-VERIFIABLE ONLY. This changes what all 40 genres sound like. No guard can say
+    /// it is right; `NEEDS-FOUNDER-VERIFY` sits on the switch below.
+    var synthPatch: SynthPatch { rawSynthPatch.loudnessNormalized() }
+
+    /// The un-normalised genre definitions (timbre design only; output level is applied by
+    /// `synthPatch` above). Same split as `SynthPatch.rawFactory` / `.factory`, and the same
+    /// split `GenreFX` already uses for `rawFXPreset` / `fxPreset` — the house pattern for
+    /// "wrap a switch in a derived post-step".
+    ///
+    /// NEEDS-FOUNDER-VERIFY: durch die Genres gehen und auf den SPRUNG hören, nicht auf den
+    /// Klang — vorher war Boom-Bap-Hip-Hop gegen Gospel Choir ein Satz von rund 15 dB, jetzt
+    /// rund 6. Zwei Fragen: (1) liegen die Genres beim Durchblättern auf einem Pegel, ohne dass
+    /// man am Master nachfassen muss? (2) hat dabei ein Genre seinen CHARAKTER verloren — klingt
+    /// eines, das laut sein soll (Black Metal, Industrial Techno), jetzt zahm?
+    private var rawSynthPatch: SynthPatch {
         // Sound-design philosophy (2026-06-12, "make it beautiful"): warm, clean,
         // spacious — built for production-ready loops, not harsh demos. Universal
         // rules: Natural/Dark spectral shapes (Metallic/Hollow sound digital),
