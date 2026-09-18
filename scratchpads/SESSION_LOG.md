@@ -33614,3 +33614,84 @@ weg → 2 · `.flowFree`-Arm gekürzt → 3 · `default:`-Arm gedreht → 3 und 
    ihn träfe die Nadel die neun Prosa-Stellen UND die Deklaration, und der Anspruch wäre vom
    ersten Tag an rot — auf korrektem Baum, für seine eigene Dokumentation. Der Stripper allein
    hätte das nicht gerettet: die Deklaration ist Code.
+
+**Gate-Lesung `d2eabba` (#1365).** `Xcode Compile Check` 35394812202 = **success**.
+CI/CD 35394812383, Schritt **`Build for Testing` = success** — der neue Wächter kompiliert.
+`Run Tests` wie auf jedem Push `failure` (#396). Ehrlich: **kompiliert nachweislich,
+Ausführung unbelegt** (#445/#807).
+
+## 2026-09-18 — #1366: der Vision-Gate-Ledger parst wieder (`f005a1d`)
+
+**Der Defekt.** `inspiration.csv` hat 229 Zeilen und einen 8-spaltigen Kopf; **13 Zeilen
+hielten ihn nicht** — eine mit NEUN Spalten (ein ungeschütztes Komma im `source`-Feld) und
+ZWÖLF mit SIEBEN (die `type`-Spalte fehlte ganz). Derselbe Ausfall wie #509 für
+`decisions.csv`, hier aber schlimmer: `vision-gate` verlangt ausdrücklich, eine Eingabe NICHT
+neu zu bewerten, wenn sie schon eine Zeile HAT — eine unlesbare Zeile wird also ein zweites Mal
+durch das Gate geschickt, womöglich mit anderem Ergebnis.
+
+**Die Reparatur erfindet nichts, und das ist der ganze Punkt.** Die Neun-Spalter-Zeile wird mit
+`","` ohne Leerzeichen wieder zusammengefügt — csv hatte das Leerzeichen im Folgefeld behalten,
+also stellt genau das den Originaltext **zeichengenau** her. Die zwölf Sieben-Spalter bekommen
+eine **LEERE** `type`-Spalte; geraten wird nichts, der Wert wurde nie erfasst. Vorher geprüft,
+damit die Diagnose nicht selbst geraten ist: `[3]` ist bei allen zwölf ein BEKANNTER
+`pillar`-Wert. Gegengeprüft über den ganzen Zeichenstrom: **98 509 → 98 510 Zeichen, und die
+EINE Differenz ist genau das wiederhergestellte Komma.** `review.sh` läuft unverändert.
+
+**Wo der Wächter wohnt, und warum nicht in einer eigenen Datei.** Zwei Ansprüche IN
+`TheDecisionLogIsMachineReadableTests`. Eine neue Datei bräuchte eine zweite Kopie von
+`parseCSV`, und #416 plus die `slice`-Warnung in `Tests/CISmoke/CLAUDE.md` §2 sagen genau dazu,
+dass zwei Schreibweisen EINER Entscheidung der Defekt sind — unabhängig davon, ob sie heute
+übereinstimmen. Der Dateiname ist damit enger als sein Inhalt. **Nicht umbenannt**, weil er in
+Backticks in `CLAUDE.md` (Zeile 783) steht und `TheLawFileCitesGuardsThatExistTests` dafür eine
+Datei verlangt: ein Rename kostet eine Änderung an der Gesetzesdatei, die **818 B** unter ihrer
+150 000-B-Decke liegt. Der Preis steht im Kopf der Datei, statt still bezahlt zu werden.
+
+**Gradierung (§3).** Anspruch 10 = **REGRESSION** (am Eltern-Stand rot, 13 Zeilen). Anspruch 11
+= **GEGENGEWICHT**, grün auf beiden Bäumen — er überspringt formfalsche Zeilen absichtlich,
+damit er nicht wiederholt, was Anspruch 10 meldet (#486). Drei Mutanten gefahren, alle
+gefangen (Prosa-Datum → 11 · Extraspalte → 10 · Ledger geleert → 11).
+
+⛔ **EIN EIGENER FEHLER, VOR DEM PUSH GEFANGEN, und er ist die interessanteste Stelle dieser
+Scheibe.** Anspruch 11 verlangte zuerst `YYYY-MM-DD` und war damit **auf meinem EIGENEN
+reparierten Baum rot**: vier Zeilen tragen `2026-06`, den MONAT. Gemessen ist Spalte 0
+**224× Tag, 4× Monat, KEIN EINZIGES MAL Prosa** — und Prosa ist der Ausfall, gegen den der
+Anspruch schützt; ein Monat sortiert weiterhin richtig (`2026-06` < `2026-06-15`), trifft ihn
+also gar nicht. Den vieren einen Tag zu verpassen wäre **dieselbe Erfindung, die dieselbe
+Scheibe beim fehlenden `type` ausdrücklich unterlässt** — zwei Spalten, eine Regel.
+⭐ **Die Lehre: ein Anspruch, der auf dem eigenen REPARIERTEN Baum rot ist, stellt die falsche
+Frage — er ist kein Zeichen, dass der Baum noch nachzubessern wäre.** Genau die Sorte
+dauerhaft-rot, die Delta-Gradierung per Bauart nicht sieht (§3), und sie wäre hier durch
+BEIDE Bäume-Fahren sichtbar geworden und ist es auch. Spalte 7 (`review_date`, 227× Datum +
+**eine leere**) bekommt bewusst KEINEN Anspruch: eine leere Fälligkeit ist für ein `REJECT`
+legitim, und daraus einen Anspruch zu machen hieße, korrekte Arbeit rot zu färben (#364).
+
+## 2026-09-18 — #1367: zwei der drei Variationsachsen haben keinen Verbraucher
+
+Gemessen über alle `Sources/`-Dateien, kommentarfrei: `VariationEnvelope` bietet **drei**
+per-Take-Variationsachsen an — `rootOffset`, `registerOffset`, `cellIndex` — und **genau eine
+landet**. `.rootOffset` hat einen Leser (`BioComposer`), die anderen beiden **null**.
+
+⚠️ **Heute folgenlos, und das wird gesagt statt verschwiegen:** `idiomProfile` gibt für jedes
+Genre `nil` — sein eigener Block benennt das ausdrücklich als Opt-in-Entwurf — und die EINZIGE
+`VariationEnvelope(`-Konstruktion im ganzen Repo ist `.still`, also die Identität
+(`[0]`, `0...0`, `[0]`). Es gibt also gar keine Hüllkurve, deren Achsen verlorengehen könnten.
+**Kein Defekt, und ich habe bewusst keinen daraus gemacht.**
+
+⭐ **Warum es trotzdem an die QUELLE gehört:** wer für G5…G15 die erste echte Hüllkurve
+schreibt, tut das mit `registerDrift:` und `cellChoices:` in der Hand, bekommt ein Drittel
+davon, und nichts sagt ihm warum. Der Vermerk sitzt deshalb an den beiden Eigenschaften selbst
+— dort, wo der Autor tippt —, nicht in einer Notiz, und die Herleitung steht EINMAL (#416).
+**Kein Wächter, mit Absicht:** heute kann kein Take diese Achsen erreichen, es gäbe also keinen
+Ausfall, für den er rot werden könnte (#367).
+
+⚠️ **Was auf dem Weg dorthin NICHT zum Befund wurde, und das ist der ehrlichere Teil:** ein
+breiter Sweep über `Sequencer/` meldete **109** öffentliche Eigenschaften ohne Leser außerhalb
+ihrer eigenen Datei. Stichprobe zeigte, dass die Mehrheit davon datei-intern sehr wohl benutzt
+wird (`reverbRoom` → `chain.reverb.roomSize`, `registerDrift` → `registerOffset`, …) — der
+Sweep schließt die deklarierende Datei aus und ist damit für diese Frage **zu unpräzise, um
+danach zu handeln**. 109 als Befundliste weiterzureichen wäre die Fehlalarm-Richtung, vor der
+`Tests/CISmoke/CLAUDE.md` bei jedem Prüfer warnt. Der ENGE Zensus (die 17 Per-Genre-
+Eigenschaften von `MusicStyle`) war das Instrument, das einen echten Befund lieferte; der
+breite nicht. **Das wird hier notiert, damit die nächste Sitzung den Sweep nicht noch einmal
+fährt und für eine Fundgrube hält.** `HarmonicProfile` wurde ebenfalls vollständig geprüft:
+alle sieben Felder haben echte Verbraucher — sauber.
