@@ -33444,3 +33444,51 @@ aufgedreht — sind die 22 Werte noch richtig, jetzt wo sie wirken?**
 
 `.deploy/release` bewusst NICHT angefasst: kein neuer Build, bevor der Founder #1362 und
 #1363 zusammen gehört hat. Commit `9745d8b`. Alle zehn Prüfer exit 0.
+
+## 2026-09-18 — Gate-Lesung 9745d8b (#1363): grün
+
+`Xcode Compile Check` **35319896858 = success** · `CI/CD` **35319896846, Schritt 9
+`Build for Testing` = success** — also kompilieren beide geänderten Wächter
+(`GenreSwingReachesTheClockTests` mit der dritten Hälfte, `PatternEngineSwingGapTests` mit dem
+umgehängten Anker). `Run Tests` endet wie immer auf `** TEST EXECUTE FAILED **` (#396); im
+`tail -200`-Fenster ist jeder sichtbare Fall `passed`, und dieser Lauf zeigt nur Clone 1 — nach
+#445 beweist die Abwesenheit eines Testnamens im Fenster nichts.
+
+⭐ Der Ersatz-Poller hat gedruckt, was der alte nicht konnte: je SHA eine `### <sha>`-Zeile plus
+`DONE`. Eine positive Abschlussbedingung ist der Unterschied zwischen einer Messung und einem
+Exit-Code.
+
+## 2026-09-18 — S3 ZURÜCKGEZOGEN, bevor eine Zeile geschrieben wurde
+
+**Die Scheibe war kein Defekt, sondern die Absicht — und der Quelltext sagte das die ganze
+Zeit, in dem Doc-Kommentar direkt über der Funktion, die ich rufen wollte.**
+
+Meine Notiz lautete: `ExpressionLevelTrim` ist gebaut und getestet, `setExpressionTrimReference`
+hat genau EINEN Aufrufer (`TouchInstrumentView`), die drei generativen Stimmen bekommen ihn nie
+— „Fix = ein Setter je Stimme am Genre-Wechsel". Die MESSUNG stimmt (ein Produktions-Aufrufer,
+gemessen heute: `TouchInstrumentView.swift:443` und `:1461`). Die SCHLUSSFOLGERUNG ist falsch
+herum.
+
+`PolySynthVoice.setExpressionTrimReference` trägt darüber:
+> „ONLY THE PLAY SURFACE SHOULD CALL THIS, and only with its own middle band. The trim exists
+> because that surface's vertical axis picks octave AND filter together; the generated take has
+> no such axis, so enabling it there would silently re-balance every generated note against a
+> reference nobody chose."
+
+Der Trim korrigiert also **eine Eigenheit der Spielfläche**, nicht die Register-Lautheit von
+Musik. Mein geplanter „Setter je Stimme am Genre-Wechsel" wäre exakt die Handlung, die dieser
+Absatz verbietet — und zwar mit einer Begründung, die ich nicht widerlegen kann: einen
+Referenzton für einen generierten Take hat niemand gewählt.
+
+⭐ **Die Lehre ist die, die in dieser Sitzung schon zweimal Geld gespart hat, hier zum dritten
+Mal und diesmal mit dem größten Ertrag: eine Aussage über einen NACHBARN ist eine MESSUNG.**
+Zwei `git grep` haben die Scheibe erledigt — nicht durch Bauen, sondern durch Nicht-Bauen. Und
+der Unterschied zu #1362/#1363 ist genau der, den ein Audit treffen muss: dort waren
+Maschine und Absicht auseinander (ein Fenster, das bis zum Bass reichte; ein Swing, der die
+falsche Ebene traf), hier stimmen sie überein und nur meine Notiz war daneben.
+
+⚠️ **Was offen BLEIBT und nicht mit zurückgezogen wird:** ob generierte Stimmen über das
+Register hinweg gleich laut klingen, ist eine eigene Frage — #1361 hat die PATCH-Lautheit
+angeglichen (`loudnessNormalized()`), nicht die REGISTER-Lautheit (dieselbe Stimme auf C2 gegen
+C6). Das ist eine Ohrfrage und wird hier NICHT als Scheibe erfunden; wenn der Founder sie hört,
+bekommt sie ihre eigene Messung.
