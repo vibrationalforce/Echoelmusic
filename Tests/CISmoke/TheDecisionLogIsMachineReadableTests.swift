@@ -74,6 +74,27 @@ import XCTest
 /// delegates to a real parser. It does not run `review.sh`, does not prove python3
 /// exists on the CI host, and says nothing about whether the 132 currently-due
 /// decisions are worth reviewing. That last one is a founder judgment, not a test.
+/// ⭐ **#1366 — DIESE DATEI DECKT JETZT BEIDE MASCHINENLESBAREN LEDGER, und der NAME ist damit
+/// enger als der Inhalt.** `inspiration.csv` ist die maschinenlesbare Hälfte des Vision-Gates,
+/// genau wie `decisions.csv` die des Entscheidungs-Logs — dieselbe Aufgabe, derselbe Parser,
+/// dieselbe Ausfallart. Gemessen am 2026-09-18 waren dort **13 von 229 Zeilen** nicht
+/// header-förmig: eine mit NEUN Spalten (ein ungeschütztes Komma im `source`-Feld) und zwölf
+/// mit SIEBEN (die `type`-Spalte fehlte ganz). Der Effekt ist derselbe, den Anspruch 1 für das
+/// Entscheidungs-Log beschreibt — jedes Feld hinter dem Bruch sitzt in der falschen Spalte —
+/// nur schlimmer, weil `vision-gate` ausdrücklich verlangt, eine Eingabe nicht neu zu bewerten,
+/// wenn sie schon eine Zeile HAT: eine unlesbare Zeile wird also wieder bewertet, mit einem
+/// womöglich anderen Ergebnis.
+///
+/// ⚠️ **WARUM DIE DATEI NICHT UMBENANNT IST, obwohl #374 das sonst verlangt:** der Name steht in
+/// Backticks in `CLAUDE.md` (Zeile 783, die `REVIEW_DUE`-Rücknahme) und in
+/// `Tests/CISmoke/CLAUDE.md`. `TheLawFileCitesGuardsThatExistTests` verlangt für jeden
+/// backtick-zitierten `…Tests`-Namen in den immer geladenen Dateien eine Datei — ein Rename
+/// kostet also eine Änderung an der Gesetzesdatei, die 818 B unter ihrer 150 000-B-Decke steht.
+/// Das ist der Preis; er wird hier GENANNT statt still bezahlt, und die Alternative wäre
+/// schlechter: eine zweite Datei bräuchte eine zweite Kopie von `parseCSV`, und #416 plus die
+/// `slice`-Warnung in `Tests/CISmoke/CLAUDE.md` §2 sagen genau dazu, dass zwei Schreibweisen
+/// EINER Entscheidung der Defekt sind — unabhängig davon, ob sie heute übereinstimmen.
+///
 final class TheDecisionLogIsMachineReadableTests: XCTestCase {
 
     // MARK: - the file
@@ -291,6 +312,19 @@ final class TheDecisionLogIsMachineReadableTests: XCTestCase {
         return rows
     }
 
+    /// #1366 — derselbe Parser, dieselbe Anker-Prüfung. Bewusst NEBEN `decisionRows()` und
+    /// nicht in einer zweiten Datei: eine zweite Datei bräuchte eine zweite `parseCSV`, und
+    /// zwei Schreibweisen EINER Entscheidung sind der Defekt (#416).
+    private func inspirationRows() throws -> [[String]] {
+        let url = try treeRoot().appendingPathComponent("inspiration.csv")
+        let text = try String(contentsOf: url, encoding: .utf8)
+        let rows = parseCSV(text)
+        guard rows.first?.isEmpty == false else {
+            throw AnchorMissing(reason: "inspiration.csv parsed to no rows at all")
+        }
+        return rows
+    }
+
     private func readerScript() throws -> String {
         let url = try treeRoot().appendingPathComponent("review.sh")
         guard let text = try? String(contentsOf: url, encoding: .utf8), !text.isEmpty else {
@@ -321,6 +355,17 @@ final class TheDecisionLogIsMachineReadableTests: XCTestCase {
         let c = Array(s)
         guard c[4] == "-", c[7] == "-" else { return false }
         for i in [0, 1, 2, 3, 5, 6, 8, 9] where !c[i].isNumber { return false }
+        return true
+    }
+
+    /// #1366 — Tag ODER Monat. Siehe die Begründung im Doc von Anspruch 11: der Ausfall ist
+    /// Prosa, nicht Grobheit, und vier Ledger-Zeilen sind ehrlich monatsgenau.
+    private func isISODateOrMonth(_ s: String) -> Bool {
+        if isISODate(s) { return true }
+        guard s.count == 7 else { return false }
+        let c = Array(s)
+        guard c[4] == "-" else { return false }
+        for i in [0, 1, 2, 3, 5, 6] where !c[i].isNumber { return false }
         return true
     }
 
@@ -431,6 +476,71 @@ final class TheDecisionLogIsMachineReadableTests: XCTestCase {
                 this entry must follow it, or the entry was a guess.
                 """)
         }
+    }
+
+    // MARK: - 10 · der Vision-Gate-Ledger ist genauso maschinenlesbar (#1366)
+
+    /// Anspruch 10 (REGRESSION — am Eltern-Stand rot mit 13 Zeilen). Dieselbe Frage wie
+    /// Anspruch 1, nur für den anderen Ledger. `vision-gate` schreibt jede bewertete Eingabe
+    /// hierher und liest die Datei, um eine schon bewertete NICHT erneut zu bewerten; eine
+    /// Zeile, die nicht parst, wird also ein zweites Mal durch das Gate geschickt.
+    func testEveryInspirationRowHasTheHeaderShape() throws {
+        let rows = try inspirationRows()
+        let expected = rows[0].count
+        XCTAssertEqual(expected, 8,
+                       "header should be date,source,type,idea,pillar,verdict,rationale,review_date")
+        let malformed = rows.enumerated()
+            .filter { $0.element.count != expected }
+            .map { "row \($0.offset) has \($0.element.count) columns: \($0.element.first ?? "")" }
+        XCTAssertTrue(malformed.isEmpty, """
+            inspiration.csv rows must all have \(expected) columns. Zwei Habits haben das \
+            gebrochen und beide sind billig zu wiederholen: ein ungeschütztes Komma in einem \
+            Freitext-Feld (→ eine Spalte zu viel) und eine ausgelassene `type`-Spalte (→ eine zu \
+            wenig). Reparieren, ohne einen Wert zu ERFINDEN: ein fehlender `type` wird LEER \
+            eingesetzt, nie geraten — der Wert wurde nie erfasst.
+            \(malformed.joined(separator: "\n"))
+            """)
+    }
+
+    /// Anspruch 11 (GEGENGEWICHT — grün auf beiden Bäumen, #343). Jeder andere Anspruch über
+    /// diesen Ledger ist auf einer leeren oder gelöschten Datei vakuum-wahr. Die Untergrenze
+    /// liegt bewusst weit unter dem echten Stand, damit gewöhnliches Protokollieren und auch
+    /// ein Ausmisten sie nie rot macht — sie fällt bei LÖSCHUNG, nicht beim Pflegen. Und sie
+    /// prüft die erste Datumsspalte, weil Prosa dort vor jedes echte Datum sortiert.
+    ///
+    /// ⛔ **DIE ERSTE FASSUNG VERLANGTE HIER `YYYY-MM-DD` UND WAR AUF DEM KORRIGIERTEN BAUM
+    /// ROT** — vier Zeilen tragen `2026-06`, also den MONAT. Gemessen: Spalte 0 ist 224×
+    /// `YYYY-MM-DD` und 4× `YYYY-MM`, **kein einziges Mal Prosa**. Die vier sind keine
+    /// Beschädigung, sondern die Genauigkeit, in der die Quelle erfasst wurde; ihnen einen Tag
+    /// zu verpassen wäre dieselbe Erfindung, die #1366 beim fehlenden `type` ausdrücklich
+    /// unterlässt. Und ein Monat sortiert weiterhin RICHTIG (`2026-06` < `2026-06-15`), also
+    /// trifft der Ausfall, den dieser Anspruch beschreibt, ihn gar nicht. **Ein Anspruch, der
+    /// auf dem eigenen reparierten Baum rot ist, ist ein Anspruch, der die falsche Frage
+    /// stellt** — nicht ein Baum, der noch nachzubessern wäre (§3: eine dauerhaft rote
+    /// Zusicherung ist die Sorte, die Delta-Gradierung nicht sieht).
+    ///
+    /// ⚠️ Spalte 7 (`review_date`) wird hier BEWUSST NICHT zugesichert. Gemessen: 227×
+    /// `YYYY-MM-DD` und **eine leere**. Eine leere Fälligkeit ist für ein `REJECT`, das nie
+    /// wieder angesehen werden muss, legitim — daraus einen Anspruch zu machen hieße,
+    /// korrekte Arbeit rot zu färben (#364). Die Messung steht hier, damit die nächste Sitzung
+    /// nicht glaubt, die Spalte sei ungeprüft.
+    func testTheInspirationLedgerIsStillPopulatedAndDated() throws {
+        let rows = try inspirationRows()
+        XCTAssertGreaterThan(rows.count, 50, """
+            inspiration.csv ist auf \(rows.count) Zeilen geschrumpft. Das ist keine Pflege mehr \
+            — entweder wurde der Ledger überschrieben, oder dieser Anspruch liest die falsche \
+            Datei. Beides gehört angesehen, bevor die Zahl hier gesenkt wird.
+            """)
+        var undated: [String] = []
+        for (i, r) in rows.enumerated() where i > 0 && r.count == 8 && !isISODateOrMonth(r[0]) {
+            undated.append("row \(i) col0 (date): \(r[0].prefix(40))")
+        }
+        XCTAssertTrue(undated.isEmpty, """
+            `date` muss YYYY-MM-DD oder YYYY-MM sein. Der Ausfall, gegen den das schützt, ist
+            PROSA in dieser Spalte: `vision-gate` vergleicht Datumsstrings, also sortiert Text
+            vor jedes echte Datum und liest sich als überfällig.
+            \(undated.joined(separator: "\n"))
+            """)
     }
 
     /// The report has to state its size BEFORE the first entry. Two hundred-odd items is a
