@@ -33303,3 +33303,67 @@ volle halbe Stunde ab und druckte `TIMEOUT` ohne eine einzige Zeile — **ununte
 context.md` §2 meint: *eine Messung, die still WENIGER zurückgeben kann als die Wahrheit, ist
 keine Messung.* Regel: **`git rev-parse HEAD`, nie die Kurzform**, und ein Poller, der null
 Zeilen findet, muss das als BEFUND drucken, nicht als Geduld.
+
+## 2026-09-18 — Gate-Lesung e8742fc / 37fefd8 (#1360, #1361)
+
+`Xcode Compile Check` Lauf **35315932290 = success** · `Echoelmusic CI/CD Pipeline` Lauf
+**35315932396, Schritt 9 `Build for Testing` = success**. Die Pipeline-Conclusion ist wie auf
+jedem Push `failure` (#396) — die Schritte sind die Lesung, nicht die Conclusion.
+
+Damit kompiliert beides: die Rücknahme der `balkanModal`-Lead-Dichte (#1360, die den seit zwei
+Tagen roten `LeadRoleAbsenceTests` im blockierenden Bündel wieder erfüllbar macht) und die
+Lautheits-Angleichung der Genre-Patches (#1361, `rawSynthPatch` → `loudnessNormalized()`,
+Spanne 15,61 dB → 5,75 dB über 81 von 81 Patches).
+
+⚠️ **Diese Lesung stand zwei Zyklen lang aus.** Sie war gemessen und lag als Werkzeug-Ausgabe
+vor — protokolliert war sie nicht. Eine Gate-Lesung, die nur im Transkript steht, ist für die
+nächste Sitzung nicht passiert; das Protokoll IST der Speicher.
+
+## 2026-09-18 — #1362: Pad und Bass konnten auf demselben Grundton landen
+
+**Der Befund ist strukturell, nicht statistisch.** Der Boden des Voice-Leading-Fensters in
+`BioComposer.composeHarmonic` war `basePitches.min() - 12` — und das ist IDENTISCH die Note, die
+`appendBass` zehn Zeilen höher in denselben Abschnitt legt. Drei Prämissen tragen den Beweis, und
+alle drei sind messbar: jedes authored `chordTones` beginnt mit 0 (57 von 57 Konstruktionsstellen),
+jedes `padOctave` ist ≥ 2 (also greift `max(0, padOctave - 1 + octShift)` nie), und
+`MusicalKey.degree` rechnet `base = (octave + 1) * 12 + root`. Der Leader DURFTE die unterste
+Pad-Stimme auf den Bass legen, und Bewegungsminimierung zog sie genau dahin.
+
+**Reparatur:** `BioComposer.padRegisterFloor(padBottom:bassRoot:)` als reiner Rechner, Abstand als
+benanntes `padBassClearance = 3`. Die Zahl steht EINMAL — der Wächter liest sie, statt sie zu
+wiederholen (#416). Die Deckelung gegen die Obergrenze bleibt an der Aufrufstelle: der Boden ist
+eine Aussage über den Bass, die Deckelung eine über den Bereich (und `lo...hi` mit lo > hi fällt).
+
+**Warum eine kleine Terz:** ein Halbton über einem gehaltenen Bass ist das SCHLECHTERE Intervall
+als das Unisono, nicht das bessere; eine Quarte kostet Bewegung, und Bewegungsarmut ist der Zweck
+des Leaders.
+
+**Wächter** `Tests/CISmoke/ThePadStaysClearOfTheBassTests.swift`, sechs Ansprüche. Drei pinnen die
+PRÄMISSEN — wer eine bricht (ein Genre mit `chordTones: [2,4,6]`, ein `padOctave: 1`, eine
+Tonsystem-Änderung), wird rot und NENNT sie, statt den Defekt still zurückzubringen. Anspruch 6 ist
+das #343-Gegengewicht: das Fenster bleibt in jedem angebotenen Genre ≥ eine Oktave breit.
+
+⭐ **ZWEI LEHREN AUS DER GRADIERUNG, beide teuer und beide in der beruhigenden Richtung.**
+· **Eine Transkription, die die Formel NACHBAUT statt sie zu LESEN, ist gegen genau den Mutanten
+blind, der die Formel ändert.** Meine erste Fassung modellierte `padRegisterFloor` in Python;
+Mutant D (Boden auf `max(0, padBottom - 12)` zurückgedreht) lief GRÜN durch. Jetzt wird der Rumpf
+aus dem Quelltext geparst und ausgewertet. Von vier Mutanten fing die erste Fassung zwei.
+· **Ein Coverage-Zähler kann in die falsche Richtung lügen, ohne dass etwas auffällt.** Der
+Skalen-Zähler lief mit einem Klammerlauf ab `public enum Scale` und verschluckte die dort
+GESCHACHTELTE Regal-Enum — er meldete „57 von 65 erreicht", also acht fehlende Skalen, die es nie
+gab. Der Befund wäre ein Phantom gewesen; die Zahl ist 57 von 57. §2 („measure; do not recite")
+deckt den Fall nicht ab: hier war die Messung selbst falsch, nicht abgeschrieben.
+
+⛔ **UND DIE COMMIT-NACHRICHT BEHAUPTETE EINE FUNDSTELLE, DIE ES NICHT GAB (#1362b).** Sie sagte
+„steht als NEEDS-FOUNDER-VERIFY am Code" — der Marker war nicht da, `founder-verify.py` hätte ihn
+nie eingesammelt, die Ohrfrage wäre genau dort verschwunden, wo dieses Repo seine Warteschlange
+führt. Nachgetragen im Folge-Commit. **Eine Commit-Nachricht ist keine Fundstelle:** was sie über
+den Code behauptet, muss im Code stehen, sonst ist sie eine Verifikations-Behauptung ohne
+Verifikations-Weg — dieselbe Klasse wie der `PulseMeasurementView`-Dateikopf, der „shown above the
+controls" sagte und keine Tür hatte.
+
+**Nicht bewiesen und deshalb nicht behauptet:** dass es BESSER klingt. Die Ansprüche pinnen, dass
+der Leader das Unisono nicht mehr DARF. NEEDS-FOUNDER-VERIFY an `padBassClearance`, mit einer
+beantwortbaren Frage (zu eng → 5, unnötig → 2) statt „klingt es gut".
+
+Commits: `ccf0c47` (#1362), `e5b3157` (#1362b). Alle elf Prüfer exit 0.
