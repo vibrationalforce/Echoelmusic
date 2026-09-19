@@ -33829,3 +33829,117 @@ Konvergenz-Kappe greift auf diesem Pfad nicht.
   wird dabei NICHT erreicht — beide Hälften gehören auf die Ohrprobe.
 * Jeder Genre-Wechsel bewegt jetzt sichtbar den Delay-Picker. Fühlt sich das nach Lernen an
   oder nach Kontrollverlust?
+
+## 2026-09-19 — #1373: die dritte Spoke-Seite (Resolume) und der Bereich, der sie gefährlich macht (`48f77d4`)
+
+Die Founder-Frage war „OSC Ausgabensteuer Abelton, Resolume etc?" — und die MESSUNG darauf
+war die halbe Antwort: `Sync/OSCSender.swift` sendet neun Bio-Adressen, die jeder
+OSC-Empfänger lesen kann; was fehlte, war nicht Code, sondern eine TÜR in Prosa. Reaper und
+TouchDesigner hatten je eine Schritt-für-Schritt-Seite, Resolume nicht.
+
+Gebaut: `docs/resolume-osc.html`, aus `touchdesigner-osc.html` transformiert (Titel,
+Beschreibung, og/twitter, canonical/hreflang, zwei frische JSON-LD-Blöcke, ganz neuer
+`<main>`), plus die drei Nabe-Stellen (`integrations.html`, `faq.html`, `sitemap.xml`) und
+`docs/dev/VJ_BRIDGE.md`.
+
+⭐ **Der Inhalt, der die Seite von einer Werbeseite unterscheidet:** ein Abschnitt „welche
+Kanäle direkt passen — und der eine, der es nicht tut". `breath/phase`, `coherence`,
+`heart/hrv` und `event/heartbeat` sind 0..1 und binden direkt. **`heart/bpm` ist es NICHT** —
+wer ihn direkt an einen Resolume-Parameter hängt, sieht ihn beim ersten Wert oben anschlagen,
+weil Resolume 0..1 erwartet und 58 als „weit über 1" liest. Die Adresse steht deshalb
+ABSICHTLICH NICHT in der „passt direkt"-Tabelle, und der Wächter
+`TheWireSendsBeatsPerMinuteNotAFractionTests` pinnt beide Hälften: dass die Leitung
+Schläge-pro-Minute sendet (nicht einen normalisierten Bruch) UND dass die Tabelle die
+bpm-Adresse nicht enthält.
+
+⛔ **Die erste Nadel dieses Anspruchs war ein Stolperdraht, der nie stolpern konnte (#367):**
+`"bind heart rate to"` — eine Formulierung, die kein Bearbeiter je tippen würde. Ersetzt durch
+den EINEN `spec-table`-Anker der Seite, brace-/tag-verankert: wer eine bpm-Zeile in die
+„passt direkt"-Tabelle schreibt, wird rot. **Die plausible Änderung muss der Auslöser sein,
+nicht die unplausible.**
+
+## 2026-09-19 — v10.79.474 auf TestFlight: Build 2594 (`dcaeb49`)
+
+Founder-Posten 2 („Internes TestFlight. Ein Build, ein Upload. Damit die Pipeline einmal
+nachweislich läuft."). ⛔ **Die genannte BEGRÜNDUNG war schon erfüllt** — acht aufeinander
+folgende TestFlight-Läufe waren grün; die Pipeline hatte sich mehrfach bewiesen. Der Bump war
+trotzdem richtig, aus einem ANDEREN Grund: **26 Commits Rückstand**, darunter die ganze
+Musikalitäts-Runde (#1360–#1373), die ohne Build auf keinem Gerät hörbar wird.
+
+Lauf 35438616521: `Export & Upload to TestFlight: success` UND `Verify build landed in App
+Store Connect: success`. Build 2594.
+
+⭐ Damit ist die Ohrprobe (#34) zum ersten Mal **lieferbar**: der Swing, der zum ersten Mal
+Noten trifft, der Pad/Bass-Freiraum und die Genre-Echo-Teilung sitzen alle in diesem Build.
+
+## 2026-09-19 — #1374: die Klammer stand HINTER ihrer eigenen Umwandlung (`721cd39`)
+
+Founder-Posten 3, Release-Härtung, read-only gefahren. EIN Befund, und er ist die teure Sorte:
+
+`RetroCapture.captureRecent(seconds: Double)` rechnete
+`min(max(Int(seconds * captureSampleRate), 0), ringCapacity)`. Die Klammer sitzt **um das
+Ergebnis der Umwandlung herum** — `Int(NaN)` ist in Swift ein TRAP, also ein Absturz, und er
+passiert eine Klammer zu früh.
+
+⭐ **GESETZ: eine Klammer hinter ihrer eigenen Umwandlung schützt nichts.** Und die
+naheliegende Reparatur — erst klammern, dann wandeln — hilft hier NICHT, weil
+`min(max(v,lo),hi)` NaN durchlässt (CLAUDE.md sagt das an anderer Stelle selbst). Der Fix ist
+ein `guard seconds.isFinite`, VOR der Umwandlung, mit `return nil`.
+
+**VERWEIGERN, nicht klammern.** Ein geklammerter NaN lieferte eine Datei falscher Länge, als
+Erfolg gemeldet — genau der #630b-Defekt. `nil` ist ein Fehlschlag, den der Aufrufer sieht.
+
+⛔ **Der Befund wurde beim Schreiben SCHMALER.** Meine erste Notiz nannte zusätzlich
+`RetroCapture:465` — das ist `snapshotPreRoll(seconds: Int = 30)`, ein `Int`-Parameter, der
+NaN gar nicht tragen kann. Der Scan hatte die FORM `Int(… * …)` getroffen, ohne die SIGNATUR
+zu lesen. Aus der Korrektur wurde Anspruch 3 des Wächters: die beiden Int-typisierten
+Signaturen werden gepinnt, damit die nächste Sitzung nicht denselben Fehlalarm produziert.
+
+⭐ **Und die Klammer gehört an den TYP, nicht an den Aufrufer.** `LoopExporter` ist heute der
+einzige Produktions-Aufrufer und übergibt einen gesunden Wert — der Fix an dieser Stelle wäre
+für genau einen Aufrufer wahr gewesen. Wächter:
+`Tests/CISmoke/TheCaptureRefusesANonFiniteLengthTests.swift` (5 Ansprüche, 10 Assertions).
+
+## 2026-09-19 — #1375: Posten 4 gemessen — der #292-Rückstand ist NULL Scheiben plus ein Grund (`03ef733`)
+
+Founder-Posten 4 („Plattformneutralität. Bevor Watch kommt."). Die Scheibe war GEPLANT und ist
+**beim Lesen der Quelle abgebrochen worden; das ist das Ergebnis, nicht ein Umweg.**
+
+CLAUDE.md sagte „5 von 9 Panels reflowen" und leitete daraus „der Rückstand ist eine Scheibe"
+ab — die einzige Fläche mit umbrechbarem Inhalt wäre `tempoToolsPanel` mit zwei
+`EchoelValueField`s in `metronomeRow`. **Die zwei Felder sind aber nicht benachbart:** dazwischen
+sitzt „Accent downbeat", den #930b ABSICHTLICH direkt unter die Zahl gesetzt hat, die er hörbar
+macht („die Abhilfe ist die nächste Zeile, nicht drei Zeilen weiter"). Ein `AdaptiveCardGrid`
+braucht benachbarte Mitglieder. Es zu erreichen hieße, eine dreimal korrigierte Entscheidung
+still umzudrehen — oder einen `Toggle` mit einem Feld zu paaren, was
+`MoodPanelReflowsTests` Anspruch 3 als Ragged-Height-Regression verbietet.
+
+Der Grund hatte kein grep-bares Zuhause und hat jetzt eins:
+`Tests/CISmoke/TheClickAccentPairStaysAdjacentTests.swift` pinnt die Reihenfolge der vier
+Anker in `metronomeRow`, die Abwesenheit eines Gitters darin (#364-sicher formuliert), die
+Anzahl der Felder und Toggles und das `if metronome.enabled`-Gate.
+
+⭐ **Der echte Watch-Blocker ist nicht Layout, sondern `WCSession`** —
+`git grep -n "WatchConnectivity\|WCSession" -- Sources` liefert nichts, und ein neues Framework
+ist Council/Founder. Die Richtung Uhr→Telefon braucht ihn gar nicht (HealthKit IST der
+Transport); Telefon→Uhr braucht ihn, weil ein App-Group-Container PRO GERÄT gilt.
+
+⛔ **CLAUDE.md-Deckel:** der Edit kostete 448 B bei 818 B Kopfraum. Statt den Rest zu
+verbrauchen ist die #746/#912-Provenienz nach `memory/LEDGER_COUNTS.md` §F.5 gezogen —
+netto **−243 B**, Stand 149.387 B / 613 B Kopfraum.
+
+## 2026-09-19 — Gate-Lesung `48f77d4` · `dcaeb49` · `721cd39` · `03ef733`
+
+Alle vier: `Xcode Compile Check` **success**, CI/CD `Build for Testing` **success**,
+`Run Tests` failure = der #396-Normalzustand (die Conclusion des Workflows sagt nichts, die
+JOB-SCHRITTE sagen es). `dcaeb49` zusätzlich mit grünem TestFlight-Upload (Build 2594).
+Alle acht stehenden Prüfer vor jedem Commit Exit 0.
+
+### Founder-gated, weiter zu berichten statt zu editieren
+
+`auto-merge-claude.yml` wartet auf kein Gate · `ci.yml` maskiert einen BUILD-Fehlschlag an
+fünf Stellen · `ci.yml:290/291` filtert auf eine nicht existierende Suite ·
+`Resources/iOS/Info.plist` trägt `NSMicrophoneUsageDescription` für eine gelöschte Fähigkeit
+und nennt in `NSCameraUsageDescription` weiter beide Linsen · `project.yml:296` trägt die alte
+Ein-Richtungs-Watch-Route · **CLAUDE.md steht in KEINEM Workflow-Pfadfilter**, ihr
+Deckel-Wächter läuft auf einem reinen CLAUDE.md-Commit also nie.
