@@ -71,8 +71,11 @@ import Foundation
 /// The `AVAudioPlayerNode`s that feed the same mixer are covered SEPARATELY, by
 /// `AudioOutputGuard.sweepNonFinite(_ buffer: AVAudioPCMBuffer)` in `Audio/`. Do
 /// not dismiss them as Apple nodes replaying decoded PCM — they replay buffers WE
-/// build (baked fade envelopes, `WSOLAStretcher` renders in `AudioClipPlayer` /
-/// `TimelineAudioSink`) carrying user-imported audio no finiteness check touches.
+/// build (baked fade envelopes, `WSOLAStretcher` renders in `TimelineAudioSink`)
+/// carrying user-imported audio no finiteness check touches.
+/// ⛔ `AudioClipPlayer` was named here as a second renderer and is REMOVED from this
+/// sentence (#1379): measured, it has ZERO callers and ZERO tests. The reasoning above is
+/// unchanged and still correct — `TimelineAudioSink` alone is enough to make the point.
 /// Those sweep at FILL time; see that file for why not at schedule time.
 ///
 /// ── THE REMAINING GAP, NAMED ────────────────────────────────────────────────

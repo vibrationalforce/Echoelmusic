@@ -65,7 +65,10 @@ Capabilities (all routed through one typed bus): **bio-reactive synthesis** · *
   · **Die MODULATIONS-MATRIX — SECHSTER Eintrag, nachgetragen 2026-08-12 (#541), und der zweite nach der Audio-Spur, der keine ANSICHT ist, sondern eine laufende Maschine ohne Erzeuger.** ⭐ **ERLEDIGT mit #1250:** `PatchbayView.modulationSection` konstruiert `ModRoute(` — der Eintrag bleibt als Herleitung, Wächter `TheMatrixHasADoorTests`. `ModulationEngine` wird beim Start konstruiert, `start(subscribing:)` läuft, die 100-ms-Schleife tickt, und `ModDestinationKey.tempo` ist als Ziel registriert. Gemessen fehlt die ROUTE: die Default-Matrix ist LEER (die Datei sagt es zweimal selbst), und `git grep -n "\bModRoute(" -- Sources` liefert **genau EINEN** Treffer — den `LossyDecoded`-Decoder in `ModulationMatrix.swift` (ohne die Wortgrenze kommt `FXModRoute(` dazu, ein fremder Typ). Null Produktions-Konstruktionsstellen. `Studio/BioModulation.swift` ist KEINE Fläche (es hält `ClockSource` und `BoundParameter`, reine Werttypen, null externe Verbraucher) — wer aus dem Dateinamen eine Matrix-UI erwartet, sucht falsch.
     ⛔ **Und das ist wieder KEIN Lösch-Argument, aus dem #527-Grund:** die Matrix wird PERSISTIERT und beim Start dekodiert (`load()` gewinnt über die leere Default), also kann ein Dokument aus einem Build mit erreichbarer Fläche weiterhin das Tempo ziehen. Abklemmen macht aus „offensichtlich abwesend" ein „still stumm". Ebenfalls tragend und nicht anzufassen: der `outputTap`, der JEDE angewandte Modulation als `/echoelmusic/mod/<key>` über OSC schickt — die Adresse steht im OSC-Abschnitt dieser Datei als real.
     ⚠️ Der Unterschied zu den vier Ansichts-Einträgen darüber: dort ist die Fläche weg und die Fähigkeit klar abwesend. Hier LÄUFT alles bis auf den letzten Zentimeter, und genau deshalb hat die CURRENT-STATE-Zeile vier Monate „wired (bio→tempo)" behauptet. Wächter: `Tests/CISmoke/TheTempoDestinationHasNoRouteTests.swift`.
-- **P1 "Sound complete" — ALREADY BUILT (audited 2026-07-01; corrects the old "Clips/Arrangement UI not wired" note):** the melodic/DAW core is done and wired — **polyphonic synth** (`PolySynthVoice`) + **bass** (`SubBassVoice`) + ~~hybrid sample/synth drums~~ (`BeatPlayer` + `DrumSynthVoice` — **entfernt 2026-07-26, #166/#167; klingt nicht mehr**); **full patch editor + presets** (`SynthPatch`/`PatchStore` + `soundPanel`, favorites/community/save-as, live-apply, tested. ⛔ Hier stand `PatchEditorView` als der Editor „DOORLESS since 2026-07-25" — die Datei ist mit #132 Slice 6 gelöscht; der Editor war die ganze Zeit `soundPanel` hinter dem Sound-Chip); **breakbeat loop-cut** (`LoopCutter`/`LoopBarLength` in the Studio UI); **MIDI export** — **AUSGELIEFERT** (korrigiert 2026-07-28): `exportMIDI()` wird wieder aufgerufen, aus dem Export-Schacht heraus (#188 hat die Tür in den VORHANDENEN Slot zurückgeholt, kein neuer Sheet). `MIDIFileExporter` intakt und getestet. Der App-Store-Text behauptet den MIDI-Export — nicht entfernen, ohne `fastlane/metadata` mitzuziehen; Clips + Arrangement UI **DELETED** by the pure-instrument epic (#121 Slice 4 — `ClipView` 807dc0d, `ArrangeTimelineView` eb58e7a; `ClipStore`/`ArrangementStore`/`AutomationLane` model retires in Slice 5).
+- **P1 "Sound complete" — ALREADY BUILT (audited 2026-07-01; corrects the old "Clips/Arrangement UI not wired" note):** the melodic/DAW core is done and wired — **polyphonic synth** (`PolySynthVoice`) + **bass** (`SubBassVoice`) + ~~hybrid sample/synth drums~~ (`BeatPlayer` + `DrumSynthVoice` — **entfernt 2026-07-26, #166/#167; klingt nicht mehr**); **full patch editor + presets** (`SynthPatch`/`PatchStore` + `soundPanel`, favorites/community/save-as, live-apply, tested. ⛔ Hier stand `PatchEditorView` als der Editor „DOORLESS since 2026-07-25" — die Datei ist mit #132 Slice 6 gelöscht; der Editor war die ganze Zeit `soundPanel` hinter dem Sound-Chip); **breakbeat loop-cut** (`LoopBarLength` in der Studio-UI — ⛔ `LoopCutter` stand
+  gleichrangig daneben und ist TOT, #1379: der `tile()`-Neuschneider hat null Aufrufer, die
+  Fähigkeit liefert heute die Per-Takt-Generierung. Die DATEI bleibt, weil `LoopBarLength` in
+  ihr wohnt und in sieben Dateien gelesen wird); **MIDI export** — **AUSGELIEFERT** (korrigiert 2026-07-28): `exportMIDI()` wird wieder aufgerufen, aus dem Export-Schacht heraus (#188 hat die Tür in den VORHANDENEN Slot zurückgeholt, kein neuer Sheet). `MIDIFileExporter` intakt und getestet. Der App-Store-Text behauptet den MIDI-Export — nicht entfernen, ohne `fastlane/metadata` mitzuziehen; Clips + Arrangement UI **DELETED** by the pure-instrument epic (#121 Slice 4 — `ClipView` 807dc0d, `ArrangeTimelineView` eb58e7a; `ClipStore`/`ArrangementStore`/`AutomationLane` model retires in Slice 5).
   **CRAFT-TOOL DOORS — the #131a craft-editor slot is GONE again (2026-07-26).** It was shipped 2026-07-25 (`f2cbf34`/`bda8f41`) to door the piano roll, and it held exactly ONE case; when the founder said *"Pianoroll soll raus"* the honest move was to take the slot with it rather than leave an undoored enum (the lying-`toolItems` trap). **Der Modifier-Zähler steht EINMAL, im Presentation-Absatz oben** — dort benannt, hier nicht nachgesprochen (⛔ #707 zitierte ihn hier wörtlich, und das Zitat traf nur sich selbst: `grep` fand die zitierte Schreibweise genau einmal, nämlich in diesem Zeiger; #708); seine Provenienz — die zwei Anker-Fehler und die Historie 12→16→15→14 — liegt in `memory/LEDGER_COUNTS.md` §D. Alerts und der File-Importer sitzen auf DERSELBEN Kette und kosten dieselben Metadaten. **The NEXT editor re-introduces the slot as `enum` + `@State` + ONE `.sheet(item:)` + an out-of-body content builder — NEVER a bare appended modifier**, and a case is added ONLY together with its door. Setterlose Slots sind die erste Stelle für Platz — **welche, druckt `python3 scripts/doctor.py --section C`; hier steht bewusst keine Liste**, die Menge bewegt sich in beide Richtungen (#747 nahm einen weg, #1024 legte einen dazu) und jede Abschrift altert. `sampleBrowserTrack` was the fourth and is DELETED (2026-07-27): once `SampleBrowserView` itself went, the slot pointed at a type that no longer compiles — a slot is only reusable while its content still builds.
   · **`PianoRollView` = GELÖSCHT (#475, 2026-08-07).** Der `struct` und die zwei privaten Gesten-Typen `RollDragAnchor`/`RollDrag` sind weg; belastbar ist die GRÖSSE des Eingriffs (`git show --stat`: 54 Einfügungen / 1020 Löschungen, netto **−966**), weil die sich nie wieder ändert. **Die Datei `Studio/PianoRollView.swift` BLEIBT**, weil sie `PianoRollModel` enthält — die Notenmaschine UND den `MusicalFrame`-Publisher, also die Wirbelsäule der Ausgabestufe (Visual · Licht · Raum). `RollSelection` ist geblieben, jetzt test-only (`Tests/EchoelmusicTests/NoteTests.swift`), die `WaveformReducer`-Form. ⛔ **Diese Scheibe produzierte NEUN Falschbehauptungen — die höchste Zahl in dieser Kette; drei davon Zahlen. Die vollständige Nachlese liegt in `memory/LEDGER_COUNTS.md` §E** und gehört dorthin, nicht in die immer-geladene Datei. Was als GESETZ bleibt: **eine Zeilenzahl einer LEBENDEN Datei ist keine Tatsache, sondern ein Datum** — nenne die Größe des Eingriffs; und **ein Vermerk, der einen lebenden Mechanismus für tot erklärt, ist die teuerste Sorte**, weil er die nächste Sitzung einlädt, eine geltende Invariante als Ballast zu behandeln. **Consequence to state plainly: there is NO note editor in the app any more** — the generated take can be heard, mixed and exported, not corrected.
     ⭐ **UND DIE LÖSCHUNG HAT DREI NACHBARN VERWAIST, was keine Register-Zeile vorhergesagt hatte** (gemessen NACH dem Schneiden, die #472-Lehre): `Studio/RollHitTest.swift` und `Studio/RollFitMath.swift` haben seither **null** Produktions-Aufrufer, `Studio/RollNoteOps.swift` überlebt mit genau einem (`stableSeed`, gerufen von `PianoRollModel`). Keiner ist mitgelöscht — `RollHitTest` trägt das #470-Gesetz, das die Löschung überleben SOLLTE, und im blockierenden Bundle pinnt es `TheUnitToPeriodLawSurvivesTheViewTests`. Dessen dritte Behauptung („die Lane ruft das Gesetz noch") ist im selben Commit zurückgezogen, weil die Lane weg ist — der Wächter hatte diese Anweisung in der eigenen Fehlermeldung stehen. **Sieben `PianoRollModel`-Mitglieder sind ebenfalls aufruferlos** und im Dateikopf namentlich aufgeschrieben statt still gelöscht.
@@ -126,61 +129,56 @@ Audio Foundation (KEEP):
     `EchoelModalBank` weiter unten. Behalten, aber nicht als klingende Stufe zitieren.)
 ```
 
-Deprecated from main flow: the old SoundscapeEngine, ClipEngine, MomentCaptureView,
-  BioSourceManager, Oura/EEG bridges, WeatherProvider, CircadianClock files have all
-  been REMOVED in cleanup (2026-06-19 audit) — they no longer exist. (HealthKit + rPPG
-  are now LIVE, not deprecated.) The genuinely app-unwired pure cores remaining are
-  **`Studio/BioModulation`** und **`Core/CloudSync`** (⚠️ #1165 — die Pfade sind KEINE
-  Kosmetik: `Core/BioModulationMap` ist eine ANDERE, LEBENDE Datei, deren `isMeasured` die
-  „gemessen"-Anzeige in BEIDEN Synth-Stimmen und im Bio-Panel gated. Der naheliegende
-  `git grep -c BioModulation -- Sources` zählt die lebende Nachbarin MIT und meldet darum
-  Treffer für einen Namen, den diese Zeile unverdrahtet nennt; mit Wortgrenze und ohne sie
-  sind es NULL. Wer hier „aufräumt", löscht plausibel das lebende Gate. ⛔ Hier stand die
-  Trefferzahl als Literal, einen Zyklus lang — und sie driftet mit jeder neuen `Sources/`-Datei,
-  die das Gate ruft, ohne dass etwas rot wird: dieselbe #818-Löschung und dieselbe
-  `EchoelModalBank`-Lehre, dass ein Vermerk, der ein `grep` ZITIERT, schneller altert als einer,
-  der eine Tatsache behauptet. Die NULL bleibt — sie ist ein Zustand, kein Datum, und
-  `TheTwoBioModulationsAreDifferentFilesTests` pinnt sie) und — nachgetragen 2026-08-23 (#757) — **`Core/BioSpaceMap`**
-  (null Produktions-Aufrufer; die bio→Objekt-Abbildung, die WIRKLICH sendet, steht in
-  `Sync/ADMOSCSender` selbst). Dazu — nachgetragen 2026-08-31 (#921) —
-  **`Core/VisualModulation`** (nicht mit dem verdrahteten `BioVisualParams` verwechseln;
-  Wächter `TheVisualModulationCoreHasNoCallerTests`). ⛔ **`DSP/EchoelWSOLA` stand hier (#1230) und ist
-  mit #1376 gestrichen: es ist VERDRAHTET ohne Erzeuger (#527-Lage), nicht unverdrahtet, und
-  die Kategorie entscheidet übers Löschen.** `EchoelWSOLA` ist ein DATEINAME, der Typ heißt
-  `WSOLAStretcher` — die zitierte Nadel `EchoelWSOLA(` kann für KEINEN Zustand des Repos
-  treffen (context.md §2). Messen: `git grep -n "WSOLAStretcher(" -- Sources` → 3, darunter
-  `TimelineAudioSink:184` auf der Transport-Kette `AudioLanePlayer.prime` → `prepareBeats`.
-  ⭐ **GESETZ: wer eine Behauptung mit ZWEI Trägern zurücknimmt, misst die Träger EINZELN** —
-  #1230 verlor die wahre Hälfte mit der falschen. §AA. Wächter
-  `TheStretcherIsNamedByItsTypeTests`. Dazu — #1325 — **`Core/AudioFeatureChannel`
-  + `Core/AudioFeatureExtractor`** (der Erzeuger war der Audio-Guard-Tick, mit #1302 gelöscht:
-  `publish(`/`reset()` null Aufrufer, der Extractor nur die eigene Datei). ⚠️ Der Kanal wird
-  trotzdem PRO BILD gelesen — `MetalBioView` bekommt jedes Mal `.silent`, `audioHueBias` und
-  `bassSwing` sind dauerhaft 0. Die Lese-Stelle IST der Montagepunkt eines künftigen Eingangs;
-  wer sie „aufräumt", verlegt die teure Hälfte in den churn-empfindlichen Rumpf.
-  Dazu — nachgetragen 2026-09-02 (Audit) —
-  **VIER `Sync/`-Kerne mit null Code-Aufrufern außerhalb der eigenen Datei:** `VBAPPanner`,
-  `AmbisonicsEncode`, `LightFixtureGroup` (+`LightFixture`), `BioPhaser` (+`BioPhaserSource`) —
-  je 1–2 Testdateien, sonst nur Kommentar-Nennungen. Befehl und Zähl-Kette:
-  `memory/LEDGER_COUNTS.md` §Q. Nicht löschen (EchoelLux L2/L3 und der EchoelRender-Pfad
-  brauchen genau sie), nicht als klingend/leuchtend zitieren. Dazu — nachgetragen 2026-09-09 (#1163) —
-  **`Core/BioTempoDirector`**: die ganze „Follow pulse"-Tempo-Spur, fertig gebaut und
-  getestet — `git grep -n BioTempoDirector -- Sources` = eigene Datei + DREI Kommentare,
-  **null Konstruktionen, null Aufrufe**; der Dateikopf sagt es selbst. **Gefährlichste
-  Sorte türlos: ein ZWILLING des lebenden Servos** (der ist inline in `EchoelStudioView`,
-  gespeist von `BioComposer.tempo(for:)` über `compose`) — wer den Tempo-Glide repariert,
-  editiert plausibel die Datei, die nichts ausliefert; wer eine BPM-Spur plant, baut neu. ⛔ #756 nannte `BioSpaceMap` als BELEG dafür, dass die
-  Website-Zeile „breath→azimuth, coherence→distance, HRV→elevation" stimmt. Der SCHLUSS
-  hält, der ZEUGE nicht — geprüft wurde der Inhalt der Karte, nicht ob jemand sie ruft. NOW WIRED — do NOT list these as unwired: BioVisualParams
-  (read by `MetalBioView`; `EchoelBioEngine` names it only in a doc comment — audit 2026-09-02), FeedbackGuard (AudioEngine duck loop; ⛔ seine „Audio input"-Tür
-  war mit #1024 entfernt und ist seit #1247 zurück — Master-Panel „Audio input", Gerät unbestätigt), LearnLibrary (LearnView), EchoelFXView (doored via
-  `showAllFX`). ⛔ **VocoderCore, VoiceAnalyzer/VoiceFrame, VocoderMapping und BrainwaveModulation
-  standen hier mit drei Fassungen ihrer Verdrahtungs-Frage und sind mit #1302 als DATEIEN
-  gelöscht** (Founder 2026-09-12, Audio-Eingang komplett raus). Die Frage stellt sich nicht mehr;
-  der Block ist entfernt statt nachgeführt, weil eine Verdrahtungs-Analyse über nicht mehr
-  existierende Dateien die teuerste Sorte Prosa ist — sie lädt zum Wiederaufbau ein. **Die LEHRE
-  bleibt und gilt allgemein: ein „unverifiziert, behaupte nichts"-Vermerk ist ehrlich und bleibt
-  für immer stehen, wenn niemand die zwei `grep`s macht, die ihn auflösen.**
+Deprecated from main flow: SoundscapeEngine, ClipEngine, MomentCaptureView, BioSourceManager,
+  Oura/EEG bridges, WeatherProvider, CircadianClock — alle 2026-06-19 GELÖSCHT, existieren
+  nicht mehr. (HealthKit + rPPG sind LIVE, nicht deprecated.)
+
+  **REGISTER DER UNVERDRAHTETEN KERNE — Namen und die EINE Falle je Eintrag. Messung,
+  Cluster-Begründung und Zähl-Ketten: `memory/LEDGER_COUNTS.md` §AB (Inventur) und §Q (die
+  `Sync/`-Zählung). Kein Eintrag ist zu löschen; der Defekt war nie ihre Existenz, sondern
+  unerreichbar UND nicht aufgeschrieben.**
+  · **`Studio/BioModulation`** — ⚠️ der Pfad ist KEINE Kosmetik: `Core/BioModulationMap` ist
+    eine ANDERE, LEBENDE Datei, deren `isMeasured` die „gemessen"-Anzeige in beiden
+    Synth-Stimmen und im Bio-Panel gated. `git grep -c BioModulation` zählt die Nachbarin MIT;
+    wer hier „aufräumt", löscht plausibel das lebende Gate. Wächter
+    `TheTwoBioModulationsAreDifferentFilesTests`.
+  · **`Core/CloudSync`** · **`Core/BioSpaceMap`** (die sendende bio→Objekt-Abbildung steht in
+    `Sync/ADMOSCSender` selbst) · **`Core/VisualModulation`** (nicht mit dem verdrahteten
+    `BioVisualParams` verwechseln; Wächter `TheVisualModulationCoreHasNoCallerTests`).
+  · **`Core/AudioFeatureChannel` + `Core/AudioFeatureExtractor`** (#1325) — ⚠️ der Kanal wird
+    trotzdem PRO BILD gelesen; `MetalBioView` bekommt jedes Mal `.silent`. Die Lese-Stelle IST
+    der Montagepunkt eines künftigen Eingangs; wer sie „aufräumt", verlegt die teure Hälfte in
+    den churn-empfindlichen Rumpf.
+  · **`Core/BioTempoDirector`** (#1163) — die fertige „Follow pulse"-Spur. **Gefährlichste
+    Sorte: ein ZWILLING des lebenden Servos** (inline in `EchoelStudioView`); wer den
+    Tempo-Glide repariert, editiert plausibel die Datei, die nichts ausliefert.
+  · **Die RAUM-RENDER-Hälfte, sieben Kerne:** `Sync/VBAPPanner`, `Sync/AmbisonicsEncode`,
+    `Sync/LightFixtureGroup` (+`LightFixture`), `Sync/BioPhaser` (+`BioPhaserSource`),
+    `DSP/BinauralPanner` (+`BinauralCues`), `DSP/EchoelSpaceReverb`,
+    `Sequencer/SpatialAutomationMapping`. Real ist die STEUER-Hälfte (`SpatialSceneStore` →
+    ADM-OSC auf der Leitung). Wächter `TheSpatialRenderHalfIsNotClaimedLiveTests`.
+  ⭐ **DREI GESETZE, die dieses Register teuer gelernt hat:** (1) **wer einen Scope in eine
+  Register-Zeile schreibt, schreibt hin, was der Scope AUSGESCHLOSSEN hat** — der 2026-09-02-Lauf
+  zählte ehrlich „VIER `Sync/`-Kerne" und wurde als Gesamtzahl gelesen, während drei identisch
+  tote Zwillinge ein Verzeichnis weiter lagen (#1379) · (2) **wer eine Behauptung mit ZWEI
+  Trägern zurücknimmt, misst die Träger EINZELN** — #1230 führte `DSP/EchoelWSOLA` hier, belegt
+  mit einer Nadel auf einen DATEINAMEN (der Typ heißt `WSOLAStretcher` und hat drei
+  Aufrufstellen); der Eintrag ist mit #1376 gestrichen, es ist die #527-Lage (verdrahtet, Daten
+  ohne Erzeuger), §AA, Wächter `TheStretcherIsNamedByItsTypeTests` · (3) **ein Vermerk, der ein
+  `grep` ZITIERT, altert schneller als einer, der eine Tatsache behauptet.**
+
+  NOW WIRED — nicht als unverdrahtet führen: **BioVisualParams** (gelesen von `MetalBioView`) ·
+  **LearnLibrary** (LearnView) · **EchoelFXView** (Tür `showAllFX`). ⛔ **`FeedbackGuard` stand
+  in dieser Gegenliste und ist mit #1302 als DATEI GELÖSCHT (#1379)** — übrig sind vier
+  Kommentare. Der Eintrag versprach dazu eine Tür („Master-Panel ‚Audio input'"), die mit dem
+  Audio-Eingang ebenfalls weg ist. ⭐ **GESETZ: eine Löschung muss die Liste der LEBENDEN
+  mitziehen, nicht nur die der toten** — #1302 führte den ⛔-Block über die Vokal-Kerne sauber
+  nach und ließ den Namen eine Zeile höher, in der Gegenliste, stehen. VocoderCore,
+  VoiceAnalyzer/VoiceFrame, VocoderMapping und BrainwaveModulation sind mit #1302 ebenfalls
+  gelöscht; ihr Block ist entfernt statt nachgeführt, weil eine Verdrahtungs-Analyse über nicht
+  mehr existierende Dateien zum Wiederaufbau einlädt. **Die LEHRE bleibt: ein „unverifiziert,
+  behaupte nichts"-Vermerk bleibt für immer stehen, wenn niemand die zwei `grep`s macht, die
+  ihn auflösen.**
 
 Protected (do not modify without explicit user approval):
   BioEventGraph, HilbertSensorMapper, BioSignalDeconvolver.

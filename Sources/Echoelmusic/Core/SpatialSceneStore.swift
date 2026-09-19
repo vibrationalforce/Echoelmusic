@@ -1,8 +1,12 @@
 // SpatialSceneStore.swift
 // The live immersive scene: one SpatialObject per track, placed by ImmersiveObjectDefaults
 // so "every instrument is immersive" by default. This is the control-plane model the Touch
-// automation surface moves, the VBAPPanner / BinauralPanner render, and ADMOSCSender streams
-// out (send(scene:)). Rebuilding from the timeline's lanes keeps the scene in step with the
+// automation surface moves and ADMOSCSender streams out (send(scene:)).
+// ⛔ "the VBAPPanner / BinauralPanner render" stood here and is FALSE (#1379): measured over
+// all of Sources/, both have zero production callers — `VBAPPanner`, `AmbisonicsEncode` and
+// `DSP/BinauralPanner` are built, tested cores with no render path. The CONTROL half of the
+// space leg is real (this store → ADM-OSC objects on the wire); the RENDER half is not built.
+// Keep them — the EchoelRender path needs exactly these — but do not cite them as sounding. Rebuilding from the timeline's lanes keeps the scene in step with the
 // tracks; user/automation moves are preserved across a rebuild (only new/removed lanes change).
 //
 // @MainActor @Observable control plane — no audio-thread work. Pure mapping (lanes → objects)

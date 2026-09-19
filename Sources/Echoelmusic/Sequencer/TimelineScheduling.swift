@@ -111,7 +111,12 @@ public extension TimelineDocument {
         lanes.first(where: { $0.kind == .midi && !$0.isBio })?.id
     }
 
-    /// The audio lanes (in order) — each plays its audio regions on its own AudioClipPlayer.
+    /// The audio lanes (in order). Each gets its own `AudioRegionSink`; the production sink
+    /// is `TimelineAudioSink` (`EchoelmusicApp` injects it as `makeSink`).
+    /// ⛔ This line said "on its own AudioClipPlayer" (#1379). That type has ZERO callers and
+    /// ZERO tests — naming it here sent anyone debugging timeline audio into a file that has
+    /// never executed. A comment mention is not a caller, and thirteen of them across eight
+    /// files made a dead 380-line class read as the engine.
     var audioLaneIDs: [UUID] {
         lanes.filter { $0.kind == .audio && !$0.isBio }.map(\.id)
     }

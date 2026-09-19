@@ -6929,3 +6929,80 @@ Nachzählen `grep -c '^## [A-Z] — '`. Dieser Befehl kann ein `## AA — ` **ni
 also hätte der Abschnitt, der die Nadel-Lehre aufschreibt, sich selbst unsichtbar gemacht.
 Auf `grep -cE '^## [A-Z]+ — '` korrigiert, im selben Commit. **Eine Zähl-Nadel altert nicht
 nur mit dem Baum, sondern mit der eigenen Namensgebung.**
+
+
+---
+
+## AB — Die vollständige Waisen-Inventur (Deep Function Check 2026-09-19, #1379)
+
+**Warum hier und nicht in `CLAUDE.md`:** die immer geladene Datei bekommt die NAMEN und das
+GESETZ; die Messung je Typ und die Cluster-Begründung stehen hier. Das Register nannte in
+`Audio/ DSP/ Sequencer/ Tools/ Sync/` SIEBEN Waisen; gemessen sind es **22 Dateien, in denen
+JEDER deklarierte Typ null externe Code-Verweise hat**, plus fünf halb-tote. Kommentar-Treffer
+sind ausgeschlossen — ein Kommentar ist keine Aufrufstelle (#762).
+
+### AB.1 — Warum die Lücken nicht zufällig sind
+
+Sie clustern auf die Säulen, die das Produkt VERKAUFT, und das ist genau die Richtung, in der
+eine Register-Lücke teuer wird: aus diesen Zeilen entsteht Store- und Website-Text.
+
+| Cluster | Dateien | Warum es hier fehlte |
+|---|---|---|
+| **Raum / Tiefe** („Bio · Audio · Video · Light · **Space**") | `DSP/BinauralPanner` (+`BinauralCues`), `DSP/EchoelSpaceReverb`, `Sequencer/SpatialAutomationMapping` | Der 2026-09-02-Audit zählte VIER `Sync/`-Kerne und hörte an der VERZEICHNISGRENZE auf. Die identisch toten DSP-Zwillinge lagen ein Verzeichnis weiter und wurden nie gefragt. |
+| **#1302-Nachlese** (Mikrofon gelöscht) | `DSP/PitchTracker`, `Audio/LatencyCompensation` | Beide beschreiben im eigenen Doc den Mikrofonpfad („The mic's FFT peak", „the mic then captures that with the input latency on top"). Die Löschung kehrte sie nicht mit. |
+| **Ship-Gate** | `DSP/PatchLibrary` (+`LibraryPatch`), `Sequencer/TakeDistance` | `PatchLibrary` ist die Preset-Datenbank-Hälfte von Check 2 und wird von VIER CISmoke-Wächtern geschützt — CI bewacht eine Bank, die kein Nutzer erreicht. `TakeDistance` ist „EINE ZAHL FÜR ‚KLINGT DAS GLEICH?'", also das Messinstrument für Check 1 und für die Founder-Bitte „soll nie gleich klingen". |
+| **#121/#475-Nachlese** (Clip-Editor, Arrangement, Pianoroll gelöscht) | `Sequencer/ClipAutomationEdit`, `MelodyBarEdit`, `TimelineDragMath`, `NoteTransform`, `WarpedClipPlan` | Reine, getestete Kerne der gelöschten Flächen. |
+| **Sonstige** | `Sequencer/LyricsModel` (SIEBEN Typen — grösster Einzelcluster), `DSP/EchoelMIDIDecode` („for the synth render path" — der nutzt es nicht), `Sequencer/LoopCutter` | |
+
+### AB.2 — Halb-tot: NICHT als Ganzes löschen
+
+| Datei | tot | lebt |
+|---|---|---|
+| `Sequencer/LaneLaunchLatch` | `LaneLaunchLatch`, `LaunchGestureResolver`, `LaunchEvent`, `LaunchedClip`, `PressOutcome`, `GestureThresholds` | `LaunchQuantize`, `LaunchTiming` (von `ClipLaunchEngine`) |
+| `Sequencer/BioMusicDirector` | `BioMusicDirector`, `BioStateSummary`, `MusicDirection`, `MusicDirectionResult`, `BioDirectionFallback` | `BioExplanation`, `BioNarrationDriver` |
+| `DSP/EchoelVDSPKit` | `EchoelSpectralAnalyzer`, `EchoelBiquadCascade`, `EchoelComplexDFT`, `EchoelDecimator` | `EchoelRealFFT`, `EchoelConvolution` |
+| `Sequencer/RecordAnchor` | `RecordAnchor` | `RecordPlan` |
+| `Sequencer/LoopCutter` | `enum LoopCutter` (der `tile()`-Neuschneider) | **`LoopBarLength`** — 7 Dateien, u. a. `EchoelStudioView` (×7) und `LoopExporter` (×4) |
+
+### AB.3 — `AudioClipPlayer`: der Einzelfall, der schlimmer ist als der Rest
+
+380 Zeilen, **null Aufrufer, null Tests** — und **dreizehn externe Erwähnungen in acht Dateien,
+alle Kommentare**, von denen mehrere es als den LEBENDEN Renderer bezeichnen. Der lebende Pfad
+ist `TimelineAudioSink` (`EchoelmusicApp:1127`). Die anderen 21 Waisen sind inert-aber-bekannt;
+diese ist inert, unregistriert und **aktiv falsch beschildert**. Zwei der Schilder sind mit
+#1379 korrigiert (`DSP/AudioOutputGuard:74`, `Sequencer/TimelineScheduling:114`); die übrigen
+elf sind beschreibende Erwähnungen, die mit der Datei selbst gehen können.
+
+### AB.4 — Das GESETZ
+
+⭐ **Ein Audit erbt die Grenzen seines eigenen Suchpfads.** Der 2026-09-02-Lauf war korrekt
+und vollständig — FÜR `Sync/`. Er schrieb „VIER `Sync/`-Kerne" und war damit ehrlich; die
+nächste Sitzung las daraus „vier Waisen", weil die Einschränkung im Satz stand und nicht im
+Gedächtnis. **Wer einen Scope in eine Register-Zeile schreibt, schreibt auch hin, was der
+Scope AUSGESCHLOSSEN hat** — sonst wird aus einer sauberen Teilmessung eine Gesamtbehauptung,
+und zwar ohne dass jemand etwas Falsches getippt hat. Das ist die Cousine von §K (wer einen
+Nachbarn mit-behauptet, misst den Nachbarn mit), nur eine Ebene höher: hier wird der Nachbar
+nicht mit-behauptet, sondern still weggelassen.
+
+⚠️ **Und keiner dieser Kerne ist zu löschen.** `EchoelLux` L2/L3, der `EchoelRender`-Pfad, eine
+wiedergeöffnete Preset-Datenbank und die Ähnlichkeits-Metrik brauchen genau sie. Der Defekt ist
+nicht ihre Existenz, sondern dass sie **unerreichbar UND nicht aufgeschrieben** waren.
+
+### AB.5 — Zwei Sätze, die beim Kürzen des Registers aus `CLAUDE.md` gezogen wurden (#1379)
+
+Beide waren Provenienz zu einem Gesetz, das in der immer geladenen Datei weiterlebt.
+
+**`Studio/BioModulation` — die Trefferzahl als Literal.** Im Register stand einen Zyklus lang die
+ZAHL der `git grep -c BioModulation`-Treffer. Sie driftet mit jeder neuen `Sources/`-Datei, die
+das lebende Gate `Core/BioModulationMap.isMeasured` ruft, **ohne dass etwas rot wird** — dieselbe
+#818-Löschung und dieselbe `EchoelModalBank`-Lehre (§W): *ein Vermerk, der ein `grep` ZITIERT,
+altert schneller als einer, der eine Tatsache behauptet.* Was bleibt, ist die NULL für den
+unverdrahteten Kern — mit Wortgrenze und ohne sie —, und die ist ein ZUSTAND, kein Datum;
+`TheTwoBioModulationsAreDifferentFilesTests` pinnt sie.
+
+**`Core/BioSpaceMap` — der richtige Schluss mit dem falschen Zeugen (#756).** Die Website-Zeile
+„breath→azimuth, coherence→distance, HRV→elevation" ist WAHR, und #756 belegte sie mit
+`BioSpaceMap`. Geprüft wurde der INHALT der Karte, nicht ob irgendwer sie ruft — und niemand tut
+es; die sendende Abbildung steht in `Sync/ADMOSCSender` selbst. ⭐ **Der Schluss hält, der Zeuge
+nicht.** Ein Beleg, der zufällig zur richtigen Antwort führt, ist kein Beleg, und er ist
+schwerer zu entdecken als ein falsches Ergebnis, weil nichts auffällt.

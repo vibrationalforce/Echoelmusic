@@ -24,7 +24,9 @@ public final class AudioEngine {
     // them turns "obviously absent" into "silently mute". Nothing persists this flag, so there
     // is nothing to keep alive — what it did instead was MISDIRECT: Echoel really does have a
     // spatial output, and it is nowhere near this class. It is `Sync/ADMOSCSender` streaming
-    // `/adm/obj/{n}/*` over the network, with `DSP/BinauralPanner` for the cues; the stage
+    // `/adm/obj/{n}/*` over the network — object POSITIONS, not a rendered binaural mix (⛔
+    // "with `DSP/BinauralPanner` for the cues" stood here and is false, #1379: that core has
+    // zero production callers, as do `VBAPPanner` and `AmbisonicsEncode`); the stage
     // surface is `Studio/ImmersiveStageView`, doorless on purpose (ship-gate 4 makes
     // light/space "demonstrable, not required for v1"). A plausible-looking hook on the audio
     // engine invites the next session to wire in-engine spatial audio that duplicates a
