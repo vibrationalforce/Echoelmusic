@@ -6029,6 +6029,25 @@ Absatz die Provenienz weiter mittrug; siehe F.4.
 NAMENSFORM, zählt also `menuPanelHost` mit (Wirt, kein Panel) und übersieht `utilityRow` (ein
 Panel, das nicht reflowt). Die Zehn stimmt, die MENGE ist um je einen daneben.
 
+### F.5 — #746s halbes Verschieben, und warum der Deckel-Wächter es nicht sehen kann (#912, hierher #1375)
+
+Diese Herleitung stand bis #1375 zusätzlich in `CLAUDE.md`; dort steht jetzt nur noch das
+GESETZ, weil die Datei mit 370 B Kopfraum unter ihrer 150-000-B-Decke lag und ein echter
+Register-Eintrag (#1375s Rücknahme des „eine Scheibe"-Rückstands) bezahlt werden musste —
+genau der Handel, für den `TheLawFileStaysUnderItsCeilingTests` existiert.
+
+**#746 hat den ZEIGER auf diesen Abschnitt gesetzt und den Text in `CLAUDE.md` stehen lassen.**
+Von #746 bis #912 trug die immer-geladene Datei die Provenienz also weiter, während §F sich als
+ihr Zuhause beschrieb — beide Seiten behaupteten, die andere sei die kurze.
+
+**Der Deckel-Wächter kann das strukturell nicht sehen:** er prüft, ob die ZIEL-Sektion
+EXISTIERT, nie ob die QUELLE danach kürzer geworden ist. Ein Verschieben, das nur anlegt und
+nichts wegnimmt, ist für ihn ununterscheidbar von einem echten. Die zwei Byte-Zahlen stehen in
+§F.4.
+
+**Das Gesetz, das in `CLAUDE.md` geblieben ist: ein Verschieben ist erst eines, wenn BEIDE
+Seiten gemessen sind.**
+
 ## G — Die „Donuts"-Pille und der tote Tools-Katalog (#227 → #747 → #751)
 
 **Verschoben aus `CLAUDE.md` am 2026-08-23 (#751), wörtlich.** In der immer-geladenen Datei bleibt
