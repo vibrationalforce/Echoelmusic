@@ -514,6 +514,40 @@ final class RetroCapture {
         // costs nothing. This method's two callers both do duration arithmetic on the result.
         // Returning nil when short was the other candidate and is REJECTED for the same
         // reason: it would also change the ring-not-yet-full case, which is not this bug.
+        // ⛔ #1374 — THE CLAMP ON THE NEXT LINE CANNOT PROTECT ITS OWN CONVERSION, and that
+        // is the whole finding. `Int(someDouble)` TRAPS on NaN, on ±infinity and out of
+        // Int's range — it does not throw and it does not saturate, the process dies. Both
+        // `min` and `max` run AFTER that conversion, so they guard the result of a step that
+        // already crashed. Reordering them would not help either: this repo's own law says
+        // `min(max(v, lo), hi)` passes NaN straight through (`min(NaN, 30)` returns NaN,
+        // because `30 < NaN` is false), which is exactly why `clamped(to:)` exists.
+        //
+        // ⚠️ IT IS LATENT, NOT A DEMONSTRATED CRASH, and saying otherwise would be the
+        // flattering direction. The live caller is `LoopExporter.exportRecentLoop`, whose
+        // window is `min(seconds + ago, retroRingSeconds)` — NaN-permeable by the line above,
+        // and so is the length guard above IT, since every comparison with NaN is false. But
+        // no producer is proven to make one: a zero tempo yields ±infinity, which `min`
+        // DOES catch correctly, and NaN needs a 0/0. So this guard buys the day a producer
+        // starts making one, not a bug anybody has seen.
+        //
+        // ⭐ WHY THE GUARD SITS HERE AND NOT IN THE CALLER. A fix that is true for ONE caller
+        // is not true for the TYPE. `seconds` is this method's public `Double` parameter;
+        // every present and future caller reaches the same conversion, and only this side can
+        // promise it is safe. The two Int-typed relatives — `snapshotPreRoll(seconds: Int)`
+        // and `writePreRollToFile(seconds: Int)` — cannot receive a NaN at all and are
+        // deliberately left alone; widening this to them would be a guard for a state their
+        // signatures already make unreachable.
+        //
+        // ⚠️ REFUSED, NOT CLAMPED, and the alternative was considered. Clamping a NaN to 0 or
+        // to the ring length would hand the caller a file of the WRONG DURATION while
+        // reporting success — the precise defect #630b above spent a cycle undoing ("short IS
+        // wrong" for both consumers, which do duration arithmetic on the result). `nil` routes
+        // into the honest-failure branch each caller already has.
+        guard seconds.isFinite else {
+            log.log(.error, category: .audio,
+                    "RetroCapture.captureRecent: non-finite seconds (\(seconds)) — refused")
+            return nil
+        }
         let frames = min(max(Int(seconds * captureSampleRate), 0), ringCapacity)
         guard frames > 0 else { return nil }
         guard let format = AVAudioFormat(standardFormatWithSampleRate: captureSampleRate, channels: 2) else {
