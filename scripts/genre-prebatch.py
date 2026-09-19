@@ -214,20 +214,40 @@ SUFFIX={i for i,_ in PATCHES}; PNAMES=[nm for _,nm in PATCHES]
 # SHIPPED budgets in `Tests/CISmoke/GenreDelaySyncResolvabilityTests` say more than
 # that, and all three sit EXACTLY on their bound today, so a candidate can redden one
 # with no warning from here:
-#   · at most ONE offered genre truncated at its own default tempo — spent by
-#     `selfObservation` (2.069 s at 46 BPM),
+#   · ZERO offered genres truncated at their own default tempo,
 #   · at least SEVEN drum-free offered genres carrying a delay at all,
-#   · at least FIVE audibly distinct echo times among them, clustered at 5%.
+#   · at least FIVE audibly distinct echo times among them, clustered at 5%
+#     (⚠️ FIVE, not seven — the cluster count is over the drum-free offered genres that
+#     actually CARRY a delay; three of the ten do not, and counting them gives a
+#     flattering 7. #1372 reported 7 for exactly one draft before re-deriving it.),
 # The third is the trap: adding a time can MERGE two clusters that were >5% apart, so a
 # new genre can LOWER a ratchet that only ever moves up. That is not reachable by
 # reading one candidate in isolation — it needs the neighbours, which is #1352's law
 # one file over: measure the neighbour with the tool before claiming a separation.
 #
-# ⚠️ The FAST end stays the only hard FAIL, because that is the shipped invariant
-# (`testEveryGenresDivisionResolvesAtItsFastestAllowedTempo`) — a division that resolves
-# NOWHERE is a lie in the source. Clamping at the SLOW end is tolerated by design:
-# `stillMeditation` sits exactly on the ceiling at 60 BPM and does not clamp at all.
-# Failing on it would forbid correct work (#364); reporting it is the whole point.
+# ⭐ **#1372 MADE THE SLOW END A HARD FAIL TOO, AND THIS BLOCK IS THE REASON THE CHANGE
+# HAD TO REACH THIS FILE.** It used to read: "The FAST end stays the only hard FAIL …
+# Clamping at the SLOW end is tolerated by design: `stillMeditation` sits exactly on the
+# ceiling at 60 BPM and does not clamp at all. Failing on it would forbid correct work
+# (#364)." Every clause of that is now wrong, and in the direction that costs most — this
+# tool is what a genre batch runs BEFORE writing a preset, so it would have green-lit a
+# division the shipped guard refuses:
+#   · #1371 routed the genre division to the audio (a genre change now sets the
+#     Delay-note picker from `style.fxPreset.delaySync`), so a slow-end clamp is no
+#     longer invisible — it is a flat echo that stops tracking tempo, on the slow
+#     `.flowFree` genres where a body actually goes.
+#   · #1372 re-voiced the three genres that were clamping (`selfObservation`,
+#     `stillMeditation`, `doom`) to `.half, .triplet`, so refusing a slow-end clamp
+#     forbids nothing that ships — the #364 objection is spent, not overruled.
+#   · the named example was doubly stale: `stillMeditation` is no longer a half note at
+#     all, and the old line beside it put `selfObservation`'s 2.069 s at 46 BPM when it
+#     is at 58 (46 gives 2.609). **A tolerance clause defended by an example is only as
+#     good as the example, and nothing re-derives one.**
+# The shipped invariant is now BOTH ends:
+# `testEveryGenresDivisionResolvesAtItsSlowestAllowedTempo` (the ceiling can only fire at
+# the floor, because seconds = k/bpm falls as bpm rises) and
+# `testEveryGenresDivisionResolvesAtItsFastestAllowedTempo` (a division that resolves
+# NOWHERE is a lie in the source). This tool fails on either.
 QUARTERS={'whole':4.0,'half':2.0,'quarter':1.0,'eighth':0.5,
           'sixteenth':0.25,'thirtySecond':0.125,'sixtyFourth':0.0625}
 MODFACTOR={'straight':1.0,'dotted':1.5,'triplet':2.0/3.0}
@@ -358,30 +378,28 @@ def selftest():
     # #1353 — section 5's two hard refusals, driven. Both candidates are the SAME clone with
     # one field moved, so a red here is about the delay arithmetic and nothing else.
     #
-    # ⚠️ Case B's expected message depends on the TREE, not on the candidate: the truncation
-    # budget is `at most one`, so the identical draft must FAIL while some offered genre
-    # already spends it and merely WARN while none does. Hard-coding either message would
-    # make this case a liar the day the tree moves — so it is derived, and the print says
-    # which branch the tree put it on.
-    st_fx, st_arms = fx_table()
-    spent_now = [n for n in OFFERED
-                 if st_fx.get(n, {}).get('enabled') and st_fx.get(n, {}).get('quarters')
-                 and delay_seconds(st_fx[n]['quarters'],
-                                   float(ints(g('defaultTempo', n))[0])) > DELAY_CEILING]
+    # ⛔ CASE B WAS TREE-DERIVED AND IS NOW FIXED, BECAUSE THE BRANCH IT CHOSE BETWEEN IS
+    # GONE. It used to pick its expected message from whether some offered genre already
+    # spent the `at most one` truncation budget — a good design for a budget, and dead the
+    # moment #1372 made the budget ZERO and the slow end a refusal. The candidate it fed
+    # (tempoRange 100…120, 4 quarters) now trips the SLOW-end rule before the budget line is
+    # ever reached, so the old needle could not be found and the case went red on a correct
+    # tree. **A self-test whose expectation is derived from the tree still dies when the RULE
+    # moves, not just the tree.**
+    #
+    # ⭐ ITS REPLACEMENT IS THE HISTORICAL DEFECT ITSELF (#944: validate a detector against a
+    # known positive). 50…80 BPM with a half note is `doom`'s exact pre-#1372 shape — 1.500 s
+    # at the fast end, so the FAST rule passes it, and 2.400 s at the slow end, which is the
+    # one the old tool called "tolerated". If this case ever goes green-without-failing, the
+    # tool has gone back to green-lighting the thing the shipped guard refuses.
+    st_fx, st_arms = fx_table()   # read here, used by the arm-coverage check below
     sec5 = [("a division over the ceiling at the FASTEST tempo resolves nowhere",
              dict(base, tempoRange=[120, 140], defaultTempo=130, delayDivisionQuarters=6.0),
-             "resolves nowhere", True)]
-    if spent_now:
-        sec5.append((f"truncation at the candidate's OWN default is refused while {spent_now} "
-                     "spends the budget",
-                     dict(base, tempoRange=[100, 120], defaultTempo=105,
-                          delayDivisionQuarters=4.0),
-                     "budget of one is already spent", True))
-    else:
-        sec5.append(("truncation at the candidate's OWN default warns while the budget is free",
-                     dict(base, tempoRange=[100, 120], defaultTempo=105,
-                          delayDivisionQuarters=4.0),
-                     "spends the truncation budget", False))
+             "resolves nowhere", True),
+            ("a division that resolves at the FAST end and clamps at the SLOW end is refused "
+             "(doom's pre-#1372 shape: half note over 50…80)",
+             dict(base, tempoRange=[50, 80], defaultTempo=65, delayDivisionQuarters=2.0),
+             "at its SLOWEST tempo", True)]
     for title, cand, needle, must_fail in sec5:
         path = tempfile.mktemp(suffix=".json")
         json.dump([cand], open(path, "w"))
@@ -591,24 +609,28 @@ for c in cands:
     over  = " CLAMPS" if slow > DELAY_CEILING else ""
     print(f"   {c['name']:18s} delay {q} q: {slow:.3f}s @{lo} … {dflt:.3f}s @{c['defaultTempo']} "
           f"… {fast:.3f}s @{hi}   binding={binds}{over}")
+    # the other half of the shipped invariant since #1372 — see the block above for why
+    # this stopped being a note and became a refusal
     if slow > DELAY_CEILING:
-        print(f"      note: clamps to {DELAY_CEILING}s below "
-              f"{q*60.0/DELAY_CEILING:.1f} BPM. Tolerated (stillMeditation sits exactly on the "
-              "ceiling by design) — but the echo stops tracking tempo there.")
+        fail(f"{c['name']}: delay {q} quarters is {slow:.3f}s at its SLOWEST tempo {lo} BPM — "
+             f"over the {DELAY_CEILING}s ceiling, so the echo reads flat below "
+             f"{q*60.0/DELAY_CEILING:.1f} BPM and stops tracking tempo there. Since #1371 a "
+             "listener HEARS this (the genre sets the Delay-note picker). Author a shorter "
+             "division — `.half, .triplet` is the measured precedent for a slow genre "
+             "(GenreDelaySyncResolvabilityTests claim 2)")
+        continue
     if FXT is None: continue
     # budget 1 — at most ONE offered genre truncated at its own default tempo
     spent=[n for n in OFFERED
            if FXT[n]['enabled'] and FXT[n]['quarters']
            and delay_seconds(FXT[n]['quarters'], float(ints(g('defaultTempo',n))[0])) > DELAY_CEILING]
-    if dflt > DELAY_CEILING:
-        if spent:
-            fail(f"{c['name']}: truncated at its OWN default tempo ({dflt:.3f}s) and the budget of "
-                 f"one is already spent by {spent} — GenreDelaySyncResolvabilityTests claim 3 "
-                 "asserts at most one. Give it a division that fits its window.")
-        else:
-            print(f"      warn: spends the truncation budget (claim 3 allows exactly one)")
-    else:
-        print(f"      truncation budget: {len(spent)}/1 spent by {spent or '—'}, candidate clear")
+    # ⚠️ UNREACHABLE FOR THE CANDIDATE SINCE #1372, AND KEPT ANYWAY — not as dead code but
+    # as a TREE reading. `dflt >= slow` always (the default sits inside the window), so the
+    # slow-end refusal above already returned for any candidate that truncates at its own
+    # default; what this line still answers is "is the SHIPPED roster clean?", which is the
+    # thing claim 3 asserts and which this tool cannot otherwise show.
+    print(f"      default-tempo truncation across the shipped roster: "
+          f"{len(spent)} — {spent or 'none, as GenreDelaySyncResolvabilityTests now requires'}")
     # budget 2+3 — the drum-free echo axis, which a NEW time can MERGE
     if c['beatArchetype'] != 'none': continue
     df=[n for n in OFFERED if g('beatArchetype',n).strip()=='.none']

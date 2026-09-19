@@ -37,6 +37,43 @@
 // flipped: a wrong value here is now a wrong SOUND, not dead data. (The count is deleted rather
 // than refreshed a third time, #818; `GenreFXPreset.apply(to:bpm:)`'s doc carries the commands.)
 //
+// ⭐ AND THE FLIPPED STAKES CASHED IN ONE COMMIT LATER (#1372), WHICH IS THE PART WORTH READING
+// BEFORE TRUSTING ANY ALLOWANCE IN THIS FILE. Two of this file's claims carried an exemption
+// whose written reason was "no listener hears it": `selfObservation` was permitted to truncate
+// at its own default tempo, and the whole-window sweep covered a hand-written pair of genres.
+// Measured after #1371: THREE genres clamped `.half` against the 2.0 s ceiling at their slowest
+// tempo — `selfObservation` (46…78), `stillMeditation` (50…70), `doom` (50…80) — and the first
+// two are OFFERED and both `.flowFree`, so their echo froze flat exactly where a body takes
+// them. All three are re-voiced to `.half, .triplet` (`deepDrone`'s division), the allowance is
+// now zero, and the sweep is a universal floor check instead of a roster.
+//
+// **THE DURABLE LESSON, and it is about guards rather than about delay: an exemption is only as
+// good as the premise written next to it, and a roster-shaped guard goes blind as its roster
+// ages.** Both defects were visible in this file's own prose the whole time.
+//
+// ⚠️ HONEST GRADING OF #1372 (§3): no Swift toolchain in the web session. The three data
+// claims were re-implemented in Python — the arithmetic READ out of `StudioCalculator.swift`
+// (`seconds = 60/bpm × division.quarters × modifier.factor`), not invented — and driven against
+// the parent tree `438cf23` and the worktree. Parent: claim "slowest" ROT with
+// `[doom, selfObservation, stillMeditation]`, claim "default" ROT with `[selfObservation]`,
+// cluster count 5. Worktree: both green, cluster count 5.
+//
+// Four mutants, landed and MEASURED:
+//   `selfObservation` back to `.half` → slowest AND default (clusters 6, green)
+//   `stillMeditation` back to `.half` → slowest ONLY — **the case no claim in this file could
+//                                       see before #1372**: it resolves at its default (60 BPM
+//                                       is exactly 2.000 s) and truncates below it
+//   `doom` back to `.half`            → slowest ONLY — it is not `offered`, so only the
+//                                       all-genres claim reaches it
+//   `drift` to `.half, .triplet`      → clusters 4, the merge the ratchet exists for
+//
+// ⛔ AND ONE NUMBER IN THIS FILE WAS NEARLY RAISED ON A BAD MEASUREMENT. The first #1372 draft
+// reported the cluster count as 7 and raised the floor to match. Seven counts the drum-free
+// offered genres without the `delayEnabled` filter the method itself applies — `celticAir`,
+// `glacialField` and `slowBloom` ship no echo. **A re-derivation is only a check if it is driven
+// against the CODE of the claim, not against a memory of what the claim asks**; the floor stays
+// at its measured 5.
+//
 // THE SOURCE DEFECT THIS FILE WAS WRITTEN FOR. `apply(to:bpm:)` resolves `delaySync` against the
 // BPM and clamps to `maxDelaySeconds` = 2.0. Two genres authored divisions over that clamp at
 // EVERY tempo in their own `tempoRange`, so the notated value could not resolve anywhere:
@@ -126,46 +163,69 @@ final class GenreDelaySyncResolvabilityTests: XCTestCase {
         }
     }
 
-    /// The two genres this slice repaired, held to the STRONGER bar the fix actually met: not
-    /// merely resolvable somewhere, but un-clamped across the ENTIRE window, so the resolved time
-    /// tracks tempo everywhere a body can take them. Swept at 1 BPM, which covers both ends.
-    func testTheTwoRepairedGenresResolveUnclampedAcrossTheirEntireWindow() {
-        for style in [MusicStyle.deepDrone, .contemplation] {
-            let range = style.tempoRange
-            var bpm = range.lowerBound
-            while bpm <= range.upperBound {
-                let r = stamped(style, bpm: bpm)
-                XCTAssertEqual(r.got, r.authored, accuracy: 1e-4,
-                    "\(style) at \(bpm) BPM: authored \(String(format: "%.3f", r.authored)) s, "
-                    + "stamped \(String(format: "%.3f", r.got)) s. This genre was re-authored "
-                    + "specifically so the clamp never fires inside its own window — a division "
-                    + "that clamps again means the window moved or the division did.")
-                bpm += 1
-            }
+    /// EVERY genre, at its SLOWEST allowed tempo — the one end where the ceiling can fire.
+    ///
+    /// ⛔ #1372 REPLACED A NAMED LIST WITH THIS, AND THE REPLACEMENT IS THE POINT. It was
+    /// `testTheTwoRepairedGenresResolveUnclampedAcrossTheirEntireWindow`, sweeping
+    /// `[.deepDrone, .contemplation]` at 1 BPM. That guard was correct and could not see the
+    /// defect #1372 repaired, because the two genres that were truncating were not in its list —
+    /// **a guard whose reach is a hand-written roster grows blind exactly as fast as the roster
+    /// ages**, and this slice would have had to edit it either way. The sweep itself was also
+    /// more machinery than the question needs: `seconds(bpm) = k / bpm` is monotonically
+    /// DECREASING, so the longest resolved time in a window is always at its floor. One endpoint
+    /// per genre is therefore not a weaker check than 1-BPM steps across all of them; it is the
+    /// same check without the roster.
+    ///
+    /// ⚠️ ITS SIBLING ABOVE TESTS THE OTHER END AND IS DELIBERATELY KEPT. At the fastest tempo
+    /// the time is SHORTEST, so that claim cannot catch a truncation — it answers a different
+    /// question ("can this division resolve at ALL, anywhere in the window?") and its failure
+    /// message says so. Two ends, two diagnoses; merging them would lose the second.
+    func testEveryGenresDivisionResolvesAtItsSlowestAllowedTempo() {
+        for style in MusicStyle.allCases {
+            let preset = style.fxPreset
+            guard preset.delayEnabled else { continue }
+
+            let slowest = style.tempoRange.lowerBound
+            let r = stamped(style, bpm: slowest)
+            XCTAssertEqual(r.got, r.authored, accuracy: 1e-4,
+                "\(style) at its SLOWEST allowed tempo (\(slowest) BPM): `\(preset.delaySync.label)` "
+                + "notates \(String(format: "%.3f", r.authored)) s and the delay-line ceiling "
+                + "truncates it to \(String(format: "%.3f", r.got)) s. The echo is then FLAT over "
+                + "the slow part of \(style.tempoRange) — it stops tracking tempo exactly where a "
+                + "body takes a contemplative genre, and the Delay-note picker (which since #1371 "
+                + "shows this genre's own division) says a note value the chain does not play. "
+                + "Author a SHORTER division; do not raise the ceiling (see "
+                + "GenreFXPreset.maxDelaySeconds, whose own doc says the same).")
         }
     }
 
     // MARK: - The collapse itself
 
-    /// The clamp must not be what makes two offered genres share an echo. Exactly ONE is
-    /// permitted to truncate at its default tempo: `selfObservation`, a half note 3.5% over the
-    /// ceiling at 58 BPM, left alone on purpose because its division DOES resolve over most of
-    /// its window, so re-authoring it would change a preset that already resolves as authored.
+    /// The clamp must not be what makes two offered genres share an echo — and since #1372 the
+    /// permitted count is ZERO.
     ///
-    /// Written as a COUNT rather than a name so re-voicing selfObservation cannot redden it —
-    /// what must not happen is a SECOND genre joining it on the ceiling, which is how four of
-    /// them ended up there.
-    func testAtMostOneOfferedGenreIsTruncatedAtItsDefaultTempo() {
+    /// ⛔ IT READ `XCTAssertLessThanOrEqual(truncated.count, 1)` AND ITS ALLOWANCE HAD A STATED
+    /// PREMISE THAT EXPIRED. The exemption was `selfObservation`, "left alone on purpose because
+    /// its division DOES resolve over most of its window", and the failure message next to it
+    /// spelled the premise out: "what a LISTENER hears is a separate, open routing question".
+    /// #1371 routed it; #1372 re-voiced the genre. **An allowance is only as good as the premise
+    /// written beside it — and this one was written beside it, honestly, which is the only
+    /// reason it could be found and closed rather than inherited.**
+    ///
+    /// Kept as a COUNT over `offered` even though the claim above now covers every genre at its
+    /// floor: this one asks about the DEFAULT tempo, the one a fresh take actually starts on, and
+    /// its failure message names the genres. A zero here and a green sibling are two different
+    /// reassurances.
+    func testNoOfferedGenreIsTruncatedAtItsDefaultTempo() {
         let truncated = MusicStyle.offered.filter { style in
             style.fxPreset.delayEnabled && isClamped(style, bpm: style.defaultTempo)
         }
-        XCTAssertLessThanOrEqual(truncated.count, 1,
+        XCTAssertEqual(truncated.count, 0,
             "\(truncated.count) offered genres have their echo truncated by the delay-line "
             + "ceiling at their own default tempo (\(truncated.map { "\($0)" }.sorted())). Every "
-            + "one of them resolves to the SAME flat time regardless of what it notated. That is "
-            + "a source-level collapse of the delay axis (what a LISTENER hears is a separate, "
-            + "open routing question — see this file's header). Give the new one a division that "
-            + "fits its window.")
+            + "one of them resolves to the SAME flat time regardless of what it notated — and "
+            + "since #1371 a listener HEARS that, because a genre change now sets the Delay-note "
+            + "picker from the genre's own preset. Give it a division that fits its window.")
     }
 
     /// The positive form of the same claim: the drum-free offered genres must actually OCCUPY the
@@ -190,20 +250,35 @@ final class GenreDelaySyncResolvabilityTests: XCTestCase {
     /// (#364). The floor is the measured count, so it only ever moves up, by hand, in a commit
     /// that says why.
     ///
-    /// ⚠️ 5 clusters, and the two ties are MEASURED and
-    /// deliberate: `selfObservation` 2.000 s (clamped) ≈ `stillMeditation` 2.000 s (a half
-    /// note at 60 BPM, exactly on the ceiling, so no clamp fires) coincide by AUTHORSHIP — same
-    /// division, near-identical default tempo; and `ambientPulse` 0.706 s ≈ `classical` 0.714 s
-    /// are both straight quarters whose windows happen to meet. Neither is a clamp artefact, so
-    /// neither is this slice's to fix. Before the fix this metric was 3.
+    /// ⚠️ 5 clusters, MEASURED, and #1372 did NOT move the number — which is the honest
+    /// result and was very nearly reported as a raise to 7. Seven is what you get by counting
+    /// the drum-free offered genres WITHOUT the `delayEnabled` filter this method applies:
+    /// `celticAir`, `glacialField` and `slowBloom` legitimately ship no echo at all, so they are
+    /// not on this axis. **The flattering number came from dropping a filter the code right here
+    /// applies; the check that caught it was re-deriving against this method rather than against
+    /// the idea of it.**
+    ///
+    /// ⭐ WHAT #1372 DID CHANGE IS THE REASON FOR ONE TIE, not the count. The old doc named the
+    /// tightest pair as `selfObservation` 2.000 s ≈ `stillMeditation` 2.000 s and called it
+    /// "AUTHORSHIP — same division, near-identical default tempo … neither is a clamp artefact".
+    /// Half of that was wrong: `stillMeditation`'s half note at 60 BPM really is exactly 2.000 s
+    /// un-clamped, but `selfObservation`'s at 58 is 2.069 s TRUNCATED to 2.0 — **the ceiling was
+    /// manufacturing that tie**, which is exactly the artefact this claim exists to detect,
+    /// sitting in its own documentation as an example of something else. Today the pair is
+    /// `stillMeditation` 1.333 ≈ `selfObservation` 1.379 (3.4%): still one cluster, now by
+    /// honest arithmetic. It is deliberately left — the two differ in delay MODE (`.digital` vs
+    /// `.tape`), wow, mix, tone and spread, so their echoes are not one echo; only their TIMES
+    /// are close, and time is all this metric can see.
     ///
     /// ⚠️ THIS SITS EXACTLY ON ITS BOUND — 5 is the measured value, not a floor with slack. Any
-    /// merge of two clusters reddens it, which is the point (it is a ratchet against re-collapse,
-    /// not a quality bar). Do not read the 5 as comfortable: the tightest surviving split is
-    /// `deepDrone` 1.667 vs `drift` 1.500, only 11% apart, and 5% at ~1.6 s is 80 ms, which is
-    /// not two echoes to an ear. If this is ever to become a real quality bar rather than a
-    /// regression latch, raise the distance to 10% and assert whatever count that yields —
-    /// deliberately NOT done here, because it would demand retuning presets on taste.
+    /// merge of two clusters reddens it, which is the point (a ratchet against re-collapse, not
+    /// a quality bar). The other tie is `ambientPulse` 0.706 ≈ `classical` 0.714 (1.1%, both
+    /// straight quarters whose windows meet); the tightest SPLIT is now `selfObservation` 1.379
+    /// vs `drift` 1.500, 8.8% apart (it was `deepDrone` 1.667 vs `drift` 1.500, 11%). 5% at
+    /// ~1.4 s is 70 ms, which is not two echoes to an ear. If this is ever to become a real
+    /// quality bar rather than a regression latch, raise the distance to 10% and assert whatever
+    /// count that yields — deliberately NOT done here, because it would demand retuning presets
+    /// on taste.
     func testTheDrumFreeOfferedGenresOccupyTheDelayAxis() {
         let drumFree = MusicStyle.offered.filter { $0.beatArchetype == .none }
         XCTAssertGreaterThanOrEqual(drumFree.count, 6,
@@ -237,7 +312,9 @@ final class GenreDelaySyncResolvabilityTests: XCTestCase {
             "the drum-free genres resolve to only \(clusters) audibly distinct echo times "
             + "(\(times.map { String(format: "%.3f", $0) })). The calm family is collapsing onto "
             + "one echo again — check whether a division started clamping before retuning "
-            + "anything by ear.")
+            + "anything by ear. #1372 did not raise this floor: it replaced a tie the CEILING "
+            + "was manufacturing (two genres flat on 2.000 s) with an honest one 3.4% apart, "
+            + "same count. So a drop below 5 is a real collapse, not a leftover.")
     }
 
     // MARK: - Anti-vacuity

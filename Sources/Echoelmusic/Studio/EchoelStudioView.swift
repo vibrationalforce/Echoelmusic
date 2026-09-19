@@ -4612,10 +4612,21 @@ struct EchoelStudioView: View {
             // move the picker and leave the chain on the old time — #240's lying control, in
             // the opposite direction.
             //
-            // ⚠️ THIS ARM IS USER-ONLY (see the contract above), so `open(_:)` is untouched:
+            // ⚠️ THIS ARM RUNS ON A DELIBERATE GENRE CHANGE ONLY, so `open(_:)` is untouched:
             // a restored take keeps the session's division and its own `applyDelaySync` call
             // still makes chain and picker agree. `delaySync` stays out of the saved `Project`
             // — restoring a take's division is a schema change and is NOT this slice.
+            //
+            // ⛔ THAT SENTENCE SAID "USER-ONLY" AND THE CONTRACT ABOVE DOES NOT QUITE SAY THAT.
+            // The contract is about the header strip, and it is exact for the two PROGRAMMATIC
+            // writers of `style` (`open(_:)` and the launch clamp): neither posts, so neither
+            // arrives here. But a THIRD writer does arrive — the OSC control cue
+            // `/echoelmusic/ctrl/genre` (#1255) writes the key and posts this notification
+            // ITSELF, precisely so a remote pick takes the same path as an on-screen one. That is
+            // correct and wanted; what was wrong was the word. A remote operator changing the
+            // genre gets the genre's echo division, exactly as a finger does. **"User-only" and
+            // "not programmatic" are different claims, and the contract above only makes the
+            // second.**
             delaySync = style.fxPreset.delaySync
             applyDelaySync(bpm: currentTempo)
             recomposeIfRunning()

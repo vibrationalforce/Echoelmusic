@@ -180,10 +180,28 @@ public struct GenreFXPreset: Sendable, Equatable {
     /// atomic-width scalars.
     ///
     /// ⛔ **THIS PARAGRAPH OPENED WITH "ONE LINE BELOW HAS NO AUDIBLE EFFECT IN THE APP TODAY:
-    /// `chain.delay.timeSeconds` … Only the TIME does not" UNTIL #1371, WHICH ROUTED IT.** All
-    /// EIGHT delay fields reach the audio now. The head is rewritten rather than trimmed because
-    /// this is the line a session reads FIRST when deciding whether a genre's echo time is worth
-    /// curating — and for months the honest answer was no. It is yes.
+    /// `chain.delay.timeSeconds` … Only the TIME does not" UNTIL #1371, WHICH ROUTED IT.** For a
+    /// GENRE preset all eight delay fields reach the audio now. The head is rewritten rather than
+    /// trimmed because this is the line a session reads FIRST when deciding whether a genre's
+    /// echo time is worth curating — and for months the honest answer was no. It is yes.
+    ///
+    /// ⚠️ **AND THE FIRST VERSION OF THAT RETRACTION SAID "All EIGHT delay fields reach the
+    /// audio now" WITH NO QUALIFIER, WHICH IS FALSE FOR THE OTHER HALF OF THIS VERY TYPE.**
+    /// `GenreFXPreset` is also what `FXCharacter.preset` returns, and six characters notate a
+    /// division of their own (`.underwater`, `.cassette`, `.dream`, `.megaphone`, `.blurry`,
+    /// `.hall`). Their TIME still never reaches the ear: all four stamp sites end on
+    /// `applyDelaySync(bpm:)`, which writes the picker over whatever the character just set —
+    /// #1364's law, deliberate, and unchanged by #1371. So: routed for GENRES, still surrendered
+    /// for CHARACTERS. **The retraction over-claimed by exactly the set it forgot to name, in a
+    /// paragraph whose own subject is over-claiming; a fix that is true of one caller is not
+    /// true of the type.**
+    ///
+    /// ⚠️ ONE CONSEQUENCE OF THE PAIR, worth stating because nothing else states it: with a
+    /// character chosen, a genre change now moves the echo TIME (through the picker) while mode,
+    /// mix, feedback, tone, spread, wow and drive keep coming from the character. That mixed
+    /// provenance is not new — the picker always owned the time — but #1371 gave the genre a way
+    /// to move it. If that ever reads wrong on the device, the fix is a decision about who owns
+    /// the time, taken at all four sites at once, never at one of them (#240's own lesson).
     ///
     /// ⚠️ THE SCOPING NOTE UNDER IT STAYS TRUE AND IS WORTH KEEPING, because it is the reason
     /// the retraction above is narrow: an even earlier version said "the `delaySync` LINE … and
@@ -1156,10 +1174,20 @@ public extension MusicStyle {
                 delaySync: TempoSyncOption(.sixteenth),
                 delayMix: 0.30, delayFeedback: 0.46, delayTone: 0.6, delaySpread: 0.5)
         case .stillMeditation:
-            // Long, dark, spacious half-note delay + very slow chorus.
+            // Long, dark, spacious delay + very slow chorus.
+            //
+            // ⛔ #1372 — WAS `.half`, AND THAT WAS A FLAT 2.0 s BELOW 60 BPM. A half note is
+            // 2.400 s at this genre's slowest allowed tempo (50), 2.0 s at 60, so the clamp fired
+            // over HALF of the 50…58 window and the echo stopped following the body exactly
+            // where this genre spends its time. Harmless while nothing routed the division;
+            // #1371 routed it. `.half, .triplet` is `deepDrone`'s division — the longest one that
+            // still resolves for a slow ambient genre — and gives 1.600…1.143 s across the whole
+            // window, tempo-tracking everywhere. Do not "restore" the half note: read
+            // `GenreFXPreset.maxDelaySeconds` first, which says in its own words that the honest
+            // fix for a truncated echo is a shorter division, not a higher ceiling.
             return GenreFXPreset(
                 delayEnabled: true, delayMode: .digital,
-                delaySync: TempoSyncOption(.half),
+                delaySync: TempoSyncOption(.half, .triplet),
                 delayMix: 0.40, delayFeedback: 0.45, delayTone: 0.30, delaySpread: 0.4,
                 chorusEnabled: true, chorusRate: 0.15, chorusDepth: 0.5, chorusMix: 0.35,
                 reverbEnabled: true, reverbMix: 0.34, reverbRoom: 0.88, reverbDamping: 0.60)
@@ -1238,35 +1266,55 @@ public extension MusicStyle {
                 saturation: 0.50)   // trimmed from 0.68 (warmth pass) — still driven, less brittle
         case .doom:
             // Thick, slow wall of drive.
+            //
+            // ⛔ #1372 — WAS `.half` (2.400 s at 50 BPM, clamped to 2.0 below 60). Not OFFERED
+            // today, and repaired anyway: `MusicStyle.offered` is one array line away, and a
+            // truncation that only stays silent because nobody can reach the genre is a trap
+            // set for whichever batch opens that door. Same division as the two ambient genres
+            // in this slice, for the same reason — there is no other slow heavy genre to take a
+            // neighbour reading from (`heavyMetal` 130…185, `blackMetal` 160…200 are an order
+            // of magnitude faster), so the only measured precedent for a long echo at a crawl is
+            // `deepDrone`'s. 1.600…1.000 s across 50…80, and the half-triplet drags three
+            // against the two — idiomatic here rather than merely safe.
             return GenreFXPreset(
                 delayEnabled: true, delayMode: .tape,
-                delaySync: TempoSyncOption(.half),
+                delaySync: TempoSyncOption(.half, .triplet),
                 delayMix: 0.40, delayFeedback: 0.50, delayTone: 0.30, delaySpread: 0.40,
                 delayWow: 0.40, delayDrive: 0.30,
                 saturation: 0.55,
                 reverbEnabled: true, reverbMix: 0.24, reverbRoom: 0.86, reverbDamping: 0.62)
         case .selfObservation:
             // THE Fläche (founder 2026-07-07: "Mehr atmosphärische Stimmung durch
-            // Hall und Tape Delay, langsamere Vibes"): a slow, wide TAPE echo —
-            // half note at ~58 BPM ≈ 2 s, gentle wow so the repeats breathe like
-            // tape, a touch of drive for warmth — blooming into a big, dark hall.
-            // Feedback stays < 0.5 so the tail washes without ever building up;
-            // the slow chorus keeps the pad's stereo width alive between echoes.
+            // Hall und Tape Delay, langsamere Vibes"): a slow, wide TAPE echo, gentle wow so the
+            // repeats breathe like tape, a touch of drive for warmth — blooming into a big, dark
+            // hall. Feedback stays < 0.5 so the tail washes without ever building up; the slow
+            // chorus keeps the pad's stereo width alive between echoes.
             //
-            // ⚠️ THE ONE GENRE CLAMPED AT ITS OWN DEFAULT TEMPO, deliberately left alone. A half
-            // note is 2.069 s at 58 BPM — 3.5% over the 2.0 s clamp — so the time reads flat at
-            // 2.0 for bpm < 60, i.e. 41% of the 46…78 window (⚠️ the first version wrote
-            // "bpm ≤ 60 / 44%": at exactly 60 a half note is 2.000 s and the clamp does NOT fire,
-            // the same arithmetic deepDrone's floor relies on). It coincides there with
-            // `stillMeditation` (half @60 = exactly 2.0, no clamp). Unlike the two genres
-            // fixed in this slice the division DOES resolve over most of this window (56% of it),
-            // so re-authoring it would change a preset that already resolves as authored — a
-            // founder listening call, not a derivable one. `GenreDelaySyncResolvabilityTests`
-            // allows exactly one genre clamped AT ITS DEFAULT, so a second one cannot appear
-            // unnoticed; it deliberately does not bound partial slow-end truncation.
+            // ⛔ #1372 — WAS `.half`, AND THE PARAGRAPH THAT DEFENDED IT WAS RIGHT UNTIL #1371
+            // AND WRONG THE MOMENT IT LANDED. It read: "THE ONE GENRE CLAMPED AT ITS OWN DEFAULT
+            // TEMPO, deliberately left alone … re-authoring it would change a preset that
+            // already resolves as authored — a founder listening call, not a derivable one."
+            // Every number in it was correct (a half note is 2.069 s at the 58 BPM default, 3.5%
+            // over the clamp; flat 2.0 below 60 BPM, i.e. 41% of the 46…78 window), and the
+            // ARGUMENT rested entirely on an unstated premise: that no listener met the value.
+            // `GenreDelaySyncResolvabilityTests`' own failure message stated that premise out
+            // loud — "what a LISTENER hears is a separate, open routing question". #1371 answered
+            // it. Leaving the half note is no longer the conservative choice: it ships a picker
+            // that reads "1/2" over a chain holding a flat 2.0, and — because this genre is
+            // `.flowFree` — an echo that stops following the pulse exactly when the body drops
+            // below 60. **A "leave it alone" note is only as durable as the premise it does not
+            // state; this one outlived its premise by one commit.**
+            //
+            // `.half, .triplet` is `deepDrone`'s division (the measured neighbour: 40…58, landing
+            // exactly on 2.000 at its floor) and gives 1.739…1.026 s here, un-clamped across the
+            // entire window. ⚠️ WHAT IT COSTS, NEEDS-FOUNDER-VERIFY: the designed "≈ 2 s at 58
+            // BPM" becomes 1.379 s there — a third shorter, and this is the flagship Fläche. The
+            // honest comparison is NOT against 2 s, though: before #1371 this genre's echo was
+            // whatever the picker held (dotted 1/8 ≈ 0.39 s at 58), so the change a listener
+            // actually hears is 0.39 → 1.379 s. Both halves belong on the device list.
             return GenreFXPreset(
                 delayEnabled: true, delayMode: .tape,
-                delaySync: TempoSyncOption(.half),
+                delaySync: TempoSyncOption(.half, .triplet),
                 delayMix: 0.34, delayFeedback: 0.45, delayTone: 0.28, delaySpread: 0.45,
                 delayWow: 0.25, delayDrive: 0.15,
                 chorusEnabled: true, chorusRate: 0.12, chorusDepth: 0.35, chorusMix: 0.25,
