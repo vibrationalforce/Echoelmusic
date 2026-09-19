@@ -33943,3 +33943,94 @@ fünf Stellen · `ci.yml:290/291` filtert auf eine nicht existierende Suite ·
 und nennt in `NSCameraUsageDescription` weiter beide Linsen · `project.yml:296` trägt die alte
 Ein-Richtungs-Watch-Route · **CLAUDE.md steht in KEINEM Workflow-Pfadfilter**, ihr
 Deckel-Wächter läuft auf einem reinen CLAUDE.md-Commit also nie.
+
+## 2026-09-19 — Deep Function Check: vier Agenten, fünf eigene Sweeps, Ausbeute = Prosa
+
+Der Befund vorweg, weil er gegen die Erwartung läuft: **der CODE ist in ungewöhnlich gutem
+Zustand** — null Stubs, null `TODO`, null Audio-Thread-Verstöße, null echte Force-Unwraps,
+null `print()`. Die GANZE Ausbeute des Durchgangs war **Prosa ÜBER den Code**: Register-Zeilen,
+Doc-Kommentare, Adresstabellen und eine veröffentlichte Integrator-Seite, die Fähigkeiten
+behaupteten, die es nicht (mehr) gibt — oder, zweimal, Fähigkeiten für tot erklärten, die
+leben. Jeder Agenten-Befund wurde vor der Veröffentlichung selbst nachgemessen; zwei mussten
+dabei zurückgenommen werden (siehe #1376 und #1380).
+
+## 2026-09-19 — #1376: `EchoelWSOLA` ist ein DATEINAME (`ca4e298`)
+
+CLAUDE.md führte `DSP/EchoelWSOLA` als „app-unwired pure core" und belegte es mit
+`git grep -n "EchoelWSOLA(" -- Sources` → 0. Der einzige deklarierte Typ heißt
+`WSOLAStretcher`; die Nadel liefert 0 für JEDEN denkbaren Zustand des Repos. Gemessen:
+drei Konstruktionsstellen, eine davon auf der vom Transport gefahrenen Kette
+`AudioLanePlayer.prime` → `StretchPlan.resolve` → `sink.prepareBeats` → `WSOLAStretcher`.
+Richtige Kategorie ist **#527** (verdrahtet, die DATEN haben keinen Erzeuger), nicht
+„unverdrahtet" — und der Unterschied entscheidet übers Löschen.
+**GESETZ: wer eine Behauptung mit ZWEI Trägern zurücknimmt, misst die Träger EINZELN.**
+Wächter `TheStretcherIsNamedByItsTypeTests` (5 Ansprüche, 8 Mutanten).
+
+## 2026-09-19 — #1377: der OSC-Event-Vertrag behauptete zwei Produzenten (`ff5a21f`)
+
+`.coherenceShift` hat drei Vorkommen und NULL Konstruktionen — identisch zu `.eegBurst`, das
+dieselbe Datei zwei Zeilen tiefer als tot führt. `.heartbeat` hat genau EINEN Produzenten,
+den BLE-Gurt: der `BioEventGraph`-Pfad kann nie feuern, weil `BioEventPublisher`
+`graph.process(cleanedHeart: 0, …)` ruft. **Auf der Flaggschiff-Quelle (Kamera-rPPG) kommt
+diese Adresse also nie an**, und das stand nirgends. Die Über-Behauptung war bereits
+VERÖFFENTLICHT: `docs/integrations.html`, `docs/reaper-osc.html`, `docs/resolume-osc.html`,
+`docs/dev/VJ_BRIDGE.md` — alle vier nachgezogen. Wächter
+`TheEventAddressesNameTheirProducerTests` (4 Ansprüche, 6 Mutanten).
+
+## 2026-09-19 — #1378: die Velocity-Klammer stand hinter ihrer Umwandlung (`08afc57`)
+
+Klassen-Sweep nach #1374: 24 Grenzstellen Float-Parameter → `Int()`, 23 sauber aus vier
+verschiedenen richtigen Gründen. Die eine offene war `MIDIOutput.noteOn`:
+`UInt8(max(1, min(127, Int(velocity * 127))))` — `Int(nonFinite)` trappt eine Klammer VOR
+dem Guard. **Verweigern statt klammern** (#630b): eine Note-on ist diskret, eine still
+geklammerte Velocity setzt eine falsche Note auf ein fremdes Rig und meldet Erfolg.
+⛔ **Mein erster Entwurf machte den reparierten Fehler eine Ebene höher** — der Guard stand
+hinter `allocateChannel(for:)` und hätte eine Member-Kanal-Reservierung geleckt. Als
+Anspruch 2 ordnungsbasiert gepinnt. Dazu der Zwilling `FloatingVisualWindow.recTimeString`
+(#456: dieselbe Funktion, zwei Heimaten, nur eine nachgezogen).
+
+## 2026-09-19 — #1379: das Waisen-Register war eine ehrliche Teilmessung (`ea068b1`)
+
+22 tote Dateien plus fünf halb-tote gemessen, das Register nannte sieben. Der Kern ist kein
+Zählfehler, sondern eine **Scope-Grenze**: der 2026-09-02-Lauf schrieb „VIER `Sync/`-Kerne"
+und war damit ehrlich — die nächste Sitzung las „vier Waisen". Einen Sprung weiter lagen die
+identisch toten Zwillinge der RENDER-Hälfte der Raum-Säule (`BinauralPanner`,
+`EchoelSpaceReverb`, `SpatialAutomationMapping`).
+**GESETZ: wer einen Scope in eine Register-Zeile schreibt, schreibt hin, was der Scope
+AUSGESCHLOSSEN hat.** Vier Kommentare behaupteten AKTIV, ein toter Kern rendere — korrigiert.
+Dazu: `FeedbackGuard` stand in der „NOW WIRED"-GEGENliste, obwohl #1302 es als Datei gelöscht
+hat (**eine Löschung muss die Liste der LEBENDEN mitziehen**), und `LoopCutter` stand in der
+P1-Zeile als lebend. ⛔ Anspruch 2 des Wächters ging in erster Fassung ROT AUF KORREKTEM BAUM:
+ein naiver `XCTAssertFalse(contains:)` trifft die Rücknahme selbst — das ist **#491, und es
+gilt für JEDE Datei, die ihre eigenen Korrekturen dokumentiert**, nicht nur CLAUDE.md.
+
+## 2026-09-19 — #1380: der Finger-Kontakt überlebte die Take-Grenze (`5ccc180`)
+
+`CameraRPPGBioPublisher.stop()` räumte Kamera, Schätzer, Atem-Fenster und Kohärenz-Historie
+ab und ließ die KONTAKT-Entscheidung stehen. `startPulseDetection()` ruft
+`resetPulseState(keepEstimate: false)` — das leert rund zwanzig OPTISCHE Fensterfelder und
+KEINES der fünf, die entscheiden, ob ein Finger auf der Linse liegt. Das Einzige, was sie
+leert, ist `CameraAnalyzer.reset()`, und das hatte **NULL Aufrufer in `Sources/`**.
+
+Der Preis: beide Hälften der Hysterese lesen das stehengebliebene `true` — die rote Schwelle
+fällt von der AKQUISE- auf die HALTE-Schwelle (das eigene Doc sagt „acquisition is never
+loosened"), und `updateFingerDetection` verlangt ein Viertel statt der Hälfte des Fensters,
+über einen Puffer, der noch voll `true` aus dem vorigen Take steht. **Der neue Take kann im
+ERSTEN Bild „Finger erkannt" melden, während nichts die Linse berührt** — genau der Zustand,
+den die Akquise-Schwelle verweigern soll. Reparatur an der Grenze, ABSICHTLICH nicht in
+`resetPulseState` (das feuerte auch auf dem Finger-Verlust-Flush).
+
+⛔ **Der Agenten-Befund zeigte auf die falsche Eigenschaft.** `device.hasTorch` ist HARDWARE
+und auf `TARGETED_DEVICE_FAMILY: "1"` immer wahr — das ist die iPad-Frage, die CLAUDE.md schon
+als Grund führt. Der ERREICHBARE Fall ist `isTorchAvailable` (fällt unter thermischem Druck,
+der Bedingung, für die `thermalTorchLevel()` existiert) und kam in `Sources/` NIRGENDS vor.
+Jetzt: Prüfung VOR dem Konfigurations-Lock, Latch mit Sprossen-Eintrag, Rücknahme über
+`device.isTorchActive` statt über den Wunsch. Die BEDIENKOPIE bleibt Founder/Council — die
+Scheibe macht die Bedingung MESSBAR, damit das nächste Gerätelog „war Licht da?" beantworten
+kann, statt Stille als „der Finger war falsch" zu lesen.
+
+Wächter `TheTakeBoundaryClearsTheContactLockTests` (7 Ansprüche, 3 Regressionen / 4
+Gegengewichte, 9 Mutanten). ⚠️ **Zwei Mutanten waren in erster Fassung NICHT GELANDET** —
+`hasTorch` traf den Kommentar statt den Code, und das `XX`-Suffix ließ `isTorchAvailable` als
+Teilstring stehen. #776: die Mutation zuerst bestätigen, sonst liest sich ein blinder Fleck
+im Mutanten als Lücke im Wächter.
