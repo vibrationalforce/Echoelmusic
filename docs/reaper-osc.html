@@ -116,7 +116,7 @@
             <li>Breathe. Reaper shows the incoming address — <code>/echoelmusic/bio/breath/phase</code> for the breath, <code>/echoelmusic/bio/heart/bpm</code> for the pulse — the moment Echoel sends it. Click <strong>OK</strong>.</li>
             <li>Set the parameter's range under <em>Param ▸ Parameter modulation/MIDI link</em> if 0–1 should map to less than the full travel.</li>
         </ol>
-        <p>Actions learn the same way: <strong>Actions ▸ Show action list ▸ Add</strong> under <em>Shortcuts for selected action</em>, then trigger the source. The per-beat bang <code>/echoelmusic/bio/event/heartbeat</code> is the one to bind to an action — a marker, a sample trigger, a transport toggle.</p>
+        <p>Actions learn the same way: <strong>Actions ▸ Show action list ▸ Add</strong> under <em>Shortcuts for selected action</em>, then trigger the source. The per-beat bang <code>/echoelmusic/bio/event/heartbeat</code> is the one to bind to an action — a marker, a sample trigger, a transport toggle. It needs a <strong>chest strap</strong>: the camera pulse publishes a rate, not per-beat events, so on camera this address stays silent.</p>
 
         <h2>Which address for what</h2>
         <table class="spec-table">
@@ -125,7 +125,7 @@
             <tr><td>a slow, continuous sweep</td><td><code>/echoelmusic/bio/breath/phase</code></td><td>0→1 over each breath, smooth, always present once breath is measured</td></tr>
             <tr><td>a value that follows effort</td><td><code>/echoelmusic/bio/heart/bpm</code></td><td>40–200; set a range in Reaper so 60–120 covers the travel</td></tr>
             <tr><td>a value that follows settling</td><td><code>/echoelmusic/bio/coherence</code></td><td>0–1; appears after ~16 beats, so map it to something that can wait</td></tr>
-            <tr><td>a trigger on every beat</td><td><code>/echoelmusic/bio/event/heartbeat</code></td><td>an action, a sampler, a marker</td></tr>
+            <tr><td>a trigger on every beat <em>(chest strap only)</em></td><td><code>/echoelmusic/bio/event/heartbeat</code></td><td>an action, a sampler, a marker</td></tr>
             </tbody>
         </table>
 

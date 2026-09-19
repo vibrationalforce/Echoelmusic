@@ -6656,6 +6656,35 @@ hatte `play`/`stop` in der Whitelist; #1255 lässt beide weg, weil `OneStartCont
 Zahl der Sitzungs-Start-Pfade auf drei pinnt (dreimal Founder: EIN Start-Knopf) — ob ein Cue
 die Sitzung starten darf, ist seine Frage.
 
+### U.x — Warum sACN die Herkunft trägt und Art-Net/ADM-OSC nicht (verschoben aus CLAUDE.md, #1377)
+
+Die immer geladene Datei behält die TATSACHE (sACN ja, Art-Net nein, ADM-OSC nein) und die
+Register-LEHRE. Die Begründung je Standard stand dort in ~2,2 KB und steht jetzt hier.
+
+**sACN — ERLEDIGT (#789).** E1.31 hat ein 64-Byte-**Source-Name**-Feld im Framing-Layer JEDES
+Datenpakets. `SACNSender` füllte es seit jeher hart mit „Echoelmusic"; eine Demo-Sitzung
+schreibt dort jetzt „Echoelmusic (DEMO)". Das ist das EIGENE Feld des Standards, das ein Pult
+ohnehin in seiner Quellenliste anzeigt — nichts erfunden, kein Slot zu patchen.
+
+**Art-Net — OFFEN, aber aus einem präzisen Grund.** Sein Datenpaket `ArtDMX` (0x5000, der
+einzige Opcode, den `ArtNetSender` baut) trägt gar keinen Namen; die Identität liegt in
+`ArtPollReply` (0x2100), einem Discovery-Paket, das Echoel nicht implementiert. Es fehlt also
+ein BAU — aber einer, dessen RICHTIGKEIT hier niemand prüfen kann: 239 Byte fremder Spec, kein
+Gerät, kein Pult. Andere Klasse als sACN, wo das Feld schon existierte und schon gefüllt wurde.
+Dazu gehört die Gegenrichtung: `git grep -ln NWListener -- Sources | wc -l` → **1** seit #1255
+(`OSCReceiver`, nur die Steuer-Whitelist, Opt-in AUS; bis #1255 **0**, #821), gepinnt in
+`TheWireSaysWhoseBodyTests`.
+
+**ADM-OSC — OFFEN.** `/adm/obj/{n}/*` ist ein FREMDER Standard-Adressraum; dort etwas zu
+erfinden wäre das Gegenteil der Offene-Standards-Haltung, und ob er einen Hersteller-Namensraum
+reserviert, ist aus öffentlichen Quellen nicht messbar (Spec v1.0 = AES-Paper hinter der
+Paywall, #786).
+
+⭐ **Die Lehre, die in CLAUDE.md bleibt, ist über REGISTER, nicht über DMX:** der Eintrag nannte,
+was Art-Net und sACN GEMEINSAM haben („tragen DMX"), und verbarg damit genau den Unterschied,
+der die Frage entscheidet — sACN ist DMX ÜBER E1.31, und der TRÄGER hat einen Kopf, den die
+NUTZLAST nicht hat.
+
 ## V — Der BRAND-Verweis, der eine Zeilennummer nannte (#1292, verschoben aus `CLAUDE.md`)
 
 Wörtlich, wie er dort stand, in Klammern hinter dem Satz „Die wahre Fassung ist die Zeile,

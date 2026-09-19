@@ -46,9 +46,9 @@ receiving app at the phone's IP (UDP). Default namespace:
 | `/echoelmusic/bio/breath/phase` | 0–1 | inhale→exhale phase (great for smooth motion) — rides the RATE's gate, never its own value, because 0 is a real position |
 | `/echoelmusic/bio/coherence` | 0–1 | HRV coherence — see the note above; frequently absent |
 | `/echoelmusic/bio/motion` | 0–1 | body motion energy — **NOT SENT today** (#215): no CoreMotion provider exists, every publisher writes `motionEnergy: 0`. It used to arrive as a constant 0, which no receiver can tell apart from a performer standing still; now the address simply does not appear. It returns when a motion sensor does. |
-| `/echoelmusic/bio/event/heartbeat` | trigger | per-beat bang (flash on the beat). Preceded by `/bio/synthetic` when the origin changes — see that row |
+| `/echoelmusic/bio/event/heartbeat` | trigger | per-beat bang (flash on the beat). **CHEST STRAP ONLY** — measured #1377: the only producer is `PolarH10BioPublisher` (per RR interval). `BioEventGraph`'s own detector cannot fire, because `BioEventPublisher` feeds it `cleanedHeart: 0` (the raw cardiac waveform is not on the bus). So on the flagship camera-rPPG source this address never arrives; take the rate from `/bio/heart/bpm` and drive your own metronome. Preceded by `/bio/synthetic` when the origin changes — see that row |
 | `/echoelmusic/bio/event/breath/inhale` · `/exhale` | trigger | breath onsets |
-| `/echoelmusic/bio/event/coherence` · `/eeg` · `/motion` | trigger | onset bangs (the `/motion` bang cannot fire while motion energy is a constant 0) |
+| `/echoelmusic/bio/event/coherence` · `/eeg` · `/motion` | trigger | **NONE OF THE THREE CAN FIRE — do not wait on them.** Measured #1377 over all 354 files in `Sources/`: `.coherenceShift`, `.eegBurst` and `.motionPeak` have ZERO construction sites. The addresses are mapped in `OSCSender` as preparation, not as an output. ⚠️ Coherence as a continuous VALUE is real and arrives every tick at `/echoelmusic/bio/coherence`; it is only the discrete *shift event* that has no producer. (The earlier wording here qualified only `/motion` and read as though the other two were live.) |
 
 Music parameters (current chord/pitch/level) drive the Light + Spatial adapters
 below; raw musical OSC is on the roadmap (OSCQuery auto-typing).

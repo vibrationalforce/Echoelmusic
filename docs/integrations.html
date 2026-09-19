@@ -107,15 +107,14 @@
             <tr><td><code>/echoelmusic/bio/breath/rate</code></td><td>3–40</td><td>Breaths per minute — sent only inside that plausibility band.</td></tr>
             <tr><td><code>/echoelmusic/bio/breath/phase</code></td><td>0–1</td><td>Inhale→exhale phase, smooth — rides the rate's gate because 0 is a real position.</td></tr>
             <tr><td><code>/echoelmusic/bio/coherence</code></td><td>0–1</td><td>HRV coherence — needs 16 accepted beats; on the camera about 16 seconds at rest, on a strap about 16 beats.</td></tr>
-            <tr><td><code>/echoelmusic/bio/event/heartbeat</code></td><td>bang</td><td>One message per detected beat: <code>[confidence, aux]</code>.</td></tr>
+            <tr><td><code>/echoelmusic/bio/event/heartbeat</code></td><td>bang</td><td>One message per detected beat: <code>[confidence, aux]</code>. <strong>Chest-strap only</strong> &mdash; the camera pulse does not produce this bang. On camera, read the beat from <code>/bio/heart/bpm</code> instead.</td></tr>
             <tr><td><code>/echoelmusic/bio/event/breath/inhale</code></td><td>bang</td><td>Inhale onset.</td></tr>
             <tr><td><code>/echoelmusic/bio/event/breath/exhale</code></td><td>bang</td><td>Exhale onset.</td></tr>
-            <tr><td><code>/echoelmusic/bio/event/coherence</code></td><td>bang</td><td>A coherence shift.</td></tr>
-            <tr><td><code>/echoelmusic/mod/&lt;key&gt;</code></td><td>float</td><td>Every applied modulation-matrix output, keyed by destination (for example <code>seq.tempo</code>).</td></tr>
+                        <tr><td><code>/echoelmusic/mod/&lt;key&gt;</code></td><td>float</td><td>Every applied modulation-matrix output, keyed by destination (for example <code>seq.tempo</code>).</td></tr>
             </tbody>
         </table>
 
-        <p>Three addresses exist in the sender and are not on the wire: <code>/echoelmusic/bio/motion</code> and <code>/echoelmusic/bio/event/motion</code> — never sent, nothing measures motion — and <code>/echoelmusic/bio/event/eeg</code> — never sent, no producer. Do not wait on them.</p>
+        <p>Four addresses exist in the sender and are not on the wire: <code>/echoelmusic/bio/motion</code> and <code>/echoelmusic/bio/event/motion</code> — never sent, nothing measures motion — plus <code>/echoelmusic/bio/event/coherence</code> and <code>/echoelmusic/bio/event/eeg</code> — never sent, no producer. Do not wait on them. Coherence itself <em>is</em> on the wire as a continuous value at <code>/echoelmusic/bio/coherence</code>; it is only the discrete shift <em>event</em> that has no producer.</p>
 
         <h2>ADM-OSC — spatial objects, default port 9000</h2>
         <p>Connect <strong>Music</strong> or <strong>Body → ADM-OSC</strong>. Echoel drives one object, <code>/adm/obj/{n}/…</code> with <em>n</em> set in Routing, in the address shape of the ADM-OSC v1.0 spec that L-ISA, d&amp;b Soundscape, Fletcher Machine and the open-source renderers read:</p>

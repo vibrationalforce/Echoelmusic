@@ -674,35 +674,16 @@ the old list named eeg/{band}, audio/rms, audio/pitch which are NEVER sent):
                                  KEIN zusätzliches Argument: ein zweiter Float auf
                                  `/heart/bpm` bräche jeden Integrator auf dem alten Vertrag.
                                  Über UDP nicht reihenfolge-garantiert → als ZUSTAND latchen.
-                                 ⛔ ADM-OSC und Art-Net tragen weiterhin KEINE Herkunft — **sACN
-                                 seit #789 SCHON**, und die Gründe der drei sind VERSCHIEDEN.
-                                 **sACN: ERLEDIGT.** E1.31 hat ein 64-Byte-**Source-Name**-Feld im
-                                 Framing-Layer JEDES Datenpakets; `SACNSender` füllte es seit
-                                 jeher hart mit „Echoelmusic", eine Demo-Sitzung schreibt dort
-                                 jetzt „Echoelmusic (DEMO)". Das ist das EIGENE Feld des
-                                 Standards, das ein Pult ohnehin in seiner Quellenliste anzeigt —
-                                 nichts erfunden, kein Slot zu patchen. **Art-Net: OFFEN, aber
-                                 aus einem PRÄZISEN Grund** — sein Datenpaket (`ArtDMX`, 0x5000,
-                                 der einzige Opcode, den `ArtNetSender` baut) trägt gar keinen
-                                 Namen; die Identität liegt in `ArtPollReply` (0x2100), einem
-                                 Discovery-Paket, das Echoel nicht implementiert. Also fehlt ein
-                                 BAU — aber einer, dessen RICHTIGKEIT hier niemand prüfen
-                                 kann: 239 Byte fremder Spec, kein Gerät, kein Pult. Das ist eine
-                                 andere Klasse als sACN, wo das Feld schon existierte und schon
-                                 gefüllt wurde. Dazu: `git grep -ln NWListener -- Sources | wc -l`
-                                 → **1** seit #1255 (`OSCReceiver`, nur die Steuer-Whitelist unten,
-                                 Opt-in AUS; bis dahin 0, #821; gepinnt in
-                                 `TheWireSaysWhoseBodyTests`). **ADM-OSC: OFFEN** — `/adm/obj/{n}/*`
-                                 ist ein FREMDER Standard-Adressraum, dort etwas zu erfinden wäre
-                                 das Gegenteil der Offene-Standards-Haltung, und ob er einen
-                                 Hersteller-Namensraum reserviert, ist aus öffentlichen Quellen
-                                 nicht messbar (Spec v1.0 = AES-Paper hinter der Paywall, #786).
-                                 ⭐ **DIE LEHRE IST ÜBER REGISTER, nicht über DMX:** dieser
-                                 Eintrag nannte, was Art-Net und sACN GEMEINSAM haben („tragen
-                                 DMX"), und verbarg damit den Unterschied, der die Frage
-                                 entscheidet — sACN ist DMX ÜBER E1.31, und der Träger hat einen
-                                 Kopf, den die Nutzlast nicht hat. (Zweite Rücknahme derselben Zeile — DMX-Slots — in
-                                 `memory/LEDGER_COUNTS.md` §U.)
+                                 ⛔ ADM-OSC und Art-Net tragen weiterhin KEINE Herkunft —
+                                 **sACN seit #789 SCHON**, und die Gründe der drei sind
+                                 VERSCHIEDEN (sACN hatte das Feld, Art-Net braucht ein
+                                 ungeprüftes Discovery-Paket, ADM-OSC ist fremder Adressraum).
+                                 ⭐ **DIE LEHRE IST ÜBER REGISTER, nicht über DMX:** der Eintrag
+                                 nannte, was Art-Net und sACN GEMEINSAM haben („tragen DMX"),
+                                 und verbarg damit den Unterschied, der die Frage entscheidet —
+                                 sACN ist DMX ÜBER E1.31, und der TRÄGER hat einen Kopf, den die
+                                 NUTZLAST nicht hat. Begründung je Standard und die
+                                 `NWListener`-Zählung: `memory/LEDGER_COUNTS.md` §U.
                                  ⭐ **Die Event-Adressen unten tragen sie SEIT #785 auch** —
                                  anderer Codepfad (`drainAndSendEvents` → `eventMessages`) und
                                  bewusst andere Kadenz: die Flagge steht unmittelbar VOR dem
@@ -718,8 +699,20 @@ the old list named eeg/{band}, audio/rms, audio/pitch which are NEVER sent):
                                               indistinguishable from a still performer.
                                               Gated on `ModSource.motion.hasProducer`
 /echoelmusic/mod/<key>           float      (modulation-matrix outs, e.g. seq.tempo)
-/echoelmusic/bio/event/heartbeat | breath/inhale | breath/exhale | coherence
-                                                     (discrete events, ADRESSEN MIT PRODUZENT)
+/echoelmusic/bio/event/breath/inhale | breath/exhale   (ADRESSEN MIT PRODUZENT, jede Quelle
+                                   mit Atem-Wellenform; `BioEventGraph` aus `breathPhase`)
+/echoelmusic/bio/event/heartbeat — PRODUZENT NUR DER BLE-GURT (`PolarH10BioPublisher`, per RR).
+                                   ⛔ „coherence" stand mit in der MIT-PRODUZENT-Zeile und ist
+                                   mit #1377 gestrichen; der heartbeat stand dort OHNE diese
+                                   Bedingung. Der `BioEventGraph`-Pfad kann ihn nie feuern:
+                                   `BioEventPublisher` ruft `graph.process(cleanedHeart: 0, …)`
+                                   — die Rohwelle liegt nicht auf dem Bus. Auf der FLAGGSCHIFF-
+                                   Quelle (Kamera-rPPG) kommt diese Adresse also nie
+/echoelmusic/bio/event/coherence — Adresse existiert, wird nie gesendet. `.coherenceShift` hat
+                                   in `Sources/` DREI Vorkommen (Enum-Fall, die Zuordnung in
+                                   OSCSender, ein Verbraucher-`switch`) und NULL Konstruktionen —
+                                   identisch zu `.eegBurst` darunter. Messen, nicht zitieren:
+                                   `git grep -n "coherenceShift" -- Sources`
 /echoelmusic/bio/event/motion    — Adresse existiert, wird nie gesendet (dieselbe #215-Begründung
                                    wie vier Zeilen höher; nichts misst Bewegung)
 /echoelmusic/bio/event/eeg       — Adresse existiert, wird nie gesendet. `.eegBurst` hat NULL

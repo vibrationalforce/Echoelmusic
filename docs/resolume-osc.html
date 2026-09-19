@@ -115,7 +115,7 @@
             <tr><td><code>/echoelmusic/bio/breath/phase</code></td><td>0&ndash;1</td><td>Opacity, position, scale &mdash; it sweeps smoothly through every take and is the best first mapping.</td></tr>
             <tr><td><code>/echoelmusic/bio/coherence</code></td><td>0&ndash;1</td><td>An effect mix or a blur that opens as the performer settles. Appears late &mdash; see below.</td></tr>
             <tr><td><code>/echoelmusic/bio/heart/hrv</code></td><td>0&ndash;1</td><td>A slow second modulator alongside the breath.</td></tr>
-            <tr><td><code>/echoelmusic/bio/event/heartbeat</code></td><td>trigger</td><td>A bang per beat &mdash; bind it to a clip trigger or a flash rather than to a fader.</td></tr>
+            <tr><td><code>/echoelmusic/bio/event/heartbeat</code></td><td>trigger</td><td>A bang per beat &mdash; bind it to a clip trigger or a flash rather than to a fader. <strong>Chest strap only:</strong> the camera pulse sends a rate, not per-beat bangs, so this address stays silent on a phone-only rig.</td></tr>
             </tbody>
         </table>
         <p><strong>Heart rate is the exception, and it is worth knowing before you spend an evening on it.</strong> <code>/echoelmusic/bio/heart/bpm</code> carries beats per minute &mdash; roughly 40 to 200 &mdash; not a nought-to-one fraction. Bind it straight to a parameter and it pins at the top the moment the first value arrives, and stays there. Two ways round it: set an input range on the shortcut if your version of Resolume offers one (the band an actual body uses is far narrower than the address’s &mdash; something like 55 to 110), or leave the fader to <code>breath/phase</code> and give the pulse the <code>event/heartbeat</code> trigger instead, which is what it is good at.</p>
