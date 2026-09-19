@@ -171,6 +171,13 @@ public final class MIDIOutput {
     /// Round-robin cursor over member channels for MPE allocation.
     @ObservationIgnored private var nextMember = 0
 
+    /// One-shot latch for the non-finite-velocity refusal below. `noteOn` runs PER NOTE, and
+    /// a bad velocity almost never arrives once — logging every refusal would flood `os_log`
+    /// AND the breadcrumb file (`logOutcome` writes both, and the breadcrumb is an unbuffered
+    /// `write(2)`). Same shape as `RetroCapture`'s write-failure latch: report the condition,
+    /// then stop paying for it.
+    @ObservationIgnored private var hasRefusedNonFiniteVelocity = false
+
     public init() {}
 
     // MARK: - Lifecycle
@@ -302,6 +309,38 @@ public final class MIDIOutput {
     /// plain note-on (expression is simply ignored).
     public func noteOn(pitch: Int, velocity: Float, expression: MPEExpression?) {
         guard enabled, isReady, (0...127).contains(pitch) else { return }
+        // ⛔ THE CLAMP USED TO SIT BEHIND ITS OWN CONVERSION (#1378, the #1374 shape one type
+        // over): `UInt8(max(1, min(127, Int(velocity * 127))))`. `Int(_:)` from a non-finite
+        // Double/Float is a TRAP in Swift, not a saturating cast — so a NaN or ±inf velocity
+        // crashed one paren before the guard that was written to contain it. Reordering alone
+        // would NOT fix it either: `min(max(v, lo), hi)` passes NaN straight through (CLAUDE.md,
+        // "Argument order in max/min decides NaN behaviour"), so the clamp has to be a real
+        // finiteness test, not a range test.
+        //
+        // NOT REACHABLE TODAY, and that is deliberately not the argument. All four call paths
+        // bound the value first — `PianoRollView` via `min(1, …)` (NaN-safe in that order),
+        // `MIDIBusPublisher` from a MIDI byte ÷127, `TouchInstrumentView` twice from a gesture.
+        // But `noteOn(pitch:velocity:expression:)` is PUBLIC and takes a `Float`: the guard
+        // belongs at the TYPE, not at today's callers (#1374's lesson, same week). A fix that
+        // is true for one caller is not true for the type.
+        //
+        // REFUSED, not clamped-to-something-plausible: a note-on is a discrete event, and
+        // silently turning a broken velocity into 1 or 127 would put a wrong note on an
+        // external rig and report success (#630b). Dropping it leaves the rig where it was.
+        guard velocity.isFinite else {
+            if !hasRefusedNonFiniteVelocity {
+                hasRefusedNonFiniteVelocity = true
+                logOutcome("non-finite velocity refused (pitch \(pitch)); "
+                           + "logged once per session", level: .error)
+            }
+            return
+        }
+        // ⚠️ AND THE GUARD SITS BEFORE `allocateChannel`, NOT AFTER IT — the first draft of this
+        // slice put it after, which is the very ordering error the slice exists to fix, one
+        // level up: `allocateChannel` PUSHES onto `channelForPitch[pitch]`, so a refused note
+        // would have left a member channel reserved for a voice that never sounds, and the
+        // matching `noteOff` would then pop it and emit a note-off for a note nobody played.
+        // A guard belongs before the side effect it is meant to prevent.
         let ch = allocateChannel(for: pitch)
         let vel = UInt8(max(1, min(127, Int(velocity * 127))))   // 1…127 (0 = note off)
         // While 5D is armed, EVERY note-on states its dimensions — an expression-

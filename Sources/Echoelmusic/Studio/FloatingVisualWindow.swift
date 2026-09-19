@@ -584,7 +584,15 @@ struct FloatingVisualWindow: View {
         }
     }
 
+    /// ⚠️ THE GUARD IS NOT DECORATION AND IT WAS MISSING HERE (#1378). `Int(_:)` from a
+    /// non-finite `TimeInterval` is a Swift TRAP, and this function has an identical twin —
+    /// `SessionView.clock(_:)` — that opens with `guard s.isFinite, s >= 0`. Same shape, two
+    /// homes, only one kept current (#456). Today's caller passes
+    /// `max(0, wavRecordStart.map { context.date.timeIntervalSince($0) } ?? 0)`, which is
+    /// NaN-safe by argument order, so this was latent rather than live — exactly the reason it
+    /// survived: nothing made it visible. Clamp at the function, not at the one call site.
     private func recTimeString(_ s: TimeInterval) -> String {
+        guard s.isFinite, s >= 0 else { return "0:00" }
         let t = Int(s)
         return String(format: "%d:%02d", t / 60, t % 60)
     }
