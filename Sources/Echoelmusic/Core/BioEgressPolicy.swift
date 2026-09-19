@@ -135,6 +135,28 @@ public enum BioEgressPolicy {
         "/echoelmusic/bio/motion",
     ]
 
+    /// The MUSICAL egress set (#1383) — the composition and transport state, not the body.
+    ///
+    /// ⚠️ A SET, NOT A PREFIX, AND THAT IS THE WHOLE DESIGN. `derivedPrefixes` below grants
+    /// the class to every future member of a namespace; this file's own `fieldClass` doc says
+    /// the point of returning `nil` is that a new address ships SILENT rather than
+    /// unclassified. A `/echoelmusic/music/` prefix would hand that property away for exactly
+    /// the namespace that is about to grow. Adding an address here is one line and one guard
+    /// claim; forgetting to is a silent send, which is the failure this file exists to prevent.
+    ///
+    /// `.derived` is the honest class: none of these five is a physiological reading.
+    /// `/music/tempo` is the one that COULD be body-derived (under `.flowFree` it follows the
+    /// pulse), and it carries a SECOND, separate gate at the sender — see
+    /// `OSCSender.sendMusicIfFresh`. It is not classified `.clinical`: the clinical class is
+    /// the opt-in for un-normalized HRV statistics, and a tempo is not one.
+    public static let musicAddresses: Set<String> = [
+        "/echoelmusic/music/tempo",
+        "/echoelmusic/music/key/root",
+        "/echoelmusic/music/beat/phase",
+        "/echoelmusic/music/level/master",
+        "/echoelmusic/music/note/count",
+    ]
+
     /// Namespaces whose every member is a derived control value: the gesture channels
     /// (`ModSource.rawValue(from:)` is bounded per channel), the discrete bio events
     /// (`[confidence, aux]`) and the modulation tap (already-applied, scaled values).
@@ -155,6 +177,7 @@ public enum BioEgressPolicy {
     public static func fieldClass(ofOSCAddress address: String) -> FieldClass? {
         if clinicalAddresses.contains(address) { return .clinical }
         if derivedAddresses.contains(address) { return .derived }
+        if musicAddresses.contains(address) { return .derived }
         if derivedPrefixes.contains(where: { address.hasPrefix($0) }) { return .derived }
         return nil
     }

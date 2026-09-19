@@ -7006,3 +7006,51 @@ unverdrahteten Kern — mit Wortgrenze und ohne sie —, und die ist ein ZUSTAND
 es; die sendende Abbildung steht in `Sync/ADMOSCSender` selbst. ⭐ **Der Schluss hält, der Zeuge
 nicht.** Ein Beleg, der zufällig zur richtigen Antwort führt, ist kein Beleg, und er ist
 schwerer zu entdecken als ein falsches Ergebnis, weil nichts auffällt.
+
+
+---
+
+## AC — Der Auto-Merge-Dämpfer war zu großzügig: `if: false` schützt NUTZER, nicht ENTWICKLER (#1337, verschoben aus CLAUDE.md #1383)
+
+**Die Prosa in CLAUDE.md sagt das GESETZ; hier steht der gemessene Fall.**
+
+Der CI-Absatz in CLAUDE.md entschärft den Befund „der Merge nach `main` wartet auf KEIN Gate"
+mit dem Hinweis, der TestFlight-Dispatch im selben Workflow stehe auf `if: false` — ein
+ungetesteter Merge erreiche `main`, aber nie einen Nutzer.
+
+⛔ **Gemessen 2026-09-16 (#1337): der Dämpfer gilt für NUTZER und unterschlägt die ENTWICKLER.**
+`d78b249` stellte ein **nicht bauendes** Test-Bündel auf `main` (`** TEST BUILD FAILED **`, kein
+`test.log`). Für jeden, der in diesem Fenster zog, lief **kein einziger Wächter des Repos** —
+bis zehn Commits später repariert wurde.
+
+⭐ **Die Lehre, und sie ist allgemeiner als CI:** ein Dämpfer, der eine Zielgruppe nennt
+(„erreicht nie einen Nutzer"), beruhigt über ALLE Zielgruppen, wenn niemand die zweite nennt.
+Die Schwere des Auto-Merge-Befunds hängt also nicht allein an `if: false`. Reparatur bleibt
+founder-gated (`.github/workflows/**` = berichten, nicht editieren).
+
+---
+
+## AD — Die Drum-Enum-Cases: ein „NICHT löschen"-Vermerk mit falscher Begründung (#167, verschoben aus CLAUDE.md #1383)
+
+**Die Prosa in CLAUDE.md sagt das GESETZ; hier steht, warum beide Hälften falsch waren.**
+
+Nach dem Drum-Abriss (#167) trugen `LaneVoiceKind.drums` und `TrackInstrument.drums` einen
+„nicht löschen"-Vermerk mit dieser Begründung: *„persistierte rawValues, ein unbekannter
+verwirft beim Decode die ganze Spur"*. Sie stand gleichzeitig in VIER Quelldateien.
+
+⛔ **Beide Hälften sind falsch.**
+· `LaneVoiceKind` ist gar nicht `Codable` und erreicht nie die Platte — `Timeline.swift` sagt
+  das selbst. Es gibt dort keine persistierten rawValues.
+· `TrackInstrument` IST `Codable`, aber `TimelineLane`s Decoder wickelt ihn in `try? … ?? nil`.
+  Genau damit ist #167 überlebbar: ein unbekannter Case wird zu „kein eingebautes Instrument",
+  und die Spur mit Regionen, Clips, Mixer und Patch bleibt VOLLSTÄNDIG. Nichts verwirft je eine
+  ganze Spur.
+
+**Die WAHREN Gründe sind schwächer und stehen jetzt an den Cases selbst:** `TrackInstrument.drums`
+zu löschen kostet einer Altspur ihre Instrument-WAHL (der Founder sagte „erstmal");
+`LaneVoiceKind.drums` ist ein toter Case ohne Produzenten, dessen Löschung eine eigene
+Entscheidung braucht.
+
+⭐ **Die Lehre: ein „NICHT löschen"-Kommentar mit falscher Begründung ist schlimmer als keiner** —
+ein Vermerk ohne Begründung lädt zum Nachmessen ein, einer mit falscher Begründung beendet die
+Frage. Die nächste Sitzung kann ihn nicht widerlegen, weil sie ihn nicht prüft.

@@ -117,6 +117,13 @@ public final class OSCSender {
     @ObservationIgnored
     private var lastFrameTimestamp: TimeInterval = -1
 
+    /// Dedupe cursor for the MUSICAL batch (#1383). Separate from `lastFrameTimestamp` on
+    /// purpose: bio and musical frames are published by different producers at different
+    /// cadences on the same clock, so one shared cursor would let whichever arrived second
+    /// suppress the other for a whole tick.
+    @ObservationIgnored
+    private var lastMusicalTimestamp: TimeInterval = -1
+
     /// Whether the three clinical HRV statistics ride the wire (#1292). Default OFF —
     /// `StudioDefaultKeys.oscClinicalDetail` owns the key and the default; this is a
     /// cached read of it, not a second definition (#416).
@@ -162,6 +169,7 @@ public final class OSCSender {
         loop.start(interval: .milliseconds(100), governedByBioCeiling: true) { [weak self] in
             guard let self, let bus = self.bus else { return }
             self.sendIfFresh(from: bus)
+            self.sendMusicIfFresh(from: bus)
             self.drainAndSendEvents(from: bus)
         }
     }
@@ -220,6 +228,98 @@ public final class OSCSender {
         guard BioEgressPolicy.allowsEgress(frame.source) else { return }
         send(frame: frame)
         lastSentTimestamp = CFAbsoluteTimeGetCurrent()
+    }
+
+    /// The MUSICAL batch (#1383): key, tempo, beat phase, master level and how many notes
+    /// sound — the counterpart of `sendIfFresh` for the output stage that visual/light/spatial
+    /// tools subscribe to. Same tick, same dedupe shape, same fail-closed filter.
+    ///
+    /// ⚠️ THE FAIL-CLOSED PROPERTY BELONGS TO THIS FILTER, NOT TO THE SENDER. `send(address:
+    /// floats:)` is a raw pipe with no classification — `sendModulation` reaches it directly
+    /// and is gated upstream instead (`ModulationEngine.apply`). So a new egress path does NOT
+    /// inherit the guarantee by being in this class; it has to route through
+    /// `BioEgressPolicy.fieldClass` itself, which is why the filter is written out here rather
+    /// than assumed.
+    ///
+    /// ⚠️ IT DOES NOT CALL `allowsEgress(address:source:clinicalDetailEnabled:)`, although
+    /// that composed call is the right one for the bio batch. It demands a `BioSource`, and a
+    /// `MusicalFrame` HAS NONE — passing some stand-in would be precisely the "rule re-stated
+    /// at the call site" failure that `BioEgressPolicy`'s own header calls the #186 lesson.
+    /// The two halves are therefore asked separately, and the source half applies to ONE
+    /// address (below) rather than to the batch.
+    ///
+    /// ── WHY THE GATE IS ON TEMPO ALONE ──────────────────────────────────────────────
+    /// Four of the five carry no physiology at all: the key and the sounding-note count are
+    /// the user's composition, the beat phase and the master level are the transport. Tempo
+    /// is different — under `.flowFree` it follows the pulse (`BioComposer.tempo(for:)`), and
+    /// `MusicalFrame` carries no provenance field that would let a receiver, or this method,
+    /// tell a body-driven tempo from a locked one. So it takes the STRICT reading and honours
+    /// the same `BioEgressPolicy.allowsEgress(source:)` that withholds the frame itself —
+    /// the rule `ModulationEngine` already applies to its network tap for the same reason.
+    ///
+    /// The strictness costs a real case and that is accepted, not overlooked: a HealthKit user
+    /// in `.studioLocked` loses tempo egress although a locked tempo cannot carry a heartbeat.
+    /// Relaxing it needs the composer mode at this call site, i.e. a new coupling — a separate
+    /// decision. Failing safe first is the cheap half.
+    ///
+    /// No live bio frame at all (nobody started a session) means nothing to withhold, so the
+    /// tempo goes: composing without biofeedback is the ordinary case, not a blocked one.
+    private func sendMusicIfFresh(from bus: EngineBus) {
+        guard let frame = bus.latestMusical else { return }
+        guard frame.timestamp != lastMusicalTimestamp else { return }
+        lastMusicalTimestamp = frame.timestamp
+
+        let bodyMayEgress = bus.latestBio.map { BioEgressPolicy.allowsEgress($0.source) } ?? true
+        for m in Self.musicMessages(for: frame) {
+            if m.address == Self.musicTempoAddress, !bodyMayEgress { continue }
+            guard let cls = BioEgressPolicy.fieldClass(ofOSCAddress: m.address) else { continue }
+            guard BioEgressPolicy.allowsEgress(fieldClass: cls,
+                                               clinicalDetailEnabled: sendsClinicalDetail) else { continue }
+            send(address: m.address, floats: m.floats)
+        }
+        lastSentTimestamp = CFAbsoluteTimeGetCurrent()
+    }
+
+    /// The one spelling of the gated address, so the filter above and the message builder
+    /// below cannot drift apart into a gate that guards a string nobody sends (#367).
+    /// ⚠️ `nonisolated` IS REQUIRED, not tidiness: this class is `@MainActor`, so Xcode's
+    /// toolchain isolates even an immutable `static let` (CLAUDE.md's build-error table —
+    /// SwiftPM may accept the same code, the two toolchains disagree on SE-0434 inference).
+    /// `musicMessages` below is `nonisolated` and reads this, so without the keyword the
+    /// Xcode Compile Check fails on a file SwiftPM compiled happily.
+    nonisolated static let musicTempoAddress = "/echoelmusic/music/tempo"
+
+    /// The musical frame → OSC message list. Pure + `nonisolated`, the `bioMessages` shape,
+    /// so the selection is unit-testable and has one source of truth.
+    ///
+    /// ── WHAT IS DELIBERATELY NOT ON THE WIRE, AND WHY EACH ONE ISN'T ─────────────────
+    /// * `sectionIndex` and `trackLevels` — **NO PRODUCER.** Measured 2026-09-19: the single
+    ///   construction site (`PianoRollModel.musicalFrame`) passes neither, so they hold their
+    ///   defaults `-1` and `[]` on every frame ever published. Streaming a constant `-1` would
+    ///   be indistinguishable from a real section reading — the #496 defect exactly, on the
+    ///   path where an integrator would build a cue list on it.
+    /// * `inaudibleNoteCount` — its own doc says DIAGNOSTIC ONLY, "no renderer may react to
+    ///   it". An OSC receiver is a renderer.
+    /// * `scaleName` — it is a STRING, and `encode(address:floats:)` writes floats only; OSC's
+    ///   `,s` argument is a real but separate slice. Sending a numeric index into the scale
+    ///   list instead would mint an ordering contract that a future inserted scale breaks
+    ///   silently on every receiver, which is worse than the omission.
+    /// * per-note frequency/amplitude — variable arity. The encoder already takes `[Float]`,
+    ///   so this is not a format limit; it is that a receiver needs stable slots to map
+    ///   "note 3" to anything, and deciding the slot contract is its own call. `note/count`
+    ///   ships now because it is bounded and already drives density mappings.
+    nonisolated static func musicMessages(for frame: MusicalFrame) -> [(address: String, floats: [Float])] {
+        var msgs: [(address: String, floats: [Float])] = []
+        // 0 means stopped/unknown by `MusicalFrame`'s own normalisation — sent as such rather
+        // than withheld, so a receiver can tell "transport stopped" from "Echoel went away".
+        msgs.append((musicTempoAddress, [Float(frame.tempoBPM)]))
+        // -1 is the type's own "unknown", preserved on the wire instead of folded into 0,
+        // which is a real pitch class (C).
+        msgs.append(("/echoelmusic/music/key/root", [Float(frame.rootPitchClass)]))
+        msgs.append(("/echoelmusic/music/beat/phase", [Float(frame.beatPhase)]))
+        msgs.append(("/echoelmusic/music/level/master", [Float(frame.masterLevel)]))
+        msgs.append(("/echoelmusic/music/note/count", [Float(frame.notes.count)]))
+        return msgs
     }
 
     /// The provenance value most recently announced on the EVENT path, latched across drains
