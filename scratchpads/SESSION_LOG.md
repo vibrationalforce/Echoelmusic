@@ -33733,3 +33733,99 @@ deshalb ALLE ein, die Compile Checks nur der jeweils letzte. Für diese Runde fo
 vier Scheiben sind Kommentare oder Testcode, keine berührt einen Release- oder
 geräte-only-Pfad —, aber die Bedingung, unter der es NICHT folgenlos wäre, steht jetzt in §5
 statt in niemandes Kopf.
+
+## 2026-09-19 — #1371/#1372: die Echo-Teilung eines Genres erreicht das Ohr (`438cf23`, `f8b76eb`)
+
+**Founder-Eingabe:** *„Ultraseniordeveloper ultraprductdesigner Ultraux Ultrathink ultraplan
+ultracode"* — gelesen als Antwort auf meine eine offene Frage („soll eine Genre-Wahl ein
+sichtbares Bedienelement anfassen?"), weil sie genau die Rollen ruft, die sie entscheiden.
+
+### Die Entscheidung: zwei Hälften, eine Prüfung, zwei verschiedene Antworten
+
+Zur Wahl standen zwei Achsen, auf denen ein Genre eine auskurierte Absicht hat, die heute
+nirgends ankommt: der **Delay-Teiler** (`GenreFXPreset.delaySync`, 53 Konstruktionsstellen über
+10 Notenteilungen) und der **BPM-Modus** (`MusicStyle.defaultMode`, null Leser seit #1365).
+
+Die Prüfung, die beide entscheidet, steht schon im Genre-Arm von `handleCompositionEdit`: sein
+Tuning-Zweig WEIGERT sich ausdrücklich, eine bewusste Wahl aus einem anderen Bedienelement zu
+überschreiben, während er `scale` und `currentPatch` sehr wohl wholesale ersetzt. Der
+Unterschied ist **Eigentum**:
+
+* **Delay-Teiler = FARBE des Genres.** Er ist ein FELD des Genre-Presets, pro Genre
+  geschrieben. Ihn zu übernehmen ist derselbe Akt wie `scale` und `currentPatch`. → **GEBAUT.**
+* **BPM-Schloss = MODUS.** Die Flow|Loop-Achse des Instruments, drei ausdrückliche Nutzer-Türen,
+  und kein Genre hat die Auftritts-Absicht des Spielers geschrieben. → **NICHT gebaut.**
+
+`decisions.csv:904` (ACTIVE) hielt die zweite Hälfte schon als founder-gated fest — meine
+Herleitung kam unabhängig dort an, was ich erst NACH der Entscheidung gemessen habe.
+
+### Was das Messen vorher gefangen hat (und was es fast nicht gefangen hätte)
+
+Die Plumbing-Vermessung (7 Agenten, read-only) hat **zwei** Dinge geliefert, die den Bau
+geändert haben:
+
+1. **Die Anhängestelle war falsch geplant.** Ein `onChange(of: style)` hätte für den
+   Picker-Pfad DOPPELT gefeuert und zugleich den dokumentierten Vertrag umgedreht, dass
+   programmatische Schreibvorgänge (`open(_:)`, Launch-Clamp) keine Nebenwirkungen auslösen.
+   Richtig ist `handleCompositionEdit("genre")` — der Hook existiert bereits.
+2. ⛔ **Ein programmatisches `delaySync = …` löst den `.onChange` des Pickers aus, dessen erste
+   Zeile `chain.delayEnabled = true` war.** Ein Genre-Wechsel hätte damit das Delay unter dem
+   `.clean`-Character scharf geschaltet — und nur dann, wenn zufällig das FX-Dropdown offen war.
+   Reparatur: `delayDivisionGesture`, eine `Binding`, deren `set` nur bei einer echten Geste
+   läuft (das `WorkspaceView.edited(_:posts:)`-Hausmuster).
+   ⭐ **GESETZ: wer einen bisher rein nutzergetriebenen `@State` zum ersten Mal PROGRAMMATISCH
+   schreibt, erbt jeden Beobachter darauf — `onChange` unterscheidet Geste und Automatik nicht,
+   eine `Binding`-`set` schon.**
+
+### #1372: die Folge, die #1371 selbst erzeugt hat
+
+Sobald die Teilung hörbar ist, ist jede Abschneidung am 2.0-s-Deckel ein hörbarer Defekt.
+Gemessen: **drei** Genres clampten `.half` an ihrem langsamsten Tempo — `selfObservation`
+(46–78), `stillMeditation` (50–70), `doom` (50–80); die ersten zwei angeboten und beide
+`.flowFree`, also friert ihr Echo unter 60 BPM flach ein. Alle drei auf `.half, .triplet`
+(deepDrones gemessene Teilung). Der Wächter lernt dabei das richtige Ende: die
+handgeschriebene Zwei-Genre-Liste ist durch einen Anspruch über ALLE Genres am
+Fenster-BODEN ersetzt, die „höchstens EINER"-Erlaubnis ist NULL, und `genre-prebatch.py`
+fällt dort jetzt hart durch, statt „tolerated by design" zu drucken.
+
+### Drei Messfehler, alle in die schmeichelnde Richtung
+
+Aufgeschrieben, weil alle drei vor dem Commit gefangen wurden und der Mechanismus derselbe ist:
+
+* die `offered`-Menge per zu früh abgeschnittenem Regex → beide Truncater sahen unerreichbar aus
+* die Cluster-Zahl **ohne** den `delayEnabled`-Filter, den die Methode selbst anwendet → 7 statt
+  5, der Ratchet wäre fälschlich angehoben worden
+* ein Selbsttest-Fall, der auf korrektem Baum rot wurde, weil die **Regel** sich bewegt hatte
+  und nicht der Baum (der Fall war tree-derived — gegen Baumdrift gehärtet, gegen Regeldrift
+  nicht)
+
+⭐ **GESETZ: eine Nach-Messung ist nur dann eine Prüfung, wenn sie gegen den CODE des Anspruchs
+gefahren wird, nicht gegen die Erinnerung an ihn.**
+
+### Zwei Über-Behauptungen aus #1371, von der adversariellen Prüfung gefunden
+
+* „All EIGHT delay fields reach the audio now" gilt für GENRE-Presets, nicht für die sechs
+  `FXCharacter`-Presets desselben Typs — deren Teilung überschreibt der Picker weiterhin an
+  allen vier Stempelstellen (#1364, absichtlich). **Ein Fix, der für einen Aufrufer wahr ist,
+  ist nicht wahr für den TYP.**
+* „USER-ONLY" im Genre-Arm: der OSC-Cue `/echoelmusic/ctrl/genre` postet dieselbe Notification
+  selbst und läuft absichtlich durch denselben Arm. „Nutzer-only" und „nicht programmatisch"
+  sind verschiedene Behauptungen.
+
+### Fünf mechanische Gründe gegen die zweite Hälfte (Protokoll, falls sie je wieder aufkommt)
+
+Die adversarielle Prüfung der Lock-Hälfte fand unabhängig von meiner Produkt-Entscheidung
+fünf: die von Hand getippte `lockedBPM` wäre beim Zurück-Sperren unwiederbringlich durch die
+abgedriftete Uhr ersetzt · das Entsperren schaltet eine vom Nutzer baubare Bio→Tempo-Route
+scharf, die nur EINE der vier T2-Stufen durchläuft · `/echoelmusic/ctrl/bpm` gilt nur unter
+Schloss, ein Genre-Pick hätte also eine externe Steuerfläche stumm geschaltet · `lockBPM` wird
+in JEDES gespeicherte, autogespeicherte und geteilte Projekt gestempelt · die
+Konvergenz-Kappe greift auf diesem Pfad nicht.
+
+### Gerät (NEEDS-FOUNDER-VERIFY)
+
+* `selfObservation` ist die Flaggschiff-Fläche: ihr Echo war faktisch punktiertes Achtel
+  (≈ 0.39 s bei 58 BPM, was der Picker hielt) und ist jetzt 1.379 s. Der entworfene „≈ 2 s"-Wert
+  wird dabei NICHT erreicht — beide Hälften gehören auf die Ohrprobe.
+* Jeder Genre-Wechsel bewegt jetzt sichtbar den Delay-Picker. Fühlt sich das nach Lernen an
+  oder nach Kontrollverlust?
