@@ -1,4 +1,4 @@
-build: v10.79.473 — Der Genre-Build: acht neue Genres (32 → 40 angeboten), die Uhr als Bio-Quelle, und die Atem-PHASE hängt nicht mehr an der Atem-RATE (#1312–#1358)
+build: v10.79.474 — Der Musikalitäts-Build: der Swing trifft zum ersten Mal Noten, Pad und Bass teilen sich keinen Grundton mehr, und jedes Genre bringt seinen eigenen Echo-Teiler mit (#1360–#1373)
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -51,7 +51,134 @@ notes: |
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
 
-  Der Vorgänger ist 10.79.472 (und davor 10.79.471).
+  Der Vorgänger ist 10.79.473 (und davor 10.79.472).
+
+  ── WAS IN DIESEM BUILD NEU IST (v10.79.474) ──────────────────────────────
+
+  ⭐ DAS IST DER MUSIKALITÄTS-BUILD. Seit dem letzten Deploy sind 26 Commits gelaufen,
+  ZEHN davon fassen `Sources/` an — und alle zehn betreffen genau eine Frage: wie der
+  generierte Take klingt. Kein neues Genre, keine neue Fläche, kein neuer Knopf.
+  Derselbe Take wie in .473, anders gespielt.
+
+  ⚠️ VORWEG, WEIL ES DIE LESART DES GANZEN BUILDS ÄNDERT: das hier sind vier REPARATUREN
+  an Dingen, die schon da waren und nicht taten, was sie sollten. Drei davon waren
+  strukturell — sie konnten in KEINEM Körperzustand und bei KEINER Einstellung richtig
+  laufen. Wenn Dir an .473 etwas flach oder leblos vorkam, steht die Ursache mit hoher
+  Wahrscheinlichkeit hier unten.
+
+  ── #1363: DER SWING SWINGTE DAS 16TEL — UND TRAF NICHTS ──────────────────
+
+  Das ist der größte Einzelbefund dieses Builds, und er ist zum Hören.
+
+  `PatternEngine.swingGap` verlängerte den Abstand nach GERADEN Schritten, verschob
+  also die UNGERADEN. Jedes lebende Akkord-Raster des Komponisten sitzt auf GERADEN
+  Schritten — Skank auf 2/6/10/14, Stab auf 0/4/8/12, Comp auf 4/12 — und jede
+  Bass-Phase ebenso (0, 2, 6, 10, 12, 14). Der Swing hat also mit voller Kraft auf
+  Positionen geschoben, auf denen keine Note lag.
+
+  Gemessen mit gedruckter Abdeckung, 40 von 40 angebotenen Genres: 22 tragen einen
+  auskurierten Swing-Wert (bis 0,30), und in 21 davon hat er KEINE EINZIGE Akkord-Note
+  bewegt. Die einzige Ausnahme war `slowedGothPop`, wo eine ungerade Taktteilung
+  zufällig die Parität kippt. Jetzt swingt der ACHTEL — was die Dokumentation die ganze
+  Zeit behauptet hat („0.33 ≈ 2:1 Triplet").
+
+  ⚠️ DAS HEISST: 21 Genres bekommen ihren kuratierten Swing in diesem Build zum ERSTEN
+  MAL zu hören. `modalJazz` trägt mit 0,30 den größten angebotenen Wert, `loFiHipHop`
+  und `dubEcho` folgen. Wenn ein Genre Dir jetzt zu sehr taumelt, ist der Wert zu hoch
+  und nicht der Mechanismus kaputt — das ist eine Zahl, die wir drehen können.
+
+  ── #1362: PAD UND BASS KONNTEN AUF DEMSELBEN GRUNDTON LANDEN ─────────────
+
+  Der Boden des Voice-Leading-Fensters war exakt die Note, die der Bass eine Zeile
+  vorher in denselben Abschnitt legt. Der Stimmführer DURFTE die unterste Pad-Stimme
+  auf den Bass legen — und weil Bewegungsarmut sein ganzer Zweck ist, hat er sie genau
+  dahin gezogen. Zwei verschiedene Synth-Stimmen auf demselben Grundton, gemessen in
+  10 von 40 Genres.
+
+  Das ist strukturell, nicht statistisch: jedes Akkordton-Set beginnt auf 0, der Bass
+  liegt immer eine Oktave unter dem Pad, und zwei Oktaven sind exakt zwölf Halbtöne.
+  Der Boden liegt jetzt eine kleine Terz über der Bassnote — ein Halbton wäre das
+  SCHLECHTERE Intervall über einem gehaltenen Bass, eine Quarte kostet zu viel Bewegung.
+  Simuliert: 35 von 297 Voicings ändern sich, alle 28 Kollisionen weg, im Schnitt
+  +0,26 Halbtöne Bewegung. Zu hören als Tiefenstaffelung — der Bass steht allein unten.
+
+  ── #1361: DIE 81 GENRE-PATCHES WAREN NIE LAUTHEITS-ANGEGLICHEN ───────────
+
+  Deine eigene Anweisung dazu steht seit dem 11. Juli im Code („angleichen"), und sie
+  hatte ein Zuhause von zwei erreicht: die Werks-Patches ja, die GENRE-Patches nie.
+  Alle 81 gingen mit vollem Pegel raus. Gemessen spannen die 57 Pad/Lead-Patches
+  **15,61 dB** von „Dust Keys" bis „Church Choir", während der Regler, mit dem Du das
+  ausgleichen solltest, ganze 2,34 dB spannt — Du hättest es gar nicht geradeziehen
+  können.
+
+  ⚠️ DAS IST DIE ÄNDERUNG MIT DEM GRÖSSTEN RISIKO IN DIESEM BUILD, und deshalb steht
+  sie hier und nicht in einer Fußnote: ein Genre-Wechsel soll jetzt keinen Lautstärke-
+  SPRUNG mehr machen. Hör auf den SPRUNG, nicht auf den Klang. Wenn ein Genre dadurch
+  zu leise geworden ist, sag welches — das ist ein Wert pro Patch, kein Umbau.
+
+  ── #1364/#1371/#1372: DAS ECHO GEHÖRT JETZT ZUM GENRE ────────────────────
+
+  Bisher hat ein Genre-Wechsel alles mitgezogen — Skala, Beat, Patch, Progression —
+  außer dem Echo-Teiler: der blieb auf dem, was zuletzt im Delay-Feld stand. Ein Genre
+  hat seinen eigenen Teiler zwar geschrieben, aber niemand hat ihn gestempelt.
+
+  Jetzt setzt jeder Genre-Wechsel die Echo-Teilung, die das Genre selbst mitbringt, und
+  der Regler bewegt sich sichtbar mit. Was BEIM Character bleibt: Modus, Mix, Feedback,
+  Ton, Wow und Stereobreite. Nur die ZEIT folgt dem Genre.
+
+  ⚠️ EINE ECHTE FRAGE AN DEIN OHR, DIE KEIN TEST ENTSCHEIDEN KANN: liest sich das als
+  „das Instrument lernt mit" oder als „mir wird mein Regler weggedreht"? Wenn das
+  Zweite, drehen wir es zurück — dann ist es eine Einstellung und kein Automatismus.
+
+  Dazu #1372: drei Genres (`stillMeditation`, `doom`, `selfObservation`) hatten eine
+  Echo-Zeit ausgeschrieben, die über der 2-Sekunden-Decke lag, und wurden dort still
+  abgeschnitten — alle drei landeten auf demselben Wert, also klangen sie im Echo
+  identisch, obwohl drei verschiedene Zahlen im Code standen. Sie sind neu vertont
+  (punktierte Halbe statt Halbe). Bei `selfObservation` geht die Echo-Zeit damit von
+  effektiv 0,39 s auf 1,379 s — hörbar ein anderer Raum.
+
+  ── #1360: EIN GENRE SANG SEIT ZWEI TAGEN, UND DER WÄCHTER DAGEGEN WAR ROT ─
+
+  `balkanModal` hat seit dem 16. September eine Lead-Stimme. Ein blockierender Wächter
+  behauptete zur selben Zeit, KEIN Genre habe eine — er war auf korrektem Baum rot, und
+  **niemand konnte es sehen**, weil unser Test-Gate auf jedem Push „failure" meldet und
+  das Job-Log nur die letzten 200 Zeilen zeigt. Gefunden hat es kein Häkchen, sondern
+  das Nachmessen der Musikalität.
+
+  Das gehört in diese Notiz, weil es sagt, wie viel ein grünes Häkchen hier wert ist:
+  weniger, als es aussieht. Dein Ohr auf dem Gerät ist weiterhin die einzige Instanz,
+  die „klingt gut" entscheidet — und bei einem roten Wächter, den keiner sieht, auch
+  „funktioniert überhaupt".
+
+  ── NICHT IN DER APP: DIE RESOLUME-SEITE (#1373) ──────────────────────────
+
+  Auf der Website steht jetzt eine Schritt-für-Schritt-Seite für Resolume, neben denen
+  für Reaper und TouchDesigner. Sie trägt eine Warnung, die sonst nirgends öffentlich
+  stand: `bio/heart/bpm` geht als Schläge pro Minute raus, nicht als 0…1 — wer den
+  direkt auf einen Resolume-Regler legt, sieht ihn am Anschlag kleben. Am Gerät ändert
+  sich dadurch nichts; es steht hier, damit Du es weißt, wenn Dich jemand fragt.
+
+  Founder device-session checklist — 6 NEW or REWORDED since `f7761ce`, of 147 open, none answered yet
+     'New' means the marker LINE was added or changed. An ask that only moved (lines edited above it) is deliberately NOT here — it did not change.
+     ⚠️ It sees TEXT, not capability: a REWORDED ask is an old ask whose sentence was polished, not one that became newly answerable. Read the sentence.
+
+  ── AUDIO  (4)
+     Sequencer/GenreFX.swift:1310
+        entire window. ⚠️ WHAT IT COSTS, NEEDS-FOUNDER-VERIFY: the designed "≈ 2 s at 58 BPM" becomes 1.379 s there — …
+     Sequencer/GenrePatches.swift:72
+        it is right; `NEEDS-FOUNDER-VERIFY` sits on the switch below.
+     Sequencer/GenrePatches.swift:80
+        NEEDS-FOUNDER-VERIFY: durch die Genres gehen und auf den SPRUNG hören, nicht auf den Klang — vorher war Boom-B…
+     Sequencer/PatternEngine.swift:718
+        NEEDS-FOUNDER-VERIFY: ein geschwungenes Genre fahren (`modalJazz` 0.30 ist der größte angebotene Wert, `loFiHi…
+
+  ── BIO  (1)
+     Sequencer/BioComposer.swift:2222
+        NEEDS-FOUNDER-VERIFY: einen Take mit Pad und Bass laufen lassen (ein gehaltenes Genre wie `.selfObservation`, …
+
+  ── OTHER  (1)
+     CISmoke/ThePadStaysClearOfTheBassTests.swift:30
+        gehört dem Founder (NEEDS-FOUNDER-VERIFY steht am Code, nicht hier). Er kann auch nicht zählen, wie oft `Voice…
 
   ── WAS IN DIESEM BUILD NEU IST (v10.79.473) ──────────────────────────────
 
