@@ -34034,3 +34034,73 @@ Gegengewichte, 9 Mutanten). ⚠️ **Zwei Mutanten waren in erster Fassung NICHT
 `hasTorch` traf den Kommentar statt den Code, und das `XX`-Suffix ließ `isTorchAvailable` als
 Teilstring stehen. #776: die Mutation zuerst bestätigen, sonst liest sich ein blinder Fleck
 im Mutanten als Lücke im Wächter.
+
+---
+
+## 2026-09-19 — #1381: fünf falsche Wegweiser auf einen toten Vollstrecker (`f78eade`)
+
+`AudioClipPlayer` hat NULL Aufrufer und NULL Tests — gemessen, nicht geschätzt. Trotzdem
+nannten ihn FÜNF fremde Dateien als den Typ, der Audio-Regionen ausführt: `AudioLanePlayer`,
+`AudioEngine`, `AudioOutputGuard+PCMBuffer`, `AudioClipRegion` und `TimelineAudioSink`. Ein
+Wegweiser auf einen toten Typ ist teurer als gar keiner — er schickt die nächste Sitzung in
+eine Datei, die nichts ausliefert, statt zum echten Konformer. Korrigiert; die drei
+überlebenden Querverweise in `TimelineAudioSink` tragen jetzt `(dead)`, die TATSACHE steht
+EINMAL an der ersten Nennung (#416).
+
+⛔ **Mein eigener Ersatztext über-behauptete „sechs Verbraucher" von `AudioClipRegion`** —
+aus `git grep -l`, das Kommentare mitzählt. Kommentar-gestrippt gemessen: DREI fremde Dateien
+im CODE, zwei davon tot; `AudioRegionPlayback` nimmt eine `TimelineRegion`. Wahr ist: **EIN
+lebender Code-Verbraucher**, `Clip.swift`, und er liest `nativeBPMRange`. Das war #867
+(„wer einen Nachbarn mit-behauptet, misst den Nachbarn mit") begangen INNERHALB des
+Register-Blocks, der #867 als Gesetz aufschreibt. Nebenbefund derselben Messung:
+`WarpedClipPlan` ist ein ACHTER Waise.
+
+⚠️ **Anspruch 5 des neuen Wächters war ROT AUF BEIDEN BÄUMEN** — also kein Delta, der
+§3-Blindfleck. Gefunden nur, weil jeder Anspruch einer NEUEN Datei gefahren wurde, nicht nur
+der Diff. Neu verankert auf `Clip.swift`. Wächter `TheLaneSinkIsNamedByItsConformerTests`
+(5 Ansprüche, POSITIVE Form, weil die reparierten Dateien ihre eigenen Rücknahmen zitieren
+(#491); nur Anspruch 4 ist eine Abwesenheits-Behauptung und liest gestrippten Text).
+
+⛔ **DEAD-END, in `HARNESS_LEDGER.md` eingetragen (`76da700`):** der naheliegende
+repo-weite Scanner „toter Typ in fremder Prosa genannt" ist nicht baubar. 132 Treffer, Spitze
+`EchoelmusicApp`, dazu verschachtelte Typen namens `Step`/`Phase`/`Frame`/`Window` — #408 im
+Großen, und er scheitert in der ALARMIERENDEN Richtung (#665/#937). Nicht ausgeliefert.
+
+---
+
+## 2026-09-19 — #1382: `andeanHighland`, das Latin-America-Regal ist voll (`275fba7`)
+
+Dritte und letzte Zeile des Regals. Dünn, hoch, Moll, ohne Schlagzeug: sparse Sub unter
+hellem Pad, Viertel-Tape-Echo, das bei jedem angebotenen Tempo INNERHALB des Takts auflöst
+(60/88 = 0,6818 s < 2,0). Gemessen nach dem Schnitt: **58 Genres, 41 angeboten, 83 Patches**,
+GenreFX-Arme 58 von 58, Fingerabdruck-Sweep leer, schlagzeugfreie Delay-Cluster 5→6 (das Echo
+HEBT die Ratsche, verschmilzt nichts — exakt die Vorhersage aus #1353).
+
+⭐ **Der Lead-Name ist ERZWUNGEN, nicht gewählt.** Alle sechs Namen standen auf 8 bei Decke 8;
+„Deep Sub" war der einzige mit Kopfraum, also nimmt ihn der Sub-Patch. Festgehalten, weil es
+sich wie eine Geschmacksentscheidung liest und keine ist.
+
+⭐ **GRADE SIND KEINE HALBTÖNE.** `[0, 5, 6]` auf `.minor` ergibt Wurzeln 0/8/10, also
+**i → ♭VI → ♭VII** — Moll-Tonika unter zwei DUR-Akkorden. Genau diese Asymmetrie treibt
+`MusicalKey.degree` und ist der ganze Charakter des Zyklus. Mein Entwurf las das Array als
+Halbtöne und schrieb „i → v → ♭VI".
+
+⛔ **Zwei weitere Korrekturen am eigenen Entwurf, beide Mess-Lehren:** (1) ich behauptete,
+`tape` + Viertel gehöre nur `rootsReggae` — gemessen SIEBEN Besitzer; was diesen Arm trennt,
+ist das Feedback (0.26), und das ist auch nicht gratis. (2) Ich nannte `delayWow: 0.06` „den
+am wenigsten verzerrten der sieben" — `detroitTechno` schreibt gar kein `delayWow` und nimmt
+die Default-0.0. **Ein weggelassenes Argument ist trotzdem ein Wert (#431); ein Superlativ
+über eine Menge muss die DEFAULTS lesen, nicht nur die geschriebenen Argumente.**
+
+⚠️ **Und der vierte Fehler lag in der TRANSKRIPTION, nicht im Code:** mein erster Parser des
+Helligkeits-Anspruchs las **41 von 83** Patch-Blöcken und meldete sauber durch — der exakte
+#1350-Defekt, eine Messung, die ihre eigene Abdeckung nicht nennen kann. Repariert (Split auf
+`patch("`, Name bei `parts[2]`), Coverage-Assert ergänzt, bei 83/83 neu gefahren; der Anspruch
+hielt (das Paar hält beide Enden der Helligkeits-Achse von `SynthPatch.factory`).
+
+Wächter `GenreBatchFourteenCTests` (6 Ansprüche, 11 Mutanten je RED auf ihrem Anspruch,
+Kontrolle GRÜN, §0-transkribiert). Mitgezogen im selben Commit: **sieben Kopie-Stellen** —
+eine Genre-Zahl ist eine Behauptung, und `docs/architecture.html` musste zusätzlich von
+„46 von 57" auf „47 von 58" (Genres mit eigenen Raumwerten). Zurückgenommen: der veraltete
+Warteliste-Satz im `latinAmerica`-Doc — das Regal ist voll, und `gnawaGuembri` steht in der
+AFRIKA-Spalte des Plans, nicht in dieser.
