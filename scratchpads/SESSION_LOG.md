@@ -34104,3 +34104,84 @@ eine Genre-Zahl ist eine Behauptung, und `docs/architecture.html` musste zusätz
 „46 von 57" auf „47 von 58" (Genres mit eigenen Raumwerten). Zurückgenommen: der veraltete
 Warteliste-Satz im `latinAmerica`-Doc — das Regal ist voll, und `gnawaGuembri` steht in der
 AFRIKA-Spalte des Plans, nicht in dieser.
+
+---
+
+## 2026-09-19 — #1383: `/echoelmusic/music/*`, Founder-Posten 5 (`9c0f962`)
+
+Der letzte offene Posten der Fünf-Prompt-Ordnung. Die `MusicalFrame`-Wirbelsäule wird seit der
+Löschung der Piano-Roll-ANSICHT veröffentlicht (`PianoRollModel` tickt weiter, beim App-Start
+installiert) — und **nichts trug sie vom Gerät**: eine externe Visual-Engine konnte den KÖRPER
+abonnieren und nicht die MUSIK. Fünf Adressen, ein Float je Adresse, auf dem BESTEHENDEN
+100-ms-Poll neben dem Bio-Batch und dem Event-Drain (kein zweiter Timer — der entkäme der
+thermischen Bio-Decke, die diesen governt).
+
+⭐ **DER BEFUND, DER DAS DESIGN GEFORMT HAT, und er hat meine eigene Annahme UMGEDREHT:** die
+Fail-closed-Eigenschaft von `BioEgressPolicy` gehört EINEM Aufrufort — dem Filter in
+`OSCSender.send(frame:)`. `send(address:floats:)` ist ein roher Pipe ohne Klassifikation, und
+`sendModulation` erreicht ihn direkt (stattdessen upstream in `ModulationEngine.apply` gegatet).
+**Ein NEUER Egress-Pfad erbt die Garantie NICHT dadurch, dass er in dieser Klasse wohnt.** Ich
+war im Begriff, mich auf eine Sicherheit zu verlassen, die für neue Pfade nicht existiert. Der
+Musik-Batch routet deshalb ausdrücklich durch `fieldClass`, und Anspruch 2 hält ihn dort.
+
+⭐ **DER GATE SITZT AUF TEMPO ALLEIN, und die Asymmetrie ist der tragende Teil.** Vier der fünf
+tragen keine Physiologie: Tonart und Notenzahl sind die Komposition des Nutzers, Beat-Phase und
+Pegel der Transport. Tempo folgt unter `.flowFree` dem Puls, und `MusicalFrame` hat KEIN
+Herkunftsfeld — nichts kann ein körpergetriebenes von einem gesperrten Tempo unterscheiden. Also
+strikte Lesart, derselbe `BioEgressPolicy.allowsEgress(source:)`, der den Bio-Rahmen zurückhält;
+die Regel, die `ModulationEngine` aus demselben Grund längst auf seinen Netz-Tap anwendet.
+**Die Kosten sind akzeptiert, nicht übersehen:** HealthKit + `.studioLocked` verliert den
+Tempo-Ausgang, obwohl ein gesperrtes Tempo keinen Herzschlag tragen kann. Lockern braucht den
+Composer-Modus an dieser Aufrufstelle, also eine neue Kopplung — eigene Entscheidung.
+
+⚠️ Es ruft NICHT `allowsEgress(address:source:clinicalDetailEnabled:)`, obwohl das für den
+Bio-Batch der richtige zusammengesetzte Aufruf ist: er verlangt eine `BioSource`, und ein
+`MusicalFrame` HAT KEINE. Einen Platzhalter zu übergeben wäre genau der „Regel an der
+Aufrufstelle wiederholt"-Fehler, den `BioEgressPolicy`s eigener Kopf die #186-Lehre nennt.
+
+⭐ **EINE MENGE, KEIN PRÄFIX.** `derivedPrefixes` verliehe die Klasse jedem künftigen Mitglied,
+und `fieldClass`' eigenes Doc sagt, der Sinn des `nil` sei, dass eine neue Adresse STILL
+ausgeliefert wird statt unklassifiziert. Das für genau den Namensraum wegzugeben, der wachsen
+wird, ist der falsche Tausch.
+
+`musicTempoAddress` ist `nonisolated static let`, keine Kosmetik: die Klasse ist `@MainActor`,
+Xcode isoliert auch ein unveränderliches `static let` (die Build-Fehler-Tabelle in CLAUDE.md),
+und der `nonisolated` Erbauer liest es — ohne das Schlüsselwort scheitert der Compile Check an
+einer Datei, die SwiftPM klaglos übersetzt.
+
+Wächter `TheMusicEgressHasItsOwnGateTests` (7 Ansprüche, zwei Gegengewichte; 11 Mutanten je RED
+auf ihrem Anspruch, Kontrolle GRÜN beidseits). CLAUDE.md bezahlt seine neuen Zeilen statt den
+150.000-B-Deckel zu sprengen: §AC und §AD ins Ledger. ⚠️ **Ich schrieb beide Zeiger zuerst als
+§AA/§AB — beide Namen waren vergeben, und nur ein `grep` der echten Überschriften zeigte es.
+Ein Zeiger ist nur so haltbar wie das, worauf er zeigt, und das prüft man durch HINSEHEN, nicht
+durch Zählen.**
+
+---
+
+## 2026-09-19 — #1384: die Adressen erreichen die zwei Seiten, die sie lehren (`b41b0f2`)
+
+#1383 legte `/echoelmusic/music/*` auf die Leitung. **Ein Adressraum, von dem niemand erfährt,
+ist halb ausgeliefert** — und die Resolume-Seite aus #1373 verspricht, `integrations.html` trage
+„the full address list", was #1383 still unwahr gemacht hatte. Prosa zieht in JEDEM Zuhause mit
+(#456).
+
+`integrations.html` (die kanonische Liste) bekommt die fünf Zeilen plus die zwei Dinge, die eine
+Tabelle nicht hergibt: dass `/music/tempo` einen ZWEITEN Gate trägt, und dass drei
+`MusicalFrame`-Felder absichtlich fehlen. `resolume-osc.html` bekommt Abschnitt 6 in der Stimme
+dieser Seite — sie existiert, um einem VJ einen Abend zu sparen, sagt also das NÜTZLICHE statt
+des vollständigen: `/music/beat/phase` schwingt im Tempo des TAKTS, wo `/bio/breath/phase` im
+Tempo eines Körpers schwingt. Als Abschnitt 6 platziert, damit nichts umnummeriert und keine
+bestehende Wächter-Nadel verrutscht.
+
+⭐ **Anspruch 8 prüft BEIDE Richtungen, weil sie verschieden scheitern:** eine Adresse, die
+ausgeliefert und undokumentiert ist, ist ein Feature, das niemand findet; eine dokumentierte,
+die nicht ausgeliefert wird, ist die Behauptungs-Klasse, die eine 2.3-Ablehnung erzeugt. Das ist
+#755s Lehre angewandt, BEVOR sie etwas kostet — jener Zyklus fand alle drei Kopie-Wächter beim
+Lesen von SWIFT, während die WEBSITE in keinem stand.
+
+⚠️ **Fünf Mutanten, und die ersten drei bewiesen nicht, was ich dachte.** Ein `XX`-Suffix macht
+eine Adresse ZUGLEICH abwesend und unbekannt — sie wurden also alle drei über die
+ÜBERVERKAUF-Hälfte rot, während die FEHLT-Hälfte ungeprüft blieb. Zwei weitere trieben sie
+sauber, indem sie eine Musik- gegen eine echte Bio-Adresse tauschten: abwesend, nichts
+Unbekanntes eingeführt, ROT auf der gemeinten Hälfte. **#776 heißt nicht nur „bestätige, dass
+die Mutation gelandet ist", sondern auch „bestätige, dass sie die Hälfte prüft, die du meinst".**
