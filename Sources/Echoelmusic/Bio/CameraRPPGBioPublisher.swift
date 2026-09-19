@@ -2105,6 +2105,33 @@ public final class CameraRPPGBioPublisher {
         capture.stop()
         sampleQueue.clear()            // drop any frames buffered but not yet drained
         analyzer.stopPulseDetection()
+        // #1380 — AND `stopPulseDetection()` ALONE LEAVES THE FINGER LOCK STANDING, so the
+        // next take opens already holding the PREVIOUS one's contact decision. Measured:
+        // `stopPulseDetection()` only writes `isPulseDetecting = false`, and the fresh take's
+        // `startPulseDetection()` runs `resetPulseState(keepEstimate: false)`, which clears
+        // twenty-odd OPTICAL-WINDOW fields and none of the five that decide whether a finger
+        // is on the lens — `isFingerDetected`, `fingerDetectionBuffer`, `fingerTrueCount`,
+        // `brightness`, `redChannel`. `reset()` is the only thing that clears those, and it
+        // had ZERO callers in `Sources/` (`git grep -n "analyzer.reset()" -- Sources` → none).
+        //
+        // ⚠️ THE CARRY-OVER IS NOT COSMETIC — IT DISARMS THE ACQUISITION GATE, the one guard
+        // against locking a high-gain exposure onto a dark, fingerless scene. Both halves of
+        // the hysteresis read the stale `true`:
+        //   · `isFingerFrame(… wasDetected:)` drops the red floor from the ACQUIRE 0.28 to
+        //     the HOLD 0.12 (its own doc: "acquisition is never loosened" — this loosened it);
+        //   · `updateFingerDetection` needs `fingerDetectionWindow / 4` instead of `/ 2`, i.e.
+        //     8 instead of 16 of 30 — over a buffer ALREADY FULL of the last take's `true`s,
+        //     so the very first frame of the new take can report finger-present.
+        // The player then sees "finger detected" over a lens nothing is touching, and every
+        // downstream cue (`placementCue`, `signalQuality`'s +0.3) inherits it.
+        //
+        // ⚠️ DELIBERATELY NOT MOVED INTO `resetPulseState`, which is the tempting one-line
+        // version: that would also fire on all five `resetForRecovery` sites, and ONE of them
+        // is the finger-loss flush — clearing the lock there is exactly what the hysteresis
+        // exists to prevent (a glare flicker would drop the contact and restart the trust
+        // climb). A take boundary and a mid-take re-settle are different events; only the
+        // boundary may forget the body.
+        analyzer.reset()
         // A new take gets a new estimator: the last take's baseline, envelope and cycle
         // count say nothing about this one.
         //

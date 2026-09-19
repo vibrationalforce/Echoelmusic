@@ -1363,6 +1363,17 @@ final class CameraAnalyzer {
 
     // MARK: - Cleanup
 
+    /// FULL teardown — the only thing in this type that clears the FINGER-CONTACT state
+    /// (`isFingerDetected`, `fingerDetectionBuffer`, `fingerTrueCount`) and the two optical
+    /// levels (`brightness`, `redChannel`). `resetPulseState` deliberately does not: it is
+    /// the mid-take re-settle, and dropping the contact lock there is what the acquire/hold
+    /// hysteresis exists to prevent.
+    ///
+    /// ⛔ #1380: this had ZERO callers in `Sources/` until `CameraRPPGBioPublisher.stop()`
+    /// took it, so every take after the first opened holding the previous take's contact
+    /// decision — the HOLD red floor (0.12) instead of the ACQUIRE one (0.28), over a
+    /// detection buffer already full of `true`. Call it at a TAKE BOUNDARY, never inside a
+    /// recovery; the reasoning is written out at that call site.
     func reset() {
         rearmFrameRateAdaptation()   // full teardown returns the filter to nominal (#652)
         resetPulseState(keepEstimate: false)

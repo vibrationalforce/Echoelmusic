@@ -69,6 +69,30 @@ final class CameraCapture: NSObject, @unchecked Sendable {
     /// restarts while interrupted (they can't work and the torch churn only adds heat);
     /// it waits for `AVCaptureSessionInterruptionEnded`. Set/cleared on sessionQueue.
     nonisolated(unsafe) private var interrupted = false
+    /// Mirror of the ONE torch failure that is reachable on the shipping target (#1380).
+    /// `true` while the torch is WANTED but the OS will not light it.
+    ///
+    /// ⛔ THE AUDIT THAT FOUND THIS POINTED AT THE WRONG PROPERTY, and the difference decides
+    /// whether the code is reachable at all. `device.hasTorch` is HARDWARE: every iPhone ever
+    /// shipped has one, and `project.yml` pins `TARGETED_DEVICE_FAMILY: "1"` (phone only,
+    /// `DeviceFamilyIsPhoneOnlyTests`). So the `hasTorch == false` branch cannot execute on
+    /// what we ship — it is the iPad question, and CLAUDE.md already keeps it as the reason
+    /// iPad is not a target.
+    ///
+    /// `isTorchAvailable` is the RUNTIME property, and it goes false when the phone is too hot
+    /// — the exact condition this file already fights, since `thermalTorchLevel()` steps the
+    /// LED 0.45 → 0.28 → 0.18 because heat is the root cause of the 40–80 s mid-session stalls
+    /// (device log 1783445611). It appeared NOWHERE in `Sources/` before #1380: the throw from
+    /// `setTorchModeOn` landed in a `catch`, got a `.warning`, and reached nobody — while the
+    /// thermal observer re-runs `applyTorch()` on every state change, so it can repeat all
+    /// session. Finger-on-lens PPG has no red-channel pulse without light; a dark torch and a
+    /// badly-placed finger look identical to every cue the player is shown.
+    ///
+    /// Deliberately NOT a new `PulseCue`: that is user-facing copy on the flagship surface, so
+    /// it is a founder/Council call (CLAUDE.md). This makes the condition MEASURABLE — the
+    /// breadcrumb ladder now records it, so the next device log can answer "was there light?"
+    /// instead of leaving silence to be read as "the finger was wrong".
+    nonisolated(unsafe) private var torchUnavailable = false
     /// Whether the app is currently foreground-`.active` (updated from the
     /// didBecomeActive/willResignActive notifications, sessionQueue-only). The
     /// interruption-wait is proven correct ONLY while we are NOT the foreground app —
@@ -83,6 +107,10 @@ final class CameraCapture: NSObject, @unchecked Sendable {
     /// can stop thrashing cold restarts against a held camera (device log
     /// 1783749556: 8 cold restarts, 0 frames — reason 1 re-fired on every start).
     var isInterrupted: Bool { interrupted }
+
+    /// Owner-visible mirror of the above. The publisher does not act on it yet; it exists so a
+    /// consumer CAN, without re-deriving it from a log line.
+    var isTorchUnavailable: Bool { torchUnavailable }
 
     /// Whether the session is running
     var isRunning: Bool { session.isRunning }
@@ -210,7 +238,25 @@ final class CameraCapture: NSObject, @unchecked Sendable {
     private func applyTorch() {
         guard let device = (self.session.inputs.first as? AVCaptureDeviceInput)?.device,
               device.hasTorch else {
+            // Hardware absence. Unreachable on the shipped iPhone target — see the note on
+            // `torchUnavailable`. Kept as the honest branch for a platform that has no LED.
+            torchUnavailable = true
             log.log(.warning, category: .biofeedback, "Torch unavailable on capture device")
+            EchoelCrashLog.breadcrumb("rPPG: torch absent (no LED on this device) — rPPG cannot lock")
+            return
+        }
+        // THE REACHABLE ONE. `isTorchAvailable` goes false under thermal pressure, which is the
+        // condition `thermalTorchLevel()` exists for. Checked BEFORE the lock, so a hot phone
+        // does not take a configuration lock it cannot use.
+        if torchDesired, !device.isTorchAvailable {
+            if !torchUnavailable {
+                torchUnavailable = true
+                EchoelCrashLog.breadcrumb(
+                    "rPPG: torch UNAVAILABLE (thermal \(ProcessInfo.processInfo.thermalState.rawValue)) "
+                    + "— no light on the finger; a missing lock here is not the player's placement")
+                log.log(.warning, category: .biofeedback,
+                        "Torch not available (thermal) — rPPG has no illumination")
+            }
             return
         }
         do {
@@ -229,9 +275,23 @@ final class CameraCapture: NSObject, @unchecked Sendable {
                 device.torchMode = .off
             }
             device.unlockForConfiguration()
+            // Clear the latch on the way OUT, using what the device actually reports rather than
+            // what we asked for: `setTorchModeOn` can return without throwing and still not be
+            // lit. `torchDesired == false` is not a failure, so it clears too.
+            if torchUnavailable, !torchDesired || device.isTorchActive {
+                torchUnavailable = false
+                EchoelCrashLog.breadcrumb("rPPG: torch available again (active=\(device.isTorchActive))")
+            }
             log.log(.info, category: .biofeedback,
                     "Torch \(torchDesired ? "on" : "off"), active=\(device.isTorchActive)")
         } catch {
+            // `lockForConfiguration` or `setTorchModeOn` threw — same OUTCOME as the thermal
+            // branch above (no light), so it latches the same flag. Before #1380 this was the
+            // only record, and it was a `.warning` nobody reads on a device.
+            if !torchUnavailable {
+                torchUnavailable = true
+                EchoelCrashLog.breadcrumb("rPPG: torch control FAILED — no light on the finger")
+            }
             log.log(.warning, category: .biofeedback, "Torch control failed: \(error.localizedDescription)")
         }
     }
