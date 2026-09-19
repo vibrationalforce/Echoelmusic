@@ -125,7 +125,21 @@
             <li><strong>An address that never appears.</strong> Echoel sends a channel only while it is genuinely measured. A finger that slips off the camera sends nothing rather than a zero, and your last value simply holds &mdash; which is what you want mid-set, because a structural zero would pull a layer to black with no way to tell it from a performer who really stopped.</li>
             <li><strong>Coherence arrives last.</strong> It needs about sixteen accepted beats, so roughly sixteen seconds of a steady resting take. Map it to something that can afford to wait.</li>
         </ul>
-        <p>One more address worth latching: <code>/echoelmusic/bio/synthetic</code> is 1 while the built-in demo body is running and 0 once a real one takes over. Build and rehearse the whole patch on the demo, then watch it flip when the performer arrives.</p>
+        <p>Echoel also sends what it is <em>playing</em> &mdash; the beat, the key, the level &mdash; on the same port; that is section 6 below. One more body address worth latching first: <code>/echoelmusic/bio/synthetic</code> is 1 while the built-in demo body is running and 0 once a real one takes over. Build and rehearse the whole patch on the demo, then watch it flip when the performer arrives.</p>
+
+        <h2>6. The music, not only the body</h2>
+        <p>Everything above is the performer&rsquo;s physiology. Echoel also sends what it is <em>playing</em>, on the same port and the same tick &mdash; useful when you want a layer to follow the chord or the downbeat rather than the breath.</p>
+        <table class="spec-table">
+            <thead><tr><th>Address</th><th>Range</th><th>Good for</th></tr></thead>
+            <tbody>
+            <tr><td><code>/echoelmusic/music/beat/phase</code></td><td>0&ndash;1</td><td>The musical pulse. Where <code>breath/phase</code> sweeps at the speed of a body, this one sweeps at the speed of the bar &mdash; the better choice for anything that should feel on the beat.</td></tr>
+            <tr><td><code>/echoelmusic/music/level/master</code></td><td>0&ndash;1</td><td>How loud the take is right now. Binds straight to opacity or a glow without scaling.</td></tr>
+            <tr><td><code>/echoelmusic/music/tempo</code></td><td>BPM</td><td>Not a fraction &mdash; the same caveat as heart rate above. Set an input range, or use it to drive a clip speed rather than a fader. <strong>It can be withheld &mdash; see below.</strong></td></tr>
+            <tr><td><code>/echoelmusic/music/key/root</code></td><td>0&ndash;11, or &minus;1</td><td>The key&rsquo;s root as a pitch class, 0 = C. A colour per key is the obvious use. &minus;1 means <em>unknown</em>, not &ldquo;below the minimum&rdquo; &mdash; treat it as a case, not as a value.</td></tr>
+            <tr><td><code>/echoelmusic/music/note/count</code></td><td>whole number</td><td>How many notes sound right now. A density signal: thicker chord, busier layer. Also not a fraction.</td></tr>
+            </tbody>
+        </table>
+        <p><strong>One behaviour to know about before you build a patch on the tempo.</strong> <code>/echoelmusic/music/tempo</code> is the one musical address that can go quiet on purpose. In Flow the tempo follows the performer&rsquo;s pulse, so it is a body reading wearing a musical name &mdash; and Echoel holds the same line for it that it holds for every body channel: readings taken from Apple Health, a Watch or a ring stay on the device and do not go out over the network. If the performer&rsquo;s pulse is coming from one of those, the tempo address stays silent while the other four keep sending. A phone camera or a chest strap sends it normally, and so does a session with no biofeedback running at all. If your tempo fader never moves, that is the reason, and it is not a fault.</p>
 
         <h2>Also from the same phone</h2>
         <p>The same pulse can drive DMX fixtures over <a href="artnet-sacn-from-a-phone.html">Art-Net or sACN</a> and a spatial object over ADM-OSC at the same time as this feed &mdash; one body, several rigs. The full address list, the ports and the DMX channel map are on the <a href="integrations.html">integrations page</a>; <a href="touchdesigner-osc.html">TouchDesigner</a> and <a href="reaper-osc.html">Reaper</a> have their own walk-throughs.</p>

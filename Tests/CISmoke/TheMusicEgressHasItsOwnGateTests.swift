@@ -203,4 +203,37 @@ final class TheMusicEgressHasItsOwnGateTests: XCTestCase {
         and so does every bio address — 5.1.3 is the reason both exist.
         """)
     }
+
+    // 8. THE WEBSITE IS IN THE LOOP. #755's lesson was that all three copy guards read SWIFT
+    //    and the WEBSITE was in none of them, so `docs/overview.html` went on selling two
+    //    producerless mappings after the code stopped claiming them. `integrations.html` is
+    //    the canonical full address list and the Resolume page teaches a VJ to bind these —
+    //    so both directions matter: an address that ships and is undocumented is a feature
+    //    nobody finds, and an address documented but not shipped is the 2.3-rejection class.
+    func testTheCanonicalAddressListNamesExactlyWhatShips() throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        for page in ["docs/integrations.html", "docs/resolume-osc.html"] {
+            let html = try String(contentsOf: root.appendingPathComponent(page), encoding: .utf8)
+            for address in BioEgressPolicy.musicAddresses {
+                XCTAssertTrue(html.contains(address), """
+                \(page) does not name \(address), which OSCSender ships. An address on the \
+                wire that the address list omits is a feature nobody finds.
+                """)
+            }
+            // The other direction: nothing under the musical namespace may be advertised
+            // that the sender cannot produce.
+            var scan = Substring(html)
+            while let r = scan.range(of: "/echoelmusic/music/") {
+                let rest = scan[r.lowerBound...]
+                let addr = String(rest.prefix(while: { !"<\" ,)&".contains($0) }))
+                XCTAssertTrue(BioEgressPolicy.musicAddresses.contains(addr), """
+                \(page) advertises \(addr), which is not in BioEgressPolicy.musicAddresses \
+                and therefore cannot be sent. Documenting an address the sender does not \
+                produce is the claim class that gets a build rejected under 2.3.
+                """)
+                scan = scan[r.upperBound...]
+            }
+        }
+    }
 }

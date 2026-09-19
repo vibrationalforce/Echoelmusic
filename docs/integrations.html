@@ -111,8 +111,16 @@
             <tr><td><code>/echoelmusic/bio/event/breath/inhale</code></td><td>bang</td><td>Inhale onset.</td></tr>
             <tr><td><code>/echoelmusic/bio/event/breath/exhale</code></td><td>bang</td><td>Exhale onset.</td></tr>
                         <tr><td><code>/echoelmusic/mod/&lt;key&gt;</code></td><td>float</td><td>Every applied modulation-matrix output, keyed by destination (for example <code>seq.tempo</code>).</td></tr>
+            <tr><td colspan="3"><strong>What the instrument PLAYS</strong> &mdash; the musical state, not the body. Same port, same tick, sent whenever a take is running.</td></tr>
+            <tr><td><code>/echoelmusic/music/tempo</code></td><td>BPM</td><td>0 means stopped or unknown, so a receiver can tell &ldquo;transport stopped&rdquo; from &ldquo;Echoel went away&rdquo;. <strong>The one musical address that can be withheld</strong> &mdash; see below.</td></tr>
+            <tr><td><code>/echoelmusic/music/key/root</code></td><td>0&ndash;11, or &minus;1</td><td>Root pitch class of the current key, 0&nbsp;=&nbsp;C. &minus;1 is the type&rsquo;s own <em>unknown</em> and is kept as such on the wire rather than folded into 0, which is a real pitch class.</td></tr>
+            <tr><td><code>/echoelmusic/music/beat/phase</code></td><td>0&ndash;1</td><td>Phase within the current beat. The musical counterpart of <code>/bio/breath/phase</code>: it sweeps at the speed of the bar, not of a body.</td></tr>
+            <tr><td><code>/echoelmusic/music/level/master</code></td><td>0&ndash;1</td><td>Broadband output level of the take.</td></tr>
+            <tr><td><code>/echoelmusic/music/note/count</code></td><td>whole number</td><td>How many notes sound right now &mdash; a density signal. Not a fraction.</td></tr>
             </tbody>
         </table>
+
+        <p><strong>One musical address carries a second gate.</strong> <code>/echoelmusic/music/tempo</code> is withheld while the live pulse comes from Apple Health, a Watch or a ring &mdash; readings from those sources stay on the device and never reach the network, and in Flow the tempo <em>is</em> a reading of the pulse wearing a musical name. A phone camera or a chest strap sends it normally, and so does a session with no biofeedback running. The other four musical addresses are composition and transport, carry no physiology, and are never withheld for this reason. Three musical fields are deliberately <em>not</em> sent at all: the arrangement section index and the per-track levels, because nothing in the app produces them today and a constant would be indistinguishable from a real reading; and the scale name, because it is text and this stream carries floats &mdash; read the key from <code>/music/key/root</code>.</p>
 
         <p>Four addresses exist in the sender and are not on the wire: <code>/echoelmusic/bio/motion</code> and <code>/echoelmusic/bio/event/motion</code> — never sent, nothing measures motion — plus <code>/echoelmusic/bio/event/coherence</code> and <code>/echoelmusic/bio/event/eeg</code> — never sent, no producer. Do not wait on them. Coherence itself <em>is</em> on the wire as a continuous value at <code>/echoelmusic/bio/coherence</code>; it is only the discrete shift <em>event</em> that has no producer.</p>
 
