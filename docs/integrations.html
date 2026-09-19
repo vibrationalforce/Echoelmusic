@@ -87,7 +87,7 @@
 
         <main id="main">
         <h1>Integrations — what Echoel sends, and how to receive it</h1>
-        <p class="lead">Echoel is the body-driven source at the front of your pipeline. Your pulse, breath and the music they compose leave the phone over open standards only — OSC, ADM-OSC, MIDI, Art-Net and sACN — so Reaper, TouchDesigner, Resolume, a lighting desk or a spatial renderer can follow a performer without any SDK on either side. This page is the address book. Two step-by-step spokes: <a href="reaper-osc.html">Reaper</a> and <a href="touchdesigner-osc.html">TouchDesigner</a>; the light half has its own page on <a href="artnet-sacn-from-a-phone.html">Art-Net and sACN</a>.</p>
+        <p class="lead">Echoel is the body-driven source at the front of your pipeline. Your pulse, breath and the music they compose leave the phone over open standards only — OSC, ADM-OSC, MIDI, Art-Net and sACN — so Reaper, TouchDesigner, Resolume, a lighting desk or a spatial renderer can follow a performer without any SDK on either side. This page is the address book. Three step-by-step spokes: <a href="reaper-osc.html">Reaper</a>, <a href="touchdesigner-osc.html">TouchDesigner</a> and <a href="resolume-osc.html">Resolume</a>; the light half has its own page on <a href="artnet-sacn-from-a-phone.html">Art-Net and sACN</a>.</p>
 
         <h2>One rule before any mapping: silence means "not measured"</h2>
         <p>Every bio address is sent only while its own channel is actually measured. A finger that slips off the camera does not send a zero — it sends nothing, and your receiver holds its last value. That is deliberate: a structural 0 would collapse a bound scale or pull a grand master to black with no way to tell it from a performer who really stopped. Two consequences: a receiver that creates channels on first arrival (TouchDesigner's OSC In CHOP) will not show an address that has never been sent, and <code>/echoelmusic/bio/coherence</code> is the last to appear on every take because it needs sixteen accepted beats.</p>
@@ -150,7 +150,7 @@
         <ul>
             <li><strong>Reaper</strong> — OSC learn on any parameter or action; <a href="reaper-osc.html">step by step</a>.</li>
             <li><strong>TouchDesigner</strong> — OSC In CHOP on port 8000, one channel per address; <a href="touchdesigner-osc.html">step by step</a>.</li>
-            <li><strong>Resolume Arena / Avenue</strong> — Preferences ▸ OSC ▸ enable input on the port you set in Echoel; right-click any parameter ▸ Edit OSC, breathe, and it learns the address.</li>
+            <li><strong>Resolume Arena / Avenue</strong> — Preferences ▸ OSC ▸ enable input on the port you set in Echoel; right-click any parameter ▸ Edit OSC, breathe, and it learns the address; <a href="resolume-osc.html">step by step</a>.</li>
             <li><strong>grandMA3, QLC+, any console</strong> — receive Art-Net or sACN on the universe you chose; patch a 4- or 8-channel generic RGB fixture with dimmer at the map above.</li>
             <li><strong>L-ISA, Soundscape, Fletcher Machine</strong> — point ADM-OSC at the renderer's OSC input; object index <em>n</em> in Routing.</li>
         </ul>

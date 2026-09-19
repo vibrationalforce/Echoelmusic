@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Cache Control: never cache HTML in browser -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
+    <script>
+    (function(){var V='10.21.0',K='echoel-nuke';try{
+    var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
+    fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
+    if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
+    if('caches' in window)p.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}));
+    if(navigator.serviceWorker)p.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}));
+    Promise.all(p).then(function(){window.location.reload()});}).catch(function(){});}catch(e){}})();
+    </script>
+
+    <title>Resolume over OSC: breathe on any parameter — Echoelmusic</title>
+    <meta name="description" content="Enable OSC input in Resolume, point Echoel at it, then right-click a parameter and breathe — Resolume learns the address. Which body channels map straight, and the one that does not.">
+    <meta name="theme-color" content="#000000">
+    <meta property="og:title" content="Resolume over OSC: breathe on any parameter — Echoelmusic">
+    <meta property="og:description" content="Enable OSC input in Resolume, point Echoel at it, then right-click a parameter and breathe — Resolume learns the address. Which body channels map straight, and the one that does not.">
+    <meta property="og:url" content="https://echoelmusic.com/resolume-osc.html">
+    <meta property="og:image" content="https://echoelmusic.com/og-cover.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:site_name" content="Echoelmusic">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Resolume over OSC: breathe on any parameter — Echoelmusic">
+    <meta name="twitter:description" content="Enable OSC input in Resolume, point Echoel at it, then right-click a parameter and breathe — Resolume learns the address. Which body channels map straight, and the one that does not.">
+    <meta name="twitter:image" content="https://echoelmusic.com/og-cover.png">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
+    <link rel="canonical" href="https://echoelmusic.com/resolume-osc.html">
+    <link rel="alternate" hreflang="en" href="https://echoelmusic.com/resolume-osc.html">
+    
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Integrations","item":"https://echoelmusic.com/integrations.html"},{"@type":"ListItem","position":3,"name":"Resolume over OSC","item":"https://echoelmusic.com/resolume-osc.html"}]}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"Drive Resolume parameters from a performer's breath and pulse over OSC","description":"Resolume learns an OSC address from any parameter. Echoel sends the body one way over OSC, so opacity, effect mix and speed can follow a performer.","totalTime":"PT10M","tool":[{"@type":"HowToTool","name":"Resolume Arena or Avenue"},{"@type":"HowToTool","name":"Echoel on iPhone"}],"step":[{"@type":"HowToStep","name":"Open the port","text":"Resolume Preferences, OSC tab: enable OSC input and note the port."},{"@type":"HowToStep","name":"Point Echoel at it","text":"Echoel Routing, OSC host is the computer running Resolume and the port matches; patchbay Body to OSC out."},{"@type":"HowToStep","name":"Teach the parameter","text":"Right-click a parameter, Edit OSC, then breathe: Resolume binds the address that moves."},{"@type":"HowToStep","name":"Pick channels that already run nought to one","text":"Breath phase, coherence and normalized HRV map straight; heart rate is in beats per minute and needs an input range or the beat event instead."}]}</script>
+    <link rel="stylesheet" href="shared.css?v=10.22.0">
+    <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
+    <style>.spec-table{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:0.95em}.spec-table th,.spec-table td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--border,#2a2a2a)}.spec-table th{color:var(--dim,#9a9a9a);font-weight:600}.spec-table code{white-space:nowrap}@media (max-width:600px){.spec-table{display:block;overflow-x:auto}}</style>
+</head>
+<body>
+    <a href="#main" class="skip-link">Skip to main content</a>
+    <div class="nav">
+        <div class="nav-bar">
+            <a href="/" class="nav-logo" aria-label="Echoelmusic Home">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text><g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round"><path d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60" opacity="0.8"/><path d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70" opacity="0.4"/><path d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80" opacity="0.2"/></g></svg>
+                <span>Echoelmusic</span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="overview.html">Overview</a>
+                <a href="tools.html">Tools</a>
+                <a href="brainstorming.html">Brainstorming</a>
+                <a href="architecture.html">Architecture</a>
+                <a href="faq.html">FAQ</a>
+                <a href="artist.html">Artist</a>
+                <a href="support.html">Support</a>
+                <span class="nav-cta nav-cta--soon" aria-disabled="true">Coming Soon</span>
+            </div>
+            <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
+        </div>
+    </div>
+    <div class="menu-overlay" id="menuOverlay" role="dialog" aria-label="Navigation menu">
+        <nav>
+            <a href="/">Home</a>
+                <a href="overview.html">Overview</a>
+            <a href="tools.html">Tools</a>
+                <a href="brainstorming.html">Brainstorming</a>
+                <a href="architecture.html">Architecture</a>
+            <a href="faq.html">FAQ</a>
+                <a href="artist.html">Artist</a>
+            <a href="support.html">Support</a>
+        </nav>
+    </div>
+
+        <main id="main">
+        <h1>Resolume: breathe on any parameter</h1>
+        <p class="lead">Resolume learns an OSC address by watching what moves. Echoel sends a performer’s body out over OSC, one way, on open standards &mdash; so layer opacity, an effect mix or a clip’s speed can follow a breath or a settling pulse with nothing installed on either side.</p>
+
+        <h2>1. Open the port in Resolume</h2>
+        <ol>
+            <li><strong>Preferences ▸ OSC</strong> → enable OSC input.</li>
+            <li>Note the port Resolume is listening on. Echoel sends on <strong>8000</strong> by default; set either end so the two agree.</li>
+        </ol>
+
+        <h2>2. Point Echoel at the machine</h2>
+        <ol>
+            <li>In Echoel: <strong>Routing ▸ OSC</strong> → host = the IP of the computer running Resolume, port = the one above.</li>
+            <li>In the same panel, connect <strong>Body → OSC out</strong>. Nothing leaves the phone until that connection exists.</li>
+            <li>Start a take and put a finger on the camera &mdash; or wear a Bluetooth strap, or let Apple Health feed it.</li>
+        </ol>
+
+        <h2>3. Teach a parameter the address</h2>
+        <ol>
+            <li>Right-click any parameter in Resolume &mdash; layer opacity, an effect’s amount, a clip’s speed &mdash; and choose <strong>Edit OSC</strong>.</li>
+            <li><strong>Breathe.</strong> The address that moves is the one Resolume binds. That is the whole mapping step; there is no file to import and no template to keep in sync.</li>
+        </ol>
+
+        <h2>4. Which channels map straight &mdash; and the one that will not</h2>
+        <p>A Resolume parameter runs from nought to one. Three body channels already do, so they land correctly with no scaling:</p>
+        <table class="spec-table">
+            <thead><tr><th>Address</th><th>Range</th><th>Good for</th></tr></thead>
+            <tbody>
+            <tr><td><code>/echoelmusic/bio/breath/phase</code></td><td>0&ndash;1</td><td>Opacity, position, scale &mdash; it sweeps smoothly through every take and is the best first mapping.</td></tr>
+            <tr><td><code>/echoelmusic/bio/coherence</code></td><td>0&ndash;1</td><td>An effect mix or a blur that opens as the performer settles. Appears late &mdash; see below.</td></tr>
+            <tr><td><code>/echoelmusic/bio/heart/hrv</code></td><td>0&ndash;1</td><td>A slow second modulator alongside the breath.</td></tr>
+            <tr><td><code>/echoelmusic/bio/event/heartbeat</code></td><td>trigger</td><td>A bang per beat &mdash; bind it to a clip trigger or a flash rather than to a fader.</td></tr>
+            </tbody>
+        </table>
+        <p><strong>Heart rate is the exception, and it is worth knowing before you spend an evening on it.</strong> <code>/echoelmusic/bio/heart/bpm</code> carries beats per minute &mdash; roughly 40 to 200 &mdash; not a nought-to-one fraction. Bind it straight to a parameter and it pins at the top the moment the first value arrives, and stays there. Two ways round it: set an input range on the shortcut if your version of Resolume offers one (the band an actual body uses is far narrower than the address’s &mdash; something like 55 to 110), or leave the fader to <code>breath/phase</code> and give the pulse the <code>event/heartbeat</code> trigger instead, which is what it is good at.</p>
+
+        <h2>5. Two behaviours that look like faults and are not</h2>
+        <ul>
+            <li><strong>An address that never appears.</strong> Echoel sends a channel only while it is genuinely measured. A finger that slips off the camera sends nothing rather than a zero, and your last value simply holds &mdash; which is what you want mid-set, because a structural zero would pull a layer to black with no way to tell it from a performer who really stopped.</li>
+            <li><strong>Coherence arrives last.</strong> It needs about sixteen accepted beats, so roughly sixteen seconds of a steady resting take. Map it to something that can afford to wait.</li>
+        </ul>
+        <p>One more address worth latching: <code>/echoelmusic/bio/synthetic</code> is 1 while the built-in demo body is running and 0 once a real one takes over. Build and rehearse the whole patch on the demo, then watch it flip when the performer arrives.</p>
+
+        <h2>Also from the same phone</h2>
+        <p>The same pulse can drive DMX fixtures over <a href="artnet-sacn-from-a-phone.html">Art-Net or sACN</a> and a spatial object over ADM-OSC at the same time as this feed &mdash; one body, several rigs. The full address list, the ports and the DMX channel map are on the <a href="integrations.html">integrations page</a>; <a href="touchdesigner-osc.html">TouchDesigner</a> and <a href="reaper-osc.html">Reaper</a> have their own walk-throughs.</p>
+    </main>
+
+    <footer>
+        <span class="footer-copy">&copy; 2026 Echoelmusic &middot; Concept in development</span>
+        <div class="footer-links">
+            <a href="overview.html">Overview</a>
+            <a href="tools.html">Tools</a>
+                <a href="brainstorming.html">Brainstorming</a>
+            <a href="architecture.html">Architecture</a>
+            <a href="faq.html">FAQ</a>
+            <a href="artist.html">Artist</a>
+            <a href="support.html">Support</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="terms.html">Terms</a>
+            <a href="health.html">Health</a>
+            <a href="security.html">Security</a>
+            <a href="accessibility.html">Accessibility</a>
+            <a href="impressum.html">Legal Notice</a>
+        </div>
+    </footer>
+
+<script src="shared.js?v=10.22.0"></script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 # Echoel → VJ / Visual / Broadcast bridge
 
 > **Published, reader-facing version:** `docs/integrations.html` (+ `reaper-osc.html`,
-> `touchdesigner-osc.html`), #1241. Keep the address table here and there in step —
+> `touchdesigner-osc.html`, `resolume-osc.html`), #1241/#1373. Keep the address table here and there in step —
 > `TheIntegrationHubIsPublishedTests` pins the page against `OSCSender`, not against this file.
 
 **Echoel is the bio-driven SOURCE at the front of your pipeline.** It already speaks
@@ -59,6 +59,14 @@ below; raw musical OSC is on the roadmap (OSCQuery auto-typing).
 3. Right-click any parameter (layer opacity, effect amount, speed) → **Edit OSC** →
    move Echoel (breathe) → Resolume learns the address. Map `breath/phase` to opacity
    or `coherence` to an effect mix for a body-reactive set.
+
+⚠️ **The range trap, and it is the reason `docs/resolume-osc.html` exists (#1373).** A Resolume
+parameter runs 0…1. `breath/phase`, `coherence` and `heart/hrv` already do and land correctly —
+but `/echoelmusic/bio/heart/bpm` carries **beats per minute** (40–200), so a parameter bound
+straight to it pins at maximum on the first datagram and never moves again. Give the pulse
+`event/heartbeat` as a trigger instead, or set an input range on the shortcut. The published
+page states this; `TheWireSendsBeatsPerMinuteNotAFractionTests` pins the page to the sender, so
+if bpm is ever normalized BOTH this paragraph and that page go with it in the same commit.
 
 ### TouchDesigner
 Add an **OSC In DAT/CHOP**, set the port, and the `/echoelmusic/...` channels appear
