@@ -179,14 +179,19 @@ public struct GenreFXPreset: Sendable, Equatable {
     /// `bpm`. Safe to call from the main actor; the chain reads are audio-thread
     /// atomic-width scalars.
     ///
-    /// ⛔ ONE LINE BELOW HAS NO AUDIBLE EFFECT IN THE APP TODAY: `chain.delay.timeSeconds`, the
-    /// one `delaySync` resolves to. ⚠️ SCOPED DELIBERATELY — the first version of this paragraph
-    /// said "the `delaySync` LINE … and every comment about what a genre's echo sounds like",
-    /// which swept the whole delay block into the same framing and invited the conclusion that
-    /// all of it is inert. It is not: `delayMode`, `delayMix`, `delayFeedback`, `delayTone`,
-    /// `delaySpread`, `delayWow` and `delayDrive` — seven of the eight delay fields, and most of
-    /// what "the genre's echo sounds like" (tape-with-wow versus ping-pong, feedback depth,
-    /// darkness, width) — all reach the audio today. Only the TIME does not.
+    /// ⛔ **THIS PARAGRAPH OPENED WITH "ONE LINE BELOW HAS NO AUDIBLE EFFECT IN THE APP TODAY:
+    /// `chain.delay.timeSeconds` … Only the TIME does not" UNTIL #1371, WHICH ROUTED IT.** All
+    /// EIGHT delay fields reach the audio now. The head is rewritten rather than trimmed because
+    /// this is the line a session reads FIRST when deciding whether a genre's echo time is worth
+    /// curating — and for months the honest answer was no. It is yes.
+    ///
+    /// ⚠️ THE SCOPING NOTE UNDER IT STAYS TRUE AND IS WORTH KEEPING, because it is the reason
+    /// the retraction above is narrow: an even earlier version said "the `delaySync` LINE … and
+    /// every comment about what a genre's echo sounds like", which swept the whole delay block
+    /// into one framing and invited the conclusion that all of it was inert. It never was —
+    /// `delayMode`, `delayMix`, `delayFeedback`, `delayTone`, `delaySpread`, `delayWow` and
+    /// `delayDrive` (tape-with-wow versus ping-pong, feedback depth, darkness, width) always
+    /// reached the ear. Exactly ONE field was dead, and exactly that one is now alive.
     ///
     /// Three sites stamp a genre/character preset — `EchoelStudioView.applyFX()`, the re-seed
     /// path and the open-take path — and each calls `applyDelaySync(bpm:)` IMMEDIATELY
@@ -225,25 +230,31 @@ public struct GenreFXPreset: Sendable, Equatable {
     /// division while the chain plays another, and `delaySync` is not part of the saved
     /// `Project`, so restoring a genre's division would be a schema change.
     ///
-    /// The consequence is nonetheless a real, unfixed defect: **every authored delay division in
-    /// this file never reaches the audio, and every genre shares whatever one division the
-    /// picker holds.** ⛔ A COUNT STOOD HERE ("29 authored per-genre delay divisions") AND HAS
-    /// AGED — measured 2026-09-18 there are **53** `delaySync:` construction sites in this file.
-    /// Deleted rather than refreshed (#818): a number in prose is a date, nothing re-derives it,
-    /// and the *shape* of the defect never depended on it. Re-derive, and note that the second
-    /// command is the one that says how much curation collapses:
+    /// ⭐ **#1371 IS THAT DAY, AND IT TOOK THE FIX THIS PARAGRAPH NAMED, VERBATIM.** What stood
+    /// here — "a real, unfixed defect: every authored delay division in this file never reaches
+    /// the audio, and every genre shares whatever one division the picker holds" — was true and
+    /// is not any more: `handleCompositionEdit`'s `"genre"` arm now SETS `delaySync` from
+    /// `style.fxPreset.delaySync` and stamps it, so the picker shows the genre's own division
+    /// and the chain holds it. "Making both true instead of picking a winner" was this
+    /// paragraph's own proposal; it is what shipped. The factory reset mirrors it.
+    ///
+    /// ⚠️ THE #240 INVARIANT ABOVE IS UNTOUCHED, and that is the point rather than an
+    /// exception to it: the picker is STILL the last writer at all four stamp sites, and a
+    /// visible control still never displays a division the chain does not hold. #1371 changed
+    /// what the picker HOLDS on a genre change — not who writes last. The schema half also
+    /// stands: `delaySync` is still not part of the saved `Project`, so `open(_:)` still
+    /// restores nothing and still ends on `applyDelaySync`.
+    ///
+    /// The per-genre `delaySync` values are therefore no longer a SOURCE-level contract awaiting
+    /// routing — they are audible. They must still be resolvable and distinct, and
+    /// `GenreDelaySyncResolvabilityTests` still guards exactly that; what changed is that a
+    /// wrong value is now a wrong SOUND rather than dead data. The spread is worth re-deriving
+    /// when curating, and the second command is the one that says how much the roster collapses:
     ///     grep -c "delaySync: TempoSyncOption(" Sources/Echoelmusic/Sequencer/GenreFX.swift
     ///     grep -o "delaySync: TempoSyncOption([^)]*)" Sources/…/GenreFX.swift | sort -u | wc -l
-    /// The second returned **10 distinct note divisions** — dotted eighth through half-triplet —
-    /// and all ten resolve to the single value the picker holds. That is a far bigger delay-axis
-    /// collapse than any preset-level tuning, and it is
-    /// tracked separately as a founder decision (the honest fix is for a genre change to SET
-    /// `delaySync` so the picker shows the genre's own division and then stamps it — making both
-    /// true instead of picking a winner).
-    ///
-    /// So the per-genre `delaySync` values are today a SOURCE-level contract: they must be
-    /// resolvable and they must be distinct, so that they are correct on the day the routing is
-    /// fixed. `GenreDelaySyncResolvabilityTests` guards exactly that and nothing more.
+    /// (⛔ A COUNT STOOD HERE TWICE — "29", then "53" — and aged both times. Deleted rather than
+    /// refreshed a second time, #818: the commands are the measurement.) Guard on the routing
+    /// itself: `TheGenreSetsItsEchoDivisionTests`.
     public func apply(to chain: EchoelFXChain, bpm: Double) {
         chain.filterEnabled = filterEnabled
         chain.setFilter(mode: filterMode, cutoff: filterCutoff, resonance: filterResonance)

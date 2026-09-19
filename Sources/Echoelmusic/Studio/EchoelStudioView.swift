@@ -4586,6 +4586,38 @@ struct EchoelStudioView: View {
             // genre had a different envelope depending on how you reached it — and
             // relaunching swapped it again.
             applyArticulation()
+            // #1371 — THE GENRE'S OWN ECHO DIVISION BECOMES THE VISIBLE ONE. `GenreFX.swift`
+            // has named this fix verbatim for months ("the honest fix is for a genre change to
+            // SET `delaySync` so the picker shows the genre's own division and then stamps it —
+            // making both true instead of picking a winner"), and it is what closes the biggest
+            // measured collapse on the FX axis: this file's genres author their delay time at
+            // 53 sites across 10 distinct divisions, and every one of them resolved to whatever
+            // single value the picker happened to hold.
+            //
+            // ⚠️ WHY THIS IS NOT THE SAME ACT AS THE TUNING BRANCH TWELVE LINES UP, which
+            // REFUSES to overwrite a deliberate choice from another control. A tone system is a
+            // separate axis the player sets for themselves and no genre claims one (every
+            // `suggestedToneSystemID` is `nil`). A delay division is a FIELD OF THE GENRE'S OWN
+            // PRESET — `GenreFXPreset.delaySync`, authored per genre in `GenreFX.swift` — so
+            // adopting it is the same act as the two overwrites already standing in this arm
+            // (`scale`, `currentPatch`). The genre owns its colour; it does not own the player.
+            // The player still has the last word: the Delay-note Picker sits in `effectsPanel`
+            // and writing it re-stamps through its own `onChange`.
+            //
+            // ⚠️ ORDER: SET THE PICKER, THEN STAMP. `applyDelaySync(bpm:)` reads `delaySync`,
+            // so the assignment has to land first; and the stamp must still happen here rather
+            // than being left to the next re-seed, because `recomposeIfRunning()` falls to
+            // `applySoundLive()` while STOPPED and the FX room is only re-stamped inside
+            // `generate()`. Without the stamp, a genre change with the transport stopped would
+            // move the picker and leave the chain on the old time — #240's lying control, in
+            // the opposite direction.
+            //
+            // ⚠️ THIS ARM IS USER-ONLY (see the contract above), so `open(_:)` is untouched:
+            // a restored take keeps the session's division and its own `applyDelaySync` call
+            // still makes chain and picker agree. `delaySync` stays out of the saved `Project`
+            // — restoring a take's division is a schema change and is NOT this slice.
+            delaySync = style.fxPreset.delaySync
+            applyDelaySync(bpm: currentTempo)
             recomposeIfRunning()
         case "key":
             applyTuning()
@@ -8137,25 +8169,10 @@ struct EchoelStudioView: View {
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
             labeledRow("Delay") {
-                Picker("Delay note", selection: $delaySync) {
+                Picker("Delay note", selection: delayDivisionGesture) {
                     ForEach(TempoSyncOption.common) { opt in Text(opt.label).tag(opt) }
                 }
                 .pickerStyle(.menu).tint(EchoelTheme.text)
-                .onChange(of: delaySync) { _, _ in
-                    // Reaching into this picker IS a request for delay, so arm it here —
-                    // this row has no enable of its own, and a division that silently did
-                    // nothing on a dry character would just be the lying control from
-                    // `applyDelaySync` moved one row over. The enable belongs on the
-                    // GESTURE; the automatic re-stamps (applyFX, re-seed) must not touch
-                    // it. See `applyDelaySync(bpm:)`.
-                    //
-                    // Over the SAME inventory the time write uses, not just `synth`: arming one
-                    // chain and timing both would give the Field a delay time it cannot hear
-                    // and the generated take a room the played notes do not share — half of
-                    // #240 fixed is a new inconsistency, not a smaller one.
-                    for chain in characterFXChains { chain.delayEnabled = true }
-                    applyDelaySync(bpm: currentTempo)
-                }
                 .accessibilityLabel("Delay note value")
             }
             // Full control: open every stage with all parameters exposed.
@@ -8296,6 +8313,50 @@ struct EchoelStudioView: View {
         applyDelaySync(bpm: currentTempo)
     }
 
+    /// The Delay-note Picker's selection — a GESTURE-ONLY binding, and that is the whole
+    /// reason it is not plain `$delaySync`.
+    ///
+    /// ⛔ IT WAS `$delaySync` PLUS AN `.onChange(of: delaySync)` UNTIL #1371, AND THAT SHAPE
+    /// COULD NOT SURVIVE A PROGRAMMATIC WRITER. The `onChange` body's first line is the one
+    /// below — `chain.delayEnabled = true` — and `applyDelaySync(bpm:)`'s own doc states the
+    /// rule it serves: **an AUTOMATIC re-stamp may set the delay time, NEVER the enable; a
+    /// direct user GESTURE may do both.** An `onChange` cannot tell the two apart. The moment
+    /// #1371 made the genre arm write `delaySync`, a genre change would have force-armed the
+    /// delay on every chain — including under the `.clean` character, whose entire job is to be
+    /// dry, and which `CleanIsDryTests` pins. (`.auto` would have got away with it by accident:
+    /// every `MusicStyle.fxPreset` enables delay anyway. "Harmless under the default" is not the
+    /// same as correct, and the default is not the only state.)
+    ///
+    /// ⚠️ WORSE THAN WRONG — IT WOULD HAVE BEEN INTERMITTENT. `effectsPanel` is mounted only
+    /// while its dropdown is open, so the `onChange` fires only then, while the genre Picker
+    /// sits in the always-mounted header strip. One genre tap, two behaviours, decided by
+    /// whether an unrelated panel happened to be open: exactly the failure `resetSoundToDefaults`
+    /// spells out for a neighbouring case.
+    ///
+    /// A `Binding`'s `set` runs ONLY when the control is driven — a programmatic write goes
+    /// through `get`. That is not a trick; it is the same mechanism `WorkspaceView.edited(_:posts:)`
+    /// uses to keep `open(_:)` from triggering the chrome's side effects, written down there as
+    /// "the strip posts on user interaction ONLY". The equality guard matches that helper too:
+    /// re-picking the division already shown does nothing.
+    private var delayDivisionGesture: Binding<TempoSyncOption> {
+        Binding(get: { delaySync },
+                set: { new in
+                    guard new != delaySync else { return }
+                    delaySync = new
+                    // Reaching into this picker IS a request for delay, so arm it here — this
+                    // row has no enable of its own, and a division that silently did nothing on
+                    // a dry character would just be the lying control from `applyDelaySync`
+                    // moved one row over.
+                    //
+                    // Over the SAME inventory the time write uses, not just `synth`: arming one
+                    // chain and timing both would give the Field a delay time it cannot hear and
+                    // the generated take a room the played notes do not share — half of #240
+                    // fixed is a new inconsistency, not a smaller one.
+                    for chain in characterFXChains { chain.delayEnabled = true }
+                    applyDelaySync(bpm: currentTempo)
+                })
+    }
+
     /// Re-apply the user's tempo-synced delay note value on top of the genre/character
     /// FX (which also set delay time), so the chosen division is never clobbered.
     ///
@@ -8320,9 +8381,18 @@ struct EchoelStudioView: View {
     ///     input from the user.
     ///
     /// THE RULE: an AUTOMATIC re-stamp may set the delay time, never the enable. A direct
-    /// user GESTURE may do both — the Effects panel's delay-division picker arms the effect
-    /// in its own `onChange`, because that row carries no enable of its own and a division
-    /// that silently did nothing would be the same lying control one row over.
+    /// user GESTURE may do both — the Effects panel's delay-division picker arms the effect,
+    /// because that row carries no enable of its own and a division that silently did nothing
+    /// would be the same lying control one row over.
+    ///
+    /// ⭐ SINCE #1371 THAT DISTINCTION IS STRUCTURAL RATHER THAN CONVENTIONAL, and the change
+    /// is worth knowing before touching either side. The picker used to arm inside an
+    /// `.onChange(of: delaySync)`, which fires on ANY write — fine only for as long as nobody
+    /// wrote `delaySync` programmatically. #1371 does (the genre arm and the factory reset), so
+    /// the arming moved into `delayDivisionGesture`, a `Binding` whose `set` runs only when the
+    /// control is driven. Its doc carries the full account. **Consequence for anyone adding a
+    /// second programmatic writer: you no longer have to remember this rule — but do not
+    /// "simplify" that binding back to `$delaySync` plus an `onChange`.**
     ///
     /// Two honest limits on that rule, so it is not read as absolute:
     ///  • `FXBioModulator` still force-enables the delay when a bio route targets delay mix
@@ -8958,6 +9028,20 @@ struct EchoelStudioView: View {
         pianoRoll.musicalA4Hz = session.a4Hz
         pianoRoll.musicalRootPitchClass = rootIndex
         pianoRoll.musicalScaleName = scale.rawValue
+
+        // #1371 — AND THE ECHO DIVISION HAS TO BE RESET WITH THE GENRE. The genre arm of
+        // `handleCompositionEdit` now adopts the genre's own `GenreFXPreset.delaySync`, so a
+        // factory reset that puts the genre back to its default while leaving the division on
+        // the PREVIOUS genre's value would be exactly the half-fix this function's other
+        // comments keep naming. `SoundReset.clear` cannot do it — `delaySync` is `@State`, not
+        // a key in the defaults — so it has to happen here, by hand, like the pushes above.
+        //
+        // ⚠️ `StudioDefaultKeys.genre.value`, not `style`: the identical reasoning as the
+        // `currentPatch` line above, whose own ⚠️ block explains why the freshly-cleared getter
+        // is not leaned on. And `currentTempo`, not a literal — the reset does not touch the
+        // clock, and a tempo-synced time is only correct against the tempo actually playing.
+        delaySync = StudioDefaultKeys.genre.value.fxPreset.delaySync
+        applyDelaySync(bpm: currentTempo)
 
         // The Field wakes up on the factory play-surface patch when nothing is stored — the
         // launch resolver decides that, not a literal here, so the two cannot disagree (#402).

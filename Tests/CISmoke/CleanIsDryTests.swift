@@ -21,10 +21,18 @@
 //      switch flipped itself with no input from the user.
 //
 // THE RULE THIS FILE PINS: an AUTOMATIC re-stamp may set the delay TIME, never the enable. A
-// direct user gesture may do both — the Effects panel's division picker arms the delay in its own
-// `onChange`, because that row carries no enable of its own and a division that silently did
-// nothing would be the same lying control one row over. That gesture is NOT what this file
-// guards; the automatic path is.
+// direct user gesture may do both — the Effects panel's division picker arms the delay, because
+// that row carries no enable of its own and a division that silently did nothing would be the
+// same lying control one row over. That gesture is NOT what this file guards; the automatic path
+// is.
+//
+// ⭐ HOW THE GESTURE IS TOLD APART FROM THE AUTOMATIC PATH CHANGED IN #1371, and this header
+// said "in its own `onChange`" until then. An `onChange` fires on ANY write, which was safe only
+// while `delaySync` had no programmatic writer; #1371 gave it two (the genre arm and the factory
+// reset), so the arming moved into `delayDivisionGesture`, a `Binding` whose `set` runs only when
+// the control is driven. **Without that move, a GENRE CHANGE would have armed the delay under
+// `.clean` — the very thing this file exists to stop, arriving through a door nobody had
+// thought about.** The rule above is unchanged; only its enforcement became structural.
 //
 // TWO GUARDS, because neither alone is enough:
 //   • The BEHAVIOURAL one below pins what "Clean" MEANS — every stage off. It would not have
@@ -253,8 +261,9 @@ final class CleanIsDryTests: XCTestCase {
     /// Source text rather than behaviour because the function is `private` on a SwiftUI `View`;
     /// there is no seam to call it through and no local toolchain to build a host with. The
     /// scan is bounded to the function body so an unrelated `delayEnabled` elsewhere in the file
-    /// cannot fail it — including the legitimate one in the delay-division picker's `onChange`,
-    /// which arms the effect on a direct user gesture and is NOT what this guards. Whole-line
+    /// cannot fail it — including the legitimate one in `delayDivisionGesture`, which arms the
+    /// effect on a direct user gesture and is NOT what this guards (it was the picker's
+    /// `onChange` until #1371; see the header). Whole-line
     /// comments are dropped, because the doc comment above the function quotes the removed line
     /// by name.
     func testApplyDelaySyncSetsTheTimeAndNothingElse() throws {

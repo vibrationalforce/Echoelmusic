@@ -14,21 +14,28 @@
 // inventory, and it writes the view's `@State delaySync` — the user's delay-division picker,
 // default dotted 1/8 — over `chain.delay.timeSeconds`.
 //
-// ⚠️ "The picker is the last writer, ALWAYS" stood here for one commit and is FALSE:
-// `EchoelFXView.applyCharacter` is a FOURTH stamp site with no `applyDelaySync` after it, so a
-// CHARACTER stamp from the FX panel wins instead (and writes only `synth.fxChain`, never
-// `touchSynth`'s). No genre preset is involved there — `.auto` is filtered out of that menu — so
-// the claim about GENRE divisions survives; the absolute did not. Correcting a false absolute
-// with another one is how this file got here.
+// ⚠️ "The picker is the last writer, ALWAYS" stood here for one commit and was FALSE at the
+// time: `EchoelFXView.applyCharacter` is a FOURTH stamp site and had no `applyDelaySync` after
+// it, so a CHARACTER stamp from the FX panel won instead (and wrote only `synth.fxChain`, never
+// `touchSynth`'s). ⭐ BOTH HALVES ARE REPAIRED — #318 gave that site the full chain inventory and
+// #1364 gave it the resync — so the absolute is true again, as a REPAIR and not as something
+// that always held. No genre preset is involved in that menu (`.auto` is filtered out), so the
+// claim about GENRE divisions never depended on any of it.
 // That is the deliberate resolution of #240, guarded by `DelayReachesEveryChainTests` in this
 // same bundle, which states it plainly. Asserting the opposite two files away is exactly the
-// "a surviving copy reads as independent confirmation" failure this repo keeps paying for.
+// "a surviving copy reads as independent confirmation" failure this repo keeps paying for — and
+// this header paid it once more: it went on describing the un-repaired fourth site for the whole
+// of #1364 and #1369, both of which rewrote the OTHER homes of the same sentence.
 //
-// SO WHAT THIS FILE GUARDS IS A SOURCE-LEVEL CONTRACT, NOT AN AUDIBLE ONE: the per-genre
-// divisions must be resolvable and distinct, so that they are correct on the day the routing is
-// fixed. `GenreFXPreset.apply(to:bpm:)`'s doc carries the routing finding; the honest summary is
-// that 29 authored divisions currently reach nothing and every genre shares whichever one the
-// picker holds — a far bigger delay-axis collapse than any preset tuning, and a founder decision.
+// ⛔ AND THE NEXT PARAGRAPH IS SPENT TOO, SINCE #1371. It read: "SO WHAT THIS FILE GUARDS IS A
+// SOURCE-LEVEL CONTRACT, NOT AN AUDIBLE ONE … 29 authored divisions currently reach nothing and
+// every genre shares whichever one the picker holds — a far bigger delay-axis collapse than any
+// preset tuning, and a founder decision." The founder delegated that decision (2026-09-18, "die
+// Parameter sollen intelligent sein"), and #1371 took it: a genre change now SETS `delaySync`
+// from `style.fxPreset.delaySync` and stamps it, so the per-genre divisions are AUDIBLE. This
+// file's contract is unchanged in what it checks — resolvable and distinct — but the stakes
+// flipped: a wrong value here is now a wrong SOUND, not dead data. (The count is deleted rather
+// than refreshed a third time, #818; `GenreFXPreset.apply(to:bpm:)`'s doc carries the commands.)
 //
 // THE SOURCE DEFECT THIS FILE WAS WRITTEN FOR. `apply(to:bpm:)` resolves `delaySync` against the
 // BPM and clamps to `maxDelaySeconds` = 2.0. Two genres authored divisions over that clamp at
