@@ -223,6 +223,13 @@ public extension MusicStyle {
         // which is why the sheet's choice survived measurement unchanged. Voice is its own
         // ("Marcato Sub"), as always here.
         case .tangoMarcato:     return .drivingEighths
+        // #1382 G14c — the SEVENTH owner of `sparseSub`, counted over the file rather than
+        // inherited from a neighbouring comment (#1295b shipped an ordinal that was off by one
+        // exactly that way). The sparse figure is the right one and not a fallback: this genre
+        // has NO drum archetype, so the bass is the only thing marking the bar, and a busy
+        // figure would put a groove under music whose whole character is space. Voice is its
+        // own ("Air Sub"), as always here — the figure is shared, the patch never.
+        case .andeanHighland:   return .sparseSub
         case .andalusianCadence: return .drivingEighths
         case .blackMetal:       return .drivingEighths
         case .modalJazz:        return .drivingEighths

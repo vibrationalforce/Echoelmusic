@@ -377,6 +377,41 @@ public extension MusicStyle {
                 cutoff: 2150, res: 0.26, lfoAmt: 0.04, lfoRate: 4.4, lfoDepth: 0.035,
                 revMix: 0.20, revDecay: 1.45, vibRate: 5.1, vibDepth: 0.09,
                 uni: 2, det: 7)
+        case .andeanHighland:
+            // #1382 G14c — THIN AIR PAD. The chord IS this genre, so the patch has to be a
+            // chord voice that stays out of the way of itself: bright, breathy, and long enough
+            // that the cycle overlaps rather than clicks. At 100 BPM a bar is 2.4 s and the
+            // release alone is 0.90, so each chord is still sounding when the next arrives —
+            // that overlap is the "open air", together with the arm's large room in `GenreFX`.
+            // Every number below is checked with `genre-prebatch.py --patch` at full coverage,
+            // never read off a neighbouring arm (#1350).
+            //
+            // `hl: 0.82` is the decision: a HIGH harmonic tilt, the opposite of every bass on
+            // this shelf and of `Lilt Keys`' 0.66. That tilt plus `bright: 0.72` and a wide-open
+            // `cutoff: 3600` is what "thin" means here — no filter trick, just nothing in the
+            // low end to be thick with. `noise: 0.05` is a breath, not a texture.
+            //
+            // ⚠️ EXACTLY ONE RANK IS CLAIMED, and it is the identity: `bright: 0.72` is TODAY
+            // the file-wide maximum (`--patch` reports SOLE HOLDER with nothing above; the
+            // nearest below are `Brass Reed` 0.66 and `Trance Pluck` 0.52). A superlative is a
+            // date (#818) — re-derive it, do not quote it, and if a brighter patch ever ships
+            // this sentence moves rather than the number. Nothing else here takes a rank:
+            // `hl: 0.82` ties three patches, `cutoff: 3600` ties `Trance Pluck`, `det: 14` ties
+            // `Nebula`.
+            //
+            // ⭐ THE PAIR IS THE POINT AND IT IS MEASURABLE: this patch holds the file's
+            // brightness MAXIMUM and `Air Sub` two arms down holds its MINIMUM (0.09), so one
+            // genre owns both ends of that axis. That gap IS the thin-air-over-a-floor picture,
+            // and it is why the two were written together.
+            //
+            // The shelf pair is named too: `Marcato Reed` above releases in 0.28 because a
+            // marcato must stop, this one in 0.90 because a cycle must ring.
+            return patch("79", "Thin Air Pad",
+                a: 0.055, d: 0.38, s: 0.52, r: 0.90,
+                harm: 0.62, hl: 0.82, bright: 0.72, noise: 0.05, color: "White", shape: "Natural",
+                cutoff: 3600, res: 0.10, lfoAmt: 0.04, lfoRate: 3.2, lfoDepth: 0.03,
+                revMix: 0.30, revDecay: 3.10, vibRate: 5.4, vibDepth: 0.06,
+                uni: 3, det: 14)
         case .rootsReggae:
             // #1289 G6b — ROOTS ORGAN. ⚠️ NOT "Skank Organ": `ska` (un-offered) already ships
             // that name, and the pre-batch check caught it — the third name collision in three
@@ -1080,6 +1115,34 @@ public extension MusicStyle {
                 a: 0.005, d: 0.24, s: 0.38, r: 0.14,
                 harm: 0.93, hl: 0.36, bright: 0.15, noise: 0.0, color: "Pink", shape: "Dark",
                 cutoff: 720, res: 0.12, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
+        case .andeanHighland:
+            // #1382 G14c — AIR SUB. The SEVENTH owner of `sparseSub` — counted over the file,
+            // not inherited from the line above (#1295b shipped an ordinal that was off by one
+            // exactly that way). Figure shared, voice never.
+            //
+            // This genre has NO drum archetype, so the sub is the only thing marking the bar,
+            // and that dictates the envelope from both ends: long enough to be a floor
+            // (`s: 0.58`, `r: 0.36`), soft enough not to be a pulse (`a: 0.014` — no click).
+            // `hl: 0.20` and `cutoff: 560` keep it under the pad rather than beside it; the pad
+            // one arm up is the file's high-tilted voice and these two are written as a pair.
+            //
+            // ⚠️ TWO RANKS ARE CLAIMED, both measured and both the identity: `hl: 0.20` and
+            // `bright: 0.09` are TODAY the file-wide MINIMA (`--patch` reports SOLE HOLDER with
+            // nothing below for either; nearest above are `Roll Sub` 0.22 and `Drone Bed` 0.10).
+            // Together with `Thin Air Pad`'s brightness maximum that means ONE genre owns both
+            // ends of the brightness axis — which is the whole picture: a thin high chord over a
+            // floor with nothing in it. ⚠️ A superlative is a date (#818): re-derive both, do
+            // not quote them. Nothing else takes a rank — `cutoff: 560` ties `Dark Sub`,
+            // `s: 0.58` ties `Church Sub`, `harm: 0.90` ties fifteen patches.
+            //
+            // Dry by construction: `revMix: 0.0`, because the big room in this genre's
+            // `GenreFX` arm is for the CHORD, and a sub in a 0.62 hall is mud.
+            return patch("80", "Air Sub",
+                a: 0.014, d: 0.46, s: 0.58, r: 0.36,
+                harm: 0.90, hl: 0.20, bright: 0.09, noise: 0.0, color: "Pink", shape: "Dark",
+                cutoff: 560, res: 0.07, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
                 revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
                 uni: 1, det: 0)
         case .rootsReggae:

@@ -648,6 +648,47 @@ public extension MusicStyle {
                 delayMix: 0.0, delayFeedback: 0.0,
                 saturation: 0.26,
                 reverbEnabled: true, reverbMix: 0.14, reverbRoom: 0.30, reverbDamping: 0.38)
+        case .andeanHighland:
+            // #1382 G14c — THE ROOM IS THE GENRE, and the delay serves it rather than the other
+            // way round. A QUARTER on tape: 0.682 s at the slow end of 88, 0.600 s at the 100
+            // default, 0.500 s at 120 — the SLOW end binds, and all three sit far under the
+            // 2.0 s ceiling `GenreDelaySyncResolvabilityTests` sweeps. Measured with
+            // `genre-prebatch.py`, which also reports what no reading of one arm can: this echo
+            // RAISES the drum-free cluster ratchet from five to six at 5 %, so it merges nothing
+            // (#1353).
+            //
+            // ⚠️ `.tape` + quarter IS THE MOST CROWDED PAIR IN THIS FILE, and this comment names
+            // the set rather than claiming a first (#1352). Measured over the whole switch,
+            // comments stripped: SEVEN arms already hold it — `loFiHipHop`, `rootsReggae`,
+            // `detroitTechno`, `vaporwave`, `oriental`, `contemplation`, `underwater` — and the
+            // first draft of this sentence named only `rootsReggae`, which is #867 in a comment
+            // about not committing #867. The pair is therefore NOT what separates this arm.
+            //
+            // The FEEDBACK is: 0.26 here against 0.46 (`rootsReggae`), 0.42 (`vaporwave`),
+            // 0.40 (`oriental`, `contemplation`), 0.34 (`detroitTechno`). Only `loFiHipHop`'s
+            // 0.21 sits lower, so no rank is claimed — and 0.26 is not free either
+            // (`industrialTechno` and `rock` return it on other modes). What the low value DOES
+            // is audible and is the point: one reflection off a valley wall, not a skank that
+            // repeats. `delayWow: 0.06` says the same thing from the other side, and again
+            // WITHOUT a rank: `detroitTechno` writes no `delayWow` at all and therefore takes
+            // the initialiser default of 0.0, so it is lower. (Checked, because the draft of
+            // this line said "the least-warped of the seven" — an omitted argument is still a
+            // value, #431, and a superlative over a set must read the DEFAULTS too, not just
+            // the written numbers.) Against the five that do write one — 0.50, 0.40, 0.38,
+            // 0.22, 0.20 — this is the small one, which is what the air needs.
+            //
+            // Reverb carries the rest: `reverbRoom: 0.62` is the largest space on this shelf by
+            // a wide margin (`cumbia` 0.34, `tangoMarcato` 0.30), `reverbDamping: 0.18` keeps
+            // the top open so the thin high chord stays thin, and `saturation: 0.08` is nearly
+            // absent — grit would fill exactly the air this genre is made of. No value takes a
+            // rank beyond the shelf comparison, which is named.
+            return GenreFXPreset(
+                delayEnabled: true, delayMode: .tape,
+                delaySync: TempoSyncOption(.quarter),
+                delayMix: 0.20, delayFeedback: 0.26, delayTone: 0.58, delaySpread: 0.42,
+                delayWow: 0.06, delayDrive: 0.08,
+                saturation: 0.08,
+                reverbEnabled: true, reverbMix: 0.30, reverbRoom: 0.62, reverbDamping: 0.18)
         case .rootsReggae:
             // #1289 G6b — THE LONG ECHO, and it is the genre rather than a decoration: a QUARTER
             // on tape with high feedback and audible wow. At the fastest allowed 84 BPM that is

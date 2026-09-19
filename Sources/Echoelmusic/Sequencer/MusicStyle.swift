@@ -177,6 +177,11 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #1358 G14b — the SECOND resident of `Latin America`, so this shelf stops being a
         // one-genre drawer. Offered from the first commit for the reason every batch gives.
         .tangoMarcato,
+        // #1382 G14c — the THIRD and LAST resident of `Latin America` that this plan lists as
+        // buildable (`gnawaGuembri` stays blocked on cultural attribution and on a `BassGrammar`
+        // case that does not exist). Offered from the first commit, for the reason every batch
+        // above gives: a genre left only in the taxonomy is a doorless genre.
+        .andeanHighland,
         .selfObservation, .stillMeditation, .drift, .contemplation,
         .vaporwave, .sciFi, .classical, .dubTechno,
         // #254 batch 1 (founder 2026-07-30: "mehr Genres der elektronischen Musik benötigt,
@@ -415,10 +420,19 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         /// sound-system music, and filing a Colombian genre there would make the shelf name
         /// mean something it does not mean today.
         ///
-        /// The title names a REGION, not a count — one genre stands here, and `tangoMarcato`
-        /// and `andeanHighland` are the catalog lines it is opened for. Same line as #1352
-        /// drew: a shelf may be roomier than its contents, it may not promise a DIFFERENT
-        /// thing than it holds.
+        /// The title names a REGION, not a count. Same line as #1352 drew: a shelf may be
+        /// roomier than its contents, it may not promise a DIFFERENT thing than it holds.
+        ///
+        /// ⛔ #1382: this paragraph used to end "one genre stands here, and `tangoMarcato` and
+        /// `andeanHighland` are the catalog lines it is opened for". It went stale TWICE while
+        /// staying grammatical — #1358 made the count two, #1382 made it three and emptied the
+        /// waiting list — because a WAITING LIST is a count with names on it, and a count in a
+        /// doc is a date (#818). The shelf is now COMPLETE: the plan's Latin America column
+        /// holds exactly these three.
+        /// ⚠️ Measured, not remembered: the first draft of this very retraction named
+        /// `gnawaGuembri` as the line still pending HERE. It is in the plan's AFRICA column,
+        /// together with `koraOstinato`, and belongs on a shelf that does not exist yet — the
+        /// #867 defect committed one sentence after quoting #818.
         case latinAmerica
         // 9 · Underground & Fringe
         case loFiHazy
@@ -569,7 +583,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             return .darkSynthScenes
         // #1357 G14 — the shelf is new and arrives here with this one genre. Filed under
         // `.folk` and not `.caribbean`; the argument is at the `Subcategory` case doc.
-        case .cumbia, .tangoMarcato:
+        case .cumbia, .tangoMarcato, .andeanHighland:
             return .latinAmerica
         case .sciFi:
             return .cinematicAtmospheres
@@ -1283,6 +1297,42 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// right for a fixed-tempo dance music and an omission a compiler cannot catch, so the batch
     /// guard asserts it.
     case tangoMarcato
+    /// #1382 G14c. The THIRD door on the Latin America shelf, and the one that makes it a
+    /// REGION rather than two dance musics: both neighbours are urban, metered and comped;
+    /// this one is highland, drum-free and open.
+    ///
+    /// ⚠️ **THE NAME IS THE REGISTER AND THE REGION, NOT AN INSTRUMENT AND NOT A TRADITION.**
+    /// The plan's catalogue drafted it as a huayno/sikuri line. Neither is claimable here for
+    /// the `andalusianCadence` reason (#1290): `leadDensity` is 0 in every genre in this file,
+    /// so there is no voice to carry a quena, and a siku is an INTERLOCKED pair of half-scales
+    /// played by two players — the composer has one pad voice and no way to split it. What IS
+    /// real is a thin, high minor cycle in open air, and the genre is named after that.
+    ///
+    ///   · **`progression: [0, 5, 6]`** — DEGREES, resolved through `MusicalKey.degree` and
+    ///     never read as semitones. On `minor` `[0,2,3,5,7,8,10]` that is roots 0, 8, 10 —
+    ///     i → ♭VI → ♭VII, and with `chordTones: [0, 2, 4]` the qualities are minor, MAJOR,
+    ///     MAJOR. Two major chords a whole tone apart above a minor tonic is the cycle, and it
+    ///     needs no raised seventh, which is why this arm takes plain `minor` while both
+    ///     shelf-mates take `harmonicMinor`. The three-root shape is FREE across the roster.
+    ///     ⚠️ `composeHarmonic` ROTATES over `progressionPhase`, so this is a set of three
+    ///     roots opening on the tonic, not a notated cadence (#1290).
+    ///   · **`chordTones: [0, 2, 4]`** = 0, 3, 7 on the tonic — the plain minor triad, which
+    ///     twenty-four arms carry and which claims nothing. The identity is in the ROOTS and in
+    ///     the register, never in the shape.
+    ///   · **`.none` archetype, NOT `sustained`.** Drum-free, so `chordArticulation` derives
+    ///     `.sustained` — but the PROFILE flag stays false so the onset generator keeps running
+    ///     and the cycle moves. `ambientPulse`, `slowBloom` and `celticAir` are the shipped
+    ///     genres in this shape. ⚠️ Unlike all three of those it is `.studioLocked`: highland
+    ///     dance music has a fixed pulse. `classical` is the only other `.none` arm that locks.
+    ///   · **`padOctave: 4`** with a long-tailed, bright patch — the "thin air" is the REGISTER
+    ///     plus the reverb, not a filter trick. `tangoMarcato` sits a register below on the same
+    ///     shelf, deliberately: a marcato needs floor, an air needs height.
+    ///   · **swing 0.10** — a TIE with four other arms including `tangoMarcato`. Nothing is
+    ///     claimed for the number; huayno leans, it does not shuffle.
+    ///
+    /// ⚠️ `defaultMode` takes NO arm — it inherits `default: .studioLocked`, which is the
+    /// omission a compiler cannot catch, so the batch guard asserts it rather than trusting it.
+    case andeanHighland
     /// #983 S5 (same founder sentence: "psy prog House"). The roster has `psytrance` (un-offered,
     /// ~145, phrygian, ARPEGGIATED, padOctave 2) and nothing between it and house. This is the
     /// house-tempo, non-arpeggiated relative — progressive, not Goa — and it is separated from
@@ -1503,6 +1553,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #1357 G14 — Latin America.
         case .cumbia:             return "Cumbia"
         case .tangoMarcato:       return "Tango Marcato"
+        case .andeanHighland:     return "Andean Highland"
         case .blackMetal:         return "Black Metal"
         case .modalJazz:          return "Modal Jazz"
         case .soulBallad:         return "Soul Ballad"
@@ -1610,6 +1661,13 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // a description of an attack.
         case .tangoMarcato:
             return "Marcato minor comp · falling ♭VII, major V"
+        // #1382 G14c. Names the register and the two things the generator produces — a thin,
+        // high chord and the three roots it rocks between. No instrument and no place is
+        // claimed: "highland" is in the genre NAME (the region the shelf is for), and this line
+        // describes the SOUND. The `TheGenreVocabularyStaysNeutral` list bans claims about a
+        // listener's state, never a description of register.
+        case .andeanHighland:
+            return "Thin high minor cycle · open air"
         case .blackMetal:
             return "Tremolo-cold raised-fourth minor"
         case .modalJazz:
@@ -1772,8 +1830,14 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
              .jazz, .oriental, .detroitTechno, .tangoMarcato:   return .backbeat
         case .ska, .rocksteady, .klezmer, .cumbia:              return .offbeat
         case .doom, .vaporwave, .sciFi, .slowedGothPop:         return .halfTime
+        // #1382 G14c — `andeanHighland` joins this arm, and it is the SECOND member that is
+        // neither meditative nor a drone (`classical` is the first). Drum-free is the honest
+        // reading: nothing in this file voices a bombo or a wankara, and `chordArticulation`
+        // derives `.sustained` from `.none` — but the PROFILE flag stays false, so the onset
+        // generator keeps running and the cycle still moves. That is the `celticAir` /
+        // `ambientPulse` / `slowBloom` shape, with a LOCKED tempo instead of a free one.
         case .classical, .stillMeditation, .selfObservation, .drift, .contemplation,
-             .deepDrone, .ambientPulse:                         return .none
+             .deepDrone, .ambientPulse, .andeanHighland:        return .none
         }
     }
 
@@ -2006,6 +2070,12 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // the first draft of `cumbia`'s neighbouring comment claimed a disjointness that did
         // not hold, which is why this one enumerates instead.
         case .tangoMarcato:       return 92...128
+        // #1382 G14c. OVERLAPS both shelf-mates (`cumbia` 88…104, `tangoMarcato` 92…128) and
+        // the overlap is named rather than engineered away, the #1358 way: what separates this
+        // from `cumbia` is archetype, lead bucket, progression and bass figure, and from
+        // `tangoMarcato` scale, archetype, lead bucket, progression, register and bass figure.
+        // A shared tempo window is not a shared sound.
+        case .andeanHighland:     return 88...120
         case .blackMetal:         return 160...200
         case .modalJazz:          return 100...160
         case .soulBallad:         return 64...86
@@ -2149,6 +2219,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case .slowedGothPop:      return 66
         case .cumbia:             return 96
         case .tangoMarcato:       return 112
+        case .andeanHighland:     return 100
         case .blackMetal:         return 180
         case .modalJazz:          return 120
         case .soulBallad:         return 72
@@ -2244,6 +2315,11 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // Measured, because the first draft of this line named `disco`, which is not among
         // them; nothing is claimed either way.
         case .tangoMarcato:                       return 0.10
+        // #1382 G14c — 0.10, the same value as `tangoMarcato` above and as three other arms.
+        // A TIE, stated as one: no arm here owns this number and none claims to. The lilt is
+        // real but small — huayno leans, it does not shuffle — and anything near `modalJazz`'s
+        // 0.30 would turn a lean into a swing.
+        case .andeanHighland:                     return 0.10
         case .boomBapHipHop:                      return 0.16
         case .electroFunk:                        return 0.08
         case .modalJazz:                          return 0.30
@@ -2417,6 +2493,13 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // this is the honest one — an orquesta típica is bandoneón AND strings. `leadDensity`
         // is 0.0, so it resolves a factory voice rather than sounding a line.
         case .tangoMarcato:       return "Warm Strings"
+        // #1382 G14c. FORCED by the ceiling and by nothing else: at bearing 48 the ceiling is
+        // 8, five of the six names already stood AT 8, and "Deep Sub" was the only one with
+        // headroom. The sheet asked for it too, so nothing had to be traded. ⚠️ The name reads
+        // wrong against "thin bright air" and that costs nothing — `leadDensity` is 0.0 here,
+        // so this resolves a factory voice for the CEILING BUCKET and never sounds a line.
+        // Re-derive the ceiling; do not quote it.
+        case .andeanHighland:     return "Deep Sub"
         case .blackMetal:         return "Warm Strings"
         case .modalJazz:          return "Soft Keys"
         case .soulBallad:         return "Choir Vox"
@@ -2565,6 +2648,11 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // the engine and the comp answers it. The triple is FREE (no other arm returns these
         // three); no single value takes a rank, and none is claimed.
         case .tangoMarcato:                       return (1.14, 1.06, 0.88)
+        // #1382 G14c. Harmony ahead of the bass — the opposite balance to `tangoMarcato` one
+        // line up, because here the chord IS the piece and the sub is a floor under it rather
+        // than an engine. The triple is FREE (no other arm returns these three); no single
+        // value takes a rank, and none is claimed.
+        case .andeanHighland:                     return (0.98, 1.12, 0.88)
         case .blackMetal:                         return (1.10, 1.04, 0.88)
         case .modalJazz:                          return (1.00, 1.08, 0.88)
         case .soulBallad:                         return (1.00, 1.10, 0.88)
@@ -2626,6 +2714,12 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #1358 G14b. The FIFTH arm on this scale and the THIRD offered one. Chosen for the
         // major V that the progression needs (see the case doc); nothing is claimed about it.
         case .tangoMarcato:       return .harmonicMinor
+        // #1382 G14c. Plain `minor`, which eleven other OFFERED genres carry — nothing is
+        // claimed for it, and that is the point: this shelf's other two arms both reached for
+        // `harmonicMinor` to buy a major V, and this genre does not want one. Its cycle
+        // i → ♭VI → ♭VII lives entirely inside natural minor, and a raised seventh would put a
+        // leading tone into music built on the flat one.
+        case .andeanHighland:     return .minor
         case .blackMetal:         return .hungarianMinor
         case .modalJazz:          return .dorian
         case .soulBallad:         return .major
@@ -2922,6 +3016,18 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             // NOT sustained — a marcato that sustains is no longer a marcato.
             return HarmonicProfile(progression: [0, 6, 4], chordTones: [0, 2, 4],
                                    padOctave: 3, leadOctave: 5, arpeggiated: false,
+                                   leadDensity: 0.0)
+        case .andeanHighland:
+            // #1382 G14c — DEGREES, never semitones. `[0, 2, 4]` on `minor` resolves to 0, 3, 7
+            // on the tonic: the plain minor triad, shared with twenty-four arms and claiming
+            // nothing. The identity is the ROOTS — degrees 5 and 6 are 8 and 10 semitones, so
+            // ♭VI and ♭VII, and the SAME triad shape on either of them comes out MAJOR. Minor
+            // tonic, two major chords a whole tone apart: that is the cycle, and it is why this
+            // arm does not need the raised seventh its two shelf-mates take. High register,
+            // because the air is the register. NOT arpeggiated and NOT sustained — a cycle that
+            // sustains stops being a cycle, and the onset generator is what moves it.
+            return HarmonicProfile(progression: [0, 5, 6], chordTones: [0, 2, 4],
+                                   padOctave: 4, leadOctave: 5, arpeggiated: false,
                                    leadDensity: 0.0)
         case .rootsReggae:
             // A plain minor triad `[0, 2, 4]` = 0, 3, 7 — eighteen arms carry it, and that is
