@@ -2039,9 +2039,15 @@ public final class AudioEngine {
     }
 
     /// Attach an AVAudioPlayerNode additively into the master mix (same safe
-    /// pause/attach/connect pattern as `attachSourceNode`). Used by AudioClipPlayer
-    /// — a clip plays into `masterMixer` like any voice, never touching the master
-    /// OUTPUT path. `format` is the player's buffer format (file's processing format).
+    /// pause/attach/connect pattern as `attachSourceNode`). The live caller is
+    /// `TimelineAudioSink` (the plain, unwarped lane path) — a clip plays into
+    /// `masterMixer` like any voice, never touching the master OUTPUT path. `format`
+    /// is the player's buffer format (file's processing format).
+    ///
+    /// ⛔ #1381: this said "Used by AudioClipPlayer", which was wrong twice over — that
+    /// type has ZERO callers, and it never used THIS overload anyway (it takes the
+    /// `through:` one). A doc that names a dead consumer and omits the live one sends
+    /// whoever debugs lane playback into a file that has never run.
     func attachPlayerNode(_ node: AVAudioPlayerNode, format: AVAudioFormat) {
         logEngineLifecycle("graph: attach player node (engine running: \(masterEngine.isRunning))")
         prepareGraph()

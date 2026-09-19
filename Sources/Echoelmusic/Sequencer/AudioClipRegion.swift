@@ -4,8 +4,27 @@
 // Pure value model for an audio clip's playback region: trim in/out, loop, and
 // gain, with second↔frame conversion and the loop/playhead math an audio-clip
 // player needs. Foundation-only and fully unit-testable (no AVFoundation, no
-// engine) — the forthcoming AudioClipPlayer (AVAudioPlayerNode scheduleSegment +
-// loop) consumes this so its timing logic is verified without audio hardware.
+// engine) — so the timing logic is verified without audio hardware.
+//
+// ⛔ #1381: this said "the forthcoming AudioClipPlayer … consumes this", wrong on both
+// halves. `AudioClipPlayer` is not forthcoming — the file exists, and it has ZERO callers
+// and ZERO tests.
+//
+// ⚠️ AND THE FIRST REPLACEMENT SENTENCE WAS WRONG TOO, in the flattering direction: it
+// named `AudioRegionPlayback`, `StretchPlan`, `Clip` and `Timeline` as live consumers,
+// "six files". Measured on COMMENT-STRIPPED text, exactly THREE files outside this one
+// name the type in CODE — `Clip`, `WarpedClipPlan` and the dead executor — and
+// `AudioRegionPlayback` takes a `TimelineRegion`, not an `AudioClipRegion`. The other
+// three mention it only in prose. `git grep -l` counts comments, which is how a register
+// entry gets four consumers it does not have (#867, the law the register block states).
+//
+// SO, NARROWLY AND HONESTLY: the ONE live code consumer is `Clip.swift`, and it reads one
+// member — `AudioClipRegion.nativeBPMRange`, the shared clamp range (#416: one definition
+// of a range, and `Clip` cites this type as its home). That is what makes this file
+// undeletable. The trim / loop / warp math below has only DEAD consumers today
+// (`AudioClipPlayer`, and `WarpedClipPlan`, which has zero external references of its
+// own). Do not read this header as "the editor model is in use"; read it as "one constant
+// is, and the rest is waiting for an executor".
 
 import Foundation
 

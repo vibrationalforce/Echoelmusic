@@ -157,6 +157,23 @@ Deprecated from main flow: SoundscapeEngine, ClipEngine, MomentCaptureView, BioS
     `DSP/BinauralPanner` (+`BinauralCues`), `DSP/EchoelSpaceReverb`,
     `Sequencer/SpatialAutomationMapping`. Real ist die STEUER-Hälfte (`SpatialSceneStore` →
     ADM-OSC auf der Leitung). Wächter `TheSpatialRenderHalfIsNotClaimedLiveTests`.
+  · **Der TOTE EXEKUTOR und seine sechs Nachbarn (#1381):** `Sequencer/AudioClipPlayer` plus
+    `Sequencer/LyricsModel` (SIEBEN Typen), `Sequencer/TakeDistance`, `DSP/PatchLibrary`
+    (+`LibraryPatch`), `DSP/PitchTracker`, `DSP/EchoelMIDIDecode`, `Audio/LatencyCompensation`
+    — je NULL Verweise aus fremdem `Sources/`-CODE, nach TYP gemessen. ⚠️ **Die #1376-Falle
+    sitzt hier siebenfach: `LyricsModel.swift` deklariert keinen Typ dieses Namens** — ein per
+    DATEINAME belegter Eintrag wäre eine Nadel, die nie treffen kann. ⭐ Der tote Exekutor war
+    in ACHT fremden Dateien als der LEBENDE ausgeschildert („Used by AudioClipPlayer", „the
+    forthcoming AudioClipPlayer", „an AudioClipPlayer-backed sink"); die fünf Falschstellen
+    sind korrigiert — der Sink ist `TimelineAudioSink`, injiziert in `EchoelmusicApp` —, die
+    drei verbliebenen Zeiger tragen `(dead)`. ⚠️ `Sequencer/AudioClipRegion` ist NICHT tot,
+    aber viel knapper als es aussieht: EIN lebender Code-Verbraucher (`Clip.swift`), und der
+    liest EIN Mitglied — `nativeBPMRange`, die geteilte Klammer (#416). Trim-/Loop-/Warp-Mathe
+    hat nur tote Verbraucher; `Sequencer/WarpedClipPlan` ist dabei als ACHTER Waise gemessen
+    worden. ⛔ Meine erste Fassung dieser Zeile schrieb „sechs Verbraucher" aus `git grep -l`,
+    das KOMMENTARE mitzählt — vier davon nennen den Typ nur in Prosa, und
+    `AudioRegionPlayback` nimmt einen `TimelineRegion`. **Der #867-Defekt in dem Register, das
+    ihn als Gesetz führt**; kommentar-gestrippt messen, sonst zählt man Zitate.
   ⭐ **DREI GESETZE, die dieses Register teuer gelernt hat:** (1) **wer einen Scope in eine
   Register-Zeile schreibt, schreibt hin, was der Scope AUSGESCHLOSSEN hat** — der 2026-09-02-Lauf
   zählte ehrlich „VIER `Sync/`-Kerne" und wurde als Gesamtzahl gelesen, während drei identisch

@@ -12,6 +12,12 @@
 // straight from the file — no whole-region PCM buffer on the main actor (a
 // 3-minute region would be ~70 MB against the 200 MB cap; AudioClipPlayer's
 // bake-into-buffer path is right for short auditions/fades, wrong here).
+// ⚠️ #1381 — THE THREE `AudioClipPlayer` POINTERS IN THIS FILE (here, at the warp
+// chain, and at the Beats cap) POINT AT A DEAD FILE: zero callers, zero tests. They
+// are kept because each cites a real design fact whose provenance is written there —
+// but nothing in that file runs, so do not read one as "the other executor does X
+// today", and do not verify a number by observing it. Stated ONCE, here (#416); the
+// other two carry a bare `(dead)`.
 // Control-plane only: scheduling happens on @MainActor; AVAudioPlayerNode does
 // its own rendering and file I/O off our threads.
 //
@@ -57,7 +63,7 @@ final class TimelineAudioSink: AudioRegionSink {
     /// Slice B: one warp chain (player → AVAudioUnitTimePitch → master) per format
     /// that this lane plays WARPED. Kept SEPARATE from the plain nodes on purpose:
     /// the spectral node is not bit-transparent even at rate 1.0 (overlap-add
-    /// latency, faint coloration — see AudioClipPlayer), so unwarped timeline
+    /// latency, faint coloration — see AudioClipPlayer, dead), so unwarped timeline
     /// audio must keep its plain, uncolored path. Attached at PRIME time via
     /// `preload(url:warped:)`; a warped region whose format was never primed
     /// still attaches mid-song — same bounded cost as the plain unseen-format
@@ -104,7 +110,7 @@ final class TimelineAudioSink: AudioRegionSink {
     /// detached render lands, and never `standardFormatWithSampleRate`, which can
     /// drop a channel layout the node connection carries → scheduleBuffer NSException).
     private var urlFormats: [URL: AVAudioFormat] = [:]
-    /// Matches AudioClipPlayer's preview cap (~31 s @48 k output, ~60 MB stereo
+    /// Matches AudioClipPlayer's preview cap (dead file; ~31 s @48 k output, ~60 MB stereo
     /// transient): a longer Beats region is not pre-rendered and plays Clean.
     /// `nonisolated`: read inside the detached render task — Xcode's toolchain
     /// isolates a plain `static let` on a @MainActor class (SwiftPM CI did not;

@@ -26,10 +26,13 @@ import AVFoundation
 ///    its stretched buffer per `BeatsKey` and reschedules it on every qualifying
 ///    region onset, so a schedule-time sweep would re-walk a buffer that cannot
 ///    have changed. That buffer is capped at `beatsMaxOutputFrames` (1.5 M frames,
-///    ~31 s), i.e. ~3 M samples in stereo — a wasted pass, not a stall. The
-///    multi-minute case people picture is `AudioClipPlayer.play()`'s direct path,
-///    which is a fresh buffer swept once per play and was never a candidate for
-///    schedule-time sweeping anyway.
+///    ~31 s), i.e. ~3 M samples in stereo — a wasted pass, not a stall.
+///    ⛔ #1381: a third sentence stood here naming `AudioClipPlayer.play()`'s direct
+///    path as "the multi-minute case people picture". That type has ZERO callers and
+///    ZERO tests, so the case it described cannot arise, and offering it as the
+///    realistic one made the cost argument rest on a path that never runs. The two
+///    points above carry the argument on their own — same repair as the one this
+///    guard's sibling header took in #1379.
 ///
 /// Fill time also means the sweep only ever touches a buffer its own builder still
 /// owns exclusively. That rules out mutating memory some other component handed us

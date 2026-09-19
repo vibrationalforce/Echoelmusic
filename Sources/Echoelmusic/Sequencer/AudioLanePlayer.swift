@@ -2,10 +2,18 @@
 // Echoel — the transport-driven executor for AUDIO lanes: on each transport window
 // it plays / stops each audio lane's active region. This is the COORDINATOR half,
 // kept Foundation-only + fully unit-tested by abstracting the device player behind
-// `AudioRegionSink`. The thin AVFoundation adapter (an AudioClipPlayer per lane,
-// attached to the engine) and the transport wiring land in a following, device-
-// verified cycle — this file has NO AVFoundation, no audio-thread code, no state
+// `AudioRegionSink`. This file has NO AVFoundation, no audio-thread code, no state
 // the render path touches.
+//
+// ⛔ #1381: THIS SENTENCE PROMISED A FUTURE THAT HAD ALREADY ARRIVED, AND NAMED THE
+// WRONG TYPE FOR IT. It read "the thin AVFoundation adapter (an AudioClipPlayer per
+// lane, attached to the engine) and the transport wiring land in a following,
+// device-verified cycle" — eight lines above this file's own "WIRED since v191".
+// A claim and its refutation in one header (#425). Measured: the adapter is
+// `TimelineAudioSink` (the only `AudioRegionSink` conformer in `Sources/`), injected
+// at `EchoelmusicApp:1127` as `makeSink: { TimelineAudioSink(engine: audioEngine) }`.
+// `AudioClipPlayer` exists as a file and has ZERO callers and ZERO tests — a reader
+// following that name landed in code that has never run.
 //
 // It composes the two already-tested pieces: TimelineScheduling decides WHICH
 // region a lane plays and WHEN it changes (onset/clear); AudioRegionPlayback maps
@@ -46,8 +54,9 @@
 import Foundation
 
 /// The device player a lane drives, abstracted so the coordinator's mapping logic
-/// is testable without AVFoundation. The wiring cycle provides an AudioClipPlayer-
-/// backed implementation (attach to the engine, `scheduleSegment`).
+/// is testable without AVFoundation. The production implementation is
+/// `TimelineAudioSink` (attach to the engine, `scheduleSegment`) — the only conformer
+/// in `Sources/`. ⛔ #1381: this named `AudioClipPlayer`, which conforms to nothing.
 @MainActor
 public protocol AudioRegionSink: AnyObject {
     /// Begin playing `url` from `fromSeconds` into the file, for up to
@@ -94,8 +103,9 @@ public extension AudioRegionSink {
 @MainActor
 public final class AudioLanePlayer {
 
-    /// Makes a fresh device sink for a lane (injected; the wiring cycle returns an
-    /// AudioClipPlayer-backed sink attached to the engine).
+    /// Makes a fresh device sink for a lane (injected). `EchoelmusicApp:1127` passes
+    /// `{ TimelineAudioSink(engine: audioEngine) }` — that is the shipped sink
+    /// (⛔ #1381: this said `AudioClipPlayer`, which nothing injects).
     private let makeSink: () -> AudioRegionSink
     /// Resolves a clip id to a playable file URL (injected; the wiring cycle passes
     /// `clips.clip(id:)` → mediaRef → URL). `nil` ⇒ nothing to play (the lane stops).
