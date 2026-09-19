@@ -30,14 +30,36 @@ public enum StretchMode: String, CaseIterable, Codable, Sendable {
     /// starts — an off-grid/stepless placement enters as "mid-region" and plays
     /// the honest Clean chain). Per-consumer `capabilities` on
     /// `StretchPlan.resolve` stay the truth mechanism.
-    /// ⛔ THE "Executors: OFFLINE pre-render … (AudioClipPlayer) AND … (TimelineAudioSink …)"
-    /// SENTENCE ABOVE IS FALSE (#1230, audit 2026-09-10 `tests-guards-6`), kept verbatim as
-    /// the retracted claim: `git grep -n "EchoelWSOLA(" -- Sources` → 0. Both files exist;
-    /// neither constructs the core, and the editor preview went with the piano roll (#475).
-    /// The 206-line core stays (the `EchoelModalBank`/`EchoelCellular` class: kept, test-
-    /// only). `isImplemented` below stays `true` ON PURPOSE — regions persist `stretchMode`,
-    /// so a flip is a document question, not a tidy-up. Do not plan a beats-stretch feature
-    /// on this case without first giving `EchoelWSOLA` a constructor.
+    /// ⛔ #1230 RETRACTED THE WHOLE "Executors: … (AudioClipPlayer) AND … (TimelineAudioSink …)"
+    /// SENTENCE ABOVE, AND ONLY HALF OF IT WAS FALSE. Its evidence was
+    /// `git grep -n "EchoelWSOLA(" -- Sources` → 0 — but `EchoelWSOLA` is this file's
+    /// FILENAME, never a declared type. The type is `WSOLAStretcher`, so that needle returns
+    /// 0 for EVERY possible state of the repo, forever (`.claude/rules/context.md` §2: a
+    /// parser that matches nothing is a finding, never a pass). Re-measured #1376:
+    ///
+    ///     $ git grep -n "WSOLAStretcher(" -- Sources
+    ///     Sequencer/AudioClipPlayer.swift:118   ← dead file: zero callers, zero tests
+    ///     Sequencer/AudioClipPlayer.swift:180   ← dead
+    ///     Sequencer/TimelineAudioSink.swift:184 ← LIVE
+    ///
+    /// · `AudioClipPlayer` half: the retraction was RIGHT. The editor preview went with the
+    ///   piano roll (#475) and nothing constructs that player any more.
+    /// · `TimelineAudioSink` half: the retraction was WRONG. `AudioLanePlayer:308` resolves a
+    ///   region with `capabilities: .timelineCapabilities`, and on `plan.mode == .beats,
+    ///   plan.rate != 1.0` calls `sink.prepareBeats(…)`, which renders through
+    ///   `WSOLAStretcher().stretchMultichannel(…)` in a prime-time `Task.detached`. Every
+    ///   link is production code; `TimelineAudioSink` itself is injected at
+    ///   `EchoelmusicApp.swift:1127`.
+    ///
+    /// So this is the #527 shape — the CHAIN runs, the DATA has no producer (nothing creates
+    /// an audio-bearing `TimelineRegion` today) — not an unwired core. `isImplemented` below
+    /// stays `true` ON PURPOSE for exactly that reason: regions persist `stretchMode`, so a
+    /// flip is a document question, not a tidy-up. A beats-stretch FEATURE still needs a
+    /// producer for audio regions; the stretcher itself is already reachable.
+    ///
+    /// ⭐ LAW: when a claim has TWO carriers, measure them SEPARATELY. A needle spelled with a
+    /// name neither carrier bears returns the same nothing for both, and the retraction is
+    /// then as coarse as its instrument. Full derivation: `memory/LEDGER_COUNTS.md` §AA.
     case beats
     /// Signalsmith Stretch (MIT C++): highest transient fidelity — FOUNDER-GATED
     /// dependency (first C++ in the tree, contained bridge). Executor: approved slice only.
@@ -79,7 +101,7 @@ public enum StretchMode: String, CaseIterable, Codable, Sendable {
     public var isImplemented: Bool {
         switch self {
         case .clean, .tape: return true      // tape = pitch-follows-tempo on the spectral node
-        case .beats:        return true      // ⚠️ nothing constructs EchoelWSOLA (#1230) — persisted-region question, see the case doc
+        case .beats:        return true      // ⚠️ #1376: WSOLAStretcher IS constructed (TimelineAudioSink:184); the DATA has no producer — see the case doc
         case .studio:       return false     // Signalsmith — founder-gated dependency slice
         }
     }
@@ -89,6 +111,9 @@ public enum StretchMode: String, CaseIterable, Codable, Sendable {
     public static let baseCapabilities: Set<StretchMode> = [.clean, .tape]
     /// The editor-preview consumer's set: it can additionally pre-render Beats
     /// offline (`AudioClipPlayer` — no realtime constraint on the audition path).
+    /// ⚠️ #1376: `AudioClipPlayer` has ZERO callers and zero tests, so this set has no live
+    /// consumer today. Kept, not deleted: it is the shape a re-doored preview would take,
+    /// and `previewCapabilities` names the only other place `.beats` was ever meant to run.
     public static let previewCapabilities: Set<StretchMode> = [.clean, .tape, .beats]
     /// The TIMELINE executor's set (Beats-Executor slice): `TimelineAudioSink`
     /// pre-renders Beats regions offline at PRIME time (transport parked) and

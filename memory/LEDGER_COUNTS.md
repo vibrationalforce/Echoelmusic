@@ -6077,6 +6077,23 @@ zwei LEHREN über Erreichbarkeit und persistierte Flags — plus ein Zeiger hier
 
 ---
 
+### G.x — Der Nachfolge-Umschalter und die #1069-Löschung (hierher #1376)
+
+Nachgetragen beim Kürzen der CLAUDE.md-Zeile: `#1069` kam in diesem Abschnitt **null mal** vor,
+obwohl die immer geladene Datei dorthin zeigte. Ein Verschieben ist erst eines, wenn das Ziel
+die Sache trägt (§F.4, aus der Gegenrichtung).
+
+Was die gestrichene Pille (#227) ersetzte, war ein Umschalter im
+`.fullScreenCover(isPresented: $showVisual)`. Mit **#1069** sind gelöscht: das Vollbild-Feld,
+das VJ-Overlay, die zweite REC-Taste und mit ihnen dieser Umschalter — und damit auch die
+**#747-Tür** `visualPanel` → „Full screen". `SpectralDonutView` ist seither über GENAU EINE
+Montagestelle erreichbar, `FloatingVisualWindow`.
+
+⭐ Das Gesetz, das in `CLAUDE.md` bleibt, gilt für BEIDE Bedienelemente gleich: sie waren
+**unerreichbar, nicht wirkungslos**. Der Unterschied ist keine Wortklauberei — „wirkungslos"
+lädt die nächste Sitzung ein, ein totes Bedienelement zu suchen und zu löschen; sie fände
+keins und stünde vor einem FUNKTIONIERENDEN Renderer hinter einer fehlenden Tür.
+
 ## H — Der Founder-Rückstand (`scripts/founder-verify.py`): warum dort keine Zahl mehr steht
 
 **Die Kette.**
@@ -6771,3 +6788,115 @@ jeder dort in Backticks zitierte `…Tests`-Name zu einer Datei auflöst) und di
 gegangen ist: welcher Parameter mit welcher Scheibe portiert wurde, die Shallow-Klon-Rücknahme
 und die Widerlegung des `loudnessNormalized()`-Arguments — drei Geschichten, die eine Sitzung
 nur dann braucht, wenn sie genau diese Entscheidung nachvollzieht.
+
+---
+
+## AA — `EchoelWSOLA`: eine Nadel, die nie treffen kann, und die WAHRE Hälfte, die sie mit zurücknahm (#1230 → #1376)
+
+**Herkunft:** verschoben aus `CLAUDE.md` beim Streichen des Eintrags (#1376, Deep Function Check
+2026-09-19). In der immer geladenen Datei steht nur noch die Tatsache plus das Gesetz; die
+Herleitung gehört hierher.
+
+### AA.1 — Was dort stand
+
+Die Liste der „app-unwired pure cores" führte seit #1230 (Audit 2026-09-10 `tests-guards-6`):
+
+> Dazu — #1230 — **`DSP/EchoelWSOLA`** (`git grep -n "EchoelWSOLA(" -- Sources` → 0;
+> `StretchMode.beats.isImplemented` bleibt bewusst `true`, Regionen persistieren `stretchMode`).
+
+Und `Sources/Echoelmusic/Sequencer/StretchMode.swift` trug dieselbe Rücknahme ausführlich:
+
+> ⛔ THE "Executors: OFFLINE pre-render … (AudioClipPlayer) AND … (TimelineAudioSink …)"
+> SENTENCE ABOVE IS FALSE (#1230) … `git grep -n "EchoelWSOLA(" -- Sources` → 0. Both files
+> exist; neither constructs the core … Do not plan a beats-stretch feature on this case
+> without first giving `EchoelWSOLA` a constructor.
+
+Dritte Heimat: `Tests/CISmoke/ANonFiniteControlCannotReachTheRenderTests.swift` nannte
+`EchoelWSOLA` neben `EchoelSpaceReverb` und `EchoelModalBank` als „zero production
+construction sites".
+
+### AA.2 — Warum der Beleg nichts belegen konnte
+
+`EchoelWSOLA` ist ein **DATEINAME**. Gemessen:
+
+```
+$ git grep -n "EchoelWSOLA" -- Sources
+Sources/Echoelmusic/DSP/EchoelWSOLA.swift:1:// EchoelWSOLA.swift        ← der Header-Kommentar
+Sources/Echoelmusic/Sequencer/StretchMode.swift:27,35,40,82             ← vier Kommentare
+
+$ grep -nE "^(public )?(final )?(struct|class|enum) " Sources/Echoelmusic/DSP/EchoelWSOLA.swift
+22:public struct WSOLAStretcher: Sendable {
+```
+
+Es gibt keinen Typ dieses Namens, also liefert `git grep -n "EchoelWSOLA(" -- Sources` **0 für
+jeden denkbaren Zustand des Repos, für immer** — auch für einen Zustand, in dem die
+Zeitdehnung in fünf Flächen läuft. `.claude/rules/context.md` §2 sagt es als Gesetz:
+*„A parser that matches nothing is a finding, never a pass."* Hier war es in der Datei
+verletzt, die die Regel aufstellt, und in dem Register, das eine Sitzung liest, BEVOR sie
+entscheidet, was gelöscht werden darf.
+
+### AA.3 — Die lebende Kette, Glied für Glied
+
+```
+$ git grep -n "WSOLAStretcher(" -- Sources
+Sources/Echoelmusic/Sequencer/AudioClipPlayer.swift:118
+Sources/Echoelmusic/Sequencer/AudioClipPlayer.swift:180
+Sources/Echoelmusic/Sequencer/TimelineAudioSink.swift:184
+```
+
+* `TimelineAudioSink:184` — `WSOLAStretcher().stretchMultichannel(inputs, rate: Float(rate))`,
+  in `prepareBeats`, in einem `Task.detached` zur Prime-Zeit (also NICHT auf dem Render-Thread;
+  die Allokation ist dort korrekt).
+* Aufrufer: `AudioLanePlayer:308` `sink(for: laneID).prepareBeats(…)`, unmittelbar hinter
+  `StretchPlan.resolve(…, capabilities: StretchMode.timelineCapabilities)` und dem Gate
+  `if plan.mode == .beats, plan.rate != 1.0`.
+* `timelineCapabilities` enthält `.beats` (`StretchMode.swift:98`).
+* `TimelineAudioSink` wird in Produktion konstruiert: `EchoelmusicApp.swift:1127`
+  (`makeSink: { TimelineAudioSink(engine: audioEngine) }`) und `BeatPlayer.swift:150`
+  (Audition-Sink).
+
+Jedes Glied ist Produktionscode. Was fehlt, ist **nicht der Pfad, sondern die DATEN**: nichts
+erzeugt heute eine audio-tragende `TimelineRegion` (#527, `TheAudioLanesHaveNoProducerTests`).
+
+### AA.4 — Die Kategorie, und warum sie übers Löschen entscheidet
+
+`CLAUDE.md` unterscheidet zwei Dinge, die gleich aussehen:
+
+| | |
+|---|---|
+| **app-unwired pure core** | niemand ruft es; ein Wieder-Anschließen ist BAU |
+| **verdrahtet, ohne Erzeuger** (#527, #541) | die Kette läuft bis zur Datenkante; ein persistiertes Dokument aus einem Build mit erreichbarer Fläche kann sie JETZT auslösen |
+
+WSOLA ist das Zweite und stand als das Erste. `#527` sagt für genau diese Lage: *„Die Schicht
+als ‚tot' abzuklemmen macht aus ‚offensichtlich abwesend' ein ‚still stumm'."* Dazu steht
+`StretchMode.beats.isImplemented` bewusst auf `true` und Regionen persistieren `stretchMode` —
+eine Aufräum-Sitzung, die den zitierten Befehl nachschlägt, sieht 0 und löscht die Dehnung,
+von der gespeicherte Projekte abhängen. Der falsche Registereintrag war also nicht schlaff,
+sondern gefährlich in genau die Richtung, vor der `CLAUDE.md` an anderer Stelle warnt:
+*„ein Vermerk, der einen lebenden Mechanismus für tot erklärt, ist die teuerste Sorte"* (§E).
+
+### AA.5 — Das GESETZ, das in der immer geladenen Datei bleibt
+
+Die ursprüngliche Prosa nannte ZWEI Executors: *„OFFLINE pre-render in the editor preview
+(`AudioClipPlayer`) AND on the timeline (`TimelineAudioSink`)"*. Gemessen 2026-09-19:
+
+* `AudioClipPlayer` ist **tot** — 380 Zeilen, null Aufrufer, null Tests, dreizehn externe
+  Erwähnungen in acht Dateien, ALLE Kommentare (mehrere davon bezeichnen es als die lebende
+  Engine). Diese Hälfte der Rücknahme war RICHTIG.
+* `TimelineAudioSink` **lebt**. Diese Hälfte war FALSCH.
+
+⭐ **#1230 nahm eine wahre Hälfte mit zurück, weil seine Nadel die beiden Aufrufer nicht
+unterscheiden konnte.** Eine Nadel auf einen Namen, den keiner der beiden trägt, liefert für
+beide dasselbe Nichts — und eine Rücknahme ist dann so grob wie ihr Messinstrument.
+**Wer eine Behauptung mit zwei Trägern zurücknimmt, misst die Träger EINZELN**; sonst
+verliert er den lebenden zusammen mit dem toten. Das ist die Gegenrichtung zu §N („eine
+Fähigkeits-Behauptung hat so viele Flächen, wie jemand aufzählt") und dieselbe Familie wie
+§K („wer eine Register-Zeile über einen NACHBARN mit-behauptet, misst den Nachbarn mit").
+
+### AA.6 — Die zweite Nadel, die derselbe Commit mitnehmen musste
+
+Diese Datei hatte die Abschnitte A–Z vergeben, und `.claude/rules/context.md` §1 nennt zum
+Nachzählen `grep -c '^## [A-Z] — '`. Dieser Befehl kann ein `## AA — ` **nicht treffen** —
+also hätte der Abschnitt, der die Nadel-Lehre aufschreibt, sich selbst unsichtbar gemacht.
+Auf `grep -cE '^## [A-Z]+ — '` korrigiert, im selben Commit. **Eine Zähl-Nadel altert nicht
+nur mit dem Baum, sondern mit der eigenen Namensgebung.**

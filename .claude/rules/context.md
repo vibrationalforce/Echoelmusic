@@ -33,7 +33,8 @@ i.e. it went stale TWICE in the three days after it was written (2026-08-19 `54e
 ⛔ "six days" stood here for one commit and was never measured — no pairing of those dates
 yields six (#708).
 A count of sections is a date, not a fact. Re-derive:
-`grep -c '^## [A-Z] — ' memory/LEDGER_COUNTS.md`.
+`grep -cE '^## [A-Z]+ — ' memory/LEDGER_COUNTS.md` — ⚠️ das `+` ist nicht Kosmetik: A–Z
+waren mit #1376 vergeben, und die einstellige Form hätte `## AA — ` still übersehen..
 
 ⚠️ **The ceiling now has teeth, and a red is not an order to delete your paragraph.**
 `Tests/CISmoke/TheLawFileStaysUnderItsCeilingTests.swift` (#702) asserts the same 150,000 B on

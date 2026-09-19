@@ -66,9 +66,22 @@
 //     `private static let sampleRate: Double = 48_000`. A constant, not a runtime value.
 //   · EchoelLoudnessMeter  — one external site (`AudioEngine`), behind
 //     `if meterFormat.sampleRate > 0 && meterFormat.channelCount > 0`.
-//   · PitchTracker  — `guard sampleRate > 0, maxHz > minHz, minHz > 0 else { return nil }`,
-//     and its one call site guards `monitorTapSampleRate > 0` again.
-//   · EchoelSpaceReverb, EchoelModalBank, EchoelWSOLA  — zero production construction sites.
+//   · PitchTracker  — `guard sampleRate > 0, maxHz > minHz, minHz > 0 else { return nil }`.
+//     ⛔ "and its one call site guards `monitorTapSampleRate > 0` again" stood here and is
+//     hollow since #1302: that call site WAS the monitor tap, and the audio input is deleted.
+//     `git grep -n "\bPitchTracker\b" -- Sources` → its own file only. The guard above still
+//     holds on its own; the corroborating second guard no longer exists (#1376).
+//   · EchoelSpaceReverb, EchoelModalBank  — zero production construction sites.
+//     ⛔ `EchoelWSOLA` stood in this bullet and is REMOVED (#1376): it is a FILENAME, and the
+//     type it holds, `WSOLAStretcher`, has THREE construction sites — one of them
+//     `TimelineAudioSink.swift:184`, which `EchoelmusicApp.swift:1127` injects. It never
+//     belonged on a "zero construction sites" list; the name simply could not be found because
+//     nobody greps a filename with a `(` after it and gets a hit. See `StretchMode.swift`'s
+//     `.beats` doc and `memory/LEDGER_COUNTS.md` §AA.
+//     ⚠️ Both corrections above are the SAME defect this block already names two paragraphs
+//     down (#867, "whoever claims a NEIGHBOUR in a register line has to measure the
+//     neighbour") — written from the shape of the neighbouring names, a third and fourth time,
+//     in the very comment that records the lesson. Measure each bullet on its own.
 //
 // ⛔ THE FIRST DRAFT OF THE LIST ABOVE PUT `EchoelSpaceReverb` IN THE FIRST BULLET, i.e.
 // claimed the FX chain protects it. It does not construct it at all: `git grep -c` finds zero
