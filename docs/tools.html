@@ -41,7 +41,7 @@
     <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
     <link rel="canonical" href="https://echoelmusic.com/tools.html">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Tools","item":"https://echoelmusic.com/tools.html"}]}</script>
-    <link rel="stylesheet" href="shared.css?v=10.23.2">
+    <link rel="stylesheet" href="shared.css?v=10.23.3">
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
 
@@ -62,7 +62,7 @@
             border-bottom: 1px solid var(--border);
         }
         .capability:last-child { border-bottom: none; }
-        .capability h4 {
+        .capability h3, .capability h4 {
             color: var(--text); font-weight: 700; margin-bottom: 4px;
             font-size: 14px; letter-spacing: 0.3px;
         }
@@ -159,8 +159,8 @@
                 </div>
                 <p class="tool-overview">Echoel reads your physiology from the iPhone camera (finger on the lens) or any standard Bluetooth heart-rate strap (Polar, Wahoo, Garmin, CooSpo&hellip;). Heart rate sets energy and tempo, HRV opens or closes the timbre, breath shapes phrasing, coherence decides whether the music is calm and spacious or busy. Every number is shown large and legible &mdash; tap any value to learn what it means. Science-first: this is for music and self-observation, <strong>not medical diagnosis</strong>.</p>
                 <div class="capability-list">
-                    <div class="capability"><h4>Real sensors</h4><p>Camera rPPG (on-device), universal BLE heart-rate (0x180D); Apple Health (Watch, ring) as a delayed source. RMSSD / SDNN / coherence computed on device.</p></div>
-                    <div class="capability"><h4>Explained, not mystified</h4><p>Tap HR, HRV or coherence for a clear definition. No esoteric claims, no &ldquo;healing frequencies&rdquo;.</p></div>
+                    <div class="capability"><h3>Real sensors</h3><p>Camera rPPG (on-device), universal BLE heart-rate (0x180D); Apple Health (Watch, ring) as a delayed source. RMSSD / SDNN / coherence computed on device.</p></div>
+                    <div class="capability"><h3>Explained, not mystified</h3><p>Tap HR, HRV or coherence for a clear definition. No esoteric claims, no &ldquo;healing frequencies&rdquo;.</p></div>
                 </div>
             </div>
             <hr class="tool-divider">
@@ -173,10 +173,10 @@
                 </div>
                 <p class="tool-overview">Pick a genre and a key; your body composes in-key material and you shape it live in the patch editor &mdash; there is no note grid to draw in, on purpose. Forty-one curated genres across 57 scales — ten on the ambient/meditative shelf (Self-Observation, Deep Ambient, Drift, Contemplation, Vaporwave, Sci-Fi, Still Drone, Ambient Pulse, Glacial Field, Slow Bloom), thirteen techno, house and trance (Dub Techno, Acid Techno, Deep House, Deep Tech, Dark Minimal, Psy Prog House, Tech House, Minimal Techno, Detroit Techno, Uplifting Trance, Industrial Techno, Afro House, Dark Psy), plus Classical, Black Metal, Modal Jazz, Soul Ballad, Boom Bap, Electro Funk, Roots Reggae, Celtic Air, Andalusian Cadence, Nordic Fiddle, Balkan Modal, Gospel Choir, Lo-Fi Hip-Hop, Dub Echo, Slowed Goth Pop, Cumbia, Tango Marcato and Andean Highland &mdash; all harmonic layers, the starting basis for a professional production. Lock to a BPM for the studio, or stay sync-free for ambient self-observation.</p>
                 <div class="capability-list">
-                    <div class="capability"><h4>Synthesis engines</h4><p>A DDSP harmonic-plus-noise voice, a polyphonic pad/lead and a dedicated sub-bass &mdash; vDSP-accelerated, zero external dependencies. Design and save your own patches.</p></div>
-                    <div class="capability"><h4>Studio precision</h4><p>BPM and concert pitch (Kammerton, freely settable 380.00–500.00 Hz) to two decimals. Tempo-synced effects and LFOs in ms &middot; Hz &middot; samples, with dotted and triplet.</p></div>
-                    <div class="capability"><h4>Effect characters</h4><p>One-tap production colors &mdash; Underwater, Telephone, Cassette, Vinyl, Dream, Megaphone &mdash; or each genre&rsquo;s own signature space (dub delay, vapor chorus, psy roll). Clean resets to dry.</p></div>
-                    <div class="capability"><h4>Loops</h4><p>Cut to 1, 2, 4, 8, 16, 32 or 64 bars, sample-accurate. Tight grid or humanized &mdash; you decide.</p></div>
+                    <div class="capability"><h3>Synthesis engines</h3><p>A DDSP harmonic-plus-noise voice, a polyphonic pad/lead and a dedicated sub-bass &mdash; vDSP-accelerated, zero external dependencies. Design and save your own patches.</p></div>
+                    <div class="capability"><h3>Studio precision</h3><p>BPM and concert pitch (Kammerton, freely settable 380.00–500.00 Hz) to two decimals. Tempo-synced effects and LFOs in ms &middot; Hz &middot; samples, with dotted and triplet.</p></div>
+                    <div class="capability"><h3>Effect characters</h3><p>One-tap production colors &mdash; Underwater, Telephone, Cassette, Vinyl, Dream, Megaphone &mdash; or each genre&rsquo;s own signature space (dub delay, vapor chorus, psy roll). Clean resets to dry.</p></div>
+                    <div class="capability"><h3>Loops</h3><p>Cut to 1, 2, 4, 8, 16, 32 or 64 bars, sample-accurate. Tight grid or humanized &mdash; you decide.</p></div>
                 </div>
             </div>
             <hr class="tool-divider">
@@ -189,10 +189,10 @@
                 </div>
                 <p class="tool-overview">Echoel isn&rsquo;t a stack of separate tools &mdash; it&rsquo;s one instrument played by the body. Beyond sound, your pulse drives several real output dimensions at once, each over an open protocol so it plugs into the gear you already own. This is what &ldquo;multidimensional&rdquo; means here, today.</p>
                 <div class="capability-list">
-                    <div class="capability"><h4>Space &mdash; spatial-audio object</h4><p>Your body streams as an immersive audio object over <strong>ADM-OSC</strong> into object-based renderers (L-ISA, d&amp;b Soundscape, FletcherMachine): breath&rarr;azimuth, coherence&rarr;distance, HRV&rarr;elevation. On-device head-tracked binaural for headphones is planned, not in the app today.</p></div>
-                    <div class="capability"><h4>Light &mdash; fixtures from your pulse</h4><p>Drive real lighting over <strong>Art-Net</strong> and <strong>sACN</strong> &mdash; the heartbeat that shapes the sound shapes the room. <a href="artnet-sacn-from-a-phone.html">How the two protocols differ, and what a phone can send</a>. The full address book for OSC, ADM-OSC, MIDI and DMX is on the <a href="integrations.html">integrations page</a>.</p></div>
-                    <div class="capability"><h4>Vibration &mdash; felt bass / LFE</h4><p>A dedicated <strong>sub-bass</strong> one octave below the body&rsquo;s bass line, with a push-to-feel level &mdash; felt on a sub, in headphones, or as Core Haptics. The physical, body-sonic dimension.</p></div>
-                    <div class="capability"><h4>Immersive 360° <span class="tag">Planned</span></h4><p>Multichannel render (5.1 / 7.1.4), true LFE, and a Vision Pro 360° scene are on the roadmap &mdash; the spatial object source already works today.</p></div>
+                    <div class="capability"><h3>Space &mdash; spatial-audio object</h3><p>Your body streams as an immersive audio object over <strong>ADM-OSC</strong> into object-based renderers (L-ISA, d&amp;b Soundscape, FletcherMachine): breath&rarr;azimuth, coherence&rarr;distance, HRV&rarr;elevation. On-device head-tracked binaural for headphones is planned, not in the app today.</p></div>
+                    <div class="capability"><h3>Light &mdash; fixtures from your pulse</h3><p>Drive real lighting over <strong>Art-Net</strong> and <strong>sACN</strong> &mdash; the heartbeat that shapes the sound shapes the room. <a href="artnet-sacn-from-a-phone.html">How the two protocols differ, and what a phone can send</a>. The full address book for OSC, ADM-OSC, MIDI and DMX is on the <a href="integrations.html">integrations page</a>.</p></div>
+                    <div class="capability"><h3>Vibration &mdash; felt bass / LFE</h3><p>A dedicated <strong>sub-bass</strong> one octave below the body&rsquo;s bass line, with a push-to-feel level &mdash; felt on a sub, in headphones, or as Core Haptics. The physical, body-sonic dimension.</p></div>
+                    <div class="capability"><h3>Immersive 360° <span class="tag">Planned</span></h3><p>Multichannel render (5.1 / 7.1.4), true LFE, and a Vision Pro 360° scene are on the roadmap &mdash; the spatial object source already works today.</p></div>
                 </div>
             </div>
             <hr class="tool-divider">
@@ -205,10 +205,10 @@
                 </div>
                 <p class="tool-overview">However you produce, Echoel fits the workflow you already have:</p>
                 <div class="capability-list">
-                    <div class="capability"><h4>MIDI 2.0-ready in</h4><p>Universal MIDI Packets, parsing both MIDI 1.0 and 2.0. Notes and pitch bend play the built-in performer voice today &mdash; one monophonic voice, which takes priority over the breath envelope. Slide (CC&nbsp;74) opens that voice&rsquo;s filter and Press (channel pressure) swells it. Air-CC (CC&nbsp;21&ndash;31) is parsed and carried on the control bus, but no voice consumes it. Full MPE zone handling and per-note pressure are on the roadmap.</p></div>
-                    <div class="capability"><h4>Live MIDI out</h4><p>A virtual &ldquo;Echoelmusic&rdquo; MIDI&nbsp;1.0 source any DAW records live, created once you enable a MIDI route in the routing panel &mdash; carrying <strong>MPE output</strong> once you turn on the two MPE switches beside it. Native MIDI&nbsp;2.0 out and Ableton Link tempo sync are on the roadmap.</p></div>
-                    <div class="capability"><h4>Export your take</h4><p>WAV &mdash; drop the file straight into FL Studio, Logic or Ableton and keep working. Files are auto-named with artist &middot; date &middot; key &middot; BPM &middot; Kammerton, so a take lands in your DAW already labeled.</p></div>
-                    <div class="capability"><h4>OSC / ADM-OSC data out</h4><p>Stream live bio values (heart, breath, HRV, coherence) over OSC to any software, and the body as an immersive audio object over ADM-OSC. Open standards &mdash; no SDK lock-in.</p></div>
+                    <div class="capability"><h3>MIDI 2.0-ready in</h3><p>Universal MIDI Packets, parsing both MIDI 1.0 and 2.0. Notes and pitch bend play the built-in performer voice today &mdash; one monophonic voice, which takes priority over the breath envelope. Slide (CC&nbsp;74) opens that voice&rsquo;s filter and Press (channel pressure) swells it. Air-CC (CC&nbsp;21&ndash;31) is parsed and carried on the control bus, but no voice consumes it. Full MPE zone handling and per-note pressure are on the roadmap.</p></div>
+                    <div class="capability"><h3>Live MIDI out</h3><p>A virtual &ldquo;Echoelmusic&rdquo; MIDI&nbsp;1.0 source any DAW records live, created once you enable a MIDI route in the routing panel &mdash; carrying <strong>MPE output</strong> once you turn on the two MPE switches beside it. Native MIDI&nbsp;2.0 out and Ableton Link tempo sync are on the roadmap.</p></div>
+                    <div class="capability"><h3>Export your take</h3><p>WAV &mdash; drop the file straight into FL Studio, Logic or Ableton and keep working. Files are auto-named with artist &middot; date &middot; key &middot; BPM &middot; Kammerton, so a take lands in your DAW already labeled.</p></div>
+                    <div class="capability"><h3>OSC / ADM-OSC data out</h3><p>Stream live bio values (heart, breath, HRV, coherence) over OSC to any software, and the body as an immersive audio object over ADM-OSC. Open standards &mdash; no SDK lock-in.</p></div>
                 </div>
             </div>
             <hr class="tool-divider">
@@ -221,9 +221,9 @@
                 </div>
                 <p class="tool-overview">Music-making is still out of reach for many disabled, blind, Deaf and neurodivergent people. Echoel is built the other way round: the body is the controller, so making sound needs no fine motor skill, no notation, and no screen-reading of tiny dials.</p>
                 <div class="capability-list">
-                    <div class="capability"><h4>VoiceOver-first</h4><p>Labelled controls and bio readouts, designed to be played without turning VoiceOver off.</p></div>
-                    <div class="capability"><h4>Legibility &amp; motion safety</h4><p>Large legible numbers, high contrast, reduced-motion support, and a hard 3&nbsp;Hz flash ceiling (WCAG epilepsy safety).</p></div>
-                    <div class="capability"><h4>Private &amp; free</h4><p>Everything runs on your device. No accounts, no analytics, no third-party SDKs, no subscription &mdash; v1.0 is completely free.</p></div>
+                    <div class="capability"><h3>VoiceOver-first</h3><p>Labelled controls and bio readouts, designed to be played without turning VoiceOver off.</p></div>
+                    <div class="capability"><h3>Legibility &amp; motion safety</h3><p>Large legible numbers, high contrast, reduced-motion support, and a hard 3&nbsp;Hz flash ceiling (WCAG epilepsy safety).</p></div>
+                    <div class="capability"><h3>Private &amp; free</h3><p>Everything runs on your device. No accounts, no analytics, no third-party SDKs, no subscription &mdash; v1.0 is completely free.</p></div>
                 </div>
             </div>
             <hr class="tool-divider">
@@ -275,6 +275,6 @@
     </footer>
 
 
-    <script src="shared.js?v=10.23.2"></script>
+    <script src="shared.js?v=10.23.3"></script>
 </body>
 </html>

@@ -35116,3 +35116,57 @@ Befunde, unbenannte Bedienelemente 0. Checker alle 0.
 
 ⚠️ **Offen und ausdrücklich NICHT erledigt:** was VoiceOver wirklich ansagt, ist eine
 Geräteprobe. `docs/accessibility.html` verspricht dieses Verhalten; CI kann es nicht hören.
+
+## 2026-09-20 — #1399 Dreizehn Überschriften sprangen eine Ebene, eine beschriftete nichts
+
+**Gemessen** über `docs/*.html` (Kommentare, `<style>`, `<script>` herausgeschnitten): **313**
+Überschriften, davon **13 mit Ebenen-Sprung** — `h1→h3` auf claims, health, support; `h2→h4` auf
+accessibility, brainstorming, overview, tools — und **eine** leere Sektion: `integrations.html`s
+`<h2>What is not here</h2>` stand unmittelbar vor `<h2 id="osc-in">`, während der Absatz, der
+dazu geschrieben wurde (Motion, EEG, Live-Streaming — die drei Dinge, die diese Seite verneint),
+unter der Tabelle saß.
+
+**Warum es für einen Menschen zählt:** wer eine lange Seite per Screenreader nach Überschriften
+durchgeht, liest die EBENE als Gliederung. `h2→h4` sagt „Unter-Unterpunkt des letzten Dings" über
+Karten, die Geschwister sind; eine Überschrift, auf die sofort die nächste folgt, sagt „diese
+Sektion ist leer". Beides ist hier falsch. WCAG 1.3.1 / Technik H42 — beratend, nicht normativ,
+und genau deshalb überlebt es Audits, die nur die normative Liste abarbeiten.
+
+⚠️ **Die Reparatur ist das TAG, und das Tag zieht CSS mit.** Der Browser-Default für `h3` ist
+1,17 em gegen `h4`s 1 em und `h2`s 1,5 em — eine nackte Promotion vergrößert den Text um ~17 %
+(bzw. 50 %). Jede Container-Regel nennt jetzt BEIDE Tags und hat eine explizite `font-size`:
+`.feature-content`, `.warning-box`, `.contact-box` in `shared.css`; `.capability`, `.idea`,
+`.pillar`, `.engine-item` inline in ihren eigenen Seiten.
+
+⚠️ **Und eine Spezifitäts-Falle, wo die Zeit hinging.** `.subpage h2:not(.page-cta h2)` ist
+(0,2,2), `.warning-box h2` ist (0,1,1) — die Promotion eines Callout-`h3` zu `h2` hätte es der
+generischen Regel übergeben (uppercase, 2 px letter-spacing): ein Restyle, das niemand bestellt
+hat, ausgelöst von einer Accessibility-Reparatur. Die generische Regel trägt jetzt
+`:not(.warning-box h2):not(.contact-box h2)`.
+
+⭐ **GEMESSEN, NICHT GELESEN — und das ist die teure Hälfte.** `font-size`, `font-weight`,
+`color`, `text-transform`, `letter-spacing`, `margin-top`, `margin-bottom`, `line-height` und
+`font-family` aller 13 Überschriften, vorher und nachher, headless Chromium bei 1024 px:
+**NULL Unterschiede.** Die Gliederung ist repariert, das Bild ist Pixel für Pixel dasselbe.
+
+Die leere Sektion ist durch VERSCHIEBEN der Überschrift zu ihrem Inhalt repariert, nicht durch
+neue Kopie — der Absatz war schon da.
+
+Cache-Version 10.23.2 → **10.23.3**.
+
+**Wächter:** `Tests/CISmoke/TheHeadingOrderNeverSkipsALevelTests.swift`, 5 Ansprüche.
+Eltern `26ec1ee8d`: `c1=RED c2=RED c3=RED c4=RED c5=green` → Worktree alle grün.
+⚠️ **Ehrliche Beschriftung (#433): NUR c1 und c2 sind Regressionen.** c3 und c4 sind
+**FORWARD-Guards** — sie nennen CSS-Regeln, die dieser Commit erst schreibt, also konnten sie nie
+aus dem Grund rot sein, den ihr Name nennt. Sie als Regressionen zu buchen machte aus zwei
+Befunden vier. c5 ist das Gegengewicht (313 Überschriften, alle mit Text).
+
+Acht Mutanten: c1–c4 röten je genau ihren eigenen Anspruch (eine Karte zurück auf `h4`; eine
+Sektion so gespalten, dass zwei `h2` aufeinandertreffen; das alte Tag aus der geteilten ODER aus
+einer Seiten-Regel entfernt; ein `:not()` entfernt). **DREI Fehlalarm-Sonden bleiben grün** und
+sie sind der Entwurfs-Punkt: eine echte dritte Ebene (`h3` dann `h4`), ein `<h2>` in einem
+`<style>`-Kommentar, und ein `h2`, das eine Reihe `h3`-Karten einleitet — die Normalform jeder
+Seite hier.
+
+`docs/CLAUDE.md` §6c neu + ein Checklisten-Punkt. Reflow-Durchlauf danach unverändert (46
+Messungen, nur `og-image.html`). Checker alle 0.

@@ -208,6 +208,34 @@ Re-derive the whole sweep from anywhere with a browser: load each page at 390 an
 compare `document.documentElement.scrollWidth` against `clientWidth`. After this commit only
 `og-image.html` differs.
 
+## 6c. Heading order, and why promoting a tag is a CSS change too
+
+⛔ **Measured 2026-09-20 (#1399): 13 headings on the site skipped a level** — `h1 → h3` on
+claims, health and support; `h2 → h4` on accessibility, brainstorming, overview and tools — and
+one `<h2>` on `integrations.html` ("What is not here") was immediately followed by another with
+nothing between, i.e. it labelled an empty section while the paragraph written for it sat below
+the table. A screen-reader user navigates a long page by heading, and the LEVEL is the outline:
+`h2 → h4` says "sub-sub-point of the last thing" about cards that are peers.
+
+**The repair is the tag, and the tag drags the CSS with it.** A browser's default `h3` is 1.17 em
+against `h4`'s 1 em and `h2`'s 1.5 em, so a bare promotion grows the text ~17 % (or 50 %). Every
+container rule was widened to name BOTH tags and given an explicit `font-size`:
+`.feature-content`, `.warning-box`, `.contact-box` in `shared.css`; `.capability`, `.idea`,
+`.pillar`, `.engine-item` inline in their own pages (§6 again — the split is real).
+
+⚠️ **And one specificity trap, which is where the time went.** `.subpage h2:not(.page-cta h2)`
+is (0,2,2); `.warning-box h2` is (0,1,1). Promoting a callout's `h3` to `h2` therefore handed it
+to the generic rule — uppercase, 2 px letter-spacing — a restyle nobody asked for, caused by an
+accessibility fix. The generic rule now carries `:not(.warning-box h2):not(.contact-box h2)`.
+
+**Verified by measuring, not by reading:** computed `font-size`, `font-weight`, `color`,
+`text-transform`, `letter-spacing`, `margin-top`, `margin-bottom`, `line-height` and
+`font-family` for all 13 headings, before and after, in headless Chromium at 1024 px — **zero
+differences.** Guard: `Tests/CISmoke/TheHeadingOrderNeverSkipsALevelTests.swift`.
+
+⚠️ `h4` is NOT banned. A genuine third level under an `h3` is correct and the guard passes it;
+so does an `h2` introducing a row of `h3` cards, which is the normal shape of every page here.
+
 ## 7. Before you commit a change here
 
 - [ ] Copy checked against `ContentPipeline/CLAIMS.md`. No wellness / healing / esoteric framing,
@@ -220,6 +248,9 @@ compare `document.documentElement.scrollWidth` against `clientWidth`. After this
       the fixed header off a phone screen, silently.
 - [ ] If you touched reflow-relevant CSS, re-measure `scrollWidth` vs `clientWidth` at 390 and
       320 px on every page, not only the one you edited (§6b).
+- [ ] If you added a heading, its level is at most one deeper than the heading before it, and it
+      has content under it (§6c). Promoting a tag needs the container's CSS rule widened and its
+      `font-size` pinned, or the text silently grows.
 - [ ] German legal pages (`impressum.html`, `privacy.html`, `terms.html`) are legal text, not
       marketing copy. Do not rewrite them for tone.
 - [ ] Neither CI gate runs for a docs-only commit — both are `paths:`-filtered to `Sources/**`,

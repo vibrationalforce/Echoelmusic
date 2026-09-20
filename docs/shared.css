@@ -188,7 +188,12 @@ code, kbd, samp { overflow-wrap: anywhere; }
 .subpage-summary strong { color: var(--text); }
 
 .subpage section { margin-bottom: 32px; }
-.subpage section h2, .subpage h2:not(.page-cta h2) { color: var(--text); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; font-weight: 700; }
+/* #1399 — the two exclusions are the PRICE of promoting a callout heading to h2: this rule
+   is (0,2,2) and would otherwise beat `.warning-box h2` (0,1,1) on letter-spacing and
+   transform, i.e. the promotion would silently restyle two boxes. `:not(.page-cta h2)`
+   was already here and is the same idiom. */
+.subpage section h2:not(.warning-box h2):not(.contact-box h2),
+.subpage h2:not(.page-cta h2):not(.warning-box h2):not(.contact-box h2) { color: var(--text); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; font-weight: 700; }
 .subpage p { color: var(--dim); line-height: 1.7; margin-bottom: 12px; }
 .subpage ul { padding-left: 20px; margin-bottom: 16px; }
 .subpage li { color: var(--dim); margin-bottom: 8px; line-height: 1.6; }
@@ -198,13 +203,13 @@ code, kbd, samp { overflow-wrap: anywhere; }
 
 /* Warning / Info boxes */
 .warning-box { margin: 24px 0; }
-.warning-box h3 { color: var(--text); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+.warning-box h2, .warning-box h3 { color: var(--text); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; font-size: 1.17em; }
 .warning-box p { color: var(--dim); line-height: 1.7; margin-bottom: 12px; }
 .warning-box strong { color: var(--text); }
 
 /* Contact box */
 .contact-box { text-align: center; margin-top: 40px; }
-.contact-box h3 { margin-bottom: 12px; }
+.contact-box h2, .contact-box h3 { margin-bottom: 12px; font-size: 1.17em; text-transform: none; letter-spacing: normal; }
 .contact-box p { color: var(--dim); margin-bottom: 12px; line-height: 1.6; }
 .contact-box a, .contact-box a:visited { color: var(--text); text-decoration: none; font-weight: 600; }
 .contact-box a:hover { text-decoration: underline; }
@@ -255,7 +260,13 @@ code, kbd, samp { overflow-wrap: anywhere; }
 .feature-list { display: grid; gap: 12px; }
 .feature-item { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; }
 .feature-icon { width: 24px; height: 24px; color: var(--text); flex-shrink: 0; margin-top: 2px; }
-.feature-content h4 { margin-bottom: 4px; color: var(--text); }
+/* #1399 — the tag moved one level UP for heading order (WCAG 1.3.1 / H42: a screen-reader
+   user navigating by heading must not fall through a level). The old tag is kept in the
+   selector so a page that has not been converted still renders identically, and the
+   explicit `font-size` is what makes the promotion INVISIBLE: a browser's default h3 is
+   1.17em and h4 is 1em, so without it every promoted card heading would grow ~17 %%.
+   Measured before and after in headless Chromium — see TheHeadingOrderNeverSkipsALevelTests. */
+.feature-content h3, .feature-content h4 { margin-bottom: 4px; color: var(--text); font-size: 1em; }
 .feature-content p { color: var(--dim); line-height: 1.5; margin-bottom: 0; }
 
 .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
