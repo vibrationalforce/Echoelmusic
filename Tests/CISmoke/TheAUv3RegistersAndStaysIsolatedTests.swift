@@ -24,7 +24,10 @@
 //
 // ⛔ AND IT IS NOT "THE PLUGIN WORKS" (#367). It cannot be. Nothing here proves the extension
 // INSTANTIATES: `EchoelmusicAUv3.entitlements` records that it once returned -3000
-// invalidComponentID in every host, and that question is open — `FOUNDER_DEVICE_SESSION.md` §2b.
+// invalidComponentID in every host. ANSWERED for AUM on 2026-09-20 (#1386): a founder
+// recording on build 2595 shows it listed, instantiating, its UI rendering and audio out —
+// so dropping the entitlement WAS the fix. Logic and GarageBand stay unproven.
+// `FOUNDER_DEVICE_SESSION.md` §2b carries the measurement.
 // A guard that implied otherwise would be the more expensive error, because the host claim is a
 // 2.3 rejection in the App Store text and three cycles (#158, #192, #184) were already spent
 // removing it.

@@ -225,8 +225,10 @@ There are no audio-clip doors — that surface went with the DAW removal. AUv3 h
 gone (#121 Slice 2) — ⭐ **aber Echoel IST seit #1385 wieder ein AUv3-Instrument (Target
 `EchoelmusicAUv3`, `aumu`/`echl`, reines Swift, in die App eingebettet); es HOSTET nur nichts.**
 Wer die zwei verwechselt, baut einen Plugin-Wirt, den der Founder gestrichen hat, oder löscht
-ein Target, das er zurückbestellt hat. ⚠️ „Läuft in Logic/AUM" ist NICHT freigegeben — ob iOS
-die Extension startet, ist seit dem `-3000`-Befund offen (`FOUNDER_DEVICE_SESSION.md` §2b). The old Section/Tools table stood here until 2026-07-04; do not
+ein Target, das er zurückbestellt hat. ⭐ **Es LÄDT — in AUM, gerätegemessen 2026-09-20 (#1386): die
+`-3000`-Frage ist für EINEN Host beantwortet.** ⚠️ „Läuft in Logic/GarageBand" bleibt NICHT
+freigegeben: ein Gerätelauf beweist EINEN Host. Messung und Nebenbefunde:
+`FOUNDER_DEVICE_SESSION.md` §2b. The old Section/Tools table stood here until 2026-07-04; do not
 resurrect it as fact.
 
 ---

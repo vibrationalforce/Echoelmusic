@@ -100,21 +100,33 @@ nächste Sitzung liest die falsche Begründung, prüft sie, findet sie widerlegt
 dann auch den Teil, der weiterhin gilt. Deshalb steht er jetzt in **zwei** Hälften, die
 getrennt altern können.
 
-**a) Echoel IST ein AUv3-Instrument — aber der Host-Claim ist ungeprüft, nicht wahr.**
-Das Target `EchoelmusicAUv3` existiert wieder (`aumu`, subtype `echl`, „Echoelmusic:
-EchoelBodyVibe"), es ist reines Swift ohne jede Abhängigkeit, es kompiliert und wird in die
-App eingebettet. **Was fehlt, ist der Beweis, dass iOS die Extension STARTET.**
-`EchoelmusicAUv3.entitlements` hält fest, dass das Instanziieren am 2026-07-19 in JEDEM Host
-mit `-3000 invalidComponentID` scheiterte; die vermutete Ursache (ein App-Group-Entitlement,
-das die App-ID nicht trägt) wurde entfernt, aber **nie nachgemessen** — fünf Tage später war
-das Target gelöscht. Die Probe steht als `scratchpads/FOUNDER_DEVICE_SESSION.md` §2b.
-**Bis sie beantwortet ist: kein „läuft in Deiner DAW", nirgends** — nicht im Store-Text, nicht
-auf der Website, nicht in einer Caption. Gepinnt von
-`TheStandingPromptDescribesThisRepoTests.testNoRoutineClaimsAUv3HostCompatibility`, dessen
-Fehlermeldung genau diese Unterscheidung trägt. „Kompiliert und ist eingebettet" ist nicht
-„lädt in Logic". Das ist im App-Store-Text der Unterschied zwischen einer Zeile und einer
-2.3-Ablehnung — #158, #192 und #184 haben je einen ganzen Zyklus mit dem Entfernen dieses
-Claims verbracht.
+**a) Echoel IST ein AUv3-Instrument, und es LÄDT — in AUM, am Gerät, gemessen am
+2026-09-20 (#1386).** Das Target `EchoelmusicAUv3` existiert wieder (`aumu`, subtype `echl`,
+„Echoelmusic: EchoelBodyVibe"), reines Swift ohne jede Abhängigkeit, kompiliert und
+eingebettet. Der Founder hat auf Build 2595 (v10.79.475) eine Bildschirmaufnahme geliefert,
+und sie beantwortet die `-3000`-Frage, an der das Target 2026-07 gestorben ist: unter
+`AUDIO UNIT EXTENSION → ECHOELMUSIC` steht `EchoelBodyVibe · INSTRUMENT PLUGIN (AU)`, es
+instanziiert, die Plugin-Oberfläche („Echoelmusic · Bio-Reactive Instrument", vier Regler)
+rendert, und Ton kommt. **Die App-Group-Hypothese war richtig** — das Entfernen des
+Entitlements ist die Reparatur, und sie ist jetzt nachgemessen statt vermutet.
+
+⚠️ **WAS DAMIT NICHT BEWIESEN IST, und die Grenze ist eng zu ziehen: EIN Host, nicht jeder.**
+Geprüft ist AUM. **Logic Pro und GarageBand sind unverändert ungeprüft**, und GarageBand ist
+der interessantere Fall, weil er auf 44,1 kHz läuft (Board A10). Was in einer Caption stehen
+darf, ist also **„läuft in AUM"** — nicht „läuft in Deiner DAW" und nicht „in Logic".
+Gepinnt von `TheStandingPromptDescribesThisRepoTests.testNoRoutineClaimsAUv3HostCompatibility`,
+dessen Host-Liste seit #1386 genau die zwei UNGEPRÜFTEN nennt: ein Wächter, der eine
+inzwischen wahre Aussage verbietet, ist selbst der Defekt (#364). Im App-Store-Text bleibt
+der Unterschied zwischen einer Zeile und einer 2.3-Ablehnung — #158, #192 und #184 haben je
+einen ganzen Zyklus mit dem Entfernen dieses Claims verbracht.
+
+⚠️ **ZWEI MESSWERTE AUS DERSELBEN AUFNAHME, die eine Caption nicht verschweigen darf, wenn
+sie das Plugin verkauft.** (1) **Die Tonhöhe stimmt bei 48 kHz** — der freilaufende Grundton
+misst 220,15 Hz gegen den Default von 220 Hz, also +1,2 Cent; das WIDERLEGT den
+44,1-kHz-Befund nicht, es bestätigt seine Form (richtig genau dann, wenn die Hostrate der
+fest genagelten entspricht). (2) **Eine Instanz kostet in AUM rund 20 Prozentpunkte
+DSP-Anzeige** (1 % leer → 19–24 % mit einer Instanz). „Läuft neben Deinem ganzen Set" ist
+damit keine belegte Aussage.
 
 **b) Echoel lädt KEINE fremden Plugins. Diese Hälfte ist nicht zurückgekommen und steht nicht
 zur Debatte.** Das AUv3-*Hosting* ging mit #121 Slice 2 und bleibt gestrichen: Echoel ist ein

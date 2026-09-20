@@ -34306,3 +34306,69 @@ Acht Prüfer exit 0. Die vier Ansprüche von `TheDeployNoteNamesRealDoorsTests` 
 Zeile-1-Ableitung von `TheShippedVersionComesFromTheReleaseFileTests` sind gegen die
 editierte Datei transkribiert (Pfad-Marken: nur `Master` und `Save/Export`, beide echte
 Chips).
+
+## 2026-09-20 — #1386: der AUv3 LÄDT (Founder-Aufnahme), und ein Wächter war dabei rot, ohne dass es jemand sehen konnte
+
+**Der Founder hat eine 26-s-Bildschirmaufnahme aus AUM geschickt, ohne Begleittext.** Sie
+beantwortet die Frage, an der das AUv3-Target 2026-07 gestorben ist.
+
+**GEMESSEN, nicht geschätzt** (`watch-clip`: `imageio-ffmpeg`-Wheel, Kontaktbogen 5×6 plus
+Einzelbilder in voller Auflösung, Tonspur als WAV):
+
+- `AUDIO UNIT EXTENSION → ECHOELMUSIC → EchoelBodyVibe · INSTRUMENT PLUGIN (AU)` — registriert.
+- **Instanziiert.** Kanal `1: EchoelBodyVibe`, kein Fehler. **Damit ist die App-Group-Hypothese
+  aus `EchoelmusicAUv3.entitlements` BESTÄTIGT** — das ersatzlose Streichen WAR die Reparatur.
+- Oberfläche rendert („Echoelmusic / Bio-Reactive Instrument", vier Regler auf 50 %).
+- Ton: Master-Meter `-∞` → `-10…-12 dBFS`.
+- **Tonhöhe: 220,15 Hz** (FFT, Sekunden 5–8, N=131072, Hann, parabolisch interpoliert) gegen
+  den 220-Hz-Default = **+1,2 Cent**. Plus Harmonische 440,3 / 660,5 / 880,9 und ein Teilton
+  bei **110,0 Hz**, der die Textur-Stimme ist (`texture.frequency = value * 0.5`).
+
+⭐ **DIE 48-kHz-FRAGE IST DAMIT NICHT WIDERLEGT, SONDERN IN IHRER FORM BESTÄTIGT.** Die
+Tonhöhe stimmt genau dann, wenn die Hostrate der fest genagelten entspricht; AUM läuft auf
+48 kHz. GarageBand (44,1 kHz) bleibt die offene Probe. **Eine Messung, die eine Vorhersage
+NICHT prüfen konnte, ist keine Bestätigung der Vorhersage — aber sie ist auch keine
+Widerlegung, und die bequeme Lesart wäre die zweite gewesen.**
+
+**ZWEI BEFUNDE, die vorher als UNGEMESSEN auf dem Board standen, haben jetzt Zahlen:**
+A11 (CPU) = **1 % ohne Plugin, 19–24 % mit EINER Instanz** in AUMs DSP-Anzeige, ohne
+gespielte Note. Größenordnung, kein Xcode-Profil — reicht aber für die Entscheidung: vier
+Instanzen wären das Gerät. A12 (neu) = **das Plugin klingt, sobald es geladen ist**
+(`allocateRenderResources()` armt den freilaufenden Ton). In der App richtig, im Fremd-Host
+eine FOUNDER-Entscheidung, keine Reparatur — nicht einseitig geändert.
+A13 (neu) = der Founder hat es in AUMs Liste **MIDI PROCESSORS** gesucht; dort kann ein `aumu`
+nicht stehen. Genau der `aumi`-Posten, und er braucht kein neues Target.
+
+⛔ **UND DER TEURE TEIL: `TheWorkBoardDoesNotQueueDeletedSurfacesTests` Anspruch 1 war seit
+#1385 ROT auf korrektem Baum.** Seine `deletedSurfaces`-Liste enthielt `"AUv3"`, und #1385 hat
+im selben Commit eine WARTENDE Board-Zeile (A10) angelegt, die genau das Wort trägt.
+Transkribiert gegen `HEAD`: 18 lebende Zeilen, **1 Treffer**. Der Wächter hatte diesen Fall in
+seinem eigenen Kopf vorhergesagt („If clips, the roll or an AUv3 target come back … this guard
+then goes red and says so, which is the correct moment to re-open that row") — die Nadel ist
+jetzt entfernt, mit Begründung an Ort und Stelle.
+
+⭐ **GESETZ: eine Negativ-Pin in einer Datei zurückzunehmen ist NICHT, die Negativ-Pins der
+Datei zurückzunehmen.** #1385 hat die AUv3-Pin aus **Anspruch 2** genommen (dem
+`Sources/`-Scan) und im Commit-Text „die Negativ-Pin" gemeldet — wahr für einen Anspruch,
+falsch für die Datei. **Eine Löschung, die einen NAMEN freigibt, muss jede Nadel fegen, die
+ihn buchstabiert; und der einzige Weg, das zu wissen, ist den Wächter zu FAHREN, nicht den
+Diff zu lesen.** Gefunden beim Einarbeiten einer Gerätemessung, nicht von einem Häkchen —
+dieselbe Gestalt wie #1360, und aus demselben Grund unsichtbar (#396 macht `Run Tests` auf
+jedem Push rot, #807 zeigt nur die letzten 200 Zeilen).
+
+**Prosa in ALLEN Zuhausen mitgezogen (#456):** `CLAUDE.md` (die „NICHT freigegeben"-Zeile —
+auf Gesetz gekürzt, 149.676 B / 324 B Kopfraum), `ContentPipeline/CLAIMS.md` §1a (Host-Claim
+ist jetzt „AUM ja, Logic/GarageBand nein" plus die zwei Messwerte),
+`FOUNDER_DEVICE_SESSION.md` §2b (beantwortet, mit den offenen Resten),
+`BAUSTELLEN_BOARD.md` A10/A11/A12/A13, der Kopfkommentar von
+`TheAUv3RegistersAndStaysIsolatedTests`.
+
+**Wächter-Änderung mit Mutanten belegt:** `testNoRoutineClaimsAUv3HostCompatibility` verliert
+**nur AUM** aus seiner Host-Liste (#364 — ein Wächter, der eine wahre Aussage verbietet, ist
+selbst der Defekt). Gefahren: Kontrolle grün, Mutant „AUv3+AUM" jetzt ERLAUBT (Absicht),
+Mutanten „AUv3+Logic Pro" und „AUv3+GarageBand" weiterhin ROT. Board-Wächter: Kontrolle
+grün (20 lebende Zeilen, 0 Treffer), Mutant mit `launchGlyphOverlay` in einer lebenden Zeile
+ROT.
+
+Acht Prüfer exit 0. Nichts in `Sources/` — kein neuer Build nötig, `.deploy/release` bleibt
+unberührt.

@@ -9,6 +9,10 @@
 // name — including A1, the FIRST row a session would pull. Measured 2026-08-25:
 // `git grep -l launchGlyphOverlay -- Sources` → 0, `git grep -n "RollChordStamp(" -- Sources` → 0
 // construction sites, no AUv3 target in `project.yml`, no clip-editor door.
+// ⛔ THE AUv3 HALF OF THAT MEASUREMENT EXPIRED on 2026-09-20 (#1385): `project.yml` carries
+// the `EchoelmusicAUv3` target again. The 2026-08-25 reading stays as the record of WHEN it
+// was true — the needle it justified is gone (see `deletedSurfaces`), the sentence is not
+// rewritten, because a dated measurement is a date and not a standing claim.
 //
 // ⭐ SAME DEFECT CLASS AS #816, ONE LEVEL UP. That slice fixed a checklist that spent the
 // founder's DEVICE time on impossible probes. This one is a queue that spends a SESSION's cycle
@@ -43,8 +47,26 @@ final class TheWorkBoardDoesNotQueueDeletedSurfacesTests: XCTestCase {
 
     /// Spelled the way the BOARD spells them, not the way the code does — every one is driven
     /// against the pre-#819 board and matches there.
+    ///
+    /// ⭐ `"AUv3"` LEFT THIS LIST ON 2026-09-20 (#1386), and the removal is this guard's own
+    /// written instruction being followed, not a weakening of it. The header says: *"If clips,
+    /// the roll or an AUv3 target come back … this guard then goes red and says so, which is
+    /// the correct moment to re-open that row."* #1385 brought the target back AND added a
+    /// waiting row (A10) that names it — so claim 1 was RED on a correct tree from that commit
+    /// onward. A surface that exists cannot be queued "impossibly"; keeping the needle would
+    /// forbid the board from tracking live work (#364).
+    ///
+    /// ⚠️ THE PART WORTH KEEPING IS HOW LONG IT STAYED INVISIBLE. `Run Tests` reports failure
+    /// on EVERY push (#396) and the job log is `tail -200` (#807), so a red claim here is not
+    /// something a gate reading can surface. #1360 was the same shape (a genre gained a lead
+    /// voice, the guard denying it went red, nobody saw it) — and #1385's own commit message
+    /// says it retired "the negative pin" of THIS file, which was true of a different claim
+    /// and left this needle standing. **Retiring one negative pin in a file is not retiring
+    /// the file's negative pins**: the deletion that frees a name has to sweep every needle
+    /// that spells it, and the only way to know is to DRIVE the guard, not to read the diff.
+    /// Found by transcription while folding a device measurement into A10/A11.
     private static let deletedSurfaces = [
-        "AUv3", "launchGlyphOverlay", "Audio-Clip-Editor",
+        "launchGlyphOverlay", "Audio-Clip-Editor",
         "RollChordStamp", "Velocity-Lane", ".patch(lane)"
     ]
 

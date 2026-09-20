@@ -89,7 +89,70 @@ stattgefunden hat.** Bis Marker existieren, ist das hier ihr Zuhause.
 
 ---
 
-## 2b · AUv3 „EchoelBodyVibe" im Fremd-Host — die EINE Frage, die kein Test beantworten kann
+## 2b · AUv3 „EchoelBodyVibe" im Fremd-Host — ✅ **BEANTWORTET für AUM am 2026-09-20 (#1386)**
+
+⭐ **ES LÄDT.** Der Founder hat auf Build 2595 (v10.79.475) eine 26-Sekunden-Bildschirmaufnahme
+aus **AUM** geliefert, und sie beantwortet die `-3000`-Frage, an der dieses Target im Juli
+gestorben ist. Gemessen aus den Einzelbildern und der Tonspur der Aufnahme:
+
+- **Registrierung:** `AUDIO UNIT EXTENSION → ECHOELMUSIC → EchoelBodyVibe · INSTRUMENT PLUGIN (AU)`,
+  mit dem Echoel-Icon. (War nie das Problem — hier nur der Vollständigkeit halber.)
+- **Instanziierung: ERFOLGREICH.** Kanal `1: EchoelBodyVibe` entsteht, kein Fehler, kein leerer
+  Slot. **Damit ist die App-Group-Hypothese aus `EchoelmusicAUv3.entitlements` BESTÄTIGT** —
+  das ersatzlose Streichen des Entitlements IST die Reparatur, und sie ist jetzt nachgemessen
+  statt vermutet.
+- **Oberfläche: rendert.** Kopf „Echoelmusic / Bio-Reactive Instrument", Gruppe `BIO-REACTIVE`
+  mit vier Reglern (Coherence · HRV · Heart Rate · Breath), alle auf 50 %.
+- **Ton: kommt.** Master-Meter geht von `-∞` auf `-10 … -12 dBFS`.
+- **Tonhöhe bei 48 kHz: RICHTIG.** FFT über die stabilen Sekunden 5–8 der Tonspur (44,1 kHz,
+  131 072 Punkte, Hann, parabolisch interpoliert): Grundton **220,15 Hz** gegen den
+  `baseFrequency`-Default von **220 Hz** = **+1,2 Cent**. Dazu die erwartete Harmonischenreihe
+  (440,3 · 660,5 · 880,9) und ein Teilton bei **110,0 Hz**, der die Textur-Stimme ist
+  (`texture.frequency = value * 0.5`).
+
+⚠️ **WAS DAS NICHT BEWEIST — EIN Host, nicht jeder.** Logic Pro und GarageBand sind unverändert
+ungeprüft. Die offenen Häkchen dafür stehen unten. Der Wächter
+`TheStandingPromptDescribesThisRepoTests.testNoRoutineClaimsAUv3HostCompatibility` hat deshalb
+mit #1386 nur **AUM** aus seiner Host-Liste verloren, nicht die Liste.
+
+### Was JETZT noch offen ist
+
+- [ ] **GarageBand iOS (44,1 kHz) — die Tonhöhen-Probe.** Board A10 sagt ~8,8 % zu hoch voraus,
+      und die AUM-Messung oben hat diese Vorhersage **gestützt, nicht widerlegt**: richtig genau
+      dann, wenn die Hostrate der fest genagelten entspricht. Klingt es dort hörbar zu hoch?
+      *(Wenn ja: erwarteter Befund, keine Regression. Wenn NEIN: dann folgt der Synth dem
+      Host-Format doch irgendwo, und A10 ist falsch analysiert — das wäre die interessantere
+      Antwort.)*
+- [ ] **Logic Pro (iPad/Mac), falls verfügbar** — lädt es dort?
+- [ ] **Noten spielen.** In der Aufnahme wurde keine Taste gedrückt; gehört hat man den
+      freilaufenden Grundton. Offen bleibt also der MIDI-Pfad: Tasten → Tonhöhe folgt?
+
+### ⛔ ZWEI BEFUNDE AUS DERSELBEN AUFNAHME, die vorher UNGEMESSEN waren
+
+1. **CPU (Board A11) hat eine Zahl: rund 20 Prozentpunkte für EINE Instanz.** AUMs
+   DSP-Anzeige liest **1 %** ohne Plugin und **19–24 %** mit genau einer Instanz, ohne dass
+   eine Note gespielt wird. Das ist hoch — vier Instanzen wären das Gerät. Die billige
+   Abhilfe bleibt `textureAmount` per Default auf 0; die richtige ist Vektorisierung.
+   ⚠️ Die Zahl ist AUMs Anzeige bei DESSEN Puffergröße, kein Xcode-Profil — sie ist ein
+   Größenordnungs-Befund, kein Messwert für das Budget in `CLAUDE.md`.
+2. **Das Plugin klingt, SOBALD es geladen ist — ohne Note, ohne Transport.** Das ist so
+   gebaut (`allocateRenderResources()` ruft `synth.noteOn(frequency: baseFreqParam.value)`,
+   und der Render-Block sagt es selbst: *„With NO note event … the free-running bio tone
+   armed in allocateRenderResources keeps playing"*). In einem Host ist das eine
+   **Entscheidung, kein Fehler** — aber eine, die der Founder treffen muss: Spur anlegen →
+   sofort Drone bei −10 dBFS. Konventionell schweigt ein Instrument, bis eine Note kommt.
+   Eine Alternative wäre, den Ton erst bei der ersten Note oder beim ersten Transport-Start
+   zu armen. **Nicht einseitig geändert.**
+
+⚠️ Die Aufnahme zeigt außerdem, dass der Founder EchoelBodyVibe in AUMs Liste
+**MIDI PROCESSORS** gesucht hat. Dort steht es nicht und kann es nicht stehen: es ist ein
+`aumu` (Instrument), kein `aumi` (MIDI-Prozessor). Das ist genau die zweite Komponente, die
+aus derselben Extension vendbar wäre (`AudioUnitViewController` erfüllt bereits
+`AUAudioUnitFactory`) — eigener Posten, kein neues Target.
+
+---
+
+### Der ursprüngliche Auftrag, als Protokoll (Stand #1385, vor der Messung)
 
 **Neu am 2026-09-20 (#1385).** Das AUv3-Target ist zurück (Founder-Auftrag, ohne JUCE — es war
 schon immer reines Swift). Es kompiliert und wird in die App eingebettet. Was **nicht** bewiesen

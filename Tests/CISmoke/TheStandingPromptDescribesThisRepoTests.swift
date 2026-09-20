@@ -98,10 +98,11 @@ final class TheStandingPromptDescribesThisRepoTests: XCTestCase {
     ///
     /// Naming AUv3 is allowed and necessary — the corrected file lists it under "not this
     /// product, on purpose", exactly so a routine does not propose rebuilding it. What is
-    /// forbidden is naming it **together with a host**, which is only ever written to
-    /// claim compatibility.
+    /// forbidden is naming it **together with an UNPROVEN host**, which is only ever written
+    /// to claim compatibility. The list is the hosts nobody has run it in; AUM left it on
+    /// 2026-09-20 (#1386) because a device recording answered that one.
     func testNoRoutineClaimsAUv3HostCompatibility() throws {
-        let hosts = ["Logic Pro", "GarageBand", "AUM"]
+        let hosts = ["Logic Pro", "GarageBand"]
         let offenders = try scan { text in
             text.contains("AUv3") && hosts.contains(where: { text.contains($0) })
         }
@@ -109,18 +110,21 @@ final class TheStandingPromptDescribesThisRepoTests: XCTestCase {
         XCTAssertTrue(offenders.isEmpty, """
             A routine prompt names AUv3 alongside a host DAW: \(detail).
 
-            ⚠️ THE REASON CHANGED ON 2026-09-20 (#1385) AND THE PROHIBITION DID NOT. Until \
-            then this claim was FALSE — there was no AUv3 target. It is now UNVERIFIED, which \
-            is a different thing and still not claimable: the target is back, but the one \
-            device question about it has never been answered. \
-            `EchoelmusicAUv3.entitlements` records that instantiating it returned -3000 \
-            invalidComponentID in EVERY host; dropping the App-Group entitlement is the \
-            HYPOTHESISED fix and was never confirmed, because the target was deleted before \
-            anyone re-tested it. "It compiles and embeds" is not "it loads in Logic". \
-            #158, #192 and #184 each spent a whole cycle deleting this exact claim from the \
-            website and the App Store text, where a false one is a 2.3 rejection — do not \
-            re-introduce it on a hypothesis. Lift this only after a founder device run says \
-            EchoelBodyVibe actually instantiated.
+            ⚠️ THE REASON HAS CHANGED TWICE AND THE HOST LIST SHRANK WITH IT. Until \
+            2026-09-20 the claim was FALSE (no target). #1385 made it UNVERIFIED (target \
+            back, device question open). #1386 ANSWERED it for ONE host: the founder's \
+            screen recording on build 2595 shows EchoelBodyVibe listed under \
+            AUDIO UNIT EXTENSION > ECHOELMUSIC in AUM, instantiating, its UI rendering and \
+            audio coming out at 220.15 Hz against a 220 Hz default. So "AUM" came OUT of \
+            this list — a guard that forbids a now-true statement is itself the defect \
+            (#364). \
+            Logic Pro and GarageBand stay in, and NOT as a formality: one device run \
+            proves one host. GarageBand is the sharper case because it runs at 44.1 kHz \
+            while this plugin is pinned to 48 kHz (board A10), so the pitch that measured \
+            correct in AUM is EXPECTED to be ~8.8 % sharp there. \
+            #158, #192 and #184 each spent a whole cycle deleting this exact claim from \
+            the website and the App Store text, where a false one is a 2.3 rejection. \
+            Take a host out of this list only when a device run named THAT host.
             """)
     }
 
