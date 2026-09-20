@@ -34515,3 +34515,21 @@ artnet-sacn 164). Der zuständige Wächter prüft nur `index.html` und `overview
 das keine Regression — aber Suchergebnisse schneiden dort ab. Eigene Scheibe.
 
 CLAUDE.md unberührt (149 676 B, 324 B Kopfraum).
+
+### Gate-Lesung 9c590cf4c (#1389) — GRÜN
+
+| Gate | Ergebnis |
+|---|---|
+| `Xcode Compile Check` (beide Schemata, `Echoelmusic` + `EchoelmusicAUv3`) | **success** |
+| CI/CD → **`Build for Testing`** (Schritt 9, 09:38:14→09:42:00) | **success** ← das entscheidende |
+| CI/CD → SwiftLint · Swift Format Check · Build Guard Pattern Check · TODO/FIXME | success |
+| Security Vulnerability Scan | success |
+| ⚡ Quick Test · Auto-Merge Claude · Auto-Merge Docs | success |
+| CI/CD → `Run Tests` | scheitert wie bei JEDEM Push (#396) — sagt nichts |
+
+`Build for Testing` grün heißt: die 542 Wächter-Dateien inklusive
+`TheClaimsPageCoversEveryDenialTests` und der drei neuen Ansprüche in
+`WebsitePagesAreFindableAndHonestTests` kompilieren. Die INHALTE sind per
+Python-Transkription benotet (21 Seiten, 0 rot; fünf Mutanten, alle fünf rot) —
+⚠️ und das bleibt die #396/#807-Lücke: ein roter Wächter auf korrektem Baum wäre
+hier unsichtbar. Genau der Befund, der diese Sitzung zweimal Arbeit gekostet hat.
