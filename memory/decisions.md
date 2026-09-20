@@ -2241,3 +2241,37 @@ das Symbol löschte.
 - **Founder-Bestätigung schließt die #1348-Frage:** „Alles läuft einwandfrei" — der 2592-Teil
   des Logs war ein Export-Schnappschuss, kein Tod bei `init e`. Der Absturz im Log stammt aus
   v10.79.469/2589 und liegt auf einem mit #1302 gelöschten Pfad.
+
+### 2026-09-20 — #1396–#1400: eine Website-Behauptung wird GERENDERT geprüft, nicht gelesen
+
+**Entscheidung:** jede Aussage über die Website (Kontrast, Erreichbarkeit, Reflow, Gliederung)
+wird in einem echten Browser gegen den AUSGELIEFERTEN Baum gemessen, bevor sie behauptet oder
+repariert gilt. Quelltext-Lesen zählt als Hinweis, nie als Messung.
+
+**Warum, mit vier bezahlten Belegen aus einer einzigen Runde** — kein einziger davon war im
+Quelltext zu sehen, und drei davon sahen im Quelltext ausdrücklich RICHTIG aus:
+- **#1396** — der Skip-Link rendert `#e0e0e0` auf `#e0e0e0`, Verhältnis **1,00**, auf 20 Seiten;
+  die Regel steht drei Zeilen über dem Reset, der sie schlägt. Spezifität ist unsichtbar
+  (`a:link` (0,1,1) gegen `.skip-link` (0,1,0)). Es ist das ERSTE Element, das ein Tastatur-
+  oder Switch-Control-Nutzer erreicht.
+- **#1397** — auf `integrations.html` saß der Burger-Knopf bei 390 px bei x = 467…507, also
+  komplett außerhalb des Schirms: EINE Tabelle ohne Klasse zog die fixierte Leiste auf 531 px
+  (`overflow-x: hidden` auf `body` propagiert an den Viewport und vergrößert den ICB, aus dem
+  ein `position: fixed`-Kasten seine Breite nimmt). Am Telefon hatte die Seite keine Navigation
+  — und die Bildlaufleiste, die es verraten hätte, war vom selben `hidden` geschluckt.
+- **#1398** — 29 von 67 Grafiken erreichten einen Screenreader als namenlose Marke.
+- **#1399** — 13 Überschriften sprangen eine Ebene; die Reparatur ist das TAG und zog CSS mit
+  (Browser-Default `h3` 1,17 em gegen `h4` 1 em), also wurden neun berechnete Eigenschaften
+  aller 13 vorher/nachher gemessen: **null** Unterschiede.
+
+**Zwei Folgeregeln, beide in `docs/CLAUDE.md` §6b/§6c und in Wächtern verankert:**
+1. **Der Cache-Sprung gehört zur Reparatur.** Nach jedem Fix lieferte der Browser weiter den
+   alten Wert — der Service Worker gab seine Kopie aus. Ein echter Besucher hat kein
+   `setBypassServiceWorker`; `sw.js` `CACHE_NAME`, `version.json` und die `?v=`-Querys aller
+   Seiten bewegen sich gemeinsam, sonst ist die Reparatur unsichtbar.
+2. **Ein Tag-Wechsel ist eine CSS-Änderung.** Jede Container-Regel nennt BEIDE Tags und eine
+   explizite `font-size`, sonst restylt eine Accessibility-Reparatur die Seite.
+
+**Erwartetes Ergebnis:** Website-Defekte dieser Klasse werden beim MESSEN gefunden statt beim
+Nutzer. **Grenze, ausdrücklich offen:** was VoiceOver ANSAGT, kann hier niemand hören — das
+bleibt eine Geräteprobe, und `docs/accessibility.html` verspricht das Verhalten.
