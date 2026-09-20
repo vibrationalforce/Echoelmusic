@@ -34890,3 +34890,33 @@ einer Klammer, die der Typ gar nicht tragen kann.
 
 **Prüfer nach der Änderung:** swift-escapes · dead-needles · foreign-needles · count-pins --all
 — alle grün.
+
+## 2026-09-20 — Gate-Lesung #1393 · #1394 · #1395
+
+| Commit | Slice | `Build for Testing` | `Xcode Compile Check` |
+|---|---|---|---|
+| `a0152da25` | #1393 doctor-Phantomscan | **KEIN LAUF** (s. u.) | **KEIN LAUF** |
+| `83378cb9c` | #1394 Wächter rot auf korrektem Baum | ✅ success (Lauf 6145, 12:28→12:31) | ✅ success (Lauf 2680) |
+| `4551b6455` | #1395 Nadel nannte lebenden Kern | ✅ success (Lauf 6146, 12:33→12:40) | ✅ success (Lauf 2681) |
+
+⚠️ **#1393 hat KEIN Gate ausgelöst, und das ist der vierte Zustand, nicht ein Grün** (#1176):
+der Commit berührt nur `scripts/` und `scratchpads/`, und **kein Workflow nennt eines von
+beiden in einem `paths:`-Filter.** Nachgesehen statt angenommen: die ci.yml-Läufe dieses
+Zweiges gehen von 6144 (`f8e319368`) direkt auf 6145 (`83378cb9c`) — für `a0152da25` existiert
+keiner. Belegt ist die Scheibe deshalb anders, und das ist für ein Python-Werkzeug auch die
+richtige Währung: `py_compile` sauber · alle vier doctor-Selbsttests grün (der neue
+`absence-loop`-Test acht Fälle, vier davon müssen LEER zurückkommen) · und eine
+**Injektionsprobe auf dem ECHTEN Baum**, drei Phantome rein, gemessen, zurückgeschrieben,
+Arbeitsbaum danach sauber.
+
+⚠️ **`Run Tests` bleibt bei beiden offen und sagt nichts** — #396 meldet auf JEDEM Push
+`failure`. Genau das ist die Lücke, die #1394 gefunden hat: ein echt roter Anspruch im
+blockierenden Bündel ist vom stehenden Rot nicht zu unterscheiden. Die Scheiben sind deshalb
+per §0-Transkription gegen beide Bäume benotet, nicht per Lauf.
+
+**Abschluss-Prüfung auf `4551b6455`:** acht stehende Prüfer grün (swift-escapes ·
+dead-needles · moved-needles · foreign-needles · count-pins --all · diag-ladder --source ·
+founder-verify --selftest · genre-prebatch --selftest) · doctor `--quiet` unverändert **zwei**
+Kritische, beide die bekannten founder-gated CI-Befunde (Build-Maskierung in
+`ci.yml`/`benchmark.yml`/`full-tests.yml`, `ComprehensiveTestSuite`-Filter auf eine nicht
+existierende Suite) · doctor `--selftest` vier Zeilen grün · `CLAUDE.md` 148.825 B von 150.000.
