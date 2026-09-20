@@ -34764,3 +34764,70 @@ ist die Liste, und `grep -c '^def selftest_' scripts/doctor.py` leitet die Zahl 
 zwei Kritische (die bekannten founder-gated), acht stehende Prüfer grün, `py_compile` sauber.
 Kein Swift berührt — `scripts/` ist nicht founder-gated, und die Selbsttests sind das etablierte
 Zuhause für doctor-Regeln (#754, #762, #1345), nicht das blockierende Bündel.
+
+## 2026-09-20 — #1394: ein Wächter im BLOCKIERENDEN Bündel war rot auf korrektem Baum, seit heute früh
+
+**Befund, gefunden beim Weitersuchen nach #1393.** `TheDeviceChecklistOnlyAsksWhatExistsTests`
+führt eine Liste `struckSurfaces` — Flächen, die es NICHT mehr gibt —, und Anspruch 1 verbietet
+jeder Checkbox-Bitte im Founder-Gerätezettel, eine davon zu nennen. Auf der Liste stand
+**`"AUv3"`**. #1385 hat das Target am selben Tag ZURÜCKGEHOLT, und derselbe Commit hat Anspruch
+2 umgebaut, so dass er die Probe jetzt **VERLANGT** (`doc.contains("EchoelBodyVibe")`). Der
+Zettel bekam die Probe prompt, und eine ihrer Bitten lautet:
+
+```
+- [ ] Falls es nicht lädt: `echoel_diag.log` exportieren. Die Zeile mit `ownAUv3` sagt, ob das
+      Gerät die Komponente überhaupt kennt.
+```
+
+`"ownAUv3"` enthält `"AUv3"` → **Anspruch 1 rot, auf einem korrekten Baum.** Zwei Ansprüche
+derselben Datei widersprachen sich: der eine fordert die Probe, der andere verbietet, sie zu
+benennen. Das ist #364 in Reinform.
+
+⚠️ **Warum es niemand sah, und das ist der übertragbare Teil.** Der Fehlschlag passiert zur
+LAUFZEIT, und `Run Tests` meldet wegen #396 auf JEDEM Push `failure` — ein echt roter Anspruch
+ist vom stehenden Rot nicht zu unterscheiden. Das Gate, das eine Sitzung tatsächlich liest, ist
+`Build for Testing`, und das KOMPILIERT nur. **Eine Nadel-LISTE ist damit der eine Teil eines
+Wächters, den kein Gate ehrlich halten kann** — sie muss in dem Commit von Hand mitgezogen
+werden, der die Welt ändert. #1385 hat Anspruch 2 gezogen und diese Liste vergessen.
+
+**Reparatur, zwei Teile.**
+1. `"AUv3"` aus `struckSurfaces` entfernt, mit ⛔-Grabstein (der positive Pin, dass das Target
+   existiert, steht EINMAL in `ContentPipelineClaimsTests` — eine zweite Kopie hier wäre #416,
+   und die veraltende ist immer die, an die sich niemand erinnert).
+2. **Anspruch 10 neu: die Liste ist SELBSTPRÜFEND** — jeder Name darauf muss aus `Sources/`
+   abwesend sein, nach PFAD und nach TEXT. Die Pfad-Hälfte ist die tragende: #1385 kam als
+   VERZEICHNIS zurück (`Sources/EchoelmusicAUv3/`), und ein Target kann existieren, bevor eine
+   Datei darin den eigenen Namen buchstabiert. **Dieser Anspruch hätte #1394 von allein
+   gefangen.**
+
+**Grading (§3), in Python gegen BEIDE Bäume getrieben, Parent `a0152da25`:**
+
+| Anspruch | Parent | Worktree |
+|---|---|---|
+| 1 (24 Bitten geparst, Boden `> 3` hält) | **ROT** — ein Treffer, `ownAUv3` | grün |
+| 10 (356 Swift-Dateien, Boden `> 100` hält) | **ROT** — `AUv3` = 2 Pfade / 39 Dateien | grün |
+| 2–9 | grün | grün (#343: die Gegengewichte sind der Inhalt) |
+
+Beide Rots sind REGRESSIONEN, keine Forward-Guards — sie wären in dem Moment gefeuert, in dem
+#1385 landete. Die vier verbliebenen Nadeln liegen auf beiden Bäumen bei 0/0.
+
+⚠️ **Nicht abgedeckt:** ob der Founder die AUv3-Probe tatsächlich ausführen kann. Das ist eine
+Gerätefrage und bleibt in `FOUNDER_DEVICE_SESSION.md` §2b offen (für AUM beantwortet, #1386;
+für GarageBand offen).
+
+⚠️ **Anspruch 10 funktioniert nur, weil die Nadeln DOKUMENT-Schreibweisen sind** (`Drums-Spur`,
+`Audio-Clip-Editor`, `Velocity-Lane` — deutsche UI-Namen, die Swift nie trägt), also kann ein
+Text-Scan nicht an Prosa ÜBER sie stolpern. Eine Nadel, die ein plausibles Swift-Token WÄRE,
+machte ihn brüchig; dann nur nach Pfad ankern und das dort aufschreiben.
+
+**Nebenbefund derselben Suche, NICHT bestätigt und deshalb hier festgehalten:** vier offene
+`NEEDS-FOUNDER-VERIFY`-Bitten sagen „Vollbild-Visual öffnen", und CLAUDE.md nennt „Vollbild-Feld
+und VJ-Overlay mit #1069 gelöscht" — das sah nach vier unausführbaren Bitten aus. **Gemessen ist
+es keine:** gelöscht ist der `.fullScreenCover($showVisual)` samt `visualVJOverlay`;
+`FloatingVisualWindow` hat einen eigenen `.fullscreen`-Größenfall, und der ist seit #580 der
+STARTZUSTAND. Die vier Bitten sind ausführbar, Hue/Saturation hängen als `EchoelValueField` in
+`visualAdjustFields`, das `visualPanel` aufruft. **#867 aus der Gegenrichtung: ein Wort, das auf
+eine gelöschte Sache passt, ist kein Beleg, dass die Bitte sie meint.**
+
+**Prüfer nach der Änderung:** swift-escapes · dead-needles (543 Wächter) · foreign-needles ·
+moved-needles · count-pins --all — alle grün.

@@ -7,7 +7,9 @@
 // tester and device time is this project's scarcest resource. Measured 2026-08-25, four of its
 // seven sections asked for probes on surfaces that no longer exist: the piano-roll editor
 // (`struct PianoRollView` deleted, #475), a drum lane (`DrumSynthVoice`/`LaneDrumKitVoice`/
-// `DrumNoteMap` deleted, #166/#167), an AUv3 host test (target removed 2026-07-24), a
+// `DrumNoteMap` deleted, #166/#167), an AUv3 host test (target removed 2026-07-24 — ⭐ BACK
+// since #1385; that half is HISTORY now, not a current absence, and the ⛔ tombstone on
+// `struckSurfaces` says what it cost to notice late), a
 // `laneAUInstruments` flag (zero occurrences in `Sources`+`Tests`), and a warp hearing test in
 // an audio-clip editor whose door went with #121 Slice 4.
 //
@@ -71,17 +73,61 @@
 // KIND (§1): **REGRESSION, source-text scans.** Claim 1 would have fired on each deletion
 // commit — the document already named these surfaces, so the moment the code went, the guard
 // goes red. It is graded as a real regression guard for this defect, not a preventive one.
+//
+// ────────────────────────────────────────────────────────────────────────────────────────
+// GRADING OF THE #1394 CHANGE (§3), transcribed in Python against BOTH trees — there is no
+// Swift toolchain in a web session (§0). Parent = `a0152da25`.
+//
+// · Claim 1 was **RED ON THE PARENT**, and not by anchor absence — it parsed 24 checkbox asks
+//   (its own `> 3` floor holds) and one of them, the `ownAUv3` diag-log ask, matched the
+//   `"AUv3"` needle. **One finding, one assertion** (#486 does not apply; it really is one).
+//   It is GREEN on this tree. That is the whole slice: a guard red on a correct tree, in the
+//   blocking bundle, invisible because `Run Tests` is red on every push (#396).
+// · Claim 10 is **RED ON THE PARENT** too, for the same needle and measured separately:
+//   `"AUv3"` scores **2 paths** (`Sources/EchoelmusicAUv3/…`) and **39 files** there. On this
+//   tree every remaining needle scores 0/0. It is a REGRESSION guard, not a forward one — it
+//   would have fired the moment #1385 landed.
+// · Claims 2–9 are **COUNTERWEIGHTS, green on both trees** (#343), and they are the point: the
+//   repair must not have loosened the four needles that are still correct, nor the positive
+//   AUv3 pin claim 2 added, nor the BLOCKED-mark machinery of claims 8/9.
+// · **NOT covered:** that the founder can actually perform the AUv3 probe. That is a device
+//   question and stays open in `FOUNDER_DEVICE_SESSION.md` §2b (answered for AUM, #1386; open
+//   for GarageBand).
+// ────────────────────────────────────────────────────────────────────────────────────────
 
 import XCTest
 
 final class TheDeviceChecklistOnlyAsksWhatExistsTests: XCTestCase {
 
     /// Surfaces measured absent on 2026-08-25, spelled the way the old checklist spelled them.
-    /// Every needle was driven against the pre-#816 document before it shipped: all five match
-    /// there (six findings across four asks) and none matches the rewritten one.
+    /// ⚠️ The sentence that stood here — "all FIVE match there (six findings across four asks)"
+    /// — is kept as HISTORY and is no longer a description of this array: it measured the
+    /// five-needle list of #816 against the pre-#816 document, and one of those five has since
+    /// come back (below). Re-deriving it against today's list would be inventing a measurement
+    /// nobody made; a historical figure stays attached to the thing it measured (#818).
+    ///
+    /// ⛔ **`"AUv3"` STOOD IN THIS LIST AND IS REMOVED (#1394, 2026-09-20) — the list had gone
+    /// RED ON A CORRECT TREE, and this file's own two claims had started contradicting each
+    /// other.** #1385 brought the target back the same day; claim 2 was updated to REQUIRE the
+    /// probe (`doc.contains("EchoelBodyVibe")`) while this needle still FORBADE any checkbox ask
+    /// from naming it. The checklist duly grew the probe, one of whose asks reads *"Die Zeile mit
+    /// `ownAUv3` sagt, ob das Gerät die Komponente überhaupt kennt"* — and `"ownAUv3"` contains
+    /// `"AUv3"`, so claim 1 failed for a surface that exists. That is #364 exactly: a guard
+    /// forbidding the correct work its own neighbour demands.
+    ///
+    /// ⚠️ **WHY NOBODY SAW IT, and it is the reason this tombstone is long.** The failure is at
+    /// RUN time, and `Run Tests` reports `failure` on every push (#396) — so a genuinely red
+    /// assertion in the blocking bundle is indistinguishable from the standing red. The gate a
+    /// session actually reads is `Build for Testing`, which only COMPILES. A needle list is
+    /// therefore the one part of a guard that no gate can keep honest; it has to be pulled along
+    /// by hand in the commit that changes the world, and #1385 pulled claim 2 and forgot this.
+    ///
+    /// ⚠️ **IT IS NOT REPLACED BY A POSITIVE PIN HERE (#416).** That the target exists is pinned
+    /// ONCE, in `ContentPipelineClaimsTests`; if it is ever cut again, that guard goes red and
+    /// claim 2's message below names what to do. A second copy here is the duplication this repo
+    /// keeps paying for, and the stale one is always the copy nobody remembers owning.
     private static let struckSurfaces = [
         "laneAUInstruments",
-        "AUv3",
         "Drums-Spur",
         "Audio-Clip-Editor",
         "Velocity-Lane"
@@ -407,5 +453,69 @@ final class TheDeviceChecklistOnlyAsksWhatExistsTests: XCTestCase {
             + "`BLOCKED-BY-#1302` mark, or the founder's queue hides a job he can now do. "
             + "#364: this guard does not forbid the return, it names the prose that travels "
             + "with it (claim 8's message lists the rest).")
+    }
+    // 10 — the struck list is SELF-CHECKING: a name on it must be absent from `Sources/`.
+    //
+    // ⭐ THIS IS THE CLAIM THAT WOULD HAVE CAUGHT #1394 BY ITSELF. Claim 2 anchors two of the
+    // struck surfaces by hand (the roll, the three drum files) and says nothing about the rest,
+    // so `"AUv3"` could sit on the list for the whole day after #1385 restored the target while
+    // claim 1 quietly forbade the probe claim 2 demands. A list maintained by hand is the one
+    // part of a guard no gate keeps honest (#396: a run-time failure in this bundle is
+    // indistinguishable from the standing red). This turns it into a measurement.
+    //
+    // ⚠️ IT SCANS PATHS AS WELL AS TEXT, and the path half is the load-bearing one: #1385 came
+    // back as a DIRECTORY (`Sources/EchoelmusicAUv3/`), and a target can exist before any file
+    // in it happens to spell its own name. Measured on the parent tree, `"AUv3"` scores 2 paths
+    // and 39 files — so this claim is RED there for exactly the needle that caused the defect,
+    // and the other four score 0/0 on both trees (#343: the counterweights are the point).
+    //
+    // ⚠️ IT WORKS BECAUSE THE NEEDLES ARE DOCUMENT SPELLINGS. `Drums-Spur`, `Audio-Clip-Editor`
+    // and `Velocity-Lane` are German UI names that Swift never carries, so a text scan cannot
+    // trip on prose about them. Adding a needle that IS a plausible Swift token would make this
+    // claim fragile — if that is ever needed, anchor it by path only and say so here.
+    //
+    // #364 — a red here does NOT mean delete the needle. It means the surface came back, and
+    // the repair is the one claim 2 spells out: move it out of the ⛔ table in the checklist in
+    // the same commit, and let the checklist ask for its probe again.
+    func testEveryStruckSurfaceIsAbsentFromTheApp() throws {
+        let sources = root().appendingPathComponent("Sources")
+        guard let walker = FileManager.default.enumerator(atPath: sources.path) else {
+            return XCTFail("ANCHOR MISSING: could not walk \(sources.path) — a missing anchor "
+                           + "is a finding, not a pass (#454).")
+        }
+        var paths: [String] = []
+        for case let rel as String in walker where rel.hasSuffix(".swift") { paths.append(rel) }
+        XCTAssertGreaterThan(paths.count, 100,
+            "Only \(paths.count) Swift files under Sources/ — the walk is measuring nothing.")
+
+        // Read ONCE, not once per needle. Four needles × ~360 files is 1,400 file reads for a
+        // question that needs 360 — and a slow guard is a guard someone eventually deletes.
+        var bodies: [(String, String)] = []
+        for rel in paths {
+            let full = sources.appendingPathComponent(rel).path
+            guard let body = try? String(contentsOfFile: full, encoding: .utf8) else { continue }
+            bodies.append((rel, body))
+        }
+
+        for surface in Self.struckSurfaces {
+            let inPath = paths.filter { $0.contains(surface) }
+            XCTAssertTrue(inPath.isEmpty,
+                "`\(surface)` is on `struckSurfaces` — the list of things that do NOT exist — "
+                + "but it names a live path: \(inPath.sorted().prefix(3).joined(separator: ", ")). "
+                + "Claim 1 is therefore forbidding the founder to be asked about a surface that "
+                + "is back. Remove the needle here and update the ⛔ table in "
+                + "scratchpads/FOUNDER_DEVICE_SESSION.md in the same commit.")
+
+            var hits: [String] = []
+            for (rel, body) in bodies where body.contains(surface) {
+                hits.append(rel)
+                if hits.count >= 3 { break }
+            }
+            XCTAssertTrue(hits.isEmpty,
+                "`\(surface)` is on `struckSurfaces` but occurs in Sources/: "
+                + "\(hits.sorted().joined(separator: ", ")). Same repair as above — and if the "
+                + "occurrence is only a tombstone COMMENT about the removal, the needle is too "
+                + "generic to stay a needle; anchor it by path only and record that here.")
+        }
     }
 }
