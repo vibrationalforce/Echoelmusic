@@ -89,6 +89,54 @@ stattgefunden hat.** Bis Marker existieren, ist das hier ihr Zuhause.
 
 ---
 
+## 2b · AUv3 „EchoelBodyVibe" im Fremd-Host — die EINE Frage, die kein Test beantworten kann
+
+**Neu am 2026-09-20 (#1385).** Das AUv3-Target ist zurück (Founder-Auftrag, ohne JUCE — es war
+schon immer reines Swift). Es kompiliert und wird in die App eingebettet. Was **nicht** bewiesen
+ist, ist das Einzige, was zählt: **ob iOS die Extension startet.**
+
+Die Vorgeschichte steht wörtlich in `EchoelmusicAUv3.entitlements`: am 2026-07-19 registrierte
+sich EchoelBodyVibe korrekt (AUM listete es), scheiterte aber in **jedem** Host beim
+Instanziieren mit `-3000 invalidComponentID` — die host-unabhängige Signatur eines Appex, dessen
+Prozessstart iOS **verweigert**. Die Hypothese war ein App-Group-Entitlement, das die App-ID
+`com.echoelmusic.app.auv3` im Portal gar nicht trägt. Die Reparatur — das Entitlement ersatzlos
+streichen — ist gebaut und ausgeliefert, **aber nie nachgemessen**: fünf Tage später wurde das
+Target gelöscht, und damit wurde die Frage nicht beantwortet, sondern gegenstandslos.
+
+Sie ist jetzt wieder gegenständlich.
+
+- [ ] **Build installieren, dann EINMAL GarageBand öffnen und wieder schließen.** Das forciert
+      eine Neuregistrierung der Audio-Komponenten — ohne den Schritt kann ein veraltetes
+      Geräte-Register ein falsches Negativ liefern (das war der A8-Workaround).
+- [ ] **AUM oder GarageBand → Instrument-Slot → Hersteller „Echo" → „Echoelmusic: EchoelBodyVibe".**
+      Erscheint es in der Liste? *(Erscheinen = Registrierung OK, das war nie das Problem.)*
+- [ ] **Antippen zum Laden.** **Das ist die eigentliche Frage.** Öffnet sich die Plugin-Oberfläche,
+      oder kommt ein Fehler / bleibt der Slot leer?
+- [ ] Falls es lädt: **Tasten spielen — kommt Ton?** Und schiebt der Host-Transport nichts kaputt?
+- [ ] Falls es **nicht** lädt: `echoel_diag.log` exportieren. Die Zeile mit `ownAUv3` sagt, ob das
+      Gerät die Komponente überhaupt kennt.
+
+⚠️ **ZWEI DINGE VORHER WISSEN, damit Du einen BEKANNTEN Fehler nicht für einen kaputten Build
+hältst** (beide am 2026-09-20 vom `audio-thread-reviewer` gefunden, beide als A10/A11 auf dem
+Board, beide absichtlich NICHT in dieser Nacht repariert):
+
+1. **In GarageBand klingt es voraussichtlich ~8,8 % ZU HOCH.** Der Synth ist hart auf 48 kHz
+   genagelt und folgt dem Host-Format nicht; GarageBand iOS läuft auf 44,1 kHz. In AUM (48 kHz)
+   sollte die Tonhöhe stimmen. **Wenn es in AUM richtig und in GarageBand zu hoch klingt, ist das
+   GENAU dieser Befund und kein neuer.** Die Reparatur greift in DSP-Code, den sich die App
+   teilt — das ist eine eigene Scheibe mit Council, kein Einzeiler.
+2. **CPU ist ungemessen.** Die Textur-Stimme rechnet ~1,5 Mio. skalare `sin()` pro Sekunde,
+   un-vektorisiert. Wenn Du magst: einmal die Xcode-CPU-Anzeige mitlaufen lassen, während das
+   Plugin im Host spielt. Falls es zu teuer ist, ist die billige Abhilfe `textureAmount` = 0.
+
+**Was Deine Antwort freischaltet:** erst danach darf „läuft in Deiner DAW" irgendwo stehen —
+Store-Text, Website, Social. Bis dahin hält `TheStandingPromptDescribesThisRepoTests` diesen
+Claim gesperrt, und das ist Absicht: #158, #192 und #184 haben je einen ganzen Zyklus damit
+verbracht, genau diese Behauptung wieder zu entfernen, und im App-Store-Text ist sie eine
+2.3-Ablehnung. **„Kompiliert und ist eingebettet" ist nicht „lädt in Logic".**
+
+---
+
 ## 3 · Die zwei Ship-Gate-Checks, die nur ein Mensch schließen kann
 
 Von den fünf Checks des Gates „Instrument-Complete v1" (CLAUDE.md) sind **Kontrolle** und
@@ -182,7 +230,7 @@ Probe, die nichts entscheiden kann** (dieselbe Lehre wie #525, nur auf Dokument-
 | **Piano-Roll-Editing** (6 Primitive, Velocity-Lane, Pin-Frage) | `grep -c "struct PianoRollView" Sources/Echoelmusic/Studio/PianoRollView.swift` → **0**. Der Editor ist mit #475 gelöscht, die Tür schon 2026-07-26 auf Founder-Wunsch („Pianoroll soll raus"). Keines der sechs Primitive ist ausführbar. |
 | **Drums-Spur trommelt** (Slice-7-Gate, `.drums`-Bus-Frage) | Es gibt keine Schlagzeug-Stimme mehr: `DrumSynthVoice`, `LaneDrumKitVoice` und `DrumNoteMap` sind mit #166/#167 als Dateien gelöscht. Es kann kein Drum-Klang entstehen. Das Flag `voiceKindRouting` existiert weiter — der Rest des Gates (Bass, Poly, Stuck-Note) ist als Bitte in den `NEEDS-FOUNDER-VERIFY`-Markern zu führen, nicht hier. |
 | **`laneAUInstruments`-Flag prüfen** | `git grep -l laneAUInstruments -- Sources Tests | wc -l` → **0**. Das Flag existiert nicht. |
-| **AUv3 im Fremd-Host** (AUM/GarageBand) | Das AUv3-Target ist am 2026-07-24 entfernt (`project.yml` sagt es selbst). Zusätzlich: die Listing-Zeile, die dieser Test verteidigen sollte, steht nicht mehr in `fastlane/metadata/` — `grep -rn "AUv3\|AUM\|GarageBand" fastlane/metadata/ | wc -l` → **0** (#184). |
+| **AUv3 im Fremd-Host** (AUM/GarageBand) | ⭐ **DIESE STREICHUNG IST AM 2026-09-20 ZURÜCKGENOMMEN (#1385)** — der Founder hat das AUv3-Target zurückgeholt, und die Bitte ist damit wieder ausführbar. Sie steht jetzt als echter Posten in **§2b**. Die Zeile bleibt hier stehen, weil nichts gelöscht wird: sie ist der Beleg, dass diese Prüfung zwischen dem 2026-07-24 und dem 2026-09-20 **nicht** gestellt werden durfte. ⚠️ Die ZWEITE Hälfte der alten Begründung gilt unverändert: `grep -rn "AUv3\|AUM\|GarageBand" fastlane/metadata/ | wc -l` → **0** (#184), und das bleibt so, **bis** §2b beantwortet ist — der Store-Text darf dem Gerät nicht vorauslaufen. |
 | **Warp-Hörtest im Audio-Clip-Editor** | Es gibt keine Clip-Editor-Tür: `git grep -ln "clipEditor\|ClipEditorView\|AudioClipEditor" -- Sources | wc -l` → **0**. Die Clip-/Arrangement-Fläche ging mit #121 Slice 4. Die Stretch-Kerne (`StretchPlan`, `AudioClipPlayer`) leben weiter, sind aber unerreichbar. |
 | **BLE-Gurt-Begründung** | Die PRÜFUNG bleibt gültig und gehört zu den `NEEDS-FOUNDER-VERIFY`-Markern (CLAUDE.md: „Gerät-Verify wartet auf Gurt-Eintreffen"). Gestrichen ist nur ihre BEGRÜNDUNG: die Listing-Zeile „Polar, Wahoo, Garmin" steht nicht mehr in `fastlane/metadata/`. |
 | **„352 geräte-unverifizierte Commits"** | Eine Zahl vom 2026-07-16 — ein Datum, keine Tatsache. Ersatzlos gestrichen statt fortgeschrieben (dieselbe Regel wie in `.claude/rules/context.md` §2). |

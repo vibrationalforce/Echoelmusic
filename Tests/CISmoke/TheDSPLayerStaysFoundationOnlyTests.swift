@@ -175,17 +175,18 @@ final class TheDSPLayerStaysFoundationOnlyTests: XCTestCase {
         // "the word appears", it was "the file PRESCRIBES a dead API" — and a rules file
         // prescribes in its code examples. Naming a removed symbol while retracting it is the
         // opposite of prescribing it.
-        for dead in ["internalRenderBlock", "AUInternalRenderBlock", "case wetDry"] {
-            let offenders = Self.fencedBlocks(in: text).filter { $0.contains(dead) }
-            XCTAssertTrue(offenders.isEmpty, """
-                A fenced code example in `\(Self.rules)` uses `\(dead)` again. That is AUv3 \
-                vocabulary for a target removed 2026-07-24, and this file is in the \
-                ALWAYS-LOADED set — stale PRESCRIPTIVE prose does not merely mislead a session, \
-                it makes one write against an API that is not there. Prose ABOUT the removal is \
-                fine and deliberately not scanned. If AUv3 came back, delete this assertion in \
-                the commit that brings it back.
-                """)
-        }
+        // ⛔ AN ASSERTION STOOD HERE AND IS DELETED 2026-09-20 (#1385), on its own written
+        // instruction: *"If AUv3 came back, delete this assertion in the commit that brings it
+        // back."* It forbade `internalRenderBlock`, `AUInternalRenderBlock` and `case wetDry`
+        // inside FENCED CODE EXAMPLES of the always-loaded rules file, because they were
+        // vocabulary for a target removed 2026-07-24 — prescriptive prose pointing at an API
+        // that was not there. Two of those three are live API again (`Sources/EchoelmusicAUv3/
+        // EchoelmusicAudioUnit.swift` overrides `internalRenderBlock`, whose type is
+        // `AUInternalRenderBlock`), so the assertion would now redden the rules file for
+        // documenting something true. That is the #364 defect exactly, and the previous author
+        // saw it coming. `case wetDry` is NOT covered by the revival and is not reinstated
+        // here: it was an unrelated enum case, and bundling it back in would smuggle a dead
+        // symbol through on the coat-tails of a live one.
         XCTAssertTrue(text.contains("Sources/Echoelmusic/DSP/*.swift"), """
             `\(Self.rules)` no longer prints the command that re-derives the DSP import set. A \
             number without its command is the thing `.claude/rules/context.md` §2 forbids: the \

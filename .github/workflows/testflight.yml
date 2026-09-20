@@ -275,7 +275,12 @@ jobs:
           # main Echoelmusic compile proves works on this runner.
           compile_scheme EchoelmusicWidgets "generic/platform=iOS"
           compile_scheme EchoelmusicWatch "generic/platform=watchOS"
-          # AUv3 scheme REMOVED 2026-07-24 (pure-instrument verdict — no AUv3 target).
+          # AUv3 REVIVED 2026-09-20 (#1385). Unlike the two above, this target IS a
+          # dependency of the app scheme (it embeds into PlugIns/), so the main
+          # compile already touches it — this isolated pass exists so a failure
+          # names the EXTENSION instead of reddening the whole app compile, which
+          # is the difference between a two-minute fix and an hour of bisecting.
+          compile_scheme EchoelmusicAUv3 "generic/platform=iOS"
           set -eo pipefail
           [ $FAILED -eq 0 ]
 

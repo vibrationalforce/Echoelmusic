@@ -108,9 +108,19 @@ final class TheStandingPromptDescribesThisRepoTests: XCTestCase {
         let detail = offenders.joined(separator: ", ")
         XCTAssertTrue(offenders.isEmpty, """
             A routine prompt names AUv3 alongside a host DAW: \(detail).
-            The AUv3 target was removed 2026-07-24 (#121). #158, #192 and #184 each spent \
-            a cycle deleting this claim from the website and the App Store text; the \
-            website is clean today, so a copy here is the last one standing.
+
+            ⚠️ THE REASON CHANGED ON 2026-09-20 (#1385) AND THE PROHIBITION DID NOT. Until \
+            then this claim was FALSE — there was no AUv3 target. It is now UNVERIFIED, which \
+            is a different thing and still not claimable: the target is back, but the one \
+            device question about it has never been answered. \
+            `EchoelmusicAUv3.entitlements` records that instantiating it returned -3000 \
+            invalidComponentID in EVERY host; dropping the App-Group entitlement is the \
+            HYPOTHESISED fix and was never confirmed, because the target was deleted before \
+            anyone re-tested it. "It compiles and embeds" is not "it loads in Logic". \
+            #158, #192 and #184 each spent a whole cycle deleting this exact claim from the \
+            website and the App Store text, where a false one is a 2.3 rejection — do not \
+            re-introduce it on a hypothesis. Lift this only after a founder device run says \
+            EchoelBodyVibe actually instantiated.
             """)
     }
 

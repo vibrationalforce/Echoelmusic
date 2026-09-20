@@ -18,19 +18,31 @@ daneben und veraltete schneller als der Inhalt — sie belegte nichts, was das D
 nicht besser belegt.)
 
 **Zwei Behauptungen dieser Datei sind maschinell gepinnt** (`Tests/CISmoke/ContentPipelineClaimsTests.swift`,
-im blockierenden Bundle): „Null externe Abhängigkeiten" und „kein AUv3". Beide sind
-Tatsachen über das Repo, keine Formulierungen — wer sie ändert, färbt das Gate rot und
-muss diese Datei im selben Commit mitziehen.
+im blockierenden Bundle): „Null externe Abhängigkeiten" und — seit 2026-09-20 in der
+UMGEKEHRTEN Richtung — „das AUv3-Target EXISTIERT". Beide sind Tatsachen über das Repo,
+keine Formulierungen — wer sie ändert, färbt das Gate rot und muss diese Datei im selben
+Commit mitziehen.
+
+⭐ **Der AUv3-Pin ist am 2026-09-20 GEKIPPT, nicht entfernt (#1385).** Bis dahin hielt er die
+ABWESENHEIT des Targets fest; der Founder hat es zurückgeholt (ausdrücklich ohne JUCE — es war
+immer reines Swift), also hält er jetzt seine ANWESENHEIT. **Ein Verbot, das wahr war und es
+nicht mehr ist, wird invertiert, nicht gelöscht:** ein gelöschter Pin merkt nichts mehr, und
+diese Datei ist das, woraus jeder Store-Text und jede Caption geschrieben wird. Die HOSTING-
+Hälfte ist **nicht** mit gekippt und wird seit #1385 getrennt gepinnt — siehe §1.
 
 ⚠️ **Wie weit der Zaun WIRKLICH reicht** — die erste Fassung dieses Absatzes versprach
 mehr, als der Test hält, und ein zu weit versprochener Zaun ist schlimmer als keiner:
 - **Abhängigkeiten:** geprüft werden `Package.swift` UND der `packages:`-Block in
   `project.yml` (die App wird über XcodeGen gebaut, nicht über SwiftPM — nur das
   Manifest zu prüfen hätte die Hälfte offen gelassen).
-- **AUv3:** geprüft wird das TARGET, gebunden an den Namen `EchoelmusicAUv3`. Ein
-  Target unter anderem Namen rutscht durch — das wäre eine laute, gewollte Änderung,
-  aber der Test findet sie nicht. Und die HOSTING-Hälfte von §1 („kann keine fremden
-  Plugins laden") ist gar nicht gepinnt.
+- **AUv3:** geprüft wird das TARGET, gebunden an den Namen `EchoelmusicAUv3`, **seit
+  #1385 auf ANWESENHEIT** (plus die Existenz von `Sources/EchoelmusicAUv3/`). Ein Target
+  unter anderem Namen rutscht weiterhin durch — das wäre eine laute, gewollte Änderung,
+  aber der Test findet sie nicht. ⭐ Die HOSTING-Hälfte („kann keine fremden Plugins
+  laden") ist **seit #1385 gepinnt** und war es vorher nicht: sie steckte mit der
+  Target-Hälfte in EINEM Satz, und genau deshalb machte die Rückkehr der einen den ganzen
+  Eintrag falsch. Zwei Tatsachen in einem Satz sind ein Pin, der nur gemeinsam altern
+  kann.
 - Alles andere hier ist **ungepinnt** und lebt von der Gegenprüfung oben. Urteilsfragen
   (Wellness-Ton, Watch-Formulierung, §10) kann kein Test entscheiden.
 
@@ -79,18 +91,40 @@ arbeitet, fasst `Tests/` nicht an und bleibt wie vorgesehen isoliert.
 
 ## ⛔ DARF NICHT behauptet werden — und warum genau
 
-### 1. „AUv3-Plugin", „läuft in Logic/Ableton/GarageBand", „in Deiner DAW"
-**Das AUv3-Target wurde am 2026-07-24 ENTFERNT** (#121 Slice 1+2, Founder-Verdikt
-„reines Instrument"). Echoel ist eine eigenständige App und **kein Plugin**. Es kann
-auch keine fremden Plugins laden — das Hosting ging im selben Schritt.
-`project.yml` sagt es wörtlich: *„AUv3 REMOVED 2026-07-24 (founder verdict: Echoelmusic
-= pure instrument, no AUv3)"*. (⛔ Hier stand `project.yml:177` — eine Zeilennummer.
-`CLAUDE.md` verbietet das Muster in dieser Datei-Familie ausdrücklich: eine zitierte
-Phrase überlebt jede Verschiebung, eine Nummer zeigt nach dem nächsten Einschub auf
-etwas anderes und behauptet dabei weiter, ein Beleg zu sein.)
-Ein AUv3-Claim ist doppelt falsch (Ziel + Host)
-und war exakt der Claim, den #158 aus der Website entfernt hat.
-*Wenn ein Bild eine DAW-Spur zeigt, ist es das falsche Bild.*
+### 1. „läuft in Logic/Ableton/GarageBand", „in Deiner DAW" — **NOCH NICHT**, und „lädt fremde Plugins" — **NIE**
+
+⭐ **DIESER EINTRAG IST AM 2026-09-20 NEU GESCHRIEBEN (#1385).** Er stand seit dem 2026-07-24
+als schlichtes Verbot da („das Target wurde ENTFERNT"), und der Founder hat das Target
+zurückgeholt. Ein Verbot mit abgelaufener Begründung ist gefährlicher als gar keins: die
+nächste Sitzung liest die falsche Begründung, prüft sie, findet sie widerlegt — und streicht
+dann auch den Teil, der weiterhin gilt. Deshalb steht er jetzt in **zwei** Hälften, die
+getrennt altern können.
+
+**a) Echoel IST ein AUv3-Instrument — aber der Host-Claim ist ungeprüft, nicht wahr.**
+Das Target `EchoelmusicAUv3` existiert wieder (`aumu`, subtype `echl`, „Echoelmusic:
+EchoelBodyVibe"), es ist reines Swift ohne jede Abhängigkeit, es kompiliert und wird in die
+App eingebettet. **Was fehlt, ist der Beweis, dass iOS die Extension STARTET.**
+`EchoelmusicAUv3.entitlements` hält fest, dass das Instanziieren am 2026-07-19 in JEDEM Host
+mit `-3000 invalidComponentID` scheiterte; die vermutete Ursache (ein App-Group-Entitlement,
+das die App-ID nicht trägt) wurde entfernt, aber **nie nachgemessen** — fünf Tage später war
+das Target gelöscht. Die Probe steht als `scratchpads/FOUNDER_DEVICE_SESSION.md` §2b.
+**Bis sie beantwortet ist: kein „läuft in Deiner DAW", nirgends** — nicht im Store-Text, nicht
+auf der Website, nicht in einer Caption. Gepinnt von
+`TheStandingPromptDescribesThisRepoTests.testNoRoutineClaimsAUv3HostCompatibility`, dessen
+Fehlermeldung genau diese Unterscheidung trägt. „Kompiliert und ist eingebettet" ist nicht
+„lädt in Logic". Das ist im App-Store-Text der Unterschied zwischen einer Zeile und einer
+2.3-Ablehnung — #158, #192 und #184 haben je einen ganzen Zyklus mit dem Entfernen dieses
+Claims verbracht.
+
+**b) Echoel lädt KEINE fremden Plugins. Diese Hälfte ist nicht zurückgekommen und steht nicht
+zur Debatte.** Das AUv3-*Hosting* ging mit #121 Slice 2 und bleibt gestrichen: Echoel ist ein
+Plugin, kein Wirt. Das ist keine Auslassung, sondern die Produktgrenze aus
+`docs/dev/PRODUCT_DEFINITION.md` — ein Instrument IN der DAW des Nutzers zu sein ist das
+Gegenteil davon, selbst die DAW sein zu wollen. Gepinnt von `ContentPipelineClaimsTests`
+gegen genau diesen Satz.
+
+*Wenn ein Bild eine DAW-ARRANGEMENT-Spur zeigt, ist es weiterhin das falsche Bild — ein
+Plugin-Slot in einem fremden Host ist ab Freigabe von (a) das richtige.*
 
 ### 2. Wellness, Meditation, Schlaf, Fokus, Stressabbau, Longevity, „HealthTech"
 `CLAUDE.md`: **„Biofeedback ist Kern, NICHT Wellness."** Echoel ist ausdrücklich kein

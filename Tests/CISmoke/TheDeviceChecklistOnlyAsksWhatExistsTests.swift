@@ -168,14 +168,28 @@ final class TheDeviceChecklistOnlyAsksWhatExistsTests: XCTestCase {
                            "\(gone) exists again. \(recovery)")
         }
 
-        let project = try text("project.yml")
-        let declaresAUv3 = project.components(separatedBy: "\n").contains {
-            $0.trimmingCharacters(in: .whitespaces) == "EchoelmusicAUv3:"
-        }
-        XCTAssertFalse(declaresAUv3, "An AUv3 target is declared again. \(recovery) "
-                       + "(The name also occurs in a comment on the line that records its "
-                       + "removal — only a bare target key counts, which is why this is an "
-                       + "equality test and not a substring search.)")
+        // ⭐ THE AUv3 ABSENCE PIN IS GONE FROM HERE, 2026-09-20 (#1385) — and that is this
+        // guard's own `recovery` instruction being followed, not an assertion being dodged:
+        // *"If this is red because the surface RETURNED, that is correct and expected (#364):
+        // update the ⛔ table in scratchpads/FOUNDER_DEVICE_SESSION.md in the same commit, and
+        // the checklist MAY ASK FOR ITS PROBE AGAIN."* Both halves happened in this commit.
+        // The target is now pinned POSITIVELY, once, in `ContentPipelineClaimsTests` — a
+        // second copy here would be the #416 duplication this repo keeps paying for, and the
+        // one that goes stale is always the copy nobody remembers owning.
+        //
+        // What this file asserts INSTEAD is its actual subject: the checklist may only ask for
+        // what exists. An AUv3 that ships un-probed is worse than one that is absent, because
+        // the -3000 instantiation failure recorded in `EchoelmusicAUv3.entitlements` was never
+        // resolved on device — it was made moot by deletion. So the probe is now MANDATORY.
+        let doc = try text("scratchpads/FOUNDER_DEVICE_SESSION.md")
+        XCTAssertTrue(doc.contains("EchoelBodyVibe"), """
+        The device checklist does not ask the founder to open EchoelBodyVibe in a host. The \
+        AUv3 target came back in #1385 and its ONE open question — does instantiating it still \
+        return -3000 invalidComponentID, or did dropping the App-Group entitlement fix it — \
+        cannot be answered by any test in this repo. It needs a phone, AUM or GarageBand, and \
+        two minutes. If the target was cut again, delete this assertion together with the \
+        target, the embed in project.yml and the compile_scheme line in testflight.yml.
+        """)
     }
 
     // 3 — the document routes a reader to the tool instead of being a second list.

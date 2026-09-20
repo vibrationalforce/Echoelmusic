@@ -145,11 +145,13 @@ final class TheWorkBoardDoesNotQueueDeletedSurfacesTests: XCTestCase {
             A queued surface is constructed again: \(offenders.joined(separator: ", ")). \(recovery)
             """)
 
-        let project = try text("project.yml")
-        let declaresAUv3 = project.components(separatedBy: "\n").contains {
-            $0.trimmingCharacters(in: .whitespaces) == "EchoelmusicAUv3:"
-        }
-        XCTAssertFalse(declaresAUv3, "An AUv3 target is declared again. \(recovery)")
+        // ⭐ THE AUv3 ABSENCE PIN IS GONE FROM HERE, 2026-09-20 (#1385), per this guard's own
+        // `recovery` text (#364: a guard that reddens on CORRECT work is the defect). The
+        // target returned; it is pinned positively, exactly once, in
+        // `ContentPipelineClaimsTests`. This file's subject is the BOARD, and the board's
+        // three AUv3 rows (A8, A9, B1) were un-VOIDed in the same commit — a ⛔ VOID whose
+        // premise has expired queues nothing, but it does teach the next reader something
+        // false, which is the more expensive failure.
     }
 
     // 3 — the board says where the live queue actually is.

@@ -7054,3 +7054,39 @@ Entscheidung braucht.
 ⭐ **Die Lehre: ein „NICHT löschen"-Kommentar mit falscher Begründung ist schlimmer als keiner** —
 ein Vermerk ohne Begründung lädt zum Nachmessen ein, einer mit falscher Begründung beendet die
 Frage. Die nächste Sitzung kann ihn nicht widerlegen, weil sie ihn nicht prüft.
+
+
+## AE — „HRV → reverb mix": ein Erzeuger, der in einen abgeschalteten Verbraucher schreibt (#546, ausgelagert #1385)
+
+Die Kurzfassung und das GESETZ stehen in `CLAUDE.md` (DDSP-Bio-Mappings). Hier die Herleitung,
+die am 2026-09-20 aus der immer geladenen Datei gezogen wurde, um unter der 150.000-B-Decke zu
+bleiben — ausgelöst durch die AUv3-Wiederbelebung (#1385), die vier Gesetzes-Zeilen brauchte.
+
+**Die ursprüngliche Messung (2026-08-12, #546), wörtlich:**
+
+> `applyBioReactive` SCHREIBT `reverbMix` wirklich aus `hrvVariability` (`EchoelDDSP.swift:2195`)
+> — die Zeile war also nicht erfunden, sondern an der Zuweisung korrekt abgelesen. Aber
+> `reverbMix` wird an **genau einer** Stelle GELESEN, innerhalb von
+> `if Self.useConvolutionReverb, reverbMix > 0, …` (`EchoelDDSP.swift:1503`), und
+> `useConvolutionReverb` steht auf `false` **ohne jede Zuweisung** in `Sources/`
+> (`git grep -n "useConvolutionReverb *=" -- Sources` liefert die Deklaration und sonst nichts).
+
+⚠️ **Die beiden Zeilennummern `:2195` und `:1503` sind DATEN, keine Orte** — dieselbe Regel wie
+überall sonst. Wer sie prüft, misst neu:
+`git grep -n "reverbMix" -- Sources/Echoelmusic/DSP/EchoelDDSP.swift` und
+`git grep -n "useConvolutionReverb" -- Sources`.
+
+**Warum diese Klasse eine eigene ist.** #496 strich drei Kanäle OHNE ERZEUGER — nichts schrieb
+sie, und ein `grep` auf die Konstruktionsstellen fand das. Hier schreibt ein Erzeuger korrekt in
+einen Verbraucher, der zur Laufzeit ausgeschaltet ist; jede Prüfung, die beim Schreibvorgang
+aufhört, meldet grün. Die beiden Fehler sehen im Diff identisch aus und brauchen verschiedene
+Messungen.
+
+**Was ausdrücklich NICHT gestrichen ist:** die algorithmische Reverb-Stufe der FX-Fläche
+(`EchoelReverb` in `EchoelFXChain`). Sie ist live, wird von den Genre-Presets geschaltet, und
+eine Bio-Route auf ihre Parameter ist über die Modulationsmatrix erreichbar. Der In-App-Hinweis
+„coherence → reverb" in `EchoelFXView` ist WAHR. Dieser Absatz hat schon einmal beinahe dazu
+geführt, dass jemand eine korrekte Zeile „korrigiert" hätte.
+
+⚠️ **Die Prosa in `CLAUDE.md` bekommt bewusst KEINEN Text-Scan** (#491): die Datei zitiert
+zurückgenommene Behauptungen absichtlich, ein negativer Scan träfe also seine eigene Rücknahme.

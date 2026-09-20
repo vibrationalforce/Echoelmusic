@@ -64,9 +64,13 @@ import Accelerate
 ///   `AVAudioSourceNode` render block). Audio-thread-safe by construction —
 ///   pre-allocated buffers, vDSP only, zero runtime allocation, no lock/malloc/
 ///   ObjC/GCD.
-/// • `applyBioReactive()` runs on the audio RENDER thread in BOTH owners
+/// • `applyBioReactive()` runs on the audio RENDER thread in EVERY owner
 ///   (corrected 2026-07-24 — the old note here still described a control-thread
-///   caller and an open "KNOWN SMELL"; both were closed by tasks #83/#90/#94):
+///   caller and an open "KNOWN SMELL"; both were closed by tasks #83/#90/#94.
+///   ⭐ Re-corrected 2026-09-20 (#1385): this sentence said "BOTH owners" and there
+///   are now THREE. It is a COUNT in a safety register, so it expires the moment an
+///   owner is added or removed — the third bullet below carries the mechanism, which
+///   does not):
 ///     - `BioReactiveSynthVoice` — enqueues on the control poll to an SPSC
 ///       command queue, drains + applies inside its render block.
 ///     - `PolySynthVoice` — same discipline: the poll enqueues to `bioCommands`
@@ -76,13 +80,28 @@ import Accelerate
 ///       bio values to the voice it just allocated, so a voice's smoothers also
 ///       advance once per NOTE-ON. That is what makes the τ figures in
 ///       `applyBioReactive` ceilings rather than facts (#332).
-///   ⛔ A THIRD BULLET STOOD HERE — AUv3 `EchoelmusicAudioUnit`, "the 10 Hz KVO
-///   poll writes atomic-width Float mirrors (`BioMirror`)". That target was removed
-///   by #121 Slice 1; `git ls-files | grep -i auv3` returns one orphaned test and
-///   three scratchpads, no source. It mattered because this list is what a reader
-///   auditing "who calls this on the audio thread" works from — a phantom owner
-///   sends them hunting a render path that does not exist, and it inflated the
-///   apparent risk of every edit to this function.
+///     - ⭐ AUv3 `EchoelmusicAudioUnit` — RESTORED 2026-09-20 (#1385). The
+///       control side (KVO / host automation / plugin UI, on a utility queue) writes
+///       ONLY the four atomic-width `Float` mirrors in `BioMirror`; it does NOT call
+///       this function. The RENDER block reads those mirrors and calls
+///       `applyBioReactive` there, throttled to ~10 Hz by a render-owned frame
+///       accumulator (`internalRenderBlock`). So it is a THIRD render-thread owner,
+///       not a control-thread one — the discipline is the same as the two above by a
+///       different mechanism. A mirror, not an SPSC queue, is the correct shape here
+///       and must not be "upgraded": the producer side is genuinely multi-threaded,
+///       which single-producer SPSC forbids.
+///   ⛔ THIS BULLET WAS DELETED BETWEEN 2026-07-24 AND 2026-09-20 and its deletion
+///   note read: *"That target was removed by #121 Slice 1; `git ls-files | grep -i
+///   auv3` returns one orphaned test and three scratchpads, no source."* Both halves
+///   were true then and are false now. Kept visible because the note gave the RIGHT
+///   reason for caring — this list is what a reader auditing "who calls this on the
+///   audio thread" works from, and an owner missing from it is worse than a phantom
+///   one: a phantom sends you hunting a path that is not there, a gap hides a path
+///   that is. ⚠️ Note also that the deletion evidence was a `git ls-files`, which
+///   cannot see an untracked file — the same measurement would have reported "no
+///   source" on the very day the restore landed in the working tree. **A grep that
+///   can silently return less than the truth is not a measurement**
+///   (`.claude/rules/context.md` §2).
 ///   ⛔ AND THE "10 Hz" IN THE SURVIVING BULLETS WAS THE #315 UNIT ERROR ITSELF:
 ///   the poll fires at 10 Hz but drops every frame whose timestamp is unchanged,
 ///   and every wired publisher emits ~1 Hz. Said plainly here because the same

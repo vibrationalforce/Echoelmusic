@@ -34185,3 +34185,70 @@ eine Adresse ZUGLEICH abwesend und unbekannt — sie wurden also alle drei über
 sauber, indem sie eine Musik- gegen eine echte Bio-Adresse tauschten: abwesend, nichts
 Unbekanntes eingeführt, ROT auf der gemeinten Hälfte. **#776 heißt nicht nur „bestätige, dass
 die Mutation gelandet ist", sondern auch „bestätige, dass sie die Hälfte prüft, die du meinst".**
+
+## 2026-09-20 — #1385: der AUv3 ist zurück (Founder-Auftrag, ohne JUCE)
+
+**Auftrag, wörtlich:** *„Schau was ich von meinen bisher verworfenen Ideen in Echoelmusic mit
+einbauen kann. Aber vermeide das ich unzufrieden bin. No sleep ultracode ultratestflightdeploy.
+Ultraauv3 VST no Juce ultralompatible."* Founder hat in derselben Runde `project.yml` UND
+`.github/workflows/**` freigegeben (AskUserQuestion) und „Deploy erst wenn AUv3 grün" gewählt.
+
+**Voraussetzung, die alles möglich gemacht hat:** der Klon war SHALLOW (342 Commits, Graft am
+2026-09-09), also waren die Abriss-Epics unlesbar. `git fetch --unshallow` → 7.980 Commits.
+Erst danach war `5ef8856f5^` erreichbar. **Ohne das wäre „AUv3 zurückholen" ein Neubau gewesen
+statt eines Restores** — und drei frühere Sitzungen haben genau deshalb „unmessbar" notiert.
+
+**Restauriert aus `5ef8856f5^` (2026-07-24, „chore: remove EchoelmusicAUv3 target"):**
+`Sources/EchoelmusicAUv3/EchoelmusicAudioUnit.swift` (530) · `AudioUnitViewController.swift`
+(234) · `Resources/EchoelmusicAUv3/Info.plist` (70) · `EchoelmusicAUv3.entitlements` (22).
+Ein `aumu`-Instrument, „Echoelmusic: EchoelBodyVibe", subtype `echl`, `sandboxSafe`, mit
+Factory-/User-Presets und `fullState`. Imports: Foundation · AVFoundation · CoreAudioKit ·
+SwiftUI · UIKit · Observation · os. **Null externe Abhängigkeiten — JUCE war dafür nie nötig.**
+
+**Drift-Prüfung VOR dem Restore (alle sieben referenzierten Typen):** `EchoelDDSP`,
+`EchoelCellular`, `BioFeedbackManager`, `PolySynthVoice`, `EchoelMIDIDecode` existieren;
+`BioMirror`/`BioRenderState` sind private nested classes IN der AU-Datei. Die fünf gerufenen
+DSP-APIs haben kompatible Signaturen (`applyBioReactive` hat seither nur Defaults dazubekommen).
+Null Verweise auf gelöschte Eingangs-Schichten (#1301–#1305).
+
+**⭐ DER TEUERSTE FUND DER NACHT — und er rechtfertigt den `audio-thread-reviewer` allein:**
+`EchoelCellular.evolve1D()` trug `cellsPrev = cells`, eine COW-Allokation (malloc + memcpy +
+free) **auf dem Audio-Thread**, ~8×/s mit den AU-Einstellungen, skalierend mit `evolutionRate`.
+`cellsPrev` hat NULL Leser. Harmlos seit #167, weil die Datei test-only wurde — **die
+Wiederbelebung eines AUFRUFERS schärft jeden latenten Defekt in allem, was er ruft, und der
+Diff des Gerufenen ist leer.** Behoben; Wächter-Anspruch 5.
+
+**Zwei weitere Reparaturen aus demselben Audit:** `startVitalsPolling()` überschrieb einen
+laufenden `DispatchSource` ohne `cancel()` → libdispatch TRAPPT („Release of a source that has
+not been cancelled"), also harter Absturz im fremden Host bei doppeltem
+`allocateRenderResources()` · `maximumFramesToRender` wird jetzt auf dem VERTRAG geklemmt statt
+nur auf den Daten; vorher blieben Samples über 4096 unbeschrieben (Host-Speicher) und der Block
+meldete `noErr`.
+
+**BEWUSST NICHT repariert, beide auf dem Board (A10/A11) und in `FOUNDER_DEVICE_SESSION.md` §2b:**
+48-kHz-Fixierung (→ ~8,8 % zu hoch in einem 44,1-kHz-Host wie GarageBand iOS; Reparatur trifft
+drei hart kodierte Sub-Engine-Raten IN `EchoelDDSP`, die sich die App teilt = Council-Fall) ·
+`EchoelCellular`-CPU im Plugin ungemessen (~1,5 Mio. skalare `sin()`/s, un-vektorisiert).
+
+**Fünf Wächter mussten mitziehen, und jeder trug seine eigene Anleitung (#364):**
+`ContentPipelineClaimsTests` GEKIPPT statt gelöscht (Abwesenheit → Anwesenheit, plus eine NEUE
+getrennte Pin auf die Hosting-Hälfte) · `TheDeviceChecklistOnlyAsksWhatExistsTests` und
+`TheWorkBoardDoesNotQueueDeletedSurfacesTests` geben ihre Negativ-Pin ab (#416: eine Tatsache,
+ein Zuhause) und die Checkliste fordert stattdessen die Geräteprobe · `TheDSPLayerStays
+FoundationOnlyTests` löscht die Tot-Vokabular-Behauptung auf ihre eigene schriftliche Anweisung
+· `TheStandingPromptDescribesThisRepoTests` BEHÄLT sein Verbot und bekommt eine neue BEGRÜNDUNG:
+der Host-Claim ist nicht mehr falsch, sondern **ungeprüft** (`-3000` nie am Gerät aufgelöst).
+
+**Neuer Wächter:** `TheAUv3RegistersAndStaysIsolatedTests` — 6 Ansprüche, 9 Assertions, 9
+Mutanten alle rot. ⛔ Anspruch 1 war im ersten Entwurf wertlos: die Nadel `"AudioComponents"`
+trifft auch `"AudioComponentsXX"`, und sie prüfte REIHENFOLGE, während das Gesetz VERSCHACHTELUNG
+ist. Der Mutant fand es vor dem Commit. Jetzt Einrückungs-Vergleich.
+
+**`CLAUDE.md`-Budget:** die vier Gesetzes-Zeilen kosteten +1.568 B und rissen die 150.000-B-Decke
+(151.159). Repariert nach #538: eigene Zusätze auf Gesetz gestrafft, die „HRV → reverb mix"-
+Herleitung nach `LEDGER_COUNTS.md` §AE ausgelagert, der iPad-⛔-Block auf Gesetz + Zeiger
+komprimiert (er trug zusätzlich die zweite, veraltete Kopie der Einstellungs-Zahl — #416).
+**149.557 B, 443 B Kopfraum — mehr als die 409 vorher.**
+
+⚠️ **Gerätestand:** nichts davon ist geräteverifiziert. „Kompiliert und ist eingebettet" ist
+nicht „lädt in Logic". Die eine offene Frage steht als §2b.

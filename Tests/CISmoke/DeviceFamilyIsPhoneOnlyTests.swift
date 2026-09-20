@@ -45,7 +45,7 @@
 // ⛔ AND THE COMMIT THAT INSTALLED THAT SENTENCE ALSO SHIPPED ITS OPPOSITE — four times.
 // "Re-enabling is this one line" stood in `project.yml`, in CLAUDE.md, in the commit body and
 // in `decisions.csv`, while the line right above says "change the settings AND this test".
-// The honest count is FOUR settings (`project.yml`: app, widget, both test bundles) + this
+// The honest count is FIVE settings (`project.yml`: app, widget, AUv3, both test bundles) + this
 // guard's equality in `testEveryIOSTargetIsIPhoneOnly` (a SYMBOL, not a line number — `:58`
 // stood here and was already wrong in the commit that wrote it, inside the file whose whole
 // thesis is that an inert number goes stale; CLAUDE.md bans the habit by name)
@@ -131,8 +131,12 @@ final class DeviceFamilyIsPhoneOnlyTests: XCTestCase {
     /// declaring `"1,2"` is no longer caught here. That is nonsense config, but it is not the
     /// iOS app shipping to iPad, which is the only thing this file claims to prevent.
     ///
-    /// Relies on `platform:` preceding its target's settings — true for all five targets
-    /// (`platform:` at project.yml 69/232/290/346/386, each setting after it). A
+    /// Relies on `platform:` preceding its target's settings — true for all six targets.
+    /// ⛔ FIVE LINE NUMBERS STOOD HERE (69/232/290/346/386) AND #1385's AUv3 insertion moved
+    /// every one of them, which is this repo's most-repeated defect arriving in the guard that
+    /// warns about it two lines up ("a SYMBOL, not a line number"). Deleted, not refreshed —
+    /// re-derive with `grep -n "^    platform:" project.yml`, which is also what the walk
+    /// below actually does. A
     /// `targetTemplates:` block declaring `platform: iOS` would count as a target and give a
     /// false red; none exists today, and if one is added it needs a scope check here.
     private func iOSDeviceFamilies() throws -> (declared: [String], targets: Int) {

@@ -120,23 +120,54 @@ final class ContentPipelineClaimsTests: XCTestCase {
     /// multi-line literal with interpolation is ONE expression and costs nothing. The irony is
     /// the lesson: a guard whose whole purpose is to keep a claim honest cannot ship if its own
     /// explanation is too expensive to compile.
-    func testTheNoAUv3ClaimIsStillTheTruthAndNotAStaleProhibition() throws {
+    /// ⭐ FLIPPED 2026-09-20 (#1385 — this IS the "#191 arriving" the previous version named).
+    /// The founder asked for AUv3 back, explicitly without JUCE, and the target was restored
+    /// from 5ef8856f5^. The old assertion demanded its ABSENCE and carried the instruction
+    /// *"Rewrite that entry in the SAME commit; do not just delete this assertion"* — so this
+    /// is a rewrite, not a deletion: the pin now holds the POSITIVE half (the target and its
+    /// sources exist) and, one claim down, the half that did NOT flip (Echoel still hosts no
+    /// foreign plugins). A prohibition that has become false is not softened here, it is
+    /// inverted, because the claims file is what every script, caption and store text is
+    /// written from and it must be pinned in whichever direction is currently true.
+    func testTheAUv3TargetExistsAgainAndTheClaimsFileSaysSo() throws {
         let project = try codeLines("project.yml", comment: "#")
         let auv3 = project.filter { $0.contains("EchoelmusicAUv3") }
-        XCTAssertTrue(auv3.isEmpty, """
-        project.yml declares an AUv3 target again:
-        \(auv3.joined(separator: "\n"))
-
-        If that is #191 arriving (Echoel AS an AUv3), then `ContentPipeline/CLAIMS.md` §1 has \
-        flipped from a true prohibition to a false one — and it is the file every script, \
-        caption and store text is written from. Rewrite that entry in the SAME commit; do not \
-        just delete this assertion.
+        XCTAssertFalse(auv3.isEmpty, """
+        project.yml no longer declares an AUv3 target. If the founder cut it again, that is a \
+        legitimate decision — but `ContentPipeline/CLAIMS.md` §1 has then flipped back to a \
+        true prohibition and must be rewritten in the SAME commit, and the embed line in the \
+        app target's `dependencies:` plus the `compile_scheme EchoelmusicAUv3` line in \
+        `.github/workflows/testflight.yml` have to go with it. Do not just delete this \
+        assertion — it is the thing that notices.
         """)
 
         let sources = try repoRoot().appendingPathComponent("Sources/EchoelmusicAUv3")
-        XCTAssertFalse(FileManager.default.fileExists(atPath: sources.path), """
-        Sources/EchoelmusicAUv3 exists again. Same instruction as above — the claims file is \
-        the thing that has to move with it.
+        XCTAssertTrue(FileManager.default.fileExists(atPath: sources.path), """
+        Sources/EchoelmusicAUv3 is gone while project.yml still declares the target — that is \
+        a build failure waiting for the next archive, not a scope change. Same instruction as \
+        above: the claims file moves with it.
+        """)
+
+        // The half that did NOT flip. Echoel is a plugin; it does not LOAD plugins. The old
+        // §1 bundled both halves into one sentence, which is exactly why reviving one of them
+        // made the whole entry false. They are pinned separately now so the next change to
+        // either cannot silently take the other with it.
+        let claims = try String(contentsOf: try repoRoot()
+                                    .appendingPathComponent("ContentPipeline/CLAIMS.md"),
+                                encoding: .utf8)
+        // ⛔ THE NEEDLE WAS `"kann keine fremden Plugins laden"` FOR ABOUT TEN MINUTES AND
+        // COULD NEVER HAVE MATCHED: the same commit rewrote §1 and phrased the sentence
+        // differently, so the guard would have gone green against a file that no longer said
+        // it — the #367 defect (a needle that cannot match is not a check) committed while
+        // writing the check. Caught by grepping the rewritten file for the needle instead of
+        // trusting that I had written what I meant to. If §1b is reworded, reword this in the
+        // SAME commit; the sentence is the pin, not a decoration.
+        XCTAssertTrue(claims.contains("Echoel lädt KEINE fremden Plugins"), """
+        `ContentPipeline/CLAIMS.md` no longer states that Echoel cannot load foreign plugins. \
+        AUv3 HOSTING was cut by #121 Slice 2 and has NOT come back. Measure it with a grep for \
+        AUAudioUnit instantiate and AVAudioUnitComponentManager over Sources — both are zero. \
+        Reviving the plugin TARGET is not reviving the HOST, and §1 bundling the two into one \
+        sentence is precisely why one revival made the whole entry false.
         """)
 
         // ⚠️ HALF A PIN, and CLAIMS.md now says so rather than letting the header imply more:

@@ -104,11 +104,20 @@ Accelerate). No control-plane type — `EngineBus`, `BioSampleFrame`, `MusicalFr
 `PatternEngine` — in **code** there; the four that appear are in comments. A DSP file that
 reaches for a Core or Sequencer type has stopped being a pure processor.
 
-⛔ A block of AUv3 patterns stood here for a target removed 2026-07-24; 3 of its 4 symbols now
-occur zero times under `Sources/`. Dead law in the always-loaded set is worse than none —
-it is prescriptive, so a session follows it.
+⛔ A block of AUv3 patterns stood here for a target removed 2026-07-24; 3 of its 4 symbols then
+occurred zero times under `Sources/`. Dead law in the always-loaded set is worse than none —
+it is prescriptive, so a session follows it. ⭐ **The target came BACK on 2026-09-20 (#1385) and
+the block is still not restored, deliberately**: a rules file earns its place by what a session
+must not get wrong, not by completeness, and `Sources/EchoelmusicAUv3/EchoelmusicAudioUnit.swift`
+now carries that vocabulary at the one place it is written. The audio-thread bans above apply to
+its `internalRenderBlock` exactly as they do to any other render path — that is the law, and it
+never needed AUv3-specific phrasing.
 
-⚠️ Reason = hygiene + one-way dependency, **not** portability and **not** AUv3; stated once, in
-`FieldSoundSurvivesRelaunchTests` (#416). Do **not** write "Linux-testable": `EchoelWSOLA.swift`
+⚠️ Reason = hygiene + one-way dependency; stated once, in `FieldSoundSurvivesRelaunchTests`
+(#416). ⭐ **Corrected 2026-09-20 (#1385): this line used to end "**not** portability and **not**
+AUv3", and the second half has flipped.** The AUv3 extension compiles `Sources/Echoelmusic/DSP`
+in ISOLATION — no Core or Sequencer type is even visible there — so a DSP file that reaches for
+one is now a BUILD failure in the extension, not merely a hygiene lapse. The rule did not
+change; it went back to having teeth, which is how it started. "Not portability" still holds. Do **not** write "Linux-testable": `EchoelWSOLA.swift`
 imports Accelerate unguarded where the other 6 use `#if canImport`. Guard, with the long
 version of all of this: `TheDSPLayerStaysFoundationOnlyTests`.

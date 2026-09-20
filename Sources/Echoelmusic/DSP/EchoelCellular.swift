@@ -265,7 +265,30 @@ public final class EchoelCellular: @unchecked Sendable {
 
     /// Evolve the 1D CA by one step
     private func evolve1D() {
-        cellsPrev = cells
+        // ⛔ `cellsPrev = cells` STOOD HERE AND WAS A HEAP ALLOCATION ON THE AUDIO THREAD.
+        // Removed 2026-09-20 (#1385, audio-thread-reviewer). The mechanism is the copy-on-write
+        // trap in its textbook form: the assignment gives the `[UInt8]` buffer a SECOND owner,
+        // so the very next `cells[i] = …` two lines down finds `isKnownUniquelyReferenced ==
+        // false` and copies — one malloc plus one memcpy, plus the free of the buffer
+        // `cellsPrev` just dropped. malloc takes the malloc-zone lock, and a render thread
+        // blocking on a lock held by a lower-priority thread is a priority inversion: an
+        // audible click, worst in a busy host where the zone is contended, non-deterministic,
+        // and reproducible by no unit test.
+        //
+        // ⚠️ IT WAS HARMLESS UNTIL 2026-09-20 AND THAT IS THE LESSON. `EchoelCellular` became
+        // test-only with #167 (its only instantiator, `DrumSynthVoice`, was deleted), so for
+        // two months nothing ran this on a render thread and nothing re-vetted it. The AUv3
+        // revival PROMOTED a test-only file onto a hardware-interrupt thread — `git grep -n
+        // "EchoelCellular(" -- Sources` now returns exactly one production site, the audio
+        // unit. **Reviving a caller re-arms every latent defect in everything it calls**, and
+        // the callee's own file will not have changed, so a diff shows nothing.
+        //
+        // The store bought nothing: `cellsPrev` has NO reader anywhere in Sources or Tests
+        // (`git grep -n cellsPrev` → the declaration, the init, `seed()`, and this line). The
+        // property and its control-thread write in `seed()` are LEFT IN PLACE deliberately —
+        // deleting a stored property is a wider change than this fix needs, and a two-buffer
+        // evolution is a plausible future that would want it back. Only the audio-thread
+        // write is gone.
         for i in 0..<cellCount {
             let left = cells[(i - 1 + cellCount) % cellCount]
             let center = cells[i]
