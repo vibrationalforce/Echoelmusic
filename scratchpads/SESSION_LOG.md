@@ -34622,3 +34622,35 @@ Sechs Nachbar-Ansprüche in `TheRoutingCardOffersOnlyDestinationsThatExistTests`
 **Gerät offen:** ob eine Route auf „Warmth drive" HÖRBAR ist, ist eine Ohrfrage. Der
 bestehende `NEEDS-FOUNDER-VERIFY` an `modulationSection` trägt sie jetzt als zweite
 Probe — bewusst IM selben Marker, weil der Leser-Helfer genau einen pro Datei verlangt.
+
+## 2026-09-20 — Sechs Suchergebnisse wurden mitten im Satz abgeschnitten (#1392)
+
+**Der Befund war nicht „sechs zu lange Texte", sondern ein WÄCHTER MIT HANDGESCHRIEBENEM
+UMFANG.** #1238 hat `index.html` bei 497 Zeichen gemessen, es und `overview.html` repariert
+— und dann genau die zwei Dateien gepinnt, die es an dem Tag angesehen hatte. Ein Scan,
+dessen Umfang die Liste des damals Geprüften ist, kann die nächste Fundstelle nicht finden:
+`architecture` 261 · `tools` 248 · `artist` 225 · `brainstorming` 201 · `resolume-osc` 182 ·
+`artnet-sacn` 164. Jede davon ein Suchtreffer, der mitten im Satz endet, wochenlang, ohne
+dass eine Behauptung sie sehen konnte. Dieselbe Gattung wie §AB/#1379, hier auf der
+Website-Seite.
+
+**Reparatur an BEIDEN Hälften, wie es die Regel verlangt:** die sechs Texte gekürzt (137–155
+Zeichen, kein neuer Anspruch — was wegfiel, steht weiter auf der Seite selbst), und der
+UMFANG ist jetzt das VERZEICHNIS statt einer Namensliste. Eine morgen hinzugefügte Seite ist
+abgedeckt, ohne dass jemand sich an diese Datei erinnert.
+
+**Eine Ausnahme, bewusst schmal:** `og-image.html` ist ein 1200×630-Renderziel für die
+Social-Karte, wird nie ausgeliefert und steht in keiner Sitemap — es hat kein Snippet zu
+füllen. Die Ausnahme ist ein LITERAL und gilt nur für „muss eine Description HABEN": bekommt
+die Datei je eine, wird sie an derselben 160er-Grenze gemessen (Mutant 3 belegt genau das).
+Jede ANDERE Seite ohne Description ist ein Befund.
+
+⚠️ Nebenbefund mitrepariert: die Schleife brach bei der ersten Seite ohne Description mit
+`return XCTFail` komplett ab — bei zwei Seiten harmlos, bei 23 hätte eine fehlende
+Description alle folgenden Prüfungen verschluckt.
+
+**Benotung (§0):** Umfang + beide Behauptungen transkribiert, gegen beide Bäume gefahren —
+Eltern (`1919a61f`) rot auf genau den sechs Seiten, Arbeitsbaum grün über 23 Seiten. Drei
+Mutanten, alle erlegt: 161 Zeichen auf einer bisher grünen Seite · eine neue Seite ganz ohne
+Description · `og-image.html` mit 200 Zeichen. Needle-Prüfer grün (`foreign-needles` liest
+`docs/` mit).

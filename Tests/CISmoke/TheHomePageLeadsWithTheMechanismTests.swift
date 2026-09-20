@@ -71,13 +71,39 @@ final class TheHomePageLeadsWithTheMechanismTests: XCTestCase {
                       "the Specs tile dropped a shipped standard again — sACN is live (`Sync/SACNSender`) and MIDI is sold on the same page (#1238)")
     }
 
-    /// Claim 5 — both meta descriptions fit a snippet and lead with what ships.
+    /// Claim 5 — every page's meta description fits a snippet and leads with what ships.
+    ///
+    /// ⛔ #1392 — THIS CLAIM CHECKED TWO PAGES AND THE SITE HAS MANY. #1238 measured
+    /// `index.html` at 497 characters, repaired it and `overview.html`, and pinned exactly the
+    /// two files it had looked at. A scan whose SCOPE is a hand-written list of what was
+    /// examined that day cannot find the next instance (the §AB/#1379 lesson, here on the
+    /// website side): six further pages sat between 164 and 261 characters for weeks, each one
+    /// a search result cut mid-sentence, and no assertion could see them. The list is now the
+    /// DIRECTORY, so a page added tomorrow is covered without anyone remembering this file.
+    ///
+    /// ⚠️ ONE FILE IS EXEMPT BY NAME, and the exemption is narrow on purpose:
+    /// `og-image.html` is a 1200×630 RENDER TARGET for the social card, never served to a
+    /// reader and not in the sitemap, so it has no snippet to fit. Every OTHER page missing a
+    /// description is a finding — the exemption is a literal, so the day a second descriptionless
+    /// page appears, this goes red rather than quietly widening.
     func testTheMetaDescriptionsFitASnippetAndLeadWithWhatShips() throws {
-        for page in ["docs/index.html", "docs/overview.html"] {
+        let docs = repoRoot().appendingPathComponent("docs")
+        let pages = ((try? FileManager.default.contentsOfDirectory(atPath: docs.path)) ?? [])
+            .filter { $0.hasSuffix(".html") }
+            .sorted()
+        XCTAssertGreaterThan(pages.count, 2,
+                             "ANCHOR MISSING: fewer than three pages under `docs/` — the "
+                             + "directory listing failed, and an empty scope is a finding, "
+                             + "never a pass (#454).")
+        for file in pages {
+            let page = "docs/" + file
             let html = try text(page)
             guard let start = html.range(of: "<meta name=\"description\" content=\""),
                   let end = html[start.upperBound...].range(of: "\"") else {
-                return XCTFail("\(page) has no meta description (#1238)")
+                if file == "og-image.html" { continue }
+                XCTFail("\(page) has no meta description (#1238/#1392) — a page with no snippet "
+                        + "lets the search engine invent one out of the first text it finds.")
+                continue
             }
             let description = String(html[start.upperBound..<end.lowerBound])
             XCTAssertLessThanOrEqual(description.count, 160,
@@ -94,9 +120,12 @@ final class TheHomePageLeadsWithTheMechanismTests: XCTestCase {
                       "`TouchInstrumentView` is no longer mounted — pull the playable sentences from index.html, overview.html and the FAQ in the same commit (#1238, #456)")
     }
 
-    private func text(_ relativePath: String) throws -> String {
-        let root = URL(fileURLWithPath: #filePath)
+    private func repoRoot() -> URL {
+        URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        return try String(contentsOf: root.appendingPathComponent(relativePath), encoding: .utf8)
+    }
+
+    private func text(_ relativePath: String) throws -> String {
+        try String(contentsOf: repoRoot().appendingPathComponent(relativePath), encoding: .utf8)
     }
 }
