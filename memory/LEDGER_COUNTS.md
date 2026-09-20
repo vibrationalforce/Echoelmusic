@@ -7090,3 +7090,61 @@ geführt, dass jemand eine korrekte Zeile „korrigiert" hätte.
 
 ⚠️ **Die Prosa in `CLAUDE.md` bekommt bewusst KEINEN Text-Scan** (#491): die Datei zitiert
 zurückgenommene Behauptungen absichtlich, ein negativer Scan träfe also seine eigene Rücknahme.
+
+## AF — Die drei produzentenlosen Bio-Kanäle (#496 → #755 → #813), ausgelagert 2026-09-20 (#1390)
+
+**Warum hier:** in `CLAUDE.md` standen dafür zwei Absätze von zusammen 4 253 B, davon rund
+85 % rückblickende Erzählung. Die Datei stand bei **324 B** unter ihrer 150 000-B-Decke
+(`TheLawFileStaysUnderItsCeilingTests`), und die Anweisung des Wächters ist wörtlich:
+PROVENIENZ in den Ledger, GESETZ bleibt dort. Das Gesetz — welche Kanäle einen Erzeuger
+haben, woraus der Trend gespeist wird, und dass die zwei toten in keiner nutzersichtbaren
+Kopie als „live" vorkommen dürfen — ist in `CLAUDE.md` geblieben und zeigt hierher.
+
+### AF.1 — Der Ausgangsbefund (#496, gemessen 2026-08-08)
+
+Drei Abbildungen standen in der DDSP-Tabelle als gleichrangig und hatten **keinen
+Produzenten**: **Breath depth → Noise**, **LF/HF → Spectral tilt**, **Coherence trend →
+Shape morphing**. Gemessen an beiden Konstruktionsstellen (`BioReactiveSynthVoice`,
+`PolySynthVoice`) waren alle drei auf Literale festgenagelt.
+
+⛔ **Was #496 dabei selbst falsch schrieb und was erst später auffiel:** die erste Fassung
+sprach von „Drei Übergängen … Quellenwechsel". Den Quellenwechsel gab es nicht, und der
+GETEILTE Zähler, den die Zeile beschrieb, wurde vom mitlaufenden HealthKit
+(`coherence: 0`) alle 4–5 s geleert. Die Fähigkeit war also **über-behauptet, nicht nur die
+Liste** — Messung und Herleitung dazu in §L.
+
+### AF.2 — Die halbe Miete (#755): drei Kopie-Wächter lasen SWIFT, die WEBSITE keinen
+
+Nach #496 verboten drei Wächter der Panel-Kopie, die toten Kanäle zu nennen. Alle drei lasen
+`Sources/`. `docs/overview.html` verkaufte „Breath depth → Noise level" und „LF/HF →
+Spectral tilt" weiter als Abbildung — auf der Seite, die ein Besucher **vor**
+`architecture.html` liest, die es die ganze Zeit richtig sagte. Seither deckt
+`WebsitePagesAreFindableAndHonestTests.testTheProducerlessBioChannelsAreNotSoldAsMappings`
+die Tabelle ab. ⚠️ Verboten ist die MAPPING-Behauptung, nicht das Wort: die FAQ nennt
+LF/HF-**Analyse**, und die ist echt.
+
+### AF.3 — Die eingetroffene Vorhersage (#813)
+
+Der #496-Absatz sagte: *„ein echter Produzent (z. B. ein Trend aus der Kohärenz-Historie)
+ist eine eigene Scheibe und wird genau diese Zweige antreiben."* **#813 IST diese Scheibe,
+mit exakt dieser Herleitung.** `Core/CoherenceTrend` leitet aus der Kohärenz-HISTORIE eine
+vorzeichenbehaftete Änderungsrate ab (−1 fallend … +1 steigend), auf dem MainActor gerechnet
+und über dieselbe SPSC-Queue an den Render-Thread gereicht wie der Rest; beide
+`…BioParams(`-Stellen schreiben seither `coherenceTrend: trend` statt der Literal-0. Der
+Steigend/Fallend-Spektralmorph war damit **zum ersten Mal seit seiner Entstehung
+erreichbar**.
+
+Im selben Commit mitgezogen: die drei Kopie-Wächter und beide Website-Seiten. Die Verbote
+auf „coherence trend" bzw. „shape morphing" mussten **WEG** — ein Wächter, der eine
+inzwischen WAHRE Aussage verbietet, ist selbst der Defekt (#364) —, und `overview.html`
+behauptete „coherence trend is not computed at all", also eine **negative** Falschaussage
+auf der Seite, die ein Besucher zuerst liest.
+
+### AF.4 — Das GESETZ, das aus der Kette bleibt
+
+⭐ **Zwei der drei waren am VERBRAUCHER längst aufgeschrieben, `coherenceTrend` als einziges
+nicht — und genau deshalb hat die Tabelle es überlebt.** Die Lehre ist nicht „Tabelle
+nachführen", sondern: **ein ⛔-Vermerk am Verbraucher erreicht die Zeile nicht, die eine
+Sitzung ZUERST liest.** Die DDSP-Tabelle ist die Stelle, aus der Store-Text, Website und
+Panel-Kopie ihre Bio-Behauptungen holen; die #496-Scheibe musste die Fläche reparieren, die
+genau daraus „sieben" hätte machen können.

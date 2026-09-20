@@ -34533,3 +34533,37 @@ CLAUDE.md unberührt (149 676 B, 324 B Kopfraum).
 Python-Transkription benotet (21 Seiten, 0 rot; fünf Mutanten, alle fünf rot) —
 ⚠️ und das bleibt die #396/#807-Lücke: ein roter Wächter auf korrektem Baum wäre
 hier unsichtbar. Genau der Befund, der diese Sitzung zweimal Arbeit gekostet hat.
+
+## 2026-09-20 — CLAUDE.md unter die Decke zurückgeholt: 324 B → 1 790 B (#1390)
+
+Der Deep Audit hat es als einzigen Posten mit Ablaufdatum benannt: `CLAUDE.md` stand bei
+**149 676 / 150 000 B**, also 324 B Kopfraum, und der nächste ehrliche Register-Eintrag hätte
+`TheLawFileStaysUnderItsCeilingTests` gerissen. Die Reparatur ist im Wächter selbst
+vorgeschrieben (#538): **PROVENIENZ in den Ledger, GESETZ bleibt in der Datei.**
+
+**GEWÄHLT: die zwei Absätze über die drei produzentenlosen Bio-Kanäle** (#496 → #755 → #813),
+zusammen 4 253 B und zu rund 85 % rückblickende Erzählung.
+
+**VORHER GEMESSEN, welche Nadeln dort hineinzielen** — die #1182/#1191-Lehre. Elf Wächter
+LADEN `CLAUDE.md` (nicht nur erwähnen); ihre Nadeln wurden einzeln aufgelistet, **keine**
+liegt in den beiden Absätzen. Ohne diesen Schritt wäre die Kürzung ein Blindflug gewesen.
+
+**ERGEBNIS:** `memory/LEDGER_COUNTS.md` §AF angelegt (3 755 B, vier Unterabschnitte: der
+Ausgangsbefund samt seiner eigenen Über-Behauptung · die #755-Hälfte, in der drei
+Kopie-Wächter Swift lasen und die Website keiner · die eingetroffene Vorhersage #813 · das
+Gesetz). In `CLAUDE.md` bleiben 2 787 B GESETZ: welche Kanäle einen Erzeuger haben, dass der
+Trend aus dem ROHEN `frame.coherence` gespeist wird und nie aus `coherenceForSound`, EINE
+HISTORIE PRO QUELLE, der `grep`-Befehl für die zwei toten, die NEEDS-FOUNDER-VERIFY-Skala,
+beide Wächternamen. **148 210 B, Kopfraum 1 790 B — das 5,5-Fache.** Ledger-Sektionen: 32.
+
+⚠️ **ZWEI FALSCHE BEFUNDE MEINER EIGENEN TRANSKRIPTION, protokolliert weil sie lehrreich
+sind:** (1) „`CLAUDE.md` enthält `memory/project_knowledge.md` nicht" — die Nadel zielt auf
+`.claude/settings.json` (`settings.contains(...)`), ich hatte das Ziel geraten. (2) „13
+zitierte Wächternamen haben keine Datei" — sie liegen in `Tests/EchoelmusicTests/`, ich hatte
+nur `Tests/CISmoke/` durchsucht. **Beide Male hat MEIN Scan das falsche Ziel geprüft und
+etwas gemeldet, was der Baum nicht hergibt.** Die Umkehrung von §2s „ein Scan, der nichts
+trifft, ist ein Befund": ein Scan, der das FALSCHE trifft, ist ein Fehlalarm — und ein
+Fehlalarm, dem man glaubt, erzeugt eine Reparatur an korrektem Code.
+
+Acht Prüfer grün. Decken-Wächter transkribiert grün, alle sechs Ledger-Überschrift-Nadeln
+sitzen.
