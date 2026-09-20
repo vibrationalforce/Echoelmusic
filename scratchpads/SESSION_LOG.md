@@ -34417,3 +34417,43 @@ SIEBEN Verbraucher. Die #1376-Falle, in einem Audit über Register.
 **HOLD-FOR-FOUNDER:** genau EINE Frage — bekommt „Signature" (B2) eine Fläche im
 Performer-Rahmen, oder bleiben die Daten gespeichert und unsichtbar? B1 und B3 laufen so oder
 so.
+
+## 2026-09-20 — Bewertung selbst erheben + die Stellschrauben (#1388)
+
+Founder: *„Kennst du Founderblocks? Damit soll der Wert der App erhoben werden können, das
+können wir selbst oder? Und formal können wir dann selbst die Stellschrauben indirekt
+drehen"*
+
+Recherchiert: **FounderBlocks = Startup-Studio/Accelerator Hamburg**, steigt als Co-Founder
+mit ein (Software/Sales/Marketing), Schwerpunkt B2B-SaaS, wirbt mit „zahlende Kunden in
+8–12 Wochen, BEVOR entwickelt wird" und „10+ Investoren-Meetings in 30 Tagen".
+Quellen: startupcity.hamburg · founderblocks.io
+
+Ergebnis: `scratchpads/BEWERTUNG_UND_STELLSCHRAUBEN_2026-09-20.md`. Gemessenes steht mit
+Befehl, Geschätztes trägt **[SCHÄTZUNG]** — kein Gutachten, eine Verhandlungsgrundlage.
+
+**GEMESSEN:** 1 199 Dateien / 317 293 Zeilen (Sources 356/134 085 · CISmoke 541/133 208 ·
+EchoelmusicTests 302/50 000), 7 984 Commits, 2025-10-15 → 2026-09-20 (~11 Monate, volle
+Historie). ⚠️ Die 50 000 sind EXAKT und zweimal unabhängig nachgemessen — eine so runde Zahl
+sieht nach Abschneidefehler aus und ist keiner.
+
+**DIE ZAHL, DIE ZÄHLT:** 1,52 blockierende Wächter pro Quelldatei. Das ist die
+Bus-Faktor-Antwort und sie steht nach außen NIRGENDS.
+
+**STELLSCHRAUBEN nach Wirkung pro Aufwand:** L1 Store-Eintrag (binär, größter Multiplikator,
+Build 2595 liegt schon in ASC — fehlt nur die Einreichung) · L2 EIN bezahlter B2B-Event
+(Netzwerk existiert: Bolle, Roman/Adamson) · L3 AUv3 als zweiter Markt mit bewiesener
+Zahlungsbereitschaft · L4 Bus-Faktor-Papier aus vorhandenen Zahlen · L5 docs/claims.html
+(#28) · L6 B1 Universal Modulation.
+
+**DIE MECHANIK hinter der Frage:** jede Stellschraube VOR der Unterschrift gehört zu 100 %
+dem Founder, dieselbe danach anteilig. Drei der sechs sind keine Entwicklungsarbeit
+(Einreichen, Telefonieren, Aufschreiben).
+
+**ZWEI REIBUNGEN berichtet, nicht verschwiegen:** (1) ihr Verfahren ist für die Ideenphase
+gebaut, hier sind 356 Dateien fertig — der passende Teil ist Vertrieb/Investorenzugang, nicht
+Mitbauen; Frage nach Anteil/Vesting/Ausstieg gehört in den ersten Termin. (2) Druck auf
+schnellen Umsatz im Bio-Feld erzeugt Wellness-Claims — `CLAIMS.md` §2 verbietet u. a.
+„Longevity" wörtlich; bei einem Partner gehört die Datei in den Datenraum als BEDINGUNG.
+
+Kein Quellcode berührt.
