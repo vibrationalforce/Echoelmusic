@@ -35297,3 +35297,10 @@ Acht stehende Prüfer plus `doctor --selftest`: alle 0.
 
 **Offen, weil kein Test es kann:** dass eine gedimmte Zeile für ein menschliches Auge als „aus"
 liest, und dass VoiceOver den gekürzten Hint spricht — beides Geräteproben.
+
+**Gate-Lesung `4a000f7c8` (#1401):** `Xcode Compile Check` **success** (Lauf 2686) ·
+CI/CD `Build for Testing` **success** (Lauf 35523247863, Schritt 9, 16:37:57–16:42:23Z) — das
+blockierende Bündel kompiliert mitsamt `ADisabledParameterRowLooksDisabledTests`. `Run Tests`
+läuft und meldet wie auf jedem Push `failure` (#396); die Conclusion allein sagt nichts.
+⚠️ **NICHT im TestFlight-Build 2596** (v10.79.476 trägt `3071f5dde`, also den Stand VOR dieser
+Reparatur). Wer die gedimmte Zeile auf dem Gerät sehen will, braucht den nächsten Bump.
