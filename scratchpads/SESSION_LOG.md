@@ -35482,3 +35482,23 @@ Vor dem Bump geprüft, nicht angenommen: erster `vX.Y.Z`-Treffer über die GANZE
 `Save/Export`) sind alle echte Chips aus `studioChips` (Anspruch 2 von
 `TheDeployNoteNamesRealDoorsTests`) · `founder-verify.py --since` und „NICHT NUR EIN BUMP" stehen
 drin (Ansprüche 4 und 5). Acht stehende Prüfer plus `doctor --selftest`: alle 0.
+
+## 2026-09-20 — Deploy bestätigt: v10.79.477 / Build 2597 in App Store Connect gelandet
+
+TestFlight-Lauf **35533540916** auf `0e8f282fe`, Job „iOS" komplett **success**:
+`Preflight` ✓ (Secrets gültig) · `Verify iOS 26 SDK (ITMS-90725)` ✓ · `Archive` ✓
+(19:50:30–19:54:30Z) · `Export & Upload to TestFlight` ✓ (19:54:30–19:55:47Z) ·
+**`Verify build landed in App Store Connect` ✓ (19:55:47–19:57:52Z)**. `BUILD_NUMBER` ist
+`github.run_number`, also **Build 2597**.
+
+Gemeldet statt angenommen: der Schritt, der die LANDUNG prüft, ist gelaufen und grün — nicht
+nur der Upload. Das ist der Unterschied, den die #1151-Nachlese teuer gelernt hat.
+
+⛔ **`.deploy/release` wird ab hier NICHT mehr angefasst.** Jeder weitere Touch dieses Pfades
+triggert `testflight.yml` erneut und legt einen ZWEITEN Build mit identischem App-Code neben
+2597 (#1151, am eigenen Leib gemessen). Diese Bestätigung steht deshalb hier und nicht in der
+Build-Notiz.
+
+**Was der Founder am Gerät entscheidet** (die drei Marker aus #1403, gedruckt in der Notiz zu
+10.79.477): der Eröffnungswert 0,25 · ob ein Genre bei „Bar variation" 1,00 noch nach sich
+selbst klingt · ob die abgeschaltete Zeile als AUS statt als kaputt liest.
