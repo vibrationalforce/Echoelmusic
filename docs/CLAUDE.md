@@ -105,19 +105,32 @@ there are **8** aliases and **all 8 targets exist** (`/app`, `/download` → `ov
 `/datenschutz`, `/agb`, `/hilfe`, `/barrierefreiheit`, `/gesundheit`, `/sicherheit` → their
 `.html`). Neither half of that pair was right. Recorded here so the wrong pair is not re-quoted.
 
-## 4. `version.json` is stale, and it is one of four version numbers
+## 4. The site version is ONE number in three files — and moving it is part of a CSS fix
 
-`docs/version.json` says `"version": "10.21.0"`, `"build": "2026-06-17"`. The shipped app is
-**v10.79.385**. Four numbers currently disagree:
+⛔ **THE FOUR-WAY DRIFT RECORDED HERE IS CLOSED (#1396, 2026-09-20), and the numbers are
+deleted rather than refreshed (#818).** They said `version.json` 10.21.0 · `sw.js` 10.21.0 ·
+`?v=` 10.14 in 16 pages · `index.html` carrying two more. Measure, do not read:
 
-- `version.json` → `10.21.0`
-- `sw.js` → `10.21.0`
-- `shared.css?v=` / `shared.js?v=` → `10.14`, in all 16 pages that load them
-- `index.html` → carries **both** `10.11.2` and `10.21.0`
+```
+grep -o "CACHE_NAME = 'echoelmusic-v[0-9.]*'" docs/sw.js
+grep -o '"version": "[0-9.]*"' docs/version.json
+grep -ho 'shared\.css?v=[0-9.]*' docs/*.html | sort -u        # ONE line, or it has drifted
+```
 
-`version.json`'s own changelog documents a bug caused by exactly this drift ("the inline
-cache-guardian version was stale … forcing a nuke+reload once per session for every visitor").
-The drift is back, one field wider.
+⚠️ **WHY THIS IS NOT BOOKKEEPING, measured the hard way in #1396.** The fix to `shared.css`
+was on disk and the browser kept serving the broken file — the **service worker** was handing
+out its cached copy, and only `Network.setBypassServiceWorker` made the repair visible. A real
+returning visitor has no such switch. **A stylesheet repair that does not move `CACHE_NAME`
+and the `?v=` query is a repair that does not ship.** Guard:
+`Tests/CISmoke/TheSkipLinkIsVisibleWhenFocusedTests.swift`, claim 5 — it scans the whole
+directory rather than a named page, because `index.html` is the one page that loads no
+`shared.css` at all (§6) and a needle pointed there passes vacuously.
+
+⚠️ `version.json`'s `features` block stays honest (`12UnifiedTools`, `3Editions`, `8Personas`,
+`generativeWorlds`, `arWorlds` all `false`). Its `changelog` array is **not**: it narrates AUv3,
+EchoelBeat, RTMP, "12 unified tools" and `EchoelCreativeWorkspace` — a type that has never
+existed here (`git ls-files "*EchoelCreativeWorkspace*"` → 0). **A changelog is a claim surface
+too**, and this one is still unrepaired.
 
 The `features` block is honest where it matters — `12UnifiedTools`, `3Editions`, `8Personas`,
 `generativeWorlds`, `arWorlds` all read `false`. **The `changelog` array is not**: it narrates

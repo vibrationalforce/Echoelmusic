@@ -189,7 +189,12 @@
             text-decoration: none;
         }
         .nav-links a:hover { color: var(--text); background: rgba(255,255,255,0.05); }
-        .nav-links .nav-cta, .nav-links .nav-cta:visited, .nav-links .nav-cta:active {
+        /* `:link` is the state an UNVISITED link is in, and leaving it out cost the primary
+           call-to-action its contrast: `.nav-links a:link` above is (0,2,1) and this rule was
+           (0,2,0), so "Join the TestFlight" rendered rgba(224,224,224,0.55) on #e0e0e0 —
+           ratio 1.00. `shared.css` already carries the four-state list here; this inline copy
+           did not, which is exactly the two-places trap docs/CLAUDE.md §6 names. */
+        .nav-links .nav-cta, .nav-links .nav-cta:link, .nav-links .nav-cta:visited, .nav-links .nav-cta:active {
             background: var(--text); color: #000; font-weight: 700;
             padding: 8px 20px; border-radius: 10px; margin-left: 8px;
             transition: transform 0.2s, box-shadow 0.2s;

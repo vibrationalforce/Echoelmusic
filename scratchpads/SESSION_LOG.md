@@ -34920,3 +34920,66 @@ founder-verify --selftest · genre-prebatch --selftest) · doctor `--quiet` unve
 Kritische, beide die bekannten founder-gated CI-Befunde (Build-Maskierung in
 `ci.yml`/`benchmark.yml`/`full-tests.yml`, `ComprehensiveTestSuite`-Filter auf eine nicht
 existierende Suite) · doctor `--selftest` vier Zeilen grün · `CLAUDE.md` 148.825 B von 150.000.
+
+## 2026-09-20 — #1396: der Skip-Link war auf 20 Seiten UNSICHTBAR (Kontrast 1,00)
+
+**Wie gefunden.** Founder-Auftrag „Hol alles raus auf Website und Produkt Ebene … Fokus auf
+accessibility Design", dazu eine Reel-Inspiration (Claude + Figma + **Playwright**, „designt,
+baut und **testet selbst**"). Also nicht gelesen, sondern **gerendert**: headless Chromium über
+CDP, ohne neue Abhängigkeit (ein 60-zeiliger WebSocket-Client im Scratchpad — `playwright` ist
+als PAKET nicht installiert, nur der Browser liegt unter `/opt/pw-browsers`).
+
+**Zwei Befunde, beide gemessen statt vermutet:**
+
+| Element | color | background | Ratio | Seiten |
+|---|---|---|---|---|
+| `.skip-link` | `rgb(224,224,224)` | `rgb(224,224,224)` | **1,00** | alle 20 mit `shared.css` |
+| `.nav-cta` „Join the TestFlight" | `rgba(224,224,224,0.55)` | `rgb(224,224,224)` | **1,00** | `index.html` |
+
+Der Skip-Link ist das ERSTE, was ein Tastatur- oder Switch-Control-Nutzer erreicht. Er war
+hell auf hell — unlesbar, auf jeder Unterseite. Und die primäre Handlungsaufforderung der
+Startseite ebenso.
+
+⭐ **Die Ursache ist SPEZIFITÄT und im Quelltext unsichtbar.** Beide Dateien tragen den
+generischen Reset `a, a:visited, a:active, a:link { color: inherit }`. `a:link` ist (0,1,1);
+ein blankes `.skip-link` ist (0,1,0) und **verliert** — die Regel steht drei Zeilen höher und
+sieht völlig richtig aus. `:visited` und `:active` waren in beiden kaputten Regeln aufgeführt;
+**`:link` — der Zustand, in dem fast jeder Link fast immer ist — fehlte.** Jede ANDERE
+klassenbasierte Link-Regel in `shared.css` trug die Vierer-Liste bereits; genau diese zwei
+nicht, und deshalb hat sie niemand nachgelesen.
+
+⚠️ **Und die Reparatur wäre fast nicht beim Nutzer angekommen.** Nach dem Fix zeigte der
+Browser weiter den alten Wert — der **Service Worker** lieferte seine Kopie aus; erst
+`Network.setBypassServiceWorker` machte die Änderung sichtbar. Ein echter Besucher hat diesen
+Schalter nicht. Also gehört der Versions-Sprung zur Scheibe: `sw.js` `CACHE_NAME`,
+`version.json` und die 21 `?v=`-Querys von `10.22.0` auf **`10.23.0`**, alle zusammen.
+
+⚠️ **Was ich NICHT erzwungen habe (#364).** Die naheliegende Regel „jede Link-Regel mit `color`
+braucht `:link`" würde **acht** weitere Stellen rot machen — und alle acht sind KORREKT: eine
+Nachfahren-Kette hebt ihre Spezifität von allein über `a:link`, und der Render bestätigt für
+jede ≥ 4,5:1. Ein Wächter, der acht richtige Zeilen auf korrektem Baum rot macht, wird gelöscht
+und nimmt das Gesetz mit. Gepinnt sind daher die zwei REPARIERTEN Regeln plus ihre PRÄMISSEN.
+
+**Wächter: `Tests/CISmoke/TheSkipLinkIsVisibleWhenFocusedTests.swift`**, fünf Ansprüche.
+Benotung (§3), in Python gegen beide Bäume getrieben, Parent `fbe9a9cde`:
+
+| Anspruch | Parent | Worktree |
+|---|---|---|
+| 1 generischer `a:link`-Reset existiert (PRÄMISSE) | grün | grün |
+| 2 `shared.css` `.skip-link` trägt `:link` | **ROT** | grün |
+| 3 `index.html` `.nav-cta` trägt `:link` | **ROT** | grün |
+| 4 `index.html`-Reset lässt `a:link` weg (PRÄMISSE — der Grund, warum SEIN Skip-Link geht) | grün | grün |
+| 5 Cache-Versionen stimmen über alle 21 Seiten + `sw.js` + `version.json` überein | grün | grün |
+
+⛔ **Anspruch 5 wäre fast VAKUUM geworden:** die erste Fassung las die Asset-Version aus
+`index.html` — der einen Seite, die `shared.css` GAR NICHT lädt (docs/CLAUDE.md §6). Die Nadel
+traf nichts, der Anspruch wäre für immer grün gewesen. Die Transkription hat es gefangen; jetzt
+scannt er das VERZEICHNIS. **Genau die Gattung, die dieses Repo als „ein Parser, der nichts
+trifft, ist ein Befund, kein Freispruch" führt — diesmal im selben Commit gefangen statt vier
+Zyklen später.**
+
+`docs/CLAUDE.md` §4 ist mitgezogen (#456): die dortige Vier-Wege-Drift ist geschlossen, die
+Zahlen sind gelöscht statt nachgeführt (#818), und der Service-Worker-Grund steht jetzt dort.
+
+**Prüfer nach der Änderung:** swift-escapes · dead-needles (544 Wächter) · foreign-needles ·
+moved-needles · count-pins --all — alle grün.
