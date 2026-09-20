@@ -9,10 +9,31 @@
 // name — including A1, the FIRST row a session would pull. Measured 2026-08-25:
 // `git grep -l launchGlyphOverlay -- Sources` → 0, `git grep -n "RollChordStamp(" -- Sources` → 0
 // construction sites, no AUv3 target in `project.yml`, no clip-editor door.
+// ⛔ THE `RollChordStamp(` HALF OF THAT MEASUREMENT WAS NEVER A MEASUREMENT (#1395). It is a
+// caseless enum — a namespace, never constructed — so that needle returns 0 for every possible
+// state of this repo, including one where the stamp runs in five surfaces. The type is alive
+// and so is its consumer; what died is the editor around them. The needle it justified is gone
+// (see `deletedSurfaces`), and the reading stays as the record of what was believed that day.
 // ⛔ THE AUv3 HALF OF THAT MEASUREMENT EXPIRED on 2026-09-20 (#1385): `project.yml` carries
 // the `EchoelmusicAUv3` target again. The 2026-08-25 reading stays as the record of WHEN it
 // was true — the needle it justified is gone (see `deletedSurfaces`), the sentence is not
 // rewritten, because a dated measurement is a date and not a standing claim.
+//
+// ────────────────────────────────────────────────────────────────────────────────────────
+// GRADING OF THE #1395 CHANGE (§3), driven in Python against the live board — and it is
+// **PREVENTIVE, NOT A REGRESSION**, which is the honest label and the less flattering one.
+// Both the old and the new needle list are GREEN on today's board (26 waiting rows, no hit),
+// because A1 still carries its VOID marker. Nothing was red; what was wrong was a CLAIM.
+// Three drives, each a pair (#739 — an exemption that only feeds itself its own positive is
+// not a check):
+//   · today's board:            OLD green · NEW green            → no regression either way
+//   · A1 with its VOID stripped: OLD catches it · NEW catches it → coverage SWAPPED, not lost
+//   · a legitimate cleanup row ("retire the callerless RollChordStamp consumers"):
+//                                OLD FORBIDS it · NEW allows it  → the #364 defect, removed
+// NOT covered: whether the board's other four needles still name dead things. Three were
+// re-measured (0 hits in `Sources/` by path and text); `.patch(lane)` is a UI door token that
+// no Swift file carries by construction, so it is asserted by the board's own VOID row, not here.
+// ────────────────────────────────────────────────────────────────────────────────────────
 //
 // ⭐ SAME DEFECT CLASS AS #816, ONE LEVEL UP. That slice fixed a checklist that spent the
 // founder's DEVICE time on impossible probes. This one is a queue that spends a SESSION's cycle
@@ -65,9 +86,37 @@ final class TheWorkBoardDoesNotQueueDeletedSurfacesTests: XCTestCase {
     /// the file's negative pins**: the deletion that frees a name has to sweep every needle
     /// that spells it, and the only way to know is to DRIVE the guard, not to read the diff.
     /// Found by transcription while folding a device measurement into A10/A11.
+    ///
+    /// ⛔ **`"RollChordStamp"` STOOD HERE AND IS REPLACED BY `"Piano Roll"` (#1395) — the needle
+    /// named a LIVING core, and the evidence that put it here could not have said otherwise.**
+    /// The header above cites `git grep -n "RollChordStamp(" -- Sources` → 0. That is true and
+    /// will be true forever: `RollChordStamp` is a **caseless enum** used as a namespace
+    /// (`public enum RollChordStamp {`, `Sequencer/RollChordStamp.swift`), so it is never
+    /// CONSTRUCTED — the parenthesis form cannot match in any possible state of this repo. The
+    /// #1376 defect exactly, one file over: *a parser that matches nothing is a finding, never
+    /// a pass*. Measured instead by the CALL form: `RollChordStamp.stamp(` has **two** sites,
+    /// both in `PianoRollModel.stampChord`/`stampArp` — themselves callerless since #475 and
+    /// named as such in that file's own head, which is the honest statement of this situation.
+    ///
+    /// ⚠️ **WHY THAT IS NOT PEDANTRY: the board says the opposite of the needle, in the very row
+    /// the needle was written for.** A1's VOID marker reads *"Die KERNE leben (`RollChordStamp`,
+    /// `BreathArp`, `setChance`, `setOccurrence` in `PianoRollModel`) — der HÖRTEST ist
+    /// unausführbar."* So the impossible thing is the **hearing test behind the deleted editor**,
+    /// not the stamp core. With `"RollChordStamp"` on this list, a perfectly legitimate future
+    /// row — *"retire the callerless stamp consumers"*, the cleanup `PianoRollView.swift`'s head
+    /// explicitly calls "its own pass" — would have been forbidden. That is #364: a guard
+    /// turning correct work red.
+    ///
+    /// ⭐ **COVERAGE IS SWAPPED, NOT DROPPED, and it was driven rather than argued.** With A1's
+    /// VOID marker stripped (the only way that row becomes a waiting row again), BOTH the old
+    /// and the new needle catch it — `"Piano Roll"` sits in the row's TITLE,
+    /// *"**Piano Roll adaptiv + Pro-Funktionen**"*, which survives an un-VOID because the VOID
+    /// text is what gets removed. And `"Piano Roll"` carries a SPACE, so it matches neither
+    /// `PianoRollModel` nor `PianoRollView` nor `RollChordStamp`: the cleanup rows stay legal
+    /// while the re-queueing of the deleted editor does not.
     private static let deletedSurfaces = [
         "launchGlyphOverlay", "Audio-Clip-Editor",
-        "RollChordStamp", "Velocity-Lane", ".patch(lane)"
+        "Piano Roll", "Velocity-Lane", ".patch(lane)"
     ]
 
     /// The three tables that mean "someone still has to act on this".

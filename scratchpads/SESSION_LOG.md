@@ -34831,3 +34831,62 @@ eine gelöschte Sache passt, ist kein Beleg, dass die Bitte sie meint.**
 
 **Prüfer nach der Änderung:** swift-escapes · dead-needles (543 Wächter) · foreign-needles ·
 moved-needles · count-pins --all — alle grün.
+
+## 2026-09-20 — #1395: dieselbe Gattung ein drittes Mal, und diesmal war der BELEG die Nadel, die nie treffen kann
+
+**Wie gefunden.** Nach #1394 die naheliegende Frage gestellt: *gibt es weitere hand-gepflegte
+Abwesenheits-Listen, die etwas Lebendes nennen?* Ein grober Sweep über `Tests/CISmoke` (jede
+`let …= [ "…", … ]`, die eine `for`-Schleife mit Abwesenheits-Behauptung speist) meldete **45**
+Listen — fast alle Fehlalarme, weil die meisten gegen ein DOKUMENT behaupten (Store-Text,
+Website, CLAIMS.md) und nicht gegen `Sources/`. **Der Sweep ist deshalb bewusst NICHT
+geshippt** (#665: ein Prüfer mit Fehlalarmen ist einer, den niemand liest); er hat als
+Triage-Liste gedient, von Hand nachgemessen, und genau **eine** Fundstelle überlebt.
+
+**Der Befund.** `TheWorkBoardDoesNotQueueDeletedSurfacesTests.deletedSurfaces` — die Liste der
+Flächen, auf die keine wartende Board-Zeile Arbeit legen darf — trug `"RollChordStamp"` mit der
+Meldung *„which no longer exists"*. Gemessen:
+
+- `Sources/Echoelmusic/Sequencer/RollChordStamp.swift` **existiert**;
+- `RollChordStamp.stamp(` hat **zwei** Aufrufstellen, beide in `PianoRollModel.stampChord`/
+  `stampArp` — die sind seit #475 aufruferlos, aber vorhanden, und der Dateikopf von
+  `PianoRollView.swift` sagt das seit #475 wörtlich;
+- **die Board-Zeile A1 sagt es selbst**: *„Die KERNE leben (`RollChordStamp`, `BreathArp`,
+  `setChance`, `setOccurrence` in `PianoRollModel`) — der HÖRTEST ist unausführbar."*
+
+⛔ **Und der BELEG, der die Nadel auf die Liste gebracht hat, konnte gar nichts anderes
+sagen.** Der Dateikopf zitiert `git grep -n "RollChordStamp(" -- Sources` → 0
+„Konstruktionsstellen". `RollChordStamp` ist ein **caseless enum**, ein Namensraum — er wird
+NIE konstruiert. Die Klammer-Form gibt 0 für JEDEN möglichen Zustand dieses Repos zurück, auch
+für einen, in dem der Stempel in fünf Flächen läuft. **Das ist #1376 eine Datei weiter: *ein
+Parser, der nichts trifft, ist ein Befund, kein Freispruch*.**
+
+**Was daraus folgte (#364).** Eine völlig legitime künftige Zeile — *„die aufruferlosen
+Stempel-Verbraucher zurückziehen"*, genau der Durchgang, den `PianoRollView.swift`s Kopf „its
+own pass" nennt — wäre von diesem Wächter verboten worden.
+
+**Reparatur:** `"RollChordStamp"` → `"Piano Roll"` (mit Leerzeichen), plus Grabstein am Array
+und Korrektur des abgelaufenen Rezepts im Dateikopf.
+
+**Benotung (§3) — PRÄVENTIV, nicht Regression, und das ist die unschmeichelhaftere Beschriftung.**
+Beide Listen sind auf dem heutigen Board GRÜN (26 wartende Zeilen, kein Treffer), weil A1 seinen
+VOID-Vermerk trägt. Rot war nichts; falsch war eine BEHAUPTUNG. Drei Proben, jede als PAAR:
+
+| Probe | ALT | NEU |
+|---|---|---|
+| heutiges Board | grün | grün |
+| A1 ohne VOID-Vermerk | fängt es | **fängt es** (Deckung getauscht, nicht verloren) |
+| legitime Aufräum-Zeile („aufruferlose `RollChordStamp`-Verbraucher zurückziehen") | **VERBIETET sie** | erlaubt sie |
+
+Das Leerzeichen ist der ganze Trick: `"Piano Roll"` trifft weder `PianoRollModel` noch
+`PianoRollView` noch `RollChordStamp`, sitzt aber im TITEL von A1
+(„**Piano Roll adaptiv + Pro-Funktionen**"), der ein Ent-VOIDen überlebt.
+
+⭐ **Das Muster über #1376 · #1394 · #1395 hinweg, und es ist jetzt dreifach belegt: eine
+hand-gepflegte Nadel-LISTE ist der eine Teil eines Wächters, den kein Gate ehrlich halten kann.**
+Der Fehlschlag liegt zur Laufzeit, `Run Tests` ist wegen #396 auf jedem Push rot, das gelesene
+Gate kompiliert nur. **Wer eine Fläche löscht oder zurückholt, muss jede Liste durchsuchen, die
+sie buchstabiert** — und die Nadel nach dem TYP messen, nicht nach dem Dateinamen und nicht nach
+einer Klammer, die der Typ gar nicht tragen kann.
+
+**Prüfer nach der Änderung:** swift-escapes · dead-needles · foreign-needles · count-pins --all
+— alle grün.
