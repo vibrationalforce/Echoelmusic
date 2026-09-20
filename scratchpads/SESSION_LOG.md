@@ -34654,3 +34654,27 @@ Eltern (`1919a61f`) rot auf genau den sechs Seiten, Arbeitsbaum grün über 23 S
 Mutanten, alle erlegt: 161 Zeichen auf einer bisher grünen Seite · eine neue Seite ganz ohne
 Description · `og-image.html` mit 200 Zeichen. Needle-Prüfer grün (`foreign-needles` liest
 `docs/` mit).
+
+## 2026-09-20 — Gate-Lesung f8e319368 (deckt #1391 und #1392)
+
+**`Build for Testing` = SUCCESS** (Lauf 35504992681, Job 106063292784, Schritt 9,
+10:26:16 → 10:29:14). Das ist das entscheidende Gate (`Tests/CISmoke/CLAUDE.md` §5): es
+kompiliert `Sources/` UND beide Test-Bündel. Damit sind compile-verifiziert: die
+`ModDestinationKey.all`-Projektion, die Registrierungsschleife in `EchoelmusicApp`, die
+geänderte Karten-Kopie, der neue Wächter
+`TheMatrixReachesEveryAutomatableParameterTests` und der erweiterte
+`TheHomePageLeadsWithTheMechanismTests`.
+
+⚠️ **Der #1391-Lauf selbst (`1919a61fb`) wurde ABGEBROCHEN, nicht rot** — der #1392-Push
+zwei Minuten später hat ihn über die Concurrency-Gruppe gekillt. **LEHRE fürs Tempo: zwei
+Pushes kurz hintereinander kosten die Lesung des ERSTEN.** Der zweite Lauf deckt beide
+Commits (er baut den Kopf), also ist nichts verloren — aber wer eine Scheibe einzeln
+belegt haben will, wartet die Lesung ab, bevor er die nächste schiebt.
+
+⚠️ `Run Tests` und `Xcode Compile Check` liefen zum Zeitpunkt dieser Notiz noch. `Run
+Tests` meldet wegen #396 auf JEDEM Push `failure`, seine Conclusion sagt also nichts —
+der Testbefund kommt aus `python3 scripts/gh-test-verdict.py`. Der `Xcode Compile Check`
+baut `Sources/` ALLEIN unter dem Xcode-Scheme plus AUv3; die eine Fehlerklasse, die er
+zusätzlich fängt, ist die AUv3-Isolation, und dieser Diff berührt sie nicht
+(`ModulationEngine.swift` referenziert `EngineBus` und ist deshalb keine der drei
+Foundation-only `Core/`-Dateien, die die Extension kompiliert).
