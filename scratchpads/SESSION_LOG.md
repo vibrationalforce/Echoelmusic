@@ -35063,3 +35063,56 @@ LEERE Sektion auf `integrations.html` (`<h2>What is not here</h2>` unmittelbar g
 `<h2 id="osc-in">`) · 30 `<svg>` ohne `aria-hidden`/`role` · Tap-Ziele: Nav- und Fußzeilen-Links
 sind 22 px hoch (unter den 24 px von WCAG 2.2 SC 2.5.8 — die Abstands-Ausnahme ist noch nicht
 vermessen), Logo 28×28 und Burger 40×40 (beide über 24, unter Apples 44).
+
+## 2026-09-20 — #1398 29 von 67 Icons erreichten einen Screenreader als namenlose Grafik
+
+**Gemessen** über `docs/*.html`, mit `<style>`, `<script>` und HTML-Kommentaren herausgeschnitten:
+**67** `<svg>`-Öffnungstags, **29** davon ohne `aria-hidden`, ohne `role` und ohne `aria-label`.
+Jedes der 29 wurde im KONTEXT gelesen, bevor es angefasst wurde, und jedes ist DEKORATIV — was
+der Grund ist, warum die Reparatur durchgehend `aria-hidden="true"` heißt und kein Label:
+
+- 15 Social-Marken in `<a aria-label="Instagram|TikTok|YouTube">` — der LINK ist benannt, die
+  Marke wiederholt ihn.
+- 2 Briefumschläge in `<a href="mailto:…">echoel@tropicaldrones.com</a>` — die Adresse steht als
+  Text daneben.
+- 11 `.cap-icon`/`.bento-icon`-Marken auf der Startseite, jeder unmittelbar gefolgt von dem
+  `<span class="cap-label">` bzw. `<h3>`, das sagt, was sie bedeutet.
+- 1 Wellenform-Marke in `og-image.html`, der festen 1200-px-Open-Graph-Vorlage.
+
+⚠️ **Was die Entscheidung „verstecken statt benennen" abgesichert hat:** derselbe gerenderte
+Durchlauf fragt auch, welche interaktiven Elemente GAR KEINEN zugänglichen Namen haben
+(`innerText`, `aria-label`, `aria-labelledby`, `title` alle leer). **Null** über alle Seiten bei
+390 und 320 px — es gibt auf dieser Seite kein Icon-only-Bedienelement, dessen Bedeutung im Bild
+steckt, also kann das Verstecken nichts verstummen lassen.
+
+Cache-Version 10.23.1 → **10.23.2** (der Service Worker cacht die HTML-Seiten nach `CACHE_NAME`,
+nicht nur die Assets — eine reine HTML-Änderung ohne Sprung erreicht keinen wiederkehrenden
+Besucher).
+
+**Wächter:** `Tests/CISmoke/EverySiteIconIsNamedOrHiddenTests.swift`, 3 Ansprüche.
+Eltern `af4997e32`: `c1=RED c2=green c3=green` → Worktree alle grün. **Eine Regression, zwei
+Gegengewichte.**
+
+⛔ **BEIDE Gegengewichte waren in ihrer ersten Fassung falsch, in ENTGEGENGESETZTE Richtungen,
+und gefunden hat das die Mutation, nicht das Nachdenken.**
+- Anspruch 2 war `tags.count > 40`. Ein Mutant, der alle 25 Marken aus `index.html` löscht, ließ
+  42 übrig und blieb **grün**; die Zahl zu erhöhen hätte sie zu einem veralteten Literal gemacht
+  (#818), das eine legitime Neugestaltung rötet (#364). Er vergleicht jetzt die GESTRIPPTE
+  Markenzahl mit der ROHEN — das ist die Gefahr, um die es immer ging (ein `<style` ohne
+  `</style>` verschluckt den Rest der Datei). Neu getrieben: der Stripper-Mutant rötet, die
+  Neugestaltung nicht.
+- Anspruch 3 verlangte ein `aria-label` am ersten `instagram.com`/`tiktok.com`/`youtube.com`-Link
+  je Seite. Auf `artist.html` ist das ein Link auf ein REEL, auf `index.html` sind es die Worte
+  „Loewe Immerlieb" — gewöhnliche Textlinks, durch ihren eigenen Text korrekt benannt: **2
+  Befunde auf einem Baum, auf dem nichts falsch war.** Er wählt jetzt Links, deren Inhalt NUR
+  eine Marke ist — das exakte Gegenstück zu Anspruch 1 (#408). 15 solcher Links, alle benannt.
+
+Fünf Mutanten: `c1`, `c2`, `c3` röten je genau ihren eigenen Anspruch; zwei
+Fehlalarm-Sonden (`<svg>` in einem `<style>`-Kommentar; ein unbenannter TEXT-Link auf Instagram)
+bleiben grün.
+
+Nach dem Commit: Reflow-Durchlauf 46 Messungen, nur `og-image.html` (korrekt). Kontrast 0
+Befunde, unbenannte Bedienelemente 0. Checker alle 0.
+
+⚠️ **Offen und ausdrücklich NICHT erledigt:** was VoiceOver wirklich ansagt, ist eine
+Geräteprobe. `docs/accessibility.html` verspricht dieses Verhalten; CI kann es nicht hören.
