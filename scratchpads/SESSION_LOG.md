@@ -35405,3 +35405,46 @@ Acht stehende Prüfer plus `doctor --selftest`: alle 0.
 bei 1,00 noch nach sich selbst anhört. Founder-Ohr am Gerät. **Und eine Frage an ihn:** soll
 „Bar variation" auch die per-Lane-Fächerung erreichen (heute nur der Haupt-Take) — das ist eine
 eigene Scheibe, keine Auslassung.
+
+## 2026-09-20 — #1402b: die Streu-Tabelle war ein GESPEICHERTES Global (Gate-Lesung `edc37a4a5`)
+
+**Gate-Lesung `edc37a4a5` (#1402): BEIDE entscheidenden Gates ROT, EIN Fehler, und er ist meiner.**
+`Xcode Compile Check` **failure** (Lauf 2687, Schritt 7) · CI/CD **Schritt 9 `Build for Testing`
+failure** (Lauf 35532697738, 19:35:01–19:36:20Z, `Run Tests` daraufhin skipped). Genau EINE
+`error:`-Zeile im Log, und sie nennt eine Repo-Datei — also nach dem Doctor-Diskriminator **kein
+Flake**:
+
+```
+Sources/Echoelmusic/Sequencer/BioComposer.swift:132:16: error: static property 'variationSpread'
+is not concurrency-safe because non-'Sendable' type
+'[(axis: WritableKeyPath<MoodProfile, Float>, cap: Float)]' may have shared mutable state
+```
+
+**Die Sache:** ein `KeyPath` ist in Swift 6 **nicht** `Sendable`, auch wenn Root und Value es sind.
+Ein GESPEICHERTES Global davon ist damit ein harter Strict-Concurrency-Fehler. Die Reparatur ist
+kein Silencer, sondern das Entfernen des geteilten Zustands: `static let` → **computed
+`static var`**. Eine berechnete Eigenschaft hat keine Speicherung, also gibt es nichts zu teilen;
+das Array hat fünf Elemente und wird von `varied` (einmal pro komponiertem Takt) und einer Caption
+gelesen — nie auf einem Render-Pfad. ⛔ Ausdrücklich NICHT `nonisolated(unsafe)`: das hätte eine
+WAHRE Aussage stummgeschaltet statt den Zustand zu beseitigen, und der Preis ist hier null.
+
+⚠️ **Der Wächter hat das nicht gefangen und KONNTE es nicht** — und das ist keine Lücke in ihm,
+sondern die Grenze der §0-Transkription: eine Python-Nachbildung führt die Swift-Typprüfung nicht
+aus. Kein Prüfer dieses Repos ersetzt den Compiler; genau dafür ist `Xcode Compile Check` das
+entscheidende Gate. Die Ansprüche selbst bleiben unverändert gültig (die Nadel
+`WritableKeyPath<MoodProfile, Float>` trifft die berechnete Form genauso), erneut durchgefahren:
+8 Quell-Ansprüche grün, 10 Mutanten rot, 4 Sonden grün.
+
+⭐ **In die immer geladene Fehlertabelle aufgenommen** (CLAUDE.md, „Swift Compiler Errors"), weil
+die Falle allgemein ist und wiederkommt: jedes `static let`, das Key-Paths oder Closures hält.
+⚠️ **Kopfraum gemessen, nicht geschätzt:** `CLAUDE.md` steht danach bei **149 252 B**, also
+**748 B** unter der 150 000-Decke von `TheLawFileStaysUnderItsCeilingTests`. Die nächste Sitzung,
+die hier einen Absatz anhängen will, hat praktisch keinen Platz mehr — die Reparatur ist
+#538s: Provenienz nach `memory/LEDGER_COUNTS.md`, Gesetz hier.
+
+⛔ **UND EIN FOUNDER-GATED BEFUND HAT SICH LIVE GEZEIGT (#683/#1337):** `auto-merge-claude.yml`
+wartet auf kein Gate und hat `edc37a4a5` nach `main` gemerged, während beide Gates rot liefen.
+`main` hat in diesem Fenster **nicht kompiliert**. Der Dämpfer „erreicht nie einen Nutzer"
+(TestFlight-Dispatch steht auf `if: false`) gilt — der #1337-Zusatz aber auch: in diesem Fenster
+lief für jeden, der zog, KEIN Wächter des Repos. Reparatur bleibt founder-gated
+(`.github/workflows/**` = berichten, nicht editieren).

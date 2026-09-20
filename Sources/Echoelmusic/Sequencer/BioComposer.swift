@@ -129,10 +129,20 @@ public extension MoodProfile {
     /// scattered nothing, silently, which is the #367 defect (a mechanism that cannot fail for
     /// its named reason). A `WritableKeyPath` makes the table itself the mapping: one
     /// definition, and the compiler carries it (#416).
-    static let variationSpread: [(axis: WritableKeyPath<MoodProfile, Float>, cap: Float)] = [
-        (\.liveliness, 0.25), (\.virtuosity, 0.25),
-        (\.syncopation, 0.20), (\.humanize, 0.20), (\.weird, 0.15)
-    ]
+    /// ⛔ COMPUTED, NOT `static let`, AND THE COMPILER DECIDED THAT — not taste. The first push
+    /// stored it and `Xcode Compile Check` (run 2687) said: *"static property 'variationSpread'
+    /// is not concurrency-safe because non-'Sendable' type
+    /// '[(axis: WritableKeyPath<MoodProfile, Float>, cap: Float)]' may have shared mutable
+    /// state"*. A key path is not `Sendable` in Swift 6 even when Root and Value are, so a
+    /// STORED global of them is a strict-concurrency error. A computed property has no storage,
+    /// so there is nothing to share; the array is rebuilt per access, five elements, and the
+    /// only callers are `varied` (once per composed bar) and one caption — never a render path.
+    /// ⚠️ Do NOT "fix" this back to `static let` with `nonisolated(unsafe)`: that silences a
+    /// true statement instead of removing the shared state, and the cost here is nil.
+    static var variationSpread: [(axis: WritableKeyPath<MoodProfile, Float>, cap: Float)] {
+        [(\.liveliness, 0.25), (\.virtuosity, 0.25),
+         (\.syncopation, 0.20), (\.humanize, 0.20), (\.weird, 0.15)]
+    }
 
     /// This profile scattered around itself — the same vibe, a different reading of it.
     ///
