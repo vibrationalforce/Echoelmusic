@@ -35448,3 +35448,37 @@ wartet auf kein Gate und hat `edc37a4a5` nach `main` gemerged, während beide Ga
 (TestFlight-Dispatch steht auf `if: false`) gilt — der #1337-Zusatz aber auch: in diesem Fenster
 lief für jeden, der zog, KEIN Wächter des Repos. Reparatur bleibt founder-gated
 (`.github/workflows/**` = berichten, nicht editieren).
+
+## 2026-09-20 — Gate-Lesung `33549005b` GRÜN + Deploy v10.79.477 (#1403)
+
+**Gate-Lesung `33549005b` (#1402b):** `Xcode Compile Check` **success** (Lauf 2688, Schritt 7,
+19:42:19–19:45:12Z) · CI/CD **Schritt 9 `Build for Testing` success** (Lauf 35533161326,
+19:43:07–19:46:27Z) — das blockierende Bündel kompiliert mitsamt
+`TheGenrePresetIsACentreNotAPointTests`. `Run Tests` läuft und meldet wie auf jedem Push
+`failure` (#396); die Conclusion allein sagt nichts. **`main` kompiliert damit wieder** — das
+#683-Fenster von 19:33 bis 19:42 ist geschlossen.
+
+**DREI PRÜF-BITTEN IN DEN QUELLTEXT GESCHRIEBEN, und das war der eigentliche Fund beim
+Deploy-Vorbereiten.** `founder-verify.py --since 3071f5dde` lieferte zuerst **NULL** — obwohl
+#1401 und #1402 zusammen drei Fragen offen lassen, die kein Test hier entscheiden kann. Sie
+standen nur als Prosa im Sitzungsprotokoll, und **eine Bitte ohne Marker ist als Warteschlange
+unsichtbar**; genau dafür existiert das Werkzeug. Nachgetragen an der Stelle, die man beim
+Beantworten ändern würde:
+· `Core/StudioDefaultKeys.swift` — atmet der Loop bei Vorgabe 0,25 hörbar, ohne unruhig zu werden?
+· `Sequencer/BioComposer.swift` — klingen vier weit auseinanderliegende Genres bei „Bar variation"
+  1,00 noch nach sich selbst, oder wandern sie aufeinander zu? (Wandern sie, sinken die Caps —
+  sie stehen in EINER Tabelle, damit genau eine Stelle sinkt.)
+· `Studio/EchoelValueField.swift` — liest die abgeschaltete Zeile jetzt als AUS statt als kaputt,
+  und lässt VoiceOver die Wisch-Anweisung weg? (#1401, der Bericht, der alles ausgelöst hat.)
+
+**DEPLOY v10.79.477 — „Der Variations-Build".** `.deploy/release` GENAU EINMAL angefasst, Bump
+und `--since`-Liste im SELBEN Commit (#1150/#1151: ein Nachtrag an dieser Datei schickt einen
+ZWEITEN Build). Inhalt: sechs Commits seit `3071f5dde`, davon drei in `Sources/`. Der Vorgänger
+10.79.476 trug `3071f5dde`, also den Stand VOR #1401 — beide Reparaturen erreichen das Gerät
+zum ersten Mal.
+
+Vor dem Bump geprüft, nicht angenommen: erster `vX.Y.Z`-Treffer über die GANZE Datei ist
+`v10.79.477` (das CI-Gesetz aus Zeile 1) · die drei Pfad-Tokens der Notiz (`Master`, `Mood`,
+`Save/Export`) sind alle echte Chips aus `studioChips` (Anspruch 2 von
+`TheDeployNoteNamesRealDoorsTests`) · `founder-verify.py --since` und „NICHT NUR EIN BUMP" stehen
+drin (Ansprüche 4 und 5). Acht stehende Prüfer plus `doctor --selftest`: alle 0.

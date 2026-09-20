@@ -175,6 +175,10 @@ public enum StudioDefaultKeys {
     /// fresh install must already breathe — but the curated genre batches were auditioned at the
     /// preset itself, so the opening default stays inside a quarter of the allowed spread. It is
     /// an ear decision and the number is here, alone, to be moved.
+    ///
+    /// NEEDS-FOUNDER-VERIFY: frische Installation, Genre „Self-Observation", Loop 8 Takte, Play.
+    /// Atmet der Loop bei 0,25 hörbar von Takt zu Takt, ohne dass es unruhig wird? Wenn zu brav:
+    /// die Zahl hier hoch. Wenn zu zappelig: runter. Nur diese eine Zeile ändern.
     public static let moodVariation = StudioDefault(key: "studio.moodVariation", value: 0.25)
 
     /// #275 slice 1 — the eight mood dials as `MoodStorage`'s JSON, or `""` meaning "nothing

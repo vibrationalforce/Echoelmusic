@@ -1,4 +1,4 @@
-build: v10.79.476 — Der Zugänglichkeits-Build: die Website ist tastatur- und screenreader-fest, und der Körper erreicht zwölf Modulationsziele statt einem (#1391, #1396–#1399)
+build: v10.79.477 — Der Variations-Build: das Genre-Preset ist eine MITTE mit Streuung statt einer Schablone, und ein abgeschalteter Regler sieht endlich abgeschaltet aus (#1401, #1402)
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -51,7 +51,121 @@ notes: |
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
 
-  Der Vorgänger ist 10.79.475 (und davor 10.79.474).
+  Der Vorgänger ist 10.79.476 (und davor 10.79.475).
+
+  ── WAS IN DIESEM BUILD NEU IST (v10.79.477) ──────────────────────────────
+
+  ⭐ DAS IST DER VARIATIONS-BUILD, und im Gegensatz zum Vorgänger fasst er fast nur
+  das Instrument an: sechs Commits seit dem letzten Deploy, davon drei in `Sources/`.
+  Beide neuen Sachen kommen direkt aus DEINEM Gerätebericht von heute.
+
+  1. DAS GENRE-PRESET IST JETZT EINE MITTE, KEIN PUNKT (#1402)
+
+     Deine Bitte, wörtlich: „Es wäre aufjedenfall gut grundsätzlich einen Status zu
+     erreichen, wo kein Moment wie der andere klingt. Auch die Genre presets sollen
+     einen vibe haben aber nicht gleich klingen. Immer random und variations reich.
+     Wie stark die Variation ist kann man dann einstellen."
+
+     NEUER REGLER: **Mood-Chip → „Bar variation"**, direkt unter den acht Mood-Reglern,
+     0…1, Vorgabe 0,25. Er sagt, wie weit jeder Takt des Loops vom kuratierten Genre-
+     Preset abweichen darf.
+
+     ⚠️ VORHER GEMESSEN, UND DER NAHELIEGENDE VERDACHT WAR FALSCH. Der Zufallsgenerator
+     ist SplitMix64 — benachbarte Seeds dekorrelieren sofort, „Seed+1 klingt gleich"
+     stimmt nicht. Variation gab es schon auf ZWEI Ebenen: pro Take (alle 25–45 s neue
+     Noten) und pro Takt (ein 8-Takt-Loop sind wirklich acht verschiedene Takte). Gefehlt
+     hat genau die Ebene, nach der du gefragt hast: WIE STARK.
+
+     WAS SICH BEWEGT UND WAS NICHT — das ist die ganze Entscheidung:
+       · Fünf AUSDRUCKS-Regler streuen pro Takt: Liveliness · Virtuosity · Syncopation ·
+         Humanize · Weird.
+       · Drei IDENTITÄTS-Regler halten: Darkness · Tension · Romance. Die drei sind
+         KLIPPEN, keine Schattierungen — über 0,60 legt Darkness die ganze Lage eine
+         Oktave tiefer, über 0,50 fügt Romance die Sept hinzu. Sie zu streuen würde das
+         Genre mitten im Loop UMREGISTRIEREN statt seine Aufführung zu variieren.
+       · Genre selbst (Akkorde, Skala, Register, Rhythmus) wird GAR NICHT angefasst.
+     Darum musst du keines der 41 kuratierten Genres neu abhören.
+
+     TAKT 1 IST IMMER DAS PRESET. Das Genre sagt sich erst selbst, dann variiert es.
+
+     ⚠️ Bei Loop-Länge 1 Takt ist die Zeile ABGESCHALTET — Takt 1 ist dann der ganze
+     Loop, es gibt nichts zu streuen. Die Caption sagt das.
+
+     BEI 0,00 IST ALLES EXAKT WIE VORHER, bitweise. Kein gespeichertes Projekt ändert
+     sich, solange du den Regler nicht bewegst.
+
+  2. EIN ABGESCHALTETER PARAMETER SIEHT JETZT ABGESCHALTET AUS (#1401)
+
+     Dein Bericht: Mood → Pad rhythm „Hypnotic" → „Variation geht nicht".
+
+     DIE ZEILE HAT SICH KORREKT VERHALTEN. „Hypnotic" ist einer von vier Rhythmen, die
+     diesen Regler gar nicht lesen — Variation von 0 auf 1 erzeugt dort einen
+     bit-identischen Takt. Die 0,20 im Screenshot war der Vorgabewert, nichts war
+     verstellt.
+
+     DER DEFEKT WAR, DASS MAN DAS NICHT SEHEN KONNTE. `EchoelValueField` — das EINE
+     Parameterfeld der ganzen App, 58 Stellen — hat nirgends gelesen, ob es überhaupt
+     bedienbar ist. Die tote Zeile zeichnete dieselbe Beschriftung, denselben Wert und
+     denselben kräftigen Rahmen wie die zwei lebenden darüber. Und VoiceOver sagte
+     obendrein „wisch hoch oder runter zum Ändern" — eine Anweisung, die die Zeile nicht
+     beantworten kann.
+
+     JETZT: abgeschaltete Zeilen sind gedimmt, ihr Rahmen ist zurückgenommen, und der
+     gesprochene Hinweis lässt das Gesten-Versprechen weg. Das gilt app-weit, nicht nur
+     an dieser einen Stelle. Die Caption nennt zusätzlich die Rhythmen, die Variation
+     TRAGEN („Dynamic" und „Flowing") — gelesen aus der Engine, nicht getippt.
+
+     ⛔ AUSDRÜCKLICH NICHT GETAN: „Hypnotic" hat KEIN Evolve bekommen. Ob Variation dort
+     etwas tun soll, ist eine Klangentscheidung und gehört deinem Ohr, nicht meiner
+     Aufräumlust. Sag Bescheid, wenn du es willst.
+
+  3. WAS AUF DEM WEG SCHIEFGING UND WARUM ES HIER STEHT (#1402b)
+
+     Der erste Push von Posten 1 hat BEIDE Gates rot gemacht — ein Swift-6-Fehler, den
+     ich hier nicht sehen kann (in dieser Umgebung gibt es keinen Swift-Compiler; ich
+     benote Wächter, indem ich ihre Behauptungen in Python nachbaue, und das führt die
+     Typprüfung nicht aus). Repariert, zweiter Push grün, und die Falle steht jetzt in
+     der Fehlertabelle, die jede Sitzung lädt.
+
+     ⛔ DABEI HAT SICH EIN BEFUND LIVE GEZEIGT, DEN ICH DIR SEIT LÄNGEREM MELDE:
+     `auto-merge-claude.yml` wartet auf KEIN Gate und hat den roten Commit trotzdem nach
+     `main` gemerged. `main` hat in dem Fenster nicht kompiliert. Es erreicht keinen
+     Nutzer (der TestFlight-Versand in dem Workflow steht auf `if: false`), aber für
+     jeden, der in dem Fenster zieht, lief kein einziger Wächter des Repos. Reparatur
+     ist workflow-seitig und gehört dir — ich fasse `.github/workflows/**` nicht an.
+
+  ⚠️ WAS DIESER BUILD NICHT BEWEIST. Ob 0,25 der richtige Startwert ist, ob ein Genre
+  bei 1,00 noch nach sich selbst klingt, und ob eine gedimmte Zeile für ein Auge als
+  „aus" liest — das kann kein Test hier entscheiden. Genau dafür sind die drei Bitten
+  unten.
+
+  ── PRÜF-BITTEN, DIE DIESER BUILD NEU BEANTWORTBAR MACHT ──────────────────
+  (gedruckt mit `python3 scripts/founder-verify.py --since 3071f5dde`, nicht von Hand)
+
+  ⚠️ ALLE DREI SIND WIRKLICH NEU, nicht bloß umformuliert — sie sind mit diesem
+  Build in den Quelltext geschrieben worden, weil es die drei Fragen sind, die kein
+  Test hier beantworten kann. Vorher waren sie nur Prosa im Sitzungsprotokoll und
+  damit als Warteschlange unsichtbar.
+
+  Founder device-session checklist — 3 NEW or REWORDED since `3071f5dde`, of 152 open, none answered yet
+     'New' means the marker LINE was added or changed. An ask that only moved (lines edited above it) is deliberately NOT here — it did not change.
+     ⚠️ It sees TEXT, not capability: a REWORDED ask is an old ask whose sentence was polished, not one that became newly answerable. Read the sentence.
+
+  ── OTHER  (1)
+     Core/StudioDefaultKeys.swift:179
+        NEEDS-FOUNDER-VERIFY: frische Installation, Genre „Self-Observation", Loop 8 Takte, Play. Atmet der Loop bei 0…
+
+  ── BIO  (1)
+     Sequencer/BioComposer.swift:143
+        NEEDS-FOUNDER-VERIFY: „Bar variation" auf 1,00, dann vier weit auseinanderliegende Genres nacheinander spielen…
+
+  ── UI  (1)
+     Studio/EchoelValueField.swift:619
+        NEEDS-FOUNDER-VERIFY (#1401, kein Test kann es): Mood → Pad rhythm auf „Hypnotic" stellen. Liest die Zeile „Va…
+
+
+  (Die Abschnitte NOT ASKS, BLOCKED, HOW TO RETIRE und LIMITS sind unverändert und
+  stehen ausgeschrieben in der Notiz zu 10.79.473 weiter unten.)
 
   ── WAS IN DIESEM BUILD NEU IST (v10.79.476) ──────────────────────────────
 

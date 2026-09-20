@@ -139,6 +139,11 @@ public extension MoodProfile {
     /// only callers are `varied` (once per composed bar) and one caption — never a render path.
     /// ⚠️ Do NOT "fix" this back to `static let` with `nonisolated(unsafe)`: that silences a
     /// true statement instead of removing the shared state, and the cost here is nil.
+    ///
+    /// NEEDS-FOUNDER-VERIFY: „Bar variation" auf 1,00, dann vier weit auseinanderliegende Genres
+    /// nacheinander spielen (z. B. Self-Observation · Modal Jazz · Cumbia · Lo-Fi Hip-Hop).
+    /// Klingt jedes noch nach SICH SELBST, oder wandern sie aufeinander zu? Wandern sie, sind die
+    /// Caps in dieser Tabelle zu weit — sie stehen hier zusammen, damit genau eine Stelle sinkt.
     static var variationSpread: [(axis: WritableKeyPath<MoodProfile, Float>, cap: Float)] {
         [(\.liveliness, 0.25), (\.virtuosity, 0.25),
          (\.syncopation, 0.20), (\.humanize, 0.20), (\.weird, 0.15)]

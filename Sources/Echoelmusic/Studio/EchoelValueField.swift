@@ -615,6 +615,10 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
     private var labelTint: Color { isEnabled ? EchoelTheme.text : EchoelTheme.dim }
 
     /// The spoken hint, with the adjust/type instruction dropped once the row is off (#1401).
+    ///
+    /// NEEDS-FOUNDER-VERIFY (#1401, kein Test kann es): Mood → Pad rhythm auf „Hypnotic" stellen.
+    /// Liest die Zeile „Variation" darunter jetzt als AUS — oder immer noch als kaputt? Und mit
+    /// VoiceOver darüber: wird „dimmed" gesagt UND die Wisch-Anweisung weggelassen?
     private var accessibleHint: String {
         let gesture = "Swipe up or down to adjust, or double-tap to type"
         if !isEnabled { return hint }
