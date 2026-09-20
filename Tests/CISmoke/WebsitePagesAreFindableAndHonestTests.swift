@@ -351,17 +351,102 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
     /// doc cited #416 as the reason it exists. The only behavioural change is that the search
     /// is now case-insensitive: for the literal "AUv3" that can only ADD matches, so the check
     /// is strictly stricter, never looser.
-    func testEveryAUv3MentionIsADenial() throws {
+    /// ⭐ **REWRITTEN 2026-09-20 (#1389) — THE OLD RULE ENFORCED AN EXPIRED PREMISE ONTO THE
+    /// WEBSITE, and that is the most expensive shape a guard can take.** It asserted that every
+    /// mention of "AUv3" anywhere on the site must sit near a negation, on the stated ground
+    /// that *"the AUv3 target was REMOVED on 2026-07-24 (#121 Slice 1+2)"*. The founder brought
+    /// the target BACK on 2026-09-20 (#1385) and it was measured loading, instantiating and
+    /// sounding in AUM on a device (#1386). `ContentPipeline/CLAIMS.md` §1 was rewritten the
+    /// same day and says so; the WEBSITE was not, and this guard is why — five pages carried
+    /// "Echoelmusic is not an AUv3 plugin", the guard held them there, and anyone repairing one
+    /// page would have gone red on a correct tree.
+    ///
+    /// That is #364 exactly: **a guard that forbids correct work is itself the defect.** But the
+    /// blanket rule also hid the half that never expired, which is why the replacement is THREE
+    /// claims that can age independently rather than one that ages all at once.
+    ///
+    /// ⚠️ The direction of the old failure is worth naming, because this repo keeps missing it:
+    /// a false DENIAL reads as caution and costs a user who never tries the plugin, while a
+    /// false CLAIM reads as hype and costs an App Store rejection. Only the second one gets
+    /// noticed. #439 wrote the same lesson about the press kit understating what ships.
+
+    /// Claim 1 — THE PREMISE, asserted positively so this file fails FIRST if it expires again.
+    ///
+    /// The whole point of the rewrite is that the website may now say Echoelmusic IS an AUv3
+    /// instrument. If the target is ever removed a second time, that permission has to be
+    /// withdrawn — and the failure has to arrive HERE, naming the pages, rather than as a
+    /// silent falsehood on a live site. Pinned on the extension's own source, not on
+    /// `project.yml` (founder-gated: report, do not edit).
+    func testTheAUv3TargetStillExists() throws {
+        let fm = FileManager.default
+        let dir = try repoRoot().appendingPathComponent("Sources/EchoelmusicAUv3")
+        let swift = ((try? fm.contentsOfDirectory(atPath: dir.path)) ?? [])
+            .filter { $0.hasSuffix(".swift") }
+        XCTAssertFalse(swift.isEmpty, """
+            `Sources/EchoelmusicAUv3/` holds no Swift file, so Echoelmusic is not an AUv3 \
+            instrument any more — but the website still says it is. Pages that claim it \
+            today: architecture.html, faq.html, overview.html, claims.html. Revert each to a \
+            denial in THIS commit, and rewrite `ContentPipeline/CLAIMS.md` §1a, which is the \
+            register those pages are derived from.
+            """)
+    }
+
+    /// Claim 2 — HOSTING. This half never expired and never will: Echoelmusic loading someone
+    /// else's plugin was built, removed on purpose (#121 Slice 2), and is not coming back.
+    ///
+    /// ⚠️ The needles are the PHRASES the site actually uses, not the bare word "host" — which
+    /// occurs in "hosted", "hosting provider" and ordinary prose, and would have made this
+    /// assertion unfalsifiable-by-noise. Each needle is a way of saying Echoelmusic hosts
+    /// plugins; each occurrence must sit near a negation.
+    func testNoPageClaimsEchoelHostsOtherPlugins() throws {
         let negations = ["not ", "no ", "never", "n't", "removed", "cannot", "can not",
                          "without", "neither", "nor "]
-        let affirmatives = try mentionsWithoutMarker("AUv3", markers: negations,
-                                                     back: 220, forward: 120)
-        let shown = affirmatives.prefix(3).joined(separator: " | ")
-        XCTAssertTrue(affirmatives.isEmpty, """
-            \(affirmatives.count) mention(s) of AUv3 on the site are not near a negation: \
-            \(shown). The AUv3 target was REMOVED on 2026-07-24 (#121 Slice 1+2) and the \
-            hosting with it — Echoel is a standalone app, is not a plugin, and cannot load \
-            one. See `ContentPipeline/CLAIMS.md` §1 before rewording anything here.
+        var offenders: [String] = []
+        for needle in ["AUv3 host", "plugin host", "host third-party", "hosts third-party",
+                       "host AUv3", "hosts AUv3", "hosting AUv3"] {
+            offenders += try mentionsWithoutMarker(needle, markers: negations,
+                                                   back: 220, forward: 120)
+        }
+        let shown = offenders.prefix(3).joined(separator: " | ")
+        XCTAssertTrue(offenders.isEmpty, """
+            \(offenders.count) place(s) on the site describe Echoelmusic as hosting other \
+            plugins without a negation nearby: \(shown). Echoelmusic is an AUv3 instrument \
+            and has been since #1385 — it has NEVER been a plugin HOST since #121 Slice 2, \
+            and the two are routinely confused. See `ContentPipeline/CLAIMS.md` §1b.
+            """)
+    }
+
+    /// Claim 3 — THE HOSTS WE HAVE NOT TESTED. One device run proves ONE host.
+    ///
+    /// AUM is measured (#1386). Logic Pro, GarageBand and Ableton Live are not, and GarageBand
+    /// is the interesting one because it runs at 44.1 kHz while the extension pins 48 kHz
+    /// (board A10). Naming an untested host next to "AUv3" is the claim that cost #158 and
+    /// #192 a cycle each and #184 twelve lines of App Store copy.
+    ///
+    /// ⚠️ "Ableton **Link**" is a different thing entirely and is covered by its own guard, so
+    /// the needle is "Ableton Live" — not "Ableton". A needle that cannot tell a protocol from
+    /// a DAW would fire on the roadmap line and be silenced for being wrong.
+    func testNoPageClaimsAnUntestedPluginHost() throws {
+        let negations = ["not ", "no ", "never", "n't", "untested", "unverified", "yet",
+                         "cannot", "can not", "without", "neither", "nor "]
+        var offenders: [String] = []
+        for needle in ["Logic Pro", "GarageBand", "Ableton Live"] {
+            for hit in try mentionsWithoutMarker(needle, markers: negations,
+                                                 back: 220, forward: 160) {
+                // Only an AUv3/plugin CONTEXT is a host claim. The same names may appear in
+                // an export or interoperability sentence, where they are simply true.
+                let low = hit.lowercased()
+                if low.contains("auv3") || low.contains("plugin") || low.contains("audio unit") {
+                    offenders.append(hit)
+                }
+            }
+        }
+        let shown = offenders.prefix(3).joined(separator: " | ")
+        XCTAssertTrue(offenders.isEmpty, """
+            \(offenders.count) place(s) name an UNTESTED plugin host without qualification: \
+            \(shown). One device run proves one host, and the one that ran is AUM. Say "AUM" \
+            or say "untested" — `ContentPipeline/CLAIMS.md` §1a draws this line and explains \
+            why GarageBand specifically is not a safe guess.
             """)
     }
 

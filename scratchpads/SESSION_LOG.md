@@ -34457,3 +34457,61 @@ schnellen Umsatz im Bio-Feld erzeugt Wellness-Claims — `CLAIMS.md` §2 verbiet
 „Longevity" wörtlich; bei einem Partner gehört die Datei in den Datenraum als BEDINGUNG.
 
 Kein Quellcode berührt.
+
+## 2026-09-20 — #28 geschlossen: claims.html, und der Wächter, der eine Falschaussage festhielt (#1389)
+
+Founder: *„Erstmal noch alle offenen tasks erfolgreich bearbeiten und alles überprüfen:
+sämtliche qualitativen standarts im Code müssen erfüllt sein"*
+
+**PRÜF-DURCHGANG ZUERST.** Acht stehende Prüfer grün (`swift-escapes`, `dead-needles`,
+`moved-needles`, `foreign-needles`, `count-pins --all`, `diag-ladder --source`,
+`founder-verify --selftest`, `genre-prebatch --selftest`). `doctor`: B/C/D null kritisch;
+Sektion A zwei kritische, beide `.github/workflows/**` und damit **founder-gated** (berichten,
+nicht editieren) — unverändert die bekannten Masken in `ci.yml`/`benchmark.yml`/`full-tests.yml`
+plus der Filter auf die nicht existierende `ComprehensiveTestSuite`.
+
+**OFFENE POSTEN, ehrlich sortiert:** von fünf ist genau EINER meiner. #27 (Marken-Zeile) und
+#34 (Ohrprobe) gehören dem Founder. #40 ist laut Board gerät-gebunden („kein sicherer
+nicht-geräte-gebundener Slice"). #58 ist belegt blockiert (`gnawaGuembri` an kultureller
+Attribution und einer `BassGrammar`, die es nicht gibt; `koraOstinato` an einem Regal, das es
+nicht gibt) — der Posten-Titel sagt das selbst. Geblieben: **#28**.
+
+**UND DABEI EIN GRÖSSERER BEFUND ALS DER POSTEN.** Die Website verneinte AUv3 auf **fünf**
+Seiten („Echoelmusic is not an AUv3 plugin") — seit #1385/#1386 falsch, und
+`ContentPipeline/CLAIMS.md` §1 sagte seit demselben Tag das Gegenteil. Festgehalten wurde die
+Falschaussage von einem BLOCKIERENDEN Wächter, `testEveryAUv3MentionIsADenial`, dessen
+Begründung wörtlich lautete *„The AUv3 target was REMOVED on 2026-07-24"*. Wer eine Seite
+repariert hätte, wäre auf korrektem Baum rot geworden. **#364 in Reinform.**
+
+⭐ **Die Richtung ist die Lehre:** eine falsche VERNEINUNG liest sich als Vorsicht und kostet
+einen Nutzer, der das Plugin nie probiert; eine falsche BEHAUPTUNG liest sich als Hype und
+kostet eine 2.3-Ablehnung. Nur die zweite fällt jemandem auf. #439 hat dieselbe Lehre am
+Pressetext geschrieben.
+
+**GEBAUT.** (1) Der Blanko-Wächter ist durch **drei** Ansprüche ersetzt, die getrennt altern:
+die PRÄMISSE positiv (`Sources/EchoelmusicAUv3/` trägt Swift — verschwindet das Target erneut,
+wird DIESE Datei zuerst rot und nennt die Seiten), HOSTING (nie wahr, nie wieder) und
+UNGEPRÜFTE HOSTS (Logic Pro · GarageBand · Ableton Live — ⚠️ die Nadel ist „Ableton **Live**",
+nicht „Ableton", sonst feuert sie auf die Ableton-**Link**-Roadmapzeile). (2) Sieben Stellen auf
+sechs Seiten korrigiert, darunter das JSON-LD der Startseite, das „Not planned: … AUv3" an
+Suchmaschinen ausgab. (3) `docs/claims.html` — 13 Einträge, Fußzeilen-Link auf 21 Seiten,
+Kontext-Link aus der FAQ, Sitemap-Eintrag. (4) `TheClaimsPageCoversEveryDenialTests` pinnt die
+ABDECKUNG in beide Richtungen (kein Register-Abschnitt ohne Seiten-Eintrag, kein Seiten-Eintrag
+ohne Abschnitt) und sagt im Kopf ausdrücklich, dass der WORTLAUT NICHT gepinnt ist.
+
+⚠️ **MEINE EIGENE ÄNDERUNG HAT EINEN GRÜNEN WÄCHTER GEBROCHEN, und nur das Durchfahren hat es
+gezeigt:** der Einschub in `brainstorming.html` schob „scoped and cut" aus dem 200-Zeichen-
+Fenster hinter „RTMP". Repariert, indem der Zusatz hinter die RTMP-Erklärung wanderte.
+**Ein Fenster-basierter Wächter bricht durch EINFÜGEN, nicht nur durch Löschen** — ein Diff
+sieht das nicht.
+
+**BENOTUNG (kein `swift` im Web):** alle Website-Ansprüche in Python nachgefahren, 21 Seiten,
+0 rot. Fünf Mutanten gegen den neuen Wächter, alle fünf erwartungsgemäß rot (Register wächst ·
+Eintrag weg · Waise · Parser blind · Anker weg).
+
+**NEBENBEFUND, nicht repariert:** sechs Seiten haben Meta-Descriptions über 160 Zeichen
+(architecture 261, tools 248, artist 225, brainstorming 201, resolume-osc 182,
+artnet-sacn 164). Der zuständige Wächter prüft nur `index.html` und `overview.html`, also ist
+das keine Regression — aber Suchergebnisse schneiden dort ab. Eigene Scheibe.
+
+CLAUDE.md unberührt (149 676 B, 324 B Kopfraum).

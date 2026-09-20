@@ -91,6 +91,16 @@ arbeitet, fasst `Tests/` nicht an und bleibt wie vorgesehen isoliert.
 
 ## ⛔ DARF NICHT behauptet werden — und warum genau
 
+⭐ **DIESE HÄLFTE IST SEIT 2026-09-20 ÖFFENTLICH: `docs/claims.html`** (#1389). Jede Sektion
+unten hat dort einen Eintrag mit derselben Nummer (`id="claim-<n>"`), auf Englisch und für
+einen Leser geschrieben, nicht übersetzt. **Wer hier eine Sektion ANLEGT, legt sie dort im
+SELBEN Commit an** — `Tests/CISmoke/TheClaimsPageCoversEveryDenialTests.swift` wird sonst rot
+und nennt die Nummer. Umgekehrt genauso: ein Seiten-Eintrag ohne Sektion hier ist eine
+öffentliche Zusage, die niemand geprüft hat, und Anspruch 3 desselben Wächters verbietet ihn.
+⚠️ Gepinnt ist die ABDECKUNG, nicht der WORTLAUT — diese Datei ist deutsch und intern, die
+Seite ist englisch und öffentlich, und eine maschinelle Übersetzung wäre schlechtere Kopie als
+ein geschriebener Satz. Die Grenze steht im Wächter-Kopf, statt versteckt zu sein.
+
 ### 1. „läuft in Logic/Ableton/GarageBand", „in Deiner DAW" — **NOCH NICHT**, und „lädt fremde Plugins" — **NIE**
 
 ⭐ **DIESER EINTRAG IST AM 2026-09-20 NEU GESCHRIEBEN (#1385).** Er stand seit dem 2026-07-24
