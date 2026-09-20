@@ -154,9 +154,23 @@
         .skip-link:focus { top: 16px; }
 
         /* ============ NAV ============ */
+        /* PROPHYLACTIC HERE, LOAD-BEARING IN `shared.css` — and the difference is measured,
+            not assumed (#1397, 2026-09-20). A `position: fixed` bar with `left: 0; right: 0`
+            resolves against the initial containing block, and that block grows to the widest
+            content on the page whenever `body`'s `overflow-x: hidden` propagates to the viewport
+            (which it does: `html` leaves overflow `visible`). On the 20 pages that load
+            `shared.css` that really happened — one unclassed <table> on integrations.html was
+            531 px wide in a 390 px viewport, the nav stretched with it, and the burger button
+            landed at x = 467…507, entirely off-screen with no way to open the menu on a phone.
+            THIS page never could: `body` above already carries `max-width: 100vw`, so injecting
+            a 900 px element leaves the nav at 390 px with or without this line (measured both
+            ways in headless Chromium). It is written anyway so the two copies of `.nav` say the
+            same thing — docs/CLAUDE.md §6 is about exactly this file drifting from the shared
+            one. Do not cite this line as the repair; the repair is the table plus shared.css. */
         .nav {
             position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
             padding: 0 24px;
+            max-width: 100vw;
             background: rgba(0,0,0,0);
             transition: background 0.3s ease, border-color 0.3s ease;
             border-bottom: 1px solid transparent;

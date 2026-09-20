@@ -47,10 +47,35 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--text); outline-
 }
 .skip-link:focus { top: 16px; }
 
+/* A long unbreakable token is a reflow failure, not a typography detail (#1397, WCAG 1.4.10).
+   Measured 2026-09-20 at a 320 px viewport — the reference width the success criterion names:
+   `<code>com.apple.developer.networking.multicast</code>` laid out at 337 px on
+   artnet-sacn-from-a-phone.html and took the page 17 px wider than the screen. There was no
+   `code` rule in this file at all, so every inline code span rode the browser default. It is
+   `anywhere` rather than `break-word` on purpose: `break-word` only breaks a word that would
+   otherwise overflow ITS OWN line box, which does not help a token that is the only thing on
+   the line. `.spec-table code { white-space: nowrap }` still wins inside a spec table — there
+   the TABLE scrolls and the address must stay readable in one piece. */
+code, kbd, samp { overflow-wrap: anywhere; }
+
 /* ===== NAV ===== */
+/* LOAD-BEARING, measured — not belt-and-braces (#1397, 2026-09-20). `body` carries
+   `overflow-x: hidden`, and because `html` leaves overflow `visible` that value PROPAGATES to
+   the viewport, so `body` itself keeps overflowing and the initial containing block grows to the
+   widest content on the page. A `position: fixed` bar with `left: 0; right: 0` resolves against
+   THAT, not against the screen. It really happened: one unclassed <table> on integrations.html
+   was 531 px wide in a 390 px viewport, the nav stretched to 531 px with it, and the burger
+   button landed at x = 467…507 — entirely off-screen, with no way to open the menu on a phone.
+   Proof this line does the work: inject a 900 px element into overview.html and the nav goes to
+   900 px with `max-width` removed at runtime (burger right edge 876 on a 390 px screen) and
+   stays at 390 px with it. The table is classed `.spec-table` in the same commit; THAT is the
+   repair, this is what stops the next wide element repeating it. `index.html` carries the same
+   line for parity only — its `body` already has `max-width: 100vw`, so it is prophylactic there
+   and its own comment says so. Guard: TheNavCannotLeaveTheScreenTests. */
 .nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
     padding: 0 24px;
+    max-width: 100vw;
     background: rgba(0,0,0,0.92);
     border-bottom: 1px solid rgba(255,255,255,0.06);
 }

@@ -169,6 +169,45 @@ That is not automatically a defect (the homepage may want to inline its critical
 means **a change to `shared.css` does not reach the homepage**. Any site-wide visual or a11y
 change has to be made twice, and the second place is easy to miss. State which one you edited.
 
+## 6b. One wide element takes the whole navigation off the screen
+
+⛔ **Measured 2026-09-20 (#1397), headless Chromium at 390×844 against the served tree.**
+`integrations.html` reported `documentElement.scrollWidth == 531` in a 390 px viewport, and
+`.nav` — the fixed header — had a **used width of 531 px**. The burger button, the only door to
+the menu at phone width, sat at **x = 467…507: entirely off-screen.** The navigation did not
+exist on that page on a phone, and nothing looked wrong, because `body { overflow-x: hidden }`
+swallows the scrollbar that would have betrayed it.
+
+**The mechanism, because it is not obvious.** `body` carries `overflow-x: hidden` while `html`
+leaves overflow `visible`, so that value PROPAGATES to the viewport and `body` itself keeps
+behaving as `visible`. Any element wider than the screen therefore grows the initial containing
+block — and a `position: fixed` box with `left: 0; right: 0` takes its width from THAT block, not
+from the screen. So **a wide element anywhere on a page drags the fixed header out with it.**
+
+The wide element was one `<table>` with no class. Three tables on that page carry
+`class="spec-table"` (which becomes `display: block; overflow-x: auto` under 600 px); the fourth,
+added with the OSC control-input slice, carried none and laid out at its natural 531 px.
+
+**Two rules follow, and both are pinned by `Tests/CISmoke/TheNavCannotLeaveTheScreenTests.swift`:**
+
+- **Every `<table>` in `docs/` gets `class="spec-table"`.** A new table style is fine — give it a
+  `@media (max-width: 600px)` rule and add its class to that guard's `widthSafeTableClasses` in
+  the same commit.
+- **Every long unbreakable token needs `overflow-wrap`.** `shared.css` had no `code` rule at all
+  until #1397; `<code>com.apple.developer.networking.multicast</code>` laid out at 337 px in a
+  320 px viewport. `code, kbd, samp { overflow-wrap: anywhere; }` is the site-wide rule, and
+  `.spec-table code { white-space: nowrap }` is its deliberate exception — inside a table that
+  already scrolls, an address broken mid-path is unreadable. **They are a pair; remove one and
+  the other misbehaves.**
+
+⚠️ **`og-image.html` still overflows and is CORRECT.** It is a fixed 1200 px Open-Graph template
+linked from nowhere (`grep -l og-image.html docs/*.html` → nothing), screenshotted at that size.
+Named here so the next reflow sweep does not "repair" it.
+
+Re-derive the whole sweep from anywhere with a browser: load each page at 390 and 320 px and
+compare `document.documentElement.scrollWidth` against `clientWidth`. After this commit only
+`og-image.html` differs.
+
 ## 7. Before you commit a change here
 
 - [ ] Copy checked against `ContentPipeline/CLAIMS.md`. No wellness / healing / esoteric framing,
@@ -177,6 +216,10 @@ change has to be made twice, and the second place is easy to miss. State which o
       whether the other three now disagree by more than they did.
 - [ ] If you touched a site-wide style or a11y rule, confirm whether `index.html` needs the same
       edit inline.
+- [ ] If you added a `<table>`, it carries `class="spec-table"` (§6b) — an unclassed table takes
+      the fixed header off a phone screen, silently.
+- [ ] If you touched reflow-relevant CSS, re-measure `scrollWidth` vs `clientWidth` at 390 and
+      320 px on every page, not only the one you edited (§6b).
 - [ ] German legal pages (`impressum.html`, `privacy.html`, `terms.html`) are legal text, not
       marketing copy. Do not rewrite them for tone.
 - [ ] Neither CI gate runs for a docs-only commit — both are `paths:`-filtered to `Sources/**`,

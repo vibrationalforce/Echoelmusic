@@ -34983,3 +34983,83 @@ Zahlen sind gelöscht statt nachgeführt (#818), und der Service-Worker-Grund st
 
 **Prüfer nach der Änderung:** swift-escapes · dead-needles (544 Wächter) · foreign-needles ·
 moved-needles · count-pins --all — alle grün.
+
+## 2026-09-20 — #1397 Die Navigation war auf einer Seite vom Telefon-Bildschirm geschoben
+
+**Gemessen, nicht gelesen** (headless Chromium, 390×844, gegen den ausgelieferten Baum):
+`integrations.html` meldete `documentElement.scrollWidth == 531` bei einem 390-px-Viewport, und
+`.nav` — die fixierte Kopfleiste — hatte eine benutzte Breite von **531 px**. Der Burger-Knopf,
+die EINZIGE Tür zum Menü bei Telefonbreite, saß bei **x = 467…507: komplett außerhalb des
+Bildschirms.** Die Navigation existierte auf dieser Seite am Telefon nicht — und nichts sah
+falsch aus, weil `body { overflow-x: hidden }` genau die Bildlaufleiste schluckt, die es verraten
+hätte.
+
+**Der Mechanismus** (er ist nicht offensichtlich und wiederholt sich): `body` trägt
+`overflow-x: hidden`, `html` lässt `overflow` auf `visible` — also PROPAGIERT der Wert an den
+Viewport und `body` selbst verhält sich weiter wie `visible`. Jedes Element, das breiter als der
+Schirm ist, vergrößert damit den Initial Containing Block. Ein `position: fixed`-Kasten mit
+`left: 0; right: 0` nimmt seine Breite von JENEM Block, nicht vom Schirm. **Ein breites Element
+irgendwo auf der Seite zieht also die fixe Kopfleiste mit hinaus.**
+
+**Die Ursache war EINE `<table>` ohne Klasse** — die OSC-Steuereingangs-Tabelle aus der
+Remote-Control-Scheibe. Die anderen drei Tabellen der Seite tragen `class="spec-table"`
+(wird unter 600 px zu `display: block; overflow-x: auto`); die vierte nicht, also legte sie sich
+mit ihren natürlichen 531 px hin.
+
+**ZWEITER, unabhängiger Reflow-Befund im selben Durchlauf** (bei 320 px, der Breite, die
+WCAG 1.4.10 nennt): `<code>com.apple.developer.networking.multicast</code>` legte sich mit
+337 px hin und zog `artnet-sacn-from-a-phone.html` 17 px über den Schirm; ein zweiter, 2-px-Fall
+auf `architecture.html`. `docs/shared.css` hatte **gar keine** `code`-Regel.
+
+**Gebaut (5 Dateien + Wächter):**
+- `docs/integrations.html` — die nackte `<table>` bekommt `class="spec-table"`. **Das ist die
+  Reparatur.**
+- `docs/shared.css` — `.nav { max-width: 100vw }` (LASTTRAGEND, gemessen: ohne die Zeile und mit
+  einem injizierten 900-px-Element geht `.nav` auf `overview.html` auf 900 px und die rechte
+  Kante des Burgers auf 876 bei 390 px Schirm) · `code, kbd, samp { overflow-wrap: anywhere }`.
+- `docs/index.html` — dieselbe `.nav`-Zeile, dort **PROPHYLAKTISCH** und ebenfalls gemessen: ihr
+  `body` trägt schon `max-width: 100vw`, also bleibt die Leiste mit UND ohne die Zeile bei 390 px.
+  Sie steht wegen der PARITÄT der zwei `.nav`-Kopien (docs/CLAUDE.md §6). Der Kommentar dort sagt
+  das selbst — wer die Zeile zitiert, darf sie nicht für die Reparatur halten.
+- Cache-Versionen 10.23.0 → **10.23.1** in `sw.js`, `version.json` und den 21 Seiten
+  (`docs/CLAUDE.md` §4: eine Stylesheet-Reparatur ohne Versionssprung erreicht keinen
+  wiederkehrenden Besucher).
+- `docs/CLAUDE.md` §6b neu + zwei Checklisten-Punkte in §7.
+
+**Wächter:** `Tests/CISmoke/TheNavCannotLeaveTheScreenTests.swift`, 8 Ansprüche.
+Benotung per §0-Transkription gegen beide Bäume, Eltern `17ba7ef4a`:
+`c1=green c2=green c3=RED c4=RED c5=RED c6=green c7=RED c8=green` →
+Worktree alle acht grün. **Vier Regressionen (c3, c4, c5, c7), vier Gegengewichte (c1, c2, c6,
+c8).** Jeder Anspruch einzeln mutations-getrieben — acht Mutanten, jeder rötet GENAU seinen
+eigenen Anspruch (#367).
+
+⚠️ **Ein Fehlalarm, gefangen beim Benoten dieser Datei selbst.** Anspruch 5 sucht `<table`-Tags
+in `docs/*.html` — und der Kommentar, den dieser Commit in `index.html` schreibt, ERKLÄRT den
+Defekt in Worten, die die Zeichen `<table>` enthalten. Die erste Fassung meldete `index.html`
+als Seite mit unklassierter Tabelle, auf einer Seite, die gar keine hat. Der Wächter wäre auf
+korrektem Baum ROT gewesen, wegen Prosa, die er selbst verlangt. Reparatur: `markupOnly(_:)`
+schneidet `<!--…-->`, `<style>` und `<script>` heraus; ein Mutant (`<table>` in einem
+`<style>`-Kommentar) beweist, dass er nicht mehr anschlägt. Dieselbe Klasse wie #408.
+
+**Nach dem Commit bleibt genau EINE Seite mit Überlauf, und sie ist KORREKT:** `og-image.html`,
+eine feste 1200-px-Open-Graph-Vorlage, von nirgends verlinkt (`grep -l og-image.html docs/*.html`
+→ nichts), deren ganzer Zweck ein Screenshot in dieser Größe ist. Steht namentlich im
+Wächter-Kopf und in `docs/CLAUDE.md` §6b, damit der nächste Durchlauf sie nicht „repariert".
+
+**Vollständiger Reflow-Durchlauf danach:** 23 Seiten × 2 Breiten (390, 320) = 46 Messungen,
+`scrollWidth <= clientWidth` überall außer `og-image.html`. Burger auf jeder Seite erreichbar.
+Kontrast-Durchlauf weiterhin `0 unter 4,5:1`, keine unbenannten Bedienelemente.
+
+Checker: `swift-escapes`, `dead-needles` (545 Wächterdateien), `foreign-needles` (46 Dateien,
+73 Bindungen, 111 Nadeln), `moved-needles`, `count-pins --all`, `doctor --selftest` — alle 0.
+
+⚠️ **Gate-Status: NICHT AUSGELÖST.** Der Commit fasst `docs/`, `Tests/CISmoke/` und
+`scratchpads/` an — `Tests/**` steht in beiden `paths:`-Filtern, also laufen beide Gates; die
+docs-Hälfte allein hätte keinen Lauf erzeugt (#1176). Gate-Lesung folgt.
+
+**Offen aus demselben Audit (nächste Scheiben):** Überschriften-Sprünge (h1→h3 auf `claims`,
+`health`, `support`; h2→h4 auf `accessibility`, `brainstorming`, `overview`, `tools`) und eine
+LEERE Sektion auf `integrations.html` (`<h2>What is not here</h2>` unmittelbar gefolgt von
+`<h2 id="osc-in">`) · 30 `<svg>` ohne `aria-hidden`/`role` · Tap-Ziele: Nav- und Fußzeilen-Links
+sind 22 px hoch (unter den 24 px von WCAG 2.2 SC 2.5.8 — die Abstands-Ausnahme ist noch nicht
+vermessen), Logo 28×28 und Burger 40×40 (beide über 24, unter Apples 44).
