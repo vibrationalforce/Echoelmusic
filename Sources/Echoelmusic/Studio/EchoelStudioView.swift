@@ -7113,8 +7113,27 @@ struct EchoelStudioView: View {
                 parts.append("Variation rides the accent here, so at Accent 0.00 it does nothing.")
             }
         } else {
-            parts.append("Variation is off for this rhythm — its bar-to-bar change is part of its "
-                         + "character, not a dial.")
+            // ⭐ #1401 — THE DEAD END GETS A SIGNPOST, and the two names are PROJECTED off
+            // `usesEvolve` rather than typed. This sentence used to stop at "not a dial", which
+            // is true and leaves the player with nowhere to go: the founder's report was
+            // "Variation geht nicht", from Hypnotic, where the row is correctly disabled. Saying
+            // WHICH rhythms answer that dial turns a wall into a direction.
+            //
+            // ⚠️ Hard-coding "Dynamic and Flowing" here is the exact mistake `accentIsSubtle`
+            // exists to record: the first A7 UI hard-coded a character list twenty lines under a
+            // comment congratulating itself for reading the flag off the engine, and the list was
+            // wrong. A seventh character, or a re-tuned `usesEvolve`, rewrites this line for free.
+            let withEvolve = RoleRhythm.Character.allCases
+                .filter(\.usesEvolve)
+                .map { fieldArpRhythmLabel($0) }
+            if withEvolve.isEmpty {
+                parts.append("Variation is off for this rhythm — its bar-to-bar change is part "
+                             + "of its character, not a dial.")
+            } else {
+                parts.append("Variation is off for this rhythm — its bar-to-bar change is part "
+                             + "of its character, not a dial. It shapes "
+                             + withEvolve.joined(separator: " and ") + ".")
+            }
         }
         return parts.joined(separator: " ")
     }

@@ -584,6 +584,43 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
     /// `false` is therefore the cancellation signal the gesture callbacks cannot give us.
     @GestureState private var dragActive = false
 
+    /// Whether an ancestor's `.disabled(…)` has switched this row off.
+    ///
+    /// ⛔ THIS FILE READ NOTHING ABOUT ENABLED-NESS UNTIL #1401, AND THAT IS A REPORTED BUG,
+    /// not a polish item. The founder hit it on the device: Mood → Pad rhythm "Hypnotic", where
+    /// `padShapeSection` disables the Variation row because `RoleRhythm.Character.usesEvolve` is
+    /// `false` for that character (turning evolve 0→1 there produces a bit-identical bar, which
+    /// `RoleRhythmTests` asserts against real output). The row was correctly INERT and rendered
+    /// with the same label colour, the same value colour and the same `borderStrong` boundary as
+    /// the two live rows directly above it. Dragging it did nothing, and nothing on the control
+    /// said why — so the honest report is exactly the one that came back: "Variation geht nicht".
+    ///
+    /// ⚠️ THE CAPTION WAS ALREADY THERE AND WAS NOT ENOUGH. `padShapeCaption` says "Variation is
+    /// off for this rhythm" in 11 pt dim text below three rows. The section's own doc calls a
+    /// silent disabled row "only marginally better than an enabled one that does nothing" — the
+    /// design was right, the RENDERING never carried it. A caption explains; it cannot be the
+    /// only signal, because the eye reaches the control first.
+    ///
+    /// ⚠️ WHY THE ENVIRONMENT AND NOT A PARAMETER: `.disabled(…)` may sit on the row, on the
+    /// section, or on any ancestor, and SwiftUI folds all of them into `isEnabled`. A `disabled:`
+    /// argument would only see the call sites that remembered to pass it — the #431/#440 defect
+    /// (an argument no call site writes appears in no diff) with the failure pointing at the user.
+    ///
+    /// ⚠️ CONTRAST IS NOT A REGRESSION HERE. WCAG 1.4.3 and 1.4.11 both exempt inactive controls,
+    /// and dimming one is the platform convention rather than a shortcut around #367 — which is
+    /// why the ACTIVE and the ENABLED-IDLE boundaries keep `accent` and `borderStrong` untouched.
+    @Environment(\.isEnabled) private var isEnabled
+
+    /// Label and value colour: full `text` while the row can be used, `dim` once it cannot.
+    private var labelTint: Color { isEnabled ? EchoelTheme.text : EchoelTheme.dim }
+
+    /// The spoken hint, with the adjust/type instruction dropped once the row is off (#1401).
+    private var accessibleHint: String {
+        let gesture = "Swipe up or down to adjust, or double-tap to type"
+        if !isEnabled { return hint }
+        return hint.isEmpty ? gesture : hint + ". " + gesture
+    }
+
     /// Drag distance (points) that covers the FULL range at normal speed — small, so
     /// the fader feels fast/direct (the old velocity-scrub felt stiff).
     private let fullRangePoints: Double = 200
@@ -609,7 +646,7 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
                 VStack(alignment: .leading, spacing: 6) {
                     Text(label)
                         .font(EchoelTheme.font(14))
-                        .foregroundStyle(EchoelTheme.text)
+                        .foregroundStyle(labelTint)
                         .fixedSize(horizontal: false, vertical: true)
                     valueBox
                 }
@@ -617,7 +654,7 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
                 HStack(spacing: 12) {
                     Text(label)
                         .font(EchoelTheme.font(14))
-                        .foregroundStyle(EchoelTheme.text)
+                        .foregroundStyle(labelTint)
                         .lineLimit(1).minimumScaleFactor(0.7)
                     Spacer(minLength: 8)
                     valueBox
@@ -629,9 +666,14 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(label)
         .accessibilityValue(accessibleValue)
-        .accessibilityHint(hint.isEmpty
-                           ? "Swipe up or down to adjust, or double-tap to type"
-                           : hint + ". Swipe up or down to adjust, or double-tap to type")
+        // ⛔ #1401 — THE GESTURE PROMISE MUST NOT SURVIVE `.disabled(…)`. VoiceOver already
+        // speaks "dimmed" for a disabled element, and appending "Swipe up or down to adjust"
+        // to that instructs a non-sighted performer to do something the row cannot answer —
+        // the same lying-control defect (#164/#227) the sighted half of this slice repairs,
+        // one sense over. The CALLER's `hint` is kept when there is one: it is the only place
+        // that can say WHY, and that sentence is worth more when the row is off than when it
+        // is on. Nothing is invented here — this view does not know the reason.
+        .accessibilityHint(accessibleHint)
         // ⛔ BOTH CALLBACKS, and `onChange` is the one that was missing (found 2026-07-29).
         // `apply(_:)` writes the binding and reports whether it moved — the WORK lives in the
         // caller's closures, and the two are not interchangeable: `onChange` is live-apply
@@ -701,7 +743,7 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
             HStack(spacing: 5) {
                 Text(numberString)
                     .font(EchoelTheme.font(17).monospacedDigit())
-                    .foregroundStyle(active ? EchoelTheme.accent : EchoelTheme.text)
+                    .foregroundStyle(active ? EchoelTheme.accent : labelTint)
                     .lineLimit(1).minimumScaleFactor(0.5)
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
@@ -843,7 +885,14 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
             // its boundary is a control boundary (WCAG 1.4.11, 3:1). The 0.10 `border`
             // measured 1.07:1 against this box's own `fill` — the value read fine and the
             // box it sits in did not.
-            .strokeBorder(active ? EchoelTheme.accent : EchoelTheme.borderStrong, lineWidth: 1))
+            // ⚠️ THE DISABLED BRANCH IS THE #1401 HALF AND IT IS THE ONE THE EYE READS FIRST.
+            // A control boundary announces "this is operable" (#367); on a row that is not, the
+            // same boundary is a promise. `border` is the decorative token this file's own
+            // comment above measures at 1.07:1 — which is wrong for a live control and exactly
+            // right for one that is off.
+            .strokeBorder(active ? EchoelTheme.accent
+                                 : (isEnabled ? EchoelTheme.borderStrong : EchoelTheme.border),
+                          lineWidth: 1))
         // (The position indicator is layered above, as a `.background` — see `faderTrack`.)
         .animation(.easeOut(duration: 0.12), value: scrubbing)
         .sheet(isPresented: $showPad) {

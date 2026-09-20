@@ -35222,3 +35222,78 @@ unberührt, #1151):** Lauf 35515127292 auf `3071f5dde`, Job `iOS`: `Preflight` s
 (Secrets gültig), `Archive` success (14:00:49–14:04:51Z), `Export & Upload to TestFlight`
 success, **`Verify build landed in App Store Connect` success** (14:06:15–14:08:20Z).
 Marketing-Version **10.79.476**, Build-Nummer **2596** (= `github.run_number`).
+
+## 2026-09-20 — #1401 „Variation geht nicht": ein abgeschalteter Parameter sah aus wie ein lebender
+
+**Founder-Report vom Gerät**, Screenshot aus Mood → Pad rhythm **Hypnotic**, Variation rot
+eingekreist: die Zeile reagiert nicht.
+
+**Gemessen, und die erste Hälfte des Befunds ist: die Zeile hat sich korrekt verhalten.**
+`padShapeSection` schreibt `.disabled(off || !(character?.usesEvolve ?? false))`, und
+`RoleRhythm.Character.usesEvolve` ist für `hypnotic` `false` — evolve von 0 auf 1 zu drehen
+erzeugt dort einen bit-identischen Takt, was `RoleRhythmTests` gegen echte `hit(...)`-Ausgabe
+prüft statt der Flagge zu glauben. Der Wert **0,20** im Screenshot ist der Default
+(`StudioDefaultKeys.padEvolve`), also war nie etwas verstellt.
+
+⛔ **Die zweite Hälfte ist der Defekt: `EchoelValueField` las Enabled-heit NIRGENDS.** Gemessen
+auf dem Eltern-Baum: `git grep -c isEnabled Sources/Echoelmusic/Studio/EchoelValueField.swift`
+→ **0**. Die abgeschaltete Zeile zeichnete dieselbe `EchoelTheme.text`-Beschriftung, denselben
+Wert und denselben **`borderStrong`**-Rahmen wie die zwei LEBENDEN Zeilen direkt darüber — und
+`borderStrong` ist genau das Token, das #367 eingeführt hat, um „das hier ist bedienbar" zu
+heißen. Drei Zeilen, eine davon tot, kein sichtbarer Unterschied.
+
+⚠️ **Die Caption war da und hat nicht gereicht.** `padShapeCaption` sagt „Variation is off for
+this rhythm" in 11 pt `dim` unter allen drei Zeilen. Der Abschnitt räumt das in seinem eigenen
+Doc selbst ein („a disabled row that does not say WHY is only marginally better than an enabled
+one that does nothing"). Der Entwurf stimmte; das **Rendering** hat ihn nie getragen, und das
+Auge erreicht das Bedienelement vor der Fußnote.
+
+⭐ **UND DIESELBE LÜGE WURDE GESPROCHEN.** Der Accessibility-Hint hängte bedingungslos „Swipe up
+or down to adjust, or double-tap to type" an. VoiceOver sagt bei einem deaktivierten Element
+ohnehin „dimmed" und las danach eine Anweisung vor, die die Zeile nicht beantworten kann — der
+#164/#227-Defekt eine Sinneswahrnehmung weiter.
+
+**GEBAUT (2 Quelldateien):**
+- `EchoelValueField`: `@Environment(\.isEnabled)`, ein `labelTint` für die drei Tint-Stellen
+  (zwei Label-Zweige + Ruhewert), der Rahmen verzweigt auf
+  `isEnabled ? borderStrong : border`, und `accessibleHint` lässt das Gesten-Versprechen fallen,
+  wenn die Zeile aus ist. Die Caller-`hint` bleibt — sie ist die einzige Stelle, die WARUM sagen
+  kann, und diese View weiß den Grund nicht.
+- `padShapeCaption`: der Satz endet nicht mehr an „not a dial", sondern nennt die Rhythmen, die
+  Variation TRAGEN — **projiziert** aus `Character.allCases.filter(\.usesEvolve)`, nicht getippt.
+  Eine getippte Liste ist exakt der Fehler, den `accentIsSubtle` als Mahnmal festhält.
+
+⚠️ **AUSDRÜCKLICH NICHT GETAN (#364): `hypnotic` hat KEIN evolve bekommen.** Ob Variation auf
+diesem Charakter etwas tun *soll*, ist eine Klangentscheidung und gehört dem Ohr des Founders;
+`usesEvolve` ist gegen echte Ausgabe gemessen. Eine View, die die Engine ändert, damit ihr
+eigener Regler beschäftigt aussieht, wäre die Umkehrung des Gesetzes. **Anspruch 7 pinnt die
+Prämisse**, damit an dem Tag, an dem die Entscheidung fällt, dort steht, was mitzuziehen ist.
+
+**Wächter:** `Tests/CISmoke/ADisabledParameterRowLooksDisabledTests.swift`, 8 Ansprüche.
+Eltern `a8e0c534d`: `c1=RED c2=RED c3=RED c4=RED c5=green c6=green c7=green c8=RED` → Arbeitsbaum
+alle acht grün.
+⚠️ **Ehrliche Beschriftung (#433/#486):** c1–c4 sind Regressionen, aber **EINE Abwesenheit,
+viermal gemeldet** — die Eltern-Datei hat gar keine Enabled-heit. c8 ist ein **FORWARD-Guard**
+(seine positive Hälfte nennt Code, den erst dieser Commit schreibt; seine negative Hälfte war auf
+dem Eltern-Baum schon wahr). c5–c7 sind die Gegengewichte und der eigentliche Punkt.
+
+⚠️ **Der Stripper ist TRAGEND, gemessen (§2): 1 von 1 Verdikt kippt.** c8 sucht das Literal
+„Dynamic and Flowing" — und dieser Commit schreibt genau diese Phrase in einen Warnkommentar, der
+sagt, sie NICHT zu tippen. Roh 1 Treffer, kommentar-gestrippt 0. Ohne `SourceText.codeOnly` wäre
+der Anspruch auf seinem eigenen korrekten Baum rot: die #1397-Anspruch-5-Selbstkollision in neuer
+Datei.
+
+**Elf Mutanten, alle wie vorgesehen:** m1 Env-Read entfernt → c1 · m2 `labelTint` bedingungslos →
+c2 · m2b EIN Label-Zweig zurück auf `EchoelTheme.text` → c2 · m3 Rahmen zurück → c3 · m4
+Gesten-Versprechen zurück → c4 · m5 beide Tokens weggefegt → c3+c5 · m6 Zeile nicht mehr disabled
+→ c6 · m7 `hypnotic` bekommt evolve → c7 · m8 Caption getippt → c8. **Zwei Fehlalarm-Sonden
+bleiben grün** und eine davon hat den Entwurf korrigiert: fp2 (ein DRITTER legitimer
+Label-Zweig) war gegen die erste Fassung rot, weil sie `== 2` pinnte — ein veraltetes Literal,
+das eine erlaubte Layout-Änderung rötet (#364/#818). Jetzt `>=` plus eine Abwesenheits-Hälfte
+(`.foregroundStyle(EchoelTheme.text)` = 0), die den eigentlichen Rückfall schärfer fängt.
+fp1: die Phrase nur in einem Kommentar → grün.
+
+Acht stehende Prüfer plus `doctor --selftest`: alle 0.
+
+**Offen, weil kein Test es kann:** dass eine gedimmte Zeile für ein menschliches Auge als „aus"
+liest, und dass VoiceOver den gekürzten Hint spricht — beides Geräteproben.
