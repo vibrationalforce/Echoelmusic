@@ -93,8 +93,10 @@ public final class ModulationEngine {
     /// whose channel the current frame does not carry (a foreign publisher's frame in the
     /// shared slot, #1015) keeps its last smoothed value for `FXModulation
     /// .channelBridgeSeconds` instead of reading the frame's 0 — the same bridge the FX
-    /// driver has, on the matrix side (every registered destination — since #1302 that is
-    /// the tempo alone; ⛔ #1324: this line read "tempo and the voice stages").
+    /// driver has, on the matrix side (every registered destination; ⛔ #1324: this line read
+    /// "tempo and the voice stages", ⛔ #1391: then "the tempo alone", and since #1391 the
+    /// tempo plus the eleven automatable synth parameters — measure, do not recite:
+    /// `grep -n "static let all" Sources/Echoelmusic/Core/ModulationEngine.swift`).
     private var lastMeasuredAt: [ModSource: TimeInterval] = [:]
     /// The value each route last contributed (smoothed or not) — what the bridge holds.
     private var lastRouteValue: [UUID: Float] = [:]
@@ -354,13 +356,32 @@ public enum ModDestinationKey {
     /// Every key this build registers, in picker order (the matrix section reads this,
     /// not `registeredDestinations`, so a key that failed to register still shows and a
     /// persisted route to it renders rather than vanishing).
-    public static let all: [String] = [tempo]
+    ///
+    /// ⭐ #1391 — THE SOUND HALF IS A PROJECTION, NOT A SECOND LIST. Until this slice the
+    /// matrix offered the tempo ALONE, so „your body plays the instrument" was true of one
+    /// parameter out of fifteen. The eleven that join it are `PolySynthVoice
+    /// .automatableBases` verbatim — the list that already answers „which parameters may a
+    /// control source OWN", whose membership rule is guarded three times over
+    /// (`TheAutomatableSetHasOneWriterTests`, `TheAutomatableSetIsWhatMovesAudioTests`,
+    /// `ABrightnessOfZeroIsAValueNotAModeTests`). Writing the eleven out again here would
+    /// have been a second home for one fact (#416) — and the reasons a key is IN or OUT
+    /// (anchor vs. live parameter, `#546`'s dead reverb stage, the note engine owning pitch)
+    /// live at that list, where they were measured.
+    ///
+    /// ⚠️ THE LAYER IS DELIBERATE AND NARROW: the ENGINE above stays decoupled from every
+    /// concrete parameter type — that is its header law and it is untouched. `ModDestinationKey`
+    /// is the opposite thing by design: this BUILD's concrete key catalog (it already names
+    /// `seq.tempo`, a sequencer key). Naming the voice's list here is what a catalog does.
+    public static let all: [String] = [tempo] + PolySynthVoice.automatableBases
 
-    /// Human name for a picker row. Unknown keys (an older or newer build's) show as-is.
+    /// Human name for a picker row. A synth key resolves through its registry descriptor —
+    /// one home for the label too (`DDSPParameterCatalog`), so a renamed parameter renames
+    /// itself in the matrix. Unknown keys (an older or newer build's) show as-is.
     public static func displayName(_ key: String) -> String {
-        switch key {
-        case tempo: return "Tempo"
-        default: return key
+        if key == tempo { return "Tempo" }
+        if let d = DDSPParameterCatalog.descriptors.first(where: { $0.keyPath == key }) {
+            return d.displayName
         }
+        return key
     }
 }

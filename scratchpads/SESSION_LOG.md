@@ -34567,3 +34567,58 @@ Fehlalarm, dem man glaubt, erzeugt eine Reparatur an korrektem Code.
 
 Acht Prüfer grün. Decken-Wächter transkribiert grün, alle sechs Ledger-Überschrift-Nadeln
 sitzen.
+
+## 2026-09-20 — B1 Universelle Modulation: der Körper erreicht zwölf Ziele statt einem (#1391)
+
+**Der Befund stand seit dem Deep Audit und war ein LEERER SCHNITT, keine Zahl.**
+`ModDestinationKey.all` = `[tempo]`. `EchoelParameterRegistry` beschreibt fünfzehn
+DDSP-Parameter, `ParameterApplyRouter` fährt elf davon auf lebende Setter. Die
+Schnittmenge von „was der Körper erreichen kann" und „was die Engine bewegen kann"
+war EIN Element — während die Produktzeile sagt, der Körper spiele das Instrument.
+Nichts war kaputt; die beiden Hälften waren nur nie verbunden.
+
+**Die Verbindung ist eine PROJEKTION, keine zweite Liste (#416.)**
+`all = [tempo] + PolySynthVoice.automatableBases` — die Liste, die schon beantwortet,
+welche Parameter eine Steuerquelle BESITZEN darf, und deren Mitgliedschaftsregel
+dreifach bewacht ist (`TheAutomatableSetHasOneWriterTests`,
+`TheAutomatableSetIsWhatMovesAudioTests`, `ABrightnessOfZeroIsAValueNotAModeTests`).
+Die Gründe für JEDEN Ein- und Ausschluss (Anker statt Live-Parameter, die tote
+Convolution-Stufe aus #546, die Noten-Engine besitzt die Tonhöhe) stehen dort, wo sie
+gemessen wurden. Sie hier abzuschreiben wäre ein zweites Zuhause für eine Tatsache.
+Die REGISTRIERUNGEN leitet `EchoelmusicApp` zur Laufzeit aus
+`automatableDescriptors()` ab = Registry ∩ gebundener Setter — die Placebo-Regel des
+Routers, geerbt statt neu formuliert.
+
+**Die Gefahr, für die der Wächter existiert, ist im Diff nicht zu sehen.** Das Tempo
+behält einen EIGENEN Handler: BPM-Lock, Oktav-Faltung, Glide (T1/T2,
+Quelle `.modulationRoute`). Die neue Schleife ruft `register(_:)`, und dessen Doku
+sagt selbst „re-registering REPLACES". An dem Tag, an dem jemand einen
+tempo-förmigen Schlüssel in `automatableBases` legt, überschreibt die Schleife den
+Lock/Fold/Glide-Handler still mit einem rohen `applyNormalized` — eine
+Tempo-Invariante, gelöscht durch eine Änderung in einer anderen Datei, die weder
+Tempo noch Lock erwähnt. Anspruch 4 hält das fest.
+
+**Zweite unsichtbare Gefahr, Anspruch 5: die REIHENFOLGE.**
+`automatableDescriptors()` ist Registry ∩ gebundener Setter, also ist die Menge VOR
+`bindAutomatable` LEER. Eine Schleife an der falschen Stelle registriert nichts,
+wirft nichts und loggt nichts — voller Picker, keine funktionierende Zeile.
+
+**Null Verhaltensänderung bis eine Route angelegt wird** (Default-Matrix ist leer,
+#541). Council: proceed-with-mitigation — die Sorge des Skeptikers war
+`ddsp.amp.level` (eine Route kann das Instrument leise stellen, und Routen überleben
+den Neustart). Minderung ist KOPIE, keine zweite Liste: die Fußzeile sagt jetzt, dass
+eine Route ihren Parameter BESITZT, solange sie aktiv ist.
+
+**Benotung (§0, kein lokales Swift):** zwölf Behauptungen in Python transkribiert,
+gegen BEIDE Bäume gefahren. Eltern (`07adb94`) rot auf 1b, 5b, 5c, 6b = DREI Befunde
+(#486); Arbeitsbaum vollständig grün. Sechs Mutanten, jeder vom vorgesehenen Anspruch
+erlegt: Projektion entfernt · Duplikat · Schlüssel ohne Deskriptor · `seq.tempo` in
+`automatableBases` · Schleife vor dem Bind · alte Ein-Ziel-Kopie zurück.
+Alle acht stehenden Prüfer grün, `doctor --section D` 0 kritisch.
+Sechs Nachbar-Ansprüche in `TheRoutingCardOffersOnlyDestinationsThatExistTests` und
+`TheMatrixHasADoorTests` einzeln nachgefahren — alle grün (die Karten-Kopie durfte
+„voice"/„harmony"/„granular" nicht berühren, tut sie nicht).
+
+**Gerät offen:** ob eine Route auf „Warmth drive" HÖRBAR ist, ist eine Ohrfrage. Der
+bestehende `NEEDS-FOUNDER-VERIFY` an `modulationSection` trägt sie jetzt als zweite
+Probe — bewusst IM selben Marker, weil der Leser-Helfer genau einen pro Datei verlangt.

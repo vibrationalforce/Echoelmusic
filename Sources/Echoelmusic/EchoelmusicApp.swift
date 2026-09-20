@@ -1219,9 +1219,9 @@ struct EchoelmusicApp: App {
                                                    source: .modulationRoute)
                 }
                 // ⛔ #1302 — FOUR VOICE-STAGE REGISTRATIONS STOOD HERE (#1249) AND ARE GONE
-                // WITH THE MONITOR INSERT. `tempo` above is now this build's only registered
-                // modulation destination; `ModDestinationKey.all` says so and the matrix
-                // picker reads that list.
+                // WITH THE MONITOR INSERT. For nine days `tempo` above was this build's ONLY
+                // registered modulation destination; the eleven synth registrations now live
+                // below, after `bindAutomatable` has supplied their setters.
                 // B26: every applied modulation ALSO streams over OSC as
                 // /echoelmusic/mod/<key> (the documented mod-out address) for external
                 // tools (TouchDesigner / Resolume / Max). The tap fires per applied
@@ -1286,6 +1286,32 @@ struct EchoelmusicApp: App {
                 // `parameterRouter` becomes automatable by name. Bio-contested params
                 // are excluded in bindAutomatable (they need automation×bio composition).
                 polyVoice.bindAutomatable(into: parameterRouter)
+                // #1391 — THE SAME SETTERS, NOW ALSO REACHABLE FROM THE BODY. Everything the
+                // router just bound becomes a modulation DESTINATION, so the matrix offers the
+                // tempo plus eleven sound parameters instead of the tempo alone. Two properties
+                // make this the cheapest possible slice:
+                //   · it is derived at RUNTIME from what the router actually bound
+                //     (`automatableDescriptors()` = registry ∩ live setter), so a key can never
+                //     be offered that moves nothing — the Placebo law of `ParameterApplyRouter`,
+                //     inherited rather than re-stated;
+                //   · the default matrix is EMPTY (#541), so with no route authored this is a
+                //     zero-behaviour-change wiring step, exactly like `start(subscribing:)` was.
+                // The value arrives NORMALIZED 0…1 from the engine and `applyNormalized`
+                // denormalizes it through the parameter's own descriptor range — the same
+                // conversion an automation lane takes, so a body route and a drawn lane write
+                // identical values. Control plane, ~1 Hz, @MainActor: each bound setter performs
+                // the plain atomic-width Float store `SynthPatch.apply(to:)` already performs,
+                // so nothing new reaches the render thread.
+                for descriptor in parameterRouter.automatableDescriptors() {
+                    let keyPath = descriptor.keyPath
+                    modulationEngine.register(keyPath) { [weak parameterRouter] value in
+                        // `_ =` rather than leaning on `@discardableResult`: a single-expression
+                        // closure infers its return type, and `Float?` in a `(Float) -> Void`
+                        // slot is the kind of implicit conversion `-warnings-as-errors` is
+                        // entitled to object to. Explicit costs nothing and cannot regress.
+                        _ = parameterRouter?.applyNormalized(keyPath, value)
+                    }
+                }
                 // L2/L4 S2b: per-track automation DISPATCH. A namespaced
                 // "track.<laneID>.<param>" lane resolves to the specific SECONDARY
                 // lane's rack voice slot (not the global voice above), so two tracks

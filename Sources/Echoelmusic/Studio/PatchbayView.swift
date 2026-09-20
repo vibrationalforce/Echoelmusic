@@ -327,6 +327,12 @@ struct PatchbayView: View {
     /// control that lies — unioned with the route's own so a persisted dropped channel still
     /// renders) · destination Picker over `ModDestinationKey.all` (unioned the same way) ·
     /// `EchoelValueField` for the NUMERIC depth and smoothing · curve Picker · Invert.
+    ///
+    /// ⭐ #1391 — THE LIST GREW FROM ONE TO TWELVE and the copy moved with it (#456). The
+    /// destinations are the tempo plus `PolySynthVoice.automatableBases`, registered in
+    /// `EchoelmusicApp` from what `ParameterApplyRouter` actually bound. The empty state is
+    /// what a first-run player reads (nothing in production constructs a `ModRoute` for them),
+    /// so „this build offers one: the tempo" was the sentence that had to move first.
     /// Every edit persists via `save()`; the engine reads `matrix.routes` on its next
     /// applied frame, so a new route is live within ~1 s with no restart.
     ///
@@ -351,6 +357,9 @@ struct PatchbayView: View {
     /// Quelle Coherence, Depth 1, BPM-Lock AUS: das Tempo muss der Kohärenz folgen (Log:
     /// `/echoelmusic/mod/seq.tempo` bei OSC an). Lock AN: das Tempo darf sich NICHT bewegen.
     /// App neu starten — die Route ist noch da.
+    /// Zweite Probe, seit #1391 zwoelf Ziele statt einem: Add route → „Warmth drive",
+    /// Quelle Coherence, Depth 1 — der Klang muss mit der Kohaerenz rauher und wieder
+    /// sauberer werden, ohne dass das Tempo sich bewegt (zwei Routen sind unabhaengig).
     @ViewBuilder
     private var modulationSection: some View {
         @Bindable var engine = modulationEngine
@@ -358,7 +367,7 @@ struct PatchbayView: View {
             Text("Body → parameter").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
             VStack(alignment: .leading, spacing: 10) {
                 if engine.matrix.routes.isEmpty {
-                    Text("No routes yet. A route lets one measured channel of your body move one parameter. This build offers one: the tempo.")
+                    Text("No routes yet. A route lets one measured channel of your body move one parameter of the instrument \u{2014} the tempo, or any sound parameter automation can reach.")
                         .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -384,7 +393,7 @@ struct PatchbayView: View {
                             .strokeBorder(EchoelTheme.border, lineWidth: 1))
                 }
                 .accessibilityHint("Adds a route from your coherence to the chosen parameter; change the source in the row.")
-                Text("Routes apply about once a second from the measured body and are kept across launches. A tempo route glides, and does nothing while the BPM lock is on. Every applied value also leaves as /echoelmusic/mod/<key> when OSC out is routed.")
+                Text("Routes apply about once a second from the measured body and are kept across launches. A route OWNS its parameter while it is enabled \u{2014} the body sets the value, so a route on the level sets the level. A tempo route glides, and does nothing while the BPM lock is on. Every applied value also leaves as /echoelmusic/mod/<key> when OSC out is routed.")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }
