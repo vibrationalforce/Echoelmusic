@@ -153,6 +153,30 @@ public enum StudioDefaultKeys {
     /// value that is stored, persisted and inaudible is worse than one that is absent.
     public static let padEvolve = StudioDefault(key: "studio.padEvolve", value: 0.2)
 
+    /// #1402 — how far each bar of the loop may drift from the genre's mood preset, 0…1.
+    ///
+    /// Founder 2026-09-20: *"kein Moment wie der andere … Auch die Genre presets sollen einen
+    /// vibe haben aber nicht gleich klingen … Wie stark die Variation ist kann man dann
+    /// einstellen."* This is the "wie stark" half, and it is the ONLY global variation control
+    /// in the app — the neighbours above shape ONE role, `MoodProfile.humanize` shapes ONE
+    /// dimension.
+    ///
+    /// ⚠️ IT MOVES THE **MOOD**, NEVER THE STYLE. See `MoodProfile.variationSpread`: five
+    /// performance axes scatter, three identity axes hold, and `MusicStyle` is untouched — so a
+    /// genre still sounds like itself at 1.0. That separation is what lets this ship without
+    /// re-auditioning 41 curated genres.
+    ///
+    /// ⚠️ BAR 1 IS ALWAYS THE PRESET, at any value. The loop states the genre and then varies
+    /// it; that is also why the row is DISABLED at a one-bar loop, where there is no "rest of
+    /// the loop" to scatter (#164/#227 — a dial with nothing to move must not look alive, and
+    /// since #1401 a disabled row finally looks disabled).
+    ///
+    /// Default **0.25**, not 0 and not 1: the founder asked for "immer … variationsreich", so a
+    /// fresh install must already breathe — but the curated genre batches were auditioned at the
+    /// preset itself, so the opening default stays inside a quarter of the allowed spread. It is
+    /// an ear decision and the number is here, alone, to be moved.
+    public static let moodVariation = StudioDefault(key: "studio.moodVariation", value: 0.25)
+
     /// #275 slice 1 — the eight mood dials as `MoodStorage`'s JSON, or `""` meaning "nothing
     /// stored, use the factory profile".
     ///

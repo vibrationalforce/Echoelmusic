@@ -35304,3 +35304,104 @@ blockierende Bündel kompiliert mitsamt `ADisabledParameterRowLooksDisabledTests
 läuft und meldet wie auf jedem Push `failure` (#396); die Conclusion allein sagt nichts.
 ⚠️ **NICHT im TestFlight-Build 2596** (v10.79.476 trägt `3071f5dde`, also den Stand VOR dieser
 Reparatur). Wer die gedimmte Zeile auf dem Gerät sehen will, braucht den nächsten Bump.
+
+## 2026-09-20 — #1402: das Genre-Preset ist eine MITTE, kein Punkt
+
+**Founder wörtlich (2026-09-20):** *„Es wäre aufjedenfall gut grundsätzlich einen Status zu
+erreichen, wo kein Moment wie der andere klingt. Auch die Genre presets sollen einen vibe haben
+aber nicht gleich klingen. Immer random und variations reich. Wie stark die Variation ist kann
+man dann einstellen."* Drei Forderungen. Diese Scheibe beantwortet die DRITTE wörtlich und macht
+die ersten beiden dadurch einstellbar statt fest.
+
+**GEMESSEN VOR DEM BAUEN, weil der naheliegende Verdacht falsch war.** `SeededRNG` ist
+SplitMix64, Nachbar-Seeds dekorrelieren sofort — „seed+1 klingt gleich" ist WIDERLEGT. Es gibt
+bereits Variation auf ZWEI Ebenen: Take (`startEvolving()` re-seedet alle 25–45 s) und Takt
+(`loopBars` Default `.eight`, `barInput.seed = evolvingSeed &+ b`, acht wirklich verschiedene
+Takte). Was es NICHT gab, ist die Ebene, nach der der Founder gefragt hat: ein Regler, der sagt
+*wie weit* das Ganze vom kuratierten Preset abweichen darf. Kein globaler Variations-Regler
+existierte; die vier vorhandenen (`padEvolve`, `fieldArpRhythmEvolve`, `humanize`, `weird`)
+fassen je ein Stück an.
+
+**GEBAUT.** `MoodProfile.varied(amount:seed:)` in `BioComposer.swift`, direkt am Typ (nicht in
+`MoodPreset.swift`, wo der erste Entwurf lag — `MoodProfile` und `SeededRNG` wohnen beide hier,
+und eine Verhaltens-Erweiterung gehört zu ihrem Typ, #416). Die Tabelle `variationSpread` ist ein
+`WritableKeyPath`-Array, **kein `String`-Switch**: der erste Entwurf war genau das, und ein neu
+hinzugefügter Kanal ohne seinen Fall streut still nichts (#367). Jeder Takt nach dem ersten liest
+das Mood-Preset leicht anders; **Takt 1 ist immer das Preset** (`rawBars[0]` ist
+`composition.notes`, unverändert komponiert — das Genre sagt sich erst selbst, dann variiert es).
+
+**DIE AUFTEILUNG IST DIE GANZE ENTSCHEIDUNG.** Fünf AUSDRUCKS-Achsen streuen
+(liveliness · virtuosity · syncopation · humanize · weird), drei IDENTITÄTS-Achsen halten
+(darkness · tension · romance), und `MusicStyle` — Akkorde, Skala, Register, Rhythmus — wird
+**gar nicht** angefasst. Die drei sind kein Geschmack: `darkness > 0.60` legt die ganze Lage eine
+Oktave tiefer und `romance > 0.50` fügt die Sept hinzu — beides KLIPPEN, die
+`MoodKnobsSayWhatTheyDoTests` vermisst. Sie zu streuen würde das Genre mitten im Loop
+umregistrieren statt seine Aufführung zu variieren. Genau deshalb kann diese Scheibe ohne
+Neu-Abhören der 41 kuratierten Genres ausgeliefert werden, und deshalb bleibt
+`GenreFamilyDistinctnessTests` unberührt.
+
+**Der Streu-Seed ist NICHT der Noten-Seed.** `compose` verbraucht `barInput.seed` für die Noten;
+denselben Strom für die Mood-Streuung zu nehmen würde „welche Stimmung liest dieser Takt" an
+„welche Noten zieht er" koppeln — zwei Dinge, die unabhängig bleiben müssen. Eigene Faltung:
+`evolvingSeed ^ (UInt64(b) &* 0xD1B54A32D192ED03)`.
+
+**DAS GOLDENE GESETZ:** bei `amount == 0` gibt `varied` `self` BIT-IDENTISCH zurück. Jedes
+gespeicherte Projekt und jede Installation komponiert exakt wie vorher; die Scheibe ist opt-in
+über den Betrag. Nicht-endlich und negativ fallen in denselben Zweig — `amount` kommt aus
+`@AppStorage` über `Float(Double)`, und eine beschädigte Defaults-Plist ist die eine Eingabe, die
+niemand von Hand schreibt.
+
+**ZWEI JOINS, DIE KEINE REGISTER-ZEILE VORHERGESAGT HAT** und die beide ohne sie still gefehlt
+hätten:
+· **`SoundReset.entries`** — das #584-Gesetz in derselben Datei sagt es selbst: eine persistierte
+  Einstellung, die entscheidet, wie ein Take KLINGT, und die nicht in dieser Liste steht, ist nur
+  durch Neuinstallation zu kurieren. Eigener Eintrag `"variation"`, NICHT in `"mood"` gefaltet —
+  es ist kein `MoodProfile`-Feld, `MoodStorage`s ein Schlüssel trägt ACHT Werte und das hier ist
+  kein neunter.
+· **Die `launch/musical:`-Brotkrume** — `ResetSoundClearsWhatTheLaunchLineReportsTests` Anspruch 1
+  verlangt, dass jedes Reset-Label auf dieser Zeile steht. `variation=` ist ergänzt, und es ist
+  der eine Wert dort, der ÄNDERT, WAS DIE ANDEREN BEDEUTEN: `mood=` meldet das gesetzte Preset,
+  bei jedem Betrag > 0 spielt jeder Takt nach dem ersten eine andere Lesart davon. Ein Bericht
+  „die Mood-Regler passen nicht zu dem, was ich höre" ist aus beiden Zahlen zusammen beantwortbar
+  und aus keiner allein.
+
+**EIN NAME WÄRE ZWEIMAL KOLLIDIERT, beide vor dem Commit gefunden.** (1) `private var
+variationRow` gegen das existierende `private func variationRow(_ cand:rank:)` in der Maze-Fläche
+(Zeile 3925) — umbenannt in `moodVariationRow`/`moodVariationCaption`. (2) Schwerer: die
+BESCHRIFTUNG. `padShapeSection` liefert seit jeher `EchoelValueField(label: "Variation")` — das
+ist `padEvolve` —, und es rendert in DEMSELBEN `moodPanel`. Zwei identisch beschriftete Zeilen in
+einem Panel sind genau, wie der Founder-Report vom selben Tag („Variation geht nicht", #1401) ein
+zweites Mal passiert. Meine heißt **„Bar variation"**; die Pad-Zeile behält ihr Wort, weil sie die
+ist, die der Founder bereits angesehen hat, unter ihrer eigenen „Pad rhythm"-Überschrift. Ein
+enger gefasstes Wort schlägt ein verschobenes.
+
+**KEIN LÜGENDER REGLER (#164/#227):** bei einem Ein-Takt-Loop ist die Zeile `.disabled` — Takt 1
+ist dann der ganze Loop, und Takt 1 ist immer das Preset, also gäbe es nichts zu streuen. Seit
+#1401 SIEHT eine abgeschaltete Zeile auch abgeschaltet aus, also liest sich das als „hier aus"
+statt als „kaputt". Die Caption sagt den Grund und zählt die Achsen aus `variationSpread`, statt
+sie zu tippen.
+
+**Wächter:** `Tests/CISmoke/TheGenrePresetIsACentreNotAPointTests.swift`, **dreizehn** Ansprüche
+(gemessen: `grep -c "^    func test"`, nicht geschätzt — der erste Entwurf dieses Absatzes schrieb
+elf). Sieben lesen echtes Verhalten über `@testable` (die fünf Kern-Gesetze plus die
+`SoundReset`-Mitgliedschaft und den Vorgabewert), sechs lesen Quelltext durch
+`SourceText.codeOnly`; der Tabellen-Anspruch ist beides.
+
+**Benotung per Transkription (§0, kein Swift im Web-Zyklus).** Verhalten: 6 Ansprüche grün,
+**acht Mutanten** alle rot für ihren genannten Anspruch (m1 Guard weg → Golden · m2 `darkness` in
+die Tabelle → Identitäts-Anspruch · m3 Klammer weg → Domäne · m4 Seed ignoriert → Streuung ·
+m5 Cap 0 → Cap-Anspruch · m6 sechste Achse → Zähl-Anspruch · m7 Ziehung auf 0 → Streuung ·
+m8 nicht-deterministische Ziehung → Determinismus). Quelltext: 8 Ansprüche grün, **zehn
+Mutanten** alle rot für ihren Anspruch. **Sechs Fehlalarm-Sonden bleiben grün**, und zwei davon
+haben den Entwurf korrigiert: fp3 (die lokale Variable umbenannt) war gegen die erste Fassung
+rot, weil sie `.disabled(!scattersSomething)` pinnte — einen NAMEN statt der Sache; jetzt
+`.disabled(!` plus die Bedingung `loopBars.rawValue > 1` (#364: ein Wächter darf korrekte Arbeit
+nicht verbieten). fp5/fp6 (ein Cap bzw. der Vorgabewert nachgestimmt) bleiben grün — die Zahl ist
+absichtlich NICHT gepinnt, nur das GESETZ `0 < default < 1` (#818).
+
+Acht stehende Prüfer plus `doctor --selftest`: alle 0.
+
+**Offen, weil kein Test es kann:** ob 0,25 der richtige Eröffnungswert ist und ob ein Genre sich
+bei 1,00 noch nach sich selbst anhört. Founder-Ohr am Gerät. **Und eine Frage an ihn:** soll
+„Bar variation" auch die per-Lane-Fächerung erreichen (heute nur der Haupt-Take) — das ist eine
+eigene Scheibe, keine Auslassung.

@@ -2275,3 +2275,42 @@ Quelltext zu sehen, und drei davon sahen im Quelltext ausdrücklich RICHTIG aus:
 **Erwartetes Ergebnis:** Website-Defekte dieser Klasse werden beim MESSEN gefunden statt beim
 Nutzer. **Grenze, ausdrücklich offen:** was VoiceOver ANSAGT, kann hier niemand hören — das
 bleibt eine Geräteprobe, und `docs/accessibility.html` verspricht das Verhalten.
+
+### 2026-09-20 — Das Genre-Preset ist eine MITTE mit Streuung, kein Punkt (#1402)
+
+**Founder wörtlich:** *„Es wäre aufjedenfall gut grundsätzlich einen Status zu erreichen, wo kein
+Moment wie der andere klingt. Auch die Genre presets sollen einen vibe haben aber nicht gleich
+klingen. Immer random und variations reich. Wie stark die Variation ist kann man dann
+einstellen."* — drei Forderungen.
+
+**Gemessen VOR der Entscheidung, und der naheliegende Verdacht war falsch.** `SeededRNG` ist
+SplitMix64, Nachbar-Seeds dekorrelieren sofort. Variation existierte bereits auf ZWEI Ebenen:
+Take (Re-Seed alle 25–45 s) und Takt (`loopBars` Default `.eight`, acht wirklich verschiedene
+Takte pro Loop). Die einzige Ebene ohne jede Umsetzung war die, nach der der Founder ausdrücklich
+gefragt hat — **wie stark**.
+
+**Die verworfene Alternative, damit sie nicht wieder aufgemacht wird:** die Progressions-Reise zu
+entkoppeln (`progressionPhase = basePhase + b` läuft bei einer Drei-Stufen-Folge wie
+`selfObservation` dreimal durch einen Acht-Takt-Loop — ein GEMESSENER Grund für „klingt gleich").
+Das ist ein echter Befund und bleibt eine Kandidaten-Scheibe, aber es greift in die Harmonik ALLER
+41 Genres ein und lässt sich nur mit einem Ohr am Gerät abnehmen. Der Regler nicht.
+
+**Entschieden:** fünf AUSDRUCKS-Achsen streuen pro Takt um das Preset
+(liveliness · virtuosity · syncopation · humanize · weird), drei IDENTITÄTS-Achsen halten
+(darkness · tension · romance), `MusicStyle` bleibt unberührt. Die drei sind KLIPPEN, keine
+Schattierungen — `darkness > 0.60` legt die Lage eine Oktave tiefer, `romance > 0.50` fügt die
+Sept hinzu; sie zu streuen hieße, das Genre mitten im Loop umzuregistrieren. Darum bleibt
+`GenreFamilyDistinctnessTests` unberührt und kein kuratiertes Genre muss neu abgehört werden.
+**Takt 1 ist immer das Preset** — das Genre sagt sich erst selbst, dann variiert es.
+
+**Erwartetes Ergebnis:** bei `amount == 0` ist alles bit-identisch zu vorher, also ändert die
+Scheibe für keine bestehende Installation etwas, bis jemand den Regler bewegt. Bei 0,25 (Vorgabe)
+atmet ein frischer Loop, ohne dass die kuratierte Abstimmung verlassen wird.
+
+**Zwei Joins gehören zur Entscheidung, nicht zur Umsetzung** — beide wären still gefehlt:
+`SoundReset.entries` (eine persistierte Klang-Einstellung ohne Reset-Zeile ist nur per
+Neuinstallation zu kurieren, #584) und die `launch/musical:`-Brotkrume, auf der `variation=` der
+eine Wert ist, der ÄNDERT, was `mood=` daneben bedeutet.
+
+**Grenze, ausdrücklich offen:** ob 0,25 der richtige Eröffnungswert ist und ob ein Genre bei 1,00
+noch nach sich selbst klingt, kann kein Test hier entscheiden — Founder-Ohr am Gerät.

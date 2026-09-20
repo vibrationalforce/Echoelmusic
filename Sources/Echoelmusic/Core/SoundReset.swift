@@ -121,6 +121,15 @@ public enum SoundReset {
         // not better — a value that persists and cannot be reset is precisely the state this
         // whole file exists to stop needing a reinstall for.
         Entry(label: "mood", keys: [StudioDefaultKeys.mood.key]),
+        // ⭐ #1402 — the global variation depth, and it passes this file's own test exactly as
+        // `padShape` above does: persisted, decides what a take SOUNDS like, not work the player
+        // made. A take at 1.00 and the same take at 0.00 are different music.
+        //
+        // ⚠️ A SEPARATE ENTRY FROM `mood`, ALTHOUGH THE PANEL SHOWS THEM TOGETHER — it is not a
+        // `MoodProfile` field. `MoodStorage`'s one key carries EIGHT values and this is not a
+        // ninth (see `StudioDefaultKeys.moodVariation` for why it was kept out of that struct).
+        // Folding it into the `mood` entry would tie its reset to a JSON blob it is not part of.
+        Entry(label: "variation", keys: [StudioDefaultKeys.moodVariation.key]),
         Entry(label: "touchPatch", keys: [StudioDefaultKeys.touchPatchID.key]),
         Entry(label: "glide", keys: [StudioDefaultKeys.touchGlide.key]),
         // ⚠️ THE LABEL IS `userMix`, NOT `mix`, AND THAT IS #306's RENAME. It distinguishes the

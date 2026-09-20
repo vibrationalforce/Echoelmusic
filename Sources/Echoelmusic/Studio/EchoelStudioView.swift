@@ -526,6 +526,7 @@ struct EchoelStudioView: View {
     // default. Still fully flexible (2/4/8/16/32) via the loop-length picker + free-longer
     // in the arrangement; this only sets the STARTING length for a fresh install.
     @AppStorage(StudioDefaultKeys.loopBars.key) private var loopBars: LoopBarLength = StudioDefaultKeys.loopBars.value
+    @AppStorage(StudioDefaultKeys.moodVariation.key) private var moodVariation: Double = StudioDefaultKeys.moodVariation.value
     // ⛔ `@AppStorage("studio.beatMode")` STOOD HERE AND IS DELETED (#323). Its only readers
     // were `beatModeRow`'s Picker and hint text, and that row has been unmounted since the
     // founder's 2026-07-07 "Schmeiß den Beat komplett raus"; the drums it selected between
@@ -4541,7 +4542,15 @@ struct EchoelStudioView: View {
         // stale shape is invisible precisely while it does nothing, and comes back the moment a
         // character is picked again.
         let padShapeText = String(format: "%.2f/%.2f/%.2f", padGate, padAccent, padEvolve)
-        EchoelCrashLog.breadcrumb("launch/musical: key=\(keyText), tuning=\(tuningID), a4=\(a4Text), genre=\(style.rawValue), preset=\(presetIndex), articulation=\(articulationText), bassRhythm=\(bassRhythmText), padRhythm=\(padRhythmText), padShape=\(padShapeText), mood=\(moodText), touchPatch=\(touchText), glide=\(glideText), userMix=\(mixText), signature=\(signatureText)")
+        // ⭐ #1402 — the global variation depth. It is on this line for the reason every other
+        // entry is: `SoundReset` clears it, and this list is keyed by the labels THIS line emits.
+        //
+        // ⚠️ IT IS THE ONE VALUE HERE THAT CHANGES WHAT THE *OTHER* ENTRIES MEAN. `mood=` above
+        // reports the preset the player set; at any non-zero variation every bar after the first
+        // plays a DIFFERENT reading of it. A report that "the mood dials do not match what I
+        // hear" is answerable from these two numbers together and from neither alone.
+        let variationText = String(format: "%.2f", moodVariation)
+        EchoelCrashLog.breadcrumb("launch/musical: key=\(keyText), tuning=\(tuningID), a4=\(a4Text), genre=\(style.rawValue), preset=\(presetIndex), articulation=\(articulationText), bassRhythm=\(bassRhythmText), padRhythm=\(padRhythmText), padShape=\(padShapeText), mood=\(moodText), variation=\(variationText), touchPatch=\(touchText), glide=\(glideText), userMix=\(mixText), signature=\(signatureText)")
     }
 
     /// Step 2b: applies the audible side effects of a USER edit in the chrome's
@@ -6924,6 +6933,7 @@ struct EchoelStudioView: View {
                 moodKnob("Syncopation", $mood.syncopation)
                 moodKnob("Humanize", $mood.humanize)
             }
+            moodVariationRow
             // ⛔ A SECOND GRID, NOT TEN ITEMS IN THE FIRST — and with eight (an even number) of
             // knobs above, the two render IDENTICALLY today, so this is a choice about the next
             // edit rather than about this frame. Two reasons it is the right one:
@@ -7258,6 +7268,60 @@ struct EchoelStudioView: View {
                              }
                              recomposeIfRunning()
                          })
+    }
+
+    /// #1402 — the one global "how much does it change" control.
+    ///
+    /// ⛔ DELIBERATELY **OUTSIDE** THE EIGHT-KNOB GRID, and not a ninth mood dimension. The grid
+    /// above is `MoodProfile`, which `moodSnapshot` captures field-for-field and every saved
+    /// `MoodPreset` round-trips; a ninth entry there would change the preset format and imply
+    /// this is a character of the music. It is not — it is a statement about how far the OTHER
+    /// eight may drift per bar. Its own row, its own key, its own caption.
+    ///
+    /// ⛔ THE LABEL IS "Bar variation", NOT "Variation", AND THAT IS NOT A STYLE CHOICE. This
+    /// same panel already ships an `EchoelValueField(label: "Variation")` — `padEvolve`, inside
+    /// `padShapeSection`, a few cards below. Two rows spelled identically in ONE panel is how the
+    /// founder's 2026-09-20 report ("Variation geht nicht", #1401) happens a second time, and the
+    /// two are genuinely different things: that one shapes ONE role's rhythm and is inert on four
+    /// of six characters; this one scales how far EVERY bar drifts from the preset. Renaming the
+    /// pad row instead was the other option and is worse — it is the control the founder has
+    /// already looked at, under its own "Pad rhythm" heading, and a scoped word beats a moved one.
+    ///
+    /// ⚠️ DISABLED AT A ONE-BAR LOOP, and that is the #164/#227 law, not tidiness: bar 1 is
+    /// always the preset, so with one bar there is nothing left to scatter and the dial would
+    /// sweep its whole range in silence. Since #1401 a disabled `EchoelValueField` finally LOOKS
+    /// disabled, so this reads as "off here" instead of "broken" — which is exactly the report
+    /// that produced #1401.
+    private var moodVariationRow: some View {
+        let scattersSomething = loopBars.rawValue > 1
+        return VStack(alignment: .leading, spacing: 6) {
+            EchoelValueField(label: "Bar variation", value: $moodVariation, range: 0...1, decimals: 2,
+                             hint: "How far each bar of the loop may drift from the genre preset",
+                             onCommit: { recomposeIfRunning() })
+                .disabled(!scattersSomething)
+            Text(moodVariationCaption(scattersSomething))
+                .font(EchoelTheme.font(11))
+                .foregroundStyle(EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// The honesty half of `moodVariationRow` — a disabled row that does not say WHY is only
+    /// marginally better than an enabled one that does nothing.
+    ///
+    /// ⚠️ The axis names are PROJECTED from `MoodProfile.variationSpread`, never typed. Widening
+    /// or narrowing that table rewrites this sentence for free; a hand-written list is the
+    /// mistake `RoleRhythm.accentIsSubtle` exists to record (a UI list that drifted from the
+    /// engine and was WRONG about which member was missing).
+    private func moodVariationCaption(_ scattersSomething: Bool) -> String {
+        guard scattersSomething else {
+            return "Variation needs more than one bar — bar 1 is always the genre preset, and "
+                + "there is no rest of the loop to vary. Raise Loop length to use it."
+        }
+        let moved = MoodProfile.variationSpread.count
+        return "Bar 1 plays the genre preset; the other \(loopBars.rawValue - 1) bars read it "
+            + "slightly differently. \(moved) performance dials drift — register, dissonance "
+            + "and chord colour hold, so the genre still sounds like itself at 1.00."
     }
 
     // MARK: Mood presets (same library pattern as FX / sound)
@@ -10516,6 +10580,26 @@ struct EchoelStudioView: View {
                 // so a multi-bar Fläche moves through its progression WITHIN the loop
                 // (a different held chord per bar), not just across evolves.
                 barInput.progressionPhase = basePhase + b
+                // #1402 — THE PRESET IS A CENTRE, NOT A POINT (founder 2026-09-20: "Auch die
+                // Genre presets sollen einen vibe haben aber nicht gleich klingen"). Every bar
+                // after the first reads the mood slightly differently: five PERFORMANCE axes
+                // scatter, three IDENTITY axes hold, `MusicStyle` is untouched. At
+                // `moodVariation == 0` this is a no-op and the loop is byte-identical to before.
+                //
+                // ⚠️ WHY THE SEED IS NOT `barInput.seed`. It must not be: `compose` consumes that
+                // stream for the notes, so deriving the scatter from the same number would tie
+                // "which mood this bar reads" to "which notes it draws" — two things that should
+                // move independently, and a future change to either would silently re-voice the
+                // other. A separate fold keeps them orthogonal.
+                //
+                // ⚠️ AND BAR 0 IS DELIBERATELY NOT SCATTERED. `rawBars[0]` is `composition.notes`,
+                // already composed at the preset itself, and it is what the loop opens with — the
+                // genre states itself, then varies. Scattering it too would mean no bar anywhere
+                // plays the curated preset, which is a different product decision than the one
+                // that was asked for.
+                barInput.mood = input.mood.varied(
+                    amount: Float(moodVariation),
+                    seed: evolvingSeed ^ (UInt64(b) &* 0xD1B54A32D192ED03))
                 rawBars.append(BioComposer.compose(barInput).notes)
             }
         }

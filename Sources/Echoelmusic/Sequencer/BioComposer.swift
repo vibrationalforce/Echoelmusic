@@ -99,6 +99,71 @@ public struct MoodProfile: Sendable, Equatable, Codable {
     }
 }
 
+// MARK: - The preset as a CENTRE, not a point (#1402)
+
+public extension MoodProfile {
+
+    /// The five axes `varied(amount:seed:)` is allowed to move, and how far at `amount == 1`.
+    ///
+    /// ⛔ THE SPLIT IS THE WHOLE DESIGN, and picking the other three would have broken genre
+    /// identity rather than varied it. Founder 2026-09-20: *"Auch die Genre presets sollen einen
+    /// vibe haben aber nicht gleich klingen."* A genre's IDENTITY lives in `MusicStyle` (chord
+    /// tones, progression, tempo window, patch) and is pinned by `GenreFamilyDistinctnessTests`;
+    /// its VIBE-within-the-identity lives here. So the scatter touches only what a player would
+    /// call performance, never what they would call the style:
+    ///
+    ///   · MOVED — `liveliness` (how busy), `virtuosity` (runs and climaxes), `syncopation`
+    ///     (how far off the beat), `humanize` (velocity looseness), `weird` (odd leaps).
+    ///   · HELD — `darkness` (register), `tension` (dissonance), `romance` (triads vs. 7ths).
+    ///     These three read as "which genre is this": brightening a dark style or adding 7ths to
+    ///     a plain one bar-to-bar is not variation, it is the piece changing its mind. A future
+    ///     slice may widen the set; it must state why, and re-run the distinctness guard.
+    ///
+    /// ⚠️ THE CAPS ARE NOT UNIFORM, on purpose. `weird` is chromaticism — at ±0.25 a bar can
+    /// leave the ear's sense of key, which is the one failure that reads as a BUG rather than as
+    /// variation. `liveliness` and `virtuosity` carry the most audible spread per unit and get
+    /// the widest window. The numbers are a musical judgement, not a measurement, and they are
+    /// named here so the founder's ear can move them in one place.
+    /// ⚠️ KEY PATHS, NOT NAMES. The first draft keyed this table by `String` and mapped each
+    /// name back to a property in a `switch` — so adding a row without its case would have
+    /// scattered nothing, silently, which is the #367 defect (a mechanism that cannot fail for
+    /// its named reason). A `WritableKeyPath` makes the table itself the mapping: one
+    /// definition, and the compiler carries it (#416).
+    static let variationSpread: [(axis: WritableKeyPath<MoodProfile, Float>, cap: Float)] = [
+        (\.liveliness, 0.25), (\.virtuosity, 0.25),
+        (\.syncopation, 0.20), (\.humanize, 0.20), (\.weird, 0.15)
+    ]
+
+    /// This profile scattered around itself — the same vibe, a different reading of it.
+    ///
+    /// `amount` 0 returns `self` **bit-identically** (the Golden law: a fresh install and every
+    /// stored project sound exactly as they did before #1402). 1 moves each of the five axes by
+    /// up to its cap in `variationSpread`, deterministically from `seed`, clamped to 0…1.
+    ///
+    /// ⚠️ DETERMINISTIC, NOT RANDOM — `SeededRNG` (SplitMix64), no `Date`, no `SystemRandom`, no
+    /// `Hasher` (process-random and banned here). The same bar of the same take scatters the same
+    /// way on every device and every relaunch, which is what makes a take reproducible at all.
+    /// "Random" in the founder's sentence means *unpredictable to the ear*, and a seeded stream
+    /// is exactly that while staying a value type this bundle can test without a device.
+    ///
+    /// ⚠️ CLAMPING IS NOT COSMETIC. An axis at 1.0 with a +0.25 draw would otherwise leave the
+    /// documented 0…1 domain every consumer assumes, and `weird > 1` is where the composer's
+    /// chromatic branch stops being musical. Clamp at the boundary, not at the consumer.
+    func varied(amount: Float, seed: UInt64) -> MoodProfile {
+        guard amount > 0, amount.isFinite else { return self }
+        let strength = min(max(amount, 0), 1)
+        var rng = SeededRNG(seed: seed)
+        var out = self
+        // One draw per axis, in the order of `variationSpread`, so the mapping from seed to
+        // result is stable — reordering the list would re-voice every stored take.
+        for (axis, cap) in Self.variationSpread {
+            let signed = rng.unit() * 2 - 1            // −1 … +1
+            out[keyPath: axis] = min(max(out[keyPath: axis] + signed * cap * strength, 0), 1)
+        }
+        return out
+    }
+}
+
 public struct BioComposition: Equatable, Sendable {
     public var notes: [Note]
     /// 8 tracks × 16 steps drum grid, shaped to the genre. All-false in the
