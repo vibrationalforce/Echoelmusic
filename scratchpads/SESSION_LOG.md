@@ -35216,3 +35216,9 @@ eine echte Fläche) grün mit den Tokens `Master` und `Save/Export`, c4 (die Not
 `Info.plist`-Zweckbeschreibungen ohne Funktion (`NSMicrophoneUsageDescription` seit #1302,
 `NSPhotoLibraryAddUsageDescription` seit #1304, `NSCameraUsageDescription` nennt weiterhin
 beide Linsen) — das ist der einzige der Befunde mit echtem Prüfer-Risiko bei Apple.
+
+**BUILD IST OBEN (Nachtrag, gleiche Scheibe, ANDERE Datei — `.deploy/release` bleibt
+unberührt, #1151):** Lauf 35515127292 auf `3071f5dde`, Job `iOS`: `Preflight` success
+(Secrets gültig), `Archive` success (14:00:49–14:04:51Z), `Export & Upload to TestFlight`
+success, **`Verify build landed in App Store Connect` success** (14:06:15–14:08:20Z).
+Marketing-Version **10.79.476**, Build-Nummer **2596** (= `github.run_number`).
