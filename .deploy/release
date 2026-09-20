@@ -1,4 +1,4 @@
-build: v10.79.474 — Der Musikalitäts-Build: der Swing trifft zum ersten Mal Noten, Pad und Bass teilen sich keinen Grundton mehr, und jedes Genre bringt seinen eigenen Echo-Teiler mit (#1360–#1373)
+build: v10.79.475 — Der Plattform-Build: Echoel ist wieder ein AUv3-Instrument in fremden DAWs, die Musik geht über OSC raus, und ein 41. Genre (#1374–#1385)
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -51,7 +51,194 @@ notes: |
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
 
-  Der Vorgänger ist 10.79.473 (und davor 10.79.472).
+  Der Vorgänger ist 10.79.474 (und davor 10.79.473).
+
+  ── WAS IN DIESEM BUILD NEU IST (v10.79.475) ──────────────────────────────
+
+  ⭐ DAS IST DER PLATTFORM-BUILD. Seit dem letzten Deploy sind 17 Commits gelaufen,
+  NEUN davon fassen `Sources/` an. Am Instrument selbst ändert sich fast nichts — was
+  sich ändert, ist WO Echoel läuft und WAS es nach außen schickt.
+
+  ── #1385: ECHOEL IST WIEDER EIN AUv3-INSTRUMENT ──────────────────────────
+
+  Das ist der größte Posten dieses Builds, und es ist DEINE Idee vom 19.09.
+  („Ultraauv3 VST no Juce ultrakompatible").
+
+  Echoel trägt wieder eine AUv3-Erweiterung: ein Instrument namens
+  „Echoelmusic: EchoelBodyVibe", Typ `aumu`, das in AUM, Logic, GarageBand, Cubasis
+  oder Drambo als Klangquelle auftauchen SOLL. Ohne JUCE, ohne C++, ohne eine einzige
+  neue Abhängigkeit — AUv3 ist Apple-eigen, JUCE war dafür nie nötig.
+
+  ⚠️ WARUM DAS DIE PRODUKTGRENZE NICHT BRICHT, weil die Frage berechtigt ist: ein
+  AUv3-Instrument macht Echoel zur QUELLE in Deiner DAW, statt selbst eine DAW sein zu
+  wollen. Das ist das Gegenteil dessen, was wir im Juli gestrichen haben. Echoel HOSTET
+  weiterhin keine fremden Plugins — das bleibt gestrichen.
+
+  ⚠️ ES WAR EIN RESTORE, KEIN NEUBAU. Die vier Dateien lagen seit dem 24. Juli
+  gelöscht in der Historie; mein Klon war abgeschnitten und konnte sie nicht sehen.
+  Nach einem vollständigen Nachladen (7.980 Commits statt 342) waren sie wieder lesbar.
+
+  ⛔ DREI ECHTE FEHLER IM AUDIO-THREAD, GEFUNDEN BEIM WIEDERBELEBEN — und das ist der
+  Grund, warum dieser Posten nicht einfach ein Zurückholen war:
+
+  · `EchoelCellular.evolve1D()` trug eine Speicher-Allokation (malloc + Kopie + free)
+    MITTEN im Render-Block, etwa 8× pro Sekunde. Das ist die Sorte Fehler, die in
+    Deinem eigenen Gerät als Knacken auftaucht und in einer fremden DAW als Aussetzer.
+    Sie war seit Juli harmlos, WEIL der Aufrufer gelöscht war — das Wiederbeleben eines
+    Aufrufers schärft jeden schlafenden Fehler in allem, was er ruft, und der Diff der
+    gerufenen Datei ist dabei leer. Gelöscht; die Variable hatte null Leser.
+  · Ein doppelter Start hätte einen laufenden Timer überschrieben, ohne ihn zu
+    beenden — das ist ein harter Absturz im fremden Host, nicht ein Schluckauf.
+  · Die Block-Obergrenze wird jetzt am VERTRAG geklemmt statt nur an den Daten; vorher
+    hätte ein Host mit großen Blöcken Stille bekommen und der Block hätte „alles gut"
+    gemeldet.
+
+  ⚠️ ZWEI DINGE, DIE ICH BEWUSST NICHT REPARIERT HABE, und das ERSTE hörst Du sofort:
+
+  1. DIE ABTASTRATE IST AUF 48 kHz FESTGENAGELT. Läuft der Host auf 44,1 kHz — das ist
+     GarageBand iOS im Standard —, klingt alles etwa **8,8 % zu hoch**, also gut einen
+     Dreiviertel-Halbton. Das ist kein Defekt der Reparatur, das war schon immer so;
+     es fällt jetzt zum ersten Mal auf, weil das Plugin wieder existiert. Die Reparatur
+     fasst drei fest verdrahtete Raten INNERHALB der Klang-Engine an, die sich die App
+     mit dem Plugin teilt — also ein Eingriff ins Herz des Instruments, den ich ohne
+     Compiler hier nicht blind machen wollte. Steht als eigener Posten an.
+  2. Die CPU der Textur-Stimme im Plugin ist ungemessen (~1,5 Mio. Sinus-Aufrufe pro
+     Sekunde, unvektorisiert). In der App läuft das; in einer DAW mit zehn anderen
+     Spuren weiß ich es nicht.
+
+  ⛔ UND DAS WICHTIGSTE: OB ES ÜBERHAUPT LÄDT, WEISS ICH NICHT. Die Erweiterung ist
+  kompiliert und eingebettet — beide Gates grün —, aber „kompiliert" ist nicht „lädt in
+  Logic". Beim letzten Versuch im Juli meldete iOS `-3000 invalidComponentID`, und
+  genau daran ist das Target damals gestorben. Die Entitlements-Datei ist deshalb
+  ABSICHTLICH LEER.
+
+  ⚠️ BITTE SCHALTE IM DEVELOPER-PORTAL KEINE APP GROUPS FÜR
+  `com.echoelmusic.app.auv3` EIN. Genau das war 2026-07-19 die Ursache: die App-ID
+  trägt die Berechtigung nicht, und iOS startet die Erweiterung dann gar nicht erst.
+  Wenn das Plugin lädt und nur keine Bio-Werte bekommt, ist das der ERWARTETE Zustand
+  dieses Builds und kein Fehler.
+
+  ── #1383: DIE MUSIK GEHT ÜBER OSC RAUS ───────────────────────────────────
+
+  Bisher konnte ein externer Visual-Rechner Deinen KÖRPER abonnieren, aber nicht die
+  MUSIK. Jetzt gehen fünf neue Adressen raus, auf demselben Takt wie der Bio-Strom:
+  Tempo, Grundton, Beat-Phase, Master-Pegel und die Zahl klingender Noten.
+
+  Für Resolume oder TouchDesigner heißt das: `music/beat/phase` läuft im Tempo des
+  TAKTS, wo `bio/breath/phase` im Tempo eines Körpers läuft — für alles, was „auf dem
+  Beat" wirken soll, ist das die bessere erste Zuordnung. Die Website führt beide.
+
+  ⚠️ EINE ASYMMETRIE, DIE DU MERKEN KÖNNTEST: das TEMPO trägt einen zweiten Filter.
+  Im Flow-Modus IST das Tempo Dein Puls mit einem musikalischen Namen — steht die
+  Bio-Quelle auf Apple Health, Uhr oder Ring, bleibt diese eine Adresse still, während
+  die anderen vier weiter senden. Kamera, Brustgurt und eine Sitzung ganz ohne
+  Biofeedback senden sie normal. Bewegt sich Dein Tempo-Regler drüben nie, ist DAS der
+  Grund und kein Fehler.
+
+  ── #1382: EIN 41. GENRE ──────────────────────────────────────────────────
+
+  `andeanHighland` (Andean Highland, 104) ist der dritte Bewohner des Regals
+  „Latin America". Gemessen: die angebotene Liste hat jetzt 41 Einträge, vorher 40.
+  Offene Quinten, dünnes Register — die Frage ans Ohr steht unten.
+
+  ── FÜNF HÄRTUNGEN, DIE DU NICHT SIEHST ───────────────────────────────────
+
+  #1374/#1378 — Zwei Stellen klammerten einen Wert ERST NACH dem Umwandeln. `Int(NaN)`
+    ist in Swift kein schlechter Wert, sondern ein sofortiger Absturz. Jetzt wird vor
+    der Umwandlung geklammert, und zwar am TYP statt an jedem Aufrufer.
+  #1380 — Der Finger-Kontakt der Puls-Messung überlebte die Take-Grenze: ein neuer
+    Take startete mit der Annahme, der Finger liege noch auf der Linse, und entwaffnete
+    damit die Schwelle, die sonst „kein Kontakt" erkennt.
+  #1376/#1379/#1381 — Drei Register-Reparaturen: ein Kern stand als „tot" in der Liste
+    und lebt (der Zeitdehner), ein anderer war in acht Dateien als der lebende
+    ausgeschildert und ist der tote, und das Waisen-Register las sich als Gesamtzahl,
+    war aber eine Teilmessung. Das ändert nichts am Klang — es verhindert, dass die
+    nächste Runde etwas Funktionierendes „aufräumt".
+
+  ── WAS ICH VON DIR BRAUCHE ───────────────────────────────────────────────
+
+  Diesmal ist Posten 2 der eigentliche Grund für diesen Build. Zwanzig Minuten.
+
+  1. App starten. Läuft sie sauber hoch, kein schwarzer Bildschirm? (Die Erweiterung
+     hängt jetzt mit im Paket — das allein kann den Start kippen.)
+  2. ⭐ DER AUv3-TEST. AUM oder GarageBand öffnen, eine Instrumentenspur anlegen, in
+     der AU-Liste nach „Echoelmusic" suchen.
+       a) Taucht „EchoelBodyVibe" überhaupt in der Liste auf?
+       b) Lässt es sich LADEN, oder kommt eine Fehlermeldung? (Wenn ja: wörtlich
+          abschreiben oder Screenshot — die Zahl darin entscheidet alles Weitere.)
+       c) Wenn es lädt: Tasten spielen — kommt Ton?
+       d) Wenn Ton kommt: klingt er ZU HOCH? In GarageBand iOS (44,1 kHz) erwarte ich
+          knapp einen Dreiviertel-Halbton zu hoch. Bestätige oder widerlege das — das
+          ist die Messung, die den Fix freigibt.
+       e) Bio-Werte im Plugin: erwartet ist, dass KEINE ankommen. Nicht schlimm.
+  3. Genre-Menü: sind es 41 Einträge?
+  4. Andean Highland 104, Generate + Play im Loop. A/B gegen Cumbia 96 und Tango
+     Marcato 112: liest es sich dünn und offen daneben, oder wie eine dritte Variante
+     desselben?
+  5. Finger auf die Kamera, Puls-Pille. Rastet der Puls wie gewohnt ein, und bleibt er
+     nach einem ZWEITEN Take sauber? (Das ist #1380.)
+  6. Wenn irgendetwas hakt: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── STAND DER GATES, ehrlich ──────────────────────────────────────────────
+
+  Gemessen auf `f6f2b6c9f` — dem Commit, den DIESER Build trägt: `Xcode Compile Check`
+  Lauf 2675 **grün**, und dieser Lauf baut seit diesem Commit ZWEI Schemata, das zweite
+  ist die AUv3-Erweiterung allein. Sie kompiliert also isoliert, ohne die App.
+  CI/CD Lauf 35494257676 Schritt 9 `Build for Testing` **grün** (das blockierende
+  Wächter-Bündel kompiliert). Der neue Wächter über die Plugin-Registrierung ist im
+  Simulator mit allen sechs Ansprüchen durchgelaufen.
+
+  `Run Tests` meldet bei JEDEM Push „failure" (#396) — die Conclusion sagt nichts, und
+  das Job-Log zeigt nur die letzten 200 Zeilen (#807). In dieser Web-Sitzung gibt es
+  KEINE Swift-Toolchain: ich habe hier nichts kompiliert und keinen Test ausgeführt.
+  Neue Wächter werden durch Transkription gegen beide Bäume benotet, die acht Prüfer
+  beenden mit 0.
+
+  ⚠️ FOUNDER-GATED, unverändert berichtet (`.github/workflows/**`,
+  `Resources/iOS/Info.plist` und `project.yml` darf ich normalerweise nicht editieren —
+  für `project.yml` und `testflight.yml` hattest Du für diesen einen Posten
+  ausdrücklich freigegeben, `Info.plist` nicht):
+
+  · `auto-merge-claude.yml` wartet auf KEIN Gate — kein `needs:`, kein `workflow_run:`,
+    keine fremde Conclusion. Der Merge nach `main` läuft parallel zu den Checks und
+    gewinnt. Ein nicht kompilierender Commit kann auf `main` stehen.
+  · `ci.yml` maskiert an fünf Stellen einen BUILD-Fehler, `benchmark.yml` an einer,
+    `full-tests.yml` an zweien. Ein grünes Häkchen dieser Schritte beweist nichts.
+  · `ci.yml:290/291` filtert auf eine Test-Suite, die es nicht gibt.
+  · `Resources/iOS/Info.plist`: `NSMicrophoneUsageDescription` hat seit #1302 keinen
+    Code mehr, `NSPhotoLibraryAddUsageDescription` seit #1304, und
+    `NSCameraUsageDescription` nennt weiterhin BEIDE Linsen, obwohl die Frontkamera
+    mit #1301 gegangen ist.
+  · `project.yml:296` trägt eine veraltete Ein-Richtungs-Route für die Watch.
+
+  GERÄTEVERIFIZIERT IST NICHTS DAVON.
+
+  ── PRÜF-BITTEN, DIE DIESER BUILD NEU BEANTWORTBAR MACHT ──────────────────
+  (gedruckt mit `python3 scripts/founder-verify.py --since dcaeb4982`, nicht von Hand)
+
+  ⚠️ DER AUv3-TEST STEHT NICHT IN DIESER LISTE, und das ist kein Versehen: er hat
+  keinen `NEEDS-FOUNDER-VERIFY`-Marker im Quelltext, sondern wohnt in
+  `scratchpads/FOUNDER_DEVICE_SESSION.md` §2b. Das Werkzeug liest den Baum, nicht
+  meine Absicht — deshalb steht Posten 2 oben ausgeschrieben.
+
+  Founder device-session checklist — 3 NEW or REWORDED since `dcaeb4982`, of 149 open, none answered yet
+     'New' means the marker LINE was added or changed. An ask that only moved (lines edited
+     above it) is deliberately NOT here — it did not change.
+     ⚠️ It sees TEXT, not capability: a REWORDED ask is an old ask whose sentence was
+     polished, not one that became newly answerable. Read the sentence.
+
+  ── AUDIO  (2)
+     CISmoke/GenreBatchFourteenCTests.swift:3
+        SOUNDS, which is an ear and stays open (NEEDS-FOUNDER-VERIFY below). ── WHAT #1382 G14c SHIPS ──
+     CISmoke/GenreBatchFourteenCTests.swift:34
+        NEEDS-FOUNDER-VERIFY: on the device, does `andeanHighland` read as thin and open next to `cumbia` and `tangoMa…
+
+  ── OTHER  (1)
+     CLAUDE.md:40
+        - Live pipeline: HealthKit + camera rPPG (live, locks on device) + Demo → bio snapshot. ( Universal BLE HR (0x…
+
+  (Die Abschnitte NOT ASKS, BLOCKED, HOW TO RETIRE und LIMITS sind unverändert und
+  stehen ausgeschrieben in der Notiz zu 10.79.473 weiter unten.)
 
   ── WAS IN DIESEM BUILD NEU IST (v10.79.474) ──────────────────────────────
 

@@ -34252,3 +34252,57 @@ komprimiert (er trug zusätzlich die zweite, veraltete Kopie der Einstellungs-Za
 
 ⚠️ **Gerätestand:** nichts davon ist geräteverifiziert. „Kompiliert und ist eingebettet" ist
 nicht „lädt in Logic". Die eine offene Frage steht als §2b.
+
+## 2026-09-20 — Deploy v10.79.475: Der Plattform-Build (Gates auf `f6f2b6c9f` gelesen)
+
+**Gate-Lesung zuerst, weil der Founder den Deploy daran gebunden hatte** („Deploy erst wenn
+AUv3 grün"):
+
+- `Xcode Compile Check` Lauf **35494257671** auf `f6f2b6c9f` → **success**. Das ist mehr wert
+  als die üblichen grünen Häkchen: seit #1385 baut dieser Lauf ZWEI Schemata, und das zweite
+  ist `EchoelmusicAUv3` allein auf `generic/platform=iOS`. Die Erweiterung kompiliert also
+  **isoliert** — gegen `DSP/` plus drei Foundation-only `Core/`-Dateien, ohne die App. Genau
+  die Isolation, die der Verzicht auf JUCE erkauft, ist damit maschinell belegt und nicht nur
+  behauptet.
+- CI/CD Lauf **35494257676** Schritt 9 `Build for Testing` → **success** (das blockierende
+  Bündel kompiliert mit dem neuen Wächter darin).
+- `TheAUv3RegistersAndStaysIsolatedTests` — **alle sechs Ansprüche im Simulator PASSED**
+  (im `tail -200`-Fenster namentlich sichtbar). Der Wächter ist damit nicht nur transkribiert
+  benotet, sondern einmal wirklich gelaufen.
+- `Run Tests` → `failure` wie auf JEDEM Push (#396). Das Fenster ist `tail -200` (#807);
+  darin steht kein einziger Fehlschlag, also sagt es über den Rest der Suite nichts.
+
+**Deploy-Bump, EINMAL angefasst** (#1151: jede Berührung dieser Datei schickt einen Build,
+nicht nur ein Bump — ein Nachtrag wäre ein zweiter Build):
+
+- `.deploy/release` Zeile 1 → `v10.79.475`, Vorgänger-Zeile auf 474/473 nachgeführt, neuer
+  Abschnitt VOR dem 474er eingefügt.
+- Die `--since`-Liste steht im SELBEN Commit, gedruckt mit
+  `python3 scripts/founder-verify.py --since dcaeb4982` (3 neu/umformuliert, 149 offen).
+
+⭐ **EIN BEFUND ÜBER DIESES WERKZEUG, der in die Notiz musste: der AUv3-Test steht NICHT in
+der `--since`-Liste.** Er hat keinen `NEEDS-FOUNDER-VERIFY`-Marker im Baum, sondern wohnt in
+`FOUNDER_DEVICE_SESSION.md` §2b. `founder-verify.py` liest den BAUM, nicht meine Absicht —
+der wichtigste Posten dieses Builds wäre also durch die Liste gefallen, die genau dafür da
+ist. Deshalb steht er oben ausgeschrieben als Posten 2, und die Notiz sagt selbst, warum er
+in der Liste fehlt. **Gesetz: eine Prüf-Bitte, die nicht im Quelltext wohnt, wird von der
+Warteschlange nicht getragen** — wer sie nur in einen Scratchpad schreibt, verlässt sich
+darauf, dass die nächste Sitzung dieselbe Datei öffnet.
+
+**Der 48-kHz-Posten ist in der Notiz die HAUPTFRAGE ans Ohr, nicht eine Fußnote.** In einem
+44,1-kHz-Host (GarageBand iOS im Standard) klingt alles ~8,8 % zu hoch, knapp einen
+Dreiviertel-Halbton. Die Reparatur fasst drei hart kodierte Raten INNERHALB `EchoelDDSP` an,
+die sich App und Plugin teilen — ohne lokalen Compiler ist das der riskanteste Eingriff, den
+diese Sitzung machen könnte. Also gemessen abgefragt statt geraten: die Notiz bittet
+ausdrücklich um Bestätigung ODER Widerlegung, weil das die Messung ist, die den Fix freigibt.
+
+**Und die Warnung, die ich für die teuerste der Notiz halte:** der Founder darf im Portal
+KEINE App Groups für `com.echoelmusic.app.auv3` einschalten. Das war 2026-07-19 die Ursache
+des `-3000 invalidComponentID`, an dem das Target gestorben ist. Die naheliegende Reaktion
+auf „das Plugin bekommt keine Bio-Werte" ist genau der Schalter, der es gar nicht mehr
+starten lässt — deshalb steht „keine Werte = ERWARTET" in derselben Zeile wie die Warnung.
+
+Acht Prüfer exit 0. Die vier Ansprüche von `TheDeployNoteNamesRealDoorsTests` und die
+Zeile-1-Ableitung von `TheShippedVersionComesFromTheReleaseFileTests` sind gegen die
+editierte Datei transkribiert (Pfad-Marken: nur `Master` und `Save/Export`, beide echte
+Chips).
