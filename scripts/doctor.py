@@ -403,6 +403,98 @@ NEEDLE_SHAPE = re.compile(
     + r'(?:func [A-Za-z_][A-Za-z0-9_]*'
     + r'|(?:struct|enum|class|protocol) [A-Z][A-Za-z0-9_]*)[^"]*)"')
 
+# ONE definition of "this line asserts that something is ABSENT" (#416). It lived only inside
+# `section_b` and is now shared with `_absence_loop_header_lines` below — two copies of the
+# same idea drift, and this one decides whether a CORRECT guard is reported as broken.
+ABSENCE_ASSERTION = re.compile(r"XCTAssertFalse|XCTAssertNil|\.isEmpty"
+                               r"|deleted|no longer|must be ABSENT")
+# Its counterweight. `XCTAssertEqual` is deliberately NOT here: it is used for BOTH directions
+# in this bundle (`XCTAssertEqual(count, 0)` is an absence assertion), so treating it as
+# presence would refuse the exemption for the very shape this is meant to recognise, and
+# treating it as absence would grant it too widely. Two unambiguous tokens, nothing else.
+PRESENCE_ASSERTION = re.compile(r"XCTAssertTrue|XCTAssertNotNil")
+# A `for <v> in [ "needle", … ] { … }` header, the repo idiom for "none of these exist".
+ABSENCE_LOOP_HEADER = re.compile(r"^\s*for\s+([A-Za-z_][A-Za-z0-9_]*)\s+in\s+\[")
+
+
+def _absence_loop_header_lines(code: str, blanked: str) -> set:
+    """Line indices whose needles belong to a `for v in [...] { XCTAssertFalse(…v…) }` header.
+
+    ⛔ WHY THIS EXISTS (#1393). `TheStretcherIsNamedByItsTypeTests.swift:71` writes the three
+    shapes of a type that must NOT exist as a list and asserts absence once, in the loop body:
+
+        for shape in ["struct EchoelWSOLA", "class EchoelWSOLA", "enum EchoelWSOLA"] {
+            XCTAssertFalse(src.contains(shape), …)
+        }
+
+    Section B's `absence` exemption is SAME-LINE ONLY, so it could not see it and reported all
+    three as needles "declared nowhere" — i.e. the phantom scan cried wolf at a guard that is
+    correct, in the tool a session runs BEFORE trusting a measurement. This file's own comment
+    had ALREADY named the idiom ("a `for dead in [...]` list") as one of three the `absence`
+    regex does not recognise — but it named it about the EXCLUDED needle bucket, where it cost
+    nothing, and so nobody connected it when the same idiom surfaced in the SCANNED bucket.
+    ⭐ The lesson is the repo's own: a defect written down in the wrong REGISTER is invisible.
+
+    ⚠️ THIS IS A STRUCTURAL TIE, NOT THE NEIGHBOURHOOD EXEMPTION THE SAME-LINE RULE FORBIDS.
+    The reason same-line exists is that "an absence word appeared nearby" exempts live things
+    by accident. Here the loop's own body is not a neighbour — it is the only consumer the
+    list literal has, and all FOUR conditions must hold:
+      1. the line is a `for <v> in [` header,
+      2. its braces BALANCE (an unbalanced scan exempts nothing — a miss, the safe direction),
+      3. the body names `<v>` — without this it is exactly the neighbourhood rule,
+      4. the body asserts absence and contains NO presence assertion.
+    A loop that checks both directions therefore stays scanned, which is the `MIDIOutQuality`
+    lesson (a positive and a negated `contains` on one line) one construct up.
+
+    ⚠️ BRACE MATCHING RUNS ON `blanked`, NEVER ON `code`. Guard failure messages are
+    triple-quoted and routinely contain `{` (a Swift interpolation, a JSON snippet, a glob);
+    counting those would run the body to end of file and exempt everything after it — a FALSE
+    GREEN in the phantom scan, the expensive direction. The two texts come from the same walk
+    and have the same line count, so an index means the same line in both.
+    """
+    lines = code.split("\n")
+    blines = blanked.split("\n")
+    exempt = set()
+    for i, line in enumerate(lines):
+        m = ABSENCE_LOOP_HEADER.match(line)
+        if not m:
+            continue
+        var = m.group(1)
+        depth, brace_line, end = 0, None, None
+        for j in range(i, len(blines)):
+            for ch in blines[j]:
+                if ch == "{":
+                    if brace_line is None:
+                        brace_line = j
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+            if brace_line is not None and depth <= 0:
+                end = j
+                break
+        if end is None:
+            continue                                   # (2) never closed — do not exempt
+        # The body can start and end on the header line (`for v in [...] { assert }`), so it is
+        # sliced from the text rather than taken as whole lines — a one-liner loop must not read
+        # as an EMPTY body, which would silently refuse the exemption it qualifies for.
+        if end == brace_line:
+            seg = lines[brace_line].split("{", 1)[1]
+            text = seg.rsplit("}", 1)[0] if "}" in seg else seg
+        else:
+            text = "\n".join([lines[brace_line].split("{", 1)[1]] + lines[brace_line + 1:end + 1])
+        if not re.search(r"\b" + re.escape(var) + r"\b", text):
+            continue                                   # (3) body ignores the loop variable
+        if PRESENCE_ASSERTION.search(text):
+            continue                                   # (4) checks both directions — keep scanning
+        if not ABSENCE_ASSERTION.search(text):
+            continue
+        # Only the HEADER SPAN is exempted — `for` to the opening brace, which is where the list
+        # literal lives. Needles written inside the BODY stay scanned; they are ordinary needles
+        # that happen to sit in a loop, and nothing about this construct vouches for them.
+        exempt.update(range(i, brace_line + 1))
+    return exempt
+
+
 BUILD_CMD = re.compile(r"xcodebuild\b[^\n]*\b(?:build|build-for-testing|test|archive)\b"
                        r"|^\s*swift\s+(?:build|test)\b", re.M)
 # Any key may open a step — `.github/workflows/testflight.yml` has one starting with `- if:`.
@@ -828,6 +920,13 @@ def section_b() -> Section:
     #     `'private let handleHeight: CGFloat = (\d+)'` against `FloatingVisualWindow.swift`.
     #   · THREE are genuine ABSENCE needles written in an idiom the `absence` regex below does not
     #     recognise (`occurrences(of:…), 0` · `count(…), 0` · a `for dead in [...]` list).
+    #     ⭐ THE THIRD ONE IS NOW RECOGNISED (#1393, `_absence_loop_header_lines`) — and the
+    #     reason it took four cycles is written at that function: this bullet filed the idiom
+    #     under the EXCLUDED bucket, where it cost nothing, so when the SAME idiom surfaced in
+    #     the SCANNED bucket (`TheStretcherIsNamedByItsTypeTests:71`, three false alarms at
+    #     once) nobody connected the two. A defect recorded in the wrong register is invisible.
+    #     The other two remain unrecognised and remain harmless for exactly the old reason —
+    #     which is a forecast, not a measurement, and the one above is how that ends.
     #   · Only the remaining ~5 are prose or in-test fixtures.
     # So the blocker is escape/metachar needles plus a gap in the absence idiom, NOT prose — and
     # "tighten the shape against prose" would have been the wrong repair. Written out because the
@@ -863,7 +962,7 @@ def section_b() -> Section:
     # A needle used in an ABSENCE assertion names something that must NOT exist. Flagging it is
     # the cry-wolf failure in its purest form. Same-line only, for the reason the path check
     # above learned the hard way: a neighbourhood exemption exempts live things by accident.
-    absence = re.compile(r"XCTAssertFalse|XCTAssertNil|\.isEmpty|deleted|no longer|must be ABSENT")
+    absence = ABSENCE_ASSERTION   # ONE home, module level (#416) — shared with the loop rule
     # ⛔ AND A NEEDLE INSIDE A **NEGATED** `contains(` IS THE SAME CRY-WOLF, IN A SHAPE THE
     # LINE ABOVE CANNOT SEE (#754). The repo-idiomatic form is
     #     lines.contains { $0.contains("foo()") && !$0.contains("func foo") }
@@ -942,8 +1041,11 @@ def section_b() -> Section:
         code_haystack = "\n".join(_code_only(read(f)) for f in sorted(tracked("Sources/*.swift")))
         phantoms = []
         for f in guards:
-            for i, line in enumerate(_code_only(read(f)).split("\n")):
-                if absence.search(line):
+            code = _code_only(read(f))
+            # The list-literal idiom (#1393) — same walk, so the indices line up.
+            loop_exempt = _absence_loop_header_lines(code, _code_only(read(f), blank_strings=True))
+            for i, line in enumerate(code.split("\n")):
+                if absence.search(line) or i in loop_exempt:
                     continue
                 for m in needle_shape.finditer(line):
                     if negated_contains.search(line[:m.start()]):
@@ -996,7 +1098,9 @@ def section_b() -> Section:
                 "that is not there, so it is green whatever the code does. Re-derive the needle "
                 "from the real declaration and ANCHOR it — assert the needle itself is present "
                 "before asserting anything about it. If the name is meant to be absent, put the "
-                "absence assertion on the SAME line, which exempts it here."))
+                "absence assertion on the SAME line, which exempts it here — or write the list "
+                "as `for v in [ … ] { XCTAssertFalse(…v…) }`, which is exempt as a whole (#1393; "
+                "a loop whose body ALSO asserts presence stays scanned, on purpose)."))
 
     # ⛔ THE DECISION LOG, BECAUSE IT BROKE AND NOBODY NOTICED FOR FOUR DAYS (#760).
     # `decisions.csv` is read by `review.sh` (and a cron), which REFUSES to report anything
@@ -1718,6 +1822,75 @@ def selftest_negated_needle() -> int:
     return 1 if bad else 0
 
 
+def selftest_absence_loop_header() -> int:
+    """Pin the #1393 rule: a `for v in [ … ] { XCTAssertFalse(…v…) }` header is an ABSENCE
+    assertion, and everything that is NOT that shape still gets scanned.
+
+    ⭐ IT DRIVES THE REAL FUNCTION, not a transcription of it — and that is a deliberate
+    improvement on its neighbour, which copies `negated_contains` into itself and says so
+    ("a selftest that cannot see a change to its subject is decoration"). Here, editing the
+    rule edits what this test measures.
+
+    ⛔ WRITTEN AS A PAIR, for the reason #739 gives: an exemption that only feeds itself its
+    own positive silently disarms the scan it lives inside. Four of the eight cases below
+    must come back EMPTY, and case 7 is the one that would be a false GREEN rather than a
+    false alarm — a `{` inside a guard's triple-quoted message running the body to end of file
+    and exempting every needle after it.
+    """
+    def run(src: str) -> set:
+        return _absence_loop_header_lines(_code_only(src), _code_only(src, blank_strings=True))
+
+    real = (
+        'for shape in ["struct EchoelWSOLA", "class EchoelWSOLA", "enum EchoelWSOLA"] {\n'
+        '    XCTAssertFalse(src.contains(shape), "nope")\n'
+        '}\n')
+    cases = [
+        # (label, source, expected exempt line indices)
+        ("the live shape (TheStretcherIsNamedByItsTypeTests:71)", real, {0}),
+        ("one-liner body", 'for d in ["struct Gone"] { XCTAssertFalse(s.contains(d)) }\n', {0}),
+        ("multi-line list literal", (
+            'for d in [\n'
+            '    "struct GoneA",\n'
+            '    "struct GoneB",\n'
+            '] {\n'
+            '    XCTAssertFalse(s.contains(d), "nope")\n'
+            '}\n'), {0, 1, 2, 3}),
+        # --- the four that must NOT be exempted ---
+        ("body checks BOTH directions", (
+            'for d in ["struct Gone"] {\n'
+            '    XCTAssertTrue(s.contains("struct Alive"))\n'
+            '    XCTAssertFalse(s.contains(d))\n'
+            '}\n'), set()),
+        ("body ignores the loop variable", (
+            'for d in ["struct Gone"] {\n'
+            '    XCTAssertFalse(s.contains("struct Other"))\n'
+            '}\n'), set()),
+        ("no absence assertion at all", (
+            'for d in ["struct Gone"] {\n'
+            '    total += s.components(separatedBy: d).count\n'
+            '}\n'), set()),
+        ("never closed", 'for d in ["struct Gone"] {\n    XCTAssertFalse(s.contains(d))\n', set()),
+        # --- case 7: the false-GREEN direction ---
+        ("a brace inside the message does not swallow the file", (
+            'for d in ["struct Gone"] {\n'
+            '    XCTAssertFalse(s.contains(d), """\n'
+            '        a message with { an unbalanced brace inside it\n'
+            '        """)\n'
+            '}\n'
+            'XCTAssertTrue(s.contains("struct StillScanned"))\n'), {0}),
+    ]
+    bad = []
+    for label, src, want in cases:
+        got = run(src)
+        if got != want:
+            bad.append(f"{label}: got {sorted(got)}, expected {sorted(want)}")
+    for line in bad:
+        print("FAIL:", line)
+    print(f"selftest (section B absence-loop rule): "
+          f"{'FAILED' if bad else 'ok'} ({len(bad)} problem(s))")
+    return 1 if bad else 0
+
+
 def selftest_comment_is_not_a_call() -> int:
     """Pin the #762 rule: a construction site QUOTED IN A COMMENT is not a construction site.
 
@@ -1901,14 +2074,18 @@ def main() -> int:
     ap.add_argument("--section", choices=list("ABCD"), help="run only one section")
     ap.add_argument("--quiet", action="store_true", help="print findings only, no clean sections")
     ap.add_argument("--selftest", action="store_true",
-                    help="check THREE rules (section B's negated needle, section C's "
-                             "comment-is-not-a-call and its DEBUG-branch rule) "
+                    # ⛔ THIS STRING USED TO OPEN "check THREE rules" AND IT WENT STALE THE
+                    # MOMENT A FOURTH WAS ADDED (#1393) — the same defect the skill doc already
+                    # names ("Hier steht bewusst keine ANZAHL"), in the flag that advertises the
+                    # checks. The OUTPUT is the list: one line per rule, and
+                    # `grep -c '^def selftest_' scripts/doctor.py` re-derives the count.
+                    help="drive each individually-pinned rule and print one line per rule "
                              "— not the doctor as a whole")
     args = ap.parse_args()
 
     if args.selftest:
-        return (selftest_negated_needle() | selftest_comment_is_not_a_call()
-                | selftest_debug_branch_is_not_a_door())
+        return (selftest_negated_needle() | selftest_absence_loop_header()
+                | selftest_comment_is_not_a_call() | selftest_debug_branch_is_not_a_door())
 
     runners = {"A": section_a, "B": section_b, "C": section_c, "D": section_d}
     keys = [args.section] if args.section else list("ABCD")

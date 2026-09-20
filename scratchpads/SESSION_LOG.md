@@ -34688,3 +34688,79 @@ zwei neuen Wächter ist die §0-Transkription**: zwölf Behauptungen gegen beide
 Mutanten, jeder vom vorgesehenen Anspruch erlegt. Der Schritt lief zu diesem Zeitpunkt über
 eine Stunde — das ist bei dieser Suite nicht ungewöhnlich, aber es heißt, dass eine Sitzung,
 die auf ihn wartet, praktisch nicht weiterarbeiten kann, ohne ihn selbst zu killen.
+
+## 2026-09-20 — #1393: der Phantom-Scan des doctor rief Wolf bei einem KORREKTEN Wächter
+
+**Befund (Lücken-Sweep nach dem Founder-Mandat „alle Fehler und Lücken vermeiden").** Acht
+stehende Prüfer grün, `doctor --section A` zwei Kritische (beide die bekannten founder-gated
+CI-Befunde), Sektion C/D ohne neuen Eintrag — und **Sektion B ein WARN, das ein Fehlalarm war**:
+
+```
+Tests/CISmoke/TheStretcherIsNamedByItsTypeTests.swift:71  'struct EchoelWSOLA' — declared nowhere
+                                                          'class  EchoelWSOLA' — declared nowhere
+                                                          'enum   EchoelWSOLA' — declared nowhere
+```
+
+Der Wächter ist korrekt. Er schreibt die drei Formen eines Typs, der NICHT existieren darf,
+als Liste und behauptet die Abwesenheit einmal, im Schleifenrumpf:
+
+```swift
+for shape in ["struct EchoelWSOLA", "class EchoelWSOLA", "enum EchoelWSOLA"] {
+    XCTAssertFalse(src.contains(shape), …)
+}
+```
+
+Die `absence`-Ausnahme von Sektion B ist **nur-gleiche-Zeile** (mit gutem Grund: eine
+Nachbarschafts-Ausnahme nimmt lebende Dinge versehentlich mit heraus), und der `for`-Kopf
+behauptet auf seiner eigenen Zeile nichts. Drei Fehlalarme auf einen Schlag, im Werkzeug, das
+eine Sitzung laufen lässt, BEVOR sie einer Messung glaubt — genau der Mechanismus, den die
+SKILL.md selbst benennt („Ein Werkzeug, das ständig dasselbe meldet, wird stumm geschaltet").
+
+⭐ **Die teure Hälfte: die Lücke war seit vier Zyklen AUFGESCHRIEBEN — im falschen Register.**
+Der Kommentarblock über dem Scan nennt drei Idiome, die `absence` nicht erkennt, darunter
+wörtlich „a `for dead in [...]` list" — aber er nennt sie über den AUSGESCHLOSSENEN Nadel-Eimer,
+wo sie nichts kostet. Als dasselbe Idiom im GESCANNTEN Eimer auftauchte, verband es niemand.
+**Gesetz: ein Defekt, der im falschen Register steht, ist unsichtbar.**
+
+**Reparatur.** `_absence_loop_header_lines(code, blanked)` auf Modulebene, plus die beiden
+Regexe `ABSENCE_ASSERTION` (bisher lokal in `section_b`, jetzt EIN Zuhause, #416) und
+`PRESENCE_ASSERTION`. Kein Nachbarschafts-Scan, sondern eine STRUKTURELLE Bindung — alle vier
+Bedingungen müssen halten: (1) `for <v> in [`-Kopf, (2) Klammern balancieren, (3) der Rumpf
+nennt `<v>`, (4) der Rumpf behauptet Abwesenheit und enthält KEINE Präsenz-Behauptung. Eine
+Schleife, die beide Richtungen prüft, bleibt also gescannt. Ausgenommen wird nur die
+KOPFSPANNE (`for` bis öffnende Klammer), nie der Rumpf.
+
+⚠️ Das Klammer-Matching läuft auf dem **geblankten** Text, nie auf dem Code: Wächter-Meldungen
+sind dreifach-quotiert und tragen routinemäßig ein `{` (Interpolation, Glob, JSON) — diese
+mitzuzählen ließe den Rumpf bis Dateiende laufen und alles danach ausnehmen. Das wäre ein
+falsches GRÜN im Phantom-Scan, die teure Richtung.
+
+**Beleg, als PAAR (#739) und auf dem ECHTEN Baum, nicht nur im Selbsttest.** Drei Phantome
+temporär in einen verfolgten Wächter injiziert, gemessen, zurückgeschrieben (Arbeitsbaum
+danach sauber):
+
+| Injektion | Form | Erwartet | Gemessen |
+|---|---|---|---|
+| `struct PhantomOne` | gewöhnliche positive Nadel | GEFANGEN | `:183 declared nowhere` ✓ |
+| `struct PhantomTwo/Three` | qualifizierende Abwesenheits-Schleife | ausgenommen | still ✓ |
+| `struct PhantomFour` | Schleife, deren Rumpf AUCH `XCTAssertTrue` hat | GEFANGEN | `:193 declared nowhere` ✓ |
+
+Die Ausnahme hat den Scan also nicht entwaffnet — der Punkt, an dem #739 sagt, eine Ausnahme,
+die sich nur selbst ihr Positiv füttert, sei keine Prüfung.
+
+**Selbsttest: `selftest_absence_loop_header()`**, acht Fälle, vier davon müssen LEER
+zurückkommen. Er treibt die ECHTE Funktion statt einer Abschrift — bewusst besser als sein
+Nachbar `selftest_negated_needle`, der seine Regel kopiert und im eigenen Docstring einräumt,
+dass ein Selbsttest, der eine Änderung an seinem Gegenstand nicht sehen kann, Dekoration ist.
+Fall 7 ist der, der ein falsches GRÜN wäre: ein `{` in einer dreifach-quotierten Meldung.
+
+⛔ **Nebenreparatur derselben Familie, in derselben Datei:** die `--selftest`-Hilfe begann mit
+„check THREE rules" und veraltete in dem Moment, in dem die vierte dazukam — dieselbe Lehre,
+die die SKILL.md an dieser Stelle schon gezogen hat („Hier steht bewusst keine ANZAHL"), in der
+Flagge, die die Prüfungen bewirbt. Die Zahl ist ersetzt, nicht nachgeführt (#818); die AUSGABE
+ist die Liste, und `grep -c '^def selftest_' scripts/doctor.py` leitet die Zahl neu ab.
+
+**Nachher:** `doctor --section B` grün, `--selftest` vier Zeilen grün, `--quiet` unverändert
+zwei Kritische (die bekannten founder-gated), acht stehende Prüfer grün, `py_compile` sauber.
+Kein Swift berührt — `scripts/` ist nicht founder-gated, und die Selbsttests sind das etablierte
+Zuhause für doctor-Regeln (#754, #762, #1345), nicht das blockierende Bündel.
