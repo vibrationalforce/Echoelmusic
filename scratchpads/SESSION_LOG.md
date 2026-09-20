@@ -34372,3 +34372,48 @@ ROT.
 
 Acht Prüfer exit 0. Nichts in `Sources/` — kein neuer Build nötig, `.deploy/release` bleibt
 unberührt.
+
+## 2026-09-20 — Deep Audit des gesamten Universums, sieben Dimensionen unter einem Hut (#1387)
+
+Founder: *„Mache die Deep Audith des gesamten Echoelmusic Universums und bringe alles unter
+einen Hut. Ultramarketing ultraechoelartistmode, Ultrascave, uktraccesible, Ultralonggevity,
+ultrasoultuning, ultraseelespeichern"*
+
+Ergebnis: `scratchpads/DEEP_AUDIT_UNIVERSUM_2026-09-20.md`. Alles gemessen, jeder Befehl steht
+neben seiner Zahl.
+
+**DER HUT (eine leere Schnittmenge).** `ModDestinationKey.all == [tempo]` (1 Bio-Ziel) gegen
+`EchoelParameterRegistry` (15 `ddsp.*`-Deskriptoren, 11 mit lebendem Setter). Kein Schlüssel
+kommt in beiden vor. Alle sieben Dimensionen hängen an derselben fehlenden Brücke — und der
+DMMW-Wunsch vom 2026-09-19 ist genau diese Brücke, keine Neuentwicklung.
+
+**DREI BRÜCKEN statt sieben Projekte.** B1 Universal Modulation (`all` als Projektion der
+Registry) · B2 Signature (`BioSessionSummary` ↔ `Project`) · B3 Stage (`ImmersiveStageView`
+betüren). B1 ist die Wurzel: solange `all == [tempo]`, ist „der Körper steuert X" für X ≠ Tempo
+eine Über-Behauptung — dieselbe, die #496 und #541 schon zweimal zurücknehmen mussten.
+
+**DER BEFUND, für den sich das Audit gelohnt hat:** „Seele speichern" ist SCHON GEBAUT und
+persistiert. `BioSessionSummary` (HR/HRV/Kohärenz/Peak/Dauer + Name) liegt als Codable JSON in
+`UserDefaults` und überlebt Neustarts; `SessionStats.streakDays` und `.coherenceTrend` sind
+unit-getestet. Der EINZIGE Leser ist `MeditationView`, konstruiert in
+`EchoelStudioView.swift:1681` hinter `showMeditation` — einer Flagge mit **null Setzern**.
+Gespeichert, gerechnet, unsichtbar.
+
+**MARKEN-ENTSCHEIDUNG (delegiert, getroffen):** „Longevity", „Soul", „Seele" bleiben INTERNE
+Arbeitsnamen. `ContentPipeline/CLAIMS.md` §2 verbietet „Longevity" als nutzersichtbare
+Behauptung wörtlich, aus hartem Grund. Nutzersichtbar: **Haltbarkeit · Dein Ton · Signature**.
+Der Programmname ist **Universal Modulation**, nicht „DMMW" — `docs/dev/DMMW_ARCHITECTURE.md:34`
+definiert DMMW als Arrangement-Timeline-Heimat, also genau die Workstation-Hälfte, die der
+Founder am 2026-07-25 selbst zurückgenommen hat.
+
+**ZWEI EIGENE ZAHLEN KORRIGIERT, bevor sie gingen** (die Lehre dieses Repos, an mir selbst):
+(1) CLAIMS-Abschnitte 12 → **13** (§6b ist ein eigener); (2) „`MeditationView` hat null
+Konstruktionsstellen" → **falsch**, sie wird konstruiert, die FLAGGE hat keinen Setzer. Zweimal
+dieselbe Form: eine plausible Behauptung, die die Messung in die andere Richtung dreht.
+⭐ Und eine dritte, die ich mir selbst gestellt habe: `git grep -l MicrotonalTuning` liefert
+EINEN Treffer und sieht nach einem toten Kern aus — der Typ heißt `TuningSystem` und hat
+SIEBEN Verbraucher. Die #1376-Falle, in einem Audit über Register.
+
+**HOLD-FOR-FOUNDER:** genau EINE Frage — bekommt „Signature" (B2) eine Fläche im
+Performer-Rahmen, oder bleiben die Daten gespeichert und unsichtbar? B1 und B3 laufen so oder
+so.
