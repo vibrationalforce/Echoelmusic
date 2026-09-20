@@ -35170,3 +35170,49 @@ Seite hier.
 
 `docs/CLAUDE.md` §6c neu + ein Checklisten-Punkt. Reflow-Durchlauf danach unverändert (46
 Messungen, nur `og-image.html`). Checker alle 0.
+
+## 2026-09-20 — #1400 Deploy v10.79.476: der Zugänglichkeits-Build
+
+Founder-Auftrag: *„Alles optimieren und aufräumen für TestFlight deploy. Hol alles raus auf
+Website und Produkt Ebene. Beachte alle sicherheits und Apple Vorgaben mit Fokus auf
+accessibility Design."* Die vier Website-Scheiben (#1396–#1399) und die zwei Audits (#67
+Produkt-Zugänglichkeit, #68 Apple/Sicherheit) sind damit abgeschlossen; dies ist der Deploy.
+
+**Gemessen, bevor die Notiz geschrieben wurde:** seit dem letzten Bump (`a16ce16fe`,
+v10.79.475) sind **19 Commits** gelaufen, davon fasst **genau einer** `Sources/` an —
+`1919a61fb` (#1391, zwölf Modulationsziele statt einem). Der Befehl steht in der Notiz:
+`git show --stat --format= --name-only <sha> | grep -c '^Sources/'` über die Spanne.
+⚠️ Das ist der Grund, warum die Notiz ungewöhnlich aufgebaut ist: Posten 1 ist das Einzige,
+was ein Gerät MERKT, und es ändert bis zum Anlegen einer Route **gar nichts** (leere
+Default-Matrix, #541). Eine Build-Notiz, die achtzehn Website-Commits als Gerät-Neuerungen
+verkauft, schickt den Founder auf eine Probe, die es nicht gibt.
+
+**Die zwei Gesetze dieser Datei, beide eingehalten:**
+· Die Version steht als erste `vX.Y.Z` der GANZEN Datei in Zeile 1 (CI greift mit
+  `grep -m1` über alles); der Vorgänger ist auf `10.79.475` ohne `v` demoviert.
+· Die `founder-verify.py --since`-Liste steht im **SELBEN** Commit wie der Bump. Jeder
+  weitere Griff an `.deploy/release` schickt einen ZWEITEN Build (#1151, an `35193c43`
+  gemessen).
+
+⚠️ **Die `--since`-Liste ist ehrlich klein und das ist kein Fehler:** 2 Einträge, beide
+CLAUDE.md-Prosa, beide **umformuliert statt neu**. Das Werkzeug sieht TEXT, nicht Fähigkeit,
+und sagt das selbst. Die einzige echt neue Bitte dieses Builds — eine Modulations-Route
+anlegen und hören — hat keinen `NEEDS-FOUNDER-VERIFY`-Marker im Quelltext und steht deshalb
+oben unter Posten 1 ausgeschrieben. Genau die Lücke, die die .475-Notiz für den AUv3-Test
+schon einmal von Hand schließen musste.
+
+**Gate-Lesung vor dem Bump** (`77598dbdd`): `Xcode Compile Check` **success** (Lauf 2685) und
+CI/CD `Build for Testing` **success** (Lauf 35514431169, Schritt 9, 13:52:16–13:58:06Z) —
+also kompiliert das blockierende Bündel mitsamt der vier neuen Wächter-Dateien. `Run Tests`
+meldet wie auf jedem Push `failure` (#396); die Conclusion allein sagt nichts.
+
+**Transkribiert gegen die neue Datei** (kein lokales Swift): `TheDeployNoteNamesRealDoorsTests`
+c1 (Chip-Leiste = die neun erwarteten) grün, c2 (jeder `X-Chip`/`X-Panel`-Pfad der Notiz ist
+eine echte Fläche) grün mit den Tokens `Master` und `Save/Export`, c4 (die Notiz nennt den
+`--since`-Befehl) grün; `TheShippedVersionComesFromTheReleaseFileTests` c1/c2 grün
+(abgeleitete Version `10.79.476`, Zeile 1). Acht stehende Prüfer: alle 0.
+
+**Offen und unverändert founder-gated, in der Notiz berichtet statt editiert:** die drei
+`Info.plist`-Zweckbeschreibungen ohne Funktion (`NSMicrophoneUsageDescription` seit #1302,
+`NSPhotoLibraryAddUsageDescription` seit #1304, `NSCameraUsageDescription` nennt weiterhin
+beide Linsen) — das ist der einzige der Befunde mit echtem Prüfer-Risiko bei Apple.

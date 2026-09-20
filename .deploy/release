@@ -1,4 +1,4 @@
-build: v10.79.475 — Der Plattform-Build: Echoel ist wieder ein AUv3-Instrument in fremden DAWs, die Musik geht über OSC raus, und ein 41. Genre (#1374–#1385)
+build: v10.79.476 — Der Zugänglichkeits-Build: die Website ist tastatur- und screenreader-fest, und der Körper erreicht zwölf Modulationsziele statt einem (#1391, #1396–#1399)
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -51,7 +51,114 @@ notes: |
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
 
-  Der Vorgänger ist 10.79.474 (und davor 10.79.473).
+  Der Vorgänger ist 10.79.475 (und davor 10.79.474).
+
+  ── WAS IN DIESEM BUILD NEU IST (v10.79.476) ──────────────────────────────
+
+  ⭐ DAS IST DER ZUGÄNGLICHKEITS-BUILD, und er ist ungewöhnlich einseitig: seit dem
+  letzten Deploy sind 19 Commits gelaufen, GENAU EINER fasst `Sources/` an. Die
+  anderen achtzehn sind Website, Wächter-Reparaturen und Audits. Am Instrument
+  ändert sich also fast nichts — was sich am Gerät ändert, steht unter Posten 1;
+  alles andere ist das, was ein Besucher mit Screenreader und ein Prüfer bei Apple
+  zu sehen bekommt.
+
+  ── 1 · AM GERÄT: die Modulationsmatrix erreicht zwölf Ziele statt einem (#1391)
+
+  WEG: **Master**-Chip → „Routing" → Karte „Body → parameter".
+
+  `ModDestinationKey.all` trug bis dahin NUR das Tempo, während die Engine elf
+  weitere DDSP-Parameter auf gebundene Setter fährt. Die Schnittmenge aus „was der
+  Körper erreichen kann" und „was die Engine bewegen kann" war EIN Element — bei
+  einer Produktzeile, die sagt, der Körper spiele das Instrument. Kaputt war
+  nichts; die beiden Hälften waren nie verbunden.
+
+  Die Liste ist eine PROJEKTION von `PolySynthVoice.automatableBases`, keine zweite
+  Abschrift, und registriert wird zur Laufzeit aus Registry ∩ gebundener Setter —
+  es kann also kein Ziel angeboten werden, das nichts bewegt.
+
+  ⚠️ NULL VERHALTENSÄNDERUNG, BIS DU SELBST EINE ROUTE ANLEGST. Die Default-Matrix
+  ist leer (#541). Wer nichts anlegt, hört denselben Take wie in .475 — das ist
+  Absicht und kein Defekt.
+
+  NEEDS-FOUNDER-VERIFY: eine Route anlegen (z. B. Kohärenz → Filter-Cutoff),
+  spielen, und sagen, ob die Bewegung musikalisch sinnvoll ist oder zappelt. Das
+  ist die Frage, die kein Test hier beantworten kann.
+
+  ── 2 · WEBSITE: vier gemessene Zugänglichkeits-Defekte (#1396–#1399)
+
+  Keiner davon war im Quelltext zu sehen. Alle vier sind in headless Chromium gegen
+  den ausgelieferten Baum GEMESSEN, nicht gelesen:
+
+  · #1396 — der Skip-Link rendert #e0e0e0 auf #e0e0e0, Kontrastverhältnis 1,00, auf
+    20 Seiten. Das ist das ERSTE Element, das ein Tastatur- oder Switch-Control-
+    Nutzer erreicht. Dazu „Join the TestFlight" auf der Startseite, ebenfalls 1,00 —
+    die primäre Handlungsaufforderung. Ursache ist Spezifität: `a:link` (0,1,1)
+    schlägt ein blankes `.skip-link` (0,1,0); die Regel steht drei Zeilen höher und
+    sieht richtig aus.
+  · #1397 — auf `integrations.html` saß der Burger-Knopf bei 390 px Breite von
+    x = 467 bis 507, also KOMPLETT außerhalb des Bildschirms: eine Tabelle ohne
+    Klasse zog die fixierte Kopfleiste auf 531 px. Am Telefon gab es auf dieser
+    Seite keine Navigation, und `body { overflow-x: hidden }` schluckte die
+    Bildlaufleiste, die es verraten hätte.
+  · #1398 — 29 von 67 Grafiken erreichten einen Screenreader als namenlose Marke.
+    Jede einzelne wurde im Kontext gelesen; alle 29 sind dekorativ und der Text
+    steht daneben, also lautet die Reparatur `aria-hidden` und nicht Label.
+    Gegenprobe im selben Durchlauf: NULL Bedienelemente ohne zugänglichen Namen.
+  · #1399 — 13 Überschriften sprangen eine Ebene (h1→h3, h2→h4), eine beschriftete
+    eine leere Sektion. Wer per Screenreader nach Überschriften springt, liest die
+    EBENE als Gliederung. Gegengemessen wurde auch das Bild: neun berechnete
+    Eigenschaften aller 13 Überschriften, vorher und nachher — NULL Unterschiede.
+
+  Dazu #1392 (sechs Meta-Descriptions schnitten im Suchergebnis ab) und #1389 (die
+  Website verneinte den AUv3 auf fünf Seiten, obwohl er seit .475 lädt).
+
+  ⚠️ WAS HIER NIEMAND PRÜFEN KANN: was VoiceOver tatsächlich ANSAGT. Das ist eine
+  Geräteprobe, und `docs/accessibility.html` verspricht dieses Verhalten.
+
+  ── 3 · GEPRÜFT UND IN ORDNUNG — ein Befund, keine Arbeit
+
+  Der Auftrag lautete „alle Sicherheits- und Apple-Vorgaben, Fokus Accessibility".
+  Gemessen statt vermutet, und das Ergebnis ist, dass am Produkt nichts zu tun war:
+  null Icon-Bedienelemente ohne Namen, Dynamic Type getragen, Reduce-Motion
+  durchgereicht; Privacy-Manifest und Verschlüsselungs-Erklärung decken sich mit
+  dem, was die App tut; kein Rohsignal verlässt das Gerät, keine Gesundheitsdaten
+  in iCloud.
+
+  ⛔ OFFEN UND FOUNDER-GATED (berichten, nicht editieren) — unverändert gegenüber
+  .475, und die erste Zeile ist die einzige mit Prüfer-Risiko:
+
+  · `Resources/iOS/Info.plist` beschreibt drei Zwecke, die es nicht mehr gibt:
+    `NSMicrophoneUsageDescription` (seit #1302 ohne Code),
+    `NSPhotoLibraryAddUsageDescription` (seit #1304) und `NSCameraUsageDescription`,
+    das weiterhin BEIDE Linsen nennt, obwohl die Frontkamera mit #1301 gegangen ist.
+    Apple prüft die Zweck-Beschreibung gegen die Funktion.
+  · `auto-merge-claude.yml` wartet auf KEIN Gate — kein `needs:`, kein
+    `workflow_run:`. Ein nicht kompilierender Commit kann auf `main` stehen.
+  · `ci.yml` maskiert an fünf Stellen einen BUILD-Fehler, `benchmark.yml` an einer,
+    `full-tests.yml` an zweien; `ci.yml:290/291` filtert auf eine Test-Suite, die es
+    nicht gibt; `project.yml:296` trägt eine veraltete Ein-Richtungs-Route für die
+    Watch.
+
+  GERÄTEVERIFIZIERT IST NICHTS DAVON.
+
+  ── PRÜF-BITTEN, DIE DIESER BUILD NEU BEANTWORTBAR MACHT ──────────────────
+  (gedruckt mit `python3 scripts/founder-verify.py --since a16ce16fe`, nicht von Hand)
+
+  ⚠️ BEIDE EINTRÄGE SIND UMFORMULIERUNGEN, KEINE NEUEN FÄHIGKEITEN, und die Liste
+  sagt das selbst: sie sieht TEXT, nicht Fähigkeit. Die einzige wirklich neue Bitte
+  dieses Builds hat keinen Marker im Quelltext und steht deshalb oben unter Posten 1
+  ausgeschrieben (eine Route anlegen und hören).
+
+  Founder device-session checklist — 2 NEW or REWORDED since `a16ce16feaaff17f41c562de7aa7d44f6fcb503d`, of 149 open, none answered yet
+
+  ── OTHER  (2)
+     CLAUDE.md:40
+        - Live pipeline: HealthKit + camera rPPG (live, locks on device) + Demo → bio snapshot. ( Universal BLE HR (0x…
+     CLAUDE.md:381
+        ⛔ DREI STANDEN HIER ALS GLEICHRANGIG UND HATTEN KEINEN PRODUZENTEN (#496, gemessen 2026-08-08): Breath depth →…
+
+  (Die Abschnitte NOT ASKS, BLOCKED, HOW TO RETIRE und LIMITS sind unverändert und
+  stehen ausgeschrieben in der Notiz zu 10.79.473 weiter unten.)
 
   ── WAS IN DIESEM BUILD NEU IST (v10.79.475) ──────────────────────────────
 
