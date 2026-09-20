@@ -34671,10 +34671,20 @@ Pushes kurz hintereinander kosten die Lesung des ERSTEN.** Der zweite Lauf deckt
 Commits (er baut den Kopf), also ist nichts verloren — aber wer eine Scheibe einzeln
 belegt haben will, wartet die Lesung ab, bevor er die nächste schiebt.
 
-⚠️ `Run Tests` und `Xcode Compile Check` liefen zum Zeitpunkt dieser Notiz noch. `Run
-Tests` meldet wegen #396 auf JEDEM Push `failure`, seine Conclusion sagt also nichts —
-der Testbefund kommt aus `python3 scripts/gh-test-verdict.py`. Der `Xcode Compile Check`
-baut `Sources/` ALLEIN unter dem Xcode-Scheme plus AUv3; die eine Fehlerklasse, die er
-zusätzlich fängt, ist die AUv3-Isolation, und dieser Diff berührt sie nicht
-(`ModulationEngine.swift` referenziert `EngineBus` und ist deshalb keine der drei
-Foundation-only `Core/`-Dateien, die die Extension kompiliert).
+⭐ **NACHGETRAGEN: `Xcode Compile Check` = SUCCESS** (Lauf 35504992710, Job 106063216912,
+10:25:14 → 10:30:18). Damit sind BEIDE Gates gelesen, die `Tests/CISmoke/CLAUDE.md` §5 als
+entscheidend führt. Er baut `Sources/` ALLEIN unter dem Xcode-Scheme plus AUv3 — die eine
+Fehlerklasse, die er zusätzlich fängt, ist die AUv3-Isolation, und dieser Diff berührt sie
+ohnehin nicht (`ModulationEngine.swift` referenziert `EngineBus` und ist deshalb keine der
+drei Foundation-only `Core/`-Dateien, die die Extension kompiliert).
+
+⚠️ **`Run Tests` lief zum Zeitpunkt des Pushes dieser Notiz NOCH und wurde von ihm über die
+Concurrency-Gruppe abgebrochen — das ist hier protokolliert, nicht verschwiegen.** Was dabei
+verloren geht, ist klein und benannt: der Schritt meldet wegen #396 auf JEDEM Push `failure`,
+seine Conclusion sagt also nichts, und sein Log-Fenster ist `tail -200` (#807), verdeckt also
+ohnehin jeden früheren Fehler. Was ein abgeschlossener Lauf zusätzlich gegeben hätte, ist der
+NAMENTLICHE Testbefund aus `python3 scripts/gh-test-verdict.py`. **Der Ersatz-Beleg für die
+zwei neuen Wächter ist die §0-Transkription**: zwölf Behauptungen gegen beide Bäume plus neun
+Mutanten, jeder vom vorgesehenen Anspruch erlegt. Der Schritt lief zu diesem Zeitpunkt über
+eine Stunde — das ist bei dieser Suite nicht ungewöhnlich, aber es heißt, dass eine Sitzung,
+die auf ihn wartet, praktisch nicht weiterarbeiten kann, ohne ihn selbst zu killen.
