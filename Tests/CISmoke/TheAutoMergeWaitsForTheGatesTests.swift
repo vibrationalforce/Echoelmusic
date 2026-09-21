@@ -192,6 +192,24 @@ final class TheAutoMergeWaitsForTheGatesTests: XCTestCase {
             straight to TestFlight, and every commit that FAILS it would stop being a \
             developer-only problem. Raise it with the founder before the next push.
             """)
+        // ⛔ #1405b — AND THE SUMMARY MUST NOT CONTRADICT THE `if: false` ABOVE. It did, for
+        // three months: the TestFlight row read `steps.merge.outputs.merge_status`, so it
+        // printed `Dispatched` on every successful merge while the step had not run since
+        // 2026-06-16. A Summary that says a green thing about a step that was skipped is the
+        // same defect class as the merge this whole file exists for — an instrument that
+        // reports an outcome nobody produced. Found by reading #1405's own first run.
+        XCTAssertTrue(yml.contains("steps.testflight.outcome"), """
+            The TestFlight row of the job Summary no longer reads the STEP's own outcome. If it \
+            went back to deriving the answer from the merge status, it is lying again: the step \
+            is `if: false`, so the honest values are `skipped` today and `success`/`failure` the \
+            day the founder flips it. A hard-coded "Disabled" would be wrong in the other \
+            direction — the row has to ask the step.
+            """)
+        XCTAssertFalse(yml.contains("'Dispatched' || 'Not triggered'"), """
+            The old TestFlight Summary expression is back. It reports whether the MERGE worked \
+            and prints a sentence about TESTFLIGHT, which made the one switched-off step in this \
+            workflow the one the Summary called done (#1405b).
+            """)
     }
 
     // MARK: - 7: the register says the true thing

@@ -35638,3 +35638,61 @@ trug dort „wartet auf KEIN Gate" (Anspruch 7). Ansprüche 1, 5, 6 waren im Elt
 also Gegengewichte. **Was damit NICHT bewiesen ist: dass die Datei gültiges YAML ist.** Das sagt
 erst der nächste Push — und wenn nicht, meldet GitHub den Workflow als ungültig, ohne dass ein
 Merge passiert. Acht stehende Prüfer plus `doctor --selftest`: alle 0.
+
+## 2026-09-21 — #1405 VERIFIZIERT am eigenen ersten Lauf, plus #1405b: die Summary log
+
+**Das Gate hat sich auf seinem eigenen ersten Lauf bewiesen** (Lauf 35566161860 auf
+`d85f485d1`, Job „Auto-Merge to Main"). Aus der Summary des Laufs, nicht aus einer Annahme:
+
+```
+| Changes code            | true    |
+| Xcode Compile Check     | success |
+| CI/CD Build for Testing | success |
+| Merge Status            | success |
+```
+
+Der Schritt „Wait for the gates that decide whether main compiles" lief **05:52:21 → 05:58:03,
+also 5 min 42 s**, und erst DANACH kam „Merge to main" (05:58:03 → 05:58:05, Fast-Forward
+`cda955eec..d85f485d1`). Damit ist alles belegt, was die Transkription nicht konnte: die Datei
+ist gültiges YAML, der Poll läuft, das `jq` trifft, der Scope-Schritt rechnet `touches_code=true`
+(die Scheibe fasst `Tests/**` an), und der Merge passiert NACH beiden Gates statt daneben.
+
+⚠️ **Zur Einordnung, damit die Zahl nicht falsch gelesen wird:** 5 min 42 s ist nah an der
+`GRACE`-Schwelle von 300 s, aber es ist NICHT der Karenz-Pfad — der hätte `never-ran` ergeben und
+mit `exit 1` verweigert. Der Schritt ist grün und die zwei Werte stehen auf `success`.
+
+### Gate-Lesung `cda955eec` (#1404) — beide grün, Posten geschlossen
+
+`Xcode Compile Check` **success** (Lauf 35564962825, Compile-Schritt 05:33:41 → 05:36:46) ·
+CI/CD Schritt 9 **`Build for Testing` success** (Lauf 35564962778, 05:35:49 → 05:42:51). Damit
+kompiliert nicht nur `Sources/` nach der `usesEvolve`-Löschung, sondern auch das Test-Bündel mit
+den vier umgezielten Wächtern und den drei neuen Ansprüchen. `Run Tests` läuft dahinter und ist
+wegen #396 auf jedem Push rot — sagt nichts.
+
+### ⛔ #1405b — DIE SUMMARY LOG ÜBER DEN EINEN SCHRITT, DER ABGESCHALTET IST
+
+Beim Lesen genau dieser Summary gefunden, also durch die eigene Ausgabe der eigenen Scheibe:
+die letzte Zeile sagte **`| TestFlight | Dispatched |`**, während der Schritt `Trigger
+TestFlight` seit 2026-06-16 auf `if: false` steht und in diesem Lauf `skipped` war.
+
+Der Ausdruck las `steps.merge.outputs.merge_status == 'success' && 'Dispatched' || 'Not
+triggered'` — er berichtet also, ob der **Merge** geklappt hat, und druckt einen Satz über
+**TestFlight**. Ergebnis: der EINE Schritt dieses Workflows, der ausgeschaltet ist, war der, den
+die Summary als erledigt meldete — und zwar bei jedem erfolgreichen Merge, seit drei Monaten.
+
+⭐ **Das ist dieselbe Defektklasse wie der Merge, für den diese ganze Datei existiert:** ein
+Messgerät, das ein Ergebnis meldet, das niemand erzeugt hat. Es stand drei Zeilen unter den zwei
+Zeilen, die ich gerade eingebaut habe, und ein Leser hätte daraus geschlossen, dass jeder Merge
+einen TestFlight-Build auslöst.
+
+**Reparatur:** der Schritt bekommt ein `id: testflight`, die Zeile liest
+`${{ steps.testflight.outcome }}` — `skipped`, solange `if: false` gilt, und `success`/`failure`
+an dem Tag, an dem der Founder es umlegt. Ein hart geschriebenes „Disabled" wäre in die andere
+Richtung falsch gewesen. **Das ist `doctor` Sektion As Regel eine Ebene tiefer: ein Wächter auf
+`steps.<id>.outcome` geht erst, wenn der Schritt eine `id` hat.** Wächter: Anspruch 6 von
+`TheAutoMergeWaitsForTheGatesTests` hält jetzt beide Hälften — das `if: false` UND dass die
+Summary den Schritt fragt statt den Merge.
+
+⚠️ **Lehre, die über diesen Fall hinausgeht: die eigene Ausgabe der eigenen Scheibe lesen ist
+eine Messung, kein Kontrollblick.** Ich hätte den Lauf als „grün, fertig" abhaken können; die
+Zeile stand in derselben Tabelle, die meine zwei neuen Zeilen enthielt.

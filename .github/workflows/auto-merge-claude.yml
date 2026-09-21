@@ -280,6 +280,7 @@ jobs:
           fi
 
       - name: Trigger TestFlight
+        id: testflight
         # DISABLED 2026-06-16: dispatching testflight.yml with platform=all on every
         # merge uploaded all Apple platforms per push and exhausted Apple's daily
         # TestFlight upload quota (and raced Fastlane cert revocation). Deploy
@@ -321,4 +322,15 @@ jobs:
           echo "| Xcode Compile Check | ${{ steps.gates.outputs.compile_check || 'not required' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| CI/CD Build for Testing | ${{ steps.gates.outputs.build_for_testing || 'not required' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Merge Status | ${{ steps.merge.outputs.merge_status || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| TestFlight | ${{ steps.merge.outputs.merge_status == 'success' && 'Dispatched' || 'Not triggered' }} |" >> $GITHUB_STEP_SUMMARY
+          # ⛔ #1405b — THIS ROW SAID `Dispatched` ON EVERY SUCCESSFUL MERGE AND THE DISPATCH HAS
+          # NOT RUN SINCE 2026-06-16. It read `steps.merge.outputs.merge_status`, i.e. it reported
+          # whether the MERGE worked and printed a sentence about TESTFLIGHT — so the one step in
+          # this workflow that is switched off was the one the Summary called done. Found by
+          # reading the Summary of #1405's own first run, which is the only reason it surfaced.
+          #
+          # It now reads the step's OWN outcome, which needs the `id:` added above. `skipped` while
+          # `if: false` holds, `success`/`failure` the day the founder flips it — honest in both
+          # states, which a hard-coded "Disabled" would not be. This is `doctor` Section A's rule
+          # one level down: a watcher on `steps.<id>.outcome` is only possible once the step has an
+          # id, and a Summary that cannot be wrong is worth more than one that is usually right.
+          echo "| TestFlight | ${{ steps.testflight.outcome }} |" >> $GITHUB_STEP_SUMMARY
