@@ -113,6 +113,12 @@ final class TheLightReachesMoreThanOneLampTests: XCTestCase {
     }
 
     // 3 — the shipped default addresses exactly one fixture.
+    /// ⚠️ SINCE #1442 THIS IS ONLY HALF THE DEFAULT, and the half this scan can see. The two
+    /// fields are now persisted, so what a FIRST open does is the declaration below AND the
+    /// decode default in `ArtNetSender.decodedFixtureCount` / `-Spacing`. The other half is
+    /// driven end-to-end by `TheLightShowStatePersistsTests` claim 1, which constructs both
+    /// senders with the keys cleared. Keep the pair: a declaration of 1 with a decode default
+    /// of, say, 4 would leave this claim green while a fresh install fanned four lamps.
     func testBothSendersDefaultToASingleFixture() throws {
         for file in [Self.artNet, Self.sacn] {
             let text = try source(file)

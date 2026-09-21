@@ -677,24 +677,24 @@ struct PatchbayView: View {
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
     }
 
-    /// One choice, both protocols — the same law as the master fader above. Until this row
-    /// existed, `resolution` had ZERO writers in the whole repository while its own doc called
-    /// 8-bit "the legacy mode for simple fixtures": a selectable mode with no selector, and the
-    /// `.eightBit` encoder branch was reachable only from a unit test. The row is what makes
-    /// that sentence true.
-    ///
-    /// ⚠️ LIVE STATE, NOT PERSISTED — deliberately the same rule as `grandMaster`/`blackout` in
-    /// this section, so a fresh launch always starts at the higher-precision default. A fixed
-    /// installation would rather have it persist like `universe` does; that is a separate
-    /// slice, and it needs its own key plus a decode default, not a `didSet` bolted on here.
     /// #1006 — the rig's size, written to BOTH arms from one control, the same law as the
     /// master fader and the resolution picker above it.
     ///
-    /// ⚠️ LIVE STATE, NOT PERSISTED, deliberately matching its two neighbours: a fresh launch
-    /// addresses ONE fixture, which is the shipped behaviour and the safe one — a stored count
-    /// of 32 would fan a stranger's rig on first open. A fixed installation would rather have
-    /// it persist like `universe` does; that is a separate slice with its own key and decode
-    /// default, not a `didSet` bolted on here.
+    /// ⭐ PERSISTED since #1442 — this IS the separate slice the previous note called for, with
+    /// its own key and its own decode default (`net.artnet.fixtureCount` / `net.sacn.*`, and
+    /// `ArtNetSender.decodedFixtureCount`). The rig's shape belongs to the installation the way
+    /// `host`/`port`/`universe` already do: an operator who tells the app the rig has twelve
+    /// lamps should not have to say it again after every relaunch.
+    ///
+    /// ⚠️ The old note's safety argument — *"a stored count of 32 would fan a stranger's rig on
+    /// first open"* — was answered by measurement, not waved away: the stream only runs when a
+    /// PERSISTED patchbay route is enabled, aimed at the PERSISTED host and universe. A first
+    /// open that emits anything is already aimed at the stored rig. With nothing stored the
+    /// decode default is 1, so a genuinely fresh install is unchanged.
+    ///
+    /// ⚠️ `grandMaster` and `blackout` did NOT join it, on purpose: a stored 5 % master reads as
+    /// broken hardware and a stored blackout opens the app into a dark room. Session state, not
+    /// installation state. Guard: `TheLightShowStatePersistsTests` (claim 5 is that half).
     ///
     /// `Double` in, `Int` out: `EchoelValueField` is the one numeric control app-wide (the UI
     /// law), and these ARE numbers with no names — a count and a slot offset — so a Picker
@@ -721,6 +721,21 @@ struct PatchbayView: View {
         )
     }
 
+    /// One choice, both protocols — the same law as the master fader above. Until this row
+    /// existed, `resolution` had ZERO writers in the whole repository while its own doc called
+    /// 8-bit "the legacy mode for simple fixtures": a selectable mode with no selector, and the
+    /// `.eightBit` encoder branch was reachable only from a unit test. The row is what makes
+    /// that sentence true.
+    ///
+    /// ⭐ PERSISTED since #1442, under `net.artnet.resolution` / `net.sacn.resolution`, with
+    /// `.sixteenBit` as the decode default — so a fresh install still starts at the higher
+    /// precision and a fixed installation keeps the mode its fixtures can actually read. An
+    /// unrecognised stored string falls back rather than trapping.
+    ///
+    /// ⛔ THIS DOC BLOCK USED TO SIT ABOVE `fixtureCountBinding` (#1442). Swift merges adjacent
+    /// `///` lines into ONE comment, so the paragraph describing the resolution picker was
+    /// attached to the fixture-count binding and documented the wrong member. Moved here in the
+    /// same commit that made its persistence sentence true.
     private var dmxResolutionBinding: Binding<ArtNetSender.DMXResolution> {
         Binding(
             get: { artNet.resolution },

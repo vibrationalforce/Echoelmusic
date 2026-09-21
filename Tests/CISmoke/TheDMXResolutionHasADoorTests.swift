@@ -26,10 +26,18 @@
 // ⚠️ NO NEW MODAL. The row goes into an EXISTING panel; the presentation-modifier chain in
 // `EchoelStudioView` is untouched (the 10.76.34 black-screen law).
 //
-// ⚠️ IT FORBIDS NOTHING (#364). Claim 7 does not forbid persisting the choice — it requires
-// that the doc saying "live state, not persisted" moves in the SAME commit that adds
-// persistence (#456). Nothing here pins `.sixteenBit` as the default: that is a design value
-// a founder may change, and #364 forbids pinning it.
+// ⚠️ IT FORBIDS NOTHING (#364). Nothing here pins `.sixteenBit` as the default: that is a
+// design value a founder may change, and #364 forbids pinning it.
+//
+// ⭐ CLAIM 7 DID ITS JOB AND HAS BEEN REWRITTEN (#1442). It used to require the literal
+// "LIVE STATE, NOT PERSISTED" in `PatchbayView`, explicitly NOT to forbid persisting the
+// choice but to require that the prose move in the SAME commit that adds a key and a decode
+// default (#456). #1442 added exactly that — `net.artnet.resolution` / `net.sacn.resolution`
+// through `ArtNetSender.decodedResolution` — so the claim now pins the NEW truth: both senders
+// read a stored resolution at init, and the picker's doc says so. A claim that kept demanding
+// the struck sentence would have been red on a correct tree, which is the #364 trap from the
+// other side. The BEHAVIOUR half (a written mode comes back) lives in
+// `TheLightShowStatePersistsTests`; this one stays a source scan about the DOOR and its doc.
 //
 // ⚠️ HONEST GRADING (#433/#464/#486). Hand-transcribed against `git show 548ecb3:` and the
 // worktree — a CI round trip is a lottery ticket, not a check (#686):
@@ -227,15 +235,35 @@ final class TheDMXResolutionHasADoorTests: XCTestCase {
             """)
     }
 
-    // MARK: - 7 · the live-only record moves with the behaviour
+    // MARK: - 7 · the persistence record moves with the behaviour
 
-    func testTheRowRecordsThatTheChoiceIsNotPersisted() throws {
+    /// ⭐ #1442 INVERTED THIS CLAIM, which is what it was written to allow. The old form asked
+    /// for the note saying the choice is NOT persisted; the choice IS persisted now, so the
+    /// same #456 rule points the other way: the KEY, the DECODER and the prose must agree.
+    func testTheStoredResolutionIsReadBackAndTheRowSaysSo() throws {
+        let art = try codeOf(Self.artNet)      // `codeOf` already strips comments
+        let sacn = try codeOf(Self.sacn)
+        XCTAssertTrue(art.contains("decodedResolution(d.string(forKey: Self.resolutionKey))"), """
+            `ArtNetSender.init` no longer decodes a stored resolution (#1442). The picker then \
+            writes a mode that is silently forgotten on the next launch — worse than never \
+            having persisted it, because the row now claims it sticks.
+            """)
+        XCTAssertTrue(sacn.contains("ArtNetSender.decodedResolution(d.string(forKey: Self.resolutionKey))"), """
+            `SACNSender.init` no longer decodes a stored resolution through the SHARED decoder \
+            (#1442/#416). One Picker drives both arms; if only one of them reads its key back, \
+            a two-protocol install comes up in two different modes.
+            """)
         let raw = try rawText(Self.patchbay)
-        XCTAssertNotNil(raw.range(of: "LIVE STATE, NOT PERSISTED"), """
-            The note recording that the DMX resolution is NOT persisted is gone from \
-            \(Self.patchbay). This does not forbid persisting it (#364) — it requires that if \
-            you add a key and a decode default, this prose moves in the SAME commit (#456), so \
-            no later reader has to guess whether a fixed installation keeps its setting.
+        XCTAssertNil(raw.range(of: "LIVE STATE, NOT PERSISTED"), """
+            \(Self.patchbay) still carries the struck "LIVE STATE, NOT PERSISTED" note while \
+            the senders persist the choice (#1442). That is the #456 defect this claim has \
+            existed for since #730, only in the opposite direction: prose and behaviour must \
+            move together, whichever way they move.
+            """)
+        XCTAssertNotNil(raw.range(of: "PERSISTED since #1442"), """
+            The note recording that the DMX resolution IS persisted is gone from \
+            \(Self.patchbay). A later reader must not have to guess whether a fixed \
+            installation keeps its setting (#456).
             """)
     }
 

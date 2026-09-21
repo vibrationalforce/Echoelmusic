@@ -37610,3 +37610,93 @@ waehrend sie ueber #1441 noch nichts sagt. ⛔ Und ich hatte zwischendurch aus z
 Hintergrund-`sleep`s auf „14 Minuten vergangen, also Staleness" geschlossen; `date -u` sagte
 22:24:43Z, also waren es fuenf. **Eine verstrichene Zeit aus der eigenen Buchhaltung ist keine
 Messung — die Uhr fragen kostet einen Befehl.**
+
+## 2026-09-22 — #1442: das Licht-ZIEL ueberlebte einen Neustart, die Licht-SHOW nicht
+
+**Die Scheibe.** `resolution`, `fixtureCount` und `fixtureSpacing` persistieren jetzt in beiden
+Licht-Sendern, unter eigenen Schluesseln, durch EINEN geteilten Decoder. `grandMaster` und
+`blackout` bleiben ABSICHTLICH sitzungs-lokal.
+
+**Der Defekt war eine Asymmetrie INNERHALB einer Flaeche, nicht ein fehlendes Feature.** Die
+Licht-Sektion der Patchbay schreibt sechs Werte in beide Sender. Drei davon — `host`, `port`,
+`universe` — persistieren seit jeher. Drei lebten nur im Objekt. Ein Installations-Kuenstler
+richtet die App auf ein Rig, sagt ihr „zwoelf Lampen, acht Slots Abstand", startet neu — und ist
+auf DASSELBE Rig gerichtet und adressiert EINE Lampe in 16 Bit. Nichts sagt es ihm; die Zahlen
+stehen einfach wieder auf 1 und 0.
+
+**Das Repo hatte diese Scheibe ausdruecklich vorgesehen — an ZWEI Stellen.** `PatchbayView`
+schrieb: *„das ist eine separate Scheibe mit eigenem Schluessel und Decode-Default, kein
+drangeschraubtes `didSet`"*, und `TheDMXResolutionHasADoorTests` Anspruch 7 sagte in seiner
+eigenen Fehlermeldung, er verbiete die Persistenz NICHT, sondern verlange, dass die Prosa im
+SELBEN Commit mitzieht (#456/#364). Genau das ist passiert — der Anspruch ist UMGEDREHT statt
+geloescht: er verlangt jetzt die Decode-Zeile in beiden `init`s, die Abwesenheit des
+gestrichenen Satzes und die Anwesenheit des neuen.
+
+**Das Sicherheits-Argument der alten Notiz ist GEMESSEN beantwortet, nicht weggewischt.** Sie
+sagte: „ein gespeicherter Zaehler von 32 wuerde beim ersten Oeffnen das Rig eines Fremden
+auffaechern." Gemessen: der Strom laeuft ueberhaupt nur, wenn eine PERSISTIERTE Patchbay-Route
+aktiv ist (`EchoelmusicApp`: `if g.hasEnabledRoute(toSink: "artnet.out")`), und er zielt auf
+den PERSISTIERTEN Host samt Universe. Ein erstes Oeffnen, das ueberhaupt etwas sendet, zielt
+also bereits auf das gespeicherte Rig. Die SHAPE war der einzige Teil dieses Ziels, der nicht
+ueberlebte. ⭐ **Lehre: ein „das waere unsicher"-Vermerk ist eine Behauptung wie jede andere und
+gehoert gemessen, bevor man ihn befolgt ODER umstoesst.**
+
+**KEIN `+1`-Offset, obwohl der Nachbar `universe` einen hat** — und ihn abzuschreiben waere der
+naheliegende Griff gewesen. `universe` braucht ihn, weil 0 ein LEGALES Art-Net-Universum ist und
+`UserDefaults.integer(forKey:)` auch fuer „nie geschrieben" 0 liefert. Hier nicht: ein
+Fixture-ZAEHLER ist erst ab 1 legal, ein gespeichertes 0 heisst also eindeutig „unset"; und der
+Default von `fixtureSpacing` IST 0, unset und gespeichertes 0 dekodieren zum selben Wert. Ein
+Offset waere Zeremonie, die eine Fehlerquelle hinzufuegt.
+
+**JEDER SCHLUESSEL WIRD VON SEINEM EIGENEN SETTER GESCHRIEBEN**, nicht von einem gemeinsamen
+`persistTarget`-Helfer wie die drei Ziel-Felder. Grund: wuerden drei Felder zusammen geschrieben,
+koennte ein waehrend `init` feuernder Observer den DEFAULT eines Geschwisters ueber dessen
+gespeicherten Wert legen. Pro-Feld-Schreiben macht die Reihenfolge egal — das ist mehr wert als
+die Symmetrie mit dem Block darueber.
+
+**EIN Decoder, ZWEI Schluesselraeume (#416).** Die Sender behalten getrennte Schluessel (sie
+adressieren im Allgemeinen verschiedene Rigs, wie schon bei host/port/universe), teilen sich
+aber `ArtNetSender.decodedResolution/-FixtureCount/-FixtureSpacing` — genau die Aufteilung, die
+`SACNSender` fuer `DMXResolution` und `reencode` schon hat.
+
+⛔ **NEBENBEFUND, im selben Commit repariert: ein Doc-Block dokumentierte das falsche Mitglied.**
+Swift fasst benachbarte `///`-Zeilen zu EINEM Kommentar zusammen; der Absatz ueber den
+Resolution-Picker stand unmittelbar vor dem Absatz ueber die Rig-Groesse und haftete damit an
+`fixtureCountBinding`, nicht an `dmxResolutionBinding`. Verschoben — in dem Commit, der seinen
+Persistenz-Satz ohnehin wahr macht.
+
+**BENOTUNG (Transkription, §0 — kein Swift hier):**
+· Ansprueche gegen beide Baeume gefahren: Worktree ALLE GRUEN; Eltern **2 Regressionen**
+  (Anspruch 2 Rundreise, Anspruch 4 Klammer), **1 Regression einmal gezaehlt** obwohl sie zwoelf
+  Dinge nennt (Anspruch 6, #486), **3 Gegengewichte** gruen auf beiden (1, 3, 5).
+· ⚠️ Anspruch 3 ist auf dem Elternbaum VAKUUM-gruen (dort persistiert nichts, also kann nichts
+  uebersprechen) — im Kopf der Datei ausdruecklich so vermerkt, damit niemand sein
+  Eltern-Verdikt als Beleg liest.
+· ⭐ Die Datei KOMPILIERT gegen den Elternbaum, jeder Anspruch hat dort ein echtes Verdikt: sie
+  RUFT die neuen Decoder nie, Anspruch 6 sucht ihre NAMEN als Text. Das ist ehrlicher als die
+  #488-Formel „gegen den Elternbaum nicht benotbar".
+· Mutations-Lauf **11 von 11 getoetet** — darunter „Klammer weg" (Anspruch 4), „SACN bekommt
+  einen eigenen Decoder" (#416, Anspruch 6), „SACN nutzt den Art-Net-Schluessel", „ein Arm
+  hoert auf zu dekodieren", „Decode-Default wird 4" (ein frisches Geraet faechert still vier
+  Lampen) und beide Prosa-Richtungen des #456-Anspruchs.
+  ⛔ **m6 UEBERLEBTE im ersten Lauf und das war MEIN Mutant, nicht der Waechter:** ich ersetzte
+  „PERSISTED since #1442" nur EINMAL, und die Zeichenkette steht ZWEIMAL in `PatchbayView`
+  (Resolution-Doc und Fixture-Doc). Mit allen Vorkommen ist der Mutant tot. **#776 in Reinform:
+  zuerst pruefen, dass die Mutation ueberhaupt gelandet ist.**
+· Stripper **PROPHYLAKTISCH (0 von 18 Verdikten kippen roh gegen gestrippt)** — gemessen, nicht
+  behauptet. `SourceText.codeOnly` bleibt trotzdem, weil der naechste Kommentar, der
+  `decodedFixtureCount(` in Prosa nennt, ihn unbemerkt tragend machen wuerde.
+· Klammer-Delta auf allen fuenf geaenderten Dateien paarweise 0. Keine neue Zeile ueber 150
+  Zeichen (die 20 langen in `PatchbayView` sind identisch mit HEAD).
+· `moved-needles.py` meldet **zwei Treffer** — die beiden Deklarationszeilen, die ein `{`
+  bekommen haben — und beide zeigen auf `TheLightReachesMoreThanOneLampTests`. Geoeffnet: die
+  Nadel ist `contains("public var fixtureCount: Int = 1")`, meine Zeile lautet
+  `public var fixtureCount: Int = 1 {`, die Nadel trifft also weiter. ⚠️ Aber ihre BEDEUTUNG ist
+  halbiert: seit #1442 ist der Deklarations-Default nur noch die HAELFTE dessen, was ein erstes
+  Oeffnen tut — die andere Haelfte ist der Decode-Default. Im selben Commit im Wachter
+  vermerkt, mit Zeiger auf Anspruch 1 des neuen Waechters. **Ein Treffer ist eine FRAGE; sie zu
+  beantworten heisst manchmal, den Nachbar-Waechter zu schaerfen statt ihn zu bestaetigen.**
+· Die uebrigen neun stehenden Pruefer Exit 0. `CLAUDE.md` 145.934 B / 150.000 (unberuehrt).
+
+**Nur compile-verifiziert.** Dass ein physisches Rig nach einem Neustart gleich leuchtet, bleibt
+Geraete-Wahrheit und ist offen.

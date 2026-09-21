@@ -59,6 +59,7 @@ public final class SACNSender {
     public var resolution: ArtNetSender.DMXResolution = .sixteenBit {
         didSet {
             lastChannels = ArtNetSender.reencode(lastChannels, from: oldValue, to: resolution)
+            UserDefaults.standard.set(resolution.rawValue, forKey: Self.resolutionKey)
         }
     }
 
@@ -93,8 +94,16 @@ public final class SACNSender {
     ///
     /// ADDRESSING, not spatial differentiation — all fixtures receive the SAME colour,
     /// because this arm produces exactly one. `spacing` 0 means back-to-back.
-    public var fixtureCount: Int = 1
-    public var fixtureSpacing: Int = 0
+    /// ⭐ PERSISTED since #1442 — mirroring Art-Net exactly, but under sACN's OWN keys. The
+    /// two arms address different rigs in general (they already keep separate host/port/
+    /// universe), so one shared key would make a two-protocol install unusable. The decode
+    /// RULE is shared, the STORAGE is not. `grandMaster`/`blackout` above stay live-only.
+    public var fixtureCount: Int = 1 {
+        didSet { UserDefaults.standard.set(fixtureCount, forKey: Self.fixtureCountKey) }
+    }
+    public var fixtureSpacing: Int = 0 {
+        didSet { UserDefaults.standard.set(fixtureSpacing, forKey: Self.fixtureSpacingKey) }
+    }
 
 
     @ObservationIgnored private weak var bus: EngineBus?
@@ -128,6 +137,10 @@ public final class SACNSender {
         self.port = (p > 0 && p <= 65_535) ? UInt16(p) : port
         let u = d.integer(forKey: Self.universeKey)
         self.universe = (u >= 1 && u <= 63_999) ? u : Swift.max(1, universe)
+        // #1442 — the show shape, through the ONE shared decoder on ArtNetSender.
+        self.resolution = ArtNetSender.decodedResolution(d.string(forKey: Self.resolutionKey))
+        self.fixtureCount = ArtNetSender.decodedFixtureCount(d.integer(forKey: Self.fixtureCountKey))
+        self.fixtureSpacing = ArtNetSender.decodedFixtureSpacing(d.integer(forKey: Self.fixtureSpacingKey))
         var bytes = [UInt8](repeating: 0, count: 16)
         withUnsafeBytes(of: UUID().uuid) { raw in
             for i in 0..<16 { bytes[i] = raw[i] }
@@ -177,6 +190,14 @@ public final class SACNSender {
     }
 
     // MARK: - Target persistence + live reconnect
+
+    /// #1442 — the show shape. Own keys, ONE shared decoder (`ArtNetSender.decoded*`), the
+    /// same split this file already uses for `DMXResolution` and `reencode` (#416). Each key
+    /// is written by its own setter so an observer firing mid-`init` cannot store a sibling's
+    /// default over that sibling's stored value.
+    private static let resolutionKey = "net.sacn.resolution"
+    private static let fixtureCountKey = "net.sacn.fixtureCount"
+    private static let fixtureSpacingKey = "net.sacn.fixtureSpacing"
 
     private static let hostKey = "net.sacn.host"
     private static let portKey = "net.sacn.port"

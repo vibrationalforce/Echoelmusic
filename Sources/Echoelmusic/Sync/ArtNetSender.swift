@@ -82,7 +82,10 @@ public final class ArtNetSender {
     ///     for the rest of the session. The decision was right and the reasoning
     ///     understated it in both directions.
     public var resolution: DMXResolution = .sixteenBit {
-        didSet { lastChannels = Self.reencode(lastChannels, from: oldValue, to: resolution) }
+        didSet {
+            lastChannels = Self.reencode(lastChannels, from: oldValue, to: resolution)
+            UserDefaults.standard.set(resolution.rawValue, forKey: Self.resolutionKey)
+        }
     }
 
     public enum DMXResolution: String, Sendable, CaseIterable {
@@ -117,8 +120,17 @@ public final class ArtNetSender {
     ///
     /// ADDRESSING, not spatial differentiation — all fixtures receive the SAME colour,
     /// because this arm produces exactly one. `spacing` 0 means back-to-back.
-    public var fixtureCount: Int = 1
-    public var fixtureSpacing: Int = 0
+    /// ⭐ PERSISTED since #1442, unlike `grandMaster`/`blackout` above — and the difference is
+    /// not taste. The rig's SHAPE belongs to the installation, the way `host`/`port`/`universe`
+    /// already do; the master fader and the blackout belong to the SESSION, so a stored 5 %
+    /// master would read as broken hardware on the next launch. See `decodedFixtureCount` for
+    /// why no `+1` offset is needed here although `universe` needs one.
+    public var fixtureCount: Int = 1 {
+        didSet { UserDefaults.standard.set(fixtureCount, forKey: Self.fixtureCountKey) }
+    }
+    public var fixtureSpacing: Int = 0 {
+        didSet { UserDefaults.standard.set(fixtureSpacing, forKey: Self.fixtureSpacingKey) }
+    }
 
 
     @ObservationIgnored private weak var bus: EngineBus?
@@ -163,6 +175,12 @@ public final class ArtNetSender {
         // universe persists as stored+1 so a legitimate 0 is distinguishable from "unset".
         let u = d.integer(forKey: Self.universeKey)
         self.universe = u > 0 ? (u - 1) : max(0, universe)
+        // #1442 — the show shape, through the ONE shared decoder. Nothing stored ⇒ exactly the
+        // values this file declares above, so a fresh install behaves as it did before any of
+        // these keys existed.
+        self.resolution = Self.decodedResolution(d.string(forKey: Self.resolutionKey))
+        self.fixtureCount = Self.decodedFixtureCount(d.integer(forKey: Self.fixtureCountKey))
+        self.fixtureSpacing = Self.decodedFixtureSpacing(d.integer(forKey: Self.fixtureSpacingKey))
     }
 
     public func start(subscribing bus: EngineBus) {
@@ -198,6 +216,52 @@ public final class ArtNetSender {
         d.set(Int(port), forKey: portKey)
         d.set(universe + 1, forKey: universeKey)   // +1 so a valid universe 0 ≠ "unset"
     }
+    // MARK: - Show persistence (resolution + rig shape)
+
+    /// #1442 — the light TARGET persisted and the light SHOW did not, inside ONE panel. An
+    /// operator aimed the app at a rig, told it the rig has twelve lamps eight slots apart,
+    /// relaunched, and was pointed at the same rig addressing ONE lamp at 16-bit.
+    ///
+    /// ⚠️ THE OLD BEHAVIOUR WAS DELIBERATE and `PatchbayView` named the price of changing it:
+    /// *"a stored count of 32 would fan a stranger's rig on first open."* Measured, that risk
+    /// is already carried by the keys above: the stream only runs when a PERSISTED patchbay
+    /// route is enabled (`EchoelmusicApp`: `hasEnabledRoute(toSink: "artnet.out")`) and it is
+    /// aimed at the PERSISTED host/port/universe. A first open that emits anything is already
+    /// aimed at the stored rig; the shape was the only part of that aim that did not survive.
+    ///
+    /// ⭐ EACH KEY IS WRITTEN BY ITS OWN SETTER, not by one combined `persistTarget`-style
+    /// helper. Three fields written together would let an observer firing mid-`init` store a
+    /// sibling's DEFAULT over that sibling's stored value; per-field writes make the order
+    /// irrelevant, which is worth more than the symmetry with the block above.
+    private static let resolutionKey = "net.artnet.resolution"
+    private static let fixtureCountKey = "net.artnet.fixtureCount"
+    private static let fixtureSpacingKey = "net.artnet.fixtureSpacing"
+
+    /// The ONE decode rule for the show fields, shared by both light senders (#416) the same
+    /// way `DMXResolution` and `reencode` already are. The two senders keep SEPARATE keys —
+    /// they address different rigs in general — but a clamp written twice is the defect
+    /// whether or not the two copies agree today.
+    ///
+    /// ⭐ NO `+1` OFFSET HERE, unlike `universe`, and copying the neighbour would have been the
+    /// obvious move. `universe` needs the offset because 0 is a LEGAL Art-Net universe and
+    /// `UserDefaults.integer(forKey:)` also returns 0 for "never written". These two do not:
+    /// a fixture COUNT is legal only from 1 up, so a stored 0 unambiguously means unset; and
+    /// `fixtureSpacing`'s own default IS 0, so unset and a stored 0 decode to the same value.
+    /// An offset would have been ceremony that adds a way to be wrong.
+    public static func decodedResolution(_ stored: String?) -> DMXResolution {
+        guard let stored, let r = DMXResolution(rawValue: stored) else { return .sixteenBit }
+        return r
+    }
+    /// Clamped to the fan's own ceiling. `DMXFixtureFan.fanned` clamps too, so this is defence
+    /// in depth — but the PROPERTY is what the patchbay shows the operator, and showing 9999
+    /// while sending 32 is a lie about the rig.
+    public static func decodedFixtureCount(_ stored: Int) -> Int {
+        stored > 0 ? Swift.min(stored, DMXFixtureFan.maxFixtures) : 1
+    }
+    public static func decodedFixtureSpacing(_ stored: Int) -> Int {
+        Swift.max(stored, 0)
+    }
+
     /// A host/port edit takes effect immediately while the output is live (connect()
     /// otherwise only runs in start()): drop the old socket, reconnect. Idle ⇒ no-op.
     private func reconnectIfActive() {
