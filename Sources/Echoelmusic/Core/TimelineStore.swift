@@ -17,19 +17,35 @@
 //   58 distinct method NAMES in 59 declarations — `moveRegion` is overloaded, and the two
 //   counts are named apart on purpose: a scan that counts `func ` gets 59, one that collects
 //   names gets 58, and a reader who meets only one of them calls the other a drift
-//   · 10 called from another file — addRegion · ensureComposerRegion · flushPendingSave ·
-//        healRollSlotAudibility · healRollSlotNamingCause · persist (9 files) · undo · redo ·
-//        snapshotForUndo · unsilenceRollSlot. THIS is the live surface.
-//   ·  6 used only inside this file (automationLaneIndex, canCombineRegions, migrate,
-//        resolveOverlaps, restoreRegions, syncUndoFlags).
-//   · 42 with NO caller anywhere in `Sources/` — and they are one coherent set, not
-//        scattered rot: add/remove/move/resize/split/merge region, mute/solo/arm, the
+//   ⛔ THE SPLIT BELOW WAS 10 / 6 / 42 AND ITS FIRST TWO NUMBERS WERE WRONG FROM #870 UNTIL
+//   #1441, in BOTH homes — here and in `TheTimelineStoresLiveSurfaceTests`, which asserted
+//   the same ten and was green (#456: prose moves into every home, and a wrong census moves
+//   with it). The measurement that broke it: SIX of the ten names are declared on a SECOND
+//   type, and the scan that "found their caller" is dot-independent, so it was matching the
+//   other type's member. `persist` alone had TEN such hits — ten other stores calling their
+//   OWN `private func persist()`. ⚠️ And `persist` and `snapshotForUndo` are `private` HERE,
+//   so "called from another file" was not merely unmeasured, it was FORBIDDEN BY THE
+//   LANGUAGE. Re-measured comment-stripped, receiver-aware:
+//   ·  4 called from another file — addRegion · ensureComposerRegion · flushPendingSave ·
+//        healRollSlotNamingCause. THIS is the live surface.
+//   ·  8 used only inside this file — the previous six (automationLaneIndex,
+//        canCombineRegions, migrate, resolveOverlaps, restoreRegions, syncUndoFlags) PLUS
+//        `persist` (46 internal call sites, one per mutating path) and `snapshotForUndo`
+//        (15). Both are private; internal is the only place they COULD be called from.
+//   · 46 with NO caller anywhere in `Sources/` — the previous 42 plus `undo`, `redo`,
+//        `healRollSlotAudibility`, `unsilenceRollSlot`. ⚠️ The last two are NOT dead logic:
+//        this store's versions delegate to `TimelineDocument`'s same-named methods, and the
+//        DOCUMENT's versions are live. A grep for the bare name cannot tell those apart —
+//        that is the whole defect this block is correcting; do not "restore" them on a hit.
+//        The 46 are one coherent set, not scattered rot: add/remove/move/resize/split/
+//        merge region, mute/solo/arm, the
 //        per-lane dials (level · pan · patch · transpose · octave · detune · mood · genre ·
 //        sample · seed) and the whole automation API. That is the API of the arrangement
 //        surface, still standing after its UI was cut.
 //
 // ⚠️ TWO NUMBERS, TWO QUESTIONS — and conflating them is how this got mis-recorded once
-// already this session (as "9 caller-less methods"). **42** have no CALLER. **9** have
+// already this session (as "9 caller-less methods"). **46** have no CALLER (42 until #1441
+// re-measured four of the ten "live" ones as unprovable). **9** have
 // neither a caller nor a TEST (bootstrapIfNeeded · renameLane · resizeRegion ·
 // setAudioRegionWindow · setBuiltinInstrument · setLaneOctave · setLaneSample · toggleMute ·
 // toggleSolo). The other 33 are exercised by the non-blocking suite. A count belongs to

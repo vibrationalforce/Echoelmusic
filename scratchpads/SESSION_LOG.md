@@ -37518,3 +37518,71 @@ Argument-Mismatch UI/Engine, Waisen-Region, nicht unterstuetzte Spur, Audio-Spur
    MIDI-Spur. Erst wenn ein Spur-ERZEUGER eine Tuer bekommt, wird die Kapazitaet faellig.
 
 **PHASE 4: CLOSED — compile verified, device verification pending** (Tasks 115/118).
+
+## 2026-09-22 — #1441: der Waechter, der zehn Namen pinnte und sechs nicht beweisen konnte
+
+**PHASE 5 hat MESSEND begonnen (§4 des Nachtvertrags), und die erste Scheibe kam aus der
+Messung, nicht aus einem Plan.** Acht Faehigkeiten A–H neu vermessen; Details im
+OVERNIGHT_STATUS. Dabei fiel ein Wächter im BLOCKIERENDEN Buendel auf.
+
+**DER DEFEKT.** `TheTimelineStoresLiveSurfaceTests` pinnte ZEHN `TimelineStore`-Methoden als
+„hat einen Aufrufer AUSSERHALB der eigenen Datei". Seine Nadel `callsFunction(named:in:)` ist
+**absichtlich punkt-unabhaengig** (ihr eigener Kommentar: eine Extension desselben Typs ist ein
+legitimer Aufrufer) — und kann deshalb nicht sagen, WESSEN Methode sie gefunden hat. **SECHS
+der zehn Namen sind auf einem ZWEITEN Typ deklariert**, und jeder Treffer war dessen Mitglied:
+
+| Name | zweite Deklaration | Treffer, kommentar-gestrippt |
+|---|---|---|
+| `persist` | ZEHN andere Stores, je `private func persist()` | 10 — **alle zehn riefen ihre EIGENE private Methode** |
+| `snapshotForUndo` · `undo` · `redo` | `PianoRollModel` (`Studio/PianoRollView.swift`) | je 1, und das war der Roll |
+| `healRollSlotAudibility` · `unsilenceRollSlot` | `TimelineDocument` (`Sequencer/Timeline.swift`) | je 1, und das war das Dokument |
+
+⛔ **UND ZWEI DAVON SIND `private` AUF DEM STORE.** Ein `private`-Mitglied ist ausserhalb seiner
+Datei nicht sichtbar — „hat einen Aufrufer ausserhalb der eigenen Datei" war fuer `persist` und
+`snapshotForUndo` also nicht bloss ungemessen, sondern **von der SPRACHE VERBOTEN**. Das ist der
+#367-Spiegelfall in Reinform: eine Zusicherung, die aus ihrem GENANNTEN Grund nicht rot werden
+kann und aus einem anderen gruen ist. `testTheSavePathIsCalledFromSeveralPlaces` pinnte genau
+diese Unmoeglichkeit zusaetzlich auf einen BODEN von zwei.
+
+**DIE REPARATUR IST NICHT RECEIVER-ATTRIBUTION** — #666 hat diesen Weg vermessen (59 Fehlalarme
+auf korrektem Baum; mit Empfaenger-Typ dann 7, aber ALLE DREI echten Treffer verloren).
+Stattdessen ist die **SOUNDNESS-VORBEDINGUNG der Nadel jetzt eine Zusicherung**: ein Name darf
+nur in `liveSurface` stehen, solange **genau EINE** Datei in `Sources/` ihn deklariert.
+Mehrdeutigkeit ist ab jetzt ein ROT statt eines stillen Gruen — und genau das haette den Defekt
+am Tag seiner Entstehung gefangen. Dazu: kein `private`-Name darf gepinnt werden (Claim 2), die
+sechs stehen namentlich in `unprovable` mit einem Gegengewicht (Claim 4: wird rot, wenn einer
+wieder BEWEISBAR wird — „hol ihn zurueck"), und der Save-Pfad wird dort gepinnt, wo seine
+Aufrufer wirklich sind: **46 Stellen INNERHALB des Stores**, eine je Mutator.
+
+⭐ **GESETZ, und es gilt fuer jede Nadel dieses Buendels: eine punkt-unabhaengige Nadel ist nur
+ueber einem Namen sound, der in `Sources/` EINDEUTIG ist. Wer sie benutzt, zieht die
+Eindeutigkeit als eigene Zusicherung mit — sonst prueft der Waechter irgendwann einen fremden
+Typ und meldet dessen Gesundheit als die eigene.** Dieselbe Regel hat eine POLARITAETS-Haelfte:
+Claim 6 pinnt sie auch fuer das Gegengewicht, weil eine ABWESENHEITS-Behauptung ueber einen
+mehrdeutigen Namen spiegelbildlich falsch rot wuerde („der Lane-Regler hat eine Tuer bekommen").
+
+**DIE ZENSUS-ZAHLEN IN BEIDEN HEIMATEN WAREN FALSCH** (#456 — Prosa zieht in JEDES Zuhause mit,
+und eine falsche Zaehlung zieht mit). Neu vermessen, kommentar-gestrippt und empfaengerbewusst:
+**4 extern** (`addRegion` · `ensureComposerRegion` · `flushPendingSave` · `healRollSlotNamingCause`)
+· **8 nur intern** (die alten sechs plus `persist` mit 46 und `snapshotForUndo` mit 15)
+· **46 ohne Aufrufer** (die alten 42 plus `undo`, `redo`, `healRollSlotAudibility`,
+`unsilenceRollSlot`). 4 + 8 + 46 = 58 — stimmt mit der Namenszahl des Kopfs ueberein.
+⚠️ `healRollSlotNamingCause` ist LEBEND, aber per Quelltext-Scan nicht BEWEISBAR (zweite
+Deklaration) — der Waechter pinnt es deshalb nicht, der Zensus zaehlt es mit. **Zwei
+verschiedene Fragen, zwei verschiedene Antworten; sie zu vermengen war der Defekt.**
+
+**BENOTUNG (§0, keine Swift-Toolchain).** Transkribiert und gegen den Baum gefahren:
+**alle Ansprueche GRUEN**. Mutation **10/10 getoetet**, darunter der bekannte Positivfall
+m1 („`persist` zurueck in `liveSurface`" → Claim 1 UND Claim 2 rot) und m5
+(„`liveSurface` leeren", der „schalt das Feature ab"-Mutant → Claim 3 rot).
+⚠️ Der Stripper ist **TRAGEND**: fuer `persist` kippen 3 von 13 Datei-Verdikten roh gegen
+gestrippt (`Project.swift`, `EchoelmusicApp.swift`, `EchoelStudioView.swift` nennen den Namen
+nur in Prosa).
+
+⛔ **EIN EIGENER MESSFEHLER, protokolliert statt verschwiegen:** meine erste Transkription
+benutzte `git ls-files 'Sources/Echoelmusic/**/*.swift'` und verfehlte damit die FUENF Dateien
+der obersten Ebene — darunter `EchoelmusicApp.swift`, die wichtigste. Ergebnis war ein
+FALSCH-ROT auf `flushPendingSave`. Der Waechter selbst ist nicht betroffen (er laeuft ueber
+`FileManager.enumerator`, das die Ebene mitlaeuft). **`.claude/rules/context.md` §2 in
+Reinform: eine Messung, die still WENIGER liefern kann als die Wahrheit, ist keine Messung** —
+hier ausnahmsweise in der alarmierenden Richtung, was Glueck war, nicht Methode.
