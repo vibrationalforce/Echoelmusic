@@ -2390,3 +2390,29 @@ einen Schritt langsam macht, erbt jede Annahme, die darauf beruhte, dass er schn
 
 **Nicht bewiesen:** dass die Datei gültiges YAML ist. Der Sandbox-Klassifizierer dieser Sitzung
 verweigerte jeden Bash-Zugriff auf den Pfad, auch rein lesenden; das sagt erst der nächste Push.
+
+### 2026-09-21 — #1406: die drei Sub-Engines in `EchoelDDSP` lesen `self.sampleRate`
+
+**Entscheidung.** `EchoelSVFilter`, `EchoelLFO` und `EchoelEntrainment` werden in
+`EchoelDDSP.init` aus der geklammerten `self.sampleRate` gebaut statt als
+Property-Initialisierer mit dem Literal `48000`.
+
+**Warum.** Ein Property-Initialisierer sieht `self` nicht, also war das Literal die einzige
+schreibbare Form an der Stelle — die Wirkung ist trotzdem, dass ein
+`EchoelDDSP(sampleRate: 44100)` Filter, LFO und Entrainment weiter auf 48 kHz rechnen ließ.
+#416 an einem Ort, den kein Aufrufer korrigieren kann.
+
+**Was sich heute ändert: nichts.** Beide Produktions-Konstruktionsstellen übergeben 48000
+(`BioReactiveSynthVoice.sampleRate`, `EchoelmusicAudioUnit`). Der Wächter FÄHRT diese
+Gleichheit über 64 Samples, statt sie zu behaupten.
+
+**Wofür es da ist.** Die tiefere Hälfte des AUv3-Host-Raten-Defekts (Board A10). Die
+verbleibende, HÖRBARE Reparatur ist jetzt eine Änderung an der Extension allein.
+
+**Zwei Mitnahmen (#456).** Board A10 trug die Richtung falsch — in einem 44,1-kHz-Host klingt
+es ~8,1 % ZU TIEF (≈ 1,47 Halbtöne), nicht 8,8 % zu hoch; LFOs/Envelopes ~8,8 % zu langsam.
+Und ein neuer latenter Befund steht als O15 auf dem Board: `EchoelEntrainment.process` trägt
+den nicht-rettenden Phasen-Wrap, den #1207b aus `EchoelLFO` entfernt hat — heute unerreichbar,
+eigene Scheibe.
+
+**Review:** 2026-10-21.

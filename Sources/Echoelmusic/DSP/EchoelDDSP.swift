@@ -389,10 +389,24 @@ public final class EchoelDDSP: @unchecked Sendable {
     // MARK: - Resonant Filter + LFO + Entrainment
 
     /// State Variable Filter (lowpass/highpass/bandpass/notch)
-    public let filter = EchoelSVFilter(sampleRate: 48000)
+    ///
+    /// ⛔ THIS READ `EchoelSVFilter(sampleRate: 48000)` AND THE LITERAL WAS A SECOND SPELLING
+    /// OF `self.sampleRate` (#416) — one that no caller could correct. A property initialiser
+    /// cannot see `self`, so the rate had to be a constant here; the consequence is that an
+    /// `EchoelDDSP(sampleRate: 44100)` used to carry a filter, an LFO and an entrainment
+    /// oscillator still running at 48 kHz. Assigned in `init` instead, from the CLAMPED
+    /// `self.sampleRate`.
+    ///
+    /// ⚠️ THIS CHANGES NOTHING TODAY, ON PURPOSE, and that is the whole point of doing it as
+    /// its own slice: both production construction sites pass 48000
+    /// (`BioReactiveSynthVoice.sampleRate` = 48_000, `EchoelmusicAudioUnit` = 48000), so every
+    /// shipping path is bit-identical. It removes the deeper half of the AUv3 host-rate defect
+    /// (board A10) so the audible half — rebuilding the engines at the host's format — becomes
+    /// a change to the extension alone rather than a reach into shared DSP.
+    public let filter: EchoelSVFilter
 
     /// Free-running LFO for filter modulation
-    public let filterLFO = EchoelLFO(sampleRate: 48000)
+    public let filterLFO: EchoelLFO
 
     /// LFO modulation depth on filter cutoff [0-1]
     public var lfoToFilterDepth: Float = 0.15     // Gentle filter sweep
@@ -550,7 +564,10 @@ public final class EchoelDDSP: @unchecked Sendable {
     public var renderCutoffScale: Float = 1.0
 
     /// Isochronic brainwave entrainment
-    public let entrainment = EchoelEntrainment(sampleRate: 48000)
+    ///
+    /// ⛔ Same nailed literal as `filter`/`filterLFO` above, same repair, same reason — see the
+    /// block there. Assigned in `init` from `self.sampleRate`.
+    public let entrainment: EchoelEntrainment
 
     // MARK: - Convolution Reverb
 
@@ -904,6 +921,27 @@ public final class EchoelDDSP: @unchecked Sendable {
         self.noiseBandCount = max(1, noiseBandCount)
         self.sampleRate = max(1, sampleRate)
         self.frameSize = max(1, frameSize)
+        // The three sub-engines follow THIS instance's rate instead of a literal (see the
+        // doc blocks at their declarations).
+        //
+        // ⚠️ `self.sampleRate` (the CLAMPED `max(1, sampleRate)`), NEVER the raw parameter,
+        // and here that is LOAD-BEARING rather than hygiene — measured, because the first
+        // draft of this comment claimed all three clamp on their own side and only ONE does:
+        // `EchoelSVFilter.init` is `sampleRate > 0 ? sampleRate : 48000`, while
+        // `EchoelLFO.init` and `EchoelEntrainment.init` both store the argument as given.
+        // Before this change they received a hard 48000 and could not be wrong; from here
+        // the clamp one line up is the ONLY thing standing between a 0 Hz rate and a
+        // division by it inside those two. Widening the clamp into their own inits is a
+        // separate slice in two more files, not this one.
+        //
+        // ⭐ AND THIS FILE ALREADY ESTABLISHED THE DISCIPLINE — the reverb IR below passes
+        // `self.sampleRate` for exactly this reason, with its own comment: a negative rate
+        // makes `generateReverbIR`'s `Int(0.02 * sampleRate)` negative and traps the range.
+        // These three lines are that same rule applied to the three sub-engines, which had
+        // been the one place in the class where it could not be applied at all.
+        self.filter = EchoelSVFilter(sampleRate: self.sampleRate)
+        self.filterLFO = EchoelLFO(sampleRate: self.sampleRate)
+        self.entrainment = EchoelEntrainment(sampleRate: self.sampleRate)
         // Seed the per-voice noise PRNG. xorshift32 requires a non-zero state;
         // a distinct seed per voice decorrelates the noise across simultaneous
         // voices (identical seeds make poly noise add coherently / comb-filter).

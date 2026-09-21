@@ -35696,3 +35696,94 @@ Summary den Schritt fragt statt den Merge.
 ⚠️ **Lehre, die über diesen Fall hinausgeht: die eigene Ausgabe der eigenen Scheibe lesen ist
 eine Messung, kein Kontrollblick.** Ich hätte den Lauf als „grün, fertig" abhaken können; die
 Zeile stand in derselben Tabelle, die meine zwei neuen Zeilen enthielt.
+
+## 2026-09-21 — #1405b VERIFIZIERT am eigenen Lauf, und #1406: die drei genagelten Sub-Engine-Raten
+
+**GATE-LESUNG `2b79b4d31` (#1405b) — alle drei grün, und die dritte IST der Beweis.**
+- `Xcode Compile Check` **success** (Lauf 35566909106, 06:04:59–06:10:12).
+- CI/CD Schritt 9 `Build for Testing` **success** (Lauf 35566909114, Job 106230587118,
+  06:07:46–06:13:33) — die erweiterte Claim 6 von `TheAutoMergeWaitsForTheGatesTests`
+  kompiliert.
+- `Auto-Merge to Main` (Lauf 35566909129, Job 106230471498) **success**. Die Warte-Stufe hielt
+  **06:05:11 → 06:13:56 = 8 min 45 s**, `Merge to main` lief **23 Sekunden nach** dem Ende von
+  `Build for Testing`. Die Summary wörtlich aus dem Job-Log:
+
+      | Changes code            | true    |
+      | Xcode Compile Check     | success |
+      | CI/CD Build for Testing | success |
+      | Merge Status            | success |
+      | TestFlight              | skipped |
+
+  Die letzte Zeile las einen Commit zuvor `Dispatched`, während der Schritt `skipped` war.
+  **#1405b ist damit an seinem eigenen ersten Lauf belegt** — dieselbe Methode, mit der der
+  Defekt gefunden wurde.
+
+**MESSUNG NEBENBEI (kostet nichts, schließt eine offene Design-Frage):** die Frage „soll die
+Bar-Variation (#1402) auch den Per-Lane-Fan-Out erreichen?" ist durch Messung ERLEDIGT, nicht
+durch Bauen. `LaneComposerInput.hasOverride` liest drei Felder — `genreOverride`, `mood`,
+`variationSeed` —, und ihre drei Setzer (`TimelineStore.setLaneGenreOverride`, `setLaneMood`,
+`setLaneVariationSeed`) haben **null Produktions-Aufrufer**; `Timeline.swift:222` sagt das für
+zwei davon selbst. `composeLaneOverrides` liefert auf jedem Gerät ein LEERES Dictionary. Eine
+Scheibe dort wäre also für keinen Nutzer hörbar. Nicht gebaut.
+
+---
+
+**#1406 — `EchoelDDSP` baute drei eigene Sub-Engines mit einem Literal, statt mit seiner
+eigenen Rate.**
+
+    public let filter      = EchoelSVFilter(sampleRate: 48000)
+    public let filterLFO   = EchoelLFO(sampleRate: 48000)
+    public let entrainment = EchoelEntrainment(sampleRate: 48000)
+
+Ein Property-Initialisierer sieht `self` nicht, also war das Literal nicht Nachlässigkeit,
+sondern das Einzige, was an der Stelle schreibbar war. Die Folge ist trotzdem dieselbe: ein
+`EchoelDDSP(sampleRate: 44100)` trug Filter, LFO und Entrainment, die weiter auf 48 kHz
+rechneten. Jetzt in `init` zugewiesen, aus der GEKLAMMERTEN `self.sampleRate`.
+
+**Ändert heute keinen Klang, und das ist der Grund für die eigene Scheibe.** Beide
+Produktions-Konstruktionsstellen übergeben 48000 (`BioReactiveSynthVoice.sampleRate` = 48_000,
+`EchoelmusicAudioUnit`), also ist jeder gerenderte Sample bit-identisch. Claim 2 des Wächters
+FÄHRT das, statt es zu behaupten.
+
+**Warum es trotzdem eine Scheibe wert ist:** es ist die TIEFERE HÄLFTE des AUv3-Host-Raten-
+Defekts (Board A10). Mit den drei Literalen im Weg hätte eine Reparatur ALLEIN in der Extension
+den Klang NICHT repariert. Jetzt ist der Rest eine Änderung an der Extension und sonst nichts.
+
+**⛔ UND DIE RICHTUNG IM BOARD-EINTRAG A10 WAR FALSCH** — korrigiert, weil genau daran eine
+Geräteprobe gemessen würde. Dort stand „~8,8 % zu hoch". Richtig ist **~8,1 % ZU TIEF**
+(≈ 1,47 Halbtöne), LFOs/Envelopes ~8,8 % zu LANGSAM: die Engine rechnet 48000 Schritte pro
+Sekunde, der Host spielt 44100 Samples pro Sekunde, jede Frequenz kommt mit 44100/48000 =
+0,91875 heraus. Vereinbar mit der einen Messung (#1386, AUM auf 48 kHz: 220,15 Hz gegen 220 Hz
+= +1,2 Cent) — bei gleicher Rate ist der Defekt unsichtbar, und genau deshalb hat er die erste
+Gerätesitzung überlebt.
+
+**WÄCHTER: `Tests/CISmoke/TheSubEnginesFollowTheirParentsRateTests.swift`**, vier Ansprüche.
+Benotung per Transkription (§0), beide Bäume, plus drei Mutanten und zwei Fehlalarm-Sonden:
+- **ZWEI Regressionen** auf dem Elternbaum, und sie sind EIN Befund dreifach gemeldet (#486):
+  Claim 1 (der LFO ignorierte einen 24-kHz-Elternteil) und Claim 3 (drei Konstruktionszeilen
+  mit Zahl statt `self.sampleRate`).
+- **Claim 2 ist ein GEGENGEWICHT** (#343) und der Punkt der Datei: grün auf BEIDEN Bäumen, und
+  es ist das, was „kein Klang geändert" zu einer Messung macht statt zu einem Versprechen.
+- **Claim 4 ist ein Gegengewicht, das DURCH diese Scheibe tragend wurde**: `EchoelSVFilter`
+  klammert selbst, `EchoelLFO` und `EchoelEntrainment` NICHT. Solange das Literal 48000 war,
+  konnten die zwei keine schlechte Rate bekommen; jetzt ist `max(1, sampleRate)` das Einzige
+  dazwischen.
+- ⛔ **UND CLAIM 4s ERSTE FASSUNG KONNTE NICHT AUS IHREM GENANNTEN GRUND ROT WERDEN (#367)** —
+  gefunden durch FAHREN, nicht durch Lesen. Sie fuhr den LFO, und dessen #1207b-Wrap
+  (`phase = phase.isFinite ? … : 0`) fängt eine `inf`-Phase eine Zeile später ab: die Zusicherung
+  war grün auf genau der Mutation, für die sie geschrieben war. Subjekt ist jetzt
+  `EchoelEntrainment`, dessen Wrap NICHT rettet (`inf - 1 == inf` → `cosf(inf)` = NaN).
+  Mutations-belegt: mit dem ROHEN init-Parameter ist das erste Sample bei Rate 0 NaN.
+- **`SourceText.codeOnly` ist für Claim 3 TRAGEND, gemessen**: der Reparatur-Commit ZITIERT das
+  zurückgenommene `EchoelSVFilter(sampleRate: 48000)` in seinem eigenen ⛔-Block. Roh → 1
+  Fehlalarm, gestrippt → 0. 1 von 1 Verdikt kippt.
+- **Fehlalarm-Sonde P2** (eine LEGITIME zweite Konstruktion, die die Rate mitliest) bleibt grün
+  — der Wächter verbietet korrekte Arbeit nicht (#364), er ist eine EIGENSCHAFT, kein Zähler.
+
+**NEUER BEFUND, BERICHTET STATT MITREPARIERT (Board O15):** `EchoelEntrainment.process` trägt
+den nicht-rettenden Wrap, den #1207b aus `EchoelLFO` entfernt hat. Heute unerreichbar —
+`git grep -n "EchoelEntrainment(" -- Sources` liefert GENAU EINE Konstruktionsstelle, und die
+übergibt seit dieser Scheibe die geklammerte Rate. Latenter Defekt, eigene Scheibe, eine Datei.
+
+Acht stehende Prüfer plus `doctor --selftest`: alle 0. **Nicht compile-verifiziert** — eine
+Transkription fährt Swifts Typprüfer nicht.
