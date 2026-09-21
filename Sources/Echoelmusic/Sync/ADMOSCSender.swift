@@ -269,8 +269,13 @@ public final class ADMOSCSender {
     /// exclusion with the bio→object path); still safe to call directly.
     public func send(scene: SpatialScene, dialect: SpatialOSCDialect = .admOSC) {
         guard connection != nil else { return }
-        for message in SpatialSceneOSCFormatter.messages(for: scene, dialect: dialect) {
-            send(address: message.address, floats: [message.value])
+        // #1430 — the scene arm was the THIRD position emitter and the only one that still
+        // walked the unpacked list. It now goes through the same fold as the bio and music
+        // arms; the formatter is untouched, so its golden tests keep testing what they tested.
+        let flat = SpatialSceneOSCFormatter.messages(for: scene, dialect: dialect)
+            .map { ($0.address, $0.value) }
+        for (address, floats) in Self.packedSceneMessages(flat, dialect: dialect) {
+            send(address: address, floats: floats)
         }
         lastSentTimestamp = CFAbsoluteTimeGetCurrent()
     }
@@ -415,6 +420,97 @@ public final class ADMOSCSender {
             out.append((address, [v]))
         }
         return out
+    }
+
+    /// The SCENE arm's fold — the same packing rule as `packedPositionMessages`, applied to a
+    /// flat list that spans MANY objects instead of one.
+    ///
+    /// ⭐ WHY THIS IS NOT A SECOND HOME FOR THE RULE (#416). It decides nothing about WHICH
+    /// leaves pack or when; it only answers "whose leaves are these" and hands each object's
+    /// own list to the single fold above. The all-three condition, the `/aed` address, the
+    /// front position and the pass-through order all stay in exactly one place — change the
+    /// rule there and this arm follows without being touched.
+    ///
+    /// ⛔ THE REGISTERED DESIGN FOR THIS SAID FOUR FILES AND WAS WRONG, measured rather than
+    /// recalled. It read: *"the fold has to move to a Foundation-only home, because
+    /// `ADMOSCSender.swift` sits inside `#if canImport(Network)` while the formatter is
+    /// deliberately Foundation-only"* — and that is true of the FORMATTER and irrelevant to the
+    /// SEND loop. `send(scene:dialect:)` is a method on this very type, inside that very guard,
+    /// so it reaches `Self.packedPositionMessages` directly; nothing moves and
+    /// `TheADMOSCLeavesAreTheSpecsTests` claim 1 keeps its `/aed` literal here. **A note that
+    /// makes work BIGGER than it is parks a real repair** — the mirror of the law CLAUDE.md
+    /// states for the slogan that made the iPad switch-back sound like one line.
+    ///
+    /// ⚠️ GROUPED BY PARSED ADDRESS, NEVER BY EMISSION STRIDE. `SpatialSceneOSCFormatter`
+    /// happens to emit each object's four leaves contiguously, four at a time; relying on that
+    /// would make this silently wrong the day a channel is added or reordered, and nothing
+    /// would go red. Prefix matching is unambiguous for the same reason it is here at all:
+    /// `/adm/obj/11/azim` does not carry the prefix `/adm/obj/1/`, because the character after
+    /// the index is a slash.
+    ///
+    /// ⚠️ ORDER IS POSITIONAL, not "objects first". Each object's packed block takes the place
+    /// of its FIRST leaf and the rest of that object's leaves are dropped from their old
+    /// positions; anything outside the ADM object namespace passes through where it stood. A
+    /// two-pass version that appended the non-object messages at the end was written first and
+    /// discarded: it is a no-op today (this formatter emits nothing else) and would silently
+    /// reorder the wire the day it is not.
+    ///
+    /// ⛔ THE CARTESIAN HALF OF THE FINDING STAYS OPEN, and saying so is the point. A
+    /// `.admOSCCartesian` scene emits `/x`, `/y`, `/z`, which the fold does not recognise, so
+    /// those objects pass through UNPACKED — the same behaviour as before this function, not a
+    /// regression. The spec's packed Cartesian address is not verified here and this repository
+    /// does not build to a remembered spec.
+    public nonisolated static func packedSceneMessages(_ msgs: [(String, Float)],
+                                                       dialect: SpatialOSCDialect)
+        -> [(String, [Float])] {
+        switch dialect {
+        case .admOSC, .admOSCCartesian:
+            break
+        case .iemMultiEncoder:
+            // A DIFFERENT standard, not an unpacked version of this one: the IEM MultiEncoder
+            // has 0-based sources, degrees, dB and no distance parameter, and `/aed` means
+            // nothing in its vocabulary. Folding here would emit an address its receiver
+            // cannot read. The switch is exhaustive on purpose (#431) — a new dialect has to
+            // state which side it is on rather than inheriting an answer.
+            return msgs.map { ($0.0, [$0.1]) }
+        }
+
+        var groups: [Int: [(String, Float)]] = [:]
+        for m in msgs {
+            guard let n = Self.admObjectIndex(m.0) else { continue }
+            groups[n, default: []].append(m)
+        }
+
+        var emitted = Set<Int>()
+        var out: [(String, [Float])] = []
+        out.reserveCapacity(msgs.count)
+        for m in msgs {
+            guard let n = Self.admObjectIndex(m.0) else {
+                out.append((m.0, [m.1]))
+                continue
+            }
+            guard !emitted.contains(n) else { continue }
+            emitted.insert(n)
+            out.append(contentsOf: Self.packedPositionMessages(groups[n] ?? [], object: n))
+        }
+        return out
+    }
+
+    /// The 1-based object index an ADM-OSC address belongs to, or `nil` when the address is
+    /// not in that namespace at all.
+    ///
+    /// ⚠️ `nil` FOR INDEX 0 IS DELIBERATE. `packedPositionMessages` raises its argument with
+    /// `max(1, n)`, so handing it a 0 would make it look for leaves under `/adm/obj/1` and
+    /// quietly mis-group a whole object. Refusing to recognise the address leaves it passing
+    /// through untouched, which is the honest outcome for a namespace nothing in this
+    /// repository emits.
+    nonisolated static func admObjectIndex(_ address: String) -> Int? {
+        let root = "/adm/obj/"
+        guard address.hasPrefix(root) else { return nil }
+        let rest = address.dropFirst(root.count)
+        guard let slash = rest.firstIndex(of: "/") else { return nil }
+        guard let n = Int(rest[rest.startIndex..<slash]), n >= 1 else { return nil }
+        return n
     }
 
     /// The bio arm's object gain, or `nil` when nothing measures motion — in which case

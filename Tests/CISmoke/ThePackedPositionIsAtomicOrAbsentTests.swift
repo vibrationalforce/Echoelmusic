@@ -45,11 +45,25 @@
 //
 // That path is DOUBLY doorless — `streamsScene` defaults false with its only writer in the
 // parked `ImmersiveStageView`, and `sceneDialect` has no writer at all — so nothing a user
-// can reach is affected. It is REGISTERED with a complete design rather than half-fixed: the
-// fold has to move to a Foundation-only home (this file's subject lives inside
-// `#if canImport(Network)`), which takes the `/aed` literal out of `ADMOSCSender.swift` and
-// reddens `TheADMOSCLeavesAreTheSpecsTests` claim 1 — a four-file slice, so it belongs with
-// the commit that re-doors the stage. Do not read the claims below as covering scene output.
+// can reach is affected.
+//
+// ⭐ THE POLAR HALF OF THAT FINDING IS CLOSED BY #1430 (claims 9–13), AND THE DESIGN QUOTED
+// ABOVE WAS WRONG, which is the part worth keeping. It said: *"the fold has to move to a
+// Foundation-only home (this file's subject lives inside `#if canImport(Network)`), which
+// takes the `/aed` literal out of `ADMOSCSender.swift` and reddens
+// `TheADMOSCLeavesAreTheSpecsTests` claim 1 — a four-file slice, so it belongs with the commit
+// that re-doors the stage."* Measured instead of recalled: that is true of the FORMATTER and
+// irrelevant to the SEND loop. `ADMOSCSender.send(scene:dialect:)` is a method on the same
+// type inside the same guard, so it reaches `Self.packedPositionMessages` directly. Nothing
+// moved, claim 1 of the neighbouring guard kept its literal, and the slice was TWO files.
+// **A note that makes work BIGGER than it is parks a real repair for weeks** — the exact
+// mirror of the law CLAUDE.md records for the slogan that made the iPad switch-back sound
+// like one line, and the reason it is corrected here rather than only in the task list (#456).
+//
+// ⛔ THE CARTESIAN HALF IS STILL OPEN and claims 9–13 say so themselves: an `.admOSCCartesian`
+// scene emits `/x`, `/y`, `/z`, which the fold does not recognise, so those objects pass
+// through unpacked — unchanged behaviour, not a regression. The spec's packed Cartesian
+// address is not verified in this repository and nothing here builds to a remembered spec.
 //
 // ⚠️ ALSO NOT DONE, deliberately: an OSC BUNDLE. The spec notes packed values "can also be
 // grouped with other messages in an OSC bundle for atomic/synchronous delivery with a shared
@@ -246,6 +260,136 @@ final class ThePackedPositionIsAtomicOrAbsentTests: XCTestCase {
                 actually produced.
                 """)
         }
+    }
+
+
+    // MARK: 9 — the scene arm packs, per object, in positional order
+
+    func testEveryObjectInASceneLeavesAsOnePackedMessage() {
+        let scene = SpatialScene(objects: [
+            SpatialObject(id: "a", position: SpatialPosition(azimuth: -30, elevation: 5,
+                                                             distance: 0.4), gain: 0.5),
+            SpatialObject(id: "b", position: SpatialPosition(azimuth: 40, elevation: -10,
+                                                             distance: 0.8), gain: 0.9),
+        ])
+        let flat = SpatialSceneOSCFormatter.messages(for: scene, dialect: .admOSC)
+            .map { ($0.address, $0.value) }
+        let out = ADMOSCSender.packedSceneMessages(flat, dialect: .admOSC)
+
+        XCTAssertEqual(addresses(out), ["/adm/obj/1/aed", "/adm/obj/1/gain",
+                                        "/adm/obj/2/aed", "/adm/obj/2/gain"], """
+            The scene arm did not fold per object, or it reordered the wire. It was the THIRD
+            position emitter (#1424) and the last one still walking the unpacked list; the
+            order must stay POSITIONAL — each object's packed block takes the place of its
+            FIRST leaf — because an "objects first, everything else appended" shape is a no-op
+            today and silently reorders the wire the day this formatter emits anything else.
+            """)
+    }
+
+    // MARK: 10 — COUNTERWEIGHT: IEM is a different standard and is never folded
+
+    func testTheIEMDialectIsNeverFolded() {
+        let scene = SpatialScene(objects: [
+            SpatialObject(id: "a", position: SpatialPosition(azimuth: -30, elevation: 5,
+                                                             distance: 0.4), gain: 0.5),
+        ])
+        let flat = SpatialSceneOSCFormatter.messages(for: scene, dialect: .iem)
+            .map { ($0.address, $0.value) }
+        let out = ADMOSCSender.packedSceneMessages(flat, dialect: .iem)
+
+        XCTAssertEqual(addresses(out), flat.map { $0.0 }, """
+            The IEM MultiEncoder vocabulary was folded. It is a DIFFERENT standard, not an
+            unpacked version of ADM-OSC: 0-based sources, degrees, dB, no distance parameter,
+            and `/aed` means nothing to its receiver. Folding here emits an address the plugin
+            cannot read — a conformance repair that breaks conformance one dialect over.
+            """)
+        XCTAssertTrue(out.allSatisfy { $0.1.count == 1 },
+                      "every IEM leaf carries exactly one float, as before the fold existed")
+    }
+
+    // MARK: 11 — COUNTERWEIGHT: the Cartesian half is UNCHANGED, not silently invented
+
+    func testTheCartesianSceneStaysUnpackedAndInventsNothing() {
+        let scene = SpatialScene(objects: [
+            SpatialObject(id: "a", position: SpatialPosition(azimuth: -30, elevation: 5,
+                                                             distance: 0.4), gain: 0.5),
+        ])
+        let flat = SpatialSceneOSCFormatter.messages(for: scene, dialect: .admOSCCartesian)
+            .map { ($0.address, $0.value) }
+        let out = ADMOSCSender.packedSceneMessages(flat, dialect: .admOSCCartesian)
+
+        XCTAssertEqual(addresses(out), flat.map { $0.0 }, """
+            The Cartesian scene changed shape. #1430 closes the POLAR half of #1424 only; `/x`,
+            `/y`, `/z` pass through UNPACKED, which is what this arm did before the fold
+            existed. If a packed Cartesian address is ever added it is a separate decision with
+            the spec read first — this repository does not build to a remembered spec, and a
+            guard that quietly accepted an invented `/xyz` would be the thing that let it.
+            """)
+        XCTAssertFalse(addresses(out).contains(where: { $0.hasSuffix("/xyz") }), """
+            An `/xyz` address appeared. Nothing in `Sources/` may emit it until the spec has
+            been read and the address written down with its source.
+            """)
+    }
+
+    // MARK: 12 — the object index is PARSED, so 11 is not 1 and a missing axis stays local
+
+    func testTheSceneFoldGroupsByParsedIndexNotByStride() {
+        let polar = { (n: Int) -> [(String, Float)] in
+            [("/adm/obj/\(n)/azim", Float(n)), ("/adm/obj/\(n)/elev", Float(n) + 0.1),
+             ("/adm/obj/\(n)/dist", Float(n) + 0.2), ("/adm/obj/\(n)/gain", 0.5)]
+        }
+        let out = ADMOSCSender.packedSceneMessages(polar(1) + polar(11), dialect: .admOSC)
+        XCTAssertEqual(addresses(out), ["/adm/obj/1/aed", "/adm/obj/1/gain",
+                                        "/adm/obj/11/aed", "/adm/obj/11/gain"], """
+            Object 11 was folded into object 1, or the grouping used the emission STRIDE. The
+            index is parsed from the address on purpose: `/adm/obj/11/azim` does not carry the
+            prefix `/adm/obj/1/` because the character after the index is a slash, while a
+            four-at-a-time stride is silently wrong the day a channel is added and nothing
+            goes red.
+            """)
+
+        let missingElev = polar(1).filter { !$0.0.hasSuffix("/elev") } + polar(2)
+        XCTAssertEqual(addresses(ADMOSCSender.packedSceneMessages(missingElev,
+                                                                  dialect: .admOSC)),
+                       ["/adm/obj/1/azim", "/adm/obj/1/dist", "/adm/obj/1/gain",
+                        "/adm/obj/2/aed", "/adm/obj/2/gain"], """
+            One object missing an axis changed another object's fate. The all-three condition
+            is #1140 and it is PER OBJECT: object 1 cannot pack, object 2 must still pack, and
+            a fold that decided globally would either invent a position for 1 or withhold a
+            correct one from 2.
+            """)
+
+        XCTAssertNil(ADMOSCSender.admObjectIndex("/adm/obj/0/azim"), """
+            Object 0 was recognised. `packedPositionMessages` raises its argument with
+            `max(1, n)`, so handing it a 0 makes it hunt for leaves under `/adm/obj/1` and
+            quietly mis-group a whole object.
+            """)
+        XCTAssertNil(ADMOSCSender.admObjectIndex("/adm/obj/1"),
+                     "an address with no leaf after the index is not an object leaf")
+        XCTAssertNil(ADMOSCSender.admObjectIndex("/echoelmusic/bio/heart/bpm"),
+                     "a foreign namespace is not an ADM object")
+    }
+
+    // MARK: 13 — the scene SEND loop goes through the fold
+
+    func testTheSceneSendLoopGoesThroughTheFold() throws {
+        var dir = URL(fileURLWithPath: #filePath)
+        for _ in 0..<3 { dir.deleteLastPathComponent() }
+        let url = dir.appendingPathComponent(Self.sender)
+        guard let code = try? String(contentsOf: url, encoding: .utf8) else {
+            return XCTFail("ANCHOR MISSING: cannot read \(Self.sender) — re-anchor rather than "
+                           + "letting this stay green (#454).")
+        }
+        XCTAssertTrue(code.contains("Self.packedSceneMessages(flat, dialect: dialect)"), """
+            `send(scene:dialect:)` no longer sends through the fold. This is the #1210 lesson
+            for the third arm: the pure function passing claims 9–12 proves nothing about the
+            wire if the send loop walks the unpacked list, and this arm is doorless, so no
+            device session would ever reveal it.
+            """)
+        XCTAssertFalse(code.contains("send(address: message.address, floats: [message.value])"), """
+            The old unpacked scene loop is back. It sent every leaf as its own datagram, which
+            is exactly the shape #1424 recorded as the third unfolded emitter.
+            """)
     }
 
     // MARK: 8 — the sender actually sends through the fold

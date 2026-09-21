@@ -36808,3 +36808,61 @@ stehende Prüfer Exit 0 (moved-needles erst nach dem Nachziehen). `OSMemoryBarri
 steht auf einem grünen Compile-Check. **Compile-verifiziert durch die Gates, NICHT geräteverifiziert
 — und eine Speicherordnung ist ohnehin durch keinen Test beweisbar; der Wächter pinnt, dass das
 Paar geschrieben ist und auf der richtigen Seite steht.**
+
+## 2026-09-21 — #1429 Gate-Lesung + #1430 ADM-OSC: die dritte Positions-Quelle faltet
+
+**Gate-Lesung `40bed1424` (#1429).** `Xcode Compile Check` Lauf **2711** (`35605283177`) =
+`success`. CI/CD Lauf **6176**, Job `106350977146`, Schritt **`Build for Testing`** = `success`
+(13:26:06 → 13:29:43, 3 m 37 s). Unabhängige Gegenprobe nach #1416: `git ls-remote origin
+refs/heads/main` → `40bed142`, also ist der Auto-Merge gefahren, und der wartet per #1405 auf
+BEIDE Gates — zwei Straßen, eine Antwort. Trägt #1426–#1428 als Passagiere nach `main`.
+`Run Tests` endet wie auf jedem Push in #396; **Ausführung der neuen Zusicherungen unbelegt,
+nicht grün** (#445/#807). Damit ist belegt, was hier offen war: `OSMemoryBarrier()` kompiliert
+in `RetroCapture` unter `-warnings-as-errors` (Release/Device) UND das blockierende Bündel baut
+mit `TheRingCursorPublishesWithABarrierTests` (Debug/Simulator — gekreuzt, nicht geschachtelt).
+
+**#1430 — und der eigentliche Befund ist, dass mein eigener Entwurf zu teuer geschätzt war.**
+#1424 hatte die dritte ADM-Positions-Quelle (den Szenen-Stream) registriert und mit einer
+VIER-DATEI-Begründung geparkt: *„der Fold muss in ein Foundation-only-Zuhause umziehen, weil
+`ADMOSCSender.swift` innerhalb `#if canImport(Network)` liegt, während der Formatter bewusst
+Foundation-only ist"*. Gemessen statt erinnert: das gilt für den FORMATTER und ist für die
+SENDE-Schleife irrelevant. `send(scene:dialect:)` ist eine Methode auf genau diesem Typ,
+innerhalb genau dieses Guards — sie erreicht `Self.packedPositionMessages` direkt. Nichts ist
+umgezogen, `TheADMOSCLeavesAreTheSpecsTests` Anspruch 1 hat sein `/aed`-Literal behalten, und
+die Scheibe war **zwei** Dateien. Blast radius vorher gemessen: ein Aufrufer, eine
+Wächter-Datei.
+
+⭐ **GESETZ, und es ist der Spiegel eines schon aufgeschriebenen:** CLAUDE.md hält fest, dass
+ein Slogan, der Arbeit KLEINER macht als sie ist, gefährlicher ist als eine falsche Zahl (die
+iPad-„eine Zeile"). Die Gegenrichtung kostet genauso: **ein Vermerk, der Arbeit GRÖSSER macht
+als sie ist, parkt eine echte Reparatur** — hier vier Wochen lang hinter einer Kostenschätzung,
+die nie nachgerechnet wurde, weil sie plausibel klang. Die falsche Prämisse stand in DREI
+Zuhausen (Task #105, der Wächter-Kopf, die #1424-Commit-Nachricht); die zwei lebenden sind
+korrigiert, die Commit-Nachricht ist Geschichte und bleibt.
+
+**Gebaut:** `ADMOSCSender.packedSceneMessages(_:dialect:)` — kein zweites Zuhause für die Regel
+(#416), es beantwortet nur „wessen Blätter sind das" und reicht jede Objekt-Liste an den EINEN
+Fold. Gruppiert über die GEPARSTE Adresse, nie über die Emissions-Schrittweite (`/adm/obj/11/`
+trägt nicht das Präfix `/adm/obj/1/`, weil danach ein Slash steht; eine Vierer-Schrittweite wäre
+still falsch, sobald ein Kanal dazukommt). Reihenfolge POSITIONELL — der gepackte Block nimmt
+den Platz des ERSTEN Blatts; eine Zwei-Pass-Fassung, die Fremd-Adressen ans Ende hängt, war
+zuerst geschrieben und ist verworfen: heute ein No-op, morgen eine stille Umsortierung der
+Leitung. `switch` über den Dialekt ist erschöpfend (#431), damit ein neuer Dialekt Stellung
+nehmen MUSS statt eine Antwort zu erben.
+
+⛔ **NICHT gefaltet: IEM.** Anderer Standard (0-basierte Quellen, Grad, dB, keine Distanz);
+`/aed` bedeutet dort nichts, und es zu senden wäre eine Konformitäts-Reparatur, die einen
+Dialekt weiter die Konformität bricht. ⛔ **Die KARTESISCHE Hälfte bleibt offen und steht so im
+Wächter**: `/x /y /z` erkennt der Fold nicht, die Objekte laufen UNGEPACKT durch — unverändertes
+Verhalten, keine Regression. Die gepackte kartesische Adresse ist hier nicht verifiziert, und
+dieses Repo baut nicht gegen eine erinnerte Spec.
+
+**Wächter:** `ThePackedPositionIsAtomicOrAbsentTests` Ansprüche 9–13 (12 Zusicherungen; 10 und
+11 sind Gegengewichte nach #343 — IEM unverändert, kartesisch unverändert und kein erfundenes
+`/xyz`). §0: der Wächter kompiliert gegen den Parent NICHT (er nennt zwei neue Symbole), also
+hat dort **keine Zusicherung ein Verdikt** — hand-transkribiert stattdessen: 12 von 12 grün auf
+dem Worktree, und die zwei Quelltext-Zusicherungen von Anspruch 13 sind gegen den Parent-Text
+direkt getrieben und dort beide rot, für den Grund, den ihr Name nennt. Alle zehn stehenden
+Prüfer Exit 0. Compile-verifiziert durch die Gates, **nicht** geräteverifiziert — und der Pfad
+ist weiterhin DOPPELT türlos (`streamsScene` false, `sceneDialect` ohne Schreiber), also ändert
+sich für einen Nutzer heute nichts.
