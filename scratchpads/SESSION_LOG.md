@@ -37723,3 +37723,37 @@ gemacht.** Ich habe in dieser Runde nur noch `date -u` als Zeitmass benutzt stat
 eigenen Buchhaltung ueber Hintergrund-`sleep`s. Ergebnis: jeder „laeuft noch"-Befund war echt,
 und ich habe keinen einzigen #1416-Fehlalarm ausgeloest. **Eine Messung ersetzt ein Gefuehl
 auch dann, wenn das Gefuehl beim letzten Mal zufaellig recht hatte.**
+
+## 2026-09-22 — #1443: eine Doc-Zeile, die dem falschen Mitglied gehoerte
+
+**Der Defekt.** Swift faltet benachbarte `///`-Zeilen zu EINEM Kommentar. In
+`Audio/RetroCapture.swift` stand *„Deinterleave ring buffer data and write to file in
+8192-frame chunks."* unmittelbar vor dem `#630`-Block und haftete damit an
+`preRollWindow(requestedFrames:)` — einer Funktion, die zwei `Int`s zurueckgibt, weder
+deinterleavt noch schreibt. Sie war die ERSTE Zeile dieses Doc-Kommentars, also genau die,
+die Quick Help anzeigt. Der echte Deinterleaver ist `writeRange` rund 30 Zeilen tiefer.
+
+⚠️ **Die RICHTUNG ist der Grund, warum es einen Commit wert war.** Das ist die Datei, aus der
+#1413 Disk-I/O vom Tap-Callback entfernt hat. Ein Doc-Kommentar, der behauptet, eine
+FENSTER-Funktion schreibe eine Datei, schickt die naechste Sitzung mit genau der falschen
+Vorstellung davon los, wo in dieser Datei I/O passiert.
+
+**Geloescht statt verschoben** (#818): `writeRange`s eigener Kopf sagt dasselbe besser („The
+ONE place frames reach disk", „one deinterleave, one chunk size"), und die Zahl 8192 ist ein
+Literal, das der Code ohnehin haelt (`:562`) — eine zweite Abschrift waere ein Datum.
+
+**Verifikation, so stark wie sie fuer eine Doc-Aenderung sein kann:** kommentar-gestrippt sind
+beide Baeume **363 zu 363 Code-Zeilen, Sequenz IDENTISCH**, Klammer-Delta ueber den
+gestrippten Text **0/0/0/0**. Es ist beweisbar eine reine Kommentar-Aenderung. Kein Waechter
+nennt das Literal (`grep -rn "Deinterleave ring buffer" Tests/` → nichts), also bricht die
+Loeschung nichts. Alle zehn stehenden Pruefer Exit 0, `moved-needles` diesmal ebenfalls 0
+(keine Code-Zeile entfernt).
+
+⭐ **UND ICH HABE BEWUSST KEINEN ELFTEN PRUEFER GEBAUT.** Der Sweep, der das gefunden hat
+(ein `/// #NNNN — `-Block-Oeffner mitten in einem `///`-Lauf ohne trennende `///`-Zeile),
+lieferte **vier Kandidaten: einen echten, eine Formatierungs-Warze und ZWEI Fehlalarme** —
+beide Satz-Fortsetzungen, bei denen eine Ticket-Nummer zufaellig eine Zeile eroeffnet. Eine
+Fehlalarm-Quote von 50 % ist genau das, wovor #665 warnt: ein Pruefer mit Fehlalarmen ist
+einer, den niemand liest, und sein gruener Lauf gilt danach trotzdem als Beleg. **Die ehrliche
+Ausgabe ist dieser Absatz plus der Befund im Status-File, nicht ein Skript.** Wer den Sweep
+wiederholen will, findet ihn dort ausgeschrieben.

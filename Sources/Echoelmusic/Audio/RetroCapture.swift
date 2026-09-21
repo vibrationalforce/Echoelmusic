@@ -511,8 +511,18 @@ final class RetroCapture {
         }
     }
 
-    /// Deinterleave ring buffer data and write to file in 8192-frame chunks.
     /// #630 — the ONE place that decides which ring frames a pre-roll may read.
+    ///
+    /// ⛔ A LINE ABOVE THIS ONE CLAIMED THIS FUNCTION DEINTERLEAVES AND WRITES A FILE
+    /// (#1443). It does neither — it returns two `Int`s. Swift folds adjacent `///`
+    /// lines into ONE comment, so a sentence written for `writeRange` below had silently
+    /// become the FIRST line of this member's doc, i.e. the line Quick Help shows.
+    /// Deleted rather than moved: `writeRange`'s own header already says it better
+    /// ("The ONE place frames reach disk", "one deinterleave, one chunk size"), and the
+    /// chunk figure it carried is a literal that would go stale while the code holds it.
+    /// ⚠️ THE DIRECTION IS WHAT MADE IT WORTH A COMMIT: this is the file #1413 cleared of
+    /// disk I/O on the tap callback, so a doc claiming a windowing function writes a file
+    /// points a future reader at exactly the wrong conclusion about where I/O happens.
     ///
     /// Returns the newest `requestedFrames` (capped at the ring), clamped so the window never
     /// reaches back across a sample-rate switch. Right after a switch it legitimately returns
