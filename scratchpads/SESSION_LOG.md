@@ -36974,3 +36974,91 @@ meldet nichts, wenn die Enden sich uneinig sind — und hält das Feature für k
 ROT (die Seite trägt dort kein 4001). Worktree: beide grün. 4b Zusicherung 2 (Kopplung) ist grün
 auf BEIDEN und ist das Gegengewicht (#343) — die Kopplung hielt vorher wie nachher, gewandert ist
 die Zahl. Sechs Prüfer Exit 0. Compile-verifiziert durch die Gates, nicht geräteverifiziert.
+
+## 2026-09-21 — #1434 MPE-Egress-Gate (Founder-Phase 1) + #1435 PeerIdentity (Phase 2)
+
+**Auftrag:** „ECHOELMUSIC — EXECUTION DIRECTIVE — Four gated phases". PHASE 0 Sync + P0–P3
+pruefen · PHASE 1 MIDI-Bio-Egress · PHASE 2 PeerIdentity · PHASE 3 Workstation-Tuer ·
+PHASE 4 Timeline-Wiedergabe · PHASE 5 Stopp + Neumessung. Je Phase einzeln gegated,
+„Do NOT batch the four together."
+
+### PHASE 0 — Praemissen, gemessen statt angenommen
+HEAD `07ecc3b66`, origin/main `6a202ffc5`, Baum sauber.
+· **P0 FALSCH — durch Phase 1 selbst**: MIDI ist seither die SIEBTE
+  `allowsEgress(frame.source)`-Aufrufstelle.
+· **P1 WAHR.**
+· **P2 WAHR und SCHLIMMER als formuliert** — das ist die Phase-3-Stoppbedingung, siehe unten.
+· **P3 WAHR** — null `timelinePlayer.play(`-Aufrufer.
+
+### PHASE 1 — #1434 (`07ecc3b66`)
+`MPEExpression.egressible(from:)` in der #511-Form. Kein neuer Policy-Typ, wie verlangt.
+Gates BEIDE gruen und GELESEN, nicht geschlossen: Compile Check run `35623448837`,
+job `106411882915`, Schritt 7 = **success** (16:06:47→16:12:04) · CI/CD run `35623448903`,
+job `106412158888`, Schritt 9 `Build for Testing` = **success** (16:09:07→16:14:29).
+⚠️ **Eigene Fehllesung, protokolliert statt stillschweigend korrigiert:** ich meldete dem
+Founder, der Compile-Job „kompiliere seit 16:06:47" (~30 min). Er war um 16:12:04 nach
+5 m 17 s fertig; `in_progress` stand nur, weil „Post Run actions/checkout@v4" haengte.
+Genau die #1416-Lage aus `Tests/CISmoke/CLAUDE.md` §5, zwei Stunden nachdem ich sie
+aufgeschrieben hatte.
+
+### PHASE 2 — #1435 (`d7868016f`)
+**Befund:** `MultipeerSession` baute die `MCPeerID` aus `UIDevice.current.name` und nahm
+diese EINE Zeichenkette als Schluessel fuer `peerIDs`, die `discovered`-Dedupe,
+`peerReadings` und `senderName`; `DiscoveredPeer.name` war woertlich `{ id }`. Kein
+`user-assigned-device-name`-Entitlement im Repo (gemessen ueber jede `*.entitlements`
+und `*.plist`) ⇒ auf iOS 16+ meldet jedes Standard-iPhone den MODELLNAMEN ⇒ zwei
+Telefone waren EIN Peer und EIN `peerReadings`-Eintrag mit zwei Koerpern.
+
+**Gebaut:** `Sync/PeerIdentity.swift` — Foundation-only, `stableID` + `displayName`, kein
+Framework-Objekt in der Identitaet. Transport-Schreibweise traegt beide in 63 Byte, der
+**Schluessel zuerst budgetiert** (eine Kuerzung frisst das Etikett, nie den Schluessel).
+Altbau-Peer faellt per `resolve` auf das alte Verhalten zurueck statt abgewiesen zu werden.
+Etikett = kanonischer Kuenstlername, sonst Geraetename. `PerformerSignature` absichtlich
+NICHT wiederverwendet.
+
+**Gates BEIDE gruen, gelesen:** Compile Check run `35626339066`, job `106421519270`,
+Schritt 7 = **success** (16:33:34→16:38:53) · CI/CD run `35626339133`, job `106421747698`,
+Schritt 9 `Build for Testing` = **success** (16:34:44→16:39:24) ⇒ das blockierende Buendel
+KOMPILIERT, inklusive `ThePeerKeyIsNotTheLabelTests` und der drei umgeankerten Waechter.
+Dazu `Code Quality & Linting` = success, `Security Vulnerability Scan` = success.
+
+⭐ **ZWEI LEHREN, die nicht im Auftrag standen:**
+1. **`moved-needles.py` sieht eine Nadel nicht, die nur ein TEIL der entfernten Zeile ist.**
+   Es meldete drei Treffer; ein VIERTER —
+   `ColabPayload.decode(data)?.attributed(to: peerName)` in
+   `TheSenderIsTheTransportNotTheClaimTests` Anspruch 5 — war unsichtbar, weil das Werkzeug
+   die GANZE entfernte Zeile im Buendel sucht und die Nadel eine Teilzeichenkette davon ist.
+   Gefunden hat ihn nur das Lesen der Waechter (§4). **Das Werkzeug ist eine Frage, keine
+   Freigabe.**
+2. **Ein Waechter stand kurz davor, AUS DEM FALSCHEN GRUND gruen zu werden** — die
+   #367-Spiegellage. `YouCanNameYourselfTests` Anspruch 7 behauptet, `MultipeerSession.swift`
+   enthalte kein `artistName`; es enthaelt es weiterhin nicht, weil der Lesevorgang EINE DATEI
+   WEITER gewandert ist (`PeerIdentity.local` ueber `SessionContext.artistStorageKey`). Eine
+   dateibezogene Abwesenheits-Nadel kann eine Tatsache, die nebenan umgezogen ist, nicht sehen.
+   Der Anspruch ist UMGEDREHT statt geloescht — wie seine eigene Fehlermeldung es anwies — und
+   dabei von einem Scan auf ECHTES VERHALTEN gehoben.
+
+⚠️ **Neue Flaeche benannt, nicht vergraben (Ω53):** der Kuenstlername verlaesst jetzt das
+Geraet (AWDL-Advertising), **nur waehrend Live Colabo laeuft**. Die Bildunterschrift von
+`ArtistNameRow` sagt es; sie sagte vorher das Gegenteil. Vier Prosa-Heimaten, die „#513 ist
+offen" behaupteten, sind im selben Commit korrigiert (#456).
+
+### PHASE 3 — GESTOPPT, Stoppbedingung ist eingetreten
+Der Auftrag sagt: *„If there is no viable existing workstation/timeline surface and the phase
+requires building a new editor: STOP. Report."* **Gemessen: es gibt im Baum ueberhaupt KEINE
+Workstation-/Timeline-`View`** — nicht tuerlos, ABWESEND. Der einzige `: View`-Treffer in den
+Timeline-/Arrange-/Clip-Dateien ist ein Grabstein-Kommentar in
+`TimelineAutomationRowMath.swift`. Drei Optionen vorgelegt (minimale Nur-Lese-Flaeche /
+Play in die Transport-Zeile ohne Tuer / echter Editor); Empfehlung: die erste.
+**Phase 4 haengt an derselben Entscheidung.** Keine Produktionszeile weiter ohne Founder.
+
+### Offen aus dieser Runde
+· **NEEDS-FOUNDER-VERIFY: Zwei-Telefon-Probe** fuer #1435 (Task #113) — gedruckt von
+  `founder-verify.py`.
+· **MIDI-Clock-Egress-Gate** — registriert, nicht gebaut, Begruendung oben.
+· **Ω49 / Ω21 verletzt VOR dieser Sitzung**, im Ω63-Bericht festgehalten: fuenf
+  Persistenz-Wurzeln (`projects.json` ist die fuenfte und die einzige mit Tuer) und ZWEI
+  Timeline-Modelle (`TimelineDocument` und `Arrangement`). Halten, nicht aufloesen (HOLD A/B).
+· **#541-Absatz in `CLAUDE.md`**: die ⭐-Ruecknahme ist da, die Herleitung darunter steht
+  weiter im PRAESENS und ist damit dreimal falsch. Nachziehen, wenn die Datei das naechste Mal
+  angefasst wird.
