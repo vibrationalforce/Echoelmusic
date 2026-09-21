@@ -17,6 +17,24 @@
 //               hrvNormalized, breathRate, synthetic)`.  All derived.
 //   · Mod tap   `ModulationEngine` → `/echoelmusic/mod/*`, already-applied values.
 //
+// ⛔ THE CENSUS SAID **SIX** AND THERE ARE **SEVEN** (#1434). MIDI was missing from this
+// list — `PianoRollView` projected a bio frame into CC74 / channel pressure / pitch bend
+// and handed it to `MIDIOutput`, which publishes a virtual source AND fans out over every
+// CoreMIDI destination. The clinical CONCLUSION of this file survives unchanged: those
+// three are `.derived`, and the millisecond statistics never reached that path either, so
+// "the surface is clinical-free" was and is true. What was wrong is the DENOMINATOR, and
+// with it the word "whole" in this file's own name.
+//
+// ⭐ THIS IS THE #867 DEFECT INSIDE THE GUARD THAT CITES #867 AS ITS LAW, three lines up.
+// The sACN line was measured rather than inferred from a neighbour — and then the list
+// those measurements belonged to was itself taken as complete. **Measuring every member
+// of a set carefully is not the same as checking the set is closed.**
+//
+//   · MIDI/MPE `MPEExpression.egressible(from:)` → CC74 · channel pressure · pitch bend.
+//     All derived. SOURCE-gated since #1434 (it was not gated at all before); the
+//     `.clinical` question is settled by the same fact as the other six — `BioSampleFrame`'s
+//     three millisecond fields are not among the three this mapping reads.
+//
 // So the surface is ALREADY clinical-free everywhere except the OSC batch, which #1292
 // gated. NOTHING PROVED IT, and nothing would catch the regression — and the regression
 // is the plausible next edit, not a hypothetical: a fifth DMX channel carrying "HRV

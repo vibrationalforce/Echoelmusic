@@ -40,6 +40,61 @@ public struct MPEExpression: Equatable, Sendable {
         return MPEExpression(slideCC74: slide, pressure: press, bend: drift)
     }
 
+    /// The ONE way a BODY becomes MPE expression — and the one place the App Store
+    /// 5.1.3 source gate is asked about it.
+    ///
+    /// ⭐ THIS IS `BioPeek.egressible(from:)`'s SHAPE, deliberately, down to the
+    /// signature (`ColabPayload.swift`). That is the #511/#186 lesson applied to the
+    /// fourth egress surface: take the FRAME, not three loose Floats, so the rule is
+    /// applied by the thing that PROJECTS, never by whoever remembers to ask. Three
+    /// `Float`s carry no provenance, so `from(coherence:breathDepth:hrvNormalized:)`
+    /// below had nothing to check — exactly the position `sendBio` was in before it
+    /// stopped taking a `BioPeek`.
+    ///
+    /// ⛔ WHY IT WAS MISSING, stated plainly so it is not re-read as a shipped breach.
+    /// `EngineBus.usableBio()` filters on FRESHNESS ONLY — it never looks at
+    /// `frame.source` — so a `.healthKit`/`.watch`/`.oura` frame reached this mapping
+    /// and left as CC74 / channel pressure / pitch bend over CoreMIDI, while the OSC,
+    /// ADM-OSC, Art-Net, sACN and Multipeer paths all consulted the policy. MIDI was
+    /// the one surface that did not. It sat behind THREE default-off switches (the
+    /// `midi.out` route, `midi.out.mpe`, `midi.out.expression`) and carried
+    /// `.derived`-class values, never `.clinical` — so: a missing privacy gate on an
+    /// opt-in egress path, not a leak in anyone's shipped build.
+    ///
+    /// ⚠️ WHAT IS DELIBERATELY NOT GATED HERE, because over-gating ordinary music is
+    /// its own defect: a note whose VELOCITY was musically shaped by the body is a
+    /// creative result, not a measurement. It has passed through generation, scale
+    /// quantisation, `noteExpression` and the lane gain; no reading is recoverable
+    /// from it. The same holds for note selection. Only the three CONTINUOUS
+    /// dimensions above are one map away from the sensor, and only they are refused.
+    ///
+    /// ⚠️ THE MIDI CLOCK IS A SEPARATE, UNRESOLVED QUESTION and is NOT decided by this
+    /// function — see `MIDIOutput.setClockTempo`. Under `.flowFree` its BPM follows the
+    /// pulse, and the OSC path withholds exactly that (`OSCSender.sendMusicIfFresh`,
+    /// `bodyMayEgress`). Suppressing clock updates is not the same move as returning
+    /// nil here: the pulse train keeps running, so a withheld tempo DESYNCS the
+    /// receiver rather than silencing a value. Different failure story ⇒ different
+    /// slice, founder-decided.
+    ///
+    /// - Returns: nil when this body's source may not leave the device, which the
+    ///   caller already treats as "no body" — a plain note-on, unchanged behaviour.
+    public static func egressible(from frame: BioSampleFrame) -> MPEExpression? {
+        guard BioEgressPolicy.allowsEgress(frame.source) else { return nil }
+        // Press should SWELL through the breath, not saw-reset at the cycle wrap:
+        // shape the 0…1 phase into a smooth hump (0 at the cycle ends, 1 mid-breath).
+        let breathSwell = Float(sin(Double(frame.breathPhase) * .pi))
+        // Both fields neutral-for-sound: this type declares its own no-body state as
+        // slide 64 / bend 0 (`.neutral`), and the raw 0s contradict it in opposite
+        // directions. Coherence 0 sends CC74 0 (darkest timbre). And
+        // `drift = (hrv·2−1)·(bendCents/100)/range` puts hrv 0 at the negative end of
+        // the drift's own range — not a pinned −1 bend, but −0.0104 normalized, which
+        // the receiver expands over ±48 semitones to exactly −50 cents. So every note
+        // left a quarter-tone flat for the whole pre-measurement window.
+        return from(coherence: frame.coherenceForSound,
+                    breathDepth: breathSwell,
+                    hrvNormalized: frame.hrvForSound)
+    }
+
     /// Neutral 5D state: slide centred (CC74 = 64, the MPE initial-value
     /// convention), no pressure, no bend. The base a per-note override lands on
     /// when no body is present.

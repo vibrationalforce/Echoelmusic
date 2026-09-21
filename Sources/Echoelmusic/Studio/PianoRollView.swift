@@ -1146,23 +1146,20 @@ public final class PianoRollModel {
             }
         }
         // The body's live 5D expression for this note (only when MIDI-out 5D mode is
-        // armed and a fresh bio frame exists): coherence→Slide/brightness,
-        // breath→Press, HRV→Glide micro-drift. nil → plain note-on (unchanged).
+        // armed, a fresh bio frame exists, AND that body's source may leave the
+        // device): coherence→Slide/brightness, breath→Press, HRV→Glide micro-drift.
+        // nil → plain note-on (unchanged).
+        //
+        // ⭐ THE PROJECTION AND THE 5.1.3 GATE ARE ONE CALL, and the mapping moved into
+        // it rather than staying here. `usableBio()` answers "is this reading current"
+        // and has never answered "may this body's numbers leave" — it does not look at
+        // `frame.source` at all. Splitting those two questions across a `guard` here
+        // and a rule somewhere else is how one of them gets dropped while the other is
+        // edited (`BioPeek.egressible`'s own note says exactly this). One symbol owns
+        // both: `MPEExpression.egressible(from:)`, which is where the reasoning lives.
         let expression: MPEExpression? = {
             guard midiOut?.expressionEnabled == true, let bio = bus?.usableBio() else { return nil }
-            // Press should SWELL through the breath, not saw-reset at the cycle wrap:
-            // shape the 0…1 phase into a smooth hump (0 at the cycle ends, 1 mid-breath).
-            let breathSwell = Float(sin(Double(bio.breathPhase) * .pi))
-            // Both fields neutral-for-sound: `MPEExpression` declares its own no-body
-            // state as slide 64 / bend 0 (`.neutral`), and the raw 0s contradict it in
-            // opposite directions. Coherence 0 sends CC74 0 (darkest timbre). And
-            // `drift = (hrv·2−1)·(bendCents/100)/range` puts hrv 0 at the negative end
-            // of the drift's own range — not a pinned −1 bend, but −0.0104 normalized,
-            // which the receiver expands over ±48 semitones to exactly −50 cents. So
-            // every note left a quarter-tone flat for the whole pre-measurement window.
-            return MPEExpression.from(coherence: bio.coherenceForSound,
-                                      breathDepth: breathSwell,
-                                      hrvNormalized: bio.hrvForSound)
+            return MPEExpression.egressible(from: bio)
         }()
         // Tied notes are already carried in `active` and their sound keeps ringing —
         // only genuinely new notes fire an attack. The lane mix scales every attack;
