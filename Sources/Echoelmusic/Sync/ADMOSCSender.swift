@@ -64,8 +64,33 @@ public final class ADMOSCSender {
         didSet { Self.persistTarget(host, port); reconnectIfActive() }
     }
 
-    /// Renderer OSC port. ADM-OSC renderers typically listen on a port distinct
-    /// from TouchOSC's 8000 — default 9000, user-configurable.
+    /// Renderer OSC port. Default **4001**, user-configurable in Routing.
+    ///
+    /// ⭐ 4001 IS THE SPEC'S OWN DEFAULT FOR THE ROLE WE PLAY (#1433). ADM-OSC v1.0's quick
+    /// reference lists it as "Default send port" and its checklist says "Send UDP packets to
+    /// port 4001". ⚠️ It is a DEFAULT, not a `must` — saying "normative" would claim more than
+    /// the source carries, and this repository does not upgrade a recommendation into a
+    /// requirement to make a change sound better founded.
+    ///
+    /// ⚠️ THE SPEC'S OTHER PORT, 4002, IS NOT OURS. It is where a RECEIVER replies to queries.
+    /// Echoel sends no queries and has no ADM listener — the one `NWListener` in `Sources/` is
+    /// `OSCReceiver`, the `/echoelmusic/ctrl/*` control input. A port number only means
+    /// something next to a role, and reading 4002 as "ours too" would open a listener the
+    /// product does not have.
+    ///
+    /// ⛔ WHAT 9000 WAS, measured rather than assumed, because it decided this change. The old
+    /// comment here said the port should be "distinct from TouchOSC's 8000" — i.e. 9000 was
+    /// picked so our two feeds would not collide, NOT because any renderer expects it. There
+    /// was no compatibility evidence for it, and that is the whole argument for moving.
+    ///
+    /// ⚠️ AN INSTALL THAT NEVER TOUCHED THIS FIELD RETARGETS SILENTLY, and no code could have
+    /// prevented it. `persistTarget` runs in `didSet`, and `didSet` does not fire during
+    /// `init`, so the key exists only after a user edit — a fresh install and a long-running
+    /// one that kept the default are indistinguishable here, because the information was never
+    /// recorded. A two-release migration (persist eagerly, then flip) only protects whoever
+    /// runs the in-between build, and a tester can skip it. The honest mitigation is the one
+    /// taken: every home of the number moved in ONE commit (#456), and the integrations page
+    /// says the default changed and where to change it back.
     public var port: UInt16 {
         didSet { Self.persistTarget(host, port); reconnectIfActive() }
     }
@@ -129,7 +154,7 @@ public final class ADMOSCSender {
     @ObservationIgnored private let loop = PollingLoop()
     @ObservationIgnored private var lastFrameTimestamp: TimeInterval = -1
 
-    public init(host: String = "127.0.0.1", port: UInt16 = 9000, objectIndex: Int = 1) {
+    public init(host: String = "127.0.0.1", port: UInt16 = 4001, objectIndex: Int = 1) {
         let d = UserDefaults.standard
         self.host = d.string(forKey: Self.hostKey) ?? host
         let p = d.integer(forKey: Self.portKey)

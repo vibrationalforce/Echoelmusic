@@ -156,7 +156,7 @@ final class ADMOSCSenderTests: XCTestCase {
     func testInit_defaultEndpoint() {
         let s = ADMOSCSender()
         XCTAssertEqual(s.host, "127.0.0.1")
-        XCTAssertEqual(s.port, 9000)
+        XCTAssertEqual(s.port, 4001)
         XCTAssertEqual(s.objectIndex, 1)
         XCTAssertFalse(s.isActive)
     }

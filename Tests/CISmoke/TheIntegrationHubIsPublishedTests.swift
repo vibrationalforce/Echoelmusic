@@ -71,7 +71,9 @@ final class TheIntegrationHubIsPublishedTests: XCTestCase {
     /// Claim 4 — the four ports.
     func testTheFourPortsAreOnTheHub() throws {
         let hub = try text("docs/integrations.html")
-        for port in ["8000", "9000", "6454", "5568"] {
+        // 9000 -> 4001 with #1433: the spec's own "Default send port" for the role Echoel
+        // plays (sender). The page and the code move together or the hub starts lying (#456).
+        for port in ["8000", "4001", "6454", "5568"] {
             XCTAssertTrue(hub.contains(port), "port \(port) is missing from the hub (#1241)")
         }
     }
@@ -113,6 +115,36 @@ final class TheIntegrationHubIsPublishedTests: XCTestCase {
 
     private func repoRoot() throws -> URL {
         URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+    }
+
+    /// Claim 4b — the CODE's default port and the PAGE's number are the same number (#1433).
+    ///
+    /// ⭐ THIS IS THE COUPLING THAT JUST BIT, pinned rather than remembered. Claim 4 asks only
+    /// that the hub CARRY four port strings; it stayed green for as long as the page said 9000
+    /// and would have stayed green if the code had moved alone. A port the app does not send on
+    /// is worse than an undocumented one: the reader configures their renderer, sees no error —
+    /// UDP reports nothing when the two ends disagree — and concludes the feature is broken.
+    ///
+    /// ⚠️ It reads the DECLARATION, not a prose sentence, so a comment about the old number
+    /// (the file deliberately keeps a tombstone naming 9000) cannot satisfy or break it.
+    func testTheAdvertisedADMPortIsTheOneTheSenderDefaultsTo() throws {
+        let sender = try text("Sources/Echoelmusic/Sync/ADMOSCSender.swift")
+        guard let range = sender.range(of: #"port: UInt16 = (\d+)"#, options: .regularExpression) else {
+            return XCTFail("""
+                ANCHOR MISSING: no `port: UInt16 = <n>` declaration in ADMOSCSender.swift.                 Re-anchor rather than letting this stay green (#454).
+                """)
+        }
+        let declared = sender[range].split(separator: "=").last.map {
+            $0.trimmingCharacters(in: .whitespaces)
+        } ?? ""
+        XCTAssertEqual(declared, "4001", """
+            The ADM-OSC sender defaults to \(declared), not 4001. 4001 is the port ADM-OSC v1.0             names as the default for the role Echoel plays — a SENDER. (The spec's 4002 is the             receiver's query-reply port and is not ours: Echoel has no ADM listener.) If this             moves on purpose, move the hub page and this pin in the SAME commit (#456).
+            """)
+
+        let hub = try text("docs/integrations.html")
+        XCTAssertTrue(hub.contains(declared), """
+            The hub page does not carry \(declared), the port the sender actually defaults to.             A reader configures their renderer from this page; a number that does not match the             code sends them to a port nothing arrives on, and UDP reports no error either end.
+            """)
     }
 
     private func text(_ relativePath: String) throws -> String {

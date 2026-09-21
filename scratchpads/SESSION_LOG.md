@@ -36921,3 +36921,56 @@ Anspruch 11 und die `/xyz`-Zeile von Anspruch 1 dort rot, die polare Hälfte gr�
 Alle zehn Prüfer Exit 0. Compile-verifiziert durch die Gates, nicht geräteverifiziert. Der
 Szenen-Pfad bleibt doppelt türlos — heute ändert sich für einen Nutzer nichts; was sich ändert,
 ist dass ein kartesisch-only-Renderer nicht mehr der einzige Empfänger mit zerrissener Position ist.
+
+## 2026-09-21 — #1433 ADM-OSC-Default-Port 9000 → 4001 (Founder-Auftrag, bedingt)
+
+**Founder 2026-09-21, wörtlich bedingt:** *„Wenn 4001 der aktuelle normative/default Port der
+Spec ist und ihr keinen belegten Kompatibilitätsgrund für 9000 habt, sollte 4001 der Default
+werden … Dafür würde ich aber die aktuelle Spec noch einmal exakt gegen eure Sender-/Receiver-
+Rollen prüfen, bevor Claude etwas ändert."* Beide Bedingungen gemessen, dann gebaut.
+
+**ROLLE ZUERST, und sie entscheidet mehr als die Zahl.** Echoel ist für ADM-OSC reiner SENDER:
+der einzige `NWListener` in `Sources/` ist `OSCReceiver` (der `/echoelmusic/ctrl/*`-Eingang,
+#1255), kein ADM-Empfänger. Die Spec nennt **4001 „Default send port"** (Checkliste: „Send UDP
+packets to port 4001") und **4002** als Query-Reply-Port des EMPFÄNGERS. ⚠️ 4002 gehört uns also
+NICHT — eine Portnummer bedeutet nur etwas neben einer Rolle, und 4002 als „auch unserer" zu
+lesen öffnete einen Listener, den das Produkt nicht hat.
+
+⚠️ **PRÄZISIERUNG gegen die Frage: 4001 ist DEFAULT, nicht normativ.** Die Quelle schreibt
+„Default send port", kein `must`/`shall`. Das ändert die Antwort nicht — wir setzen ja genau
+einen Default —, aber eine Empfehlung zur Anforderung hochzustufen, damit eine Änderung besser
+begründet klingt, ist genau die Sorte Über-Behauptung, die dieses Repo sonst zurücknimmt.
+
+**KEIN KOMPATIBILITÄTSGRUND FÜR 9000, und der Beleg stand im Code selbst.** Der alte Kommentar
+an `ADMOSCSender.port` sagte: Port „distinct from TouchOSC's 8000 — default 9000". 9000 war also
+gewählt, damit unsere zwei Feeds nicht kollidieren, nicht weil ein Renderer es erwartet.
+
+⚠️ **DER MIGRATIONS-HAKEN, den keine Code-Lösung schließt, und er ist aufgeschrieben statt
+weggeschwiegen.** `persistTarget` läuft im `didSet`, `didSet` feuert nicht in `init` — der
+Schlüssel `net.adm.port` existiert also NUR nach einer Nutzer-Änderung. Eine Neuinstallation und
+eine lange laufende, die den Default nie anfasste, sind im Code **nicht unterscheidbar**, weil
+die Information nie aufgezeichnet wurde. Es gibt auch keinen „hat schon gelaufen"-Marker im
+Baum (gemessen: null Treffer für `hasSeenOnboarding|onboardingCompleted|hasLaunchedBefore|
+firstRun`). Eine Zwei-Release-Migration (erst eager persistieren, dann flippen) schützt nur, wer
+den Zwischen-Build tatsächlich startet — ein Tester kann ihn überspringen. **Die ehrliche
+Milderung ist die genommene:** jedes Zuhause der Zahl in EINEM Commit (#456), plus ein sichtbarer
+Absatz auf der Integrations-Seite, der die Änderung nennt und sagt, wo man sie zurückdreht.
+
+**Fünf Zuhause, alle bewegt:** `ADMOSCSender.swift` (Default + Kommentar), `TheIntegrationHub
+IsPublishedTests` Anspruch 4, `Tests/EchoelmusicTests/ADMOSCSenderTests` (nicht-blockierend, von
+KEINEM Gate kompiliert — #208 —, wäre also still verrottet), `docs/integrations.html`,
+`docs/faq.html`. Nach der Änderung null verbliebene 9000 außer dem Grabstein-Kommentar und dem
+Migrations-Absatz.
+
+⭐ **NEUER WÄCHTER, Anspruch 4b — genau die Kopplung, die hier gebissen hat.** Anspruch 4 verlangt
+nur, dass die Seite VIER Port-Strings TRÄGT; er blieb grün, solange die Seite 9000 sagte, und
+wäre grün geblieben, wenn der Code allein gewandert wäre. 4b liest die DEKLARATION per Regex
+(nicht einen Prosa-Satz, damit der Grabstein ihn weder erfüllen noch brechen kann) und verlangt,
+dass die Seite genau diese Zahl trägt. **Ein Port, auf dem die App nicht sendet, ist schlimmer
+als ein undokumentierter:** der Leser konfiguriert seinen Renderer, bekommt keinen Fehler — UDP
+meldet nichts, wenn die Enden sich uneinig sind — und hält das Feature für kaputt.
+
+**§0:** gegen beide Bäume getrieben. Parent: `declared=9000` → 4b Zusicherung 1 ROT; Anspruch 4
+ROT (die Seite trägt dort kein 4001). Worktree: beide grün. 4b Zusicherung 2 (Kopplung) ist grün
+auf BEIDEN und ist das Gegengewicht (#343) — die Kopplung hielt vorher wie nachher, gewandert ist
+die Zahl. Sechs Prüfer Exit 0. Compile-verifiziert durch die Gates, nicht geräteverifiziert.
