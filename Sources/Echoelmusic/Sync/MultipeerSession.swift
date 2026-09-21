@@ -32,9 +32,14 @@ import UIKit
 private struct UncheckedBox<T>: @unchecked Sendable { let value: T }
 
 /// A peer the browser has found and we could invite.
+///
+/// ⛔ `name` USED TO BE `{ id }` — one value wearing two hats, and that was the #1435 defect
+/// in miniature: the list key and the label a human reads were literally the same string, so
+/// two phones advertising the identical device name collapsed into ONE row. They are now two
+/// stored fields, and the key is the peer's `PeerIdentity.stableID`.
 public struct DiscoveredPeer: Identifiable, Equatable, Sendable {
-    public let id: String            // displayName (unique enough for a nearby session)
-    public var name: String { id }
+    public let id: String            // PeerIdentity.stableID — the KEY, never shown
+    public let name: String          // PeerIdentity.displayName — shown, never keyed on
 }
 
 /// An incoming invitation awaiting the user's EXPLICIT consent. Never auto-accepted
@@ -56,7 +61,12 @@ public final class MultipeerSession: NSObject {
 
     // MARK: - Observed state
     public private(set) var isLive = false
-    public private(set) var connectedPeerNames: [String] = []
+    /// Everyone currently connected, keyed apart from how they are labelled (#1435).
+    public private(set) var connectedPeers: [PeerIdentity] = []
+    /// The labels only. Kept as a computed projection so the several `.isEmpty` readers in
+    /// `LiveColaboView` stay exactly as they were; it must NEVER become the key again, which
+    /// is the whole point of `connectedPeers` sitting beside it.
+    public var connectedPeerNames: [String] { connectedPeers.map(\.displayName) }
     public private(set) var discovered: [DiscoveredPeer] = []
     /// Set when a peer sends us a session — the UI offers to load/import it.
     public private(set) var incoming: ColabPayload?
@@ -65,7 +75,7 @@ public final class MultipeerSession: NSObject {
     public private(set) var pendingInvitation: PendingInvitation?
     /// Last status line for the UI (e.g. "Shared with 2 peers").
     public private(set) var status: String = "Off"
-    /// Live bio per connected peer (E5): display name → last reading AND when it
+    /// Live bio per connected peer (E5): `PeerIdentity.stableID` → last reading AND when it
     /// arrived here. Shown SIDE BY SIDE with our own — never combined into a
     /// cross-person score (decision 2026-06-20). Cleared on disconnect/stop.
     /// Updates arrive at the sender's ~2.5 Hz — read this only in leaf views
@@ -77,6 +87,12 @@ public final class MultipeerSession: NSObject {
     /// `PeerReading.live(at:)`; never render `.peek` directly. That one substitution is
     /// what keeps a pocketed phone from showing a perfectly steady pulse on someone
     /// else's screen for the rest of the session.
+    ///
+    /// ⛔ THE KEY IS THE STABLE ID SINCE #1435, NOT THE DISPLAY NAME. Two phones that both
+    /// advertise "iPhone" — the default on iOS 16+ without the user-assigned-device-name
+    /// entitlement, which this app does not declare — wrote into ONE entry here and mixed two
+    /// bodies into a single reading. Ask `displayName(forPeer:)` for the label; never render a
+    /// key.
     public private(set) var peerReadings: [String: PeerReading] = [:]
 
     /// Called when a session payload arrives (e.g. import into the library / load live).
@@ -91,8 +107,11 @@ public final class MultipeerSession: NSObject {
 
     @ObservationIgnored private var advertiser: MCNearbyServiceAdvertiser?
     @ObservationIgnored private var browser: MCNearbyServiceBrowser?
-    /// displayName → MCPeerID, so the UI can invite by name (MainActor-only).
+    /// `PeerIdentity.stableID` → MCPeerID, so the UI can invite by identity (MainActor-only).
     @ObservationIgnored private var peerIDs: [String: MCPeerID] = [:]
+    /// This installation's own identity — the thing `myPeerID` spells for the transport, and
+    /// the source of the `senderName` every payload carries.
+    @ObservationIgnored private let identity: PeerIdentity
 
     public override init() {
         // @MainActor init, so UIDevice (MainActor API) is directly accessible.
@@ -101,8 +120,14 @@ public final class MultipeerSession: NSObject {
         #else
         let raw = ProcessInfo.processInfo.hostName
         #endif
-        let name = String(raw.prefix(63))
-        let id = MCPeerID(displayName: name.isEmpty ? "Echoelmusic" : name)
+        // ⭐ THE ADVERTISED STRING IS NO LONGER THE DEVICE NAME (#1435). It is
+        // `PeerIdentity.transportName` — label, separator, stable key — so two phones with the
+        // same device name are two peers on the wire. It can never be empty (the key never is),
+        // which also retires the old `"Echoelmusic"` guard against MCPeerID's empty-name trap.
+        let me = PeerIdentity.local(defaults: .standard,
+                                    fallbackName: raw.isEmpty ? "Echoelmusic" : raw)
+        self.identity = me
+        let id = MCPeerID(displayName: me.transportName)
         self.myPeerID = id
         self.mcSession = MCSession(peer: id, securityIdentity: nil, encryptionPreference: .required)
         super.init()
@@ -139,16 +164,29 @@ public final class MultipeerSession: NSObject {
         isLive = false
         discovered.removeAll()
         peerIDs.removeAll()
-        connectedPeerNames.removeAll()
+        connectedPeers.removeAll()
         peerReadings.removeAll()
         status = "Off"
     }
 
-    /// Invite a discovered peer (by display name) into the session.
-    public func invite(_ name: String) {
-        guard let peer = peerIDs[name], let browser else { return }
+    /// Invite a discovered peer into the session, BY IDENTITY.
+    ///
+    /// ⚠️ The parameter is `DiscoveredPeer.id` (a `PeerIdentity.stableID`), never `.name`
+    /// (#1435). Inviting by label picked an arbitrary one of two identically-named phones.
+    public func invite(_ stableID: String) {
+        guard let peer = peerIDs[stableID], let browser else { return }
+        let label = discovered.first { $0.id == stableID }?.name ?? stableID
         browser.invitePeer(peer, to: mcSession, withContext: nil, timeout: 20)
-        status = "Inviting \(name)…"
+        status = "Inviting \(label)…"
+    }
+
+    /// The label for a peer key — the one place a `stableID` is turned back into something a
+    /// person reads. Falls back to the key itself, which is only reachable for a reading that
+    /// arrived before the connection state did.
+    public func displayName(forPeer stableID: String) -> String {
+        connectedPeers.first { $0.stableID == stableID }?.displayName
+            ?? discovered.first { $0.id == stableID }?.name
+            ?? stableID
     }
 
     /// Send a whole session to every connected peer.
@@ -187,7 +225,9 @@ public final class MultipeerSession: NSObject {
     /// (`EchoelCrashLog.diagnosticsExport()` since #916; it was `currentLog()` before). So the status text deliberately does not send anyone to Diagnostics;
     /// the log is a telemetry floor for a sysdiagnose, exactly as in #514.
     public func share(project: Project) {
-        let payload = ColabPayload(kind: "session", senderName: myPeerID.displayName, project: project)
+        // ⚠️ `identity.displayName`, NOT `myPeerID.displayName` (#1435) — the latter is now the
+        // TRANSPORT spelling and would put a separator and a UUID into a human-facing line.
+        let payload = ColabPayload(kind: "session", senderName: identity.displayName, project: project)
         let data: Data
         do {
             data = try payload.encodedThrowing()
@@ -253,34 +293,44 @@ public final class MultipeerSession: NSObject {
         guard let peek = BioPeek.egressible(from: frame) else { return }
         let peers = mcSession.connectedPeers
         guard !peers.isEmpty else { return }
-        let payload = ColabPayload(kind: "bio", senderName: myPeerID.displayName, bio: peek)
+        // `identity.displayName` for the same reason as `share(project:)` above.
+        let payload = ColabPayload(kind: "bio", senderName: identity.displayName, bio: peek)
         guard let data = payload.encoded() else { return }
         try? mcSession.send(data, toPeers: peers, with: .unreliable)
     }
 
     // MARK: - MainActor handlers (called from the nonisolated delegates)
 
+    /// ⚠️ EVERY ONE OF THESE THREE RESOLVES THE TRANSPORT STRING FIRST (#1435). The delegates
+    /// hand over `MCPeerID.displayName`, which is now a `PeerIdentity.transportName`; keying on
+    /// it raw would work, but it would put the separator and the UUID on screen and it would
+    /// lose the distinction for a legacy peer, whose transport name IS its label.
     private func handleFound(_ peerID: MCPeerID) {
-        peerIDs[peerID.displayName] = peerID
-        if !discovered.contains(where: { $0.id == peerID.displayName }) {
-            discovered.append(DiscoveredPeer(id: peerID.displayName))
+        let peer = PeerIdentity.resolve(transportName: peerID.displayName)
+        peerIDs[peer.stableID] = peerID
+        if !discovered.contains(where: { $0.id == peer.stableID }) {
+            discovered.append(DiscoveredPeer(id: peer.stableID, name: peer.displayName))
         }
     }
 
-    private func handleLost(_ name: String) {
-        peerIDs[name] = nil
-        discovered.removeAll { $0.id == name }
+    private func handleLost(_ transportName: String) {
+        let peer = PeerIdentity.resolve(transportName: transportName)
+        peerIDs[peer.stableID] = nil
+        discovered.removeAll { $0.id == peer.stableID }
     }
 
-    private func handleStateChange(_ name: String, connected: Bool) {
+    private func handleStateChange(_ transportName: String, connected: Bool) {
+        let peer = PeerIdentity.resolve(transportName: transportName)
         if connected {
-            if !connectedPeerNames.contains(name) { connectedPeerNames.append(name) }
-            discovered.removeAll { $0.id == name }
-            status = "Connected to \(name)"
+            if !connectedPeers.contains(where: { $0.stableID == peer.stableID }) {
+                connectedPeers.append(peer)
+            }
+            discovered.removeAll { $0.id == peer.stableID }
+            status = "Connected to \(peer.displayName)"
         } else {
-            connectedPeerNames.removeAll { $0 == name }
-            peerReadings[name] = nil
-            if connectedPeerNames.isEmpty && isLive { status = "Looking for nearby Echoelmusic…" }
+            connectedPeers.removeAll { $0.stableID == peer.stableID }
+            peerReadings[peer.stableID] = nil
+            if connectedPeers.isEmpty && isLive { status = "Looking for nearby Echoelmusic…" }
         }
     }
 
@@ -301,8 +351,13 @@ public final class MultipeerSession: NSObject {
     /// `ColabPayload.attributed(to:)` — not as four defensive reads downstream. Every
     /// later reader (`peerReadings`, `incoming`, `onReceiveSession`, `status`) then
     /// sees a payload whose `senderName` is a transport fact by construction.
+    /// ⭐ #1435 SPLIT THE ONE STRING THIS METHOD USED IN TWO. `attributed(to:)` still takes a
+    /// TRANSPORT FACT rather than the sender's claim — that is #517 and it is untouched — but
+    /// the fact now has two halves: the reading is filed under `stableID`, and the label that
+    /// reaches `status` and `senderName` is `displayName`.
     private func handleData(_ data: Data, from peerName: String) {
-        guard let payload = ColabPayload.decode(data)?.attributed(to: peerName) else { return }
+        let peer = PeerIdentity.resolve(transportName: peerName)
+        guard let payload = ColabPayload.decode(data)?.attributed(to: peer.displayName) else { return }
         // Bio pings update the per-peer reading quietly — no incoming prompt,
         // no status churn (they arrive continuously while a peer shares).
         if payload.kind == "bio", let peek = payload.bio {
@@ -310,8 +365,8 @@ public final class MultipeerSession: NSObject {
             // no time, and a sender field could not report the failures that matter —
             // a dropped link, a backgrounded app, a peer that crashed. Only arrival
             // here can distinguish a peer still breathing from one that went quiet.
-            peerReadings[payload.senderName] = PeerReading(peek: peek,
-                                                           arrivedAt: CFAbsoluteTimeGetCurrent())
+            peerReadings[peer.stableID] = PeerReading(peek: peek,
+                                                      arrivedAt: CFAbsoluteTimeGetCurrent())
             return
         }
         incoming = payload
@@ -355,7 +410,8 @@ extension MultipeerSession: MCNearbyServiceAdvertiserDelegate {
         // hop boxed, and `mcSession` is the nonisolated(unsafe) immutable ref MC
         // accepts from any thread. If the user never answers, MC's own inviter
         // timeout (20 s) resolves it; stop() declines a still-pending card.
-        let name = peerID.displayName
+        // The card shows a LABEL, so resolve the transport spelling (#1435).
+        let name = PeerIdentity.resolve(transportName: peerID.displayName).displayName
         let handlerBox = UncheckedBox(value: invitationHandler)
         // MCSession is non-Sendable — box it across the hop like MCPeerID
         // (immutable ref; MC accepts the handler's session from any thread).

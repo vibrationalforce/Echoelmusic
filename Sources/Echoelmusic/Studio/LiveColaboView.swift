@@ -160,10 +160,14 @@ struct LiveColaboView: View {
     private var connectedSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Connected").font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
-            ForEach(colab.connectedPeerNames, id: \.self) { name in
+            // ⚠️ KEYED ON `stableID`, LABELLED WITH `displayName` (#1435). `id: \.self` over the
+            // NAMES was a SwiftUI identity bug the moment two phones advertised the same device
+            // name — which is the default on iOS 16+ without the user-assigned-device-name
+            // entitlement, and this app declares none.
+            ForEach(colab.connectedPeers, id: \.stableID) { peer in
                 HStack(spacing: 8) {
                     Image(systemName: "person.fill.checkmark").foregroundStyle(EchoelTheme.accent)
-                    Text(name).font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
+                    Text(peer.displayName).font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
                     Spacer()
                 }
                 .padding(.vertical, 6).padding(.horizontal, 10)
@@ -183,7 +187,8 @@ struct LiveColaboView: View {
                     Image(systemName: "iphone").foregroundStyle(EchoelTheme.dim)
                     Text(peer.name).font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
                     Spacer()
-                    Button { colab.invite(peer.name) } label: {
+                    // Invite by IDENTITY, show the LABEL (#1435).
+                    Button { colab.invite(peer.id) } label: {
                         Text("Invite").font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.onPrimary)
                             .padding(.horizontal, 12).frame(minHeight: 30)
                             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.text))
@@ -362,9 +367,14 @@ private struct PeerBioRows: View {
         // view. The other `.sorted()` call sites on strings are `ModulationEngine`'s ASCII
         // destination keys (no production consumer) and integer/slot sorts; the three preset
         // stores rank by favourite and recency, never by name.
+        //
+        // ⚠️ THE KEYS ARE `PeerIdentity.stableID` SINCE #1435, SO THEY ARE SORTED BY THE LABEL
+        // THEY RESOLVE TO, not by themselves. Sorting the keys directly would order the rows by
+        // UUID — arbitrary, and stable only by accident. The row is still IDENTIFIED by the key.
         ForEach(colab.peerReadings.keys.sorted {
-            $0.localizedStandardCompare($1) == .orderedAscending
-        }, id: \.self) { name in
+            colab.displayName(forPeer: $0)
+                .localizedStandardCompare(colab.displayName(forPeer: $1)) == .orderedAscending
+        }, id: \.self) { key in
             // ⚠️ THE TICK IS INSIDE THE ROW, NOT AROUND THE `ForEach` — the #503 trade,
             // for the same two reasons. (1) Wrapping the loop would put ONE container
             // where a list of sibling rows belongs, and the rows would stop flattening
@@ -374,8 +384,8 @@ private struct PeerBioRows: View {
             // whole defect, since a peer who stopped sending also stopped invalidating
             // this body.
             TimelineView(.periodic(from: .now, by: 1)) { _ in
-                let live = colab.peerReadings[name]?.live(at: CFAbsoluteTimeGetCurrent())
-                bioLine(name: name,
+                let live = colab.peerReadings[key]?.live(at: CFAbsoluteTimeGetCurrent())
+                bioLine(name: colab.displayName(forPeer: key),
                         bpm: live?.bpm ?? 0,
                         coherence: live?.coherence ?? 0,
                         highlight: false,

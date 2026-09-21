@@ -306,12 +306,25 @@ final class AQuietPeerStopsLookingAliveTests: XCTestCase {
 
     // MARK: - 8. Disconnect and stop still clear the readings
 
+    /// ⛔ THIS CLAIM USED TO SPELL THE KEY — `peerReadings[name] = nil` — AND #1435 CHANGED IT
+    /// (to `PeerIdentity.stableID`, because two phones advertising the same device name wrote
+    /// into one entry). The needle named a LOCAL VARIABLE, which `Tests/CISmoke/CLAUDE.md` §3
+    /// calls out as the fragile kind for exactly this reason: a rename that is ordinary,
+    /// correct work would red it, and a guard that reds on correct work gets deleted (#364).
+    ///
+    /// ⭐ SO THE ANCHOR IS NOW THE FACT, NOT THE SPELLING: SOME reading is cleared to `nil`
+    /// somewhere, and `stop()` clears them all. WHICH key is the paired question, and it is
+    /// pinned once — `TheSenderIsTheTransportNotTheClaimTests` claim 7a asserts the arrival
+    /// path and the disconnect path use the SAME key expression (#416).
     func testLeavingStillRemovesThePeerEntirely() throws {
         let src = try code(at: Self.session)
-        XCTAssertTrue(src.contains("peerReadings[name] = nil"), """
+        let clears = src.split(separator: "\n", omittingEmptySubsequences: false).filter {
+            $0.contains("peerReadings[") && $0.contains("= nil")
+        }
+        XCTAssertFalse(clears.isEmpty, """
             A disconnected peer must be REMOVED, not merely expired (#508). Expiry says "still \
             here, gone quiet"; a peer who left is neither, and leaving their name on the board \
-            would be a second kind of lie.
+            would be a second kind of lie. No line in MultipeerSession clears a peer reading.
             """)
         XCTAssertTrue(src.contains("peerReadings.removeAll()"),
                       "stop() must clear every peer reading, as it always has.")

@@ -12418,11 +12418,19 @@ private struct BodyOnlyRow: View {
 /// reported the same `E~`, every take was stamped `E~`, and #521's credit line was therefore
 /// correctly silent on every take in existence — a mechanism without a producer (#506).
 ///
-/// ⚠️ IT DOES NOT MAKE LIVE-COLABO PEERS DISTINGUISHABLE, and the v10.79.382 deploy note said
-/// it would. Measured: `MCPeerID` is built exactly once, in `MultipeerSession.init()`, from
-/// `UIDevice.current.name` — which iOS 16+ returns as the MODEL name ("iPhone") without the
-/// user-assigned-device-name entitlement Echoel does not hold. #513 is untouched by this slice
-/// and stays open. Two things land here, not three.
+/// ⛔ THIS PARAGRAPH SAID THE NAME DOES NOT REACH LIVE COLABO, AND #1435 MADE IT FALSE. It read:
+/// *"`MCPeerID` is built exactly once, from `UIDevice.current.name` — which iOS 16+ returns as
+/// the MODEL name without the user-assigned-device-name entitlement Echoel does not hold; #513
+/// is untouched and stays open."* All of that was true for two months and is now history. The
+/// advertised string is a `PeerIdentity.transportName`, and its label half IS this field when
+/// the user has named themselves — `PeerIdentity.local(defaults:fallbackName:)` prefers the
+/// canonical artist name over inventing a second one, and falls back to the device name for an
+/// unnamed user, which is exactly the old behaviour for exactly those installs.
+///
+/// ⚠️ SO THE NAME NOW LEAVES THE DEVICE, and the caption below says so. It is advertised over
+/// AWDL to anything nearby running this service type, but ONLY while the user has started Live
+/// Colabo — never in the background, never otherwise. That is a real change of surface and it
+/// is named here rather than left for someone to discover (Ω53).
 ///
 /// ⭐ WHY A `Binding` OVER A TRANSFORM rather than `$session.artistName` straight through.
 /// `unnamedArtist` IS the "no name" state, so a field bound to the raw property would show `E~`
@@ -12483,11 +12491,12 @@ private struct ArtistNameRow: View {
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                 .strokeBorder(EchoelTheme.border, lineWidth: 1))
-            // ⚠️ THE CAPTION NAMES WHAT IS TRUE TODAY AND NOTHING MORE. It does NOT promise that
-            // other players will see the name — that is #513 and it is not fixed here. It does
-            // not promise the credit line appears on your own takes; `Project.attribution`
-            // stays quiet there by design.
-            Text("Stamped on takes you save, and used in session and export file names. Without a name they are stamped \(SessionContext.unnamedArtist).")
+            // ⚠️ THE CAPTION NAMES WHAT IS TRUE TODAY AND NOTHING MORE. ⛔ It used to add "It does
+            // NOT promise that other players will see the name — that is #513"; since #1435 they
+            // DO, so the caption now says it instead of staying quiet about a string that leaves
+            // the device. It still does not promise the credit line appears on your own takes;
+            // `Project.attribution` stays quiet there by design.
+            Text("Stamped on takes you save, and used in session and export file names. Shown to nearby devices while Live Colabo is on. Without a name they are stamped \(SessionContext.unnamedArtist).")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)

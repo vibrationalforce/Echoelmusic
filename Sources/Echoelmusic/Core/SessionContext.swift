@@ -21,6 +21,10 @@ import Foundation
 /// below stays deliberately narrow.
 private enum SessionStorageKey {
     static let artist = "echoel.artistName"
+    /// #1435 — the stable per-INSTALLATION key behind `PeerIdentity`. It lives in this
+    /// namespace because `SessionContext` owns who the performer is; it is MINTED by
+    /// `PeerIdentity.local(defaults:)`, which is the only writer.
+    static let installationID = "echoel.installationID"
     static let keyRoot = "echoel.keyRoot"
     static let keyScale = "echoel.keyScale"
     static let a4Hz = "echoel.a4Hz"
@@ -107,6 +111,17 @@ public final class SessionContext {
 
     /// The concert-pitch key, exposed for the same reason.
     public nonisolated static var a4StorageKey: String { SessionStorageKey.a4Hz }
+
+    /// The two keys `PeerIdentity.local(defaults:)` reads. Exposed the same narrow way as
+    /// `a4StorageKey`, and for the same reason: the key strings are defined ONCE, here
+    /// (#416), so a reader in another file cannot drift from the writer.
+    ///
+    /// ⚠️ `installationIDStorageKey` is NOT cleared by `reset()`. A reset returns the
+    /// INSTRUMENT to defaults; it does not make this a different participant. Clearing it
+    /// would mint a new identity and re-collide the peer a rename was never supposed to
+    /// move — the whole point of separating a stable key from a display label.
+    public nonisolated static var artistStorageKey: String { SessionStorageKey.artist }
+    public nonisolated static var installationIDStorageKey: String { SessionStorageKey.installationID }
 
     @ObservationIgnored private let defaults: UserDefaults
 

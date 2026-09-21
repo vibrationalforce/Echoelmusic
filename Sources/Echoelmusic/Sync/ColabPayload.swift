@@ -271,15 +271,14 @@ public struct ColabPayload: Codable, Sendable, Equatable {
     /// keyed and displayed everything by the field. Three consequences, all reachable
     /// today with two connected phones:
     ///
-    ///  · **The row a bio reading lands in was chosen by the sender.** `peerReadings` is
-    ///    keyed by name and `PeerReadingsSection` renders `peerReadings.keys` DIRECTLY,
-    ///    so a peer could write into somebody else's row, or conjure a row for a name
-    ///    that is not in the session at all.
-    ///  · **Such a row can never be removed.** The disconnect path clears
-    ///    `peerReadings[peerID.displayName]` — the TRANSPORT name. A reading filed under
-    ///    a different key survives every disconnect for the rest of the process. That is
-    ///    exactly the property #508 was built to give ("a quiet peer stops looking
-    ///    alive"), defeated through the key rather than through the timestamp.
+    ///  · **The row a bio reading lands in was chosen by the sender.** `peerReadings` was
+    ///    keyed by that field, so a peer could write into somebody else's row, or conjure
+    ///    a row for a name that is not in the session at all.
+    ///  · **Such a row can never be removed.** The disconnect path clears by the key the
+    ///    TRANSPORT supplied. A reading filed under a different key survives every
+    ///    disconnect for the rest of the process. That is exactly the property #508 was
+    ///    built to give ("a quiet peer stops looking alive"), defeated through the key
+    ///    rather than through the timestamp.
     ///  · **The import card names the claim.** `incomingCard(inc.senderName, project)`
     ///    asks "do you want to load this project from X" — and X was whatever the sender
     ///    typed. A peer could present as somebody you trust.
@@ -290,19 +289,20 @@ public struct ColabPayload: Codable, Sendable, Equatable {
     /// with the fact AT THE BOUNDARY means no downstream reader can get it wrong, because
     /// after this call the field IS the transport name.
     ///
-    /// ⚠️ THE WIRE IS UNCHANGED, said plainly: we still SEND `senderName` (from our own
-    /// `myPeerID.displayName`), and an older peer still sends its own. This changes only
+    /// ⚠️ THE WIRE IS UNCHANGED, said plainly: we still SEND `senderName` (our own
+    /// `PeerIdentity.displayName`), and an older peer still sends its own. This changes only
     /// what WE believe on receipt. Removing the field would be a protocol change and
     /// would break a peer running an older build.
     ///
-    /// ⚠️ AND IT DOES NOT MAKE NAMES UNIQUE. `MCPeerID.displayName` comes from
-    /// `UIDevice.current.name`, which on iOS 16+ returns the MODEL ("iPhone") unless the
-    /// app holds the user-assigned-device-name entitlement — which Echoel does not declare
-    /// (measured: zero hits for `user-assigned-device-name` across the entitlements). So
-    /// three phones in a room are three peers all called "iPhone", and they still collide
-    /// into one row. That is a SEPARATE defect about identity (#513); this one is about
-    /// AUTHORITY, and fixing authority first is what makes a later unique name safe rather
-    /// than merely different.
+    /// ⭐ AND THE IDENTITY HALF IS CLOSED SINCE #1435, which this paragraph used to register
+    /// as open. It said: `MCPeerID.displayName` comes from `UIDevice.current.name`, which on
+    /// iOS 16+ returns the MODEL ("iPhone") unless the app holds the user-assigned-device-name
+    /// entitlement — which Echoel does not declare — so three phones in a room were three
+    /// peers all called "iPhone" and still collided into one row. The advertised string is now
+    /// a `PeerIdentity.transportName`, and `peerReadings` is keyed by `stableID`. **The order
+    /// was the point:** fixing AUTHORITY first is what made a unique name safe rather than
+    /// merely different — a unique key handed out before attribution would have let a sender
+    /// claim somebody else's key.
     public func attributed(to peerName: String) -> ColabPayload {
         var copy = self
         copy.senderName = peerName

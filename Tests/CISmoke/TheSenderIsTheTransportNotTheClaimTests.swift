@@ -22,11 +22,17 @@
 // is no negative needle forbidding `payload.senderName`: after attribution that field IS the
 // transport name, and forbidding a correct read is the #364 trap that gets guards deleted.
 //
-// ⚠️ SCOPE, said first: this fixes AUTHORITY, not IDENTITY. `MCPeerID.displayName` comes from
-// `UIDevice.current.name`, which on iOS 16+ returns the MODEL ("iPhone") without the
-// user-assigned-device-name entitlement — which Echoel does not declare. Three phones in a room
-// are still three peers called "iPhone" and still collide into one row (#513). Claim 4 pins that
-// limit deliberately, so nobody reads this file as "peer identity is solved".
+// ⚠️ SCOPE, said first: this file fixes AUTHORITY, not IDENTITY — and IDENTITY was fixed
+// separately by #1435, which is why this paragraph is corrected rather than left standing. It
+// read: *"Three phones in a room are still three peers called \"iPhone\" and still collide into
+// one row (#513)."* True until 2026-09-21; the advertised string is now a
+// `PeerIdentity.transportName` and `peerReadings` is keyed by `stableID`.
+//
+// ⭐ CLAIM 4 STILL HOLDS AND IS STILL THE POINT, because it is a claim about `attributed(to:)`
+// and not about the transport: attribution maps whatever string it is handed onto the payload,
+// so two peers handed the SAME string still land in one row. That is exactly why the ORDER
+// mattered — a unique key handed out before attribution existed would have let a sender claim
+// somebody else's key, which is a worse defect than a shared one.
 //
 // ⚠️ AND THE LIMIT OF THE GUARD: claims 5–7 are SOURCE SCANS. `MultipeerSession` sits behind
 // `#if canImport(MultipeerConnectivity)` and needs a real MC stack, so this bundle cannot drive
@@ -49,9 +55,14 @@
 //   · claims 1–4, and claim 8's second assertion — could never have been red: they drive a
 //     method the same commit adds. Booking them as regressions would be the #433 defect in the
 //     flattering direction.
-//   · claims 4, 7a–7c, 8a — GREEN on BOTH trees, and they are the content. The obvious later
-//     cleanups are "attribution makes names unique, so drop #513" and "the disconnect cleanup is
+//   · claims 4, 7, 8a — GREEN on BOTH trees, and they are the content. The obvious later
+//     cleanups were "attribution makes names unique, so drop #513" and "the disconnect cleanup is
 //     redundant now". The first is false; the second re-opens the phantom row from the other end.
+//     ⭐ #1435 RE-ANCHORED claim 7 (formerly 7a–7c): it spelled both `peerReadings` keys, both
+//     naming a LOCAL, and that slice changed both at once. It now pins the PAIRING — the arrival
+//     site and the disconnect site must use ONE key expression — which is what the file actually
+//     cares about and is rename-proof. Claim 5 gained the `peerName → peer → displayName` chain
+//     for the same reason.
 //
 // ⚠️ `SourceText.codeOnly` is PROPHYLACTIC here, and that is MEASURED rather than assumed
 // (#484/#485 each had to withdraw the stronger claim once, #486 twice): raw versus stripped
@@ -125,10 +136,11 @@ final class TheSenderIsTheTransportNotTheClaimTests: XCTestCase {
         let a = ColabPayload(kind: "bio", senderName: "A", bio: peek()).attributed(to: "iPhone")
         let b = ColabPayload(kind: "bio", senderName: "B", bio: peek()).attributed(to: "iPhone")
         XCTAssertEqual(a.senderName, b.senderName, """
-            Two different peers whose devices both report "iPhone" still collide into one row, \
-            and that is #513 — a SEPARATE defect about identity. This assertion exists so the \
-            slice cannot be read as having solved it: fixing AUTHORITY first is what makes a \
-            later unique name safe rather than merely different.
+            Attribution maps whatever string it is handed onto the payload — so two peers \
+            handed the SAME string still collide into one row. That they are no longer handed \
+            the same string is #1435 (`PeerIdentity`), a SEPARATE mechanism one layer out. This \
+            assertion exists so this file cannot be read as having solved identity: fixing \
+            AUTHORITY first is what made a unique key safe rather than merely different.
             """)
 
         // Idempotent: attributing twice is attributing once. The receive path applies it exactly
@@ -155,10 +167,28 @@ final class TheSenderIsTheTransportNotTheClaimTests: XCTestCase {
                       `handleData` must RECEIVE the authenticated peer. Taking only the bytes is \
                       what made the receiving side believe a field the sender writes.
                       """)
-        XCTAssertTrue(src.contains("ColabPayload.decode(data)?.attributed(to: peerName)"), """
-            Receiving the peer is not enough — the payload must be re-attributed at the boundary. \
-            A version that took `peerName` and then still keyed by the decoded field would pass a \
-            signature check and change nothing.
+        // ⛔ THIS ASSERTION USED TO READ `attributed(to: peerName)` AND #1435 SPLIT THAT ONE
+        // STRING IN TWO. The transport name is now a `PeerIdentity.transportName` — label,
+        // separator, stable key — so passing it through unparsed would put a UUID on the import
+        // card. The LAW is unchanged and is what is pinned: the argument must descend from the
+        // transport parameter, never from the decoded payload.
+        let arrival = try declarationBody(
+            of: "private func handleData(_ data: Data, from peerName: String) {", in: Self.session)
+        XCTAssertTrue(arrival.contains("PeerIdentity.resolve(transportName: peerName)"), """
+            The boundary must resolve the AUTHENTICATED transport name into an identity. \
+            Resolving anything else — or resolving nothing — is how the receiving side started \
+            believing a field the sender writes.
+            """)
+        XCTAssertTrue(arrival.contains("ColabPayload.decode(data)?.attributed(to: peer.displayName)"),
+                      """
+                      Receiving the peer is not enough — the payload must be re-attributed at the \
+                      boundary, with the label that came OUT of the transport name. A version that \
+                      took `peerName` and then still keyed by the decoded field would pass a \
+                      signature check and change nothing.
+                      """)
+        XCTAssertFalse(arrival.contains("attributed(to: payload."), """
+            Attributing FROM the payload is the defect itself, written the other way round: it \
+            would replace the sender's claim with the sender's claim.
             """)
     }
 
@@ -181,30 +211,57 @@ final class TheSenderIsTheTransportNotTheClaimTests: XCTestCase {
             """)
     }
 
-    // MARK: - 7. COUNTERWEIGHT — the two names must still be the SAME name
+    // MARK: - 7. COUNTERWEIGHT — the two sides must key on the SAME thing
 
-    func testTheDisconnectPathStillClearsByTheTransportName() throws {
+    /// ⛔ THIS CLAIM USED TO SPELL BOTH KEYS — `peerReadings[payload.senderName] = PeerReading(`
+    /// and `peerReadings[name] = nil` — and #1435 changed both at once (to
+    /// `PeerIdentity.stableID`, because two phones advertising the same device name wrote into
+    /// ONE entry and mixed two bodies into a single reading). Two spellings of one decision,
+    /// each naming a LOCAL VARIABLE: the fragile kind (`Tests/CISmoke/CLAUDE.md` §3).
+    ///
+    /// ⭐ WHAT THE FILE ACTUALLY CARES ABOUT IS THE PAIRING, so that is what is pinned now: the
+    /// arrival path and the disconnect path must subscript `peerReadings` with the SAME
+    /// expression. A phantom row — the #517 defect — is precisely the state where those two
+    /// expressions differ, whatever either one happens to be called. This is rename-proof and
+    /// still fails for its named reason: make the two disagree and it goes red.
+    func testTheTwoSidesOfTheReadingUseOneKey() throws {
         let src = try code(at: Self.session)
+        let keys = Self.peerReadingKeys(in: src)
 
-        // 7a. The write side is what changed.
-        XCTAssertTrue(src.contains("peerReadings[payload.senderName] = PeerReading(peek: peek,"),
-                      """
-                      The bio branch still keys by `payload.senderName` — and after #517 that is \
-                      CORRECT, because the field is now a transport fact. This assertion pins the \
-                      pairing: the key is only safe BECAUSE attribution happened above it.
-                      """)
-
-        // 7b. The read side never changed, and must not: the whole fix is that these two now
-        // agree. Removing the cleanup "because attribution handles it" would re-open the phantom
-        // row from the other end — a peer that disconnects would keep its line forever.
-        XCTAssertTrue(src.contains("peerReadings[name] = nil"), """
-            The disconnect path must still clear the reading by the transport name. Attribution \
-            makes the two names agree; it does not remove the need to clear on disconnect.
+        guard keys.count >= 2 else {
+            throw AnchorMissing(reason: """
+                MultipeerSession subscripts `peerReadings` \(keys.count) time(s); this scan needs \
+                the arrival site and the disconnect site. Re-anchor it rather than letting one \
+                site read as agreement with itself.
+                """)
+        }
+        XCTAssertEqual(Set(keys).count, 1, """
+            Every `peerReadings[…]` must use ONE key expression. Found \(Set(keys).sorted()). A \
+            reading filed under one key and cleared under another is the phantom row #517 exists \
+            to end — it survives every disconnect for the rest of the process, and #508's \
+            freshness window cannot reach it because the defect is in the KEY, not the clock.
             """)
         XCTAssertTrue(src.contains("peerReadings.removeAll()"), """
             Leaving the session must clear every reading. Otherwise the rows outlive the session \
             they belong to, which is the same phantom-row defect with a different cause.
             """)
+    }
+
+    /// Every subscript key written on `peerReadings`, in source order. Deliberately simple: the
+    /// key is the text between the first `[` and the matching `]` on that occurrence, and a key
+    /// containing a further `[` is not written anywhere in this file today.
+    private static func peerReadingKeys(in src: String) -> [String] {
+        var keys: [String] = []
+        var cursor = src.startIndex
+        while let open = src.range(of: "peerReadings[", range: cursor..<src.endIndex) {
+            if let close = src.range(of: "]", range: open.upperBound..<src.endIndex) {
+                keys.append(String(src[open.upperBound..<close.lowerBound]))
+                cursor = close.upperBound
+            } else {
+                cursor = open.upperBound
+            }
+        }
+        return keys
     }
 
     // MARK: - 8. COUNTERWEIGHT — the wire is unchanged

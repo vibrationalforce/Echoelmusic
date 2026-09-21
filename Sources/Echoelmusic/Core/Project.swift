@@ -623,10 +623,15 @@ public struct Project: Codable, Sendable, Identifiable, Equatable {
     /// below returns `nil`. The row appears exactly when two people have named themselves
     /// differently — which is a property of two devices, not one.
     ///
-    /// ⛔ AND IT DOES NOT MAKE LIVE-COLABO PEERS DISTINGUISHABLE, although the v10.79.382 deploy
-    /// note claimed it would. `MCPeerID` is built once in `MultipeerSession.init()` from
-    /// `UIDevice.current.name`, which iOS 16+ returns as the MODEL name without an entitlement
-    /// Echoel does not hold. #513 is untouched by the door and stays open.
+    /// ⛔ THIS PARAGRAPH SAID THE NAME DOES NOT REACH LIVE COLABO, AND #1435 MADE IT FALSE — the
+    /// #456 shape, so it is corrected in every home rather than only where the edit happened. It
+    /// read: *"`MCPeerID` is built once from `UIDevice.current.name`, which iOS 16+ returns as
+    /// the MODEL name without an entitlement Echoel does not hold; #513 is untouched and stays
+    /// open."* Peers are now distinguished by `PeerIdentity.stableID`, and the label they show
+    /// is this same artist name when one has been typed.
+    ///
+    /// ⚠️ IT CHANGES NOTHING HERE. The credit line is still a property of two takes, not of two
+    /// phones, and the difference-gate below is untouched.
     ///
     /// ⚠️ SHOWING IT ONLY WHEN IT DIFFERS IS A NOISE DECISION, NOT A TRUTH DECISION, and the two
     /// must not be confused. Every take THIS BUILD WRITES carries a stamp, and on an untouched

@@ -21,12 +21,24 @@
 // credit line was correctly silent on every take in existence — a mechanism with no producer in
 // the #506 shape.
 //
-// ⛔ IT DOES NOT FIX #513, although the v10.79.382 deploy note said one word would "solve three
-// things at once". Measured: `MCPeerID` is constructed exactly once, in `MultipeerSession.init()`,
-// from `UIDevice.current.name` — which iOS 16+ returns as the MODEL name ("iPhone") without the
-// user-assigned-device-name entitlement Echoel does not hold. Live-Colabo peers stay
-// indistinguishable. **Two things land here, not three**, and claim 7 pins that so the overclaim
-// cannot quietly return.
+// ⛔ IT DID NOT FIX #513 — AND #1435 DID, so this paragraph is retracted rather than refreshed.
+// It read: *"`MCPeerID` is constructed exactly once, from `UIDevice.current.name` — which iOS 16+
+// returns as the MODEL name without the user-assigned-device-name entitlement Echoel does not
+// hold; Live-Colabo peers stay indistinguishable. Two things land here, not three."* Every word
+// was true of #522 and is now history: peers are keyed by `PeerIdentity.stableID`, and the label
+// beside that key is THIS field whenever one has been typed.
+//
+// ⭐ CLAIM 7 IS INVERTED RATHER THAN DELETED, exactly as its own failure message instructed
+// ("if that is deliberate, #513 is fixed and this counterweight should be DELETED in the same
+// commit"). The reason to keep a claim here at all is that the connection is the whole point of
+// the scope sentence above: #522 still lands TWO things by itself, and the third arrived later
+// through a different door. A deleted counterweight would leave that sentence unguarded.
+//
+// ⚠️ AND THE NEEDLE WAS ABOUT TO GO GREEN FOR THE WRONG REASON, which is the #367 mirror case
+// and worth recording. It asserted `MultipeerSession.swift` does not contain `artistName` — and
+// it still does not: the read lives one file away, in `PeerIdentity.local(defaults:fallbackName:)`
+// via `SessionContext.artistStorageKey`. A file-scoped absence needle cannot see a fact that
+// moved next door.
 //
 // ⭐ THE COUNTERWEIGHTS ARE THE CONTENT (#343). A guard that only asserted "a field exists" would
 // stay green on a tree that kept the field and lost every property that makes it safe: the
@@ -202,25 +214,43 @@ final class YouCanNameYourselfTests: XCTestCase {
             """)
     }
 
-    /// ⚠️ COUNTERWEIGHT that pins the scope. #522 delivers TWO things — the credit line becomes
-    /// reachable, and export/session file names carry the name. It does NOT make Live-Colabo
-    /// peers distinguishable, though the v10.79.382 deploy note claimed it would: `MCPeerID` is
-    /// built from `UIDevice.current.name` in a no-argument `init()`. If someone wires the artist
-    /// name into that peer id, #513 really is fixed and this assertion should be deleted
-    /// deliberately — but it must not happen by accident, and the claim must not return first.
-    func testTheArtistNameStillDoesNotReachThePeerIdentity() throws {
-        let session = try code(at: "Sources/Echoelmusic/Sync/MultipeerSession.swift")
-        guard session.contains("MCPeerID(") else {
-            throw AnchorMissing(reason: """
-                `MultipeerSession` no longer constructs an `MCPeerID`; this scan is anchored on \
-                that. Re-anchor rather than deleting the assertion.
-                """)
-        }
-        XCTAssertFalse(session.contains("artistName"), """
-            `MultipeerSession` now reads `artistName`. If that is deliberate, #513 is fixed and \
-            this counterweight should be DELETED in the same commit — together with the ⛔ \
-            paragraphs in `Project.attribution` and `ArtistNameRow` that currently state the \
-            opposite.
+    /// ⭐ THE INVERTED COUNTERWEIGHT (#1435). It used to assert that the artist name does NOT
+    /// reach the peer identity, and said in its own message that the day it did, it should be
+    /// turned round in the same commit. That day is this one.
+    ///
+    /// ⚠️ AND IT IS REAL BEHAVIOUR, not a scan, which the old form could not be:
+    /// `PeerIdentity.local(defaults:fallbackName:)` is `public`, `nonisolated` and
+    /// Foundation-only, and it takes the `UserDefaults` it reads — so this drives the shipped
+    /// decision instead of describing it. The FALLBACK half matters as much as the name half:
+    /// an unnamed install must still advertise the device name, or #522's "two things, not
+    /// three" scope sentence above would have quietly become "and every unnamed user is now
+    /// called E~ to strangers".
+    func testTheArtistNameNowIsThePeerLabel() throws {
+        let suite = "echoel.tests.peerIdentity.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        defaults.set("Mira", forKey: SessionContext.artistStorageKey)
+        let named = PeerIdentity.local(defaults: defaults, fallbackName: "iPhone")
+        XCTAssertEqual(named.displayName, "Mira", """
+            A named performer must be advertised under the name they chose everywhere else in \
+            the app — not under a second user-name truth, and not under the device model.
+            """)
+
+        defaults.removeObject(forKey: SessionContext.artistStorageKey)
+        let unnamed = PeerIdentity.local(defaults: defaults, fallbackName: "iPhone")
+        XCTAssertEqual(unnamed.displayName, "iPhone", """
+            An UNNAMED install must fall back to the device name — the pre-#1435 behaviour for \
+            exactly the installs that had it. Advertising the brand mark `E~` to strangers \
+            would be a new surface, not a repair.
+            """)
+        XCTAssertEqual(named.stableID, unnamed.stableID, """
+            Renaming — or un-naming — must NOT mint a new identity. A label change that moved \
+            the key would re-collide the very peer this type exists to keep apart.
+            """)
+        XCTAssertNotEqual(named.stableID, named.displayName, """
+            The key and the label must never be the same value. That collapse IS #513: the \
+            presentation string was the identity, so two phones reporting "iPhone" were one peer.
             """)
     }
 
