@@ -365,8 +365,7 @@ public final class ADMOSCSender {
     /// are present. Everything else passes through in order, untouched.
     ///
     /// ⭐ WHY THIS EXISTS, cited rather than asserted. ADM-OSC v1.0 §"Minimum Viable
-    /// Implementation" (`docs/adm-osc.bs`, the vendored spec this repo already pins its leaf
-    /// names against) requires of a SENDER: *"Implement at least one of `/adm/obj/{n}/xyz`
+    /// Implementation" requires of a SENDER: *"Implement at least one of `/adm/obj/{n}/xyz`
     /// (Cartesian, packed) or `/adm/obj/{n}/aed` (polar, packed) for position"*, and of a
     /// RECEIVER: *"Handle at least one of `/adm/obj/{n}/xyz` or `/adm/obj/{n}/aed`"*.
     /// Until this function existed Echoel sent NEITHER packed form, so it was not a

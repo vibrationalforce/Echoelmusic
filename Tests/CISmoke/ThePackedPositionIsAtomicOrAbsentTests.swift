@@ -2,8 +2,7 @@
 // Echoel — #1421. The immersive object now leaves as ONE position message, or as none.
 //
 // THE DEFECT, cited from the standard rather than asserted. ADM-OSC v1.0 §"Minimum Viable
-// Implementation" (`docs/adm-osc.bs`, the vendored spec #1210 already pinned the leaf NAMES
-// against) requires of a SENDER: "Implement at least one of `/adm/obj/{n}/xyz` (Cartesian,
+// Implementation" requires of a SENDER: "Implement at least one of `/adm/obj/{n}/xyz` (Cartesian,
 // packed) or `/adm/obj/{n}/aed` (polar, packed) for position". Echoel sent NEITHER — three
 // separate `/azim`, `/elev`, `/dist` datagrams — so it was not a conforming sender.
 //

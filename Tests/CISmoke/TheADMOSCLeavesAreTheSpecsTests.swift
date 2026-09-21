@@ -5,6 +5,19 @@
 // `SpatialSceneOSC`'s polar and Cartesian branches) emitted `/adm/obj/{n}/position/azimuth`,
 // `/position/elevation`, `/position/distance` and `/position/x|y|z`. The ADM-OSC v1.0 address
 // table (github.com/immersive-audio-live/ADM-OSC, docs/adm-osc.bs, fetched 2026-09-10) has NO
+//
+// ⛔ THAT PATH IS UPSTREAM, AND TWO SIBLING CITATIONS CALLED IT "the vendored spec" (#1431).
+// Measured: `git ls-files docs/adm-osc.bs` → 0, and it is not on disk either. The PATH is
+// right — it exists in the upstream repository, verified — so this is not a needle that can
+// never hit (#1376); it is a mis-homed pointer, and saying which of the two it is matters,
+// because the repairs differ. "Vendored" asserts the file is in THIS tree, so a session that
+// believes it opens nothing and then has to decide whether the quoted spec sentence is real.
+// THIS header is the one home of the provenance (#416): it names the upstream repository, the
+// path inside it and the fetch date. The two sibling sites now quote the standard by SECTION
+// and make no location claim at all, which is the honest shape for a citation whose source is
+// not in reach. A vendored copy would be better than any wording and is not free — the spec
+// is Bikeshed source under its own licence, so that is a founder call, not a cleanup.
+//
 // `position` segment: the object leaves are `/azim`, `/elev`, `/dist`, `/aed`, `/x`, `/y`, `/z`,
 // `/xyz`, `/gain`. A conforming receiver (the repo's reference Python receiver included) logs
 // "unrecognized ADM address" and moves nothing. The identity line, README, the website and
@@ -51,7 +64,8 @@ final class TheADMOSCLeavesAreTheSpecsTests: XCTestCase {
         for leaf in ["/azim", "/elev", "/dist", "/aed", "/gain"] {
             XCTAssertTrue(code.contains("\(leaf)\""), """
                 `ADMOSCSender.swift` no longer writes the ADM-OSC leaf `\(leaf)`. The spec's \
-                object table (docs/adm-osc.bs) names exactly /azim /elev /dist /aed /x /y /z /xyz \
+                object table (UPSTREAM docs/adm-osc.bs, not a file in this repo) names \
+                exactly /azim /elev /dist /aed /x /y /z /xyz \
                 /gain — a renamed leaf is a message every conforming renderer drops on the floor.
                 """)
         }
