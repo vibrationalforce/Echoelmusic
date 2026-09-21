@@ -35950,3 +35950,49 @@ nicht zu nutzen.
 
 ⚠️ **Unverändert offen bleibt die Geräteprobe:** dass das Plugin in einem 44,1-kHz-Host
 (GarageBand iOS) lädt und in Tonhöhe spielt. Kein Gate dieses Repos kann das zeigen.
+
+## 2026-09-21 — #1408: das Sensitivity-Window bekommt eine Tür (Board AU2, Aufgabe #40)
+
+**Der Befund, und er ist eine Kategorie-Korrektur.** Board AU2 („Bio löst zu neutral —
+Ursache gefunden: fehlende Range-Expansion") trug ein ✅ am Primitiv und daneben
+„UI-Knopf + Founder-Feel-Tuning = device-gated Folge". Das liest sich als Geschmacksfrage.
+Gemessen: `git grep -n "inputLow\|inputHigh" -- Sources` liefert Treffer in **genau einer
+Datei**, `Core/ModulationMatrix.swift` selbst — **null Schreiber außerhalb des Typs.** Die
+Fähigkeit wird angewendet (`windowed`), persistiert und dekodiert; die #1250-Tür legt Routen
+mit den Defaults 0/1 an, also lief jede je erzeugte Route auf dem IDENTITÄTS-Fenster.
+Kohärenz lebt typisch in ~[0,3…0,6], also bewegte ein Ziel mit voller Spanne rund ein
+Drittel seines Wegs. **Der Founder-Befund war eine Erreichbarkeits-Tatsache, keine
+Tuning-Frage** — und das Board hätte das nie gesagt, weil das ✅ am Primitiv stand.
+
+⭐ **LEHRE: ein ✅ an einem PRIMITIV verdeckt, ob die Kette dahinter geschlossen ist.** Das
+ist die Register-Familie dieses Repos („gebaut, verdrahtet, türlos"), diesmal in einem
+Board-Eintrag statt in `CLAUDE.md`.
+
+**Die Paarungsregel sitzt am TYP.** `windowed(_:)` beantwortet ein geschlossenes oder
+invertiertes Fenster mit IDENTITÄT (bewusster Divide-by-zero-Schutz). Zwei rohe Bindings auf
+die gespeicherten Eigenschaften hätten den Spieler eine Kante an der anderen vorbeiziehen
+lassen — zwei Zahlen auf dem Schirm neben einer Route, die still aufgehört hat zu formen,
+also #164/#227. `setInputLow`/`setInputHigh` schieben statt zu blockieren (sonst steht der
+Finger an einer unsichtbaren Wand ohne Weg, das Fenster als Ganzes zu verschieben) und pinnen
+als Paar an 0 und 1. **`init` und `Decodable` bleiben bewusst unberührt (#527)** — Anspruch 4
+hält das fest, weil die naheliegende Aufräum-Bewegung genau in die andere Richtung geht.
+
+**Benotung.** Ansprüche 1–4 sind END-TO-END auf einem Foundation-only-Werttyp, gegen den
+Elternbaum nicht kompilierbar (zwei neue Methoden) → hand-transkribiert: **erschöpfender
+Sweep über 1 250 Editier-Folgen** auf einem 25-Punkte-Raster inklusive Außerbereichs- und
+Randwerten, beide Reihenfolgen, null Verletzungen. Anspruch 5 ist eine echte Regression
+(vier Nadeln, EINE Abwesenheit — #486).
+
+⛔ **Und zwei Ansprüche waren im ersten Entwurf als reine Gegengewichte verbucht, und das
+Fahren hat beide widerlegt:** Anspruch 6 hat zwei Nadeln, die auf dem Elternbaum rot sind
+(dieselbe Abwesenheit), und nur sein `Slider`/`Stepper`-Verbot ist ein Gegengewicht; Anspruch
+7 hat eine Nadel auf ein Symbol, das dieser Commit erst anlegt. **Eine geteilte Behauptung
+nach ihrer schmeichelhafteren Hälfte zu verbuchen ist genau die Richtung, vor der §3 warnt** —
+jetzt pro NADEL aufgeschrieben, nicht pro Methode.
+
+⛔ Und die erste Fassung von Anspruch 6 war ein ZÄHL-PIN (`EchoelValueField(` ≥ 4). Das ist
+die #903-Form, die still altert: eine spätere Scheibe, die „Smooth" legitim entfernt, hätte
+einen Wächter über eine Regel rot gemacht, die sie nicht gebrochen hat. Ersetzt durch zwei
+benannte Nadeln auf genau die zwei Zeilen, die diese Scheibe anlegt.
+
+Zehn Prüfer: alle 0. **NICHT compile-verifiziert.**

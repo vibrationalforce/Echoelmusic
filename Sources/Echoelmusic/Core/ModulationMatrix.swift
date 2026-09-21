@@ -360,6 +360,59 @@ public struct ModRoute: Codable, Sendable, Identifiable, Equatable {
         self.inputHigh = ModulationMatrix.clamp01(inputHigh)
     }
 
+    /// The narrowest sensitivity window the EDITING surface will leave open.
+    ///
+    /// ⚠️ IT BELONGS TO THE EDIT PATH ONLY, NEVER TO `init` OR `Decodable` — and that is a
+    /// decision, not an omission. A persisted route may legitimately carry `inputLow ==
+    /// inputHigh`; `windowed(_:)` documents that as identity and a build that wrote such a
+    /// route is entitled to keep behaving the way it did (#527 — a stored document is not a
+    /// bug to be corrected on load). Enforcing the gap at construction would silently
+    /// re-tune every such route on the next launch.
+    ///
+    /// Why a floor at all: `windowed` divides by the width, so a window of 0,01 is a 100×
+    /// expansion of a channel that is applied about once a second and carries real
+    /// measurement noise — the destination would chatter rather than follow. 0,05 caps the
+    /// expansion at 20×, which still spans coherence's typical ~[0,3…0,6] operating range
+    /// more than six times over. It forbids nothing a player would ask for (#364); it
+    /// forbids only the DEGENERATE window, which `windowed` answers by falling back to
+    /// identity — i.e. two on-screen numbers next to a route that quietly does nothing, the
+    /// lying dial #164/#227 bans.
+    public static let minInputWindow: Float = 0.05
+
+    /// Move the window's LOWER edge, pushing the upper one ahead of it if it would be
+    /// overtaken. Clamped into [0,1] and never allowed to close below `minInputWindow`.
+    ///
+    /// Pushing rather than blocking is deliberate: an editing surface that refuses the drag
+    /// at the meeting point leaves the player stuck against an invisible wall with no way to
+    /// move the pair together. At the very top the pair pins as a unit — `low = 1` yields
+    /// `1 - minInputWindow … 1` rather than an impossible window.
+    public mutating func setInputLow(_ v: Float) {
+        let low = ModulationMatrix.clamp01(v)
+        if inputHigh - low >= ModRoute.minInputWindow {
+            inputLow = low
+        } else if low + ModRoute.minInputWindow <= 1 {
+            inputLow = low
+            inputHigh = low + ModRoute.minInputWindow
+        } else {
+            inputHigh = 1
+            inputLow = 1 - ModRoute.minInputWindow
+        }
+    }
+
+    /// Move the window's UPPER edge. Mirror of `setInputLow(_:)`, including the pin at 0.
+    public mutating func setInputHigh(_ v: Float) {
+        let high = ModulationMatrix.clamp01(v)
+        if high - inputLow >= ModRoute.minInputWindow {
+            inputHigh = high
+        } else if high - ModRoute.minInputWindow >= 0 {
+            inputHigh = high
+            inputLow = high - ModRoute.minInputWindow
+        } else {
+            inputLow = 0
+            inputHigh = ModRoute.minInputWindow
+        }
+    }
+
     /// Remap `v` through the sensitivity window `[inputLow, inputHigh] → [0,1]`.
     /// A non-positive width is identity (guards divide-by-zero); result clamped.
     /// With the identity window (0…1) this returns `clamp01(v)` unchanged — the

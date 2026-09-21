@@ -2450,3 +2450,30 @@ beiden korrigiert (#456).
 
 **Review:** 2026-10-21. **Offen:** Geräteprobe in einem 44,1-kHz-Host — kein Gate kann sie
 ersetzen, `Sources/EchoelmusicAUv3/` wird vom blockierenden Bündel nicht kompiliert.
+
+### 2026-09-21 — Die Sensitivity-Window-Kanten bekommen eine Tür (#1408)
+
+**Entscheidung.** `ModulationRouteRow` mountet zwei `EchoelValueField`-Zeilen („Bio min",
+„Bio max") für `ModRoute.inputLow`/`inputHigh`. Die Paarungsregel — eine Kante schiebt die
+andere vor sich her, das Paar pinnt an 0 und 1, Mindestbreite `minInputWindow` — sitzt als
+`setInputLow`/`setInputHigh` am TYP, nicht in der Ansicht (#416).
+
+**Warum am Typ und nicht als rohe Bindings.** `windowed(_:)` beantwortet ein geschlossenes
+oder invertiertes Fenster mit IDENTITÄT — ein bewusster Divide-by-zero-Schutz. Zwei rohe
+Bindings auf die gespeicherten Eigenschaften hätten den Spieler eine Kante an der anderen
+vorbeiziehen lassen: zwei Zahlen auf dem Schirm neben einer Route, die still aufgehört hat
+zu formen. Genau der lügende Regler aus #164/#227.
+
+**Warum die Regel `init` und `Decodable` NICHT erreicht.** Eine persistierte Route darf
+`inputLow == inputHigh` tragen; `windowed` nennt das Identität, und ein Build, der so etwas
+geschrieben hat, darf sich weiter so verhalten (#527). Die Regel dort einzubauen stimmte
+jede dieser Routen beim nächsten Start still um. Anspruch 4 des Wächters hält das fest, weil
+die naheliegende „Aufräum"-Bewegung genau in die andere Richtung geht.
+
+**Der eigentliche Befund.** Der Board-Eintrag AU2 las sich als „Feintuning offen". Gemessen
+hatten beide Kanten NULL Schreiber außerhalb ihres eigenen Typs — die Fähigkeit war
+angewendet, persistiert und dekodiert, aber für keinen Finger erreichbar. **„Bio löst zu
+neutral" war eine Erreichbarkeits-Tatsache, keine Geschmacksfrage.** Lehre: ein Board-Eintrag
+mit einem ✅ am Primitiv verdeckt, dass die Kette dahinter nie geschlossen wurde.
+
+**Review:** 2026-10-21. **Offen:** Founder-Feel-Tuning am Gerät.

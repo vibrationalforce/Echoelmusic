@@ -393,7 +393,7 @@ struct PatchbayView: View {
                             .strokeBorder(EchoelTheme.border, lineWidth: 1))
                 }
                 .accessibilityHint("Adds a route from your coherence to the chosen parameter; change the source in the row.")
-                Text("Routes apply about once a second from the measured body and are kept across launches. A route OWNS its parameter while it is enabled \u{2014} the body sets the value, so a route on the level sets the level. A tempo route glides, and does nothing while the BPM lock is on. Every applied value also leaves as /echoelmusic/mod/<key> when OSC out is routed.")
+                Text("Routes apply about once a second from the measured body and are kept across launches. A route OWNS its parameter while it is enabled \u{2014} the body sets the value, so a route on the level sets the level. Bio min and Bio max are the part of the channel's range the route spans: coherence usually sits between about 0.30 and 0.60, so setting those two makes the parameter travel its whole way instead of a third of it. A tempo route glides, and does nothing while the BPM lock is on. Every applied value also leaves as /echoelmusic/mod/<key> when OSC out is routed.")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -882,6 +882,20 @@ private struct ModulationRouteRow: View {
         return list
     }
 
+    /// Read-modify-write through the binding rather than calling a `mutating` method on
+    /// `route` in place: `@Binding`'s setter is `nonmutating`, so this form needs nothing
+    /// from an immutable `self` and cannot depend on how Swift chooses to synthesise a
+    /// read-modify-write accessor.
+    private var inputLowBinding: Binding<Float> {
+        Binding(get: { route.inputLow },
+                set: { var r = route; r.setInputLow($0); route = r })
+    }
+
+    private var inputHighBinding: Binding<Float> {
+        Binding(get: { route.inputHigh },
+                set: { var r = route; r.setInputHigh($0); route = r })
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
@@ -901,6 +915,23 @@ private struct ModulationRouteRow: View {
                 Spacer(minLength: 0)
             }
             EchoelValueField(label: "Depth", value: $route.depth, range: 0...1, decimals: 2)
+            // The SENSITIVITY WINDOW (#1408) — the door `ModRoute.inputLow/inputHigh` never
+            // had. The primitive shipped with AU2 and was applied, persisted and decoded, but
+            // nothing outside the type could write it, so every route created here ran the
+            // identity window and the route only moved as far as the raw channel did. That is
+            // the founder's "Bio löst zu neutral" as a reachability fact: coherence typically
+            // lives in ~[0,3…0,6], so a full-range destination saw about a third of its travel.
+            //
+            // ⚠️ BOTH EDGES GO THROUGH `setInputLow`/`setInputHigh`, never through a plain
+            // binding on the stored properties. `windowed(_:)` answers a closed or inverted
+            // window with IDENTITY, so a raw pair of fields would let a player drag one past
+            // the other and leave two numbers on screen beside a route that silently stopped
+            // shaping anything — the lying dial #164/#227 bans. The pairing rule lives ONCE,
+            // on the type (#416); this row only spells the edges.
+            EchoelValueField(label: "Bio min", value: inputLowBinding, range: 0...1, decimals: 2)
+                .accessibilityHint("The body value that maps to none of this route's depth. Raise it to ignore the bottom of the channel's range.")
+            EchoelValueField(label: "Bio max", value: inputHighBinding, range: 0...1, decimals: 2)
+                .accessibilityHint("The body value that maps to all of this route's depth. Lower it to reach full depth without reaching the top of the channel's range.")
             HStack(spacing: 12) {
                 Toggle("Invert", isOn: $route.invert).tint(EchoelTheme.accent)
                     .font(EchoelTheme.font(12))
