@@ -37586,3 +37586,27 @@ FALSCH-ROT auf `flushPendingSave`. Der Waechter selbst ist nicht betroffen (er l
 `FileManager.enumerator`, das die Ebene mitlaeuft). **`.claude/rules/context.md` §2 in
 Reinform: eine Messung, die still WENIGER liefern kann als die Wahrheit, ist keine Messung** —
 hier ausnahmsweise in der alarmierenden Richtung, was Glueck war, nicht Methode.
+
+## 2026-09-22 — Gate-Lesung #1441 (88f0c6702)
+
+Beide Pflicht-Gates auf **Schritt-Ebene** gelesen, nie die Run-Conclusion (#396):
+
+| Gate | Lauf | Job | Schritt | Conclusion |
+|---|---|---|---|---|
+| Xcode Compile Check | 35661975069 | 106539078640 | 7 · „Compile (iOS device SDK, no signing)" | **success** (22:18:48 → 22:23:17Z) |
+| Echoelmusic CI/CD Pipeline | 35661975072 | 106539328525 | 9 · „Build for Testing" | **success** (22:19:57 → 22:24:51Z) |
+
+Die zweite Zeile ist die, die zaehlt: #1441 ist eine reine Testdatei plus ein Kommentarblock,
+und `Xcode Compile Check` baut `Sources/` ALLEIN — ein gruenes Haekchen dort sagt ueber eine
+Testdatei nichts (`Tests/CISmoke/CLAUDE.md` §5b). Der neu geschriebene Waechter kompiliert also
+nachweislich; **ob seine acht Ansprueche LIEFEN, ist damit nicht belegt** (#445/#807).
+
+⚠️ **#1416 ist wieder aufgetreten und diesmal habe ich fast falsch geschlossen.** Der
+Job-Endpunkt meldete den Compile-Schritt noch `in_progress`, als seine eigenen Zeitstempel ihn
+bereits als 22:23:17Z abgeschlossen auswiesen. Die Querprobe `git ls-remote origin
+refs/heads/main` stand auf `1b351d0b3` — und das ist die NUETZLICHE Haelfte der Probe: sie
+bestaetigt unabhaengig, dass #1440s beide Gates gruen waren (der Auto-Merge wartet auf beide),
+waehrend sie ueber #1441 noch nichts sagt. ⛔ Und ich hatte zwischendurch aus zwei
+Hintergrund-`sleep`s auf „14 Minuten vergangen, also Staleness" geschlossen; `date -u` sagte
+22:24:43Z, also waren es fuenf. **Eine verstrichene Zeit aus der eigenen Buchhaltung ist keine
+Messung — die Uhr fragen kostet einen Befehl.**
