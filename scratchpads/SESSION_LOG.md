@@ -35996,3 +35996,10 @@ einen Wächter über eine Regel rot gemacht, die sie nicht gebrochen hat. Ersetz
 benannte Nadeln auf genau die zwei Zeilen, die diese Scheibe anlegt.
 
 Zehn Prüfer: alle 0. **NICHT compile-verifiziert.**
+
+## 2026-09-21 — Gate-Lesung `075c54ec4` (#1407b): beide grün
+
+`Xcode Compile Check` = success (Lauf 35570417691, 06:53:38–06:58:01). CI/CD Schritt 9
+`Build for Testing` = success (Lauf 35570417772, Job 106240873269, 06:55:01–06:59:20).
+Der Commit fasst eine Testdatei und `scratchpads/` an, also greift der `Tests/**`-Pfadfilter
+und beide Gates laufen — anders als bei einem reinen `scratchpads/`-Commit.
