@@ -20,8 +20,15 @@
 //  ⚠️ THREE SPACES, NOT FOUR — AND THE MISSING ONE IS A DECISION, NOT AN OVERSIGHT.
 //  The audit proposed a fourth, `FrameTime` (frames + a drop-frame-aware video rate). It is
 //  NOT built here because the founder withdrew video on 2026-09-12 (#1303/#1304, verbatim
-//  "Kein Video Capture"): `AVAssetWriter` occurs zero times under `Sources/` and the app
-//  encodes no video at all. A 29.97-drop-frame timecode type with no domain would be a
+//  "Kein Video Capture"): `Sources/` constructs no VIDEO writer at all. ⛔ THIS LINE SAID
+//  "`AVAssetWriter` occurs zero times under `Sources/`" and that was FALSE the day it was
+//  written (#1425) — `Audio/SingleExport.swift` constructs exactly one, with
+//  `mediaType: .audio`, for the master export. The argument survives UNCHANGED and a
+//  little stronger: the one writer in the tree is audio-typed, so it gives a frame type
+//  no domain either. Pinned by `TheShareReadyClipIsNotSoldAnywhereTests` claim 4 (no
+//  `AVAssetWriterInput(mediaType: .video` anywhere, audio input still in `SingleExport`),
+//  never by a count in a comment — a count in prose is a date (§W).
+//  A 29.97-drop-frame timecode type with no domain would be a
 //  doorless core, and this repository keeps a whole register of those precisely because they
 //  cost a later session real confusion. It is registered as its own slice, to be built the
 //  day a video or timecode domain comes back — with the SMPTE reference table

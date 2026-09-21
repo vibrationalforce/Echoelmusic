@@ -36550,3 +36550,69 @@ seine Form behält.
 ⭐ **Die Scope-Grenze steht jetzt im KOPF des #1421-Wächters**, nicht nur hier: „Echoel ist ein
 konformer ADM-OSC-Sender" ist genau die Sorte Behauptung, die über-gelesen wird, und der
 Wächter sagt selbst, dass seine Ansprüche die Szenen-Ausgabe NICHT abdecken.
+
+---
+
+## 2026-09-21 — #1425: der §W-Sweep, und die eine Falschstelle, die KEIN Kommentar-Rauschen war
+
+⭐ **WAS DER SWEEP IST.** Ein Skript (`scratchpad/sw-sweep.py`, read-only per Allowlist +
+Veto-Liste) zieht JEDEN backtick-zitierten BEFEHL aus den immer-geladenen Dateien
+(`CLAUDE.md`, `.claude/rules/*.md`) und führt ihn neu aus. Gemessen: **64 befehlsförmige
+Spannen, 57 ausgeführt, 7 als mutierend/unvollständig übersprungen.** Das ist die unassistierte
+Hälfte von Frage 3 an ChatGPT — sie braucht keine zweite KI, nur einen Lauf.
+
+⛔ **ERSTER VERSUCH WAR STUMM, UND DAS IST DIE LEHRE.** Der Hintergrundlauf endete mit einer
+Ausgabedatei von **0 Zeilen**. Ursache: `| tail -95` — `tail` puffert bis EOF, der Kill beim
+Timeout warf also alles weg. **Eine leere Ausgabe ist KEIN sauberes Ergebnis** (doctor-Skill:
+„ein Werkzeug, das im Timeout stirbt, druckt kein Häkchen und keinen Befund — es ist stumm").
+Reparatur: `python3 -u` direkt in eine Datei, Per-Befehl-Timeout 90 s → 25 s.
+
+⭐ **DER BEFUND, und er ist von anderer GATTUNG als die vier daneben.** `CLAUDE.md` TECH STACK
+belegte „die App kodiert heute kein Video" mit `git grep -l AVAssetWriter -- Sources` **→ 0**.
+Der Befehl liefert **vier Dateien**, und eine davon ist ECHTER CODE:
+`Audio/SingleExport.swift:245` konstruiert einen `AVAssetWriter` — mit `mediaType: .audio`,
+der Master-Export. **Die SUBSTANZ („kein Video") stimmt weiter; die belegende TATSACHE ist
+falsch** — und sie steht in genau der Tabelle, die eine Sitzung liest, BEVOR sie eine
+Encode-API wählt. Dieselbe Phantom-Gefahr, vor der der Absatz zwei Sätze höher warnt, nur in
+die andere Richtung: nicht ein Framework behauptet, das es nicht gibt, sondern die Abwesenheit
+eines Frameworks behauptet, das BENUTZT wird.
+
+⛔ **ZWEI HOMES, UND DAS ZWEITE HABE ICH LETZTE WOCHE SELBST GESCHRIEBEN.**
+`Core/Timebase.swift:23` (#1416, M1) sagt wörtlich „`AVAssetWriter` occurs zero times under
+`Sources/`" — dieselbe Falschaussage, als Begründung dafür, `FrameTime` NICHT zu bauen. Das
+Argument überlebt die Korrektur **unverändert und etwas stärker**: der eine Writer im Baum ist
+audio-typisiert, gibt einem Frame-Typ also ebenfalls keine Domäne. Beide Stellen korrigiert.
+
+⭐ **UND DAS REPO WUSSTE ES BEREITS — an VIER Stellen richtig, an ZWEI falsch.** Richtig:
+`TheShareReadyClipIsNotSoldAnywhereTests:117/208` („the only `AVAssetWriter` is in
+`Audio/SingleExport.swift` with `mediaType: .audio`"), `Studio/LearnLibrary.swift:107`,
+`SESSION_LOG.md:31659` (#1318, sauber gemessen). Falsch: die immer-geladene Datei und ein
+Core-Kopf. **Die #456-Form in Reinkultur — die korrekte Messung lag in einem Zuhause, die
+falsche in den zwei, die eine Sitzung ZUERST liest.** ⚠️ `SESSION_LOG.md:36261` trägt dieselbe
+Falschaussage; sie wird hier BENANNT statt in der datierten Vergangenheit überschrieben.
+
+⭐ **KEIN NEUER WÄCHTER, und der Grund ist gemessen.** `TheShareReadyClipIsNotSoldAnywhereTests`
+Anspruch 4 pinnt die SACHE bereits: null `AVAssetWriterInput(mediaType: .video` in `Sources/`
+(über `SourceText.codeOnly`, also kommentar-gestrippt) UND der Audio-Input in `SingleExport`.
+Eine vierte handgetippte Nadel-Liste auf die Prosa-Schreibweise wäre genau der #1318-Defekt,
+über den DIESE Wächterdatei geschrieben wurde: drei Listen, die je fast passen. Beide
+korrigierten Stellen zeigen jetzt auf den Wächter statt auf eine Zahl.
+
+⚠️ **RISIKO IM DIFF, gemessen statt gehofft:** der Timebase-Kommentar enthält jetzt das
+VERBOTENE Literal `AVAssetWriterInput(mediaType: .video` — zulässig NUR, weil Anspruch 4 über
+`SourceText.codeOnly` läuft. Verifiziert: 356 Swift-Dateien gelaufen, null Offender, der
+Audio-Input steht.
+
+⚠️ **DIE ANDEREN VIER SIND EINE ANDERE GATTUNG UND BLEIBEN OFFEN (#106).** `HKWorkoutSession`
+(zitiert → 0, liefert 1), `WatchConnectivity\|WCSession` (zitiert „nichts", liefert 3),
+`BioSourceView(` (zitiert NULL, liefert 3), `ADMStreamStatusLine(` (zitiert 1, liefert 2),
+`EchoelCellular(` (zitiert EINE, liefert 2). **Bei allen fünf ist die SUBSTANZ wahr** — die
+Treffer sind durchweg PROSA ÜBER die Abwesenheit, teils die zitierte Zeile selbst
+(`EchoelWatchApp.swift:17` schreibt den Befehl hin und sagt, er liefere nichts — und ist
+dadurch sein eigener Treffer). Das ist §W wörtlich. Die Reparatur ist die Idiomatik, die das
+Repo schon hat (`| grep -v ': *//'`, an zwei Quelldateien vorgeschrieben), und sie ist eine
+EIGENE Scheibe: hier mitzunehmen hieße, unverwandte Korrekturen zu bündeln.
+
+**Gates:** zehn stehende Prüfer alle Exit 0; drei gefährdete Wächter transkribiert (Anspruch 4
+grün, Decke 141.332 B / 150.000, alle zitierten Wächternamen auflösbar). Swift-Delta ist
+KOMMENTAR-ONLY.
