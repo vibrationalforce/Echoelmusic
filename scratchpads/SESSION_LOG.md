@@ -37260,8 +37260,21 @@ Gesetz zitiert (#367). `SourceText.codeOnly` ist hier jetzt LOAD-BEARING, gemess
 weiter an `pattern?.stop()` (und `handleTransportStopped()` ausdruecklich NICHT: es wird AUS
 der Stop-Kaskade gerufen), und der Rumpf liest keinen Spielkopf.
 
+### Gate-Lesung #1438 — GEMESSEN, auf Schritt-Ebene, nie die Run-Conclusion (#396)
+· `Xcode Compile Check` Lauf **35646067946**, Job **106486713176**, Schritt 7
+  `Compile (iOS device SDK, no signing)` → **`success`** (19:38:35→19:44:13).
+· `Echoelmusic CI/CD Pipeline` Lauf **35646067938**, Job **106487016896**, Schritt 9
+  `Build for Testing` → **`success`** (19:39:41→19:43:23). Die RUN-Conclusion ist wie auf
+  jedem Push `failure` (#396) und trägt null Information; `Code Quality & Linting` und
+  `Security Vulnerability Scan` beide `success`.
+· **Zweite Straße, anderer Weg (#1416):** `git ls-remote origin refs/heads/main` →
+  `3ee39c5e3`. `auto-merge-claude.yml` merged nur auf grünem `Build for Testing`, also IST
+  das Vorrücken von `main` die Conclusion des Schritts, angekommen über einen Kanal, der
+  den Job-Datensatz nicht teilt. ⚠️ Das ist eine Bestätigung des GATES, keine Aussage
+  über `Run Tests` — dieser Schritt lief beim Lesen noch, und #445/#807 bleiben in Kraft:
+  die neuen Ansprüche sind **kompiliert nachweislich, Ausführung unbelegt**.
+
 ### Offen nach dieser Runde
-· **Gate-Lesung #1438** — beide Gates, Schritt `Build for Testing`, nie die Run-Conclusion.
 · **NEEDS-FOUNDER-VERIFY (#1436/#1437)** unveraendert, sechs Blicke am `WorkstationView`-Kopf.
   ⚠️ Der Blick „mit einem MIDI-Teil KLINGT Play" ist jetzt SCHAERFER: auf einer frischen
   Installation bleibt Play so lange aus, bis Generate echte Noten in den Composer-Clip
