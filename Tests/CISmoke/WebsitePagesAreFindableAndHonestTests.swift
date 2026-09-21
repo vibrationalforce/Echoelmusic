@@ -826,8 +826,17 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
     ///
     /// `EchoelSynth` is a TAXONOMY, not a type: two published places name the modules grouped
     /// under it, and both read them as shipping. `EchoelModalBank`'s only caller was the drum
-    /// voice removed by #167; `EchoelCellular` never had one. Both stay in the tree deliberately
-    /// (the founder said "erstmal") — what must not stay is a public line reading them as live.
+    /// voice removed by #167; `EchoelCellular` had none between #167 and #1385. Both stay in the
+    /// tree deliberately (the founder said "erstmal") — what must not stay is a public line
+    /// reading an unwired one as live.
+    ///
+    /// ⚠️ HALF THIS HEADER'S PREMISE EXPIRED ON 2026-09-20 AND THE ASSERTION SURVIVED IT INTACT
+    /// — which is the point of measuring a premise instead of listing it (#364). #1385 brought
+    /// the AUv3 target back and its `texture` voice instantiates `EchoelCellular`, so the filter
+    /// below drops it from `unsounding` on its own and this check quietly stops demanding a
+    /// qualifier for it. `EchoelModalBank` is unchanged at zero. The PROSE above had to be
+    /// corrected by hand (#1410) — a measured assertion ages gracefully, the sentence explaining
+    /// it does not.
     ///
     /// ⭐ THE PREMISE IS MEASURED, SO THIS CANNOT BECOME A TRAP (#364). It counts `Module(` in
     /// the CODE of `Sources/**` first and skips any module with even one instantiation. The day
@@ -924,6 +933,93 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
                 entry here plans the next cycle's work around a module that makes no sound. \
                 Wire it, or leave it out of the Live line.
                 """)
+        }
+    }
+
+    /// #1410 — the MIRROR of the claim above: a module that DOES sound must not be published as
+    /// one that cannot.
+    ///
+    /// ⛔ THIS DIRECTION HAD NO CHECK FOR SEVEN WEEKS AND THE TRUTH AGED DOWNWARD THROUGH THE
+    /// GAP. #796 forbade selling `EchoelCellular` and `EchoelModalBank` as LIVE while nothing
+    /// instantiated them. #1385 then wired `EchoelCellular` into the AUv3's texture voice, and
+    /// five published homes went on calling it soundless — two in `CLAUDE.md`, two rows on
+    /// `architecture.html`, one bullet in `FEATURE_MATRIX.md`. Nothing was red, because every
+    /// guard in the family asked only whether we OVERCLAIM.
+    ///
+    /// ⭐ THE LAW, and it is #367 applied to an honesty check rather than to a failure message:
+    /// **a check that forbids an over-claim needs its mirror against the under-claim.** The two
+    /// are not symmetric in how they get noticed — an over-claim is a 2.3 rejection risk and
+    /// somebody hunts it; an under-claim is safe, comfortable, and therefore never re-read. Its
+    /// cost lands on PLANNING: a session reading "makes no sound" treats the ~20-percentage-point
+    /// AUv3 DSP measurement (#1386) as a test artefact and skips the one real performance defect
+    /// on the board.
+    ///
+    /// ⚠️ ANCHORED ON THE MODULE'S OWN DETAIL ROW, never the shared roster row. The roster row
+    /// names BOTH modules in one sentence, so while one of them is genuinely unwired that row
+    /// MUST carry a not-wired phrase — judging it per module would fire on a correct page. That
+    /// is the same per-file-versus-per-claim mistake the header above records (#425/#665),
+    /// arriving from the other side.
+    ///
+    /// ⚠️ THE PREMISE IS MEASURED, SO THIS CANNOT BECOME A TRAP EITHER (#364). It skips any
+    /// module with zero instantiations — delete the AUv3 tomorrow and this check stands down by
+    /// itself, handing the module back to the half above. Neither half can forbid correct work.
+    func testTheWiredSynthModulesAreNotSoldAsUnwired() throws {
+        let modules = ["EchoelModalBank", "EchoelCellular"]
+        let notWired = ["not wired", "no voice instantiates", "makes no sound",
+                        "neither makes a sound", "nicht verdrahtet"]
+
+        let sources = try repoRoot().appendingPathComponent("Sources")
+        guard let walk = FileManager.default.enumerator(atPath: sources.path) else {
+            throw XCTSkip("`Sources/` is not present — a docs-only checkout cannot judge the premise")
+        }
+        var code = ""
+        for case let rel as String in walk where rel.hasSuffix(".swift") {
+            let text = try String(contentsOf: sources.appendingPathComponent(rel), encoding: .utf8)
+            code += SourceText.codeOnly(text)
+        }
+        XCTAssertFalse(code.isEmpty, """
+            The walk over `Sources/**` read no Swift at all, so the premise was never measured \
+            and the assertion below would have passed vacuously (#454). Re-point the walk in the \
+            same commit as whatever moved the sources.
+            """)
+
+        // Comments are stripped above for a concrete reason: `EchoelCellular.swift` QUOTES the
+        // recipe `git grep -n "EchoelCellular(" -- Sources` in its own audio-thread note, so a
+        // naive scan reads that documentation as a second instantiation (#W, in its own case).
+        let sounding = modules.filter { code.components(separatedBy: $0 + "(").count - 1 > 0 }
+        guard !sounding.isEmpty else { return }   // none wired — the half above owns them all
+
+        let html = try String(contentsOf: try repoRoot()
+            .appendingPathComponent("docs/architecture.html"), encoding: .utf8)
+
+        for module in sounding {
+            let key = "<div class=\"k\">" + module + " "
+            guard let keyAt = html.range(of: key) else {
+                return XCTFail("""
+                    `docs/architecture.html` no longer carries a `<div class="k">\(module) ` \
+                    detail row, so this guard checked nothing (#454). \(module) IS instantiated \
+                    in the code of `Sources/**` — if the row moved, re-anchor it here in the \
+                    same commit; do not delete the check.
+                    """)
+            }
+            let rowEnd = html.range(of: "</div></div>", range: keyAt.upperBound..<html.endIndex)
+            let row = String(html[keyAt.upperBound..<(rowEnd?.upperBound ?? html.endIndex)])
+                .lowercased()
+            for phrase in notWired where row.contains(phrase) {
+                XCTFail("""
+                    `docs/architecture.html`'s \(module) row still says "\(phrase)".
+
+                    \(module) HAS at least one instantiation in the code of `Sources/**` — it \
+                    sounds. Saying otherwise is an under-claim, and an under-claim is not the \
+                    harmless direction: it is the sentence a session reads before deciding a \
+                    measured defect in that module is not worth fixing (#1410).
+
+                    Say where it sounds and where it does not — "plug-in only" is the honest \
+                    shape when the AUv3 instantiates it and no voice in the app does. A scoped \
+                    sentence must avoid these five phrases outright, because a qualifier three \
+                    words away is not something this check can read.
+                    """)
+            }
         }
     }
 

@@ -123,10 +123,12 @@ EchoelmusicApp (@main)
 
 Audio Foundation (KEEP):
   AudioEngine (AVAudioEngine master bus) · SPSCQueue ·   (⛔ MicrophoneManager: gelöscht #1302)
-  EchoelDDSP (reused as synth voice) · EchoelCellular (⛔ NICHT „reused as FX texture" —
-    gemessen 2026-08-07: `git grep -ln EchoelCellular -- Sources Tests` liefert die eigene
-    Datei plus ZWEI Testdateien und sonst nichts. Es ist test-only, dieselbe Lage wie
-    `EchoelModalBank` weiter unten. Behalten, aber nicht als klingende Stufe zitieren.)
+  EchoelDDSP (reused as synth voice) · EchoelCellular (⛔ „test-only, nicht als klingende
+    Stufe zitieren" GESTRICHEN 2026-09-21: #1385 hat es auf einen Render-Thread befördert.
+    `git grep -n "EchoelCellular(" -- Sources` → EINE Produktionsstelle, die `texture`-Stimme
+    des AUv3. Im APP-Ziel klingt es weiter nicht — der Unterschied gehört in jede Kopie.
+    ⭐ GESETZ: ein wiederbelebter AUFRUFER schärft jeden latenten Defekt im Aufgerufenen,
+    dessen Datei sich nicht geändert hat. Herleitung: `memory/LEDGER_COUNTS.md` §AH.)
 ```
 
 Deprecated from main flow: SoundscapeEngine, ClipEngine, MomentCaptureView, BioSourceManager,
@@ -317,9 +319,8 @@ Sources/Echoelmusic/
                        ← EchoelBioEngine + HealthKitBioPublisher + CameraRPPGBioPublisher (LIVE)
                        ← (BioSourceManager/OuraRingClient/EEGSensorBridge/MotionActivityProvider REMOVED)
   DSP/                 ← EchoelDDSP, EchoelVDSPKit (KEEP, reused as synth voices).
-                          ⛔ `EchoelCellular` stand hier mit im „reused"-Satz und ist es NICHT
-                          (gemessen 2026-08-07: eigene Datei + 2 Testdateien, null Produktion) —
-                          siehe die korrigierte Zeile in der Audio-Foundation-Liste oben.
+                          ⚠️ `EchoelCellular` KLINGT seit #1385 — aber NUR im AUv3, nie im
+                          App-Ziel. Die Messung steht EINMAL, in der Audio-Foundation-Liste oben.
                        ← EchoelModalBank — ⛔ TEST-ONLY seit #167 (2026-07-31): sein einziger
                           Instanziierer war `DrumSynthVoice`. ~800 Zeilen DSP ohne
                           Produktionspfad. Nicht gelöscht (Founder sagte „erstmal"), aber auch

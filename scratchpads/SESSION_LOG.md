@@ -36069,3 +36069,46 @@ unentscheidbar — genau O11s Lage.
 bleibt offen und ist vom Board selbst als „riskanter Live-Meter-Self-Poll-Refactor, NICHT
 mechanisch" markiert — ohne Compiler und ohne Gerät die falsche Scheibe, und die Landmine ist
 seit #919 durch `TheMenuHostReadsNoHotStateTests` bewacht.
+
+## 2026-09-21 — #1410: „test-only" ist für EchoelCellular abgelaufen, und der Spiegel hat gefehlt
+
+**Anlass war eine Statusfrage, kein Audit.** Founder: „Noch Probleme vorhanden? ist noch was
+offen und muss aufgeräumt werden?" Beim Nachmessen für die Antwort (Arbeitsbaum sauber, zehn
+Checker grün, `main` durch den #1405-Auto-Merge auf `9dcca22dc` nachgezogen) fiel auf, dass die
+immer geladene Datei an zwei Stellen `EchoelCellular` als test-only führt — eine Behauptung, die
+#1385 am Vortag ungültig gemacht hat.
+
+**Gemessen (kommentar-gestrippt, `EchoelCellular(` über `Sources/`):**
+0 Produktionsstellen von #167 bis #1385 · **1 seit #1385** — `EchoelmusicAudioUnit.texture`.
+Es klingt im AUv3-Plug-in, nicht im App-Ziel; dieser Unterschied ist die ganze Wahrheit.
+
+**Fünf von sechs Zuhause waren falsch (#456):** CLAUDE.md ×2, `docs/architecture.html` ×2,
+`docs/dev/FEATURE_MATRIX.md` ×1. Das einzige richtige war `EchoelCellular.swift:298`, im selben
+Zyklus geschrieben, der die Beförderung auslöste. Zwei Wächter-Köpfe trugen die Prosa mit.
+
+**Warum kein Wächter rot wurde — der lehrreiche Teil.**
+`testTheUnwiredSynthModulesAreNotSoldAsLive` MISST seine Prämisse und hat sich beim Flip
+korrekt selbst stillgelegt (#364 funktioniert). Es prüft aber nur die Über-Behauptung. Die
+Gegenrichtung — ein VERDRAHTETES Modul als unverdrahtet verkauft — hatte niemand, und dorthin
+ist die Wahrheit gealtert. **Dreißig Zeilen tiefer im selben Bundle steht die Lehre schon
+wörtlich** (#797-Kopf, aus fünf Zyklen #788–#795): eine Unter-Behauptung ist für jede Prüfung
+unsichtbar, die nach falschen Aussagen sucht. Sie war für FÄHIGKEITEN gezogen und für MODULE
+nicht — die Wiederholung ist nicht der Fehler, sondern die nicht gezogene Verallgemeinerung.
+
+**Gebaut:** `testTheWiredSynthModulesAreNotSoldAsUnwired` — Spiegel, Prämisse gemessen, am
+EIGENEN Detail-Row des Moduls verankert (nie an der geteilten Roster-Zeile, die beide Module in
+einem Satz nennt und deshalb zu Recht eine Nicht-verdrahtet-Formel trägt, solange eines es ist).
+**§0-Benotung:** ROT auf `d7fabb3e3` mit drei benannten Phrasen, GRÜN auf dem Arbeitsbaum; die
+bestehende Hälfte bleibt in BEIDEN Bäumen grün (keine Regression).
+
+**Warum das nicht kosmetisch ist:** die CLAUDE.md-Zeile war PRÄSKRIPTIV („nicht als klingende
+Stufe zitieren"). Aus ihr heraus hätte die nächste Sitzung den gemessenen A11-Befund — rund 20
+Prozentpunkte DSP für EINE AUv3-Instanz (#1386), Ursache der skalare `sin()`-Pfad in
+`EchoelCellular.renderAdditive` — für ein Test-Artefakt gehalten und den einzigen echten
+Performance-Posten auf dem Board übersprungen.
+
+**Zweites Gesetz, aus #1385 in die Nachlese gehoben:** ein wiederbelebter AUFRUFER schärft jeden
+latenten Defekt in allem, was er ruft — und die Datei des Aufgerufenen hat sich nicht geändert,
+der Diff zeigt also nichts.
+
+Provenienz: `memory/LEDGER_COUNTS.md` §AH.

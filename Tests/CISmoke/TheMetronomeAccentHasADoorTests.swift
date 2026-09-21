@@ -25,9 +25,15 @@
 //     `CrashSafeStatePersistence` ×2 · `TimelineStore` · `ADMOSCSender` · `Transport` ·
 //     `PolarH10BioPublisher` · `CameraAnalyzer` · `BioReactiveSynthVoice`.
 //   · **9 are in `EchoelDDSP`**, which 30 other files under `Sources/` consume.
-//   · Only **9** are in the two test-only files (`EchoelCellular` 7, `EchoelModalBank` 2), and
-//     even there the label means "no INSTANTIATION site", not "unmentioned" — CLAUDE.md makes
-//     that exact distinction after a `grep` recipe aged badly.
+//   · Only **9** are in the two then-test-only files (`EchoelCellular` 7, `EchoelModalBank` 2),
+//     and even there the label meant "no INSTANTIATION site", not "unmentioned" — CLAUDE.md
+//     makes that exact distinction after a `grep` recipe aged badly.
+// ⚠️ **"test-only" EXPIRED for one of those two on 2026-09-20 (#1410).** #1385 brought the AUv3
+//     target back and its `texture` voice instantiates `EchoelCellular`, so those 7 knobs are on
+//     a render thread in a shipped plug-in now — production knobs, not test scenery.
+//     `EchoelModalBank` is unchanged at 0 instantiations. The breakdown above is left as it was
+//     TAKEN (2026-08-31); this note is the delta, which is the discipline this header preaches.
+//     Provenance: `memory/LEDGER_COUNTS.md` §AH.
 // So the list still holds real production knobs and is NOT triaged. Writing an untested survey
 // into a guard header is the failure this bundle exists to prevent: **the check is the
 // measurement, the survey is a memory of one.** Kept as a ⛔ rather than deleted because the same

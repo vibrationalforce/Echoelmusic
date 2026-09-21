@@ -7218,3 +7218,70 @@ die Commits verklemmt, die CI reparieren. Der Scope-Schritt fragt deshalb, ob de
 ändert; tut er es nicht, kompiliert `main` danach exakt wie vorher. **Die Ausnahme ist eng
 gehalten und gepinnt** (`TheAutoMergeWaitsForTheGatesTests`, Anspruch 4): jede Erweiterung der
 Pfadliste stellt für diesen Pfad das #683-Verhalten wieder her.
+
+## AH — `EchoelCellular` war zwei Monate test-only und ist es seit #1385 nicht mehr (#1410)
+
+**Der Anlass war eine Statusfrage, kein Audit.** Am 2026-09-21 fragte der Founder „Noch
+Probleme vorhanden?"; beim Nachmessen für die Antwort fiel auf, dass die immer geladene Datei
+an ZWEI Stellen eine Behauptung trägt, die der AUv3-Wiederbelebung vom Vortag widerspricht.
+
+**Die Zähl-Kette:**
+
+| Stand | Produktions-Konstruktionsstellen `EchoelCellular(` in `Sources/` | Quelle |
+|---|---|---|
+| bis #167 (2026-07-31) | 1 — `DrumSynthVoice` | gelöscht mit den Drums |
+| #167 … #1385 | **0** | „test-only", korrekt gemessen 2026-08-07 |
+| seit #1385 (2026-09-20) | **1** — `EchoelmusicAudioUnit.texture` | AUv3-Target zurück |
+
+Messen, nicht zitieren: `git grep -n "EchoelCellular(" -- Sources` (kommentar-gestrippt; der
+Datei-eigene Kommentar in `EchoelCellular.swift` zitiert genau dieses Rezept und verfälscht
+einen naiven Zähl-Lauf — die #W-Falle in eigener Sache).
+
+**SECHS Zuhause für EINE Tatsache, und fünf waren am 2026-09-21 falsch** (#456 in Reinform):
+
+1. `CLAUDE.md` Audio-Foundation-Liste — „Es ist test-only … nicht als klingende Stufe
+   zitieren". **Die teuerste**: sie ist PRÄSKRIPTIV und steht in der Datei, die eine Sitzung
+   ZUERST liest. Aus ihr heraus hätte die nächste Sitzung den gemessenen A11-Befund (rund 20
+   Prozentpunkte DSP für EINE AUv3-Instanz, #1386) für ein Test-Artefakt gehalten.
+2. `CLAUDE.md` `DSP/`-Register — „null Produktion".
+3. `docs/architecture.html:226` — „no voice instantiates it today — it makes no sound in the
+   shipping app".
+4. `docs/architecture.html:347` — dieselbe Behauptung in der Roster-Zeile.
+5. `docs/dev/FEATURE_MATRIX.md` — „`EchoelCellular` never had one".
+6. `Sources/Echoelmusic/DSP/EchoelCellular.swift:298` — **das EINZIGE richtige Zuhause**,
+   am 2026-09-20 im selben Zyklus mitgeschrieben, der die Beförderung auslöste.
+
+**Zwei Wächter-Köpfe trugen die Prosa ebenfalls** (`TheMetronomeAccentHasADoorTests`,
+`WebsitePagesAreFindableAndHonestTests`) — Prosa, keine Nadeln, also nicht rot geworden.
+
+⭐ **Warum kein Wächter das gefangen hat, und das ist der lehrreiche Teil.**
+`testTheUnwiredSynthModulesAreNotSoldAsLive` MISST seine Prämisse (`Module(` in `Sources/**`)
+und hat sich beim Flip korrekt selbst stillgelegt — genau wie sein Kopf es verspricht (#364).
+Es prüft aber nur EINE Richtung: „wird ein unverdrahtetes Modul als live verkauft?" Die
+Gegenrichtung — „wird ein VERDRAHTETES Modul als unverdrahtet verkauft?" — hatte niemand, und
+in die ist der Fehler gelaufen. **GESETZ (#367 auf eine Ehrlichkeits-Prüfung angewandt): eine
+Prüfung, die eine Über-Behauptung verbietet, braucht ihren Spiegel gegen die
+Unter-Behauptung — sonst altert die Wahrheit ungestraft nach unten.** Eine Unter-Behauptung
+fühlt sich sicher an (kein 2.3-Risiko, keine Marketing-Lüge) und ist deshalb schwerer zu
+bemerken; ihr Schaden ist, dass sie PLANUNG verdirbt statt Werbung.
+
+⭐ **Das zweite Gesetz steht seit #1385 im Quelltext und gehört in die Nachlese, weil es
+allgemein ist: ein wiederbelebter AUFRUFER schärft jeden latenten Defekt in allem, was er
+ruft — und die Datei des Aufgerufenen hat sich nicht geändert, der Diff zeigt also nichts.**
+`EchoelCellular` hatte zwei Monate lang keinen Render-Thread; die `cellsPrev`-Zuweisung darin
+war in dieser Zeit harmlos und wurde mit #1385 zu einer Priority-Inversion. Dieselbe Kette
+gilt für A11: der skalare `sin()`-Pfad in `renderAdditive` war nie ein Kostenproblem, solange
+nur Unit-Tests ihn fuhren.
+
+⛔ **UND DIE LEHRE WAR IM SELBEN BUNDLE SCHON BEZAHLT, nur für eine andere Gattung.** Der
+Kopf von `testTheVoiceCaptureIsPublishedOnlyWhileItExists` (#797, dreißig Zeilen unter der
+neuen Methode) sagt es wörtlich: *„an UNDER-claim is invisible to every check that looks for
+false statements, which is why nobody had looked"* — gelernt an FÜNF Zyklen nacheinander
+(#788, #791, #793, #794, #795), jedes Mal eine ausgelieferte, betürte FÄHIGKEIT ohne Fläche,
+die sie verkauft. Verallgemeinert wurde sie nie: der Spiegel wurde für Fähigkeiten gebaut und
+für MODULE nicht. **Das ist die eigentliche Wiederholung — nicht der Fehler, sondern die
+nicht gezogene Verallgemeinerung.** Wer das nächste Mal eine Über-Behauptungs-Prüfung
+schreibt, fragt im selben Commit, welche GATTUNG sie abdeckt und welche benachbarte nicht.
+
+Wächter der Gegenrichtung: `WebsitePagesAreFindableAndHonestTests`
+`testTheWiredSynthModulesAreNotSoldAsUnwired` (#1410).
