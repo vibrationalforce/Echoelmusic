@@ -81,16 +81,12 @@
 		<string>audio</string>
 		<string>bluetooth-central</string>
 	</array>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Echoel uses the microphone to turn live audio into sound, processed on your device. Audio is not recorded or sent anywhere unless you export it yourself.</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>Echoel reads heart rate and HRV to drive sound, image and light in real time. Health data stays on your device — it is never sent over the network, even when OSC or ADM output is on — and is never used for diagnosis.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>If you turn on "Save to Apple Health", Echoel writes the heart rate and respiratory rate it measures (camera or Bluetooth sensor) to Apple Health. This is off by default and you can turn it off anytime.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Echoelmusic uses the camera as an instrument input: your pulse from a fingertip on the rear lens, or your facial movement from the front camera as a control signal (never an inferred emotion). No images are stored or transmitted.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Finished visual recordings are saved to your photo library so you can keep and share them. Nothing is uploaded by Echoelmusic.</string>
+	<string>Echoelmusic uses the rear camera as an instrument input: it reads your pulse from a fingertip held on the lens, lit by the torch (photoplethysmography). No images are stored or transmitted.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Echoelmusic connects to Bluetooth heart-rate sensors (chest straps like Polar, Wahoo or Garmin) to drive the bio-reactive music, and to Bluetooth MIDI controllers and audio devices.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
@@ -98,16 +94,11 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>If you turn on "Place in session name", Echoel looks up your city once to stamp it into the session name (e.g. Echoel_2026-07-10_Hamburg_Am_72bpm_A440). If you turn on "Weather shapes the music", the same location is used to fetch local weather from Apple Weather. Both are off by default; nothing is stored by Echoel or sent anywhere else.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Echoelmusic uses the local network for Art-Net &amp; sACN lighting control and external audio interfaces; for nearby collaboration with other Echoelmusic users (sharing sessions and, only if you choose, your live pulse); when you enable OSC or ADM output, to send live bio values (heart rate, HRV, breath, coherence) to the devices you choose; and to receive wireless MIDI from other devices via Apple's Network MIDI session. Values read from Apple Health or Apple Watch are never sent.</string>
+	<string>Echoelmusic uses the local network for Art-Net &amp; sACN lighting control; for nearby collaboration with other Echoelmusic users (sharing sessions and, only if you choose, your live pulse); when you enable OSC or ADM output, to send live bio values (heart rate, HRV, breath, coherence) to the devices you choose; if you open the OSC control input, to receive cues from the senders you allow (off by default); and to receive wireless MIDI from other devices via Apple's Network MIDI session. Values read from Apple Health or Apple Watch are never sent.</string>
 	<key>NSBonjourServices</key>
 	<array>
-		<string>_http._tcp</string>
-		<string>_rtsp._tcp</string>
-		<string>_artnet._udp</string>
-		<string>_osc._udp</string>
 		<string>_midi._udp</string>
 		<string>_apple-midi._udp</string>
-		<string>_echoelmusic._tcp</string>
 		<string>_echoel-colab._tcp</string>
 		<string>_echoel-colab._udp</string>
 	</array>

@@ -36176,3 +36176,61 @@ seinen eigenen Beleg.**
 **Gate-Lesung 05a14ca99 (#1413), nachgeholt:** Xcode Compile Check 2699 = success · CI/CD 6164
 Schritt 9 `Build for Testing` = success · `Run Tests` = failure (#396). Beide echten Gates grün,
 also ist die Annahmebedingung des Founders für C erfüllt.
+
+---
+
+## 2026-09-21 — DMMW-E: die Erlaubnis-Texte sagen jetzt, was die App kann (#1415)
+
+**Founder-Freigabe, wörtlich (Punkt 12):** Info.plist-Permission-Korrekturen sind erlaubt „nach
+exakter Quell-Neuverifikation, mit exakten Vorher/Nachher-Werten und Quellenbeleg im Commit-
+Report". Genau so gemacht; die Datei bleibt ansonsten founder-gated.
+
+**Sieben Änderungen, jede einzeln gemessen:**
+
+1. **`NSMicrophoneUsageDescription` ENTFERNT.** ⭐ Der Beleg ist STRUKTURELL, nicht nur ein
+   `grep` — und das ist der interessante Teil. Kommentar-gestrippt über `Sources/`:
+   `upgradeToPlayAndRecord()` hat GENAU EINEN Aufrufer (`claimRecordRoute`, Zeile 509);
+   `claimRecordRoute(_ owner: RecordRouteOwner)` hat NULL Aufrufer **und ist unaufrufbar**, weil
+   `RecordRouteOwner` ein LEERES Enum ist — der Parametertyp hat keinen Bewohner.
+   `recordingRouteNeeded` ist `private(set)` und wird nur in `upgradeToPlayAndRecord` wahr.
+   ⇒ Beide `setCategory(.playAndRecord)`-Stellen sind unerreichbar, iOS fragt nie nach dem
+   Mikrofon. **Ein unbewohnter Typ ist ein stärkerer Beweis als eine Zählung von Aufrufstellen**,
+   weil er auch den Aufrufer ausschließt, den jemand morgen schreibt.
+2. **`NSPhotoLibraryAddUsageDescription` ENTFERNT.** `PHPhotoLibrary` / `import Photos`: NULL in
+   `Sources/` seit #1304.
+3. **`NSCameraUsageDescription` korrigiert** — nur noch die RÜCKSEITIGE Linse. Die
+   Front-Kamera-/Gesichts-Hälfte beschrieb den mit #1301 entfernten Pfad;
+   `AVCaptureDevice.Position.front` kommt nicht vor (die drei `.front`-Treffer sind
+   `SpatialPosition`, ein anderer Typ).
+4. **`NSLocalNetworkUsageDescription`**: die Klausel „and external audio interfaces" gestrichen
+   (kein Netzwerk-Audio im Repo), und der OSC-EINGANG nachgetragen (#1255, `OSCReceiver`, opt-in).
+   ⚠️ Ein Erlaubnis-Text, der einen eingehenden Listener VERSCHWEIGT, irrt in der teuren Richtung.
+5. **Bonjour: fünf von neun gestrichen** — `_http._tcp`, `_rtsp._tcp`, `_artnet._udp`,
+   `_osc._udp`, `_echoelmusic._tcp`. Gemessen: `NWBrowser` und `NetServiceBrowser` kommen in
+   `Sources/` **NULL**-mal vor, `NWListener` setzt nirgends `.service`. Die einzigen zwei
+   Discovery-Nutzer sind `MCNearbyServiceBrowser`/`-Advertiser` mit `serviceType "echoel-colab"`
+   und `MIDINetworkSession.default()`. Art-Net/sACN/OSC senden unicast über `NWConnection` und
+   brauchen kein Bonjour.
+   ⚠️ **`_midi._udp` BLEIBT, bewusst und unentschieden.** Es steht neben `_apple-midi._udp` auf
+   dem CoreMIDI-Netzpfad, und aus diesem Repo lässt sich nicht beweisen, welchen der beiden das
+   System browst. **Der Fehler wäre STILL** — Discovery findet einfach nichts —, und eine stille
+   Regression für zwei Zeilen Aufräumen ist der falsche Tausch. Geräteprobe, dann entscheiden.
+6. **Wächter mitgezogen (#456), und er ist dabei STÄRKER geworden.**
+   `EveryPermissionPromptHasACapabilityTests`: `founderGatedOrphans` → `retiredPrompts`, und
+   Anspruch 4 prüft jetzt die PAARUNG in BEIDE Richtungen. ⭐ Die gefährliche Richtung war nie
+   „ein ungenutzter String im Binary", sondern **eine Fähigkeit, die OHNE ihren String
+   zurückkommt** — iOS beendet die App beim ersten Zugriff. Die alte Fassung konnte das nicht
+   prüfen, weil sie die Anwesenheit des Schlüssels behauptete; sie wäre an genau der Reparatur
+   rot geworden, um die sie zwei Zyklen lang gebeten hat (#364).
+7. **Zwei Skripte und zwei Prosa-Stellen nachgezogen:** `scripts/check-infoplist.sh`
+   (`orphan_keys` samt Schleife gelöscht — eine Ausnahmeliste, die ihre Ausnahme überlebt, liest
+   sich als offene Schuld), `scripts/preflight-check.sh` (verlangte den Mikrofon-Schlüssel und
+   wäre an dieser Reparatur rot geworden), `CLAUDE.md` ×2, plus die Fehlermeldung von
+   `TheFeatureRegisterLostTheMicrophoneTooTests`, die jetzt vor dem Absturz warnt statt auf eine
+   erledigte Founder-Frage zu zeigen.
+
+**§0-Benotung:** Anspruch 4 ROT auf `ec45a49e5` für BEIDE Schlüssel mit dem benannten Grund
+(„key present, capability gone"), GRÜN auf dem Arbeitsbaum. `bash scripts/check-infoplist.sh`
+= PASSED. Alle Checker 0. NICHT compile-verifiziert, NICHT geräteverifiziert — und die
+Geräteprobe hat hier eine echte Frage: **startet die App noch und rastet der Kamerapuls noch
+ein**, nachdem zwei plist-Schlüssel weg sind.

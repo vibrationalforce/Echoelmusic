@@ -1,7 +1,10 @@
 // EveryPermissionPromptHasACapabilityTests.swift
 // Echoel — #771. The system permission dialog is user-facing copy, and nothing checked it.
 //
-// WHAT THIS GUARDS. `Resources/iOS/Info.plist` carries nine `NS…UsageDescription` strings.
+// WHAT THIS GUARDS. `Resources/iOS/Info.plist` carries a set of `NS…UsageDescription`
+// strings — measure it, never quote it here (#818):
+//     grep -o 'NS[A-Za-z]*UsageDescription' Resources/iOS/Info.plist | sort -u | wc -l
+// (a literal stood here and read "nine"; #1415 removed two and nothing would have noticed).
 // Each one is shown to the user by iOS, verbatim, at the moment they are asked to grant
 // something — the highest-stakes sentence the app ever prints, and the one App Store review
 // reads first for a 5.1.1 rejection. They are ALSO a capability claim: "Finished visual
@@ -17,10 +20,15 @@
 // below ends with "the day a slice deletes `VisualRecorder`, the photo-library sentence becomes
 // a promise with no code AND an unused permission string in the binary — and no gate would have
 // said a word." #1304 is that day (founder 2026-09-12, "Kein Video Capture"). The plist is
-// FOUNDER-GATED, so the repair is a REPORT and not an edit; the key therefore moves into
-// `founderGatedOrphans` below, which claim 2 skips and claim 4 pins as genuinely code-less.
-// The guard did not go red on a tree nobody is allowed to fix — it NAMED the debt, which is
-// the whole point, and #1304's commit message and CLAUDE.md carry the report.
+// FOUNDER-GATED, so the repair was a REPORT and not an edit; the key moved into a row below,
+// which claim 2 skips. The guard did not go red on a tree nobody was allowed to fix — it NAMED
+// the debt, which is the whole point.
+//
+// ⭐ AND THE DEBT WAS PAID: #1415 removed BOTH orphans after the founder released Info.plist
+// permission corrections. The rows did not go with them. They are `retiredPrompts` now, and
+// claim 4 checks the pairing in BOTH directions — because the dangerous half was never "an
+// unused string in the binary", it is a capability coming back WITHOUT its string, which
+// terminates the app on iOS the first time that code runs.
 //
 // ⚠️ MEASURED BEFORE IT WAS WRITTEN, and the result was that the copy was HONEST. All nine keys
 // had live production code behind them then: `PHPhotoLibrary` in `VisualRecorder`,
@@ -148,8 +156,16 @@ final class EveryPermissionPromptHasACapabilityTests: XCTestCase {
     /// survive on purpose (#299), but `RecordRouteOwner` is an EMPTY enum, so `claimRecordRoute`
     /// cannot even be called, and neither has a production caller. The session can never be
     /// raised to `.playAndRecord`: the prompt this string carries can never appear.
-    private static let founderGatedOrphans: [String: [String]] = [
-        "NSPhotoLibraryAddUsageDescription": ["PHPhotoLibrary"],
+    /// Prompts the plist USED to carry and no longer does, with the symbols that prove the
+    /// capability is still gone. #1415 landed the repair this file spent two cycles reporting.
+    ///
+    /// ⭐ THE ROW DOES NOT DISAPPEAR WITH THE KEY, and that is the point. Deleting a permission
+    /// string is only half a decision; the other half is that the capability must not come back
+    /// WITHOUT it. On iOS an `NS…UsageDescription` is not optional garnish — activating a record
+    /// category, or opening the camera, without the string TERMINATES the app on the spot. So
+    /// claim 4 now asserts the two sides agree in BOTH directions rather than pinning either one.
+    private static let retiredPrompts: [String: [String]] = [
+        "NSPhotoLibraryAddUsageDescription": ["PHPhotoLibrary", "import Photos"],
         "NSMicrophoneUsageDescription":
             ["requestRecordPermission", ".inputNode", "availableInputs", "AVAudioRecorder"]
     ]
@@ -163,7 +179,7 @@ final class EveryPermissionPromptHasACapabilityTests: XCTestCase {
             than nothing wrong (#454). If the permission strings moved to another plist or to \
             `project.yml`, re-anchor this file in the same commit — do not let it skip.
             """)
-        let unknown = keys.filter { Self.table[$0] == nil && Self.founderGatedOrphans[$0] == nil }.sorted()
+        let unknown = keys.filter { Self.table[$0] == nil && Self.retiredPrompts[$0] == nil }.sorted()
         XCTAssertTrue(unknown.isEmpty, """
             \(Self.plist) asks the user for something this guard cannot check: \
             \(unknown.joined(separator: ", ")).
@@ -197,28 +213,46 @@ final class EveryPermissionPromptHasACapabilityTests: XCTestCase {
         }
     }
 
-    // MARK: - claim 4 — an orphaned prompt is orphaned for real, and only while it is
+    // MARK: - claim 4 — a retired prompt and its capability move together, both ways
 
-    /// The counterweight that keeps `founderGatedOrphans` from becoming a quiet exemption list.
-    /// Two directions, both of which fail for their named reason:
-    ///  · the capability came BACK (the needle occurs in code again) ⇒ the row belongs in
-    ///    `table`, and leaving it here would silence claim 2 for a live capability;
-    ///  · the plist no longer carries the key (the founder did the reported repair) ⇒ the row
-    ///    is finished and should go, so the next reader does not read a settled debt as open.
-    func testTheOrphanedPromptsAreStillOrphanedAndStillAsked() throws {
+    /// ⭐ THIS IS A CRASH GUARD, not bookkeeping, and it is the direction the old version could
+    /// not check. While the key sat in the plist this claim asserted it was STILL asked for;
+    /// once #1415 removed it, that assertion would have reddened the very repair the file had
+    /// been requesting (#364). What survives is the pairing:
+    ///  · a needle back in `Sources/` while the key is gone ⇒ the capability was restored
+    ///    without its permission string, and iOS terminates the app the first time that code
+    ///    runs. This is the failure worth a blocking guard.
+    ///  · the key back in the plist while the needles are absent ⇒ the old orphan case, an
+    ///    unused prompt and a 5.1.1 risk.
+    /// Either way the row is telling somebody they did half of a two-part change.
+    func testARetiredPromptAndItsCapabilityMoveTogether() throws {
         let sources = try swiftSources()
         let keys = try usageKeys()
-        for (key, needles) in Self.founderGatedOrphans.sorted(by: { $0.key < $1.key }) {
-            XCTAssertTrue(keys.contains(key), """
-                "\(key)" is listed as a founder-gated orphan but \(Self.plist) no longer asks \
-                for it. The reported repair has landed — delete this row (and its mention in \
-                this file's header) so an open debt is not read into a closed one.
-                """)
-            for needle in needles {
-                XCTAssertFalse(sources.values.contains { $0.contains(needle) }, """
-                    "\(needle)" is back in `Sources/`, so "\(key)" is a LIVE capability again \
-                    and must not sit in `founderGatedOrphans` — claim 2 would stop checking it. \
-                    Move the row back into `table` in this same commit.
+        for (key, needles) in Self.retiredPrompts.sorted(by: { $0.key < $1.key }) {
+            let capabilityPresent = needles.contains { needle in
+                sources.values.contains { $0.contains(needle) }
+            }
+            let keyPresent = keys.contains(key)
+            if capabilityPresent && !keyPresent {
+                XCTFail("""
+                    One of \(needles.joined(separator: " / ")) is back in `Sources/`, but \
+                    \(Self.plist) no longer carries "\(key)".
+
+                    On iOS that is not a tidiness problem: the first time that code path runs, \
+                    the system terminates the app for using a protected resource with no usage \
+                    string. Restore the key in the SAME commit and move this row into `table`, \
+                    so claim 2 starts checking it again.
+                    """)
+            }
+            if keyPresent && !capabilityPresent {
+                XCTFail("""
+                    \(Self.plist) carries "\(key)" again, but none of \
+                    \(needles.joined(separator: " / ")) occurs in `Sources/`.
+
+                    That is the orphan this file reported for two cycles and #1415 closed: a \
+                    sentence iOS will print to the user for something the app cannot do, and a \
+                    5.1.1 question at review. If the capability is coming back, add its code and \
+                    move this row to `table`; if not, drop the key again.
                     """)
             }
         }

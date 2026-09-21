@@ -262,10 +262,15 @@ echo "--- Checking Info.plist ---"
 PLIST_FILE="Resources/iOS/Info.plist"
 if [[ -f "$PLIST_FILE" ]]; then
     # HealthKit usage descriptions (required for App Store)
+    # ⛔ NSMicrophoneUsageDescription STOOD HERE AND IS REMOVED (#1415). The audio input went
+    # with #1302 and the key went with it: the only code that can raise the session to
+    # `.playAndRecord` is `AudioConfiguration.claimRecordRoute(_:)`, whose parameter type
+    # `RecordRouteOwner` is an EMPTY enum — uninhabitable, so the function cannot be called.
+    # Requiring a usage string for a capability the app cannot reach turned this pre-flight
+    # into a gate against the repair it was asking for (#364).
     REQUIRED_KEYS=(
         "NSHealthShareUsageDescription"
         "NSHealthUpdateUsageDescription"
-        "NSMicrophoneUsageDescription"
     )
 
     for key in "${REQUIRED_KEYS[@]}"; do

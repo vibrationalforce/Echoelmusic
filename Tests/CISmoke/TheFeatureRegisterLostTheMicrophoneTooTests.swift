@@ -120,8 +120,11 @@ final class TheFeatureRegisterLostTheMicrophoneTooTests: XCTestCase {
             "an INPUT tap is back in `AudioEngine`. Legal (#364), and it makes the register's "
             + "corrected wording — \"a 1024-pt FFT window on the **master OUTPUT**\" — false in the "
             + "same word it was just repaired in. Move that line in the SAME commit, and re-check "
-            + "`docs/_headers` (`microphone=()`) and the `NSMicrophoneUsageDescription` question "
-            + "that is founder-gated in CLAUDE.md.")
+            + "`docs/_headers` (`microphone=()`). ⚠️ AND THE PLIST KEY IS NO LONGER THERE TO "
+            + "FALL BACK ON: #1415 removed `NSMicrophoneUsageDescription`, so input code that "
+            + "reaches a record-category session now TERMINATES the app on iOS. Restore the key "
+            + "in the same commit — `EveryPermissionPromptHasACapabilityTests.retiredPrompts` "
+            + "is the guard that says so.")
     }
 
     private static func repoRoot() throws -> URL {
