@@ -36112,3 +36112,67 @@ latenten Defekt in allem, was er ruft — und die Datei des Aufgerufenen hat sic
 der Diff zeigt also nichts.
 
 Provenienz: `memory/LEDGER_COUNTS.md` §AH.
+
+---
+
+## 2026-09-21 — DMMW-D: zwei Copy-Behauptungen, die es nicht gibt (#1414)
+
+**Founder-Auftrag, wörtlich:** „D enthält ausschließlich Wahrheitskorrekturen, keine neue
+Funktionalität." Sieben Punkte, davon zwei, die die Form des Commits bestimmt haben: *Keine
+Implementierung von Tempo-Sync oder HRV→Visual in D* und *Schreibe Regression Guards gegen die
+falschen Claims, nicht gegen konkrete Formulierungen unnötig eng*.
+
+**Befund 1 — die VoiceOver-Zusage an der Live-Colabo-Tür.** Der Hint lautete „Opens the
+nearby-session sheet to play together **on one tempo**". `MultipeerSession` teilt einen Codable
+`Project`-SCHNAPPSCHUSS (style · key · ein Tempo-WERT · patch · notes) und streamt hinter einem
+Opt-in-Schalter die eigenen Bio-Werte jedes Peers für eine Nebeneinander-Anzeige. Es gibt keinen
+geteilten Transport und keine Clock-Synchronisation: der Kopf des Publishers sagt das selbst
+(„Real-time tempo/phase lock (Ableton Link) is a separate, device-verified step"), und Link ist
+gar nicht verlinkt — `Package.swift` trägt ein LEERES `dependencies`-Array.
+
+⭐ **Die Lehre sitzt in der Asymmetrie der beiden Flächen.** Der SHEET-Text war die ganze Zeit
+ehrlich („share your session both ways — a starting point to jam from together"). Falsch war nur
+die Tür — also genau die Hälfte, die **kein sehender Nutzer je liest** (#480: ein
+Accessibility-String ist ohne VoiceOver unsichtbar, kein Screenshot und kein Design-Durchgang
+zeigt ihn). **Eine falsche Behauptung versteckt sich am besten dort, wo sie gesprochen wird.**
+
+**Befund 2 — HRV → Bild, gemessen statt erinnert.** Kommentar-gestrippt über das ganze
+`Sources/`: der Renderer liest **genau EIN** `BioVisualParams`-Feld, `vp.pulseHz` (Herzfrequenz).
+`complexity` ist der EINZIGE HRV→Bild-Pfad und hat keinen Verbraucher (#1131). ⭐ **Das Ergebnis
+war eine Überraschung in der angenehmen Richtung: die vier Treiber-Aufzählungen der Website waren
+BEREITS exakt** (HR→pulse, tone→hue, breath→spread, coherence→sharpness), ebenso der Learn-Text
+und `docs/claims.html`. Es gab nichts zu streichen — der Wächter ist das, was sie exakt HÄLT,
+solange die Messung gilt.
+
+**⚠️ EINE FLÄCHE TRÄGT DIE BEHAUPTUNG WEITER UND WIRD BERICHTET, NICHT EDITIERT:**
+`fastlane/metadata/{en-US,de-DE}/description.txt`, erste Zeile — „Heart rate, HRV and breath
+drive a synthesizer, a live visual and your light rig". Distributiv gelesen sind das neun Pfeile,
+**acht davon halten** (HRV→Licht ist echt: `ArtNetSender` sendet `hrvNormalized` als
+DMX-Kanal); der neunte, HRV→Bild, nicht. App-Store-Wortlaut gehört dem Founder — und ein Wächter
+darüber wäre auf einem Baum rot, den er nicht freigegeben hat (#488). Vorschlag steht im Report.
+
+**Wächter:** `Tests/CISmoke/TheNearbySessionPromisesNoClockTests.swift`, fünf Ansprüche.
+· Anspruch 5 ist **BEDINGT auf die Messung**: liest `MetalBioView` eines Tages `vp.complexity`,
+  legt er sich selbst still und sagt im Skip-Text, dass jetzt die Kopie nachzuziehen ist. Ein
+  Wächter, der die ehrliche Kopie dauerhaft macht, macht die ehrliche Reparatur illegal (#364).
+· Die Nadelliste nennt **affirmative** Zusagen („on one tempo", „in sync", „phase lock"), NICHT
+  die blanken Wörter „sync"/„synced" — der reparierte Hint sagt „are not clock-synced", und eine
+  Nadel, die den ehrlichen Satz rot macht, ist die #425-Falle.
+· Der Türblock wird **kommentar-gestrippt** gelesen: die Rücknahme, die dieser Commit dort
+  hineinschreibt, ZITIERT die entfernte Zusage wörtlich — ein roher Scan träfe seine eigene
+  Korrektur (#491, eine Datei weiter).
+
+⛔ **ZWEI EIGENE FEHLER, BEIDE VON DER BENOTUNG GEFANGEN, BEIDE IN DER BERUHIGENDEN RICHTUNG.**
+(1) Anspruch 4 zielte auf `"Real-time tempo/phase lock"` — und der Kopf des Publishers bricht
+genau dort um, die Phrase überspannt ein `\n` plus `// `. Die Nadel hätte **nie** treffen können
+(#808/#367); die Transkription hat es gesehen, sonst nichts. (2) Der erste Entwurf des
+Tür-Kommentars belegte „Link ist nicht verlinkt" mit einem zitierten `git grep` — und das
+Schreiben dieses Satzes machte den Treffer aus 0 eine 1, **sich selbst**. Jetzt steht die
+TATSACHE (`Package.swift`, leeres `dependencies`) statt des Rezepts. Das ist die
+`EchoelModalBank`-Lehre (§W) in einem neuen Kostüm: **ein Vermerk, der ein `grep` zitiert, altert
+schneller als einer, der eine Tatsache behauptet — jeder Kommentar ÜBER die Sache verfälscht
+seinen eigenen Beleg.**
+
+**Gate-Lesung 05a14ca99 (#1413), nachgeholt:** Xcode Compile Check 2699 = success · CI/CD 6164
+Schritt 9 `Build for Testing` = success · `Run Tests` = failure (#396). Beide echten Gates grün,
+also ist die Annahmebedingung des Founders für C erfüllt.

@@ -125,13 +125,21 @@ final class TheDoorsAreIndividualButtonsTests: XCTestCase {
 
     // MARK: - 3. both doors speak
 
-    /// An icon-only control must say what it is (#489). Both labels are inherited verbatim from
-    /// the menu entries they replace — "Live Colabo" alone would not tell a first-time listener
-    /// that it is about playing WITH someone in the room.
+    /// An icon-only control must say what it is (#489). Both labels are inherited from the menu
+    /// entries they replace — "Live Colabo" alone would not tell a first-time listener that it
+    /// is about playing WITH someone in the room.
+    ///
+    /// ⛔ THE LIVE COLABO LABEL WAS PINNED AS "play together nearby" UNTIL #1414 and moved to
+    /// "play together with a nearby device" together with its hint, which had promised "on one
+    /// tempo" for a capability that does not exist. **This pin is a SPELLING, and the file it
+    /// guards is copy** — the honest reading is that it holds the label PRESENT, not that this
+    /// wording is law. The claim that no nearby-collaboration copy may promise tempo or clock
+    /// sync lives in `TheNearbySessionPromisesNoClockTests`, which scans for the PROMISE rather
+    /// than for a phrase, so a future rewording moves this one literal and nothing else.
     func testBothDoorsSpeak() throws {
         let doors = try declarationBody(of: "private var quickDoorRow: some View {",
                                         in: Self.studio)
-        for (door, label) in [("Live Colabo", "Live Colabo — play together nearby"),
+        for (door, label) in [("Live Colabo", "Live Colabo — play together with a nearby device"),
                               ("Learn", "Learn and news")] {
             XCTAssertTrue(doors.contains(".accessibilityLabel(\"\(label)\")"), """
                 The \(door) tile lost its spoken label.

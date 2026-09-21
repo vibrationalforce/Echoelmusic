@@ -2396,11 +2396,34 @@ struct EchoelStudioView: View {
                 EchoelIconTile(systemImage: "dot.radiowaves.left.and.right", expands: true)
             }
             .buttonStyle(.plain)
-            // The label the menu entry carried, verbatim — an icon-only control must say what
-            // it is (#489), and "Live Colabo" alone would not tell a first-time listener that
-            // it is about playing WITH someone in the room.
-            .accessibilityLabel("Live Colabo — play together nearby")
-            .accessibilityHint("Opens the nearby-session sheet to play together on one tempo")
+            // An icon-only control must say what it is (#489), and "Live Colabo" alone would
+            // not tell a first-time listener that it is about playing WITH someone in the room.
+            //
+            // ⛔ THE HINT PROMISED "play together on one tempo" UNTIL #1414, AND NOTHING IN THIS
+            // APP DOES THAT. `MultipeerSession` shares a Codable `Project` SNAPSHOT — style, key,
+            // a tempo VALUE, patch, notes — and, behind an opt-in toggle, streams each peer's own
+            // bio for a side-by-side readout. There is no shared transport and no clock sync: the
+            // publisher's own header says "Real-time tempo/phase lock (Ableton Link) is a
+            // separate, device-verified step", and Link is not linked at all — `Package.swift`
+            // carries an EMPTY `dependencies` array. Loading a shared session sets your BPM to
+            // theirs ONCE; from the next bar the two devices drift, because each one runs its
+            // own transport.
+            // ⚠️ The first draft of this note cited a `git grep` for the Link symbols as the
+            // proof and said it "returns nothing" — writing that sentence made it return ONE,
+            // itself. A note that quotes a grep ages faster than one that states a fact,
+            // because every comment ABOUT the thing corrupts its own evidence (the
+            // `EchoelModalBank` lesson, `memory/LEDGER_COUNTS.md` §W).
+            //
+            // ⭐ THE RULE THIS COST: spoken copy and visible copy must describe the SAME
+            // capability. The sheet's own paragraph was honest the whole time ("share your
+            // session both ways — a starting point to jam from together"); only the door
+            // over-promised, and the door is the half no sighted user can read (#480 — an
+            // accessibility string is invisible with VoiceOver off, so no screenshot and no
+            // design pass will ever show it). A false claim hides best where it is spoken.
+            .accessibilityLabel("Live Colabo — play together with a nearby device")
+            .accessibilityHint("Opens the nearby-session sheet: find a device on the same "
+                               + "Wi-Fi and share your session with it. The two devices are "
+                               + "not clock-synced.")
             #endif
 
             Button { showLearn = true } label: {
