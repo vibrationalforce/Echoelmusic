@@ -550,6 +550,227 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
         XCTAssertFalse(TimelineScheduling.isSampleable(span(Self.step + 1, Self.step - 1)))
     }
 
+    // MARK: - 20. BEHAVIOUR — an executable region the scheduler never SELECTS (#1440)
+
+    func testARegionFullyShadowedByItsOverlapCannotPlay() {
+        let midi = TimelineLane(name: "MIDI 1", kind: .midi)
+        let good = Self.midiClip()
+        // Two one-tick parts at tick 0. `activeRegion` breaks the equal-start tie toward the
+        // LATER array element, so the dangling one owns the only grid tick either of them has.
+        let executable = TimelineRegion(laneID: midi.id, clipID: good.id,
+                                        startTick: 0, lengthTicks: 1)
+        let dangling = TimelineRegion(laneID: midi.id, clipID: UUID(),
+                                      startTick: 0, lengthTicks: 1)
+        let doc = TimelineDocument(lanes: [midi], regions: [executable, dangling])
+        XCTAssertFalse(Self.startable(doc, clips: [good]), """
+            ⛔ THE #1440 BLOCKER, and the last of the four silent-clock escapes. #1439 asked \
+            each region TWO independent questions — "does the grid land in you" and "do you \
+            hold content" — and approved the song when ONE region answered both. The player \
+            never asks a region anything: `laneEvent` loads whatever `activeRegion` RETURNS, \
+            and `activeRegion` gives the tick to the latest-starting containing region, \
+            breaking an equal start toward the one placed LATER. Here that is the dangling \
+            part, at the only grid tick in the song, so Play starts a transport over nothing \
+            — while a region full of notes sits underneath it, never loaded. Dropping a part \
+            on top of another at the same bar is the everyday shape of this, not an exotic \
+            one.
+            """)
+
+        // The same shadow, one step LATER in the song rather than at an equal start — the
+        // other half of the precedence rule (latest START wins, ties aside).
+        let laterStart = TimelineRegion(laneID: midi.id, clipID: good.id,
+                                        startTick: Self.step, lengthTicks: Self.step)
+        let laterShadow = TimelineRegion(laneID: midi.id, clipID: UUID(),
+                                         startTick: Self.step, lengthTicks: 1)
+        XCTAssertFalse(Self.startable(TimelineDocument(lanes: [midi],
+                                                       regions: [laterStart, laterShadow]),
+                                      clips: [good]), """
+            `laterStart` owns exactly one grid tick and `laterShadow` takes it. A predicate \
+            that read only the earliest region, or only the first in the array, would answer \
+            the opposite — which is why claim 21 exists beside this one.
+            """)
+
+        // AUDIO behaves identically: the resolver is asked about the WINNER, not about the
+        // region that happens to resolve.
+        let audioLane = TimelineLane(name: "Audio 1", kind: .audio)
+        let present = Clip(name: "Loop", kind: .audio, mediaRef: "loop.wav")
+        let missing = Clip(name: "Gone", kind: .audio, mediaRef: "gone.wav")
+        let ok = TimelineRegion(laneID: audioLane.id, clipID: present.id,
+                                startTick: 0, lengthTicks: 1)
+        let gone = TimelineRegion(laneID: audioLane.id, clipID: missing.id,
+                                  startTick: 0, lengthTicks: 1)
+        XCTAssertFalse(Self.startable(TimelineDocument(lanes: [audioLane],
+                                                       regions: [ok, gone]),
+                                      clips: [present, missing],
+                                      resolveAudio: Self.resolving(present.id)), """
+            The #1439 resolver truth and the #1440 precedence truth compose, and this is the \
+            case that proves they were not fixed in isolation: the file that EXISTS belongs \
+            to the region the scheduler will not select. Asking the resolver about the wrong \
+            region is as wrong as not asking it at all.
+            """)
+    }
+
+    // MARK: - 21. COUNTERWEIGHT — overlaps the scheduler DOES select still play (#364)
+
+    func testOverlapsTheSchedulerSelectsAreStillPlayable() {
+        let midi = TimelineLane(name: "MIDI 1", kind: .midi)
+        let good = Self.midiClip()
+
+        // (a) The WINNER is the executable one — the mirror image of claim 20's first case.
+        let dangling = TimelineRegion(laneID: midi.id, clipID: UUID(),
+                                      startTick: 0, lengthTicks: 1)
+        let executable = TimelineRegion(laneID: midi.id, clipID: good.id,
+                                        startTick: 0, lengthTicks: 1)
+        XCTAssertTrue(Self.startable(TimelineDocument(lanes: [midi],
+                                                      regions: [dangling, executable]),
+                                     clips: [good]), """
+            Identical geometry to claim 20, array order swapped. If the repair had been \
+            "any overlap is unplayable" — the cheap way to green claim 20 — this would be \
+            red, and every song where a user replaced a part by dropping a new one on top \
+            would refuse to start. The rule is the SELECTOR, not the presence of an overlap.
+            """)
+
+        // (b) A shadow that LIFTS: the executable region outlives its shadow and owns a
+        // later grid tick. One reachable tick is a playable song.
+        let long = TimelineRegion(laneID: midi.id, clipID: good.id,
+                                  startTick: 0, lengthTicks: 3 * Self.step)
+        let brief = TimelineRegion(laneID: midi.id, clipID: UUID(),
+                                   startTick: 0, lengthTicks: Self.step)
+        XCTAssertTrue(Self.startable(TimelineDocument(lanes: [midi],
+                                                      regions: [long, brief]),
+                                     clips: [good]), """
+            `brief` wins tick 0 and ends before tick 120, so `long` owns the rest. A \
+            predicate that judged only the FIRST candidate tick — the obvious \
+            implementation, and one step short of correct — would refuse this. The question \
+            is whether ANY sample tick selects executable content, not the first one.
+            """)
+
+        // (c) A later-STARTING executable region rescues an earlier dangling one.
+        let earlierGone = TimelineRegion(laneID: midi.id, clipID: UUID(),
+                                         startTick: 0, lengthTicks: 2 * Self.step)
+        let laterGood = TimelineRegion(laneID: midi.id, clipID: good.id,
+                                       startTick: Self.step, lengthTicks: Self.step)
+        XCTAssertTrue(Self.startable(TimelineDocument(lanes: [midi],
+                                                      regions: [earlierGone, laterGood]),
+                                     clips: [good]), """
+            Latest start wins, so the good part takes tick 120 from the dangling one that \
+            spans it. This is the ordinary "punch a new part over the middle of an old one" \
+            edit and it must stay startable.
+            """)
+    }
+
+    // MARK: - 22. COUNTERWEIGHT — lanes are scheduled independently (§7)
+
+    func testOverlapsOnDifferentLanesStayIndependent() {
+        let one = TimelineLane(name: "MIDI 1", kind: .midi)
+        let two = TimelineLane(name: "MIDI 2", kind: .midi)
+        let good = Self.midiClip()
+
+        // A dangling part on ANOTHER lane must not shadow an executable one.
+        let executable = TimelineRegion(laneID: one.id, clipID: good.id,
+                                        startTick: 0, lengthTicks: 1)
+        let elsewhere = TimelineRegion(laneID: two.id, clipID: UUID(),
+                                       startTick: 0, lengthTicks: 1)
+        XCTAssertTrue(Self.startable(TimelineDocument(lanes: [one, two],
+                                                      regions: [executable, elsewhere]),
+                                     clips: [good]), """
+            `TimelineScheduling.activeRegion` filters by `laneID` before it picks a winner, \
+            so lanes cannot shadow each other at runtime and must not here. The tempting \
+            implementation — one global winner per tick — is red on this claim, and it would \
+            dim Play on any multi-lane song with a stale part anywhere in it.
+            """)
+
+        // …and a lane that is wholly shadowed does not poison a lane that plays.
+        let shadowed = TimelineRegion(laneID: one.id, clipID: good.id,
+                                      startTick: 0, lengthTicks: 1)
+        let shadow = TimelineRegion(laneID: one.id, clipID: UUID(),
+                                    startTick: 0, lengthTicks: 1)
+        let plain = TimelineRegion(laneID: two.id, clipID: good.id,
+                                   startTick: 0, lengthTicks: Self.bar)
+        XCTAssertTrue(Self.startable(TimelineDocument(lanes: [one, two],
+                                                      regions: [shadowed, shadow, plain]),
+                                     clips: [good]), """
+            Lane 1 is exactly claim 20 and contributes nothing; lane 2 plays. ONE executable \
+            winning lane is a startable song — the predicate asks for an existence, not for \
+            every lane to qualify.
+            """)
+    }
+
+    // MARK: - 23. BEHAVIOUR — the candidate tick set is SOUND and COMPLETE (#1440)
+
+    func testTheCandidateTicksAreSoundAndCompleteAgainstAFullGridScan() {
+        let lane = UUID()
+        func span(_ start: Int, _ length: Int) -> TimelineRegion {
+            TimelineRegion(laneID: lane, clipID: UUID(), startTick: start, lengthTicks: length)
+        }
+        // SOUND: every emitted tick lies INSIDE a region on the lane. This is the one thing
+        // `isSampleable` decides inside the enumeration that a caller can observe — drop it
+        // and the sliver below contributes tick 240, which no region owns. `activeRegion`
+        // re-checks containment, so no VERDICT would change; the set would just stop meaning
+        // what its name says, and the next reader would build on a false description.
+        let sliverAndBar = TimelineDocument(
+            lanes: [], regions: [span(Self.step + 1, 1), span(4 * Self.step, 4 * Self.step)])
+        for tick in TimelineScheduling.candidateSampleTicks(in: sliverAndBar, laneID: lane) {
+            XCTAssertTrue(sliverAndBar.regions.contains { tick >= $0.startTick && tick < $0.endTick },
+                          """
+                          Candidate tick \(tick) lies in no region on this lane. Every \
+                          emitted tick must be one some region actually owns — that is what \
+                          `isSampleable` is doing inside `candidateSampleTicks`, and it is \
+                          invisible in any verdict because `activeRegion` filters again.
+                          """)
+        }
+        // A region ending exactly ON a grid tick owns none: the same exclusive end claim 19
+        // drives directly, observed here through the enumeration.
+        let endsOnGrid = TimelineDocument(lanes: [], regions: [span(Self.step - 1, 1)])
+        XCTAssertEqual(TimelineScheduling.candidateSampleTicks(in: endsOnGrid, laneID: lane), [],
+                       """
+                       `[119, 120)` contains no grid tick — 120 belongs to whatever starts \
+                       there. An inclusive end here would emit 120 and describe a tick this \
+                       region does not own.
+                       """)
+
+        // COMPLETE: over a spread of overlapping geometries, the bounded candidate set finds
+        // the same winners a FULL grid sweep finds. The set is O(regions); the sweep is O(song
+        // length) and is here only as the oracle — it must never become the implementation
+        // (§6: no per-tick brute force in the app).
+        let geometries: [[TimelineRegion]] = [
+            [span(0, Self.bar)],
+            [span(0, 1), span(0, 1)],
+            [span(0, 3 * Self.step), span(0, Self.step)],
+            [span(0, 2 * Self.step), span(Self.step, Self.step)],
+            [span(0, 4 * Self.step), span(0, Self.step), span(Self.step, Self.step)],
+            [span(1, Self.step - 1), span(0, 2 * Self.step)],
+            [span(Self.step + 1, 1), span(0, 4 * Self.step)],
+            [span(Self.step - 1, 1), span(240, 240)],
+            [span(0, Self.bar), span(60, 60), span(300, 1), span(480, 2 * Self.step)],
+        ]
+        for regions in geometries {
+            let doc = TimelineDocument(lanes: [], regions: regions)
+            let candidates = Set(TimelineScheduling.candidateSampleTicks(in: doc, laneID: lane))
+            let horizon = (regions.map(\.endTick).max() ?? 0) + 2 * Self.step
+            var sweptWinners = Set<UUID>()
+            var tick = 0
+            while tick <= horizon {
+                if let r = TimelineScheduling.activeRegion(in: doc, laneID: lane, at: tick) {
+                    sweptWinners.insert(r.id)
+                }
+                tick += Self.step
+            }
+            var candidateWinners = Set<UUID>()
+            for t in candidates {
+                if let r = TimelineScheduling.activeRegion(in: doc, laneID: lane, at: t) {
+                    candidateWinners.insert(r.id)
+                }
+            }
+            XCTAssertEqual(candidateWinners, sweptWinners, """
+                The bounded candidate set must select the SAME regions a full grid sweep \
+                selects. A missing boundary would hide a region that really does win a tick \
+                — the predicate would then refuse a song that plays, which is #364 in the \
+                direction nobody notices. Geometry: \
+                \(regions.map { "[\($0.startTick),\($0.endTick))" }.joined(separator: " "))
+                """)
+        }
+    }
+
     // MARK: - 14. BEHAVIOUR — the control says WHY, and never promises editing
 
     func testTheTransportWordsAreTruthful() {
@@ -968,14 +1189,17 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
     // MARK: - M. COUNTERWEIGHT — the scheduler's grid is asked, and its end stays exclusive
 
     func testThePredicateAsksWhetherTheSchedulerCanReachTheRegion() throws {
-        let engine = try code(at: Self.player)
-        XCTAssertTrue(engine.contains("TimelineScheduling.isSampleable(region)"), """
-            `firstExecutableRegion` must ask whether the transport's grid ever lands in the \
-            region. Without it a sliver between two grid ticks enables Play and is never \
-            loaded — content the scheduler cannot reach, which is a silent clock by a \
-            different road than a missing clip.
-            """)
         let sched = try code(at: Self.scheduling)
+        XCTAssertTrue(sched.contains("if isSampleable(region) {"), """
+            The schedulability question must still be ASKED — a sliver between two grid ticks \
+            must not contribute a candidate tick, or the set stops describing ticks any \
+            region owns. ⚠️ THE CALLER MOVED IN #1440, THE QUESTION DID NOT: until then this \
+            needle read `TimelineScheduling.isSampleable(region)` in the PLAYER, because \
+            `firstExecutableRegion` filtered regions one by one. It now walks the scheduler \
+            instead, so the gate lives inside `candidateSampleTicks` — one file further down, \
+            same rule. A needle left on the old address would have gone red on a correct tree \
+            (#1092), which is the failure this bundle has paid for four times.
+            """)
         guard let head = sched.range(of: "static func isSampleable("),
               let close = sched.range(of: "\n    }\n", range: head.upperBound..<sched.endIndex)
         else { throw AnchorMissing(reason: "`isSampleable` could not be delimited — re-anchor.") }
@@ -1031,6 +1255,60 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
             `WorkstationView` must not read a tempo property. The file's own header names \
             `beatPlayer.pattern` as the thing it must never touch in `body`; the preflight \
             mirror exists so it does not have to.
+            """)
+    }
+
+    // MARK: - O. COUNTERWEIGHT — the preflight ASKS the selector, it does not re-derive it
+
+    func testThePreflightAsksTheSchedulerWhoWins() throws {
+        let engine = try code(at: Self.player)
+        guard let head = engine.range(of: "static func firstExecutableRegion("),
+              let close = engine.range(of: "\n    }\n", range: head.upperBound..<engine.endIndex)
+        else { throw AnchorMissing(reason: "`firstExecutableRegion` could not be delimited — re-anchor.") }
+        let body = String(engine[head.upperBound..<close.lowerBound])
+
+        XCTAssertTrue(body.contains("TimelineScheduling.candidateSampleTicks(in: document, laneID: lane.id)"), """
+            The preflight must walk the scheduler's own decision set. Judging regions one by \
+            one — the #1439 shape — approves a song whose only executable part is shadowed by \
+            an overlapping neighbour at every grid tick it owns (claim 20).
+            """)
+        XCTAssertTrue(body.contains("TimelineScheduling.activeRegion(in: document,"), """
+            …and it must ask who WINS each of those ticks. `activeRegion` is the one place \
+            overlap precedence is defined; a preflight that picks its own winner is a second \
+            definition of the rule that decides what the user hears (§2, #416).
+            """)
+        XCTAssertTrue(body.contains("for lane in document.lanes where !lane.isBio"), """
+            Lane by lane, because `activeRegion` filters by `laneID` before it picks. A \
+            single global winner per tick would let a stale part on one lane dim Play for a \
+            song that plays on another (claim 22).
+            """)
+        for vocabulary in ["startTick", "endTick", "max(by:", ".sorted"] {
+            XCTAssertFalse(body.contains(vocabulary), """
+                `firstExecutableRegion` must not contain the token `\(vocabulary)`. Ordering, \
+                containment and the equal-start tie-break belong to `TimelineScheduling`; the \
+                moment the predicate spells any of them itself, the two can disagree — and \
+                the disagreement is invisible until a user drops one part on top of another.
+                """)
+        }
+
+        let sched = try code(at: Self.scheduling)
+        XCTAssertTrue(sched.contains("($0.element.startTick, $0.offset) < ($1.element.startTick, $1.offset)"), """
+            THE PRECEDENCE RULE ITSELF, pinned where it lives: the lexicographic maximum over \
+            `(startTick, position)` is what makes the LATEST-STARTING region win and breaks an \
+            equal start toward the one placed LATER. Claims 20–22 are written against exactly \
+            this rule; if it is ever changed deliberately, they change with it in the same \
+            commit rather than going quietly wrong.
+            """)
+        var declarations: [String] = []
+        for (path, source) in try Self.allSources()
+        where source.contains("func candidateSampleTicks(") { declarations.append(path) }
+        XCTAssertEqual(declarations.sorted(), ["Sequencer/TimelineScheduling.swift"], """
+            The candidate-tick enumeration belongs to the file that owns `activeRegion` and \
+            the grid, and must exist once. Found: \(declarations.sorted()).
+            """)
+        XCTAssertFalse(engine.contains("func candidateSampleTicks("), """
+            …and the player must not grow its own copy. A second enumeration is a second \
+            answer to "where can the winner change", which is the whole defect #1440 closed.
             """)
     }
 

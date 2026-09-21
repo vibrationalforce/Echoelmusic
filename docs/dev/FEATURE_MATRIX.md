@@ -130,10 +130,25 @@ acceptance line.
 >   derivation; (3) a region lying entirely between two transport grid ticks was reachable to
 >   the predicate and invisible to the scheduler — `TimelineScheduling.isSampleable` asks that
 >   question, which the file's own header had stated as a limit since P2 without any caller
->   being able to put it. ⚠️ **What `canPlay` proves, at its narrowest:** the current scheduler
->   can reach at least one region whose source resolves and whose executor has content. NOT
->   that the media decodes, that the mixer gain is non-zero, or that a sound leaves the device
->   — those remain runtime and DEVICE truths.
+>   being able to put it.
+>   ⛔ **AND #1440 (Phase 4d) CLOSED THE FOURTH AND LAST OF THEM: OVERLAP PRECEDENCE.** #1439
+>   still asked each region on its OWN — "does the grid land in you" and "do you hold content"
+>   — and approved the song when one region answered both. The player never asks a region
+>   anything: `laneEvent` loads whatever `TimelineScheduling.activeRegion` RETURNS at a grid
+>   tick, and that gives the tick to the LATEST-STARTING containing region, breaking an equal
+>   start toward the one placed LATER. So an executable part can own grid ticks and still never
+>   be loaded, because a part dropped on top of it owns every one of them — the everyday shape
+>   is a replacement part over a stale one whose clip is gone. `firstExecutableRegion` now walks
+>   `TimelineScheduling.candidateSampleTicks(in:laneID:)` — the bounded set of ticks at which
+>   the winner can change, O(regions), no per-tick sweep and no second clock — and asks
+>   `activeRegion` who wins each one. **Precedence stays defined exactly once, in
+>   `TimelineScheduling`**; the predicate asks it rather than restating it.
+>   ⚠️ **What `canPlay` proves, at its narrowest (the #1440 wording):** there is at least one
+>   transport sample tick at which the scheduler SELECTS a region whose source resolves and
+>   whose executor has content. The word #1440 added is SELECTS — "a region exists that could
+>   be reached" is the weaker claim, and the gap between them is precisely an overlapping
+>   neighbour. NOT that the media decodes, that the mixer gain is non-zero, or that a sound
+>   leaves the device — those remain runtime and DEVICE truths.
 >
 > **UPDATE (2026-07-11) — comprehensive-interface modules + sound (code-truth):**
 > - **Module 1 Mixer — LIVE, but TWO faders, not four (corrected 2026-08-06, #438).** `Core/MixerStore.swift` still *stores* bass/pad/lead/drums (four persisted keys, deliberately — see the file's own `⚠️ drums IS INCLUDED AND THAT IS DELIBERATE` note: a key that vanishes cannot be reset to unity if drums ever return). What the user can actually MOVE is `mixerPanel`'s two `EchoelValueField` rows: **Level (bass) and Pad**. Lead's fader went with #255 (founder: "Lead kann raus aus dem Mix"); drums produce no sound at all since #166/#167.

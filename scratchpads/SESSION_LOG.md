@@ -37391,3 +37391,96 @@ weil er zur Lesezeit noch nicht gelaufen war.
 ### Offen nach dieser Runde
 · **NEEDS-FOUNDER-VERIFY (#1436/#1437)** unveraendert.
 · **PHASE 5** — der Auftrag sagt „EXECUTE PHASE 4c ONLY. DO NOT START PHASE 5."
+
+## 2026-09-21 — PHASE 4d (#1440): canPlay fragt den echten Overlap-Gewinner
+
+**AUFTRAG (Founder, nach dem zweiten Codex-GPT-5.6-Sol-Review auf `fa21213a9`).** Zwei der
+drei Phase-4c-Fragen kamen als PASS zurueck (Resolver-Wahrheit, Legacy-Offset-Gleichheit),
+die dritte als FINDING: *"canPlay can approve an executable region that is completely
+shadowed by another overlapping region which the actual scheduler would select instead."*
+Ein letzter, eng begrenzter Slice; sonst nichts anfassen.
+
+### §0 Praemisse geprueft, BEVOR editiert wurde
+`TimelineScheduling.activeRegion` filtert nach `laneID` und nimmt dann das lexikografische
+Maximum ueber `(startTick, Position in der gefilterten Liste)`. Also: **die SPAETER
+beginnende enthaltende Region gewinnt; bei gleichem Start die SPAETER platzierte.** Die
+Codex-Praemisse ist damit woertlich bestaetigt — nichts fiel weg, nichts musste berichtet
+statt repariert werden. `TimelinePlaybackCursor.advance` liefert ausschliesslich Vielfache
+von `ticksPerTransportStep`, das Gitter ist also wie in #1439 beschrieben.
+
+### DER DEFEKT, gemessen statt argumentiert
+Transkription beider Praedikat-Formen gegen 21 Faelle: **die #1439-Form liegt bei FUENF
+falsch**, jedesmal in der gefaehrlichen Richtung (sie sagt Ja). Der Founder-Fall ist der
+erste davon: zwei Ein-Tick-Teile bei 0, das ausfuehrbare zuerst im Array, das haengende
+danach — der Scheduler nimmt bei Tick 0 das haengende, der Vorbehalt sah das ausfuehrbare.
+
+### DIE REPARATUR — eine Frage, einmal definiert
+· **`TimelineScheduling.candidateSampleTicks(in:laneID:)`** (NEU): die begrenzte Menge der
+  Gitter-Ticks, an denen sich der Gewinner ueberhaupt aendern kann. Zwei Quellen, je
+  O(Regionen auf der Spur): der eigene erste Gitter-Tick einer Region (`isSampleable`
+  entscheidet, ob sie einen hat) und der erste Gitter-Tick, nachdem eine ANDERE Region
+  STRIKT innerhalb dieser endet — der Moment, in dem ein Schatten sich hebt. Eine Grenze,
+  an der eine andere Region BEGINNT, ist bewusst keine Quelle: ein Start kann die Spur nur
+  WEGNEHMEN, und der erste Gitter-Tick des Nehmers steht unter seinem eigenen Namen schon
+  drin.
+· **`TimelineRegionPlayer.firstExecutableRegion`**: laeuft spurweise ueber
+  `document.lanes`, holt je Kandidaten-Tick den Gewinner aus `activeRegion` und fragt NUR
+  den. Jede Region wird hoechstens EINMAL beurteilt (Memo ueber das, was `isExecutable`
+  wirklich liest — nicht ueber `region.id`, weil ein dekodiertes Dokument nicht uniquifiziert
+  ist), also kostet eine fehlende Mediendatei EINE `fileExists`-Probe statt einer pro Tick.
+· **Kein** Scheduler-Umbau, **keine** hoehere Transport-Aufloesung, **keine** zweite Uhr,
+  **kein** Per-Tick-Durchlauf ueber das Lied, **kein** Cache, **kein** Timer.
+
+⚠️ **ZWEI ABLEHNUNGEN SIND UMGEZOGEN, NICHT VERSCHWUNDEN**, und das ist die Stelle, an der
+eine spaetere Sitzung sonst „der Slice hat eine Pruefung geloescht" liest: Waisen (Region auf
+einer Spur, die das Lied nicht hat) werden jetzt STRUKTURELL abgelehnt, weil der Lauf ueber
+`document.lanes` geht; die Sampleability sitzt in der Aufzaehlung. Beide haben weiter ihren
+eigenen Anspruch, der das PRAEDIKAT faehrt statt der Zeile, die sie frueher implementierte.
+
+### BELEG (kein Swift in dieser Sitzung — Transkription, §0)
+· Verhalten: **21 von 21** Faellen richtig auf dem reparierten Praedikat; die Eltern-Form
+  liegt bei **5** falsch. Genau diese fuenf sind die neuen Ansprueche 20–22.
+· **Vollstaendigkeits-Orakel**: die begrenzte Kandidaten-Menge und ein VOLLER Gitter-Durchlauf
+  waehlen ueber **200 000** zufaellige Dokumente (1–5 Regionen, Off-Grid-Starts, Laengen unter
+  einem Schritt, drei Spuren) **dieselben** Gewinner — null Abweichungen. Das ist der Beleg,
+  den die Codex-Nachfrage woertlich verlangt.
+· Mutation: **10 von 10** getoetet. Acht davon durch `canPlay` (Praezedenz ignorieren ·
+  frueheste statt spaeteste Start-Zeit · erstes statt letztes Element bei Gleichstand ·
+  Spur-Scoping ignorieren · alle Overlaps falsch · alle Overlaps wahr · nie spielen · immer
+  spielen). ⚠️ **ZWEI nur eine Ebene tiefer, und das ist ein Befund, kein Loch:** „isSampleable
+  aus der Aufzaehlung nehmen" und „Ende inklusiv machen" aendern KEIN Verdikt, weil
+  `activeRegion` die Enthaltung selbst nochmal prueft — also ist die Halb-offenheit genau
+  einmal definiert, wie §2 es verlangt. Getoetet werden sie von Anspruch 23 (jeder
+  ausgegebene Tick liegt INNERHALB einer Region) und vom bestehenden Anspruch 19.
+· Scans: **50 von 50** gruen auf dem Arbeitsbaum, **4 rot** auf dem Elternteil
+  (`84ee5670e`) — M1 (die `isSampleable`-Aufrufstelle ist umgezogen; die Nadel ist im selben
+  Commit mitgezogen, #1092) plus O1/O2/O6, die `candidateSampleTicks` nennen, das es dort
+  nicht gibt: EINE Abwesenheit, dreimal gemeldet (#486). Null echte Regressionen im
+  Scan-Teil; die Regression liegt vollstaendig im VERHALTENS-Teil.
+· Stripper **TRAGEND** (4 von 50 Verdikten kippen roh gegen gestrippt).
+· Klammer-Bilanz code-only auf allen drei Dateien: Eltern = Arbeitsbaum.
+· Zehn Standard-Pruefer Exit 0. `moved-needles.py` meldete EINEN Treffer — geoeffnet: es ist
+  die Code-Zeile des Wächter-Helfers `Self.startable`, keine Nadel (null String-Literale mit
+  dem Text). Keine Aenderung noetig.
+
+### ANNAHME-GRENZE, in der #1440-Fassung
+`canPlay` beweist: **es gibt mindestens einen Transport-Abtast-Tick, an dem der Scheduler eine
+Region AUSWAEHLT**, deren Quelle sich aufloest und deren Executor Inhalt hat. Das Wort, das
+#1440 hinzufuegt, ist AUSWAEHLT; „eine erreichbare Region existiert" ist die schwaechere
+Behauptung, und die Luecke zwischen beiden ist genau der ueberlappende Nachbar. Es beweist
+weiterhin NICHT Hoerbarkeit, Dekodierbarkeit, Mixer-Pegel oder Hardware.
+
+### NEUER BEFUND, nicht in diesem Slice gehandelt (berichten, nicht ausweiten)
+Der Vorbehalt akzeptiert JEDE nicht-Bio-Spur mit Engine-Kind. Zur LAUFZEIT faehrt
+`transportStep` aber nur die `rollLane` (die erste nicht-Bio-MIDI-Spur) plus die Audio-Spuren;
+weitere MIDI-Spuren laufen nur ueber `fanOutSecondaryLanes`, und das ist auf
+`multiRollCapacity > 0` gegated. Ein Lied, dessen einziger ausfuehrbarer Teil auf MIDI-Spur 2
+liegt, koennte also Play anbieten und still bleiben. **Das ist NICHT der Codex-Fund**, der
+Auftrag nennt Mehrspur-Unabhaengigkeit ausdruecklich als gewuenschtes Verhalten (§5, §9), und
+Anspruch 9 haelt sie seit #1438 fest. Hier nur registriert, damit die naechste Runde es als
+Frage vorfindet statt als Zufall.
+
+### Offen nach dieser Runde
+· **Gate-Lesung #1440** — beide Gates auf Schritt-Ebene, nie die Run-Conclusion (#396).
+· **NEEDS-FOUNDER-VERIFY (#1436/#1437)** unveraendert.
+· **PHASE 5** — der Auftrag sagt „EXECUTE PHASE 4d ONLY. DO NOT START PHASE 5."

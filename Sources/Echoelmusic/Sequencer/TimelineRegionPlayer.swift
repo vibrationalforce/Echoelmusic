@@ -314,9 +314,12 @@ public final class TimelineRegionPlayer {
     /// owner (§8), and taking the VALUES rather than the store keeps this a pure function
     /// drivable by a guard that must never construct an App-Group-backed store.
     ///
-    /// ⭐ WHAT IT PROVES, STATED AT ITS NARROWEST (#1439): the CURRENT scheduler can reach at
-    /// least one region whose source RESOLVES and whose current executor has content to
-    /// process. It does NOT prove that a sound is audible — not that the media decodes, not
+    /// ⭐ WHAT IT PROVES, STATED AT ITS NARROWEST (#1439, sharpened by #1440): there is at
+    /// least one transport sample tick at which the scheduler SELECTS a region whose source
+    /// resolves and whose current executor has content to process. The word that #1440 added
+    /// is SELECTS — "a region exists that could be reached" is a weaker claim, and the gap
+    /// between the two is exactly an overlapping neighbour that wins the tick. It does NOT
+    /// prove that a sound is audible — not that the media decodes, not
     /// that the mixer gain is above zero, not that a route exists, not that the hardware is
     /// healthy. Those are runtime and device truths and they stay there. The claim is about
     /// the CLOCK: pressing Play will put something into an engine, rather than starting a
@@ -349,42 +352,84 @@ public final class TimelineRegionPlayer {
     ///   · a clip whose kind does not match its lane's — a MIDI lane holding an audio clip
     ///     loads no notes, an audio lane holding a MIDI clip resolves no URL
     ///   · a clip that resolves but carries nothing this engine would execute (below)
-    ///   · a region the transport's grid never lands in (→ `TimelineScheduling.isSampleable`)
+    ///   · a region the transport's grid never lands in (#1439)
+    ///   · a region the grid DOES land in, that an overlapping region always beats (#1440)
     ///
-    /// ⭐ THE SCHEDULABILITY GATE IS FIRST, AND IT IS THE ONE REJECTION THAT IS ABOUT THE
-    /// ENGINE RATHER THAN THE CONTENT (#1439). Everything else here asks "is there something
-    /// to play"; this asks "can the player ever LOOK". `laneEvent` compares the active region
-    /// at two grid ticks, the grid is `ticksPerTransportStep` apart, and a region whose
-    /// half-open span contains no grid tick is therefore invisible to it forever — full of
-    /// notes, resolvable, on a driven lane, and unreachable. It runs first because it is the
-    /// cheapest of the four and needs no clip lookup.
+    /// ⭐ IT WALKS THE SCHEDULER, NOT THE REGION LIST — THE #1440 REPAIR. #1439 asked each
+    /// region two independent questions ("does the grid land in you" and "do you hold
+    /// content") and approved the song if ONE region answered both. That is not what the
+    /// player does. `laneEvent` never sees a region; it sees whatever `activeRegion` RETURNS
+    /// at a grid tick, and `activeRegion` gives the tick to the LATEST-STARTING containing
+    /// region — on an equal start, to the one placed LATER. So an executable region can own
+    /// grid ticks and still never be loaded, because an overlapping neighbour owns every one
+    /// of them. The founder's case is the everyday shape of it: a part dropped on top of
+    /// another at the same bar, pointing at a clip that is gone. #1439 said yes and started a
+    /// transport over silence. The predicate now asks the SELECTOR — same function, same
+    /// half-open containment, same tie-break — so preflight and playback cannot disagree
+    /// about who wins.
     ///
-    /// Short-circuits on the FIRST executable region: one is the whole question, and the
-    /// song loops, so position is irrelevant — a region at bar 90 is as playable as bar 1.
-    /// That short-circuit is also what keeps the audio resolver's file probes bounded: a
-    /// song whose first MIDI part has notes never touches the filesystem at all.
+    /// ⭐ BOUNDED BY THE DOCUMENT, NOT BY THE SONG. The candidate ticks come from
+    /// `TimelineScheduling.candidateSampleTicks`, which is O(regions on the lane) and carries
+    /// the completeness argument; there is no per-tick sweep, no simulation, no cache and no
+    /// second clock. Two facts about the shape make this cheap in the case that matters: it
+    /// short-circuits on the FIRST executable winner — a song that plays usually answers at
+    /// its very first candidate tick — and each region is JUDGED at most once, so a missing
+    /// media file costs one `fileExists` probe rather than one per tick it wins.
+    ///
+    /// ⚠️ THE ORPHAN AND SCHEDULABILITY REJECTIONS MOVED; THEY DID NOT GO. Orphans are now
+    /// refused STRUCTURALLY — the walk is over `document.lanes`, so a region whose `laneID`
+    /// names no lane is never reached. Schedulability is refused by the enumeration: a region
+    /// that owns no grid tick contributes no candidate and can never be returned by
+    /// `activeRegion` at one. Both are still pinned by their own claims, which drive the
+    /// PREDICATE rather than the line that used to implement them (#367).
+    ///
+    /// ⚠️ LANE BY LANE, BECAUSE `activeRegion` IS LANE-SCOPED. A region on lane A cannot
+    /// shadow one on lane B at runtime, so it must not here either — one executable winning
+    /// lane is a playable song. A mutant that drops the scoping and takes a single global
+    /// winner is red on the claim that names it.
     static func firstExecutableRegion(in document: TimelineDocument,
                                       clips: [Clip],
                                       bpm: Double,
                                       resolveAudio: (UUID) -> URL?) -> TimelineRegion? {
         guard !document.regions.isEmpty else { return nil }
-        var driven: [UUID: ClipKind] = [:]
-        let engineKinds = ClipKind.timelineEngineKinds
-        for lane in document.lanes where !lane.isBio && engineKinds.contains(lane.kind) {
-            driven[lane.id] = lane.kind
-        }
-        guard !driven.isEmpty else { return nil }
         // First occurrence wins, so the answer is stable for a grid that ever held a
         // duplicated id — `ClipStore` is positional and its slots are not uniqued.
         var byID: [UUID: Clip] = [:]
         for clip in clips where byID[clip.id] == nil { byID[clip.id] = clip }
-        return document.regions.first { region in
-            guard TimelineScheduling.isSampleable(region),
-                  let laneKind = driven[region.laneID],
-                  let clip = byID[region.clipID] else { return false }
-            return isExecutable(region: region, onLaneOfKind: laneKind, clip: clip,
-                                bpm: bpm, resolveAudio: resolveAudio)
+        let engineKinds = ClipKind.timelineEngineKinds
+        // What `isExecutable` actually reads — the memo key, rather than `region.id`, because
+        // a decoded document is not uniqued and two regions sharing an id must not inherit
+        // each other's verdict. `contentOffsetSeconds` is finite by construction (the
+        // initialiser clamps it through `max(0,)`, which maps NaN to 0), so it is a safe key.
+        struct Judged: Hashable {
+            let clipID: UUID
+            let lengthTicks: Int
+            let offsetTicks: Int
+            let offsetSeconds: Double
         }
+        var verdicts: [Judged: Bool] = [:]
+        for lane in document.lanes where !lane.isBio && engineKinds.contains(lane.kind) {
+            for tick in TimelineScheduling.candidateSampleTicks(in: document, laneID: lane.id) {
+                guard let region = TimelineScheduling.activeRegion(in: document,
+                                                                   laneID: lane.id,
+                                                                   at: tick) else { continue }
+                let key = Judged(clipID: region.clipID, lengthTicks: region.lengthTicks,
+                                 offsetTicks: region.contentOffsetTicks,
+                                 offsetSeconds: region.contentOffsetSeconds)
+                if let known = verdicts[key] {
+                    if known { return region }
+                    continue
+                }
+                var verdict = false
+                if let clip = byID[region.clipID] {
+                    verdict = isExecutable(region: region, onLaneOfKind: lane.kind, clip: clip,
+                                           bpm: bpm, resolveAudio: resolveAudio)
+                }
+                verdicts[key] = verdict
+                if verdict { return region }
+            }
+        }
+        return nil
     }
 
     /// Whether ONE placed region would put something through the engine.
