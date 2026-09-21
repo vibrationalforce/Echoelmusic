@@ -36616,3 +36616,50 @@ EIGENE Scheibe: hier mitzunehmen hieße, unverwandte Korrekturen zu bündeln.
 **Gates:** zehn stehende Prüfer alle Exit 0; drei gefährdete Wächter transkribiert (Anspruch 4
 grün, Decke 141.332 B / 150.000, alle zitierten Wächternamen auflösbar). Swift-Delta ist
 KOMMENTAR-ONLY.
+
+---
+
+## 2026-09-21 — #1426: `/verify`s Code-Quality-Scan war in BEIDEN Richtungen falsch
+
+⭐ **GEFUNDEN, indem der §W-Sweep auf die ZWEITE Fläche gezogen wurde** — `Tests/CISmoke/CLAUDE.md`,
+`.claude/skills/*/SKILL.md`, `.claude/commands/*.md` (**40 befehlsförmige Spannen**). Der erste
+Sweep (#1425) hatte nur die immer-geladenen Dateien.
+
+⛔ **RICHTUNG 1 — ÜBER-MELDUNG.** `.claude/commands/verify.md` §4 ließ drei Bannscans laufen und
+bekam **2 Force-Unwraps und 2 `print()`**. Drei der vier sind PROSA: ein Doc-Kommentar, der
+`NoteNaming(rawValue:)!` ERWÄHNT · `ProfessionalLogger.swift:5` („Replaces all print()
+statements") · ein Python-Schnipsel in einem Kommentar in `TimelineStore.swift:61`. Der vierte
+ist echt, dokumentiert und gepinnt (`Project.swift:82`). **Ein Scan, der bei jedem Lauf Wolf
+ruft, wird stumm geschaltet — genau der Mechanismus, der `continue-on-error` 14 Stunden lang
+unsichtbar gemacht hat.**
+
+⛔ **RICHTUNG 2 — UNTER-MELDUNG, und das ist die gefährliche.** Die Nadel war `)!`, also EINE von
+vier Schreibweisen. Kommentar-gestrippt gemessen über 356 Dateien: **`)!` findet 1 von 4** echten
+Force-Unwrap-AUSDRÜCKEN. Die anderen drei sind `best!` in `Sequencer/AutomationCanvasMath.swift:67`,
+`Sequencer/TempoMatch.swift:65`, `Sequencer/TimelineAutomationRowMath.swift:135` — je sicher durch
+Kurzschluss-Auswertung (`if best == nil || … best!…`), aber **nirgends im Repo aufgeschrieben**,
+weil die Nadel sie nie sah. `.claude/rules/context.md` §2 wörtlich: „Eine Messung, die still
+WENIGER als die Wahrheit liefern kann, ist keine Messung." ⚠️ `]!`, `try!`, `as!` sind gemessen
+**NULL** — der Baum ist dort echt sauber.
+
+⭐ **REPARATUR = das Instrument, NICHT die drei Stellen.** Drei verhaltensgleiche Swift-Edits ohne
+lokalen Compiler sind drei Chancen, ein Gate rot zu machen, für null sichtbaren Gewinn; der
+Zweck des Verbots ist, dass ein Force-Unwrap nicht VERSTECKT ist, und genau das leistet die
+Auflistung. Die vier bekannten Stellen und die ZWEI gutartigen Sorten (elf IUO-DEKLARATIONEN im
+AUv3-`AUAudioUnit`-Muster, drei Sätze in DREIFACH-GEQUOTETEN Strings, die auf „!" enden) stehen
+jetzt namentlich in der Datei, damit ein Leser die 18 Zeilen von Hand subtrahieren kann. **Eine
+FÜNFTE ist Arbeit.**
+
+⛔ **UND ICH HABE DEN FEHLER, DEN ICH REPARIERE, IM SELBEN DIFF EINMAL SELBST GEMACHT.** Die erste
+Fassung schrieb `SourceText.tripleQuoteAwareCodeOnly` — den Namen gibt es dort NICHT; der Helfer
+ist eine PRIVATE statische Funktion auf `TheStripperDoesNotKnowATripleQuoteTests`, und
+`SourceText.codeOnly` kennt Dreifach-Quotes bewusst NICHT (#659). Eine Nadel, die nie treffen
+kann (#1376), im Commit gegen Nadeln, die nie treffen können. **Vor dem Push gefangen**, weil
+jeder neu eingeführte Backtick-Name maschinell gegen `Sources`/`Tests` aufgelöst wurde — nicht,
+weil er beim Lesen auffiel. **Die Lehre ist die Prüfung, nicht die Sorgfalt:** ein
+Symbol-Zitat gehört aufgelöst, nicht erinnert.
+
+**Verifikation:** die drei umgeschriebenen Befehle wörtlich gelaufen → **18 / 0 / 0**, exakt wie
+dokumentiert. Alle zehn Backtick-Symbole des neuen Blocks lösen auf. Fünf stehende Prüfer Exit 0,
+`doctor --section B` 0 CRITICAL. Kein `Sources/`-Delta, kein `Tests/`-Delta — eine Kommando-Datei
+anzupassen ist ausdrücklich NICHT founder-gated (doctor §B).

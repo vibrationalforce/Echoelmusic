@@ -66,9 +66,43 @@ Scan: `grep -r "import UIKit" Sources/ --include="*.swift" -l`
 Verify each has `#if canImport`
 
 ### 4. Code Quality Scan
-- Force unwraps: `grep -rn ')\!' Sources/ --include="*.swift"` (exclude `!=`)
-- print() usage: `grep -rn 'print(' Sources/ --include="*.swift"`
-- TODO/FIXME: `grep -rn 'TODO\|FIXME' Sources/ --include="*.swift"`
+
+⛔ **MEASURED 2026-09-21 (#1426): the three greps that stood here were wrong in BOTH
+directions, and the force-unwrap one in the direction that HIDES work.** Run as written they
+reported 2 force unwraps and 2 `print()` calls — and three of those four were PROSE: a doc
+comment naming `NoteNaming(rawValue:)!`, `ProfessionalLogger`'s header saying it "replaces all
+print() statements", and a Python snippet inside a comment in `TimelineStore`. A scan that
+cries wolf on every run gets ignored, which is how `continue-on-error` stayed invisible for
+14 hours. **And the same needle UNDER-reported:** `)!` is one spelling of four, so it found
+**1 of the 4** real force-unwrap expressions in the tree. A measurement that can silently
+return less than the truth is not a measurement (`.claude/rules/context.md` §2).
+
+- Force unwraps: `grep -rnE '[A-Za-z0-9_)]!([^=A-Za-z0-9_]|$)' Sources/ --include="*.swift" | grep -v ': *//'`
+- print() usage: `grep -rn 'print(' Sources/ --include="*.swift" | grep -v ': *//'`
+- TODO/FIXME: `grep -rn 'TODO\|FIXME' Sources/ --include="*.swift" | grep -v ': *//'`
+
+⚠️ **READ THE FORCE-UNWRAP RESULT WITH THIS SUBTRACTION, and do not read a short list as
+"none".** Today it prints 18 lines. Fourteen are two known-benign KINDS a shell grep cannot
+tell apart from an unwrap, and both are named here so nobody has to re-derive them:
+- **Eleven implicitly-unwrapped DECLARATIONS** (`private var outputBus: AUAudioUnitBus!`),
+  all in `Sources/EchoelmusicAUv3/EchoelmusicAudioUnit.swift` — the standard `AUAudioUnit`
+  allocate-later pattern, a declaration and not an unwrap.
+- **Three sentences inside TRIPLE-QUOTED strings** that simply end in "!" (the share-sheet
+  lines in `FXPreset`, `SynthPatch`, `MoodPreset`). `| grep -v ': *//'` cannot see them; the
+  triple-quote-aware stripper exists in the blocking bundle, but as a PRIVATE helper on
+  `TheStripperDoesNotKnowATripleQuoteTests` (`SourceText.codeOnly` deliberately does NOT
+  know triple quotes — #659 — so do not reach for it here), and neither has a shell form.
+
+**The FOUR real ones, all known and all allowed today — a FIFTH is work:**
+- `Core/Project.swift:82` — `UUID(uuidString:)!` for `autosaveSlotID`. Knowingly bent, argued
+  at the line, and pinned to the exact string by `AutosaveSlotTests`, so a typo goes red in
+  CI before it ships.
+- `Sequencer/AutomationCanvasMath.swift:67`, `Sequencer/TempoMatch.swift:65`,
+  `Sequencer/TimelineAutomationRowMath.swift:135` — each `if best == nil || … best!…`, safe
+  by short-circuit evaluation. ⚠️ **All three were INVISIBLE to the old needle**, so they had
+  never been listed anywhere; they are written down here rather than rewritten, because three
+  behaviour-preserving edits with no local Swift compiler is three chances to redden a gate
+  for no user-visible gain. If they are ever rewritten, it is its own slice.
 
 ### 5. Bio Safety Check
 Launch `bio-safety-reviewer` agent:
