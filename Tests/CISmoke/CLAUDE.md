@@ -551,6 +551,34 @@ is transient replica staleness on the API side; no query shape avoids it, so the
 to memorise, only a check to run. A repair that "worked" once is a coincidence until the variable
 is isolated.
 
+⛔ **AND THE SAME STALENESS LIVES ON THE JOB ENDPOINT, WHERE IT IS FAR WORSE AND HAS NO
+`total_count` TO CATCH IT (#1416, measured 2026-09-21).** The run list at least carries a
+counter that can move backwards. `list_workflow_jobs` and `get_workflow_job` carry only
+`status` and per-step timestamps, and both served `Build for Testing: in_progress` for
+**~70 minutes** after the step had in fact completed — its own `completed_at`, once it
+finally appeared, read **11:05:46**, i.e. 3 m 42 s after it started. The compile-check job of
+the same push did it too, for ~20 minutes. `get_check_run` agrees with the stale job, because
+it reads the same record; two endpoints agreeing is NOT a second measurement.
+
+⚠️ **THE TELL IS THE STEP'S OWN HISTORY, NOT THE CLOCK**, and the honest version of it is
+narrow: a step that has never taken more than a few minutes on this repo and now reads
+`in_progress` at ten times that is far more likely stale than stuck. Two cheap
+cross-checks, neither of which shares the stale record:
+· `git ls-remote origin refs/heads/main` — `auto-merge-claude.yml` merges on a GREEN
+  `Build for Testing`, so main moving to your sha IS the step's conclusion, arriving by a
+  different road.
+· `get_job_logs` returns **HTTP 404 while a job is genuinely running** and content once it
+  is not. A 404 is therefore weak evidence FOR still-running, and content is strong
+  evidence against.
+⛔ **What I nearly did instead, and it is the expensive move this paragraph exists to
+prevent:** I had begun reasoning about WHICH expression in the new guard was blowing up the
+type-checker — an array literal of implicit-member `.init`s, a heterogeneous `[Int64.min,
+1 << 62, …]`. The evidence against that was already in hand and I had not weighed it:
+`Xcode Compile Check` compiled the same `Sources/` in 2 m 47 s, and a type-check explosion
+is not configuration-specific. **A diagnosis that requires your own new code to be the cause
+needs one piece of evidence that the instrument is honest first** (§ the whole of this
+section), or you spend a cycle debugging correct code — the #478 trap, one layer up.
+
 - Step **"Build for Testing" = `success`** ⇒ this bundle **compiles**. That is the claim a
   compile-only gate can support; `Xcode Compile Check` builds `Sources/` **only** and proves
   nothing about a test file.

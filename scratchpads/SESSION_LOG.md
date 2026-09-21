@@ -36318,3 +36318,29 @@ einen 4/4→7/8-Wechsel, 51 Positionen: null Fehler. Feindliche Eingaben (NaN, �
 ±1e308, `Int64.min/max`, `ppq = Int.max`): kein Trap, kein NaN am Ausgang. Zehn Checker exit 0.
 **NICHT compile-verifiziert** — eine Transkription fährt Swifts Typprüfer nicht.
 **NICHT geräteverifiziert**, und es gibt nichts zu verifizieren: null Aufrufstellen.
+
+## 2026-09-21 — Gate-Lesung #1416, DMMW-G kartiert, und was das Warten gelehrt hat (#1417/#1418)
+
+**GATE-LESUNG `4587e024b` (#1416) — beide echten Gates GRÜN.** Xcode Compile Check Lauf 2702
+= `success` (Gerät/Release, 11:00:21→11:03:08) · CI/CD Lauf 6167 Schritt 9 `Build for
+Testing` = `success` (Simulator/Debug, 11:02:04→**11:05:46**, 3 min 42 s). Damit ist der
+Wächter `TheTimebaseConvertsWithoutBecomingAClockTests` **compile-verifiziert**: der
+`@testable`-Import stimmt, die `Int64`-`stride`s, `Foundation.log` neben dem globalen `log`,
+das Regex-Literal `[^\n{]*` und die Codable-Synthese neben den handgeschriebenen
+`init(from:)` gehen alle durch den Typprüfer. `Run Tests` = wie auf jedem Push #396.
+SwiftLint grün. ⚠️ **Ausführung der acht Ansprüche bleibt unbelegt** (#445/#807) — der
+Job-Log ist ein `tail -200`.
+
+⛔ **UND DIE LESUNG HAT EINE STUNDE GEKOSTET, WEIL DAS MESSGERÄT GELOGEN HAT.** Der Schritt
+war um 11:05:46 fertig; `get_workflow_job` und `get_check_run` meldeten ihn **~70 Minuten
+lang** als `in_progress`. Der Compile-Check-Job desselben Pushes tat dasselbe, ~20 Minuten.
+Das ist die #1180-Familie auf dem JOB-Endpunkt, wo sie schlimmer ist: die Lauf-Liste hat
+wenigstens `total_count`, das rückwärts springen kann — der Job-Endpunkt hat gar keinen
+Zähler. ⭐ **Und ich war eine Minute davon entfernt, die falsche Ursache zu untersuchen:**
+ich hatte begonnen zu überlegen, welcher Ausdruck im neuen Wächter den Typprüfer sprengt,
+obwohl der Gegenbeweis längst vorlag — der Compile-Check hatte dieselben Quellen in 2 min
+47 s gebaut, und eine Typprüfer-Explosion ist nicht konfigurationsspezifisch. Festgehalten
+in `Tests/CISmoke/CLAUDE.md` §5, mit den zwei billigen Gegenproben, die NICHT denselben
+Datensatz lesen: `git ls-remote origin refs/heads/main` (der Auto-Merge merged auf ein
+GRÜNES `Build for Testing`, main bewegt sich also als Schlussfolgerung auf anderem Weg) und
+`get_job_logs`, das **404** liefert, solange ein Job wirklich läuft.
