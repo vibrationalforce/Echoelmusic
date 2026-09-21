@@ -35929,3 +35929,24 @@ Vor-Fix-Oszillators, Swift statt Nadel.
 `Sources/EchoelmusicAUv3/` ist ein ANDERES Target: kein Gate dieses Repos kompiliert es
 zusammen mit dem blockierenden Bündel, und keines kann zeigen, dass das Plugin in einem
 44,1-kHz-Host lädt und in Tonhöhe spielt. Das bleibt eine Geräteprobe.
+
+## 2026-09-21 — Gate-Lesung `2328e06d4` (#1407): beide grün
+
+`Xcode Compile Check` = **success** (Lauf 35569964166, 06:47:06–06:51:21). CI/CD Schritt 9
+`Build for Testing` = **success** (Lauf 35569964153, Job 106239477931, 06:48:32–06:51:38).
+Also: `Sources/` mit den fünf `setSampleRate`-Ergänzungen und der AUv3-Änderung kompiliert,
+UND das blockierende Bündel mit den neun Ansprüchen kompiliert.
+
+⭐ **NACHGETRAGENE MESSUNG, die den Wächter-Kopf ehrlicher macht:** `project.yml` führt
+`- target: EchoelmusicAUv3` unter den `dependencies:` des APP-Targets. `xcodebuild build`
+auf Scheme `Echoelmusic` baut Abhängigkeiten mit, also **kompiliert `Xcode Compile Check`
+die Extension sehr wohl** — in Release, für ein Geräte-Ziel. Der Kopf des Wächters sagte
+nur, was NICHT gedeckt ist („ein anderes Target, nicht in diesem Bündel"), und das liest
+sich wie „gar nichts prüft das". Korrigiert: die KOMPILIERUNG ist gegatet, die LAUFZEIT
+(lädt es in einem Host, klingt es dort in Tonhöhe) nicht. ⚠️ Das ist dieselbe Unterscheidung,
+für die `Tests/CISmoke/CLAUDE.md` §5b existiert — eine Sitzung rät sie sonst jedes Mal neu,
+und eine Auslassung rät in die vorsichtige Richtung, was hier heißt: eine echte Deckung
+nicht zu nutzen.
+
+⚠️ **Unverändert offen bleibt die Geräteprobe:** dass das Plugin in einem 44,1-kHz-Host
+(GarageBand iOS) lädt und in Tonhöhe spielt. Kein Gate dieses Repos kann das zeigen.

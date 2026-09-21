@@ -69,6 +69,15 @@
 // is not compiled into this bundle, so claim 7 can only read its text. Nothing here — and
 // nothing in either CI gate — proves the plug-in loads at 44.1 kHz and sounds right. That is
 // a DEVICE PROBE (§1) and is registered as open, not implied by a green run.
+//
+// ⭐ BUT THE EXTENSION IS NOT UNGATED, AND THE FIRST DRAFT OF THE PARAGRAPH ABOVE LEFT THAT
+// OUT — an omission that reads as "nothing checks this at all". `project.yml` lists
+// `- target: EchoelmusicAUv3` under the APP target's `dependencies:`, so `xcodebuild build`
+// on scheme `Echoelmusic` builds the extension as a dependency: **`Xcode Compile Check`
+// DOES compile `Sources/EchoelmusicAUv3/`**, in Release, for a device destination.
+// Measured on this slice: run 35569964166 on `2328e06d4`, success. What is NOT gated is the
+// extension's RUNTIME — loading in a host, and sounding in tune there. Say which of the two
+// a green covers; §5b's own warning is that a session otherwise re-guesses this every time.
 
 import Foundation
 import XCTest
