@@ -3,10 +3,23 @@
 ## Executive Summary
 
 Nachtlauf nach dem Vertrag „OVERNIGHT AUTONOMOUS EXECUTION" (Founder 2026-09-21).
-Eintritt mit bereits gebautem und gepushtem Phase-4d-Slice (#1440); der Lauf beginnt
+Eintritt mit bereits gebautem und gepushtem Phase-4d-Slice (#1440); der Lauf begann
 also bei §20.2 (Gate-Lesung), nicht bei §20.1.
 
-STATUS: LAUFEND — diese Zeile wird beim Beenden ersetzt.
+**STATUS: SAUBER BEENDET.** Fuenf Scheiben, davon drei mit Produktions-Delta und eine
+read-only. **Alle Gates jeder Scheibe sind auf SCHRITT-Ebene gelesen und gruen**; `main` ist
+unabhaengig bis `8b274b12e` vorgerueckt, was die Lesungen von #1440 bis #1442 auf einem
+zweiten Weg bestaetigt (der Auto-Merge wartet auf beide Gates).
+
+**PHASE 4 IST GESCHLOSSEN** (compile-verifiziert, Geraete-Verifikation offen) — acht
+Falsifikationsversuche, kein erreichbares Gegenbeispiel im aktuellen Baum.
+**PHASE 5 IST VERMESSEN, NICHT BEGONNEN**: alle acht Faehigkeiten A–H eingestuft, und das
+Ranking hat genau EINE Zeile ohne Founder-Entscheidung geliefert (G), die gebaut ist.
+
+⚠️ **Der wichtigste Ertrag der Nacht ist nicht eine Scheibe, sondern drei Rücknahmen** — zwei
+fremde Vorschlaege und eine eigene Behauptung, die die Messung nicht ueberlebt haben (Befunde
+3, 7, 8). **NULL Geraete-Verifikation**: keine der drei Produktions-Scheiben ist am Geraet
+geprueft, und §15 verbietet, das anders zu formulieren.
 
 ## Starting HEAD
 
@@ -15,7 +28,10 @@ STATUS: LAUFEND — diese Zeile wird beim Beenden ersetzt.
 
 ## Ending HEAD
 
-    (wird beim Beenden gesetzt)
+    c2a95b9a753044017e9b86267cc63c82f5915bfd   (claude/echoelmusic-review-optimize-u5jjpd)
+    plus dieser Status-Commit selbst.
+    origin/main beim Beenden: 8b274b12e8521d625f94eb78057924080d5bcb63 (#1442 auto-gemerged;
+    #1440, #1441 und die Scratchpad-Commits sind als Vorfahren mitgefahren).
 
 ## Completed Slices
 
@@ -219,6 +235,39 @@ GESCHAERFT statt bestaetigt.
 **Device:** OFFEN — dass ein physisches Rig nach einem Neustart gleich leuchtet, ist
 Geraete-Wahrheit (§15).
 
+### Slice 5 — #1443: eine Doc-Zeile, die dem falschen Mitglied gehoerte
+
+**Scheibe:** die verwaiste erste Doc-Zeile von `preRollWindow(requestedFrames:)` in
+`Sources/Echoelmusic/Audio/RetroCapture.swift` geloescht, mit Grabstein an ihrer Stelle.
+**Erlaubnis:** §7 „correcting stale documentation". Aus Befund 6 dieser Nacht.
+
+**Der Defekt.** Swift faltet benachbarte `///`-Zeilen zu EINEM Kommentar. *„Deinterleave ring
+buffer data and write to file in 8192-frame chunks."* stand unmittelbar vor dem `#630`-Block
+und haftete damit an einer Funktion, die zwei `Int`s zurueckgibt — sie war die ERSTE Zeile des
+Doc-Kommentars, also genau die, die Quick Help zeigt. ⚠️ **Die Richtung ist der Grund:** das
+ist die Datei, aus der #1413 Disk-I/O vom Tap-Callback entfernt hat.
+
+**Geloescht statt verschoben** (#818): `writeRange`s eigener Kopf sagt dasselbe besser, und die
+Zahl 8192 haelt der Code ohnehin (`:562`).
+
+**Verifikation, so stark wie fuer eine Doc-Aenderung moeglich:** kommentar-gestrippt sind beide
+Baeume **363 zu 363 Code-Zeilen, Sequenz IDENTISCH**, Klammer-Delta ueber den gestrippten Text
+**0/0/0/0**. Beweisbar reine Kommentar-Aenderung. Kein Waechter nennt das Literal. Alle zehn
+stehenden Pruefer Exit 0, `moved-needles` diesmal ebenfalls 0.
+
+⭐ **KEIN elfter Pruefer gebaut, bewusst.** Der Sweep hatte vier Kandidaten: einen echten, eine
+Formatierungs-Warze, ZWEI Fehlalarme. 50 % Fehlalarm ist genau #665 („ein Pruefer mit
+Fehlalarmen ist einer, den niemand liest, und sein gruener Lauf gilt danach als Beleg").
+
+**Commit:** `c2a95b9a753044017e9b86267cc63c82f5915bfd`
+**Dateien:** `Audio/RetroCapture.swift` · `scratchpads/SESSION_LOG.md`
+**Gates:** BEIDE GRUEN, Schritt-Ebene.
+  · `Xcode Compile Check` Lauf **35664299225**, Job **106546461627**, Schritt 7 = **success**
+    (22:45:42 bis 22:50:26Z) — hier der aussagekraeftige, das Delta ist reines `Sources/`.
+  · `Echoelmusic CI/CD Pipeline` Lauf **35664299242**, Job **106546904657**, Schritt 9
+    „Build for Testing“ = **success** (22:47:38 bis 22:50:45Z).
+**Device:** nicht anwendbar (kein Produktionsverhalten geaendert, beweisbar).
+
 ## Findings That Changed The Plan
 
 1. **Der Ueberlauf-Befund oben** hat die #1440-Notiz praezisiert: ich hatte dort
@@ -272,6 +321,23 @@ Geraete-Wahrheit (§15).
    ⭐ **Als Scheibe registriert, nicht heimlich mitgenommen** — eine Ein-Zeilen-Doc-Loeschung in
    einer audio-thread-sensiblen Datei gehoert in ihren eigenen Commit mit eigener Gate-Lesung,
    nicht als Anhaengsel. Empfehlung steht unter „Recommended Next Slice".
+7. ⛔ **EIGENE UEBER-BEHAUPTUNG ZURUECKGENOMMEN, und sie stand in MEINEM Phase-4-Audit.** Ich
+   hatte registriert, MIDI-Spuren jenseits der Rack-Kapazitaet 4 wuerden **STILL** fallen
+   gelassen. Nachgemessen: `Sequencer/LaneVoiceRackPlan.swift` beschreibt die Regel im eigenen
+   Kopf ausdruecklich (*„a lane whose rank is `>= capacity` OVERFLOWS — it has no physical
+   voice and is silenced"*) und modelliert sie als BENANNTEN `overflow`-Befehlsfall. Das ist
+   ein absichtlicher, benannter Entwurf, kein stiller Verlust. **Das Wort „still" war die
+   teure Haelfte** — es haette die naechste Sitzung auf die Jagd nach einem Fehler geschickt,
+   den es nicht gibt. ⭐ Was ueberlebt, ist enger und echt: die Regel ist **ausschliesslich in
+   `Tests/EchoelmusicTests/LaneVoiceRackPlanTests.swift` getestet — der Suite, die KEIN Gate
+   kompiliert (#208)**. Also ist ein absichtlicher Entwurf dort gepinnt, wo ihn nichts
+   ausfuehrt. Als BEFUND registriert, nicht als Scheibe: ihn ins blockierende Buendel zu
+   heben waere eine Migration, keine begrenzte Aenderung.
+8. **Die naechste Scheibe, die ich schon ausgewaehlt hatte, hat sich an der eigenen Messung
+   aufgeloest** — und das ist ein Ergebnis, kein Leerlauf. Ich wollte einen Waechter ueber die
+   Ueberlauf-Regel bauen; Befund 7 zeigt, dass die Regel bereits benannt und getestet ist, nur
+   im falschen Buendel. Ein Waechter haette eine Tatsache gepinnt, die schon steht, und die
+   ECHTE Luecke (#208) nicht angefasst. **Gestrichen, bevor eine Zeile geschrieben wurde.**
 
 ## Current Capability Matrix
 
@@ -353,37 +419,51 @@ denselben Mechanismus vergiftet. A, B, C, E, H sind alle Hold-Gebiet.
 
 ## Recommended Next Slice
 
-⭐ **G IST GEBAUT (Slice 4, #1442).** Die naechste Scheibe kommt aus Befund 6 und ist
-absichtlich winzig:
+⭐ **ICH EMPFEHLE KEINE WEITERE AUTONOME SCHEIBE — und das ist ein Messergebnis, kein
+Erschoepfungszeichen.** Nach #1443 ist die Liste der Kandidaten, die alle 14
+Auto-Continue-Kriterien erfuellen, LEER:
+· A, B, C, E, H kreuzen §8-Holds oder die vom Founder benannte #1436/#1437-Ausnahme.
+· D und F fuehren beide durch die 10-Hz-Menuefrier-Falle (Founder-Entscheidung 1).
+· G ist gebaut (#1442).
+· Der Ueberlauf-Waechter, den ich als naechstes wollte, hat sich an der eigenen Messung
+  aufgeloest (Befund 7/8).
 
-**Eine EINZIGE Doc-Zeile in `Sources/Echoelmusic/Audio/RetroCapture.swift:514` loeschen.**
-*„Deinterleave ring buffer data and write to file in 8192-frame chunks."* haengt durch
-Swifts `///`-Faltung an `preRollWindow(requestedFrames:)` (Zeilen 537–542), das nur Indizes
-rechnet — weder deinterleavt noch schreibt. Der echte Deinterleaver ist `writeRange` (`:544`),
-und sein EIGENER Kopf sagt dasselbe besser („The ONE place frames reach disk", „one
-deinterleave, one chunk size"). **Loeschen statt verschieben** (#818: die Zahl 8192 waere ein
-Datum; `:562` haelt sie ohnehin).
-**Warum es zaehlt und nicht Kosmetik ist:** ausgerechnet in der Datei, aus der #1413 Disk-I/O
-aus dem Tap-Callback entfernt hat, behauptet ein Doc-Kommentar, eine Fenster-Funktion schreibe
-eine Datei — die Fehlrichtung ist die teure.
-**Vorvermessen:** kein Waechter nennt das Literal (`grep -rn "Deinterleave ring buffer" Tests/`
-→ nichts), also bricht die Loeschung nichts. 14 Kriterien: alle erfuellt, null
-Produktionsverhalten.
+**Was stattdessen ansteht, gehoert dem Founder, und es sind zwei verschiedene Sorten:**
+1. **Eine GERAETE-Sitzung.** Drei Produktions-Scheiben dieser Nacht und die ganze
+   Workstation-Kette (#1436–#1443) sind compile-verifiziert und NULL-mal am Geraet gesehen.
+   Der Einkaufszettel steht unter „Open Device Checks"; `python3 scripts/founder-verify.py`
+   druckt die vollstaendige Warteschlange.
+2. **Fuenf Entscheidungen**, unter „Founder Decisions Required" mit Belegen und Optionen.
+
+⚠️ Wer trotzdem eine Scheibe braucht, nimmt die KLEINSTE aus Befund 7: die
+Ueberlauf-Regel ist nur in der ungegateten Suite getestet (#208). Das ist eine MIGRATION und
+deshalb bewusst nicht ueber Nacht angefasst — aber es ist die ehrlichste offene Luecke.
 
 ## Exact Morning Starting Point
 
-    git rev-parse HEAD                  # 88f0c67024b6782f229d5726e1c40efa885a19a3
-    git rev-parse origin/main
-    git status                          # muss sauber sein
+    git fetch origin && git status                 # muss sauber sein
+    git rev-parse HEAD                             # der Status-Commit ueber c2a95b9a7
+    git ls-remote origin refs/heads/main           # 8b274b12e oder weiter
 
-Erste Befehle:
+**Letzte gruene Gates** (alle auf Schritt-Ebene, nie ueber die Run-Conclusion, #396):
 
-    python3 scripts/gh-run-status.py <overflow>     # Gates der letzten Pushes
-    git grep -n "net.artnet\|net.sacn" -- Sources/Echoelmusic/Sync
+| Commit | Compile Check | CI/CD Build for Testing |
+|---|---|---|
+| `1b351d0b3` (#1440) | gruen | gruen |
+| `88f0c6702` (#1441) | Lauf 35661975069 / Job 106539078640 / Schritt 7 | Lauf 35661975072 / Job 106539328525 / Schritt 9 |
+| `8b274b12e` (#1442) | Lauf 35663491521 / Job 106543887059 / Schritt 7 | Lauf 35663491548 / Job 106544100339 / Schritt 9 |
+| `c2a95b9a7` (#1443) | Lauf 35664299225 / Job 106546461627 / Schritt 7 | Lauf 35664299242 / Job 106546904657 / Schritt 9 |
 
-Zu inspizierende Dateien fuer die naechste Scheibe: `Sync/ArtNetSender.swift`,
-`Sync/SACNSender.swift`, `Core/StudioDefaultKeys.swift`.
+**Offene ungeloeste Befunde:** keiner ist ROT. Offen sind die fuenf Founder-Entscheidungen,
+die Geraete-Checks und die #208-Luecke aus Befund 7.
 
-**Nicht zu kreuzen:** §8 in voller Laenge — insbesondere TimelineDocument/Arrangement,
-der fuenf-Wurzel-Persistenz-Umbau, Performance-Scenes-Ort, WebRTC/SFU, jede neue Uhr, jede
-Wiederbelebung historischer UI (#1301 ausdruecklich), grosse Studio-Navigations-Umbauten.
+**Zuerst zu inspizierende Dateien**, falls die #208-Luecke angegangen wird:
+`Sequencer/LaneVoiceRackPlan.swift` · `Tests/EchoelmusicTests/LaneVoiceRackPlanTests.swift` ·
+`.github/workflows/full-tests.yml` (⚠️ founder-gated: berichten, nicht editieren).
+
+**NICHT ZU KREUZEN** — §8 in voller Laenge: TimelineDocument/Arrangement-Konsolidierung, der
+Fuenf-Wurzel-Persistenz-Umbau, ein SECHSTER Persistenz-Wurzel, der Ort der Performance Scenes,
+WebRTC/SFU, jede neue Uhr, jede Projektformat-Migration, jede Wiederbelebung historischer UI
+(#1301 ausdruecklich), grosse Studio-Navigations-Umbauten, neue Bio-Privacy-Semantik.
+Dazu die stehenden Founder-Gates: `.github/workflows/**`, `project.yml`,
+`Resources/iOS/Info.plist` — berichten, nicht editieren. Und `.deploy/release` NICHT anfassen.

@@ -37757,3 +37757,40 @@ Fehlalarm-Quote von 50 % ist genau das, wovor #665 warnt: ein Pruefer mit Fehlal
 einer, den niemand liest, und sein gruener Lauf gilt danach trotzdem als Beleg. **Die ehrliche
 Ausgabe ist dieser Absatz plus der Befund im Status-File, nicht ein Skript.** Wer den Sweep
 wiederholen will, findet ihn dort ausgeschrieben.
+
+## 2026-09-22 — Gate-Lesung #1443 (c2a95b9a7) + Ende des Nachtlaufs
+
+| Gate | Lauf | Job | Schritt | Conclusion |
+|---|---|---|---|---|
+| Xcode Compile Check | 35664299225 | 106546461627 | 7 · „Compile (iOS device SDK, no signing)" | **success** (22:45:42 → 22:50:26Z) |
+| Echoelmusic CI/CD Pipeline | 35664299242 | 106546904657 | 9 · „Build for Testing" | **success** (22:47:38 → 22:50:45Z) |
+
+`main` steht auf `8b274b12e` (#1442 auto-gemerged) — der Auto-Merge wartet auf BEIDE Gates,
+also bestaetigt das die Schritt-Lesungen von #1440 bis #1442 auf einem zweiten Weg (#1416).
+#1441 und die Scratchpad-Commits sind als Vorfahren mitgefahren (der Merge nimmt
+`${{ github.sha }}`, also die ganze Vorgeschichte).
+
+⛔ **ZWEI RUECKNAHMEN ZUM SCHLUSS, beide MEINE, beide von der Messung erzwungen:**
+
+1. **Mein eigener Phase-4-Befund war ueber-behauptet.** Ich hatte notiert, MIDI-Spuren
+   jenseits der Rack-Kapazitaet 4 wuerden **STILL** fallen gelassen. `LaneVoiceRackPlan.swift`
+   sagt es im eigenen Kopf ausdruecklich und modelliert es als BENANNTEN `overflow`-Fall — ein
+   absichtlicher Entwurf, kein stiller Verlust. **Das Wort „still" war die teure Haelfte**: es
+   haette die naechste Sitzung auf die Jagd nach einem Fehler geschickt, den es nicht gibt.
+   ⭐ Was ueberlebt, ist enger und echt: die Regel ist NUR in `Tests/EchoelmusicTests/` getestet
+   — der Suite, die KEIN Gate kompiliert (#208). Ein absichtlicher Entwurf, gepinnt dort, wo
+   ihn nichts ausfuehrt. Als Befund registriert, nicht als Scheibe (es waere eine Migration).
+2. **Die naechste Scheibe hat sich an der eigenen Messung aufgeloest.** Ich wollte einen
+   Waechter ueber genau diese Ueberlauf-Regel bauen. Rueckname 1 zeigt: die Regel steht schon
+   benannt und getestet da, nur im falschen Buendel. Ein Waechter haette eine bereits stehende
+   Tatsache gepinnt und die ECHTE Luecke nicht angefasst. **Gestrichen, bevor eine Zeile
+   geschrieben war.** ⭐ Das ist der Zweck der Vorvermessung: eine Scheibe, die beim Messen
+   stirbt, hat keinen Zyklus gekostet.
+
+**Bilanz der Nacht:** drei Produktions-Scheiben (#1441 Waechter-Reparatur, #1442 Licht-Show-
+Persistenz, #1443 Doc-Reparatur), ein read-only Phase-4-Abschluss-Audit, eine vollstaendige
+Phase-5-Vermessung A–H. Alle Gates gruen, alle auf Schritt-Ebene gelesen. **NULL
+Geraete-Verifikation** — und §15 verbietet, das anders zu formulieren. Nach #1443 ist die
+Liste der Kandidaten, die alle 14 Auto-Continue-Kriterien erfuellen, LEER; was bleibt, gehoert
+dem Founder (fuenf Entscheidungen, eine Geraete-Sitzung). Vollstaendig in
+`scratchpads/OVERNIGHT_STATUS_2026-09-22.md`.
