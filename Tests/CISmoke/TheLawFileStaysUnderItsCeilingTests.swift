@@ -373,7 +373,35 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
              + "reason gets checked before it blocks a cleanup"),
             ("RUN_DESTINATION_DEVICE_NAME", "Tests/CISmoke/CLAUDE.md", "§5b",
              "the Clone-2 evidence from the #763 gate-discriminator move — the log line that "
-             + "settled which simulator clone dies under #396")
+             + "settled which simulator clone dies under #396"),
+            // #1412 (M0) — five blocks cut back to their law so the DMMW ADR has room to be
+            // WRITTEN at all: the law file stood at 149,157 B of a 150,000 B ceiling, less
+            // headroom than the ADR itself weighs. Each needle below is a MEASUREMENT or a
+            // verbatim quote from the removed half — no paraphrase of the block survives it,
+            // and none carries caps that ordinary de-shouting could touch (#912).
+            ("die B5-Tür starb schon mit den Drums", "memory/LEDGER_COUNTS.md", "§AI",
+             "the absence register's door provenance — 7,913 B, the largest paragraph in the "
+             + "file. The LAW stayed: the register itself, the three lessons (unreachable is "
+             + "not ineffective; slot plus setter proves nothing; check what a UI block is the "
+             + "SOLE writer of), and `doctor --section C` as the command instead of a copy"),
+            ("hatte null Produktions-Aufrufer", "memory/LEDGER_COUNTS.md", "§AI",
+             "the live-pipeline provenance — the BLE-3 lifecycle history, the #277 retraction "
+             + "in full, and the whole ⛔ walk-back of \"ModulationEngine wired (bio→tempo)\". "
+             + "The LAW stayed: one owner for the belt, MPE-IN is not MPE-OUT, the matrix has "
+             + "its door since #1250, and EchoelBeat is dead"),
+            ("Das hat leider nichtbgeklappt", "memory/LEDGER_COUNTS.md", "§AI",
+             "the strike list's founder quotes in full. This needle is the founder's own "
+             + "verbatim wording INCLUDING its typo, which is why no paraphrase can reproduce "
+             + "it. The LAW stayed: what is struck, when, why — and the two ⚠️ lines that stop "
+             + "a session deleting live code (the rPPG path under Video/, MicrotonalTuning)"),
+            ("#459-Nachlese, 2026-08-07", "memory/LEDGER_COUNTS.md", "§AI",
+             "the fourth and fifth editions of the 10 Hz / 1 Hz confusion. The LAW stayed as "
+             + "ONE sentence — a rate belongs to exactly one operation — plus the guard that "
+             + "anchors the NAMED constant rather than a spelling"),
+            ("WorkspaceView.swift:345", "memory/LEDGER_COUNTS.md", "§AI",
+             "the deleted TransportBar's archaeology, quoted down to a line number that had "
+             + "long pointed at unrelated code — which is itself the lesson the law file kept: "
+             + "a quoted phrase survives an insertion, a line number does not")
         ]
         for w in witnesses {
             let home: String = try rawFile(w.home)
