@@ -34,6 +34,23 @@
 // (`/adm/obj/n/aed  f f f  packed polar: azimuth, elevation, distance`); reception is not
 // proved here, and the `NEEDS-FOUNDER-VERIFY` for that lives in `ADMOSCSender.swift`'s header.
 //
+// ⛔ AND THE SCOPE OF THIS FILE IS TWO EMITTERS, NOT THREE — written here because the claim
+// "Echoel is a conforming ADM-OSC sender" is exactly the kind that gets over-read. #1421
+// enumerated the BIO arm and the MUSIC arm. Applying this repo's own #766/#768 law to that
+// enumeration ("all checked" only ever means "all the ones I thought of"; the tell is that
+// every surface checked so far is the same KIND) found a THIRD: `SpatialSceneOSC.swift`
+// emits `/azim`, `/elev`, `/dist` per object for the scene stream, and
+// `ADMOSCSender.send(scene:dialect:)` has its OWN send loop that does not pass through this
+// fold. Its Cartesian dialect is unpacked too, where the spec has `/xyz`.
+//
+// That path is DOUBLY doorless — `streamsScene` defaults false with its only writer in the
+// parked `ImmersiveStageView`, and `sceneDialect` has no writer at all — so nothing a user
+// can reach is affected. It is REGISTERED with a complete design rather than half-fixed: the
+// fold has to move to a Foundation-only home (this file's subject lives inside
+// `#if canImport(Network)`), which takes the `/aed` literal out of `ADMOSCSender.swift` and
+// reddens `TheADMOSCLeavesAreTheSpecsTests` claim 1 — a four-file slice, so it belongs with
+// the commit that re-doors the stage. Do not read the claims below as covering scene output.
+//
 // ⚠️ ALSO NOT DONE, deliberately: an OSC BUNDLE. The spec notes packed values "can also be
 // grouped with other messages in an OSC bundle for atomic/synchronous delivery with a shared
 // timestamp". That needs `#bundle` framing in `OSCSender.encode` and is beyond the MVI bar.

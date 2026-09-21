@@ -36527,3 +36527,26 @@ fehlenden `schedule:`-Trigger und den CLAUDE.md-Text, nicht den `grep`. Das war 
 Vermutung und sie war falsch; nachgelesen statt angenommen. Es bleibt trotzdem der #1420-Punkt:
 wäre er rot gewesen, hätte es niemand gesehen, weil `Run Tests` wegen #396 auf jedem Push rot
 ist.
+
+⛔ **NACHTRAG ZU #1421, und gefunden, indem ich das #766/#768-GESETZ AUF MEINE EIGENE
+BEHAUPTUNG angewendet habe (#1424).** „Alle geprüft" heißt nur „alle, die mir eingefallen
+sind", und das Erkennungszeichen ist, dass alle bisher geprüften Flächen dieselbe GATTUNG
+haben. Ich hatte ZWEI Arme aufgezählt (bio, musik). **Es sind DREI:**
+`Sync/SpatialSceneOSC.swift:63-67` emittiert pro Objekt `/azim`, `/elev`, `/dist` EINZELN,
+und `ADMOSCSender.send(scene:dialect:)` hat eine EIGENE Sendeschleife, die nicht durch die
+Faltung geht. Der kartesische Dialekt ist ebenfalls ungepackt, wo die Spec `/xyz` hat.
+
+⚠️ **Doppelt türlos** (`streamsScene` defaultet false, einziger Schreiber in der geparkten
+`ImmersiveStageView`; `sceneDialect` hat GAR KEINEN Schreiber), also null beobachtbare
+Wirkung. **REGISTRIERT statt halb repariert (#105), mit fertigem Entwurf** — und der Grund,
+warum es nicht sofort gebaut wurde, ist eine gemessene Rippel: die Faltung muss in ein
+Foundation-only-Zuhause (`ADMOSCSender.swift` liegt in `#if canImport(Network)`), damit
+verliert diese Datei das Literal `/aed`, und `TheADMOSCLeavesAreTheSpecsTests` Anspruch 1
+geht rot. **Vier Dateien, also keine Ralph-Scheibe.** Zwei Risiken sind dabei gemessen und
+entschärft: `TheWireContractMatchesTheLawTests` (genau EIN Formatter-Aufrufer) bleibt grün,
+und die Golden-Tests in der ungegateten Suite bleiben UNBERÜHRT, weil `messages(for:dialect:)`
+seine Form behält.
+
+⭐ **Die Scope-Grenze steht jetzt im KOPF des #1421-Wächters**, nicht nur hier: „Echoel ist ein
+konformer ADM-OSC-Sender" ist genau die Sorte Behauptung, die über-gelesen wird, und der
+Wächter sagt selbst, dass seine Ansprüche die Szenen-Ausgabe NICHT abdecken.
