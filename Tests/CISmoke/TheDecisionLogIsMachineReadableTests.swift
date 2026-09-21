@@ -35,7 +35,13 @@ import XCTest
 /// garbage token beginning with a space sorts before any date, so it read as due;
 /// the status token was garbage too, so the "already flagged" skip never fired. One
 /// run would have shifted every field of every comma-carrying row, permanently. It
-/// has never run (`grep -c REVIEW_DUE` = 0) — luck, not design. `check-decisions.sh`,
+/// has never run — luck, not design. ⛔ THE CITATION THAT STOOD HERE (`grep -c REVIEW_DUE`
+/// = 0) WENT STALE ON 2026-09-21: it reads 2, because #805 and #815 wrote prose ABOUT the
+/// mechanism into decision ROWS. The fact is unchanged — zero rows are flagged — but the
+/// proof counted the WORD, so the comments about the thing refuted the evidence for it
+/// (§W). The column-aware form cannot be fooled by prose and is the one CLAUDE.md now
+/// carries: `sum(1 for r in csv.reader(...) if len(r) == 6 and r[5].strip() == "REVIEW_DUE")`.
+/// `check-decisions.sh`,
 /// the documented daily cron, calls exactly `review.sh --flag`.
 ///
 /// ⚠️ **`SourceText.codeOnly` is the WRONG tool here and is deliberately not used.**

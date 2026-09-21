@@ -36436,3 +36436,94 @@ ist gegen die TYPEN testbar, nicht gegen die Dateien echter Nutzer.
 
 **FOUNDER-GATED, berichtet statt editiert:** das `EchoelCore`-Target in `project.yml`. Die
 Schicht ist Foundation-only genau deshalb — das Herausheben bleibt eine Target-Änderung.
+
+## 2026-09-21 — ADM-OSC packt die Position, und der Umfang des Merge-Gates wird gepinnt (#1421/#1422)
+
+**#1421 — Echoel ist jetzt ein spec-konformer ADM-OSC-Sender.** `docs/adm-osc.bs`
+§"Minimum Viable Implementation" verlangt vom SENDER „Implement at least one of
+`/adm/obj/{n}/xyz` (Cartesian, packed) or `/adm/obj/{n}/aed` (polar, packed) for position" —
+wir sandten KEINE der beiden, sondern drei getrennte `/azim`, `/elev`, `/dist`.
+
+⭐ **DIE HÄLFTE, DIE DAS RISIKO UMKEHRT, und der Grund, warum das vier Monate offen stand:**
+eine Wireformat-Änderung an einer Fremd-Integration verdient normalerweise die Vermutung,
+dass sie jemandes Rig bricht. Hier verlangt derselbe Abschnitt vom EMPFÄNGER nur „Handle at
+least one of `/xyz` or `/aed`" — **ein vollständig konformer Renderer muss `/azim`, `/elev`
+und `/dist` GAR NICHT behandeln.** Der ungepackte Feed konnte also regelkonform auf dem Boden
+landen. Packen macht das Objekt WAHRSCHEINLICHER verstanden. Der Spec-Text ist, was die
+Vermutung kippt; die Vermutung war, was den Befund liegen ließ.
+
+⛔ **Die Alle-drei-Bedingung ist #1140, keine Optimierung.** Eine gepackte Nachricht braucht
+drei Zahlen; ein teilweise gemessener Frame hat keine dritte, und die einzigen Wege, eine zu
+liefern, sind Erfinden oder eine veraltete wiederholen. Beides ist exakt das, was die
+Achsen-Gates verhindern — und beides ist auf Hardware passiert (Polar-Gurt jede Session auf
+Azimut −180, Kamera ganze Takes auf Distanz 1).
+
+⭐ **DIE FORM WAR DIE RISIKOSTEUERUNG, nicht Geschmack.** `packedPositionMessages` nimmt die
+AUSGABE der Mapper statt des Frames: leitet nichts neu ab (#416) und ändert KEINE Signatur.
+Das war **gemessen, nicht angenommen** — die naheliegende Erweiterung des Rückgabetyps hätte
+rund fünfzehn Aufrufstellen gebrochen, alle in `Tests/EchoelmusicTests`, und **beide Gates
+wären grün geblieben.**
+
+**#1422 — daraus wurde ein Wächter.** Vier Tatsachen gepinnt: das blockierende
+`EchoelmusicTests`-Ziel sourced `Tests/CISmoke`; `EchoelmusicFullTests` sourced
+`Tests/EchoelmusicTests`; das Schema, das das Merge-Gate baut, testet das blockierende
+Bündel; und `ci.yml` führt WEDER `swift build` NOCH `swift test` aus. ⛔ **Befund 2 war NICHT
+neu** — eine große Minderheit der Dateien in `Tests/CISmoke` sagt es in Prosa —, aber
+**nichts ließ ihn scheitern**, und `project.yml` kündigt selbst die Änderung an, die jede
+dieser Stellen auf einen Schlag falsch machte. Der Wächter **verbietet nichts** (#364): das
+Umhängen ist die Verbesserung, die #208 will; die Fehlermeldung ZÄHLT die abhängigen
+Prosa-Stellen zur Fehlerzeit, statt eine Zahl einzufrieren (#818 — die erste Fassung des
+Kopfs fror sie ein und war vor dem Commit veraltet, weil die Datei sich selbst mitzählt).
+
+⚠️ **Benotet per MUTATION statt per RED-auf-Eltern**, und das ist die ehrliche Form: der
+Wächter hält eine Tatsache fest, die SCHON wahr ist, also ist er auf beiden Bäumen grün. Eine
+RED-Behauptung wäre die falsche Sorte gewesen — genau der Fehler, den #1420 eine Stunde vorher
+gekostet hat. Jeder Anspruch wurde einzeln umgekippt und ging rot; kein toter Anspruch.
+
+⭐⭐ **DREI BEFUNDE DERSELBEN FAMILIE AN EINEM TAG — „ein grünes Gate misst die gefährdete
+Sache nicht":** (1) #1420, ein Wächter mit falscher Zusicherung besteht beide Gates, weil kein
+Gate eine Zusicherung AUSWERTET · (2) `Tests/EchoelmusicTests` wird von keinem blockierenden
+Gate kompiliert · (3) `Package.swift` wird von keinem Gate gebaut. **Konsequenz für #89
+(release/acquire um den Ring-Cursor): GEHALTEN statt geraten.** `Synchronization.Atomic` ist
+ein Nichtkopierbar-Generics-Typ, das Manifest trägt tools-version 5.10, und kein Gate baut es
+— liege ich falsch, meldet nichts etwas und der Founder findet es beim nächsten `swift build`.
+Billigster nächster Schritt steht in #89: EINE Zeile auf dem Mac.
+
+**GATE-LESUNGEN:** `60dfd9366` (#1421) und `e6bb0d802` (#1422) — beide über den Auto-Merge
+bestätigt (`main` steht auf dem jeweiligen SHA; der Merge wartet seit #1405 auf beide Gates).
+Für `2596d2849` (#1420) zusätzlich direkt gelesen: Schritt 9 `Build for Testing` `success`.
+
+**NICHT RENDERER-VERIFIZIERT und das ist die ehrliche Grenze von #1421:** dass ein echter
+Renderer auf `/aed` BEWEGT, braucht einen Renderer. Adresse, Arity und Argument-REIHENFOLGE
+sind aus der Spec-Tabelle zitiert, der Empfang nicht bewiesen.
+
+**REGISTRIERT STATT GEÄNDERT (#101):** der Spec-Default-Port ist **4001**, `ADMOSCSender.port`
+defaultet auf **9000** — und sein Kommentar begründet, warum es nicht 8000 ist, nie, warum es
+nicht 4001 ist. Nutzerkonfigurierbar UND persistiert, also ändert ein neuer Default nichts für
+jemanden, der ihn gesetzt hat, und alles für jemanden, der es nie tat. Founder-Frage.
+
+**BEI DIESEM STAND IST DER REGISTRIERTE RÜCKSTAND FOUNDER-GATED ODER BLOCKIERT:** #87 (H —
+widerspricht in seiner zweiten Hälfte drei Founder-Rücknahmen vom 2026-09-12), #89 (eine Zeile
+auf dem Mac), #101, #40 (Rest-Befund (a) ist die Zwei-Modi-Entscheidung des Founders), #34,
+#58, #91, #94, #95.
+
+⛔ **EIN BEFUND BEIM PROTOKOLLIEREN SELBST, und er sitzt in der immer-geladenen Datei.** Beim
+Nachtragen von `decisions.csv` fiel `grep -c REVIEW_DUE decisions.csv` = **2** auf, wo
+CLAUDE.md und der Wächter-Kopf **0** behaupten. Erste Sorge war, `./review.sh` (ohne `--flag`)
+hätte geschrieben — **hat es nicht**: beide Treffer stehen schon in `HEAD` und sind PROSA
+**über** den Mechanismus, in zwei Entscheidungs-Zeilen, die #805 und #815 selbst geschrieben
+haben. **Die BEHAUPTUNG stimmt also weiter — null Zeilen sind geflaggt** (spaltenbewusst
+gemessen: `r[5].strip() == 'REVIEW_DUE'` über alle 922 Zeilen → 0). ⭐ **Falsch war der
+ZITIERTE BELEG: `git log -S REVIEW_DUE -- decisions.csv` „über die GANZE Historie leer" liefert
+heute zwei Commits — genau die zwei, die Prosa über die Sache schrieben.** Das ist §W wörtlich
+(„ein Vermerk, der ein `grep` ZITIERT, altert schneller als einer, der eine Tatsache
+behauptet — jeder Kommentar über die Sache verfälscht den eigenen Beleg"), nur diesmal in
+`CLAUDE.md` statt an einem Dateikopf. Beide Zitate sind durch die spaltenbewusste Form ersetzt,
+die Prosa nicht täuschen kann; die Behauptung blieb unverändert. Netto +296 B in der
+immer-geladenen Datei, Decke 150 000 (heute 140 713).
+
+⚠️ **Anspruch 7 von `TheDecisionLogIsMachineReadableTests` war NICHT rot** — er pinnt den
+fehlenden `schedule:`-Trigger und den CLAUDE.md-Text, nicht den `grep`. Das war die erste
+Vermutung und sie war falsch; nachgelesen statt angenommen. Es bleibt trotzdem der #1420-Punkt:
+wäre er rot gewesen, hätte es niemand gesehen, weil `Run Tests` wegen #396 auf jedem Push rot
+ist.
