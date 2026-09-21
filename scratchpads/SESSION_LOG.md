@@ -37484,3 +37484,37 @@ Frage vorfindet statt als Zufall.
 · **Gate-Lesung #1440** — beide Gates auf Schritt-Ebene, nie die Run-Conclusion (#396).
 · **NEEDS-FOUNDER-VERIFY (#1436/#1437)** unveraendert.
 · **PHASE 5** — der Auftrag sagt „EXECUTE PHASE 4d ONLY. DO NOT START PHASE 5."
+
+## 2026-09-21/22 — GATE-LESUNG #1440 + PHASE 4 GESCHLOSSEN
+
+**Gate-Lesung `1b351d0b3` (#1440), Schritt-Ebene, nie die Run-Conclusion (#396):**
+- `Xcode Compile Check` run `35659456101`, job `106530962043`, Schritt 7
+  `Compile (iOS device SDK, no signing)` = **success** (21:50:39Z → 21:55:21Z).
+- `Echoelmusic CI/CD Pipeline` run `35659456058`, job `106531162318`, Schritt 9
+  `Build for Testing` = **success** (21:52:08Z → 21:58:09Z). Das blockierende Buendel
+  kompiliert mit den 41 `func test` von `TheWorkstationPlaysTheTimelineTests`.
+  Schritt 11 `Run Tests` bleibt unter #396/#445/#807 und ist kein Verdikt.
+- Kreuzprobe (#1416): `git ls-remote origin refs/heads/main` = `fa21213a9`; beide
+  Job-Datensaetze tragen `head_sha` `1b351d0b3…` und frische `created_at`, also keine
+  Stale-Seite. Die Gates gehoeren diesem Commit.
+- Zehn Standard-Checker: alle exit 0.
+
+**PHASE 4 ABSCHLUSS-AUDIT (read-only) — kein erreichbares Gegenbeispiel.**
+Acht Angriffe gefahren (zweiter `play(`-Aufrufer, zweite Uhr, veraltetes UI-Praedikat,
+Argument-Mismatch UI/Engine, Waisen-Region, nicht unterstuetzte Spur, Audio-Spurabdeckung,
+`loopTicks == 0`) — alle sauber. Details und Befehle: `scratchpads/OVERNIGHT_STATUS_2026-09-22.md`.
+
+⭐ **ZWEI SACHEN, DIE DAS AUDIT GELERNT HAT UND DIE #1440 NOCH FALSCH HATTE:**
+1. `play()` ruft `canPlay` SELBST noch einmal auf (`TimelineRegionPlayer.swift:554`), und
+   zwar mit `pattern.tempo` statt `preflightTempo`. **Die Engine ist autoritativ, der Knopf
+   beratend** — damit ist „das UI-Praedikat koennte veralten" keine Korrektheitsfrage.
+2. ⛔ Mein #1440-Befund sagte, sekundaere MIDI-Spuren haengen an `FeatureFlags.multiRoll`.
+   Gemessen ist das Flag **DEFAULT-ON** (`register(defaults:)` beim Start, drei Schluessel).
+   Die echte Luecke ist die **Rack-Kapazitaet 4** (`LaneVoiceRack.init(capacity: Int = 4)`;
+   `MultiRollFanout` laesst Ueberlauf-Spuren ausdruecklich weg). **Ein Befund, der den
+   falschen Schalter beschuldigt, kostet die naechste Sitzung einen ganzen Zyklus** — sie
+   sucht an einer Flagge, die schon an ist. Unerreichbar bleibt er trotzdem: `addLane` und
+   `addInstrumentTrack` haben NULL Produktions-Aufrufer, das Saat-Dokument hat EINE
+   MIDI-Spur. Erst wenn ein Spur-ERZEUGER eine Tuer bekommt, wird die Kapazitaet faellig.
+
+**PHASE 4: CLOSED — compile verified, device verification pending** (Tasks 115/118).
