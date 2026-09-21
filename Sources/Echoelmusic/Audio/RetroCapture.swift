@@ -1,6 +1,7 @@
 #if canImport(AVFoundation)
 import AVFoundation
 import Accelerate
+import Foundation
 import Observation
 import os.log
 
@@ -10,6 +11,55 @@ import os.log
 ///   1. `install(on:)` — installs tap on mainMixerNode, ring buffer fills continuously.
 ///   2. `startRecording()` — prepends last 30s pre-roll, then begins writing live audio.
 ///   3. `stopRecording(completion:)` — closes file, calls completion with URL.
+/// The release/acquire pair for the capture ring's cursor — the half #1413b named as NOT held.
+///
+/// ⛔ `nonisolated(unsafe)` IS NOT SYNCHRONISATION, and "one writer, one reader" is not a
+/// memory-model guarantee. The tap fills `ring` and then stores `ringWriteFrame`; every consumer
+/// loads `ringWriteFrame` and then reads `ring`. arm64 is NOT total-store-ordered, so nothing in
+/// a plain store/load pair stops the cursor from becoming visible BEFORE the slots it covers.
+/// The consumer then reads a slot the tap never filled — a click in a recording, not a crash,
+/// which is the defect class that gets blamed on hardware for months.
+///
+/// ⭐ THE MECHANISM IS NOT NEW AND NEEDED NO NEW DEPENDENCY — that is the whole finding.
+/// `Core/SPSCQueue.swift` already implements this exact protocol with this exact call:
+/// `OSMemoryBarrier()` before publishing `tail`, and again after loading it and before touching
+/// the slot, with a comment naming arm64 non-TSO as the reason. Measure, do not quote:
+/// `grep -n "OSMemoryBarrier()" Sources/Echoelmusic/Core/SPSCQueue.swift`.
+///
+/// ⛔ AND #1413b READ THAT FILE WRONG, which is why this sat open as a "needs a new primitive"
+/// slice. It said #1237 "REMOVED `OSAtomicIncrement64Barrier` — a fence per operation on the
+/// lock-free spine was judged the worse trade", which reads as *this repo decided against
+/// fences*. #1237 removed them from the METRICS counters and KEPT them on the publish path. The
+/// repo's position is **fences where ordering is load-bearing, none on bookkeeping** — and
+/// `RetroCapture` had taken neither. A retraction that describes a decision more broadly than it
+/// was made costs the next session the cheap fix.
+///
+/// ⚠️ RT-SAFE: `OSMemoryBarrier` is a fence instruction — no lock, no allocation, no syscall, no
+/// ObjC. One per tap callback against 4096 frames of work, and it already runs on an
+/// audio-thread path in `SPSCQueue`.
+///
+/// ⚠️ THE ACCESSOR EXISTS SO THE NEXT READER CANNOT FORGET IT (#416). Eight sites touch this
+/// cursor; a barrier written out at each is one refactor away from being dropped at one of
+/// them, and the loss is silent. Read the cursor ONLY through `load`.
+enum RetroRingCursor {
+
+    /// Publish AFTER filling — the release half.
+    @inline(__always)
+    static func publish(_ cursor: UnsafeMutablePointer<Int64>, _ frame: Int64) {
+        OSMemoryBarrier()
+        cursor.pointee = frame
+    }
+
+    /// Load BEFORE reading slots — the acquire half. Without it the slot loads may be satisfied
+    /// ahead of the cursor load, which is the same hazard from the other side.
+    @inline(__always)
+    static func load(_ cursor: UnsafeMutablePointer<Int64>) -> Int64 {
+        let frame = cursor.pointee
+        OSMemoryBarrier()
+        return frame
+    }
+}
+
 @MainActor @Observable
 final class RetroCapture {
 
@@ -138,16 +188,26 @@ final class RetroCapture {
     /// it REMOVED `OSAtomicIncrement64Barrier` — a fence per operation on the lock-free spine was
     /// judged the worse trade.
     ///
-    /// **What is NOT held is the ORDERING.** Safety rests on the tap publishing the cursor AFTER
-    /// filling the slots, and nothing enforces that: without a release/acquire pair the store of
-    /// `writePtr.pointee` may in principle be observed before the ring writes it covers, and the
-    /// drain would then read a slot that was never filled — a click in a recording, not a crash,
-    /// which is exactly the kind of defect that gets blamed on hardware for months. "One writer,
-    /// one reader" is NOT by itself a memory-model guarantee, and this comment must not be read
-    /// as claiming otherwise. Closing it needs `Synchronization.Atomic` (Swift 6 stdlib, no
-    /// external dependency, reachable at the iOS 18 floor) around the publish and the load — a
-    /// slice of its own, because a concurrency primitive introduced without a compiler is a
-    /// guess, and the tap must keep capturing no `self`.
+    /// ⭐ **THE ORDERING IS HELD SINCE #1429** — this paragraph used to end "what is NOT held is
+    /// the ORDERING", and closing it turned out to cost far less than this note predicted. It
+    /// said the fix "needs `Synchronization.Atomic` … a slice of its own, because a concurrency
+    /// primitive introduced without a compiler is a guess". No new primitive was needed:
+    /// `SPSCQueue` already publishes with `OSMemoryBarrier()` and acquires with it, for this
+    /// same hazard, on this same platform. The pair now lives in `RetroRingCursor` at the top of
+    /// this file, and every one of the eight cursor sites goes through it.
+    ///
+    /// ⚠️ **WHAT IS STILL NOT SYNCHRONISED, named rather than implied.** `writeFailure`,
+    /// `droppedFrames` and `isActive` are still plain cells. Their second writers are
+    /// TEMPORALLY exclusive by construction, not by luck — `startRecording` writes them all
+    /// before `isActive` goes true and before the drain timer resumes, and `stopRecording`
+    /// clears `isActive`, cancels the timer and then takes `writeQueue.sync`, which is a real
+    /// happens-before edge. The ONE read left outside that edge is the `writeFailure` lift
+    /// immediately before the `sync`: it can observe a stale latch, and the line two statements
+    /// after the `sync` re-reads it. A late latch, never a wrong file. ⛔ The old wording here
+    /// argued this from "a torn read is not expressible for a `Bool`" — that answers the wrong
+    /// question. Tearing and a data race are different things; a `Bool` cannot tear and an
+    /// unsynchronised concurrent read/write is still a race. The defence is the exclusion
+    /// above, not the width of the word.
     nonisolated(unsafe) private let drainFrame: UnsafeMutablePointer<Int64>
 
     /// Frames the tap overwrote before the writer got to them.
@@ -257,7 +317,7 @@ final class RetroCapture {
         // before assigning — most reinstalls (headphone unplug, engine restart) keep the
         // same rate and must keep their pre-roll.
         if format.sampleRate != captureSampleRate {
-            rateBoundaryFrame = ringWriteFrame.pointee
+            rateBoundaryFrame = RetroRingCursor.load(ringWriteFrame)
             log.log(.info, category: .audio,
                     "RetroCapture: capture rate \(captureSampleRate) → \(format.sampleRate) Hz; "
                     + "pre-roll history before frame \(rateBoundaryFrame) is no longer usable")
@@ -276,6 +336,10 @@ final class RetroCapture {
             guard let channelData = buffer.floatChannelData else { return }
             let frameCount = Int(buffer.frameLength)
             let chCount    = Int(buffer.format.channelCount)
+            // ⚠️ RAW ON PURPOSE — this is the producer reading its OWN last publish, not a
+            // cross-thread load. `RetroRingCursor.load` here would be a pointless fence in the
+            // hottest loop in the app, and reading it through the accessor would also imply a
+            // second consumer that does not exist. The acquire half belongs to the READERS.
             var frame      = Int(writePtr.pointee)
 
             for f in 0..<frameCount {
@@ -284,9 +348,11 @@ final class RetroCapture {
                 ringPtr[slot + 1] = chCount > 1 ? channelData[1][f] : channelData[0][f]
                 frame &+= 1
             }
-            // PUBLISH LAST. The cursor tells the writer which frames are finished, so it must
-            // never advance over a slot the loop above has not filled yet.
-            writePtr.pointee = Int64(frame)
+            // PUBLISH LAST — and #1429 finally gives that sentence its release barrier. The
+            // cursor tells the writer which frames are finished, so it must never become
+            // VISIBLE before the slots the loop above filled. A plain store did not ensure
+            // that on arm64; `publish` does.
+            RetroRingCursor.publish(writePtr, Int64(frame))
         }
 
 
@@ -339,7 +405,7 @@ final class RetroCapture {
         // worth a branch on the 2 Hz path, and a visible gap in a level meter would read as
         // "the engine stopped" — the same wrong message this repo rejects elsewhere.
         let totalFrames = ringCapacity
-        let endFrame   = Int(ringWriteFrame.pointee)
+        let endFrame   = Int(RetroRingCursor.load(ringWriteFrame))
         let startFrame = max(0, endFrame - totalFrames)
         let framesPerBin = totalFrames / waveformResolution
         guard framesPerBin > 0 else { return }
@@ -404,7 +470,7 @@ final class RetroCapture {
             // #1413 — the live drain starts HERE, at the cursor the pre-roll ended on. Reading
             // it AFTER `writePreRollToFile` is what makes the two writers meet exactly: every
             // frame before this point is already in the file, every frame after it is owed.
-            drainFrame.pointee = ringWriteFrame.pointee
+            drainFrame.pointee = RetroRingCursor.load(ringWriteFrame)
             writeFormat        = format
 
             activeFile.pointee = file
@@ -469,7 +535,7 @@ final class RetroCapture {
     /// ⚠️ `RetroCaptureTests` is not the blocking bundle, which is why claim 3 of
     /// `APreRollNeverCrossesARateSwitchTests` deliberately restates two of its assertions.
     private func preRollWindow(requestedFrames: Int) -> (start: Int, count: Int) {
-        let end = Int(ringWriteFrame.pointee)
+        let end = Int(RetroRingCursor.load(ringWriteFrame))
         let wanted = min(max(requestedFrames, 0), ringCapacity)
         let start = max(max(0, end - wanted), Int(rateBoundaryFrame))
         return (start, max(0, end - start))
@@ -530,7 +596,7 @@ final class RetroCapture {
         guard isActive.pointee, !writeFailure.pointee,
               let file = activeFile.pointee, let format = writeFormat else { return }
 
-        let end   = Int(ringWriteFrame.pointee)
+        let end   = Int(RetroRingCursor.load(ringWriteFrame))
         var start = Int(drainFrame.pointee)
         guard end > start else { return }
 
@@ -586,7 +652,7 @@ final class RetroCapture {
         // false above, so `drainToDisk`'s own guard would refuse; this last stretch is written
         // directly. `writeQueue.sync` doubles as the barrier that guarantees no drain handler is
         // still mid-write when the file is released one line later.
-        let tail = (start: Int(drainFrame.pointee), end: Int(ringWriteFrame.pointee))
+        let tail = (start: Int(drainFrame.pointee), end: Int(RetroRingCursor.load(ringWriteFrame)))
         writeQueue.sync {
             guard !writeFailure.pointee, let file = activeFile.pointee, let format = writeFormat,
                   tail.end > tail.start else { return }
@@ -641,7 +707,7 @@ final class RetroCapture {
         // In a repo whose whole discipline is "measure the consumers before asserting them",
         // asserting one in the same breath as a length contract is the error worth naming.
         let frames  = min(Int(Double(seconds) * captureSampleRate), ringCapacity)
-        let endFrame = Int(ringWriteFrame.pointee)
+        let endFrame = Int(RetroRingCursor.load(ringWriteFrame))
         let startFrame = max(0, endFrame - frames)
         let boundary = Int(rateBoundaryFrame)
         var out = [Float](repeating: 0, count: frames * 2)
@@ -736,7 +802,7 @@ final class RetroCapture {
             let url = try makeRecordingURL()
             let file = try AVAudioFile(forWriting: url, settings: format.settings,
                                        commonFormat: .pcmFormatFloat32, interleaved: false)
-            let endFrame = Int(ringWriteFrame.pointee)
+            let endFrame = Int(RetroRingCursor.load(ringWriteFrame))
             let startFrame = max(0, endFrame - frames)
             let boundary = Int(rateBoundaryFrame)
             let chunkSize = 8192

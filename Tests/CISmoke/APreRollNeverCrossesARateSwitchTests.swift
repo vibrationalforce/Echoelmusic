@@ -103,9 +103,12 @@ final class APreRollNeverCrossesARateSwitchTests: XCTestCase {
             ordinary re-install such as a headphone unplug (history is fine) — and the \
             watchdog re-installs on every route change (#630).
             """)
-        let boundaryIdx = lines.firstIndex { $0.contains("rateBoundaryFrame = ringWriteFrame.pointee") }
+        let boundaryIdx = lines.firstIndex { $0.contains("rateBoundaryFrame = RetroRingCursor.load(ringWriteFrame)") }
         XCTAssertNotNil(boundaryIdx, """
-            the rate boundary is no longer recorded. The tap then keeps up to 30 s of \
+            the rate boundary is no longer recorded. (⚠️ The anchor MOVED with #1429: the \
+            cursor is now read through `RetroRingCursor.load`, which is the acquire half of the \
+            release/acquire pair. If it moved again, re-anchor — do not delete the claim.) \
+            The tap then keeps up to 30 s of \
             old-rate frames that every pre-roll reader would write out under the NEW rate — \
             the "viel höher" pitch-shift the AudioEngine watchdog comment claims to prevent \
             (#630).

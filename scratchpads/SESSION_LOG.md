@@ -36744,3 +36744,67 @@ Gate und es gibt keine Conclusion zu lesen** — die Founder-Regel „erst nach 
 nächste Push" ist hier leer erfüllt, nicht grün bestätigt. Die drei warten als PASSAGIERE auf den
 nächsten Code-Commit (#697/#699). Der letzte Commit MIT Gate ist #1425 (`8d83133a3`): beide Gates
 grün, `main` steht darauf.
+
+---
+
+## 2026-09-21 — #1429: der Ring-Cursor bekommt sein Release/Acquire — und der Grund, warum es so lange offen war
+
+⭐ **AUSGELÖST DURCH EINE EXTERNE PRÜFUNG (ChatGPT über den Founder), die auf einem Klon von
+`05a14ca99` (#1413) arbeitete — fünfzehn Commits alt.** Ihr Statusbild (D–G offen) war überholt;
+ihr SACHBEFUND war richtig und deckt sich mit Task #89, der seit #1413b registriert war.
+
+⛔ **DER DEFEKT.** `nonisolated(unsafe)` ist keine Synchronisation, und „ein Schreiber, ein Leser"
+ist keine Speichermodell-Garantie. Der Tap füllt `ring` und speichert dann `ringWriteFrame`; acht
+Stellen laden `ringWriteFrame` und lesen dann `ring`. **arm64 ist nicht total-store-ordered** —
+nichts hinderte den Cursor daran, VOR den Slots sichtbar zu werden, die er bewirbt. Folge: ein
+Verbraucher liest einen nie gefüllten Slot. Kein Absturz, ein Knacken in der Aufnahme.
+
+⭐ **DIE ENTSCHEIDENDE MESSUNG, und sie hat den Aufwand von „eigene Scheibe mit neuem Primitiv"
+auf „eine Datei" gesenkt: DAS MITTEL LAG SCHON IM BAUM.** `Core/SPSCQueue.swift` implementiert
+GENAU dieses Protokoll mit GENAU diesem Aufruf — `OSMemoryBarrier()` vor dem `tail`-Publish
+(`:246`, `:274`) und erneut nach dem Laden, vor dem Slot-Zugriff (`:302`, `:330`), mit einem
+Kommentar, der arm64 non-TSO ausdrücklich nennt. Fünf Barrieren, gemessen.
+
+⛔ **UND #1413b HAT GENAU DIESE DATEI FALSCH GELESEN — das ist die eigentliche Lehre.** Meine
+Notiz schrieb, #1237 habe `OSAtomicIncrement64Barrier` ENTFERNT, „a fence per operation on the
+lock-free spine was judged the worse trade". Das liest sich als *dieses Repo hat sich gegen
+Fences entschieden*, und daraus folgte der Satz, das Schließen brauche
+`Synchronization.Atomic` und sei „a slice of its own, because a concurrency primitive introduced
+without a compiler is a guess". **#1237 hat die Fences von den METRIK-Zählern genommen und auf dem
+Publish-Pfad BEHALTEN.** Die Haltung des Repos ist *Fences dort, wo Ordnung tragend ist, keine auf
+Buchhaltung* — und `RetroCapture` hatte keines von beidem. ⭐ **GESETZ: eine Rücknahme, die eine
+Entscheidung BREITER beschreibt als sie getroffen wurde, kostet die nächste Sitzung die billige
+Reparatur.** Sie altert nicht, sie war von Anfang an zu weit — und klang dabei vorsichtig.
+
+⭐ **GEBAUT:** `RetroRingCursor` (top-level `enum`, bewusst NICHT geschachtelt — eine `static` auf
+dem `@MainActor`-Typ erbte dessen Isolation und der Tap könnte sie nicht rufen). `publish` =
+Barriere DANN Store, `load` = Load DANN Barriere. Alle acht Cursor-Stellen laufen durch den
+Accessor (#416: eine verstreute Barriere ist ein Refactor davon entfernt, an einer Stelle zu
+fehlen — und der Verlust wäre stumm).
+
+⚠️ **WAS BEWUSST ROH BLEIBT:** der Tap liest seinen EIGENEN Cursor (`writePtr.pointee`). Das ist
+kein Cross-Thread-Load; `load` dort wäre eine sinnlose Fence in der heißesten Schleife der App.
+Anspruch 6 pinnt das gegen einen künftigen „Konsistenz"-Durchgang.
+
+⚠️ **WAS NICHT SYNCHRONISIERT IST, benannt statt impliziert:** `writeFailure`, `droppedFrames`,
+`isActive` bleiben einfache Zellen. Ihre Zweitschreiber sind KONSTRUKTIV zeitlich ausgeschlossen
+(`startRecording` schreibt vor `isActive = true` und vor dem Timer; `stopRecording` löscht
+`isActive`, killt den Timer und nimmt dann `writeQueue.sync` — eine echte Happens-Before-Kante).
+**Die EINE Lesung außerhalb dieser Kante** ist der `writeFailure`-Lift unmittelbar VOR dem `sync`;
+sie kann einen Tick alt sein und wird nach dem `sync` erneut gelesen. Späte Latch, nie falsche
+Datei. ⛔ Die alte Begründung dafür („a torn read is not expressible for a `Bool`") beantwortet die
+falsche Frage — Tearing und Data Race sind verschiedene Dinge. Korrigiert an der Deklaration.
+
+⚠️ **ZWEI FREMDE WÄCHTER HINGEN AN GEÄNDERTEN ZEILEN**, gefunden von `scripts/moved-needles.py`,
+nicht von mir: `APreRollNeverCrossesARateSwitchTests` (Raten-Grenz-Ordnung) und
+`TheCaptureTapDoesNotTouchTheDiskTests` (Anspruch 2). Beide im SELBEN Commit nachgezogen — sie
+wären sonst auf korrektem Baum rot geworden, unsichtbar hinter #396. **Das ist der #1092-Fall, und
+das Werkzeug hat ihn gefangen.**
+
+**Verifikation:** §0-Transkription beider Bäume — **6 Ansprüche RED auf dem Elternteil, alle 7
+Zusicherungen GRÜN im Worktree**; die zwei Gegengewichte grün auf beiden (korrekt, #343). Zehn
+stehende Prüfer Exit 0 (moved-needles erst nach dem Nachziehen). `OSMemoryBarrier` ist unter
+`-warnings-as-errors` empirisch sicher: `SPSCQueue` benutzt es heute in `Sources/`, und `main`
+steht auf einem grünen Compile-Check. **Compile-verifiziert durch die Gates, NICHT geräteverifiziert
+— und eine Speicherordnung ist ohnehin durch keinen Test beweisbar; der Wächter pinnt, dass das
+Paar geschrieben ist und auf der richtigen Seite steht.**

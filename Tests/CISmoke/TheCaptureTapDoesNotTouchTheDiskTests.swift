@@ -93,12 +93,16 @@ final class TheCaptureTapDoesNotTouchTheDiskTests: XCTestCase {
     // passes trivially if the tap stops doing anything at all, so pin what it must STILL do.
     func testTheTapStillFillsTheRing() throws {
         let body = try tapBody(try source(Self.capturePath))
-        for needle in ["ringPtr[slot]", "writePtr.pointee = Int64(frame)"] {
+        for needle in ["ringPtr[slot]", "RetroRingCursor.publish(writePtr, Int64(frame))"] {
             XCTAssertTrue(body.contains(needle), """
                 The capture tap no longer contains `\(needle)`. Claim 1 of this file forbids the
                 tap from reaching disk; it must not be satisfiable by emptying the tap. The ring
                 fill IS the tap's job — and the cursor publish must stay LAST, after the loop, or
-                the writer can read frames that were never filled.
+                the writer can read frames that were never filled. ⚠️ The publish needle MOVED
+                with #1429: a raw `writePtr.pointee =` store made "LAST" an aspiration with
+                nothing enforcing it on arm64. `RetroRingCursor.publish` is the same store with
+                its release barrier; the ordering claim this message makes is only true through
+                it.
                 """)
         }
     }
