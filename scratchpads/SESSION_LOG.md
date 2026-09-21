@@ -36234,3 +36234,87 @@ Report". Genau so gemacht; die Datei bleibt ansonsten founder-gated.
 = PASSED. Alle Checker 0. NICHT compile-verifiziert, NICHT geräteverifiziert — und die
 Geräteprobe hat hier eine echte Frage: **startet die App noch und rastet der Kamerapuls noch
 ein**, nachdem zwei plist-Schlüssel weg sind.
+
+## 2026-09-21 — DMMW-F (M1): Timebase/TempoMap, die Umrechnungs-Autorität (#1416)
+
+**Gate-Lesung zuerst (#92 geschlossen).** `a34ee1208` (#1415): Xcode Compile Check Lauf 2701
+= `success` (Gerät/Release) · CI/CD Lauf 6166 Schritt 9 `Build for Testing` = `success`
+(Simulator/Debug, 10:38:17→10:41:35) — der umgeschriebene Anspruch 4 in
+`EveryPermissionPromptHasACapabilityTests` kompiliert, und `scripts/check-infoplist.sh`
+läuft im Compile-Check-Workflow weiter durch, nachdem `orphan_keys` gelöscht ist. Beide
+echten Gates grün. **Geräteprobe bleibt offen:** startet die App und rastet der Kamerapuls
+ein, nachdem `NSMicrophoneUsageDescription` und `NSPhotoLibraryAddUsageDescription` aus der
+plist raus sind, und welchen der zwei MIDI-Bonjour-Dienste CoreMIDI wirklich browst.
+
+**Dann F.** `Sources/Echoelmusic/Core/TempoMap.swift` + `Core/Timebase.swift`: `MusicalTime`
+· `WallTime` · `SampleTime` · `TempoMap` · `MeterMap` · `TimeSignature` · `BarBeat` ·
+`Timebase` · `TimeMath`. Reine Werttypen, Foundation-only, **NULL Produktions-Aufrufstellen**
+— das ist die Definition of Done dieser Scheibe, keine Auslassung.
+
+⛔ **KEINE UHR, und das ist eine Founder-Auflage.** `PatternEngine` bleibt die musikalische
+Takt-Autorität, `Transport` bleibt der Fan-out. Nichts hier tickt, plant, beobachtet oder
+hält Zustand, der sich bewegt. Wächter-Anspruch 7 nagelt das fest (vierzehn Uhr-Formen,
+kommentar-gestrippt gelesen, weil die eigenen Köpfe die verbotenen Wörter zitieren — #491).
+
+⚠️ **DREI RÄUME, NICHT VIER — eine Entscheidung, kein Vergessen.** Das Audit schlug als
+vierten `FrameTime` mit Drop-Frame-Timecode vor. **Nicht gebaut**, weil der Founder Video am
+2026-09-12 zurückgenommen hat (#1303/#1304, „Kein Video Capture"): `AVAssetWriter` kommt in
+`Sources/` null Mal vor. Ein 29,97-Drop-Frame-Typ ohne Domäne wäre ein türloser Kern, und
+dieses Repo führt ein ganzes Register davon. **Registriert als eigene Scheibe M1b**, mit der
+SMPTE-Referenztabelle (00:10:00;00 → Frame 17982, 01:00:00;00 → Frame 107892) als Wächter,
+nie ein Skalierungsfaktor. Steht im Kopf von `Timebase.swift`.
+
+⭐ **DAS RAMPEN-INTEGRAL IST DIE SACHE, DIE MAN FALSCH MACHT.** Sekunden über eine
+Tempo-Rampe sind `∫60/(bpm(t)·ppq)dt`, geschlossen `(60/ppq)·span·ln(b₁/b₀)/(b₁−b₀)`. Der
+Mittelwert der Endpunkte ist um 4 % daneben — und zwar nur auf LANGEN Rampen sichtbar, also
+unsichtbar bis zur Show. Anspruch 2 pinnt `ln 2` für eine 60→120-Viertel, algebraisch
+hergeleitet statt abgelesen (#442). Die Umkehrfunktion löst dasselbe Integral, sie nähert es
+nicht an.
+
+⚠️ **KONSTANTEN WERDEN ERFRAGT, NIE WIEDERHOLT (#416).** `Transport.minTempo`/`maxTempo`/
+`defaultTempo`/`beatsPerBar` — genau vier, als MENGE gepinnt statt als Zahl (#903). `ppq` hat
+BEWUSST KEINEN Default: das Song-Gitter der App ist `Note.ticksPerQuarter`, und MIDI-Import
+skaliert ohnehin schon ein fremdes PPQ um; ein zweites fest verdrahtetes Gitter wäre der
+#416-Defekt in genau dem Typ, der ihn beenden soll. ⭐ Beim späteren Herausheben in ein
+eigenes Foundation-only-Target dreht sich die Richtung um — `Transport` läse die Grenzen dann
+von hier. Das ist founder-gated (`project.yml`) und steht deshalb aufgeschrieben statt
+vorweggenommen.
+
+⛔ **FOUNDER-GATED, BERICHTET STATT GEBAUT: das `EchoelCore`-TARGET.** Die Definition of Done
+des Audits verlangt „`EchoelCore` target exists". Ein neues Target heißt `project.yml`, und
+das ist berichten-nicht-editieren. Die Typen liegen deshalb in `Core/`, wo sie von beiden
+Gates gebaut und vom blockierenden Bundle instanziiert werden. **Das Herausheben ist später
+ein `git mv` plus ein `project.yml`-Block** — die Foundation-only-Eigenschaft, die es möglich
+macht, ist ab heute von Anspruch 8 bewacht, nicht erst dann.
+
+⭐ **TOTALITÄT IST HIER EIN ABSTURZ-THEMA, NICHT KOSMETIK.** `Int64(NaN)` TRAPPT, und ein Trap
+im blockierenden Bundle tötet den Clone — von außen nicht von #396 zu unterscheiden (#1174),
+also ein stilles Grün über einem toten Lauf. Jede `Double → Int64`-Verengung geht durch
+`TimeMath.whole`, jeder `ppq` durch `TimeMath.ppq`, `BarBeat` klammert `beat`/`tick` als
+Überlaufschutz. ⚠️ `WallTime` macht aus NaN eine **0** und nicht die untere Grenze —
+bewusste Abweichung von `clamped(to:)`: das GESETZ ist „kein NaN kommt durch", der ERSATZWERT
+ist eine Größen-Entscheidung, und für eine vorzeichenbehaftete Zeit wäre die untere Grenze die
+negativste ausdrückbare Zeit. `SampleTime` klammert die Rate dagegen ans UNTERE Ende (8 kHz),
+und das ist Absicht: eine Position liest sich dann sechsmal zu lang und fällt sofort auf,
+während ein still untergeschobenes 48 000 richtig aussähe und falsch wäre.
+
+⛔ **`SampleTime` ist ABSICHTLICH NICHT `Comparable`.** 44 100 und 48 000 mit gleichem Frame-
+Count sind verschiedene Augenblicke. Anspruch 5 fährt beides: verhaltensseitig
+(`Timebase(sampleRate: 48000).seconds(at:)` einer 44,1-kHz-Position ist exakt 1,0 s) und als
+Quelltext-Scan per Regex über die Deklarationszeile — die erste Fassung ankerte auf EINER
+Konformitäts-Schreibweise und wäre an `extension SampleTime: Comparable` vorbeigelaufen
+(#408).
+
+**Benotung (§0/§3), ehrlich und der ungewöhnliche Fall:** die Wächter-Datei nennt Symbole, die
+dieser Commit ERST anlegt — sie **kompiliert gegen den Elternbaum nicht**, also hat dort
+**keine einzige Zusicherung ein Verdikt**. Alle acht Ansprüche sind FORWARD-Wächter: null
+Regressionen, null Anker-Absenzen im üblichen Sinn (die Abwesenheit der zwei Quelldateien ist
+EINE, #486). Was stattdessen benotet wurde, weil CI die Zahlen eines Forward-Wächters nicht
+für einen prüft (#686/#943b): **jede arithmetische Zusicherung wurde aus dem AUSGELIEFERTEN
+Swift nach Python transkribiert und gefahren, bevor der Wächter existierte.** Round-Trip über
+eine Vier-Einträge-Karte mit zwei Rampen und einer Naht, jeder 7. Tick über 40 Takte:
+schlechteste Abweichung **0 Ticks**. Monotonie über die Naht: hält. Bar/Beat-Round-Trip über
+einen 4/4→7/8-Wechsel, 51 Positionen: null Fehler. Feindliche Eingaben (NaN, ±inf, 0, −1,
+±1e308, `Int64.min/max`, `ppq = Int.max`): kein Trap, kein NaN am Ausgang. Zehn Checker exit 0.
+**NICHT compile-verifiziert** — eine Transkription fährt Swifts Typprüfer nicht.
+**NICHT geräteverifiziert**, und es gibt nichts zu verifizieren: null Aufrufstellen.
