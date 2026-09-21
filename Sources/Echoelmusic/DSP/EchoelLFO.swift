@@ -42,6 +42,25 @@ public final class EchoelLFO: @unchecked Sendable {
         self.sampleRate = sampleRate
     }
 
+    /// Re-point the LFO at a new sample rate — CONTROL PLANE ONLY, never the render thread.
+    ///
+    /// Nothing is derived: `next()` reads `sampleRate` per sample, so the assignment IS the
+    /// change. The phase is deliberately NOT reset — a rate change happens between renders,
+    /// and restarting the cycle would be an audible discontinuity for no gain.
+    ///
+    /// ⚠️ IN PLACE, NOT A NEW INSTANCE — `EchoelDDSP` holds this object and its render block
+    /// dereferences it (see the ARC-reseat law at `EchoelDDSP.updateReverbDecay`). The only
+    /// legal caller runs while no render is in flight.
+    ///
+    /// ⚠️ A non-positive rate is REFUSED rather than clamped, and that is the difference from
+    /// `EchoelSVFilter`: this type's `init` stores whatever it is given, so there is no
+    /// existing spelling of a fallback here to be consistent with (#416). Refusing keeps the
+    /// last known-good rate instead of inventing a second default.
+    public func setSampleRate(_ newRate: Float) {
+        guard newRate > 0, newRate.isFinite else { return }
+        sampleRate = newRate
+    }
+
     // MARK: - Process
 
     /// Get next LFO value. Returns [-depth, +depth]. Audio-thread safe.
@@ -89,12 +108,18 @@ public final class EchoelLFO: @unchecked Sendable {
     /// ⭐ THE CLASS IS ENUMERATED, NOT ASSUMED — #1206 shipped a boundary sentence that was an
     /// incomplete count, and this is the same shape. `git grep -n "phase >= 1\|phase -= 1"`
     /// over `Sources/` finds exactly TWO wraps of this form: this one, and
-    /// `EchoelEntrainment.process`. The second is NOT reachable by a hostile rate and is left
-    /// alone deliberately: it advances by `band.centerFrequency`, a five-case `switch`
-    /// returning 2 / 6 / 10 / 20 / 40, and `band` is an ENUM — no file, no setter and no bio
-    /// value can put a large or non-finite number there. Changing it would be churn on a
-    /// correct path. If a future slice makes that frequency a `Float` parameter, this wrap is
-    /// the form to copy.
+    /// `EchoelEntrainment.process`.
+    ///
+    /// ⛔ THAT SECOND ONE CARRIED THE SAME DEFECT AND NOW CARRIES THE SAME FIX (#1407) — the
+    /// paragraph here used to argue it was unreachable "by a hostile rate" and predicted that
+    /// a slice turning `band.centerFrequency` into a `Float` parameter would owe the copy. The
+    /// argument about the NUMERATOR was right and is still right; the prediction named the
+    /// wrong half. What arrived instead was `setSampleRate`, so the DENOMINATOR became
+    /// writable — at a small rate the increment is enormous and the single `phase -= 1.0`
+    /// never folds back. ⭐ THE DURABLE LESSON, and it is why this is corrected rather than
+    /// deleted: **a reachability argument has as many halves as the expression has terms.**
+    /// Enumerating the wraps was the right move (#1206); bounding the reasoning to the term I
+    /// happened to be looking at was not.
     @inline(__always)
     public func next() -> Float {
         // Advance phase

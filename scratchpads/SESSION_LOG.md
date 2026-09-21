@@ -35825,3 +35825,107 @@ wieder ein, die diese Commits erledigt haben.
 ⚠️ **Die Datei trägt eine Warnung an sich selbst:** jede Zahl darin ist eine Messung mit
 Datum. Wer sie aktualisiert, misst neu — sonst schickt der Prompt eine fremde KI auf einen
 alten Stand, und das Ergebnis sieht genauso plausibel aus wie ein richtiges.
+
+## 2026-09-21 — Gate-Lesung `08ed159ba` (#1406, Teil 2): beide Gates grün, Auto-Merge hat gewartet
+
+**Ergebnis.** `Xcode Compile Check` = success (Lauf 35568153387, 06:21:57–06:25:38).
+CI/CD Schritt 9 `Build for Testing` = success (Lauf 35568153309, Job 106234159840,
+**06:23:50–06:27:11**). Also: `Sources/` mit den drei neuen `self.sampleRate`-Zuweisungen
+kompiliert, UND das blockierende Bündel mit
+`TheSubEnginesFollowTheirParentsRateTests.swift` kompiliert. Das ist die stärkste
+Aussage, die von hier aus erreichbar ist — die AUSFÜHRUNG der vier Ansprüche bleibt
+unbelegt (§5/#445: das Job-Log ist `tail -200`, und `Run Tests` meldet wegen #396 auf
+jedem Push `failure`).
+
+⭐ **UND DAS IST DER ERSTE ECHTE CODE-COMMIT, AUF DEM #1405 GEHALTEN HAT.** Der
+Auto-Merge-Lauf 35568153383 schließt um **06:27:23** ab — **zwölf Sekunden** nachdem
+`Build for Testing` um 06:27:11 gemeldet hat, nach rund fünfeinhalb Minuten Wartezeit.
+Vorher hätte derselbe Lauf in unter zwanzig Sekunden gemerged und `main` für die Dauer
+des Builds auf einem ungeprüften Baum stehen lassen. Die zwei gemessenen Fenster aus
+§AG (`f61be63` zehn Minuten, `edc37a4a5` neun) können in dieser Form nicht mehr
+entstehen.
+
+⚠️ **Was das NICHT beweist:** die Verweigerungs-Hälfte. `never-ran`, `timeout` und
+`cancelled` sind in der Bedingung als positive Gleichheit formuliert und durch Anspruch
+3/4 von `TheAutoMergeWaitsForTheGatesTests` gepinnt, aber noch nie auf einem echten
+roten Gate durchlaufen. Erst ein rotes Gate misst diese Hälfte, und darauf wird nicht
+hingearbeitet.
+
+**Folge-Commit `dd3a283e5`** (dieser Prompt + Teil 1 der Lesung) fasst nur
+`scratchpads/**` an: kein Gate-Pfadfilter trifft, also läuft der Merge über die
+bewusste #1405-Ausnahme `touches_code=false`. Genau der Fall, für den sie gebaut wurde.
+
+## 2026-09-21 — #1407: der AUv3 folgt der Rate seines Hosts (Board A10, hörbare Hälfte)
+
+**Der Befund, gemessen statt vermutet.** Ein AUv3 rendert ohne Wandler in den Bus, den der
+HOST konfiguriert hat. `EchoelmusicAudioUnit` deklariert in `init` 48 kHz — richtig, es muss
+etwas deklariert sein, bevor ein Host gesprochen hat — und baute dann beide Engines auf
+dasselbe Literal und fragte nie wieder. In einer 44,1-kHz-Sitzung kommt damit jede Frequenz
+mit 44100/48000 = 0,91875 heraus: **~8,1 % zu tief, rund 1,47 Halbtöne**, LFO und Hüllkurven
+8,8 % zu langsam.
+
+⚠️ **Warum die erste Gerätesitzung das nicht gesehen hat:** #1386 maß in AUM bei 48 kHz —
+der einen Rate, bei der der Defekt unsichtbar ist (220,15 Hz gegen 220 Hz Default). **Ein
+Gerätelauf beweist den Signalpfad, den er gefahren hat, nicht den, den er zufällig nicht
+gefahren hat.**
+
+**Die Scheibe hat ihre eigene Reparaturanweisung verworfen, und das ist der teuerste Fund
+darin.** Board A10 trug seit gestern den Plan „`synth`/`texture` zu `var`s machen, die in
+`allocateRenderResources()` aus dem Host-Format NEU GEBAUT werden". Beim Lesen von
+`EchoelDDSP` stand zwölf Zeilen unter der Einfügestelle das Gegenteil, mit Begründung:
+`updateReverbDecay` setzt die Convolution ausdrücklich NICHT neu, weil ein Referenz-Reseat
+aus der Steuerebene den ARC-Retain des Render-Threads gerannt und auf dem Gerät mit
+EXC_BAD_ACCESS beim ersten Generate abgestürzt ist. Gebaut ist deshalb die In-place-Form:
+`setSampleRate(_:)` auf `EchoelDDSP`, `EchoelCellular` und den drei Sub-Engines. ⭐ **Lehre
+für das Board: ein Eintrag, der die Reparatur mitliefert, nennt sie als VORSCHLAG, nicht als
+Auftrag.** Wer den Plan abgeschrieben hätte, hätte den teuersten Absturz dieser Datei
+reproduziert.
+
+**Was NICHT mitgezogen wurde, und warum das die Hälfte ist, die man prüfen muss.** Die
+Haupt-App ist nicht betroffen: ihre Stimmen speisen `AVAudioSourceNode`s, die 48 kHz
+DEKLARIEREN, und `AVAudioEngine` wandelt für sie auf die Hardware-Rate
+(`AudioEngine.setupMasterEngine` baut sein Format aus `outputNode.outputFormat(forBus: 0)`).
+Das deklarierte Format IST der Vertrag. Anspruch 8 pinnt diesen VERTRAG (eine Konstante
+speist Engine und deklariertes Format) statt einen Aufruf zu verbieten — ein Verbot wäre
+#364 gewesen.
+
+**Die Vorbedingung, die erst durch diese Scheibe entstand (Board O15).**
+`EchoelEntrainment.process` trug den nicht-rettenden `phase -= 1.0`-Wrap. `EchoelLFO`s Doku
+hatte die beiden Wraps in `Sources/` ENUMERIERT und diesen für unerreichbar erklärt — und das
+Argument über den ZÄHLER stimmt bis heute (`band.centerFrequency` ist ein Fünf-Fall-Enum).
+Seine Vorhersage war, eine Scheibe, die den Zähler zum Parameter macht, schulde den Fix.
+Diese Scheibe hat den **NENNER** schreibbar gemacht. ⭐ **Gesetz: ein
+Erreichbarkeits-Argument hat so viele Hälften, wie der Ausdruck Terme hat.** Die veraltete
+Hälfte stand in ZWEI Zuhausen und ist in beiden korrigiert (#456): `EchoelLFO.next()`s Doku
+und der Kopf von `OneDefinitionOfAParameterRangeTests` — letzteres fand `moved-needles.py`,
+nicht ich.
+
+⛔ **Und Anspruch 5 war in seiner ersten Fassung VAKUUM, gefunden durch Fahren statt durch
+Lesen (#367, der Spiegelfall — zum zweiten Mal in zwei Scheiben).** Er fuhr
+`EchoelEntrainment(sampleRate: 1e-30)` über 10 000 Aufrufe und rechnete, ein Inkrement von
+4e31 erreiche `Float.greatestFiniteMagnitude` schnell. Es braucht **8,5 Millionen** Aufrufe,
+nicht achttausend — die Schätzung lag um drei Größenordnungen daneben, in der schmeichelnden
+Richtung. Gemessen und ersetzt: bei `sampleRate = 4e-36` ist das Inkrement 1e37, **endlich**
+(prüft also den FOLD und nicht einen Einschritt-Überlauf), und die Phase wird auf Aufruf
+**34** nicht-endlich. Die Zahl steht jetzt in beiden Zuhausen als Messung, mit dem Hinweis,
+dass sie eine war.
+
+**Benotung (§0/§3).** Die Datei kompiliert nicht gegen den Elternbaum — Ansprüche 1–6 rufen
+`setSampleRate`, das dieser Commit anlegt —, also hat DORT keine Zusicherung ein Verdikt;
+hand-transkribiert statt behauptet. Gefahren: Anspruch 5 ist eine echte Regression auf der
+Eltern-FORM des Wraps (alt = NaN, neu = 1,0), Anspruch 6 ein Gegengewicht (bei 48 kHz sind
+beide Formen bit-gleich), Ansprüche 7/9 Quelltext-Scans (7 rot auf dem Elternbaum, 9 dort
+ohne Anker), Anspruch 8 ein Gegengewicht auf beiden. Fünf Mutanten gefahren, alle gefangen
+(M1 nur speichern → 9; M3 Reseat → 9; M4 Re-Point nach `noteOn` → 7; M5 Literal zurück → 7),
+eine Fehlalarm-Sonde P1 (ein legitimer ZWEITER Aufruf) bleibt grün. `SourceText.codeOnly` ist
+hier **PROPHYLAKTISCH, gemessen**: 0 von 6 Verdikten kippen.
+
+**Zehn Prüfer (neun stehende plus `needle-reachability`): alle 0.** `moved-needles.py` meldet
+genau einen Treffer, und er ist beantwortet: `if phase >= 1.0 { phase -= 1.0 }` lebt weiter in
+`OneDefinitionOfAParameterRangeTests` als `OldWrapLFO` — eine absichtliche Transkription des
+Vor-Fix-Oszillators, Swift statt Nadel.
+
+**NICHT compile-verifiziert** — eine Transkription fährt Swifts Typprüfer nicht. Und
+`Sources/EchoelmusicAUv3/` ist ein ANDERES Target: kein Gate dieses Repos kompiliert es
+zusammen mit dem blockierenden Bündel, und keines kann zeigen, dass das Plugin in einem
+44,1-kHz-Host lädt und in Tonhöhe spielt. Das bleibt eine Geräteprobe.

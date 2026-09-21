@@ -85,8 +85,13 @@ public final class EchoelCellular: @unchecked Sendable {
     /// Number of cells in the 1D CA (also determines wavetable size)
     public let cellCount: Int
 
-    /// Sample rate
-    public let sampleRate: Float
+    /// Sample rate.
+    ///
+    /// ⚠️ `private(set) var`, not `let` (#1407): an AUv3 renders straight into the host's bus
+    /// with no resampler in between, so the engine has to follow whatever rate that bus was
+    /// given. Write it ONLY through `setSampleRate(_:)` and ONLY from the control plane —
+    /// every read below is on the audio thread.
+    public private(set) var sampleRate: Float
 
     // MARK: - State
 
@@ -191,6 +196,21 @@ public final class EchoelCellular: @unchecked Sendable {
 
         // Seed with single cell in center (classic CA initialization)
         seed(.singleCenter)
+    }
+
+    /// Re-point the engine at a new sample rate — CONTROL PLANE ONLY, never the render thread.
+    ///
+    /// Nothing is derived from the rate at init: every use is a per-render divisor (phase
+    /// increments, the Nyquist guards, `samplesPerEvolution`), so the assignment IS the change
+    /// and no table has to be rebuilt. That is the whole reason this type needs no in-place
+    /// surgery while `EchoelDDSP` does.
+    ///
+    /// ⚠️ A non-positive or non-finite rate is REFUSED, keeping the last known-good one. It is
+    /// not a nicety: `frequency / sampleRate` at 0 is `inf`, and `phases` would fill with NaN
+    /// within one block and never recover — `render` has no sanitiser downstream of it.
+    public func setSampleRate(_ newRate: Float) {
+        guard newRate > 0, newRate.isFinite else { return }
+        sampleRate = newRate
     }
 
     // MARK: - Seeding

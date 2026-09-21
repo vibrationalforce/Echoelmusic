@@ -130,8 +130,19 @@ public final class EchoelDDSP: @unchecked Sendable {
     /// Number of noise filter bands
     public let noiseBandCount: Int
 
-    /// Sample rate
-    public let sampleRate: Float
+    /// Sample rate — clamped at `init` and thereafter writable ONLY through
+    /// `setSampleRate(_:)`.
+    ///
+    /// ⚠️ `private(set) var`, not `let` (#1407). An AUv3 renders straight into the host's bus
+    /// with no resampler in between, so the engine must follow whatever rate that bus was
+    /// given; the main app is the opposite case and must NOT call the setter — its
+    /// `AVAudioSourceNode`s DECLARE 48 kHz and `AVAudioEngine` converts to the hardware rate
+    /// for them (`BioReactiveSynthVoice.makeSourceNode`). Changing the engine there would
+    /// break that contract, not honour it.
+    ///
+    /// ⚠️ Every read of this property below is on the audio thread. The setter is control
+    /// plane only, and the only legal moment is one where no render is in flight.
+    public private(set) var sampleRate: Float
 
     /// Frame size for parameter updates (controls update rate)
     public let frameSize: Int
@@ -1055,6 +1066,43 @@ public final class EchoelDDSP: @unchecked Sendable {
     /// Generate. Instead we update the existing convolution's kernel IN PLACE
     /// (length is always 4096, so `setKernel` never reallocates). The object the
     /// audio thread holds is never swapped.
+    /// Re-point this engine and its three sub-engines at a new sample rate.
+    ///
+    /// **CONTROL PLANE ONLY, and only while no render is in flight.** The one production
+    /// caller is `EchoelmusicAudioUnit.allocateRenderResources()`, where Apple guarantees the
+    /// render block is not running. The main app never calls it — see the note on
+    /// `sampleRate`.
+    ///
+    /// ⛔ IT MUTATES IN PLACE AND MUST KEEP DOING SO. Writing
+    /// `filter = EchoelSVFilter(sampleRate: r)` here is the shorter code and is the exact move
+    /// `updateReverbDecay` below forbids in its own comment: reseating a reference that the
+    /// render thread dereferences raced ARC and crashed on device (EXC_BAD_ACCESS on the first
+    /// Generate). The object the audio thread holds is never swapped; only its innards change.
+    ///
+    /// ⚠️ THE REVERB IR IS DELIBERATELY NOT REGENERATED, and that is a decision, not an
+    /// oversight. `generateReverbIR` bakes the rate into its early-reflection offsets and tail
+    /// slope, so the kernel built at 48 kHz is ~8.8 % long when played at 44.1 kHz. Two
+    /// reasons to leave it: the convolution stage is switched OFF at runtime
+    /// (`useConvolutionReverb` has no writer in `Sources/`, #546), so it produces no sound at
+    /// all today; and even switched on, a 3 ms reflection arriving at 3.3 ms is not the defect
+    /// this slice exists for — the PITCH being 1.47 semitones flat is. Regenerating it would
+    /// also drag in a second, unrelated change: `init` builds the kernel with `decay: 1.5`
+    /// while `reverbDecay` defaults to `2.0`, so any call to `updateReverbDecay(reverbDecay)`
+    /// here would quietly retune the tail as a side effect of a rate change. That mismatch is
+    /// a REAL neighbouring finding and is reported rather than fixed under cover of this
+    /// slice.
+    ///
+    /// The clamp is the SAME expression as `init` (`max(1, ·)`), not a second spelling of it
+    /// (#416). NaN-safe by argument order: `max(1, .nan)` is `1`, never NaN.
+    public func setSampleRate(_ newRate: Float) {
+        let clamped = Swift.max(1, newRate)
+        guard clamped != sampleRate else { return }
+        sampleRate = clamped
+        filter.setSampleRate(clamped)
+        filterLFO.setSampleRate(clamped)
+        entrainment.setSampleRate(clamped)
+    }
+
     public func updateReverbDecay(_ newDecay: Float) {
         reverbDecay = newDecay
         let ir = EchoelDDSP.generateReverbIR(decay: newDecay, sampleRate: sampleRate, length: 4096)

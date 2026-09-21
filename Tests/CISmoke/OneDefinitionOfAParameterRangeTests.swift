@@ -95,10 +95,21 @@
 //   · `moved-needles.py` REPORTS TWO MORE HITS AFTER #1207b, both `[still in Sources]`, and
 //     both are ANSWERED: `if phase >= 1.0 {` and `phase -= 1.0` occur in this file as the body
 //     of `OldWrapLFO`, a deliberate TRANSCRIPTION of the pre-fix oscillator — Swift, not
-//     needles. Nothing scans for them. They also still occur in `Sources/`, in
-//     `EchoelEntrainment.process`, which is a different and unreachable instance of the same
-//     shape (its rate is a five-case enum `switch`) — see `EchoelLFO.next()`'s doc for why it
-//     is left alone.
+//     needles. Nothing scans for them.
+//     ⛔ THE SECOND HALF OF THIS BULLET IS WITHDRAWN (#1407). It read: they also still occur
+//     in `Sources/`, in `EchoelEntrainment.process`, "a different and UNREACHABLE instance of
+//     the same shape (its rate is a five-case enum `switch`)". The argument was about the
+//     NUMERATOR and is still sound — no file or setter can enlarge `band.centerFrequency`.
+//     What it did not cover is the DENOMINATOR, and #1407 made that writable
+//     (`EchoelEntrainment.setSampleRate`, so the AUv3 can follow its host's rate). The wrap
+//     there now carries the same total fold as `EchoelLFO.next()`, and
+//     `TheAUv3FollowsTheHostSampleRateTests` claim 5 drives it: at a rate of 4e-36 the
+//     increment is 1e37 and the old form goes non-finite on call 34.
+//     ⭐ THE LESSON, and it is why this is corrected here rather than only at the LFO (#456):
+//     a reachability argument has as many halves as the expression has terms. Enumerating the
+//     two wraps was right; bounding the reasoning to the term I happened to be looking at was
+//     not — and the stale half sat in a guard header, where the next reader would have trusted
+//     it without re-deriving.
 //   · WHAT NO TEST HERE CAN SHOW: that a clamped project file sounds like the one the sender
 //     saved. A file written by THIS app cannot be out of range (its rows are bounded by the
 //     same constant), so the only patch this can alter is one Echoel did not write.

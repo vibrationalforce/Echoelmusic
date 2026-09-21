@@ -2416,3 +2416,37 @@ den nicht-rettenden Phasen-Wrap, den #1207b aus `EchoelLFO` entfernt hat — heu
 eigene Scheibe.
 
 **Review:** 2026-10-21.
+
+### 2026-09-21 — AUv3 folgt der Host-Rate, in place statt durch Neubau (#1407)
+
+**Entscheidung.** `EchoelmusicAudioUnit.allocateRenderResources()` liest
+`outputBus.format.sampleRate` und richtet `synth` (`EchoelDDSP`) und `texture`
+(`EchoelCellular`) danach aus — VOR `noteOn`, damit der Leerlauf-Ton nicht erst auf der
+falschen Tonhöhe startet. Beide Typen und die drei Sub-Engines (`EchoelSVFilter`,
+`EchoelLFO`, `EchoelEntrainment`) bekommen dafür `setSampleRate(_:)`.
+
+**Warum IN PLACE und nicht neu bauen.** Der kürzere Weg wäre `synth = EchoelDDSP(...)`.
+Das ist exakt der Zug, den `EchoelDDSP.updateReverbDecay` zwölf Zeilen weiter in seinem
+eigenen Kommentar verbietet: eine Referenz neu zu setzen, die der Render-Thread
+dereferenziert, hat ARC gerannt und auf dem Gerät mit EXC_BAD_ACCESS beim ersten Generate
+abgestürzt. Die Objekte werden nie getauscht, nur ihre Innereien geändert.
+
+**Warum die Haupt-App NICHT mitzieht.** Ihre Stimmen speisen `AVAudioSourceNode`s, die
+48 kHz DEKLARIEREN; `AVAudioEngine` wandelt für sie auf die Hardware-Rate
+(`AudioEngine.setupMasterEngine` baut sein Format aus `outputNode.outputFormat`). Das
+deklarierte Format ist der Vertrag, und die Engine erfüllt ihn bereits. Anspruch 8 des
+Wächters pinnt den VERTRAG (eine Konstante speist Engine und deklariertes Format) statt
+einen Aufruf zu verbieten — ein Verbot hätte eine künftige Scheibe blockiert, die beide
+zusammen bewegt (#364).
+
+**Mitgeliefert als VORBEDINGUNG, nicht als Beifang.** `EchoelEntrainment.process` trug den
+nicht-rettenden `phase -= 1.0`-Wrap (Board O15). `EchoelLFO`s Doku hatte ihn enumeriert und
+für unerreichbar erklärt — richtig über den ZÄHLER (ein Fünf-Fall-Enum), und die Vorhersage
+lautete, eine Scheibe, die den Zähler zum Parameter macht, schulde den Fix. Diese Scheibe
+hat stattdessen den NENNER schreibbar gemacht. **Gesetz: ein Erreichbarkeits-Argument hat so
+viele Hälften, wie der Ausdruck Terme hat.** Die veraltete Hälfte stand in zwei Zuhausen
+(`EchoelLFO`s Doku und der Kopf von `OneDefinitionOfAParameterRangeTests`) und ist in
+beiden korrigiert (#456).
+
+**Review:** 2026-10-21. **Offen:** Geräteprobe in einem 44,1-kHz-Host — kein Gate kann sie
+ersetzen, `Sources/EchoelmusicAUv3/` wird vom blockierenden Bündel nicht kompiliert.

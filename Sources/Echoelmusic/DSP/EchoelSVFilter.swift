@@ -88,6 +88,28 @@ public final class EchoelSVFilter: @unchecked Sendable {
         updateCoefficients()
     }
 
+    /// Re-point the filter at a new sample rate — CONTROL PLANE ONLY, never the render thread.
+    ///
+    /// ⚠️ `g` is `tan(π · cutoff / sampleRate)`, so the rate is baked into the coefficient, not
+    /// read per sample. Assigning the stored rate alone would leave the corner where the OLD
+    /// rate put it; `updateCoefficients()` is what makes the change real, and it is `private`,
+    /// which is why this setter exists at all instead of a `public var`.
+    ///
+    /// ⚠️ IN PLACE, NOT A NEW INSTANCE. `EchoelDDSP` holds this object and its render block
+    /// dereferences it; reseating such a reference from the control plane raced ARC and crashed
+    /// on device (the law is written out at `EchoelDDSP.updateReverbDecay`). The only legal
+    /// caller is one that runs while no render is in flight — in practice
+    /// `AUAudioUnit.allocateRenderResources()`.
+    ///
+    /// The guard is the SAME expression as `init`, not a second spelling of it (#416): a
+    /// non-positive or NaN rate falls back to 48000 rather than producing a NaN `g`.
+    public func setSampleRate(_ newRate: Float) {
+        let resolved = newRate > 0 ? newRate : 48000
+        guard resolved != sampleRate else { return }
+        sampleRate = resolved
+        updateCoefficients()
+    }
+
     // MARK: - Coefficient Update
 
     private func updateCoefficients() {

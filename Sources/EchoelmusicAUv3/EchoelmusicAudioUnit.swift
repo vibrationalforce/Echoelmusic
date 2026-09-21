@@ -23,6 +23,11 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
 
     // MARK: - DSP
 
+    /// ⚠️ The 48000 here is a PLACEHOLDER, not the rate this plug-in runs at. A property
+    /// initialiser has no host to ask; `allocateRenderResources()` re-points both engines at
+    /// `outputBus.format.sampleRate` before the first render, and the long comment there is
+    /// the one that explains why (#1407). Both are `let` on purpose — the rate changes IN
+    /// PLACE, the references never move.
     private let synth = EchoelDDSP(sampleRate: 48000)
     private let texture = EchoelCellular(cellCount: 128, sampleRate: 48000)
     private var isNoteOn = false
@@ -387,12 +392,41 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
 
     public override func allocateRenderResources() throws {
         try super.allocateRenderResources()
+
+        // ⭐ THE HOST OWNS THE RATE (#1407, board A10). `init` declares the output bus at
+        // 48 kHz because something has to be declared before a host has spoken — but the host
+        // then WRITES `outputBus.format`, and an AUv3 renders straight into that bus with no
+        // converter in between. Both engines were built at the 48 kHz literal and never asked
+        // again, so in a 44.1 kHz session every partial came out multiplied by 44100/48000 =
+        // 0.91875: roughly 1.47 semitones FLAT, with the LFO and the envelopes 8.8 % slow.
+        //
+        // ⚠️ IT SURVIVED THE FIRST DEVICE SESSION BECAUSE OF WHERE IT WAS MEASURED. #1386
+        // loaded the plug-in in AUM at 48 kHz — the one rate at which the defect is invisible
+        // — and read 220.15 Hz against a 220 Hz default. A matching rate proves the signal
+        // path, not the rate path.
+        //
+        // ⚠️ THIS IS THE ONLY LEGAL MOMENT. Both setters mutate in place (never reseating a
+        // reference the render block holds — the ARC-reseat law lives at
+        // `EchoelDDSP.updateReverbDecay`), and Apple guarantees no render is in flight between
+        // `allocateRenderResources` and the first callback. It runs BEFORE `noteOn` so the
+        // idle tone starts at the right pitch rather than sliding into it, and before
+        // `internalRenderBlock` is fetched, so the `bioInterval` derived there
+        // (`synth.sampleRate / 10`) is the host's rate too.
+        //
+        // ⚠️ NOT PROPAGATED TO THE MAIN APP, DELIBERATELY. Its voices feed `AVAudioSourceNode`s
+        // that DECLARE 48 kHz, and `AVAudioEngine` converts to the hardware rate on their
+        // behalf. Calling a setter there would break that contract instead of honouring it.
+        let hostRate = Float(outputBus.format.sampleRate)
+        synth.setSampleRate(hostRate)
+        texture.setSampleRate(hostRate)
+
         // Start generating
         synth.amplitude = 0.6
         synth.noteOn(frequency: baseFreqParam.value)
         isNoteOn = true
         startVitalsPolling()
-        os_log(.info, log: Self.auLog, "Instrument started: %.0f Hz", baseFreqParam.value)
+        os_log(.info, log: Self.auLog, "Instrument started: %.0f Hz at %.0f Hz host rate",
+               baseFreqParam.value, Double(synth.sampleRate))
     }
 
     public override func deallocateRenderResources() {
