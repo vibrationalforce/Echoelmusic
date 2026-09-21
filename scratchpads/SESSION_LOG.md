@@ -36706,3 +36706,41 @@ Backslash-Pipe ist. Richtig gelaufen: **74**. Und die vier Zahlen jener Tabelle 
 gegen heute 558/3 475/293/74) sind **kein Defekt** — die Datei sagt über der Tabelle selbst, die
 Zahlen seien datiert und die BEFEHLE die Tatsache. **Ein Werkzeug-Artefakt sieht aus wie ein
 Repo-Befund; der Unterschied kostet einen Lauf von Hand.**
+
+---
+
+## 2026-09-21 — #1428: die Idee-Labyrinth-Zeilen zum Sweep, inkl. einer NICHT gebauten Sache
+
+⭐ **PLAYBOOK eingetragen:** der §W-Befehls-Sweep. Zwei Flächen gefahren (64 + 40 befehlsförmige
+Spannen), Ausbeute drei echte Defekte an einem Nachmittag (#1425 substanziell falsche Behauptung
+in der TECH-STACK-Tabelle · #1426 ein Bann-Scan, der in BEIDE Richtungen log · #1427 sechs
+kommentar-verfälschte Zitate). Mit beiden bezahlten Fallen: niemals `| tail` (puffert bis EOF →
+eine im Timeout gestorbene Ausgabe ist 0 Zeilen und sieht aus wie „nichts gefunden"), und ein
+Befehl aus einer MARKDOWN-TABELLE trägt escapete `\|`, die in ERE literal sind.
+
+⛔ **DEAD-END eingetragen, und das ist die eigentliche Arbeit dieser Runde: ein `source-pins.py`
+wird NICHT gebaut.** `count-pins.py` deckt Zählpins in `Tests/CISmoke` ab — dort steht die Zahl in
+einer ASSERTION. Die offene Fläche sind die Zählbehauptungen in `Sources/`-PROSA, und genau dort
+saß der #1425-Defekt, also lag ein Werkzeug nahe. **Gemessen statt gebaut:** die hochpräzise Form
+(Backtick-Symbol + Zählwort + „caller/call site") liefert **33 Behauptungen, 16 als Abweichung
+markiert — und alle sechzehn sind Artefakte.** Zwei per Regex unheilbare Ausfallarten:
+(a) **falsches Subjekt** — das Backtick-Symbol neben dem Zählwort ist nicht das Gezählte
+(„Writes exactly `count` samples … callers zero-fill"; „`composeHarmonic`'s parameter of the same
+name. One caller" zählt die UMGEBENDE Funktion, geprüft: `composeHarmonic` hat wirklich zwei
+Aufrufstellen und die Prosa behauptet nichts anderes) · (b) **Vergangenheitsform** — dieses Repo
+schreibt Rücknahmen absichtlich als Geschichte („`setLatencyMode` HAD zero callers",
+„`EchoelGranular` went with #1305, so the ONE guarding caller is gone"), und eine ERFÜLLTE
+Rücknahme liest sich wie eine falsche Behauptung.
+
+⭐ **Das ist #491 in Werkzeugform:** ein Negativ-Scan über eine Datei, die ihre eigenen Rücknahmen
+zitiert, trifft die Rücknahmen. Ein Werkzeug mit ~50 % Fehlalarm wird nach zwei Läufen stumm
+geschaltet — der Mechanismus, der `continue-on-error` unsichtbar gemacht hat. **Ein nicht gebautes
+Werkzeug mit einer Messung daneben ist mehr wert als ein gebautes ohne.**
+
+⚠️ **ZUR MERGE-LAGE, gemessen statt angenommen:** #1426, #1427 und #1428 berühren weder `Sources/`
+noch `Tests/` noch `Package.swift`/`project.yml`/`.github/workflows/**`. Alle drei Workflows
+(`auto-merge-claude`, `xcode-compile-check`, `ci`) filtern auf genau diese Pfade, **also läuft KEIN
+Gate und es gibt keine Conclusion zu lesen** — die Founder-Regel „erst nach der Conclusion der
+nächste Push" ist hier leer erfüllt, nicht grün bestätigt. Die drei warten als PASSAGIERE auf den
+nächsten Code-Commit (#697/#699). Der letzte Commit MIT Gate ist #1425 (`8d83133a3`): beide Gates
+grün, `main` steht darauf.
