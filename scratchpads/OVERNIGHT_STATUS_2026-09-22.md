@@ -168,6 +168,55 @@ Methode.
     unabhaengig BESTAETIGT, dass #1440s Gates gruen waren (der Auto-Merge wartet auf beide).
 **Device:** nicht anwendbar (kein Produktionsverhalten geaendert)
 
+### Slice 4 — #1442: das Licht-ZIEL ueberlebte einen Neustart, die Licht-SHOW nicht
+
+**Scheibe:** `resolution`, `fixtureCount`, `fixtureSpacing` persistieren jetzt in BEIDEN
+Licht-Sendern, unter eigenen Schluesseln, durch EINEN geteilten Decoder auf `ArtNetSender`.
+`grandMaster` und `blackout` bleiben ABSICHTLICH sitzungs-lokal.
+**Erlaubnis:** §7 „wiring an already-owned production path" + „correcting stale documentation
+made false by the same slice". Alle 14 Auto-Continue-Kriterien geprueft — insbesondere Nr. 4
+(kein sechster Persistenz-Wurzel: dieselbe `UserDefaults.standard`, derselbe `net.*`-Raum, den
+die Sender schon besitzen) und Nr. 13 (der Besitzer existiert).
+
+**Der Defekt war eine Asymmetrie INNERHALB einer Flaeche.** Die Licht-Sektion schreibt sechs
+Werte in beide Sender; `host`/`port`/`universe` persistieren seit jeher, die drei SHOW-Felder
+nicht. Ein Installations-Kuenstler richtet die App auf ein Rig, sagt ihr „zwoelf Lampen, acht
+Slots Abstand", startet neu — und ist auf DASSELBE Rig gerichtet und adressiert EINE Lampe.
+
+⭐ **Das Repo hatte diese Scheibe an ZWEI Stellen ausdruecklich vorgesehen:** `PatchbayView`
+(„das ist eine separate Scheibe mit eigenem Schluessel und Decode-Default") und
+`TheDMXResolutionHasADoorTests` Anspruch 7, der in seiner eigenen Fehlermeldung sagte, er
+verbiete die Persistenz NICHT, sondern verlange, dass die Prosa im SELBEN Commit mitzieht
+(#456/#364). Der Anspruch ist deshalb **UMGEDREHT statt geloescht**.
+
+⭐ **Das Sicherheits-Argument der alten Notiz ist GEMESSEN beantwortet:** der Strom laeuft nur,
+wenn eine PERSISTIERTE Patchbay-Route aktiv ist, und zielt auf den PERSISTIERTEN Host samt
+Universe. Ein erstes Oeffnen, das ueberhaupt sendet, zielt bereits auf das gespeicherte Rig.
+**Lehre: ein „das waere unsicher"-Vermerk ist eine Behauptung wie jede andere.**
+
+**Benotung:** Worktree alle gruen; Eltern **2 Regressionen** + **1 einmal gezaehlte** (#486)
++ **3 Gegengewichte**. Mutation **11 von 11** (m6 ueberlebte zuerst — MEIN Mutant traf nur eines
+von zwei Vorkommen, #776). Stripper **PROPHYLAKTISCH (0 von 18)**, gemessen statt behauptet.
+`moved-needles` zwei Treffer, beide geoeffnet und der Nachbar-Waechter im selben Commit
+GESCHAERFT statt bestaetigt.
+
+**Commit:** `8b274b12e8521d625f94eb78057924080d5bcb63`
+**Dateien:** `Sync/ArtNetSender.swift` · `Sync/SACNSender.swift` · `Studio/PatchbayView.swift` ·
+`Tests/CISmoke/TheDMXResolutionHasADoorTests.swift` ·
+`Tests/CISmoke/TheLightReachesMoreThanOneLampTests.swift` ·
+**neu** `Tests/CISmoke/TheLightShowStatePersistsTests.swift` · `scratchpads/SESSION_LOG.md`
+**Gates:** NOCH NICHT GELESEN — beide Laeufe waren um 22:39:39Z in Arbeit.
+  · `Xcode Compile Check` Lauf **35663491521**, Job **106543887059**, Schritt 7 lief seit
+    22:36:06Z (der #1441-Lauf brauchte 4 min 29 s; hier ist zusaetzlich `Sources/` im Delta).
+  · Die CI/CD-Pipeline zu diesem Push war zum selben Zeitpunkt ebenfalls nicht fertig.
+  ⚠️ **Hier steht bewusst KEIN Verdikt.** §13: aus „lief noch" folgt nichts, und aus einem
+    vorrueckenden `main` folgt es erst, wenn `main` wirklich auf `8b274b12e` steht — bei der
+    letzten Probe stand es auf `1b351d0b3`. Die Lesung ist Aufgabe #130 und der ERSTE Schritt
+    der naechsten Runde, VOR jeder neuen Scheibe (§1: nicht weitergehen, solange die laufende
+    Scheibe ungelesen ist).
+**Device:** OFFEN — dass ein physisches Rig nach einem Neustart gleich leuchtet, ist
+Geraete-Wahrheit (§15).
+
 ## Findings That Changed The Plan
 
 1. **Der Ueberlauf-Befund oben** hat die #1440-Notiz praezisiert: ich hatte dort
@@ -191,6 +240,36 @@ Methode.
    gemeldet wurde `FOUNDER_DEVICE_SESSION.md` existiere nicht und das Zitat in `CLAUDE.md`
    haenge in der Luft. Die Datei liegt unter `scratchpads/`; der Agent hatte nur die Wurzel
    geprueft. Sub-Agenten-Berichte sind Modell-Ausgabe, keine Messung.
+5. **Der #1441-Defekt hat KEINE zweite Instanz im Buendel — gemessen, nicht gehofft.** Nach
+   der Reparatur habe ich gefragt, welche anderen Waechter eine „es gibt einen externen
+   Aufrufer"-Behauptung aufstellen: `git grep -rln "callsFunction\|externalCaller\|hasCaller\|
+   callerFiles\|filesCalling" Tests/CISmoke/*.swift` liefert genau ZWEI Dateien, die reparierte
+   und `SoundPromptHasADoorTests`. Letztere ist SOUND, und der Grund ist der uebertragbare Teil:
+   ihre Nadel ist `"SoundPrompt."` — **TYP-qualifiziert**, und `SoundPrompt` ist in `Sources/`
+   genau einmal deklariert (`DSP/SoundPrompt.swift:30`). ⭐ **GESETZ: eine
+   Aufrufer-Existenz-Nadel muss typ-qualifiziert sein, ODER ihr blosser Name muss als EINDEUTIG
+   bewiesen werden** — genau das, was #1441s Anspruch 1 jetzt zusichert. `persist` war unsound,
+   weil es ein blosser MITGLIEDS-Name ist. Ein negatives Ergebnis, das aufgeschrieben ist, spart
+   der naechsten Sitzung denselben Sweep.
+6. **Die #1442-Nebenreparatur hat eine DEFEKT-KLASSE aufgemacht, und ich habe sie gemessen
+   statt vermutet.** Swift faltet benachbarte `///`-Zeilen zu EINEM Kommentar, also kann ein
+   Doc-Block, dem die `///`-Leerzeile fehlt, still am falschen Mitglied haengen. Sweep ueber
+   alle `Sources/**/*.swift`: ein neuer Block-Oeffner der Form `/// #NNNN — ` mitten in einem
+   `///`-Lauf, ohne vorangehende `///`-Leerzeile. **Vier Kandidaten, davon EINER echt:**
+   · ⚠️ `Audio/RetroCapture.swift:514` — die Zeile *„Deinterleave ring buffer data and write to
+     file in 8192-frame chunks."* haengt an `preRollWindow(requestedFrames:)`, das WEDER
+     deinterleavt NOCH auf Platte schreibt; der echte Deinterleaver steht 30 Zeilen tiefer
+     (`:544`). **Und die Richtung ist die teure:** ausgerechnet in der Datei, aus der #1413
+     Disk-I/O aus dem Tap-Callback entfernt hat, behauptet ein Doc-Kommentar, eine
+     Fenster-Funktion schreibe eine Datei.
+   · `Studio/WorkspaceView.swift:754` — Formatierungs-Warze, kein falsches Mitglied (der Absatz
+     beschreibt dieselbe `struct`, ihm fehlt nur die trennende `///`-Zeile).
+   · `Sequencer/TimelineRegionPlayer.swift:91` und `Studio/WorkspaceView.swift:1035` sind
+     FEHLALARME: beide sind Satz-Fortsetzungen, bei denen `#479 —` bzw. `#492 —` zufaellig eine
+     Zeile eroeffnet.
+   ⭐ **Als Scheibe registriert, nicht heimlich mitgenommen** — eine Ein-Zeilen-Doc-Loeschung in
+   einer audio-thread-sensiblen Datei gehoert in ihren eigenen Commit mit eigener Gate-Lesung,
+   nicht als Anhaengsel. Empfehlung steht unter „Recommended Next Slice".
 
 ## Current Capability Matrix
 
@@ -272,16 +351,22 @@ denselben Mechanismus vergiftet. A, B, C, E, H sind alle Hold-Gebiet.
 
 ## Recommended Next Slice
 
-**G — die Licht-Show-Groessen persistieren.** `resolution`, `fixtureCount`,
-`fixtureSpacing` neben die schon vorhandenen `net.artnet.*` / `net.sacn.*`-Schluessel in
-`Sources/Echoelmusic/Sync/ArtNetSender.swift` und `SACNSender.swift`.
-**Bewusst AUSGESCHLOSSEN: `grandMaster` und `blackout`** — ein persistierter Blackout laedt
-die App in einen dunklen Saal, und ein persistierter Master ist eine Sicherheits-Ueberraschung
-auf einer Buehne. Beide gehoeren zur Sitzung, nicht zum Dokument.
-Alle 14 Auto-Continue-Kriterien geprueft: kein Hold, keine Migration, kein sechster
-Persistenz-Wurzel (der Besitzer `StudioDefaultKeys` existiert und traegt die Nachbarn
-bereits), keine neue Uhr, keine Navigation, keine Abhaengigkeit, umkehrbar, Abnahme-Kriterien
-vorab formulierbar („nach Neustart zeigt die Licht-Flaeche dieselben drei Werte").
+⭐ **G IST GEBAUT (Slice 4, #1442).** Die naechste Scheibe kommt aus Befund 6 und ist
+absichtlich winzig:
+
+**Eine EINZIGE Doc-Zeile in `Sources/Echoelmusic/Audio/RetroCapture.swift:514` loeschen.**
+*„Deinterleave ring buffer data and write to file in 8192-frame chunks."* haengt durch
+Swifts `///`-Faltung an `preRollWindow(requestedFrames:)` (Zeilen 537–542), das nur Indizes
+rechnet — weder deinterleavt noch schreibt. Der echte Deinterleaver ist `writeRange` (`:544`),
+und sein EIGENER Kopf sagt dasselbe besser („The ONE place frames reach disk", „one
+deinterleave, one chunk size"). **Loeschen statt verschieben** (#818: die Zahl 8192 waere ein
+Datum; `:562` haelt sie ohnehin).
+**Warum es zaehlt und nicht Kosmetik ist:** ausgerechnet in der Datei, aus der #1413 Disk-I/O
+aus dem Tap-Callback entfernt hat, behauptet ein Doc-Kommentar, eine Fenster-Funktion schreibe
+eine Datei — die Fehlrichtung ist die teure.
+**Vorvermessen:** kein Waechter nennt das Literal (`grep -rn "Deinterleave ring buffer" Tests/`
+→ nichts), also bricht die Loeschung nichts. 14 Kriterien: alle erfuellt, null
+Produktionsverhalten.
 
 ## Exact Morning Starting Point
 
