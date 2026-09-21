@@ -205,15 +205,17 @@ GESCHAERFT statt bestaetigt.
 `Tests/CISmoke/TheDMXResolutionHasADoorTests.swift` ·
 `Tests/CISmoke/TheLightReachesMoreThanOneLampTests.swift` ·
 **neu** `Tests/CISmoke/TheLightShowStatePersistsTests.swift` · `scratchpads/SESSION_LOG.md`
-**Gates:** NOCH NICHT GELESEN — beide Laeufe waren um 22:39:39Z in Arbeit.
-  · `Xcode Compile Check` Lauf **35663491521**, Job **106543887059**, Schritt 7 lief seit
-    22:36:06Z (der #1441-Lauf brauchte 4 min 29 s; hier ist zusaetzlich `Sources/` im Delta).
-  · Die CI/CD-Pipeline zu diesem Push war zum selben Zeitpunkt ebenfalls nicht fertig.
-  ⚠️ **Hier steht bewusst KEIN Verdikt.** §13: aus „lief noch" folgt nichts, und aus einem
-    vorrueckenden `main` folgt es erst, wenn `main` wirklich auf `8b274b12e` steht — bei der
-    letzten Probe stand es auf `1b351d0b3`. Die Lesung ist Aufgabe #130 und der ERSTE Schritt
-    der naechsten Runde, VOR jeder neuen Scheibe (§1: nicht weitergehen, solange die laufende
-    Scheibe ungelesen ist).
+**Gates:** BEIDE GRUEN, auf Schritt-Ebene gelesen (nie die Run-Conclusion, #396).
+  · `Xcode Compile Check` Lauf **35663491521**, Job **106543887059**, Schritt 7
+    „Compile (iOS device SDK, no signing)“ = **success** (22:36:06 bis 22:40:45Z).
+  · `Echoelmusic CI/CD Pipeline` Lauf **35663491548**, Job **106544100339**, Schritt 9
+    „Build for Testing“ = **success** (22:37:15 bis 22:42:33Z).
+  ⚠️ **Hier zaehlen BEIDE, und sie beweisen Verschiedenes** (`Tests/CISmoke/CLAUDE.md` §5b):
+    der Compile Check baut `Sources/` ALLEIN, auf dem GERAETE-SDK in Release — also die
+    beiden Sender und `PatchbayView`. `Build for Testing` baut das blockierende Buendel,
+    Debug/Simulator — also den neuen Waechter und den umgedrehten Anspruch 7. Die zwei sind
+    GEKREUZT, nicht verschachtelt; keiner ist eine Obermenge des anderen.
+  ⚠️ Dass die acht Ansprueche LIEFEN, ist damit weiterhin NICHT belegt (#445/#807).
 **Device:** OFFEN — dass ein physisches Rig nach einem Neustart gleich leuchtet, ist
 Geraete-Wahrheit (§15).
 

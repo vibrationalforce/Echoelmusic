@@ -37700,3 +37700,26 @@ Persistenz-Satz ohnehin wahr macht.
 
 **Nur compile-verifiziert.** Dass ein physisches Rig nach einem Neustart gleich leuchtet, bleibt
 Geraete-Wahrheit und ist offen.
+
+## 2026-09-22 — Gate-Lesung #1442 (8b274b12e)
+
+| Gate | Lauf | Job | Schritt | Conclusion |
+|---|---|---|---|---|
+| Xcode Compile Check | 35663491521 | 106543887059 | 7 · „Compile (iOS device SDK, no signing)" | **success** (22:36:06 → 22:40:45Z) |
+| Echoelmusic CI/CD Pipeline | 35663491548 | 106544100339 | 9 · „Build for Testing" | **success** (22:37:15 → 22:42:33Z) |
+
+⭐ **Hier zaehlen BEIDE, und das ist der Unterschied zu #1441.** #1441 war eine reine Testdatei,
+also war nur CI/CD aussagekraeftig. #1442 aendert `Sources/` UND `Tests/`: der Compile Check
+baut `Sources/` allein auf dem GERAETE-SDK in Release (die zwei Sender, `PatchbayView`),
+`Build for Testing` baut das blockierende Buendel in Debug/Simulator (den neuen Waechter, den
+umgedrehten Anspruch 7). **Gekreuzt, nicht verschachtelt** — keiner ist Obermenge des anderen
+(`Tests/CISmoke/CLAUDE.md` §5b, #1370). Beide gruen heisst also: beide Haelften kompilieren.
+
+⚠️ Dass die acht Ansprueche des neuen Waechters LIEFEN, ist damit weiter unbelegt (#445/#807).
+Ehrliche Formulierung bleibt „kompiliert nachweislich, Ausfuehrung unbelegt".
+
+⛔ **Keine Staleness diesmal — und die Lehre aus der vorigen Runde hat sich sofort bezahlt
+gemacht.** Ich habe in dieser Runde nur noch `date -u` als Zeitmass benutzt statt meiner
+eigenen Buchhaltung ueber Hintergrund-`sleep`s. Ergebnis: jeder „laeuft noch"-Befund war echt,
+und ich habe keinen einzigen #1416-Fehlalarm ausgeloest. **Eine Messung ersetzt ein Gefuehl
+auch dann, wenn das Gefuehl beim letzten Mal zufaellig recht hatte.**
