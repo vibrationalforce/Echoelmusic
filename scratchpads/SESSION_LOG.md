@@ -36663,3 +36663,46 @@ Symbol-Zitat gehört aufgelöst, nicht erinnert.
 dokumentiert. Alle zehn Backtick-Symbole des neuen Blocks lösen auf. Fünf stehende Prüfer Exit 0,
 `doctor --section B` 0 CRITICAL. Kein `Sources/`-Delta, kein `Tests/`-Delta — eine Kommando-Datei
 anzupassen ist ausdrücklich NICHT founder-gated (doctor §B).
+
+---
+
+## 2026-09-21 — #1427: sechs Zitate der immer-geladenen Datei kommentarfest gemacht
+
+⭐ **DIE GEGEN-LEHRE ZU §W.** §W sagt, ein Vermerk, der ein `grep` ZITIERT, altere schneller als
+einer, der eine Tatsache behauptet — jeder Kommentar über die Sache verfälscht den eigenen Beleg.
+Die bisherige Konsequenz war **löschen** (`EchoelModalBank`, §W) oder die Zahl **ersetzen**
+(#1423). **Es gibt eine dritte, billigere: das Zitat KOMMENTARFEST machen.** Das Repo schreibt die
+Form selbst schon vor, an zwei Quelldateien (`BioSourceView.swift:16`,
+`PulseMeasurementView.swift:15`): `| grep -v ': *//'`.
+
+**Die SECHS, je zitierter Wert → gemessen roh → gemessen gestrippt:**
+| Zitat | zitiert | roh | gestrippt |
+|---|---|---|---|
+| `HKWorkoutSession` | 0 | 1 | **0** |
+| `WatchConnectivity\|WCSession` | nichts | 3 | **0** |
+| `PulseMeasurementView(` | EINE | 2 | **1** |
+| `BioSourceView(` | NULL | 3 | **0** |
+| `ADMStreamStatusLine(` | 1 | 2 | **1** |
+| `EchoelCellular(` | EINE | 2 | **1** |
+
+**Bei allen sechs war die SUBSTANZ wahr** — jeder Zusatztreffer ist Prosa ÜBER die Abwesenheit.
+Der schönste Fall ist `EchoelWatchApp.swift:17`: die Zeile SCHREIBT den Befehl hin und sagt, er
+liefere nichts, und ist dadurch sein eigener Treffer.
+
+⚠️ **NICHT nachgeführt, sondern repariert** (#818): eine Zahl, die ein Mensch neu hinschreibt,
+altert wieder; ein Befehl, der die Zahl wieder herstellt, nicht.
+
+⭐ **VERIFIKATION IN DER STÄRKSTEN VERFÜGBAREN FORM:** die sechs Befehle wurden nicht aus meiner
+Absicht, sondern **per Regex aus der gepatchten `CLAUDE.md` EXTRAHIERT und verbatim ausgeführt** —
+1 / 0 / 1 / 1 / 0 / 0, exakt die zitierten Werte. Wäre eine Ersetzung schief gegangen, hätte der
+Lauf es gezeigt, nicht mein Lesen. Decke: 141.866 B / 150.000 (+534). Sieben stehende Prüfer
+Exit 0. Kein `Sources/`-, kein `Tests/`-Delta.
+
+⛔ **WAS DIESE RUNDE NICHT IST, weil ich es beinahe als Befund berichtet hätte.** Der Sweep meldete
+`git grep -lE 'func (codeLines\|stripComment\|sourceLines)' -- 'Tests/CISmoke/*.swift'` → **0**,
+was wie eine fertige Migration in `Tests/CISmoke/CLAUDE.md` aussah. **Artefakt des Sweeps:** er
+führte die Markdown-Tabellen-Schreibweise mit escapetem `\|` aus, das in ERE ein literaler
+Backslash-Pipe ist. Richtig gelaufen: **74**. Und die vier Zahlen jener Tabelle (284/1 927/119/69
+gegen heute 558/3 475/293/74) sind **kein Defekt** — die Datei sagt über der Tabelle selbst, die
+Zahlen seien datiert und die BEFEHLE die Tatsache. **Ein Werkzeug-Artefakt sieht aus wie ein
+Repo-Befund; der Unterschied kostet einen Lauf von Hand.**
