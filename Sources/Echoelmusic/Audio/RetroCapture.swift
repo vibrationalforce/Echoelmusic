@@ -120,6 +120,34 @@ final class RetroCapture {
     nonisolated(unsafe) private var writeFormat: AVAudioFormat?
 
     /// Next ABSOLUTE ring frame the writer still owes the file. Monotonic, like `ringWriteFrame`.
+    ///
+    /// ⭐ INVARIANT 1 — **ABSOLUTE, NEVER MODULO.** Both cursors count frames since the tap was
+    /// installed and are never wrapped; `end - start` is therefore literally
+    /// `producedFrames - consumedFrames`, and `> ringCapacity` is a sound overrun test. The
+    /// modulo lives in exactly one place, `writeRange`'s indexing loop. A cursor kept in
+    /// `0..<capacity` would look plausible again after one full lap and could not tell a full
+    /// buffer from an empty one, let alone a lost one — that is the classic ring-buffer defect
+    /// and this design does not have it. `Int64` at 48 kHz overflows in about six million
+    /// years, so the monotonicity is not a leak.
+    ///
+    /// ⚠️ INVARIANT 2 — **HALF-HELD, AND SAYING SO IS THE POINT.** Each cursor has exactly ONE
+    /// writer (`ringWriteFrame` the tap, `drainFrame` this queue) and is a naturally aligned
+    /// 64-bit word, so a reader can see a value one update STALE but never a TORN one. Staleness
+    /// is safe here by construction: a stale `end` makes the drain write less this tick and catch
+    /// up on the next. That is the same discipline `SPSCQueue` chose deliberately in #1237, when
+    /// it REMOVED `OSAtomicIncrement64Barrier` — a fence per operation on the lock-free spine was
+    /// judged the worse trade.
+    ///
+    /// **What is NOT held is the ORDERING.** Safety rests on the tap publishing the cursor AFTER
+    /// filling the slots, and nothing enforces that: without a release/acquire pair the store of
+    /// `writePtr.pointee` may in principle be observed before the ring writes it covers, and the
+    /// drain would then read a slot that was never filled — a click in a recording, not a crash,
+    /// which is exactly the kind of defect that gets blamed on hardware for months. "One writer,
+    /// one reader" is NOT by itself a memory-model guarantee, and this comment must not be read
+    /// as claiming otherwise. Closing it needs `Synchronization.Atomic` (Swift 6 stdlib, no
+    /// external dependency, reachable at the iOS 18 floor) around the publish and the load — a
+    /// slice of its own, because a concurrency primitive introduced without a compiler is a
+    /// guess, and the tap must keep capturing no `self`.
     nonisolated(unsafe) private let drainFrame: UnsafeMutablePointer<Int64>
 
     /// Frames the tap overwrote before the writer got to them.

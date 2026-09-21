@@ -145,6 +145,32 @@ final class TheCaptureTapDoesNotTouchTheDiskTests: XCTestCase {
             """)
     }
 
+    // 6 — INVARIANT 1, pinned because it is the half that IS held and the half a later
+    // "optimisation" would quietly break. Overrun detection must compare MONOTONIC absolute
+    // counters; a cursor kept in `0..<capacity` looks plausible again after one lap and cannot
+    // distinguish a full ring from an empty one. The modulo belongs in the indexing loop alone.
+    func testTheOverrunTestComparesMonotonicCounters() throws {
+        let text = try source(Self.capturePath)
+        XCTAssertTrue(text.contains("if end - start > ringCapacity {"), """
+            The overrun test in `drainToDisk` is no longer `end - start > ringCapacity` over two
+            monotonic absolute frame counts. That comparison IS `producedFrames -
+            consumedFrames > ringCapacity`. If the cursors were wrapped into `0..<capacity` the
+            test would silently stop detecting loss after one lap — the classic ring defect.
+            """)
+        XCTAssertFalse(text.contains("drainFrame.pointee % "), """
+            `drainFrame` is being wrapped. It is ABSOLUTE on purpose; `writeRange` does the only
+            modulo this design needs.
+            """)
+        // The honest half must stay written down too: a future reader has to know the ordering
+        // is NOT fenced, or the next person to touch the tap will assume it is.
+        XCTAssertTrue(text.contains("What is NOT held is the ORDERING"), """
+            The note recording that the cursor publish carries no release/acquire pair is gone.
+            Either the fence was added — then say so here and replace this needle in the same
+            commit — or the limitation was deleted while it still applies, which is worse than
+            never having written it down.
+            """)
+    }
+
     // 5 — and VoiceOver says the same thing the label shows. #1378's lesson, one surface over:
     // two homes for one fact, only one kept current.
     func testTheSpokenValueNamesTheGap() throws {
