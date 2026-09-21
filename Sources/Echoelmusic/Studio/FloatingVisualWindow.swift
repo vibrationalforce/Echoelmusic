@@ -558,6 +558,17 @@ struct FloatingVisualWindow: View {
                     // "a take is running". Same colour today, opposite messages — the token
                     // names are what keep them separable if either is ever retuned.
                     .foregroundStyle(EchoelTheme.danger)
+            } else if wavRecording && audioEngine.retroCapture.droppedSeconds > 0 {
+                // #1413 — THE TAKE IS STILL RUNNING, BUT IT HAS A HOLE. The disk writer fell
+                // more than the 30 s ring behind and the tap overwrote frames it still owed.
+                // This is a NEW state that the old tap-side write could not produce, and the
+                // reason it gets a surface instead of a log line is the rule this bar already
+                // follows for `writeFailed`: a recorder that quietly loses audio is the
+                // lying-control class. `warning`, not `danger` — the take is salvageable and
+                // still growing, which is a different message from "nothing more is written".
+                Text("WAV GAP \(String(format: "%.1f", audioEngine.retroCapture.droppedSeconds))s")
+                    .font(EchoelTheme.font(10, .semibold).monospacedDigit())
+                    .foregroundStyle(EchoelTheme.warning)
             } else if wavRecording {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     let elapsed = max(0, wavRecordStart.map { context.date.timeIntervalSince($0) } ?? 0)
@@ -579,9 +590,22 @@ struct FloatingVisualWindow: View {
             .buttonStyle(.plain)
             .disabled(wavExporting)
             .accessibilityLabel(wavRecording ? "Stop WAV audio recording" : "Record lossless WAV audio")
-            .accessibilityValue(wavRecording && audioEngine.retroCapture.writeFailed
-                                ? "Writing to disk failed" : "")
+            .accessibilityValue(Self.wavAccessibilityValue(
+                recording: wavRecording,
+                failed: audioEngine.retroCapture.writeFailed,
+                droppedSeconds: audioEngine.retroCapture.droppedSeconds))
         }
+    }
+
+    /// Spoken state of the WAV button. #1413 — a pure `static` so the third state can be
+    /// tested without a view: the accessibility value must say the SAME thing the label shows,
+    /// and a gap that is visible but silent to VoiceOver is the #1378 class of defect (two
+    /// homes for one fact, only one kept current).
+    static func wavAccessibilityValue(recording: Bool, failed: Bool, droppedSeconds: Double) -> String {
+        guard recording else { return "" }
+        if failed { return "Writing to disk failed" }
+        guard droppedSeconds.isFinite, droppedSeconds > 0 else { return "" }
+        return String(format: "Recording, %.1f seconds lost", droppedSeconds)
     }
 
     /// ⚠️ THE GUARD IS NOT DECORATION AND IT WAS MISSING HERE (#1378). `Int(_:)` from a

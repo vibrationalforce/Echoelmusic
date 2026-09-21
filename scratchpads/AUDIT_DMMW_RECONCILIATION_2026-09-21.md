@@ -1111,7 +1111,22 @@ in `AutoMixChain`. Per-voice tone is `ChannelInsertFX` (5 sites, live).
 or delete — a gap in it is the failure mode CLAUDE.md itself calls *"teurer als eine falsche
 Zahl, weil sie gar nicht erst als Frage auftaucht."*
 
-### 1.J 🔴 ONE REAL AUDIO-THREAD VIOLATION, ON A LIVE DOORED PATH ✔ verified first-hand
+### 1.J 🔴 BLOCKING DISK I/O ON A LIVE, DOORED CAPTURE PATH ✔ verified first-hand
+
+> ⛔ **CORRECTED 2026-09-21, AFTER EXTERNAL VERIFICATION — this section was headed "ONE REAL
+> AUDIO-THREAD VIOLATION" and that over-stated it.** Apple does **not** document
+> `AVAudioNodeTapBlock` as a hard realtime callback and does **not** forbid
+> `AVAudioFile.write(from:)` inside it; the documentation says only that the block may be
+> invoked on a thread other than the one that installed it, and for the newer sendable
+> `installAudioTap(...)` that it may be called from any isolation domain. There is therefore
+> no API-contract violation to cite. The finding survives on a weaker and TRUE basis: a
+> potentially blocking filesystem call sits on a deadline-sensitive capture path, which is an
+> avoidable underrun risk against Echoel's own pro-audio bar. Apple's own DTS guidance for
+> this block — copy the samples out, dispatch the processing elsewhere — is exactly the
+> repair. ⭐ **THE LESSON: a fix does not need the strongest available justification, it needs
+> the TRUE one.** A finding sold as "Apple forbids this" dies the moment someone reads the
+> documentation, and it takes the correct repair down with it. **FIXED in #1413**; guard
+> `Tests/CISmoke/TheCaptureTapDoesNotTouchTheDiskTests.swift`.
 
 `Sources/Echoelmusic/Audio/RetroCapture.swift:211`, inside the `installTap` callback
 installed at `:183` on `engine.mainMixerNode`:
@@ -1129,19 +1144,25 @@ It **is** reachable: `FloatingVisualWindow.swift:1263` calls `startRecording(pre
   expensive branch fires at most once per take. The comment at `:203-208` derives that fix
   and is accurate.
 - A tap callback is a high-priority audio-queue callback, **not the render block proper**,
-  and `AVAudioFile.write(from:)` on a tap is the conventional Apple pattern.
-- **But the write itself is unconditional while recording and is not mitigated**, and
-  `CLAUDE.md`'s audio-thread list bans file I/O without that distinction.
+  and `AVAudioFile.write(from:)` on a tap is a widely used Apple pattern that Apple's own
+  documentation does not prohibit.
+- **But the write itself is unconditional while recording and is not mitigated.** ⛔ The
+  first draft of this bullet added "and `CLAUDE.md`'s audio-thread list bans file I/O" as
+  though that settled it. It does not: that list governs DSP kernels and render blocks, and
+  stretching it over a tap block is how a true finding acquires a false reason.
 
-**This is the only banned-op site found on any audio-priority path in the repo.** The rest
+**This is the only blocking-I/O site found on any audio-priority path in the repo.** The rest
 of the render bodies are clean: 654 lines across seven render blocks scanned brace-balanced
 and comment-stripped for allocation/lock/actor-hop/logging → **zero hits**. The AUv3's one
 hit is `Optional.map` on a raw pointer (no allocation, no ARC).
 
 ⚠️ **Relevance to DMMW:** pillar 1 asks for recording, punch/loop and resampling. That work
-lands on exactly this path. **Fix or consciously accept `RetroCapture` before building on
-it** — the standard repair is a lock-free hand-off from the tap to a writer thread, which
-is also what multi-track recording needs anyway.
+lands on exactly this path. **Fixed in #1413 before building on it** — the repair is the
+lock-free hand-off the DTS guidance describes: the tap fills the ring (which it already did
+first), and a serial writer queue follows the ring's cursor into the file. That is also what
+multi-track recording needs anyway. ⚠️ It introduces ONE new failure mode the old shape could
+not have — a writer that falls more than the 30 s ring behind loses frames — so the gap is
+counted (`droppedFrames`) and shown in the REC bar, never swallowed.
 
 ### 1.K 🔴 THE WORST COMMENT-VS-CODE CONTRADICTION IN THE REPO
 
