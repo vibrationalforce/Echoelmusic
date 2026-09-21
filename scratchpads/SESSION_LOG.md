@@ -36003,3 +36003,28 @@ Zehn Prüfer: alle 0. **NICHT compile-verifiziert.**
 `Build for Testing` = success (Lauf 35570417772, Job 106240873269, 06:55:01–06:59:20).
 Der Commit fasst eine Testdatei und `scratchpads/` an, also greift der `Tests/**`-Pfadfilter
 und beide Gates laufen — anders als bei einem reinen `scratchpads/`-Commit.
+
+## 2026-09-21 — Gate-Lesung `9dcca22dc` (#1408): beide grün
+
+`Xcode Compile Check` = **success** (Lauf 35570947067, Compile-Schritt 07:02:57–07:07:36,
+Lauf-Conclusion 07:10:30). CI/CD Schritt 9 `Build for Testing` = **success**
+(Lauf 35570946954, Job 106242472485, 07:04:49–07:08:52).
+
+⭐ **Damit sind genau die drei Stellen typgeprüft, die ohne lokalen Compiler das echte
+Risiko dieser Scheibe waren** — und sie sind aufgeschrieben, weil ein „beide grün" sonst
+nicht sagt, WAS es beweist: (1) die zwei `mutating`-Methoden auf `ModRoute`, einem `struct`,
+aufgerufen aus einer `Binding`-Closure; (2) die zwei Computed-Property-Bindings in
+`ModulationRouteRow`, bewusst als Read-modify-write geschrieben, damit sie nichts von einem
+unveränderlichen `self` brauchen; (3) `ModDestination(ModDestinationKey.tempo)` im Wächter —
+`tempo` ist ein `String`, kein Enum-Fall, und ein Raten wäre hier ein harter Fehler gewesen.
+
+⚠️ **Was WEITER unbelegt ist, in der Sprache, die §5 verlangt:** die AUSFÜHRUNG der sieben
+Ansprüche. `Run Tests` meldet wegen #396 auf jedem Push `failure`, und das Job-Log ist
+`tail -200` (#807) — „kompiliert nachweislich, Ausführung unbelegt", nicht „grün".
+
+**Push-Reihenfolge, zum zweiten Mal heute angewandt:** `c7a955aaf` (die #1407b-Lesung) lag
+committet und ungepusht, bis der Compile-Schritt dieses Laufs durch war. Ein Push davor
+hätte ihn über `cancel-in-progress: true` storniert, und `cancelled` ist für das
+#1405-Gate korrekt kein `success` — der Merge hätte verweigert und die Lesung wäre weg
+gewesen. ⚠️ Der Stop-Hook fragt zweimal nach dem Push; die richtige Antwort war committen
+und warten, nicht pushen.
