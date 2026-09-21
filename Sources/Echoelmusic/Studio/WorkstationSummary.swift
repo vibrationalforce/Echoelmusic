@@ -157,6 +157,25 @@ public struct WorkstationSummary: Equatable, Sendable {
     /// The lane row as one sentence, for VoiceOver — the visual row is several small pieces of
     /// text and a symbol, which a screen reader would otherwise announce as disconnected
     /// fragments. Says only what the models say.
+    /// Say WHY, not just that it is off. "Play timeline, dimmed" tells a VoiceOver user
+    /// nothing they can act on; "no parts on a track that plays" does. Lives HERE rather
+    /// than on the view for the reason the rest of this type does: a `public` Foundation-only
+    /// function is DRIVEN by the blocking bundle, while the same words inside a `private`
+    /// SwiftUI body would only ever be scanned (#1436's split, kept).
+    public static func transportHint(playing: Bool, startable: Bool) -> String {
+        if playing { return "Stops the arrangement and the transport." }
+        if startable { return "Plays the arrangement from the top on the shared transport." }
+        return "Unavailable: this song has no parts on a track that plays."
+    }
+
+    /// The sentence beside the button. It must never promise editing — this surface reads
+    /// the song and now starts it; it still cannot change a note.
+    public static func transportCaption(playing: Bool, startable: Bool) -> String {
+        if playing { return "Playing from the top on the shared transport." }
+        if startable { return "Plays the existing parts — this view still does not edit them." }
+        return "Nothing to play yet."
+    }
+
     public static func spokenDescription(of row: LaneRow) -> String {
         var parts: [String] = [row.name, row.kind.displayName]
         if let instrument = row.instrument { parts.append(instrument.displayName) }

@@ -96,9 +96,15 @@ acceptance line.
 >   Schritt 2 hat die Bild-Karte nach `visualPanel` gezogen, und ein Gitter mit einer Karte
 >   ordnet nichts an, also ist es mitgegangen. Size-class read
 >   confined to the leaf (render-safe); layout-only, revertible.
-> - **Timeline playback (PARTIAL, v169)** — `Sequencer/TimelineRegionPlayer.swift` rides the
->   transport and plays the roll lane's **MIDI/drum** regions (opt-in "Play timeline", additive —
->   the Generate+Play instrument is untouched). **Audio/video/visual lanes are scaffold — they do
+> - **Timeline playback (REACHABLE since #1437, 2026-09-21)** — `Sequencer/TimelineRegionPlayer.swift`
+>   rides the transport and plays the roll lane's **MIDI** regions (drums went with #166/#167).
+>   ⭐ Its door is the **Workstation chip** (`Studio/WorkstationView.swift`, founder Phase 3+4):
+>   Play/Stop over the document `TimelineStore` already owns. Additive — the Generate+Play
+>   instrument is untouched, and `TimelineRegionPlayer.canPlay(_:)` (the engine's own guard,
+>   asked by the control) keeps the button unavailable unless a part sits on a lane the player
+>   drives. ⛔ This entry said "opt-in \"Play timeline\"" while NO such control existed — the ▶
+>   branch that used to consult the document was gone and nothing had replaced it. The words
+>   were right for a year that had ended. **Audio/video/visual lanes are scaffold — they do
 >   NOT play** (`Clip.kind.isPlayable == .midi` only). Path to functioning audio tracks mapped in
 >   `scratchpads/PLAN_TIMELINE_AUDIO_TRACKS.md` (blocked on durable audio-clip creation + device verify).
 >

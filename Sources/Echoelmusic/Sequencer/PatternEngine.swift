@@ -415,33 +415,40 @@ public final class PatternEngine {
     /// the clock — the founder's log 2466 has notes 67 s BEFORE the only play breadcrumb
     /// that existed ("Start tapped", logged by the UI, not by the transport).
     ///
-    /// Six named call sites exist in code; only THREE can appear in a log today, because
-    /// the rest sit behind surfaces the pure-instrument epic already deleted. Stated
+    /// Six named call sites exist in code; only FOUR can appear in a log today (THREE
+    /// until #1437 gave `.timelineRegion` a door), because the rest sit behind surfaces
+    /// the pure-instrument epic already deleted. Stated
     /// explicitly so nobody reads this enum as a map of live topology — and KEEP THE
     /// COUNTS IN STEP with the list below: the previous revision left "Seven/FOUR"
     /// standing while the list underneath already said otherwise, which is the exact
     /// mis-mapping this block exists to prevent.
-    ///   REACHABLE — `.transportButton`, `.generate`, `.loopExport`.
+    ///   REACHABLE — `.transportButton`, `.generate`, `.loopExport`, and since #1437
+    ///     `.timelineRegion`: its only writer is `TimelineRegionPlayer.play(document:)`,
+    ///     and that method got its production caller back when the Workstation plate grew
+    ///     a Play control (founder Phase 4). ⛔ This entry read "UNREACHABLE … lost its
+    ///     last production caller when ▶ stopped consulting the timeline document" — true
+    ///     when written, false the moment a door existed. A cause list that misreports
+    ///     reachability is worse than no list: this breadcrumb is read while triaging a
+    ///     log, and "that case cannot happen" sends the reader past the line that explains
+    ///     the run.
     ///   UNREACHABLE — `.pianoRoll` (the `PianoRollView` struct had zero instantiations
     ///     since #178 and was DELETED by #475; `PianoRollModel` is what survives, and it
-    ///     never sets this case),
-    ///   `.arrangement` (`ArrangementPlayer.play(store:…)` has no caller since
-    ///   `ArrangementView` went with #121 Slice 4), and `.timelineRegion`, whose only
-    ///   writer is `TimelineRegionPlayer.play(document:)` — that method lost its last
-    ///   production caller when ▶ stopped consulting the timeline document. All three
-    ///   retire with #132; the cases stay only so the call sites keep naming themselves,
-    ///   and `TimelineRegionPlayer` dies as one piece in Slice 5c rather than being
-    ///   hollowed out first.
+    ///     never sets this case) and `.arrangement` (`ArrangementPlayer.play(store:…)` has
+    ///   no caller since `ArrangementView` went with #121 Slice 4). Both retire with #132;
+    ///   the cases stay only so the call sites keep naming themselves.
     ///   `.launchQuantized` is GONE (#132 Slice 5a): `LaunchQuantizer` is deleted, so the
     ///   case had no possible writer at all — an unreachable case whose type still exists
     ///   documents a dormant path, one whose type does not just lies.
     ///   `.unspecified` has no production caller either — seeing it in a log means a NEW
     ///   call site was added without naming itself, which is exactly what it is for.
     public enum PlayCause: String, Sendable, CaseIterable {
-        /// `WorkspaceView`'s ▶ — but only its THIRD branch. That button also routes to
-        /// `timelinePlayer.play` (→ `.timelineRegion`) and to the bio toggle (→ `.generate`),
-        /// so this does not mean "the play button was tapped", it means "▶ started the
-        /// live loop directly".
+        /// `WorkspaceView`'s ▶ — but only its THIRD branch. That button also routes to the
+        /// bio toggle (→ `.generate`), so this does not mean "the play button was tapped",
+        /// it means "▶ started the live loop directly". ⛔ This sentence also claimed ▶
+        /// routes to `timelinePlayer.play` (→ `.timelineRegion`); it has not since ▶ stopped
+        /// consulting the timeline document, and the block above said so ten lines up — a
+        /// claim and its own refutation in one doc (#425). The timeline's producer is the
+        /// Workstation's Play (#1437), not this button.
         case transportButton
         /// `EchoelStudioView` starting a fresh take. Conflates ▶-on-empty-project, Start,
         /// and applyVariation — the `generate[<reason>]` breadcrumb on the next log line
@@ -449,7 +456,7 @@ public final class PatternEngine {
         case generate
         case pianoRoll         // UNREACHABLE — the view was unmounted (#178), then deleted (#475)
         case arrangement       // UNREACHABLE — ArrangementPlayer.play has no caller
-        case timelineRegion    // TimelineRegionPlayer (unreachable since ▶ stopped reading the document)
+        case timelineRegion    // TimelineRegionPlayer.play — the Workstation's Play (#1437)
         case loopExport        // LoopExporter (offline render)
         case unspecified       // a caller that has not been given a cause yet
     }

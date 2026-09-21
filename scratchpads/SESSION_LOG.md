@@ -37125,3 +37125,73 @@ Commit-Text existiert, ist eine Behauptung ueber einen Vorgang, der nie stattgef
   ist der Gegengewicht-Wächter, der das festhaelt: `TimelineRegionPlayer.play(` hat weiterhin
   null Produktions-Aufrufer, rename-fest ueber den Bezeichner geloest, an den die App den
   Player bindet.
+
+## 2026-09-21 — #1437 PHASE 4: die Arrangement-Wiedergabe bekommt ihre Tuer
+
+**Founder-Freigabe:** *„Activate existing Timeline playback from the Workstation."* Plus zwei
+LOW-Befunde aus der Codex-Durchsicht, ausdruecklich IN dieser Phase zu loesen, nicht davor.
+
+**PRE-FLIGHT, alle Praemissen neu gemessen, alle gehalten:** `TimelineRegionPlayer.play(` hatte
+NULL Produktions-Aufrufer · `PatternEngine` ist weiter die musikalische Autoritaet
+(`transport?.play()` haengt an IHR, nicht umgekehrt) · die Workstation war erreichbar und
+nur-lesend · kein konkurrierender Timeline-Transport war seit Phase 3 dazugekommen.
+
+⭐ **DER GANZE MOTOR WAR SCHON VERDRAHTET — ES FEHLTE EIN AUFRUF.** `EchoelmusicApp` baut den
+einen Player, haengt jeden Sink ein, gibt ihm `audioLanes`, injiziert ihn in die Umgebung und
+meldet ihn beim globalen Stop an; `PianoRollModel` fuettert `transportStep` auf dem geteilten
+Tick. Phase 4 ist deshalb eine ORCHESTRIERUNGS-Scheibe: vier `@Environment`-Lesungen und zwei
+Zeilen im Tap-Handler. Kein neuer Typ, kein Koordinator, kein Timer.
+
+⭐ **DIE EINE VERHALTENS-AENDERUNG, und sie ist eine VERENGUNG:** `canPlay(_:)` ersetzt die alte
+`play`-Wache. Die fragte nur „gibt es eine spielbare SPUR und ist die Regionen-Liste nicht
+leer" — ein Dokument, dessen Regionen alle WAISEN sind (erreichbar, weil der Spur-Decode
+`try?`-tolerant ist und der Regionen-Decode nicht), startete damit die Uhr ueber Stille. Von
+aussen ist das nicht von Wiedergabe zu unterscheiden. Weil `play(` in dem Moment NULL
+Produktions-Aufrufer hatte, kostet die Verengung null ausgeliefertes Verhalten.
+
+⭐ **EINE DEFINITION, NICHT ZWEI (#416):** die Wache IST `canPlay`, und der Knopf fragt dieselbe
+Funktion. Ein Knopf, der einen Start anbietet, den die Maschine still verweigert, kann so nicht
+entstehen. Bei „nichts zu spielen" ist er deaktiviert und der VoiceOver-Hinweis sagt WARUM
+(„no parts on a track that plays") statt nur „dimmed".
+
+**DIE ZWEI BEFUNDE, beide mit ihrer Mutation belegt:**
+· **A — Rueckweg zum Instrument.** Der alte Anspruch G prueftedie MITGLIEDSCHAFT von `.sound` im
+  Chip-Array. Eine Leiste, die `.sound` zeigt und nirgendwohin routet, haette ihn bestanden.
+  Jetzt wird die Tap-AKTION von `menuChip` extrahiert und darf keine Verzweigung enthalten.
+  Gefahren: `if menu != .sound { activeMenu = menu }` wird ROT, `activeMenu = .sound` fuer alle
+  auch. Bewusst nur die AKTION, nicht die ganze Deklaration — das Label traegt drei legitime
+  Ternaries, ein Scan darueber waere auf korrektem Code rot (#364).
+· **B — Anspruch H.** Er behauptete „null Produktions-Aufrufer" und seine eigene Fehlermeldung
+  nannte diesen Commit. Er ist UMGEDREHT, nicht umgangen: neu ist „genau der Workstation-Pfad
+  darf rufen, sonst niemand", und das ist STRENGER als das, was es ersetzt. Der Aufloeser kennt
+  Konstruktion, `@Environment` und EINEN Alias-Sprung; die Grenze steht im Code, nicht als
+  Vollstaendigkeits-Behauptung. Gefahren: Alias-Aufrufer in zweiter Datei ROT, schlichter
+  zweiter Aufrufer ROT, Aufrufer entfernt ROT.
+
+⛔ **EINE EIGENE FALSCHBEHAUPTUNG, IM ENTWURF GEFANGEN — und sie ist die Sorte, vor der
+`Tests/CISmoke/CLAUDE.md` §2 warnt.** Der Kopf des neuen Waechters erklaerte `SourceText.codeOnly`
+fuer LOAD-BEARING („raw vs. stripped flips claim E"), mit einer plausiblen Begruendung, die VOR
+der Messung geschrieben war. Gefahren: **0 von 8 Verdikten kippen.** Die Prosa schreibt
+`TimelineRegionPlayer.play(…)`, nie die EMPFAENGER-Form `player.play(`, die der Scan trifft.
+Korrigiert auf PROPHYLAKTISCH, mit der Begruendung, warum der Stripper trotzdem bleibt. Ebenso
+am Phase-3-Waechter: 0 von 13.
+
+**#456-Prosa-Zug, fuenf Heimaten in EINEM Commit** — jede waere durch diese Scheibe falsch
+geworden: `PatternEngine.PlayCause` (`.timelineRegion` stand als UNREACHABLE, plus die Zahl
+„nur DREI koennen im Log auftauchen" → VIER, plus ein `transportButton`-Doc, das ▶ als
+Timeline-Starter behauptete und sich zehn Zeilen tiefer selbst widersprach, #425) ·
+`EchoelmusicApp`s `audioNeeded` („beide konstant falsch") · `TimelineScheduling.midiLaneIDs`
+(„nichts liest es auf dem Wiedergabepfad" — war schon beim Schreiben falsch, `MultiRollFanout`
+liest es) · `CLAUDE.md` (die CUT-Liste „timeline/arrangement/clips" ist die Zeile, aus der eine
+Sitzung ableitet, ob eine Loeschung sicher ist — die Ausnahme steht jetzt dort, die Regel bleibt
+unveraendert) · `docs/dev/FEATURE_MATRIX.md` (behauptete ein „opt-in Play timeline", das es
+nicht gab).
+
+### Offen nach dieser Runde
+· **Gate-Lesung #1437** — beide Gates, Schritt `Build for Testing`, nie die Run-Conclusion.
+· **NEEDS-FOUNDER-VERIFY (#1436/#1437)** am Kopf von `WorkstationView`, jetzt SECHS Blicke:
+  Chip erreichbar · Tap tauscht die Platte und Sound holt das Instrument zurueck · frische
+  Installation zeigt „Nothing to play yet" und der Knopf reagiert nicht · mit einem MIDI-Teil
+  KLINGT Play, Stop schweigt, ein ZWEITES Play startet wieder · das ■ des Instruments stoppt es
+  ebenfalls · VoiceOver liest Spurzeilen als einen Satz und nennt Play/Stop mit Hinweis.
+· **PHASE 5** (Stop + Neu-Vermessung) — nicht begonnen, der Auftrag sagt „EXECUTE PHASE 4 ONLY".

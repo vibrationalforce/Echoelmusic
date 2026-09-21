@@ -7,10 +7,12 @@
 // in, and on each region onset LOADS that region's clip into the live pattern +
 // piano roll — EXACTLY the proven ArrangementPlayer/Session-grid launch path.
 //
-// Additive + opt-in: nothing calls `play()` until the timeline's own Play control
-// (P3b) does, so the existing Generate+Play instrument path is untouched — this
-// cannot regress the launching instrument. Multi-lane MIDI (every lane its own
-// voice) is the later A1 step; today the roll lane plays, mirroring rollSlotGain.
+// Additive + opt-in, and since #1437 (founder Phase 4) the opt-in has its control:
+// the Workstation plate's Play calls `play()` — the ONE production caller, pinned by
+// `TheWorkstationPlaysTheTimelineTests`. The existing Generate+Play instrument path is
+// untouched: nothing starts this player except that tap, so a user who never opens the
+// Workstation cannot reach it. Multi-lane MIDI (every lane its own voice) is the later
+// A1 step; today the roll lane plays, mirroring rollSlotGain.
 //
 // The position math lives in the PURE `TimelinePlaybackCursor` so it's unit-tested
 // without audio; the audio side (loadClip) mirrors ArrangementPlayer.loadCurrentSection.
@@ -256,9 +258,35 @@ public final class TimelineRegionPlayer {
 
     // MARK: - Transport
 
+    /// Whether `play(...)` can do anything with `document`. ONE definition (#416): the
+    /// guard inside `play` IS this call, and the Workstation's transport asks the same
+    /// question to decide whether its Play control is available — so a control can never
+    /// offer a start the engine will silently refuse.
+    ///
+    /// ⭐ THE DRIVEN LANES ARE THE TWO THIS PLAYER PRIMES: every non-bio MIDI lane
+    /// (`midiLaneIDs` — the roll lane plus the multi-roll fan-out `primeSecondaryLanes`
+    /// walks) and every audio lane (`audioLaneIDs`, primed through `AudioLanePlayer`).
+    /// Video and bio lanes are shown by the arrangement and are not played by it
+    /// (`ClipKind.timelineEngineKinds`), so a region sitting only there is not content.
+    ///
+    /// ⚠️ THIS IS A TIGHTENING OF THE OLD GUARD, and it is deliberately free. The old
+    /// form asked only "does a playable LANE exist, and is the region list non-empty",
+    /// so a document whose every region is an ORPHAN (a `laneID` naming no lane — a
+    /// state a decoded document can reach, because the lane decode is `try?`-tolerant
+    /// while the region decode is not) started the transport with nothing to chain:
+    /// a running clock over silence, which reads as playback. `play(...)` had ZERO
+    /// production callers when this was narrowed, so no shipped behaviour changes —
+    /// the only caller is the one that arrives with it.
+    nonisolated static func canPlay(_ document: TimelineDocument) -> Bool {
+        let driven = Set(document.midiLaneIDs + document.audioLaneIDs)
+        guard !driven.isEmpty else { return false }
+        return document.regions.contains { driven.contains($0.laneID) }
+    }
+
     /// Start playing `document` from the bar containing `fromTick` (CLIP-5: the
-    /// playhead the user parked — 0 = the top, the old behavior). No-op if the
-    /// document has no MIDI (roll) lane or no regions — nothing to chain.
+    /// playhead the user parked — 0 = the top, the old behavior). No-op unless
+    /// `canPlay(_:)` — nothing to chain; the caller asks the same question to
+    /// decide whether to offer the control at all.
     /// GRANULARITY: the start folds to the BAR — the shared PatternEngine always
     /// starts its 16-step phase at 0, so a mid-bar start tick is not representable
     /// at the transport layer (the within-bar phase belongs to the pattern; exact
@@ -274,8 +302,7 @@ public final class TimelineRegionPlayer {
         // A song is playable when ANY playable lane has content — a MIDI (roll)
         // lane, or an audio lane (A1: a pure-audio arrangement must sound too;
         // the old rollLaneID-only guard silenced it).
-        guard document.rollLaneID != nil || !document.audioLaneIDs.isEmpty,
-              !document.regions.isEmpty else { return }
+        guard Self.canPlay(document) else { return }
         self.doc = document
         self.clips = clips
         self.pattern = pattern

@@ -1,11 +1,19 @@
 // TheWorkstationHasADoorTests.swift
-// Echoel — #1436, founder Phase 3. The Workstation surface is REACHABLE, READ-ONLY, and it
-// did not absorb Phase 4.
+// Echoel — #1436 founder Phase 3, amended by #1437 (Phase 4). The Workstation surface is
+// REACHABLE, it projects the song faithfully, and it still cannot EDIT it.
 //
-// WHAT PHASE 3 SET OUT TO PROVE, and the distinction is the whole file: a production path
-// `launch → Instrument → Workstation → back to Instrument` exists, it shows the arrangement
-// `TimelineStore` already owns, and it changes nothing. It does NOT prove the arrangement
-// plays — claim H is here so a later reader cannot mistake one for the other.
+// WHAT THIS FILE PROVES: a production path `launch → Instrument → Workstation → back to
+// Instrument` exists, it shows the arrangement `TimelineStore` already owns, and it changes
+// nothing about that document.
+//
+// ⛔ CLAIM H USED TO LIVE HERE AND ASSERTED THE OPPOSITE OF TODAY'S TRUTH — "the timeline
+// player still has no production caller". #1437 is the commit its own failure message named,
+// so it was INVERTED rather than deleted or routed around: the new invariant is "exactly the
+// Workstation path may call it, and nothing else", and it lives in
+// `TheWorkstationPlaysTheTimelineTests`. A counterweight that would have to be aliased past
+// is not a counterweight; retiring it in the commit that falsifies it is the only honest
+// move, and leaving this tombstone is what stops the next reader hunting for a claim H that
+// was silently dropped.
 //
 // ⚠️ WHICH HALF IS WHICH (§1). Claims 1–7 are END-TO-END BEHAVIOUR: `WorkstationSummary` is
 // `public`, Foundation-only and a pure function of the document handed to it, so the
@@ -35,14 +43,21 @@
 //     (#486), not three findings.
 //   · claims D, E, F — could not have run on the parent: their subject files do not exist.
 //     They are the ones that matter going FORWARD, which is why they are here at all.
-//   · claims G and H — GREEN on BOTH trees, and they are the content (#343). G is the
-//     counterweight against a Workstation that hides the instrument; H against a Phase 3 that
-//     quietly does Phase 4's job.
+//   · claim G — GREEN on BOTH trees, and it is the content (#343): the counterweight
+//     against a Workstation that hides the instrument. #1437 deepened it from "the strip
+//     still lists `.sound`" to "tapping a chip actually routes to it" — an array membership
+//     check cannot fail for the reason the claim's NAME gives (#367), and the mutation that
+//     proves the difference is written at the assertion.
 //
-// ⚠️ `SourceText.codeOnly` is LOAD-BEARING, measured rather than assumed: `WorkstationView`'s
-// own header comment names `TimelineRegionPlayer.play(…)` while explaining why it does not
-// call it, and claim F's negative would read that sentence as a call site. Raw versus
-// stripped flips 1 of 11 scan verdicts on the worktree.
+// ⚠️ `SourceText.codeOnly` stays in use, but its load-bearing CASE moved with claim H. It
+// used to be: `WorkstationView`'s header named `TimelineRegionPlayer.play(…)` while claim F's
+// negative scanned for that spelling. The header still names it and the file now genuinely
+// calls it, so that particular flip is gone from here — it reappears, sharper, in
+// `TheWorkstationPlaysTheTimelineTests`, where the question is HOW MANY call sites exist and
+// a comment would be counted as one. Measured on this file's needles today — all thirteen of
+// them, not a sample: PROPHYLAKTISCH, 0 of 13 verdicts flip raw vs. stripped. It stays in use
+// because claims D and E are ABSENCE scans over two files whose headers are free to start
+// naming a forbidden spelling at any time.
 
 import Foundation
 import XCTest
@@ -346,10 +361,12 @@ final class TheWorkstationHasADoorTests: XCTestCase {
             mutates the song or drives undo, and a read-only surface that can do either is not \
             the surface Phase 3 authorised.
             """)
-        XCTAssertFalse(src.contains(".play("), """
-            The Workstation must not start playback in Phase 3 — see claim H, which is the \
-            same boundary from the other side.
-            """)
+        // ⛔ A `XCTAssertFalse(src.contains(".play("))` stood here and was correct for Phase 3.
+        // #1437 is the commit that makes it false BY DESIGN, so it is retired here and
+        // REPLACED — not weakened — by the caller invariant in
+        // `TheWorkstationPlaysTheTimelineTests`, which pins the exact opposite with a number:
+        // one call site, on the player binding, in this file. The boundary this claim owns is
+        // narrower and unchanged: the surface may start the song, never EDIT it.
     }
 
     // MARK: - G. COUNTERWEIGHT — the instrument stays reachable
@@ -371,38 +388,54 @@ final class TheWorkstationHasADoorTests: XCTestCase {
             Nothing may force the plate to the Workstation. That would be a surface opening \
             itself — the shape #1298/#1300 had to make asymmetric on the bio source.
             """)
-    }
 
-    // MARK: - H. COUNTERWEIGHT — Phase 3 did not absorb Phase 4
-
-    func testTheTimelinePlayerStillHasNoProductionCaller() throws {
-        let declaration = try code(at: Self.player)
-        guard declaration.contains("public func play(") else {
-            throw AnchorMissing(reason: """
-                `TimelineRegionPlayer` no longer declares `play(`; this scan is anchored on it. \
-                Re-anchor rather than reporting "no caller" for a method that is gone.
+        // ⭐ #1437 — THE PART AN ARRAY-MEMBERSHIP CHECK CANNOT SEE. Everything above proves
+        // the Sound chip is LISTED. It does not prove that TAPPING it goes anywhere: a chip
+        // strip that renders `.sound` and routes it nowhere passes every assertion so far,
+        // and "the path back to the instrument is the same tap it always was" is precisely
+        // the sentence that would then be false. #367 — a claim must be able to fail for the
+        // reason its NAME gives.
+        //
+        // The mutation this catches, and it was written down before the assertion was:
+        //     if menu != .sound { activeMenu = menu }
+        // i.e. every chip routes EXCEPT the one that leads home. Any conditional in the tap
+        // action is that shape, so the check is "no branch stands between the tap and the
+        // assignment" rather than a list of forbidden spellings.
+        let action = try Self.tapAction(ofChipIn: src)
+        XCTAssertTrue(action.contains("activeMenu = menu"), """
+            The chip's tap action no longer assigns `activeMenu = menu` (it reads: \
+            \(action.trimmingCharacters(in: .whitespacesAndNewlines))). Selecting a chip is \
+            how every panel in the instrument is reached, the Workstation included, and the \
+            way BACK from the Workstation is the Sound chip. If the routing moved, re-anchor \
+            this on wherever it moved to — do not delete it.
+            """)
+        for branch in ["if ", "guard ", "switch ", " ? "] {
+            XCTAssertFalse(action.contains(branch), """
+                The chip's tap action contains `\(branch.trimmingCharacters(in: .whitespaces))`, \
+                so the assignment is CONDITIONAL: some chip does not route. Which one is \
+                invisible from here and that is the point — a selector that silently refuses \
+                one destination is worse than one that refuses all, because it looks like it \
+                works. Action read: \(action.trimmingCharacters(in: .whitespacesAndNewlines))
                 """)
         }
+    }
 
-        // Rename-proof: find whatever the app binds the player to, then look for a call on it.
-        let names = try Self.bindings(of: "TimelineRegionPlayer")
-        XCTAssertFalse(names.isEmpty, """
-            Nothing in `Sources/` constructs a `TimelineRegionPlayer` any more, so this scan \
-            has no receiver to look for and would report "no caller" vacuously (#926).
-            """)
-        var callers: [String] = []
-        for (path, source) in try Self.allSources() {
-            for name in names where source.contains("\(name).play(") {
-                callers.append("\(path) → \(name).play(")
-            }
+    /// The chip Button's ACTION closure — `return Button { … } label:` — comment-stripped.
+    /// Scoped to the action on purpose: the LABEL legitimately carries ternaries (active vs.
+    /// inactive styling), so a branch scan over the whole declaration would be red on correct
+    /// code — measured, 3 hits of ` ? ` in the label today.
+    private static func tapAction(ofChipIn source: String) throws -> String {
+        guard let head = source.range(of: "private func menuChip(_ menu: StudioMenu) -> some View {"),
+              let open = source.range(of: "return Button {", range: head.upperBound..<source.endIndex),
+              let close = source.range(of: "} label:", range: open.upperBound..<source.endIndex)
+        else {
+            throw AnchorMissing(reason: """
+                `menuChip`'s `return Button { … } label:` shape is gone, so the tap action \
+                cannot be extracted and this claim would pass VACUOUSLY (#926). Re-anchor on \
+                whatever builds a chip now.
+                """)
         }
-        XCTAssertTrue(callers.isEmpty, """
-            The timeline player now HAS a production caller: \(callers). If that is Phase 4 \
-            landing, this claim has done its job — delete it deliberately, in the same commit \
-            that makes the arrangement playable, and correct `WorkstationView`'s Phase-4 seam \
-            comment, which currently states the opposite (#456). It must not happen by \
-            accident inside a phase whose whole point was REACHABLE, not PLAYABLE.
-            """)
+        return String(source[open.upperBound..<close.lowerBound])
     }
 
     // MARK: - Helpers
@@ -447,38 +480,6 @@ final class TheWorkstationHasADoorTests: XCTestCase {
         return found
     }
 
-    /// Identifiers bound to `Type()` anywhere in `Sources/` — e.g. `timelinePlayer` from
-    /// `@State private var timelinePlayer = TimelineRegionPlayer()`.
-    private static func bindings(of type: String) throws -> Set<String> {
-        var names: Set<String> = []
-        for (_, source) in try allSources() {
-            for line in source.split(separator: "\n", omittingEmptySubsequences: false)
-            where line.contains("= \(type)(") {
-                guard let head = line.range(of: "= \(type)(") else { continue }
-                let lhs = line[line.startIndex..<head.lowerBound]
-                    .trimmingCharacters(in: .whitespaces)
-                if let name = lhs.split(whereSeparator: { $0 == " " || $0 == ":" }).last,
-                   !name.isEmpty {
-                    names.insert(String(name))
-                }
-            }
-        }
-        return names
-    }
-
-    private static func allSources() throws -> [(String, String)] {
-        let root = try treeRootStatic().appendingPathComponent("Sources")
-        var out: [(String, String)] = []
-        let enumerator = FileManager.default.enumerator(atPath: root.path)
-        while let rel = enumerator?.nextObject() as? String {
-            guard rel.hasSuffix(".swift") else { continue }
-            let text = (try? String(contentsOf: root.appendingPathComponent(rel),
-                                    encoding: .utf8)) ?? ""
-            out.append((rel, SourceText.codeOnly(text)))
-        }
-        return out
-    }
-
     private func declarationBody(of key: String, in relativePath: String) throws -> String {
         let text = try code(at: relativePath)
         guard let start = text.range(of: key) else {
@@ -500,10 +501,13 @@ final class TheWorkstationHasADoorTests: XCTestCase {
         throw AnchorMissing(reason: "Unbalanced braces after `\(key)` in \(relativePath).")
     }
 
-    /// Comment-stripped source (#453 — the ONE definition of "code, not prose"). LOAD-BEARING
-    /// here, measured: `WorkstationView`'s header names `TimelineRegionPlayer.play(…)` while
-    /// explaining why it does not call it, and claim F's `.play(` negative would read that
-    /// sentence as a call site.
+    /// Comment-stripped source (#453 — the ONE definition of "code, not prose"). ⛔ This doc
+    /// said the stripper is LOAD-BEARING here because claim F's `.play(` negative would read
+    /// `WorkstationView`'s header sentence as a call site. That negative is retired (#1437),
+    /// so on THIS file the stripper is now PROPHYLAKTISCH — measured, 0 of 10 verdicts flip.
+    /// It is still required: the load-bearing case moved to the caller COUNT in
+    /// `TheWorkstationPlaysTheTimelineTests`, where a comment counted as a call site would
+    /// turn one caller into two and redden a correct tree.
     private func code(at relativePath: String) throws -> String {
         let path = try Self.treeRootStatic().appendingPathComponent(relativePath)
         guard FileManager.default.fileExists(atPath: path.path) else {

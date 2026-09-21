@@ -146,8 +146,12 @@ public extension TimelineDocument {
     }
 
     /// Every non-bio MIDI lane, in order — the fan-out set for multi-roll playback.
-    /// `rollLaneID` (the first) stays the single-slot owner until the fan-out lands,
-    /// so this is additive: nothing reads it on the playback path yet.
+    /// `rollLaneID` (the first) stays the single-slot owner until the fan-out lands.
+    /// ⛔ This sentence ended "so this is additive: nothing reads it on the playback path
+    /// yet", and that was already false when it was written: `MultiRollFanout.activeLoads`
+    /// reads it, and `primeSecondaryLanes` calls that on every play and every locate.
+    /// `TimelineRegionPlayer.canPlay` is the third reader (#1437) — it asks which lanes the
+    /// player actually drives, and this accessor plus `audioLaneIDs` IS that answer.
     var midiLaneIDs: [UUID] {
         lanes.filter { $0.kind == .midi && !$0.isBio }.map(\.id)
     }

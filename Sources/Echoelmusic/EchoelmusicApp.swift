@@ -1507,13 +1507,18 @@ struct EchoelmusicApp: App {
                     // drain (real-time audio thread). stop() also deactivates the
                     // session with .notifyOthersOnDeactivation, giving other apps
                     // their audio back; the .active branch below restarts idempotently.
-                    // `timelinePlayer.isPlaying` and `arrangementPlayer.isPlaying` are both
-                    // constant-false today (neither `play(...)` has a production caller).
-                    // They STAY: a redundant disjunct in an OR chain is not a lying choice
-                    // the way the route-lost `if` above was — it cannot pick a wrong branch,
-                    // only fail to add a `true` that is already covered. Editing a
-                    // background-audio lifecycle guard for tidiness is the riskier move, and
-                    // #132 Slice 5 removes the types outright.
+                    // ⭐ `timelinePlayer.isPlaying` IS LIVE SINCE #1437 — the Workstation
+                    // plate's Play is its production caller (founder Phase 4), so this
+                    // disjunct now does real work: an arrangement playing while the user
+                    // glances at a message must keep the session alive, exactly like the
+                    // armed body voice below. ⛔ Until then this comment called BOTH of
+                    // these constant-false, and the disjuncts were kept as harmless
+                    // redundancy. `arrangementPlayer.isPlaying` still is constant-false
+                    // (`ArrangementPlayer.play(store:…)` has no caller since #121 Slice 4)
+                    // and stays on the same reasoning as before: a redundant disjunct in an
+                    // OR chain cannot pick a wrong branch, only fail to add a `true` that is
+                    // already covered, and editing a background-audio lifecycle guard for
+                    // tidiness is the riskier move.
                     let audioNeeded = transport.isPlaying
                         || beatPlayer.pattern.isPlaying
                         || timelinePlayer.isPlaying
