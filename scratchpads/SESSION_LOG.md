@@ -37367,7 +37367,27 @@ den Mixer-Pegel, nicht die Hardware. Das bleibt Laufzeit- und GERAETE-Wahrheit.
 zweite Uhr, kein Audio-Import, kein Producer, keine Persistenz-Konsolidierung, keine
 Timeline-Modell-Wahl. **PHASE 5 nicht begonnen.**
 
+### Gate-Lesung #1439 — GEMESSEN, auf Schritt-Ebene, nie die Run-Conclusion (#396)
+Commit `fa21213a96165e316a6b694f6b8b6f2f2c572f7e`, beide Läufe am 2026-09-21T21:14:52Z erzeugt.
+· **`Xcode Compile Check`** Lauf **35656027543**, Job **106519816437**, Schritt 7
+  `Compile (iOS device SDK, no signing)` = **`success`** (21:15:08 → 21:19:35, 4 m 27 s).
+  Das ist die RELEASE/GERÄT-Hälfte und baut `Sources/` allein.
+· **`Echoelmusic CI/CD Pipeline`** Lauf **35656027537**, Job **106520131493**, Schritt 9
+  `Build for Testing` = **`success`** (21:16:22 → 21:21:16, 4 m 54 s).
+  Das ist die DEBUG/SIMULATOR-Hälfte und die EINZIGE, die `Tests/CISmoke` kompiliert —
+  also der Beleg, dass die 32 Ansprüche von `TheWorkstationPlaysTheTimelineTests` bauen,
+  samt der neuen `@MainActor`-Klasse und des `resolveAudio:`-Arguments an vier Aufrufstellen.
+  Die zwei Gates sind GEKREUZT, nicht geschachtelt (`Tests/CISmoke/CLAUDE.md` §5) — beide
+  gelesen, keines aus dem anderen gefolgert.
+⚠️ **Die Run-Conclusion der Pipeline ist wegen #396 auf jedem Push `failure`** und wurde
+nicht gelesen. `Run Tests` lief zum Zeitpunkt der Lesung noch; #445/#807 gelten unverändert:
+die Ausführung eines einzelnen Wächters ist damit **unbelegt**, nicht grün und nicht rot.
+Die Benotung dieser Scheibe ist die Transkription (22/22 Fälle, 8/8 Mutanten, 40/40 Scans).
+⚠️ **`main` steht weiter auf `3ee39c5e325d401e10f7ca1aa9eaebe4d3325312`** (`git ls-remote`
+zum Zeitpunkt der Lesung) — der #1416-Quercheck, der NICHT dieselbe Akte liest wie der
+Job-Endpunkt. Der Auto-Merge folgt dem grünen `Build for Testing`, ist hier aber kein Beleg,
+weil er zur Lesezeit noch nicht gelaufen war.
+
 ### Offen nach dieser Runde
-· **Gate-Lesung #1439** — beide Gates auf Schritt-Ebene, nie die Run-Conclusion (#396).
 · **NEEDS-FOUNDER-VERIFY (#1436/#1437)** unveraendert.
 · **PHASE 5** — der Auftrag sagt „EXECUTE PHASE 4c ONLY. DO NOT START PHASE 5."
