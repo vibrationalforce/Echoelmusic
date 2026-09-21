@@ -36375,3 +36375,64 @@ statt neben sie, die Automations-Doppelung wird IM IMPORT entschieden (Timeline 
 und die sieben Nicht-SONG-Wurzeln bleiben DRAUSSEN — ein Projektwechsel darf die Bibliothek
 des Nutzers nicht ersetzen. **Importeur zuerst, Schreiber zweitens**; M2 schreibt noch keine
 neue Datei, alte öffnen weiter, und ein falscher Importeur kostet nichts.
+
+## 2026-09-21 — M2: der Umschlag, der Importeur, und ein Wächter, der auf korrektem Code rot war (#1419/#1420)
+
+**M2 gebaut (#1419, `b6b4dc918`):** `Core/DMMWProject.swift` (ein Umschlag über die FÜNF
+SONG-Wurzeln) + `Core/DMMWProjectImport.swift` (nur lesend, null Aufrufstellen) + ein
+Wächter mit acht Ansprüchen. Die sieben APP-Wurzeln (Patch-Bibliothek, FX- und Mood-Presets,
+Modulations-Matrix, Signal-Routen, Track-FX, Bio-Protokoll) bleiben DRAUSSEN — ein Umschlag,
+der die Bibliothek mitnähme, machte aus „Projekt öffnen" ein „App-Zustand ersetzen", und der
+Nutzer verlöre seine eigenen Presets, weil er ein fremdes Stück geöffnet hat.
+
+**DREI REGELN, je mit Grund an der Zeile:** `bpm` WIRD zu `timebase.tempoMap` (konstante
+Karte), sitzt nicht daneben · die Timeline-Automation GEWINNT beim Lesen, aber die
+Spieler-Spuren werden MITGENOMMEN, minus der Parameter, die die Timeline schon fährt
+(Löschen wäre der #527-Verlust) · der Take fährt GANZ in `legacy` und wird nicht in eine
+Region gehoben.
+
+⭐ **DAS SCHREIBEN DES CODES HAT FÜNF AUSSAGEN DES G-ENTWURFS WIDERLEGT**, alle im selben
+Commit korrigiert (#456): (1) „`Project.notes` wird in eine Region gehoben" geht NICHT in
+einem Schritt — eine `TimelineRegion` trägt eine `clipID`, die Noten wohnen in `Clip.melody`,
+Clips sind eine ANDERE Wurzel; Heben hieße einen Clip PRÄGEN, also Umstrukturieren, und ein
+umstrukturierender Importeur ist nur noch gegen „hat er geraten wie ich?" prüfbar statt gegen
+„hat er etwas verloren?" · (2) Automation hat DREI Heimaten, nicht zwei — `Clip.automation`
+ist die dritte und gehört ABSICHTLICH NICHT zur Doppelung (clip-relativ statt song-absolut) ·
+(3) die §4-Skizze führte `bpm` in `legacy` und widersprach damit ihrer EIGENEN Regel 2 vier
+Zeilen tiefer · (4) dieselbe Skizze nannte `timeline` allein, wo vier Inhalts-Wurzeln
+hingehören · (5) „ob `Arrangement` und die Clip-Slots überhaupt mitkommen" stand als offene
+Scheiben-Frage und ist entschieden: sie kommen mit.
+
+⭐⭐ **DIE TEUERSTE LEHRE DIESES ZYKLUS — und KEIN Gate dieses Repos konnte sie fangen
+(#1420).** Anspruch 2 des gerade gepushten Wächters war auf KORREKTEM Code rot, also die
+Umkehrung von #364. `fixtureProject` war eine FABRIK und wurde in `fixtureEnvelope` ein
+ZWEITES Mal gerufen; `Project.init` defaultet `id: UUID()` und `savedAt: Date()`, also
+entstanden ZWEI verschiedene Projekte und die Identitäts-Vergleiche stellten zwei frisch
+geprägte UUIDs gegeneinander. **Beide Gates waren auf diesem Commit GRÜN, und beide zu
+Recht:** `Xcode Compile Check` baut nur `Sources/`, `Build for Testing` KOMPILIERT das
+Bündel, und `Run Tests` ist wegen #396 auf jedem Push rot — **kein Gate dieses Repos wertet
+eine Zusicherung aus.** Das einzige Instrument, das das findet, ist das nochmalige LESEN der
+eigenen Datei. **GESETZ: eine Fixture mit einem gedefaulteten IDENTITÄTS-Feld ist keine
+Fixture, sondern ein GENERATOR — sie zweimal zu rufen ruft zwei verschiedene Dinge.**
+Reparatur: EIN `static let`. Die Lehre steht im Kopf des Wächters, nicht nur hier.
+
+⚠️ **Der zweite Befund war KLEINER als zuerst vermutet, und das gehört so berichtet:**
+`while let entry = walker?.nextObject() as? String` castet durch `Any??`, und ich hielt eine
+`-warnings-as-errors`-Ablehnung für wahrscheinlich. Das Gate war grün — es war also NIE ein
+Build-Defekt. Repariert bleibt es trotzdem, aber aus dem anderen Grund: ein nil-Enumerator
+besuchte still nichts und meldete null Aufrufstellen, also ein falsches Grün. Jetzt `guard
+let` mit FAIL.
+
+**GATE-LESUNG `b6b4dc918`:** Xcode Compile Check Lauf 2704 `success` (5m43s) · CI/CD Lauf
+6169 **Schritt 9 `Build for Testing` `success` (2m59s)** — der entscheidende, weil der
+Compile-Check das Test-Bündel NICHT baut und genau dort die 367 neuen Zeilen liegen. Schritt
+11 `Run Tests` trägt wie immer keine Information. Für `b67688c72` (#1417/#1418) doppelt
+bestätigt: Lauf 2703 `success` UND `main` steht auf demselben SHA (auto-merge merged nur auf
+grün) — zwei Gegenproben, die den #1417-Datensatz nicht lesen.
+
+**NICHT GERÄTEVERIFIZIERT und das ist keine Formalie:** ob ein ECHTES gespeichertes
+`projects.json` durch den Importeur kommt, kann nur eine Geräte-Session sagen. Der Importeur
+ist gegen die TYPEN testbar, nicht gegen die Dateien echter Nutzer.
+
+**FOUNDER-GATED, berichtet statt editiert:** das `EchoelCore`-Target in `project.yml`. Die
+Schicht ist Foundation-only genau deshalb — das Herausheben bleibt eine Target-Änderung.

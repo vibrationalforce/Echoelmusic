@@ -26,6 +26,18 @@
 //   (clip-relative, not song-absolute) and is deliberately NOT folded; claim 3 pins the rule
 //   for the two that genuinely duplicate.
 //
+// ⭐ AND THE GATES COULD NOT HAVE FOUND THE WORST BUG IN THIS FILE — worth writing down,
+// because it is the shape of every future one. As first pushed (`b6b4dc918`), claim 2 was RED
+// on correct code: `fixtureProject` was a FACTORY, called a second time inside
+// `fixtureEnvelope`, and `Project.init` defaults `id` to a fresh `UUID()` and `savedAt` to
+// `Date()` — so the identity assertions compared two freshly minted UUIDs. Both gates went
+// GREEN on that commit, and neither was wrong to: `Xcode Compile Check` builds `Sources/`
+// only, `Build for Testing` COMPILES the bundle, and `Run Tests` is red on every push (#396),
+// so no gate in this repository evaluates an assertion. **A fixture with a defaulted identity
+// field is not a fixture, it is a generator — calling it twice calls two different things**,
+// and the only instrument that catches that is reading the file again. `fixtureProject` is
+// one `static let` for exactly that reason.
+//
 // Grading (§0, no Swift toolchain in a web session): claims 1–5 are end-to-end behaviour over
 // the real types and were transcribed into Python and driven against a hand-model of the
 // importer; claims 6–8 are source-text scans and were driven directly against this tree. RED on
@@ -73,7 +85,7 @@ final class TheProjectEnvelopeImportsWithoutRestructuringTests: XCTestCase {
 
     // MARK: Fixtures
 
-    private func note(_ pitch: Int, _ step: Int) -> Note {
+    private static func note(_ pitch: Int, _ step: Int) -> Note {
         Note(pitch: pitch, startStep: step, lengthSteps: 2, velocity: 0.7, role: .lead)
     }
 
@@ -84,25 +96,31 @@ final class TheProjectEnvelopeImportsWithoutRestructuringTests: XCTestCase {
 
     /// Distinctive in EVERY field, so claim 2 fails on a dropped one rather than matching a
     /// default that happens to agree.
-    private func fixtureProject() -> Project {
-        Project(name: "Harbour Take",
-                styleRaw: "dubTechno",
-                keyRoot: 7,
-                scaleRaw: "dorian",
-                bpm: 97.5,
-                modeRaw: "flowFree",
-                fxCharacterRaw: "warm",
-                loopBars: 8,
-                a4Hz: 432,
-                toneSystemID: "just-intonation",
-                moodFields: ["weird": 0.25],
-                artist: "Echoel",
-                patch: SynthPatch(name: "Harbour Pad"),
-                notes: [note(60, 0), note(64, 2)],
-                rawTake: Project.RawTake(styleRaw: "ambient", bars: [[note(67, 0)]]),
-                drumSteps: [[true, false]],
-                drumAccents: [[false, true]])
-    }
+    ///
+    /// ⚠️ ONE VALUE, not a factory, and that is a correctness requirement rather than a
+    /// tidiness one. `Project.init` defaults `id` to a fresh `UUID()` and `savedAt` to
+    /// `Date()`, so two calls produce two DIFFERENT projects and claim 2's identity
+    /// assertions would compare two freshly minted UUIDs — red on correct code, forever.
+    /// A fixture with a defaulted identity field is a GENERATOR; calling it twice calls
+    /// two different things.
+    private static let fixtureProject = Project(
+        name: "Harbour Take",
+        styleRaw: "dubTechno",
+        keyRoot: 7,
+        scaleRaw: "dorian",
+        bpm: 97.5,
+        modeRaw: "flowFree",
+        fxCharacterRaw: "warm",
+        loopBars: 8,
+        a4Hz: 432,
+        toneSystemID: "just-intonation",
+        moodFields: ["weird": 0.25],
+        artist: "Echoel",
+        patch: SynthPatch(name: "Harbour Pad"),
+        notes: [note(60, 0), note(64, 2)],
+        rawTake: Project.RawTake(styleRaw: "ambient", bars: [[note(67, 0)]]),
+        drumSteps: [[true, false]],
+        drumAccents: [[false, true]])
 
     private func fixtureEnvelope(
         timelineAutomation: [AutomationLane] = [],
@@ -110,7 +128,7 @@ final class TheProjectEnvelopeImportsWithoutRestructuringTests: XCTestCase {
         clipSlots: [Clip?] = [Clip(name: "A"), nil, Clip(name: "B")]
     ) -> DMMWProject {
         DMMWProjectImport.envelope(
-            project: fixtureProject(),
+            project: Self.fixtureProject,
             timeline: TimelineDocument(automation: timelineAutomation),
             clipSlots: clipSlots,
             songForm: Arrangement(sections: [ArrangementSection(name: "Intro", lengthBars: 4)]),
@@ -149,7 +167,7 @@ final class TheProjectEnvelopeImportsWithoutRestructuringTests: XCTestCase {
     // MARK: 2 — lossless: every stored field of `Project` arrives somewhere
 
     func testTheImportDropsNothingTheProjectCarried() {
-        let project = fixtureProject()
+        let project = Self.fixtureProject
         let envelope = fixtureEnvelope()
 
         XCTAssertEqual(envelope.meta.id, project.id)
@@ -330,8 +348,12 @@ final class TheProjectEnvelopeImportsWithoutRestructuringTests: XCTestCase {
         // from a corrected function into a user's lost piece.
         let sources = repoRoot().appendingPathComponent("Sources/Echoelmusic")
         var callers: [String] = []
-        let walker = FileManager.default.enumerator(atPath: sources.path)
-        while let entry = walker?.nextObject() as? String {
+        guard let walker = FileManager.default.enumerator(atPath: sources.path) else {
+            return XCTFail("ANCHOR MISSING: cannot walk Sources/Echoelmusic. A walk that "
+                           + "visits nothing reports no call sites — a parser that matches "
+                           + "nothing is a finding, never a pass (#454).")
+        }
+        while let entry = walker.nextObject() as? String {
             guard entry.hasSuffix(".swift") else { continue }
             let relative = "Sources/Echoelmusic/" + entry
             guard relative != Self.envelopePath, relative != Self.importerPath else { continue }
