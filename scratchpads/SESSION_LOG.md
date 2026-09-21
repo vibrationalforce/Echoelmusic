@@ -35787,3 +35787,41 @@ den nicht-rettenden Wrap, den #1207b aus `EchoelLFO` entfernt hat. Heute unerrei
 
 Acht stehende Prüfer plus `doctor --selftest`: alle 0. **Nicht compile-verifiziert** — eine
 Transkription fährt Swifts Typprüfer nicht.
+
+## 2026-09-21 — Gate-Lesung `08ed159ba` (#1406, Teil 1) + Prompt für eine externe KI
+
+**`Xcode Compile Check` = success** (Lauf 35568153387, 06:21:57–06:25:38). **Das war bei
+dieser Scheibe der entscheidende Posten**, und zwar aus einem Grund, der sich nicht auf jede
+Scheibe überträgt: #1406 verschiebt drei `let`-Property-Initialisierer in den `init`. Ob das
+geht, ist eine reine TYPPRÜFER-Frage, und §0 sagt ausdrücklich, dass eine Transkription
+Swifts Typprüfer nicht fährt. Die Commit-Nachricht stand deshalb auf „NOT compile-verified" —
+jetzt ist sie es. CI/CD Schritt 9 `Build for Testing` (Debug/Simulator, kompiliert den neuen
+Wächter) lief beim Schreiben noch; nachzutragen.
+
+**Nebenbefund zur Push-Ordnung, weil er in beide Richtungen zählt:** `ci.yml` trägt KEIN
+`cancel-in-progress`, `xcode-compile-check.yml` schon. Ein neuer Push storniert also den
+laufenden Compile-Check des Vorgänger-Commits, aber NIE dessen `Build for Testing`. Solange
+der Compile-Check eines Commits noch läuft, ist ein Push der Verlust genau dieser einen
+Lesung — hier abgewartet, und mit #1405 hat das eine zweite Folge: der Auto-Merge des
+wartenden Commits würde bei storniertem Gate korrekt die Zustimmung VERWEIGERN (`cancelled`
+ist kein `success`). Die `concurrency`-Gruppe `auto-merge-main` mit
+`cancel-in-progress: false` serialisiert die beiden Merge-Jobs, statt den älteren zu
+verwerfen — genau der Fall, für den sie eingebaut wurde.
+
+**`scratchpads/PROMPT_FUER_EXTERNE_KI_2026-09-21.md` angelegt** (Founder-Bitte: „Mache einen
+Prompt mit der Frage nach Lösungsansätzen für ChatGPT inkl. Repolink, Insider-Wissen und
+Problemstellung. Auch die Website"). Selbsttragend, deutsch, mit Kopier-Markierungen. Sieben
+Problemstellungen mit GEMESSENEN Zahlen: AUv3-Hostrate (die verbleibende Extension-Hälfte),
+AUv3-CPU (~20 Prozentpunkte für eine Instanz, mit dem Pro-Sample-Code beider heißer
+Schleifen im Zitat), Drone-beim-Laden, `aumi`-Zweitkomponente, Musikalität/Variation,
+rPPG-Blitzabhängigkeit, Website-Positionierung.
+
+⭐ **Der teuerste Teil des Prompts ist der Abschnitt „Was bewusst ENTFERNT wurde".** Ohne ihn
+erfindet ein fremdes Modell zuverlässig einen AUv3-HOST, eine Meditations-Zielgruppe und eine
+Timeline — dieselben drei Behauptungen, die #158/#192 (Website) und #184 (App-Store-Text)
+schon einmal einzeln entfernen mussten. Ein Prompt ohne Negativliste lädt genau die Arbeit
+wieder ein, die diese Commits erledigt haben.
+
+⚠️ **Die Datei trägt eine Warnung an sich selbst:** jede Zahl darin ist eine Messung mit
+Datum. Wer sie aktualisiert, misst neu — sonst schickt der Prompt eine fremde KI auf einen
+alten Stand, und das Ergebnis sieht genauso plausibel aus wie ein richtiges.
