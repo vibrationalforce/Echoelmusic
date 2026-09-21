@@ -36344,3 +36344,34 @@ in `Tests/CISmoke/CLAUDE.md` §5, mit den zwei billigen Gegenproben, die NICHT d
 Datensatz lesen: `git ls-remote origin refs/heads/main` (der Auto-Merge merged auf ein
 GRÜNES `Build for Testing`, main bewegt sich also als Schlussfolgerung auf anderem Weg) und
 `get_job_logs`, das **404** liefert, solange ein Job wirklich läuft.
+
+**DMMW-G: die Dokument-Wurzeln sind kartiert** — `scratchpads/PLAN_DOCUMENT_ROOTS_2026-09-21.md`,
+Design, kein Code. ⭐ **Es sind ZWÖLF persistierte Wurzeln, nicht vier.** Das Audit sagt
+„four persisted document roots overlap"; das stimmt für die SONG-Wurzeln und ist als
+Bestandsaufnahme unvollständig. Gemessen: fünf SONG (`Project`/`projects.json` ·
+`TimelineDocument`/`timeline` · `Arrangement`/`song` · Clip-Slots/`clips` ·
+`AutomationState`/`automation`), drei BIBLIOTHEK (Patches, FX-Presets, Moods), drei
+EINSTELLUNG (Matrix, Routing, Track-FX), eine BIO (`bioSessions.v1`). Jede wird an genau
+EINER Stelle konstruiert — es gibt keine versteckte Zweitinstanz.
+
+⭐ **DREI ECHTE ÜBERLAPPUNGEN, gemessen:** (1) **Automation hat ZWEI Heimaten** —
+`AutomationState.lanes` in der Datei `automation` (der SPIELER) gegen
+`TimelineDocument.automation` in der Datei `timeline` (der türlose EDITOR), derselbe Typ,
+kein Abgleich; heute unsichtbar, weil die Timeline-Fläche mit #121 Slice 4 ging, also die
+stille Sorte · (2) **Noten liegen in zwei Wurzeln** (`Project.notes`/`rawTake.bars` gegen
+`TimelineDocument.regions`) · (3) ⭐ **Tempo hat im Zeitdokument GAR KEINE Heimat** —
+`Project.bpm` ist ein Skalar, `TimelineDocument` hat kein Tempo-Feld, und seit #1416 ist eine
+Tempokurve ausdrückbar und hat nirgends einen Platz. **Genau deshalb steht G nach F.**
+
+⚠️ Zwei Nebenbefunde in den Entwurf gezogen: nur ZWEI der zwölf tragen eine `schemaVersion`
+(`Project`, `TimelineDocument`) — die Version gehört auf den UMSCHLAG, einmal; und
+`Project.drumSteps`/`drumAccents` sind eine Nutzlast ohne Klang (kodiert/dekodiert weiter,
+`BioComposer` füllt sie, aber seit #166/#167 gibt es keine Drum-Stimme), **nicht zu löschen,
+#527-Grund**.
+
+**ENTWURF:** ein `DMMWProject`-Umschlag mit fünf Fächern, `envelopeVersion` EINMAL oben,
+`timebase: Timebase` aus #1416 als Tempo-Heimat, `bpm` wird zu `TempoMap.constant(bpm)`
+statt neben sie, die Automations-Doppelung wird IM IMPORT entschieden (Timeline gewinnt),
+und die sieben Nicht-SONG-Wurzeln bleiben DRAUSSEN — ein Projektwechsel darf die Bibliothek
+des Nutzers nicht ersetzen. **Importeur zuerst, Schreiber zweitens**; M2 schreibt noch keine
+neue Datei, alte öffnen weiter, und ein falscher Importeur kostet nichts.
