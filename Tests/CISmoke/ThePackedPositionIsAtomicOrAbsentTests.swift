@@ -59,10 +59,15 @@
 // mirror of the law CLAUDE.md records for the slogan that made the iPad switch-back sound
 // like one line, and the reason it is corrected here rather than only in the task list (#456).
 //
-// ⛔ THE CARTESIAN HALF IS STILL OPEN and claims 9–13 say so themselves: an `.admOSCCartesian`
-// scene emits `/x`, `/y`, `/z`, which the fold does not recognise, so those objects pass
-// through unpacked — unchanged behaviour, not a regression. The spec's packed Cartesian
-// address is not verified in this repository and nothing here builds to a remembered spec.
+// ⭐ THE CARTESIAN HALF IS CLOSED BY #1432, and my #1430 reason for leaving it open was WRONG
+// in the cautious direction: it said *"the spec's packed Cartesian address is not verified in
+// this repository"*. It was — `TheADMOSCLeavesAreTheSpecsTests`'s header has named `/xyz` among
+// the object leaves since #1210 and quotes the sender minimum *"implement at least one of
+// /xyz or /aed"*. I read the guard I was editing and not its neighbour, which is #456 a third
+// time in one day. Re-derived from the standard anyway, and it agrees: the quick reference
+// lists `/adm/obj/{n}/xyz` as `f f f`, "Packed: x, y, z (recommended for atomicity)", with
+// object numbers starting at 1. **Over-caution is not free either** — it parked a two-file
+// repair behind a fact the repository already held.
 //
 // ⚠️ ALSO NOT DONE, deliberately: an OSC BUNDLE. The spec notes packed values "can also be
 // grouped with other messages in an OSC bundle for atomic/synchronous delivery with a shared
@@ -306,9 +311,9 @@ final class ThePackedPositionIsAtomicOrAbsentTests: XCTestCase {
                       "every IEM leaf carries exactly one float, as before the fold existed")
     }
 
-    // MARK: 11 — COUNTERWEIGHT: the Cartesian half is UNCHANGED, not silently invented
+    // MARK: 11 — the Cartesian scene packs too, into `/xyz`, and invents nothing
 
-    func testTheCartesianSceneStaysUnpackedAndInventsNothing() {
+    func testTheCartesianSceneLeavesAsOnePackedMessage() {
         let scene = SpatialScene(objects: [
             SpatialObject(id: "a", position: SpatialPosition(azimuth: -30, elevation: 5,
                                                              distance: 0.4), gain: 0.5),
@@ -317,16 +322,32 @@ final class ThePackedPositionIsAtomicOrAbsentTests: XCTestCase {
             .map { ($0.address, $0.value) }
         let out = ADMOSCSender.packedSceneMessages(flat, dialect: .admOSCCartesian)
 
-        XCTAssertEqual(addresses(out), flat.map { $0.0 }, """
-            The Cartesian scene changed shape. #1430 closes the POLAR half of #1424 only; `/x`,
-            `/y`, `/z` pass through UNPACKED, which is what this arm did before the fold
-            existed. If a packed Cartesian address is ever added it is a separate decision with
-            the spec read first — this repository does not build to a remembered spec, and a
-            guard that quietly accepted an invented `/xyz` would be the thing that let it.
+        XCTAssertEqual(addresses(out), ["/adm/obj/1/xyz", "/adm/obj/1/gain"], """
+            The Cartesian scene did not fold. ADM-OSC v1.0 lists `/adm/obj/{n}/xyz` as `f f f`,
+            "Packed: x, y, z (recommended for atomicity)", exactly as it lists `/aed` — the two
+            are two SPELLINGS of one decision, and a fold that packs only one of them makes a
+            Cartesian-only renderer the single receiver that still gets a torn position.
             """)
-        XCTAssertFalse(addresses(out).contains(where: { $0.hasSuffix("/xyz") }), """
-            An `/xyz` address appeared. Nothing in `Sources/` may emit it until the spec has
-            been read and the address written down with its source.
+        XCTAssertEqual(out.first(where: { $0.0 == "/adm/obj/1/xyz" })?.1.count, 3, """
+            `/xyz` must carry exactly three floats, in x, y, z order. The argument ORDER is not
+            checkable from the address alone, so it is pinned here at the value level by
+            claim 11b below rather than assumed from the name.
+            """)
+        let packedXYZ = out.first(where: { $0.0 == "/adm/obj/1/xyz" })?.1 ?? []
+        let leaves = flat.filter { ["/adm/obj/1/x", "/adm/obj/1/y", "/adm/obj/1/z"]
+            .contains($0.0) }
+        XCTAssertEqual(packedXYZ, [leaves.first(where: { $0.0.hasSuffix("/x") })?.1,
+                                   leaves.first(where: { $0.0.hasSuffix("/y") })?.1,
+                                   leaves.first(where: { $0.0.hasSuffix("/z") })?.1]
+                                  .compactMap { $0 }, """
+            11b — the packed floats are not the formatter's x, y, z in that order. This is the
+            assertion that catches a transposed axis, which no address check can see and which
+            moves an object to the wrong place in the room while every guard stays green.
+            """)
+        XCTAssertFalse(addresses(out).contains(where: { $0.hasSuffix("/xy") }), """
+            The spec also defines a TWO-axis packed form, `/adm/obj/{n}/xy`. Nothing here emits
+            a 2D position, so nothing may emit that address — a partial position sent as if it
+            were complete is the #1140 defect wearing the spec's own vocabulary.
             """)
     }
 

@@ -36866,3 +36866,58 @@ direkt getrieben und dort beide rot, für den Grund, den ihr Name nennt. Alle ze
 Prüfer Exit 0. Compile-verifiziert durch die Gates, **nicht** geräteverifiziert — und der Pfad
 ist weiterhin DOPPELT türlos (`streamsScene` false, `sceneDialect` ohne Schreiber), also ändert
 sich für einen Nutzer heute nichts.
+
+## 2026-09-21 — #1431 der Spec-Zeiger, #1432 die kartesische Packung
+
+**#1430 Gate-Lesung.** Compile Check **2712** (`35607234866`) = `success`; CI/CD **6177**, Job
+`106357497026`, `Build for Testing` = `success` (13:43:01 → 13:48:11). `main` = `54e92795b`.
+
+**#1431 — `docs/adm-osc.bs` liegt NICHT in diesem Repo, und zwei Zitate sagten „vendored".**
+Gefunden beim Versuch, die Datei zu öffnen. `git ls-files docs/adm-osc.bs` → 0, auch nicht auf
+der Platte. ⭐ **WELCHER DEFEKT ES IST, entscheidet die Reparatur, und die kleinere Diagnose ist
+die richtige:** der PFAD stimmt — die Datei existiert upstream, verifiziert —, also ist es KEINE
+Nadel, die nie treffen kann (#1376), sondern ein **fehl-verorteter Zeiger**. „Vendored"
+behauptet, die Datei liege in DIESEM Baum; eine Sitzung öffnet nichts und muss dann entscheiden,
+ob der zitierte Spec-Satz überhaupt echt ist. Den Befund größer zu machen als er ist, wäre der
+Spiegel der Kostenschätzung, die #1430 zurücknehmen musste. Ein Zuhause (#416): der Kopf von
+`TheADMOSCLeavesAreTheSpecsTests` trug die ehrliche Form schon (Upstream-Repo + Pfad + Abrufdatum)
+und trägt jetzt die Rücknahme; die zwei Geschwister-Stellen zitieren den Standard per ABSCHNITT
+und machen gar keine Ortsangabe mehr. Vendorieren wäre besser als jede Formulierung und ist nicht
+umsonst (Bikeshed-Quelle unter eigener Lizenz) → Founder-Entscheidung, kein Aufräumen.
+
+**#1432 — und meine #1430-Begründung war in der VORSICHTIGEN Richtung falsch.** Ich schrieb, die
+gepackte kartesische Adresse sei „in diesem Repo nicht verifiziert". Sie war es: der Kopf von
+`TheADMOSCLeavesAreTheSpecsTests` nennt `/xyz` seit #1210 unter den Objekt-Blättern und zitiert
+das Sender-Minimum *„implement at least one of /xyz or /aed"*. Ich habe den Wächter gelesen, den
+ich gerade bearbeitete, und nicht seinen Nachbarn — **#456 zum dritten Mal an einem Tag**.
+⭐ **GESETZ: Über-Vorsicht ist auch nicht umsonst.** Sie hat eine Zwei-Datei-Reparatur hinter
+einer Tatsache geparkt, die das Repo schon besaß. Trotzdem aus dem Primärdokument nachgeholt, und
+es stimmt überein: die Quick Reference listet `/adm/obj/{n}/xyz` als `f f f`, „Packed: x, y, z
+(recommended for atomicity)", Objekt-Nummern ab 1 (bestätigt `max(1, n)`).
+
+**Gebaut:** `packedPositionMessages` faltet jetzt BEIDE Vokabulare — zwei SCHREIBWEISEN einer
+Entscheidung, nicht zwei Entscheidungen (#416). ⚠️ **Unabhängig, und keines rettet das andere:**
+die #1140-Alle-drei-Bedingung gilt PRO Vokabular; eine halb gemessene polare Position darf nicht
+aus den kartesischen Blättern vervollständigt werden und umgekehrt, weil auf diesem Pfad nichts
+das eine aus dem anderen ableitet. Beide zugleich kann aus unseren Emittern nicht entstehen (ein
+Dialekt pro Aufruf) und ist trotzdem behandelt, weil die Funktion `public` ist.
+
+⛔ **NICHT gebaut: die zweiachsige `/adm/obj/{n}/xy`-Form.** Die Spec definiert sie; wir erzeugen
+nie eine 2D-Position, und eine Teil-Position als vollständig zu senden wäre der #1140-Defekt im
+Vokabular der Spec selbst. Anspruch 11 verbietet die Adresse ausdrücklich.
+
+**Wächter:** Anspruch 11 ist UMGEDREHT (er pinnte genau die Lücke, die diese Scheibe schließt)
+und vertieft — **11b prüft die Argument-REIHENFOLGE auf Wertebene**, denn eine vertauschte Achse
+ist aus keiner Adresse ablesbar und schiebt ein Objekt an die falsche Stelle im Raum, während
+jeder Wächter grün bleibt. `TheADMOSCLeavesAreTheSpecsTests` Anspruch 1 pinnt `/xyz` mit genau
+dem #1421-Argument mit; ⚠️ die blanken `/x /y /z` bewusst NICHT — der Sender nennt sie, um sie zu
+FINDEN, nicht um sie zu senden, und ein Blatt zu pinnen, das diese Datei nicht sendet, machte
+Anspruch 1 schwächer als sein Name (#367).
+
+**§0:** 16 Zusicherungen transkribiert und getrieben, 0 rot — darunter drei REGRESSIONS-Proben
+(polare Faltung, fehlende Achse, polare Szene unverändert) und zwei Gegengewichte. Gegen den
+Parent `47ce35757` gemessen: `/xyz"` und die kartesische Faltung fehlen dort beide, also sind
+Anspruch 11 und die `/xyz`-Zeile von Anspruch 1 dort rot, die polare Hälfte grün auf beiden.
+Alle zehn Prüfer Exit 0. Compile-verifiziert durch die Gates, nicht geräteverifiziert. Der
+Szenen-Pfad bleibt doppelt türlos — heute ändert sich für einen Nutzer nichts; was sich ändert,
+ist dass ein kartesisch-only-Renderer nicht mehr der einzige Empfänger mit zerrissener Position ist.

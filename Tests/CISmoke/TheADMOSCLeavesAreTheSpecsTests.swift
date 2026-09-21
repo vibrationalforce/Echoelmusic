@@ -61,7 +61,13 @@ final class TheADMOSCLeavesAreTheSpecsTests: XCTestCase {
         // beside the leaves it folds, rather than only in its own guard: this is the file
         // that answers "does the sender speak the spec's address table", and a leaf that
         // the MVI requires belongs in that answer.
-        for leaf in ["/azim", "/elev", "/dist", "/aed", "/gain"] {
+        // ⭐ `/xyz` joined with #1432 on EXACTLY that argument — the MVI names the two packed
+        // forms as alternatives, so both belong in this answer once the sender emits both.
+        // ⚠️ The bare `/x`, `/y`, `/z` deliberately did NOT join, although the sender's text
+        // now contains them: it names them to FIND them in the formatter's output, not to emit
+        // them, and pinning a leaf this file does not send would make claim 1 mean something
+        // weaker than its own name (#367).
+        for leaf in ["/azim", "/elev", "/dist", "/aed", "/xyz", "/gain"] {
             XCTAssertTrue(code.contains("\(leaf)\""), """
                 `ADMOSCSender.swift` no longer writes the ADM-OSC leaf `\(leaf)`. The spec's \
                 object table (UPSTREAM docs/adm-osc.bs, not a file in this repo) names \

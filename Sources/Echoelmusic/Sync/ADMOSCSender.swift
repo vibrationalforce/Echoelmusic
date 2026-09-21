@@ -405,17 +405,39 @@ public final class ADMOSCSender {
     public nonisolated static func packedPositionMessages(_ msgs: [(String, Float)],
                                                           object n: Int) -> [(String, [Float])] {
         let prefix = "/adm/obj/\(max(1, n))"
-        let azimuth = prefix + "/azim", elevation = prefix + "/elev", distance = prefix + "/dist"
-        func value(_ address: String) -> Float? {
-            msgs.first(where: { $0.0 == address })?.1
+        func value(_ leaf: String) -> Float? {
+            msgs.first(where: { $0.0 == prefix + leaf })?.1
         }
-        guard let a = value(azimuth), let e = value(elevation), let d = value(distance) else {
-            return msgs.map { ($0.0, [$0.1]) }
+
+        // ⭐ TWO SPELLINGS OF ONE DECISION, not two decisions (#416). The rule is "a COMPLETE
+        // position leaves as ONE message"; the spec gives it two vocabularies and the quick
+        // reference marks both `f f f` and "recommended for atomicity". Handling them in one
+        // function is what keeps the all-three condition, the front position and the
+        // pass-through order from drifting apart in a polar copy and a Cartesian copy.
+        //
+        // ⚠️ INDEPENDENT, AND NEITHER RESCUES THE OTHER. The #1140 all-three condition applies
+        // per vocabulary: a half-measured polar position must not be completed from the
+        // Cartesian leaves or the reverse, because the two are not redundant views of the same
+        // measurement here — nothing in this repository derives one from the other on this
+        // path. Both present at once cannot arise from our own emitters (one dialect per call)
+        // and is handled anyway rather than left to chance, since this function is `public`.
+        var packed: [(String, [Float])] = []
+        var consumed: Set<String> = []
+        if let a = value("/azim"), let e = value("/elev"), let d = value("/dist") {
+            packed.append((prefix + "/aed", [a, e, d]))
+            consumed.formUnion([prefix + "/azim", prefix + "/elev", prefix + "/dist"])
         }
-        // `/aed` takes the position's place at the FRONT; every non-positional address keeps
-        // its relative order behind it (the music arm's `/gain` followed its three axes).
-        var out: [(String, [Float])] = [(prefix + "/aed", [a, e, d])]
-        for (address, v) in msgs where address != azimuth && address != elevation && address != distance {
+        if let x = value("/x"), let y = value("/y"), let z = value("/z") {
+            packed.append((prefix + "/xyz", [x, y, z]))
+            consumed.formUnion([prefix + "/x", prefix + "/y", prefix + "/z"])
+        }
+        guard !packed.isEmpty else { return msgs.map { ($0.0, [$0.1]) } }
+
+        // The packed form takes the position's place at the FRONT; every non-positional
+        // address keeps its relative order behind it (the music arm's `/gain` followed its
+        // three axes).
+        var out = packed
+        for (address, v) in msgs where !consumed.contains(address) {
             out.append((address, [v]))
         }
         return out
