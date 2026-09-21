@@ -225,6 +225,29 @@ public final class AudioLanePlayer {
         self.resolveNativeBPM = resolveNativeBPM
     }
 
+    /// THE resolver the streaming path uses, asked as a QUESTION instead of as a step —
+    /// the Play preflight's one way to find out whether an audio region has a source today.
+    ///
+    /// ⛔ THE PREFLIGHT USED TO ASK THE CLIP INSTEAD, AND A NON-EMPTY STRING IS NOT A FILE
+    /// (#1439). #1438's audio branch was `!(clip.mediaRef?.isEmpty ?? true)`, which is true
+    /// for a saved project whose media has since been deleted, moved off the device, or
+    /// written by another install — the everyday shape of a media reference, not an exotic
+    /// one. `prime`/`apply` then `continue` past that lane (three call sites, all
+    /// `guard let url = self.resolveURL(...) else`), so the button started a transport that
+    /// could never make a sound. Routing the preflight through THIS accessor means predicate
+    /// and player share one answer by construction: there is no second resolver to drift
+    /// (§2), and `MediaLibrary.resolveRef` is not duplicated — it is reached, through the
+    /// same injected closure `EchoelmusicApp` installs at the one construction site.
+    ///
+    /// ⚠️ THE BOUNDARY IS RESOLUTION, NOT PLAYABILITY, and it is drawn here on purpose.
+    /// A URL back means a source the scheduler can hand to a sink; it does NOT mean the file
+    /// decodes, that the codec is supported, or that a sound reaches the speaker —
+    /// `AVAudioFile` can still throw at load time, and that stays runtime failure handling.
+    /// Opening every file to answer a button's enabled state would put decode work in a
+    /// SwiftUI body; the resolver is a `fileExists` probe and is the right depth for a
+    /// preflight.
+    public func resolvedURL(forClipID id: UUID) -> URL? { resolveURL(id) }
+
     /// Apply the transport window `fromTick`→`toTick`: for each audio lane, start
     /// its newly-entered region (`.load`), stop it on leaving into a gap (`.clear`),
     /// or leave it playing (`.unchanged`). Order-independent, so a loop wrap works

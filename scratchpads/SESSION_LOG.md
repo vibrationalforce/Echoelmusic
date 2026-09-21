@@ -37280,3 +37280,94 @@ der Stop-Kaskade gerufen), und der Rumpf liest keinen Spielkopf.
   Installation bleibt Play so lange aus, bis Generate echte Noten in den Composer-Clip
   geschrieben hat — vorher ist der Clip leer, und das ist die Absicht.
 · **PHASE 5** (Stop + Neu-Vermessung) — nicht begonnen, der Auftrag sagt „EXECUTE PHASE 4b ONLY".
+
+## 2026-09-21 — PHASE 4c (#1439): die drei letzten Silent-Clock-Wege
+
+**Der Auftrag kam mit einem NOT READY von aussen** (Codex GPT-5.6 Sol auf `3ee39c5e3`) und drei
+benannten Blockern. §0 verlangt, sie erst zu widerlegen zu versuchen. **Alle drei waren im
+aktuellen Quelltext echt** — keiner ist durch Messen weggefallen:
+
+1. **Audio.** `isExecutable` entschied eine Audio-Region an `!(clip.mediaRef?.isEmpty ?? true)`.
+   Eine nicht-leere ZEICHENKETTE ist keine Datei. `AudioLanePlayer` ueberspringt die Spur an
+   allen drei `guard let url = self.resolveURL(`-Stellen, der Transport lief ueber nichts.
+2. **Legacy-Offset.** `loadClip` und `windowedBars` derivieren
+   `contentOffsetTicks > 0 ? ticks : offsetTicks(seconds, bpm)` + `stepAligned`; #1438s
+   `executableNotes` derivierte `stepAligned(contentOffsetTicks)` und sonst nichts. DREI
+   Schreibweisen einer Regel, die dritte anders. Erreichbar nicht ueber einen SCHREIBER,
+   sondern ueber den DECODER: jedes vor der M1b-Tick-Zwillingsstufe gespeicherte Projekt
+   dekodiert genau in diese Kombination (die #527-Form).
+3. **Abtastbarkeit.** `laneEvent` vergleicht `activeRegion` an zwei RASTER-Ticks, und
+   `TimelinePlaybackCursor.advance` liefert ausschliesslich Vielfache von
+   `ticksPerTransportStep`. Eine Region ohne Raster-Tick in ihrer Spanne ist fuer den Player
+   unsichtbar — voller Noten, aufloesbar, auf einer getriebenen Spur, unerreichbar. Der
+   Dateikopf von `TimelineScheduling` sagt das seit P2; es gab nur nie einen Aufrufer, der
+   fragen konnte.
+
+**DREI KANONISCHE HELFER, je EINE Definition (§4/§7):**
+· `RegionNoteWindow.effectiveOffsetTicks(of:bpm:)` — drei Schreibweisen → eine.
+· `TimelineScheduling.isSampleable(_:)` — benutzt `activeRegion`s eigene Halboffen-Regel
+  wieder, statt sie zu wiederholen.
+· `AudioLanePlayer.resolvedURL(forClipID:)` — reicht die GESPEICHERTE Closure woertlich durch.
+  Kein zweiter Aufloeser, `MediaLibrary.resolveRef` nicht dupliziert.
+
+**DIE SIGNATUR IST WIEDER GEWACHSEN, UND DAS IST DIE ANTWORT, NICHT DAS PROBLEM:**
+`canPlay(_:clips:bpm:resolveAudio:)`. Jedes Argument steht da, weil eine Fassung ohne es falsch
+war — #1437 nahm das Dokument allein, #1438 die Clips, #1439 den Tempo- und den Medien-Eingang.
+
+⭐ **DER TEUERSTE EINZELPUNKT WAR DAS TEMPO, und er ist ein RENDER-Problem, kein Logik-Problem.**
+Der Legacy-Offset braucht die Live-BPM; der einzige Aufrufer ist ein SwiftUI-`body`; und
+`PatternEngine.tempo` wie `Transport.tempo` sind BEIDE `@Observable` und nicht ignoriert. Ein
+`body`-Read haette die Workstation-Platte — die seit #479 dauerhaft im ROOT-Body ausgewertet
+wird — an einen Wert gehaengt, der waehrend eines Glides mit ~20 Hz laeuft: der 10.76.41/50-
+Menue-Freeze mit einem vierten Erzeuger, und `WorkstationView`s eigener Kopf nennt
+`beatPlayer.pattern` namentlich als das, was der Rumpf nie lesen darf.
+**Loesung: ein `@ObservationIgnored`-Spiegel** (`TimelineRegionPlayer.preflightTempo`), gefuettert
+von `transport.onTempoChange(id: "timeline.preflight")` — dieselbe Form wie der Klick eine Zeile
+darueber. GEMESSEN statt angenommen: alle FUENF `tempo =`-Stellen in `PatternEngine` tragen eine
+`transport?.setTempo`-Weiterleitung, die Klammern sind dieselben zwei Konstanten, und der
+midi-clock-Block in `EchoelmusicApp` hatte die sechs Produktions-Aufrufer schon ausgezaehlt.
+⚠️ EIN Schreiber, fuer immer: `Transport.setTempo` benachrichtigt nur bei echter BEWEGUNG, ein
+abgedrifteter Spiegel heilt also nie von selbst. Waechter: Anspruch N.
+
+⭐ **DIE MUTATION HAT MIR EINE LUECKE GEZEIGT, DIE ICH NICHT GESUCHT HATTE.** Sieben der acht
+Mutanten starben sofort; `no-step-align` UEBERLEBTE, weil jede Testvorrichtung zufaellig einen
+Offset auf dem Raster hatte — die Ausricht-Haelfte von `effectiveOffsetTicks` war ungetestet.
+Anspruch 16 hat jetzt eine zweite Zusicherung (0,52 s → 499 Ticks → rastet auf 480). **Ein
+ueberlebender Mutant sagt dir, welche HAELFTE eines Helfers du nie gefahren hast.**
+
+⛔ **UND ZWEI EIGENE FEHLER, BEIDE VON DER TRANSKRIPTION GEFANGEN, BEIDE #442:**
+· Die erste Fassung von Anspruch 15/16 schrieb `contentOffsetSeconds: 2.0` neben den Kommentar
+  „= 960 Ticks". 2 s bei 120 bpm sind 1920 Ticks, ein ganzer Takt — Anspruch 16s Note haette
+  dann ebenfalls ausserhalb ihres eigenen Fensters gelegen. Aus der Algebra herleiten, nicht
+  aus dem Gefuehl.
+· Meine erste Transkription von `SourceText.codeOnly` loeschte STRING-INHALTE. Drei Nadeln, die
+  in Literalen wohnen, lasen daraufhin ROT auf einem korrekten Baum. `codeOnly` loescht
+  KOMMENTARE und ist lediglich literal-BEWUSST. **Eine Transkription, die das Werkzeug falsch
+  modelliert, ist keine Messung des Waechters — auch wenn sie in die alarmierende Richtung
+  irrt.**
+
+**MESSUNGEN (§0, keine Swift-Toolchain):**
+· Verhalten: **22 von 22** Faellen gruen · **8 von 8** Mutanten getoetet.
+· Scans: **40 von 40** gruen auf dem Arbeitsbaum, **18 rot** auf `3ee39c5e3`. Davon ist GENAU
+  EINE eine Regression im #433-Sinn (L2, „der Player darf `mediaRef` nicht lesen"); der Rest
+  sind Vorwaerts-Waechter plus DREI Abwesenheiten, N-mal gemeldet (#486).
+· Stripper: **4 von 40** Verdikten kippen roh gegen gestrippt ⇒ **TRAGEND** (D3, J1, L2, N4 —
+  alle vier Nadeln, deren Text in diesem Baum nur in dem Kommentar vorkommt, der erklaert,
+  warum der Code die Sache NICHT tut).
+· Klammer-Bilanz +0/+0/+0 auf jeder beruehrten Datei, beide Baeume. Zehn Standard-Pruefer
+  Exit 0. `moved-needles.py` meldete EINEN Treffer (Anspruch 11b's Anker) — geoeffnet,
+  nachgemessen, Anker haelt, keine Aenderung noetig. `CLAUDE.md` 144 746 B / 150 000.
+
+**ANNAHME-GRENZE, so eng wie der Quelltext sie stuetzt:** `canPlay` beweist, dass der HEUTIGE
+Scheduler mindestens eine Region erreichen kann, deren Quelle sich aufloest und deren Executor
+Inhalt zu verarbeiten hat. Es beweist NICHT Hoerbarkeit, nicht dass die Datei dekodiert, nicht
+den Mixer-Pegel, nicht die Hardware. Das bleibt Laufzeit- und GERAETE-Wahrheit.
+
+**NICHT GETAN (§9, Holds):** kein Scheduler-Umbau, keine hoehere Transport-Aufloesung, keine
+zweite Uhr, kein Audio-Import, kein Producer, keine Persistenz-Konsolidierung, keine
+Timeline-Modell-Wahl. **PHASE 5 nicht begonnen.**
+
+### Offen nach dieser Runde
+· **Gate-Lesung #1439** — beide Gates auf Schritt-Ebene, nie die Run-Conclusion (#396).
+· **NEEDS-FOUNDER-VERIFY (#1436/#1437)** unveraendert.
+· **PHASE 5** — der Auftrag sagt „EXECUTE PHASE 4c ONLY. DO NOT START PHASE 5."

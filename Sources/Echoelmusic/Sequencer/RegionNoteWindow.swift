@@ -93,6 +93,34 @@ public enum RegionNoteWindow {
         guard bpm > 0, contentOffsetSeconds.isFinite, contentOffsetSeconds > 0 else { return 0 }
         return TimelineTime.ticks(fromSeconds: contentOffsetSeconds, bpm: bpm)
     }
+
+    /// THE content offset a MIDI region's window uses — the ONE derivation, so the Play
+    /// predicate and the loader can never disagree about where a region's content starts.
+    ///
+    /// ⛔ IT WAS WRITTEN THREE TIMES AND THE THIRD SPELLING WAS DIFFERENT (#1439).
+    /// `TimelineRegionPlayer.loadClip` and `.windowedBars` both did
+    /// `contentOffsetTicks > 0 ? contentOffsetTicks : offsetTicks(seconds, bpm)` then
+    /// `stepAligned`; #1438's `executableNotes` did `stepAligned(contentOffsetTicks)` and
+    /// nothing else. For a LEGACY region — tick twin 0, seconds set, which is exactly what a
+    /// document written before M1b decodes to — the predicate judged the window at offset 0
+    /// while the loader judged it at the seconds conversion. Predicate-yes / loader-nothing
+    /// is a silent transport start, the defect Phase 4b existed to close, surviving in the
+    /// one branch nothing reachable writes today. **Two spellings of one decision is the
+    /// defect whether or not they agree today** (#416): here they did not.
+    ///
+    /// ⚠️ THE `bpm` IS NOT DECORATION AND IT IS NOT AVOIDABLE. The seconds→ticks conversion
+    /// needs a tempo, so a caller that cannot supply the live one cannot answer this
+    /// question exactly — that is a property of the legacy field, not of this function.
+    /// The preflight's tempo source is named at `TimelineRegionPlayer.preflightTempo`.
+    ///
+    /// The `> 0` test (not `!= 0`) mirrors both loaders exactly; `TimelineRegion`'s init and
+    /// decoder both clamp the tick twin to ≥ 0, so 0 is the only non-positive value it takes.
+    public static func effectiveOffsetTicks(of region: TimelineRegion, bpm: Double) -> Int {
+        let raw = region.contentOffsetTicks > 0
+            ? region.contentOffsetTicks
+            : offsetTicks(contentOffsetSeconds: region.contentOffsetSeconds, bpm: bpm)
+        return stepAligned(raw)
+    }
 }
 
 // MARK: - Arrangement load plan (pure)

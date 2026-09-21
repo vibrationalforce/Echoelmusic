@@ -239,8 +239,21 @@ struct WorkstationView: View {
         // wanted: the moment the composer writes notes into its clip, Play becomes
         // available without a second tap. It is not a hot read — `ClipStore.slots` is
         // written by generate/evolve (~30 s at most), never per transport step.
-        let startable = TimelineRegionPlayer.canPlay(timeline.document,
-                                                     clips: clipStore.filledClips)
+        // ⭐ TWO MORE ARGUMENTS SINCE #1439, AND NEITHER IS A HOT READ — that is the whole
+        // reason they look like this. `preflightTempo` and `audioLanes` are both
+        // `@ObservationIgnored` on the player, so this body subscribes to NOTHING new. The
+        // obvious spellings would both be the 10.76.41/50 freeze: `beatPlayer.pattern.tempo`
+        // is `@Observable` and glides at ~20 Hz, and so is `Transport.tempo`.
+        // ⚠️ The resolver does `FileManager.fileExists` probes, in a `body`. Bounded on
+        // purpose: `firstExecutableRegion` short-circuits, so a song whose first MIDI part
+        // has notes never touches the filesystem, and an audio-first song probes only until
+        // one region resolves. Do not "optimise" this into a cached set — a cache is a
+        // second answer, and the whole point is that there is one (§2).
+        let startable = TimelineRegionPlayer.canPlay(
+            timeline.document,
+            clips: clipStore.filledClips,
+            bpm: player.preflightTempo,
+            resolveAudio: { player.audioLanes?.resolvedURL(forClipID: $0) })
         return HStack(spacing: 8) {
             Button {
                 if playing { player.stop() } else { startTimeline() }

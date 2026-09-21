@@ -100,7 +100,7 @@ acceptance line.
 >   rides the transport and plays the roll lane's **MIDI** regions (drums went with #166/#167).
 >   ⭐ Its door is the **Workstation chip** (`Studio/WorkstationView.swift`, founder Phase 3+4):
 >   Play/Stop over the document `TimelineStore` already owns. Additive — the Generate+Play
->   instrument is untouched, and `TimelineRegionPlayer.canPlay(_:clips:)` (the engine's own
+>   instrument is untouched, and `TimelineRegionPlayer.canPlay(_:clips:bpm:resolveAudio:)` (the engine's own
 >   guard, asked by the control with the same arguments) keeps the button unavailable unless a
 >   part resolves into content the engine would execute. ⛔ This entry said "opt-in \"Play
 >   timeline\"" while NO such control existed — the ▶ branch that used to consult the document
@@ -119,6 +119,21 @@ acceptance line.
 >   (#204/#527), so only a document persisted by an older build can exercise it. Path to
 >   user-creatable audio tracks: `scratchpads/PLAN_TIMELINE_AUDIO_TRACKS.md` (blocked on
 >   durable audio-clip creation + device verify).
+>   ⛔ **AND #1439 (Phase 4c) CLOSED THREE MORE WAYS THE BUTTON COULD START A SILENT CLOCK.**
+>   The guard is now `TimelineRegionPlayer.canPlay(_:clips:bpm:resolveAudio:)`, and every one
+>   of the four arguments is there because a version without it was wrong: (1) an audio region
+>   was judged by its `mediaRef` being a non-empty STRING — it now asks
+>   `AudioLanePlayer.resolvedURL(forClipID:)`, the SAME resolver the streaming path uses, so a
+>   recording deleted or moved since the project was saved no longer offers Play; (2) a legacy
+>   seconds-trimmed MIDI region was judged at offset 0 while `loadClip` judged it at the
+>   tempo-derived offset — both now call `RegionNoteWindow.effectiveOffsetTicks`, one
+>   derivation; (3) a region lying entirely between two transport grid ticks was reachable to
+>   the predicate and invisible to the scheduler — `TimelineScheduling.isSampleable` asks that
+>   question, which the file's own header had stated as a limit since P2 without any caller
+>   being able to put it. ⚠️ **What `canPlay` proves, at its narrowest:** the current scheduler
+>   can reach at least one region whose source resolves and whose executor has content. NOT
+>   that the media decodes, that the mixer gain is non-zero, or that a sound leaves the device
+>   — those remain runtime and DEVICE truths.
 >
 > **UPDATE (2026-07-11) — comprehensive-interface modules + sound (code-truth):**
 > - **Module 1 Mixer — LIVE, but TWO faders, not four (corrected 2026-08-06, #438).** `Core/MixerStore.swift` still *stores* bass/pad/lead/drums (four persisted keys, deliberately — see the file's own `⚠️ drums IS INCLUDED AND THAT IS DELIBERATE` note: a key that vanishes cannot be reset to unity if drums ever return). What the user can actually MOVE is `mixerPanel`'s two `EchoelValueField` rows: **Level (bass) and Pad**. Lead's fader went with #255 (founder: "Lead kann raus aus dem Mix"); drums produce no sound at all since #166/#167.

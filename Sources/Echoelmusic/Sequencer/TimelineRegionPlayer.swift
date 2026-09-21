@@ -72,6 +72,43 @@ public final class TimelineRegionPlayer {
     /// Loop the whole song (rounded up to whole bars) when it reaches the end.
     public var loopEnabled = true
 
+    /// The tempo every `pattern?.tempo` read in this file falls back to when the engine is
+    /// not attached. Named rather than repeated as `120` at eight sites (#416/#1439): the
+    /// literal and `Transport.defaultTempo` were two spellings of one decision, and #1439
+    /// gave the offset derivation a `bpm` parameter, which multiplies any disagreement
+    /// between them into a note window instead of leaving it cosmetic.
+    nonisolated static let fallbackTempo = Transport.defaultTempo
+
+    /// The tempo the Workstation's Play PREFLIGHT judges a region at — a NON-OBSERVED mirror
+    /// of the live tempo, written by exactly one subscriber in `EchoelmusicApp`
+    /// (`transport.onTempoChange(id: "timeline.preflight")`).
+    ///
+    /// ⭐ WHY A MIRROR AND NOT A READ (#1439). `canPlay` needs the live tempo to derive a
+    /// legacy region's content offset, and the only caller that can supply it is a SwiftUI
+    /// `body`. `PatternEngine.tempo` and `Transport.tempo` are BOTH `@Observable` and
+    /// non-ignored, so reading either in `body` would subscribe the Workstation plate —
+    /// which `EchoelStudioView.dropdownContent` evaluates in the ROOT body permanently since
+    /// #479 — to a value that glides at ~20 Hz. That is the 10.76.41/50 menu-freeze
+    /// ship-blocker with a fourth producer, and `WorkstationView`'s own header names
+    /// `beatPlayer.pattern` as the thing it must never read in `body`. `@ObservationIgnored`
+    /// here is what lets the read stay free.
+    ///
+    /// ⚠️ IT EQUALS `pattern.tempo`, MEASURED RATHER THAN ASSUMED, and the measurement is
+    /// already in the tree: `EchoelmusicApp`'s midi-clock block records that
+    /// `Transport.setTempo` has exactly SIX production callers, all `PatternEngine` relaying
+    /// its own clamped value, that the relay sits BEFORE the no-change early return, and
+    /// that `PatternEngine.defaultTempo` IS `Transport.defaultTempo` (the clamps are the
+    /// same two constants). Re-measured for this slice: all FIVE `tempo =` sites inside
+    /// `PatternEngine` are accompanied by a `transport?.setTempo` relay.
+    ///
+    /// ⚠️ TWO WAYS IT CAN DRIFT, both latent and both named so the next reader can check
+    /// rather than trust: a SECOND writer to this property (there must never be one —
+    /// `Transport.setTempo` only re-notifies on a real move, so a drifted subscriber never
+    /// self-heals, which that method's own comment states), and a `PatternEngine.setTempo`
+    /// issued before `pattern.transport` is wired (nothing does that today). Drift here
+    /// costs a legacy region's window, never the clock.
+    @ObservationIgnored public var preflightTempo: Double = Transport.defaultTempo
+
     @ObservationIgnored private var cursor = TimelinePlaybackCursor()
     @ObservationIgnored private var doc = TimelineDocument()
     @ObservationIgnored private var rollLane: UUID?
@@ -274,10 +311,31 @@ public final class TimelineRegionPlayer {
     /// because no body could have fixed it — the truth was not in the argument (§3).
     ///
     /// `clips` is `ClipStore.filledClips` at both call sites: the store stays the one clip
-    /// owner (§8), and taking the VALUES rather than the store keeps this pure, `nonisolated`
-    /// and drivable by a guard that must never construct an App-Group-backed store.
-    nonisolated static func canPlay(_ document: TimelineDocument, clips: [Clip]) -> Bool {
-        firstExecutableRegion(in: document, clips: clips) != nil
+    /// owner (§8), and taking the VALUES rather than the store keeps this a pure function
+    /// drivable by a guard that must never construct an App-Group-backed store.
+    ///
+    /// ⭐ WHAT IT PROVES, STATED AT ITS NARROWEST (#1439): the CURRENT scheduler can reach at
+    /// least one region whose source RESOLVES and whose current executor has content to
+    /// process. It does NOT prove that a sound is audible — not that the media decodes, not
+    /// that the mixer gain is above zero, not that a route exists, not that the hardware is
+    /// healthy. Those are runtime and device truths and they stay there. The claim is about
+    /// the CLOCK: pressing Play will put something into an engine, rather than starting a
+    /// transport over nothing.
+    ///
+    /// ⛔ IT IS `@MainActor` SINCE #1439 AND THAT IS A DELIBERATE TRADE, NOT AN OVERSIGHT.
+    /// The #1438 form was `nonisolated` and paid for it with a lie: it decided an audio
+    /// region from `clip.mediaRef` being a non-empty STRING, because reaching the real
+    /// resolver would have meant touching `@MainActor` state. Taking the truthful dependency
+    /// costs the isolation annotation and nothing else — the function still owns no state,
+    /// still allocates no store, and a guard drives it by marking its own test method
+    /// `@MainActor`. A convenient signature that cannot answer the question is worth less
+    /// than an inconvenient one that can (§3).
+    static func canPlay(_ document: TimelineDocument,
+                        clips: [Clip],
+                        bpm: Double,
+                        resolveAudio: (UUID) -> URL?) -> Bool {
+        firstExecutableRegion(in: document, clips: clips,
+                              bpm: bpm, resolveAudio: resolveAudio) != nil
     }
 
     /// The first region this document could actually execute, or `nil` when there is none.
@@ -291,11 +349,24 @@ public final class TimelineRegionPlayer {
     ///   · a clip whose kind does not match its lane's — a MIDI lane holding an audio clip
     ///     loads no notes, an audio lane holding a MIDI clip resolves no URL
     ///   · a clip that resolves but carries nothing this engine would execute (below)
+    ///   · a region the transport's grid never lands in (→ `TimelineScheduling.isSampleable`)
+    ///
+    /// ⭐ THE SCHEDULABILITY GATE IS FIRST, AND IT IS THE ONE REJECTION THAT IS ABOUT THE
+    /// ENGINE RATHER THAN THE CONTENT (#1439). Everything else here asks "is there something
+    /// to play"; this asks "can the player ever LOOK". `laneEvent` compares the active region
+    /// at two grid ticks, the grid is `ticksPerTransportStep` apart, and a region whose
+    /// half-open span contains no grid tick is therefore invisible to it forever — full of
+    /// notes, resolvable, on a driven lane, and unreachable. It runs first because it is the
+    /// cheapest of the four and needs no clip lookup.
     ///
     /// Short-circuits on the FIRST executable region: one is the whole question, and the
     /// song loops, so position is irrelevant — a region at bar 90 is as playable as bar 1.
-    nonisolated static func firstExecutableRegion(in document: TimelineDocument,
-                                                  clips: [Clip]) -> TimelineRegion? {
+    /// That short-circuit is also what keeps the audio resolver's file probes bounded: a
+    /// song whose first MIDI part has notes never touches the filesystem at all.
+    static func firstExecutableRegion(in document: TimelineDocument,
+                                      clips: [Clip],
+                                      bpm: Double,
+                                      resolveAudio: (UUID) -> URL?) -> TimelineRegion? {
         guard !document.regions.isEmpty else { return nil }
         var driven: [UUID: ClipKind] = [:]
         let engineKinds = ClipKind.timelineEngineKinds
@@ -308,9 +379,11 @@ public final class TimelineRegionPlayer {
         var byID: [UUID: Clip] = [:]
         for clip in clips where byID[clip.id] == nil { byID[clip.id] = clip }
         return document.regions.first { region in
-            guard let laneKind = driven[region.laneID],
+            guard TimelineScheduling.isSampleable(region),
+                  let laneKind = driven[region.laneID],
                   let clip = byID[region.clipID] else { return false }
-            return isExecutable(region: region, onLaneOfKind: laneKind, clip: clip)
+            return isExecutable(region: region, onLaneOfKind: laneKind, clip: clip,
+                                bpm: bpm, resolveAudio: resolveAudio)
         }
     }
 
@@ -347,22 +420,30 @@ public final class TimelineRegionPlayer {
     /// `clip.kind` guard flipped NO claim, i.e. it was doing nothing the content check was
     /// not already doing — except on a clip carrying BOTH, where it would have refused
     /// something the loader plays (#364).
-    nonisolated static func isExecutable(region: TimelineRegion,
-                                         onLaneOfKind laneKind: ClipKind,
-                                         clip: Clip) -> Bool {
+    ///
+    /// ⭐ AND THE AUDIO BRANCH NOW ASKS THE RESOLVER, WHICH IS THE WIRING SLICE #1438 SAID IT
+    /// WAS DEFERRING (#1439). Its own note read: *"an audio-ONLY song whose media file has
+    /// gone missing since it was saved still offers Play and starts a silent transport.
+    /// Closing that needs the resolver on BOTH sides of one predicate, which is a wiring
+    /// slice, not this one."* It is this one. `resolveAudio` IS the closure
+    /// `EchoelmusicApp` injects into `AudioLanePlayer` — reached through
+    /// `AudioLanePlayer.resolvedURL(forClipID:)`, not re-implemented — so the question the
+    /// button asks and the question `prime`/`apply` ask are the SAME call on the same input.
+    /// A non-empty `mediaRef` was never evidence of a file; it is a string a deleted,
+    /// moved, or foreign-install recording leaves behind.
+    static func isExecutable(region: TimelineRegion,
+                             onLaneOfKind laneKind: ClipKind,
+                             clip: Clip,
+                             bpm: Double,
+                             resolveAudio: (UUID) -> URL?) -> Bool {
         switch laneKind {
         case .midi:
-            return !executableNotes(of: clip, in: region).isEmpty
+            return !executableNotes(of: clip, in: region, bpm: bpm).isEmpty
         case .audio:
-            // The audio chain is clip → `mediaRef` → `MediaLibrary.resolveRef` → sink. This
-            // answers the DOCUMENT half. The FILE half is device state and is deliberately
-            // not `stat()`ed here: the Workstation asks this predicate from a SwiftUI body,
-            // and the engine already degrades correctly (`AudioLanePlayer` skips a region
-            // whose URL does not resolve). Stated rather than papered over (§"honest
-            // limits"): an audio-ONLY song whose media file has gone missing since it was
-            // saved still offers Play and starts a silent transport. Closing that needs the
-            // resolver on BOTH sides of one predicate, which is a wiring slice, not this one.
-            return !(clip.mediaRef?.isEmpty ?? true)
+            // `region.clipID`, not `clip.id`, although the lookup makes them equal: the
+            // runtime call is `resolveURL(region.clipID)` at all three `AudioLanePlayer`
+            // sites, and a predicate that mirrors a call should mirror its ARGUMENT too.
+            return resolveAudio(region.clipID) != nil
         case .video, .visual:
             // Unreachable while `timelineEngineKinds` excludes them — exhaustive on purpose,
             // so adding a kind to that set can never silently inherit "executable". TWO
@@ -378,19 +459,27 @@ public final class TimelineRegionPlayer {
     /// `RegionNoteWindow` call, so the predicate and the player cannot disagree about what
     /// "has content" means.
     ///
-    /// ⚠️ ONE DELIBERATE DIFFERENCE, AND IT IS A SUPERSET. `loadClip` falls back to
-    /// `RegionNoteWindow.offsetTicks(contentOffsetSeconds:bpm:)` when `contentOffsetTicks`
-    /// is 0 — which needs a tempo this pure function does not have, and MUST not have, or
-    /// the Play button would blink in and out as the body drives the tempo. A legacy
-    /// seconds-trimmed MIDI region is therefore judged at offset 0: the WIDEST window, so
-    /// the residual error can only be "offered a start for content the trim would have
-    /// skipped", never "refused a song that plays" (#364). Measured: no production path
-    /// writes a non-zero `contentOffsetSeconds` onto a MIDI region — `AudioClipFactory` is
-    /// the only writer and it builds `.audio` clips.
-    nonisolated static func executableNotes(of clip: Clip, in region: TimelineRegion) -> [Note] {
+    /// ⛔ THERE USED TO BE A DELIBERATE DIFFERENCE HERE AND IT WAS A HOLE, NOT A SUPERSET
+    /// (#1439). #1438 judged a legacy seconds-trimmed region at offset 0 and argued the
+    /// residual error could only be "offered a start for content the trim would have
+    /// skipped, never refused a song that plays". The first half of that IS the defect this
+    /// predicate exists to prevent — a start over content the loader then windows away is a
+    /// silent transport, which is precisely what "offered a start" means here. Both sides
+    /// now derive the offset from `RegionNoteWindow.effectiveOffsetTicks`, the ONE
+    /// derivation, so there is no residual left to argue about.
+    ///
+    /// ⚠️ ITS PREMISE ALSO DID NOT SURVIVE RE-MEASUREMENT. "No production path writes a
+    /// non-zero `contentOffsetSeconds` onto a MIDI region" is true of today's WRITERS and
+    /// says nothing about today's DOCUMENTS: `TimelineRegion.init(from:)` decodes the
+    /// seconds field of any project saved before the M1b tick twin existed, and
+    /// `contentOffsetTicks` decodes as 0 for exactly those. That is the #527 shape — a
+    /// capability with no producer left, whose persisted DATA still arrives — and it is
+    /// why a branch nothing writes is still a branch that runs.
+    static func executableNotes(of clip: Clip, in region: TimelineRegion,
+                                bpm: Double) -> [Note] {
         RegionNoteWindow.windowed(
             notes: clip.melody?.notes ?? [],
-            offsetTicks: RegionNoteWindow.stepAligned(region.contentOffsetTicks),
+            offsetTicks: RegionNoteWindow.effectiveOffsetTicks(of: region, bpm: bpm),
             lengthTicks: region.lengthTicks)
     }
 
@@ -413,7 +502,13 @@ public final class TimelineRegionPlayer {
         // ONE definition (#416/#1438): the control the user tapped asked this exact
         // call with this exact argument, so an enabled button can never reach a `return`
         // here — and a document whose regions point at nothing can never reach the clock.
-        guard Self.canPlay(document, clips: clips.filledClips) else { return }
+        // #1439: `pattern.tempo` is the LIVE tempo, the same value `loadClip` reads a few
+        // lines later; the button asked with `preflightTempo`, which mirrors it through the
+        // one relay (see that property). `audioLanes` is nil until the app wires it, and a
+        // nil resolver refusing every audio region is correct — unwired means unplayable.
+        guard Self.canPlay(document, clips: clips.filledClips, bpm: pattern.tempo,
+                           resolveAudio: { self.audioLanes?.resolvedURL(forClipID: $0) })
+        else { return }
         self.doc = document
         self.clips = clips
         self.pattern = pattern
@@ -481,7 +576,7 @@ public final class TimelineRegionPlayer {
         loadRollRegion(at: anchor)
         pianoRoll?.setTimelineAutomationTick(anchor)
         primeSecondaryLanes(at: anchor)
-        audioLanes?.prime(in: doc, atTick: anchor, bpm: pattern?.tempo ?? 120)
+        audioLanes?.prime(in: doc, atTick: anchor, bpm: pattern?.tempo ?? Self.fallbackTempo)
         log.log(.info, category: .audio, "timeline: relocate to tick \(anchor)")
     }
 
@@ -586,7 +681,7 @@ public final class TimelineRegionPlayer {
         // but its scheduled one-shot segment is finite/out of phase — the lane
         // must be force-restarted at the wrapped position (audio review HIGH 1).
         if wrapped {
-            audioLanes?.prime(in: doc, atTick: newTick, bpm: pattern?.tempo ?? 120)
+            audioLanes?.prime(in: doc, atTick: newTick, bpm: pattern?.tempo ?? Self.fallbackTempo)
             // S3a: `prime` warms every lane's files but SKIPS overridden lanes, so a
             // launched audio loop whose boundary coincides with the song wrap would
             // lose its re-trigger there (one silent bar per song loop, audio/MIDI out
@@ -594,10 +689,10 @@ public final class TimelineRegionPlayer {
             // anchors were just shifted into — `loopWrapped` re-fires a boundary-aligned
             // segment and leaves a spanning one playing (audio-thread review).
             audioLanes?.applyWrappedOverrides(in: doc, fromTick: lastTick - loopTicks,
-                                              toTick: newTick, bpm: pattern?.tempo ?? 120)
+                                              toTick: newTick, bpm: pattern?.tempo ?? Self.fallbackTempo)
         } else {
             audioLanes?.apply(in: doc, fromTick: lastTick, toTick: newTick,
-                              bpm: pattern?.tempo ?? 120)
+                              bpm: pattern?.tempo ?? Self.fallbackTempo)
         }
         // Feed the arrangement automation the absolute playhead BEFORE the roll's
         // onTick chain reaches AutomationPlayer.applyStep (cycle 5). loadClip above
@@ -650,12 +745,11 @@ public final class TimelineRegionPlayer {
         // (pre-M1b, ticks == 0 but seconds set) fall back to the conversion at the
         // current tempo. Step-aligned either way: the roll is a step-grid
         // instrument, an off-grid window would shift every note off the trigger grid.
-        let bpm = pattern?.tempo ?? 120
-        let rawOffset = region.contentOffsetTicks > 0
-            ? region.contentOffsetTicks
-            : RegionNoteWindow.offsetTicks(contentOffsetSeconds: region.contentOffsetSeconds,
-                                           bpm: bpm)
-        let offset = RegionNoteWindow.stepAligned(rawOffset)
+        // #1439: ONE derivation, shared with the Play predicate (`executableNotes`) and with
+        // `windowedBars` below. This block used to spell the tick-twin-else-seconds rule out
+        // inline, twice, and the predicate spelled a THIRD, different version.
+        let bpm = pattern?.tempo ?? Self.fallbackTempo
+        let offset = RegionNoteWindow.effectiveOffsetTicks(of: region, bpm: bpm)
         let windowed = RegionNoteWindow.windowed(notes: clip.melody?.notes ?? [],
                                                  offsetTicks: offset,
                                                  lengthTicks: region.lengthTicks)
@@ -685,12 +779,8 @@ public final class TimelineRegionPlayer {
     /// the pump's %16 fold superimposed every bar of a multi-bar clip.
     private func windowedBars(for region: TimelineRegion) -> [[Note]] {
         let clipNotes = clips?.clip(id: region.clipID)?.melody?.notes ?? []
-        let bpm = pattern?.tempo ?? 120
-        let rawOffset = region.contentOffsetTicks > 0
-            ? region.contentOffsetTicks
-            : RegionNoteWindow.offsetTicks(contentOffsetSeconds: region.contentOffsetSeconds,
-                                           bpm: bpm)
-        let offset = RegionNoteWindow.stepAligned(rawOffset)
+        let bpm = pattern?.tempo ?? Self.fallbackTempo
+        let offset = RegionNoteWindow.effectiveOffsetTicks(of: region, bpm: bpm)   // #1439: one derivation
         let windowed = RegionNoteWindow.windowed(notes: clipNotes,
                                                  offsetTicks: offset,
                                                  lengthTicks: region.lengthTicks)
@@ -927,7 +1017,7 @@ public final class TimelineRegionPlayer {
         for laneID in launch.overriddenLaneIDs where laneID != rollLane {
             reapplyLaunched(laneID: laneID, atTick: lastTick)
         }
-        audioLanes?.prime(in: doc, atTick: lastTick, bpm: pattern?.tempo ?? 120)
+        audioLanes?.prime(in: doc, atTick: lastTick, bpm: pattern?.tempo ?? Self.fallbackTempo)
         log.log(.info, category: .audio, "timeline: structure edit pulled into playback at tick \(lastTick)")
     }
 
@@ -972,7 +1062,7 @@ public final class TimelineRegionPlayer {
     /// separately; a region that vanished between request and boundary falls silently
     /// back to the arrangement.
     private func applyLaunchTransitions(_ transitions: [LaunchTransition], atTick tick: Int, step: Int) {
-        let bpm = pattern?.tempo ?? 120
+        let bpm = pattern?.tempo ?? Self.fallbackTempo
         for t in transitions {
             // S2 (audio-lane launch): an AUDIO lane's transition drives the
             // AudioLanePlayer override (loop the launched segment / hand back to the

@@ -46,9 +46,18 @@ public struct MelodyClip: Codable, Sendable, Equatable {
 /// What a clip carries. The retired DMMW plan's main view WAS a clip-typed timeline
 /// (audio · MIDI · video · visual) — `ClipKind` is that type, kept because clips are
 /// persisted. `.midi` is the existing pattern clip (melody — the drums went with
-/// #166/#167) and the only kind that PLAYS today; audio/video/visual are scaffolding,
-/// surfaced honestly (`isPlayable`). DMMW_ARCHITECTURE.md is superseded history;
-/// the living boundary is docs/dev/PRODUCT_DEFINITION.md.
+/// #166/#167); `.audio` has a shipped timeline engine too (`TimelineAudioSink`, driven by
+/// `TimelineRegionPlayer` — see `timelineEngineKinds`), though no ordinary surface can
+/// CREATE an audio region today, so the kind is reachable by decode rather than by use.
+/// video/visual are scaffolding. `isPlayable` is where that boundary is surfaced.
+/// DMMW_ARCHITECTURE.md is superseded history; the living boundary is
+/// docs/dev/PRODUCT_DEFINITION.md.
+///
+/// ⛔ THIS HEADER SAID "`.midi` … the only kind that PLAYS today" UNTIL #1439, TWO COMMITS
+/// AFTER #1438 CORRECTED THE SET TWELVE LINES BELOW IT. The #456 pull-along defect inside
+/// ONE FILE: the fix went to the member a session was editing, and the type's own summary —
+/// the line a reader meets FIRST — kept the retracted claim. Correcting a fact means
+/// correcting every home it has, and the nearest home is the easiest one to miss.
 public enum ClipKind: String, Codable, Sendable, CaseIterable {
     case midi, audio, video, visual
 

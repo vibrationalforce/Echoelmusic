@@ -878,6 +878,19 @@ struct EchoelmusicApp: App {
                 transport.onTempoChange(id: "metronome") { [weak metronome] bpm in
                     metronome?.bpm = bpm
                 }
+                // #1439: the Workstation's Play preflight must judge a legacy seconds-trimmed
+                // MIDI region at the SAME offset `loadClip` will derive, and that derivation
+                // needs the live tempo. The only caller is a SwiftUI `body`, and both
+                // `PatternEngine.tempo` and `Transport.tempo` are `@Observable` — reading
+                // either there would subscribe the always-evaluated Studio root to a value
+                // that glides at ~20 Hz (the menu-freeze law). So the tempo is PUSHED into an
+                // `@ObservationIgnored` mirror instead, exactly like the click above, and the
+                // body read costs nothing. This must stay the ONLY writer of that property:
+                // `setTempo` re-notifies solely on a real move, so a drifted mirror would
+                // never heal — the same constraint the click carries.
+                transport.onTempoChange(id: "timeline.preflight") { [weak timelinePlayer] bpm in
+                    timelinePlayer?.preflightTempo = bpm
+                }
                 #if canImport(CoreHaptics)
                 // Eyes-free transport: every quarter-note pulses the body (no-op
                 // until the user arms haptics). Lowest-priority subscriber so it

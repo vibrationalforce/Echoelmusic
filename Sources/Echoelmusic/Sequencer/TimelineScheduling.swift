@@ -14,6 +14,12 @@
 // shorter than one step that falls entirely between two steps is not triggered —
 // the same step resolution the 16-step sequencer already works at. Regions are
 // bar/beat sized in practice, so this is not a real limitation.
+//
+// ⭐ SINCE #1439 THAT PARAGRAPH IS ALSO A FUNCTION: `isSampleable(_:)`. It had been true
+// and unasked for a year — the Workstation's Play button enabled itself on a region the
+// scheduler provably never looks at, which is a silent transport start rather than a
+// rounding detail. A documented limit that no caller can query is a limit only the author
+// knows about; the predicate is how the UI finds out.
 
 import Foundation
 
@@ -47,6 +53,38 @@ public enum TimelineScheduling {
             .enumerated()
             .max(by: { ($0.element.startTick, $0.offset) < ($1.element.startTick, $1.offset) })?
             .element
+    }
+
+    /// The first tick of the transport's SAMPLING GRID at or after `tick`. The player never
+    /// asks about an arbitrary position: `TimelinePlaybackCursor.advance` returns
+    /// `(bar * 16 + step) * ticksPerTransportStep` and `play`/`seek` fold their start to a
+    /// BAR, so every tick this file is ever handed is a multiple of `ticksPerTransportStep`.
+    /// Named rather than inlined because it is the grid's ONE definition (#416) and the
+    /// schedulability rule below is meaningless without it.
+    public static func firstSampleTick(atOrAfter tick: Int) -> Int {
+        let step = TimelineTime.ticksPerTransportStep
+        let floored = Swift.max(0, tick)
+        return (floored + step - 1) / step * step
+    }
+
+    /// Whether the transport's grid ever lands INSIDE this region — i.e. whether
+    /// `activeRegion` can ever return it. **A region no sample tick falls in is not
+    /// playable, however much content it holds** (#1439).
+    ///
+    /// ⚠️ THIS IS NOT A NEW POLICY; IT IS THIS FILE'S OWN HEADER, MADE ASKABLE. The header
+    /// has said since P2 that "a region shorter than one step that falls entirely between two
+    /// steps is not triggered", and the Play predicate had no way to ask it — so a one-tick
+    /// region at tick 121 enabled the button and then never loaded. Phase 4c makes the UI
+    /// honest about the scheduler that EXISTS; it does not raise the resolution, and raising
+    /// it would be a transport change, not a predicate change.
+    ///
+    /// EXCLUSIVE END, deliberately and by REUSE rather than by restatement: the test below is
+    /// `activeRegion`'s own containment (`t >= startTick && t < endTick`) applied to the first
+    /// candidate tick. A region ending exactly ON a sample boundary does not own that tick —
+    /// the next region does — so `[119, 120)` is NOT schedulable while `[120, 121)` is.
+    public static func isSampleable(_ region: TimelineRegion) -> Bool {
+        let t = firstSampleTick(atOrAfter: region.startTick)
+        return t >= region.startTick && t < region.endTick
     }
 
     /// Whether the lane's active region CHANGED moving from `fromTick` to `toTick` —
