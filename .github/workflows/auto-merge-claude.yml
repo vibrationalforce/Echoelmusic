@@ -5,6 +5,39 @@
 # then dispatch TestFlight workflow for all Apple platforms.
 # Note: GITHUB_TOKEN pushes don't trigger other workflows, so we dispatch
 # TestFlight directly from this workflow after a successful merge.
+#
+# ---------------------------------------------------------------------------
+# #1405 (founder 2026-09-21) — THIS MERGE NOW WAITS FOR A GATE. It did not
+# before, and that was the finding #683 recorded on 2026-08-21: no `needs:`,
+# no `workflow_run:`, no conclusion read anywhere, so the compile check, the
+# pipeline and this merge ran in PARALLEL and the merge won every time.
+#
+# It was never a hypothesis. #681 failed `Xcode Compile Check` (run
+# 32457537356, `f61be63`) and reached `origin/main` regardless — `main` did not
+# compile for ten minutes. It happened again on 2026-09-20 (`edc37a4a5`, nine
+# minutes). The damage is to DEVELOPERS, not users: the TestFlight dispatch
+# below is `if: false`, so an unverified commit reaches `main` and never a
+# phone — but anyone who pulls inside that window has no working test bundle,
+# and therefore not one working guard of this repo.
+#
+# WHY THIS IS A POLL AND NOT A `needs:` OR A `workflow_run:` TRIGGER, which is
+# the shape anyone would reach for first. `Echoelmusic CI/CD Pipeline` reports
+# `failure` on EVERY push because of #396, so its CONCLUSION carries no
+# information at all and a dependency on it would block every merge forever.
+# The decisive signal is one STEP inside that run, `Build for Testing` — which
+# is exactly what this repo's own reading rule says (`Tests/CISmoke/CLAUDE.md`
+# section 5, and `.claude/rules/context.md` section 3: "read the job steps").
+# A step conclusion is not reachable from `needs:`; it has to be asked for. So
+# the gate below polls the API: the compile check by its conclusion, the
+# pipeline by that one step.
+#
+# AND IT ONLY APPLIES WHERE THERE IS SOMETHING TO VERIFY. Both gate workflows
+# fire on `Sources/**`, `Tests/**`, `Package.swift`, `project.yml` and their
+# OWN file — so a push touching only some other workflow triggers this merge
+# and NEITHER gate, and waiting for a run that can never start would deadlock
+# exactly the commits that repair CI. The scope step below asks whether the
+# merge changes code; if it does not, `main` compiles afterwards exactly as it
+# did before and there is nothing for a gate to say.
 # =============================================================================
 name: Auto-Merge Claude Branch
 
@@ -23,11 +56,23 @@ permissions:
   contents: write
   actions: write
 
+# Serialises merges to `main`. It was not needed while the job took seconds; it
+# is needed now that the job can WAIT up to 45 minutes for a gate, because two
+# pushes five minutes apart would otherwise hold two merge jobs open against the
+# same branch. `cancel-in-progress: false` on purpose — cancelling the older one
+# would drop a commit that had already passed its gates.
+concurrency:
+  group: auto-merge-main
+  cancel-in-progress: false
+
 jobs:
   auto-merge:
     name: Auto-Merge to Main
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # Was 10. The gate below waits for a macOS compile that routinely takes 15
+    # minutes and is allowed 40 in its own workflow; a 10-minute ceiling here
+    # would have turned every slow-but-green build into a failed merge.
+    timeout-minutes: 60
 
     steps:
       - name: Checkout main
@@ -57,6 +102,122 @@ jobs:
             exit 1
           fi
 
+      - name: Does this merge change code?
+        if: steps.fetch.outputs.commit_exists == 'true'
+        id: scope
+        run: |
+          set -uo pipefail
+          echo "=============================================="
+          echo "  SCOPE: is there anything for a gate to say?"
+          echo "=============================================="
+          # HEAD is `main` (this job checks main out), so the diff to the pushed
+          # commit is exactly the content the merge would bring. That asks the
+          # real question and needs no merge-base — which a shallow fetch of the
+          # branch might not even contain.
+          CHANGED=$(git diff --name-only HEAD..${{ github.sha }} 2>/dev/null || echo "")
+          echo "$CHANGED"
+          echo ""
+          if printf '%s\n' "$CHANGED" \
+               | grep -Eq '^(Sources/|Tests/|Package\.swift$|project\.yml$)'; then
+            echo "touches_code=true" >> $GITHUB_OUTPUT
+            echo "[GATE] This merge changes code — both gates must be green."
+          else
+            echo "touches_code=false" >> $GITHUB_OUTPUT
+            echo "[GATE] No code change. Neither gate workflow can even start on"
+            echo "       this push, and main compiles afterwards exactly as before."
+          fi
+
+      - name: Wait for the gates that decide whether main compiles
+        if: steps.fetch.outputs.commit_exists == 'true' && steps.scope.outputs.touches_code == 'true'
+        id: gates
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          echo "=============================================="
+          echo "  WAITING FOR THE TWO DECISIVE GATES"
+          echo "=============================================="
+          START=$(date +%s)
+          DEADLINE=$(( START + 45 * 60 ))
+          # A gate that has not even produced a RUN after this long is not slow,
+          # it is absent — a path filter kept it out, or it was never queued.
+          # Absent is REFUSED, never assumed green.
+          GRACE=300
+          compile=""
+          testbuild=""
+
+          while :; do
+            elapsed=$(( $(date +%s) - START ))
+            runs=$(gh api "repos/$REPO/actions/runs?head_sha=$SHA&per_page=100" 2>/dev/null \
+                   || echo '{"workflow_runs":[]}')
+
+            # --- gate 1: `Xcode Compile Check`, read by CONCLUSION. It builds
+            # Sources/ alone and its conclusion is honest, unlike the pipeline's.
+            if [ -z "$compile" ]; then
+              compile=$(printf '%s' "$runs" | jq -r '
+                [.workflow_runs[] | select(.name == "Xcode Compile Check")]
+                | sort_by(.run_started_at) | last
+                | select(. != null and .status == "completed")
+                | .conclusion // empty')
+              seen=$(printf '%s' "$runs" | jq -r '
+                [.workflow_runs[] | select(.name == "Xcode Compile Check")] | length')
+              if [ -z "$compile" ] && [ "$seen" = "0" ] && [ "$elapsed" -gt "$GRACE" ]; then
+                compile="never-ran"
+              fi
+            fi
+
+            # --- gate 2: `Echoelmusic CI/CD Pipeline`, read by STEP. #396 makes
+            # the RUN red on every push, so the run's own conclusion says nothing;
+            # `Build for Testing` is the step that proves the test bundle compiles.
+            # The matrix may hold several — every one of them must be success.
+            if [ -z "$testbuild" ]; then
+              ci=$(printf '%s' "$runs" | jq -r '
+                [.workflow_runs[] | select(.name == "Echoelmusic CI/CD Pipeline")]
+                | sort_by(.run_started_at) | last | .id // empty')
+              ci_status=$(printf '%s' "$runs" | jq -r '
+                [.workflow_runs[] | select(.name == "Echoelmusic CI/CD Pipeline")]
+                | sort_by(.run_started_at) | last | .status // empty')
+              if [ -n "$ci" ]; then
+                jobs=$(gh api "repos/$REPO/actions/runs/$ci/jobs?per_page=100" 2>/dev/null \
+                       || echo '{"jobs":[]}')
+                testbuild=$(printf '%s' "$jobs" | jq -r '
+                  [.jobs[].steps[]? | select(.name == "Build for Testing")] as $s
+                  | if ($s | length) == 0 then empty
+                    elif ($s | map(select(.conclusion == null)) | length) > 0 then empty
+                    elif ($s | map(select(.conclusion != "success")) | length) > 0 then "failure"
+                    else "success" end')
+                # The run finished and the step never reported: an earlier job
+                # failed and this one was skipped. Nothing was built.
+                if [ -z "$testbuild" ] && [ "$ci_status" = "completed" ]; then
+                  testbuild="never-ran"
+                fi
+              elif [ "$elapsed" -gt "$GRACE" ]; then
+                testbuild="never-ran"
+              fi
+            fi
+
+            echo "  t+${elapsed}s  compile=${compile:-pending}  build-for-testing=${testbuild:-pending}"
+            if [ -n "$compile" ] && [ -n "$testbuild" ]; then break; fi
+            if [ "$(date +%s)" -ge "$DEADLINE" ]; then
+              compile="${compile:-timeout}"
+              testbuild="${testbuild:-timeout}"
+              break
+            fi
+            sleep 30
+          done
+
+          echo "compile_check=$compile" >> $GITHUB_OUTPUT
+          echo "build_for_testing=$testbuild" >> $GITHUB_OUTPUT
+          echo ""
+          if [ "$compile" = "success" ] && [ "$testbuild" = "success" ]; then
+            echo "[OK] Both gates green. Merging."
+          else
+            echo "::error::REFUSING TO MERGE ${SHA}. Xcode Compile Check=${compile}; CI/CD step 'Build for Testing'=${testbuild}. The commit stays on its branch — fix it there and push again. This is the repair of #683: before it, an unverified commit reached main anyway."
+            exit 1
+          fi
+
       - name: Merge to main
         if: steps.fetch.outputs.commit_exists == 'true'
         id: merge
@@ -78,24 +239,43 @@ jobs:
           git diff --name-only HEAD..${{ github.sha }} 2>/dev/null || echo "(could not diff)"
           echo ""
 
-          # Try merge
-          if git merge ${{ github.sha }} --no-edit -m "fix: auto-merge from ${{ github.ref_name }}"; then
+          # RETRIED, because the gate above can hold this job for up to 45
+          # minutes and `main` may have moved meanwhile (the docs auto-merge, or
+          # a branch that finished first). Before #1405 this job took seconds and
+          # a stale checkout was not a realistic failure; now it is the ordinary
+          # case. Each attempt re-reads `main`, so the merge is always computed
+          # against what is actually there.
+          merged=""
+          for attempt in 1 2 3; do
             echo ""
-            echo "Merge successful, pushing to main..."
-            echo "New HEAD: $(git rev-parse HEAD)"
+            echo "--- attempt $attempt ---"
+            git fetch origin main
+            git reset --hard origin/main
 
-            if git push origin main 2>&1; then
-              echo "merge_status=success" >> $GITHUB_OUTPUT
-              echo "[OK] Pushed to main successfully!"
-            else
-              echo "merge_status=push_failed" >> $GITHUB_OUTPUT
-              echo "[ERROR] Push to main failed"
+            if ! git merge ${{ github.sha }} --no-edit \
+                 -m "fix: auto-merge from ${{ github.ref_name }}"; then
+              echo "merge_status=conflict" >> $GITHUB_OUTPUT
+              echo "[ERROR] Merge failed - conflicts detected"
+              git merge --abort 2>/dev/null || true
               exit 1
             fi
+
+            echo "Merge successful, pushing to main..."
+            echo "New HEAD: $(git rev-parse HEAD)"
+            if git push origin main 2>&1; then
+              merged="yes"
+              break
+            fi
+            echo "[WARN] Push rejected — main moved. Re-reading and retrying."
+            sleep 5
+          done
+
+          if [ -n "$merged" ]; then
+            echo "merge_status=success" >> $GITHUB_OUTPUT
+            echo "[OK] Pushed to main successfully!"
           else
-            echo "merge_status=conflict" >> $GITHUB_OUTPUT
-            echo "[ERROR] Merge failed - conflicts detected"
-            git merge --abort 2>/dev/null || true
+            echo "merge_status=push_failed" >> $GITHUB_OUTPUT
+            echo "[ERROR] Push to main failed three times"
             exit 1
           fi
 
@@ -137,5 +317,8 @@ jobs:
           echo "| Pushed Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Source Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Commit Found | ${{ steps.fetch.outputs.commit_exists == 'true' && 'Yes' || 'No' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Changes code | ${{ steps.scope.outputs.touches_code || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Xcode Compile Check | ${{ steps.gates.outputs.compile_check || 'not required' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CI/CD Build for Testing | ${{ steps.gates.outputs.build_for_testing || 'not required' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Merge Status | ${{ steps.merge.outputs.merge_status || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| TestFlight | ${{ steps.merge.outputs.merge_status == 'success' && 'Dispatched' || 'Not triggered' }} |" >> $GITHUB_STEP_SUMMARY

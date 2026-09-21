@@ -7148,3 +7148,73 @@ nachführen", sondern: **ein ⛔-Vermerk am Verbraucher erreicht die Zeile nicht
 Sitzung ZUERST liest.** Die DDSP-Tabelle ist die Stelle, aus der Store-Text, Website und
 Panel-Kopie ihre Bio-Behauptungen holen; die #496-Scheibe musste die Fläche reparieren, die
 genau daraus „sieben" hätte machen können.
+
+## AG — Vier Monate ohne Gate: `auto-merge-claude.yml` (#683 → #1337 → #1405)
+
+**Ausgelagert 2026-09-21 mit #1405, weil der Befund repariert ist und seine Provenienz nicht
+mehr in die immer geladene Datei gehört (#538). Was dort steht, ist jetzt das GESETZ (welches
+Gate wie gelesen wird und warum); hier steht, wie lange es anders war und was das gekostet hat.**
+
+### AG.1 — Der Befund, wie #683 ihn am 2026-08-21 gemessen hat
+
+`auto-merge-claude.yml` feuerte auf `push` nach `claude/**` und merged **sofort** nach `main`.
+Kein `needs:`, kein `workflow_run:`-Trigger, keine fremde Conclusion gelesen — gemessen mit
+`grep -n "needs:\|workflow_run\|conclusion" .github/workflows/auto-merge-claude.yml` → nichts.
+Er KONNTE also strukturell auf nichts warten. `Xcode Compile Check`, die CI/CD-Pipeline und der
+Merge liefen parallel, und der Merge gewann. Gepusht wurde direkt (`git push origin main`); es
+gab keinen Pull Request, der die Checks dazwischengestellt hätte.
+
+⭐ **Schlimmer als die Lücke selbst war, dass der Workflow in CLAUDE.mds Tabelle „Active
+Workflows" GAR NICHT VORKAM.** Sie nannte fünf von vierzehn Dateien in `.github/workflows/`,
+und ausgerechnet die, die entscheidet, was `main` erreicht, war keine davon — genau die
+Register-Lücke, die CLAUDE.md an anderer Stelle „teurer als eine falsche Zahl" nennt: eine
+falsche Zahl kann jemand widerlegen, eine fehlende Zeile taucht nie als Frage auf.
+
+### AG.2 — Die zwei gemessenen Fenster (keine Theorie)
+
+| Commit | Was rot war | Fenster, in dem `main` nicht baute |
+|---|---|---|
+| `f61be63` (#681) | `Xcode Compile Check`, Lauf 32457537356 | ~10 Minuten, bis #682 reparierte |
+| `edc37a4a5` (#1402) | beide entscheidenden Gates, ein Concurrency-Fehler | 9 Minuten (19:33–19:42 UTC), bis #1402b |
+
+Beide standen trotzdem auf `origin/main` — belegt über `git branch -r --contains`.
+
+### AG.3 — Der Dämpfer, der zu großzügig war (#1337)
+
+Die erste Fassung des CLAUDE.md-Absatzes stellte den Befund bewusst ins Verhältnis: der
+TestFlight-Dispatch im selben Workflow steht auf `if: false` (abgeschaltet 2026-06-16 wegen
+Apples Upload-Kontingent), **ein ungetesteter Merge erreicht also `main`, aber nie einen
+Nutzer**. Das stimmt und war richtig, es dazuzuschreiben.
+
+⛔ **Es unterschlägt aber die ENTWICKLER, und das hat #1337 nachgetragen:** ein nicht bauendes
+Test-Bündel auf `main` heißt, dass für jeden, der in dem Fenster zieht, **kein einziger Wächter
+dieses Repos läuft**. Die Schwere hing also nie allein an `if: false`. **Lehre: ein Dämpfer, der
+eine Gruppe von Betroffenen nennt, behauptet implizit, es gebe keine zweite** — und die zweite
+war hier die einzige, die es überhaupt merken konnte.
+
+### AG.4 — Was die Reparatur (#1405) nicht sein durfte
+
+Founder 2026-09-21, wörtlich: *„auto-merge-claude.yml du hast das alles unter Kontrolle und
+machste das klar."* Die naheliegende Form — ein `needs:` oder ein `workflow_run:`-Trigger — ist
+**falsch und hätte jeden Merge für immer blockiert**: `Echoelmusic CI/CD Pipeline` meldet wegen
+#396 auf JEDEM Push `failure`, ihre Conclusion trägt null Information. Der einzige ehrliche
+Beleg ist **ein Schritt** in ihr, `Build for Testing` — und eine Schritt-Conclusion ist aus
+`needs:` nicht erreichbar, sie muss abgefragt werden. Deshalb ein Poll und keine Abhängigkeit.
+
+⚠️ **Zwei Nebenbefunde, die erst die Wartezeit erzeugt hat** und die beim Bauen gefunden wurden,
+nicht beim Planen: der Job stand auf `timeout-minutes: 10`, während der Compile-Check in seinem
+eigenen Workflow 40 bekommt (jeder langsame GRÜNE Build wäre ein fehlgeschlagener Merge
+geworden); und ohne `concurrency`-Gruppe hätten zwei Pushes wenige Minuten auseinander zwei
+Merge-Jobs bis zu 45 Minuten gleichzeitig offen gehalten. Beides war vorher kein Problem, weil
+der Job Sekunden dauerte. **Lehre: wer einen Schritt langsam macht, erbt jede Annahme, die
+darauf beruhte, dass er schnell war.**
+
+### AG.5 — Die Lücke, die die Reparatur BEWUSST offen lässt
+
+Beide Gate-Workflows haben Pfadfilter (`Sources/**`, `Tests/**`, `Package.swift`, `project.yml`
+plus die eigene Datei). Ein Commit, der NUR einen anderen Workflow anfasst, löst diesen Merge
+aus und **keins der beiden Gates** — auf ein Gate zu warten, das nie startet, hätte ausgerechnet
+die Commits verklemmt, die CI reparieren. Der Scope-Schritt fragt deshalb, ob der Merge Code
+ändert; tut er es nicht, kompiliert `main` danach exakt wie vorher. **Die Ausnahme ist eng
+gehalten und gepinnt** (`TheAutoMergeWaitsForTheGatesTests`, Anspruch 4): jede Erweiterung der
+Pfadliste stellt für diesen Pfad das #683-Verhalten wieder her.

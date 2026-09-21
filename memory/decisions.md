@@ -2352,3 +2352,41 @@ klingen anders, weil der gespeicherte Wert aufhört wirkungslos zu sein, und der
 absichtlich NICHT mitgeändert, sonst ist „Motor oder Default?" per Ohr nicht beantwortbar · ist
 `flowing`s Aussetzer bei sehr kleiner Dichte Atmen oder ein Loch (gemessen pre-existing, nicht
 von dieser Scheibe erzeugt).
+
+### 2026-09-21 — Der Auto-Merge nach `main` wartet auf zwei Gates, als POLL (#1405)
+
+**Entscheidung (Founder, wörtlich):** *„auto-merge-claude.yml du hast das alles unter Kontrolle
+und machste das klar."* Damit ist der seit #683 berichtete Befund freigegeben —
+`.github/workflows/**` ist founder-gated, und genau diese Datei hat er benannt.
+
+**Was falsch war:** der Merge wartete auf NICHTS. Kein `needs:`, kein `workflow_run:`, keine
+fremde Conclusion; die drei Workflows liefen parallel und der Merge gewann. Zwei gemessene
+Fenster, in denen `main` nicht kompilierte: `f61be63` (#681) zehn Minuten, `edc37a4a5` (#1402)
+neun. Der #1337-Dämpfer („erreicht nie einen Nutzer") galt nur für Nutzer: ein nicht bauendes
+Test-Bündel auf `main` heißt, dass für jeden, der in dem Fenster zieht, **kein einziger Wächter
+dieses Repos läuft**.
+
+**Warum ein POLL und kein `needs:` — das ist die eigentliche Entscheidung.** `Echoelmusic CI/CD
+Pipeline` meldet wegen #396 auf JEDEM Push `failure`; ihre Conclusion trägt null Information,
+eine Abhängigkeit darauf blockierte jeden Merge für immer. Der einzige ehrliche Beleg ist EIN
+SCHRITT in ihr (`Build for Testing`), und eine Schritt-Conclusion ist aus `needs:` nicht
+erreichbar — sie muss abgefragt werden. `Xcode Compile Check` dagegen wird über seine Conclusion
+gelesen, die ehrlich ist.
+
+**Abwesenheit ist Ablehnung.** `never-ran` und `timeout` merged nicht, und die Erfolgsbedingung
+ist eine POSITIVE Gleichheit auf beiden Werten statt einer Negation — `!= "failure"` hätte
+`never-ran`, `timeout`, `cancelled` und `skipped` durchgelassen, also jede Art, wie ein Gate
+schweigen kann.
+
+**Bewusst offen, eng gepinnt:** berührt der Merge keinen Code, läuft keins der beiden Gates
+(Pfadfilter) und der Merge geht durch — sonst verklemmte ausgerechnet ein CI-Reparatur-Commit
+auf einem Gate, das nie startet.
+
+⚠️ **Zwei Nebenbefunde, die erst die Wartezeit erzeugt hat:** `timeout-minutes: 10` → 60 (der
+Compile-Check darf in seinem eigenen Workflow 40; jeder langsame GRÜNE Build wäre sonst ein
+fehlgeschlagener Merge geworden) und eine `concurrency`-Gruppe, weil zwei Pushes wenige Minuten
+auseinander sonst zwei Merge-Jobs bis zu 45 Minuten gleichzeitig offen hielten. **Gesetz: wer
+einen Schritt langsam macht, erbt jede Annahme, die darauf beruhte, dass er schnell war.**
+
+**Nicht bewiesen:** dass die Datei gültiges YAML ist. Der Sandbox-Klassifizierer dieser Sitzung
+verweigerte jeden Bash-Zugriff auf den Pfad, auch rein lesenden; das sagt erst der nächste Push.

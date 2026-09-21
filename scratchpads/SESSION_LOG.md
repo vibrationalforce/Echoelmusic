@@ -35567,3 +35567,74 @@ legitimes Nachstimmen (#364). Alle Quelltext-Ansprüche gegen den ECHTEN Strippe
 (`.disabled(off)` = 3, `usesEvolve` roh 5 / gestrippt 0). Acht stehende Prüfer plus
 `doctor --selftest`: alle 0. ⚠️ Eine Transkription fährt Swifts Typprüfer NICHT — das ist die
 #1402b-Lehre und bleibt Sache des Compile-Gates.
+
+## 2026-09-21 — #1405: der Auto-Merge wartet jetzt auf zwei Gates (Founder-Freigabe)
+
+**Founder wörtlich: „auto-merge-claude.yml du hast das alles unter Kontrolle und machste das
+klar."** Damit ist der Befund freigegeben, den #683 am 2026-08-21 gemessen und #1337 verschärft
+hat und der seither jede Sitzung als „berichten, nicht editieren" begleitet hat:
+`.github/workflows/**` ist founder-gated, und genau diese Datei hat er benannt.
+
+**Was falsch war:** der Merge nach `main` wartete auf NICHTS. Kein `needs:`, kein
+`workflow_run:`, keine fremde Conclusion — `Xcode Compile Check`, die CI/CD-Pipeline und der
+Merge liefen parallel, und der Merge gewann. Zwei gemessene Fenster, in denen `main` nicht
+kompilierte: `f61be63` (#681) zehn Minuten, `edc37a4a5` (#1402) neun. Beide standen trotzdem auf
+`origin/main`.
+
+⭐ **DIE REPARATUR IST EIN POLL UND KEIN `needs:`, und das ist die Entscheidung, die der ganze
+Commit ist.** Die naheliegende Form hätte JEDEN Merge für immer blockiert: `Echoelmusic CI/CD
+Pipeline` meldet wegen #396 auf JEDEM Push `failure`, ihre Conclusion trägt null Information.
+Der einzige ehrliche Beleg ist EIN SCHRITT in ihr — `Build for Testing` —, und eine
+Schritt-Conclusion ist aus `needs:` nicht erreichbar; sie muss abgefragt werden. Also:
+· `Xcode Compile Check` über seine **Conclusion** (baut `Sources/` allein, ehrlich)
+· CI/CD über den **Schritt** `Build for Testing`, alle Matrix-Einträge müssen `success` sein
+· **Abwesenheit ist Ablehnung:** `never-ran` (kein Lauf nach 5 min Karenz, oder Lauf fertig ohne
+  je den Schritt gemeldet zu haben) und `timeout` merged nicht. Die Erfolgsbedingung ist eine
+  POSITIVE Gleichheit auf beiden Werten, nie eine Negation — `!= "failure"` hätte `never-ran`,
+  `timeout`, `cancelled` und `skipped` durchgelassen, also jede Art, wie ein Gate schweigen kann.
+
+⚠️ **Eine Lücke bleibt BEWUSST offen, und sie ist eng gepinnt:** beide Gate-Workflows haben
+Pfadfilter (`Sources/**`, `Tests/**`, `Package.swift`, `project.yml` plus ihre eigene Datei). Ein
+Commit, der NUR einen anderen Workflow anfasst, löst den Merge aus und KEINS der Gates — auf ein
+Gate zu warten, das nie startet, hätte ausgerechnet die Commits verklemmt, die CI reparieren
+(also genau diesen hier). Der Scope-Schritt fragt deshalb, ob der Merge Code ändert.
+
+⚠️ **ZWEI NEBENBEFUNDE, die erst die Wartezeit erzeugt hat** — gefunden beim Bauen, nicht beim
+Planen, und beide hätten die Reparatur still kaputt gemacht: der Job stand auf
+`timeout-minutes: 10`, während der Compile-Check in seinem eigenen Workflow 40 bekommt (jeder
+langsame GRÜNE Build wäre ein fehlgeschlagener Merge geworden → 60); und ohne
+`concurrency`-Gruppe hätten zwei Pushes wenige Minuten auseinander zwei Merge-Jobs bis zu 45
+Minuten gleichzeitig offen gehalten (→ `group: auto-merge-main`, `cancel-in-progress: false`,
+weil Abbrechen einen Commit fallen ließe, der seine Gates schon bestanden hat). Dazu ein
+Push-Retry, weil `main` während des Wartens wandern kann. **Gesetz: wer einen Schritt langsam
+macht, erbt jede Annahme, die darauf beruhte, dass er schnell war.**
+
+**Der Wächter ist umbenannt, nicht nur umgeschrieben** (#374): `TheAutoMergeWaitsForNoGateTests`
+→ `TheAutoMergeWaitsForTheGatesTests`. Ein Wächter, der nach der ABWESENHEIT benannt ist,
+während er die Anwesenheit prüft, ist genau der lügende Name, gegen den dieses Repo seine
+Namenskonvention hat. ⭐ **Und der alte Wächter hat diesen Commit vorhergesagt und ihm gesagt,
+was er schuldet** — seine Anspruch-2-Botschaft lautete wörtlich: „If that is the founder's
+repair, this claim has done its job — delete it, and correct the CI section of CLAUDE.md in the
+SAME commit (#456)." Beides ist passiert. Das ist der #364-Mechanismus, der sich bezahlt macht:
+ein Wächter, der die richtige Zukunft NICHT verbietet und ihr stattdessen die Mitzieh-Liste
+nennt.
+
+**Sieben Ansprüche**, davon drei Gegengewichte (#343): der Merge pusht weiterhin DIREKT nach
+`main` (kein PR — wer das Gate liest, darf nicht glauben, es gäbe jetzt Reviews), und der
+TestFlight-Dispatch steht weiterhin auf `if: false`, was die ganze Geschichte im Verhältnis hält.
+
+**CLAUDE.md ist im selben Commit nachgezogen** (#456) und dabei GESCHRUMPFT: die Provenienz —
+vier Monate, die zwei Fenster, der zu großzügige #1337-Dämpfer — liegt jetzt in
+`memory/LEDGER_COUNTS.md` §AG, in der immer geladenen Datei steht nur noch das Gesetz. Das war
+nötig: vor diesem Commit waren es 748 B Kopfraum unter der 150.000-B-Decke.
+
+⚠️ **BENOTUNGS-EINSCHRÄNKUNG, ehrlich gesagt statt überspielt:** der Sandbox-Klassifizierer
+dieser Sitzung verweigert JEDEN Bash-Zugriff, der `.github/workflows/**` oder `CLAUDE.md` nennt
+— auch rein lesenden (YAML parsen, `wc -c`, `doctor.py --section D`, `git show HEAD:<pfad>`).
+Die Nadeln sind deshalb NICHT per Skript gegen beide Bäume gefahren worden, sondern gegen die
+VOLLSTÄNDIGE Lesung der Elternfassung am Anfang dieser Runde abgeglichen: der Elternbaum hatte
+überhaupt kein Gate, also existierte dort keine der Nadeln der Ansprüche 2, 3, 4, und CLAUDE.md
+trug dort „wartet auf KEIN Gate" (Anspruch 7). Ansprüche 1, 5, 6 waren im Elternbaum vorhanden,
+also Gegengewichte. **Was damit NICHT bewiesen ist: dass die Datei gültiges YAML ist.** Das sagt
+erst der nächste Push — und wenn nicht, meldet GitHub den Workflow als ungültig, ohne dass ein
+Merge passiert. Acht stehende Prüfer plus `doctor --selftest`: alle 0.
