@@ -320,6 +320,11 @@ struct EchoelStudioView: View {
     @State private var showSound = false
     @State private var showEffects = false
     @State private var showMaster = false
+    /// #1436 — the Workstation plate's disclosure state. `true` because the chip already IS
+    /// the door: arriving at a panel that then has to be opened a second time is the
+    /// two-doors-for-one-surface shape, and in the dropdown `menuPanelHost` force-opens it
+    /// anyway (`echoelPanelForceOpen`), so this only decides the standalone-disclosure case.
+    @State private var showWorkstation = true
     /// Video window (DMMW menu, 2026-07-12) — only read by the panel's
     /// disclosure fallback; in the dropdown it renders force-open anyway.
     /// Delivery loudness target (shared key with MasterLoudnessGrid's colour-coding).
@@ -876,7 +881,12 @@ struct EchoelStudioView: View {
         // ⛔ `video` WAS REMOVED (#1304, founder 2026-09-12 "Kein Video Capture"), and the same
         // paragraph above licenses it: the raw value reaches no persisted store and no door
         // string survives it. Its panel was the recorded-clips library; there are no clips.
-        case bio, composition, sound, mix, effects, master, mood, export, field
+        // ⭐ `workstation` ADDED (#1436, founder Phase 3) — the read-only window onto the
+        // arrangement `TimelineStore` already owns. A chip rather than a `.sheet` on purpose:
+        // this idiom costs ZERO presentation modifiers, and the plate's grammar ("this chip
+        // selects what the plate shows") is exactly what a read-only surface wants. See
+        // `WorkstationView`'s header for the whole argument.
+        case bio, composition, sound, mix, effects, master, mood, export, field, workstation
         var id: String { rawValue }
         /// Short chip label (DAW-style small buttons — Uncodixfy 12 pt chips).
         var label: String {
@@ -908,6 +918,11 @@ struct EchoelStudioView: View {
             // sees this most of the time" would have licensed shortening it back to "Save".
             case .export:      return "Save/Export"
             case .field:       return "Field"
+            // The founder's own word for this surface, kept verbatim rather than shortened to
+            // "Song": the phase brief names the user path "Instrument → Workstation → back",
+            // and a chip that says something else makes that path unfindable by its own name.
+            // It is the same width as "Save/Export", which already rides in this strip.
+            case .workstation: return "Workstation"
             }
         }
         /// Full name for VoiceOver (the chip text is abbreviated).
@@ -952,6 +967,10 @@ struct EchoelStudioView: View {
             // from two sides: the field's look, and the field's voice under your fingers.
             // Nobody could guess from the old string that the picture is playable.
             case .field:       return "Field — the visual surface you play with your fingers"
+            // Says READ-ONLY out loud, because a door that only looks is the one kind a
+            // listener cannot discover by feeling around inside it (#482's lesson: the spoken
+            // name of a door must list what the panel actually holds).
+            case .workstation: return "Workstation — the arrangement: tracks and parts, read-only"
             }
         }
     }
@@ -2805,8 +2824,13 @@ struct EchoelStudioView: View {
     ///     entries on the presentation chain's conscience. They stay in the "•••".
     /// `visibleChips` still appends whichever of those is on screen, so the strip never shows
     /// an unselected state while a panel is open.
+    /// ⭐ `.workstation` SITS BETWEEN Field AND Save/Export (#1436), and the position is the
+    /// argument above applied rather than a free slot: the order is the signal chain, then
+    /// context, then what you do when the take is done. The arrangement is what you have MADE
+    /// — you look at it, then you take it away. Placing it after `.export` would put the song
+    /// after the act of exporting it.
     private static let studioChips: [StudioMenu] =
-        [.sound, .effects, .mix, .master, .mood, .composition, .field, .export]
+        [.sound, .effects, .mix, .master, .mood, .composition, .field, .workstation, .export]
 
     /// The tab strip: the eight chips above, PLUS whatever the plate currently shows if a
     /// chrome door selected the one menu the strip does NOT carry — `.bio` (pulse pill).
@@ -3195,6 +3219,7 @@ struct EchoelStudioView: View {
         case .mood:        return AnyView(moodPanel)
         case .export:      return AnyView(utilityRow)
         case .field:       return AnyView(visualPanel)
+        case .workstation: return AnyView(workstationPanel)
         }
     }
 
@@ -3210,6 +3235,20 @@ struct EchoelStudioView: View {
     /// closing it achieved nothing, while the tab reset was a real side effect. It made
     /// "Master → Routing → dismiss" land the user on Sound with Master gone.
     private var displayedMenu: StudioMenu { activeMenu ?? .sound }
+
+    /// #1436 — the read-only Workstation plate (founder Phase 3).
+    ///
+    /// ⚠️ IT IS A WRAPPER AND NOTHING ELSE, deliberately. Everything the surface knows lives
+    /// in `WorkstationView` (a leaf `View` in its own file) and `WorkstationSummary` (a pure
+    /// value type the blocking bundle DRIVES). Nothing about the arrangement is computed in
+    /// this file, so this 12 000-line view gains one panel and no new state: `dropdownContent`
+    /// is evaluated in the ROOT body permanently since #479, and anything expensive or
+    /// churn-prone written here would be paid on every Studio rebuild.
+    private var workstationPanel: some View {
+        panel("Workstation", "The arrangement — read-only", isExpanded: $showWorkstation) {
+            WorkstationView()
+        }
+    }
 
     /// B3: the bio strip's new home. The live numbers (HR/HRV/Br/Coh),
     /// tap-to-learn and the source control render UNCHANGED inside the
