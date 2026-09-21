@@ -12,8 +12,14 @@ final class ClipTypeTests: XCTestCase {
     func testClipKind_casesAndPlayability() {
         XCTAssertEqual(Set(ClipKind.allCases), [.midi, .audio, .video, .visual])
         XCTAssertTrue(ClipKind.midi.isPlayable)
-        XCTAssertFalse(ClipKind.audio.isPlayable)   // engines not shipped → not playable yet
-        XCTAssertFalse(ClipKind.video.isPlayable)
+        // ⭐ #1438: `.audio` is TRUE since the audio verdict was decided from runtime truth —
+        // `TimelineAudioSink` ships, `EchoelmusicApp` injects it into `AudioLanePlayer`, and
+        // `TimelineRegionPlayer` drives it on every prime, step and stop. The comment that
+        // stood here ("engines not shipped → not playable yet") expired when the A1 slice
+        // landed and nothing re-read it. What is still missing is a PRODUCER of audio clips
+        // (#204/#527), which is a different fact from a missing engine.
+        XCTAssertTrue(ClipKind.audio.isPlayable)
+        XCTAssertFalse(ClipKind.video.isPlayable)   // capture removed outright by #1304
         XCTAssertFalse(ClipKind.visual.isPlayable)
     }
 

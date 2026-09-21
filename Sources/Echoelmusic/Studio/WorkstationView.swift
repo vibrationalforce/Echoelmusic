@@ -232,7 +232,15 @@ struct WorkstationView: View {
         // TWICE per take, not per step (`currentTick` is `@ObservationIgnored` precisely so
         // a reader like this one cannot subscribe to the ~8 Hz position).
         let playing = player.isPlaying
-        let startable = TimelineRegionPlayer.canPlay(timeline.document)
+        // ⚠️ THE CLIPS ARE PART OF THE QUESTION (#1438). A placed region is a POINTER; the
+        // engine can only start if at least one of them resolves into content it would
+        // execute, so the control must hand over the same clip values `play(...)` will.
+        // Reading `filledClips` here also SUBSCRIBES this leaf to the clip grid, which is
+        // wanted: the moment the composer writes notes into its clip, Play becomes
+        // available without a second tap. It is not a hot read — `ClipStore.slots` is
+        // written by generate/evolve (~30 s at most), never per transport step.
+        let startable = TimelineRegionPlayer.canPlay(timeline.document,
+                                                     clips: clipStore.filledClips)
         return HStack(spacing: 8) {
             Button {
                 if playing { player.stop() } else { startTimeline() }

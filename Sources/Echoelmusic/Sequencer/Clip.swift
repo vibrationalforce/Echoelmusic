@@ -70,13 +70,30 @@ public enum ClipKind: String, Codable, Sendable, CaseIterable {
         }
     }
 
-    /// Kinds a timeline PLAYBACK engine drives today. `isPlayable` reads this set,
-    /// so enabling video is a ONE-LINE change here once the AVPlayer video engine is
-    /// device-verified (add `.video`) — not scattered `== .midi` checks.
-    public static let timelineEngineKinds: Set<ClipKind> = [.midi]
+    /// Kinds a timeline PLAYBACK engine drives today. `isPlayable` reads this set, so
+    /// enabling a kind is a ONE-LINE change here — never scattered `== .midi` checks.
+    ///
+    /// ⭐ `.audio` JOINED THIS SET IN #1438, AND IT IS A CORRECTION, NOT A NEW CAPABILITY.
+    /// The set read `[.midi]` with the reason *"engines not shipped"*; that reason expired
+    /// when the A1 slice shipped `TimelineAudioSink` and `EchoelmusicApp` injected it into
+    /// `AudioLanePlayer` (`makeSink:` + `resolveURL:` at the one construction site), which
+    /// `TimelineRegionPlayer` drives on every prime, every transport step and every stop. A
+    /// persisted audio region whose clip carries a resolvable `mediaRef` SOUNDS today.
+    ///
+    /// ⚠️ WHAT IS STILL ABSENT IS A PRODUCER, NOT AN ENGINE, and the two are different
+    /// facts: the only path that can create an audio-carrying clip is `AudioClipFactory` ←
+    /// `TakeRecorder` ← `RecordController`, whose `arm()` has zero callers (#204/#527).
+    /// Conflating them is exactly what kept this set stale — an UNDER-claim, whose cost is
+    /// the one #527 names: a document from an older build that the engine would happily play,
+    /// refused by a predicate reading this set. "Silently mute" where "visibly absent" was
+    /// the honest state.
+    public static let timelineEngineKinds: Set<ClipKind> = [.midi, .audio]
 
-    /// Only kinds with a shipped, device-verified engine render on the timeline. The
-    /// arrangement may show the other lanes, but must not pretend they play.
+    /// Only kinds a SHIPPED engine drives render on the timeline. The arrangement may show
+    /// the other lanes, but must not pretend they play. ⚠️ "Shipped" is the claim, not
+    /// "device-verified" — the word stood here and over-claimed for `.audio`, whose engine
+    /// compiles, is injected and is driven, but has no founder device probe behind it
+    /// because nothing can currently CREATE an audio region to probe with (#1438).
     public var isPlayable: Bool { Self.timelineEngineKinds.contains(self) }
 
     /// Kinds that carry an external media file via `mediaRef` (vs. inline

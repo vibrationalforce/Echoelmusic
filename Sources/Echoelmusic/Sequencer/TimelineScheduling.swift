@@ -150,8 +150,12 @@ public extension TimelineDocument {
     /// ⛔ This sentence ended "so this is additive: nothing reads it on the playback path
     /// yet", and that was already false when it was written: `MultiRollFanout.activeLoads`
     /// reads it, and `primeSecondaryLanes` calls that on every play and every locate.
-    /// `TimelineRegionPlayer.canPlay` is the third reader (#1437) — it asks which lanes the
-    /// player actually drives, and this accessor plus `audioLaneIDs` IS that answer.
+    /// ⛔ #1437 added "`TimelineRegionPlayer.canPlay` is the third reader — this accessor
+    /// plus `audioLaneIDs` IS that answer", and #1438 made it FALSE in the same week: the
+    /// repaired predicate walks `document.lanes` itself, because it needs each driven lane's
+    /// KIND to check it against its clip's, and a list of ids has thrown that away. The
+    /// `!isBio` + kind filter is now written twice — deliberately, and the two must stay in
+    /// step; `TheWorkstationPlaysTheTimelineTests` drives a bio lane against both.
     var midiLaneIDs: [UUID] {
         lanes.filter { $0.kind == .midi && !$0.isBio }.map(\.id)
     }

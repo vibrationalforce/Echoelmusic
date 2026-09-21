@@ -100,13 +100,25 @@ acceptance line.
 >   rides the transport and plays the roll lane's **MIDI** regions (drums went with #166/#167).
 >   ⭐ Its door is the **Workstation chip** (`Studio/WorkstationView.swift`, founder Phase 3+4):
 >   Play/Stop over the document `TimelineStore` already owns. Additive — the Generate+Play
->   instrument is untouched, and `TimelineRegionPlayer.canPlay(_:)` (the engine's own guard,
->   asked by the control) keeps the button unavailable unless a part sits on a lane the player
->   drives. ⛔ This entry said "opt-in \"Play timeline\"" while NO such control existed — the ▶
->   branch that used to consult the document was gone and nothing had replaced it. The words
->   were right for a year that had ended. **Audio/video/visual lanes are scaffold — they do
->   NOT play** (`Clip.kind.isPlayable == .midi` only). Path to functioning audio tracks mapped in
->   `scratchpads/PLAN_TIMELINE_AUDIO_TRACKS.md` (blocked on durable audio-clip creation + device verify).
+>   instrument is untouched, and `TimelineRegionPlayer.canPlay(_:clips:)` (the engine's own
+>   guard, asked by the control with the same arguments) keeps the button unavailable unless a
+>   part resolves into content the engine would execute. ⛔ This entry said "opt-in \"Play
+>   timeline\"" while NO such control existed — the ▶ branch that used to consult the document
+>   was gone and nothing had replaced it. The words were right for a year that had ended.
+>   ⛔ **AND TWO MORE SENTENCES HERE WERE CORRECTED BY #1438 (Phase 4b), BOTH IN THE
+>   REASSURING DIRECTION.** (1) The guard was described as "unless a part sits on a lane the
+>   player drives", and that is exactly what it did — a PLACED region was enough, so a part
+>   pointing at a clip that is missing, empty, or windowed to nothing started the transport
+>   over silence. It now resolves the `clipID` through `ClipStore` and asks whether the
+>   content would execute. (2) "**Audio/video/visual lanes are scaffold — they do NOT play**"
+>   was one third wrong: **audio PLAYS.** `TimelineAudioSink` ships, `EchoelmusicApp` injects
+>   it into `AudioLanePlayer`, and the region player drives it on every prime, step and stop —
+>   so `ClipKind.timelineEngineKinds` is `[.midi, .audio]`, corrected from `[.midi]`. Video
+>   and visual remain scaffold (the video capture path went with #1304). What audio still
+>   lacks is a PRODUCER, not an engine: no reachable path creates an audio-carrying clip
+>   (#204/#527), so only a document persisted by an older build can exercise it. Path to
+>   user-creatable audio tracks: `scratchpads/PLAN_TIMELINE_AUDIO_TRACKS.md` (blocked on
+>   durable audio-clip creation + device verify).
 >
 > **UPDATE (2026-07-11) — comprehensive-interface modules + sound (code-truth):**
 > - **Module 1 Mixer — LIVE, but TWO faders, not four (corrected 2026-08-06, #438).** `Core/MixerStore.swift` still *stores* bass/pad/lead/drums (four persisted keys, deliberately — see the file's own `⚠️ drums IS INCLUDED AND THAT IS DELIBERATE` note: a key that vanishes cannot be reset to unity if drums ever return). What the user can actually MOVE is `mixerPanel`'s two `EchoelValueField` rows: **Level (bass) and Pad**. Lead's fader went with #255 (founder: "Lead kann raus aus dem Mix"); drums produce no sound at all since #166/#167.

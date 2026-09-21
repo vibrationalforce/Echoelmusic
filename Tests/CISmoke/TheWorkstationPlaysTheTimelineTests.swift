@@ -3,7 +3,18 @@
 // Workstation."* The arrangement is PLAYABLE, it plays on the ONE clock, and exactly one
 // path may start it.
 //
-// ⛔ THIS FILE EXISTS BECAUSE A CLAIM HAD TO BE INVERTED, NOT ROUTED AROUND.
+// ⛔ AND #1438, PHASE 4b, WHICH THIS FILE'S OWN POSITIVE TEST MADE NECESSARY.
+// The #1437 predicate took a document ALONE and asked only "does a region sit on a lane this
+// player drives". A region is a POINTER: its `clipID` can resolve to nothing, to an empty
+// clip, to a clip of the wrong kind, or to notes the region's window throws away — and every
+// one of those enabled Play and started `PatternEngine` over silence. **The test written to
+// prove the feature worked constructed the defect and asserted it**: a bare `UUID()`, no clip
+// installed, `XCTAssertTrue`. It was green, it was honest about what it drove, and what it
+// drove was wrong. The lesson is not "write more tests" — it is that a POSITIVE case must be
+// built from the same materials the app builds from (an installed clip with real notes), or
+// it pins the shape of the bug. Claims 4–7, 11 and 13 are the negatives that did not exist.
+//
+// ⛔ THIS FILE ALSO EXISTS BECAUSE A CLAIM HAD TO BE INVERTED, NOT ROUTED AROUND.
 // `TheWorkstationHasADoorTests` claim H asserted "`TimelineRegionPlayer.play(…)` has no
 // production caller", and its own failure message named this commit: *"If that is Phase 4
 // landing, this claim has done its job — delete it deliberately, in the same commit that
@@ -13,43 +24,53 @@
 // "exactly one, and it is the Workstation's Play".
 //
 // ⚠️ WHICH HALF IS WHICH (§1).
-//   · Claims 1–7 are END-TO-END BEHAVIOUR. `TimelineRegionPlayer.canPlay(_:)` and the two
-//     transport strings are pure, Foundation-only functions of a value type, so the question
-//     "will Play do anything, and does the control say so" is DRIVEN rather than scanned.
-//     That is the #1436 design decision reused: the predicate deliberately does NOT live
-//     inside a `private` SwiftUI body, where it could only ever have been a source scan.
-//   · Claims A–H are SOURCE-TEXT SCANS. `WorkstationView` is `@Environment`-resolving
+//   · Claims 1–14 are END-TO-END BEHAVIOUR. `TimelineRegionPlayer.canPlay(_:clips:)` and the
+//     two transport strings are pure, Foundation-only functions of value types, so the
+//     question "will Play do anything, and does the control say so" is DRIVEN rather than
+//     scanned. That is the #1436 design decision reused, and #1438 is why it matters: the
+//     predicate deliberately does NOT live inside a `private` SwiftUI body, where it could
+//     only ever have been a source scan — and a source scan cannot tell a resolving `clipID`
+//     from a dangling one. Taking `[Clip]` instead of the `@MainActor` `ClipStore` is the
+//     other half: the store's `init` reads the App Group, and a guard that has to construct
+//     one is a guard that will be skipped on the day it matters.
+//   · Claims A–J are SOURCE-TEXT SCANS. `WorkstationView` is `@Environment`-resolving
 //     SwiftUI behind `#if canImport(SwiftUI)` and `EchoelStudioView` is a 12 000-line
 //     `private` view; this bundle can construct neither.
 //   · **That a note is HEARD when Play is tapped is a DEVICE PROBE and is OPEN.** A green
 //     `Build for Testing` proves the bundle compiles. It proves nothing about sound.
 //     Registered at `WorkstationView`'s header (`founder-verify.py` prints it).
 //
-// ⚠️ HONEST GRADING (#433/#464), against the parent `228e48e54`:
-//   · claims 1–7 name `TimelineRegionPlayer.canPlay` and `WorkstationSummary.transportHint`,
-//     which this commit ADDS, so the bundle does not compile there and NO claim has a verdict
-//     (#488 said out loud). Transcribed by hand instead, both trees, per §0.
-//   · claims A, B, G — RED on the parent for their named reasons (the view had no player, no
-//     `play(`, no `.disabled(`). ONE absence reported three times (#486), not three findings.
-//   · claim E — the INVERSION. On the parent it would report 0 call sites and fail its new
-//     "exactly one" assertion; that is the claim doing its job in reverse, and it is the
-//     reason this file cannot simply be back-ported.
-//   · claims C, D, F, H — GREEN on BOTH trees. They are the content (#343): the clock, the
-//     one-definition guard, the single player, and the global Stop are the four things this
-//     slice is most likely to have broken while looking correct.
+// ⚠️ HONEST GRADING (#433/#464) — #1438, against the parent `a9bc667ff`:
+//   · claims 1–13 name `TimelineRegionPlayer.canPlay(_:clips:)`, whose SIGNATURE this commit
+//     changes, so the bundle does not compile on the parent and NO behaviour claim has a
+//     verdict there (#488 said out loud). Transcribed by hand against both trees, per §0.
+//   · claim 4 (dangling clip) and claim 5 (empty clip) are the BLOCKER, and their honest
+//     grade is not "red on the parent" but "unexpressible there": the parent's predicate has
+//     no clip argument to be wrong about. That is what §3 means by a signature that cannot
+//     answer truthfully — the bug was not in a body anyone could have fixed.
+//   · claim 8 is the COUNTERWEIGHT (#364) and it is the one that could not be faked: a
+//     predicate returning `false` unconditionally greens twelve claims here and reds only
+//     this one.
+//   · claims A, B, C, E, F, G, H — GREEN on BOTH trees, unchanged by this repair. They are
+//     the content (#343): the clock, the single player, the single caller, the global Stop.
+//   · claim D changed its NEEDLES with the signature; D2, I and J are new (D2 = one
+//     definition, §11 H; I and J = the two LOW review findings, §10).
 //
-// ⛔ `SourceText.codeOnly` IS PROPHYLAKTISCH HERE — 0 of 8 scan verdicts flip raw vs.
-// stripped — AND THE FIRST DRAFT OF THIS LINE CLAIMED THE OPPOSITE. It said the stripper is
-// LOAD-BEARING because claim E counts call sites while two file headers name `play(` in
-// prose, so a raw scan "would count three callers where there is one". Driving it disproved
-// that in one command: the prose says `TimelineRegionPlayer.play(…)` and `play()`, never the
-// RECEIVER-plus-method form `player.play(` that the scan actually matches, so the raw and
-// stripped verdicts are identical. The reasoning was plausible, it was written before the
-// measurement, and `Tests/CISmoke/CLAUDE.md` §2 names exactly this: *a gate claimed
-// load-bearing without measuring is the thing §2 keeps retracting.* It stays in use because
-// the margin is one comment wide — the day a header writes `player.play(` the claim would
-// go red on a correct tree — but PROPHYLAKTISCH is what it is today, and saying otherwise
-// would be borrowing confidence from a check that is not doing the work.
+// ⭐ `SourceText.codeOnly` IS LOAD-BEARING HERE SINCE #1438 — AND THE LINE IT REPLACES SAID
+// THE OPPOSITE, TWICE, IN OPPOSITE DIRECTIONS. Measured each time rather than reasoned:
+//   · #1437 first claimed the stripper was load-bearing because claim E counts `play(` call
+//     sites while two headers name `play(` in prose. Driving it disproved that — the prose
+//     writes `TimelineRegionPlayer.play(…)`, never the RECEIVER form `player.play(` the scan
+//     matches — so the line was rewritten to PROPHYLAKTISCH with 0 of 8 verdicts flipping.
+//   · #1438 re-drove all 27 scan verdicts raw vs. stripped: **1 flips, and it is claim J.**
+//     `WorkstationView` names `currentTick` exactly once, inside the comment that explains
+//     why the body does not read it. A raw scan reds a correct file for quoting its own law —
+//     the #367 shape (a needle that cannot tell a claim from its denial), disarmed by the
+//     stripper rather than by deleting the sentence.
+// The DURABLE lesson is the measurement, not either verdict: this went from "load-bearing"
+// (wrong) to "prophylaktisch" (right, then) to "load-bearing" (right, now) in two commits,
+// and each step was one command. `Tests/CISmoke/CLAUDE.md` §2 is about exactly this — a
+// stripper claimed either way without driving it is borrowed confidence.
 
 import Foundation
 import XCTest
@@ -62,10 +83,24 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
     private static let player = "Sources/Echoelmusic/Sequencer/TimelineRegionPlayer.swift"
     private static let app = "Sources/Echoelmusic/EchoelmusicApp.swift"
 
+    // MARK: - Fixtures — the difference between a POINTER and CONTENT
+
+    private static let bar = TimelineTime.ticksPerBar
+
+    /// A MIDI clip that WOULD sound: one note inside the first bar.
+    private static func midiClip(_ notes: [Note] = [Note(pitch: 60, startStep: 0)]) -> Clip {
+        Clip(name: "Take", kind: .midi, melody: MelodyClip(notes: notes))
+    }
+
+    /// One bar-long part placing `clip` at the top of `lane`.
+    private static func part(_ clip: Clip, on lane: TimelineLane) -> TimelineRegion {
+        TimelineRegion(laneID: lane.id, clipID: clip.id, startTick: 0, lengthTicks: bar)
+    }
+
     // MARK: - 1. BEHAVIOUR — an untouched song offers no start
 
     func testAnEmptyDocumentCannotPlay() {
-        XCTAssertFalse(TimelineRegionPlayer.canPlay(TimelineDocument()), """
+        XCTAssertFalse(TimelineRegionPlayer.canPlay(TimelineDocument(), clips: []), """
             An empty document must not be startable. The control asks this exact question, so \
             a `true` here is a Play button that runs a clock over nothing — the "fake \
             playback" the phase brief forbids by name.
@@ -78,11 +113,12 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
         let doc = TimelineDocument(lanes: [TimelineLane(name: "MIDI 1", kind: .midi),
                                            TimelineLane(name: "Audio 1", kind: .audio)],
                                    regions: [])
-        XCTAssertFalse(TimelineRegionPlayer.canPlay(doc), """
+        XCTAssertFalse(TimelineRegionPlayer.canPlay(doc, clips: [Self.midiClip()]), """
             `TimelineStore.migrate` seeds exactly this on a fresh install: two lanes, no \
             parts. It is the state MOST users see first, and it is not a song. A startable \
             Play here would be the first thing a new user taps and the first thing that does \
-            nothing.
+            nothing. The clip grid is deliberately NOT empty in this case — a clip that \
+            exists but is placed nowhere is still not an arrangement.
             """)
     }
 
@@ -90,46 +126,116 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
 
     func testOrphanedPartsAloneCannotPlay() {
         let midi = TimelineLane(name: "MIDI 1", kind: .midi)
+        let clip = Self.midiClip()
         let doc = TimelineDocument(
             lanes: [midi],
-            regions: [TimelineRegion(laneID: UUID(), clipID: UUID(),
-                                     startTick: 0, lengthTicks: TimelineTime.ticksPerBar)])
-        XCTAssertFalse(TimelineRegionPlayer.canPlay(doc), """
+            regions: [TimelineRegion(laneID: UUID(), clipID: clip.id,
+                                     startTick: 0, lengthTicks: Self.bar)])
+        XCTAssertFalse(TimelineRegionPlayer.canPlay(doc, clips: [clip]), """
             Every part here names a lane the song does not have — reachable today, because a \
             decoded document's LANE list is `try?`-tolerant while its REGION list is not. The \
-            old guard asked only "a playable lane exists AND the region array is non-empty", \
-            which this document satisfies, so it started the transport with nothing to chain: \
-            a running clock over silence, which from outside is indistinguishable from \
-            playback. This is the tightening #1437 made, and it is the one behaviour change \
-            in the slice.
+            clip it points at is REAL and full of notes, so nothing but the missing lane can \
+            make this false: the part has content and nowhere to play it.
             """)
     }
 
-    // MARK: - 4. BEHAVIOUR — a MIDI part on a MIDI lane is a song
+    // MARK: - 4. BEHAVIOUR — a part pointing at a clip that is gone (GUARD A)
 
-    func testAMidiPartMakesTheSongStartable() {
+    func testAPartWhoseClipIsMissingCannotPlay() {
         let midi = TimelineLane(name: "MIDI 1", kind: .midi)
         let doc = TimelineDocument(
             lanes: [midi],
             regions: [TimelineRegion(laneID: midi.id, clipID: UUID(),
-                                     startTick: 0, lengthTicks: TimelineTime.ticksPerBar)])
-        XCTAssertTrue(TimelineRegionPlayer.canPlay(doc), """
-            MIDI is the one kind with a shipped engine (`ClipKind.timelineEngineKinds`), so \
-            this is the case Phase 4 exists to make audible. If this is false the Play button \
-            is permanently dead and the phase shipped nothing.
+                                     startTick: 0, lengthTicks: Self.bar)])
+        XCTAssertFalse(TimelineRegionPlayer.canPlay(doc, clips: [Self.midiClip()]), """
+            ⛔ THIS IS THE #1438 BLOCKER, AND THE #1437 POSITIVE TEST CONSTRUCTED EXACTLY THIS \
+            SHAPE AND ASSERTED TRUE. A region is a POINTER; a bare `UUID()` points at nothing. \
+            The grid here is not even empty — it holds a perfectly good clip with a different \
+            id, which is what an arrangement outliving its clip grid actually looks like (the \
+            two persist as separate files). Tapping Play on this started `PatternEngine` over \
+            silence: a running clock that reads, from outside, as playback.
             """)
     }
 
-    // MARK: - 5. BEHAVIOUR — a SECONDARY MIDI lane counts too
+    // MARK: - 5. BEHAVIOUR — a clip that resolves and carries nothing (GUARD B)
+
+    func testAResolvedButEmptyMidiClipCannotPlay() {
+        let midi = TimelineLane(name: "MIDI 1", kind: .midi)
+        let empty = Clip(name: "Composed · MIDI 1", kind: .midi,
+                         melody: MelodyClip(notes: []), composerOwned: true)
+        let doc = TimelineDocument(lanes: [midi], regions: [Self.part(empty, on: midi)])
+        XCTAssertFalse(TimelineRegionPlayer.canPlay(doc, clips: [empty]), """
+            *"The clip exists"* is NOT the question (§4). This is the EVERYDAY shape, not an \
+            exotic one: `ensureComposerRegion` and `ensureUserMidiRegion` both place a region \
+            over a clip built with `MelodyClip(notes: [])`, and the notes arrive later — for a \
+            user clip, with the note editor deleted by #475 and the MIDI-record path doorless \
+            (#204), never. A predicate that stopped at `clips.clip(id:) != nil` would light \
+            Play up on a brand-new empty track.
+            """)
+    }
+
+    // MARK: - 6. BEHAVIOUR — notes the region's own window throws away (GUARD B)
+
+    func testNotesOutsideTheRegionWindowAreNotContent() {
+        let midi = TimelineLane(name: "MIDI 1", kind: .midi)
+        // Bar 5 of the clip, placed in a ONE-bar region at offset 0 — `loadClip` windows to
+        // [0, 1920) before the roll ever sees a note, so this clip contributes nothing.
+        let clip = Self.midiClip([Note(pitch: 60, startStep: 64)])
+        let doc = TimelineDocument(lanes: [midi], regions: [Self.part(clip, on: midi)])
+        XCTAssertFalse(TimelineRegionPlayer.canPlay(doc, clips: [clip]), """
+            The engine does not play a clip, it plays a clip THROUGH a region window \
+            (`RegionNoteWindow.windowed`, the M1b repair). A predicate that asked \
+            `melody?.notes.isEmpty == false` would be a THIRD definition of "has content" — \
+            agreeing with the player most of the time and diverging exactly where a user \
+            trimmed or split a part down to a silent stretch. `executableNotes` is the same \
+            call the loader makes, so the two cannot drift.
+            """)
+    }
+
+    // MARK: - 7. BEHAVIOUR — a drum grid is a bar clock, not a voice (GUARD B)
+
+    func testADrumsOnlyClipIsNotExecutableContent() {
+        let midi = TimelineLane(name: "MIDI 1", kind: .midi)
+        let beat = Clip(name: "Beat", kind: .midi,
+                        drums: DrumPattern(steps: [[true, false, true, false]],
+                                           accents: [[false, false, false, false]]),
+                        melody: MelodyClip(notes: []))
+        let doc = TimelineDocument(lanes: [midi], regions: [Self.part(beat, on: midi)])
+        XCTAssertFalse(TimelineRegionPlayer.canPlay(doc, clips: [beat]), """
+            `loadClip` really does hand this grid to `pattern.load(steps:accents:)`, so it \
+            LOOKS like content — and it is the single most plausible thing a later session \
+            adds to `isExecutable` to "fix a false negative". It is not content: \
+            `PatternEngine.onStep` has had ZERO production assignments since #166/#167 \
+            (`git grep -n "onStep" -- Sources | grep -v ': *//'` → the declaration, the call \
+            site, and `BeatPlayer.detach`'s `= nil`). No drum voice exists to receive it. \
+            Counting it re-opens Play over silence through a door closed twice already.
+            """)
+    }
+
+    // MARK: - 8. BEHAVIOUR — a MIDI part with real notes IS a song (GUARD C)
+
+    func testAMidiPartWithNotesMakesTheSongStartable() {
+        let midi = TimelineLane(name: "MIDI 1", kind: .midi)
+        let clip = Self.midiClip()
+        let doc = TimelineDocument(lanes: [midi], regions: [Self.part(clip, on: midi)])
+        XCTAssertTrue(TimelineRegionPlayer.canPlay(doc, clips: [clip]), """
+            THE COUNTERWEIGHT (#364): every claim above this one is a refusal, and a \
+            predicate that returned `false` unconditionally would make all of them green. \
+            This is the live path — Generate places a composer region, then \
+            `updateComposerMelody` fills its clip — and if it is false the Play button is \
+            permanently dead and the phase shipped nothing.
+            """)
+    }
+
+    // MARK: - 9. BEHAVIOUR — a SECONDARY MIDI lane counts too
 
     func testAPartOnASecondMidiLaneStillCounts() {
         let first = TimelineLane(name: "MIDI 1", kind: .midi)
         let second = TimelineLane(name: "MIDI 2", kind: .midi)
-        let doc = TimelineDocument(
-            lanes: [first, second],
-            regions: [TimelineRegion(laneID: second.id, clipID: UUID(),
-                                     startTick: 0, lengthTicks: TimelineTime.ticksPerBar)])
-        XCTAssertTrue(TimelineRegionPlayer.canPlay(doc), """
+        let clip = Self.midiClip()
+        let doc = TimelineDocument(lanes: [first, second],
+                                   regions: [Self.part(clip, on: second)])
+        XCTAssertTrue(TimelineRegionPlayer.canPlay(doc, clips: [clip]), """
             `rollLaneID` is only the FIRST non-bio MIDI lane; the rest sound through \
             `primeSecondaryLanes`/`MultiRollFanout`. A predicate written against `rollLaneID` \
             alone would refuse to play a song that plays perfectly — #364, forbidding correct \
@@ -137,23 +243,103 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
             """)
     }
 
-    // MARK: - 6. BEHAVIOUR — a kind with no engine is not content
+    // MARK: - 10. BEHAVIOUR — a BIO lane is shown, never driven
+
+    func testAPartOnlyOnABioLaneIsNotASong() {
+        let bio = TimelineLane(name: "Breath", kind: .midi, isBio: true)
+        let clip = Self.midiClip()
+        let doc = TimelineDocument(lanes: [bio], regions: [Self.part(clip, on: bio)])
+        XCTAssertFalse(TimelineRegionPlayer.canPlay(doc, clips: [clip]), """
+            `midiLaneIDs` and `audioLaneIDs` both filter `!isBio`, and since #1438 the \
+            predicate walks `document.lanes` itself (it needs each lane's KIND, which a list \
+            of ids has thrown away) — so the `!isBio` filter is written in TWO places and \
+            this is the claim that keeps them in step. A bio lane carries the body's own \
+            trace for the eye; routing it into the roll would play the performer's breath \
+            back at them as notes.
+            """)
+    }
+
+    // MARK: - 11. BEHAVIOUR — a clip on the wrong KIND of lane (GUARD F)
+
+    func testAClipOnTheWrongKindOfLaneCannotPlay() {
+        let midi = TimelineLane(name: "MIDI 1", kind: .midi)
+        let audioClip = Clip(name: "Loop", kind: .audio, mediaRef: "Media/Audio/loop.wav")
+        let doc = TimelineDocument(lanes: [midi], regions: [Self.part(audioClip, on: midi)])
+        XCTAssertFalse(TimelineRegionPlayer.canPlay(doc, clips: [audioClip]), """
+            The mismatch is reachable from a decoded document — a region's `clipID` is just a \
+            UUID and nothing type-checks it at rest — and a predicate that asked "is the LANE \
+            driven" and "does the CLIP exist" as two independent questions says true here.
+            ⚠️ AND THE REASON IT IS FALSE IS CONTENT, NOT LABEL, which is the opposite of what \
+            the obvious implementation does. A MIDI lane loads `clip.melody`, an audio clip \
+            has none, so nothing sounds. `isExecutable` deliberately does NOT compare \
+            `clip.kind` to the lane's: the engine never does either (`loadClip` and \
+            `resolveURL` read their content slot whatever the clip calls itself), and a gate \
+            the loader lacks is a SECOND definition — the very defect this repair removes. \
+            The first draft had that gate; the mutation run showed dropping it flipped no \
+            claim, i.e. it was inert here and wrong on a clip carrying both (#364).
+            """)
+    }
+
+    // MARK: - 11b. COUNTERWEIGHT — the predicate stays as kind-blind as the loader
+
+    func testThePredicateDoesNotOutlawWhatTheLoaderWouldPlay() throws {
+        let engine = try code(at: Self.player)
+        guard let head = engine.range(of: "onLaneOfKind laneKind: ClipKind,"),
+              let close = engine.range(of: "\n    }\n", range: head.upperBound..<engine.endIndex)
+        else { throw AnchorMissing(reason: "`isExecutable` could not be delimited — re-anchor.") }
+        XCTAssertFalse(String(engine[head.upperBound..<close.lowerBound]).contains("clip.kind"), """
+            `isExecutable` must not gate on `clip.kind`. Not a style rule — a CORRESPONDENCE \
+            rule: `loadClip`, `windowedBars`, `MultiRollFanout.activeLoads` and \
+            `AudioLanePlayer.resolveURL` contain no clip-kind test between them, so a clip \
+            carrying a melody plays on a MIDI lane whatever its `kind` field says. A \
+            predicate stricter than its engine dims Play over a song that would sound (#364).
+            ⚠️ IF YOU ADDED A KIND GATE TO THE LOADER TOO, this claim is doing its job and \
+            must move WITH it, in the same commit — do not satisfy it by renaming the read.
+            """)
+    }
+
+    // MARK: - 12. BEHAVIOUR — a kind with no engine is not content (GUARD E)
 
     func testAPartOnlyOnAVideoLaneIsNotASong() {
         let video = TimelineLane(name: "Video 1", kind: .video)
-        let doc = TimelineDocument(
-            lanes: [video],
-            regions: [TimelineRegion(laneID: video.id, clipID: UUID(),
-                                     startTick: 0, lengthTicks: TimelineTime.ticksPerBar)])
-        XCTAssertFalse(TimelineRegionPlayer.canPlay(doc), """
-            No video engine ships (`ClipKind.timelineEngineKinds` is `[.midi]`, and the video \
+        let clip = Clip(name: "Intro", kind: .video, mediaRef: "Media/Video/intro.mov")
+        let doc = TimelineDocument(lanes: [video], regions: [Self.part(clip, on: video)])
+        XCTAssertFalse(TimelineRegionPlayer.canPlay(doc, clips: [clip]), """
+            Lane kind, clip kind and media reference all AGREE here — and it is still not \
+            playable, because no video engine ships (`ClipKind.timelineEngineKinds`, and the \
             capture path was removed outright by #1304). The arrangement may SHOW such a \
             lane — `WorkstationSummary` marks it "no engine yet" — but offering Play over it \
             would promise a rendering that does not exist.
             """)
     }
 
-    // MARK: - 7. BEHAVIOUR — the control says WHY, and never promises editing
+    // MARK: - 13. BEHAVIOUR — the AUDIO verdict, decided from the engine (GUARD G)
+
+    func testAnAudioPartWithMediaPlaysAndOneWithoutDoesNot() {
+        let lane = TimelineLane(name: "Audio 1", kind: .audio)
+        let withMedia = Clip(name: "Loop", kind: .audio, mediaRef: "Media/Audio/loop.wav")
+        let withNone = Clip(name: "Empty", kind: .audio, mediaRef: "")
+        let playable = TimelineDocument(lanes: [lane], regions: [Self.part(withMedia, on: lane)])
+        let silent = TimelineDocument(lanes: [lane], regions: [Self.part(withNone, on: lane)])
+
+        XCTAssertTrue(TimelineRegionPlayer.canPlay(playable, clips: [withMedia]), """
+            §5 asked for the audio contradiction to be decided ONCE, from runtime truth. It \
+            is decided in favour of audio, and this is where that verdict is pinned: \
+            `TimelineAudioSink` ships, `EchoelmusicApp` injects it into `AudioLanePlayer` \
+            (`makeSink:` + `resolveURL:` → `MediaLibrary.resolveRef`), and \
+            `TimelineRegionPlayer` drives it on every prime, step and stop. A persisted audio \
+            region SOUNDS. What is missing is a PRODUCER, not an engine (#204/#527) — and \
+            refusing to play a document the engine would happily play is the #527 harm: \
+            "silently mute" where "visibly absent" was the honest state.
+            """)
+        XCTAssertFalse(TimelineRegionPlayer.canPlay(silent, clips: [withNone]), """
+            …and the audio branch must still ask for CONTENT. An audio clip with no media \
+            reference resolves to no URL, `AudioLanePlayer` skips it, and the transport would \
+            run over nothing — the same defect as the empty MIDI clip, one kind over.
+            """)
+    }
+
+    // MARK: - 14. BEHAVIOUR — the control says WHY, and never promises editing
 
     func testTheTransportWordsAreTruthful() {
         let blocked = WorkstationSummary.transportHint(playing: false, startable: false)
@@ -268,22 +454,69 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
             """)
     }
 
-    // MARK: - D. COUNTERWEIGHT — one definition of "can this play"
+    // MARK: - D. COUNTERWEIGHT — ONE definition of "can this play" (GUARD D)
 
     func testTheEngineGuardAndTheControlAskTheSameQuestion() throws {
         let engine = try code(at: Self.player)
-        XCTAssertTrue(engine.contains("guard Self.canPlay(document) else { return }"), """
-            `play(...)` must be gated by `canPlay` itself, not by a copy of its conditions. \
-            Two spellings of one threshold is the defect whether or not they agree today \
-            (#416) — and here disagreement has a specific shape: an enabled button whose tap \
-            silently does nothing.
+        XCTAssertTrue(
+            engine.contains("guard Self.canPlay(document, clips: clips.filledClips) else { return }"),
+            """
+            `play(...)` must be gated by `canPlay` itself, not by a copy of its conditions, \
+            and it must hand over the SAME clip values the control did. Two spellings of one \
+            threshold is the defect whether or not they agree today (#416) — and here \
+            disagreement has a specific shape: an enabled button whose tap silently does \
+            nothing, or a dimmed button over a song that would have played.
             """)
         let src = try code(at: Self.view)
-        XCTAssertTrue(src.contains("TimelineRegionPlayer.canPlay(timeline.document)"), """
+        XCTAssertTrue(src.contains("TimelineRegionPlayer.canPlay(timeline.document,"), """
             The control must ask the ENGINE, not a lookalike computed from the summary. The \
             summary answers "what does this song look like"; only the player answers "will I \
             do anything with it".
             """)
+        XCTAssertTrue(src.contains("clips: clipStore.filledClips"), """
+            ⛔ #1438: the control must pass the CLIPS. The #1437 form asked \
+            `canPlay(timeline.document)` and the engine agreed with it exactly — both were \
+            blind in the same way, which is the worst kind of agreement: one definition, \
+            uniformly wrong, and no test comparing two spellings could see it.
+            """)
+        // The UI may not grow a SECOND opinion by reading clip internals itself.
+        for ownWork in ["firstExecutableRegion", "isExecutable", "executableNotes",
+                        ".melody", ".mediaRef", "timelineEngineKinds"] {
+            XCTAssertFalse(src.contains(ownWork), """
+                `WorkstationView` names `\(ownWork)`. The view's job is to ASK; the moment it \
+                inspects clip content itself there are two answers to one question, and the \
+                one on screen is the one nobody drives in a test (§2).
+                """)
+        }
+    }
+
+    // MARK: - D2. COUNTERWEIGHT — the predicate is declared once (GUARD H)
+
+    func testExactlyOneDefinitionOfPlayabilityExists() throws {
+        var declarations: [String] = []
+        var askers: [String] = []
+        for (path, source) in try Self.allSources() {
+            if source.contains("func canPlay(") { declarations.append(path) }
+            if source.contains("canPlay(") { askers.append(path) }
+        }
+        XCTAssertEqual(declarations.sorted(), ["Sequencer/TimelineRegionPlayer.swift"], """
+            "Can this timeline currently execute at least one placed region?" must have ONE \
+            answer, and it lives with the thing that would execute it. Found declarations in: \
+            \(declarations.sorted()). A second one in the view, the summary or `ClipKind` is \
+            exactly the shape §2 forbids.
+            """)
+        XCTAssertEqual(askers.sorted(),
+                       ["Sequencer/TimelineRegionPlayer.swift", "Studio/WorkstationView.swift"], """
+            Only the engine and its one control may ask. Found: \(askers.sorted()).
+            """)
+        let src = try code(at: Self.view)
+        for construction in ["ClipStore(", "TimelineStore(", "PatternEngine(", "PianoRollModel("] {
+            XCTAssertFalse(src.contains(construction), """
+                `WorkstationView` constructs `\(construction)`. Every one of these is owned \
+                elsewhere and injected; a surface-local copy compiles, looks identical, and is \
+                wired to nothing the user can hear (§8).
+                """)
+        }
     }
 
     // MARK: - E. THE REPLACEMENT FOR CLAIM H — exactly one production caller
@@ -376,6 +609,57 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
         XCTAssertTrue(engine.contains("guard isPlaying else { return }"), """
             Both stop paths must be no-ops when already stopped. Stop-while-stopped is \
             ordinary (the global ■ fires the subscriber every time) and must stay safe.
+            """)
+    }
+
+    // MARK: - I. COUNTERWEIGHT — Stop still stops the CLOCK, not just the follow-state
+
+    func testStopStillDelegatesToTheSharedTransport() throws {
+        let engine = try code(at: Self.player)
+        guard let head = engine.range(of: "public func stop() {"),
+              let close = engine.range(of: "\n    }\n", range: head.upperBound..<engine.endIndex)
+        else {
+            throw AnchorMissing(reason: """
+                `TimelineRegionPlayer.stop()` could not be delimited — re-anchor rather than \
+                letting the one claim about the stop cascade skip.
+                """)
+        }
+        let body = String(engine[head.upperBound..<close.lowerBound])
+        XCTAssertTrue(body.contains("pattern?.stop()"), """
+            Review finding (low, §10): `stop()` must keep DELEGATING to the shared \
+            `PatternEngine`. It is the asymmetry that makes the pair correct — `stop()` stops \
+            the clock, `handleTransportStopped()` deliberately does not (it is called FROM \
+            the stop cascade and would loop). Drop this line and the Workstation's Stop \
+            clears its own follow-state while the transport keeps running: the surface looks \
+            stopped and the song does not stop.
+            """)
+        let external = engine.range(of: "public func handleTransportStopped() {")
+        XCTAssertNotNil(external)
+        if let external,
+           let end = engine.range(of: "\n    }\n", range: external.upperBound..<engine.endIndex) {
+            XCTAssertFalse(String(engine[external.upperBound..<end.lowerBound])
+                .contains("pattern?.stop()"), """
+                …and the external entry point must NOT stop the pattern: it is invoked BY the
+                transport's own stop, so calling back into it is a cascade loop.
+                """)
+        }
+    }
+
+    // MARK: - J. COUNTERWEIGHT — the control does not subscribe to the playhead
+
+    func testTheControlDoesNotReadThePlayhead() throws {
+        let src = try code(at: Self.view)
+        XCTAssertFalse(src.contains("currentTick"), """
+            Review finding (low, §10): `WorkstationView` must not read `player.currentTick`. \
+            It is `@ObservationIgnored` precisely so a view CANNOT subscribe to the ~8 Hz \
+            position — but that attribute protects the observation graph, not the reader: a \
+            body that reads it would simply render a stale number forever, which is worse \
+            than not showing one. The 10.76.50 law is the other half: a live positional read \
+            in an ancestor of a `.menu` host tears the popover down on every tick.
+            """)
+        XCTAssertFalse(src.contains("player.relocate"), """
+            …and `relocate` is the neighbouring temptation once a position is on screen. \
+            Phase 4 authorised a transport, not a playhead.
             """)
     }
 

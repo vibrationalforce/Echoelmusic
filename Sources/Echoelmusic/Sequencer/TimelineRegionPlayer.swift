@@ -258,29 +258,140 @@ public final class TimelineRegionPlayer {
 
     // MARK: - Transport
 
-    /// Whether `play(...)` can do anything with `document`. ONE definition (#416): the
-    /// guard inside `play` IS this call, and the Workstation's transport asks the same
-    /// question to decide whether its Play control is available — so a control can never
+    /// Whether `play(...)` can do anything with `document` AND the clips its regions point
+    /// at. ONE definition (#416): the guard inside `play` IS this call, and the Workstation's
+    /// transport asks the same question with the same argument, so the control can never
     /// offer a start the engine will silently refuse.
     ///
-    /// ⭐ THE DRIVEN LANES ARE THE TWO THIS PLAYER PRIMES: every non-bio MIDI lane
-    /// (`midiLaneIDs` — the roll lane plus the multi-roll fan-out `primeSecondaryLanes`
-    /// walks) and every audio lane (`audioLaneIDs`, primed through `AudioLanePlayer`).
-    /// Video and bio lanes are shown by the arrangement and are not played by it
-    /// (`ClipKind.timelineEngineKinds`), so a region sitting only there is not content.
+    /// ⛔ THE #1437 FORM TOOK A DOCUMENT ALONE AND WAS STRUCTURALLY INCAPABLE OF ANSWERING
+    /// THIS (#1438). It asked only "does a region sit on a lane this player drives" — so a
+    /// region whose `clipID` resolves to NOTHING enabled Play and started the transport over
+    /// silence. That is not a hypothetical: it is what a decoded document reaches whenever
+    /// the arrangement outlives the clip grid (they are two files — `TimelineDocument` and
+    /// `ClipStore` persist separately), and it is literally what the slice's own positive
+    /// test constructed, with a bare `UUID()` and no clip installed. **A placed region is a
+    /// POINTER; content is what it points at.** The SIGNATURE changed rather than the body,
+    /// because no body could have fixed it — the truth was not in the argument (§3).
     ///
-    /// ⚠️ THIS IS A TIGHTENING OF THE OLD GUARD, and it is deliberately free. The old
-    /// form asked only "does a playable LANE exist, and is the region list non-empty",
-    /// so a document whose every region is an ORPHAN (a `laneID` naming no lane — a
-    /// state a decoded document can reach, because the lane decode is `try?`-tolerant
-    /// while the region decode is not) started the transport with nothing to chain:
-    /// a running clock over silence, which reads as playback. `play(...)` had ZERO
-    /// production callers when this was narrowed, so no shipped behaviour changes —
-    /// the only caller is the one that arrives with it.
-    nonisolated static func canPlay(_ document: TimelineDocument) -> Bool {
-        let driven = Set(document.midiLaneIDs + document.audioLaneIDs)
-        guard !driven.isEmpty else { return false }
-        return document.regions.contains { driven.contains($0.laneID) }
+    /// `clips` is `ClipStore.filledClips` at both call sites: the store stays the one clip
+    /// owner (§8), and taking the VALUES rather than the store keeps this pure, `nonisolated`
+    /// and drivable by a guard that must never construct an App-Group-backed store.
+    nonisolated static func canPlay(_ document: TimelineDocument, clips: [Clip]) -> Bool {
+        firstExecutableRegion(in: document, clips: clips) != nil
+    }
+
+    /// The first region this document could actually execute, or `nil` when there is none.
+    /// The REJECTIONS are the point, and every one of them is a state a real document reaches:
+    ///   · a region on a lane the song no longer has (ORPHAN — the lane list decodes
+    ///     `try?`-tolerantly while the region list does not, so they can disagree)
+    ///   · a region on a lane whose kind no engine drives (`ClipKind.timelineEngineKinds`)
+    ///   · a region on a BIO lane — shown by the arrangement, never driven by it (the same
+    ///     `!isBio` filter `midiLaneIDs`/`audioLaneIDs` apply)
+    ///   · a `clipID` that resolves to nothing (DANGLING)
+    ///   · a clip whose kind does not match its lane's — a MIDI lane holding an audio clip
+    ///     loads no notes, an audio lane holding a MIDI clip resolves no URL
+    ///   · a clip that resolves but carries nothing this engine would execute (below)
+    ///
+    /// Short-circuits on the FIRST executable region: one is the whole question, and the
+    /// song loops, so position is irrelevant — a region at bar 90 is as playable as bar 1.
+    nonisolated static func firstExecutableRegion(in document: TimelineDocument,
+                                                  clips: [Clip]) -> TimelineRegion? {
+        guard !document.regions.isEmpty else { return nil }
+        var driven: [UUID: ClipKind] = [:]
+        let engineKinds = ClipKind.timelineEngineKinds
+        for lane in document.lanes where !lane.isBio && engineKinds.contains(lane.kind) {
+            driven[lane.id] = lane.kind
+        }
+        guard !driven.isEmpty else { return nil }
+        // First occurrence wins, so the answer is stable for a grid that ever held a
+        // duplicated id — `ClipStore` is positional and its slots are not uniqued.
+        var byID: [UUID: Clip] = [:]
+        for clip in clips where byID[clip.id] == nil { byID[clip.id] = clip }
+        return document.regions.first { region in
+            guard let laneKind = driven[region.laneID],
+                  let clip = byID[region.clipID] else { return false }
+            return isExecutable(region: region, onLaneOfKind: laneKind, clip: clip)
+        }
+    }
+
+    /// Whether ONE placed region would put something through the engine.
+    ///
+    /// ⚠️ "THE CLIP EXISTS" IS NOT THE QUESTION. A MIDI clip is executable when at least one
+    /// of its notes survives the region's own window — the EXACT windowing `loadClip` applies
+    /// before it hands bars to the roll (`executableNotes`), so this cannot drift from what
+    /// is played. An empty MIDI clip is the EVERYDAY case, not an exotic one:
+    /// `ensureComposerRegion` and `ensureUserMidiRegion` both place a region over a clip
+    /// built with `MelodyClip(notes: [])` and the notes arrive LATER — for a user clip, with
+    /// the note editor deleted by #475 and the MIDI-record path doorless (#204), never.
+    /// Starting the transport over one of those is the defect this predicate exists to stop.
+    ///
+    /// ⛔ AND `clip.drums` IS NOT CONTENT, however much it looks like it. `loadClip` still
+    /// hands a drum grid to `pattern.load(steps:accents:)`, but `PatternEngine.onStep` has
+    /// ZERO production assignments since #166/#167 — measure, do not trust this sentence:
+    /// `git grep -n "onStep" -- Sources | grep -v ': *//'` finds the declaration, the call
+    /// site, and `BeatPlayer.detach`'s `= nil`, and nothing else. The grid is a bar clock,
+    /// not a voice. Counting it would re-open Play over silence through a door this repo has
+    /// already closed twice.
+    ///
+    /// ⛔ AND THE FIRST DRAFT OF THIS FUNCTION OPENED WITH `guard clip.kind == laneKind`,
+    /// WHICH IS A SECOND DEFINITION THE ENGINE DOES NOT HAVE — the same §2 defect this whole
+    /// repair exists to remove, re-introduced while removing it. Measured, not assumed:
+    /// `git grep -n "\.kind ==" -- Sources/Echoelmusic/Sequencer/TimelineRegionPlayer.swift
+    /// Sources/Echoelmusic/Sequencer/AudioLanePlayer.swift
+    /// Sources/Echoelmusic/Sequencer/MultiRollFanout.swift` finds LANE-kind tests and nothing
+    /// else. `loadClip` reads `clip.melody` whatever the clip calls itself; `resolveURL`
+    /// reads `clip.mediaRef` the same way. The engine is kind-BLIND and LANE-driven, so the
+    /// predicate is too — and the founder's mismatch case (§6) still comes out false for
+    /// every reachable clip, by CONTENT rather than by label: an audio clip carries no
+    /// melody, a MIDI clip carries no `mediaRef`. A mutation run caught this: dropping the
+    /// `clip.kind` guard flipped NO claim, i.e. it was doing nothing the content check was
+    /// not already doing — except on a clip carrying BOTH, where it would have refused
+    /// something the loader plays (#364).
+    nonisolated static func isExecutable(region: TimelineRegion,
+                                         onLaneOfKind laneKind: ClipKind,
+                                         clip: Clip) -> Bool {
+        switch laneKind {
+        case .midi:
+            return !executableNotes(of: clip, in: region).isEmpty
+        case .audio:
+            // The audio chain is clip → `mediaRef` → `MediaLibrary.resolveRef` → sink. This
+            // answers the DOCUMENT half. The FILE half is device state and is deliberately
+            // not `stat()`ed here: the Workstation asks this predicate from a SwiftUI body,
+            // and the engine already degrades correctly (`AudioLanePlayer` skips a region
+            // whose URL does not resolve). Stated rather than papered over (§"honest
+            // limits"): an audio-ONLY song whose media file has gone missing since it was
+            // saved still offers Play and starts a silent transport. Closing that needs the
+            // resolver on BOTH sides of one predicate, which is a wiring slice, not this one.
+            return !(clip.mediaRef?.isEmpty ?? true)
+        case .video, .visual:
+            // Unreachable while `timelineEngineKinds` excludes them — exhaustive on purpose,
+            // so adding a kind to that set can never silently inherit "executable". TWO
+            // independent gates, deliberately: a mutation run shows EITHER half alone still
+            // refuses a video lane, which is the point — widening the set is a one-line
+            // change made for a different reason (a new engine), and it must not quietly
+            // decide this question on the way past.
+            return false
+        }
+    }
+
+    /// The notes of `clip` that `loadClip` would actually load for `region` — the same
+    /// `RegionNoteWindow` call, so the predicate and the player cannot disagree about what
+    /// "has content" means.
+    ///
+    /// ⚠️ ONE DELIBERATE DIFFERENCE, AND IT IS A SUPERSET. `loadClip` falls back to
+    /// `RegionNoteWindow.offsetTicks(contentOffsetSeconds:bpm:)` when `contentOffsetTicks`
+    /// is 0 — which needs a tempo this pure function does not have, and MUST not have, or
+    /// the Play button would blink in and out as the body drives the tempo. A legacy
+    /// seconds-trimmed MIDI region is therefore judged at offset 0: the WIDEST window, so
+    /// the residual error can only be "offered a start for content the trim would have
+    /// skipped", never "refused a song that plays" (#364). Measured: no production path
+    /// writes a non-zero `contentOffsetSeconds` onto a MIDI region — `AudioClipFactory` is
+    /// the only writer and it builds `.audio` clips.
+    nonisolated static func executableNotes(of clip: Clip, in region: TimelineRegion) -> [Note] {
+        RegionNoteWindow.windowed(
+            notes: clip.melody?.notes ?? [],
+            offsetTicks: RegionNoteWindow.stepAligned(region.contentOffsetTicks),
+            lengthTicks: region.lengthTicks)
     }
 
     /// Start playing `document` from the bar containing `fromTick` (CLIP-5: the
@@ -299,10 +410,10 @@ public final class TimelineRegionPlayer {
         pianoRoll: PianoRollModel,
         fromTick: Int = 0
     ) {
-        // A song is playable when ANY playable lane has content — a MIDI (roll)
-        // lane, or an audio lane (A1: a pure-audio arrangement must sound too;
-        // the old rollLaneID-only guard silenced it).
-        guard Self.canPlay(document) else { return }
+        // ONE definition (#416/#1438): the control the user tapped asked this exact
+        // call with this exact argument, so an enabled button can never reach a `return`
+        // here — and a document whose regions point at nothing can never reach the clock.
+        guard Self.canPlay(document, clips: clips.filledClips) else { return }
         self.doc = document
         self.clips = clips
         self.pattern = pattern

@@ -37195,3 +37195,75 @@ nicht gab).
   KLINGT Play, Stop schweigt, ein ZWEITES Play startet wieder · das ■ des Instruments stoppt es
   ebenfalls · VoiceOver liest Spurzeilen als einen Satz und nennt Play/Stop mit Hinweis.
 · **PHASE 5** (Stop + Neu-Vermessung) — nicht begonnen, der Auftrag sagt „EXECUTE PHASE 4 ONLY".
+
+## 2026-09-21 — PHASE 4b (#1438): Play heisst jetzt „ausfuehrbarer Inhalt existiert"
+
+**Der Blocker kam von aussen und war echt.** `TimelineRegionPlayer.canPlay(_:)` nahm ein
+Dokument ALLEIN und fragte nur „liegt ein Teil auf einer Spur, die dieser Spieler faehrt".
+Eine Region ist aber ein ZEIGER: ihre `clipID` kann auf nichts zeigen, auf einen leeren Clip,
+auf einen Clip der falschen Art, oder auf Noten, die das Regionsfenster wegwirft — und jeder
+dieser Faelle schaltete Play frei und startete `PatternEngine` ueber Stille.
+
+⛔ **Und der eigene POSITIV-Test der Scheibe hat genau diese Form gebaut und `true` behauptet**
+(`clipID: UUID()`, kein Clip installiert). Er war gruen, er war ehrlich darueber, was er fuhr,
+und was er fuhr war der Defekt. **Lehre, teurer als „schreib mehr Tests": ein POSITIVFALL muss
+aus demselben Material gebaut sein wie die App ihn baut** — ein installierter Clip mit echten
+Noten —, sonst pinnt er die Form des Bugs. Die Signatur, nicht der Rumpf, war falsch: kein
+Rumpf haette es reparieren koennen, die Wahrheit lag nicht im Argument.
+
+**Neu:** `canPlay(_:clips:)` nimmt `[Clip]` (= `ClipStore.filledClips`, an BEIDEN Aufrufstellen
+identisch) und faehrt `firstExecutableRegion` → `isExecutable` → `executableNotes`. Letzteres
+ruft DENSELBEN `RegionNoteWindow.windowed`, den `loadClip` ruft, also koennen Praedikat und
+Lader nicht auseinanderlaufen. Zurueckgewiesen: Waise · undriven/bio-Spur · dangling `clipID` ·
+leerer MIDI-Clip · Noten ausserhalb des Fensters · Audio ohne `mediaRef`.
+
+⛔ **`clip.drums` ist KEIN Inhalt**, so sehr es danach aussieht: `loadClip` uebergibt das Raster
+weiterhin an `pattern.load(steps:accents:)`, aber `PatternEngine.onStep` hat seit #166/#167
+NULL Produktionszuweisungen. Es ist eine Taktuhr, keine Stimme — und die plausibelste
+Ergaenzung, die eine spaetere Sitzung „als Fehlalarm-Fix" einbaut.
+
+**AUDIO-URTEIL, einmal sauber entschieden (§5), gegen die Maschine gemessen, nicht gegen das
+Etikett.** `ClipKind.timelineEngineKinds` sagte `[.midi]` mit der Begruendung „engines not
+shipped" — abgelaufen, seit A1 `TimelineAudioSink` ausliefert, `EchoelmusicApp` ihn in
+`AudioLanePlayer` injiziert (`makeSink:` + `resolveURL:` → `MediaLibrary.resolveRef`) und
+`TimelineRegionPlayer` ihn bei jedem prime/step/stop faehrt. **Audio KLINGT.** Menge jetzt
+`[.midi, .audio]`. ⚠️ Es fehlt der ERZEUGER, nicht die Engine (#204/#527) — zwei verschiedene
+Tatsachen, und ihre Vermengung hielt die Menge vier Monate veraltet. Eine UNTER-Behauptung
+kostet dasselbe wie eine Ueber-Behauptung: ein Dokument, das die Engine spielen wuerde, still
+abzulehnen ist genau die #527-Lage.
+
+⭐ **DIE MUTATIONS-PROBE HAT EINEN DEFEKT IN MEINER EIGENEN REPARATUR GEFUNDEN.** Der erste
+Entwurf von `isExecutable` begann mit `guard clip.kind == laneKind`. Neun Mutanten gefahren,
+zwei ueberlebten — einer davon „lass die Art-Pruefung weg", der KEIN Verdikt kippte. Nachmessen
+(`.kind ==` ueber `TimelineRegionPlayer`, `AudioLanePlayer`, `MultiRollFanout`) zeigte warum:
+**die Engine ist art-BLIND.** `loadClip` liest `clip.melody`, `resolveURL` liest
+`clip.mediaRef`, keiner fragt `clip.kind`. Mein Gate war also eine ZWEITE Definition, die die
+Engine nicht hat — derselbe §2-Defekt, den diese Reparatur entfernt, beim Entfernen neu
+eingebaut. Es war hier wirkungslos und auf einem Clip, der BEIDES traegt, falsch (#364).
+Entfernt; die Founder-Mismatch-Forderung (§6) faellt weiterhin `false`, aber ueber INHALT statt
+ueber Etikett. Waechter 11b haelt es fest und sagt in seiner Fehlermeldung, wie es MIT dem
+Lader mitzuziehen waere.
+
+**Der zweite Ueberlebende war KEIN Defekt:** „video zu `timelineEngineKinds` hinzufuegen" kippt
+nichts, weil der `switch` in `isExecutable` video/visual unabhaengig ablehnt. Zwei Tore
+absichtlich — das Erweitern der Menge geschieht aus einem anderen Grund (eine neue Engine) und
+darf diese Frage nicht im Vorbeigehen entscheiden. Mutant ist jetzt das PAAR; alle neun tot.
+
+**Stripper-Messung, zum dritten Mal in zwei Commits, und zum dritten Mal anders.** #1437 sagte
+erst „load-bearing" (falsch), dann nach dem Fahren „prophylaktisch, 0 von 8". #1438 hat alle
+**27** Scan-Verdikte roh gegen gestrippt gefahren: **1 kippt, und es ist Anspruch J.**
+`WorkstationView` nennt `currentTick` genau einmal — im Kommentar, der erklaert, warum der
+Rumpf es NICHT liest. Ein roher Scan faerbt eine korrekte Datei rot, weil sie ihr eigenes
+Gesetz zitiert (#367). `SourceText.codeOnly` ist hier jetzt LOAD-BEARING, gemessen.
+
+**Zwei LOW-Findings des Reviews (§10) als Anspruch I und J eingebaut** — `stop()` delegiert
+weiter an `pattern?.stop()` (und `handleTransportStopped()` ausdruecklich NICHT: es wird AUS
+der Stop-Kaskade gerufen), und der Rumpf liest keinen Spielkopf.
+
+### Offen nach dieser Runde
+· **Gate-Lesung #1438** — beide Gates, Schritt `Build for Testing`, nie die Run-Conclusion.
+· **NEEDS-FOUNDER-VERIFY (#1436/#1437)** unveraendert, sechs Blicke am `WorkstationView`-Kopf.
+  ⚠️ Der Blick „mit einem MIDI-Teil KLINGT Play" ist jetzt SCHAERFER: auf einer frischen
+  Installation bleibt Play so lange aus, bis Generate echte Noten in den Composer-Clip
+  geschrieben hat — vorher ist der Clip leer, und das ist die Absicht.
+· **PHASE 5** (Stop + Neu-Vermessung) — nicht begonnen, der Auftrag sagt „EXECUTE PHASE 4b ONLY".
