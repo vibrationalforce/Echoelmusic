@@ -26,6 +26,16 @@
 // idiom `soundPanel`, `mixerPanel` and the rest use — so the body's aggregate generic type is
 // untouched and the black-screen law (10.76.34) is not approached. A modal would have spent
 // one of the last slots under the 14 ceiling on a surface that needs no modality at all.
+//
+// NEEDS-FOUNDER-VERIFY (#1436): the door, on the device, in four looks — none of them is a
+// thing a gate can answer, and the commit message called this "registered as open" while
+// nothing was written where `founder-verify.py` reads. (1) The "Workstation" chip is there,
+// between Field and Save/Export, and the strip scrolls far enough to reach it. (2) A tap
+// swaps the plate, and tapping Sound afterwards brings the instrument back — no stuck panel.
+// (3) On a fresh install the plate shows EITHER the empty state OR the two seeded lanes
+// ("MIDI 1", "Audio 1") with zero parts. Both are correct; seeing BOTH claims at once is not.
+// (4) VoiceOver reads each lane row as ONE sentence and the chip announces itself as
+// read-only.
 
 #if canImport(SwiftUI)
 import Foundation

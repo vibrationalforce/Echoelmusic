@@ -37062,3 +37062,66 @@ Play in die Transport-Zeile ohne Tuer / echter Editor); Empfehlung: die erste.
 · **#541-Absatz in `CLAUDE.md`**: die ⭐-Ruecknahme ist da, die Herleitung darunter steht
   weiter im PRAESENS und ist damit dreimal falsch. Nachziehen, wenn die Datei das naechste Mal
   angefasst wird.
+
+## 2026-09-21 — #1436 Workstation-Tuer (Founder-Phase 3, Option 1) + die Gate-Lesung
+
+**Founder-Entscheidung nach dem Phase-3-Stopp:** *„Proceed with Option 1 — build the smallest
+read-only Workstation surface."* Gebaut, `fc61574eb`. Der Auftrag endet mit *„EXECUTE PHASE 3
+ONLY. Do not begin Phase 4 automatically."* — es ist keine Produktionszeile weiter gegangen.
+
+**DIE TUER IST EIN CHIP, KEIN SHEET**, und das ist die ganze Form der Scheibe. `StudioMenu` +
+`studioChips` + `dropdownContent` ist das vorhandene Produktions-Idiom (Sound, FX, Mix, Master,
+Mood, Tempo, Field, Save/Export) und kostet **null** Praesentations-Modifier — 13 von 14 sind
+belegt, ein `.sheet` haette einen der letzten Plaetze unter dem Schwarzbild-Gesetz (10.76.34)
+fuer eine Flaeche ausgegeben, die keine Modalitaet braucht.
+
+**BESITZ:** `TimelineStore` bleibt der eine Besitzer. `WorkstationView` liest
+`TimelineStore.document` und sonst NICHTS auf diesem Store — Anspruch F pinnt das STRUKTURELL
+(jede Nachricht an `timeline` muss exakt `document` sein), statt als schwarze Liste von ~40
+Mutatoren, die am Tag des 41. veraltet.
+
+**WARUM EIN REINER WERTTYP DAZWISCHEN SITZT:** `WorkstationSummary` ist Foundation-only und
+eine reine Funktion des uebergebenen Dokuments, also wird die Arithmetik vom blockierenden
+Buendel **end-to-end GEFAHREN** statt gescannt. Im `private` SwiftUI-Rumpf gerechnet waeren
+alle sieben Anspruechen Quelltext-Scans gewesen — die schwache Sorte (§1).
+
+⭐ **EIN ECHTER FEHLER, DEN DIE TRANSKRIPTION FAND, kein Review-Kommentar:**
+`TimelineRegion.lastTick` ist das EXKLUSIVE Ende, also endet ein Ein-Takt-Teil ab Takt 3 auf
+dem Tick, an dem Takt 4 beginnt — der erste Entwurf druckte „bars 3–4" fuer einen Takt Musik.
+Repariert am TYP (`endBarNumber`, `barSpan`), damit gedruckte und gesprochene Form nicht
+auseinanderlaufen koennen. **Konsequenz fuer Phase 4: der Tick, der eine Region beendet, ist
+eine GRENZE, keine Position** — ein Playhead braucht dieselbe Unterscheidung.
+
+⭐ **`orphanRegionCount` existiert aus einem gemessenen Grund:** eine Region, deren `laneID`
+keine Spur nennt, ist heute erreichbar, weil der Spur-Decode `try?`-tolerant ist und der
+Region-Decode nicht (die #167-Form). Ohne sie druckte die Flaeche eine Summe, die den Zeilen
+darunter widerspricht — schlimmer als jede der beiden Zahlen allein.
+
+**GATE-LESUNG `fc61574eb` (Task #114), die tatsaechlichen Conclusions, nicht abgeleitet:**
+· `Xcode Compile Check` Lauf **35631131358** → **success** (17:18:08 → 17:24:02).
+· `Echoelmusic CI/CD Pipeline` Lauf **35631131434**, Job **106437527414**, Schritt 9
+  **`Build for Testing` → success** (17:19:27 → 17:24:36, 5 m 09 s). Der LAUF stand dabei noch
+  auf `in_progress` bei Schritt 11 `Run Tests` — die Run-Conclusion sagt wegen #396 ohnehin
+  nichts, gelesen wird der SCHRITT (§5).
+· Unabhaengige Gegenprobe auf demselben Befund ueber einen anderen Weg: `git ls-remote origin
+  refs/heads/main` steht auf `fc61574eb` — `auto-merge-claude.yml` merged nur auf gruenem
+  `Build for Testing`.
+
+⛔ **UND EINE EIGENE FALSCHBEHAUPTUNG AUS DEM PHASE-3-BERICHT, hier korrigiert statt still
+nachgebessert:** die Commit-Botschaft sagte, die Geraeteprobe sei *„registered as open"*. Sie
+war es in PROSA und nirgends, wo `founder-verify.py` liest — die Warteschlange kannte sie
+nicht. Jetzt steht der Marker in `WorkstationView.swift:30` (158 offene Bitten in 129 Dateien,
+vorher 157/128). **Lehre, und sie ist die #456-Form eine Stufe hoeher: ein Vermerk gilt erst,
+wenn er in dem Zuhause steht, das das WERKZEUG liest** — eine Registrierung, die nur im
+Commit-Text existiert, ist eine Behauptung ueber einen Vorgang, der nie stattgefunden hat.
+
+### Offen nach dieser Runde
+· **Task #115 NEEDS-FOUNDER-VERIFY: die Workstation-Tuer am Geraet** — vier Blicke, im Marker
+  benannt (Chip erreichbar · Tap tauscht die Platte und Sound holt das Instrument zurueck ·
+  frische Installation zeigt ENTWEDER den Leerzustand ODER die zwei gesaeten Spuren mit null
+  Teilen · VoiceOver liest jede Spurzeile als EINEN Satz).
+· **Task #113** Zwei-Telefon-Probe fuer #1435.
+· **PHASE 4** (Timeline-Wiedergabe) — **nicht begonnen, auf Founder-Wort wartend.** Anspruch H
+  ist der Gegengewicht-Wächter, der das festhaelt: `TimelineRegionPlayer.play(` hat weiterhin
+  null Produktions-Aufrufer, rename-fest ueber den Bezeichner geloest, an den die App den
+  Player bindet.
