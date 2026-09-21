@@ -245,8 +245,10 @@ public final class ADMOSCSender {
         // on a strap-only rig this arm can now send nothing for a whole session while that
         // dot still reads "sending". That is a separate defect, not one this line closes.
         guard !messages.isEmpty else { return }
-        for (address, value) in messages {
-            send(address: address, floats: [value])
+        // #1421 — the three polar leaves leave as ONE `/aed` when all three are present.
+        // Both arms flow through here, so the packing rule has exactly one home.
+        for (address, floats) in Self.packedPositionMessages(messages, object: objectIndex) {
+            send(address: address, floats: floats)
         }
         lastSentTimestamp = CFAbsoluteTimeGetCurrent()
     }
@@ -352,6 +354,67 @@ public final class ADMOSCSender {
             msgs.append(("\(prefix)/gain", gain))
         }
         return msgs
+    }
+
+    /// Folds the three POLAR leaves into ONE `/adm/obj/{n}/aed`, and only when ALL THREE
+    /// are present. Everything else passes through in order, untouched.
+    ///
+    /// ⭐ WHY THIS EXISTS, cited rather than asserted. ADM-OSC v1.0 §"Minimum Viable
+    /// Implementation" (`docs/adm-osc.bs`, the vendored spec this repo already pins its leaf
+    /// names against) requires of a SENDER: *"Implement at least one of `/adm/obj/{n}/xyz`
+    /// (Cartesian, packed) or `/adm/obj/{n}/aed` (polar, packed) for position"*, and of a
+    /// RECEIVER: *"Handle at least one of `/adm/obj/{n}/xyz` or `/adm/obj/{n}/aed`"*.
+    /// Until this function existed Echoel sent NEITHER packed form, so it was not a
+    /// conforming sender — and, the sharper half, **a conforming receiver is not required to
+    /// handle `/azim`, `/elev` or `/dist` at all.** The unpacked-only feed could be dropped
+    /// entirely by a renderer that is fully within spec. Packing therefore makes the object
+    /// MORE likely to be understood, not less, which is the opposite of what a wire-format
+    /// change usually risks — worth stating, because that assumption is what would otherwise
+    /// keep this unfixed.
+    ///
+    /// The second reason is the spec's own: *"Use packed messages (`xyz` or `aed`) for
+    /// position updates to ensure atomic delivery."* Three datagrams can arrive split across
+    /// two render ticks, so a moving object can be rendered at a position it never occupied —
+    /// one axis from this frame, two from the last.
+    ///
+    /// ⛔ AND THE ALL-THREE CONDITION IS #1140, NOT AN OPTIMISATION. A packed message must
+    /// carry three numbers; a partially measured frame has no third number to carry, and the
+    /// only ways to send one anyway are to invent it or to repeat a stale one. Both are
+    /// exactly what the per-axis gates above exist to prevent — an unmeasured breath would
+    /// ride out as azimuth −180 (hard left) and an unmeasured coherence as distance 1 (far
+    /// wall), which a renderer cannot tell from a performer who really is there. So: all
+    /// three measured ⇒ one atomic `/aed`; anything less ⇒ the individual leaves, each still
+    /// riding its own channel's measurement. Atomicity where possible, an invented number
+    /// never.
+    ///
+    /// ⚠️ IT TAKES THE OUTPUT OF THE MAPPERS RATHER THAN THE FRAME, deliberately (#416).
+    /// Re-deriving azimuth/elevation/distance here would put each mapping AND each
+    /// measurement gate in a second home, and the bio arm's gates are the most carefully
+    /// argued lines in this file. This function only regroups what the mappers already
+    /// decided, so a value in `/aed` is bit-identical to the one that would have gone out
+    /// alone, and a leaf the gates withheld cannot reappear here.
+    ///
+    /// ⚠️ NOT a bundle. The spec notes packed values *"can also be grouped with other
+    /// messages in an OSC bundle for atomic/synchronous delivery with a shared timestamp"* —
+    /// that is a further step, needs `#bundle` framing in `OSCSender.encode`, and is not what
+    /// the MVI asks for. One packed message per position update is the conformance bar.
+    public nonisolated static func packedPositionMessages(_ msgs: [(String, Float)],
+                                                          object n: Int) -> [(String, [Float])] {
+        let prefix = "/adm/obj/\(max(1, n))"
+        let azimuth = prefix + "/azim", elevation = prefix + "/elev", distance = prefix + "/dist"
+        func value(_ address: String) -> Float? {
+            msgs.first(where: { $0.0 == address })?.1
+        }
+        guard let a = value(azimuth), let e = value(elevation), let d = value(distance) else {
+            return msgs.map { ($0.0, [$0.1]) }
+        }
+        // `/aed` takes the position's place at the FRONT; every non-positional address keeps
+        // its relative order behind it (the music arm's `/gain` followed its three axes).
+        var out: [(String, [Float])] = [(prefix + "/aed", [a, e, d])]
+        for (address, v) in msgs where address != azimuth && address != elevation && address != distance {
+            out.append((address, [v]))
+        }
+        return out
     }
 
     /// The bio arm's object gain, or `nil` when nothing measures motion — in which case

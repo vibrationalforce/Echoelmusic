@@ -43,7 +43,12 @@ final class TheADMOSCLeavesAreTheSpecsTests: XCTestCase {
 
     func testTheSenderEmitsTheSpecLeafNames() throws {
         let code = try source(Self.sender)
-        for leaf in ["/azim", "/elev", "/dist", "/gain"] {
+        // `/aed` joined this list with #1421 — the PACKED polar form the spec's sender
+        // minimum asks for ("implement at least one of /xyz or /aed"). It is pinned HERE,
+        // beside the leaves it folds, rather than only in its own guard: this is the file
+        // that answers "does the sender speak the spec's address table", and a leaf that
+        // the MVI requires belongs in that answer.
+        for leaf in ["/azim", "/elev", "/dist", "/aed", "/gain"] {
             XCTAssertTrue(code.contains("\(leaf)\""), """
                 `ADMOSCSender.swift` no longer writes the ADM-OSC leaf `\(leaf)`. The spec's \
                 object table (docs/adm-osc.bs) names exactly /azim /elev /dist /aed /x /y /z /xyz \
