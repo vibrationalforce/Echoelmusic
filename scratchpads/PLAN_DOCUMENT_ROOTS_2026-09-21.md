@@ -50,13 +50,21 @@ zweite Instanz — die Wurzeln sind sauber einmal da. Das ist die gute Nachricht
 
 ## 2. Die drei ECHTEN Überlappungen — gemessen, nicht vermutet
 
-### 2.1 ⛔ AUTOMATION HAT ZWEI HEIMATEN, und nichts hält sie synchron
+### 2.1 ⛔ AUTOMATION HAT DREI HEIMATEN — zwei davon doppeln sich, die dritte NICHT
 `AutomationPlayer` speichert `AutomationState { enabled, lanes: [AutomationLane] }` in die
 Datei `automation` (`AutomationPlayer.swift:165/260/263/634`). `TimelineDocument` hält ein
 **zweites** `automation: [AutomationLane]` in der Datei `timeline`
 (`Timeline.swift`, gelesen/geschrieben in `TimelineStore.swift:780-816`). **Derselbe Typ,
 zwei Dateien, kein Abgleich.** Der SPIELER liest die erste, der (heute türlose) EDITOR
 schriebe in die zweite.
+
+⭐ **KORRIGIERT BEIM BAUEN VON M2 (#1419): es sind DREI, nicht zwei.** Die dritte ist
+`Clip.automation` — eine Kurvenliste IN jedem Clip. ⚠️ **Sie gehört NICHT zur Doppelung, und
+das genau aufzuschreiben ist der Punkt:** ihr GELTUNGSBEREICH ist ein anderer
+(clip-relativ statt song-absolut), so wie jede DAW Clip-Automation von Spur-Automation
+trennt. Wer „Automation vereinheitlichen" liest und drei Dinge in eins faltet, verliert
+diese Unterscheidung still. Die Doppelung sind die ZWEI song-absoluten Heimaten unten; die
+dritte wird benannt, damit sie beim Vereinheitlichen nicht mitgerissen wird.
 
 Das ist der #416-Defekt eine Ebene über dem Code: eine Entscheidung, zwei Zuhause. Und er ist
 heute unsichtbar, weil die Timeline-Fläche mit #121 Slice 4 gelöscht wurde — **genau die
@@ -67,9 +75,21 @@ zurückbringt und sich wundert, warum seine Kurve nicht spielt.
 `Project.notes: [Note]` (plus `rawTake.bars: [[Note]]`) gegen `TimelineDocument.regions`,
 deren MIDI-Regionen dieselben Noten tragen. Welche gewinnt, entscheidet, wer zuletzt
 geschrieben hat. Für heute harmlos (der Roll-Editor ist mit #475 weg, die Timeline türlos),
-für M2 die zentrale Entscheidung: **die Timeline ist die Wurzel, `Project.notes` wird beim
-Import in eine Region gehoben** — nicht umgekehrt, weil nur die Timeline mehrere Spuren und
-mehrere Medien tragen kann.
+für M2 die zentrale Entscheidung: **die Timeline ist die Wurzel** — nicht umgekehrt, weil nur
+sie mehrere Spuren und mehrere Medien tragen kann.
+
+⛔ **UND DER ZWEITE HALBSATZ DIESER ZEILE WAR FALSCH — er lautete „`Project.notes` wird beim
+Import in eine Region gehoben", und das Schreiben des Codes (#1419) hat ihn widerlegt.** Es
+geht nicht in EINEM Schritt: eine `TimelineRegion` trägt eine `clipID`, die Noten wohnen in
+`Clip.melody`, und Clips sind eine ANDERE persistierte Wurzel. Eine Region, deren Clip nicht
+mit im Umschlag liegt, ist ein hängender Verweis. Heben hieße also zusätzlich einen Clip zu
+PRÄGEN — das ist Umstrukturieren, und ein Importeur, der umstrukturiert, ist nicht mehr gegen
+„hat er etwas verloren?" prüfbar, sondern nur noch gegen „hat er so geraten wie ich?". Die
+erste Frage ist die einzige, die ein Importeur schuldet. **Der Take fährt deshalb GANZ in
+`legacy` mit, und das Heben gehört dem SCHREIBER.** ⭐ Lehre, und sie ist der Grund, warum
+diese Korrektur hier steht und nicht nur im Quelltext: **ein Entwurf, der eine Umwandlung in
+einem Satz beschreibt, hat sie damit noch nicht auf ihre Schritte geprüft** — „wird gehoben"
+klang wie eine Zuweisung und war eine Restrukturierung.
 
 ### 2.3 ⭐ TEMPO HAT GAR KEINE HEIMAT IM ZEITDOKUMENT — das ist die Lücke, die M1 sichtbar macht
 `Project.bpm: Double` ist ein SKALAR und liegt in der Projekt-Wurzel. `TimelineDocument` hat
@@ -111,11 +131,24 @@ DMMWProject                      ← der einzige neue Wurzel-Typ
   ├─ meta      { id, name, artist, savedAt }
   ├─ timebase  : Timebase        ← #1416. ppq · sampleRate · TempoMap · MeterMap
   ├─ musical   { keyRoot, scaleRaw, styleRaw, modeRaw, a4Hz, toneSystemID, moodFields }
-  ├─ timeline  : TimelineDocument
+  ├─ content   { timeline, clipSlots: [Clip?], songForm: Arrangement, playerAutomation }
   ├─ sound     { patch: SynthPatch, fxCharacterRaw }
-  └─ legacy    { notes, rawTake, drumSteps, drumAccents, loopBars, bpm }
+  └─ legacy    { notes, rawTakeBars, rawTakeStyleRaw, drumSteps, drumAccents, loopBars }
                                  ← NUR vom Importeur beschrieben, nie vom Schreiber
 ```
+
+⛔ **ZWEI KORREKTUREN AN DIESER SKIZZE, beide aus #1419, beide vom Code gefunden:**
+· **`bpm` stand in `legacy` — und widersprach damit Regel 2 vier Zeilen weiter unten**, die
+  sagt, er werde zur `tempoMap` und hinterlasse kein zweites Feld. Die Skizze und ihre eigene
+  Regel waren im selben Abschnitt uneins; der gebaute Umschlag hat KEIN `bpm`-Feld, und ein
+  Wächter hält das fest. ⭐ **Lehre: ein Entwurf widerlegt sich manchmal auf derselben Seite,
+  und ein Diagramm liest sich dabei autoritativer als der Fließtext daneben.**
+· **`timeline` stand allein, wo VIER Inhalts-Wurzeln hingehören.** §5 führte „ob `Arrangement`
+  und die Clip-Slots überhaupt in den Umschlag kommen" als offene Scheiben-Frage; M2 hat sie
+  entschieden — sie kommen mit, weil sie SONG-Inhalt tragen und weil eine Wurzel, die man
+  später nachrüstet, in der Zwischenzeit die einzige Heimat von Nutzerdaten ohne Umschlag ist
+  (#527). `clipSlots` bleibt dabei POSITIONAL, Löcher inklusive: der Index IST die Identität,
+  auf die eine gespeicherte Section zeigt.
 
 **Vier Regeln, jede mit ihrem Grund:**
 
@@ -128,10 +161,15 @@ DMMWProject                      ← der einzige neue Wurzel-Typ
    Import als `TempoMap.constant(project.bpm)` im Entwurf: die Umwandlung ist total, sie
    verliert nichts, und sie hinterlässt kein zweites Feld.
 3. **DIE AUTOMATIONS-DOPPELUNG WIRD IM IMPORT ENTSCHIEDEN, nicht vertagt:** `timeline`
-   gewinnt, `automation` wird beim Import hineingefaltet, und der Spieler liest danach aus dem
-   Dokument. ⚠️ Solange das nicht passiert ist, bleiben BEIDE Dateien liegen — die
+   gewinnt. ⛔ **Hier stand „`automation` wird beim Import hineingefaltet", und das ist beim
+   Bauen präzisiert worden (#1419), weil „einfalten" zwei Dinge heißen kann und nur eines
+   davon richtig ist.** „Timeline gewinnt" ist eine **LESE-Regel**: eine Spieler-Spur für einen
+   Parameter, den die Timeline schon fährt, fällt weg — **jede andere Spieler-Spur wird
+   MITGENOMMEN**, nicht gelöscht. Ein Importeur, der alle löschte, machte aus einer sichtbaren
+   Doppelung einen stillen Verlust, also genau die #527-Form, vor der der nächste Satz warnt.
+   ⚠️ Und solange kein Schreiber existiert, bleiben ohnehin BEIDE Dateien liegen — die
    `automation`-Datei abzuklemmen, bevor der Umschlag sie trägt, macht aus einer sichtbaren
-   Doppelung eine stille Stummheit (#527).
+   Doppelung eine stille Stummheit.
 4. **DIE SIEBEN NICHT-SONG-WURZELN BLEIBEN DRAUSSEN.** Bibliothek (Patches, FX-Presets,
    Moods) und Einstellungen (Matrix, Routing, Track-FX) sind APP-Zustand. Ein Projektwechsel
    darf sie nicht ersetzen. Das Projekt trägt den EINEN Patch, den es klingen lässt, als WERT
@@ -144,10 +182,12 @@ DMMWProject                      ← der einzige neue Wurzel-Typ
 · **Das Dateiformat auf der Platte** (ein `.echoel`-Paket gegen eine JSON-Datei) — das ist
   eine Founder-/Produktfrage, keine Architekturfrage, und sie ist umkehrbar, solange der
   Umschlag ein `Codable`-Werttyp ist.
-· **Ob `Arrangement` und die Clip-Slots überhaupt in den Umschlag kommen.** Beide sind türlos
-  (`ArrangeTimelineView` und `ClipView` sind mit #121 Slice 4 gelöscht). Sie gehören in die
-  SONG-Klasse, weil sie Stück-Inhalt tragen — aber ob M2 sie importiert oder erst M5, wenn
-  eine Fläche zurückkommt, ist eine Scheiben-Entscheidung, keine Entwurfs-Entscheidung.
+· ⭐ **ENTSCHIEDEN IN M2 (#1419), nicht mehr offen: `Arrangement` und die Clip-Slots kommen
+  mit.** Die Frage stand hier als Scheiben-Entscheidung („M2 oder erst M5, wenn eine Fläche
+  zurückkommt") und ist so beantwortet: beide sind türlos, aber türlos heißt nicht
+  wirkungslos — eine SONG-Wurzel, die der Umschlag NICHT trägt, ist in der Zwischenzeit die
+  einzige Heimat von Nutzerdaten ohne Umschlag, und genau daraus wird die #527-Lage. Beide
+  fahren im Fach `content` mit, die Clip-Slots positional.
 · **Migration alter `projects.json`-Dateien auf dem GERÄT.** Nur eine Geräte-Session kann
   sagen, ob ein echtes gespeichertes Projekt durch den Importeur kommt. Der Importeur ist
   gegen die TYPEN testbar, nicht gegen die Dateien echter Nutzer.
