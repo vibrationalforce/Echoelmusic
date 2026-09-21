@@ -1895,9 +1895,14 @@ public enum BioComposer {
             //      wearing a new name, and a test asserting only "≠ driving" cannot see it.
             // So the rotation is measured FROM THE SECTION'S OWN DOWNBEAT: entry offset within the
             // section = `sectionIndex` cells, whatever cell of the bar the section happens to begin
-            // on. `syncopated` and `sparse` read `position`, not `bar`, so their quarter alignment is
-            // untouched; `dynamic`'s jitter and `flowing`'s flips only re-derive a different (still
-            // reproducible) draw stream.
+            // on. `syncopated` and `sparse` keep their QUARTER ALIGNMENT whatever `bar` is (the one
+            // reads `position % beat`, the other refuses every off-quarter cell), so rotating the
+            // entry cannot move them off the grid; `dynamic`'s jitter and `flowing`'s flips only
+            // re-derive a different (still reproducible) draw stream.
+            // ⛔ THIS SAID "`syncopated` and `sparse` read `position`, NOT `bar`" UNTIL #1404, AND
+            // THAT HALF IS NOW FALSE: both consult `bar` to decide this bar's rotation once
+            // `evolve > 0`. The CONCLUSION it was supporting is unchanged and is restated above
+            // from what actually holds — the alignment, not the absence of a `bar` read.
             let cellOfStart = ((secStart % cells) + cells) % cells
             let rotation = cellOfStart + sectionIndex
             for step in secStart..<secEndLocal {

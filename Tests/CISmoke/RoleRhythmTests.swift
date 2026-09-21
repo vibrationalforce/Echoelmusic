@@ -220,12 +220,18 @@ final class RoleRhythmTests: XCTestCase {
                           bar(params(.dynamic, density: 0.6, evolve: 1), bar: 3))
     }
 
-    /// ⛔ THE ANTI-LYING-DIAL TEST (#164, #227). `Character.usesEvolve` is what A7 reads to decide
-    /// whether to draw the row at all, so it must describe the CODE and not the intention: for
-    /// every character, turning `evolve` from 0 to 1 must change the output exactly when that
-    /// property says it does. Without this, `evolve` was a full-range slider that did nothing on
-    /// four of the six — and nothing would have gone red if it had been deleted from a fifth.
-    func testEvolveChangesExactlyTheCharactersThatClaimToUseIt() {
+    /// ⛔ THE ANTI-LYING-DIAL TEST (#164, #227), AND IT GOT STRICTER WITH #1404.
+    ///
+    /// It used to compare the measured answer against `Character.usesEvolve`, the flag A7 read
+    /// before deciding whether to draw the row at all. Founder 2026-09-21: *„Variation soll immer
+    /// gehen bei allen Genres"* — so the flag is deleted and the assertion is now unconditional:
+    /// EVERY character must change when the dial goes from 0 to 1.
+    ///
+    /// ⭐ THAT CLOSES A GAP THE FLAG VERSION ADMITTED IN ITS OWN DOC. With the flag, a seventh
+    /// character arriving with no evolve branch answered `false`, matched, and shipped a full-range
+    /// row that did nothing. There is nothing left to answer with here — a seventh case with no
+    /// response turns this red the day it is added.
+    func testEvolveChangesEveryCharacterWhenTurnedUp() {
         for character in RoleRhythm.Character.allCases {
             var differed = false
             for barIndex in 0..<8 {
@@ -233,9 +239,92 @@ final class RoleRhythmTests: XCTestCase {
                 let moving = bar(params(character, density: 0.6, evolve: 1), bar: barIndex)
                 if still != moving { differed = true }
             }
-            XCTAssertEqual(differed, character.usesEvolve,
-                           "\(character).usesEvolve is \(character.usesEvolve) but the output "
-                           + (differed ? "changed" : "did not change") + " when evolve went to 1")
+            XCTAssertTrue(differed, """
+                \(character) produced a bit-identical bar at evolve 0 and evolve 1 over eight \
+                bars. Since #1404 the Variation row is enabled on every character, so a character \
+                that ignores the dial is a full-range control that does nothing — the #164/#227 \
+                defect the founder reported from the device ("Variation geht nicht", on Hypnotic). \
+                `RoleRhythm.Params.evolve` lists what each character is supposed to answer with.
+                """)
+        }
+    }
+
+    /// ⭐ #1404 — THE FLOOR, AND IT IS THE HALF THAT MAKES THE DIAL HONEST IN EVERY CONFIGURATION.
+    ///
+    /// The four rotating characters answer `evolve` by changing WHICH cells sound, and that is
+    /// invisible at `density == 1` (every cell already fires, so there is nothing for a rotation
+    /// to reveal). `dynamic` answers by jittering the accent contour, and that is annihilated at
+    /// `accent == 0` (the velocity maths multiplies it by the depth). Both are real settings a
+    /// player can be sitting on WITHOUT SEEING THEM — the pad's density is chosen by the composer,
+    /// not by a row — and in the old design that is precisely how a live dial still read as broken.
+    ///
+    /// So the note-LENGTH breath is deliberately gated by neither. Pinned at the worst corner of
+    /// both at once: full grid, flat accent, and every character must still move.
+    func testTheLengthBreathIsNotGatedByAccentOrDensity() {
+        for character in RoleRhythm.Character.allCases {
+            var differed = false
+            for barIndex in 0..<8 {
+                let still = bar(params(character, density: 1, accent: 0, evolve: 0), bar: barIndex)
+                let moving = bar(params(character, density: 1, accent: 0, evolve: 1), bar: barIndex)
+                if still != moving { differed = true }
+            }
+            XCTAssertTrue(differed, """
+                \(character) went inert at density 1 with accent 0. That is the corner where the \
+                rotations and the accent jitter both vanish, so the shared note-length breath is \
+                the only thing left — if it has been gated on a character, a dial the player can \
+                see has been made to depend on two settings they cannot.
+                """)
+        }
+    }
+
+    /// ⭐ #1404 — THE DIFFERENCE BETWEEN A ROTATION AND NOISE, and it is the reason the rotation
+    /// draw is folded from (seed, bar) and NOT from the cell.
+    ///
+    /// A per-CELL draw would move each cell of the figure independently: the bar would still
+    /// "change", every test above would still pass, and the character would be gone — `hypnotic`
+    /// is a repeating figure that ENTERS somewhere else, not a scatter. So this asserts the SHAPE:
+    /// whatever `evolve` does to a bar, the cells that sound are the unrotated bar's cells moved by
+    /// ONE constant, the same for all of them.
+    ///
+    /// ⚠️ `syncopated` ROTATES IN WHOLE BEATS and the search below says so, which is not a
+    /// convenience: rotating it by single cells moved its one low-density note onto a quarter,
+    /// where the on-beat branch silenced the bar (see `testTheDensityFloorSurvivesEveryEvolve`).
+    func testTheBarRotationMovesTheWholeFigureTogether() {
+        for (character, step) in [(RoleRhythm.Character.hypnotic, 1), (.syncopated, 4)] {
+            for barIndex in 0..<24 {
+                let base = firedCells(params(character, density: 0.6, evolve: 0), bar: barIndex)
+                let moved = firedCells(params(character, density: 0.6, evolve: 1), bar: barIndex)
+                let isARotation = stride(from: 0, to: cells, by: step).contains { shift in
+                    Set(base.map { RoleRhythm.floorMod($0 + shift, cells) }) == moved
+                }
+                XCTAssertTrue(isARotation, """
+                    \(character) at bar \(barIndex) fired \(moved.sorted()), which is not \
+                    \(base.sorted()) rotated by any single amount. The per-bar draw has become a \
+                    per-cell one, so each cell moved on its own — the bar changes, every other \
+                    test here still passes, and the character is gone: a rotating figure that \
+                    enters somewhere else has turned into a scatter.
+                    """)
+            }
+        }
+    }
+
+    /// ⭐ #1404 — and the counterweight to the test above (#343): the floor must not be the WHOLE
+    /// answer on the four rotating characters, or Variation would be one humanise control wearing
+    /// six names and the six would have collapsed toward each other (#81/#125).
+    func testTheRotatingCharactersChangeWhichCellsSound() {
+        for character in [RoleRhythm.Character.hypnotic, .sparse, .syncopated, .flowing] {
+            var differed = false
+            for barIndex in 0..<24 where firedCells(params(character, density: 0.6, evolve: 0),
+                                                    bar: barIndex)
+                != firedCells(params(character, density: 0.6, evolve: 1), bar: barIndex) {
+                differed = true
+            }
+            XCTAssertTrue(differed, """
+                \(character) fired the same CELLS at evolve 0 and evolve 1 over 24 bars. Its \
+                response to the dial has been reduced to the shared note-length breath, which \
+                every character already has — the character no longer answers Variation in \
+                character, and `RoleRhythm.Params.evolve` says it should.
+                """)
         }
     }
 
@@ -272,18 +361,27 @@ final class RoleRhythmTests: XCTestCase {
         }
     }
 
-    /// ⛔ AND THE CASE THE FLAG CANNOT SEE: on `dynamic`, `evolve`'s only effect is a jitter added to
+    /// ⛔ AND THE CASE NO BLANKET CHECK SEES: on `dynamic`, `evolve`'s LEVEL effect is a jitter added to
     /// the accent STRENGTH, which the velocity maths multiplies by the accent depth. So at
-    /// `accent == 0` the bar is bit-identical however far Evolve is pushed — the panel shows both
-    /// rows and one of them is inert. Pinned because `testEvolveChangesExactlyTheCharactersThatUseIt`
-    /// runs at `accent: 0.5` and therefore cannot catch it, and because `flowing` must NOT share the
+    /// `accent == 0` the CONTOUR is bit-identical however far Evolve is pushed. Pinned because
+    /// `testEvolveChangesEveryCharacterWhenTurnedUp` runs at `accent: 0.5` and therefore cannot
+    /// catch it, and because `flowing` must NOT share the
     /// behaviour (its evolve flips which cells sound, upstream of the multiply) — if it ever did,
     /// the panel's caveat would be pointing at the wrong character.
-    func testOnDynamicTheEvolveDialNeedsSomeAccentToMove() {
+    func testOnDynamicTheEvolveDialNeedsSomeAccentToMoveTheLevels() {
         for barIndex in 0..<4 {
-            XCTAssertEqual(bar(params(.dynamic, accent: 0, evolve: 0), bar: barIndex),
-                           bar(params(.dynamic, accent: 0, evolve: 1), bar: barIndex),
-                           "dynamic changed at accent 0 — the panel's Evolve caveat is now wrong")
+            // ⛔ THIS COMPARED WHOLE `Hit`s UNTIL #1404 AND WOULD NOW BE RED FOR THE RIGHT REASON:
+            // the shared note-length breath moves at accent 0 by design. The caveat the panel
+            // prints was narrowed in the same commit ("the contour stays flat and only the note
+            // length still breathes"), so the assertion is narrowed to match it — VELOCITIES, not
+            // the whole Hit. Widening this back would re-assert a sentence no screen says.
+            let still = bar(params(.dynamic, accent: 0, evolve: 0), bar: barIndex)
+            let moving = bar(params(.dynamic, accent: 0, evolve: 1), bar: barIndex)
+            XCTAssertEqual(still.map { $0?.velocity }, moving.map { $0?.velocity },
+                           "dynamic's LEVELS changed at accent 0 — the panel's Evolve caveat is now wrong")
+            XCTAssertNotEqual(still, moving,
+                              "dynamic went fully inert at accent 0 — #1404's note-length breath "
+                              + "is ungated on purpose, and the caption promises it")
         }
         var flowingDiffered = false
         for barIndex in 0..<4 where bar(params(.flowing, accent: 0, evolve: 0), bar: barIndex)
@@ -457,6 +555,44 @@ final class RoleRhythmTests: XCTestCase {
             for density in [Float(0.001), 0.01, 0.05, 0.1, 0.2, 0.3, 0.35, 0.5] {
                 XCTAssertFalse(firedCells(params(character, density: density)).isEmpty,
                                "\(character) was silent at density \(density)")
+            }
+        }
+    }
+
+    /// ⛔ THE SAME FLOOR, SWEPT ACROSS `evolve` — AND IT CAUGHT A REAL BUG BEFORE IT SHIPPED.
+    ///
+    /// #1404's first version rotated `syncopated`'s off-beat figure by single CELLS. At a low
+    /// density `spread` selects exactly one index, the one satisfying `position − beat/2 − rot ≡ 0`,
+    /// so a rotation that is not a multiple of `beat` moved that position ONTO a quarter — where
+    /// the on-beat guard claims it first and answers `density > 0.85`, i.e. false. Nothing else
+    /// fires. The whole bar went silent, on a dial the founder had just asked to be always live.
+    /// The test above could not see it: it runs at `evolve: 0`, where no rotation happens.
+    ///
+    /// ⚠️ `flowing` IS EXCLUDED, AND NOT TO MAKE THIS GREEN. Its evolve flips individual cells in
+    /// and out, so at a density that selects exactly one cell it can legitimately flip that one
+    /// out — measured identically on the tree BEFORE #1404 (bars 79, 87, 163, 178 of 200 at
+    /// density 0.001, seed 9), so it is a pre-existing corner of `flowing`'s design and not
+    /// something this slice introduced. Reported rather than silently excluded; if the founder
+    /// wants the floor to hold there too, the fix is one guard in `fires`'s `flowing` branch
+    /// (never flip out the last surviving cell) and it changes that character's sound, which is
+    /// why it is not folded in here.
+    func testTheDensityFloorSurvivesEveryEvolve() {
+        for character in RoleRhythm.Character.allCases where character != .flowing {
+            for density in [Float(0.001), 0.01, 0.05, 0.1, 0.2, 0.3, 0.35, 0.5] {
+                for evolve in [Float(0.2), 0.5, 0.8, 1] {
+                    for barIndex in -3..<40 {
+                        XCTAssertFalse(
+                            firedCells(params(character, density: density, evolve: evolve),
+                                       bar: barIndex).isEmpty, """
+                            \(character) went silent at density \(density), evolve \(evolve), \
+                            bar \(barIndex). `Params.density` promises in writing that only 0 is \
+                            silence, on every character — the floor inside `spread` exists for it. \
+                            A per-bar rotation that moves the one selected cell into another \
+                            character branch breaks it without touching `spread` at all, which is \
+                            exactly how #1404's first draft did.
+                            """)
+                    }
+                }
             }
         }
     }

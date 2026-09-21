@@ -35502,3 +35502,68 @@ Build-Notiz.
 **Was der Founder am Gerät entscheidet** (die drei Marker aus #1403, gedruckt in der Notiz zu
 10.79.477): der Eröffnungswert 0,25 · ob ein Genre bei „Bar variation" 1,00 noch nach sich
 selbst klingt · ob die abgeschaltete Zeile als AUS statt als kaputt liest.
+
+## 2026-09-21 — #1404: Variation geht jetzt auf ALLEN sechs Rhythmus-Charakteren
+
+**Founder wörtlich: „Variation soll immer gehen bei allen Genres."** Das ist die Antwort auf die
+Frage, die #1401 ausdrücklich offengelassen hatte — sein Gerätebericht („Variation geht nicht",
+auf Hypnotic) betraf eine Zeile, die KORREKT abgeschaltet war, weil `evolve` nur zwei der sechs
+Charaktere erreichte. #1401 hat die Zeile sichtbar abgeschaltet aussehen lassen und in seinem
+eigenen Kopf notiert, dass die Klangentscheidung dem Founder gehört. Sie ist gefallen.
+
+**Nicht die Flagge umgedreht — die Flagge GELÖSCHT.** `RoleRhythm.Character.usesEvolve` hätte als
+konstantes `true` überlebt; das wäre eine Tatsache ohne Inhalt, und `padShapeCaption` PROJIZIERT
+sie, hätte also alle sechs Namen als Wegweiser gedruckt. Das Anti-Lügen-Gesetz (#164/#227) hängt
+seither an der stärkeren Stelle: `RoleRhythmTests` verlangt von JEDEM Charakter, dass echte
+`hit(...)`-Ausgabe zwischen `evolve: 0` und `evolve: 1` differiert. Die Flagge konnte das nicht —
+ihr eigenes Doc gab zu, dass ein siebter Charakter mit `false` still durchläuft.
+
+**Die Aufteilung, und sie ist der musikalische Kern:** ein gemeinsamer BODEN für alle sechs plus
+die charakter-eigene Antwort darüber, damit Aufdrehen den Charakter VERTIEFT statt die sechs
+aufeinander zuzubewegen (#81/#125).
+· **alle sechs** — die Notenlänge atmet, ±15 % bei 1,0, pro Zelle gezogen. Bewusst WEDER von
+  `accent` NOCH von `density` abhängig: genau diese zwei Einstellungen sind es, die ein Spieler
+  nicht sieht (die Pad-Dichte wählt der Komponist), und in der alten Bauart las eine lebende Zeile
+  deshalb als kaputt. Länge ist außerdem die EINE der vier Dimensionen, die keinem Charakter
+  gehört — Pegel ist `dynamic`s Antwort, Platzierung ist das, wofür man `driving` wählt.
+· `driving` — nichts weiter. Gerade, auf dem Raster, Maschinenzeit IST der Charakter.
+· `hypnotic` · `sparse` · `syncopated` — eine Rotation, **PRO TAKT** entschieden (eigener
+  Zieh-Strom aus (seed, bar), getrennt vom Pro-Zelle-Strom). Pro Zelle wäre keine Rotation,
+  sondern Rauschen unter ihrem Namen; und ein geteilter Strom hätte das Ziehen von `dynamic` und
+  `flowing` still verschoben.
+· `dynamic` · `flowing` — unverändert.
+
+⭐ **DIE TRANSKRIPTION HAT EINEN ECHTEN FEHLER GEFANGEN, BEVOR ER AUSGELIEFERT WURDE.** Die erste
+Fassung rotierte `syncopated` um einzelne ZELLEN. Bei kleiner Dichte wählt `spread` genau einen
+Index; eine Rotation, die kein Vielfaches von `beat` ist, schiebt diese Position auf ein Viertel,
+wo der On-Beat-Zweig sie zuerst beansprucht und `density > 0.85` = false antwortet. **Der ganze
+Takt wurde still** — genau die Zusage, die `Params.density` schriftlich gibt („nur 0 ist Stille,
+auf jedem Charakter"). Gemessen: 6 stille Takte in einem kleinen Sweep, null auf dem Elternbaum.
+Reparatur: Rotation in GANZEN Beats, was Off-Beats auf Off-Beats abbildet und musikalisch das
+Bessere ist. **Der Wächter dafür ist mitgebaut** (`testTheDensityFloorSurvivesEveryEvolve`) — der
+alte Boden-Test läuft bei `evolve: 0` und konnte es nicht sehen.
+
+⚠️ **Ein gemessener Nachbar-Befund, NICHT mit repariert und deshalb aufgeschrieben:** `flowing`
+kann bei sehr kleiner Dichte einen Takt ganz aussetzen — das Umkippen einer Zelle trifft die
+einzige gewählte. Identisch auf dem Baum VOR #1404 (Takte 79, 87, 163, 178 von 200 bei Dichte
+0,001, Seed 9), also `flowing`s eigene Bauart. Der neue Wächter nimmt den Charakter deshalb
+NAMENTLICH aus, statt still grün zu sein; die Frage steht als `NEEDS-FOUNDER-VERIFY` am Zweig.
+
+**Was der Founder hören muss** (4 neue Marker, `founder-verify.py --since` gemessen): klingt bei
+Variation 1,00 jeder Charakter noch nach sich selbst · ⚠️ **bestehende Projekte klingen anders**,
+weil `padEvolve` seit jeher auf 0,20 steht und auf vier Charakteren wirkungslos WAR — soll der
+Regler ab Werk auf 0? (Der Wert ist absichtlich NICHT mitgeändert: sonst ist „Motor oder
+Default?" per Ohr nicht mehr beantwortbar.) · ist `flowing`s Aussetzer Atmen oder ein Loch · die
+#1401-Bitte ist umgeschrieben, weil sie auf „Hypnotic" zeigte und dort seit heute nichts mehr zu
+entscheiden ist (der abgeschaltete Zustand ist jetzt „Genre").
+
+**Benotung (§0, kein Swift im Web):** `RoleRhythm.hit` in Python transkribiert, ALT und NEU
+nebeneinander gefahren. Goldenes Gesetz bit-genau über 6 Charaktere × 6 Dichten × 3 Accent × 3
+Gate × 3 Push × 6 Takte × 3 Seeds; `dynamic`/`flowing` zusätzlich bei JEDEM evolve in Velocity
+und Push unverändert (nur das Gate atmet). Fünf Mutanten, alle gefangen — darunter der echte
+Zellen-Rotations-Bug und „Rotation pro Zelle statt pro Takt". Zwei Fehlalarm-Proben (Atem-Tiefe
+0,30→0,50, Rotations-Wahrscheinlichkeit ×0,6) bleiben grün, also verbietet kein Wächter ein
+legitimes Nachstimmen (#364). Alle Quelltext-Ansprüche gegen den ECHTEN Stripper geprüft
+(`.disabled(off)` = 3, `usesEvolve` roh 5 / gestrippt 0). Acht stehende Prüfer plus
+`doctor --selftest`: alle 0. ⚠️ Eine Transkription fährt Swifts Typprüfer NICHT — das ist die
+#1402b-Lehre und bleibt Sache des Compile-Gates.

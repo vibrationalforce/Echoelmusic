@@ -588,15 +588,21 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
     ///
     /// ⛔ THIS FILE READ NOTHING ABOUT ENABLED-NESS UNTIL #1401, AND THAT IS A REPORTED BUG,
     /// not a polish item. The founder hit it on the device: Mood → Pad rhythm "Hypnotic", where
-    /// `padShapeSection` disables the Variation row because `RoleRhythm.Character.usesEvolve` is
-    /// `false` for that character (turning evolve 0→1 there produces a bit-identical bar, which
-    /// `RoleRhythmTests` asserts against real output). The row was correctly INERT and rendered
+    /// `padShapeSection` disabled the Variation row because `evolve` reached only two of the six
+    /// rhythm characters and Hypnotic was not one of them. The row was correctly INERT and rendered
     /// with the same label colour, the same value colour and the same `borderStrong` boundary as
     /// the two live rows directly above it. Dragging it did nothing, and nothing on the control
     /// said why — so the honest report is exactly the one that came back: "Variation geht nicht".
     ///
-    /// ⚠️ THE CAPTION WAS ALREADY THERE AND WAS NOT ENOUGH. `padShapeCaption` says "Variation is
-    /// off for this rhythm" in 11 pt dim text below three rows. The section's own doc calls a
+    /// ⭐ THE ORIGINAL TRIGGER IS GONE, THIS PROPERTY IS NOT, AND THAT ORDER MATTERS. #1404 took
+    /// the founder's follow-up answer (*„Variation soll immer gehen bei allen Genres"*) and gave
+    /// every character an evolve response, so that particular row is never disabled for that
+    /// particular reason again. It is still disabled whenever the Pad rhythm Picker sits on
+    /// "Genre", and every other `.disabled(…)` row in the app still renders through here — a
+    /// rendering law does not expire because the example that paid for it was resolved.
+    ///
+    /// ⚠️ THE CAPTION WAS ALREADY THERE AND WAS NOT ENOUGH. `padShapeCaption` explained the dead
+    /// row in 11 pt dim text below three rows. The section's own doc calls a
     /// silent disabled row "only marginally better than an enabled one that does nothing" — the
     /// design was right, the RENDERING never carried it. A caption explains; it cannot be the
     /// only signal, because the eye reaches the control first.
@@ -616,9 +622,12 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
 
     /// The spoken hint, with the adjust/type instruction dropped once the row is off (#1401).
     ///
-    /// NEEDS-FOUNDER-VERIFY (#1401, kein Test kann es): Mood → Pad rhythm auf „Hypnotic" stellen.
-    /// Liest die Zeile „Variation" darunter jetzt als AUS — oder immer noch als kaputt? Und mit
-    /// VoiceOver darüber: wird „dimmed" gesagt UND die Wisch-Anweisung weggelassen?
+    /// NEEDS-FOUNDER-VERIFY (#1401/#1404, kein Test kann es): Mood → Pad rhythm auf „Genre"
+    /// stellen — das ist seit #1404 der Zustand, in dem die drei Zeilen darunter AUS sind.
+    /// Lesen sie jetzt als AUS oder immer noch als kaputt? Und mit VoiceOver darüber: wird
+    /// „dimmed" gesagt UND die Wisch-Anweisung weggelassen? ⚠️ Die alte Fassung dieser Bitte
+    /// nannte „Hypnotic", und dort ist die Zeile seit #1404 LEBENDIG — eine Geräteprobe an einer
+    /// Stelle, die nichts mehr entscheiden kann, kostet den Founder eine Sitzung umsonst.
     private var accessibleHint: String {
         let gesture = "Swipe up or down to adjust, or double-tap to type"
         if !isEnabled { return hint }

@@ -148,9 +148,18 @@ public enum StudioDefaultKeys {
     /// is the character's choice (measured spread at 1.0: `dynamic` ≈ 5.8 dB … `flowing` ≈ 0.5 dB),
     /// which is why the row reads `Character.accentIsSubtle` instead of hard-coding a list.
     public static let padAccent = StudioDefault(key: "studio.padAccent", value: 0.4)
-    /// See `RoleRhythm.Params.evolve`. Bar-to-bar change, 0…1 — and it applies to only TWO of the
-    /// six characters (`Character.usesEvolve`). On the other four the row is disabled, because a
-    /// value that is stored, persisted and inaudible is worse than one that is absent.
+    /// See `RoleRhythm.Params.evolve`. Bar-to-bar change, 0…1.
+    ///
+    /// ⭐ #1404 — IT APPLIES TO ALL SIX CHARACTERS NOW (founder 2026-09-21: *„Variation soll immer
+    /// gehen bei allen Genres"*). It used to reach only `dynamic` and `flowing`, and the row was
+    /// disabled on the other four because a value that is stored, persisted and inaudible is worse
+    /// than one that is absent.
+    ///
+    /// ⚠️ THIS DEFAULT WAS ALREADY 0.2 WHILE THE DIAL WAS DEAD ON FOUR CHARACTERS, so #1404 is
+    /// audible on an EXISTING install the moment the Pad rhythm Picker sits on Driving, Hypnotic,
+    /// Sparse or Syncopated — the stored value stops being inert. It is not raised or lowered here:
+    /// changing the number at the same time would make "did the engine change or the default?"
+    /// unanswerable by ear, which is the one question the founder's verify has to settle.
     public static let padEvolve = StudioDefault(key: "studio.padEvolve", value: 0.2)
 
     /// #1402 — how far each bar of the loop may drift from the genre's mood preset, 0…1.
@@ -438,8 +447,10 @@ public enum StudioDefaultKeys {
     /// How far the accent pattern swings between soft and hard, 0 = flat.
     public static let fieldArpRhythmAccent = StudioDefault(key: "field.autoPlay.arpRhythm.accent",
                                                           value: 0.4)
-    /// Per-note variation — **only `dynamic` and `flowing` read it** (`Character.usesEvolve`), which
-    /// is why its row is hidden for the other four rather than shown and ignored.
+    /// Per-note variation — **every character reads it since #1404**, which is why its row is no
+    /// longer hidden on four of the six. The default stays 0, so a fresh install and every saved
+    /// setting are bit-identical until the player moves it (self-play is off on a fresh install
+    /// anyway, so this row cannot change what an untouched app does at all).
     public static let fieldArpRhythmEvolve = StudioDefault(key: "field.autoPlay.arpRhythm.evolve",
                                                           value: 0.0)
     /// How far BEHIND its own grid cell a note lands, as a fraction of one cell (#258 / A2c).

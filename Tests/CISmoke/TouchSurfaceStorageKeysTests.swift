@@ -133,20 +133,47 @@ final class TouchSurfaceStorageKeysTests: XCTestCase {
     /// of grepping. Caught by review. A number in a name that no assertion derives is bad; a note
     /// claiming it was removed when it was not is worse.
     ///
-    /// ⚠️ THE FIRST VERSION OF THIS TEST CLAIMED MORE THAN IT DELIVERS, and the claim is deleted
-    /// rather than reworded down: it said `XCTAssertEqual(Set(usesIt), [.dynamic, .flowing])` stopped
-    /// "a seventh character arriving with a silently-`false` answer". It cannot — add a seventh case
-    /// returning `false` and the filtered set is unchanged and this stays green. What actually forces
-    /// that decision is the exhaustive `switch` in `Character.usesEvolve`, and a `false` seventh
-    /// character would produce a HIDDEN row, i.e. the correct behaviour. The flag's agreement with
-    /// real output is proved in `RoleRhythmTests` (`testEvolveChangesExactlyTheCharactersThatClaimToUseIt`
-    /// and, for the accent dial, `testAccentIsSubtleDescribesTheMeasuredSpreadAndNotAnIntention`) —
-    /// duplicating that pin here bought nothing except a rationale describing a defence it did not
-    /// provide, which is the failure class this repo pays for most often.
-    func testTheArpPanelHidesEvolveOnTheDefaultCharacter() {
-        XCTAssertFalse(StudioDefaultKeys.fieldArpRhythmCharacter.value.usesEvolve,
-                       "the default character now uses Evolve — the panel opens with one row more "
-                       + "than it did, which is a founder-visible change and not a side effect")
+    /// ⭐ #1404 TURNED THIS CLAIM AROUND, and the inversion is the founder's, not a test's taste.
+    ///
+    /// It used to assert `XCTAssertFalse(…fieldArpRhythmCharacter.value.usesEvolve)` — the panel
+    /// must OPEN with the Evolve row hidden, because the default character (`driving`) was one of
+    /// the four that ignored the dial. Founder 2026-09-21, verbatim: *„Variation soll immer gehen
+    /// bei allen Genres"*. Every character answers it now, `usesEvolve` is deleted, and the row is
+    /// unconditional — so the property worth pinning is the one that makes that honest: the
+    /// character the panel OPENS on must really move when the dial does.
+    ///
+    /// ⚠️ ASSERTED AGAINST REAL `hit(...)` OUTPUT, not against a flag, for the reason the deleted
+    /// version of this paragraph had already written down about itself: a flag can agree with a
+    /// list and disagree with the engine, and a seventh character arriving with no response would
+    /// have slipped past a set comparison unchanged. `RoleRhythmTests` carries the same law across
+    /// all six; this one is narrower ON PURPOSE — it is about the FIRST SCREEN a new install shows.
+    ///
+    /// ⚠️ AND THE COUNTERWEIGHT (#343) IS IN THE SAME METHOD: the stored default stays 0, so the
+    /// extra row cannot change what an untouched install SOUNDS like. Without that half this reads
+    /// as licence to re-tune the default in the same breath as un-hiding the row, and then no ear
+    /// could tell which of the two changed the music.
+    func testTheArpPanelOpensOnACharacterThatAnswersEvolve() {
+        let character = StudioDefaultKeys.fieldArpRhythmCharacter.value
+        func bar(_ evolve: Float, _ index: Int) -> [RoleRhythm.Hit?] {
+            let p = RoleRhythm.Params(character: character, density: 0.6, gate: 0.8,
+                                      accent: 0.5, push: 0, evolve: evolve)
+            return (0..<16).map { RoleRhythm.hit(bar: index, cell: $0, cellsPerBar: 16,
+                                                 params: p, seed: 9) }
+        }
+        var differed = false
+        for index in 0..<8 where bar(0, index) != bar(1, index) { differed = true }
+        XCTAssertTrue(differed, """
+            The panel's DEFAULT rhythm character (\(character.rawValue)) produces a bit-identical \
+            bar at Evolve 0 and Evolve 1. Since #1404 that row is shown unconditionally, so a \
+            fresh install would open on a full-range control that does nothing — the #164/#227 \
+            defect the founder reported from the device, moved to the first screen.
+            """)
+        XCTAssertEqual(StudioDefaultKeys.fieldArpRhythmEvolve.value, 0, accuracy: 1e-9, """
+            The Evolve default moved. #1404 un-hid the row; it deliberately did NOT change what \
+            the row is set to, so every saved setting and every untouched install still sounds \
+            exactly as it did. Changing both at once makes "did the engine change or the default?" \
+            unanswerable by ear, which is the one question the founder's verify has to settle.
+            """)
     }
 
     /// SELF-PLAY MUST BE OFF ON A FRESH INSTALL, and this is the assertion that gates it.

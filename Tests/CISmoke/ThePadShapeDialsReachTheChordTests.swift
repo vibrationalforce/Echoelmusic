@@ -149,26 +149,39 @@ final class ThePadShapeDialsReachTheChordTests: XCTestCase {
             would sweep their range in silence — the lying-control defect this repo has paid for \
             three times (#135/#164/#227).
             """)
-        XCTAssertEqual(src.components(separatedBy: ".disabled(off)").count - 1, 2, """
-            The number of rows disabled by the no-character state is not two. Chord length and \
-            Accent are disabled by `off` alone; Variation carries a second condition and is \
-            asserted separately. If a row was added, disable it too.
+        XCTAssertEqual(src.components(separatedBy: ".disabled(off)").count - 1, 3, """
+            The number of rows disabled by the no-character state is not three. ⭐ It was TWO \
+            until #1404: Variation used to carry a second condition (`|| !character.usesEvolve`) \
+            because `evolve` reached only two of the six characters. Founder 2026-09-21 \
+            ("Variation soll immer gehen bei allen Genres") — every character answers it now, so \
+            all three rows are disabled by `off` alone. If a row was added, disable it too; if a \
+            row grew a second condition again, assert that condition separately rather than \
+            lowering this number, or the next added row hides behind the gap.
             """)
     }
 
-    // MARK: - claim 4 (SOURCE SCAN) — Variation asks the engine, not a hard-coded list
+    // MARK: - claim 4 (SOURCE SCAN) — the caption asks the engine, not a hard-coded list
 
-    /// ⛔ `RoleRhythm.Character.usesEvolve`'s own doc records that the FIRST attempt at this UI
-    /// hard-coded the character list in the view and got it wrong — and that the sibling flag
-    /// `accentIsSubtle` exists because the same attempt hard-coded `hypnotic || flowing` and left
-    /// out `sparse`, which spreads MORE than `hypnotic`. This assertion is that lesson, executable.
-    func testVariationReadsTheEngineFlagRatherThanAList() throws {
+    /// ⛔ `RoleRhythm.Character`'s own docs record that the FIRST attempt at this UI hard-coded a
+    /// character list in the view and got it wrong — that `accentIsSubtle` exists because the same
+    /// attempt hard-coded `hypnotic || flowing` and left out `sparse`, which spreads MORE than
+    /// `hypnotic`. This assertion is that lesson, executable.
+    ///
+    /// ⭐ THE `usesEvolve` HALF OF THIS CLAIM IS RETIRED BY #1404, NOT WEAKENED. It required the
+    /// Variation row to read the engine flag instead of listing characters; the founder's answer
+    /// ("Variation soll immer gehen bei allen Genres") gave every character a response, so the
+    /// flag is deleted and the row needs no list to read — the strongest possible form of "no
+    /// hard-coded list". What the row now needs is that its behaviour be PROVED, and that is
+    /// `RoleRhythmTests.testEvolveChangesEveryCharacterWhenTurnedUp`, against real output.
+    func testTheCaptionReadsTheEngineFlagRatherThanAList() throws {
         let src = try source(Self.view)
-        XCTAssertTrue(src.contains("character?.usesEvolve"), """
-            The Variation row no longer reads `Character.usesEvolve`. `evolve` moves only \
-            `dynamic` and `flowing`; on the other four it does nothing at all — `hypnotic` \
-            included, whose bar-to-bar rotation is a pure function of the bar index and consults \
-            neither the dial nor the seed. A hard-coded list here has already been wrong once.
+        XCTAssertFalse(src.contains("usesEvolve"), """
+            The view reads `Character.usesEvolve` again. That flag was deleted by #1404 — it \
+            answered "does this character respond to Variation at all", and since every one does, \
+            a revived version of it can only be a constant or a fresh hard-coded list. If the \
+            engine really grew a character that ignores the dial, that is a SOUND decision and \
+            `RoleRhythmTests` must say so first; then re-read this file and \
+            `ADisabledParameterRowLooksDisabledTests`, whose premises both move with it.
             """)
         XCTAssertTrue(src.contains("character.accentIsSubtle"), """
             The caption no longer reads `Character.accentIsSubtle`. Without it the Accent row \
@@ -186,16 +199,12 @@ final class ThePadShapeDialsReachTheChordTests: XCTestCase {
 
     // MARK: - claim 5 (END-TO-END) — the two engine flags still split the six as documented
 
-    /// The premise claims 3–4 depend on. If `usesEvolve` ever silently became "all six", the view
-    /// would still be reading the engine — correctly — and offering a dead row on four characters.
-    func testTheEngineFlagsStillSplitTheCharacters() {
-        let evolving = RoleRhythm.Character.allCases.filter(\.usesEvolve)
-        XCTAssertEqual(Set(evolving), Set([.dynamic, .flowing]), """
-            `usesEvolve` no longer selects exactly dynamic + flowing (it now selects \
-            \(evolving.map(\.rawValue).sorted().joined(separator: ", "))). The Variation row \
-            follows this flag, so a change here silently changes which characters offer the dial \
-            — correct if the engine really changed, and a dead row on four characters if not.
-            """)
+    /// The premise claim 4 depends on. ⛔ ITS `usesEvolve` HALF IS DELETED, NOT REFRESHED (#1404,
+    /// #818): it pinned `Set(evolving) == [.dynamic, .flowing]`, i.e. exactly the split the
+    /// founder's "Variation soll immer gehen bei allen Genres" abolished. Rewriting it as "all six"
+    /// would have pinned a constant — the property is gone, and the behaviour it stood for is
+    /// proved against real `hit(...)` output in `RoleRhythmTests`, which is where it belongs.
+    func testTheEngineFlagStillSplitsTheCharacters() {
         let subtle = RoleRhythm.Character.allCases.filter(\.accentIsSubtle)
         XCTAssertEqual(Set(subtle), Set([.sparse, .hypnotic, .flowing]), """
             `accentIsSubtle` no longer selects exactly sparse + hypnotic + flowing. The caption \

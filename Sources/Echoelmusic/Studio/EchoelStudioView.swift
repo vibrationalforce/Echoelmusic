@@ -5772,12 +5772,13 @@ struct EchoelStudioView: View {
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        // Hidden, not disabled, on the four characters that ignore it — `RoleRhythm.Character`
-        // exists to answer exactly this and its own doc requires the row to obey.
-        if fieldArpCharacter.usesEvolve {
-            EchoelValueField(label: "Evolve", value: $fieldArpEvolve,
-                             range: 0...1, unit: "", decimals: 2)
-        }
+        // ⭐ #1404 — ALWAYS SHOWN. It used to be `if fieldArpCharacter.usesEvolve`, hidden on the
+        // four characters that ignored the dial. Founder 2026-09-21: *„Variation soll immer gehen
+        // bei allen Genres"* — every character now answers it (`RoleRhythm.Params.evolve` lists
+        // what each one does), so there is nothing left to hide and a row that appeared and
+        // vanished as the character Picker moved was itself a small surprise.
+        EchoelValueField(label: "Evolve", value: $fieldArpEvolve,
+                         range: 0...1, unit: "", decimals: 2)
     }
 
     /// The one thing about the current setting a player would otherwise read as a broken dial, or
@@ -5789,13 +5790,18 @@ struct EchoelStudioView: View {
     /// - **Accent on the three subtle characters.** Read off `Character.accentIsSubtle`, NOT a list
     ///   written here. The first version of this row did hard-code the list, and got it wrong by
     ///   omitting `sparse` — whose ≈1.3 dB spread is larger than `hypnotic`'s ≈1.0 dB and was the one
-    ///   left unexplained. That is exactly the drift `usesEvolve` exists to prevent, so the sibling
-    ///   dial now has its own engine-side flag.
-    /// - **Evolve on Dynamic at Accent 0.** `dynamic`'s evolve is a jitter added to the accent
-    ///   STRENGTH, and the velocity maths multiplies that by the accent depth — so at Accent 0 the
-    ///   bar is bit-identical whatever Evolve says. `flowing` is unaffected: its evolve flips which
-    ///   cells sound, upstream of the multiply. The two cases cannot collide (`dynamic` is not
-    ///   subtle), which is why this is a single chain and not two independent lines.
+    ///   left unexplained. A character list written in a view has been wrong here once already;
+    ///   the engine owns the answer.
+    /// - **Evolve on Dynamic at Accent 0.** `dynamic`'s ACCENT response is a jitter added to the
+    ///   accent STRENGTH, and the velocity maths multiplies that by the accent depth — so at
+    ///   Accent 0 the contour stops moving whatever Evolve says. ⛔ IT USED TO SAY "the bar is
+    ///   bit-identical", and #1404 made that false: `evolve` now breathes the note LENGTH on all
+    ///   six characters, ungated by accent, so something always moves. The caveat survives in its
+    ///   honest, smaller form — the LEVEL stops, the length does not — because "Evolve moves the
+    ///   accent" is what this row's neighbour promises. `flowing` is unaffected either way: its
+    ///   evolve flips which cells sound, upstream of the multiply. The two cases cannot collide
+    ///   (`dynamic` is not subtle), which is why this is a single chain and not two independent
+    ///   lines.
     private var fieldArpRhythmCaveat: String? {
         // #258 FIRST, and deliberately ahead of the Accent case: `flowing` is `accentIsSubtle`, so
         // anything after that branch is unreachable for the one character whose lean applies to
@@ -5823,7 +5829,7 @@ struct EchoelStudioView: View {
             return "\(fieldArpRhythmLabel(fieldArpCharacter)) is nearly level by design — Accent barely cuts here. Dynamic or Driving give a strong one."
         }
         if fieldArpCharacter == .dynamic && fieldArpAccent <= 0 {
-            return "On Dynamic, Evolve moves the accent — with Accent at 0 there is nothing for it to move."
+            return "On Dynamic, Evolve moves the accent — with Accent at 0 the contour stays flat and only the note length still breathes."
         }
         return nil
     }
@@ -6794,9 +6800,10 @@ struct EchoelStudioView: View {
             // not in the shipped look set. Say so instead of letting the row read as broken.
             //
             // NOT hidden and NOT disabled — and the reason is NOT the one the first draft
-            // gave. It cited "the Bass-rhythm row and A7's Evolve", and Evolve is the exact
-            // opposite: it IS hidden (`if fieldArpCharacter.usesEvolve`), because a character
-            // that ignores it can never use it — a structural fact about the engine. The
+            // gave. It cited "the Bass-rhythm row and A7's Evolve". ⛔ THE EVOLVE HALF OF THAT
+            // CONTRAST IS GONE SINCE #1404: that row used to be hidden on the four characters
+            // that ignored the dial, and today every character answers it, so it is simply
+            // always there. The point the sentence was making survives without it. The
             // Bass row's reason does not transfer either: it stays because ITS condition is
             // live-body-driven, and this one is not. The real precedent is
             // `fieldArpRhythmCaveat` — a caption for a dial that is live but inaudible — and
@@ -7058,11 +7065,15 @@ struct EchoelStudioView: View {
     ///  1. **Everything disables on "Genre".** With `padRhythm == ""` the composer never calls
     ///     `roleRhythmOnsets` at all, so all three would sweep their range in silence — the
     ///     lying-control defect (#135/#164/#227).
-    ///  2. **Variation reads `Character.usesEvolve`, not a hard-coded list.** `evolve` moves only
-    ///     `dynamic` and `flowing`; on the other four it does nothing, `hypnotic` included (its
-    ///     bar-to-bar rotation is a pure function of the bar index and consults neither the dial
-    ///     nor the seed). ⛔ The FIRST version of this UI hard-coded that list in the view and got
-    ///     it wrong — `RoleRhythm`'s doc says so at the flag itself.
+    ///  2. **Variation needs no gate at all since #1404.** It used to read
+    ///     `Character.usesEvolve`, because `evolve` moved only `dynamic` and `flowing` and a
+    ///     full-range row that does nothing is the defect this section is built against. Founder
+    ///     2026-09-21: *„Variation soll immer gehen bei allen Genres"* — every character answers
+    ///     the dial now (`RoleRhythm.Params.evolve` lists what each one does), the flag is deleted
+    ///     rather than made constantly `true`, and this row is disabled by `off` alone like its two
+    ///     neighbours. ⛔ The FIRST version of this UI hard-coded a character list in the view and
+    ///     got it wrong — which is why the sibling `accentIsSubtle` below is still read off the
+    ///     engine and must never become a list written here.
     ///  3. **Accent reads `Character.accentIsSubtle`.** The spread at accent 1.0 runs from ≈5.8 dB
     ///     (`dynamic`) to ≈0.5 dB (`flowing`), a 2.6× gap that splits the six cleanly. The same
     ///     earlier attempt hard-coded `hypnotic || flowing` and left out `sparse`, which spreads
@@ -7088,7 +7099,7 @@ struct EchoelStudioView: View {
             EchoelValueField(label: "Accent", value: $padAccent, range: 0...1, decimals: 2)
                 .disabled(off)
             EchoelValueField(label: "Variation", value: $padEvolve, range: 0...1, decimals: 2)
-                .disabled(off || !(character?.usesEvolve ?? false))
+                .disabled(off)
             Text(padShapeCaption(character))
                 // ⛔ #584 — WAS `.font(.caption2)`, and that made this the ONE line of the phone
                 // app rendered in the system face instead of Atkinson Hyperlegible. Not a rule
@@ -7117,33 +7128,34 @@ struct EchoelStudioView: View {
             parts.append("This rhythm accents gently by design, so Accent moves less than on "
                          + "Driving or Dynamic.")
         }
-        if character.usesEvolve {
-            if !character.accentIsSubtle {
-                // Only `dynamic` reaches both branches, and it is the one with the interaction.
-                parts.append("Variation rides the accent here, so at Accent 0.00 it does nothing.")
-            }
-        } else {
-            // ⭐ #1401 — THE DEAD END GETS A SIGNPOST, and the two names are PROJECTED off
-            // `usesEvolve` rather than typed. This sentence used to stop at "not a dial", which
-            // is true and leaves the player with nowhere to go: the founder's report was
-            // "Variation geht nicht", from Hypnotic, where the row is correctly disabled. Saying
-            // WHICH rhythms answer that dial turns a wall into a direction.
-            //
-            // ⚠️ Hard-coding "Dynamic and Flowing" here is the exact mistake `accentIsSubtle`
-            // exists to record: the first A7 UI hard-coded a character list twenty lines under a
-            // comment congratulating itself for reading the flag off the engine, and the list was
-            // wrong. A seventh character, or a re-tuned `usesEvolve`, rewrites this line for free.
-            let withEvolve = RoleRhythm.Character.allCases
-                .filter(\.usesEvolve)
-                .map { fieldArpRhythmLabel($0) }
-            if withEvolve.isEmpty {
-                parts.append("Variation is off for this rhythm — its bar-to-bar change is part "
-                             + "of its character, not a dial.")
-            } else {
-                parts.append("Variation is off for this rhythm — its bar-to-bar change is part "
-                             + "of its character, not a dial. It shapes "
-                             + withEvolve.joined(separator: " and ") + ".")
-            }
+        // ⭐ #1404 — THE SIGNPOST IS GONE BECAUSE THE DEAD END IS. #1401 ended this branch with
+        // "Variation is off for this rhythm … It shapes Dynamic and Flowing", projected off
+        // `usesEvolve` so the two names could never be typed wrong. The founder's answer
+        // (*„Variation soll immer gehen bei allen Genres"*) removed the four dead characters, so
+        // both the sentence and the flag it read are deleted. Leaving a projected list behind
+        // would have printed all six names — a direction pointing everywhere.
+        //
+        // ⚠️ WHAT REPLACES IT IS NOT A LIST EITHER. Each character's response differs, and naming
+        // them here would rebuild the hard-coded table `accentIsSubtle` exists to record as a
+        // mistake. The caption says what the dial DOES on the chosen rhythm, one branch deep, and
+        // `RoleRhythm.Params.evolve` stays the single place the per-character split is written.
+        // ⚠️ AN EXHAUSTIVE `switch` AND NOT AN `if`-CHAIN, for the reason the deleted `usesEvolve`
+        // states at its own grave: a seventh character must force a decision rather than inherit
+        // a sentence. An `else` branch would have handed it "changes which cells sound", which is
+        // true of four of the six and a guess about the seventh.
+        switch character {
+        case .dynamic:
+            // The one character whose response another row on this very section can annihilate.
+            parts.append("Variation rides the accent here, so at Accent 0.00 the contour stays "
+                         + "flat and only the note length still breathes.")
+        case .driving:
+            // The one character that answers ONLY with the shared floor, and it is deliberate:
+            // straight, on the grid, machine time is what a player picks Driving for.
+            parts.append("Variation breathes the note length here — Driving keeps its straight "
+                         + "grid whatever you set.")
+        case .hypnotic, .sparse, .syncopated, .flowing:
+            parts.append("Variation changes which cells sound from bar to bar, and breathes the "
+                         + "note length.")
         }
         return parts.joined(separator: " ")
     }
@@ -11098,8 +11110,9 @@ struct EchoelStudioView: View {
     ///
     /// ⚠️ NAME THE TRADEOFF RATHER THAN CALLING IT AN INVARIANT: once a character IS chosen, the
     /// Brightness / Cutoff / Attack / Release rows display a value up to 12 % / 22 % away from
-    /// what the voice was handed. That is the mirror image of the rule `usesEvolve` and
-    /// `accentIsSubtle` exist to enforce (a dial that does nothing is worse than a missing one) —
+    /// what the voice was handed. That is the mirror image of the rule `accentIsSubtle` exists to
+    /// enforce (a dial that does nothing is worse than a missing one; its sibling `usesEvolve` was
+    /// deleted by #1404 once every character answered Variation) —
     /// here a dial's READOUT stops matching the engine, and today the only disclosure is the Pad
     /// rhythm row's accessibility hint, which a sighted non-AT user never sees. It is bounded and
     /// small, and writing the trim back would compound; but "every number in the Sound panel

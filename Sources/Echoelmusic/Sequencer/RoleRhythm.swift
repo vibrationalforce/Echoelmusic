@@ -213,31 +213,30 @@ public enum RoleRhythm {
         /// under everything else without competing with it.
         case flowing
 
-        /// Whether `Params.evolve` changes ANYTHING on this character.
-        ///
-        /// ⛔ THIS EXISTS SO A7 CANNOT SHIP A LYING DIAL (#164, #227). Four of the six ignore
-        /// `evolve` entirely — turning it from 0 to 1 on `driving`, `hypnotic`, `sparse` or
-        /// `syncopated` produces a bit-identical bar, and a full-range slider that does nothing is
-        /// worse than a missing one. The UI row must be hidden or disabled where this is `false`.
-        ///
-        /// Exhaustive on purpose: adding a seventh character forces a decision here rather than
-        /// silently inheriting `false`. And it is asserted against real output rather than trusted
-        /// — the test compares `evolve: 0` with `evolve: 1` per character and requires the two to
-        /// differ exactly when this says they should.
-        ///
-        /// (`hypnotic` is the subtle one: it varies bar to bar, but by ROTATION, which is its
-        /// character and is a pure function of the bar index. It reads neither `evolve` nor the
-        /// seed at any value.)
-        public var usesEvolve: Bool {
-            switch self {
-            case .dynamic, .flowing:                        return true
-            case .driving, .hypnotic, .sparse, .syncopated:  return false
-            }
-        }
+        // ⛔ `usesEvolve` STOOD HERE AND IS DELETED, NOT FLIPPED TO A CONSTANT `true` (#1404).
+        //
+        // FOUNDER 2026-09-21, verbatim: *„Variation soll immer gehen bei allen Genres"* — the
+        // answer to the question #1401 left open after his device report („Variation geht nicht",
+        // from Hypnotic). That report was about a row correctly DISABLED: four of the six
+        // characters ignored `evolve` entirely, so the flag existed to stop A7 shipping a lying
+        // dial (#164, #227). The founder's answer removes the premise rather than the symptom —
+        // every character now answers the dial, so there is no dead half to mark.
+        //
+        // ⚠️ A PROPERTY THAT RETURNS `true` FOR EVERY CASE IS A FACT WITH NO CONTENT, and it would
+        // have been worse than absent here: `padShapeCaption` PROJECTS the flag to name the
+        // rhythms that carry Variation, so a constant-`true` version would have printed all six
+        // names as a signpost pointing at everything.
+        //
+        // ⭐ AND THE ANTI-LYING-DIAL LAW IS NOW HELD MORE TIGHTLY, NOT LESS. The flag's own doc
+        // conceded the gap: a seventh character arriving with `false` passed every guard silently,
+        // because the filtered set was unchanged. `RoleRhythmTests` iterates `allCases` and
+        // requires EVERY character's real `hit(...)` output to differ between `evolve: 0` and
+        // `evolve: 1` — a seventh case with no evolve branch turns that red on arrival.
 
         /// Whether `Params.accent` can only ever make a SMALL difference on this character.
         ///
-        /// ⛔ SAME PURPOSE AS `usesEvolve`, and it exists because the first version of the A7 UI
+        /// ⛔ SAME PURPOSE AS THE DELETED `usesEvolve` — mark the dial that cannot do what its
+        /// range promises — and it exists because the first version of the A7 UI
         /// hard-coded `character == .hypnotic || character == .flowing` in the view — twenty lines
         /// under a comment congratulating itself for reading `usesEvolve` off the engine instead of
         /// duplicating it. That list was also WRONG: `sparse` spreads ≈ 1.3 dB at `accent == 1`,
@@ -299,10 +298,14 @@ public enum RoleRhythm {
         /// `RoleRhythmTests` now derives the subtle/strong split from real `hit(...)` output so this
         /// table cannot drift away from the code again.
         ///
-        /// ⚠️ AND IT GATES `evolve` ON `dynamic`: that character's evolve is a jitter ADDED TO
-        /// `strength`, so the `accent ·` factor annihilates it at `accent == 0` — a bar is then
-        /// bit-identical at evolve 0 and evolve 1. `flowing` is unaffected (its evolve flips which
-        /// cells sound, upstream of this multiply). A UI offering both dials must say so.
+        /// ⚠️ AND IT GATES THE ACCENT HALF OF `evolve` ON `dynamic`: that character's level
+        /// jitter is ADDED TO `strength`, so the `accent ·` factor annihilates it at `accent == 0`.
+        /// ⛔ THIS USED TO SAY "a bar is then bit-identical at evolve 0 and evolve 1", AND SINCE
+        /// #1404 THAT IS FALSE — the note-LENGTH breath below applies to all six characters and is
+        /// not multiplied by anything here, so the bar still differs. What survives is the honest,
+        /// smaller claim: at `accent == 0` the loud/soft contour stops moving and only the length
+        /// does. `flowing` was and stays unaffected (its evolve flips which cells sound, upstream
+        /// of this multiply). A UI offering both dials must say so.
         public var accent: Float
         /// Timing offset in cell fractions, −0.45…0.45. Negative = early, positive = laid back.
         /// The character adds its own on top; the sum is clamped so a note can never cross into
@@ -315,12 +318,45 @@ public enum RoleRhythm {
         /// How much the figure changes from bar to bar, 0…1. **0 is bit-identical bars** — asserted,
         /// because "off" has to mean off rather than "less".
         ///
-        /// ⚠️ AND IT ONLY APPLIES TO TWO OF THE SIX CHARACTERS — see `Character.usesEvolve`, which
-        /// is the value A7 must read before drawing this row. On `dynamic` it jitters the accent
-        /// contour per note; on `flowing` it flips individual cells in and out (a note more or a
-        /// note less, which is what breathing sounds like on a pad). On the other four it does
-        /// nothing at all, `hypnotic` included: its bar-to-bar rotation IS its character, is a pure
-        /// function of the bar index, and consults neither this dial nor the seed.
+        /// ⭐ IT APPLIES TO ALL SIX CHARACTERS SINCE #1404 (founder 2026-09-21: *„Variation soll
+        /// immer gehen bei allen Genres"*). Before that it moved only `dynamic` and `flowing`, and
+        /// `Character.usesEvolve` existed to keep the UI row off the other four. Both are gone.
+        ///
+        /// WHAT IT TOUCHES, PER CHARACTER — and the split is the point: every character gets the
+        /// same FLOOR so the dial can never be inert, and then its own structural response on top,
+        /// so raising it DEEPENS the character instead of blurring the six toward each other
+        /// (#81/#125 is what blurring costs).
+        ///
+        ///  · **all six** — the note LENGTH breathes, ±15 % of the character-scaled gate at 1.0,
+        ///    drawn per cell. This is the floor, and it is deliberately level- and
+        ///    density-independent: an accent dial at 0 or a saturated grid cannot silence it.
+        ///  · `driving` — nothing further. Straight, on the grid, machine time IS the character;
+        ///    rotating its cells or pushing its timing would erase what a player picked it for.
+        ///  · `hypnotic` — its rotation occasionally advances further, decided ONCE PER BAR so the
+        ///    whole figure enters together rather than smearing cell by cell.
+        ///  · `dynamic` — jitters the accent contour per note (unchanged, and the one response the
+        ///    `accent` dial can annihilate; see `accent` above).
+        ///  · `sparse` — rotates WHICH beats sound, per bar. Still only on the beats, still few.
+        ///  · `syncopated` — rotates WHICH off-beats sound, per bar. The downbeat rule is untouched.
+        ///  · `flowing` — flips individual cells in and out per cell (a note more or a note less,
+        ///    which is what breathing sounds like on a pad; unchanged).
+        ///
+        /// NEEDS-FOUNDER-VERIFY (#1404, kein Test kann es — es ist eine Klangfrage): Mood → Pad
+        /// rhythm nacheinander auf alle SECHS stellen, Variation jedesmal auf 1,00, und hören:
+        /// klingt jeder noch nach SICH SELBST (Driving straight, Hypnotic kreisend, Sparse weit,
+        /// Syncopated gegen den Schlag), oder wandern sie bei voller Variation aufeinander zu? Das
+        /// ist die #81/#125-Frage, und sie ist der GRUND, warum die Antwort je Charakter anders
+        /// ausfällt statt überall dieselbe Zufallsstreuung zu sein.
+        ///
+        /// NEEDS-FOUNDER-VERIFY (#1404): ⚠️ BESTEHENDE PROJEKTE KLINGEN ANDERS. `padEvolve` steht
+        /// seit jeher auf 0,20 und war auf vier der sechs Charaktere wirkungslos — auf genau diesen
+        /// vieren wird die gespeicherte 0,20 jetzt hörbar. Ist 0,20 als Grundeinstellung richtig,
+        /// oder soll der Regler ab Werk auf 0 stehen und nur bewusst aufgedreht werden?
+        ///
+        /// ⚠️ THE FOUR ROTATIONS ARE INVISIBLE AT `density == 1`, and that is arithmetic rather
+        /// than a dead dial: `spread` fires every cell once the active count reaches the grid, so
+        /// there is no unselected cell for a rotation to reveal. The length floor still moves, which
+        /// is exactly why it exists.
         public var evolve: Float
 
         /// Format stamp (#189): the encoder writes it, so a future non-additive migration can
@@ -462,9 +498,10 @@ public enum RoleRhythm {
     ///     absolute cells may hand over anything.
     ///   - cellsPerBar: the grid. Clamped to `1...maxCellsPerBar`.
     ///   - params: the dials.
-    ///   - seed: makes `evolve` reproducible on the two characters that use it. Where
-    ///     `Character.usesEvolve` is false, or at `evolve == 0`, the result does not depend on it
-    ///     at all — which is asserted rather than assumed.
+    ///   - seed: makes `evolve` reproducible. At `evolve == 0` the result does not depend on it
+    ///     at all — which is asserted rather than assumed. (Before #1404 that was also true on the
+    ///     four characters `evolve` did not reach; since every character answers the dial, only the
+    ///     `evolve == 0` half of that promise remains.)
     public static func hit(bar: Int, cell: Int, cellsPerBar: Int,
                            params: Params, seed: UInt64) -> Hit? {
         let cells = Swift.min(maxCellsPerBar, Swift.max(1, cellsPerBar))
@@ -490,7 +527,7 @@ public enum RoleRhythm {
 
         guard fires(position: position, cells: cells, density: density,
                     character: params.character, bar: bar,
-                    evolve: evolve, rng: &rng) else { return nil }
+                    evolve: evolve, seed: seed, rng: &rng) else { return nil }
 
         let strength = accentStrength(position: position, cells: cells,
                                       character: params.character,
@@ -514,7 +551,13 @@ public enum RoleRhythm {
         // `Swift.max(minGate, …)` only matters if `maxPush` ever rises past `1 - minGate`; today
         // the headroom is at least 0.55. It is here so the range can never invert.
         let headroom = Swift.max(minGate, 1 - Swift.max(0, push))
-        let gate = clampRange(clamp01(params.gate) * gateScale(params.character),
+        // ⭐ #1404 — THE ONE RESPONSE EVERY CHARACTER MAKES, and the reason `Params.evolve` can no
+        // longer be inert on any of them. It is the LAST draw of the cell's stream on purpose: put
+        // anywhere earlier it would have shifted the draws `flowing` (in `fires`) and `dynamic` (in
+        // `accentStrength`) already make, i.e. changed two characters that this slice is not
+        // touching. Appending is the only placement that leaves their output bit-identical.
+        let breath = gateBreath(evolve: evolve, rng: &rng)
+        let gate = clampRange(clamp01(params.gate) * gateScale(params.character) * breath,
                               minGate, Swift.min(maxGate, headroom))
 
         return Hit(velocity: velocity, gateFraction: gate, pushFraction: push)
@@ -530,7 +573,8 @@ public enum RoleRhythm {
     /// then transforms that base set — which is what makes them different rhythms rather than
     /// different amounts of one rhythm.
     private static func fires(position: Int, cells: Int, density: Float, character: Character,
-                              bar: Int, evolve: Float, rng: inout SeededRNG) -> Bool {
+                              bar: Int, evolve: Float, seed: UInt64,
+                              rng: inout SeededRNG) -> Bool {
         let beat = Swift.max(1, cells / 4)
 
         switch character {
@@ -560,7 +604,14 @@ public enum RoleRhythm {
             // `0 - Int.min` TRAPS. A wrap merely picks a different rotation of the same figure,
             // which is inaudible nonsense at bar ±9·10^18 and cannot crash a performance. (Found
             // by the absurd-bar test, not by reading — the plain `-` looked obviously fine.)
-            return spread(floorMod(position &- bar, cells), cells: cells, density: density)
+            //
+            // ⭐ #1404 — `evolve` ADVANCES THE ROTATION FURTHER, decided ONCE PER BAR. Per-bar and
+            // not per-cell is the whole musical point: a per-cell draw would move each cell of the
+            // figure independently, which is not a rotation at all but noise wearing its name.
+            // `barRotation` therefore derives a stream from (seed, bar) only, so every cell of a bar
+            // computes the identical extra step without any shared state.
+            let extra = barRotation(seed: seed, bar: bar, evolve: evolve, span: cells)
+            return spread(floorMod(position &- bar &- extra, cells), cells: cells, density: density)
 
         case .sparse:
             // Only on the beats, and fewer of them: `density` is squared, which makes the
@@ -568,16 +619,50 @@ public enum RoleRhythm {
             // `spread` is what keeps the squared value from rounding to zero notes — it used to
             // silence the whole bottom third of this character's dial.
             guard position % beat == 0 else { return false }
-            return spread(position / beat, cells: Swift.max(1, cells / beat),
+            // ⭐ #1404 — which BEATS sound is rotated per bar. The quarter alignment is untouched
+            // (the guard above still refuses every off-quarter cell at any `evolve`); what moves is
+            // only which of the few selected beats is the one that fires.
+            let beats = Swift.max(1, cells / beat)
+            let rot = barRotation(seed: seed, bar: bar, evolve: evolve, span: beats)
+            return spread(floorMod(position / beat &- rot, beats), cells: beats,
                           density: density * density)
 
         case .syncopated:
             // Prefer the cells BETWEEN the beats. The downbeat only sounds when the density is
             // high enough that leaving it out would read as a mistake rather than as a push.
             if position % beat == 0 { return density > 0.85 }
-            return spread(floorMod(position - beat / 2, cells), cells: cells, density: density)
+            // ⭐ #1404 — which OFF-beats sound is rotated per bar. The downbeat rule above is
+            // deliberately outside the rotation: whether the on-beats sound is what tells this
+            // character apart from `driving`, and letting `evolve` move it would let a dial erase
+            // a character.
+            //
+            // ⛔ THE ROTATION IS IN WHOLE BEATS, AND THE FIRST VERSION ROTATED BY SINGLE CELLS —
+            // which SILENCED THE BAR. Measured before it shipped: at a low density `spread` selects
+            // exactly one index, the one satisfying `position − beat/2 − rot ≡ 0`, and a `rot` that
+            // is not a multiple of `beat` moves that position ONTO a quarter, where the guard above
+            // claims it first and answers `density > 0.85` = false. Nothing else fires, so the whole
+            // bar goes silent — breaking the promise `Params.density` makes in writing ("only 0 is
+            // silence, on every character") and the floor inside `spread` exists to keep. Whole
+            // beats map off-beats to off-beats, so the residue class the character is built on
+            // cannot change. It is also the more musical of the two: the figure moves by a quarter
+            // rather than smearing across the grid.
+            let beats = Swift.max(1, cells / beat)
+            let rot = barRotation(seed: seed, bar: bar, evolve: evolve, span: beats) * beat
+            return spread(floorMod(position - beat / 2 &- rot, cells), cells: cells, density: density)
 
         case .flowing:
+            // ⚠️ MEASURED CORNER, PRE-EXISTING AND DELIBERATELY NOT FIXED BY #1404: at a density
+            // that selects exactly ONE cell, the flip below can remove it and the bar falls silent
+            // — which contradicts `Params.density`'s written promise that only 0 is silence.
+            // Measured identically on the tree BEFORE #1404 (bars 79, 87, 163, 178 of 200 at
+            // density 0.001, seed 9), so it is `flowing`'s own design and not something the
+            // all-characters work introduced. `testTheDensityFloorSurvivesEveryEvolve` excludes
+            // this character BY NAME rather than quietly passing.
+            //
+            // NEEDS-FOUNDER-VERIFY (#1404): ein Flowing-Pad bei sehr niedriger Dichte kann
+            // einzelne Takte ganz aussetzen. Ist das Atmen (so gedacht) oder ein Loch? Die
+            // Reparatur wäre eine Zeile hier (die LETZTE überlebende Zelle nie wegkippen) und
+            // ändert den Klang dieses Charakters — deshalb nicht mit eingebaut.
             let base = spread(position, cells: cells, density: density)
             // The one place `evolve` changes the SELECTION rather than the level: a flowing part
             // is where an extra or a missing note reads as breathing rather than as an error.
@@ -586,6 +671,34 @@ public enum RoleRhythm {
             guard evolve > 0 else { return base }
             return rng.unit() < evolve * 0.18 ? !base : base
         }
+    }
+
+    /// How far `evolve` rotates this bar's figure, `0..<span`, decided ONCE PER BAR (#1404).
+    ///
+    /// ⚠️ THE DRAW STREAM IS SEPARATE FROM `hit`'s PER-CELL ONE, on purpose and in two directions.
+    /// It must not depend on the cell, or the cells of one bar would disagree about the rotation
+    /// and the figure would smear instead of moving; and it must not CONSUME from the per-cell
+    /// stream, or adding a rotation to one character would silently shift the draws `dynamic` and
+    /// `flowing` make — a change to one character leaking into another through draw ordering is
+    /// the hazard that makes shared RNG state so expensive to reason about.
+    ///
+    /// Re-derived from the indices rather than carried in state, for the same reason `hit` gives:
+    /// this is a pure function, so a scrub, a test or a re-render of any bar in any order must come
+    /// back with the same answer.
+    ///
+    /// The shape is a coin THEN an amount: with probability `evolve` the bar takes a rotation drawn
+    /// uniformly over the whole span (which may legitimately land back on 0), otherwise it keeps
+    /// the unrotated figure. So `evolve` reads as "how often does this bar enter somewhere else",
+    /// which is monotone in the dial and exactly 0 at 0 — the bit-identical promise `Params.evolve`
+    /// makes, held by construction and not only by the `guard` at the call site.
+    private static func barRotation(seed: UInt64, bar: Int, evolve: Float, span: Int) -> Int {
+        let width = Swift.max(1, span)
+        guard evolve > 0, width > 1 else { return 0 }
+        var rng = SeededRNG(seed: seed
+                            &+ UInt64(bitPattern: Int64(bar)) &* 0x9E3779B97F4A7C15
+                            &+ 0x42415220_00000000)                       // "BAR "
+        guard rng.unit() < evolve else { return 0 }
+        return Swift.min(width - 1, Int(rng.unit() * Float(width)))
     }
 
     /// The even-spread rule, with the active count derived exactly as everywhere else in this
@@ -662,6 +775,28 @@ public enum RoleRhythm {
         case .syncopated: return 0.6
         case .flowing:    return 1.0
         }
+    }
+
+    /// The multiplier `evolve` puts on the note length, 1 at `evolve == 0` (#1404).
+    ///
+    /// ⭐ WHY LENGTH AND NOT LEVEL OR PLACEMENT, given this applies to all six: it is the only one
+    /// of the four dimensions no character OWNS. Level is `dynamic`'s response and placement is
+    /// what `driving` is picked for — varying either universally would have moved every character
+    /// toward the middle, which is the #81/#125 failure this type's header is about. Length is a
+    /// per-character CONSTANT (`gateScale`), so breathing it is audible on all six and belongs to
+    /// none of them.
+    ///
+    /// ⚠️ IT IS NOT GATED BY `accent` OR BY `density`, and that is what makes the dial honest in
+    /// every configuration: the accent contour can be flattened to nothing (`accent == 0`) and the
+    /// grid can be saturated (`density == 1`), and this still moves. That was the whole defect
+    /// behind the founder's report — a row whose effect depended on a setting he could not see.
+    ///
+    /// ±15 % at `evolve == 1`, of the length AFTER the character's own scaling, so a staccato
+    /// `driving` note stays staccato and a legato `flowing` note stays legato. The final clamp in
+    /// `hit` still owns both ends, so this can never reach a click or spill into the next cell.
+    private static func gateBreath(evolve: Float, rng: inout SeededRNG) -> Float {
+        guard evolve > 0 else { return 1 }
+        return 1 + (rng.unit() - 0.5) * evolve * 0.30
     }
 
     /// The character's own timing offset, added to the player's `push`.

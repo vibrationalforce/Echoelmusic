@@ -2314,3 +2314,41 @@ eine Wert ist, der ÄNDERT, was `mood=` daneben bedeutet.
 
 **Grenze, ausdrücklich offen:** ob 0,25 der richtige Eröffnungswert ist und ob ein Genre bei 1,00
 noch nach sich selbst klingt, kann kein Test hier entscheiden — Founder-Ohr am Gerät.
+
+### 2026-09-21 — Variation erreicht ALLE sechs Rhythmus-Charaktere; `usesEvolve` wird gelöscht (#1404)
+
+**Entscheidung (Founder, wörtlich):** *„Variation soll immer gehen bei allen Genres."* Damit ist
+die Frage beantwortet, die #1401 ausdrücklich offenließ. Sein Gerätebericht („Variation geht
+nicht", auf Hypnotic) betraf eine Zeile, die KORREKT abgeschaltet war: `evolve` erreichte nur
+`dynamic` und `flowing`.
+
+**Warum die Flagge gelöscht und nicht auf `true` gesetzt wurde.** Ein `usesEvolve`, das für jeden
+Fall `true` sagt, ist eine Tatsache ohne Inhalt — und `padShapeCaption` PROJIZIERT sie, hätte
+also alle sechs Namen als Wegweiser gedruckt, eine Richtung, die überallhin zeigt. Das
+Anti-Lügen-Gesetz (#164/#227) hängt seither an der stärkeren Stelle: `RoleRhythmTests` verlangt
+von JEDEM Charakter, dass echte `hit(...)`-Ausgabe zwischen `evolve: 0` und `evolve: 1`
+differiert. Das konnte die Flagge nicht — ihr eigenes Doc gab zu, dass ein siebter Charakter mit
+`false` still durchläuft.
+
+**Die Bauform:** ein gemeinsamer BODEN (die Notenlänge atmet auf allen sechs, ±15 % bei 1,0, pro
+Zelle) plus die charakter-eigene Antwort darüber. Der Boden ist bewusst WEDER von `accent` NOCH
+von `density` abhängig — genau diese zwei Einstellungen sieht ein Spieler nicht (die Pad-Dichte
+wählt der Komponist), und in der alten Bauart las eine lebende Zeile deshalb als kaputt. Länge
+ist außerdem die EINE der vier Dimensionen, die keinem Charakter gehört. Darüber rotieren
+`hypnotic`, `sparse` und `syncopated` ihre Figur **pro Takt** (eigener Zieh-Strom aus
+(seed, bar), getrennt vom Pro-Zelle-Strom: pro Zelle wäre es Rauschen unter dem Namen Rotation,
+und ein geteilter Strom hätte das Ziehen von `dynamic` und `flowing` still verschoben).
+`driving` bekommt nichts weiter — gerade auf dem Raster IST sein Charakter.
+
+**Was die Benotung fing, bevor es auslieferte:** eine Rotation um einzelne ZELLEN schob
+`syncopated`s einzige Note bei kleiner Dichte auf ein Viertel, wo der On-Beat-Zweig sie verwarf —
+der ganze Takt wurde still, gegen die schriftliche Zusage von `Params.density`. Reparatur:
+Rotation in GANZEN Beats. Der Wächter dafür ist mitgebaut; der alte Boden-Test läuft bei
+`evolve: 0` und konnte es nicht sehen.
+
+**Offen und nur am Gerät entscheidbar:** klingt jeder Charakter bei Variation 1,00 noch nach sich
+selbst (#81/#125) · soll `padEvolve` ab Werk auf 0 statt 0,20 stehen — bestehende Projekte
+klingen anders, weil der gespeicherte Wert aufhört wirkungslos zu sein, und der Wert wurde
+absichtlich NICHT mitgeändert, sonst ist „Motor oder Default?" per Ohr nicht beantwortbar · ist
+`flowing`s Aussetzer bei sehr kleiner Dichte Atmen oder ein Loch (gemessen pre-existing, nicht
+von dieser Scheibe erzeugt).
