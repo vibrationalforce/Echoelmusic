@@ -36028,3 +36028,44 @@ hätte ihn über `cancel-in-progress: true` storniert, und `cancelled` ist für 
 #1405-Gate korrekt kein `success` — der Merge hätte verweigert und die Lesung wäre weg
 gewesen. ⚠️ Der Stop-Hook fragt zweimal nach dem Push; die richtige Antwort war committen
 und warten, nicht pushen.
+
+## 2026-09-21 — #1409: Board-Audit, vier Zeilen ohne Gegenstand geprüft
+
+**Anlass.** Nach drei Scheiben stand die Frage, was als Nächstes buildbar ist — und die
+Antwort hing an Zeilen, deren Subjekt ich nicht geprüft hatte. #819 hat genau deshalb schon
+zwei Zeilen auf VOID gesetzt. Gemessen wurde nach TYP-DEKLARATION, nicht nach Dateiname
+(#1376: eine per Dateiname belegte Nadel kann nie treffen).
+
+⛔ **A5 = VOID, und es ist die gefährlichste Zeile der Liste gewesen.** „BodyVibe B2 —
+Kamera-Modulator Stufe 1 (Grimassen/Smile/Arme als Modulator)". Der Founder hat am
+2026-09-12 wörtlich gesagt: „OK Face und Audio Input komplett entfernen. Keine Tests davon
+sollen im Repo bleiben" (#1301). `FaceExpressionBioPublisher` und `BodyPoseAnalyzer`:
+**0 Dateien, 0 Typdeklarationen.** **Eine Board-Zeile, die eine GELÖSCHTE Fähigkeit als
+offenen Posten führt, ist teurer als eine falsche Zahl** — sie liest sich als Rückstand, und
+die nächste Sitzung baut wieder auf, was ausdrücklich bestellt-weg ist. ⚠️ A4 (BodyVibe B1)
+bleibt offen: das ist das Instrument, nicht der Kamera-Modulator; sie teilen nur den Namen.
+
+⛔ **AU4 = VOID.** Zeigte auf `MicrophoneManager.swift:194/269` — 0 Dateien, 0 Deklarationen
+seit #1302. ⚠️ Die BEFUND-KLASSE (#22: ein Lifecycle-Flag, das zwei Besitzer unbalancieren
+können) bleibt echt und lebt als `RecordRouteOwner`; deshalb VOIDEN statt löschen — wer die
+Zeile entfernt, verliert den Zeiger auf die Klasse.
+
+⚠️ **O6 und O11 NICHT entschieden, und das ist Absicht.** O6 („Audio-Loop-Import +
+Record-Capture"): die Record-Hälfte ist wahrscheinlich mit #1302 gegangen, die Import-Hälfte
+nicht — `Sequencer/AudioClipFactory.swift` existiert. Der billige Test scheitert an einer
+Namenskollision: `git grep -c "\.arm()"` liefert vier Dateien, und mindestens
+`BioReactiveSynthVoice.arm()` ist ein FREMDER Typ desselben Methodennamens. **Eine
+Void-Erklärung ist selbst eine Behauptung und braucht dieselbe Messung wie das, was sie
+zurücknimmt** — also nach TYP, nicht nach Methodenname. O11 („Sampler-Name statt UUID"):
+`SampleBrowserView` und `BrowserView` sind beide gelöscht, `SamplerVoice` lebt — **wo die
+Beobachtung vom 07-17 gemacht wurde, ist nirgends festgehalten**, also lässt sich weder
+„behoben" noch „gegenstandslos" belegen.
+
+⭐ **GESETZ daraus: eine Board-Zeile aus einer BEOBACHTUNG braucht den ORT, nicht nur das
+Symptom.** Sonst überlebt sie jede Löschung ihrer eigenen Fläche und ist danach
+unentscheidbar — genau O11s Lage.
+
+**AU3 und AU6 sind übrigens längst geschlossen** und mussten nicht angefasst werden; AU5
+bleibt offen und ist vom Board selbst als „riskanter Live-Meter-Self-Poll-Refactor, NICHT
+mechanisch" markiert — ohne Compiler und ohne Gerät die falsche Scheibe, und die Landmine ist
+seit #919 durch `TheMenuHostReadsNoHotStateTests` bewacht.
