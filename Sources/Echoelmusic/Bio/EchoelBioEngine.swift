@@ -85,14 +85,55 @@ public struct BioSnapshot: Sendable {
     public var timestamp: Date = Date()
 }
 
-/// Where bio data is coming from
+/// Where bio data is coming from — **for this engine only**.
+///
+/// ⚠️ THIS IS NOT THE PROVENANCE THE REST OF THE APP USES, and reading it as if it were is
+/// the mistake this note exists to prevent. The canonical one is `BioSource`
+/// (`Core/EngineBus.swift`): it rides on `BioSampleFrame`, it has four real producers
+/// (`HealthKitBioPublisher`, `CameraRPPGBioPublisher` ×2, `BioSimulator`), and it is what
+/// `BioEgressPolicy.allowsEgress(_:)` switches on. THIS enum reaches exactly two properties —
+/// `EchoelBioEngine.dataSource` and `BioSnapshot.source` — and nothing downstream reads it
+/// except one `== .healthKit` gate in `HealthKitBioPublisher`.
+///
+/// ⭐ THE ASYMMETRY THAT DECIDES WHICH ONE TO EXTEND: the egress switch over `BioSource` is
+/// EXHAUSTIVE with no `default:`, so adding a case there is a COMPILE ERROR until someone
+/// says whether that source may leave the device (App Store 5.1.3). Adding a case HERE
+/// compiles silently and changes nothing. **A new bio source belongs in `BioSource`.**
+///
+/// ⛔ FIVE OF THE EIGHT CASES BELOW HAVE NO PRODUCER ANYWHERE IN `Sources/` — measured
+/// word-bounded and comment-stripped on 2026-09-22. Only `.healthKit` and `.fallback` are
+/// ever assigned (`startStreaming()`, two lines). `.camera` is not assigned either; it looks
+/// reachable only because three OTHER enums declare a `.camera` case. The five are kept
+/// rather than deleted, per this repo's habit for producerless cases (`ModSource.motion`,
+/// `BioEventKind.eegBurst`), with the reason at each case — a "do not delete" note with a
+/// wrong reason is worse than none.
+///
+/// ⚠️ `BioSnapshot.source` (the other user of this type) has NO writer at all — only its
+/// default. It therefore reads `.fallback` even while HealthKit is streaming. Inert today
+/// because nothing reads it; do not build a claim on it without giving it a writer first.
 public enum BioDataSource: String, Sendable {
     case healthKit = "HealthKit"
+    // ⛔ NO PRODUCER. The Watch ships as a compiled-but-NOT-embedded target and reaches the
+    // phone through HealthKit, which arrives as `.healthKit`, not as this case.
     case appleWatch = "Apple Watch"
+    // ⛔ NO PRODUCER — and this one is the trap, because the capability IS built and wired.
+    // The BLE strap (0x180D) publishes to the bus as `BioSource.ble` through its own
+    // publisher and never touches this engine. Wiring it here would change nothing.
     case chestStrap = "Chest Strap"
+    // ⛔ NO PRODUCER. Camera rPPG — the flagship source — publishes `BioSource.cameraPPG`
+    // from `CameraRPPGBioPublisher`, also never through this engine. ⚠️ A bare `.camera`
+    // grep looks busy: `BioSourceKind`, `BioSourceOption` and `SignalRouting` each declare
+    // one, and an UNBOUNDED needle also matches `.cameraPPG`. Measure by TYPE (#1376).
     case camera = "Camera rPPG"
+    // ⛔ NO PRODUCER — capability DELETED. `OuraRingClient` went 2026-06-19.
     case ouraRing = "Oura Ring"
+    // ⛔ NO PRODUCER — capability DELETED by founder order (#1301, 2026-09-12): the face
+    // path and everything under it. Do not restore this from history.
     case arkit = "ARKit Face"
+    // ⛔ NO PRODUCER — capability DELETED by founder order (#1302, 2026-09-12), and
+    // structurally so: `AudioConfiguration.RecordRouteOwner` is an UNINHABITED enum, so
+    // `claimRecordRoute(_:)` cannot be called and the session can never rise to
+    // `.playAndRecord`. There is no microphone to be a source.
     case microphone = "Microphone"
     case fallback = "Simulated"
 }

@@ -48,6 +48,19 @@ public enum BioEgressPolicy {
     /// Whether frames from this source may be sent off-device. Only sources
     /// Echoel measures itself (or synthesizes, for the demo) pass; anything
     /// read out of the HealthKit store stays on the device (5.1.3).
+    /// ⭐ THE MISSING `default:` IS LOAD-BEARING — do not add one, and do not "tidy" this
+    /// into `default: return false`. Without it the switch is EXHAUSTIVE, so adding a case to
+    /// `BioSource` is a COMPILE ERROR here until someone decides whether that source may
+    /// leave the device. That compile error IS the 5.1.3 review step. With a default, a new
+    /// source silently inherits it — and if the default ever read `true`, a future
+    /// Health-derived source would leak the day it was added, with nothing going red.
+    /// Shared handling is fine as an explicit list (`case .ble, .cameraPPG, .fallback:`),
+    /// which is what this does. Pinned by `TheEgressSwitchNamesEverySourceTests`.
+    ///
+    /// ⚠️ It also decides which of the app's TWO provenance enums is canonical. `BioSource`
+    /// is; `BioDataSource` (`Bio/EchoelBioEngine.swift`) is engine-local, has five cases with
+    /// no producer, and is read by exactly one `== .healthKit` gate. A bio source added there
+    /// never reaches this function — see the note at that enum.
     public static func allowsEgress(_ source: BioSource) -> Bool {
         switch source {
         case .ble, .cameraPPG, .fallback:
