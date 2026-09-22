@@ -64,10 +64,10 @@ public final class SACNSender {
     }
 
     public private(set) var isActive = false
-    /// `CFAbsoluteTimeGetCurrent()` of the last packet the network stack ACCEPTED — drives the
-    /// keep-alive below and the patchbay's activity dot. ⚠️ Since #1445 this is strictly the
-    /// acceptance time, never a no-connection tick. Still NOT delivery: E1.31 over UDP gives
-    /// no receiver acknowledgement (`LightSendAccounting`).
+    /// The SUBMISSION time of the most recent packet whose completion then reported no local
+    /// error — an `@Observable` mirror of `pump.acceptedSentAt`, exactly as in `ArtNetSender`
+    /// (where the clock correction of #1446 is written out in full). Still NOT delivery:
+    /// E1.31 over UDP gives no receiver acknowledgement.
     public private(set) var lastSentTimestamp: TimeInterval = 0
 
     /// #1218 (audit 2026-09-10 `output-sync-3`) — KEEP-ALIVE. E1.31 §6.7.1 lets a receiver declare
@@ -113,40 +113,20 @@ public final class SACNSender {
     @ObservationIgnored private weak var bus: EngineBus?
     @ObservationIgnored private var connection: NWConnection?
     @ObservationIgnored private let loop = PollingLoop()
-    /// DELIVERY anchor — the source timestamp of the last packet the network stack ACCEPTED,
-    /// not of the last one computed. Internal rather than private so the accounting guard can
-    /// drive `applySendOutcome` without a socket; the only production writer is that method.
-    @ObservationIgnored var lastFrameTimestamp: TimeInterval = -1
-    @ObservationIgnored var lastSentGrandMaster: Float = 1
-    /// ⚠️ EXPLICIT TYPE, not inference: an inferred declaration spells `lastSentBlackout =`,
-    /// which is the same text as an ASSIGNMENT — and the guard that proves these anchors have
-    /// exactly one writer counts that text. Type it, or the declaration hides a second writer.
-    @ObservationIgnored var lastSentBlackout: Bool = false
-    /// Creative look level as of the last packet (mirrors ArtNetSender). A creative move with
-    /// a STALE source must still reach the wire. This is the CREATIVE anchor — it sits beside
-    /// the operator anchors, it is not one of them.
-    @ObservationIgnored var lastSentLookIntensity: Float = LightingStore.defaultLookIntensity
-    /// Send accounting (#1445) — the same two counters and the same shared rule as Art-Net.
-    /// `sendGeneration` counts ATTEMPTED data packets; `committedGeneration` is the newest one
-    /// whose completion reported no error. ⚠️ The three Stream_Terminated packets in
-    /// `sayGoodbye()` are deliberately OUTSIDE this accounting: they carry no state to commit
-    /// and the session is ending, so a commit from them could only mislead a restart.
-    @ObservationIgnored var sendGeneration: UInt64 = 0
-    @ObservationIgnored var committedGeneration: UInt64 = 0
+    /// THE EXECUTION STATE of this output — the same type, the same law and the same bound as
+    /// `ArtNetSender.pump` (#416: the senders share the decision, each keeps its own state).
+    /// Internal rather than private so the accounting guard drives the real state machine
+    /// without a socket; the production writers are `connect`, `stop` and `applySendOutcome`.
+    ///
+    /// ⚠️ The three Stream_Terminated packets in `sayGoodbye()` are deliberately OUTSIDE this
+    /// accounting and outside the in-flight bound: they are a terminal, one-shot burst of
+    /// exactly three (§6.7.1.2) sent while stopping, they carry no state to commit, and the
+    /// connection is cancelled in the last one's completion.
+    @ObservationIgnored var pump = LightSendPump()
     /// The creative lighting state (founder decision 2026-09-22), weak — the store lives at
     /// app level and is READ here. Both adapters read the SAME store, which is the point: the
     /// creative level is one value, unlike `grandMaster`, which each adapter owns for itself.
     @ObservationIgnored private weak var lighting: LightingStore?
-    /// RENDER/SLEW state — the last dimmer this sender PRODUCED, advancing on COMPUTE and not
-    /// on delivery (#1445; the reasoning is written out once, at `ArtNetSender.lastDimmer`).
-    /// Slew anchor for the flash guard (−1 = uninitialised → first frame lands
-    /// at target). Mirrors ArtNetSender: the mastered dimmer ramps at
-    /// `FlashGuard.senderTickDelta` (a per-second velocity resolved at this loop's
-    /// interval, 0.08 today) so a Blackout release (or a Grand-Master jump) can never
-    /// strobe physical fixtures — the ≤3 Hz / W3C-WCAG flash hard law applies to sACN too.
-    @ObservationIgnored private var lastDimmer: Float = -1
-    /// Per-channel colour slew anchor (R,G,B in 0…1; empty = no history yet).
-    @ObservationIgnored private var lastColour: [Float] = []
     /// Last RAW colour channels + dimmer target chosen (pre-master, pre-slew).
     /// Held so a tick with NO fresh/allowed source can still honor a Blackout /
     /// Grand-Master move from the last lit state (L1 — mirrors ArtNetSender).
@@ -206,11 +186,11 @@ public final class SACNSender {
         sayGoodbye()
         connection = nil
         isActive = false
-        lastDimmer = -1
-        lastColour = []
-        // A completion still in flight when the socket dies must not commit into whatever
-        // session comes next: retire every outstanding generation (#1445).
-        committedGeneration = sendGeneration
+        // Close the epoch, retire every outstanding generation and drop the OUTPUT anchors:
+        // after Stream_Terminated the receiver has released the universe, so the next session
+        // snaps to its first value like a cold start rather than ramping from a level nobody
+        // is holding any more (#1445/#1446).
+        pump.retire()
     }
 
     /// #1218 — three Stream_Terminated packets, then the socket closes in the LAST send's
@@ -262,6 +242,11 @@ public final class SACNSender {
     // MARK: - Connection
 
     private func connect() {
+        // #1446 — a new socket is a NEW DELIVERY EPOCH, and `openEpoch` arms `needsResend`.
+        // That is what makes a quick stop/start emit the current level immediately instead of
+        // waiting out the keep-alive — which matters more here than on Art-Net, because
+        // `stop()` told the receiver in so many words that the stream had ended.
+        pump.openEpoch()
         guard let nwPort = NWEndpoint.Port(rawValue: port) else { return }
         let endpoint = NWEndpoint.hostPort(host: .init(host), port: nwPort)
         let conn = NWConnection(to: endpoint, using: .udp)
@@ -308,7 +293,7 @@ public final class SACNSender {
             // unchanged timestamp means this only emits while master state moves
             // or the slew is still settling. Held channels come from an allowed
             // source (a gated frame never reaches the store), so nothing egresses.
-            sourceTimestamp = lastFrameTimestamp
+            sourceTimestamp = pump.acceptedFrameTimestamp
             channels = lastChannels
             dimmer = lastTarget
         } else {
@@ -329,16 +314,22 @@ public final class SACNSender {
         // Send when the source is fresh, the master state moved, the creative level moved, OR
         // the slew ramp hasn't reached its target yet — so a paused source can't freeze a fade
         // mid-ramp, and a blackout is never blocked. (Mirrors ArtNetSender.)
-        let masterMoved = grandMaster != lastSentGrandMaster || blackout != lastSentBlackout
-        let lookMoved = look != lastSentLookIntensity
-        let slewSettling = lastDimmer >= 0 && abs(mastered - lastDimmer) > 0.001
+        // ⭐ Every comparison is against what the network ACCEPTED (#1446) — see the same
+        // block in ArtNetSender for why, stated once there.
+        let masterMoved = grandMaster != pump.acceptedGrandMaster || blackout != pump.acceptedBlackout
+        let lookMoved = look != pump.acceptedLookIntensity
+        let slewSettling = pump.acceptedDimmer >= 0 && abs(mastered - pump.acceptedDimmer) > 0.001
         // #1218 — or the universe is about to be declared lost: re-send the held look.
-        let keepAliveDue = lastSentTimestamp > 0
-            && CFAbsoluteTimeGetCurrent() - lastSentTimestamp >= Self.keepAliveSeconds
-        guard sourceTimestamp != lastFrameTimestamp || masterMoved || lookMoved
+        let keepAliveDue = pump.keepAliveDue(now: CFAbsoluteTimeGetCurrent(),
+                                             after: Self.keepAliveSeconds)
+        // ⭐ MAX_IN_FLIGHT = 1 (#1446) — one ordinary data send at a time; a busy tick builds
+        // nothing and the next eligible tick re-reads the LATEST desired state.
+        guard !pump.isBusy else { return }
+        guard pump.needsResend || sourceTimestamp != pump.acceptedFrameTimestamp
+                || masterMoved || lookMoved
                 || slewSettling || keepAliveDue else { return }
         // ⛔ THE FOUR DELIVERY ANCHORS USED TO BE ASSIGNED HERE (#1445) — see the same block in
-        // ArtNetSender: `send` returns early with no socket, so this line consumed the reasons
+        // ArtNetSender: `send` reports `false` with no socket, so this line consumed the reasons
         // to retry for a packet that never left. They commit in `applySendOutcome` now.
         // Hard flash guarantee for PHYSICAL fixtures: slew-limit the dimmer so
         // even a Blackout release or a pathological jump ramps up from dark
@@ -346,13 +337,16 @@ public final class SACNSender {
         // this loop's interval (#372) — 0.08 at today's 33 ms → full fade ≥0.4 s,
         // ~1.2 Hz max. Same shared decision as ArtNetSender, and now literally the
         // same number: both read it from FlashGuard rather than each holding one.
-        let limited = FlashGuard.slewedDimmer(from: lastDimmer, to: mastered, blackout: blackout,
+        let limited = FlashGuard.slewedDimmer(from: pump.acceptedDimmer, to: mastered,
+                                              blackout: blackout,
                                               maxDelta: FlashGuard.senderTickDelta)
-        lastDimmer = limited
         ArtNetSender.applyDimmer(&channels, resolution: resolution, dimmer: limited)
         // Slew the COLOUR channels too (same shared guarantee as ArtNet — a fast
         // hue swing at high dimmer would otherwise strobe past 3 Hz, Law 6 gap).
-        ArtNetSender.applySlewedColour(&channels, resolution: resolution, last: &lastColour,
+        // A COPY of the accepted anchor, never the anchor itself (#1446 — the hue used to walk
+        // to its destination during an outage; see ArtNetSender for the full reasoning).
+        var colour = pump.acceptedColour
+        ArtNetSender.applySlewedColour(&channels, resolution: resolution, last: &colour,
                                        maxDelta: FlashGuard.senderTickDelta)
         // The fan matters MORE here than on Art-Net: E1.31 pads to a full 512 slots by
         // specification, so every slot this stream does not fill is actively driven to zero.
@@ -361,13 +355,15 @@ public final class SACNSender {
         let packet = Self.e131Packet(universe: universe, sequence: sequence, cid: cid,
                                      channels: fanned, synthetic: lastKnownSynthetic)
         sequence = sequence &+ 1   // wraps 0…255 (0 is valid in E1.31)
-        sendGeneration &+= 1
-        send(packet, attempt: LightSendAttempt(generation: sendGeneration,
-                                               frameTimestamp: sourceTimestamp,
-                                               grandMaster: grandMaster,
-                                               blackout: blackout,
-                                               lookIntensity: look,
-                                               sentAt: CFAbsoluteTimeGetCurrent()))
+        let attempt = pump.submit(frameTimestamp: sourceTimestamp,
+                                  grandMaster: grandMaster,
+                                  blackout: blackout,
+                                  lookIntensity: look,
+                                  sentAt: CFAbsoluteTimeGetCurrent(),
+                                  dimmer: limited,
+                                  colour: colour)
+        // No socket ⇒ no handover ⇒ free the one in-flight slot and commit nothing.
+        if !send(packet, attempt: attempt) { pump.abandon(attempt) }
     }
 
     /// Hand one data packet to the stack. ⚠️ NO connection ⇒ NO attempt and NOTHING committed,
@@ -377,28 +373,26 @@ public final class SACNSender {
     /// sender has no `lastError` and the patchbay shows none for it, so adding one would be a
     /// display with no reader), but because the ERROR is what decides whether the attempt's
     /// delivery anchors may commit at all.
-    private func send(_ data: Data, attempt: LightSendAttempt) {
-        guard let conn = connection else { return }
+    @discardableResult
+    private func send(_ data: Data, attempt: LightSendAttempt) -> Bool {
+        guard let conn = connection else { return false }
         conn.send(content: data, completion: .contentProcessed { [weak self] error in
             MainActor.assumeIsolated {
                 guard let self else { return }
                 self.applySendOutcome(attempt, failed: error != nil)
             }
         })
+        return true
     }
 
     /// Commit one attempt's DELIVERY anchors, or refuse — the SAME shared rule Art-Net applies
     /// (`LightSendAccounting.commits`). Internal, not private: the accounting guard drives this
     /// method, the one the production completion calls, so no test-only branch exists.
     func applySendOutcome(_ attempt: LightSendAttempt, failed: Bool) {
-        guard LightSendAccounting.commits(attempt, over: committedGeneration,
-                                          failed: failed) else { return }
-        committedGeneration = attempt.generation
-        lastFrameTimestamp = attempt.frameTimestamp
-        lastSentGrandMaster = attempt.grandMaster
-        lastSentBlackout = attempt.blackout
-        lastSentLookIntensity = attempt.lookIntensity
-        lastSentTimestamp = attempt.sentAt
+        pump.complete(attempt, failed: failed)
+        // The ONE observable mirror (see the property's doc). Compared before assigning so a
+        // refused completion cannot churn every `@Observable` reader of the activity dot.
+        if lastSentTimestamp != pump.acceptedSentAt { lastSentTimestamp = pump.acceptedSentAt }
     }
 
     // MARK: - Pure kernels (testable without a socket)

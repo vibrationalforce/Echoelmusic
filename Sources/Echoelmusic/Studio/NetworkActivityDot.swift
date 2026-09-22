@@ -14,13 +14,20 @@ import SwiftUI
 public protocol NetworkSendActivity: AnyObject {
     /// The connection is open. NOT evidence that anything has been sent.
     var isActive: Bool { get }
-    /// `CFAbsoluteTimeGetCurrent()` of the last datagram this sender got out.
+    /// `CFAbsoluteTimeGetCurrent()` of the moment this sender last handed a datagram to
+    /// `NWConnection.send`.
     ///
     /// ⚠️ ONE meaning, two strictnesses, and saying so is cheaper than a wrong dot (#1445):
-    /// `ArtNetSender`/`SACNSender` advance it only when `NWConnection` ACCEPTED the content,
-    /// so a tick with no socket leaves it alone; `OSCSender`/`ADMOSCSender` still advance it
-    /// at the handoff. The stricter pair can only ever make this value LATER than the looser
-    /// rule would, never earlier, so every reader below stays correct either way.
+    /// `ArtNetSender`/`SACNSender` keep the handover time but publish it only once that send's
+    /// `.contentProcessed` completion has reported no local error, so a tick with no socket —
+    /// or one whose send failed — leaves it alone; `OSCSender`/`ADMOSCSender` publish at the
+    /// handover without waiting. The stricter pair can only ever make this value LATER than
+    /// the looser rule would, never earlier, so every reader below stays correct either way.
+    ///
+    /// ⛔ THIS DOC SAID "the last datagram this sender got out", and #1446 retired that
+    /// phrasing everywhere: `.contentProcessed` reports that the CONNECTION finished
+    /// processing the content, which is not the NIC transmitting it and certainly not a
+    /// receiver holding it. The word for what we know is "no local error".
     var lastSentTimestamp: TimeInterval { get }
 }
 
@@ -39,7 +46,9 @@ public protocol NetworkSendActivity: AnyObject {
 public enum NetworkSendState: Equatable, Sendable {
     /// The output is not running at all.
     case off
-    /// A datagram left the device within the freshness window.
+    /// A datagram was handed to the network stack within the freshness window — and, for the
+    /// two light outputs, processed without a local error. ⛔ "left the device" stood here and
+    /// is retired (#1446): nothing at this layer can see the wire.
     case sending
     /// The connection is open and nothing has left recently. **This is a legitimate steady
     /// state, not a fault** — and saying so is half the point of the type:

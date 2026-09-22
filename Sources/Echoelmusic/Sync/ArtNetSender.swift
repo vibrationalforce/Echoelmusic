@@ -94,11 +94,15 @@ public final class ArtNetSender {
     }
 
     public private(set) var isActive = false
-    /// `CFAbsoluteTimeGetCurrent()` of the last packet the network stack ACCEPTED — drives the
-    /// keep-alive below and the patchbay's activity dot. ⚠️ Since #1445 this is strictly the
-    /// acceptance time, never a no-connection tick: `NetworkActivityDot` says "a datagram left
-    /// the device", and before the repair that could be false. Still NOT delivery — UDP offers
-    /// no receiver acknowledgement (`LightSendAccounting`).
+    /// The SUBMISSION time of the most recent packet whose completion then reported no local
+    /// error — an `@Observable` mirror of `pump.acceptedSentAt`, kept as stored state because
+    /// `NetworkActivityDot` observes it and a computed property over `@ObservationIgnored`
+    /// storage is not tracked. One writer: `applySendOutcome`.
+    ///
+    /// ⛔ THIS DOC SAID "the last packet the network stack ACCEPTED", and #1446 measured the
+    /// clock: the value is read in the tick, before `NWConnection.send` is called, so it is
+    /// when we HANDED IT OVER — which is the right number for a keep-alive and the wrong word
+    /// for what happened. It is still not delivery, and `.contentProcessed` never said it was.
     public private(set) var lastSentTimestamp: TimeInterval = 0
 
     /// #1218 (audit 2026-09-10 `output-sync-3`) — KEEP-ALIVE, the same number as sACN so the
@@ -141,48 +145,24 @@ public final class ArtNetSender {
     @ObservationIgnored private weak var bus: EngineBus?
     @ObservationIgnored private var connection: NWConnection?
     @ObservationIgnored private let loop = PollingLoop()
-    /// DELIVERY anchor — the source timestamp of the last packet the network stack ACCEPTED,
-    /// not of the last one computed. Internal rather than private so
-    /// `TheLightSendAccountingIsHonestTests` can drive the accounting without a socket; the
-    /// only production writer is `applySendOutcome`.
-    @ObservationIgnored var lastFrameTimestamp: TimeInterval = -1
+    /// THE EXECUTION STATE of this output: the one in-flight slot, the connection epoch, the
+    /// accepted OUTPUT anchors (dimmer/colour) and the accepted DELIVERY anchors. Internal
+    /// rather than private so the accounting guard can drive the real state machine without a
+    /// socket; the only production writers are `connect`, `stop` and `applySendOutcome`.
+    ///
+    /// ⛔ EIGHT STORED PROPERTIES STOOD HERE AND ARE GONE (#1446), among them `lastDimmer` and
+    /// `lastColour`. Those two advanced on COMPUTE, so an outage let the fade finish inside
+    /// this object while the receiver still sat at the old value — and the first packet after
+    /// recovery carried the END of the ramp. A slew-limiter measured from a value nobody
+    /// received is not a slew-limiter.
+    @ObservationIgnored var pump = LightSendPump()
     /// Art-Net wire sequence — advanced per packet CONSTRUCTED, which is what keeps every
     /// attempt (including a retry) uniquely numbered and in order for the node. A GAP is
     /// harmless: Art-Net nodes use the field to reject out-of-order/duplicate packets, never
-    /// to detect loss. ⚠️ It is not evidence of delivery and must never be read as such.
+    /// to detect loss. ⚠️ It is not evidence of delivery and must never be read as such, and
+    /// it is neither the generation nor the epoch — three counters, three questions.
     @ObservationIgnored private var sequence: UInt8 = 1
-    /// RENDER/SLEW state: the last dimmer (luminance) value this sender PRODUCED, the anchor
-    /// the flash slew-limiter measures its next step from. -1 = none yet. Reset on stop so a
-    /// restart doesn't slew from a stale value.
-    ///
-    /// ⚠️ IT ADVANCES ON COMPUTE, NOT ON DELIVERY, and that is deliberate (#1445). The doc
-    /// here used to read "actually sent", which was never true — it moved before the packet
-    /// reached the socket. It stays on the compute side because the ramp is this app's own
-    /// deterministic fade: gating it on an asynchronous completion would halve the fade rate
-    /// on any tick whose completion lands after the next one, a visible artefact on stage.
-    /// The DELIVERY anchors (`lastFrameTimestamp`, `lastSent…`) are the ones that moved.
-    @ObservationIgnored private var lastDimmer: Float = -1
-    /// Per-channel colour slew anchor (R,G,B in 0…1; empty = no history yet).
-    /// Reset on stop so a restart doesn't ramp the hue from a stale value.
-    @ObservationIgnored private var lastColour: [Float] = []
-    /// Master state as of the last packet — a Grand-Master/Blackout change must
-    /// send even when the source timestamp is unchanged (a stale bio source
-    /// must never block a blackout).
-    @ObservationIgnored var lastSentGrandMaster: Float = 1
-    /// ⚠️ EXPLICIT TYPE, not inference: an inferred declaration spells `lastSentBlackout =`,
-    /// which is the same text as an ASSIGNMENT — and the guard that proves these anchors have
-    /// exactly one writer counts that text. Type it, or the declaration hides a second writer.
-    @ObservationIgnored var lastSentBlackout: Bool = false
-    /// Creative look level as of the last packet. Same reason as the two above: a creative
-    /// move with a STALE source must still reach the wire, or a look change would appear to
-    /// do nothing until the next bio frame. This is the CREATIVE anchor — it sits beside the
-    /// operator anchors, it is not one of them.
-    @ObservationIgnored var lastSentLookIntensity: Float = LightingStore.defaultLookIntensity
-    /// Send accounting (#1445). `sendGeneration` counts ATTEMPTED packets; `committedGeneration`
-    /// is the newest one whose completion reported no error. A late completion of an older
-    /// packet cannot roll the anchors backward — see `LightSendAccounting.commits`.
-    @ObservationIgnored var sendGeneration: UInt64 = 0
-    @ObservationIgnored var committedGeneration: UInt64 = 0
+
     /// The creative lighting state (founder decision 2026-09-22), weak — the store lives at
     /// app level and is READ here. This adapter does not own it and must never write it; the
     /// operator's `grandMaster` above is a different concept and stays this object's own.
@@ -247,11 +227,10 @@ public final class ArtNetSender {
         connection?.cancel()
         connection = nil
         isActive = false
-        lastDimmer = -1
-        lastColour = []
         // A completion still in flight when the socket dies must not commit into whatever
-        // session comes next: retire every outstanding generation (#1445).
-        committedGeneration = sendGeneration
+        // session comes next: close the epoch, retire every outstanding generation, and drop
+        // the OUTPUT anchors so the next session snaps like a cold start (#1445/#1446).
+        pump.retire()
     }
 
     // MARK: - Target persistence + live reconnect
@@ -322,6 +301,13 @@ public final class ArtNetSender {
     // MARK: - Connection
 
     private func connect() {
+        // #1446 — a new socket is a NEW DELIVERY EPOCH. Opened before the port guard on
+        // purpose: if the port is unusable we have already cancelled the old connection, so
+        // retiring its outstanding attempts is the conservative direction. `openEpoch` also
+        // arms `needsResend`, which is what makes the current look go out on the new
+        // connection instead of waiting for the keep-alive.
+        pump.openEpoch()
+        let epoch = pump.epoch
         guard let nwPort = NWEndpoint.Port(rawValue: port) else { return }
         // Allow sending to a broadcast address (255.255.255.255) as well as unicast.
         let params = NWParameters.udp
@@ -332,7 +318,10 @@ public final class ArtNetSender {
         // interface) into `lastError`. Runs on `.main` (the start queue), hence assumeIsolated.
         conn.stateUpdateHandler = { [weak self] state in
             MainActor.assumeIsolated {
-                guard let self else { return }
+                // An old connection's health says nothing about the one that replaced it —
+                // without this gate a dying socket overwrites the new socket's `lastError`
+                // and the operator reads a fault that no longer exists (#1446).
+                guard let self, epoch == self.pump.epoch else { return }
                 switch state {
                 case .failed(let error):  self.lastError = "Art-Net: \(error.localizedDescription)"
                 case .waiting(let error): self.lastError = "Art-Net waiting: \(error.localizedDescription)"
@@ -375,7 +364,7 @@ public final class ArtNetSender {
             // only emits while master state moves or the slew is still settling.
             // Held channels are always from an allowed source (a gated frame never
             // reaches the store below), so nothing new egresses.
-            sourceTimestamp = lastFrameTimestamp
+            sourceTimestamp = pump.acceptedFrameTimestamp
             channels = lastChannels
             target = lastTarget
         } else {
@@ -398,74 +387,95 @@ public final class ArtNetSender {
         // Send when the source is fresh, the master state moved, the creative level moved, or
         // the slew ramp hasn't reached its target yet (a paused source must not freeze a fade
         // mid-ramp, and must never block a blackout).
-        let masterMoved = grandMaster != lastSentGrandMaster || blackout != lastSentBlackout
-        let lookMoved = look != lastSentLookIntensity
-        let slewSettling = lastDimmer >= 0 && abs(mastered - lastDimmer) > 0.001
+        // ⭐ EVERY COMPARISON IS AGAINST WHAT THE NETWORK ACCEPTED (#1446), never against what
+        // a previous tick computed. During an outage these anchors stand still, so each reason
+        // to send stays true and the retry keeps being eligible instead of being consumed.
+        let masterMoved = grandMaster != pump.acceptedGrandMaster || blackout != pump.acceptedBlackout
+        let lookMoved = look != pump.acceptedLookIntensity
+        let slewSettling = pump.acceptedDimmer >= 0 && abs(mastered - pump.acceptedDimmer) > 0.001
         // #1218 — or the node is about to forget us: re-send the held look.
-        let keepAliveDue = lastSentTimestamp > 0
-            && CFAbsoluteTimeGetCurrent() - lastSentTimestamp >= Self.keepAliveSeconds
-        guard sourceTimestamp != lastFrameTimestamp || masterMoved || lookMoved
+        let keepAliveDue = pump.keepAliveDue(now: CFAbsoluteTimeGetCurrent(),
+                                             after: Self.keepAliveSeconds)
+        // ⭐ MAX_IN_FLIGHT = 1 (#1446). One ordinary data send at a time: while a completion is
+        // outstanding this tick builds NOTHING — no packet, no sequence number, no generation.
+        // The desired state is not queued; it is simply re-read from the bus and the controls
+        // on the next eligible tick, so repeated ticks coalesce to the LATEST state by
+        // construction. This is what makes the outstanding work bounded by code rather than by
+        // how fast the network happens to be.
+        guard !pump.isBusy else { return }
+        guard pump.needsResend || sourceTimestamp != pump.acceptedFrameTimestamp
+                || masterMoved || lookMoved
                 || slewSettling || keepAliveDue else { return }
-        // ⛔ THE FOUR DELIVERY ANCHORS USED TO BE ASSIGNED HERE, and that was the defect
-        // (#1445): `send` below begins with `guard let conn = connection else { return }`, so
-        // with no socket this line consumed `lookMoved`, `masterMoved`, the freshness compare
-        // and the keep-alive clock for a packet that never left. They now commit in
-        // `applySendOutcome`, from the completion, and only for an attempt the stack accepted.
+        // ⛔ THE FOUR DELIVERY ANCHORS USED TO BE ASSIGNED HERE, and that was the first half of
+        // the defect (#1445): `send` below reports `false` with no socket, so this line consumed
+        // `lookMoved`, `masterMoved`, the freshness compare and the keep-alive clock for a packet
+        // that never left. ⛔ AND THE SECOND HALF SURVIVED THAT REPAIR (#1446): the FADE still
+        // advanced here, so an outage finished the ramp internally and the first packet after
+        // recovery carried its END. Both categories now commit in `applySendOutcome`, from the
+        // completion, and only for an attempt whose local processing reported no error.
         // Hard flash guarantee for PHYSICAL fixtures: slew-limit the dimmer
         // (luminance) channel so even a pathological input jump can never strobe
         // the lights. The step is `FlashGuard.senderTickDelta` — a per-SECOND
         // luminance velocity resolved at THIS loop's interval (#372), so halving
         // the interval above halves the step instead of doubling the flash rate.
         // At today's 33 ms that is the same 0.08 as before → full fade ≥0.4 s.
-        let limited = FlashGuard.slewedDimmer(from: lastDimmer, to: mastered, blackout: blackout,
+        let limited = FlashGuard.slewedDimmer(from: pump.acceptedDimmer, to: mastered,
+                                              blackout: blackout,
                                               maxDelta: FlashGuard.senderTickDelta)
-        lastDimmer = limited
         Self.applyDimmer(&channels, resolution: resolution, dimmer: limited)
         // Slew the COLOUR channels too — a fast hue swing at high dimmer would
         // otherwise strobe even though the dimmer is rate-limited (Law 6 gap).
-        Self.applySlewedColour(&channels, resolution: resolution, last: &lastColour,
+        // ⚠️ A COPY of the accepted anchor, never the anchor itself: `applySlewedColour`
+        // updates its `last` in place, and writing straight into the stored anchor is how the
+        // hue walked to its destination during an outage (#1446). The candidate commits with
+        // the packet or dies with it.
+        var colour = pump.acceptedColour
+        Self.applySlewedColour(&channels, resolution: resolution, last: &colour,
                                maxDelta: FlashGuard.senderTickDelta)
         let fanned = DMXFixtureFan.fanned(channels, count: fixtureCount, spacing: fixtureSpacing)
         let packet = Self.artDMXPacket(universe: universe, sequence: sequence, channels: fanned)
         sequence = sequence == 255 ? 1 : sequence &+ 1   // 1...255, 0 = disabled
-        sendGeneration &+= 1
-        send(packet, attempt: LightSendAttempt(generation: sendGeneration,
-                                               frameTimestamp: sourceTimestamp,
-                                               grandMaster: grandMaster,
-                                               blackout: blackout,
-                                               lookIntensity: look,
-                                               sentAt: CFAbsoluteTimeGetCurrent()))
+        let attempt = pump.submit(frameTimestamp: sourceTimestamp,
+                                  grandMaster: grandMaster,
+                                  blackout: blackout,
+                                  lookIntensity: look,
+                                  sentAt: CFAbsoluteTimeGetCurrent(),
+                                  dimmer: limited,
+                                  colour: colour)
+        // No socket ⇒ the handover never happened ⇒ free the slot again and commit nothing.
+        // Without this the ONE in-flight slot would latch shut the first time the cable is out.
+        if !send(packet, attempt: attempt) { pump.abandon(attempt) }
     }
 
     /// Hand one packet to the stack. ⚠️ NO connection ⇒ NO attempt and NOTHING committed, so
     /// the next tick still sees every reason to retry (#1445). That early return is the whole
     /// reason the anchors moved out of the tick.
-    private func send(_ data: Data, attempt: LightSendAttempt) {
-        guard let conn = connection else { return }
+    @discardableResult
+    private func send(_ data: Data, attempt: LightSendAttempt) -> Bool {
+        guard let conn = connection else { return false }
         // #1219 — a send the OS refuses (e.g. EPERM on a broadcast literal) is the error an
         // operator needs to see; a send it accepts clears it. Same queue as the state handler.
         conn.send(content: data, completion: .contentProcessed { [weak self] error in
             MainActor.assumeIsolated {
                 guard let self else { return }
-                if let error { self.lastError = "Art-Net send: \(error.localizedDescription)" }
-                else if self.lastError?.hasPrefix("Art-Net send:") == true { self.lastError = nil }
+                if attempt.epoch == self.pump.epoch {
+                    if let error { self.lastError = "Art-Net send: \(error.localizedDescription)" }
+                    else if self.lastError?.hasPrefix("Art-Net send:") == true { self.lastError = nil }
+                }
                 self.applySendOutcome(attempt, failed: error != nil)
             }
         })
+        return true
     }
 
     /// Commit one attempt's DELIVERY anchors, or refuse. Internal, not private: the accounting
     /// guard drives THIS method — the same one the production completion calls — so the law is
     /// proven end to end without a socket and without a test-only branch in shipping logic.
     func applySendOutcome(_ attempt: LightSendAttempt, failed: Bool) {
-        guard LightSendAccounting.commits(attempt, over: committedGeneration,
-                                          failed: failed) else { return }
-        committedGeneration = attempt.generation
-        lastFrameTimestamp = attempt.frameTimestamp
-        lastSentGrandMaster = attempt.grandMaster
-        lastSentBlackout = attempt.blackout
-        lastSentLookIntensity = attempt.lookIntensity
-        lastSentTimestamp = attempt.sentAt
+        pump.complete(attempt, failed: failed)
+        // The ONE observable mirror (see the property's doc). Compared before assigning so a
+        // refused completion cannot churn every `@Observable` reader of the activity dot.
+        if lastSentTimestamp != pump.acceptedSentAt { lastSentTimestamp = pump.acceptedSentAt }
     }
 
     // MARK: - Pure kernels (testable without a socket)

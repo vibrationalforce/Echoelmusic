@@ -1,7 +1,9 @@
 import XCTest
 @testable import Echoelmusic
 
-/// #996 — the network "sending" dot means a datagram left the device.
+/// #996 — the network "sending" dot means a datagram was handed to the network stack.
+/// ⛔ "left the device" stood here and is retired (#1446): `.contentProcessed` reports that
+/// the CONNECTION finished processing the content, never that the NIC transmitted it.
 ///
 /// WHY IT EXISTS. All four senders set `isActive = true` ONE LINE after `connect()`, and the
 /// Routing rows rendered exactly that flag as "sending". So the dot read "sending" with the

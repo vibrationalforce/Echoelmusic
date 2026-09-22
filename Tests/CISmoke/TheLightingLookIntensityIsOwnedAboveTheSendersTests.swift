@@ -55,6 +55,9 @@ final class TheLightingLookIntensityIsOwnedAboveTheSendersTests: XCTestCase {
     private static let sacn = "Sources/Echoelmusic/Sync/SACNSender.swift"
     private static let store = "Sources/Echoelmusic/Core/LightingStore.swift"
     private static let app = "Sources/Echoelmusic/EchoelmusicApp.swift"
+    /// #1446 moved the COMMIT of the creative anchor out of the senders and into the shared
+    /// execution state. Claim 10's second half follows it here (§4).
+    private static let pump = "Sources/Echoelmusic/Sync/LightSendAccounting.swift"
 
     /// A spread of generated targets including both ends and the bio mapping's own floor
     /// (`0.3 + 0.7·coherence`, so 0.3 at coherence 0 and 1.0 at coherence 1).
@@ -248,11 +251,19 @@ final class TheLightingLookIntensityIsOwnedAboveTheSendersTests: XCTestCase {
                           "\(path)'s send attempt no longer carries the creative level, so "
                           + "nothing can record what was sent and `lookMoved` stays true "
                           + "forever — the sender would stream on every tick.")
-            XCTAssertTrue(src.contains("lastSentLookIntensity = attempt.lookIntensity"),
-                          "\(path) never records the creative level it sent. If this moved "
-                          + "again, keep a needle on the COMMIT, not on the tick: committing "
-                          + "in the tick is the #1445 defect.")
         }
+        // ⚠️ RE-ANCHORED A SECOND TIME BY #1446, which moved the COMMIT itself out of both
+        // senders and into `LightSendPump.complete`. The needle follows the commit, because
+        // the commit is the invariant: committing in the TICK is the #1445 defect, and
+        // committing a packet the network never processed is the #1446 one.
+        let commit = SourceText.codeOnly(try text(Self.pump))
+        XCTAssertTrue(commit.contains("acceptedLookIntensity = attempt.lookIntensity"),
+                      "the shared send accounting never records the creative level it sent. "
+                      + "`lookMoved` would then stay true forever and both senders would "
+                      + "stream on every tick.")
+        XCTAssertTrue(commit.contains("guard LightSendAccounting.commits(attempt"),
+                      "the creative anchor commits without passing the shared rule, so a "
+                      + "failed or stale send records a creative level that never went out.")
     }
 
     // MARK: - Claims 11–12 — the boundary this slice must not cross
