@@ -164,7 +164,15 @@ final class TheDetectedTuningHasAProducerTests: XCTestCase {
             A file of EXACTLY one window must be read exactly once, at 0.
             """)
 
-        for frameCount in [Int64(window) * 2, 100_000, 5_000_000, 44_100 * 600] {
+        // ⛔ THIS ARRAY CARRIED NO TYPE ANNOTATION AND THE BUILD DIED ON IT (#E2).
+        // Mixing ONE conversion expression (`Int64(window) * 2`) with bare integer
+        // literals let inference collapse the literal to `[Any]`, so `frameCount` was
+        // `Any` and three errors followed from one root cause (#689). The §0
+        // transcription could not see it: it grades what a needle SAYS, never what
+        // the Swift around it type-checks to. Annotate the collection.
+        let frameCounts: [Int64] = [Int64(window) * 2, 100_000, 5_000_000, 44_100 * 600]
+        let windowFrames = Int64(window)
+        for frameCount in frameCounts {
             let starts = AudioKeyAnalysis.windowStarts(frameCount: frameCount,
                                                        windowFrames: window,
                                                        maxWindows: maxWindows)
@@ -178,12 +186,13 @@ final class TheDetectedTuningHasAProducerTests: XCTestCase {
             XCTAssertEqual(starts.count, Set(starts).count,
                            "window starts must be distinct (\(frameCount)).")
             if let last = starts.last {
-                XCTAssertLessThanOrEqual(last + Int64(window), frameCount, """
+                XCTAssertLessThanOrEqual(last + windowFrames, frameCount, """
                     The last window of a \(frameCount)-frame file starts at \(last) and would \
                     read past the end.
                     """)
             }
-            let overlapping = zip(starts, starts.dropFirst()).filter { $1 - $0 < Int64(window) }
+            let overlapping: [(Int64, Int64)] = zip(starts, starts.dropFirst())
+                .filter { (pair: (Int64, Int64)) in pair.1 - pair.0 < windowFrames }
             XCTAssertTrue(overlapping.isEmpty, """
                 Windows OVERLAP at \(frameCount) frames: \(overlapping.prefix(3)). This is a \
                 correctness defect, not a performance one — the fundamentals feed a \

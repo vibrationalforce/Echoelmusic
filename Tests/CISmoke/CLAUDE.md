@@ -305,6 +305,33 @@ evidence. Resolving arbitrary member calls to declaration sites is the #666 prot
 honest output is this paragraph. **Read the imports of every guard you ADD against the symbols
 it uses; `Xcode Compile Check` cannot help — it builds `Sources/` alone (§5b).**
 
+⛔ **AND THE FIFTH SHAPE HAS A THIRD MEMBER: A LITERAL THAT PARSES, ESCAPES CLEANLY, IMPORTS
+CORRECTLY — AND STILL DOES NOT TYPE-CHECK (#E2, 2026-09-22).** `TheDetectedTuningHasAProducer
+Tests` wrote `for frameCount in [Int64(window) * 2, 100_000, 5_000_000, 44_100 * 600]`. ONE
+conversion expression beside three bare integer literals, no annotation: inference collapsed the
+literal to `[Any]`, `frameCount` became `Any`, and `** TEST BUILD FAILED **` followed with three
+errors from that one root cause (#689 — the second and third named `Set(starts)` and a `+`, both
+cascades). Every checker was clean and correctly so: they read needles as DATA, and there is no
+needle here at all. §0's transcription is blind by construction — it grades what a claim SAYS
+against both trees, never what the Swift carrying it resolves to. **The guard was
+semantically right and did not exist**, which is the same cost as #1337: the whole blocking
+bundle stops, so it is never one guard.
+
+⚠️ **WRITE THE COLLECTION'S TYPE whenever any element is a call, a conversion or an operator
+expression and any other is a bare literal.** That is the whole repair, and it is cheap enough to
+be reflexive. **No checker is shipped, for the #665 reason the paragraph above gives**: the shape
+`[Int64(x), 0]` infers correctly far more often than not, so a scan for it would be an alarm
+nobody reads — and per #937 a checker that fires on correct code costs more than the paragraph.
+
+⚠️ **ONE OBSERVATION, STATED AS ONE AND NOT AS A LAW: the collapse ANNOUNCED ITSELF as a slow
+type-check.** The same compile printed `expression took 327ms to type-check (limit: 200ms)` on the
+neighbouring line and `361ms` on the method, and `gh-test-verdict.py` already reports those
+(#933d/#933e). Whether a slow-type-check warn generally precedes an inference collapse is
+**UNMEASURED** — this is a single data point, and writing it down as a rule would be the
+flattering direction of §3. What it does support: a NEW slow-type-check warn on your own
+expression is worth reading rather than tolerating, which #933d already asks for on hygiene
+grounds alone.
+
 **A count pin is the other shape that rots silently, and it rots the same way (#903/#904).**
 `XCTAssertEqual(occurrences(of: "…", in: code), N)` goes stale when the CODE changes
 CORRECTLY and the number does not follow. Three measured cases, none of them noticed by CI:
