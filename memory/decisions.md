@@ -2477,3 +2477,72 @@ neutral" war eine Erreichbarkeits-Tatsache, keine Geschmacksfrage.** Lehre: ein 
 mit einem ✅ am Primitiv verdeckt, dass die Kette dahinter nie geschlossen wurde.
 
 **Review:** 2026-10-21. **Offen:** Founder-Feel-Tuning am Gerät.
+
+### 2026-09-22 — Zwei Phasen des 8-h-DMMW-Laufs sind GESTRICHEN, nicht offen (H/I/J und M)
+
+**Kontext.** Der Founder hat den Lauf mit „Du entscheidest ultradmmw Mode" vollständig
+delegiert. Die Phasenliste A–R enthält vier Phasen, die einer datierten, wörtlich
+protokollierten Founder-Entfernung widersprechen. Der Lauf selbst verlangt, vor JEDER
+Scheibe auf Repo-Wahrheit und Founder Holds zurückzugehen — also sind sie hier
+entschieden und aufgeschrieben, bevor eine spätere Sitzung ihre Abwesenheit als
+Rückstand liest und sie still nachbaut.
+
+**H / I / J (Audio-Input-Erkennung, -Host, -Aufnahme) = FOUNDER HOLD.** Founder
+2026-09-12, wörtlich: „Face und Audio Input komplett entfernen." Entscheidend ist,
+dass die Entfernung **strukturell** ist und nicht kosmetisch: der einzige Pfad, der die
+Sitzung auf `.playAndRecord` heben kann, ist
+`AudioConfiguration.claimRecordRoute(_ owner: RecordRouteOwner)`, und `RecordRouteOwner`
+ist ein **unbewohntes** Enum — der Parametertyp hat keinen Bewohner, die Funktion ist
+unaufrufbar, `recordingRouteNeeded` ist `private(set)` und kann nie wahr werden.
+`NSMicrophoneUsageDescription` ist mit #1415 aus `Resources/iOS/Info.plist` entfernt,
+und die Datei ist founder-gated (berichten, nicht editieren).
+
+**Warum das eine Founder-Entscheidung ist und keine Scheibe.** Eine Rückkehr braucht
+DREI Dinge in EINEM Commit: das Umdrehen einer wörtlichen Anweisung, einen Fall in
+`RecordRouteOwner`, und die founder-gated plist-Zeile — iOS beendet die App beim
+Aktivieren einer Aufnahme-Kategorie ohne den Schlüssel. Das hält
+`EveryPermissionPromptHasACapabilityTests` (`retiredPrompts`) fest. ⚠️ Und die
+Absturzfamilie am Eingangsknoten (`isInputConnToConverter`, Leiter #859–#862b) wird
+dabei **ungelöst geerbt**, nicht repariert: sie wurde gegenstandslos, weil der Knoten
+verschwand.
+
+**M (Echoel Grain Engine) = FOUNDER HOLD.** Founder 2026-09-12, wörtlich: „Kein
+audioninout kein Autotune, Harmonizer, granularsynthese" (#1305). ⚠️ Die Grenze, die
+beim Streichen NICHT mit weggeht: `Sequencer/MicrotonalTuning.swift` — der Typ heißt
+`TuningSystem` (#1376), er ist das Tonsystem JEDER gestimmten Stimme und über sieben
+`setTuningCents(`-Aufrufstellen erreichbar; er war nur ZUSÄTZLICH das Autotune-Ziel.
+Seit #C1 pinnt das `TheToneSystemIsNamedByItsTypeTests`.
+
+**Review:** 2026-10-22. **Offen:** nichts — beide sind Holds, keine Aufgaben.
+
+### 2026-09-22 — Phase C: der musikalische Kontext braucht keinen neuen Wert, sondern einen Erzeuger (#C1)
+
+**Die Frage.** Kann ein geteilter musikalischer Kontext eingeführt werden, ohne eine
+zweite Sitzungs-Wahrheit zu erzeugen?
+
+**Gemessene Antwort: die Frage ist falsch gestellt.** Die Werttypen existieren bereits
+(`MusicalKey`, `Scale`, `TuningSystem`, `DetectedTuning`), der Besitzer existiert
+bereits (`SessionContext`, persistiert unter `echoel.keyRoot` / `echoel.keyScale` /
+`echoel.a4Hz`), und `MusicalFrame` projiziert Root, Scale und Tempo schon. Einen neuen
+Wert einzuführen wäre genau die tote Abstraktion, die der Lauf verbietet. **Was fehlt,
+ist der ERZEUGER** — und die Unterscheidung „erkannt" vs. „vom Nutzer gesetzt", die es
+heute nirgends in `Sources/` gibt (gemessen: null Treffer auf `detectedKey`,
+`isDetected`, `userSet`, `keySource`).
+
+**Der eigentliche Befund, und er war ein Kopf-Kommentar.** `Core/TuningDetector.swift`
+nannte als Quelle „MicrophoneManager.pitch / .frequency" — einen Typ, den #1302 zehn
+Tage zuvor als DATEI gelöscht hat. Der Eintrag las sich damit als „wartet auf das
+Mikrofon", also als blockiert durch einen Founder Hold, während sein natürlicher
+Erzeuger heute die IMPORTIERTE AUDIODATEI ist (Audio Import V1, 2026-09-22), offline
+analysiert, außerhalb jedes Realtime-Callbacks. **Das ist die teure Sorte veralteter
+Prosa: sie altert nicht nur, sie lenkt die nächste Scheibe fehl.**
+
+**Zweiter Befund derselben Runde.** `DSP/PitchTracker` (YIN, rein, getestet) hat
+ebenfalls null Produktions-Aufrufer — und die beiden Waisen sind die zwei HÄLFTEN
+DERSELBEN Fähigkeit: YIN liefert die Grundfrequenzen, die `TuningDetector.analyze`
+verlangt. Es fehlt nur das Lesen von PCM-Fenstern aus der verwalteten Kopie. Beide
+Kopfzeilen sagen das jetzt, damit die nächste Sitzung keinen zweiten Schätzer daneben
+baut (#416).
+
+**Review:** 2026-10-22. **Offen:** der Erzeuger selbst (Phase E) — Entwurf steht,
+Geräte-Verify wird fällig, sobald er eine Tür hat.
