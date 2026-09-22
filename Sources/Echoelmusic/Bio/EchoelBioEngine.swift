@@ -463,9 +463,33 @@ public final class EchoelBioEngine {
     // `BioSource.providesTrustedHRV == false` for HealthKit. (The RMSSD/coherence math
     // itself remains covered by the algorithm tests in BioEngineTests, fed real RR.)
 
-    // MARK: - Fallback Mode (Mic Level Proxy)
+    // MARK: - Fallback Mode (Simulated, no sensor)
 
-    /// When HealthKit unavailable, use microphone RMS as coherence proxy
+    /// The demo/preview path: when HealthKit is unavailable or unauthorised, drive the
+    /// snapshot from four slow sines so the app has SOMETHING moving. No sensor is involved.
+    ///
+    /// ⛔ THIS HEADING AND THIS LINE BOTH NAMED A MICROPHONE, AND NEITHER HALF WAS TRUE. They
+    /// read "Fallback Mode (Mic Level Proxy)" and "use microphone RMS as coherence proxy".
+    /// `MicrophoneManager` was DELETED with #1302 (founder 2026-09-12, "Face und Audio Input
+    /// komplett entfernen"), and the deletion is structural rather than cosmetic:
+    /// `AudioConfiguration.RecordRouteOwner` is an UNINHABITED enum, so `claimRecordRoute(_:)`
+    /// cannot be called and the session can never rise to `.playAndRecord`. But the second half
+    /// was false even BEFORE that — the body below has never computed an RMS; it has always
+    /// been `sin()`. A session reading it would conclude this path is entangled with audio
+    /// input and that restoring a microphone touches it. It is not, and it does not.
+    ///
+    /// ⚠️ THE VALUES PRODUCED HERE ARE SIMULATED AND MUST NEVER BE SOLD AS A BODY. They stay
+    /// off the bus because `HealthKitBioPublisher` gates its publish on
+    /// `engine.dataSource == .healthKit`, and this branch sets `.fallback` — that ONE guard is
+    /// what separates a demo from a false biometric claim. Anything that widens it (to
+    /// `!= .fallback`, say, or to "any authorised source") has to be re-argued from scratch.
+    ///
+    /// ⚠️ IT IS ALSO A 20 Hz `@Observable` WRITER, which is the fifth machine-rate producer in
+    /// this app. It writes `snapshot` plus four `smooth…` properties on every tick, so reading
+    /// ANY of them in a menu-hosting body — or in any ancestor of one — is the 10.76.41/50
+    /// Picker-teardown defect. There is no reader today; the engine is a `.shared` singleton,
+    /// so acquiring one needs no binding and leaves nothing conspicuous behind. Pinned by
+    /// `TheMenuHostReadsNoHotStateTests` section 5.
     private func startFallbackMode() {
         // Cancel any existing breath timer to prevent accumulation
         breathTimerCancellable?.cancel()

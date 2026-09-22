@@ -1,5 +1,11 @@
 // TheMenuHostReadsNoHotStateTests.swift
-// Echoel — #918 (bio producer) · #919 (meter + automation producer) · #928 (click relay).
+// Echoel — #918 (bio producer) · #919 (meter + automation producer) · #928 (click relay)
+//          · #E4 (the shared bio engine's 20 Hz fallback timer).
+// ⭐ #E4 IS THE FIRST SECTION ADDED BEFORE THE PRODUCER HAD A READER, which is what the
+// ⛔#1301 note below asks for in so many words — "a new `@Observable` whose writes are
+// driven by a timer needs a section here in ITS OWN commit, not after a report". It is
+// therefore a PREMISE, not a scan, and says so at the claim: pointing `assertNoHotRead`
+// at a type no view references would be a test that cannot fail (#367).
 // ⛔ #1301 — A FOURTH PRODUCER SECTION STOOD HERE (#1268, the front-camera publisher's 10 Hz
 // drain — the only one found by a REVIEW rather than by a device freeze). The publisher is
 // removed by founder order (2026-09-12) and its four claims, its derivation and its leaf
@@ -310,6 +316,31 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
     // very body that must not read the hot one, and the two spellings differ by one word.
     private static let metronomeVoice = "Sources/Echoelmusic/Audio/MetronomeVoice.swift"
     private static let metronomeReceiver = "metronome"
+
+    // ⭐ #E4 — THE FOURTH PRODUCER OBJECT, and the first one pinned BEFORE it shipped a freeze.
+    // The four above were each found the expensive way: a founder reported a menu that would
+    // not open, and the read was located afterwards. This one has NO reader at all today —
+    // measured, comment-stripped over `Sources/`, the only file outside the engine that so
+    // much as NAMES `EchoelBioEngine` is `Bio/HealthKitBioPublisher.swift`. So it cannot be
+    // causing a freeze, and this section is a premise rather than a scan.
+    //
+    // ⚠️ WHY IT IS WORTH PINNING ANYWAY, and the reason is a SHAPE the other four do not have:
+    // `EchoelBioEngine` is a `.shared` SINGLETON. The other four producers reach a body through
+    // a binding — `@Environment(AudioEngine.self) var audioEngine`, a `@State` in the app — so
+    // adding a read is two edits, a binding and a use, and the binding is conspicuous. Here it
+    // is ONE edit anywhere in the app: `EchoelBioEngine.shared.snapshot.heartRate` in a body
+    // needs no binding, no injection and no import beyond the module. The cheapest possible
+    // version of the 10.76.50 defect is available to any line in any ancestor.
+    //
+    // The producer is `startFallbackMode()`: a 20 Hz main-run-loop timer that writes five
+    // observation-tracked properties per tick. It runs in production — `HealthKitBioPublisher`
+    // calls `startStreaming()`, whose `else` branch sets `.fallback` and starts this timer on
+    // every device where HealthKit authorisation fails or is unavailable.
+    private static let bioEngine = "Sources/Echoelmusic/Bio/EchoelBioEngine.swift"
+    /// The one publisher that legitimately holds the engine — the counterweight (#343) that
+    /// proves the needle below matches real text instead of going green over a typo.
+    private static let bioEngineHolder = "Sources/Echoelmusic/Bio/HealthKitBioPublisher.swift"
+    private static let bioEngineTimerMethod = "startFallbackMode"
     private static let leaves = [
         "Sources/Echoelmusic/Studio/HeaderMonitors.swift",
         "Sources/Echoelmusic/Studio/PulseMeasurementView.swift",
@@ -728,6 +759,122 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
         }
     }
 
+    // MARK: - 5. The fourth producer object (#E4)
+
+    func testTheFallbackBioHotSetIsDerivedFromTheTwentyHertzTimer() throws {
+        guard try fallbackTimerExists() else {
+            throw XCTSkip("""
+                `\(Self.bioEngineTimerMethod)` is gone from \(Self.bioEngine). That is allowed \
+                — it had no reader — so this is a SKIP, not a failure. Delete this whole \
+                section and the constants it uses in the same commit; leaving a derivation \
+                anchored on an absent method makes its claims green for free (#367).
+                """)
+        }
+        let hot = try fallbackBioHotProperties()
+        XCTAssertTrue(hot.contains("snapshot"), """
+            DERIVATION CLAIM. ⚠️ Stated precisely, because the obvious sentence here would be \
+            an over-claim: this does NOT make the premise claim below sound. That one anchors \
+            on the TYPE NAME and would work with this derivation deleted. What this protects \
+            is the SCAN the premise's failure message tells the next session to write — the \
+            set has to be correct and non-empty on the day it is first used, which is the day \
+            nobody will re-derive it. \
+            `snapshot` is the tracked property four of the timer's eight writes go THROUGH \
+            (`self.snapshot.heartRate = …`), so it is the one a body is most likely to read \
+            and the one a hand-written list gets wrong. Selected: \
+            \(hot.sorted().joined(separator: ", ")).
+            If the timer legitimately stopped writing it, move the anchor — do not hard-code.
+            """)
+        XCTAssertTrue(hot.contains("smoothHeartRate"), """
+            The DIRECT-write shape is no longer selected: `smoothHeartRate` is assigned as \
+            `self.smoothHeartRate = …` in the same closure. Losing it means the derivation now \
+            only sees writes through a struct, so a plain tracked property added to that timer \
+            would stay invisible. Selected: \(hot.sorted().joined(separator: ", ")).
+            """)
+        XCTAssertGreaterThanOrEqual(hot.count, 2, """
+            FLOOR. The derivation collapsed: either the writes moved out of \
+            `\(Self.bioEngineTimerMethod)`, or `isObservationTracked` can no longer resolve \
+            declarations in \(Self.bioEngine) — moving them into an extension in another file \
+            does exactly that, silently. Selected: \(hot.sorted()).
+            """)
+    }
+
+    func testTheFallbackTimerIsStillAMachineRateWriter() throws {
+        guard try fallbackTimerExists() else { throw XCTSkip("timer removed; see the claim above") }
+        let lines = SourceText.codeOnly(try read(Self.bioEngine))
+            .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        guard let index = lines.firstIndex(where: { $0.contains("func \(Self.bioEngineTimerMethod)(") }),
+              let (lo, hi) = span(of: lines[index], in: lines, from: index) else {
+            // ⛔ A `\`-NEWLINE CONTINUATION IS ONLY LEGAL INSIDE `\"\"\"`. The first draft of
+            // this line wrote one inside a plain `"` literal — the exact class of defect that
+            // cost a TEST BUILD on 2026-09-22 (#E2): Swift the §0 transcription cannot see,
+            // because it grades what a needle SAYS, never what the code carrying it parses to.
+            XCTFail("""
+                `\(Self.bioEngineTimerMethod)` was found by substring but not by span — the \
+                brace layout changed, so every claim in this section is now reading the wrong \
+                lines. Re-derive `span` against the new shape before trusting any of them.
+                """)
+            return
+        }
+        let body = lines[lo..<hi].joined(separator: "\n")
+        XCTAssertTrue(body.contains("Timer.publish(every:"), """
+            The word HOT in this section rests on one fact: these properties are rewritten by a \
+            TIMER, not by a finger. `Timer.publish(every:` is gone from \
+            `\(Self.bioEngineTimerMethod)`, so either the writer became event-driven — then \
+            re-derive what its rate actually is before keeping the premise claim — or the \
+            method now does something else entirely and this section is measuring nothing.
+            """)
+    }
+
+    func testNoAncestorHoldsTheSharedBioEngine() throws {
+        // ⛔ THIS IS A PREMISE, NOT A SCAN, AND THE DIFFERENCE IS THE WHOLE POINT (#367).
+        // Pointing `assertNoHotRead` at these files today would be a claim that CANNOT fail:
+        // there is no receiver to read through, so it would report clean forever, including on
+        // the day someone introduces one. So this asserts the condition under which no scan is
+        // needed, and its failure message names the scan that then has to be written.
+        //
+        // ⚠️ THE NEEDLE IS THE TYPE, NOT A BINDING NAME, and that is deliberate rather than
+        // lazy. The other four producers are reached through a named binding, so their scans
+        // anchor on that name. `EchoelBioEngine` is a `.shared` singleton: a body can read
+        // `EchoelBioEngine.shared.snapshot.heartRate` with no binding at all, and a
+        // binding-name needle would miss it completely. Matching the TYPE catches both the
+        // singleton read and any future `@Environment`/`@State` binding.
+        //
+        // ⭐ AND IT IS NOT A BAN. Holding the engine in an ancestor is allowed — `WorkspaceView`
+        // legitimately holds `CameraRPPGBioPublisher` for exactly that kind of reason, and
+        // `testTheRootStillReadsTheStartStopFlag` REQUIRES it. This asks for the scan to arrive
+        // WITH the reference, not for the reference to stay away (#364).
+        let unscanned = try fallbackBioHotProperties().sorted().joined(separator: ", ")
+        for path in [Self.app, Self.root, Self.wrapper, Self.host] {
+            let text = SourceText.codeOnly(try read(path))
+            XCTAssertFalse(text.contains("EchoelBioEngine"), """
+                \(path) now references `EchoelBioEngine`. That is NOT forbidden and this is \
+                not a request to undo it — but no scan in this file covers that type, so this \
+                ancestor is UNGUARDED for a 20 Hz writer, and a read here tears down any open \
+                `.menu` Picker in every surface below it. The engine is a `.shared` singleton, \
+                so the read needs no binding and leaves no second line to notice.
+                Hot properties, already derived and ready to use: \(unscanned).
+                In the SAME commit: add a `testTheAncestorBuildsNoViewFromHotFallbackBio` \
+                calling `assertNoHotRead(in: \(path), of: <the struct>, receiver: <the \
+                spelling>, hot: try fallbackBioHotProperties(), why: …)`, and take this path \
+                out of the list above.
+                """)
+        }
+    }
+
+    func testTheOnePublisherThatHoldsTheBioEngineStillDoes() throws {
+        // COUNTERWEIGHT (#343). Without it the claim above is green whenever the needle is
+        // misspelled, the file is renamed, or `SourceText.codeOnly` starts eating the text —
+        // four absences that look exactly like four clean ancestors.
+        let text = SourceText.codeOnly(try read(Self.bioEngineHolder))
+        XCTAssertTrue(text.contains("EchoelBioEngine"), """
+            \(Self.bioEngineHolder) no longer names `EchoelBioEngine`, so the needle used by \
+            `testNoAncestorHoldsTheSharedBioEngine` is now matching nothing anywhere and that \
+            claim passes for free. Either the engine has a different holder — point this at it \
+            — or it has none, in which case the whole #E4 section describes a type nothing \
+            reaches and should go.
+            """)
+    }
+
     // MARK: - Derivation
 
     /// Externally readable, observation-TRACKED properties that a body evaluating them
@@ -1066,6 +1213,66 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
             an anchor that matches nothing makes three negative claims green for free.
             """)
         return names
+    }
+
+    // MARK: - Derivation, fourth producer (#E4)
+
+    /// The observation-tracked `EchoelBioEngine` properties the 20 Hz fallback timer rewrites.
+    ///
+    /// Anchored on the METHOD, not on a property list, for the reason every derivation here is:
+    /// a fifth line added to that closure has to enter the set by itself. Two shapes are
+    /// accepted, because the closure uses both — a direct write (`self.smoothHeartRate = …`)
+    /// and a write THROUGH a tracked struct (`self.snapshot.heartRate = …`). The second is the
+    /// one a property list would get wrong: the tracked property is `snapshot`, not
+    /// `heartRate`, so a body reading `engine.snapshot.anything` registers on `snapshot` and
+    /// churns at 20 Hz no matter which field it wanted.
+    ///
+    /// ⚠️ THREE LIMITS, stated rather than engineered around (§1), all failing toward a false
+    /// RED rather than a false green:
+    ///   (a) ONE write per line — the first `self.` on a line wins. That is also what makes
+    ///       `self.smoothBreathPhase = self.snapshot.breathPhase` collect the WRITE and ignore
+    ///       the read on the same line, which is correct; a second write on one line would be
+    ///       dropped. `meterProperties()` and `metronomeHotProperties()` carry the same limit.
+    ///   (b) RATE IS NOT PARSED. Any tracked write inside this method is assumed machine-rate.
+    ///       If the timer were slowed to once a minute the set would still be called hot.
+    ///   (c) `isObservationTracked` takes the FIRST `var <name>` in the file, and this file
+    ///       declares the engine TWICE — the real type under `#if canImport(HealthKit)` and a
+    ///       stub under `#else`. First match is the real one, which is what ships on iOS; if
+    ///       the branches are ever reordered this reads the stub's declarations instead. They
+    ///       agree today, so that would be silent — hence writing it down.
+    private func fallbackBioHotProperties() throws -> Set<String> {
+        let lines = SourceText.codeOnly(try read(Self.bioEngine))
+            .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        var names: Set<String> = []
+        for (index, line) in lines.enumerated()
+        where line.contains("func \(Self.bioEngineTimerMethod)(") {
+            guard let (lo, hi) = span(of: line, in: lines, from: index) else { continue }
+            for body in lines[lo..<hi] {
+                guard let range = body.range(of: "self.") else { continue }
+                let rest = body[range.upperBound...]
+                let name = String(rest.prefix { isWordChar($0) })
+                guard !name.isEmpty else { continue }
+                var after = rest.dropFirst(name.count)
+                // `self.snapshot.heartRate = …` — step over the FIELD, keep the tracked root.
+                if after.first == "." {
+                    after = after.dropFirst().drop { isWordChar($0) }
+                }
+                after = after.drop { $0 == " " }
+                // An assignment makes it a producer; a read inside the closure does not.
+                guard after.first == "=", after.dropFirst().first != "=" else { continue }
+                guard isObservationTracked(name, in: lines) else { continue }
+                names.insert(name)
+            }
+        }
+        return names
+    }
+
+    /// Whether the fallback timer still exists. Every claim about it is conditional on this,
+    /// because DELETING it is legitimate work — it has no reader, and a session that removes
+    /// it must not be met with a red test for doing so (#364).
+    private func fallbackTimerExists() throws -> Bool {
+        SourceText.codeOnly(try read(Self.bioEngine))
+            .contains("func \(Self.bioEngineTimerMethod)(")
     }
 
     // MARK: - The scan
