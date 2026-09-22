@@ -37920,3 +37920,72 @@ Codex-Review. Und erst danach wird `lighting.look.intensity` unser tatsaechliche
 durch ist. Offen und bewusst zurueckgestellt: eine Register-Zeile in CLAUDE.md fuer
 `LightingStore` (ein lebender Laufzeit-Besitzer ohne Schreiber — die #1250-Lage vor der
 Tuer), am besten im selben Commit wie die Parameter-Registrierung.
+
+---
+
+**#1445 — EIN LICHT-PAKET, DAS NIE LOKAL ANGENOMMEN WURDE, DARF KEINEN ZUSTAND VERBRAUCHEN.**
+Unabhaengiger Codex-Befund auf der Ownership-Seam (3ebeef787/4edb7d111): beide Sender
+schrieben `lastFrameTimestamp`, `lastSentGrandMaster`, `lastSentBlackout`,
+`lastSentLookIntensity` und `lastSentTimestamp` im Tick fort — VOR dem `guard let conn`
+und ohne die `contentProcessed`-Completion zu lesen (`{ _ in }`). Folge, gemessen: ein Tick
+ohne Verbindung KONSUMIERTE `lookMoved`, `masterMoved`, den Frische-Vergleich und die
+Keepalive-Uhr. Schlimmster Fall Blackout — die Sicherheitsstufe galt als gesendet, obwohl
+kein Byte die Maschine verlassen hatte, und der naechste Tick sah „unveraendert“.
+
+**Die Reparatur trennt ZWEI Zustandsklassen statt alles in die Completion zu schieben.**
+A. RENDER/SLEW (`lastDimmer`, die FlashGuard-Evolution, die Wire-`sequence`) bleibt im Tick —
+eine Faderate, die auf eine Netzwerk-Completion wartet, wuerde bei Paketverlust einfrieren.
+B. DELIVERY/DEDUP (die fuenf oben) wandert hinter eine Generation: `sendGeneration` zaehlt
+beim Absenden hoch, `committedGeneration` folgt nur, wenn `LightSendAccounting.commits`
+zustimmt. Der Vergleich ist `>` und nicht `>=`, damit eine doppelte Completion die
+Keepalive-Uhr nicht neu stempeln kann; eine spaet eintreffende aeltere Completion kann einen
+neueren Commit nicht zurueckrollen.
+
+⭐ **GEWAEHLTER VERTRAG, einmal ausgeschrieben: „gesendet“ = Network.framework meldet in
+`.contentProcessed` KEINEN lokalen Fehler.** Das ist NICHT „der Empfaenger hat es bekommen“ —
+UDP bestaetigt nichts, und die Doku in `NetworkActivityDot.swift` behauptete genau diese
+Staerke nicht, sagte aber etwas anderes Falsches („jeder Sender verwirft den Completion-
+Fehler“), was nach dieser Scheibe nicht mehr stimmt. Zurueckgenommen statt nachgefuehrt.
+
+**Sequenznummern bleiben UNVERAENDERT, in beiden Protokollen, und das ist eine Entscheidung,
+keine Auslassung.** Art-Net 1…255 (0 = deaktiviert) und E1.31 §6.2.4.1 sind
+EMPFAENGER-Reihenfolgehinweise. Eine Nummer wiederzuverwenden, damit ein Retry „gleich
+aussieht“, wuerde Empfaenger dazu bringen, den Retry als veraltet zu VERWERFEN. Der Fortschritt
+der Sequenz ist kein Zustellungsbeleg und darf keiner werden.
+
+**Dateien:** `Sync/LightSendAccounting.swift` (neu, reines Foundation, 1 Regel),
+`Sync/ArtNetSender.swift`, `Sync/SACNSender.swift`, `Studio/NetworkActivityDot.swift`,
+`Tests/CISmoke/TheLightSendAccountingIsHonestTests.swift` (neu, 13 Ansprueche),
+`Tests/CISmoke/TheLightingLookIntensityIsOwnedAboveTheSendersTests.swift` (Anspruch 10
+umgeankert — §4: der Commit, der eine Nadel bewegt, zieht ihren Waechter mit).
+
+**Gates (9b5c4c49a):** Xcode Compile Check 35736816367 **success** · CI/CD 35736816684,
+Job 106776391714, Schritt „Build for Testing“ **success** (13:58:53–14:05:01Z, 6m08s) ·
+Quick Test 35736816626 success · `main` ist auf diese sha vorgerueckt, also hat
+`auto-merge-claude.yml` beide Gates unabhaengig gruen gelesen.
+
+⚠️ **AUSFUEHRUNG IST UNBELEGT, NICHT GRUEN — und das ist die Antwort auf die ausdrueckliche
+Frage, ob Sender-Tests in der verfuegbaren CI wirklich LAUFEN.** Der Job-Log von „Run Tests“
+ist `tail -200 test.log` (#807): `** TEST EXECUTE FAILED **` (die #396-Familie, auf jedem
+Push), **0 Compile-Fehler, 0 `❌`, 0 fehlgeschlagene Zusicherungen**, ~26 Suiten mit
+`passed`-Zeilen aus Clone 1 und Clone 2 — und **KEINE der beiden Licht-Waechter-Dateien im
+Fenster**. Abwesenheit im Fenster beweist nichts (#445). Ehrliche Formulierung, unveraendert:
+**kompiliert nachweislich, Ausfuehrung unbelegt.** `Build for Testing` ist NICHT dasselbe wie
+Test-Ausfuehrung, und diese zwei Saetze duerfen nie zu einem werden.
+⚠️ Kein NEUER Slow-Type-Check-Warn: die zwei Treffer im Fenster liegen in
+`TheLightRigSeesTheSimulatorTests.swift:87:27` (529 ms) und `:85:18` (545 ms) und
+vordatieren diesen Zweig (#933d/#933e — nicht rot machen, nur keine neue hinterlassen).
+
+**Zehn stehende Pruefer: alle exit 0.** `moved-needles.py` schlug waehrend der Arbeit EINMAL
+an (`lastSentLookIntensity = look`, als `(prose)` markiert — mein eigener Erklaerkommentar)
+und ist nach dem Commit wieder 0. Ehrlich berichtet statt als „zehn gruen“ gerundet.
+
+**ZWEI GERAETEPROBEN GESCHULDET** [NEEDS-FOUNDER-VERIFY]: (a) die alte — echtes Art-Net-
+oder sACN-Rig, `lookIntensity` auf dem Default 1.0, ein Take vor und einer nach der Seam
+ununterscheidbar; (b) die NEUE aus dieser Scheibe — Verbindung trennen, Look/Master/Blackout
+aendern, wieder verbinden: der ausstehende Zustand muss WIEDERHOLT werden, nicht still
+verbraucht. Genau das war vorher unmoeglich und ist der Punkt der Reparatur.
+
+**Naechster Schritt gehoert weiter nicht mir.** Founder-Reihenfolge unveraendert: Codex-Review,
+danach wird `lighting.look.intensity` P2 Proof #1. Descriptor, Registry-Registrierung,
+Router-Bindung, ModDestinationKey, ModRoute, Automation, UI und Persistenz bleiben ungebaut.
