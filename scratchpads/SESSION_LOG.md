@@ -37794,3 +37794,48 @@ Geraete-Verifikation** — und §15 verbietet, das anders zu formulieren. Nach #
 Liste der Kandidaten, die alle 14 Auto-Continue-Kriterien erfuellen, LEER; was bleibt, gehoert
 dem Founder (fuenf Entscheidungen, eine Geraete-Sitzung). Vollstaendig in
 `scratchpads/OVERNIGHT_STATUS_2026-09-22.md`.
+
+## 2026-09-22 — P2 DESCRIPTOR CONTRACT: `ParameterDomain` (c57c8b7bb)
+
+Founder-Auftrag „P2 DESCRIPTOR CONTRACT MEASUREMENT": messen, ob `ParameterDescriptor`
+sicher um die minimale typisierte Domaenen-Angabe erweitert werden kann — ohne Audio-,
+Persistenz-, Routing-, UI- oder Realtime-Aenderung. Zehn GO-Bedingungen, alle geprueft,
+alle erfuellt. Umgesetzt.
+
+**Die Messung, die das Ergebnis traegt:** es gibt genau EIN vorhandenes domaenen-foermiges
+Vokabular, `SignalKind` (`Core/SignalRouting.swift`), und es ist NICHT wiederverwendbar.
+Es beantwortet eine andere Frage — „welche Klasse Signal laeuft auf einer KANTE" — und
+SECHS seiner elf Faelle benennen eine Nutzlast-Klasse (`controlBio`, `controlMusical`,
+`controlMacro`, `note`, `controlChange`, `clock`), durch die JEDER Parameter dieses
+Registers erreicht wird, egal welcher Domaene. Dazu sein `isLive`, das `visual` als nicht
+live meldet: wahr von einer Engine auf einer Kante, falsch als Aussage ueber einen
+visuellen Parameter. #416 verlangt eine Definition je ENTSCHEIDUNG, nicht ein Enum je Wort.
+
+**Zwei unsichtbare Bruchstellen, beide geschlossen und beide gepinnt:**
+1. Swifts SYNTHETISIERTES `init(from:)` faellt NICHT auf den Default einer gespeicherten
+   Eigenschaft zurueck — es wirft `keyNotFound`. Ein vor dem Feld geschriebenes Payload
+   haette aufgehoert zu dekodieren. Deshalb ist der Decoder von Hand geschrieben; ein
+   unbekannter Domaenen-String faellt ebenfalls auf `.audio`.
+2. `PerTrackParameterKeyPath.descriptors(for:laneLabel:from:)` baut den Descriptor Feld
+   fuer Feld neu. Ohne explizites `domain: d.domain` waere ein Klon eines Nicht-Audio-
+   Descriptors still `.audio` geworden — er baut, er routet, und LUEGT nur ueber sein Medium.
+
+**§0-Benotung, und der Grader war zweimal selbst falsch.** Beide Male an Anspruch 5, beide
+Male ROT AUF BEIDEN BAEUMEN — und genau das ist das Erkennungszeichen: die Scheibe hat
+`PolySynthVoice` nie angefasst, also kann ein Rot auf beiden Seiten nur der Grader sein.
+Erst ein Fenster von +700 Zeichen, das in den `automatableSetter`-Switch ueberlief (14 statt
+11 Bases), dann die falsche oeffnende Klammer (`[String]`, die TYP-Annotation, statt der nach
+`=`). ⭐ **GESETZ: ein Rot auf dem Parent allein ist ein Befund; ein Rot auf BEIDEN Baeumen
+ist der Grader.** Ein §0-Grader wird von nichts benotet — diese Unterscheidung ist das
+Einzige, was ihn pruefbar macht. Im Waechter-Kopf festgehalten.
+
+**Gates, Schritt-Ebene:** Xcode Compile Check Lauf 35717935132, Job 106713731437,
+conclusion success (Schritt 7 „Compile (iOS device SDK, no signing)" 10:47:58–10:52:19Z) —
+das ist die Sources/-Haelfte, also der handgeschriebene Decoder. CI/CD Lauf 35717935134,
+Job 106713980900, **Schritt 9 „Build for Testing" success** (10:49:45–10:54:01Z) — das
+blockierende Buendel samt neuem Waechter kompiliert. „Run Tests" meldet wie auf jedem Push
+nichts Verwertbares (#396). Zehn stehende Pruefer: alle exit 0.
+
+**Nicht geraeteverifiziert, und es ist keine geschuldet:** ein Feld, das kein Verbraucher
+liest, kann nicht aendern, was der Founder hoert. **Kein Nicht-Audio-Parameter registriert**
+— das ist ausdruecklich die NAECHSTE Scheibe und gehoert dem Founder.
