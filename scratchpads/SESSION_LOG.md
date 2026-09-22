@@ -38101,3 +38101,111 @@ unterdruecken.
 **Naechster Schritt gehoert nicht mir.** Codex-Nachpruefung dieser Reparatur, und erst
 danach `lighting.look.intensity` als P2 Proof #1. Descriptor, Registry, Router-Bindung,
 `ModDestinationKey`, `ModRoute`, Automation, UI und Persistenz bleiben ungebaut.
+
+## 2026-09-22 — #1447 Licht-Transport finalisiert: Art-Net-Stop-Kontinuitaet + begrenzte Stall-Recovery
+
+Externe Schlussdurchsicht (Codex GPT-5.6 Sol) auf `0a121ae44`: das #1446-Modell
+(MAX_IN_FLIGHT = 1, Latest-State-Coalescing, akzeptierte Anker, Epochen,
+Stale-Rejection, prompter Restart, gleiche Fade-Kurve im Gesundfall) wurde
+BESTAETIGT und ausdruecklich nicht zur Neuplanung freigegeben. Zwei Blocker
+blieben. Beide sind mit `2e0a7f9b7` erledigt.
+
+### (a) ZUSTANDSTRENNUNG — `retire()` sprach sACN in einem protokollneutralen Typ
+
+`LightSendPump.retire()` setzte bei JEDEM Stop die OUTPUT-Anker zurueck. Fuer
+sACN ist das richtig: `stop()` schickt dort drei Stream_Terminated-Pakete
+(E1.31 §6.7.1.2), der Empfaenger ist also informiert, dass diese QUELLSITZUNG
+endet. **Art-Net hat gar keinen Terminate-Opcode.** Ein Node hoert uns einfach
+nicht mehr und haelt seine letzten DMX-Werte bis zu seinem eigenen Timeout
+(~4 s). Nach einem Art-Net-Stop sitzt die Lampe also weiter auf dem Pegel, den
+wir zuletzt herausbekommen haben — und ein Neustart „von nichts" legte genau
+den Ein-Frame-Sprung 0→1 auf die Leitung, den #1446 verbieten sollte, nur
+durch die Vordertuer eines gewoehnlichen Stop/Start.
+
+Kleinste saubere Trennung: `retire()` ist jetzt REIN TRANSPORT (Epoche zu,
+Slot frei, `committedGeneration` hoch, `needsResend` aus). Der Anker-Reset
+wohnt in `forgetAcceptedOutput()` — und NUR `SACNSender.stop()` ruft ihn.
+⚠️ Auch dort ist der Satz eng gehalten: Stream_Terminated drueckt
+QUELLTERMINIERUNG aus. Es beweist nicht, dass die Lampe dunkel wurde, dass sie
+physisch freigegeben hat, oder dass die drei Pakete ankamen — es ist UDP.
+
+### (b) BEGRENZTE TRANSPORT-RECOVERY — der eine Slot hatte keine Frist
+
+#1446 hatte den Rest ehrlich hingeschrieben statt versteckt: eine Completion,
+die nie kommt (Verbindung ohne Route geparkt), hielt den Slot fuer immer — kein
+Blackout, kein Grand Master, kein Look, kein Keep-Alive. Die Schranke BLEIBT
+EINS: keine Queue, kein zweites Paket, kein Sonderweg fuer Blackout. Neu ist
+eine Frist. Ueberschreitet der Versuch `LightSendPump.stallDeadlineSeconds`,
+erklaert der Tick die Epoche fuer veraltet und erholt sich ueber das VORHANDENE
+`reconnectIfActive()`; `connect()` oeffnet eine neue Epoche, was den Slot
+freigibt, `needsResend` scharf stellt und die OUTPUT-Anker STEHEN LAESST. Die
+spaete Completion des aufgegebenen Versuchs ist epochen-veraltet und committet
+nichts. `stalled` ist falsch, sobald der Slot frei ist ⇒ eine haengende Epoche
+erzeugt genau EINEN Reconnect (kein Sturm).
+
+**Frist = 0,8 s, hergeleitet statt gegriffen:** es ist das vorhandene
+Keep-Alive-Budget der Sender (`SACNSender.keepAliveSeconds`, Art-Net leitet
+davon ab) — dieselbe Entscheidung von der anderen Seite gesehen, also EINE
+Zahl (#416); ~24 Ticks der 33-ms-Schleife, kann also im Gesundfall nicht
+feuern; und unter der Geduld BEIDER Empfaenger (E1.31 erklaert eine Quelle nach
+2,5 s fuer verloren, ein Art-Net-Node haelt ~4 s), damit die ersetzte Epoche
+noch rechtzeitig nachsenden kann. ⚠️ Das Literal steht in
+`LightSendAccounting.swift` statt einer Referenz, weil die Datei
+Foundation-only ist und `Network` nicht importieren darf — die Gleichheit
+pinnt Anspruch 6 des neuen Waechters.
+
+**Schlimmster lokaler Blackout-Weg:** ≤ Frist + ein Tick ≈ 0,83 s, wenn das
+Blackout unmittelbar nach einem Submit gedrueckt wird, der dann haengt. Im
+Gesundfall unveraendert (ein Tick, ≤33 ms).
+
+⚠️ **Der Anspruch bleibt durchgehend LOKAL:** begrenzt wird, wie lange DIESE APP
+auf ihre eigene `NWConnection`-Completion wartet. Keine Zustell-, keine
+Lampen-, keine NIC-Frist.
+
+### Dateien
+
+`Sync/LightSendAccounting.swift` (Trennung, `inFlightSince`, `stalled(now:after:)`,
+`stallDeadlineSeconds`) · `Sync/ArtNetSender.swift` (Stop nur `retire()`,
+Recovery vor der Schranke) · `Sync/SACNSender.swift` (Stop `retire()` +
+`forgetAcceptedOutput()`, Recovery vor der Schranke) ·
+`Tests/CISmoke/TheLightSendAccountingIsHonestTests.swift` (Anspruch 9 und 13
+nachgezogen) · NEU `Tests/CISmoke/TheLightTransportRecoversFromAStallTests.swift`
+(zehn Ansprueche).
+
+### §0-Benotung (kein lokales Swift)
+
+`lp-1447-model.py` — Transkription von Pump + FlashGuard + LightingStore,
+Float32 per `struct.pack/unpack`: **FAILURES 0**, `TICK_DELTA = 0.08`.
+`lp-1447-scan.py` — Transkription von `SourceText.codeOnly`, treibt die drei
+Scan-Ansprueche, die nachgezogenen Ansprueche 11–15 und jede Fremdnadel auf dem
+Diff: **SCAN FAILURES 0**.
+
+⭐ **Die Transkription hat einen ECHTEN Testdefekt gefangen, bevor er ins Gate
+ging:** die erste Fassung behauptete `stalled` EXAKT auf der Frist. In `Double`
+ist `(1_000 + 0.8) - 1_000` = 0,799999999999954, also war die Behauptung rot
+auf korrektem Code — sie haette die Rundung eines Tausend-Sekunden-Offsets
+geprueft statt der Politik. Gefragt wird jetzt einen Tick spaeter; die
+„nicht zu frueh"-Haelfte steht unveraendert bei Frist − 1 ms. **Lehre: eine
+Behauptung genau auf einer Gleitkomma-Grenze prueft die Arithmetik, nicht die
+Regel** — und die Sender fragen ohnehin nur auf Tick-Grenzen.
+
+### Bewusst NICHT gemacht
+
+Kein `.failed`-Sofort-Reconnect aus dem `stateUpdateHandler` (zweiter
+Mechanismus fuer dieselbe Entscheidung; die Frist deckt es ab, und eine
+`.failed`-Verbindung liefert in der Praxis eine Fehler-Completion, die den Slot
+ohnehin freigibt). Kein P2-Deskriptor, keine Registry, keine Modulation, keine
+UI, keine Persistenz.
+
+⚠️ **Beobachtet, vorbestehend, nicht in diesem Slice:** faellt `connect()` am
+Port-Guard zurueck, zeigt `connection` weiter auf die GEKUENDIGTE alte
+Verbindung (`reconnectIfActive` setzt sie nicht auf nil). Das wedged nicht —
+der Send scheitert, committet nichts, der naechste Tick versucht es erneut —
+und stammt aus `reconnectIfActive`, nicht aus dieser Aenderung.
+
+### Geraeteproben weiter offen (alle NEEDS-FOUNDER-VERIFY)
+
+Wie nach #1446, plus zwei neue: **STOP/START AM ART-NET-RIG** (Pegel setzen,
+stoppen, starten, kommandiert hell — der erste empfangene Wert muss RAMPEN) und
+**STALL/RECOVERY** (Route waehrend eines Sends kappen, Blackout druecken, auf
+die Erholung warten — Blackout muss binnen ~1 s erscheinen, ohne Reconnect-Sturm).
