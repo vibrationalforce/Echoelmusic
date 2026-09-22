@@ -38694,3 +38694,99 @@ Regressionsfänge, drei Gegengewichte, null Rot. ⛔ Zwei Propositionen der erst
 die #708-Form (sie suchten den gestrichenen Satz, den die Rücknahmen zitieren).
 
 **Offen, founder-gated:** ob ein Bedienelement eine Audio-Spur anlegen darf.
+
+## 2026-09-22 — #E4: der FÜNFTE heiße Erzeuger, gepinnt BEVOR er einen Leser hat
+
+`TheMenuHostReadsNoHotStateTests` trägt in seinem eigenen ⛔#1301-Vermerk die Anweisung, die
+diese Scheibe befolgt: *„a new `@Observable` whose writes are driven by a timer needs a section
+here in ITS OWN commit, not after a report."* Die vier bestehenden Sektionen wurden je teuer
+gelernt — der Founder meldete ein Menü, das nicht aufging, und der Read wurde danach gesucht.
+Dies ist die erste, bei der es nichts zu melden gibt.
+
+**Der Erzeuger:** `EchoelBioEngine.startFallbackMode()` fährt `Timer.publish(every: 1.0/20.0,
+on: .main)` und schreibt pro Tick FÜNF observation-getrackte Eigenschaften — `snapshot` (über
+vier Feld-Schreibungen) plus die vier `smooth…`-Spiegel. Er läuft in PRODUKTION:
+`HealthKitBioPublisher` ruft `startStreaming()`, dessen `else`-Zweig `.fallback` setzt.
+
+**Heute harmlos, und die MESSUNG ist der Punkt:** kommentar-gestrippt über `Sources/` ist
+`Bio/HealthKitBioPublisher.swift` die EINZIGE Datei außerhalb der Engine, die
+`EchoelBioEngine` überhaupt NENNT. Null Views, `audioParameters()` ohne Produktions-Aufrufer.
+Deshalb ist die Sektion eine PRÄMISSE und sagt das am Anspruch: `assertNoHotRead` auf einen Typ
+zu richten, den keine View referenziert, wäre ein Test, der nicht rot werden kann (#367).
+
+⭐ **Warum trotzdem — eine FORM, die die anderen vier nicht haben:** sie werden über ein Binding
+erreicht, ein Read kostet also zwei Edits und das Binding fällt auf. `EchoelBioEngine` ist ein
+`.shared`-SINGLETON: `EchoelBioEngine.shared.snapshot.heartRate` in einem `body` braucht kein
+Binding, keine Injektion, nichts. Die billigste Fassung des 10.76.50-Defekts ist EINE Zeile weit
+von jedem Vorfahren entfernt. Die Nadel ist deshalb der TYP, nicht ein Binding-Name.
+
+**KEIN Bio-Integritäts-Defekt**, gemessen bevor ich ihn gemeldet hätte: simulierte Werte
+erreichen den Bus nicht, weil `HealthKitBioPublisher:110` auf `dataSource == .healthKit` gated.
+
+**Zwei stale Mikrofon-Zeilen an derselben Methode (#456):** „Fallback Mode (Mic Level Proxy)"
+und „use microphone RMS as coherence proxy". Die zweite war schon VOR #1302 falsch — der Rumpf
+hat nie ein RMS gerechnet, immer `sin()`.
+
+⛔ **Eigener #E2-Klasse-Defekt vor dem Gate gefangen:** ein `XCTFail` mit `\`-Newline-Fortsetzung
+in einem einfachen `"`-Literal (nur in `"""` legal). ⛔ **Und eine eigene ÜBER-Behauptung vor dem
+Shippen zurückgenommen:** „die Prämisse unten ist ohne das nichts wert (#367)" — falsch, die
+Prämisse ankert auf dem Typnamen. Das ist der #E3-Defekt wörtlich.
+
+**Benotung:** 14 Propositionen, Worktree 14/14, Eltern `0bcac925e` 6/14 — acht Regressionsfänge,
+sechs Gegengewichte, null Rot. Gates: beide grün auf `5f8dc5f17`.
+
+## 2026-09-22 — #E5: das fehlende `default:` im Egress-Switch IST der 5.1.3-Prüfschritt
+
+Zwei Enums beantworten „woher kommt dieser Bio-Wert", und nur eines trägt. `BioSource`
+(`Core/EngineBus.swift`, 6 Fälle) sitzt auf `BioSampleFrame`, hat vier Erzeuger und ist das,
+worauf `BioEgressPolicy` schaltet. `BioDataSource` (`Bio/EchoelBioEngine.swift`, 8 Fälle)
+erreicht nur zwei Eigenschaften, hat ZWEI Erzeuger, und FÜNF seiner Fälle kommen in `Sources/`
+überhaupt nicht vor.
+
+⭐ **Die Asymmetrie ist, was das eine kanonisch macht:** `allowsEgress(_ source: BioSource)` ist
+ein ERSCHÖPFENDER switch ohne `default:` — ein neuer Fall in `BioSource` ist dort ein
+COMPILE-FEHLER, bis jemand entscheidet, ob die Quelle das Gerät verlassen darf. **Dieser
+Compile-Fehler IST der 5.1.3-Prüfschritt.** Ein neuer Fall in `BioDataSource` kompiliert still.
+Der Compiler erzwingt Erschöpfung; er kann die ABWESENHEIT eines `default:` nicht erzwingen —
+deshalb der Wächter.
+
+⛔ **Ich habe das Risiko KLEINER formuliert als mein erster Entwurf.** Der sagte, eine zum
+falschen Enum hinzugefügte Quelle bekäme „einen Wert, den die Egress-Politik nie gesehen hat".
+Sie LECKT NICHT — `BioDataSource` hat außer einer `== .healthKit`-Sperre keinen Leser und
+erreicht den Bus nie. Der echte Schaden ist ein falsches Architekturmodell. Eine übertriebene
+Privacy-Behauptung in einem Privacy-Wächter ist die Form, die ignoriert wird.
+
+⛔ **Die Messung, die fast falsch hineinging, und sie ist der wiederverwendbare Teil.** Mein
+zweiter Sweep suchte `.camera` UNGEBUNDEN und fand vier „Erzeuger" — alle vier waren
+`source: .cameraPPG`, ein Fall des ANDEREN Enums. `.camera` ist ein PRÄFIX von `.cameraPPG`.
+Die Nadel machte den Befund GRÖSSER, und die Zahl VOR der „Korrektur" war die richtige.
+Wortgrenzen allein reichen auch nicht: `.camera` trifft weiter `BioSourceKind`,
+`BioSourceOption` und `SignalRouting`. **Parallele Taxonomien überlappen per Konstruktion, also
+ist ein blanker Fall-Name nie eine saubere Nadel für eines von ihnen** (#1376 in neuer Form).
+
+**Drei Prosa-Heimaten (#456):** der Vermerk am `BioDataSource` (kanonisch ist `BioSource`, plus
+die Asymmetrie), eine ⛔-Zeile an JEDEM der fünf erzeugerlosen Fälle mit SEINEM EIGENEN Grund,
+und ein Vermerk am Switch selbst. Zusätzlich festgehalten: `BioSnapshot.source` hat GAR KEINEN
+Schreiber und liest immer `.fallback`, auch während HealthKit streamt — inert, weil leserlos.
+
+**Benotung:** 11 Propositionen, Worktree 11/11, Eltern `5f8dc5f17` 7/11. Rot-auf-Eltern ist für
+eine neue Datei entartet, also die sieben Gegengewichte per MUTATION benotet: sechs Mutanten
+gefahren, sechs getötet. ⭐ **Der wichtigste ist der NEGATIVE:** `.microphoneArrayPlaceholder`
+lässt den Anspruch GRÜN, während eine ungebundene Nadel ihn getroffen hätte — der Bug des
+ersten Sweeps, bewiesen repariert statt behauptet repariert. Gates: beide grün auf `cac86519e`.
+
+## 2026-09-22 — `Run Tests` auf `3033a363d`: failure, und es ist #396, kein Regress
+
+Zum ersten Mal in dieser Runde bis zur Conclusion gelesen: `Run Tests` = **failure**
+(22:47:05→23:07:35, 20m30s). `scripts/gh-test-verdict.py` auf den Job-Log:
+`build-for-testing: Succeeded` · **`TEST BUILD FAILED: False`** (der Diskriminator, #935) ·
+`TEST EXECUTE FAILED: True` — und das Werkzeug beschriftet das selbst als *„#396 — expected on
+every push"*. 168 Tests im Fenster passing, 0 Failures, 0 Skips.
+
+⚠️ **Und das ist ausdrücklich KEIN „die Suite ist grün" (#807/#1040):** das Fenster ist
+`tail -200`, und der Parser meldet ein LOCH von 1230 s in der eigenen Zeitachse. Ein Fehler
+davor hinterlässt hier keine Spur. Was POSITIV belegt ist (#445 — nur Anwesenheit beweist):
+`TheWorkstationImportsAudioTests.testTheNoLaneRefusalOnlyInstructsWhatAProductionPathCanDo()`
+**passed (2.831 s)** — Claim 18 aus #E3 ist gelaufen und grün.
+
+Nebenbefund: 46 slow-type-check-Warnungen, KEINE davon in einer von mir berührten Datei (#933d).

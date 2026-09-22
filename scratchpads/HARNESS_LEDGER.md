@@ -136,6 +136,45 @@ auf dem Commit davor (`3121e81e3`). Der Cross-Check aus `Tests/CISmoke/CLAUDE.md
 `git ls-remote origin refs/heads/main` als ZWEITE Straße zur Schritt-Conclusion — ist damit
 auch in seiner negativen Richtung belegt: main NICHT vorgerückt heißt Gate nicht grün.
 
+## DEAD-END (2026-09-22, #E5): ein blanker ENUM-FALL ist nie eine saubere Nadel, wenn das Repo parallele Taxonomien hat
+
+Ich wollte messen, welche Fälle von `BioDataSource` einen Erzeuger haben, und suchte `.camera`.
+Vier Treffer in `CameraRPPGBioPublisher` und Nachbarn — alle vier waren `source: .cameraPPG`,
+ein Fall des ANDEREN Provenienz-Enums (`BioSource`). **`.camera` ist ein PRÄFIX von
+`.cameraPPG`.** Die Nadel machte den Befund GRÖSSER als er ist, und die Zahl, die ich vor der
+„Korrektur" hatte, war die richtige — ich habe eine korrekte Messung mit einer falschen
+überschrieben.
+
+**Wortgrenzen allein reparieren das NICHT.** Word-bounded trifft `.camera` immer noch
+`BioSourceKind.camera`, `BioSourceOption.camera` und `SignalRouting`s `.camera` — drei lebende
+Enums. Dieses Repo hat mindestens sechs Enums mit bio-quellen-ähnlichen Fällen.
+
+**MACH STATTDESSEN:** (1) messe über die EIGENSCHAFT des bekannten Typs (`dataSource = .x`),
+nicht über den Fall-Namen; (2) wo das nicht geht, prüfe ZUERST, ob ein anderes Enum denselben
+Namen deklariert, und schließe den Fall sonst aus der Messung aus, mit dem Grund daneben;
+(3) Wortgrenze als MINIMUM, nie als Beweis. Das ist #1376 („zitiere den TYP, nicht die Datei")
+in einer Form, die #1376 nicht abdeckt: hier ist der NAME mehrdeutig, nicht die Datei.
+
+**Gegenkontrolle, die den Fix beweist statt ihn zu behaupten:** ein Mutant, der
+`.microphoneArrayPlaceholder` einfügt, muss den Anspruch GRÜN lassen, während eine ungebundene
+Nadel ihn trifft. Gefahren, bestanden.
+
+## PLAYBOOK (2026-09-22, #E4): eine Erzeuger-Sektion, die keinen SCAN sein kann, wird eine PRÄMISSE
+
+`TheMenuHostReadsNoHotStateTests` pinnt heiße `@Observable`-Erzeuger, indem es die Vorfahren des
+Menü-Wirts nach `receiver.hotProperty` durchsucht. Für einen Erzeuger mit NULL Lesern gibt es
+keinen `receiver` — ein Scan wäre ein Test, der nicht rot werden kann (#367).
+
+**Die Form, die funktioniert:** die BEDINGUNG behaupten, unter der kein Scan nötig ist („keine
+Vorfahr-Datei nennt diesen Typ"), und in die Fehlermeldung den Aufruf schreiben, den die nächste
+Sitzung dann bauen muss. Dazu ein Gegengewicht (#343), das beweist, dass die Nadel überhaupt
+irgendwo trifft — sonst sind vier saubere Vorfahren von vier kaputten Nadeln ununterscheidbar.
+
+**Zwei Feinheiten, die es tragen:** (a) bei einem `.shared`-SINGLETON ist die Nadel der TYPNAME,
+nicht ein Binding-Name — ein Body kann `Type.shared.hot` ohne jedes Binding lesen; (b) jeder
+Anspruch wird auf die EXISTENZ des Erzeugers bedingt (`…Exists()` → `XCTSkip`), weil das Löschen
+eines leserlosen Timers legitime Arbeit ist und nicht mit Rot bestraft werden darf (#364).
+
 ## PLAYBOOK (2026-08-30, #897/#898): ein `prefix(N)`-Fenster über Quelltext ist ein LATENTES ROT
 
 **Der Mechanismus — und ⛔ er gilt NICHT für den ganzen Bundle, wie die erste Fassung hier

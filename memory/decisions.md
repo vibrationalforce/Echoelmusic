@@ -2571,3 +2571,33 @@ Produktgrenze, keine Scheibe.
 **Nebenbefund, nachgeführt:** dieselbe Workstation-Ausnahme sagte „kein Import", während der
 Founder am selben Tag Audio Import V1 auf genau diese Platte gelegt hatte. Provenienz:
 `memory/LEDGER_COUNTS.md` §AK.
+
+### 2026-09-22 — `BioSource` ist die kanonische Bio-Provenienz (#E5)
+
+**Entscheidung.** Eine neue Bio-Quelle wird in `BioSource` (`Core/EngineBus.swift`) eingetragen,
+nie in `BioDataSource` (`Bio/EchoelBioEngine.swift`). Letzteres bleibt engine-lokal und wird
+nicht erweitert; seine fünf erzeugerlosen Fälle bleiben stehen, jeder mit seinem eigenen Grund
+am Fall.
+
+**Begründung, und sie ist eine Code-Eigenschaft, keine Präferenz.**
+`BioEgressPolicy.allowsEgress(_ source: BioSource)` ist ein erschöpfender `switch` OHNE
+`default:`. Ein neuer Fall in `BioSource` ist dort deshalb ein COMPILE-FEHLER, bis jemand
+entscheidet, ob diese Quelle das Gerät verlassen darf — **dieser Compile-Fehler ist der
+App-Store-5.1.3-Prüfschritt.** Ein neuer Fall in `BioDataSource` kompiliert still und bewegt
+nichts: der Typ erreicht nur `EchoelBioEngine.dataSource` und `BioSnapshot.source`, und der
+einzige Leser ist eine `== .healthKit`-Sperre.
+
+**Risiko ehrlich beziffert.** Eine zum falschen Enum hinzugefügte Quelle LECKT NICHT — sie
+erreicht den Bus nie. Der Schaden ist ein falsches Architekturmodell und verschwendete Arbeit.
+Mein erster Entwurf hat das als Egress-Gefahr formuliert; das war zu scharf und ist
+zurückgenommen, weil eine übertriebene Privacy-Behauptung in einem Privacy-Wächter genau die
+Form ist, die ignoriert wird.
+
+**Wächter.** `Tests/CISmoke/TheEgressSwitchNamesEverySourceTests.swift` — der Compiler kann
+Erschöpfung erzwingen, die ABWESENHEIT eines `default:` aber nicht. Fünf Ansprüche, per Mutation
+benotet (sechs Mutanten, sechs getötet), plus eine negative Kontrolle, die beweist, dass die
+Wortgrenzen-Nadel `.microphoneArrayPlaceholder` nicht fälschlich trifft.
+
+**Nicht entschieden, weil nicht meins:** ob `BioDataSource` mittelfristig ganz verschwindet und
+`EchoelBioEngine` auf `BioSource` umgestellt wird. Das berührt einen Typ mit zwei öffentlichen
+Eigenschaften und gehört in eine eigene Scheibe.
