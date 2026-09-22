@@ -64,6 +64,10 @@ public final class SACNSender {
     }
 
     public private(set) var isActive = false
+    /// `CFAbsoluteTimeGetCurrent()` of the last packet the network stack ACCEPTED — drives the
+    /// keep-alive below and the patchbay's activity dot. ⚠️ Since #1445 this is strictly the
+    /// acceptance time, never a no-connection tick. Still NOT delivery: E1.31 over UDP gives
+    /// no receiver acknowledgement (`LightSendAccounting`).
     public private(set) var lastSentTimestamp: TimeInterval = 0
 
     /// #1218 (audit 2026-09-10 `output-sync-3`) — KEEP-ALIVE. E1.31 §6.7.1 lets a receiver declare
@@ -109,17 +113,32 @@ public final class SACNSender {
     @ObservationIgnored private weak var bus: EngineBus?
     @ObservationIgnored private var connection: NWConnection?
     @ObservationIgnored private let loop = PollingLoop()
-    @ObservationIgnored private var lastFrameTimestamp: TimeInterval = -1
-    @ObservationIgnored private var lastSentGrandMaster: Float = 1
-    @ObservationIgnored private var lastSentBlackout = false
+    /// DELIVERY anchor — the source timestamp of the last packet the network stack ACCEPTED,
+    /// not of the last one computed. Internal rather than private so the accounting guard can
+    /// drive `applySendOutcome` without a socket; the only production writer is that method.
+    @ObservationIgnored var lastFrameTimestamp: TimeInterval = -1
+    @ObservationIgnored var lastSentGrandMaster: Float = 1
+    /// ⚠️ EXPLICIT TYPE, not inference: an inferred declaration spells `lastSentBlackout =`,
+    /// which is the same text as an ASSIGNMENT — and the guard that proves these anchors have
+    /// exactly one writer counts that text. Type it, or the declaration hides a second writer.
+    @ObservationIgnored var lastSentBlackout: Bool = false
     /// Creative look level as of the last packet (mirrors ArtNetSender). A creative move with
     /// a STALE source must still reach the wire. This is the CREATIVE anchor — it sits beside
     /// the operator anchors, it is not one of them.
-    @ObservationIgnored private var lastSentLookIntensity: Float = LightingStore.defaultLookIntensity
+    @ObservationIgnored var lastSentLookIntensity: Float = LightingStore.defaultLookIntensity
+    /// Send accounting (#1445) — the same two counters and the same shared rule as Art-Net.
+    /// `sendGeneration` counts ATTEMPTED data packets; `committedGeneration` is the newest one
+    /// whose completion reported no error. ⚠️ The three Stream_Terminated packets in
+    /// `sayGoodbye()` are deliberately OUTSIDE this accounting: they carry no state to commit
+    /// and the session is ending, so a commit from them could only mislead a restart.
+    @ObservationIgnored var sendGeneration: UInt64 = 0
+    @ObservationIgnored var committedGeneration: UInt64 = 0
     /// The creative lighting state (founder decision 2026-09-22), weak — the store lives at
     /// app level and is READ here. Both adapters read the SAME store, which is the point: the
     /// creative level is one value, unlike `grandMaster`, which each adapter owns for itself.
     @ObservationIgnored private weak var lighting: LightingStore?
+    /// RENDER/SLEW state — the last dimmer this sender PRODUCED, advancing on COMPUTE and not
+    /// on delivery (#1445; the reasoning is written out once, at `ArtNetSender.lastDimmer`).
     /// Slew anchor for the flash guard (−1 = uninitialised → first frame lands
     /// at target). Mirrors ArtNetSender: the mastered dimmer ramps at
     /// `FlashGuard.senderTickDelta` (a per-second velocity resolved at this loop's
@@ -134,6 +153,11 @@ public final class SACNSender {
     /// Empty = never lit yet.
     @ObservationIgnored private var lastChannels: [UInt8] = []
     @ObservationIgnored private var lastTarget: Float = 0
+    /// E1.31 wire sequence — advanced per packet CONSTRUCTED (data packets here, termination
+    /// packets in `sayGoodbye`). §6.2.4.1 lets a receiver discard a packet whose sequence is
+    /// BEHIND the last one it saw, so every attempt including a retry must carry a fresh,
+    /// increasing number; a GAP (a packet the stack refused) is harmless, a REPEAT would not
+    /// be. ⚠️ It is not evidence of delivery and must never be read as such.
     @ObservationIgnored private var sequence: UInt8 = 0
     /// Sender CID — stable per instance (E1.31 requires a unique component id).
     @ObservationIgnored private let cid: [UInt8]
@@ -184,6 +208,9 @@ public final class SACNSender {
         isActive = false
         lastDimmer = -1
         lastColour = []
+        // A completion still in flight when the socket dies must not commit into whatever
+        // session comes next: retire every outstanding generation (#1445).
+        committedGeneration = sendGeneration
     }
 
     /// #1218 — three Stream_Terminated packets, then the socket closes in the LAST send's
@@ -310,10 +337,9 @@ public final class SACNSender {
             && CFAbsoluteTimeGetCurrent() - lastSentTimestamp >= Self.keepAliveSeconds
         guard sourceTimestamp != lastFrameTimestamp || masterMoved || lookMoved
                 || slewSettling || keepAliveDue else { return }
-        lastFrameTimestamp = sourceTimestamp
-        lastSentGrandMaster = grandMaster
-        lastSentBlackout = blackout
-        lastSentLookIntensity = look
+        // ⛔ THE FOUR DELIVERY ANCHORS USED TO BE ASSIGNED HERE (#1445) — see the same block in
+        // ArtNetSender: `send` returns early with no socket, so this line consumed the reasons
+        // to retry for a packet that never left. They commit in `applySendOutcome` now.
         // Hard flash guarantee for PHYSICAL fixtures: slew-limit the dimmer so
         // even a Blackout release or a pathological jump ramps up from dark
         // instead of snapping. The step is the per-SECOND velocity resolved at
@@ -335,13 +361,44 @@ public final class SACNSender {
         let packet = Self.e131Packet(universe: universe, sequence: sequence, cid: cid,
                                      channels: fanned, synthetic: lastKnownSynthetic)
         sequence = sequence &+ 1   // wraps 0…255 (0 is valid in E1.31)
-        send(packet)
-        lastSentTimestamp = CFAbsoluteTimeGetCurrent()
+        sendGeneration &+= 1
+        send(packet, attempt: LightSendAttempt(generation: sendGeneration,
+                                               frameTimestamp: sourceTimestamp,
+                                               grandMaster: grandMaster,
+                                               blackout: blackout,
+                                               lookIntensity: look,
+                                               sentAt: CFAbsoluteTimeGetCurrent()))
     }
 
-    private func send(_ data: Data) {
+    /// Hand one data packet to the stack. ⚠️ NO connection ⇒ NO attempt and NOTHING committed,
+    /// so the next tick still sees every reason to retry (#1445).
+    ///
+    /// ⚠️ THE COMPLETION USED TO BE `{ _ in }`. It is read now — not to surface an error (this
+    /// sender has no `lastError` and the patchbay shows none for it, so adding one would be a
+    /// display with no reader), but because the ERROR is what decides whether the attempt's
+    /// delivery anchors may commit at all.
+    private func send(_ data: Data, attempt: LightSendAttempt) {
         guard let conn = connection else { return }
-        conn.send(content: data, completion: .contentProcessed { _ in })
+        conn.send(content: data, completion: .contentProcessed { [weak self] error in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.applySendOutcome(attempt, failed: error != nil)
+            }
+        })
+    }
+
+    /// Commit one attempt's DELIVERY anchors, or refuse — the SAME shared rule Art-Net applies
+    /// (`LightSendAccounting.commits`). Internal, not private: the accounting guard drives this
+    /// method, the one the production completion calls, so no test-only branch exists.
+    func applySendOutcome(_ attempt: LightSendAttempt, failed: Bool) {
+        guard LightSendAccounting.commits(attempt, over: committedGeneration,
+                                          failed: failed) else { return }
+        committedGeneration = attempt.generation
+        lastFrameTimestamp = attempt.frameTimestamp
+        lastSentGrandMaster = attempt.grandMaster
+        lastSentBlackout = attempt.blackout
+        lastSentLookIntensity = attempt.lookIntensity
+        lastSentTimestamp = attempt.sentAt
     }
 
     // MARK: - Pure kernels (testable without a socket)

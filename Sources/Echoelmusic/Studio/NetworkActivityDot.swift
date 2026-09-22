@@ -14,17 +14,28 @@ import SwiftUI
 public protocol NetworkSendActivity: AnyObject {
     /// The connection is open. NOT evidence that anything has been sent.
     var isActive: Bool { get }
-    /// `CFAbsoluteTimeGetCurrent()` of the last datagram handed to the network stack.
+    /// `CFAbsoluteTimeGetCurrent()` of the last datagram this sender got out.
+    ///
+    /// ⚠️ ONE meaning, two strictnesses, and saying so is cheaper than a wrong dot (#1445):
+    /// `ArtNetSender`/`SACNSender` advance it only when `NWConnection` ACCEPTED the content,
+    /// so a tick with no socket leaves it alone; `OSCSender`/`ADMOSCSender` still advance it
+    /// at the handoff. The stricter pair can only ever make this value LATER than the looser
+    /// rule would, never earlier, so every reader below stays correct either way.
     var lastSentTimestamp: TimeInterval { get }
 }
 
 /// The three states an output can honestly be in, and the words for each.
 ///
-/// ⚠️ "SENDING" MEANS HANDED TO THE OS, NOT DELIVERED. Every sender's `send` discards the
-/// completion error (`.contentProcessed { _ in }`), so nothing in this app knows whether a
-/// datagram arrived — UDP would not tell it reliably even if it looked. That is why the third
-/// word is never "connected": a wrong IP looks exactly like a right one from in here, and a
-/// label promising delivery would be the same overclaim this type exists to remove.
+/// ⚠️ "SENDING" MEANS THE OS TOOK IT, NOT THAT ANYTHING ARRIVED. UDP carries no receiver
+/// acknowledgement at any layer this app can see, so a wrong IP looks exactly like a right one
+/// from in here — which is why the third word is never "connected": a label promising delivery
+/// would be the same overclaim this type exists to remove.
+///
+/// ⛔ THIS BLOCK USED TO SAY "every sender's `send` discards the completion error
+/// (`.contentProcessed { _ in }`)", and that stopped being true in two steps: #1219 gave
+/// `ArtNetSender` a `lastError`, and #1445 made BOTH light senders read the error to decide
+/// whether the packet's delivery anchors may commit. The CONCLUSION survives untouched — local
+/// acceptance is still not delivery — but the reason given for it was measurably stale.
 public enum NetworkSendState: Equatable, Sendable {
     /// The output is not running at all.
     case off

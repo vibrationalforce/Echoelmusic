@@ -239,9 +239,19 @@ final class TheLightingLookIntensityIsOwnedAboveTheSendersTests: XCTestCase {
             XCTAssertTrue(src.contains("|| lookMoved"),
                           "\(path) computes a creative anchor but does not OR it into the send "
                           + "guard — the #164/#227 lying control, in the send decision.")
-            XCTAssertTrue(src.contains("lastSentLookIntensity = look"),
-                          "\(path) never records the creative level it sent, so `lookMoved` "
-                          + "stays true forever and the sender streams on every tick.")
+            // ⚠️ RE-ANCHORED BY #1445, which MOVED this assignment on purpose (§4: a commit
+            // that relocates a surface moves its guards in the same commit). The old needle
+            // was `lastSentLookIntensity = look` in the tick — exactly the line that made a
+            // no-connection tick consume the creative move. The INVARIANT is unchanged and is
+            // now two halves: the attempt must CARRY the level, and the commit must record it.
+            XCTAssertTrue(src.contains("lookIntensity: look,"),
+                          "\(path)'s send attempt no longer carries the creative level, so "
+                          + "nothing can record what was sent and `lookMoved` stays true "
+                          + "forever — the sender would stream on every tick.")
+            XCTAssertTrue(src.contains("lastSentLookIntensity = attempt.lookIntensity"),
+                          "\(path) never records the creative level it sent. If this moved "
+                          + "again, keep a needle on the COMMIT, not on the tick: committing "
+                          + "in the tick is the #1445 defect.")
         }
     }
 
