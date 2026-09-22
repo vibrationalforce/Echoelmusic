@@ -67,7 +67,11 @@ public final class LightingStore {
     /// this becomes the P2 parameter `lighting.look.intensity`, `ParameterApplyRouter.applyReal`
     /// BYPASSES the descriptor's range clamp, so the range has to be enforced by the owner or
     /// not at all — and this value reaches a physical fixture.
-    public private(set) var lookIntensity: Float = Self.defaultLookIntensity
+    /// ⚠️ `LightingStore.` and not `Self.`: Swift rejects a covariant `Self` in a STORED
+    /// property initializer, even on a `final class` — `error: covariant 'Self' type cannot be
+    /// referenced from a stored property initializer`, which is what `Xcode Compile Check` said
+    /// about the first version of this line. `Self.` inside a method body (below) is fine.
+    public private(set) var lookIntensity: Float = LightingStore.defaultLookIntensity
 
     /// The identity value. Named rather than repeated as a literal, because three places
     /// (the property, the NaN fallback, the future descriptor default) must agree (#416).
