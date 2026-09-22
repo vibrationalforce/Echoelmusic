@@ -78,8 +78,13 @@ public enum PerTrackParameterKeyPath {
     /// Clone global descriptors into per-track descriptors for ONE lane:
     /// keyPath namespaced, displayName prefixed with a short lane tag so the
     /// target picker distinguishes "Filter cutoff" on track A vs track B.
-    /// Ranges / units / defaults / labels are inherited verbatim — it is the
-    /// SAME engine parameter, only addressed per track.
+    /// Ranges / units / defaults / labels / DOMAIN are inherited verbatim — it is
+    /// the SAME engine parameter, only addressed per track, so its creative medium
+    /// cannot differ from the global descriptor's. ⚠️ `domain` is passed EXPLICITLY
+    /// rather than left to the init default: a per-track clone of a non-audio
+    /// descriptor would otherwise silently become `.audio`, and the failure would be
+    /// invisible — the clone still builds, still routes, and only LIES about which
+    /// medium it belongs to.
     public static func descriptors(for laneID: UUID,
                                    laneLabel: String,
                                    from base: [ParameterDescriptor]) -> [ParameterDescriptor] {
@@ -88,7 +93,7 @@ public enum PerTrackParameterKeyPath {
                 keyPath: make(laneID: laneID, base: d.keyPath),
                 displayName: laneLabel.isEmpty ? d.displayName : "\(laneLabel) · \(d.displayName)",
                 min: d.min, max: d.max, defaultValue: d.defaultValue,
-                unit: d.unit, valueLabels: d.valueLabels)
+                unit: d.unit, valueLabels: d.valueLabels, domain: d.domain)
         }
     }
 }
