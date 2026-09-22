@@ -27,6 +27,19 @@
 //  Nothing bounded outstanding sends either, and a replaced connection kept committing
 //  into the new one's bookkeeping.
 //
+//  ROUND THREE (#1447) — the two things round two BOUNDED but did not FINISH.
+//  (a) `retire()` reset the OUTPUT anchors on every stop, and that is an sACN sentence in a
+//  protocol-neutral type. sACN says goodbye out loud (three Stream_Terminated packets), so a
+//  receiver has been told the source session ended and its next session may legitimately
+//  start cold. Art-Net has no terminate opcode at all: it simply stops being heard, and a
+//  node holds its last DMX values until its own timeout — so the level a fixture sits at
+//  after an Art-Net stop is the level we last got out. Snapping from it on restart is the
+//  same one-frame 0→1 step round two existed to forbid, arriving through the front door.
+//  (b) the ONE in-flight slot had no deadline. A completion that never arrives — a connection
+//  parked with no route — left the slot occupied forever: no blackout, no master move, no
+//  keep-alive, a wedged output with no way back except an operator edit. The bound stays ONE;
+//  what is added is a bounded TRANSPORT RECOVERY, below.
+//
 //  ⚠️ THE CONTRACT THIS TYPE ENCODES IS LOCAL PROCESSING, NOT DELIVERY.
 //  `NWConnection.send(completion: .contentProcessed)` calls back when the connection has
 //  finished processing the content, or with the error that stopped it. That is NOT "the
@@ -151,6 +164,11 @@ public enum LightSendAccounting {
 ///     compares against when deciding whether there is anything to send at all.
 /// There is deliberately NO third "computed" anchor. A variable that sometimes means
 /// computed and sometimes means accepted is how round two shipped; one meaning each.
+/// ⭐ AND THE TWO CATEGORIES DIE SEPARATELY (#1447): closing an epoch — a stop, a reconnect,
+/// a stall recovery — retires the TRANSPORT and leaves the OUTPUT anchors standing, because a
+/// receiver that was never told anything is still holding the last level it got. Only an
+/// adapter whose protocol announced the end of the source session clears them, through
+/// `forgetAcceptedOutput()`.
 ///
 /// ⭐ WHAT IS NOT HERE, ON PURPOSE: generation of the music, the bio frame, the colour
 /// mapping, the DMX bytes. Output progression is acceptance-relative; GENERATION is not.
@@ -175,13 +193,19 @@ public struct LightSendPump {
     /// A tick that finds it full returns before building a packet, so nothing accumulates —
     /// no array, no closure chain, no sequence numbers burned.
     ///
-    /// ⚠️ THE RESIDUAL, STATED RATHER THAN HIDDEN: if a completion never arrives (a
-    /// connection parked in `.waiting` with no route), this stays full and the sender is
-    /// quiet until the epoch closes. That is not a queue's problem solved differently —
-    /// a transport that cannot process anything cannot carry a blackout either, and a
-    /// backlog would deliver STALE pre-blackout packets first on recovery. The escapes are
-    /// the operator's: changing host/port/universe reconnects, and stopping retires.
+    /// ⭐ AND IT NOW HAS A DEADLINE (#1447). Round two stated as a residual that a completion
+    /// which never arrives leaves this full forever — no blackout, no master move, no
+    /// keep-alive, recoverable only by an operator edit. `stalled(now:after:)` below bounds
+    /// that: past the deadline the sender closes the epoch and opens a new one, which frees
+    /// this slot, arms `needsResend` and KEEPS the output anchors. The bound stays ONE; what
+    /// changed is that occupancy became finite. A backlog is still refused — it would deliver
+    /// STALE pre-blackout packets first on recovery, which is worse than waiting.
     public private(set) var inFlight: UInt64?
+    /// The `sentAt` of the attempt in the slot above. Meaningful ONLY while `inFlight != nil`;
+    /// one writer, `submit`. It is not an anchor and is never committed — it measures how long
+    /// ONE attempt has monopolised the slot, which is a LOCAL question about this app's own
+    /// bookkeeping and says nothing about the network.
+    public private(set) var inFlightSince: TimeInterval = 0
     /// Set when an epoch opens; cleared by the first commit on that epoch. It makes the
     /// current state eligible immediately after a connect or a restart, even when every
     /// other reason says "unchanged" — the defect where a quick stop/start went silent
@@ -210,8 +234,40 @@ public struct LightSendPump {
 
     public init() {}
 
+    /// THE STALL DEADLINE — how long this app lets ONE send attempt monopolise the single
+    /// ordinary-data slot before the transport is declared stale and replaced.
+    ///
+    /// ⚠️ THE CLAIM IS LOCAL, and the wording is the point: it bounds how long *Echoelmusic*
+    /// waits on its own `NWConnection` completion. It is NOT a remote-delivery deadline, NOT
+    /// a fixture-response deadline and NOT a NIC-transmission deadline — UDP offers no such
+    /// number at any layer this app can see.
+    ///
+    /// WHY 0.8 s, derived from what already exists rather than picked:
+    ///   · it is the senders' KEEP-ALIVE budget (`SACNSender.keepAliveSeconds`, which Art-Net
+    ///     derives from) — this repo's existing statement of the longest the wire may be
+    ///     quiet. One attempt that has kept the wire quiet for the WHOLE of that budget has
+    ///     already spent it; the two are one decision seen from either side, so they are one
+    ///     number (#416). ⚠️ The literal is repeated here rather than referenced because this
+    ///     file is Foundation-only and must not import `Network`; the guard
+    ///     `TheLightTransportRecoversFromAStallTests` asserts the two stay equal.
+    ///   · it is ~24 ticks of the 33 ms send loop, so it cannot fire on healthy traffic:
+    ///     local processing of a ~530-byte datagram on a ready connection is sub-millisecond.
+    ///   · it is BELOW both receivers' own patience — E1.31 §6.7.1 declares a source lost
+    ///     after 2.5 s, an Art-Net node holds for ~4 s — so a stalled epoch can be replaced
+    ///     and the current state re-sent before the far side gives up on us.
+    public static let stallDeadlineSeconds: TimeInterval = 0.8
+
     /// True while the one outstanding ordinary data send has not completed.
     public var isBusy: Bool { inFlight != nil }
+
+    /// Has the attempt in the slot monopolised it past the deadline? False whenever the slot
+    /// is free, so ONE stalled epoch produces exactly ONE recovery: the transition clears
+    /// `inFlight`, and only a fresh `submit` can arm this again. That is what keeps recovery
+    /// from becoming a reconnect storm — the next one is at least a full deadline away.
+    public func stalled(now: TimeInterval, after seconds: TimeInterval) -> Bool {
+        guard inFlight != nil, inFlightSince > 0 else { return false }
+        return now - inFlightSince >= seconds
+    }
 
     /// Is the keep-alive due? Asked here rather than spelled out in each sender so the two
     /// light outputs cannot drift into two readings of the same clock (#416). Never true
@@ -229,15 +285,35 @@ public struct LightSendPump {
         needsResend = true
     }
 
-    /// The sender is stopping. Same retirement, plus the OUTPUT anchors reset: after a stop
-    /// the receiver has been released (sACN says so explicitly with Stream_Terminated, an
-    /// Art-Net node times out), so there is no established level on the far side to ramp
-    /// from and the next session snaps to its first value exactly as a cold start does.
+    /// TRANSPORT RETIREMENT — the sender is stopping. The socket's outstanding attempts are
+    /// retired so none of them can commit into whatever session comes next, and nothing is
+    /// armed to re-send, because nothing is running.
+    ///
+    /// ⭐ IT DOES NOT TOUCH THE OUTPUT ANCHORS, and that separation is the whole of #1447(a).
+    /// Whether the far side still holds a level after we stop is a PROTOCOL question, and
+    /// this type has no protocol. The adapter that knows the answer says so by calling
+    /// `forgetAcceptedOutput()` beside this; the adapter that does not, does not.
     public mutating func retire() {
         epoch &+= 1
         inFlight = nil
         committedGeneration = generation
         needsResend = false
+    }
+
+    /// OUTPUT ANCHOR RESET — "nothing on the far side is holding a level we could ramp from."
+    ///
+    /// ⚠️ ONLY an adapter whose protocol announced the end of the source session may say
+    /// this, and only sACN can: `stop()` there sends three Stream_Terminated packets
+    /// (E1.31 §6.7.1.2), so the receiver has been told the stream ended and its next session
+    /// starts from nothing. ⛔ Even there the honest sentence is narrow: Stream_Terminated
+    /// expresses SOURCE TERMINATION. It does not prove the fixture went dark, that it
+    /// released physically, or that the packets arrived at all — it is UDP, and the
+    /// receiver's own merge/hold configuration decides what it then does.
+    ///
+    /// Art-Net has no terminate opcode: a node keeps its last DMX values until its own
+    /// timeout, so the last output we got out is still the best available description of
+    /// what a fixture is sitting at, and the restart must ramp from it.
+    public mutating func forgetAcceptedOutput() {
         acceptedDimmer = -1
         acceptedColour = []
     }
@@ -253,6 +329,7 @@ public struct LightSendPump {
                                 colour: [Float]) -> LightSendAttempt {
         generation &+= 1
         inFlight = generation
+        inFlightSince = sentAt
         return LightSendAttempt(epoch: epoch,
                                 generation: generation,
                                 frameTimestamp: frameTimestamp,

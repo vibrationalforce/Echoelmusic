@@ -55,8 +55,12 @@ final class TheLightSendAccountingIsHonestTests: XCTestCase {
     ]
 
     /// OUTPUT anchors — what the slew step is measured from. TWO writers each, and the second
-    /// one is not a leak: `retire()` drops them on stop, because after Stream_Terminated (or an
-    /// Art-Net node's timeout) nothing on the far side is holding a level to ramp from.
+    /// one is not a leak: `forgetAcceptedOutput()` drops them, for the ONE adapter whose
+    /// protocol announced the end of its source session.
+    /// ⛔ THE SECOND WRITER USED TO BE `retire()`, i.e. EVERY stop, and #1447 separated them:
+    /// Art-Net has no terminate opcode, so an Art-Net node is still holding the last level we
+    /// got out and a restart must ramp from it. `TheLightTransportRecoversFromAStallTests`
+    /// owns that pair of policies.
     private static let outputAnchors = ["acceptedDimmer", "acceptedColour"]
 
     private func repoRoot() -> URL {
@@ -361,11 +365,17 @@ final class TheLightSendAccountingIsHonestTests: XCTestCase {
                                      now: 1_000.05) else { return XCTFail("no outstanding attempt") }
         XCTAssertTrue(pump.isBusy, "the pre-stop attempt is not outstanding — the case is vacuous")
 
-        pump.retire()                             // stop(): goodbye, cancel, epoch closed
+        pump.retire()                             // stop(): cancel, epoch closed
         XCTAssertFalse(pump.isBusy, "stop left the in-flight slot occupied")
+        // ⛔ THIS LINE USED TO ASSERT `acceptedDimmer == -1` AFTER `retire()` ALONE, and #1447
+        // took that sentence out of the protocol-neutral pump: transport retirement does not
+        // decide what a receiver is holding. sACN's `stop()` says so with a SECOND call.
+        XCTAssertNotEqual(pump.acceptedDimmer, -1,
+                          "transport retirement dropped an OUTPUT anchor. Only "
+                          + "`forgetAcceptedOutput()` may, and only sACN calls it (#1447).")
+        pump.forgetAcceptedOutput()               // sACN only: Stream_Terminated was sent
         XCTAssertEqual(pump.acceptedDimmer, -1,
-                       "stop kept an output anchor. After Stream_Terminated nothing on the far "
-                       + "side is holding a level to ramp from.")
+                       "after the source session was announced ended there is nothing to ramp from")
         pump.openEpoch()                          // start() -> connect()
         pump.complete(outstanding, failed: false) // the old socket's completion lands late
         XCTAssertEqual(pump.acceptedFrameTimestamp, 11, """
@@ -505,8 +515,8 @@ final class TheLightSendAccountingIsHonestTests: XCTestCase {
             let writes = pumpSrc.components(separatedBy: "\(anchor) = ").count - 1
             XCTAssertEqual(writes, 2, """
             `\(anchor)` has \(writes) assignments in \(Self.pumpFile); exactly two are allowed \
-            — the commit in `complete` and the reset in `retire`. A third is a compute-side \
-            writer, which is #1446 written again.
+            — the commit in `complete` and the reset in `forgetAcceptedOutput`. A third is a \
+            compute-side writer, which is #1446 written again.
             """)
         }
         XCTAssertTrue(pumpSrc.contains("guard LightSendAccounting.commits(attempt"), """

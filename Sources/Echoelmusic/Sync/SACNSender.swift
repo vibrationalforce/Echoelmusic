@@ -186,11 +186,19 @@ public final class SACNSender {
         sayGoodbye()
         connection = nil
         isActive = false
-        // Close the epoch, retire every outstanding generation and drop the OUTPUT anchors:
-        // after Stream_Terminated the receiver has released the universe, so the next session
-        // snaps to its first value like a cold start rather than ramping from a level nobody
-        // is holding any more (#1445/#1446).
+        // TRANSPORT RETIREMENT, then — and ONLY here — the OUTPUT ANCHOR RESET (#1447).
+        // sACN is the one adapter entitled to the second call: `sayGoodbye()` above announced
+        // the end of this SOURCE SESSION with three Stream_Terminated packets (E1.31
+        // §6.7.1.2), so the next session is a new session and starts from nothing rather than
+        // ramping from a level this sender no longer claims.
+        // ⛔ NARROWER THAN IT READS: Stream_Terminated expresses SOURCE TERMINATION. It does
+        // not prove the fixture went dark, that it released physically, or that the three
+        // packets arrived — it is UDP, and the receiver's own merge/hold configuration
+        // decides what happens next. What is claimed is only that WE stopped claiming the
+        // universe. `ArtNetSender.stop()` calls `retire()` alone, because Art-Net has no way
+        // to say any of this (#1447(a)).
         pump.retire()
+        pump.forgetAcceptedOutput()
     }
 
     /// #1218 — three Stream_Terminated packets, then the socket closes in the LAST send's
@@ -324,6 +332,21 @@ public final class SACNSender {
                                              after: Self.keepAliveSeconds)
         // ⭐ MAX_IN_FLIGHT = 1 (#1446) — one ordinary data send at a time; a busy tick builds
         // nothing and the next eligible tick re-reads the LATEST desired state.
+        // ⭐ BOUNDED TRANSPORT RECOVERY (#1447(b)) — BEFORE the bound below, because this is
+        // the only thing that can free a slot no completion will ever free. One attempt may
+        // monopolise the single ordinary-data slot for at most `stallDeadlineSeconds`; past
+        // that the connection is replaced and `connect()` opens a NEW epoch, which clears the
+        // slot, arms `needsResend` and KEEPS the output anchors, so the resend still ramps
+        // from what the network last took. The late completion of the abandoned attempt is
+        // epoch-stale and commits nothing.
+        // ⚠️ NO STORM: `stalled` is false the moment the slot is free, so one stalled epoch
+        // yields exactly ONE reconnect, and the next can be no sooner than a full deadline
+        // after the NEXT submit. ⚠️ And the claim stays LOCAL — this bounds how long we wait
+        // on our own completion, never how long a fixture or the network may take.
+        if pump.stalled(now: CFAbsoluteTimeGetCurrent(),
+                        after: LightSendPump.stallDeadlineSeconds) {
+            reconnectIfActive()
+        }
         guard !pump.isBusy else { return }
         guard pump.needsResend || sourceTimestamp != pump.acceptedFrameTimestamp
                 || masterMoved || lookMoved
