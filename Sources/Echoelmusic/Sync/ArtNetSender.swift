@@ -149,6 +149,15 @@ public final class ArtNetSender {
     /// must never block a blackout).
     @ObservationIgnored private var lastSentGrandMaster: Float = 1
     @ObservationIgnored private var lastSentBlackout = false
+    /// Creative look level as of the last packet. Same reason as the two above: a creative
+    /// move with a STALE source must still reach the wire, or a look change would appear to
+    /// do nothing until the next bio frame. This is the CREATIVE anchor — it sits beside the
+    /// operator anchors, it is not one of them.
+    @ObservationIgnored private var lastSentLookIntensity: Float = LightingStore.defaultLookIntensity
+    /// The creative lighting state (founder decision 2026-09-22), weak — the store lives at
+    /// app level and is READ here. This adapter does not own it and must never write it; the
+    /// operator's `grandMaster` above is a different concept and stays this object's own.
+    @ObservationIgnored private weak var lighting: LightingStore?
     /// Last RAW colour channels + dimmer target actually chosen (pre-master,
     /// pre-slew). Held so a tick with NO fresh/allowed source can still honor a
     /// Blackout / Grand-Master move from the last lit state (L1 — a stale or
@@ -194,6 +203,14 @@ public final class ArtNetSender {
             guard let self, let bus = self.bus else { return }
             self.sendIfFresh(from: bus)
         }
+    }
+
+    /// Attach the creative lighting state (weak — the store lives at app level). Idempotent,
+    /// called from `applyRouting` like `ADMOSCSender.attachScene`. Detached (nil) the sender
+    /// falls back to the identity, so an un-wired build is bit-identical to the one before
+    /// this seam existed.
+    public func attachLighting(_ store: LightingStore?) {
+        lighting = store
     }
 
     public func stop() {
@@ -336,21 +353,31 @@ public final class ArtNetSender {
         // honor master/blackout from the held state.
         lastChannels = channels
         lastTarget = target
-        // Grand Master scales the target; Blackout cuts to 0 instantly (and
+        // CREATIVE stage — the composition's own level, BEFORE any operator or safety stage.
+        // ⚠️ `lastTarget` above deliberately holds the GENERATED value, never this one: the
+        // hold arm re-enters here every tick, so caching the scaled value would multiply the
+        // look in again on each pass and fade the rig to nothing on a stale source.
+        let look = LightingStore.sanitizedLookIntensity(lighting?.lookIntensity
+                                                        ?? LightingStore.defaultLookIntensity)
+        let creative = LightingStore.creativeTarget(target, lookIntensity: look)
+        // Grand Master scales the CREATIVE target; Blackout cuts to 0 instantly (and
         // resets the slew anchor, so the return to light ramps up from dark).
-        let mastered = Self.masteredDimmer(target, grandMaster: grandMaster, blackout: blackout)
-        // Send when the source is fresh, the master state moved, or the slew
-        // ramp hasn't reached its target yet (a paused source must not freeze
-        // a fade mid-ramp, and must never block a blackout).
+        let mastered = Self.masteredDimmer(creative, grandMaster: grandMaster, blackout: blackout)
+        // Send when the source is fresh, the master state moved, the creative level moved, or
+        // the slew ramp hasn't reached its target yet (a paused source must not freeze a fade
+        // mid-ramp, and must never block a blackout).
         let masterMoved = grandMaster != lastSentGrandMaster || blackout != lastSentBlackout
+        let lookMoved = look != lastSentLookIntensity
         let slewSettling = lastDimmer >= 0 && abs(mastered - lastDimmer) > 0.001
         // #1218 — or the node is about to forget us: re-send the held look.
         let keepAliveDue = lastSentTimestamp > 0
             && CFAbsoluteTimeGetCurrent() - lastSentTimestamp >= Self.keepAliveSeconds
-        guard sourceTimestamp != lastFrameTimestamp || masterMoved || slewSettling || keepAliveDue else { return }
+        guard sourceTimestamp != lastFrameTimestamp || masterMoved || lookMoved
+                || slewSettling || keepAliveDue else { return }
         lastFrameTimestamp = sourceTimestamp
         lastSentGrandMaster = grandMaster
         lastSentBlackout = blackout
+        lastSentLookIntensity = look
         // Hard flash guarantee for PHYSICAL fixtures: slew-limit the dimmer
         // (luminance) channel so even a pathological input jump can never strobe
         // the lights. The step is `FlashGuard.senderTickDelta` — a per-SECOND

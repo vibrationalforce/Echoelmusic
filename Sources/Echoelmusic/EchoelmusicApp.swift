@@ -141,6 +141,11 @@ struct EchoelmusicApp: App {
     /// The live immersive scene: every non-bio track is a positioned SpatialObject,
     /// moved by the Immersive Stage Touch surface. Control-plane only (no audio thread).
     @State private var spatialScene = SpatialSceneStore()
+    /// The creative lighting state Echoelmusic owns above Art-Net and sACN (founder decision
+    /// 2026-09-22). ⚠️ Deliberately NOT injected into the environment: nothing renders it yet,
+    /// and an `.environment` line with no reader is a door to a surface that does not exist.
+    /// Its only consumers are the two senders, attached in `applyRouting`.
+    @State private var lighting = LightingStore()
     /// Parameter automation (master level / tempo) played over the shared transport.
     @State private var automationPlayer = AutomationPlayer()
     /// Selectable recording inputs (mic / interface / Bluetooth) with latency notes.
@@ -516,6 +521,10 @@ struct EchoelmusicApp: App {
         if g.hasEnabledRoute(toSink: "osc.out") { osc.start(subscribing: bus) } else { osc.stop() }
         admOSC.attachScene(spatialScene)   // idempotent weak-ref; enables Immersive-Stage scene streaming
         if g.hasEnabledRoute(toSink: "adm.out") { admOSC.start(subscribing: bus) } else { admOSC.stop() }
+        // Both light adapters READ the one creative lighting state; neither owns it. Attached
+        // before start/stop so a sender that begins streaming on this very call already has it.
+        artNet.attachLighting(lighting)
+        sacn.attachLighting(lighting)
         if g.hasEnabledRoute(toSink: "artnet.out") { artNet.start(subscribing: bus) } else { artNet.stop() }
         if g.hasEnabledRoute(toSink: "sacn.out") { sacn.start(subscribing: bus) } else { sacn.stop() }
         // #1255 — not a graph route: an opt-in switch in the routing card, applied here so the
