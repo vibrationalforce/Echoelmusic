@@ -46,10 +46,14 @@
 //  `EchoelmusicApp` binds the router to `setLookIntensity`. Nothing flows back: this file names
 //  no descriptor, no registry, no modulation key and no persistence root, which is what keeps
 //  it a plain Foundation value type two protocol adapters can share.
-//  ⚠️ STILL ABSENT, DELIBERATELY: modulation, automation, persistence and a UI door. The
-//  binding sits AFTER the app's `automatableDescriptors()` loop on purpose — that loop turns
-//  every router-bound keyPath into a `ModulationEngine` destination, and the look is not one.
-//  `TheLightingLookIsACanonicalParameterTests` pins both the path and those absences.
+//  ⚠️ STILL ABSENT, DELIBERATELY: modulation, automation, persistence and a UI door — and
+//  since P2 Proof #1.1 that absence is STATED rather than arranged. The descriptor carries
+//  `automationEligible: false` and `modulationEligible: false`; `AutomationPlayer` dispatches
+//  through `ParameterApplyRouter.applyAutomation`, which asks, and the app's modulation loop
+//  filters on `modulatableDescriptors()`. The earlier version kept the look out of the
+//  modulation engine by placing one statement after another — correct, invisible, and one
+//  tidy-up away from silently untrue. `TheLightingLookIsACanonicalParameterTests` pins the
+//  path and the two denials; nothing pins line order any more, because nothing depends on it.
 //
 
 import Foundation

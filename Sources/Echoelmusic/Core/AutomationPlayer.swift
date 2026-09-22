@@ -315,9 +315,17 @@ public final class AutomationPlayer {
             }
             // Extra keyPath lanes (cycle 2): registry-denormalize + dispatch through the
             // router. No router / unbound keyPath = safe no-op (never a dead crash).
+            //
+            // ⭐ P2 PROOF #1.1 — `applyAutomation`, NOT `applyNormalized`. The generic entry
+            // point writes any BOUND parameter, which is what makes the router canonical; this
+            // is automation, a source with a policy, so it asks the descriptor whether a drawn
+            // lane may own this key first. A lane naming a parameter that is dispatchable but
+            // not automation-eligible now behaves exactly like a lane nobody drew — the same
+            // silent no-op an unbound key already produced. The lane is NOT deleted and the
+            // schema is untouched; only the runtime authorisation changed.
             for lane in lanes where AutomationTarget.forParameter(lane.parameter) == nil {
                 if let n = lane.value(atTick: step * Note.ticksPerStep) {
-                    router?.applyNormalized(lane.parameter, Float(n))
+                    router?.applyAutomation(lane.parameter, Float(n))
                 }
             }
         } else {
@@ -341,12 +349,17 @@ public final class AutomationPlayer {
     /// Apply one lane's value at a resolved tick to its live target — the ONE
     /// dispatch the clip AND timeline layers share (enum → its curve → applyEnum;
     /// free keyPath → the router). No fork.
+    ///
+    /// ⚠️ The free-keyPath branch takes `applyAutomation` for the same reason the per-bar loop
+    /// above does. Both automation entry points must ask the same question; a gate on one of
+    /// two dispatch sites is not a gate (#416 — one decision, and here it has two call sites,
+    /// so the decision lives in the router rather than being spelled out twice).
     private func dispatchLane(_ lane: AutomationLane, atTick tick: Int) {
         guard let n = lane.value(atTick: tick) else { return }
         if let target = AutomationTarget.forParameter(lane.parameter) {
             applyEnum(target, real: target.value(forNormalized: n))
         } else {
-            router?.applyNormalized(lane.parameter, Float(n))
+            router?.applyAutomation(lane.parameter, Float(n))
         }
     }
 

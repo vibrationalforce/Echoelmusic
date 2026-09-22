@@ -73,6 +73,33 @@ public struct ParameterDescriptor: Codable, Sendable, Equatable, Identifiable {
     public var unit: String
     /// Optional labels for stepped/enum-like parameters (index = value).
     public var valueLabels: [String]?
+    /// Whether an AUTOMATION LANE may drive this parameter. **DENY BY DEFAULT.**
+    ///
+    /// ⭐ WHY THIS IS NOT "is a setter bound" (P2 Proof #1.1). Until this field existed,
+    /// `automatableDescriptors()` meant *registry ∩ bound setter*, so BINDING a key into the
+    /// router — the only way to make the canonical path able to dispatch it at all — silently
+    /// also granted it to automation and, through the app's registration loop, to modulation.
+    /// Three different questions answered by one predicate: *can the router reach the owner*,
+    /// *may a drawn lane own it*, *may a body route own it*. The first is a wiring fact; the
+    /// other two are POLICY, and policy must be written down rather than inferred.
+    ///
+    /// ⚠️ IT IS ORTHOGONAL TO `domain`. `if domain == .audio` would have been shorter and
+    /// would have encoded today's inventory as law — blocking lighting automation, visual
+    /// modulation and spatial automation, all of which are legitimate later work. A future
+    /// lighting parameter becomes automatable by setting THIS flag, not by changing its medium.
+    ///
+    /// ⚠️ ELIGIBILITY IS NOT EXECUTION. A descriptor may be eligible and still move nothing,
+    /// because the owner setter is unbound — the Placebo law is unchanged and still applies on
+    /// top of this flag. Both conditions are required, in that order.
+    public var automationEligible: Bool
+
+    /// Whether a MODULATION ROUTE (the body → parameter matrix) may drive this parameter.
+    /// **DENY BY DEFAULT**, and a separate field from `automationEligible` on purpose: the two
+    /// answer different questions and a future parameter may legitimately allow a drawn lane
+    /// and refuse a live body route, or the reverse. They happen to agree for every parameter
+    /// in this build; that is a measurement, not a definition.
+    public var modulationEligible: Bool
+
     /// Which creative medium owns this parameter (see `ParameterDomain`). Defaults to
     /// `.audio` so every existing descriptor and every existing call site is unchanged.
     /// NOTHING reads it yet — it is identity metadata, deliberately not apply semantics:
@@ -83,10 +110,17 @@ public struct ParameterDescriptor: Codable, Sendable, Equatable, Identifiable {
 
     public var id: String { keyPath }
 
+    /// ⚠️ THE TWO ELIGIBILITY DEFAULTS ARE `false`, AND THAT IS THE SAFETY LAW OF THIS TYPE:
+    /// a parameter described by a call site that has not thought about capability grants none.
+    /// The opposite default would make every future cross-domain descriptor automatable and
+    /// modulatable the moment someone registers it, which is the defect this field exists to
+    /// remove. Adding a capability is a visible edit; losing one can only be a visible edit too.
     public init(keyPath: String, displayName: String,
                 min: Float, max: Float, defaultValue: Float,
                 unit: String = "", valueLabels: [String]? = nil,
-                domain: ParameterDomain = .audio) {
+                domain: ParameterDomain = .audio,
+                automationEligible: Bool = false,
+                modulationEligible: Bool = false) {
         self.keyPath = keyPath
         self.displayName = displayName
         self.min = min
@@ -95,12 +129,15 @@ public struct ParameterDescriptor: Codable, Sendable, Equatable, Identifiable {
         self.unit = unit
         self.valueLabels = valueLabels
         self.domain = domain
+        self.automationEligible = automationEligible
+        self.modulationEligible = modulationEligible
     }
 
     // MARK: - Codable
 
     private enum CodingKeys: String, CodingKey {
         case keyPath, displayName, min, max, defaultValue, unit, valueLabels, domain
+        case automationEligible, modulationEligible
     }
 
     /// Hand-written ONLY so a payload without `domain` — or with a domain string this build
@@ -122,6 +159,19 @@ public struct ParameterDescriptor: Codable, Sendable, Equatable, Identifiable {
         self.unit = try c.decode(String.self, forKey: .unit)
         self.valueLabels = try c.decodeIfPresent([String].self, forKey: .valueLabels)
         self.domain = (try? c.decode(ParameterDomain.self, forKey: .domain)) ?? .audio
+        // ⚠️ A PAYLOAD THAT DOES NOT SAY GRANTS NOTHING. `decodeIfPresent ?? false` is the same
+        // tolerance the `domain` line above takes, pointed the other way: there it keeps an old
+        // payload WORKING, here it keeps an old — or a forged, or a newer — payload from
+        // acquiring a capability it never stated. Measured before choosing the direction:
+        // nothing in `Sources/` encodes or decodes a `ParameterDescriptor`, so no production
+        // payload exists to break, and the strict default costs zero behaviour today. If
+        // descriptors ever become persisted or network-carried, THIS is the line that must stay
+        // deny — and `domain`'s permissive fallback is the one that must then be fixed first.
+        // A wrong-TYPE value still throws, exactly like every other key here: `decodeIfPresent`
+        // tolerates absence, never nonsense. Only the missing case is answered, and it is
+        // answered with "no capability".
+        self.automationEligible = try c.decodeIfPresent(Bool.self, forKey: .automationEligible) ?? false
+        self.modulationEligible = try c.decodeIfPresent(Bool.self, forKey: .modulationEligible) ?? false
     }
 
     /// Map a normalized 0…1 tool value into the parameter's real range
@@ -197,7 +247,10 @@ public final class EchoelParameterRegistry {
 /// about the engine, not a second source of truth for DSP behaviour — the
 /// voice's own clamps still apply at the write site.
 public enum DDSPParameterCatalog {
-    public static let descriptors: [ParameterDescriptor] = [
+
+    /// The described inventory — RANGES and NAMES only. Capability is decided once, below, so
+    /// no entry here can grant itself automation or modulation by being edited.
+    private static let inventory: [ParameterDescriptor] = [
         ParameterDescriptor(keyPath: "ddsp.osc.frequency", displayName: "Oscillator frequency",
                             min: 20, max: 2000, defaultValue: 110, unit: "Hz"),
         ParameterDescriptor(keyPath: "ddsp.osc.harmonicity", displayName: "Harmonicity",
@@ -229,6 +282,36 @@ public enum DDSPParameterCatalog {
         ParameterDescriptor(keyPath: "ddsp.warmth.drive", displayName: "Warmth drive",
                             min: 0, max: 1, defaultValue: 0),
     ]
+
+    /// The catalog as the registry sees it: the inventory above, with capability stamped on.
+    ///
+    /// ⭐ THE ELIGIBLE SET IS A PROJECTION, NOT A SECOND LIST (#416). `PolySynthVoice
+    /// .automatableBases` already IS this build's answer to "which parameters may a control
+    /// source own" — it is the list `bindAutomatable` iterates, and the rule behind its
+    /// membership (automation may own a parameter only where it is the ONLY writer; everywhere
+    /// else it owns the ANCHOR) is guarded three times over at that list. Writing the eleven
+    /// names again here would be a second home for one decision, and the copy would be the one
+    /// that rots. `ModDestinationKey.all` reads the same list from the same file for the same
+    /// reason, so this is the established direction, not a new coupling.
+    ///
+    /// ⚠️ THE FOUR PARAMETERS NOT IN THAT LIST STAY DENIED, and that is exactly today's
+    /// behaviour rather than a new restriction: `ddsp.osc.frequency`, `ddsp.filter.cutoff`,
+    /// `ddsp.fx.reverbMix` and `ddsp.fx.reverbDecay` have no router binding, so before this
+    /// slice they were already unreachable by automation and by the matrix. Denying them
+    /// changes nothing; it only says so out loud. `ddsp.fx.reverbMix` in particular must STAY
+    /// denied while its stage is off (#546) — `TheDisabledReverbStageIsNotOfferedForAutomation`
+    /// carries that reason.
+    ///
+    /// ⚠️ The two capabilities come from ONE predicate because they agree for every parameter
+    /// in this build. That is a measurement of today, not a definition: they are separate
+    /// fields precisely so the next parameter that needs them to differ can say so.
+    public static let descriptors: [ParameterDescriptor] = DDSPParameterCatalog.inventory.map {
+        var d = $0
+        let mayBeOwned = PolySynthVoice.automatableBases.contains(d.keyPath)
+        d.automationEligible = mayBeOwned
+        d.modulationEligible = mayBeOwned
+        return d
+    }
 }
 
 // MARK: - Second inventory: the creative LIGHTING state (P2 Proof #1)
@@ -262,6 +345,8 @@ public enum LightingParameterCatalog {
         ParameterDescriptor(keyPath: lookIntensity, displayName: "Look intensity",
                             min: 0, max: 1,
                             defaultValue: LightingStore.defaultLookIntensity,
-                            domain: .lighting),
+                            domain: .lighting,
+                            automationEligible: false,
+                            modulationEligible: false),
     ]
 }

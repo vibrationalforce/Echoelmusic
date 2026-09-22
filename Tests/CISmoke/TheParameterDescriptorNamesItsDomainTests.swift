@@ -163,6 +163,12 @@ final class TheParameterDescriptorNamesItsDomainTests: XCTestCase {
     /// END-TO-END. Binds the eleven automatable bases to inert setters and checks that
     /// `automatableDescriptors()` returns exactly those, in REGISTRY order — the Placebo law.
     /// (Inert setters, not a real voice: this bundle never starts audio.)
+    ///
+    /// ⚠️ SINCE P2 PROOF #1.1 THE SET IS registry ∩ bound ∩ `automationEligible`, and this
+    /// claim is unchanged BECAUSE the eligible set is derived from `PolySynthVoice
+    /// .automatableBases` — the same list this fixture binds. That agreement is the point: the
+    /// repair made a previously implicit rule explicit without moving which parameters it
+    /// names. If this ever goes red, the eligible set and the bind list have parted company.
     func testAutomatableDescriptorsCountAndOrderAreUnchanged() {
         let registry = EchoelParameterRegistry()
         registry.register(DDSPParameterCatalog.descriptors)
@@ -342,6 +348,24 @@ final class TheParameterDescriptorNamesItsDomainTests: XCTestCase {
             + "rebuilds the descriptor field by field, so a forgotten field does not fail to "
             + "compile — it silently produces a descriptor that LIES about its medium while "
             + "still building and still routing. Pass `domain: d.domain` explicitly.")
+        XCTAssertEqual(
+            clones.first?.automationEligible, source.automationEligible,
+            "the per-track clone dropped `automationEligible`. It defaults to FALSE, so a "
+            + "forgotten field here silently REVOKES automation from a per-track lane rather "
+            + "than mislabelling it — no compile error, no red test at the call site.")
+        XCTAssertEqual(clones.first?.modulationEligible, source.modulationEligible,
+                       "the per-track clone dropped `modulationEligible` (see above).")
+        let eligible = ParameterDescriptor(keyPath: "ddsp.env.attack", displayName: "A",
+                                           min: 0, max: 1, defaultValue: 0,
+                                           automationEligible: true, modulationEligible: true)
+        let eligibleClone = PerTrackParameterKeyPath.descriptors(for: lane, laneLabel: "T",
+                                                                 from: [eligible]).first
+        XCTAssertEqual(eligibleClone?.automationEligible, true,
+                       "an ELIGIBLE source cloned to an ineligible per-track descriptor. The "
+                       + "two assertions above would be green on a clone that hard-codes false, "
+                       + "because the lighting source they use is denied anyway (#367).")
+        XCTAssertEqual(eligibleClone?.modulationEligible, true,
+                       "an ELIGIBLE source lost `modulationEligible` in the clone.")
         XCTAssertEqual(clones.first?.max, source.max,
                        "the clone no longer inherits the range — it is the SAME engine "
                        + "parameter, only addressed per track.")

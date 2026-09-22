@@ -93,7 +93,15 @@ public enum PerTrackParameterKeyPath {
                 keyPath: make(laneID: laneID, base: d.keyPath),
                 displayName: laneLabel.isEmpty ? d.displayName : "\(laneLabel) · \(d.displayName)",
                 min: d.min, max: d.max, defaultValue: d.defaultValue,
-                unit: d.unit, valueLabels: d.valueLabels, domain: d.domain)
+                unit: d.unit, valueLabels: d.valueLabels, domain: d.domain,
+                // ⚠️ AND THE SAME ARGUMENT AGAIN FOR CAPABILITY (P2 Proof #1.1), for a reason
+                // that is one step worse than the domain one: these two default to `false`, so
+                // a forgotten field would not merely mislabel the clone — it would SILENTLY
+                // REVOKE automation from a per-track lane that works today, with no compile
+                // error and no red test anywhere the clone is not inspected. It is the same
+                // engine parameter addressed per track, so its policy cannot differ.
+                automationEligible: d.automationEligible,
+                modulationEligible: d.modulationEligible)
         }
     }
 }

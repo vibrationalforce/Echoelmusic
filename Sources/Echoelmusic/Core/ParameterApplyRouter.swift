@@ -20,6 +20,13 @@
 // Placebo law: the picker offers ONLY keyPaths that are actually bound to a live
 // setter (`automatableDescriptors()`), so a user can never author a lane that moves
 // nothing. Binding happens at app wiring time (later cycle); this type is pure.
+//
+// ⭐ AND SINCE P2 PROOF #1.1 THE PLACEBO LAW IS NO LONGER THE WHOLE RULE. Binding means
+// exactly one thing — "this router knows how to dispatch this key to its real owner" — and
+// says nothing about whether a drawn lane or a body route MAY own it. Those are explicit,
+// deny-by-default capabilities on the descriptor. See the eligibility section at the bottom
+// of this file for the four concepts and why the gate sits at `applyAutomation` rather than
+// inside `applyNormalized`.
 
 import Foundation
 
@@ -132,10 +139,87 @@ public final class ParameterApplyRouter {
     /// Every keyPath that currently has a live setter.
     public var boundKeyPaths: Set<String> { Set(setters.keys) }
 
-    /// The registry descriptors that are ALSO bound to a live setter — i.e. the
-    /// parameters a UI may safely offer for automation (no dead lanes). Registry
-    /// insertion order is preserved so the picker stays stable.
+    // MARK: - Eligibility (P2 Proof #1.1) — four concepts, kept apart
+
+    /// ⭐ THE CONFLATION THIS SECTION REMOVES, stated once so it cannot come back. Until now
+    /// `automatableDescriptors()` meant *registry ∩ bound setter*, and it was read by BOTH the
+    /// automation surface and the app's modulation-registration loop. So `bind(...)` — the only
+    /// way to teach this router how to reach a parameter's real owner at all — silently also
+    /// granted that parameter to drawn automation AND to body routes. Four different facts were
+    /// riding on one predicate:
+    ///
+    ///   REGISTERED            the registry describes it (identity, range, unit)
+    ///   BOUND / DISPATCHABLE  this router knows how to reach its real owner
+    ///   AUTOMATION ELIGIBLE   a drawn lane MAY own it          ← policy, on the descriptor
+    ///   MODULATION ELIGIBLE   a body route MAY own it          ← policy, on the descriptor
+    ///
+    /// Binding now means ONLY the second. The last two are explicit descriptor metadata, deny
+    /// by default, and neither is inferred from `domain`, from the keyPath's spelling, from
+    /// whether a setter happens to exist, or from the order in which the app wires things up.
+
+    /// Whether an AUTOMATION LANE is authorised to drive this keyPath.
+    ///
+    /// ⚠️ A PER-TRACK LANE INHERITS ITS BASE PARAMETER'S ANSWER. `track.<uuid>.<base>` has no
+    /// descriptor of its own — the namespace is resolved at dispatch — so the question is
+    /// forwarded to `<base>`. That is the only answer that keeps the two paths consistent: a
+    /// parameter a global lane may not own must not become ownable by addressing it per track.
+    public func isAutomationEligible(_ keyPath: String) -> Bool {
+        eligibilityDescriptor(for: keyPath)?.automationEligible ?? false
+    }
+
+    /// Whether a MODULATION ROUTE is authorised to drive this keyPath. Same rules as above.
+    public func isModulationEligible(_ keyPath: String) -> Bool {
+        eligibilityDescriptor(for: keyPath)?.modulationEligible ?? false
+    }
+
+    /// The descriptor whose POLICY governs `keyPath` — itself, or, for a per-track keyPath,
+    /// the global base it clones. nil for a keyPath the registry does not describe, which is
+    /// how an unknown key ends up denied rather than defaulted.
+    private func eligibilityDescriptor(for keyPath: String) -> ParameterDescriptor? {
+        if let parsed = PerTrackParameterKeyPath.parse(keyPath) {
+            return registry.descriptor(for: parsed.base)
+        }
+        return registry.descriptor(for: keyPath)
+    }
+
+    /// The AUTOMATION dispatch: apply a normalized lane value only if automation is authorised
+    /// for this keyPath, then go through the ordinary `applyNormalized`. Returns the applied
+    /// real value, or nil — which is the same safe no-op an unbound or unknown key already
+    /// produced, so an unauthorised lane behaves exactly like a lane nobody drew.
+    ///
+    /// ⚠️ THIS IS THE ONLY GATE, AND IT IS HERE RATHER THAN INSIDE `applyNormalized` ON
+    /// PURPOSE. `applyNormalized` / `applyReal` stay the generic canonical dispatch — a direct
+    /// caller that has already decided is still allowed to write any bound parameter, which is
+    /// what makes the path canonical in the first place. Automation is a SOURCE with a policy,
+    /// not a synonym for writing. Putting the check in the generic entry point would have made
+    /// the two ideas one again, in the other direction.
+    @discardableResult
+    public func applyAutomation(_ keyPath: String, _ normalized: Float) -> Float? {
+        guard isAutomationEligible(keyPath) else { return nil }
+        return applyNormalized(keyPath, normalized)
+    }
+
+    /// The registry descriptors an AUTOMATION surface may offer: registered, bound to a live
+    /// setter (the Placebo law — a lane must move something), AND explicitly automation
+    /// eligible. Registry insertion order is preserved so a picker stays stable.
+    ///
+    /// ⚠️ All three conditions are required and none implies another. A descriptor may be
+    /// eligible and unbound (policy says yes, nothing is listening — excluded), or bound and
+    /// ineligible (the router can reach it directly, a lane may not own it — excluded here,
+    /// still dispatchable through `applyNormalized`).
     public func automatableDescriptors() -> [ParameterDescriptor] {
-        registry.all().filter { isBound($0.keyPath) }
+        registry.all().filter { isBound($0.keyPath) && $0.automationEligible }
+    }
+
+    /// The registry descriptors a MODULATION surface may offer — the same three conditions
+    /// against the other capability. Separate from `automatableDescriptors()` because the two
+    /// questions are separate; that they return the same set today is a measurement.
+    ///
+    /// ⭐ THIS IS WHAT RETIRES THE LINE-ORDER POLICY. The app used to keep lighting out of the
+    /// modulation engine by registering destinations BEFORE the lighting bind — correct only
+    /// as long as nobody moved two statements, and invisible in review. The answer no longer
+    /// depends on when this is called.
+    public func modulatableDescriptors() -> [ParameterDescriptor] {
+        registry.all().filter { isBound($0.keyPath) && $0.modulationEligible }
     }
 }

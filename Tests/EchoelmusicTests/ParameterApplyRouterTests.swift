@@ -99,14 +99,20 @@ final class ParameterApplyRouterTests: XCTestCase {
 
     // MARK: - The picker rule: only BOUND descriptors are automatable (no dead lanes)
 
-    func testAutomatableDescriptors_onlyBoundInRegistryOrder() {
+    // P2 Proof #1.1: the set is registry ∩ bound ∩ `automationEligible`. `ddsp.filter.cutoff`
+    // is registry-known and bindable but NOT eligible (it is absent from
+    // `PolySynthVoice.automatableBases`), so binding it no longer offers it — binding means
+    // "dispatchable", never "permitted". `ddsp.amp.level` is eligible and stays.
+    func testAutomatableDescriptors_onlyBoundEligibleInRegistryOrder() {
         let (router, _) = makeRouter()
-        router.bind("ddsp.filter.cutoff") { _ in }
+        router.bind("ddsp.filter.cutoff") { _ in }               // bound, NOT eligible → excluded
         router.bind("ddsp.amp.level") { _ in }
         router.bind("au.unregistered.knob") { _ in }             // bound but not in registry → excluded
         let kps = router.automatableDescriptors().map(\.keyPath)
-        // exactly the two registry-known bound ones, in registry insertion order
-        XCTAssertEqual(kps, ["ddsp.amp.level", "ddsp.filter.cutoff"])
+        XCTAssertEqual(kps, ["ddsp.amp.level"])
+        // …and the ineligible one is still DISPATCHABLE through the generic path.
+        XCTAssertNotNil(router.applyNormalized("ddsp.filter.cutoff", 0.5))
+        XCTAssertNil(router.applyAutomation("ddsp.filter.cutoff", 0.5))
     }
 
     func testAutomatableDescriptors_emptyWhenNothingBound() {

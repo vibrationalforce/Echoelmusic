@@ -22,12 +22,13 @@
 //   3. the clamp is repeated at the binding — `applyReal` BYPASSES the descriptor range on
 //      purpose, so a second clamp would look like safety while the two spellings drift
 //      (claims 6–7);
-//   4. the parameter silently acquires a modulation destination. The app loop directly above
-//      the binding turns EVERY router-bound keyPath into one; binding after it is the whole
-//      reason this parameter is not modulatable, and that ORDER is invisible to review
-//      (claim 10);
+//   4. the parameter silently acquires a control source. BINDING used to be enough: the
+//      router offered every bound keyPath to automation, and the app loop swept that same set
+//      into the modulation matrix — so "the look is not modulatable" was carried by the ORDER
+//      OF TWO STATEMENTS in `EchoelmusicApp`. P2 Proof #1.1 replaced that with eligibility
+//      STATED on the descriptor and ASKED FOR at dispatch (claims 9–15);
 //   5. per-track cloning namespaces it into `track.<uuid>.lighting.look.intensity`, which
-//      would address a lighting rig per audio lane — a category error (claim 11).
+//      would address a lighting rig per audio lane — a category error (claims 16–17).
 //
 // ⚠️ IT FORBIDS NO FUTURE WORK (#364). Nothing here says the look may never be modulated,
 // automated, persisted or given a door. Those are later, DELIBERATE steps, and each one has a
@@ -36,13 +37,16 @@
 // that none of them happens BY ACCIDENT, and that the value has exactly one writer today.
 //
 // ⚠️ HONEST GRADING (§0/§3). No local Swift toolchain — every assertion was transcribed into
-// Python and driven against BOTH trees. On the parent (`cc0c71ed3`) `LightingParameterCatalog`
-// does not exist, so this file does not compile there at all: NO assertion has a verdict on the
-// parent, and that is stated rather than booked as twelve regressions (#486, #488). Claims 1–8
-// and 11 are END-TO-END BEHAVIOUR (§1) — the registry, the router and the store are `public`
-// value/control-plane types the bundle really constructs and drives. Claims 5b, 7b, 9, 10 and
-// 11b are SOURCE-TEXT SCANS, because a wiring ORDER inside `EchoelmusicApp.body` and the
-// absence of a second writer are not observable from a test process.
+// Python and driven against BOTH trees. Against `cc0c71ed3` (before P2 Proof #1)
+// `LightingParameterCatalog` does not exist, so this file does not compile there at all: NO
+// assertion has a verdict on that tree, and that is stated rather than booked as sixteen
+// regressions (#486, #488). Against `b38332a75` (before P2 Proof #1.1) it does compile, and
+// the transcription put NINE claims red there — the ones this repair creates. Most claims are
+// END-TO-END BEHAVIOUR (§1): the registry, the router, the player and the store are `public`
+// value/control-plane types the bundle really constructs and drives, and that is the whole
+// point of replacing a line-order scan with a behavioural one. The SOURCE-TEXT SCANS are the
+// ones asking about a second writer, a persistence root and a call-site count — facts no test
+// process can observe.
 //
 // ⚠️ DEVICE PROBE, OPEN AND NAMED: that the look reads as one continuous creative level on a
 // real rig — and that the default still looks identical to the pre-parameter build — is an eye
@@ -311,35 +315,142 @@ final class TheLightingLookIsACanonicalParameterTests: XCTestCase {
             + "name nothing is bound to. (Comments naming it are stripped and do not count.)")
     }
 
-    // MARK: - 9. The wiring ORDER that keeps the parameter out of the modulation engine
+    // MARK: - 9. ELIGIBILITY, not line order — the P2 Proof #1.1 repair
 
-    /// SOURCE-TEXT SCAN, and the one claim in this file that guards a fact invisible to review.
-    /// The app loop turns every ROUTER-BOUND keyPath into a `ModulationEngine` destination, and
-    /// it reads a snapshot — so binding lighting AFTER the loop is the entire reason claim 8's
-    /// first half holds. Moving one line up would grant a modulation destination nobody asked
-    /// for, and no test of the loop or of the binding alone would notice.
-    func testTheLightingBindingComesAfterTheModulationRegistrationLoop() throws {
-        let code = SourceText.codeOnly(try text(Self.app))
-        let loop = "for descriptor in parameterRouter.automatableDescriptors()"
-        let bind = "parameterRouter.bind(LightingParameterCatalog.lookIntensity)"
+    /// END-TO-END BEHAVIOUR, and it REPLACES a source-order scan that this file used to carry.
+    ///
+    /// ⛔ WHAT THAT SCAN PINNED, AND WHY IT HAD TO GO. It asserted that the lighting binding
+    /// appears AFTER the app's modulation-registration loop, because the loop swept up every
+    /// router-bound keyPath and read a snapshot. The assertion was true and the protection was
+    /// real — and it institutionalised the defect: the policy "the look is not modulatable"
+    /// was carried by the ORDER OF TWO STATEMENTS. A guard that pins line order teaches the
+    /// next session that line order is the mechanism, and it goes green on a tree where the
+    /// mechanism has quietly become something else. Codex named it, and the repair is that
+    /// eligibility is now stated on the descriptor and asked for at dispatch.
+    ///
+    /// ⭐ SO THIS CLAIM PROVES THE ORDER NO LONGER MATTERS, by binding lighting FIRST — the
+    /// arrangement the old guard forbade — and showing the answer is unchanged.
+    func testEligibilityGovernsRegardlessOfBindingOrder() {
+        let store = LightingStore()
+        let registry = EchoelParameterRegistry()
+        let router = ParameterApplyRouter(registry: registry)
 
-        let loopRange = try XCTUnwrap(
-            code.range(of: loop),
-            "ANCHOR MISSING: `\(loop)` is gone from the app. If the modulation registration "
-            + "moved or was rewritten, re-anchor this claim in the same commit (§4) — do not "
-            + "let it pass by finding nothing.")
-        let bindRange = try XCTUnwrap(
-            code.range(of: bind),
-            "ANCHOR MISSING: the lighting parameter is no longer bound in `EchoelmusicApp`.")
+        // Deliberately the "wrong" order: lighting bound BEFORE the audio catalog is even
+        // registered, and long before anything reads the modulatable set.
+        registry.register(LightingParameterCatalog.descriptors)
+        router.bind(LightingParameterCatalog.lookIntensity) { [weak store] in
+            store?.setLookIntensity($0)
+        }
+        registry.register(DDSPParameterCatalog.descriptors)
+        for base in PolySynthVoice.automatableBases { router.bind(base) { _ in } }
 
-        XCTAssertTrue(
-            loopRange.lowerBound < bindRange.lowerBound,
-            "the lighting binding now runs BEFORE the modulation registration loop, so the loop "
-            + "sweeps it up and `\(Self.key)` becomes a modulation destination as a side effect. "
-            + "If that is intended, register the destination EXPLICITLY and say so — a "
-            + "capability nobody asked for should not arrive by line order.")
-        XCTAssertEqual(try Self.occurrencesAcrossSources(bind), 1,
-                       "the lighting parameter is bound more than once.")
+        XCTAssertFalse(
+            router.modulatableDescriptors().map(\.keyPath).contains(Self.key),
+            "binding the lighting parameter EARLY put it into the modulatable set. Eligibility "
+            + "must be a property of the descriptor, not of when the bind happened — that was "
+            + "the whole defect this slice repairs.")
+        XCTAssertFalse(
+            router.automatableDescriptors().map(\.keyPath).contains(Self.key),
+            "binding the lighting parameter EARLY put it into the automatable set.")
+        XCTAssertEqual(
+            router.modulatableDescriptors().map(\.keyPath),
+            PolySynthVoice.automatableBases.filter { base in
+                DDSPParameterCatalog.descriptors.contains { $0.keyPath == base }
+            },
+            "the modulatable set is no longer exactly the eligible AUDIO parameters, in "
+            + "registry order. ⚠️ This is a COUNTERWEIGHT (#343): if it goes red together with "
+            + "the two assertions above, the filter is broken in general; if it goes red ALONE, "
+            + "the audio inventory changed and this expectation follows it.")
+        XCTAssertTrue(router.isBound(Self.key),
+                      "ANCHOR MISSING: the lighting key is not bound in this fixture, so the "
+                      + "two exclusions above would be green for the wrong reason (#367).")
+    }
+
+    /// END-TO-END BEHAVIOUR — the three concepts, told apart on one router.
+    func testRegisteredAndBoundDoNotImplyEligible() {
+        let store = LightingStore()
+        let router = Self.wiredRouter(for: store)
+
+        XCTAssertNotNil(router.applyNormalized(Self.key, 0.25),
+                        "REGISTERED + BOUND must still dispatch: the canonical path is what "
+                        + "this parameter exists to prove, and eligibility must not break it.")
+        XCTAssertEqual(store.lookIntensity, 0.25, accuracy: 1e-6,
+                       "the direct apply no longer reaches the owner.")
+        XCTAssertFalse(router.isAutomationEligible(Self.key),
+                       "the look is automation eligible. It is not — and a lane must not be "
+                       + "able to own a light rig's creative level in this slice.")
+        XCTAssertFalse(router.isModulationEligible(Self.key),
+                       "the look is modulation eligible. It is not.")
+    }
+
+    /// END-TO-END BEHAVIOUR — an `AutomationLane` naming this key cannot move the owner.
+    /// The lane is CONSTRUCTED, not rejected: the schema is untouched and a persisted project
+    /// carrying such a lane still decodes. Only the runtime authorisation is gone.
+    func testAnAutomationLaneCannotMoveTheLightingOwner() {
+        let store = LightingStore()
+        let router = Self.wiredRouter(for: store)
+        let player = AutomationPlayer()
+        player.wire(router: router)
+        player.enabled = true
+
+        player.addPoint(parameter: Self.key, beat: 0, value: 0)
+        player.addPoint(parameter: Self.key, beat: 1, value: 0)
+        for step in 0..<16 { player.applyStep(step) }
+
+        XCTAssertEqual(
+            store.lookIntensity, LightingStore.defaultLookIntensity, accuracy: 1e-6,
+            "an automation lane on `\(Self.key)` moved the owner to \(store.lookIntensity). "
+            + "The lane drew a value of 0, so a dispatch would be unmistakable. Automation is "
+            + "not authorised for this parameter; `AutomationPlayer` must go through "
+            + "`applyAutomation`, which asks the descriptor.")
+        XCTAssertFalse(
+            player.lanes.filter { $0.parameter == Self.key }.isEmpty,
+            "ANCHOR MISSING: the lane was never created, so the assertion above proves nothing "
+            + "(#367). The schema must still ACCEPT this parameter — refusing to store it would "
+            + "be a persistence change, which this slice does not make.")
+    }
+
+    /// END-TO-END BEHAVIOUR — the counterweight that keeps claim 9 honest: the SAME player,
+    /// the SAME router, an ELIGIBLE audio parameter, and the value does arrive.
+    func testAnAutomationLaneStillMovesAnEligibleAudioParameter() {
+        let registry = EchoelParameterRegistry()
+        registry.register(DDSPParameterCatalog.descriptors)
+        let router = ParameterApplyRouter(registry: registry)
+        let base = "ddsp.env.attack"
+        var seen: [Float] = []
+        router.bind(base) { seen.append($0) }
+
+        let player = AutomationPlayer()
+        player.wire(router: router)
+        player.enabled = true
+        player.addPoint(parameter: base, beat: 0, value: 1)
+        player.addPoint(parameter: base, beat: 1, value: 1)
+        for step in 0..<16 { player.applyStep(step) }
+
+        XCTAssertFalse(
+            seen.isEmpty,
+            "an eligible, bound audio parameter received NOTHING from an automation lane. "
+            + "Without this, the lighting exclusion above would be green on a build where "
+            + "automation dispatches nothing at all — the #367 mirror case.")
+    }
+
+    /// END-TO-END BEHAVIOUR — eligibility does not replace a bound owner. A descriptor may say
+    /// yes and still move nothing, because nothing is listening.
+    func testAnEligibleButUnboundDescriptorStillExecutesNothing() {
+        let registry = EchoelParameterRegistry()
+        registry.register(DDSPParameterCatalog.descriptors)
+        let router = ParameterApplyRouter(registry: registry)   // NOTHING bound
+        let base = "ddsp.env.attack"
+
+        XCTAssertTrue(router.isAutomationEligible(base),
+                      "ANCHOR MISSING: `\(base)` is no longer automation eligible, so this "
+                      + "claim has no eligible-but-unbound subject left (#454).")
+        XCTAssertNil(router.applyAutomation(base, 0.5),
+                     "an ELIGIBLE but UNBOUND parameter applied something. Capability is "
+                     + "permission, never a setter — both conditions are required.")
+        XCTAssertTrue(router.automatableDescriptors().isEmpty,
+                      "the automatable set offers an unbound parameter. The Placebo law still "
+                      + "applies on top of eligibility.")
     }
 
     // MARK: - 10. It is not a per-track parameter, and nothing clones it into one
@@ -363,6 +474,50 @@ final class TheLightingLookIsACanonicalParameterTests: XCTestCase {
             + "Read what it is handed: if it is swept over the whole registry it will clone the "
             + "lighting descriptor into `track.<uuid>.\(Self.key)`, addressing a light rig per "
             + "audio lane. Pass an explicitly AUDIO base list, or filter by `domain`.")
+    }
+
+    // MARK: - 11. A per-track ADDRESS cannot launder an eligibility answer
+
+    /// END-TO-END BEHAVIOUR, and it pins the mechanism the previous claim's neighbour relies
+    /// on without ever naming it.
+    ///
+    /// ⭐ WHY THIS IS A CLAIM OF ITS OWN. `ParameterApplyRouter` answers eligibility through
+    /// `PerTrackParameterKeyPath.parse` — a `track.<uuid>.<base>` key is answered by its BASE
+    /// descriptor. That is deliberate and it is load-bearing in the direction that matters:
+    /// `PerTrackParameterKeyPath.descriptors(` has ZERO production call sites (claim 10), so a
+    /// per-track key reaching the router today resolves against NOTHING unless the base is
+    /// consulted. Resolve by the raw key instead and every per-track lane silently becomes
+    /// ineligible — and in the other direction, a future clone that hard-codes `true` could
+    /// not grant what its base denies.
+    ///
+    /// ⚠️ BOTH HALVES ARE REQUIRED (#367). The denial half alone is green on a router that
+    /// resolves nothing at all, because "no descriptor" also answers `false`.
+    func testAPerTrackAddressResolvesThroughItsBaseDescriptor() {
+        let registry = EchoelParameterRegistry()
+        registry.register(DDSPParameterCatalog.descriptors)
+        registry.register(LightingParameterCatalog.descriptors)
+        let router = ParameterApplyRouter(registry: registry)
+        let lane = UUID()
+
+        let eligibleBase = PolySynthVoice.automatableBases.first ?? "ddsp.env.attack"
+        let perTrackAudio = PerTrackParameterKeyPath.make(laneID: lane, base: eligibleBase)
+        XCTAssertTrue(
+            router.isAutomationEligible(perTrackAudio),
+            "`\(perTrackAudio)` is not automation eligible, although its base `\(eligibleBase)` "
+            + "is. No clone of it is registered — nothing registers per-track descriptors in "
+            + "production — so the only way to answer is through the BASE. A router that looks "
+            + "the raw key up instead answers `false` for every per-track lane in the app, "
+            + "silently, with no compile error and no lane that refuses out loud.")
+
+        let perTrackLook = PerTrackParameterKeyPath.make(laneID: lane, base: Self.key)
+        XCTAssertFalse(
+            router.isAutomationEligible(perTrackLook),
+            "`\(Self.key)` is denied automation, but addressing it PER TRACK grants it. A "
+            + "key namespace is not a capability decision — whatever answers for the base must "
+            + "answer for every address of it, or the denial is one string away from useless.")
+        XCTAssertFalse(
+            router.isModulationEligible(perTrackLook),
+            "the same, for modulation: a per-track address must not grant what the base denies.")
     }
 
     // MARK: - Helpers

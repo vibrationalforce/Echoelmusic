@@ -11,8 +11,10 @@
 //
 // THE JOIN IS A PROJECTION, NOT A SECOND LIST (#416). `all` is now
 // `[tempo] + PolySynthVoice.automatableBases`, and the REGISTRATIONS in `EchoelmusicApp` are
-// derived at runtime from `ParameterApplyRouter.automatableDescriptors()` — registry ∩ bound
-// setter. So the offered set cannot drift from the movable set by editing one of them.
+// derived at runtime from `ParameterApplyRouter.modulatableDescriptors()` — registry ∩ bound
+// setter ∩ `modulationEligible` since P2 Proof #1.1. So the offered set cannot drift from the
+// movable set by editing one of them, and a parameter made merely DISPATCHABLE does not join
+// the matrix as a side effect of being bound.
 //
 // ⚠️ THE HAZARD THIS GUARD EXISTS FOR IS CLAIM 4, AND IT IS NOT OBVIOUS FROM THE DIFF. The
 // tempo keeps a BESPOKE handler: it refuses to move while the BPM lock is on, octave-folds its
@@ -114,9 +116,16 @@ final class TheMatrixReachesEveryAutomatableParameterTests: XCTestCase {
             + "lock/fold/glide INTO its setter first, then retire this assertion.")
     }
 
-    /// Claim 5 — ORDER, and it fails silently. `automatableDescriptors()` is registry ∩ bound
-    /// setter, so a loop that runs BEFORE `bindAutomatable` iterates an empty sequence:
-    /// zero registrations, zero errors, a full picker and not one working row.
+    /// Claim 5 — ORDER, and it fails silently. The registration loop reads a SNAPSHOT of the
+    /// router, so a loop that runs BEFORE `bindAutomatable` iterates an empty sequence: zero
+    /// registrations, zero errors, a full picker and not one working row.
+    ///
+    /// ⚠️ THIS IS THE ORDER THAT IS STILL LOAD-BEARING, AND IT IS THE OPPOSITE OF THE ONE
+    /// P2 PROOF #1.1 RETIRED. That slice removed order as a way to WITHHOLD a capability
+    /// (lighting was kept out of modulation by being bound after the loop — now it is kept out
+    /// by saying so on its descriptor). It did not, and could not, remove order as a
+    /// precondition for GRANTING one: a filter over an empty set is empty whatever it filters
+    /// on. Bind first, then register — that has always been the requirement and still is.
     func testTheRegistrationLoopRunsAfterTheSettersAreBound() throws {
         let src = SourceText.codeOnly(try text(Self.app))
         guard let bind = src.range(of: "polyVoice.bindAutomatable(into: parameterRouter)") else {
@@ -124,16 +133,18 @@ final class TheMatrixReachesEveryAutomatableParameterTests: XCTestCase {
                            + "nothing binds the synth setters, so every synth row in the matrix "
                            + "is dead (#454: a missing anchor is a finding, not a pass).")
         }
-        guard let loop = src.range(of: "parameterRouter.automatableDescriptors()") else {
-            return XCTFail("`EchoelmusicApp` never reads `automatableDescriptors()` — the synth "
+        guard let loop = src.range(of: "parameterRouter.modulatableDescriptors()") else {
+            return XCTFail("`EchoelmusicApp` never reads `modulatableDescriptors()` — the synth "
                            + "keys are OFFERED by `ModDestinationKey.all` and REGISTERED by "
-                           + "nothing, so every one of them is a row that moves no audio.")
+                           + "nothing, so every one of them is a row that moves no audio. "
+                           + "(P2 Proof #1.1 renamed this read from `automatableDescriptors()`; "
+                           + "if it moved again, re-anchor here in the same commit, §4.)")
         }
         XCTAssertTrue(bind.lowerBound < loop.lowerBound,
-                      "the registration loop reads `automatableDescriptors()` BEFORE "
+                      "the registration loop reads `modulatableDescriptors()` BEFORE "
                       + "`bindAutomatable` has bound the setters. That set is registry ∩ bound "
-                      + "setter, so it is empty there — the loop registers nothing and says so "
-                      + "in no log. Move the loop below the bind.")
+                      + "setter ∩ eligible, so it is empty there — the loop registers nothing "
+                      + "and says so in no log. Move the loop below the bind.")
     }
 
     /// Claim 6 — COUNTERWEIGHT: the card's first-run copy moved with the list (#456). Nothing in

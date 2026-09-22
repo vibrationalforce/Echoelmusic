@@ -67,6 +67,15 @@ final class TheAutomatableSetIsWhatMovesAudioTests: XCTestCase {
     /// runtime signal at all — which is why this is claim 1.
     func testEveryAutomatableBaseIsARealRegistryKeyPath() {
         let registry = EchoelParameterRegistry()
+        // ⛔ THE CATALOG REGISTRATION WAS MISSING HERE, AND IN CLAIMS 4 AND 5 (found while
+        // re-reading this file for P2 Proof #1.1). `EchoelParameterRegistry()` starts EMPTY —
+        // `init() {}`, `descriptors: [] ` — so `known` was the empty set, every base counted as
+        // unknown, and this assertion was RED on a correct tree. Invisible for the §5 reason:
+        // the pipeline reports `failure` on every push (#396) and the job log is a `tail -200`,
+        // so a genuinely red guard reads exactly like the host dying. This is the §3 blind spot
+        // named in `Tests/CISmoke/CLAUDE.md`: delta grading compares parent with worktree and
+        // an assertion red on BOTH produces no delta.
+        registry.register(DDSPParameterCatalog.descriptors)
         let known = Set(registry.all().map(\.keyPath))
         let unknown = PolySynthVoice.automatableBases.filter { !known.contains($0) }
         XCTAssertTrue(unknown.isEmpty, """
@@ -129,6 +138,7 @@ final class TheAutomatableSetIsWhatMovesAudioTests: XCTestCase {
     /// mode is indistinguishable, from inside the app, from a lane the user has not drawn yet.
     func testAnUnboundRegistryKeyPathAppliesNothing() {
         let registry = EchoelParameterRegistry()
+        registry.register(DDSPParameterCatalog.descriptors)   // see claim 1 — it was missing
         let router = ParameterApplyRouter(registry: registry)
         let unbound = registry.all().map(\.keyPath)
             .first { !PolySynthVoice.automatableBases.contains($0) }
@@ -156,13 +166,14 @@ final class TheAutomatableSetIsWhatMovesAudioTests: XCTestCase {
 
     // MARK: - claim 5 (COUNTERWEIGHT) — the honest set is the intersection, and it is non-empty
 
-    func testTheAutomatableDescriptorsAreExactlyTheBoundOnes() {
+    func testTheAutomatableDescriptorsAreExactlyTheBoundEligibleOnes() {
         let registry = EchoelParameterRegistry()
+        registry.register(DDSPParameterCatalog.descriptors)   // see claim 1 — it was missing
         let router = ParameterApplyRouter(registry: registry)
         XCTAssertTrue(router.automatableDescriptors().isEmpty, """
-            `automatableDescriptors()` returned parameters on a router with nothing bound. It is \
-            defined as registry ∩ bound, and a UI builds its automation picker from it — a \
-            non-empty answer here means a picker can offer a parameter with no live setter.
+            `automatableDescriptors()` returned parameters on a router with nothing bound. A UI \
+            builds its automation picker from it — a non-empty answer here means a picker can \
+            offer a parameter with no live setter.
             """)
         var seen: [Float] = []
         router.bind("ddsp.env.attack") { seen.append($0) }
@@ -171,6 +182,20 @@ final class TheAutomatableSetIsWhatMovesAudioTests: XCTestCase {
             After binding exactly one keyPath the honest set is \(offered) rather than just \
             that one. Registry insertion order is preserved on purpose so a picker stays stable; \
             a different answer means either the filter or that ordering moved.
+            """)
+        // ⭐ P2 PROOF #1.1 — BINDING IS NOT PERMISSION. `ddsp.filter.cutoff` is described and
+        // has no automation eligibility (it is not in `automatableBases`), so binding it makes
+        // it DISPATCHABLE and nothing more. Before this slice the same two lines would have put
+        // it in the picker, which is exactly how a lighting parameter acquired automation
+        // access by being wired at all.
+        router.bind("ddsp.filter.cutoff") { _ in }
+        XCTAssertEqual(router.automatableDescriptors().map(\.keyPath), ["ddsp.env.attack"], """
+            binding an INELIGIBLE parameter put it into the automatable set. Registered + bound \
+            must not imply automatable — that conflation is the whole subject of this repair.
+            """)
+        XCTAssertNotNil(router.applyNormalized("ddsp.filter.cutoff", 0.5), """
+            the ineligible parameter also stopped being DISPATCHABLE. The generic canonical \
+            path must keep working for anything bound; only automation asks about policy.
             """)
         XCTAssertNotNil(router.applyNormalized("ddsp.env.attack", 0.5), """
             A keyPath that IS bound reported no applied value. Claims 1 and 4 only mean \

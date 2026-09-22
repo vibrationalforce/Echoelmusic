@@ -372,8 +372,10 @@ struct EchoelmusicApp: App {
         let paramRegistry = EchoelParameterRegistry()
         paramRegistry.register(DDSPParameterCatalog.descriptors)
         // P2 Proof #1 — the FIRST non-audio descriptor in this registry. Registration alone
-        // moves nothing: `automatableDescriptors()` is registry ∩ bound setter, so until the
-        // router binding below exists this descriptor is queryable and inert.
+        // moves nothing: a descriptor is queryable, and reaching a real owner additionally
+        // needs a router binding. Since #1.1 the descriptor ALSO carries its automation and
+        // modulation eligibility, both denied here, so registering it cannot grant a
+        // capability no matter what is bound afterwards or in what order.
         paramRegistry.register(LightingParameterCatalog.descriptors)
         _parameterRouter = State(wrappedValue: ParameterApplyRouter(registry: paramRegistry))
         EchoelCrashLog.breadcrumb("init c: bio publishers")
@@ -1312,14 +1314,14 @@ struct EchoelmusicApp: App {
                 // `parameterRouter` becomes automatable by name. Bio-contested params
                 // are excluded in bindAutomatable (they need automation×bio composition).
                 polyVoice.bindAutomatable(into: parameterRouter)
-                // #1391 — THE SAME SETTERS, NOW ALSO REACHABLE FROM THE BODY. Everything the
-                // router just bound becomes a modulation DESTINATION, so the matrix offers the
-                // tempo plus eleven sound parameters instead of the tempo alone. Two properties
-                // make this the cheapest possible slice:
-                //   · it is derived at RUNTIME from what the router actually bound
-                //     (`automatableDescriptors()` = registry ∩ live setter), so a key can never
-                //     be offered that moves nothing — the Placebo law of `ParameterApplyRouter`,
-                //     inherited rather than re-stated;
+                // #1391 — THE SAME SETTERS, NOW ALSO REACHABLE FROM THE BODY. The matrix offers
+                // the tempo plus eleven sound parameters instead of the tempo alone. Two
+                // properties make this the cheapest possible slice:
+                //   · it is derived at RUNTIME from what the router actually bound AND from what
+                //     each descriptor explicitly permits (`modulatableDescriptors()` = registry
+                //     ∩ live setter ∩ `modulationEligible`), so a key can never be offered that
+                //     moves nothing — the Placebo law of `ParameterApplyRouter`, inherited
+                //     rather than re-stated — and never one that was merely made dispatchable;
                 //   · the default matrix is EMPTY (#541), so with no route authored this is a
                 //     zero-behaviour-change wiring step, exactly like `start(subscribing:)` was.
                 // The value arrives NORMALIZED 0…1 from the engine and `applyNormalized`
@@ -1328,7 +1330,7 @@ struct EchoelmusicApp: App {
                 // identical values. Control plane, ~1 Hz, @MainActor: each bound setter performs
                 // the plain atomic-width Float store `SynthPatch.apply(to:)` already performs,
                 // so nothing new reaches the render thread.
-                for descriptor in parameterRouter.automatableDescriptors() {
+                for descriptor in parameterRouter.modulatableDescriptors() {
                     let keyPath = descriptor.keyPath
                     modulationEngine.register(keyPath) { [weak parameterRouter] value in
                         // `_ =` rather than leaning on `@discardableResult`: a single-expression
@@ -1345,16 +1347,16 @@ struct EchoelmusicApp: App {
                 // and `grandMaster`/`blackout` stay operator-and-safety controls that no
                 // parameter may move.
                 //
-                // ⚠️ THE POSITION OF THIS LINE IS LOAD-BEARING, and it is the one thing a
-                // future edit here can get wrong invisibly. The loop directly above turns
-                // EVERY router-bound keyPath into a `ModulationEngine` destination. Binding
-                // lighting BEFORE it would hand this slice a modulation destination nobody
-                // asked for — P2 Proof #1 is descriptor + registration + binding + owner
-                // mutation, and NOT modulation. Binding AFTER the loop is what keeps that
-                // true, because the loop reads a snapshot. Making the look modulatable is a
-                // later, deliberate step: move this line above the loop, or register the
-                // destination explicitly. `TheLightingLookIsACanonicalParameterTests` pins
-                // the order so the move cannot happen by accident.
+                // ⛔ THE POSITION OF THIS LINE WAS LOAD-BEARING UNTIL P2 PROOF #1.1, AND THAT
+                // WAS THE DEFECT, not the safeguard. The loop above used to sweep up EVERY
+                // router-bound keyPath, so lighting stayed out of the modulation engine only
+                // because this statement came second — a policy carried by statement order,
+                // invisible in review, and destroyed by any tidy-up that moved two lines.
+                // Eligibility is now explicit on the descriptor and the loop filters on it, so
+                // this bind may sit anywhere: `lighting.look.intensity` is denied because it
+                // SAYS it is denied. Making the look modulatable is a later, deliberate step,
+                // and it is now a one-word edit at the descriptor rather than a silent
+                // consequence of line order.
                 parameterRouter.bind(LightingParameterCatalog.lookIntensity) { [weak lighting] value in
                     lighting?.setLookIntensity(value)
                 }
