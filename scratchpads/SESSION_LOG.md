@@ -38319,3 +38319,81 @@ Nicht geraeteverifiziert; compile-verifiziert erst mit den Gates.
   Fail-closed wie entworfen; die Doku-Drift bleibt die bekannte #697-Lage.
 · `slow type-check warns`: 7, alle vorbestehend (Composer-Velocity, LightRigSeesThe
   Simulator, ScopeTrigger). Keiner aus dieser Scheibe (#933e).
+
+## 2026-09-22 — P2 Proof #1.1: Binden heisst erreichbar, nicht automatisierbar (`4879829ec`)
+
+Codex hatte P2 Proof #1 mit EINEM Befund blockiert, und der Befund war richtig:
+`automatableDescriptors()` bedeutete *Registry ∩ gebundener Setter*, gelesen von
+BEIDEN Seiten — der Automations-Flaeche UND der Modulations-Registrierungsschleife der
+App. Also hat `bind(...)`, der einzige Weg, dem kanonischen Router ueberhaupt
+beizubringen wie er den echten Besitzer erreicht, still auch gezeichnete Automation
+und Koerper-Routen mitgewaehrt. Das Licht blieb nur deshalb unmodulierbar, weil seine
+Bind-Zeile NACH der Schleife stand: eine Richtlinie, getragen von der Reihenfolge
+zweier Anweisungen.
+
+### Vier Begriffe, jeder einzeln gefragt
+
+    REGISTRIERT              die Registry beschreibt es
+    GEBUNDEN / ERREICHBAR    der Router weiss, wie er den echten Besitzer erreicht
+    AUTOMATIONS-BERECHTIGT   eine gezeichnete Spur DARF es besitzen   ← am Descriptor
+    MODULATIONS-BERECHTIGT   eine Koerper-Route DARF es besitzen      ← am Descriptor
+
+Beide Berechtigungen sind DENY BY DEFAULT. Keine wird aus `domain` abgeleitet, aus der
+Schreibweise des keyPath, aus der Existenz eines Setters oder aus der Verdrahtungs-
+Reihenfolge. `if domain == .audio` kommt auf dem ganzen Pfad NICHT vor — das haette
+den heutigen Bestand zum Gesetz gemacht und legitime spaetere Licht-Automation,
+Visual-Modulation und Raum-Automation blockiert.
+
+### Wo das Gate sitzt, und warum nicht eine Ebene tiefer
+
+In `ParameterApplyRouter.applyAutomation`, NICHT in `applyNormalized`. Der generische
+Eingang bleibt generisch — wer direkt aufruft und bereits entschieden hat, darf
+weiterhin jeden gebundenen Parameter schreiben, und genau das macht den Pfad
+kanonisch. Automation ist eine QUELLE mit einer Richtlinie, kein Synonym fuer
+Schreiben. Beide freien keyPath-Stellen in `AutomationPlayer` gehen durch das Gate;
+ein Gate an einer von zwei Stellen ist kein Gate.
+
+### Die DDSP-Berechtigung ist eine PROJEKTION (#416)
+
+`PolySynthVoice.automatableBases` IST bereits die Antwort dieses Builds auf „welche
+Parameter darf eine Steuerquelle besitzen"; `ModDestinationKey.all` liest dieselbe
+Liste aus derselben Datei. Die elf Namen ein drittes Mal zu schreiben waere die Kopie,
+die verrottet. GEMESSEN statt behauptet: die elf gebundenen DDSP-Parameter sind exakt
+die elf dieser Liste, also sind die automatisierbare und die modulierbare Menge
+identisch zu vorher, in Registry-Reihenfolge. Die vier Katalog-Parameter ausserhalb
+haben keine Router-Bindung — deny-by-default kostet nichts, keine Migration noetig.
+
+### Der abgelaufene Waechter ist ERSETZT, nicht behalten
+
+Der Scan, der „die Licht-Bindung kommt nach der Modulations-Schleife" festnagelte,
+hat den Defekt institutionalisiert. Sein Ersatz bindet das Licht ZUERST — die
+Anordnung, die der alte Waechter verbot — und zeigt, dass die Antwort unveraendert
+ist. Ausserdem neu: ein per-track ADRESSIERTER Schluessel wird ueber seinen BASIS-
+Descriptor beantwortet, in beide Richtungen gepinnt (sonst waere die Verweigerung
+eine Zeichenkette weit von nutzlos entfernt).
+
+### Ein vorbestehendes ROT im selben Commit repariert (§3-Blindfleck)
+
+`TheAutomatableSetIsWhatMovesAudioTests` baute in drei Anspruechen eine
+`EchoelParameterRegistry()` OHNE `register(DDSPParameterCatalog.descriptors)`. Die
+Registry startet leer, also war Anspruch 1 vakuum-gruen bzw. rot je nach Lesart und
+zaehlte jede Basis als unbekannt. Delta-Benotung sieht so etwas nie — es ist auf
+beiden Baeumen rot (§3).
+
+### Benotung
+
+§0-Transkription ueber BEIDE Baeume: **21/21 Worktree, 11/21 Parent** (`b38332a75`) —
+zehn Regressionen, exakt die Tatsachen, die diese Scheibe schafft. Elf #367-Mutanten
+landen jeweils auf genau den erwarteten Anspruechen (Baseline 16/16). Alle zehn
+stehenden Checker: Exit 0. `CLAUDE.md` unberuehrt (146 422 B).
+
+### Wieder berichtet, nicht hier repariert
+
+Der `ParameterDescriptor`-Decoder faellt bei unbekannter oder fehlender `domain`
+weiter auf `.audio` zurueck. Heute sicher (nichts in `Sources/` kodiert oder dekodiert
+einen Descriptor), MUSS aber repariert sein, bevor Descriptoren persistiert, ueber
+Netz getragen oder als Richtlinie gelesen werden.
+
+### Offen
+
+Geraeteproben unveraendert offen. Nicht geraeteverifiziert.
