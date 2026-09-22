@@ -37839,3 +37839,84 @@ nichts Verwertbares (#396). Zehn stehende Pruefer: alle exit 0.
 **Nicht geraeteverifiziert, und es ist keine geschuldet:** ein Feld, das kein Verbraucher
 liest, kann nicht aendern, was der Founder hoert. **Kein Nicht-Audio-Parameter registriert**
 — das ist ausdruecklich die NAECHSTE Scheibe und gehoert dem Founder.
+
+## 2026-09-22 — Lighting Creative State: die Ownership-Seam (3ebeef787) + #1444 Compile-Fix (4edb7d111)
+
+**FOUNDER-ENTSCHEIDUNG, woertlich umgesetzt und nicht weiter.** „Der naechste
+Claude-Code-Slice sollte dann aber nur den LightingStore + lookIntensity + Konsum durch
+beide Sender bauen und das bisherige Verhalten bei 1.0 beweisen. Noch kein
+ParameterDescriptor, noch keine Modulation, noch keine UI. Erst die Ownership-Seam."
+Genau das ist gebaut: `Core/LightingStore.swift` (neu), beide Sender verbrauchen, App
+haengt an, ein Waechter mit zwoelf Anspruechen. **Null** Descriptor, **null** Registry,
+**null** `ModDestinationKey`, **null** Persistenz, **null** `.environment`.
+
+**Die Kette, wie der Founder sie festgelegt hat:**
+
+    bio/music -> generated target -> x lookIntensity -> grandMaster
+              -> blackout -> FlashGuard -> Art-Net / sACN
+
+`grandMaster` bleibt Operator-Kontrolle und ist KEIN P2-Ziel; `blackout` bleibt die
+absolute Sicherheits-Ueberschreibung und kurzschliesst zweimal (`masteredDimmer` UND
+`FlashGuard.slewedDimmer`). Default 1.0 ist ein EXAKTES No-op.
+
+**Drei Entscheidungen, die im Code begruendet stehen, weil sie sonst wie Willkuer aussehen:**
+1. Die Stufe kann nur DAEMPFEN (beide Faktoren in 0…1). Kein Stil-Limit: eine Stufe, die
+   die Leuchtdichte nicht anheben kann, kann auch die Leuchtdichte-GESCHWINDIGKEIT nicht
+   anheben, die FlashGuard flussabwaerts begrenzt — die Blitz-Garantie ueberlebt das
+   Einfuegen, ohne neu hergeleitet zu werden.
+2. Ein nicht-endlicher KREATIV-Pegel faellt auf die IDENTITAET zurueck, bewusst
+   gegenlaeufig zu `FloatingPointClamp.clamped(to:)`. Ein Bio-Wert muss leise scheitern;
+   ein kreativer Multiplikator ohne gueltige Anweisung darf ein Rig nicht mitten in der
+   Show auf einen schlechten Frame hin schwarz schalten. Ein nicht-endlicher GENERIERTER
+   Zielwert faellt weiterhin auf 0.
+3. Der Besitzer klammert beim SCHREIBEN (`private(set)` + `setLookIntensity`), weil
+   `ParameterApplyRouter.applyReal` die Descriptor-Klammer UMGEHT — und dieser Wert
+   erreicht eine physische Leuchte.
+
+**Die stille Haelfte der Sender-Aenderung.** `lastTarget` cached weiter den GENERIERTEN
+Wert. Der Halte-Arm betritt diese Zeile bei stehender Quelle JEDEN Tick, also haette ein
+Cachen des skalierten Werts den Look pro Durchlauf erneut einmultipliziert und ein
+leuchtendes Rig allmaehlich auf null gefadet — ohne Fehler, nur auf der Buehne. Der
+Send-Vorbehalt bekam zusaetzlich seinen eigenen kreativen Anker (`lookMoved` /
+`lastSentLookIntensity`), sonst erreichte eine kreative Bewegung bei stehender Quelle nie
+die Leitung.
+
+**#1444 — DIE SEAM WAR IM ERSTEN ANLAUF ROT, an EINEM Zeichen.**
+`Xcode Compile Check` (Lauf 35730937495) meldete GENAU EINE Diagnose mit Repo-Datei:
+
+    Sources/Echoelmusic/Core/LightingStore.swift:70:52: error: covariant 'Self'
+    type cannot be referenced from a stored property initializer
+
+Die „(3 failures)" im Log sind die kaskadierenden Build-Kommandos EINER Ursache (#689:
+Ursachen zaehlen, nicht Fehlerzeilen) — 1 `error:`, 0 `❌`, alles uebrige sind
+Alt-Warnungen in `SingleExport.swift` und `SubBassVoice.swift`, die diesen Zweig
+vordatieren. Reparatur: `Self.defaultLookIntensity` -> `LightingStore.defaultLookIntensity`.
+Die beiden Sender schrieben den Typnamen schon, deshalb kompilierten sie.
+
+⭐ **GESETZ, jetzt als Zeile in der Build-Fehler-Tabelle von CLAUDE.md:** Swift verbietet
+ein kovariantes `Self` im Initialisierer einer GESPEICHERTEN Eigenschaft, auch auf einer
+`final class` — im METHODENRUMPF ist dieselbe Schreibweise erlaubt. Beide Formen sitzen
+hier wenige Zeilen auseinander in DERSELBEN Datei, und nur eine ist ein Build-Fehler.
+**Eine §0-Transkription kann das nicht sehen** — sie benotet den INHALT eines Waechters
+gegen beide Baeume und fuehrt keinen Typpruefer aus. Nur ein Gate beantwortet diese Frage.
+Die Zeile nennt bewusst BEIDE Haelften: eine Zeile, die nur den Fehler nennt, laese sich
+als Verbot von `Self.` und faerbte korrekte Arbeit rot (#364). `wc -c CLAUDE.md` = 146.422,
+Kopfraum 3.578 B unter der 150.000-B-Decke.
+
+**Gates, Schritt-Ebene (4edb7d111):** Xcode Compile Check Lauf 35732495317 conclusion
+**success** — das Gate, das 3ebeef787 rot gemacht hat, ist gruen. CI/CD Lauf 35732495296,
+Job 106761609193, **Schritt 9 „Build for Testing" success** (13:18:39–13:22:01Z, 3m22s) —
+das blockierende Buendel samt neuem Waechter kompiliert. „Run Tests" sagt wie auf jedem
+Push nichts (#396); Ausfuehrung bleibt unbelegt (#445/#807). Zehn stehende Pruefer: alle
+exit 0, `foreign-needles.py` eigens wegen der CLAUDE.md-Aenderung (#1191).
+
+**NICHT geraeteverifiziert, und eine Probe ist geschuldet und im Waechter-Kopf benannt:**
+mit angeschlossenem Art-Net- oder sACN-Rig muessen ein Take vor und einer nach diesem Build
+beim Default-Look ununterscheidbar sein. [NEEDS-FOUNDER-VERIFY]
+
+**Naechster Schritt gehoert nicht mir:** der Founder hat die Reihenfolge gesetzt — „Danach
+Codex-Review. Und erst danach wird `lighting.look.intensity` unser tatsaechlicher P2 Proof
+#1." Descriptor, Registry-Registrierung und Router-Bindung bleiben ungebaut, bis das Review
+durch ist. Offen und bewusst zurueckgestellt: eine Register-Zeile in CLAUDE.md fuer
+`LightingStore` (ein lebender Laufzeit-Besitzer ohne Schreiber — die #1250-Lage vor der
+Tuer), am besten im selben Commit wie die Parameter-Registrierung.
