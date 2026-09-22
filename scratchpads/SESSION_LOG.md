@@ -38593,3 +38593,104 @@ zum Defekt.
 **Offen und unverändert:** die Geräteprobe (Posten 7–13 an `WorkstationView`, eine an
 `ClipKind`) und der berichtete, NICHT reparierte Befund, dass kein Produktionspfad eine
 `TimelineLane` anlegt — die Tür kann bis dahin nur „Add an audio track first." melden.
+
+## 2026-09-22 — Phase C1/E1: der Tonart-Schätzer bekommt einen Erzeuger (`3121e81e3`, `c8b1c5c63`)
+
+**Phase C fragte falsch herum.** Der Auftrag lautete, ob ein geteilter musikalischer
+Kontextwert ohne eine zweite Session-Wahrheit einführbar ist. Gemessene Antwort: die WERTE
+gibt es alle (`MusicalKey`, `Scale`, `TuningSystem`, `DetectedTuning`), den BESITZER auch
+(`SessionContext`, persistiert unter `echoel.keyRoot`/`keyScale`/`a4Hz`), und `MusicalFrame`
+projiziert Root/Scale/Tempo schon. **Gefehlt hat der ERZEUGER, nicht der Wert** — ein neuer
+Wert wäre genau die tote Abstraktion gewesen, die der Auftrag verbietet.
+
+**#C1** nahm zurück, dass `TuningDetector`s Kopf seinen Erzeuger mit
+`MicrophoneManager.pitch / .frequency` benannte — gelöscht mit #1302, und zwar STRUKTURELL
+(`RecordRouteOwner` ist ein unbewohntes Enum). Ein Leser hätte geschlossen, der Typ warte auf
+ein Mikrofon, also auf eine Founder-Entscheidung, während sein natürlicher Erzeuger heute eine
+importierte Datei ist.
+
+**#E1 ist der Erzeuger — und der eigentliche Fund ist ein Gesetz über das Waisen-Register:**
+`DSP/PitchTracker` (YIN) und `Core/TuningDetector` (Krumhansl–Kessler) waren BEIDE monatelang
+aufruferlos und sind die **zwei HÄLFTEN EINER Fähigkeit**; YIN liefert exakt das `[Double]`,
+das `analyze(frequencies:)` frisst. Dazwischen fehlte nur das Lesen von PCM-Fenstern.
+**Das Register kann das nicht sehen, weil es je Eintrag fragt „wer ruft DAS hier?".** Bei
+einem Waisen-Eintrag also auch fragen, ob ein ANDERER Eintrag sein fehlendes Stück ist.
+
+`Sequencer/AudioKeyAnalysis` ist reine Fenster-Arithmetik plus EIN Decoder-Sprung. Vier
+Messungen, die die Umsetzung geändert haben: die Fenstergröße ist eine VORBEDINGUNG von
+`PitchTracker.detect` (ein Literal liefert oberhalb ~327 kHz an JEDER Position nil, ohne
+Fehler und ohne Log); die erste Klammer 16 384 brach genau so und ist 32 768; die Fenster
+dürfen nicht ÜBERLAPPEN, und das ist Korrektheit statt Effizienz (das Pitch-Class-Histogramm
+gewichtet doppelt gelesenes Audio doppelt); und `MediaLibrary.resolveRef` gehört nicht an die
+Tür — `TheWorkstationImportsAudioTests` verbot der Ansicht den Namen, und **der Wächter hatte
+in der SACHE recht** (bis zu fünf `FileManager.fileExists` auf dem Main Actor), also wurde der
+ENTWURF geändert, nicht der Wächter: `AudioImport.Landing` meldet jetzt `managedURL`.
+
+**Es schreibt nichts.** `SessionContext` bleibt der EINE Besitzer der drei Schlüssel.
+Erkennen berichtet, der Nutzer entscheidet — ein stilles Umstimmen wäre die #164/#227-Form.
+
+**Gates:** `3121e81e3` Compile Check success, Build for Testing success, Run Tests = #396-Form
+(0 Failures, 0 Skips, 168 Tests im Fenster; die Suite selbst NICHT im Fenster → #445
+„kompiliert nachweislich, Ausführung unbelegt"). `c8b1c5c63` Compile Check success —
+**Build for Testing ROT**, siehe der nächste Eintrag.
+
+## 2026-09-22 — #E2: ein Array-Literal ohne Typ hat das Testbündel getötet (`84b9cb92d`)
+
+`** TEST BUILD FAILED **`, drei `error:`-Zeilen, alle in `TheDetectedTuningHasAProducerTests`,
+alle EINE Ursache (#689). Die Zeile:
+
+    for frameCount in [Int64(window) * 2, 100_000, 5_000_000, 44_100 * 600]
+
+Ein Konvertierungsausdruck neben drei blanken Literalen, ohne Annotation: die Inferenz fiel
+auf `[Any]` zurück, `frameCount` war `Any`, und die zwei Folgefehler (`Set(starts)`, ein `+`)
+waren die Kaskade. **Zehn stehende Checker waren sauber und hatten recht damit** — sie lesen
+Nadeln als DATEN, und hier gibt es keine Nadel. Die §0-Transkription war vorher und nachher
+16/16 grün: sie benotet, was eine Behauptung SAGT, nie, wozu das Swift darum type-checkt.
+**Dritter Vertreter der „fünften Form" in `Tests/CISmoke/CLAUDE.md` §4** (nach #1280 Escapes
+und #1337 `@testable import`) und der erste, der weder lexikalisch noch ein Import ist.
+
+⛔ **Meine erste Fassung der Lehre war zu WEIT, und die Messung hat sie vor dem Festsetzen
+gefangen.** Sie sagte: annotiere, sobald ein Element ein Call/Konvertierung/Operator ist.
+Über 939 Dateien kommt diese Form **85×** vor — und **jede kompiliert**. Eine Regel, die 85
+korrekte Stellen verurteilt, ist #364 in Prosa. Was das gescheiterte Literal als EINZIGES
+hatte, ist ARITHMETIK (`Int64(window) * 2`, `44_100 * 600`): davon **null** andere
+Vorkommen. Also die enge Gewohnheit — und **kein Checker**, weil er auf der weiten Form 85×
+Fehlalarm wäre und auf der engen nur auf seinem eigenen einzigen Positiv feuern würde, die
+#937-Falle.
+
+**Ein Datenpunkt, als solcher notiert:** derselbe Compile druckte 327 ms / 361 ms
+slow-type-check-Warnungen auf genau diesem Ausdruck. Ob das allgemein vorausgeht, ist
+UNGEMESSEN. Beide Warnungen waren meine und sind weg (#933d).
+
+**Der Auto-Merge hat getan, wofür er da ist** — erstmals hier gemessen: `main` blieb auf
+`3121e81e3`, `c8b1c5c63` wurde NICHT gemerged, weil #1405 auf einen grünen
+`Build for Testing` wartet. Gate-Lesung `84b9cb92d`: Build for Testing **success** (3 m 50 s).
+
+## 2026-09-22 — #E3: die Import-Absage nannte eine unmögliche Handlung (`3033a363d`)
+
+Audio Import V1 ist auf einer **frischen Installation unerreichbar**, und der Defekt ist der
+SATZ, nicht die fehlende Spur. Gemessen: `TimelineDocument()` hat `lanes: []`; die
+`Audio 1`-Saat lebt in `TimelineStore.migrate`, erreichbar nur über `bootstrapIfNeeded`,
+dessen einziger Aufrufer mit #121 Slice 4 ging; `bootstrapIfNeeded`, `addLane` und
+`addInstrumentTrack` haben je **null** Produktions-Aufrufer. Die Meldung „Add an audio track
+first." schickte den Nutzer damit nach einem Bedienelement, das es nicht gibt — #164/#227 eine
+Ebene höher. Neu: „This project has no audio track, and this build cannot add one."
+
+⛔ **Der Wächter hatte die falsche Prämisse VERTEIDIGT** („the only one they can fix inside the
+app"), am Tag des Schreibens schon falsch. **Eine BEGRÜNDUNG in einer Wächter-Meldung ist eine
+Behauptung über das Repo und braucht dieselbe Messung wie eine Zusicherung** — sie bekommt nur
+keine, weil sie nur rendert, wenn der Test rot ist.
+
+Neuer Claim 18 ist eine BIKONDITIONALE (#364): `instructs == (ein Erzeuger hat einen
+Aufrufer)`. Er verbietet keine Spuren-Tür — die wäre eine ARRANGIER-Bearbeitung und damit
+Founder-Sache — und wird rot in beiden widersprüchlichen Zuständen.
+
+Zwei CLAUDE.md-Stellen nachgeführt (#456): die §527-Zeile („Default-Dokument sät eine LEERE
+`Audio 1`-Spur") und die Workstation-Ausnahme, die „kein Import" sagte, während der Founder am
+selben Tag Audio Import V1 auf genau diese Platte gelegt hat. Provenienz: `LEDGER_COUNTS` §AK.
+
+**Benotung:** 11 Propositionen gegen beide Bäume, Worktree 11/11, Eltern 3/11 — acht
+Regressionsfänge, drei Gegengewichte, null Rot. ⛔ Zwei Propositionen der ersten Fassung waren
+die #708-Form (sie suchten den gestrichenen Satz, den die Rücknahmen zitieren).
+
+**Offen, founder-gated:** ob ein Bedienelement eine Audio-Spur anlegen darf.

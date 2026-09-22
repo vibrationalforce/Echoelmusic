@@ -108,6 +108,34 @@ won, and what is a known dead-end**, so the loop climbs instead of circling.
 | v10.79.195 | Immersive Stage — Touch room-map, each track a draggable spatial object (SpatialSceneStore + ImmersiveStageMath + ImmersiveStageView) | green |
 | v10.79.194 | Multi-Roll (tracks play simultaneously) + per-track Record (arm→play→capture MIDI/bio→Clip+region) | green |
 
+## DEAD-END + PLAYBOOK (2026-09-22, #E2): §0 benotet die BEHAUPTUNG, nicht das SWIFT darum
+
+**DEAD-END:** „zehn Checker grün + §0-Transkription 16/16 grün" als Beleg zu lesen, dass eine
+neue Wächter-Datei BAUT. Sie tat es nicht — `** TEST BUILD FAILED **`, drei Fehler, eine
+Ursache. Alle Werkzeuge lesen Nadeln als DATEN; der Defekt war Typinferenz und enthielt gar
+keine Nadel. Die Kette ist damit dreigliedrig: #1280 (Escape), #1337 (`@testable import`),
+#E2 (Type-Check) — und nur der erste hat ein Werkzeug.
+
+**RIGHT COLUMN:** vor dem Push das eigene neue Swift ADVERSARISCH auf Inferenz lesen, nicht
+nur auf Inhalt. Konkrete Gewohnheit, eng gehalten, weil die weite Fassung 85 korrekte Stellen
+verurteilt hätte: **ein Array-Literal, das ARITHMETIK enthält, bekommt seinen Typ
+geschrieben.** Gemessen über 939 Dateien: die weite Form (Konvertierung neben blanken
+Literalen, unannotiert) kommt **85×** vor und kompiliert jedes Mal; die enge Form
+(Arithmetik auf der Konvertierung oder ein Literal-Rechenausdruck) **null**× außer der
+defekten Stelle. Deshalb KEIN Checker (#665/#937).
+
+**BEOBACHTUNG, ein Datenpunkt, nicht mehr:** derselbe Compile druckte 327 ms/361 ms
+slow-type-check-Warnungen auf genau dem Ausdruck, der kollabierte. `gh-test-verdict.py`
+meldet die ohnehin (#933e). Ob das allgemein vorausgeht: UNGEMESSEN.
+
+## OBSERVATION (2026-09-22, #1405-Gate): der Auto-Merge hat erstmals messbar BLOCKIERT
+
+#1405 gab dem Merge nach `main` zwei Gates. Am 2026-09-22 ist der erste gemessene Nachweis
+angefallen, dass es wirkt: `c8b1c5c63` hatte einen roten `Build for Testing`, und `main` blieb
+auf dem Commit davor (`3121e81e3`). Der Cross-Check aus `Tests/CISmoke/CLAUDE.md` §5 —
+`git ls-remote origin refs/heads/main` als ZWEITE Straße zur Schritt-Conclusion — ist damit
+auch in seiner negativen Richtung belegt: main NICHT vorgerückt heißt Gate nicht grün.
+
 ## PLAYBOOK (2026-08-30, #897/#898): ein `prefix(N)`-Fenster über Quelltext ist ein LATENTES ROT
 
 **Der Mechanismus — und ⛔ er gilt NICHT für den ganzen Bundle, wie die erste Fassung hier
