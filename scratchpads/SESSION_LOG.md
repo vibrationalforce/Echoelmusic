@@ -38209,3 +38209,84 @@ Wie nach #1446, plus zwei neue: **STOP/START AM ART-NET-RIG** (Pegel setzen,
 stoppen, starten, kommandiert hell — der erste empfangene Wert muss RAMPEN) und
 **STALL/RECOVERY** (Route waehrend eines Sends kappen, Blackout druecken, auf
 die Erholung warten — Blackout muss binnen ~1 s erscheinen, ohne Reconnect-Sturm).
+
+## 2026-09-22 — P2 PROOF #1: `lighting.look.intensity` als kanonischer Parameter (`c8f943bb8`)
+
+**Auftrag (Founder, woertlich):** „IMPLEMENT ONE CANONICAL CROSS-DOMAIN PARAMETER
+ONLY … No other feature." Voraussetzung `2e0a7f9b7`, Codex-Endpruefung des
+Licht-Transports = PASS WITH NON-BLOCKING RESIDUALS, „DO NOT touch transport code in
+this task" — eingehalten: null Zeilen in `ArtNetSender`, `SACNSender`,
+`LightSendAccounting`.
+
+### Was gebaut wurde
+
+Genau EIN nicht-Audio-Parameter laeuft den vorhandenen Weg zu Ende:
+`EchoelParameterRegistry` → `ParameterDescriptor` → `ParameterApplyRouter` →
+`LightingStore.setLookIntensity`. Kein zweites Register, kein zweiter Deskriptor-Typ,
+kein Licht-Framework.
+
+· `LightingParameterCatalog` (in `Core/EchoelParameterRegistry.swift`, direkt hinter
+  `DDSPParameterCatalog`) — EIN Deskriptor: keyPath `lighting.look.intensity`,
+  `min 0`, `max 1`, `defaultValue = LightingStore.defaultLookIntensity`,
+  `domain .lighting`, leere Einheit, keine `valueLabels`.
+· `EchoelmusicApp.init` registriert ihn; die Bindung steht in der Wiring-Strecke.
+
+### Die Entscheidung, die man in einem Diff NICHT sieht
+
+Die Bindung sitzt **hinter** der Schleife
+`for descriptor in parameterRouter.automatableDescriptors()`, und das ist tragend:
+diese Schleife macht aus JEDEM router-gebundenen keyPath ein
+`ModulationEngine`-Ziel. Eine Zeile hoeher waere der Look modulierbar — eine
+Faehigkeit, die niemand bestellt hat. Die Schleife liest eine Momentaufnahme, also
+haelt die Reihenfolge das fern. Anspruch 11 nagelt sie fest; ohne ihn kann ein
+spaeteres Umsortieren die Absenz still aufheben.
+
+Zweite gemessene Entscheidung: **die Klammer bleibt beim Besitzer.**
+`ParameterApplyRouter.applyReal` umgeht die Deskriptor-Range absichtlich, und dieser
+Wert erreicht eine physische Lampe — also klammert `sanitizedLookIntensity` oder
+niemand. Die Bindung darf sie NICHT wiederholen (#416): eine zweite Schreibweise
+driftet und sieht dabei wie Sicherheit aus. Anspruch 9 verbietet `min(`, `max(`,
+`clamped(`, `isFinite` im Closure-Rumpf.
+
+### Per-Track-Klon: gemessen, nicht angenommen
+
+`PerTrackParameterKeyPath.descriptors(for:laneLabel:from:)` nimmt ein ausdrueckliches
+`base:`-Array und hat **null** Produktions-Aufrufer — es kann das Register also nicht
+durchkehren und `track.<uuid>.lighting.look.intensity` erzeugen (ein Lichtrig, pro
+Audiospur adressiert). Anspruch 12 haelt die Null fest und nennt im Fehlertext die
+Reparatur (audio-gefilterte Basisliste), statt den Klon zu verbieten (#364).
+
+### Wachter + Benotung
+
+`Tests/CISmoke/TheLightingLookIsACanonicalParameterTests.swift`, 12 Ansprueche,
+Verhalten zuerst (§1): 1 Register traegt genau EINEN `.lighting`-Deskriptor · 2 Felder
+gegen den Besitzer · 3 `applyNormalized` 0/0.5/1 erreicht den echten Store · 4 eine
+Registrierung OHNE Bindung bewegt nichts · 5 der Besitzer klammert, was der Deskriptor
+nicht kann · 6 nicht-endlich faellt auf die IDENTITAET (nicht auf 0 — ein kreativer
+Multiplikator ohne gueltige Anweisung muss unsichtbar scheitern, nicht ein Rig
+schwaerzen) · 7 Register/Router besitzen den Wert nicht · 8 der Default ist die
+Identitaet fuer `creativeTarget` · 9 genau EIN Produktions-Schreiber, ohne Klammer-Kopie
+· 10 keine Modulation, ein einziges Code-Vorkommen des Literals · 11 die Reihenfolge ·
+12 kein Per-Track-Klon.
+
+§0-Transkription gegen BEIDE Baeume: **12/12 gruen im Arbeitsbaum**; am Eltern-Commit
+(`cc0c71ed3`) existiert der Katalog nicht, die Datei kompiliert dort gar nicht — also
+hat dort KEIN Anspruch ein Verdikt, als EIN Befund gesagt und nicht als elf
+Regressionen gebucht (#486/#488). **Dreizehn Mutationen** trieben jeden Anspruch fuer
+seinen eigenen genannten Grund auf Rot (#367) — 0 Mutanten blieben gruen.
+Alle zehn stehenden Checker: Exit 0.
+
+### Zwei abgelaufene Prosa-Stellen im selben Commit gezogen (§4)
+
+`LightingStore`s Kopf und der Anspruch `testTheOwnerIsNotYetAParameterOrPersisted`
+sagten beide, die Registrierung sei eine SPAETERE Scheibe. Der Anspruch hatte die
+Anweisung in seiner eigenen Fehlermeldung stehen; er heisst jetzt
+`testTheOwnerStaysFreeOfTheParameterInfrastructure` und nagelt die
+ABHAENGIGKEITSRICHTUNG fest — Katalog und Bindung lesen den Besitzer, nie umgekehrt.
+Das war immer die eigentliche Aussage; „noch nicht" war nur ihre damalige Form.
+
+### Offen
+
+Geraeteproben unveraendert offen (alle NEEDS-FOUNDER-VERIFY), plus eine neue: den Look
+am Rig 1.0 → 0 → 1.0 fahren — er muss weich dimmen und unveraendert zurueckkommen.
+Nicht geraeteverifiziert; compile-verifiziert erst mit den Gates.
