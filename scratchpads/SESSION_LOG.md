@@ -38397,3 +38397,33 @@ Netz getragen oder als Richtlinie gelesen werden.
 ### Offen
 
 Geraeteproben unveraendert offen. Nicht geraeteverifiziert.
+
+### Gate-Lesung `4879829ec` (P2 Proof #1.1)
+
+· **Xcode Compile Check** — Lauf `35771568334`, Job `106894299806`, Schritt
+  *Compile (iOS device SDK, no signing)* **success** (19:06:18 → 19:11:26, 5 m 08 s);
+  Run-Conclusion `success`. Belegt: `Sources/` baut Release gegen das Geraete-SDK —
+  die zwei neuen Descriptor-Felder, der abgeleitete `DDSPParameterCatalog.descriptors`,
+  der Eligibility-Abschnitt des Routers, beide `AutomationPlayer`-Stellen und die
+  Schleifen-Aenderung der App. Ueber die Waechter-Dateien sagt er NICHTS (§5b).
+· **CI/CD Pipeline** — Lauf `35771568315`. `Code Quality & Linting` success (SwiftLint
+  sauber), `Security Vulnerability Scan` success, Schritt **Build for Testing success**
+  (19:07:18 → 19:12:09, 4 m 51 s). DAS belegt, dass das blockierende Buendel
+  KOMPILIERT — samt des auf 17 Ansprueche erweiterten Licht-Waechters, des reparierten
+  `TheAutomatableSetIsWhatMovesAudioTests`, des umgeankerten Matrix-Waechters und des
+  erweiterten Domain-Waechters. Mehr traegt der Schritt nicht.
+· **Run Tests — GETRENNT berichtet, wie verlangt**: Schritt-Conclusion `failure`
+  (19:12:09 → 19:33:36, 21 m 27 s). `gh-test-verdict.py`: `TEST EXECUTE FAILED: True`
+  (#396, auf jedem Push), `TEST BUILD FAILED: False`, **0 Compile-Fehler, 0
+  Fehlschlaege, 0 Skips, 166 Tests beim Bestehen beobachtet**. ⚠️ `WINDOW`/`GAPS`
+  mitgelesen: der Job-Log ist `tail -200 test.log` und es fehlen 1287 s der eigenen
+  Zeitachse. Das ist KEIN „die Suite ist gruen" (#807). **Gemessen, welche Suiten im
+  Fenster stehen: 27 — KEINE der vier geaenderten Dateien ist darunter.** Nach #445
+  beweist das nichts. Ehrliche Formulierung: **kompiliert nachweislich, Ausfuehrung
+  unbelegt.**
+· **Zweite, unabhaengige Lesung:** `git ls-remote origin refs/heads/main` →
+  `4879829ecfdd…`. `main` ist vorgerueckt; `auto-merge-claude.yml` merged nur bei
+  gruener Compile-Check-CONCLUSION UND gruenem `Build for Testing`-SCHRITT — dieselben
+  zwei Tatsachen auf einem anderen Weg (#1416).
+· `slow type-check warns`: 5, ALLE vorbestehend (`TheComposerWritesPerNoteVelocityTests`
+  3×, `TheLightRigSeesTheSimulatorTests` 2×). Keiner aus dieser Scheibe (#933e).
