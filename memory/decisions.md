@@ -2546,3 +2546,28 @@ baut (#416).
 
 **Review:** 2026-10-22. **Offen:** der Erzeuger selbst (Phase E) — Entwurf steht,
 Geräte-Verify wird fällig, sobald er eine Tür hat.
+
+### 2026-09-22 — Audio Import V1 ist auf einer frischen Installation unerreichbar (#E3)
+
+**Befund, gemessen:** `TimelineStore.init()` baut ohne gespeichertes Dokument ein
+`TimelineDocument()` mit `lanes: []`. Die `Audio 1`-Saat lebt in `TimelineStore.migrate`,
+erreichbar nur über `bootstrapIfNeeded` — dessen einziger Aufrufer `ArrangeTimelineView` ging
+mit #121 Slice 4. `bootstrapIfNeeded`, `addLane` und `addInstrumentTrack` haben je **null**
+Produktions-Aufrufer. Eine frische Installation hat also dauerhaft keine Spur, und der
+Import-Pfad kann nur mit `.noAudioLane` enden. Dasselbe gilt für die Workstation-Wiedergabe
+(#1437).
+
+**Entschieden (meine Entscheidung unter „Du entscheidest"):** die Meldung sagt die Wahrheit
+statt einer unmöglichen Anweisung — „This project has no audio track, and this build cannot
+add one." Ein bikonditionaler Wächter hält Meldung und Fähigkeit zusammen, ohne eine künftige
+Tür zu verbieten (#364).
+
+**NICHT entschieden, founder-gated:** ob es eine Spuren-anlegende Tür geben soll. Entscheidung
+4 von Audio Import V1 verbot dem IMPORT, still eine Spur anzulegen; sie sagt nichts über ein
+ausdrückliches Bedienelement. Eine solche Tür wäre aber eine ARRANGIER-Bearbeitung, und die
+Workstation-Ausnahme in CLAUDE.md sagt ausdrücklich „sie EDITIERT nichts". Das ist eine
+Produktgrenze, keine Scheibe.
+
+**Nebenbefund, nachgeführt:** dieselbe Workstation-Ausnahme sagte „kein Import", während der
+Founder am selben Tag Audio Import V1 auf genau diese Platte gelegt hatte. Provenienz:
+`memory/LEDGER_COUNTS.md` §AK.

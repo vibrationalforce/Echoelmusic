@@ -7465,3 +7465,70 @@ Keine Schreiboperation auf `SessionContext`. Keine Tempo-Schätzung aus Audio (A
 Entscheidung 7: `nativeBPM = 0`, keine Schätzung — eine Tonart-Erkennung, die still auch BPM
 rät, dreht eine Founder-Entscheidung der Nachbar-Scheibe um). Kein Mikrofon. Kein zweiter
 Schätzer.
+
+## AK — Die Spur, die niemand anlegen kann: Audio Import V1 ist auf einer frischen Installation unerreichbar (#E3)
+
+**Datum:** 2026-09-22, gemessen einen Tag nach dem Bau von Audio Import V1 (#141).
+
+**DER BEFUND, in drei Messungen.** (1) `TimelineStore.init()` findet ohne gespeichertes
+Dokument nichts und baut `TimelineDocument()`; dessen Default-Init ist
+`init(lanes: [TimelineLane] = [], …)` — **`lanes: []`**, aus dem Code gelesen, nicht aus
+dem Kommentar. (2) Die `Audio 1`-Saat, die CLAUDE.md dem Default-Dokument zuschrieb, lebt in
+`TimelineStore.migrate(sections:)`, und deren einziger Eingang ist
+`bootstrapIfNeeded(sections:)`. (3) Kommentar-gestrippt über `Sources/`, jeweils ohne
+`Core/TimelineStore.swift` selbst:
+
+```
+bootstrapIfNeeded(    → 0
+addLane(              → 0
+addInstrumentTrack(   → 0
+TimelineStore.migrate(→ 0
+```
+
+`bootstrapIfNeeded`s einziger Aufrufer war `ArrangeTimelineView`, und der ging mit #121
+Slice 4. **Also hat eine frische Installation dauerhaft null Spuren, und der Import-Pfad
+kann NUR mit `.noAudioLane` enden.** Dasselbe trifft die Workstation-Wiedergabe (#1437):
+keine Spuren, keine Teile, nichts abzuspielen.
+
+**WAS DARAN DER DEFEKT WAR — nicht die fehlende Spur, sondern der SATZ.** Die Meldung lautete
+„Add an audio track first." Sie nennt eine Handlung, die kein erreichbares Bedienelement
+ausführt, und sie ist die EINZIGE Meldung, die ein neuer Nutzer garantiert sieht. Das ist die
+#164/#227-Lüge eine Ebene höher: kein Bedienelement, das nichts tut, sondern ein Satz, der den
+Nutzer nach einem Bedienelement suchen schickt, das es nicht gibt. Neu:
+**„This project has no audio track, and this build cannot add one."**
+
+⛔ **UND DER WÄCHTER HAT DIE FALSCHE PRÄMISSE VERTEIDIGT.**
+`TheWorkstationImportsAudioTests` begründete die alte Fassung wörtlich damit, sie sei „the
+only one of the seven that tells the user an action rather than a diagnosis, **because it is
+the only one they can fix inside the app**". Die Begründung war am Tag ihres Schreibens schon
+falsch — drei `git grep` hätten es gezeigt. **Lehre: eine BEGRÜNDUNG in einer Wächter-Meldung
+ist eine Behauptung über das Repo und braucht dieselbe Messung wie eine Zusicherung**; sie
+wird nur von niemandem geprüft, weil sie im Fehlertext steht und der Test grün ist.
+
+**DIE FORM DES NEUEN WÄCHTERS IST EINE BIKONDITIONALE (#364), und das ist der Punkt.**
+`testTheNoLaneRefusalOnlyInstructsWhatAProductionPathCanDo` verlangt
+`instructs == (ein Erzeuger hat einen Aufrufer)`. Er VERBIETET keine Spuren-Tür — eine solche
+Tür ist eine ARRANGIER-Bearbeitung, die die Workstation-Ausnahme ausschließt, also eine
+FOUNDER-Entscheidung — und wird rot in genau den zwei widersprüchlichen Zuständen: eine
+Anweisung ohne Weg, ihr zu folgen, oder eine Tür, während die Meldung nur noch diagnostiziert.
+⚠️ Seine Reichweite sind die DREI Namen, die er kennt; ein vierter Erzeuger ist für ihn
+unsichtbar. Das ist eine UNTER-Behauptung und steht so in seinem Kopf.
+
+**BENOTUNG (§0, keine Toolchain im Web):** 11 Propositionen gegen beide Bäume —
+Worktree 11/11, Eltern (`84b9cb92d`) 3/11, **acht Regressionsfänge, drei Gegengewichte, null
+Rot auf dem Worktree**. ⛔ Zwei Propositionen der ERSTEN Fassung waren die #708-Form: sie
+suchten den gestrichenen Satz, und dieses Repo nimmt zurück, indem es zitiert — beide feuerten
+auf meine eigenen Rücknahmen. Gefragt wird jetzt, ob der Satz als LEBENDE Behauptung auftritt
+(`says "…"` gegen `USED to say`).
+
+**ZWEI CLAUDE.md-STELLEN NACHGEFÜHRT (#456).** Die §527-Zeile behauptete „das Default-Dokument
+sät eine LEERE `Audio 1`-Spur" — die Saat existiert, ihr Eingang nicht. Und die
+Workstation-Ausnahme in Zeile 40 sagte „sie EDITIERT nichts (… **kein Import**)", während der
+Founder am selben Tag Audio Import V1 auf genau diese Platte gelegt hatte: die immer geladene
+Datei widersprach sich über die Workstation, in der ⭐-Zeile, die sie selbst als „DIESE Zeile
+entscheidet, ob eine Löschung sicher ist" markiert.
+
+**OFFEN, FOUNDER-GATED:** ob es eine Spuren-anlegende Tür geben soll. Entscheidung 4 verbot
+dem IMPORT, still eine Spur zu erfinden — sie sagt nichts über ein ausdrückliches
+Bedienelement. Solange keines existiert, sind Audio Import V1 und die
+Workstation-Wiedergabe für jeden neuen Nutzer tote Flächen.

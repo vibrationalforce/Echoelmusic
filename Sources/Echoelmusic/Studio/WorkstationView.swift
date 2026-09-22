@@ -97,10 +97,16 @@
 // adds a part to the audio track, the plate's part count rises, and the line underneath names
 // the file and its bar span. (10) Play then SOUNDS that file at its recorded speed, and Stop
 // silences it. (11) A second import appends AFTER the first rather than on top of it. (12)
-// With no audio track the button still taps and says "Add an audio track first" — and per
-// item (3) above, on a fresh install that is the ONLY outcome this build can reach. Founder
-// decision 4 for this slice was explicitly "do NOT auto-create a lane", so it is reported,
-// not repaired. (13) VoiceOver announces the button and reads the result line.
+// With no audio track the button still taps and says so — and per item (3) above, on a fresh
+// install that is the ONLY outcome this build can reach. ⛔ The sentence it USED to say was
+// "Add an audio track first", and that instructed an action no production path can perform:
+// `bootstrapIfNeeded`, `addLane` and `addInstrumentTrack` each have ZERO production callers,
+// so a fresh `TimelineDocument()` has `lanes: []` permanently. It now reports the fact
+// instead (`AudioImport.Failure.noAudioLane`, where the measurement is written out).
+// Founder decision 4 was explicitly "do NOT auto-create a lane", and a separate lane-adding
+// control is an ARRANGE edit the Workstation exception excludes — so the CAPABILITY stays
+// reported, not repaired; only the false instruction is gone. (13) VoiceOver announces the
+// button and reads the result line.
 
 #if canImport(SwiftUI)
 import Foundation

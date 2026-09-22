@@ -783,10 +783,58 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
                 """)
         }
         XCTAssertTrue(AudioImport.Failure.noAudioLane.userMessage.contains("audio track"), """
-            The no-lane message no longer names the missing thing. The founder wrote this \
-            sentence: "Add an audio track first." It is the only one of the seven that tells \
-            the user an action rather than a diagnosis, because it is the only one they can \
-            fix inside the app.
+            The no-lane message no longer names the missing thing. Whatever it says, it has to \
+            name what is absent, or the user cannot tell this refusal from the other six.
+            """)
+    }
+
+    /// Claim 18 (SOURCE-TEXT SCAN) — the no-lane refusal may INSTRUCT only for as long as some
+    /// production path can carry the instruction out.
+    ///
+    /// ⛔ THE FOUNDER'S OWN SENTENCE WAS "Add an audio track first.", and the paragraph that
+    /// stood above defended it as "the only one they can fix inside the app". Measured
+    /// comment-stripped over `Sources/`, that premise is false and was false on the day it was
+    /// written: `bootstrapIfNeeded`, `addLane` and `addInstrumentTrack` each have ZERO callers
+    /// outside `Core/TimelineStore.swift`, and a fresh `TimelineStore.init()` with no stored
+    /// document builds `TimelineDocument()` — `lanes: []`. So the sentence named an action no
+    /// reachable control performs, in the one refusal a new user is guaranteed to hit. That is
+    /// the #164/#227 lying-control shape one level up: not a control that does nothing, but a
+    /// message that sends the user hunting for a control that does not exist.
+    ///
+    /// ⭐ THIS IS WRITTEN AS A BICONDITIONAL ON PURPOSE (#364). It does NOT forbid a lane door
+    /// — a lane-adding control is an ARRANGE edit the Workstation exception excludes, so it is
+    /// the founder's call, and the day they make it this guard must not stand in the way. It
+    /// goes red in exactly the two INCONSISTENT states: an instruction with no way to obey it,
+    /// or a door that exists while the message still only diagnoses.
+    ///
+    /// ⚠️ ITS REACH IS THE THREE NAMES IT KNOWS. A lane creator added under a fourth name is
+    /// invisible to it, so this under-claims rather than over-claims — say so rather than
+    /// reading a green here as "no lane can be created".
+    func testTheNoLaneRefusalOnlyInstructsWhatAProductionPathCanDo() throws {
+        let creators: [String] = ["bootstrapIfNeeded(", "addLane(", "addInstrumentTrack("]
+        var doored: [String] = []
+        for creator in creators {
+            let callers = try filesUnderSources(containing: creator)
+                .filter { $0 != "Core/TimelineStore.swift" }
+            if !callers.isEmpty {
+                doored.append("\(creator) called from \(callers.joined(separator: ", "))")
+            }
+        }
+        let message: String = AudioImport.Failure.noAudioLane.userMessage
+        let instructs: Bool = message.lowercased().contains("add an audio track")
+        // Hoisted out of the interpolation on purpose: a ternary over two String-producing
+        // branches inside a `\( … )` is the shape that cost a TEST BUILD on 2026-09-22 (#E2,
+        // `Tests/CISmoke/CLAUDE.md` §4). Nothing here needs the type checker to work for it.
+        let creatorList: String = doored.isEmpty ? "none" : doored.joined(separator: " | ")
+        XCTAssertEqual(instructs, !doored.isEmpty, """
+            The no-lane refusal and the app's actual ability to create a lane disagree.
+            message: "\(message)"  (instructs: \(instructs))
+            production lane creators with a caller: \(creatorList)
+            Either the message tells the user to add an audio track while nothing outside \
+            `Core/TimelineStore.swift` can add one — the state this claim was written for — or \
+            a lane creator has gained a door and the message still only diagnoses, which \
+            withholds the repair from a user who now has it. Fix whichever side is stale; this \
+            claim does not prefer one.
             """)
     }
 

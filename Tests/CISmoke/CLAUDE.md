@@ -317,11 +317,27 @@ against both trees, never what the Swift carrying it resolves to. **The guard wa
 semantically right and did not exist**, which is the same cost as #1337: the whole blocking
 bundle stops, so it is never one guard.
 
-⚠️ **WRITE THE COLLECTION'S TYPE whenever any element is a call, a conversion or an operator
-expression and any other is a bare literal.** That is the whole repair, and it is cheap enough to
-be reflexive. **No checker is shipped, for the #665 reason the paragraph above gives**: the shape
-`[Int64(x), 0]` infers correctly far more often than not, so a scan for it would be an alarm
-nobody reads — and per #937 a checker that fires on correct code costs more than the paragraph.
+⛔ **AND MY FIRST WORDING OF THE REPAIR WAS TOO WIDE, WHICH THE MEASUREMENT CAUGHT BEFORE IT
+SETTLED.** It said: annotate whenever any element is a call, a conversion or an operator
+expression and any other is a bare literal. Scanned over 939 files (`Sources/` + this bundle,
+comment-stripped), that shape occurs **85** times — `for rate in [Float(44_100), 48_000, 96_000]`,
+`for bad in [Double.nan, .infinity, -1]`, and 83 more — and **every one compiles**. Advice that
+condemns 85 correct sites is #364 in prose form: it gets ignored, and the law goes with it.
+
+⚠️ **THE NARROWER SHAPE, AND IT IS HONESTLY N = 1.** What the failing literal had that none of
+the 85 have is ARITHMETIC, in two places: an operator applied to the conversion
+(`Int64(window) * 2`, not bare `Int64(window)`) and an element that is pure literal arithmetic
+(`44_100 * 600`). Measured over the same 939 files: **zero** other occurrences of either. So the
+usable habit is narrow — **annotate an array literal that contains an ARITHMETIC EXPRESSION, not
+merely a conversion** — and the reason it is worth obeying is that it costs almost nothing:
+there is nowhere else in the repo it applies.
+
+⚠️ **NO CHECKER IS SHIPPED, and now for a MEASURED reason rather than an asserted one.** On the
+wide shape a scan would fire 85 times on correct code — the #665 alarm nobody reads, exactly. On
+the narrow shape it would fire once, on the case it was written from, and **a detector validated
+against its only known positive and nothing else is the #937 trap**: its green run would then
+count as evidence, for a mechanism nobody has shown holds twice. One data point is a habit, not a
+law, and it is written here as one.
 
 ⚠️ **ONE OBSERVATION, STATED AS ONE AND NOT AS A LAW: the collapse ANNOUNCED ITSELF as a slow
 type-check.** The same compile printed `expression took 327ms to type-check (limit: 200ms)` on the

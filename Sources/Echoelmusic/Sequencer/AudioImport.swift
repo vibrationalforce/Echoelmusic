@@ -97,6 +97,17 @@ public enum AudioImport {
         /// It opened with a sane format and carries no playable length.
         case invalidDuration
         /// The song has no audio track to place it on. Founder decision 4: fail, never create one.
+        ///
+        /// ⛔ AND ON A FRESH INSTALL THAT IS THE ONLY OUTCOME THIS BUILD CAN REACH, which is
+        /// why the sentence below no longer tells the user to add one. `TimelineStore.init()`
+        /// with no stored document builds `TimelineDocument()` — `lanes: []` — and the ONE
+        /// thing that would seed a lane, `TimelineStore.migrate`, is reachable only through
+        /// `bootstrapIfNeeded`, whose single caller (`ArrangeTimelineView`) went with #121
+        /// Slice 4. Measured comment-stripped over `Sources/`: `bootstrapIfNeeded`, `addLane`
+        /// and `addInstrumentTrack` each have ZERO production callers. So whenever this
+        /// failure is shown, no reachable control can resolve it — a door for that is an
+        /// ARRANGE edit, which the Workstation exception excludes, and therefore a founder
+        /// decision rather than a slice.
         case noAudioLane
         /// All eight `ClipStore` slots are taken. Founder decision 8: fail, never overwrite.
         case clipGridFull
@@ -110,7 +121,7 @@ public enum AudioImport {
             case .unreadableAudio: return "That file isn't audio this app can read."
             case .invalidFormat:   return "That audio has no usable sample rate or channels."
             case .invalidDuration: return "That audio has no playable length."
-            case .noAudioLane:     return "Add an audio track first."
+            case .noAudioLane:     return "This project has no audio track, and this build cannot add one."
             case .clipGridFull:    return "The clip grid is full — all 8 slots are in use."
             }
         }
