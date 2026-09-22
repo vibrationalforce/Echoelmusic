@@ -38525,3 +38525,71 @@ BLATT, und `doctor --section D` zählt dateiweit in genau einer Datei.
 **Verifikations-Ehrlichkeit:** compile-verifiziert durch CI, sonst nichts. Kein Picker
 geöffnet, keine Datei dekodiert, kein Ton erzeugt. Geräte-Probe offen und registriert
 ([NEEDS-FOUNDER-VERIFY] Posten 7–13 an `WorkstationView`, einer an `ClipKind`).
+
+## 2026-09-22 — Gate-Lesung `2d08e28eb` (Audio Import V1), inkl. Run Tests
+
+**Beide Gates GRÜN, und `main` ist nachgezogen.**
+
+- **Xcode Compile Check** — Lauf 2736, Job `106933100982`, Release / `generic/platform=iOS`.
+  Job-Conclusion `success`; der Schritt „Compile (iOS device SDK, no signing)" lief
+  20:52:43 → 20:58:44 (**6 m 01 s**).
+- **CI/CD Pipeline** — Lauf 6201, Job `106933443840`, Debug / iOS Simulator.
+  Schritt **`Build for Testing` = `success`**, 20:53:57 → 20:58:00 (**4 m 03 s**).
+  `Code Quality & Linting` und `Security Vulnerability Scan` ebenfalls `success`.
+- **Kreuzprobe:** `git ls-remote origin refs/heads/main` steht auf `2d08e28eb` — der
+  Auto-Merge hat gefeuert, und der liest genau diese zwei Signale (Compile-Check-Conclusion
+  plus den SCHRITT `Build for Testing`). Das ist eine zweite Straße zum selben Ergebnis.
+  Der Sitzungslog-Commit `ee00734be` liegt weiterhin VOR `main` — erwartet (#697/#699:
+  ein reiner `scratchpads/`-Commit löst keinen eigenen Merge aus).
+
+**Run Tests — GETRENNT berichtet, wie verlangt.** Schritt 11, 20:58:00 → 21:18:56 (~20 m 56 s).
+`python3 scripts/gh-test-verdict.py` auf dem Überlauf-File:
+
+```
+build-for-testing : Succeeded
+TEST BUILD FAILED : False
+TEST EXECUTE FAILED: True   (#396 — auf jedem Push erwartet)
+tests observed passing: 168
+compile-error lines   : 0
+TEST FAILURES         : 0
+TESTS SKIPPED         : 0
+slow type-check warns : 28 (advisory)
+GAPS: 1 Stille >= 60 s — 1256 s bei 20:58:00 -> 21:18:56
+```
+
+⚠️ **Das ist NICHT „die Suite ist grün" (#807/#1040):** der Job-Log ist `tail -200 test.log`,
+und das Werkzeug meldet selbst ein Loch von 1 256 s in der eigenen Zeitleiste. `TEST FAILURES: 0`
+beschreibt das FENSTER, nicht den Lauf.
+
+**Was BELEGT ist (#445 — Anwesenheit beweist, Abwesenheit nicht):** **11 der 17** Ansprüche von
+`TheWorkstationImportsAudioTests` stehen namentlich als `passed` im Log, alle auf
+`Clone 2 of iPhone 17`:
+`testNoMediaAssetIdentityWasIntroduced` · `testRepeatedImportsAppendThroughTheExistingPlacementRule` ·
+`testTheClipIsCommittedBeforeTheRegionAndOnlyOnSuccess` · `testTheClipRefersToTheManagedCopyAndTheResolverFindsIt` ·
+`testTheImportIntroducesNoPersistenceRoot` · `testTheImportPathCarriesNoInputOrRecordingCode` ·
+`testThePlacementSkipsTheBioLaneAndTakesTheFirstAudioOne` · `testTheRefusalsAreOrderedSoTheFileItselfAnswersFirst` ·
+`testTheSpanCoversTheMediaRatherThanRoundingIntoIt` · `testTheSuccessNoteNamesWhatLanded` ·
+`testTheWorkstationIsTheOnlyImportDoor`.
+Die übrigen sechs und die drei mitgezogenen Wächter
+(`TheAudioLaneProducerIsTheImportDoorTests`, `TheWorkstationHasADoorTests`,
+`TheAnchorMissSkipsDoNotGrowTests`) haben **keine Ergebniszeile im Fenster** — das heißt
+„unbelegt", nicht „rot". Sie kompilieren nachweislich (`Build for Testing` grün).
+
+⛔ **EINE MESS-KORREKTUR, weil sie mich fast einen Zyklus gekostet hätte.** Ich hatte einen
+früheren Compile-Check-Job als „52 Minuten `in_progress`" gelesen und war dabei, #1416 (den
+stale Job-Record) als Erklärung anzunehmen. Beim Nachmessen war es **umgekehrt**: hier war
+der **RUN**-Record der veraltete (`get_workflow_run` meldete `updated_at 20:52:34` und
+`in_progress`, während `list_workflow_jobs` die fertigen Schritte schon trug). **Lehre:
+#1416s Erkennungszeichen wird am JOB-Endpunkt gelesen und der RUN-Endpunkt dagegen
+gekreuzt — nicht andersherum.** Und die „~2 m 47 s"-Zahl, die §5 als Compile-Check-Dauer
+zitiert, ist selbst veraltet: gemessen hier **6 m 01 s**, im Lauf davor auf diesem Zweig
+**5 m 34 s**. Eine Dauer in Prosa ist ein Datum, kein Sachverhalt (#818) — der Test „zehnmal
+so lang wie je zuvor" braucht die HEUTIGE Basis, sonst erklärt man eine normale Laufzeit
+zum Defekt.
+
+**Zehn stehende Checker:** alle Exit 0, am HEAD nachgefahren.
+`doctor.py --section D`: `CLAUDE.md` **147 134 B** (Decke 150 000), Präsentations-Modifier **13**.
+
+**Offen und unverändert:** die Geräteprobe (Posten 7–13 an `WorkstationView`, eine an
+`ClipKind`) und der berichtete, NICHT reparierte Befund, dass kein Produktionspfad eine
+`TimelineLane` anlegt — die Tür kann bis dahin nur „Add an audio track first." melden.
