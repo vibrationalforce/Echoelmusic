@@ -1,7 +1,31 @@
 // TuningDetector.swift
 // Echoel — hear the room, find the tuning. Given a set of detected fundamental
-// frequencies (Hz) from the mic/voice (MicrophoneManager.pitch / .frequency), this
-// pure analysis estimates:
+// frequencies (Hz), this pure analysis estimates:
+//
+// ⛔ THIS HEADER NAMED ITS PRODUCER AND THE PRODUCER NO LONGER EXISTS. It read
+// "from the mic/voice (MicrophoneManager.pitch / .frequency)". `MicrophoneManager`
+// was DELETED with #1302 (founder 2026-09-12, "Face und Audio Input komplett
+// entfernen"), and the deletion is structural rather than cosmetic:
+// `AudioConfiguration.RecordRouteOwner` is an UNINHABITED enum, so
+// `claimRecordRoute(_:)` cannot be called and the session can never rise to
+// `.playAndRecord`. There is no microphone to read fundamentals from, and
+// restoring one is a founder decision, not a slice.
+//
+// ⚠️ SO THIS TYPE HAS **NO PRODUCTION CALLER**. Measured 2026-09-22, comment-stripped:
+// `git grep -n "TuningDetector" -- Sources | grep -v ': *//'` hits only this file;
+// the one reference anywhere else in the repo is a COMMENT in
+// `Tests/CISmoke/NoteNamingTests.swift`. It is test-only, in the `WaveformReducer`
+// shape — kept deliberately, not forgotten.
+//
+// ⭐ AND ITS NATURAL PRODUCER TODAY IS NOT A MICROPHONE — it is an IMPORTED AUDIO
+// FILE. Audio Import V1 (2026-09-22) made `Sequencer/AudioImport` the first
+// user-reachable producer of an audio-bearing clip, so the fundamentals for this
+// estimator can come from offline analysis of a managed copy, off any realtime
+// callback. **Whoever builds detected key/scale analysis: this type already exists
+// and already carries `confidence` plus a nil return when evidence is thin — do not
+// mint a second one.** What is missing is the PRODUCER, not the value.
+//
+// The estimates:
 //   • the Kammerton (concert-pitch A4) the source is tuned to, from the circular
 //     mean of each note's cents-deviation to the nearest 12-TET pitch, and
 //   • the musical key (root + major/minor) via Krumhansl–Kessler key-finding

@@ -26,7 +26,7 @@ Capabilities (all routed through one typed bus): **bio-reactive synthesis** · *
 · **„Multi-track Recorder (mic over beats)"** — **GELÖSCHT mit #1302** (Founder 2026-09-12, kein Mikrofon mehr): `MultiTrackRecorder` ist als DATEI weg; `git grep -n MultiTrackRecorder -- Sources` liefert nur noch Kommentare. `FeatureFlags.audioLaneRecording` existiert weiter und hat seit #1302 KEINEN Zweig (`EveryFlagSaysWhatItGatesTests`). ⛔ Bis #1326 stand hier eine KORREKTUR, die den Typ für lebend erklärte und dabei zwei Zeilennummern zitierte, die längst auf fremden Code zeigten — in der Zeile, die eine Sitzung ZUERST liest. **Lehre: eine KORREKTUR veraltet genauso wie das, was sie korrigierte** — und eine Zeilennummer einer lebenden Datei ist ein Datum, kein Sachverhalt (§E).
 · **„Video Capture & Trim"** — **GANZ GESTRICHEN, #1304** (Founder 2026-09-12, wörtlich „Kein Video Capture"). Der SCHNITT war schon mit #121 Slice 3 weg; jetzt ist auch die AUFNAHME weg — Recorder, Muxer, Bibliothek, REC-Taste, Menüfall, Kopf-Kachel, acht Wächter und jede nutzersichtbare Zeile. ⚠️ **`Video/CameraCapture`, `CameraAnalyzer`, `RPPGConditioning` und `PulsePeriodEstimator` BLEIBEN** — das ist der rPPG-PULSPFAD, die Flaggschiff-Bio-Quelle; sie teilen nur das Verzeichnis. **Wer hier nach Verzeichnis aufräumt, löscht den Puls.**
 · **„RTMP Live Stream"** — nie verlinkt (`BroadcastPublisher` ist ein Compile-Guard-Gerüst).
-· **„Harmonizer", „Granularsynthese", „Autotune"** — GESTRICHEN 2026-09-12 (#1305, Founder wörtlich „Kein audioninout kein Autotune, Harmonizer, granularsynthese"). Autotune war schon mit #1302 weg (`VoicePitchCorrector` ging mit dem Audio-Eingang). ⚠️ **`Sequencer/MicrotonalTuning` BLEIBT** — es ist das Tonsystem JEDER gestimmten Stimme und war nur zusätzlich das Autotune-Ziel.
+· **„Harmonizer", „Granularsynthese", „Autotune"** — GESTRICHEN 2026-09-12 (#1305, Founder wörtlich „Kein audioninout kein Autotune, Harmonizer, granularsynthese"). Autotune war schon mit #1302 weg (`VoicePitchCorrector` ging mit dem Audio-Eingang). ⚠️ **Die DATEI `Sequencer/MicrotonalTuning.swift` BLEIBT, und der TYP darin heißt `TuningSystem`** — die #1376-Falle, deshalb hier beide Namen: wer nach einem Typ `MicrotonalTuning` greppt, findet nichts und könnte das lebende Tonsystem für tot halten. Es ist das Tonsystem JEDER gestimmten Stimme, und das ist gemessen, nicht behauptet: `setTuningCents(` hat SIEBEN Aufrufstellen und erreicht `synth` · `touchSynth` · `leadSynth` · `bassSynth` · `subBass` · `bioVoice` · `laneVoiceRack` (das an voices/subs/bios weiterfächert). Es war nur zusätzlich das Autotune-Ziel.
 · **„MPE"** bleibt aus dem I/O-Satz gestrichen, aber mit einer ANDEREN Begründung als früher: **MPE OUT ist real und schaltbar, MPE IN nicht** (#548/#713 — Details eine Ebene tiefer bei „Live pipeline"). Ein „MPE"-Satz im I/O-Set behauptete also die Hälfte, die fehlt.
 ⛔ **Die Streich-Provenienz — die vollständigen Datei-Listen je Entfernung, die Founder-Zitate in ganzer Länge und die zwei Zeilennummern des #1326-Fehlers — liegt in `memory/LEDGER_COUNTS.md` §AI.** Diese Zeile ist die Identitäts-Zeile der Datei: sie muss der Wahrheit folgen, sonst plant die nächste Session aus ihr heraus Features, deren Fundament abgerissen ist.
 
@@ -169,6 +169,13 @@ Deprecated from main flow: SoundscapeEngine, ClipEngine, MomentCaptureView, BioS
     trotzdem PRO BILD gelesen; `MetalBioView` bekommt jedes Mal `.silent`. Die Lese-Stelle IST
     der Montagepunkt eines künftigen Eingangs; wer sie „aufräumt", verlegt die teure Hälfte in
     den churn-empfindlichen Rumpf.
+  · **`Core/TuningDetector` (+`DetectedTuning`)** (#C1, 2026-09-22) — test-only, null
+    Produktions-Aufrufer. ⚠️ **Die Falle ist sein eigener Dateikopf: er nannte
+    `MicrophoneManager.pitch / .frequency` als Quelle, und die ist mit #1302 gelöscht** — der
+    Eintrag las sich damit als „wartet auf das Mikrofon", während sein natürlicher Erzeuger
+    heute die IMPORTIERTE AUDIODATEI ist (Audio Import V1). ⭐ Er IST der Phase-E-Typ:
+    `keyRoot`, `isMinor`, `confidence`, `a4Hz`, `centsOffset` — und `analyze` gibt nil zurück,
+    wenn die Evidenz dünn ist. **Wer detektierte Tonart baut, baut sonst einen zweiten.**
   · **`Core/BioTempoDirector`** (#1163) — die fertige „Follow pulse"-Spur. **Gefährlichste
     Sorte: ein ZWILLING des lebenden Servos** (inline in `EchoelStudioView`); wer den
     Tempo-Glide repariert, editiert plausibel die Datei, die nichts ausliefert.
