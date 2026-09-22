@@ -38427,3 +38427,101 @@ Geraeteproben unveraendert offen. Nicht geraeteverifiziert.
   zwei Tatsachen auf einem anderen Weg (#1416).
 · `slow type-check warns`: 5, ALLE vorbestehend (`TheComposerWritesPerNoteVelocityTests`
   3×, `TheLightRigSeesTheSimulatorTests` 2×). Keiner aus dieser Scheibe (#933e).
+
+## 2026-09-22 — Audio Import V1: managed audio file → existing audio lane (2d08e28eb)
+
+**Founder-Auftrag:** EINE vertikale Scheibe. Acht feste Entscheidungen, 16 Tests,
+„Replace stale guards", und eine STOP-Liste (kein Audio-Eingang, kein Recording, kein
+MediaAsset, kein SampleInstrument, keine Grain-Engine).
+
+**Was gebaut wurde.** `Sequencer/AudioImport.swift` (neu) ist der ZWEITE Aufrufer von
+`AudioClipFactory` und der erste mit Tür. Die Form ist EIN unreiner Schritt, alles andere
+rein: `plan(managed:measurement:document:freeSlotIndex:bpm:)` hält JEDE Entscheidung als
+reine Funktion über Werte; `commit` nimmt Kopie, Messung und Löschung als INJIZIERTE
+Closures (das `AudioLanePlayer`-`makeSink:`/`resolveURL:`-Idiom) und ist Foundation-only;
+`perform` ist der AVFoundation-Adapter. `WorkstationView` bekam EINE Zeile „Import Audio"
+plus `.fileImporter` auf dem BLATT, `@State` lokal.
+
+**Warum die Store-Schreibvorgänge kaum getestet werden — und das ist keine Zimperlichkeit.**
+`ClipStore` und `TimelineStore` persistieren bei JEDEM Schreiben in die App Group. Ein Test
+des Erfolgspfads durch `commit` hinterließe einen Clip und eine Region im gespeicherten Lied
+der laufenden App. Deshalb der `plan`-Schnitt: alle Ablehnungen, die Platzierung, die
+Taktspanne und die ungewarpten Defaults sind aus Werten fahrbar. Die EINE Behauptung, die die
+echten Stores baut, fährt einen Fehler, den `plan` VOR beiden Stores erreicht.
+
+**Zwei Messungen, die die Implementierung geändert haben.**
+1. **Das Spur-Prädikat ist das der Engine, keine zweite Meinung (#416).** Der Founder sagte
+   „the first existing TimelineLane whose kind is .audio"; `TimelineDocument.audioLaneIDs` —
+   was `AudioLanePlayer.prime`/`apply` WIRKLICH abläuft — sagt `kind == .audio && !isBio`.
+   Eine Region auf einer `.audio`+`isBio`-Spur wäre persistiert, wo der Transport nicht
+   hinsieht: ein lügendes Bedienelement. Die `!isBio`-Hälfte ist KEINE Erweiterung der
+   Entscheidung, sie ist das, was sie wahr macht.
+2. **`AudioClipFactory.region(…)` ist die falsche Fabrik.** Sie leitet die Taktzahl aus einem
+   `nativeBPM` ab, den diese Scheibe nicht erfinden darf, und rundet auf den NÄCHSTEN Takt —
+   5 s bei 120 bpm sind 2,5 Takte, `barCount` sagt 2, und die letzte Sekunde wird nie
+   geplant. Bei Gleichverteilung ist das die HÄLFTE aller Dateien, nicht ein Randfall.
+   `coveringBars`/`unwarpedRegion` runden AUF: die Kosten des Deckens sind nachlaufende
+   Stille (unhörbar), die Kosten des Abrundens sind verlorenes Audio des Nutzers.
+
+**BERICHTET, NICHT REPARIERT (Founder-Entscheidung 4 verbietet die Reparatur):** KEIN
+Produktionspfad legt eine `TimelineLane` an. `bootstrapIfNeeded`s einziger Aufrufer
+(`ArrangeTimelineView`) ging mit #121 Slice 4, `addLane` hat null Aufrufer,
+`addInstrumentTrack` keinen Produktions-Aufrufer. **Auf einer frischen Installation ist das
+Dokument leer, die Tür kann also nur „Add an audio track first." melden**, bis eine Spur
+existiert. Nur ein von einem Vor-Slice-4-Build persistiertes Dokument trägt das gesäte
+„MIDI 1"/„Audio 1"-Paar.
+
+**Die Wiedergabe brauchte NULL Änderungen** (der Founder hatte „STOP and report" verlangt,
+falls doch): `EchoelmusicApp` injiziert `AudioLanePlayer(resolveURL:)`,
+`ClipKind.timelineEngineKinds == [.midi, .audio]` seit #1438, und `StretchPlan.resolve` gibt
+bei `warpEnabled: false` Rate 1.0 — ein Clip mit `nativeBPM = 0` spielt ungewarpt durch die
+vorhandene Kette. `TimelineRegionPlayer.canPlay` findet ihn ausführbar, sobald der Resolver
+antwortet; das ist die Auszahlungs-Behauptung des neuen Wächters, end-to-end gefahren.
+
+**Gestrichene Wächter/Prosa, alle im SELBEN Commit (#456/#374):**
+· `TheAudioLanesHaveNoProducerTests.swift` → `TheAudioLaneProducerIsTheImportDoorTests.swift`.
+  Der NAME war ab dem Tag eine Falschaussage. Die Zensur erwartet jetzt ZWEI
+  `AudioClipFactory.`-Aufrufer; jedes Gegengewicht überlebt.
+· `AudioLanePlayer`s ⛔-Block, `ClipKind.timelineEngineKinds`' Doc und CLAUDE.mds fünfter
+  Register-Eintrag zählten alle drei null Erzeuger.
+· **`TheAnchorMissSkipsDoNotGrowTests` las die umbenannte Datei per PFAD** — und `text(_:)`
+  SKIPPT eine fehlende Datei, die Behauptung wäre also ein stiller Pass geworden. Genau der
+  Defekt, gegen den die Ratsche geschrieben ist.
+· `TheWorkstationHasADoorTests` Ansprüche E und F sagen jetzt, WOHIN die Mutation gewandert
+  ist: die Ansicht sendet `timeline` weiterhin genau EINE Nachricht (`document`), weil sie
+  beide Stores übergibt statt sie anzusprechen.
+
+**⭐ ZWEI LEHREN, die diese Scheibe teuer bezahlt hat und die über Audio hinausgehen:**
+1. **Eine Prosa-Nadel PRO ZEILE in einen Kommentarblock ist unsound by construction.** Die
+   erste Fassung von `testTheHeaderNamesTheProducerInsteadOfCountingZero` filterte ZEILEN mit
+   der zurückgenommenen Behauptung — und auf dem Elternbaum ist genau dieser Satz UMBROCHEN
+   („because nothing a / user can reach ever puts…"). Der Scan fand nichts und las sich als
+   Pass, auf dem Baum, dessen Prosa er fangen sollte (#367/#454). Gefahren wird jetzt auf
+   einem whitespace-normalisierten Kopf. ⛔ Und die erste Fassung des NORMALISIERERS war
+   ebenfalls falsch: nach dem Wegwerfen des zweiten `/` stand `lastWasSpace = false`, also
+   rutschte das Leerzeichen des Markers als ZWEITES durch und jeder umbrochene Satz
+   normalisierte mit Doppel-Leerzeichen an der Bruchstelle. Ein Wort, und die ganze
+   Behauptung war vakuum-grün. Gemessen: Elternbaum 0 statt 1.
+2. **Eine blanke Member-Nadel kann „auf DIESEM Typ" nicht ausdrücken.** Ein dritter Anspruch
+   war entworfen, der `Sources/` nach `.arm()` scannte, um zu pinnen, dass
+   `RecordController.arm()` weiter keinen Aufrufer hat — der einzige Treffer ist
+   `voice.arm()` in `EchoelStudioView`, der „Body voice"-Schalter (#277). ROT AUF KORREKTEM
+   CODE (#364/#367). Gelöscht vor dem Push, mit dem Grund an Ort und Stelle: die
+   Recorder-Kette ist einen Anspruch höher über ihren KONSTRUKTOR gepinnt, und den schreibt
+   nur `RecordController`.
+
+**Mutations-Durchgang (#367).** Sechs Mutanten gegen die transkribierten Behauptungen:
+nearest-bar → `span` rot · `!isBio` weg → `c6_lane` + `c8_nolane` rot · `startTick = 0` →
+`c7_append` rot · `nativeBPM` durchgereicht → `c5_nbpm` rot · `validate` kollabiert →
+`c10_dur` rot · **Spur-Prüfung VOR die Messung gehoben → LANDETE AUF KEINEM ANSPRUCH.**
+Nachgetragen als `testTheRefusalsAreOrderedSoTheFileItselfAnswersFirst`, und der ist doppelt
+tragend: er pinnt die vom Founder vorgegebene Reihenfolge UND das Sicherheitsargument der
+einen store-berührenden Behauptung.
+
+**Zehn stehende Checker: alle Exit 0.** `CLAUDE.md` 147.134 B (Decke 150.000, Kopfraum
+2.866). Modifier-Zahl in `EchoelStudioView` unverändert 13 — `.fileImporter` sitzt auf dem
+BLATT, und `doctor --section D` zählt dateiweit in genau einer Datei.
+
+**Verifikations-Ehrlichkeit:** compile-verifiziert durch CI, sonst nichts. Kein Picker
+geöffnet, keine Datei dekodiert, kein Ton erzeugt. Geräte-Probe offen und registriert
+([NEEDS-FOUNDER-VERIFY] Posten 7–13 an `WorkstationView`, einer an `ClipKind`).
