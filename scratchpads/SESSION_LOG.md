@@ -37989,3 +37989,115 @@ verbraucht. Genau das war vorher unmoeglich und ist der Punkt der Reparatur.
 **Naechster Schritt gehoert weiter nicht mir.** Founder-Reihenfolge unveraendert: Codex-Review,
 danach wird `lighting.look.intensity` P2 Proof #1. Descriptor, Registry-Registrierung,
 Router-Bindung, ModDestinationKey, ModRoute, Automation, UI und Persistenz bleiben ungebaut.
+
+---
+
+**#1446 — EINE BLENDE DARF NUR SO WEIT LAUFEN, WIE DAS NETZ SIE TATSAECHLICH GENOMMEN HAT.**
+Codex-Nachpruefung auf `9b5c4c49a` fand die Haelfte, die #1445 stehen liess — und es ist
+die SICHERHEITS-Haelfte. #1445 hat die LIEFER-Anker in die Completion geholt; die
+AUSGABE-Anker blieben auf der Rechen-Seite. `lastDimmer = limited` und das In-Place-
+`lastColour` liefen in JEDEM Tick weiter, ob etwas den Stack erreichte oder nicht. Folge,
+in Bedienersprache: dunkel, „voll“ kommandieren, Kabel eine Sekunde raus, Kabel rein —
+und das erste Paket, das ein Empfaenger sieht, traegt das ENDE der Rampe. Ein 0→1-Sprung
+in EINEM DMX-Frame, aus dem Slew-Limiter heraus, der genau das unmoeglich machen soll.
+
+**SIEBEN BEFUNDE, alle bestaetigt und alle repariert ausser einem bewusst offenen:**
+(1) unbegrenzte ausstehende Sends · (2) Dimmer-Slew auf COMPUTE · (3) Farb-Slew ebenso ·
+(4) Verbindungswechsel ohne Epoche — ein spaeter Erfolg auf dem ALTEN Socket committete
+in den NEUEN · (5) schneller stop/start blieb bis zum Keepalive STUMM (auf sACN nach
+einem Stream_Terminated, das der Empfaenger schon verarbeitet hat) · (6) der Stop-Test
+war verhaltensmaessig leer (er erfand eine Generation 1 auf einem frischen Sender, der nie
+etwas abgeschickt hatte) · (7) `.contentProcessed`-Wortlaut zu stark.
+
+**`LightSendPump` — ein reiner Werttyp, den BEIDE Sender besitzen.** EIN optionaler
+In-Flight-Platz, eine Verbindungs-Epoche, und ZWEI sauber getrennte Anker-Klassen:
+AKZEPTIERTE AUSGABE (Dimmer, Farbe — davon misst der Slew-Schritt) und AKZEPTIERTE
+LIEFERUNG/DEDUP (Frame-Stempel, Master, Blackout, Look, Sendezeit — dagegen vergleicht der
+naechste Tick). ⭐ **Bewusst KEIN dritter „berechneter“ Anker:** eine Variable, die mal
+berechnet und mal akzeptiert bedeutet, ist der Grund, warum dieser Defekt ZWEIMAL
+ausgeliefert wurde. `lastDimmer` und `lastColour` sind als Eigenschaften geloescht.
+
+⭐ **MAX_IN_FLIGHT = 1, strukturell statt geprueft.** Ein Tick, der den Platz besetzt
+findet, baut GAR NICHTS — kein Paket, keine Sequenznummer, keine Generation. Nichts wird
+eingereiht; der Wunschzustand wird im naechsten faehigen Tick neu aus Bus und Bedien-
+elementen gelesen. **Der Vertrag heisst damit: Licht-Netzausgabe ist LATEST-STATE-
+COALESCING, nicht ein Datagramm pro Bedien-Ereignis.** Beleg aus dem Code, kommentar-
+gestrippt gemessen, je Sender: `pump.submit(` = 1 · `guard !pump.isBusy` = 1 direkt davor ·
+`send(packet, attempt: attempt)` = 1 · `pump.abandon(` = 1 (sonst waere die Schranke beim
+ersten fehlenden Socket ein Deadlock) · `inFlight = ` = 5, alle fuenf im Pump.
+⚠️ **Ausserhalb der Schranke und benannt statt verschwiegen:** sACNs `sayGoodbye()` sendet
+drei Stream_Terminated-Pakete in einer literalen `for i in 0..<3`, nur in `stop()`, und
+cancelt in der letzten Completion.
+
+⚠️ **DER RESTRISIKO-SATZ, ausgeschrieben statt versteckt:** kommt eine Completion NIE
+(`.waiting` ohne Route), bleibt der Platz belegt und der Sender schweigt bis die Epoche
+schliesst. Kein Stall-Timer gebaut. Begruendung: ein Transport, der nichts verarbeiten
+kann, traegt auch keinen Blackout — und eine Warteschlange liefert bei der Erholung die
+VERALTETEN Vor-Blackout-Pakete ZUERST. Die Ausgaenge gehoeren dem Bediener: Host/Port/
+Universum aendern reconnected, Stop retired.
+
+⭐ **BLACKOUT bleibt hoechste Prioritaet und geht nie VERLOREN** — er kann um genau eine
+Completion verzoegert werden und geht im ersten faehigen Tick danach raus, als Schnitt auf
+0 (nur der Weg ZURUECK ins Licht wird gerampt). Anspruch 6 und 7 beweisen beides.
+
+**SEQUENZNUMMERN unveraendert, in beiden Protokollen, aus ZWEI verschiedenen Gruenden
+getrennt gelesen** — und mit einer ehrlichen Ruecknahme der Aufgabenstellung: ein
+„rapid wrap under backlog“ gab es nie. Pakete entstehen nur in `sendIfFresh`, hoechstens
+einmal pro 33-ms-Tick, also lag die Wrap-Periode immer schon bei ≥ 8,4 s. Die Schranke
+kann sie nur VERLANGSAMEN. Der Pump kennt das Wort `sequence` im Code gar nicht.
+
+**WORTLAUT an vier Stellen korrigiert:** `.contentProcessed` meldet, dass die VERBINDUNG
+den Inhalt fertig verarbeitet hat. Nicht die NIC, nicht die Leitung, nicht ein Empfaenger.
+`lastSentTimestamp` ist die ABSENDE-Zeit des juengsten Versuchs, dessen lokale
+Verarbeitung danach fehlerfrei endete — „Akzeptanzzeit“ war schlicht die falsche Uhr.
+`NetworkActivityDot`s `case sending` sagt nicht mehr „left the device“.
+
+**Dateien:** `Sync/LightSendAccounting.swift` (Pump + erweiterte Regel),
+`Sync/ArtNetSender.swift`, `Sync/SACNSender.swift`, `Studio/NetworkActivityDot.swift`,
+`Tests/CISmoke/TheLightSendAccountingIsHonestTests.swift` (16 Ansprueche, A–I plus
+Gegengewichte), `TheLightingLookIntensityIsOwnedAboveTheSendersTests.swift` (Anspruch 10
+ZUM ZWEITEN MAL umgeankert, §4 — die Nadel folgt dem COMMIT, weil der Commit die
+Invariante ist), `TheSendingDotMeansSendingTests.swift` (Kopfzeile).
+
+**§0-BENOTUNG, gemessen statt behauptet:** alle 16 Ansprueche in Python gegen ein Modell
+der ausgelieferten Arithmetik getrieben (SplitMix-freie `Float`-Rundung ueber `struct`,
+`FlashGuard.limitedLuminance`, `creativeTarget`, `masteredDimmer`) — **0 Fehlschlaege**.
+Die Source-Text-Nadeln separat gegen die echten Dateien getrieben, **0 Fehlschlaege**,
+einschliesslich JEDER fremden Guard-Nadel, die diese Aenderung haette brechen koennen
+(`|| keepAliveDue else { return }`, `lookMoved`, `|| lookMoved`, `lookIntensity: look,`,
+`lastTarget = target|dimmer`, `if let error { self.lastError = `,
+`conn.stateUpdateHandler = {`, `params.allowLocalEndpointReuse = true`).
+
+**GATES (`0a121ae44`):** Xcode Compile Check Lauf 35746974777 Schritt 7 **success**
+(15:23:38–15:27:16Z) · CI/CD Lauf 35746974105, Job 106811344578, **Schritt 9 „Build for
+Testing“ success** (15:24:44–15:29:38Z, 4m54s) — **und DAS ist hier das entscheidende
+Gate**, weil die Scheibe eine Testdatei vollstaendig neu schreibt und der Compile Check
+`Sources/` allein baut (§5b). Dazu Security Scan + Code Quality (SwiftLint, Swift Format,
+Build Guard, TODO) success. `main` ist auf `0a121ae44` vorgerueckt — zweite, unabhaengige
+Lesung ueber `auto-merge-claude.yml`.
+
+⚠️ **AUSFUEHRUNG: UNBELEGT, NICHT GRUEN.** `Run Tests` (15:29:38–15:52:17Z, Testing
+elapsed 1347,6 s) endete mit `** TEST EXECUTE FAILED **` = #396-Familie. Im Fenster —
+und der Log druckt seine eigene Fenstergrenze, `##[group]Run tail -200 test.log` (#807) —
+stehen **null `error:` mit Repo-Datei, null `❌`, null `Test case … failed on`**, dafuer
+~26 Suiten mit `passed` aus Clone 1 UND Clone 2. **Keine der beiden Licht-Waechter-Dateien
+erscheint im Fenster.** Abwesenheit beweist dort nichts (#445). Ehrliche Formulierung
+unveraendert: **kompiliert nachweislich, Ausfuehrung unbelegt.**
+
+**Zehn stehende Pruefer:** neun exit 0. `moved-needles.py` meldete vor dem Commit DREI
+Treffer, alle drei geoeffnet und beantwortet — `lastDimmer = limited` lebt nur noch als
+PROSA (vom Werkzeug als `(prose)` markiert), `blackout: blackout,` und
+`lookIntensity: look,` treffen weiter echten Code in beiden Sendern. Nach dem Commit
+exit 0. Ehrlich berichtet statt zu „zehn gruen“ gerundet.
+
+**DREI GERAETEPROBEN GESCHULDET** [NEEDS-FOUNDER-VERIFY]: (a) alt — echtes Rig,
+`lookIntensity` 1.0, vor/nach der Seam ununterscheidbar · (b) OUTAGE-DIMMER: Empfaenger
+sieht zuletzt 0, trennen, hell kommandieren, warten, verbinden — der erste empfangene
+Wert muss RAMPEN, nicht springen; dasselbe fuer eine weite RGB-Fahrt · (c) RECONNECT-
+EPOCHE und SCHNELLER NEUSTART: Host wechseln bzw. stop/start vor der Keepalive-Frist —
+das aktuelle Paket muss prompt kommen und eine spaete alte Completion darf es nicht
+unterdruecken.
+
+**Naechster Schritt gehoert nicht mir.** Codex-Nachpruefung dieser Reparatur, und erst
+danach `lighting.look.intensity` als P2 Proof #1. Descriptor, Registry, Router-Bindung,
+`ModDestinationKey`, `ModRoute`, Automation, UI und Persistenz bleiben ungebaut.
