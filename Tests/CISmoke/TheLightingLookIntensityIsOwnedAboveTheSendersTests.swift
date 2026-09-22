@@ -28,9 +28,11 @@
 //
 // ⚠️ IT FORBIDS NO FUTURE WORK (#364). Nothing here says the store may not gain a second
 // creative value, a descriptor, a route or a door — those are the next slices. What it pins is
-// the ORDER, the identity default, and the two-writer rule. Claim 12 is the one deliberate
-// "not yet", and it is scoped to THIS file only, so registering the parameter later touches
-// the guard that is about it rather than this one.
+// the ORDER, the identity default, and the two-writer rule. ⭐ The first of those next slices
+// has SINCE landed: P2 Proof #1 made `lighting.look.intensity` a registry parameter with a
+// router binding, and claim 12 — which this header used to call "the one deliberate not-yet" —
+// now pins the DEPENDENCY DIRECTION instead, which is what it was always really about. The
+// parameter itself is guarded by `TheLightingLookIsACanonicalParameterTests`.
 //
 // ⚠️ HONEST GRADING (§0/§3). No local Swift toolchain — every assertion transcribed in Python
 // and driven against BOTH trees. On the parent (`178d999c9`) `LightingStore` does not exist,
@@ -287,21 +289,29 @@ final class TheLightingLookIntensityIsOwnedAboveTheSendersTests: XCTestCase {
                       "ANCHOR MISSING: `LightingStore` no longer imports Foundation (#454).")
     }
 
-    /// SOURCE-TEXT SCAN — the deliberate NOT-YET. This slice is ownership only: no descriptor,
-    /// no registry, no modulation destination, no persistence, no UI.
-    /// ⚠️ Scoped to THIS FILE on purpose (#364). Registering `lighting.look.intensity` is the
-    /// next approved step; when it happens it adds a descriptor ELSEWHERE and retires this
-    /// assertion here, rather than going red across the repo.
-    func testTheOwnerIsNotYetAParameterOrPersisted() throws {
+    /// SOURCE-TEXT SCAN — the DEPENDENCY DIRECTION, and the claim that changed meaning when
+    /// P2 Proof #1 landed. `lighting.look.intensity` IS a registry parameter now: the
+    /// descriptor lives in `LightingParameterCatalog` and the binding in `EchoelmusicApp`, both
+    /// of which READ this owner. What this claim still pins — and what the doc above predicted
+    /// in as many words — is that the traffic never runs the other way: the owner must not
+    /// learn about the registry, a modulation key or a persistence root. That is what keeps it
+    /// a plain Foundation value type two adapters can share.
+    /// ⚠️ It is NOT the "not yet" it used to be, and the difference matters for the next
+    /// reader: the parameter exists, and `TheLightingLookIsACanonicalParameterTests` is the
+    /// guard that covers it. Persistence and modulation ARE still absent, deliberately, and
+    /// that absence is pinned over there, where the key is — not here, where the value is.
+    func testTheOwnerStaysFreeOfTheParameterInfrastructure() throws {
         let src = SourceText.codeOnly(try text(Self.store))
         for premature in ["ParameterDescriptor", "EchoelParameterRegistry", "ModDestinationKey",
                           "UserDefaults", "Codable"] {
             XCTAssertFalse(
                 src.contains(premature),
-                "`LightingStore` references `\(premature)`. This slice is the ownership seam "
-                + "ONLY — the founder's sequence is seam first, then an independent review, "
-                + "then P2 Proof #1. If that step has now been taken, move this assertion into "
-                + "the guard that covers the registration instead of deleting it.")
+                "`LightingStore` references `\(premature)`. The dependency runs ONE way: the "
+                + "catalog and the router binding read this owner, never the reverse. An owner "
+                + "that imports the registry cannot be the plain value type two protocol "
+                + "adapters share, and `Codable`/`UserDefaults` here would be a persistence "
+                + "root nobody decided on. Register the absence of the KEY in "
+                + "`TheLightingLookIsACanonicalParameterTests`; this claim is about the VALUE.")
         }
         let app = SourceText.codeOnly(try text(Self.app))
         XCTAssertTrue(app.contains("artNet.attachLighting(lighting)")

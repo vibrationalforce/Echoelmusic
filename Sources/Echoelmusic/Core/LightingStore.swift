@@ -40,10 +40,16 @@
 //  adapter (or a renderer) reads the same value. `TheLightingLookIntensityIsOwnedAboveTheSendersTests`
 //  pins that.
 //
-//  ⚠️ THIS SLICE IS OWNERSHIP ONLY. No `ParameterDescriptor`, no registry registration, no
-//  modulation destination, no UI, no persistence. `lighting.look.intensity` becomes the P2
-//  parameter in a LATER slice, and the setter below is already written for it — see
-//  `setLookIntensity`.
+//  ⭐ AND SINCE P2 PROOF #1 IT IS A REGISTRY PARAMETER — but the dependency runs ONE way, and
+//  that is the thing to preserve. `LightingParameterCatalog` (in `Core/EchoelParameterRegistry
+//  .swift`) describes `lighting.look.intensity` and READS `defaultLookIntensity` from here;
+//  `EchoelmusicApp` binds the router to `setLookIntensity`. Nothing flows back: this file names
+//  no descriptor, no registry, no modulation key and no persistence root, which is what keeps
+//  it a plain Foundation value type two protocol adapters can share.
+//  ⚠️ STILL ABSENT, DELIBERATELY: modulation, automation, persistence and a UI door. The
+//  binding sits AFTER the app's `automatableDescriptors()` loop on purpose — that loop turns
+//  every router-bound keyPath into a `ModulationEngine` destination, and the look is not one.
+//  `TheLightingLookIsACanonicalParameterTests` pins both the path and those absences.
 //
 
 import Foundation
@@ -63,10 +69,11 @@ public final class LightingStore {
     /// **1.0 is the identity and the default**, so a build with this type behaves exactly as
     /// the build before it did: `creativeTarget(g, lookIntensity: 1) == g` for every `g`.
     ///
-    /// `private(set)` with a clamping setter rather than a plain `var`, deliberately: when
-    /// this becomes the P2 parameter `lighting.look.intensity`, `ParameterApplyRouter.applyReal`
-    /// BYPASSES the descriptor's range clamp, so the range has to be enforced by the owner or
-    /// not at all — and this value reaches a physical fixture.
+    /// `private(set)` with a clamping setter rather than a plain `var`, deliberately — and
+    /// P2 Proof #1 turned that from foresight into load-bearing: as the parameter
+    /// `lighting.look.intensity` it is reached by `ParameterApplyRouter.applyReal`, which
+    /// BYPASSES the descriptor's range clamp, so the range is enforced by this owner or not at
+    /// all — and this value reaches a physical fixture.
     /// ⚠️ `LightingStore.` and not `Self.`: Swift rejects a covariant `Self` in a STORED
     /// property initializer, even on a `final class` — `error: covariant 'Self' type cannot be
     /// referenced from a stored property initializer`, which is what `Xcode Compile Check` said

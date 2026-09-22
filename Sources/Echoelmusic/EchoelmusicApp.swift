@@ -371,6 +371,10 @@ struct EchoelmusicApp: App {
         // keyPath → live setter so automation reaches each parameter.
         let paramRegistry = EchoelParameterRegistry()
         paramRegistry.register(DDSPParameterCatalog.descriptors)
+        // P2 Proof #1 — the FIRST non-audio descriptor in this registry. Registration alone
+        // moves nothing: `automatableDescriptors()` is registry ∩ bound setter, so until the
+        // router binding below exists this descriptor is queryable and inert.
+        paramRegistry.register(LightingParameterCatalog.descriptors)
         _parameterRouter = State(wrappedValue: ParameterApplyRouter(registry: paramRegistry))
         EchoelCrashLog.breadcrumb("init c: bio publishers")
         #if canImport(HealthKit)
@@ -1333,6 +1337,26 @@ struct EchoelmusicApp: App {
                         // entitled to object to. Explicit costs nothing and cannot regress.
                         _ = parameterRouter?.applyNormalized(keyPath, value)
                     }
+                }
+                // P2 PROOF #1 — the first NON-AUDIO parameter reaches its real owner.
+                // `lighting.look.intensity` → `LightingStore.setLookIntensity`, which clamps
+                // 0…1 and maps non-finite to the identity. The router NEVER writes sender
+                // state: `ArtNetSender`/`SACNSender` read the store, they are not bound here,
+                // and `grandMaster`/`blackout` stay operator-and-safety controls that no
+                // parameter may move.
+                //
+                // ⚠️ THE POSITION OF THIS LINE IS LOAD-BEARING, and it is the one thing a
+                // future edit here can get wrong invisibly. The loop directly above turns
+                // EVERY router-bound keyPath into a `ModulationEngine` destination. Binding
+                // lighting BEFORE it would hand this slice a modulation destination nobody
+                // asked for — P2 Proof #1 is descriptor + registration + binding + owner
+                // mutation, and NOT modulation. Binding AFTER the loop is what keeps that
+                // true, because the loop reads a snapshot. Making the look modulatable is a
+                // later, deliberate step: move this line above the loop, or register the
+                // destination explicitly. `TheLightingLookIsACanonicalParameterTests` pins
+                // the order so the move cannot happen by accident.
+                parameterRouter.bind(LightingParameterCatalog.lookIntensity) { [weak lighting] value in
+                    lighting?.setLookIntensity(value)
                 }
                 // L2/L4 S2b: per-track automation DISPATCH. A namespaced
                 // "track.<laneID>.<param>" lane resolves to the specific SECONDARY

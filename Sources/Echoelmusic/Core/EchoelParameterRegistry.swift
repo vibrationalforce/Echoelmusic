@@ -230,3 +230,38 @@ public enum DDSPParameterCatalog {
                             min: 0, max: 1, defaultValue: 0),
     ]
 }
+
+// MARK: - Second inventory: the creative LIGHTING state (P2 Proof #1)
+
+/// The one non-audio parameter this build describes, and the point of the whole P2 exercise:
+/// the canonical parameter infrastructure — registry, descriptor, router — was built for the
+/// synth and had never addressed another medium. `lighting.look.intensity` proves it can,
+/// without a second registry, a second descriptor type or a lighting-specific framework.
+///
+/// ⚠️ ONE DESCRIPTOR, DELIBERATELY. The lighting chain has exactly three stored values and
+/// only ONE of them is creative: `grandMaster` is the live operator's control over finished
+/// output and `blackout` is a safety cut, so neither may ever become a parameter a
+/// composition, an automation lane or a body route can move. The reasons live at
+/// `LightingStore`'s header, where they were decided; this catalog only obeys them.
+///
+/// ⚠️ THE DEFAULT IS READ FROM THE OWNER, not written again here (#416). `LightingStore`'s
+/// own doc predicted this line: the stored property, the NaN fallback and this descriptor
+/// default are three places that must agree, so there is one literal and two references.
+public enum LightingParameterCatalog {
+
+    /// The canonical keyPath. One home for the string: the registration below and the router
+    /// binding in `EchoelmusicApp` both read THIS, so a rename cannot leave a descriptor
+    /// registered under a name nothing is bound to (the placebo the router's own law forbids).
+    public static let lookIntensity = "lighting.look.intensity"
+
+    /// ⚠️ `unit` is empty ON PURPOSE. Dimensionless 0…1 values read as raw decimals in this
+    /// app ("0.50", never "50 %") — the Uncodixfy parameter-row law — and an empty unit is how
+    /// a descriptor says so. `valueLabels` stays nil: this is a continuous level, not a
+    /// stepped choice, so it is a number field and never a Picker.
+    public static let descriptors: [ParameterDescriptor] = [
+        ParameterDescriptor(keyPath: lookIntensity, displayName: "Look intensity",
+                            min: 0, max: 1,
+                            defaultValue: LightingStore.defaultLookIntensity,
+                            domain: .lighting),
+    ]
+}
