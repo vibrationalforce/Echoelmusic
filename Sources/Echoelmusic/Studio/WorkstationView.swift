@@ -1,23 +1,32 @@
 // WorkstationView.swift
-// Echoel — #1436 founder Phase 3 (the surface) + #1437 founder Phase 4 (its transport).
+// Echoel — #1436 founder Phase 3 (the surface) + #1437 founder Phase 4 (its transport)
+// + Audio Import V1 (its first producer).
 //
 // WHAT THIS IS. A reachable window onto the canonical timeline state — the lanes and regions
 // `TimelineStore` already owns and already persists — with ONE control: Play/Stop. It is a
 // DMMW surface, not a product and not a rebuild of the arrangement UI #121 Slice 4 deleted.
 //
-// ⭐ READ-ONLY NOW MEANS A NARROWER, SHARPER THING, and the distinction is the whole reason
-// the word survives here. The surface still cannot CHANGE the song — no region or lane
-// editing, no drag, trim, split, duplicate, no automation authoring, no import, no record.
-// What Phase 4 added is the ability to START it. Editing the document and starting the
-// transport are different powers; #1437 took exactly one of them.
+// ⭐ READ-ONLY HAS NARROWED TWICE, AND EACH STEP IS ONE NAMED POWER. Phase 3 could only SHOW
+// the song. #1437 added the power to START it. Audio Import V1 (founder 2026-09-22) adds the
+// power to place ONE imported audio file on the audio track the song already has — and
+// nothing else. The surface still cannot move, trim, split, duplicate or delete a part, add
+// or remove a track, author automation, or record. Showing, starting and appending one clip
+// are three different powers, and each arrived on its own founder decision.
 //
-// ⛔ IT OWNS NOTHING AND MINTS NOTHING. No second `TimelineDocument`, no `Arrangement`, no
-// project store, no persistence file, no clock, no routing graph, no second player. It reads
-// `TimelineStore.document`, projects it through `WorkstationSummary` (a pure function), and
-// hands that same document to the ONE `TimelineRegionPlayer` the app constructs. Every one of
-// `TimelineStore`'s ~40 mutating methods is deliberately unreached from here —
-// `TheWorkstationPlaysTheTimelineTests` pins that, because "read-only" is a property a later
-// slice can lose in one line.
+// ⛔ IT OWNS NOTHING AND MINTS NOTHING, WHICH THE IMPORT DOES NOT CHANGE. No second
+// `TimelineDocument`, no `Arrangement`, no project store, no persistence file, no clock, no
+// routing graph, no second player, no media store. It reads `TimelineStore.document`, projects
+// it through `WorkstationSummary` (a pure function), and hands that same document to the ONE
+// `TimelineRegionPlayer` the app constructs.
+//
+// ⚠️ AND THE IMPORT DOES NOT WRITE FROM HERE EITHER — IT HANDS THE OWNERS OVER. This file
+// constructs no `Clip`, no `TimelineRegion` and no file path; it calls `AudioImport.perform`
+// with the two stores and the picked URL, and that type — Foundation-only at its core, with
+// its three impure steps injected — does the copy, the validation and the two writes. So the
+// only message this view sends to `timeline` is still `document`, and that is a fact about
+// where the transaction lives rather than a spelling that dodges a guard:
+// `TheWorkstationImportsAudioTests` pins the transaction's ONE production call site here, and
+// `TheWorkstationHasADoorTests` claim F says in as many words where the mutation moved.
 //
 // ⚠️ THE CLOCK IS NOT HERE AND MUST NEVER BE. `PatternEngine` is the musical authority;
 // `play(...)` joins it (`pattern.play(cause: .timelineRegion)`) rather than starting anything
@@ -37,28 +46,56 @@
 // any open `.menu` Picker. The law is in `.claude/skills/swiftui-render-safety/SKILL.md`;
 // the reason it applies HERE is that this file sits on the always-evaluated path.
 //
-// ⭐ THE DOOR COSTS ZERO PRESENTATION MODIFIERS, which is the whole reason this shape was
-// chosen over a `.sheet`. It is a `StudioMenu` case in the existing chip strip — the same
-// idiom `soundPanel`, `mixerPanel` and the rest use — so the body's aggregate generic type is
-// untouched and the black-screen law (10.76.34) is not approached. A modal would have spent
-// one of the last slots under the 14 ceiling on a surface that needs no modality at all.
+// ⭐ THE DOOR COSTS ZERO PRESENTATION MODIFIERS ON THE ROOT, which is the whole reason this
+// shape was chosen over a `.sheet`. It is a `StudioMenu` case in the existing chip strip — the
+// same idiom `soundPanel`, `mixerPanel` and the rest use — so the ROOT body's aggregate
+// generic type is untouched and the black-screen law (10.76.34) is not approached.
+//
+// ⚠️ AND THE IMPORT'S `.fileImporter` DOES NOT CHANGE THAT, measured rather than assumed. It
+// sits on THIS file's body, and `WorkstationView.body` returns an OPAQUE `some View`: the root
+// sees one type token, never the leaf's modifier chain, so the aggregate type
+// `EchoelStudioView.body` builds is unchanged. The budgeted count — the one CLAUDE.md's
+// presentation paragraph carries and `python3 scripts/doctor.py --section D` prints — is
+// scoped to `EchoelStudioView.swift` file-wide, so it does not move either. A `.fileImporter`
+// added to the ROOT instead would have spent a slot under the 14 ceiling, and the founder's
+// instruction to keep the picker state local to this view is exactly what avoids that.
+// Exactly one modal is ever true here; never drive two at once (the tap-blocking layer).
 //
 // NEEDS-FOUNDER-VERIFY (#1436/#1437): the door AND its transport, on the device. None of
 // this is a thing a gate can answer — a green `Build for Testing` proves the bundle compiles
 // and says nothing about whether a note is heard. (1) The "Workstation" chip is there,
 // between Field and Save/Export, and the strip scrolls far enough to reach it. (2) A tap
 // swaps the plate, and tapping Sound afterwards brings the instrument back — no stuck panel.
-// (3) On a fresh install the plate shows EITHER the empty state OR the two seeded lanes
-// ("MIDI 1", "Audio 1") with zero parts, and Play reads "Nothing to play yet" and does not
-// respond. (4) With a MIDI part on the song: Play SOUNDS it, the button turns to Stop, Stop
+// (3) On a fresh install the plate shows the empty state — ⚠️ MEASURED FOR AUDIO IMPORT V1
+// AND SHARPER THAN THE "EITHER/OR" THAT STOOD HERE: NOTHING in this build creates a
+// `TimelineLane`. `TimelineStore.migrate` is only reached through `bootstrapIfNeeded`, whose
+// one caller was `ArrangeTimelineView` (deleted by #121 Slice 4), and `addLane` /
+// `addInstrumentTrack` have no production caller either. So the seeded "MIDI 1"/"Audio 1"
+// pair exists ONLY in a document a pre-Slice-4 build persisted. Play reads "Nothing to play
+// yet" and does not respond. (4) With a MIDI part on the song: Play SOUNDS it, the button
+// turns to Stop, Stop
 // silences it, and a second Play after that starts it again — the stick is what a lifecycle
 // bug looks like from outside. (5) The instrument's own ■ also stops it (one transport, not
 // two). (6) VoiceOver reads each lane row as ONE sentence and announces Play/Stop with the
 // hint, not as an unlabelled glyph.
+//
+// NEEDS-FOUNDER-VERIFY (Audio Import V1): the import door on the device. (7) "Import Audio"
+// sits under the transport and tapping it opens the system picker filtered to audio. (8)
+// Cancelling says NOTHING — a cancelled pick is not a failure. (9) Picking a real audio file
+// adds a part to the audio track, the plate's part count rises, and the line underneath names
+// the file and its bar span. (10) Play then SOUNDS that file at its recorded speed, and Stop
+// silences it. (11) A second import appends AFTER the first rather than on top of it. (12)
+// With no audio track the button still taps and says "Add an audio track first" — and per
+// item (3) above, on a fresh install that is the ONLY outcome this build can reach. Founder
+// decision 4 for this slice was explicitly "do NOT auto-create a lane", so it is reported,
+// not repaired. (13) VoiceOver announces the button and reads the result line.
 
 #if canImport(SwiftUI)
 import Foundation
 import SwiftUI
+#if canImport(UniformTypeIdentifiers)
+import UniformTypeIdentifiers
+#endif
 
 @MainActor
 struct WorkstationView: View {
@@ -76,6 +113,15 @@ struct WorkstationView: View {
     @Environment(BeatPlayer.self) private var beatPlayer
     @Environment(PianoRollModel.self) private var pianoRoll
     @Environment(ClipStore.self) private var clipStore
+
+    /// Audio Import V1 — picker + result, both LOCAL to this leaf on the founder's
+    /// instruction. Neither is persisted, neither is read by any other surface, and neither
+    /// is hot: `importPresented` flips on a tap, `importNote` on a completed pick. Putting
+    /// either in the permanent Studio root would have made the whole Studio rebuild on a
+    /// file-picker dismissal, and `importNote` would have become a sixth thing the root
+    /// carries between plate switches for no reason.
+    @State private var importPresented = false
+    @State private var importNote: String?
 
     var body: some View {
         let summary = WorkstationSummary(document: timeline.document)
@@ -102,8 +148,29 @@ struct WorkstationView: View {
             // a start that silently does nothing — the "disabled decorative transport" this
             // surface was told not to grow.
             transportRow
+
+            // MARK: - The import door (Audio Import V1, founder 2026-09-22)
+            //
+            // ⭐ THE FIRST REACHABLE PRODUCER OF AN AUDIO-BEARING REGION. Until this row the
+            // only path that could mint one was `RecordController` → `TakeRecorder` →
+            // `AudioClipFactory`, and `arm()` had zero callers (#204/#527) — so
+            // `AudioLanePlayer` walked `doc.audioLaneIDs` on every transport step and found
+            // nothing, for four months, with the engine shipped and injected the whole time.
+            importRow
+            if let note = importNote { importNoteLine(note) }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        #if canImport(UniformTypeIdentifiers)
+        // ⚠️ ON THE LEAF, NEVER ON THE ROOT — see the header. `allowedContentTypes: [.audio]`
+        // is the system's own conformance test, so a picker that offers a file at all has
+        // already said it claims to be audio; `AudioImport` still measures the MANAGED COPY
+        // afterwards, because "claims to be audio" and "decodes" are different facts.
+        .fileImporter(isPresented: $importPresented,
+                      allowedContentTypes: [.audio],
+                      allowsMultipleSelection: false) { result in
+            handleImport(result)
+        }
+        #endif
     }
 
     // MARK: - Pieces
@@ -289,6 +356,92 @@ struct WorkstationView: View {
                 .accessibilityHidden(true)   // the button's own hint already carries this
         }
         .padding(.top, 2)
+    }
+
+    /// "Import Audio" — one button, no menu, no browser. The founder's instruction was a
+    /// single action inside the existing plate, and a media browser is the surface this
+    /// phase was told not to grow.
+    ///
+    /// ⚠️ IT IS NEVER DISABLED, deliberately, and that is the opposite of the transport's
+    /// rule one row up. Play disables itself because the engine's own `canPlay` can answer
+    /// "this would do nothing" BEFORE the tap. Import cannot: whether the pick succeeds,
+    /// whether the file decodes, whether a slot is free at that moment — none of it is known
+    /// until the user has chosen. A greyed-out Import would have to guess, and the honest
+    /// alternative is what this row does: always tappable, and every outcome says what
+    /// happened in words (`AudioImport.Failure.userMessage`).
+    private var importRow: some View {
+        Button {
+            importNote = nil
+            importPresented = true
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "square.and.arrow.down")
+                    .font(.system(size: 13, weight: .semibold))
+                Text("Import Audio").font(EchoelTheme.font(13, .semibold))
+            }
+            .foregroundStyle(EchoelTheme.text)
+            .padding(.horizontal, 14)
+            .frame(minWidth: 92, minHeight: 44)
+            .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
+            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                .strokeBorder(EchoelTheme.border, lineWidth: 1))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Import audio")
+        .accessibilityHint("Adds an audio file to the song's audio track")
+    }
+
+    /// The one line every outcome writes to. Success and failure share it on purpose: two
+    /// separate slots would let a stale success sit under a fresh failure, which is the
+    /// "control that lies" shape in its quietest form.
+    private func importNoteLine(_ note: String) -> some View {
+        Text(note)
+            .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityLabel(note)
+    }
+
+    /// Run the import and say what happened.
+    ///
+    /// ⚠️ CANCELLING IS NOT A FAILURE, and the check is a SUPERSET under both readings of
+    /// SwiftUI's contract — the same argument `EchoelStudioView`'s project importer writes
+    /// out: whether Cancel arrives as `CocoaError.userCancelled` or never calls the
+    /// completion has varied across iOS versions, and no device is available here to settle
+    /// it. If cancellation is delivered we swallow it; if it is not, the guard is a no-op.
+    /// The other direction would put "Couldn't open that file." on screen for a user who
+    /// deliberately backed out.
+    ///
+    /// ⚠️ THE STORES ARE HANDED OVER, NOT MESSAGED. Everything that writes lives in
+    /// `AudioImport`, which is why this file still sends `timeline` exactly one message
+    /// (`document`) and names no `Clip`, `TimelineRegion`, `FileManager` or path.
+    private func handleImport(_ result: Result<[URL], Error>) {
+        switch result {
+        case .failure(let error):
+            if (error as? CocoaError)?.code == .userCancelled { return }
+            importNote = AudioImport.Failure.pickerFailed.userMessage
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            #if canImport(AVFoundation)
+            // `preflightTempo` is the tempo the Play predicate already judges this song at —
+            // `@ObservationIgnored`, mirrored from `PatternEngine`, and read in a tap handler
+            // rather than in `body`. The placement needs a tempo to turn the file's measured
+            // seconds into whole bars; it does NOT estimate the file's own tempo (decision 7).
+            switch AudioImport.perform(pickedURL: url,
+                                       clipStore: clipStore,
+                                       timeline: timeline,
+                                       bpm: player.preflightTempo) {
+            case .success(let landing):
+                let laneName = timeline.document.lanes
+                    .first { $0.id == landing.laneID }?.name ?? "the audio track"
+                importNote = AudioImport.successNote(landing, laneName: laneName)
+            case .failure(let failure):
+                importNote = failure.userMessage
+            }
+            #else
+            importNote = AudioImport.Failure.unreadableAudio.userMessage
+            #endif
+        }
     }
 
     /// Start the arrangement on the ONE transport. Everything this hands over is already

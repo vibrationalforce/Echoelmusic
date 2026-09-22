@@ -85,6 +85,55 @@ public enum AudioClipFactory {
                               stretchMode: stretchMode)
     }
 
+    /// Whole bars that COVER `durationSeconds` at `bpm` — ceil, floored at 1.
+    ///
+    /// ⭐ WHY THIS EXISTS BESIDE `barCount`, WHICH ROUNDS (Audio Import V1). `barCount` is
+    /// built for a WELL-CUT LOOP whose native tempo is known: rounding to the nearest bar is
+    /// how a 3,97-bar loop lands on 4 and plays in time. An UNWARPED import has no native
+    /// tempo — the founder's decision 7 for this slice is `nativeBPM = 0`, do not estimate —
+    /// so there is no loop to snap to, and rounding DOWN silently truncates the tail: a
+    /// 5-second file at 120 bpm is 2,5 bars, `barCount` says 2, and the last second is
+    /// simply never scheduled. Half the durations in a uniform distribution round down, so
+    /// this is the everyday case, not an edge one.
+    ///
+    /// ⚠️ THE COST OF COVERING IS SILENCE, NOT SOUND, and that asymmetry is the argument.
+    /// A region LONGER than its media plays the media and then nothing — inaudible. A region
+    /// SHORTER than its media loses audio the user imported. One of those two is a bug.
+    ///
+    /// ⚠️ A DEGENERATE `bpm` RETURNS 1, IT DOES NOT SUBSTITUTE A TEMPO. `TimelineTime.ticks`
+    /// is already NaN/inf-safe and returns 0 for a non-positive or non-finite tempo; quietly
+    /// swapping in a default here would be an invisible musical decision made by a helper.
+    /// The one production caller passes `TimelineRegionPlayer.preflightTempo`, which mirrors
+    /// the clamped transport tempo, so the fallback is unreachable from the door.
+    public static func coveringBars(forDurationSeconds durationSeconds: Double,
+                                    bpm: Double) -> Int {
+        let ticks = TimelineTime.ticks(fromSeconds: durationSeconds, bpm: bpm)
+        guard ticks > 0, TimelineTime.ticksPerBar > 0 else { return 1 }
+        let bars = (Double(ticks) / Double(TimelineTime.ticksPerBar)).rounded(.up)
+        return max(1, Int(bars))
+    }
+
+    /// The region an UNWARPED audio import places: whole bars that COVER the media, at
+    /// `startTick` on `laneID`. `warpEnabled` and `stretchMode` keep their initialiser
+    /// defaults (`false` / `.clean`), which `StretchPlan.resolve` turns into rate 1.0 — the
+    /// media plays at its recorded speed, which is what "unwarped" means.
+    ///
+    /// ⚠️ IT IS NOT `region(forDurationSeconds:…)` WITH A DIFFERENT ROUNDING. That one takes
+    /// a `nativeBPM` and derives the span from it; this one has no native tempo to take, and
+    /// passing the SESSION tempo into that parameter would read, correctly, as a BPM
+    /// estimate — the exact thing founder decision 7 forbids. Two questions, two functions.
+    public static func unwarpedRegion(forDurationSeconds durationSeconds: Double,
+                                      bpm: Double,
+                                      laneID: UUID,
+                                      clipID: UUID,
+                                      startTick: Int) -> TimelineRegion {
+        let bars = coveringBars(forDurationSeconds: durationSeconds, bpm: bpm)
+        return TimelineRegion(laneID: laneID,
+                              clipID: clipID,
+                              startTick: max(0, startTick),
+                              lengthTicks: bars * TimelineTime.ticksPerBar)
+    }
+
     /// Whole-bar count for `durationSeconds` at `nativeBPM`, rounded to the
     /// nearest bar and floored at 1. Pure; guards non-positive inputs.
     static func barCount(forDurationSeconds durationSeconds: Double,

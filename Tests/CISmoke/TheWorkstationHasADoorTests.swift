@@ -335,7 +335,11 @@ final class TheWorkstationHasADoorTests: XCTestCase {
                 XCTAssertFalse(src.contains(forbidden), """
                     \(path) names `\(forbidden)`. Phase 3 is explicitly a HOLD on persistence: \
                     a sixth root would have to be chosen between, migrated, and versioned, and \
-                    none of that is this slice's to decide.
+                    none of that is this slice's to decide. ⭐ Audio Import V1 persists a clip \
+                    and a region and does NOT break this: it writes through the EXISTING \
+                    `ClipStore`/`TimelineStore` roots, from `AudioImport`, and the file copy \
+                    goes through `MediaLibrary`, which has owned `Media/Audio` since before \
+                    this surface existed. A NEW root is still the thing forbidden here.
                     """)
             }
         }
@@ -367,6 +371,24 @@ final class TheWorkstationHasADoorTests: XCTestCase {
         // `TheWorkstationPlaysTheTimelineTests`, which pins the exact opposite with a number:
         // one call site, on the player binding, in this file. The boundary this claim owns is
         // narrower and unchanged: the surface may start the song, never EDIT it.
+        //
+        // ⭐ AND AUDIO IMPORT V1 (2026-09-22) ADDED A WRITE TO THE SONG WITHOUT MOVING THIS
+        // LINE, WHICH IS WORTH SAYING OUT LOUD BECAUSE IT LOOKS LIKE A MISS. The Workstation
+        // now has an "Import Audio" row that ends with a `Clip` in `ClipStore` and a
+        // `TimelineRegion` in `TimelineStore` — and the set above is still exactly
+        // `["document"]`, measured, not assumed. The reason is the shape of the seam: the
+        // view HANDS BOTH STORES OVER to `AudioImport.perform(pickedURL:clipStore:timeline:
+        // bpm:)` and reads back a `Result`; every mutation is `AudioImport.commit`'s, in
+        // `Sequencer/AudioImport.swift`, pinned there by
+        // `TheWorkstationImportsAudioTests.testTheClipIsCommittedBeforeTheRegionAndOnlyOnSuccess`.
+        //
+        // ⚠️ SO READ THIS CLAIM FOR WHAT IT MEASURES, not for more. It proves this FILE sends
+        // the store nothing but `document` — a real and useful boundary, because a mutator
+        // called from a `body` is the shape that edits the song by accident. It does NOT
+        // prove the surface causes no write; since the import door it demonstrably does. A
+        // future slice that adds timeline EDITING must fail here, and it still would: an edit
+        // is a message to the store, whoever ultimately sends it, and handing the store to a
+        // helper that edits would be caught by that helper's own guard, not by this one.
     }
 
     // MARK: - G. COUNTERWEIGHT — the instrument stays reachable

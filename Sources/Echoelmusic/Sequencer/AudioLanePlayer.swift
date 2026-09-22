@@ -22,28 +22,36 @@
 // the transport on every prime/apply/stop; it stays allocation-free on the render
 // path (the `.unchanged`/onset/clear windows do all reconciliation).
 //
-// ⛔ THIS SENTENCE SAID "audio lanes now sound in time with the arrangement" AND THAT IS
-// A CAPABILITY CLAIM WITH NO PRODUCER. Wired is true; sounding is not, because nothing a
-// user can reach ever puts an audio region on an audio lane. Measured 2026-08-12 over
-// `Sources/` with comments stripped — FIVE `TimelineRegion(` construction sites, and every
-// one of them is accounted for:
-//   · `TimelineStore.migrate(sections:)` seeds an empty `Audio 1` lane and puts EVERY
-//     region it creates on the MIDI lane.
-//   · `TimelineStore.ensureComposerRegion` and `ensureUserMidiRegion` both build their clip
-//     with `kind: .midi`, by construction.
-//   · `RecordController` and `AudioClipFactory` are the only two that can produce an
-//     audio-bearing region — and that chain is doorless: `AudioClipFactory` is called only
-//     by `TakeRecorder`, `TakeRecorder` is constructed only by `RecordController`, and
-//     `RecordController.arm()` has ZERO callers in `Sources/` (#204).
-// So `apply`/`prime` walk `doc.audioLaneIDs` on every transport step and find nothing to
-// play. The arrangement UI that would have created one went with #121 Slice 4.
+// ⛔ THIS SENTENCE SAID "audio lanes now sound in time with the arrangement" AND FOR FOUR
+// MONTHS IT WAS A CAPABILITY CLAIM WITH NO PRODUCER. Wired was true; sounding was not,
+// because nothing a user could reach ever put an audio region on an audio lane — the only
+// audio-bearing creator, `AudioClipFactory`, was called only by `TakeRecorder`, constructed
+// only by `RecordController`, whose `arm()` has ZERO callers (#204/#527). So `apply`/`prime`
+// walked `doc.audioLaneIDs` on every transport step and found nothing to play.
 //
-// ⚠️ AND THAT IS NOT AN ARGUMENT FOR DELETING THIS LAYER — the reverse. `TimelineDocument`
-// is PERSISTED and decoded on launch, so a document written by any build whose recorder
-// path was reachable can still carry an audio region, and this coordinator is the only
-// thing that would play it. Unwiring it would make such a project silently silent rather
-// than obviously absent. Re-dooring audio import is welcome work; see the guard for what
-// must move in the same commit.
+// ⭐ THAT GAP IS CLOSED (Audio Import V1, founder 2026-09-22). `Sequencer/AudioImport.swift`
+// is the second caller of `AudioClipFactory` and the first with a door: `WorkstationView`'s
+// "Import Audio" row copies a picked file into `Media/Audio` through `MediaLibrary`, measures
+// the MANAGED COPY, and lands a `Clip(kind: .audio)` in `ClipStore` plus a `TimelineRegion`
+// on the song's first non-bio audio lane. From this file's point of view NOTHING changed —
+// it was always correct and always reconciling; it simply has something to reconcile now.
+//
+// ⚠️ THE HONEST SHAPE OF THE CLAIM IS STILL CONDITIONAL. An audio lane sounds when a user has
+// imported something onto it; the default document seeds an EMPTY `Audio 1` lane, so a fresh
+// install still walks this layer and finds nothing, and that is correct rather than broken.
+// The RECORDER half of the census is also unchanged and stays doorless: it needs an audio
+// INPUT, which this app does not have (#1302).
+//
+// ⚠️ AND NONE OF THAT IS AN ARGUMENT FOR DELETING THIS LAYER — the reverse, twice over.
+// `TimelineDocument` is PERSISTED and decoded on launch, so a document written by any build
+// can carry an audio region; and the import door now writes exactly such a document every
+// time it is used. Unwiring this coordinator would make both silently silent rather than
+// obviously absent. The census lives in
+// `Tests/CISmoke/TheAudioLaneProducerIsTheImportDoorTests.swift`; what a successful import
+// produces is `Tests/CISmoke/TheWorkstationImportsAudioTests.swift`. A THIRD producer is
+// welcome work — it just has to move both of those and CLAUDE.md's register line in the same
+// commit.
+//
 // LIVE MIXER (H4, closed the original known gap): `.unchanged` windows reconcile
 // the lane's gain/pan against what the sink last received — a mid-region level
 // move re-gains live, mute stops now, unmute RE-STARTS the region at the honest

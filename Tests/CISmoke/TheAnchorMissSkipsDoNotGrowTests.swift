@@ -56,7 +56,12 @@ final class TheAnchorMissSkipsDoNotGrowTests: XCTestCase {
         let gain = try text("Tests/CISmoke/TheMasterGainMovesInSmallStepsTests.swift")
         XCTAssertTrue(gain.contains("return XCTFail(\"`stop(reason:)` is gone from AudioEngine.swift"),
                       "the `stop(reason:)` anchor miss skips again instead of failing (#1240)")
-        let lanes = try text("Tests/CISmoke/TheAudioLanesHaveNoProducerTests.swift")
+        // ⚠️ THE PATH MOVED WITH AUDIO IMPORT V1 (2026-09-22): the file was
+        // `TheAudioLanesHaveNoProducerTests.swift` until the audio lanes got a producer and
+        // its NAME became a false statement (#374). Carried here in the same commit, because
+        // `text(_:)` SKIPS a missing file — a stale path would have turned this claim into a
+        // silent pass, which is the exact defect the ratchet above exists to prevent (#456).
+        let lanes = try text("Tests/CISmoke/TheAudioLaneProducerIsTheImportDoorTests.swift")
         XCTAssertTrue(lanes.contains("throw AnchorMissing(name: name)") && lanes.contains("XCTFail(\"`func \\(name)` is not in TimelineStore.swift"),
                       "the creator-anchor miss in `body(of:in:)` skips again instead of failing (#1240)")
     }

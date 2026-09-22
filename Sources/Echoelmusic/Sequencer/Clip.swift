@@ -89,20 +89,29 @@ public enum ClipKind: String, Codable, Sendable, CaseIterable {
     /// `TimelineRegionPlayer` drives on every prime, every transport step and every stop. A
     /// persisted audio region whose clip carries a resolvable `mediaRef` SOUNDS today.
     ///
-    /// ⚠️ WHAT IS STILL ABSENT IS A PRODUCER, NOT AN ENGINE, and the two are different
-    /// facts: the only path that can create an audio-carrying clip is `AudioClipFactory` ←
+    /// ⭐ AND THE PRODUCER ARRIVED WITH AUDIO IMPORT V1 (founder 2026-09-22). When #1438
+    /// corrected this set, what was still absent was a PRODUCER, not an engine — the only
+    /// path that could create an audio-carrying clip was `AudioClipFactory` ←
     /// `TakeRecorder` ← `RecordController`, whose `arm()` has zero callers (#204/#527).
-    /// Conflating them is exactly what kept this set stale — an UNDER-claim, whose cost is
-    /// the one #527 names: a document from an older build that the engine would happily play,
-    /// refused by a predicate reading this set. "Silently mute" where "visibly absent" was
-    /// the honest state.
+    /// `Sequencer/AudioImport.swift` is the second caller of that factory and the first with
+    /// a door (`WorkstationView`'s "Import Audio" row), so an audio region is now something
+    /// a user can make.
+    ///
+    /// ⚠️ THE #1438 LESSON SURVIVES THE REPAIR AND IS THE REASON THIS PARAGRAPH STAYS. Engine
+    /// and producer are DIFFERENT FACTS, and conflating them is what kept this set stale for
+    /// four months — an UNDER-claim, whose cost is the one #527 names: a document from an
+    /// older build that the engine would happily play, refused by a predicate reading this
+    /// set. "Silently mute" where "visibly absent" was the honest state. The next medium to
+    /// join this set will be asked the same two questions separately.
     public static let timelineEngineKinds: Set<ClipKind> = [.midi, .audio]
 
     /// Only kinds a SHIPPED engine drives render on the timeline. The arrangement may show
     /// the other lanes, but must not pretend they play. ⚠️ "Shipped" is the claim, not
     /// "device-verified" — the word stood here and over-claimed for `.audio`, whose engine
-    /// compiles, is injected and is driven, but has no founder device probe behind it
-    /// because nothing can currently CREATE an audio region to probe with (#1438).
+    /// compiles, is injected and is driven. ⭐ Since Audio Import V1 there IS finally
+    /// something to probe with (import a file, press Play), so the device probe is owed
+    /// rather than impossible — [NEEDS-FOUNDER-VERIFY] an imported clip is AUDIBLE in time
+    /// with the arrangement.
     public var isPlayable: Bool { Self.timelineEngineKinds.contains(self) }
 
     /// Kinds that carry an external media file via `mediaRef` (vs. inline
