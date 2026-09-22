@@ -1,4 +1,4 @@
-build: v10.79.477 — Der Variations-Build: das Genre-Preset ist eine MITTE mit Streuung statt einer Schablone, und ein abgeschalteter Regler sieht endlich abgeschaltet aus (#1401, #1402)
+build: v10.79.478 — Der Workstation-Build: die Timeline hat eine Tuer und einen Play-Knopf, und dieser Build existiert fuer die Geraete-Pruefliste D1-D9 (#1436-#1444)
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -51,7 +51,105 @@ notes: |
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
 
-  Der Vorgänger ist 10.79.476 (und davor 10.79.475).
+  ── WAS IN DIESEM BUILD NEU IST (v10.79.478) ──────────────────────────────
+
+  ⭐ DIESER BUILD EXISTIERT FÜR EINE GERÄTE-SITZUNG, nicht für ein Feature. Seit dem
+  letzten Deploy (0e8f282fe) sind 58 Commits gelaufen, davon 38 in `Sources/` oder
+  `Tests/` — die ganze Phase 4. Ihr Ergebnis ist eine Fläche, die KEIN Gate beweisen
+  kann: die Workstation hat eine Tür und einen Play-Knopf, und ob daraus Ton wird,
+  entscheidet ein Telefon. Die Prüfliste D1–D9 unten IST der Zweck des Builds.
+
+  ── POSTEN 1: DIE WORKSTATION (#1436, #1437) — DAS NEUE AM GERÄT ──
+
+  Der Weg: der Workstation-Chip in der Chip-Leiste des Instruments. Die Platte ZEIGT
+  die Spuren und Teile, die `TimelineStore` ohnehin besitzt, und sie STARTET sie.
+  Sie EDITIERT nichts — kein Verschieben, Trimmen, Teilen, kein Import. Das ist
+  Absicht und die einzige benannte Ausnahme der CUT-Liste.
+
+  ⚠️ WAS DU NICHT ERWARTEN DARFST: es gibt KEINEN Playhead und keine laufende
+  Positionsanzeige. `WorkstationView` liest `currentTick` bewusst nicht — ein
+  Transport-Tick im Rumpf einer Fläche mit Menüs ist die 10.76.41/50-Freeze-Form.
+  Der sichtbare Beleg ist stattdessen die Zeile UNTER dem Knopf, die drei Zustände
+  wörtlich unterscheidet:
+      "Nothing to play yet."                                        (nichts spielbar)
+      "Plays the existing parts — this view still does not edit them."   (bereit)
+      "Playing from the top on the shared transport."                    (läuft)
+
+  ── POSTEN 2: VIER REPARATUREN AN DER FRAGE „KANN DAS ÜBERHAUPT SPIELEN?" ──
+
+  #1438 bis #1440 haben denselben Defekt drei Mal enger gefasst, und jede Stufe war
+  ein stiller Transport über Stille — der Knopf sagte ja, der Lautsprecher schwieg:
+  · #1438  ein platzierter ZEIGER ist kein Inhalt
+  · #1439  ein Medien-VERWEIS ist keine Datei — gefragt wird jetzt derselbe Auflöser,
+           den der spielende Pfad benutzt
+  · #1440  ein platziertes Teil ist kein GESPIELTES Teil: bei Überlappung gewinnt das
+           später beginnende, und der Vorbehalt fragte die Teile einzeln statt den
+           einen Vorrang-Entscheider
+  Wenn D4 also Play NICHT ausgegraut zeigt, ist das eine Aussage mit Gewicht.
+
+  ── POSTEN 3: WAS SONST ZUM ERSTEN MAL AUF DEM GERÄT IST ──
+
+  · Die LICHT-SHOW überlebt einen Neustart (#1442): Auflösung, Anzahl der Lampen und
+    ihr Abstand werden gespeichert, nicht nur das Licht-ZIEL. Weg: Master-Chip →
+    Routing. Prüfbitte: Rig einstellen, App killen, neu starten — steht alles noch?
+  · ADM-OSC spricht die Spec statt unserer Auslegung: Default-Port 4001 statt 9000
+    (#1433), und die Objekt-Position verlässt das Gerät als EINE atomare Nachricht
+    statt als drei (#1421/#1430/#1432). Wer ein Rig hat, muss den Port umstellen.
+  · Ein Gerät in der Nähe zeigt seinen NAMEN, nicht seinen Schlüssel (#1435).
+  · Der MPE-Ausgang fragt die Egress-Policy, bevor er Körperdaten trägt (#1434).
+  · Die drei Berechtigungs-Texte beschreiben, was die App wirklich tut (#1415) — das
+    Mikrofon ist raus, die Kamera nennt nur noch die rückseitige Linse.
+
+  ── DIE GERÄTE-PRÜFLISTE D1–D9 (der eigentliche Auftrag dieses Builds) ──
+
+  D1  Workstation-Chip sichtbar, Tap öffnet die Platte.
+  D2  Workstation → Sound-Chip → Workstation, beides über die Chip-Leiste.
+  D3  Generate im Instrument, dann Workstation: mindestens eine Spur mit ≥ 1 Teil,
+      und die Zeile unter dem Knopf ist NICHT "Nothing to play yet."
+  D4  Play: Knopf wechselt in den Stop-Zustand, Zeile wird "Playing from the top…",
+      MIDI ist hörbar. KEIN Playhead erwartet.
+  D5  Stop: Ton endet, Knopf zurück auf Play, Zeile zurück auf "Plays the existing…".
+  D6  Play → Stop → Play: zweiter Play klingt wieder, keine Doppelstimme, keine
+      hängende Note. Startposition NUR notieren, nicht bewerten.
+  D7  Wiedergabe starten, Workstation schließen, globalen Transport-Stop drücken:
+      derselbe Ton muss enden.
+  D8  VoiceOver auf Chip, Spurzeile, Play, Stop — gesprochenen Text wörtlich notieren.
+  D9  Jede Abweichung zwischen Gezeigtem und Hörbarem notieren.
+  ⚠️ D4 bis D7 sind EINE durchgehende Bildschirmaufnahme MIT TON. Bricht sie, ab D4
+  neu — der Lebenszyklus ist der Beweis, nicht die Einzelbilder.
+
+  ── PRÜF-BITTEN, DIE DIESER BUILD NEU BEANTWORTBAR MACHT ──
+
+  Gedruckt, nicht von Hand geschrieben:
+      python3 scripts/founder-verify.py --since 0e8f282fe
+  → 8 NEU oder UMFORMULIERT, von 158 offenen. Die Liste sieht TEXT, nicht Fähigkeit:
+  eine nur umformulierte Bitte erscheint als „neu", also den Satz lesen.
+
+  AUDIO (3) — alle drei aus #1404, alle drei eine Klangfrage:
+    Sequencer/RoleRhythm.swift:344  Mood → Pad rhythm nacheinander durchgehen
+    Sequencer/RoleRhythm.swift:351  ⚠️ BESTEHENDE PROJEKTE KLINGEN ANDERS (padEvolve)
+    Sequencer/RoleRhythm.swift:662  Flowing-Pad bei sehr niedriger Dichte — setzt es
+                                    einzelne Takte ganz aus, und ist das gewollt?
+  UI (2):
+    Studio/EchoelValueField.swift:625  Mood → Pad rhythm auf „Genre" (#1401/#1404)
+    Studio/WorkstationView.swift:46    die Tür UND ihr Transport, am Gerät — das ist
+                                       D1–D9 oben, an der Stelle, die man beim
+                                       Beantworten ändern würde
+  SYNC (2): Sync/PeerIdentity.swift:21 und CISmoke/ThePeerKeyIsNotTheLabelTests.swift:16
+    — beide brauchen ZWEI Telefone, nicht eins. Nicht in dieser Sitzung.
+  OTHER (1): CLAUDE.md:48 (BLE-Gurt, wartet auf Eintreffen des Gurts)
+
+  ⛔ EIN BEFUND BEIM VORBEREITEN DIESES BUMPS, und er gehört hierher, weil er GENAU
+  diese Datei betrifft (#1444): `TheDeployNoteNamesRealDoorsTests` Anspruch 2 prüft,
+  dass jeder Chip-Weg dieser Notiz ein echtes Label der Leiste nennt — gegen eine fest
+  verdrahtete Liste in Anspruch 1. #1436 hatte „Workstation" als zehnten Chip
+  hinzugefügt, die Liste hatte neun. Der Wächter war also die ganze Phase 4 über auf
+  korrektem Baum ROT, und kein Gate sagte es: das blockierende Bündel wird GEBAUT,
+  nie AUSGEFÜHRT (#396/#807). Ausgerechnet der Wächter, der den Founder vor einem
+  Weg bewahren soll, den es nicht gibt, hätte den einen Weg nicht gekannt, den diese
+  Sitzung braucht. Repariert in 4556ff8c9, vor diesem Bump, in eigenem Commit.
+
+  Der Vorgänger ist 10.79.477 (und davor 10.79.476).
 
   ── WAS IN DIESEM BUILD NEU IST (v10.79.477) ──────────────────────────────
 
