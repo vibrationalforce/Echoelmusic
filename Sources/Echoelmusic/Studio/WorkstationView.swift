@@ -20,13 +20,25 @@
 // `TimelineRegionPlayer` the app constructs.
 //
 // ⚠️ AND THE IMPORT DOES NOT WRITE FROM HERE EITHER — IT HANDS THE OWNERS OVER. This file
-// constructs no `Clip`, no `TimelineRegion` and no file path; it calls `AudioImport.perform`
-// with the two stores and the picked URL, and that type — Foundation-only at its core, with
-// its three impure steps injected — does the copy, the validation and the two writes. So the
-// only message this view sends to `timeline` is still `document`, and that is a fact about
-// where the transaction lives rather than a spelling that dodges a guard:
+// constructs no `Clip` and no `TimelineRegion`; it calls `AudioImport.perform` with the two
+// stores and the picked URL, and that type — Foundation-only at its core, with its three
+// impure steps injected — does the copy, the validation and the two writes. So the only
+// message this view sends to `timeline` is still `document`, and that is a fact about where
+// the transaction lives rather than a spelling that dodges a guard:
 // `TheWorkstationImportsAudioTests` pins the transaction's ONE production call site here, and
 // `TheWorkstationHasADoorTests` claim F says in as many words where the mutation moved.
+//
+// ⛔ "AND NO FILE PATH" STOOD IN THE LINE ABOVE, AND PHASE E MADE IT HALF FALSE. This file now
+// holds one `URL` — the managed copy the detected-tuning analysis reads — but it still neither
+// builds nor looks one up: `AudioImport.Landing` REPORTS it, because the transaction that made
+// the copy is the only thing that knows which file it wrote.
+//
+// ⭐ AND THE FIRST DRAFT DID IT THE OTHER WAY, WHICH IS WHY THE DISTINCTION IS WORTH THE LINES.
+// It called `MediaLibrary.resolveRef(landing.clip.mediaRef)` right here. That is forbidden by
+// `TheWorkstationImportsAudioTests`, and the guard turned out to be right about the SUBSTANCE
+// rather than merely the vocabulary: `resolveRef` performs up to five
+// `FileManager.fileExists` probes, and this code path is the MAIN ACTOR. The rule survives in
+// its strong form — the view constructs no model and looks up no file.
 //
 // ⚠️ THE CLOCK IS NOT HERE AND MUST NEVER BE. `PatternEngine` is the musical authority;
 // `play(...)` joins it (`pattern.play(cause: .timelineRegion)`) rather than starting anything
@@ -123,6 +135,15 @@ struct WorkstationView: View {
     @State private var importPresented = false
     @State private var importNote: String?
 
+    /// The managed copy a tuning analysis is owed for, or nil. It is the `.task(id:)` key,
+    /// which is why it holds the URL rather than a flag: a SECOND import must supersede the
+    /// first, and SwiftUI restarts the task exactly when this value changes. A `Bool` would
+    /// have had to be toggled off and on to re-fire, and the window between the two is a
+    /// stale answer landing on a fresh note.
+    ///
+    /// ⚠️ LOCAL, LIKE THE OTHER TWO, AND NOT HOT — it changes once per completed import.
+    @State private var tuningPending: URL?
+
     var body: some View {
         let summary = WorkstationSummary(document: timeline.document)
         VStack(alignment: .leading, spacing: 10) {
@@ -171,6 +192,32 @@ struct WorkstationView: View {
             handleImport(result)
         }
         #endif
+        // MARK: - Detected tuning (Phase E)
+        //
+        // ⭐ THE ANALYSIS RUNS HERE AND NOWHERE ELSE, and the hop is the point.
+        // `AudioKeyAnalysis.analyse` is seconds of YIN; `Task.detached` takes it off the
+        // main actor so the plate stays live, and `.task(id:)` cancels a superseded run
+        // rather than letting two answers race for one line.
+        //
+        // ⚠️ THE NOTE IS APPENDED ONLY IF IT IS STILL THE SAME NOTE. This file's own law is
+        // that success and failure share ONE line so a stale success cannot sit under a
+        // fresh failure; an async append is exactly the way to break that law by accident,
+        // so the base text is captured before the hop and compared after it.
+        //
+        // ⚠️ NOTHING IS WRITTEN. The estimate is prose. `SessionContext` remains the one
+        // owner of the song's key; the user reads this and decides.
+        .task(id: tuningPending) {
+            #if canImport(AVFoundation)
+            guard let url = tuningPending else { return }
+            let base = importNote
+            let tuning = await Task.detached(priority: .utility) {
+                AudioKeyAnalysis.analyse(url: url)
+            }.value
+            guard let summary = AudioKeyAnalysis.summarise(tuning) else { return }
+            guard importNote == base else { return }
+            importNote = base.map { $0 + " " + summary } ?? summary
+            #endif
+        }
     }
 
     // MARK: - Pieces
@@ -372,6 +419,7 @@ struct WorkstationView: View {
     private var importRow: some View {
         Button {
             importNote = nil
+            tuningPending = nil
             importPresented = true
         } label: {
             HStack(spacing: 6) {
@@ -414,7 +462,11 @@ struct WorkstationView: View {
     ///
     /// ⚠️ THE STORES ARE HANDED OVER, NOT MESSAGED. Everything that writes lives in
     /// `AudioImport`, which is why this file still sends `timeline` exactly one message
-    /// (`document`) and names no `Clip`, `TimelineRegion`, `FileManager` or path.
+    /// (`document`) and names no `Clip`, `TimelineRegion` or `FileManager`.
+    ///
+    /// ⛔ THIS SENTENCE USED TO END "or path" — narrowed by Phase E, see the file header. The
+    /// success branch reads ONE `URL` off the `Landing` the transaction returns. It neither
+    /// builds a path nor looks one up.
     private func handleImport(_ result: Result<[URL], Error>) {
         switch result {
         case .failure(let error):
@@ -435,6 +487,13 @@ struct WorkstationView: View {
                 let laneName = timeline.document.lanes
                     .first { $0.id == landing.laneID }?.name ?? "the audio track"
                 importNote = AudioImport.successNote(landing, laneName: laneName)
+                // ⚠️ THE URL COMES FROM THE TRANSACTION, NOT FROM A SECOND LOOKUP. A first
+                // draft asked `MediaLibrary.resolveRef(landing.clip.mediaRef)` here, which
+                // `TheWorkstationImportsAudioTests` forbids — and the guard was right on the
+                // merits, not only on the spelling: `resolveRef` runs up to five
+                // `fileExists` probes, and this is the MAIN ACTOR. `AudioImport` already
+                // held the managed copy, so it reports it.
+                tuningPending = landing.managedURL
             case .failure(let failure):
                 importNote = failure.userMessage
             }

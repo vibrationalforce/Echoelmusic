@@ -124,11 +124,27 @@ public enum AudioImport {
         public var slotIndex: Int
         public var laneID: UUID
 
-        public init(clip: Clip, region: TimelineRegion, slotIndex: Int, laneID: UUID) {
+        /// The MANAGED COPY this import created, as a URL.
+        ///
+        /// ⭐ IT IS REPORTED HERE BECAUSE THE TRANSACTION IS THE ONLY THING THAT KNOWS IT,
+        /// and a caller that wants to READ what was just imported must not go looking for it
+        /// again. `clip.mediaRef` carries the same location as a string, so the obvious
+        /// alternative is `MediaLibrary.resolveRef(landing.clip.mediaRef)` at the call site —
+        /// and that is worse in two ways that only show up when measured: `resolveRef`
+        /// performs up to five `FileManager.fileExists` probes, which on the import path runs
+        /// them on the MAIN ACTOR; and it re-derives a fact this function already had in
+        /// hand, so a caller could disagree with the transaction about which file was
+        /// written. `TheWorkstationImportsAudioTests` forbids the door from naming
+        /// `MediaLibrary.` for exactly that reason, and this field is why it does not need to.
+        public var managedURL: URL
+
+        public init(clip: Clip, region: TimelineRegion, slotIndex: Int, laneID: UUID,
+                    managedURL: URL) {
             self.clip = clip
             self.region = region
             self.slotIndex = slotIndex
             self.laneID = laneID
+            self.managedURL = managedURL
         }
     }
 
@@ -205,7 +221,8 @@ public enum AudioImport {
             clipID: clip.id,
             startTick: document.nextStartTick(inLane: lane.id))
 
-        return .success(Landing(clip: clip, region: region, slotIndex: slot, laneID: lane.id))
+        return .success(Landing(clip: clip, region: region, slotIndex: slot,
+                                laneID: lane.id, managedURL: managed))
     }
 
     // MARK: - The transaction

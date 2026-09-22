@@ -67,10 +67,15 @@
 //   · EchoelLoudnessMeter  — one external site (`AudioEngine`), behind
 //     `if meterFormat.sampleRate > 0 && meterFormat.channelCount > 0`.
 //   · PitchTracker  — `guard sampleRate > 0, maxHz > minHz, minHz > 0 else { return nil }`.
-//     ⛔ "and its one call site guards `monitorTapSampleRate > 0` again" stood here and is
-//     hollow since #1302: that call site WAS the monitor tap, and the audio input is deleted.
-//     `git grep -n "\bPitchTracker\b" -- Sources` → its own file only. The guard above still
-//     holds on its own; the corroborating second guard no longer exists (#1376).
+//     ⛔ TWO SUCCESSIVE NOTES HERE WENT STALE, AND THE SECOND ONE CITED A `grep`. First:
+//     "and its one call site guards `monitorTapSampleRate > 0` again" — hollow since #1302,
+//     because that call site WAS the monitor tap and the audio input is deleted. Then:
+//     "`git grep …` → its own file only" — false since #E1, which gave YIN a caller
+//     (`Sequencer/AudioKeyAnalysis`, reading an imported file). **A note that quotes a grep
+//     ages faster than one that states a fact**, because every later commit can move the
+//     result without touching the note. What is durable is the guard in the signature, and
+//     it still holds on its own. The caller additionally derives its window size FROM this
+//     function's own precondition, so a nonsense rate is refused before it is reached.
 //   · EchoelSpaceReverb, EchoelModalBank  — zero production construction sites.
 //     ⛔ `EchoelWSOLA` stood in this bullet and is REMOVED (#1376): it is a FILENAME, and the
 //     type it holds, `WSOLAStretcher`, has THREE construction sites — one of them

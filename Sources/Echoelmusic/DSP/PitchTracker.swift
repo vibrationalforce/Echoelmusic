@@ -1,14 +1,27 @@
 // PitchTracker.swift
 // Echoel — fine fundamental-frequency detection (YIN) for "hear the tuning".
 //
-// The mic's FFT peak (~43 Hz/bin at 1024 pt) is far too coarse to tell A4=432 from
-// 440 (8 Hz). YIN (de Cheveigné & Kawahara, 2002) estimates the period directly from
-// the signal with sub-sample (parabolic) refinement, giving cents-accurate pitch from
-// voice/instrument — exactly what TuningDetector needs to recover the Kammerton.
+// An FFT peak (~43 Hz/bin at 1024 pt) is far too coarse to tell A4=432 from 440 (8 Hz).
+// YIN (de Cheveigné & Kawahara, 2002) estimates the period directly from the signal with
+// sub-sample (parabolic) refinement, giving cents-accurate pitch — exactly what
+// `TuningDetector` needs to recover the Kammerton.
+//
+// ⛔ THIS HEADER USED TO SAY "the mic's FFT peak" AND "the audio tap passes a Float window
+// in", and there is no microphone. `MicrophoneManager` was deleted with #1302 (founder
+// 2026-09-12, "Face und Audio Input komplett entfernen"); audio input is a FOUNDER HOLD.
+// The wording is corrected rather than left, because a header that describes a deleted
+// input reads as "waiting for the mic to come back" — which is what made `TuningDetector`
+// look blocked for as long as it did (#C1).
+//
+// ⭐ THE CALLER IS `Sequencer/AudioKeyAnalysis` (#E1): it reads windows out of an IMPORTED
+// FILE, off the main actor, and feeds the fundamentals to `TuningDetector`. ⚠️ THAT CALLER
+// DERIVES ITS WINDOW SIZE FROM THE PRECONDITION BELOW — `detect` refuses unless
+// `n >= tauMax * 2`, and a caller with a fixed window silently returns nil at EVERY
+// position of a high-sample-rate file. If that arithmetic changes here, it changes there.
 //
 // Pure value math (no AVFoundation/Accelerate) so it is fully unit-tested on every
-// platform with synthetic tones. The audio tap passes a Float window in; this returns
-// the fundamental in Hz (or nil when the window is unvoiced/aperiodic).
+// platform with synthetic tones. A Float window in; the fundamental in Hz out, or nil when
+// the window is unvoiced/aperiodic.
 
 import Foundation
 

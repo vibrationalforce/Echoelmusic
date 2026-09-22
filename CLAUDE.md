@@ -169,13 +169,19 @@ Deprecated from main flow: SoundscapeEngine, ClipEngine, MomentCaptureView, BioS
     trotzdem PRO BILD gelesen; `MetalBioView` bekommt jedes Mal `.silent`. Die Lese-Stelle IST
     der Montagepunkt eines künftigen Eingangs; wer sie „aufräumt", verlegt die teure Hälfte in
     den churn-empfindlichen Rumpf.
-  · **`Core/TuningDetector` (+`DetectedTuning`)** (#C1, 2026-09-22) — test-only, null
-    Produktions-Aufrufer. ⚠️ **Die Falle ist sein eigener Dateikopf: er nannte
-    `MicrophoneManager.pitch / .frequency` als Quelle, und die ist mit #1302 gelöscht** — der
-    Eintrag las sich damit als „wartet auf das Mikrofon", während sein natürlicher Erzeuger
-    heute die IMPORTIERTE AUDIODATEI ist (Audio Import V1). ⭐ Er IST der Phase-E-Typ:
-    `keyRoot`, `isMinor`, `confidence`, `a4Hz`, `centsOffset` — und `analyze` gibt nil zurück,
-    wenn die Evidenz dünn ist. **Wer detektierte Tonart baut, baut sonst einen zweiten.**
+  · ⭐ **`Core/TuningDetector` (+`DetectedTuning`) IST SEIT #E1 KEIN WAISE MEHR** — Erzeuger ist
+    `Sequencer/AudioKeyAnalysis` (Fenster aus der verwalteten Kopie → `DSP/PitchTracker` →
+    `analyze`), GENAU EINER, gepinnt von `TheToneSystemIsNamedByItsTypeTests`. ⚠️ **Die
+    Schätzung SCHREIBT NICHTS**: `SessionContext` bleibt der EINE Besitzer von
+    `echoel.keyRoot`/`echoel.keyScale`/`echoel.a4Hz` — erkannt wird berichtet, entschieden
+    wird vom Nutzer. **Wer detektierte Tonart baut, baut sonst einen zweiten**; `confidence`
+    und das nil bei dünner Evidenz sind schon da.
+    ⭐ **GESETZ, und es gilt dem REGISTER selbst: zwei Waisen können die zwei HÄLFTEN EINER
+    Fähigkeit sein.** Das Register sieht das nicht, weil es je Eintrag fragt „wer ruft DAS
+    hier?" — YIN lag in `DSP/`, die Tonart-Schätzung in `Core/`, beide monatelang aufruferlos,
+    dazwischen fehlte nur das Lesen von PCM-Fenstern. **Bei einem Waisen-Eintrag also auch
+    fragen, ob ein ANDERER Eintrag sein fehlendes Stück ist.** Herleitung (#C1 → #E1 an einem
+    Tag, die Mikrofon-Falle im Dateikopf): `memory/LEDGER_COUNTS.md` §AJ.
   · **`Core/BioTempoDirector`** (#1163) — die fertige „Follow pulse"-Spur. **Gefährlichste
     Sorte: ein ZWILLING des lebenden Servos** (inline in `EchoelStudioView`); wer den
     Tempo-Glide repariert, editiert plausibel die Datei, die nichts ausliefert.
@@ -186,8 +192,12 @@ Deprecated from main flow: SoundscapeEngine, ClipEngine, MomentCaptureView, BioS
     ADM-OSC auf der Leitung). Wächter `TheSpatialRenderHalfIsNotClaimedLiveTests`.
   · **Der TOTE EXEKUTOR und seine sechs Nachbarn (#1381):** `Sequencer/AudioClipPlayer` plus
     `Sequencer/LyricsModel` (SIEBEN Typen), `Sequencer/TakeDistance`, `DSP/PatchLibrary`
-    (+`LibraryPatch`), `DSP/PitchTracker`, `DSP/EchoelMIDIDecode`, `Audio/LatencyCompensation`
-    — je NULL Verweise aus fremdem `Sources/`-CODE, nach TYP gemessen. ⚠️ **Die #1376-Falle
+    (+`LibraryPatch`), `DSP/EchoelMIDIDecode`, `Audio/LatencyCompensation`
+    — je NULL Verweise aus fremdem `Sources/`-CODE, nach TYP gemessen. ⛔ **`DSP/PitchTracker`
+    stand in dieser Aufzählung und ist mit #E1 GESTRICHEN**: `Sequencer/AudioKeyAnalysis` ruft
+    es, die Behauptung „null Verweise" ist für diesen einen Eintrag falsch geworden. Der Rest
+    der Zeile bleibt unberührt — eine Sammel-Zeile wird EINTRAGSWEISE zurückgenommen, nie im
+    Ganzen, sonst verliert man sechs wahre Befunde für einen veralteten. ⚠️ **Die #1376-Falle
     sitzt hier siebenfach: `LyricsModel.swift` deklariert keinen Typ dieses Namens** — ein per
     DATEINAME belegter Eintrag wäre eine Nadel, die nie treffen kann. ⭐ Der tote Exekutor war
     in ACHT fremden Dateien als der LEBENDE ausgeschildert („Used by AudioClipPlayer", „the

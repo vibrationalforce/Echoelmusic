@@ -26,10 +26,17 @@
 // key/scale analysis without knowing that builds a SECOND one. Claim 5 is what keeps
 // that shape pinned, and it is a counterweight, not a catch.
 //
-// ⚠️ WHAT MUST NOT BE READ INTO THIS (#364). It does NOT forbid giving `TuningDetector`
-// a producer — that is the point of writing it down. On the day one lands, claim 3 goes
-// red BY DESIGN and its message says to move the register entry in the same commit. It
-// also does NOT pin the NUMBER of pitched voices: a new retuned voice must not turn this
+// ⭐ THAT DAY ARRIVED IMMEDIATELY, AND THE PARAGRAPH BELOW IS WHAT IT LOOKED LIKE. This
+// note used to read *"It does NOT forbid giving `TuningDetector` a producer — that is the
+// point of writing it down. On the day one lands, claim 3 goes red BY DESIGN and its
+// message says to move the register entry in the same commit."* Phase E landed that
+// producer one commit later: `Sequencer/AudioKeyAnalysis` reads an IMPORTED FILE, and
+// claim 3 is now inverted to name it. The prediction is kept rather than deleted because
+// it is the evidence that the absence claim was written to be retired, not defended — and
+// because the next absence claim in this bundle should be written the same way.
+//
+// ⚠️ WHAT MUST NOT BE READ INTO THIS (#364). It does NOT pin the NUMBER of pitched voices:
+// a new retuned voice must not turn this
 // file red, so claim 2 asserts the SEVEN NAMED receivers rather than a total (#903 — a
 // count pin rots when the code changes correctly and the number does not follow).
 //
@@ -47,16 +54,22 @@
 // propositions**, folding claim 1's five variants into one (they are one fact) and keeping
 // claim 2's seven apart (they are seven facts).
 //
-// ⚠️ `grep -c XCTAssert` on this file returns **12**, not 11 — the twelfth is THIS
-// paragraph naming the token (#708: a note that cites a count can become its own hit).
-// Subtract the header or count from `final class` down.
+// ⚠️ COUNT FROM `final class` DOWN — `grep -c XCTAssert` over the WHOLE file over-counts,
+// because this header names the token (#708: a note that cites a count can become its own
+// hit). The command that measures the claims rather than the prose about them is
+// `awk '/^final class/,0' <file> | grep -c XCTAssert`.
 //
-// Against the PARENT tree `ba1eed686`: **4 REGRESSION CATCHES, 13 COUNTERWEIGHTS, 0 red
-// on this tree.** The catches are claim 4 (the header named a deleted producer with no
-// retraction) and all THREE assertions of claim 7 (the law file cited the tone system by
-// file WITHOUT `.swift`, never named the type `TuningSystem`, and carried no register
-// entry for `Core/TuningDetector`). I had booked only two, i.e. UNDER-counted — which is
-// the same defect as over-counting and is recorded here rather than quietly fixed (§3).
+// Against the tree this file was WRITTEN on (`ba1eed686`): **4 REGRESSION CATCHES, 13
+// COUNTERWEIGHTS, 0 red.** The catches were claim 4 (the header named a deleted producer
+// with no retraction) and all THREE assertions of claim 7 (the law file cited the tone
+// system by file WITHOUT `.swift`, never named the type `TuningSystem`, and carried no
+// register entry for `Core/TuningDetector`). I had booked only two, i.e. UNDER-counted —
+// the same defect as over-counting, recorded here rather than quietly fixed (§3).
+//
+// ⚠️ THAT GRADING IS A DATE, NOT A STANDING FACT, and it is left as history on purpose.
+// Phase E changed claim 3 from an absence to a named producer in the very next commit, so
+// the catch/counterweight split above describes the file as it was first written. Re-grade
+// against the current parent before quoting it.
 //
 // The 13 counterweights are green on both trees (#343) and are the content: this slice
 // corrected two CITATIONS and added a register entry, it changed no behaviour. What they
@@ -184,11 +197,19 @@ final class TheToneSystemIsNamedByItsTypeTests: XCTestCase {
         }
     }
 
-    // MARK: - claim 3 — the detector still has no production caller
+    // MARK: - claim 3 — the detector has EXACTLY ONE production caller, and it is the file one
 
-    /// The register entry's whole content. If this goes red because a producer landed,
-    /// that is the GOOD day — move the register entry, do not weaken the claim.
-    func testTheTuningDetectorStillHasNoProductionCaller() throws {
+    /// ⭐ THIS CLAIM WAS INVERTED IN THE COMMIT THAT MADE IT FALSE, which is the only honest
+    /// way to retire an absence claim (#1437 did the same thing to "`TimelineRegionPlayer.play`
+    /// has zero callers"). It used to read `testTheTuningDetectorStillHasNoProductionCaller`
+    /// and assert `callers.isEmpty`. Phase E gave the detector a producer —
+    /// `Sequencer/AudioKeyAnalysis`, reading an IMPORTED FILE — so the old form would have
+    /// gone red on correct work, and its failure message said in as many words what to do:
+    /// *"That is progress, not a defect … Move both in this commit, and say which producer
+    /// supplies the fundamentals (the import path, not a microphone: #1302)."* This is that
+    /// move. The claim is NOT weakened to an inequality: it names the one caller, so a SECOND
+    /// producer is still a finding that has to be written down.
+    func testTheTuningDetectorHasExactlyOneProducerAndItIsTheFileAnalysis() throws {
         let dir = try repoRoot().appendingPathComponent("Sources")
         guard let walker = FileManager.default.enumerator(atPath: dir.path) else {
             XCTFail("Sources/ is present but not enumerable — re-anchor rather than skip (#454).")
@@ -200,11 +221,16 @@ final class TheToneSystemIsNamedByItsTypeTests: XCTestCase {
             let contents = try String(contentsOf: dir.appendingPathComponent(rel), encoding: .utf8)
             if SourceText.codeOnly(contents).contains("TuningDetector") { callers.append(rel) }
         }
-        XCTAssertTrue(callers.isEmpty, """
-            `TuningDetector` now has production caller(s): \(callers.joined(separator: ", ")). \
-            That is progress, not a defect — but the orphan register in CLAUDE.md and this \
-            file's own header both state it has NONE. Move both in this commit, and say which \
-            producer supplies the fundamentals (the import path, not a microphone: #1302).
+        XCTAssertEqual(callers, ["Sequencer/AudioKeyAnalysis.swift"], """
+            `TuningDetector`'s production callers are \
+            \(callers.isEmpty ? "NONE" : callers.joined(separator: ", ")) — expected exactly \
+            `Sequencer/AudioKeyAnalysis.swift`. If the list is EMPTY the producer was lost and \
+            the detector is an orphan again: CLAUDE.md's register entry and this file's header \
+            must go back to saying so. If there is a SECOND caller, say what it is and why it \
+            is not a duplicate estimator — #C1 recorded that the value and the estimator \
+            already existed, and minting a parallel one is the mistake both were written to \
+            prevent (#416). The producer must stay the FILE path: audio input is a founder \
+            hold (#1302), so a microphone-shaped caller here is a regression, not a feature.
             """)
     }
 

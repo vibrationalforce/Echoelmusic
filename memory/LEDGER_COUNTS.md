@@ -7386,3 +7386,82 @@ größte verbliebene.** Dort sind fünf lebende Gesetze (Black-Screen-Metadaten-
 10-Hz-Freeze-Gesetze, die Ketten-Wachstumsregel) mit der Build-Nummern-Erzählung VERWOBEN; sie zu
 trennen ist ein eigener Eingriff mit echtem Risiko. Er ist der nächste Kandidat, wenn wieder Raum
 gebraucht wird — und dann als EIGENER Commit mit doppelter Prüfung.
+
+## AJ — `TuningDetector` und `PitchTracker`: vom Waisen-Eintrag zum Erzeuger an einem Tag (#C1 → #E1)
+
+**Warum diese Kette hier liegt und nicht in `CLAUDE.md`:** sie ist Herleitung, kein Gesetz. Das
+GESETZ („zwei Waisen können die zwei Hälften EINER Fähigkeit sein — bei einem Waisen-Eintrag
+auch fragen, ob ein ANDERER Eintrag sein fehlendes Stück ist") steht in der Register-Zeile
+selbst, weil es beim Lesen des Registers gebraucht wird. Alles Folgende ist das Protokoll.
+
+### 1. Der Befund (#C1, 2026-09-22)
+
+Phase C des 8-h-DMMW-Laufs fragte, ob ein geteilter musikalischer Kontext eingeführt werden
+kann, ohne eine zweite Sitzungs-Wahrheit zu erzeugen. Gemessene Antwort: die Frage war falsch
+gestellt. Werttypen (`MusicalKey`, `Scale`, `TuningSystem`, `DetectedTuning`) und Besitzer
+(`SessionContext`) existierten; `MusicalFrame` projizierte Root, Scale und Tempo bereits. Es
+fehlte der ERZEUGER.
+
+**Die Falle war ein Dateikopf.** `Core/TuningDetector.swift` nannte als Quelle
+„MicrophoneManager.pitch / .frequency". `MicrophoneManager` ist mit #1302 (Founder 2026-09-12,
+„Face und Audio Input komplett entfernen") als DATEI gelöscht, und die Löschung ist strukturell:
+`RecordRouteOwner` ist ein unbewohntes Enum, `claimRecordRoute(_:)` unaufrufbar, die Sitzung
+kann nie auf `.playAndRecord` steigen. **Der Eintrag las sich damit als „wartet auf das
+Mikrofon", also als founder-gated und unerreichbar** — während sein natürlicher Erzeuger seit
+Audio Import V1 (demselben Tag) die IMPORTIERTE AUDIODATEI war.
+
+⭐ **Das ist die teure Sorte veralteter Prosa: sie altert nicht nur, sie lenkt die nächste
+Scheibe fehl.** Eine Sitzung, die den Kopf liest, schreibt den Typ als blockiert ab.
+
+### 2. Der zweite Waise, gefunden erst beim Bauen
+
+`DSP/PitchTracker` (YIN, de Cheveigné & Kawahara 2002) hatte ebenfalls null
+Produktions-Aufrufer und stand in der #1381-Sammelzeile („je NULL Verweise aus fremdem
+`Sources/`-CODE"). **Die beiden sind die zwei Hälften EINER Fähigkeit**: YIN liefert genau den
+`[Double]` von Grundfrequenzen, den `TuningDetector.analyze(frequencies:)` konsumiert. Es fehlte
+weder ein Algorithmus noch ein Wert, sondern das Lesen von PCM-Fenstern aus einer Datei.
+
+### 3. Die Reparatur (#E1) und was sie unterwegs gelernt hat
+
+`Sequencer/AudioKeyAnalysis` — reine Fenster-Arithmetik plus EIN Dekoder-Sprung, nach dem
+`AudioImport`-Muster (reiner Kern, injizierte unreine Schritte). Vier Messungen, die die
+Implementierung geändert haben:
+
+1. **Die Fenstergröße ist eine VORBEDINGUNG, kein Regler.** `PitchTracker.detect` rechnet
+   `tauMax = min(n - 1, Int(sampleRate / minHz))` und verweigert, wenn `n < tauMax * 2`. Ein
+   festes Literal funktioniert bei 44,1 kHz und gibt bei jedem Fenster einer hochratigen Datei
+   nil zurück — **ohne Fehler, ohne Log**. `windowFrames(forSampleRate:)` leitet die Größe ab.
+2. **Die erste Klammer war 16 384 und brach genau so oberhalb ~327 kHz.** Sie sieht großzügig
+   aus. Sie ist jetzt 32 768, gemessen gegen jede Rate, die `AVAudioFile` tragen kann. **Eine
+   Klammer, die eine Vorbedingung in ein stilles nil verwandelt, ist keine Sicherheitsmarge.**
+3. **Die Fenster dürfen sich nicht überlappen, und das ist Korrektheit, nicht Effizienz.** Die
+   Grundfrequenzen füttern ein Tonklassen-Histogramm; zweimal gelesenes Audio wird zweimal
+   gewichtet. `windowStarts` deckelt daher über die Zahl GANZER Fenster, nicht nur über
+   `maxWindows`. Beweis: Abstand = `(frameCount − window) / (count − 1)` mit
+   `count ≤ ⌊frameCount/window⌋` ⟹ Abstand ≥ `window`. Zusätzlich über 20 000 zufällige Tripel
+   getrieben: null Verletzungen.
+4. **`MediaLibrary.resolveRef` gehört NICHT an die Tür.** Der erste Entwurf holte die
+   verwaltete Kopie dort. `TheWorkstationImportsAudioTests` verbietet der Ansicht den Namen —
+   **und der Wächter hatte in der SACHE recht, nicht nur in der Schreibweise**: `resolveRef`
+   führt bis zu fünf `FileManager.fileExists`-Proben aus, und dieser Pfad ist der MAIN ACTOR.
+   Reparatur: `AudioImport.Landing` berichtet `managedURL` — die Transaktion, die die Kopie
+   geschrieben hat, ist das Einzige, was sicher weiß, welche Datei es war.
+
+### 4. Der Wächter-Befund, der die teuerste Zeile war
+
+**Die Mutations-Probe fing einen Fehler in meinem EIGENEN Wächter.** Die Zusicherung
+`windowFrames(.nan) == 2048` sollte den `isFinite`-Teil des Guards pinnen und tat es nicht:
+`Double.nan > 0` ist bereits falsch, also deckt `guard sampleRate > 0` den NaN-Fall allein ab.
+**INFINITY ist, was `isFinite` schützt** — `Double.infinity > 0` ist WAHR, und die nächste Zeile
+wertet dann `Int(.infinity / 50)` aus, was TRAPPT. Die Zusicherung auf `.infinity` ist die
+Unterscheidung, die die NaN-Zeile nur zu liefern schien. Dazu ein zweiter Befund derselben
+Runde: der Nadel-Proxy im Benotungsskript hieß `sampleRate.isFinite`, und der Token kommt in der
+Datei ZWEIMAL vor — der Mutant entkam, weil das zweite Vorkommen ihn grün hielt (#408, die
+Nadel muss eindeutig sein).
+
+### 5. Was #E1 ausdrücklich NICHT getan hat
+
+Keine Schreiboperation auf `SessionContext`. Keine Tempo-Schätzung aus Audio (Audio Import V1
+Entscheidung 7: `nativeBPM = 0`, keine Schätzung — eine Tonart-Erkennung, die still auch BPM
+rät, dreht eine Founder-Entscheidung der Nachbar-Scheibe um). Kein Mikrofon. Kein zweiter
+Schätzer.

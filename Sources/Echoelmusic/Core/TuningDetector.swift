@@ -11,19 +11,26 @@
 // `.playAndRecord`. There is no microphone to read fundamentals from, and
 // restoring one is a founder decision, not a slice.
 //
-// ⚠️ SO THIS TYPE HAS **NO PRODUCTION CALLER**. Measured 2026-09-22, comment-stripped:
-// `git grep -n "TuningDetector" -- Sources | grep -v ': *//'` hits only this file;
-// the one reference anywhere else in the repo is a COMMENT in
-// `Tests/CISmoke/NoteNamingTests.swift`. It is test-only, in the `WaveformReducer`
-// shape — kept deliberately, not forgotten.
+// ⭐ THIS TYPE NOW HAS EXACTLY ONE PRODUCTION CALLER, AND THE SENTENCE THAT STOOD HERE
+// SAID IT HAD NONE. It was true for about a day. `Sequencer/AudioKeyAnalysis` reads
+// windows out of an IMPORTED FILE, estimates a fundamental per window with
+// `DSP/PitchTracker` (YIN), and hands the list to `analyze` below. Measure rather than
+// trust this line: `git grep -n "TuningDetector" -- Sources | grep -v ': *//'`.
+// `TheToneSystemIsNamedByItsTypeTests` pins that there is exactly one and names it —
+// a SECOND producer is a finding, because it is likely a duplicate estimator.
 //
-// ⭐ AND ITS NATURAL PRODUCER TODAY IS NOT A MICROPHONE — it is an IMPORTED AUDIO
-// FILE. Audio Import V1 (2026-09-22) made `Sequencer/AudioImport` the first
-// user-reachable producer of an audio-bearing clip, so the fundamentals for this
-// estimator can come from offline analysis of a managed copy, off any realtime
-// callback. **Whoever builds detected key/scale analysis: this type already exists
-// and already carries `confidence` plus a nil return when evidence is thin — do not
-// mint a second one.** What is missing is the PRODUCER, not the value.
+// ⛔ AND THE PRODUCER IS STILL NOT A MICROPHONE, which is the half of the old note that
+// must not be lost. This header used to name `MicrophoneManager.pitch / .frequency`,
+// deleted with #1302 (founder 2026-09-12, "Face und Audio Input komplett entfernen"),
+// and the deletion is structural: `AudioConfiguration.RecordRouteOwner` is an
+// UNINHABITED enum, so `claimRecordRoute(_:)` cannot be called and the session can never
+// rise to `.playAndRecord`. Audio input is a FOUNDER HOLD. A microphone-shaped caller
+// here would be a regression, not a feature.
+//
+// ⚠️ **Whoever builds detected key/scale analysis: this type already exists and already
+// carries `confidence` plus a nil return when evidence is thin — do not mint a second
+// one.** That was the point of writing the orphan entry, and it is why the entry stays
+// in CLAUDE.md as a derivation rather than being deleted now that it is wired.
 //
 // The estimates:
 //   • the Kammerton (concert-pitch A4) the source is tuned to, from the circular
