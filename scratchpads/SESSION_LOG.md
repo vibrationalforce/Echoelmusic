@@ -38290,3 +38290,32 @@ Das war immer die eigentliche Aussage; „noch nicht" war nur ihre damalige Form
 Geraeteproben unveraendert offen (alle NEEDS-FOUNDER-VERIFY), plus eine neue: den Look
 am Rig 1.0 → 0 → 1.0 fahren — er muss weich dimmen und unveraendert zurueckkommen.
 Nicht geraeteverifiziert; compile-verifiziert erst mit den Gates.
+
+### Gate-Lesung `c8f943bb8` (P2 Proof #1)
+
+· **Xcode Compile Check** — Lauf `35762784201`, Job `106864717952`, Schritt
+  *Compile (iOS device SDK, no signing)* **success** (17:46:10 → 17:49:38, 3 m 28 s);
+  Run-Conclusion `success`. Belegt: `Sources/` baut Release gegen das Geraete-SDK.
+  Ueber die neue Testdatei sagt er NICHTS (§5b: das Schema baut `Sources/` allein).
+· **CI/CD Pipeline** — Lauf `35762784196`. `Code Quality & Linting` success (SwiftLint
+  sauber), `Security Vulnerability Scan` success, Schritt **Build for Testing success**
+  (17:47:33 → 17:52:25, 4 m 52 s). DAS ist der Beleg, dass das blockierende Buendel
+  samt des neuen 12-Anspruch-Waechters KOMPILIERT — und mehr traegt der Schritt nicht.
+· **Run Tests — GETRENNT berichtet, wie verlangt**: Schritt-Conclusion `failure`
+  (17:52:25 → 18:18:59, 26 m 34 s). `gh-test-verdict.py`: `TEST EXECUTE FAILED: True`
+  (#396, auf jedem Push), `TEST BUILD FAILED: False`, **0 Compile-Fehler, 0
+  Fehlschlaege, 0 Skips, 167 Tests beim Bestehen beobachtet**. ⚠️ `WINDOW` und `GAPS`
+  mitlesen: der Job-Log ist `tail -200 test.log` und es fehlen 1594 s der eigenen
+  Zeitachse — das ist KEIN „die Suite ist gruen" (#807). Die drei Licht-Waechter
+  stehen NICHT im Fenster; nach #445 beweist das nichts. Ehrliche Formulierung:
+  **kompiliert nachweislich, Ausfuehrung unbelegt.**
+· **Zweite, unabhaengige Lesung:** `main` ist auf `c8f943bb8` vorgerueckt. Der
+  Auto-Merge merged nur bei gruener Compile-Check-CONCLUSION UND gruenem
+  `Build for Testing`-SCHRITT — dieselbe Aussage auf einem anderen Weg.
+· ⚠️ Der reine Log-Commit `4b2c86cc7` (nur `scratchpads/`) wird NICHT gemerged und
+  das ist korrekt: `auto-merge-claude.yml:117` diffed `main..github.sha`, sieht also
+  die Code-Aenderung mit und verlangt Gates — fuer `4b2c86cc7` existiert aber kein
+  Gate-Lauf (der Pfad trifft keinen Filter), also `never-ran` → Ablehnung.
+  Fail-closed wie entworfen; die Doku-Drift bleibt die bekannte #697-Lage.
+· `slow type-check warns`: 7, alle vorbestehend (Composer-Velocity, LightRigSeesThe
+  Simulator, ScopeTrigger). Keiner aus dieser Scheibe (#933e).
