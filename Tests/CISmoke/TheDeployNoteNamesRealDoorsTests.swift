@@ -55,8 +55,15 @@ final class TheDeployNoteNamesRealDoorsTests: XCTestCase {
     /// ⚠️ It stays HAND-WRITTEN on purpose — deriving it from the same parse would make the file
     /// agree with itself and never fail. The literal IS the second opinion (the argument
     /// `scripts/check-infoplist.sh` states for its own list).
+    // ⚠️ THE ORDER IS PART OF THE CLAIM — `shippedLabels()` returns the switch in source
+    // order and claim 1 compares with `XCTAssertEqual`, so a reordered strip is a finding too.
+    // ⛔ "Workstation" was MISSING here from #1436 (the chip's own slice) until this line.
+    // Claim 1 was therefore RED on a correct tree for the whole Phase-4 run and no gate said so:
+    // the blocking bundle is BUILT by CI/CD `Build for Testing`, never RUN (#396/#807). The
+    // deploy that follows is the first reader — exactly the #1360 shape, found while preparing it.
     private static let expectedLabels = [
-        "Bio", "Tempo", "Sound", "Mix", "FX", "Master", "Mood", "Save/Export", "Field"
+        "Bio", "Tempo", "Sound", "Mix", "FX", "Master", "Mood", "Save/Export", "Field",
+        "Workstation"
     ]
 
     private func root() -> URL {
