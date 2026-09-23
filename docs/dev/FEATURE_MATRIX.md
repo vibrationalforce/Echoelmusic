@@ -1,5 +1,10 @@
 # FEATURE MATRIX — Echoelmusic v10 (the "second brain")
 
+> ⭐ **FÜR DEN HEUTIGEN STAND ZUERST `docs/dev/FEATURE_STATUS.md` LESEN (2026-09-23).** Drei Fächer —
+> läuft · gebaut-aber-versteckt · gestrichen —, gemessen am Code. Diese Matrix bleibt die
+> Provenienz: WARUM etwas so ist. Welche versteckte Ansicht fehlt, meldet der Wächter
+> `EveryHiddenSurfaceIsInTheStatusRegisterTests`.
+
 > ⛔ **READ `docs/dev/PRODUCT_DEFINITION.md` FIRST (2026-08-28 banner).** This file claims
 > canonical authority and then LEADS with a retired end-state: every UPDATE block dated
 > before 2026-07-25 (including the 2026-07-13 "ONE tracks-centric, bio-reactive DAW …

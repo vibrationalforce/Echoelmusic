@@ -39061,3 +39061,21 @@ change since the previous deploy.
 - Ursache ist abgeleitet, NICHT am Gerät bewiesen — Build 10.79.480 ist die Probe (R1–R5).
 - Lehre: ein „freier Slot" ist kein freier Kopfraum, wenn er als VORFAHRE über einer lebenden
   Tür derselben Art sitzt. Setterlose Slots nach Art UND Position prüfen, nicht nur zählen.
+
+## 2026-09-23f — Bestandsaufnahme: FEATURE_STATUS.md + Wächter gegen verlorene Ansichten
+
+Founder (Build 2600): „Import und Play funktioniert." Dann: „Wie sieht es aus mit der Feature
+Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
+- `docs/dev/FEATURE_STATUS.md` NEU: drei Fächer (läuft+erreichbar · gebaut-aber-versteckt ·
+  gestrichen) plus Roadmap, gemessen am Code. Gerät bestätigt: Workstation Import + Play
+  (2026-09-23), AUv3 in AUM, Kamera-Puls. Alles andere „offen".
+- Versteckt, gemessen: 9 nie gebaute Ansichten (= doctor C1), 5 eine Ebene tiefer
+  (BreathGuide, PulseMeasurement, ADMStreamStatusLine, MeditationView, importMIDI ohne Knopf
+  seit #W1), 11 Maschinen ohne Regler (Pitch je Teil, Stretch-Modi, ×2/÷2-Tempo,
+  Hand-BPM, Automation zeichnen, Raum-Render …). 10 Feature-Flags ohne Leser = Platzhalter.
+- Wächter `EveryHiddenSurfaceIsInTheStatusRegisterTests` (3 Ansprüche): jede nie gebaute
+  View muss im Register stehen. Transkribiert mit exaktem Python-Port von
+  `SourceText.codeOnly`: 370 Dateien, 97 Views, 9 versteckt, 0 fehlen; Mutation (Name aus
+  Register entfernt) → rot. Parent: Vorwärts-Wächter (Register existiert nicht).
+- FEATURE_MATRIX-Banner + CLAUDE.md-Register-Zeile zeigen auf die neue Datei (149 721 B).
+- Zehn Checker: alle 0.
