@@ -120,6 +120,146 @@ final class TheDetectedTuningHasAProducerTests: XCTestCase {
             """)
     }
 
+    // MARK: - Uncertainty (#F3)
+
+    /// Equal-tempered frequency for a MIDI note at A4 = 440, so a fixture can be written as
+    /// notes rather than as numbers nobody can check by eye.
+    private func hz(_ midi: Int) -> Double { 440.0 * pow(2.0, (Double(midi) - 69.0) / 12.0) }
+
+    /// Claim 1b (BEHAVIOUR) — material with no tonal centre is reported as HAVING no tonal
+    /// centre, instead of being named.
+    ///
+    /// ⛔ THE DEFECT THIS PINS WAS LIVE AND USER-FACING. `analyze` returns non-nil on ≥8
+    /// valid pitches with NO floor on the correlation; `correlation` returns 0 for a flat
+    /// histogram; `bestCorr` starts at −2.0 and the first candidate tried is root 0 major.
+    /// So one chromatic pass — every pitch class once, i.e. the least tonal input there is —
+    /// produced `confidence == 0` and the sentence "Sounds like C major". The named key came
+    /// from the ITERATION ORDER, not from the audio, and `confidence` had zero readers in
+    /// `Sources/` to stop it.
+    func testMaterialWithNoTonalCentreIsNotGivenAKey() throws {
+        let chromatic = (60...71).map { hz($0) }
+        let tuning = try XCTUnwrap(TuningDetector().analyze(frequencies: chromatic), """
+            A chromatic pass no longer produces an estimate at all. That is not a failure of \
+            this claim's subject — it means `analyze`'s nil rule changed — but it makes the \
+            assertion below vacuous (#343), so re-anchor the fixture rather than deleting it.
+            """)
+        let sentence = try XCTUnwrap(AudioKeyAnalysis.summarise(tuning))
+        XCTAssertFalse(sentence.contains("Sounds like"), """
+            A flat pitch-class histogram was given a NAMED key: "\(sentence)" \
+            (confidence \(tuning.confidence), margin \(tuning.keyMargin)). There is no key \
+            in this material; whichever one is printed came from the order the 24 candidates \
+            are tried in. `AudioKeyAnalysis.summarise` must consult \
+            `keyConfidenceFloor` before naming anything.
+            """)
+    }
+
+    /// Claim 1c (BEHAVIOUR) — the case a CONFIDENCE-ONLY gate would have let through, which
+    /// is why `keyMargin` exists.
+    ///
+    /// ⭐ A SINGLE SUSTAINED NOTE SCORES ≈0.68, comfortably above any sane confidence floor,
+    /// because one tall bar correlates decently with the profile whose tonic it sits on. But
+    /// it correlates EXACTLY as well with the other key built on that same tonic, so the
+    /// runner-up ties the winner and the margin is 0. Measured, not assumed: the winner is
+    /// then whichever of the two the loop reached first. **A guard written only against
+    /// `confidence` would be green here while the sentence was still a coin flip** — that is
+    /// the whole argument for the second number, stated where it can fail.
+    func testASinglePitchClassIsReportedAsAmbiguousRatherThanNamed() throws {
+        let oneNote = [Double](repeating: hz(69), count: 12)   // twelve A4s
+        let tuning = try XCTUnwrap(TuningDetector().analyze(frequencies: oneNote), """
+            Twelve copies of one pitch no longer produce an estimate. Re-anchor the fixture \
+            (#343) — without an estimate the assertion below proves nothing.
+            """)
+        XCTAssertGreaterThan(tuning.confidence, AudioKeyAnalysis.keyConfidenceFloor, """
+            This fixture no longer scores ABOVE the confidence floor (\(tuning.confidence)), \
+            so it no longer demonstrates what it was written for: a case a confidence-only \
+            gate would pass. The claim below would still hold, but for the wrong reason.
+            """)
+        let sentence = try XCTUnwrap(AudioKeyAnalysis.summarise(tuning))
+        XCTAssertFalse(sentence.contains("Sounds like"), """
+            One repeated pitch class was given a NAMED key: "\(sentence)" \
+            (confidence \(tuning.confidence), margin \(tuning.keyMargin)). Its two best \
+            candidates are tied, so the name is the iteration order again — this time ABOVE \
+            the confidence floor. `summarise` must consult `keyMargin`, not only \
+            `confidence`.
+            """)
+    }
+
+    /// Claim 1e (BEHAVIOUR) — WEAK evidence is not named even when ONE key clearly leads.
+    /// This is the fixture the OTHER floor cannot catch, and writing the pair is the point:
+    /// after claims 1b/1c a reader could reasonably conclude `keyMargin` had made
+    /// `keyConfidenceFloor` redundant, because the chromatic run and the repeated pitch are
+    /// BOTH tied at the top (margin 0) — the margin branch alone would have rejected both.
+    ///
+    /// ⚠️ A GATE NO CLAIM CAN FAIL FOR IS NOT A GATE (#367), so the floor needs material that
+    /// only it rejects. Eight ADJACENT semitones are it: a cluster has no tonal centre, yet
+    /// whichever eight semitones it happens to span lean toward one key by accident, so the
+    /// winner leads the runner-up comfortably while correlating weakly with EVERY key. That
+    /// lean is an artefact of the span, not evidence about the music — measured here rather
+    /// than argued, and it is why "how alone does the winner stand" and "how well does it fit
+    /// at all" are two questions and need two numbers.
+    func testWeakEvidenceIsNotNamedEvenWhenOneKeyLeads() throws {
+        let cluster = [60, 61, 62, 63, 64, 65, 66, 67, 60, 61, 62, 63, 64, 65, 66, 67].map { hz($0) }
+        let tuning = try XCTUnwrap(TuningDetector().analyze(frequencies: cluster), """
+            A chromatic cluster no longer produces an estimate. Re-anchor the fixture (#343).
+            """)
+        XCTAssertGreaterThan(tuning.keyMargin, AudioKeyAnalysis.keyMarginFloor, """
+            This fixture no longer clears the MARGIN floor (\(tuning.keyMargin)), so it no \
+            longer isolates the confidence floor — the claim below would pass through the \
+            other branch and `keyConfidenceFloor` would again be pinned by nothing.
+            """)
+        let sentence = try XCTUnwrap(AudioKeyAnalysis.summarise(tuning))
+        XCTAssertFalse(sentence.contains("Sounds like"), """
+            A chromatic cluster was given a NAMED key: "\(sentence)" (confidence \
+            \(tuning.confidence), margin \(tuning.keyMargin)). The winner leads here, so \
+            `keyMargin` is satisfied and cannot save this one — `summarise` must ALSO refuse \
+            material that fits no key well. Both floors are load-bearing; neither subsumes \
+            the other.
+            """)
+    }
+
+    /// COUNTERWEIGHT (#343) — genuinely tonal material is STILL named. Without this, the two
+    /// claims above would pass just as well if `summarise` had been changed to refuse
+    /// everything, which would be a worse product than the defect they fix.
+    func testTonalMaterialIsStillNamedConfidently() throws {
+        // A C-major melody that returns to its tonic — the weighting a real recording has.
+        // ⚠️ A UNIFORM C-major SCALE would NOT pass this, and correctly so: C major and A
+        // minor contain the identical pitch-class set, so nothing in a histogram can
+        // separate them. The tonic emphasis is what makes the key knowable at all.
+        let melody = [60, 62, 64, 65, 67, 69, 71, 72, 64, 67, 60, 65, 69, 67, 64, 60].map { hz($0) }
+        let tuning = try XCTUnwrap(TuningDetector().analyze(frequencies: melody))
+        XCTAssertEqual(tuning.keyRoot, 0, "The C-major fixture no longer resolves to C.")
+        XCTAssertFalse(tuning.isMinor, "The C-major fixture resolved to a minor key.")
+        let sentence = try XCTUnwrap(AudioKeyAnalysis.summarise(tuning))
+        XCTAssertTrue(sentence.contains("Sounds like C major"), """
+            Clearly tonal material is no longer named: "\(sentence)" \
+            (confidence \(tuning.confidence), margin \(tuning.keyMargin)). The floors are \
+            meant to remove a false claim, not the feature — if they now reject real music, \
+            they are set wrong.
+            """)
+    }
+
+    /// Claim 1d (BEHAVIOUR) — the producer WRITES the runner-up. `runnerUpConfidence` carries
+    /// a default so the memberwise init stays source-compatible, and a defaulted value no
+    /// production site writes is invisible in a diff (#431/#440/#443). This is the assertion
+    /// that makes the default safe.
+    func testTheEstimatorReportsTheRunnerUpAndNotJustTheWinner() throws {
+        let melody = [60, 62, 64, 65, 67, 69, 71, 72, 64, 67, 60, 65, 69, 67, 64, 60].map { hz($0) }
+        let tuning = try XCTUnwrap(TuningDetector().analyze(frequencies: melody))
+        XCTAssertGreaterThan(tuning.runnerUpConfidence, 0, """
+            `analyze` returned `runnerUpConfidence == \(tuning.runnerUpConfidence)` on \
+            clearly tonal material. Twenty-four candidates are scored, so a runner-up always \
+            exists; a zero here means the producer stopped writing the field and every \
+            `keyMargin` in the app silently became the full confidence — the permissive \
+            direction, which no sentence would reveal.
+            """)
+        XCTAssertEqual(tuning.keyMargin,
+                       tuning.confidence - tuning.runnerUpConfidence, accuracy: 1e-12, """
+            `keyMargin` is no longer the gap between the two reported numbers. It is the ONE \
+            ambiguity measure (#416); a second definition would let the gate and the report \
+            disagree.
+            """)
+    }
+
     /// Claim 2 (BEHAVIOUR) — the window satisfies `PitchTracker`'s own precondition at every
     /// sample rate a file can carry. THE CATCH THIS GUARDS IS SILENT: violating it returns
     /// nil from every window instead of failing.

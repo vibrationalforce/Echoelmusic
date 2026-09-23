@@ -54,16 +54,41 @@ public struct DetectedTuning: Sendable, Equatable {
     /// Major vs natural-minor key.
     public var isMinor: Bool
     /// Key-finding correlation strength, 0…1 (higher = clearer key).
+    ///
+    /// ⚠️ THIS ALONE DOES NOT MEASURE AMBIGUITY, and reading it as if it did is the trap
+    /// this property spent its whole life in. It is the correlation of the WINNER, so a
+    /// histogram that fits C major at 0.80 and A minor at 0.79 reports 0.80 — "high" — for
+    /// what is a coin flip. Relative and parallel keys share most of their pitch classes,
+    /// so near-ties are the NORMAL failure of Krumhansl key-finding, not an exotic one.
+    /// Ask `keyMargin` before naming a key to a user.
     public var confidence: Double
+    /// The best correlation among the other 23 candidates, 0…1 — the runner-up key's fit.
+    /// Stored rather than derived because `analyze` is the only place that sees all 24.
+    public var runnerUpConfidence: Double
     /// Global tuning offset vs A4=440, in cents (informational; −31.8 ≈ 432 Hz).
     public var centsOffset: Double
     /// How many valid pitches informed the estimate.
     public var sampleCount: Int
 
+    /// How far ahead of the runner-up the winning key is, ≥ 0. THIS is the ambiguity
+    /// measure: near 0 means two keys fit the same material equally well and naming
+    /// either one is a guess dressed as a finding.
+    public var keyMargin: Double { Swift.max(0, confidence - runnerUpConfidence) }
+
+    /// ⚠️ `runnerUpConfidence` DEFAULTS so the memberwise init stays source-compatible for
+    /// callers that only care about `keyName` formatting — NOT because the producer may skip
+    /// it. `TuningDetector.analyze` writes it explicitly; a default nobody writes is the
+    /// #431/#440/#443 shape, and the reason that warning does not apply here is exactly that
+    /// the one production construction site passes a measured value. A default of 0 means
+    /// "no runner-up known", which makes `keyMargin` read as the full confidence — the
+    /// permissive direction, so any future producer that forgets it is CAUGHT by the guard
+    /// rather than silently gated.
     public init(a4Hz: Double, keyRoot: Int, isMinor: Bool,
-                confidence: Double, centsOffset: Double, sampleCount: Int) {
+                confidence: Double, runnerUpConfidence: Double = 0,
+                centsOffset: Double, sampleCount: Int) {
         self.a4Hz = a4Hz; self.keyRoot = keyRoot; self.isMinor = isMinor
-        self.confidence = confidence; self.centsOffset = centsOffset; self.sampleCount = sampleCount
+        self.confidence = confidence; self.runnerUpConfidence = runnerUpConfidence
+        self.centsOffset = centsOffset; self.sampleCount = sampleCount
     }
 
     /// "A minor", "C♯ major" … from keyRoot + isMinor.
@@ -117,19 +142,37 @@ public struct TuningDetector {
             hist[pc] += 1
         }
 
-        // 3) Krumhansl key-finding: best Pearson correlation over the 24 keys.
-        var bestRoot = 0, bestMinor = false, bestCorr = -2.0
+        // 3) Krumhansl key-finding: best Pearson correlation over the 24 keys — AND the
+        //    runner-up, because the winner's score says how well the best key fits while
+        //    only the GAP says whether a second key fits just as well. Tracking it is two
+        //    lines here and impossible anywhere else: this loop is the only place all 24
+        //    candidates exist at once.
+        //
+        //    ⚠️ The verdict is unchanged by this addition — same winner, same nil rule, same
+        //    `confidence`. Existing callers that assert a detected key keep their answer;
+        //    what is new is that the answer can now say how alone it stands.
+        var bestRoot = 0, bestMinor = false, bestCorr = -2.0, runnerUp = -2.0
         for root in 0..<12 {
-            let cMaj = Self.correlation(hist, Self.rotated(Self.majorProfile, by: root))
-            if cMaj > bestCorr { bestCorr = cMaj; bestRoot = root; bestMinor = false }
-            let cMin = Self.correlation(hist, Self.rotated(Self.minorProfile, by: root))
-            if cMin > bestCorr { bestCorr = cMin; bestRoot = root; bestMinor = true }
+            for minor in [false, true] {
+                let profile = minor ? Self.minorProfile : Self.majorProfile
+                let c = Self.correlation(hist, Self.rotated(profile, by: root))
+                if c > bestCorr {
+                    runnerUp = bestCorr
+                    bestCorr = c; bestRoot = root; bestMinor = minor
+                } else if c > runnerUp {
+                    runnerUp = c
+                }
+            }
         }
 
         return DetectedTuning(
             a4Hz: (a4 * 100).rounded() / 100,
             keyRoot: bestRoot, isMinor: bestMinor,
             confidence: max(0, min(1, bestCorr)),
+            // Clamped on the SAME scale as `confidence`, so `keyMargin` subtracts comparable
+            // numbers. A negative runner-up means the alternative is anti-correlated — no
+            // ambiguity at all — and clamping it to 0 says exactly that.
+            runnerUpConfidence: max(0, min(1, runnerUp)),
             centsOffset: (offsetCents * 10).rounded() / 10,
             sampleCount: valid.count
         )

@@ -127,6 +127,22 @@ public enum AudioKeyAnalysis {
         return starts
     }
 
+    // MARK: - How sure is sure enough (#F3)
+
+    /// The winning correlation below which no key is named. ⚠️ A JUDGEMENT, NOT A
+    /// MEASUREMENT, and it is named rather than inlined so it can be argued with. A clearly
+    /// tonal excerpt correlates ≈0.6–0.9 with its own Krumhansl profile; unpitched or
+    /// atonal material lands near 0. Half of the achievable range is where "this has a
+    /// tonal centre" stops being evidence. [NEEDS-FOUNDER-VERIFY]
+    public static let keyConfidenceFloor: Double = 0.5
+
+    /// The lead over the runner-up below which no key is named. ⚠️ ALSO A JUDGEMENT.
+    /// Relative (C major / A minor) and parallel (C major / C minor) keys share most of
+    /// their pitch classes, so their correlations sit close by construction — a lead this
+    /// small means the material fits two keys equally and the winner is whichever one the
+    /// loop reached first. [NEEDS-FOUNDER-VERIFY]
+    public static let keyMarginFloor: Double = 0.05
+
     /// The ONE place the user-facing phrasing lives (#416). nil in ⇒ nil out: a thin
     /// estimate says NOTHING rather than guessing, which is what `analyze`'s nil return is
     /// for.
@@ -135,9 +151,38 @@ public enum AudioKeyAnalysis {
     /// estimate is a correlation over a pitch-class histogram, it is sometimes wrong, and
     /// nothing in the app acts on it. Prose that asserted it would be a claim the code
     /// cannot keep.
+    ///
+    /// ⛔ AND UNTIL #F3 THAT HEDGE WAS THE ONLY ONE, WHICH MADE IT A FIG LEAF. This function
+    /// read `keyName` and `snappedA4` and never `confidence`, so it printed the same
+    /// sentence at correlation 0.9 and at correlation 0.0 — and 0.0 is reachable:
+    /// `analyze` returns non-nil on ≥8 valid pitches with NO floor on the correlation,
+    /// `correlation` returns 0 for a flat histogram, `bestCorr` starts at −2.0 and the
+    /// first candidate tried is root 0 major. So a drum loop that yields eight YIN hits
+    /// was reported as "Sounds like C major" — a named key produced by the iteration order,
+    /// not by the audio. `confidence` had ZERO readers in `Sources/` at the time.
+    ///
+    /// ⭐ THE KEY AND THE KAMMERTON ARE SEPARATE FACTS WITH SEPARATE EVIDENCE, so they are
+    /// gated separately — the single most useful thing in this function. A4 comes from the
+    /// CIRCULAR MEAN of each pitch's cents-deviation and never touches the key correlation,
+    /// so a percussive file can have a trustworthy tuning reference and no key at all.
+    /// Collapsing both behind one threshold would throw away a good measurement to hide a
+    /// bad one.
+    ///
+    /// ⚠️ WHAT IS *NOT* GATED HERE, stated so nobody reads this as "both halves are now
+    /// validated": the A4 half has no evidence measure of its own. The honest one is the
+    /// circular-mean RESULTANT LENGTH (how concentrated the cents-deviations are), and
+    /// `analyze` does not compute it — it keeps `sumSin`/`sumCos` only long enough to take
+    /// the angle. A separate slice, deliberately: two weak gates are worse than one real
+    /// one.
     public static func summarise(_ tuning: DetectedTuning?) -> String? {
         guard let tuning else { return nil }
         let a4 = Int(tuning.snappedA4().rounded())
+        if tuning.confidence < keyConfidenceFloor {
+            return "Key unclear — little tonal centre. A4 ≈ \(a4) Hz."
+        }
+        if tuning.keyMargin < keyMarginFloor {
+            return "Key ambiguous — two keys fit equally well. A4 ≈ \(a4) Hz."
+        }
         return "Sounds like \(tuning.keyName), A4 ≈ \(a4) Hz."
     }
 
