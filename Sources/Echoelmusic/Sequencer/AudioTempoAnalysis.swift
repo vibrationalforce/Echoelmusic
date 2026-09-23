@@ -10,8 +10,9 @@
 // actor's hot path or a render callback. `Task.isCancelled` is checked per chunk so a
 // superseded import stops reading.
 //
-// ⛔ IT WRITES NOTHING. It returns a `DetectedTempo?`; whether a clip adopts it is decided
-// by the caller, through `ClipStore`, and only for `isKnown` results.
+// ⛔ IT WRITES NOTHING. It returns a `DetectedTempo?`; whether a clip adopts it is decided by
+// `adoptableNativeBPM` below and written by `ClipStore.adoptDetectedNativeBPM` — never the
+// transport, never `SessionContext`.
 
 import Foundation
 #if canImport(AVFoundation)
@@ -38,6 +39,23 @@ public enum AudioTempoAnalysis {
             return "Tempo ≈ \(bpm) BPM, a \(bars)-bar loop (or \(alternative))."
         }
         return "Tempo ≈ \(bpm) BPM (or \(alternative))."
+    }
+
+    /// The native tempo a clip may ADOPT from a detection, or nil to leave the clip alone.
+    /// Pure, so the decision is driven by the blocking bundle with plain values; its one
+    /// writer is `ClipStore.adoptDetectedNativeBPM`, which asks this and nothing else.
+    ///
+    /// ⚠️ NEVER-CLOBBER. A clip that already carries a native tempo keeps it — whoever or
+    /// whatever set it, a detection does not get to overrule it. This is what keeps a detected
+    /// fact from silently replacing an authored one once an authored writer exists.
+    ///
+    /// ⚠️ ONLY `isKnown`. An UNKNOWN estimate writes nothing, so its number never becomes a
+    /// warp rate. A clip whose tempo stays 0 simply cannot warp, which is the honest state.
+    public static func adoptableNativeBPM(current: Double, detected: DetectedTempo?) -> Double? {
+        guard current.isFinite, current == 0 else { return nil }
+        guard let detected, detected.isKnown else { return nil }
+        let bpm = Clip.clampedNativeBPM(detected.bpm)
+        return bpm > 0 ? bpm : nil
     }
 
     #if canImport(AVFoundation)

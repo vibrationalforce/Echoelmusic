@@ -139,11 +139,14 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
             """)
 
         XCTAssertEqual(landing.clip.nativeBPM, 0, """
-            `nativeBPM` is \(landing.clip.nativeBPM), not 0. Founder decision 7 for this \
-            slice is explicit: imported audio begins UNWARPED and the app does not estimate \
-            a tempo. A non-zero native tempo makes `StretchPlan.resolve` a rate other than \
-            1.0 the moment warping is ever enabled, i.e. it silently re-pitches the user's \
-            file. `AudioClipFactory.clip` must keep NOT passing `nativeBPM:`.
+            `nativeBPM` is \(landing.clip.nativeBPM), not 0 AT THE LANDING. The tempo is \
+            estimated — founder 2026-09-23 lifted decision 7 — but NOT here: `plan` is pure \
+            and the transaction is synchronous and `@MainActor`, while the estimate is seconds \
+            of work. It runs afterwards from the door, off the main actor, and a KNOWN result \
+            is adopted through `ClipStore.adoptDetectedNativeBPM` (#B2, pinned by \
+            `TheDetectedTempoIsHonestTests`). A tempo appearing HERE would be a guess made \
+            without the audio — `AudioClipFactory.nativeBPM` derives one from the file's \
+            length alone. `AudioClipFactory.clip` must keep NOT passing `nativeBPM:`.
             """)
 
         XCTAssertEqual(landing.region.clipID, landing.clip.id, """

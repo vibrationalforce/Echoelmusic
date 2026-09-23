@@ -120,6 +120,29 @@ public final class ClipStore {
         return true
     }
 
+    /// #B2: an imported AUDIO clip adopts its DETECTED native tempo — the first production
+    /// writer of `Clip.nativeBPM`, and the reason a region can warp at all. Whole-value write
+    /// like its neighbours. The decision (never-clobber, `isKnown` only) is
+    /// `AudioTempoAnalysis.adoptableNativeBPM`, pure and driven with plain values; this method
+    /// adds only the lookup, the `.audio` gate and the persist. Returns false, writing nothing,
+    /// for an unknown id, a MIDI clip, or a refused adoption.
+    ///
+    /// ⚠️ INAUDIBLE BY ITSELF. A region plays at rate 1.0 until the person turns warp ON for it
+    /// (`StretchPlan.resolve` reads `warpEnabled` first), so adopting a tempo changes nothing
+    /// the user hears. The session tempo is never touched.
+    @discardableResult
+    public func adoptDetectedNativeBPM(id: UUID, _ detected: DetectedTempo?) -> Bool {
+        guard let i = slots.firstIndex(where: { $0?.id == id }),
+              var clip = slots[i], clip.kind == .audio,
+              let bpm = AudioTempoAnalysis.adoptableNativeBPM(current: clip.nativeBPM,
+                                                               detected: detected)
+        else { return false }
+        clip.nativeBPM = bpm
+        slots[i] = clip
+        persist()
+        return true
+    }
+
     public func rename(at index: Int, to name: String) {
         guard slots.indices.contains(index), var clip = slots[index] else { return }
         clip.name = name

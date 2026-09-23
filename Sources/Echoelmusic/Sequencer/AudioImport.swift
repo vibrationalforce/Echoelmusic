@@ -30,7 +30,9 @@
 // `mediaRef` remains the file-location bridge, so nothing here claims canonical source-media
 // identity. There is no new store, no new persistence root, no new clock and no new playback
 // engine. There is no audio INPUT, no recording, no sample instrument and no grain engine. There
-// is no BPM estimate (founder decision 7 — `nativeBPM` stays 0, the clip never warps), no
+// is no BPM estimate IN THE TRANSACTION (the landing carries `nativeBPM = 0`; since #B2 the
+// Workstation door runs `AudioTempoAnalysis` AFTER the landing, off the main actor, and a
+// KNOWN tempo is adopted through `ClipStore` — founder 2026-09-23 lifted decision 7), no
 // AUTOMATIC lane creation (decision 4 — `addAudioTrack` was added 2026-09-23 and IS a lane
 // creator, but nothing on the import path calls it; only a deliberate tap does), and no
 // relink UI: a media file that later disappears leaves the clip and the region alone and
@@ -254,9 +256,10 @@ public enum AudioImport {
         guard let lane = firstImportableAudioLane(in: document) else { return .failure(.noAudioLane) }
         guard let slot = freeSlotIndex else { return .failure(.clipGridFull) }
 
-        // `nativeBPM` is NOT passed and therefore stays 0 — founder decision 7. A clip with an
-        // unknown native tempo never warps (`StretchPlan.resolve` returns rate 1.0 while
-        // `warpEnabled` is false), which is exactly "imported audio begins unwarped".
+        // `nativeBPM` is NOT passed and therefore stays 0 HERE. This transaction is synchronous
+        // and `@MainActor`; the tempo analysis is seconds of work and runs afterwards, off the
+        // main actor, from the door (#B2). Imported audio still begins UNWARPED either way:
+        // `warpEnabled` is false, so `StretchPlan.resolve` returns rate 1.0.
         let clip = AudioClipFactory.clip(
             name: managed.deletingPathExtension().lastPathComponent,
             mediaRef: managed.path,

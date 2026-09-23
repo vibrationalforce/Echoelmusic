@@ -3,7 +3,9 @@
 //
 // WHAT KIND OF GUARD THIS IS (§1). Claims 1–13 are END-TO-END BEHAVIOUR: they drive the shipped,
 // public, Foundation-only `TempoOnsetEnvelope` + `TempoDetector` on synthetic PCM built in this
-// file from a deterministic LCG. Claim 14 is a SOURCE-TEXT SCAN. Whether real recordings get the
+// file from a deterministic LCG. Claim 14 is a SOURCE-TEXT SCAN. Claims 15–16 are #B2: 15 drives
+// the pure adoption policy with values (the real `ClipStore` persists to the App Group, so no
+// guard writes through it), 16 is a SOURCE-TEXT SCAN of the one writer and the door. Whether real recordings get the
 // right tempo is a DEVICE question, open, and marked at `TempoDetector.confidenceFloor`.
 //
 // HONEST GRADING (§3). Every behavioural claim names a type this commit creates, so the file does
@@ -349,6 +351,60 @@ final class TheDetectedTempoIsHonestTests: XCTestCase {
         let detector = try code(Self.detectorFile)
         XCTAssertFalse(detector.contains("import AVFoundation"),
                        "the estimator stays pure so every claim above runs without a file or a device")
+    }
+
+    /// 15. (#B2) Adoption is NEVER-CLOBBER and KNOWN-only — driven with plain values, because the
+    /// real `ClipStore` persists into the shared App Group and a guard must not write there.
+    func testAClipAdoptsOnlyAKnownTempoAndNeverReplacesOne() {
+        let known = DetectedTempo(bpm: 124, confidence: 0.9, octaveAlternativeBPM: 62,
+                                  loopBars: 4, mediaDurationSeconds: 7.74)
+        let unknown = DetectedTempo(bpm: 124, confidence: TempoDetector.confidenceFloor - 0.05,
+                                    octaveAlternativeBPM: 62, loopBars: nil, mediaDurationSeconds: 30)
+        XCTAssertTrue(known.isKnown && !unknown.isKnown, "premise: one of each")
+
+        XCTAssertEqual(AudioTempoAnalysis.adoptableNativeBPM(current: 0, detected: known), 124,
+                       "a clip with no native tempo adopts a KNOWN detection — that is the whole slice")
+        XCTAssertNil(AudioTempoAnalysis.adoptableNativeBPM(current: 98, detected: known),
+                     "NEVER-CLOBBER: a clip that already has a native tempo keeps it")
+        XCTAssertNil(AudioTempoAnalysis.adoptableNativeBPM(current: 0, detected: unknown),
+                     "an UNKNOWN estimate must never become a warp rate")
+        XCTAssertNil(AudioTempoAnalysis.adoptableNativeBPM(current: 0, detected: nil))
+        XCTAssertNil(AudioTempoAnalysis.adoptableNativeBPM(current: .nan, detected: known),
+                     "a corrupt current value is not 'empty' — leave it for a person to look at")
+
+        let wild = DetectedTempo(bpm: 1_000, confidence: 0.9, octaveAlternativeBPM: 500,
+                                 loopBars: nil, mediaDurationSeconds: 30)
+        XCTAssertEqual(AudioTempoAnalysis.adoptableNativeBPM(current: 0, detected: wild),
+                       AudioClipRegion.nativeBPMRange.upperBound,
+                       "an adopted tempo goes through the ONE clamp `Clip` already owns (#416)")
+    }
+
+    /// 16. (#B2) SOURCE-TEXT SCAN: the ONE writer asks the policy; the door runs the analysis
+    /// behind the hop and writes the CLIP; the synchronous import transaction stays out of it.
+    func testTheTempoIsAdoptedByTheClipStoreFromBehindTheHop() throws {
+        let store = try code("Sources/Echoelmusic/Core/ClipStore.swift")
+        XCTAssertTrue(store.contains("func adoptDetectedNativeBPM"), "the writer is gone")
+        XCTAssertTrue(store.contains("AudioTempoAnalysis.adoptableNativeBPM("),
+                      "the writer must ask the pure policy, not re-decide (#416)")
+        XCTAssertTrue(store.contains("clip.kind == .audio"),
+                      "only an AUDIO clip has a native tempo; a MIDI clip ignores it")
+
+        let door = try code("Sources/Echoelmusic/Studio/WorkstationView.swift")
+        guard let hop = door.range(of: "Task.detached(priority: .utility)"),
+              let end = door.range(of: ".value", range: hop.upperBound..<door.endIndex) else {
+            XCTFail("ANCHOR MISSING: the door's detached analysis hop")
+            return
+        }
+        XCTAssertTrue(door[hop.upperBound..<end.lowerBound].contains("AudioTempoAnalysis.analyse(url: url)"),
+                      "the tempo analysis is seconds of work and must run INSIDE the detached hop")
+        XCTAssertTrue(door.contains("clipStore.adoptDetectedNativeBPM("),
+                      "the door must write through the store's one writer")
+        XCTAssertFalse(door.contains("nativeBPM ="), "the door must not assign the field itself")
+        XCTAssertFalse(door.contains("setTempo("), "a detected tempo must never reach the transport")
+
+        let transaction = try code("Sources/Echoelmusic/Sequencer/AudioImport.swift")
+        XCTAssertFalse(transaction.contains("AudioTempoAnalysis"),
+                       "AudioImport.perform is @MainActor and synchronous; the analysis there is the freeze")
     }
 
     // MARK: - Source helpers

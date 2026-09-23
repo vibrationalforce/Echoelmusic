@@ -239,16 +239,32 @@ struct WorkstationView: View {
         // fresh failure; an async append is exactly the way to break that law by accident,
         // so the base text is captured before the hop and compared after it.
         //
-        // ⚠️ NOTHING IS WRITTEN. The estimate is prose. `SessionContext` remains the one
-        // owner of the song's key; the user reads this and decides.
+        // ⚠️ THE KEY IS PROSE, NOT STATE. `SessionContext` remains the one owner of the
+        // song's key; the user reads the sentence and decides.
+        //
+        // ⭐ THE TEMPO IS WRITTEN — TO THE CLIP, NEVER TO THE SESSION (#B2). A KNOWN native
+        // tempo is adopted through `ClipStore.adoptDetectedNativeBPM` (never-clobber, see
+        // `AudioTempoAnalysis.adoptableNativeBPM`), because warp needs it and nothing else
+        // can supply it. It is inaudible until the person turns warp on for a region. The
+        // clip is found by its managed path, which `MediaLibrary` makes collision-free; a
+        // clip deleted in the meantime is simply not found, and nothing is written.
+        //
+        // ⚠️ THE WRITE DOES NOT WAIT FOR THE NOTE. A newer import supersedes the SENTENCE,
+        // not the fact: the older clip's tempo is still that clip's tempo.
         .task(id: tuningPending) {
             #if canImport(AVFoundation)
             guard let url = tuningPending else { return }
             let base = importNote
-            let tuning = await Task.detached(priority: .utility) {
-                AudioKeyAnalysis.analyse(url: url)
+            let (tuning, tempo) = await Task.detached(priority: .utility) {
+                (AudioKeyAnalysis.analyse(url: url), AudioTempoAnalysis.analyse(url: url))
             }.value
-            guard let summary = AudioKeyAnalysis.summarise(tuning) else { return }
+            if let clip = clipStore.filledClips.first(where: { $0.mediaRef == url.path }) {
+                clipStore.adoptDetectedNativeBPM(id: clip.id, tempo)
+            }
+            let parts = [AudioKeyAnalysis.summarise(tuning), AudioTempoAnalysis.summarise(tempo)]
+                .compactMap { $0 }
+            guard !parts.isEmpty else { return }
+            let summary = parts.joined(separator: " ")
             guard importNote == base else { return }
             importNote = base.map { $0 + " " + summary } ?? summary
             #endif

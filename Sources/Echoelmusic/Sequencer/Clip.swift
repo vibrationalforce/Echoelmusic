@@ -212,11 +212,17 @@ public struct Clip: Codable, Sendable, Equatable, Identifiable {
     /// need it to detect a clip SHORTER than its placed span (video `.exhausted` /
     /// audio EOF), so it is persisted with the clip rather than re-measured each launch.
     public var nativeDurationSeconds: Double?
-    /// The media's NATIVE tempo in BPM — a property of the AUDIO itself (task #54
-    /// Warp): seeded from the import bar-guess (`TempoMatch`), user-correctable in
-    /// the editor ("Clip BPM"). `0` = unknown → the clip NEVER warps. Clamped to
-    /// `AudioClipRegion.nativeBPMRange` when set; older documents decode as 0
-    /// (bit-identical playback, nothing pruned). MIDI clips ignore it.
+    /// The media's NATIVE tempo in BPM — a property of the AUDIO itself. `0` = unknown →
+    /// the clip NEVER warps. Clamped to `AudioClipRegion.nativeBPMRange` when set; older
+    /// documents decode as 0 (bit-identical playback, nothing pruned). MIDI clips ignore it.
+    ///
+    /// ⭐ ITS ONE PRODUCTION WRITER IS A DETECTION (#B2): `ClipStore.adoptDetectedNativeBPM`,
+    /// fed by `AudioTempoAnalysis` after an import, only for a KNOWN estimate and only while
+    /// this is still 0. ⛔ This doc used to say "seeded from the import bar-guess
+    /// (`TempoMatch`), user-correctable in the editor ('Clip BPM')". Neither existed: the
+    /// import passed no tempo, and no "Clip BPM" field is constructed anywhere in `Sources/`.
+    /// ⚠️ An AUTHORED writer (a tempo field, tap-tempo on a clip) would make this value mean
+    /// two things; whoever adds one decides whether it needs a provenance flag.
     public var nativeBPM: Double
     /// Parameter automation the clip carries (automation-in-track cycle 4).
     /// Ticks are CLIP-RELATIVE (0 = the clip's first step), so the lanes travel
