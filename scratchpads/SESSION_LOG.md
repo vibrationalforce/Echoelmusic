@@ -39043,3 +39043,21 @@ attached at prime time); what never existed was a producer of `Clip.nativeBPM` o
 **Deploy:** `.deploy/release` → v10.79.479, RC `b1cd290ca`, note with W1–W9 and
 `founder-verify.py --since cd15e0652` (13 new of 172). No plist/entitlement/project.yml/workflow
 change since the previous deploy.
+
+## 2026-09-23e — #W1/#W2 Workstation-Reparatur nach Founder-Gerätebericht → v10.79.480
+
+- Founder auf Build 2599: „neue Rubrik Workstation mit zwei drei Knöpfen, die nicht richtig
+  funktionieren". Nachgefragt (AskUserQuestion): „Import Audio" → GAR NICHTS (kein Dialog);
+  Play → grau, reagiert nicht.
+- Diagnose aus dem Code: ein toter `.fileImporter($midiImportPresented)` auf der Body-Kette von
+  `EchoelStudioView` — Vorfahre der Workstation-Fläche — überschattet deren eigenen Importer.
+  Play grau ist Folge (nichts kann landen). Leerzustand versprach „record or generate", beides
+  auf frischem Dokument unmöglich.
+- #W1 `cfaf8f17c`: toter Importer + @State gelöscht (Kette 12→11, dateiweit 13→12), Zähl-Wächter
+  nachgezogen, neuer Anspruch `testNoFileImporterSitsAboveTheImportDoor`, CLAUDE.md zwei Zeilen
+  (149.654 B). #W2 `f0e6df036`: Leerzustand nennt „Add Audio Track" / „Import Audio"; Anspruch
+  `testTheEmptyPlateNamesOnlyActionsItOffers`. `c34f754bb`: Doku-Zeile umformuliert, damit
+  founder-verify sie nicht als Bitte zählt. Beide Gates grün (main vorgerückt).
+- Ursache ist abgeleitet, NICHT am Gerät bewiesen — Build 10.79.480 ist die Probe (R1–R5).
+- Lehre: ein „freier Slot" ist kein freier Kopfraum, wenn er als VORFAHRE über einer lebenden
+  Tür derselben Art sitzt. Setterlose Slots nach Art UND Position prüfen, nicht nur zählen.

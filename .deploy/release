@@ -1,4 +1,4 @@
-build: v10.79.479 — Der Audio-Build: Spur anlegen, Datei importieren, Tonart und Tempo erkennen, Warp aufs Song-Tempo (#F1, #E1-#F4, #B1, #B2, #C1)
+build: v10.79.480 — Workstation-Reparatur: „Import Audio" öffnet die Dateiauswahl wieder, ehrlicher Leerzustand (#W1, #W2)
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,45 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (v10.79.480) ──────────────────────────────
+
+  ⭐ EINE REPARATUR, gemeldet vom Founder am Gerät (Build 2599): auf der Workstation tat
+  „Import Audio" GAR NICHTS — keine Dateiauswahl, auch nicht beim zweiten Tippen — und
+  Play blieb grau, weil nie ein Teil auf eine Spur kam.
+
+  · #W1: Über der Workstation hing ein toter MIDI-Dateiauswahl-Dialog, den nichts öffnen
+    konnte. Er saß in der Ansichtskette OBERHALB der Import-Tür, und SwiftUI lässt einen
+    höher liegenden Datei-Dialog einen tieferen überschatten. Gelöscht. Die Modal-Kette
+    wird dabei kürzer (11), also die sichere Richtung fürs Black-Screen-Gesetz.
+  · #W2: Die leere Workstation versprach „Takes you record or generate appear here" —
+    auf einer frischen Installation kann beides nicht passieren. Sie sagt jetzt, was geht:
+    „Tap Add Audio Track, then Import Audio."
+
+  ⚠️ Die Ursache ist aus dem Code abgeleitet, nicht am Gerät bewiesen. Dieser Build IST
+  die Probe.
+
+  ── PRÜFLISTE (kurz) ──
+  R1  Workstation-Chip → leere Fläche zeigt „No tracks yet" und nennt die zwei Knöpfe.
+  R2  „Add Audio Track" → Zeile „Audio 1" erscheint.
+  R3  „Import Audio" → die DATEIAUSWAHL ÖFFNET SICH. (Das ist der Fehler von 2599.)
+  R4  Eine Audiodatei wählen → ein Teil erscheint, die Zeile nennt Datei und Takte,
+      Play wird aktiv; danach gilt die Liste W1–W9 von 10.79.479 unverändert.
+  R5  Gegenprobe, dass nichts anderes kaputt ist: Save/Open-Projekt öffnet weiter seine
+      eigene Dateiauswahl (die sitzt IN einem Sheet und ist nicht betroffen).
+
+  ── PRÜF-BITTEN, DIE DIESER BUILD NEU BEANTWORTBAR MACHT ──
+  Gedruckt: python3 scripts/founder-verify.py --since a9537cb87
+  → 0 NEU oder UMFORMULIERT, von 172 offenen. Die Bitte, um die es geht, gab es schon:
+    WorkstationView (7) „Import Audio" — sie war in 2599 nicht beantwortbar, jetzt schon.
+
+  ── STAND DER GATES ──
+  cfaf8f17c (#W1) und c34f754bb (#W2 + Notiz-Reparatur): Xcode Compile Check und CI/CD
+  Build for Testing grün (main ist auf c34f754bb vorgerückt). Run Tests = #396 wie immer;
+  Ausführung der zwei neuen Wächter unbelegt. Info.plist, Entitlements, project.yml,
+  Workflows unverändert.
+
+  Der Vorgänger ist 10.79.479 (Build 2599), davor 10.79.478.
 
   ── WAS IN DIESEM BUILD NEU IST (v10.79.479) ──────────────────────────────
 
