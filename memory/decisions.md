@@ -2695,3 +2695,29 @@ listener can say which is worse here. Device items (19)–(22) in `WorkstationVi
 founder which way it errs.
 
 **All three floors remain NEEDS-FOUNDER-VERIFY. Review:** 2026-10-23.
+
+
+### 2026-09-23 — The protocol register must agree with the machine (#F5)
+
+**Decision.** `SignalTransport.midi2.status` returns `.live`, and the case comment records
+that MIDI-CI is absent instead of claiming it.
+
+**Why.** MIDI 2.0 ships: a virtual source created with
+`MIDISourceCreateWithProtocol(…, ._2_0, …)`, the `UMPEncoder` 2.0 builders every send is
+mirrored through, UMP channel-voice parsing inbound, an input port opened at `._2_0`, and a
+switch in the Patchbay. `.roadmap` means "typed, not wired" by the enum's own doc. The
+MIDI-CI parenthetical was a capability claim with zero code, on the register that answers
+"which protocols do we speak".
+
+**A no-op today, corrected anyway.** No port carries `.midi2`, but `defaultInventory()`
+filters roadmap transports out, so the first such port would silently never appear.
+
+**The transferable lesson.** The same guard file already pinned that the FAQ stopped calling
+MIDI 2.0 roadmap — the #1253 sweep fixed the copy and left the model. **A correction that
+sweeps prose and not code leaves the model as the last false witness.**
+
+**`.auv3` stays roadmap on purpose:** Echoel IS an AUv3 (#1385), but that case means hosting
+other plugins, which the founder struck (#121 Slice 2). Being one and hosting them are
+different facts.
+
+**Review:** 2026-10-23.

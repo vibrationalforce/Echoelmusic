@@ -4303,3 +4303,26 @@ nicht das, was eine Drum-Loop an YIN liefert; profil-gezogene Noten sind ein sch
 echter Musik. Meine Zahlen messen den SEPARATOR unter einem genannten Modell, nicht diese App
 an echtem Audio. **Deshalb wurde keine Schwelle verschoben** — Anheben tauscht einen Fehler
 gegen den anderen, und nur ein Ohr entscheidet, welcher hier schlimmer ist.
+
+
+## PLAYBOOK #F5 (2026-09-23) — ein Korrektur-Durchgang, der die PROSA prüft und das MODELL nicht, lässt das Modell als letzten falschen Zeugen stehen
+
+`TheMIDI2SourceIsSwitchableTests` Anspruch 7 nagelt seit #1253 fest, dass `docs/faq.html`
+MIDI 2.0 OUT nicht mehr als Roadmap verkauft. Im selben Baum gab
+`SignalTransport.midi2.status` weiter `.roadmap` zurück — in dem `enum`, aus dem eine Sitzung
+abliest, WELCHE Protokolle es gibt. Die Website war korrigiert, das Modell nicht.
+
+**Regel: wer eine Fähigkeits-Behauptung zurücknimmt oder nachführt, zählt die TRÄGER auf —
+Website, Store-Text, CLAIMS.md, Panel-Kopie UND das Typ-System.** Der Code-Träger ist der
+teuerste, weil ihm die nächste Sitzung glaubt, und der einzige, den ein Prosa-Sweep nie sieht.
+Es ist #1302 andersherum: dort zog eine Löschung die Liste der TOTEN sauber nach und ließ den
+Namen in der Liste der LEBENDEN stehen.
+
+⚠️ **Zweite Regel, gegen die naheliegende Entwertung: „ist doch ein No-op" ist kein Grund, es
+zu lassen.** Keine `SignalPort` trägt `transport: .midi2`, die Änderung bewegt heute nichts.
+Aber `defaultInventory()` FILTERT Roadmap-Transporte heraus — der erste `.midi2`-Port, den
+jemand anlegt, verschwände lautlos, und sein Autor suchte eine fehlende Zeile. **Eine latente
+Falle ist am billigsten zu entfernen, solange sie latent ist.**
+
+⭐ Und der Wächter BINDET, statt zu verbieten (#364, Playbook #F1): nicht „`.midi2` darf nie
+Roadmap sein", sondern „Etikett und Maschine müssen übereinstimmen" — rot in BEIDE Richtungen.

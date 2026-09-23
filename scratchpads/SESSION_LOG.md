@@ -38975,3 +38975,38 @@ gap is founder decision 7, and the key/tuning law is already satisfied by separa
 recommend explicitly AGAINST a provenance enum). The video AWB / AI-video requirements are
 recorded as roadmap only, with the tension stated: they presuppose a capture pipeline #1304
 struck eleven days ago, and `Sources/Echoelmusic/Video/` now holds ONLY the rPPG pulse path.
+
+## 2026-09-23c — #F5 the routing model called MIDI 2.0 roadmap while it shipped
+
+**#F5 SHIPPED (8116b3663, Compile Check success + Build for Testing success).** Two defects
+in `SignalTransport`, both found by the MIDI/MPE census, both on the register a session reads
+to learn which protocols exist: `.midi2` returned `.roadmap` ("typed, not wired") while MIDI
+2.0 ships on five legs, and the case comment claimed "(+ MIDI-CI capability inquiry)" with
+ZERO code — one occurrence in all of `Sources/`, namely the claim itself.
+
+**A no-op today and corrected anyway:** no `SignalPort` carries `transport: .midi2`, so
+nothing is filtered differently. The label matters because `defaultInventory()` FILTERS
+roadmap transports out for App Store reasons — the first `.midi2` port anyone adds would be
+silently dropped and its author would hunt a missing row. **A latent trap is cheapest to
+remove while it is still latent.**
+
+⭐ **HOW IT SURVIVED, and this is the transferable part: claim 7 of the SAME guard file
+already pinned that `docs/faq.html` no longer sells MIDI 2.0 out as roadmap.** The #1253
+sweep corrected the COPY and left the MODEL. **A correction sweep that checks the prose and
+not the model leaves the model as the last false witness — and the model is the one a future
+session trusts.** #1302's lesson inverted: a correction must pull the list of LIVING things
+too, not only the dead ones.
+
+The new claim 8b BINDS rather than BANS (#364, #F1 playbook): it does not forbid `.midi2`
+from being roadmap again, it requires label and machinery to agree, and goes red in either
+direction. `.auv3` deliberately STAYS roadmap — Echoel IS an AUv3 since #1385, but that case
+means the HOST side, which the founder struck.
+
+**Sweep for other instances of the class: CLEAN.** `SignalKind.isLive` (`.video`/`.visual`
+false) is honest, `ModSource.hasProducer` kept pace with the #1301 channel removal, and
+`StretchMode.isImplemented` correctly reports `.studio` unavailable. #F5 was the only one.
+
+**LOOP STATE: no further dependency-ready slice exists, and that is measured rather than
+assumed.** All five censuses are closed; every remaining thread ends at a founder hold or a
+missing producer that needs a founder decision. The consolidated report is
+`scratchpads/FINAL_REPORT_DMMW_LOOP_2026-09-23.md`.
