@@ -2721,3 +2721,13 @@ other plugins, which the founder struck (#121 Slice 2). Being one and hosting th
 different facts.
 
 **Review:** 2026-10-23.
+
+### 2026-09-23 — Detected tempo lands on the clip, and warp is a switch that asks the engine (#B1/#B2/#C1)
+**Decision:** a KNOWN detected tempo is adopted onto `Clip.nativeBPM` (never the session, never
+over an existing value); a lane-level "Warp" switch on the Workstation sets `warpEnabled` and
+resizes whole-file parts to the bars the engine's own (clamped) rate consumes; it is absent when
+no part can warp and locked while the song plays.
+**Why:** the warp engine shipped months ago with no producer and no writer. Detection must not
+become a second tempo truth, and a warp flag without a resize leaves silence or a cut loop.
+`TempoMatch` clamps to 0.25–4, so the span asks `StretchPlan.resolve` (#416).
+**Review:** 2026-10-23, after the W1–W9 device run on v10.79.479.

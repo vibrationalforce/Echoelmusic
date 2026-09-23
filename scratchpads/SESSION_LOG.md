@@ -39010,3 +39010,36 @@ false) is honest, `ModSource.hasProducer` kept pace with the #1301 channel remov
 assumed.** All five censuses are closed; every remaining thread ends at a founder hold or a
 missing producer that needs a founder decision. The consolidated report is
 `scratchpads/FINAL_REPORT_DMMW_LOOP_2026-09-23.md`.
+
+## 2026-09-23d — #B1/#B2/#C1 detected tempo → clip → warp switch, and the v10.79.479 deploy
+
+**Founder decision in force:** "WARP / NATIVE BPM: Approved." The warp ENGINE was whole long
+before this round (`AudioLanePlayer` → `StretchPlan.resolve` → `TimelineAudioSink`, warp chain
+attached at prime time); what never existed was a producer of `Clip.nativeBPM` or a writer of
+`TimelineRegion.warpEnabled`. Three slices, each gated before the next push:
+
+- **#B1 `6f88bb3d7`** — `Core/TempoDetector` (pure) + `Sequencer/AudioTempoAnalysis` (AVFoundation
+  adapter, middle 90 s, cancellable). Four drafts were wrong and each was caught by MEASURING a
+  Python prototype first: steady-tone energy aliasing (four-hop frames), fold-up killing slow
+  tempos (fold down only), single-lag confidence naming melodies (comb over four multiples),
+  short-media false positives (loop-consistency rule). A margin gate was measured and REJECTED.
+  Synthetic only; the floor carries NEEDS-FOUNDER-VERIFY. Guard 14 claims.
+- **#B2 `36468bb9a`** — `ClipStore.adoptDetectedNativeBPM`, the first production writer of
+  `Clip.nativeBPM`; policy `AudioTempoAnalysis.adoptableNativeBPM` = KNOWN only, NEVER-CLOBBER,
+  one clamp (#416). Runs in the SAME detached hop as the key analysis. Struck a false doc line
+  ("seeded from import bar-guess, user-correctable in the editor") — neither existed.
+- **#C1 `b1cd290ca`** — `Sequencer/AudioWarp` (pure decision) + `TimelineStore.setRegionWarp`
+  (one undo step) + a lane-level "Warp" switch in `WorkstationView`, shown ONLY when a part can
+  warp, disabled while playing (mid-song warp-chain attach pauses the engine), outside the
+  row's `.combine` (#621). ⭐ **The find worth keeping:** `TempoMatch` clamps the rate to
+  0.25…4, so "the file's bars at its native tempo" is right only inside that range; the span
+  asks `StretchPlan.resolve` for the rate the engine will play (#416) and a guard pins the
+  clamped 40→200 case. Also corrected the view header, which said the surface cannot "add or
+  remove a track" from #F1 on — in the file that holds the track button.
+
+**Gates:** all three moved `main` (Compile Check + Build for Testing green each). Run Tests =
+#396 on each; the new guards sit outside the 200-line window — compiled, execution unproven.
+
+**Deploy:** `.deploy/release` → v10.79.479, RC `b1cd290ca`, note with W1–W9 and
+`founder-verify.py --since cd15e0652` (13 new of 172). No plist/entitlement/project.yml/workflow
+change since the previous deploy.

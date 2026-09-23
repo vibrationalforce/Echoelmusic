@@ -1,4 +1,4 @@
-build: v10.79.478 — Der Workstation-Build: die Timeline hat eine Tuer und einen Play-Knopf, und dieser Build existiert fuer die Geraete-Pruefliste D1-D9 (#1436-#1444)
+build: v10.79.479 — Der Audio-Build: Spur anlegen, Datei importieren, Tonart und Tempo erkennen, Warp aufs Song-Tempo (#F1, #E1-#F4, #B1, #B2, #C1)
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,104 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (v10.79.479) ──────────────────────────────
+
+  ⭐ DER AUDIO-BUILD. Seit dem letzten Deploy (cd15e0652) sind 47 Commits gelaufen.
+  Was du am Gerät zum ERSTEN MAL tun kannst, ist eine zusammenhängende Kette auf der
+  Workstation: eine Audio-Spur anlegen → eine Datei importieren → die App sagt dir
+  Tonart, Kammerton und Tempo der Datei → und wenn das Tempo sicher erkannt ist, lässt
+  ein „Warp"-Schalter den Loop dem Song-Tempo folgen. Nichts davon kann ein Gate hören.
+  Die Prüfliste W1–W9 unten IST der Zweck des Builds.
+
+  ── POSTEN 1: DIE AUDIO-KETTE AUF DER WORKSTATION ──
+
+  Der Weg: Workstation-Chip in der Chip-Leiste des Instruments.
+  · „Add Audio Track" (#F1) legt eine leere Audio-Spur an — auf einer frischen
+    Installation war der Import vorher unerreichbar, weil es keine Spur gab.
+  · „Import Audio" (Audio Import V1) kopiert die gewählte Datei in die App, misst die
+    KOPIE und legt sie als Teil auf die erste Audio-Spur, in ganzen Takten.
+  · Danach, ein paar Sekunden später und ohne die Oberfläche anzuhalten, hängt die
+    Zeile unter den Knöpfen an, was die Analyse gefunden hat (#E1/#F3/#F4/#B1):
+    „Sounds like <Tonart>, A4 ≈ <n> Hz." und „Tempo ≈ <n> BPM …" — oder ehrlich
+    „Tempo unclear." / keine Tonart, wenn die Belege zu dünn sind. Tonart und
+    Kammerton sind nur TEXT; die App übernimmt sie nicht in deinen Song.
+  · Das Tempo wird am TEIL gespeichert, nie am Song (#B2). Hörbar wird es erst über
+    den „Warp"-Schalter (#C1), der auf einer Audio-Spur NUR erscheint, wenn ein Teil
+    ein sicher erkanntes Tempo hat. An = das Teil folgt dem Song-Tempo in derselben
+    Tonhöhe und spannt so viele Takte, wie die Datei bei ihrem eigenen Tempo hat.
+    Aus = Originalgeschwindigkeit. Während der Song läuft, ist der Schalter gesperrt
+    (das Einhängen der Warp-Kette mitten im Song würde die Engine anhalten).
+
+  ⚠️ WAS DU NICHT ERWARTEN DARFST: Teile verschieben, trimmen, teilen oder löschen
+  geht weiterhin nicht, und es gibt keinen Playhead. Die Tempo-Erkennung ist nur auf
+  SYNTHETISCHEM Material vermessen — echte Aufnahmen sind genau deine Prüfung.
+
+  ── POSTEN 2: WAS SONST NEU IST ──
+
+  · Licht: Echoel besitzt den kreativen Licht-Zustand jetzt OBERHALB von Art-Net und
+    sACN (#1444–#1447). Ein Fade läuft nur so weit, wie das Netz ihn wirklich
+    angenommen hat, und ein Art-Net-Knoten hält nach Stop seinen Pegel. Nur mit Rig
+    prüfbar.
+  · MIDI 2.0 wird im Routing-Modell nicht mehr als „Roadmap" geführt (#F5) — reine
+    Beschriftung, am Gerät unsichtbar.
+
+  ── DIE GERÄTE-PRÜFLISTE W1–W9 ──
+
+  W1  Frische Installation (oder ein Song ohne Audio-Spur): Workstation-Chip →
+      „Add Audio Track" → eine Zeile „Audio 1" erscheint.
+  W2  „Import Audio" → einen Loop wählen, dessen Tempo du kennst → ein Teil erscheint,
+      die Zeile nennt Datei und Taktlänge.
+  W3  Warten (wenige Sekunden): die Zeile hängt Tonart/Kammerton und „Tempo ≈ …" an.
+      Tempo notieren: stimmt es, oder steht das richtige als „(or …)" dahinter?
+      Während der Analyse muss die App bedienbar bleiben.
+  W4  Auf der Spur-Zeile erscheint „Warp". Play (ohne Warp): Originalgeschwindigkeit.
+  W5  Stop → Warp an → Play: der Loop läuft im Takt des Songs, gleiche Tonhöhe,
+      und die Taktlänge in der Spur-Zeile hat sich auf die Loop-Länge geändert.
+  W6  Während der Song läuft: Warp ist ausgegraut, VoiceOver sagt
+      „Stop the song to change warp".
+  W7  Stop → Warp aus → Play: wieder Originalgeschwindigkeit.
+  W8  Eine Datei OHNE Puls importieren (Sprache, Fläche, Geräusch): „Tempo unclear."
+      und KEIN Warp-Schalter. Erscheint doch einer, ist die Schwelle zu niedrig.
+  W9  Jede Abweichung zwischen Gezeigtem und Hörbarem notieren.
+  ⚠️ W4 bis W7 sind EINE durchgehende Bildschirmaufnahme MIT TON.
+
+  Die Prüfliste D1–D9 des Vorgängers (10.79.478) ist weiterhin offen und gilt
+  unverändert — sie steht direkt unter dieser Notiz.
+
+  ── PRÜF-BITTEN, DIE DIESER BUILD NEU BEANTWORTBAR MACHT ──
+
+  Gedruckt, nicht von Hand geschrieben:
+      python3 scripts/founder-verify.py --since cd15e0652
+  → 13 NEU oder UMFORMULIERT, von 172 offenen. Die Liste sieht TEXT, nicht Fähigkeit:
+  eine nur umformulierte Bitte erscheint als „neu", also den Satz lesen.
+
+  AUDIO (4):
+    Core/TempoDetector.swift:180          die Tempo-Schwelle an echten Loops und Songs
+    Sequencer/AudioKeyAnalysis.swift:136  Tonart-Belege
+    Sequencer/AudioKeyAnalysis.swift:143  Tonart-Belege, Loop-Fall
+    Sequencer/AudioKeyAnalysis.swift:190  keine erfundene Tonart bei atonalem Material
+  UI (4) — alle in Studio/WorkstationView.swift, das ist W1–W9 oben:
+    :100 Import-Tür (7)–(13) · :113 Add Audio Track (14)–(18)
+    :122 Tonart + Kammerton (19)–(22) · :134 Tempo + Warp (23)–(27)
+  VISUAL (3):
+    Sequencer/Clip.swift:113  ein importiertes Teil klingt im Takt des Arrangements
+    zwei Licht-Bitten (TheLightingLook…Tests) — nur mit Art-Net- oder sACN-Rig
+  OTHER (2): CISmoke/TheDetectedTuningHasAProducerTests.swift:49 und :536 — die
+    Analyse eines langen Files darf die App nicht einfrieren; Tonart/Kammerton einer
+    echten Aufnahme.
+
+  ── STAND DER GATES, ehrlich ──
+
+  Release-Kandidat b1cd290ca (= main). Xcode Compile Check (Release, Gerät) und CI/CD
+  „Build for Testing“ (Debug, Simulator) sind für B1 (6f88bb3d7), B2 (36468bb9a) und
+  C1 (b1cd290ca) jeweils GRÜN — main ist auf jeden der drei vorgerückt. „Run Tests“
+  endet wie auf jedem Push mit TEST EXECUTE FAILED (#396, Clone 2 stirbt beim Start);
+  im sichtbaren Log-Fenster steht kein fehlgeschlagener Test, die drei neuen Wächter
+  liegen außerhalb des Fensters: kompiliert nachweislich, Ausführung unbelegt.
+  Info.plist, Entitlements, project.yml und Workflows sind seit cd15e0652 unverändert.
+
+  Der Vorgänger ist 10.79.478 (und davor 10.79.477).
 
   ── WAS IN DIESEM BUILD NEU IST (v10.79.478) ──────────────────────────────
 
