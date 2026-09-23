@@ -744,8 +744,8 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
     /// on the plate's ancestor path (app → `WorkspaceView` → `SurfaceHost` →
     /// `EchoelStudioView`) carry no `.fileImporter(` except the ONE nested inside
     /// `openSheet`, which is a sheet's CONTENT and so not an ancestor of the plate. That the
-    /// picker now OPENS is a DEVICE PROBE and stays open (WorkstationView NEEDS-FOUNDER-VERIFY
-    /// (7)); the shadowing mechanism itself is SwiftUI behaviour no test here can run.
+    /// picker now OPENS is a DEVICE PROBE and stays open (item (7) of the founder checks in
+    /// `WorkstationView`'s header); the shadowing mechanism is SwiftUI behaviour no test here can run.
     ///
     /// Grading (#433): REGRESSION on the parent tree — `EchoelStudioView` carried two
     /// `.fileImporter(` occurrences there, one of them `$midiImportPresented`; green after.
