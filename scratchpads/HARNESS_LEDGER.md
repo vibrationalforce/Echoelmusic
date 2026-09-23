@@ -4208,3 +4208,59 @@ Alle drei entstanden beim Schreiben aus einer Teil-Messung (nur die 27 `patch()`
 statt aller 69 — die älteren Literal-Voices halten drei der vier Extreme). **Wer über „das
 ganze File" behauptet, misst das ganze File, auch wenn die neue Nachbarschaft nur einen Teil
 davon benutzt.**
+
+## PLAYBOOK #F3 (2026-09-23) — eine „confidence", die nur den SIEGER meldet, misst keine Mehrdeutigkeit; und ein Symbol-`grep` beantwortet keine VERHALTENS-Frage
+
+**Zwei Lehren aus einem Tag. Die erste kostete beinahe einen falschen Gate, die zweite
+beinahe eine „Reparatur" an korrektem Code.**
+
+### 1. Der Gewinner-Score ist keine Unsicherheitsmessung — der ABSTAND zum Zweiten ist es
+
+`TuningDetector` korreliert ein Pitch-Class-Histogramm gegen 24 Krumhansl-Profile und gab
+die beste Korrelation als `confidence` zurück. Naheliegende Reparatur für „atonales Material
+wird ‚Sounds like C major' genannt": eine Schwelle auf `confidence`. **Gemessen (Python
+gegen die echten Profile, nicht geschätzt): zwölf Kopien EINES Tons ergeben confidence
+0,684 — über jeder vernünftigen Schwelle — bei Abstand 0,000**, weil ein einzelner hoher
+Balken zum Dur- UND zum Moll-Profil auf demselben Grundton gleich gut passt. Eine
+Confidence-Schwelle hätte den Defekt VERSCHOBEN, nicht behoben.
+
+**Regel:** wo ein Verfahren N Kandidaten bewertet und EINEN zurückgibt, sind „wie gut passt
+der Beste" und „wie allein steht er" ZWEI Größen. Nur die zweite ist eine
+Mehrdeutigkeitsmessung, und sie ist nur dort berechenbar, wo alle N gleichzeitig existieren
+— also im Erzeuger, nie im Verbraucher.
+
+**Und die Gegenprobe gehört dazu:** nach zwei Ansprüchen sah die Confidence-Schwelle
+redundant aus (beide Fixtures waren oben GLEICHAUF, Abstand 0). Eine Schwelle, für die kein
+Anspruch rot werden kann, ist keine Schwelle (#367). Das Fixture, das nur SIE fängt: acht
+benachbarte Halbtöne — ein Cluster ohne tonales Zentrum, dessen Spanne zufällig zu einer
+Tonart neigt, also großer Abstand bei schwacher Passung überall.
+
+### 2. „Wer schreibt X?" ist keine `grep 'X ='`-Frage
+
+DREI Fehlmessungen an einem Tag, eine Wurzel — und **alle drei lösten sich in die
+BESTÄTIGENDE Richtung auf**, das leere Ergebnis las sich als Beleg FÜR den Befund:
+
+| Nadel | traf in Wahrheit | Folge |
+|---|---|---|
+| `mpe` | `te-MPE-o` | halbes Repo als „MIDI-tragend" |
+| `RPN` | `SHA-RPN-ESS` | „nichts sendet die MPE-Zone" — FALSCH, `sendMPEConfiguration()` sendet sie |
+| `keyRoot\s*=` | nur Feld-Zuweisungen | „kein Produktions-Schreiber" — FALSCH, `adopt(key:)` schreibt es aus zwei Aufrufstellen |
+
+Beim dritten kam der #1376-Fehler dazu, selbst verschuldet: ich SUCHTE nach `setKey(`, einem
+Namen, den ich erfunden hatte. Der Treffer war null, und diese Null bestätigte meinen Befund.
+
+**Regel:** eine Suche, die NICHTS liefert, ist zuerst ein Verdacht gegen die NADEL, erst
+danach ein Befund über die Sache. Der billige Diskriminator: einen BEKANNTEN Positivfall
+suchen und prüfen, ob die Nadel ihn fängt. **Und: wenn die Trefferliste Dateien nennt, die
+mit der Frage nichts zu tun haben (`MetalBioView` bei einer RPN-Frage), ist die Nadel
+kaputt — die Treffer lesen, nicht ihre Anzahl.**
+
+### 3. Die Zusatz-Regel für Zensus-Läufe
+
+**Bevor man aus einer Messung eine Scheibe empfiehlt, liest man den Doc-Kommentar des TYPS,
+den man ändern würde.** Zweimal heute stand die Antwort exakt dort: `UMPEncoder.RealTime`
+erklärt in voller Länge, warum es Continue NICHT gibt (nichts könnte es senden,
+`Transport.play()` setzt die Position bedingungslos auf null) — meine Zensus-Empfehlung
+„SPP + Continue" war damit schon widerlegt, bevor ich sie schrieb. Ein Zensus misst, was
+EXISTIERT; er misst nicht, was bereits ENTSCHIEDEN wurde, und dieses Repo schreibt seine
+Entscheidungen neben den Code, nicht in eine Plandatei.

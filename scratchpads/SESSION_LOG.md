@@ -38900,3 +38900,39 @@ allerdings weiterhin türlos, also sieht ihn niemand. Eine Tür-Öffnung dort er
 korrekten Satz; vor #F1 hätte sie einen lügenden geerbt.
 
 **OFFEN:** die räumlichen Behauptungen als Geräte-Durchgang (Task).
+
+## 2026-09-23 — #F3 detected-key uncertainty + censuses #3/#4 (autonomous DMMW loop)
+
+**#F3 SHIPPED (74668c389, merged to `main`).** `DetectedTuning.confidence` had zero readers
+and `analyze` put no floor on the correlation, so atonal material was reported as "Sounds
+like C major" — a key name produced by iteration order. Added `runnerUpConfidence` +
+`keyMargin`; `AudioKeyAnalysis.summarise` now refuses to name a key below either floor.
+
+⭐ **The design lesson, and it nearly went the other way:** my first instinct was to gate on
+`confidence` alone. Simulating against the real Krumhansl profiles showed twelve copies of
+ONE pitch score confidence **0.684** — above any sane floor — with margin **0.000**. A
+"confidence" that reports only the winner's score does not measure ambiguity; the margin to
+the runner-up does. Both floors are pinned by a fixture only that floor catches (repeated
+pitch → margin; chromatic cluster → confidence), because after the first two claims
+`keyConfidenceFloor` looked redundant and was pinned by nothing (#367).
+
+Verification: §0-transcribed against both trees (12/12 worktree, 4 red on parent; the three
+degenerate reds graded by mutation, both mutants killed). Ten checkers exit 0. Both gates
+green — read via the second road, `main` advanced to the sha.
+
+**Censuses run (read-only, in `scratchpads/CENSUS_MIDI_MPE_2026-09-23.md` and
+`CENSUS_KEY_TUNING_2026-09-23.md`).** MIDI/MPE: MPE OUT and MIDI 2.0 in/out are real and
+doored; SPP, Continue, MTC, Program Change, poly AT, note-off velocity and a virtual
+DESTINATION are missing. **No dependency-ready slice came out of it** — almost every missing
+row is blocked on a missing PRODUCER, not a missing encoder (#527 shape, fourth domain).
+Key/tuning: the founder's authored/detected/imported/external law is already satisfied by
+SEPARATION; recommending explicitly AGAINST adding a provenance enum (it would have no
+consumer, #496).
+
+⛔ **THREE MEASUREMENT FAILURES, ONE ROOT — worth more than the slices.** `mpe` is a
+substring of `tempo`; `RPN` of `SHARPNESS`; `SPP` of `DDSPParameterCatalog`. Then twice I
+answered a BEHAVIOUR question ("who writes X?") with a SYMBOL grep and got a confident
+wrong answer: the MPE zone RPN is sent (I said it was not), and `SessionContext.keyRoot` is
+written by `adopt(key:)` from two sites (I said it had no writer and was about to "fix" a
+filename that is correct). **Both failures resolved in the CONFIRMING direction** — the
+empty result read as evidence FOR the finding. Law recorded in `HARNESS_LEDGER.md`.

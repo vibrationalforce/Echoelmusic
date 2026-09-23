@@ -2629,3 +2629,38 @@ Produktions-Aufrufer. Anspruch 21 pinnt die Menge und verbietet einen zweiten Er
 2026-09-23 kündigte ZWEI aufgelöste Holds an und lieferte einen. Der zweite ist nie
 angekommen; der Text bricht mitten im Satz über `addLane`s Rückgabewert ab. Gemessen: die
 abgeschnittene Klausel band nichts (kein Aufrufer braucht die Spur-Identität).
+
+
+### 2026-09-23 — A detected fact must carry its own uncertainty (#F3)
+
+**Decision.** `TuningDetector.analyze` now reports `runnerUpConfidence` alongside
+`confidence`, `DetectedTuning` derives `keyMargin` from the pair, and
+`AudioKeyAnalysis.summarise` names a key only past BOTH a confidence floor and a margin
+floor. The winner, the nil rule and `confidence` itself are unchanged.
+
+**Why two numbers.** `confidence` is the WINNER's correlation. Measured against the real
+Krumhansl–Kessler profiles: twelve copies of one pitch score 0.684 — above any sane floor —
+with margin 0.000, because one tall bar fits the major and the minor profile on the same
+tonic equally well. Relative and parallel keys share most of their pitch classes, so
+near-ties are the NORMAL failure of Krumhansl key-finding. Gating on confidence alone would
+have moved the defect, not fixed it.
+
+**Both floors are load-bearing**, each pinned by material only it catches: a repeated pitch
+class clears the confidence floor and is caught by the margin; a chromatic cluster clears
+the margin floor (its span leans toward one key by accident) and is caught by the
+confidence. Without the second fixture `keyConfidenceFloor` would be a gate no claim can
+fail for (#367).
+
+**Both floors are JUDGEMENTS**, marked NEEDS-FOUNDER-VERIFY at the constants — an ear, not a
+test, decides whether they are set right.
+
+**Companion decision — do NOT add a provenance enum for key/scale.** The founder's
+authored / detected / imported / external law is already satisfied by separation:
+`studio.rootIndex`/`.scale` hold the SELECTED key, `SessionContext.keyRoot`/`.keyScale` hold
+the COMPOSED key (written only by `adopt(key:)`, from compose and project open), and
+`DetectedTuning` never writes either — pinned by a guard. A provenance field with no surface
+to display it would be the #496 shape. The one unrepresentable case is an OSC remote edit,
+which is indistinguishable from the user's own edit; judged acceptable (opt-in, default off,
+sender-allowlisted — the user acting at a distance), and recorded so it is not re-derived.
+
+**Review:** 2026-10-23.
