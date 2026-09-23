@@ -971,6 +971,46 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
             """)
     }
 
+    /// #W2 (SOURCE-TEXT SCAN) — the empty plate instructs only what the plate offers.
+    ///
+    /// On build 2599 the empty Workstation said "Takes you record or generate appear here as
+    /// parts on a track." beside a greyed Play. Neither producer could run on a fresh
+    /// document: nothing records (#1302), and a generated take reaches the timeline only
+    /// through `ensureComposerRegion`, which needs a MIDI lane nothing in the build creates.
+    /// The founder read it as buttons that do not work. The sentence now names the two
+    /// buttons that DO fill the plate, and this claim pins that each name it uses is a label
+    /// this same file renders.
+    ///
+    /// Grading (#433): REGRESSION on the parent for the second assertion (the old sentence
+    /// says "record" and "generate"); the first is FORWARD (the labels are new in the empty
+    /// state). ⚠️ It forbids no future producer (#364): when a production path DOES record or
+    /// generate onto a track, the sentence may say so again, and this claim moves with it.
+    func testTheEmptyPlateNamesOnlyActionsItOffers() throws {
+        let door = SourceText.codeOnly(try rawText(Self.door))
+        guard let start = door.range(of: "private var emptyState: some View {"),
+              let end = door.range(of: "private func songLine(", range: start.upperBound..<door.endIndex)
+        else {
+            return XCTFail("`emptyState` or the `songLine` that follows it moved in \(Self.door) — re-anchor this claim")
+        }
+        let empty = String(door[start.upperBound..<end.lowerBound])
+
+        for label in ["Add Audio Track", "Import Audio"] {
+            XCTAssertTrue(empty.contains(label) && door.contains("Text(\"\(label)\")"), """
+                The empty Workstation no longer names "\(label)", or no button on the plate is \
+                labelled that any more. The empty state is the one sentence a new user reads \
+                beside a greyed Play; it must point at a button that exists (#W2).
+                """)
+        }
+        for promise in ["record", "generate"] {
+            XCTAssertFalse(empty.lowercased().contains(promise), """
+                The empty Workstation says "\(promise)" again. On a fresh document nothing \
+                \(promise)s onto a track (#1302 took recording; a generated take needs a MIDI \
+                lane nothing creates), so the plate would promise a producer that cannot run — \
+                the #W2 device report. If such a producer now exists, update this claim with it.
+                """)
+        }
+    }
+
     /// Claim 21 (SOURCE-TEXT SCAN) — `addLane` has exactly one production caller, and it is
     /// the helper, not the view.
     ///

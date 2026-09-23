@@ -286,11 +286,18 @@ struct WorkstationView: View {
 
     // MARK: - Pieces
 
+    /// ⛔ #W2 — THIS SAID "Takes you record or generate appear here as parts on a track." and
+    /// both halves were false on the only document a new user has. Nothing records (#1302), and
+    /// a generated take lands on the timeline only through `ensureComposerRegion`, which needs
+    /// a MIDI lane — and nothing in this build creates one (the seed is unreachable, the one
+    /// lane creator makes audio tracks). So the empty plate promised a producer that could
+    /// not run, beside a greyed Play. It now names the two buttons that DO fill it, by their
+    /// labels rather than by position (the #152 lesson: "below" is a claim about layout).
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("No arrangement yet")
+            Text("No tracks yet")
                 .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
-            Text("Takes you record or generate appear here as parts on a track.")
+            Text("Tap Add Audio Track, then Import Audio. The file becomes a part you can play.")
                 .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -299,7 +306,7 @@ struct WorkstationView: View {
         // One spoken sentence rather than two fragments — VoiceOver would otherwise read the
         // heading and the explanation as unrelated items.
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("No arrangement yet. Takes you record or generate appear here as parts on a track.")
+        .accessibilityLabel("No tracks yet. Tap Add Audio Track, then Import Audio. The file becomes a part you can play.")
     }
 
     private func songLine(_ summary: WorkstationSummary) -> some View {
