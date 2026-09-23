@@ -171,6 +171,21 @@
 // (42) Sound at ±5 and ±12 on a voice and a drum loop — acceptable? The value survives a
 // relaunch. (43) Open a project saved before this build: no audio track is unexpectedly shifted
 // (an older build could store a per-track transpose that was silent until now).
+//
+// NEEDS-FOUNDER-VERIFY (S2, MIDI file import, 2026-09-23): (44) "Import MIDI" opens a picker
+// showing MIDI files; "Import Audio" still opens its audio picker after a MIDI pick, and the
+// reverse — the two share ONE importer whose type switches (#W1). (45) Fresh install: Add MIDI
+// Track → Import MIDI → Play sounds the whole file, then loops; Stop silences it. (46) Import,
+// then the instrument's Start, then Workstation Play: bar 1 is still the imported file, not a
+// composed take (the composer now yields to a user part). (47) Long pads and dense chords: the
+// one-bar hold, and a note repeated across a bar line merging into one — acceptable? (48) With
+// the instrument RUNNING, Workstation Play for more than 45 s: its evolve reloads the shared
+// roll, so the part is replaced until Stop. The note says "with the instrument stopped"; say
+// whether that is enough or needs fixing. (49) After Workstation Stop, the instrument's Play and
+// its MIDI export: what plays and what is exported (the roll still holds the imported bars)?
+// (50) A second import appends after the first. (51) A drum-only file is refused with its own
+// sentence; a 3 MB file is refused as too large. (52) VoiceOver reads both new rows; nothing
+// runs off the screen at a large text size.
 
 #if canImport(SwiftUI)
 import Foundation
@@ -204,6 +219,13 @@ struct WorkstationView: View {
     /// carries between plate switches for no reason.
     @State private var importPresented = false
     @State private var importNote: String?
+
+    /// S2 — which file the ONE importer is asking for. One `.fileImporter` whose content type
+    /// switches, never a second one: two importers on one view is the shape that can shadow a
+    /// picker (#W1), and `TheWorkstationImportsAudioTests` pins the prefix of this one.
+    /// Local and cold, like the two above — it changes on a tap.
+    private enum ImportKind { case audio, midi }
+    @State private var importKind: ImportKind = .audio
 
     /// The managed copy a tuning analysis is owed for, or nil. It is the `.task(id:)` key,
     /// which is why it holds the URL rather than a flag: a SECOND import must supersede the
@@ -274,6 +296,10 @@ struct WorkstationView: View {
             // forever and the import door was unreachable on a clean install.
             addTrackRow
             importRow
+            // S2 — the MIDI pair, in the same order and for the same reason: the refusal
+            // "add a MIDI track first" names the row directly above Import MIDI.
+            addMIDITrackRow
+            importMIDIRow
             if let note = importNote { importNoteLine(note) }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -283,9 +309,11 @@ struct WorkstationView: View {
         // already said it claims to be audio; `AudioImport` still measures the MANAGED COPY
         // afterwards, because "claims to be audio" and "decodes" are different facts.
         .fileImporter(isPresented: $importPresented,
-                      allowedContentTypes: [.audio],
+                      allowedContentTypes: [importKind == .midi ? UTType.midi : UTType.audio],
                       allowsMultipleSelection: false) { result in
-            handleImport(result)
+            // ⚠️ `.midi` conforms to `.audio`, so the AUDIO picker also lists `.mid` files;
+            // picking one there is refused by `AudioImport` as audio it cannot read.
+            if importKind == .midi { handleMIDIImport(result) } else { handleImport(result) }
         }
         #endif
         // MARK: - Detected tuning (Phase E)
@@ -337,15 +365,16 @@ struct WorkstationView: View {
     /// ⛔ #W2 — THIS SAID "Takes you record or generate appear here as parts on a track." and
     /// both halves were false on the only document a new user has. Nothing records (#1302), and
     /// a generated take lands on the timeline only through `ensureComposerRegion`, which needs
-    /// a MIDI lane — and nothing in this build creates one (the seed is unreachable, the one
-    /// lane creator makes audio tracks). So the empty plate promised a producer that could
-    /// not run, beside a greyed Play. It now names the two buttons that DO fill it, by their
+    /// a MIDI lane — and at the time nothing in this build created one (the seed is
+    /// unreachable; since S2 "Add MIDI Track" does, but the composer still writes only when the
+    /// instrument runs, never onto an empty plate). So the empty plate promised a producer that
+    /// could not run, beside a greyed Play. It now names the buttons that DO fill it, by their
     /// labels rather than by position (the #152 lesson: "below" is a claim about layout).
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("No tracks yet")
                 .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
-            Text("Tap Add Audio Track, then Import Audio. The file becomes a part you can play.")
+            Text("Tap Add Audio Track, then Import Audio — or Add MIDI Track, then Import MIDI. The file becomes a part you can play.")
                 .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -354,7 +383,7 @@ struct WorkstationView: View {
         // One spoken sentence rather than two fragments — VoiceOver would otherwise read the
         // heading and the explanation as unrelated items.
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("No tracks yet. Tap Add Audio Track, then Import Audio. The file becomes a part you can play.")
+        .accessibilityLabel("No tracks yet. Tap Add Audio Track, then Import Audio — or Add MIDI Track, then Import MIDI. The file becomes a part you can play.")
     }
 
     private func songLine(_ summary: WorkstationSummary) -> some View {
@@ -704,6 +733,7 @@ struct WorkstationView: View {
         Button {
             importNote = nil
             tuningPending = nil
+            importKind = .audio
             importPresented = true
         } label: {
             HStack(spacing: 6) {
@@ -722,6 +752,84 @@ struct WorkstationView: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Import audio")
         .accessibilityHint("Adds an audio file to the song's audio track")
+    }
+
+    /// S2 — "Add MIDI Track": `addTrackRow`'s twin. The store is handed to
+    /// `MIDIImport.addMIDITrack`, never messaged (claim F). It always appends.
+    ///
+    /// ⚠️ A MIDI TRACK IS WHERE THE INSTRUMENT'S COMPOSER WRITES, so this row changes more than
+    /// the plate: the next Start mirrors the composed take onto this track (one clip slot),
+    /// unless a user part already sits at its start — then the composer yields.
+    private var addMIDITrackRow: some View {
+        Button {
+            importNote = nil
+            MIDIImport.addMIDITrack(timeline: timeline)
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "plus")
+                    .font(.system(size: 13, weight: .semibold))
+                Text("Add MIDI Track").font(EchoelTheme.font(13, .semibold))
+            }
+            .foregroundStyle(EchoelTheme.text)
+            .padding(.horizontal, 14)
+            .frame(minWidth: 92, minHeight: 44)
+            .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
+            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                .strokeBorder(EchoelTheme.border, lineWidth: 1))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Add MIDI track")
+        .accessibilityHint("Adds an empty MIDI track to the song, ready for an import")
+    }
+
+    /// S2 — "Import MIDI": the same importer as `importRow`, asked for a MIDI file. Never
+    /// disabled, for `importRow`'s reason: every outcome is known only after the pick, and each
+    /// one says what happened (`MIDIImport.Failure.userMessage`).
+    private var importMIDIRow: some View {
+        Button {
+            importNote = nil
+            tuningPending = nil
+            importKind = .midi
+            importPresented = true
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "pianokeys")
+                    .font(.system(size: 13, weight: .semibold))
+                Text("Import MIDI").font(EchoelTheme.font(13, .semibold))
+            }
+            .foregroundStyle(EchoelTheme.text)
+            .padding(.horizontal, 14)
+            .frame(minWidth: 92, minHeight: 44)
+            .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
+            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                .strokeBorder(EchoelTheme.border, lineWidth: 1))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Import MIDI file")
+        .accessibilityHint("Adds a MIDI file's notes to the song's first MIDI track")
+    }
+
+    /// S2 — run the MIDI import and say what happened. `handleImport`'s shape without the
+    /// analysis: cancelling says nothing, and everything that writes or reads the file lives in
+    /// `MIDIImport` (this file still names no `Clip`, `TimelineRegion` or `FileManager`).
+    private func handleMIDIImport(_ result: Result<[URL], Error>) {
+        switch result {
+        case .failure(let error):
+            if (error as? CocoaError)?.code == .userCancelled { return }
+            importNote = MIDIImport.Failure.pickerFailed.userMessage
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            switch MIDIImport.perform(pickedURL: url, clipStore: clipStore, timeline: timeline) {
+            case .success(let landing):
+                let laneName = timeline.document.lanes
+                    .first { $0.id == landing.laneID }?.name ?? "the MIDI track"
+                importNote = MIDIImport.successNote(landing, laneName: laneName)
+            case .failure(let failure):
+                importNote = failure.userMessage
+            }
+        }
     }
 
     /// The one line every outcome writes to. Success and failure share it on purpose: two

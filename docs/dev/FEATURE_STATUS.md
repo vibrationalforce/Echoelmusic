@@ -27,7 +27,7 @@ noch nicht am Gerät bestätigt.
 | Chip **Mood** | Genre, Charakter, Wetter-Färbung, Takt-Variation (#1402) | offen |
 | Chip **Tempo** | Tap-Tempo, Metronom, Haptik-Beat, „Explore“ (6 Varianten, bewertet) | offen |
 | Chip **Field** | die spielbare Bildfläche; Visual-Feinregler | offen |
-| Chip **Workstation** | Spur anlegen, Audio importieren, abspielen; Tonart, Stimmton und Tempo werden erkannt; Warp-Schalter; Tempo je Datei korrigieren (×2 · ÷2 · von Hand, S1); Tonhöhe je Audiospur (±24 Halbtöne, #165) | **ja (Import + Play, 2026-09-23)**; Tempo-Korrektur und Tonhöhe offen |
+| Chip **Workstation** | Spur anlegen, Audio importieren, abspielen; Tonart, Stimmton und Tempo werden erkannt; Warp-Schalter; Tempo je Datei korrigieren (×2 · ÷2 · von Hand, S1); Tonhöhe je Audiospur (±24 Halbtöne, #165); MIDI-Spur anlegen + MIDI-Datei importieren (S2 — spielt im 16tel-Raster zum Song-Tempo, bei gestopptem Instrument) | **ja (Import + Play, 2026-09-23)**; Tempo-Korrektur, Tonhöhe und MIDI-Import offen |
 | Chip **Save/Export** | Projekt speichern/öffnen, MIDI-Export, Loop-Länge, Klang zurücksetzen, Guide, Diagnose | offen |
 | Puls-Pille (Kopfzeile) | Bio-Panel: Puls, HRV, Kohärenz, Quellenwahl, „Body voice“, Apple-Health-Schreiben | offen |
 | Bio-Quellen | Kamera-Puls (Finger auf Linse), Apple Health (auch Watch), BLE-Brustgurt (0x180D), Demo | Kamera: ja |
@@ -70,7 +70,7 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed�
 | `PulseMeasurementView` (Puls-Messanzeige) | nur in `BioSourceView` | dito; der Hinweistext erscheint schon heute im Bio-Panel |
 | `ADMStreamStatusLine` | nur in `ImmersiveStageView` | die Tür zur Raumkarte |
 | `MeditationView` | wird gebaut, aber `showMeditation` kann nie wahr werden | ein Knopf, der den Schalter setzt (Founder: bewusst so) |
-| **MIDI-Datei-Import** (`importMIDI`) | der Dateiwähler blockierte Audio-Import und wurde in #W1 gelöscht; die Funktion lebt ohne Knopf | ein Knopf in der Workstation, **mit eigenem Wähler an der Stelle, nicht an der Wurzel** |
+| `importMIDI` (der alte Weg ins INSTRUMENT) | der Dateiwähler blockierte Audio-Import und wurde in #W1 gelöscht; die Funktion lebt ohne Knopf. ⭐ Seit S2 gibt es MIDI-Import als TEIL in der Workstation (`MIDIImport`, Abschnitt 1) — dieser Weg hier lädt stattdessen in den Take des Instruments und bleibt absichtlich knopflos | Entscheidung des Founders, ob er entfällt |
 
 ### 2c. Maschine läuft, aber kein Regler
 

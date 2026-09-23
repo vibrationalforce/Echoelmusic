@@ -976,7 +976,9 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
     /// On build 2599 the empty Workstation said "Takes you record or generate appear here as
     /// parts on a track." beside a greyed Play. Neither producer could run on a fresh
     /// document: nothing records (#1302), and a generated take reaches the timeline only
-    /// through `ensureComposerRegion`, which needs a MIDI lane nothing in the build creates.
+    /// through `ensureComposerRegion`, which needs a MIDI lane nothing in the build created
+    /// then (since S2 "Add MIDI Track" does — but the composer writes only while the
+    /// instrument runs, so "generate" still names no action the empty plate offers).
     /// The founder read it as buttons that do not work. The sentence now names the two
     /// buttons that DO fill the plate, and this claim pins that each name it uses is a label
     /// this same file renders.
@@ -1027,6 +1029,9 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
     /// project importer, a template are all legitimate; each must arrive with this line, with
     /// claim 18's two halves re-checked, and with CLAUDE.md's register moved in the same
     /// commit. A pinned SET rather than a count, so the failure names WHO appeared.
+    /// ⭐ S2 (2026-09-23) was the first such arrival: `MIDIImport.addMIDITrack`, doored by
+    /// "Add MIDI Track". Claim 18 stays true (the set only grew), and CLAUDE.md's sentence —
+    /// `AudioImport.addAudioTrack` is `addLane`'s FIRST production caller — is still true.
     func testTheLaneCreatorIsTheOnlyProductionCallerOfAddLane() throws {
         let callers = try filesUnderSources(containing: "addLane(")
             .filter { $0 != "Core/TimelineStore.swift" }
@@ -1035,11 +1040,12 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
         // carries the same note for the same reason — the type checker is not needed here.
         let callerList: String = callers.isEmpty ? "nothing outside its own file"
                                                  : callers.joined(separator: ", ")
-        XCTAssertEqual(callers, ["Sequencer/AudioImport.swift"], """
+        XCTAssertEqual(callers, ["Sequencer/AudioImport.swift", "Sequencer/MIDIImport.swift"], """
             `TimelineStore.addLane` is called from \(callerList). \
-            Exactly one production caller was the founder's shape: the creator lives beside \
-            `firstImportableAudioLane` so it cannot drift from the predicate that decides \
-            which lane an import lands on, and the view stays read-only toward the store.
+            The founder's shape is one creator per importer, each beside the predicate that \
+            decides which lane its import lands on (`firstImportableAudioLane`, \
+            `firstImportableMIDILane`), so neither can drift from it, and the view stays \
+            read-only toward the store. S2 added the MIDI one.
             """)
     }
 

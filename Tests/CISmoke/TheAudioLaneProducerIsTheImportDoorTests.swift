@@ -16,7 +16,10 @@
 // drift, and that is exactly as true with one door as with none. Every counterweight below
 // stands: the recorder chain is still doorless, the migration still seeds an EMPTY audio
 // lane, both MIDI region creators still build `kind: .midi`, and the layer is still wired to
-// the transport. What changed is one number in one set.
+// the transport. What changed is one number in one set. (S2, 2026-09-23, added a THIRD MIDI
+// region creator — `MIDIImport.plan`, doored by "Import MIDI" — and it too builds
+// `kind: .midi` with notes in `Clip.melody`, never an audio-bearing clip; its own guard is
+// `TheWorkstationImportsMIDITests`.)
 //
 // THE MEASUREMENT, because "one door" is a claim like any other. Every audio-bearing region
 // creator in `Sources/` is accounted for:

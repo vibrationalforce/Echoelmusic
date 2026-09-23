@@ -11102,16 +11102,26 @@ struct EchoelStudioView: View {
     private func syncPrimaryRollClip(bars: [[Note]], createIfNeeded: Bool) {
         guard let laneID = timelineStore.document.lanes
                 .first(where: { $0.kind == .midi && !$0.isBio })?.id else { return }
+        let windowTicks = max(1, loopBars.rawValue) * TimelineTime.ticksPerBar
         if createIfNeeded {
-            // true when a composer region already exists (idempotent) OR was created;
-            // false ONLY on a full grid — the one honest, visible failure.
-            composerClipGridFull = !timelineStore.ensureComposerRegion(
-                for: laneID, clipStore: clipStore, loopBars: max(1, loopBars.rawValue))
+            if MIDIImport.userPartWouldBeShadowed(onLane: laneID, in: timelineStore.document,
+                                                  clips: clipStore.filledClips,
+                                                  windowTicks: windowTicks) {
+                // S2 — a USER part (an imported MIDI file) starts inside the window. A new
+                // composer region there would win every tick it covers (`activeRegion` gives
+                // the tie to the later region) and silence the import. Yield instead; this is
+                // not a full grid, so the grid-full note stays down.
+                composerClipGridFull = false
+            } else {
+                // true when a composer region already exists (idempotent) OR was created;
+                // false ONLY on a full grid — the one honest, visible failure.
+                composerClipGridFull = !timelineStore.ensureComposerRegion(
+                    for: laneID, clipStore: clipStore, loopBars: max(1, loopBars.rawValue))
+            }
         }
         // Flatten the loop's per-bar (bar-relative) notes into clip-absolute ticks so
         // RegionNoteWindow.barSlices reproduces exactly these bars on region playback.
         let flat = MelodyClip.flatten(loopBars: bars)
-        let windowTicks = max(1, loopBars.rawValue) * TimelineTime.ticksPerBar
         for region in timelineStore.document.regions(in: laneID)
         where region.startTick < windowTicks {
             // Ownership guard lives in the store — a user clip returns false, untouched.
