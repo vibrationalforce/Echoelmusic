@@ -777,15 +777,10 @@ struct EchoelStudioView: View {
     // The checkable claim is the present-tense one; that history is not in the repo.) Nothing
     // pinned it until now, so `SoundPanelPresetBarTests` does: those six are why the deletion
     // cost nothing, and there is no duplicate left to fall back on if one is dropped.
-    /// Would present a file picker to import a Standard MIDI File onto the roll. NOTHING
-    /// SETS THIS — its only writer was `openTool`, deleted 2026-07-26 (`f371d27`), and the
-    /// roll it imported into has no door any more either. Kept as a reusable slot on the
-    /// "a free slot beats two saved lines at the metadata ceiling" trade — which holds here
-    /// because `importMIDI(_:)` still exists and would work the moment something sets this.
-    /// (The sample-browser slot did NOT survive that same test: its view is deleted, so its
-    /// slot pointed at nothing. See the note where it used to stand.) Do not read this
-    /// declaration as evidence MIDI import ships.
-    @State private var midiImportPresented = false
+    // ⛔ `midiImportPresented` stood here — the flag of a MIDI file picker nothing could open
+    // (its only writer was `openTool`, deleted 2026-07-26, `f371d27`). It went with its
+    // `.fileImporter` in #W1, because that importer sat ABOVE the Workstation's audio-import
+    // door and shadowed it (see the tombstone on the body chain).
     /// Drives the project-import file picker in the Open-project sheet.
     @State private var projectImportPresented = false
     /// What the last import could not do, shown as a row in the Open-project sheet.
@@ -822,10 +817,12 @@ struct EchoelStudioView: View {
     // rewrites that closure anyway.
     //
     // CHAIN LENGTH — ONE number, kept here so nobody reads two: the body carries
-    // **13** presentation modifiers today (8 `.sheet` + 1 `.fullScreenCover` +
-    // 3 `.alert` + 1 `.fileImporter`; a second `.fileImporter` sits NESTED inside
-    // `openSheet` and counts file-wide, not on the chain — 14 file-wide, pinned by
-    // `ResetSoundClearsWhatTheLaunchLineReportsTests`). It got there by shrinking, which is the
+    // **11** presentation modifiers today, with NO `.fileImporter` on it since #W1; the one
+    // `.fileImporter` left in this file sits NESTED inside `openSheet` and counts file-wide,
+    // not on the chain — 12 file-wide, pinned by
+    // `ResetSoundClearsWhatTheLaunchLineReportsTests`. (⛔ This said 13/14 while the file
+    // already measured 12/13 after #1302 — the same one-number-two-readings drift the
+    // paragraph warns about.) It got there by shrinking, which is the
     // only safe direction under the black-screen metadata law: 16 → 15 when the piano
     // roll's craft-editor slot went (founder 2026-07-26, "Pianoroll soll raus" — it
     // held exactly one case, so removing the roll's door would have left an undoored
@@ -1676,13 +1673,16 @@ struct EchoelStudioView: View {
         }
         .sheet(isPresented: $showRouting) { AnyView(PatchbayView().echoelSheetPanel()) }
         .sheet(isPresented: $showLearn) { AnyView(LearnView()) }   // self-manages its detents
-        #if canImport(UniformTypeIdentifiers)
-        .fileImporter(isPresented: $midiImportPresented,
-                      allowedContentTypes: [.midi],
-                      allowsMultipleSelection: false) { result in
-            if case .success(let urls) = result, let url = urls.first { importMIDI(url) }
-        }
-        #endif
+        // ⛔ THE MIDI `.fileImporter($midiImportPresented)` STOOD HERE AND IS DELETED (#W1,
+        // founder device report 2026-09-23: "Import Audio" on the Workstation does NOTHING).
+        // Its flag had no writer of `true` since `f371d27`, so it could never open — but it was
+        // an ANCESTOR of `WorkstationView`, whose own `.fileImporter` is the audio-import door.
+        // SwiftUI resolves a file importer through the hierarchy, and one declared higher up
+        // can shadow a nested one: the tap set the nested flag and no picker appeared. A dead
+        // slot is not free headroom when it sits above a live door of the same kind.
+        // ⚠️ The mechanism is SwiftUI behaviour and cannot be proven without a device; what
+        // this commit guarantees is only that no importer sits above the door any more
+        // (`TheWorkstationImportsAudioTests`). `importMIDI(_:)` stays, without a presenter.
         // ⛔ THE FULLSCREEN COVER STOOD HERE AND IS DELETED (#1069, ~139 lines) — the founder
         // asked for it by name: *"aktuell gibt es fullscreen Mode das soll aber alles zu einem
         // Ding zusammen gefasst werden"*. It was a SECOND chrome over the SAME renderer, and
@@ -5356,8 +5356,9 @@ struct EchoelStudioView: View {
             // ⚠️ THE MODAL CHAIN SHRANK. #1067 left `showVisual` un-settable; #1069 (S3c) then
             // deleted the cover outright, so the chain is 14 → 13 and the file-wide count 16 → 14
             // — both measured with `ResetSoundClearsWhatTheLaunchLineReportsTests`' own predicate,
-            // not reasoned about. The un-settable pair is `showMeditation` and
-            // `midiImportPresented`; `showVisual` is not a third, because it no longer exists.
+            // not reasoned about. The un-settable pair was `showMeditation` and
+            // `midiImportPresented` (the second deleted with its importer in #W1, which moved
+            // the chain 12 → 11); `showVisual` is not a third, because it no longer exists.
             // The black-screen metadata law (10.76.34) is untouched and now has one slot of real
             // headroom, which is meant to be spent once and deliberately.
             //
@@ -11862,7 +11863,7 @@ struct EchoelStudioView: View {
         // (#167): the grid is a bar/step CLOCK, nothing turns a step into sound. This
         // block is inert, kept only because `PatternEngine` still carries the step data;
         // it does not import "drums" in any audible sense. (`importMIDI` itself has no
-        // caller either — `midiImportPresented` has no setter.)
+        // caller either — its picker was deleted in #W1; a future MIDI door needs its own.)
         if let grid = try? MIDIFileImporter.drumGrid(from: data,
                                                      trackCount: BeatPlayer.trackNames.count,
                                                      stepCount: PatternEngine.stepCount),

@@ -83,8 +83,8 @@
 // `_redirects` PR. A follow-up promise whose tracker a reader cannot open is not a promise.
 //
 // ⚠️ AND `importMIDI` WAS LISTED HERE AS A FIFTH LIVE PATH, WHICH OVERSTATES IT. It does
-// replace the take, but it has NO CALLER — `midiImportPresented` has no setter, a fact the
-// source states about itself and CLAUDE.md repeats. Naming it beside three reachable controls
+// replace the take, but it has NO CALLER — its picker (`midiImportPresented`) never had a
+// writer of `true` and was deleted outright in #W1, a fact the source states about itself. Naming it beside three reachable controls
 // invites the next session to spend a slice guarding a doorless function. It belongs to the
 // class only if a door ever returns.
 //

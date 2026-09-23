@@ -13,12 +13,12 @@
 // ⚠️ THE LIMIT, FIRST (§1). Most of this file is END-TO-END BEHAVIOUR: `AudioImport.plan`,
 // `validate`, `firstImportableAudioLane`, `successNote`, `AudioClipFactory.coveringBars`,
 // `MediaLibrary.resolveRef` and `TimelineRegionPlayer.canPlay` are all shipped, `public` or
-// `@testable`-reachable, Foundation-only value code, driven here on real values. FIVE claims
-// are SOURCE-TEXT SCANS and each says so in its own doc — named rather than counted a second
+// `@testable`-reachable, Foundation-only value code, driven here on real values. The claims
+// that are SOURCE-TEXT SCANS say so in their own doc — named rather than counted a second
 // time (#416/#818): `testTheImportIntroducesNoPersistenceRoot`,
 // `testNoMediaAssetIdentityWasIntroduced`, `testTheImportPathCarriesNoInputOrRecordingCode`,
-// `testTheWorkstationIsTheOnlyImportDoor` and
-// `testTheClipIsCommittedBeforeTheRegionAndOnlyOnSuccess`. NOTHING here is a DEVICE PROBE: no file picker
+// `testTheWorkstationIsTheOnlyImportDoor`, `testNoFileImporterSitsAboveTheImportDoor` (#W1)
+// and `testTheClipIsCommittedBeforeTheRegionAndOnlyOnSuccess`. NOTHING here is a DEVICE PROBE: no file picker
 // runs, no security-scoped URL is acquired, no audio decodes, no sound is made. That the
 // door is tappable and that an imported file is AUDIBLE are both open and registered.
 //
@@ -730,6 +730,65 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
     /// dangling pointer for as long as the gap lasts; a clip written before its region is an
     /// unreferenced slot, which is the harmless direction. Neither store exposes a
     /// transaction — this claim pins the ordering, it does not pretend the pair is atomic.
+    /// #W1 — NO FILE IMPORTER MAY SIT ABOVE THE DOOR. SOURCE-TEXT SCAN (§1).
+    ///
+    /// Founder device report on build 2599 (2026-09-23): tapping "Import Audio" did NOTHING —
+    /// no picker, not even on a second tap — and Play stayed grey because nothing could land.
+    /// The door's own `.fileImporter` was correctly bound. Directly above it, on
+    /// `EchoelStudioView`'s body chain, sat a SECOND `.fileImporter` whose flag
+    /// (`midiImportPresented`) had had no writer of `true` since `f371d27` — dead, but an
+    /// ANCESTOR of the plate, and SwiftUI resolves a file importer through the hierarchy, where
+    /// one declared higher up can shadow a nested one. #W1 deleted it.
+    ///
+    /// ⚠️ WHAT THIS PROVES AND WHAT IT CANNOT. It proves where the text sits: the four files
+    /// on the plate's ancestor path (app → `WorkspaceView` → `SurfaceHost` →
+    /// `EchoelStudioView`) carry no `.fileImporter(` except the ONE nested inside
+    /// `openSheet`, which is a sheet's CONTENT and so not an ancestor of the plate. That the
+    /// picker now OPENS is a DEVICE PROBE and stays open (WorkstationView NEEDS-FOUNDER-VERIFY
+    /// (7)); the shadowing mechanism itself is SwiftUI behaviour no test here can run.
+    ///
+    /// Grading (#433): REGRESSION on the parent tree — `EchoelStudioView` carried two
+    /// `.fileImporter(` occurrences there, one of them `$midiImportPresented`; green after.
+    /// ⚠️ It does not forbid a future MIDI or project import (#364): it forbids mounting one
+    /// on the plate's ANCESTOR path. Put it on its own leaf, or inside a sheet's content, the
+    /// way `openSheet` does.
+    func testNoFileImporterSitsAboveTheImportDoor() throws {
+        let ancestors = [
+            "Sources/Echoelmusic/EchoelmusicApp.swift",
+            "Sources/Echoelmusic/Studio/WorkspaceView.swift",
+            "Sources/Echoelmusic/Studio/SurfaceSwitcher.swift",
+        ]
+        for path in ancestors {
+            let code = SourceText.codeOnly(try rawText(path))
+            XCTAssertEqual(occurrences(of: ".fileImporter(", in: code), 0, """
+                \(path) now mounts a `.fileImporter`. It is an ancestor of the Workstation \
+                plate, and an importer declared above the plate's own can shadow it — the #W1 \
+                device defect: "Import Audio" opened nothing. Mount the new importer on its own \
+                leaf or inside a sheet's content instead.
+                """)
+        }
+
+        let studio = SourceText.codeOnly(try rawText("Sources/Echoelmusic/Studio/EchoelStudioView.swift"))
+        let importers = studio.components(separatedBy: "\n").filter { $0.contains(".fileImporter(") }
+        XCTAssertEqual(importers.count, 1, """
+            `EchoelStudioView` now has \(importers.count) `.fileImporter(` sites. Exactly one \
+            is legal — the project importer nested inside `openSheet`, which is a sheet's \
+            content and therefore NOT an ancestor of the Workstation plate. Any other one sits \
+            above the plate and can shadow its "Import Audio" picker (#W1). Found: \
+            \(importers.map { $0.trimmingCharacters(in: .whitespaces) })
+            """)
+        XCTAssertTrue(importers.allSatisfy { $0.contains("$projectImportPresented") }, """
+            The one `.fileImporter` left in `EchoelStudioView` is no longer the project \
+            importer inside `openSheet`: \(importers.map { $0.trimmingCharacters(in: .whitespaces) }). \
+            A body-chain importer is an ancestor of the Workstation plate (#W1).
+            """)
+        XCTAssertFalse(studio.contains("midiImportPresented"), """
+            `midiImportPresented` is back in code. Its importer was an ancestor of the \
+            Workstation plate and silenced "Import Audio" on the device (#W1); a MIDI import \
+            door, if it returns, must not ride the root body chain.
+            """)
+    }
+
     func testTheClipIsCommittedBeforeTheRegionAndOnlyOnSuccess() throws {
         let code = SourceText.codeOnly(try rawText(Self.importer))
         let body = try body(of: "commit", in: code)
