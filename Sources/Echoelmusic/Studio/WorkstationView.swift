@@ -8,10 +8,13 @@
 //
 // ⭐ READ-ONLY HAS NARROWED TWICE, AND EACH STEP IS ONE NAMED POWER. Phase 3 could only SHOW
 // the song. #1437 added the power to START it. Audio Import V1 (founder 2026-09-22) adds the
-// power to place ONE imported audio file on the audio track the song already has — and
-// nothing else. The surface still cannot move, trim, split, duplicate or delete a part, add
-// or remove a track, author automation, or record. Showing, starting and appending one clip
-// are three different powers, and each arrived on its own founder decision.
+// power to place ONE imported audio file on the audio track the song already has. #F1
+// (2026-09-23) adds an empty audio track. #C1 ("WARP / NATIVE BPM: Approved", 2026-09-23)
+// lets a track's parts follow the song tempo — which resizes a whole-file part to the bars
+// its file covers, and nothing else. The surface still cannot move, trim, split, duplicate or
+// delete a part, remove a track, author automation, or record. ⛔ This sentence said "add or
+// remove a track" from #F1 until #C1: the header of the file that holds the track button.
+// Each power arrived on its own founder decision.
 //
 // ⛔ IT OWNS NOTHING AND MINTS NOTHING, WHICH THE IMPORT DOES NOT CHANGE. No second
 // `TimelineDocument`, no `Arrangement`, no project store, no persistence file, no clock, no
@@ -127,6 +130,16 @@
 // Kammerton — `a4ConfidenceFloor` is the one that decides, and 0.5 is a judgement. (22) The
 // opposite failure matters as much: if real music keeps coming back "unclear", the floors
 // are too HIGH and the feature has been gated into uselessness. Say which way it errs.
+//
+// NEEDS-FOUNDER-VERIFY (#B2/#C1, detected tempo + warp, 2026-09-23): (23) Import a loop whose
+// tempo you know: the note should end "Tempo ≈ <n> BPM …" within a BPM or two, or offer the
+// right number as the "(or …)" alternative. (24) A "Warp" switch then appears on that track;
+// with the song at a DIFFERENT tempo, turning it on and pressing Play should keep the loop in
+// time with the bar grid and at its own pitch (stretched, not sped up), and the part's bar span
+// should change to the loop's own length. (25) Off returns it to recorded speed. (26) While the
+// song plays the switch is unavailable, and VoiceOver says "Stop the song to change warp". (27)
+// A file whose note says "Tempo unclear." shows NO switch. If the switch appears for a file
+// that plainly has no pulse, `TempoDetector.confidenceFloor` is too low.
 
 #if canImport(SwiftUI)
 import Foundation
@@ -308,6 +321,21 @@ struct WorkstationView: View {
 
     private func laneRow(_ row: WorkstationSummary.LaneRow) -> some View {
         HStack(spacing: 8) {
+            laneFacts(row)
+            // ⚠️ OUTSIDE the combined element, on purpose: `.combine` on the row swallowed the
+            // tuning banner's recovery button once (#621) — a control inside a merged element
+            // loses its own focus and hint. The facts are ONE sentence; the switch is a switch.
+            if row.kind == .audio { warpSwitch(laneID: row.id) }
+        }
+        .padding(.vertical, 6).padding(.horizontal, 10)
+        .frame(minHeight: 44)
+        .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
+        .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+            .strokeBorder(EchoelTheme.border, lineWidth: 1))
+    }
+
+    private func laneFacts(_ row: WorkstationSummary.LaneRow) -> some View {
+        HStack(spacing: 8) {
             Image(systemName: row.kind.systemImage)
                 .foregroundStyle(EchoelTheme.dim)
                 .frame(width: 18)
@@ -333,16 +361,61 @@ struct WorkstationView: View {
                         .fill(EchoelTheme.fill))
             }
         }
-        .padding(.vertical, 6).padding(.horizontal, 10)
-        .frame(minHeight: 44)
-        .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
-        .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-            .strokeBorder(EchoelTheme.border, lineWidth: 1))
         // The row is several fragments on screen and ONE fact to a listener (#1436): the
         // sentence is built once, in `WorkstationSummary`, so it cannot drift from the numbers
         // rendered beside it (#416).
         .accessibilityElement(children: .combine)
         .accessibilityLabel(WorkstationSummary.spokenDescription(of: row))
+    }
+
+    /// #C1 — "Warp": the audio track's parts follow the SONG tempo instead of their recorded
+    /// speed. The whole decision is `AudioWarp` (which parts can warp, what each one spans);
+    /// this view hands the two stores over and messages neither, the seam claim F names.
+    ///
+    /// ⚠️ NO SWITCH WHEN NOTHING CAN WARP. A part can only warp once its clip carries a KNOWN
+    /// native tempo (#B2), so a track whose tempo stayed unclear shows nothing here rather
+    /// than a control that can only refuse — the disabled-decorative shape this surface was
+    /// told not to grow. The import note already says "Tempo unclear." for exactly that case.
+    ///
+    /// ⚠️ UNAVAILABLE WHILE THE SONG PLAYS, and that is the engine's rule, not a nicety: the
+    /// player re-reads the document every step, and a warped part needs its warp chain
+    /// attached at PRIME time — attaching mid-song pauses the whole engine (the
+    /// `AudioLanePlayer.prime` "review HIGH 2" law). Stop, switch, Play.
+    ///
+    /// Cold reads only: `timeline.document` and `clipStore.filledClips` change on a user edit
+    /// or a ~30 s evolve, `isPlaying` twice per take, `preflightTempo` is read in the tap.
+    @ViewBuilder
+    private func warpSwitch(laneID: UUID) -> some View {
+        let state = AudioWarp.state(laneID: laneID, in: timeline.document,
+                                    clips: clipStore.filledClips)
+        if state != .unavailable {
+            let on = state == .on
+            let playing = player.isPlaying
+            Button {
+                // Mixed → all on: the tap resolves the ambiguity toward the switch's name.
+                AudioWarp.setWarp(!on, laneID: laneID, timeline: timeline,
+                                  clipStore: clipStore, bpm: player.preflightTempo)
+            } label: {
+                Text(state == .mixed ? "Warp · some" : "Warp")
+                    .font(EchoelTheme.font(11, .semibold))
+                    .foregroundStyle(on ? EchoelTheme.onPrimary
+                                        : (playing ? EchoelTheme.dim : EchoelTheme.text))
+                    .padding(.horizontal, 10)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                        .fill(on ? EchoelTheme.accent : EchoelTheme.fill))
+                    .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                        .strokeBorder(on ? Color.clear : EchoelTheme.border, lineWidth: 1))
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(playing)
+            .accessibilityLabel("Warp to song tempo")
+            .accessibilityValue(on ? "On" : (state == .mixed ? "On for some parts" : "Off"))
+            .accessibilityHint(playing
+                ? "Stop the song to change warp"
+                : "Plays this track's parts at the song's tempo instead of their recorded speed")
+        }
     }
 
     /// The printed half of the same facts `spokenDescription` says — short, because the row

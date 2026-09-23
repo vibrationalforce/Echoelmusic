@@ -69,6 +69,8 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
     /// Claim 1 keeps that precondition true; do not add a name without re-checking it.
     private static let liveSurface = [
         "addRegion", "ensureComposerRegion", "flushPendingSave",
+        // #C1: the Workstation's warp switch, reached through `AudioWarp.setWarp`.
+        "setRegionWarp",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than

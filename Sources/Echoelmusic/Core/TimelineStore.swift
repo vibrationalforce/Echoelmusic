@@ -27,7 +27,9 @@
 //   so "called from another file" was not merely unmeasured, it was FORBIDDEN BY THE
 //   LANGUAGE. Re-measured comment-stripped, receiver-aware:
 //   ·  4 called from another file — addRegion · ensureComposerRegion · flushPendingSave ·
-//        healRollSlotNamingCause. THIS is the live surface.
+//        healRollSlotNamingCause. THIS is the live surface. ⭐ #C1 added a fifth name,
+//        `setRegionWarp`, called from `AudioWarp.setWarp` — so every count in this block is
+//        one short from that commit on; re-derive, do not patch the digits.
 //   ·  8 used only inside this file — the previous six (automationLaneIndex,
 //        canCombineRegions, migrate, resolveOverlaps, restoreRegions, syncUndoFlags) PLUS
 //        `persist` (46 internal call sites, one per mutating path) and `snapshotForUndo`
@@ -323,6 +325,29 @@ public final class TimelineStore {
         guard document.regions[i].gain != g else { return }
         snapshotForUndo()
         document.regions[i].gain = g
+        persist()
+    }
+
+    /// #C1: turn warping on or off for a set of placed parts, each with the length it spans in
+    /// its new state — ONE undo step for the whole set, and a no-op when nothing changes. The
+    /// decision (which parts, which length) is `AudioWarp.changes`, pure and driven by the
+    /// blocking bundle; this only applies it. Mutates ONLY `document.regions`, like every
+    /// other snapshotted command. Unknown ids are skipped, lengths floor at one tick.
+    public func setRegionWarp(_ changes: [AudioWarp.Change]) {
+        var next = document.regions
+        var changed = false
+        for change in changes {
+            guard let i = next.firstIndex(where: { $0.id == change.regionID }) else { continue }
+            let length = max(1, change.lengthTicks)
+            guard next[i].warpEnabled != change.warpEnabled || next[i].lengthTicks != length
+            else { continue }
+            next[i].warpEnabled = change.warpEnabled
+            next[i].lengthTicks = length
+            changed = true
+        }
+        guard changed else { return }
+        snapshotForUndo()
+        document.regions = next
         persist()
     }
 
