@@ -143,6 +143,32 @@ public enum AudioKeyAnalysis {
     /// loop reached first. [NEEDS-FOUNDER-VERIFY]
     public static let keyMarginFloor: Double = 0.05
 
+    // ⛔ THE TWO KEY FLOORS ABOVE ARE MUCH WEAKER THAN #F3's COMMIT MESSAGE IMPLIED, and the
+    // measurement is written here rather than left as a feeling. Simulated the same way the
+    // A4 floor was (40 000 draws per cell), with the null "atonal material" modelled as N
+    // notes drawn UNIFORMLY from the twelve pitch classes:
+    //
+    //   N notes:            8       12       16       24       48       64
+    //   still NAMED:    53.6 %   52.7 %   51.5 %   50.0 %   48.7 %   48.3 %
+    //
+    // So roughly HALF of atonal material still gets a key asserted. #F3 removed the
+    // degenerate case — a flat histogram named by iteration order, which was 100 % — and it
+    // did not make the classifier good. Drawing from the Krumhansl profile as "tonal"
+    // material, 29–42 % of it is refused a name. **This is a coin-flip-grade separator, and
+    // anyone quoting "the key estimate is gated now" should quote these numbers with it.**
+    //
+    // ⚠️ AND THE NULL MODEL'S LIMITS MATTER AS MUCH AS ITS RESULT — quoting my numbers
+    // uncritically would repeat the mistake they document. Uniform pitch classes are NOT
+    // what a drum loop gives YIN: real percussive material yields few valid pitches clustered
+    // on whatever resonances exist, which may be easier OR harder than uniform. And profile-
+    // drawn notes are a weak model of real music, which leans on the tonic far harder and
+    // uses about seven pitch classes, so the false-reject figure is probably pessimistic.
+    // **Neither number is a measurement of this app on real audio; both are a measurement of
+    // the SEPARATOR under a stated model.** The real one needs the founder's ear on the
+    // device, which is what the markers on both constants are for — and why no floor was
+    // moved on the strength of this simulation. Raising them trades one error for the other,
+    // and only a listener can say which is worse here.
+
     /// The concentration below which no concert pitch is reported. ⚠️ A JUDGEMENT TOO, but
     /// the only one of the three whose error rates are MEASURED rather than argued, because
     /// the null hypothesis here is writable: material with no tuning reference has

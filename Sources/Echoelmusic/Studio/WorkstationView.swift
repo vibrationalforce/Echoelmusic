@@ -115,6 +115,18 @@
 // importable lane, not the newest). (17) The refusal note from a pre-track Import tap
 // disappears when the track is added, instead of sitting under the new track. (18) VoiceOver
 // announces "Add audio track" with its hint, and the tap target is a full 44 pt.
+//
+// NEEDS-FOUNDER-VERIFY (#F3/#F4, detected key + concert pitch, 2026-09-23): the import note
+// is the ONLY place this analysis reaches a human, so only a device run can say whether it
+// reads as a suggestion or as a claim. (19) Import a clearly tonal piece: the note should
+// end "Sounds like <key>, A4 ≈ <n> Hz." and the key should match what you hear — if it is
+// confidently WRONG, `keyConfidenceFloor`/`keyMarginFloor` are set too low. (20) Import a
+// drum loop or anything atonal: it must NOT name a key. Before #F3 it said "Sounds like C
+// major", which was the iteration order talking. (21) Import something recorded off-pitch
+// or heavily pitch-bent: it should say "concert pitch unclear" rather than inventing a
+// Kammerton — `a4ConfidenceFloor` is the one that decides, and 0.5 is a judgement. (22) The
+// opposite failure matters as much: if real music keeps coming back "unclear", the floors
+// are too HIGH and the feature has been gated into uselessness. Say which way it errs.
 
 #if canImport(SwiftUI)
 import Foundation
