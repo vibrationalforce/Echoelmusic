@@ -791,21 +791,23 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
     /// Claim 18 (SOURCE-TEXT SCAN) — the no-lane refusal may INSTRUCT only for as long as some
     /// production path can carry the instruction out.
     ///
-    /// ⛔ THE FOUNDER'S OWN SENTENCE WAS "Add an audio track first.", and the paragraph that
-    /// stood above defended it as "the only one they can fix inside the app". Measured
-    /// comment-stripped over `Sources/`, that premise is false and was false on the day it was
-    /// written: `bootstrapIfNeeded`, `addLane` and `addInstrumentTrack` each have ZERO callers
-    /// outside `Core/TimelineStore.swift`, and a fresh `TimelineStore.init()` with no stored
-    /// document builds `TimelineDocument()` — `lanes: []`. So the sentence named an action no
-    /// reachable control performs, in the one refusal a new user is guaranteed to hit. That is
-    /// the #164/#227 lying-control shape one level up: not a control that does nothing, but a
-    /// message that sends the user hunting for a control that does not exist.
+    /// ⛔ THE FOUNDER'S OWN SENTENCE WAS "Add an audio track first.", and on 2026-09-22 that
+    /// was an instruction no production path could perform: `bootstrapIfNeeded`, `addLane` and
+    /// `addInstrumentTrack` each had ZERO callers outside `Core/TimelineStore.swift`, and a
+    /// fresh `TimelineStore.init()` with no stored document builds `TimelineDocument()` —
+    /// `lanes: []`. The sentence sent a new user hunting for a control that did not exist, in
+    /// the one refusal a fresh install is guaranteed to hit, so it was demoted to a report.
     ///
-    /// ⭐ THIS IS WRITTEN AS A BICONDITIONAL ON PURPOSE (#364). It does NOT forbid a lane door
-    /// — a lane-adding control is an ARRANGE edit the Workstation exception excludes, so it is
-    /// the founder's call, and the day they make it this guard must not stand in the way. It
-    /// goes red in exactly the two INCONSISTENT states: an instruction with no way to obey it,
-    /// or a door that exists while the message still only diagnoses.
+    /// ⭐ AND ON 2026-09-23 THE FOUNDER BUILT THE MISSING CONTROL, so this claim flipped —
+    /// which is the whole reason it was written as a BICONDITIONAL (#364) rather than as a ban
+    /// on instructing. It never forbade a lane door; it required the two halves to agree.
+    /// `AudioImport.addAudioTrack` is now `addLane`'s one production caller and
+    /// `WorkstationView`'s "Add Audio Track" row is its door, so `doored` is non-empty and the
+    /// message instructs again. It still goes red in exactly the two INCONSISTENT states: an
+    /// instruction with no way to obey it, or a door that exists while the message only
+    /// diagnoses. ⚠️ Read that as a ratchet in neither direction — DELETING the door is
+    /// legitimate work and this claim permits it, as long as the sentence is demoted in the
+    /// same commit.
     ///
     /// ⚠️ ITS REACH IS THE THREE NAMES IT KNOWS. A lane creator added under a fourth name is
     /// invisible to it, so this under-claims rather than over-claims — say so rather than
@@ -835,6 +837,107 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
             a lane creator has gained a door and the message still only diagnoses, which \
             withholds the repair from a user who now has it. Fix whichever side is stale; this \
             claim does not prefer one.
+            """)
+    }
+
+    // MARK: - 19…21 The lane door (founder 2026-09-23)
+
+    /// Claim 19 (END-TO-END BEHAVIOUR) — one tap appends exactly one importable audio lane.
+    ///
+    /// ⚠️ EVERY ASSERTION IS A DELTA, NOT AN ABSOLUTE, AND THAT IS NOT TIMIDITY. `TimelineStore`
+    /// has one initialiser and it LOADS from the app-group container, so what a fresh
+    /// `TimelineStore()` holds in a test host depends on what an earlier run persisted —
+    /// `addLane` calls `persist()`, so this claim's own previous run is one of those. An
+    /// absolute (`lanes.count == 1`) would pass once and then fail forever for a reason that
+    /// has nothing to do with the code under test. The delta is the real invariant anyway: the
+    /// founder asked for a creator, and a creator is defined by what it ADDS.
+    ///
+    /// ⭐ THE LAST ASSERTION IS THE ONE THAT MATTERS — it closes the founder's own chain.
+    /// "Add Audio Track → Import Audio" only works if the lane this mints is the lane the
+    /// import SELECTS, and those are two different predicates written in two places. Asking
+    /// `firstImportableAudioLane` rather than re-checking `kind`/`isBio` by hand is the #416
+    /// discipline: a creator that drifted (`isBio: true`, a `.midi` kind) would still satisfy
+    /// a hand-written copy of the rule while the import silently refused its own track.
+    func testTheLaneDoorAppendsOneImportableAudioLane() {
+        let timeline = TimelineStore()
+        let before = timeline.document.lanes
+
+        AudioImport.addAudioTrack(timeline: timeline)
+
+        let after = timeline.document.lanes
+        XCTAssertEqual(after.count, before.count + 1, """
+            `addAudioTrack` changed the lane count by \(after.count - before.count) rather \
+            than by exactly one. The founder's instruction was "create exactly a \
+            TimelineLane(kind: .audio)" — no more, and not nothing.
+            """)
+        guard let added = after.last else { return }   // unreachable once the delta above holds
+        XCTAssertEqual(added.kind, .audio, """
+            `addAudioTrack` appended a lane of kind `.\(added.kind)`. An audio track is the \
+            only thing this door was approved to create.
+            """)
+        XCTAssertFalse(added.isBio, """
+            `addAudioTrack` appended a lane marked `isBio`. The bio lane renders an \
+            automation curve instead of media regions, and `TimelineDocument.audioLaneIDs` — \
+            what the transport actually walks — excludes it. A track the user added and the \
+            transport refuses to look at is a control that lies.
+            """)
+        XCTAssertNotNil(AudioImport.firstImportableAudioLane(in: timeline.document), """
+            After adding a track, the import still finds no lane to land on. That breaks the \
+            founder's whole chain (Add Audio Track → Import Audio → playback): the creator \
+            and the selector disagree about what an importable audio lane is.
+            """)
+    }
+
+    /// Claim 20 (SOURCE-TEXT SCAN) — the creator has a door, and it is the Workstation plate.
+    ///
+    /// ⚠️ THE LABEL IS SCANNED SEPARATELY FROM THE CALL because they fail apart. A button
+    /// wired to nothing and a call with no button are both "the door exists" to a careless
+    /// reading, and only one of them is reachable by a person holding the phone.
+    func testTheLaneCreatorHasADoorOnTheWorkstationPlate() throws {
+        let door = SourceText.codeOnly(try rawText(Self.door))
+        XCTAssertTrue(door.contains("AudioImport.addAudioTrack(timeline: timeline)"), """
+            `WorkstationView` no longer calls `AudioImport.addAudioTrack`. It is the only \
+            production caller, so losing it takes `addLane` back to zero callers and makes \
+            the import door unreachable on a fresh install — the exact state the founder \
+            unblocked on 2026-09-23. If the removal is deliberate, demote \
+            `AudioImport.Failure.noAudioLane.userMessage` in the same commit; claim 18 is a \
+            biconditional and will say so.
+            """)
+        XCTAssertTrue(door.contains("Text(\"Add Audio Track\")"), """
+            The "Add Audio Track" action is no longer labelled. This is the only user-facing \
+            name the founder's creator has.
+            """)
+    }
+
+    /// Claim 21 (SOURCE-TEXT SCAN) — `addLane` has exactly one production caller, and it is
+    /// the helper, not the view.
+    ///
+    /// ⭐ THIS IS WHY `TheWorkstationHasADoorTests` CLAIM F IS STILL GREEN, and the two must be
+    /// read together. Claim F asserts `WorkstationView` sends `timeline` nothing but
+    /// `document`; the founder's instruction was that the mutation go through the existing
+    /// `TimelineStore` owner. Both hold because the view HANDS THE STORE OVER to
+    /// `AudioImport.addAudioTrack`, the same seam `perform` uses — which is the repair claim
+    /// F's own note prescribes, not a way around it. A future slice that calls
+    /// `timeline.addLane(` from a `body` reddens claim F; one that calls it from a third file
+    /// reddens this.
+    ///
+    /// ⚠️ IT FORBIDS NO SECOND CREATOR (#364) — it prices one. An "Add MIDI Track" row, a
+    /// project importer, a template are all legitimate; each must arrive with this line, with
+    /// claim 18's two halves re-checked, and with CLAUDE.md's register moved in the same
+    /// commit. A pinned SET rather than a count, so the failure names WHO appeared.
+    func testTheLaneCreatorIsTheOnlyProductionCallerOfAddLane() throws {
+        let callers = try filesUnderSources(containing: "addLane(")
+            .filter { $0 != "Core/TimelineStore.swift" }
+        // Hoisted, not inlined: a ternary over two String-producing branches inside a
+        // `\( … )` is the shape that cost a TEST BUILD on 2026-09-22 (#E2). Claim 18 above
+        // carries the same note for the same reason — the type checker is not needed here.
+        let callerList: String = callers.isEmpty ? "nothing outside its own file"
+                                                 : callers.joined(separator: ", ")
+        XCTAssertEqual(callers, ["Sequencer/AudioImport.swift"], """
+            `TimelineStore.addLane` is called from \(callerList). \
+            Exactly one production caller was the founder's shape: the creator lives beside \
+            `firstImportableAudioLane` so it cannot drift from the predicate that decides \
+            which lane an import lands on, and the view stays read-only toward the store.
             """)
     }
 

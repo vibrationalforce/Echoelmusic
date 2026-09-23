@@ -7532,3 +7532,68 @@ entscheidet, ob eine Löschung sicher ist" markiert.
 dem IMPORT, still eine Spur zu erfinden — sie sagt nichts über ein ausdrückliches
 Bedienelement. Solange keines existiert, sind Audio Import V1 und die
 Workstation-Wiedergabe für jeden neuen Nutzer tote Flächen.
+
+---
+
+### AK.2 — Der Founder hat die Sackgasse aufgemacht, und der bikonditionale Wächter hat das Umschalten erzwungen (#F1, 2026-09-23)
+
+**Der Beschluss, wörtlich:** *„A minimal user-reachable ‚Add Audio Track' action is
+approved"* — mit zehn Auflagen, von denen drei diese Scheibe geformt haben: *„mutation must
+go through the existing TimelineStore owner"*, *„create exactly a `TimelineLane(kind:
+.audio)`"*, *„no generic track framework unless current code already requires it"*.
+
+⚠️ **DIE NACHRICHT WAR ABGESCHNITTEN.** Sie kündigte ZWEI aufgelöste Holds an und lieferte
+einen; der letzte Satz bricht mitten in *„If TimelineStore.addLane currently has an API
+limitation such as not returning the created lane identity"* ab. **Gemessen, bevor gefragt
+wurde** (`.claude/rules/context.md` §6): `addLane(kind:name:)` gibt tatsächlich nichts
+zurück — und **kein Aufrufer braucht die Identität**, weil der Import seine Spur über
+`AudioImport.firstImportableAudioLane` wählt, genau wie vor der Tür. Die abgeschnittene
+Klausel band also nichts, und die Scheibe lief ohne Rückfrage weiter. **Lehre: eine Lücke in
+einer Anweisung ist erst dann eine Frage, wenn die Messung sie zu einer macht.**
+
+**WO DIE MUTATION LIEGT, und warum nicht im View.** `TheWorkstationHasADoorTests` Anspruch F
+pinnt strukturell, dass `WorkstationView` an `timeline` **nur** `document` schickt — kein
+Mutator, auch kein neuer. Die Auflage des Founders („through the existing TimelineStore
+owner") und dieser Anspruch sehen wie ein Widerspruch aus und sind keiner: der Anspruch sagt
+in seinem EIGENEN Kommentar, die Reparatur für eine Fläche, die schreiben MUSS, sei die
+Übergabe des Stores an einen Helfer, dessen eigener Wächter die Mutation dann besitzt. Genau
+so arbeitet `AudioImport.perform` seit #141. Also:
+
+```
+Button → AudioImport.addAudioTrack(timeline:) → timeline.addLane(kind: .audio)
+```
+
+Der Erzeuger sitzt neben `firstImportableAudioLane` — dem Prädikat, mit dem er
+übereinstimmen MUSS (#416). Ein Erzeuger, der abdriftet (`isBio: true`, `.midi`), legte eine
+Spur an, die der Import anschließend ablehnt: die leiseste Form eines lügenden Bedienelements.
+
+**DIE MESSUNG NACH DEM BAU**, kommentar-gestrippt über `Sources/`, ohne `Core/TimelineStore.swift`:
+
+```
+addLane(              → 1   (Sequencer/AudioImport.swift)
+bootstrapIfNeeded(    → 0   (unverändert — die SAAT bleibt unerreichbar)
+addInstrumentTrack(   → 0   (unverändert)
+```
+
+Die erste Spur einer frischen Installation ist damit eine, die der Nutzer anlegt, nicht eine
+geerbte „MIDI 1"/„Audio 1"-Saat. Das ist eine ANDERE Tatsache als „die Saat ist zurück", und
+die Unterscheidung gehört in jede Kopie.
+
+⭐ **DER BIKONDITIONALE WÄCHTER HAT GETAN, WOFÜR ER GEBAUT WURDE — und das ist der Grund,
+diesen Eintrag überhaupt zu schreiben.** Anspruch 18 verlangt
+`instructs == (ein Spur-Erzeuger hat einen Produktions-Aufrufer)`. Einen Tag nach seiner
+Entstehung kippte die rechte Seite, also MUSSTE die linke im selben Commit kippen: die
+Meldung lautet wieder **„This project has no audio track — add an audio track first."**
+Per Mutation benotet (kein lokales Swift), alle drei Mutanten getötet:
+
+| Mutant | Erwartung | Ergebnis |
+|---|---|---|
+| Meldung zurück auf den Bericht, Tür bleibt | Anspruch 18 rot | rot (`instructs=False doored=['addLane(']`) |
+| Tür entfernt, Meldung bleibt Anweisung | Anspruch 18 **und** 21 rot | beide rot |
+| View ruft `timeline.addLane(` direkt | Anspruch F **und** 20a **und** 21 rot | alle drei rot |
+
+**LEHRE, und sie ist allgemeiner als diese Spur: ein Wächter, der zwei Hälften einer Wahrheit
+aneinanderbindet, statt eine davon zu verbieten, überlebt die Entscheidung, die ihn umdreht.**
+Ein Verbot („die Meldung darf nicht anweisen") wäre am 2026-09-23 im Weg gewesen und hätte
+gelöscht werden müssen — und mit ihm der Schutz. Der Bikonditional war stattdessen die
+CHECKLISTE: er hat die zweite Hälfte der Arbeit benannt, bevor sie jemand vergessen konnte.

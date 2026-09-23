@@ -382,6 +382,15 @@ final class TheWorkstationHasADoorTests: XCTestCase {
         // `Sequencer/AudioImport.swift`, pinned there by
         // `TheWorkstationImportsAudioTests.testTheClipIsCommittedBeforeTheRegionAndOnlyOnSuccess`.
         //
+        // ⭐ AND THE LANE DOOR (founder 2026-09-23) IS THE SECOND WRITE THROUGH THE SAME SEAM,
+        // recorded here for the same reason: "Add Audio Track" appends a `TimelineLane` and
+        // the set above is STILL exactly `["document"]`, measured. The row calls
+        // `AudioImport.addAudioTrack(timeline:)` and the mutation is that helper's, pinned by
+        // `TheWorkstationImportsAudioTests` claims 19–21 — one of which asserts that
+        // `TimelineStore.addLane` has exactly ONE production caller and that it is the
+        // helper, not this view. That is not a way around this claim; it is the repair the
+        // paragraph below prescribes, taken deliberately.
+        //
         // ⚠️ SO READ THIS CLAIM FOR WHAT IT MEASURES, not for more. It proves this FILE sends
         // the store nothing but `document` — a real and useful boundary, because a mutator
         // called from a `body` is the shape that edits the song by accident. It does NOT

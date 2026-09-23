@@ -44,8 +44,9 @@
 //        surface, still standing after its UI was cut.
 //
 // ⚠️ TWO NUMBERS, TWO QUESTIONS — and conflating them is how this got mis-recorded once
-// already this session (as "9 caller-less methods"). **46** have no CALLER (42 until #1441
-// re-measured four of the ten "live" ones as unprovable). **9** have
+// already this session (as "9 caller-less methods"). **45** have no CALLER (42 until #1441
+// re-measured four of the ten "live" ones as unprovable; 46 until #F1 gave `addLane` its
+// first production caller, `AudioImport.addAudioTrack`). **9** have
 // neither a caller nor a TEST (bootstrapIfNeeded · renameLane · resizeRegion ·
 // setAudioRegionWindow · setBuiltinInstrument · setLaneOctave · setLaneSample · toggleMute ·
 // toggleSolo). The other 33 are exercised by the non-blocking suite. A count belongs to

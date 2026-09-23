@@ -31,8 +31,10 @@
 // identity. There is no new store, no new persistence root, no new clock and no new playback
 // engine. There is no audio INPUT, no recording, no sample instrument and no grain engine. There
 // is no BPM estimate (founder decision 7 — `nativeBPM` stays 0, the clip never warps), no
-// automatic lane creation (decision 4), and no relink UI: a media file that later disappears
-// leaves the clip and the region alone and blocks only its own playback (decision 5).
+// AUTOMATIC lane creation (decision 4 — `addAudioTrack` was added 2026-09-23 and IS a lane
+// creator, but nothing on the import path calls it; only a deliberate tap does), and no
+// relink UI: a media file that later disappears leaves the clip and the region alone and
+// blocks only its own playback (decision 5).
 //
 // ⚠️ THE ORDER OF THE TWO WRITES IS LOAD-BEARING AND THE PAIR IS NOT ATOMIC. `ClipStore` first,
 // `TimelineStore` second, because playback resolves `TimelineRegion.clipID` THROUGH `ClipStore`
@@ -96,18 +98,24 @@ public enum AudioImport {
         case invalidFormat
         /// It opened with a sane format and carries no playable length.
         case invalidDuration
-        /// The song has no audio track to place it on. Founder decision 4: fail, never create one.
+        /// The song has no audio track to place it on. Founder decision 4: fail, never create
+        /// one behind the user's back — `addAudioTrack` is a separate, deliberate tap.
         ///
-        /// ⛔ AND ON A FRESH INSTALL THAT IS THE ONLY OUTCOME THIS BUILD CAN REACH, which is
-        /// why the sentence below no longer tells the user to add one. `TimelineStore.init()`
-        /// with no stored document builds `TimelineDocument()` — `lanes: []` — and the ONE
-        /// thing that would seed a lane, `TimelineStore.migrate`, is reachable only through
-        /// `bootstrapIfNeeded`, whose single caller (`ArrangeTimelineView`) went with #121
-        /// Slice 4. Measured comment-stripped over `Sources/`: `bootstrapIfNeeded`, `addLane`
-        /// and `addInstrumentTrack` each have ZERO production callers. So whenever this
-        /// failure is shown, no reachable control can resolve it — a door for that is an
-        /// ARRANGE edit, which the Workstation exception excludes, and therefore a founder
-        /// decision rather than a slice.
+        /// ⭐ THE SENTENCE INSTRUCTS AGAIN, AND ONLY BECAUSE THE INSTRUCTION CAN NOW BE OBEYED
+        /// (founder 2026-09-23). ⛔ It was demoted to a bare report on 2026-09-22 for a reason
+        /// that was measured and true at the time: `TimelineStore.init()` with no stored
+        /// document builds `TimelineDocument()` — `lanes: []` — the one seed
+        /// (`TimelineStore.migrate`) was reachable only through `bootstrapIfNeeded`, whose
+        /// single caller (`ArrangeTimelineView`) went with #121 Slice 4, and `addLane` /
+        /// `addInstrumentTrack` had zero production callers. So on a fresh install this was
+        /// the only outcome the build could reach and no control could resolve it. That is
+        /// what the founder unblocked: `AudioImport.addAudioTrack` now has a door in
+        /// `WorkstationView`, one row above Import.
+        ///
+        /// ⚠️ THE TWO HALVES MUST MOVE TOGETHER, AND A GUARD MAKES THEM. Claim 18 of
+        /// `TheWorkstationImportsAudioTests` is a BICONDITIONAL between this wording and
+        /// whether any lane creator has a production caller — it goes red both ways, so
+        /// deleting the door without demoting this sentence is caught, as is the reverse.
         case noAudioLane
         /// All eight `ClipStore` slots are taken. Founder decision 8: fail, never overwrite.
         case clipGridFull
@@ -121,7 +129,7 @@ public enum AudioImport {
             case .unreadableAudio: return "That file isn't audio this app can read."
             case .invalidFormat:   return "That audio has no usable sample rate or channels."
             case .invalidDuration: return "That audio has no playable length."
-            case .noAudioLane:     return "This project has no audio track, and this build cannot add one."
+            case .noAudioLane:     return "This project has no audio track — add an audio track first."
             case .clipGridFull:    return "The clip grid is full — all 8 slots are in use."
             }
         }
@@ -165,6 +173,35 @@ public enum AudioImport {
     /// see the header for why `!isBio` is part of the founder's decision rather than beyond it.
     public static func firstImportableAudioLane(in document: TimelineDocument) -> TimelineLane? {
         document.lanes.first { $0.kind == .audio && !$0.isBio }
+    }
+
+    /// Create the audio track this import needs, through the ONE owner. Founder 2026-09-23,
+    /// resolving the hold #E3 recorded: *"mutation must go through the existing TimelineStore
+    /// owner … create exactly a `TimelineLane(kind: .audio)`"*, and no more than that.
+    ///
+    /// ⭐ IT LIVES HERE RATHER THAN IN THE VIEW, AND THAT IS THE EXISTING SEAM, NOT A DETOUR.
+    /// `TheWorkstationHasADoorTests` claim F pins that `WorkstationView` sends `timeline`
+    /// nothing but `document`, and that claim's own note says the repair for a surface that
+    /// must cause a write is to hand the store to a helper, whose OWN guard then owns the
+    /// mutation. That is already how `perform` works, so the door adds no new shape. It also
+    /// puts the creator beside `firstImportableAudioLane` — the predicate that decides what an
+    /// importable lane IS (#416). A creator that drifted from that predicate (`isBio: true`, a
+    /// `.midi` kind) would mint a track the import then refuses, which is the quietest way to
+    /// build a control that lies.
+    ///
+    /// ⚠️ IT RETURNS NOTHING, because `TimelineStore.addLane` returns nothing and widening it
+    /// was explicitly not this slice's to do. Nothing here needs the identity: the import
+    /// picks its lane with `firstImportableAudioLane`, exactly as it did before this door
+    /// existed. A caller that ever needs the new lane's id is the moment to change `addLane`,
+    /// not before.
+    ///
+    /// ⚠️ IT APPENDS, IT DOES NOT "ENSURE". A second audio track is a legitimate thing to
+    /// want, and a creator that silently no-ops when one already exists is the #164/#227
+    /// lying control in its quietest form: a label that promises a track and sometimes gives
+    /// none, with nothing on screen to say which happened.
+    @MainActor
+    public static func addAudioTrack(timeline: TimelineStore) {
+        timeline.addLane(kind: .audio)
     }
 
     /// nil when the measurement describes something schedulable; the failure otherwise.

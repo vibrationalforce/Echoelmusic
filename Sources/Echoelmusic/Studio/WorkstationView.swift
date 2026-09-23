@@ -78,13 +78,16 @@
 // and says nothing about whether a note is heard. (1) The "Workstation" chip is there,
 // between Field and Save/Export, and the strip scrolls far enough to reach it. (2) A tap
 // swaps the plate, and tapping Sound afterwards brings the instrument back — no stuck panel.
-// (3) On a fresh install the plate shows the empty state — ⚠️ MEASURED FOR AUDIO IMPORT V1
-// AND SHARPER THAN THE "EITHER/OR" THAT STOOD HERE: NOTHING in this build creates a
-// `TimelineLane`. `TimelineStore.migrate` is only reached through `bootstrapIfNeeded`, whose
-// one caller was `ArrangeTimelineView` (deleted by #121 Slice 4), and `addLane` /
-// `addInstrumentTrack` have no production caller either. So the seeded "MIDI 1"/"Audio 1"
-// pair exists ONLY in a document a pre-Slice-4 build persisted. Play reads "Nothing to play
-// yet" and does not respond. (4) With a MIDI part on the song: Play SOUNDS it, the button
+// (3) On a fresh install the plate shows the empty state — and it stays empty until the
+// user taps something. ⛔ THIS ITEM USED TO END "NOTHING in this build creates a
+// `TimelineLane`", measured and true until 2026-09-23: `TimelineStore.migrate` is reached
+// only through `bootstrapIfNeeded`, whose one caller was `ArrangeTimelineView` (deleted by
+// #121 Slice 4), and `addLane` / `addInstrumentTrack` had no production caller either, so
+// the seeded "MIDI 1"/"Audio 1" pair existed ONLY in a document a pre-Slice-4 build
+// persisted. The founder lifted that hold: "Add Audio Track" below now calls
+// `AudioImport.addAudioTrack`, which is `addLane`'s first production caller. The SEED is
+// still unreachable — a fresh document has no "MIDI 1" — so the first track a new user sees
+// is one they asked for. Play reads "Nothing to play yet" and does not respond. (4) With a MIDI part on the song: Play SOUNDS it, the button
 // turns to Stop, Stop
 // silences it, and a second Play after that starts it again — the stick is what a lifecycle
 // bug looks like from outside. (5) The instrument's own ■ also stops it (one transport, not
@@ -97,16 +100,21 @@
 // adds a part to the audio track, the plate's part count rises, and the line underneath names
 // the file and its bar span. (10) Play then SOUNDS that file at its recorded speed, and Stop
 // silences it. (11) A second import appends AFTER the first rather than on top of it. (12)
-// With no audio track the button still taps and says so — and per item (3) above, on a fresh
-// install that is the ONLY outcome this build can reach. ⛔ The sentence it USED to say was
-// "Add an audio track first", and that instructed an action no production path can perform:
-// `bootstrapIfNeeded`, `addLane` and `addInstrumentTrack` each have ZERO production callers,
-// so a fresh `TimelineDocument()` has `lanes: []` permanently. It now reports the fact
-// instead (`AudioImport.Failure.noAudioLane`, where the measurement is written out).
-// Founder decision 4 was explicitly "do NOT auto-create a lane", and a separate lane-adding
-// control is an ARRANGE edit the Workstation exception excludes — so the CAPABILITY stays
-// reported, not repaired; only the false instruction is gone. (13) VoiceOver announces the
-// button and reads the result line.
+// With no audio track the button still taps and says "add an audio track first" — and the
+// button that does it is the row directly above, so the instruction is obeyable in one tap.
+// ⛔ That sentence was demoted to a bare report on 2026-09-22 because it named an action no
+// production path could perform, and RESTORED on 2026-09-23 when the founder approved the
+// creator. Founder decision 4 is untouched: the import still never creates a lane by itself.
+// (13) VoiceOver announces the button and reads the result line.
+//
+// NEEDS-FOUNDER-VERIFY (Add Audio Track, founder 2026-09-23): (14) On a FRESH install the
+// plate shows the empty state and "Add Audio Track" is tappable; one tap makes a track row
+// appear named "Audio 1", and the plate stops reading empty. (15) Import then succeeds onto
+// it and Play sounds it — the whole point of the door is that chain. (16) A second tap adds
+// "Audio 2" rather than doing nothing, and an import still lands on "Audio 1" (the FIRST
+// importable lane, not the newest). (17) The refusal note from a pre-track Import tap
+// disappears when the track is added, instead of sitting under the new track. (18) VoiceOver
+// announces "Add audio track" with its hint, and the tap target is a full 44 pt.
 
 #if canImport(SwiftUI)
 import Foundation
@@ -183,6 +191,15 @@ struct WorkstationView: View {
             // `AudioClipFactory`, and `arm()` had zero callers (#204/#527) — so
             // `AudioLanePlayer` walked `doc.audioLaneIDs` on every transport step and found
             // nothing, for four months, with the engine shipped and injected the whole time.
+            // MARK: - The lane door (founder 2026-09-23, unblocking the #E3 hold)
+            //
+            // ⭐ IT SITS ABOVE IMPORT BECAUSE THAT IS THE ORDER OF THE SENTENCE the refusal
+            // one row down speaks: "add an audio track first". Until this row that sentence
+            // named an action no production path could perform — `bootstrapIfNeeded`,
+            // `addLane` and `addInstrumentTrack` each had zero callers outside
+            // `Core/TimelineStore.swift`, so a fresh `TimelineDocument()` stayed `lanes: []`
+            // forever and the import door was unreachable on a clean install.
+            addTrackRow
             importRow
             if let note = importNote { importNoteLine(note) }
         }
@@ -409,6 +426,52 @@ struct WorkstationView: View {
                 .accessibilityHidden(true)   // the button's own hint already carries this
         }
         .padding(.top, 2)
+    }
+
+    /// "Add Audio Track" — the founder's minimal creator (2026-09-23). One tap appends one
+    /// `TimelineLane(kind: .audio)` and nothing else: no arrangement edit, no clip, no
+    /// region, no recording, no input.
+    ///
+    /// ⚠️ THE STORE IS HANDED OVER, NEVER MESSAGED — the same seam `handleImport` uses, and
+    /// for the same reason. `TheWorkstationHasADoorTests` claim F pins that this file sends
+    /// `timeline` exactly one message, `document`; the mutation belongs to
+    /// `AudioImport.addAudioTrack`, where its own guard can own it. That is not a way around
+    /// claim F, it is the repair claim F's own note prescribes.
+    ///
+    /// ⚠️ ALWAYS TAPPABLE, LIKE IMPORT AND UNLIKE PLAY. Play disables itself because the
+    /// engine can answer "this would do nothing" BEFORE the tap; this action never can do
+    /// nothing — it always appends a track. Hiding it once a track exists would make a
+    /// SECOND audio track unreachable for no stated reason, which is a surface that lies by
+    /// omission rather than by label.
+    ///
+    /// ⚠️ NO RESULT LINE, DELIBERATELY — but it CLEARS one. The outcome is the plate itself:
+    /// the new track appears in the rows above within the same update, because `body` reads
+    /// `timeline.document`, and a sentence saying "added a track" under a plate that already
+    /// shows the track is a second truth about one event. The `importNote = nil` is the
+    /// opposite case and is not decoration: the note most likely on screen when this button
+    /// is tapped is "add an audio track first", and leaving that refusal standing underneath
+    /// the track it just asked for would read as the tap having failed.
+    private var addTrackRow: some View {
+        Button {
+            importNote = nil
+            AudioImport.addAudioTrack(timeline: timeline)
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "plus")
+                    .font(.system(size: 13, weight: .semibold))
+                Text("Add Audio Track").font(EchoelTheme.font(13, .semibold))
+            }
+            .foregroundStyle(EchoelTheme.text)
+            .padding(.horizontal, 14)
+            .frame(minWidth: 92, minHeight: 44)
+            .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
+            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                .strokeBorder(EchoelTheme.border, lineWidth: 1))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Add audio track")
+        .accessibilityHint("Adds an empty audio track to the song, ready for an import")
     }
 
     /// "Import Audio" — one button, no menu, no browser. The founder's instruction was a
