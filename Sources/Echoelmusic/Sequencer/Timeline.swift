@@ -59,7 +59,8 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
     /// path — non-destructive: the written notes keep their pitch, only the rendered
     /// frequency moves. 0 = no shift (bit-identical). Persisted DATA; the voice wiring
     /// reads it per lane (primary lane via `rollTransposeSink`, secondary lanes via
-    /// `slotTransposeSink`).
+    /// `slotTransposeSink`). #165: on an AUDIO lane `AudioLanePlayer` reads it through
+    /// `AudioTranspose.semitones` (±24, the time-pitch node's range).
     public var transposeSemitones: Int
     /// Per-instrument DETUNE in cents (founder 2026-07-14: "transpose detune und Oktaver").
     /// The FINE-pitch twin of `transposeSemitones` (which is whole semitones): a small

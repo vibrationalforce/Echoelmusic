@@ -27,7 +27,7 @@ noch nicht am Gerät bestätigt.
 | Chip **Mood** | Genre, Charakter, Wetter-Färbung, Takt-Variation (#1402) | offen |
 | Chip **Tempo** | Tap-Tempo, Metronom, Haptik-Beat, „Explore“ (6 Varianten, bewertet) | offen |
 | Chip **Field** | die spielbare Bildfläche; Visual-Feinregler | offen |
-| Chip **Workstation** | Spur anlegen, Audio importieren, abspielen; Tonart, Stimmton und Tempo werden erkannt; Warp-Schalter; Tempo je Datei korrigieren (×2 · ÷2 · von Hand, S1) | **ja (Import + Play, 2026-09-23)**; Tempo-Korrektur offen |
+| Chip **Workstation** | Spur anlegen, Audio importieren, abspielen; Tonart, Stimmton und Tempo werden erkannt; Warp-Schalter; Tempo je Datei korrigieren (×2 · ÷2 · von Hand, S1); Tonhöhe je Audiospur (±24 Halbtöne, #165) | **ja (Import + Play, 2026-09-23)**; Tempo-Korrektur und Tonhöhe offen |
 | Chip **Save/Export** | Projekt speichern/öffnen, MIDI-Export, Loop-Länge, Klang zurücksetzen, Guide, Diagnose | offen |
 | Puls-Pille (Kopfzeile) | Bio-Panel: Puls, HRV, Kohärenz, Quellenwahl, „Body voice“, Apple-Health-Schreiben | offen |
 | Bio-Quellen | Kamera-Puls (Finger auf Linse), Apple Health (auch Watch), BLE-Brustgurt (0x180D), Demo | Kamera: ja |
@@ -76,7 +76,7 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed�
 
 | Fähigkeit | Stand | Was fehlt |
 |---|---|---|
-| Tonhöhe je Audio-Teil (`StretchPlan`) | Engine kann es | ein Regler je Teil |
+| Tonhöhe je einzelnem TEIL (statt je Spur) | je Spur läuft seit #165 | ein neues gespeichertes Feld je Teil |
 | Stretch-Modi außer „clean“ | Engine kann es | eine Auswahl je Teil |
 | Erkannte Tonart übernehmen | wird nur angezeigt, nie übernommen (Absicht) | Founder-Entscheidung + ein Knopf |
 | Timeline-Automation | gespeicherte Kurven SPIELEN, aber keine Fläche kann eine zeichnen | Zeichenfläche (Workstation-Grenze!) |

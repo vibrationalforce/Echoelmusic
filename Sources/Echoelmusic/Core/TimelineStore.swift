@@ -29,7 +29,9 @@
 //   ·  4 called from another file — addRegion · ensureComposerRegion · flushPendingSave ·
 //        healRollSlotNamingCause. THIS is the live surface. ⭐ #C1 added a fifth name,
 //        `setRegionWarp`, called from `AudioWarp.setWarp` — so every count in this block is
-//        one short from that commit on; re-derive, do not patch the digits.
+//        one short from that commit on; re-derive, do not patch the digits. #165 added
+//        a sixth, `setLaneTranspose`, called from `AudioTranspose.setPitch` (the per-lane
+//        "transpose" dial below leaves the caller-less set).
 //   ·  8 used only inside this file — the previous six (automationLaneIndex,
 //        canCombineRegions, migrate, resolveOverlaps, restoreRegions, syncUndoFlags) PLUS
 //        `persist` (46 internal call sites, one per mutating path) and `snapshotForUndo`
@@ -576,6 +578,9 @@ public final class TimelineStore {
     /// Instrumenten Elemente im synth nen transpose Button haben ist das kool"), clamped
     /// ±48 (±4 octaves) to match the voice. State only — the region player pitches each
     /// lane's voice on load AND live per transport step (refreshMixer; CLIP-3 review).
+    /// #165: on an AUDIO lane `AudioLanePlayer.start` applies it through the sink's
+    /// time-pitch chain at each region start, clamped tighter to `AudioTranspose`'s ±24. Its
+    /// one caller is `AudioTranspose.setPitch`, disabled while the song plays.
     public func setLaneTranspose(id: UUID, _ semitones: Int) {
         guard let i = document.lanes.firstIndex(where: { $0.id == id }) else { return }
         document.lanes[i].transposeSemitones = max(-48, min(48, semitones))

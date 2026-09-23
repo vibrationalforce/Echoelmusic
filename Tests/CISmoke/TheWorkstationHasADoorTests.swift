@@ -272,9 +272,11 @@ final class TheWorkstationHasADoorTests: XCTestCase {
             the path "Instrument → Workstation → back", and a chip saying anything else makes \
             that path unfindable by the name it was specified under.
             """)
-        XCTAssertTrue(src.contains("case .workstation: return \"Workstation — the arrangement: tracks and parts, read-only\""), """
-            The SPOKEN name must say read-only. A door that only looks is the one kind a \
-            VoiceOver user cannot discover by feeling around inside it (#482).
+        XCTAssertTrue(src.contains("case .workstation: return \"Workstation — the arrangement: tracks and parts; it plays and imports, it does not move or cut parts\""), """
+            The SPOKEN name must say what the plate can and cannot do. It said "read-only" until \
+            #165, which stopped being true once the plate could import, warp and set a file's \
+            tempo and a track's pitch; what stays true is that it never moves or cuts a part. \
+            A VoiceOver user cannot discover the limit by feeling around inside it (#482).
             """)
     }
 

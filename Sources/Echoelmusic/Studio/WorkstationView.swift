@@ -13,7 +13,8 @@
 // lets a track's parts follow the song tempo — which resizes a whole-file part to the bars
 // its file covers, and nothing else. S1 (founder "all tasks", 2026-09-23) lets an imported
 // FILE's own tempo be corrected — ×2, ÷2, or by hand — which is a property of the clip and
-// is inaudible until Warp is on. The surface still cannot move, trim, split, duplicate or
+// is inaudible until Warp is on. #165 lets an audio track's parts play higher or lower in
+// whole semitones (per track, while stopped). The surface still cannot move, trim, split, duplicate or
 // delete a part, remove a track, author automation, or record. ⛔ This sentence said "add or
 // remove a track" from #F1 until #C1: the header of the file that holds the track button.
 // Each power arrived on its own founder decision.
@@ -157,6 +158,19 @@
 // (34) VoiceOver reads the field with its unit and hint and each ÷2 / ×2 as its own button;
 // check at a large text size that nothing runs off the screen. (35) After an import the
 // detected tempo is still adopted (S1-0 changed how the clip is found).
+//
+// NEEDS-FOUNDER-VERIFY (#165, audio track pitch, 2026-09-23): (36) An audio track with a part
+// shows "Pitch 0 semitones"; an empty track and the bio lane show none. Only whole numbers
+// from −24 to +24; the − key works; a typed 30 lands on 24. (37) Set +12, Play: the part sounds
+// an octave up at the same speed and bar length; −12 an octave down; back to 0 sounds exactly
+// as before. (38) Is a transposed part audibly LATE against the click or the other tracks?
+// The pitch node adds a delay nothing compensates — say whether it matters. (39) Warp on, song
+// at another tempo, Pitch +5: in time and a fourth higher. (40) While the song plays the field
+// is dimmed and VoiceOver says "Stop the song to change pitch". (41) The first Play after
+// leaving 0: any dropout or click in the running instrument (the chain attaches then)?
+// (42) Sound at ±5 and ±12 on a voice and a drum loop — acceptable? The value survives a
+// relaunch. (43) Open a project saved before this build: no audio track is unexpectedly shifted
+// (an older build could store a per-track transpose that was silent until now).
 
 #if canImport(SwiftUI)
 import Foundation
@@ -220,7 +234,10 @@ struct WorkstationView: View {
                 songLine(summary)
                 ForEach(summary.lanes) { row in
                     laneRow(row)
-                    if row.kind == .audio { partTempoRows(laneID: row.id) }
+                    if row.kind == .audio {
+                        pitchField(row)
+                        partTempoRows(laneID: row.id)
+                    }
                 }
                 if summary.orphanRegionCount > 0 { orphanLine(summary.orphanRegionCount) }
                 if summary.automationLaneCount > 0 { automationLine(summary.automationLaneCount) }
@@ -453,6 +470,38 @@ struct WorkstationView: View {
             .accessibilityHint(playing
                 ? "Stop the song to change warp"
                 : "Plays this track's parts at the song's tempo instead of their recorded speed")
+        }
+    }
+
+    /// #165 — "Pitch": every part on this audio track, up or down in whole semitones, tempo
+    /// unchanged. The decision is `AudioTranspose`; the write is the store's — this view hands
+    /// `timeline` over and still sends it exactly one message, `document`. Declared AFTER
+    /// `warpSwitch` for the same slice reason as `partTempoRows` below.
+    ///
+    /// ⚠️ UNAVAILABLE WHILE THE SONG PLAYS — the Warp switch's rule and reason: a pitched part
+    /// needs the time-pitch chain attached at PRIME time. No field on a track with no parts,
+    /// where it could only shift nothing, and none on the bio lane.
+    ///
+    /// Cold reads only: `timeline.document` changes on an edit, `isPlaying` twice per take.
+    @ViewBuilder
+    private func pitchField(_ row: WorkstationSummary.LaneRow) -> some View {
+        if !row.isBio, row.regionCount > 0 {
+            let laneID = row.id
+            let playing = player.isPlaying
+            EchoelValueField(
+                label: "Pitch",
+                value: Binding(
+                    get: { Double(AudioTranspose.semitones(laneID: laneID, in: timeline.document)) },
+                    set: { AudioTranspose.setPitch(AudioTranspose.semitones(fromField: $0),
+                                                   laneID: laneID, timeline: timeline) }),
+                range: AudioTranspose.fieldRange,
+                unit: "semitones",
+                decimals: 0,
+                hint: playing
+                    ? "Stop the song to change pitch"
+                    : "Moves every part on this track up or down without changing its tempo")
+            .disabled(playing)
+            .padding(.leading, 36).padding(.trailing, 10)
         }
     }
 

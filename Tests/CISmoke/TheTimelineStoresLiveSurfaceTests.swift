@@ -71,6 +71,8 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         "addRegion", "ensureComposerRegion", "flushPendingSave",
         // #C1: the Workstation's warp switch, reached through `AudioWarp.setWarp`.
         "setRegionWarp",
+        // #165: the Workstation's Pitch field, reached through `AudioTranspose.setPitch`.
+        "setLaneTranspose",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than

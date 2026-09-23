@@ -82,8 +82,9 @@ public protocol AudioRegionSink: AnyObject {
     /// engine in this codebase's attach pattern) happens BEFORE playback — a lane
     /// whose first region starts at bar 9 must not pause the running mix mid-song
     /// (audio-thread review HIGH 2). `warped` (Slice B): true when any region of
-    /// this lane plays `url` warped, so the sink can attach its warp chain NOW,
-    /// at prime time, never mid-song. Default: no-op.
+    /// this lane plays `url` through the time-pitch chain — warped, or (#165) on a
+    /// transposed lane — so the sink can attach that chain NOW, at prime time, never
+    /// mid-song. Default: no-op.
     func preload(url: URL, warped: Bool)
     /// Release engine resources when the lane is removed (reconcile). Default: no-op.
     func detach()
@@ -98,6 +99,9 @@ public protocol AudioRegionSink: AnyObject {
     func setGain(_ gain: Float)
     /// Live mixer (H4): set this lane's stereo pan (−1…1). Default: no-op.
     func setPan(_ pan: Float)
+    /// Pitch (#165): this lane's pitch in whole semitones, applied at the NEXT `play` through
+    /// the sink's time-pitch chain. `start` sets it right before every `play`. Default: no-op.
+    func setTranspose(_ semitones: Int)
 }
 
 public extension AudioRegionSink {
@@ -106,6 +110,7 @@ public extension AudioRegionSink {
     func prepareBeats(url: URL, fromSeconds: Double, lengthSeconds: Double, rate: Double) {}
     func setGain(_ gain: Float) {}
     func setPan(_ pan: Float) {}
+    func setTranspose(_ semitones: Int) {}
 }
 
 @MainActor
@@ -318,11 +323,13 @@ public final class AudioLanePlayer {
             // Slice B: OR-merge the warp need per URL — if ANY region plays this
             // file warped (and its native tempo is known), the sink must attach
             // its warp chain NOW, at prime time, never mid-song (review HIGH 2).
+            // #165: a transposed lane plays EVERY part through the same chain.
+            let pitched = AudioTranspose.semitones(laneID: laneID, in: doc) != 0
             var need: [URL: Bool] = [:]
             var order: [URL] = []
             for region in laneRegions {
                 guard let url = self.resolveURL(region.clipID) else { continue }
-                let warped = region.warpEnabled && resolveNativeBPM(region.clipID) > 0
+                let warped = (region.warpEnabled && resolveNativeBPM(region.clipID) > 0) || pitched
                 if let existing = need[url] {
                     need[url] = existing || warped
                 } else {
@@ -343,7 +350,9 @@ public final class AudioLanePlayer {
                                                nativeBPM: resolveNativeBPM(region.clipID),
                                                projectBPM: bpm,
                                                capabilities: StretchMode.timelineCapabilities)
-                if plan.mode == .beats, plan.rate != 1.0 {
+                // #165: a transposed Beats region plays through the pitch chain instead —
+                // the pre-rendered buffer runs on the plain node and cannot be pitched.
+                if plan.mode == .beats, plan.rate != 1.0, !pitched {
                     let mediaLength = TimelineTime.seconds(
                         fromTicks: region.lengthTicks, bpm: bpm) * plan.rate
                     sink(for: laneID).prepareBeats(url: url,
@@ -411,6 +420,7 @@ public final class AudioLanePlayer {
         let length = TimelineTime.seconds(fromTicks: region.endTick - tick, bpm: bpm)
             * plan.rate
         let lane = sink(for: laneID)
+        lane.setTranspose(AudioTranspose.semitones(laneID: laneID, in: doc))   // #165
         lane.play(url: url, fromSeconds: from,
                   lengthSeconds: max(0, length), gain: gain, stretch: plan)
         // H4: audio lanes take the lane's stereo position too (B2 gave TimelineLane

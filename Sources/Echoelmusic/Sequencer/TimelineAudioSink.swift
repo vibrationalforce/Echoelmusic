@@ -42,6 +42,9 @@
 // it ride the tempo — while UNWARPED regions keep the plain, uncolored node
 // (the spectral unit is not bit-transparent even at rate 1.0). Warp chains
 // attach at prime time via `preload(url:warped:)`.
+// Pitch (#165): a TRANSPOSED lane also plays through that chain, the transpose added to
+// the node's `pitch` (`AudioTranspose`); the Beats buffer is bypassed while transposed,
+// because it plays on the plain node. The chain's own delay is not compensated.
 // Honest limits (documented, later cycles): per-clip fades from the audio
 // editor are not consumed on the timeline yet (audit A5).
 
@@ -82,6 +85,12 @@ final class TimelineAudioSink: AudioRegionSink {
     /// format mid-song) must join at the lane's current level, not a stale one.
     private var gain: Float = 1
     private var pan: Float = 0
+    /// #165: this lane's pitch in whole semitones, set by `AudioLanePlayer.start` before `play`.
+    private var transposeSemitones = 0
+
+    func setTranspose(_ semitones: Int) {
+        transposeSemitones = AudioTranspose.clamped(semitones)
+    }
 
     // MARK: Beats-Executor (prime-time offline WSOLA per region)
 
@@ -238,7 +247,7 @@ final class TimelineAudioSink: AudioRegionSink {
         // exact prepared window qualifies (onset entry, |Δ| < 1 ms) — a mid-region
         // entry (seek / unmute restart) falls through to the Clean chain below
         // (honest; the next onset is transient-locked again).
-        if stretch.rate != 1.0, stretch.mode == .beats,
+        if stretch.rate != 1.0, stretch.mode == .beats, transposeSemitones == 0,
            let entry = beatsBuffers[BeatsKey(url: url, rate: stretch.rate, fromSeconds: fromSeconds)],
            abs(entry.lengthSeconds - lengthSeconds) < 0.001,
            plainNode.engine?.isRunning == true {
@@ -252,12 +261,11 @@ final class TimelineAudioSink: AudioRegionSink {
         // clean by design — tapePitchCents(1) = 0 — so the plain path is honest).
         // Unwarped playback stays on the plain node: bit-identical to pre-Slice-B.
         let node: AVAudioPlayerNode
-        if stretch.rate != 1.0, let key = knownURLs[url],
-           let chain = ensureWarpChain(for: key) {
+        if AudioTranspose.needsTimePitchChain(plan: stretch, semitones: transposeSemitones),
+           let key = knownURLs[url], let chain = ensureWarpChain(for: key) {
             chain.timePitch.rate = Float(stretch.rate)
-            chain.timePitch.pitch = stretch.preservesPitch
-                ? 0
-                : Float(StretchPlan.tapePitchCents(forRate: stretch.rate))
+            chain.timePitch.pitch = AudioTranspose.nodePitchCents(plan: stretch,
+                                                                  semitones: transposeSemitones)
             node = chain.player
         } else {
             node = plainNode
