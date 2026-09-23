@@ -2664,3 +2664,34 @@ which is indistinguishable from the user's own edit; judged acceptable (opt-in, 
 sender-allowlisted — the user acting at a distance), and recorded so it is not re-derived.
 
 **Review:** 2026-10-23.
+
+
+### 2026-09-23 — The concert pitch carries its own evidence (#F4), and the key floors are published rather than tuned
+
+**Decision 1.** `TuningDetector.analyze` now also returns `a4Confidence` — the circular-mean
+resultant length of the same vector sum it already takes `atan2` of — and
+`AudioKeyAnalysis.summarise` gates the concert-pitch clause on `a4ConfidenceFloor` (0.5)
+independently of the two key floors. The two halves are separate facts with separate
+evidence: exactly-tuned chromatic material scores 1.0 for tuning and 0.0 for key.
+
+**Why.** A deterministic fixture with no tuning reference produced a4 = 440.4 Hz, which
+snaps to 440 — so the shipped sentence asserted a concert pitch for material that has none,
+in the most plausible-looking way possible. A random draw landed on 432.55 → the 432 preset,
+which is the esoteric claim CLAUDE.md bans, invented by the analyser itself.
+
+**`a4Confidence` takes no default while `runnerUpConfidence` keeps one.** A default is safe
+only when forgetting it fails where a guard can see it. The neighbour's 0 is permissive (a
+key gets named that should not be, and the gating claims go red); a default here would be
+restrictive — the sentence would quietly stop reporting a tuning, which no claim would
+notice. All construction sites are in-module, so a forgetful producer simply does not
+compile.
+
+**Decision 2 — publish, do not tune.** Measuring the two KEY floors against a stated null
+showed roughly HALF of atonal material is still named a key (53.6% at n=8 → 48.3% at n=64),
+and 29–42% of profile-drawn tonal material is refused. #F3 removed the degenerate case, not
+the weakness. The numbers are recorded at the constants along with the null model's limits;
+**no floor was moved**, because raising them trades one error for the other and only a
+listener can say which is worse here. Device items (19)–(22) in `WorkstationView` ask the
+founder which way it errs.
+
+**All three floors remain NEEDS-FOUNDER-VERIFY. Review:** 2026-10-23.

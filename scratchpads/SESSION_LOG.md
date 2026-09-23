@@ -38936,3 +38936,42 @@ wrong answer: the MPE zone RPN is sent (I said it was not), and `SessionContext.
 written by `adopt(key:)` from two sites (I said it had no writer and was about to "fix" a
 filename that is correct). **Both failures resolved in the CONFIRMING direction** — the
 empty result read as evidence FOR the finding. Law recorded in `HARNESS_LEDGER.md`.
+
+## 2026-09-23b — #F4 the concert pitch carries its own evidence, and an honest correction to #F3
+
+**#F4 SHIPPED (2d3420cab, both gates green at step level).** `analyze` already summed the
+unit vectors of every pitch's cents-deviation and took `atan2` of the pair; `atan2` discards
+the MAGNITUDE, and the magnitude divided by the count IS the evidence. Two lines, at the one
+place it still existed. `DetectedTuning.a4Confidence` + `AudioKeyAnalysis.a4ConfidenceFloor`,
+and `summarise` now gates the key clause and the concert-pitch clause independently.
+
+**What it prevents, measured:** a deterministic fixture of twelve evenly spread detunings —
+no tuning reference by construction — produced a4 = 440.4 Hz, snapping to 440. The shipped
+sentence asserted "A4 ≈ 440 Hz" for material that has no concert pitch at all, and nothing
+about that sentence looks wrong. (A random draw landed on 432.55 → the 432 preset, i.e. the
+esoteric claim CLAUDE.md bans, invented by the analyser.) **The plausible wrong answer is the
+dangerous one; the gate has to be the evidence, never the value.**
+
+⭐ **THE REUSABLE LAW, now proven twice in one day: `atan2` throws away the magnitude, `max`
+throws away the runner-up. A producer that returns only a decision has already discarded the
+evidence for it, and no consumer can recover it.** Both fixes were two lines in the producer
+and impossible anywhere else. Whenever a derived value crosses a boundary, ask what the
+producer knew and dropped.
+
+⛔ **AND THEN I MEASURED THE TWO KEY FLOORS AND HAD TO CORRECT MY OWN #F3 CLAIM (cbf0ce60d).**
+#F3's commit message read as though the defect was fixed. Simulated against a stated null
+(N notes drawn uniformly from the twelve pitch classes, 40 000 draws per cell): **roughly HALF
+of atonal material still gets named a key** — 53.6 % at n=8, 48.3 % at n=64 — and 29–42 % of
+profile-drawn tonal material is refused. What #F3 removed was the DEGENERATE case (a flat
+histogram named by iteration order, 100 % wrong). Real and worthwhile; not a good classifier.
+The numbers now live next to the constants, **together with the null model's limits**, because
+quoting them uncritically would repeat the mistake they document. **No floor was moved** — that
+trades one error for the other and only the founder's ear decides; device items (19)–(22) in
+`WorkstationView` ask which way it errs.
+
+**Censuses #3/#4/#5 written up** (`scratchpads/CENSUS_*.md`). Net: no dependency-ready slice
+came out of any of them — the missing MIDI bytes are blocked on missing PRODUCERS, the warp
+gap is founder decision 7, and the key/tuning law is already satisfied by separation (and I
+recommend explicitly AGAINST a provenance enum). The video AWB / AI-video requirements are
+recorded as roadmap only, with the tension stated: they presuppose a capture pipeline #1304
+struck eleven days ago, and `Sources/Echoelmusic/Video/` now holds ONLY the rPPG pulse path.

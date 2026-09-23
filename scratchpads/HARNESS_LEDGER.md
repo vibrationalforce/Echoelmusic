@@ -4264,3 +4264,42 @@ erklärt in voller Länge, warum es Continue NICHT gibt (nichts könnte es sende
 „SPP + Continue" war damit schon widerlegt, bevor ich sie schrieb. Ein Zensus misst, was
 EXISTIERT; er misst nicht, was bereits ENTSCHIEDEN wurde, und dieses Repo schreibt seine
 Entscheidungen neben den Code, nicht in eine Plandatei.
+
+## PLAYBOOK #F4 (2026-09-23) — `atan2` wirft die Länge weg, `max` wirft den Zweiten weg: ein Erzeuger, der nur eine ENTSCHEIDUNG zurückgibt, hat ihren BELEG schon vernichtet
+
+**Zweimal an einem Tag dieselbe Form, in zwei verschiedenen Größen derselben Funktion — das
+macht sie zu einer Regel und nicht zu zwei Anekdoten.**
+
+| Erzeuger | gibt zurück | wirft weg | wiederherstellbar vom Verbraucher? |
+|---|---|---|---|
+| Krumhansl-Schleife über 24 Kandidaten | den Sieger + seine Korrelation | den ZWEITBESTEN | **nein** — nur hier existieren alle 24 gleichzeitig |
+| `atan2(sumSin, sumCos)` | den Winkel (= A4) | die LÄNGE des Summenvektors | **nein** — der Winkel allein enthält sie nicht |
+
+Beide Reparaturen waren ZWEI ZEILEN, und beide waren an keiner anderen Stelle des Programms
+möglich. **Regel: wenn ein abgeleiteter Wert eine Grenze überquert, frage, was der Erzeuger
+WUSSTE und fallen ließ.** Der Verbraucher kann die Unsicherheit nicht nachträglich bilden; er
+kann sie nur erfinden.
+
+**Die Probe, ob eine „confidence" überhaupt eine ist:** nenne den Fall, in dem sie hoch ist und
+die Antwort trotzdem beliebig. Gibt es ihn, misst die Zahl etwas anderes als Sicherheit.
+Gemessen: zwölf Kopien EINES Tons → `confidence` 0,684, Abstand 0,000. Exakt gestimmte
+chromatische Läufe → Stimmung 1,000, Tonart 0,000.
+
+### Und die zweite Lehre, die teurer war als die erste
+
+**Ich habe in der #F3-Commit-Nachricht „behoben" geschrieben und es nicht nachgemessen.** Als
+ich am selben Tag die Fehlerraten doch simulierte (weil #F4s Nullhypothese schreibbar war und
+die Frage sich dadurch aufdrängte), kam heraus: **rund die HÄLFTE atonalen Materials bekommt
+weiterhin eine Tonart genannt.** #F3 hat den DEGENERIERTEN Fall entfernt — ein flaches
+Histogramm, benannt von der Schleifenreihenfolge —, nicht den Klassifikator repariert.
+
+**Regel: eine Schwelle ohne gemessene Fehlerrate ist eine Meinung mit einer Zahl davor.** Und
+wenn die Nullhypothese schreibbar ist (hier: gleichverteilte Tonklassen), ist die Messung
+billig — es gab keinen Grund, sie nicht vor dem Ausliefern zu machen.
+
+⚠️ **Gegen-Regel im selben Atemzug, sonst ersetzt man eine Überheblichkeit durch die nächste:
+die GRENZEN des Nullmodells gehören neben sein Ergebnis.** Gleichverteilte Tonklassen sind
+nicht das, was eine Drum-Loop an YIN liefert; profil-gezogene Noten sind ein schwaches Modell
+echter Musik. Meine Zahlen messen den SEPARATOR unter einem genannten Modell, nicht diese App
+an echtem Audio. **Deshalb wurde keine Schwelle verschoben** — Anheben tauscht einen Fehler
+gegen den anderen, und nur ein Ohr entscheidet, welcher hier schlimmer ist.
