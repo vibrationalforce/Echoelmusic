@@ -81,8 +81,9 @@ final class TheCameraRefusesToStateAnUntrustedHRVTests: XCTestCase {
     /// Claim 5 — the header no longer credits a consumer that does not exist on a reachable path.
     func testTheAnalyzerHeaderNamesTheDoorlessReaderAndTheGate() throws {
         let analyzer = try text("Sources/Echoelmusic/Video/CameraAnalyzer.swift")
-        XCTAssertTrue(analyzer.contains("\"CONSUMERS\" WAS ONE, AND IT IS DOORLESS (#1236"),
-                      "`rawIntervalsMs`'s doc again says consumers run hygiene without naming that the one reader is doorless (#1236)")
+        // S4c: "IS" → "WAS" — the plot has a door in the Visual window now; the history stays.
+        XCTAssertTrue(analyzer.contains("\"CONSUMERS\" WAS ONE, AND IT WAS DOORLESS (#1236"),
+                      "`rawIntervalsMs`'s doc again says consumers run hygiene without naming that the one reader was doorless (#1236)")
         XCTAssertTrue(analyzer.contains("reads this array itself for `RRIntervalHygiene.canStateHRV`"),
                       "the header does not name the publisher's own gate as the reachable reader (#1236)")
     }

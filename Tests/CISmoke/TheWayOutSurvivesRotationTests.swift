@@ -173,8 +173,11 @@ final class TheWayOutSurvivesRotationTests: XCTestCase {
     func testNeitherExitIsPartOfTheShedBudget() {
         let fields = Mirror(reflecting: FloatingVisualLayout.ChromeFit())
             .children.compactMap(\.label).sorted()
+        // `analysisToggle` (S4c) is NOT an exit, which is why it may join: it OPENS the meters,
+        // and the way back to the picture ("Picture") lives in the meter surface's own header,
+        // outside this budget — so no width can shed the way back.
         XCTAssertEqual(fields,
-                       ["gridToggle", "lookSlider", "miniTransport",
+                       ["analysisToggle", "gridToggle", "lookSlider", "miniTransport",
                         "studioChip", "wavRecord"],
                        "ChromeFit's fields changed. That is allowed — but if the new one is an "
                        + "exit, a narrow card can now shed the way out on its own, which is the "

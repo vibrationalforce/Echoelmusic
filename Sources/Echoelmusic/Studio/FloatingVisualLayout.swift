@@ -238,6 +238,36 @@ public enum FloatingVisualLayout {
         public static let wavRecording: CGFloat = 104
     }
 
+    /// Whether the window offers its four meters (S4c, founder 2026-09-23: "Wenn dann ins
+    /// Visual Window übertragen"). One owner of the three states the bar has to tell apart.
+    ///
+    /// ⭐ WHY `.shown` IS A STATE AND NOT A BOOL BESIDE `.offered`: while a meter is on screen
+    /// there is no picture to shape, so the look slider and the note-grid toggle have nothing
+    /// to act on and leave the bar — and the "Show meters" button leaves with them, because
+    /// the way back ("Picture") sits in the meter surface's own header. That keeps the
+    /// labelled Studio exit's shed rank untouched: a meter never pushes it out
+    /// (`ChromeBudgetFitsTests`, the labelled-exit claim, loops over all three states).
+    public enum AnalysisDoor: Sendable, Equatable, CaseIterable {
+        /// The window is too small for a legible meter (Small and Medium), or hidden.
+        case absent
+        /// The picture is on screen and the meters may be opened.
+        case offered
+        /// A meter is on screen instead of the picture.
+        case shown
+    }
+
+    /// The door for a given window state — ONE owner, so the toolbar, the picture branch and
+    /// the touch surface cannot disagree about whether a meter is on screen.
+    /// - Parameters:
+    ///   - isPresented: a hidden window offers nothing (it renders `Color.clear`, #311).
+    ///   - isRoomy: Large or fullscreen. Below that a meter's caption and its picture do not
+    ///     both fit, so the door is absent rather than offering an illegible meter.
+    ///   - meterOn: the user opened the meters.
+    public static func analysisDoor(isPresented: Bool, isRoomy: Bool, meterOn: Bool) -> AnalysisDoor {
+        guard isPresented, isRoomy else { return .absent }
+        return meterOn ? .shown : .offered
+    }
+
     /// Which OPTIONAL chrome items survive at a given card width. The three that never
     /// shed — logo, resize, close — are not represented: they are the identity of the bar
     /// (brand + the two ways out) and their floor is 96 pt of content, which even the
@@ -248,6 +278,10 @@ public enum FloatingVisualLayout {
         public var miniTransport = false
         public var gridToggle = false
         public var wavRecord = false
+        /// The "Show meters" button (S4c). It exists only while the meters are OFFERED and
+        /// not already on screen — the way back to the picture lives INSIDE the meter
+        /// surface, outside this budget, so this field is never an exit (see `AnalysisDoor`).
+        public var analysisToggle = false
         /// ⛔ `videoRecord` and `stillShutter` STOOD HERE and went with video capture
         /// (#1304, founder 2026-09-12 "Kein Video Capture"). The budget is two
         /// `iconButton`s + two gaps LIGHTER, so every "it fits" verdict this type ever
@@ -306,6 +340,10 @@ public enum FloatingVisualLayout {
     ///     and while nothing is presented. Pass that condition through rather than
     ///     duplicating it here, so there is one owner of "may it appear at all".
     ///   - wavBusy: the WAV control carries a running time, which roughly quadruples it.
+    ///   - analysisDoor: whether the meters are offered or on screen (S4c). ⚠️ Defaulted only
+    ///     so the budget guard's pre-S4c call sites keep their meaning; the ONE production
+    ///     call passes it explicitly, and `TheMetersLiveInTheVisualWindowTests` pins that —
+    ///     a defaulted argument no call site writes appears in no diff (#431).
     ///
     /// ⛔ A BUSY RECORDER IS PINNED, and finding that out is why the shed order alone was
     /// not enough. The first version of this function shed by rank only, and the
@@ -318,13 +356,18 @@ public enum FloatingVisualLayout {
     public static func chromeFit(cardWidth: CGFloat,
                                  isFullscreen: Bool,
                                  showsTransport: Bool,
-                                 wavBusy: Bool) -> ChromeFit {
+                                 wavBusy: Bool,
+                                 analysisDoor: AnalysisDoor = .absent) -> ChromeFit {
+        // A meter on screen replaces the picture: nothing is left for the look slider or
+        // the note grid to act on (see `AnalysisDoor`).
+        let pictureShown = analysisDoor != .shown
         var fit = ChromeFit()
-        fit.lookSlider = isFullscreen
+        fit.lookSlider = isFullscreen && pictureShown
         fit.studioChip = isFullscreen
         fit.miniTransport = showsTransport
-        fit.gridToggle = true
+        fit.gridToggle = pictureShown
         fit.wavRecord = true
+        fit.analysisToggle = analysisDoor == .offered
 
         // A degenerate width must not silently return "everything fits" — that is the
         // failure this whole type exists to stop. Shed to the floor instead, but keep a
@@ -343,6 +386,7 @@ public enum FloatingVisualLayout {
             if f.studioChip    { total += ChromeCost.studioChip;    items += 1 }
             if f.miniTransport { total += ChromeCost.miniTransport; items += 1 }
             if f.gridToggle    { total += ChromeCost.iconButton;    items += 1 }
+            if f.analysisToggle { total += ChromeCost.iconButton;   items += 1 }
             if f.wavRecord {
                 total += wavBusy ? ChromeCost.wavRecording : ChromeCost.iconButton
                 items += 1
@@ -384,7 +428,14 @@ public enum FloatingVisualLayout {
         var shed: [(inout ChromeFit) -> Void] = [
             { $0.lookSlider = false },
             { $0.miniTransport = false },
-            { $0.gridToggle = false }
+            { $0.gridToggle = false },
+            // S4c: the meters' door ranks just above the grid toggle — it is a display
+            // choice, not an exit (the way back is inside the meter surface), so it goes
+            // before the labelled Studio exit and never costs it its place.
+            // COST, stated rather than glossed: with the door offered and no take running,
+            // `miniTransport` sheds one width earlier — at Large on a 375 pt phone, and in
+            // fullscreen on 402/430 pt phones (idle fullscreen needs 431 pt with the door).
+            { $0.analysisToggle = false }
         ]
         // The recorder sheds only when it is IDLE. Busy, it is its own take's stop button
         // (`stop.circle.fill`) and is pinned — see the ⛔ note on the signature.

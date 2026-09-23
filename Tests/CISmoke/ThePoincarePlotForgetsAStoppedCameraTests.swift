@@ -85,12 +85,15 @@ final class ThePoincarePlotForgetsAStoppedCameraTests: XCTestCase {
 
     // MARK: - Helpers
 
+    /// A missed anchor ends the claim as a FAILURE (the XCTFail above), never a skip (#1240).
+    private struct AnchorMissing: Error {}
+
     /// Text from the start of `from` up to (not including) the first `to` after it.
     private func slice(_ text: String, from: String, to: String) throws -> String {
         guard let start = text.range(of: from),
               let end = text.range(of: to, range: start.upperBound..<text.endIndex) else {
             XCTFail("anchor `\(from)` … `\(to)` not found — re-anchor this guard (#1240)")
-            throw XCTSkip("anchor missing")
+            throw AnchorMissing()
         }
         return String(text[start.lowerBound..<end.lowerBound])
     }

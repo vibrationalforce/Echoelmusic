@@ -18,15 +18,18 @@ import SwiftUI
 // panel's `Toggle(isOn: $spectralDonuts)` (#1065; ⛔ "then the cover's top-bar donut toggle"
 // stood here until #1105, #1069 deleted that cover); this comment said "no reachable door" until then
 // and the distinction it drew never depended on that. This is a
-// PANEL-SIZED MEASURING INSTRUMENT inside the Field panel: 88 pt tall, 20 fps, a number
-// first. They share the pure parts on purpose (`SpectrumAnalysis`, `SpectralColor`,
+// PANEL-SIZED MEASURING INSTRUMENT: 88 pt tall, 20 fps, a number first — since S4c the
+// Visual window's "Spectrum" meter (⛔ it said "inside the Field panel" here; #575 took it out
+// of there and the founder circled that spot). They share the pure parts on purpose (`SpectrumAnalysis`, `SpectralColor`,
 // `EchoelRealFFT`) and nothing else. Do not "unify" them — one is art, one is a meter, and
 // the repo already paid for the reverse mistake (#164/#227: a control that looked like a
 // measurement and was not).
 //
 // COLOUR IS THE APP'S PHYSICAL MAPPING, not decoration: each band is tinted by
-// `SpectralColor.visibleColor`, the same frequency→visible-light transform the Field's own
-// colour uses (octave-doubled into the visible band, through CIE 1931). So a bass partial
+// `SpectralColor.visibleColor`: 30 Hz…16 kHz mapped LOG-LINEARLY onto 700…400 nm, then through
+// CIE 1931 (⛔ this said "octave-doubled, the same transform the Field's own colour uses" — the
+// octave-folding mapping is a DIFFERENT function; `visibleColor` spreads the whole audible range
+// across the whole visible one, which is why partials read as distinct colours). So a bass partial
 // reads red and a bright one violet, and the meter and the artwork agree about what a
 // frequency LOOKS like. Uncodixfy-clean: flat fills, no glow, no gradient, radius 2.
 //
@@ -42,7 +45,8 @@ import SwiftUI
 struct AnalysisSpectrumView: View {
 
     @Environment(AudioEngine.self) private var audioEngine
-    var reduceMotion: Bool = false
+    /// Required, no default (S4c): a mount that ignores the system setting must not compile.
+    let reduceMotion: Bool
 
     /// 24 log-spaced bands over 30 Hz…16 kHz. Enough to separate a fundamental from its
     /// first partials at panel width; more would put bars under 4 pt wide on the narrowest

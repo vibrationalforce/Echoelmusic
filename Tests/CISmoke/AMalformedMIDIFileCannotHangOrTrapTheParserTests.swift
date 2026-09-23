@@ -90,9 +90,11 @@ final class AMalformedMIDIFileCannotHangOrTrapTheParserTests: XCTestCase {
         let url = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
             .appendingPathComponent("Sources/Echoelmusic/Sequencer/MIDIFileImporter.swift")
-        guard let text = try? String(contentsOf: url, encoding: .utf8) else {
-            throw XCTSkip("MIDIFileImporter.swift not readable — source scan skipped")
+        // #1240: only a missing TREE may skip; an unreadable file that exists is a red.
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw XCTSkip("MIDIFileImporter.swift is not present — this guard inspects source text (#454)")
         }
+        let text = try String(contentsOf: url, encoding: .utf8)
         let code = SourceText.codeOnly(text)
         XCTAssertTrue(code.contains("for _ in 0..<4 {"),
                       "a variable-length quantity must stop after four bytes (SMF)")

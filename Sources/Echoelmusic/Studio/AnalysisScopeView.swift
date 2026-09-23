@@ -28,7 +28,8 @@ import SwiftUI
 struct AnalysisScopeView: View {
 
     @Environment(AudioEngine.self) private var audioEngine
-    var reduceMotion: Bool = false
+    /// Required, no default (S4c): a mount that ignores the system setting must not compile.
+    let reduceMotion: Bool
 
     /// Samples drawn across the width. 512 at 48 kHz is ~10.7 ms — ONE cycle of a 94 Hz
     /// bass note, a few dozen of a lead. (The first version of this line said "two cycles

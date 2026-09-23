@@ -77,9 +77,12 @@ final class AClosedPictureSaysSoTests: XCTestCase {
     func testTheReportCarriesTheRendererTermNotOnlyVisibility() throws {
         let src = try source(Self.window)
         let hits = src.components(separatedBy: "renderer=\\(").count - 1
-        XCTAssertEqual(hits, 2, """
-            The window's state report no longer names `renderer=` at both sites (found \
-            \(hits), expected 2). Visibility alone is the WEAKER fix and this assertion exists \
+        // THREE since S4c: the meters REPLACE the renderer, which is exactly the "something
+        // consumes the picture again" day the message below predicted — the third site is the
+        // `meters`/`picture` report, and it must say `renderer=off` while a meter shows.
+        XCTAssertEqual(hits, 3, """
+            The window's state report no longer names `renderer=` at all three sites (found \
+            \(hits), expected 3: launch, visibility change, meters/picture change). Visibility alone is the WEAKER fix and this assertion exists \
             to stop it replacing this one. Until #1304 the renderer had a SECOND gate (a \
             running video take kept a hidden window drawing, #319) and a log line saying only \
             "hidden" would have contradicted a stream of `visual:` lines. That gate is gone \

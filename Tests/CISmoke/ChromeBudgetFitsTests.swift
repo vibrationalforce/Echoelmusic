@@ -65,6 +65,7 @@ final class ChromeBudgetFitsTests: XCTestCase {
         if f.studioChip    { total += C.studioChip;    items += 1 }
         if f.miniTransport { total += C.miniTransport; items += 1 }
         if f.gridToggle    { total += C.iconButton;    items += 1 }
+        if f.analysisToggle { total += C.iconButton;   items += 1 }
         if f.wavRecord     { total += wavBusy ? C.wavRecording : C.iconButton; items += 1 }
         return total + C.gap * CGFloat(items) + C.horizontalPadding
     }
@@ -329,14 +330,19 @@ final class ChromeBudgetFitsTests: XCTestCase {
     /// delete the exception paragraph above it" — this is that, done.
     func testTheLabelledExitSurvivesEveryShippedWidth() {
         var shedStates: [String] = []
-        for bounds in Self.devices {
-            for wavBusy in [false, true] {
-                let fit = FloatingVisualLayout.chromeFit(cardWidth: bounds.width,
-                                                         isFullscreen: true,
-                                                         showsTransport: true,
-                                                         wavBusy: wavBusy)
-                if !fit.studioChip {
-                    shedStates.append("\(Int(bounds.width))pt wav=\(wavBusy)")
+        // S4c: every meter-door state too — the meters' button must shed BEFORE the exit,
+        // and a meter on screen must never be what costs the exit its place.
+        for door in FloatingVisualLayout.AnalysisDoor.allCases {
+            for bounds in Self.devices {
+                for wavBusy in [false, true] {
+                    let fit = FloatingVisualLayout.chromeFit(cardWidth: bounds.width,
+                                                             isFullscreen: true,
+                                                             showsTransport: true,
+                                                             wavBusy: wavBusy,
+                                                             analysisDoor: door)
+                    if !fit.studioChip {
+                        shedStates.append("\(Int(bounds.width))pt wav=\(wavBusy) door=\(door)")
+                    }
                 }
             }
         }
@@ -409,20 +415,29 @@ final class ChromeBudgetFitsTests: XCTestCase {
             ("lookSlider",    { $0.lookSlider }),
             ("miniTransport", { $0.miniTransport }),
             ("gridToggle",    { $0.gridToggle }),
+            // S4c: the meters' door — a display choice, not an exit, so it goes before the
+            // labelled way back (the way back from a meter is inside the meter surface).
+            ("analysisToggle", { $0.analysisToggle }),
             ("studioChip",    { $0.studioChip }),
             ("wavRecord",     { $0.wavRecord })
         ]
 
+        for door in FloatingVisualLayout.AnalysisDoor.allCases {
         for isFullscreen in [false, true] {
             for showsTransport in [false, true] {
                 for wavBusy in [false, true] {
                         // An item that cannot appear at all in this state, and a BUSY recorder
                         // (pinned as its take's stop button), are outside the ranking — they
-                        // are not "kept because the budget could afford them".
+                        // are not "kept because the budget could afford them". S4c: a meter on
+                        // screen takes the look slider and the grid with the picture, and the
+                        // meters' button exists only while they are OFFERED.
                         let offered = ranking.filter { item in
                             switch item.name {
-                            case "lookSlider", "studioChip": return isFullscreen
+                            case "lookSlider":               return isFullscreen && door != .shown
+                            case "studioChip":               return isFullscreen
                             case "miniTransport":            return showsTransport
+                            case "gridToggle":               return door != .shown
+                            case "analysisToggle":           return door == .offered
                             case "wavRecord":                return !wavBusy
                             default:                         return true
                             }
@@ -433,7 +448,8 @@ final class ChromeBudgetFitsTests: XCTestCase {
                             let fit = FloatingVisualLayout.chromeFit(
                                 cardWidth: w, isFullscreen: isFullscreen,
                                 showsTransport: showsTransport,
-                                wavBusy: wavBusy)
+                                wavBusy: wavBusy,
+                                analysisDoor: door)
                             let survivors = offered.map { $0.keep(fit) }
                             // ⛔ #1033 — THIS CHECK WAS INVERTED, AND IT HAD BEEN RED SINCE IT
                             // WAS WRITTEN. It read: "once an item is gone, nothing cheaper to
@@ -466,7 +482,8 @@ final class ChromeBudgetFitsTests: XCTestCase {
                                 .map { offered[$0].name }
                             XCTAssertTrue(goneAfter.isEmpty, """
                                 At \(Int(w))pt (fullscreen=\(isFullscreen), \
-                                transport=\(showsTransport), wavBusy=\(wavBusy)) the budget KEPT \
+                                transport=\(showsTransport), wavBusy=\(wavBusy), \
+                                door=\(door)) the budget KEPT \
                                 "\(offered[firstKept].name)" while having already dropped \
                                 \(goneAfter.joined(separator: ", ")) — items the documented \
                                 ranking says are MORE expensive to lose. Either the shed array \
@@ -477,6 +494,7 @@ final class ChromeBudgetFitsTests: XCTestCase {
                         }
                 }
             }
+        }
         }
     }
 
@@ -600,22 +618,26 @@ final class ChromeBudgetFitsTests: XCTestCase {
     func testAWiderCardNeverKeepsLessThanANarrowerOne() {
         // Monotonicity. A shed order that is not monotonic produces the behaviour users
         // describe as "it flickers when I resize": an item vanishing as the window GROWS.
-        func kept(_ w: CGFloat) -> Int {
-            let f = FloatingVisualLayout.chromeFit(cardWidth: w, isFullscreen: true,
-                                                   showsTransport: true,
-                                                   wavBusy: false)
-            return [f.lookSlider, f.studioChip, f.miniTransport,
-                    f.gridToggle, f.wavRecord].filter { $0 }.count
-        }
-        var previous = kept(60)
-        for w in stride(from: CGFloat(60), through: 900, by: 13) {
-            let now = kept(w)
-            XCTAssertGreaterThanOrEqual(now, previous, """
-                Growing the card to \(w) pt REMOVED an item (\(previous) → \(now)). The shed \
-                order must be monotonic in width, or a control disappears while the user is \
-                making the window bigger.
-                """)
-            previous = now
+        // S4c: in every meter-door state, and counting the meters' button with the rest.
+        for door in FloatingVisualLayout.AnalysisDoor.allCases {
+            func kept(_ w: CGFloat) -> Int {
+                let f = FloatingVisualLayout.chromeFit(cardWidth: w, isFullscreen: true,
+                                                       showsTransport: true,
+                                                       wavBusy: false,
+                                                       analysisDoor: door)
+                return [f.lookSlider, f.studioChip, f.miniTransport,
+                        f.gridToggle, f.analysisToggle, f.wavRecord].filter { $0 }.count
+            }
+            var previous = kept(60)
+            for w in stride(from: CGFloat(60), through: 900, by: 13) {
+                let now = kept(w)
+                XCTAssertGreaterThanOrEqual(now, previous, """
+                    Growing the card to \(w) pt REMOVED an item (\(previous) → \(now), \
+                    door=\(door)). The shed order must be monotonic in width, or a control \
+                    disappears while the user is making the window bigger.
+                    """)
+                previous = now
+            }
         }
     }
 }

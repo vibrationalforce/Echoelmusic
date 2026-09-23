@@ -762,13 +762,16 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
     // MARK: - 5. The fourth producer object (#E4)
 
     func testTheFallbackBioHotSetIsDerivedFromTheTwentyHertzTimer() throws {
+        // #1240: a missed ANCHOR is a red, never a skip — the removal is allowed, and the
+        // commit that makes it deletes this section with it (the message says so).
         guard try fallbackTimerExists() else {
-            throw XCTSkip("""
+            XCTFail("""
                 `\(Self.bioEngineTimerMethod)` is gone from \(Self.bioEngine). That is allowed \
-                — it had no reader — so this is a SKIP, not a failure. Delete this whole \
-                section and the constants it uses in the same commit; leaving a derivation \
-                anchored on an absent method makes its claims green for free (#367).
+                — it had no reader — but delete this whole section and the constants it uses \
+                in the same commit; leaving a derivation anchored on an absent method makes its \
+                claims green for free (#367).
                 """)
+            return
         }
         let hot = try fallbackBioHotProperties()
         XCTAssertTrue(hot.contains("snapshot"), """
@@ -799,7 +802,7 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
     }
 
     func testTheFallbackTimerIsStillAMachineRateWriter() throws {
-        guard try fallbackTimerExists() else { throw XCTSkip("timer removed; see the claim above") }
+        guard try fallbackTimerExists() else { XCTFail("timer removed; see the claim above (#1240)"); return }
         let lines = SourceText.codeOnly(try read(Self.bioEngine))
             .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
         guard let index = lines.firstIndex(where: { $0.contains("func \(Self.bioEngineTimerMethod)(") }),

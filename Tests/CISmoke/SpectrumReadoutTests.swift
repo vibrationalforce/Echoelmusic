@@ -171,14 +171,18 @@ final class SpectrumReadoutTests: XCTestCase {
     /// numeric guarantees below (`SpectrumReadout`, the decimal separator, the peak
     /// definition) are UNTOUCHED and still end-to-end — parking a view does not make its
     /// arithmetic wrong, and they are what a re-mount will need to still hold.
+    ///
+    /// ⭐ S4c (2026-09-23): the "wenn dann ins Visual Window" half is done — the spectrum is
+    /// the Visual window's "Spectrum" meter (`TheMetersLiveInTheVisualWindowTests`), and the
+    /// second assertion below is exactly the one that keeps it out of the Field panel.
     func testTheParkedSpectrumStillExistsAsAFile() throws {
         let code = try source("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
         let view = try source("Sources/Echoelmusic/Studio/AnalysisSpectrumView.swift")
         XCTAssertTrue(view.contains("struct AnalysisSpectrumView"), """
-            `AnalysisSpectrumView.swift` no longer declares `AnalysisSpectrumView`. It is \
-            PARKED, not deleted — the removal note in `EchoelStudioView` promises that \
-            restoring it costs one line, and that promise needs the file. If it was genuinely \
-            deleted, delete this test with it and say so in the commit.
+            `AnalysisSpectrumView.swift` no longer declares `AnalysisSpectrumView`. Since S4c \
+            it is the Visual window's "Spectrum" meter (`VisualAnalysisLayer`), so deleting it \
+            breaks a reachable surface. If it was genuinely retired, delete this test and the \
+            meter case with it and say so in the commit.
             """)
         XCTAssertFalse(code.contains("AnalysisSpectrumView(reduceMotion:"), """
             `EchoelStudioView` constructs `AnalysisSpectrumView` again. #575 removed the mount \

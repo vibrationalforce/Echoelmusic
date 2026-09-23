@@ -156,8 +156,9 @@
 //  Pure value maths, Foundation only, so the blocking bundle can test it without a
 //  sensor, a view or an audio graph.
 //
-//  CONSUMER: `AnalysisPoincareView` (#347 Slice 3b), doored from the Field panel's "Body"
-//  section and guarded by `Tests/CISmoke/PoincareViewDoorTests.swift`.
+//  CONSUMER: `AnalysisPoincareView` (#347 Slice 3b). Doored from the Field panel until
+//  2026-08-02, since S4c (2026-09-23) the Visual window's "Pulse" meter; guarded by
+//  `Tests/CISmoke/PoincareViewDoorTests.swift` and `TheMetersLiveInTheVisualWindowTests`.
 //
 //  ⛔ THE TWO HEADERS BEFORE THIS ONE BOTH PLEDGED "CONSUMER-FREE FOR (EXACTLY / ONE MORE)
 //  CYCLE", and the pledge was kept — 3b landed the very next commit — but the phrasing is

@@ -159,15 +159,17 @@ final class CameraAnalyzer {
     /// their own hygiene (`RRIntervalHygiene.acceptedSegments`) and get both the beats and the
     /// honest survival rate.
     ///
-    /// ⛔ "CONSUMERS" WAS ONE, AND IT IS DOORLESS (#1236, audit 2026-09-10). Measured: the only
-    /// reader of `rrWindowMs` (the publisher's pass-through of this array) is
-    /// `AnalysisPoincareView`, one of the four analysis views the CLAUDE.md register lists as
+    /// ⛔ "CONSUMERS" WAS ONE, AND IT WAS DOORLESS (#1236, audit 2026-09-10). Measured then: the
+    /// only reader of `rrWindowMs` (the publisher's pass-through of this array) was
+    /// `AnalysisPoincareView`, one of the four analysis views the CLAUDE.md register listed as
     /// deliberately unmounted — so on the shipping path NOTHING ran hygiene on the camera's
     /// beats, and the frame's RMSSD/SDNN/pNN50 left for the bus and OSC ungated. Since #1236
     /// `CameraRPPGBioPublisher` reads this array itself for `RRIntervalHygiene.canStateHRV`
     /// before publishing any HRV field (the strap's gate, same fraction, same sentinel 0). Two
     /// readers now, one reachable; the plural above was a description of a consumer that did
-    /// not exist on any reachable path.
+    /// not exist on any reachable path. ⭐ S4c gave the plot a door (the Visual window's "Pulse"
+    /// meter, Large and fullscreen only) — and the publisher's gate STAYS: hygiene on published
+    /// HRV must never depend on whether a meter happens to be open.
     ///
     /// ⭐ S4b — IT DIES WITH ITS BEATS. Until S4b it survived both window resets (lock loss and
     /// `resetPulseState`), so the Poincaré plot kept drawing the previous take's cloud after the

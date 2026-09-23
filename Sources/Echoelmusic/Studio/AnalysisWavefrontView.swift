@@ -16,8 +16,9 @@ import SwiftUI
 //   · RADIUS = age. Under a constant propagation speed that is exactly proportional to distance,
 //     so the geometry is honest without this file inventing a room size it cannot know.
 //   · COLOUR = the spectral CENTROID of the moment that ring was emitted, through
-//     `SpectralColor.visibleColor` — the same frequency→visible-light transform the Field's own
-//     colour and the spectrum meter use. A bass moment leaves a red ring, a bright one violet, and
+//     `SpectralColor.visibleColor` — the same frequency→visible-light transform the spectrum
+//     meter uses (30 Hz…16 kHz log-linear onto 700…400 nm; ⛔ "the Field's own colour" stood here
+//     too, and the Field folds by OCTAVE, a different function). A bass moment leaves a red ring, a bright one violet, and
 //     you watch the phrase you just played travel outward as a band of colour.
 //   · AMPLITUDE = the loudness of that moment, decayed by `WavefrontField.spreadingAmplitude`.
 // The physics, its three honest limits (age not metres · envelope fronts not pressure cycles ·
@@ -25,7 +26,8 @@ import SwiftUI
 //
 // ⚠️ NO PRINTED NUMBER ON THIS VIEW, deliberately — but the SPOKEN label carries the live
 // measurement, and the first version of this file got that second half wrong. It argued "no
-// number at all" because the spectrum meter two rows down already names the loudest partial of
+// number at all" because the spectrum meter (then two rows down, since S4c the neighbouring
+// segment in the Visual window's meter picker) already names the loudest partial of
 // the same output, and a second printed readout would be a second address for one fact. That
 // argument holds for a SIGHTED reader, who gets frequency from the ring colour and loudness from
 // its brightness. For a VoiceOver user the picture contributes nothing whatsoever, so a fixed
@@ -57,7 +59,8 @@ import SwiftUI
 struct AnalysisWavefrontView: View {
 
     @Environment(AudioEngine.self) private var audioEngine
-    var reduceMotion: Bool = false
+    /// Required, no default (S4c): a mount that ignores the system setting must not compile.
+    let reduceMotion: Bool
 
     /// Grows with Dynamic Type instead of sitting at a fixed height (#292 — a fixed frame is
     /// ecosystem debt, and this view is meant to survive the move to larger surfaces, where a

@@ -179,7 +179,10 @@ final class TheFrontDoorIsDecidedBeforeItIsAskedTests: XCTestCase {
         // the window is hidden by `.opacity(0)`, never unmounted, so without it a hidden
         // fullscreen window banks invisible showings toward the cap (and a monitor
         // re-show is an opacity flip that never re-runs the `.task`).
-        XCTAssertTrue(src.contains("if isPresented && windowSize.isFullscreen {"), """
+        // S4c appended `&& !analysisShown` (a meter covers the play surface the hint teaches);
+        // the needle carries it because the gate is one line, and removing that third half is
+        // a change to THIS claim's line — move the needle with it.
+        XCTAssertTrue(src.contains("if isPresented && windowSize.isFullscreen && !analysisShown {"), """
             `InstrumentHintOverlay`'s visible-fullscreen gate is gone. The fullscreen half \
             is why the front-door fix also delivers the first-run teaching text (written \
             for the immersive surface, unreadable in a 180-pt floating card); the \

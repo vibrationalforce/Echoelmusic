@@ -31,7 +31,7 @@ noch nicht am Gerät bestätigt.
 | Chip **Save/Export** | Projekt speichern/öffnen, MIDI-Export, Loop-Länge, Klang zurücksetzen, Guide, Diagnose | offen |
 | Puls-Pille (Kopfzeile) | Bio-Panel: Puls, HRV, Kohärenz, Quellenwahl, „Body voice“, Apple-Health-Schreiben | offen |
 | Bio-Quellen | Kamera-Puls (Finger auf Linse), Apple Health (auch Watch), BLE-Brustgurt (0x180D), Demo | Kamera: ja |
-| Kopfzeile | schwebendes Visual-Fenster, Donut-Visual | offen |
+| Kopfzeile | schwebendes Visual-Fenster, Donut-Visual; ab Größe „Large“ und im Vollbild ein Mess-Knopf: vier Messgeräte (Wellen · Spektrum · Scope · Puls) STATT des Bilds, zurück mit „Picture“ (S4c) | offen |
 | Kopfzeile „•••“ | Routing (OSC, ADM-OSC, Art-Net, sACN, MIDI-Out, MPE-Out, MIDI 2.0, Modulations-Matrix „Body → parameter“) · Live Colabo · Learn | offen |
 | im Hintergrund | MIDI-Keyboard spielt eine Performer-Stimme · OSC-Ausgang · OSC-Steuereingang (Opt-in) | offen |
 | AUv3-Plugin | Echoel als Instrument in anderen Apps | ja (AUM, 2026-09-20) |
@@ -52,10 +52,6 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed�
 
 | Ansicht | Was sie kann | Warum versteckt | Tür kostet |
 |---|---|---|---|
-| `AnalysisScopeView` | Oszilloskop des Ausgangs | Founder-X am 2026-08-02 (Field zeigt keine Messgeräte) | eine Zeile + Beschriftung |
-| `AnalysisSpectrumView` | Spektrum, Spitzenton mit Notenname | wie oben | eine Zeile |
-| `AnalysisPoincareView` | Poincaré-Plot der Herzschläge (HRV) | wie oben | eine Zeile |
-| `AnalysisWavefrontView` | Wellenfront-Ringe (Alter · Klangfarbe) | wie oben | eine Zeile |
 | `BioSourceView` | alte Bio-Seite; trägt Atem-Führung und Puls-Messanzeige | seit dem Tools-Grid-Abbau (2026-07-02) ohne Tür | ein Knopf im Bio-Panel |
 | `ImmersiveStageView` | Raumkarte: jede Spur als Punkt im Raum, ADM-OSC-Status | Ship-Gate 4: Raum „demonstrierbar, nicht Pflicht“ | ein Chip oder Routing-Knopf |
 | `SessionView` | geführte Session mit Atemtakt | Founder 2026-07-06: „keine Atemübung“ | nur mit neuer Founder-Entscheidung |

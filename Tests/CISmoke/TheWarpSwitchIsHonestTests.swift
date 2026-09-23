@@ -265,9 +265,11 @@ final class TheWarpSwitchIsHonestTests: XCTestCase {
 
     private func code(_ relative: String) throws -> String {
         let url = try repoRoot().appendingPathComponent(relative)
-        guard let text = try? String(contentsOf: url, encoding: .utf8) else {
-            throw XCTSkip("\(relative) not readable — source scan skipped")
+        // #1240: only a missing TREE may skip; an unreadable file that exists is a red.
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw XCTSkip("\(relative) is not present — this guard inspects source text (#454)")
         }
+        let text = try String(contentsOf: url, encoding: .utf8)
         return SourceText.codeOnly(text)
     }
 }

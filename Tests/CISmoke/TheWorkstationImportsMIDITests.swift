@@ -352,13 +352,19 @@ final class TheWorkstationImportsMIDITests: XCTestCase {
             }
             index = code.index(after: index)
         }
-        throw XCTSkip("unbalanced braces after `func \(name)` — refusing to guess its body")
+        XCTFail("unbalanced braces after `func \(name)` — refusing to guess its body (#1240)")
+        throw AnchorMissing(name: name)
     }
 
     private func filesUnderSources(containing needle: String) throws -> [String] {
         let root = try repoRoot().appendingPathComponent(Self.sourcesRoot)
+        guard FileManager.default.fileExists(atPath: root.path) else {
+            throw XCTSkip("\(Self.sourcesRoot) is not present — this guard inspects source text (#454)")
+        }
+        // #1240: the tree exists, so a walk that cannot start is a red, never a skip.
         guard let walker = FileManager.default.enumerator(atPath: root.path) else {
-            throw XCTSkip("cannot enumerate \(Self.sourcesRoot) — refusing to report a green it did not earn")
+            XCTFail("cannot enumerate \(Self.sourcesRoot) — refusing to report a green it did not earn")
+            return []
         }
         var hits: [String] = []
         for case let relative as String in walker where relative.hasSuffix(".swift") {

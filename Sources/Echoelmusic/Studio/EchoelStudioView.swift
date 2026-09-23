@@ -5398,19 +5398,12 @@ struct EchoelStudioView: View {
             // circled the whole block on a v10.79.388 screenshot — the wavefront, its
             // paragraph, the spectrum, its paragraph, the `63,0 Hz · B1 +36 ct` readout —
             // and wrote: *"Das Brauch da nicht sein. Wenn dann ins Visual Window
-            // übertragen."* The unconditional half is done here. The conditional half
-            // ("wenn dann") is NOT done, deliberately: putting a measurement readout over
-            // the immersive field is a layout he has not seen, and inventing one would be
-            // the same overreach as the 2026-08-02 note that kept two struck views mounted
-            // "pending a device look". It is registered as a slice in
-            // `scratchpads/PLAN_ONE_VISUALISER.md` instead.
-            //
-            // `AnalysisWavefrontView` and `AnalysisSpectrumView` are now PARKED — files
-            // intact, cores and content guards still running, doorless ON PURPOSE, exactly
-            // like `AnalysisScopeView` and `AnalysisPoincareView` since 2026-08-02. All four
-            // analysis views are now in that state; the Field panel shows no meters at all.
-            // Restoring any of them is one line here plus its caption. Do NOT "fix" the
-            // doorlessness by re-mounting, and do NOT delete the files.
+            // übertragen."* The unconditional half is done here. ⭐ The conditional half is
+            // done too since S4c (founder 2026-09-23, "all tasks"): all four analysis views
+            // live in the floating Visual window (`VisualAnalysisLayer`, Large and fullscreen,
+            // one at a time, REPLACING the picture rather than drawn over it). The Field panel
+            // still shows no meter at all, and must not again — re-mounting one HERE is the
+            // thing the founder circled (`TheMetersLiveInTheVisualWindowTests` claim 9).
             //
             // ⚠️ AND THE VIEWBUILDER NOTE BELOW IS NOW ONE CHILD LOOSER, not obsolete: the
             // ten-child claim it argues against was already struck as false in #359's

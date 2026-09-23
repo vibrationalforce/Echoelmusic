@@ -51,16 +51,20 @@ final class PoincareViewDoorTests: XCTestCase {
     /// ⚠️ WHAT IS UNGUARDED WHILE IT IS PARKED, said plainly: nothing now notices if the view
     /// is deleted outright. That is the accepted cost of a deliberate doorless state, and it
     /// is bounded by the founder's verdict on the wavefront picture.
+    ///
+    /// ⭐ S4c (2026-09-23): the plot has a door again — the Visual window's "Pulse" meter —
+    /// and the door half of this is guarded by `TheMetersLiveInTheVisualWindowTests`. What
+    /// this test still owns is unchanged: the file exists and declares the view.
     func testTheParkedPlotStillExistsAsAFile() throws {
         // The one door-shaped fact still worth asserting: the file is on disk. `source(_:)`
         // throws if it is not, which is the whole assertion — a parked view that quietly
         // vanished would make the "one line to restore" promise above a lie.
         let view = try source("Sources/Echoelmusic/Studio/AnalysisPoincareView.swift")
         XCTAssertTrue(view.contains("struct AnalysisPoincareView"), """
-            `AnalysisPoincareView.swift` no longer declares `AnalysisPoincareView`. The view is \
-            PARKED (doorless on purpose since 2026-08-02), not retired — the promise recorded \
-            in `signalSection` is that restoring it costs one line. If it was genuinely \
-            deleted, delete this file with it and say so in the commit.
+            `AnalysisPoincareView.swift` no longer declares `AnalysisPoincareView`. Since S4c \
+            it is the Visual window's "Pulse" meter (`VisualAnalysisLayer`), so deleting it \
+            breaks a reachable surface. If it was genuinely retired, delete this file and the \
+            meter case with it and say so in the commit.
             """)
     }
 

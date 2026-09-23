@@ -205,15 +205,18 @@ final class ScopeTriggerStandsStillTests: XCTestCase {
     ///
     /// Source text, because `EchoelStudioView` is a SwiftUI view this bundle cannot build —
     /// the house pattern (`SoundPanelPresetBarTests`, `NoDoorlessStudioViewsTests`).
+    ///
+    /// ⭐ S4c (2026-09-23): the scope has a door again — the Visual window's "Scope" meter
+    /// (`TheMetersLiveInTheVisualWindowTests`). This test still owns the file and the absence
+    /// of `signalSection` from the Field panel.
     func testTheParkedScopeStillExistsAsAFile() throws {
         let code = try source("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
         let view = try source("Sources/Echoelmusic/Studio/AnalysisScopeView.swift")
         XCTAssertTrue(view.contains("struct AnalysisScopeView"), """
-            `AnalysisScopeView.swift` no longer declares `AnalysisScopeView`. The view is \
-            PARKED, not retired — the removal note in `EchoelStudioView` records the promise \
-            that restoring it costs one line, and that promise needs the file to still be \
-            there. If it was genuinely deleted, delete this test file with it and say so in \
-            the commit.
+            `AnalysisScopeView.swift` no longer declares `AnalysisScopeView`. Since S4c it is \
+            the Visual window's "Scope" meter (`VisualAnalysisLayer`), so deleting it breaks a \
+            reachable surface. If it was genuinely retired, delete this test file and the \
+            meter case with it and say so in the commit.
             """)
         // COMMENTS STRIPPED FIRST, the way `NoDoorlessStudioViewsTests` does it — and here it
         // is LOAD-BEARING in the opposite direction from before. The removal note names

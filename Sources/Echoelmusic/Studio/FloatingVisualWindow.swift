@@ -334,6 +334,19 @@ struct FloatingVisualWindow: View {
     /// Stable-resize dip (see `cycleSize`): true for the instant of the one-step
     /// size snap, easing back to full brightness right after.
     @State private var resizeDip = false
+    /// S4c — the user opened the meters. Per launch, not persisted: a cold launch always opens
+    /// on the picture (the instrument home), and the door being ABSENT resets it, so a meter
+    /// never comes back unasked after the window was shrunk or hidden.
+    @State private var analysisOn = false
+
+    /// S4c — whether the meters are offered or on screen. One owner (`FloatingVisualLayout`);
+    /// every reader below asks this, never `analysisOn` directly.
+    private var analysisDoor: FloatingVisualLayout.AnalysisDoor {
+        FloatingVisualLayout.analysisDoor(isPresented: isPresented,
+                                          isRoomy: windowSize == .large || windowSize.isFullscreen,
+                                          meterOn: analysisOn)
+    }
+    private var analysisShown: Bool { analysisDoor == .shown }
 
     enum WindowSize: Int, CaseIterable {
         case small, medium, large, fullscreen
@@ -512,6 +525,20 @@ struct FloatingVisualWindow: View {
             EchoelCrashLog.breadcrumb(
                 "visual window: \(now ? "shown" : "hidden") · "
                 + "renderer=\(now ? "on" : "off")")
+        }
+        // S4c — a meter REPLACES the renderer, so the log has to say so: without this line a
+        // reader sees `renderer=on`, then no `visual:` lines, and reads a dead picture (#579).
+        // `renderer=` asks `isPresented` too: hiding the window WHILE a meter shows flips this to
+        // "picture" in the same transaction, and the picture is not drawing then either.
+        .onChange(of: analysisShown) { _, meters in
+            EchoelCrashLog.breadcrumb(
+                "visual window: \(meters ? "meters" : "picture") · "
+                + "renderer=\(!meters && isPresented ? "on" : "off")")
+        }
+        // The door going ABSENT (window shrunk below Large, or hidden) closes the meters, so
+        // growing the window again opens on the picture rather than on a meter nobody asked for.
+        .onChange(of: analysisDoor) { _, door in
+            if door == .absent { analysisOn = false }
         }
         // #1073 — PUBLISH THE SKY SO THE BEAMER CAN DRAW THE SAME PICTURE. Until now the
         // external scene rendered the four design keys RAW while this window mixed the
@@ -769,6 +796,13 @@ struct FloatingVisualWindow: View {
             // so the take did not lose its only frame source. It went with video capture in
             // #1304, so the branch is unconditional again.)
             Color.clear
+        } else if analysisShown {
+            // S4c — THE METERS, instead of the picture (founder: "Wenn dann ins Visual Window
+            // übertragen"). Placed before the external-screen and donut branches on purpose:
+            // the user asked for a meter HERE, and none of the four is Metal, so showing one
+            // never competes with a picture held on the beamer (one-`MetalBioView` law).
+            VisualAnalysisLayer(reduceMotion: reduceMotion,
+                                onShowPicture: { analysisOn = false })
         } else if ExternalStageBridge.shared.isConnected {
             // Not a placeholder for a missing feature — a deliberate statement of where
             // the picture went, so a performer who looks down does not think the visual
@@ -878,6 +912,12 @@ struct FloatingVisualWindow: View {
                                         autoPlay: fieldAutoPlay,
                                         autoPlaySeed: 0,
                                         noteNaming: NoteNaming(stored: noteNamingRaw))
+                    // S4c — while a meter is on screen the play surface stays MOUNTED (the
+                    // Field's self-play keeps sounding, #311) but is invisible, untouchable
+                    // and silent to VoiceOver, so every tap reaches the meter's own controls.
+                    .opacity(analysisShown ? 0 : 1)
+                    .allowsHitTesting(!analysisShown)
+                    .accessibilityHidden(analysisShown)
                 }
                 #endif
                 // ⛔ THE VIDEO REC BADGE AND ITS OUTCOME SENTENCE STOOD HERE (#991) AND WENT
@@ -908,7 +948,9 @@ struct FloatingVisualWindow: View {
                     // via the header monitor is an opacity flip, not a remount — `isPresented`
                     // here makes this branch structural in visibility, so the `.task` re-runs
                     // and the hint genuinely returns on a visible fullscreen entry.
-                    if isPresented && windowSize.isFullscreen {
+                    // S4c: `!analysisShown` — the hint teaches the play surface, which a meter
+                    // covers; showing it there would spend one of its capped showings unseen.
+                    if isPresented && windowSize.isFullscreen && !analysisShown {
                         InstrumentHintOverlay(reduceMotion: reduceMotion)
                             .padding(.bottom, 44)
                     }
@@ -954,7 +996,8 @@ struct FloatingVisualWindow: View {
             cardWidth: card.width,
             isFullscreen: windowSize.isFullscreen,
             showsTransport: windowSize != .small && isPresented,
-            wavBusy: wavRecording || wavExporting)
+            wavBusy: wavRecording || wavExporting,
+            analysisDoor: analysisDoor)
         return HStack(spacing: 8) {
             // Drag ONLY by this handle — NOT the whole bar. A DragGesture spanning the whole
             // bar competed with the buttons: a tap with the slightest finger move started a
@@ -1130,6 +1173,19 @@ struct FloatingVisualWindow: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(touchShowGrid ? "Hide note grid" : "Show note grid")
+            }
+            // S4c — the meters' door. Only while OFFERED: once a meter is on screen the way
+            // back is the "Picture" button in the meter surface itself, outside this budget.
+            if fit.analysisToggle {
+                Button { analysisOn = true } label: {
+                    Image(systemName: "chart.bar.xaxis")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(EchoelTheme.text)
+                        .frame(width: 28, height: 44).contentShape(Rectangle().inset(by: -5))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Show meters")
+                .accessibilityHint("Replaces the picture with a sound or pulse meter.")
             }
             #if canImport(AVFoundation)
             if fit.wavRecord { wavRecordControl }

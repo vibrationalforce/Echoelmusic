@@ -405,7 +405,8 @@ struct WorkspaceView: View {
     /// still holds — and it holds even better for what replaced it. The loop readout is also a
     /// measurement, it is the ONE fact a performer needs at a glance while both hands are busy,
     /// and unlike the spectrum it exists nowhere else on screen. **The spectrum was a SECOND
-    /// copy**: `AnalysisSpectrumView` in the Field panel is the same ring, the same bands and
+    /// copy**: `AnalysisSpectrumView` (then in the Field panel; since S4c the Visual window's
+    /// "Spectrum" meter) is the same ring, the same bands and
     /// the same frequency→visible-light colours, at a size where the number beside it is
     /// readable. So this removes a duplicate, not a capability — which is the fact that made
     /// deleting `HeaderSpectrumStrip.swift` outright the honest move rather than unmounting it

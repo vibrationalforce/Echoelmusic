@@ -64,8 +64,9 @@
 // ⚠️ AND THE OTHER COPY IS GONE TOO SINCE #575 — this paragraph said "in the Field panel", in
 // the PRESENT tense, as the load-bearing half of a deletion argument. On 2026-08-13 the founder
 // circled the whole Signal block and wrote *"Das Brauch da nicht sein"*; `AnalysisSpectrumView`
-// is now PARKED (file intact, doorless on purpose, one line to restore). So the app currently
-// shows NO spectrum anywhere.
+// was PARKED from then until S4c (2026-09-23), when the founder's own "wenn dann ins Visual
+// Window" half was built: the spectrum is now the Visual window's "Spectrum" meter, at Large and
+// fullscreen only. The header stays free of it, which is what this file guards.
 //
 // ⭐ THAT DOES NOT WEAKEN THE DELETION, and saying why is the point of this note. The header
 // strip went because the founder asked for it, twice — first for it, then against it — not
@@ -210,10 +211,10 @@ final class TheHeaderShowsTheLoopTests: XCTestCase {
 
             Note what made the removal cheap AT THE TIME: the same measurement also shipped \
             in `AnalysisSpectrumView`, so the header copy was a duplicate and not a \
-            capability. That is no longer true — #575 parked the Field-panel spectrum on a \
-            second founder instruction, so today the app shows no spectrum at all. The \
-            deletion still stands (he asked for it), but restoring a spectrum is now a \
-            decision about WHERE it lives, not a choice between two copies.
+            capability. #575 then parked the Field-panel spectrum on a second founder \
+            instruction, and S4c gave it its one home: the Visual window's "Spectrum" meter. \
+            The header deletion still stands (he asked for it); a second spectrum in the \
+            header would be a second copy again.
             """)
 
         let bar = try topBar()
