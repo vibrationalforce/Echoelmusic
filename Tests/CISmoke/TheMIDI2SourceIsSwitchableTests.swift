@@ -157,6 +157,62 @@ final class TheMIDI2SourceIsSwitchableTests: XCTestCase {
         XCTAssertTrue(index.contains("2.0 source out (switch)"))
     }
 
+    /// Claim 8b — THE ROUTING MODEL CALLS MIDI 2.0 LIVE, NOT ROADMAP (#F5).
+    ///
+    /// ⛔ CLAIM 7 SWEPT THE PROSE AND MISSED THE CODE. It pins that `docs/faq.html` no
+    /// longer lists MIDI 2.0 out as roadmap — and for nine months
+    /// `SignalTransport.midi2.status` returned `.roadmap` in the enum a session reads to
+    /// decide which protocols exist, with the FAQ already corrected beside it. **A sweep
+    /// that checks the copy and not the model leaves the model as the last false witness**,
+    /// and it is the one a future session trusts (#1302's lesson, other way round: a
+    /// correction must pull the list of LIVING things too, not just the dead ones).
+    ///
+    /// ⚠️ THE TWO HALVES ARE BOUND, NOT BANNED (#364, and the #F1 playbook). The claim does
+    /// not forbid `.midi2` from ever being roadmap again — it requires that the label and
+    /// the machinery agree. Rip out the UMP source and this goes red until the label
+    /// follows; ship a protocol and forget the label and it goes red too. Either direction
+    /// is a real finding, which a one-sided ban could not express.
+    func testTheRoutingModelCallsMIDI2Live() throws {
+        // Comment-stripped: this enum's own ⛔ note NAMES the label it retracts, and a raw
+        // scan would read the retraction as the violation (#453/#486).
+        let routing = SourceText.codeOnly(
+            try text("Sources/Echoelmusic/Core/SignalRouting.swift"))
+        let status = try Self.member("public var status: Status", in: routing)
+        guard let live = status.range(of: "return .live") else {
+            XCTFail("ANCHOR MISSING: `status` no longer returns `.live` — re-anchor rather "
+                    + "than trust a zero (#454/#408).")
+            return
+        }
+        let liveSide = String(status[..<live.lowerBound])
+        let roadmapSide = String(status[live.upperBound...])
+
+        XCTAssertTrue(try text(Self.engine).contains("MIDISourceCreateWithProtocol"), """
+            \(Self.engine) no longer creates a MIDI 2.0 source. If that was deliberate, \
+            `SignalTransport.midi2` must go back to `.roadmap` in the SAME commit — this \
+            claim binds the two so neither can move alone.
+            """)
+        XCTAssertFalse(roadmapSide.contains(".midi2"), """
+            `SignalTransport.midi2` is on the `.roadmap` side while the app creates a MIDI \
+            2.0 source, parses UMP channel voice inbound (`MIDIEventParse` case 0x4) and \
+            ships a switch for it. `.roadmap` means "typed, not wired" by this enum's own \
+            doc, and `defaultInventory()` FILTERS roadmap transports out — so a `.midi2` \
+            port would silently never appear in the Patchbay. Fix the label or remove the \
+            machinery, not neither.
+            """)
+        XCTAssertTrue(liveSide.contains(".midi2"), """
+            `.midi2` is on neither side of `status` — the switch no longer covers it, or \
+            the anchors moved. Re-anchor: a claim that cannot find its subject proves \
+            nothing (#367).
+            """)
+        XCTAssertTrue(routing.contains("no MIDI-CI"), """
+            The `.midi2` case no longer records that MIDI-CI is absent. It used to claim \
+            "(+ MIDI-CI capability inquiry)" with ZERO code behind it — one occurrence in \
+            all of `Sources/`, namely the claim — on the register that answers "which \
+            protocols do we speak". If MIDI-CI ever ships, replace this note; do not just \
+            delete it.
+            """)
+    }
+
     /// Claim 8 — counterweights: the 1.0 source and the MPE gate are as they were; the 2.0
     /// source is ADDED beside them, not swapped in.
     func testTheFirstSourceAndTheMPEGateAreUntouched() throws {

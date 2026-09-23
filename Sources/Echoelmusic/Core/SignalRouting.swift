@@ -60,7 +60,11 @@ public enum SignalKind: String, Codable, Sendable, CaseIterable {
 public enum SignalTransport: String, Codable, Sendable, CaseIterable {
     case internalBus
     case coreMIDI       // MIDI 1.0 (CoreMIDI)
-    case midi2          // MIDI 2.0 / UMP (+ MIDI-CI capability inquiry)
+    // ⛔ "(+ MIDI-CI capability inquiry)" STOOD HERE AND HAD ZERO CODE — one occurrence in
+    // all of `Sources/`, namely this claim. MIDI-CI is a real protocol we do not speak, and
+    // this enum is where a session looks up which protocols exist, so the parenthetical was
+    // a capability claim on the register that answers that question (#496).
+    case midi2          // MIDI 2.0 / UMP — in and out; no MIDI-CI
     case mpe            // MPE over CoreMIDI
     case rtpMIDI        // RTP-MIDI / network MIDI session
     case osc            // OSC 1.0/1.1 (+ OSCQuery discovery)
@@ -86,10 +90,27 @@ public enum SignalTransport: String, Codable, Sendable, CaseIterable {
 
     public var status: Status {
         switch self {
-        case .internalBus, .coreMIDI, .mpe, .rtpMIDI, .osc, .admOSC,
+        // ⭐ `.midi2` MOVED FROM roadmap TO live — the #1438 shape, where the machine beat
+        // the label. MIDI 2.0 ships on five legs: a second virtual source created with
+        // `MIDISourceCreateWithProtocol(…, ._2_0, …)`, the `UMPEncoder` 2.0 builders every
+        // send is mirrored through, UMP channel-voice PARSING inbound (`MIDIEventParse`
+        // case 0x4), an input port opened at `._2_0`, and a door in the Patchbay
+        // (`midiOutUMP2`, default off). "typed, not wired" stopped being true at #1253.
+        //
+        // ⚠️ A NO-OP TODAY, AND CORRECTED ANYWAY. No `SignalPort` carries
+        // `transport: .midi2`, so nothing is filtered differently and no "soon" tag moves.
+        // The label is fixed because this enum is read to decide what EXISTS: left alone, a
+        // future `.midi2` port would be silently dropped by `defaultInventory()` as roadmap
+        // and the author would hunt a missing row. A latent trap is cheaper to remove while
+        // it is still latent.
+        //
+        // ⚠️ `.auv3` STAYS roadmap and that is NOT an oversight. Echoel IS an AUv3 since
+        // #1385, but this case means the HOST side — hosting other plugins — which the
+        // founder struck (#121 Slice 2). Being one and hosting them are different facts.
+        case .internalBus, .coreMIDI, .midi2, .mpe, .rtpMIDI, .osc, .admOSC,
              .artNet, .sacn, .audioIO, .bleHRS, .camera, .healthKit:
             return .live
-        case .midi2, .auv3, .abletonLink, .rtmp, .srt, .ndi:
+        case .auv3, .abletonLink, .rtmp, .srt, .ndi:
             return .roadmap
         }
     }
