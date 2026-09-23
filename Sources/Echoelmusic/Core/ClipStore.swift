@@ -143,6 +143,29 @@ public final class ClipStore {
         return true
     }
 
+    /// S1 — the AUTHORED writer of `Clip.nativeBPM`: the Workstation's ×2 / ÷2 and the
+    /// hand-entered tempo. Unlike the detection writer above it OVERRIDES — that is its
+    /// purpose. The warp lock is decided by its one caller, `AudioTempoCorrection.setNativeBPM`;
+    /// the value is clamped by `AudioTempoCorrection.accepted` (the one range, #416). Returns
+    /// false, writing nothing, for an unknown id, a MIDI clip, or a non-positive proposal; an
+    /// unchanged value returns true without persisting.
+    ///
+    /// ⚠️ INAUDIBLE BY ITSELF, like the detection writer: a region plays at rate 1.0 until warp
+    /// is on for it. No provenance flag is kept — a detection that finishes later is refused by
+    /// never-clobber, so the authored value cannot be replaced behind the user's back.
+    @discardableResult
+    public func setAuthoredNativeBPM(id: UUID, _ proposed: Double) -> Bool {
+        guard let i = slots.firstIndex(where: { $0?.id == id }),
+              var clip = slots[i], clip.kind == .audio,
+              let bpm = AudioTempoCorrection.accepted(proposed)
+        else { return false }
+        guard clip.nativeBPM != bpm else { return true }
+        clip.nativeBPM = bpm
+        slots[i] = clip
+        persist()
+        return true
+    }
+
     public func rename(at index: Int, to name: String) {
         guard slots.indices.contains(index), var clip = slots[index] else { return }
         clip.name = name

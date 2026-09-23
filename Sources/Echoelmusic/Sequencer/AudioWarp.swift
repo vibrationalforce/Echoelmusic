@@ -16,9 +16,9 @@
 //
 // ⚠️ ONLY A PART WITH A KNOWN NATIVE TEMPO CAN WARP. "Warp to what?" has no answer for a clip
 // whose `nativeBPM` is 0, and the engine agrees (`StretchPlan.resolve` returns rate 1.0 for
-// it). Since #B2 the only writer of that field is the detected-tempo adoption, which writes
-// KNOWN estimates only — so a switch that appears here appears because a detection was
-// confident, and a part whose tempo stayed unclear offers no switch rather than a dead one.
+// it). The field has two writers: the detected-tempo adoption (#B2, KNOWN estimates only) and,
+// since S1, the Workstation's hand-entered tempo (`AudioTempoCorrection`). A part whose tempo
+// stayed unclear offers no switch rather than a dead one — until the person enters its tempo.
 //
 // ⚠️ THE PART'S LENGTH FOLLOWS ITS STATE, because a flag alone would be half a warp. A warped
 // part consumes media `rate`× as fast as song time passes, so a part sized for the recorded

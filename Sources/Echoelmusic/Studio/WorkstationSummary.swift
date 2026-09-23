@@ -169,7 +169,9 @@ public struct WorkstationSummary: Equatable, Sendable {
     }
 
     /// The sentence beside the button. It must never promise editing — this surface reads
-    /// the song and now starts it; it still cannot change a note.
+    /// the song and now starts it; it still cannot change a note. ⚠️ Kept after S1 on purpose:
+    /// the tempo row corrects a FILE's own tempo (a clip property, inaudible until Warp), not a
+    /// part's place, length or content — so "does not edit them" stays true of the parts.
     public static func transportCaption(playing: Bool, startable: Bool) -> String {
         if playing { return "Playing from the top on the shared transport." }
         if startable { return "Plays the existing parts — this view still does not edit them." }

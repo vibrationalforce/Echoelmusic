@@ -204,8 +204,8 @@ Deprecated from main flow: SoundscapeEngine, ClipEngine, MomentCaptureView, BioS
     forthcoming AudioClipPlayer", „an AudioClipPlayer-backed sink"); die fünf Falschstellen
     sind korrigiert — der Sink ist `TimelineAudioSink`, injiziert in `EchoelmusicApp` —, die
     drei verbliebenen Zeiger tragen `(dead)`. ⚠️ `Sequencer/AudioClipRegion` ist NICHT tot,
-    aber viel knapper als es aussieht: EIN lebender Code-Verbraucher (`Clip.swift`), und der
-    liest EIN Mitglied — `nativeBPMRange`, die geteilte Klammer (#416). Trim-/Loop-/Warp-Mathe
+    aber viel knapper als es aussieht: ZWEI lebende Leser (`Clip.swift`, seit S1 `AudioTempoCorrection`),
+    beide lesen EIN Mitglied — `nativeBPMRange`, die geteilte Klammer (#416). Trim-/Loop-/Warp-Mathe
     hat nur tote Verbraucher; `Sequencer/WarpedClipPlan` ist dabei als ACHTER Waise gemessen
     worden. ⛔ Meine erste Fassung dieser Zeile schrieb „sechs Verbraucher" aus `git grep -l`,
     das KOMMENTARE mitzählt — vier davon nennen den Typ nur in Prosa, und

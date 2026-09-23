@@ -11,7 +11,9 @@
 // power to place ONE imported audio file on the audio track the song already has. #F1
 // (2026-09-23) adds an empty audio track. #C1 ("WARP / NATIVE BPM: Approved", 2026-09-23)
 // lets a track's parts follow the song tempo — which resizes a whole-file part to the bars
-// its file covers, and nothing else. The surface still cannot move, trim, split, duplicate or
+// its file covers, and nothing else. S1 (founder "all tasks", 2026-09-23) lets an imported
+// FILE's own tempo be corrected — ×2, ÷2, or by hand — which is a property of the clip and
+// is inaudible until Warp is on. The surface still cannot move, trim, split, duplicate or
 // delete a part, remove a track, author automation, or record. ⛔ This sentence said "add or
 // remove a track" from #F1 until #C1: the header of the file that holds the track button.
 // Each power arrived on its own founder decision.
@@ -140,6 +142,21 @@
 // song plays the switch is unavailable, and VoiceOver says "Stop the song to change warp". (27)
 // A file whose note says "Tempo unclear." shows NO switch. If the switch appears for a file
 // that plainly has no pulse, `TempoDetector.confidenceFloor` is too low.
+//
+// NEEDS-FOUNDER-VERIFY (S1, correcting a file's own tempo, 2026-09-23): (28) Import a loop the
+// note reads at half speed (e.g. a 174 BPM loop read as "Tempo ≈ 87"). Under its track a row
+// names the file with "Tempo 87.0 BPM" and ÷2 / ×2 below it. Tap ×2: the field reads 174.0.
+// Turn Warp on with the song at another tempo: the loop plays at its true speed and its part
+// spans TWICE as many bars as it did at 87. (29) With Warp on, the row is greyed and says
+// "turn Warp off to change its tempo"; VoiceOver speaks that. (30) A file the note calls
+// "Tempo unclear." shows "tempo not set" and no Warp switch; type its tempo on the pad and
+// the switch appears. (31) Right after an import the row reads "measuring tempo…" and cannot
+// be touched until the note finishes. (32) Dragging the field while Warp is off changes
+// nothing you hear, even while the song plays; the value survives leaving the plate and a
+// relaunch. (33) The number pad opens here, and Import Audio still opens its picker after it.
+// (34) VoiceOver reads the field with its unit and hint and each ÷2 / ×2 as its own button;
+// check at a large text size that nothing runs off the screen. (35) After an import the
+// detected tempo is still adopted (S1-0 changed how the clip is found).
 
 #if canImport(SwiftUI)
 import Foundation
@@ -188,6 +205,12 @@ struct WorkstationView: View {
     /// reports the clip's id, so the key carries both and nothing is looked up.
     @State private var tuningPending: AnalysisRequest?
 
+    /// S1 — the clip whose tempo analysis is still running, or nil. Its tempo row stays
+    /// untouchable meanwhile: a stray swipe over a fresh "not set" row would otherwise author a
+    /// tempo, and never-clobber would then refuse the detection that was about to land.
+    /// Separate from `tuningPending` because that key stays set after the task ends.
+    @State private var measuringClip: UUID?
+
     var body: some View {
         let summary = WorkstationSummary(document: timeline.document)
         VStack(alignment: .leading, spacing: 10) {
@@ -195,7 +218,10 @@ struct WorkstationView: View {
                 emptyState
             } else {
                 songLine(summary)
-                ForEach(summary.lanes) { laneRow($0) }
+                ForEach(summary.lanes) { row in
+                    laneRow(row)
+                    if row.kind == .audio { partTempoRows(laneID: row.id) }
+                }
                 if summary.orphanRegionCount > 0 { orphanLine(summary.orphanRegionCount) }
                 if summary.automationLaneCount > 0 { automationLine(summary.automationLaneCount) }
             }
@@ -278,6 +304,7 @@ struct WorkstationView: View {
                 (AudioKeyAnalysis.analyse(url: url), AudioTempoAnalysis.analyse(url: url))
             }.value
             clipStore.adoptDetectedNativeBPM(id: request.clipID, tempo)
+            if measuringClip == request.clipID { measuringClip = nil }
             let parts = [AudioKeyAnalysis.summarise(tuning), AudioTempoAnalysis.summarise(tempo)]
                 .compactMap { $0 }
             guard !parts.isEmpty else { return }
@@ -427,6 +454,33 @@ struct WorkstationView: View {
                 ? "Stop the song to change warp"
                 : "Plays this track's parts at the song's tempo instead of their recorded speed")
         }
+    }
+
+    /// S1 — one row per imported FILE on this audio track, under the track row. The tempo is a
+    /// property of the clip, not of the placement, so a file placed twice is one row. Declared
+    /// AFTER `warpSwitch` on purpose: `TheWarpSwitchIsHonestTests` slices from `laneFacts` to
+    /// `warpSwitch` and this must not sit inside that slice.
+    ///
+    /// Cold reads only — `timeline.document` and `clipStore.filledClips` change on an edit,
+    /// `preflightTempo` is `@ObservationIgnored`. The drag-rate draft lives in the leaf.
+    @ViewBuilder
+    private func partTempoRows(laneID: UUID) -> some View {
+        let document = timeline.document
+        ForEach(AudioTempoCorrection.audioClips(onLane: laneID, in: document,
+                                                clips: clipStore.filledClips)) { clip in
+            PartTempoRow(clip: clip,
+                         lockedByWarp: AudioTempoCorrection.isLockedByWarp(clip: clip, in: document),
+                         measuring: measuringClip == clip.id,
+                         songBPM: player.preflightTempo,
+                         onSet: { correctTempo($0, clipID: clip.id) })
+        }
+    }
+
+    /// Hands the decision to `AudioTempoCorrection` and the write to `ClipStore` — this view
+    /// still sends `timeline` exactly one message, `document`.
+    private func correctTempo(_ bpm: Double, clipID: UUID) {
+        AudioTempoCorrection.setNativeBPM(bpm, clipID: clipID, in: timeline.document,
+                                          clipStore: clipStore)
     }
 
     /// The printed half of the same facts `spokenDescription` says — short, because the row
@@ -675,6 +729,7 @@ struct WorkstationView: View {
                 // `fileExists` probes, and this is the MAIN ACTOR. `AudioImport` already
                 // held the managed copy, so it reports it.
                 tuningPending = AnalysisRequest(url: landing.managedURL, clipID: landing.clip.id)
+                measuringClip = landing.clip.id
             case .failure(let failure):
                 importNote = failure.userMessage
             }
@@ -695,6 +750,104 @@ struct WorkstationView: View {
                     pianoRoll: pianoRoll)
     }
 
+}
+
+/// S1 — one imported file's own tempo: a number field, and ÷2 / ×2 on their own line.
+///
+/// ⚠️ THE BUTTONS DO NOT SHARE THE FIELD'S LINE. A labelled field pins its box to a
+/// Dynamic-Type-scaled width that does not compress; a field plus two 44 pt buttons in one
+/// `HStack` overflows a portrait phone at larger text sizes (#1026/#1027, which the founder
+/// rejected twice).
+///
+/// ⚠️ THE DRAFT IS CLEARED WHENEVER THE STORED TEMPO MOVES. A cancelled drag or one that ends
+/// where it began fires no `onCommit`, so without the reset the field would keep showing a
+/// stale draft after a ×2 or a late detection.
+private struct PartTempoRow: View {
+    let clip: Clip
+    let lockedByWarp: Bool
+    let measuring: Bool
+    let songBPM: Double
+    let onSet: (Double) -> Void
+
+    @State private var draft: Double? = nil
+    @Environment(\.isEnabled) private var isEnabled
+
+    var body: some View {
+        let known = clip.nativeBPM > 0
+        VStack(alignment: .leading, spacing: 4) {
+            Text(caption(known: known))
+                .font(EchoelTheme.font(11))
+                .foregroundStyle(EchoelTheme.dim)
+            EchoelValueField(label: known ? "Tempo" : "Set tempo",
+                             value: Binding(get: { shownValue }, set: { draft = $0 }),
+                             range: AudioTempoCorrection.bounds,
+                             unit: "BPM",
+                             decimals: 1,
+                             hint: hint(known: known),
+                             onCommit: { commitDraft() })
+            if known {
+                HStack(spacing: 8) {
+                    octaveButton("÷2", target: AudioTempoCorrection.halved(clip.nativeBPM),
+                                 spoken: "Halve tempo")
+                    octaveButton("×2", target: AudioTempoCorrection.doubled(clip.nativeBPM),
+                                 spoken: "Double tempo")
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+        .disabled(lockedByWarp || measuring)
+        .padding(.vertical, 6)
+        .padding(.leading, 36).padding(.trailing, 10)
+        .onChange(of: clip.nativeBPM) { _, _ in draft = nil }
+    }
+
+    private var shownValue: Double {
+        draft ?? AudioTempoCorrection.startingValue(nativeBPM: clip.nativeBPM, songBPM: songBPM)
+    }
+
+    private func commitDraft() {
+        guard let value = draft else { return }
+        draft = nil
+        onSet(value)
+    }
+
+    private func caption(known: Bool) -> String {
+        if measuring { return "\(clip.name) · measuring tempo…" }
+        if lockedByWarp { return "\(clip.name) · turn Warp off to change its tempo" }
+        return known ? clip.name : "\(clip.name) · tempo not set — enter it to use Warp"
+    }
+
+    private func hint(known: Bool) -> String {
+        if measuring { return "The file's tempo is still being measured." }
+        if lockedByWarp { return "Turn Warp off to change this file's tempo." }
+        return known
+            ? "This file's own tempo. Warp uses it to fit the file to the song tempo."
+            : "Not set. Starts at the song tempo; enter the file's own tempo to enable Warp."
+    }
+
+    @ViewBuilder
+    private func octaveButton(_ glyph: String, target: Double?, spoken: String) -> some View {
+        if let target {
+            Button {
+                draft = nil
+                onSet(target)
+            } label: {
+                Text(glyph)
+                    .font(EchoelTheme.font(12, .semibold))
+                    .foregroundStyle(isEnabled ? EchoelTheme.text : EchoelTheme.dim)
+                    .padding(.horizontal, 10)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                        .fill(EchoelTheme.fill))
+                    .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                        .strokeBorder(EchoelTheme.border, lineWidth: 1))
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(spoken)
+            .accessibilityHint("Sets this file's tempo to \(String(format: "%.1f", target)) BPM")
+        }
+    }
 }
 
 /// The `.task(id:)` key of an owed analysis: the managed copy to read AND the clip its tempo

@@ -125,7 +125,8 @@ final class TheLaneSinkIsNamedByItsConformerTests: XCTestCase {
             `Clip.swift` no longer reads `AudioClipRegion.nativeBPMRange`. That single member is \
             the ONLY live code use of the whole editor model — measured comment-stripped, the \
             other two files naming it in code are `AudioClipPlayer` and `WarpedClipPlan`, both \
-            with zero external references. The tempting reading of #1381 is "the executor is \
+            with zero external references (S1's `AudioTempoCorrection.bounds` forwards the SAME \
+            member, which is a second reader of the range, not a second spelling of it). The tempting reading of #1381 is "the executor is \
             dead, delete its model too"; what forbids that is #416 — `Clip` cites this type as \
             the home of the shared clamp range, and a second spelling of a range is the defect \
             whether or not the two agree today. If the range moved, move this claim with it.

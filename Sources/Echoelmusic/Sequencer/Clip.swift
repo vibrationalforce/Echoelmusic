@@ -216,13 +216,13 @@ public struct Clip: Codable, Sendable, Equatable, Identifiable {
     /// the clip NEVER warps. Clamped to `AudioClipRegion.nativeBPMRange` when set; older
     /// documents decode as 0 (bit-identical playback, nothing pruned). MIDI clips ignore it.
     ///
-    /// ⭐ ITS ONE PRODUCTION WRITER IS A DETECTION (#B2): `ClipStore.adoptDetectedNativeBPM`,
-    /// fed by `AudioTempoAnalysis` after an import, only for a KNOWN estimate and only while
-    /// this is still 0. ⛔ This doc used to say "seeded from the import bar-guess
-    /// (`TempoMatch`), user-correctable in the editor ('Clip BPM')". Neither existed: the
-    /// import passed no tempo, and no "Clip BPM" field is constructed anywhere in `Sources/`.
-    /// ⚠️ An AUTHORED writer (a tempo field, tap-tempo on a clip) would make this value mean
-    /// two things; whoever adds one decides whether it needs a provenance flag.
+    /// ⭐ TWO PRODUCTION WRITERS, ONE RULE EACH. The DETECTION (#B2,
+    /// `ClipStore.adoptDetectedNativeBPM`, fed by `AudioTempoAnalysis`) writes a KNOWN estimate
+    /// only while this is still 0. The AUTHORED one (S1, `ClipStore.setAuthoredNativeBPM`, via
+    /// `AudioTempoCorrection` — the Workstation's ×2 / ÷2 and hand-entered tempo) overrides.
+    /// No provenance flag: a later detection is refused by never-clobber, so it cannot replace
+    /// an authored value. ⛔ This doc once said "user-correctable in the editor ('Clip BPM')"
+    /// when no such field existed; since S1 the correction is real and lives in the Workstation.
     public var nativeBPM: Double
     /// Parameter automation the clip carries (automation-in-track cycle 4).
     /// Ticks are CLIP-RELATIVE (0 = the clip's first step), so the lanes travel

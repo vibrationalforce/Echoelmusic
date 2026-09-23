@@ -5,7 +5,7 @@
 // public, Foundation-only `TempoOnsetEnvelope` + `TempoDetector` on synthetic PCM built in this
 // file from a deterministic LCG. Claim 14 is a SOURCE-TEXT SCAN. Claims 15–16 are #B2: 15 drives
 // the pure adoption policy with values (the real `ClipStore` persists to the App Group, so no
-// guard writes through it), 16 is a SOURCE-TEXT SCAN of the one writer and the door. Whether real recordings get the
+// guard writes through it), 16 is a SOURCE-TEXT SCAN of the detection writer and the door. Whether real recordings get the
 // right tempo is a DEVICE question, open, and marked at `TempoDetector.confidenceFloor`.
 //
 // HONEST GRADING (§3). Every behavioural claim names a type this commit creates, so the file does
@@ -379,7 +379,7 @@ final class TheDetectedTempoIsHonestTests: XCTestCase {
                        "an adopted tempo goes through the ONE clamp `Clip` already owns (#416)")
     }
 
-    /// 16. (#B2) SOURCE-TEXT SCAN: the ONE writer asks the policy; the door runs the analysis
+    /// 16. (#B2) SOURCE-TEXT SCAN: the DETECTION writer asks the policy; the door runs the analysis
     /// behind the hop and writes the CLIP; the synchronous import transaction stays out of it.
     func testTheTempoIsAdoptedByTheClipStoreFromBehindTheHop() throws {
         let store = try code("Sources/Echoelmusic/Core/ClipStore.swift")
@@ -398,7 +398,7 @@ final class TheDetectedTempoIsHonestTests: XCTestCase {
         XCTAssertTrue(door[hop.upperBound..<end.lowerBound].contains("AudioTempoAnalysis.analyse(url: url)"),
                       "the tempo analysis is seconds of work and must run INSIDE the detached hop")
         XCTAssertTrue(door.contains("clipStore.adoptDetectedNativeBPM("),
-                      "the door must write through the store's one writer")
+                      "the door must write through the store's detection writer")
         XCTAssertFalse(door.contains("nativeBPM ="), "the door must not assign the field itself")
         XCTAssertFalse(door.contains("setTempo("), "a detected tempo must never reach the transport")
 
