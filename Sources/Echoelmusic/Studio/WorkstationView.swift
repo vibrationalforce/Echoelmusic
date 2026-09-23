@@ -181,7 +181,12 @@ struct WorkstationView: View {
     /// stale answer landing on a fresh note.
     ///
     /// ⚠️ LOCAL, LIKE THE OTHER TWO, AND NOT HOT — it changes once per completed import.
-    @State private var tuningPending: URL?
+    ///
+    /// ⛔ S1-0: THIS HELD ONLY THE URL, and the analysis then looked the clip up again by
+    /// comparing `mediaRef` strings — a second opinion about clip content in the one view
+    /// `TheWorkstationPlaysTheTimelineTests` forbids to inspect it. The `Landing` already
+    /// reports the clip's id, so the key carries both and nothing is looked up.
+    @State private var tuningPending: AnalysisRequest?
 
     var body: some View {
         let summary = WorkstationSummary(document: timeline.document)
@@ -259,21 +264,20 @@ struct WorkstationView: View {
         // tempo is adopted through `ClipStore.adoptDetectedNativeBPM` (never-clobber, see
         // `AudioTempoAnalysis.adoptableNativeBPM`), because warp needs it and nothing else
         // can supply it. It is inaudible until the person turns warp on for a region. The
-        // clip is found by its managed path, which `MediaLibrary` makes collision-free; a
-        // clip deleted in the meantime is simply not found, and nothing is written.
+        // clip is named by the id the import's `Landing` reported (S1-0); a clip deleted in
+        // the meantime is simply not found by the store, and nothing is written.
         //
         // ⚠️ THE WRITE DOES NOT WAIT FOR THE NOTE. A newer import supersedes the SENTENCE,
         // not the fact: the older clip's tempo is still that clip's tempo.
         .task(id: tuningPending) {
             #if canImport(AVFoundation)
-            guard let url = tuningPending else { return }
+            guard let request = tuningPending else { return }
+            let url = request.url
             let base = importNote
             let (tuning, tempo) = await Task.detached(priority: .utility) {
                 (AudioKeyAnalysis.analyse(url: url), AudioTempoAnalysis.analyse(url: url))
             }.value
-            if let clip = clipStore.filledClips.first(where: { $0.mediaRef == url.path }) {
-                clipStore.adoptDetectedNativeBPM(id: clip.id, tempo)
-            }
+            clipStore.adoptDetectedNativeBPM(id: request.clipID, tempo)
             let parts = [AudioKeyAnalysis.summarise(tuning), AudioTempoAnalysis.summarise(tempo)]
                 .compactMap { $0 }
             guard !parts.isEmpty else { return }
@@ -642,8 +646,8 @@ struct WorkstationView: View {
     /// (`document`) and names no `Clip`, `TimelineRegion` or `FileManager`.
     ///
     /// ⛔ THIS SENTENCE USED TO END "or path" — narrowed by Phase E, see the file header. The
-    /// success branch reads ONE `URL` off the `Landing` the transaction returns. It neither
-    /// builds a path nor looks one up.
+    /// success branch reads the `URL` and the clip id off the `Landing` the transaction
+    /// returns (the id since S1-0). It neither builds a path nor looks one up.
     private func handleImport(_ result: Result<[URL], Error>) {
         switch result {
         case .failure(let error):
@@ -670,7 +674,7 @@ struct WorkstationView: View {
                 // merits, not only on the spelling: `resolveRef` runs up to five
                 // `fileExists` probes, and this is the MAIN ACTOR. `AudioImport` already
                 // held the managed copy, so it reports it.
-                tuningPending = landing.managedURL
+                tuningPending = AnalysisRequest(url: landing.managedURL, clipID: landing.clip.id)
             case .failure(let failure):
                 importNote = failure.userMessage
             }
@@ -692,4 +696,13 @@ struct WorkstationView: View {
     }
 
 }
+
+/// The `.task(id:)` key of an owed analysis: the managed copy to read AND the clip its tempo
+/// belongs to, both taken from the import's `Landing` (S1-0). Equatable so a second import
+/// restarts the task exactly when the pair changes.
+private struct AnalysisRequest: Equatable {
+    let url: URL
+    let clipID: UUID
+}
+
 #endif
