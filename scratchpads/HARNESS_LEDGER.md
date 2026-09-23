@@ -175,6 +175,33 @@ nicht ein Binding-Name — ein Body kann `Type.shared.hot` ohne jedes Binding le
 Anspruch wird auf die EXISTENZ des Erzeugers bedingt (`…Exists()` → `XCTSkip`), weil das Löschen
 eines leserlosen Timers legitime Arbeit ist und nicht mit Rot bestraft werden darf (#364).
 
+## PLAYBOOK (2026-09-23, #F1) — bind the two halves, do not ban one of them
+
+**Situation.** You find a user-facing sentence that instructs an action no production path can
+perform (the #164/#227 lying control, one level up). The obvious guard is a BAN: "this message
+must not instruct". Do not write it.
+
+**Why the ban is wrong.** The missing capability is usually a FOUNDER decision, not a defect —
+and the day they approve it, the ban is in the way and gets deleted, taking the protection with
+it. Measured: #E3 wrote the biconditional `instructs == (some creator has a production caller)`
+on 2026-09-22 with an explicit note that it must not block a founder's lane door; the founder
+approved that door on **2026-09-23, one day later**. A ban would have lasted 24 hours.
+
+**The playbook.** Assert the AGREEMENT of the two halves, never the value of one:
+  1. measure the capability side mechanically (callers of the named creators, comment-stripped);
+  2. measure the copy side from the one place the wording lives;
+  3. `XCTAssertEqual(instructs, hasCapability, …)`, with a message that says the claim prefers
+     neither side and names both current values;
+  4. state its REACH in the doc — a creator under a fourth name is invisible, so it under-claims.
+
+**What you get.** The guard becomes the CHECKLIST for the flip instead of an obstacle to it: on
+the day the capability lands, the red names the second half of the work before anyone can forget
+it. It also stays correct if the capability is later REMOVED, which a ban does not.
+
+**Generalises to:** any pair of (a sentence the user reads) and (a thing the app can do) —
+permission copy vs. the plist key, an empty-state hint vs. the control it names, a Store claim
+vs. a shipped feature.
+
 ## PLAYBOOK (2026-08-30, #897/#898): ein `prefix(N)`-Fenster über Quelltext ist ein LATENTES ROT
 
 **Der Mechanismus — und ⛔ er gilt NICHT für den ganzen Bundle, wie die erste Fassung hier

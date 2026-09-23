@@ -38790,3 +38790,55 @@ davor hinterlässt hier keine Spur. Was POSITIV belegt ist (#445 — nur Anwesen
 **passed (2.831 s)** — Claim 18 aus #E3 ist gelaufen und grün.
 
 Nebenbefund: 46 slow-type-check-Warnungen, KEINE davon in einer von mir berührten Datei (#933d).
+
+## 2026-09-23 — #F1: „Add Audio Track" — der Founder macht die Sackgasse auf, der Bikonditional erzwingt das Umschalten
+
+**Commit `28f39f2e4`, beide Gates grün** (`main` ist auf die sha vorgerückt; der #1405-Merge
+verlangt Compile-Check-Conclusion `success` UND den Schritt `Build for Testing` — Abwesenheit
+ist Ablehnung, also ist das Vorrücken die Conclusion, nur anders zugestellt, §5).
+
+**DER BESCHLUSS.** Founder 2026-09-23: *„A minimal user-reachable ‚Add Audio Track' action is
+approved"*, mit zehn Auflagen. ⚠️ **Die Nachricht war ABGESCHNITTEN** — sie kündigte ZWEI
+aufgelöste Holds an und lieferte einen; der Schlusssatz bricht mitten in *„If
+TimelineStore.addLane currently has an API limitation such as not returning the created lane
+identity"* ab. **Gemessen statt gefragt** (§6): `addLane` gibt nichts zurück, und kein
+Aufrufer braucht die Identität — der Import wählt seine Spur über
+`firstImportableAudioLane`. Die Klausel band also nichts. Der zweite Hold ist weiterhin offen
+und ungenannt; das ist die EINE Frage, die an den Founder zurückgeht.
+
+**DIE ARCHITEKTUR-ENTSCHEIDUNG, und sie sah zuerst wie ein Widerspruch aus.** Der Founder
+verlangt „mutation must go through the existing TimelineStore owner"; `TheWorkstationHasADoor`
+Anspruch F verlangt, dass `WorkstationView` an `timeline` NUR `document` schickt. Kein
+Widerspruch: Anspruch F sagt in seinem eigenen Kommentar, die Reparatur für eine Fläche, die
+schreiben MUSS, sei die Übergabe des Stores an einen Helfer. Genau so arbeitet
+`AudioImport.perform` seit #141. Also `Button → AudioImport.addAudioTrack(timeline:) →
+timeline.addLane(kind: .audio)`, und der Erzeuger sitzt neben `firstImportableAudioLane`, dem
+Prädikat, mit dem er übereinstimmen MUSS (#416).
+
+**⭐ DER BIKONDITIONAL HAT GETAN, WOFÜR ER GEBAUT WURDE — einen Tag nach seiner Entstehung.**
+Anspruch 18 (#E3) verlangt `instructs == (ein Spur-Erzeuger hat einen Produktions-Aufrufer)`.
+Die rechte Seite kippte, also kippte die linke im selben Commit: die Meldung lautet wieder
+„This project has no audio track — add an audio track first." **Ein VERBOT wäre am 2026-09-23
+im Weg gewesen und hätte gelöscht werden müssen — mit ihm der Schutz. Der Bikonditional war
+stattdessen die CHECKLISTE.**
+
+**BENOTUNG** (kein lokales Swift): 14 Propositionen transkribiert, Worktree 14/14. Ansprüche
+20/21 rot auf dem Eltern-Baum. Drei Mutanten, drei Tötungen — Meldung degradiert bei stehender
+Tür → 18 rot · Tür entfernt bei stehender Anweisung → 18 und 21 rot · View ruft
+`timeline.addLane(` direkt → F, 20a und 21 rot. Anspruch 19 ist Verhalten und misst DELTAS,
+nicht Absolutwerte: `TimelineStore` hat genau einen Init und der LÄDT aus dem App-Group-
+Container, ein Absolutwert bestände einmal und fiele danach aus einem Grund, der nichts mit
+dem Code zu tun hat.
+
+**EIN EIGENER #E2-DEFEKT VOR DEM GATE GEFANGEN:** Anspruch 21 enthielt zuerst einen Ternary
+über zwei String-Zweige INNERHALB einer `\( … )`-Interpolation — genau die Form, die am
+2026-09-22 einen TEST BUILD gekostet hat, und Anspruch 18 zwei Bildschirme höher trägt die
+Warnung davor in seinem eigenen Rumpf. Herausgehoben, Begründung an der Zeile.
+
+**PROSA-HEIMATEN MITGEZOGEN (#456):** der `noAudioLane`-Doc-Block, die
+`WorkstationView`-Kopfposten (3) und (12) plus fünf neue Geräte-Posten (14)–(18), die
+Doc-Blöcke von Anspruch 18 und F, die aufruferlose Zählung in `TimelineStore` (46 → 45) und
+die CLAUDE.md-Registerzeile. Provenienz: `memory/LEDGER_COUNTS.md` §AK.2. CLAUDE.md 149.562 B
+(438 B unter der Decke).
+
+**OFFEN:** Geräteprobe (14)–(18) [NEEDS-FOUNDER-VERIFY] · der zweite, nie zugestellte Hold.

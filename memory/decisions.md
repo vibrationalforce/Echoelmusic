@@ -2601,3 +2601,31 @@ Wortgrenzen-Nadel `.microphoneArrayPlaceholder` nicht fälschlich trifft.
 **Nicht entschieden, weil nicht meins:** ob `BioDataSource` mittelfristig ganz verschwindet und
 `EchoelBioEngine` auf `BioSource` umgestellt wird. Das berührt einen Typ mit zwei öffentlichen
 Eigenschaften und gehört in eine eigene Scheibe.
+
+### 2026-09-23 — Der Spur-Erzeuger lebt im Helfer, nicht in der Fläche (#F1)
+
+**Entscheidung.** „Add Audio Track" ruft `AudioImport.addAudioTrack(timeline:)`, und NUR dieser
+Helfer ruft `TimelineStore.addLane`. `WorkstationView` schickt dem Store weiterhin genau eine
+Nachricht: `document`.
+
+**Begründung.** Die Founder-Auflage („mutation must go through the existing TimelineStore
+owner") und `TheWorkstationHasADoorTests` Anspruch F („die Fläche schickt `timeline` nur
+`document`") sehen wie ein Widerspruch aus. Anspruch F nennt in seinem EIGENEN Kommentar die
+Reparatur für eine Fläche, die schreiben muss: den Store an einen Helfer übergeben, dessen
+eigener Wächter die Mutation besitzt. Genau diesen Saum benutzt `AudioImport.perform` seit
+#141 — die Tür fügt also keine neue Form hinzu. Zweitens sitzt der Erzeuger damit neben
+`firstImportableAudioLane`, dem Prädikat, mit dem er übereinstimmen MUSS (#416): ein Erzeuger,
+der abdriftet (`isBio: true`, `.midi`), legte eine Spur an, die der Import anschließend
+ablehnt — die leiseste Form eines lügenden Bedienelements.
+
+**Erwartetes Ergebnis.** Anspruch F bleibt strukturell grün (kein Mutator aus dem `body` —
+genau der Defekt, den er abwehrt), die Tür ist erreichbar, und `addLane` hat genau EINEN
+Produktions-Aufrufer. Anspruch 21 pinnt die Menge und verbietet einen zweiten Erzeuger NICHT
+(#364) — er bepreist ihn: wer einen anlegt, zieht diese Zeile und CLAUDE.mds Register mit.
+
+**Review:** 2026-10-23.
+
+**⚠️ OFFEN, und es ist eine Frage an den Founder, keine Aufgabe:** die Nachricht vom
+2026-09-23 kündigte ZWEI aufgelöste Holds an und lieferte einen. Der zweite ist nie
+angekommen; der Text bricht mitten im Satz über `addLane`s Rückgabewert ab. Gemessen: die
+abgeschnittene Klausel band nichts (kein Aufrufer braucht die Spur-Identität).
