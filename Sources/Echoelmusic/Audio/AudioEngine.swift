@@ -302,14 +302,17 @@ public final class AudioEngine {
     /// reset on its own thread (meters are tap-confined) and clears the flag.
     @ObservationIgnored nonisolated(unsafe) private let _resetMeters = UnsafeMutablePointer<Bool>.allocate(capacity: 1)
     /// Gate for the EXPENSIVE mastering meters (peak/true-peak oversample + EBU
-    /// R128 K-weighting/gating). Only `MasterLoudnessGrid` reads their outputs, and
-    /// it lives in a collapsed-by-default panel — yet the tap ran them on EVERY
+    /// R128 K-weighting/gating). Only `MasterLoudnessGrid` and (S4a) the scope's peak label
+    /// read their outputs, both on surfaces that are closed by default — yet the tap ran them on EVERY
     /// buffer, forever, burning CPU during play (a load contributor to the
     /// occasional "Knistern"). The cheap RMS level + FFT ring always run (the
     /// SpectralDonut + immersive visual need them); the heavy meters run ONLY while
-    /// a mastering readout is on screen. Set true `.onAppear`, false `.onDisappear`;
-    /// the 100 ms poll makes the readout live within a frame of opening.
+    /// a mastering readout is on screen. Since S4a the readers CLAIM it
+    /// (`claimDetailedMetering` on appear, `releaseDetailedMetering` on disappear) and
+    /// `meteringClaims` decides; `applyDetailedMeteringGate` is the one writer.
     @ObservationIgnored nonisolated(unsafe) private let _detailedMetering = UnsafeMutablePointer<Bool>.allocate(capacity: 1)
+    /// S4a — the surfaces holding the gate above open. Main actor only; the tap never sees it.
+    @ObservationIgnored private var meteringClaims = DetailedMeteringClaims()
     @ObservationIgnored nonisolated(unsafe) private var meterPollTimer: Timer?
 
     // MARK: - Audio-path timing instrument (#193 "es knistert")
@@ -1125,9 +1128,9 @@ public final class AudioEngine {
                 // Peak / true-peak / LUFS — meters are confined to this thread;
                 // only the resulting Floats cross to the poll timer via pointers.
                 // GATED: this is the EXPENSIVE work (true-peak oversampling + EBU
-                // R128 K-weighting/gating). Its only consumer is MasterLoudnessGrid
-                // (a collapsed-by-default panel), so run it ONLY while that readout
-                // is on screen — otherwise it burned CPU every buffer for nothing
+                // R128 K-weighting/gating). Its consumers are MasterLoudnessGrid and,
+                // since S4a, the scope's peak label — so run it ONLY while one of them
+                // is on screen (`meteringClaims`) — otherwise it burned CPU every buffer for nothing
                 // (a load contributor to the occasional "Knistern"). The cheap RMS +
                 // FFT ring below always run (SpectralDonut + immersive visual).
                 let n = Int(frameLength)
@@ -1591,8 +1594,8 @@ public final class AudioEngine {
                 // WHAT IT ACTUALLY BUYS, measured:
                 //   · ~420 no-op registrar mutations per second removed while the mastering
                 //     readout is closed — which is the DEFAULT
-                //     (`_detailedMetering.initialize(to: false)`; `setDetailedMetering` has
-                //     exactly two callers, `MasterLoudnessGrid`'s appear/disappear).
+                //     (`_detailedMetering.initialize(to: false)`; since S4a it opens only
+                //     while a reader holds a claim — `MasterLoudnessGrid` or the scope's peak).
                 //   · `masterPeakDb` and `masterLUFS` stop being published at all: ZERO
                 //     readers in `Sources/` and `Tests/` today — measured, not assumed.
                 //     They are KEPT (a mastering surface is the natural next reader, and
@@ -1704,13 +1707,32 @@ public final class AudioEngine {
         _resetMeters.pointee = true
     }
 
-    /// Enable/disable the expensive mastering meters (peak/true-peak + EBU R128).
-    /// Call `true` when a mastering readout (`MasterLoudnessGrid`) appears and
-    /// `false` when it disappears, so the tap only runs that DSP while it is read.
-    /// The cheap RMS level + FFT ring are unaffected (always on). Single-Bool
-    /// cross-thread write, same discipline as `resetMastering`.
-    func setDetailedMetering(_ on: Bool) {
-        _detailedMetering.pointee = on
+    /// A reader of the expensive mastering meters (peak/true-peak + EBU R128) came on screen.
+    /// Call from `.onAppear`; pair with `releaseDetailedMetering` in `.onDisappear`. The cheap
+    /// RMS level + FFT ring are unaffected (always on).
+    ///
+    /// ⭐ S4a: an OWNER SET, not the old single Bool — with two readers on screen, the first
+    /// to leave used to freeze the other's numbers. See `DetailedMeteringClaims`.
+    func claimDetailedMetering(_ owner: DetailedMeteringOwner) {
+        applyDetailedMeteringGate(meteringClaims.claim(owner))
+    }
+
+    /// The reader left the screen. Releasing an owner that holds no claim changes nothing.
+    func releaseDetailedMetering(_ owner: DetailedMeteringOwner) {
+        applyDetailedMeteringGate(meteringClaims.release(owner))
+    }
+
+    /// THE ONE WRITER of the gate after `initialize(to: false)`. Single-Bool cross-thread
+    /// write, same discipline as `resetMastering`.
+    ///
+    /// When the gate goes from CLOSED to OPEN it also requests a meter reset: the held values
+    /// are from whenever it was last open, and a scope opened after a loud passage would
+    /// otherwise show a stale peak falling for ~2 s. Safe, because a closed gate means no
+    /// reader's integration was running to lose; a gate that is already open is never reset
+    /// here, so opening the scope beside the Master panel keeps the panel's integration.
+    private func applyDetailedMeteringGate(_ open: Bool) {
+        if open && !_detailedMetering.pointee { _resetMeters.pointee = true }
+        _detailedMetering.pointee = open
     }
 
     private var currentOutputDescription: String {

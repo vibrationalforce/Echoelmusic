@@ -225,11 +225,10 @@ struct MasterLoudnessGrid: View {
             // whole subject is a comment that outlived its truth. (The commit message of
             // 6a6bb81 leans on the same non-existent page and cannot be edited — recorded
             // here instead.)
-            // ⚠️ LATENT, not introduced here: `.onAppear`/`.onDisappear` below flip GLOBAL
-            // metering state. Two simultaneously mounted grids would fight — the second to
-            // disappear silently freezes the first's numbers. Unreachable today precisely
-            // because there is only one caller; if #316b or a broadcast door ever mounts two,
-            // that ownership needs a refcount.
+            // ⭐ RESOLVED BY S4a: `.onAppear`/`.onDisappear` below used to flip ONE global
+            // Bool, so a second reader leaving would freeze these numbers. They now claim and
+            // release an OWNER (`DetailedMeteringClaims`) — the scope's peak label is the
+            // second owner, and the gate stays open while either is on screen.
             // #316b MOVED THE POINT, so this sentence moved with it. It names the FOUR
             // NUMBERS specifically, not "this panel", because the bars above are a separate
             // measurement on purpose (see the ⭐ note at the bars). An earlier draft said
@@ -245,12 +244,12 @@ struct MasterLoudnessGrid: View {
         // contributor to the occasional crackle). The cheap RMS level bars above
         // stay live regardless — they read the always-on meter levels.
         .onAppear {
-            audioEngine.setDetailedMetering(true)
+            audioEngine.claimDetailedMetering(.masterPanel)
             // Fresh integration window each open (the meters were paused while hidden,
             // so the held integrated/true-peak-max would otherwise show stale numbers).
             audioEngine.resetMastering()
         }
-        .onDisappear { audioEngine.setDetailedMetering(false) }
+        .onDisappear { audioEngine.releaseDetailedMetering(.masterPanel) }
     }
 
     /// One channel's level bar — fill proportional to level, turning warning near clip.

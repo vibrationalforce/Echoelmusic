@@ -170,6 +170,12 @@ private struct ScopePeakLabel: View {
             .accessibilityLabel(silent
                                 ? "Silent"
                                 : "Peak \(value) decibels true peak")
+            // S4a — the reader claims what it reads. The true peak is one of the GATED
+            // meters, so without a claim this label read a frozen value unless the Master
+            // panel happened to be open. It never calls `resetMastering()`: that would wipe
+            // the Master panel's integration while both are on screen.
+            .onAppear { audioEngine.claimDetailedMetering(.scope) }
+            .onDisappear { audioEngine.releaseDetailedMetering(.scope) }
     }
 }
 
