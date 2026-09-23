@@ -39100,3 +39100,21 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
 - S4 umgeplant: der Founder sagte 2026-08-13 wörtlich „Wenn dann ins Visual Window übertragen";
   der Field-Panel-Plan widerspricht dem und hatte drei echte Defekte (Scope-Peak nur mit
   Detail-Metering, Poincaré zeigt alte Kamera-Fenster, Messgeräte laufen unsichtbar weiter).
+
+## 2026-09-23h — S2 + S4 gebaut, Deploy v10.79.481
+
+- S2 `50ed5ed6a` (Parser gehärtet) + `bebcce6ff` (MIDI-Datei → EIN MIDI-Teil auf einer
+  MIDI-Spur, Workstation-Play spielt es; Kanal 10 übersprungen, Ein-Takt-Halten, 512 Takte /
+  8192 Noten / 2 MB). Bekannte Kopplung berichtet, nicht behoben: das laufende Instrument
+  lädt die geteilte Rolle alle 25–45 s neu (Prüfpunkt 48). Gates grün.
+- S4a `23c624749`: Detail-Metering als Owner-Set (Master-Panel + Scope), kein Bool mehr.
+  S4b `6bd1ae243`: der Poincaré-Plot vergisst eine gestoppte Kamera. Gates grün.
+- S4c `4a5814175`: die vier Messgeräte im Visual-Fenster (Large/Vollbild), ERSETZEN das Bild,
+  „Picture" zurück. `AnalysisDoor` im Leisten-Budget, Exit-Rang unberührt (3 Tür-Zustände
+  transkribiert, 0 Fehler). Kosten: Transport-Anzeige verschwindet früher (Prüfpunkt 6).
+  Reviewer (ui-state) fand 6 LOW, alle umgesetzt. Gates grün.
+- ⛔ BEFUND: `TheAnchorMissSkipsDoNotGrowTests` ist ROT seit spätestens 2d08e28eb (109 gegen
+  Ratchet 89). Diese Sitzung hatte 11 Stellen beigetragen — alle zurückgenommen (fileExists-
+  Guard bzw. XCTFail). Die 20 älteren: Aufgabe #168. Unsichtbar geblieben, weil Run Tests
+  wegen #396 immer rot ist — dieselbe Lage wie #686/#943b.
+- Deploy v10.79.481: `.deploy/release` einmal angefasst, `--since dd2493e4e` = 7 neue Bitten.

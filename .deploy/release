@@ -1,4 +1,4 @@
-build: v10.79.480 — Workstation-Reparatur: „Import Audio" öffnet die Dateiauswahl wieder, ehrlicher Leerzustand (#W1, #W2)
+build: v10.79.481 — Tempo einer Datei korrigieren, Tonhöhe je Audiospur, MIDI-Import, Messgeräte im Visual-Fenster (S1–S4)
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,70 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (v10.79.481) ──────────────────────────────
+
+  ⭐ DER „ALLE AUFGABEN"-BUILD (Founder 2026-09-23, „Great all tasks"). Vier Posten, alle
+  auf der Workstation oder im Visual-Fenster. Nichts davon kann ein Gate hören oder sehen;
+  die Prüfliste unten IST der Zweck des Builds.
+
+  ── POSTEN 1: TEMPO EINER DATEI KORRIGIEREN (S1) ──
+  Workstation-Chip → auf einer Audio-Spur mit Teil: ÷2 · ×2 · Feld (von Hand, mit Einheit).
+  Die Erkennung liegt bei Loops oft eine Oktave daneben (halb/doppelt) — das ist jetzt mit
+  einem Tipp behoben. Gilt für das TEIL, nie für den Song. Bei laufendem Warp gesperrt.
+
+  ── POSTEN 2: TONHÖHE JE AUDIOSPUR (S3) ──
+  „Pitch" je Audio-Spur, −24 … +24 Halbtöne, gleiche Geschwindigkeit, nur bei gestopptem
+  Song einstellbar. ⚠️ Die Tonhöhen-Stufe
+  bringt eine kleine Verzögerung mit, die nichts ausgleicht — hör, ob ein transponierter Teil
+  gegen die anderen SPÄT klingt (Prüfpunkt 38).
+
+  ── POSTEN 3: MIDI-DATEI IMPORTIEREN (S2) ──
+  Workstation-Chip → „Add MIDI Track" → „Import MIDI". Eine .mid wird EIN MIDI-Teil auf der
+  Spur und spielt mit Workstation-Play durch den Synth. Grenzen, ehrlich: Song-Tempo, 16tel-
+  Raster, Kanal 10 (Drums) wird übersprungen und gezählt, Noten länger als ein Takt werden
+  einen Takt gehalten, höchstens 512 Takte / 8192 Noten / 2 MB. ⚠️ Läuft das INSTRUMENT
+  gleichzeitig, lädt es alle 25–45 s die geteilte Notenrolle neu und überschreibt den Teil
+  hörbar — Import bei gestopptem Instrument spielen (Prüfpunkt 48: reicht das?).
+
+  ── POSTEN 4: DIE MESSGERÄTE IM VISUAL-FENSTER (S4) ──
+  Dein Satz vom 2026-08-13: „Wenn dann ins Visual Window übertragen." Visual-Fenster auf
+  Größe Large oder Vollbild → neuer Knopf (Balkendiagramm) in der Leiste → das Bild wird durch
+  EIN Messgerät ERSETZT: Wellen · Spektrum · Scope · Puls. „Picture" oben rechts bringt das
+  Bild zurück; Verkleinern auf Small/Medium auch. Das Field-Panel bleibt messgerätefrei.
+  Dazu zwei Reparaturen darunter: die Master-Lautheitsmesser laufen weiter, solange IRGENDEIN
+  Leser offen ist (S4a), und der Puls-Plot vergisst eine gestoppte Kamera (S4b).
+  ⚠️ Kosten: mit angebotenem Knopf verschwindet die Transport-Anzeige aus der Leiste — bei
+  Large auf 375-pt-Telefonen und im Vollbild auf 402/430-pt-Telefonen.
+
+  ── PRÜFLISTE (kurz, Nummern = Prüfpunkte im Code) ──
+  T1 (28–35)  Tempo ÷2/×2/Feld an einem Loop, dessen Tempo du kennst.
+  T2 (36–43)  Pitch +12 / −5 an Stimme und Drumloop; klingt es spät?
+  T3 (44–52)  Add MIDI Track → Import MIDI → Play spielt die ganze Datei; Drum-Datei wird
+              mit eigenem Satz abgelehnt.
+  T4 (S4c 1–7) Visual Large/Vollbild → Knopf → vier Segmente lesbar, „Picture" zurück;
+              Field-Selbstspiel klingt weiter, Tippen aufs Messgerät spielt keine Note.
+
+  ── PRÜF-BITTEN, DIE DIESER BUILD NEU BEANTWORTBAR MACHT ──
+  Gedruckt: python3 scripts/founder-verify.py --since dd2493e4e
+  → 7 NEU oder UMFORMULIERT, von 179 offenen:
+    audio  Sequencer/AudioTranspose.swift:29 (Pitch-Verzögerung hörbar?)
+    audio  CISmoke/ATransposedTrackPlaysThroughThePitchChainTests.swift:11 (→ 36–43)
+    audio  CISmoke/TheImportedTempoCanBeCorrectedTests.swift:11 (→ 28–35)
+    ui     Studio/WorkstationView.swift:147 (S1, 28–35)
+    ui     Studio/WorkstationView.swift:162 (#165, 36–43)
+    ui     Studio/WorkstationView.swift:175 (S2, 44–52)
+    visual Studio/VisualAnalysisMeter.swift:18 (S4c, 1–7)
+
+  ── STAND DER GATES ──
+  Jeder Code-Commit seit dd2493e4e (zehn Commits): Xcode Compile Check und CI/CD Build for Testing
+  grün, main schrittweise vorgerückt bis 4a5814175 (S4c). Run Tests = #396 wie immer;
+  Ausführung der neuen Wächter unbelegt. ⚠️ Ein älterer Wächter ist ROT und war es schon
+  vor diesem Build: der Anker-Miss-Ratchet (109 Stellen gegen 89, seit spätestens
+  2d08e28eb); S4c hat die elf Stellen dieser Sitzung zurückgenommen, die 20 älteren sind
+  als eigene Aufgabe notiert. Info.plist, Entitlements, project.yml, Workflows unverändert.
+
+  Der Vorgänger ist 10.79.480 (Build 2600), davor 10.79.479.
 
   ── WAS IN DIESEM BUILD NEU IST (v10.79.480) ──────────────────────────────
 
