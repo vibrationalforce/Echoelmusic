@@ -38842,3 +38842,61 @@ die CLAUDE.md-Registerzeile. Provenienz: `memory/LEDGER_COUNTS.md` §AK.2. CLAUD
 (438 B unter der Decke).
 
 **OFFEN:** Geräteprobe (14)–(18) [NEEDS-FOUNDER-VERIFY] · der zweite, nie zugestellte Hold.
+
+## 2026-09-23 — #F2: der Anweisungs-Sweep ist zu Ende, und sein Ergebnis ist eine KLASSIFIKATION, keine Reparatur
+
+**Die Aufgabe** (#148, aus #E3 verallgemeinert): #E3 fand EINEN nutzersichtbaren Satz, der eine
+Handlung nannte, die kein erreichbarer Pfad ausführen kann, und ließ 45 ungeprüft.
+
+**DIE MESSUNG, mit dem Befehl statt mit einer Erinnerung** (`.claude/rules/context.md` §2).
+Zwei Siebe über kommentar-gestripptes `Sources/`:
+
+```
+Sieb 1 — Imperativ am Stringanfang:  r'"([^"\\]{6,120})"' , String beginnt mit einem der
+         35 Imperativ-Verben (Add/Tap/Open/Choose/…/Swipe) und enthält ein Leerzeichen
+         →  84 Kandidaten
+Sieb 2 — QUERVERWEIS (nennt eine Handlung ANDERSWO): 20–160 Zeichen, enthält ein
+         Imperativ-Verb UND entweder steht es am Anfang oder es enthält ein deiktisches
+         Wort (above|below|first|instead|then|the X tile/chip/button/panel/row|Control Center)
+         →  53 Kandidaten
+```
+
+⚠️ **84 ≠ die früher notierten 47** — nicht weil sich das Repo bewegt hat, sondern weil meine
+Nadel breiter ist. Eine Zahl gehört zu genau EINER Operation; die beiden Zahlen beantworten
+verschiedene Fragen, und es wäre falsch, eine für veraltet zu halten.
+
+**DAS ERGEBNIS: von den 53 ist KEINE einzige ein #E3-Defekt, und das ist gemessen, nicht
+geschätzt.** Die 53 zerfallen in drei Klassen, und die Klassifikation ist der eigentliche Ertrag:
+
+1. **EIGENE BESCHRIFTUNG** (die Mehrheit): „Save preset", „Open Routing", „Add route" — der
+   String IST das Bedienelement. Er kann nicht auf ein fehlendes zeigen.
+2. **CODE-PRÜFBARER QUERVERWEIS** — er nennt eine Fähigkeit oder einen Namen, den ein `grep`
+   auflösen kann. Alle geprüft, alle sauber:
+   · `EchoelStudioView:3332` „Apple Watch feeds in through Health" → `BioSourceOption.health`
+     = „Apple Health", vierter Chooser-Eintrag (#1319 Scheibe A) ✓
+   · `EchoelFXView:1235` „Add one above" → `Label("Add bio modulation…")`, 139 Zeilen früher ✓
+   · `EchoelStudioView:6911` „Add Rings under Slider looks above" → „Slider looks — tap to add
+     or remove" (`:6224`) und der Look „Rings" (`LookBlendMap`, `BioVisualParams`) ✓
+   · `EchoelStudioView:8894`/`:12169` „the Record tile" → die Kachel beschriftet sich
+     `"Record \(loopBars.label) → send"`; „Record tile" ist eine Beschreibung, kein Fehlzeiger ✓
+   · `WorkstationView` „Audio 1" → `ClipKind.audio.displayName == "Audio"`, also heißt die
+     erste angelegte Spur wirklich „Audio 1" ✓ (Prüfung an dem, was #F1 selbst ausliefert)
+3. **RÄUMLICHE BEHAUPTUNG — die Restklasse, und KEIN Gate kann sie entscheiden.** „above",
+   „below", „the tile", „the X hides the picture": ob etwas WIRKLICH darüber steht, ist eine
+   Layout-Tatsache. Die Quellreihenfolge ist ein Indiz, kein Beweis — ein `ScrollView`, ein
+   `ViewThatFits`, ein Querformat kann sie umdrehen. **Das ist ein Geräte-Posten, kein Befund.**
+
+**KEIN WÄCHTER GEBAUT, UND DAS IST DIE ENTSCHEIDUNG, NICHT DIE FAULHEIT.** Ein „ein genannter
+Name muss existieren"-Scan müsste Steuerungs-Namen aus Prosa extrahieren — eine Nadel, die
+für ihren genannten Grund kaum rot werden kann (#367) — und die `doctor`-Regel lautet: eine
+Prüfung nur für einen Fehler, den dieses Repo SCHON EINMAL gemacht hat. Diese Sorte ist
+bisher genau einmal aufgetreten (#E3), und für genau die steht seit #E3 der Bikonditional.
+Eine elfte Prüfung, die niemand liest, ist der Mechanismus, der `continue-on-error`
+unsichtbar gemacht hat.
+
+**BEILÄUFIGER BEFUND, der zu #F1 gehört:** `ImmersiveStageView:210` sagt „Add a track to place
+it in space". Der Satz war bis gestern falsch und ist seit #F1 WAHR — die Fläche ist
+allerdings weiterhin türlos, also sieht ihn niemand. Eine Tür-Öffnung dort erbt einen jetzt
+korrekten Satz; vor #F1 hätte sie einen lügenden geerbt.
+
+**OFFEN:** die räumlichen Behauptungen als Geräte-Durchgang (Task).
