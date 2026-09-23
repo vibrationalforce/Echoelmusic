@@ -143,6 +143,27 @@ public enum AudioKeyAnalysis {
     /// loop reached first. [NEEDS-FOUNDER-VERIFY]
     public static let keyMarginFloor: Double = 0.05
 
+    /// The concentration below which no concert pitch is reported. ⚠️ A JUDGEMENT TOO, but
+    /// the only one of the three whose error rates are MEASURED rather than argued, because
+    /// the null hypothesis here is writable: material with no tuning reference has
+    /// cents-deviations spread uniformly over (−50, 50].
+    ///
+    /// Simulated against that null (40 000 draws per cell) and against tuned material with
+    /// Gaussian jitter, at this floor:
+    ///   • untuned material wrongly given a tuning — 13.5 % at n = 8, 4.9 % at n = 12,
+    ///     0.1 % at n = 24, 0.0 % at n = 48. The weak spot is exactly `minSamples`, and it
+    ///     is stated rather than hidden: a file that yields only eight pitched windows is
+    ///     the case to distrust. `maxWindows` is 64, so the common case is the safe end.
+    ///   • tuned material wrongly refused — 0 % up to 10 cents of jitter, 8 % at 15,
+    ///     49 % at 20. Real YIN scatter on a decent recording sits well inside that.
+    ///
+    /// ⭐ THE FAILURE THIS PREVENTS IS SPECIFIC AND IT IS THE BRAND'S WORST ONE. A uniformly
+    /// random (i.e. untuned) fixture measured a4 = 432.55 Hz with concentration 0.361 —
+    /// and 432.55 SNAPS to the 432 Hz preset (`snappedA4` tolerance 1.5 Hz). Without this
+    /// floor the app announces "A4 ≈ 432 Hz" over noise, which is precisely the esoteric
+    /// claim `CLAUDE.md` bans, invented by the instrument itself. [NEEDS-FOUNDER-VERIFY]
+    public static let a4ConfidenceFloor: Double = 0.5
+
     /// The ONE place the user-facing phrasing lives (#416). nil in ⇒ nil out: a thin
     /// estimate says NOTHING rather than guessing, which is what `analyze`'s nil return is
     /// for.
@@ -168,22 +189,42 @@ public enum AudioKeyAnalysis {
     /// Collapsing both behind one threshold would throw away a good measurement to hide a
     /// bad one.
     ///
-    /// ⚠️ WHAT IS *NOT* GATED HERE, stated so nobody reads this as "both halves are now
-    /// validated": the A4 half has no evidence measure of its own. The honest one is the
-    /// circular-mean RESULTANT LENGTH (how concentrated the cents-deviations are), and
-    /// `analyze` does not compute it — it keeps `sumSin`/`sumCos` only long enough to take
-    /// the angle. A separate slice, deliberately: two weak gates are worse than one real
-    /// one.
+    /// ⭐ BOTH HALVES ARE NOW GATED, AND THE NOTE THAT STOOD HERE SAYING OTHERWISE IS THE
+    /// REASON THIS SLICE EXISTS. It read: *"the A4 half has no evidence measure of its own.
+    /// The honest one is the circular-mean RESULTANT LENGTH … `analyze` does not compute
+    /// it."* It computes it now (`DetectedTuning.a4Confidence`), it was two lines at the
+    /// one place the magnitude still existed, and the gap is closed. Kept in the past tense
+    /// rather than deleted because the SHAPE recurs: `atan2` discards the magnitude, so an
+    /// angle handed downstream has already thrown its own evidence away. **Whenever a
+    /// derived value crosses a boundary, ask what the producer knew and dropped.**
+    ///
+    /// ⚠️ THE TWO CLAUSES ARE BUILT SEPARATELY AND JOINED, rather than three whole
+    /// sentences with the A4 text repeated in each. With two independent gates that would
+    /// be six sentences and four copies of one phrase (#416), and the next gate would make
+    /// it twelve. It also keeps the common case byte-identical to what shipped.
+    ///
+    /// ⚠️ HOISTED, NOT INLINED. A ternary over two String-producing branches inside a
+    /// `\( … )` interpolation is the shape that cost a TEST BUILD on 2026-09-22 (#E2).
     public static func summarise(_ tuning: DetectedTuning?) -> String? {
         guard let tuning else { return nil }
-        let a4 = Int(tuning.snappedA4().rounded())
+        let keyPhrase: String
         if tuning.confidence < keyConfidenceFloor {
-            return "Key unclear — little tonal centre. A4 ≈ \(a4) Hz."
+            keyPhrase = "Key unclear — little tonal centre"
+        } else if tuning.keyMargin < keyMarginFloor {
+            keyPhrase = "Key ambiguous — two keys fit equally well"
+        } else {
+            keyPhrase = "Sounds like \(tuning.keyName)"
         }
-        if tuning.keyMargin < keyMarginFloor {
-            return "Key ambiguous — two keys fit equally well. A4 ≈ \(a4) Hz."
+        let a4Phrase: String
+        if tuning.a4Confidence < a4ConfidenceFloor {
+            // NOT "A4 ≈ ? Hz" and not a silent omission: the reading exists, it is simply
+            // not evidenced, and saying so is the whole point of the slice.
+            a4Phrase = "concert pitch unclear"
+        } else {
+            let a4 = Int(tuning.snappedA4().rounded())
+            a4Phrase = "A4 ≈ \(a4) Hz"
         }
-        return "Sounds like \(tuning.keyName), A4 ≈ \(a4) Hz."
+        return "\(keyPhrase), \(a4Phrase)."
     }
 
     // MARK: - The one impure step

@@ -67,6 +67,7 @@ final class TuningDetectorTests: XCTestCase {
     func testKeyNameFormatting() {
         let t = DetectedTuning(a4Hz: 440, keyRoot: 9, isMinor: true,
                                confidence: 0.8, runnerUpConfidence: 0.3,
+                               a4Confidence: 0.9,
                                centsOffset: 0, sampleCount: 20)
         XCTAssertEqual(t.keyName, "A minor")
     }

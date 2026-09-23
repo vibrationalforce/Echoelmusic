@@ -217,6 +217,99 @@ final class TheDetectedTuningHasAProducerTests: XCTestCase {
             """)
     }
 
+    /// Claim 1f (BEHAVIOUR) — the CONCERT PITCH half carries its own evidence, and the two
+    /// halves are INDEPENDENT. This fixture is the demonstration: twelve exactly-tuned
+    /// chromatic semitones have NO tonal centre (`confidence` 0) and a PERFECT tuning
+    /// reference (`a4Confidence` 1) — every deviation is zero, so they all point the same
+    /// way. A single threshold over both would have thrown the good measurement away to
+    /// hide the bad one.
+    func testAFileWithNoKeyCanStillHaveATrustworthyTuning() throws {
+        let chromatic = (60...71).map { hz($0) }
+        let tuning = try XCTUnwrap(TuningDetector().analyze(frequencies: chromatic))
+        XCTAssertGreaterThan(tuning.a4Confidence, AudioKeyAnalysis.a4ConfidenceFloor, """
+            Exactly-tuned material scored \(tuning.a4Confidence) for concentration, below \
+            the floor. Every cents-deviation here is zero, so the resultant length must be \
+            1 — a value below the floor means `analyze` is no longer measuring the \
+            magnitude of the same sum it takes the angle from.
+            """)
+        let sentence = try XCTUnwrap(AudioKeyAnalysis.summarise(tuning))
+        XCTAssertFalse(sentence.contains("Sounds like"), """
+            The key half regressed: "\(sentence)". Claim 1b covers this; if it is also \
+            red, fix that one first — this claim is about the TUNING half.
+            """)
+        XCTAssertTrue(sentence.contains("A4 "), """
+            A trustworthy tuning was withheld: "\(sentence)". The key being unknown must \
+            not suppress the concert pitch — they are separate facts with separate \
+            evidence, and collapsing them is what this claim exists to prevent.
+            """)
+    }
+
+    /// Claim 1g (BEHAVIOUR) — scattered detuning is NOT given a concert pitch, and the
+    /// fixture is the exact failure that motivated the floor.
+    ///
+    /// ⭐ THE STAKES ARE BRAND, NOT JUST CORRECTNESS. Untuned material measured
+    /// a4 = 432.55 Hz in simulation, and `snappedA4`'s 1.5 Hz tolerance SNAPS that to the
+    /// 432 Hz preset — so without the floor the instrument announces "A4 ≈ 432 Hz" over
+    /// noise it generated the reading from. `CLAUDE.md` bans exactly that claim in
+    /// user-facing copy; having the analyser invent it is worse than writing it.
+    ///
+    /// ⚠️ The fixture is DETERMINISTIC — a fixed spread of cents offsets, not a random
+    /// draw. A guard that rolls dice fails intermittently and gets muted (#343).
+    ///
+    /// ⭐ AND THIS FIXTURE MAKES THE SHARPER POINT THAN THE 432 ONE DOES: its deviations
+    /// cancel to a4 ≈ 440.4 Hz, which snaps to 440 — the most PLAUSIBLE answer there is.
+    /// Before the floor, the app answered "A4 ≈ 440 Hz" for material with no tuning
+    /// reference at all, and nothing about that sentence looks wrong. An invented 432 is
+    /// caught by a reader; an invented 440 is not, which is why the gate has to be the
+    /// evidence and not the value.
+    func testScatteredDetuningIsNotGivenAConcertPitch() throws {
+        // Twelve pitches whose cents-deviations are spread evenly around the circle: their
+        // vectors cancel, so the mean direction is meaningless and its length is ~0.
+        let scattered = (0..<12).map { i -> Double in
+            let cents = -50.0 + (100.0 / 12.0) * Double(i)
+            return hz(60 + i) * pow(2.0, cents / 1200.0)
+        }
+        let tuning = try XCTUnwrap(TuningDetector().analyze(frequencies: scattered), """
+            Evenly scattered detuning no longer yields an estimate. Re-anchor (#343).
+            """)
+        XCTAssertLessThan(tuning.a4Confidence, AudioKeyAnalysis.a4ConfidenceFloor, """
+            Deviations spread evenly around the circle scored \(tuning.a4Confidence) for \
+            concentration — at or above the floor. They cancel by construction, so this \
+            means the concentration is not being computed from the same vector sum.
+            """)
+        let sentence = try XCTUnwrap(AudioKeyAnalysis.summarise(tuning))
+        XCTAssertFalse(sentence.contains("A4 "), """
+            A concert pitch was reported for material with no tuning reference: \
+            "\(sentence)" (concentration \(tuning.a4Confidence), a4 \(tuning.a4Hz)). \
+            `summarise` must consult `a4Confidence` before naming a Kammerton — an \
+            invented 432 Hz reading is the worst claim this app can make.
+            """)
+    }
+
+    /// Claim 1h (SOURCE-TEXT SCAN) — the producer WRITES `a4Confidence`, and no call site
+    /// may lean on a default, because there is none. This is the counterpart to claim 1d
+    /// and it exists for the opposite reason: `runnerUpConfidence` defaults PERMISSIVELY
+    /// (a forgetful producer names a key it should not, and the gating claims go red),
+    /// while a default here would be RESTRICTIVE — the sentence would quietly stop
+    /// reporting a tuning, which no claim would notice. So the init takes it with no
+    /// default and a forgetful producer fails to COMPILE. This claim pins that the
+    /// declaration stays that way.
+    func testTheConcentrationArgumentHasNoDefault() throws {
+        let src = try code(Self.detectorFile)
+        XCTAssertTrue(src.contains("a4Confidence: Double,"), """
+            `DetectedTuning.init` no longer declares `a4Confidence: Double,` without a \
+            default. If it gained one, a producer that stops writing the concentration \
+            compiles silently and every tuning reading becomes unevidenced (default 0) or \
+            unconditionally trusted (default 1) — neither is visible in a diff \
+            (#431/#440/#443). Keep it mandatory, or add a claim that asserts the value.
+            """)
+        XCTAssertFalse(src.contains("a4Confidence: Double = "), """
+            `a4Confidence` acquired a default in `Core/TuningDetector.swift`. See above — \
+            the asymmetry with `runnerUpConfidence` is deliberate and documented at the \
+            init.
+            """)
+    }
+
     /// COUNTERWEIGHT (#343) — genuinely tonal material is STILL named. Without this, the two
     /// claims above would pass just as well if `summarise` had been changed to refuse
     /// everything, which would be a worse product than the defect they fix.

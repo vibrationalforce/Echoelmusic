@@ -65,6 +65,20 @@ public struct DetectedTuning: Sendable, Equatable {
     /// The best correlation among the other 23 candidates, 0…1 — the runner-up key's fit.
     /// Stored rather than derived because `analyze` is the only place that sees all 24.
     public var runnerUpConfidence: Double
+    /// How CONCENTRATED the cents-deviations are — the circular-mean resultant length,
+    /// 0…1. This is the A4 estimate's own evidence, and it is a different question from
+    /// `confidence`: 1.0 means every note is detuned by the SAME amount (a real, consistent
+    /// tuning reference), 0.0 means the deviations point every which way and the mean
+    /// direction is an artefact of where they happened to land.
+    ///
+    /// ⚠️ IT IS NOT A MEASURE OF BEING IN TUNE. Material tuned consistently 32 cents flat
+    /// scores 1.0 — correctly, because A4≈432 is then a trustworthy reading. The number
+    /// answers "is there a tuning reference to report", never "is this good intonation".
+    ///
+    /// ⭐ INDEPENDENT OF THE KEY HALF BY CONSTRUCTION, which is the point: exactly-tuned
+    /// chromatic material scores 1.0 here and 0.0 on `confidence` — a trustworthy tuning
+    /// with no key at all. Measured, and pinned by the guard.
+    public var a4Confidence: Double
     /// Global tuning offset vs A4=440, in cents (informational; −31.8 ≈ 432 Hz).
     public var centsOffset: Double
     /// How many valid pitches informed the estimate.
@@ -83,11 +97,23 @@ public struct DetectedTuning: Sendable, Equatable {
     /// "no runner-up known", which makes `keyMargin` read as the full confidence — the
     /// permissive direction, so any future producer that forgets it is CAUGHT by the guard
     /// rather than silently gated.
+    /// ⚠️ `a4Confidence` DELIBERATELY HAS NO DEFAULT, AND ITS NEIGHBOUR DELIBERATELY KEEPS
+    /// ONE — the asymmetry is the decision, not an oversight. A default is only safe when
+    /// forgetting it fails in the direction a guard can SEE. `runnerUpConfidence`'s 0 makes
+    /// `keyMargin` read as the full confidence: permissive, so a forgetful producer names a
+    /// key it should not and the gating claims go red. A default of 0 here would be
+    /// RESTRICTIVE instead — the sentence would just stop reporting a tuning — and an
+    /// over-cautious output is the kind of failure that survives review. Since every
+    /// construction site is inside this module, the strongest option is available: no
+    /// default at all, so a producer that forgets it does not compile (#431/#440/#443 —
+    /// a defaulted argument no call site writes is invisible in a diff).
     public init(a4Hz: Double, keyRoot: Int, isMinor: Bool,
                 confidence: Double, runnerUpConfidence: Double = 0,
+                a4Confidence: Double,
                 centsOffset: Double, sampleCount: Int) {
         self.a4Hz = a4Hz; self.keyRoot = keyRoot; self.isMinor = isMinor
         self.confidence = confidence; self.runnerUpConfidence = runnerUpConfidence
+        self.a4Confidence = a4Confidence
         self.centsOffset = centsOffset; self.sampleCount = sampleCount
     }
 
@@ -132,6 +158,17 @@ public struct TuningDetector {
         let meanTheta = atan2(sumSin, sumCos)
         let offsetCents = meanTheta / (2.0 * .pi) * 100.0           // (−50, 50]
         let a4 = 440.0 * pow(2.0, offsetCents / 1200.0)
+        //    The resultant LENGTH of the same sum — free here and computable nowhere else,
+        //    for the same reason as the key runner-up: this is where the evidence exists.
+        //    `atan2` throws the magnitude away, so a caller handed only the angle can never
+        //    recover how concentrated the deviations were.
+        //
+        //    ⚠️ DIVIDED BY THE COUNT, so it is a mean direction's length in 0…1 and not a
+        //    sum that grows with the take. Guarded because `valid.count` reaching zero would
+        //    have returned at the `minSamples` check above — belt-and-braces, not a live
+        //    path, and cheaper than reasoning about it again at the next edit.
+        let n = Double(valid.count)
+        let resultant = n > 0 ? (sumSin * sumSin + sumCos * sumCos).squareRoot() / n : 0
 
         // 2) Pitch-class histogram at the DETECTED tuning, so off-tuning notes still
         //    land in the correct class.
@@ -173,6 +210,10 @@ public struct TuningDetector {
             // numbers. A negative runner-up means the alternative is anti-correlated — no
             // ambiguity at all — and clamping it to 0 says exactly that.
             runnerUpConfidence: max(0, min(1, runnerUp)),
+            // Already in 0…1 by construction; clamped anyway because floating-point error on
+            // a long take can put a magnitude a hair past 1, and a "confidence" of 1.0000001
+            // reads as a bug at the only place anyone would look at it.
+            a4Confidence: max(0, min(1, resultant)),
             centsOffset: (offsetCents * 10).rounded() / 10,
             sampleCount: valid.count
         )
