@@ -168,6 +168,14 @@ final class CameraAnalyzer {
     /// before publishing any HRV field (the strap's gate, same fraction, same sentinel 0). Two
     /// readers now, one reachable; the plural above was a description of a consumer that did
     /// not exist on any reachable path.
+    ///
+    /// ⭐ S4b — IT DIES WITH ITS BEATS. Until S4b it survived both window resets (lock loss and
+    /// `resetPulseState`), so the Poincaré plot kept drawing the previous take's cloud after the
+    /// camera stopped or the finger lifted. It is now cleared at both places `rrIntervals` is.
+    /// The `isEmpty` check is not tidiness: the lock-loss block runs on EVERY frame while
+    /// confidence sits under 0.05, and this array is observed — an unconditional clear would
+    /// invalidate the plot's leaf ~15 times a second. Clearing changes nothing that is
+    /// published: both sites already zero `rmssd` and empty the arrays SDNN/pNN50 read.
     var rawIntervalsMs: [Double] = []
     /// Calculated RMSSD from camera PPG
     var rmssd: Double = 0
@@ -470,6 +478,7 @@ final class CameraAnalyzer {
                 rrIntervals.removeAll()
                 beatTimes.removeAll()    // stays 1:1 with rrIntervals, including when both are empty
                 rrSegments.removeAll()   // derived from the two above; KEEP LAST — see its doc
+                if !rawIntervalsMs.isEmpty { rawIntervalsMs.removeAll() }   // S4b: see its doc
                 recentBPMs.removeAll()   // don't seed the next lock from a stale median
             }
         }
@@ -548,6 +557,7 @@ final class CameraAnalyzer {
         rrIntervals.removeAll()
         beatTimes.removeAll()   // stays 1:1 with rrIntervals, including when both are empty
         rrSegments.removeAll()  // derived from the two above; KEEP LAST — see its doc
+        if !rawIntervalsMs.isEmpty { rawIntervalsMs.removeAll() }   // S4b: see its doc
         bpState = BandpassState()
         dcEstimate = 0
         dcWarmupCount = 0

@@ -9,11 +9,12 @@ import SwiftUI
 // with published grounding — the Poincaré plot is the standard non-linear HRV picture and
 // its two descriptors have accepted definitions (`PoincareMetrics`).
 //
-// WHAT IT DRAWS: each accepted beat interval against the NEXT one. A relaxed, coherent state
-// scatters into a wide comet along the diagonal; a tense or shallow-breathing one collapses
-// into a tight ball. The ellipse is not decoration — its two semi-axes ARE the two numbers in
-// the caption (SD1 across the diagonal, SD2 along it), so the picture and its label cannot
-// drift apart.
+// WHAT IT DRAWS: each accepted pulse interval against the NEXT one. A wide cloud along the
+// diagonal means the timing varies from beat to beat; a tight ball means it barely does. The
+// ellipse is not decoration — its two semi-axes ARE the two numbers in the caption (SD1 across
+// the diagonal, SD2 along it), so the picture and its label cannot drift apart. (⛔ S4b: this
+// paragraph used to read the shapes as "relaxed, coherent" and "tense or shallow-breathing" —
+// a health reading, which the paragraph below forbids. It describes timing, nothing more.)
 //
 // ⛔ WHAT IT IS NOT: a diagnosis, and not a coherence score. It is descriptive statistics of
 // an interval series for self-observation (CLAUDE.md safety section). No shape here means a
@@ -46,12 +47,18 @@ struct AnalysisPoincareView: View {
     @ScaledMetric(relativeTo: .caption) private var plotHeight: CGFloat = 132
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        // S4b — the beats are read HERE, in `body`, and handed to the Canvas. A read made only
+        // inside the Canvas draw closure is not certain to register this view as an observer,
+        // so the cloud could miss a beat. And a camera that is not running draws NO cloud:
+        // gated on `isRunning` (changes only on start/stop), never on `isLocked`, which can
+        // flip at the analyzer rate and would blink the cloud faster than the 3 Hz flash limit.
+        let rr: [Double] = cameraRPPG.isRunning ? cameraRPPG.rrWindowMs : []
+        return VStack(alignment: .leading, spacing: 6) {
             // No `TimelineView`: this picture changes when a BEAT lands (~1 Hz), not on a
             // clock. Observation delivers exactly those redraws and no more — a 20 fps
             // schedule here would redraw the same dots twenty times per beat. Reduce Motion
             // therefore needs no special case: there is no animation to freeze.
-            Canvas { ctx, size in draw(ctx, size) }
+            Canvas { ctx, size in draw(ctx, size, rr: rr) }
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                     .strokeBorder(EchoelTheme.border, lineWidth: 1))
@@ -61,13 +68,13 @@ struct AnalysisPoincareView: View {
                 // caption's label — the same defect the scope shipped and had to fix.
                 .accessibilityElement()
                 .accessibilityLabel("Poincaré plot")
-                .accessibilityHint("Each heartbeat interval drawn against the next one. A wide cloud along the diagonal means variable timing.")
+                .accessibilityHint("Each pulse interval drawn against the next one. A wide cloud along the diagonal means variable timing.")
             // SCIENCE-FIRST: the numbers, then the picture (Uncodixfy).
             PoincareReadoutLabel()
         }
     }
 
-    private func draw(_ ctx: GraphicsContext, _ size: CGSize) {
+    private func draw(_ ctx: GraphicsContext, _ size: CGSize, rr: [Double]) {
         guard size.width > 2, size.height > 2 else { return }
 
         // A SQUARE drawing region, centred. Both axes are the same quantity in the same unit,
@@ -84,7 +91,7 @@ struct AnalysisPoincareView: View {
         identity.addLine(to: CGPoint(x: originX + side, y: originY))
         ctx.stroke(identity, with: .color(EchoelTheme.border), lineWidth: 1)
 
-        guard let analysis = PoincareMetrics.analyse(rrMs: cameraRPPG.rrWindowMs),
+        guard let analysis = PoincareMetrics.analyse(rrMs: rr),
               !analysis.points.isEmpty else { return }
 
         // Centre and span. The centre is the cloud's own centroid; the half-span is scaled
@@ -184,6 +191,10 @@ private struct PoincareReadoutLabel: View {
     }
 
     private func readout() -> String {
+        // S4b — a stopped camera says so, instead of "Waiting for beats" forever.
+        guard cameraRPPG.isRunning else {
+            return "Camera pulse is off. This plot reads the camera pulse only."
+        }
         let raw = cameraRPPG.rrWindowMs
         // `nil` means nothing arrived AT ALL — not "what arrived was unusable". Keeping those
         // two apart is the whole reason `analyse` stopped returning `nil` for the second case:

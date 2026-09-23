@@ -10,9 +10,10 @@
 //  picture and its two axes have accepted definitions.
 //
 //  ⭐ WHY A PICTURE OF THE HEARTBEAT AND NOT ANOTHER NUMBER: the SHAPE is the
-//  information. A relaxed, coherent state draws a wide comet along the diagonal; a
-//  tense or shallow-breathing one draws a tight ball. Two numbers cannot say "wide in
-//  one direction, narrow in the other" as directly as an image of the cloud can.
+//  information. Timing that varies from beat to beat draws a wide cloud along the
+//  diagonal; timing that barely varies draws a tight ball. Two numbers cannot say "wide in
+//  one direction, narrow in the other" as directly as an image of the cloud can. (S4b: the
+//  shapes are timing, never a health or mood state — no copy may read them as one.)
 //
 //  DEFINITIONS. SD1 is the dispersion of the cloud PERPENDICULAR to the line of
 //  identity (short-term, beat-to-beat); SD2 is the dispersion ALONG it (long-term).
