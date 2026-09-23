@@ -14,10 +14,24 @@
 //  status, meta and SysEx events are handled/skipped. Percussion channel 10 is
 //  excluded by default (those are drum hits, not melody).
 //
+//  ⚠️ HARDENED FOR ARBITRARY FILES (S2, 2026-09-23), because the Workstation's "Import MIDI"
+//  hands this parser whatever a user picks. Three shapes of a malformed file used to hang the
+//  main actor or trap: a variable-length quantity with more than four bytes wrapped `<<` into a
+//  NEGATIVE length and walked the read index backwards (endless loop); a running `absTick`
+//  could overflow on `+=`; and `fileTick * 480` could overflow in `mapTicks`. Now a VLQ is at
+//  most FOUR bytes (the SMF maximum, 0x0FFF_FFFF — never negative), and the running tick is
+//  clamped to `maxFileTick`, so every product stays far inside `Int`. Every loop pass consumes
+//  at least one byte, so a track always terminates. Meta and SysEx events no longer latch
+//  running status (the SMF rule), so a stray data byte after one cannot become a phantom meta.
+//
 
 import Foundation
 
 public enum MIDIFileImporter {
+
+    /// The running tick's ceiling: 2^40 file ticks. A four-byte delta adds at most 2^28, and
+    /// `mapTicks` multiplies by `Note.ticksPerQuarter` (480 < 2^9), so nothing reaches 2^50.
+    static let maxFileTick = 1 << 40
 
     public enum ImportError: Error, Sendable, Equatable {
         case notAMIDIFile
@@ -76,9 +90,11 @@ public enum MIDIFileImporter {
             var absTick = 0
             var running: UInt8 = 0
 
+            // At most FOUR bytes (SMF), so the value is 0…0x0FFF_FFFF and never negative.
             func readVLQ() -> Int {
                 var value = 0
-                while i < bodyEnd {
+                for _ in 0..<4 {
+                    guard i < bodyEnd else { break }
                     let b = data[i]; i += 1
                     value = (value << 7) | Int(b & 0x7F)
                     if b & 0x80 == 0 { break }
@@ -87,11 +103,12 @@ public enum MIDIFileImporter {
             }
 
             while i < bodyEnd {
-                absTick += readVLQ()
+                absTick = Swift.min(absTick + readVLQ(), Self.maxFileTick)
                 guard i < bodyEnd else { break }
                 var status = data[i]
                 if status & 0x80 != 0 { i += 1 } else { status = running }   // running status
-                if status & 0x80 != 0 { running = status }
+                // Only channel messages latch running status; meta/SysEx cancel it (SMF).
+                if status >= 0x80, status < 0xF0 { running = status } else if status >= 0xF0 { running = 0 }
 
                 let hi = status & 0xF0
                 let chan = Int(status & 0x0F)
