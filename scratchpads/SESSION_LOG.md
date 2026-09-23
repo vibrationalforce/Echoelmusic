@@ -39079,3 +39079,24 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
   Register entfernt) → rot. Parent: Vorwärts-Wächter (Register existiert nicht).
 - FEATURE_MATRIX-Banner + CLAUDE.md-Register-Zeile zeigen auf die neue Datei (149 721 B).
 - Zehn Checker: alle 0.
+
+## 2026-09-23g — „Great all tasks ultracode": S1 und S3 gebaut, S2/S4 umgeplant
+
+- S1-0 `938fb81c4`: der Workstation-Tempo-Übernahme-Pfad nennt den Clip aus dem `Landing`
+  statt über `.mediaRef` (war seit #B2 per Transkription rot in TheWorkstationPlaysTheTimelineTests D).
+- S1 `5db909c5d`: Tempo je importierter Datei korrigieren — ×2 / ÷2 / von Hand
+  (`AudioTempoCorrection`, `ClipStore.setAuthoredNativeBPM`, Blatt `PartTempoRow`). Gesperrt,
+  solange ein Teil der Datei gewarpt ist; unhörbar ohne Warp, deshalb auch während des Spielens
+  bedienbar. Wächter `TheImportedTempoCanBeCorrectedTests` (12). Gates grün (main in 360 s).
+- S3 `fb6bb32fa` (#165): Pitch je AUDIOSPUR (nicht je Teil — kein Schema-Umbau), ±24 aus dem
+  ±2400-Cent-Bereich des Knotens abgeleitet, gestoppt-only. Der vorhandene TimePitch-Zweig trägt
+  es; transponierte Beats-Teile überspringen das Vorrendern. NICHT versprochen: sample-genaues
+  Timing (Knoten-Latenz unkompensiert) — Geräteprobe (38). „read-only"-Beschriftung der
+  Workstation ehrlich gemacht. Wächter `ATransposedTrackPlaysThroughThePitchChainTests` (10).
+  Gates grün (main in 450 s).
+- S2 umentschieden: Variante A (MIDI in den Ein-Takt-Take) verworfen — jeder hörbare Pfad
+  überschreibt sie. Variante B (MIDI-Teil auf einer MIDI-Spur, Workstation-Play spielt ihn)
+  wird geplant.
+- S4 umgeplant: der Founder sagte 2026-08-13 wörtlich „Wenn dann ins Visual Window übertragen";
+  der Field-Panel-Plan widerspricht dem und hatte drei echte Defekte (Scope-Peak nur mit
+  Detail-Metering, Poincaré zeigt alte Kamera-Fenster, Messgeräte laufen unsichtbar weiter).
