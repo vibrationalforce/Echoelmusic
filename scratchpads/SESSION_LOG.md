@@ -39118,3 +39118,18 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
   Guard bzw. XCTFail). Die 20 älteren: Aufgabe #168. Unsichtbar geblieben, weil Run Tests
   wegen #396 immer rot ist — dieselbe Lage wie #686/#943b.
 - Deploy v10.79.481: `.deploy/release` einmal angefasst, `--since dd2493e4e` = 7 neue Bitten.
+
+## 2026-09-24 — Founder product law (DMMW) + historical capability register (R1–R3)
+
+- **R1 `e9ff6ae5c`**: `docs/dev/FOUNDER_PRODUCT_LAW.md` (canonical scope; "CURRENT PRODUCT LAW
+  SUPERSEDES HISTORICAL PRODUCT CUTS") + `docs/dev/HISTORY_ARCHIVE.md` (97 capabilities, recovery
+  class each: CURRENT 25 · REUSE 10 · PORT ALGORITHM 20 · REBUILD 25 · RESEARCH 5 · DO NOT RESTORE 12;
+  defects D1–D6, D1 = export can clip after normalise gain).
+- **R2 `1e9188d50`**: stale scope law bannered/pointed in CLAUDE.md (old block → LEDGER §AL),
+  README, PRODUCT_DEFINITION, DMMW_ARCHITECTURE, ARCHITECTURE_NORTH_STAR, BROADCAST spec,
+  FEATURE_STATUS/MATRIX, ROADMAP, memory (vision/user/preferences/project_knowledge), council and
+  vision-gate skills; decision logged (review 2026-10-24). History kept, never rewritten.
+- **R3 `45e6751bd`**: entry-point doc + seven source comments point at the law;
+  `TheEntryPointTellsTheTruthTests` re-anchored (parent red on claims 1/3). Gates green, main = R3.
+- Open for founder: "Instrument-Complete v1" read as next-release gate, not boundary (confirm).
+  Next implementation candidate: export-quality repair (D1), `Audio/SingleExport.swift` only.
