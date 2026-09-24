@@ -258,6 +258,21 @@ LAUNCH_ERROR = re.compile(r"(?:Error Domain=)?(\w+ErrorDomain) Code=(-?\d+)")
 DEAD_CLONE = re.compile(r'RUN_DESTINATION_DEVICE_NAME"? = "([^"]+)"')
 
 
+# ⭐ 2026-09-24 (overnight P7) — A THIRD RED THAT IS NEITHER #396 NOR A TEST: `xcodebuild` ITSELF
+# ABORTS. Measured on `df9222b38` (run 36064225997, job 107857884307): the Run Tests step ended
+# `##[error]Process completed with exit code 134.`, the shell printed `Abort trap: 6  xcodebuild
+# test-without-building …`, the stack was `Xcode3Core` with `NSInternalInconsistencyException`,
+# reason `Unexpected operation <IDERunOperation …>, current operation is (null)` — and there was NO
+# `** TEST EXECUTE FAILED **` banner. This tool printed `TEST EXECUTE FAILED: False` and `TEST
+# FAILURES: 0` over it, which read as the cleanest run of the night while most tests never ran.
+# The next commit (`c2fc6f407`, same code plus more) ended in the ordinary #396 shape, so this is
+# the harness, not the slice. The needle is the SHELL's line, not the exception: an uncaught
+# exception in the TEST HOST is a real app crash and xcodebuild would survive it to report.
+STEP_EXIT = re.compile(r"##\[error\]Process completed with exit code (\d+)\.")
+TOOL_ABORT = re.compile(r"Abort trap: 6\s+(xcodebuild [a-z-]+)")
+UNCAUGHT = re.compile(r"Terminating app due to uncaught exception '(\w+)', reason: '([^']{0,120})")
+
+
 def find_failures(text):
     return FAIL_LINE.findall(text)
 
@@ -453,6 +468,32 @@ def selftest():
         bad += 0 if good else 1
         print(f"  {'ok ' if good else 'BAD'}  execute-launch {name:28}  -> {got}")
 
+    # The xcodebuild-abort needles (overnight P7, 2026-09-24). Positives are copied from the
+    # measured log; the negatives are the shapes that must NOT read as a tool abort.
+    abort_cases = {
+        "exit 134 (df9222b38)": (STEP_EXIT, "##[error]Process completed with exit code 134.", "134"),
+        "exit 65 (#396 shape)": (STEP_EXIT, "##[error]Process completed with exit code 65.", "65"),
+        "shell abort (df9222b38)": (TOOL_ABORT,
+                                    "line 9:  9606 Abort trap: 6           xcodebuild "
+                                    "test-without-building -scheme Echoelmusic",
+                                    "xcodebuild test-without-building"),
+        "uncaught (df9222b38)": (UNCAUGHT,
+                                 "*** Terminating app due to uncaught exception "
+                                 "'NSInternalInconsistencyException', reason: 'Unexpected "
+                                 "operation <IDERunOperation: 0xa>",
+                                 "NSInternalInconsistencyException"),
+        "a test named abort":   (TOOL_ABORT,
+                                 "Test case 'A.testAbortTrapIsHandled()' passed on 'Clone 1'", None),
+        "abort, not xcodebuild": (TOOL_ABORT, "Abort trap: 6   xcpretty", None),
+        "exit prose":           (STEP_EXIT, "the process completed with exit code 134", None),
+    }
+    for name, (needle, line, expected) in abort_cases.items():
+        hit = needle.search(line)
+        got = hit.group(1) if hit else None
+        good = got == expected
+        bad += 0 if good else 1
+        print(f"  {'ok ' if good else 'BAD'}  tool-abort {name:32}  -> {got}")
+
     print("selftest: OK" if not bad else f"selftest: {bad} check(s) MISREAD")
     return 0 if not bad else 1
 
@@ -545,6 +586,18 @@ def main():
             print("  launch failure  : no `failed to launch` line in this log — NOT a finding.")
             print("                    §5 measured `5584ffd` with this exact shape and benign.")
             print("                    The discriminator stays TEST BUILD FAILED (#935).")
+    exits = sorted(set(STEP_EXIT.findall(text)), key=int)
+    tool_abort = TOOL_ABORT.search(text)
+    if exits:
+        print(f"step exit code(s) : {', '.join(exits)}")
+    if tool_abort:
+        uncaught = UNCAUGHT.search(text)
+        print(f"  TOOL ABORTED    : `{tool_abort.group(1)}` itself died (Abort trap) — NOT a test "
+              "result and NOT #396's shape.")
+        if uncaught:
+            print(f"                    {uncaught.group(1)}: {uncaught.group(2)}")
+        print("                    Tests after the abort NEVER RAN; the counts below cover only "
+              "what ran first. Compare the next commit's run before blaming the slice.")
     print(f"tests observed passing: {ran}")
     print(f"compile-error lines   : {len(compile_errors)}")
     for line in compile_errors[:10]:
@@ -597,6 +650,11 @@ def main():
         if gaps:
             gap_note = (f" AND the fetched log is missing at least {gaps[0][0]}s of its own "
                         f"timeline (GAPS above) — the failure may simply be in the hole.")
+        if tool_abort:
+            print(f"\nVERDICT: `{tool_abort.group(1)}` ABORTED mid-run — this log is NOT a test "
+                  "verdict. No failure is visible, and every test after the abort never ran — how many that is "
+                  "this log does not say.")
+            return 0
         print(f"\nVERDICT: no failure and no skip IN {scope.upper()}. That is NOT "
               "'the suite passed' (#807): the job log is a tail, so a failure earlier in the "
               "run leaves no trace here." + gap_note + " #445 — a test name's ABSENCE proves "

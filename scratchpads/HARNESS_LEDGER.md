@@ -108,6 +108,19 @@ won, and what is a known dead-end**, so the loop climbs instead of circling.
 | v10.79.195 | Immersive Stage — Touch room-map, each track a draggable spatial object (SpatialSceneStore + ImmersiveStageMath + ImmersiveStageView) | green |
 | v10.79.194 | Multi-Roll (tracks play simultaneously) + per-track Record (arm→play→capture MIDI/bio→Clip+region) | green |
 
+## OBSERVATION + PLAYBOOK (2026-09-24 overnight P7): xcodebuild ITSELF can abort — a third red that is neither #396 nor a test
+- **Signature** (`df9222b38`, run 36064225997, job 107857884307): Run Tests step `##[error]Process
+  completed with exit code 134.`; shell line `Abort trap: 6  xcodebuild test-without-building …`;
+  `NSInternalInconsistencyException`, reason `Unexpected operation <IDERunOperation …>, current
+  operation is (null)`, stack in `Xcode3Core`; **no** `** TEST EXECUTE FAILED **` banner.
+- **Why it matters:** `gh-test-verdict.py` printed `TEST EXECUTE FAILED: False` + `TEST FAILURES: 0`
+  — the cleanest-looking run of the night, while every test after the abort never ran.
+- **Not the slice:** the next commit (`c2fc6f407`, same code + more) ended in the ordinary #396
+  shape (exit 65, banner present, 170 passes observed).
+- **Playbook:** the verdict tool now prints `step exit code(s)` and a `TOOL ABORTED` line (needle =
+  the SHELL's `Abort trap … xcodebuild`, never the exception alone — a test-host exception is a real
+  app crash that xcodebuild survives to report). Selftest carries the measured lines.
+
 ## DEAD-END + PLAYBOOK (2026-09-22, #E2): §0 benotet die BEHAUPTUNG, nicht das SWIFT darum
 
 **DEAD-END:** „zehn Checker grün + §0-Transkription 16/16 grün" als Beleg zu lesen, dass eine
