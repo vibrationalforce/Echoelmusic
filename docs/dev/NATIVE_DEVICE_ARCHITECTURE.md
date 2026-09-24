@@ -208,6 +208,12 @@ must type-check.
 | `latency(samples)` / `tail(seconds)` | numbers | 0 / ~2 s (reverb) |
 | `presets` | factory preset list | ✅ |
 
+**WA3.1 amendment — a declaration is not a producer.** A capability states what a device COULD
+consume or emit. It never implies that a producer exists or that the feature ships: `motionControl`
+has no producer (`ModSource.motion.hasProducer == false`), and a granular parameter does not exist
+(granular went with #1305; `HISTORY_ARCHIVE` B5). Store, website and content claim only what
+ships (`FEATURE_STATUS.md`, `ContentPipeline/CLAIMS.md`), never what a descriptor declares.
+
 ---
 
 ## D. Minimum Track contract (input to implementation; no Track type is created here)
@@ -345,7 +351,7 @@ automationEligible ≠ modulationEligible*, and eligibility is deny-by-default.
 | instance address | `track.<laneID>.<base>` (per-lane) | `device.<instanceID>.<base>`; `track.<laneID>.<base>` resolves through the track's instrument slot |
 | name, unit, range, default, value labels | ✅ | ✅ |
 | **scaling / taper** | ❌ linear only | **add**: linear · exponential · dB (automation's `filterCutoff` target is already exponential, outside the registry) |
-| **host address** | ❌ | **add**: an explicit, stable 32-bit number per BASE parameter, declared in the catalog, never derived from array order (AU needs `UInt64`, VST3 `ParamID` and CLAP `clap_id` are 32-bit) |
+| **host address** | ❌ | **adapter mapping, not identity** (WA3.1 amendment): each adapter keeps a stable table BASE id → numeric host ID, never derived from array order (AU needs `UInt64`, VST3 `ParamID` and CLAP `clap_id` are 32-bit) |
 | automation eligibility | ✅ | ✅ |
 | modulation eligibility | ✅ | ✅ |
 | domain | ✅ (`audio`/`visual`/`lighting`/`spatial`) | ✅ |
@@ -357,6 +363,13 @@ automationEligible ≠ modulationEligible*, and eligibility is deny-by-default.
 host-visible, writable AUv3 parameters. In the contract they are **ControlSource inputs, not
 device parameters**: they are not in the preset, not in `fullState`, not automatable as creative
 state. A host that wants to drive them sends them as control input (§I).
+
+**WA3.1 amendment — canonical identity is format-neutral.** The BASE id and
+`device.<instanceID>.<base>` are the only identities the Session stores. AU / VST3 / CLAP numeric
+host IDs belong to each adapter's mapping table and must never become Session identity, a
+persisted key in Session content, or an automation address. **Deferred to WA3.2:** unifying the
+AUv3's hand-built 8-parameter tree with the app registry. WA3.1 left the tree, its identifiers
+and its addresses 0…7 unchanged.
 
 ---
 
@@ -404,10 +417,16 @@ camera rPPG · BLE · HealthKit   coherence · hrv · heartRate(norm)     source
   OSC) inherits `BioEgressPolicy` at the adapter, as the MPE output path does today (Ω7).
 - **Motion:** the contract reserves `motionControl`; nothing produces motion today and nothing
   may claim it.
-- **Existing defect recorded, not fixed here:** the AUv3 `fullState` getter writes all eight
-  parameters, including `heartRate`, `hrv`, `coherence` and `breathPhase`, into the host's
-  preset/project file. That persists personal bio readings in third-party documents whenever a
-  host or its automation set them. The contract (§G, §J) forbids it; the repair is its own slice.
+- **Defect repaired in WA3.1 (2026-09-24).** The AUv3 `fullState` getter wrote all eight
+  parameters, `heartRate`, `hrv`, `coherence` and `breathPhase` included, into the host's
+  preset/project file. It now goes through `AUv3StateContract` (`Core/BioFeedbackManager.swift`,
+  compiled by the app and the extension): **PERSIST** `baseFrequency`, `textureAmount`,
+  `reverbMix`, `masterGain` · **TRANSIENT** the four bio inputs, never written, and the base
+  class's parameter blob (`kAUPresetDataKey`), which also held them, is stripped on save ·
+  **LEGACY READ-ONLY** an older document's bio keys are accepted, never applied (the live values
+  are held across the restore), and omitted by the next save. Host automation LANES on the bio
+  parameters are host-owned documents and outside this contract. Guard:
+  `Tests/CISmoke/TheAUv3SavesNoBodyReadingTests.swift`. Not host-verified.
 - No medical or healing claim is made or implied by any part of this contract.
 
 ---
@@ -422,7 +441,9 @@ camera rPPG · BLE · HealthKit   coherence · hrv · heartRate(norm)     source
 | **Session snapshot** | the whole `DMMWProject` incl. all instance states | the Session | endpoint/hardware config, credentials |
 
 **Mapping today's preset concepts:**
-- `SynthPatch` (PatchStore) → a **sub-preset** of the Echoel Device (the sound section). Stays a
+- `SynthPatch` (PatchStore) → a **sub-preset** of the Echoel Device (the sound section). **It is a
+  sound/patch COMPONENT, not the whole device instance state** (WA3.1 amendment): mood, FX,
+  rhythm/phrase, routes and visual response are separate sections. Stays a
   library, loadable into any instance. `SynthPatch.apply(to: EchoelDDSP)` already compiles in both
   targets and is the natural shared carrier.
 - `MoodPreset` → sub-preset (the mood section).
@@ -464,7 +485,8 @@ a mono last-note-priority voice (`EchoelDDSP`) plus `EchoelCellular` texture, bl
 1.0 events, and **no App-Group entitlement** (removed because every host failed with -3000), so
 its vitals bridge silently falls back to host-set values. It is a separate, smaller instrument,
 not the app's Echoel instrument. **WA3 does not rewrite it.** Converging it onto the core is a
-later slice: build its tree from descriptors, carry `SynthPatch`, drop bio from `fullState`.
+later slice: build its tree from descriptors (WA3.2), carry `SynthPatch`. Dropping bio from
+`fullState` is DONE (WA3.1, §I).
 
 **Third-party hosting seam (not implemented).** A hosted plugin appears to the Session as a
 `DeviceInstance` whose `typeID` names the adapter and whose `state` is the plugin's own opaque

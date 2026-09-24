@@ -362,28 +362,50 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
 
     // MARK: - State
 
+    // ⭐ WA3.1 — RUNTIME BIO INPUT IS NOT SAVED PLUGIN STATE. The four bio parameters are
+    // written live (App-Group bridge, host automation) and a host stores `fullState` in ITS
+    // project file, which Echoel cannot erase. The getter used to save all eight; it now saves
+    // the four creative ones and nothing else of the tree. The policy lives in
+    // `AUv3StateContract` (Core/BioFeedbackManager.swift) so the blocking bundle can drive it.
+    // Addresses, identifiers and tree order are unchanged; only what reaches a document moved.
+    private var stateParameters: [AUParameter] {
+        let all: [AUParameter?] = [coherenceParam, hrvParam, heartRateParam, breathPhaseParam,
+                                   baseFreqParam, textureAmountParam, reverbMixParam,
+                                   masterGainParam]
+        return all.compactMap { $0 }
+    }
+
     public override var fullState: [String: Any]? {
         get {
-            var s = super.fullState ?? [:]
-            let params = [coherenceParam, hrvParam, heartRateParam, breathPhaseParam,
-                          baseFreqParam, textureAmountParam, reverbMixParam, masterGainParam]
-            for p in params.compactMap({ $0 }) {
-                s[p.identifier] = p.value
+            var persisted: [String: Float] = [:]
+            for p in stateParameters
+            where AUv3StateContract.persistedParameterIdentifiers.contains(p.identifier) {
+                persisted[p.identifier] = p.value
             }
-            return s
+            return AUv3StateContract.savedState(base: super.fullState, persistedValues: persisted)
         }
         set {
-            super.fullState = newValue
-            guard let s = newValue else { return }
-            let params = [coherenceParam, hrvParam, heartRateParam, breathPhaseParam,
-                          baseFreqParam, textureAmountParam, reverbMixParam, masterGainParam]
-            for p in params.compactMap({ $0 }) {
-                // fullState is host/preset-file controlled (third-party documents).
-                // Reject non-finite values and clamp to each param's range so a
-                // malformed preset can't inject NaN/huge gain into the render block.
-                if let v = s[p.identifier] as? Float, v.isFinite {
-                    p.value = min(max(v, p.minValue), p.maxValue)
-                }
+            // LEGACY READ-ONLY: a document from an older build carries bio values, explicitly
+            // and inside the base class's parameter snapshot. Neither may become the plug-in's
+            // state, so the live transient values are held across the base restore and put
+            // back; a parameter in neither contract list counts as transient (fails closed).
+            let transient = stateParameters.filter {
+                !AUv3StateContract.persistedParameterIdentifiers.contains($0.identifier)
+            }
+            let live = transient.map { ($0, $0.value) }
+            super.fullState = AUv3StateContract.stateForBaseRestore(newValue)
+            for (p, v) in live where p.value != v { p.value = v }
+
+            // fullState is host/preset-file controlled (third-party documents): the contract
+            // rejects non-finite values and clamps to each param's range so a malformed preset
+            // can't inject NaN/huge gain into the render block.
+            var ranges: [String: ClosedRange<Float>] = [:]
+            for p in stateParameters where p.minValue <= p.maxValue {
+                ranges[p.identifier] = p.minValue...p.maxValue
+            }
+            let restored = AUv3StateContract.restorableValues(from: newValue, ranges: ranges)
+            for p in stateParameters {
+                if let v = restored[p.identifier] { p.value = v }
             }
         }
     }

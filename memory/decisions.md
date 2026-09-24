@@ -2801,3 +2801,19 @@ is blocked on WA3. Record: `docs/dev/SESSION_OWNERSHIP_CENSUS.md` §O.
 **Also:** the active steering surfaces (ROADMAP, `_golden-goal.md`, CLAUDE.md root-view line,
 council skill, two memory headings) were bannered as pure-instrument phase history.
 **Review:** 2026-10-24.
+
+### 2026-09-24 — WA3.1: AUv3 saved state holds no body reading
+
+- **Decision:** `EchoelmusicAudioUnit.fullState` goes through `AUv3StateContract`
+  (`Core/BioFeedbackManager.swift`). PERSIST `baseFrequency`, `textureAmount`, `reverbMix`,
+  `masterGain`. TRANSIENT `coherence`, `hrv`, `heartRate`, `breathPhase`, never written, plus the
+  base class's `kAUPresetDataKey` parameter blob, stripped on save. LEGACY READ-ONLY: old bio
+  keys are accepted, the live values are held across the restore, and the next save omits them.
+- **Why here:** the only Foundation-only file the extension already compiles (no project.yml
+  edit); the app compiles it too, so `TheAUv3SavesNoBodyReadingTests` exercises real dictionaries
+  and a property-list round trip.
+- **Bridge:** DEAD / UNREACHABLE in the shipped extension (no App-Group entitlement since
+  2026-07-19). The defect was latent, not leaking.
+- **Not done:** host verification (AUM/Logic/GarageBand save → reload); WA3.2 parameter-identity
+  unification; what Apple's base getter really emits (simulated in the guard).
+- **Review:** 2026-10-24.

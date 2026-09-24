@@ -277,3 +277,107 @@ public final class BioFeedbackManager: @unchecked Sendable {
         return vitals
     }
 }
+
+// MARK: - AUv3 saved-state contract (WA3.1)
+
+/// What the AUv3 instrument (`EchoelmusicAudioUnit.fullState`) may write into a HOST DOCUMENT,
+/// and what it may take back out of one. **Runtime bio input is not saved plugin state.**
+///
+/// ⛔ WHY THIS EXISTS (WA3.1, 2026-09-24). The getter used to write all EIGHT parameter-tree
+/// values under their identifiers — including `coherence`, `hrv`, `heartRate` and `breathPhase`,
+/// the four inputs the App-Group vitals bridge writes from a live body. A host saves `fullState`
+/// into ITS project file (AUM, Logic, GarageBand), which Echoel neither owns nor can erase, so a
+/// body reading would have become a durable value in a third-party document. Measured today the
+/// bridge is DEAD in the shipped extension (no App-Group entitlement, see
+/// `EchoelmusicAUv3.entitlements`), so what reached those keys was host automation, the plug-in
+/// UI or a factory preset — never physiology. The defect was latent, one portal checkbox away
+/// from live; the contract closes it before that checkbox exists.
+///
+/// ⚠️ WHY HERE and not in `DSP/` or a new `Core/` file: this is the one Foundation-only file the
+/// extension ALREADY compiles (`project.yml` lists it standalone), so the contract reaches the
+/// AUv3 without a founder-gated build-file edit, and the app compiles it too, so the blocking
+/// bundle can drive the real dictionaries through it (`TheAUv3SavesNoBodyReadingTests`). It is
+/// also the file whose data it keeps out of host documents. It must stay Foundation-only: the
+/// Watch and Widget targets compile this file standalone as well.
+///
+/// ⚠️ ROUTES ARE NOT VALUES. A future user-authored bio → parameter ROUTE is creative state and
+/// may persist; a bio READING never does. This contract only knows readings.
+///
+/// ⚠️ IDENTIFIERS, NOT ADDRESSES. These are the AUv3 tree's string identifiers. Host numeric
+/// addresses (0…7) are adapter mapping and are untouched here; unifying this tree with the
+/// app's parameter registry is WA3.2, deliberately not this slice.
+public enum AUv3StateContract {
+
+    /// PERSIST — creative sound parameters. Saved and restored.
+    public static let persistedParameterIdentifiers: [String] =
+        ["baseFrequency", "textureAmount", "reverbMix", "masterGain"]
+
+    /// TRANSIENT — the four bio inputs. Never written by `savedState`; ignored when a document
+    /// (including one written by an older build) carries them — LEGACY READ-ONLY.
+    /// A parameter in neither list is treated as transient: the default fails closed.
+    public static let transientParameterIdentifiers: [String] =
+        ["coherence", "hrv", "heartRate", "breathPhase"]
+
+    /// `kAUPresetDataKey`: where `AUAudioUnit`'s base `fullState` keeps its OWN snapshot of the
+    /// parameter tree — every parameter, the bio ones included. Removing only our explicit keys
+    /// would leave the readings in that blob. Spelled as a literal so this file stays
+    /// Foundation-only. Creative values do not depend on it: they are written explicitly.
+    public static let baseParameterSnapshotKey = "data"
+
+    /// The dictionary to hand a host. `base` is `super.fullState`; `persistedValues` maps
+    /// identifier → current value. Transient identifiers and the base parameter snapshot are
+    /// removed; every other base key (component identity, preset name) passes through.
+    public static func savedState(base: [String: Any]?,
+                                  persistedValues: [String: Float]) -> [String: Any] {
+        var state = base ?? [:]
+        state.removeValue(forKey: baseParameterSnapshotKey)
+        for identifier in transientParameterIdentifiers {
+            state.removeValue(forKey: identifier)
+        }
+        for identifier in persistedParameterIdentifiers {
+            if let value = persistedValues[identifier], value.isFinite {
+                state[identifier] = value
+            }
+        }
+        return state
+    }
+
+    /// What the AUv3 passes to `super.fullState` on restore: the document minus the explicit
+    /// transient keys. The base snapshot stays, because a document from an older build may need
+    /// it; any bio value it replays is overwritten by the caller with the live value it held
+    /// before the restore.
+    public static func stateForBaseRestore(_ state: [String: Any]?) -> [String: Any]? {
+        guard var state else { return nil }
+        for identifier in transientParameterIdentifiers {
+            state.removeValue(forKey: identifier)
+        }
+        return state
+    }
+
+    /// The creative values to apply from a saved document, clamped to each parameter's range.
+    /// Non-finite and non-numeric entries are dropped (a host document is third-party input).
+    /// Transient identifiers are never returned, whatever the document holds.
+    public static func restorableValues(from state: [String: Any]?,
+                                        ranges: [String: ClosedRange<Float>]) -> [String: Float] {
+        guard let state else { return [:] }
+        var values: [String: Float] = [:]
+        for identifier in persistedParameterIdentifiers {
+            guard let range = ranges[identifier],
+                  let stored = state[identifier],
+                  let raw = floatValue(stored),
+                  raw.isFinite else { continue }
+            values[identifier] = min(max(raw, range.lowerBound), range.upperBound)
+        }
+        return values
+    }
+
+    /// A property-list round trip hands numbers back as `NSNumber`/`Double`, not `Float`.
+    static func floatValue(_ stored: Any) -> Float? {
+        switch stored {
+        case let value as Float: return value
+        case let value as Double: return Float(value)
+        case let value as NSNumber: return value.floatValue
+        default: return nil
+        }
+    }
+}

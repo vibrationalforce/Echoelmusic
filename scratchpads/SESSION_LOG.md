@@ -39176,3 +39176,16 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
   tabs", `_golden-goal.md` goal + "Not this product", CLAUDE.md root-view/Session-door/hosting
   lines (148,572 B), council-skill constraint, two memory headings, FOUNDER_PRODUCT_LAW §6.
 - No Swift, test, workflow or persistence change. decisions.csv + memory/decisions.md row added.
+
+## 2026-09-24 — WA3.1 AUv3 bio state privacy repair
+
+- Measured: the AUv3 `fullState` getter wrote all 8 tree values (4 bio included) into host
+  documents; no `fullStateForDocument` override; factory presets set `coherence` too; the
+  App-Group bridge is dead (`EchoelmusicAUv3.entitlements` has no group).
+- Repair: `AUv3StateContract` in `Core/BioFeedbackManager.swift`; the getter saves the 4 creative
+  params and strips the bio keys and the base `data` blob; the setter hands the base a document
+  without explicit bio keys, restores the live bio values afterwards, and applies creative values
+  clamped. Addresses, identifiers and tree unchanged. No render-path change.
+- Guard `TheAUv3SavesNoBodyReadingTests` (9 claims), transcribed against the parent and this tree.
+- WA3 doc: three amendments (SynthPatch ≠ whole device state; host IDs = adapter mapping; a
+  capability declaration is not a producer) + §I/§K repair notes. WA3.2 deferred.
