@@ -674,11 +674,11 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
                         case let .noteOn(frequency, velocity):
                             synthRef.noteVelocity = velocity
                             synthRef.noteOn(frequency: frequency)
-                            noteState.current = Int32(midi.data.1)   // now the sounding note
+                            noteState.current = EchoelMIDIDecode.noteNumber(midi.data.1)   // now the sounding note
                         case .noteOff:
                             // Last-note priority: only release the voice if this note-off
                             // is for the note that is actually sounding.
-                            if Int32(midi.data.1) == noteState.current {
+                            if EchoelMIDIDecode.noteNumber(midi.data.1) == noteState.current {
                                 synthRef.noteOff()
                                 noteState.current = -1
                             }

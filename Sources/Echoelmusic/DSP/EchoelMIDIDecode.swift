@@ -38,7 +38,15 @@ public enum EchoelMIDIDecode {
     /// (C math, audio-thread safe). The note is masked to 0…127 so a malformed
     /// running-status byte can never index out of the audible range.
     public static func frequency(forNote note: UInt8) -> Float {
-        440.0 * powf(2.0, (Float(note & 0x7F) - 69.0) / 12.0)
+        440.0 * powf(2.0, (Float(noteNumber(note)) - 69.0) / 12.0)
+    }
+
+    /// The key a message's data1 names, masked to 0…127 — the ONE spelling of note identity.
+    /// `frequency(forNote:)` plays this number, and the AUv3's last-note tracker stores and
+    /// compares it (overnight P8n, 2026-09-24): the tracker used the raw byte, so a malformed
+    /// data1 ≥ 0x80 played one key and tracked another. Scalar only — audio-thread safe.
+    public static func noteNumber(_ data1: UInt8) -> Int32 {
+        Int32(data1 & 0x7F)
     }
 
     /// Decode the first bytes of a MIDI-1.0 message into a mono-voice action.

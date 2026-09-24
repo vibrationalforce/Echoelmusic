@@ -20,6 +20,8 @@
 // REGRESSION — one finding (allocate never writes the tracker there). Claim 2 is a COUNTERWEIGHT
 // (the render block still releases only the tracked note, and the tracker still starts at -1) —
 // green on both. The file names no `Sources/` symbol, so it compiles on both.
+// ⚠️ Claim 2's render-block needle moved with P8n (the tracker now asks
+// `EchoelMIDIDecode.noteNumber`), in the same commit — `TheNoteIdentityHasOneSpellingTests`.
 
 import Foundation
 import XCTest
@@ -53,7 +55,7 @@ final class TheReallocatedDroneIgnoresAStaleNoteOffTests: XCTestCase {
                       "the tracker no longer starts at -1 — the reset value above would mean something else")
         let render = try XCTUnwrap(Self.body(startingWith: "public override var internalRenderBlock", in: code),
                                    "the render block is not found — re-anchor this guard (#456)")
-        XCTAssertTrue(render.contains("if Int32(midi.data.1) == noteState.current {"), """
+        XCTAssertTrue(render.contains("if EchoelMIDIDecode.noteNumber(midi.data.1) == noteState.current {"), """
             The render block no longer gates note-off on the tracked note. If last-note priority \
             changed shape, this guard's premise changed with it.
             """)
