@@ -608,6 +608,14 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         return { (actionFlags, timestamp, frameCount, outputBusNumber,
                   outputData, renderEvent, pullInputBlock) in
 
+            // ⭐ 2026-09-24 (overnight P8j): a host that asks for more than the scratch holds is
+            // told so, instead of receiving `noErr` over a tail left EXACTLY as it handed it
+            // over (the defect the `maximumFramesToRender` note describes). The override above
+            // is the contract; this is the answer for a host that breaks it. Guard:
+            // `TheAUv3RefusesAnOversizedBlockTests`.
+            guard Int(frameCount) <= scratch.capacity else {
+                return kAudioUnitErr_TooManyFramesToProcess
+            }
             let count = min(Int(frameCount), 4096)
 
             // MIDI note input (music-device / aumu). Walk the host's realtime event
