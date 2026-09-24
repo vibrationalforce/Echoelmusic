@@ -39133,3 +39133,22 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
   `TheEntryPointTellsTheTruthTests` re-anchored (parent red on claims 1/3). Gates green, main = R3.
 - Open for founder: "Instrument-Complete v1" read as next-release gate, not boundary (confirm).
   Next implementation candidate: export-quality repair (D1), `Audio/SingleExport.swift` only.
+
+## 2026-09-24 — Export quality E1 + E2
+
+- **E1 `d71eb2936`** (Codex: PASS / CLOSED): a normalisation BOOST is bounded by the measured
+  sample peak (−1 dBFS, 0.001 dB margin) — no limiter, one scalar. Gates green, main = E1.
+  Run Tests: #396 banner, 170 passing in the tail-200 window, guard names absent (#445:
+  "kompiliert nachweislich, Ausführung unbelegt").
+- **E2 `ad356e10b`**: `measureLUFS` was RMS−0.1 (no K-weighting, no gating). The export now
+  feeds the ONE meter (`EchoelLoudnessMeter`) via `ExportLoudnessMeasurement`, one 100 ms hop
+  per call, decoded at **48 kHz** — measured first that the meter's canonical 48 kHz
+  coefficients err at 44.1 kHz by +1.1 dB @20 Hz, +0.4 @60 Hz, +0.3 @1.5 kHz. So E2 does NOT
+  depend on E3; E3 still matters for the live meter at non-48k rates and would let the loudness
+  pass fold back into one decode. Meter vs EBU 3341 cases 1–4 (transcribed): ≤ 0.05 LU (0.1 LU
+  bins). Undefined loudness (nothing above −70 LUFS, < 400 ms) → 0 dB instead of +12. E1 peak
+  pass unchanged at 44.1 kHz. Guard `TheExportNormalisesByIntegratedLoudnessTests` (10 e2e +
+  2 scans). Gates green, main = E2. Run Tests: #396, 166 passing in window, names absent.
+- Parked (not in E2): true-peak / AAC reconstruction peaks, sanitising non-finite PCM, an
+  already-over-full-scale source, AutoMixChain's live auto-gain (still RMS−0.1, a third loudness
+  truth), per-rate K-weighting (E3).

@@ -2751,3 +2751,14 @@ reconciliation open for founder confirmation.
 **Recovery principle:** never restore a subsystem wholesale; port the proven core into the current
 owners, then test end to end and on a device.
 **Review:** 2026-10-24.
+
+### 2026-09-24 — Export loudness truth (E2)
+**Decision:** `SingleExport` normalises by gated integrated loudness from the ONE BS.1770 meter
+(`EchoelLoudnessMeter`), fed one 100 ms hop per call through `ExportLoudnessMeasurement`, with the
+loudness pass decoded at **48 kHz**. Undefined loudness (no block above −70 LUFS) asks for 0 dB.
+**Why:** the old `measureLUFS` was RMS−0.1, a different truth from the Master readout. The meter's
+coefficients are exact only at 48 kHz (measured error at 44.1 kHz up to +1.1 dB), so measuring at
+48 kHz makes E2 valid without the per-rate repair (E3). The E1 sample-peak bound (44.1 kHz render
+pass) still decides the applied gain.
+**Not claimed:** full EBU R128 conformance, true-peak, AAC reconstruction peaks.
+**Review:** 2026-10-24.
