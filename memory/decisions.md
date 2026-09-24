@@ -2762,3 +2762,20 @@ coefficients are exact only at 48 kHz (measured error at 44.1 kHz up to +1.1 dB)
 pass) still decides the applied gain.
 **Not claimed:** full EBU R128 conformance, true-peak, AAC reconstruction peaks.
 **Review:** 2026-10-24.
+
+### 2026-09-24 — Sample-rate-correct K-weighting + one export analysis decode (E3)
+**Decision:** `EchoelLoudnessMeter.kWeighting(sampleRate:)` designs both BS.1770 sections by the
+bilinear transform (libebur128 parameters), once, in `init`. Supported: 44.1–192 kHz. Any other
+rate (or a non-finite one) sets `supportsSampleRate = false` and the meter reads the floor, and it
+never borrows the 48 kHz coefficients. The rate is a `let`: a new rate means a new meter, which
+`AudioEngine.installMeterTap` already builds after `removeTap`. `SingleExport` takes the sample
+peak and the integrated loudness in ONE decode at `exportSampleRate` (44.1 kHz), then renders.
+That is two source reads instead of three.
+**Why:** before E3, 44.1 kHz read +1.13 dB high at 20 Hz and +0.40 dB high at 60 Hz. After E3 it
+is within 0.005 dB, and the 48 kHz coefficients match the published table to 8.9e-16. The E2
+fixtures are identical at 44.1 and 48 kHz.
+**Not claimed:** full EBU R128, true peak, codec-safe output, every rate.
+**Residual:** the running-engine configuration-change branch does not rebuild the meter. Apple
+stops the engine on a rate change, so that path goes through `start()`, but this is not
+device-verified. The analysis still runs on the main actor.
+**Review:** 2026-10-24.

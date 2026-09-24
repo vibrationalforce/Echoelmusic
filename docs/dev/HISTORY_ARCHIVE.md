@@ -282,7 +282,7 @@ Bulk-deletion commits cited below:
 - **Impl:** `EchoelLoudnessMeter` — BS.1770-4: K-weighting, M/S/I, gating, LRA. `EchoelMeter` — peak/RMS plus 4× Catmull-Rom true-peak estimate.
 - **C/R/O:** Y/Y/Y (Master chip)
 - **Stub/overclaim:**
-  - K-weighting coefficients are the 48 kHz set at every rate (the file says "close approximation").
+  - ~~K-weighting coefficients are the 48 kHz set at every rate~~ — REPAIRED by E3 (2026-09-24, `2e6b54d66`): derived per rate by the bilinear transform, 44.1–192 kHz supported, any other rate reads the floor instead of borrowing coefficients.
   - True peak is an estimate, not a polyphase oversampler.
 - **Scope / Class:** YES / **CURRENT**
 - **Next safe slice:** per-rate coefficients; polyphase true peak.
@@ -682,7 +682,7 @@ it. Treat it as a dated snapshot (#818), not a pinned number.
 
 - **D1 · export can clip.** `SingleExport.normalizeGainDB` allows up to +12 dB, then applies it with `vDSP_vsmul`, and **no limiter or ceiling follows**. The captured source is already peak-limited near 0 dBFS, so a sparse take read at −20 against a −14 target is written about 6 dB over full scale into a 24-bit integer WAV. Code-read; not device-verified.
 - **D2 · two loudness engines disagree.** The meter shown is R128. The auto-gain and the export normaliser steer by unweighted RMS.
-- **D3 · K-weighting coefficients are the 48 kHz set at every sample rate.** A documented approximation; the offset at 44.1 kHz has not been measured.
+- **D3 · K-weighting coefficients are the 48 kHz set at every sample rate.** A documented approximation; the offset at 44.1 kHz has not been measured. → **REPAIRED by E3 (2026-09-24, `2e6b54d66`).** Measured before the repair: +1.13 dB at 20 Hz, +0.40 dB at 60 Hz, +0.33 dB at 1.5 kHz at 44.1 kHz. After: within 0.005 dB of the standard at 44.1 kHz; the export now takes peak and loudness in one 44.1 kHz decode.
 - **D4 · stale header claims in `EchoelDDSP.swift`.** "FIR noise"; "LF/HF → reverb".
 - **D5 · `SamplerVoice` has no loader.** No UI can load a sample into the rack slot.
 - **D6 · no undo** anywhere, while editing capabilities are in scope.

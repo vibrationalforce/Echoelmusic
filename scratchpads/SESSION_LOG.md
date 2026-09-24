@@ -39152,3 +39152,17 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
 - Parked (not in E2): true-peak / AAC reconstruction peaks, sanitising non-finite PCM, an
   already-over-full-scale source, AutoMixChain's live auto-gain (still RMS−0.1, a third loudness
   truth), per-rate K-weighting (E3).
+
+## 2026-09-24 — Export quality E3 (per-rate K-weighting, one analysis decode)
+
+- **E3 `2e6b54d66`**: the meter derives its K-weighting per rate. The 48 kHz output equals the
+  BS.1770 table to 8.9e-16. At 44.1 kHz it is within 0.005 dB from 20 Hz to 21 kHz; at 88.2–192 kHz,
+  within 0.038 dB. An unsupported rate gives an explicit "no reading". The export does peak and
+  loudness in one 44.1 kHz decode, so it reads the source twice instead of three times.
+- Guards: `TheExportNormalisesByIntegratedLoudnessTests` now runs the E2 fixtures at 44.1 and
+  48 kHz, and they are identical when transcribed. New: `TheLoudnessMeterIsSampleRateCorrectTests`
+  (10 claims).
+- Residuals:
+  - The engine's running configuration-change branch does not rebuild the meter.
+  - Analysis runs on the main actor.
+  - NEEDS-FOUNDER-VERIFY: Master LUFS at a 44.1 kHz route vs 48 kHz.
