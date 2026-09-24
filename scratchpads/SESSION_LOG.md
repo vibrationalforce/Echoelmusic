@@ -39230,3 +39230,17 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
 - Measured by Python transcription: 55 Hz full-mix output 2.0 s after note-off = −37 dB (default
   mix −54 dB) → 2.0 was short; at 4.49 s ≤ −99 dB. Tone-stop tails 1.65–2.85 s by pitch.
 - Guards: TheAUv3ReverbFollowsTheHostRateTests (6), TheAUv3TailCoversTheReverbTests (4).
+
+## 2026-09-24 overnight — P5: EngineBus.bioFrames removed (dead publication)
+- Measured: `bioFrames` had no consumer (comment-stripped: declaration, init, enqueue only). Every
+  `publish(bio:)` enqueued into a ring nobody read; it kept the first 31 frames, dropped the rest.
+- Repair: property, `bioCapacity` init parameter and the enqueue removed; `publish(bio:)` updates
+  only `latestBio`. Header rewritten (continuous bio → snapshot; two queues, each with its consumer).
+  Corrected my own draft claim that four publishers could race — all four are `@MainActor`.
+- Homes updated (measured with `git grep bioFrames`): CLAUDE.md, README, docs/architecture.html (note,
+  bus intro, payload row → `latestBio`), FEATURE_MATRIX (both lines; also fixed "bioEvents not
+  drained"), ROADMAP (⭐ Nachtrag, ⛔ order kept), memory/project_knowledge + vision, SPSCQueue +
+  SPSCQueueOverflowTests comments (also the stale "EngineBus declares audio-thread consumers"),
+  EngineBusTests (non-blocking; overflow pin moved to controllerEvents). History left alone.
+- Guard `TheBioSignalIsASnapshotNotAQueueTests` (4 claims). Python transcription: parent 1a9ec0dbb
+  claims 1–2 red (one finding), 3–4 green; worktree all green. Checkers clean; CLAUDE.md 148,802 B.

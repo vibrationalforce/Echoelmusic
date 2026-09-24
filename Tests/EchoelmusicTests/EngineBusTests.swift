@@ -11,22 +11,22 @@ final class EngineBusTests: XCTestCase {
         XCTAssertNil(bus.latestBio)
         XCTAssertNil(bus.latestControllerEvent)
         XCTAssertNil(bus.latestBioEvent)
-        XCTAssertTrue(bus.bioFrames.isEmpty)
         XCTAssertTrue(bus.controllerEvents.isEmpty)
         XCTAssertTrue(bus.bioEvents.isEmpty)
     }
 
     // MARK: - Bio frame publish
 
-    func testPublishBio_enqueuesToQueue() {
+    /// The continuous bio signal is a SNAPSHOT, not a queue (2026-09-24): the `bioFrames`
+    /// ring had no consumer and was removed. Publishing a frame must touch neither queue
+    /// that remains.
+    func testPublishBio_touchesNoQueue() {
         let bus = EngineBus()
-        let frame = Self.makeBioFrame()
 
-        bus.publish(bio: frame)
+        bus.publish(bio: Self.makeBioFrame())
 
-        XCTAssertEqual(bus.bioFrames.count, 1)
-        let dequeued = bus.bioFrames.dequeue()
-        XCTAssertEqual(dequeued, frame)
+        XCTAssertTrue(bus.controllerEvents.isEmpty)
+        XCTAssertTrue(bus.bioEvents.isEmpty)
     }
 
     func testPublishBio_updatesLatestSnapshot() async {
@@ -114,17 +114,22 @@ final class EngineBusTests: XCTestCase {
     /// consumer's index. It kept passing either way — `count <= 4` and `droppedCount > 0`
     /// hold under both policies — which is exactly what made it dangerous: a green test
     /// whose NAME is the documentation a future session reads. Now it pins the policy.
-    func testPublishBio_pastCapacity_dropsTheIncomingFrame_andKeepsTheOldest() {
-        let bus = EngineBus(bioCapacity: 4)
+    ///
+    /// 2026-09-24: moved from the removed `bioFrames` ring to `controllerEvents`, the queue
+    /// whose drop policy actually matters (a note burst from a fast controller).
+    func testPublishController_pastCapacity_dropsTheIncomingEvent_andKeepsTheOldest() {
+        let bus = EngineBus(controllerCapacity: 4)
         for i in 0..<10 {
-            bus.publish(bio: Self.makeBioFrame(timestamp: TimeInterval(i)))
+            bus.publish(controller: ControllerEvent(
+                timestamp: TimeInterval(i), kind: .noteOff, channel: 0, note: 60, value: 0, auxCC: 0
+            ))
         }
 
         // SPSCQueue rounds capacity to next power of 2; 4 stays 4, so 3 are usable.
-        XCTAssertEqual(bus.bioFrames.count, 3)
-        XCTAssertEqual(bus.bioFrames.droppedCount, 7)
+        XCTAssertEqual(bus.controllerEvents.count, 3)
+        XCTAssertEqual(bus.controllerEvents.droppedCount, 7)
         // The survivors are the FIRST three — the producer never evicts.
-        XCTAssertEqual(bus.bioFrames.dequeue()?.timestamp, 0)
+        XCTAssertEqual(bus.controllerEvents.dequeue()?.timestamp, 0)
     }
 
     // MARK: - Topics are independent
@@ -137,7 +142,6 @@ final class EngineBusTests: XCTestCase {
             timestamp: 0, kind: .noteOff, channel: 2, note: 60, value: 0, auxCC: 0
         ))
 
-        XCTAssertEqual(bus.bioFrames.count, 1)
         XCTAssertEqual(bus.controllerEvents.count, 1)
         XCTAssertEqual(bus.bioEvents.count, 0)
     }

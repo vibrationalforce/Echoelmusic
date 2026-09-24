@@ -213,8 +213,10 @@ acceptance line.
 >
 > **Architecture correction (audit):** the EngineBus bio path runs over the
 > `@MainActor latestBio` **snapshot** (10 Hz), NOT the SPSC queue. The lock-free
-> SPSCQueue is load-bearing only for `controllerEvents` (MIDI). `bioFrames`/
-> `bioEvents` queues are present but **not drained** (reserved). RTMP/video/
+> SPSCQueue is load-bearing for `controllerEvents` (MIDI) and `bioEvents` (sole
+> consumer `OSCSender.drainAndSendEvents`, OSC egress). ⛔ „`bioFrames`/`bioEvents`
+> present but not drained" stood here; `bioEvents` was drained all along, and
+> `bioFrames` had no consumer and was **removed 2026-09-24**. RTMP/video/
 > multitrack are **absent** (no wired code), not shipping — see each tool below.
 
 > The "12 tools" are a taxonomy over the real modules. E.g. *EchoelSynth* is the
@@ -227,7 +229,7 @@ acceptance line.
 
 | Module | File | Notes |
 |---|---|---|
-| EngineBus | `Sources/Echoelmusic/Core/EngineBus.swift` | `@MainActor @Observable` control plane (snapshots) + lock-free `SPSCQueue`. 3 topics: `bioFrames` / `controllerEvents` / `bioEvents`. **Audit truth:** bio flows over the `latestBio`/`latestBioEvent` snapshots (10 Hz poll); the SPSC queue is actually drained only for `controllerEvents` (MIDI). `bioFrames`/`bioEvents` queues are reserved/undrained. Modules produce/consume via the bus, never couple directly. |
+| EngineBus | `Sources/Echoelmusic/Core/EngineBus.swift` | `@MainActor @Observable` control plane (snapshots) + lock-free `SPSCQueue`. **Truth (2026-09-24):** continuous bio flows over the `latestBio` snapshot (10 Hz poll); two SPSC queues remain, `controllerEvents` (MIDI consumer) and `bioEvents` (sole consumer `OSCSender.drainAndSendEvents`). ⛔ A third, `bioFrames`, had no consumer and was removed; „`bioFrames`/`bioEvents` reserved/undrained" stood here and was wrong for `bioEvents` too. Modules produce/consume via the bus, never couple directly. |
 | SPSCQueue | `Sources/Echoelmusic/Core/SPSCQueue.swift` | Lock-free single-producer/single-consumer ring; audio-thread safe. Live use: `controllerEvents`. |
 | AudioEngine | `Sources/Echoelmusic/Audio/AudioEngine.swift` | `AVAudioEngine` master bus. Graph: source nodes → masterMixer → **AutoMixChain (EQ→gain)** → mainMixer → output. Attach source nodes **before** `start()`. |
 | Store / Logger | `Core/EchoelStore.swift`, `Core/ProfessionalLogger.swift` (`EchoelLogger`) | Persistence; `os_log` wrapper (never `print`). |

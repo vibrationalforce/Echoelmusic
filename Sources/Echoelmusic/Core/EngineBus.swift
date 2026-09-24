@@ -8,14 +8,23 @@
 //    Control plane (latest snapshots for SwiftUI observation):
 //        @MainActor @Observable, single-source-of-truth for views.
 //
-//    Data plane (audio-thread consumers, ≤120 Hz bio producers):
-//        Lock-free SPSCQueue per topic, allocation-free at the
-//        consumer side.
+//    Data plane (discrete streams): a lock-free SPSCQueue for each of the
+//        TWO topics that have a consumer — `controllerEvents` (MIDI, drained
+//        by `BioReactiveSynthVoice`) and `bioEvents` (discrete onsets,
+//        drained by `OSCSender.drainAndSendEvents` for OSC egress).
 //
-//  Publishers run at sub-kHz rates (Oura ≤4 Hz, HealthKit ≤1 Hz,
-//  CoreMIDI ≤sub-kHz) and may dual-update both planes safely.
-//  Audio-thread *consumers* only read from the queues — they never
-//  publish through this surface.
+//  The CONTINUOUS bio signal has no queue: it is the `latestBio`
+//  snapshot, read on a 10 Hz poll and applied at ~1 Hz (deduped on
+//  `frame.timestamp`). ⛔ A third queue, `bioFrames`, stood here as
+//  "audio-side consumers see it immediately" and had NO consumer in any
+//  tree since the 2026-06-09 audit said so. It was removed 2026-09-24
+//  rather than drained into nothing: every publish enqueued into a ring nobody read, so the ring
+//  held the first frames of the process and dropped every later one (the
+//  queue drops the NEW element when full). Its four publishers are all
+//  `@MainActor`, so the single-producer contract did hold — the defect was
+//  a write with no reader, not a race. A future full-rate path adds a
+//  queue TOGETHER with its consumer.
+//  Guard: `TheBioSignalIsASnapshotNotAQueueTests`.
 //
 
 import Foundation
@@ -795,10 +804,7 @@ public final class EngineBus {
         return f
     }
 
-    // MARK: - Lock-free queues (data plane, audio-thread consumers)
-
-    @ObservationIgnored
-    nonisolated(unsafe) public let bioFrames: SPSCQueue<BioSampleFrame>
+    // MARK: - Lock-free queues (data plane — one per topic that has a consumer)
 
     @ObservationIgnored
     nonisolated(unsafe) public let controllerEvents: SPSCQueue<ControllerEvent>
@@ -897,22 +903,19 @@ public final class EngineBus {
     // MARK: - Init
 
     public init(
-        bioCapacity: Int = 32,
         controllerCapacity: Int = 128,
         bioEventCapacity: Int = 64
     ) {
-        self.bioFrames = SPSCQueue(capacity: bioCapacity)
         self.controllerEvents = SPSCQueue(capacity: controllerCapacity)
         self.bioEvents = SPSCQueue(capacity: bioEventCapacity)
     }
 
     // MARK: - Publishers (callable from any thread except audio render)
 
-    /// Publish a bio frame. Enqueues to the lock-free queue (audio-side
-    /// consumers see it immediately) and updates the @MainActor latest
-    /// snapshot for SwiftUI observation.
+    /// Publish a bio frame: updates the @MainActor `latestBio` snapshot, which is the ONE
+    /// path the continuous bio signal takes — every bio consumer reads it. There is no queue
+    /// behind this call; see the file header for the removed one.
     nonisolated public func publish(bio frame: BioSampleFrame) {
-        bioFrames.enqueue(frame)
         Task { @MainActor [weak self] in
             self?.latestBio = frame
         }

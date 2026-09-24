@@ -19,11 +19,11 @@
 // the state is consistent. `count == capacity-1` is just what a full ring reads. The
 // race needs a concurrent consumer.
 //
-// THE RACE IS LATENT, NOT OBSERVED. All three `enqueue()` queues are single-threaded end
-// to end today (`bioFrames` has no consumer; `controllerEvents` and `bioEvents` have
-// `@MainActor` producers AND consumers). It is closed because `EngineBus` declares these
-// queues as having audio-thread consumers by design. Do not cite it as the cause of any
-// shipped symptom.
+// THE RACE IS LATENT, NOT OBSERVED. Both `enqueue()` queues are single-threaded end to
+// end today (`controllerEvents` and `bioEvents` have `@MainActor` producers AND consumers;
+// a third, `bioFrames`, had no consumer and was removed 2026-09-24). It is closed because
+// an audio-thread consumer is the reason a lock-free ring exists at all. Do not cite it as
+// the cause of any shipped symptom.
 //
 // These tests pin the contract the fix restores: the producer never touches `head`, so
 // an overflow drops the INCOMING element and says so — and an overflowed queue never

@@ -2851,3 +2851,11 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
   to the host rate (room colour at 44.1 kHz, never pitch).
 - **Not done:** host/device listening (WA3-5); texture-gain initial mismatch (0.15 vs param 0.3).
 - **Review:** 2026-10-24.
+
+### 2026-09-24 — P5: the bio signal is a snapshot, not a queue
+- `EngineBus.bioFrames` removed (property, `bioCapacity`, the enqueue). Measured: zero consumers;
+  comment-stripped the name occurred only at declaration/init/enqueue. The ring kept the first 31
+  frames and refused the rest. Not drained-and-discarded: a queue returns only WITH its consumer.
+- Kept: `BioSampleFrame`, `controllerEvents` (MIDI consumer), `bioEvents` (sole consumer
+  `OSCSender.drainAndSendEvents`). All four bio publishers are `@MainActor` — no race existed.
+- Guard: `TheBioSignalIsASnapshotNotAQueueTests`. Review 2026-10-24.

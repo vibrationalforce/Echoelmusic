@@ -154,7 +154,7 @@ if the website disagrees, the code wins.**
    vocoder/biomod cores flagged not-yet-wired“ is void with the cores (#1302). ⭐ **A register
    does not stay reconciled** — four days after the founder deletions it again claimed a live
    microphone, one line below its own tombstone. „Resolved“ is a date on this row, not a state.
-4. **Bus topic `bioFrames` is reserved but undrained** (`bioEvents` IS drained — sole consumer `OSCSender.drainAndSendEvents`, OSC egress only; ⛔ both stood here as undrained, audit 2026-08-28); bio flows over the
+4. ⛔ **Bus topic `bioFrames` — REMOVED 2026-09-24, it had no consumer** (`bioEvents` IS drained — sole consumer `OSCSender.drainAndSendEvents`, OSC egress only; ⛔ both stood here as undrained, audit 2026-08-28); bio flows over the
    snapshot (per-RR heartbeat events have no synth sink). Lock-free design partly aspirational.
 5. **North-Star concepts have no written bridge** to the roadmap — auto-driving stays
    parked. ⚠️ For the HARDWARE line this gap is now a real cost, not a deliberate

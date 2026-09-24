@@ -189,12 +189,14 @@ public final class SPSCQueue<Element> {
     /// comment said exactly this. The race needs a concurrent consumer; there is no
     /// single-threaded corruption.
     ///
-    /// THE RACE IS LATENT, NOT OBSERVED. All three `enqueue()` queues are single-
-    /// threaded end to end today: `bioFrames` has no consumer at all, and both
-    /// `controllerEvents` and `bioEvents` have `@MainActor` producers AND consumers.
-    /// It is worth closing anyway because `EngineBus` declares these queues as having
-    /// "audio-thread consumers" by design — the mine goes off the day someone honours
-    /// that declaration. Do not cite this fix as the cause of any shipped symptom.
+    /// THE RACE IS LATENT, NOT OBSERVED. Both `enqueue()` queues are single-threaded end
+    /// to end today: `controllerEvents` and `bioEvents` have `@MainActor` producers AND
+    /// consumers. (A third, `bioFrames`, had no consumer and was removed 2026-09-24.)
+    /// It is worth closing anyway because an audio-thread consumer is the reason a
+    /// lock-free ring exists at all — the mine goes off the day someone adds one. (⛔ The
+    /// `EngineBus` header used to DECLARE "audio-thread consumers"; that line went with
+    /// `bioFrames` on 2026-09-24, and the reason stands without it.) Do not cite this fix
+    /// as the cause of any shipped symptom.
     ///
     /// SCOPE, since I got this wrong once: the voice queues (`PolySynthVoice`,
     /// `SubBassVoice`, `SamplerVoice`, `BioReactiveSynthVoice`) all use `tryEnqueue`,

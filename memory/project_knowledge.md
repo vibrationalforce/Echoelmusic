@@ -37,7 +37,7 @@ See `memory/vision.md` for the LIVE / ROADMAP / NORTH-STAR tiers.
   (10 Hz poll) + lock-free `SPSCQueue`. Bio flows over the snapshot (correct for slow bio);
   the SPSC queue is drained for `controllerEvents` (MIDI) — and, since the OSC event path,
   `bioEvents` is drained too, by exactly ONE consumer (`OSCSender.drainAndSendEvents`, OSC
-  egress only — no synth sink). `bioFrames` stays reserved/undrained. (⛔ "bioFrames/
+  egress only — no synth sink). `bioFrames` had no consumer and is REMOVED (2026-09-24). (⛔ "bioFrames/
   bioEvents … reserved/undrained" stood here; half was stale — 2026-08-28 audit.)
   `freshBio(maxAge:5)` returns the latest frame only if recent.
 - **Audio graph:** `AudioEngine` (`@MainActor @Observable`) master `AVAudioEngine`; source nodes
@@ -157,7 +157,7 @@ lives in scratchpads + SESSION_LOG. Phases:
 2. CLAUDE.md "v10 Target" diagram describes Beat/Record/Video/Share tabs never built (as-built = one
    EchoelStudioView); the file contradicts itself.
 3. FEATURE_MATRIX stale on the visual dimension (cites old deleted MetalBioView; a new live one exists).
-4. Bus `bioFrames` reserved but undrained; `bioEvents` drained solely by OSCSender (OSC egress) — per-RR heartbeat events still have no synth sink.
+4. ⛔ Bus `bioFrames` — REMOVED 2026-09-24 (it had no consumer); `bioEvents` drained solely by OSCSender (OSC egress) — per-RR heartbeat events still have no synth sink.
 5. North-star concepts (installation worlds, auto-driving, dive-flying/Tauchfliegen, "revolutionise
    humanity via self-observation") are parked in `memory/vision.md` Tier-3 — never in product copy.
 
