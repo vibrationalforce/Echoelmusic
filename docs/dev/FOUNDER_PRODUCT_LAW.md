@@ -178,6 +178,7 @@ records which. **"It existed" is never evidence that "it worked".**
 | Question | File |
 |---|---|
 | What is the product (now)? | **this file** |
+| In what order is it built, and what state is each item in? | `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` |
 | What ships and is reachable today? | `docs/dev/FEATURE_STATUS.md` |
 | What existed historically, did it work, and should it come back? | `docs/dev/HISTORY_ARCHIVE.md` |
 | What may public copy claim? | `ContentPipeline/CLAIMS.md` |
