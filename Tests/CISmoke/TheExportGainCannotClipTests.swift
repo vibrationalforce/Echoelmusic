@@ -1,9 +1,10 @@
 // TheExportGainCannotClipTests.swift
 // Echoel — Export quality E1: post-normalisation SAMPLE-PEAK safety in `SingleExport`.
 //
-// THE DEFECT. `SingleExport.normalizeGainDB` may ask for up to +12 dB, steered by an RMS
-// loudness over the whole window. A sparse take — a quiet body with one hot transient —
-// measures quiet, got the full boost, and the transient landed up to ~12 dB over full scale.
+// THE DEFECT. `SingleExport.normalizeGainDB` may ask for up to +12 dB, steered by a loudness
+// that knows nothing about peaks (an RMS at E1, gated integrated LUFS since E2). A sparse
+// take — a quiet body with one hot transient — measures quiet, got the full boost, and the
+// transient landed up to ~12 dB over full scale.
 // Nothing after the `vDSP_vsmul` bounded it: WAV converts to 24-bit integer PCM (hard clip),
 // AAC received the same over-range floats.
 //
@@ -220,9 +221,11 @@ final class TheExportGainCannotClipTests: XCTestCase {
         XCTAssertLessThan(bound.lowerBound, render.lowerBound)
     }
 
-    /// 10 — the peak comes from the SAME read as the loudness, and the renderer touches samples
-    /// ONLY through `applyGain` (one `vDSP_vsmul` in the file — a second would be a second,
-    /// unbounded gain path). COUNT PIN — legal to move (#364), never silently.
+    /// 10 — the peak is measured by a pass that decodes at the RENDER's settings (since E2 a
+    /// separate pass from the 48 kHz loudness pass — `TheExportNormalisesByIntegratedLoudnessTests`),
+    /// and the renderer touches samples ONLY through `applyGain` (one `vDSP_vsmul` in the file —
+    /// a second would be a second, unbounded gain path). COUNT PIN — legal to move (#364), never
+    /// silently.
     func testThePeakIsMeasuredAndTheGainHasOneApplicationSite() throws {
         let code = SourceText.codeOnly(try Self.text(Self.export))
         XCTAssertTrue(code.contains("let segmentPeak = Self.samplePeak(floatPtr, count: count)"),

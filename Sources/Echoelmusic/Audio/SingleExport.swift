@@ -85,30 +85,39 @@ final class SingleExport {
 
     // MARK: - Export
 
-    /// Gain to apply so a take measured at `measuredDB` lands on `target` — or 0 dB
-    /// when `target` is nil ("No target": deliver at the captured level). Clamped to
-    /// ±12 dB so a mismeasured or near-silent take can't be slammed.
+    /// Gain to apply so a take measured at `measuredDB` (integrated loudness, LUFS — see
+    /// `ExportLoudnessMeasurement`) lands on `target` — or 0 dB when `target` is nil ("No
+    /// target": deliver at the captured level). Clamped to ±12 dB so a mismeasured take
+    /// can't be slammed.
+    ///
+    /// `measuredDB` nil (or non-finite) means the loudness is UNDEFINED — no 400 ms block
+    /// cleared the BS.1770 gates: digital silence, material under −70 LUFS throughout, or a
+    /// window shorter than one block. Then there is no measurement to normalise against, and
+    /// the answer is 0 dB — never the +12 dB a floor value would ask for, which only lifts a
+    /// noise floor (E2).
     ///
     /// Pure + static ON PURPOSE. Inline inside the `async` AVFoundation method this
     /// arithmetic was untestable, and it is the one line the "No target" fix actually
     /// changes in the audio path — so it was the half of that fix nothing asserted.
     /// A pure seam makes "nil ⇒ 0 dB" a test rather than a hope.
-    nonisolated static func normalizeGainDB(target: Float?, measuredDB: Float) -> Float {
-        let raw = target.map { $0 - measuredDB } ?? 0
-        return Swift.min(Swift.max(raw, -12), 12)
+    nonisolated static func normalizeGainDB(target: Float?, measuredDB: Float?) -> Float {
+        guard let target, target.isFinite else { return 0 }
+        guard let measuredDB, measuredDB.isFinite else { return 0 }
+        return Swift.min(Swift.max(target - measuredDB, -12), 12)
     }
 
     // MARK: - Post-normalisation peak safety (E1)
     //
     // ⛔ THE DEFECT THIS CLOSES. `normalizeGainDB` may ask for up to +12 dB, and the loudness
-    // it steers by is an RMS over the whole window — it knows nothing about PEAKS. A sparse
+    // it steers by (an RMS until E2, gated integrated LUFS since) knows nothing about PEAKS. A sparse
     // take (a quiet body with one hot transient near full scale) measures quiet, gets the
     // full boost, and the transient lands up to ~12 dB over full scale. Nothing after the
     // `vDSP_vsmul` bounded it: the WAV branch then converts to 24-bit integer PCM (hard clip
     // at the converter), and the AAC branch hands the same over-range floats to the encoder.
     //
-    // ⭐ THE REPAIR IS A GAIN BOUND, NOT A LIMITER. The export already reads the whole window
-    // once to measure loudness; that pass now also takes the SAMPLE PEAK, and a positive gain
+    // ⭐ THE REPAIR IS A GAIN BOUND, NOT A LIMITER. The export reads the whole window once at
+    // the RENDER's settings to take the SAMPLE PEAK (since E2 a separate pass, because loudness
+    // is measured at 48 kHz — see `ExportLoudnessMeasurement`), and a positive gain
     // is capped so `peak × gain` stays at or under `exportSamplePeakCeilingDBFS`. Nothing is
     // clipped and no dynamics change: the bound only lowers ONE scalar, so the waveform is the
     // same shape at a lower level. `EchoelLimiter` (`DSP/EchoelDynamics.swift`) was NOT reused:
@@ -186,12 +195,14 @@ final class SingleExport {
         do {
             let outputURL = try makeOutputURL(sourceURL: sourceURL)
             let timeRange = try await resolveTrimRange(sourceURL: sourceURL)
-            let levels = try await measureLUFS(sourceURL: sourceURL, timeRange: timeRange)
-            let requestedGain = Self.normalizeGainDB(target: targetLUFS, measuredDB: levels.loudnessDB)
+            let levels = try await measureExportLevels(sourceURL: sourceURL, timeRange: timeRange)
+            let requestedGain = Self.normalizeGainDB(target: targetLUFS, measuredDB: levels.integratedLUFS)
             let safeGain = Self.peakSafeGainDB(requestedDB: requestedGain, sourcePeak: levels.samplePeak)
 
             exportState = .exporting(progress: 0)
-            log.log(.info, category: .audio, "SingleExport: gain \(String(format: "%.1f", safeGain))dB (requested \(String(format: "%.1f", requestedGain))dB) → \(outputFormat.label)")
+            let loudnessText = levels.integratedLUFS.map { String(format: "%.1f LUFS", $0) } ?? "undefined"
+            let gainText = "gain \(String(format: "%.1f", safeGain))dB (requested \(String(format: "%.1f", requestedGain))dB)"
+            log.log(.info, category: .audio, "SingleExport: integrated \(loudnessText), \(gainText) → \(outputFormat.label)")
 
             try await renderWithGain(sourceURL: sourceURL, outputURL: outputURL,
                                      gainDB: safeGain, timeRange: timeRange)
@@ -234,25 +245,52 @@ final class SingleExport {
                            duration: CMTime(seconds: window.duration, preferredTimescale: scale))
     }
 
-    // MARK: - LUFS measurement (BS.1770 approximation via RMS)
+    // MARK: - Export levels (E2 loudness · E1 peak)
 
-    /// Loudness (the RMS approximation below — E2 replaces it) AND the sample peak of the
-    /// exact window that will be rendered, from one read.
-    private func measureLUFS(sourceURL: URL,
-                             timeRange: CMTimeRange?) async throws -> (loudnessDB: Float, samplePeak: Float) {
+    /// The two numbers the gain is decided from, each measured over EXACTLY the window that
+    /// will be rendered (C6: normalising against audio outside the final cut would set the
+    /// wrong gain for what actually ships in the file):
+    /// · `integratedLUFS` — gated BS.1770 integrated loudness, decoded at 48 kHz for
+    ///   `ExportLoudnessMeasurement`; nil when undefined (see `normalizeGainDB`).
+    /// · `samplePeak` — decoded at the RENDER's settings (44.1 kHz, as `renderWithGain`), so
+    ///   the E1 bound is computed from the very samples the gain is later applied to.
+    /// Two decodes on purpose: one read at one rate cannot serve both (see the E2 block on
+    /// `ExportLoudnessMeasurement`).
+    private func measureExportLevels(sourceURL: URL,
+                                     timeRange: CMTimeRange?) async throws -> (integratedLUFS: Float?, samplePeak: Float) {
+        // `isNaN ||` keeps a NaN once seen: `Swift.max(x, NaN)` would silently drop it, and a
+        // dropped NaN reads as a clean measurement that can vouch for a boost.
+        var peak: Float = 0
+        try await forEachDecodedSegment(sourceURL: sourceURL, timeRange: timeRange,
+                                        sampleRate: 44100) { floatPtr, count in
+            let segmentPeak = Self.samplePeak(floatPtr, count: count)
+            if segmentPeak.isNaN || segmentPeak > peak { peak = segmentPeak }
+        }
+
+        let loudness = ExportLoudnessMeasurement()
+        try await forEachDecodedSegment(sourceURL: sourceURL, timeRange: timeRange,
+                                        sampleRate: ExportLoudnessMeasurement.sampleRate) { floatPtr, count in
+            loudness.append(interleaved: floatPtr, sampleCount: count)
+        }
+        return (loudness.integratedLUFS(), peak)
+    }
+
+    /// Decode `timeRange` of `sourceURL` to interleaved stereo Float32 at `sampleRate` and
+    /// hand every contiguous segment to `body` as (pointer, float count). Throws when the
+    /// source has no audio, yields nothing, or the reader fails part-way — a measurement over
+    /// a truncated read is not a measurement of the window.
+    private func forEachDecodedSegment(sourceURL: URL, timeRange: CMTimeRange?, sampleRate: Int,
+                                       _ body: (UnsafePointer<Float>, Int) -> Void) async throws {
         let asset = AVAsset(url: sourceURL)
         guard let track = try await asset.loadTracks(withMediaType: .audio).first else {
             throw ExportError.noAudioTrack
         }
-        _ = track   // confirm audio track present
 
         let reader = try AVAssetReader(asset: asset)
-        // Measure ONLY the loop window (C6): normalising against audio outside the
-        // final cut would set the wrong gain for what actually ships in the file.
         if let timeRange { reader.timeRange = timeRange }
         let outputSettings: [String: Any] = [
             AVFormatIDKey: kAudioFormatLinearPCM,
-            AVSampleRateKey: 44100,
+            AVSampleRateKey: sampleRate,
             AVNumberOfChannelsKey: 2,
             AVLinearPCMBitDepthKey: 32,
             AVLinearPCMIsFloatKey: true,
@@ -264,12 +302,7 @@ final class SingleExport {
             throw ExportError.cannotReadSource
         }
 
-        var sumOfSquares: Double = 0
-        var sampleCount: Int = 0
-        // `isNaN ||` keeps a NaN once seen: `Swift.max(x, NaN)` would silently drop it, and a
-        // dropped NaN reads as a clean measurement that can vouch for a boost.
-        var peak: Float = 0
-
+        var sampleCount = 0
         while let buffer = readerOutput.copyNextSampleBuffer(),
               let blockBuffer = CMSampleBufferGetDataBuffer(buffer) {
             // Walk the block by offset: only `lengthAtOffset` bytes are guaranteed
@@ -289,21 +322,14 @@ final class SingleExport {
                 guard let ptr = dataPointer, lengthAtOffset >= 4 else { break }
                 let count = lengthAtOffset / 4
                 let floatPtr = UnsafeRawPointer(ptr).bindMemory(to: Float.self, capacity: count)
-                var rms: Float = 0
-                vDSP_measqv(floatPtr, 1, &rms, vDSP_Length(count))
-                sumOfSquares += Double(rms) * Double(count)
+                body(floatPtr, count)
                 sampleCount += count
-                let segmentPeak = Self.samplePeak(floatPtr, count: count)
-                if segmentPeak.isNaN || segmentPeak > peak { peak = segmentPeak }
                 offset += lengthAtOffset
             } while offset < totalLength
         }
 
+        if reader.status == .failed { throw ExportError.cannotReadSource }
         guard sampleCount > 0 else { throw ExportError.emptyAudio }
-        let rmsOverall = Float(sqrt(sumOfSquares / Double(sampleCount)))
-        guard rmsOverall > 0.000001 else { return (-60, peak) }
-        let dBFS = 20 * log10f(rmsOverall)
-        return (dBFS - 0.1, peak)   // BS.1770 K-weighting approximation
     }
 
     // MARK: - Render with gain
@@ -503,6 +529,95 @@ final class SingleExport {
             case .noDocumentsDirectory: return "Cannot locate the documents directory"
             }
         }
+    }
+}
+
+// MARK: - Export loudness (E2)
+//
+// ⛔ THE DEFECT THIS CLOSES. The export normalised by a function named `measureLUFS` that was
+// not LUFS: mean-square → RMS → dBFS − 0.1, with no K-weighting and no gating. The Master
+// panel meanwhile shows real BS.1770 loudness from `EchoelLoudnessMeter` — so the number the
+// user reads and the number the export steered by were two different truths. A bass-heavy
+// take and a bright one at the same RMS got the same gain; a take with long quiet passages
+// was measured by its quiet passages too, and boosted for them.
+//
+// ⭐ ONE METER. This type feeds the SAME `EchoelLoudnessMeter` the Master readout uses — no
+// second loudness algorithm exists. It only adapts the export's interleaved stream to it and
+// owns two decisions the live meter does not have to make:
+// · THE RATE: 48 kHz. The meter's K-weighting is the canonical BS.1770 48 kHz coefficient set
+//   and is NOT re-derived per rate (its own header says so). Fed the export's 44.1 kHz decode
+//   it errs by up to ~+1.1 dB at 20 Hz, +0.4 at 60 Hz, +0.3 at 1.5 kHz (measured by
+//   transcription, 2026-09-24) — a bass-dependent error in exactly the register this
+//   instrument lives in. So the loudness pass decodes the window at 48 kHz, where the
+//   coefficients are exact. Loudness of band-limited audio does not depend on the rate it is
+//   sampled at; the filter does. The per-rate coefficients are E3 and stay out of this slice.
+// · THE BLOCK GRID: the meter records at most ONE 400 ms gating block per call, taken at the
+//   end of the call. Fed exactly one 100 ms hop per call, every block lands on the BS.1770
+//   grid (400 ms blocks, 75 % overlap); fed a reader's arbitrary segment sizes it would skip
+//   and misplace blocks.
+//
+// ⚠️ WHAT THIS IS, NAMED HONESTLY: gated integrated loudness per ITU-R BS.1770-4 for a stereo
+// programme (K-weighting at 48 kHz, L/R weight 1.0, absolute gate −70 LUFS, relative gate
+// −10 LU). The meter keeps block loudness in 0.1 LU histogram bins (libebur128 technique), so
+// the result is quantised: a steady tone reads up to +0.05 LU off (EBU TECH 3341 cases 1–4:
+// ≤ 0.05 LU, inside the ±0.1 LU tolerance). It is NOT a claim of full EBU R128 conformance —
+// no true-peak and no LRA enter the export decision, and nothing here was run against the
+// full EBU test-vector set. Guard: `TheExportNormalisesByIntegratedLoudnessTests`.
+
+/// Integrated programme loudness (LUFS) of an interleaved-stereo stream at 48 kHz, measured by
+/// the app's one BS.1770 meter. Offline, owned by a single measurement pass; not for a render
+/// thread (it is fed from a decode loop, and the meter itself is audio-thread safe regardless).
+final class ExportLoudnessMeasurement {
+
+    /// The rate the export decodes the loudness pass at — the rate `EchoelLoudnessMeter`'s
+    /// K-weighting coefficients are defined for. See the E2 block above.
+    static let sampleRate = 48_000
+
+    /// One 100 ms gating hop. Equals the meter's own hop at this rate
+    /// (`Int(0.1 × 48000)` = 4800); one hop per call keeps every block on the BS.1770 grid.
+    static let hopFrames = sampleRate / 10
+
+    // The TYPE NAME, not `Self.` — `Self` is illegal in a stored-property initializer (#1444).
+    private let meter = EchoelLoudnessMeter(sampleRate: Float(ExportLoudnessMeasurement.sampleRate))
+    private var left: [Float]
+    private var right: [Float]
+    private var filled = 0
+    /// Channel parity carried ACROSS calls: a segment boundary may split a frame, and a
+    /// per-call pairing would then swap L and R for the rest of the take.
+    private var expectingLeft = true
+
+    init() {
+        left = [Float](repeating: 0, count: Self.hopFrames)
+        right = [Float](repeating: 0, count: Self.hopFrames)
+    }
+
+    /// Append `sampleCount` interleaved floats (L R L R …).
+    func append(interleaved samples: UnsafePointer<Float>, sampleCount: Int) {
+        guard sampleCount > 0 else { return }
+        for i in 0..<sampleCount {
+            if expectingLeft {
+                left[filled] = samples[i]
+                expectingLeft = false
+                continue
+            }
+            right[filled] = samples[i]
+            expectingLeft = true
+            filled += 1
+            if filled == Self.hopFrames {
+                meter.processStereo(left: left, right: right, frameCount: filled)
+                filled = 0
+            }
+        }
+    }
+
+    /// Gated integrated loudness in LUFS, or nil when BS.1770 leaves it undefined — no 400 ms
+    /// block above the −70 LUFS absolute gate (silence, near-silence, or less than one block).
+    /// A trailing partial hop is not fed: it cannot complete a block, so it could not change
+    /// the result — BS.1770 counts only complete blocks.
+    func integratedLUFS() -> Float? {
+        let value = meter.integratedLUFS
+        guard value.isFinite, value > EchoelLoudnessMeter.floorLUFS else { return nil }
+        return value
     }
 }
 #endif
