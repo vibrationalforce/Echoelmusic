@@ -18,10 +18,16 @@ import Accelerate
 //   - Rule 110: Class IV complex — Turing-complete, mixtures of order/chaos
 //   - Rule 184: Class II periodic — traffic flow, rhythmic
 //
-// Bio-Reactive Integration:
-//   - Coherence → Rule number (high coherence = harmonic rules, low = chaotic)
-//   - HRV → Evolution speed (calm = slow, stressed = fast)
-//   - Heart rate → Fundamental frequency
+// Bio-Reactive Integration (measured 2026-09-24, overnight P8p — ⛔ this block claimed three
+// mappings and all three were wrong):
+//   - Coherence → rule, and the direction is the OPPOSITE of what stood here: coherence 0
+//     selects `harmonicRules.first` (90) and coherence 1 selects `harmonicRules.last` (30,
+//     the chaotic one). ⚠️ HOLD-FOR-FOUNDER: whether high coherence SHOULD sound harmonic is
+//     a listening decision — flipping it changes the texture at every coherence, and the
+//     in-place update (see `evolve1D`) changes which rules are audible at all.
+//   - There is NO HRV input: `evolutionRate` is a plain property (the AUv3 pins it to 8).
+//   - There is NO heart-rate input: `frequency` comes from the AUv3's Base Frequency knob
+//     (× 0.5, `EchoelBodyVibeDevice.apply`).
 //
 // References:
 //   - Wolfram, S. (1983) "Statistical mechanics of cellular automata"
@@ -366,9 +372,9 @@ public final class EchoelCellular: @unchecked Sendable {
 
     private func updateRuleFromCoherence() {
         guard bioReactiveEnabled else { return }
-        // Map coherence (0-1) to harmonic rules
-        // High coherence → harmonic rules (90, 150, 60)
-        // Low coherence → chaotic rules (110, 30)
+        // Map coherence (0-1) onto `harmonicRules` by index: 0 → 90 (first), 1 → 30 (last,
+        // chaotic). ⛔ "High coherence → harmonic" stood here and is the inverse of this code;
+        // the intended direction is a founder decision (file header, P8p).
         // ⚠️ Clamp the FLOAT before `Int(…)` (overnight P8, 2026-09-24): `Int(.nan)` and
         // `Int(.infinity)` TRAP, and the AUv3 hands this setter the host's raw parameter value.
         // The index clamp below cannot help — it runs after the conversion. `clamped(to:)` is
