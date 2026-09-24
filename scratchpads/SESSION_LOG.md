@@ -39216,3 +39216,6 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
 - Guard `TheBodyVibeReverbIsHeardAndAnchoredTests` (8 claims; claim 5 renders audio through
   the real engines). Python transcription green; parent red where it should be.
 - Owed: WA3-5 host listening; texture-gain initial mismatch reported, not touched.
+- Gates `f72b09b74`: Xcode Compile Check success (36053234043); CI/CD Build for Testing success
+  (36053233853); Run Tests `TEST EXECUTE FAILED` (#396), 0 failures / 0 skips in the tail window,
+  1008 s gap, new guard not visible → compiles, execution unproven. `main` = `f72b09b74`.

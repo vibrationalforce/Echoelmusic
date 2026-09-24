@@ -345,8 +345,10 @@ done. WA4 is the first front.
   - **WA3.3 — BodyVibe reverb runtime truth + binding hardening: IMPLEMENTED.** Address 6 is
     the anchor, bio modulates around it (`EchoelDDSP.bioModulatedReverbMix`), and `EchoelReverb`
     makes it audible (`EchoelBodyVibeDevice.renderSpace`). A creative host parameter without a
-    runtime binding now fails setup. Guard `TheBodyVibeReverbIsHeardAndAnchoredTests`. COMPILES /
-    TESTED only with gate evidence (§4); host check WA3-5 in §9.
+    runtime binding now fails setup. Guard `TheBodyVibeReverbIsHeardAndAnchoredTests`. **COMPILES** at `f72b09b74` (Xcode
+    Compile Check run 36053234043 success, AUv3 embedded; CI/CD `Build for Testing` success, run
+    36053233853; `main` advanced). Not TESTED: Run Tests `TEST EXECUTE FAILED` (#396), no
+    failure in the tail window, new guard not visible there (#807). Host check WA3-5 in §9.
 
 ### WA4 — Arrange + Session Front
 
