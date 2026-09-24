@@ -39355,3 +39355,26 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
 - Guard `TheAUv3SuppliesItsOwnOutputBuffersTests` (source scan, one finding on parent + counterweight).
 - HOST: unmeasured whether any host passes null; NEEDS-FOUNDER-VERIFY marker at RenderScratch.
 - Gates read: 240656161 (P8c) Build for Testing SUCCESS (22:28:59Z).
+
+## 2026-09-24 overnight — P8h–P8l + P7a (97faa961d · 835cb8e8c · 66748c221 · 67c834759 · 53fb7ef1b · 7356a4dbf)
+Found by a read-only audit agent over the AUv3 file; each path re-read hop by hop before the repair.
+- **P8h (97faa961d)** `allocateRenderResources` started the voice with the RAW `baseFreqParam.value`
+  two lines after `seed` admitted it; a refused NaN stays in the AUParameter → synth silent for the
+  instance's life. Now `synth.noteOn()` (plays the seeded pitch). Guard: claim 5 of
+  `TheHostValueIsAdmittedOnceTests` (behaviour through the real engine + scan).
+- **P8i (835cb8e8c)** bio writes refreshed all four mirrors from the params (ordering unverified) and
+  mirrored them raw. Now: non-finite refused, clamp to `legacyLiveControlRange`, only the addressed
+  mirror moves. Guard `TheBioMirrorTakesTheWrittenValueTests`.
+- **P8j (66748c221)** oversized block returned noErr with stale samples past 4096 → now
+  `kAudioUnitErr_TooManyFramesToProcess` against `scratch.capacity`. Guard `TheAUv3RefusesAnOversizedBlockTests`.
+- **P8k (67c834759)** no `deinit` → a host releasing without deallocate drops a resumed timer (trap
+  per the #1385 note). `deinit { vitalsTimer?.cancel() }`. Guard `TheVitalsTimerDiesWithTheUnitTests`.
+- **P8l (53fb7ef1b)** `shouldChange(to:for:)` refuses interleaved / non-Float32 formats the mix loop
+  cannot write. Guard `TheAUv3AcceptsOnlyTheFormatItRendersTests`.
+- **P7a (7356a4dbf)** `gh-test-verdict.py` names an xcodebuild abort (`Abort trap: 6 xcodebuild …`,
+  df9222b38's Run Tests) instead of reading it as a clean window; exit code unchanged; 7 selftests.
+- NOT fixed, measured (NATIVE_DEVICE_ARCHITECTURE §K): no `reset()` override · Base Frequency retunes a
+  held MIDI note · `bioInterval` captured at block fetch · render-event automation ignored.
+- Gates: main = df9222b38 (P8d merged on green Build for Testing). CI/CD for a4cea87de/90ae395e6 in
+  progress, later commits queued (runner backlog); Compile Check 36070539097 (53fb7ef1b, covers all
+  AU changes) in progress at 23:10Z.

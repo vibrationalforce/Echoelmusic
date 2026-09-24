@@ -563,6 +563,15 @@ about 10 times a second from `bioBaseReverbMix`, which the AUv3 never set. Repai
   control thread replaced a heap-table struct under a live render read on every Coherence write);
   a non-finite coherence selects a rule instead of trapping in `Int(…)`. All three are
   sound-neutral.
+- **Render-contract repairs (2026-09-24, P8f–P8l, one commit each, NOT host-verified):**
+  one admission rule, `ParameterDescriptor.admitted(_:)`, for both host writes and restored
+  state · AU-owned output buffers when a host passes null `mData` (the `AURenderBlock`
+  contract) · the voice starts from the admitted pitch, not the raw parameter · a bio write moves
+  only its own mirror, clamped to `legacyLiveControlRange`, and a non-finite write is refused ·
+  a block larger than the scratch returns `kAudioUnitErr_TooManyFramesToProcess` · `deinit`
+  cancels the vitals timer · `shouldChange(to:for:)` accepts only non-interleaved Float32.
+  Each has a guard in `Tests/CISmoke` (mostly source scans; the extension cannot be
+  instantiated in the bundle).
 - Every creative host parameter must have a runtime binding
   (`EchoelBodyVibeAUv3Mapping.resolveBindings`), or setup throws `unboundCreativeParameter`.
 - The APP's convolution reverb is unchanged: still off, still unclaimed.
@@ -592,6 +601,17 @@ about 10 times a second from `bioBaseReverbMix`, which the AUv3 never set. Repai
   With no live bio, **Ambient Calm's seeded coherence 0.7 selects rule 184**. Rules 150, 110 and
   30 light a partial cell only after about 33 evolutions (~4 s at 8/s). A true double buffer
   changes every rule's sound, so it is a founder / listening decision, not a fix.
+
+**Three more AUv3 findings measured 2026-09-24 and NOT changed (product or host decision):**
+- **`reset()` is not overridden.** A host that calls it on transport stop expects tails and
+  voices cleared; the reverb tail and the held note survive. Clearing them needs a decision
+  about what "reset" means for a bio-driven drone (silence, or re-seed and keep sounding).
+- **Base Frequency retunes a held MIDI note.** `apply` writes `synth.frequency`, the glide target
+  of whatever sounds, including a key the host is holding. Whether the knob is a transpose or
+  only the drone's pitch is a product call.
+- **`bioInterval` is captured when the host fetches the render block**, not per render. A
+  sample-rate change without a re-fetch keeps the old interval. Hosts normally re-allocate and
+  re-fetch; HOST VERIFY before building anything.
 
 **Third-party hosting seam (not implemented).** A hosted plugin appears to the Session as a
 `DeviceInstance` whose `typeID` names the adapter and whose `state` is the plugin's own opaque
