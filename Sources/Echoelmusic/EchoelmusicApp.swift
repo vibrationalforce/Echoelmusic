@@ -23,10 +23,20 @@ private func scenePhaseName(_ phase: ScenePhase) -> String {
     }
 }
 
-/// Echoel is a bio-reactive instrument. Your body plays it, and its output is
-/// multidimensional — sound, image, light, space.
+/// Echoelmusic is a full professional distributed multidimensional multimedia
+/// workstation (DMMW): own the complete creative workflow, integrate the complete
+/// professional ecosystem. The body — heart, breath — is its differentiating control
+/// source, not its outer boundary.
 ///
-/// (The canonical one-sentence from `docs/dev/PRODUCT_DEFINITION.md`, 2026-07-25.)
+/// CURRENT PRODUCT LAW SUPERSEDES HISTORICAL PRODUCT CUTS.
+///
+/// (The canonical product law, `docs/dev/FOUNDER_PRODUCT_LAW.md`, 2026-09-24. It names the
+/// DESTINATION; what this build ships is `docs/dev/FEATURE_STATUS.md`.)
+///
+/// ⛔ 2026-09-24 — WHAT STOOD HERE BEFORE: "Echoel is a bio-reactive instrument. Your body
+/// plays it, and its output is multidimensional — sound, image, light, space.", the one-
+/// sentence of `docs/dev/PRODUCT_DEFINITION.md` (2026-07-25). It is still TRUE of what ships
+/// today; it is no longer the product BOUNDARY, and an entry-point line is read as one.
 ///
 /// ⛔ #587 — WHAT STOOD HERE, AND WHY IT COULD NOT STAY: `"Make Beats. Record Video.
 /// Stream Live."` — the v10 DAW-era tagline, on the `@main` struct, the first doc line of

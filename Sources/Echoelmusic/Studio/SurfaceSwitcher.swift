@@ -51,6 +51,9 @@ import SwiftUI
 /// clipped) is preserved so nothing inflates past the screen.
 @MainActor
 struct SurfaceHost: View {
+    /// (Phase history — the pure-instrument verdict below was superseded as SCOPE on
+    /// 2026-09-24, docs/dev/FOUNDER_PRODUCT_LAW.md; the home layout it describes is
+    /// still what ships.)
     /// PURE INSTRUMENT (founder 2026-07-24, verbatim "keine Timeline etc nur das
     /// alte Interface mit create from within"): the Arrange timeline is GONE from
     /// the home — `EchoelStudioView` (the "create from within" generative

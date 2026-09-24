@@ -3,9 +3,9 @@
 //  Echoelmusic — Core
 //
 //  A snapshot of the live MUSICAL state, published on EngineBus alongside the bio
-//  snapshot. This is the OUTPUT-STAGE backbone (DMMW as a product is retired,
-//  2026-07-25 — docs/dev/PRODUCT_DEFINITION.md; its multidimensional half survives
-//  as exactly this spine): visuals, light, spatial and (later) video subscribe to it
+//  snapshot. This is the OUTPUT-STAGE backbone (the 2026-07-25 instrument phase kept
+//  only this spine of the DMMW; since 2026-09-24 the DMMW is the product again —
+//  docs/dev/FOUNDER_PRODUCT_LAW.md): visuals, light, spatial and (later) video subscribe to it
 //  so every medium can be shaped BY musical parameters — the pitch/chord you play
 //  becomes colour, the tempo/section drives motion and cues.
 //

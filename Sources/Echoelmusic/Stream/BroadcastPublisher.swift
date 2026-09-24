@@ -2,10 +2,12 @@
 //  BroadcastPublisher.swift
 //  Echoelmusic — Stream
 //
-//  The broadcast pillar — CUT from the roadmap (Editor ≠ Workstation, 2026-07-25;
-//  struck from the identity line 2026-07-31). WOULD stream the live bio-AV
-//  instrument from the phone; the engine (HaishinKit) is not linked, so nothing
-//  streams in this build. Config/UI are preserved for a founder re-open.
+//  The broadcast pillar — a DMMW domain again since 2026-09-24
+//  (docs/dev/FOUNDER_PRODUCT_LAW.md); it was cut 2026-07-25 as a phase decision and
+//  struck from the identity line 2026-07-31 because nothing streams. WOULD stream the
+//  live bio-AV instrument from the phone; the engine (HaishinKit) is not linked, so
+//  nothing streams in this build — no copy may claim it. Linking it is a founder-gated
+//  dependency slice. Config/UI are preserved for that re-open.
 //  This is the SINK side of the Signal Router (rtmp.out / srt.out).
 //
 //  Build-green first (founder principle #1): the real RTMP/SRT engine is HaishinKit

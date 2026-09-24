@@ -50,8 +50,8 @@ public struct MelodyClip: Codable, Sendable, Equatable {
 /// `TimelineRegionPlayer` — see `timelineEngineKinds`), though no ordinary surface can
 /// CREATE an audio region today, so the kind is reachable by decode rather than by use.
 /// video/visual are scaffolding. `isPlayable` is where that boundary is surfaced.
-/// DMMW_ARCHITECTURE.md is superseded history; the living boundary is
-/// docs/dev/PRODUCT_DEFINITION.md.
+/// Scope (which kinds SHOULD exist) is docs/dev/FOUNDER_PRODUCT_LAW.md; this enum says
+/// only which ones PLAY in this build.
 ///
 /// ⛔ THIS HEADER SAID "`.midi` … the only kind that PLAYS today" UNTIL #1439, TWO COMMITS
 /// AFTER #1438 CORRECTED THE SET TWELVE LINES BELOW IT. The #456 pull-along defect inside
