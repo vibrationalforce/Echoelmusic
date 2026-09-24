@@ -271,7 +271,10 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
                 // runs RENDER-SIDE (see internalRenderBlock) so the synth's
                 // harmonicAmplitudes array stays single-owner — no cross-thread COW race
                 // and no audio-thread allocation. texture.coherence is a scalar
-                // (atomic-width Float) — safe to set directly here.
+                // (atomic-width Float) — safe to set directly here. Its didSet replaces
+                // `texture.rule`, which the render thread reads per cell; that is safe only
+                // because `CARule` is ONE BYTE with no heap storage (overnight P8 — it used to
+                // carry a [UInt8] table, released under a live render read).
                 self.bioMirror.coherence = self.coherenceParam.value
                 self.bioMirror.hrv = self.hrvParam.value
                 self.bioMirror.heartRate = self.heartRateParam.value

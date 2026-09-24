@@ -39305,3 +39305,14 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
 - FOUNDER HOLD (public copy, brand wording — NOT touched): docs/faq.html (twice, incl. JSON-LD),
   docs/architecture.html (4 rows) and docs/brainstorming.html still say video/streaming/console mixer
   "not planned" / "deliberately not in Echoelmusic". True as "not shipping", false as scope.
+
+## 2026-09-24 overnight — P8c: CARule's heap table was replaced under a live render read
+- AU value observer writes `texture.coherence` on the control thread ("a scalar — safe"), but its
+  didSet replaces `texture.rule` (bioReactiveEnabled defaults true), and CARule carried a `[UInt8]`
+  table: a heap buffer released while `evolve1D()` reads `rule` per cell on the render thread.
+- Repair: evaluate reads bit `index` of the rule number (Wolfram's numbering IS the table); CARule is
+  one byte. Bit-identical (256×8 exhaustive, transcribed). AU comment now says WHY it is safe.
+- Guard `TheCellularRuleIsOneByteTests`: claim 1 MemoryLayout size (regression, 16 → 1), claim 2
+  exhaustive Wolfram-bit counterweight (green both trees).
+- NEXT CANDIDATE (measured by reading, not fixed): `updateRuleFromCoherence` does
+  `Int(coherence * 7)` — a NaN coherence from a host write traps (`Int(.nan)`) on the control thread.

@@ -47,23 +47,26 @@ public final class EchoelCellular: @unchecked Sendable {
     }
 
     /// Elementary CA rule (0-255) wrapper
+    ///
+    /// ⚠️ ONE BYTE, NO HEAP — and that is load-bearing, not tidiness (overnight P8, 2026-09-24).
+    /// `rule` is REPLACED on the control thread (`coherence.didSet` → `updateRuleFromCoherence`,
+    /// on every host write to the AUv3's Coherence) while `evolve1D()` reads it on the render
+    /// thread for every cell. It used to carry an 8-entry `[UInt8]` lookup table: the swap then
+    /// released a heap buffer the render thread could be reading, and built a new one. Wolfram's
+    /// numbering IS the table — bit `i` of the rule is the output for neighbourhood `i` — so
+    /// `evaluate` reads the bit directly and the struct is a single byte store.
+    /// Guard: `TheCellularRuleIsOneByteTests`.
     public struct CARule: Sendable {
         public let number: UInt8
-        private let lookupTable: [UInt8] // 8 entries for 3-bit neighborhood
 
         public init(_ rule: UInt8) {
             self.number = rule
-            var table = [UInt8](repeating: 0, count: 8)
-            for i in 0..<8 {
-                table[i] = (rule >> i) & 1
-            }
-            self.lookupTable = table
         }
 
         /// Evaluate rule for a 3-bit neighborhood (left, center, right)
         public func evaluate(left: UInt8, center: UInt8, right: UInt8) -> UInt8 {
-            let index = Int((left << 2) | (center << 1) | right)
-            return lookupTable[index]
+            let index = (left << 2) | (center << 1) | right
+            return (number >> (index & 7)) & 1
         }
 
         // Named rules
