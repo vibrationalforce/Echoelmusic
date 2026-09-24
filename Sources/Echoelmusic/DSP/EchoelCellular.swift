@@ -257,8 +257,17 @@ public final class EchoelCellular: @unchecked Sendable {
             }
         }
 
-        // Copy to prev
-        cellsPrev = cells
+        // Copy to prev ELEMENT-WISE. ⛔ `cellsPrev = cells` stood here (overnight P8,
+        // 2026-09-24) and was the #1385 audio-thread allocation MOVED, not removed: the
+        // whole-array assignment makes both properties share ONE buffer, so the first
+        // `cells[i] = …` in `evolve1D()` — on the render thread — found it shared and
+        // copy-on-wrote it: one malloc + memcpy + free per seed. `init` seeds, so every AUv3
+        // instance paid it once, at its first evolution. Copying by index writes into
+        // `cellsPrev`'s OWN buffer; neither array ever gains a second owner.
+        // Guard: `TheCellularSeedSharesNoBufferTests`.
+        for i in 0..<cellCount {
+            cellsPrev[i] = cells[i]
+        }
         updateWavetableFromCells()
 
         // Seed 2D grid
@@ -303,12 +312,12 @@ public final class EchoelCellular: @unchecked Sendable {
         // unit. **Reviving a caller re-arms every latent defect in everything it calls**, and
         // the callee's own file will not have changed, so a diff shows nothing.
         //
-        // The store bought nothing: `cellsPrev` has NO reader anywhere in Sources or Tests
-        // (`git grep -n cellsPrev` → the declaration, the init, `seed()`, and this line). The
-        // property and its control-thread write in `seed()` are LEFT IN PLACE deliberately —
-        // deleting a stored property is a wider change than this fix needs, and a two-buffer
-        // evolution is a plausible future that would want it back. Only the audio-thread
-        // write is gone.
+        // The store bought nothing: `cellsPrev` has NO reader anywhere in Sources or Tests.
+        // The property and its write in `seed()` stay — a two-buffer evolution is a plausible
+        // future that would want it back. ⛔ This paragraph called that write "control-thread"
+        // and therefore harmless; it was not (overnight P8): a WHOLE-ARRAY assignment there
+        // shares the buffer, and the copy then lands HERE, on the render thread. `seed()` now
+        // copies element-wise.
         for i in 0..<cellCount {
             let left = cells[(i - 1 + cellCount) % cellCount]
             let center = cells[i]

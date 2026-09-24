@@ -39282,3 +39282,15 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
   (b) `seed()` writes `cellsPrev = cells`, so the first render-thread `cells[i] =` after a seed COW-copies
       (one malloc on the audio thread per seed; the AU seeds once, in init).
   (c) rules 150/30/110 reach the partial cells (0…31) only at evolution 33 — ~4 s at the AU's 8/s.
+
+## 2026-09-24 overnight — P8a: EchoelCellular.seed shared its buffer with the render thread
+- `seed()` ended with `cellsPrev = cells` — the #1385 audio-thread COW moved, not removed: the
+  shared buffer is copied at the first `cells[i] =` in `evolve1D()` on the RENDER thread. `init`
+  seeds, so every AUv3 instance paid one malloc+memcpy+free at its first evolution. Repair: index
+  copy. `cellsPrev` has no reader → output bit-identical. Guard `TheCellularSeedSharesNoBufferTests`
+  (3 source-scan claims; 1+2 one finding on the parent, 3 counterweight; stripper TRAGEND).
+- P8b NOT FIXED (sound change → founder ear / host listening): `evolve1D` updates in place, so the
+  "rules" are not the Wolfram rules they are named after; rule 184 (coherence index 4, e.g. a 0.7
+  seed) kills the texture permanently; a true double buffer would make the default rule-90 texture
+  silent for ~33 evolutions (~4 s at 8/s) before a partial cell lights. Both directions change the
+  plug-in's sound. Needs a founder decision, not an overnight slice.
