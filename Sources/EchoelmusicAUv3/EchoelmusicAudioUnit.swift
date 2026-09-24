@@ -349,6 +349,19 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     public override var outputBusses: AUAudioUnitBusArray { _outputBusArray }
 
     public override var canProcessInPlace: Bool { false }
+
+    /// ⭐ 2026-09-24 (overnight P8l) — the render block writes NON-INTERLEAVED FLOAT32, one
+    /// buffer per channel (`data[i] = …` through `assumingMemoryBound(to: Float.self)`), and
+    /// treats a one-buffer list as mono. Nothing refused a host bus format it cannot serve: an
+    /// interleaved stereo bus arrives as ONE buffer of `2 × frames`, which the block would read
+    /// as mono and fill half of; an integer format would receive float bit patterns. The host
+    /// asks this before it changes a bus, so refusing here keeps a format the block cannot
+    /// honour from ever reaching it. Guard: `TheAUv3AcceptsOnlyTheFormatItRendersTests`.
+    public override func shouldChange(to format: AVAudioFormat, for bus: AUAudioUnitBus) -> Bool {
+        guard format.commonFormat == .pcmFormatFloat32, !format.isInterleaved,
+              format.channelCount >= 1 else { return false }
+        return super.shouldChange(to: format, for: bus)
+    }
     public override var supportsUserPresets: Bool { true }
     public override var latency: TimeInterval { 0 }
     /// The synth's release plus the reverb's decay (`EchoelBodyVibeDevice.tailSeconds`). Reads
