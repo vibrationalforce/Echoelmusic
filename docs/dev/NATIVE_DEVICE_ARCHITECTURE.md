@@ -613,6 +613,29 @@ about 10 times a second from `bioBaseReverbMix`, which the AUv3 never set. Repai
   sample-rate change without a re-fetch keeps the old interval. Hosts normally re-allocate and
   re-fetch; HOST VERIFY before building anything.
 
+**Second audit pass 2026-09-24 (WA3 device-model files): fixed P8m (stale note tracker across
+re-allocate), P8n (one note-identity spelling), P8p (EchoelCellular's bio comments). Measured and
+NOT changed:**
+- **The shared-vitals bridge writes "not measured" as a real low value** (`pullSharedVitals`):
+  `BioVitals` uses 0 for unmeasured coherence/HRV and 0 BPM for no heart rate, and the AU maps
+  them raw to 0, where the app's rule (`EngineBus.…ForSound`) reads unmeasured as neutral 0.5.
+  **Dormant**: the extension carries no App Group entitlement, so the bridge delivers nothing
+  today (entitlements = founder hold). Repair when it is enabled: Foundation-only `…ForSound`
+  accessors on `BioVitals` with the app's gates. `AnUnmeasuredChannelReadsNeutralTests` does not
+  see this spelling (`vitals.` vs `frame.`).
+- **A fresh instance plays rule 90 while its Coherence reads 0.5** (which maps to rule 105):
+  `init` sets `texture.rule = .rule90`, and a default value never fires the observer, so the
+  first coherence write, even of 0.5, changes the timbre. Sound change → founder ear, together
+  with the coherence DIRECTION (coherence 1 selects the chaotic rule 30; HOLD in `EchoelCellular`).
+- **Saved state stores the raw `AUParameter` value, not the admitted one that sounds** (premise:
+  a parameter keeps a value the observer refused; unverified). A refused NaN Master Gain is then
+  dropped from the saved document and a restore plays the default. Repair sketch: an
+  admitted-value cache per creative ID, read by the getter and the re-seed.
+- **fullState live-restore compares `p.value != v`**; a live NaN bio parameter lets an old
+  document's bio value reach the mirrors (WA3.1). Unlikely; repair reads live values from the mirrors.
+- **`EchoelDeviceState` drops the whole value map on one unreadable entry** — per-field lossiness
+  is its documented design; per-entry would match `sanitized`. No production caller.
+
 **Third-party hosting seam (not implemented).** A hosted plugin appears to the Session as a
 `DeviceInstance` whose `typeID` names the adapter and whose `state` is the plugin's own opaque
 blob plus its component description. The Session never imports `AudioToolbox` or AUv3 types;

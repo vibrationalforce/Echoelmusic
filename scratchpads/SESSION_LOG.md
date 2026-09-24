@@ -39378,3 +39378,25 @@ Found by a read-only audit agent over the AUv3 file; each path re-read hop by ho
 - Gates: main = df9222b38 (P8d merged on green Build for Testing). CI/CD for a4cea87de/90ae395e6 in
   progress, later commits queued (runner backlog); Compile Check 36070539097 (53fb7ef1b, covers all
   AU changes) in progress at 23:10Z.
+
+## 2026-09-24 overnight — second audit pass (WA3 device-model files): P8m · P8n · P8o · P8p
+Read-only audit agent over EchoelBodyVibeDevice / ParameterDescriptor / EchoelDeviceState / mapping /
+AUv3StateContract; 7 findings, each re-read before acting.
+- **P8m (d62441b8e)** `renderNoteState.current` survived deallocate/allocate → a key held across a
+  re-allocate released the new drone on its note-off. Reset to -1 in allocate before `noteOn()`.
+  Guard `TheReallocatedDroneIgnoresAStaleNoteOffTests` (scan; 1 finding on parent + counterweight).
+- **P8n (d975e6d0a)** note identity spelled twice (`frequency` masked `& 0x7F`, tracker raw byte).
+  `EchoelMIDIDecode.noteNumber(_:)` is the one owner. Guard `TheNoteIdentityHasOneSpellingTests`
+  (behaviour forward + scan). P8m claim-2 needle moved in the same commit.
+- **P8o (39730a7d3, ac10c99e1)** six comments (3 DSP, 3 elsewhere) said the AUv3 target was removed
+  and DSP/ is no longer compiled in isolation — false since #1385; TuningReference said a Core type
+  "would compile fine" there. Comments only; the quoted project.yml sentence no longer exists.
+- **P8p (39b433ce1)** EchoelCellular's bio block claimed coherence→harmonic (code: coherence 1 →
+  rule 30, chaotic), HRV→evolution and HR→frequency (no such inputs). Comments now say what the code
+  does; the DIRECTION is HOLD-FOR-FOUNDER. The non-blocking `testHighCoherenceSelectsHarmonicRule`
+  is vacuous (harmonicRules holds all 8 rules) — recorded, not edited (no gate compiles that suite).
+- Not fixed, recorded in NATIVE_DEVICE_ARCHITECTURE §K: dormant bridge maps unmeasured → 0 (needs
+  the App Group entitlement to matter) · fresh instance plays rule 90 at displayed coherence 0.5 ·
+  saved state stores the raw parameter · fullState `!=` restore corner · EchoelDeviceState per-field lossiness.
+- Gates: Compile Check 53fb7ef1b SUCCESS (covers P8e–P8l). Build for Testing: a4cea87de SUCCESS,
+  c2fc6f407 SUCCESS (Run Tests #396 shape, 170 passing in window, tonight's guards not in window).
