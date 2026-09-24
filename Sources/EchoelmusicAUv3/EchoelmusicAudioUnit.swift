@@ -295,11 +295,28 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
                 // `texture.rule`, which the render thread reads per cell; that is safe only
                 // because `CARule` is ONE BYTE with no heap storage (overnight P8 — it used to
                 // carry a [UInt8] table, released under a live render read).
-                self.bioMirror.coherence = self.coherenceParam.value
-                self.bioMirror.hrv = self.hrvParam.value
-                self.bioMirror.heartRate = self.heartRateParam.value
-                self.bioMirror.breathPhase = self.breathPhaseParam.value
-                self.texture.coherence = self.coherenceParam.value
+                //
+                // ⭐ 2026-09-24 (overnight P8i) — ONE MIRROR, FROM `value`. This used to refresh
+                // all four mirrors from `self.xParam.value` on every bio write. Whether an
+                // `AUParameter` has stored the new value before calling this observer is not
+                // documented, so the parameter being written could be read one write behind
+                // (a preset's single coherence seed would then never land). And the values were
+                // mirrored raw: a host's out-of-range heart rate reached the fallback vibrato
+                // (`0.004 + heartRate * 0.02`) and a non-finite one left the sanitiser to guess.
+                // Now: non-finite is refused (the mirror keeps what sounds), anything else is
+                // clamped to the range the tree declares, and only the addressed mirror moves.
+                // Guard: `TheBioMirrorTakesTheWrittenValueTests`.
+                guard value.isFinite else { return }
+                let v = value.clamped(to: EchoelBodyVibeAUv3Mapping.legacyLiveControlRange)
+                switch addr {
+                case .coherence:
+                    self.bioMirror.coherence = v
+                    self.texture.coherence = v
+                case .hrv: self.bioMirror.hrv = v
+                case .heartRate: self.bioMirror.heartRate = v
+                case .breathPhase: self.bioMirror.breathPhase = v
+                default: break
+                }
             case .baseFrequency, .textureAmount, .reverbMix:
                 // WA3.2: the same three engine writes as before, now through the one shared
                 // binding (`EchoelBodyVibeDevice.apply`) resolved at setup. Overnight P8: the
