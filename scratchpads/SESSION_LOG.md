@@ -39244,3 +39244,16 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
   EngineBusTests (non-blocking; overflow pin moved to controllerEvents). History left alone.
 - Guard `TheBioSignalIsASnapshotNotAQueueTests` (4 claims). Python transcription: parent 1a9ec0dbb
   claims 1–2 red (one finding), 3–4 green; worktree all green. Checkers clean; CLAUDE.md 148,802 B.
+
+## 2026-09-24 overnight — P2: BodyVibe starts where its tree says
+- Measured: tree defaults are written before `implementorValueObserver` is installed, and the
+  observer is the only caller of `apply`. Allocate seeded only the reverb (WA3.3). So a fresh
+  instance played texture gain 0.15 (literal in init) against a 0.3 knob; pitch agreed with the
+  220 default only by two matching literals; output gain was a second spelling of 0.7.
+- Repair: `EchoelBodyVibeDevice.seed(values, synth:, texture:) -> Float` (missing/non-finite →
+  descriptor default, clamped to range) — called in init (defaults) and allocate (tree values,
+  keyed by canonical ID), returns the output gain for `gainMirror`. The two texture literals gone.
+- Guard `TheBodyVibeStartsWhereItsTreeSaysTests` (4 claims; 1–3 behaviour on real engines,
+  FORWARD; 4 source scan, REGRESSION on the parent). WA3.3 claim-8 needle moved to
+  `EchoelBodyVibeDevice.seed(creativeValues` in the same commit (#456).
+- Audible change: a fresh instance's texture is ~6 dB louder (0.3 vs 0.15). Host listening owed.

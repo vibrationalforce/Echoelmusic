@@ -199,7 +199,10 @@ final class TheBodyVibeReverbIsHeardAndAnchoredTests: XCTestCase {
                       "setup no longer fails loudly on a creative parameter without a binding")
         XCTAssertFalse(setup.contains("if let binding = EchoelBodyVibeDevice.binding(for:"),
                        "setup skips a missing binding again")
-        XCTAssertTrue(allocate.contains("apply(.synthReverbMix, value: reverbMixParam.value"),
+        // ⚠️ 2026-09-24 (P2): the reverb-only seed became the shared seed of ALL creative
+        // values (`EchoelBodyVibeDevice.seed`); `TheBodyVibeStartsWhereItsTreeSaysTests`
+        // proves that function writes the reverb anchor. The needle moved with it (#456).
+        XCTAssertTrue(allocate.contains("EchoelBodyVibeDevice.seed(creativeValues"),
                       "allocation no longer seeds the reverb anchor from the host value")
         XCTAssertTrue(render.contains("EchoelBodyVibeDevice.renderSpace("),
                       "the render block no longer feeds the reverb stage")

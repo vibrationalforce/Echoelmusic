@@ -541,6 +541,12 @@ about 10 times a second from `bioBaseReverbMix`, which the AUv3 never set. Repai
   then the tanks stayed sized for 48 kHz: a 9 % larger room at 44.1 kHz, half the room at 96 kHz.
 - **Tail (2026-09-24):** `tailTime` = synth release + the reverb's slowest-mode T60
   (`EchoelBodyVibeDevice.tailSeconds`, ≈ 2.0 + 2.48 s). It was a literal 2.0 s, the release alone.
+- **Initial state (2026-09-24):** `EchoelBodyVibeDevice.seed` writes ALL four creative values
+  (pitch, texture, reverb anchor, output gain) from the tree in `init` and again in
+  `allocateRenderResources`. Until then only the reverb was seeded; the texture played a literal
+  0.15 while its knob showed 0.3, because the tree's defaults are written before the observer
+  that calls `apply` exists. A fresh instance's texture is therefore louder than before — the
+  displayed value is now the audible one. Host listening owed.
 - Every creative host parameter must have a runtime binding
   (`EchoelBodyVibeAUv3Mapping.resolveBindings`), or setup throws `unboundCreativeParameter`.
 - The APP's convolution reverb is unchanged: still off, still unclaimed.

@@ -122,6 +122,39 @@ public enum EchoelBodyVibeDevice {
         }
     }
 
+    /// ⭐ 2026-09-24 (overnight P2) — THE ONE SEEDING PATH. Writes every creative value to the
+    /// engines, keyed by canonical base ID; a missing or non-finite value takes the descriptor
+    /// default, and every value is clamped to its descriptor's range. Returns the output gain,
+    /// because `.outputGain` lands on the adapter's own stage, not on an engine.
+    ///
+    /// ⛔ WHY IT EXISTS. `apply` runs only when a value CHANGES (the AUv3's parameter observer),
+    /// and the tree's defaults are written before that observer is installed — so a fresh
+    /// instance played whatever the engines were constructed with. The texture gain was a
+    /// literal 0.15 in the AUv3's `init` while the host showed 0.3; the output gain was a second
+    /// spelling of the 0.7 default (#416). A displayed value must be the value that sounds.
+    ///
+    /// NOT for the render thread: it may allocate nothing, but `apply` is a control-plane write
+    /// and the AUv3 calls this only from `init` and `allocateRenderResources`.
+    @discardableResult
+    public static func seed(_ values: [String: Float],
+                            synth: EchoelDDSP, texture: EchoelCellular) -> Float {
+        var outputGain: Float = 0
+        for descriptor in creativeDescriptors {
+            guard let target = binding(for: descriptor.keyPath),
+                  descriptor.min <= descriptor.max else { continue }
+            let raw = values[descriptor.keyPath] ?? descriptor.defaultValue
+            let value = raw.isFinite
+                ? raw.clamped(to: descriptor.min...descriptor.max)
+                : descriptor.defaultValue
+            if target == .outputGain {
+                outputGain = value
+            } else {
+                apply(target, value: value, synth: synth, texture: texture)
+            }
+        }
+        return outputGain
+    }
+
     // MARK: The space stage (render thread)
 
     /// ⭐ WA3.3 — the AUv3's audible reverb consumer. The synth's mono block goes in as `left`;

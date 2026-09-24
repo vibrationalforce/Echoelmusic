@@ -163,11 +163,13 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         // Configure texture
         texture.synthMode = .additive
         texture.rule = .rule90
-        texture.gain = 0.15
-        texture.frequency = 110
         texture.evolutionRate = 8
 
         try setupParameterTree()
+        // ⭐ 2026-09-24 (P2): the engines start from the tree's own defaults. Until now the
+        // texture gain was a literal 0.15 here while the host showed 0.3 — the observer never
+        // fires for the defaults, because they are written before it is installed.
+        gainMirror.value = EchoelBodyVibeDevice.seed([:], synth: synth, texture: texture)
         os_log(.info, log: Self.auLog, "AUv3 Instrument initialized")
     }
 
@@ -456,11 +458,17 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         // allocates — legal here and nowhere later. It also empties them.
         reverb.setSampleRate(hostRate)
 
-        // ⭐ WA3.3: the reverb anchor starts at the HOST value (the synth's own default is
-        // 0.25, the parameter's 0.3), and the tank starts empty, not with a previous session's
-        // tail. Both run here, before render starts.
-        EchoelBodyVibeDevice.apply(.synthReverbMix, value: reverbMixParam.value,
-                                   synth: synth, texture: texture)
+        // ⭐ WA3.3 + P2 (2026-09-24): EVERY creative engine field starts at the HOST value —
+        // pitch, texture, the reverb anchor (the synth's own default is 0.25, the parameter's
+        // 0.3) and the output gain — through the one shared seeding path. WA3.3 seeded the
+        // reverb alone; texture and gain then played their construction values until a host
+        // moved them. The tank starts empty, not with a previous session's tail. Both run
+        // here, before render starts.
+        var creativeValues: [String: Float] = [:]
+        for param in stateParameters {
+            if let id = canonicalIDByAddress[param.address] { creativeValues[id] = param.value }
+        }
+        gainMirror.value = EchoelBodyVibeDevice.seed(creativeValues, synth: synth, texture: texture)
         reverb.reset()
 
         // Start generating
