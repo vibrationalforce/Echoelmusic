@@ -39203,3 +39203,6 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
   claim 8 now reads the mapping (its `withIdentifier:` literals are gone by design).
 - Held: preset coherence seed (founder). Reported: `project.yml:266` "38 Foundation" is stale
   (DSP now 40 files) — founder-gated.
+- Gates `be17d968b`: Xcode Compile Check success; CI/CD Build for Testing success; Run Tests
+  `TEST EXECUTE FAILED` (#396), no failing name in the tail window, new guard not visible
+  (compiles, execution unproven). `main` = `be17d968b`.

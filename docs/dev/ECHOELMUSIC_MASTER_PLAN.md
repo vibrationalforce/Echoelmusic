@@ -336,8 +336,10 @@ done. WA4 is the first front.
   - **WA3.2 — canonical parameter identity + AUv3 adapter mapping + minimal
     `EchoelDeviceState`: IMPLEMENTED** (`DSP/ParameterDescriptor.swift`,
     `DSP/EchoelBodyVibeDevice.swift`; the AUv3 tree is built from the mapping; guard
-    `TheParameterIdentityIsFormatNeutralTests`). COMPILES / TESTED are recorded only with gate
-    evidence (§4). `EchoelDeviceState` has no production caller; instance addressing is a
+    `TheParameterIdentityIsFormatNeutralTests`). **COMPILES** at `be17d968b` (Xcode Compile Check
+    run 36047320605 success, AUv3 embedded; CI/CD `Build for Testing` success, run 36047320600;
+    `main` advanced). Not TESTED: Run Tests ended `TEST EXECUTE FAILED` (#396) and the
+    `tail -200` window does not show the new guard (#807). `EchoelDeviceState` has no production caller; instance addressing is a
     contract only; the preset coherence seed is HOLD-FOR-FOUNDER.
 
 ### WA4 — Arrange + Session Front
