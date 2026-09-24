@@ -108,10 +108,12 @@ struct ProUnlockView: View {
     /// The doc line above was already right about the LAW and the rows still broke it, because
     /// "in development" reads as a softener rather than as what it is: a claim about the
     /// PRESENT. Measured on this tree:
-    ///   · AUv3 — the target was DELETED on 2026-07-24 (#121 Slice 2). `Sources/EchoelmusicAUv3`
-    ///     does not exist, `Package.swift` links nothing, and `ContentPipelineClaimsTests`
-    ///     pins that absence. The work was removed, not started. That is the opposite of
-    ///     "in development".
+    ///   · AUv3 — the target was DELETED on 2026-07-24 (#121 Slice 2) and was absent when
+    ///     this was measured. ⛔ STALE SINCE #1385 (2026-09-20): the target is back, it loads
+    ///     in AUM (device-measured, #1386), and `ContentPipelineClaimsTests` now pins its
+    ///     PRESENCE. So the row below ("Planned, not built yet") is false in the other
+    ///     direction. ⚠️ HOLD-FOR-FOUNDER, not repaired here (2026-09-24, P8q): whether the
+    ///     plug-in is a Pro extension at all is a pricing decision, and this view has no door.
     ///   · Video FX catalog — `videoFXCatalog` occurs in exactly two places: the `ProFeature`
     ///     case and the label below. No implementation of any kind.
     ///   · Export format presets (4K, aspect ratios) — no 4K, no aspect-ratio export code

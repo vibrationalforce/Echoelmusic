@@ -85,6 +85,12 @@ public final class BioFeedbackPublisher {
     /// `git grep -n "pullSharedVitals" -- Sources` returns TWO COMMENTS AND NO CODE — this
     /// one and `Core/BioModulationMap.swift`.
     ///
+    /// ⛔ AND THAT CORRECTION IS ITSELF STALE SINCE #1385 (2026-09-20; noted 2026-09-24, P8q):
+    /// the AUv3 target is back in `project.yml`, and `pullSharedVitals` is live CODE in
+    /// `Sources/EchoelmusicAUv3/EchoelmusicAudioUnit.swift` that refuses `egressAllowed == false`
+    /// before writing host-visible parameters — the ORIGINAL reason holds again. (The bridge is
+    /// dormant in the shipped extension, which carries no App Group entitlement.)
+    ///
     /// ⭐ THE GATE STAYS, and its reason is now the one that still exists: `BioEgressPolicy` is
     /// ONE policy shared with the OSC/ADM-OSC senders (#416), and those senders ship. Keeping
     /// the flag correct here is what lets a future host-visible surface — an AUv3 rebuilt, a
