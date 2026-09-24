@@ -98,6 +98,86 @@ final class SingleExport {
         return Swift.min(Swift.max(raw, -12), 12)
     }
 
+    // MARK: - Post-normalisation peak safety (E1)
+    //
+    // ⛔ THE DEFECT THIS CLOSES. `normalizeGainDB` may ask for up to +12 dB, and the loudness
+    // it steers by is an RMS over the whole window — it knows nothing about PEAKS. A sparse
+    // take (a quiet body with one hot transient near full scale) measures quiet, gets the
+    // full boost, and the transient lands up to ~12 dB over full scale. Nothing after the
+    // `vDSP_vsmul` bounded it: the WAV branch then converts to 24-bit integer PCM (hard clip
+    // at the converter), and the AAC branch hands the same over-range floats to the encoder.
+    //
+    // ⭐ THE REPAIR IS A GAIN BOUND, NOT A LIMITER. The export already reads the whole window
+    // once to measure loudness; that pass now also takes the SAMPLE PEAK, and a positive gain
+    // is capped so `peak × gain` stays at or under `exportSamplePeakCeilingDBFS`. Nothing is
+    // clipped and no dynamics change: the bound only lowers ONE scalar, so the waveform is the
+    // same shape at a lower level. `EchoelLimiter` (`DSP/EchoelDynamics.swift`) was NOT reused:
+    // it is a stateful real-time stage with release ballistics — running it offline here would
+    // change what the export SOUNDS like, which is a mastering decision, not a safety repair.
+    //
+    // ⚠️ WHAT THIS IS, NAMED HONESTLY: a SAMPLE-PEAK bound on the decoded 44.1 kHz float
+    // samples, measured and rendered from the SAME reader settings and window. It is NOT a
+    // true-peak (inter-sample) bound, and it does not bound what the AAC ENCODER does to the
+    // signal afterwards (codec overshoot). The −1 dBFS ceiling leaves room for both, but that
+    // room is headroom, not a proof.
+    //
+    // NEEDS-FOUNDER-VERIFY: export a sparse take (quiet pad + one hard hit) at target −14 as
+    // WAV and as AAC and listen — the hit must not crackle, and a plainly quiet take must still
+    // come out louder than it was captured. Guard: `TheExportGainCannotClipTests`.
+
+    /// Sample-peak ceiling a NORMALISATION BOOST may raise the export to, in dBFS.
+    /// Sample peak, not true peak — see the block above.
+    nonisolated static let exportSamplePeakCeilingDBFS: Float = -1
+
+    /// Safety margin under the ceiling so float rounding in `log10f`/`powf`/the multiply can
+    /// never land a sample a hair ABOVE it. ~0.01 % in level — inaudible by four orders.
+    nonisolated static let peakBoundMarginDB: Float = 0.001
+
+    /// The gain actually applied: `requestedDB` from `normalizeGainDB`, capped so a BOOST
+    /// cannot lift the sample peak above `exportSamplePeakCeilingDBFS`.
+    ///
+    /// The rule, and why each branch is what it is:
+    /// · requested ≤ 0 dB passes UNCHANGED — attenuation never raises a peak, and "No target"
+    ///   (exactly 0 dB) must stay exactly the captured level.
+    /// · a boost is capped at the headroom `ceiling − peak`, never below 0 dB — a source whose
+    ///   peak already sits above the ceiling gets no boost, but it is not attenuated either:
+    ///   its level is the performer's, not caused by this gain.
+    /// · digital silence (peak 0) has nothing to overshoot, so the boost stands.
+    /// · a non-finite peak or request cannot vouch for a boost — 0 dB.
+    /// Consequence: whenever the applied gain is positive, `peak × gain ≤ ceiling`; whenever it
+    /// is not, no sample grows. Normalisation still raises quiet material.
+    nonisolated static func peakSafeGainDB(requestedDB: Float, sourcePeak: Float) -> Float {
+        guard requestedDB.isFinite else { return 0 }
+        guard requestedDB > 0 else { return requestedDB }
+        guard sourcePeak.isFinite, sourcePeak >= 0 else { return 0 }
+        guard sourcePeak > 0 else { return requestedDB }
+        let headroomDB = exportSamplePeakCeilingDBFS - 20 * log10f(sourcePeak) - peakBoundMarginDB
+        return Swift.min(requestedDB, Swift.max(headroomDB, 0))
+    }
+
+    /// Largest |sample| in a block. A NaN in the block may be reported as NaN — callers keep it,
+    /// so `peakSafeGainDB` refuses the boost rather than trusting a partial measurement.
+    nonisolated static func samplePeak(_ samples: UnsafePointer<Float>, count: Int) -> Float {
+        guard count > 0 else { return 0 }
+        var peak: Float = 0
+        vDSP_maxmgv(samples, 1, &peak, vDSP_Length(count))
+        return peak
+    }
+
+    /// dB → linear, the ONE conversion the renderer uses (so a test drives the same number).
+    nonisolated static func gainFactor(dB: Float) -> Float {
+        powf(10, dB / 20)
+    }
+
+    /// The ONE place the export gain touches samples. In place, one scalar for every channel —
+    /// interleaved stereo shares the gain, so the hottest channel's peak governs both.
+    nonisolated static func applyGain(_ samples: UnsafeMutablePointer<Float>, count: Int,
+                                      linearGain: Float) {
+        guard count > 0 else { return }
+        var gain = linearGain
+        vDSP_vsmul(samples, 1, &gain, samples, 1, vDSP_Length(count))
+    }
+
     func export(sourceURL: URL) async {
         guard exportState == .idle else { return }
         exportState = .analyzing
@@ -106,14 +186,15 @@ final class SingleExport {
         do {
             let outputURL = try makeOutputURL(sourceURL: sourceURL)
             let timeRange = try await resolveTrimRange(sourceURL: sourceURL)
-            let gainDB = try await measureLUFS(sourceURL: sourceURL, timeRange: timeRange)
-            let clampedGain = Self.normalizeGainDB(target: targetLUFS, measuredDB: gainDB)
+            let levels = try await measureLUFS(sourceURL: sourceURL, timeRange: timeRange)
+            let requestedGain = Self.normalizeGainDB(target: targetLUFS, measuredDB: levels.loudnessDB)
+            let safeGain = Self.peakSafeGainDB(requestedDB: requestedGain, sourcePeak: levels.samplePeak)
 
             exportState = .exporting(progress: 0)
-            log.log(.info, category: .audio, "SingleExport: gain \(String(format: "%.1f", clampedGain))dB → \(outputFormat.label)")
+            log.log(.info, category: .audio, "SingleExport: gain \(String(format: "%.1f", safeGain))dB (requested \(String(format: "%.1f", requestedGain))dB) → \(outputFormat.label)")
 
             try await renderWithGain(sourceURL: sourceURL, outputURL: outputURL,
-                                     gainDB: clampedGain, timeRange: timeRange)
+                                     gainDB: safeGain, timeRange: timeRange)
             exportState = .done(outputURL)
             log.log(.info, category: .audio, "SingleExport complete → \(outputURL.lastPathComponent)")
         } catch {
@@ -155,7 +236,10 @@ final class SingleExport {
 
     // MARK: - LUFS measurement (BS.1770 approximation via RMS)
 
-    private func measureLUFS(sourceURL: URL, timeRange: CMTimeRange?) async throws -> Float {
+    /// Loudness (the RMS approximation below — E2 replaces it) AND the sample peak of the
+    /// exact window that will be rendered, from one read.
+    private func measureLUFS(sourceURL: URL,
+                             timeRange: CMTimeRange?) async throws -> (loudnessDB: Float, samplePeak: Float) {
         let asset = AVAsset(url: sourceURL)
         guard let track = try await asset.loadTracks(withMediaType: .audio).first else {
             throw ExportError.noAudioTrack
@@ -182,6 +266,9 @@ final class SingleExport {
 
         var sumOfSquares: Double = 0
         var sampleCount: Int = 0
+        // `isNaN ||` keeps a NaN once seen: `Swift.max(x, NaN)` would silently drop it, and a
+        // dropped NaN reads as a clean measurement that can vouch for a boost.
+        var peak: Float = 0
 
         while let buffer = readerOutput.copyNextSampleBuffer(),
               let blockBuffer = CMSampleBufferGetDataBuffer(buffer) {
@@ -206,15 +293,17 @@ final class SingleExport {
                 vDSP_measqv(floatPtr, 1, &rms, vDSP_Length(count))
                 sumOfSquares += Double(rms) * Double(count)
                 sampleCount += count
+                let segmentPeak = Self.samplePeak(floatPtr, count: count)
+                if segmentPeak.isNaN || segmentPeak > peak { peak = segmentPeak }
                 offset += lengthAtOffset
             } while offset < totalLength
         }
 
         guard sampleCount > 0 else { throw ExportError.emptyAudio }
         let rmsOverall = Float(sqrt(sumOfSquares / Double(sampleCount)))
-        guard rmsOverall > 0.000001 else { return -60 }
+        guard rmsOverall > 0.000001 else { return (-60, peak) }
         let dBFS = 20 * log10f(rmsOverall)
-        return dBFS - 0.1   // BS.1770 K-weighting approximation
+        return (dBFS - 0.1, peak)   // BS.1770 K-weighting approximation
     }
 
     // MARK: - Render with gain
@@ -255,7 +344,7 @@ final class SingleExport {
         // sample would be offset (silence at the head, tail cut off).
         writer.startSession(atSourceTime: timeRange?.start ?? .zero)
 
-        let linearGain = pow(10, gainDB / 20)
+        let linearGain = Self.gainFactor(dB: gainDB)
         let windowStartSeconds = timeRange.map { CMTimeGetSeconds($0.start) } ?? 0
         let durationSeconds = timeRange.map { CMTimeGetSeconds($0.duration) }
             ?? CMTimeGetSeconds(duration)
@@ -306,8 +395,7 @@ final class SingleExport {
                             guard let ptr = dataPointer, lengthAtOffset >= 4 else { break }
                             let n = lengthAtOffset / 4
                             let floatPtr = UnsafeMutableRawPointer(ptr).bindMemory(to: Float.self, capacity: n)
-                            var gain = linearGain
-                            vDSP_vsmul(floatPtr, 1, &gain, floatPtr, 1, vDSP_Length(n))
+                            SingleExport.applyGain(floatPtr, count: n, linearGain: linearGain)
 
                             // Edge fades — interleaved stereo: float i belongs to
                             // frame (bufferStartFrame + (segmentStartFloat + i) / 2).
