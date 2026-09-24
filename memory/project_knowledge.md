@@ -24,7 +24,7 @@ have we learned" so the knowledge is never lost between sessions.
   SUPERSEDES HISTORICAL PRODUCT CUTS. The sentence stays true of what ships today; scope is not a
   claim. History + recovery class per capability: `docs/dev/HISTORY_ARCHIVE.md`.
 
-## The five dimensions (one instrument, never new tabs)
+## The five dimensions (one bus; ⛔ "never new tabs" = phase history since 2026-09-24, see `docs/dev/ECHOELMUSIC_MASTER_PLAN.md`)
 
 Body (differentiator) → Sound → Image → Light → Space (vibration/haptics ride the output
 stage), with Data (OSC · MIDI 2.0 · MPE **out** · Art-Net/sACN · ADM-OSC) as the connective

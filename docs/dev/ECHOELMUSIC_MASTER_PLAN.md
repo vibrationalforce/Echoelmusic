@@ -17,7 +17,7 @@ not say that anything ships. Public copy (App Store, website, content) claims on
 Founder.
 
 ⚠️ **One roadmap only.** Older sequencing documents are history as far as ORDER is concerned:
-`ROADMAP.md` (2026-06-19, subordinate to the superseded `PRODUCT_DEFINITION.md`),
+`ROADMAP.md` (2026-06-19; since the WA2 decision lock bannered as subordinate to the law and to this file),
 `ARCHITECTURE_NORTH_STAR.md`, `DMMW_ARCHITECTURE.md` and the `scratchpads/PLAN_*` files. They
 remain useful as evidence. Where they disagree with this file about order or status, this file
 wins. Where this file disagrees with `FOUNDER_PRODUCT_LAW.md`, the law wins.
@@ -60,7 +60,7 @@ is not the product boundary.
 ## 2. Canonical product model
 
 This is the target model. **Nothing in this section is implemented as described.** It is the
-vocabulary W1–W4 are measured against.
+vocabulary WA1–WA4 are measured against.
 
 ```
 WORKSTATION
@@ -91,8 +91,8 @@ ENGINE LAYER           (things devices are built on)
 **The current Echoel experience is a CANDIDATE first-class native Echoel instrument/device
 inside the larger workstation.** That experience is `EchoelStudioView` plus its engine: the
 bio-generative composer, the voices, the FX character and the visual field. It is not meant
-to stay the permanent whole-app shell. **Status: IDEA.** W3 decides how the move happens.
-Nothing moves before W1–W3.
+to stay the permanent whole-app shell. **Status: IDEA.** WA3 decides how the move happens.
+Nothing moves before WA1–WA3.
 
 ---
 
@@ -101,7 +101,10 @@ Nothing moves before W1–W3.
 These hold for every slice. Breaking one needs an explicit Founder decision recorded in
 `decisions.csv`.
 
-1. **One canonical Session.** There is never a second document that owns song state.
+1. **One canonical Session.** There is never a second document that owns song state. Since the
+   WA2 decision (2026-09-24) that Session is **`DMMWProject`** in the existing `ProjectStore`
+   (`SESSION_OWNERSHIP_CENSUS.md` §O). ⚠️ *Canonical Session* ≠ the historical `SessionView`/
+   `SessionEngine` breathing experiment; no production type is renamed.
 2. **No second transport truth.** One clock, one play state, one tempo.
 3. **`PatternEngine` stays the musical clock authority** unless the Founder changes it. Every
    production `Transport.setTempo` call is made inside `PatternEngine`; every other tempo
@@ -109,7 +112,9 @@ These hold for every slice. Breaking one needs an explicit Founder decision reco
    `git grep -n "\.setTempo(" -- Sources`. The tempo invariants T1–T3 in `CLAUDE.md` apply,
    and `TempoInvariantTests` is their law.
 4. **`TimelineStore`/`TimelineDocument` and `Arrangement`/`ArrangementStore` are NOT
-   consolidated** without an explicit Founder decision (W2).
+   consolidated.** Decided in WA2: `TimelineDocument` is the canonical linear spine,
+   `Arrangement` a future song-form/sections/scene projection, and `ArrangementStore` with its
+   format is preserved. Any migration toward that target is its own Founder-approved slice.
 5. **No new persistence root** without a Founder decision. Twelve roots exist today; see
    `scratchpads/PLAN_DOCUMENT_ROOTS_2026-09-21.md`.
 6. **Realtime callbacks** (render blocks, taps, AUv3 `internalRenderBlock`) contain no locks,
@@ -187,10 +192,11 @@ Detail and device status: `FEATURE_STATUS.md` §1. Owners: `scratchpads/PLAN_DOC
 | Bio-generative instrument (`EchoelStudioView`, composer, voices, FX, field) | IMPLEMENTED · COMPILES · shipping on TestFlight | Ship-gate checks 1 (sound) and 5 (stability) are founder/device checks |
 | Workstation chip (`Studio/WorkstationView.swift`) | IMPLEMENTED · COMPILES; import + play **DEVICE VERIFIED 2026-09-23** | Audio and MIDI tracks, audio/MIDI file import, play via `TimelineRegionPlayer`, key/tempo detection, warp, pitch per track |
 | Timeline document (`Core/TimelineStore.swift`, `Sequencer/Timeline.swift`) | IMPLEMENTED | Persisted; played by the Workstation |
-| Arrangement (`Core/ArrangementStore.swift`, `Sequencer/Arrangement.swift`) | IMPLEMENTED (model) | Separate persistence root; relationship to the timeline is the W2 question |
+| Arrangement (`Core/ArrangementStore.swift`, `Sequencer/Arrangement.swift`) | IMPLEMENTED (model) | Separate persistence root; DECIDED in WA2: a future song-form/sections/scene projection over the timeline, store and format preserved |
 | Clips (`Core/ClipStore.swift`) | IMPLEMENTED (model) | Written by audio import |
 | Project envelope (`Core/DMMWProject.swift`, `DMMWProjectImport.swift`) | IMPLEMENTED (M2) | Wraps the song roots; reader/importer exists |
 | Timebase (`Core/TempoMap.swift`) | IMPLEMENTED (M1) | EchoelCore target is founder-gated (#95) |
+| Canonical Session (`DMMWProject`) | **DECIDED (WA2)** · envelope + importer IMPLEMENTED (M2), 0 callers | Target ownership: `SESSION_OWNERSHIP_CENSUS.md` §O |
 | Session / Scenes (clip launch) | **IDEA** | No scene type exists in `Sources/` |
 | Automation | IMPLEMENTED (player); **no editor** | Two homes of `[AutomationLane]` (`automation` + `timeline`), see the roots plan §2.1 |
 | Parameters (`Core/EchoelParameterRegistry.swift`, `ParameterApplyRouter.swift`) | IMPLEMENTED · COMPILES | Eligibility split per invariant 8 |
@@ -216,17 +222,17 @@ Detail and device status: `FEATURE_STATUS.md` §1. Owners: `scratchpads/PLAN_DOC
 | Phase | Content | State |
 |---|---|---|
 | **PHASE 1 — Foundation & truth** | the shipping instrument; product law R1–R3; export quality E1–E3; Workstation chip with import/play | CLOSED as a phase (items carry their own statuses above) |
-| **PHASE 2 — WORKSTATION ARCHITECTURE** | W1 → W2 → W3 → W4 (§7) | **CURRENT** |
-| PHASE 3 — Domain recovery | recording/input, note editing, automation editing, undo, video, broadcast, hosting, etc., each through the recovery principle (law §5) into the W2 owners | PLANNED — order decided by the Founder after W2 |
+| **PHASE 2 — WORKSTATION ARCHITECTURE** | WA1 → WA2 → WA3 → WA4 (§7) | **CURRENT** — WA1 and WA2 COMPLETE, WA3 NEXT |
+| PHASE 3 — Domain recovery | recording/input, note editing, automation editing, undo, video, broadcast, hosting, etc., each through the recovery principle (law §5) into the WA2 owners | PLANNED — order decided by the Founder after WA2 |
 
-**Phase 2 is architecture, not UI construction.** No workstation UI is built until W1–W3 are
-done. W4 is the first front.
+**Phase 2 is architecture, not UI construction.** No workstation UI is built until WA1–WA3 are
+done. WA4 is the first front.
 
 ---
 
 ## 7. Next four slices — in this exact order
 
-### W1 — Workstation / UI Ownership Census
+### WA1 — Workstation / UI Ownership Census
 
 - **Mode:** READ-ONLY. No code, no tests, no CI changes.
 - **Task:** classify every major current UI surface into exactly one of:
@@ -254,11 +260,13 @@ done. W4 is the first front.
   - the models it writes as the ONLY writer;
   - the hot state it reads;
   - its share of the modal budget.
-- **Output:** `scratchpads/CENSUS_W1_UI_OWNERSHIP.md` (evidence, not a roadmap).
+- **Output:** [`WORKSTATION_UI_OWNERSHIP_CENSUS.md`](WORKSTATION_UI_OWNERSHIP_CENSUS.md)
+  (evidence, not a roadmap). ⛔ The path planned here was `scratchpads/CENSUS_W1_UI_OWNERSHIP.md`.
 - **Done when:** every surface has one class, each with a file path and a measured door.
-- **Status:** PLANNED.
+- **Status:** **COMPLETE** (`c2fad0a0a`, 2026-09-24). Its 13 "NEEDS WA2 DECISION" rows are
+  answered by the WA2 decision below.
 
-### W2 — Session Ownership Census + Founder Decision
+### WA2 — Session Ownership Census + Founder Decision
 
 - **Mode:** READ-ONLY FIRST. It ends in a Founder decision; there is no consolidation before it.
 - **Trace:**
@@ -282,12 +290,20 @@ done. W4 is the first front.
   - `scratchpads/PLAN_DOCUMENT_ROOTS_2026-09-21.md` (12 roots, 3 overlaps);
   - `scratchpads/AUDIT_DMMW_RECONCILIATION_2026-09-21.md`;
   - `Tests/CISmoke/TheWorkstationPlaysTheTimelineTests.swift`.
-- **Output:** `scratchpads/CENSUS_W2_SESSION_OWNERSHIP.md` + a `decisions.csv` row **after** the
-  Founder answers.
-- **Done when:** the Founder has chosen the ownership model. Invariant 4 governs until then.
-- **Status:** PLANNED.
+- **Output:** [`SESSION_OWNERSHIP_CENSUS.md`](SESSION_OWNERSHIP_CENSUS.md) + a `decisions.csv`
+  row. ⛔ The path planned here was `scratchpads/CENSUS_W2_SESSION_OWNERSHIP.md`.
+- **Done when:** the Founder has chosen the ownership model.
+- **Status:** **COMPLETE** — census `a52170ca5`; Founder decision **APPROVED WITH BINDING
+  AMENDMENTS** 2026-09-24, recorded in §O of the census (CURRENT REALITY vs APPROVED TARGET).
+  In short: `DMMWProject` is the one Session root (not schema-frozen); `PatternEngine` stays the
+  one clock and the Session `Timebase` owns TempoMap/MeterMap/loop; live Flow/Bio tempo is a
+  ControlSource that reaches the TempoMap only by explicit commit; START = device activation,
+  ▶ = Session transport; `TimelineLane` is the Track precursor; `TimelineDocument` is the linear
+  spine and `Arrangement` a future projection; the Session owns persistent automation, device
+  modulation, creative routing, domain creative state and collaboration metadata; ClipStore's 8
+  slots are compatibility only; future main export bounces the Session. **Nothing implemented.**
 
-### W3 — Native Device Architecture
+### WA3 — Native Device Architecture
 
 - **Task:** define how the current Echoel environment becomes a first-class native
   instrument/device inside the workstation. That environment is:
@@ -302,22 +318,31 @@ done. W4 is the first front.
   - the audio/visual/light outputs;
   - the per-track instancing question;
   - how the same device core feeds the native DMMW adapter and the AUv3 adapter.
+- **Bound by WA2:**
+  - define the **minimum Track/device contract** (`TimelineLane` is precursor and migration
+    source, not the final Track; no Track type exists until WA3 designs it);
+  - the device's concrete modulation matrix is device-instance state that persists with the
+    device in the Session (global defaults may stay app preferences);
+  - device-local context (genre, mood, generative phrase) derives from the Session musical
+    context (key, scale, A4/tuning, tone system, MeterMap);
+  - bio and Flow tempo enter as ControlSources; START activates the device, ▶ is the Session
+    transport.
 - **Hard rule:** no plugin-format-specific coupling in DSP (invariants 10–11).
 - **Output:** a design document plus a `decisions.csv` row. Code only as separately approved slices.
-- **Status:** PLANNED (after W2).
+- **Status:** **NEXT.**
 
-### W4 — Arrange + Session Front
+### WA4 — Arrange + Session Front
 
-- **Only after W1–W3.**
+- **Only after WA1–WA3.**
 - **Task:** the first workstation front. Arrange (linear) and Session (scenes) are both
-  **projections of the same canonical Session** from W2 — never two documents.
+  **projections of the same canonical Session** from WA2 — never two documents.
 - **Must obey:**
   - the modal budget (consolidate before appending);
   - the hot-state leaf law;
   - `EchoelValueField`;
   - Uncodixfy;
   - iPhone-first layout with adaptive reflow.
-- **Status:** IDEA (its shape depends on W2/W3).
+- **Status:** **BLOCKED ON WA3** (its shape depends on the WA2 decision and the WA3 contract).
 
 ---
 
@@ -440,8 +465,8 @@ general.
 
 | # | Hold | Blocks |
 |---|---|---|
-| W2 | canonical Session ownership model | consolidation of the timeline, arrangement and automation homes; W3/W4 |
-| — | confirm the reading of "Instrument-Complete v1" as a release gate, not the product boundary (law §6) | release planning |
+| ~~WA2~~ | ~~canonical Session ownership model~~ — **ANSWERED 2026-09-24: APPROVED WITH BINDING AMENDMENTS** (`SESSION_OWNERSHIP_CENSUS.md` §O). Every migration toward the target is still its own Founder-approved slice | — |
+| ~~—~~ | ~~confirm "Instrument-Complete v1" as a release gate, not the product boundary~~ — **ANSWERED 2026-09-24** in the WA2 decision lock (law §6) | — |
 | — | App Store wording | any store text |
 | #27 | brand line "Create from Within" vs "multidimensional" | brand copy |
 | #91 | the HRV line in the App Store text (`fastlane/metadata`) | store text |
@@ -461,4 +486,7 @@ general.
 - A closed slice moves from §7 to §5 with its commits and review verdict.
 - Do not copy counts from code into this file; name the command (the `CLAUDE.md` #818 rule).
 - Change log:
-  - 2026-09-24 — created at `main` = `7b2690357`; Phase 2 opened with W1–W4.
+  - 2026-09-24 — created at `main` = `7b2690357`; Phase 2 opened with WA1–WA4.
+  - 2026-09-24 — WA1 COMPLETE (`c2fad0a0a`); WA2 COMPLETE (`a52170ca5` + the decision lock:
+    APPROVED WITH BINDING AMENDMENTS); WA3 NEXT; WA4 BLOCKED ON WA3. Bare W1–W4 renamed WA1–WA4;
+    the two census output paths corrected from `scratchpads/` to `docs/dev/`.

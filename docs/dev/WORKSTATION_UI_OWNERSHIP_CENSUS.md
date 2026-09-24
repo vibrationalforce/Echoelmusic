@@ -1,4 +1,8 @@
-# W1 — Workstation / UI Ownership Census
+# WA1 — Workstation / UI Ownership Census
+
+⭐ **WA1 COMPLETE (2026-09-24).** "W1"/"W2"/"W3" below mean WA1/WA2/WA3 of the master plan. Every
+"NEEDS W2 DECISION" row is now answered by the WA2 decision (APPROVED WITH BINDING AMENDMENTS,
+`docs/dev/SESSION_OWNERSHIP_CENSUS.md` §O); the rows are kept as the evidence they were.
 
 **Status: EVIDENCE, not a roadmap.** Read-only census, 2026-09-24. Branch head at census time
 `dd14a8b69`, `main` = `7b2690357`. No code, test, CI, view or model was changed.
@@ -7,9 +11,8 @@
 → current code and tests → `docs/dev/HISTORY_ARCHIVE.md` → older ROADMAP / `CLAUDE.md` wording
 (history only).
 
-⚠️ **Output path.** Master plan §7 names `scratchpads/CENSUS_W1_UI_OWNERSHIP.md` as W1's output. This
-file is the output instead, because the founder's W1 instruction names this path. The master-plan
-line was left unedited because this slice may change one file only.
+⚠️ **Output path.** This file is the WA1 output; the master plan's old `scratchpads/` path for it
+was corrected in the WA2 decision-lock commit.
 
 ⚠️ **Known stale sources, reported and NOT edited:**
 - `ROADMAP.md` still calls itself the sequencing source of truth. The master plan is.

@@ -59,8 +59,9 @@ the full DMMW, surfaces are replaceable, capabilities survive). With
 nobody arguing the other way, an instrument converges on safe and thin — and "thin" was
 already a real founder complaint about the sound. This seat is the counterweight.
 **Its constraint, non-negotiable:** it argues for expressive DEPTH on what exists — wiring
-a dead modulation channel, widening a range, making a mapping legible — never for a new
-screen, a new surface, or a new modal. It loses to Vision-Keeper on brand and to the
+a dead modulation channel, widening a range, making a mapping legible — never for an ad-hoc
+screen or surface outside the master plan's WA order (`docs/dev/ECHOELMUSIC_MASTER_PLAN.md`),
+and never for a new modal on the root chain (black-screen law). It loses to Vision-Keeper on brand and to the
 flash/accessibility laws every time. When it and Vision-Keeper disagree, name the
 disagreement rather than averaging it.
 

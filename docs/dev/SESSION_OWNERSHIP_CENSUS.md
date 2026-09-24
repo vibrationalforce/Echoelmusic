@@ -1,7 +1,16 @@
-# W2 — Session Ownership Census + Founder Decision Package
+# WA2 — Session Ownership Census + Founder Decision
 
-**Status: EVIDENCE + ONE RECOMMENDATION. Nothing here is implemented.** Read-only analysis,
-2026-09-24.
+**Status: WA2 COMPLETE — Founder decision APPROVED WITH BINDING AMENDMENTS (2026-09-24, §O).
+Nothing here is implemented.** The census (§A–§L) is read-only evidence of CURRENT REALITY. §M is
+the proposal as amended; §O is the binding decision and the APPROVED TARGET OWNERSHIP. Where §M
+and §O differ, §O wins.
+
+⚠️ **Terminology.** *Canonical Session* in this document means the future full workstation
+creative/session truth (`DMMWProject`). The historical `SessionView`/`SessionEngine`/
+`SessionRecorder` are a parked breathing/performance experiment. They are **not the same
+concept**; no production type is renamed.
+
+Census analysis dated 2026-09-24.
 - Branch head at census time: `c2fad0a0a`. `main` = `7b2690357`.
 - No production code, test, store, persistence format, UI or workflow was changed.
 
@@ -12,7 +21,7 @@
 4. `docs/dev/HISTORY_ARCHIVE.md`
 5. older docs, as evidence only
 
-**Predecessor:** `docs/dev/WORKSTATION_UI_OWNERSHIP_CENSUS.md` (W1).
+**Predecessor:** `docs/dev/WORKSTATION_UI_OWNERSHIP_CENSUS.md` (WA1).
 
 **How it was measured.**
 - Four read-only inspection passes: save/open/export/collaboration · time/transport/Start ·
@@ -24,9 +33,8 @@
   The fixed-string re-run is the one quoted here.
 - Line numbers are dates, not facts. Re-derive them before acting.
 
-⚠️ **Output path.** Master plan §7 names `scratchpads/CENSUS_W2_SESSION_OWNERSHIP.md`; this
-file follows the founder's W2 instruction instead. The plan line was left unedited because this
-slice changes one file.
+⚠️ **Output path.** This file is the WA2 output. The master plan's old `scratchpads/` path for
+it was corrected in the decision-lock commit.
 
 ---
 
@@ -72,17 +80,18 @@ slice changes one file.
 10. **Scenes: NONE.** There is no musical Scene type, and clip launching exists only as unreached
     player code.
 
-**Recommendation (§M, §O):**
+**Recommendation (§M) — APPROVED WITH BINDING AMENDMENTS; the binding form is §O:**
 - The canonical Session is the **already-built `DMMWProject` envelope**, stored as the payload
   of the **existing** `ProjectStore` root. There is no new root and no new store.
 - Its content spine is **`TimelineDocument`**.
 - The existing stores remain the runtime owners of its children, and `PatternEngine` remains
   the clock.
 - The Echoel instrument becomes **a device whose output lands on a Session track**, not a
-  second song.
+  second song (the Track itself is defined by WA3, §O).
 - Arrangement becomes a future projection (port its sequencing algorithm).
 - The automation file and `Project` v1 become import-only legacy.
-- App-level settings stay outside the Session.
+- App/system settings stay outside the Session; creative routing, domain creative state,
+  device modulation and collaboration metadata belong to it (amended, §O).
 
 **Founder: APPROVE or REJECT.**
 
@@ -162,7 +171,7 @@ The role column is **this document's recommendation**. No code carries it.
 | O20 | `Timebase` / `TempoMap` / `MeterMap` | `Core/Timebase.swift`, `Core/TempoMap.swift` | none (only inside O2) | only `DMMWProjectImport` | No | `Project.bpm`, `studio.lockedBPM`, live O9 tempo | #1416 EchoelCore time | **CHILD OF SESSION** (`timebase`), the tempo home |
 | O21 | `MetronomeVoice` | `Audio/MetronomeVoice.swift` | none | App | its own `beatsPerBar` (1–16) | disagrees with fixed 4/4 elsewhere | practice click | **RUNTIME DERIVED** (reads Session meter later) |
 | O22 | `currentPatch` / `PatchStore` | `Studio/EchoelStudioView.swift`, `Core/PatchStore.swift` | patch: view `@State`, rebuilt from `studio.presetIndex`/genre; library: App Group `Patches/userPatches` | view / App | patch: Yes (UI-owned) | O1 `patch` (snapshot), `TimelineLane.patch` (unused field) | — | patch = **CHILD OF THE ECHOEL DEVICE**; library = app-level (outside Session) |
-| O23 | `MixerStore`, `TrackFXStore` | `Core/MixerStore.swift`, `Core/TrackFXStore.swift` | UserDefaults `mixer.*`, `trackfx.*` | App | Yes (fixed role buses) | `TimelineLane.level/pan/mute/solo` (unused setters) | instrument voice mix | **CHILD OF THE ECHOEL DEVICE** (internal voice mix, W1 S28) |
+| O23 | `MixerStore`, `TrackFXStore` | `Core/MixerStore.swift`, `Core/TrackFXStore.swift` | UserDefaults `mixer.*`, `trackfx.*` | App | Yes (fixed role buses) | `TimelineLane.level/pan/mute/solo` (unused setters) | instrument voice mix | **CHILD OF THE ECHOEL DEVICE** (internal voice mix, WA1 S28) |
 | O24 | `SignalRouter` + network targets | `Core/SignalRouter.swift`, `Sync/*Sender.swift`, `Sync/OSCReceiver.swift` | UserDefaults `signalGraph.routes.v1`, `net.*` | App; `applyRouting` starts senders | Yes (app-global) | — | I/O hub | **Outside the Session** (app/studio settings; adapters, invariant 9) |
 | O25 | `LightingStore`, `SpatialSceneStore` | `Core/LightingStore.swift`, `Core/SpatialSceneStore.swift` | none; spatial scene is rebuilt from O4 | App | Lighting: runtime; Spatial: derived | — | P2 lighting seam; ADM-OSC | Spatial = **PROJECTION of Session tracks**; lighting creative state = **NEEDS FOUNDER DECISION** (not persisted today) |
 | O26 | `MultipeerSession` / `ColabPayload` / `PeerIdentity` | `Sync/MultipeerSession.swift`, `Sync/ColabPayload.swift`, `Sync/PeerIdentity.swift` | none (peer identity reads `echoel.installationID`) | App | No | — | J2 Live Colabo | **ADAPTER** (shares Session snapshots later; not an owner) |
@@ -282,9 +291,9 @@ UD signalGraph.routes.v1, net.*   →    routes/targets    →   SignalRouter/se
 - `currentPatch` edits that were not saved as a preset or project.
 
 **UI truth that should not be the persistent owner:**
-- the ~13 musical/device `@AppStorage` keys declared inside views (W1 §F1);
+- the ~13 musical/device `@AppStorage` keys declared inside views (WA1 §F1);
 - `currentPatch` as view `@State`;
-- `MoodPresetStore` owned as view `@State` (W1 §F2).
+- `MoodPresetStore` owned as view `@State` (WA1 §F2).
 
 **Oddities, reported and not fixed:**
 - The project library file is `projects.json.json`.
@@ -375,8 +384,9 @@ The voices themselves were started at app launch.
 | `PerTrackParameterKeyPath` | the only lane-keyed parameter address (`track.<laneID>.<base>`), bound through the rack |
 | `SpatialSceneStore` | one object per non-bio lane, rebuilt only by a parked view |
 
-**Minimum Track contract** (proposal, not implemented; derived from what `TimelineLane` already
-half-holds):
+**Minimum Track contract** (INPUT to WA3, not the decision — §O: WA3 defines the minimum
+Track/device contract, and `TimelineLane` is its precursor, not the final Track; derived from what
+`TimelineLane` already half-holds):
 1. **Identity:** stable UUID (the lane id) + name.
 2. **Domain:** audio · MIDI/instrument · bio · (later: video, light, spatial object).
 3. **Timeline relationship:** owns an ordered set of regions; overlap precedence stays
@@ -525,20 +535,26 @@ Session  ≙  DMMWProject envelope  (the type already in Core/DMMWProject.swift)
 ├── timebase        TempoMap · MeterMap · ppq          ← the ONE tempo/meter home; PatternEngine EXECUTES it
 ├── musical         key · scale · A4 · tone system     ← runtime owner: SessionContext (widened), views project it
 ├── content
-│   ├── timeline    TimelineDocument                   ← CANONICAL spine: lanes (= Tracks), regions, song automation
+│   ├── timeline    TimelineDocument                   ← CANONICAL linear spine: lanes (Track PRECURSOR — WA3 defines Track), regions, song automation
 │   ├── clipSlots   ClipStore pool                     ← content referenced by regions; media by reference (MediaLibrary)
-│   └── songForm    Arrangement                        ← kept for import; future sections/scenes = PROJECTION over the timeline
-├── devices         the Echoel device state per track   ← today's envelope `sound` {patch, fxCharacter} + genre, mood,
-│                                                        loopBars, mixer roles, TrackFX (lane fields exist: patch, genreOverride, mood)
+│   └── songForm    Arrangement                        ← preserved; future song-form/sections/scenes = PROJECTION over the timeline
+├── devices         device instances + state per track  ← today's envelope `sound` {patch, fxCharacter} + genre, mood,
+│                                                        loopBars, mixer roles, TrackFX, AND the device's own modulation matrix
+├── routing         logical source/destination assignments (creative routing only)
+├── domains         visual · video · lighting creative state · SpatialScene (looks, automation, assignments, positions)
+├── assets          references to media (ClipStore/MediaLibrary today; no MediaAsset yet)
+├── collaboration   identity · permissions · provenance · collaboration metadata
 ├── automation      = content.timeline.automation (song) + Clip.automation (clip)   ← playerAutomation imported, never written
 └── legacy          Project v1 notes / rawTake / drumSteps / loopBars             ← importer-only, read once
 
-OUTSIDE the Session (app / studio settings and adapters, unchanged):
-  PatchStore · FXPresetStore · MoodPresetStore (libraries) · SignalRouter + net.* (I/O) · ModulationMatrix
-  (until decided) · MultipeerSession (adapter; later shares envelopes) · SessionEngine/SessionRecorder (parked bio log)
+OUTSIDE the Session (app / system settings and adapters):
+  PatchStore · FXPresetStore · MoodPresetStore (libraries) · global modulation DEFAULTS · system/endpoint I/O
+  config (net.*, discovered hardware, addresses, credentials, Dante/AES67/NMOS, external services) ·
+  MultipeerSession (replication ADAPTER, never a second Session owner) · SessionEngine/SessionRecorder (parked bio log)
 RUNTIME (derived, never persisted as truth):
-  PatternEngine + Transport (clock) · TimelineRegionPlayer/AudioLanePlayer/AutomationPlayer (executors)
-  · PianoRollModel (the Echoel device's note engine) · MusicalFrame
+  PatternEngine + Transport (the ONE clock) · TimelineRegionPlayer/AudioLanePlayer/AutomationPlayer (executors;
+  AutomationPlayer arrays are caches/projections) · PianoRollModel (the Echoel device's note engine) · MusicalFrame
+  · live Flow/Bio tempo (a ControlSource; reaches the TempoMap only through an explicit Capture/Record/Commit)
 ```
 
 **The five modes are projections of this one object:**
@@ -556,11 +572,11 @@ None of them owns a document.
 |---|---|---|---|---|---|---|
 | **Session = `DMMWProject` in `ProjectStore`** | the only type that already binds all five song roots; importer written and tested; reuses an existing root (invariant 5) | a writer (save → envelope), a reader (open → envelope → stores), a v1→envelope import on first open; medium | double-extension file name; the Colabo same-id save; a half-migrated library | every saved `Project` (imported, not converted in place) | `Project` v1 (becomes import source) | `Project` decoder, `projects.json.json`, `DMMWProjectImport` |
 | **Content spine = `TimelineDocument`** | only song model with writers, playback, persistence and a door | open/save must now include it; the composer mirror becomes the primary write path | the generator and timeline share one note engine and one clock (§F), which must be resolved first | the timeline file and all its APIs | `Arrangement` (sections/scenes later) | `ArrangementStore`, `Arrangement/song`, `ArrangementPlayer`, `bootstrapIfNeeded` |
-| **Tempo/meter = `timebase` (TempoMap)**; clock = `PatternEngine` | one tempo home; invariant 3 unchanged | `setTempo(source:)` callers keep working; Loop mode writes the map, Flow mode stays a live SOURCE | Flow tempo is body-driven: whether it is RECORDED into the map is a founder question (§O hold 1) | `PatternEngine`, `Transport`, T1–T3 | `studio.lockedBPM`, `Project.bpm` | `studio.lockBPM/lockedBPM` keys (OSC and UI read them) |
+| **Tempo/meter/loop = `timebase` (TempoMap · MeterMap · Session loop)**; clock = `PatternEngine` | one tempo home; invariant 3 unchanged | `setTempo(source:)` callers keep working; the TempoMap changes only by Session edits or an explicit Capture/Record/Commit | DECIDED (§O): live Flow/Bio tempo is a ControlSource and never mutates the TempoMap automatically | `PatternEngine`, `Transport`, T1–T3 | `studio.lockedBPM`, `Project.bpm` | `studio.lockBPM/lockedBPM` keys (OSC and UI read them) |
 | **Musical context = `SessionContext`** | already persists A4 and key; already the naming owner | move "selected" key/scale/tone off `@AppStorage` into it; views read it | the ~13 view-declared keys and the OSC dispatch write the old keys | `SessionContext` keys | `studio.rootIndex/scale/toneSystemID` | those keys (SoundReset, OSC, 3+ views) |
-| **Automation = timeline automation (song) + clip automation (clip)** | the timeline already wins at runtime; clip automation is a real separate domain | import uncovered player lanes once ("timeline wins") | per-bar player lanes have no song-absolute equivalent without a loop length | both homes | `AutomationPlayer.lanes` (legacy import source) | the `Automation/automation` file |
-| **Tracks = `TimelineLane` (grown to the §G contract)** | already the only per-track record and already keyed for parameters | wire the unreached setters; move mixer ownership onto the lane | fixed role buses and the 4-slot rack assume ≤4 voices | lanes, `PerTrackParameterKeyPath` | `MixerStore` roles → the Echoel device's internal mix | `MixerStore`, `TrackFXStore` |
-| **Echoel = a device on a track** | W1 §D: the device half never writes song stores; the lane already has `patch`/`genreOverride`/`mood`/`variationSeed` | the device's take becomes region content on its track; `loopBars`, genre, mood, patch, FX character move under the device | Start/▶ semantics (§O hold 2); `PianoRollModel` is shared with timeline playback | `PianoRollModel` as the device note engine | the `Project` take (notes/rawTake) | `PianoRollModel`, `Project.notes/rawTake` |
+| **Automation = Session-owned persistent automation (timeline song automation converges into it) + clip-relative automation (separate scope)** | the timeline already wins at runtime; clip automation is a real separate domain | nothing migrates now; later, uncovered player lanes import once ("timeline wins") | per-bar player lanes have no song-absolute equivalent without a loop length | both homes | `AutomationPlayer.lanes` (legacy import source) | the `Automation/automation` file |
+| **Tracks: defined by WA3; `TimelineLane` is the strongest precursor and migration source** (DECIDED §O — not grown in place into the final Track) | already the only per-track record and already keyed for parameters | WA3 names the minimum Track/device contract; lane data migrates into it | fixed role buses and the 4-slot rack assume ≤4 voices | lanes, `PerTrackParameterKeyPath` | `MixerStore` roles → the Echoel device's internal mix | `MixerStore`, `TrackFXStore` |
+| **Echoel = a device on a track** | WA1 §D: the device half never writes song stores; the lane already has `patch`/`genreOverride`/`mood`/`variationSeed` | the device's take becomes region content on its track; `loopBars`, genre, mood, patch, FX character move under the device | Start/▶ semantics (decided §O: START = device activation, ▶ = Session transport); `PianoRollModel` is shared with timeline playback | `PianoRollModel` as the device note engine | the `Project` take (notes/rawTake) | `PianoRollModel`, `Project.notes/rawTake` |
 
 **Rejected alternatives (named, not recommended):**
 1. **A new `SessionStore` over all stores.** It adds a 13th persistence root, violating
@@ -577,7 +593,8 @@ None of them owns a document.
 
 ## N. Migration boundaries
 
-These are for a later, Founder-approved phase. **None of this happens in W2.**
+These are for a later phase. **None of this happens in WA2**, and the WA2 approval does not
+authorize any of it: each step is its own Founder-approved slice, and WA3 comes first.
 
 1. **Before any writer:**
    - Resolve generator-vs-timeline clock and note-engine sharing (§F).
@@ -609,45 +626,50 @@ These are for a later, Founder-approved phase. **None of this happens in W2.**
 
 ---
 
-## O. Founder decision
+## O. Founder decision — APPROVED WITH BINDING AMENDMENTS (2026-09-24)
 
-**RECOMMENDATION — approve as one package:**
+**The Founder approved the §M package with binding amendments. They overwrite the defaults this
+document proposed for its five holds** (those defaults — "Flow tempo: live source only, Loop
+mode writes the map", "modulation matrix: app setting until WA3", "lighting creative state: not
+now, stays runtime", "tracks = `TimelineLane` grown to the §G contract" — are withdrawn, not
+kept as alternatives). Nothing below is implemented; it is the target every later slice is
+measured against. Decision row: `decisions.csv` 2026-09-24.
 
-> The canonical Echoelmusic Session is the existing `DMMWProject` envelope, stored as the payload
-> of the existing `ProjectStore`.
-> - Its content spine is `TimelineDocument`, with tracks = `TimelineLane`, regions, and song
->   automation in `TimelineDocument.automation`.
-> - `ClipStore` and `MediaLibrary` are its referenced content pools.
-> - `timebase` (TempoMap) is its single tempo/meter home, executed by `PatternEngine` as the
->   only clock.
-> - `SessionContext` is the runtime owner of its musical context.
-> - The Echoel instrument is a device whose state and output belong to a Session track.
-> - `Arrangement`, the automation file and `Project` v1 are kept on disk as import sources and
->   future projections, and are not deleted.
-> - Libraries, routing, network I/O and collaboration stay outside the Session as app settings
->   and adapters.
+### O1. CURRENT REALITY vs APPROVED TARGET OWNERSHIP
 
-**Founder holds inside the package.** Each has a default that applies if you approve without
-comment.
-1. **Flow tempo:** is a body-driven tempo recorded into the Session's TempoMap, or is it only a
-   live source?
-   *Default: live source only; Loop mode writes the map.*
-2. **Start vs ▶:** after the move, does Start mean "arm the Echoel device (bio + generator)"
-   while ▶ owns the Session transport?
-   *Default: yes, as two named intents. No change until W3/W4.*
-3. **Modulation matrix and automation `enabled`:** Session content or app setting?
-   *Default: app setting until W3 defines device parameters.*
-4. **Lighting creative state** (look, intensity): persisted inside the Session?
-   *Default: not now; it stays runtime.*
-5. **ClipStore capacity (8):** keep until a `MediaAsset` decision?
-   *Default: keep.*
+| Area | CURRENT REALITY (measured §A–§L) | APPROVED TARGET OWNERSHIP |
+|---|---|---|
+| Session root | no single song: timeline has the writers, `Project` v1 + `PianoRollModel` is what is saved/opened/exported/shared; `DMMWProject` has 0 callers | **`DMMWProject` is the ONE canonical Session root**, stored in the existing `ProjectStore`. No new SessionStore, no new persistence root. **Not schema-frozen** — later migration design is expected. `Project` v1 stays a legacy take/import source |
+| Session contents | spread over 12 roots | metadata · Timebase · MusicalContext · Tracks · `TimelineDocument` · clip/media relationships · automation · device instances/state · logical routing · visual/video/lighting creative state · SpatialScene · assets/references · collaboration metadata/provenance · legacy migration payload. **Fields are not implemented in this slice** |
+| Clock | `PatternEngine` is the only clock, `Transport` relays | unchanged: **`PatternEngine` stays the ONE clock/runtime executor** |
+| Tempo · meter · loop | tempo in `studio.lockedBPM`/`Project.bpm`; 4/4 hard-coded; three unrelated loop meanings | **Session `Timebase` owns TempoMap, MeterMap and the Session loop** |
+| Flow / Bio tempo | the body servo sets the live tempo directly | **a ControlSource. It never mutates the TempoMap automatically**; only an explicit Capture/Record/Commit turns it into Session automation or TempoMap data. Not implemented |
+| Start vs ▶ | one Start arms bio + generator + transport | **START/ACTIVATE = device/performance activation; PLAY ▶ = the canonical Session transport.** Current behaviour unchanged |
+| Track | no Track type; `TimelineLane` is the de-facto track | **`TimelineLane` is NOT the final Track** — it is the strongest precursor and migration source. **WA3 defines the minimum Track/device contract.** No Track type is created before that |
+| Linear content | `TimelineDocument` (writers, playback, door) | **`TimelineDocument` is the canonical linear content/timeline spine** |
+| Arrangement | 0 writers, `ArrangementPlayer.play` 0 callers | **a future song-form / sections / scene PROJECTION.** `ArrangementStore` and its format are preserved — not consolidated, not deleted |
+| Automation | three homes (automation file, `TimelineDocument.automation`, `Clip.automation`), no production writers; runtime order timeline > clip > global | **the canonical Session owns persistent automation**; timeline song automation converges toward it; **clip-relative automation is a valid separate scope**; `AutomationPlayer` runtime arrays are caches/projections. Nothing migrates now |
+| Modulation | `ModulationMatrix` persisted as a global app preference | **the concrete matrix of a native Echoel Device is creative device/Session state and will persist with that device instance.** Global defaults may stay app preferences. UserDefaults are not migrated now |
+| Musical context | key/scale duplicated (`studio.*` selected, `SessionContext` naming mirror); A4 owned by `SessionContext` | **Session-level: key, scale, A4/tuning, tone system, time signature/MeterMap.** Device-local context may derive from it; genre, mood and generative-phrase settings may stay device-local. Storage not migrated now |
+| Lighting · visual · spatial · video | lighting look is runtime; spatial scene in its own store; video absent | **their CREATIVE state belongs to the Session** (look, automation, track/light assignments, spatial positions, visual composition, video edit/composition). **Outside the Session:** discovered hardware, network addresses, credentials, Dante/AES67/NMOS infrastructure, external service config |
+| Routing | `SignalRouter` + `net.*` app settings | **creative routing (logical source/destination assignments) is Session truth**; system/endpoint configuration is not |
+| Collaboration | Live Colabo sends a `Project` v1 snapshot + bio every 0.4 s; no sync | **the runtime is an adapter/replication layer.** The Session owns shared creative state plus identity, permissions, provenance and collaboration metadata. The transport is never a second Session owner |
+| ClipStore | 8 slots | **the 8 slots stay for compatibility; they are NOT a future capacity limit.** No `MediaAsset` yet |
+| Export | "take as heard": real-time master-tap WAV + composer-bar MIDI | **future MAIN EXPORT renders/bounces the canonical Session.** Today's take export stays valid and later becomes an explicit take/device/performance capture or bounce path. Export code unchanged |
 
-**FOUNDER DECISION REQUIRED: APPROVE / REJECT.**
-- **APPROVE:** W3 designs the Echoel device contract against this Session. A later
-  implementation phase follows §N, one slice at a time, with invariant 4 lifted only for the
-  steps named there.
-- **REJECT:** invariant 4 stays in force and the five working files remain separate. Name the
-  objection, and a revised package addresses it without another full census.
+### O2. What this decision does NOT authorize
+
+- no production Swift, test, persistence-format, UserDefaults or workflow change;
+- no Track type, no Session fields, no migration, no consolidation of `ArrangementStore`;
+- no workstation UI (WA4 is blocked on WA3);
+- no renaming of `SessionView`/`SessionEngine` or any other production type.
+
+### O3. Next
+
+**WA3 — Native Device Architecture** designs the Echoel device and the minimum Track/device
+contract against this target: parameters, state, presets, the device-instance modulation matrix,
+device-local context derived from the Session, bio as a ControlSource, outputs, and the same core
+behind the native and AUv3 adapters. Invariant 4 of the master plan now carries this decision.
 
 ---
 
@@ -657,7 +679,8 @@ comment.
 - `scratchpads/PLAN_DOCUMENT_ROOTS_2026-09-21.md` §2.1 says "the player reads the first
   (automation file)"; it also plays timeline automation, last.
 - `PatternEngine.PlayCause.loopExport` is described as an "offline render" and is real-time.
-- The master plan names `scratchpads/` paths for the W1 and W2 outputs.
+- ~~The master plan names `scratchpads/` paths for the WA1 and WA2 outputs.~~ Fixed in the WA2
+  decision-lock commit.
 
 *Maintenance:* evidence dated 2026-09-24. Re-measure with the commands named above; do not
 update numbers in place without re-running them.

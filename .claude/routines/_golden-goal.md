@@ -6,34 +6,50 @@
 > "ambient soundscape generator" with an AUv3 plugin, on iOS 26, driven partly by
 > circadian phase. All four were false. "Soundscape" is a **banned brand term**
 > (CLAUDE.md BRAND: *"It is NOT a wellness, soundscape, or therapy product"*); the
-> AUv3 target was removed 2026-07-24 (#121); the deployment floor is iOS 18; and
+> AUv3 target was removed 2026-07-24 (#121 — it came back as an instrument with #1385 and
+> hosts nothing); the deployment floor is iOS 18; and
 > `CircadianClock` was deleted 2026-06-19. Because this text is prepended **verbatim**
 > to every routine, it was the first thing those agents read — ranking above CLAUDE.md
 > in their reading order. Anything below that contradicts CLAUDE.md: CLAUDE.md wins.
+>
+> ⛔ Corrected again 2026-09-24 (WA2 decision lock). The goal below said "Echoel is a
+> **bio-reactive instrument**" and listed AUv3, DAW timeline / clips / multitrack, video
+> editing and RTMP streaming as "**Not this product, on purpose** … do not propose, plan or
+> restore them". That was the pure-instrument phase (2026-07-25 → 09-24) and it is HISTORY:
+> `docs/dev/FOUNDER_PRODUCT_LAW.md` supersedes it. Its engineering warnings stay law; its
+> scope verdict does not.
 
 ---
 
 ## The Golden Goal
 
-Echoel is a **bio-reactive instrument** — your body plays it, and its output is
-multidimensional: sound, image, light, space. Heart and breath drive a generative
-engine in real time.
+Echoelmusic is a full professional **distributed multidimensional multimedia workstation
+(DMMW)** — audio, MIDI, instruments, FX, recording, arrangement, mixing, mastering,
+automation, video, visual, light, spatial, streaming, collaboration. *Own the complete
+creative workflow, integrate the complete professional ecosystem* — never rebuild specialist
+infrastructure (codecs, Dante, NDI, CDNs, plugin SDKs). The body — heart and breath — is the
+differentiator, not the outer boundary. Canonical: `docs/dev/FOUNDER_PRODUCT_LAW.md`; build
+order and status: `docs/dev/ECHOELMUSIC_MASTER_PLAN.md`.
 
 **SCIENCE-ONLY.** No esoteric terminology. No chakras, auras, energy healing.
 Evidence-based biofeedback. Every wellness claim requires peer-reviewed citation.
 Biofeedback is core, **not wellness** — never wellness/soundscape/therapy framing.
 
-### What the app does (priority order):
+### What ships today (claims follow this, not the scope above):
 
 1. **Instrument** — DDSP synthesis + generative composition react to HR, HRV,
    coherence and breath; weather feeds the mood rubric
 2. **Output stage** — one typed bus feeds visual, light (Art-Net · sACN) and
-   immersive space (ADM-OSC). Adding a medium = adding a subscriber, never a surface
+   immersive space (ADM-OSC)
 3. **OSC/EchoelSync** — streams bio data to external tools via UDP OSC
+4. **Workstation (early)** — the timeline plays from its own door; audio and MIDI import
 
-**Not this product, on purpose:** AUv3 (plugin *and* host — both built, both removed
-2026-07-24), DAW timeline / clips / multitrack, video editing, RTMP streaming.
-Do not propose, plan or "restore" them without an explicit founder ask.
+**Scope is not a claim.** Public copy, reviews and triage replies claim only what ships
+(`docs/dev/FEATURE_STATUS.md`, `ContentPipeline/CLAIMS.md`). A historically removed
+capability (timeline editing, video, streaming, plugin hosting) is future DMMW scope, not a
+forbidden topic — but recovery ports the proven core into today's owners and never copies a
+subsystem back (`docs/dev/HISTORY_ARCHIVE.md`). Architecture work follows the master plan's
+WA sequence; do not start a later WA before the earlier one is complete.
 
 ### Non-negotiable principles:
 

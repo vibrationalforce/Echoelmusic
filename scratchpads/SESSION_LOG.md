@@ -39166,3 +39166,13 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
   - The engine's running configuration-change branch does not rebuild the meter.
   - Analysis runs on the main actor.
   - NEEDS-FOUNDER-VERIFY: Master LUFS at a 44.1 kHz route vs 48 kHz.
+
+## 2026-09-24 — V0 / WA2 decision lock (docs + active steering only)
+- Founder approved WA2 WITH BINDING AMENDMENTS. Recorded in `docs/dev/SESSION_OWNERSHIP_CENSUS.md`
+  §O as CURRENT REALITY vs APPROVED TARGET; the census's own hold-defaults are withdrawn.
+- Master plan: bare W1–W4 → WA1–WA4; WA1 + WA2 COMPLETE, WA3 NEXT, WA4 BLOCKED ON WA3; census
+  output paths corrected to `docs/dev/`; invariants 1 and 4 carry the decision; two §13 holds answered.
+- Active steering reconciled (banner/rewrite, no history deleted): ROADMAP header + "never new
+  tabs", `_golden-goal.md` goal + "Not this product", CLAUDE.md root-view/Session-door/hosting
+  lines (148,572 B), council-skill constraint, two memory headings, FOUNDER_PRODUCT_LAW §6.
+- No Swift, test, workflow or persistence change. decisions.csv + memory/decisions.md row added.

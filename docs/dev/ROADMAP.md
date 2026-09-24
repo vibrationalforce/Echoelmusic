@@ -1,6 +1,16 @@
-# Echoel — Execution Roadmap (canonical for SEQUENCE — subordinate to the product definition)
+# Echoel — Execution Roadmap (backlog history — subordinate to the founder law and the master plan)
 
-> ⛔ **SUBORDINATE to `docs/dev/PRODUCT_DEFINITION.md` (2026-07-25).** That file decides WHAT Echoel is
+> ⭐ **2026-09-24 (WA2 decision lock): this file is SUBORDINATE to `docs/dev/FOUNDER_PRODUCT_LAW.md`
+> (WHAT Echoel is: a full professional DMMW) and to `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` (the build
+> ORDER — WA1 → WA4 and the phases).** Where this file and the master plan disagree on sequence, the
+> master plan wins. The banner directly below and the "never new tabs" rule in §0 are PHASE HISTORY
+> of the pure-instrument phase: their engineering lessons (black-screen modal law, hot-state law,
+> no breadth-first oscillation) stay law, their scope verdicts do not. A backlog item that names a
+> historically cut capability (timeline, clips, multitrack, plugin hosting, video, broadcast) is
+> future DMMW scope, recovered only per `docs/dev/HISTORY_ARCHIVE.md` — never by copying a
+> subsystem back. Public claims still follow what ships (`docs/dev/FEATURE_STATUS.md`).
+
+> ⛔ **(HISTORY, 2026-07-25 → 09-24) SUBORDINATE to `docs/dev/PRODUCT_DEFINITION.md` (2026-07-25).** That file decides WHAT Echoel is
 > (a bio-reactive instrument; the workstation half is CUT; ship gate = the five checks of
 > "Instrument-Complete v1" in `CLAUDE.md`). This file only orders HOW the kept scope gets built.
 > Where a backlog item below names CUT scope (timeline, clips, multitrack, AUv3, broadcast), the
@@ -26,6 +36,10 @@ _Last structured: 2026-06-19. Re-confirm at each session start alongside `memory
   TestFlight → **verified on device**. Green CI ≠ works on device (honesty rule).
 - **One paradigm:** every surface is a pillar off the same bio bus + one `EchoelStudioView`.
   Add dimensions as controls on the one instrument — **never new tabs** (anti-pattern: breadth-first oscillation).
+  ⛔ HISTORY since 2026-09-24: the scope half ("one instrument, never new tabs") is superseded by
+  `FOUNDER_PRODUCT_LAW.md` §3 (surfaces are replaceable; the workstation and Session front are
+  sequenced as WA3/WA4 in the master plan). What stays law: finish one surface before opening the
+  next (no breadth-first oscillation), and never append a modal to the `EchoelStudioView` chain.
 - **Guardrails:** open standards / near-zero deps · science-only copy · audio-thread sanctity ·
   accessibility-first · protected DSP triad read-only.
 

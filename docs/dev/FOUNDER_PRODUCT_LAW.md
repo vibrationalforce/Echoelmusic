@@ -166,7 +166,9 @@ records which. **"It existed" is never evidence that "it worked".**
 - **Release sequencing stays iPhone-first.** That is an order, not a limit.
 - **The five-check "Instrument-Complete v1" gate** stays the gate for the NEXT App Store
   release until the founder replaces it. It is a release milestone, not the product boundary.
-  ⚠️ This reading is a reconciliation made on 2026-09-24 and is open for founder confirmation.
+  ⭐ Confirmed by the founder 2026-09-24 in the WA2 decision lock ("Instrument-Complete v1 is a
+  release milestone / quality gate, NOT the permanent product boundary"). It was a reconciliation
+  open for confirmation until then.
 - **Audio-thread law, the protected Rausch triad, zero-dependency default, one slice per
   cycle, device verification, and founder-gated files.** All stay unchanged.
 - **Public claims.** They follow what ships (see the banner at the top).

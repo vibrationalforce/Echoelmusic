@@ -31,7 +31,7 @@ iPhone-first. On-device, private, free. The body is the controller.
 
 ---
 
-## The five dimensions (one instrument, never new tabs)
+## The five dimensions (one bus; ⛔ "one instrument, never new tabs" = phase history since 2026-09-24 — surfaces follow the master plan's WA order)
 
 **Body** (the differentiator) → **Sound** → **Image** → **Light** → **Space** (the
 canonical pillars; vibration/haptics ride the output stage), with **Data**

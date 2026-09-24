@@ -2779,3 +2779,25 @@ fixtures are identical at 44.1 and 48 kHz.
 stops the engine on a rate change, so that path goes through `start()`, but this is not
 device-verified. The analysis still runs on the main actor.
 **Review:** 2026-10-24.
+
+### 2026-09-24 — WA2 decision lock: the canonical Session (APPROVED WITH BINDING AMENDMENTS)
+**Decision:** `DMMWProject` is the ONE canonical Session root, stored in the existing
+`ProjectStore` — no new SessionStore, no new persistence root, not schema-frozen. `Project` v1
+stays a legacy take/import source. `PatternEngine` stays the one clock; the Session `Timebase`
+owns TempoMap, MeterMap and the Session loop. Live Flow/Bio tempo is a ControlSource and reaches
+the TempoMap only by an explicit Capture/Record/Commit. START = device/performance activation,
+PLAY ▶ = Session transport. `TimelineLane` is the Track precursor; WA3 defines the minimum
+Track/device contract. `TimelineDocument` is the linear spine; `Arrangement` a future
+song-form/scene projection (store preserved). The Session owns persistent automation (clip
+automation is a separate scope), device-instance modulation matrices, logical routing, visual /
+video / lighting / spatial creative state and collaboration metadata; hardware, addresses,
+credentials and endpoint config stay outside. ClipStore's 8 slots are compatibility only. Future
+main export bounces the Session; today's take export stays valid. Instrument-Complete v1 is a
+release milestone, not the product boundary.
+**Why:** the WA2 census measured no single song today. The founder amended the five holds the
+census had defaulted (Flow tempo, Start/▶, modulation, lighting, Track).
+**Not authorized:** any code, test, migration, Track type, Session field or UI. WA3 is next; WA4
+is blocked on WA3. Record: `docs/dev/SESSION_OWNERSHIP_CENSUS.md` §O.
+**Also:** the active steering surfaces (ROADMAP, `_golden-goal.md`, CLAUDE.md root-view line,
+council skill, two memory headings) were bannered as pure-instrument phase history.
+**Review:** 2026-10-24.
