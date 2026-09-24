@@ -349,6 +349,10 @@ done. WA4 is the first front.
     Compile Check run 36053234043 success, AUv3 embedded; CI/CD `Build for Testing` success, run
     36053233853; `main` advanced). Not TESTED: Run Tests `TEST EXECUTE FAILED` (#396), no
     failure in the tail window, new guard not visible there (#807). Host check WA3-5 in §9.
+  - **WA3.3a — reverb follows the host rate; `tailTime` covers the room: IMPLEMENTED
+    (2026-09-24).** `EchoelReverb.setSampleRate` in `allocateRenderResources`; `tailTime` =
+    release + reverb T60 (`EchoelBodyVibeDevice.tailSeconds`). Guards
+    `TheAUv3ReverbFollowsTheHostRateTests`, `TheAUv3TailCoversTheReverbTests`. Host check WA3-6.
 
 ### WA4 — Arrange + Session Front
 
@@ -418,6 +422,7 @@ settles which path really fires.
 | WA3-3 | host parameter list after WA3.2 | the same eight parameters, names, ranges and order as before; existing automation lanes still drive the same parameter |
 | WA3-4 | factory presets 0–2 | as before, except that their reverb (0.4 / 0.6 / 0.2) is now audible (WA3.3); the coherence seed is unchanged |
 | WA3-5 | automate address 6 from 0 → 1 while audio sounds, with bio modulation active for several seconds | the space audibly follows the host value and stays anchored to it; it never snaps back to a fixed base |
+| WA3-6 | reverb at 1, a 55 Hz note, then bounce/freeze past note-off at 44.1 kHz and at 96 kHz | the same room at both rates; the bounce keeps the whole tail (no cut about 2 s after note-off) |
 
 **Other open device checks (existing):**
 - ship-gate check 1 (sound: founder ear) and check 5 (stability);

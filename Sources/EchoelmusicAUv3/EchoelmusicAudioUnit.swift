@@ -31,11 +31,11 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     private let synth = EchoelDDSP(sampleRate: 48000)
     private let texture = EchoelCellular(cellCount: 128, sampleRate: 48000)
     /// ⭐ WA3.3 — the audible consumer of host address 6 ("Reverb"). The same Freeverb stage the
-    /// app's FX chain runs on its audio thread; all tanks are allocated here, never in render.
-    /// ⚠️ Its delay tunings are sized for 48 kHz and are NOT re-pointed to the host rate
-    /// (`EchoelReverb` has no rate setter). At 44.1 kHz the room reads about 9 % larger. That
-    /// changes colour, never pitch or correctness. `let`, like the engines: the reference never
-    /// moves.
+    /// app's FX chain runs on its audio thread; its tanks are allocated here and, re-sized for the
+    /// host rate, in `allocateRenderResources` — never in render. `let`, like the engines: the
+    /// reference never moves.
+    /// ⛔ Until 2026-09-24 the tanks stayed sized for 48 kHz whatever the host ran at: about 9 %
+    /// larger a room at 44.1 kHz and half the room, in seconds, at 96 kHz.
     private let reverb = EchoelReverb(sampleRate: 48000)
     private var isNoteOn = false
 
@@ -300,7 +300,11 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     public override var canProcessInPlace: Bool { false }
     public override var supportsUserPresets: Bool { true }
     public override var latency: TimeInterval { 0 }
-    public override var tailTime: TimeInterval { 2.0 }
+    /// The synth's release plus the reverb's decay (`EchoelBodyVibeDevice.tailSeconds`). Reads
+    /// three scalars the render thread never writes. ⛔ Was a literal 2.0 — the release alone.
+    public override var tailTime: TimeInterval {
+        EchoelBodyVibeDevice.tailSeconds(synth: synth, reverb: reverb)
+    }
 
     // MARK: - Presets
 
@@ -434,7 +438,7 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         // — and read 220.15 Hz against a 220 Hz default. A matching rate proves the signal
         // path, not the rate path.
         //
-        // ⚠️ THIS IS THE ONLY LEGAL MOMENT. Both setters mutate in place (never reseating a
+        // ⚠️ THIS IS THE ONLY LEGAL MOMENT. The engine setters mutate in place (never reseating a
         // reference the render block holds — the ARC-reseat law lives at
         // `EchoelDDSP.updateReverbDecay`), and Apple guarantees no render is in flight between
         // `allocateRenderResources` and the first callback. It runs BEFORE `noteOn` so the
@@ -448,6 +452,9 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         let hostRate = Float(outputBus.format.sampleRate)
         synth.setSampleRate(hostRate)
         texture.setSampleRate(hostRate)
+        // The reverb follows too (2026-09-24). Unlike the two above it REBUILDS its tanks, so it
+        // allocates — legal here and nowhere later. It also empties them.
+        reverb.setSampleRate(hostRate)
 
         // ⭐ WA3.3: the reverb anchor starts at the HOST value (the synth's own default is
         // 0.25, the parameter's 0.3), and the tank starts empty, not with a previous session's

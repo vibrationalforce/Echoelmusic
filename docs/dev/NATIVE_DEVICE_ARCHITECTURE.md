@@ -536,8 +536,11 @@ about 10 times a second from `bioBaseReverbMix`, which the AUv3 never set. Repai
   Freeverb stage the app's FX chain already runs on its audio thread), wet by the effective
   mix. The texture stays dry, as with the old convolution stage. At mix 0 the output is the
   pre-WA3.3 dry signal.
-- ⚠️ `EchoelReverb` is sized for 48 kHz and not re-pointed to the host rate (it has no rate
-  setter): at 44.1 kHz the room is about 9 % larger. Colour only, never pitch.
+- **Rate (2026-09-24):** `EchoelReverb.setSampleRate` rebuilds the tanks for the host rate in
+  `allocateRenderResources`, next to the two engine setters (it allocates, so only there). Until
+  then the tanks stayed sized for 48 kHz: a 9 % larger room at 44.1 kHz, half the room at 96 kHz.
+- **Tail (2026-09-24):** `tailTime` = synth release + the reverb's slowest-mode T60
+  (`EchoelBodyVibeDevice.tailSeconds`, ≈ 2.0 + 2.48 s). It was a literal 2.0 s, the release alone.
 - Every creative host parameter must have a runtime binding
   (`EchoelBodyVibeAUv3Mapping.resolveBindings`), or setup throws `unboundCreativeParameter`.
 - The APP's convolution reverb is unchanged: still off, still unclaimed.

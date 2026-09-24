@@ -149,6 +149,23 @@ public enum EchoelBodyVibeDevice {
         }
     }
 
+    // MARK: The tail
+
+    /// How long the AUv3 keeps sounding after its input stops — its `tailTime`: the synth's own
+    /// release, then the reverb's slowest mode falling 60 dB (`EchoelReverb.decayTimeSeconds`).
+    /// An upper bound by construction, because the reverb's input is already fading during the
+    /// release; `TheAUv3TailCoversTheReverbTests` renders it.
+    /// ⛔ The AUv3 reported a literal 2.0 s — the release alone — after WA3.3 made the reverb
+    /// audible. At full mix on a 55 Hz note the output two seconds after note-off was still far
+    /// above −60 dB, so a host bouncing to the tail cut the room off.
+    /// A non-finite reverb decay (a feedback of 1 or more, which nothing sets) returns the
+    /// largest finite value: "keep rendering", without handing a host infinity. A NaN release
+    /// counts as none (`max(0, ·)` in the NaN-safe argument order).
+    public static func tailSeconds(synth: EchoelDDSP, reverb: EchoelReverb) -> Double {
+        let total = Double(Swift.max(0, synth.release)) + reverb.decayTimeSeconds
+        return total.isFinite ? total : .greatestFiniteMagnitude
+    }
+
     // MARK: Factory presets
 
     /// A factory preset as creative state, keyed by canonical ID.

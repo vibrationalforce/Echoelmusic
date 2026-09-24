@@ -59,8 +59,10 @@
 // save you — the clamp runs AFTER the conversion). Followed to their callers, none is
 // reachable today:
 //
-//   · EchoelReverb  — exactly ONE production construction site, in `EchoelFXChain`, whose
-//     rate #1172 sanitises with a CEILING before handing it on.
+//   · EchoelReverb  — TWO production construction sites since WA3.3: `EchoelFXChain`, whose
+//     rate #1172 sanitises with a CEILING before handing it on, and the AUv3's 48 kHz literal.
+//     Since 2026-09-24 its own `init`/`setSampleRate` also clamp the rate before any `Int(...)`,
+//     so the boundary is closed at the type as well.
 //   · EchoelDDSP's envelope conversions  — one production site,
 //     `BioReactiveSynthVoice.swift:299`, and it passes `Float(Self.sampleRate)` where that is
 //     `private static let sampleRate: Double = 48_000`. A constant, not a runtime value.
@@ -504,10 +506,11 @@ final class ANonFiniteControlCannotReachTheRenderTests: XCTestCase {
     // MARK: - #1172 — the FX chain guarded its own field and nothing it built
 
     /// FINDING FOUR-B. `EchoelFXChain.init` computed a sanitised `sampleRateHz` and then handed
-    /// the RAW `sampleRate` to all FIFTEEN stages. `EchoelReverb.init` — whose ONLY construction
-    /// site in the whole tree is that line — scales its Freeverb tuning by `sampleRate / 44100`
-    /// and converts with `Int(...)`, so a non-finite rate TRAPS there exactly as it used to trap
-    /// in the delay line (#1171). Building the chain is therefore the whole test: if the raw
+    /// the RAW `sampleRate` to all FIFTEEN stages. `EchoelReverb.init` — at the time the ONLY
+    /// construction site in the whole tree was that line — scaled its Freeverb tuning by
+    /// `sampleRate / 44100` and converted with `Int(...)`, so a non-finite rate TRAPPED there
+    /// exactly as it used to trap in the delay line (#1171). (Since 2026-09-24 the reverb clamps
+    /// the rate itself; the chain's sanitiser still covers every other stage.) Building the chain is therefore the whole test: if the raw
     /// value still reached the reverb, this crashes rather than fails.
     ///
     /// ⛔ AND `1e30` IS IN THE LIST ON PURPOSE. It is FINITE and POSITIVE, so it satisfies the
@@ -584,7 +587,7 @@ final class ANonFiniteControlCannotReachTheRenderTests: XCTestCase {
         XCTAssertFalse(body.contains("(sampleRate: sampleRate)"), """
             A stage is being built from the RAW `sampleRate` again. That is the #1172 defect: \
             the chain's guard then protects only the field it stores, not what it constructs — \
-            and EchoelReverb.init traps on a rate it cannot scale.
+            and a stage's coefficient maths can trap on a rate it cannot scale.
             """)
     }
 

@@ -39219,3 +39219,14 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
 - Gates `f72b09b74`: Xcode Compile Check success (36053234043); CI/CD Build for Testing success
   (36053233853); Run Tests `TEST EXECUTE FAILED` (#396), 0 failures / 0 skips in the tail window,
   1008 s gap, new guard not visible → compiles, execution unproven. `main` = `f72b09b74`.
+
+## 2026-09-24 overnight — WA3.3a: reverb follows the host rate, tailTime covers the room
+- P0 self-audit of WA3.3 (f72b09b74): no defect in the law itself (wet/dry, stereo, scratch,
+  bounds, gain, writers, fail-loud bindings all hold). Two real gaps → this slice; texture seed → P2.
+- `EchoelReverb.setSampleRate` (rebuilds tanks with init's rule, empties state, clamps the rate so
+  `Int(·)` cannot trap) + `decayTimeSeconds` (T60 of the longest comb at DC, 2.48 s at roomSize 0.72).
+- AU: `reverb.setSampleRate(hostRate)` in allocate before noteOn; `tailTime` =
+  `EchoelBodyVibeDevice.tailSeconds` = release + decay (≈4.48 s). Was literal 2.0.
+- Measured by Python transcription: 55 Hz full-mix output 2.0 s after note-off = −37 dB (default
+  mix −54 dB) → 2.0 was short; at 4.49 s ≤ −99 dB. Tone-stop tails 1.65–2.85 s by pitch.
+- Guards: TheAUv3ReverbFollowsTheHostRateTests (6), TheAUv3TailCoversTheReverbTests (4).

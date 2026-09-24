@@ -57,26 +57,105 @@ public final class EchoelReverb: @unchecked Sendable {
     private let combCount: Int
     private let apCount: Int
 
-    public init(sampleRate: Float = 48000) {
-        let scale = sampleRate / 44100.0
-        func scaled(_ n: Int) -> Int { Swift.max(1, Int(Float(n) * scale)) }
+    /// The rate the tanks are sized for (Hz). Written only by `init` and `setSampleRate`, both
+    /// control plane.
+    public private(set) var sampleRate: Float
+    /// Length of the longest comb tank in samples — the slowest-decaying mode. Cached as a
+    /// plain scalar so `decayTimeSeconds` never reads the tank arrays the render thread mutates.
+    private var longestCombSamples: Int
 
+    public init(sampleRate: Float = 48000) {
+        let rate = Self.usableRate(sampleRate)
+        self.sampleRate = rate
         combCount = Self.combTuning.count
         apCount = Self.allpassTuning.count
 
-        combBufL = Self.combTuning.map { [Float](repeating: 0, count: scaled($0)) }
-        combBufR = Self.combTuning.map { [Float](repeating: 0, count: scaled($0 + Self.stereoSpread)) }
+        let tanks = Self.makeTanks(rate: rate)
+        combBufL = tanks.combL
+        combBufR = tanks.combR
+        apBufL = tanks.allpassL
+        apBufR = tanks.allpassR
+        longestCombSamples = tanks.longestComb
         combIdxL = [Int](repeating: 0, count: combCount)
         combIdxR = [Int](repeating: 0, count: combCount)
         combStoreL = [Float](repeating: 0, count: combCount)
         combStoreR = [Float](repeating: 0, count: combCount)
-
-        apBufL = Self.allpassTuning.map { [Float](repeating: 0, count: scaled($0)) }
-        apBufR = Self.allpassTuning.map { [Float](repeating: 0, count: scaled($0 + Self.stereoSpread)) }
         apIdxL = [Int](repeating: 0, count: apCount)
         apIdxR = [Int](repeating: 0, count: apCount)
 
         updateDamping()
+    }
+
+    /// ⭐ Re-points the reverb at a new rate (2026-09-24). Every tank is rebuilt at the
+    /// rate-scaled Freeverb tuning — the same rule as `init` — and the state starts empty, so a
+    /// re-pointed instance is indistinguishable from one constructed at that rate. Before this
+    /// existed, a reverb built at 48 kHz and run in a 96 kHz host had delay lines half as long
+    /// in SECONDS: a smaller, shorter, differently coloured room than the one it was tuned as.
+    ///
+    /// ⚠️ ALLOCATES. Control plane only, and only while no render is in flight: the AUv3 calls
+    /// it in `allocateRenderResources`, the one moment Apple guarantees that. The OBJECT a render
+    /// block holds is never reseated — only the arrays inside it are replaced.
+    /// A call at the current rate changes nothing, so the 48 kHz path stays bit-identical.
+    public func setSampleRate(_ newRate: Float) {
+        let rate = Self.usableRate(newRate)
+        guard rate != sampleRate else { return }
+        sampleRate = rate
+        let tanks = Self.makeTanks(rate: rate)
+        combBufL = tanks.combL
+        combBufR = tanks.combR
+        apBufL = tanks.allpassL
+        apBufR = tanks.allpassR
+        longestCombSamples = tanks.longestComb
+        // The old write positions may lie past the end of the new, shorter tanks.
+        for i in 0..<combCount {
+            combIdxL[i] = 0; combIdxR[i] = 0
+            combStoreL[i] = 0; combStoreR[i] = 0
+        }
+        for i in 0..<apCount {
+            apIdxL[i] = 0; apIdxR[i] = 0
+        }
+    }
+
+    /// Time (s) for the slowest mode to fall by 60 dB: the longest comb, at DC, where the
+    /// damping lowpass has unity gain and the loop gain is exactly `combFeedback`
+    /// (T60 = delay · 3 / −log10 g). Every other mode decays faster. This bounds the energy
+    /// left in the tanks; an OUTPUT measured against its own level at note-off can take a few
+    /// tenths of a second longer, because the eight combs partly cancel in the sum
+    /// (measured 2026-09-24 in a transcription of this file: up to 2.85 s at the 0.72 default,
+    /// against 2.49 s from this formula). Read from the control plane only.
+    public var decayTimeSeconds: Double {
+        let g = Double(combFeedback)
+        guard g > 0 else { return 0 }
+        guard g < 1 else { return .infinity }
+        return Double(longestCombSamples) / Double(sampleRate) * 3 / -log10(g)
+    }
+
+    /// A rate the tank sizing can use: NaN, zero or a negative rate becomes 1 Hz (every tank one
+    /// sample long), and an absurd rate is capped, so `Int(·)` below can never trap.
+    private static func usableRate(_ rate: Float) -> Float {
+        rate.clamped(to: 1...768_000)
+    }
+
+    private struct Tanks {
+        var combL: [[Float]]
+        var combR: [[Float]]
+        var allpassL: [[Float]]
+        var allpassR: [[Float]]
+        var longestComb: Int
+    }
+
+    /// The tanks for `rate` — the Freeverb tunings are samples at 44.1 kHz, scaled to the rate.
+    private static func makeTanks(rate: Float) -> Tanks {
+        let scale = rate / 44100.0
+        func scaled(_ n: Int) -> Int { Swift.max(1, Int(Float(n) * scale)) }
+        let combL = combTuning.map { [Float](repeating: 0, count: scaled($0)) }
+        let combR = combTuning.map { [Float](repeating: 0, count: scaled($0 + stereoSpread)) }
+        let longest = (combL + combR).map(\.count).max() ?? 1
+        return Tanks(
+            combL: combL, combR: combR,
+            allpassL: allpassTuning.map { [Float](repeating: 0, count: scaled($0)) },
+            allpassR: allpassTuning.map { [Float](repeating: 0, count: scaled($0 + stereoSpread)) },
+            longestComb: longest)
     }
 
     private func updateDamping() {
