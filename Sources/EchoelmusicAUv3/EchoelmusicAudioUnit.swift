@@ -545,6 +545,16 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         os_log(.info, log: Self.auLog, "Instrument stopped")
     }
 
+    /// ⭐ 2026-09-24 (overnight P8k): a host may release the unit without ever calling
+    /// `deallocateRenderResources()` (a crash-path teardown, or a host that skips it), and then
+    /// the last reference to a RESUMED `vitalsTimer` drops here — the libdispatch trap
+    /// `startVitalsPolling` documents, inside someone else's process. Cancelling is idempotent,
+    /// so the ordinary path (deallocate, then release) is unaffected.
+    /// Guard: `TheVitalsTimerDiesWithTheUnitTests`.
+    deinit {
+        vitalsTimer?.cancel()
+    }
+
     // MARK: - Shared vitals (App Group → bio params)
 
     /// Starts a 10 Hz utility-queue timer (NOT the render thread) that reads the
