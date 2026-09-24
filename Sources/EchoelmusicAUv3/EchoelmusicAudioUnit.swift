@@ -67,10 +67,30 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         /// WA3.3: the reverb's right channel (`pad` carries the left).
         nonisolated(unsafe) var padR: [Float]
         nonisolated(unsafe) var tex: [Float]
+        /// ⭐ 2026-09-24 (overnight P8g) — the output memory the AU OWNS. `AURenderBlock`'s
+        /// contract: *"The buffer pointers may be null on entry, in which case the block will
+        /// render into memory it owns and modify the `mData` pointers to point to that
+        /// memory"*, valid until the next render or `deallocateRenderResources()`. The block
+        /// used to `continue` past a null `mData`, so a host that asks the AU to supply its
+        /// buffers got none written. Allocated ONCE here (never in render), freed in `deinit`,
+        /// so the pointer outlives every render call; sized with the same `capacity` as the
+        /// scratch above, i.e. in lockstep with the 4096-frame ceiling. A host bus wider than
+        /// `ownedChannels` with null pointers past that index still gets nothing — recorded,
+        /// not hidden. Guard: `TheAUv3SuppliesItsOwnOutputBuffersTests`.
+        /// NEEDS-FOUNDER-VERIFY: load the plug-in in a host other than AUM (GarageBand, Logic) and hear it — whether any of them passes null output pointers is unmeasured.
+        static let ownedChannels = 8
+        let capacity: Int
+        let ownedOutput: UnsafeMutablePointer<Float>
         init(capacity: Int) {
+            self.capacity = capacity
             pad = [Float](repeating: 0, count: capacity)
             padR = [Float](repeating: 0, count: capacity)
             tex = [Float](repeating: 0, count: capacity)
+            ownedOutput = UnsafeMutablePointer<Float>.allocate(capacity: capacity * Self.ownedChannels)
+            ownedOutput.initialize(repeating: 0, count: capacity * Self.ownedChannels)
+        }
+        deinit {
+            ownedOutput.deallocate()
         }
     }
     private let renderScratch = RenderScratch(capacity: 4096)
@@ -653,8 +673,16 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
             scratch.pad.withUnsafeBufferPointer { padBuf in
                 scratch.padR.withUnsafeBufferPointer { padRBuf in
                     scratch.tex.withUnsafeBufferPointer { texBuf in
-                        for (channel, buf) in ablPointer.enumerated() {
-                            guard let data = buf.mData?.assumingMemoryBound(to: Float.self) else { continue }
+                        for channel in 0..<ablPointer.count {
+                            // A null pointer is the host asking the AU for its own memory
+                            // (AURenderBlock contract, see `RenderScratch.ownedOutput`).
+                            // Pointer and size stores only — no allocation here.
+                            if ablPointer[channel].mData == nil, channel < RenderScratch.ownedChannels {
+                                ablPointer[channel].mData = UnsafeMutableRawPointer(
+                                    scratch.ownedOutput + channel * scratch.capacity)
+                            }
+                            guard let data = ablPointer[channel].mData?.assumingMemoryBound(to: Float.self) else { continue }
+                            ablPointer[channel].mDataByteSize = UInt32(count * MemoryLayout<Float>.size)
                             for i in 0..<count {
                                 // Channel 0 = the reverb's left, every other = its right; a
                                 // mono bus gets their mean. At mix 0 all three equal the dry
