@@ -39269,3 +39269,16 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
 - Guard `TheDeviceStateBoundaryFailsClosedTests` (5 claims, all end-to-end on the public type; FORWARD —
   does not compile on the parent).
 - Gates: P5 0f4b01b72 Xcode Compile Check SUCCESS (36062160962). P1 1a9ec0dbb Build for Testing SUCCESS.
+
+## 2026-09-24 overnight — P4: every BodyVibe knob moves the sound (proof file)
+- Guard `TheBodyVibeKnobsMoveTheSoundTests`: claim 1 inventory (declared = mapped = bound = probed; a new
+  descriptor without a probe is red), claims 2–4 rendered audio with exact determinism counterweights
+  (pitch → synth + texture, texture gain linear ×8, reverb 0 vs 1 through renderSpace), claim 5 source
+  scan (render writes `(synth + texture) * gain`, observer feeds the mirror). Green on the parent too —
+  a PROOF file, not a regression guard: nothing was broken.
+- Found while simulating the texture (Python, exact in-place loop) — P8 candidates, NOT fixed here:
+  (a) `EchoelCellular.evolve1D` updates cells IN PLACE (left neighbour already new). Rule 184 then kills
+      the pattern at step 1 → texture permanently silent; coherence 4/7…5/7 selects 184.
+  (b) `seed()` writes `cellsPrev = cells`, so the first render-thread `cells[i] =` after a seed COW-copies
+      (one malloc on the audio thread per seed; the AU seeds once, in init).
+  (c) rules 150/30/110 reach the partial cells (0…31) only at evolution 33 — ~4 s at the AU's 8/s.
