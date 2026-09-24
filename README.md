@@ -50,7 +50,7 @@ Network routing (OSC · ADM-OSC · Art-Net · sACN · MIDI out) is a patchbay re
 
 `BioStripView` lives inside the Bio panel, not as an always-on strip. That is deliberate: a ~10 Hz reading in an always-mounted ancestor — `WorkspaceView` or any permanent header — rebuilds the whole view tree and tears down any open menu. See the freeze law in `CLAUDE.md`.
 
-**Not planned, not roadmap** — RTMP / live streaming, video editing, and the Clips/Arrangement UI. Video editing and the Clips/Arrangement UI were built and removed in July 2026; RTMP was never built — `BroadcastPublisher` is a compile-guarded scaffold and HaishinKit is not a dependency. A broadcast stack would be a second product. See [`docs/dev/FEATURE_MATRIX.md`](./docs/dev/FEATURE_MATRIX.md).
+**Not shipping today** — RTMP / live streaming, video capture and editing, and a clips/arrangement editing surface. They are long-term scope under [`docs/dev/FOUNDER_PRODUCT_LAW.md`](docs/dev/FOUNDER_PRODUCT_LAW.md) (streaming through a proven library, never a hand-rolled client), with no date and nothing in this build. History, not direction: the video editor and the clips/arrangement UI were built and removed as implementations in July 2026, video capture in September 2026; RTMP was never built — `BroadcastPublisher` is a compile-guarded scaffold and HaishinKit is not a dependency. What runs today: [`docs/dev/FEATURE_STATUS.md`](./docs/dev/FEATURE_STATUS.md).
 
 ---
 

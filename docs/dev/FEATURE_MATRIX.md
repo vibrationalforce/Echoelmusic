@@ -5,6 +5,10 @@
 > Provenienz: WARUM etwas so ist. Welche versteckte Ansicht fehlt, meldet der Wächter
 > `EveryHiddenSurfaceIsInTheStatusRegisterTests`.
 
+> ⭐ **2026-09-24: SCOPE is `docs/dev/FOUNDER_PRODUCT_LAW.md` (DMMW), not the banner below.** That banner
+> is pure-instrument PHASE HISTORY: its code facts stay true (`ArrangeTimelineView` is deleted), its
+> verdict that "DAW" is a retired framing does not — arrangement is DMMW scope again, not shipping today.
+
 > ⛔ **READ `docs/dev/PRODUCT_DEFINITION.md` FIRST (2026-08-28 banner).** This file claims
 > canonical authority and then LEADS with a retired end-state: every UPDATE block dated
 > before 2026-07-25 (including the 2026-07-13 "ONE tracks-centric, bio-reactive DAW …

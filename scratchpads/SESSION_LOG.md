@@ -39294,3 +39294,14 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
   seed) kills the texture permanently; a true double buffer would make the default rule-90 texture
   silent for ~33 evolutions (~4 s at 8/s) before a partial cell lights. Both directions change the
   plug-in's sound. Needs a founder decision, not an overnight slice.
+
+## 2026-09-24 overnight — P6: README / active-steering truth
+- README "Not planned, not roadmap" (RTMP, video, clips/arrangement) contradicted FOUNDER_PRODUCT_LAW
+  (streaming, video, arrangement are DMMW scope). Now "Not shipping today": long-term scope, no date,
+  nothing in this build; the removal history kept as history. No new capability claimed.
+- FEATURE_MATRIX: one ⭐ pointer above its 2026-08-28 banner (which still read "DAW is the retired
+  framing" and "read PRODUCT_DEFINITION first"). ROADMAP / PRODUCT_DEFINITION / FEATURE_STATUS /
+  memory/vision.md already carry the supersession banner — measured, left alone.
+- FOUNDER HOLD (public copy, brand wording — NOT touched): docs/faq.html (twice, incl. JSON-LD),
+  docs/architecture.html (4 rows) and docs/brainstorming.html still say video/streaming/console mixer
+  "not planned" / "deliberately not in Echoelmusic". True as "not shipping", false as scope.
