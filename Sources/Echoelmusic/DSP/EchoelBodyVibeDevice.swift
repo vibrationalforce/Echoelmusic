@@ -133,10 +133,7 @@ public enum EchoelBodyVibeDevice {
     /// guard turns that into permanent silence until the next seed). `seed` already refused
     /// both; the live path did not. Guard: `TheHostValueIsAdmittedOnceTests`.
     public static func admitted(_ value: Float, forCreativeID id: String) -> Float? {
-        guard value.isFinite,
-              let descriptor = creativeDescriptors.first(where: { $0.keyPath == id }),
-              descriptor.min <= descriptor.max else { return nil }
-        return value.clamped(to: descriptor.min...descriptor.max)
+        creativeDescriptors.first(where: { $0.keyPath == id })?.admitted(value)
     }
 
     /// ⭐ 2026-09-24 (overnight P2) — THE ONE SEEDING PATH. Writes every creative value to the
@@ -456,8 +453,9 @@ public struct EchoelDeviceState: Codable, Sendable, Equatable {
         var copy = self
         var kept: [String: Float] = [:]
         for descriptor in descriptors {
-            guard let value = parameterValues[descriptor.keyPath], value.isFinite else { continue }
-            kept[descriptor.keyPath] = Swift.min(Swift.max(value, descriptor.min), descriptor.max)
+            guard let value = parameterValues[descriptor.keyPath]
+                .flatMap({ descriptor.admitted($0) }) else { continue }
+            kept[descriptor.keyPath] = value
         }
         copy.parameterValues = kept
         return copy

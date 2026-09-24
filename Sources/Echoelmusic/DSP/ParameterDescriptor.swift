@@ -105,6 +105,16 @@ public struct ParameterDescriptor: Codable, Sendable, Equatable, Identifiable {
 
     public var id: String { keyPath }
 
+    /// ⭐ THE ONE ADMISSION RULE for a value arriving from outside (a host write, a restored
+    /// state): `nil` if it is not finite or this descriptor's range is inverted — the caller
+    /// keeps what it has — otherwise the value clamped to `min...max`. `EchoelBodyVibeDevice`
+    /// (live host writes, seeding) and `EchoelDeviceState.sanitized` both ask this; before
+    /// 2026-09-24 they spelled it twice (#416).
+    public func admitted(_ value: Float) -> Float? {
+        guard value.isFinite, min <= max else { return nil }
+        return value.clamped(to: min...max)
+    }
+
     /// ⚠️ THE TWO ELIGIBILITY DEFAULTS ARE `false`, AND THAT IS THE SAFETY LAW OF THIS TYPE:
     /// a parameter described by a call site that has not thought about capability grants none.
     /// The opposite default would make every future cross-domain descriptor automatable and

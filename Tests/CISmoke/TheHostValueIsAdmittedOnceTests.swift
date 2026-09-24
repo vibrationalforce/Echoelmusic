@@ -31,6 +31,14 @@
 // ⚠️ HONEST GRADING — TRANSCRIBED (§0), no local toolchain. Parent `df9222b38`: `admitted` does not
 // exist, so the file does not COMPILE there — no assertion has a verdict. Claims 1–2 are FORWARD
 // guards; claim 3's text would be red on the parent (raw `value` in both branches) — one finding.
+//
+// CLAIM 4 (overnight P8f, its own commit): the rule lives ONCE, on `ParameterDescriptor`.
+// P8e wrote `admitted` beside `EchoelDeviceState.sanitized`, which spelled the same decision a
+// second way (`Swift.min(Swift.max(…))`) — #416 created by the repair itself. Both now ask
+// `ParameterDescriptor.admitted(_:)`. END-TO-END BEHAVIOUR (parity over every creative
+// descriptor, and an inverted range refused) plus a SOURCE-TEXT SCAN of the device file.
+// Parent `c2fc6f407`: `ParameterDescriptor.admitted` does not exist, so this file does not
+// compile there — FORWARD guard; the scan half would be red there (the second spelling).
 
 import Foundation
 import XCTest
@@ -40,6 +48,7 @@ final class TheHostValueIsAdmittedOnceTests: XCTestCase {
 
     private typealias ID = EchoelBodyVibeDevice.BaseID
     private static let audioUnit = "Sources/EchoelmusicAUv3/EchoelmusicAudioUnit.swift"
+    private static let device = "Sources/Echoelmusic/DSP/EchoelBodyVibeDevice.swift"
     private static let nonFinite: [Float] = [.nan, .infinity, -.infinity, .signalingNaN]
 
     // MARK: - claim 1
@@ -89,6 +98,33 @@ final class TheHostValueIsAdmittedOnceTests: XCTestCase {
                        "the raw host value reaches `apply` again")
         XCTAssertFalse(observer.contains("gainMirror.value = value"),
                        "the raw host value reaches the output-gain mirror again — NaN would leave the plug-in")
+    }
+
+    // MARK: - claim 4
+
+    func testTheDeviceAndItsStateAskTheOneDescriptorRule() throws {
+        for d in EchoelBodyVibeDevice.creativeDescriptors {
+            let probes: [Float] = [d.min - 1, d.min, d.defaultValue, d.max, d.max + 1,
+                                   .nan, .infinity, -.infinity]
+            for v in probes {
+                XCTAssertEqual(EchoelBodyVibeDevice.admitted(v, forCreativeID: d.keyPath), d.admitted(v),
+                               "\(d.keyPath): the device admits \(v) differently from its descriptor")
+            }
+        }
+        let inverted = ParameterDescriptor(keyPath: "probe.inverted", displayName: "Inverted",
+                                           min: 1, max: 0, defaultValue: 0.5)
+        XCTAssertNil(inverted.admitted(0.5), "an inverted range admitted a value instead of refusing it")
+
+        let code = SourceText.codeOnly(try text(Self.device))
+        XCTAssertFalse(code.contains("Swift.min(Swift.max(value, descriptor.min)"), """
+            The device file clamps a descriptor value by hand again — a second spelling of \
+            `ParameterDescriptor.admitted` (#416).
+            """)
+        let sanitized = try XCTUnwrap(Self.body(
+            startingWith: "public func sanitized(against descriptors: [ParameterDescriptor])", in: code),
+            "`sanitized(against:)` is not found — re-anchor this guard (#456)")
+        XCTAssertTrue(sanitized.contains("descriptor.admitted("),
+                      "a restored state no longer passes the descriptor's own admission rule")
     }
 
     // MARK: - helpers
