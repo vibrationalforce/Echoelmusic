@@ -103,6 +103,10 @@ User preferences for development workflow, communication, and tooling.
   were CUT by the product definition 2026-07-25 (Editor ≠ Workstation). "Everything in ONE
   app" now means one instrument whose OUTPUT is multidimensional (sound · image · light ·
   space) — not a workstation. Quote kept as founder history (audit 2026-09-02).
+  ⭐ **2026-09-24: the OBJECT is back.** Founder law (`docs/dev/FOUNDER_PRODUCT_LAW.md`): Echoelmusic
+  is a full professional multimedia workstation (DMMW); the 07-25 cut revoked IMPLEMENTATIONS, not
+  the capability. The unified-app stance above applies again — with the recovery principle
+  (port the proven core into current owners, never copy a deleted subsystem back wholesale).
 - **Be genuinely enthusiastic. Frame problems as future situations with an intelligent
   solution, never as negatives.** ("Sei begeistert … betrachte Probleme nicht als
   negativ sondern als Situation für die Zukunft, für die es wunderbarerweise immer eine

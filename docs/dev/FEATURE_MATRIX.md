@@ -33,6 +33,9 @@ acceptance line.
 > vom Founder gestrichen** — `PRODUCT_DEFINITION.md`s GRENZE (Editor ≠ Workstation) schneidet
 > Timeline/Arrangement/Clips, Mehrspur + Mixer, Audio-Regionen, Video-Schnitt, AUv3 und RTMP
 > ausdrücklich weg, und `#121` Slice 2–4, `#166`/`#167`, `#1302` und `#1304` haben das ausgeführt.
+> ⭐ **2026-09-24:** diese Streichung ist PHASEN-Historie — seit `FOUNDER_PRODUCT_LAW.md` ist die DMMW
+> wieder das Ziel. Der B-Rückstand bleibt trotzdem KEIN Auftrag: seine Typen existieren nicht, und
+> zurückgeholt wird über `HISTORY_ARCHIVE.md` (Kern portieren, nie den alten Plan abarbeiten).
 > Vier der hier genannten Typen sind als DATEIEN weg: `VideoResyncPolicy`, `VideoExportPlan`,
 > `VideoLanePlayer`, `MultiTrackRecorder` (messen: `git grep -l "struct VideoLanePlayer\|class MultiTrackRecorder" -- Sources` → 0).
 > **Warum ein Marker und keine Löschung:** der Block ist DATIERTE Historie und hält fest, was am

@@ -18,6 +18,11 @@ have we learned" so the knowledge is never lost between sessions.
   not a renderer. (⛔ The pre-2026-07-25 variant that stood here dropped *image* and
   promoted *vibration* into the sentence — corrected by the 2026-08-28 brand audit;
   haptics stay an output-stage subscriber.)
+- ⭐ **PRODUCT LAW since 2026-09-24 (supersedes the sentence above as the SCOPE boundary):**
+  `docs/dev/FOUNDER_PRODUCT_LAW.md` — a full professional distributed multidimensional multimedia
+  workstation (DMMW); own the creative workflow, integrate the ecosystem. CURRENT PRODUCT LAW
+  SUPERSEDES HISTORICAL PRODUCT CUTS. The sentence stays true of what ships today; scope is not a
+  claim. History + recovery class per capability: `docs/dev/HISTORY_ARCHIVE.md`.
 
 ## The five dimensions (one instrument, never new tabs)
 
@@ -148,7 +153,7 @@ lives in scratchpads + SESSION_LOG. Phases:
 
 ## Standing vision↔code gaps (keep honest, review each cycle)
 
-1. ~~"Live Broadcast" brand pillar~~ — RESOLVED: struck 2026-07-31 (identity line + Built-for); CUT by Editor ≠ Workstation. HaishinKit stays unlinked; WATCH tier only.
+1. ~~"Live Broadcast" brand pillar~~ — RESOLVED as a CLAIM: struck 2026-07-31 (identity line + Built-for) because nothing ships. ⭐ As SCOPE it is a DMMW domain again since 2026-09-24 (`docs/dev/FOUNDER_PRODUCT_LAW.md`): via a proven RTMP/SRT library, never the hand-rolled client. HaishinKit stays unlinked until a founder-approved dependency slice.
 2. CLAUDE.md "v10 Target" diagram describes Beat/Record/Video/Share tabs never built (as-built = one
    EchoelStudioView); the file contradicts itself.
 3. FEATURE_MATRIX stale on the visual dimension (cites old deleted MetalBioView; a new live one exists).
@@ -161,7 +166,9 @@ lives in scratchpads + SESSION_LOG. Phases:
 The old track order here (Live Clip session grid · RTMP broadcast · AUv3 instrument · video
 editing) named four things that were deleted or decided out by the pure-instrument epic
 (#121/#122/#123) — it would have sent a session building against a product that no longer
-exists. The canonical gate now lives in `docs/dev/PRODUCT_DEFINITION.md`; five binary checks:
+exists. The gate lives in `docs/dev/PRODUCT_DEFINITION.md` (historical since 2026-09-24; the gate
+itself stays the NEXT-RELEASE milestone per `docs/dev/FOUNDER_PRODUCT_LAW.md` §6, not the product
+boundary); five binary checks:
 
 1. **Klang** — curated genres professional, identity survives, no convergence bug.
 2. **Kontrolle** — patch editor reachable (`soundPanel` behind the Sound chip). The piano-roll

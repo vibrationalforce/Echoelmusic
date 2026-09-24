@@ -1,5 +1,9 @@
 # FEATURE STATUS — was läuft, was versteckt ist, was gestrichen ist
 
+> **Produktumfang ≠ diese Seite.** Was Echoelmusic werden soll, entscheidet
+> [`FOUNDER_PRODUCT_LAW.md`](FOUNDER_PRODUCT_LAW.md) (DMMW, seit 2026-09-24). Diese Seite sagt nur, was HEUTE
+> läuft. Fach 3 ist Historie: eine Streichung dort nahm eine Implementierung zurück, nicht die Fähigkeit.
+
 Stand: 2026-09-23 · v10.79.480 / Build 2600 · gemessen am Code, nicht aus dem Gedächtnis.
 
 **Wozu diese Datei.** `FEATURE_MATRIX.md` ist über Monate gewachsen und trägt viele datierte
@@ -89,7 +93,12 @@ Messen: `git grep -n "FeatureFlags.<name>" -- Sources | grep -v ': *//'`.
 
 ---
 
-## 3. GESTRICHEN — per Founder-Entscheidung entfernt
+## 3. HISTORISCH ENTFERNT — Implementierung zurückgenommen, Fähigkeit NICHT automatisch verboten
+
+⭐ Seit 2026-09-24 gilt [`FOUNDER_PRODUCT_LAW.md`](FOUNDER_PRODUCT_LAW.md): **aktuelles Produktgesetz schlägt
+historische Streichungen.** Die Zeilen unten sagen, welche IMPLEMENTIERUNG warum ging — nicht, dass die
+Fähigkeit tabu ist. Ob und wie eine zurückkommt (wiederverwenden, Algorithmus portieren, neu bauen, nie wieder),
+steht je Fähigkeit in [`HISTORY_ARCHIVE.md`](HISTORY_ARCHIVE.md).
 
 Nichts davon ist verloren: jeder Stand liegt in der Git-Historie unter der genannten Nummer.
 Zurückholen heißt aber meist **neu bauen**, nicht wieder anhängen.
@@ -98,7 +107,7 @@ Zurückholen heißt aber meist **neu bauen**, nicht wieder anhängen.
 |---|---|---|
 | Drums / Beat-Maker / Sampler-Kit | 2026-07-26, #166/#167 | Fokus aufs Instrument |
 | Noten-Editor (Piano Roll) | 2026-07-26, #178/#475 | „Pianoroll soll raus“ |
-| DAW-Arrangement (Clips, Arrange-Timeline, Mixer-Spuren) | 2026-07-24…31, #121 | Instrument statt Workstation |
+| DAW-Arrangement (Clips, Arrange-Timeline, Mixer-Spuren) | 2026-07-24…31, #121 | Phase „reines Instrument“ (historisch, 2026-07-24) |
 | AUv3-HOST (fremde Plugins laden) | #121 Slice 2 | wie oben (das Echoel-PLUGIN ist zurück, #1385) |
 | Mikrofon / Audio-Eingang, Vocoder, Autotune | 2026-09-12, #1302 | „Face und Audio Input komplett entfernen“ |
 | Harmonizer, Granularsynthese | 2026-09-12, #1305 | wörtlich gestrichen |

@@ -1,5 +1,10 @@
 # Broadcast (RTMP/SRT) — HaishinKit FINISH spec
 
+> ⭐ **2026-09-24:** broadcast is a DMMW domain again ([`FOUNDER_PRODUCT_LAW.md`](FOUNDER_PRODUCT_LAW.md)),
+> so the SCOPE reason below is historical. The spec stays **DO NOT EXECUTE** for a reason that
+> still holds: linking HaishinKit is a new dependency, and dependencies are founder-gated. The
+> integrate-don't-rebuild rule applies — a proven RTMP/SRT library, never a hand-rolled client.
+>
 > ⛔ **FOUNDER-GATED — DO NOT EXECUTE (banner 2026-08-28).** Broadcast/RTMP is CUT by the
 > Editor ≠ Workstation boundary (`docs/dev/PRODUCT_DEFINITION.md`, 2026-07-25) and struck
 > from the identity line 2026-07-31. This spec is preserved as engineering knowledge for

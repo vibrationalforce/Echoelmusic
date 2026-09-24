@@ -53,7 +53,9 @@ Convening on trivia is the failure mode — stay cheap.
 **Why the Aesthetic Maximalist exists** (added 2026-07-25, founder asked whether such a
 voice was in the room — it was not). Every other seat pulls toward *less*: Shipper wants
 the smallest change, Skeptic wants the risk gone, Architect wants no new coupling,
-Vision-Keeper enforces "adding a medium = adding a subscriber, never a new surface". With
+Vision-Keeper enforced "adding a medium = adding a subscriber, never a new surface" (the
+2026-07-25 instrument phase — superseded 2026-09-24 by `docs/dev/FOUNDER_PRODUCT_LAW.md`: scope is
+the full DMMW, surfaces are replaceable, capabilities survive). With
 nobody arguing the other way, an instrument converges on safe and thin — and "thin" was
 already a real founder complaint about the sound. This seat is the counterweight.
 **Its constraint, non-negotiable:** it argues for expressive DEPTH on what exists — wiring

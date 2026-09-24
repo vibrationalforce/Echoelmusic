@@ -1,3 +1,11 @@
+> ## ⭐ 2026-09-24 — THE DMMW DESTINATION IS CURRENT AGAIN; THIS BLUEPRINT IS NOT
+>
+> The founder made Echoelmusic a full professional DMMW again
+> ([`FOUNDER_PRODUCT_LAW.md`](FOUNDER_PRODUCT_LAW.md)). The 2026-07-25 banner below records the
+> pure-instrument phase and is history. This June 2026 blueprint is **not** the canonical
+> architecture: recover capabilities through [`HISTORY_ARCHIVE.md`](HISTORY_ARCHIVE.md) and the
+> recovery principle (port the proven core into today's owners), never by re-executing this plan.
+
 > ## ⚠️ SUPERSEDED — 2026-07-25
 >
 > This document describes the **"Digital Multidimensional Multimedia Workstation"**

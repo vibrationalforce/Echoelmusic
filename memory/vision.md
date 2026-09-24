@@ -8,6 +8,16 @@ Durable knowledge. Read at session start with the rest of `memory/`. This is the
 > multidimensional (sound, image, light, space).** Over open standards, no SDK
 > lock-in; the bio-reactive object *source*, not a renderer. *Create From Within.*
 
+⭐ **2026-09-24 — THE SENTENCE ABOVE IS NO LONGER THE PRODUCT BOUNDARY.** Founder law, canonical
+in `docs/dev/FOUNDER_PRODUCT_LAW.md`: Echoelmusic is a full professional **distributed
+multidimensional multimedia workstation (DMMW)** — *own the complete creative workflow, integrate
+the complete professional ecosystem* (never rebuild codecs, Dante, NDI, CDNs, plugin SDKs).
+**CURRENT PRODUCT LAW SUPERSEDES HISTORICAL PRODUCT CUTS**: every „CUT, not roadmap“ below records
+a revoked IMPLEMENTATION and its engineering warning, not a scope ban. The bio-reactive sentence
+stays true of what SHIPS today and stays the differentiator; bio is not the outer boundary. Scope
+is not a claim — public copy still follows `ContentPipeline/CLAIMS.md`. Per-capability history and
+recovery class: `docs/dev/HISTORY_ARCHIVE.md`. The paragraph below is kept as the 2026-07-25 record.
+
 ⛔ **The sentence above is the RATIFIED one** (PRODUCT_DEFINITION.md, founder-delegated
 2026-07-25). The variant that stood here — "sound, space, light, **vibration**", no
 *image* — predated it and diverged from the canon in the one file the vision-gate skill
@@ -55,7 +65,7 @@ no zone parser — naming either in the spine re-sold two struck capabilities.)
 
 ## TIER 2 — ROADMAP (planned; partially wired or authorized, not built)
 
-- ⛔ **Live RTMP/SRT broadcast — CUT, not roadmap** (Editor ≠ Workstation, 2026-07-25;
+- ⛔ **Live RTMP/SRT broadcast — CUT, not roadmap** [⭐ 2026-09-24: scope verdict superseded — broadcast is a DMMW domain again, via a proven RTMP/SRT library, never a hand-rolled client; `docs/dev/HISTORY_ARCHIVE.md`] (Editor ≠ Workstation, 2026-07-25;
   "broadcast" struck from the identity line 2026-07-31). HaishinKit stays unlinked.
   Honest tier per `inspiration_intake.md`: WATCH. Re-entry needs a founder ask, not a plan.
 - ⛔ **AUDIOVISUAL VOCODER — CUT, not roadmap** (#1301/#1302, founder 2026-09-12, wörtlich
@@ -70,7 +80,8 @@ no zone parser — naming either in the spine re-sold two struck capabilities.)
   shipping: that is the output stage, driven by the BODY, which is what the product is.
   **⛔ The 2026-06-20 "full all-in-one professional production environment" pivot that stood
   here is ITSELF SUPERSEDED (2026-07-24, #121; decisions.csv rows 84/101/102/190/191).** The
-  canonical boundary is now `docs/dev/PRODUCT_DEFINITION.md`: **Editor ≠ Workstation** — the
+  canonical boundary WAS `docs/dev/PRODUCT_DEFINITION.md` (2026-07-25 → 09-24, superseded by
+  `docs/dev/FOUNDER_PRODUCT_LAW.md`): **Editor ≠ Workstation** — the
   instrument plus its multidimensional output stage (sound · visual · light · space). DAW,
   AUv3 host, video/NLE and broadcast were dismantled on purpose.
   `scratchpads/PLAN_PRO_PRODUCTION_SUITE.md` plans a product that no longer exists — history
@@ -98,8 +109,9 @@ no zone parser — naming either in the spine re-sold two struck capabilities.)
   copy, no roadmap slot) and still never a health/therapy claim — but it is a declared
   direction of the founder's own practice, not a whim to be parked and forgotten.
   **The architectural consequence is the opposite of what it looks like:** hardware needs NO
-  app rebuild. `PRODUCT_DEFINITION.md` already rules *"adding a medium = adding a subscriber,
-  never a new surface"*, and the output stage already speaks open standards (OSC, ADM-OSC,
+  app rebuild. The bus principle *"adding a medium = adding a subscriber"* (from the historical
+  `PRODUCT_DEFINITION.md`; its "never a new surface" half is superseded by the 2026-09-24 UI law —
+  surfaces are replaceable, capabilities survive) still holds for OUTPUT hardware, and the output stage already speaks open standards (OSC, ADM-OSC,
   Art-Net, sACN, MIDI/UMP). A sounding lounger attaches as ONE MORE SUBSCRIBER. Any proposal
   that rebuilds the engine "for the hardware" (C++ core, second bus, CMake) has it backwards —
   see the 2026-09-11 entries in `inspiration_intake.md`.

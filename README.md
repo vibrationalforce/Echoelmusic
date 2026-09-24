@@ -14,7 +14,7 @@ An immersive, iPhone-first instrument for **Installation · Event · Content · 
 
 ## Positioning
 
-This is not a DAW, and catching one on its own axis is not possible solo. Echoelmusic is an **instrument**: it is about the sound being made *now*, not about arranging material over time. The timeline, the clip/arrangement UI and video editing were built and then deliberately removed in July 2026 to keep that boundary sharp. Multitrack recording is a different case and worth stating precisely: it is *built*, but feature-flagged off with no door, so it is not part of the app you install.
+Today Echoelmusic ships as a bio-reactive **instrument**: it is about the sound being made *now*. The long-term product is a full professional multimedia workstation — see [`docs/dev/FOUNDER_PRODUCT_LAW.md`](docs/dev/FOUNDER_PRODUCT_LAW.md) — but this README describes only what the app you install does today. The July 2026 timeline, clip/arrangement and video-editing UIs were removed as implementations, not as a direction; the current build has a read-and-play Workstation panel for imported audio and MIDI files, and no audio input or recording (removed in September 2026).
 
 What it does have, structurally, is **biofeedback as a first-class modulation source on a typed bus**:
 

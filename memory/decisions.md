@@ -2731,3 +2731,23 @@ no part can warp and locked while the song plays.
 become a second tempo truth, and a warp flag without a resize leaves silence or a cut loop.
 `TempoMatch` clamps to 0.25–4, so the span asks `StretchPlan.resolve` (#416).
 **Review:** 2026-10-23, after the W1–W9 device run on v10.79.479.
+
+### 2026-09-24 — Founder product law: Echoelmusic is a full professional DMMW; current law supersedes historical cuts
+**Decision (founder, verbatim core):** "ECHOELMUSIC IS A FULL PROFESSIONAL DISTRIBUTED
+MULTIDIMENSIONAL MULTIMEDIA WORKSTATION (DMMW). It is NOT limited to being a bio-reactive
+instrument." Strategic law: *own the complete creative workflow, integrate the complete
+professional ecosystem* — never rebuild specialist infrastructure (codecs, Dante, NDI, CDNs,
+plugin SDKs). **A historical deletion revokes an implementation, not necessarily the capability.**
+Canonical text: `docs/dev/FOUNDER_PRODUCT_LAW.md`; per-capability history and recovery class:
+`docs/dev/HISTORY_ARCHIVE.md`.
+**What it supersedes:** the 2026-07-25 product definition ("DMMW is retired", Editor ≠ Workstation
+as a scope boundary) and every "CUT, not roadmap" scope verdict derived from it. Those documents are
+kept, bannered, not rewritten.
+**What it does NOT change:** engineering warnings (#1302 input graph, #299 record-route refcount,
+black-screen chain, hot-state, audio-thread law, protected triad), the bio/science red lines, the
+claims discipline (scope is not a claim — copy follows what ships), founder-gated files and
+dependencies, iPhone-first order. "Instrument-Complete v1" stays the NEXT-RELEASE gate — a
+reconciliation open for founder confirmation.
+**Recovery principle:** never restore a subsystem wholesale; port the proven core into the current
+owners, then test end to end and on a device.
+**Review:** 2026-10-24.

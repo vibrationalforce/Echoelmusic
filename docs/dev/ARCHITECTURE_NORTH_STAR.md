@@ -1,5 +1,12 @@
 # Echoel — Architecture North Star (multidimensional DMW)
 
+> ⭐ **2026-09-24 — the DESTINATION is current again, this blueprint still is not.** Founder law
+> [`FOUNDER_PRODUCT_LAW.md`](FOUNDER_PRODUCT_LAW.md) restores the full professional DMMW as the
+> product scope (CURRENT PRODUCT LAW SUPERSEDES HISTORICAL PRODUCT CUTS). The 07-25 banner below
+> stays as the record of why this particular plan was set aside; its concrete technical errors
+> are still errors. Recover capabilities through [`HISTORY_ARCHIVE.md`](HISTORY_ARCHIVE.md) and
+> the recovery principle, never by executing this file.
+>
 > ⛔ **SUPERSEDED 2026-07-25 — HISTORY ONLY, DO NOT PLAN FROM THIS FILE.**
 > The canonical scope decision is `docs/dev/PRODUCT_DEFINITION.md`: "DMMW" is retired
 > and Echoel is a bio-reactive **instrument**, not an all-in-one pro suite. The

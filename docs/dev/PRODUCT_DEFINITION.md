@@ -1,6 +1,14 @@
-# Echoel — Product Definition (canonical)
+# Echoel — Product Definition (HISTORICAL: the pure-instrument phase)
 
-**Status:** CANONICAL as of 2026-07-25. Supersedes `DMMW_ARCHITECTURE.md`
+> ⛔ **SUPERSEDED 2026-09-24 by [`FOUNDER_PRODUCT_LAW.md`](FOUNDER_PRODUCT_LAW.md).** Echoelmusic is a
+> full professional DMMW. **Current product law supersedes historical product cuts:** the KEEP/CUT
+> table below records what the 2026-07-25 → 2026-09-24 phase decided, and each cut revoked an
+> IMPLEMENTATION, not the capability. Do not use this page to reject a feature. Its technical
+> findings (e.g. `PianoRollModel` is load-bearing, `PianoRollView` is deleted) remain true; the
+> recovery of any cut capability goes through `docs/dev/HISTORY_ARCHIVE.md`. The text below is
+> kept unaltered as the record of that phase.
+
+**Status (historical):** was CANONICAL from 2026-07-25 until 2026-09-24. Supersedes `DMMW_ARCHITECTURE.md`
 (the "Digital Multidimensional Multimedia Workstation" goal, 2026-06-21).
 Founder delegated this call in full ("Du entscheidest… etwas das einfach zu
 begreifen, zu vermarkten und zu pflegen ist"); decided via Grand Council

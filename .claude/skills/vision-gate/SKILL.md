@@ -26,7 +26,11 @@ then logged so we never re-litigate and never drift.
 
 1. **Read the vision** — `memory/vision.md` (tiers + 8 founder principles) and the
    existing ledger `memory/inspiration_intake.md` + `inspiration.csv` (don't re-evaluate
-   an item already logged — point to its row).
+   an item already logged — point to its row). **Scope authority is
+   `docs/dev/FOUNDER_PRODUCT_LAW.md` (2026-09-24, DMMW)** — CURRENT PRODUCT LAW SUPERSEDES
+   HISTORICAL PRODUCT CUTS, so a past „CUT“ is never on its own a REJECT reason; check
+   `docs/dev/HISTORY_ARCHIVE.md` for why the old implementation failed and what recovery class
+   it carries. Overclaim, esoteric/healing and fabricated-science bans are unchanged.
 2. **For each external input**, apply the gate. To be **ADOPT→PRODUCT** it must pass ALL:
    1. Serves a dimension — Body / Sound / Space / Light / Vibration / Data (or an explicit
       North-Star tier, labeled concept, never shipped copy).

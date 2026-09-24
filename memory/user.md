@@ -83,9 +83,13 @@ Eine Session, die hieraus Kontext restaurierte, plante gegen ein Repo, das es ni
 - **Kanonischer Zustand steht in `CLAUDE.md` (CURRENT STATE)** — dieser Block ist bewusst
   nur ein Zeiger plus das Wenige, das zur Nutzer-Ebene gehört, damit er nicht wieder
   still altert wie sein Vorgänger.
-- Produkt: das bio-reaktive Instrument (`docs/dev/PRODUCT_DEFINITION.md`, 2026-07-25).
-  DMMW ist RETIRED; Drums (#166/#167), Noten-Editor (#475) und AUv3 sind per
-  Founder-Entscheidung entfernt.
+- ⭐ **Produkt seit 2026-09-24: eine volle professionelle DMMW** (`docs/dev/FOUNDER_PRODUCT_LAW.md`) —
+  „Own the complete creative workflow, integrate the complete professional ecosystem“. Bio ist das
+  Alleinstellungsmerkmal, nicht die Außengrenze. ⛔ Hier stand: „das bio-reaktive Instrument
+  (PRODUCT_DEFINITION, 2026-07-25). DMMW ist RETIRED; Drums (#166/#167), Noten-Editor (#475) und
+  AUv3 sind per Founder-Entscheidung entfernt.“ — die Entfernungen bleiben als IMPLEMENTIERUNGS-
+  Historie wahr (Warnungen gelten weiter, AUv3 als TARGET ist seit #1385 zurück), das Scope-Urteil
+  nicht. Was je Fähigkeit historisch existierte und ob es zurückkommt: `docs/dev/HISTORY_ARCHIVE.md`.
 - Ship-Gate „Instrument-Complete v1": die offenen Checks sind SENSORISCH (Founder-Ohr /
   Gerät). Der Geräte-Einkaufszettel: `python3 scripts/founder-verify.py`.
 - ⛔ **Die Vokal-Ketten-Zeile ist gestrichen (#1302/#1305, Founder 2026-09-12).** Sie sagte
