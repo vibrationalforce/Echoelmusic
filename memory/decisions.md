@@ -2836,3 +2836,18 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Not done:** host verification; any production writer of `EchoelDeviceState`;
   `device.<instanceID>.<base>` resolution; scaling/taper.
 - **Review:** 2026-10-24.
+
+### 2026-09-24 — WA3.3: the AUv3 reverb is heard and anchored
+
+- **Decision:** host address 6 writes the anchor `bioBaseReverbMix` (plus `reverbMix`), the pair
+  `SynthPatch.apply` writes. Effective = `EchoelDDSP.bioModulatedReverbMix(base:hrv:)` (anchor +
+  (HRV − 0.5) · 0.12, clamped 0…1; the 0…0.9 ceiling is gone). Consumer =
+  `EchoelBodyVibeDevice.renderSpace` → `EchoelReverb` on the synth, texture dry. Setup throws
+  `unboundCreativeParameter` if any creative host parameter lacks a binding.
+- **Why not convolution:** its realtime safety is unproven (#404 note); Freeverb is already
+  proven live in the app's FX chain.
+- **Consequences:** presets 0–2 and every host project now HEAR their reverb value; mix 0
+  reproduces the pre-WA3.3 output exactly. `EchoelReverb` is 48 kHz-sized and not re-pointed
+  to the host rate (room colour at 44.1 kHz, never pitch).
+- **Not done:** host/device listening (WA3-5); texture-gain initial mismatch (0.15 vs param 0.3).
+- **Review:** 2026-10-24.

@@ -484,6 +484,11 @@ discard the whole state on one unknown value.
 heart-rate, HRV, coherence or breath-phase key cannot survive it. Lossy per-field decode. ⚠️ **No
 production caller yet**: the AUv3 keeps its WA3.1 saved-state format, and nothing in the app writes
 this value; mood, FX, routes and the rest of §B's INST list are still absent from it.
+⛔ **Before its FIRST production reader or writer (WA3.3 debt note), the boundary MUST enforce:**
+`sanitized(against:)` on every decode and every write; `deviceType` validated against the device
+it is loaded into (reject, never coerce); a supported-`schemaVersion` check with an explicit
+policy for newer and older versions; and a written migration policy. Today's lossy decode
+defaults a missing `schemaVersion` to the current one, which is safe only while nothing reads it.
 
 ---
 
@@ -517,11 +522,27 @@ not the app's Echoel instrument. **WA3 does not rewrite it.** Its tree is now bu
 descriptors plus the adapter mapping (WA3.2, §G); carrying `SynthPatch` is still a later slice.
 Dropping bio from `fullState` is DONE (WA3.1, §I).
 
-**Two AUv3 facts WA3.2 measured and did NOT change:**
-- **"Reverb" (address 6) is bound but inaudible.** It writes `EchoelDDSP.reverbMix`, whose
-  convolution stage is off (`useConvolutionReverb = false`), and the render-side
-  `applyBioReactive` rewrites the field about 10 times a second. The binding is kept so a host
-  project's value still lands where it always did.
+**WA3.3 — "Reverb" (address 6) is audible and anchored.** WA3.2 measured it as bound but
+inaudible: the binding wrote `EchoelDDSP.reverbMix` only; that field's one reader, the convolution
+stage, is off (`useConvolutionReverb = false`); and the render-side `applyBioReactive` rewrote it
+about 10 times a second from `bioBaseReverbMix`, which the AUv3 never set. Repair:
+- **Anchor:** the binding writes `bioBaseReverbMix` (plus `reverbMix`), the same pair
+  `SynthPatch.apply` writes in the app. `allocateRenderResources` seeds it from the host value.
+- **Law:** `EchoelDDSP.bioModulatedReverbMix(base:hrv:)` = anchor + (HRV − 0.5) · 0.12, clamped
+  0…1. A neutral body leaves the host value exactly. The ceiling was 0…0.9, which made host
+  values above 0.9 unreachable; the only in-app reader is the disabled convolution, so the
+  widening changes nothing the app can hear.
+- **Consumer:** `EchoelBodyVibeDevice.renderSpace` feeds the synth through `EchoelReverb` (the
+  Freeverb stage the app's FX chain already runs on its audio thread), wet by the effective
+  mix. The texture stays dry, as with the old convolution stage. At mix 0 the output is the
+  pre-WA3.3 dry signal.
+- ⚠️ `EchoelReverb` is sized for 48 kHz and not re-pointed to the host rate (it has no rate
+  setter): at 44.1 kHz the room is about 9 % larger. Colour only, never pitch.
+- Every creative host parameter must have a runtime binding
+  (`EchoelBodyVibeAUv3Mapping.resolveBindings`), or setup throws `unboundCreativeParameter`.
+- The APP's convolution reverb is unchanged: still off, still unclaimed.
+
+**One AUv3 fact WA3.2 measured and did NOT change:**
 - **The factory presets still seed coherence (HOLD-FOR-FOUNDER).** Ambient Calm 0.7, Deep Sleep
   0.8, Active Focus 0.5. Coherence shapes the synth's cutoff, brightness and harmonicity and
   selects the texture's cellular rule (`Int(c·7)`: 0.5→rule 105, 0.7→184, 0.8→73). No creative

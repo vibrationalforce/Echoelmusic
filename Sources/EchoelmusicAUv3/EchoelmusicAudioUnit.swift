@@ -30,6 +30,13 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     /// PLACE, the references never move.
     private let synth = EchoelDDSP(sampleRate: 48000)
     private let texture = EchoelCellular(cellCount: 128, sampleRate: 48000)
+    /// ⭐ WA3.3 — the audible consumer of host address 6 ("Reverb"). The same Freeverb stage the
+    /// app's FX chain runs on its audio thread; all tanks are allocated here, never in render.
+    /// ⚠️ Its delay tunings are sized for 48 kHz and are NOT re-pointed to the host rate
+    /// (`EchoelReverb` has no rate setter). At 44.1 kHz the room reads about 9 % larger. That
+    /// changes colour, never pitch or correctness. `let`, like the engines: the reference never
+    /// moves.
+    private let reverb = EchoelReverb(sampleRate: 48000)
     private var isNoteOn = false
 
     /// Shared vitals from the main app over the App Group. Refreshed OFF the
@@ -57,9 +64,12 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     /// on the audio thread. Same class-owns-the-buffer pattern as GainMirror below.
     private final class RenderScratch {
         nonisolated(unsafe) var pad: [Float]
+        /// WA3.3: the reverb's right channel (`pad` carries the left).
+        nonisolated(unsafe) var padR: [Float]
         nonisolated(unsafe) var tex: [Float]
         init(capacity: Int) {
             pad = [Float](repeating: 0, count: capacity)
+            padR = [Float](repeating: 0, count: capacity)
             tex = [Float](repeating: 0, count: capacity)
         }
     }
@@ -182,6 +192,10 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     /// plug-in that failed to load rather than one whose knobs drive the wrong parameter.
     private func setupParameterTree() throws {
         let resolved = try EchoelBodyVibeAUv3Mapping.resolve()
+        // ⭐ WA3.3: every creative parameter MUST have a runtime binding, or setup throws.
+        // Before WA3.3 a missing binding was skipped with `if let`, leaving a knob that moved
+        // nothing.
+        engineBindingByAddress = try EchoelBodyVibeAUv3Mapping.resolveBindings(resolved)
         var created: [UInt64: AUParameter] = [:]
         var bioChildren: [AUParameter] = []
         var soundChildren: [AUParameter] = []
@@ -197,9 +211,6 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
             created[r.address] = p
             if case .creative(let id) = r.target {
                 canonicalIDByAddress[r.address] = id
-                if let binding = EchoelBodyVibeDevice.binding(for: id) {
-                    engineBindingByAddress[r.address] = binding
-                }
             }
             switch r.group {
             case .bio: bioChildren.append(p)
@@ -438,6 +449,13 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         synth.setSampleRate(hostRate)
         texture.setSampleRate(hostRate)
 
+        // ⭐ WA3.3: the reverb anchor starts at the HOST value (the synth's own default is
+        // 0.25, the parameter's 0.3), and the tank starts empty, not with a previous session's
+        // tail. Both run here, before render starts.
+        EchoelBodyVibeDevice.apply(.synthReverbMix, value: reverbMixParam.value,
+                                   synth: synth, texture: texture)
+        reverb.reset()
+
         // Start generating
         synth.amplitude = 0.6
         synth.noteOn(frequency: baseFreqParam.value)
@@ -511,6 +529,7 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         let bioBox = self.bioMirror
         let bioState = self.bioRenderState
         let noteState = self.renderNoteState
+        let reverbRef = self.reverb
         // ~10 Hz throttle for the render-side bio application (sampleRate/10 frames).
         let bioInterval = max(1, Int(self.synth.sampleRate / 10))
 
@@ -589,17 +608,34 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
             synthRef.render(buffer: &scratch.pad, frameCount: count)
             textureRef.render(buffer: &scratch.tex, frameCount: count)
 
+            // WA3.3 — the synth through the reverb, wet by its EFFECTIVE mix (host anchor plus
+            // bounded bio offset). In place, sole-owned scratch, no allocation.
+            scratch.pad.withUnsafeMutableBufferPointer { left in
+                scratch.padR.withUnsafeMutableBufferPointer { right in
+                    EchoelBodyVibeDevice.renderSpace(reverbRef, synth: synthRef,
+                                                     left: left, right: right, count: count)
+                }
+            }
+
             // Mix and apply master gain (lock-free mirror — never read AUParameter here). Bind the
             // scratch to unsafe buffer pointers so the per-sample loop takes no per-element ARC on
             // the class-held arrays.
             let gain = gainBox.value
             let ablPointer = UnsafeMutableAudioBufferListPointer(outputData)
+            let mono = ablPointer.count == 1
             scratch.pad.withUnsafeBufferPointer { padBuf in
-                scratch.tex.withUnsafeBufferPointer { texBuf in
-                    for buf in ablPointer {
-                        guard let data = buf.mData?.assumingMemoryBound(to: Float.self) else { continue }
-                        for i in 0..<count {
-                            data[i] = (padBuf[i] + texBuf[i]) * gain
+                scratch.padR.withUnsafeBufferPointer { padRBuf in
+                    scratch.tex.withUnsafeBufferPointer { texBuf in
+                        for (channel, buf) in ablPointer.enumerated() {
+                            guard let data = buf.mData?.assumingMemoryBound(to: Float.self) else { continue }
+                            for i in 0..<count {
+                                // Channel 0 = the reverb's left, every other = its right; a
+                                // mono bus gets their mean. At mix 0 all three equal the dry
+                                // synth, which is the pre-WA3.3 output exactly.
+                                let synthSample = mono ? (padBuf[i] + padRBuf[i]) * 0.5
+                                                       : (channel == 0 ? padBuf[i] : padRBuf[i])
+                                data[i] = (synthSample + texBuf[i]) * gain
+                            }
                         }
                     }
                 }

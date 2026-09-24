@@ -19,8 +19,8 @@
 // (`AUv3StateContract`, WA3.1). They are never Session-automation targets.
 //
 // ⚠️ WHY THIS FILE IS IN `DSP/`: the same reason `ParameterDescriptor.swift` is (read its
-// header). Foundation only; it names `EchoelDDSP`, `EchoelCellular` and `SynthPatch`, which are
-// `DSP/` types, and no control-plane type.
+// header). Foundation only; it names `EchoelDDSP`, `EchoelCellular`, `EchoelReverb` (WA3.3)
+// and `SynthPatch`, which are `DSP/` types, and no control-plane type.
 
 import Foundation
 
@@ -79,10 +79,14 @@ public enum EchoelBodyVibeDevice {
         case pitch
         /// `texture.gain = v`.
         case textureGain
-        /// `synth.reverbMix = v`. ⛔ BOUND BUT NOT AUDIBLE today: the convolution stage that
-        /// reads it is gated off (`EchoelDDSP.useConvolutionReverb` has no writer, #546), and
-        /// the render-side `applyBioReactive` rewrites `reverbMix` from `bioBaseReverbMix`
-        /// every ~100 ms. Recorded, not repaired, by WA3.2.
+        /// ⭐ WA3.3: `synth.bioBaseReverbMix = v` AND `synth.reverbMix = v`, the same pair
+        /// `SynthPatch.apply` writes. The host value is the ANCHOR; the render-side
+        /// `applyBioReactive` moves the effective value only by a bounded offset around it
+        /// (`EchoelDDSP.bioModulatedReverbMix`), and `renderSpace` feeds that effective value
+        /// to the AUv3's reverb (`EchoelReverb`).
+        /// ⛔ Until WA3.3 this wrote `reverbMix` alone. That value was overwritten within about
+        /// 100 ms from an anchor nothing had set (the 0.25 default), and its only reader, the
+        /// convolution stage, is gated off. So the host value was neither kept nor audible.
         case synthReverbMix
         /// The plug-in's own output stage (the render-side gain mirror). No engine field.
         case outputGain
@@ -111,9 +115,37 @@ public enum EchoelBodyVibeDevice {
         case .textureGain:
             texture.gain = value
         case .synthReverbMix:
+            synth.bioBaseReverbMix = value
             synth.reverbMix = value
         case .outputGain:
             break
+        }
+    }
+
+    // MARK: The space stage (render thread)
+
+    /// ⭐ WA3.3 — the AUv3's audible reverb consumer. The synth's mono block goes in as `left`;
+    /// it comes out as the reverb's stereo pair in `left` / `right`, wet by the synth's
+    /// EFFECTIVE mix (anchor + bounded bio offset, already computed render-side by
+    /// `applyBioReactive`). The texture stays dry: the old convolution stage it replaces
+    /// also sat on the synth only.
+    ///
+    /// RENDER-THREAD SAFE: one scalar store, then `EchoelReverb.processStereo` per sample, whose
+    /// tanks are pre-allocated in its `init` (the same stage the app's FX chain runs on its
+    /// audio thread). No allocation, lock, dictionary, string, actor or I/O. At mix 0,
+    /// `processStereo` returns its input unchanged, so `left == right ==` the dry synth.
+    @inline(__always)
+    public static func renderSpace(_ reverb: EchoelReverb, synth: EchoelDDSP,
+                                   left: UnsafeMutableBufferPointer<Float>,
+                                   right: UnsafeMutableBufferPointer<Float>, count: Int) {
+        reverb.mix = synth.reverbMix
+        let n = Swift.min(count, Swift.min(left.count, right.count))
+        guard n > 0 else { return }
+        for i in 0..<n {
+            let dry = left[i]
+            let (l, r) = reverb.processStereo(dry, dry)
+            left[i] = l
+            right[i] = r
         }
     }
 
@@ -198,6 +230,10 @@ public enum AUv3MappingError: Error, Equatable {
     case duplicateIdentifier(String)
     case unknownCanonicalID(String)
     case unmappedCreativeDescriptor(String)
+    /// ⭐ WA3.3: a creative parameter that is mapped to a host address but has no runtime
+    /// binding. Before WA3.3 the AUv3 skipped such an entry with `if let`, and the knob
+    /// moved nothing.
+    case unboundCreativeParameter(String)
 }
 
 public enum EchoelBodyVibeAUv3Mapping {
@@ -293,6 +329,25 @@ public enum EchoelBodyVibeAUv3Mapping {
             throw AUv3MappingError.unmappedCreativeDescriptor(descriptor.keyPath)
         }
         return resolved
+    }
+
+    /// ⭐ WA3.3 — the runtime binding for EVERY creative host parameter, keyed by address;
+    /// throws `unboundCreativeParameter` if one is missing. Legacy live controls need no
+    /// creative binding and are skipped. `binder` is injectable so the failure path can be
+    /// driven; production passes nothing. Control thread only (the AUv3 calls it at setup).
+    public static func resolveBindings(
+        _ resolved: [AUv3ResolvedParameter],
+        binder: (String) -> EchoelBodyVibeDevice.Binding? = EchoelBodyVibeDevice.binding(for:)
+    ) throws -> [UInt64: EchoelBodyVibeDevice.Binding] {
+        var bindings: [UInt64: EchoelBodyVibeDevice.Binding] = [:]
+        for r in resolved {
+            guard case .creative(let id) = r.target else { continue }
+            guard let binding = binder(id) else {
+                throw AUv3MappingError.unboundCreativeParameter(id)
+            }
+            bindings[r.address] = binding
+        }
+        return bindings
     }
 }
 

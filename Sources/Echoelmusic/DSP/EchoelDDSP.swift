@@ -1880,6 +1880,21 @@ public final class EchoelDDSP: @unchecked Sendable {
     public var bioBaseHarmonicity: Float = 0.88
     public var bioBaseNoiseLevel: Float = 0.01
     public var bioBaseReverbMix: Float = 0.25
+
+    /// ⭐ WA3.3 — THE ONE REVERB LAW: the anchor (`bioBaseReverbMix`, written by
+    /// `SynthPatch.apply` in the app and by the AUv3's address-6 binding) plus a bounded HRV
+    /// offset of ±0.06, centred on neutral HRV 0.5. So a resting body leaves EXACTLY the
+    /// anchor, and bio never replaces it. Clamped to 0…1, the parameter's own range
+    /// (`SynthPatch.Bounds.reverbMix`, AU address 6). ⛔ It was 0…0.9 until WA3.3: a host value
+    /// above 0.9 was then unreachable even at neutral bio. That ceiling protected nothing in
+    /// the app: the only in-app reader is the convolution stage, which is gated off
+    /// (`useConvolutionReverb`), and `SynthPatch(name:from:)`, which would capture the value,
+    /// has no production caller. NaN-safe via `clamped(to:)`. Pure scalar arithmetic, so it is
+    /// safe on the audio thread.
+    @inline(__always)
+    public nonisolated static func bioModulatedReverbMix(base: Float, hrv: Float) -> Float {
+        (base + (hrv - 0.5) * 0.12).clamped(to: 0...1)
+    }
     /// Patch-baseline FILTER CUTOFF (Hz) for bio modulation. 0 = "no patch anchor set" →
     /// the raw bio voice keeps the legacy absolute coherence sweep (byte-identical).
     /// When > 0 (set by `SynthPatch.apply(to:)` alongside `filterCutoff`), coherence opens
@@ -2425,7 +2440,7 @@ public final class EchoelDDSP: @unchecked Sendable {
         //      gently colour the sound so the character you chose survives. Small, clamped
         //      deviations centred on the captured baseline.
         harmonicity = (bioBaseHarmonicity + (coherence - 0.5) * 0.12).clamped(to: 0.05...0.98)
-        reverbMix   = (bioBaseReverbMix + (hrvVariability - 0.5) * 0.12).clamped(to: 0...0.9)
+        reverbMix   = Self.bioModulatedReverbMix(base: bioBaseReverbMix, hrv: hrvVariability)
         noiseLevel  = Swift.max(0, bioBaseNoiseLevel + (0.5 - coherence) * 0.06)
         // Note: reverb DECAY is intentionally NOT bio-modulated (rebuilding the convolution IR
         // allocates and would click the tail per frame); the spatial character comes from

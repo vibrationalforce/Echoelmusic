@@ -39206,3 +39206,13 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
 - Gates `be17d968b`: Xcode Compile Check success; CI/CD Build for Testing success; Run Tests
   `TEST EXECUTE FAILED` (#396), no failing name in the tail window, new guard not visible
   (compiles, execution unproven). `main` = `be17d968b`.
+
+## 2026-09-24 — WA3.3 BodyVibe reverb runtime truth + binding hardening
+
+- Measured: address 6 → `reverbMix` only; sole reader = convolution (off); `applyBioReactive`
+  rewrote it from the never-set anchor 0.25 every ~100 ms (clamp 0…0.9). Dead knob.
+- Repair: anchor binding, one law `bioModulatedReverbMix` (0…1), Freeverb consumer
+  `renderSpace`, fail-loud `resolveBindings`, anchor seeded + tank reset in allocate.
+- Guard `TheBodyVibeReverbIsHeardAndAnchoredTests` (8 claims; claim 5 renders audio through
+  the real engines). Python transcription green; parent red where it should be.
+- Owed: WA3-5 host listening; texture-gain initial mismatch reported, not touched.

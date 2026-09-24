@@ -340,7 +340,13 @@ done. WA4 is the first front.
     run 36047320605 success, AUv3 embedded; CI/CD `Build for Testing` success, run 36047320600;
     `main` advanced). Not TESTED: Run Tests ended `TEST EXECUTE FAILED` (#396) and the
     `tail -200` window does not show the new guard (#807). `EchoelDeviceState` has no production caller; instance addressing is a
-    contract only; the preset coherence seed is HOLD-FOR-FOUNDER.
+    contract only; the preset coherence seed is HOLD-FOR-FOUNDER. **CLOSED** (independent review
+    PASS WITH NAMED WA3.3 DEFECTS).
+  - **WA3.3 — BodyVibe reverb runtime truth + binding hardening: IMPLEMENTED.** Address 6 is
+    the anchor, bio modulates around it (`EchoelDDSP.bioModulatedReverbMix`), and `EchoelReverb`
+    makes it audible (`EchoelBodyVibeDevice.renderSpace`). A creative host parameter without a
+    runtime binding now fails setup. Guard `TheBodyVibeReverbIsHeardAndAnchoredTests`. COMPILES /
+    TESTED only with gate evidence (§4); host check WA3-5 in §9.
 
 ### WA4 — Arrange + Session Front
 
@@ -408,7 +414,8 @@ settles which path really fires.
 | WA3-1 | old host project saved before WA3.1, reopened | the four creative values restore; nothing crashes |
 | WA3-2 | new save → reopen in AUM, then GarageBand/Logic when available | the saved state holds no coherence/HRV/heart-rate/breath-phase value |
 | WA3-3 | host parameter list after WA3.2 | the same eight parameters, names, ranges and order as before; existing automation lanes still drive the same parameter |
-| WA3-4 | factory presets 0–2 | they sound as before (the coherence seed is unchanged) |
+| WA3-4 | factory presets 0–2 | as before, except that their reverb (0.4 / 0.6 / 0.2) is now audible (WA3.3); the coherence seed is unchanged |
+| WA3-5 | automate address 6 from 0 → 1 while audio sounds, with bio modulation active for several seconds | the space audibly follows the host value and stays anchored to it; it never snaps back to a fixed base |
 
 **Other open device checks (existing):**
 - ship-gate check 1 (sound: founder ear) and check 5 (stability);
