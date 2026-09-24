@@ -554,6 +554,15 @@ about 10 times a second from `bioBaseReverbMix`, which the AUv3 never set. Repai
   0.15 while its knob showed 0.3, because the tree's defaults are written before the observer
   that calls `apply` exists. A fresh instance's texture is therefore louder than before — the
   displayed value is now the audible one. Host listening owed.
+- **Host values (2026-09-24, P8e):** every creative value arriving from a host passes
+  `EchoelBodyVibeDevice.admitted` (non-finite → refused, the engine keeps what sounds; otherwise
+  clamped to the descriptor), in `seed` and in both observer branches. Before, a NaN Master Gain
+  reached the host's bus. Guard `TheHostValueIsAdmittedOnceTests`.
+- **Texture realtime safety (2026-09-24, P8a/c/d):** `EchoelCellular.seed` no longer shares its
+  cell buffer (the first render evolution used to copy-on-write); `CARule` is one byte (the
+  control thread replaced a heap-table struct under a live render read on every Coherence write);
+  a non-finite coherence selects a rule instead of trapping in `Int(…)`. All three are
+  sound-neutral.
 - Every creative host parameter must have a runtime binding
   (`EchoelBodyVibeAUv3Mapping.resolveBindings`), or setup throws `unboundCreativeParameter`.
 - The APP's convolution reverb is unchanged: still off, still unclaimed.
@@ -565,6 +574,24 @@ about 10 times a second from `bioBaseReverbMix`, which the AUv3 never set. Repai
   parameter is equivalent, so removing the seed would change two presets' sound materially. The
   seed is isolated as `Preset.legacyCoherenceSeed`, outside creative values; it is the preset
   path's only bio write, and removing it is a founder call.
+
+**Two AUv3 facts measured 2026-09-24 and deliberately NOT changed (host / founder):**
+- **Host automation as render events is ignored.** C3 above requires "parameter changes as
+  timestamped `(address, value)`". The render block handles only `.MIDI`; a host that automates
+  through `scheduleParameterBlock` delivers `.parameter`/`.parameterRamp` events and they are
+  dropped. Hosts that write `AUParameter.value` reach the observer and work. Which path AUM,
+  Logic and GarageBand use is unmeasured. Proposed repair (not built): a table indexed by address,
+  precomputed in `init` (binding + range; no Dictionary or String on the render thread); ramps
+  applied as steps; bio addresses into `bioMirror`; force `CARule.harmonicRules` initialisation
+  in `init` so the render thread never takes its `swift_once`. HOST VERIFY FIRST: automate a
+  knob in each host and listen.
+- **The texture's cellular automaton updates IN PLACE**, so its rules are not the Wolfram rules
+  they are named after (the left neighbour is already the new value). Simulated from the
+  one-cell seed: rule 184 empties the automaton, and only rules 105 and 73 (bit 0 set) can switch
+  cells on from all-zero, so the texture stays silent until coherence selects one of those two.
+  With no live bio, **Ambient Calm's seeded coherence 0.7 selects rule 184**. Rules 150, 110 and
+  30 light a partial cell only after about 33 evolutions (~4 s at 8/s). A true double buffer
+  changes every rule's sound, so it is a founder / listening decision, not a fix.
 
 **Third-party hosting seam (not implemented).** A hosted plugin appears to the Session as a
 `DeviceInstance` whose `typeID` names the adapter and whose `state` is the plugin's own opaque
