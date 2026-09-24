@@ -416,6 +416,9 @@ public enum EchoelBodyVibeAUv3Mapping {
 ///
 /// ⚠️ NO PRODUCTION CALLER YET (WA3.2). The AUv3's saved state keeps its WA3.1 format; nothing
 /// in the app writes this value. It is exercised by `TheParameterIdentityIsFormatNeutralTests`.
+/// A future caller reads through `restored(from:into:)` and writes through `encodedForStorage()` —
+/// the boundary below (P3) — never through a bare `JSONDecoder`/`JSONEncoder`
+/// (`TheDeviceStateBoundaryFailsClosedTests`).
 public struct EchoelDeviceState: Codable, Sendable, Equatable {
     public static let currentSchemaVersion = 1
 
@@ -449,13 +452,104 @@ public struct EchoelDeviceState: Codable, Sendable, Equatable {
     }
 
     /// Lossy per field: an unreadable patch or value map costs only that field.
+    ///
+    /// ⚠️ SCHEMA VERSION (2026-09-24, P3): a MISSING key reads as `firstSchemaVersion`. Every
+    /// build writes the key, so a document without it was written by hand or by something else;
+    /// reading it as the oldest version is the conservative choice. A key that is PRESENT but not an
+    /// integer reads as `unreadableSchemaVersion` and `validated()` refuses it. ⛔ It used to
+    /// read as the CURRENT version, so a corrupted or foreign document was treated as a
+    /// well-formed one of this build.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.schemaVersion = (try? c.decode(Int.self, forKey: .schemaVersion))
-            ?? Self.currentSchemaVersion
+        if c.contains(.schemaVersion) {
+            self.schemaVersion = (try? c.decode(Int.self, forKey: .schemaVersion))
+                ?? Self.unreadableSchemaVersion
+        } else {
+            self.schemaVersion = Self.firstSchemaVersion
+        }
         self.deviceType = try c.decode(String.self, forKey: .deviceType)
         self.patch = try? c.decodeIfPresent(SynthPatch.self, forKey: .patch)
         self.parameterValues = (try? c.decodeIfPresent([String: Float].self,
                                                         forKey: .parameterValues)) ?? [:]
+    }
+}
+
+// MARK: - The state boundary (2026-09-24, P3)
+
+/// Why a device state was refused. Every case FAILS CLOSED: the caller keeps its current or
+/// default state; nothing from the refused document becomes active.
+public enum EchoelDeviceStateError: Error, Equatable, Sendable {
+    /// The type names no device this build knows. Its values cannot be checked against any
+    /// descriptor set, so none of them may become active.
+    case unknownDeviceType(String)
+    /// A known type, but not the device the state is being loaded into. Rejected, never
+    /// coerced: a BodyVibe value map applied to another device would drive the wrong engine.
+    case wrongDeviceType(expected: String, found: String)
+    /// Written by a NEWER build. Never silently downgraded — a field this build cannot read
+    /// would be dropped and the next write would erase it from the user's document.
+    case futureSchema(Int)
+    /// Below the first version, or present but not an integer.
+    case invalidSchema(Int)
+}
+
+extension EchoelDeviceState {
+    /// The first schema version. A document without the key is read as this one.
+    public static let firstSchemaVersion = 1
+    /// What an unreadable `schemaVersion` decodes to; below `firstSchemaVersion` on purpose.
+    public static let unreadableSchemaVersion = 0
+
+    /// The creative parameter set of a known device type, or nil for an unknown type. The ONE
+    /// place a device type is resolved to the descriptors its values are checked against.
+    public static func creativeDescriptors(forDeviceType type: String) -> [ParameterDescriptor]? {
+        switch type {
+        case EchoelBodyVibeDevice.typeID: return EchoelBodyVibeDevice.creativeDescriptors
+        default: return nil
+        }
+    }
+
+    /// THE MIGRATION ENTRY POINT. Brings a state of any supported older version up to
+    /// `currentSchemaVersion`; refuses a future or invalid one. v1 is current, so today the only
+    /// step is the identity — a new version adds its step HERE, in order, never in a caller.
+    public static func migrated(_ state: EchoelDeviceState) throws -> EchoelDeviceState {
+        guard state.schemaVersion >= firstSchemaVersion else {
+            throw EchoelDeviceStateError.invalidSchema(state.schemaVersion)
+        }
+        guard state.schemaVersion <= currentSchemaVersion else {
+            throw EchoelDeviceStateError.futureSchema(state.schemaVersion)
+        }
+        var out = state
+        // (future: `if out.schemaVersion == 1 { …; out.schemaVersion = 2 }`)
+        out.schemaVersion = currentSchemaVersion
+        return out
+    }
+
+    /// Migrate, check the device type, then keep only finite, in-range values of that type's
+    /// creative descriptors and fold the patch into its bounds. Bio and live-control names,
+    /// unknown IDs and non-finite values cannot survive: no descriptor names them.
+    public func validated() throws -> EchoelDeviceState {
+        let current = try Self.migrated(self)
+        guard let descriptors = Self.creativeDescriptors(forDeviceType: current.deviceType) else {
+            throw EchoelDeviceStateError.unknownDeviceType(current.deviceType)
+        }
+        var out = current.sanitized(against: descriptors)
+        out.patch?.clampToBounds()
+        return out
+    }
+
+    /// THE READ BOUNDARY: decode, check the state belongs to the device it is loaded INTO,
+    /// then `validated()`. Throws rather than returning a state that failed a check. The target
+    /// type is REQUIRED (no default, #431): a loader always knows which device it is filling.
+    public static func restored(from data: Data, into deviceType: String) throws -> EchoelDeviceState {
+        let decoded = try JSONDecoder().decode(EchoelDeviceState.self, from: data)
+        guard decoded.deviceType == deviceType else {
+            throw EchoelDeviceStateError.wrongDeviceType(expected: deviceType, found: decoded.deviceType)
+        }
+        return try decoded.validated()
+    }
+
+    /// THE WRITE BOUNDARY: `validated()`, then encode. A state that would be refused on read is
+    /// never written (and a non-finite value, which `JSONEncoder` rejects, never reaches it).
+    public func encodedForStorage() throws -> Data {
+        try JSONEncoder().encode(validated())
     }
 }

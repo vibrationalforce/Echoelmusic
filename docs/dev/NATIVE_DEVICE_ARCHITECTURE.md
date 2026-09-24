@@ -487,8 +487,15 @@ this value; mood, FX, routes and the rest of §B's INST list are still absent fr
 ⛔ **Before its FIRST production reader or writer (WA3.3 debt note), the boundary MUST enforce:**
 `sanitized(against:)` on every decode and every write; `deviceType` validated against the device
 it is loaded into (reject, never coerce); a supported-`schemaVersion` check with an explicit
-policy for newer and older versions; and a written migration policy. Today's lossy decode
-defaults a missing `schemaVersion` to the current one, which is safe only while nothing reads it.
+policy for newer and older versions; and a written migration policy. ⛔ "Today's lossy decode
+defaults a missing `schemaVersion` to the current one, which is safe only while nothing reads it"
+stood here. ⭐ **The boundary is BUILT (2026-09-24, P3) — value layer only, still no caller:**
+`restored(from:into:)` (decode → the state must be for the device it is loaded into, reject never
+coerce → `validated()`) and `encodedForStorage()` (`validated()` → encode). `validated()` =
+`migrated(_:)` (THE migration entry point; a future version is refused as `futureSchema`, never
+downgraded; below v1 or an unreadable key is `invalidSchema`; a missing key reads as v1) →
+`creativeDescriptors(forDeviceType:)` (unknown type → `unknownDeviceType`) → sanitize values and
+fold the patch into `SynthPatch.Bounds`. Guard: `TheDeviceStateBoundaryFailsClosedTests`.
 
 ---
 

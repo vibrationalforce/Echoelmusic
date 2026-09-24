@@ -39257,3 +39257,15 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
   FORWARD; 4 source scan, REGRESSION on the parent). WA3.3 claim-8 needle moved to
   `EchoelBodyVibeDevice.seed(creativeValues` in the same commit (#456).
 - Audible change: a fresh instance's texture is ~6 dB louder (0.3 vs 0.15). Host listening owed.
+
+## 2026-09-24 overnight — P3: EchoelDeviceState boundary (value layer)
+- Measured: `sanitized(against:)` existed but nothing joined it to decode/encode; `deviceType` never
+  resolved or checked; unreadable `schemaVersion` became CURRENT; no future-version policy; no write path.
+- Built: `EchoelDeviceStateError` (unknownDeviceType, wrongDeviceType, futureSchema, invalidSchema);
+  `creativeDescriptors(forDeviceType:)`; `migrated(_:)` (the one migration entry point, v1 identity);
+  `validated()`; `restored(from:into:)` (target type REQUIRED, reject never coerce);
+  `encodedForStorage()`. Missing schemaVersion → v1; present-unreadable → 0 → refused.
+- Still no caller, no Session writer, no persistence root, no Track, no multi-instance. No #95/project.yml need.
+- Guard `TheDeviceStateBoundaryFailsClosedTests` (5 claims, all end-to-end on the public type; FORWARD —
+  does not compile on the parent).
+- Gates: P5 0f4b01b72 Xcode Compile Check SUCCESS (36062160962). P1 1a9ec0dbb Build for Testing SUCCESS.
