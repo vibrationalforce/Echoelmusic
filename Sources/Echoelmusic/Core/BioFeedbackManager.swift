@@ -128,6 +128,35 @@ public struct BioVitals: Codable, Sendable, Equatable {
             && coherence.isFinite && breathRate.isFinite && timestamp.isFinite
     }
 
+    // MARK: - The four sound channels, "unmeasured reads neutral" (2026-09-24, overnight P8r)
+    //
+    // The app's rule lives on `BioSampleFrame` (`coherenceForSound`, `hrvForSound`,
+    // `heartRateForSound`, `breathPhaseForSound`): a channel that measured nothing reads 0.5,
+    // never 0. The AUv3's `pullSharedVitals` wrote these four raw into its host parameters, so
+    // an unmeasured coherence/HRV/pulse sounded as the LOWEST reading (filter at 0.75×, texture
+    // rule 90) — a second spelling of one rule with a different answer.
+    //
+    // ⚠️ WHY A SECOND SPELLING AND NOT A CALL: this file compiles STANDALONE into the Widget,
+    // the Watch and the AUv3 (see `isFresh`), none of which can see `BioSampleFrame`. So the rule
+    // is written twice on purpose, and `TheBridgeReadsAnUnmeasuredChannelAsNeutralTests` drives
+    // BOTH over the same frames — agreement is the guard, not the source text. `min`/`max`
+    // instead of `clamped(to:)`: that helper is not compiled into the Widget or the Watch.
+
+    /// Respiration band a breath phase is believed in — the same bounds as
+    /// `BioSampleFrame.plausibleBreathRate` (pinned equal by the guard above).
+    public static let plausibleBreathRate: ClosedRange<Float> = 3...40
+
+    public var coherenceForSound: Float { coherence > 0 ? Swift.min(coherence, 1) : 0.5 }
+    public var hrvForSound: Float { hrvNormalized > 0 ? Swift.min(hrvNormalized, 1) : 0.5 }
+    public var heartRateForSound: Float {
+        guard heartRateBPM > 0, heartRateBPM.isFinite else { return 0.5 }
+        return Swift.min(Swift.max((heartRateBPM - 40) / 160, 0), 1)
+    }
+    public var breathPhaseForSound: Float {
+        guard Self.plausibleBreathRate.contains(breathRate), breathPhase.isFinite else { return 0.5 }
+        return Swift.min(Swift.max(breathPhase, 0), 1)
+    }
+
     /// The window a GLANCE must use — an UPPER BOUND, derived rather than chosen.
     ///
     /// `isFresh`'s 2 s default below is a wire window: right for a live in-app read, useless on

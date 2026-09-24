@@ -617,10 +617,13 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
               vitals.isFresh(within: Self.vitalsMaxAge),
               vitals.timestamp != lastVitalsTimestamp else { return }
         lastVitalsTimestamp = vitals.timestamp
-        coherenceParam.value = min(max(vitals.coherence, 0), 1)
-        hrvParam.value = min(max(vitals.hrvNormalized, 0), 1)
-        heartRateParam.value = max(0, min(1, (vitals.heartRateBPM - 40) / 160))
-        breathPhaseParam.value = min(max(vitals.breathPhase, 0), 1)
+        // ⭐ 2026-09-24 (overnight P8r): the APP's rule — a channel that measured nothing reads
+        // neutral 0.5 — not the raw value, which turned "no coherence yet" into the lowest
+        // coherence. Guard: `TheBridgeReadsAnUnmeasuredChannelAsNeutralTests`.
+        coherenceParam.value = vitals.coherenceForSound
+        hrvParam.value = vitals.hrvForSound
+        heartRateParam.value = vitals.heartRateForSound
+        breathPhaseParam.value = vitals.breathPhaseForSound
     }
 
     public override var internalRenderBlock: AUInternalRenderBlock {
