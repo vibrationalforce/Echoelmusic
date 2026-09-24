@@ -543,6 +543,13 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         // MIDI note recovers it). The argument-less `noteOn()` plays `synth.frequency`, which
         // `seed` set from `ParameterDescriptor.admitted` or the default.
         // Guard: `TheHostValueIsAdmittedOnceTests` claim 5.
+        //
+        // ⭐ 2026-09-24 (overnight P8m): the drone is not a MIDI note, so the tracker forgets
+        // whichever key sounded before a deallocate. It was written only by the render block,
+        // so a key held across a host's re-allocate (a rate change) stayed "current", and its
+        // late note-off released this fresh drone. No render is in flight here.
+        // Guard: `TheReallocatedDroneIgnoresAStaleNoteOffTests`.
+        renderNoteState.current = -1
         synth.noteOn()
         isNoteOn = true
         startVitalsPolling()
