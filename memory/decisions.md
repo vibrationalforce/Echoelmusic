@@ -2859,3 +2859,13 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - Kept: `BioSampleFrame`, `controllerEvents` (MIDI consumer), `bioEvents` (sole consumer
   `OSCSender.drainAndSendEvents`). All four bio publishers are `@MainActor` — no race existed.
 - Guard: `TheBioSignalIsASnapshotNotAQueueTests`. Review 2026-10-24.
+
+### 2026-09-24 — Overnight P8: AUv3 texture realtime safety + one host-value gate; two holds
+- Shipped (sound-neutral): `EchoelCellular.seed` copies by index (no shared buffer → no render COW);
+  `CARule` is one byte (no heap table swapped under a live render read); a non-finite coherence
+  selects a rule instead of trapping. Host values pass `EchoelBodyVibeDevice.admitted` (NaN Master
+  Gain used to reach the host bus). Guards: `TheCellularSeedSharesNoBufferTests`,
+  `TheCellularRuleIsOneByteTests`, `TheHostValueIsAdmittedOnceTests`.
+- HOLD founder/listening: the CA's in-place update (rule 184 empties it; Ambient Calm seeds 0.7).
+- HOLD host verification: render-event automation is dropped; design written in
+  `docs/dev/NATIVE_DEVICE_ARCHITECTURE.md`. Review 2026-10-24.
