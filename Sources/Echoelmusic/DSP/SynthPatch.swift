@@ -720,11 +720,11 @@ public struct SynthPatch: Codable, Sendable, Equatable, Identifiable {
     ///
     /// ⚠️ TAKES THE STORED ID AS A STRING, and does not read `UserDefaults` itself — for two
     /// reasons, neither of which is the one the first version gave. It claimed `DSP/` "compiles
-    /// in isolation for the AUv3 target"; **there is no AUv3 target** (removed 2026-07-24,
-    /// `project.yml` says so and adds that `DSP/` stays Foundation-only "by hygiene even though
-    /// the isolated-AUv3-compile that mandated it is retired"). Landing a dead compile mandate
-    /// in the commit that exists to punish false rationales is exactly the trap it names. The
-    /// real reasons: (1) that hygiene rule still stands on its own, and (2) a `String` parameter
+    /// in isolation for the AUv3 target" at a time when there was none (removed 2026-07-24).
+    /// ⭐ SINCE #1385 (2026-09-20) THERE IS ONE AGAIN, and it compiles `DSP/` in isolation — so
+    /// the first version's reason is TRUE today, and the "no AUv3 target" correction that stood
+    /// here until 2026-09-24 (P8o) is the stale one. The reasons: (1) a `Core` type here is a
+    /// build failure in the extension, and (2) a `String` parameter
     /// is what lets every branch below be tested without `UserDefaults`, a view or a simulator —
     /// which is the whole reason `FieldSoundSurvivesRelaunchTests` can exist.
     ///

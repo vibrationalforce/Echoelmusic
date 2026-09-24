@@ -52,11 +52,12 @@ public struct TuningReference: Sendable, Equatable, Codable {
 /// overcorrected. Both versions are recorded here because each would misdirect a refactor.
 ///
 /// 1. The first version said `DSP/` "by house rule must not depend on `Core/` types", stated
-///    as a hard constraint. It is real but WEAKER than that: `project.yml:179-180` — "DSP/
-///    stays Foundation-only by hygiene even though the isolated-AUv3-compile that mandated
-///    it is retired" (the AUv3 extension target was removed 2026-07-24). So it is hygiene
-///    with a dead rationale, not a compile boundary — `Package.swift` declares ONE target
-///    covering all of `Sources/Echoelmusic/`, and delegating here would compile fine.
+///    as a hard constraint. Between 2026-07-24 and 2026-09-20 it was WEAKER than that (the
+///    AUv3 target that compiles `DSP/` in isolation was removed). ⭐ Since #1385 it is a
+///    compile boundary again: `project.yml` compiles `Sources/Echoelmusic/DSP` into the AUv3
+///    extension without `Core/`, so delegating to a `Core` type here would break THAT build
+///    (`Package.swift`'s one target would still compile it). A sentence here said
+///    "delegating here would compile fine" until 2026-09-24 (P8o).
 /// 2. The correction then swung to "there is no such rule", which is worse: the rule is
 ///    written in `project.yml` and the founder's standing mandate repeats it verbatim
 ///    ("DSP/-Dateien ohne Core/Sequencer-Typen"). Denying it would have made the next
