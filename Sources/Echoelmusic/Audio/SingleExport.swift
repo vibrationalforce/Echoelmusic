@@ -116,8 +116,8 @@ final class SingleExport {
     // at the converter), and the AAC branch hands the same over-range floats to the encoder.
     //
     // ⭐ THE REPAIR IS A GAIN BOUND, NOT A LIMITER. The export reads the whole window once at
-    // the RENDER's settings to take the SAMPLE PEAK (since E2 a separate pass, because loudness
-    // is measured at 48 kHz — see `ExportLoudnessMeasurement`), and a positive gain
+    // the RENDER's settings (`exportSampleRate`) to take the SAMPLE PEAK — since E3 in the same
+    // pass that measures loudness (see `ExportLoudnessMeasurement`) — and a positive gain
     // is capped so `peak × gain` stays at or under `exportSamplePeakCeilingDBFS`. Nothing is
     // clipped and no dynamics change: the bound only lowers ONE scalar, so the waveform is the
     // same shape at a lower level. `EchoelLimiter` (`DSP/EchoelDynamics.swift`) was NOT reused:
@@ -137,6 +137,12 @@ final class SingleExport {
     /// Sample-peak ceiling a NORMALISATION BOOST may raise the export to, in dBFS.
     /// Sample peak, not true peak — see the block above.
     nonisolated static let exportSamplePeakCeilingDBFS: Float = -1
+
+    /// The ONE rate the export decodes at — for the analysis pass (peak + loudness) and for
+    /// the render — and encodes at. One constant on purpose: E1 bounds the gain by the peak
+    /// of the samples the gain is applied to, which only holds while analysis and render
+    /// decode alike (E3 folded the loudness pass into the analysis pass).
+    nonisolated static let exportSampleRate = 44_100
 
     /// Safety margin under the ceiling so float rounding in `log10f`/`powf`/the multiply can
     /// never land a sample a hair ABOVE it. ~0.01 % in level — inaudible by four orders.
@@ -247,29 +253,25 @@ final class SingleExport {
 
     // MARK: - Export levels (E2 loudness · E1 peak)
 
-    /// The two numbers the gain is decided from, each measured over EXACTLY the window that
-    /// will be rendered (C6: normalising against audio outside the final cut would set the
-    /// wrong gain for what actually ships in the file):
-    /// · `integratedLUFS` — gated BS.1770 integrated loudness, decoded at 48 kHz for
-    ///   `ExportLoudnessMeasurement`; nil when undefined (see `normalizeGainDB`).
-    /// · `samplePeak` — decoded at the RENDER's settings (44.1 kHz, as `renderWithGain`), so
-    ///   the E1 bound is computed from the very samples the gain is later applied to.
-    /// Two decodes on purpose: one read at one rate cannot serve both (see the E2 block on
-    /// `ExportLoudnessMeasurement`).
+    /// The two numbers the gain is decided from, both taken in ONE decode of EXACTLY the window
+    /// that will be rendered (C6: normalising against audio outside the final cut would set the
+    /// wrong gain for what actually ships in the file), at the render's own rate:
+    /// · `integratedLUFS` — gated BS.1770 integrated loudness via `ExportLoudnessMeasurement`;
+    ///   nil when undefined (see `normalizeGainDB`).
+    /// · `samplePeak` — of the very samples the gain is later applied to (E1).
+    /// ⛔ Until E3 this was two decodes: loudness had to be decoded at 48 kHz, because the
+    /// meter's K-weighting was the 48 kHz table at every rate. The meter now derives its
+    /// coefficients per rate, so the loudness pass rides along with the peak pass.
     private func measureExportLevels(sourceURL: URL,
                                      timeRange: CMTimeRange?) async throws -> (integratedLUFS: Float?, samplePeak: Float) {
         // `isNaN ||` keeps a NaN once seen: `Swift.max(x, NaN)` would silently drop it, and a
         // dropped NaN reads as a clean measurement that can vouch for a boost.
         var peak: Float = 0
+        let loudness = ExportLoudnessMeasurement(sampleRate: Self.exportSampleRate)
         try await forEachDecodedSegment(sourceURL: sourceURL, timeRange: timeRange,
-                                        sampleRate: 44100) { floatPtr, count in
+                                        sampleRate: Self.exportSampleRate) { floatPtr, count in
             let segmentPeak = Self.samplePeak(floatPtr, count: count)
             if segmentPeak.isNaN || segmentPeak > peak { peak = segmentPeak }
-        }
-
-        let loudness = ExportLoudnessMeasurement()
-        try await forEachDecodedSegment(sourceURL: sourceURL, timeRange: timeRange,
-                                        sampleRate: ExportLoudnessMeasurement.sampleRate) { floatPtr, count in
             loudness.append(interleaved: floatPtr, sampleCount: count)
         }
         return (loudness.integratedLUFS(), peak)
@@ -348,7 +350,7 @@ final class SingleExport {
         if let timeRange { reader.timeRange = timeRange }
         let inputSettings: [String: Any] = [
             AVFormatIDKey: kAudioFormatLinearPCM,
-            AVSampleRateKey: 44100,
+            AVSampleRateKey: Self.exportSampleRate,
             AVNumberOfChannelsKey: 2,
             AVLinearPCMBitDepthKey: 32,
             AVLinearPCMIsFloatKey: true,
@@ -374,11 +376,12 @@ final class SingleExport {
         let windowStartSeconds = timeRange.map { CMTimeGetSeconds($0.start) } ?? 0
         let durationSeconds = timeRange.map { CMTimeGetSeconds($0.duration) }
             ?? CMTimeGetSeconds(duration)
-        // Micro edge fades (loop seam safety): frame counts at the 44.1 kHz LPCM
-        // reader rate, applied over interleaved stereo. Only the first/last
+        // Micro edge fades (loop seam safety): frame counts at the LPCM reader rate
+        // (`exportSampleRate`), applied over interleaved stereo. Only the first/last
         // buffers ever intersect the fade zones, so the per-sample loop is cheap.
-        let totalFrames = Int(durationSeconds * 44_100)
-        let fadeFrames = edgeFadeSeconds > 0 ? Int(edgeFadeSeconds * 44_100) : 0
+        let readerRate = Double(Self.exportSampleRate)
+        let totalFrames = Int(durationSeconds * readerRate)
+        let fadeFrames = edgeFadeSeconds > 0 ? Int(edgeFadeSeconds * readerRate) : 0
         var framesWritten = 0
         // ONE main-actor hop per PERCENT, not per sample buffer (#1335). The pull loop
         // below is OFFLINE — `expectsMediaDataInRealTime = false`, so it runs as fast as
@@ -482,7 +485,7 @@ final class SingleExport {
         case .wav:
             return [
                 AVFormatIDKey: kAudioFormatLinearPCM,
-                AVSampleRateKey: 44100,
+                AVSampleRateKey: Self.exportSampleRate,
                 AVNumberOfChannelsKey: 2,
                 AVLinearPCMBitDepthKey: 24,
                 AVLinearPCMIsFloatKey: false,
@@ -494,7 +497,7 @@ final class SingleExport {
         case .aac:
             return [
                 AVFormatIDKey: kAudioFormatMPEG4AAC,
-                AVSampleRateKey: 44100,
+                AVSampleRateKey: Self.exportSampleRate,
                 AVNumberOfChannelsKey: 2,
                 AVEncoderBitRateKey: 256_000,
                 AVEncoderAudioQualityKey: AVAudioQuality.max.rawValue,
@@ -532,53 +535,44 @@ final class SingleExport {
     }
 }
 
-// MARK: - Export loudness (E2)
+// MARK: - Export loudness (E2, rate-folded in E3)
 //
-// ⛔ THE DEFECT THIS CLOSES. The export normalised by a function named `measureLUFS` that was
+// ⛔ THE DEFECT E2 CLOSED. The export normalised by a function named `measureLUFS` that was
 // not LUFS: mean-square → RMS → dBFS − 0.1, with no K-weighting and no gating. The Master
 // panel meanwhile shows real BS.1770 loudness from `EchoelLoudnessMeter` — so the number the
-// user reads and the number the export steered by were two different truths. A bass-heavy
-// take and a bright one at the same RMS got the same gain; a take with long quiet passages
-// was measured by its quiet passages too, and boosted for them.
+// user reads and the number the export steered by were two different truths.
 //
 // ⭐ ONE METER. This type feeds the SAME `EchoelLoudnessMeter` the Master readout uses — no
 // second loudness algorithm exists. It only adapts the export's interleaved stream to it and
-// owns two decisions the live meter does not have to make:
-// · THE RATE: 48 kHz. The meter's K-weighting is the canonical BS.1770 48 kHz coefficient set
-//   and is NOT re-derived per rate (its own header says so). Fed the export's 44.1 kHz decode
-//   it errs by up to ~+1.1 dB at 20 Hz, +0.4 at 60 Hz, +0.3 at 1.5 kHz (measured by
-//   transcription, 2026-09-24) — a bass-dependent error in exactly the register this
-//   instrument lives in. So the loudness pass decodes the window at 48 kHz, where the
-//   coefficients are exact. Loudness of band-limited audio does not depend on the rate it is
-//   sampled at; the filter does. The per-rate coefficients are E3 and stay out of this slice.
+// owns the one decision the live meter does not have to make:
 // · THE BLOCK GRID: the meter records at most ONE 400 ms gating block per call, taken at the
-//   end of the call. Fed exactly one 100 ms hop per call, every block lands on the BS.1770
-//   grid (400 ms blocks, 75 % overlap); fed a reader's arbitrary segment sizes it would skip
-//   and misplace blocks.
+//   end of the call. Fed exactly one 100 ms hop (`EchoelLoudnessMeter.gatingHopFrames`) per
+//   call, every block lands on the BS.1770 grid (400 ms blocks, 75 % overlap); fed a reader's
+//   arbitrary segment sizes it would skip and misplace blocks.
+// ⛔ E2 ALSO OWNED THE RATE: it decoded a separate 48 kHz pass, because the meter used the
+// 48 kHz K-weighting table at every rate (up to +1.1 dB wrong at 44.1 kHz). Since E3 the meter
+// derives its coefficients per rate, so the measurement runs at the export's own rate inside
+// the one analysis decode. A rate outside `EchoelLoudnessMeter.supportedSampleRates` yields no
+// reading (nil), never a wrong one.
 //
 // ⚠️ WHAT THIS IS, NAMED HONESTLY: gated integrated loudness per ITU-R BS.1770-4 for a stereo
-// programme (K-weighting at 48 kHz, L/R weight 1.0, absolute gate −70 LUFS, relative gate
-// −10 LU). The meter keeps block loudness in 0.1 LU histogram bins (libebur128 technique), so
-// the result is quantised: a steady tone reads up to +0.05 LU off (EBU TECH 3341 cases 1–4:
-// ≤ 0.05 LU, inside the ±0.1 LU tolerance). It is NOT a claim of full EBU R128 conformance —
-// no true-peak and no LRA enter the export decision, and nothing here was run against the
-// full EBU test-vector set. Guard: `TheExportNormalisesByIntegratedLoudnessTests`.
+// programme (K-weighting per rate, L/R weight 1.0, absolute gate −70 LUFS, relative gate
+// −10 LU), for the rates the meter supports. The meter keeps block loudness in 0.1 LU
+// histogram bins (libebur128 technique), so the result is quantised: a steady tone reads up to
+// +0.05 LU off. It is NOT a claim of full EBU R128 conformance — no true-peak and no LRA enter
+// the export decision, and nothing here was run against the full EBU test-vector set.
+// Guards: `TheExportNormalisesByIntegratedLoudnessTests`, `TheLoudnessMeterIsSampleRateCorrectTests`.
 
-/// Integrated programme loudness (LUFS) of an interleaved-stereo stream at 48 kHz, measured by
-/// the app's one BS.1770 meter. Offline, owned by a single measurement pass; not for a render
-/// thread (it is fed from a decode loop, and the meter itself is audio-thread safe regardless).
+/// Integrated programme loudness (LUFS) of an interleaved-stereo stream, measured by the app's
+/// one BS.1770 meter at `sampleRate`. Offline, owned by a single measurement pass; not for a
+/// render thread (it is fed from a decode loop, and the meter itself is audio-thread safe).
 final class ExportLoudnessMeasurement {
 
-    /// The rate the export decodes the loudness pass at — the rate `EchoelLoudnessMeter`'s
-    /// K-weighting coefficients are defined for. See the E2 block above.
-    static let sampleRate = 48_000
+    let sampleRate: Int
+    /// One 100 ms gating hop — the METER's own hop, asked rather than restated (#416).
+    let hopFrames: Int
 
-    /// One 100 ms gating hop. Equals the meter's own hop at this rate
-    /// (`Int(0.1 × 48000)` = 4800); one hop per call keeps every block on the BS.1770 grid.
-    static let hopFrames = sampleRate / 10
-
-    // The TYPE NAME, not `Self.` — `Self` is illegal in a stored-property initializer (#1444).
-    private let meter = EchoelLoudnessMeter(sampleRate: Float(ExportLoudnessMeasurement.sampleRate))
+    private let meter: EchoelLoudnessMeter
     private var left: [Float]
     private var right: [Float]
     private var filled = 0
@@ -586,9 +580,13 @@ final class ExportLoudnessMeasurement {
     /// per-call pairing would then swap L and R for the rest of the take.
     private var expectingLeft = true
 
-    init() {
-        left = [Float](repeating: 0, count: Self.hopFrames)
-        right = [Float](repeating: 0, count: Self.hopFrames)
+    init(sampleRate: Int) {
+        self.sampleRate = sampleRate
+        let meter = EchoelLoudnessMeter(sampleRate: Float(sampleRate))
+        self.meter = meter
+        self.hopFrames = meter.gatingHopFrames
+        left = [Float](repeating: 0, count: meter.gatingHopFrames)
+        right = [Float](repeating: 0, count: meter.gatingHopFrames)
     }
 
     /// Append `sampleCount` interleaved floats (L R L R …).
@@ -603,7 +601,7 @@ final class ExportLoudnessMeasurement {
             right[filled] = samples[i]
             expectingLeft = true
             filled += 1
-            if filled == Self.hopFrames {
+            if filled == hopFrames {
                 meter.processStereo(left: left, right: right, frameCount: filled)
                 filled = 0
             }
@@ -611,9 +609,9 @@ final class ExportLoudnessMeasurement {
     }
 
     /// Gated integrated loudness in LUFS, or nil when BS.1770 leaves it undefined — no 400 ms
-    /// block above the −70 LUFS absolute gate (silence, near-silence, or less than one block).
-    /// A trailing partial hop is not fed: it cannot complete a block, so it could not change
-    /// the result — BS.1770 counts only complete blocks.
+    /// block above the −70 LUFS absolute gate (silence, near-silence, or less than one block) —
+    /// or when the meter does not support this rate. A trailing partial hop is not fed: it
+    /// cannot complete a block, so it could not change the result.
     func integratedLUFS() -> Float? {
         let value = meter.integratedLUFS
         guard value.isFinite, value > EchoelLoudnessMeter.floorLUFS else { return nil }

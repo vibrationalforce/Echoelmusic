@@ -12,14 +12,42 @@ import Foundation
 /// memory is constant regardless of measurement length, and they are recomputed
 /// only at the gating-block cadence (100 ms / 1 s), not per sample.
 ///
-/// K-weighting coefficients are the canonical 48 kHz set (stage-1 high-shelf +
-/// stage-2 RLB high-pass). The app runs at 48 kHz; at other rates this is a
-/// close approximation (coefficients are not re-derived per rate).
+/// K-weighting is DERIVED PER SAMPLE RATE from the BS.1770 filter design (a high
+/// shelf and the RLB high-pass, each by the bilinear transform — the derivation used
+/// by libebur128), once, in `init`. At 48 kHz it reproduces the standard's published
+/// coefficient table to double precision. Supported rates: `supportedSampleRates`.
+/// At any other rate the meter DEGRADES EXPLICITLY — `supportsSampleRate` is false,
+/// nothing is measured and every reading stays at the floor — rather than filtering
+/// with coefficients that belong to a different rate (E3).
+///
+/// ⛔ Until E3 (2026-09-24) the canonical 48 kHz coefficients were used at EVERY rate,
+/// and the old doc here called that "a close approximation". Measured at 44.1 kHz it
+/// read +1.13 dB at 20 Hz, +0.39 dB at 60 Hz and +0.33 dB at 1.5 kHz too high — a
+/// bass-dependent error, on the Master readout whenever the hardware granted 44.1 kHz.
+/// Guard: `TheLoudnessMeterIsSampleRateCorrectTests`.
+///
+/// RATE CHANGE: the rate is fixed for the life of an instance (`let`). A new rate
+/// means a NEW meter — which is what `AudioEngine.installMeterTap` does on every
+/// (re)install, after `removeTap` — so filter state is never carried from one set of
+/// coefficients to another. `reset()` clears state at the same rate.
 ///
 /// Reference: ITU-R BS.1770-4; EBU R128; EBU TECH 3341/3342.
 public final class EchoelLoudnessMeter: @unchecked Sendable {
 
     public static let floorLUFS: Float = -120
+
+    /// Sample rates the K-weighting derivation is validated for: every rate in this range
+    /// stays within 0.05 dB of the standard's 48 kHz response from 20 Hz to 20 kHz (and
+    /// within 0.01 dB at 44.1 kHz). Below it the shelf sits too close to Nyquist; above
+    /// it the Float filter loses the low end (+0.32 dB at 20 Hz measured at 384 kHz).
+    public static let supportedSampleRates: ClosedRange<Float> = 44_100...192_000
+
+    /// The rate this meter was built for.
+    public let sampleRate: Float
+    /// False when `sampleRate` is outside `supportedSampleRates` (or not finite): the
+    /// meter then measures nothing and reads the floor — an explicit "no reading", never
+    /// a reading filtered with another rate's coefficients.
+    public let supportsSampleRate: Bool
 
     public private(set) var momentaryLUFS: Float = floorLUFS
     public private(set) var shortTermLUFS: Float = floorLUFS
@@ -32,10 +60,10 @@ public final class EchoelLoudnessMeter: @unchecked Sendable {
 
     // MARK: - K-weighting biquads (per channel)
 
-    private var kL1 = Biquad.kStage1()
-    private var kL2 = Biquad.kStage2()
-    private var kR1 = Biquad.kStage1()
-    private var kR2 = Biquad.kStage2()
+    private var kL1: Biquad
+    private var kL2: Biquad
+    private var kR1: Biquad
+    private var kR2: Biquad
 
     // MARK: - Sliding windows (squared, K-weighted)
 
@@ -65,22 +93,76 @@ public final class EchoelLoudnessMeter: @unchecked Sendable {
     private static let offsetLUFS: Float = -0.691  // BS.1770 absolute offset
 
     public init(sampleRate: Float = 48000) {
-        self.mLen = Swift.max(1, Int(0.4 * sampleRate))
-        self.sLen = Swift.max(1, Int(3.0 * sampleRate))
+        let supported = sampleRate.isFinite && Self.supportedSampleRates.contains(sampleRate)
+        // An unsupported rate still gets finite, allocated windows (at 48 kHz) so nothing
+        // below can trap on `Int(NaN)`; `supportsSampleRate` keeps them unused.
+        let rate: Float = supported ? sampleRate : 48_000
+        self.sampleRate = sampleRate
+        self.supportsSampleRate = supported
+        let k = Self.kWeighting(sampleRate: Double(rate))
+        self.kL1 = Biquad(k.shelf)
+        self.kL2 = Biquad(k.highPass)
+        self.kR1 = Biquad(k.shelf)
+        self.kR2 = Biquad(k.highPass)
+        self.mLen = Swift.max(1, Int(0.4 * rate))
+        self.sLen = Swift.max(1, Int(3.0 * rate))
         self.mRing = [Float](repeating: 0, count: mLen)
         self.sRing = [Float](repeating: 0, count: sLen)
         self.integratedHist = [Int](repeating: 0, count: Self.histBinCount)
         self.lraHist = [Int](repeating: 0, count: Self.histBinCount)
-        self.hopLen = Swift.max(1, Int(0.1 * sampleRate))
-        self.lraHopLen = Swift.max(1, Int(1.0 * sampleRate))
+        self.hopLen = Swift.max(1, Int(0.1 * rate))
+        self.lraHopLen = Swift.max(1, Int(1.0 * rate))
         self.hopRemaining = hopLen
         self.lraRemaining = lraHopLen
+    }
+
+    /// Frames per 100 ms gating hop at this meter's rate. An offline caller that feeds
+    /// exactly this many frames per call puts every 400 ms block on the BS.1770 grid
+    /// (the meter records at most one block per call).
+    public var gatingHopFrames: Int { hopLen }
+
+    // MARK: - K-weighting design (BS.1770)
+
+    /// One normalised biquad section (a0 = 1).
+    public struct KWeightingSection: Equatable, Sendable {
+        public let b0: Double, b1: Double, b2: Double, a1: Double, a2: Double
+    }
+
+    /// The two K-weighting sections for `sampleRate`, designed by the bilinear transform
+    /// from the analogue prototypes behind BS.1770 (stage 1: high shelf, ≈ +4 dB above
+    /// ≈ 1.68 kHz; stage 2: RLB high-pass at ≈ 38 Hz). Parameters are the ones that
+    /// reproduce the standard's 48 kHz table (libebur128). Pure, setup-time only — never
+    /// called per sample.
+    public static func kWeighting(sampleRate: Double) -> (shelf: KWeightingSection, highPass: KWeightingSection) {
+        // Stage 1 — high shelf.
+        let shelfF0 = 1681.974450955533
+        let shelfGainDB = 3.999843853973347
+        let shelfQ = 0.7071752369554196
+        let k1 = tan(Double.pi * shelfF0 / sampleRate)
+        let vh = pow(10.0, shelfGainDB / 20.0)
+        let vb = pow(vh, 0.4996667741545416)
+        let d1 = 1.0 + k1 / shelfQ + k1 * k1
+        let shelf = KWeightingSection(b0: (vh + vb * k1 / shelfQ + k1 * k1) / d1,
+                                      b1: 2.0 * (k1 * k1 - vh) / d1,
+                                      b2: (vh - vb * k1 / shelfQ + k1 * k1) / d1,
+                                      a1: 2.0 * (k1 * k1 - 1.0) / d1,
+                                      a2: (1.0 - k1 / shelfQ + k1 * k1) / d1)
+        // Stage 2 — RLB high-pass (numerator fixed at 1, −2, 1, as in the standard).
+        let highPassF0 = 38.13547087602444
+        let highPassQ = 0.5003270373238773
+        let k2 = tan(Double.pi * highPassF0 / sampleRate)
+        let d2 = 1.0 + k2 / highPassQ + k2 * k2
+        let highPass = KWeightingSection(b0: 1.0, b1: -2.0, b2: 1.0,
+                                         a1: 2.0 * (k2 * k2 - 1.0) / d2,
+                                         a2: (1.0 - k2 / highPassQ + k2 * k2) / d2)
+        return (shelf, highPass)
     }
 
     // MARK: - Process
 
     /// Measure a mono buffer (channel weight 1.0). Audio-thread safe.
     public func process(_ buf: [Float], frameCount: Int) {
+        guard supportsSampleRate else { return }
         let n = Swift.min(frameCount, buf.count)
         guard n > 0 else { return }
         for i in 0..<n {
@@ -93,6 +175,7 @@ public final class EchoelLoudnessMeter: @unchecked Sendable {
 
     /// Measure a stereo pair — sum of K-weighted channel powers (L,R weight 1.0).
     public func processStereo(left: [Float], right: [Float], frameCount: Int) {
+        guard supportsSampleRate else { return }
         let n = Swift.min(frameCount, Swift.min(left.count, right.count))
         guard n > 0 else { return }
         for i in 0..<n {
@@ -108,6 +191,7 @@ public final class EchoelLoudnessMeter: @unchecked Sendable {
     /// inside an `AVAudioEngine` tap callback. `right` may be nil for mono (the
     /// left channel is then used for both sides).
     public func processStereo(left: UnsafePointer<Float>, right: UnsafePointer<Float>?, frameCount n: Int) {
+        guard supportsSampleRate else { return }
         guard n > 0 else { return }
         for i in 0..<n {
             let l = left[i]
@@ -265,16 +349,10 @@ public final class EchoelLoudnessMeter: @unchecked Sendable {
 
         mutating func reset() { s1 = 0; s2 = 0 }
 
-        /// Stage 1 — high-shelf "head" filter (BS.1770, 48 kHz).
-        static func kStage1() -> Biquad {
-            Biquad(b0: 1.53512485958697, b1: -2.69169618940638, b2: 1.19839281085285,
-                   a1: -1.69065929318241, a2: 0.73248077421585)
-        }
-
-        /// Stage 2 — RLB high-pass (BS.1770, 48 kHz).
-        static func kStage2() -> Biquad {
-            Biquad(b0: 1.0, b1: -2.0, b2: 1.0,
-                   a1: -1.99004745483398, a2: 0.99007225036621)
+        /// Built once from a designed section; the per-sample path runs in Float.
+        init(_ c: KWeightingSection) {
+            b0 = Float(c.b0); b1 = Float(c.b1); b2 = Float(c.b2)
+            a1 = Float(c.a1); a2 = Float(c.a2)
         }
     }
 }
