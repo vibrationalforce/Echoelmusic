@@ -39316,3 +39316,11 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
   exhaustive Wolfram-bit counterweight (green both trees).
 - NEXT CANDIDATE (measured by reading, not fixed): `updateRuleFromCoherence` does
   `Int(coherence * 7)` — a NaN coherence from a host write traps (`Int(.nan)`) on the control thread.
+
+## 2026-09-24 overnight — P8d: a non-finite coherence trapped the CA rule selection
+- `updateRuleFromCoherence`: `Int(coherence * 7)` before the index clamp → `Int(.nan)`/`Int(.inf)`
+  trap (also overflow at huge finite values). The AUv3 feeds it the host's raw Coherence value.
+- Repair: `coherence.clamped(to: 0...1)` first (the one NaN-safe clamp; NaN → rule 90). Every finite
+  value selects the same rule as before (the old index clamp gave identical results).
+- Guard: claim 3 in `TheCellularRuleIsOneByteTests` (behaviour; on the parent a TRAP, not a red —
+  invisible in the CI log, #1174). Finite rows = counterweights.

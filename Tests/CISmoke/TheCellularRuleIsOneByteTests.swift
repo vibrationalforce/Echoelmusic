@@ -31,6 +31,13 @@
 // REGRESSION (a `UInt8` plus an array reference is 16 bytes on a 64-bit target, not 1); claim 2
 // is a COUNTERWEIGHT, green on both trees — the table held exactly these bits, which is why the
 // repair changes no sound. Both claims name only symbols that exist on the parent.
+//
+// CLAIM 3 (overnight P8d, its own commit): `updateRuleFromCoherence` converted
+// `coherence * 7` with `Int(…)` BEFORE clamping the index, so a NaN or infinite coherence —
+// the AUv3 passes the host's raw parameter value — TRAPPED. END-TO-END BEHAVIOUR. On the parent
+// it is not an assertion failure but a TRAP that kills the test clone, which the CI log cannot
+// tell apart from #396 (`Tests/CISmoke/CLAUDE.md` §5, #1174) — state it as that, not as "red".
+// The finite rows are COUNTERWEIGHTS, green on both trees: the rule selection is unchanged.
 
 import Foundation
 import XCTest
@@ -75,5 +82,26 @@ final class TheCellularRuleIsOneByteTests: XCTestCase {
         XCTAssertEqual(Rule.harmonicRules.count, 8)
         XCTAssertEqual(Rule.rule90.evaluate(left: 1, center: 0, right: 0), 1)
         XCTAssertEqual(Rule.rule90.evaluate(left: 1, center: 0, right: 1), 0)
+    }
+
+    // MARK: - claim 3
+
+    func testANonFiniteCoherenceSelectsARuleInsteadOfTrapping() {
+        let cases: [(Float, UInt8)] = [
+            // non-finite / overflowing: must not trap
+            (.nan, 90), (.infinity, 30), (-.infinity, 90),
+            (.greatestFiniteMagnitude, 30), (-1, 90), (2, 30),
+            // COUNTERWEIGHT — the finite mapping every earlier build used
+            (0, 90), (0.5, 105), (0.7, 184), (1, 30),
+        ]
+        for (coherence, expected) in cases {
+            let texture = EchoelCellular(cellCount: 16, sampleRate: 48000)
+            texture.coherence = coherence
+            XCTAssertEqual(texture.rule.number, expected, """
+                coherence \(coherence) selected rule \(texture.rule.number), expected \(expected). \
+                A non-finite value must clamp before `Int(…)`; a finite one must keep the rule \
+                every earlier build selected.
+                """)
+        }
     }
 }

@@ -369,7 +369,13 @@ public final class EchoelCellular: @unchecked Sendable {
         // Map coherence (0-1) to harmonic rules
         // High coherence → harmonic rules (90, 150, 60)
         // Low coherence → chaotic rules (110, 30)
-        let ruleIndex = Int(coherence * Float(CARule.harmonicRules.count - 1))
+        // ⚠️ Clamp the FLOAT before `Int(…)` (overnight P8, 2026-09-24): `Int(.nan)` and
+        // `Int(.infinity)` TRAP, and the AUv3 hands this setter the host's raw parameter value.
+        // The index clamp below cannot help — it runs after the conversion. `clamped(to:)` is
+        // NaN-safe (NaN → 0 → rule 90, the default); every finite value selects the same rule
+        // as before. Guard: `TheCellularRuleIsOneByteTests` claim 3.
+        let safeCoherence = coherence.clamped(to: 0...1)
+        let ruleIndex = Int(safeCoherence * Float(CARule.harmonicRules.count - 1))
         let clampedIndex = max(0, min(CARule.harmonicRules.count - 1, ruleIndex))
         rule = CARule(CARule.harmonicRules[clampedIndex])
     }
