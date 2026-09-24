@@ -22,12 +22,11 @@
 //      anything would be a bug.
 //  `Tests/CISmoke/NoteNamingTests.swift` pins both, in the blocking bundle.
 //
-//  ⚠️ SEQUENCER, NOT DSP — and the REASON matters, because the one I first wrote here was
-//  retired three weeks ago. `DSP/` is no longer compiled in isolation: the AUv3 extension
-//  target that mandated it was removed 2026-07-24, and `project.yml` says so in its own
-//  words. `DSP/` stays Foundation-only by HYGIENE now, not by a build constraint. The
-//  placement is still right and this file still may not move there — but do not repeat the
-//  dead justification to defend it.
+//  ⚠️ SEQUENCER, NOT DSP — and the REASON matters. `DSP/` is compiled in isolation by the
+//  AUv3 extension (removed 2026-07-24, revived 2026-09-20, #1385), so it stays
+//  Foundation-only by a BUILD constraint again, not only by hygiene. A paragraph here said
+//  the opposite until 2026-09-24 (P8o). The placement is still right and this file still
+//  may not move there.
 //
 
 import Foundation

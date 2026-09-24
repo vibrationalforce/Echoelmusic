@@ -4,8 +4,9 @@
 // Lives OUTSIDE Sources/Echoelmusic/DSP on purpose: DSP/ stays Foundation-only
 // (self-contained Foundation+Accelerate) by hygiene. This code depends on
 // FXCharacter (Sequencer/) and MusicStyle, which are main-app-only — so keeping
-// it here keeps DSP/FXPreset.swift portable. (The rule was originally enforced by
-// the EchoelmusicAUv3 target, removed 2026-07-24 in the pure-instrument verdict.)
+// it here keeps DSP/FXPreset.swift portable. (The rule is enforced by the
+// EchoelmusicAUv3 target, which compiles DSP/ in isolation: removed 2026-07-24,
+// revived 2026-09-20, #1385.)
 
 import Foundation
 

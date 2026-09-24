@@ -1211,9 +1211,9 @@ struct EchoelmusicApp: App {
                 // and both launch paths resolve a stored id through it — so the two applies
                 // land on the SAME patch and the fix holds whichever runs first. Reading the
                 // key HERE rather than inside the resolver keeps that resolver free of `Core`
-                // types: `DSP/` stays Foundation-only by hygiene (`project.yml` — the AUv3
-                // target that once mandated it was removed 2026-07-24, so do not repeat the
-                // "compiles in isolation" reason this comment carried for one commit), and a
+                // types: `DSP/` stays Foundation-only because the AUv3 extension compiles it
+                // in isolation (`project.yml`; the target was removed 2026-07-24 and revived
+                // 2026-09-20, #1385 — a note here called it gone until 2026-09-24), and a
                 // plain `String` parameter is what makes every branch testable without
                 // `UserDefaults`.
                 let storedTouchPatchID = UserDefaults.standard
