@@ -14,7 +14,8 @@
 //     write while a note sounds moves the pitch; the texture reads `frequency` per partial.
 //   · texture gain — `EchoelCellular.render` multiplies every sample by `gain`, linearly.
 //   · reverb — `renderSpace` reads the synth's effective `reverbMix` (WA3.3 claim 5 renders it).
-//   · output gain — the AUv3 render block writes `(synth + texture) * gainBox.value`; the only
+//   · output gain — the AUv3 render block writes `(synth + texture) * gainBox.value` (the
+//     observer fills the mirror through `admitted`, P8e); the only
 //     link this bundle cannot RENDER, because it cannot instantiate the extension.
 //
 // WHAT KIND OF GREEN (§1), PER CLAIM:
@@ -154,8 +155,8 @@ final class TheBodyVibeKnobsMoveTheSoundTests: XCTestCase {
             The output is no longer `(synth + texture) * gain`. If the mix stage moved, move this \
             needle with it (#456) — the claim is that every rendered sample passes the gain.
             """)
-        XCTAssertTrue(code.contains("self.gainMirror.value = value"),
-                      "a host write to Master Gain no longer reaches the render mirror")
+        XCTAssertTrue(code.contains("self.gainMirror.value = admitted"),
+                      "a host write to Master Gain no longer reaches the render mirror (through `admitted`)")
     }
 
     // MARK: - helpers

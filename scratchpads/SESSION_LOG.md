@@ -39324,3 +39324,15 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
   value selects the same rule as before (the old index clamp gave identical results).
 - Guard: claim 3 in `TheCellularRuleIsOneByteTests` (behaviour; on the parent a TRAP, not a red —
   invisible in the CI log, #1174). Finite rows = counterweights.
+
+## 2026-09-24 overnight — P8e: host values reached the engines and the output bus unchecked
+- AU observer passed the host's raw value to `apply` and straight into `gainMirror`. No finite guard
+  anywhere in the AU (`grep isFinite` → 0): NaN Master Gain → NaN into the HOST's bus; NaN pitch →
+  texture phases NaN for good (silent until re-seed); out-of-range values bypassed the descriptor.
+- Repair: `EchoelBodyVibeDevice.admitted(_:forCreativeID:)` — nil for non-finite/unknown (keep what
+  sounds), else clamped. `seed` and both observer branches use it (one decision, #416).
+- Guard `TheHostValueIsAdmittedOnceTests` (behaviour ×2 forward, source scan ×1). P4 claim-5 needle
+  moved to `self.gainMirror.value = admitted` in the same commit.
+- HOST QUESTION, not fixed (unverifiable here): the render block handles only `.MIDI` events. If a
+  host delivers sample-accurate automation as `.parameter`/`.parameterRamp` render events, it is
+  dropped. Needs a host check (automate a knob in AUM/Logic and listen).

@@ -282,13 +282,22 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
                 self.texture.coherence = self.coherenceParam.value
             case .baseFrequency, .textureAmount, .reverbMix:
                 // WA3.2: the same three engine writes as before, now through the one shared
-                // binding (`EchoelBodyVibeDevice.apply`) resolved at setup.
-                if let binding = self.engineBindingByAddress[param.address] {
-                    EchoelBodyVibeDevice.apply(binding, value: value,
+                // binding (`EchoelBodyVibeDevice.apply`) resolved at setup. Overnight P8: the
+                // host's value passes `admitted` first — non-finite is refused (the engine keeps
+                // what sounds), anything else is clamped to the descriptor's range.
+                if let binding = self.engineBindingByAddress[param.address],
+                   let id = self.canonicalIDByAddress[param.address],
+                   let admitted = EchoelBodyVibeDevice.admitted(value, forCreativeID: id) {
+                    EchoelBodyVibeDevice.apply(binding, value: admitted,
                                                synth: self.synth, texture: self.texture)
                 }
             case .masterGain:
-                self.gainMirror.value = value // mirror for the render thread
+                // Mirror for the render thread — through the same gate, or a NaN reaches the
+                // host's bus (`(synth + texture) * gain` has no finite guard after it).
+                if let id = self.canonicalIDByAddress[param.address],
+                   let admitted = EchoelBodyVibeDevice.admitted(value, forCreativeID: id) {
+                    self.gainMirror.value = admitted
+                }
             }
         }
     }

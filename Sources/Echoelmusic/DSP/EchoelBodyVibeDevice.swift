@@ -122,6 +122,23 @@ public enum EchoelBodyVibeDevice {
         }
     }
 
+    /// ⭐ 2026-09-24 (overnight P8) — THE ONE GATE for a creative value arriving from outside
+    /// (a host write, a restored tree). `nil` for a non-finite value or an unknown ID — the
+    /// caller keeps what already sounds; otherwise the value clamped to its descriptor's range.
+    /// `seed` and the AUv3's value observer both go through it (#416).
+    ///
+    /// ⛔ WHY IT EXISTS. The observer handed the host's raw value to `apply` and to the output
+    /// gain mirror. A NaN Master Gain then reached the HOST's bus as `(synth + texture) * NaN`,
+    /// and a NaN pitch left the texture's partial phases NaN for good (its per-sample finite
+    /// guard turns that into permanent silence until the next seed). `seed` already refused
+    /// both; the live path did not. Guard: `TheHostValueIsAdmittedOnceTests`.
+    public static func admitted(_ value: Float, forCreativeID id: String) -> Float? {
+        guard value.isFinite,
+              let descriptor = creativeDescriptors.first(where: { $0.keyPath == id }),
+              descriptor.min <= descriptor.max else { return nil }
+        return value.clamped(to: descriptor.min...descriptor.max)
+    }
+
     /// ⭐ 2026-09-24 (overnight P2) — THE ONE SEEDING PATH. Writes every creative value to the
     /// engines, keyed by canonical base ID; a missing or non-finite value takes the descriptor
     /// default, and every value is clamped to its descriptor's range. Returns the output gain,
@@ -142,10 +159,9 @@ public enum EchoelBodyVibeDevice {
         for descriptor in creativeDescriptors {
             guard let target = binding(for: descriptor.keyPath),
                   descriptor.min <= descriptor.max else { continue }
-            let raw = values[descriptor.keyPath] ?? descriptor.defaultValue
-            let value = raw.isFinite
-                ? raw.clamped(to: descriptor.min...descriptor.max)
-                : descriptor.defaultValue
+            let value = values[descriptor.keyPath]
+                .flatMap { admitted($0, forCreativeID: descriptor.keyPath) }
+                ?? descriptor.defaultValue
             if target == .outputGain {
                 outputGain = value
             } else {
