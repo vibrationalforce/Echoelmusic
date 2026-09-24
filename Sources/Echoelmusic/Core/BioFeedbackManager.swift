@@ -304,8 +304,10 @@ public final class BioFeedbackManager: @unchecked Sendable {
 /// may persist; a bio READING never does. This contract only knows readings.
 ///
 /// ⚠️ IDENTIFIERS, NOT ADDRESSES. These are the AUv3 tree's string identifiers. Host numeric
-/// addresses (0…7) are adapter mapping and are untouched here; unifying this tree with the
-/// app's parameter registry is WA3.2, deliberately not this slice.
+/// addresses (0…7) are adapter mapping. ⭐ WA3.2: the tree is now BUILT from
+/// `EchoelBodyVibeAUv3Mapping` (`DSP/EchoelBodyVibeDevice.swift`); these two lists stay literal
+/// because the Watch and Widget targets compile this file without `DSP/`, and the blocking
+/// bundle pins them equal to the mapping's creative/live partition.
 public enum AUv3StateContract {
 
     /// PERSIST — creative sound parameters. Saved and restored.

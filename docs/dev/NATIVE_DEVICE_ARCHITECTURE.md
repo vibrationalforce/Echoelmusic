@@ -367,9 +367,31 @@ state. A host that wants to drive them sends them as control input (§I).
 **WA3.1 amendment — canonical identity is format-neutral.** The BASE id and
 `device.<instanceID>.<base>` are the only identities the Session stores. AU / VST3 / CLAP numeric
 host IDs belong to each adapter's mapping table and must never become Session identity, a
-persisted key in Session content, or an automation address. **Deferred to WA3.2:** unifying the
-AUv3's hand-built 8-parameter tree with the app registry. WA3.1 left the tree, its identifiers
-and its addresses 0…7 unchanged.
+persisted key in Session content, or an automation address.
+
+**WA3.2 (2026-09-24) — built, narrowly.** What exists now, and what it does not claim:
+- `ParameterDomain` + `ParameterDescriptor` moved, unchanged, from `Core/EchoelParameterRegistry.swift`
+  to `DSP/ParameterDescriptor.swift` — one type, not a second registry. Reason: the AUv3 compiles
+  `DSP/` and not `Core/`. ⚠️ **Debt (#95):** the intended home is a shared core target
+  (`Core/Device/` or `EchoelCore`); `DSP/` is the only shared compile boundary reachable without a
+  founder-gated `project.yml` edit. It holds Foundation-only value types, so the DSP layer guard
+  still holds.
+- `DSP/EchoelBodyVibeDevice.swift` — the AUv3's device TYPE (`echoel.bodyvibe`), a DIFFERENT
+  instrument from the app's `ddsp.*` synth (AU base frequency 40–440/220 vs `ddsp.osc.frequency`
+  20–2000/110; merging the two would change a host-visible range). Four creative descriptors
+  (`bodyvibe.osc.baseFrequency`, `bodyvibe.texture.amount`, `bodyvibe.fx.reverbMix`,
+  `bodyvibe.out.masterGain`), eligibility DENIED (nothing in the app binds them), plus one binding
+  table (`Binding` → engine field) applied on the control thread, never in render.
+- `EchoelBodyVibeAUv3Mapping` — the adapter table. Addresses 0…7, identifiers, units and groups
+  are LITERALS; `resolve()` joins them to the descriptors and throws on a duplicate canonical ID,
+  a duplicate address or identifier, an unknown canonical ID, or a descriptor with no host entry.
+  The AUv3 builds its tree from `resolve()` and fails to load rather than mis-wire. Every
+  host-visible fact is the value it shipped with.
+- **Scaling/taper: NOT added.** Nothing consumes a taper, and the AU `unit` already tells the host
+  how to display each value; a taper field without a reader would be a declaration without a
+  producer (the WA3.1 lesson).
+- **Instance addressing: CONTRACT ONLY.** `device.<instanceID>.<base>` has no resolver because
+  there is no instance runtime; `track.<laneID>.<base>` (`PerTrackParameterKeyPath`) is unchanged.
 
 ---
 
@@ -456,6 +478,13 @@ camera rPPG · BLE · HealthKit   coherence · hrv · heartRate(norm)     source
 **Versioning:** state carries `stateVersion`; decoders are lossy-tolerant per field and never
 discard the whole state on one unknown value.
 
+**WA3.2 foundation — `EchoelDeviceState` (`DSP/EchoelBodyVibeDevice.swift`).** `schemaVersion`,
+`deviceType`, `patch: SynthPatch?` (one COMPONENT), `parameterValues` keyed by canonical ID.
+`sanitized(against:)` keeps only finite, clamped values whose key is a creative descriptor, so a
+heart-rate, HRV, coherence or breath-phase key cannot survive it. Lossy per-field decode. ⚠️ **No
+production caller yet**: the AUv3 keeps its WA3.1 saved-state format, and nothing in the app writes
+this value; mood, FX, routes and the rest of §B's INST list are still absent from it.
+
 ---
 
 ## K. Native / AUv3 / future plugin adapters
@@ -484,9 +513,21 @@ negotiation · sample-rate adoption (the AUv3 already adopts the host rate, #140
 a mono last-note-priority voice (`EchoelDDSP`) plus `EchoelCellular` texture, block-granular MIDI
 1.0 events, and **no App-Group entitlement** (removed because every host failed with -3000), so
 its vitals bridge silently falls back to host-set values. It is a separate, smaller instrument,
-not the app's Echoel instrument. **WA3 does not rewrite it.** Converging it onto the core is a
-later slice: build its tree from descriptors (WA3.2), carry `SynthPatch`. Dropping bio from
-`fullState` is DONE (WA3.1, §I).
+not the app's Echoel instrument. **WA3 does not rewrite it.** Its tree is now built from shared
+descriptors plus the adapter mapping (WA3.2, §G); carrying `SynthPatch` is still a later slice.
+Dropping bio from `fullState` is DONE (WA3.1, §I).
+
+**Two AUv3 facts WA3.2 measured and did NOT change:**
+- **"Reverb" (address 6) is bound but inaudible.** It writes `EchoelDDSP.reverbMix`, whose
+  convolution stage is off (`useConvolutionReverb = false`), and the render-side
+  `applyBioReactive` rewrites the field about 10 times a second. The binding is kept so a host
+  project's value still lands where it always did.
+- **The factory presets still seed coherence (HOLD-FOR-FOUNDER).** Ambient Calm 0.7, Deep Sleep
+  0.8, Active Focus 0.5. Coherence shapes the synth's cutoff, brightness and harmonicity and
+  selects the texture's cellular rule (`Int(c·7)`: 0.5→rule 105, 0.7→184, 0.8→73). No creative
+  parameter is equivalent, so removing the seed would change two presets' sound materially. The
+  seed is isolated as `Preset.legacyCoherenceSeed`, outside creative values; it is the preset
+  path's only bio write, and removing it is a founder call.
 
 **Third-party hosting seam (not implemented).** A hosted plugin appears to the Session as a
 `DeviceInstance` whose `typeID` names the adapter and whose `state` is the plugin's own opaque

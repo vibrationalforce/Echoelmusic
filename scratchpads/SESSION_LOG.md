@@ -39189,3 +39189,17 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
 - Guard `TheAUv3SavesNoBodyReadingTests` (9 claims), transcribed against the parent and this tree.
 - WA3 doc: three amendments (SynthPatch ≠ whole device state; host IDs = adapter mapping; a
   capability declaration is not a producer) + §I/§K repair notes. WA3.2 deferred.
+
+## 2026-09-24 — WA3.2 canonical parameter identity + minimal device state
+
+- Measured: two parameter systems (app `ddsp.*`/`lighting.*` registry; the AUv3's hand-written
+  8-parameter tree). The AU instrument differs from the app synth, so it got its own device type
+  (`echoel.bodyvibe`) instead of a merge.
+- Built: `DSP/ParameterDescriptor.swift` (moved), `DSP/EchoelBodyVibeDevice.swift` (descriptors,
+  bindings, presets, AUv3 mapping, `EchoelDeviceState`); the AUv3 builds its tree, observer and
+  presets from them. Addresses, identifiers, names, ranges, defaults, units, groups, order and
+  preset numbers/names unchanged (diffed against the parent's hand-written tree).
+- Guard `TheParameterIdentityIsFormatNeutralTests` (14 claims, 12 behavioural); WA3.1 guard
+  claim 8 now reads the mapping (its `withIdentifier:` literals are gone by design).
+- Held: preset coherence seed (founder). Reported: `project.yml:266` "38 Foundation" is stale
+  (DSP now 40 files) — founder-gated.

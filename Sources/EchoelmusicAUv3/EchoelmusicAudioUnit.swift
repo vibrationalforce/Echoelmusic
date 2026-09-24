@@ -124,6 +124,12 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     private var reverbMixParam: AUParameter!
     private var masterGainParam: AUParameter!
 
+    /// ⭐ WA3.2: the canonical ID and the engine binding for each host address, resolved ONCE
+    /// in `setupParameterTree` from `EchoelBodyVibeAUv3Mapping`. Read by the parameter observer
+    /// and the preset path (control threads); the render block never touches them.
+    private var canonicalIDByAddress: [UInt64: String] = [:]
+    private var engineBindingByAddress: [UInt64: EchoelBodyVibeDevice.Binding] = [:]
+
     // MARK: - Init
 
     public override init(
@@ -151,7 +157,7 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         texture.frequency = 110
         texture.evolutionRate = 8
 
-        setupParameterTree()
+        try setupParameterTree()
         os_log(.info, log: Self.auLog, "AUv3 Instrument initialized")
     }
 
@@ -168,86 +174,64 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         case masterGain = 7
     }
 
-    private func setupParameterTree() {
-        coherenceParam = AUParameterTree.createParameter(
-            withIdentifier: "coherence", name: "Coherence",
-            address: ParameterAddress.coherence.rawValue,
-            min: 0, max: 1, unit: .generic, unitName: nil,
-            flags: [.flag_IsReadable, .flag_IsWritable],
-            valueStrings: nil, dependentParameters: nil
-        )
-        coherenceParam.value = 0.5
-
-        hrvParam = AUParameterTree.createParameter(
-            withIdentifier: "hrv", name: "HRV",
-            address: ParameterAddress.hrv.rawValue,
-            min: 0, max: 1, unit: .generic, unitName: nil,
-            flags: [.flag_IsReadable, .flag_IsWritable],
-            valueStrings: nil, dependentParameters: nil
-        )
-        hrvParam.value = 0.5
-
-        heartRateParam = AUParameterTree.createParameter(
-            withIdentifier: "heartRate", name: "Heart Rate",
-            address: ParameterAddress.heartRate.rawValue,
-            min: 0, max: 1, unit: .generic, unitName: nil,
-            flags: [.flag_IsReadable, .flag_IsWritable],
-            valueStrings: nil, dependentParameters: nil
-        )
-        heartRateParam.value = 0.5
-
-        breathPhaseParam = AUParameterTree.createParameter(
-            withIdentifier: "breathPhase", name: "Breath Phase",
-            address: ParameterAddress.breathPhase.rawValue,
-            min: 0, max: 1, unit: .generic, unitName: nil,
-            flags: [.flag_IsReadable, .flag_IsWritable],
-            valueStrings: nil, dependentParameters: nil
-        )
-        breathPhaseParam.value = 0.5
-
-        baseFreqParam = AUParameterTree.createParameter(
-            withIdentifier: "baseFrequency", name: "Base Frequency",
-            address: ParameterAddress.baseFrequency.rawValue,
-            min: 40, max: 440, unit: .hertz, unitName: nil,
-            flags: [.flag_IsReadable, .flag_IsWritable],
-            valueStrings: nil, dependentParameters: nil
-        )
-        baseFreqParam.value = 220
-
-        textureAmountParam = AUParameterTree.createParameter(
-            withIdentifier: "textureAmount", name: "Texture",
-            address: ParameterAddress.textureAmount.rawValue,
-            min: 0, max: 1, unit: .generic, unitName: nil,
-            flags: [.flag_IsReadable, .flag_IsWritable],
-            valueStrings: nil, dependentParameters: nil
-        )
-        textureAmountParam.value = 0.3
-
-        reverbMixParam = AUParameterTree.createParameter(
-            withIdentifier: "reverbMix", name: "Reverb",
-            address: ParameterAddress.reverbMix.rawValue,
-            min: 0, max: 1, unit: .generic, unitName: nil,
-            flags: [.flag_IsReadable, .flag_IsWritable],
-            valueStrings: nil, dependentParameters: nil
-        )
-        reverbMixParam.value = 0.3
-
-        masterGainParam = AUParameterTree.createParameter(
-            withIdentifier: "masterGain", name: "Master Gain",
-            address: ParameterAddress.masterGain.rawValue,
-            min: 0, max: 1, unit: .linearGain, unitName: nil,
-            flags: [.flag_IsReadable, .flag_IsWritable],
-            valueStrings: nil, dependentParameters: nil
-        )
-        masterGainParam.value = 0.7
+    /// ⭐ WA3.2 — the tree is BUILT from the canonical descriptors plus the AUv3 adapter table
+    /// (`DSP/EchoelBodyVibeDevice.swift`), no longer hand-written here. Every host-visible
+    /// fact — identifier, address, name, range, default, unit, group and order — is the value
+    /// the plug-in has always published; `TheParameterIdentityIsFormatNeutralTests` pins them.
+    /// A mapping that cannot be resolved throws, and `init` throws with it: a host shows a
+    /// plug-in that failed to load rather than one whose knobs drive the wrong parameter.
+    private func setupParameterTree() throws {
+        let resolved = try EchoelBodyVibeAUv3Mapping.resolve()
+        var created: [UInt64: AUParameter] = [:]
+        var bioChildren: [AUParameter] = []
+        var soundChildren: [AUParameter] = []
+        for r in resolved {
+            let p = AUParameterTree.createParameter(
+                withIdentifier: r.identifier, name: r.name,
+                address: r.address,
+                min: r.min, max: r.max, unit: Self.auUnit(r.unit), unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: nil, dependentParameters: nil
+            )
+            p.value = r.defaultValue
+            created[r.address] = p
+            if case .creative(let id) = r.target {
+                canonicalIDByAddress[r.address] = id
+                if let binding = EchoelBodyVibeDevice.binding(for: id) {
+                    engineBindingByAddress[r.address] = binding
+                }
+            }
+            switch r.group {
+            case .bio: bioChildren.append(p)
+            case .sound: soundChildren.append(p)
+            }
+        }
+        guard let coherence = created[ParameterAddress.coherence.rawValue],
+              let hrv = created[ParameterAddress.hrv.rawValue],
+              let heartRate = created[ParameterAddress.heartRate.rawValue],
+              let breathPhase = created[ParameterAddress.breathPhase.rawValue],
+              let baseFrequency = created[ParameterAddress.baseFrequency.rawValue],
+              let textureAmount = created[ParameterAddress.textureAmount.rawValue],
+              let reverbMix = created[ParameterAddress.reverbMix.rawValue],
+              let masterGain = created[ParameterAddress.masterGain.rawValue] else {
+            throw NSError(domain: "com.echoelmusic.app.auv3", code: -2,
+                          userInfo: [NSLocalizedDescriptionKey:
+                                        "Parameter mapping does not cover addresses 0...7"])
+        }
+        coherenceParam = coherence
+        hrvParam = hrv
+        heartRateParam = heartRate
+        breathPhaseParam = breathPhase
+        baseFreqParam = baseFrequency
+        textureAmountParam = textureAmount
+        reverbMixParam = reverbMix
+        masterGainParam = masterGain
 
         let bioGroup = AUParameterTree.createGroup(
-            withIdentifier: "bio", name: "Bio-Reactive",
-            children: [coherenceParam, hrvParam, heartRateParam, breathPhaseParam]
+            withIdentifier: "bio", name: "Bio-Reactive", children: bioChildren
         )
         let soundGroup = AUParameterTree.createGroup(
-            withIdentifier: "sound", name: "Sound",
-            children: [baseFreqParam, textureAmountParam, reverbMixParam, masterGainParam]
+            withIdentifier: "sound", name: "Sound", children: soundChildren
         )
 
         _parameterTree = AUParameterTree.createTree(withChildren: [bioGroup, soundGroup])
@@ -280,13 +264,13 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
                 self.bioMirror.heartRate = self.heartRateParam.value
                 self.bioMirror.breathPhase = self.breathPhaseParam.value
                 self.texture.coherence = self.coherenceParam.value
-            case .baseFrequency:
-                self.synth.frequency = value
-                self.texture.frequency = value * 0.5
-            case .textureAmount:
-                self.texture.gain = value
-            case .reverbMix:
-                self.synth.reverbMix = value
+            case .baseFrequency, .textureAmount, .reverbMix:
+                // WA3.2: the same three engine writes as before, now through the one shared
+                // binding (`EchoelBodyVibeDevice.apply`) resolved at setup.
+                if let binding = self.engineBindingByAddress[param.address] {
+                    EchoelBodyVibeDevice.apply(binding, value: value,
+                                               synth: self.synth, texture: self.texture)
+                }
             case .masterGain:
                 self.gainMirror.value = value // mirror for the render thread
             }
@@ -309,12 +293,23 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
 
     // MARK: - Presets
 
+    /// WA3.2: the presets are creative state keyed by canonical ID
+    /// (`EchoelBodyVibeDevice.factoryPresets`); numbers and names are unchanged.
     public override var factoryPresets: [AUAudioUnitPreset]? {
-        (0..<3).map { i in
+        EchoelBodyVibeDevice.factoryPresets.map { preset in
             let p = AUAudioUnitPreset()
-            p.number = i
-            p.name = ["Ambient Calm", "Deep Sleep", "Active Focus"][i]
+            p.number = preset.number
+            p.name = preset.name
             return p
+        }
+    }
+
+    /// `AudioUnitParameterUnit` for the adapter's unit kind (AudioToolbox stays in the adapter).
+    private static func auUnit(_ unit: AUv3ParameterEntry.Unit) -> AudioUnitParameterUnit {
+        switch unit {
+        case .generic: return .generic
+        case .hertz: return .hertz
+        case .linearGain: return .linearGain
         }
     }
 
@@ -344,18 +339,19 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
 
     public override var currentPreset: AUAudioUnitPreset? {
         didSet {
-            guard let p = currentPreset, p.number >= 0 else { return }
-            switch p.number {
-            case 0: // Ambient Calm
-                baseFreqParam.value = 220; coherenceParam.value = 0.7
-                textureAmountParam.value = 0.2; reverbMixParam.value = 0.4
-            case 1: // Deep Sleep
-                baseFreqParam.value = 55; coherenceParam.value = 0.8
-                textureAmountParam.value = 0.1; reverbMixParam.value = 0.6
-            case 2: // Active Focus
-                baseFreqParam.value = 330; coherenceParam.value = 0.5
-                textureAmountParam.value = 0.4; reverbMixParam.value = 0.2
-            default: break
+            guard let p = currentPreset, p.number >= 0,
+                  let preset = EchoelBodyVibeDevice.factoryPresets.first(
+                      where: { $0.number == p.number }) else { return }
+            for param in stateParameters {
+                if let id = canonicalIDByAddress[param.address],
+                   let value = preset.creativeValues[id] {
+                    param.value = value
+                }
+            }
+            // ⛔ HOLD-FOR-FOUNDER (WA3.2): a LIVE seed, not creative state — see
+            // `EchoelBodyVibeDevice.Preset.legacyCoherenceSeed` for the measured dependency.
+            if let seed = preset.legacyCoherenceSeed {
+                coherenceParam.value = seed
             }
         }
     }

@@ -2817,3 +2817,22 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Not done:** host verification (AUM/Logic/GarageBand save → reload); WA3.2 parameter-identity
   unification; what Apple's base getter really emits (simulated in the guard).
 - **Review:** 2026-10-24.
+
+### 2026-09-24 — WA3.2: canonical parameter identity + AUv3 adapter mapping
+
+- **Decision:** a parameter's identity is the `ParameterDescriptor.keyPath` string. Host numbers
+  live only in adapter tables. `ParameterDomain`/`ParameterDescriptor` moved unchanged to
+  `DSP/ParameterDescriptor.swift`. `DSP/EchoelBodyVibeDevice.swift` holds the AUv3's device type
+  (`echoel.bodyvibe`, four creative descriptors, eligibility denied), the binding table, the
+  factory presets as creative values, the literal AUv3 mapping (0…7) with a throwing `resolve()`,
+  and `EchoelDeviceState` (schemaVersion, deviceType, `SynthPatch?`, canonical values; sanitize
+  drops every non-creative key).
+- **Why DSP/:** the only shared compile boundary with the extension without a founder-gated
+  `project.yml` edit. Debt against #95 (a shared core target).
+- **HOLD-FOR-FOUNDER:** the preset coherence seed (0.7 / 0.8 / 0.5) changes cutoff, brightness,
+  harmonicity and the cellular rule; no creative equivalent exists, so it is kept, isolated.
+- **Measured, not changed:** the AU "Reverb" is bound but inaudible (convolution off, and
+  overwritten by render-side bio reactivity).
+- **Not done:** host verification; any production writer of `EchoelDeviceState`;
+  `device.<instanceID>.<base>` resolution; scaling/taper.
+- **Review:** 2026-10-24.

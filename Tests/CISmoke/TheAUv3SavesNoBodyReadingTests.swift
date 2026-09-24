@@ -18,9 +18,10 @@
 //   `AUAudioUnit` subclass, so the base class's own `super.fullState` is SIMULATED here with the
 //   `kAUPresetDataKey` blob key the contract strips — what Apple's base getter actually emits is
 //   NOT observed by this file (HOST VERIFY OWED).
-// · claims 7–9 are SOURCE-TEXT SCANS of the extension: that its getter and setter route through
-//   the contract, that the contract's two lists cover exactly the tree's eight identifiers, and
-//   that host-visible addresses 0…7 did not move.
+// · claims 7 and 9 are SOURCE-TEXT SCANS of the extension: its getter and setter route through
+//   the contract, and host-visible addresses 0…7 did not move. Claim 8 was a scan too; since
+//   WA3.2 it reads `EchoelBodyVibeAUv3Mapping` — the table the extension builds its tree from —
+//   and checks the contract's two lists against it.
 // · DEVICE / HOST PROBE — a real AUM/Logic/GarageBand save → reload — is impossible here.
 //
 // ⚠️ WHAT MUST NOT BE READ INTO THIS (#364). It does not forbid persisting a future bio ROUTE
@@ -198,26 +199,32 @@ final class TheAUv3SavesNoBodyReadingTests: XCTestCase {
     /// 8 — the contract's two lists are EXACTLY the tree's identifiers. A new parameter must be
     /// classified in the same commit; an unclassified one would silently fail closed (not saved).
     func testEveryTreeParameterIsClassified() throws {
+        // ⭐ WA3.2: the AUv3 no longer spells its identifiers as `withIdentifier: "…"` literals —
+        // it builds the tree from `EchoelBodyVibeAUv3Mapping`. So this claim now reads the
+        // mapping itself (END-TO-END on the same table the plug-in consumes) instead of
+        // parsing the extension's source, and demands the extension still builds from it.
         let code = SourceText.codeOnly(try text(Self.audioUnit))
-        var declared: Set<String> = []
-        var rest = Substring(code)
-        let needle = "withIdentifier: \""
-        while let hit = rest.range(of: needle) {
-            let after = rest[hit.upperBound...]
-            guard let close = after.firstIndex(of: "\"") else { break }
-            declared.insert(String(after[..<close]))
-            rest = after[close...]
+        XCTAssertTrue(code.contains("EchoelBodyVibeAUv3Mapping.resolve()"), """
+            The AUv3 no longer builds its tree from `EchoelBodyVibeAUv3Mapping`. Then the mapping \
+            below is not what a host sees, and this classification check proves nothing.
+            """)
+        let entries = EchoelBodyVibeAUv3Mapping.entries
+        XCTAssertFalse(entries.isEmpty, "the mapping is empty — the check below matched nothing")
+        var creative: Set<String> = []
+        var live: Set<String> = []
+        for entry in entries {
+            switch entry.target {
+            case .creative: creative.insert(entry.identifier)
+            case .legacyLiveControl: live.insert(entry.identifier)
+            }
         }
-        declared.subtract(["bio", "sound"])   // the two GROUP identifiers, not parameters
-        guard !declared.isEmpty else {
-            return XCTFail("no `withIdentifier:` found in \(Self.audioUnit) — the parser matched nothing")
-        }
-        let classified = Set(AUv3StateContract.persistedParameterIdentifiers)
-            .union(AUv3StateContract.transientParameterIdentifiers)
-        XCTAssertEqual(declared, classified, """
-            The AUv3 tree and `AUv3StateContract` disagree. Add a new parameter's identifier to \
-            persistedParameterIdentifiers (creative) OR transientParameterIdentifiers (a live \
-            reading) in the same commit.
+        XCTAssertEqual(creative, Set(AUv3StateContract.persistedParameterIdentifiers), """
+            The AUv3 mapping's CREATIVE identifiers and `AUv3StateContract`'s persisted list \
+            disagree. A creative parameter must be saved; a new one goes into both in the same commit.
+            """)
+        XCTAssertEqual(live, Set(AUv3StateContract.transientParameterIdentifiers), """
+            The AUv3 mapping's LIVE-CONTROL identifiers and `AUv3StateContract`'s transient list \
+            disagree. A body reading must never be saved.
             """)
     }
 

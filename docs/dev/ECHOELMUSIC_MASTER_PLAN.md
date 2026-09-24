@@ -222,7 +222,7 @@ Detail and device status: `FEATURE_STATUS.md` §1. Owners: `scratchpads/PLAN_DOC
 | Phase | Content | State |
 |---|---|---|
 | **PHASE 1 — Foundation & truth** | the shipping instrument; product law R1–R3; export quality E1–E3; Workstation chip with import/play | CLOSED as a phase (items carry their own statuses above) |
-| **PHASE 2 — WORKSTATION ARCHITECTURE** | WA1 → WA2 → WA3 → WA4 (§7) | **CURRENT** — WA1 and WA2 COMPLETE, WA3 NEXT |
+| **PHASE 2 — WORKSTATION ARCHITECTURE** | WA1 → WA2 → WA3 → WA4 (§7) | **CURRENT** — WA1 and WA2 COMPLETE; WA3 APPROVED (WA3.1 CLOSED, WA3.2 IMPLEMENTED) |
 | PHASE 3 — Domain recovery | recording/input, note editing, automation editing, undo, video, broadcast, hosting, etc., each through the recovery principle (law §5) into the WA2 owners | PLANNED — order decided by the Founder after WA2 |
 
 **Phase 2 is architecture, not UI construction.** No workstation UI is built until WA1–WA3 are
@@ -329,7 +329,16 @@ done. WA4 is the first front.
     transport.
 - **Hard rule:** no plugin-format-specific coupling in DSP (invariants 10–11).
 - **Output:** a design document plus a `decisions.csv` row. Code only as separately approved slices.
-- **Status:** **NEXT.**
+- **Status:** **APPROVED** — design `docs/dev/NATIVE_DEVICE_ARCHITECTURE.md` (`59a243958`).
+  Code arrives only as separately approved slices:
+  - **WA3.1 — AUv3 bio state privacy: CLOSED.** `87d829f42`; COMPILES (both gates green, `main`
+    advanced); independent review PASS WITH HOST VERIFICATION. Host obligation in §9.
+  - **WA3.2 — canonical parameter identity + AUv3 adapter mapping + minimal
+    `EchoelDeviceState`: IMPLEMENTED** (`DSP/ParameterDescriptor.swift`,
+    `DSP/EchoelBodyVibeDevice.swift`; the AUv3 tree is built from the mapping; guard
+    `TheParameterIdentityIsFormatNeutralTests`). COMPILES / TESTED are recorded only with gate
+    evidence (§4). `EchoelDeviceState` has no production caller; instance addressing is a
+    contract only; the preset coherence seed is HOLD-FOR-FOUNDER.
 
 ### WA4 — Arrange + Session Front
 
@@ -389,6 +398,15 @@ Known code fact behind E3-1/E3-2: `AudioEngine`'s configuration-change branch fo
 engine re-arms taps without rebuilding the meter. Apple documents that a rate change stops the
 engine, which routes through `start()` → `installMeterTap()` → a new meter. The device run
 settles which path really fires.
+
+**WA3.1 / WA3.2 — the AUv3 in real hosts** (AUM measured loading once, 2026-09-20; nothing since)
+
+| # | Check | Pass looks like |
+|---|---|---|
+| WA3-1 | old host project saved before WA3.1, reopened | the four creative values restore; nothing crashes |
+| WA3-2 | new save → reopen in AUM, then GarageBand/Logic when available | the saved state holds no coherence/HRV/heart-rate/breath-phase value |
+| WA3-3 | host parameter list after WA3.2 | the same eight parameters, names, ranges and order as before; existing automation lanes still drive the same parameter |
+| WA3-4 | factory presets 0–2 | they sound as before (the coherence seed is unchanged) |
 
 **Other open device checks (existing):**
 - ship-gate check 1 (sound: founder ear) and check 5 (stability);
@@ -490,3 +508,6 @@ general.
   - 2026-09-24 — WA1 COMPLETE (`c2fad0a0a`); WA2 COMPLETE (`a52170ca5` + the decision lock:
     APPROVED WITH BINDING AMENDMENTS); WA3 NEXT; WA4 BLOCKED ON WA3. Bare W1–W4 renamed WA1–WA4;
     the two census output paths corrected from `scratchpads/` to `docs/dev/`.
+  - 2026-09-24 — WA3 APPROVED (`59a243958`); WA3.1 CLOSED (`87d829f42`, PASS WITH HOST
+    VERIFICATION); WA3.2 IMPLEMENTED (canonical identity + AUv3 mapping + `EchoelDeviceState`
+    foundation); AUv3 host checks WA3-1…4 added to §9.
