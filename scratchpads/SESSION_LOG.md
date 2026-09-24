@@ -39336,3 +39336,22 @@ Matrix? Vermeide dass Sachen versteckt bleiben oder verloren gehen."
 - HOST QUESTION, not fixed (unverifiable here): the render block handles only `.MIDI` events. If a
   host delivers sample-accurate automation as `.parameter`/`.parameterRamp` render events, it is
   dropped. Needs a host check (automate a knob in AUM/Logic and listen).
+
+## 2026-09-24 overnight — P8f: one descriptor admission rule (a4cea87de)
+- P8e's `admitted` sat beside `EchoelDeviceState.sanitized`, which spelled the same decision as
+  `Swift.min(Swift.max(value, descriptor.min), descriptor.max)` — #416, created by the repair.
+- Repair: `ParameterDescriptor.admitted(_:)` (finite + non-inverted range → clamped, else nil); both
+  call sites ask it. Only behaviour delta: a restored value on an INVERTED range is dropped (no
+  shipped descriptor has one). P3 guard claims re-transcribed: 9999 → 1, 330 kept, NaN dropped.
+- Guard: `TheHostValueIsAdmittedOnceTests` claim 4 (parity behaviour + scan; scan half one finding
+  on the parent, file forward-only there).
+
+## 2026-09-24 overnight — P8g: AU-owned output buffers for a null mData (90ae395e6)
+- AURenderBlock contract (Apple doc, fetched verbatim): null `mData` on entry → the block renders
+  into memory it owns and sets `mData`. The mix loop `continue`d past null, and never wrote
+  `mDataByteSize`.
+- Repair: `RenderScratch.ownedOutput` = 8 ch × capacity floats, allocated in init, freed in deinit;
+  the render block points a null channel at its slice (pointer/size stores only).
+- Guard `TheAUv3SuppliesItsOwnOutputBuffersTests` (source scan, one finding on parent + counterweight).
+- HOST: unmeasured whether any host passes null; NEEDS-FOUNDER-VERIFY marker at RenderScratch.
+- Gates read: 240656161 (P8c) Build for Testing SUCCESS (22:28:59Z).
