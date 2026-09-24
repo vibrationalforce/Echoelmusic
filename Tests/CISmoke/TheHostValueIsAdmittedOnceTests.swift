@@ -39,6 +39,15 @@
 // descriptor, and an inverted range refused) plus a SOURCE-TEXT SCAN of the device file.
 // Parent `c2fc6f407`: `ParameterDescriptor.admitted` does not exist, so this file does not
 // compile there — FORWARD guard; the scan half would be red there (the second spelling).
+//
+// CLAIM 5 (overnight P8h, its own commit): `allocateRenderResources` started the voice with
+// `synth.noteOn(frequency: baseFreqParam.value)` — the RAW parameter, two lines after `seed` had
+// written the admitted one. An `AUParameter` keeps a refused value, so a NaN there poisoned
+// `smoothedFreq` and every partial phase for the life of the instance. END-TO-END BEHAVIOUR (the
+// NaN start is silent, the admitted start sounds — both through the real engine) plus a
+// SOURCE-TEXT SCAN of `allocateRenderResources`. Parent `4a2c23daa`: the claim names only symbols that
+// exist there: the behaviour half is green on both trees (it proves the MECHANISM; the defect was
+// which argument the AU passed); the scan half is a REGRESSION, red there — one finding.
 
 import Foundation
 import XCTest
@@ -125,6 +134,52 @@ final class TheHostValueIsAdmittedOnceTests: XCTestCase {
             "`sanitized(against:)` is not found — re-anchor this guard (#456)")
         XCTAssertTrue(sanitized.contains("descriptor.admitted("),
                       "a restored state no longer passes the descriptor's own admission rule")
+    }
+
+    // MARK: - claim 5
+
+    func testTheVoiceStartsFromTheAdmittedPitchNotTheRawParameter() throws {
+        func rendered(_ start: (EchoelDDSP) -> Void) -> [Float] {
+            let synth = EchoelDDSP(sampleRate: 48000)
+            let texture = EchoelCellular(cellCount: 128, sampleRate: 48000)
+            EchoelBodyVibeDevice.seed([ID.baseFrequency: .nan], synth: synth, texture: texture)
+            synth.amplitude = 0.6
+            start(synth)
+            var out: [Float] = []
+            var block = [Float](repeating: 0, count: 512)
+            for _ in 0..<40 {
+                synth.render(buffer: &block, frameCount: 512)
+                out.append(contentsOf: block)
+            }
+            return out
+        }
+        let d = try XCTUnwrap(EchoelBodyVibeDevice.creativeDescriptors.first { $0.keyPath == ID.baseFrequency })
+        let seeded = EchoelDDSP(sampleRate: 48000)
+        EchoelBodyVibeDevice.seed([ID.baseFrequency: .nan], synth: seeded,
+                                  texture: EchoelCellular(cellCount: 128, sampleRate: 48000))
+        XCTAssertEqual(seeded.frequency, d.defaultValue, "a NaN base frequency was not replaced by its default")
+
+        let admitted = rendered { $0.noteOn() }
+        let raw = rendered { $0.noteOn(frequency: Float.nan) }
+        XCTAssertGreaterThan(admitted.map { Double($0 * $0) }.reduce(0, +), 0,
+                             "the admitted start is silent — the claim below would be vacuous")
+        XCTAssertTrue(admitted.allSatisfy(\.isFinite))
+        // COUNTERWEIGHT — the hazard is real: a NaN pitch leaves the voice silent for good.
+        XCTAssertEqual(raw.map { Double($0 * $0) }.reduce(0, +), 0, """
+            A NaN note-on no longer silences the synth. If the engine now recovers from a \
+            non-finite pitch, this claim's premise changed — keep the scan below regardless.
+            """)
+
+        let code = SourceText.codeOnly(try text(Self.audioUnit))
+        let allocate = try XCTUnwrap(Self.body(startingWith: "public override func allocateRenderResources() throws {",
+                                               in: code),
+                                     "allocateRenderResources not found — re-anchor this guard (#456)")
+        XCTAssertFalse(allocate.contains("noteOn(frequency: baseFreqParam.value)"), """
+            The voice starts from the RAW Base Frequency parameter again. A refused (non-finite) \
+            host value stays in the parameter and silences the synth for the instance's life.
+            """)
+        XCTAssertTrue(allocate.contains("synth.noteOn()"),
+                      "the voice no longer starts from the pitch `seed` admitted")
     }
 
     // MARK: - helpers

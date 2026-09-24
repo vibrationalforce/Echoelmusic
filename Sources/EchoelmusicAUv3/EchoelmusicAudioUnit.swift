@@ -505,11 +505,19 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
 
         // Start generating
         synth.amplitude = 0.6
-        synth.noteOn(frequency: baseFreqParam.value)
+        // ⛔ 2026-09-24 (overnight P8h): this read `noteOn(frequency: baseFreqParam.value)` —
+        // the RAW parameter, two lines after `seed` had written the ADMITTED one. An
+        // `AUParameter` keeps whatever a host or a restored blob wrote even when the observer
+        // refuses it, so a NaN here poisoned `smoothedFreq` and every partial phase for the
+        // life of the instance (the render's finite guard then zeroes the synth; no later
+        // MIDI note recovers it). The argument-less `noteOn()` plays `synth.frequency`, which
+        // `seed` set from `ParameterDescriptor.admitted` or the default.
+        // Guard: `TheHostValueIsAdmittedOnceTests` claim 5.
+        synth.noteOn()
         isNoteOn = true
         startVitalsPolling()
         os_log(.info, log: Self.auLog, "Instrument started: %.0f Hz at %.0f Hz host rate",
-               baseFreqParam.value, Double(synth.sampleRate))
+               synth.frequency, Double(synth.sampleRate))
     }
 
     public override func deallocateRenderResources() {
