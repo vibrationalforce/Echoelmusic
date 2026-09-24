@@ -191,10 +191,12 @@ Deprecated from main flow: SoundscapeEngine, ClipEngine, MomentCaptureView, BioS
     ADM-OSC auf der Leitung). Wächter `TheSpatialRenderHalfIsNotClaimedLiveTests`.
   · **Der TOTE EXEKUTOR und seine sechs Nachbarn (#1381):** `Sequencer/AudioClipPlayer` plus
     `Sequencer/LyricsModel` (SIEBEN Typen), `Sequencer/TakeDistance`, `DSP/PatchLibrary`
-    (+`LibraryPatch`), `DSP/EchoelMIDIDecode`, `Audio/LatencyCompensation`
+    (+`LibraryPatch`), `Audio/LatencyCompensation`
     — je NULL Verweise aus fremdem `Sources/`-CODE, nach TYP gemessen. ⛔ **`DSP/PitchTracker`
     stand in dieser Aufzählung und ist mit #E1 GESTRICHEN**: `Sequencer/AudioKeyAnalysis` ruft
-    es, die Behauptung „null Verweise" ist für diesen einen Eintrag falsch geworden. Der Rest
+    es, die Behauptung „null Verweise" ist für diesen einen Eintrag falsch geworden. ⛔ **Ebenso
+    `DSP/EchoelMIDIDecode` (gestrichen 2026-09-24):** der AUv3-Render-Block ruft es seit #1385 —
+    der wiederbelebte Aufrufer, nach der Register-Messung. Der Rest
     der Zeile bleibt unberührt — eine Sammel-Zeile wird EINTRAGSWEISE zurückgenommen, nie im
     Ganzen, sonst verliert man sechs wahre Befunde für einen veralteten. ⚠️ **Die #1376-Falle
     sitzt hier siebenfach: `LyricsModel.swift` deklariert keinen Typ dieses Namens** — ein per

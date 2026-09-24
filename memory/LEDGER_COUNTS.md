@@ -6952,7 +6952,7 @@ eine Register-Lücke teuer wird: aus diesen Zeilen entsteht Store- und Website-T
 | **#1302-Nachlese** (Mikrofon gelöscht) | `DSP/PitchTracker`, `Audio/LatencyCompensation` | Beide beschreiben im eigenen Doc den Mikrofonpfad („The mic's FFT peak", „the mic then captures that with the input latency on top"). Die Löschung kehrte sie nicht mit. |
 | **Ship-Gate** | `DSP/PatchLibrary` (+`LibraryPatch`), `Sequencer/TakeDistance` | `PatchLibrary` ist die Preset-Datenbank-Hälfte von Check 2 und wird von VIER CISmoke-Wächtern geschützt — CI bewacht eine Bank, die kein Nutzer erreicht. `TakeDistance` ist „EINE ZAHL FÜR ‚KLINGT DAS GLEICH?'", also das Messinstrument für Check 1 und für die Founder-Bitte „soll nie gleich klingen". |
 | **#121/#475-Nachlese** (Clip-Editor, Arrangement, Pianoroll gelöscht) | `Sequencer/ClipAutomationEdit`, `MelodyBarEdit`, `TimelineDragMath`, `NoteTransform`, `WarpedClipPlan` | Reine, getestete Kerne der gelöschten Flächen. |
-| **Sonstige** | `Sequencer/LyricsModel` (SIEBEN Typen — grösster Einzelcluster), `DSP/EchoelMIDIDecode` („for the synth render path" — der nutzt es nicht), `Sequencer/LoopCutter` | |
+| **Sonstige** | `Sequencer/LyricsModel` (SIEBEN Typen — grösster Einzelcluster), `DSP/EchoelMIDIDecode` („for the synth render path" — der nutzt es nicht; ⛔ 2026-09-24: der AUv3-Render-Block ruft es seit #1385, aus dem CLAUDE.md-Register gestrichen), `Sequencer/LoopCutter` | |
 
 ### AB.2 — Halb-tot: NICHT als Ganzes löschen
 
