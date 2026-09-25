@@ -235,6 +235,9 @@ struct TrackInspectorView: View {
                         }
                     }
                 }
+                // WA4.3 — the track's parts: move, copy, remove, and the part-edit Undo/Redo.
+                // Its own leaf; it hides itself on a track with nothing to arrange.
+                TrackPartsView(laneID: laneID)
             }
             .padding(.vertical, 8).padding(.horizontal, 10)
             .padding(.leading, 26)

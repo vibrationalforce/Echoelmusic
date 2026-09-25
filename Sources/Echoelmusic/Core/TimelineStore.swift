@@ -37,7 +37,10 @@
 //        inspector). They leave both sets below: the caller-less 46, and — for `renameLane`,
 //        `toggleMute`, `toggleSolo` — the untested nine. Level and pan are now real
 //        per-lane dials; the rest of that dial list (octave, detune, patch, mood, genre,
-//        sample, seed) is still caller-less.
+//        sample, seed) is still caller-less. ⭐ WA4.3 added THREE plus two —
+//        `moveRegion` · `duplicateRegion` · `removeRegion`, and `undo` · `redo`, called from
+//        `TrackParts` / `TrackPartsView` in `Studio/TrackPartsView.swift` (the selected
+//        track's parts). All five leave the caller-less set; re-derive, do not patch digits.
 //   ·  8 used only inside this file — the previous six (automationLaneIndex,
 //        canCombineRegions, migrate, resolveOverlaps, restoreRegions, syncUndoFlags) PLUS
 //        `persist` (46 internal call sites, one per mutating path) and `snapshotForUndo`

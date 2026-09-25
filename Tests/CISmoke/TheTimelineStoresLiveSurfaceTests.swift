@@ -77,6 +77,10 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         // (`Studio/TrackInspectorView.swift`). The counterweight below moved from `setLanePan`
         // to `setLaneOctave` in the same commit, exactly as its own message asked.
         "setLaneLevel", "setLanePan", "toggleMute", "toggleSolo", "renameLane",
+        // WA4.3: the track's parts under the inspector, reached through `TrackParts`
+        // (`Studio/TrackPartsView.swift`). `undo`/`redo` got their first production caller
+        // in the same file, but stay in `unprovable`: `PianoRollModel` declares both names too.
+        "moveRegion", "duplicateRegion", "removeRegion",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than
