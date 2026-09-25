@@ -24,9 +24,11 @@
 // follow the engine, the thermal tier or a route. See the ⛔ block where claims 5 and 6 stood.
 // ⭐ #1331 GAVE THE TIER A DOOR AGAIN (`EchoelStudioView`, pinned by its own guard,
 // `TheBufferTierHasADoorAgainTests`), and this file keeps its name: what it owns is still the
-// NEGATIVE law. Claim 3 therefore expects exactly TWO mentions of `setLatencyMode` — its
-// declaration and that one door — and was RED on a correct tree from #1331 until this was
-// written, because the door landed in a new file instead of in the expected set here.
+// NEGATIVE law. Claim 3 therefore expects exactly TWO FILES to mention `setLatencyMode` —
+// `AudioConfiguration` (declaration + the stored-choice restore) and that one door — and was
+// RED on a correct tree from #1331 until this was written, because the door landed in a new
+// file instead of in the expected set here. It also counts the mentions PER FILE (2 and 1), so
+// a second call inside either expected file is seen too (review of 0357c7eae).
 //
 // ⚠️ HONEST LIMITS. Re-derive both, do not re-type:
 //   grep -c "^    func test" <this file>
@@ -141,6 +143,23 @@ final class TheBufferPolicyIsNeverAutomaticTests: XCTestCase {
             test. A new DOOR is welcome and is a different edit: it adds a path here, and this \
             message is where you say so (#364 — this guard forbids automation, not a control).
             """)
+        // ⛔ A PER-FILE set cannot see a second call INSIDE an expected file, and both expected
+        // files are the likeliest homes for one: the door file is 5 000+ lines of `.onChange`
+        // handlers, and `AudioConfiguration` owns the route-change and media-reset paths
+        // (review of 0357c7eae). So the mentions are counted per file too: the declaration
+        // plus the stored-choice restore (`applyStoredLatencyMode`, the player's own earlier
+        // choice), and the one door. A new legitimate site raises a number here, on purpose.
+        let expectedMentions = [Self.config: 2, Self.door: 1]
+        for (path, code) in sources {
+            guard let expected = expectedMentions[path] else { continue }
+            XCTAssertEqual(Self.occurrences(of: "setLatencyMode", in: code), expected, """
+                `\(path)` mentions `setLatencyMode` a different number of times than its \
+                \(expected) known site(s) (declaration + stored-choice restore in the config, the \
+                one door in the view). A call added to an expected file is exactly the automatic \
+                switch this claim forbids — or a new door, which is fine and belongs in this \
+                table with a sentence saying so.
+                """)
+        }
     }
 
     // MARK: - 4. The buffer request never re-claims the route (#625/#628)
