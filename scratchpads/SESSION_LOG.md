@@ -39734,3 +39734,11 @@ Findings kept (none blocks a commit; latent = unreachable today):
 - P3 commit message says "finite in-range"; out-of-range is actually clamped; patch decode is lossy (`try?`).
 - PLAUSIBLE/unreachable: `LaneVoiceRack.setTuning` stores NaN. Latent: `EchoelDDSP.setSampleRate` passes +inf; `levels(forBits:)` NaN-passing min/max order; `BioMusicDirector.swift:178` `Int(tempo.rounded())` traps on non-finite tempo.
 - Headroom: texture +6 dB fresh-instance default has no limiter — host listening owed (already in queue).
+
+## 2026-09-25 04:50 UTC — gate check-in 2
+
+- main (ls-remote) = 1e8e4cb91, unchanged — no SHA has both gates green on it yet (Compile Check cancel-in-progress vs. BfT backlog).
+- Xcode Compile Check: GREEN on 1b5224c9a (run 36088471638), the last Sources/Tests push; covers every Sources change tonight incl. 469e47dbe and 9359d92d3.
+- CI/CD Build for Testing: GREEN on f68360774 (run 36082627155, step 9 success 04:20→04:25). The d1609b33d run (6275) entered Build for Testing at 04:46. Everything after it (030f18d47 … 1b5224c9a, ~35 pushes) is still QUEUED — macOS runners are saturated (the non-blocking Full Test Suite runs share them). At ~25 min per run this backlog does NOT clear by 06:45; tonight's last ~35 commits will leave the session compile-verified (Release/device) but WITHOUT a Debug/Simulator test-bundle build.
+- Run Tests on f68360774: #396 shape (exit 65, TEST EXECUTE FAILED), build-for-testing Succeeded, TEST BUILD FAILED false, 166 observed passing, 0 failures, 0 skipped IN THE WINDOW; 1315 s gap in the fetched log (#1040). Tonight's guards observed passing in window: TheAUv3TailCoversTheReverbTests, TheAUv3RegistersAndStaysIsolatedTests (6), TheReverbCannotPassANaNControlTests (3), TheNarrationCannotTrapOnARawPulseTests (2), TheMetronomeAccentHasADoorTests, TheTimebaseConvertsWithoutBecomingAClockTests. Absence of any other name proves nothing (#445).
+- Pushed since the last reading: 912f1bd94 (docs-only, architecture.html; Auto-Merge Docs success).
