@@ -20,6 +20,8 @@
 // 4. SOURCE: the view writes through `TrackParts` → the store API and nothing else, and the
 //    inspector is its one door. Undo/Redo MOVED (WA4 path 7) to `Studio/SongHistoryRow.swift`,
 //    mounted once under the Arrange canvas — a FORWARD sub-claim on this tree (the file is new).
+//    And the per-part buttons MOVED (WA4 path 8): the list rows only select, the edits are
+//    `SelectedPartBar`'s — one part editor over the one selection. FORWARD on its parent.
 //
 // Grading (§0, no Swift toolchain in a web session): claims 1–2 were transcribed into Python
 // over a model of `TrackParts` and the store's snapshot/undo/redo; claims 3–4 were driven
@@ -27,8 +29,9 @@
 // there — ONE absence, not N findings (#486). Claim 3 is COUNTERWEIGHTS (green on both).
 // NOT covered: whether the rows render, read well, or that a moved part is HEARD in its new
 // bar while the song plays — a device probe, owned by the marker below.
-// NEEDS-FOUNDER-VERIFY: Workstation → tap a track → Parts: Later, Earlier, Copy, Remove, then
-// Undo and Redo, once stopped and once while the song plays.
+// NEEDS-FOUNDER-VERIFY: Workstation → tap a track → tap a part in Parts → the part bar under
+// the arrangement: Later, Earlier, Copy, Remove, then Undo and Redo, once stopped and once
+// while the song plays.
 
 import Foundation
 import XCTest
@@ -41,6 +44,7 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
     private static let inspectorPath = "Sources/Echoelmusic/Studio/TrackInspectorView.swift"
     private static let storePath = "Sources/Echoelmusic/Core/TimelineStore.swift"
     private static let historyPath = "Sources/Echoelmusic/Studio/SongHistoryRow.swift"
+    private static let partBarPath = "Sources/Echoelmusic/Studio/SelectedPartBar.swift"
     private static let sourcesRoot = "Sources/Echoelmusic"
     private static let bar = TimelineTime.ticksPerBar
 
@@ -193,6 +197,24 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
                 no persistence of its own, no overlap trimming (activeRegion decides at play \
                 time), no playhead read.
                 """)
+        }
+        // WA4 path 8 — ONE part editor. The list rows SELECT; the edits are the part bar's.
+        guard let viewStart = code.range(of: "struct TrackPartsView: View {") else {
+            return XCTFail("ANCHOR MISSING: struct TrackPartsView (#454)")
+        }
+        let view = String(code[viewStart.upperBound...])
+        for edit in ["TrackParts.move(", "TrackParts.duplicate(", "TrackParts.remove("] {
+            XCTAssertFalse(view.contains(edit), """
+                TrackPartsView calls `\(edit)` again — a second door to the edits \
+                `SelectedPartBar` makes on the one selection (WA4 path 8).
+                """)
+        }
+        XCTAssertTrue(view.contains("selection.selectRegion(part.id, in: document)"),
+                      "a part row selects its part — the one part editor acts on the one selection")
+        let bar = try source(Self.partBarPath)
+        for edit in ["TrackParts.move(", "TrackParts.duplicate(part, timeline: timeline)",
+                     "TrackParts.remove(part, timeline: timeline)"] {
+            XCTAssertTrue(bar.contains(edit), "the part bar lost `\(edit)` — the edits need their one door")
         }
         let inspector = try source(Self.inspectorPath)
         XCTAssertEqual(inspector.components(separatedBy: "TrackPartsView(laneID: laneID)").count - 1, 1)

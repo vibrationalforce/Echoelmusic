@@ -1,13 +1,18 @@
 //
 //  TrackPartsView.swift
-//  Echoelmusic — Studio (WA4.3: arrange the selected track's parts — move, copy, remove)
+//  Echoelmusic — Studio (WA4.3: arrange the selected track's parts — move, copy, remove;
+//  WA4 path 8: the list SELECTS, and the one part editor is `SelectedPartBar`)
 //
 //  WHY THIS EXISTS. The WA4 journey step ARRANGE. `TimelineStore` has carried the whole
 //  arrangement API since the arrange surface was cut (#121): `moveRegion`, `duplicateRegion`,
 //  `removeRegion`, and a region-only undo history — with ZERO production callers for the
 //  edits and for `undo`/`redo`. The only reachable writes to that history were imports and
 //  the composer's own part. So the Workstation could list and play a song but not arrange it.
-//  This is the door, opened under the selected track's inspector (one door, no new modal).
+//  This file gave those edits their first door, under the selected track's inspector.
+//  ⚠️ SINCE WA4 PATH 8 THE ROWS ONLY SELECT: the Arrange canvas's part bar
+//  (`SelectedPartBar`) makes the same edits through the same `TrackParts` calls, and two sets
+//  of buttons for one part was a second door. `TrackParts` (the pure half and the three store
+//  writes below) stays here and is what the part bar calls.
 //
 //  ⭐ NO NEW TRUTH. Every write is the store's existing method, one call = one undo step
 //  (`snapshotForUndo` runs inside each). The playing engine chases a structural edit live
@@ -24,8 +29,8 @@
 //  resolved at play time by `TimelineScheduling.activeRegion` (the later start wins), the one
 //  definition of precedence (#1440). Nothing here trims a neighbour.
 //
-//  Cold reads only: `timeline.document` changes on an edit; `canUndo`/`canRedo` flip on an
-//  edit. No playhead, no meter, no bio.
+//  Cold reads only: `timeline.document` changes on an edit, the selection on a tap. No
+//  playhead, no meter, no bio.
 //
 
 import SwiftUI
@@ -107,17 +112,22 @@ enum TrackParts {
     }
 }
 
-/// The selected track's parts, with move / copy / remove (Undo/Redo: `SongHistoryRow`).
+/// The selected track's parts, as a list that SELECTS. The actions on a selected part live in
+/// ONE place — `SelectedPartBar`, under the Arrange canvas (WA4 path 8, one inspector); the
+/// history in `SongHistoryRow`.
 @MainActor
 struct TrackPartsView: View {
 
     @Environment(TimelineStore.self) private var timeline
+    @Environment(WorkstationSelection.self) private var selection
     let laneID: UUID
 
     var body: some View {
         let document = timeline.document
         if TrackParts.arrangeable(laneID, in: document) {
             let parts = TrackParts.parts(onLane: laneID, in: document)
+            let selected = WorkstationSelection.resolvedRegion(selection.regionID,
+                                                               track: selection.trackID, in: document)
             VStack(alignment: .leading, spacing: 6) {
                 Text("Parts")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
@@ -127,63 +137,33 @@ struct TrackPartsView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 ForEach(parts) { part in
-                    partRow(part)
+                    partRow(part, isSelected: part.id == selected, document: document)
                 }
-                // Undo/Redo MOVED to `SongHistoryRow`, the one history control under the
-                // Arrange canvas (WA4 path 7) — Undo must stay visible after the part it
-                // would restore is gone, and this list shows only while a track is open.
+                // WA4 path 8 — the per-part Earlier/Later/Copy/Remove buttons that stood here
+                // were a SECOND door to the same edits `SelectedPartBar` makes. A row now
+                // selects its part; the one part editor acts on the one selection.
             }
         }
     }
 
-    private func partRow(_ part: TrackParts.Part) -> some View {
+    private func partRow(_ part: TrackParts.Part, isSelected: Bool,
+                         document: TimelineDocument) -> some View {
         let title = TrackParts.title(part)
-        let earlier = TrackParts.earlierStart(part)
-        return VStack(alignment: .leading, spacing: 4) {
+        return Button {
+            selection.selectRegion(part.id, in: document)
+        } label: {
             Text(title)
                 .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
-            HStack(spacing: 6) {
-                actionButton("Earlier", systemImage: "chevron.left", enabled: earlier != nil,
-                             label: "Move part at \(title) one bar earlier") {
-                    if let tick = earlier {
-                        TrackParts.move(part, toStartTick: tick, timeline: timeline)
-                    }
-                }
-                actionButton("Later", systemImage: "chevron.right", enabled: true,
-                             label: "Move part at \(title) one bar later") {
-                    TrackParts.move(part, toStartTick: TrackParts.laterStart(part), timeline: timeline)
-                }
-                actionButton("Copy", systemImage: "plus.square.on.square", enabled: true,
-                             label: "Copy part at \(title) to right after it") {
-                    TrackParts.duplicate(part, timeline: timeline)
-                }
-                actionButton("Remove", systemImage: "trash", enabled: true,
-                             label: "Remove part at \(title). Undo brings it back") {
-                    TrackParts.remove(part, timeline: timeline)
-                }
-            }
-        }
-        .padding(.vertical, 6).padding(.horizontal, 8)
-        .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-            .strokeBorder(EchoelTheme.border, lineWidth: 1))
-    }
-
-    private func actionButton(_ title: String, systemImage: String, enabled: Bool, label: String,
-                              action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                Image(systemName: systemImage).font(.system(size: 11, weight: .semibold))
-                Text(title).font(EchoelTheme.font(11, .semibold)).lineLimit(1)
-            }
-            .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)
-            .padding(.horizontal, 8)
-            .frame(minHeight: 44)
-            .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                .fill(EchoelTheme.fill))
-            .contentShape(Rectangle())
+                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                .padding(.horizontal, 8)
+                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                    .strokeBorder(isSelected ? EchoelTheme.accent : EchoelTheme.border,
+                                  lineWidth: isSelected ? 2 : 1))
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(!enabled)
-        .accessibilityLabel(label)
+        .accessibilityLabel("Part at \(title)")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityHint("Selects this part. Its actions are under the arrangement above")
     }
 }
