@@ -510,7 +510,11 @@ public extension FXPreset {
     /// control. Continuous parameters interpolate linearly; enables/modes switch at
     /// the midpoint. `amount` 0 = self, 1 = `other`. Pure + deterministic.
     func morphed(to other: FXPreset, amount: Float) -> FXPreset {
-        let t = Swift.min(Swift.max(amount, 0), 1)
+        // ⭐ 2026-09-25 (overnight P8): `clamped(to:)`. `min(max(amount, 0), 1)` passed NaN, and
+        // a NaN `t` made EVERY interpolated field NaN at once, which `EchoelFXView.morph` then
+        // stamps onto every chain. NaN now reads as 0 (this preset, unchanged); every other
+        // value, ±inf included, is unchanged. Guard: `TheMorphCannotSpreadANaNAmountTests`.
+        let t = amount.clamped(to: 0...1)
         func L(_ a: Float, _ b: Float) -> Float { a + (b - a) * t }
         func B(_ a: Bool, _ b: Bool) -> Bool { t < 0.5 ? a : b }
         func S(_ a: String, _ b: String) -> String { t < 0.5 ? a : b }

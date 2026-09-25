@@ -273,6 +273,8 @@ public final class EchoelTremolo: @unchecked Sendable {
 /// with the NaN-transparent idiom, so a NaN amount makes every interpolated field NaN at once —
 /// including `flangerFeedback` and `phaserFeedback`, the two #1206b bounds. Latent only because
 /// its fader carries a `0...1` range. This is closed on engineering.md's boundary rule.
+/// ⭐ CLOSED 2026-09-25 (overnight P8): `morphed` now uses `amount.clamped(to: 0...1)`, so a NaN
+/// amount reads as 0 (the source preset). Guard: `TheMorphCannotSpreadANaNAmountTests`.
 ///
 /// ⚠️ AND IT DOES NOT CLOSE THE CLASS. The same NaN-transparent spelling occurs many times under
 /// `DSP/` and across `Sources/` — ⛔ two figures stood here and are deleted rather than

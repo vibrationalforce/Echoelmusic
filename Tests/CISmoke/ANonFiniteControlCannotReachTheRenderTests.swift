@@ -223,7 +223,8 @@
 //     stamps the result onto every chain. It runs from a live fader binding on every value
 //     change. Latent only because that field carries a `0...1` range; that is the reason to
 //     state, not to omit the writer. It is also the most plausible future NaN producer for the
-//     fields #1206b bounds.
+//     fields #1206b bounds. ⭐ CLOSED 2026-09-25 (overnight P8): `t` is now
+//     `amount.clamped(to: 0...1)`; guard `TheMorphCannotSpreadANaNAmountTests`.
 //   · NAMED WRONG: `FXBioModulator` was cited as "guarded by `FXModulation.clamp01`". The value
 //     it writes comes from `FXModulation.combine(…)`, whose guard is `v.isFinite ? v : base` —
 //     same conclusion, different function, and the fallback `base` is read live off the chain,
