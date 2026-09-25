@@ -39819,3 +39819,16 @@ Review 10 was independent. These three prose commits are builder-made and **not 
   - Claim 4 loops over NaN/±inf.
 - ⚠️ `4055a5dd2` is builder-made and has NOT been independently reviewed.
 - Gates: the Compile Check on `4055a5dd2` is queued. It covers the breath swell, reverb, poly-tuning and sub-tuning Sources changes, none of which had their own Compile Check (all were superseded). BfT is ~4.5 h behind.
+
+## 2026-09-25 ~07:08 UTC — Overnight run END (≈10 h active, 21:10 → 07:08 UTC)
+
+- `43d3da0c6` `EchoelCompressor`: a non-finite gain TARGET holds `grState` (NaN/−inf threshold, and a huge finite `kneeDb` that overflows `x*x` in the knee branch).
+  - Guard `TheCompressorCannotLatchANonFiniteThresholdTests` has three claims: threshold rows, knee rows (added in `a3346bc8f`), and a counterweight. Float32 transcription: red on the parent, green on the head.
+  - Review 16 (independent) found no code defect and two LOW prose errors, fixed in `a3346bc8f`. ⛔ The commit message of `43d3da0c6` carries the wrong −inf mechanism ("latch at the restore"). The truth: the latch lands on the 2nd sample while −inf is still set.
+- Review 15 (independent) on `4055a5dd2` found no code defect. It found one LOW prose understatement: the silent voice counts through its release tail, and so does every unison/Oktaver copy. Fixed in `982b96524`. `982b96524` and `a3346bc8f` are builder-made and NOT independently reviewed.
+- Measured, not fixed: `EchoelDDSP` attack/decay/release → `Int()` trap stays LATENT. `SynthPatch` clamps at `B.attack` etc. on decode, and the automation path clamps first.
+- **Final gates:**
+  - Xcode Compile Check GREEN on `a3346bc8f` (the final code head; covers every Sources change of the night).
+  - CI/CD Build for Testing GREEN on `38bd67c2b` (02:00); its Run Tests is #396 shape, with 166 observed passing and 0 failures in the window (711 s gap).
+  - Later BfT runs are still queued (backlog ~5 h).
+  - main = `1e8e4cb91` (unchanged since ~00:30).
