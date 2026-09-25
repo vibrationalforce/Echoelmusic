@@ -69,6 +69,15 @@ audio input. **There is no `AUAudioUnit` in `Sources/` any more** —
 point: a replacement citation is a claim with an expiry date, so name the measuring command
 beside it, never the name alone.
 
+⭐ **AND BOTH ⛔ BLOCKS ABOVE ARE STALE SINCE #1385 (2026-09-20; noted 2026-09-25).** The AUv3
+INSTRUMENT target is back: `project.yml` declares `EchoelmusicAUv3` (six targets now), and
+`git grep -nE ": *AUAudioUnit\b" -- Sources` → 1 (`Sources/EchoelmusicAUv3/EchoelmusicAudioUnit.swift`)
+— parameter tree, `fullState`, factory presets and an `internalRenderBlock` are real again. It
+compiles `DSP/` in isolation and hosts nothing. Its testable halves live in `DSP/`/`Core/`
+(`EchoelBodyVibeDevice`, `EchoelBodyVibeAUv3Mapping`, `AUv3StateContract`); the extension itself
+cannot be instantiated in a test bundle, so its render block is guarded by source scans
+(`TheAUv3SuppliesItsOwnOutputBuffersTests` and its neighbours) and verified in a host (AUM, #1386).
+
 The live render shape is the `AVAudioSourceNode` closure (`DSP/EchoelDDSP.swift`,
 `Tools/PolySynthVoice.swift`, `Sequencer/SamplerVoice.swift`), and the end-to-end pattern to
 copy is `Tests/CISmoke/TheDDSPRenderIsDeterministicAndBoundedTests.swift` — it builds the

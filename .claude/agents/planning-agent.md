@@ -84,6 +84,14 @@ date,decision,reasoning,expected_outcome,review_date,status
   A planner reading the old text went looking for two files that are not there. The founder
   removed the whole microphone monitor rail, so **there is no `AUAudioUnit` in `Sources/` at
   all**: `git grep -nE ": *AUAudioUnit\b" -- Sources` → 0.
+- ⭐ **AND BOTH ⛔ BLOCKS ABOVE ARE STALE SINCE #1385 (2026-09-20; noted 2026-09-25).** The AUv3
+  INSTRUMENT target is back: `project.yml` declares `EchoelmusicAUv3` (six targets now), and
+  `git grep -nE ": *AUAudioUnit\b" -- Sources` → 1 (`Sources/EchoelmusicAUv3/EchoelmusicAudioUnit.swift`)
+  — parameter tree, `fullState`, factory presets and an `internalRenderBlock` are real again. It
+  compiles `DSP/` in isolation and hosts nothing. Its testable halves live in `DSP/`/`Core/`
+  (`EchoelBodyVibeDevice`, `EchoelBodyVibeAUv3Mapping`, `AUv3StateContract`); the extension itself
+  cannot be instantiated in a test bundle, so its render block is guarded by source scans
+  (`TheAUv3SuppliesItsOwnOutputBuffersTests` and its neighbours) and verified in a host (AUM, #1386).
 - What DOES exist, and is the audio shape to plan against, is the `AVAudioSourceNode` render
   closure: `Audio/AudioEngine.swift`, `DSP/EchoelDDSP.swift`, `Tools/PolySynthVoice.swift`,
   `Sequencer/SamplerVoice.swift`. The end-to-end render guard to plan a test against is

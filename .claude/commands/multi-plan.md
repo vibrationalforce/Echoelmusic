@@ -37,6 +37,16 @@ in `Sources/`** — `git grep -nE ": *AUAudioUnit\b" -- Sources` → 0. Audio wo
 the DSP/audio agent through the `AVAudioSourceNode` render closures, never through a plugin
 shell.
 
+⭐ **AND BOTH ⛔ BLOCKS ABOVE ARE STALE SINCE #1385 (2026-09-20; noted 2026-09-25).** The AUv3
+INSTRUMENT target is back: `project.yml` declares `EchoelmusicAUv3` (six targets now), and
+`git grep -nE ": *AUAudioUnit\b" -- Sources` → 1 (`Sources/EchoelmusicAUv3/EchoelmusicAudioUnit.swift`)
+— parameter tree, `fullState`, factory presets and an `internalRenderBlock` are real again. It
+compiles `DSP/` in isolation and hosts nothing. Its testable halves live in `DSP/`/`Core/`
+(`EchoelBodyVibeDevice`, `EchoelBodyVibeAUv3Mapping`, `AUv3StateContract`); the extension itself
+cannot be instantiated in a test bundle, so its render block is guarded by source scans
+(`TheAUv3SuppliesItsOwnOutputBuffersTests` and its neighbours) and verified in a host (AUM, #1386). The decomposition above stays as it is: the AUv3 shell is thin and its logic lives in
+`DSP/`, so it is still not a third of every feature.
+
 For audits:
 ```
 Agent 1: Core Systems  — App init, data flow, engine wiring

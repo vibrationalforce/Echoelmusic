@@ -35,8 +35,8 @@ until #1306):
 - ⛔ The 2026-08 repair named `MonitorInsertAudioUnit` (`Audio/MonitorInsertAU.swift`) and told
   you to copy a guard that was deleted with it —
   `Tests/CISmoke/TheMonitorInsertCarriesTheNeutralChainTests.swift` was removed by #1302
-  (founder 2026-09-12) together with the audio input. **No `AUAudioUnit` remains in
-  `Sources/`**: `git grep -nE ": *AUAudioUnit\b" -- Sources` → 0.
+  (founder 2026-09-12) together with the audio input. ⛔ "No `AUAudioUnit` remains in
+  `Sources/` … → 0" stood here and is stale since #1385: the grep returns 1, the AUv3 (above).
 - The live render is an `AVAudioSourceNode` closure. Copy
   `Tests/CISmoke/TheDDSPRenderIsDeterministicAndBoundedTests.swift` (asserts on rendered
   SAMPLES) for a voice, and `Tests/CISmoke/TheChainPointerEntryMatchesTheArrayEntryTests.swift`

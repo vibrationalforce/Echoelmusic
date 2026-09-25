@@ -768,7 +768,8 @@ def section_b() -> Section:
     # with what it was pointed at. This is the exact "clean for work nobody looked at" failure
     # section B exists to prevent, committed by section B.
     # ⚠️ AND WIDENING IT DOES NOT CLOSE THE CLASS. A path scan catches path drift. It cannot
-    # see `e2e-test-agent.md`, which is entirely about an AUv3 target removed 2026-07-24, or
+    # see `e2e-test-agent.md`, which was entirely about an AUv3 target removed 2026-07-24 (revived
+    # with #1385, so it drifted a SECOND time, in the other direction), or
     # `ui-state-reviewer.md`, whose subject `StudioRoot` has 0 hits in `Sources/` — neither
     # names a path. Concept drift in an agent's PROSE has no automated check here; say so
     # rather than let a green section B imply otherwise.

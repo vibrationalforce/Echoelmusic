@@ -28,6 +28,18 @@ reading it, and that is still the only way. The `name:` is kept because
 `.claude/skills/ultracode-teams/SKILL.md` addresses this agent by it; the `description:`
 changed, because that line is what a session reads when deciding whether to invoke it.
 
+⭐ **AND BOTH ⛔ BLOCKS ABOVE ARE STALE SINCE #1385 (2026-09-20; noted 2026-09-25).** The AUv3
+INSTRUMENT target is back: `project.yml` declares `EchoelmusicAUv3` (six targets now), and
+`git grep -nE ": *AUAudioUnit\b" -- Sources` → 1 (`Sources/EchoelmusicAUv3/EchoelmusicAudioUnit.swift`)
+— parameter tree, `fullState`, factory presets and an `internalRenderBlock` are real again. It
+compiles `DSP/` in isolation and hosts nothing. Its testable halves live in `DSP/`/`Core/`
+(`EchoelBodyVibeDevice`, `EchoelBodyVibeAUv3Mapping`, `AUv3StateContract`); the extension itself
+cannot be instantiated in a test bundle, so its render block is guarded by source scans
+(`TheAUv3SuppliesItsOwnOutputBuffersTests` and its neighbours) and verified in a host (AUM, #1386). For a ship check that means: the extension
+is embedded in the app, `sandboxSafe: true` sits in its AudioComponents entry, and
+`Xcode Compile Check` compiles it (Release, device) as an app dependency. It carries no App Group
+entitlement, so its shared-vitals bridge is dormant.
+
 ⚠️ One artefact survives the deletion: `Tests/EchoelmusicTests/AUv3MIDIInstrumentTests.swift`.
 It sits in the suite that **no gate compiles** (#208), so it is neither green nor red —
 it is unobserved. Do not read it as evidence that an AUv3 path exists.
