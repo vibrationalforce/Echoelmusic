@@ -83,9 +83,10 @@ public enum RollHitTest {
 
     /// Length in steps for a right-edge resize: the step under the finger becomes
     /// the note's LAST covered step, so length = fingerStep − startStep + 1, never
-    /// below 1 (drag past the start collapses to a single step). #58 Slice 3. The
-    /// caller still passes the result through `PianoRollModel.setLength`, which
-    /// clamps the tail to the bar — this is just the finger→length law.
+    /// below 1 (drag past the start collapses to a single step). #58 Slice 3.
+    /// ⚠️ TEST-ONLY since the M2 review (90a6bd10a): the note editor stretches by a DELTA
+    /// (`NoteGridGesture.resize(id:dSteps:)`), because an absolute length re-stated on a
+    /// hold committed a step. `PianoRollModel.setLength`, named here before, is not a caller.
     public static func resizedLengthSteps(fingerStep: Int, startStep: Int) -> Int {
         Swift.max(1, fingerStep - startStep + 1)
     }

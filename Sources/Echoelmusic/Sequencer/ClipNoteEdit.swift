@@ -146,6 +146,8 @@ enum ClipNoteEdit {
               let index = clipNotes.firstIndex(where: { $0.id == id }) else { return nil }
         let note = clipNotes[index]
         let windowEnd = Swift.max(0, offsetTicks) + lengthTicks
+        // Only a note this part SHOWS has an end on screen to move.
+        guard note.startTick >= Swift.max(0, offsetTicks), note.startTick < windowEnd else { return nil }
         let drawnEnd = Swift.min(note.endTick, windowEnd)
         let newLength: Int
         if dSteps > 0 {
@@ -265,13 +267,21 @@ enum ClipNoteEdit {
     // or writes it (`SessionContext` is the one owner of `echoel.keyRoot`/`echoel.keyScale`).
 
     /// `ids` with each pitch moved to the nearest note of `key` (`MusicalKey.quantize`, lower
-    /// wins a tie); nil when every one is already in the key.
+    /// wins a tie); nil when every one is already in the key. At the ends of MIDI the nearest key
+    /// note can lie outside 0…127 (MIDI 0 in D major quantizes to −1): then the nearest one on
+    /// the side that exists is taken, so no note is silently left out of the key (M4 review).
     nonisolated static func fittingToKey(_ ids: Set<UUID>, key: MusicalKey,
                                          in clipNotes: [Note]) -> [Note]? {
         var changed = false
         let fitted = clipNotes.map { note -> Note in
             guard ids.contains(note.id) else { return note }
-            let pitch = key.quantize(note.pitch)
+            var pitch = key.quantize(note.pitch)
+            if pitch < 0 {
+                pitch = (note.pitch...127).first(where: { key.contains($0) }) ?? note.pitch
+            } else if pitch > 127 {
+                pitch = stride(from: note.pitch, through: 0, by: -1)
+                    .first(where: { key.contains($0) }) ?? note.pitch
+            }
             guard pitch != note.pitch, (0...127).contains(pitch) else { return note }
             var moved = note
             moved.pitch = pitch
@@ -281,11 +291,12 @@ enum ClipNoteEdit {
         return changed ? fitted : nil
     }
 
-    /// `ids` moved by `degrees` steps OF THE KEY'S SCALE (a diatonic transpose: C→E→G in C major
-    /// is one step each, not four semitones). A note outside the key is first fitted to it, so the
-    /// result is always in the key. nil when a note would leave MIDI 0…127 — the whole group
-    /// refuses rather than folding one note back, which would break the chord's shape — or when
-    /// nothing changes.
+    /// `ids` moved by `degrees` steps OF THE KEY'S SCALE (a diatonic transpose: C E G → D F A in C
+    /// major is one step each, not two semitones). A note OUTSIDE the key takes its first step to
+    /// its nearest key note IN THAT DIRECTION — C# goes up to D and down to C (M4 review: fitting
+    /// it first made −1 skip C, because the fit's tie goes down) — so the result is always in the
+    /// key. nil when a note would leave MIDI 0…127 — the whole group refuses rather than folding
+    /// one note back, which would break the chord's shape — or when nothing changes.
     nonisolated static func transposingInKey(_ ids: Set<UUID>, by degrees: Int, key: MusicalKey,
                                              in clipNotes: [Note]) -> [Note]? {
         let intervals = key.scale.intervals
@@ -296,10 +307,21 @@ enum ClipNoteEdit {
         moved.reserveCapacity(clipNotes.count)
         for note in clipNotes {
             guard ids.contains(note.id) else { moved.append(note); continue }
-            let relative = key.quantize(note.pitch) - key.root
+            var start = note.pitch
+            var remaining = degrees
+            if !key.contains(start) {
+                let direction = degrees > 0 ? 1 : -1
+                // Bounded: a scale with at least one note has one within every 12 semitones.
+                for _ in 0..<12 {
+                    start += direction
+                    if key.contains(start) { break }
+                }
+                remaining -= direction
+            }
+            let relative = start - key.root
             let octave = Int((Double(relative) / 12).rounded(.down))
             guard let step = intervals.firstIndex(of: relative - 12 * octave) else { return nil }
-            let index = octave * perOctave + step + degrees
+            let index = octave * perOctave + step + remaining
             let newOctave = Int((Double(index) / Double(perOctave)).rounded(.down))
             let pitch = key.root + 12 * newOctave + intervals[index - newOctave * perOctave]
             guard (0...127).contains(pitch) else { return nil }

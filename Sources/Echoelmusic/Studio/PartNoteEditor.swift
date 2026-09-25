@@ -86,8 +86,10 @@ struct PartNoteEditor: View {
                 if isOpen {
                     // Keyed by the part: another part starts with an empty selection and its
                     // own octave, never with the last part's.
-                    PartNoteGrid(regionID: regionID)
-                        .id(regionID)
+                    NoteNamingReader { naming in
+                        PartNoteGrid(regionID: regionID, naming: naming)
+                    }
+                    .id(regionID)
                 }
             }
         }
@@ -100,6 +102,8 @@ struct PartNoteEditor: View {
 private struct PartNoteGrid: View {
 
     let regionID: UUID
+    /// The reader's note-name system, for naming the key on screen (`NoteNamingReader`).
+    let naming: NoteNaming
 
     @Environment(TimelineStore.self) private var timeline
     @Environment(ClipStore.self) private var clipStore
@@ -327,6 +331,9 @@ private struct PartNoteGrid: View {
                                    key: MusicalKey) -> some View {
         let what = scope.spoken
         let notes = clip.melody?.notes ?? []
+        // Shown in the reader's note names; spoken with ♯/♭ expanded (M4 review).
+        let keyShown = key.name(naming: naming)
+        let keySpoken = "\(naming.spokenName(pitchClass: key.root, preferFlats: key.prefersFlatSpelling)) \(key.scale.displayName)"
         // Every button is enabled only when its operation would change something (M3 review: an
         // enabled button that silently does nothing). Cold inputs — the clip and the selection.
         func can(_ edit: [Note]?) -> Bool { edit != nil }
@@ -355,20 +362,20 @@ private struct PartNoteGrid: View {
             HStack(spacing: 6) {
                 // M4: the key is the session's (`SessionContext`), named on the row so the
                 // buttons never act on a key the player cannot see.
-                Text(key.name).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                Text(keyShown).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .lineLimit(1)
                 button("Fit", "", enabled: can(ClipNoteEdit.fittingToKey(targets, key: key, in: notes)),
-                       label: "Move \(what) to the nearest notes of \(key.name)") {
+                       label: "Move \(what) to the nearest notes of \(keySpoken)") {
                     fitToKey(targets, key: key, region: region)
                 }
                 button("−1 step", "",
                        enabled: can(ClipNoteEdit.transposingInKey(targets, by: -1, key: key, in: notes)),
-                       label: "Move \(what) down one step of \(key.name)") {
+                       label: "Move \(what) down one step of \(keySpoken)") {
                     stepInKey(targets, by: -1, key: key, region: region)
                 }
                 button("+1 step", "",
                        enabled: can(ClipNoteEdit.transposingInKey(targets, by: 1, key: key, in: notes)),
-                       label: "Move \(what) up one step of \(key.name)") {
+                       label: "Move \(what) up one step of \(keySpoken)") {
                     stepInKey(targets, by: 1, key: key, region: region)
                 }
             }

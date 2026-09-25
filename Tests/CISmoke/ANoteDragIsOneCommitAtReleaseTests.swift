@@ -102,6 +102,12 @@ final class ANoteDragIsOneCommitAtReleaseTests: XCTestCase {
         XCTAssertEqual(NoteGridGesture.resolve(startX: 84, startY: rowY(60), dx: 3, dy: 2,
                                                visible: notes, picked: [], grid: g),
                        .resize(id: a.id, dSteps: 0))
+        // M4 review: the grab zone is the last 8 points before a column boundary, so counting
+        // BOUNDARIES CROSSED turned a 2-point drift to the RIGHT into a one-step stretch. The
+        // delta is the distance slid, rounded — the rule a body move uses.
+        XCTAssertEqual(NoteGridGesture.resolve(startX: 87, startY: rowY(60), dx: 2, dy: 0,
+                                               visible: notes, picked: [], grid: g),
+                       .resize(id: a.id, dSteps: 0))
         // Empty cell: a box; the notes it touches become the selection.
         guard case .marquee(let all, _, _, _, _) =
                 NoteGridGesture.resolve(startX: 0, startY: 0, dx: 300, dy: 200,
@@ -223,6 +229,9 @@ final class ANoteDragIsOneCommitAtReleaseTests: XCTestCase {
         let trimmed = try XCTUnwrap(ClipNoteEdit.resizing(cut.id, bySteps: -1, in: [cut],
                                                           offsetTicks: offset, lengthTicks: length))
         XCTAssertEqual(trimmed[0].lengthTicks, Self.step, "the drawn 2 steps less one")
+        XCTAssertNil(ClipNoteEdit.resizing(other.id, bySteps: -1, in: clip, offsetTicks: offset,
+                                           lengthTicks: length),
+                     "a note the part does not show has no end on screen to move")
         let cutGrid = NoteGridGesture.Grid(stepWidth: 22, rowHeight: 14, rows: 48...72, partSteps: 16)
         let cutShown = ClipNoteEdit.visibleNotes([cut], offsetTicks: offset, lengthTicks: length)
         XCTAssertEqual(NoteGridGesture.resolve(startX: 16 * 22 - 2, startY: rowY(65), dx: 0, dy: 0,

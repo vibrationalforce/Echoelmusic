@@ -8,7 +8,7 @@
 //  `ClipNoteEdit` exactly once, when the finger lifts.
 //
 //  Where the hold starts decides the gesture, in `RollHitTest`'s own words:
-//  · on a note's RIGHT EDGE → move that note's END by the whole steps the finger crossed (at least
+//  · on a note's RIGHT EDGE → move that note's END by the whole steps the finger slid (at least
 //    one step long, never past the part; a hold without a slide stretches nothing);
 //  · on a note's BODY → move the selection by whole steps and semitones — the whole on-screen
 //    selection when the note is part of it, otherwise that note alone;
@@ -75,12 +75,14 @@ enum NoteGridGesture: Equatable, Sendable {
             guard let note = onScreen.first(where: { $0.id == id }), grid.stepWidth > 0 else {
                 return .resize(id: id, dSteps: 0)
             }
-            let origin = Int((startX / grid.stepWidth).rounded(.down))
-            let finger = Int(((startX + dx) / grid.stepWidth).rounded(.down))
+            // The steps the finger SLID, rounded — the rule a body move uses. Not the column
+            // boundaries it crossed: the grab zone is the last 8 points before a boundary, so a
+            // 2-point drift to the right crossed one and committed a step (M4 review).
+            let slid = Int((dx / grid.stepWidth).rounded())
             let drawn = note.lengthSteps
             let room = Swift.max(1, grid.partSteps - note.startStep)
             // Bounded so the drawn length stays 1…room; both bounds contain zero.
-            let dSteps = Swift.min(Swift.max(finger - origin, 1 - drawn), Swift.max(0, room - drawn))
+            let dSteps = Swift.min(Swift.max(slid, 1 - drawn), Swift.max(0, room - drawn))
             return .resize(id: id, dSteps: dSteps)
         case .body(let id):
             let shown = Set(onScreen.map(\.id))

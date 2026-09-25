@@ -16,6 +16,12 @@
 // bundle does not build there: ONE absence, not N findings (#486) — every claim is a FORWARD
 // guard. The same commit moves the writer count in
 // `TheSelectedPartsNotesAreEditedThroughOneWriterTests` 8 → 10.
+// ⭐ INDEPENDENT REVIEW (M4, code-reviewer): an out-of-key note's −1 skipped its nearest key
+// note below (fitting first, and the fit's tie goes down) — it now steps to its nearest key note
+// in the step's direction; "Fit" left MIDI 0/127 out of the key where the nearest key note lies
+// outside MIDI — it now takes the nearest on the side that exists; and the key row spoke the
+// English interop name — it now uses the reader's note names. The three new assertions are
+// REGRESSIONS against 9dc19bf71.
 // NOT covered: that the shading reads well and that a step "sounds right" — a device listen.
 // NEEDS-FOUNDER-VERIFY: Notes → the rows outside the key are darker → a chord, "+1 step" (it
 // climbs the scale, not by semitones) → an off-key note, "Fit" → one Undo each.
@@ -44,6 +50,12 @@ final class TheNotesMoveThroughTheSessionKeyTests: XCTestCase {
         XCTAssertEqual(fitted.map(\.id), clip.map(\.id), "a fit moves notes, it never replaces them")
         XCTAssertNil(ClipNoteEdit.fittingToKey([inKey.id], key: Self.cMajor, in: clip),
                      "already in the key: nothing to do, no step")
+        // M4 review: MIDI 0 in D major quantizes to −1 (B, below MIDI). The nearest key note on
+        // the side that exists is taken — C#-1 — instead of leaving the note out of the key.
+        let bottom = Note(pitch: 0, startStep: 0)
+        XCTAssertEqual(try XCTUnwrap(ClipNoteEdit.fittingToKey([bottom.id],
+                                                               key: MusicalKey(root: 2, scale: .major),
+                                                               in: [bottom])).map(\.pitch), [1])
     }
 
     func testAStepClimbsTheScaleNotTheSemitones() throws {
@@ -64,7 +76,11 @@ final class TheNotesMoveThroughTheSessionKeyTests: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(ClipNoteEdit.transposingInKey([sharp.id], by: 1,
                                                                    key: Self.cMajor,
                                                                    in: [sharp])).map(\.pitch),
-                       [62], "an outside note is fitted first (C# → C), then stepped (→ D)")
+                       [62], "an outside note's first step up is its nearest key note above (C# → D)")
+        XCTAssertEqual(try XCTUnwrap(ClipNoteEdit.transposingInKey([sharp.id], by: -1,
+                                                                   key: Self.cMajor,
+                                                                   in: [sharp])).map(\.pitch),
+                       [60], "…and down, its nearest below (C# → C, not B — M4 review)")
         let a3 = Note(pitch: 57, startStep: 0)
         XCTAssertEqual(try XCTUnwrap(ClipNoteEdit.transposingInKey([a3.id], by: 2,
                                                                    key: MusicalKey(root: 9, scale: .minor),
@@ -133,6 +149,10 @@ final class TheNotesMoveThroughTheSessionKeyTests: XCTestCase {
                       "the rows shade by the session key")
         XCTAssertTrue(editor.contains("key: session.key)"),
                       "the M4 buttons act on the key the rows show")
+        // M4 review: `MusicalKey.name` is the ENGLISH interop spelling; the row says the key in
+        // the reader's own note names (German: H, not B), handed in by `NoteNamingReader`.
+        XCTAssertTrue(editor.contains("key.name(naming: naming)"), "the key row uses the reader's note names")
+        XCTAssertFalse(editor.contains("Text(key.name)"), "never the English interop name on screen")
         for write in ["session.adopt(", "keyRoot =", "keyScale =", "session.key ="] {
             XCTAssertFalse(editor.contains(write), """
                 PartNoteEditor writes the session key (`\(write)`). `SessionContext` is its one \
