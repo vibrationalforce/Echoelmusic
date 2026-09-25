@@ -642,10 +642,12 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
 
     /// The stereo position the ONE shared Piano-Roll slot plays at (B2 — the
     /// rollSlotGain mirror for pan). Clamped −1…1; mute/solo do NOT touch pan
-    /// (audibility is gain's job). No MIDI lane → center.
+    /// (audibility is gain's job). No MIDI lane → center. A non-finite pan is centre too:
+    /// `min(1, NaN)` is 1, so the bare clamp read NaN as HARD RIGHT — the rule every other
+    /// reader of `TimelineLane.pan` already takes (`MultiRollFanout.pan(forSlot:)`, #416).
     public var rollSlotPan: Float {
         guard let lane = lanes.first(where: { $0.kind == .midi && !$0.isBio }) else { return 0 }
-        return max(-1, min(1, lane.pan))
+        return max(-1, min(1, lane.pan.isFinite ? lane.pan : 0))
     }
 
     /// The whole-semitone TRANSPOSE the ONE shared Piano-Roll slot plays at (the

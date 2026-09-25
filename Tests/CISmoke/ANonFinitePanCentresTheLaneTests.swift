@@ -4,10 +4,14 @@
 // ⭐ THE DEFECT. A lane's pan is decided in TWO layers, and the first version of this slice
 // (890837252) fixed only the second one — the review of it caught that (overnight P8b).
 //   · THE BOUNDARY — where `TimelineLane.pan` is read: `MultiRollFanout.pan(forSlot:)` (every
-//     melodic rack voice), `AudioLanePlayer.clampedPan` (every audio lane) and the store's
-//     writer `TimelineStore.setLanePan`. All three clamped with a bare `max(-1, min(1, p))`, and
-//     `min(1, NaN)` is 1 (every comparison with NaN is false), so a NaN lane played — or was
+//     melodic rack voice), `AudioLanePlayer.clampedPan` (every audio lane), the store's writer
+//     `TimelineStore.setLanePan`, and `TimelineDocument.rollSlotPan` (the `rollSlotGain` mirror
+//     for pan; no production reader today). All four clamped with a bare `max(-1, min(1, p))`,
+//     and `min(1, NaN)` is 1 (every comparison with NaN is false), so a NaN lane played — or was
 //     stored — HARD RIGHT.
+//     ⛔ The first version of this header said "three" and "every site", and missed
+//     `rollSlotPan` — found by the review of f2bef146d. A list of readers is a claim about the
+//     WHOLE tree: `git grep -n "\.pan\b" -- Sources` and read EVERY hit before trusting it.
 //   · THE SINKS — `PolySynthVoice.setPan` and `TimelineAudioSink.setPan` had the same bare clamp,
 //     while `BioReactiveSynthVoice.setPan` already mapped non-finite to centre. One decision,
 //     two rules (#416). On the live path the sinks only ever receive the boundary's output, so
@@ -32,6 +36,9 @@
 //   · claim 5 — SOURCE-TEXT SCAN on `AudioLanePlayer.clampedPan` (private) and
 //     `TimelineStore.setLanePan` (`@MainActor`, persists to disk). REGRESSION on the parent of
 //     this commit. One finding across claims 4 and 5: one rule missing at three sites (#486).
+//   · claim 6 — END-TO-END BEHAVIOUR on the pure `TimelineDocument.rollSlotPan`. REGRESSION on
+//     the tree before its repair (NaN and +inf read 1, -inf reads -1); the finite rows are
+//     counterweights. Same finding as claims 4 and 5 — its fourth site.
 //   · Not executed (no toolchain); what `Build for Testing` proves is compilation only. Whether
 //     an unattached `AVAudioSourceNode` reports the pan it was given is the premise of claims 1
 //     and 2 — its only precedent is in the non-blocking suite (#208) — and claim 2 fails loudly
@@ -131,6 +138,26 @@ final class ANonFinitePanCentresTheLaneTests: XCTestCase {
                 `MultiRollFanout.pan(forSlot:)` and both sinks do (#416).
                 """)
         }
+    }
+
+    /// claim 6 — the roll slot's own pan mirror takes the same rule.
+    func testTheRollSlotPanCentresANonFiniteLane() {
+        for poison: Float in [.nan, .infinity, -.infinity] {
+            let doc = TimelineDocument(lanes: [TimelineLane(name: "MIDI 1", kind: .midi, pan: poison)],
+                                       regions: [])
+            XCTAssertEqual(doc.rollSlotPan, 0, """
+                `rollSlotPan` for a lane whose pan is \(poison) is not centre. It is the \
+                `rollSlotGain` mirror for pan, and a bare `max(-1, min(1, pan))` reads NaN as \
+                hard right — the rule `MultiRollFanout.pan(forSlot:)` already refuses (#416).
+                """)
+        }
+        // Counterweights: a finite pan lands, an out-of-range one clamps.
+        let half = TimelineDocument(lanes: [TimelineLane(name: "MIDI 1", kind: .midi, pan: -0.5)],
+                                    regions: [])
+        XCTAssertEqual(half.rollSlotPan, -0.5)
+        let wide = TimelineDocument(lanes: [TimelineLane(name: "MIDI 1", kind: .midi, pan: 3)],
+                                    regions: [])
+        XCTAssertEqual(wide.rollSlotPan, 1)
     }
 
     private func source(_ relative: String) throws -> String {
