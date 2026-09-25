@@ -39878,3 +39878,13 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - **Selected-part bar (path 5)** `ccc96c753`: move/split/copy/remove; Split snaps to the grid and passes `PartSplit.mediaBPM` → fixes the latent warped-split jump. Guard TheSelectedPartIsCutWhereItIsHeard.
 - **Gates:** Compile Check runs cancelled by successive pushes (cancel-in-progress); the run on the last push covers all. CI/CD macOS jobs queued at 18:05. Reviewer launched on f43bfe505..7ceb7e2f5.
 - **Device verification owed:** canvas render/tap, part bar, warped split audible seam, Session Save→Open audible half.
+
+## 2026-09-25 19:40Z — WA4 paths 6–9 + review repair of paths 3–5
+
+- **Path 7 Undo/Redo** `048b4c69c` (`SongHistoryRow` under the canvas, moved out of `TrackPartsView`).
+- **Path 6 Mute/Solo in the track header** `33d5c0537` + `9f29e8538` (claim 5 of TheTrackInspectorShowsOnlyWiredControls banned `TrackMix.` in WorkstationView — the checkers did not see it; now a member-set pin). No Arm (#1302). Level/Pan stay in the inspector.
+- **Path 9 Echoel device door** `f8feea953`: "Open" on the Echoel track posts chrome door `"sound"`; receiver case added. Guard TheEchoelTrackOpensItsDevice.
+- **Path 8 one part editor** `6bf183726`: parts list only selects; SelectedPartBar is the one editor.
+- **Review of 3–5 (PASS WITH CONDITIONS)** → `75d27e615` (`PartSplit.keepsWhoPlays` refuses a cut that changes the overlap winner; part bar collapses to icons via ViewThatFits; recovery slot keeps its Session when the live one failed to encode) + `534b0df29` (`ProjectStore.adoptArriving`: every arrival = fresh id, no song). MEDIUM-4 accepted + logged.
+- **Gates:** `7ebb2e322` Build for Testing = success (Run Tests #396 shape). Runs for f43bfe5…534b0df all QUEUED (macOS backlog, 12 deep at 19:35Z) — readings owed.
+- **Device verification owed:** header M/S heard, Open lands on Sound, part list select, refused split label, arrival rows.

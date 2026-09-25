@@ -2876,3 +2876,10 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Why:** founder override (no new persistence root, no new Session type, legacy Project = import source, unknown future fails safely and preserves data). Review of S1–S3 found two ways the single slot lost data (empty take over a composed one; blank song over the user's after two legacy Opens) — repaired in `7ceb7e2f5`.
 - **Open:** song form captured not restored; player automation not captured by the Studio's Save; an encode-failed Save reads as a legacy row (M1).
 - **Review:** 2026-10-25.
+
+### 2026-09-25 — WA4 editing: one part editor, one door per mixer fact, the Echoel device door
+
+- **Decision:** `SelectedPartBar` is the ONE editor of a part; the parts list only selects. Mute/Solo live in the track header only; Level/Pan in the inspector only (numeric → `EchoelValueField`, too wide for a phone row). The Echoel track's "Open" posts chrome door `"sound"` — no new modal.
+- **Why:** review MEDIUM-2 (two editors for one part) and #416 (one fact, one control); the modal chain has no headroom; the inspector is a leaf.
+- **Accepted (MEDIUM-4):** the recovery slot keeps its Session while the live song has no user parts. Repair = a flag set on library Open, cleared on the first edit — deferred to the Session-front design.
+- **Review:** 2026-10-25.

@@ -436,12 +436,29 @@ done. WA4 is the first front.
     `TrackMix.muteHint`/`soloHint`. **No Arm** (no record path, #1302). Level/Pan stay in the
     inspector (numeric → `EchoelValueField`, too wide for a phone row). Guard
     `TheTrackHeaderMutesAndSolosTests`.
+  - **WA4 path 9 — Echoel as a Device on its track: DOOR IMPLEMENTED.** The Echoel track's
+    device row carries ONE "Open" that posts the existing chrome door `"sound"` (`f8feea953`)
+    — the Sound plate is the instrument's editor; no new modal, the inspector stays a leaf.
+    Guard `TheEchoelTrackOpensItsDeviceTests`. Not yet: the instance state on the row (needs the
+    view-private live patch).
+  - **WA4 path 8 — one part editor: IMPLEMENTED.** The parts list under the inspector now only
+    SELECTS (`6bf183726`); every edit of a part lives on the one `SelectedPartBar` (review
+    MEDIUM-2: two editors for one part). Guard `TheTrackPartsAreArrangedThroughTheStoreTests`.
+  - **Review of paths 3–5: PASS WITH CONDITIONS → repaired** (`75d27e615`, `534b0df29`):
+    Split is refused where the cut would change which overlapping part plays
+    (`PartSplit.keepsWhoPlays`, asked through `TimelineScheduling.activeRegion` — the one
+    precedence rule); the part bar collapses to icons before it overflows; a live Session that
+    failed to encode never replaces the recovery slot's good one; every arrival (Import, Live
+    Colabo Save) goes through `ProjectStore.adoptArriving` — fresh id, no song. **Accepted and
+    logged (MEDIUM-4):** the slot's Session stays while the live song holds no user parts — a
+    flag set on Open and cleared on the first edit would close it.
   - Evidence ceiling: transcription-graded guards; compile gates are read per commit in
     `scratchpads/SESSION_LOG.md`; **device verification owed** for every slice
     (NEEDS-FOUNDER-VERIFY markers in each guard header).
   - **Open in WA4:** workspace promotion (Workstation as a first-class surface, not a panel),
     a general undo step beyond regions (mixer edits are not undoable), drag
-    edits, the Echoel device seam, and the device proof journey.
+    edits and trim, the Echoel instance state on its row, the MEDIUM-4 flag, and the device
+    proof journey.
 
 ---
 
