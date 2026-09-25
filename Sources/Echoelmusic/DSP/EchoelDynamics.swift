@@ -197,14 +197,18 @@ public final class EchoelCompressor: @unchecked Sendable {
 
         // Ballistics: fast toward more reduction (attack), slow toward less (release).
         //
-        // A NON-FINITE TARGET HOLDS THE STATE — the same hold as the input bail above, for a
-        // bad CONTROL instead of a bad sample. A NaN `thresholdDb` makes `over` NaN, both knee
-        // comparisons fail into the `else`, and the release branch wrote `grState = NaN` for
-        // good. A −inf threshold made the target −inf, `grState` followed it, and the first
-        // finite threshold afterwards computed `−inf + inf` = NaN — the same latch one step
-        // later. LATENT: every writer (`FXPreset.apply` from a decoded preset, the FX panel
-        // field, the now NaN-safe morph) delivers a finite value; closed on the #588 boundary
-        // rule. Guard: `TheCompressorCannotLatchANonFiniteThresholdTests`.
+        // A NON-FINITE TARGET HOLDS THE STATE — a hold of `grState` like the input bail's, for
+        // a bad CONTROL instead of a bad sample (`env` keeps tracking the finite input). A NaN
+        // `thresholdDb` makes `over` NaN, both knee comparisons fail into the `else`, and the
+        // release branch wrote `grState = NaN` for good. A −inf threshold made the target −inf;
+        // `grState` followed it for one sample, and the next sample's release update computed
+        // (−inf) − (−inf) = NaN — the same latch one sample later, while the bad threshold was
+        // still set. A huge FINITE (or +inf) `kneeDb` reaches it too: `x * x` overflows in the
+        // knee branch to a −inf target (ratio > 1) or 0·inf = NaN (ratio 1), and a decoded
+        // preset carries `kneeDb` unclamped (`FXPreset.apply`). The threshold half is LATENT
+        // (JSON cannot carry NaN/inf; the FX panel field is ranged; the morph is NaN-safe in
+        // its amount); the knee half is reachable from a hand-edited preset. Closed on the
+        // #588 boundary rule. Guard: `TheCompressorCannotLatchANonFiniteThresholdTests`.
         if target.isFinite {
             if target < grState {
                 grState += (target - grState) * attackCoeff
