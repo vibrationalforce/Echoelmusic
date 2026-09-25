@@ -250,6 +250,11 @@ struct TrackInspectorView: View {
                         openDeviceButton
                     }
                 }
+                // What this Echoel is set to — genre and FX character, read-only, from the
+                // instrument's own keys (`EchoelInstanceLine`; the inspector owns no persistence).
+                if controls.role == .echoelInstrument {
+                    EchoelInstanceLine()
+                }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Name")
