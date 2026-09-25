@@ -28,7 +28,10 @@
 // (voice frequency NaN or +inf) and claim 2 (mirror took the NaN table) are REGRESSIONS, two
 // findings from one missing gate. Claim 1's −inf row is green on the parent too: `pow(2, −inf)` is
 // 0, a finite 0 Hz voice (not silent — frozen phases give a DC offset shaped by the envelope, a
-// thump) — the row stays because the gate must refuse it all the same. Claim 3 is a COUNTERWEIGHT (a finite table still retunes), green on both.
+// thump) — the row stays because the gate must refuse it all the same. Claim 3 is a
+// COUNTERWEIGHT (a finite table still retunes), green on both. Claim 4 (the sub) is graded against
+// ITS parent `fe7865a14`: a REGRESSION there (the sub latched the NaN table), green after
+// `d371e45b9`.
 
 import Foundation
 import XCTest
