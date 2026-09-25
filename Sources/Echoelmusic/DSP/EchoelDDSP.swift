@@ -2805,7 +2805,9 @@ public final class EchoelPolyDDSP: @unchecked Sendable {
         // `noteOn`'s `baseFreq` non-finite for that pitch class; the voice's smoothed frequency
         // and phases went NaN, and the voice's OWN output guard (`EchoelDDSP.render`) zeroed its
         // buffer — every note on that pitch class was silent. The other voices played on, but
-        // quieter: `polyMakeupTarget` counts the silent voice while it is held. A
+        // quieter: the render's `soundingVoices` counter (fed to `polyMakeupTarget`) gates on
+        // `amplitude`, not on output, so it counted every silent copy (each unison and Oktaver
+        // voice) while held AND through its release tail. A
         // reused slot that is still ringing keeps its phases (`hardReset: false`), so the NaN
         // outlived the note. (⛔ Review 13: the first version said the poly MIX guard zeroed
         // every sample — the per-voice guard runs first, so the scope was one pitch class.)

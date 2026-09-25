@@ -7,11 +7,11 @@
 // non-finite entry — but the studio calls the primary voices DIRECTLY, past the rack's gate. A NaN
 // or +inf entry made `noteOn`'s `baseFreq` non-finite for that pitch class; the voice's smoothed
 // frequency and phases went NaN, and the voice's own output guard zeroed it: every note on that
-// pitch class was silent (the other voices played on, quieter while it was held, because
-// `polyMakeupTarget` counted it). The `uiTuningCents` mirror took the bad table
+// pitch class was silent (the other voices played on, quieter until its envelope went idle,
+// because the render's voice counter fed to `polyMakeupTarget` counted it). The `uiTuningCents` mirror took the bad table
 // too. (⛔ review 13 corrected "the poly mix guard zeroed every sample" — the scope was one pitch
 // class, not the bus.) `SubBassVoice.setTuningCents` was size-only on the same direct path; there
-// a NaN entry played at `minHz` (off-pitch, not silent) because `feltFrequency` guards it. Closed
+// a non-finite entry (NaN or ±inf) played at `minHz` (off-pitch, not silent) because `feltFrequency` guards it. Closed
 // in the follow-up commit; claim 4 pins it through the Debug seam `lastTuningCentsForTests` (the
 // blocking bundle builds Debug, `SubBassFollowsTheToneSystemTests` uses the same seam).
 // Found by tonight's read-only sticky-NaN sweep (its candidate 2).
