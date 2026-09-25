@@ -135,6 +135,83 @@ public enum MIDIImport {
         timeline.addLane(kind: .midi)
     }
 
+    // MARK: - The empty part (Phase 3 / M1b — "New MIDI Part")
+
+    /// Bars in a part made by "New MIDI Part": four, the length most MIDI hosts give a new
+    /// pattern. The grid scrolls, so this is a starting length, not a ceiling.
+    public static let emptyPartBars = 4
+
+    /// An EMPTY part for the user's own notes — the import's decision without a file: the same
+    /// lane (the roll lane, `firstImportableMIDILane`, #416), the same refusals, the same
+    /// ownership (`composerOwned: false`, so evolve never rewrites what the user writes into it).
+    ///
+    /// ⭐ WHY IT EXISTS: until this row the note editor (`PartNoteEditor`) could only open a part
+    /// that a MIDI FILE had made, so on a fresh install it had nothing to edit.
+    ///
+    /// ⭐ AN ORPHANED EMPTY USER CLIP IS REUSED, for the reason `ensureComposerRegion` reuses its
+    /// own: nothing clears a slot, and an Undo removes the region but leaves the clip, so every
+    /// New → Undo would otherwise spend one of the eight slots for good. Only an EMPTY, user-owned
+    /// MIDI clip that NO region plays qualifies — a clip with notes is someone's music and is
+    /// never overwritten. Reuse keeps the clip's id; the Redo that could bring its old part back
+    /// is cleared by the new part's own undo step (`TimelineStore.pushUndo`).
+    ///
+    /// ⚠️ IT STARTS ON A BAR: after the lane's last part, rounded up to the next barline, so the
+    /// grid's first column is a downbeat even when a trimmed part ends mid-bar.
+    public static func planEmptyPart(document: TimelineDocument,
+                                     slots: [Clip?]) -> Result<Landing, Failure> {
+        guard let lane = firstImportableMIDILane(in: document) else { return .failure(.noMIDILane) }
+        let name = "MIDI · \(lane.name)"
+        let played = Set(document.regions.map(\.clipID))
+        let clip: Clip
+        let slot: Int
+        if let reuse = slots.firstIndex(where: { candidate in
+               guard let c = candidate else { return false }
+               return c.kind == .midi && !c.composerOwned
+                   && (c.melody?.notes.isEmpty ?? true) && !played.contains(c.id)
+           }),
+           var reused = slots[reuse] {
+            reused.name = name
+            reused.melody = MelodyClip(notes: [])
+            clip = reused
+            slot = reuse
+        } else if let free = slots.firstIndex(where: { $0 == nil }) {
+            clip = Clip(name: name, colorIndex: free, kind: .midi,
+                        melody: MelodyClip(notes: []), composerOwned: false)
+            slot = free
+        } else {
+            return .failure(.clipGridFull)
+        }
+        let bar = TimelineTime.ticksPerBar
+        let end = document.nextStartTick(inLane: lane.id)
+        let start = ((Swift.max(0, end) + bar - 1) / bar) * bar
+        let region = TimelineRegion(laneID: lane.id, clipID: clip.id,
+                                    startTick: start, lengthTicks: emptyPartBars * bar)
+        return .success(Landing(clip: clip, region: region, slotIndex: slot, laneID: lane.id,
+                                skippedDrumNotes: 0, heldForOneBar: 0))
+    }
+
+    /// The sentence after "New MIDI Part": where it landed, and how to write into it.
+    public static func emptyPartNote(laneName: String) -> String {
+        "Added an empty \(emptyPartBars)-bar part on \(laneName). Tap Notes to write into it."
+            + " Plays at the song tempo, with the instrument stopped."
+    }
+
+    /// Plan, then write — clip FIRST, region SECOND, `commit`'s order and reason. ONE undo step
+    /// (the region add); nothing is written on a refusal.
+    @MainActor
+    @discardableResult
+    public static func addEmptyPart(clipStore: ClipStore,
+                                    timeline: TimelineStore) -> Result<Landing, Failure> {
+        switch planEmptyPart(document: timeline.document, slots: clipStore.slots) {
+        case .failure(let failure):
+            return .failure(failure)
+        case .success(let landing):
+            clipStore.setClip(at: landing.slotIndex, landing.clip)  // FIRST
+            timeline.addRegion(landing.region)                      // SECOND
+            return .success(landing)
+        }
+    }
+
     /// True when a NEW composer region over `[0, windowTicks)` on this lane would shadow a user
     /// part — i.e. a region starts inside that window and its clip EXISTS and is not
     /// composer-owned. A region whose clip is missing is inaudible, so it has nothing to shadow

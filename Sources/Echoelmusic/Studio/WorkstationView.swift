@@ -343,6 +343,9 @@ struct WorkstationView: View {
             // "add a MIDI track first" names the row directly above Import MIDI.
             addMIDITrackRow
             importMIDIRow
+            // Phase 3 / M1b — an EMPTY part for the note editor, so writing notes does not
+            // need a MIDI file. Same lane and refusals as Import MIDI (`MIDIImport`).
+            newMIDIPartRow
             if let note = importNote { importNoteLine(note) }
             // WA4 Acceptance Test A inside the workspace: create → import → SAVE → reopen
             // without leaving the plate. The row owns no Studio state; it opens the Studio's
@@ -421,7 +424,7 @@ struct WorkstationView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("No tracks yet")
                 .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
-            Text("Tap Add Audio Track, then Import Audio — or Add MIDI Track, then Import MIDI. The file becomes a part you can play.")
+            Text("Tap Add Audio Track, then Import Audio — or Add MIDI Track, then Import MIDI or New MIDI Part. Each becomes a part you can play.")
                 .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -430,7 +433,7 @@ struct WorkstationView: View {
         // One spoken sentence rather than two fragments — VoiceOver would otherwise read the
         // heading and the explanation as unrelated items.
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("No tracks yet. Tap Add Audio Track, then Import Audio — or Add MIDI Track, then Import MIDI. The file becomes a part you can play.")
+        .accessibilityLabel("No tracks yet. Tap Add Audio Track, then Import Audio — or Add MIDI Track, then Import MIDI or New MIDI Part. Each becomes a part you can play.")
     }
 
     private func songLine(_ summary: WorkstationSummary) -> some View {
@@ -912,6 +915,44 @@ struct WorkstationView: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Import MIDI file")
         .accessibilityHint("Adds a MIDI file's notes to the song's first MIDI track")
+    }
+
+    /// Phase 3 / M1b — "New MIDI Part": an empty part on the MIDI track, selected at once so the
+    /// part bar and the note editor below the canvas open on it. The stores are handed to
+    /// `MIDIImport.addEmptyPart`, never messaged (claim F); selecting reads only `document`.
+    ///
+    /// ⚠️ NEVER DISABLED, for `importMIDIRow`'s reason: a missing track or a full clip grid is
+    /// known to the plan, and each refusal says so in words on the one note line.
+    private var newMIDIPartRow: some View {
+        Button {
+            importNote = nil
+            tuningPending = nil
+            switch MIDIImport.addEmptyPart(clipStore: clipStore, timeline: timeline) {
+            case .success(let landing):
+                selection.selectRegion(landing.region.id, in: timeline.document)
+                let laneName = timeline.document.lanes
+                    .first { $0.id == landing.laneID }?.name ?? "the MIDI track"
+                importNote = MIDIImport.emptyPartNote(laneName: laneName)
+            case .failure(let failure):
+                importNote = failure.userMessage
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "square.grid.3x3")
+                    .font(.system(size: 13, weight: .semibold))
+                Text("New MIDI Part").font(EchoelTheme.font(13, .semibold))
+            }
+            .foregroundStyle(EchoelTheme.text)
+            .padding(.horizontal, 14)
+            .frame(minWidth: 92, minHeight: 44)
+            .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
+            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                .strokeBorder(EchoelTheme.border, lineWidth: 1))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("New MIDI part")
+        .accessibilityHint("Adds an empty four-bar part to the song's first MIDI track and selects it")
     }
 
     /// S2 — run the MIDI import and say what happened. `handleImport`'s shape without the
