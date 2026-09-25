@@ -15,8 +15,9 @@
 // THE REPAIR. `amount.clamped(to: 0...1)`: NaN reads as 0 (this preset); every other value,
 // ±inf included, is unchanged.
 //
-// WHAT KIND OF GREEN (§1): BEHAVIOUR of the shipped value type (`morphed` is internal, hence
-// `@testable`).
+// WHAT KIND OF GREEN (§1): BEHAVIOUR of the shipped value type. (⛔ This line gave "`morphed` is
+// internal" as the reason for `@testable` until review 10: it sits in `public extension
+// FXPreset`, so it is public. The import stays as the bundle's convention, not a necessity.)
 //
 // ⚠️ HONEST GRADING — TRANSCRIBED (§0), no local toolchain. On the parent `fc116b337`, claim 1
 // is RED: the fields come back as NaN and the switches pick the target. That is one finding.
