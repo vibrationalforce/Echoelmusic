@@ -36,6 +36,9 @@
 // DEFECT they target was driven in Python on the parent's arithmetic (anchor never written,
 // 0.25 default, 0…0.9 clamp): a host value of 0.9 read back 0.25 after one neutral tick.
 // Claim 8 is a REGRESSION: its three anchors are absent in the parent.
+// Claim 9 (review, 2026-09-25) is a REGRESSION too: before the rising-edge reset in
+// `renderSpace`, a tank frozen at mix 0 replayed its tail when the mix rose. Its
+// counterweight (the tank held energy) is green on both trees.
 
 import Foundation
 import XCTest
@@ -157,6 +160,51 @@ final class TheBodyVibeReverbIsHeardAndAnchoredTests: XCTestCase {
         var maxDelta: Float = 0
         for i in 0..<wet.samples.count { maxDelta = max(maxDelta, abs(wet.samples[i] - dry.samples[i])) }
         XCTAssertLessThanOrEqual(maxDelta, 1e-6, "mix 0 changed the output by \(maxDelta)")
+    }
+
+    /// 9 — a mix that returns from 0 starts from a silent room, not from the tail it froze.
+    ///
+    /// WA3.3 review (2026-09-25): at mix 0 `processStereo` returns before touching a comb, so
+    /// the tank kept its old tail and the next rise played it back. The counterweight proves
+    /// the tank really held energy — without it, "silent after the rise" would be vacuous.
+    /// Only the rise through 0 is under test: the input is silent after the fill, so anything
+    /// the stage emits in the first block is the tank.
+    func testAMixReturningFromZeroStartsFromASilentRoom() {
+        func firstBlockAfterRise(crossingZero: Bool) -> Float {
+            let (synth, _) = engines()
+            let reverb = EchoelReverb(sampleRate: 48000)
+            let block = 512
+            var left = [Float](repeating: 0, count: block)
+            var right = [Float](repeating: 0, count: block)
+            func pass(_ input: (Int) -> Float) {
+                for i in 0..<block { left[i] = input(i) }
+                left.withUnsafeMutableBufferPointer { l in
+                    right.withUnsafeMutableBufferPointer { r in
+                        EchoelBodyVibeDevice.renderSpace(reverb, synth: synth,
+                                                         left: l, right: r, count: block)
+                    }
+                }
+            }
+            synth.reverbMix = 0.8
+            for b in 0..<20 { pass { i in 0.5 * sinf(Float(b * block + i) * 0.05) } }
+            if crossingZero {
+                synth.reverbMix = 0
+                for _ in 0..<10 { pass { _ in 0 } }
+            }
+            synth.reverbMix = 0.5
+            pass { _ in 0 }
+            var peak: Float = 0
+            for i in 0..<block { peak = max(peak, abs(left[i]), abs(right[i])) }
+            return peak
+        }
+        let held = firstBlockAfterRise(crossingZero: false)
+        XCTAssertGreaterThan(held, 1e-3, "the tank held no tail — the claim below would be vacuous")
+        let risen = firstBlockAfterRise(crossingZero: true)
+        XCTAssertLessThanOrEqual(risen, 1e-6, """
+            After the mix sat at 0 and rose again, the stage emitted \(risen) from a silent input. \
+            That is the tail frozen at mix 0 being played back — `renderSpace` must reset the \
+            tank on the rising edge, as `EchoelFXChain` does on its reverb enable edge.
+            """)
     }
 
     /// 7 (G) — every creative host parameter has a runtime binding, and a missing one THROWS.

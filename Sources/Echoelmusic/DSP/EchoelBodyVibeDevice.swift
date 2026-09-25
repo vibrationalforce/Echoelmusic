@@ -180,11 +180,23 @@ public enum EchoelBodyVibeDevice {
     /// tanks are pre-allocated in its `init` (the same stage the app's FX chain runs on its
     /// audio thread). No allocation, lock, dictionary, string, actor or I/O. At mix 0,
     /// `processStereo` returns its input unchanged, so `left == right ==` the dry synth.
+    ///
+    /// ⭐ THE RISING EDGE STARTS FROM SILENCE (WA3.3 review, 2026-09-25). At mix 0
+    /// `processStereo` returns before it touches a comb, so the tank FREEZES with whatever tail
+    /// it held — and the next mix above 0 played that stale tail back, minutes later if the
+    /// host left the knob at 0 that long. The app's FX chain never has this: it resets the
+    /// reverb on its enable edge (`EchoelFXChain.reverbEnabled`). This is the same edge, read
+    /// off the mix. `reset()` zero-fills the pre-allocated tanks in place — no allocation —
+    /// and runs once per rise, not per block. `!(old > 0)` also counts a NaN as "was off".
+    /// It runs ON the render thread, the tank's only reader, so the #1196b window in which
+    /// `reset()` holds a tank as empty storage has no second party here.
     @inline(__always)
     public static func renderSpace(_ reverb: EchoelReverb, synth: EchoelDDSP,
                                    left: UnsafeMutableBufferPointer<Float>,
                                    right: UnsafeMutableBufferPointer<Float>, count: Int) {
-        reverb.mix = synth.reverbMix
+        let next = synth.reverbMix
+        if !(reverb.mix > 0) && next > 0 { reverb.reset() }
+        reverb.mix = next
         let n = Swift.min(count, Swift.min(left.count, right.count))
         guard n > 0 else { return }
         for i in 0..<n {
