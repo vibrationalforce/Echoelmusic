@@ -74,10 +74,10 @@ final class CameraCapture: NSObject, @unchecked Sendable {
     ///
     /// ⛔ THE AUDIT THAT FOUND THIS POINTED AT THE WRONG PROPERTY, and the difference decides
     /// whether the code is reachable at all. `device.hasTorch` is HARDWARE: every iPhone ever
-    /// shipped has one, and `project.yml` pins `TARGETED_DEVICE_FAMILY: "1"` (phone only,
-    /// `DeviceFamilyIsPhoneOnlyTests`). So the `hasTorch == false` branch cannot execute on
-    /// what we ship — it is the iPad question, and CLAUDE.md already keeps it as the reason
-    /// iPad is not a target.
+    /// shipped has one, and `project.yml` pins the device family to phone only (the value
+    /// lives there and in `DeviceFamilyIsPhoneOnlyTests`). So the `hasTorch == false`
+    /// branch cannot execute on what we ship — it is the iPad question, and CLAUDE.md
+    /// already keeps it as the reason iPad is not a target.
     ///
     /// `isTorchAvailable` is the RUNTIME property, and it goes false when the phone is too hot
     /// — the exact condition this file already fights, since `thermalTorchLevel()` steps the
