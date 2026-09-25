@@ -46,9 +46,11 @@ Launch `audio-thread-reviewer` agent on all DSP/Audio files:
 - `Sources/Echoelmusic/DSP/**/*.swift`
 - `Sources/Echoelmusic/Audio/**/*.swift`
 - `Sources/Echoelmusic/Tools/**/*.swift`   (PolySynthVoice, SubBassVoice — real render paths)
+- `Sources/EchoelmusicAUv3/**/*.swift`      (the AUv3 `internalRenderBlock` — revived #1385)
 
-(The old list named two paths that no longer exist. `Sources/EchoelmusicAUv3/**` was deleted
-with the AUv3 removal, #121 Slice 1 (`5ef8856`). `Sources/EchoelVoice/**` does not exist either,
+(⛔ Until 2026-09-25 this note said `Sources/EchoelmusicAUv3/**` "no longer exists" and the path
+was missing from the list, so the one `AUAudioUnit` render block in the repo went unscanned. It
+was deleted with the AUv3 removal, #121 Slice 1 (`5ef8856`), and REVIVED by #1385 (2026-09-20). `Sources/EchoelVoice/**` does not exist either,
 but NOT for that reason — it has no source history in this checkout at all; it was a
 Tuist-declared target that went with Tuist, separately and earlier, see
 `docs/dev/APP_STORE_CONNECT.md`. Either way an agent scanning them reported "clean" for nothing.

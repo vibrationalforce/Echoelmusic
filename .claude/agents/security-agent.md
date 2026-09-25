@@ -41,6 +41,15 @@ HealthKit compliance, and audio plugin safety.
   `Tools/PolySynthVoice.swift`, `Sequencer/SamplerVoice.swift`) against the two render-thread
   rules above; the parameter-range law for everything else is `clamped(to:)` at the DSP
   boundary (`Core/FloatingPointClamp.swift`).
+- ⭐ **AND BOTH ⛔ BULLETS ABOVE ARE STALE SINCE #1385 (2026-09-20; noted 2026-09-25).** The AUv3
+  instrument extension is back: `git grep -nE ": *AUAudioUnit\b" -- Sources` → 1
+  (`Sources/EchoelmusicAUv3/EchoelmusicAudioUnit.swift`). The three struck checks apply again and
+  each has a real subject: `sandboxSafe: true` in `project.yml`'s AudioComponents; `fullState`
+  sanitisation (`AUv3StateContract.restorableValues`, and `ParameterDescriptor.admitted` for
+  host writes); parameter ranges in the tree (`EchoelBodyVibeAUv3Mapping`). Also check that
+  runtime bio values never reach saved state (`AUv3StateContract`, WA3.1) and that
+  `pullSharedVitals` refuses `egressAllowed == false`. Audit its `internalRenderBlock` with the
+  `AVAudioSourceNode` closures.
 
 ### 4. Input Validation
 - All user inputs validated at system boundaries

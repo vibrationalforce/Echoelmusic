@@ -25,8 +25,13 @@ For DSP/Audio tests:
 
 For the render path (⛔ "For AUv3 tests" until #1112, "for the one in-process audio unit"
 until #1306):
-- There is no AUv3 target (removed 2026-07-24, #121 Slice 2) and no parameter tree, factory
-  preset or `fullState` to test — those four bullets tested nothing.
+- ⭐ The AUv3 target is BACK (#1385, 2026-09-20) — the sentence here said it was gone until
+  2026-09-25. Its parameter tree, factory presets and `fullState` are real subjects again, and
+  the testable halves live in `DSP/`/`Core/` (the extension cannot be instantiated in the test
+  bundle): `EchoelBodyVibeDevice` (descriptors, `seed`, `apply`, `renderSpace`),
+  `EchoelBodyVibeAUv3Mapping`, `AUv3StateContract`. Copy
+  `Tests/CISmoke/TheBodyVibeKnobsMoveTheSoundTests.swift` (rendered audio per knob) or
+  `Tests/CISmoke/TheHostValueIsAdmittedOnceTests.swift` (host values → one admission rule).
 - ⛔ The 2026-08 repair named `MonitorInsertAudioUnit` (`Audio/MonitorInsertAU.swift`) and told
   you to copy a guard that was deleted with it —
   `Tests/CISmoke/TheMonitorInsertCarriesTheNeutralChainTests.swift` was removed by #1302
