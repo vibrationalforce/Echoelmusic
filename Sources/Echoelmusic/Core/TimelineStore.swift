@@ -278,7 +278,8 @@ public final class TimelineStore {
     /// unchanged list returns true without a step. A clip shown by several parts changes in
     /// all of them: parts are windows onto one clip (the editor says so).
     ///
-    /// Heard from the part's NEXT onset: `TimelineRegionPlayer` re-reads the clip there.
+    /// Heard while the song plays: `updateMelody` moves `ClipStore.userMelodyGeneration`, and
+    /// `TimelineRegionPlayer.refreshNoteContent` re-loads what plays on the next step.
     @discardableResult
     public func setClipNotes(clipID: UUID, _ notes: [Note], clips: ClipStore) -> Bool {
         guard let clip = clips.clip(id: clipID), ClipNoteEdit.acceptsEdits(clip) else {

@@ -119,6 +119,9 @@ public final class TimelineRegionPlayer {
     @ObservationIgnored private weak var pattern: PatternEngine?
     @ObservationIgnored private weak var pianoRoll: PianoRollModel?
     @ObservationIgnored private weak var clips: ClipStore?
+    /// The `ClipStore.userMelodyGeneration` this session's loaded notes reflect (see
+    /// `refreshNoteContent`). Taken at `play`, advanced when a note edit is pulled in.
+    @ObservationIgnored private var seenMelodyGeneration = 0
 
     // MARK: - Multi-roll fan-out (B08) — SECONDARY lanes play their own rack voice.
     // The PRIMARY lane keeps the rich PianoRollModel above; every ADDITIONAL non-bio
@@ -562,6 +565,7 @@ public final class TimelineRegionPlayer {
         else { return }
         self.doc = document
         self.clips = clips
+        self.seenMelodyGeneration = clips.userMelodyGeneration   // Play loads the current notes
         self.pattern = pattern
         self.pianoRoll = pianoRoll
         self.rollLane = document.rollLaneID
@@ -683,6 +687,8 @@ public final class TimelineRegionPlayer {
         // play()-time snapshot until Stop+Play while the UI showed a different
         // arrangement. Runs BEFORE this step's window so the edit sounds this step.
         refreshStructure()
+        // Phase 3 / M1: pull NOTE edits in too — they change a clip, not the document.
+        refreshNoteContent()
         var newTick = cursor.advance(step: step)
         var wrapped = false
         if loopTicks > 0, newTick >= loopTicks {
@@ -1075,6 +1081,32 @@ public final class TimelineRegionPlayer {
         }
         audioLanes?.prime(in: doc, atTick: lastTick, bpm: pattern?.tempo ?? Self.fallbackTempo)
         log.log(.info, category: .audio, "timeline: structure edit pulled into playback at tick \(lastTick)")
+    }
+
+    /// Phase 3 / M1 review: a note edit (the Workstation's note editor, or its Undo/Redo)
+    /// writes the CLIP through `ClipStore.updateMelody` and leaves the document untouched, so
+    /// `refreshStructure` returns at its equality gate — and a part active on both sides of a
+    /// song-loop wrap reads `.unchanged` forever. Imported MIDI is exactly that shape (one part
+    /// spanning the loop), so an edit was silent until Stop + Play. When a user note write
+    /// happened since the last step, re-load what plays at the current position through the
+    /// SAME chase paths a structure edit uses: the roll region (or its launched content) and
+    /// the secondary lanes. Idle cost is one integer compare per step; the composer's own
+    /// writes do not move the counter, so an evolve never restages through here.
+    private func refreshNoteContent() {
+        guard let generation = clips?.userMelodyGeneration,
+              generation != seenMelodyGeneration else { return }
+        seenMelodyGeneration = generation
+        if let lane = rollLane, launch.isOverriding(laneID: lane) {
+            reapplyLaunched(laneID: lane, atTick: lastTick)
+        } else {
+            loadedRegionID = nil
+            loadRollRegion(at: lastTick)
+        }
+        primeSecondaryLanes(at: lastTick)
+        for laneID in launch.overriddenLaneIDs where laneID != rollLane {
+            reapplyLaunched(laneID: laneID, atTick: lastTick)
+        }
+        log.log(.info, category: .audio, "timeline: note edit pulled into playback at tick \(lastTick)")
     }
 
     /// Release every sounding secondary voice and clear the fan-out state (stop/reset).

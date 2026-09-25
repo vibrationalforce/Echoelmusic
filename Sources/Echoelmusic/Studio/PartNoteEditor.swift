@@ -6,7 +6,8 @@
 //  in it — `PianoRollView` went with #475 and nothing replaced it. This is the note editor for
 //  the part selected on the Arrange canvas, inline under its part bar: see the part's notes,
 //  tap an empty cell to add one, tap a note to select it, delete the selection, and take any of
-//  it back with the Workstation's one Undo.
+//  it back with the Workstation's one Undo. An edit is heard from the next step while the song
+//  plays (`TimelineRegionPlayer.refreshNoteContent`), not only from the part's next start.
 //
 //  ⭐ ONE OWNER, ONE WRITER, ONE HISTORY. The notes are the clip's (`ClipStore`,
 //  `Clip.melody.notes`); the part is a window onto them (`ClipNoteEdit`). Every edit builds the
@@ -18,6 +19,9 @@
 //  marquee — M2), no velocity, quantize or transpose (M3), no scale lock (M4), no playhead, and
 //  the grid is touch-only — VoiceOver hears its summary, not the cells. A composer-owned part is
 //  shown and not edited (evolve rewrites it); a part saved before tick offsets is not shown.
+//  The rows centre ONCE per opened part (`@State centre`) and never follow the notes, so an
+//  add or an undo cannot move a row under the finger. Delete acts only on selected notes that
+//  are ON SCREEN — a note scrolled out by Lower/Higher is never removed unseen.
 //
 //  Cold reads only: the selection, `timeline.document` and the clip grid change on a tap, an
 //  import or a composer evolve (~25–45 s) — never on a clock. No transport, tempo or playhead is
@@ -81,6 +85,8 @@ private struct PartNoteGrid: View {
     @Environment(ClipStore.self) private var clipStore
     @State private var picked: RollSelection = .none
     @State private var octaveShift = 0
+    /// The pitch the rows centre on — taken when the grid first draws, then held.
+    @State private var centre: Int?
 
     private static let stepWidth: CGFloat = 22
     private static let rowHeight: CGFloat = 14
@@ -95,10 +101,15 @@ private struct PartNoteGrid: View {
                     let visible = ClipNoteEdit.visibleNotes(clip.melody?.notes ?? [],
                                                             offsetTicks: offset,
                                                             lengthTicks: region.lengthTicks)
-                    let steps = ClipNoteEdit.stepCount(lengthTicks: region.lengthTicks)
-                    let range = ClipNoteEdit.pitchRange(of: visible, octaveShift: octaveShift)
+                    let steps = ClipNoteEdit.columnCount(lengthTicks: region.lengthTicks,
+                                                         visible: visible)
+                    let heldCentre = centre ?? ClipNoteEdit.centrePitch(of: visible)
+                    let range = ClipNoteEdit.pitchRange(centre: heldCentre, octaveShift: octaveShift)
                     let editable = refusal == nil
-                    let pickedCount = visible.filter { picked.contains($0.id) }.count
+                    let pickedOnScreen = Set(visible.filter {
+                        range.contains($0.pitch) && picked.contains($0.id)
+                    }.map(\.id))
+                    let pickedCount = pickedOnScreen.count
                     ScrollView(.horizontal, showsIndicators: true) {
                         grid(visible: visible, steps: steps, range: range)
                             .contentShape(Rectangle())
@@ -112,8 +123,9 @@ private struct PartNoteGrid: View {
                                 ? "Touch only in this version: tap an empty cell to add a note, tap a note to select it"
                                 : "Shown, not edited")
                     }
-                    controls(range: range, pickedCount: pickedCount, editable: editable,
+                    controls(range: range, picked: pickedOnScreen, editable: editable,
                              region: region)
+                        .onAppear { if centre == nil { centre = heldCentre } }
                     if editable {
                         Text(hint(sharedBy: document.regions.filter { $0.clipID == region.clipID }.count))
                             .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
@@ -128,7 +140,7 @@ private struct PartNoteGrid: View {
     }
 
     private func hint(sharedBy parts: Int) -> String {
-        let heard = "A change is heard from the next time the part starts."
+        let heard = "A change plays the next time the playhead reaches it."
         guard parts > 1 else { return heard }
         return "This clip plays in \(parts) parts — a change edits all of them. " + heard
     }
@@ -203,13 +215,7 @@ private struct PartNoteGrid: View {
         }
     }
 
-    private func deletePicked(region: TimelineRegion) {
-        let ids: Set<UUID>
-        switch picked {
-        case .none: ids = []
-        case .single(let id): ids = [id]
-        case .group(let group): ids = group
-        }
+    private func deletePicked(_ ids: Set<UUID>, region: TimelineRegion) {
         guard !ids.isEmpty, let clip = clipStore.clip(id: region.clipID) else { return }
         let remaining = ClipNoteEdit.removing(ids, from: clip.melody?.notes ?? [])
         if timeline.setClipNotes(clipID: region.clipID, remaining, clips: clipStore) {
@@ -219,9 +225,10 @@ private struct PartNoteGrid: View {
 
     // MARK: - Controls
 
-    private func controls(range: ClosedRange<Int>, pickedCount: Int, editable: Bool,
+    private func controls(range: ClosedRange<Int>, picked: Set<UUID>, editable: Bool,
                           region: TimelineRegion) -> some View {
-        HStack(spacing: 6) {
+        let pickedCount = picked.count
+        return HStack(spacing: 6) {
             button("Lower", "chevron.down", enabled: range.lowerBound > 0,
                    label: "Show the octave below") { octaveShift -= 1 }
             button("Higher", "chevron.up", enabled: range.upperBound < 127,
@@ -230,7 +237,7 @@ private struct PartNoteGrid: View {
                 button("Delete", "trash", enabled: pickedCount > 0,
                        label: pickedCount == 1 ? "Delete the selected note"
                                                : "Delete the \(pickedCount) selected notes") {
-                    deletePicked(region: region)
+                    deletePicked(picked, region: region)
                 }
             }
         }

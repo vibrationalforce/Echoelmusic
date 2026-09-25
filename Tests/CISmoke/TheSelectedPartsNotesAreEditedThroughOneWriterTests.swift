@@ -17,6 +17,15 @@
 // 3. SOURCE: `ClipStore.updateMelody` is called from the store alone; the editor writes through
 //    `setClipNotes` and nothing else, reads no transport, tempo or playhead, owns no persistence
 //    and no modal, and is mounted once, under the part bar.
+// 4. THE M1 REVIEW (independent ui-state review of 4781cbc0d, five findings, all repaired here):
+//    (1) a note edit changes the CLIP, not the document, so the structure chase never saw it and
+//    a part spanning the loop — every imported MIDI song — kept its Play-time notes until Stop:
+//    `ClipStore.userMelodyGeneration` now moves on every user note write (not the composer's)
+//    and `TimelineRegionPlayer.refreshNoteContent` re-loads on the next step (counter:
+//    END-TO-END over the real store; the player's call order: SOURCE — the player needs a live
+//    engine no test bundle can build); (2) the rows centre once per opened part; (3) the legacy
+//    refusal no longer says "shown"; (4) a note rounding past the part's last step gets a
+//    column; (5) Delete acts only on picked notes that are on screen. (2) and (5) are SOURCE.
 //
 // Grading (§0, no Swift toolchain in a web session): claims 1–2 were transcribed into Python
 // over models of `ClipNoteEdit`, `RegionNoteWindow.windowed/effectiveOffsetTicks`, `Note`'s
@@ -26,10 +35,11 @@
 // guards this commit moved (the history shape in `TheTrackPartsAreArrangedThroughTheStoreTests`,
 // the caption in `TheWorkstationPlaysTheTimelineTests`) carry their own grading.
 // NOT covered: that the grid renders, that a tap lands on the cell under the finger, that an
-// added note is HEARD at the part's next onset — a device probe, owned by the marker below.
+// added note is HEARD while the song loops — a device probe, owned by the marker below.
 // NEEDS-FOUNDER-VERIFY: Workstation → import a MIDI file → tap its part on the canvas → Notes →
 // tap an empty cell (a note appears), tap it (it lights), Delete, then Undo and Redo under the
-// canvas; play the song and hear the added note from the part's next start.
+// canvas; while the song loops, hear the added note the next time the playhead reaches it
+// (no Stop + Play needed — `TimelineRegionPlayer.refreshNoteContent`).
 
 import Foundation
 import XCTest
@@ -41,6 +51,8 @@ final class TheSelectedPartsNotesAreEditedThroughOneWriterTests: XCTestCase {
     private static let editorPath = "Sources/Echoelmusic/Studio/PartNoteEditor.swift"
     private static let workstationPath = "Sources/Echoelmusic/Studio/WorkstationView.swift"
     private static let storePath = "Sources/Echoelmusic/Core/TimelineStore.swift"
+    private static let playerPath = "Sources/Echoelmusic/Sequencer/TimelineRegionPlayer.swift"
+    private static let clipStorePath = "Sources/Echoelmusic/Core/ClipStore.swift"
     private static let sourcesRoot = "Sources/Echoelmusic"
     private static let step = Note.ticksPerStep
     private static let bar = TimelineTime.ticksPerBar
@@ -130,12 +142,30 @@ final class TheSelectedPartsNotesAreEditedThroughOneWriterTests: XCTestCase {
         XCTAssertEqual(ClipNoteEdit.removing([b.id], from: [a, b, c]), [a, c])
         XCTAssertEqual(ClipNoteEdit.removing([], from: [a, b, c]), [a, b, c])
 
-        XCTAssertEqual(ClipNoteEdit.pitchRange(of: [], octaveShift: 0), 48...72, "C3–C5 when empty")
-        XCTAssertEqual(ClipNoteEdit.pitchRange(of: [], octaveShift: 1), 60...84)
-        XCTAssertEqual(ClipNoteEdit.pitchRange(of: [], octaveShift: -9), 0...24, "floored, not shrunk")
-        XCTAssertEqual(ClipNoteEdit.pitchRange(of: [], octaveShift: 9), 103...127, "capped, not shrunk")
-        XCTAssertEqual(ClipNoteEdit.pitchRange(of: [Note(pitch: 90, startStep: 0)], octaveShift: 0),
-                       78...102, "centred on the part's own notes")
+        XCTAssertEqual(ClipNoteEdit.centrePitch(of: []), 60, "C4 when empty")
+        XCTAssertEqual(ClipNoteEdit.centrePitch(of: [Note(pitch: 90, startStep: 0)]), 90,
+                       "centred on the part's own notes")
+        XCTAssertEqual(ClipNoteEdit.pitchRange(centre: 60, octaveShift: 0), 48...72, "C3–C5")
+        XCTAssertEqual(ClipNoteEdit.pitchRange(centre: 60, octaveShift: 1), 60...84)
+        XCTAssertEqual(ClipNoteEdit.pitchRange(centre: 60, octaveShift: -9), 0...24, "floored, not shrunk")
+        XCTAssertEqual(ClipNoteEdit.pitchRange(centre: 60, octaveShift: 9), 103...127, "capped, not shrunk")
+        XCTAssertEqual(ClipNoteEdit.pitchRange(centre: 90, octaveShift: 0), 78...102)
+    }
+
+    /// M1 review, finding 4: an unquantized note in a part's last half-step rounds to
+    /// `startStep == stepCount`. The player sounds it, so the grid must draw a column for it.
+    func testANoteTheGridWouldRoundPastThePartsEndStillGetsAColumn() {
+        let edge = Note(pitch: 60, startTick: Self.bar - 20, lengthTicks: 20)
+        let visible = ClipNoteEdit.visibleNotes([edge], offsetTicks: 0, lengthTicks: Self.bar)
+        XCTAssertEqual(visible.count, 1, "premise: the player's window keeps it")
+        XCTAssertEqual(visible.first?.startStep, 16, "premise: it rounds past the last column")
+        XCTAssertEqual(ClipNoteEdit.stepCount(lengthTicks: Self.bar), 16)
+        XCTAssertEqual(ClipNoteEdit.columnCount(lengthTicks: Self.bar, visible: visible), 17,
+                       "a column exists to see, select and delete it")
+        XCTAssertEqual(ClipNoteEdit.columnCount(lengthTicks: Self.bar, visible: []), 16)
+        XCTAssertNil(ClipNoteEdit.adding(pitch: 60, step: 16, to: [], offsetTicks: 0,
+                                         lengthTicks: Self.bar),
+                     "the extra column shows; it never creates outside the part")
     }
 
     // MARK: 2 — the real stores
@@ -212,6 +242,29 @@ final class TheSelectedPartsNotesAreEditedThroughOneWriterTests: XCTestCase {
         }
     }
 
+    /// M1 review, finding 1: a note write moves the counter the playing timeline reads; the
+    /// composer's own write does not (it keeps its delivery, and an evolve must not restage).
+    func testAUserNoteWriteMovesTheCounterThePlayerReads() throws {
+        try withStores { timeline, clips, clipID, _ in
+            let before = clips.userMelodyGeneration
+            XCTAssertTrue(timeline.setClipNotes(clipID: clipID, [Note(pitch: 60, startStep: 0)],
+                                                clips: clips))
+            XCTAssertEqual(clips.userMelodyGeneration, before &+ 1, "one edit, one bump")
+            timeline.undo()
+            XCTAssertEqual(clips.userMelodyGeneration, before &+ 2, "Undo is a note write too")
+            XCTAssertTrue(timeline.setClipNotes(clipID: clipID, [], clips: clips),
+                          "unchanged list accepted")
+            XCTAssertEqual(clips.userMelodyGeneration, before &+ 2, "…and wrote nothing")
+            let composed = Clip(name: "M1 guard composer", kind: .midi,
+                                melody: MelodyClip(notes: []), composerOwned: true)
+            clips.setClip(at: 1, composed)
+            let atComposer = clips.userMelodyGeneration
+            clips.updateComposerMelody(id: composed.id, notes: [Note(pitch: 64, startStep: 0)])
+            XCTAssertEqual(clips.userMelodyGeneration, atComposer,
+                           "the composer's evolve never restages playback through this path")
+        }
+    }
+
     // MARK: 3 — source
 
     func testTheEditorWritesOnlyThroughTheStoreAndReadsColdState() throws {
@@ -236,6 +289,32 @@ final class TheSelectedPartsNotesAreEditedThroughOneWriterTests: XCTestCase {
         let store = try source(Self.storePath)
         XCTAssertEqual(store.components(separatedBy: ".updateMelody(").count - 1, 2,
                        "setClipNotes and the history's own apply — nothing else")
+
+        // Finding 5: Delete acts only on picked notes that are ON SCREEN.
+        XCTAssertTrue(editor.contains("range.contains($0.pitch) && picked.contains($0.id)"),
+                      "Delete must be scoped to the rows shown — a scrolled-out note is never removed unseen")
+        // Finding 2: the rows centre ONCE per opened part, never on the live notes.
+        XCTAssertTrue(editor.contains("@State private var centre: Int?"),
+                      "ANCHOR MISSING: the held centre")
+        XCTAssertFalse(editor.contains("pitchRange(of:"), "the rows must not follow the live notes")
+
+        // Finding 1: the player pulls a note edit in on the next step.
+        let player = try source(Self.playerPath)
+        guard let step = player.range(of: "public func transportStep(_ step: Int) {"),
+              let structure = player.range(of: "refreshStructure()", range: step.upperBound..<player.endIndex),
+              let notes = player.range(of: "refreshNoteContent()", range: step.upperBound..<player.endIndex),
+              let advance = player.range(of: "cursor.advance(step: step)", range: step.upperBound..<player.endIndex)
+        else {
+            return XCTFail("ANCHOR MISSING: transportStep's chase calls (#454)")
+        }
+        XCTAssertLessThan(structure.lowerBound, notes.lowerBound)
+        XCTAssertLessThan(notes.lowerBound, advance.lowerBound,
+                          "note edits are pulled in BEFORE this step's window, like structure edits")
+        XCTAssertTrue(player.contains("self.seenMelodyGeneration = clips.userMelodyGeneration"),
+                      "Play must load the current notes and start the count from there")
+        let clipStore = try source(Self.clipStorePath)
+        XCTAssertTrue(clipStore.contains("@ObservationIgnored public private(set) var userMelodyGeneration"),
+                      "the counter is never observed — a view reading it would churn")
 
         let mounts = try filesMatching { code, _ in code.contains("PartNoteEditor()") }
         XCTAssertEqual(mounts, [Self.workstationPath], "one door, on the Workstation")

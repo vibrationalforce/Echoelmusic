@@ -19,6 +19,14 @@ public final class ClipStore {
     /// Fixed grid of slots; `nil` = empty cell.
     public private(set) var slots: [Clip?]
 
+    /// Counts USER writes of a clip's notes (`updateMelody` — the note editor and its Undo).
+    /// The playing timeline reads it once per transport step and re-loads what it plays when
+    /// it moved: a note edit changes the CLIP, not the song document, so the structure chase
+    /// never sees it, and a part that spans the whole loop would keep its Play-time notes
+    /// until Stop (Phase 3 / M1 review). NOT bumped by `updateComposerMelody` (the composer
+    /// keeps its own delivery) and never observed — a view reading a counter churns.
+    @ObservationIgnored public private(set) var userMelodyGeneration = 0
+
     @ObservationIgnored private let store = AppGroupStore(subdirectory: "Clips")
     @ObservationIgnored private static let fileName = "clips"
 
@@ -73,6 +81,7 @@ public final class ClipStore {
               slots[i]?.kind == .midi else { return false }   // melody is MIDI content only
         slots[i]?.melody = MelodyClip(notes: notes)
         persist()
+        userMelodyGeneration &+= 1
         return true
     }
 

@@ -37,7 +37,7 @@ enum ClipNoteEdit {
             case .composerOwned:
                 return "The composer rewrites this part as it evolves, so its notes are shown, not edited."
             case .legacyOffset:
-                return "This part was saved by an older build; its notes are shown, not edited."
+                return "This part was saved by an older build; its notes cannot be shown or edited here."
             }
         }
     }
@@ -78,6 +78,16 @@ enum ClipNoteEdit {
         return Swift.max(1, (Swift.max(0, lengthTicks) + step - 1) / step)
     }
 
+    /// Columns the GRID draws: the part's steps, widened when a visible note's rounded start
+    /// lands past them. An unquantized note in the last half-step of a part rounds to
+    /// `startStep == stepCount` — the player still sounds it, so the grid must still show it
+    /// (drawn outside the frame it could be neither seen, selected nor deleted — M1 review).
+    /// Creation stays bounded by `adding`, which refuses a step outside the part.
+    nonisolated static func columnCount(lengthTicks: Int, visible: [Note]) -> Int {
+        let lastStart = visible.map(\.startStep).max() ?? -1
+        return Swift.max(stepCount(lengthTicks: lengthTicks), lastStart + 1)
+    }
+
     /// The clip's notes with ONE new note at region-relative `step` and `pitch`: one step long
     /// (shortened to the part's end), velocity 0.8, appended so it draws on top. nil when the
     /// step lies outside the part — nothing the player would skip is created.
@@ -98,11 +108,18 @@ enum ClipNoteEdit {
         clipNotes.filter { !ids.contains($0.id) }
     }
 
-    /// Rows shown: two octaves centred on the part's median pitch (C4 when empty), moved by
-    /// whole octaves, kept inside MIDI 0…127 without shrinking.
-    nonisolated static func pitchRange(of visible: [Note], octaveShift: Int) -> ClosedRange<Int> {
+    /// Where the rows centre when a part's grid opens: its median pitch, C4 when empty. The
+    /// view takes this ONCE and keeps it — recomputing it from the live notes moved the rows
+    /// under the finger after every add, delete and undo, so a second tap on the note just
+    /// placed created one an octave away (M1 review).
+    nonisolated static func centrePitch(of visible: [Note]) -> Int {
+        RollFitMath.medianPitch(of: visible.map(\.pitch), fallback: 60)
+    }
+
+    /// Rows shown: two octaves around `centre`, moved by whole octaves, kept inside MIDI
+    /// 0…127 without shrinking.
+    nonisolated static func pitchRange(centre: Int, octaveShift: Int) -> ClosedRange<Int> {
         let span = 24
-        let centre = RollFitMath.medianPitch(of: visible.map(\.pitch), fallback: 60)
         let low = Swift.min(Swift.max(0, centre - span / 2 + octaveShift * 12), 127 - span)
         return low...(low + span)
     }
