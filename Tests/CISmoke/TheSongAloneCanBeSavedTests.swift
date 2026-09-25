@@ -16,15 +16,19 @@
 // 3. COUNTERWEIGHT: `songHasUserParts` still ignores the composer's own part (the #622 law —
 //    never an empty take under a real name — holds for a plain launch). Its behaviour is driven
 //    end to end in `TheSessionSaveOpensTheSameSongTests`; here the source keeps the gate on it.
+// 4. SOURCE: the Workstation plate carries the same two doors (`WorkstationProjectRow`), gated on
+//    the same facts, raising the Studio's OWN Save alert and Open sheet through the chrome door —
+//    no presentation modifier of its own (the black-screen budget), and a receiver case per post.
 //
 // Grading (§0, no Swift toolchain in a web session): all claims driven in Python against this
-// tree. On the parent (8820621fd) claims 1–2 are red by ABSENCE of `SaveSessionButton` and the
-// new sentence — ONE absence (#486); they are FORWARD guards. Claim 3 is a COUNTERWEIGHT, green
+// tree. On 8820621fd claims 1–2 are red by ABSENCE of `SaveSessionButton` and the new
+// sentence; on c69af8995 claim 4 is red by ABSENCE of `WorkstationProjectRow` — one absence
+// each (#486); all are FORWARD guards. Claim 3 is a COUNTERWEIGHT, green
 // on both. NOT covered: that the tile lights up on the device after an import, and that the
 // Open of a song-only project restores it audibly — device probes.
 // NEEDS-FOUNDER-VERIFY: fresh launch, do NOT press Start → Workstation → Add Audio Track →
-// Import Audio → the Save tile lights → Save → clear the song → Open the saved project → the
-// track and the part come back and play.
+// Import Audio → the plate's Save lights → Save → clear the song → the plate's Open → the saved
+// project → the track and the part come back and play.
 
 import Foundation
 import XCTest
@@ -33,6 +37,7 @@ final class TheSongAloneCanBeSavedTests: XCTestCase {
 
     private static let studioPath = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
     private static let sessionPath = "Sources/Echoelmusic/Core/SessionSaveOpen.swift"
+    private static let workstationPath = "Sources/Echoelmusic/Studio/WorkstationView.swift"
 
     // MARK: 1 — the leaf asks the one predicate
 
@@ -77,6 +82,44 @@ final class TheSongAloneCanBeSavedTests: XCTestCase {
                       "songHasUserParts must still skip the composer's own clip — otherwise a plain launch enables Save on nothing (#622)")
         XCTAssertTrue(session.contains("known.contains($0.clipID) && !composed.contains($0.clipID)"),
                       "songHasUserParts must still require a part whose clip is known and not the composer's")
+    }
+
+    // MARK: 4 — the same two doors on the Workstation plate, through the chrome door
+
+    func testTheWorkstationSavesAndOpensThroughTheStudiosOwnSlots() throws {
+        let view = try code(Self.workstationPath)
+        guard let start = view.range(of: "private struct WorkstationProjectRow: View {"),
+              let end = view.range(of: "private struct PartTempoRow: View {",
+                                   range: start.upperBound..<view.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the WorkstationProjectRow leaf (#454)")
+        }
+        let row = String(view[start.upperBound..<end.lowerBound])
+        for needle in ["let canSave = !pianoRoll.notes.isEmpty",
+                       "|| SessionSaveOpen.songHasUserParts(timeline.document, clips: clips.filledClips)",
+                       "let canOpen = !projects.projects.isEmpty",
+                       "object: \"save\", enabled: canSave", "object: \"open\", enabled: canOpen",
+                       "NotificationCenter.default.post(name: .echoelChromeDoor, object: object)",
+                       ".disabled(!enabled)", ".frame(minWidth: 92, minHeight: 44)"] {
+            XCTAssertTrue(row.contains(needle), "the Workstation's Save/Open row lost `\(needle)`")
+        }
+        for modifier in [".sheet(", ".fullScreenCover(", ".alert(", ".confirmationDialog(", ".popover("] {
+            XCTAssertFalse(row.contains(modifier),
+                           "the row presents `\(modifier)` itself — it must raise the Studio's existing slot")
+        }
+        XCTAssertEqual(view.components(separatedBy: "WorkstationProjectRow()").count - 1, 1,
+                       "the row is mounted once, on the plate")
+
+        let studio = try code(Self.studioPath)
+        guard let receiverStart = studio.range(of: "publisher(for: .echoelChromeDoor)) { note in"),
+              let receiverEnd = studio.range(of: "default: break",
+                                             range: receiverStart.upperBound..<studio.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the chrome-door receiver (#454)")
+        }
+        let receiver = String(studio[receiverStart.upperBound..<receiverEnd.lowerBound])
+        for needle in ["case \"save\":", "showSaveDialog = true", "case \"open\":", "showOpen = true"] {
+            XCTAssertTrue(receiver.contains(needle),
+                          "a posted door with no receiver case is a button that does nothing (#164/#227) — `\(needle)`")
+        }
     }
 
     // MARK: helpers

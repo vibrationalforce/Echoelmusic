@@ -340,6 +340,10 @@ struct WorkstationView: View {
             addMIDITrackRow
             importMIDIRow
             if let note = importNote { importNoteLine(note) }
+            // WA4 Acceptance Test A inside the workspace: create → import → SAVE → reopen
+            // without leaving the plate. The row owns no Studio state; it opens the Studio's
+            // existing Save alert and Open sheet through the chrome door (no new modal).
+            WorkstationProjectRow()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         #if canImport(UniformTypeIdentifiers)
@@ -1011,6 +1015,67 @@ struct WorkstationView: View {
 /// ⚠️ THE DRAFT IS CLEARED WHENEVER THE STORED TEMPO MOVES. A cancelled drag or one that ends
 /// where it began fires no `onCommit`, so without the reset the field would keep showing a
 /// stale draft after a ×2 or a late detection.
+/// WA4 Acceptance Test A inside the workspace — Save and Open for the song, on the plate where
+/// the song is built. Until this row both doors sat only on the instrument plate
+/// (`quickActionRow` / `quickDoorRow`), so the test's middle steps meant leaving the Workstation.
+///
+/// ⭐ IT OWNS NO STUDIO STATE, AND THAT DECIDES THE SHAPE. The Save alert (`showSaveDialog`) and
+/// the Open sheet (`showOpen`) are the Studio's, on its existing modal chain; this leaf posts the
+/// chrome door (`"save"` / `"open"`) and the Studio's receiver raises them — the
+/// `TrackInspectorView.openDeviceButton` shape. No new modal, so the black-screen budget is
+/// untouched, and the Save still goes through `saveProject()` → `withSession`, the ONE capture.
+///
+/// ⚠️ Enabled by the same facts as the Studio's tiles, asked rather than restated (#416): Save by
+/// a composed take (`pianoRoll.notes`) or a song holding the user's parts
+/// (`SessionSaveOpen.songHasUserParts`); Open by a non-empty library. The reads sit in this
+/// leaf's own body — none of them is high-frequency, and none reaches the menu host.
+private struct WorkstationProjectRow: View {
+    @Environment(TimelineStore.self) private var timeline
+    @Environment(ClipStore.self) private var clips
+    @Environment(PianoRollModel.self) private var pianoRoll
+    @Environment(ProjectStore.self) private var projects
+
+    var body: some View {
+        let canSave = !pianoRoll.notes.isEmpty
+            || SessionSaveOpen.songHasUserParts(timeline.document, clips: clips.filledClips)
+        let canOpen = !projects.projects.isEmpty
+        HStack(spacing: 8) {
+            door("Save", systemImage: "tray.and.arrow.down", object: "save", enabled: canSave,
+                 spoken: "Save this session",
+                 hint: "Names the session and saves it, with the song on this plate")
+            door("Open", systemImage: "tray.and.arrow.up", object: "open", enabled: canOpen,
+                 spoken: "Open a saved session",
+                 hint: "Shows your saved sessions. Opening one replaces the song on this plate")
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 10)
+    }
+
+    private func door(_ title: String, systemImage: String, object: String, enabled: Bool,
+                      spoken: String, hint: String) -> some View {
+        Button {
+            NotificationCenter.default.post(name: .echoelChromeDoor, object: object)
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 13, weight: .semibold))
+                Text(title).font(EchoelTheme.font(13, .semibold))
+            }
+            .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)
+            .padding(.horizontal, 14)
+            .frame(minWidth: 92, minHeight: 44)
+            .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
+            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                .strokeBorder(EchoelTheme.border, lineWidth: 1))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .accessibilityLabel(spoken)
+        .accessibilityHint(hint)
+    }
+}
+
 private struct PartTempoRow: View {
     let clip: Clip
     let lockedByWarp: Bool

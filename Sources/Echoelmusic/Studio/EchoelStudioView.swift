@@ -1239,6 +1239,16 @@ struct EchoelStudioView: View {
                     // instrument's editor. Its producer is a leaf that owns no Studio state,
                     // which is exactly what this notification is for.
                     case "sound":   activeMenu = .sound
+                    // WA4 Acceptance Test A — the Workstation's Save/Open row
+                    // (`WorkstationProjectRow`) raises the Studio's OWN Save alert and Open sheet:
+                    // the same slots `quickActionRow`/`quickDoorRow` set, no new modal, and the
+                    // save still goes through `saveProject()` → `withSession`.
+                    case "save":
+                        saveName = session.sessionName(bpm: beatPlayer.pattern.tempo)
+                        showSaveDialog = true
+                    case "open":
+                        openNote = nil
+                        showOpen = true
                     default: break
                     }
                 }
