@@ -16,8 +16,8 @@
 // named three NaN-to-floor helpers (`Core/FXModulation`, `Core/ModulationMatrix`,
 // `Bio/BioNormalizer`). Review 4 found more (`Sequencer/BreathArp`, `Sequencer/FieldAutoPlay`,
 // `Core/MusicalFrame`, `Core/SpectralColor`, and `Sequencer/AutomationLane`, whose helper is
-// named `clamp`). Review 5: they agree on NaN only — +inf lands at 1 in three of them and at 0
-// in the other five. No count stands here on purpose: a uniqueness or count claim needs the
+// named `clamp`). Review 5: they disagree only on +inf — it lands at 1 in three of them and at
+// 0 in the other five; NaN, −inf and every finite value agree (review 6). No count stands here on purpose: a uniqueness or count claim needs the
 // grep, not the memory.)
 // `normalized(_:)`, the inverse, had the same shape and returned 1 for a NaN value.
 //

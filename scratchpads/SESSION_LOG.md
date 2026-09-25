@@ -39683,3 +39683,23 @@ transcription before its repair; one defect per commit; checkers exit 0 on every
     SpaceReverb), or in offline APIs (VDSPKit, WSOLA).
   · Tonight's seven non-`@testable` guards touch only SourceText, AVFoundation and local statics.
   · No changed guard header claims execution.
+
+## 2026-09-25 ~02:54–03:05 UTC — overnight P8: the wavetable wrap; review 6
+
+- `9359d92d3`: `EchoelCellular.renderWavetable()` wrapped its phase with a subtraction loop.
+  · A NaN or infinite frequency trapped in `Int(…)`, and a negative one trapped on index −1.
+  · A huge finite one (~1e20) HUNG the render thread: subtracting 128 from ~1e17 is a Float no-op.
+  · The fix is `truncatingRemainder` plus a negative branch and a finite gate. It is bit-identical
+    below the table length (900 cases simulated; review 6 added 220,000 random cases, 0 differences).
+  · Latent: production is `.additive`, with an admitted 20–220 Hz texture frequency.
+  · Guard: `TheWavetablePhaseWrapsForAnyFrequencyTests`.
+- Review 6 (read-only), over 469e47dbe, 27111e6cc, 7729c4ab2 and 9359d92d3: no blocker.
+  · Compiles CONFIRMED on all four: the init reads `grid2DSize` directly, as the line above has
+    since February; the closure captures only the local.
+  · Claim 5 CONFIRMED on three trees by float32 simulation. The first non-silent frame is 4463,
+    and on caae8e304 the samples are exactly 2×.
+  · Every index path of the new wrap stays in [0, L), including −0.0 and overflow.
+  · One prose nit: "they agree on NaN only" is false. They disagree only on +inf, and −inf and
+    every finite value agree. Fixed in the next commit.
+- NEGATIVE: `renderFM`/`renderAdditive` subtract at most once per sample. A NaN there is silent
+  (the render loop zeroes non-finite samples), with no trap and no hang.
