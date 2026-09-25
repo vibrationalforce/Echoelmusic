@@ -11,7 +11,9 @@
 // the analyzer's poll.
 //
 // ⚠️ LATENT, NOT LIVE — measured, not assumed. The one caller (`CameraAnalyzer.detectPeaks`)
-// divides by the timestamp span only under `span > 0` and passes the default BPM band. This
+// passes the default BPM band and a rate of `(windowSize − 1) / span` from capture timestamps.
+// Its `span > 0` guard alone would still admit a subnormal span (→ +∞); what keeps the shipped
+// rate finite is that real frame timestamps are milliseconds apart (review of bbc8c60d0). This
 // closes the boundary for the next caller. The repair bounds both lags in `Double` before the
 // conversion and refuses a non-finite rate or band.
 //

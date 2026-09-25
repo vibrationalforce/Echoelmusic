@@ -8,8 +8,10 @@
 // automation lane), `PerTrackAutomationResolver`, `ParameterToolCore`. It clamped with a
 // hand-rolled `Swift.max(0, Swift.min(1, t))`. `Swift.min(1, NaN)` is `1` (every comparison with
 // NaN is false), so a NaN mapped to the TOP of the parameter's range: full output level, the
-// longest release. Every other NaN boundary in this repo lands on the FLOOR through
-// `Core/FloatingPointClamp` — two spellings of one decision, with opposite answers (#416).
+// longest release. The repo's one NaN-safe clamp, `Core/FloatingPointClamp`, lands NaN on the
+// FLOOR — two spellings of one clamp, with opposite answers (#416). (⛔ This line first said
+// "every other NaN boundary lands on the floor"; review found three bare ceiling clamps on the
+// lane-pan path, repaired in f2bef146d, and boundaries that map NaN to a neutral value instead.)
 // `normalized(_:)`, the inverse, had the same shape and returned 1 for a NaN value.
 //
 // ⚠️ LATENT, NOT LIVE — measured, not assumed. The live producers are finite: the modulation

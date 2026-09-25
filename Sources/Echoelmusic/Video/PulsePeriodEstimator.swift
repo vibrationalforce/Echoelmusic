@@ -28,8 +28,10 @@ public enum PulsePeriodEstimator {
                                    maxBPM: Double = 200) -> (bpm: Double, strength: Double)? {
         let n = signal.count
         // `isFinite` is not decoration: `sampleRate > 1` ADMITS +∞, and the lag bounds below are
-        // `Int((… ) * sampleRate)` — `Int(+∞)` is a Swift TRAP, not a nil. The one caller guards
-        // `span > 0` before dividing, so this is the boundary rule, not a live crash (overnight P8).
+        // `Int((… ) * sampleRate)` — `Int(+∞)` is a Swift TRAP, not a nil. Not a live crash: the
+        // one caller derives the rate as `(windowSize − 1) / span` from capture timestamps. Its
+        // `span > 0` alone would admit a subnormal span (→ +∞); what keeps the shipped rate near
+        // the frame rate is that real frame timestamps are milliseconds apart (overnight P8).
         guard n >= 16, sampleRate.isFinite, sampleRate > 1,
               minBPM.isFinite, maxBPM.isFinite, minBPM > 0, maxBPM > minBPM else { return nil }
 
