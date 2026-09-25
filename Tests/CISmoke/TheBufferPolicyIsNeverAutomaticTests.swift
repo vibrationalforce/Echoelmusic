@@ -22,6 +22,11 @@
 // on 2026-09-12 and the tier control went with the sheet, so there is no door; what survives,
 // and what this file is now named for, is the NEGATIVE law above — the buffer must never
 // follow the engine, the thermal tier or a route. See the ⛔ block where claims 5 and 6 stood.
+// ⭐ #1331 GAVE THE TIER A DOOR AGAIN (`EchoelStudioView`, pinned by its own guard,
+// `TheBufferTierHasADoorAgainTests`), and this file keeps its name: what it owns is still the
+// NEGATIVE law. Claim 3 therefore expects exactly TWO mentions of `setLatencyMode` — its
+// declaration and that one door — and was RED on a correct tree from #1331 until this was
+// written, because the door landed in a new file instead of in the expected set here.
 //
 // ⚠️ HONEST LIMITS. Re-derive both, do not re-type:
 //   grep -c "^    func test" <this file>
@@ -42,6 +47,8 @@ import XCTest
 final class TheBufferPolicyIsNeverAutomaticTests: XCTestCase {
 
     private static let config = "Sources/Echoelmusic/Audio/AudioConfiguration.swift"
+    /// The ONE user door (#1331) — a Picker row the player drives, never a state it follows.
+    private static let door = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
 
     // MARK: - 1. The shipped default did not move
 
@@ -124,9 +131,9 @@ final class TheBufferPolicyIsNeverAutomaticTests: XCTestCase {
         for (path, code) in sources where Self.occurrences(of: "setLatencyMode", in: code) > 0 {
             callers.append(path)
         }
-        XCTAssertEqual(Set(callers), [Self.config], """
+        XCTAssertEqual(Set(callers), [Self.config, Self.door], """
             `setLatencyMode` is mentioned in \(callers.sorted()) — expected exactly its own \
-            declaration. The buffer must not follow the engine's state, the thermal tier or a \
+            declaration and the one user door (#1331). The buffer must not follow the engine's state, the thermal tier or a \
             route change: 256 frames was the shipped default until dense chords missed the \
             render deadline and it was heard as crackle on the device (10.76.49). Automating it \
             aims that regression at the session it claims to optimise, and the player changed \
@@ -204,6 +211,11 @@ final class TheBufferPolicyIsNeverAutomaticTests: XCTestCase {
     // 6 pinned the 10.76.41/50 freeze law on `MonitorLatencyRow` (the value is read INSIDE the
     // leaf, never in the Picker-hosting parent body). Kept as text, not as assertions, because
     // an assertion against a deleted file is red on a CORRECT tree (#364).
+    //
+    // ⛔ SUPERSEDED BY #1331 — the paragraph below is kept as the state between #1302 and
+    // #1331. The door came back as a Picker row in `EchoelStudioView`, pinned by
+    // `TheBufferTierHasADoorAgainTests` rather than by re-added claims here; the two caveat
+    // claims are NOT restored, because their subject file stays deleted.
     //
     // ⚠️ AND THE FILE NAME IS NOW A CLAIM THIS TREE CANNOT MAKE: there is no door. The policy
     // still RUNS — `AudioEngine` calls `AudioConfiguration.applyStoredLatencyMode()` on start,
