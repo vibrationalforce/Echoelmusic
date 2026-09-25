@@ -27,7 +27,11 @@ public enum PulsePeriodEstimator {
                                    minBPM: Double = 40,
                                    maxBPM: Double = 200) -> (bpm: Double, strength: Double)? {
         let n = signal.count
-        guard n >= 16, sampleRate > 1, minBPM > 0, maxBPM > minBPM else { return nil }
+        // `isFinite` is not decoration: `sampleRate > 1` ADMITS +∞, and the lag bounds below are
+        // `Int((… ) * sampleRate)` — `Int(+∞)` is a Swift TRAP, not a nil. The one caller guards
+        // `span > 0` before dividing, so this is the boundary rule, not a live crash (overnight P8).
+        guard n >= 16, sampleRate.isFinite, sampleRate > 1,
+              minBPM.isFinite, maxBPM.isFinite, minBPM > 0, maxBPM > minBPM else { return nil }
 
         // Mean-remove (so a residual DC offset can't dominate the correlation).
         var mean: Double = 0
@@ -47,8 +51,13 @@ public enum PulsePeriodEstimator {
         // and a genuinely confident pulse could never pass the display trust gate
         // (device log 2026-07-08: stable ~71 bpm, conf 0.91, never shown). Every
         // searched lag must itself be a legal answer.
-        let minLag = max(1, Int(((60.0 / maxBPM) * sampleRate).rounded(.up)))
-        let maxLag = min(n - 1, Int((60.0 / minBPM) * sampleRate))
+        // Bounded in DOUBLE before the `Int` conversion: a finite but huge product (a tiny
+        // `minBPM`, an absurd rate) overflows `Int` and traps exactly like +∞ would. Both
+        // bounds are capped at the window length, which the lag search cannot exceed anyway.
+        let minLagD = ((60.0 / maxBPM) * sampleRate).rounded(.up)
+        let maxLagD = (60.0 / minBPM) * sampleRate
+        let minLag = minLagD >= Double(n) ? n : max(1, Int(minLagD))
+        let maxLag = maxLagD >= Double(n - 1) ? n - 1 : Int(maxLagD)
         guard maxLag > minLag else { return nil }
 
         // Per-lag NORMALIZED sums (÷ number of terms): the raw sum has n−lag terms,
