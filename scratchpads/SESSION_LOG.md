@@ -39503,3 +39503,33 @@ AUv3StateContract; 7 findings, each re-read before acting.
 - Not executed: no toolchain. Build for Testing on `526c43b18` is queued (runner backlog).
 - Gates read: CI/CD `Build for Testing` GREEN on `76274efc5`; `d41c9d6a4`/`1e8e4cb91` in
   progress, five later runs queued.
+
+### 2026-09-25 ~01:20–01:50 UTC — overnight P7/P8: the silently-red walker guards
+
+A read-only transcription sweep of directory-walking guards (four agents, 124 guards) found
+guards that were red on a correct tree. Nothing reported them: CI/CD reports `failure` on every
+push (#396), and the job log is a tail-200 window (#807). Each was verified by a Python
+transcription before its repair; one defect per commit; checkers exit 0 on every commit.
+- MIDI (`b48c79e86`, `3fc7cb5b6`): `MIDIInput` read a packet's `words` tuple by value, which
+  MAY read past a short final packet. It now reads in place at `packetWordsOffset`, bounded by
+  `wordCount`. Guard: `TheMIDIPacketIsReadInPlaceTests`. NEEDS host verify: a controller still
+  plays notes.
+- Premise rot since #1385 (AUv3 back under `Sources/`): raw-Slider census skips the plug-in UI
+  (`f68360774`); the plug-in's two fixed-width read-outs are ADAPTIVE-EXEMPT, because they use
+  fixed-point fonts that do not scale (`7e8e3c85f`); AU6's guard now pins the render-side
+  `applyBioReactive` call instead of the owner's absence (`9764e86f0`).
+- Repo growth: buffer-tier door #1331 (`0357c7eae`, `95d1d4adc`); INDEX.md is not a preflight
+  caller (`c379eb84d`); `AudioWarp`'s bar helper is not an audio-clip producer (`77c796089`); a
+  doc comment is not an `NWListener` (`35e59a314`); a witness description revived "EchoelBeat"
+  (`d1609b33d`); the history archive is not an integrator table (`5fa78a958`); the
+  `providesBreathWaveform` spelling conflict between two guards (`2f06eb26a`); plus the earlier
+  `5b946fc27`, `af819db90`, `47ad72910`, `7f92c0abf`.
+- Wire contract: the CLAUDE.md parser could not read brace sets `{a,b}` (`551bf40d7`). Once it
+  could, it found a real leftover, `/echoelmusic/gesture/` in `BioEgressPolicy.derivedPrefixes`,
+  a dormant `.derived` grant for an address space #1301 deleted. Removed (`6d16e3f5f`).
+- NOT a defect: the MPE "roadmap" finding. All 12 "MPE out" sentences under `docs/` are short
+  and none says roadmap or planned; the sweep agent's splitter port was wrong.
+- LEFT RED ON PURPOSE: `TheProScreenSellsNoWorkThatIsNotHappeningTests.testTheAUv3TargetIsStillAbsent`.
+  The Pro row "AUv3 plugin in your DAW — Planned, not built yet" is FALSE since #1385, and the
+  copy fix is a founder pricing hold (P8q). The red is a true finding, not a stale premise.
+- Not executed: no toolchain. Every CI/CD run since `2f06eb26a` is QUEUED (runner backlog).
