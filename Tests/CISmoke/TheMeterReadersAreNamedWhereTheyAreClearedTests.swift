@@ -222,7 +222,15 @@ final class TheMeterReadersAreNamedWhereTheyAreClearedTests: XCTestCase {
             XCTFail("`internalRenderBlock`'s braces do not balance — re-anchor (#454).")
             return
         }
-        XCTAssertTrue(callAt.lowerBound > head.lowerBound && callAt.lowerBound < blockEnd, """
+        // ⛔ The block's braces also enclose the GETTER PROLOGUE (`let bioBox = self.bioMirror`
+        // …) that runs on whatever thread fetches the block, not the render thread. A call
+        // moved there stayed green in the first form (review of 9764e86f0). The call must sit
+        // inside the RETURNED closure — after the getter's `return {`.
+        guard let closure = au.range(of: "return {", range: head.upperBound..<blockEnd) else {
+            XCTFail("`internalRenderBlock` no longer returns a closure literal — re-anchor (#454).")
+            return
+        }
+        XCTAssertTrue(callAt.lowerBound > closure.lowerBound && callAt.lowerBound < blockEnd, """
             The AUv3's `applyBioReactive(` call left `internalRenderBlock`. It now runs on a \
             control thread while the render thread reads `harmonicAmplitudes` — the \
             cross-thread COW hazard AU6 was about. Move it back render-side, or reopen AU6 in \
