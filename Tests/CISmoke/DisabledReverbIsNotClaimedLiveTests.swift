@@ -406,7 +406,7 @@ final class DisabledReverbIsNotClaimedLiveTests: XCTestCase {
 
     private func swiftFilesUnderSources() throws -> [URL] {
         let dir = try repoRoot().appendingPathComponent("Sources/Echoelmusic")
-        guard let walk = FileManager.default.enumerator(at: dir,
+        guard FileManager.default.fileExists(atPath: dir.path), let walk = FileManager.default.enumerator(at: dir,
                                                         includingPropertiesForKeys: nil) else {
             throw XCTSkip("could not enumerate Sources/Echoelmusic")
         }
