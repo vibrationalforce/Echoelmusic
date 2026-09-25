@@ -514,7 +514,9 @@ public final class AudioLanePlayer {
 
     private func clampedPan(in doc: TimelineDocument, laneID: UUID) -> Float {
         let p = doc.lanes.first(where: { $0.id == laneID })?.pan ?? 0
-        return max(-1, min(1, p))
+        // Non-finite → centre, the rule `MultiRollFanout.pan(forSlot:)` and both sinks take:
+        // `min(1, NaN)` is 1, so the bare clamp played a NaN lane hard right (overnight P8).
+        return max(-1, min(1, p.isFinite ? p : 0))
     }
 
     private func sink(for laneID: UUID) -> AudioRegionSink {

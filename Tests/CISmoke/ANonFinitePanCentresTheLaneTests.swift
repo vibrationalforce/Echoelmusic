@@ -1,29 +1,41 @@
 // ANonFinitePanCentresTheLaneTests.swift
 // Echoel — overnight P8 (2026-09-25). Blocking bundle.
 //
-// ⭐ THE DEFECT. The live lane-pan path ends at three sinks: `BioReactiveSynthVoice.setPan`
-// maps a non-finite pan to centre (`pan.isFinite ? pan : 0`); `PolySynthVoice.setPan` and
-// `TimelineAudioSink.setPan` clamped with a bare `max(-1, min(1, pan))`. `min(1, NaN)` is 1,
-// because every comparison with NaN is false, so a NaN pan landed HARD RIGHT, and the sink
-// also stored it for every later region start. One boundary, two rules (#416), and in both
-// files the gain setter right beside it already guarded `isFinite`.
+// ⭐ THE DEFECT. A lane's pan is decided in TWO layers, and the first version of this slice
+// (890837252) fixed only the second one — the review of it caught that (overnight P8b).
+//   · THE BOUNDARY — where `TimelineLane.pan` is read: `MultiRollFanout.pan(forSlot:)` (every
+//     melodic rack voice), `AudioLanePlayer.clampedPan` (every audio lane) and the store's
+//     writer `TimelineStore.setLanePan`. All three clamped with a bare `max(-1, min(1, p))`, and
+//     `min(1, NaN)` is 1 (every comparison with NaN is false), so a NaN lane played — or was
+//     stored — HARD RIGHT.
+//   · THE SINKS — `PolySynthVoice.setPan` and `TimelineAudioSink.setPan` had the same bare clamp,
+//     while `BioReactiveSynthVoice.setPan` already mapped non-finite to centre. One decision,
+//     two rules (#416). On the live path the sinks only ever receive the boundary's output, so
+//     fixing the sinks ALONE delivered nothing: a NaN arrived there already as 1.0.
+// Every site now maps non-finite to 0 before the clamp.
 //
-// ⚠️ LATENT, NOT LIVE — measured, not assumed. The pan arrives from `TimelineLane.pan` in a
-// decoded document (`JSONDecoder` throws on NaN), and `TimelineStore.setLanePan` has no
-// production caller (`TheTimelineStoresLiveSurfaceTests`). This closes the boundary for the
-// next producer.
+// ⚠️ LATENT, NOT LIVE — measured, not assumed. `TimelineLane.pan` arrives from a decoded
+// document (`JSONDecoder` throws on NaN), and `TimelineStore.setLanePan` has no production
+// caller (`TheTimelineStoresLiveSurfaceTests`). This closes the boundary for the next producer.
 //
 // ⚠️ HONEST GRADING (transcribed in Python against both trees; no toolchain, §0).
 //   · claim 1 — END-TO-END BEHAVIOUR on `PolySynthVoice` (reads the public `sourceNode.pan`,
-//     the same read `BodyVibeBioRackTests` makes on the bio voice). REGRESSION: on the parent,
-//     NaN and +inf land at 1 and -inf at -1.
+//     the same read `BodyVibeBioRackTests` makes on the bio voice). REGRESSION against the tree
+//     before 890837252: NaN and +inf land at 1 and -inf at -1.
 //   · claim 2 — COUNTERWEIGHT, same voice: finite values land, out-of-range values clamp.
-//     Green on both trees.
+//     Green on every tree.
 //   · claim 3 — SOURCE-TEXT SCAN on `TimelineAudioSink.setPan` (its `pan` is `private`, and the
-//     sink needs an engine to own nodes). REGRESSION: the parent's body has no `isFinite`.
+//     sink needs an engine to own nodes). REGRESSION against the tree before 890837252.
+//   · claim 4 — END-TO-END BEHAVIOUR on the pure `MultiRollFanout.pan(forSlot:)` over a real
+//     `TimelineDocument`. REGRESSION on the parent of this commit (NaN and +inf read 1, -inf
+//     reads -1); its finite rows are counterweights, green on both trees.
+//   · claim 5 — SOURCE-TEXT SCAN on `AudioLanePlayer.clampedPan` (private) and
+//     `TimelineStore.setLanePan` (`@MainActor`, persists to disk). REGRESSION on the parent of
+//     this commit. One finding across claims 4 and 5: one rule missing at three sites (#486).
 //   · Not executed (no toolchain); what `Build for Testing` proves is compilation only. Whether
 //     an unattached `AVAudioSourceNode` reports the pan it was given is the premise of claims 1
-//     and 2; claim 2 fails loudly if it does not.
+//     and 2 — its only precedent is in the non-blocking suite (#208) — and claim 2 fails loudly
+//     if it does not.
 
 import XCTest
 @testable import Echoelmusic
@@ -70,6 +82,55 @@ final class ANonFinitePanCentresTheLaneTests: XCTestCase {
             NaN pan lands hard right and is stored for every later region start. Its own \
             `setGain` one member up maps non-finite to silent; pan maps it to centre (#416).
             """)
+    }
+
+    /// claim 4 — the melodic boundary: a non-finite LANE pan resolves to centre for its slot.
+    func testTheRackSlotPanCentresANonFiniteLane() {
+        let roll = TimelineLane(name: "MIDI 1", kind: .midi)
+        let poisoned: [Float] = [.nan, .infinity, -.infinity]
+        var lanes: [TimelineLane] = [roll]
+        for (i, p) in poisoned.enumerated() {
+            lanes.append(TimelineLane(name: "MIDI \(i + 2)", kind: .midi, pan: p))
+        }
+        lanes.append(TimelineLane(name: "MIDI 5", kind: .midi, pan: 0.5))
+        lanes.append(TimelineLane(name: "MIDI 6", kind: .midi, pan: 3))
+        let doc = TimelineDocument(lanes: lanes, regions: [])
+        for (slot, p) in poisoned.enumerated() {
+            XCTAssertEqual(MultiRollFanout.pan(forSlot: slot, in: doc, rollLane: roll.id), 0, """
+                `MultiRollFanout.pan(forSlot:)` did not centre a lane whose pan is \(p). This is \
+                the boundary every melodic voice's pan comes through: a bare \
+                `Swift.max(-1, Swift.min(1, p))` resolves NaN to 1 before any sink sees it.
+                """)
+        }
+        // Counterweights: a finite pan lands, an out-of-range one clamps.
+        XCTAssertEqual(MultiRollFanout.pan(forSlot: 3, in: doc, rollLane: roll.id), 0.5)
+        XCTAssertEqual(MultiRollFanout.pan(forSlot: 4, in: doc, rollLane: roll.id), 1)
+    }
+
+    /// claim 5 — the audio-lane boundary and the store's writer take the same rule.
+    func testTheAudioLaneBoundaryAndTheStoreCentreANonFinitePan() throws {
+        let player = try source("Sources/Echoelmusic/Sequencer/AudioLanePlayer.swift")
+        let store = try source("Sources/Echoelmusic/Core/TimelineStore.swift")
+        let sites: [(label: String, code: String, head: String, tail: String, needle: String)] = [
+            ("AudioLanePlayer.clampedPan", player,
+             "private func clampedPan(in doc: TimelineDocument, laneID: UUID) -> Float {",
+             "private func sink(for laneID: UUID)", "p.isFinite ? p : 0"),
+            ("TimelineStore.setLanePan", store,
+             "public func setLanePan(id: UUID, _ pan: Float) {",
+             "persist()", "pan.isFinite ? pan : 0"),
+        ]
+        for (label, code, head, tail, needle) in sites {
+            guard let h = code.range(of: head),
+                  let t = code.range(of: tail, range: h.upperBound..<code.endIndex) else {
+                XCTFail("`\(label)` or the member after it moved — re-anchor (#454).")
+                continue
+            }
+            XCTAssertTrue(code[h.upperBound..<t.lowerBound].contains(needle), """
+                `\(label)` clamps a lane pan without a finite check. `min(1, NaN)` is 1, so a NaN \
+                lane plays (or is stored) hard right. Map non-finite to 0 before the clamp, as \
+                `MultiRollFanout.pan(forSlot:)` and both sinks do (#416).
+                """)
+        }
     }
 
     private func source(_ relative: String) throws -> String {

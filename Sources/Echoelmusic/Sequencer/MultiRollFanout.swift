@@ -151,7 +151,9 @@ public enum MultiRollFanout {
     public static func pan(forSlot slot: Int, in document: TimelineDocument, rollLane: UUID?) -> Float {
         guard let id = laneID(forSlot: slot, in: document, rollLane: rollLane) else { return 0 }
         let p = document.lanes.first(where: { $0.id == id })?.pan ?? 0
-        return Swift.max(-1, Swift.min(1, p))
+        // Non-finite → centre BEFORE the clamp: `Swift.min(1, NaN)` is 1, so the bare clamp sent a
+        // NaN lane to HARD RIGHT — upstream of both sinks, which never saw the NaN (overnight P8).
+        return Swift.max(-1, Swift.min(1, p.isFinite ? p : 0))
     }
 
     /// The continuous GAIN slot `slot`'s lane plays at — the full mute/foreign-solo/
