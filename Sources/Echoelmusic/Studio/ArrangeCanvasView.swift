@@ -218,6 +218,9 @@ struct ArrangePartBlock: View {
                 .strokeBorder(isSelected || moving ? EchoelTheme.accent : EchoelTheme.border,
                               lineWidth: isSelected || moving ? 2 : 1))
             .opacity(moving ? 0.8 : 1)
+            // A part being moved draws over its neighbours, not under a later-starting one
+            // (review of e3211f21d, L4); at rest the draw order is the play order again.
+            .zIndex(moving ? 1 : 0)
             .frame(width: Swift.max(2, laneWidth * block.width))
             .offset(x: laneWidth * block.start + shift)
             .contentShape(Rectangle())

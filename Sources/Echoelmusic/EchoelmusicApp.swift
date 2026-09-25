@@ -471,6 +471,11 @@ struct EchoelmusicApp: App {
                     EchoelCrashLog.breadcrumb(
                         EchoelCrashLog.recoveryScreenClearedMarker + " (one-shot)")
                     LaunchGuard.reset()
+                    // WA4-P2 review M1 — the last launch crashed, and the relaunch memory would
+                    // send "Continue" and every later launch straight back to the Workstation
+                    // plate if that is what crashed. Forget it: the next Studio start shows
+                    // Sound, the plate an untouched launch has always shown. Clear only.
+                    UserDefaults.standard.removeObject(forKey: EchoelStudioView.reopensWorkstationKey)
                 }
             } else if hasCompletedOnboarding {
                 mainContent

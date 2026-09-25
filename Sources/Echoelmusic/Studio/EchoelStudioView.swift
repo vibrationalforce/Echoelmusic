@@ -868,7 +868,11 @@ struct EchoelStudioView: View {
     /// (#325: the tuning banner's default door). The only writer is the `displayedMenu`
     /// `onChange` in the chip strip — i.e. the player's own selection, by chip or by door; no
     /// code path opens the Workstation on the player's behalf.
-    @AppStorage("studio.reopensWorkstation") private var reopensWorkstation = false
+    /// ⚠️ The ONE other hand on the key is Safe Mode, and it only CLEARS it
+    /// (`EchoelmusicApp`, the recovery screen's `onAppear`): a plate that crashed at render
+    /// must not be the plate every relaunch returns to (review of b4c2179bf, M1).
+    static let reopensWorkstationKey = "studio.reopensWorkstation"
+    @AppStorage(EchoelStudioView.reopensWorkstationKey) private var reopensWorkstation = false
 
 
 

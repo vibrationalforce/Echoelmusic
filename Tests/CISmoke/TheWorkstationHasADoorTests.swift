@@ -76,6 +76,7 @@ final class TheWorkstationHasADoorTests: XCTestCase {
     private static let view = "Sources/Echoelmusic/Studio/WorkstationView.swift"
     private static let summary = "Sources/Echoelmusic/Studio/WorkstationSummary.swift"
     private static let player = "Sources/Echoelmusic/Sequencer/TimelineRegionPlayer.swift"
+    private static let app = "Sources/Echoelmusic/EchoelmusicApp.swift"
 
     // MARK: - 1. BEHAVIOUR — an untouched install shows an empty state, not a fake song
 
@@ -425,10 +426,20 @@ final class TheWorkstationHasADoorTests: XCTestCase {
         // make that true, and each is the premise the one above rests on (#343):
         // it starts false (a first launch is Sound), it has exactly ONE writer, and that
         // writer is the plate the player has just selected.
-        XCTAssertTrue(src.contains("@AppStorage(\"studio.reopensWorkstation\") private var reopensWorkstation = false"), """
+        XCTAssertTrue(src.contains("@AppStorage(EchoelStudioView.reopensWorkstationKey) private var reopensWorkstation = false"), """
             The relaunch memory no longer defaults to false — a FIRST launch would then open on \
             the Workstation, which is the surface opening itself.
             """)
+        XCTAssertTrue(src.contains("static let reopensWorkstationKey = \"studio.reopensWorkstation\""))
+        // Review of b4c2179bf, M1: Safe Mode FORGETS the memory, so a plate that crashed at
+        // render is not the plate every relaunch returns to. It may only clear, never set.
+        let app = try code(at: Self.app)
+        XCTAssertEqual(app.components(separatedBy: "UserDefaults.standard.removeObject(forKey: EchoelStudioView.reopensWorkstationKey)").count - 1, 1, """
+            The Safe-Mode recovery screen must clear the relaunch memory once — otherwise a \
+            Workstation plate that crashes at render is reopened by "Continue" and by every \
+            later launch.
+            """)
+        XCTAssertFalse(app.contains("reopensWorkstation ="), "the app may clear the memory, never set it")
         XCTAssertEqual(src.components(separatedBy: "reopensWorkstation =").count - 1, 2, """
             `reopensWorkstation =` must occur exactly twice: its declaration's default and the \
             ONE writer in the chip strip's `onChange(of: displayedMenu)`. A second writer is a \
