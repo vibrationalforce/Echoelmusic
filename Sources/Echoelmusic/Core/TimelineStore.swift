@@ -122,6 +122,26 @@ public final class TimelineStore {
         }
     }
 
+    /// Replace the whole song with a restored one — the Session OPEN path (WA4-S1).
+    ///
+    /// ⚠️ THE UNDO HISTORY IS CLEARED, not carried. It holds region arrays of the song being
+    /// replaced; an Undo after an Open would restore the previous song's parts into this one
+    /// (`restoreRegions` keeps any whose lane id happens to survive).
+    /// ⚠️ WRITTEN THROUGH AT ONCE, not after the edit debounce: the caller restores clips
+    /// first (`ClipStore.replaceSlots`, written immediately), and a crash inside the debounce
+    /// window must not leave the new clips on disk beside the old song.
+    /// ⚠️ The caller stops playback first — a playing engine holds the previous song's
+    /// regions and launch state (`TimelineRegionPlayer`).
+    public func replaceDocument(_ replacement: TimelineDocument) {
+        document = replacement
+        needsBootstrap = false
+        undoStack.removeAll()
+        redoStack.removeAll()
+        syncUndoFlags()
+        persist()
+        flushPendingSave()
+    }
+
     /// One-time migration of the legacy arrangement (idempotent; call from the
     /// timeline surface's `.task`). Persists the migrated document.
     public func bootstrapIfNeeded(sections: [ArrangementSection]) {

@@ -173,6 +173,18 @@ public final class ClipStore {
         persist()
     }
 
+    /// Replace the whole grid with a restored one — the Session OPEN path (WA4-S1). Returns
+    /// false and changes NOTHING unless the grid has exactly `slotCount` cells: the index IS
+    /// the slot a region's clip lives in, so padding or truncating would silently re-seat
+    /// clips (the same reason `init` refuses a mis-sized file).
+    @discardableResult
+    public func replaceSlots(_ replacement: [Clip?]) -> Bool {
+        guard replacement.count == Self.slotCount else { return false }
+        slots = replacement
+        persist()
+        return true
+    }
+
     public func clear(at index: Int) {
         guard slots.indices.contains(index) else { return }
         slots[index] = nil
