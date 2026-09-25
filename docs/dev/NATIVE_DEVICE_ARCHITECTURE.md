@@ -634,6 +634,29 @@ NOT changed:**
 - **`EchoelDeviceState` drops the whole value map on one unreadable entry** — per-field lossiness
   is its documented design; per-entry would match `sanitized`. No production caller.
 
+**Audio-thread review of `98f5d8f7e..HEAD` (2026-09-25, read-only reviewer, reasoned from source,
+nothing built or run): no critical or high finding, nothing in the diff allocates, locks,
+messages ObjC, dispatches or does I/O on the render thread.** Fixed from it: P8t (`84c899af6`,
+refuse a bus wider than the 8 owned output channels), P8u (`283dfb093`, the render closure reads
+no `static let`), P8v (`d41c9d6a4`, no second `4096` in the block). Measured and NOT changed:
+- **An oversized block drops its MIDI.** The refusal returns before the event walk, so a note-off
+  in that block is lost and the note hangs. Only a host that breaks `maximumFramesToRender` can
+  send one. Walking events before the refusal is the repair; it changes what a refused call does,
+  so HOST VERIFY first.
+- **A mono bus flagged interleaved may be refused needlessly.** For one channel the layout is the
+  single buffer the block already renders; whether `AVAudioFormat.isInterleaved` reports `true`
+  there is unverified, so `!isInterleaved || channelCount == 1` waits for a measurement.
+- **`mDataByteSize` is written for host-owned buffers too.** It matches Apple's `BufferedAudioBus`
+  and cannot misstate a contract-keeping host; for a host that passes a SHORT buffer the overflow
+  predates this diff and the size write now hides it.
+- **`tailTime` returns `.greatestFiniteMagnitude` when the reverb feedback is ≥ 1.** Unreachable in
+  the AUv3 (`roomSize` stays at its 0.72 default there; the mapping needs ≥ ~1.07). A host that
+  converts it to frames with an integer cast would trap. A finite cap is a product number
+  (how long is "keep rendering"?), so it is recorded rather than invented.
+- **Out of scope, pre-existing:** render-event parameter automation is ignored (above);
+  `EchoelCellular.evolve2D` copies `grid2D` per evolution, an allocation, never reached in the
+  AUv3 (mode fixed at `.additive`).
+
 **Third-party hosting seam (not implemented).** A hosted plugin appears to the Session as a
 `DeviceInstance` whose `typeID` names the adapter and whose `state` is the plugin's own opaque
 blob plus its component description. The Session never imports `AudioToolbox` or AUv3 types;

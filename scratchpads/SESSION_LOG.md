@@ -39413,3 +39413,22 @@ AUv3StateContract; 7 findings, each re-read before acting.
   Group entitlement on the extension).
 - Gates at 00:06Z: Compile Check for 76274efc5 pending (runner backlog); it covers P8m–P8r.
   Source pushes paused so it is not cancelled again.
+
+## 2026-09-25 00:15–00:45 UTC — overnight P8s-tail, P8t–P8v (audio-thread review)
+
+- `cf86c7105` docs(tools): `/verify` re-scans `Sources/EchoelmusicAUv3/**` (it was dropped as "no
+  longer exists"), security-agent's three AUv3 checks restored with real subjects, `/tdd` points
+  at the BodyVibe guards. `84e64044d` docs(memory): four "AUv3 removed" lines → revived #1385.
+- Audio-thread reviewer on `98f5d8f7e..HEAD`: no critical/high. Fixed:
+  · P8t `84c899af6` — `shouldChange` refuses channelCount > `RenderScratch.ownedChannels`
+    (null-mData hosts got null back past ch 7). Guard claim 1 + claim 2 ceiling read from decl.
+  · P8u `283dfb093` — render closure captures `ownedChannels` instead of reading a `static let`
+    (swift_once on the audio thread in Debug). Guard claim 4.
+  · P8v `d41c9d6a4` — dead `min(Int(frameCount), 4096)` removed; `maximumFramesToRender` doc
+    corrected. Guard: render block names no 4096.
+  Each transcribed on its parent: exactly one regression; counterweights green on both.
+- Recorded, not changed (NATIVE_DEVICE_ARCHITECTURE §K): oversized block drops MIDI; mono+
+  interleaved refusal (unverified premise); mDataByteSize on host buffers; tailTime
+  `.greatestFiniteMagnitude` (unreachable in AU, cap is a product number).
+- Gates: Compile Check 36075168450 (76274efc5) sat `pending` 50 min with no runner; the push of
+  d41c9d6a4 supersedes it (cancel-in-progress). Nothing read yet for d41c9d6a4.
