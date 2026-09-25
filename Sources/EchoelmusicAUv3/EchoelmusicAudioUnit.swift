@@ -124,8 +124,20 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     private let bioMirror = BioMirror()
     /// Render-owned frame accumulator throttling the render-side bio application to
     /// ~10 Hz (the vitals poll rate) — bounds the audio-thread cost to what it was.
-    /// Touched ONLY by the render thread (single-owner), so the plain field is safe.
-    private final class BioRenderState { nonisolated(unsafe) var frameAccum = 0 }
+    /// Touched by the render thread, and by `allocateRenderResources` only while no render is
+    /// in flight (Apple's guarantee), so the plain fields are safe.
+    /// ⭐ 2026-09-25 (overnight P8w): `interval` lives here too, written ONLY in
+    /// `allocateRenderResources` (no render in flight there) and read by the block. It used to
+    /// be a capture computed when the host FETCHED the block — correct only if the host fetches
+    /// after allocate, which nothing here controls; a block fetched at the 48 kHz placeholder
+    /// and played at 96 kHz applied bio at ~20 Hz. Guard: `TheAUv3FollowsTheHostSampleRateTests`.
+    private final class BioRenderState {
+        nonisolated(unsafe) var frameAccum = 0
+        /// Placeholder only: no render runs before `allocateRenderResources`, which overwrites it.
+        nonisolated(unsafe) var interval = BioRenderState.frames(forSampleRate: 48000)
+        /// ~10 Hz of frames at `sampleRate` — the one spelling of the throttle.
+        static func frames(forSampleRate sampleRate: Float) -> Int { Swift.max(1, Int(sampleRate / 10)) }
+    }
     private let bioRenderState = BioRenderState()
     /// Render-owned last-note-priority tracker for the mono voice: the MIDI note number
     /// currently sounding (-1 = none, or the free-running bio drone). A note-off silences
@@ -512,9 +524,9 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         // reference the render block holds — the ARC-reseat law lives at
         // `EchoelDDSP.updateReverbDecay`), and Apple guarantees no render is in flight between
         // `allocateRenderResources` and the first callback. It runs BEFORE `noteOn` so the
-        // idle tone starts at the right pitch rather than sliding into it, and before
-        // `internalRenderBlock` is fetched, so the `bioInterval` derived there
-        // (`synth.sampleRate / 10`) is the host's rate too.
+        // idle tone starts at the right pitch rather than sliding into it. The render-side bio
+        // throttle is set here too (P8w) — ⛔ this comment used to say the block derived it at
+        // fetch time "after this method returns", a host-ordering premise nothing enforced.
         //
         // ⚠️ NOT PROPAGATED TO THE MAIN APP, DELIBERATELY. Its voices feed `AVAudioSourceNode`s
         // that DECLARE 48 kHz, and `AVAudioEngine` converts to the hardware rate on their
@@ -525,6 +537,10 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         // The reverb follows too (2026-09-24). Unlike the two above it REBUILDS its tanks, so it
         // allocates — legal here and nowhere later. It also empties them.
         reverb.setSampleRate(hostRate)
+        // The render-side bio throttle follows the same rate, here rather than at block fetch
+        // (P8w): the host decides when it fetches the block, not this class.
+        bioRenderState.interval = BioRenderState.frames(forSampleRate: synth.sampleRate)
+        bioRenderState.frameAccum = 0
 
         // ⭐ WA3.3 + P2 (2026-09-24): EVERY creative engine field starts at the HOST value —
         // pitch, texture, the reverb anchor (the synth's own default is 0.25, the parameter's
@@ -646,8 +662,6 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         let bioState = self.bioRenderState
         let noteState = self.renderNoteState
         let reverbRef = self.reverb
-        // ~10 Hz throttle for the render-side bio application (sampleRate/10 frames).
-        let bioInterval = max(1, Int(self.synth.sampleRate / 10))
 
         return { (actionFlags, timestamp, frameCount, outputBusNumber,
                   outputData, renderEvent, pullInputBlock) in
@@ -719,7 +733,7 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
             // keeps the synth's harmonicAmplitudes array single-owner: no cross-thread
             // COW race, and its in-place rewrite triggers no allocation. See BioMirror.
             bioState.frameAccum += count
-            if bioState.frameAccum >= bioInterval {
+            if bioState.frameAccum >= bioState.interval {
                 bioState.frameAccum = 0
                 synthRef.applyBioReactive(coherence: bioBox.coherence,
                                           hrvVariability: bioBox.hrv,

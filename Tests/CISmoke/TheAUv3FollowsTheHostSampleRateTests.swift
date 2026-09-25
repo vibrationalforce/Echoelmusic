@@ -302,9 +302,10 @@ final class TheAUv3FollowsTheHostSampleRateTests: XCTestCase {
         XCTAssertTrue(body.contains("texture.setSampleRate("), "The texture is no longer re-pointed.")
 
         // ORDER, not just presence: `noteOn` starts the idle tone, so a re-point after it
-        // would start the tone at the wrong pitch and jump. `internalRenderBlock` also
-        // derives `bioInterval` from `synth.sampleRate` when the host fetches it, which is
-        // after this method returns.
+        // would start the tone at the wrong pitch and jump. (⛔ "`internalRenderBlock` also
+        // derives `bioInterval` … when the host fetches it, which is after this method
+        // returns" stood here: a host-ordering premise nothing enforced. Since P8w the
+        // throttle is set in this method — claim 10.)
         let repoint = try XCTUnwrap(body.range(of: "synth.setSampleRate("), """
             anchor absent — the assertion above already reported it; this unwrap only keeps \
             the ordering check from reading as a pass it did not earn
@@ -318,6 +319,36 @@ final class TheAUv3FollowsTheHostSampleRateTests: XCTestCase {
             placeholder rate and shift once the correction lands — audible as a blip on \
             every instantiation, and only in hosts that are not at 48 kHz.
             """)
+    }
+
+    // MARK: - Claim 10 — the bio throttle follows the host rate at allocate (SOURCE-TEXT SCAN)
+
+    /// ⭐ 2026-09-25 (overnight P8w). The render-side bio application runs every
+    /// `sampleRate / 10` frames. That interval was a capture of the render-block GETTER, so it
+    /// took whatever rate the synth had when the host FETCHED the block — right only if the
+    /// host fetches after `allocateRenderResources`, which this class does not control; a block
+    /// fetched at the 48 kHz placeholder and played at 96 kHz applied bio at ~20 Hz.
+    /// Grading, parent `b09f6d1a7`: REGRESSION — one finding (the getter computed it there and
+    /// allocate never set it). HOST: the fetch order of real hosts stays unmeasured; the repair
+    /// removes the dependence on it.
+    func testTheBioThrottleIsSetWhereTheRateIsKnown() throws {
+        let code = SourceText.codeOnly(try rawText(Self.audioUnit))
+        let allocate = try Self.bodyOfMember(
+            startingWith: "public override func allocateRenderResources() throws {", in: code)
+        let set = try XCTUnwrap(allocate.range(of: "bioRenderState.interval = BioRenderState.frames(forSampleRate: synth.sampleRate)"), """
+            `allocateRenderResources` no longer sets the bio throttle from the host rate.
+            """)
+        let repoint = try XCTUnwrap(allocate.range(of: "synth.setSampleRate("),
+                                    "the re-point moved — claim 7 reports it; this keeps the order check honest")
+        XCTAssertLessThan(repoint.lowerBound, set.lowerBound,
+                          "the throttle is derived before the synth has the host rate")
+        let getter = try Self.bodyOfMember(startingWith: "public override var internalRenderBlock", in: code)
+        XCTAssertFalse(getter.contains("synth.sampleRate"), """
+            The render-block getter reads the synth's rate again. It runs when the HOST fetches \
+            the block, which may be before allocate — the rate it sees can be the placeholder.
+            """)
+        XCTAssertTrue(getter.contains("bioState.frameAccum >= bioState.interval"),
+                      "the render block no longer throttles against the allocate-time interval")
     }
 
     // MARK: - Claim 8 — the app is a different case (COUNTERWEIGHT, SOURCE-TEXT SCAN)

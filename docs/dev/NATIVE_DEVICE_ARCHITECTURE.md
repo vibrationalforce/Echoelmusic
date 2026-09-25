@@ -609,9 +609,11 @@ about 10 times a second from `bioBaseReverbMix`, which the AUv3 never set. Repai
 - **Base Frequency retunes a held MIDI note.** `apply` writes `synth.frequency`, the glide target
   of whatever sounds, including a key the host is holding. Whether the knob is a transpose or
   only the drone's pitch is a product call.
-- **`bioInterval` is captured when the host fetches the render block**, not per render. A
-  sample-rate change without a re-fetch keeps the old interval. Hosts normally re-allocate and
-  re-fetch; HOST VERIFY before building anything.
+- ✅ **FIXED 2026-09-25 (P8w): `bioInterval` was captured when the host fetched the render
+  block**, not at allocate. The interval now lives in `BioRenderState`, is set in
+  `allocateRenderResources` from the host rate, and the block reads it
+  (`TheAUv3FollowsTheHostSampleRateTests` claim 10). Real hosts' fetch order stays unmeasured;
+  the repair no longer depends on it.
 
 **Second audit pass 2026-09-24 (WA3 device-model files): fixed P8m (stale note tracker across
 re-allocate), P8n (one note-identity spelling), P8p (EchoelCellular's bio comments). Measured and
