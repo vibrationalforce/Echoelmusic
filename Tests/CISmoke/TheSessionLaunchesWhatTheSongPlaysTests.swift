@@ -14,6 +14,10 @@
 //    part on a refused lane opens no scene; each cell is `activeRegion`'s answer — a part that
 //    started earlier and still plays belongs to the later scene, and an overlap is won by the
 //    region `activeRegion` picks (#1440: one definition of precedence).
+// 2b. END-TO-END (WA4.2c): only a part that WOULD SOUND gets a cell — the player's own
+//    `isExecutable` verdict, asked with the playing path's resolver (#1439). A missing audio
+//    file, a missing clip or an empty MIDI clip opens no scene and no cell, and an unplayable
+//    overlap winner is never replaced by a different part.
 // 3. END-TO-END: every `LaneLaunchState` case maps to the cell it lights, and only that one.
 // 4. COUNTERWEIGHTS (#343): the premises — `launchRegion` still refuses bio/other lanes and
 //    no-ops while stopped; `launchGeneration` stays OBSERVED and `currentTick` IGNORED (the
@@ -26,15 +30,21 @@
 // over a model of `SessionGrid` and `TimelineScheduling.activeRegion`; claims 4–5 were driven
 // against this tree. On the parent the subject file does not exist, so the bundle does not
 // build there — ONE absence, not N findings (#486). Claim 4 is COUNTERWEIGHTS (green on both).
+// WA4.2c against its parent (7ebb2e322): `scenes(in:voiceCapacity:playable:)` and
+// `playableRegionIDs` do not exist there — again ONE absence; the prune/relocate bump
+// claim is a REGRESSION guard (red there: neither site bumped `launchGeneration`).
 // NOT covered: whether the grid renders, reads well, or that a launched part is HEARD on the
 // bar — a device probe, owned by the marker below.
 // NEEDS-FOUNDER-VERIFY: Workstation → Play → Session → tap a part, then Launch scene, then
 // Stop: each change lands on the next bar and the track returns to the song after Stop.
 
+// `@MainActor` because `playableRegionIDs` asks the main-actor player's verdict (#1439 form).
+
 import Foundation
 import XCTest
 @testable import Echoelmusic
 
+@MainActor
 final class TheSessionLaunchesWhatTheSongPlaysTests: XCTestCase {
 
     private static let viewPath = "Sources/Echoelmusic/Studio/SessionLaunchView.swift"
@@ -51,6 +61,10 @@ final class TheSessionLaunchesWhatTheSongPlaysTests: XCTestCase {
     private static let bar = TimelineTime.ticksPerBar
     /// The lane rack's default capacity, as `TimelineRegionPlayer.laneVoiceCapacity` reports it.
     private static let rack = 4
+
+    /// Every placed region counted playable — for the claims about TRACKS and OVERLAP, which
+    /// must not depend on content.
+    private static func all(_ doc: TimelineDocument) -> Set<UUID> { Set(doc.regions.map(\.id)) }
 
     // MARK: 1 — the tracks are the lanes the engine launches on
 
@@ -72,7 +86,7 @@ final class TheSessionLaunchesWhatTheSongPlaysTests: XCTestCase {
         let ids = SessionGrid.tracks(in: doc, voiceCapacity: Self.rack).map(\.id)
         XCTAssertEqual(ids, [Self.keysLane.id] + extras.prefix(4).map(\.id),
                        "a launch on a voiceless track would read Playing in silence")
-        let cells = SessionGrid.scenes(in: doc, voiceCapacity: Self.rack).first?.cells ?? [:]
+        let cells = SessionGrid.scenes(in: doc, voiceCapacity: Self.rack, playable: Self.all(doc)).first?.cells ?? [:]
         XCTAssertNil(cells[extras[4].id])
         // Multi-roll off: only the Echoel track launches a MIDI part.
         XCTAssertEqual(SessionGrid.tracks(in: doc, voiceCapacity: 0).map(\.id), [Self.keysLane.id])
@@ -97,7 +111,7 @@ final class TheSessionLaunchesWhatTheSongPlaysTests: XCTestCase {
             lanes: [Self.bioLane, Self.keysLane, Self.lookLane, Self.drumsLane],
             regions: [long, loopA, loopB, curve, look])
 
-        let scenes = SessionGrid.scenes(in: doc, voiceCapacity: Self.rack)
+        let scenes = SessionGrid.scenes(in: doc, voiceCapacity: Self.rack, playable: Self.all(doc))
         XCTAssertEqual(scenes.map(\.startTick), [0, 4 * Self.bar])
         XCTAssertEqual(scenes[0].cells, [Self.keysLane.id: long.id, Self.drumsLane.id: loopA.id])
         // The long part started earlier and still plays at bar 5 — it belongs to that scene.
@@ -111,7 +125,7 @@ final class TheSessionLaunchesWhatTheSongPlaysTests: XCTestCase {
         let over = TimelineRegion(laneID: Self.keysLane.id, clipID: clip,
                                   startTick: 2 * Self.bar, lengthTicks: 2 * Self.bar)
         let doc = TimelineDocument(lanes: [Self.keysLane], regions: [under, over])
-        let scenes = SessionGrid.scenes(in: doc, voiceCapacity: Self.rack)
+        let scenes = SessionGrid.scenes(in: doc, voiceCapacity: Self.rack, playable: Self.all(doc))
         XCTAssertEqual(scenes.map(\.startTick), [0, 2 * Self.bar])
         for scene in scenes {
             // #416/#1440: the cell IS activeRegion's answer, never a second rule.
@@ -123,9 +137,67 @@ final class TheSessionLaunchesWhatTheSongPlaysTests: XCTestCase {
                        "the later-starting overlap is what the song plays at bar 3")
     }
 
+    // MARK: 2b — only a part that would sound gets a cell
+
+    func testOnlyPartsThatWouldSoundArePlayable() {
+        let full = Clip(name: "Take", kind: .midi,
+                        melody: MelodyClip(notes: [Note(pitch: 60, startStep: 0)]))
+        let empty = Clip(name: "Composed", kind: .midi, melody: MelodyClip(notes: []))
+        let found = Clip(name: "Loop", kind: .audio, mediaRef: "Media/Audio/found.wav")
+        let lost = Clip(name: "Gone", kind: .audio, mediaRef: "Media/Audio/gone.wav")
+        let keysFull = TimelineRegion(laneID: Self.keysLane.id, clipID: full.id,
+                                      startTick: 0, lengthTicks: Self.bar)
+        let keysEmpty = TimelineRegion(laneID: Self.keysLane.id, clipID: empty.id,
+                                       startTick: 2 * Self.bar, lengthTicks: Self.bar)
+        let keysOrphanClip = TimelineRegion(laneID: Self.keysLane.id, clipID: UUID(),
+                                            startTick: 4 * Self.bar, lengthTicks: Self.bar)
+        let loopFound = TimelineRegion(laneID: Self.drumsLane.id, clipID: found.id,
+                                       startTick: 0, lengthTicks: Self.bar)
+        let loopLost = TimelineRegion(laneID: Self.drumsLane.id, clipID: lost.id,
+                                      startTick: 6 * Self.bar, lengthTicks: Self.bar)
+        let bioPart = TimelineRegion(laneID: Self.bioLane.id, clipID: full.id,
+                                     startTick: 0, lengthTicks: Self.bar)
+        let doc = TimelineDocument(
+            lanes: [Self.bioLane, Self.keysLane, Self.drumsLane],
+            regions: [keysFull, keysEmpty, keysOrphanClip, loopFound, loopLost, bioPart])
+        let url = URL(fileURLWithPath: "/echoel/test/found.wav")
+        let playable = SessionGrid.playableRegionIDs(
+            in: doc, clips: [full, empty, found, lost],
+            bpm: TimelineRegionPlayer.fallbackTempo,
+            resolveAudio: { $0 == found.id ? url : nil })
+        XCTAssertEqual(playable, [keysFull.id, loopFound.id], """
+            an empty MIDI clip, a missing clip, an audio file that does not resolve and a bio \
+            curve must not be launchable — each would read Playing in silence
+            """)
+
+        let scenes = SessionGrid.scenes(in: doc, voiceCapacity: Self.rack, playable: playable)
+        XCTAssertEqual(scenes.map(\.startTick), [0],
+                       "a silent part opens no scene of its own")
+        XCTAssertEqual(scenes.first?.cells, [Self.keysLane.id: keysFull.id,
+                                             Self.drumsLane.id: loopFound.id])
+    }
+
+    func testAnUnplayableWinnerLeavesTheCellEmpty() {
+        let clip = UUID()
+        let under = TimelineRegion(laneID: Self.keysLane.id, clipID: clip,
+                                   startTick: 0, lengthTicks: 8 * Self.bar)
+        let over = TimelineRegion(laneID: Self.keysLane.id, clipID: clip,
+                                  startTick: 2 * Self.bar, lengthTicks: 2 * Self.bar)
+        let loop = TimelineRegion(laneID: Self.drumsLane.id, clipID: clip,
+                                  startTick: 2 * Self.bar, lengthTicks: Self.bar)
+        let doc = TimelineDocument(lanes: [Self.keysLane, Self.drumsLane],
+                                   regions: [under, over, loop])
+        // `over` wins at bar 3 but cannot sound: its cell stays empty rather than showing
+        // `under`, which is not what the song plays there.
+        let scenes = SessionGrid.scenes(in: doc, voiceCapacity: Self.rack,
+                                        playable: [under.id, loop.id])
+        XCTAssertEqual(scenes.map(\.startTick), [0, 2 * Self.bar])
+        XCTAssertEqual(scenes[1].cells, [Self.drumsLane.id: loop.id])
+    }
+
     func testAnEmptySongHasNoScenes() {
         let doc = TimelineDocument(lanes: [Self.keysLane, Self.drumsLane], regions: [])
-        XCTAssertTrue(SessionGrid.scenes(in: doc, voiceCapacity: Self.rack).isEmpty)
+        XCTAssertTrue(SessionGrid.scenes(in: doc, voiceCapacity: Self.rack, playable: Self.all(doc)).isEmpty)
     }
 
     func testTheSceneLabelNamesTheBar() {
@@ -183,14 +255,41 @@ final class TheSessionLaunchesWhatTheSongPlaysTests: XCTestCase {
                       "launch no-ops while stopped — the premise of the view's disabled state")
         XCTAssertTrue(body.contains("(lane.kind == .midi || lane.kind == .audio), !lane.isBio"),
                       """
-                      launchRegion's lane refusal changed. `SessionGrid.tracks` mirrors it; \
-                      update both in the same commit, or the grid offers a cell that does nothing \
-                      (or hides one that works).
+                      launchRegion's lane refusal changed. `TrackMix.role` (which \
+                      `SessionGrid.tracks` asks) mirrors it; update both in the same commit, or \
+                      the grid offers a cell that does nothing (or hides one that works).
                       """)
         XCTAssertTrue(player.contains("public private(set) var launchGeneration"),
                       "launchGeneration must stay observed, or the grid never repaints on a bar")
         XCTAssertTrue(player.contains("@ObservationIgnored public private(set) var currentTick"),
                       "the playhead must stay unobserved — the leaf-safety argument depends on it")
+    }
+
+    func testAPrunedOrCutLaunchReachesTheGrid() throws {
+        // WA4.2c (review LOW 3): an edit that deletes a launched part, or a locate, clears
+        // launch state; the grid only observes `launchGeneration`, so both must bump it or a
+        // "Stop <track>" row stays on screen with nothing behind it.
+        let player = try source(Self.playerPath)
+        guard let prune = player.range(of: "launch.prune(validLaneIDs:"),
+              let pruneEnd = player.range(of: "audioLanes?.pruneLaunchOverrides(",
+                                          range: prune.upperBound..<player.endIndex),
+              let relocate = player.range(of: "public func relocate(toTick"),
+              let relocateEnd = player.range(of: "static func relocateAnchorTick(",
+                                             range: relocate.upperBound..<player.endIndex)
+        else {
+            XCTFail("ANCHOR MISSING: the prune or relocate moved (#454)")
+            return
+        }
+        XCTAssertTrue(player[prune.upperBound..<pruneEnd.lowerBound].contains("launchGeneration &+= 1"),
+                      "the prune inside refreshStructure must bump launchGeneration")
+        let body = String(player[relocate.upperBound..<relocateEnd.lowerBound])
+        guard let bump = body.range(of: "if !launch.isIdle { launchGeneration &+= 1 }"),
+              let cut = body.range(of: "launch.removeAll()") else {
+            XCTFail("relocate's hard cut must bump launchGeneration while launches still exist")
+            return
+        }
+        XCTAssertLessThan(bump.lowerBound, cut.lowerBound,
+                          "the bump reads isIdle, so it must run BEFORE removeAll empties the engine")
     }
 
     // MARK: 5 — source: the view's calls, gates and absences; the one door
@@ -205,6 +304,13 @@ final class TheSessionLaunchesWhatTheSongPlaysTests: XCTestCase {
                       "the voiced-track rule gets the player's capacity, never a literal")
         XCTAssertTrue(code.contains("TrackMix.role(of: lane.id, in: document,"),
                       "one rule for which tracks sound, shared with the inspector (#416)")
+        XCTAssertTrue(code.contains("TimelineRegionPlayer.isExecutable(region: region, onLaneOfKind: kind, clip: clip,"),
+                      "one verdict for which parts sound — the player's, never a second rule")
+        XCTAssertTrue(code.contains("resolveAudio: { player.audioLanes?.resolvedURL(forClipID: $0) })"),
+                      "the audio verdict asks the resolver the playing path uses (#1439)")
+        XCTAssertTrue(code.contains("clips: clipStore.filledClips,"))
+        XCTAssertTrue(code.contains("bpm: player.preflightTempo,"),
+                      "the tempo input is the @ObservationIgnored mirror, never the gliding tempo")
         XCTAssertGreaterThanOrEqual(code.components(separatedBy: ".disabled(!playing)").count - 1, 2,
                                     "a part and a scene cannot be launched while the song is stopped")
         for banned in ["player.play(", "player.stop()", "relocate", "currentTick", "loopEnabled",

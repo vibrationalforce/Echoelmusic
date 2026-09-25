@@ -24,6 +24,19 @@
 //  can never disagree about which tracks sound. And launching is disabled while the song is
 //  stopped, because the engine no-ops then; the caption says so.
 //
+//  ⚠️ ONLY PARTS THAT WOULD SOUND GET A CELL (WA4.2c, the same law one level down). A
+//  region whose audio file no longer resolves, or whose MIDI clip is missing or empty,
+//  would launch into silence while the cell read "Playing". The verdict is the player's
+//  own `TimelineRegionPlayer.isExecutable` — the per-region question behind the Play
+//  button — with the same resolver `AudioLanePlayer` plays through (#1439). Never a
+//  second rule.
+//
+//  ⚠️ PHASE, STATED RATHER THAN IMPLIED. A launched part on the Echoel track picks up
+//  where the song is inside that part (`loadClip` follows the arrangement position); on
+//  every other track it starts from its own top (the player's PHASE CAVEAT). So a scene
+//  is the SET of parts the song plays at that bar, not a guarantee that they line up the
+//  way the arrangement had them. The caption says so.
+//
 //  Cold reads only. `launchGeneration` bumps on a tap or a fired bar boundary, never per
 //  step, and `isPlaying` changes twice per take — both are safe in a leaf body. The playhead
 //  (`currentTick`) is not read here.
@@ -78,25 +91,57 @@ enum SessionGrid {
             .map { Track(id: $0.id, name: $0.name) }
     }
 
-    /// One scene per distinct tick at which a part starts on a launchable track, ascending.
-    /// Each cell is `activeRegion`'s answer at that tick, so a part that started earlier and
-    /// is still playing belongs to the scene too — the scene is "what the song plays here".
+    /// One scene per distinct tick at which a PLAYABLE part starts on a launchable track,
+    /// ascending. Each cell is `activeRegion`'s answer at that tick, so a part that started
+    /// earlier and is still playing belongs to the scene too. A winner that would not sound
+    /// (not in `playable`) gets no cell — never a different part in its place, because that
+    /// would not be what the song plays there.
     nonisolated static func scenes(in document: TimelineDocument,
-                                   voiceCapacity: Int) -> [LaunchScene] {
+                                   voiceCapacity: Int,
+                                   playable: Set<UUID>) -> [LaunchScene] {
         let trackIDs = tracks(in: document, voiceCapacity: voiceCapacity).map(\.id)
         let launchable = Set(trackIDs)
         let starts = Set(document.regions
-            .filter { launchable.contains($0.laneID) && $0.lengthTicks > 0 }
+            .filter { launchable.contains($0.laneID) && playable.contains($0.id) }
             .map(\.startTick))
-        return starts.sorted().map { tick in
+        return starts.sorted().compactMap { tick in
             var cells: [UUID: UUID] = [:]
             for laneID in trackIDs {
-                if let region = TimelineScheduling.activeRegion(in: document, laneID: laneID, at: tick) {
+                if let region = TimelineScheduling.activeRegion(in: document, laneID: laneID, at: tick),
+                   playable.contains(region.id) {
                     cells[laneID] = region.id
                 }
             }
-            return LaunchScene(startTick: tick, cells: cells)
+            return cells.isEmpty ? nil : LaunchScene(startTick: tick, cells: cells)
         }
+    }
+
+    /// The regions that would put something through the engine if launched: the player's
+    /// own per-region verdict (`TimelineRegionPlayer.isExecutable`), asked with the same
+    /// clip values and audio resolver the playing path uses. Bio lanes and lanes whose kind
+    /// the timeline engine does not play are never playable. `@MainActor` because the verdict
+    /// it asks lives on the (main-actor) player.
+    @MainActor
+    static func playableRegionIDs(in document: TimelineDocument,
+                                  clips: [Clip],
+                                  bpm: Double,
+                                  resolveAudio: (UUID) -> URL?) -> Set<UUID> {
+        var byID: [UUID: Clip] = [:]
+        for clip in clips where byID[clip.id] == nil { byID[clip.id] = clip }
+        var kinds: [UUID: ClipKind] = [:]
+        for lane in document.lanes
+        where !lane.isBio && ClipKind.timelineEngineKinds.contains(lane.kind) {
+            kinds[lane.id] = lane.kind
+        }
+        var playable = Set<UUID>()
+        for region in document.regions {
+            guard let kind = kinds[region.laneID], let clip = byID[region.clipID] else { continue }
+            if TimelineRegionPlayer.isExecutable(region: region, onLaneOfKind: kind, clip: clip,
+                                                 bpm: bpm, resolveAudio: resolveAudio) {
+                playable.insert(region.id)
+            }
+        }
+        return playable
     }
 
     /// What a cell shows, given its track's launch state. Only the region the state names
@@ -146,12 +191,21 @@ struct SessionLaunchView: View {
 
     @Environment(TimelineStore.self) private var timeline
     @Environment(TimelineRegionPlayer.self) private var player
+    @Environment(ClipStore.self) private var clipStore
 
     var body: some View {
         let document = timeline.document
         let capacity = player.laneVoiceCapacity
         let tracks = SessionGrid.tracks(in: document, voiceCapacity: capacity)
-        let scenes = SessionGrid.scenes(in: document, voiceCapacity: capacity)
+        // Cold inputs only, the transport row's own (#1439): `filledClips` changes on
+        // generate/evolve or an import, `preflightTempo` and `audioLanes` are
+        // `@ObservationIgnored`. The resolver probes the file system once per audio part.
+        let playable = SessionGrid.playableRegionIDs(
+            in: document,
+            clips: clipStore.filledClips,
+            bpm: player.preflightTempo,
+            resolveAudio: { player.audioLanes?.resolvedURL(forClipID: $0) })
+        let scenes = SessionGrid.scenes(in: document, voiceCapacity: capacity, playable: playable)
         // Subscribes this leaf to launch changes: a tap or a fired bar, never a step.
         let _ = player.launchGeneration
         let playing = player.isPlaying
@@ -160,7 +214,7 @@ struct SessionLaunchView: View {
                 Text("Session")
                     .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
                 Text(playing
-                     ? "Tap a part to loop it on its track from the next bar. Stop hands the track back to the song."
+                     ? "Tap a part to loop it on its track from the next bar. A launched part starts from its top — on the Echoel track it continues where the song is. Stop hands the track back to the song."
                      : "Play the song to launch parts.")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
@@ -209,7 +263,7 @@ struct SessionLaunchView: View {
                 .buttonStyle(.plain)
                 .disabled(!playing)
                 .accessibilityLabel("Launch scene at \(title)")
-                .accessibilityHint("Loops every part the song plays at \(title), from the next bar")
+                .accessibilityHint("Loops every part listed at \(title) on its track, from the next bar")
             }
             ForEach(tracks.filter { scene.cells[$0.id] != nil }) { track in
                 if let regionID = scene.cells[track.id] {
@@ -255,7 +309,9 @@ struct SessionLaunchView: View {
         .disabled(!playing)
         .accessibilityLabel("\(track.name), part at \(title)")
         .accessibilityValue(SessionGrid.word(state) ?? "Not launched")
-        .accessibilityHint("Loops this part on its track from the next bar")
+        .accessibilityHint(state == .playing
+                           ? "Already looping. Stop the track to hand it back to the song"
+                           : "Loops this part on its track from the next bar")
     }
 
     private func stopButton(_ track: SessionGrid.Track) -> some View {

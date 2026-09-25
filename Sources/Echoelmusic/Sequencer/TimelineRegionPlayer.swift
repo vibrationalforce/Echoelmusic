@@ -616,6 +616,7 @@ public final class TimelineRegionPlayer {
         let anchor = Self.relocateAnchorTick(targetBarTick: target, nextPatternStep: nextStep)
         pianoRoll?.allNotesOff()   // hard locate: cut the primary roll's ringing notes
         flushPumps()               // offs through current bindings (H5b), slots released
+        if !launch.isIdle { launchGeneration &+= 1 }   // the launch UI must see the cut
         launch.removeAll()         // P0 policy: a locate is a hard cut — launches do not
                                    // survive it (their boundaries reference the old
                                    // position); the arrangement re-primes below.
@@ -1049,6 +1050,10 @@ public final class TimelineRegionPlayer {
         if !launch.isIdle {
             launch.prune(validLaneIDs: Set(fresh.lanes.map(\.id)),
                          validRegionIDs: Set(fresh.regions.map(\.id)))
+            // The launch UI observes only this counter: a pruned launch must reach it, or a
+            // deleted part's "Stop" row stays on screen with nothing behind it. A structural
+            // edit is a user gesture, never per step, so the bump stays low-frequency.
+            launchGeneration &+= 1
         }
         // S3: prune AUDIO overrides for a deleted launched region/lane too (its audio
         // is stopped here); the prime below re-arms freed lanes, and skips surviving
