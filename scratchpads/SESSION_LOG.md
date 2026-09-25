@@ -39432,3 +39432,19 @@ AUv3StateContract; 7 findings, each re-read before acting.
   `.greatestFiniteMagnitude` (unreachable in AU, cap is a product number).
 - Gates: Compile Check 36075168450 (76274efc5) sat `pending` 50 min with no runner; the push of
   d41c9d6a4 supersedes it (cancel-in-progress). Nothing read yet for d41c9d6a4.
+
+## 2026-09-25 00:45–01:05 UTC — P8w–P8y + gate reads
+
+- Gates: Build for Testing GREEN on 90ae395e6, 97faa961d, 835cb8e8c, 66748c221, 67c834759,
+  53fb7ef1b. Run Tests on 53fb7ef1b = #396 shape, 166 observed passing / 0 failures in the
+  `tail -200` window, and that window carries `TheAUv3TailCoversTheReverbTests` (P1) and
+  `TheAUv3RegistersAndStaysIsolatedTests` — first execution evidence for P1's guard.
+  **Xcode Compile Check GREEN on `1e8e4cb91`** (Release, device, builds the AUv3) — covers
+  P8m–P8w.
+- P8w `1e8e4cb91` — bio throttle interval set in allocate (was captured at block fetch).
+- Tool/agent sweep `8bd674a0d`, `docs/CLAUDE.md` §5 `871285762`, ledger addendum `c87e6a4b6`.
+- DSP review (read-only) of 98f5d8f7e..HEAD/DSP: no critical/high. Tank rebuild, CA rule
+  bit-identity, NaN gates: clean. F3 → P8x `5910992e5` (reverb mix/width NaN-safe clamp, new
+  guard `TheReverbCannotPassANaNControlTests`). F1 → P8y `a535d5ba4` (comments: decayTime is not
+  an output bound; tail safe only because of the 2 s release). F2 (fresh texture plays rule 90
+  at displayed 0.5) = already a founder hold.
