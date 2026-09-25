@@ -39846,3 +39846,10 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - **WA3.3 independent review (2 read-only reviewers, audio-thread + DSP correctness):** core contract confirmed (neutral HRV keeps the host value exactly; mix 0 bit-exact dry; texture dry; app path unchanged). One MED fixed: `6a5026004` — `renderSpace` resets the reverb tank on the rising mix edge (the tank froze at mix 0 and replayed its old tail). Guard claim 9 + counterweight. Remaining LOW/MED items (per-block mix zipper, word-width races, re-entrant allocate, exclusivity cost, NaN law doc, bus assembly untested) → task #202, post-RC.
 - **Auto-merge root cause:** 6c333a028's merge failed with "refusing to merge unrelated histories" (both gates green). `--depth=50` fetch on a full checkout made the repo shallow; branch is 113 ahead of main. Founder approved the one-line fix → `979383e1a` (full fetch + guard claim 5b). The run for THIS push uses the fixed workflow file.
 - Run Tests for 6c333a028 (run 36138252577) still running at 13:35.
+
+## 2026-09-25 14:05Z — main advanced to 979383e1a; RC stops at the TestFlight gate
+
+- **Run Tests on 6c333a028 (run 36138252577):** Build for Testing success; Run Tests exit 65 `TEST EXECUTE FAILED`, 166 passed / 0 failed / 0 skipped in the tail window, one 1934 s gap. #396 shape; per-test results only in the xcresult artifact (egress 403 here). The repaired Pro guard is not in the window — execution unrecorded, not observed failing.
+- **Auto-merge with the fixed fetch (run 36141906898, 979383e1a): SUCCESS.** origin/main = 979383e1a (fast-forward from 1e8e4cb91), carrying 6c333a028 (Pro row), 6a5026004 (reverb rising-edge reset) and the workflow fix. First merge since the 113-commit gap.
+- **Release Archive:** skipped again — it `needs` the test job, and #396 fails that job on every push, so in ci.yml the archive can never run. The Release/device compile proof is the Xcode Compile Check (green on 979383e1a via the merge gate). Report-only: this dependency is founder-gated CI.
+- **Next:** TestFlight RC deploy of 979383e1a needs founder approval (`.deploy/release` bump). Post-RC items stay in task #202.
