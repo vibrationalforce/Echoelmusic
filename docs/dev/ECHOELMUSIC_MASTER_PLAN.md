@@ -426,11 +426,21 @@ done. WA4 is the first front.
     `splitRegion` the tempo MEDIA elapses at (`PartSplit.mediaBPM`), fixing a latent jump at the
     cut of a warped part. Guard `TheSelectedPartIsCutWhereItIsHeardTests`. **Held:** drag-move and
     trim (trim needs a decision on what the spoken name promises).
+  - **WA4 path 7 — Undo/Redo for the song: IMPLEMENTED.** `Studio/SongHistoryRow.swift`
+    (`048b4c69c`), one history control under the canvas, moved (not copied) out of
+    `TrackPartsView`, so Remove on the part bar keeps a visible way back. Region-only, as the
+    store's history is. Guard `TheTrackPartsAreArrangedThroughTheStoreTests` claim 4.
+  - **WA4 path 6 — track headers: Mute/Solo IMPLEMENTED.** M/S switches in the track row
+    (`33d5c0537`), gated on `TrackMix.controls(…).muteSolo`, writing through `TrackMix`; the
+    inspector no longer draws them (one door per fact), hints worded once in
+    `TrackMix.muteHint`/`soloHint`. **No Arm** (no record path, #1302). Level/Pan stay in the
+    inspector (numeric → `EchoelValueField`, too wide for a phone row). Guard
+    `TheTrackHeaderMutesAndSolosTests`.
   - Evidence ceiling: transcription-graded guards; compile gates are read per commit in
     `scratchpads/SESSION_LOG.md`; **device verification owed** for every slice
     (NEEDS-FOUNDER-VERIFY markers in each guard header).
   - **Open in WA4:** workspace promotion (Workstation as a first-class surface, not a panel),
-    track headers (mute/solo/level/pan in the row), a general undo step beyond regions, drag
+    a general undo step beyond regions (mixer edits are not undoable), drag
     edits, the Echoel device seam, and the device proof journey.
 
 ---
