@@ -274,6 +274,10 @@ struct WorkstationView: View {
                     SelectedPartBar()
                         .padding(.horizontal, 10)
                 }
+                // WA4 path 7 — the ONE Undo/Redo for the song's parts. Outside the canvas's
+                // `if`, so removing the last part still leaves the way back on screen.
+                SongHistoryRow()
+                    .padding(.horizontal, 10)
                 ForEach(summary.lanes) { row in
                     laneRow(row)
                     if WorkstationSelection.resolvedTrack(selection.trackID,

@@ -18,7 +18,8 @@
 // 3. COUNTERWEIGHTS (#343): the undo history is still region-only (so the "never mixer
 //    changes" hint stays true) and each store edit still snapshots before it mutates.
 // 4. SOURCE: the view writes through `TrackParts` → the store API and nothing else, and the
-//    inspector is its one door.
+//    inspector is its one door. Undo/Redo MOVED (WA4 path 7) to `Studio/SongHistoryRow.swift`,
+//    mounted once under the Arrange canvas — a FORWARD sub-claim on this tree (the file is new).
 //
 // Grading (§0, no Swift toolchain in a web session): claims 1–2 were transcribed into Python
 // over a model of `TrackParts` and the store's snapshot/undo/redo; claims 3–4 were driven
@@ -39,6 +40,7 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
     private static let partsPath = "Sources/Echoelmusic/Studio/TrackPartsView.swift"
     private static let inspectorPath = "Sources/Echoelmusic/Studio/TrackInspectorView.swift"
     private static let storePath = "Sources/Echoelmusic/Core/TimelineStore.swift"
+    private static let historyPath = "Sources/Echoelmusic/Studio/SongHistoryRow.swift"
     private static let sourcesRoot = "Sources/Echoelmusic"
     private static let bar = TimelineTime.ticksPerBar
 
@@ -146,7 +148,7 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
                       """
                       The undo history is no longer region-only. The parts view promises Undo \
                       never reverts a mixer change; if the history now holds whole documents, \
-                      that hint is false — change it in `Studio/TrackPartsView.swift` in the \
+                      that hint is false — change it in `Studio/SongHistoryRow.swift` in the \
                       same commit.
                       """)
         for method in ["public func moveRegion(id: UUID, toStartTick tick: Int, bpm:",
@@ -169,10 +171,20 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
         let code = try source(Self.partsPath)
         for call in ["timeline.moveRegion(id: part.id, toStartTick: tick)",
                      "timeline.duplicateRegion(id: part.id)",
-                     "timeline.removeRegion(id: part.id)",
-                     "timeline.undo()", "timeline.redo()"] {
+                     "timeline.removeRegion(id: part.id)"] {
             XCTAssertEqual(code.components(separatedBy: call).count - 1, 1, "`\(call)` exactly once")
         }
+        // WA4 path 7 — Undo/Redo MOVED to the one song-level control under the Arrange canvas;
+        // a second copy here would be two histories' worth of buttons over one history.
+        XCTAssertFalse(code.contains("timeline.undo()"), "Undo lives in SongHistoryRow now")
+        XCTAssertFalse(code.contains("timeline.redo()"), "Redo lives in SongHistoryRow now")
+        let history = try source(Self.historyPath)
+        for call in ["timeline.undo()", "timeline.redo()"] {
+            XCTAssertEqual(history.components(separatedBy: call).count - 1, 1, "`\(call)` exactly once")
+        }
+        let historyDoors = try filesMatching { code, _ in code.contains("SongHistoryRow()") }
+        XCTAssertEqual(historyDoors, ["Sources/Echoelmusic/Studio/WorkstationView.swift"],
+                       "one Undo/Redo for the whole song, mounted once")
         for banned in ["UserDefaults", "@AppStorage", "JSONEncoder", "TimelineStore(",
                        "TimelineRegion(", "TimelineDocument(", "resolveOverlaps", "bpm:",
                        "Slider(", "Stepper(", "currentTick", "player."] {

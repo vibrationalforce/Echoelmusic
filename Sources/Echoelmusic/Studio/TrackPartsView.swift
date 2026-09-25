@@ -1,6 +1,6 @@
 //
 //  TrackPartsView.swift
-//  Echoelmusic — Studio (WA4.3: arrange the selected track's parts — move, copy, remove, undo)
+//  Echoelmusic — Studio (WA4.3: arrange the selected track's parts — move, copy, remove)
 //
 //  WHY THIS EXISTS. The WA4 journey step ARRANGE. `TimelineStore` has carried the whole
 //  arrangement API since the arrange surface was cut (#121): `moveRegion`, `duplicateRegion`,
@@ -107,7 +107,7 @@ enum TrackParts {
     }
 }
 
-/// The selected track's parts, with move / copy / remove, and the song's part-edit Undo/Redo.
+/// The selected track's parts, with move / copy / remove (Undo/Redo: `SongHistoryRow`).
 @MainActor
 struct TrackPartsView: View {
 
@@ -129,7 +129,9 @@ struct TrackPartsView: View {
                 ForEach(parts) { part in
                     partRow(part)
                 }
-                historyRow
+                // Undo/Redo MOVED to `SongHistoryRow`, the one history control under the
+                // Arrange canvas (WA4 path 7) — Undo must stay visible after the part it
+                // would restore is gone, and this list shows only while a track is open.
             }
         }
     }
@@ -164,22 +166,6 @@ struct TrackPartsView: View {
         .padding(.vertical, 6).padding(.horizontal, 8)
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
             .strokeBorder(EchoelTheme.border, lineWidth: 1))
-    }
-
-    private var historyRow: some View {
-        let canUndo = timeline.canUndo
-        let canRedo = timeline.canRedo
-        return HStack(spacing: 6) {
-            actionButton("Undo", systemImage: "arrow.uturn.backward", enabled: canUndo,
-                         label: "Undo the last change to the song's parts") {
-                timeline.undo()
-            }
-            actionButton("Redo", systemImage: "arrow.uturn.forward", enabled: canRedo,
-                         label: "Redo the last undone change to the song's parts") {
-                timeline.redo()
-            }
-        }
-        .accessibilityHint("Covers moves, copies, removals, imports and the composer's part — never mixer changes")
     }
 
     private func actionButton(_ title: String, systemImage: String, enabled: Bool, label: String,
