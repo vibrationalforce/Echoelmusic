@@ -53,7 +53,7 @@ final class TheCoherenceBlendHasNoFaderTests: XCTestCase {
     func testNothingUnderSourcesWritesTheBlend() throws {
         var writers: [String] = []
         let root = try repoRoot().appendingPathComponent(Self.sourcesRoot)
-        guard let walker = FileManager.default.enumerator(atPath: root.path) else {
+        guard FileManager.default.fileExists(atPath: root.path), let walker = FileManager.default.enumerator(atPath: root.path) else {
             throw XCTSkip("cannot enumerate \(Self.sourcesRoot) — refusing to report a green it did not earn")
         }
         for case let relative as String in walker where relative.hasSuffix(".swift") {

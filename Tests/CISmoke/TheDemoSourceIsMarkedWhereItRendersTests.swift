@@ -378,7 +378,7 @@ final class TheDemoSourceIsMarkedWhereItRendersTests: XCTestCase {
     /// trailing paren is what separates the wrapper from the tile.
     func testThePillHasExactlyOneConstructionSite() throws {
         let sources = sourceRoot().appendingPathComponent("Sources")
-        guard let walker = FileManager.default.enumerator(atPath: sources.path) else {
+        guard FileManager.default.fileExists(atPath: sources.path), let walker = FileManager.default.enumerator(atPath: sources.path) else {
             throw XCTSkip("source tree not present at \(sources.path)")
         }
         var sites: [String] = []

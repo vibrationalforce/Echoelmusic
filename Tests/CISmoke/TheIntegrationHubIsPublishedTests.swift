@@ -88,7 +88,7 @@ final class TheIntegrationHubIsPublishedTests: XCTestCase {
             XCTAssertTrue(hub.contains(address), "\(address) is missing from the hub's control table (#1255)")
         }
         let root = try repoRoot().appendingPathComponent("Sources")
-        guard let walker = FileManager.default.enumerator(atPath: root.path) else {
+        guard FileManager.default.fileExists(atPath: root.path), let walker = FileManager.default.enumerator(atPath: root.path) else {
             throw XCTSkip("cannot enumerate Sources — refusing to report a green it did not earn")
         }
         var listeners: [String] = []
