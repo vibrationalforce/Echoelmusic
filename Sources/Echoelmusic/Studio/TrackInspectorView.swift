@@ -22,10 +22,15 @@
 //    there would move a number and not the sound. When a consumer lands, flip `pan` there
 //    and the guard that pins the missing consumer in the same commit.
 //  · a bio lane carries a recorded curve and makes no sound — no mixer at all.
-//  ⚠️ And one COUPLING that is stated rather than hidden: the Echoel track's level is the level
-//  the Studio instrument plays at (`rollSlotGain` → `mixGain`, the one writer in
-//  `EchoelmusicApp`). Muting it here silences the instrument, and the instrument's Start heals
-//  a silenced roll slot (`healRollSlotNamingCause`). The hint says both.
+//  ⚠️ And the COUPLINGS with the Studio instrument are stated rather than hidden (review of
+//  b2913f96b): the Echoel track's level is the level the instrument plays at (`rollSlotGain` →
+//  `mixGain`, the one writer in `EchoelmusicApp`), so muting it or pulling it to 0 silences
+//  the instrument; soloing ANY other track does too (`effectiveGain` zeroes every unsoloed
+//  lane); and the instrument's Start heals all three (`unsilenceRollSlot`: unmute, a zeroed
+//  fader back to 1.00, every other solo cleared). Each hint names the coupling it carries.
+//
+//  ⚠️ A typed name is committed on Return, when the field loses focus, and when the inspector
+//  closes — a field that shows a name the song never stored is a second truth on screen.
 //
 //  Cold reads only: `timeline.document` changes on an edit. No playhead, no meter, no bio.
 //
@@ -66,9 +71,8 @@ enum TrackMix {
         case .audio:
             return .audio
         case .midi:
-            // The same rule `rollSlotGain` uses to pick the roll lane (#416: one rule).
-            let rollLane = document.lanes.first(where: { $0.kind == .midi && !$0.isBio })
-            if rollLane?.id == laneID { return .echoelInstrument }
+            // The player's own roll-lane rule (#416: one rule, `rollSlotGain` reads it too).
+            if document.rollLaneID == laneID { return .echoelInstrument }
             return .laneSynth(lane.builtinInstrument?.voiceKind ?? .poly)
         case .video, .visual:
             return .unplayed
@@ -137,8 +141,9 @@ struct TrackInspectorView: View {
 
     @Environment(TimelineStore.self) private var timeline
     let laneID: UUID
-    /// The name being typed. Local and cold; committed on Return.
+    /// The name being typed. Local and cold; committed on Return, on focus loss and on close.
     @State private var nameDraft = ""
+    @FocusState private var nameFocused: Bool
 
     var body: some View {
         let document = timeline.document
@@ -160,10 +165,10 @@ struct TrackInspectorView: View {
                         .font(EchoelTheme.font(13))
                         .textFieldStyle(.roundedBorder)
                         .submitLabel(.done)
-                        .onSubmit {
-                            if !TrackMix.rename(nameDraft, laneID: laneID, timeline: timeline) {
-                                nameDraft = lane.name
-                            }
+                        .focused($nameFocused)
+                        .onSubmit { commitName() }
+                        .onChange(of: nameFocused) { _, focused in
+                            if !focused { commitName() }
                         }
                         .accessibilityLabel("Track name")
                 }
@@ -178,7 +183,7 @@ struct TrackInspectorView: View {
                         range: TrackMix.levelRange,
                         decimals: 2,
                         hint: controls.role == .echoelInstrument
-                            ? "1.00 unchanged, 0 silent. This is also the level the Studio instrument plays at"
+                            ? "1.00 unchanged, 0 silent. This is also the level the Studio instrument plays at; its Start lifts 0 back to 1.00"
                             : "1.00 unchanged, 0 silent, 2.00 is +6 dB")
                 }
                 if controls.pan {
@@ -201,7 +206,9 @@ struct TrackInspectorView: View {
                             TrackMix.flipMute(laneID: laneID, timeline: timeline)
                         }
                         stateButton("Solo", on: lane.isSoloed,
-                                    hint: "Plays only the soloed tracks") {
+                                    hint: controls.role == .echoelInstrument
+                                        ? "Plays only the soloed tracks"
+                                        : "Plays only the soloed tracks. This also silences the Studio instrument, whose Start clears the solo") {
                             TrackMix.flipSolo(laneID: laneID, timeline: timeline)
                         }
                     }
@@ -210,6 +217,17 @@ struct TrackInspectorView: View {
             .padding(.vertical, 8).padding(.horizontal, 10)
             .padding(.leading, 26)
             .onAppear { nameDraft = lane.name }
+            .onDisappear { commitName() }
+        }
+    }
+
+    /// Store the typed name if it changed; otherwise, or when it is refused, show the stored one.
+    private func commitName() {
+        guard let stored = timeline.document.lanes.first(where: { $0.id == laneID })?.name else { return }
+        let typed = nameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        if typed == stored { return }
+        if !TrackMix.rename(nameDraft, laneID: laneID, timeline: timeline) {
+            nameDraft = stored
         }
     }
 
@@ -221,14 +239,16 @@ struct TrackInspectorView: View {
                 .foregroundStyle(on ? EchoelTheme.onPrimary : EchoelTheme.text)
                 .padding(.horizontal, 14)
                 .frame(minWidth: 64, minHeight: 44)
+                // Monochrome primary fill, never a green area behind a label (EchoelTheme).
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                    .fill(on ? EchoelTheme.accent : EchoelTheme.fill))
+                    .fill(on ? EchoelTheme.text : EchoelTheme.fill))
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
                     .strokeBorder(on ? Color.clear : EchoelTheme.border, lineWidth: 1))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(title)
+        .accessibilityAddTraits(.isToggle)
         .accessibilityValue(on ? "On" : "Off")
         .accessibilityHint(hint)
     }

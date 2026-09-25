@@ -21,6 +21,8 @@
 //    exactly once, and still sends `timeline` nothing but `document` (the seam
 //    `TheWorkstationHasADoorTests` pins — re-asserted here only for the inspector's sake).
 //
+// Review of b2913f96b (PASS WITH CONDITIONS) tightened claims 3 and 4 and added the roll-rule /
+// rename-commit claim; all three are FORWARD guards over this repair.
 // Grading (§0, no Swift toolchain in a web session): claims 1–2 were transcribed into Python over
 // a model of `TrackMix.role`/`controls` and `rollSlotGain`'s lane rule; claims 3–5 were driven
 // against this tree. On the parent the subject file does not exist, so the bundle does not build
@@ -101,8 +103,13 @@ final class TheTrackInspectorShowsOnlyWiredControlsTests: XCTestCase {
     // MARK: 3 — counterweight: the premise of "no pan on the Echoel track"
 
     func testTheRollSlotPanStillHasNoConsumer() throws {
+        // Every file but the declaring one must be silent, and the declaring one may name it
+        // exactly once — its declaration (review of b2913f96b: skipping the whole file let a
+        // reader added there go unseen).
         let hits = try filesMatching { code, path in
-            !path.hasSuffix("Sequencer/Timeline.swift") && code.contains("rollSlotPan")
+            code.contains("rollSlotPan") && !(path.hasSuffix("Sequencer/Timeline.swift")
+                && code.components(separatedBy: "rollSlotPan").count - 1 == 1
+                && code.contains("public var rollSlotPan: Float {"))
         }
         XCTAssertEqual(hits, [], """
             `TimelineDocument.rollSlotPan` is now read by \(hits.joined(separator: ", ")). \
@@ -134,17 +141,33 @@ final class TheTrackInspectorShowsOnlyWiredControlsTests: XCTestCase {
 
     func testThePanFieldIsGatedOnTheWiredFlag() throws {
         let code = try source(Self.inspectorPath)
+        // Brace-matched (#408), so a Pan field just AFTER the gate's closing brace fails too.
         guard let gate = code.range(of: "if controls.pan {"),
-              let field = code.range(of: "label: \"Pan\"", range: gate.upperBound..<code.endIndex),
-              let nextGate = code.range(of: "if controls.muteSolo {",
-                                        range: gate.upperBound..<code.endIndex) else {
-            XCTFail("ANCHOR MISSING: the pan gate or the Pan field moved (#454)")
+              let block = Self.braceBody(in: code, openingAt: gate.upperBound) else {
+            XCTFail("ANCHOR MISSING: the pan gate moved (#454)")
             return
         }
-        XCTAssertLessThan(field.lowerBound, nextGate.lowerBound,
-                          "the Pan field must sit inside `if controls.pan`, or it appears on the "
-                          + "Echoel track where it moves nothing")
+        XCTAssertTrue(block.contains("label: \"Pan\""),
+                      "the Pan field must sit inside `if controls.pan`, or it appears on the "
+                      + "Echoel track where it moves nothing")
         XCTAssertEqual(code.components(separatedBy: "label: \"Pan\"").count - 1, 1)
+    }
+
+    /// The Echoel track is picked by the player's OWN rule, and a typed name cannot be left on
+    /// screen unsaved (review of b2913f96b).
+    func testTheRollRuleIsTheDocumentsAndTheNameIsNeverLeftUnsaved() throws {
+        let code = try source(Self.inspectorPath)
+        XCTAssertTrue(code.contains("document.rollLaneID == laneID"),
+                      "the Echoel track is `TimelineDocument.rollLaneID` — one rule (#416)")
+        XCTAssertFalse(code.contains("$0.kind == .midi && !$0.isBio"),
+                       "a restated roll-lane rule is a second definition that can drift")
+        XCTAssertTrue(code.contains(".onSubmit { commitName() }"))
+        XCTAssertTrue(code.contains("if !focused { commitName() }"),
+                      "leaving the field commits the name")
+        XCTAssertTrue(code.contains(".onDisappear { commitName() }"),
+                      "closing the inspector commits the name")
+        XCTAssertFalse(code.contains(".fill(on ? EchoelTheme.accent"),
+                       "a solid green area behind a label is the one EchoelTheme forbids")
     }
 
     // MARK: 5 — the Workstation seam
@@ -164,6 +187,23 @@ final class TheTrackInspectorShowsOnlyWiredControlsTests: XCTestCase {
     }
 
     // MARK: Source helpers
+
+    /// The text from `start` — just past an anchor's own `{` — to that brace's matching `}`.
+    /// nil when the brace never closes.
+    private static func braceBody(in code: String, openingAt start: String.Index) -> String? {
+        var depth = 1
+        var cursor = start
+        while cursor < code.endIndex {
+            let ch = code[cursor]
+            if ch == "{" { depth += 1 }
+            if ch == "}" {
+                depth -= 1
+                if depth == 0 { return String(code[start..<cursor]) }
+            }
+            cursor = code.index(after: cursor)
+        }
+        return nil
+    }
 
     private func repoRoot() -> URL {
         var dir = URL(fileURLWithPath: #filePath)

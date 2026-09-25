@@ -428,9 +428,13 @@ struct WorkstationView: View {
             // WA4.1 — tapping the facts selects the track and opens its inspector; tapping the
             // open one closes it. The facts stay ONE spoken element (#1436); selection is a
             // trait on it, not a second control beside it.
+            // The facts fill the row's height (44 pt with the 6 pt padding) so the whole row is
+            // the tap target, not the ~31 pt of text (review of b2913f96b).
             laneFacts(row)
+                .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
                 .contentShape(Rectangle())
                 .onTapGesture { selectedTrack = selected ? nil : row.id }
+                .accessibilityAction { selectedTrack = selected ? nil : row.id }
                 .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
                 .accessibilityHint(selected ? "Closes this track's mixer"
                                             : "Opens this track's device, level, pan, mute and solo")
