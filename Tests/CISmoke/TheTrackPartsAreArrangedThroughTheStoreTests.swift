@@ -211,6 +211,8 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
         }
         XCTAssertTrue(view.contains("selection.selectRegion(part.id, in: document)"),
                       "a part row selects its part — the one part editor acts on the one selection")
+        XCTAssertTrue(view.contains("are under the arrangement above."),
+                      "a selected part says in words where its actions went — the bar may be scrolled away (review of 6bf183726)")
         let bar = try source(Self.partBarPath)
         for edit in ["TrackParts.move(", "TrackParts.duplicate(part, timeline: timeline)",
                      "TrackParts.remove(part, timeline: timeline)"] {

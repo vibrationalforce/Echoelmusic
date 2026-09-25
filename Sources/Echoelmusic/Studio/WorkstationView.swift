@@ -506,6 +506,9 @@ struct WorkstationView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(name)
+        // Review of 33d5c0537 (LOW): the switch SHOWS "M"/"S" and is NAMED "Mute"/"Solo" — a
+        // Voice Control user who says what they see ("tap M") must reach it too.
+        .accessibilityInputLabels([name, letter])
         .accessibilityAddTraits(.isToggle)
         .accessibilityValue(on ? "On" : "Off")
         .accessibilityHint(hint)

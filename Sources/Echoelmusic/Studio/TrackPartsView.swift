@@ -139,6 +139,14 @@ struct TrackPartsView: View {
                 ForEach(parts) { part in
                     partRow(part, isSelected: part.id == selected, document: document)
                 }
+                // Review of 6bf183726 (MEDIUM): with several tracks the part bar can be scrolled
+                // out of view when a part is picked here, and the accent border alone does not
+                // say where its actions went. Said in words, to everyone, not only to VoiceOver.
+                if let selected, parts.contains(where: { $0.id == selected }) {
+                    Text("Its actions — move, trim, split, copy, remove — are under the arrangement above.")
+                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 // WA4 path 8 — the per-part Earlier/Later/Copy/Remove buttons that stood here
                 // were a SECOND door to the same edits `SelectedPartBar` makes. A row now
                 // selects its part; the one part editor acts on the one selection.

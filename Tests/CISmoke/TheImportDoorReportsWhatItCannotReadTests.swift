@@ -338,8 +338,6 @@ final class TheImportDoorReportsWhatItCannotReadTests: XCTestCase {
 
     private struct AnchorMissing: Error { let reason: String }
 
-    /// Directory-gated, never per-file (#475): a `fileExists` bracket around each read turns the
-    /// very catastrophe this file guards against into a green SKIP.
     // MARK: - 10. Every arrival door is one rule (review LOW-2)
 
     /// A take from outside this device — a file or a Live Colabo peer — becomes a NEW row and
@@ -364,6 +362,8 @@ final class TheImportDoorReportsWhatItCannotReadTests: XCTestCase {
                       "the file import is the same rule, not a second copy of it (#416)")
     }
 
+    /// Directory-gated, never per-file (#475): a `fileExists` bracket around each read turns the
+    /// very catastrophe this file guards against into a green SKIP.
     private func code(at relativePath: String) throws -> String {
         let here = URL(fileURLWithPath: #filePath)
         let root = here.deletingLastPathComponent().deletingLastPathComponent()
