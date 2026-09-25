@@ -269,6 +269,10 @@ struct WorkstationView: View {
                     ArrangeCanvasView(rows: arrangeRows, document: timeline.document,
                                       songTicks: ArrangementStrip.songTicks(summary))
                         .padding(.horizontal, 10)
+                    // WA4 path 5 — the actions for the part selected on the canvas. Its own
+                    // leaf: it reads the song tempo and the clip only inside Split.
+                    SelectedPartBar()
+                        .padding(.horizontal, 10)
                 }
                 ForEach(summary.lanes) { row in
                     laneRow(row)
