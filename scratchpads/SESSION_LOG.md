@@ -39400,3 +39400,16 @@ AUv3StateContract; 7 findings, each re-read before acting.
   saved state stores the raw parameter · fullState `!=` restore corner · EchoelDeviceState per-field lossiness.
 - Gates: Compile Check 53fb7ef1b SUCCESS (covers P8e–P8l). Build for Testing: a4cea87de SUCCESS,
   c2fc6f407 SUCCESS (Run Tests #396 shape, 170 passing in window, tonight's guards not in window).
+
+## 2026-09-25 overnight — P8q · P8r (a87e59692 · 76274efc5)
+- **P8q** two more stale "AUv3 is gone" comments the P8o sweep missed (it grepped one spelling):
+  `BioFeedbackPublisher.vitals(from:)` ("pullSharedVitals returns TWO COMMENTS AND NO CODE") and
+  `ProUnlockView` ("ContentPipelineClaimsTests pins that absence" — it pins PRESENCE now). The
+  doorless Pro row "AUv3 plugin in your DAW — Planned, not built yet" is false the other way:
+  HOLD-FOR-FOUNDER (pricing), comment only. Lesson: sweep for the CLAIM, not one spelling of it.
+- **P8r** `BioVitals` gets `coherence/hrv/heartRate/breathPhaseForSound` + `plausibleBreathRate`;
+  `pullSharedVitals` writes them (unmeasured → 0.5, like `BioSampleFrame`). Guard drives both
+  spellings over a 960-frame grid through `BioFeedbackPublisher.vitals(from:)`. Dormant (no App
+  Group entitlement on the extension).
+- Gates at 00:06Z: Compile Check for 76274efc5 pending (runner backlog); it covers P8m–P8r.
+  Source pushes paused so it is not cancelled again.

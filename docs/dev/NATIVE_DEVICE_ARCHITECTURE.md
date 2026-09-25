@@ -616,13 +616,11 @@ about 10 times a second from `bioBaseReverbMix`, which the AUv3 never set. Repai
 **Second audit pass 2026-09-24 (WA3 device-model files): fixed P8m (stale note tracker across
 re-allocate), P8n (one note-identity spelling), P8p (EchoelCellular's bio comments). Measured and
 NOT changed:**
-- **The shared-vitals bridge writes "not measured" as a real low value** (`pullSharedVitals`):
-  `BioVitals` uses 0 for unmeasured coherence/HRV and 0 BPM for no heart rate, and the AU maps
-  them raw to 0, where the app's rule (`EngineBus.…ForSound`) reads unmeasured as neutral 0.5.
-  **Dormant**: the extension carries no App Group entitlement, so the bridge delivers nothing
-  today (entitlements = founder hold). Repair when it is enabled: Foundation-only `…ForSound`
-  accessors on `BioVitals` with the app's gates. `AnUnmeasuredChannelReadsNeutralTests` does not
-  see this spelling (`vitals.` vs `frame.`).
+- ✅ **FIXED LATER THE SAME NIGHT (P8r, `76274efc5`): the shared-vitals bridge wrote "not
+  measured" as a real low value.** `BioVitals` now carries the app's `…ForSound` rule (0.5 when
+  unmeasured) and `pullSharedVitals` writes it; `TheBridgeReadsAnUnmeasuredChannelAsNeutralTests`
+  drives both spellings over the same frames. Still **dormant**: the extension carries no App
+  Group entitlement (founder hold), so the bridge delivers nothing today.
 - **A fresh instance plays rule 90 while its Coherence reads 0.5** (which maps to rule 105):
   `init` sets `texture.rule = .rule90`, and a default value never fires the observer, so the
   first coherence write, even of 0.5, changes the timbre. Sound change → founder ear, together
