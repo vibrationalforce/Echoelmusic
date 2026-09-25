@@ -170,11 +170,15 @@ public enum BioEgressPolicy {
         "/echoelmusic/music/note/count",
     ]
 
-    /// Namespaces whose every member is a derived control value: the gesture channels
-    /// (`ModSource.rawValue(from:)` is bounded per channel), the discrete bio events
+    /// Namespaces whose every member is a derived control value: the discrete bio events
     /// (`[confidence, aux]`) and the modulation tap (already-applied, scaled values).
+    ///
+    /// ⛔ `/echoelmusic/gesture/` stood first in this list and is gone. Its sender went with the
+    /// face/body path (#1301, `OSCSender` says so where the block stood), so the entry granted
+    /// `.derived` to an address space nothing writes. Removing it changes no packet; if a
+    /// gesture family ever returns, the classifier answers nil and fails CLOSED until the new
+    /// sender is classified in the same commit.
     public static let derivedPrefixes: [String] = [
-        "/echoelmusic/gesture/",
         "/echoelmusic/bio/event/",
         "/echoelmusic/mod/",
     ]
