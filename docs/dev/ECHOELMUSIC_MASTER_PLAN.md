@@ -424,8 +424,8 @@ done. WA4 is the first front.
   - **WA4 path 5 — act on the selected part: IMPLEMENTED (move · split · copy · remove).**
     `Studio/SelectedPartBar.swift` (`ccc96c753`); Split snaps to the song grid and hands
     `splitRegion` the tempo MEDIA elapses at (`PartSplit.mediaBPM`), fixing a latent jump at the
-    cut of a warped part. Guard `TheSelectedPartIsCutWhereItIsHeardTests`. **Held:** drag-move and
-    trim (trim needs a decision on what the spoken name promises).
+    cut of a warped part. Guard `TheSelectedPartIsCutWhereItIsHeardTests`. (Held at the time:
+    drag-move and trim — both since built, see path D and TRIM below.)
   - **WA4 path 7 — Undo/Redo for the song: IMPLEMENTED.** `Studio/SongHistoryRow.swift`
     (`048b4c69c`), one history control under the canvas, moved (not copied) out of
     `TrackPartsView`, so Remove on the part bar keeps a visible way back. Region-only, as the
@@ -479,13 +479,26 @@ done. WA4 is the first front.
   - Evidence ceiling: transcription-graded guards; compile gates are read per commit in
     `scratchpads/SESSION_LOG.md`; **device verification owed** for every slice
     (NEEDS-FOUNDER-VERIFY markers in each guard header).
-  - **Open in WA4:** workspace promotion (Workstation as a first-class surface, not a panel),
-    a general undo step beyond regions (mixer edits are not undoable), drag
-    edits (and an outward trim — today's trim only shortens), the MEDIUM-4 flag (kept open on
-    purpose: today's behaviour errs toward keeping a song, the flag would trade that for losing
-    one); the device proof journey is written and owed to the founder. Path 2 is a founder hold
-    (§13, WA4-P2).
-
+  - **WA4 journey proof — item 9: WRITTEN** (`b0d1739a4`, review repair `5c8de3c59`):
+    `TheWorkstationJourneySurvivesSaveAndOpenTests` walks one song through the calls the surfaces
+    make — Add Audio Track, the real `AudioImport.commit`, trim/move/split/duplicate/delete,
+    undo/redo, `TrackMix`, Save, a fresh `ProjectStore`, restore, field-by-field equality and the
+    Play preflight. A song-only saved row is no longer shared as an empty take
+    (`Project.shareCarriesItsContent`).
+  - **WA4 path 2 — the Workstation as a first-class workspace: IMPLEMENTED** (`b4c2179bf`,
+    §13 WA4-P2 option (a) with the tuning banner). A relaunch returns to the Workstation the
+    player left from; a first launch still shows Sound.
+  - **WA4 path D — drag-move on the canvas: IMPLEMENTED** (`e3211f21d`). Press, hold, slide:
+    whole bars relative to the start (the part bar's step), `@GestureState` preview in the
+    `ArrangePartBlock` leaf, ONE commit through `TrackParts.move` on release. Old
+    `ArrangeTimelineView` classified: body drag + snapped preview PORTED as idea,
+    `TimelineDragMath.tickDelta` PORTED as algorithm; zoom, magnet, lane change and overlap
+    trimming NOT RESTORED. Guard `TheArrangeCanvasMovesAPartByDraggingTests`.
+  - **Open in WA4 (after path D):** a general undo step beyond regions (mixer edits are not
+    undoable), drag across tracks and drag-trim of edges (and an outward trim — today's trim
+    only shortens), the MEDIUM-4 flag (kept open on purpose: today's behaviour errs toward
+    keeping a song, the flag would trade that for losing one); Arm stays absent (no record
+    path, #1302); the device proof journey is written and owed to the founder.
 ---
 
 ## 8. Deferred — parked, not forgotten
