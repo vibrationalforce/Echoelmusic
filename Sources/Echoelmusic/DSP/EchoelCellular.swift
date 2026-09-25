@@ -528,13 +528,16 @@ public final class EchoelCellular: @unchecked Sendable {
     private func renderSpectral2D() -> Float {
         var sample: Float = 0
         let row = grid2D[spectralFrameIndex % grid2DSize]
-        // `phases` holds `cellCount` entries, not `grid2DSize`: bound by it too, or a texture
-        // with fewer cells than partials indexes past it on the render thread (overnight P8).
-        let count = min(partialCount, grid2DSize, phases.count)
-        guard count > 0 else { return 0 }
-        let invCount = 1.0 / Float(count)
+        // The NORMALISATION is over the partials the row describes; the LOOP is also bounded
+        // by `phases`, which holds `cellCount` entries, not `grid2DSize` — or a texture with
+        // fewer cells than partials indexes past it on the render thread (overnight P8). The two
+        // are separate on purpose: folding `phases.count` into `invCount` made a 16-cell texture
+        // above ~1.5 kHz (where the Nyquist break stopped the loop before it trapped) 6 dB louder.
+        let partials = min(partialCount, grid2DSize)
+        guard partials > 0 else { return 0 }
+        let invCount = 1.0 / Float(partials)
 
-        for i in 0..<count {
+        for i in 0..<min(partials, phases.count) {
             let partialFreq = frequency * Float(i + 1)
             if partialFreq > sampleRate * 0.5 { break } // Nyquist guard
             let phaseInc = partialFreq / sampleRate * 2.0 * .pi
