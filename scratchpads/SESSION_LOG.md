@@ -39482,3 +39482,24 @@ AUv3StateContract; 7 findings, each re-read before acting.
   keeps `number`/`init`/`evaluate`).
 - Gates: CI/CD for `5910992e5`, `a535d5ba4`, `1a813fe23` all QUEUED (macOS runner backlog);
   Compile Check for `1a813fe23` queued then superseded by the `36844deac` push.
+
+### 2026-09-25 ~01:15 UTC — overnight P7: the anchor-miss ratchet was RED (109 > 89), now 75
+
+- `TheAnchorMissSkipsDoNotGrowTests` claim 1 counts `throw XCTSkip` lines with no `fileExists`
+  in the three lines above. Measured with a Python transcription of its scan at `10e43b197^`:
+  **109** against `ratchet = 89` — red on the branch since guards added after #1240 wrote their
+  missing-TREE skip as `guard let walk = …enumerator(…)` or `isReadableFile`, which the window
+  cannot see. Nothing reported it: the job log is a tail-200 window (#807).
+- Repair, nine commits (`10e43b197`, `2e285981d`, `ec349227b`, `0e56e099e`, `d37ed6235`,
+  `b0e1d45c8`, `deb28fac0`, `c4af16dc9`, `526c43b18`): 30 missing-TREE skips reclassified by
+  putting `FileManager.default.fileExists(atPath:)` on the guard line (no verdict changes;
+  109 → 79); the two `bodyOfMember` helpers (`TheAUv3FollowsTheHostSampleRateTests`,
+  `TheSensitivityWindowHasADoorTests`) now `XCTFail` + throw `AnchorMissing` for a missed anchor
+  and for unbalanced braces (79 → 75); ratchet lowered to **75** (440 skip sites total).
+- Checkers: swift-escapes / dead-needles / count-pins / foreign-needles exit 0. `moved-needles`
+  over `98f5d8f7e..HEAD`: two non-prose hits opened — both false alarms (`cellsPrev = cells`
+  survives only in comments, which that guard filters; `EchoelBodyVibeDevice.apply(binding…` is
+  a behavioural call, not a scan).
+- Not executed: no toolchain. Build for Testing on `526c43b18` is queued (runner backlog).
+- Gates read: CI/CD `Build for Testing` GREEN on `76274efc5`; `d41c9d6a4`/`1e8e4cb91` in
+  progress, five later runs queued.

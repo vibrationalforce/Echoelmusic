@@ -4364,3 +4364,12 @@ the command that exists to scan it. **Sweep every home by KIND — Sources, docs
 (commands, agents, skills, rules), scripts, each directory's CLAUDE.md — not only the kind you
 were editing.** One-liner used:
 `git grep -n -i -E "auv3[^.]{0,60}(removed|deleted|gone|does not exist)|AUAudioUnit.{0,40}→ *0" -- .claude scripts memory docs`.
+
+## PLAYBOOK (2026-09-25 overnight P7): a RATCHET over the bundle rots by GROWTH, not by edits
+
+`TheAnchorMissSkipsDoNotGrowTests` was red (109 > 89) for two weeks and nothing said so: every
+new guard that skipped on a missing tree through an enumerator (`guard let walk = …`) or
+`isReadableFile` counted as an anchor miss, because the scan only sees `fileExists` within three
+lines. Do this: when you add a missing-TREE skip, write `FileManager.default.fileExists(atPath:)`
+ON the `guard` line. When you touch any ratchet, re-derive its count with a Python transcription
+of its own scan (at the parent AND the worktree) — the job-log tail will never show the red.
