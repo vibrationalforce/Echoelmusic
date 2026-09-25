@@ -39448,3 +39448,37 @@ AUv3StateContract; 7 findings, each re-read before acting.
   guard `TheReverbCannotPassANaNControlTests`). F1 → P8y `a535d5ba4` (comments: decayTime is not
   an output bound; tail safe only because of the 2 s release). F2 (fresh texture plays rule 90
   at displayed 0.5) = already a founder hold.
+
+## 2026-09-25 (UTC, after 00:45) — P8z, P8aa, second AUv3 audio-thread review
+
+⚠️ The heading of the entry above says "00:45–01:05"; `date -u` read 00:45 at the P8z push and
+~01:00 when this entry was written, so that range was an estimate, not a measurement.
+
+- P8z `1a813fe23` — `EchoelBitcrush.step(forDownsample:)`: `Int(min(max(d,1),64).rounded())`
+  trapped on NaN (the NaN-passing clamp order). Now `clamped(to: 1...64)`. Guard
+  `TheBitcrushDownsampleCannotTrapTests` (claim 1 traps on the parent's NaN case = one finding;
+  claim 2 counterweight on the hold). Latent: field 1…64, JSON rejects NaN.
+- P8aa `7af98656e` — `BioExplanation.text(for:tempo:)` converted EVERY frame's raw pulse with
+  `Int(…rounded())` before asking if it was measured; NaN/±inf/1e30 trap on the main actor in
+  the generate path. Now `Int(exactly:)` (nil for all three, exact for finite; no threshold).
+  Guard `TheNarrationCannotTrapOnARawPulseTests` (one finding + counterweight). Latent: every
+  shipped publisher writes a finite pulse (rPPG gates 40…200 BPM).
+- Sweeps that found NOTHING to change (so nobody repeats them): every `Int(` over a float in
+  `DSP/` (FDN, Cellular, SpaceReverb, DDSP envelope — all writers bounded or NaN-safe) · every
+  `Int(…rounded())`/`Int(min|max(` in Core/Sequencer/Audio/Sync/Bio (OSCReceiver already bounds
+  in the Double, #1321) · raw bio fields → `Int(` (Widget/Watch: JSONEncoder refuses non-finite
+  at the writer) · `[Int(… % count)]` indexing (every divisor ≥ 1) · Int `%`/`/` by persisted
+  lengths (`ClipLaunchEngine`, `LaneNotePump` both guard) · MIDI decode (velocity clamped at the
+  consumers, note masked) · AUv3 value observer and `fullState` (both admit/sanitize).
+- Second read-only audio-thread review — the DSP the AUv3 render CALLS: no violation on any
+  reached path. Recorded in §K (`36844deac`, dedup `a8b2405b2`: its Base-Frequency point was
+  already there). Not changed: Debug-only `swift_once` on static ranges; `setSampleRate` has no
+  ceiling (traps only >1.8e19 Hz).
+- Not touched, measured: `mDataByteSize` truncation (would silence a host that passes size 0 with
+  non-null mData — host verify first); `MIDIInput` reads `.pointee.words` (possible over-read of a
+  short final packet — unverified, no toolchain).
+- P7: tonight's guards all import correctly (the no-`@testable` ones call only `SourceText`); the
+  non-blocking suite still matches every changed API (`bioFrames` only in comments; `CARule`
+  keeps `number`/`init`/`evaluate`).
+- Gates: CI/CD for `5910992e5`, `a535d5ba4`, `1a813fe23` all QUEUED (macOS runner backlog);
+  Compile Check for `1a813fe23` queued then superseded by the `36844deac` push.
