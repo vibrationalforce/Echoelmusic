@@ -254,8 +254,9 @@ final class TheFXDoorNamesAControlThatExistsTests: XCTestCase {
             """)
     }
 
-    /// The UI law made falsifiable. Exactly TWO raw `Slider(` in `Sources/`, both the look scrub,
-    /// and ZERO `Stepper(` anywhere.
+    /// The UI law made falsifiable. Exactly TWO raw `Slider(` in `Sources/` outside the AUv3
+    /// plug-in UI (`EchoelmusicAUv3/`, the one stated exception), both the look scrub, and ZERO
+    /// `Stepper(` anywhere, the extension included.
     ///
     /// ⚠️ LINE-BASED, not paren-matched: both of today's sites fit on one line. A future
     /// multi-line `Slider(` would still be COUNTED (the `Slider(` token is on its own line) but
@@ -304,7 +305,8 @@ final class TheFXDoorNamesAControlThatExistsTests: XCTestCase {
             """)
 
         XCTAssertEqual(sliderSites.count, 2, """
-            Sources/ declares \(sliderSites.count) raw `Slider(`, not 2. The two known ones are \
+            Sources/ (outside EchoelmusicAUv3/) declares \(sliderSites.count) raw `Slider(`, \
+            not 2. The two known ones are \
             the visual look scrub (EchoelStudioView + FloatingVisualWindow), which are morphs \
             between NAMED looks and not parameter rows. A third is a divergence from \
             `EchoelValueField` and goes to The Council. Sites: \
