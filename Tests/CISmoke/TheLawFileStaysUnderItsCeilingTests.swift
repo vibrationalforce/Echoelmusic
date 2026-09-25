@@ -388,7 +388,7 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
              "the live-pipeline provenance — the BLE-3 lifecycle history, the #277 retraction "
              + "in full, and the whole ⛔ walk-back of \"ModulationEngine wired (bio→tempo)\". "
              + "The LAW stayed: one owner for the belt, MPE-IN is not MPE-OUT, the matrix has "
-             + "its door since #1250, and EchoelBeat is dead"),
+             + "its door since #1250, and the drum product is dead"),
             ("Das hat leider nichtbgeklappt", "memory/LEDGER_COUNTS.md", "§AI",
              "the strike list's founder quotes in full. This needle is the founder's own "
              + "verbatim wording INCLUDING its typo, which is why no paraphrase can reproduce "
