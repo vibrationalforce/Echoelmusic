@@ -88,7 +88,12 @@ final class EveryHiddenSurfaceIsInTheStatusRegisterTests: XCTestCase {
         XCTAssertEqual(first.hidden, ["Alpha"],
                        "a comment or an `extension` line was read as a construction, or `Beta()` was not")
 
-        let decl = "struct Gamma: View, Equatable { var body: some View { EmptyView() } }"
+        // A multi-line literal (the same form as `a` above) on purpose: the one-line spelling
+        // read as a Sources/ needle to `doctor.py` section B ("declared nowhere") — a fixture
+        // for this guard's own detector, never a claim about the app.
+        let decl = """
+        struct Gamma: View, Equatable { var body: some View { EmptyView() } }
+        """
         XCTAssertEqual(try Self.hiddenViews(in: [decl]).hidden, ["Gamma"],
                        "a View conforming to a second protocol was not recognised as a View")
         XCTAssertEqual(try Self.hiddenViews(in: [decl, "let v = Gamma { }"]).hidden, [],
