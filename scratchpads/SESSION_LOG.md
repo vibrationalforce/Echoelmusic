@@ -39742,3 +39742,12 @@ Findings kept (none blocks a commit; latent = unreachable today):
 - CI/CD Build for Testing: GREEN on f68360774 (run 36082627155, step 9 success 04:20→04:25). The d1609b33d run (6275) entered Build for Testing at 04:46. Everything after it (030f18d47 … 1b5224c9a, ~35 pushes) is still QUEUED — macOS runners are saturated (the non-blocking Full Test Suite runs share them). At ~25 min per run this backlog does NOT clear by 06:45; tonight's last ~35 commits will leave the session compile-verified (Release/device) but WITHOUT a Debug/Simulator test-bundle build.
 - Run Tests on f68360774: #396 shape (exit 65, TEST EXECUTE FAILED), build-for-testing Succeeded, TEST BUILD FAILED false, 166 observed passing, 0 failures, 0 skipped IN THE WINDOW; 1315 s gap in the fetched log (#1040). Tonight's guards observed passing in window: TheAUv3TailCoversTheReverbTests, TheAUv3RegistersAndStaysIsolatedTests (6), TheReverbCannotPassANaNControlTests (3), TheNarrationCannotTrapOnARawPulseTests (2), TheMetronomeAccentHasADoorTests, TheTimebaseConvertsWithoutBecomingAClockTests. Absence of any other name proves nothing (#445).
 - Pushed since the last reading: 912f1bd94 (docs-only, architecture.html; Auto-Merge Docs success).
+
+## 2026-09-25 ~05:00–05:15 UTC — review 8 (correctness pass on the eight commits no one had reviewed for correctness)
+
+Review 8 (read-only code-reviewer) over 7f92c0abf, 2f06eb26a, 7e8e3c85f, 6d16e3f5f, af819db90, d62441b8e, d975e6d0a, 76274efc5: no BLOCKER, no MEDIUM; five CLEAN, three LOW. All three LOWs are fixed, one commit each:
+- `b005f4701` (76274efc5): the bridge counterweight used 120 BPM, which maps to exactly the neutral 0.5; now 72 BPM → 0.2.
+- `f66ac2910` (2f06eb26a): the breath-waveform guard pinned only the YES arm of the new switch; the NO arm is pinned too (mutant `.ble` → own yes arm: new claim 0, old pin still 1).
+- `6889eb75d` (d62441b8e): `RenderNoteState` doc said "render thread only"; it now names the allocate-time write and its no-render-in-flight contract. Comment only.
+Also confirmed: 6d16e3f5f silences no live address (no `/echoelmusic/gesture/` literal in code); d975e6d0a's mask is audio-thread safe. Out of scope and harmless: the CC panic check compares data1 unmasked.
+Gate effect: the push restarts Xcode Compile Check (cancel-in-progress). The only Sources delta since the green 1b5224c9a is a comment, so the runtime code is still what 1b5224c9a compiled. Both test edits are unbuilt until BfT reaches them — not tonight.
