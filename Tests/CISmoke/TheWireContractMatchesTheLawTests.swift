@@ -1,6 +1,9 @@
 // TheWireContractMatchesTheLawTests.swift
 // Echoel — #1157. Blocking bundle. SOURCE-TEXT SCAN (`Tests/CISmoke/CLAUDE.md` §1): it proves
 // which address strings EXIST in code and in the law file, never that a packet leaves the phone.
+// ONE exception, behavioural and labelled as such: a member of the `ctrl` brace set is checked
+// against the live `OSCControlCommand.addresses` whitelist (hence `@testable import`), because
+// its leaves are quoted in too many unrelated files for a text scan to see one go missing.
 //
 // ⭐ WHY THIS FILE EXISTS, AND THE DEFECT IS RECORDED, NOT IMAGINED. `CLAUDE.md`'s OSC section
 // says so about itself: "corrected 2026-07-04; the old list named eeg/{band}, audio/rms,
@@ -47,6 +50,7 @@
 
 import Foundation
 import XCTest
+@testable import Echoelmusic
 
 final class TheWireContractMatchesTheLawTests: XCTestCase {
 
@@ -127,16 +131,21 @@ final class TheWireContractMatchesTheLawTests: XCTestCase {
         var missing: [String] = []
         for token in documented.sorted() {
             // A brace SET is checked per member: the full path written in code (the `music`
-            // family is), OR the set's prefix written in code AND the member quoted as a leaf
-            // (the `ctrl` family is — `OSCReceiver.prefix` plus its `addresses` array).
+            // family is), OR the member is on the receiver's own whitelist (the `ctrl` family
+            // is — `OSCControlCommand.prefix` + leaf, listed in `OSCControlCommand.addresses`,
+            // which `TheOSCControlInputIsAWhitelistTests` ties to `parse`).
+            // ⛔ The first form of this fallback accepted the prefix literal plus the quoted
+            // leaf ANYWHERE in `Sources/`, and `"bpm"`, `"key"`, `"scale"` and `"genre"` are
+            // quoted in five unrelated files each — dropping a member from the whitelist stayed
+            // green (review of 551bf40d7). The whitelist is asked, not the text.
             if let members = alternatives(of: token) {
                 for member in members {
                     let whole = code.contains(member.full + "\"")
-                    let split = code.contains(member.prefix + "\"")
-                        && code.contains("\"" + member.leaf + "\"")
-                    if !whole && !split {
-                        missing.append("\(member.full) (from \(token): neither the full path nor "
-                                       + "its prefix plus the quoted leaf is in code)")
+                    let whitelisted = member.prefix == OSCControlCommand.prefix
+                        && OSCControlCommand.addresses.contains(member.full)
+                    if !whole && !whitelisted {
+                        missing.append("\(member.full) (from \(token): the full path is not in "
+                                       + "code and the member is not on OSCControlCommand.addresses)")
                     }
                 }
                 continue
