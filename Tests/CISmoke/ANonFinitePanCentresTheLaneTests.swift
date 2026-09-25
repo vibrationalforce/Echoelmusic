@@ -13,8 +13,12 @@
 //     `rollSlotPan` — found by the review of f2bef146d. A list of readers is a claim about the
 //     WHOLE tree: `git grep -n "\.pan\b" -- Sources` and read EVERY hit before trusting it.
 //     Two hits there are not boundaries: `TimelineDocument.mergeMixer` COPIES the pan and
-//     `structurallyEqual` COMPARES it, neither clamps. A NaN would compare unequal to itself
-//     and be re-copied on every merge. That cannot happen today, because nothing produces a NaN pan (review 4).
+//     `structurallyEqual` copies it into the other side precisely to EXCLUDE it from the
+//     comparison. Neither clamps. A NaN would compare unequal to itself: `mergeMixer` would
+//     re-copy it on every merge, and `structurallyEqual`'s exclusion would fail, so every merge
+//     would read as structural. The synthesized `Equatable`/`Encodable` of `TimelineLane` read
+//     it too, and no grep finds them. None of this can happen today, because nothing produces a
+//     NaN pan (reviews 4 and 5).
 //   · THE SINKS — `PolySynthVoice.setPan` and `TimelineAudioSink.setPan` had the same bare clamp,
 //     while `BioReactiveSynthVoice.setPan` already mapped non-finite to centre. One decision,
 //     two rules (#416). On the live path the sinks only ever receive the boundary's output, so

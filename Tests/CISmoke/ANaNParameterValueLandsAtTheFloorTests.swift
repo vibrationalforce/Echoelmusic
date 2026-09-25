@@ -13,10 +13,12 @@
 // "every other NaN boundary lands on the floor"; review found three bare ceiling clamps on the
 // lane-pan path, repaired in f2bef146d, and boundaries that map NaN to a neutral value instead.
 // ⛔ Its repair then called `FloatingPointClamp` "the repo's ONE NaN-safe clamp". Review 3
-// named three floor-landing `clamp01`s (`Core/FXModulation`, `Core/ModulationMatrix`,
+// named three NaN-to-floor helpers (`Core/FXModulation`, `Core/ModulationMatrix`,
 // `Bio/BioNormalizer`). Review 4 found more (`Sequencer/BreathArp`, `Sequencer/FieldAutoPlay`,
-// `Core/MusicalFrame`, `Core/SpectralColor`, `Sequencer/AutomationLane`). No count stands here
-// on purpose: a uniqueness or count claim needs the grep, not the memory.)
+// `Core/MusicalFrame`, `Core/SpectralColor`, and `Sequencer/AutomationLane`, whose helper is
+// named `clamp`). Review 5: they agree on NaN only — +inf lands at 1 in three of them and at 0
+// in the other five. No count stands here on purpose: a uniqueness or count claim needs the
+// grep, not the memory.)
 // `normalized(_:)`, the inverse, had the same shape and returned 1 for a NaN value.
 //
 // ⚠️ LATENT, NOT LIVE — measured, not assumed. The live producers are finite: the modulation
