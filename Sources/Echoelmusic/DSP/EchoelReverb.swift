@@ -22,6 +22,15 @@ public final class EchoelReverb: @unchecked Sendable {
     public var damping: Float = 0.5 { didSet { updateDamping() } }
     /// Wet/dry blend [0…1]. 0 = dry, 1 = fully wet.
     public var mix: Float = 0.25
+    /// #202 — set by the AUv3 space stage (`EchoelBodyVibeDevice.renderSpace`) after its first
+    /// block: from then on `mix` holds the value the last sample PLAYED, so the next block may
+    /// glide from it. Before that, `mix` is this type's default, not something a listener
+    /// heard, and gliding from it would put a wet fade on the first block of a dry plugin.
+    /// Nothing else reads it; the app's FX chain sets `mix` directly and never glides.
+    /// `reset()` leaves it alone on purpose: the rising-edge reset in `renderSpace` must still
+    /// glide up from 0, and a re-allocated AUv3 glides for one block from the mix its last
+    /// session ended on — under the synth's attack, from an emptied tank.
+    public var mixGlidePrimed = false
     /// Stereo width of the wet signal [0…1].
     public var width: Float = 1.0
 

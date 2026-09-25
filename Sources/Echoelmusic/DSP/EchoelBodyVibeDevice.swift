@@ -190,21 +190,45 @@ public enum EchoelBodyVibeDevice {
     /// and runs once per rise, not per block. `!(old > 0)` also counts a NaN as "was off".
     /// It runs ON the render thread, the tank's only reader, so the #1196b window in which
     /// `reset()` holds a tank as empty storage has no second party here.
+    ///
+    /// ⭐ THE MIX GLIDES ACROSS THE BLOCK (#202, post-RC). A host automating address 6 used to
+    /// move the wet/dry blend in one step at every block boundary — a zipper on a slow sweep,
+    /// and a click on a jump. Each sample now takes `mixRamp`'s value, from the mix the last
+    /// block ENDED on to this block's target, landing exactly on the target at the last sample.
+    /// Arithmetic only, one division per sample. The first block does not glide (see
+    /// `EchoelReverb.mixGlidePrimed`), so a fresh stage at mix 0 stays exactly dry. The rising
+    /// edge above still resets the tank first, so a glide up from 0 starts from a silent room.
+    /// A non-finite target plays as 0 — what `processStereo` already made of it.
     @inline(__always)
     public static func renderSpace(_ reverb: EchoelReverb, synth: EchoelDDSP,
                                    left: UnsafeMutableBufferPointer<Float>,
                                    right: UnsafeMutableBufferPointer<Float>, count: Int) {
         let next = synth.reverbMix
-        if !(reverb.mix > 0) && next > 0 { reverb.reset() }
-        reverb.mix = next
+        let target: Float = next.isFinite ? next : 0
+        let previous = reverb.mix
+        if !(previous > 0) && target > 0 { reverb.reset() }
+        let start = reverb.mixGlidePrimed && previous.isFinite ? previous : target
+        reverb.mixGlidePrimed = true
+        defer { reverb.mix = target }
         let n = Swift.min(count, Swift.min(left.count, right.count))
         guard n > 0 else { return }
         for i in 0..<n {
+            reverb.mix = mixRamp(from: start, to: target, sample: i, of: n)
             let dry = left[i]
             let (l, r) = reverb.processStereo(dry, dry)
             left[i] = l
             right[i] = r
         }
+    }
+
+    /// #202 — the blend sample `i` of an `n`-sample block plays while gliding `start` → `end`:
+    /// linear, one step past `start` at the first sample and EXACTLY `end` at the last (returned,
+    /// not computed — `start + (end - start)` need not round back to `end`), so consecutive
+    /// blocks join without a repeated or skipped value. `n <= 0` is `end`.
+    @inline(__always)
+    public static func mixRamp(from start: Float, to end: Float, sample i: Int, of n: Int) -> Float {
+        guard n > 0, i + 1 < n else { return end }
+        return start + (end - start) * Float(i + 1) / Float(n)
     }
 
     // MARK: The tail
