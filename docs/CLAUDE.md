@@ -141,6 +141,16 @@ carried until 2026-08-12. **A changelog is a claim surface too.**
 
 ## 5. Do NOT "fix" the AUv3 and RTMP mentions
 
+⭐ **THE AUv3 HALF OF THIS SECTION IS STALE SINCE #1385 (2026-09-20; noted 2026-09-25) — the
+pages were already corrected, this instruction was not.** Measured today
+(`git grep -n -i auv3 -- 'docs/*.html'`): the site now says Echoelmusic **IS** an AUv3
+instrument, confirmed loading and sounding in AUM, other hosts untested (`faq.html`,
+`overview.html`, `architecture.html`), and that it does **not host** third-party AUv3 plugins.
+So "never claim AUv3 (host or plugin)" below is wrong for the PLUGIN half: the claim that ships is
+"AUv3 instrument, AUM-confirmed, not a host". `ContentPipeline/CLAIMS.md` flipped its pin the same
+day and is the list to follow. The RTMP half stands. Numbers below (9 hits, 6 pages) are
+2026-08 dates, not today's.
+
 `git grep -ci AUv3 -- 'docs/*.html'` sums to **9** hits across 6 pages; RTMP to **10**. Every
 single one is a **denial**, not a claim — *"not an AUv3 plugin and not an AUv3 host … both were
 built and then deliberately removed"*, *"RTMP was never built — the publisher is a
