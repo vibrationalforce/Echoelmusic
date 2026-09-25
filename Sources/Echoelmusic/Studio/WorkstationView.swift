@@ -247,10 +247,11 @@ struct WorkstationView: View {
     /// Separate from `tuningPending` because that key stays set after the task ends.
     @State private var measuringClip: UUID?
 
-    /// WA4.1 — the track whose inspector is open, or nil. VIEW state, never song state: which
-    /// row is expanded is not part of the piece and is not persisted. Local and cold — it
-    /// changes on a tap.
-    @State private var selectedTrack: UUID?
+    /// WA4 — the ONE owner of what is selected (`WorkstationSelection`, built once by the app).
+    /// VIEW state, never song state: not part of the piece, never persisted. Cold — it changes
+    /// on a tap. ⛔ `@State selectedTrack` stood here (WA4.1); a second surface that wanted
+    /// the selection would have had to keep its own, and two selections disagree.
+    @Environment(WorkstationSelection.self) private var selection
 
     var body: some View {
         let summary = WorkstationSummary(document: timeline.document)
@@ -268,7 +269,8 @@ struct WorkstationView: View {
                                              songTicks: ArrangementStrip.songTicks(summary))
                             .padding(.horizontal, 10)
                     }
-                    if selectedTrack == row.id {
+                    if WorkstationSelection.resolvedTrack(selection.trackID,
+                                                          in: timeline.document) == row.id {
                         // The mixer and device facts of the ONE open track. Its own leaf, with
                         // its own store reads — this view still sends `timeline` nothing but
                         // `document`.
@@ -430,7 +432,7 @@ struct WorkstationView: View {
     }
 
     private func laneRow(_ row: WorkstationSummary.LaneRow) -> some View {
-        let selected = selectedTrack == row.id
+        let selected = selection.trackID == row.id
         return HStack(spacing: 8) {
             // WA4.1 — tapping the facts selects the track and opens its inspector; tapping the
             // open one closes it. The facts stay ONE spoken element (#1436); selection is a
@@ -440,8 +442,8 @@ struct WorkstationView: View {
             laneFacts(row)
                 .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
                 .contentShape(Rectangle())
-                .onTapGesture { selectedTrack = selected ? nil : row.id }
-                .accessibilityAction { selectedTrack = selected ? nil : row.id }
+                .onTapGesture { selection.toggleTrack(row.id) }
+                .accessibilityAction { selection.toggleTrack(row.id) }
                 .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
                 // Only what every track has is promised; the mixer and the parts list appear
                 // where the track has them (`TrackMix.controls`, `TrackParts.arrangeable`).

@@ -147,6 +147,9 @@ struct EchoelmusicApp: App {
     /// Plays the arrange TIMELINE's regions over the shared transport (reorg P3).
     /// Opt-in: engaged only by the timeline's own Play control; a no-op otherwise.
     @State private var timelinePlayer = TimelineRegionPlayer()
+    /// WA4 — the ONE owner of the Workstation's selection (track, part). App-level so it
+    /// outlives any surface switch; never persisted.
+    @State private var workstationSelection = WorkstationSelection()
     @State private var recordController = RecordController()
     /// The live immersive scene: every non-bio track is a positioned SpatialObject,
     /// moved by the Immersive Stage Touch surface. Control-plane only (no audio thread).
@@ -634,6 +637,7 @@ struct EchoelmusicApp: App {
             .environment(timelineStore)
             .environment(arrangementPlayer)
             .environment(timelinePlayer)
+            .environment(workstationSelection)
             .environment(recordController)
             .environment(spatialScene)
             .environment(automationPlayer)

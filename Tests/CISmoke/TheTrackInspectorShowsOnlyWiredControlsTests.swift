@@ -17,9 +17,10 @@
 // 4. SOURCE: the writes go through the store's existing API and nothing else (no second truth,
 //    no persistence of its own); the pan field sits inside `if controls.pan`; numeric
 //    parameters use `EchoelValueField`, never `Slider`/`Stepper`.
-// 5. SOURCE: the Workstation holds the selection as VIEW state and constructs the inspector
-//    exactly once, and still sends `timeline` nothing but `document` (the seam
-//    `TheWorkstationHasADoorTests` pins — re-asserted here only for the inspector's sake).
+// 5. SOURCE: the Workstation reads the ONE selection owner (`WorkstationSelection`, WA4 — it
+//    held `@State selectedTrack` until then) and constructs the inspector exactly once, and
+//    still sends `timeline` nothing but `document` (the seam `TheWorkstationHasADoorTests`
+//    pins — re-asserted here only for the inspector's sake).
 //
 // Review of b2913f96b (PASS WITH CONDITIONS) tightened claims 3 and 4 and added the roll-rule /
 // rename-commit claim; all three are FORWARD guards over this repair.
@@ -210,10 +211,15 @@ final class TheTrackInspectorShowsOnlyWiredControlsTests: XCTestCase {
 
     // MARK: 5 — the Workstation seam
 
-    func testTheWorkstationOwnsTheSelectionAndOpensOneInspector() throws {
+    func testTheWorkstationReadsTheOneSelectionAndOpensOneInspector() throws {
         let code = try source(Self.workstationPath)
-        XCTAssertTrue(code.contains("@State private var selectedTrack: UUID?"),
-                      "selection is VIEW state of the Workstation, never song state")
+        // WA4 moved the selection out of this view into `WorkstationSelection` (one owner for the
+        // rows, the inspector and the canvas to come); `TheWorkstationHasOneSelectionTests` pins
+        // the owner. Here: the Workstation READS it and keeps no copy of its own.
+        XCTAssertTrue(code.contains("@Environment(WorkstationSelection.self) private var selection"),
+                      "the Workstation reads the ONE selection owner")
+        XCTAssertFalse(code.contains("@State private var selectedTrack"),
+                       "a local selection beside the owner is a second truth")
         XCTAssertEqual(code.components(separatedBy: "TrackInspectorView(").count - 1, 1)
         XCTAssertFalse(code.contains("TrackMix."),
                        "the Workstation hands the track id over; the inspector owns the writes")
