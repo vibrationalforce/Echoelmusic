@@ -2801,10 +2801,13 @@ public final class EchoelPolyDDSP: @unchecked Sendable {
         // ⭐ 2026-09-25 (overnight P8): a non-finite entry is refused, the rule
         // `LaneVoiceRack.setTuningCents` and `BioReactiveSynthVoice.setTuningCents` already
         // apply — one boundary, one rule (#416). The studio calls the primary voices DIRECTLY,
-        // past the rack's gate, so this is the only gate on that path. A NaN entry made
-        // `noteOn`'s `baseFreq` NaN for that pitch class, the voice's phases accumulated NaN, and
-        // the poly mix guard then zeroed EVERY sample while that voice sounded (silence, not
-        // noise); a stolen slot keeps its phases (`hardReset: false`), so it outlived the note.
+        // past the rack's gate, so this is the only gate on that path. A NaN or +inf entry made
+        // `noteOn`'s `baseFreq` non-finite for that pitch class; the voice's smoothed frequency
+        // and phases went NaN, and the voice's OWN output guard (`EchoelDDSP.render`) zeroed its
+        // buffer — every note on that pitch class was silent, the other voices unaffected. A
+        // reused slot that is still ringing keeps its phases (`hardReset: false`), so the NaN
+        // outlived the note. (⛔ Review 13: the first version said the poly MIX guard zeroed
+        // every sample — the per-voice guard runs first, so the scope was one pitch class.)
         // Guard: `TheToneSystemTableRefusesANonFiniteEntryTests`.
         guard cents.count == 12, cents.allSatisfy({ $0.isFinite }) else { return }
         for i in 0..<12 { tuningCents[i] = cents[i] }

@@ -5,9 +5,12 @@
 // THE DEFECT (measured before the repair). `EchoelPolyDDSP.setTuningCents` checked only
 // `count == 12`. `LaneVoiceRack.setTuningCents` and `BioReactiveSynthVoice.setTuningCents` refuse a
 // non-finite entry — but the studio calls the primary voices DIRECTLY, past the rack's gate. A NaN
-// entry made `noteOn`'s `baseFreq` NaN for that pitch class; the voice's `frequency` became NaN,
-// its phases accumulated NaN, and the poly mix guard zeroed every sample while it sounded. The
-// `uiTuningCents` mirror took the bad table too. Found by tonight's read-only sticky-NaN sweep
+// or +inf entry made `noteOn`'s `baseFreq` non-finite for that pitch class; the voice's smoothed
+// frequency and phases went NaN, and the voice's own output guard zeroed it: every note on that
+// pitch class was silent (other voices unaffected). The `uiTuningCents` mirror took the bad table
+// too. (⛔ review 13 corrected "the poly mix guard zeroed every sample" — the scope was one pitch
+// class, not the bus.) `SubBassVoice.setTuningCents` is still size-only on the same direct path;
+// there a NaN entry plays at `minHz` (off-pitch, not silent) because `feltFrequency` guards it. Found by tonight's read-only sticky-NaN sweep
 // (its candidate 2).
 //
 // LATENT: the one producer is `TuningSystem.pitchClassCents(root:)`, a finite library table.
@@ -22,8 +25,8 @@
 // ⚠️ HONEST GRADING — TRANSCRIBED (§0), no local toolchain. On the parent `f585182d2`: claim 1
 // (voice frequency NaN or +inf) and claim 2 (mirror took the NaN table) are REGRESSIONS, two
 // findings from one missing gate. Claim 1's −inf row is green on the parent too: `pow(2, −inf)` is
-// 0, a silent 0 Hz voice rather than a non-finite one — the row stays because the gate must refuse
-// it all the same. Claim 3 is a COUNTERWEIGHT (a finite table still retunes), green on both.
+// 0, a finite 0 Hz voice (not silent — frozen phases give a DC offset shaped by the envelope, a
+// thump) — the row stays because the gate must refuse it all the same. Claim 3 is a COUNTERWEIGHT (a finite table still retunes), green on both.
 
 import Foundation
 import XCTest
