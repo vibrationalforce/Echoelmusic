@@ -435,16 +435,20 @@ final class TheAUv3FollowsTheHostSampleRateTests: XCTestCase {
         return out
     }
 
+    /// Thrown after an `XCTFail` so the calling claim stops; the failure is already recorded.
+    private struct AnchorMissing: Error {}
+
     /// Brace-matched body extraction — NOT a fixed line window. This repo writes 30-40 line
     /// comment blocks and `SourceText.codeOnly` preserves line count, so any window is
     /// unsound by construction and gets worse as the prose grows (#408).
     private static func bodyOfMember(startingWith anchor: String, in code: String) throws -> String {
         guard let start = code.range(of: anchor) else {
-            throw XCTSkip("""
+            XCTFail("""
                 the declaration `\(anchor)` is not present — this guard reads a member body, \
-                so it SKIPS rather than reporting a green it did not earn. If the member was \
+                so a missed anchor FAILS rather than skipping (#1240). If the member was \
                 renamed, re-anchor it here in the same commit (#456).
                 """)
+            throw AnchorMissing()
         }
         var depth = 0
         var body = ""
@@ -456,7 +460,8 @@ final class TheAUv3FollowsTheHostSampleRateTests: XCTestCase {
                 if depth == 0 { return body }
             }
         }
-        throw XCTSkip("unbalanced braces after `\(anchor)` — extraction cannot be trusted")
+        XCTFail("unbalanced braces after `\(anchor)` — extraction cannot be trusted")
+        throw AnchorMissing()
     }
 
     private func rawText(_ relativePath: String) throws -> String {
