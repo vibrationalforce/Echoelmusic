@@ -39949,3 +39949,11 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - **Evidenz:** Transkription (Python) der Quell-Ansprüche grün; fünf Checker sauber; CLAUDE.md 149 137 B (< 150 000). Gates laufen (CI/CD 6359, Compile 2894). Unabhängiges Review (ui-state) läuft.
 - **Bekannte Lücke:** ein MIDI-Part mit Nutzer-Clip entsteht heute nur durch MIDI-Import — auf frischer Installation ist der Editor erst nach „Add MIDI Track → Import MIDI“ erreichbar. Kandidat für eine eigene Scheibe („New MIDI part“), Achtung: `ClipStore` hat 8 feste Slots, Undo eines neuen Parts ließe einen verwaisten Clip stehen.
 - **NEEDS-FOUNDER-VERIFY:** Import MIDI → Part → Notes → tippen/auswählen/Delete → Undo/Redo → beim nächsten Part-Start hören.
+
+## 2026-09-25 23:05Z — M1 review repair gated; M1b "New MIDI Part" (`3cf0a5346`)
+
+- **M1 review repair `d29c206c3`** (five ui-state findings: loop-spanning edit now heard via `ClipStore.userMelodyGeneration` → `TimelineRegionPlayer.refreshNoteContent`; grid centre held; legacy copy; last-half-step column; Delete only on-screen picks): Compile Check 2895 = success, CI/CD 6360 `Build for Testing` = success. `Run Tests` for 6359/6360 still running at 22:55Z — reading owed. Evidence: COMPILES + INDEPENDENTLY REVIEWED; DEVICE pending.
+- **M1b built:** `MIDIImport.planEmptyPart` / `addEmptyPart` + Workstation row "New MIDI Part" (selects the landed part). Empty part = user-owned MIDI clip, 4 bars, roll lane (the import's lane, #416), on the barline after the lane's last part. Orphaned EMPTY user clips are reused by id, so New→Undo cycles spend one slot, not eight. Empty-state copy names the new row.
+- **Guard:** `ANewMIDIPartOpensTheNoteEditorTests` (pure placement/reuse/refusals, real-store one-step undo + slot-reuse, source scan). Forward guards; transcription of source claims green; five checkers clean. Independent ui-state review running.
+- **NEEDS-FOUNDER-VERIFY:** fresh install → Add MIDI Track → New MIDI Part → Notes → tap cells → Play hears them; Undo removes the part; repeating does not fill the clip grid.
+- Next: review findings → then M2 (move/resize/marquee/multi-select with local gesture preview, ONE commit per gesture).
