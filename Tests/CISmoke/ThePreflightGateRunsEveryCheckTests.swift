@@ -192,6 +192,9 @@ final class ThePreflightGateRunsEveryCheckTests: XCTestCase {
             for item in items {
                 let path = base.appendingPathComponent(item)
                 if path.lastPathComponent == "preflight-check.sh" { continue }
+                // A document cannot run anything (2026-09-25): `scripts/INDEX.md` (#1359) lists
+                // the gate in its tool table and made this claim red on a correct tree.
+                if path.pathExtension == "md" { continue }
                 guard let text = try? String(contentsOf: path, encoding: .utf8) else { continue }
                 if text.contains("preflight-check") { callers.append("\(dir)/\(item)") }
             }
