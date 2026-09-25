@@ -39751,3 +39751,15 @@ Review 8 (read-only code-reviewer) over 7f92c0abf, 2f06eb26a, 7e8e3c85f, 6d16e3f
 - `6889eb75d` (d62441b8e): `RenderNoteState` doc said "render thread only"; it now names the allocate-time write and its no-render-in-flight contract. Comment only.
 Also confirmed: 6d16e3f5f silences no live address (no `/echoelmusic/gesture/` literal in code); d975e6d0a's mask is audio-thread safe. Out of scope and harmless: the CC panic check compares data1 unmasked.
 Gate effect: the push restarts Xcode Compile Check (cancel-in-progress). The only Sources delta since the green 1b5224c9a is a comment, so the runtime code is still what 1b5224c9a compiled. Both test edits are unbuilt until BfT reaches them — not tonight.
+
+## 2026-09-25 ~05:05–05:25 UTC — review 9 (correctness of the ten AUv3 hardening commits)
+
+⚠️ The review-8 entry above is headed "~05:00–05:15"; `date -u` read 04:58 at its push. The heading is an estimate.
+
+Review 9 (read-only code-reviewer) over c2fc6f407, 90ae395e6, 97faa961d, 835cb8e8c, 66748c221, 67c834759, 53fb7ef1b, 84c899af6, 283dfb093, d41c9d6a4. Before this, those ten had audio-thread reviews only. Result: 7 CLEAN, 3 LOW, no BLOCKER/MEDIUM, and no legitimate host configuration broken that could be established from code.
+- FIXED `20804097d` (67c834759): the "libdispatch traps on releasing an un-cancelled source" claim was false. The quoted message ends ", but has a mandatory cancel handler" (strict sources only); a plain resumed timer is cancelled on its last release. Cancels kept; three texts now say DEFENSIVE.
+- FIXED `ae109565d` (283dfb093): the render closure could never be the first read of `RenderScratch.ownedChannels` (`RenderScratch.init` reads it at construction). Capture kept as defensive; guard claim 4 is labelled a forward pin.
+- RECORDED, not changed (host behaviour, no BfT tonight): 84c899af6 refuses ANY bus wider than 8 channels, even when the host supplies buffers. Before it, such a bus rendered (ch0 = L, rest = R). The limit is advertised nowhere (no `maximumChannelCount`). Options: set `outputBus.maximumChannelCount = 8`, or size owned memory from the bus at allocate. HOST-VERIFY: does any iOS host ask an instrument for >8 channels?
+- RECORDED (predates tonight, #1385): the `maximumFramesToRender` setter silently clamps a legal 8192 request to 4096; since 66748c221 such blocks return `kAudioUnitErr_TooManyFramesToProcess` instead of a garbage tail. The durable fix resizes the scratch in allocate. HOST-VERIFY.
+- HOST-VERIFY: the null-mData branch (90ae395e6) may never run out of process.
+Reviews 1–9 now cover every overnight Sources commit for correctness. The exception is WA3.3 itself (f72b09b74 + 98f5d8f7e), which still needs an independent review.
