@@ -80,6 +80,15 @@ final class TheBreathRateAndItsWaveformAreTwoGatesTests: XCTestCase {
             synthetic — `isSynthetic` answers "is it a body" and this answers "is there a \
             waveform"; two questions, two properties, deliberately not merged.
             """)
+        // The NO side, pinned too (review 8, 2026-09-25): the switch split the membership into
+        // two arms, and pinning only the yes arm let a source move from no to yes in a new arm
+        // while this guard stayed green.
+        XCTAssertEqual(
+            count("case .healthKit, .oura, .ble, .watch: return false", in: bus), 1, """
+            `BioSource.providesBreathWaveform`'s NO arm changed. HealthKit, Oura, the BLE strap \
+            and the Watch deliver a breath RATE at most, never a moving waveform. A source that \
+            gains one moves to the yes arm together with the producer that derives it.
+            """)
         XCTAssertEqual(count("hasMeasuredBreath && source.providesBreathWaveform", in: bus), 1, """
             `hasMeasuredBreathWaveform` no longer conjoins the rate gate with the source \
             capability. Both halves are needed: the rate gate still rejects the three \
