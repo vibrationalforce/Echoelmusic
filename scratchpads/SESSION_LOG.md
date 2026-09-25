@@ -39840,3 +39840,9 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - **Gates on 6c333a028:** Compile Check 36138252565 success (6 min). CI/CD 36138252577: Build for Testing success 13:08; Run Tests running.
 - **Founder preference recorded (memory/preferences.md):** no "Shall I continue?" — keep working, stop only for real blockers.
 - **WA3.3 independent review:** two read-only reviewers launched (audio-thread, DSP correctness) against HEAD.
+
+## 2026-09-25 13:40Z — WA3.3 reviewed; frozen-tail fix; auto-merge shallow-fetch fix
+
+- **WA3.3 independent review (2 read-only reviewers, audio-thread + DSP correctness):** core contract confirmed (neutral HRV keeps the host value exactly; mix 0 bit-exact dry; texture dry; app path unchanged). One MED fixed: `6a5026004` — `renderSpace` resets the reverb tank on the rising mix edge (the tank froze at mix 0 and replayed its old tail). Guard claim 9 + counterweight. Remaining LOW/MED items (per-block mix zipper, word-width races, re-entrant allocate, exclusivity cost, NaN law doc, bus assembly untested) → task #202, post-RC.
+- **Auto-merge root cause:** 6c333a028's merge failed with "refusing to merge unrelated histories" (both gates green). `--depth=50` fetch on a full checkout made the repo shallow; branch is 113 ahead of main. Founder approved the one-line fix → `979383e1a` (full fetch + guard claim 5b). The run for THIS push uses the fixed workflow file.
+- Run Tests for 6c333a028 (run 36138252577) still running at 13:35.
