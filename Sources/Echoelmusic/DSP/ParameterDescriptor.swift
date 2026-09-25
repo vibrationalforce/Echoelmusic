@@ -181,14 +181,21 @@ public struct ParameterDescriptor: Codable, Sendable, Equatable, Identifiable {
 
     /// Map a normalized 0…1 tool value into the parameter's real range
     /// (clamped — a planner can never push a parameter out of bounds).
+    ///
+    /// ⚠️ NaN lands at the FLOOR, through the one NaN-safe clamp (`Core/FloatingPointClamp`).
+    /// The hand-rolled `Swift.max(0, Swift.min(1, t))` that stood here sent NaN to the TOP of
+    /// the range: `Swift.min(1, NaN)` is `1`, because every comparison with NaN is false.
+    /// A poisoned modulation or automation value then wrote `max` — full output level, the
+    /// longest release — instead of the repo-wide convention (overnight P8, #416).
     public func denormalized(_ normalized: Float) -> Float {
-        let t = Swift.max(0, Swift.min(1, normalized))
+        let t = normalized.clamped(to: 0...1)
         return min + t * (max - min)
     }
 
-    /// Inverse of `denormalized` (0 when the range is degenerate).
+    /// Inverse of `denormalized` (0 when the range is degenerate, and 0 for a NaN value —
+    /// the same clamp, for the same reason).
     public func normalized(_ value: Float) -> Float {
         guard max > min else { return 0 }
-        return Swift.max(0, Swift.min(1, (value - min) / (max - min)))
+        return ((value - min) / (max - min)).clamped(to: 0...1)
     }
 }
