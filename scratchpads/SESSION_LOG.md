@@ -39656,3 +39656,30 @@ transcription before its repair; one defect per commit; checkers exit 0 on every
   36844deac already read, the BfT readings reach 36844deac. Everything after that is still queued (~3 concurrent,
   ~50–60 min each). main = 1e8e4cb91. auto-merge also needs the Compile Check conclusion, and
   rapid pushes cancel that (`cancel-in-progress`). CI policy is founder-gated: recorded, not touched.
+
+## 2026-09-25 ~02:43–02:55 UTC — overnight P8: evolve2D in place, and review 5 caught a compile error
+
+- `1a67b2619`: `EchoelCellular.evolve2D()` (render thread, `.spectral2D`) no longer copies the
+  nested grid (65 allocs + 65 frees per generation). It writes a preallocated `grid2DNext` and
+  `swap`s. This is latent: the one production texture runs `.additive`. The guard is
+  `TheSpectralGridEvolvesInPlaceTests` (a scan, plus a five-generation Conway reference as the counterweight).
+- Review 5 (read-only), over 269aae615, 07a6c425a and 1a67b2619:
+  · BLOCKER, fixed in `469e47dbe`: 1a67b2619 built `grid2DNext` with
+    `(0..<grid2DSize).map { _ in … grid2DSize … }` in `init`. The closure captures `self`
+    before every member is initialised, and Swift rejects that. ⛔ My transcription could not
+    see it: §0 grades what a claim says, never whether the Swift carrying it type-checks. This
+    is the fifth-shape class of `Tests/CISmoke/CLAUDE.md` §4, in `Sources/` this time. It was
+    caught before any gate ran; the Compile Check for 1a67b2619 was still queued.
+    **Habit: in an `init`, a closure may use only locals and parameters, never `self.x`.**
+  · CONFIRMED 269aae615 bit-identical to pre-caae8e304 for all non-trapping inputs (3053 cases
+    simulated, 0 differences). Its suggestion became claim 5 (`27111e6cc`): 16- vs 64-cell
+    spectral samples at 3 kHz must be equal. Transcribed in float32: green on the tree before
+    caae8e304, red on caae8e304 (exactly 2×), green now. This is the first guard that tests the
+    SOUND of that fix, not its spelling.
+  · Prose nits from review 5 went into `7729c4ab2`: the clamp helper names, +inf disagreement,
+    `structurallyEqual`'s exclusion, and the synthesized Equatable/Encodable readers.
+- NEGATIVE sweeps:
+  · DSP render/process functions: allocations only in `init` or unwired cores (FDN,
+    SpaceReverb), or in offline APIs (VDSPKit, WSOLA).
+  · Tonight's seven non-`@testable` guards touch only SourceText, AVFoundation and local statics.
+  · No changed guard header claims execution.
