@@ -44,7 +44,7 @@ final class TheNoteEngineOutlivedItsEditorTests: XCTestCase {
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let dir = root.appendingPathComponent("Sources/Echoelmusic")
-        guard FileManager.default.isReadableFile(atPath: dir.path) else {
+        guard FileManager.default.fileExists(atPath: dir.path), FileManager.default.isReadableFile(atPath: dir.path) else {
             throw XCTSkip("source tree not present under \(root.path) — this file reads source text")
         }
         return dir

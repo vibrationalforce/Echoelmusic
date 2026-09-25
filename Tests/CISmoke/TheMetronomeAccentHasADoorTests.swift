@@ -344,7 +344,7 @@ final class TheMetronomeAccentHasADoorTests: XCTestCase {
         // reason, plus a dangling separator from joining an empty array. That is exactly the
         // #367 shape the floor was written to prevent. Throwing ends the test at the real
         // cause, the way both cited precedents do.
-        guard let walker = FileManager.default.enumerator(atPath: root.path) else {
+        guard FileManager.default.fileExists(atPath: root.path), let walker = FileManager.default.enumerator(atPath: root.path) else {
             throw XCTSkip("Sources/ could not be enumerated — this claim cannot be answered, "
                           + "and answering it from an empty list would blame the wrong thing.")
         }
