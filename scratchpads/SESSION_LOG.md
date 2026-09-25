@@ -39533,3 +39533,30 @@ transcription before its repair; one defect per commit; checkers exit 0 on every
   The Pro row "AUv3 plugin in your DAW — Planned, not built yet" is FALSE since #1385, and the
   copy fix is a founder pricing hold (P8q). The red is a true finding, not a stale premise.
 - Not executed: no toolchain. Every CI/CD run since `2f06eb26a` is QUEUED (runner backlog).
+
+### 2026-09-25 ~01:50–02:10 UTC — overnight P8: the concert-pitch boundary, and five negative sweeps
+
+- `a39dae7ce`: `PolySynthVoice.setTuning` and `SubBassVoice.setTuning` clamped A4 with
+  `min(max(a4Hz, 380), 500)`, which lets NaN through (every comparison with NaN is false).
+  Both now start with the sibling `BioReactiveSynthVoice`'s `guard a4Hz.isFinite else
+  { return }`. LATENT: `SessionContext` restores A4 only if `> 0`, and NaN fails that. Guard:
+  `TheConcertPitchIgnoresANonFiniteValueTests` (end-to-end, two red on the parent = one
+  finding, plus one counterweight).
+- Gate: Compile Check GREEN on `9764e86f0`, which covers every `Sources/` change of the walker
+  series. The CI/CD backlog from `5910992e5` on is still QUEUED.
+- NEGATIVE sweeps (measured, nothing to fix — recorded so they are not re-run):
+  · `setUnison` detune: its only non-literal source is the Sound-panel binding, which already
+    maps non-finite to 0, and JSON decode throws on NaN (`nonConformingFloatDecodingStrategy`).
+  · Division by `.count`: 9 unguarded-looking sites. Every one is guarded upstream (a
+    non-empty `guard`, an append just before, or `first` bound).
+  · Float→Int trap (`Int(NaN)` traps): 136 heuristic candidates, 49 in render-side dirs. The
+    exposed ones are fed by a finite source: `denormalized` clamps and maps NaN to the top of
+    the range; patch decode rejects NaN; `MIDIOutput.noteOn` guards `isFinite` before its
+    conversion.
+  · AUv3 host parameter writes: the `implementorValueObserver` refuses non-finite values on
+    all three branches (tonight's P8 work).
+  · OSC control input: every number `guard`s `isFinite`, and `bpm` has an upper bound.
+  · Side note, not changed: `ParameterDescriptor.denormalized(NaN)` returns `max` (inner
+    `Swift.min(1, NaN)` = 1). That is finite, so there is no trap, but a NaN automation value
+    lands at the top of the range rather than being refused. No producer of a NaN normalized
+    value is known.
