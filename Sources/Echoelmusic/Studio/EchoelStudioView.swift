@@ -171,6 +171,11 @@ struct EchoelStudioView: View {
     /// into that lane's composer-OWNED clip (never a user clip). Read only inside
     /// `generate()` — never in `body` (no observation churn).
     @Environment(ClipStore.self) private var clipStore
+    /// WA4-S3 — the Session. Read ONLY inside `saveProject()`, `autosaveTake()` and the
+    /// library row's Open action, never in `body`: Save captures the song through these,
+    /// Open stops the timeline player before the song is replaced.
+    @Environment(TimelineRegionPlayer.self) private var timelinePlayer
+    @Environment(ArrangementStore.self) private var arrangementStore
     // The one shared transport. Read ONLY via `.onChange(of: transport.isPlaying)` (a
     // LOW-frequency flag — flips on play/stop, never 10 Hz) so the global transport bar's
     // Stop can end the whole bio session; NOT read in `body` (freeze rule).
@@ -794,6 +799,10 @@ struct EchoelStudioView: View {
     /// SIGSEGV'd on once. An inline row costs zero modifiers and is the house pattern for a
     /// status the user is already looking at (Live Colabo's status line, #518).
     @State private var importNote: String?
+    /// WA4-S3 — why the last Open from the library was refused (a Session this build cannot
+    /// open). Same inline-row treatment as `importNote`, one line below it in `openSheet`:
+    /// zero presentation modifiers. Cleared by the next successful Open.
+    @State private var openNote: String?
     // ⛔ `showVisual` STOOD HERE AND IS DELETED (#1069). It drove the second fullscreen chrome;
     // "Full screen" now resizes the ONE window (#1067). Presentation slots on this body: the
     // chain is one shorter, the safe direction at the 10.76.34 metadata ceiling.
@@ -9438,6 +9447,13 @@ struct EchoelStudioView: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .accessibilityLabel("Import failed. \(importNote)")
                 }
+                if let openNote {
+                    Text(openNote)
+                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.warning)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityLabel("Not opened. \(openNote)")
+                }
                 if projects.projects.isEmpty {
                     Text("No saved projects yet.").foregroundStyle(EchoelTheme.dim)
                 }
@@ -9534,7 +9550,7 @@ struct EchoelStudioView: View {
     @ViewBuilder
     private func projectRow(_ p: Project) -> some View {
         HStack(spacing: 8) {
-            Button { open(p); showOpen = false } label: {
+            Button { openFromLibrary(p) } label: {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(p.name).font(.callout.weight(.medium)).foregroundStyle(EchoelTheme.text)
                     Text("\(p.style.displayName) · \(p.key.shortName) · \(EchoelDecimalText.string(p.bpm, decimals: 0)) BPM")
@@ -11497,7 +11513,43 @@ struct EchoelStudioView: View {
     }
 
     private func saveProject() {
-        projects.save(currentProject())
+        projects.save(withSession(currentProject()))
+    }
+
+    /// WA4-S3 — the take plus the Workstation's song, as the project row's Session. Save and
+    /// the recovery slot go through here; Live Colabo and the shared document do NOT (a take
+    /// that travels carries no song — `Project.sharedDocumentData`). The engine's configured
+    /// rate stands in for the render rate the Session's timebase records.
+    private func withSession(_ take: Project) -> Project {
+        SessionSaveOpen.capturing(take, timeline: timelineStore.document,
+                                  clipSlots: clipStore.slots,
+                                  songForm: arrangementStore.arrangement,
+                                  // ⚠️ EMPTY ON PURPOSE, and it is a gap, not a fact about the
+                                  // song: this view must not hold `AutomationPlayer` (the
+                                  // 10.76.41/50 freeze law, `TheAutomationReadoutIsWhatPlaysTests`
+                                  // claim 7), and nothing can write player lanes today. They
+                                  // stay an app root until a capture seam outside `body`'s host
+                                  // carries them.
+                                  playerAutomation: [],
+                                  sampleRate: audioEngine.sampleRate)
+    }
+
+    /// WA4-S3 — "open this project" from the library: the take AND the song it was saved
+    /// with. A Session this build cannot open refuses the whole Open before anything changes
+    /// (and says why in the sheet). `open(_:)` runs first, so its rescue records the take and
+    /// song being replaced; the song is replaced after it. The two doors that load an ARRIVING
+    /// take (Live Colabo, a shared document) call `open(_:)` alone and leave the song alone.
+    private func openFromLibrary(_ p: Project) {
+        if let refusal = SessionSaveOpen.refusal(for: p) {
+            openNote = refusal
+            EchoelCrashLog.breadcrumb("Open refused: \(refusal)")
+            return
+        }
+        openNote = nil
+        open(p)
+        SessionSaveOpen.restoreSong(of: p, timeline: timelineStore, clips: clipStore,
+                                    player: timelinePlayer)
+        showOpen = false
     }
 
     /// #273 — write the live take into the ONE reserved library slot as the app leaves the
@@ -11539,14 +11591,23 @@ struct EchoelStudioView: View {
     /// backgrounding, the app switcher, a call the user answers, and termination by the OS
     /// while suspended. A foreground crash still loses everything since the last departure.
     private func autosaveTake() {
-        guard hasComposed, !pianoRoll.notes.isEmpty else { return }
+        // WA4-S3 (H3) — a song with the USER's parts in it is worth a recovery point even with
+        // no composed take: before this, the slot skipped it, and an Open then replaced the
+        // song with nothing to go back to. The composer's own part does not count (it is
+        // re-made on the next Start), so a plain launch still writes nothing.
+        let songHasUserParts = SessionSaveOpen.songHasUserParts(timelineStore.document,
+                                                                clips: clipStore.filledClips)
+        if !songHasUserParts {
+            guard hasComposed, !pianoRoll.notes.isEmpty else { return }
+        }
         // Built from `currentProject()` rather than re-deriving the default name: the first
         // version duplicated `saveProject()`'s name expression verbatim, so a change there
         // would have silently drifted the autosave's name away from the manual save's.
         var take = currentProject()
         take.name = Project.autosaveNamePrefix + take.name
         take.id = Project.autosaveSlotID
-        projects.save(take)
+        // Captured AFTER the slot's id and name are set, so the Session's identity is the row's.
+        projects.save(withSession(take))
     }
 
     /// ⭐ RESCUE BEFORE REPLACE. Nearly every line below overwrites the live take — style, key,

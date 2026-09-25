@@ -354,6 +354,7 @@ final class TheProjectEnvelopeImportsWithoutRestructuringTests: XCTestCase {
         // place the envelope becomes bytes and bytes become an envelope.
         let allowedReaders = [
             "Sources/Echoelmusic/Core/ProjectSession.swift",   // the row codec (WA4-S2)
+            "Sources/Echoelmusic/Core/SessionSaveOpen.swift",  // Save captures via the importer (WA4-S3)
         ]
         let sources = repoRoot().appendingPathComponent("Sources/Echoelmusic")
         var callers: [String] = []
