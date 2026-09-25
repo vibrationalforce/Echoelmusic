@@ -75,8 +75,8 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         /// buffers got none written. Allocated ONCE here (never in render), freed in `deinit`,
         /// so the pointer outlives every render call; sized with the same `capacity` as the
         /// scratch above, i.e. in lockstep with the 4096-frame ceiling. A host bus wider than
-        /// `ownedChannels` with null pointers past that index still gets nothing — recorded,
-        /// not hidden. Guard: `TheAUv3SuppliesItsOwnOutputBuffersTests`.
+        /// `ownedChannels` is refused in `shouldChange(to:for:)` (P8t) — before that it got
+        /// null pointers back past index 7. Guard: `TheAUv3SuppliesItsOwnOutputBuffersTests`.
         /// NEEDS-FOUNDER-VERIFY: load the plug-in in a host other than AUM (GarageBand, Logic) and hear it — whether any of them passes null output pointers is unmeasured.
         static let ownedChannels = 8
         let capacity: Int
@@ -357,9 +357,14 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     /// as mono and fill half of; an integer format would receive float bit patterns. The host
     /// asks this before it changes a bus, so refusing here keeps a format the block cannot
     /// honour from ever reaching it. Guard: `TheAUv3AcceptsOnlyTheFormatItRendersTests`.
+    /// ⭐ 2026-09-25 (overnight P8t): and no wider than `RenderScratch.ownedChannels`. A host
+    /// that passes null `mData` is owed memory for EVERY channel; the block owns eight, so on a
+    /// wider bus channel 8+ came back still null with `noErr` — a null read in the host. The
+    /// channel ceiling is the owned-memory ceiling, one constant (#416).
     public override func shouldChange(to format: AVAudioFormat, for bus: AUAudioUnitBus) -> Bool {
         guard format.commonFormat == .pcmFormatFloat32, !format.isInterleaved,
-              format.channelCount >= 1 else { return false }
+              format.channelCount >= 1,
+              format.channelCount <= AVAudioChannelCount(RenderScratch.ownedChannels) else { return false }
         return super.shouldChange(to: format, for: bus)
     }
     public override var supportsUserPresets: Bool { true }

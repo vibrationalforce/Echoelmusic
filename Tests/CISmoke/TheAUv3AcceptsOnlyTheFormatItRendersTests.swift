@@ -20,6 +20,14 @@
 // ⚠️ HONEST GRADING — TRANSCRIBED (§0), no local toolchain. Parent `7356a4dbf`: claim 1 is a
 // REGRESSION — one finding (no override there). Claim 2 is a COUNTERWEIGHT, green on both trees;
 // it uses only AVFoundation.
+//
+// ⭐ 2026-09-25 (overnight P8t): claim 1 also pins the CHANNEL ceiling — no wider than
+// `RenderScratch.ownedChannels`, the memory the block owns for a host that passes null `mData`.
+// Found by tonight's read-only audio-thread review (its finding 1). Grading against parent
+// `84e64044d`: that one assertion is a REGRESSION — one finding;
+// the rest of the file is unchanged. Claim 2 now also checks the default bus fits under the
+// ceiling, read from the declaration (a COUNTERWEIGHT: the AU must not refuse its own stereo default).
+// Claim 2 therefore no longer uses only AVFoundation — it also reads the AU source (a SCAN half).
 
 import AVFoundation
 import Foundation
@@ -41,6 +49,10 @@ final class TheAUv3AcceptsOnlyTheFormatItRendersTests: XCTestCase {
             """)
         XCTAssertTrue(hook.contains("format.commonFormat == .pcmFormatFloat32"), "the sample format is no longer checked")
         XCTAssertTrue(hook.contains("!format.isInterleaved"), "an interleaved bus is no longer refused")
+        XCTAssertTrue(hook.contains("format.channelCount <= AVAudioChannelCount(RenderScratch.ownedChannels)"), """
+            A bus wider than the eight channels of memory the AU owns is no longer refused. A host \
+            passing null `mData` would get null pointers back past channel 7, with `noErr`.
+            """)
         XCTAssertTrue(hook.contains("super.shouldChange(to: format, for: bus)"),
                       "an acceptable format no longer defers to the base class")
         let render = try XCTUnwrap(Self.body(startingWith: "public override var internalRenderBlock", in: code),
@@ -54,10 +66,18 @@ final class TheAUv3AcceptsOnlyTheFormatItRendersTests: XCTestCase {
     // MARK: - claim 2 (COUNTERWEIGHT, behaviour)
 
     func testTheDefaultBusPassesTheRefusal() throws {
+        // The ceiling is READ from the declaration, not restated here (#416): the constant is
+        // private to the extension, so this bundle cannot name it.
+        let code = SourceText.codeOnly(try text(Self.audioUnit))
+        let marker = "static let ownedChannels = "
+        let decl = try XCTUnwrap(code.range(of: marker), "`ownedChannels` not found — re-anchor this guard (#456)")
+        let ceiling = try XCTUnwrap(UInt32(code[decl.upperBound...].prefix(while: { $0.isNumber })),
+                                    "`ownedChannels` is no longer an integer literal — re-anchor this guard")
         for rate in [44_100.0, 48_000.0, 96_000.0] {
             let format = try XCTUnwrap(AVAudioFormat(standardFormatWithSampleRate: rate, channels: 2))
             XCTAssertEqual(format.commonFormat, .pcmFormatFloat32, "the standard format is no longer Float32 at \(rate)")
             XCTAssertFalse(format.isInterleaved, "the standard format is interleaved at \(rate)")
+            XCTAssertLessThanOrEqual(format.channelCount, ceiling, "the default bus is wider than the owned-memory ceiling")
         }
     }
 
