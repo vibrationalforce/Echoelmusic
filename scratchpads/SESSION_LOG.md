@@ -39452,7 +39452,7 @@ AUv3StateContract; 7 findings, each re-read before acting.
 ## 2026-09-25 (UTC, after 00:45) — P8z, P8aa, second AUv3 audio-thread review
 
 ⚠️ The heading of the entry above says "00:45–01:05"; `date -u` read 00:45 at the P8z push and
-~01:00 when this entry was written, so that range was an estimate, not a measurement.
+00:54 when this entry was written, so that range was an estimate, not a measurement.
 
 - P8z `1a813fe23` — `EchoelBitcrush.step(forDownsample:)`: `Int(min(max(d,1),64).rounded())`
   trapped on NaN (the NaN-passing clamp order). Now `clamped(to: 1...64)`. Guard
