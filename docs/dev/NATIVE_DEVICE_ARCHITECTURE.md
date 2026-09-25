@@ -665,10 +665,8 @@ closure into `EchoelMIDIDecode`, `EchoelDDSP` (`noteOn`/`noteOff`, `applyBioReac
 sentinel branches, `render`, `updateEnvelope`, the SVF/LFO/entrainment stages), `EchoelCellular`
 (`.additive` only), `EchoelBodyVibeDevice.renderSpace` and `EchoelReverb`: no allocation, lock, ObjC,
 GCD, I/O or system RNG; every array has a fixed size set at init. Recorded, NOT changed:
-- **Base Frequency (address 4) and a held MIDI note write the same `synth.frequency`.** Host
-  automation of the knob re-pitches a note that is sounding. Whether the knob is "the drone pitch
-  when no note is held" or "the pitch, full stop" is a DEVICE decision (§G), not a bug to patch; a
-  repair would also have to cross threads (the note state is render-side). Decide, then HOST VERIFY.
+- Base Frequency re-pitching a held MIDI note — the reviewer found it again; it is already the
+  "Base Frequency retunes a held MIDI note" item above, not restated here (#416).
 - **`static let` ranges read on the render thread** (`EchoelDDSP` `characterRange`,
   `masterGainRange`, `cutoffRange`; `EchoelReverb`'s gains): in an unoptimised build the one-time
   `swift_once` may run there, the P8u class. Release most likely initialises them statically — not
