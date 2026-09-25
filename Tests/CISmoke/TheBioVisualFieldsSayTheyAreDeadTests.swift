@@ -110,17 +110,21 @@ final class TheBioVisualFieldsSayTheyAreDeadTests: XCTestCase {
             """)
     }
 
-    // MARK: - 2 · The four dead fields say so, at the field
+    // MARK: - 2 · The dead fields (and the dead look-system type) say so, at the declaration
 
     func testEachConsumerlessFieldCarriesItsRetraction() throws {
         // RAW on purpose: these needles ARE prose. `codeOnly` would blank exactly the
         // thing being checked — the same deliberate exception `TheVoiceTintsTheVisual
         // Tests` documents for its one law-comment needle.
         let params = try read(Self.paramsFile, stripped: false)
-        XCTAssertEqual(params.components(separatedBy: "NO CONSUMER").count - 1, 4, """
+        // 4 → 6 on 2026-09-25: #1147 added two more notes (the `BioVisualPattern` enum and its
+        // `pattern` field — a whole parallel look system nothing renders) and did not carry
+        // this count, so claim 2 was red on a correct tree for 17 days (#456).
+        XCTAssertEqual(params.components(separatedBy: "NO CONSUMER").count - 1, 6, """
             \(Self.paramsFile) carries \(params.components(separatedBy: "NO CONSUMER").count - 1) \
-            "NO CONSUMER" notes, expected 4 — one each on `hue` (#1116), `complexity`, \
-            `spread` and `intensity` (#1131). A field that is computed every frame and read \
+            "NO CONSUMER" notes, expected 6 — one each on `hue` (#1116), `complexity`, \
+            `spread` and `intensity` (#1131), and on `BioVisualPattern` and `pattern` \
+            (#1147). A field that is computed every frame and read \
             by nothing, while its doc describes a live mapping, is the sentence a website \
             line gets written from: six of them were, and #1116 had to take them back.
             """)
