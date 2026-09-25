@@ -223,9 +223,10 @@ final class MIDIInput {
         // variable-length list in place.
         //
         // The words are read IN PLACE, too (overnight P8, 2026-09-25): the old
-        // `withUnsafeBytes(of: packetPtr.pointee.words)` loaded the whole 64-word
-        // (256-byte) tuple into a temporary, but a packet in a CoreMIDI list is only
-        // `wordCount` words long — the same read-past-storage class as the
+        // `withUnsafeBytes(of: packetPtr.pointee.words)` took the 64-word (256-byte)
+        // tuple by value — materialised as a copy at -Onone, possibly borrowed in place
+        // at -O — but a packet in a CoreMIDI list is only `wordCount` words long, so the
+        // copy MAY read past the list's storage: the same class as the
         // `MIDIEventPacketNext` repair above. Only the words that exist are loaded.
         let wordsOffset = Self.packetWordsOffset
         for packetPtr in eventList.unsafeSequence() {

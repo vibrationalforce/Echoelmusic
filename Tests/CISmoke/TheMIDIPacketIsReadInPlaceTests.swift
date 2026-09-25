@@ -1,7 +1,8 @@
 // Echoel — overnight P8 (2026-09-25). `MIDIInput.handleMIDIEvents` read a packet's first two
-// words with `withUnsafeBytes(of: packetPtr.pointee.words)`. That argument is a VALUE: it loads
-// the whole 64-word (256-byte) tuple into a temporary. A packet inside a CoreMIDI event list is
-// only `wordCount` words long, so for the last packet of a short list the load reads past the
+// words with `withUnsafeBytes(of: packetPtr.pointee.words)`. That argument is a VALUE: the whole
+// 64-word (256-byte) tuple is materialised as a copy at -Onone (at -O the optimizer may borrow it
+// in place — not guaranteed either way). A packet inside a CoreMIDI event list is only
+// `wordCount` words long, so for the last packet of a short list the copy MAY read past the
 // list's storage — the same read-past-storage class as the `MIDIEventPacketNext(&localCopy)`
 // repair already documented one comment above it. Now the two words are loaded in place from
 // `UnsafeRawPointer(packetPtr)` at `MIDIInput.packetWordsOffset`, and only the ones that exist.
