@@ -562,7 +562,9 @@ public final class TimelineStore {
 
     public func setLaneLevel(id: UUID, _ level: Float) {
         guard let i = document.lanes.firstIndex(where: { $0.id == id }) else { return }
-        document.lanes[i].level = max(0, min(2, level))
+        // Non-finite → 0 (silent), as `TimelineDocument.effectiveGain` plays it; a bare
+        // `min(2, NaN)` would STORE double gain.
+        document.lanes[i].level = level.isFinite ? max(0, min(2, level)) : 0
         persist()
     }
 

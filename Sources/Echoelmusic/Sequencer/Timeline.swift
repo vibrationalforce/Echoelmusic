@@ -583,6 +583,10 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
         guard let lane = lanes.first(where: { $0.id == laneID }) else { return 0 }
         if lane.isMuted { return 0 }
         if lanes.contains(where: { $0.isSoloed }) && !lane.isSoloed { return 0 }
+        // Non-finite → SILENT, the rule every gain sink already takes. The bare clamp gave
+        // `max(0, min(2, NaN))` = 2: a NaN level played at DOUBLE gain (+6 dB), upstream of sinks
+        // that would have silenced it — and they never saw the NaN (overnight P8b).
+        guard lane.level.isFinite else { return 0 }
         return max(0, min(2, lane.level))
     }
 
@@ -685,7 +689,9 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
         guard let lane = lanes.first(where: { $0.kind == .midi && !$0.isBio }) else { return nil }
         if lane.isMuted { return .muted }
         if lanes.contains(where: { $0.isSoloed }) && !lane.isSoloed { return .otherSoloed }
-        if lane.level <= 0.001 { return .levelZero }
+        // `!isFinite` mirrors `effectiveGain`'s non-finite → 0, so a lane the gain rule silences
+        // is never reported audible here (`NaN <= 0.001` is false).
+        if !lane.level.isFinite || lane.level <= 0.001 { return .levelZero }
         return nil
     }
 
@@ -696,7 +702,7 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
     public mutating func unsilenceRollSlot() {
         guard let idx = lanes.firstIndex(where: { $0.kind == .midi && !$0.isBio }) else { return }
         lanes[idx].isMuted = false
-        if lanes[idx].level <= 0.001 { lanes[idx].level = 1 }
+        if !lanes[idx].level.isFinite || lanes[idx].level <= 0.001 { lanes[idx].level = 1 }
         for i in lanes.indices where i != idx && lanes[i].isSoloed { lanes[i].isSoloed = false }
     }
 
