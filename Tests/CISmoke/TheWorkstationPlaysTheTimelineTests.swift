@@ -855,7 +855,8 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
         // launchRegion, enableMultiRoll…). A read-only-plus-transport surface may reach
         // exactly three of them, and anything else is scope this phase did not authorise.
         let reached = Set(Self.messages(to: "player", in: src))
-        XCTAssertEqual(reached, ["play", "stop", "isPlaying", "preflightTempo", "audioLanes"], """
+        XCTAssertEqual(reached, ["play", "stop", "isPlaying", "preflightTempo", "audioLanes",
+                                 "laneVoiceCapacity"], """
             The surface reaches the player for \(reached.sorted()). Phase 4 authorised a \
             transport, not an editor: `relocate`, `launchRegion`, `loopEnabled` and the sinks \
             are all one tap away and all out of bounds here.
@@ -865,6 +866,10 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
             `audioLanes` is reached ONLY to borrow its resolver. Neither is written here, and \
             neither subscribes this body to anything. A third addition needs the same two \
             properties argued, not this list widened by habit.
+            ⚠️ WA4 path 6 ARGUED THE THIRD: `laneVoiceCapacity` is a read-only computed view of \
+            `@ObservationIgnored private var multiRollCapacity`, set once at start. The track \
+            header asks it — through `TrackMix.controls`, the inspector's own rule — so Mute \
+            and Solo appear only on a track that has a voice to silence.
             """)
     }
 

@@ -30,6 +30,9 @@
 //  the instrument; soloing ANY other track does too (`effectiveGain` zeroes every unsoloed
 //  lane); and the instrument's Start heals all three (`unsilenceRollSlot`: unmute, a zeroed
 //  fader back to 1.00, every other solo cleared). Each hint names the coupling it carries.
+//  ⚠️ Mute and Solo are no longer drawn HERE (WA4 path 6): they sit in the track header in
+//  `WorkstationView.laneRow`, gated on the same `controls.muteSolo` and speaking the same
+//  `muteHint`/`soloHint`. The writes stay in `TrackMix` in this file — one door per fact.
 //
 //  ⚠️ A typed name is committed on Return, when the field loses focus, and when the inspector
 //  closes — a field that shows a name the song never stored is a second truth on screen.
@@ -168,6 +171,22 @@ enum TrackMix {
         timeline.setLanePan(id: laneID, Float(pan))
     }
 
+    /// What Mute says it does on a track with `role` — the coupling with the Studio instrument
+    /// named where it exists. ONE wording, read by the track header (WA4 path 6).
+    nonisolated static func muteHint(_ role: Role) -> String {
+        role == .echoelInstrument
+            ? "Silences this track and the Studio instrument. Start un-mutes it"
+            : "Silences this track"
+    }
+
+    /// What Solo says it does: soloing any track but the Echoel one silences the instrument too
+    /// (`effectiveGain` zeroes every unsoloed lane), and the instrument's Start clears it.
+    nonisolated static func soloHint(_ role: Role) -> String {
+        role == .echoelInstrument
+            ? "Plays only the soloed tracks"
+            : "Plays only the soloed tracks. This also silences the Studio instrument, whose Start clears the solo"
+    }
+
     @MainActor
     static func flipMute(laneID: UUID, timeline: TimelineStore) {
         timeline.toggleMute(id: laneID)
@@ -262,22 +281,8 @@ struct TrackInspectorView: View {
                         decimals: 2,
                         hint: "−1 left, 0 centre, 1 right")
                 }
-                if controls.muteSolo {
-                    HStack(spacing: 8) {
-                        stateButton("Mute", on: lane.isMuted,
-                                    hint: controls.role == .echoelInstrument
-                                        ? "Silences this track and the Studio instrument. Start un-mutes it"
-                                        : "Silences this track") {
-                            TrackMix.flipMute(laneID: laneID, timeline: timeline)
-                        }
-                        stateButton("Solo", on: lane.isSoloed,
-                                    hint: controls.role == .echoelInstrument
-                                        ? "Plays only the soloed tracks"
-                                        : "Plays only the soloed tracks. This also silences the Studio instrument, whose Start clears the solo") {
-                            TrackMix.flipSolo(laneID: laneID, timeline: timeline)
-                        }
-                    }
-                }
+                // WA4 path 6 — Mute and Solo moved to the track HEADER (`WorkstationView.laneRow`):
+                // one control per fact on screen, reachable without opening this inspector.
                 // WA4.3 — the track's parts: move, copy, remove, and the part-edit Undo/Redo.
                 // Its own leaf; it hides itself on a track with nothing to arrange.
                 TrackPartsView(laneID: laneID)
@@ -327,27 +332,5 @@ struct TrackInspectorView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityHidden(true)
         }
-    }
-
-    private func stateButton(_ title: String, on: Bool, hint: String,
-                             action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(EchoelTheme.font(12, .semibold))
-                .foregroundStyle(on ? EchoelTheme.onPrimary : EchoelTheme.text)
-                .padding(.horizontal, 14)
-                .frame(minWidth: 64, minHeight: 44)
-                // Monochrome primary fill, never a green area behind a label (EchoelTheme).
-                .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                    .fill(on ? EchoelTheme.text : EchoelTheme.fill))
-                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                    .strokeBorder(on ? Color.clear : EchoelTheme.border, lineWidth: 1))
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(title)
-        .accessibilityAddTraits(.isToggle)
-        .accessibilityValue(on ? "On" : "Off")
-        .accessibilityHint(hint)
     }
 }

@@ -30,8 +30,9 @@
 // there — ONE absence, not five findings (#486). Claim 3 is a COUNTERWEIGHT (green on both trees).
 // NOT covered: whether the inspector renders, reads well, or that a moved fader is HEARD — that is
 // a device probe, and the founder-verify marker below owns it.
-// NEEDS-FOUNDER-VERIFY: Workstation → tap a track → move Level, Pan, Mute, Solo while the song
-// plays; the Echoel track's Mute also silences the Studio instrument and Start un-mutes it.
+// NEEDS-FOUNDER-VERIFY: Workstation → tap a track → move Level and Pan while the song plays.
+// (Mute and Solo moved to the track header in WA4 path 6; their probe is in
+// `TheTrackHeaderMutesAndSolosTests`.)
 
 import Foundation
 import XCTest

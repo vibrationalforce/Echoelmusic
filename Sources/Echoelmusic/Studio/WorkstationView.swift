@@ -444,13 +444,18 @@ struct WorkstationView: View {
 
     private func laneRow(_ row: WorkstationSummary.LaneRow) -> some View {
         let selected = selection.trackID == row.id
+        // WA4 path 6 — the header's Mute/Solo appear only where they are HEARD
+        // (`TrackMix.controls`, the rule the inspector used). `laneVoiceCapacity` is cold.
+        let controls = TrackMix.controls(of: row.id, in: timeline.document,
+                                         voiceCapacity: player.laneVoiceCapacity)
+        let muteSoloRole = controls.flatMap { $0.muteSolo ? $0.role : nil }
         return HStack(spacing: 8) {
             // WA4.1 — tapping the facts selects the track and opens its inspector; tapping the
             // open one closes it. The facts stay ONE spoken element (#1436); selection is a
             // trait on it, not a second control beside it.
             // The facts fill the row's height (44 pt with the 6 pt padding) so the whole row is
             // the tap target, not the ~31 pt of text (review of b2913f96b).
-            laneFacts(row)
+            laneFacts(row, headerSwitches: muteSoloRole != nil)
                 .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
                 .contentShape(Rectangle())
                 .onTapGesture { selection.toggleTrack(row.id) }
@@ -463,6 +468,14 @@ struct WorkstationView: View {
             // ⚠️ OUTSIDE the combined element, on purpose: `.combine` on the row swallowed the
             // tuning banner's recovery button once (#621) — a control inside a merged element
             // loses its own focus and hint. The facts are ONE sentence; the switch is a switch.
+            if let role = muteSoloRole {
+                headerSwitch("M", name: "Mute", on: row.isMuted, hint: TrackMix.muteHint(role)) {
+                    TrackMix.flipMute(laneID: row.id, timeline: timeline)
+                }
+                headerSwitch("S", name: "Solo", on: row.isSoloed, hint: TrackMix.soloHint(role)) {
+                    TrackMix.flipSolo(laneID: row.id, timeline: timeline)
+                }
+            }
             if row.kind == .audio { warpSwitch(laneID: row.id) }
         }
         .padding(.vertical, 6).padding(.horizontal, 10)
@@ -472,7 +485,29 @@ struct WorkstationView: View {
             .strokeBorder(selected ? EchoelTheme.accent : EchoelTheme.border, lineWidth: 1))
     }
 
-    private func laneFacts(_ row: WorkstationSummary.LaneRow) -> some View {
+    /// One track-header switch (Mute or Solo). A letter on screen, the full word to VoiceOver;
+    /// monochrome fill when on, never a coloured area behind a label (EchoelTheme).
+    private func headerSwitch(_ letter: String, name: String, on: Bool, hint: String,
+                              action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(letter)
+                .font(EchoelTheme.font(12, .semibold))
+                .foregroundStyle(on ? EchoelTheme.onPrimary : EchoelTheme.text)
+                .frame(minWidth: 44, minHeight: 44)
+                .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                    .fill(on ? EchoelTheme.text : EchoelTheme.fill))
+                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                    .strokeBorder(on ? Color.clear : EchoelTheme.border, lineWidth: 1))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(name)
+        .accessibilityAddTraits(.isToggle)
+        .accessibilityValue(on ? "On" : "Off")
+        .accessibilityHint(hint)
+    }
+
+    private func laneFacts(_ row: WorkstationSummary.LaneRow, headerSwitches: Bool) -> some View {
         HStack(spacing: 8) {
             Image(systemName: row.kind.systemImage)
                 .foregroundStyle(EchoelTheme.dim)
@@ -490,7 +525,7 @@ struct WorkstationView: View {
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             }
             Spacer(minLength: 0)
-            ForEach(stateTags(row), id: \.self) { tag in
+            ForEach(stateTags(row, headerSwitches: headerSwitches), id: \.self) { tag in
                 Text(tag)
                     .font(EchoelTheme.font(10, .semibold))
                     .foregroundStyle(EchoelTheme.dim)
@@ -637,10 +672,13 @@ struct WorkstationView: View {
 
     /// Only the states that are ON. A row of greyed-out "not muted, not soloed, not armed"
     /// badges would be three pieces of chrome saying nothing.
-    private func stateTags(_ row: WorkstationSummary.LaneRow) -> [String] {
+    /// Where the header draws Mute/Solo switches, their state is ON the switch; a tag beside
+    /// it would say the same fact twice. A track without the switches keeps the tags — a stored
+    /// mute on a bio lane is still a fact worth showing.
+    private func stateTags(_ row: WorkstationSummary.LaneRow, headerSwitches: Bool) -> [String] {
         var tags: [String] = []
-        if row.isMuted { tags.append("MUTE") }
-        if row.isSoloed { tags.append("SOLO") }
+        if row.isMuted && !headerSwitches { tags.append("MUTE") }
+        if row.isSoloed && !headerSwitches { tags.append("SOLO") }
         if row.isArmed { tags.append("ARM") }
         return tags
     }
