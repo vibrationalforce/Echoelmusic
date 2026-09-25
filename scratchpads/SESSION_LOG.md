@@ -39853,3 +39853,9 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - **Auto-merge with the fixed fetch (run 36141906898, 979383e1a): SUCCESS.** origin/main = 979383e1a (fast-forward from 1e8e4cb91), carrying 6c333a028 (Pro row), 6a5026004 (reverb rising-edge reset) and the workflow fix. First merge since the 113-commit gap.
 - **Release Archive:** skipped again — it `needs` the test job, and #396 fails that job on every push, so in ci.yml the archive can never run. The Release/device compile proof is the Xcode Compile Check (green on 979383e1a via the merge gate). Report-only: this dependency is founder-gated CI.
 - **Next:** TestFlight RC deploy of 979383e1a needs founder approval (`.deploy/release` bump). Post-RC items stay in task #202.
+
+## 2026-09-25 15:10Z — RC v10.79.482 / Build 2602 landed in App Store Connect
+
+- TestFlight run 36146920011 (de0451978 = main 979383e1a + the bump): Preflight, Compile Check (device SDK + ecosystem targets), Archive, Export & Upload, **Verify build landed in App Store Connect** — all success (14:21 → 14:31). Build number = run_number 2602.
+- Founder approval: "Yes, deploy the RC" (2026-09-25). No App Store release.
+- Device checklist R1–R5 is in the build note. Next: post-RC task #202 (reverb mix smoothing) only after device feedback or founder go.
