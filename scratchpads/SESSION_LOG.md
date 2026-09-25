@@ -39560,3 +39560,41 @@ transcription before its repair; one defect per commit; checkers exit 0 on every
     `Swift.min(1, NaN)` = 1). That is finite, so there is no trap, but a NaN automation value
     lands at the top of the range rather than being refused. No producer of a NaN normalized
     value is known.
+
+### 2026-09-25 ~02:10–02:25 UTC — overnight P8: estimator, export tempo, the pan boundary; review round 3
+
+- `030f18d47` (from the previous block's side note): `ParameterDescriptor.denormalized`/`normalized`
+  now use `clamped(to: 0...1)`, so NaN lands at the floor. Guard `ANaNParameterValueLandsAtTheFloorTests`.
+- `890837252` then `f2bef146d`: the lane pan. The first commit fixed the two SINKS
+  (`PolySynthVoice.setPan`, `TimelineAudioSink.setPan`). The review showed that this delivered
+  nothing on the live path: `MultiRollFanout.pan(forSlot:)` and `AudioLanePlayer.clampedPan`
+  clamp first, with a bare `max(-1, min(1, p))`, so a NaN lane arrives at the sink already as 1.0.
+  `f2bef146d` fixes those two plus `TimelineStore.setLanePan`. Guard
+  `ANonFinitePanCentresTheLaneTests` claims 4 and 5, with the header premise corrected.
+  ⭐ LESSON: before fixing a sink, walk UP to where the value is decided. A sink downstream of a
+  clamp cannot see the input the clamp already converted.
+- `bbc8c60d0`: `PulsePeriodEstimator.dominantBPM` refuses a non-finite rate/band and bounds lags
+  in Double before `Int` (`Int(+inf)` and overflow trapped). The review checked it over 840,645
+  grid cases: zero behavioural differences.
+- `2c8729781`: `MIDIFileExporter.tempoMeta` — `Swift.max(NaN, 1)` is NaN, so `UInt32(NaN)`
+  trapped on the public export path. NaN is now written as `Transport.defaultTempo` (the SMF
+  default too). Guard `ANaNExportTempoIsWrittenAsTheDefaultTests`.
+- `dcc49fe38`: `doctor --section B` had one standing WARN (a literal `struct Gamma` fixture read
+  as a phantom Sources needle). The fixture is now a `"""` block and Section B reads 0.
+- `52dc0a8fc`: three prose corrections from the review (an overclaim in a guard header, the
+  estimator's "why latent" reasoning, and the AU6 message's helper case).
+- Review round 3 (independent, read-only), over 030f18d47, 890837252, 8d7506a9d, 3a0740908 and
+  bbc8c60d0. Findings 1, 3, 4 and 6 are repaired as above. Recorded and not fixable:
+  · finding 5: the 8d7506a9d commit message says deleting `case "key":` "stayed green". That is
+    true for that file only; `TheOSCControlInputIsAWhitelistTests` already parses `…/key` and
+    would go red. The message overstates the motivation. The new check still adds the tie from the
+    CLAUDE.md brace set to `parse`.
+  · finding 2: `ANonFinitePanCentresTheLaneTests` claims 1 and 2 read `pan` back from an
+    UNATTACHED `AVAudioSourceNode`. The only precedent is in the non-blocking suite. If it does
+    not round-trip, claim 2 goes red loudly, as the header says.
+- NEGATIVE sweeps: `Array(repeating:count:)` with a computed count (13 sites; the only negative-
+  count path is `RetroCapture.snapshotPreRoll(seconds:<0)`, which has no Sources caller) · WSOLA
+  stretch rate (guarded finite > 0, fed from `TempoMatch.rateRange` 0.25…4) · 23 unsigned/fixed-
+  width conversions (`MIDIOutput.noteOn` already guards; the port field clamps before `clampPort`;
+  `MPEExpression.u7` maps NaN to 127, a ceiling but no trap, and its inputs are sanitized upstream)
+  · `TimelineTime.ticks(fromSeconds:)` (already hardened, #1195).
