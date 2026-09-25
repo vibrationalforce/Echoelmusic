@@ -3075,7 +3075,13 @@ public final class EchoelPolyDDSP: @unchecked Sendable {
     /// Set unison live (clamped). count 1 = off; detune is the full spread in cents.
     public func setUnison(count: Int, detuneCents: Float) {
         unisonCount = min(max(count, 1), Self.maxUnison)
-        unisonDetuneCents = min(max(detuneCents, 0), 50)
+        // ⭐ 2026-09-25 (overnight P8): `clamped(to:)`, not `min(max(detuneCents, 0), 50)` — that
+        // order passes NaN, `noteOn` then computes every unison voice's frequency as
+        // `baseFreq * pow(2, t * NaN …)`, and the voices render NaN. `setOctaver` below already
+        // refused a non-finite value: one boundary, two rules (#416). NaN now reads as 0 (no
+        // spread); every other value, ±inf included, is unchanged.
+        // Guard: `TheUnisonDetuneCannotBecomeANaNPitchTests`.
+        unisonDetuneCents = detuneCents.clamped(to: 0...50)
     }
 
     // MARK: - Oktaver
