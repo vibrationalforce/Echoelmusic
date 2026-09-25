@@ -31,7 +31,13 @@
 //        `setRegionWarp`, called from `AudioWarp.setWarp` — so every count in this block is
 //        one short from that commit on; re-derive, do not patch the digits. #165 added
 //        a sixth, `setLaneTranspose`, called from `AudioTranspose.setPitch` (the per-lane
-//        "transpose" dial below leaves the caller-less set).
+//        "transpose" dial below leaves the caller-less set). ⭐ WA4.1 added FIVE more —
+//        `setLaneLevel` · `setLanePan` · `toggleMute` · `toggleSolo` · `renameLane`, called
+//        from `TrackMix` in `Studio/TrackInspectorView.swift` (the Workstation's track
+//        inspector). They leave both sets below: the caller-less 46, and — for `renameLane`,
+//        `toggleMute`, `toggleSolo` — the untested nine. Level and pan are now real
+//        per-lane dials; the rest of that dial list (octave, detune, patch, mood, genre,
+//        sample, seed) is still caller-less.
 //   ·  8 used only inside this file — the previous six (automationLaneIndex,
 //        canCombineRegions, migrate, resolveOverlaps, restoreRegions, syncUndoFlags) PLUS
 //        `persist` (46 internal call sites, one per mutating path) and `snapshotForUndo`
@@ -568,8 +574,11 @@ public final class TimelineStore {
         persist()
     }
 
-    /// B2 stereo position, clamped −1…1 (0 = center). State only, like level —
-    /// the surface pushes the roll-slot pan into the melodic voices.
+    /// B2 stereo position, clamped −1…1 (0 = center). State only, like level. Audio lanes
+    /// (`AudioLanePlayer`) and rack lanes (`slotPanSink`) read it live. ⛔ "the surface pushes
+    /// the roll-slot pan into the melodic voices" stood here: `TimelineDocument.rollSlotPan`
+    /// has NO consumer, so the roll lane's pan moves nothing — which is why `TrackMix` shows
+    /// no Pan field on the Echoel instrument's track.
     public func setLanePan(id: UUID, _ pan: Float) {
         guard let i = document.lanes.firstIndex(where: { $0.id == id }) else { return }
         // Non-finite → centre, as on the playback path: a bare `min(1, NaN)` would STORE hard right.

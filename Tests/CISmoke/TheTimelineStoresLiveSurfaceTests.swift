@@ -73,6 +73,10 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         "setRegionWarp",
         // #165: the Workstation's Pitch field, reached through `AudioTranspose.setPitch`.
         "setLaneTranspose",
+        // WA4.1: the Workstation's track inspector, reached through `TrackMix`
+        // (`Studio/TrackInspectorView.swift`). The counterweight below moved from `setLanePan`
+        // to `setLaneOctave` in the same commit, exactly as its own message asked.
+        "setLaneLevel", "setLanePan", "toggleMute", "toggleSolo", "renameLane",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than
@@ -187,16 +191,17 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
 
     // MARK: - Counterweight (#343) — the dead half must still be dead, or the header is stale
 
-    /// ONE representative of the 42, not all of them (#486: one absence is one finding, and
-    /// forty-two assertions of the same absence is noise that hides the one that matters).
-    /// `setLanePan` is chosen because it is a per-lane dial — the exact thing a "mehrere"
-    /// surface would door first, so this is the assertion most likely to go red for a GOOD
-    /// reason. ⚠️ It is also unique in `Sources/`, which is what makes the scan sound here;
-    /// claim 6 pins that, because an ambiguous name would make this absence unprovable too.
+    /// ONE representative of the caller-less set, not all of them (#486: one absence is one
+    /// finding, and forty assertions of the same absence is noise that hides the one that
+    /// matters). ⭐ This was `setLanePan` until WA4.1 doored the lane mixer — the red this
+    /// method promised arrived "for a GOOD reason", and pan joined `liveSurface`. The
+    /// representative is now `setLaneOctave`: still a per-lane dial, still caller-less, the
+    /// next one a track surface would door. ⚠️ It is unique in `Sources/`, which is what makes
+    /// the scan sound; claim 6 pins that.
     func testTheLaneDialsAreStillUnreachable() throws {
-        let callers = try filesCalling("setLanePan")
+        let callers = try filesCalling("setLaneOctave")
         XCTAssertTrue(callers.isEmpty, """
-            `TimelineStore.setLanePan` now has a caller: \(callers.joined(separator: ", ")). \
+            `TimelineStore.setLaneOctave` now has a caller: \(callers.joined(separator: ", ")). \
             If a lane surface was built, this red is CORRECT and welcome — it is not an \
             objection. It is a checklist: the header of `Core/TimelineStore.swift` says 42 \
             methods have no caller and names the per-lane dials among them, so that block \
@@ -208,9 +213,9 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
     /// is the mirror of the defect above: `XCTAssertTrue(callers.isEmpty)` would go red for a
     /// foreign type's caller and read as "the lane dial got a door". Same rule, other polarity.
     func testTheCounterweightNameIsUniqueToo() throws {
-        let declarers = try filesDeclaring("setLanePan")
+        let declarers = try filesDeclaring("setLaneOctave")
         XCTAssertEqual(declarers, [Self.storePath], """
-            `setLanePan` is declared in \(declarers.joined(separator: ", ")) — the absence \
+            `setLaneOctave` is declared in \(declarers.joined(separator: ", ")) — the absence \
             claim above needs it unique to `TimelineStore`, or a same-named member elsewhere \
             turns that assertion red without any lane surface existing.
             """)

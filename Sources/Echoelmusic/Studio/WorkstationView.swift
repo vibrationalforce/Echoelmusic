@@ -247,6 +247,11 @@ struct WorkstationView: View {
     /// Separate from `tuningPending` because that key stays set after the task ends.
     @State private var measuringClip: UUID?
 
+    /// WA4.1 — the track whose inspector is open, or nil. VIEW state, never song state: which
+    /// row is expanded is not part of the piece and is not persisted. Local and cold — it
+    /// changes on a tap.
+    @State private var selectedTrack: UUID?
+
     var body: some View {
         let summary = WorkstationSummary(document: timeline.document)
         VStack(alignment: .leading, spacing: 10) {
@@ -256,6 +261,13 @@ struct WorkstationView: View {
                 songLine(summary)
                 ForEach(summary.lanes) { row in
                     laneRow(row)
+                    if selectedTrack == row.id {
+                        // The mixer and device facts of the ONE open track. Its own leaf, with
+                        // its own store reads — this view still sends `timeline` nothing but
+                        // `document`.
+                        TrackInspectorView(laneID: row.id)
+                            .id(row.id)
+                    }
                     if row.kind == .audio {
                         pitchField(row)
                         partTempoRows(laneID: row.id)
@@ -404,8 +416,17 @@ struct WorkstationView: View {
     }
 
     private func laneRow(_ row: WorkstationSummary.LaneRow) -> some View {
-        HStack(spacing: 8) {
+        let selected = selectedTrack == row.id
+        return HStack(spacing: 8) {
+            // WA4.1 — tapping the facts selects the track and opens its inspector; tapping the
+            // open one closes it. The facts stay ONE spoken element (#1436); selection is a
+            // trait on it, not a second control beside it.
             laneFacts(row)
+                .contentShape(Rectangle())
+                .onTapGesture { selectedTrack = selected ? nil : row.id }
+                .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+                .accessibilityHint(selected ? "Closes this track's mixer"
+                                            : "Opens this track's device, level, pan, mute and solo")
             // ⚠️ OUTSIDE the combined element, on purpose: `.combine` on the row swallowed the
             // tuning banner's recovery button once (#621) — a control inside a merged element
             // loses its own focus and hint. The facts are ONE sentence; the switch is a switch.
@@ -415,7 +436,7 @@ struct WorkstationView: View {
         .frame(minHeight: 44)
         .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-            .strokeBorder(EchoelTheme.border, lineWidth: 1))
+            .strokeBorder(selected ? EchoelTheme.accent : EchoelTheme.border, lineWidth: 1))
     }
 
     private func laneFacts(_ row: WorkstationSummary.LaneRow) -> some View {
