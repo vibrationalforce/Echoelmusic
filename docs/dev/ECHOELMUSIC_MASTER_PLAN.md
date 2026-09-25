@@ -222,7 +222,7 @@ Detail and device status: `FEATURE_STATUS.md` §1. Owners: `scratchpads/PLAN_DOC
 | Phase | Content | State |
 |---|---|---|
 | **PHASE 1 — Foundation & truth** | the shipping instrument; product law R1–R3; export quality E1–E3; Workstation chip with import/play | CLOSED as a phase (items carry their own statuses above) |
-| **PHASE 2 — WORKSTATION ARCHITECTURE** | WA1 → WA2 → WA3 → WA4 (§7) | **CURRENT** — WA1 and WA2 COMPLETE; WA3 APPROVED (WA3.1 CLOSED, WA3.2 IMPLEMENTED, slice 2 IMPLEMENTED); WA4 IN PROGRESS (WA4.1–WA4.3 IMPLEMENTED) |
+| **PHASE 2 — WORKSTATION ARCHITECTURE** | WA1 → WA2 → WA3 → WA4 (§7) | **CURRENT** — WA1 and WA2 COMPLETE; WA3 APPROVED (WA3.1 CLOSED, WA3.2 IMPLEMENTED, slice 2 IMPLEMENTED); WA4 IN PROGRESS (WA4.1–WA4.5, Session S1–S3, paths 3–5 IMPLEMENTED) |
 | PHASE 3 — Domain recovery | recording/input, note editing, automation editing, undo, video, broadcast, hosting, etc., each through the recovery principle (law §5) into the WA2 owners | PLANNED — order decided by the Founder after WA2 |
 
 **Phase 2 is architecture, not UI construction.** No workstation UI is built until WA1–WA3 are
@@ -399,11 +399,39 @@ done. WA4 is the first front.
     (`325710ca9`) — every track's parts on one shared scale, overlap drawn in `activeRegion`
     order, no playhead (hot-state law). Guard `TheSongIsSeenOnOneScaleTests`. Plate copy
     corrected in `a6cc4fef2`.
+  - **WA4-S1…S3 — the Operational Session (critical path 1): IMPLEMENTED.**
+    `a924cd4fb` (whole-song replace: `TimelineStore.replaceDocument`, `ClipStore.replaceSlots`),
+    `3da618ede` (composer reuses its orphaned clip — the slot leak), `bc261fae3` (the Session
+    rides in the `projects.json` row as opaque bytes: `Core/ProjectSession.swift`, newer/damaged
+    envelopes refused AND preserved), `2eb3cb84d` (`Core/SessionSaveOpen.swift`: Save captures
+    the song through the one importer; Open from the library replaces it, a legacy take opens on
+    a fresh song, a refused Open changes nothing; shared/Colabo takes never replace the song).
+    Guards `TheSessionReplacesTheSongWholeTests`, `TheComposerReusesItsOrphanedClipTests`,
+    `TheSessionTravelsInTheProjectRowTests`, `TheSessionSaveOpensTheSameSongTests` (Acceptance
+    Test A minus the audible half). Review PASS WITH CONDITIONS → repaired `7ceb7e2f5`: the ONE
+    recovery slot keeps the richer half of old and new (`SessionSaveOpen.recoveryRow` — never an
+    empty take over a composed one, never a blank song over the user's); an imported document's
+    Session is stripped. Known gaps, stated at the code: song form captured not restored; player
+    automation not captured by the Studio's Save; a Save whose song fails to encode reads as a
+    pre-Session row (review M1, logged only).
+  - **WA4 path 3 — one selection owner: IMPLEMENTED.** `Studio/WorkstationSelection.swift`
+    (`f43bfe505`), built once in `EchoelmusicApp`, never persisted; stale ids resolve to nil on
+    read. Guard `TheWorkstationHasOneSelectionTests`.
+  - **WA4 path 4 — the Arrange canvas: IMPLEMENTED.** `Studio/ArrangeCanvasView.swift`
+    (`c5c938ccd`) replaces the WA4.5 per-row strips: all tracks with parts on one scale, a part
+    selected by tapping it, `ArrangePlayheadView` the only `currentTick` reader (15 Hz leaf,
+    paused when stopped). Guard `TheSongIsSeenOnOneScaleTests`.
+  - **WA4 path 5 — act on the selected part: IMPLEMENTED (move · split · copy · remove).**
+    `Studio/SelectedPartBar.swift` (`ccc96c753`); Split snaps to the song grid and hands
+    `splitRegion` the tempo MEDIA elapses at (`PartSplit.mediaBPM`), fixing a latent jump at the
+    cut of a warped part. Guard `TheSelectedPartIsCutWhereItIsHeardTests`. **Held:** drag-move and
+    trim (trim needs a decision on what the spoken name promises).
   - Evidence ceiling: transcription-graded guards; compile gates are read per commit in
     `scratchpads/SESSION_LOG.md`; **device verification owed** for every slice
     (NEEDS-FOUNDER-VERIFY markers in each guard header).
-  - **Open in WA4:** the canonical Session writer (`DMMWProject` save/reopen — importer exists, writer
-    SECOND per #1416; the song itself already persists through `TimelineStore`).
+  - **Open in WA4:** workspace promotion (Workstation as a first-class surface, not a panel),
+    track headers (mute/solo/level/pan in the row), a general undo step beyond regions, drag
+    edits, the Echoel device seam, and the device proof journey.
 
 ---
 
@@ -570,3 +598,6 @@ general.
     (commits in §7 WA4). Device verification owed.
   - 2026-09-25 — WA4.2c review repair, WA4.4 remove empty track, WA4.5 song-wide parts strip
     IMPLEMENTED (commits in §7 WA4). Device verification owed.
+  - 2026-09-25 — Codex forensic override applied: Operational Session S1–S3, one selection
+    owner, Arrange canvas + leaf playhead, selected-part bar with warped-split fix IMPLEMENTED
+    (commits in §7 WA4). Device verification owed; Acceptance Test A's audible half open.

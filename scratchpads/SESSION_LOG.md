@@ -39868,3 +39868,13 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - **WA4.3 part arrange** `e0d7132a3`: `TrackPartsView` under the inspector — Earlier/Later (1 bar), Copy, Remove, Undo/Redo; first production callers of `moveRegion`/`duplicateRegion`/`removeRegion`/`undo`/`redo`. Undo is region-only by design and says so.
 - **Gates:** Compile Check runs for b2913…7ebb2 were all CANCELLED by the next push (`cancel-in-progress`); pushes paused so e0d7132a3's run completes (it covers every Sources change above). CI/CD runs 6329–6332 QUEUED (macOS backlog). No gate verdict yet — nothing above is compile-verified.
 - **Device verification owed:** WA4.1/4.2/4.3 (markers in each guard header).
+
+## 2026-09-25 18:20Z — Codex override: Operational Session S1–S3, selection owner, Arrange canvas, part bar
+
+- **Session (critical path 1):** `a924cd4fb` whole-song replace APIs · `3da618ede` composer reuses its orphaned clip (slot leak) · `bc261fae3` Session as opaque bytes in the `projects.json` row (newer/damaged refused AND kept) · `2eb3cb84d` Save captures / library Open restores / legacy opens fresh / refusal before any change. Guards: TheSessionReplacesTheSongWhole, TheComposerReusesItsOrphanedClip, TheSessionTravelsInTheProjectRow, TheSessionSaveOpensTheSameSong (Acceptance Test A minus audio).
+- **Review of S1–S3: PASS WITH CONDITIONS.** H1 (empty take over the recovery slot) + H2 (two legacy Opens lose the user's song) repaired in `7ceb7e2f5` via `SessionSaveOpen.recoveryRow`; M2 import strips Session; L3/L4/L5 fixed. Open: M1 (encode-failed Save reads as legacy), L1/L2/L6/L7 recorded in the commit/review.
+- **Selection owner (path 3)** `f43bfe505`: `WorkstationSelection`, one construction in the app, not persisted. Guard TheWorkstationHasOneSelection.
+- **Arrange canvas (path 4)** `c5c938ccd`: `ArrangeCanvasView` + `ArrangePlayheadView` (15 Hz TimelineView leaf, only currentTick reader); WA4.5 strips replaced. Guard TheSongIsSeenOnOneScale rewritten.
+- **Selected-part bar (path 5)** `ccc96c753`: move/split/copy/remove; Split snaps to the grid and passes `PartSplit.mediaBPM` → fixes the latent warped-split jump. Guard TheSelectedPartIsCutWhereItIsHeard.
+- **Gates:** Compile Check runs cancelled by successive pushes (cancel-in-progress); the run on the last push covers all. CI/CD macOS jobs queued at 18:05. Reviewer launched on f43bfe505..7ceb7e2f5.
+- **Device verification owed:** canvas render/tap, part bar, warped split audible seam, Session Save→Open audible half.

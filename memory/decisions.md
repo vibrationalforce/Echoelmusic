@@ -2869,3 +2869,10 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - HOLD founder/listening: the CA's in-place update (rule 184 empties it; Ambient Calm seeds 0.7).
 - HOLD host verification: render-event automation is dropped; design written in
   `docs/dev/NATIVE_DEVICE_ARCHITECTURE.md`. Review 2026-10-24.
+
+### 2026-09-25 — WA4 Operational Session: stored in the project row, one Open door, a recovery slot that keeps the richer half
+
+- **Decision:** the canonical `DMMWProject` is written INTO the existing `projects.json` row (`Project.sessionEnvelope`, opaque base64 bytes, key `session` frozen). Library Open = "open this project": refusal checked first (newer / damaged / wrong grid → nothing changes), then `open(p)` (its rescue records the old take+song), then the saved song replaces the live one. A row without a Session (older build, imported document) opens on a fresh song. Live Colabo loads a take and never touches the song. The ONE recovery slot keeps the richer half of old and new (`SessionSaveOpen.recoveryRow`).
+- **Why:** founder override (no new persistence root, no new Session type, legacy Project = import source, unknown future fails safely and preserves data). Review of S1–S3 found two ways the single slot lost data (empty take over a composed one; blank song over the user's after two legacy Opens) — repaired in `7ceb7e2f5`.
+- **Open:** song form captured not restored; player automation not captured by the Studio's Save; an encode-failed Save reads as a legacy row (M1).
+- **Review:** 2026-10-25.
