@@ -273,7 +273,7 @@ struct LiveColaboView: View {
                         .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.text))
                 }
                 .buttonStyle(.plain)
-                Button { projects.save(project); colab.clearIncoming() } label: {
+                Button { projects.adoptArriving(project); colab.clearIncoming() } label: {
                     Text("Save").font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
                         .frame(maxWidth: .infinity).frame(minHeight: 40)
                         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))

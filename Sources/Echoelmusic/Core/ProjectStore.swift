@@ -97,11 +97,21 @@ public final class ProjectStore {
     /// one screen up: the yes/no form stays for its existing callers, the throwing form is
     /// what the reachable door uses.
     public func importProject(fromDocument data: Data) throws -> Project {
-        var p = try JSONDecoder().decode(Project.self, from: data)
+        let p = try JSONDecoder().decode(Project.self, from: data)
+        return adoptArriving(p)
+    }
+
+    /// Saves a take that came from OUTSIDE this device — a file or a Live Colabo peer — as a
+    /// NEW row. The ONE rule for every arrival door (review LOW-2: the Live Colabo Save kept the
+    /// peer's id and Session): a fresh id, because a row saved under the sender's id
+    /// overwrites the original of an export you import back (`save` replaces by id); and never
+    /// a song — a Session names another device's media paths and clip grid (WA4-S2/H5;
+    /// `sharedDocumentData` strips it on the way out, but a hand-made or future file, or
+    /// another build's peer, may still carry one, and it would be installed on Open).
+    @discardableResult
+    public func adoptArriving(_ project: Project) -> Project {
+        var p = project
         p.id = UUID()
-        // An arriving document never brings a song: a Session names another device's media
-        // paths and clip grid (WA4-S2/H5 — `sharedDocumentData` strips it on the way out; a
-        // hand-made or future file may still carry one, and it would be installed on Open).
         p.setSessionEnvelope(nil)
         return save(p)
     }

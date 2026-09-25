@@ -14,9 +14,13 @@
 //    current one. A project saved before Sessions existed carries no song, so it opens on a
 //    fresh, empty song rather than inheriting the previous project's — the legacy take is an
 //    import source, never a window onto someone else's timeline.
-//  · A take that ARRIVES LIVE (Live Colabo) is not a project: it has no Session by
-//    construction (`sharedDocumentData` strips it) and loads into the instrument without
-//    touching the song — that caller never reaches `restoreSong`. ⚠️ A shared DOCUMENT imported
+//  · A take that ARRIVES LIVE (Live Colabo) is not a project: today's senders share the take
+//    WITHOUT the song (`currentSession` builds it with no `withSession`), and Load puts it
+//    into the instrument without touching the song — that caller never reaches
+//    `restoreSong`. Its Save goes through `ProjectStore.adoptArriving`, which strips any
+//    Session another build might send and gives the row a fresh id. (⛔ This line said
+//    "no Session by construction (`sharedDocumentData` strips it)" — the Live Colabo path
+//    never passes through `sharedDocumentData`; review LOW-2.) ⚠️ A shared DOCUMENT imported
 //    through the Import button becomes a library ROW (its Session stripped on import, so no
 //    foreign media paths arrive); opening that row IS "open this project", so it opens on a
 //    fresh song like any pre-Session row — and the song it replaces is kept by the recovery

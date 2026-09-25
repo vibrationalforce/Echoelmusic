@@ -340,6 +340,30 @@ final class TheImportDoorReportsWhatItCannotReadTests: XCTestCase {
 
     /// Directory-gated, never per-file (#475): a `fileExists` bracket around each read turns the
     /// very catastrophe this file guards against into a green SKIP.
+    // MARK: - 10. Every arrival door is one rule (review LOW-2)
+
+    /// A take from outside this device — a file or a Live Colabo peer — becomes a NEW row and
+    /// never brings a song. The Live Colabo Save used `projects.save(project)` directly, so a
+    /// peer's id could overwrite a local row and a Session from another build would arrive.
+    func testEveryArrivalIsANewRowWithoutASong() throws {
+        let store = isolatedStore()
+        var peer = take(named: "Peer loop")
+        peer.setSessionEnvelope(Data("another device's song".utf8))
+        let adopted = store.adoptArriving(peer)
+        XCTAssertNotEqual(adopted.id, peer.id, "an arrival never takes the sender's id")
+        XCTAssertNil(adopted.sessionEnvelope, "an arrival never brings another device's song")
+        XCTAssertEqual(store.projects.count, 1)
+
+        let colab = try code(at: "Sources/Echoelmusic/Studio/LiveColaboView.swift")
+        XCTAssertTrue(colab.contains("projects.adoptArriving(project)"),
+                      "the Live Colabo Save goes through the one arrival rule")
+        XCTAssertFalse(colab.contains("projects.save(project)"),
+                       "a direct save keeps the peer's id and Session")
+        let storeCode = try code(at: "Sources/Echoelmusic/Core/ProjectStore.swift")
+        XCTAssertTrue(storeCode.contains("return adoptArriving(p)"),
+                      "the file import is the same rule, not a second copy of it (#416)")
+    }
+
     private func code(at relativePath: String) throws -> String {
         let here = URL(fileURLWithPath: #filePath)
         let root = here.deletingLastPathComponent().deletingLastPathComponent()
