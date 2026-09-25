@@ -109,6 +109,12 @@ won, and what is a known dead-end**, so the loop climbs instead of circling.
 | v10.79.195 | Immersive Stage — Touch room-map, each track a draggable spatial object (SpatialSceneStore + ImmersiveStageMath + ImmersiveStageView) | green |
 | v10.79.194 | Multi-Roll (tracks play simultaneously) + per-track Record (arm→play→capture MIDI/bio→Clip+region) | green |
 
+## DEAD-END + PLAYBOOK (2026-09-25 overnight P8, c06ac2167 → e24010296): narrowing a type's DOMAIN reddens a guard that no text checker can see
+
+**What happened.** `c06ac2167` clamped `EchoelReverb.roomSize`/`damping` to 0…1 at the type (a finite 1.5 from a decoded preset diverged the tank). All six checkers exited 0. The independent review found `TheAUv3TailCoversTheReverbTests` claim 3 RED on the correct tree: it drove a runaway edge with `reverb.roomSize = 1.2`, a value the type now refuses. The dependency was a BEHAVIOUR (an out-of-domain write that used to diverge), not a needle, so `dead-needles`/`moved-needles`/`count-pins` are blind to it by construction.
+
+**Do this instead.** Before narrowing what a setter/type accepts, `git grep` every write of that property across `Tests/` (both bundles) with the out-of-domain shapes: `= 1.[0-9]`, `= -`, `.nan`, `.infinity`, and any test that asserts the old edge (`isFinite == false`, `.infinity`, `.greatestFiniteMagnitude`). A guard that exercised the old edge must move in the SAME commit (§4), onto an input that still reaches it. Reviewer caught it in one pass; the gate would not have shown it before morning (BfT backlog ~4.5 h).
+
 ## OBSERVATION + PLAYBOOK (2026-09-24 overnight P7): xcodebuild ITSELF can abort — a third red that is neither #396 nor a test
 - **Signature** (`df9222b38`, run 36064225997, job 107857884307): Run Tests step `##[error]Process
   completed with exit code 134.`; shell line `Abort trap: 6  xcodebuild test-without-building …`;

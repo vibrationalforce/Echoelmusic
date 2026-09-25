@@ -39797,3 +39797,12 @@ defects**, three LOW prose findings, each closed as its own comment-only commit:
 
 The repo text is now correct; read these commit messages against this entry.
 Review 10 was independent. These three prose commits are builder-made and **not independently reviewed**.
+
+## 2026-09-25 ~06:25 UTC — Overnight P8: breath swell, sticky-NaN sweep, reverb domain clamp (+ review 11/12)
+
+- `642b7e4e4` `PolySynthVoice.setBreathSwell`: NaN depth latched in the render one-pole, so the swell stayed dead for the session while the (unread) mirror said active. Fix: `clamped(to: 0...0.6)`. Guard `TheBreathSwellCannotLatchANaNDepthTests`. Review 11: code CLEAN; prose → `1d5d627e7`.
+- Read-only sticky-NaN sweep (~110 sites): **no live NaN producer**. 5 traced candidates; #1 fixed, #2–#5 latent or with no writer (report draft lists them).
+- `c06ac2167` `EchoelReverb.updateDamping` clamps room/damping 0…1 at the type. A finite 1.5 from a decoded FXPreset (no range check) diverged the tank to NaN and latched it; float32 simulation: parent non-finite at sample 1544, head peak 0.75. Guard `TheReverbTankCannotBeDrivenUnstableTests`.
+- ⛔ **Review 12 CRITICAL:** `c06ac2167` turned `TheAUv3TailCoversTheReverbTests` claim 3 RED (it drove the runaway edge with room 1.2). Repaired in `e24010296` (edge driven by an infinite release; `tailSeconds` doc updated). Playbook row in HARNESS_LEDGER.
+- Review 12 LOW prose → `52c8f95f6`. **The commit message of `c06ac2167` carries two sentences that were retracted: "until re-enabled or drained" and "sizes the AUv3 tailTime"** (amend is forbidden).
+- Gates: Compile Check was GREEN on `aa491798a`; the one for head `52c8f95f6` is pending. BfT was GREEN on `5fa78a958` (the 01:39 commit); the backlog runs ~4.5 h behind.
