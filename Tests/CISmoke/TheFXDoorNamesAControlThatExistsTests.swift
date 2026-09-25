@@ -276,8 +276,15 @@ final class TheFXDoorNamesAControlThatExistsTests: XCTestCase {
         }
         for case let rel as String in walker where rel.hasSuffix(".swift") {
             let text = try String(contentsOf: root.appendingPathComponent(rel), encoding: .utf8)
+            // ⚠️ The AUv3 plug-in UI is the ONE stated exception to the `EchoelValueField` law
+            // (CLAUDE.md, UI DESIGN CONSTRAINTS: "AUSSER der AUv3-Plugin-Oberfläche im
+            // Fremd-Host" — the extension cannot link `EchoelTheme`). #1385 brought that target
+            // back under `Sources/`, and this walk then counted its ten `Slider(` lines as app
+            // divergences: red on a correct tree. Only the SLIDER half is exempted — the Stepper
+            // ban below still reads the extension, because no exception covers it.
+            let isPlugInUI = rel.hasPrefix("EchoelmusicAUv3/")
             for line in SourceText.codeOnly(text).components(separatedBy: "\n") {
-                if line.contains("Slider(") {
+                if line.contains("Slider(") && !isPlugInUI {
                     // Labels written OUT at the append. `[(String, String)]` and
                     // `[(file: String, text: String)]` are different types once they are an
                     // Array's element, and there is no compiler in this session to catch a
