@@ -92,30 +92,17 @@ final class TheStalledPillSaysWhySilentTests: XCTestCase {
         XCTAssertEqual(RPPGRecoveryState.interrupted.shortLabel, "Camera paused")
     }
 
-    /// Non-empty lines with `//` comments removed. DEFENSIVE AND LOAD-BEARING, not tidiness:
-    /// claim 4 forbids a phrase that the paragraph EXPLAINING claim 4 spells out verbatim, in
-    /// this same repo's own habit of quoting what it rejects. The first draft of this guard was
-    /// red on a correct tree for exactly that reason (#491), caught by transcribing it before
-    /// committing. A negative scan must read CODE, never the prose that justifies it.
-    private func codeOnly(_ text: String) -> String {
-        var out: [String] = []
-        for raw in text.split(separator: "\n", omittingEmptySubsequences: false) {
-            var line = String(raw)
-            if let r = line.range(of: "//") {
-                let before = line[line.startIndex..<r.lowerBound]
-                if before.filter({ $0 == "\"" }).count % 2 == 0 { line = String(before) }
-            }
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if !trimmed.isEmpty { out.append(trimmed) }
-        }
-        return out.joined(separator: "\n")
-    }
+    // Claim 4 reads CODE through `SourceText.codeOnly` — DEFENSIVE AND LOAD-BEARING, not
+    // tidiness: it forbids a phrase that the paragraph EXPLAINING the gate spells out verbatim
+    // (#491). The first draft was red on a correct tree for exactly that reason. This file
+    // carried a private stripper until 2026-09-25, which kept
+    // `OneDefinitionOfCodeNotProseTests.testNoUnlistedFileDeclaresItsOwnStripper` red (#453).
 
     // 4 — COUNTERWEIGHT, and the needle is an ABSENCE. The gate must not become the banner:
     //     `.cooling` fires on thermal state alone while frames arrive fine, so gating on
     //     `recoveryState` would replace a live, actionable placement cue on a merely warm phone.
     func testTheGateIsFrameFlowAndNotTheThermalBanner() throws {
-        let text = codeOnly(try source(Self.header))
+        let text = SourceText.codeOnly(try source(Self.header))
         for wrong in ["recoveryState == .healthy", "recoveryState != .healthy"] {
             XCTAssertFalse(text.contains(wrong), """
                 The pill gates on `\(wrong)`. That is the thermal BANNER, not frame flow: \
