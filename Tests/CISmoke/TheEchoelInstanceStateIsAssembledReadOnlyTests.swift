@@ -14,7 +14,8 @@
 // 4. THE BOUNDARY — the encoded value has EXACTLY the declared top-level fields (no key, scale,
 //    A4, tone system, BPM lock, bio value or preset cursor), and the Session's tempo route is
 //    removed from the device's matrix.
-// 5. FRESH INSTALL — an empty store assembles to the owners' own defaults.
+// 5. FRESH INSTALL — an empty store assembles to the owners' own defaults; a RETIRED raw value
+//    (an FX character, genre or loop length no case has) resolves as the instrument resolves it.
 // 6. SOURCE — the file writes nothing to `UserDefaults`, and the two keys it names by literal are
 //    still declared by that literal in `EchoelStudioView` (the `SoundReset` pattern: a rename there
 //    must fail here, not turn one field into a silent default).
@@ -200,6 +201,21 @@ final class TheEchoelInstanceStateIsAssembledReadOnlyTests: XCTestCase {
         }
     }
 
+    // MARK: 5b — retired raw values resolve the way the instrument resolves them
+
+    /// `@AppStorage` reads an undecodable raw value as its declared default, and
+    /// `currentProject()` saves the resolved enum. An assembly that passed the stored raw value
+    /// through would describe a sound the instrument is not playing (review of 862e41279).
+    func testARetiredRawValueAssemblesAsTheInstrumentPlaysIt() {
+        defaults.set("harmonizer", forKey: EchoelInstanceState.fxCharacterKey)
+        defaults.set("noSuchGenre", forKey: StudioDefaultKeys.genre.key)
+        defaults.set(-7, forKey: StudioDefaultKeys.loopBars.key)
+        let s = assembled()
+        XCTAssertEqual(s.fxCharacterRaw, FXCharacter.auto.rawValue)
+        XCTAssertEqual(s.genreRaw, StudioDefaultKeys.genre.value.rawValue)
+        XCTAssertEqual(s.loopBarsRaw, StudioDefaultKeys.loopBars.value.rawValue)
+    }
+
     // MARK: 6 — source
 
     private func repoRoot() -> URL {
@@ -217,18 +233,8 @@ final class TheEchoelInstanceStateIsAssembledReadOnlyTests: XCTestCase {
         return text
     }
 
-    private func codeOnly(_ text: String) -> String {
-        text.components(separatedBy: "\n")
-            .filter { !$0.trimmingCharacters(in: .whitespaces).hasPrefix("//") }
-            .map { line -> String in
-                guard let r = line.range(of: " //") else { return line }
-                return String(line[..<r.lowerBound])
-            }
-            .joined(separator: "\n")
-    }
-
     func testTheAssemblyFileWritesNoDefaultsAndItsLiteralKeysStillExist() {
-        let subject = codeOnly(source(Self.subjectPath))
+        let subject = SourceText.codeOnly(source(Self.subjectPath))
         XCTAssertTrue(subject.contains("static func assemble("),
                       "ANCHOR MISSING: the assembly function moved or was renamed")
         for writer in [".set(", "removeObject(", "setValue(", "synchronize("] {

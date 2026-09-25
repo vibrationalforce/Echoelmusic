@@ -28,10 +28,19 @@
 //  · The preset-list cursor `studio.presetIndex` — a UI cache, not sound.
 //  · KNOWN GAPS, named so nobody reads this as complete: the three bus inserts (`TrackFXStore`
 //    keeps its keys private), the live FX-chain parameters and `delaySync` (not persisted
-//    anywhere today), and the `touch.*` / `field.autoPlay.*` surfaces (a second step).
+//    anywhere today), the `touch.*` / `field.autoPlay.*` surfaces (a second step), and WA3 §E's
+//    `keyFollow` (a contract field with no owner yet — today the device always follows).
 //
-//  Foundation-only on purpose: every field is a raw value or a Foundation-only model type, so
-//  the value can move into the EchoelCore target (#95) unchanged when that target exists.
+//  ⭐ RAW VALUES ARE RESOLVED, NOT PASSED THROUGH (review of 862e41279). `@AppStorage` meets a
+//  stored raw value it cannot decode — a retired FX character like "harmonizer", a retired
+//  genre, a loop length no case has — with its DECLARED default, and `currentProject()` saves
+//  the resolved enum. An assembly that copied the stored string would describe a sound the
+//  instrument is not playing. So each enum-backed field goes through its type and its owner's
+//  default, exactly as the view does.
+//
+//  The FIELDS are Foundation-only model types. The assembly FUNCTION is not yet: it reads
+//  `MixerStore`'s key list and `ModDestinationKey`, whose files import Observation, so moving
+//  this into an EchoelCore target (#95) takes those two constants with it.
 //
 
 import Foundation
@@ -71,7 +80,8 @@ public struct EchoelInstanceState: Codable, Sendable, Equatable {
     /// `LoopBarLength` raw value — the device's PHRASE length, not the Session loop (§O).
     public var loopBarsRaw: Int
     /// The composer's internal role mix, keyed by `MixerStore.storageKeys`. ⚠️ This is the
-    /// DEVICE's voice balance (bass · pad · lead), never a workstation mixer (WA1 S28).
+    /// DEVICE's voice balance (bass · pad · lead, plus the silent legacy `mixer.drums` key the
+    /// store still reads), never a workstation mixer (WA1 S28).
     public var roleLevels: [String: Float]
     /// The device's own modulation routes. The tempo route is Session state and is removed.
     public var modulation: ModulationMatrix
@@ -103,6 +113,10 @@ public struct EchoelInstanceState: Codable, Sendable, Equatable {
 
     /// The two keys declared by literal at their single view site (`EchoelStudioView`),
     /// named once here so the guard can scan that view for them (the `SoundReset` pattern).
+    /// ⚠️ `fxCharacter`'s fallback `.auto` below repeats the view's declared default. That is
+    /// the one second default in this file, kept because `.auto` is the type's own
+    /// "defer to the genre" case rather than a tuned number; `articulation` has no such case,
+    /// which is why it reads `nil` instead.
     public static let fxCharacterKey = "studio.fxCharacter"
     public static let articulationKey = "studio.articulation"
 
@@ -142,9 +156,16 @@ public struct EchoelInstanceState: Codable, Sendable, Equatable {
             }
         }
 
-        let loopBars: Int = defaults.object(forKey: StudioDefaultKeys.loopBars.key) == nil
-            ? StudioDefaultKeys.loopBars.value.rawValue
-            : defaults.integer(forKey: StudioDefaultKeys.loopBars.key)
+        // Resolved through the type, as `@AppStorage` resolves them (see the header).
+        let loopBars: LoopBarLength = defaults.object(forKey: StudioDefaultKeys.loopBars.key) == nil
+            ? StudioDefaultKeys.loopBars.value
+            : LoopBarLength(rawValue: defaults.integer(forKey: StudioDefaultKeys.loopBars.key))
+                ?? StudioDefaultKeys.loopBars.value
+        let fxCharacter = FXCharacter(rawValue: string(fxCharacterKey, FXCharacter.auto.rawValue))
+            ?? .auto
+        let genre = MusicStyle(rawValue: string(StudioDefaultKeys.genre.key,
+                                                StudioDefaultKeys.genre.value.rawValue))
+            ?? StudioDefaultKeys.genre.value
 
         let autoMode: Bool = defaults.object(forKey: StudioDefaultKeys.autoMode.key) == nil
             ? StudioDefaultKeys.autoMode.value
@@ -162,8 +183,8 @@ public struct EchoelInstanceState: Codable, Sendable, Equatable {
             schemaVersion: currentSchemaVersion,
             deviceType: deviceType,
             patch: patch,
-            fxCharacterRaw: string(fxCharacterKey, FXCharacter.auto.rawValue),
-            genreRaw: string(StudioDefaultKeys.genre.key, StudioDefaultKeys.genre.value.rawValue),
+            fxCharacterRaw: fxCharacter.rawValue,
+            genreRaw: genre.rawValue,
             moodFields: moodFields,
             variation: double(StudioDefaultKeys.moodVariation.key,
                               StudioDefaultKeys.moodVariation.value),
@@ -176,7 +197,7 @@ public struct EchoelInstanceState: Codable, Sendable, Equatable {
             padAccent: double(StudioDefaultKeys.padAccent.key, StudioDefaultKeys.padAccent.value),
             padEvolve: double(StudioDefaultKeys.padEvolve.key, StudioDefaultKeys.padEvolve.value),
             autoMode: autoMode,
-            loopBarsRaw: loopBars,
+            loopBarsRaw: loopBars.rawValue,
             roleLevels: roleLevels,
             modulation: ModulationMatrix(routes: deviceRoutes))
     }
