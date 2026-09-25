@@ -39630,3 +39630,29 @@ transcription before its repair; one defect per commit; checkers exit 0 on every
   `secondsPerTick > 0`, SpectrumReadout/TempoDetector/AudioKeyAnalysis guarded, `TuningSystem.snap`
   has no caller) · `OSCReceiver` decode (every read length-checked; live untrusted boundary is
   clean) · DMX byte packing (every `clampUnit` maps non-finite to 0; universe bytes masked).
+
+## 2026-09-25 ~02:40–02:55 UTC — overnight P8: review round 4 acted on
+
+- Review round 4 (independent, read-only) covered caae8e304, 41a817ac7, e68ddfda1 and 6ffd8cfbd.
+  · CONFIRMED, fixed in `269aae615`: caae8e304 folded `phases.count` into the spectral
+    normalisation (`invCount`). A 16-cell `.spectral2D` texture above ~1.5 kHz at 48 kHz never
+    trapped: the Nyquist break stopped the loop first. It came out exactly 2× louder (+6 dB).
+    Now only the LOOP takes `phases.count`, so every input that did not trap renders bit-identically
+    to the tree before caae8e304. Guard claim 4 (source text) pins the split. It is FORWARD, red on
+    both earlier trees, and says so. ⛔ My caae8e304 message claimed "no input that did not trap
+    changes behaviour". A normalisation is not a loop bound.
+  · CONFIRMED, prose, fixed in `07a6c425a` (comments only):
+    (a) the `rollSlotPan` doc and the pan-guard header now say "every CLAMPING reader";
+        `mergeMixer`/`structurallyEqual` copy/compare pan unclamped (NaN re-copy unreachable);
+    (b) the NaN-floor guard header names five MORE floor-landing clamp helpers (BreathArp,
+        FieldAutoPlay, MusicalFrame, SpectralColor, AutomationLane) and deliberately states no total;
+    (c) the AUv3-slider guard header: BOTH gates compile the extension, because `project.yml`
+        makes it a dependency of the app target. 6ffd8cfbd's message stays wrong (not amendable).
+  · PLAUSIBLE, recorded, NOT fixed: `EchoelCellular.evolve2D` allocates on the render thread in
+    `.spectral2D` (older code; not reached by the one production texture, which is `.additive`).
+    Needs its own slice with a preallocated scratch grid. The DSP Purist seat wants a measured
+    trace, not a reviewer's reading.
+- Gates: CI/CD Build for Testing is GREEN on 5910992e5 (run 36078689414). With 1a813fe23 and
+  36844deac already read, the BfT readings reach 36844deac. Everything after that is still queued (~3 concurrent,
+  ~50–60 min each). main = 1e8e4cb91. auto-merge also needs the Compile Check conclusion, and
+  rapid pushes cancel that (`cancel-in-progress`). CI policy is founder-gated: recorded, not touched.
