@@ -239,7 +239,7 @@ final class TwoControlsShareALineOnlyWhileTheyFitTests: XCTestCase {
 
     private func sourceFiles() throws -> [URL] {
         let sources = try repoRoot().appendingPathComponent("Sources")
-        guard let e = FileManager.default.enumerator(at: sources,
+        guard FileManager.default.fileExists(atPath: sources.path), let e = FileManager.default.enumerator(at: sources,
                                                      includingPropertiesForKeys: nil) else {
             throw XCTSkip("could not enumerate \(sources.path)")
         }
