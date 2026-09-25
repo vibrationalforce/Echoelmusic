@@ -470,10 +470,24 @@ public final class EchoelCellular: @unchecked Sendable {
     /// Wavetable mode: CA tape IS the oscillator
     private func renderWavetable() -> Float {
         guard cellCount > 0 else { return 0 }
-        let phaseIncrement = frequency / sampleRate * Float(cellCount)
+        let tableLength = Float(cellCount)
+        let phaseIncrement = frequency / sampleRate * tableLength
+        // ⚠️ The wrap must hold for ANY increment (overnight P8). It was a `while` loop that
+        // subtracted the table length: a NaN or infinite increment made the phase non-finite and
+        // `Int(…)` below TRAPPED; a negative one left the phase below 0, and the index −1 trapped
+        // on the array; a huge finite one (frequency ~1e20) never left the loop, because
+        // subtracting 128 from ~1e17 changes nothing in Float — a HANG on the render thread.
+        // `truncatingRemainder` is exact, so for every increment below the table length (any
+        // frequency below the sample rate) it gives the same phase as one subtraction, bit for
+        // bit (Sterbenz). A non-finite increment is refused and the phase holds.
+        // Guard: `TheWavetablePhaseWrapsForAnyFrequencyTests`.
+        guard phaseIncrement.isFinite else { return 0 }
         wavetablePhase += phaseIncrement
-        while wavetablePhase >= Float(cellCount) {
-            wavetablePhase -= Float(cellCount)
+        if wavetablePhase >= tableLength {
+            wavetablePhase = wavetablePhase.truncatingRemainder(dividingBy: tableLength)
+        } else if wavetablePhase < 0 {
+            wavetablePhase = wavetablePhase.truncatingRemainder(dividingBy: tableLength) + tableLength
+            if wavetablePhase >= tableLength { wavetablePhase = 0 }
         }
 
         // Linear interpolation
