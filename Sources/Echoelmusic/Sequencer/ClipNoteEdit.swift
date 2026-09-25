@@ -142,6 +142,99 @@ enum ClipNoteEdit {
         return resized
     }
 
+    // MARK: - M3: operations on a selection
+    //
+    // Each takes the ids to act on and the CLIP's notes, returns the clip's notes whole, and
+    // returns nil when nothing would change — so a button that would do nothing commits no step.
+    // Which ids: `targets` — the on-screen selection, or every note the part shows when nothing
+    // is selected (the usual editor rule, stated once here and not in the view).
+
+    /// The ids an M3 operation acts on: the selection, or the whole part when none.
+    nonisolated static func targets(selected: Set<UUID>, visible: [Note]) -> Set<UUID> {
+        selected.isEmpty ? Set(visible.map(\.id)) : selected
+    }
+
+    /// `ids` moved by `semitones`, clamped as a GROUP to MIDI 0…127 so the chord keeps its shape.
+    nonisolated static func transposing(_ ids: Set<UUID>, by semitones: Int,
+                                        in clipNotes: [Note]) -> [Note]? {
+        let pitches = clipNotes.filter { ids.contains($0.id) }.map(\.pitch)
+        guard let low = pitches.min(), let high = pitches.max() else { return nil }
+        let delta = Swift.min(Swift.max(semitones, -low), 127 - high)
+        guard delta != 0 else { return nil }
+        return clipNotes.map { note in
+            guard ids.contains(note.id) else { return note }
+            var moved = note
+            moved.pitch = note.pitch + delta
+            return moved
+        }
+    }
+
+    /// `ids` with their starts snapped to the nearest sixteenth OF THE PART (the grid the editor
+    /// draws), each kept inside the part's window; lengths untouched.
+    nonisolated static func quantizing(_ ids: Set<UUID>, in clipNotes: [Note], offsetTicks: Int,
+                                       lengthTicks: Int) -> [Note]? {
+        guard !ids.isEmpty, lengthTicks > 0 else { return nil }
+        let offset = Swift.max(0, offsetTicks)
+        let lastStep = stepCount(lengthTicks: lengthTicks) - 1
+        var changed = false
+        let snapped = clipNotes.map { note -> Note in
+            guard ids.contains(note.id) else { return note }
+            let relative = note.startTick - offset
+            guard relative >= 0, relative < lengthTicks else { return note }
+            let step = Swift.min((relative + Note.ticksPerStep / 2) / Note.ticksPerStep, lastStep)
+            var moved = note
+            moved.startTick = offset + step * Note.ticksPerStep
+            if moved.startTick != note.startTick { changed = true }
+            return moved
+        }
+        return changed ? snapped : nil
+    }
+
+    /// `ids` set to one velocity (NaN-safe, 0…1); nil when every one already has it.
+    nonisolated static func settingVelocity(_ ids: Set<UUID>, to velocity: Float,
+                                            in clipNotes: [Note]) -> [Note]? {
+        let value = velocity.clamped(to: 0...1)
+        var changed = false
+        let updated = clipNotes.map { note -> Note in
+            guard ids.contains(note.id), note.velocity != value else { return note }
+            var loud = note
+            loud.velocity = value
+            changed = true
+            return loud
+        }
+        return changed ? updated : nil
+    }
+
+    /// The mean velocity of `ids` — what the velocity row shows for a mixed selection.
+    nonisolated static func meanVelocity(_ ids: Set<UUID>, in clipNotes: [Note]) -> Float? {
+        let values = clipNotes.filter { ids.contains($0.id) }.map(\.velocity)
+        guard !values.isEmpty else { return nil }
+        return values.reduce(0, +) / Float(values.count)
+    }
+
+    /// `ids` copied once, right after themselves: the copies start one selection-span later
+    /// (the span from the first start to the last end, rounded up to whole steps). nil when a
+    /// copy would start outside the part — nothing the player would skip is created. The copies
+    /// get new ids and are appended, so they draw on top; their ids are returned to select them.
+    nonisolated static func duplicating(_ ids: Set<UUID>, in clipNotes: [Note], offsetTicks: Int,
+                                        lengthTicks: Int) -> (notes: [Note], ids: Set<UUID>)? {
+        let picked = clipNotes.filter { ids.contains($0.id) }
+        guard let first = picked.map(\.startTick).min(), let end = picked.map(\.endTick).max(),
+              lengthTicks > 0 else { return nil }
+        let span = Swift.max(1, (end - first + Note.ticksPerStep - 1) / Note.ticksPerStep)
+            * Note.ticksPerStep
+        let windowEnd = Swift.max(0, offsetTicks) + lengthTicks
+        var copies: [Note] = []
+        for note in picked {
+            var copy = note
+            copy.id = UUID()
+            copy.startTick = note.startTick + span
+            guard copy.startTick < windowEnd else { return nil }
+            copies.append(copy)
+        }
+        return (clipNotes + copies, Set(copies.map(\.id)))
+    }
+
     /// Where the rows centre when a part's grid opens: its median pitch, C4 when empty. The
     /// view takes this ONCE and keeps it — recomputing it from the live notes moved the rows
     /// under the finger after every add, delete and undo, so a second tap on the note just

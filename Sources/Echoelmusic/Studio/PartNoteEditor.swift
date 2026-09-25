@@ -22,8 +22,14 @@
 //  → ONE undo step. Preview and commit are the same value (`NoteGridGesture.resolve`). Nothing
 //  is persisted per sample. Hold first, like the Arrange canvas, so a swipe still scrolls.
 //
-//  ⚠️ WHAT IT DOES NOT DO, stated so the surface does not read as more: no velocity, quantize or
-//  transpose (M3), no scale lock (M4), no playhead, no auto-scroll while dragging (a move stays
+//  Since M3: Transpose (±1, ±12), Quantize (starts to the part's sixteenths), Duplicate (the
+//  copies land right after the selection and become it) and Velocity — each acts on the selection
+//  on screen, or on the whole part when nothing is selected (`ClipNoteEdit.targets`), and each is
+//  ONE commit. The Velocity drag edits a draft in its own leaf (`NoteVelocityRow`) and writes once,
+//  when it ends.
+//
+//  ⚠️ WHAT IT DOES NOT DO, stated so the surface does not read as more: no scale lock or
+//  scale-aware transpose (M4), no playhead, no auto-scroll while dragging (a move stays
 //  on the rows and inside the part shown), and the grid is touch-only — VoiceOver hears its
 //  summary, not the cells. A composer-owned part is
 //  shown and not edited (evolve rewrites it); a part saved before tick offsets is not shown.
@@ -141,6 +147,12 @@ private struct PartNoteGrid: View {
                     controls(range: range, picked: pickedOnScreen, editable: editable,
                              region: region)
                         .onAppear { if centre == nil { centre = heldCentre } }
+                    if editable, !visible.isEmpty {
+                        selectionControls(targets: ClipNoteEdit.targets(selected: pickedOnScreen,
+                                                                         visible: visible),
+                                          pickedCount: pickedCount, clip: clip, region: region,
+                                          offset: offset)
+                    }
                     if editable {
                         Text(hint(sharedBy: document.regions.filter { $0.clipID == region.clipID }.count))
                             .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
@@ -218,6 +230,86 @@ private struct PartNoteGrid: View {
         }
     }
 
+    // MARK: - M3: operations on the selection (one commit each)
+    //
+    // Each acts on `ClipNoteEdit.targets` — the selection on screen, or every note of the part
+    // when nothing is selected — and each is ONE `setClipNotes`, so ONE Undo takes it back. A
+    // button that would change nothing commits nothing (the pure op returns nil).
+
+    private func transpose(_ ids: Set<UUID>, by semitones: Int, region: TimelineRegion) {
+        guard let clip = clipStore.clip(id: region.clipID),
+              let moved = ClipNoteEdit.transposing(ids, by: semitones,
+                                                   in: clip.melody?.notes ?? []) else { return }
+        if timeline.setClipNotes(clipID: region.clipID, moved, clips: clipStore),
+           abs(semitones) == 12 {
+            // The rows follow an octave move, so the notes stay under the finger.
+            octaveShift += semitones > 0 ? 1 : -1
+        }
+    }
+
+    private func quantize(_ ids: Set<UUID>, region: TimelineRegion, offset: Int) {
+        guard let clip = clipStore.clip(id: region.clipID),
+              let snapped = ClipNoteEdit.quantizing(ids, in: clip.melody?.notes ?? [],
+                                                    offsetTicks: offset,
+                                                    lengthTicks: region.lengthTicks) else { return }
+        _ = timeline.setClipNotes(clipID: region.clipID, snapped, clips: clipStore)
+    }
+
+    private func duplicate(_ ids: Set<UUID>, region: TimelineRegion, offset: Int) {
+        guard let clip = clipStore.clip(id: region.clipID),
+              let copied = ClipNoteEdit.duplicating(ids, in: clip.melody?.notes ?? [],
+                                                    offsetTicks: offset,
+                                                    lengthTicks: region.lengthTicks) else { return }
+        if timeline.setClipNotes(clipID: region.clipID, copied.notes, clips: clipStore) {
+            picked = RollSelection(ids: Array(copied.ids))
+        }
+    }
+
+    private func setVelocity(_ ids: Set<UUID>, to velocity: Float, region: TimelineRegion) {
+        guard let clip = clipStore.clip(id: region.clipID),
+              let updated = ClipNoteEdit.settingVelocity(ids, to: velocity,
+                                                         in: clip.melody?.notes ?? []) else { return }
+        _ = timeline.setClipNotes(clipID: region.clipID, updated, clips: clipStore)
+    }
+
+    private func selectionControls(targets: Set<UUID>, pickedCount: Int, clip: Clip,
+                                   region: TimelineRegion, offset: Int) -> some View {
+        let what = pickedCount == 0 ? "every note in this part"
+            : pickedCount == 1 ? "the selected note" : "the \(pickedCount) selected notes"
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Text("Transpose").font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                button("−12", "", enabled: true, label: "Move \(what) down an octave") {
+                    transpose(targets, by: -12, region: region)
+                }
+                button("−1", "", enabled: true, label: "Move \(what) down a semitone") {
+                    transpose(targets, by: -1, region: region)
+                }
+                button("+1", "", enabled: true, label: "Move \(what) up a semitone") {
+                    transpose(targets, by: 1, region: region)
+                }
+                button("+12", "", enabled: true, label: "Move \(what) up an octave") {
+                    transpose(targets, by: 12, region: region)
+                }
+            }
+            HStack(spacing: 6) {
+                button("Quantize", "square.grid.3x3", enabled: true,
+                       label: "Snap the starts of \(what) to the nearest sixteenth") {
+                    quantize(targets, region: region, offset: offset)
+                }
+                button("Duplicate", "plus.square.on.square", enabled: true,
+                       label: "Copy \(what) to right after themselves, and select the copies") {
+                    duplicate(targets, region: region, offset: offset)
+                }
+            }
+            if let mean = ClipNoteEdit.meanVelocity(targets, in: clip.melody?.notes ?? []) {
+                NoteVelocityRow(shown: mean, targets: targets, what: what) { velocity in
+                    setVelocity(targets, to: velocity, region: region)
+                }
+            }
+        }
+    }
+
     // MARK: - Controls
 
     private func controls(range: ClosedRange<Int>, picked: Set<UUID>, editable: Bool,
@@ -242,7 +334,9 @@ private struct PartNoteGrid: View {
                         action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 4) {
-                Image(systemName: systemImage).font(.system(size: 11, weight: .semibold))
+                if !systemImage.isEmpty {
+                    Image(systemName: systemImage).font(.system(size: 11, weight: .semibold))
+                }
                 Text(title).font(EchoelTheme.font(11, .semibold)).lineLimit(1)
             }
             .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)
@@ -382,5 +476,33 @@ private extension RollSelection {
         case .single(let id): return [id]
         case .group(let ids): return ids
         }
+    }
+}
+
+/// The velocity of the notes an M3 operation targets. ⭐ ITS OWN LEAF, FOR THE PERFORMANCE LAW:
+/// an `EchoelValueField` drag moves the value at finger rate, so the drag edits `draft` — only
+/// this row redraws — and the notes are written ONCE, when the edit ends. One drag, one commit,
+/// one Undo. A mixed selection shows its mean; the commit sets every target to one value.
+@MainActor
+private struct NoteVelocityRow: View {
+
+    let shown: Float
+    let targets: Set<UUID>
+    let what: String
+    let commit: (Float) -> Void
+
+    @State private var draft: Double?
+
+    var body: some View {
+        EchoelValueField(label: "Velocity",
+                         value: Binding(get: { draft ?? Double(shown) },
+                                        set: { draft = $0 }),
+                         range: 0...1, decimals: 2,
+                         hint: "Sets \(what) to one velocity when you let go",
+                         onCommit: {
+                             if let draft { commit(Float(draft)) }
+                             draft = nil
+                         })
+            .onChange(of: targets) { _, _ in draft = nil }
     }
 }
