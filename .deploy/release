@@ -1,4 +1,4 @@
-build: v10.79.481 — Tempo einer Datei korrigieren, Tonhöhe je Audiospur, MIDI-Import, Messgeräte im Visual-Fenster (S1–S4)
+build: v10.79.482 — Release Candidate: AUv3-Hall hörbar und gehärtet, Export nach Lautheit, NaN-Härtung (WA3, E1–E3, P8)
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,68 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (v10.79.482) ──────────────────────────────
+
+  ⭐ RELEASE CANDIDATE (Founder-Freigabe 2026-09-25: „Yes, deploy the RC"). Stand = main
+  979383e1a. KEIN neues Bedienelement in der App — der Build bündelt 57 feat/fix-Commits
+  in Sources/ seit 10.79.481, davon 41 Härtungen (P8) und 20 am AUv3-Plugin.
+
+  ── POSTEN 1: DAS AUV3-PLUGIN (WA3.1–WA3.3 + Härtung) ──
+  In AUM: Audio Unit Extension → Echoelmusic → EchoelBodyVibe. Der Regler „Reverb"
+  (Adresse 6) ist jetzt HÖRBAR und bleibt auf dem Host-Wert, auch während Bio läuft —
+  vorher überschrieb der Bio-Pfad ihn etwa zehnmal pro Sekunde, und der Hall war aus. Der
+  Hall folgt der Host-Samplerate, tailTime deckt den Nachhall, und ein Hall, der auf 0 stand
+  und wieder hochgedreht wird, startet still statt eine alte Fahne abzuspielen (Review-Fund
+  2026-09-25). Gespeicherter Plugin-Zustand enthält keine Körperwerte mehr (WA3.1). Dazu
+  rund zwanzig Render-Reparaturen (Puffer, Formate, Timer, Grenzen), jede mit Wächter.
+  ⚠️ Bekannt und NICHT behoben: Automation von „Reverb" springt blockweise (kein Glätten) —
+  eine schnelle Fahrt kann leise knistern. Kommt nach dem RC.
+
+  ── POSTEN 2: EXPORT NACH LAUTHEIT (E1–E3) ──
+  Save/Export-Chip → Export: normalisiert jetzt auf die integrierte Lautheit (LUFS, gated),
+  bei jeder Samplerate korrekt gemessen, und der Gain wird durch die gemessene Sample-Spitze
+  begrenzt, damit nichts clippt.
+
+  ── POSTEN 3: STABILITÄT (P8) ──
+  Stellen, an denen ein ungültiger Zahlenwert (NaN oder unendlich) aus Preset, Datei oder
+  Sensor abstürzen, hängen oder dauerhaft stumm werden konnte, fangen jetzt an der Grenze ab:
+  Kompressor, Hall, Bitcrush, Wavetable, Stimmung, Pan, Spur-Pegel, MIDI-Export-Tempo,
+  Puls-Schätzer, Narration. Im Normalbetrieb hörst du davon nichts — genau das ist gewollt.
+
+  ── POSTEN 4: TEXT DER PRO-SEITE (unsichtbar) ──
+  Die AUv3-Zeile sagt jetzt „Loads in AUM — other hosts not yet verified" statt „Planned,
+  not built yet". Die Seite hat keine Tür; ob das Plugin zu Pro gehört, bleibt deine
+  Preis-Entscheidung für v1.1.
+
+  ── PRÜFLISTE ──
+  R1  AUM: Reverb-Regler bewegt den Raum hörbar; 0 → 0,5 bei gehaltener Note startet still.
+  R2  Zweiter Host (GarageBand oder Logic): lädt das Plugin, klingt es?
+  R3  Spärlicher Take (leises Pad + ein harter Schlag) bei −14 als WAV und AAC exportieren —
+      gleich laut, nichts geclippt?
+  R4  Lautheitsanzeige über eine 44,1-kHz-Route (Bluetooth) und über den Lautsprecher —
+      gleiche Werte?
+  R5  Normaler Start, kein Black Screen, Menüs frieren nicht (Ship-Gate 5).
+
+  ── PRÜF-BITTEN, DIE DIESER BUILD NEU BEANTWORTBAR MACHT ──
+  Gedruckt: python3 scripts/founder-verify.py --since 7c4ca9bcb
+  → 5 NEU oder UMFORMULIERT, von 184 offenen:
+    other  EchoelmusicAUv3/EchoelmusicAudioUnit.swift:80 (zweiter Host, → R2)
+    other  CISmoke/TheExportNormalisesByIntegratedLoudnessTests.swift:25 (→ R3)
+    other  CISmoke/TheLoudnessMeterIsSampleRateCorrectTests.swift:26 (→ R4)
+    audio  Audio/SingleExport.swift:133 (→ R3)
+    visual CISmoke/TheExportGainCannotClipTests.swift:24 (→ R3)
+
+  ── STAND DER GATES ──
+  main = 979383e1a (Auto-Merge vorgerückt von 1e8e4cb91). Xcode Compile Check (Release,
+  Gerät) und CI/CD Build for Testing grün. Run Tests = #396 wie immer: im sichtbaren
+  Fenster 166 bestanden, 0 fehlgeschlagen; die vollständigen Ergebnisse liegen nur im
+  Artefakt, das diese Umgebung nicht laden kann. Release Archive in ci.yml übersprungen
+  (hängt am Testjob). WA3.3 von zwei unabhängigen Prüfern gelesen. Info.plist,
+  Entitlements, project.yml unverändert; einzige Workflow-Änderung: auto-merge-claude.yml
+  holt den Commit mit ganzer Historie (Founder-Freigabe 2026-09-25).
+
+  Der Vorgänger ist 10.79.481 (Build 2601), davor 10.79.480.
 
   ── WAS IN DIESEM BUILD NEU IST (v10.79.481) ──────────────────────────────
 
