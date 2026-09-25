@@ -67,7 +67,12 @@ public final class EchoelBitcrush: @unchecked Sendable {
         let q = levels
         let crushedL = q > 0 ? roundf(heldL * q) / q : heldL
         let crushedR = q > 0 ? roundf(heldR * q) / q : heldR
-        let m = Swift.min(Swift.max(mix, 0), 1)
+        // ⭐ 2026-09-25 (overnight P8): `clamped(to:)`, not `min(max(mix, 0), 1)` — that order
+        // passes NaN, and a NaN mix wrote NaN into every sample, upstream of the chain's delay
+        // line and reverb tanks, whose state it would poison. NaN reads as 0 (dry, the neutral
+        // end); every other value, ±inf included, is unchanged.
+        // Guard: `TheLoFiStagesCannotPassANaNControlTests`.
+        let m = mix.clamped(to: 0...1)
         return (inL * (1 - m) + crushedL * m,
                 inR * (1 - m) + crushedR * m)
     }
@@ -86,7 +91,12 @@ public final class EchoelStereoWidener: @unchecked Sendable {
 
     @inline(__always)
     public func processStereo(_ inL: Float, _ inR: Float) -> (Float, Float) {
-        let w = Swift.min(Swift.max(width, 0), 2)
+        // ⭐ 2026-09-25 (overnight P8): NaN-safe. `min(max(width, 0), 2)` passed NaN and every
+        // output sample became NaN. The neutral width is 1 (unchanged), NOT the range floor 0
+        // (mono), so NaN is mapped to 1 before the clamp — the flanger-feedback shape in
+        // `EchoelModFX`. Every other value, ±inf included, is unchanged.
+        // Guard: `TheLoFiStagesCannotPassANaNControlTests`.
+        let w = (width.isNaN ? 1 : width).clamped(to: 0...2)
         let mid = (inL + inR) * 0.5
         let side = (inL - inR) * 0.5 * w
         return (mid + side, mid - side)
