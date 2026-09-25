@@ -58,7 +58,7 @@ Full LIVE/ROADMAP/NORTH-STAR detail in [`vision.md`](../../memory/vision.md) and
 | **Light** | LIVE | native Art-Net + sACN (zero-dep UDP) |
 | **Space** | LIVE | ADM-OSC object out `/adm/obj/{n}/*` |
 | **Vibration** | LIVE | sub-bass/LFE voice + Core Haptics infra |
-| **Data spine** | LIVE | OSC, MIDI 1.0/2.0 note **in**, **MPE out** (#713), RTP-MIDI, Widgets (AUv3 target deleted — #121 Slice 1). ⛔ **MPE _in_ is NOT live** and was claimed here as such — #548/#770: no zone disambiguation, no Channel Pressure case, and the three per-note dimensions reach a `break` in the voice. |
+| **Data spine** | LIVE | OSC, MIDI 1.0/2.0 note **in**, **MPE out** (#713), RTP-MIDI, Widgets, the AUv3 instrument extension (revived #1385 after #121 Slice 1 deleted it; loads in AUM, other hosts unverified). ⛔ **MPE _in_ is NOT live** and was claimed here as such — #548/#770: no zone disambiguation, no Channel Pressure case, and the three per-note dimensions reach a `break` in the voice. |
 
 ---
 

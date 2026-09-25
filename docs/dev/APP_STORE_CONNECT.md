@@ -32,7 +32,7 @@ single `com.echoelmusic.app` ID so one purchase unlocks iOS / macOS / tvOS / vis
 | ASC display name | Bundle ID | Role | CI (`project.yml`) |
 |---|---|---|---|
 | Echoelmusic | `com.echoelmusic.app` | Main app (iOS + universal) | ✅ **builds + ships** |
-| Echoelmusic AUv3 | `com.echoelmusic.app.auv3` | Audio Unit v3 extension | ❌ **TARGET DELETED** (pure-instrument epic #121 Slice 1, 2026-07-24). The bundle ID stays registered in ASC; nothing builds or ships under it. Do not re-declare it without a founder ask. |
+| Echoelmusic AUv3 | `com.echoelmusic.app.auv3` | Audio Unit v3 instrument extension (`aumu`/`echl`) | ✅ **embedded + builds** — REVIVED 2026-09-20 (#1385, founder ask) after its removal 2026-07-24 (#121 Slice 1); ships inside the host app like the widget (`project.yml` app dependencies), loads in AUM (device-measured, #1386). **No App Group**: the App ID lacks the capability, and with the key iOS refuses to launch the appex (`-3000`), so its entitlements file is deliberately empty. ⛔ This row said "TARGET DELETED" until 2026-09-25. |
 | Echoelmusic Widgets | `com.echoelmusic.app.widgets` | WidgetKit extension | ✅ **embedded + ships** |
 | Echoelmusic watchOS | `com.echoelmusic.app.watchkitapp` | watchOS companion | ⚠️ compile-verified, **embed blocked** (local Xcode) |
 | Echoelmusic Clip | `com.echoelmusic.app.clip` | App Clip | ❌ ASC-registered, **target deferred** |
@@ -60,8 +60,9 @@ single `com.echoelmusic.app` ID so one purchase unlocks iOS / macOS / tvOS / vis
   this round. Add them only in a dedicated cycle with entitlements + provisioning verified.
 - **Former extra target:** the removed Tuist `Project.swift` also declared `com.echoelmusic.app.voice`
   (an `EchoelVoice` AUv3), not in the owner's ASC bundle set. With Tuist gone it is no longer
-  declared — and since #121 removed the AUv3 target entirely, there is nothing to fold it into.
-  Do not re-declare either without a founder ask.
+  declared. The AUv3 target #121 removed was revived by #1385 as the BodyVibe instrument
+  (`com.echoelmusic.app.auv3`), not as `EchoelVoice`; `.voice` stays undeclared. Do not
+  re-declare it without a founder ask.
 - **TestFlight signing** is pure App Store Connect API key (no Match). Required GitHub Actions
   secrets: `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`,
   `APP_STORE_CONNECT_PRIVATE_KEY`, `APPLE_TEAM_ID`. See `.github/workflows/testflight.yml`.

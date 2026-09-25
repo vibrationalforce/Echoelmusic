@@ -418,7 +418,7 @@ Ship only what is `LIVE` or the `LIVE` part of `PARTIAL`. Build #1 = a working
 - **Info.plist source:** XcodeGen generates it from `project.yml` `info.properties` — keep it synced with `Resources/iOS/Info.plist`.
 - **Entitlements:** HealthKit + App Group `group.com.echoelmusic` only. iCloud/CloudKit **disabled** (no code uses it; it blocks provisioning until the container is registered).
 - **Signing (CI):** automatic, via App Store Connect API key secrets `APP_STORE_CONNECT_KEY_ID / ISSUER_ID / PRIVATE_KEY` + `APPLE_TEAM_ID`, `-allowProvisioningUpdates`. If archive succeeds but upload fails → check these secrets first (key created Dec may be expired).
-- **AUv3 extension:** ❌ REMOVED 2026-07-24 (#121 Slice 1). It was enabled and shipped in 1467/1469; the target, its sources, its entitlements and the `EchoelmusicAUv3` compile-check scheme are all gone. Do not re-add without a founder ask. (Widget remains embedded + shipped. Watch dependency kept OFF — export-blocked.)
+- **AUv3 extension:** ✅ REVIVED 2026-09-20 (#1385, founder ask, no JUCE) after its removal 2026-07-24 (#121 Slice 1; it had shipped in 1467/1469). Embedded like the widget; loads in AUM (#1386); entitlements deliberately empty (no App Group — the App ID lacks the capability). ⛔ This line said "REMOVED … all gone" until 2026-09-25. (Widget remains embedded + shipped. Watch dependency kept OFF — export-blocked.)
 
 ---
 
