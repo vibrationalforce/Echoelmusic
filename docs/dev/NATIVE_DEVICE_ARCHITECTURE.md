@@ -659,6 +659,26 @@ no `static let`), P8v (`d41c9d6a4`, no second `4096` in the block). Measured and
   `EchoelCellular.evolve2D` copies `grid2D` per evolution, an allocation, never reached in the
   AUv3 (mode fixed at `.additive`).
 
+**Audio-thread review of the DSP the render block CALLS (2026-09-25, second read-only reviewer,
+reasoned from source, nothing built or run): no violation on any reached path.** Traced from the
+closure into `EchoelMIDIDecode`, `EchoelDDSP` (`noteOn`/`noteOff`, `applyBioReactive` on the AUv3's
+sentinel branches, `render`, `updateEnvelope`, the SVF/LFO/entrainment stages), `EchoelCellular`
+(`.additive` only), `EchoelBodyVibeDevice.renderSpace` and `EchoelReverb`: no allocation, lock, ObjC,
+GCD, I/O or system RNG; every array has a fixed size set at init. Recorded, NOT changed:
+- **Base Frequency (address 4) and a held MIDI note write the same `synth.frequency`.** Host
+  automation of the knob re-pitches a note that is sounding. Whether the knob is "the drone pitch
+  when no note is held" or "the pitch, full stop" is a DEVICE decision (§G), not a bug to patch; a
+  repair would also have to cross threads (the note state is render-side). Decide, then HOST VERIFY.
+- **`static let` ranges read on the render thread** (`EchoelDDSP` `characterRange`,
+  `masterGainRange`, `cutoffRange`; `EchoelReverb`'s gains): in an unoptimised build the one-time
+  `swift_once` may run there, the P8u class. Release most likely initialises them statically — not
+  verified (no SIL dump here). Debug-only if real.
+- **`EchoelDDSP.setSampleRate` has no ceiling**, so `Int(0.5 * sampleRate)` in the envelope traps
+  only above ~1.8e19 Hz. `EchoelReverb.usableRate` caps at 768 kHz; the same cap on the synth would
+  be symmetry, not a fix for a reachable case.
+- Formally racy plain-`Float` writes from the parameter observer (`synth.frequency`, `reverbMix`,
+  `texture.*`) — atomic-width on arm64, no lock/alloc/trap; the house convention (F4).
+
 **Third-party hosting seam (not implemented).** A hosted plugin appears to the Session as a
 `DeviceInstance` whose `typeID` names the adapter and whose `state` is the plugin's own opaque
 blob plus its component description. The Session never imports `AudioToolbox` or AUv3 types;
