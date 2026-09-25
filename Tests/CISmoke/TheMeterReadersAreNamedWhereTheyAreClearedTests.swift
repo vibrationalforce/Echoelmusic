@@ -231,8 +231,10 @@ final class TheMeterReadersAreNamedWhereTheyAreClearedTests: XCTestCase {
             return
         }
         XCTAssertTrue(callAt.lowerBound > closure.lowerBound && callAt.lowerBound < blockEnd, """
-            The AUv3's `applyBioReactive(` call left `internalRenderBlock`. It now runs on a \
-            control thread while the render thread reads `harmonicAmplitudes` — the \
+            The AUv3's `applyBioReactive(` call is no longer inside the render closure that \
+            `internalRenderBlock` returns — it left the block, or moved into the getter's \
+            prologue before `return {`. Either way it now runs on a control thread (the one \
+            that fetches the block) while the render thread reads `harmonicAmplitudes` — the \
             cross-thread COW hazard AU6 was about. Move it back render-side, or reopen AU6 in \
             `\(Self.board)` and the `EchoelDDSP.swift` header invariant in the SAME commit.
             """)
