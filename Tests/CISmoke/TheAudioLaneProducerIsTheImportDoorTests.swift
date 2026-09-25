@@ -285,7 +285,10 @@ final class TheAudioLaneProducerIsTheImportDoorTests: XCTestCase {
     /// this line, `AudioLanePlayer`'s header block and CLAUDE.md's register moved in the same
     /// commit. A pinned SET rather than a count, so the failure message names WHO appeared.
     func testTheAudioBearingProducersAreTheRecorderChainAndTheImportDoor() throws {
-        let factoryCallers = try filesUnderSources(containing: "AudioClipFactory.")
+        // The MINTING call, not the type name (2026-09-25): `AudioWarp` (#C1) calls the pure
+        // `AudioClipFactory.coveringBars(…)` helper, which creates no clip, and the old needle
+        // `AudioClipFactory.` counted it as a third producer — red on a correct tree.
+        let factoryCallers = try filesUnderSources(containing: "AudioClipFactory.clip(")
         XCTAssertEqual(factoryCallers,
                        ["Sequencer/AudioImport.swift", "Sequencer/TakeRecorder.swift"], """
             `AudioClipFactory` is now called from \
