@@ -2,9 +2,10 @@
 // Echoelmusic — Sequencer (Phase 3 / MIDI editor, slice M1)
 //
 // The PURE half of the selected-part note editor: which part may be edited, which of its notes
-// the part shows, and the whole-value edits (add one note, remove a set). Foundation-only and
-// deterministic — the view (`Studio/PartNoteEditor.swift`) only classifies a tap and hands the
-// result to `TimelineStore.setClipNotes`, the one writer and the one undo step.
+// the part shows, and the whole-value edits (add one note, remove a set; since M2 move a set,
+// stretch one). Foundation-only and deterministic — the view (`Studio/PartNoteEditor.swift`) only
+// classifies a tap or a finished gesture and hands the result to `TimelineStore.setClipNotes`,
+// the one writer and the one undo step.
 //
 // ⭐ OWNERSHIP, stated once: a MIDI part's notes live in `ClipStore` (`Clip.melody.notes`,
 // clip-relative ticks), addressed by `TimelineRegion.clipID`. A part is a WINDOW onto them,
@@ -106,6 +107,39 @@ enum ClipNoteEdit {
     /// The clip's notes without `ids`. Order of the survivors is kept.
     nonisolated static func removing(_ ids: Set<UUID>, from clipNotes: [Note]) -> [Note] {
         clipNotes.filter { !ids.contains($0.id) }
+    }
+
+    /// The clip's notes with `ids` moved by whole semitones and whole steps (M2) — nil when
+    /// nothing changes, so a slide back to the start commits no step. Each start stays inside
+    /// the part's window `[offset, offset + length)`, where the player plays it; a note's offset
+    /// from the step grid is kept, so an unquantized note moves with its feel intact.
+    nonisolated static func moving(_ ids: Set<UUID>, dPitch: Int, dStep: Int, in clipNotes: [Note],
+                                   offsetTicks: Int, lengthTicks: Int) -> [Note]? {
+        guard !ids.isEmpty, dPitch != 0 || dStep != 0, lengthTicks > 0 else { return nil }
+        let first = Swift.max(0, offsetTicks)
+        let last = first + lengthTicks - 1
+        var changed = false
+        let moved = clipNotes.map { note -> Note in
+            guard ids.contains(note.id) else { return note }
+            var shifted = note
+            shifted.pitch = Swift.min(Swift.max(note.pitch + dPitch, 0), 127)
+            shifted.startTick = Swift.min(Swift.max(note.startTick + dStep * Note.ticksPerStep, first),
+                                          last)
+            if shifted != note { changed = true }
+            return shifted
+        }
+        return changed ? moved : nil
+    }
+
+    /// The clip's notes with note `id` made `steps` steps long (M2) — nil when it is gone or
+    /// already that long. The caller bounds `steps` by the part (`NoteGridGesture.resolve`).
+    nonisolated static func resizing(_ id: UUID, toSteps steps: Int, in clipNotes: [Note]) -> [Note]? {
+        guard steps >= 1, let index = clipNotes.firstIndex(where: { $0.id == id }) else { return nil }
+        let ticks = steps * Note.ticksPerStep
+        guard clipNotes[index].lengthTicks != ticks else { return nil }
+        var resized = clipNotes
+        resized[index].lengthTicks = ticks
+        return resized
     }
 
     /// Where the rows centre when a part's grid opens: its median pitch, C4 when empty. The

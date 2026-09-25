@@ -269,16 +269,19 @@ final class TheSelectedPartsNotesAreEditedThroughOneWriterTests: XCTestCase {
 
     func testTheEditorWritesOnlyThroughTheStoreAndReadsColdState() throws {
         let editor = try source(Self.editorPath)
-        XCTAssertEqual(editor.components(separatedBy: "timeline.setClipNotes(").count - 1, 2,
-                       "create and delete — each one commit through the one writer")
+        // M2 (`ANoteDragIsOneCommitAtReleaseTests`) moved this from 2 to 4: create, delete, and
+        // since M2 a finished move and a finished stretch — still one commit per action.
+        XCTAssertEqual(editor.components(separatedBy: "timeline.setClipNotes(").count - 1, 4,
+                       "create, delete, move, stretch — each one commit through the one writer")
         for banned in ["updateMelody", "PianoRollModel", "pianoRoll", "currentTick", "player.",
                        "preflightTempo", "pattern.", "UserDefaults", "@AppStorage", ".sheet(",
-                       ".fullScreenCover(", "Slider(", "Stepper(", "DragGesture"] {
+                       ".fullScreenCover(", "Slider(", "Stepper("] {
             XCTAssertFalse(editor.contains(banned), """
                 PartNoteEditor contains `\(banned)`. It edits through `setClipNotes` only (one \
                 owner, one history), reads no transport, tempo or playhead (it sits under the \
-                menu host), owns no persistence and no modal, and M1 has no drag (M2 adds it \
-                with a gesture-local preview and ONE commit at release).
+                menu host), and owns no persistence and no modal. (`DragGesture` stood in this \
+                list for M1; M2 added the drag with a gesture-local preview and ONE commit at \
+                release, pinned by `ANoteDragIsOneCommitAtReleaseTests`.)
                 """)
         }
         let callers = try filesMatching { code, _ in code.contains(".updateMelody(") }

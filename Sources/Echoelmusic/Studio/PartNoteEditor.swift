@@ -5,8 +5,9 @@
 //  WHY THIS EXISTS. The Workstation could place, cut and move a MIDI part but not change a note
 //  in it — `PianoRollView` went with #475 and nothing replaced it. This is the note editor for
 //  the part selected on the Arrange canvas, inline under its part bar: see the part's notes,
-//  tap an empty cell to add one, tap a note to select it, delete the selection, and take any of
-//  it back with the Workstation's one Undo. An edit is heard from the next step while the song
+//  tap an empty cell to add one, tap notes to select them, delete the selection, and take any of
+//  it back with the Workstation's one Undo. Since M2: press and hold, then slide — on a note to
+//  move the selection, on its right edge to stretch it, on an empty cell to box-select. An edit is heard from the next step while the song
 //  plays (`TimelineRegionPlayer.refreshNoteContent`), not only from the part's next start.
 //
 //  ⭐ ONE OWNER, ONE WRITER, ONE HISTORY. The notes are the clip's (`ClipStore`,
@@ -15,9 +16,16 @@
 //  one undo step, on the same stack `SongHistoryRow` drives. `PianoRollModel` is the playback
 //  buffer and is never written from here.
 //
-//  ⚠️ WHAT M1 DOES NOT DO, stated so the surface does not read as more: no drag (move, resize,
-//  marquee — M2), no velocity, quantize or transpose (M3), no scale lock (M4), no playhead, and
-//  the grid is touch-only — VoiceOver hears its summary, not the cells. A composer-owned part is
+//  ⭐ THE DRAG LAW (M2, founder performance law): finger samples → a GESTURE-LOCAL preview
+//  (`@GestureState` in the `PartNoteCanvas` leaf, so only the canvas redraws at finger rate and
+//  a scroll that cancels the gesture leaves nothing behind) → ONE commit when the finger lifts
+//  → ONE undo step. Preview and commit are the same value (`NoteGridGesture.resolve`). Nothing
+//  is persisted per sample. Hold first, like the Arrange canvas, so a swipe still scrolls.
+//
+//  ⚠️ WHAT IT DOES NOT DO, stated so the surface does not read as more: no velocity, quantize or
+//  transpose (M3), no scale lock (M4), no playhead, no auto-scroll while dragging (a move stays
+//  on the rows and inside the part shown), and the grid is touch-only — VoiceOver hears its
+//  summary, not the cells. A composer-owned part is
 //  shown and not edited (evolve rewrites it); a part saved before tick offsets is not shown.
 //  The rows centre ONCE per opened part (`@State centre`) and never follow the notes, so an
 //  add or an undo cannot move a row under the finger. Delete acts only on selected notes that
@@ -110,17 +118,24 @@ private struct PartNoteGrid: View {
                         range.contains($0.pitch) && picked.contains($0.id)
                     }.map(\.id))
                     let pickedCount = pickedOnScreen.count
+                    let grid = NoteGridGesture.Grid(
+                        stepWidth: Double(Self.stepWidth), rowHeight: Double(Self.rowHeight),
+                        rows: range, partSteps: ClipNoteEdit.stepCount(lengthTicks: region.lengthTicks))
                     ScrollView(.horizontal, showsIndicators: true) {
-                        grid(visible: visible, steps: steps, range: range)
-                            .contentShape(Rectangle())
-                            .onTapGesture(coordinateSpace: .local) { location in
-                                tap(location, visible: visible, region: region, offset: offset,
-                                    steps: steps, range: range, editable: editable)
-                            }
+                        PartNoteCanvas(visible: visible, steps: steps, grid: grid,
+                                       picked: picked.ids, editable: editable,
+                                       onTap: { location in
+                                           tap(location, visible: visible, region: region,
+                                               offset: offset, steps: steps, range: range,
+                                               editable: editable)
+                                       },
+                                       onRelease: { gesture in
+                                           finish(gesture, region: region, offset: offset)
+                                       })
                             .accessibilityElement()
                             .accessibilityLabel("Note grid: \(visible.count) notes, \(pickedCount) selected")
                             .accessibilityHint(editable
-                                ? "Touch only in this version: tap an empty cell to add a note, tap a note to select it"
+                                ? "Touch only in this version: tap an empty cell to add a note, tap notes to select them; press and hold, then slide, to move, stretch or box-select"
                                 : "Shown, not edited")
                     }
                     controls(range: range, picked: pickedOnScreen, editable: editable,
@@ -145,52 +160,6 @@ private struct PartNoteGrid: View {
         return "This clip plays in \(parts) parts — a change edits all of them. " + heard
     }
 
-    // MARK: - Drawing
-
-    private func grid(visible: [Note], steps: Int, range: ClosedRange<Int>) -> some View {
-        let stepW = Self.stepWidth
-        let rowH = Self.rowHeight
-        let high = range.upperBound
-        let picked = self.picked
-        return Canvas { context, size in
-            // Rows: the black keys darker, so a pitch reads without a keyboard.
-            for pitch in range {
-                let y = CGFloat(high - pitch) * rowH
-                if [1, 3, 6, 8, 10].contains(((pitch % 12) + 12) % 12) {
-                    context.fill(Path(CGRect(x: 0, y: y, width: size.width, height: rowH)),
-                                 with: .color(EchoelTheme.fill))
-                }
-            }
-            // Columns: bars strong, beats light, sixteenths faint.
-            for step in 0...steps {
-                let x = CGFloat(step) * stepW
-                let color = step % 16 == 0 ? EchoelTheme.borderStrong.opacity(0.5)
-                    : step % 4 == 0 ? EchoelTheme.border : EchoelTheme.border.opacity(0.4)
-                context.fill(Path(CGRect(x: x, y: 0, width: step % 16 == 0 ? 1 : 0.5,
-                                         height: size.height)), with: .color(color))
-            }
-            // Octave names on the C rows.
-            for pitch in range where pitch % 12 == 0 {
-                let y = CGFloat(high - pitch) * rowH + rowH / 2
-                context.draw(Text("C\(pitch / 12 - 1)").font(EchoelTheme.font(9))
-                                .foregroundStyle(EchoelTheme.dim),
-                             at: CGPoint(x: 3, y: y), anchor: .leading)
-            }
-            // Notes, in draw order: later on top — the order `RollHitTest` reads.
-            for note in visible where range.contains(note.pitch) {
-                let rect = CGRect(x: CGFloat(note.startStep) * stepW + 1,
-                                  y: CGFloat(high - note.pitch) * rowH + 1,
-                                  width: Swift.max(2, CGFloat(note.lengthSteps) * stepW - 2),
-                                  height: rowH - 2)
-                let shape = Path(roundedRect: rect, cornerRadius: 2)
-                let isPicked = picked.contains(note.id)
-                context.fill(shape, with: .color(isPicked ? EchoelTheme.text : EchoelTheme.accent))
-            }
-        }
-        .frame(width: CGFloat(steps) * stepW, height: CGFloat(range.count) * rowH)
-        .background(EchoelTheme.surface)
-    }
-
     // MARK: - Actions (one commit each)
 
     private func tap(_ location: CGPoint, visible: [Note], region: TimelineRegion, offset: Int,
@@ -202,7 +171,8 @@ private struct PartNoteGrid: View {
                                        stepCount: steps, edgeSlop: 0)
         switch hit {
         case .body(let id), .rightEdge(let id):
-            picked = picked.contains(id) ? .none : .single(id)
+            // Multi-select: a tap adds the note to the selection, or takes it out again.
+            picked = RollSelection(ids: Array(NoteGridGesture.toggling(id, in: picked.ids)))
         case .empty(let pitch, let step):
             guard editable, let clip = clipStore.clip(id: region.clipID),
                   let added = ClipNoteEdit.adding(pitch: pitch, step: step,
@@ -211,6 +181,31 @@ private struct PartNoteGrid: View {
                                                   lengthTicks: region.lengthTicks) else { return }
             if timeline.setClipNotes(clipID: region.clipID, added.notes, clips: clipStore) {
                 picked = .single(added.id)
+            }
+        }
+    }
+
+    /// The finger lifted: a box selects; a move or a stretch is ONE commit through the one
+    /// writer, and a gesture that changed nothing commits nothing.
+    private func finish(_ gesture: NoteGridGesture, region: TimelineRegion, offset: Int) {
+        switch gesture {
+        case .marquee(let ids, _, _, _, _):
+            picked = RollSelection(ids: Array(ids))
+        case .move(let ids, let dPitch, let dStep):
+            guard let clip = clipStore.clip(id: region.clipID),
+                  let moved = ClipNoteEdit.moving(ids, dPitch: dPitch, dStep: dStep,
+                                                  in: clip.melody?.notes ?? [],
+                                                  offsetTicks: offset,
+                                                  lengthTicks: region.lengthTicks) else { return }
+            if timeline.setClipNotes(clipID: region.clipID, moved, clips: clipStore) {
+                picked = RollSelection(ids: Array(ids))
+            }
+        case .resize(let id, let lengthSteps):
+            guard let clip = clipStore.clip(id: region.clipID),
+                  let resized = ClipNoteEdit.resizing(id, toSteps: lengthSteps,
+                                                      in: clip.melody?.notes ?? []) else { return }
+            if timeline.setClipNotes(clipID: region.clipID, resized, clips: clipStore) {
+                picked = .single(id)
             }
         }
     }
@@ -260,5 +255,132 @@ private struct PartNoteGrid: View {
         .buttonStyle(.plain)
         .disabled(!enabled)
         .accessibilityLabel(label)
+    }
+}
+
+/// The drawn grid and its press-hold-and-slide. ⭐ THE ONLY FINGER-RATE STATE IN THE EDITOR:
+/// `live` is `@GestureState`, so only this leaf redraws while a finger slides, and it resets
+/// itself when the scroll view cancels the gesture. Nothing is written until the finger lifts,
+/// and then exactly once, through `onRelease`.
+@MainActor
+private struct PartNoteCanvas: View {
+
+    let visible: [Note]
+    let steps: Int
+    let grid: NoteGridGesture.Grid
+    let picked: Set<UUID>
+    let editable: Bool
+    let onTap: (CGPoint) -> Void
+    let onRelease: (NoteGridGesture) -> Void
+
+    @GestureState private var live: NoteGridGesture? = nil
+
+    var body: some View {
+        let shown = live?.applied(to: visible) ?? visible
+        let lit: Set<UUID> = {
+            switch live {
+            case .marquee(let ids, _, _, _, _)?: return ids
+            case .move(let ids, _, _)?: return ids
+            case .resize(let id, _)?: return [id]
+            case nil: return picked
+            }
+        }()
+        let stepW = CGFloat(grid.stepWidth)
+        let rowH = CGFloat(grid.rowHeight)
+        let range = grid.rows
+        let high = range.upperBound
+        let box: CGRect? = {
+            guard case .marquee(_, let x0, let y0, let x1, let y1)? = live else { return nil }
+            return CGRect(x: Swift.min(x0, x1), y: Swift.min(y0, y1),
+                          width: abs(x1 - x0), height: abs(y1 - y0))
+        }()
+        Canvas { context, size in
+            // Rows: the black keys darker, so a pitch reads without a keyboard.
+            for pitch in range {
+                let y = CGFloat(high - pitch) * rowH
+                if [1, 3, 6, 8, 10].contains(((pitch % 12) + 12) % 12) {
+                    context.fill(Path(CGRect(x: 0, y: y, width: size.width, height: rowH)),
+                                 with: .color(EchoelTheme.fill))
+                }
+            }
+            // Columns: bars strong, beats light, sixteenths faint.
+            for step in 0...steps {
+                let x = CGFloat(step) * stepW
+                let color = step % 16 == 0 ? EchoelTheme.borderStrong.opacity(0.5)
+                    : step % 4 == 0 ? EchoelTheme.border : EchoelTheme.border.opacity(0.4)
+                context.fill(Path(CGRect(x: x, y: 0, width: step % 16 == 0 ? 1 : 0.5,
+                                         height: size.height)), with: .color(color))
+            }
+            // Octave names on the C rows.
+            for pitch in range where pitch % 12 == 0 {
+                let y = CGFloat(high - pitch) * rowH + rowH / 2
+                context.draw(Text("C\(pitch / 12 - 1)").font(EchoelTheme.font(9))
+                                .foregroundStyle(EchoelTheme.dim),
+                             at: CGPoint(x: 3, y: y), anchor: .leading)
+            }
+            // Notes, in draw order: later on top — the order `RollHitTest` reads.
+            for note in shown where range.contains(note.pitch) {
+                let rect = CGRect(x: CGFloat(note.startStep) * stepW + 1,
+                                  y: CGFloat(high - note.pitch) * rowH + 1,
+                                  width: Swift.max(2, CGFloat(note.lengthSteps) * stepW - 2),
+                                  height: rowH - 2)
+                let shape = Path(roundedRect: rect, cornerRadius: 2)
+                context.fill(shape, with: .color(lit.contains(note.id) ? EchoelTheme.text
+                                                                         : EchoelTheme.accent))
+            }
+            // The selection box, outline only.
+            if let box {
+                context.stroke(Path(box), with: .color(EchoelTheme.text.opacity(0.7)), lineWidth: 1)
+            }
+        }
+        .frame(width: CGFloat(steps) * stepW, height: CGFloat(range.count) * rowH)
+        .background(EchoelTheme.surface)
+        .contentShape(Rectangle())
+        .onTapGesture(coordinateSpace: .local) { location in onTap(location) }
+        .gesture(edit)
+    }
+
+    /// Hold first, then slide — so a swipe that starts on the grid still scrolls it.
+    private var edit: some Gesture {
+        // Values, captured once per body — the gesture closures read no view state.
+        let visible = self.visible
+        let picked = self.picked
+        let grid = self.grid
+        let editable = self.editable
+        return LongPressGesture(minimumDuration: 0.3)
+            .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .local))
+            .updating($live) { value, state, _ in
+                guard case .second(true, let drag?) = value else { return }
+                state = Self.resolve(drag, visible: visible, picked: picked, grid: grid,
+                                     editable: editable)
+            }
+            .onEnded { value in
+                guard case .second(true, let drag?) = value,
+                      let gesture = Self.resolve(drag, visible: visible, picked: picked,
+                                                 grid: grid, editable: editable) else { return }
+                onRelease(gesture)
+            }
+    }
+
+    /// The gesture a slide means; a part that is shown, not edited, can still be box-selected.
+    private nonisolated static func resolve(_ drag: DragGesture.Value, visible: [Note],
+                                            picked: Set<UUID>, grid: NoteGridGesture.Grid,
+                                            editable: Bool) -> NoteGridGesture? {
+        let gesture = NoteGridGesture.resolve(
+            startX: Double(drag.startLocation.x), startY: Double(drag.startLocation.y),
+            dx: Double(drag.translation.width), dy: Double(drag.translation.height),
+            visible: visible, picked: picked, grid: grid)
+        return editable || !gesture.edits ? gesture : nil
+    }
+}
+
+private extension RollSelection {
+    /// The selected note ids, whatever the case.
+    var ids: Set<UUID> {
+        switch self {
+        case .none: return []
+        case .single(let id): return [id]
+        case .group(let ids): return ids
+        }
     }
 }
