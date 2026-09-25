@@ -12,9 +12,11 @@
 // FLOOR — two spellings of one clamp, with opposite answers (#416). (⛔ This line first said
 // "every other NaN boundary lands on the floor"; review found three bare ceiling clamps on the
 // lane-pan path, repaired in f2bef146d, and boundaries that map NaN to a neutral value instead.
-// ⛔ Its repair then called `FloatingPointClamp` "the repo's ONE NaN-safe clamp" — three more
-// exist, each a floor-landing `clamp01` (`Core/FXModulation`, `Core/ModulationMatrix`,
-// `Bio/BioNormalizer`); found by review 3. A uniqueness claim needs the grep, not the memory.)
+// ⛔ Its repair then called `FloatingPointClamp` "the repo's ONE NaN-safe clamp". Review 3
+// named three floor-landing `clamp01`s (`Core/FXModulation`, `Core/ModulationMatrix`,
+// `Bio/BioNormalizer`). Review 4 found more (`Sequencer/BreathArp`, `Sequencer/FieldAutoPlay`,
+// `Core/MusicalFrame`, `Core/SpectralColor`, `Sequencer/AutomationLane`). No count stands here
+// on purpose: a uniqueness or count claim needs the grep, not the memory.)
 // `normalized(_:)`, the inverse, had the same shape and returned 1 for a NaN value.
 //
 // ⚠️ LATENT, NOT LIVE — measured, not assumed. The live producers are finite: the modulation

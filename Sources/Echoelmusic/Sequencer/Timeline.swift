@@ -644,7 +644,8 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
     /// rollSlotGain mirror for pan). Clamped −1…1; mute/solo do NOT touch pan
     /// (audibility is gain's job). No MIDI lane → center. A non-finite pan is centre too:
     /// `min(1, NaN)` is 1, so the bare clamp read NaN as HARD RIGHT — the rule every other
-    /// reader of `TimelineLane.pan` already takes (`MultiRollFanout.pan(forSlot:)`, #416).
+    /// CLAMPING reader of `TimelineLane.pan` takes (`MultiRollFanout.pan(forSlot:)`, #416).
+    /// `mergeMixer` and `structurallyEqual` copy and compare it without clamping.
     public var rollSlotPan: Float {
         guard let lane = lanes.first(where: { $0.kind == .midi && !$0.isBio }) else { return 0 }
         return max(-1, min(1, lane.pan.isFinite ? lane.pan : 0))

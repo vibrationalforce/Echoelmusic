@@ -21,9 +21,11 @@
 //     been red for its own reason on the parent (it is absent there — one absence).
 //   · claim 3 is a COUNTERWEIGHT: the tree is still built from the resolved descriptor's
 //     `min`/`max`, i.e. the range the slider now reads IS the canonical one. Green on both.
-//   · Not executed; the extension compiles only in `Xcode Compile Check` (Release, device),
-//     never in `Build for Testing`. DEVICE PROBE open: the plug-in UI in a host (AUM), each
-//     slider sweeping its full host-visible range.
+//   · Not executed. The extension is a dependency of the app target (`project.yml`), so BOTH
+//     gates compile it: `Xcode Compile Check` (Release, device) and `Build for Testing` (Debug,
+//     Simulator). (⛔ The first version of this header, and the message of 6ffd8cfbd, said
+//     "never in Build for Testing". Review 4 refuted that.) DEVICE PROBE open: the plug-in UI in
+//     a host (AUM), each slider sweeping its full host-visible range.
 
 import XCTest
 
