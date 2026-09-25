@@ -591,9 +591,12 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
 
     /// ⭐ 2026-09-24 (overnight P8k): a host may release the unit without ever calling
     /// `deallocateRenderResources()` (a crash-path teardown, or a host that skips it), and then
-    /// the last reference to a RESUMED `vitalsTimer` drops here — the libdispatch trap
-    /// `startVitalsPolling` documents, inside someone else's process. Cancelling is idempotent,
-    /// so the ordinary path (deallocate, then release) is unaffected.
+    /// the last reference to a RESUMED `vitalsTimer` drops here. ⚠️ Corrected 2026-09-25 (review 9):
+    /// that is NOT a crash — libdispatch traps on release only for a SUSPENDED or inactive source,
+    /// or a strict source with a mandatory cancel handler, and this timer is none of those; a
+    /// plain resumed source is cancelled on its last release. The cancel here is DEFENSIVE: it
+    /// keeps the lifecycle explicit and stays correct if the timer ever gains a cancel handler.
+    /// Idempotent, so the ordinary path (deallocate, then release) is unaffected.
     /// Guard: `TheVitalsTimerDiesWithTheUnitTests`.
     deinit {
         vitalsTimer?.cancel()
@@ -610,9 +613,12 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     private func startVitalsPolling() {
         // Cancel any timer still installed. A host MAY call allocateRenderResources() twice
         // without an intervening deallocate; overwriting `vitalsTimer` would then release a
-        // RESUMED, UN-CANCELLED DispatchSource, and libdispatch does not leak that — it traps
-        // ("BUG IN CLIENT OF LIBDISPATCH: Release of a source that has not been cancelled"),
-        // i.e. a hard crash inside someone else's DAW. One line, added 2026-09-20 (#1385).
+        // RESUMED, UN-CANCELLED DispatchSource; the cancel makes its end explicit instead of
+        // leaving it to the release. One line, added 2026-09-20 (#1385).
+        // ⚠️ Corrected 2026-09-25 (review 9): this comment quoted the libdispatch crash as
+        // "Release of a source that has not been cancelled" and stopped there. The full message
+        // ends ", but has a mandatory cancel handler" — it applies to strict sources only, and
+        // this plain timer is not one. The release itself does not crash; the cancel stays.
         vitalsTimer?.cancel()
         let timer = DispatchSource.makeTimerSource(
             queue: DispatchQueue(label: "com.echoelmusic.app.auv3.vitals", qos: .utility)

@@ -6,14 +6,17 @@
 // `DispatchSourceTimer` at `allocateRenderResources`. Two drop paths cancelled it (re-arm in
 // `startVitalsPolling`, and `deallocateRenderResources`); the THIRD did not exist: the class had
 // no `deinit`, so a host that releases the unit without `deallocateRenderResources()` released a
-// resumed, un-cancelled source. `startVitalsPolling`'s own comment (#1385) records that libdispatch
-// traps on exactly that, inside the host's process. Found by tonight's read-only audit agent (its
-// finding 8; it rated the outcome a leak — the repo's own note says trap; either is a defect).
+// resumed, un-cancelled source. Found by tonight's read-only audit agent (its finding 8).
+// ⚠️ CORRECTED 2026-09-25 (review 9): the outcome was neither the trap `startVitalsPolling`'s
+// #1385 comment claimed nor the leak the agent guessed. libdispatch traps on release only for a
+// suspended or inactive source, or a strict source with a mandatory cancel handler, and cancels a
+// plain resumed source on its last release. So this guard pins a DEFENSIVE cancel (an explicit
+// lifecycle that survives a future cancel handler), not the repair of a live crash.
 //
 // THE REPAIR. `deinit { vitalsTimer?.cancel() }` — idempotent, so the ordinary path is unchanged.
 //
 // WHAT KIND OF GREEN (§1): SOURCE-TEXT SCANS (comment-stripped). The extension cannot be
-// instantiated here, and a libdispatch trap is not a unit-testable event. HOST: a teardown that
+// instantiated here, and a teardown is not a unit-testable event. HOST: a teardown that
 // skips `deallocateRenderResources` is unmeasured on any real host.
 //
 // ⚠️ HONEST GRADING — TRANSCRIBED (§0), no local toolchain. Parent `66748c221`: claim 1 is a
