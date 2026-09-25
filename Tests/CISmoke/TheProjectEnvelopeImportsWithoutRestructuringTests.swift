@@ -8,10 +8,10 @@
 // project" into "replace the app's state" — the user would lose their own presets because they
 // loaded somebody else's piece. Claim 6 is that line, made executable.
 //
-// ⚠️ THE RISK THIS SLICE ACTUALLY CARRIES, and why claim 7 exists. Nothing writes this type.
-// The old files stay the truth on disk, so a wrong import costs a corrected function and not a
-// user's piece. The moment a writer lands, claim 7 is the claim to REPLACE in the same commit —
-// it is a statement about today, not a prohibition (#364).
+// ⚠️ THE RISK THIS SLICE ACTUALLY CARRIES, and why claim 7 exists. Until WA4-S2 nothing wrote
+// this type. The writer has landed, and claim 7 was REPLACED in that commit, as it asked: the
+// envelope is written into the project row by `Core/ProjectSession.swift` and by nothing else,
+// and the importer still only reads (`TheSessionTravelsInTheProjectRowTests` owns the codec).
 //
 // ⭐ WRITING THE CODE CORRECTED THE DESIGN TWICE, and both corrections are pinned here rather
 // than only apologised for in prose:
@@ -223,6 +223,9 @@ final class TheProjectEnvelopeImportsWithoutRestructuringTests: XCTestCase {
         // `schemaVersion` is the ONE exemption, and it has a reason: the version belongs on the
         // ENVELOPE, once, not in each compartment — an envelope whose compartments each version
         // themselves is one you can only open once.
+        // (`sessionEnvelope` is declared `public private(set) var`, so this walk does not see
+        // it, and correctly: it IS the envelope's own bytes — carrying it inside the envelope
+        // would nest every saved Session in the next one.)
         let importerCode = code(Self.importerPath)
         let unread = stored.filter { $0 != "schemaVersion" && !importerCode.contains("project.\($0)") }
         XCTAssertTrue(unread.isEmpty, """
@@ -327,25 +330,31 @@ final class TheProjectEnvelopeImportsWithoutRestructuringTests: XCTestCase {
             """)
     }
 
-    // MARK: 7 — importer first, writer second
+    // MARK: 7 — importer first, writer second — and the writer is the project row
 
-    func testThereIsNoWriterAndNoCallSiteYet() throws {
+    /// Replaced by WA4-S2 in the same commit as the writer, as this claim's predecessor
+    /// (`testThereIsNoWriterAndNoCallSiteYet`) asked. It still forbids nothing (#364): a NEW
+    /// file that reaches the envelope goes red here only so that it names itself in
+    /// `allowedReaders` together with its reason.
+    func testTheOneWriterIsTheProjectRow() throws {
         let importerCode = code(Self.importerPath)
         let funcs = importerCode.components(separatedBy: "func ").count - 1
         XCTAssertEqual(funcs, 2, """
             \(Self.importerPath) declares \(funcs) functions; it declares exactly two on
-            purpose — `envelope(...)` and `openingTempo(of:)`. Nothing in here writes. When the
-            writer lands, it is a DECISION about the on-disk format and it gets its own slice,
-            its own gate and this claim replaced in the same commit (#364 — this forbids
-            nothing, it records what is true today).
+            purpose — `envelope(...)` and `openingTempo(of:)`. The importer READS; the writer
+            lives in `Core/ProjectSession.swift`, and that split is what lets a wrong import
+            stay a corrected function.
             """)
         for absent in ["func write", "func save", "func apply", "func store"] {
             XCTAssertFalse(importerCode.contains(absent),
                            "\(Self.importerPath) grew `\(absent)` — see the message above.")
         }
 
-        // And nothing in the app reaches for it yet. A call site is what turns a wrong import
-        // from a corrected function into a user's lost piece.
+        // Every file that reaches the envelope, with its reason. The row codec is the ONE
+        // place the envelope becomes bytes and bytes become an envelope.
+        let allowedReaders = [
+            "Sources/Echoelmusic/Core/ProjectSession.swift",   // the row codec (WA4-S2)
+        ]
         let sources = repoRoot().appendingPathComponent("Sources/Echoelmusic")
         var callers: [String] = []
         guard let walker = FileManager.default.enumerator(atPath: sources.path) else {
@@ -359,12 +368,17 @@ final class TheProjectEnvelopeImportsWithoutRestructuringTests: XCTestCase {
             guard relative != Self.envelopePath, relative != Self.importerPath else { continue }
             if code(relative).contains("DMMWProject") { callers.append(relative) }
         }
-        XCTAssertTrue(callers.isEmpty, """
-            \(callers.joined(separator: ", ")) reach(es) the envelope. The whole risk mitigation
-            of this slice is that the five source roots stay the truth on disk and nothing reads
-            the new shape — if the import is wrong, the cost is a corrected function. Wiring it
-            up is the writer's slice, and it takes this claim with it.
+        XCTAssertEqual(callers.sorted(), allowedReaders.sorted(), """
+            The files that reach the envelope are \(callers.sorted().joined(separator: ", ")).
+            Expected exactly \(allowedReaders.joined(separator: ", ")). A new reader is
+            legitimate work — the Save/Open wiring is one — but it names itself in
+            `allowedReaders` with its reason, so the next reader knows who opens a Session.
             """)
+        let codec = code("Sources/Echoelmusic/Core/ProjectSession.swift")
+        XCTAssertTrue(codec.contains("JSONEncoder().encode(session)"),
+                      "the row codec is where the envelope becomes bytes")
+        XCTAssertTrue(codec.contains("decode(DMMWProject.self, from: data)"),
+                      "the row codec is where bytes become an envelope")
     }
 
     // MARK: 8 — the layer stays Foundation-only

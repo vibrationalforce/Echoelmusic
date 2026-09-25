@@ -199,6 +199,31 @@ public struct Project: Codable, Sendable, Identifiable, Equatable {
     /// these bars on the hot path — only a fader move and `open(_:)`.
     public var rawTake: RawTake?
 
+    /// WA4-S2 — the canonical Session (`DMMWProject`) this take was saved with, as the
+    /// envelope's own encoded bytes. `nil` for every take written before the Session writer
+    /// and for every take that states no song beyond the Echoel take. Read and written only
+    /// through `ProjectSession.swift`; this file never interprets it.
+    ///
+    /// ⚠️ OPAQUE BYTES, NOT A DECODED VALUE, and that is the data-safety decision. The whole
+    /// library is re-encoded on every save (`ProjectStore.persist()`). A decoded field would
+    /// have to be decoded to survive that rewrite — so an envelope a NEWER build wrote, or one
+    /// this build cannot read, would become `nil` and be erased by the next unrelated save.
+    /// Bytes survive the round-trip untouched whatever they contain; whether they can be
+    /// OPENED is decided later, at Open, by `readSession()`.
+    ///
+    /// ⛔ THE KEY'S TYPE IS FROZEN: `session` is a base64 string, for every future build.
+    /// A new shape goes INSIDE the envelope under `DMMWProject.envelopeVersion`, never into
+    /// this key — a build that finds a non-string here reads `nil` and its next save erases it.
+    /// An OLDER build (one without this field) drops the key on its next save; that is the
+    /// accepted cost of a field it cannot represent anyway.
+    public private(set) var sessionEnvelope: Data?
+
+    /// Attach (or clear, with `nil`) the encoded Session. The one writer of `sessionEnvelope`
+    /// — see `Project.attachSession(_:)` in `ProjectSession.swift` for the encoding.
+    public mutating func setSessionEnvelope(_ data: Data?) {
+        sessionEnvelope = data
+    }
+
     /// The composer's bars plus the genre they were composed in — see `rawTake`.
     public struct RawTake: Codable, Sendable, Equatable {
 
@@ -332,6 +357,7 @@ public struct Project: Codable, Sendable, Identifiable, Equatable {
         case fxCharacterRaw, loopBars, a4Hz, toneSystemID, moodFields, artist, patch, notes
         case rawTake
         case drumSteps, drumAccents
+        case session
     }
 
     /// Custom decoder so a take saved by an OLDER (or FUTURE) build — one that predates
@@ -460,6 +486,9 @@ public struct Project: Codable, Sendable, Identifiable, Equatable {
         // dropping the keys later is safe, since an unlisted key is simply ignored.
         drumSteps      = try c.decodeIfPresent([[Bool]].self, forKey: .drumSteps)      ?? []
         drumAccents    = try c.decodeIfPresent([[Bool]].self, forKey: .drumAccents)    ?? []
+        // `try?` for the #217 reason: a malformed `session` must never take the Echoel take
+        // down with it — the take is the part every build can open.
+        sessionEnvelope = (try? c.decodeIfPresent(Data.self, forKey: .session)) ?? nil
     }
 
     /// Explicit, for exactly ONE reason: the version stamp must describe the BYTES BEING
@@ -506,6 +535,7 @@ public struct Project: Codable, Sendable, Identifiable, Equatable {
         try c.encodeIfPresent(rawTake, forKey: .rawTake)
         try c.encode(drumSteps, forKey: .drumSteps)
         try c.encode(drumAccents, forKey: .drumAccents)
+        try c.encodeIfPresent(sessionEnvelope, forKey: .session)
     }
 
     // MARK: - Sharing (the ONE shared-document format)
@@ -558,7 +588,13 @@ public struct Project: Codable, Sendable, Identifiable, Equatable {
     public func sharedDocumentData() throws -> Data {
         let enc = JSONEncoder()
         enc.outputFormatting = [.prettyPrinted, .sortedKeys]
-        return try enc.encode(self)
+        // WA4-S2: the Session stays home. It carries this device's media references (paths
+        // into its own container) and the song's clip grid — on somebody else's phone those
+        // resolve to nothing, and an Open there would replace their song with silent parts.
+        // The take travels; the Session is not a shared document until media travels with it.
+        var take = self
+        take.sessionEnvelope = nil
+        return try enc.encode(take)
     }
 
     // MARK: - Decoded accessors (raw → enum, with safe fallbacks)
