@@ -39724,3 +39724,13 @@ transcription before its repair; one defect per commit; checkers exit 0 on every
 - main = 1e8e4cb91, unchanged. Auto-merge needs a green Compile Check on the SAME sha as a green
   BfT, and rapid pushes cancel the intermediate Compile Checks. CI policy is founder-gated: recorded,
   not touched.
+
+## 2026-09-25 ~03:55 UTC — review 7 recorded + architecture.html EngineBus lines corrected
+
+Review 7 (independent read-only subagent) over 1a9ec0dbb, 0f4b01b72, 05968e1b5, 2ed46b045, a4cea87de, 1e8e4cb91, 5910992e5, 1a813fe23, 7af98656e, a39dae7ce: **all CLEAN**. The `Int(exactly:)` fractional-pulse concern is REFUTED (`.rounded()` precedes it).
+Findings kept (none blocks a commit; latent = unreachable today):
+- FIXED here (docs-only): `docs/architecture.html` said `publish(bio:)` is an "atomic enqueue" (stale since 0f4b01b72 removed bioFrames — 0f4b01b72 missed this page) and that `SPSCQueue.enqueue()` "drops the oldest on overflow" (false and older than tonight: it drops the INCOMING element, `SPSCQueue.swift` doc at :161). Also "publish from any thread" → one publishing context per SPSC queue (controllerEvents: `MIDIBusPublisher` only), and the "no allocation" claim dropped (the MainActor hop is a `Task`). No guard scans these phrases.
+- PLAUSIBLE: `restored(from:into:)` checks deviceType before `migrated()` — a future migration cannot rename a type.
+- P3 commit message says "finite in-range"; out-of-range is actually clamped; patch decode is lossy (`try?`).
+- PLAUSIBLE/unreachable: `LaneVoiceRack.setTuning` stores NaN. Latent: `EchoelDDSP.setSampleRate` passes +inf; `levels(forBits:)` NaN-passing min/max order; `BioMusicDirector.swift:178` `Int(tempo.rounded())` traps on non-finite tempo.
+- Headroom: texture +6 dB fresh-instance default has no limiter — host listening owed (already in queue).
