@@ -16,6 +16,12 @@
 // REGRESSIONS there (a NaN reached `poly.a4Hz` / `lastTuningForTests`); claim 3 is a
 // COUNTERWEIGHT (a finite value still lands, clamped) and is green on both trees.
 // ⚠️ `lastTuningForTests` is a DEBUG-only seam; the blocking bundle builds Debug.
+//
+// ⭐ 2026-09-25 (overnight P8, review 7) — claim 4: the LANE RACK is the fourth taker, and it
+// LATCHED the value before any voice could refuse it (`tuningA4Hz = a4Hz`), replaying it at
+// `attachAll`. A latched NaN left late-joining lane voices at 440 while the primaries kept the
+// last good A4. SOURCE-TEXT SCAN (the latch is private, and attaching needs an `AudioEngine`).
+// Transcribed: RED on the parent `655194fd9` (the first code line stores the value), green after.
 
 import XCTest
 @testable import Echoelmusic
@@ -50,6 +56,27 @@ final class TheConcertPitchIgnoresANonFiniteValueTests: XCTestCase {
                 is computed from this value on the render thread.
                 """)
         }
+    }
+
+    /// 4 — the lane rack refuses a non-finite pitch before it latches it.
+    func testTheLaneRackRefusesANonFinitePitchBeforeItLatches() throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let url = root.appendingPathComponent("Sources/Echoelmusic/Sequencer/LaneVoiceRack.swift")
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw XCTSkip("LaneVoiceRack.swift is not present — source-text claim cannot run (#454)")
+        }
+        let code = SourceText.codeOnly(try String(contentsOf: url, encoding: .utf8))
+        let head = try XCTUnwrap(code.range(of: "public func setTuning(a4Hz: Double) {"),
+                                 "`LaneVoiceRack.setTuning(a4Hz:)` not found — re-anchor claim 4")
+        let body = code[head.upperBound...]
+        let gate = try XCTUnwrap(body.range(of: "guard a4Hz.isFinite else { return }"), """
+            `LaneVoiceRack.setTuning(a4Hz:)` no longer refuses a non-finite pitch. The rack \
+            latches the value and replays it at `attachAll`; a latched NaN splits the tuning.
+            """)
+        let latch = try XCTUnwrap(body.range(of: "tuningA4Hz = a4Hz"), "the latch moved — re-anchor claim 4")
+        XCTAssertLessThan(gate.lowerBound, latch.lowerBound,
+                          "the finite gate must run BEFORE the value is latched")
     }
 
     /// 3 — COUNTERWEIGHT (#343): a finite value still lands, and the clamp still holds.

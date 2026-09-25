@@ -229,6 +229,13 @@ public final class LaneVoiceRack {
     /// gets this; without it a lane sub droned off-pitch at e.g. A=432). No-op
     /// while flag OFF (subs empty). Control-path (setTuning writes an atomic).
     public func setTuning(a4Hz: Double) {
+        // ⭐ 2026-09-25 (overnight P8): refuse a non-finite pitch HERE, before the latch. Every
+        // voice family already refuses it (`PolySynthVoice`/`SubBassVoice` since a39dae7ce,
+        // `BioReactiveSynthVoice` always), but the rack stored it first: `attachAll` then replayed
+        // the NaN to the late-joining voices, which refused it and stayed at 440 while the
+        // primaries kept the last good A4 — a split tuning with nothing watching. Same one-gate
+        // shape as `setTuningCents` below. Guard: `TheConcertPitchIgnoresANonFiniteValueTests`.
+        guard a4Hz.isFinite else { return }
         tuningA4Hz = a4Hz
         // The lane MELODIC voices (the PolySynthVoice pool) must follow A4 too — they
         // were skipped here and every lane MIDI note played at the hardcoded 440 while
