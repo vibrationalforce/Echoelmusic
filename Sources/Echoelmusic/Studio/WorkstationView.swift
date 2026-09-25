@@ -440,7 +440,7 @@ struct WorkstationView: View {
                 Text(tag)
                     .font(EchoelTheme.font(10, .semibold))
                     .foregroundStyle(EchoelTheme.dim)
-                    .padding(.horizontal, 6).frame(height: 20)
+                    .padding(.horizontal, 6).frame(minHeight: 20)
                     .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
                         .fill(EchoelTheme.fill))
             }
