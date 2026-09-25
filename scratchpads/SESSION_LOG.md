@@ -39957,3 +39957,19 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - **Guard:** `ANewMIDIPartOpensTheNoteEditorTests` (pure placement/reuse/refusals, real-store one-step undo + slot-reuse, source scan). Forward guards; transcription of source claims green; five checkers clean. Independent ui-state review running.
 - **NEEDS-FOUNDER-VERIFY:** fresh install → Add MIDI Track → New MIDI Part → Notes → tap cells → Play hears them; Undo removes the part; repeating does not fill the clip grid.
 - Next: review findings → then M2 (move/resize/marquee/multi-select with local gesture preview, ONE commit per gesture).
+
+## 2026-09-25 23:40Z — M1b review repair, M2, M3, M4 and the M2 review repair
+
+- **M1b review repair `65b633f6c`**: five ui-state findings fixed. The most important: a drums-only or automation-only clip is no longer reused as "empty". The note now says an empty part plays nothing until it has notes, and that Generate yields when the part sits at song start.
+- **M2 `7674eff6b`**: move, stretch, box-select and multi-select. `NoteGridGesture` is pure; the `PartNoteCanvas` leaf owns the only `@GestureState`. Each gesture is hold-then-slide and commits ONE `setClipNotes` on release. Guard: `ANoteDragIsOneCommitAtReleaseTests`.
+- **M2 review repair `90a6bd10a`**:
+  - MEDIUM: a stretch was an absolute length, so holding an edge without sliding re-quantized imported lengths and wrote a part-cut length into a shared clip. Stretch is now a delta (`dSteps`), and `resizing(_:bySteps:…)` moves the end that this part draws.
+  - LOW: the group's left bound is now counted in start ticks.
+  - LOW: the right bound stays on the rounded column; this is documented.
+  - Four new guard assertions.
+- **M3 `05a8f4619`**: Transpose ±1/±12, Quantize, Duplicate and Velocity on `ClipNoteEdit.targets` (the on-screen selection, or the whole part). Each operation is one commit. Velocity is an `EchoelValueField` in its own leaf (`NoteVelocityRow`) and commits once in `onCommit`. Guard: `TheSelectionIsTransposedQuantizedAndDuplicatedInOneStepTests`.
+- **M4 `9dc19bf71`**: the rows shade the notes outside the session key. `SessionContext.key` is read and never written. "Fit" uses `MusicalKey.quantize`; "±1 step" moves notes by steps of the key's scale, and a group refuses the whole move if any note would leave 0…127. There is deliberately no scale lock on tap or drag, because snapping only the commit would break the rule that the preview equals the commit. Guard: `TheNotesMoveThroughTheSessionKeyTests`.
+- The writer count in the M1 guard is now 10.
+- **Evidence:** Compile Check 2896 is green on `3cf0a5346`. Every later run is queued or pending (2897 and 2898 were cancelled by newer pushes). Every guard's arithmetic was transcribed in Python, and the five checkers are clean on each commit.
+- **Reviews:** the M3 ui-state review and the M4 + M2-repair code review are running.
+- **NEEDS-FOUNDER-VERIFY** (device, all slices): New MIDI Part → Notes → add notes → hold and slide (move) → hold an edge (stretch; hold without slide = nothing) → box → Transpose / Quantize / Duplicate / Velocity drag → shaded rows → Fit / ±1 step → one Undo each.
