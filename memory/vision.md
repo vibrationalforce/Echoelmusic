@@ -36,8 +36,8 @@ iPhone-first. On-device, private, free. The body is the controller.
 **Body** (the differentiator) → **Sound** → **Image** → **Light** → **Space** (the
 canonical pillars; vibration/haptics ride the output stage), with **Data**
 (OSC · MIDI 2.0 · MPE **out** — in is not built, #548 · Art-Net/sACN · ADM-OSC) as the
-connective layer. (⛔ "MPE / AUv3" stood here: AUv3 was removed 2026-07-24 and MPE-IN has
-no zone parser — naming either in the spine re-sold two struck capabilities.)
+connective layer. (⛔ "MPE / AUv3" stood here: AUv3 was removed 2026-07-24 — revived as an instrument with #1385, 2026-09-20 — and MPE-IN has
+no zone parser — naming either in the spine re-sold two capabilities struck at the time; AUv3 is an Apple plugin format, not an open standard, so it stays out of this list either way.)
 
 ---
 
@@ -61,7 +61,7 @@ no zone parser — naming either in the spine re-sold two struck capabilities.)
 - **Visual** — Metal GPU bio-renderer (HR→pulse ≤2 Hz WCAG, coherence→hue, breath→spread).
 - **Open spine** — OSC, MIDI 2.0 (mono in: notes + pitch-bend; **MPE OUT** since #713 —
   MPE IN is not built, #548), RTP-MIDI. **Apple**: Widgets shipped (WidgetKit).
-  **AUv3 removed 2026-07-24 (#122/#123)** — Echoel is neither a plugin nor a host.
+  **AUv3 removed 2026-07-24 (#122/#123)** — ⛔ „Echoel is neither a plugin nor a host" held until 2026-09-20: #1385 revived the AUv3 INSTRUMENT (`EchoelmusicAUv3`, loads in AUM #1386). Echoel is a plugin again; it is still not a host.
 
 ## TIER 2 — ROADMAP (planned; partially wired or authorized, not built)
 

@@ -28,7 +28,7 @@ have we learned" so the knowledge is never lost between sessions.
 
 Body (differentiator) → Sound → Image → Light → Space (vibration/haptics ride the output
 stage), with Data (OSC · MIDI 2.0 · MPE **out** · Art-Net/sACN · ADM-OSC) as the connective
-layer — ⛔ "MPE/AUv3" stood here; AUv3 is removed and MPE-IN is not built (#548).
+layer — ⛔ "MPE/AUv3" stood here; AUv3 was removed 2026-07-24 and revived as an INSTRUMENT with #1385 (2026-09-20; loads in AUM, #1386 — one host, not Logic/GarageBand); Echoel hosts nothing. MPE-IN is not built (#548).
 See `memory/vision.md` for the LIVE / ROADMAP / NORTH-STAR tiers.
 
 ## Architecture (audited)

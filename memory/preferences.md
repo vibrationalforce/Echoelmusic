@@ -50,7 +50,7 @@ User preferences for development workflow, communication, and tooling.
 - **Fahrplan discipline:** `docs/dev/FEATURE_MATRIX.md` is the roadmap (code-truth). The website MIRRORS code, never drives it ("if the website disagrees, the code wins"). Avoid marketing-driven overclaiming.
 - **Brand purity (hard):** never "wellness"/"meditation"/"healing"/"16K"/"Super Intelligence AI" overclaims in user-facing copy (App Store, Info.plist, website). Biofeedback is core, NOT wellness. Use "self-observation, not medical diagnosis".
 - **CI-verified, not blind:** every change verified via `testflight.yml` (compile_check or full ship) before trusting it. Don't blind-build unverifiable things (watch embed, camera concurrency) — architect + flag for a device session instead.
-- **SDK doctrine:** speak open standards (MIDI/OSC/Link/Art-Net/sACN/ADM-OSC), depend on almost nothing; vendor SDKs only behind an explicit logged decision. (AUv3 was in this list until the target was deleted 2026-07-24.)
+- **SDK doctrine:** speak open standards (MIDI/OSC/Link/Art-Net/sACN/ADM-OSC), depend on almost nothing; vendor SDKs only behind an explicit logged decision. (AUv3 was in this list until the target was deleted 2026-07-24; the AUv3 INSTRUMENT target came back with #1385, 2026-09-20 — Apple's own plugin format, no vendor SDK — and Echoel still hosts nothing.)
 
 ### Resolved 2026-07-28 (the three drift items above are now folded into the Tooling block)
 - "12 EchoelTools" is a **taxonomy over real modules**, not 12 Swift types (see FEATURE_MATRIX).
