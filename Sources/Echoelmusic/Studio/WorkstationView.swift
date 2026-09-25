@@ -261,6 +261,13 @@ struct WorkstationView: View {
                 songLine(summary)
                 ForEach(summary.lanes) { row in
                     laneRow(row)
+                    // WA4.5 — where this track plays in the song, on the one shared scale.
+                    // Handed the document this body already read; the strip observes nothing.
+                    if !row.isBio && row.regionCount > 0 {
+                        ArrangementStripView(laneID: row.id, document: timeline.document,
+                                             songTicks: ArrangementStrip.songTicks(summary))
+                            .padding(.horizontal, 10)
+                    }
                     if selectedTrack == row.id {
                         // The mixer and device facts of the ONE open track. Its own leaf, with
                         // its own store reads — this view still sends `timeline` nothing but
