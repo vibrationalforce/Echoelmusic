@@ -207,7 +207,7 @@ steht schon als `NEEDS-FOUNDER-VERIFY` im genannten Wächter — `founder-verify
 Was KEIN Marker tragen kann, ist die **Reihenfolge**: Acceptance Test A ist eine Kette, und ein
 Schritt prüft nur, was der vorige gebaut hat. Hier steht also nur die Reihenfolge plus der
 Zeiger; der Wortlaut jeder Bitte bleibt am Wächter (#416). Build: der nächste TestFlight mit
-`be933a627` oder später (Trim, Save/Open auf der Platte, Review-Reparatur).
+`aefcd42dc` oder später (Trim, Save/Open auf der Platte, Review-Reparatur, Instanz-Zeile).
 
 Antwortformat je Schritt: **OK** · oder **Abweichung + ein Satz + Screenshot**.
 
@@ -229,7 +229,9 @@ Antwortformat je Schritt: **OK** · oder **Abweichung + ein Satz + Screenshot**.
        einmal mit der GRÖSSTEN Textgröße (Einstellungen → Bedienungshilfen → Größerer Text) —
        bleibt die Spur-Zeile lesbar, oder schiebt M/S den Namen weg? Voice Control: „Tippe M“
        und „Tippe Mute“ treffen beide. (`TheTrackHeaderMutesAndSolosTests`)
-6. [ ] **Echoel-Spur antippen → Open** → die Sound-Platte; Chip „Workstation“ führt zurück.
+6. [ ] **Echoel-Spur antippen** → unter „Device Echoel“ stehen Genre und FX-Charakter so, wie das
+       Instrument sie gerade spielt (`TheEchoelTrackNamesItsInstanceTests`) → **Open** → die
+       Sound-Platte; Genre dort ändern; Chip „Workstation“ führt zurück und zeigt das neue Genre.
        (`TheEchoelTrackOpensItsDeviceTests`)
 7. [ ] **Acceptance Test A, der Kern — ohne die Workstation zu verlassen:** unten auf der
        Platte ist **Save** HELL, obwohl nie komponiert wurde → speichern → den Song ändern oder

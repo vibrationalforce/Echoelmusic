@@ -469,6 +469,10 @@ done. WA4 is the first front.
     `accessibilityInputLabels([name, letter])`; a part selected in the parts list says in visible
     text where its actions are. Open as a device check: the header row at accessibility type
     sizes (journey step 5).
+  - **WA4 path 9 — the instance on its row** (`aefcd42dc`): the Echoel track's inspector shows
+    its genre and FX character, read-only, from the instrument's own keys resolved through their
+    types (`EchoelInstanceLine`, its own file because the inspector owns no persistence). The
+    patch name is not shown — view-private. Guard `TheEchoelTrackNamesItsInstanceTests`.
   - **WA4 path 10 — device proof journey: WRITTEN, execution is the founder's.**
     `scratchpads/FOUNDER_DEVICE_SESSION.md` §2c orders the nine steps of one sitting (Acceptance
     Test A in the middle); each ask stays worded at its guard.
@@ -477,8 +481,10 @@ done. WA4 is the first front.
     (NEEDS-FOUNDER-VERIFY markers in each guard header).
   - **Open in WA4:** workspace promotion (Workstation as a first-class surface, not a panel),
     a general undo step beyond regions (mixer edits are not undoable), drag
-    edits (and an outward trim — today's trim only shortens), the Echoel instance state on its
-    row, the MEDIUM-4 flag; the device proof journey is written and owed to the founder.
+    edits (and an outward trim — today's trim only shortens), the MEDIUM-4 flag (kept open on
+    purpose: today's behaviour errs toward keeping a song, the flag would trade that for losing
+    one); the device proof journey is written and owed to the founder. Path 2 is a founder hold
+    (§13, WA4-P2).
 
 ---
 
@@ -622,6 +628,7 @@ general.
 | #58 | two blocked genres (gnawaGuembri, koraOstinato) | genre catalogue |
 | #208 / #396 / #807 / #1176 | CI: full-tests label, the simulator-clone crash, the `tail -200` log window, and the `CLAUDE.md` path filter | test-execution evidence (TESTED status) |
 | — | adding any dependency (HaishinKit, LinkKit, NDI SDK, …) | broadcast, Link, NDI |
+| WA4-P2 | **the Workstation as a first-class workspace (critical path 2).** Measured 2026-09-25, three options, none taken: **(a)** relaunch returns to the Workstation if the player left from there — breaks #325 (a detuned instrument is announced on the Sound plate an untouched launch shows) unless the tuning banner also lands on the Workstation; **(b)** a Workstation door in the chrome header (`WorkspaceView.topBar`), one tap from anywhere — cheap, no new shell, adds one header tile against the chrome budget; **(c)** a second root beside the instrument — forbidden by census D10 ("DO NOT RESTORE any shell"). Recommendation: **(b)**, then (a) with the banner. | path 2 |
 
 ---
 
