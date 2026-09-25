@@ -4,8 +4,12 @@
 //  WHAT WAS WRONG. `ProUnlockView.featureList` listed four "Pro extensions". Three of them
 //  carried the detail "In development", and measured against this tree not one had code:
 //    · "AUv3 plugin in your DAW" — the AUv3 target was DELETED on 2026-07-24 (#121 Slice 2).
-//      `Sources/EchoelmusicAUv3` does not exist and `ContentPipelineClaimsTests` already pins
-//      that absence. The work was REMOVED, not started — the opposite of "in development".
+//      The work was REMOVED, not started — the opposite of "in development".
+//      ⛔ STALE SINCE #1385 (2026-09-20): the target is back and loads in AUM (#1386). Claim 3
+//      stood here as "the target is still absent" and turned RED on a correct tree, exactly as
+//      its own message foresaw; it was left red for five days pending the founder's word on the
+//      row, and on 2026-09-25 the row was repaired and claim 3 FLIPPED to the new premise —
+//      the target exists, so the row must not say "not built" and must not claim "your DAW".
 //    · "Video FX catalog" — `videoFXCatalog` occurs in exactly two files: the `ProFeature`
 //      case and the label itself.
 //    · "Export format presets — 4K & aspect ratios" — no 4K and no aspect-ratio export code
@@ -75,22 +79,51 @@ final class TheProScreenSellsNoWorkThatIsNotHappeningTests: XCTestCase {
         let code = SourceText.codeOnly(try rawText(Self.screen)).lowercased()
         XCTAssertFalse(code.contains("in development"), """
             A "Pro extensions" row says "in development" again. That is a claim about the \
-            PRESENT, and for all three rows it was false: the AUv3 target was DELETED (#121 \
-            Slice 2), `videoFXCatalog` exists only as an enum case and a label, and no 4K or \
+            PRESENT, and for all three rows it was false when #765 measured it: the AUv3 \
+            target was then deleted (#121 Slice 2; it is back since #1385 and its row now says \
+            so), `videoFXCatalog` exists only as an enum case and a label, and no 4K or \
             aspect-ratio export code exists at all. Work that was removed, or never begun, is \
             "planned" — not "in development". If one of them really starts, say so here AND \
             leave the code that proves it, so claims 3 and 4 below turn red with you.
             """)
     }
 
-    /// Premise for the AUv3 row: the target is gone, so nothing about it can be in progress.
-    func testTheAUv3TargetIsStillAbsent() throws {
+    /// Premise for the AUv3 row, FLIPPED on 2026-09-25: the target EXISTS (#1385) and loads in
+    /// one host (AUM, #1386), so the row must neither say it is unbuilt nor claim a DAW.
+    ///
+    /// ⛔ This claim stood as `testTheAUv3TargetIsStillAbsent` and was red on every run from
+    /// #1385 to this commit — a TRUE finding against stale copy, not a flake. The fix its own
+    /// message named was the copy, not the assertion; the assertion changed only because its
+    /// premise did, and it is now two-sided: the target must be present AND the row must be true.
+    ///
+    /// ⚠️ The row is located by its SF Symbol `"pianokeys"` up to the next `featureRow(` — a
+    /// renamed symbol FAILS here (re-anchor it) rather than scanning nothing into a green (#454).
+    func testTheAUv3RowFollowsTheTarget() throws {
         let path = try repoRoot().appendingPathComponent("Sources/EchoelmusicAUv3")
-        XCTAssertFalse(FileManager.default.fileExists(atPath: path.path), """
-            `Sources/EchoelmusicAUv3` exists again. That is welcome work (#191) — and it means \
-            the Pro row's "planned, not built yet" has become the false word. Change it in the \
-            same commit, and read `ContentPipeline/CLAIMS.md` §1, which forbids the AUv3 claim \
-            outright and has to move with it.
+        XCTAssertTrue(FileManager.default.fileExists(atPath: path.path), """
+            `Sources/EchoelmusicAUv3` is gone again. The Pro row now says the plug-in loads in \
+            AUM — with the target removed that is the false word. Change the row in the same \
+            commit, and pull `ContentPipeline/CLAIMS.md` §1a along.
+            """)
+
+        let code = SourceText.codeOnly(try rawText(Self.screen))
+        guard let anchor = code.range(of: "\"pianokeys\"") else {
+            XCTFail("""
+                No `"pianokeys"` row in \(Self.screen). If the AUv3 row was re-iconed, re-anchor \
+                this claim; if the founder removed the row from Pro, delete this half deliberately.
+                """)
+            return
+        }
+        let tail = code[anchor.upperBound...]
+        let row = tail.range(of: "featureRow(").map { tail[..<$0.lowerBound] } ?? tail
+        let text = row.lowercased()
+        XCTAssertFalse(text.contains("not built"), """
+            The AUv3 row says "not built" while `Sources/EchoelmusicAUv3` exists and loads in AUM \
+            (#1386). That is the false word this claim exists to catch.
+            """)
+        XCTAssertFalse(text.contains("your daw"), """
+            The AUv3 row claims "your DAW". One host is verified (AUM); Logic and GarageBand are \
+            not (`ContentPipeline/CLAIMS.md` §1a). Name the host, not the category.
             """)
     }
 

@@ -111,9 +111,14 @@ struct ProUnlockView: View {
     ///   · AUv3 — the target was DELETED on 2026-07-24 (#121 Slice 2) and was absent when
     ///     this was measured. ⛔ STALE SINCE #1385 (2026-09-20): the target is back, it loads
     ///     in AUM (device-measured, #1386), and `ContentPipelineClaimsTests` now pins its
-    ///     PRESENCE. So the row below ("Planned, not built yet") is false in the other
-    ///     direction. ⚠️ HOLD-FOR-FOUNDER, not repaired here (2026-09-24, P8q): whether the
-    ///     plug-in is a Pro extension at all is a pricing decision, and this view has no door.
+    ///     PRESENCE. The row said "Planned, not built yet" — false in the other direction —
+    ///     until 2026-09-25, when the founder approved the repair: it now states the measured
+    ///     truth, one host (AUM), the same boundary `ContentPipeline/CLAIMS.md` §1a draws. The
+    ///     title lost "in your DAW" for the same reason: AUM is one host, and Logic and
+    ///     GarageBand are unverified. ⚠️ STILL THE FOUNDER'S, and untouched here: whether the
+    ///     plug-in belongs under "Pro" at all. `ProGate.auv3Plugin` gates nothing today — no
+    ///     code outside `ProGate` names it, and the plug-in ships ungated inside the free app.
+    ///     The row set is a pricing call for the v1.1 re-door (claim 5 of the guard below).
     ///   · Video FX catalog — `videoFXCatalog` occurs in exactly two places: the `ProFeature`
     ///     case and the label below. No implementation of any kind.
     ///   · Export format presets (4K, aspect ratios) — no 4K, no aspect-ratio export code
@@ -141,8 +146,8 @@ struct ProUnlockView: View {
                        "Grows with every release")
             featureRow("arrow.up.right.square", "Export format presets",
                        "4K & aspect ratios — planned, not built yet")
-            featureRow("pianokeys", "AUv3 plugin in your DAW",
-                       "Planned, not built yet")
+            featureRow("pianokeys", "AUv3 instrument plugin",
+                       "Loads in AUM — other hosts not yet verified")
             featureRow("camera.filters", "Video FX catalog",
                        "Planned, not built yet")
         }
