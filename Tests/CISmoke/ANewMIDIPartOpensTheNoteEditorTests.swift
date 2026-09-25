@@ -25,6 +25,12 @@
 // the bundle does not build there: ONE absence, not N findings (#486) — every claim here is a
 // FORWARD guard. Counterweights: the refusal and the never-overwrite assertions in claim 2 pin
 // premises (#343) that were already true of the import.
+// M1b REVIEW (independent ui-state review of 3cf0a5346, five findings, all repaired in the next
+// commit): a drums-only or automation-carrying orphan was reusable as "empty" and rode its old
+// content into a silent-looking part (claim 2 now holds a drums-only fixture); the note and the
+// empty-state line promised a part that plays while an empty one plays nothing; the note now
+// says that a part at the song's start makes Generate yield; the undone rename is documented at
+// `planEmptyPart`; the VoiceOver hint named the wrong lane rule.
 // NOT covered: that the row renders, that the part appears selected on the canvas, that notes
 // written into it are heard — a device probe, owned by the marker below.
 // NEEDS-FOUNDER-VERIFY: fresh install → Workstation → Add MIDI Track → New MIDI Part → the
@@ -77,6 +83,14 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
         }
         XCTAssertEqual(after.region.startTick, 3 * Self.bar, "after the last part, on a barline")
         XCTAssertEqual(after.region.startTick % Self.bar, 0)
+
+        // The note says what the part does NOT do yet (M1b review): an empty part plays nothing,
+        // and one at the song's start makes Generate yield.
+        let atStart = MIDIImport.emptyPartNote(laneName: "Keys", atSongStart: true)
+        XCTAssertTrue(atStart.contains("once it has notes"))
+        XCTAssertTrue(atStart.contains("Generate won't place its take over this part."))
+        XCTAssertFalse(MIDIImport.emptyPartNote(laneName: "Keys", atSongStart: false)
+                        .contains("Generate"), "later in the song, nothing yields")
     }
 
     // MARK: 2 — pure: reuse and refusals
@@ -89,6 +103,9 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
         let composed = Clip(name: "Composed", kind: .midi, melody: MelodyClip(notes: []),
                             composerOwned: true)
         let playedEmpty = Clip(name: "played", kind: .midi, melody: MelodyClip(notes: []))
+        // M1b review: an older build's drums-only clip has no melody and is NOT empty.
+        let oldBeat = Clip(name: "beat", kind: .midi,
+                           drums: DrumPattern(steps: [[true, false]], accents: [[false, false]]))
         let playing = TimelineRegion(laneID: keys.id, clipID: playedEmpty.id, startTick: 0,
                                      lengthTicks: Self.bar)
         let doc = TimelineDocument(lanes: [keys], regions: [playing])
@@ -97,6 +114,7 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
         grid[1] = orphanMusic
         grid[2] = composed
         grid[3] = playedEmpty
+        grid[4] = oldBeat
         grid[5] = orphanEmpty
         guard case .success(let reused) = MIDIImport.planEmptyPart(document: doc, slots: grid) else {
             return XCTFail("a free grid must take a part")
@@ -104,6 +122,8 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
         XCTAssertEqual(reused.slotIndex, 5, "the one orphaned EMPTY user clip is reused")
         XCTAssertEqual(reused.clip.id, orphanEmpty.id, "…by id, not replaced")
         XCTAssertEqual(reused.clip.name, "MIDI · Keys")
+        XCTAssertNil(reused.clip.drums, "a reused clip is rebuilt — nothing old rides along")
+        XCTAssertTrue(reused.clip.automation.isEmpty)
 
         // Without it: a free slot, never one of the three that hold something.
         grid[5] = nil
@@ -111,7 +131,8 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
             return XCTFail("a free grid must take a part")
         }
         XCTAssertEqual(fresh.slotIndex, 0)
-        XCTAssertFalse([orphanMusic.id, composed.id, playedEmpty.id].contains(fresh.clip.id))
+        XCTAssertFalse([orphanMusic.id, composed.id, playedEmpty.id, oldBeat.id].contains(fresh.clip.id),
+                       "a drum pattern is content — the drums-only clip is never taken as empty")
 
         // Full grid, nothing reusable → refused, nothing chosen.
         let full: [Clip?] = (0..<ClipStore.slotCount).map { i in

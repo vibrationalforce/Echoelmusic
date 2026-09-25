@@ -424,7 +424,7 @@ struct WorkstationView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("No tracks yet")
                 .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
-            Text("Tap Add Audio Track, then Import Audio — or Add MIDI Track, then Import MIDI or New MIDI Part. Each becomes a part you can play.")
+            Text("Tap Add Audio Track, then Import Audio — or Add MIDI Track, then Import MIDI or New MIDI Part. A file becomes a part you can play; a new part plays once it has notes.")
                 .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -433,7 +433,7 @@ struct WorkstationView: View {
         // One spoken sentence rather than two fragments — VoiceOver would otherwise read the
         // heading and the explanation as unrelated items.
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("No tracks yet. Tap Add Audio Track, then Import Audio — or Add MIDI Track, then Import MIDI or New MIDI Part. Each becomes a part you can play.")
+        .accessibilityLabel("No tracks yet. Tap Add Audio Track, then Import Audio — or Add MIDI Track, then Import MIDI or New MIDI Part. A file becomes a part you can play; a new part plays once it has notes.")
     }
 
     private func songLine(_ summary: WorkstationSummary) -> some View {
@@ -932,7 +932,8 @@ struct WorkstationView: View {
                 selection.selectRegion(landing.region.id, in: timeline.document)
                 let laneName = timeline.document.lanes
                     .first { $0.id == landing.laneID }?.name ?? "the MIDI track"
-                importNote = MIDIImport.emptyPartNote(laneName: laneName)
+                importNote = MIDIImport.emptyPartNote(laneName: laneName,
+                                                      atSongStart: landing.region.startTick == 0)
             case .failure(let failure):
                 importNote = failure.userMessage
             }
@@ -952,7 +953,7 @@ struct WorkstationView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("New MIDI part")
-        .accessibilityHint("Adds an empty four-bar part to the song's first MIDI track and selects it")
+        .accessibilityHint("Adds an empty four-bar part to the MIDI track Import MIDI uses, and selects it")
     }
 
     /// S2 — run the MIDI import and say what happened. `handleImport`'s shape without the

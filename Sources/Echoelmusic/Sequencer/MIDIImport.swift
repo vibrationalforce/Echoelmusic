@@ -150,10 +150,14 @@ public enum MIDIImport {
     ///
     /// ⭐ AN ORPHANED EMPTY USER CLIP IS REUSED, for the reason `ensureComposerRegion` reuses its
     /// own: nothing clears a slot, and an Undo removes the region but leaves the clip, so every
-    /// New → Undo would otherwise spend one of the eight slots for good. Only an EMPTY, user-owned
-    /// MIDI clip that NO region plays qualifies — a clip with notes is someone's music and is
-    /// never overwritten. Reuse keeps the clip's id; the Redo that could bring its old part back
-    /// is cleared by the new part's own undo step (`TimelineStore.pushUndo`).
+    /// New → Undo would otherwise spend one of the eight slots for good. Only a user-owned MIDI
+    /// clip that NO region plays and that carries NOTHING qualifies — `Clip.isEmpty` (no notes,
+    /// no drum steps) and no automation: an older build's drum pattern or bio-take automation
+    /// would otherwise ride along into a part the editor shows as empty (M1b review). A reused
+    /// clip is rebuilt from scratch and keeps only its id and colour. The Redo that could bring
+    /// its old part back is cleared by the new part's own undo step (`TimelineStore.pushUndo`).
+    /// ⚠️ The rename is not in the undo history (clip slots sit outside it): an Undo that brings
+    /// the clip's OLD part back shows it under the new name. Cosmetic, and recorded here.
     ///
     /// ⚠️ IT STARTS ON A BAR: after the lane's last part, rounded up to the next barline, so the
     /// grid's first column is a downbeat even when a trimmed part ends mid-bar.
@@ -166,13 +170,12 @@ public enum MIDIImport {
         let slot: Int
         if let reuse = slots.firstIndex(where: { candidate in
                guard let c = candidate else { return false }
-               return c.kind == .midi && !c.composerOwned
-                   && (c.melody?.notes.isEmpty ?? true) && !played.contains(c.id)
+               return c.kind == .midi && !c.composerOwned && c.isEmpty && c.automation.isEmpty
+                   && !played.contains(c.id)
            }),
-           var reused = slots[reuse] {
-            reused.name = name
-            reused.melody = MelodyClip(notes: [])
-            clip = reused
+           let old = slots[reuse] {
+            clip = Clip(id: old.id, name: name, colorIndex: old.colorIndex, kind: .midi,
+                        melody: MelodyClip(notes: []), composerOwned: false)
             slot = reuse
         } else if let free = slots.firstIndex(where: { $0 == nil }) {
             clip = Clip(name: name, colorIndex: free, kind: .midi,
@@ -190,10 +193,15 @@ public enum MIDIImport {
                                 skippedDrumNotes: 0, heldForOneBar: 0))
     }
 
-    /// The sentence after "New MIDI Part": where it landed, and how to write into it.
-    public static func emptyPartNote(laneName: String) -> String {
-        "Added an empty \(emptyPartBars)-bar part on \(laneName). Tap Notes to write into it."
-            + " Plays at the song tempo, with the instrument stopped."
+    /// The sentence after "New MIDI Part": where it landed, how to write into it, and what it
+    /// does NOT do yet. An empty part plays nothing (`canPlay` refuses a song of empty parts), and
+    /// a user part at the song's start makes the instrument's Generate yield
+    /// (`userPartWouldBeShadowed` counts it, empty or not) — both said, neither left for the ear.
+    public static func emptyPartNote(laneName: String, atSongStart: Bool) -> String {
+        var note = "Added an empty \(emptyPartBars)-bar part on \(laneName). Tap Notes to write into it"
+            + " — once it has notes, it plays at the song tempo, with the instrument stopped."
+        if atSongStart { note += " Generate won't place its take over this part." }
+        return note
     }
 
     /// Plan, then write — clip FIRST, region SECOND, `commit`'s order and reason. ONE undo step
