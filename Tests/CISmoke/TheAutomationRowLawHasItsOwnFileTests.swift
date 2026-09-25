@@ -72,7 +72,8 @@ final class TheAutomationRowLawHasItsOwnFileTests: XCTestCase {
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let sources = root.appendingPathComponent("Sources/Echoelmusic")
-        guard FileManager.default.isReadableFile(atPath: sources.path) else {
+        guard FileManager.default.fileExists(atPath: sources.path),
+              FileManager.default.isReadableFile(atPath: sources.path) else {
             throw XCTSkip("source tree not present at \(sources.path) — this half reads source text")
         }
         return SourceText.codeOnly(
@@ -171,7 +172,8 @@ final class TheAutomationRowLawHasItsOwnFileTests: XCTestCase {
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let sources = root.appendingPathComponent("Sources/Echoelmusic")
-        guard let walk = FileManager.default.enumerator(atPath: sources.path) else {
+        guard FileManager.default.fileExists(atPath: sources.path),
+              let walk = FileManager.default.enumerator(atPath: sources.path) else {
             throw XCTSkip("cannot enumerate \(sources.path) — this half reads source text")
         }
         var hits: [String] = []

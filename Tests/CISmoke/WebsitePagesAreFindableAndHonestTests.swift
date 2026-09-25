@@ -499,7 +499,8 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
     ///     different than it does over a live page.
     func testTheSiteAndTheStoreAgreeThatMIDIExportShips() throws {
         let sources = try repoRoot().appendingPathComponent("Sources")
-        guard let walk = FileManager.default.enumerator(atPath: sources.path) else {
+        guard FileManager.default.fileExists(atPath: sources.path),
+              let walk = FileManager.default.enumerator(atPath: sources.path) else {
             throw XCTSkip("`Sources/` is not present — a docs-only checkout cannot judge the premise")
         }
         var mentions = 0
@@ -861,7 +862,8 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
                         "neither makes a sound", "nicht verdrahtet"]
 
         let sources = try repoRoot().appendingPathComponent("Sources")
-        guard let walk = FileManager.default.enumerator(atPath: sources.path) else {
+        guard FileManager.default.fileExists(atPath: sources.path),
+              let walk = FileManager.default.enumerator(atPath: sources.path) else {
             throw XCTSkip("`Sources/` is not present — a docs-only checkout cannot judge the premise")
         }
         var code = ""
@@ -969,7 +971,8 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
                         "neither makes a sound", "nicht verdrahtet"]
 
         let sources = try repoRoot().appendingPathComponent("Sources")
-        guard let walk = FileManager.default.enumerator(atPath: sources.path) else {
+        guard FileManager.default.fileExists(atPath: sources.path),
+              let walk = FileManager.default.enumerator(atPath: sources.path) else {
             throw XCTSkip("`Sources/` is not present — a docs-only checkout cannot judge the premise")
         }
         var code = ""
@@ -1049,7 +1052,8 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
     /// website's copy of it, because the two corpora are read by different people.
     func testTheVoiceCaptureIsPublishedOnlyWhileItExists() throws {
         let sources = try repoRoot().appendingPathComponent("Sources")
-        guard let walk = FileManager.default.enumerator(atPath: sources.path) else {
+        guard FileManager.default.fileExists(atPath: sources.path),
+              let walk = FileManager.default.enumerator(atPath: sources.path) else {
             throw XCTSkip("`Sources/` is not present — a docs-only checkout cannot judge the premise")
         }
         var code = ""
@@ -1219,7 +1223,8 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
     /// the counter-assertion below is the one that runs (#926 — invert, do not delete).
     func testTheSiteSellsNoVisualRecordingWhileNoneExists() throws {
         let sources = try repoRoot().appendingPathComponent("Sources")
-        guard let walk = FileManager.default.enumerator(atPath: sources.path) else {
+        guard FileManager.default.fileExists(atPath: sources.path),
+              let walk = FileManager.default.enumerator(atPath: sources.path) else {
             throw XCTSkip("`Sources/` is not present — a docs-only checkout cannot judge the premise")
         }
         var code = ""

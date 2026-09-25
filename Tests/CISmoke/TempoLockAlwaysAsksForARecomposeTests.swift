@@ -184,7 +184,8 @@ final class TempoLockAlwaysAsksForARecomposeTests: XCTestCase {
     private func lockWriteSites() throws -> [Site] {
         let root = try repoRoot()
         let sources = root.appendingPathComponent("Sources/Echoelmusic")
-        guard let walk = FileManager.default.enumerator(atPath: sources.path) else {
+        guard FileManager.default.fileExists(atPath: sources.path),
+              let walk = FileManager.default.enumerator(atPath: sources.path) else {
             throw XCTSkip("could not enumerate \(sources.path)")
         }
         var out: [Site] = []
