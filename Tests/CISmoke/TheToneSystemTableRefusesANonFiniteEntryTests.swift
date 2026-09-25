@@ -1,28 +1,30 @@
 // TheToneSystemTableRefusesANonFiniteEntryTests.swift
-// Echoel — 2026-09-25 (overnight P8): the poly engine refuses a tone-system table with a
-// non-finite entry, the rule the lane rack and the bio voice already apply. Blocking bundle.
+// Echoel — 2026-09-25 (overnight P8): the poly engine and the sub refuse a tone-system table
+// with a non-finite entry, the rule the lane rack and the bio voice already apply. Blocking bundle.
 //
 // THE DEFECT (measured before the repair). `EchoelPolyDDSP.setTuningCents` checked only
 // `count == 12`. `LaneVoiceRack.setTuningCents` and `BioReactiveSynthVoice.setTuningCents` refuse a
 // non-finite entry — but the studio calls the primary voices DIRECTLY, past the rack's gate. A NaN
 // or +inf entry made `noteOn`'s `baseFreq` non-finite for that pitch class; the voice's smoothed
 // frequency and phases went NaN, and the voice's own output guard zeroed it: every note on that
-// pitch class was silent (other voices unaffected). The `uiTuningCents` mirror took the bad table
+// pitch class was silent (the other voices played on, quieter while it was held, because
+// `polyMakeupTarget` counted it). The `uiTuningCents` mirror took the bad table
 // too. (⛔ review 13 corrected "the poly mix guard zeroed every sample" — the scope was one pitch
 // class, not the bus.) `SubBassVoice.setTuningCents` was size-only on the same direct path; there
 // a NaN entry played at `minHz` (off-pitch, not silent) because `feltFrequency` guards it. Closed
 // in the follow-up commit; claim 4 pins it through the Debug seam `lastTuningCentsForTests` (the
-// blocking bundle builds Debug, `SubBassFollowsTheToneSystemTests` uses the same seam). Found by tonight's read-only sticky-NaN sweep
-// (its candidate 2).
+// blocking bundle builds Debug, `SubBassFollowsTheToneSystemTests` uses the same seam).
+// Found by tonight's read-only sticky-NaN sweep (its candidate 2).
 //
 // LATENT: the one producer is `TuningSystem.pitchClassCents(root:)`, a finite library table.
 // Closed on the #588 boundary rule and on #416 (one boundary, one rule).
 //
-// THE REPAIR. `guard cents.count == 12, cents.allSatisfy({ $0.isFinite })` in the engine; the
-// `PolySynthVoice` mirror applies the same acceptance.
+// THE REPAIR. `guard cents.count == 12, cents.allSatisfy({ $0.isFinite })` in the engine and in
+// `SubBassVoice.setTuningCents`; the `PolySynthVoice` mirror applies the same acceptance.
 //
 // WHAT KIND OF GREEN (§1): END-TO-END BEHAVIOUR of the shipped engine (voice `frequency` is
-// public) and of the public mirror.
+// public) and of the public mirror (claims 1–3). Claim 4 is weaker: it reads the sub's
+// CONTROL-SIDE latch through the Debug seam, not a rendered pitch.
 //
 // ⚠️ HONEST GRADING — TRANSCRIBED (§0), no local toolchain. On the parent `f585182d2`: claim 1
 // (voice frequency NaN or +inf) and claim 2 (mirror took the NaN table) are REGRESSIONS, two
@@ -30,8 +32,8 @@
 // 0, a finite 0 Hz voice (not silent — frozen phases give a DC offset shaped by the envelope, a
 // thump) — the row stays because the gate must refuse it all the same. Claim 3 is a
 // COUNTERWEIGHT (a finite table still retunes), green on both. Claim 4 (the sub) is graded against
-// ITS parent `fe7865a14`: a REGRESSION there (the sub latched the NaN table), green after
-// `d371e45b9`.
+// ITS parent `fe7865a14`: a REGRESSION there on all three rows (the size-only sub latched every
+// non-finite table), green after `d371e45b9`. One finding, three rows (#486).
 
 import Foundation
 import XCTest
@@ -68,12 +70,14 @@ final class TheToneSystemTableRefusesANonFiniteEntryTests: XCTestCase {
     // MARK: - claim 4 (added with the sub's gate; the parent of THAT commit has no sub gate)
 
     func testTheSubRefusesANonFiniteEntryAndKeepsItsLastTable() {
-        let sub = SubBassVoice()
-        let good = Self.table(-13.7)
-        sub.setTuningCents(good)
-        sub.setTuningCents(Self.table(.nan))
-        XCTAssertEqual(sub.lastTuningCentsForTests ?? [], good,
-                       "the sub took a table with a NaN entry; that pitch class plays at minHz")
+        for bad: Float in [.nan, .infinity, -.infinity] {
+            let sub = SubBassVoice()
+            let good = Self.table(-13.7)
+            sub.setTuningCents(good)
+            sub.setTuningCents(Self.table(bad))
+            XCTAssertEqual(sub.lastTuningCentsForTests ?? [], good,
+                           "the sub took a table with a \(bad) entry; that pitch class plays off-pitch")
+        }
     }
 
     // MARK: - claim 3 (COUNTERWEIGHT)

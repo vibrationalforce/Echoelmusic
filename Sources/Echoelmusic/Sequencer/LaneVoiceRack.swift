@@ -271,12 +271,13 @@ public final class LaneVoiceRack {
     ///
     /// ⚠️ THE FINITE CHECK LIVES HERE AND, since 2026-09-25, in all three voice families too.
     /// Until then `SubBassVoice` and `EchoelPolyDDSP` guarded the SIZE only while
-    /// `BioReactiveSynthVoice` guarded size AND finiteness (6ba5de935 closed the poly, the next
-    /// commit the sub). Without this gate one NaN entry would have retuned poly + sub and been
-    /// REJECTED by bio, leaving
-    /// the rack split across two tuning tables with nothing watching. Unreachable today
+    /// `BioReactiveSynthVoice` guarded size AND finiteness (6ba5de935 closed the poly,
+    /// d371e45b9 the sub). Back then, without this gate one NaN entry would have retuned poly +
+    /// sub and been REJECTED by bio, splitting the rack across two tables. The three families
+    /// now agree, so what this gate still protects TODAY is the rack's own `tuningCents` latch,
+    /// which `attachAll` seeds into every newly attached voice. Unreachable today
     /// (`TuningSystem.pitchClassCents(root:)` is a table lookup), so this is shape and not a
-    /// live defect — but one gate in front of all three is cheaper than three that disagree.
+    /// live defect.
     public func setTuningCents(_ cents: [Float]) {
         guard cents.count == 12, cents.allSatisfy({ $0.isFinite }) else { return }
         tuningCents = cents
