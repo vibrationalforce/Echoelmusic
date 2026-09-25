@@ -920,7 +920,9 @@ public final class PolySynthVoice {
     /// and is connected into the master mixer, so the ENGINE pans downstream;
     /// nothing here runs on the render block.
     public func setPan(_ pan: Float) {
-        sourceNode.pan = max(-1, min(1, pan))
+        // Non-finite ⇒ centre, like `BioReactiveSynthVoice.setPan` and `setGain` below. The bare
+        // `max(-1, min(1, pan))` sent NaN to HARD RIGHT: `min(1, NaN)` is 1 (overnight P8, #416).
+        sourceNode.pan = max(-1, min(1, pan.isFinite ? pan : 0))
     }
 
     /// H4 lane gain: this voice's whole-output level at the mixer, 0…2 (1 = unity;

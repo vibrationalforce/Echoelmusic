@@ -307,7 +307,10 @@ final class TimelineAudioSink: AudioRegionSink {
 
     /// H4 live mixer: the lane's stereo position (B2 pan finally reaches audio lanes).
     func setPan(_ pan: Float) {
-        let p = max(-1, min(1, pan))
+        // Non-finite ⇒ centre, the sibling of `setGain`'s non-finite ⇒ silent one line up. The
+        // bare clamp sent NaN to HARD RIGHT (`min(1, NaN)` is 1) and stored it for every later
+        // region start (overnight P8, #416).
+        let p = max(-1, min(1, pan.isFinite ? pan : 0))
         self.pan = p
         for node in nodes.values { node.pan = p }
         for chain in warpChains.values { chain.player.pan = p }
