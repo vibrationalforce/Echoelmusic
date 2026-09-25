@@ -720,6 +720,12 @@ public final class TimelineStore {
     ///   like every structural region edit. Undoing removes the region; the clip
     ///   stays in its slot (clip slots sit outside the region history, same as
     ///   the audio/video import paths).
+    /// - An ORPHANED composer clip (composer-owned, no region anywhere plays it —
+    ///   its part was removed, undone, or moved past the window) is REUSED rather
+    ///   than a new one minted. Nothing clears a slot (`ClipStore.clear(at:)` has
+    ///   no caller), so without this every remove→Start cycle spent one of the
+    ///   eight slots for good until the grid refused every import. Reused by id,
+    ///   not replaced: an Undo that brings the old part back still finds its clip.
     @discardableResult
     public func ensureComposerRegion(for laneID: UUID, clipStore: ClipStore,
                                      loopBars: Int,
@@ -734,12 +740,23 @@ public final class TimelineStore {
         }) {
             return true
         }
+        let name = "Composed · \(lane.name)"
+        if let orphan = Self.orphanedComposerClip(in: document, clips: clipStore.filledClips,
+                                                  preferring: name),
+           let slot = clipStore.slots.firstIndex(where: { $0?.id == orphan.id }) {
+            if orphan.name != name { clipStore.rename(at: slot, to: name) }
+            addRegion(TimelineRegion(laneID: laneID, clipID: orphan.id,
+                                     startTick: 0, lengthTicks: windowTicks))
+            log.log(.info, category: .audio,
+                    "ensureComposerRegion: reused orphaned composer clip (slot \(slot)) for lane \(lane.name)")
+            return true
+        }
         guard let slot = clipStore.firstEmptySlotIndex else {
             log.log(.warning, category: .audio,
                     "ensureComposerRegion: clip grid full (\(ClipStore.slotCount) slots) — no composer clip for lane \(lane.name)")
             return false
         }
-        let clip = Clip(name: "Composed · \(lane.name)", colorIndex: slot, kind: .midi,
+        let clip = Clip(name: name, colorIndex: slot, kind: .midi,
                         melody: MelodyClip(notes: []), composerOwned: true)
         clipStore.setClip(at: slot, clip)
         addRegion(TimelineRegion(laneID: laneID, clipID: clip.id,
@@ -747,6 +764,16 @@ public final class TimelineStore {
         log.log(.info, category: .audio,
                 "ensureComposerRegion: created 'Composed · \(lane.name)' (slot \(slot), \(max(1, loopBars)) bars)")
         return true
+    }
+
+    /// A composer-owned clip that no region in `document` plays — reusable by
+    /// `ensureComposerRegion`. A clip whose name matches `preferring` wins (it was
+    /// this lane's), else the first in slot order. User clips are never candidates.
+    nonisolated static func orphanedComposerClip(in document: TimelineDocument, clips: [Clip],
+                                                 preferring name: String) -> Clip? {
+        let played = Set(document.regions.map(\.clipID))
+        let orphans = clips.filter { $0.composerOwned && !played.contains($0.id) }
+        return orphans.first(where: { $0.name == name }) ?? orphans.first
     }
 
     /// H12 (founder v281 "Wo bleibt Midi Clip?"): the USER-clip twin of
