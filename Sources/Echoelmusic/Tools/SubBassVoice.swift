@@ -272,6 +272,9 @@ public final class SubBassVoice {
 
     /// Match the instrument's concert pitch so the sub stays in tune with the body.
     public func setTuning(a4Hz: Double) {
+        // A NaN slips through min/max and would reach `feltFrequency` on the render thread;
+        // keep the last good pitch, as `BioReactiveSynthVoice.setTuning` does.
+        guard a4Hz.isFinite else { return }
         self.a4Hz = Float(min(max(a4Hz, 380), 500))
         #if DEBUG
         lastTuningForTests = a4Hz
