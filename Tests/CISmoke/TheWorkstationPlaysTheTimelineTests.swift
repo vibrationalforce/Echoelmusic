@@ -807,10 +807,16 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
                     """)
             }
         }
-        XCTAssertTrue(captions[0].lowercased().contains("does not edit"), """
-            The ready caption must still SAY the boundary out loud. Adding a transport is \
-            exactly the moment a read-only surface starts reading as an editor, and the one \
-            sentence beside the button is where that is cheapest to prevent. Read: \
+        // ⛔ Until Phase 3 / M1 this claim DEMANDED the denial "does not edit". It had been false
+        // since WA4 put move, trim and split on the part bar, and the note editor made it deny
+        // the surface's purpose. The boundary now lives where it is true — each editor's own
+        // refusal sentence — and the caption may no longer carry the stale denial.
+        XCTAssertFalse(captions[0].lowercased().contains("does not edit"), """
+            The ready caption denies editing, but the Workstation edits parts (WA4) and notes \
+            (Phase 3 / M1). A caption states what Play does. Read: \(captions[0])
+            """)
+        XCTAssertTrue(captions[0].lowercased().contains("from the top"), """
+            The ready caption must still say what Play does — the song from the top. Read: \
             \(captions[0])
             """)
     }

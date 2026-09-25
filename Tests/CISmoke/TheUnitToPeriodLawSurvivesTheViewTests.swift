@@ -158,7 +158,7 @@ final class TheUnitToPeriodLawSurvivesTheViewTests: XCTestCase {
             PianoRollView.swift declares the unit→period law again. The view that used to \
             own it was doorless (#178) and is now DELETED (#475) — this file's top level is \
             now `protocol NoteVoice` + its two conformances, `PianoRollModel`, and the \
-            test-only `enum RollSelection`. A second copy here is unreachable AND \
+            `enum RollSelection` (test-only until Phase 3 / M1's note editor took it). A second copy here is unreachable AND \
             authoritative-looking, \
             which is how one decision quietly becomes two (#416). Call RollHitTest instead.
             """)

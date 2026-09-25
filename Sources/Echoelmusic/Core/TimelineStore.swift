@@ -43,6 +43,10 @@
 //        track's parts). All five leave the caller-less set; re-derive, do not patch digits.
 //        ⭐ WA4.4 added `removeLaneIfEmpty`, called from `TrackMix.removeTrack` (the
 //        inspector's "Remove track", empty non-Echoel non-bio tracks only).
+//        ⭐ Phase 3 / M1 added `setClipNotes` (the note editor's one writer, called from
+//        `Studio/PartNoteEditor.swift`) plus two private helpers of the typed history,
+//        `pushUndo` and `apply(_:)` — so the internal-only count below is two short too.
+//        (`undo`/`redo` still sit in the caller-less 46 and have had callers since WA4.3.)
 //   ·  8 used only inside this file — the previous six (automationLaneIndex,
 //        canCombineRegions, migrate, resolveOverlaps, restoreRegions, syncUndoFlags) PLUS
 //        `persist` (46 internal call sites, one per mutating path) and `snapshotForUndo`
@@ -178,15 +182,25 @@ public final class TimelineStore {
 
     // MARK: - Undo / Redo (clip game C2 — founder 2026-07-15 "seamless workflow")
 
-    /// REGION-array snapshots BEFORE each region edit (value-type copies — cheap). Kept
-    /// off observation; the observable `canUndo`/`canRedo` flags drive the toolbar
-    /// buttons. Deliberately NOT whole-document snapshots: lanes/mixer/automation are
-    /// not part of this history, so an undo can never silently revert a fader move,
-    /// rename, or instrument assignment made after the region edit (reviewer-caught
-    /// cross-contamination). All 11 snapshotted commands mutate ONLY `document.regions`.
+    /// ONE step of the song's history, TYPED by what it restores (Phase 3 / M1). Each kind
+    /// reverts exactly its own field and nothing beside it:
+    ///   · `.regions` — the song's parts (value-type copy of `document.regions`, cheap);
+    ///   · `.clipNotes` — ONE MIDI clip's notes, written back through the `ClipStore` the edit
+    ///     went through (an app-lifetime store, carried so `undo()`/`redo()` keep their
+    ///     parameterless shape and nothing has to be attached at launch).
+    /// Deliberately NOT whole-document snapshots: lanes/mixer/automation are not part of this
+    /// history, so an undo can never silently revert a fader move, rename, or instrument
+    /// assignment made after the edit (reviewer-caught cross-contamination). A notes step
+    /// cannot touch a part and a parts step cannot touch a note — the kinds do not overlap.
     /// EchoelAI's "mach das rückgängig" will call exactly `undo()` (store-first, plan C6).
-    @ObservationIgnored private var undoStack: [[TimelineRegion]] = []
-    @ObservationIgnored private var redoStack: [[TimelineRegion]] = []
+    private enum HistoryStep {
+        case regions([TimelineRegion])
+        case clipNotes(clipID: UUID, notes: [Note], clips: ClipStore)
+    }
+
+    /// Kept off observation; the observable `canUndo`/`canRedo` flags drive the buttons.
+    @ObservationIgnored private var undoStack: [HistoryStep] = []
+    @ObservationIgnored private var redoStack: [HistoryStep] = []
     public private(set) var canUndo = false
     public private(set) var canRedo = false
     private static let undoDepth = 50
@@ -194,7 +208,11 @@ public final class TimelineStore {
     /// Call AFTER a method's guards pass and BEFORE its first mutation, so every
     /// snapshot equals exactly one real user command (no dead undo steps).
     private func snapshotForUndo() {
-        undoStack.append(document.regions)
+        pushUndo(.regions(document.regions))
+    }
+
+    private func pushUndo(_ step: HistoryStep) {
+        undoStack.append(step)
         if undoStack.count > Self.undoDepth { undoStack.removeFirst() }
         redoStack.removeAll()
         syncUndoFlags()
@@ -206,22 +224,70 @@ public final class TimelineStore {
         document.regions = regions.filter { r in document.lanes.contains { $0.id == r.laneID } }
     }
 
-    /// Revert the last region edit. No-op with an empty history.
+    /// Apply `step` and return the step that reverses it — or nil, changing nothing, when the
+    /// clip it names is gone or no longer takes notes (then the caller moves on to the next).
+    private func apply(_ step: HistoryStep) -> HistoryStep? {
+        switch step {
+        case .regions(let regions):
+            let inverse = HistoryStep.regions(document.regions)
+            restoreRegions(regions)
+            persist()
+            return inverse
+        case .clipNotes(let clipID, let notes, let clips):
+            guard let clip = clips.clip(id: clipID), ClipNoteEdit.acceptsEdits(clip) else {
+                return nil
+            }
+            let inverse = HistoryStep.clipNotes(clipID: clipID, notes: clip.melody?.notes ?? [],
+                                                clips: clips)
+            guard clips.updateMelody(id: clipID, notes: notes) else { return nil }
+            return inverse
+        }
+    }
+
+    /// Revert the last edit — of the song's parts or of one part's notes. A notes step whose
+    /// clip has since gone is dropped and the one before it is taken, so Undo never does
+    /// nothing while it reads as available. No-op with an empty history.
     public func undo() {
-        guard let previous = undoStack.popLast() else { return }
-        redoStack.append(document.regions)
-        restoreRegions(previous)
-        persist()
+        while let step = undoStack.popLast() {
+            if let inverse = apply(step) {
+                redoStack.append(inverse)
+                break
+            }
+        }
         syncUndoFlags()
     }
 
     /// Re-apply the last undone edit. No-op unless the previous action was `undo()`.
     public func redo() {
-        guard let next = redoStack.popLast() else { return }
-        undoStack.append(document.regions)
-        restoreRegions(next)
-        persist()
+        while let step = redoStack.popLast() {
+            if let inverse = apply(step) {
+                undoStack.append(inverse)
+                break
+            }
+        }
         syncUndoFlags()
+    }
+
+    /// Phase 3 / M1 — replace a MIDI part's notes: the ONE production writer of
+    /// `ClipStore.updateMelody` besides Undo/Redo above, and ONE undo step per call. The
+    /// editor builds a whole new note list locally and commits it here once per action; it
+    /// never writes per gesture sample.
+    ///
+    /// Refused (false, nothing written, no undo step): an unknown clip, an audio clip, a
+    /// composer-owned clip (evolve rewrites it every ~25–45 s — an edit would vanish). An
+    /// unchanged list returns true without a step. A clip shown by several parts changes in
+    /// all of them: parts are windows onto one clip (the editor says so).
+    ///
+    /// Heard from the part's NEXT onset: `TimelineRegionPlayer` re-reads the clip there.
+    @discardableResult
+    public func setClipNotes(clipID: UUID, _ notes: [Note], clips: ClipStore) -> Bool {
+        guard let clip = clips.clip(id: clipID), ClipNoteEdit.acceptsEdits(clip) else {
+            return false
+        }
+        let before = clip.melody?.notes ?? []
+        guard before != notes else { return true }
+        pushUndo(.clipNotes(clipID: clipID, notes: before, clips: clips))
+        return clips.updateMelody(id: clipID, notes: notes)
     }
 
     private func syncUndoFlags() {
@@ -878,11 +944,12 @@ public final class TimelineStore {
     // playing song via the existing refreshStructure path. These were the FIRST
     // writers of the field (until T1 it was play-only scaffolding).
     //
-    // UNDO: deliberately OUTSIDE the region undo history — the undo stack
-    // snapshots ONLY `document.regions` (see snapshotForUndo's contract), so
-    // automation edits are not undoable today. Documented limit, not extended
-    // here (extending the history to a second field would cross-contaminate
-    // region undo — the exact hazard that contract exists to prevent).
+    // UNDO: deliberately OUTSIDE the history — its steps restore parts or one
+    // clip's notes (see `HistoryStep`), never automation, so automation edits
+    // are not undoable today. Documented limit. If they join, they join as a
+    // step KIND of their own (the M1 notes shape), never by widening a parts
+    // snapshot to the whole document — that is the cross-contamination the
+    // typed steps exist to prevent.
 
     /// Lane index for a parameter, matched under EITHER identity (legacy enum
     /// rawValue or registry keyPath alias) so "masterLevel" and

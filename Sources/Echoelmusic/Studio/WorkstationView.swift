@@ -273,6 +273,10 @@ struct WorkstationView: View {
                     // leaf: it reads the song tempo and the clip only inside Split.
                     SelectedPartBar()
                         .padding(.horizontal, 10)
+                    // Phase 3 / M1 — the selected MIDI part's notes, behind its own "Notes"
+                    // switch. A leaf: it reads the clip grid, never the transport.
+                    PartNoteEditor()
+                        .padding(.horizontal, 10)
                 }
                 // WA4 path 7 — the ONE Undo/Redo for the song's parts. Outside the canvas's
                 // `if`, so removing the last part still leaves the way back on screen.

@@ -83,6 +83,8 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         "moveRegion", "duplicateRegion", "removeRegion",
         // WA4.4: "Remove track" in the inspector, reached through `TrackMix.removeTrack`.
         "removeLaneIfEmpty",
+        // Phase 3 / M1: the note editor's one writer, reached from `Studio/PartNoteEditor.swift`.
+        "setClipNotes",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than

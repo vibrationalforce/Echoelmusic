@@ -51,8 +51,8 @@ import Foundation
 //
 // ⚠️ AND THE ORPHANING REACHES THREE NEIGHBOURING FILES, which is the part a
 // file-local header would have missed. `Studio/RollHitTest.swift` and
-// `Studio/RollFitMath.swift` were the view's pure geometry, and both now have **zero
-// production callers**. `Studio/RollNoteOps.swift` is the exception and survives with
+// `Studio/RollFitMath.swift` were the view's pure geometry, and both then had **zero
+// production callers** (since Phase 3 / M1 `Studio/PartNoteEditor` calls both again). `Studio/RollNoteOps.swift` is the exception and survives with
 // one: `PianoRollModel` calls `RollNoteOps.stableSeed(for:)` at `bioHumanize`.
 // ⛔ A GREP RECIPE STOOD HERE AND THIS COMMIT FALSIFIED IT IN THE ACT OF WRITING IT:
 // `git grep -n "RollHitTest\.\|RollFitMath\." -- Sources` "returns only their own
@@ -74,8 +74,9 @@ import Foundation
 // called from `bioHumanize`, which the list above records as callerless. So the natural
 // next cleanup — "retire the callerless members" — silently orphans a third file. Said
 // here so that pass starts knowing it, instead of discovering it afterwards (#472).
-// `enum RollSelection` at the bottom of THIS file is in the same position: nothing in
-// `Sources/` reads it since the view went, and it stays because `Tests/EchoelmusicTests/
+// `enum RollSelection` at the bottom of THIS file WAS in the same position (since Phase 3 /
+// M1 `Studio/PartNoteEditor` holds its selection in one): nothing in
+// `Sources/` read it once the view went, and it stayed because `Tests/EchoelmusicTests/
 // NoteTests.swift` makes eight assertions on it — the `WaveformReducer` shape (#132
 // Slice 5), test-only with the reason written down rather than inferred. (⛔ "nine" stood
 // here and in CLAUDE.md; nine is `grep -c RollSelection`, which counts the

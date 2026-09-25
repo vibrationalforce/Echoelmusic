@@ -1,0 +1,257 @@
+//
+//  PartNoteEditor.swift
+//  Echoelmusic — Studio (Phase 3 / Creation Workflow, MIDI editor slice M1)
+//
+//  WHY THIS EXISTS. The Workstation could place, cut and move a MIDI part but not change a note
+//  in it — `PianoRollView` went with #475 and nothing replaced it. This is the note editor for
+//  the part selected on the Arrange canvas, inline under its part bar: see the part's notes,
+//  tap an empty cell to add one, tap a note to select it, delete the selection, and take any of
+//  it back with the Workstation's one Undo.
+//
+//  ⭐ ONE OWNER, ONE WRITER, ONE HISTORY. The notes are the clip's (`ClipStore`,
+//  `Clip.melody.notes`); the part is a window onto them (`ClipNoteEdit`). Every edit builds the
+//  whole new list locally and commits it ONCE through `TimelineStore.setClipNotes` — one call,
+//  one undo step, on the same stack `SongHistoryRow` drives. `PianoRollModel` is the playback
+//  buffer and is never written from here.
+//
+//  ⚠️ WHAT M1 DOES NOT DO, stated so the surface does not read as more: no drag (move, resize,
+//  marquee — M2), no velocity, quantize or transpose (M3), no scale lock (M4), no playhead, and
+//  the grid is touch-only — VoiceOver hears its summary, not the cells. A composer-owned part is
+//  shown and not edited (evolve rewrites it); a part saved before tick offsets is not shown.
+//
+//  Cold reads only: the selection, `timeline.document` and the clip grid change on a tap, an
+//  import or a composer evolve (~25–45 s) — never on a clock. No transport, tempo or playhead is
+//  read here, so the leaf cannot churn the menu host above it.
+//
+
+import SwiftUI
+
+/// The notes of the MIDI part selected on the Arrange canvas — a "Notes" switch, then the grid.
+@MainActor
+struct PartNoteEditor: View {
+
+    @Environment(WorkstationSelection.self) private var selection
+    @Environment(TimelineStore.self) private var timeline
+    /// View state: whether the grid is open. Not part of the song, never persisted.
+    @State private var isOpen = false
+
+    var body: some View {
+        let document = timeline.document
+        if let regionID = WorkstationSelection.resolvedRegion(selection.regionID,
+                                                              track: selection.trackID, in: document),
+           let region = document.regions.first(where: { $0.id == regionID }),
+           let lane = document.lanes.first(where: { $0.id == region.laneID }),
+           lane.kind == .midi, !lane.isBio {
+            VStack(alignment: .leading, spacing: 6) {
+                Button { isOpen.toggle() } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: isOpen ? "chevron.down" : "chevron.right")
+                            .font(.system(size: 11, weight: .semibold))
+                        Text("Notes").font(EchoelTheme.font(12, .semibold))
+                    }
+                    .foregroundStyle(EchoelTheme.text)
+                    .padding(.horizontal, 8)
+                    .frame(minHeight: 44)
+                    .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                        .fill(EchoelTheme.fill))
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(isOpen ? "Hide the selected part's notes"
+                                           : "Show the selected part's notes")
+                if isOpen {
+                    // Keyed by the part: another part starts with an empty selection and its
+                    // own octave, never with the last part's.
+                    PartNoteGrid(regionID: regionID)
+                        .id(regionID)
+                }
+            }
+        }
+    }
+}
+
+/// The grid of one part's notes. Local state is view state only: which notes are picked and
+/// which octaves are shown.
+@MainActor
+private struct PartNoteGrid: View {
+
+    let regionID: UUID
+
+    @Environment(TimelineStore.self) private var timeline
+    @Environment(ClipStore.self) private var clipStore
+    @State private var picked: RollSelection = .none
+    @State private var octaveShift = 0
+
+    private static let stepWidth: CGFloat = 22
+    private static let rowHeight: CGFloat = 14
+
+    var body: some View {
+        let document = timeline.document
+        if let region = document.regions.first(where: { $0.id == regionID }) {
+            let clip = clipStore.clip(id: region.clipID)
+            let refusal = ClipNoteEdit.refusal(clip: clip, region: region)
+            VStack(alignment: .leading, spacing: 6) {
+                if let clip, clip.kind == .midi, let offset = ClipNoteEdit.windowOffset(of: region) {
+                    let visible = ClipNoteEdit.visibleNotes(clip.melody?.notes ?? [],
+                                                            offsetTicks: offset,
+                                                            lengthTicks: region.lengthTicks)
+                    let steps = ClipNoteEdit.stepCount(lengthTicks: region.lengthTicks)
+                    let range = ClipNoteEdit.pitchRange(of: visible, octaveShift: octaveShift)
+                    let editable = refusal == nil
+                    let pickedCount = visible.filter { picked.contains($0.id) }.count
+                    ScrollView(.horizontal, showsIndicators: true) {
+                        grid(visible: visible, steps: steps, range: range)
+                            .contentShape(Rectangle())
+                            .onTapGesture(coordinateSpace: .local) { location in
+                                tap(location, visible: visible, region: region, offset: offset,
+                                    steps: steps, range: range, editable: editable)
+                            }
+                            .accessibilityElement()
+                            .accessibilityLabel("Note grid: \(visible.count) notes, \(pickedCount) selected")
+                            .accessibilityHint(editable
+                                ? "Touch only in this version: tap an empty cell to add a note, tap a note to select it"
+                                : "Shown, not edited")
+                    }
+                    controls(range: range, pickedCount: pickedCount, editable: editable,
+                             region: region)
+                    if editable {
+                        Text(hint(sharedBy: document.regions.filter { $0.clipID == region.clipID }.count))
+                            .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                    }
+                }
+                if let refusal {
+                    Text(refusal.sentence)
+                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                }
+            }
+        }
+    }
+
+    private func hint(sharedBy parts: Int) -> String {
+        let heard = "A change is heard from the next time the part starts."
+        guard parts > 1 else { return heard }
+        return "This clip plays in \(parts) parts — a change edits all of them. " + heard
+    }
+
+    // MARK: - Drawing
+
+    private func grid(visible: [Note], steps: Int, range: ClosedRange<Int>) -> some View {
+        let stepW = Self.stepWidth
+        let rowH = Self.rowHeight
+        let high = range.upperBound
+        let picked = self.picked
+        return Canvas { context, size in
+            // Rows: the black keys darker, so a pitch reads without a keyboard.
+            for pitch in range {
+                let y = CGFloat(high - pitch) * rowH
+                if [1, 3, 6, 8, 10].contains(((pitch % 12) + 12) % 12) {
+                    context.fill(Path(CGRect(x: 0, y: y, width: size.width, height: rowH)),
+                                 with: .color(EchoelTheme.fill))
+                }
+            }
+            // Columns: bars strong, beats light, sixteenths faint.
+            for step in 0...steps {
+                let x = CGFloat(step) * stepW
+                let color = step % 16 == 0 ? EchoelTheme.borderStrong.opacity(0.5)
+                    : step % 4 == 0 ? EchoelTheme.border : EchoelTheme.border.opacity(0.4)
+                context.fill(Path(CGRect(x: x, y: 0, width: step % 16 == 0 ? 1 : 0.5,
+                                         height: size.height)), with: .color(color))
+            }
+            // Octave names on the C rows.
+            for pitch in range where pitch % 12 == 0 {
+                let y = CGFloat(high - pitch) * rowH + rowH / 2
+                context.draw(Text("C\(pitch / 12 - 1)").font(EchoelTheme.font(9))
+                                .foregroundStyle(EchoelTheme.dim),
+                             at: CGPoint(x: 3, y: y), anchor: .leading)
+            }
+            // Notes, in draw order: later on top — the order `RollHitTest` reads.
+            for note in visible where range.contains(note.pitch) {
+                let rect = CGRect(x: CGFloat(note.startStep) * stepW + 1,
+                                  y: CGFloat(high - note.pitch) * rowH + 1,
+                                  width: Swift.max(2, CGFloat(note.lengthSteps) * stepW - 2),
+                                  height: rowH - 2)
+                let shape = Path(roundedRect: rect, cornerRadius: 2)
+                let isPicked = picked.contains(note.id)
+                context.fill(shape, with: .color(isPicked ? EchoelTheme.text : EchoelTheme.accent))
+            }
+        }
+        .frame(width: CGFloat(steps) * stepW, height: CGFloat(range.count) * rowH)
+        .background(EchoelTheme.surface)
+    }
+
+    // MARK: - Actions (one commit each)
+
+    private func tap(_ location: CGPoint, visible: [Note], region: TimelineRegion, offset: Int,
+                     steps: Int, range: ClosedRange<Int>, editable: Bool) {
+        let hit = RollHitTest.classify(x: Double(location.x), y: Double(location.y),
+                                       notes: visible,
+                                       stepW: Double(Self.stepWidth), rowH: Double(Self.rowHeight),
+                                       highPitch: range.upperBound, lowPitch: range.lowerBound,
+                                       stepCount: steps, edgeSlop: 0)
+        switch hit {
+        case .body(let id), .rightEdge(let id):
+            picked = picked.contains(id) ? .none : .single(id)
+        case .empty(let pitch, let step):
+            guard editable, let clip = clipStore.clip(id: region.clipID),
+                  let added = ClipNoteEdit.adding(pitch: pitch, step: step,
+                                                  to: clip.melody?.notes ?? [],
+                                                  offsetTicks: offset,
+                                                  lengthTicks: region.lengthTicks) else { return }
+            if timeline.setClipNotes(clipID: region.clipID, added.notes, clips: clipStore) {
+                picked = .single(added.id)
+            }
+        }
+    }
+
+    private func deletePicked(region: TimelineRegion) {
+        let ids: Set<UUID>
+        switch picked {
+        case .none: ids = []
+        case .single(let id): ids = [id]
+        case .group(let group): ids = group
+        }
+        guard !ids.isEmpty, let clip = clipStore.clip(id: region.clipID) else { return }
+        let remaining = ClipNoteEdit.removing(ids, from: clip.melody?.notes ?? [])
+        if timeline.setClipNotes(clipID: region.clipID, remaining, clips: clipStore) {
+            picked = .none
+        }
+    }
+
+    // MARK: - Controls
+
+    private func controls(range: ClosedRange<Int>, pickedCount: Int, editable: Bool,
+                          region: TimelineRegion) -> some View {
+        HStack(spacing: 6) {
+            button("Lower", "chevron.down", enabled: range.lowerBound > 0,
+                   label: "Show the octave below") { octaveShift -= 1 }
+            button("Higher", "chevron.up", enabled: range.upperBound < 127,
+                   label: "Show the octave above") { octaveShift += 1 }
+            if editable {
+                button("Delete", "trash", enabled: pickedCount > 0,
+                       label: pickedCount == 1 ? "Delete the selected note"
+                                               : "Delete the \(pickedCount) selected notes") {
+                    deletePicked(region: region)
+                }
+            }
+        }
+    }
+
+    private func button(_ title: String, _ systemImage: String, enabled: Bool, label: String,
+                        action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: systemImage).font(.system(size: 11, weight: .semibold))
+                Text(title).font(EchoelTheme.font(11, .semibold)).lineLimit(1)
+            }
+            .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)
+            .padding(.horizontal, 8)
+            .frame(minHeight: 44)
+            .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                .fill(EchoelTheme.fill))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .accessibilityLabel(label)
+    }
+}

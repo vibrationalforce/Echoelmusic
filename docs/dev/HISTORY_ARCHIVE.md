@@ -346,7 +346,7 @@ Bulk-deletion commits cited below:
   - `MIDI/PianoRollView` (2025-12 → 03-08).
   - `Views/PianoRollView` (03-09 → 03-25).
   - `Studio/PianoRollView` (06-09 → #475, 2026-08-07).
-  - `RollHitTest`, `RollFitMath` and `RollNoteOps` survive as orphans.
+  - `RollHitTest`, `RollFitMath` and `RollNoteOps` survived as orphans; since Phase 3 / M1 `PartNoteEditor` calls `RollHitTest.classify` and (via `ClipNoteEdit`) `RollFitMath.medianPitch` again — the REBUILD this row names, started.
   - `PianoRollModel` is **CURRENT**: the note engine plus the `MusicalFrame` publisher.
 - **Removed because:** founder, "Pianoroll soll raus".
 - **Scope / Class:** YES / **REBUILD** (reuse the Roll* math and the #470 unit-to-period law)

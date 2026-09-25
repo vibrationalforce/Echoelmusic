@@ -168,13 +168,14 @@ public struct WorkstationSummary: Equatable, Sendable {
         return "Unavailable: this song has no parts on a track that plays."
     }
 
-    /// The sentence beside the button. It must never promise editing — this surface reads
-    /// the song and now starts it; it still cannot change a note. ⚠️ Kept after S1 on purpose:
-    /// the tempo row corrects a FILE's own tempo (a clip property, inaudible until Warp), not a
-    /// part's place, length or content — so "does not edit them" stays true of the parts.
+    /// The sentence beside the button: what Play does, and nothing it cannot. ⛔ Until Phase 3 /
+    /// M1 it ended "— this view still does not edit them", and that denial had been false since
+    /// WA4 put move, trim and split on the part bar; with the note editor it would deny the
+    /// surface's own purpose. A caption states what the BUTTON does — it is not where the
+    /// editing boundary is kept (that is each editor's own refusal sentence).
     public static func transportCaption(playing: Bool, startable: Bool) -> String {
         if playing { return "Playing from the top on the shared transport." }
-        if startable { return "Plays the existing parts — this view still does not edit them." }
+        if startable { return "Plays the song's parts from the top." }
         return "Nothing to play yet."
     }
 
