@@ -16,7 +16,9 @@
 //    region, clip and media reference included; a legacy project opens on an empty song; a
 //    refused project leaves both stores untouched. The app-wide stores are restored in `defer`
 //    through the WA4-S1 replace APIs.
-// 2. END-TO-END (pure): the rescue counts only the user's parts, never the composer's.
+// 2. END-TO-END (pure): the rescue counts only the user's parts, never the composer's; the ONE
+//    recovery slot keeps the richer half of old and new — never an empty take over a composed
+//    one (review H1), never a blank song over the user's (review H2).
 // 3. SOURCE: the library row is the one door that restores a song, and it asks for a refusal
 //    BEFORE `open(_:)` and restores AFTER it; Live Colabo still calls `open(_:)` alone; Save and
 //    the recovery slot both capture through `withSession`.
@@ -173,6 +175,52 @@ final class TheSessionSaveOpensTheSameSongTests: XCTestCase {
                        "a part whose clip is gone holds nothing to recover")
     }
 
+    /// Review of `2eb3cb84d`, H1/H2: the ONE recovery slot must never trade what it holds for
+    /// something emptier. H1 — no live take, a song with the user's parts: the slot kept its
+    /// SESSION fresh but wrote an empty take over the last composed one. H2 — a live take over
+    /// a blank song (two pre-Session Opens in a row): the slot traded the user's song for the
+    /// blank one. The existing empty-take guards could not see either (they pin a guard line
+    /// that H3 had put behind a condition); this drives the rule itself.
+    func testTheRecoverySlotKeepsTheRicherHalf() throws {
+        var live = Self.take
+        live.id = Project.autosaveSlotID
+        live.notes = [Note(pitch: 60, startStep: 0, lengthSteps: 2, velocity: 0.7, role: .lead)]
+        live.setSessionEnvelope(Data("live song".utf8))
+        var slot = Self.take
+        slot.id = Project.autosaveSlotID
+        slot.name = "Autosave · the take before"
+        slot.notes = [Note(pitch: 67, startStep: 4, lengthSteps: 2, velocity: 0.5, role: .lead)]
+        slot.setSessionEnvelope(Data("the user's song".utf8))
+
+        // H1 — no take, user parts: the slot's take stays, only its Session moves on.
+        let h1 = try XCTUnwrap(SessionSaveOpen.recoveryRow(live: live, takeIsLive: false,
+                                                           songHasUserParts: true, existingSlot: slot))
+        XCTAssertEqual(h1.notes, slot.notes, "an empty roll must not overwrite the last composed take")
+        XCTAssertEqual(h1.name, slot.name)
+        XCTAssertEqual(h1.sessionEnvelope, live.sessionEnvelope, "…while the user's song IS recorded")
+
+        // H2 — a take over a song with none of the user's parts: the slot's song stays.
+        let h2 = try XCTUnwrap(SessionSaveOpen.recoveryRow(live: live, takeIsLive: true,
+                                                           songHasUserParts: false, existingSlot: slot))
+        XCTAssertEqual(h2.notes, live.notes)
+        XCTAssertEqual(h2.sessionEnvelope, slot.sessionEnvelope,
+                       "a blank song must not replace the one the slot rescued")
+
+        // Nothing worth recording leaves the slot alone; both halves live replace it whole.
+        XCTAssertNil(SessionSaveOpen.recoveryRow(live: live, takeIsLive: false,
+                                                 songHasUserParts: false, existingSlot: slot))
+        XCTAssertEqual(SessionSaveOpen.recoveryRow(live: live, takeIsLive: true,
+                                                   songHasUserParts: true, existingSlot: slot), live)
+        XCTAssertEqual(SessionSaveOpen.recoveryRow(live: live, takeIsLive: false,
+                                                   songHasUserParts: true, existingSlot: nil), live,
+                       "with no slot yet there is nothing to overwrite")
+        var bare = slot
+        bare.setSessionEnvelope(nil)
+        XCTAssertEqual(SessionSaveOpen.recoveryRow(live: live, takeIsLive: true,
+                                                   songHasUserParts: false, existingSlot: bare), live,
+                       "a slot with no song has none to keep")
+    }
+
     // MARK: 3 — source: one door restores a song, in the right order
 
     func testTheLibraryRowIsTheOneDoorThatReplacesTheSong() throws {
@@ -206,8 +254,10 @@ final class TheSessionSaveOpensTheSameSongTests: XCTestCase {
         let code = try studio()
         XCTAssertTrue(code.contains("projects.save(withSession(currentProject()))"),
                       "Save captures the song")
-        XCTAssertTrue(code.contains("projects.save(withSession(take))"),
-                      "the recovery slot captures the song it is rescuing")
+        XCTAssertTrue(code.contains("live: withSession(take), takeIsLive: takeIsLive, songHasUserParts: songHasUserParts,"),
+                      "the recovery slot captures the song it is rescuing, through the keep-the-richer rule")
+        XCTAssertTrue(code.contains("existingSlot: projects.project(id: Project.autosaveSlotID)) else { return }"),
+                      "…and hands the rule the slot it would overwrite")
         XCTAssertTrue(code.contains("currentSession: { currentProject(named: \"Shared session\") }"),
                       "Live Colabo shares the take WITHOUT the song (no withSession there)")
         XCTAssertTrue(code.contains("SessionSaveOpen.songHasUserParts("),

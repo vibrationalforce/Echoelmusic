@@ -10,10 +10,13 @@
 //  An envelope that swallowed the library would turn "open a project" into "replace the app's
 //  state": the user would lose their own presets because they loaded somebody else's piece.
 //
-//  ⚠️ IMPORTER FIRST, WRITER SECOND — nothing writes this type yet, and that is the whole
+//  ⚠️ IMPORTER FIRST, WRITER SECOND — until WA4-S2/S3 nothing wrote this type, and that was the whole
 //  risk mitigation. `DMMWProjectImport` reads the five existing roots into this shape; the old
 //  files keep being the truth on disk. If the import is wrong, nothing is lost, because the
 //  sources are untouched. The writer is its own slice and its own decision.
+//  ⭐ WA4-S2/S3 (2026-09-25): the writer landed — the project row carries an encoded envelope
+//  (`Core/ProjectSession.swift`), filled at Save by `Core/SessionSaveOpen.swift`. The five
+//  roots stay the LIVE truth; the envelope is what a saved project reopens.
 //
 //  ⭐ WRITING THE CODE CORRECTED THE DESIGN, and the correction is recorded rather than
 //  quietly applied. The design document said `Project.notes` would be "lifted into a region"

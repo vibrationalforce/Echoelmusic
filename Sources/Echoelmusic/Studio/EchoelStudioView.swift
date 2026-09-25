@@ -2411,7 +2411,7 @@ struct EchoelStudioView: View {
     /// no observation at all.
     private var quickDoorRow: some View {
         HStack(spacing: 8) {
-            Button { showOpen = true } label: {
+            Button { openNote = nil; showOpen = true } label: {
                 EchoelIconTile(systemImage: "tray.and.arrow.up", expands: true,
                                enabled: !projects.projects.isEmpty)
             }
@@ -11546,6 +11546,10 @@ struct EchoelStudioView: View {
             return
         }
         openNote = nil
+        // The song is about to be replaced: stop its player BEFORE `open(p)`, so the take is not
+        // loaded into a still-running arrangement (review L3). Stopping changes no document —
+        // the rescue inside `open(p)` still records the song being replaced.
+        timelinePlayer.stop()
         open(p)
         SessionSaveOpen.restoreSong(of: p, timeline: timelineStore, clips: clipStore,
                                     player: timelinePlayer)
@@ -11607,7 +11611,13 @@ struct EchoelStudioView: View {
         take.name = Project.autosaveNamePrefix + take.name
         take.id = Project.autosaveSlotID
         // Captured AFTER the slot's id and name are set, so the Session's identity is the row's.
-        projects.save(withSession(take))
+        // The slot keeps the richer of old and new per half — never an empty take over a
+        // composed one, never a blank song over the user's (`recoveryRow`, review H1/H2).
+        let takeIsLive = hasComposed && !pianoRoll.notes.isEmpty
+        guard let row = SessionSaveOpen.recoveryRow(
+            live: withSession(take), takeIsLive: takeIsLive, songHasUserParts: songHasUserParts,
+            existingSlot: projects.project(id: Project.autosaveSlotID)) else { return }
+        projects.save(row)
     }
 
     /// ⭐ RESCUE BEFORE REPLACE. Nearly every line below overwrites the live take — style, key,
@@ -11690,6 +11700,9 @@ struct EchoelStudioView: View {
     /// `autosaveTake()`'s own `guard hasComposed, !pianoRoll.notes.isEmpty` is load-bearing for
     /// this caller too: without it, opening a project while the roll is empty would write an
     /// EMPTY take over a good recovery point, which is the exact trap that guard was added for.
+    /// ⚠️ Since WA4-S3 that guard is skipped when the SONG holds the user's parts, and what then
+    /// keeps an empty take off the slot is `SessionSaveOpen.recoveryRow`: it keeps the slot's
+    /// take and replaces only its Session (review H1 of `2eb3cb84d`).
     private func open(_ p: Project) {
         if p.id != Project.autosaveSlotID { autosaveTake() }
         // Same clamp as launch: a project saved before the genre re-curation (#125) can

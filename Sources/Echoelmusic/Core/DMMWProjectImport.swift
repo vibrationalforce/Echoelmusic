@@ -3,7 +3,8 @@
 //  Echoelmusic — Core (DMMW M2: the importer, and ONLY the importer)
 //
 //  ⛔ THERE IS NO WRITER IN THIS FILE, AND ITS ABSENCE IS THE DESIGN. The five song roots on
-//  disk stay the truth; this reads them into one `DMMWProject` value. Nothing calls it yet.
+//  disk stay the truth; this reads them into one `DMMWProject` value. Its one production caller is
+//  `SessionSaveOpen.capturing` (WA4-S3, Save and the recovery slot).
 //  If a rule below turns out to be wrong, the cost is a corrected function — not a user's
 //  piece, because the sources were never touched. The writer is its own slice, with its own
 //  gate and its own founder-visible decision about the on-disk format.

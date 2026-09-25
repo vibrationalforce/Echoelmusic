@@ -99,6 +99,10 @@ public final class ProjectStore {
     public func importProject(fromDocument data: Data) throws -> Project {
         var p = try JSONDecoder().decode(Project.self, from: data)
         p.id = UUID()
+        // An arriving document never brings a song: a Session names another device's media
+        // paths and clip grid (WA4-S2/H5 — `sharedDocumentData` strips it on the way out; a
+        // hand-made or future file may still carry one, and it would be installed on Open).
+        p.setSessionEnvelope(nil)
         return save(p)
     }
 

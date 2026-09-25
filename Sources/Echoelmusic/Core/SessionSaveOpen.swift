@@ -14,9 +14,14 @@
 //    current one. A project saved before Sessions existed carries no song, so it opens on a
 //    fresh, empty song rather than inheriting the previous project's — the legacy take is an
 //    import source, never a window onto someone else's timeline.
-//  · A take that ARRIVES (a shared document, a Live Colabo take) is not a project: it has no
-//    Session by construction (`sharedDocumentData` strips it) and it loads into the
-//    instrument without touching the song. Those callers never reach `restoreSong`.
+//  · A take that ARRIVES LIVE (Live Colabo) is not a project: it has no Session by
+//    construction (`sharedDocumentData` strips it) and loads into the instrument without
+//    touching the song — that caller never reaches `restoreSong`. ⚠️ A shared DOCUMENT imported
+//    through the Import button becomes a library ROW (its Session stripped on import, so no
+//    foreign media paths arrive); opening that row IS "open this project", so it opens on a
+//    fresh song like any pre-Session row — and the song it replaces is kept by the recovery
+//    slot (`recoveryRow`). (⛔ The first wording said a shared document never replaces the
+//    song; the review of `2eb3cb84d` measured the import door and it does.)
 //  · A Session this build cannot open — newer, damaged, or with a clip grid of another size —
 //    REFUSES the whole Open before anything changes, and says why. Never half an open.
 //  · Song form is CAPTURED and not yet restored (its store has no replace API; it is the legacy
@@ -104,6 +109,34 @@ public enum SessionSaveOpen {
     }
 
     // MARK: Rescue
+
+    /// What the ONE recovery slot should hold after a departure or an Open's rescue — or nil to
+    /// leave it untouched. `live` is the current take already carrying the live song as its
+    /// Session (slot id and name set). Two rules, each closing a way the slot LOST data
+    /// (review of `2eb3cb84d`, H1/H2):
+    /// · No live take, but the song holds the user's parts → keep the slot's TAKE and replace
+    ///   only its Session. Before, a launch with an empty roll wrote an empty take over the
+    ///   last composed one the first time the app left the foreground.
+    /// · A live take, but the song holds none of the user's parts → keep the slot's SESSION.
+    ///   Before, opening two pre-Session projects in a row traded the user's song (rescued by
+    ///   the first Open) for the blank one the first Open installed.
+    /// The slot is a recovery point: in doubt it keeps the richer of the two, never the emptier.
+    public static func recoveryRow(live: Project, takeIsLive: Bool, songHasUserParts: Bool,
+                                   existingSlot: Project?) -> Project? {
+        guard takeIsLive || songHasUserParts else { return nil }
+        guard let slot = existingSlot else { return live }
+        if !takeIsLive {
+            var kept = slot
+            kept.setSessionEnvelope(live.sessionEnvelope)
+            return kept
+        }
+        if !songHasUserParts, slot.sessionEnvelope != nil {
+            var row = live
+            row.setSessionEnvelope(slot.sessionEnvelope)
+            return row
+        }
+        return live
+    }
 
     /// Whether the song holds anything the USER put there — a part whose clip is not the
     /// composer's. The composer's own part is re-made on the next Start, so a song holding
