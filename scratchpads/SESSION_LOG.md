@@ -39806,3 +39806,16 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - ⛔ **Review 12 CRITICAL:** `c06ac2167` turned `TheAUv3TailCoversTheReverbTests` claim 3 RED (it drove the runaway edge with room 1.2). Repaired in `e24010296` (edge driven by an infinite release; `tailSeconds` doc updated). Playbook row in HARNESS_LEDGER.
 - Review 12 LOW prose → `52c8f95f6`. **The commit message of `c06ac2167` carries two sentences that were retracted: "until re-enabled or drained" and "sizes the AUv3 tailTime"** (amend is forbidden).
 - Gates: Compile Check was GREEN on `aa491798a`; the one for head `52c8f95f6` is pending. BfT was GREEN on `5fa78a958` (the 01:39 commit); the backlog runs ~4.5 h behind.
+
+## 2026-09-25 ~06:40 UTC — Overnight P8: tone-system table finite gate (poly + sub) + reviews 13/14
+
+- `6ba5de935` `EchoelPolyDDSP.setTuningCents` and the `PolySynthVoice` mirror now refuse a table with a non-finite entry. This was sweep candidate 2: the studio calls the voices directly, past the rack's gate. Guard: `TheToneSystemTableRefusesANonFiniteEntryTests`. LATENT: the only producer is the finite `TuningSystem` table.
+- Review 13 (independent) found no code defect. Its prose findings were fixed in `fe7865a14`. The real scope was one silent pitch class, via the per-voice guard, NOT the bus. ⛔ **The commit message of `6ba5de935` carries "poly mix guard zeroed every sample" and "No older test writes a non-finite table"** (amend is forbidden).
+- `d371e45b9` `SubBassVoice.setTuningCents` gets the same finite gate. It used to play a NaN entry at minHz, off-pitch. Claim 4 runs through the Debug seam. `bf97f8bd4` grades claim 4 against its own parent.
+- Review 14 (independent) found no code defect, three prose findings and two LOW guard gaps. All are fixed in `4055a5dd2`:
+  - The other voices were quieter, not "unaffected": `polyMakeupTarget` counts the silent voice.
+  - The LaneVoiceRack doc cites `d371e45b9` and says the gate now protects the rack's own `tuningCents` latch.
+  - The guard header names the sub and the Debug-seam green kind.
+  - Claim 4 loops over NaN/±inf.
+- ⚠️ `4055a5dd2` is builder-made and has NOT been independently reviewed.
+- Gates: the Compile Check on `4055a5dd2` is queued. It covers the breath swell, reverb, poly-tuning and sub-tuning Sources changes, none of which had their own Compile Check (all were superseded). BfT is ~4.5 h behind.
