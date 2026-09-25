@@ -34,6 +34,11 @@
 //     and the loop alone is bounded by `phases.count`. Red on BOTH earlier trees, because it
 //     names this commit's spelling — so it is a FORWARD guard, not a regression count; what it
 //     pins is the split that caae8e304 got wrong.
+//   · claim 5 is END-TO-END BEHAVIOUR and the one that tests the SOUND, not the spelling
+//     (suggested by review 5). The same claim transcribed on each tree: green on the tree
+//     before caae8e304, RED on caae8e304 (the 16-cell samples are exactly twice the 64-cell
+//     ones), and green on the parent of this commit. It is a regression guard for the +6 dB
+//     defect, not for this commit.
 //   · Not executed (no toolchain); what `Build for Testing` proves is compilation only.
 
 import XCTest
@@ -100,6 +105,33 @@ final class ASmallCellularTextureCannotTrapTests: XCTestCase {
         XCTAssertTrue(body.contains("for i in 0..<min(partials, phases.count)"), """
             The spectral loop is no longer bounded by `phases.count`; a texture with fewer \
             cells than partials indexes past `phases` on the render thread.
+            """)
+    }
+
+    /// claim 5 — BEHAVIOUR: the cell count does not change the level of the spectral mode.
+    /// At 3 kHz / 48 kHz only partials 0…7 are below Nyquist, so a 16-cell and a 64-cell
+    /// texture play the SAME partials from the SAME grid and must render the same samples. The
+    /// grid's live cells reach columns 0…7 of the playing row from generation 93 on (simulated),
+    /// so 200 generations are rendered and the output must not be silent.
+    func testTheCellCountDoesNotChangeTheSpectralLevel() {
+        func render(cells: Int) -> [Float] {
+            let texture = EchoelCellular(cellCount: cells, sampleRate: 48000)
+            texture.synthMode = .spectral2D
+            texture.frequency = 3000
+            texture.evolutionRate = 1000             // 48 frames per generation
+            let frames = 48 * 200
+            var buffer = [Float](repeating: 0, count: frames)
+            texture.render(buffer: &buffer, frameCount: frames)
+            return buffer
+        }
+        let small = render(cells: 16)
+        let large = render(cells: 64)
+        XCTAssertGreaterThan(large.map { abs($0) }.max() ?? 0, 0,
+                             "premise: the spectral mode sounded within 200 generations")
+        XCTAssertEqual(small, large, """
+            A 16-cell and a 64-cell texture render different spectral samples at 3 kHz, where \
+            both play only partials 0…7. The normalisation must not depend on the cell count \
+            (caae8e304 made the 16-cell texture exactly 2× louder, review 4).
             """)
     }
 
