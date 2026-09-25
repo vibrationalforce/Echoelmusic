@@ -556,6 +556,9 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         }
         gainMirror.value = EchoelBodyVibeDevice.seed(creativeValues, synth: synth, texture: texture)
         reverb.reset()
+        // #202: the first block of this session plays the host value, not a glide out of the
+        // mix the last session ended on — a re-allocated unit starts like a fresh one.
+        reverb.mixGlidePrimed = false
 
         // Start generating
         synth.amplitude = 0.6

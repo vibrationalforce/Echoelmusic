@@ -19,7 +19,13 @@
 //   on a silent input `processStereo` returns `wet * m` (the dry term is `0 * (1 - m)`, exactly
 //   zero), and a twin stage at mix 1 returns `wet` from an identical tank — the tank's input does
 //   not depend on the mix while the mix is above 0 — so the ratio of the two IS the blend.
-// · HOST — automating address 6 in AUM and hearing no zipper — stays owed (WA3-5).
+// · claim 4 is END-TO-END on the same types: a zero-length call changes no state (review C1).
+// · claim 5 is a SOURCE-TEXT SCAN of the extension: `allocateRenderResources` un-primes the
+//   glide beside its tank reset, so a re-allocated unit starts like a fresh one.
+// · HOST — automating address 6 in AUM and hearing no zipper — stays owed (WA3-5). ⚠️ The AUv3
+//   render block reads only `.MIDI` render events; a host that schedules address 6 as a
+//   `.parameter`/`.parameterRamp` render event reaches the unit through the observer at block
+//   rate, never sample-accurately. That is outside this slice and recorded, not claimed.
 //
 // ⚠️ WHAT MUST NOT BE READ INTO THIS (#364). It does not freeze a LINEAR ramp or a one-block glide
 // length; a later slice may choose another shape. It freezes: the first sample of a changed block
@@ -39,6 +45,9 @@
 //   glide in float32; returning `end` is load-bearing, not tidiness.
 // · `TheBodyVibeReverbIsHeardAndAnchoredTests` claim 9 re-driven on the new body: held 0.162,
 //   risen 0.0 — still green.
+// Claims 4–5 were added with the review repair (C1 + the re-allocation note): on `735a91968`
+// claim 4 is a REGRESSION (the `defer` stored the target on a zero-length call and primed a
+// fresh stage) and claim 5 is a REGRESSION (no un-prime in `allocateRenderResources`).
 
 import Foundation
 import XCTest
@@ -48,6 +57,7 @@ final class TheAUv3ReverbMixGlidesAcrossABlockTests: XCTestCase {
 
     private static let rate: Float = 48000
     private static let block = 512
+    private static let audioUnit = "Sources/EchoelmusicAUv3/EchoelmusicAudioUnit.swift"
 
     // MARK: - claim 1 (the ramp's arithmetic)
 
@@ -171,5 +181,88 @@ final class TheAUv3ReverbMixGlidesAcrossABlockTests: XCTestCase {
                 """)
             XCTAssertTrue(stage.mixGlidePrimed, "the first block did not prime the glide for the next one")
         }
+    }
+
+    // MARK: - claim 4 (a zero-length call changes nothing)
+
+    func testAZeroLengthRenderLeavesTheGlideUntouched() {
+        let synth = EchoelDDSP(sampleRate: Self.rate)
+        let stage = EchoelReverb(sampleRate: Self.rate)
+        var empty: [Float] = []
+        var emptyRight: [Float] = []
+        func renderNothing() {
+            empty.withUnsafeMutableBufferPointer { l in
+                emptyRight.withUnsafeMutableBufferPointer { r in
+                    EchoelBodyVibeDevice.renderSpace(stage, synth: synth, left: l, right: r, count: 0)
+                }
+            }
+        }
+
+        synth.reverbMix = 0.6
+        renderNothing()
+        XCTAssertFalse(stage.mixGlidePrimed, "a zero-length call primed the glide — nothing was played")
+        XCTAssertEqual(stage.mix, 0.25, "a zero-length call stored a target no sample played")
+
+        // Primed at 0.2, then the host jumps to 0.9 during a zero-length call.
+        var left = [Float](repeating: 0.1, count: Self.block)
+        var right = [Float](repeating: 0, count: Self.block)
+        synth.reverbMix = 0.2
+        left.withUnsafeMutableBufferPointer { l in
+            right.withUnsafeMutableBufferPointer { r in
+                EchoelBodyVibeDevice.renderSpace(stage, synth: synth, left: l, right: r, count: Self.block)
+            }
+        }
+        synth.reverbMix = 0.9
+        renderNothing()
+        XCTAssertEqual(stage.mix, 0.2, """
+            A zero-length call stored the new target 0.9. The next real block would then start ON \
+            it and play the whole change at its first sample — the block-edge step #202 removes.
+            """)
+    }
+
+    // MARK: - claim 5 (SOURCE-TEXT SCAN — a re-allocated unit starts like a fresh one)
+
+    func testTheAudioUnitUnprimesTheGlideWhenItReallocates() throws {
+        let code = SourceText.codeOnly(try text(Self.audioUnit))
+        let allocate = try XCTUnwrap(Self.body(
+            startingWith: "public override func allocateRenderResources() throws", in: code),
+            "ANCHOR MISSING: `allocateRenderResources` in \(Self.audioUnit) (#454)")
+        guard let reset = allocate.range(of: "reverb.reset()"),
+              let unprime = allocate.range(of: "reverb.mixGlidePrimed = false") else {
+            return XCTFail("""
+                `allocateRenderResources` no longer resets the tank AND un-primes the glide. The \
+                first block of a re-allocated unit would glide out of the last session's mix.
+                """)
+        }
+        XCTAssertLessThan(reset.lowerBound, unprime.lowerBound, "un-prime beside the tank reset, after it")
+        XCTAssertEqual(code.components(separatedBy: "mixGlidePrimed").count - 1, 1,
+                       "the extension writes the glide flag once, in allocation — the render path owns it otherwise")
+    }
+
+    // MARK: - helpers
+
+    private static func body(startingWith anchor: String, in code: String) -> String? {
+        guard let start = code.range(of: anchor) else { return nil }
+        var depth = 0
+        var out = ""
+        for ch in code[start.lowerBound...] {
+            if ch == "{" { depth += 1 }
+            if depth > 0 { out.append(ch) }
+            if ch == "}" {
+                depth -= 1
+                if depth == 0 { return out }
+            }
+        }
+        return nil
+    }
+
+    private func text(_ relative: String) throws -> String {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let url = root.appendingPathComponent(relative)
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw XCTSkip("\(relative) is not present — source-text claim cannot run (#454)")
+        }
+        return try String(contentsOf: url, encoding: .utf8)
     }
 }

@@ -28,8 +28,9 @@ public final class EchoelReverb: @unchecked Sendable {
     /// heard, and gliding from it would put a wet fade on the first block of a dry plugin.
     /// Nothing else reads it; the app's FX chain sets `mix` directly and never glides.
     /// `reset()` leaves it alone on purpose: the rising-edge reset in `renderSpace` must still
-    /// glide up from 0, and a re-allocated AUv3 glides for one block from the mix its last
-    /// session ended on — under the synth's attack, from an emptied tank.
+    /// glide up from 0. The AUv3's `allocateRenderResources` clears it beside its own `reset()`,
+    /// so a re-allocated unit starts like a fresh one instead of gliding out of the last
+    /// session's mix.
     public var mixGlidePrimed = false
     /// Stereo width of the wet signal [0…1].
     public var width: Float = 1.0

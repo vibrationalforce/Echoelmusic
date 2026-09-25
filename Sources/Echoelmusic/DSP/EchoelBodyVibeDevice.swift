@@ -176,7 +176,8 @@ public enum EchoelBodyVibeDevice {
     /// `applyBioReactive`). The texture stays dry: the old convolution stage it replaces
     /// also sat on the synth only.
     ///
-    /// RENDER-THREAD SAFE: one scalar store, then `EchoelReverb.processStereo` per sample, whose
+    /// RENDER-THREAD SAFE: scalar arithmetic and one `mix` store per sample, then
+    /// `EchoelReverb.processStereo` per sample, whose
     /// tanks are pre-allocated in its `init` (the same stage the app's FX chain runs on its
     /// audio thread). No allocation, lock, dictionary, string, actor or I/O. At mix 0,
     /// `processStereo` returns its input unchanged, so `left == right ==` the dry synth.
@@ -198,11 +199,15 @@ public enum EchoelBodyVibeDevice {
     /// Arithmetic only, one division per sample. The first block does not glide (see
     /// `EchoelReverb.mixGlidePrimed`), so a fresh stage at mix 0 stays exactly dry. The rising
     /// edge above still resets the tank first, so a glide up from 0 starts from a silent room.
-    /// A non-finite target plays as 0 — what `processStereo` already made of it.
+    /// A non-finite target plays as 0 — what `processStereo` already made of it. A zero-length
+    /// call returns before touching ANY state: storing the target there would let the next real
+    /// block start on it unplayed — the very step this removes (review of `735a91968`, C1).
     @inline(__always)
     public static func renderSpace(_ reverb: EchoelReverb, synth: EchoelDDSP,
                                    left: UnsafeMutableBufferPointer<Float>,
                                    right: UnsafeMutableBufferPointer<Float>, count: Int) {
+        let n = Swift.min(count, Swift.min(left.count, right.count))
+        guard n > 0 else { return }
         let next = synth.reverbMix
         let target: Float = next.isFinite ? next : 0
         let previous = reverb.mix
@@ -210,8 +215,6 @@ public enum EchoelBodyVibeDevice {
         let start = reverb.mixGlidePrimed && previous.isFinite ? previous : target
         reverb.mixGlidePrimed = true
         defer { reverb.mix = target }
-        let n = Swift.min(count, Swift.min(left.count, right.count))
-        guard n > 0 else { return }
         for i in 0..<n {
             reverb.mix = mixRamp(from: start, to: target, sample: i, of: n)
             let dry = left[i]
