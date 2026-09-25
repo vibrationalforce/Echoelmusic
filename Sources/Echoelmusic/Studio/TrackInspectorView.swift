@@ -234,13 +234,22 @@ struct TrackInspectorView: View {
            let controls = TrackMix.controls(of: laneID, in: document,
                                             voiceCapacity: player.laneVoiceCapacity) {
             VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 6) {
-                    Text("Device")
-                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-                    Text(TrackMix.deviceName(controls.role))
-                        .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
+                HStack(spacing: 8) {
+                    HStack(spacing: 6) {
+                        Text("Device")
+                            .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                        Text(TrackMix.deviceName(controls.role))
+                            .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
+                    }
+                    .accessibilityElement(children: .combine)
+                    // WA4 path 9 — the Echoel track's device opens the instrument's own editor.
+                    // OUTSIDE the combined element (#621), and only on the track the
+                    // instrument plays: a rack voice or an audio player has no such editor.
+                    if controls.role == .echoelInstrument {
+                        Spacer(minLength: 0)
+                        openDeviceButton
+                    }
                 }
-                .accessibilityElement(children: .combine)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Name")
@@ -305,6 +314,30 @@ struct TrackInspectorView: View {
         if !TrackMix.rename(nameDraft, laneID: laneID, timeline: timeline) {
             nameDraft = stored
         }
+    }
+
+    /// Opens the Echoel instrument's sound controls — the Sound plate, which IS the device's
+    /// editor (patch, presets, tone). It posts the existing chrome door rather than reaching
+    /// into the Studio's state: this view is a leaf of the Workstation plate and owns none of
+    /// it. The way back is the Workstation chip, the same tap as always.
+    private var openDeviceButton: some View {
+        Button {
+            NotificationCenter.default.post(name: .echoelChromeDoor, object: "sound")
+        } label: {
+            Text("Open")
+                .font(EchoelTheme.font(12, .semibold))
+                .foregroundStyle(EchoelTheme.text)
+                .padding(.horizontal, 12)
+                .frame(minWidth: 44, minHeight: 44)
+                .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                    .fill(EchoelTheme.fill))
+                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                    .strokeBorder(EchoelTheme.border, lineWidth: 1))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Open the Echoel instrument")
+        .accessibilityHint("Shows its sound controls. The Workstation chip brings you back")
     }
 
     private func removeRow(_ removal: TrackMix.Removal) -> some View {

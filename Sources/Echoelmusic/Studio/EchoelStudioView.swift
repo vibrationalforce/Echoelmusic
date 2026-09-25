@@ -1190,7 +1190,9 @@ struct EchoelStudioView: View {
                 // Both readings are dead with #492: the overflow is gone and its two doors are
                 // tiles in `quickDoorRow` that set their own `@State`. The sentence is true
                 // again as written, with the header monitors as the ONLY producers, which is
-                // the whole reason this notification still exists.)
+                // the whole reason this notification still exists. WA4 path 9 added a third
+                // producer of the same kind — a leaf outside this view's state: the Echoel
+                // track's device door in the Workstation's track inspector, posting "sound".)
                 //
                 // ⛔ FOUR CASES WERE DELETED HERE, NOT LEFT "just in case" (#290): "master",
                 // "export", "tempo" and "session". Those four panels are chips now, and a chip
@@ -1232,6 +1234,11 @@ struct EchoelStudioView: View {
                     // The pulse monitor opens the Bio dropdown (B3). Since #289 that monitor
                     // sits beside "Create from Within" rather than in the header.
                     case "bio":     activeMenu = .bio
+                    // WA4 path 9 — the Echoel track's device door in the Workstation's track
+                    // inspector (`TrackInspectorView.openDeviceButton`): the Sound plate IS the
+                    // instrument's editor. Its producer is a leaf that owns no Studio state,
+                    // which is exactly what this notification is for.
+                    case "sound":   activeMenu = .sound
                     default: break
                     }
                 }
