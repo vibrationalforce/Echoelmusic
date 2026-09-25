@@ -18,7 +18,8 @@
 //    no persistence of its own); the pan field sits inside `if controls.pan`; numeric
 //    parameters use `EchoelValueField`, never `Slider`/`Stepper`.
 // 5. SOURCE: the Workstation reads the ONE selection owner (`WorkstationSelection`, WA4 — it
-//    held `@State selectedTrack` until then) and constructs the inspector exactly once, and
+//    held `@State selectedTrack` until then), reaches `TrackMix` only for the track header's
+//    Mute/Solo (WA4 path 6), constructs the inspector exactly once, and
 //    still sends `timeline` nothing but `document` (the seam `TheWorkstationHasADoorTests`
 //    pins — re-asserted here only for the inspector's sake).
 //
@@ -222,8 +223,19 @@ final class TheTrackInspectorShowsOnlyWiredControlsTests: XCTestCase {
         XCTAssertFalse(code.contains("@State private var selectedTrack"),
                        "a local selection beside the owner is a second truth")
         XCTAssertEqual(code.components(separatedBy: "TrackInspectorView(").count - 1, 1)
-        XCTAssertFalse(code.contains("TrackMix."),
-                       "the Workstation hands the track id over; the inspector owns the writes")
+        // WA4 path 6 moved Mute/Solo into the track HEADER, so the Workstation now reaches
+        // `TrackMix` — for exactly the header's five members and nothing the inspector owns
+        // (level, pan, name, removal stay behind the selected row).
+        var reached: Set<String> = []
+        var cursor = code.startIndex
+        while let hit = code.range(of: "TrackMix.", range: cursor..<code.endIndex) {
+            cursor = hit.upperBound
+            let member = code[hit.upperBound...].prefix { $0.isLetter || $0.isNumber || $0 == "_" }
+            if !member.isEmpty { reached.insert(String(member)) }
+        }
+        XCTAssertEqual(reached, ["controls", "flipMute", "flipSolo", "muteHint", "soloHint"],
+                       "the Workstation reaches TrackMix for \(reached.sorted()) — the header owns "
+                       + "Mute/Solo only; level, pan, name and removal belong to the inspector")
         let inspectorConstructions = try filesMatching { code, _ in
             code.contains("TrackInspectorView(")
         }
