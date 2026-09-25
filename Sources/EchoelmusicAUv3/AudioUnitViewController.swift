@@ -150,6 +150,17 @@ final class AUv3ViewModel {
     func setParameter(address: UInt64, value: Float) {
         parameterTree.parameter(withAddress: address)?.value = value
     }
+
+    /// The slider range IS the host-visible range: read from the tree, which is built from the
+    /// canonical descriptors (`EchoelBodyVibeAUv3Mapping.resolve()`). The view used to restate
+    /// all eight ranges and addresses as literals — a second spelling of the one mapping (#416)
+    /// that nothing tied to the first. `setupParameterTree()` throws unless all eight
+    /// parameters exist, so the unit range below is a type-level floor, not a live path.
+    func range(for address: EchoelmusicAudioUnit.ParameterAddress) -> ClosedRange<Float> {
+        guard let p = parameterTree.parameter(withAddress: address.rawValue),
+              p.minValue.isFinite, p.maxValue.isFinite, p.minValue < p.maxValue else { return 0...1 }
+        return p.minValue...p.maxValue
+    }
 }
 
 // MARK: - SwiftUI Plugin View
@@ -169,25 +180,25 @@ struct AUv3PluginView: View {
                     .foregroundColor(Color(white: 0.4))
 
                 parameterSection("Bio-Reactive") {
-                    paramSlider("Coherence", value: $viewModel.coherence, range: 0...1,
-                                address: 0, format: "%.0f%%") { $0 * 100 }
-                    paramSlider("HRV", value: $viewModel.hrv, range: 0...1,
-                                address: 1, format: "%.0f%%") { $0 * 100 }
-                    paramSlider("Heart Rate", value: $viewModel.heartRate, range: 0...1,
-                                address: 2, format: "%.0f%%") { $0 * 100 }
-                    paramSlider("Breath", value: $viewModel.breathPhase, range: 0...1,
-                                address: 3, format: "%.0f%%") { $0 * 100 }
+                    paramSlider("Coherence", value: $viewModel.coherence,
+                                address: .coherence, format: "%.0f%%") { $0 * 100 }
+                    paramSlider("HRV", value: $viewModel.hrv,
+                                address: .hrv, format: "%.0f%%") { $0 * 100 }
+                    paramSlider("Heart Rate", value: $viewModel.heartRate,
+                                address: .heartRate, format: "%.0f%%") { $0 * 100 }
+                    paramSlider("Breath", value: $viewModel.breathPhase,
+                                address: .breathPhase, format: "%.0f%%") { $0 * 100 }
                 }
 
                 parameterSection("Sound") {
-                    paramSlider("Frequency", value: $viewModel.baseFrequency, range: 40...440,
-                                address: 4, format: "%.0f Hz") { $0 }
-                    paramSlider("Texture", value: $viewModel.textureAmount, range: 0...1,
-                                address: 5, format: "%.0f%%") { $0 * 100 }
-                    paramSlider("Reverb", value: $viewModel.reverbMix, range: 0...1,
-                                address: 6, format: "%.0f%%") { $0 * 100 }
-                    paramSlider("Gain", value: $viewModel.masterGain, range: 0...1,
-                                address: 7, format: "%.0f%%") { $0 * 100 }
+                    paramSlider("Frequency", value: $viewModel.baseFrequency,
+                                address: .baseFrequency, format: "%.0f Hz") { $0 }
+                    paramSlider("Texture", value: $viewModel.textureAmount,
+                                address: .textureAmount, format: "%.0f%%") { $0 * 100 }
+                    paramSlider("Reverb", value: $viewModel.reverbMix,
+                                address: .reverbMix, format: "%.0f%%") { $0 * 100 }
+                    paramSlider("Gain", value: $viewModel.masterGain,
+                                address: .masterGain, format: "%.0f%%") { $0 * 100 }
                 }
 
                 Spacer(minLength: 20)
@@ -212,8 +223,9 @@ struct AUv3PluginView: View {
     }
 
     @ViewBuilder
-    private func paramSlider(_ label: String, value: Binding<Float>, range: ClosedRange<Float>,
-                             address: UInt64, format: String, display: ((Float) -> Float)? = nil) -> some View {
+    private func paramSlider(_ label: String, value: Binding<Float>,
+                             address: EchoelmusicAudioUnit.ParameterAddress, format: String,
+                             display: ((Float) -> Float)? = nil) -> some View {
         HStack(spacing: 8) {
             Text(label)
                 .font(.system(size: 12, weight: .medium))
@@ -221,8 +233,8 @@ struct AUv3PluginView: View {
                 .frame(width: 80, alignment: .leading) // ADAPTIVE-EXEMPT: fixed-point .system(size:) font in the host-sized plug-in UI; it does not scale with Dynamic Type
             Slider(value: Binding(
                 get: { value.wrappedValue },
-                set: { value.wrappedValue = $0; viewModel.setParameter(address: address, value: $0) }
-            ), in: range)
+                set: { value.wrappedValue = $0; viewModel.setParameter(address: address.rawValue, value: $0) }
+            ), in: viewModel.range(for: address))
             .tint(Color(white: 0.4))
             Text(String(format: format, display?(value.wrappedValue) ?? value.wrappedValue))
                 .font(.system(size: 11, design: .monospaced))
