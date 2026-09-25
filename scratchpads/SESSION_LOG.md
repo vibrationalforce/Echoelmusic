@@ -39703,3 +39703,24 @@ transcription before its repair; one defect per commit; checkers exit 0 on every
     every finite value agree. Fixed in the next commit.
 - NEGATIVE: `renderFM`/`renderAdditive` subtract at most once per sample. A NaN there is silent
   (the render loop zeroes non-finite samples), with no trap and no hang.
+
+## 2026-09-25 03:43 UTC — gate reading (check-in)
+
+- **Xcode Compile Check GREEN on `1b5224c9a`** (run 2839, Release/device). It covers every
+  `Sources/` change tonight, including the review-5 init fix `469e47dbe` and the wavetable wrap
+  `9359d92d3`. The runs for 469e47dbe, 7729c4ab2 and 9359d92d3 were cancelled by later
+  pushes (`cancel-in-progress`), as expected.
+- **CI/CD Build for Testing GREEN on `47ad72910`** (run 6266). Its tree contains 526c43b18,
+  b48c79e86, 5b946fc27, 3fc7cb5b6 and af819db90.
+- **Run Tests on `47ad72910`**:
+  · #396 shape (`** TEST EXECUTE FAILED **`); both clones alive; no `failed on` line in the
+    tail-200 window.
+  · OBSERVED PASSING: `TheAUv3TailCoversTheReverbTests` 2/2, `TheNarrationCannotTrapOnARawPulseTests` 2/2,
+    `TheReverbCannotPassANaNControlTests` 3/3, `TheAUv3RegistersAndStaysIsolatedTests` 6
+    (including `testTheCellularEvolutionAllocatesNothingOnTheRenderThread`), and
+    `TheMetronomeAccentHasADoorTests`.
+  · Every other overnight guard is absent from the window: execution unrecorded (#445/#807).
+- The CI/CD runs for 269aae615 … 1b5224c9a are still queued.
+- main = 1e8e4cb91, unchanged. Auto-merge needs a green Compile Check on the SAME sha as a green
+  BfT, and rapid pushes cancel the intermediate Compile Checks. CI policy is founder-gated: recorded,
+  not touched.
