@@ -297,14 +297,18 @@ final class OneChromeControlHeightTests: XCTestCase {
         // ⛔ THIS WAS `4` UNTIL #492 AND THE MOVE IS THE POINT, not a loosening. Dissolving
         // the "•••" into two door tiles made seven tiles, which do not fit one line on a
         // 360/375 pt phone (see `quickDoorRow`'s doc for the arithmetic) — so Open moved down
-        // with them. This row is Record · Keep last · Export MIDI · Save, and only three of
+        // with them. This row is Record · Keep last · Export MIDI · Save, and only two of
         // those four build the tile here: Keep last builds its own inside `KeepLastLoopButton`
-        // because it reads `pattern.tempo` in its own body (freeze law).
-        XCTAssertEqual(row.filter { $0.contains("EchoelIconTile(") }.count, 3, """
-            `quickActionRow` should construct `EchoelIconTile` exactly three times (Record, \
-            Export MIDI, Save). A different count means an action was added or removed \
+        // because it reads `pattern.tempo` in its own body, and — since WA4 Acceptance Test A —
+        // Save builds its own inside `SaveSessionButton` because it reads the timeline document
+        // in its own body (the same freeze law; ⛔ this was `3` until then).
+        XCTAssertEqual(row.filter { $0.contains("EchoelIconTile(") }.count, 2, """
+            `quickActionRow` should construct `EchoelIconTile` exactly twice (Record, \
+            Export MIDI). A different count means an action was added or removed \
             without this expectation moving with it.
             """)
+        XCTAssertEqual(row.filter { $0.contains("SaveSessionButton(hasComposed: hasComposed)") }.count, 1,
+                       "the Save tile is the `SaveSessionButton` leaf, mounted once in this row")
         // ⛔ THE FIRST VERSION BANNED FOUR MODIFIERS AND ITS OWN DOC NAMED THREE EDITS —
         // "wider / rounder / brighter". Only "rounder" was covered. `.frame(width:` (wider)
         // and `.font(`/`.foregroundStyle(` (brighter) passed every assertion while

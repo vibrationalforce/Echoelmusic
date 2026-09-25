@@ -1764,8 +1764,8 @@ struct EchoelStudioView: View {
             // "stay with / the instrument" and did exactly that — caught by measuring, not by
             // the reviewer. Both pinned runs must stay inside one literal each.
             Text("Saves the loop with its genre, key, tuning, tempo, Flow/Loop mode, mood, "
-                 + "sound and FX character. Your mixer levels and hand-dialled FX "
-                 + "stay with the instrument.")
+                 + "sound and FX character, and the Workstation's song — its tracks and parts. "
+                 + "Your mixer levels and hand-dialled FX stay with the instrument.")
         }
         .alert("Save mood", isPresented: $showSaveMoodAs) {
             TextField("Name", text: $moodAsName)
@@ -2354,17 +2354,13 @@ struct EchoelStudioView: View {
             .accessibilityLabel("Export MIDI for your DAW")
             .accessibilityHint("Exports the take as a MIDI file to open in a DAW, with tempo and key")
 
-            Button {
+            // WA4 Acceptance Test A — a song the USER built (an imported part) is worth saving
+            // with no composed take. The leaf reads the song itself: the root body must not
+            // observe the timeline document (freeze law), exactly the `KeepLastLoopButton` shape.
+            SaveSessionButton(hasComposed: hasComposed) {
                 saveName = session.sessionName(bpm: beatPlayer.pattern.tempo)
                 showSaveDialog = true
-            } label: {
-                EchoelIconTile(systemImage: "tray.and.arrow.down", expands: true,
-                               enabled: hasComposed)
             }
-            .buttonStyle(.plain)
-            .disabled(!hasComposed)
-            .accessibilityLabel("Save this session")
-            .accessibilityHint("Names the session and saves it. The place row in Save & Export decides whether your city is in that name")
 
         }
     }
@@ -12150,6 +12146,36 @@ private struct StudioZoom: ViewModifier {
 /// and only then did an alert say no. Now the control refuses in advance and names a
 /// length that works. The PLANNED door above is untouched — it records live to a file
 /// and has no such limit, which is exactly why 64 bars stays offered there.
+/// The Save tile. WA4 Acceptance Test A (create → import → save → reopen): a song holding the
+/// USER's parts is worth a save even with no composed take — the Session carries it. Before,
+/// the tile was `hasComposed`-gated alone, so a player who only imported audio could not save
+/// the song they had built. The composer's own part does not count (it is re-made on the next
+/// Start), so an empty launch still has nothing to save — the #622 law (never an empty take
+/// under a real name) holds for the TAKE, and a song with user parts is not empty.
+///
+/// ⚠️ A SEPARATE `struct` FOR THE FREEZE LAW, like `KeepLastLoopButton`: it reads the timeline
+/// document and the clip grid in its OWN body. Inlined into `quickActionRow`, those reads would
+/// make `EchoelStudioView.body` — which hosts every `.menu` Picker — rebuild on every song edit
+/// and on every composer re-seed.
+private struct SaveSessionButton: View {
+    let hasComposed: Bool
+    let action: () -> Void
+    @Environment(TimelineStore.self) private var timeline
+    @Environment(ClipStore.self) private var clips
+
+    var body: some View {
+        let canSave = hasComposed
+            || SessionSaveOpen.songHasUserParts(timeline.document, clips: clips.filledClips)
+        Button(action: action) {
+            EchoelIconTile(systemImage: "tray.and.arrow.down", expands: true, enabled: canSave)
+        }
+        .buttonStyle(.plain)
+        .disabled(!canSave)
+        .accessibilityLabel("Save this session")
+        .accessibilityHint("Names the session and saves it, with the Workstation's song. The place row in Save & Export decides whether your city is in that name")
+    }
+}
+
 private struct KeepLastLoopButton: View {
     let pattern: PatternEngine
     let bars: LoopBarLength
