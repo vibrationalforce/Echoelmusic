@@ -67,9 +67,13 @@ final class TheBreathRateAndItsWaveformAreTwoGatesTests: XCTestCase {
 
     func testTheWaveformPredicateIsDeclaredOnceAndNamesBothProducers() throws {
         let bus = try code(Self.bus)
+        // Spelling-agnostic since 2026-09-25: the predicate is an exhaustive `switch` (the
+        // equality form tripped `OneSpellingOfWhoseBodyItIsTests`), so the declaration and the
+        // YES-side membership are pinned separately.
+        XCTAssertEqual(count("public var providesBreathWaveform: Bool {", in: bus), 1,
+                       "`BioSource.providesBreathWaveform` is gone or declared twice")
         XCTAssertEqual(
-            count("public var providesBreathWaveform: Bool { self == .cameraPPG || self == .fallback }",
-                  in: bus), 1, """
+            count("case .cameraPPG, .fallback: return true", in: bus), 1, """
             `BioSource.providesBreathWaveform` is gone or its membership changed. Exactly two \
             sources derive a moving breath waveform today: the camera (`RespirationEstimator`) \
             and the demo generator. `.fallback` belongs on the YES side even though it is \

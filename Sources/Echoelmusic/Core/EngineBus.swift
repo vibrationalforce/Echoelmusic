@@ -537,7 +537,17 @@ public enum BioSource: UInt8, Sendable, Equatable {
     /// waveform, so a phase consumer fed by it is reading something real about the signal it
     /// was handed. This predicate asks "is there a waveform", not "is it a body". The two
     /// questions have separate answers and separate properties on purpose.
-    public var providesBreathWaveform: Bool { self == .cameraPPG || self == .fallback }
+    ///
+    /// A `switch`, and exhaustive, on purpose (2026-09-25): naming the demo generator is the
+    /// NARROW question here, which `OneSpellingOfWhoseBodyItIsTests` allows only in this form —
+    /// the equality spelling read as a hand-written "is it synthetic" and kept that guard red
+    /// since #1140. A new `BioSource` case must now decide which side it is on.
+    public var providesBreathWaveform: Bool {
+        switch self {
+        case .cameraPPG, .fallback: return true
+        case .healthKit, .oura, .ble, .watch: return false
+        }
+    }
 
     /// Whether this frame's numbers were GENERATED rather than measured — the demo
     /// generator (`BioSimulator`), which the founder uses to show the instrument with no
