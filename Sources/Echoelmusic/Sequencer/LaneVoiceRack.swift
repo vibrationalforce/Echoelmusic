@@ -269,11 +269,11 @@ public final class LaneVoiceRack {
     /// empty on the launch path, before `attachAll`. That is why the value is latched — see
     /// the `tuningCents` field doc.
     ///
-    /// ⚠️ THE FINITE CHECK LIVES HERE, not in all three voice families. `SubBassVoice` guards the
-    /// SIZE only; `BioReactiveSynthVoice` and — since 2026-09-25 (6ba5de935) — `EchoelPolyDDSP`
-    /// guard size AND finiteness. (Until then this line named `EchoelPolyDDSP` size-only too.)
-    /// One NaN entry would therefore have retuned the sub (and, before 6ba5de935, poly) and been
-    /// REJECTED by the others, leaving
+    /// ⚠️ THE FINITE CHECK LIVES HERE AND, since 2026-09-25, in all three voice families too.
+    /// Until then `SubBassVoice` and `EchoelPolyDDSP` guarded the SIZE only while
+    /// `BioReactiveSynthVoice` guarded size AND finiteness (6ba5de935 closed the poly, the next
+    /// commit the sub). Without this gate one NaN entry would have retuned poly + sub and been
+    /// REJECTED by bio, leaving
     /// the rack split across two tuning tables with nothing watching. Unreachable today
     /// (`TuningSystem.pitchClassCents(root:)` is a table lookup), so this is shape and not a
     /// live defect — but one gate in front of all three is cheaper than three that disagree.

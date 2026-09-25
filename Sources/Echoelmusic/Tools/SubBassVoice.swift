@@ -289,8 +289,14 @@ public final class SubBassVoice {
     /// No-op if the table is not exactly 12 entries: a short table would either trap
     /// on the render thread or silently retune the wrong pitch classes, and both are
     /// worse than staying at the last good tuning.
+    ///
+    /// ⭐ 2026-09-25 (overnight P8): a non-finite entry is refused too — the rule the rack, the
+    /// bio voice and (since 6ba5de935) the poly engine apply; the studio calls this voice
+    /// directly, past the rack's gate. Before, a NaN entry reached `feltFrequency`, whose own
+    /// guard played that pitch class at `minHz` (off-pitch, not silent) while the other voices
+    /// stayed in tune. Guard: `TheToneSystemTableRefusesANonFiniteEntryTests` claim 4.
     public func setTuningCents(_ cents: [Float]) {
-        guard cents.count == 12 else { return }
+        guard cents.count == 12, cents.allSatisfy({ $0.isFinite }) else { return }
         for i in 0..<12 { tuningCents[i] = cents[i] }
         #if DEBUG
         lastTuningCentsForTests = cents

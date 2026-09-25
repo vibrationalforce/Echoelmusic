@@ -9,8 +9,10 @@
 // frequency and phases went NaN, and the voice's own output guard zeroed it: every note on that
 // pitch class was silent (other voices unaffected). The `uiTuningCents` mirror took the bad table
 // too. (⛔ review 13 corrected "the poly mix guard zeroed every sample" — the scope was one pitch
-// class, not the bus.) `SubBassVoice.setTuningCents` is still size-only on the same direct path;
-// there a NaN entry plays at `minHz` (off-pitch, not silent) because `feltFrequency` guards it. Found by tonight's read-only sticky-NaN sweep
+// class, not the bus.) `SubBassVoice.setTuningCents` was size-only on the same direct path; there
+// a NaN entry played at `minHz` (off-pitch, not silent) because `feltFrequency` guards it. Closed
+// in the follow-up commit; claim 4 pins it through the Debug seam `lastTuningCentsForTests` (the
+// blocking bundle builds Debug, `SubBassFollowsTheToneSystemTests` uses the same seam). Found by tonight's read-only sticky-NaN sweep
 // (its candidate 2).
 //
 // LATENT: the one producer is `TuningSystem.pitchClassCents(root:)`, a finite library table.
@@ -58,6 +60,17 @@ final class TheToneSystemTableRefusesANonFiniteEntryTests: XCTestCase {
         synth.setTuningCents(good)
         synth.setTuningCents(Self.table(.nan))
         XCTAssertEqual(synth.uiTuningCents, good, "the mirror took a table the engine refused")
+    }
+
+    // MARK: - claim 4 (added with the sub's gate; the parent of THAT commit has no sub gate)
+
+    func testTheSubRefusesANonFiniteEntryAndKeepsItsLastTable() {
+        let sub = SubBassVoice()
+        let good = Self.table(-13.7)
+        sub.setTuningCents(good)
+        sub.setTuningCents(Self.table(.nan))
+        XCTAssertEqual(sub.lastTuningCentsForTests ?? [], good,
+                       "the sub took a table with a NaN entry; that pitch class plays at minHz")
     }
 
     // MARK: - claim 3 (COUNTERWEIGHT)
