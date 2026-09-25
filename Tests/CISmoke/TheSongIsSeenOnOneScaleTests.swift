@@ -15,9 +15,13 @@
 //    an empty song draws nothing; the spoken form names bars the way the Session view does.
 // 2. END-TO-END (pure): the canvas draws exactly the non-bio tracks with parts; the playhead
 //    fraction is nil without a scale and pinned to 0…1 otherwise.
-// 3. SOURCE: the canvas reads no player, no position, no store and has no drag; the playhead is
-//    its own self-driving leaf that selects nothing and launches nothing; the Workstation is the
-//    one door and mounts no strip any more.
+// 3. SOURCE: the canvas reads no player, no position and no song from the store, and has no
+//    drag of its own; the playhead is its own self-driving leaf that selects nothing and
+//    launches nothing; the Workstation is the one door and mounts no strip any more.
+//    ⚠️ WA4 path D moved the "no drag" half: dragging a part is now real, and it lives in the
+//    `ArrangePartBlock` leaf AFTER the playhead in the same file, so the playhead slice below
+//    stops at that declaration. The drag's own claims are in
+//    `TheArrangeCanvasMovesAPartByDraggingTests`.
 //
 // Grading (§0, no Swift toolchain in a web session): claims 1–2 transcribed into Python over a
 // model of `ArrangementStrip`, `ArrangeCanvas`, `TrackParts.parts` and
@@ -143,11 +147,13 @@ final class TheSongIsSeenOnOneScaleTests: XCTestCase {
         let file = try source(Self.canvasPath)
         guard let canvasStart = file.range(of: "struct ArrangeCanvasView: View {"),
               let playheadStart = file.range(of: "struct ArrangePlayheadView: View {"),
-              canvasStart.upperBound < playheadStart.lowerBound else {
-            return XCTFail("ANCHOR MISSING: the canvas and playhead declarations (#454)")
+              let blockStart = file.range(of: "struct ArrangePartBlock: View {"),
+              canvasStart.upperBound < playheadStart.lowerBound,
+              playheadStart.upperBound < blockStart.lowerBound else {
+            return XCTFail("ANCHOR MISSING: the canvas, playhead and part-block declarations (#454)")
         }
         let canvas = String(file[canvasStart.upperBound..<playheadStart.lowerBound])
-        let playhead = String(file[playheadStart.upperBound...])
+        let playhead = String(file[playheadStart.upperBound..<blockStart.lowerBound])
 
         XCTAssertTrue(canvas.contains("ArrangementStrip.blocks(onLane: row.id, in: document, songTicks: songTicks)"),
                       "one geometry rule: the canvas places parts by the pinned pure half (#416)")
@@ -158,8 +164,9 @@ final class TheSongIsSeenOnOneScaleTests: XCTestCase {
                        "Timer", "DragGesture", "TimelineView("] {
             XCTAssertFalse(canvas.contains(banned), """
                 ArrangeCanvasView contains `\(banned)`. The canvas is a cold picture of the \
-                document plus the selection: no position read (the hot-state law), no store, no \
-                clock and — until the edit slices land — no drag.
+                document plus the selection: no position read (the hot-state law), no read of \
+                the store (it holds it only to COMMIT a drop), no clock, and no drag of its own \
+                — the finger-rate state lives in `ArrangePartBlock`.
                 """)
         }
 
