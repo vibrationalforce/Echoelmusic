@@ -179,7 +179,7 @@ final class TextControlsGrowWithTheTypeSizeTests: XCTestCase {
         let sources = root.appendingPathComponent("Sources")
         guard FileManager.default.fileExists(atPath: sources.path)
         else { throw XCTSkip("source tree not present under \(root.path)") }
-        guard let e = FileManager.default.enumerator(at: sources,
+        guard FileManager.default.fileExists(atPath: sources.path), let e = FileManager.default.enumerator(at: sources,
                                                      includingPropertiesForKeys: nil) else {
             throw XCTSkip("could not enumerate \(sources.path)")
         }
