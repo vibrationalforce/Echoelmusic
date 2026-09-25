@@ -166,7 +166,12 @@ public final class EchoelReverb: @unchecked Sendable {
 
     @inline(__always)
     public func processStereo(_ inL: Float, _ inR: Float) -> (Float, Float) {
-        let m = Swift.min(Swift.max(mix, 0.0), 1.0)
+        // ⭐ 2026-09-25 (overnight P8x): `clamped(to:)`, the repo's NaN-safe clamp. The old
+        // `min(max(mix, 0), 1)` is the argument order that passes NaN straight through
+        // (CLAUDE.md, API gotchas), so a NaN mix put NaN on the output. NaN now reads as 0
+        // (dry); every finite value clamps exactly as before.
+        // Guard: `TheReverbCannotPassANaNControlTests`.
+        let m = mix.clamped(to: 0...1)
         if m <= 0 { return (inL, inR) }
 
         // Mono excitation into the tank (Freeverb feeds the sum, scaled).
@@ -187,7 +192,7 @@ public final class EchoelReverb: @unchecked Sendable {
         }
 
         // Stereo spread of the wet signal.
-        let w = Swift.min(Swift.max(width, 0.0), 1.0)
+        let w = width.clamped(to: 0...1)   // NaN → 0 (P8x), finite values unchanged
         let wet1 = w * 0.5 + 0.5
         let wet2 = (1.0 - w) * 0.5
         let wetL = outL * wet1 + outR * wet2
