@@ -384,16 +384,25 @@ done. WA4 is the first front.
     `Studio/SessionLaunchView.swift` (`d9a0b87fc`, voiceless-lane fix `7ebb2e322`) — the first
     production caller of `TimelineRegionPlayer.launchRegion`. Scenes are start bars; cells are
     `activeRegion`'s answer. Runtime-only launch state. Guard
-    `TheSessionLaunchesWhatTheSongPlaysTests`.
+    `TheSessionLaunchesWhatTheSongPlaysTests`. Review PASS WITH CONDITIONS → repaired
+    `764e1f8e7` (WA4.2c): a cell only for a part the player would sound (`isExecutable`, the
+    playing path's resolver), the phase caveat stated, `launchGeneration` bumped on prune/relocate.
   - **WA4.3 — arrange parts (move · copy · remove · undo/redo): IMPLEMENTED.**
     `Studio/TrackPartsView.swift` (`e0d7132a3`) — first production callers of
     `moveRegion` / `duplicateRegion` / `removeRegion` / `undo` / `redo`. Undo is region-only by
     the store's design and says so. Guard `TheTrackPartsAreArrangedThroughTheStoreTests`.
+  - **WA4.4 — remove an empty track: IMPLEMENTED.** `TrackMix.removal` / `removeTrack` in
+    `Studio/TrackInspectorView.swift` (`0faea6e66`) — first production caller of
+    `TimelineStore.removeLaneIfEmpty`. Only an empty, non-Echoel, non-bio track; the reason is
+    shown otherwise. Guard `OnlyAnEmptyTrackCanBeRemovedTests`.
+  - **WA4.5 — the song at a glance: IMPLEMENTED.** `Studio/ArrangementStripView.swift`
+    (`325710ca9`) — every track's parts on one shared scale, overlap drawn in `activeRegion`
+    order, no playhead (hot-state law). Guard `TheSongIsSeenOnOneScaleTests`. Plate copy
+    corrected in `a6cc4fef2`.
   - Evidence ceiling: transcription-graded guards; compile gates are read per commit in
-    `scratchpads/SESSION_LOG.md`; **device verification owed** for all three
+    `scratchpads/SESSION_LOG.md`; **device verification owed** for every slice
     (NEEDS-FOUNDER-VERIFY markers in each guard header).
-  - **Open in WA4:** remove a track; a timeline-wide view of parts (today they are listed per
-    track); the canonical Session writer (`DMMWProject` save/reopen — importer exists, writer
+  - **Open in WA4:** the canonical Session writer (`DMMWProject` save/reopen — importer exists, writer
     SECOND per #1416; the song itself already persists through `TimelineStore`).
 
 ---
@@ -559,3 +568,5 @@ general.
   - 2026-09-25 — WA3 slice 2 IMPLEMENTED (`862e41279`/`c071ddbba`); WA4 IN PROGRESS: WA4.1
     track inspector, WA4.2 Session launch grid, WA4.3 part arrange + undo IMPLEMENTED
     (commits in §7 WA4). Device verification owed.
+  - 2026-09-25 — WA4.2c review repair, WA4.4 remove empty track, WA4.5 song-wide parts strip
+    IMPLEMENTED (commits in §7 WA4). Device verification owed.
