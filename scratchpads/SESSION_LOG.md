@@ -39763,3 +39763,16 @@ Review 9 (read-only code-reviewer) over c2fc6f407, 90ae395e6, 97faa961d, 835cb8e
 - RECORDED (predates tonight, #1385): the `maximumFramesToRender` setter silently clamps a legal 8192 request to 4096; since 66748c221 such blocks return `kAudioUnitErr_TooManyFramesToProcess` instead of a garbage tail. The durable fix resizes the scratch in allocate. HOST-VERIFY.
 - HOST-VERIFY: the null-mData branch (90ae395e6) may never run out of process.
 Reviews 1–9 now cover every overnight Sources commit for correctness. The exception is WA3.3 itself (f72b09b74 + 98f5d8f7e), which still needs an independent review.
+
+## 2026-09-25 ~05:46–05:55 UTC — P8 resumed after the user's "continue": four latent NaN boundaries
+
+The user's continue instruction arrived at 05:46 UTC (≈8.6 h active). The run resumed on P8, the measured latent items from review 7 and the DSP clamp sweep. Four slices, one defect each:
+- `fc116b337` EchoelLoFiFX: bitcrush `mix` and widener `width` were NaN-transparent, so NaN reached the output. The bitcrush sits upstream of the chain's delay/reverb state. Mix: `clamped` (NaN → dry). Width: NaN → 1 before the clamp (the floor would be mono). `bits` and tape depth/saturation/tone go TRANSPARENT on NaN (`> 0` / `< 0.999` tests), so they are left alone. Guard `TheLoFiStagesCannotPassANaNControlTests`.
+- `655194fd9` FXPreset.morphed: a NaN `t` made every field NaN and flipped every switch to the target; now NaN → 0 (source preset). This closes the "producer #1206 missed" named in two notes. Guard `TheMorphCannotSpreadANaNAmountTests`.
+- `bf43cc71b` LaneVoiceRack.setTuning(a4Hz:) latched a NaN before any voice could refuse it, and attachAll replays that latch; now it gates before the latch. Guard: claim 4 of `TheConcertPitchIgnoresANonFiniteValueTests` (source scan).
+- `aa491798a` EchoelPolyDDSP.setUnison: a NaN detune became every unison voice's frequency; now `clamped(to: 0...50)` (NaN → 0). setOctaver beside it already guarded. Guard `TheUnisonDetuneCannotBecomeANaNPitchTests`.
+MEASURED, NOT CHANGED:
+- EchoelDDSP.setSampleRate(+inf): the only caller is the AUv3 host rate, and an `AVAudioFormat` with an infinite rate cannot be built.
+- BioEntrainmentDirector: the only caller passes `coherenceForSound` (NaN → 0.5), and NaN → 0 would be the "muffle" its doc warns about.
+- ChannelInsertFX drive, ParamGlide, EchoelDelay's `g`: already guarded, or finite by construction.
+Gates: Compile Check GREEN on 3f39fae12 (05:30; covers 20804097d + ae109565d). aa491798a is queued. ⚠️ A docs-only push ALSO triggers Compile Check and CANCELS the running one (3f39fae12 was a log commit), so nothing is pushed until aa491798a reports. Review 10 (dsp-reviewer) is running over fc116b337, 655194fd9 and bf43cc71b; aa491798a still needs its review.
