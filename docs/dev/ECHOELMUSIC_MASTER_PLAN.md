@@ -222,7 +222,7 @@ Detail and device status: `FEATURE_STATUS.md` §1. Owners: `scratchpads/PLAN_DOC
 | Phase | Content | State |
 |---|---|---|
 | **PHASE 1 — Foundation & truth** | the shipping instrument; product law R1–R3; export quality E1–E3; Workstation chip with import/play | CLOSED as a phase (items carry their own statuses above) |
-| **PHASE 2 — WORKSTATION ARCHITECTURE** | WA1 → WA2 → WA3 → WA4 (§7) | **CURRENT** — WA1 and WA2 COMPLETE; WA3 APPROVED (WA3.1 CLOSED, WA3.2 IMPLEMENTED) |
+| **PHASE 2 — WORKSTATION ARCHITECTURE** | WA1 → WA2 → WA3 → WA4 (§7) | **CURRENT** — WA1 and WA2 COMPLETE; WA3 APPROVED (WA3.1 CLOSED, WA3.2 IMPLEMENTED, slice 2 IMPLEMENTED); WA4 IN PROGRESS (WA4.1–WA4.3 IMPLEMENTED) |
 | PHASE 3 — Domain recovery | recording/input, note editing, automation editing, undo, video, broadcast, hosting, etc., each through the recovery principle (law §5) into the WA2 owners | PLANNED — order decided by the Founder after WA2 |
 
 **Phase 2 is architecture, not UI construction.** No workstation UI is built until WA1–WA3 are
@@ -373,7 +373,28 @@ done. WA4 is the first front.
   - `EchoelValueField`;
   - Uncodixfy;
   - iPhone-first layout with adaptive reflow.
-- **Status:** **BLOCKED ON WA3** (its shape depends on the WA2 decision and the WA3 contract).
+- **Status:** **IN PROGRESS (2026-09-25)** — WA3 prerequisites re-evaluated against code (WA3
+  APPROVED; prerequisite 4 closed by WA3 slice 2). The first three slices live inside the ONE
+  Workstation plate; no new modal, no second document, every write through `TimelineStore`:
+  - **WA4.1 — select a track → device → mix: IMPLEMENTED.** `Studio/TrackInspectorView.swift`
+    (`b2913f96b`, review PASS WITH CONDITIONS → repaired `8b8e9af19` + `7ebb2e322`). Only
+    controls the engine applies are shown (`TrackMix.controls`; no pan on the Echoel track,
+    none on a voiceless rack lane). Guard `TheTrackInspectorShowsOnlyWiredControlsTests`.
+  - **WA4.2 — Session projection (launch a part / a scene on the bar): IMPLEMENTED.**
+    `Studio/SessionLaunchView.swift` (`d9a0b87fc`, voiceless-lane fix `7ebb2e322`) — the first
+    production caller of `TimelineRegionPlayer.launchRegion`. Scenes are start bars; cells are
+    `activeRegion`'s answer. Runtime-only launch state. Guard
+    `TheSessionLaunchesWhatTheSongPlaysTests`.
+  - **WA4.3 — arrange parts (move · copy · remove · undo/redo): IMPLEMENTED.**
+    `Studio/TrackPartsView.swift` (`e0d7132a3`) — first production callers of
+    `moveRegion` / `duplicateRegion` / `removeRegion` / `undo` / `redo`. Undo is region-only by
+    the store's design and says so. Guard `TheTrackPartsAreArrangedThroughTheStoreTests`.
+  - Evidence ceiling: transcription-graded guards; compile gates are read per commit in
+    `scratchpads/SESSION_LOG.md`; **device verification owed** for all three
+    (NEEDS-FOUNDER-VERIFY markers in each guard header).
+  - **Open in WA4:** remove a track; a timeline-wide view of parts (today they are listed per
+    track); the canonical Session writer (`DMMWProject` save/reopen — importer exists, writer
+    SECOND per #1416; the song itself already persists through `TimelineStore`).
 
 ---
 
@@ -535,3 +556,6 @@ general.
   - 2026-09-24 — WA3 APPROVED (`59a243958`); WA3.1 CLOSED (`87d829f42`, PASS WITH HOST
     VERIFICATION); WA3.2 IMPLEMENTED (canonical identity + AUv3 mapping + `EchoelDeviceState`
     foundation); AUv3 host checks WA3-1…4 added to §9.
+  - 2026-09-25 — WA3 slice 2 IMPLEMENTED (`862e41279`/`c071ddbba`); WA4 IN PROGRESS: WA4.1
+    track inspector, WA4.2 Session launch grid, WA4.3 part arrange + undo IMPLEMENTED
+    (commits in §7 WA4). Device verification owed.

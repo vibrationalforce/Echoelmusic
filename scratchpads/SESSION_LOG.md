@@ -39859,3 +39859,12 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - TestFlight run 36146920011 (de0451978 = main 979383e1a + the bump): Preflight, Compile Check (device SDK + ecosystem targets), Archive, Export & Upload, **Verify build landed in App Store Connect** — all success (14:21 → 14:31). Build number = run_number 2602.
 - Founder approval: "Yes, deploy the RC" (2026-09-25). No App Store release.
 - Device checklist R1–R5 is in the build note. Next: post-RC task #202 (reverb mix smoothing) only after device feedback or founder go.
+
+## 2026-09-25 17:25Z — Long-run orchestrator: WA3 slice 2 + WA4.1–WA4.3 (Arrange + Session front)
+
+- **WA4-0 boot:** WA3 re-evaluated against code — APPROVED/implemented; its one open WA4 prerequisite (Echoel instance state, read-only) closed by **WA3 slice 2** `862e41279` + review fix `c071ddbba` (retired raw values resolved through their types; `SourceText.codeOnly`).
+- **WA4.1 track inspector** `b2913f96b`: select a track → device, name, Level/Pan (`EchoelValueField`), Mute/Solo — first production callers of `setLaneLevel`/`setLanePan`/`toggleMute`/`toggleSolo`/`renameLane`. ui-state review **PASS WITH CONDITIONS**; repaired in `8b8e9af19` (name commit on focus loss/close, Solo/Level hints name the Studio couplings, `rollLaneID` as the one rule, 44 pt row target, toggle trait, monochrome fill, guard tightened) and `7ebb2e322` (voiceless rack lanes get no mixer via `MultiRollFanout.slot` + new `TimelineRegionPlayer.laneVoiceCapacity`).
+- **WA4.2 Session projection** `d9a0b87fc`: `SessionLaunchView` — first production caller of `launchRegion`/`stopLaunched`/`launchState`/`launchGeneration`; scenes = start bars, cells = `activeRegion`; disabled while stopped; voiceless tracks excluded (`7ebb2e322`, shared `TrackMix.role`). Independent ui-state review RUNNING.
+- **WA4.3 part arrange** `e0d7132a3`: `TrackPartsView` under the inspector — Earlier/Later (1 bar), Copy, Remove, Undo/Redo; first production callers of `moveRegion`/`duplicateRegion`/`removeRegion`/`undo`/`redo`. Undo is region-only by design and says so.
+- **Gates:** Compile Check runs for b2913…7ebb2 were all CANCELLED by the next push (`cancel-in-progress`); pushes paused so e0d7132a3's run completes (it covers every Sources change above). CI/CD runs 6329–6332 QUEUED (macOS backlog). No gate verdict yet — nothing above is compile-verified.
+- **Device verification owed:** WA4.1/4.2/4.3 (markers in each guard header).
