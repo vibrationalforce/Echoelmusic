@@ -222,7 +222,7 @@ Detail and device status: `FEATURE_STATUS.md` §1. Owners: `scratchpads/PLAN_DOC
 | Phase | Content | State |
 |---|---|---|
 | **PHASE 1 — Foundation & truth** | the shipping instrument; product law R1–R3; export quality E1–E3; Workstation chip with import/play | CLOSED as a phase (items carry their own statuses above) |
-| **PHASE 2 — WORKSTATION ARCHITECTURE** | WA1 → WA2 → WA3 → WA4 (§7) | **CURRENT** — WA1 and WA2 COMPLETE; WA3 APPROVED (WA3.1 CLOSED, WA3.2 IMPLEMENTED, slice 2 IMPLEMENTED); WA4 IN PROGRESS (WA4.1–WA4.5, Session S1–S3, paths 3–5 IMPLEMENTED) |
+| **PHASE 2 — WORKSTATION ARCHITECTURE** | WA1 → WA2 → WA3 → WA4 (§7) | **CURRENT** — WA1 and WA2 COMPLETE; WA3 APPROVED (WA3.1 CLOSED, WA3.2 IMPLEMENTED, slice 2 IMPLEMENTED); WA4 IMPLEMENTED 2026-09-25 (items 1–9; Arm absent by design, no record path) — compile gates QUEUED for everything after `5bdcd2b`, device journey owed (§2c) |
 | PHASE 3 — Domain recovery | recording/input, note editing, automation editing, undo, video, broadcast, hosting, etc., each through the recovery principle (law §5) into the WA2 owners | PLANNED — order decided by the Founder after WA2 |
 
 **Phase 2 is architecture, not UI construction.** No workstation UI is built until WA1–WA3 are
@@ -654,6 +654,7 @@ general.
 - Do not copy counts from code into this file; name the command (the `CLAUDE.md` #818 rule).
 - Change log:
   - 2026-09-24 — created at `main` = `7b2690357`; Phase 2 opened with WA1–WA4.
+  - 2026-09-25 — WA4 items 1–9 implemented through `3f383f666` (path 2 = §13 WA4-P2 option (a), path D drag-move, journey proof); Phase 3 order stays the Founder's.
   - 2026-09-24 — WA1 COMPLETE (`c2fad0a0a`); WA2 COMPLETE (`a52170ca5` + the decision lock:
     APPROVED WITH BINDING AMENDMENTS); WA3 NEXT; WA4 BLOCKED ON WA3. Bare W1–W4 renamed WA1–WA4;
     the two census output paths corrected from `scratchpads/` to `docs/dev/`.
