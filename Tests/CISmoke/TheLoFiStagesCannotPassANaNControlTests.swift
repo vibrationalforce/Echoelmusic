@@ -6,7 +6,10 @@
 // `Swift.min(Swift.max(x, lo), hi)`, the order CLAUDE.md names as NaN-transparent (`max(NaN, 0)`
 // is NaN). A NaN mix made every bitcrush output NaN. The bitcrush sits UPSTREAM of the chain's
 // chorus, delay and reverb (`EchoelFXChain`), whose stored state such a sample poisons: the
-// shipped permanent-silence class. A NaN width did the same at the chain's last stage. The same
+// shipped permanent-silence class. A NaN width did the same at the widener, which only the
+// compressor and limiter follow; both skip their state update on a non-finite sample and pass it
+// on (`EchoelDynamics`), so that NaN reached the chain's OUTPUT rather than stored state. (⛔ This
+// line said "at the chain's last stage" until review 10 — two stages follow it.) The same
 // file's other NaN-transparent clamps are harmless and deliberately left alone: `bits`, the
 // tape's `depth`/`saturation` and its tone coefficient all fall through a `> 0` or `< 0.999` test
 // that is false for NaN, so the stage goes transparent, not NaN. The mod-FX stages had this

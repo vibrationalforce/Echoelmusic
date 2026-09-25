@@ -93,8 +93,9 @@ public final class EchoelStereoWidener: @unchecked Sendable {
     public func processStereo(_ inL: Float, _ inR: Float) -> (Float, Float) {
         // ⭐ 2026-09-25 (overnight P8): NaN-safe. `min(max(width, 0), 2)` passed NaN and every
         // output sample became NaN. The neutral width is 1 (unchanged), NOT the range floor 0
-        // (mono), so NaN is mapped to 1 before the clamp — the flanger-feedback shape in
-        // `EchoelModFX`. Every other value, ±inf included, is unchanged.
+        // (mono), so NaN is mapped to 1 before the clamp — the map-before-clamp form of the
+        // flanger feedback in `EchoelModFX`, but NaN-ONLY: there ±inf read as 0 too, here ±inf
+        // keep the old clamp. Every other value, ±inf included, is unchanged.
         // Guard: `TheLoFiStagesCannotPassANaNControlTests`.
         let w = (width.isNaN ? 1 : width).clamped(to: 0...2)
         let mid = (inL + inR) * 0.5
