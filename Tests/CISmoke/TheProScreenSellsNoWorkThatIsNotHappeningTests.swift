@@ -136,7 +136,7 @@ final class TheProScreenSellsNoWorkThatIsNotHappeningTests: XCTestCase {
 
     private func filesUnderSources(containing needle: String) throws -> [String] {
         let base = try repoRoot().appendingPathComponent(Self.sourcesRoot)
-        guard let walker = FileManager.default.enumerator(atPath: base.path) else {
+        guard FileManager.default.fileExists(atPath: base.path), let walker = FileManager.default.enumerator(atPath: base.path) else {
             throw XCTSkip("cannot enumerate \(Self.sourcesRoot) — refusing to report a green it did not earn")
         }
         var hits: [String] = []

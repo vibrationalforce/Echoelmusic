@@ -250,7 +250,7 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
                              _ matches: (String) -> Bool) throws -> [String] {
         let root = try repoRoot()
         let sources = root.appendingPathComponent(Self.sourcesRoot)
-        guard let walker = FileManager.default.enumerator(atPath: sources.path) else {
+        guard FileManager.default.fileExists(atPath: sources.path), let walker = FileManager.default.enumerator(atPath: sources.path) else {
             throw XCTSkip("cannot enumerate \(Self.sourcesRoot) — refusing to report a green it did not earn")
         }
         var hits: [String] = []
