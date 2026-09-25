@@ -1,26 +1,19 @@
 //
 //  ArrangementStripView.swift
-//  Echoelmusic — Studio (WA4.5: the song at a glance — every track's parts on one scale)
+//  Echoelmusic — Studio (WA4.5: the song on one scale — the pure geometry)
 //
-//  WHY THIS EXISTS. The WA4 journey step SEE CONTENT. Since WA4.3 a track's parts are listed
-//  under its inspector, one track at a time; nothing showed WHERE in the song each track
-//  plays. This strip sits under every track row with parts: one block per part, placed on the
-//  SAME scale for every track (the song's length in whole bars, `WorkstationSummary
-//  .lengthBars`), so the rows line up into an arrangement overview.
+//  WHY THIS EXISTS. WA4.5 drew one thin strip per track under its row; WA4 path 4 replaced
+//  the strips with `ArrangeCanvasView`, which draws every track on the same scale and makes a
+//  part selectable. What stays here is the PURE half both used — where each part sits on the
+//  song's scale — so the canvas has exactly one geometry rule (#416). The file keeps its name
+//  because the guards and the census cite it; the `View` that gave it that name is gone.
 //
-//  ⚠️ OVERLAP IS DRAWN THE WAY IT IS HEARD. Parts are drawn in `TrackParts.parts` order —
-//  start, then placement — so a later-starting part sits ON TOP of the one it overlaps, which
-//  is exactly who `TimelineScheduling.activeRegion` lets play (#1440). No second rule.
-//
-//  ⚠️ NO PLAYHEAD, ON PURPOSE. The position is ~8 Hz state (`currentTick` is
-//  `@ObservationIgnored` precisely so no view subscribes to it); drawing it here would make
-//  every strip — and the Workstation body that hosts them — a hot reader (10.76.41/50). The
-//  strip is a picture of the DOCUMENT and changes only on an edit.
-//
-//  Read-only: no tap, no drag, no write. Arranging stays in the inspector (WA4.3).
+//  ⚠️ OVERLAP IS DRAWN THE WAY IT IS HEARD. Blocks come in `TrackParts.parts` order — start,
+//  then placement — so a later-starting part sits ON TOP of the one it overlaps, which is
+//  exactly who `TimelineScheduling.activeRegion` lets play (#1440). No second rule.
 //
 
-import SwiftUI
+import Foundation
 
 /// The pure half: where each part of a track sits on the song's scale, and how that is said.
 enum ArrangementStrip {
@@ -66,36 +59,4 @@ enum ArrangementStrip {
 
     /// Past this many, the sentence summarises instead of reading a whole song aloud.
     static let spokenLimit = 6
-}
-
-/// One track's parts across the song. A leaf with no observation of its own: the host hands it
-/// the document it already read, so it re-renders only when the song is edited.
-struct ArrangementStripView: View {
-
-    let laneID: UUID
-    let document: TimelineDocument
-    let songTicks: Int
-
-    var body: some View {
-        let blocks = ArrangementStrip.blocks(onLane: laneID, in: document, songTicks: songTicks)
-        GeometryReader { geometry in
-            let width = geometry.size.width
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                    .fill(EchoelTheme.fill)
-                ForEach(blocks) { block in
-                    RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                        .fill(EchoelTheme.dim)
-                        .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                            .strokeBorder(EchoelTheme.border, lineWidth: 1))
-                        .frame(width: Swift.max(2, width * block.width))
-                        .offset(x: width * block.start)
-                }
-            }
-        }
-        // A picture of data, not a control: a fixed height is right here (no text inside).
-        .frame(height: 10)
-        .accessibilityElement()
-        .accessibilityLabel(ArrangementStrip.spoken(onLane: laneID, in: document))
-    }
 }

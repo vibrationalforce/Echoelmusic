@@ -1,26 +1,34 @@
 // TheSongIsSeenOnOneScaleTests.swift
-// Echoel — WA4.5: every track's parts drawn across the song, on one shared scale.
+// Echoel — WA4.5 → WA4 path 4: every track's parts on one shared scale, now selectable.
 //
-// WHAT THIS PINS. `Studio/ArrangementStripView.swift` draws, under each Workstation track row
-// with parts, where that track plays in the song. The risks: a strip on its own scale (rows
-// that do not line up are not an arrangement), an overlap drawn differently from how it is
-// heard (a second precedence rule, #1440), and a playhead read that turns the Workstation body
-// into a hot reader (10.76.41/50).
+// WHAT THIS PINS. WA4.5 drew a read-only strip under each track row; WA4 path 4 replaced the
+// strips with `Studio/ArrangeCanvasView.swift` — all tracks with parts on ONE scale, a part
+// selected by tapping it, and a playhead. The pure geometry stayed in
+// `Studio/ArrangementStripView.swift` (`ArrangementStrip`). The risks: rows on their own scale
+// (not an arrangement), an overlap drawn differently from how it is heard (a second precedence
+// rule, #1440), and a position read that turns the canvas or the Workstation body into a hot
+// reader (10.76.41/50).
 //
 // 1. END-TO-END (pure) over `TimelineDocument`: the scale is the song's length in whole bars;
 //    blocks sit at start/length fractions of it; overlapping parts are ordered start-then-
 //    placement (the order `activeRegion` resolves in, so the part that plays is drawn on top);
 //    an empty song draws nothing; the spoken form names bars the way the Session view does.
-// 2. SOURCE: the strip reads no player, no store, no environment and no playhead, and has no
-//    control; the Workstation mounts it once, for non-bio tracks with parts, and is its door.
+// 2. END-TO-END (pure): the canvas draws exactly the non-bio tracks with parts; the playhead
+//    fraction is nil without a scale and pinned to 0…1 otherwise.
+// 3. SOURCE: the canvas reads no player, no position, no store and has no drag; the playhead is
+//    its own self-driving leaf that selects nothing and launches nothing; the Workstation is the
+//    one door and mounts no strip any more.
 //
-// Grading (§0, no Swift toolchain in a web session): claim 1 was transcribed into Python over
-// a model of `ArrangementStrip`, `TrackParts.parts` and `WorkstationSummary.lengthBars`; claim
-// 2 was driven against this tree. On the parent (0faea6e66) `ArrangementStrip` does not exist,
-// so the bundle does not build there — ONE absence, not N findings (#486).
-// NOT covered: that the strips render, line up and read well at every width — a device probe.
-// NEEDS-FOUNDER-VERIFY: Workstation with two or more tracks with parts — the strips line up
-// bar for bar, and an overlapping later part shows on top.
+// Grading (§0, no Swift toolchain in a web session): claims 1–2 transcribed into Python over a
+// model of `ArrangementStrip`, `ArrangeCanvas`, `TrackParts.parts` and
+// `WorkstationSummary.lengthBars`; claim 3 driven against this tree. On the parent (f43bfe505)
+// `ArrangeCanvas` does not exist, so the bundle does not build there — ONE absence (#486);
+// claims 2–3 are FORWARD guards, claim 1 a COUNTERWEIGHT (unchanged, green on both trees).
+// NOT covered: that the canvas renders, lines up, and a tap lands on a narrow part at every
+// width — a device probe.
+// NEEDS-FOUNDER-VERIFY: Workstation with two or more tracks with parts — the rows line up bar
+// for bar, an overlapping later part shows on top, tapping a part outlines it and opens its
+// track, and the playhead line moves while the timeline plays.
 
 import Foundation
 import XCTest
@@ -29,6 +37,7 @@ import XCTest
 final class TheSongIsSeenOnOneScaleTests: XCTestCase {
 
     private static let stripPath = "Sources/Echoelmusic/Studio/ArrangementStripView.swift"
+    private static let canvasPath = "Sources/Echoelmusic/Studio/ArrangeCanvasView.swift"
     private static let workstationPath = "Sources/Echoelmusic/Studio/WorkstationView.swift"
     private static let sourcesRoot = "Sources/Echoelmusic"
     private static let bar = TimelineTime.ticksPerBar
@@ -107,34 +116,84 @@ final class TheSongIsSeenOnOneScaleTests: XCTestCase {
         XCTAssertEqual(ArrangementStrip.spoken(onLane: Self.keysLane.id, in: empty), "No parts")
     }
 
-    // MARK: 2 — source: a cold picture with one door
+    // MARK: 2 — the canvas rows and the playhead position (pure)
 
-    func testTheStripIsAColdPictureOfTheDocument() throws {
-        let code = try source(Self.stripPath)
-        XCTAssertTrue(code.contains("TrackParts.parts(onLane: laneID, in: document)"),
-                      "draw order is the parts list's order — one ordering rule")
-        XCTAssertTrue(code.contains("SessionGrid.label(forTick:"),
-                      "bars are named by the one label rule (#416)")
-        XCTAssertTrue(code.contains("summary.lengthBars * TimelineTime.ticksPerBar"),
-                      "the scale is the summary's song length — the number the song line prints")
-        for banned in ["@Environment", "player", "currentTick", "timeline.", "Button(",
-                       "onTapGesture", "gesture(", "Timer", "TimelineRegion(", "TimelineDocument("] {
-            XCTAssertFalse(code.contains(banned), """
-                ArrangementStripView contains `\(banned)`. It is a read-only picture of the \
-                document it is handed: no playhead (the hot-state law), no store, no control.
+    func testTheCanvasDrawsTracksWithPartsAndPinsThePlayhead() {
+        let bio = TimelineLane(name: "Body", kind: .midi, isBio: true)
+        let clip = UUID()
+        let doc = TimelineDocument(
+            lanes: [bio, Self.keysLane, Self.loopLane],
+            regions: [TimelineRegion(laneID: bio.id, clipID: clip, startTick: 0, lengthTicks: Self.bar),
+                      TimelineRegion(laneID: Self.keysLane.id, clipID: clip, startTick: 0,
+                                     lengthTicks: Self.bar)])
+        XCTAssertEqual(ArrangeCanvas.rows(WorkstationSummary(document: doc)).map(\.id), [Self.keysLane.id],
+                       "a bio curve is not an arrangement, and an empty track has no row")
+
+        let song = 4 * Self.bar
+        XCTAssertNil(ArrangeCanvas.playheadFraction(tick: 0, songTicks: 0), "no scale, no playhead")
+        XCTAssertEqual(ArrangeCanvas.playheadFraction(tick: 2 * Self.bar, songTicks: song), 0.5)
+        XCTAssertEqual(ArrangeCanvas.playheadFraction(tick: -10, songTicks: song), 0)
+        XCTAssertEqual(ArrangeCanvas.playheadFraction(tick: 9 * Self.bar, songTicks: song), 1,
+                       "a loop running past the end pins to the end instead of leaving the canvas")
+    }
+
+    // MARK: 3 — source: a cold canvas, a self-driving playhead, one door
+
+    func testTheCanvasIsColdAndThePlayheadIsItsOwnLeaf() throws {
+        let file = try source(Self.canvasPath)
+        guard let canvasStart = file.range(of: "struct ArrangeCanvasView: View {"),
+              let playheadStart = file.range(of: "struct ArrangePlayheadView: View {"),
+              canvasStart.upperBound < playheadStart.lowerBound else {
+            return XCTFail("ANCHOR MISSING: the canvas and playhead declarations (#454)")
+        }
+        let canvas = String(file[canvasStart.upperBound..<playheadStart.lowerBound])
+        let playhead = String(file[playheadStart.upperBound...])
+
+        XCTAssertTrue(canvas.contains("ArrangementStrip.blocks(onLane: row.id, in: document, songTicks: songTicks)"),
+                      "one geometry rule: the canvas places parts by the pinned pure half (#416)")
+        XCTAssertTrue(canvas.contains("selection.selectRegion(block.id, in: document)"),
+                      "a tap selects through the ONE selection owner")
+        XCTAssertTrue(canvas.contains("ArrangePlayheadView(songTicks: songTicks)"))
+        for banned in ["currentTick", "player", "timeline.", "TimelineRegion(", "TimelineDocument(",
+                       "Timer", "DragGesture", "TimelineView("] {
+            XCTAssertFalse(canvas.contains(banned), """
+                ArrangeCanvasView contains `\(banned)`. The canvas is a cold picture of the \
+                document plus the selection: no position read (the hot-state law), no store, no \
+                clock and — until the edit slices land — no drag.
                 """)
         }
+
+        XCTAssertTrue(playhead.contains("TimelineView(.animation(minimumInterval: 1.0 / 15.0, paused: !playing))"),
+                      "the playhead self-drives, and stops redrawing while the timeline is stopped")
+        XCTAssertTrue(playhead.contains("player.currentTick"))
+        XCTAssertTrue(playhead.contains(".allowsHitTesting(false)"),
+                      "the line over the parts must not swallow the taps that select them")
+        for banned in ["selection", "timeline.", "player.play(", "player.stop()", "relocate", "launch"] {
+            XCTAssertFalse(playhead.contains(banned),
+                           "ArrangePlayheadView contains `\(banned)` — it shows the position and does nothing else")
+        }
+
+        let strip = try source(Self.stripPath)
+        XCTAssertTrue(strip.contains("summary.lengthBars * TimelineTime.ticksPerBar"),
+                      "the scale is the summary's song length — the number the song line prints")
+        XCTAssertTrue(strip.contains("TrackParts.parts(onLane: laneID, in: document)"),
+                      "draw order is the parts list's order — one ordering rule")
+        XCTAssertTrue(strip.contains("SessionGrid.label(forTick:"),
+                      "bars are named by the one label rule (#416)")
+        XCTAssertFalse(strip.contains(": View"), "the strip file is the pure geometry now; the canvas draws")
     }
 
     func testTheWorkstationIsTheOneDoor() throws {
         let workstation = try source(Self.workstationPath)
-        XCTAssertEqual(workstation.components(separatedBy: "ArrangementStripView(").count - 1, 1)
-        XCTAssertTrue(workstation.contains("if !row.isBio && row.regionCount > 0 {"),
-                      "a strip only for a track with parts to show, never for a bio curve")
+        XCTAssertEqual(workstation.components(separatedBy: "ArrangeCanvasView(").count - 1, 1)
+        XCTAssertTrue(workstation.contains("let arrangeRows = ArrangeCanvas.rows(summary)"),
+                      "the rows are the pure rule's rows — never a bio curve, never an empty track")
         XCTAssertTrue(workstation.contains("songTicks: ArrangementStrip.songTicks(summary))"),
                       "every row gets the SAME scale, or the rows do not line up")
-        let doors = try filesMatching { code, _ in code.contains("ArrangementStripView(") }
+        let doors = try filesMatching { code, _ in code.contains("ArrangeCanvasView(") }
         XCTAssertEqual(doors, [Self.workstationPath])
+        let strips = try filesMatching { code, _ in code.contains("ArrangementStripView(") }
+        XCTAssertEqual(strips, [], "one picture of the song: the per-row strips went with the canvas")
     }
 
     // MARK: Source helpers

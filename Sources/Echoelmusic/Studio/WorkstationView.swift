@@ -260,15 +260,18 @@ struct WorkstationView: View {
                 emptyState
             } else {
                 songLine(summary)
+                // WA4 path 4 — the arrangement: every track's parts on the one shared scale,
+                // a part selected by tapping it. Handed the document this body already read;
+                // the canvas observes only the selection, and the playhead is its own leaf.
+                // (Replaces the WA4.5 per-row strips — one picture of the song, not two.)
+                let arrangeRows = ArrangeCanvas.rows(summary)
+                if !arrangeRows.isEmpty {
+                    ArrangeCanvasView(rows: arrangeRows, document: timeline.document,
+                                      songTicks: ArrangementStrip.songTicks(summary))
+                        .padding(.horizontal, 10)
+                }
                 ForEach(summary.lanes) { row in
                     laneRow(row)
-                    // WA4.5 — where this track plays in the song, on the one shared scale.
-                    // Handed the document this body already read; the strip observes nothing.
-                    if !row.isBio && row.regionCount > 0 {
-                        ArrangementStripView(laneID: row.id, document: timeline.document,
-                                             songTicks: ArrangementStrip.songTicks(summary))
-                            .padding(.horizontal, 10)
-                    }
                     if WorkstationSelection.resolvedTrack(selection.trackID,
                                                           in: timeline.document) == row.id {
                         // The mixer and device facts of the ONE open track. Its own leaf, with
