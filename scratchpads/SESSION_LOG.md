@@ -39910,3 +39910,10 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - **Review of 5c8de3c59/b4c2179bf/e3211f21d: PASS WITH CONDITIONS** → `3f383f666`: M1 Safe Mode clears `studio.reopensWorkstation` (a crashing Workstation plate can no longer trap every relaunch); L4 dragged part `zIndex` on top. Recorded, device-only: L2 relaunch chip scroll timing, L3 no "lifted" cue, L5 drag past song end rescales the canvas.
 - **Next ready:** read CI/CD `Build for Testing` + Compile Check for the queued backlog (runs 6335→), newest first; then #202 (AUv3 reverb mix per-sample smoothing). Phase 3 order = Founder.
 - **Gate reading 19:35Z:** CI/CD run 6335 (`3da618e`) and 6336 (`bc261fae`, WA4-S2): **Build for Testing = success** on both. Run Tests on 6336 = #396 shape (exit 65, 167 observed passing, 0 failures, 0 skipped in the `tail -200` window, one 1082 s log gap). Runs 6337→ (from `a924cd4f`, WA4-S3) still queued behind the macOS pool; no Compile Check result yet in this window.
+
+## 2026-09-25 19:40Z — #202 AUv3 reverb blend glides per sample
+
+- **`735a91968`**: `renderSpace` plays `EchoelBodyVibeDevice.mixRamp(from: lastEnd, to: target)` per sample; the last sample returns the target exactly (float32 transcription: the computed form misses 0.1 on 0.9 → 0.1). `EchoelReverb.mixGlidePrimed` — the first block does not glide out of the type default 0.25, so a fresh stage at mix 0 stays bit-exact dry. Rising-edge tank reset unchanged and still first. Non-finite target → 0. Render cost: one mul-add + one div per sample, no allocation.
+- **Guard** `TheAUv3ReverbMixGlidesAcrossABlockTests` (3 claims, all FORWARD — no compile on the parent). Graded by float32 transcription of `EchoelReverb` (scratchpad `g202.py`): new body 0/510 blend mismatches, parent body 509; first-block counterweight red under the no-prime mutation; existing claim 9 re-driven green (held 0.162, risen 0.0). Five checkers clean.
+- **Review:** independent dsp review of `735a91968` running.
+- **Gates:** CI/CD runs 6337→6357 all still QUEUED at 19:38Z (macOS pool, #208). Nothing after `bc261fae` is compile-verified.

@@ -353,6 +353,12 @@ done. WA4 is the first front.
     (2026-09-24).** `EchoelReverb.setSampleRate` in `allocateRenderResources`; `tailTime` =
     release + reverb T60 (`EchoelBodyVibeDevice.tailSeconds`). Guards
     `TheAUv3ReverbFollowsTheHostRateTests`, `TheAUv3TailCoversTheReverbTests`. Host check WA3-6.
+  - **WA3.3b — the reverb blend glides across a block (#202, post-RC): IMPLEMENTED
+    (2026-09-25, `735a91968`).** `renderSpace` played each block at ONE blend, so address-6
+    automation stepped at every block edge (zipper/click). Each sample now plays
+    `EchoelBodyVibeDevice.mixRamp` from the last block's end to the new target, exactly the
+    target at the last sample; `EchoelReverb.mixGlidePrimed` keeps the first block from gliding
+    out of the type default. Guard `TheAUv3ReverbMixGlidesAcrossABlockTests`. Host check WA3-5.
   - **WA3 slice 2 (app instrument) — Echoel instance state, read-only assembly: IMPLEMENTED
     (2026-09-25).** `Core/EchoelInstanceState.swift` gathers the app instrument's creative state
     (patch, FX character, genre, mood, variation, articulation, rhythm/pad shape, auto mode,
