@@ -196,10 +196,21 @@ public final class EchoelCompressor: @unchecked Sendable {
         }
 
         // Ballistics: fast toward more reduction (attack), slow toward less (release).
-        if target < grState {
-            grState += (target - grState) * attackCoeff
-        } else {
-            grState += (target - grState) * releaseCoeff
+        //
+        // A NON-FINITE TARGET HOLDS THE STATE — the same hold as the input bail above, for a
+        // bad CONTROL instead of a bad sample. A NaN `thresholdDb` makes `over` NaN, both knee
+        // comparisons fail into the `else`, and the release branch wrote `grState = NaN` for
+        // good. A −inf threshold made the target −inf, `grState` followed it, and the first
+        // finite threshold afterwards computed `−inf + inf` = NaN — the same latch one step
+        // later. LATENT: every writer (`FXPreset.apply` from a decoded preset, the FX panel
+        // field, the now NaN-safe morph) delivers a finite value; closed on the #588 boundary
+        // rule. Guard: `TheCompressorCannotLatchANonFiniteThresholdTests`.
+        if target.isFinite {
+            if target < grState {
+                grState += (target - grState) * attackCoeff
+            } else {
+                grState += (target - grState) * releaseCoeff
+            }
         }
         // Denormal flush, third site (#207). `grState` is a dB reduction, so it is ≤ 0 and
         // relaxes UP toward 0 — the guard is one-sided for that reason. Snapping the last
