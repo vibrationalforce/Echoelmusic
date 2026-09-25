@@ -580,6 +580,11 @@ final class TheWireSaysWhoseBodyTests: XCTestCase {
         var silent: [String] = []
         for case let rel as String in walker {
             guard rel.hasSuffix(".md") || rel.hasSuffix(".html") else { continue }
+            // ⚠️ The history archive (R1, 2026-09-24) records what EXISTED — it names
+            // `/echoelmusic/bio/event/eeg` only to say it has zero producers. It is not a table
+            // an integrator wires from, and demanding the provenance flag there reddened this
+            // claim on a correct tree. Only this one file is exempt; every other doc still is not.
+            guard rel != "dev/HISTORY_ARCHIVE.md" else { continue }
             guard let text = try? String(contentsOf: docs.appendingPathComponent(rel),
                                          encoding: .utf8) else { continue }
             guard text.contains("/echoelmusic/bio/event/") else { continue }
