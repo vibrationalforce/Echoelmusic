@@ -218,7 +218,7 @@ struct AUv3PluginView: View {
             Text(label)
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(Color(white: 0.6))
-                .frame(width: 80, alignment: .leading)
+                .frame(width: 80, alignment: .leading) // ADAPTIVE-EXEMPT: fixed-point .system(size:) font in the host-sized plug-in UI; it does not scale with Dynamic Type
             Slider(value: Binding(
                 get: { value.wrappedValue },
                 set: { value.wrappedValue = $0; viewModel.setParameter(address: address, value: $0) }
@@ -227,7 +227,7 @@ struct AUv3PluginView: View {
             Text(String(format: format, display?(value.wrappedValue) ?? value.wrappedValue))
                 .font(.system(size: 11, design: .monospaced))
                 .foregroundColor(Color(white: 0.4))
-                .frame(width: 56, alignment: .trailing)
+                .frame(width: 56, alignment: .trailing) // ADAPTIVE-EXEMPT: fixed-point .system(size:) font in the host-sized plug-in UI; it does not scale with Dynamic Type
         }
     }
 }
