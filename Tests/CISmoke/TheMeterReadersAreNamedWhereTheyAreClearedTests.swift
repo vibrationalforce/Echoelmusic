@@ -43,6 +43,9 @@
 //   · claims 2 and 4 — COUNTERWEIGHTS, green on both trees. That is the point of them
 //     (#343): claim 1 is only meaningful while `masterLevelR` still discriminates, and the
 //     AU6 row is only closed while the third `applyBioReactive` owner stays gone.
+//     ⛔ Claim 4's premise EXPIRED with #1385 (the AUv3 owner came back), and the claim was
+//     red on a correct tree from then until it was re-pointed at the invariant the board now
+//     closes AU6 on: the one AUv3 call sits inside `internalRenderBlock`. See claim 4.
 //
 //  ⭐ CLAIMS 5–7 ADDED BY #1197 (2026-09-09), same law family: the AU5 note is about these
 //  nine meter properties being a 60 Hz landmine, and #1197 is the slice that stopped them
@@ -171,23 +174,59 @@ final class TheMeterReadersAreNamedWhereTheyAreClearedTests: XCTestCase {
 
     // MARK: - 4. counterweight — AU6 stays closed only while its premise holds
 
-    func testTheThirdBioOwnerIsStillGone() throws {
-        var offenders: [String] = []
-        for path in try swiftFiles() {
+    /// ⛔ THIS CLAIM WAS `testTheThirdBioOwnerIsStillGone` AND PINNED AN ABSENCE: `BioMirror`
+    /// must not occur in code. #1385 (2026-09-20) brought the AUv3 back WITH its `BioMirror`,
+    /// and the claim was red on a correct tree from then on — the message said to reopen AU6.
+    /// The board did the measuring instead: AU6 stays closed, but on a DIFFERENT ground — the
+    /// restored owner calls `applyBioReactive` INSIDE `internalRenderBlock`, on the render
+    /// thread, exactly like the other two owners, so `harmonicAmplitudes` keeps one thread.
+    /// "The owner is absent" was an inventory fact and expired; "the owner applies render-side"
+    /// is a behaviour fact, and that is what is pinned now. SOURCE-TEXT SCAN (§1).
+    func testTheThirdBioOwnerAppliesOnTheRenderThread() throws {
+        let auPath = "Sources/EchoelmusicAUv3/EchoelmusicAudioUnit.swift"
+        var strays: [String] = []
+        for path in try swiftFiles() where path != auPath {
             guard let code = try? codeText(path) else { continue }
-            if code.contains("BioMirror") { offenders.append(path) }
+            if code.contains("BioMirror") { strays.append(path) }
         }
-        XCTAssertTrue(offenders.isEmpty, """
-            `BioMirror` is back in CODE (not just in the tombstone comment) at: \
-            \(offenders.joined(separator: ", ")).
+        XCTAssertTrue(strays.isEmpty, """
+            `BioMirror` appears in code outside the AUv3 at: \(strays.joined(separator: ", ")). \
+            The AU6 closure in `\(Self.board)` covers exactly ONE mirror-fed owner, the AUv3 \
+            render block. A new owner reopens AU6 and the `EchoelDDSP.swift` header invariant \
+            in the SAME commit — this does not forbid the work (#364).
+            """)
 
-            That name belonged to the AUv3 KVO poll — the THIRD caller of `applyBioReactive`, \
-            and the only one that ran off the render thread. Its removal (#121 Slice 1) is what \
-            closed audit item AU6 (cross-thread COW hazard on `harmonicAmplitudes`), and \
-            `\(Self.board)` now records AU6 as closed on exactly that ground.
-
-            This does NOT forbid the work (#364). It says: if a third owner comes back, the AU6 \
-            row and the `EchoelDDSP.swift` header invariant must be reopened in the SAME commit.
+        let au = try codeText(auPath)
+        let anchor = "override var internalRenderBlock: AUInternalRenderBlock {"
+        let call = "applyBioReactive("
+        XCTAssertEqual(au.components(separatedBy: call).count - 1, 1, """
+            The AUv3 no longer makes exactly ONE `applyBioReactive(` call. AU6 is closed on the \
+            ground that its one call runs render-side; a second call site needs the same \
+            measurement before the board may keep AU6 closed.
+            """)
+        guard let head = au.range(of: anchor),
+              let callAt = au.range(of: call) else {
+            XCTFail("`\(anchor)` or `\(call)` is gone from the AUv3 — re-anchor (#454).")
+            return
+        }
+        // Brace-match the render block from its opening brace (#408): the call must sit inside.
+        var depth = 0
+        var end: String.Index?
+        var i = au.index(before: head.upperBound)
+        while i < au.endIndex {
+            if au[i] == "{" { depth += 1 }
+            if au[i] == "}" { depth -= 1; if depth == 0 { end = au.index(after: i); break } }
+            i = au.index(after: i)
+        }
+        guard let blockEnd = end else {
+            XCTFail("`internalRenderBlock`'s braces do not balance — re-anchor (#454).")
+            return
+        }
+        XCTAssertTrue(callAt.lowerBound > head.lowerBound && callAt.lowerBound < blockEnd, """
+            The AUv3's `applyBioReactive(` call left `internalRenderBlock`. It now runs on a \
+            control thread while the render thread reads `harmonicAmplitudes` — the \
+            cross-thread COW hazard AU6 was about. Move it back render-side, or reopen AU6 in \
+            `\(Self.board)` and the `EchoelDDSP.swift` header invariant in the SAME commit.
             """)
     }
 
