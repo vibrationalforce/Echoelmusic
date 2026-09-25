@@ -181,7 +181,16 @@ public enum BioExplanation {
         // to unwrap `f` a second time. `s.arousal != nil` implies `f != nil` (the summary
         // sets all three to nil for a nil frame), so pairing them in one `if let` below
         // cannot change the outcome for any frame that could already arrive.
-        let measuredHR = f.map { Int($0.heartRateBPM.rounded()) }
+        // ⭐ 2026-09-25 (overnight P8aa): `Int(exactly:)`, not `Int(_:)`. The frame is RAW by
+        // contract (`BioSampleFrame` sanitises nothing; its consumers do), and this line
+        // converted every frame's pulse EAGERLY — before any clause asked whether it was
+        // measured. `Int(Float.nan)`, `Int(.infinity)` and `Int(1e30)` are Swift TRAPS, on
+        // the main actor, on every generate. `Int(exactly:)` is nil for all three and exact
+        // for every finite pulse, so no threshold is invented here (#416). Non-finite now
+        // reads as ABSENT — the rule `heartRateForSound` already states — and `+inf`, which
+        // passes `hasMeasuredHeartRate`, lands in the "no pulse measured yet" clause.
+        // Guard: `TheNarrationCannotTrapOnARawPulseTests`.
+        let measuredHR = f.flatMap { Int(exactly: $0.heartRateBPM.rounded()) }
 
         // Each clause is built ONLY from a measured field. An unmeasured one drops the
         // clause entirely rather than narrating a default — this text is presented as
