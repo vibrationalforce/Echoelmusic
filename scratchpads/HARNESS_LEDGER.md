@@ -4339,3 +4339,17 @@ Falle ist am billigsten zu entfernen, solange sie latent ist.**
 
 ⭐ Und der Wächter BINDET, statt zu verbieten (#364, Playbook #F1): nicht „`.midi2` darf nie
 Roadmap sein", sondern „Etikett und Maschine müssen übereinstimmen" — rot in BEIDE Richtungen.
+
+## PLAYBOOK P8o→P8q (2026-09-25) — sweep for the CLAIM, not for one spelling of it
+
+**Observed.** P8o corrected six comments that said the AUv3 target was gone (false since #1385),
+found by `git grep "removed 2026-07-24"`. Two more carried the SAME claim in other words — "the
+AUv3 removal at 2026-07-24 … none of them an audio unit" (`BioFeedbackPublisher`) and "the target
+was DELETED … `Sources/EchoelmusicAUv3` does not exist" (`ProUnlockView`) — and survived the sweep.
+They surfaced only because a later slice happened to read the neighbouring function.
+
+**Playbook.** Before calling a stale-claim sweep complete, grep for the claim's CONSEQUENCES as
+well as its words: the path it says is absent (`Sources/EchoelmusicAUv3`), the symbol it says has no
+code (`pullSharedVitals`), the verb family (`removed|deleted|gone|no longer|does not exist`) near
+the subject. Then check the surviving hits by reading them. A sweep's hit count says how many
+spellings you thought of, not how many copies exist (the #766/#768 law, applied to prose).
