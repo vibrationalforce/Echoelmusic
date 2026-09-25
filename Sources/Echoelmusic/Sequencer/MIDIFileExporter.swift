@@ -34,7 +34,7 @@ public enum MIDIFileExporter {
     /// Build a Type-0 Standard MIDI File for the grid + tempo.
     /// - Parameters:
     ///   - steps: `steps[track][step] == true` triggers a note.
-    ///   - tempo: BPM (clamped to 1...1000).
+    ///   - tempo: BPM (clamped to 1...1000; NaN is written as `Transport.defaultTempo`).
     ///   - velocity: note-on velocity, 1...127.
     public static func export(steps: [[Bool]], tempo: Double, velocity: UInt8 = 100,
                               humanize: Humanizer = .tight, seed: UInt64 = 0) -> Data {
@@ -226,7 +226,14 @@ public enum MIDIFileExporter {
     // MARK: - Meta-event builders (each begins with a 0x00 delta-time)
 
     static func tempoMeta(_ tempo: Double) -> [UInt8] {
-        let clampedTempo = Swift.min(Swift.max(tempo, 1), 1000)
+        // NaN first: `Swift.max(NaN, 1)` is NaN, so the bare clamp passed it through and
+        // `UInt32(60_000_000.0 / NaN)` TRAPPED — on the public export path whose doc says
+        // "clamped to 1...1000". A NaN tempo is written as `Transport.defaultTempo`, which
+        // is also the tempo a reader assumes when a file carries no tempo meta at all.
+        // ±inf is unchanged (1000 and 1). Latent: every live caller passes the transport's
+        // finite tempo (overnight P8).
+        let finiteTempo = tempo.isNaN ? Transport.defaultTempo : tempo
+        let clampedTempo = Swift.min(Swift.max(finiteTempo, 1), 1000)
         // The SMF tempo meta is a fixed 3-byte field → max 0xFFFFFF µs/quarter
         // (~3.576 BPM). Clamp the ENCODED value so a very slow tempo saturates at
         // the format floor instead of silently overflowing (dropping the top byte,
