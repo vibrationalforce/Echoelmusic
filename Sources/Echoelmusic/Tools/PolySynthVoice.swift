@@ -352,7 +352,7 @@ public final class PolySynthVoice {
         // order passes NaN into the target, the render's one-pole (`breathSwellDepth +=
         // (target - depth) * 0.05`) latches it, and NaN never leaves: every later depth
         // stays NaN, `> 0.0005` is false, and the swell is skipped for the rest of the
-        // session while `isBreathSwellActive` reports true for the next non-zero call.
+        // session while `isBreathSwellActive` reports true for the next positive depth.
         // NaN now reads as 0 (off); every other value, ±inf included, is unchanged.
         // Guard: `TheBreathSwellCannotLatchANaNDepthTests`.
         let d = depth.clamped(to: 0...0.6)

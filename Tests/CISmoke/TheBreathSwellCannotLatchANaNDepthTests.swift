@@ -7,9 +7,10 @@
 // The render ramps `breathSwellDepth += (breathSwellTargetDepth - breathSwellDepth) * 0.05`, so a
 // NaN target makes the applied depth NaN, and NaN plus anything stays NaN: the `> 0.0005` test is
 // false on every later block and the swell is skipped for good, even after a finite depth is set
-// again. The UI mirror `isBreathSwellActive` then reports true for that later call — the panel says
-// "breathing" over a swell that never runs. The OUTPUT is not NaN (the multiply is skipped); the
-// loss is the feature, permanently, with nothing watching.
+// again. The mirror `isBreathSwellActive` then reports true for the next POSITIVE depth, over a
+// swell that never runs — a mirror nothing reads today (review 11: this line first said a panel
+// shows it; none does). The OUTPUT is not NaN (the multiply is skipped); the loss is the feature,
+// permanently, with nothing watching.
 //
 // LATENT: the two production callers pass literals (0 and 0.22). Closed on the #588 boundary rule,
 // because the failure is sticky rather than transient.
@@ -51,7 +52,7 @@ final class TheBreathSwellCannotLatchANaNDepthTests: XCTestCase {
 
     // MARK: - claim 2 (COUNTERWEIGHT)
 
-    func testTheMirrorStillFollowsEveryNonNaNDepth() {
+    func testTheMirrorStillFollowsEveryDepth() {
         let synth = PolySynthVoice(maxVoices: 1)
         for (depth, active): (Float, Bool) in [(0.22, true), (0, false), (-1, false), (.infinity, true),
                                                (-.infinity, false), (.nan, false)] {
