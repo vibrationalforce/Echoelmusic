@@ -23,7 +23,10 @@
 // ⚠️ WHAT MUST NOT BE READ INTO THIS (#364). The bound is deliberately CONSERVATIVE (release +
 // room, while the room's input already fades during the release); a later slice may tighten
 // it, and should keep claim 1 green when it does. It does not freeze the release or the room
-// size.
+// size. ⚠️ (2026-09-25) "Conservative" holds because of the 2 s release in front of the room,
+// NOT because `decayTimeSeconds` bounds the output — it does not (see its doc). Claim 1 renders
+// the shipped release only; a slice that shortens the release must add a margin and a render at
+// that release.
 //
 // ⚠️ HONEST GRADING — TRANSCRIBED (§0), no local toolchain. Parent `98f5d8f7e`: `tailSeconds`
 // and `decayTimeSeconds` do not exist, so claims 1–3 do not COMPILE there — FORWARD guards.

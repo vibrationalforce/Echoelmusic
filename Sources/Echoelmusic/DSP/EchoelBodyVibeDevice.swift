@@ -199,8 +199,12 @@ public enum EchoelBodyVibeDevice {
 
     /// How long the AUv3 keeps sounding after its input stops — its `tailTime`: the synth's own
     /// release, then the reverb's slowest mode falling 60 dB (`EchoelReverb.decayTimeSeconds`).
-    /// An upper bound by construction, because the reverb's input is already fading during the
-    /// release; `TheAUv3TailCoversTheReverbTests` renders it.
+    /// ⚠️ Conservative TODAY, not by construction (corrected 2026-09-25). `decayTimeSeconds` does
+    /// not bound the reverb's OUTPUT (see its own comment: up to ~0.7 s short, reasoned). What
+    /// makes the sum safe is the release in front of it: the AUv3 plays a 2 s, −60 dB release it
+    /// never changes, so the room is already far down when the release ends.
+    /// `TheAUv3TailCoversTheReverbTests` renders that case. A path that shortens the release
+    /// toward 0 must add a margin here, or a host bounce cuts the room off again.
     /// ⛔ The AUv3 reported a literal 2.0 s — the release alone — after WA3.3 made the reverb
     /// audible. At full mix on a 55 Hz note the output two seconds after note-off was still far
     /// above −60 dB, so a host bouncing to the tail cut the room off.

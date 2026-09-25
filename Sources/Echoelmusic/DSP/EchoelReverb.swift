@@ -119,10 +119,17 @@ public final class EchoelReverb: @unchecked Sendable {
     /// Time (s) for the slowest mode to fall by 60 dB: the longest comb, at DC, where the
     /// damping lowpass has unity gain and the loop gain is exactly `combFeedback`
     /// (T60 = delay · 3 / −log10 g). Every other mode decays faster. This bounds the energy
-    /// left in the tanks; an OUTPUT measured against its own level at note-off can take a few
-    /// tenths of a second longer, because the eight combs partly cancel in the sum
-    /// (measured 2026-09-24 in a transcription of this file: up to 2.85 s at the 0.72 default,
-    /// against 2.49 s from this formula). Read from the control plane only.
+    /// left in the COMB tanks; it is NOT a bound on the output. Measured 2026-09-24 in a
+    /// transcription of this file: an output read against its own note-off level took up to
+    /// 2.85 s at the 0.72 default, against 2.49 s from this formula.
+    /// ⛔ The first version of this comment blamed "the eight combs partly cancel in the sum".
+    /// The 2026-09-25 DSP review (reasoned, not measured) points at the output stages instead:
+    /// Freeverb's four "allpass" diffusers are not unity-gain (|H| runs 1…1.667 each, up to
+    /// ~7.7× over the cascade), so as the tail narrows to the slowest modes its level relative to
+    /// the broadband note-off level can rise by up to ~17.7 dB — about 0.7 s at this decay rate —
+    /// and the cascade adds its own ring (~0.37 s). Both are consistent with the +0.36 s measured;
+    /// neither is proven by it. Anything that needs a true output bound adds a margin on top.
+    /// Read from the control plane only.
     public var decayTimeSeconds: Double {
         let g = Double(combFeedback)
         guard g > 0 else { return 0 }
