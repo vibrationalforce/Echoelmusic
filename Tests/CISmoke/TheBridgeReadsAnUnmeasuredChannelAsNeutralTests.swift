@@ -79,12 +79,14 @@ final class TheBridgeReadsAnUnmeasuredChannelAsNeutralTests: XCTestCase {
         XCTAssertEqual(unmeasured.hrvForSound, 0.5)
         XCTAssertEqual(unmeasured.heartRateForSound, 0.5)
         XCTAssertEqual(unmeasured.breathPhaseForSound, 0.5)
-        // COUNTERWEIGHT — a measured payload is NOT neutralised.
-        let measured = BioVitals(heartRateBPM: 120, hrvNormalized: 0.8, breathPhase: 0.25,
+        // COUNTERWEIGHT — a measured payload is NOT neutralised. 72 BPM, not 120: 120 maps to
+        // exactly 0.5, the neutral value, so it could not tell a pass-through from a
+        // neutralisation (review 8, 2026-09-25).
+        let measured = BioVitals(heartRateBPM: 72, hrvNormalized: 0.8, breathPhase: 0.25,
                                  coherence: 0.9, timestamp: 1, breathRate: 12)
         XCTAssertEqual(measured.coherenceForSound, 0.9)
         XCTAssertEqual(measured.hrvForSound, 0.8)
-        XCTAssertEqual(measured.heartRateForSound, 0.5, accuracy: 1e-6)   // (120 − 40) / 160
+        XCTAssertEqual(measured.heartRateForSound, 0.2, accuracy: 1e-6)   // (72 − 40) / 160
         XCTAssertEqual(measured.breathPhaseForSound, 0.25)
     }
 
