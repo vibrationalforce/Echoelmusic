@@ -197,6 +197,13 @@ final class MIDIInput {
 
     // MARK: - MIDI Event Processing
 
+    /// Byte offset of `words` inside a `MIDIEventPacket`, read from the imported layout.
+    /// The fallback is the header's own layout (`MIDITimeStamp timeStamp; UInt32 wordCount;`
+    /// before the words), so a `nil` can never turn into "drop every packet".
+    nonisolated static let packetWordsOffset: Int =
+        MemoryLayout<MIDIEventPacket>.offset(of: \MIDIEventPacket.words)
+        ?? MemoryLayout<MIDITimeStamp>.size + MemoryLayout<UInt32>.size
+
     /// H10 (#30, audit): the old version reflected over `packet.words` with
     /// `Mirror` (allocation per packet on the CoreMIDI receive thread) and
     /// spawned one `Task { @MainActor }` PER EVENT — main-executor flood under
@@ -214,13 +221,21 @@ final class MIDIInput {
         // packet's address relative to a stack copy — for numPackets > 1 that
         // read past the copy's storage. `unsafeSequence()` walks CoreMIDI's own
         // variable-length list in place.
+        //
+        // The words are read IN PLACE, too (overnight P8, 2026-09-25): the old
+        // `withUnsafeBytes(of: packetPtr.pointee.words)` loaded the whole 64-word
+        // (256-byte) tuple into a temporary, but a packet in a CoreMIDI list is only
+        // `wordCount` words long — the same read-past-storage class as the
+        // `MIDIEventPacketNext` repair above. Only the words that exist are loaded.
+        let wordsOffset = Self.packetWordsOffset
         for packetPtr in eventList.unsafeSequence() {
             let wordCount = Int(packetPtr.pointee.wordCount)
             if wordCount >= 1 {
-                let (word0, word1): (UInt32, UInt32?) = withUnsafeBytes(of: packetPtr.pointee.words) { raw in
-                    let words = raw.bindMemory(to: UInt32.self)
-                    return (words[0], wordCount >= 2 ? words[1] : nil)
-                }
+                let words = UnsafeRawPointer(packetPtr).advanced(by: wordsOffset)
+                let word0 = words.load(as: UInt32.self)
+                let word1: UInt32? = wordCount >= 2
+                    ? words.load(fromByteOffset: MemoryLayout<UInt32>.stride, as: UInt32.self)
+                    : nil
                 if let event = MIDIEventParse.event(word0: word0, word1: word1) {
                     if inQueue.push(event) { needDrain = true }
                 }
