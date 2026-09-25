@@ -456,6 +456,19 @@ done. WA4 is the first front.
     only by importing could not be saved. `SaveSessionButton` (`c69af8995`) is enabled by
     `hasComposed || SessionSaveOpen.songHasUserParts` — the recovery slot's predicate — and reads
     the song in its own leaf body (freeze law). Guard `TheSongAloneCanBeSavedTests`.
+  - **Acceptance Test A inside the Workstation:** `WorkstationProjectRow` (`dc55c2d6e`) puts
+    Save and Open on the plate itself, gated on the same facts as the Studio's tiles, raising the
+    Studio's OWN Save alert and Open sheet through the chrome door (`"save"`/`"open"` receiver
+    cases) — no presentation modifier of its own. Guard `TheSongAloneCanBeSavedTests` claim 4.
+  - **WA4 path 5 — TRIM: IMPLEMENTED, inward only** (`a246cf91b`). Trim start/Trim end on the
+    part bar move one grid step inward (bar, else beat) through `TimelineStore.trimRegionStart`/
+    `resizeRegion`; a trim that would hand bars of an overlapped part to another part — or take
+    them from one — is refused via `PartTrim.onlyLetsGo`, asked through `activeRegion`. The
+    refused Split now says why in visible text. Guard `TheSelectedPartIsCutWhereItIsHeardTests`.
+  - **Review of paths 6–9: PASS WITH CONDITIONS → repaired** (`be933a627`): M/S carry
+    `accessibilityInputLabels([name, letter])`; a part selected in the parts list says in visible
+    text where its actions are. Open as a device check: the header row at accessibility type
+    sizes (journey step 5).
   - **WA4 path 10 — device proof journey: WRITTEN, execution is the founder's.**
     `scratchpads/FOUNDER_DEVICE_SESSION.md` §2c orders the nine steps of one sitting (Acceptance
     Test A in the middle); each ask stays worded at its guard.
@@ -464,8 +477,8 @@ done. WA4 is the first front.
     (NEEDS-FOUNDER-VERIFY markers in each guard header).
   - **Open in WA4:** workspace promotion (Workstation as a first-class surface, not a panel),
     a general undo step beyond regions (mixer edits are not undoable), drag
-    edits and trim, the Echoel instance state on its row, the MEDIUM-4 flag, and the device
-    proof journey.
+    edits (and an outward trim — today's trim only shortens), the Echoel instance state on its
+    row, the MEDIUM-4 flag; the device proof journey is written and owed to the founder.
 
 ---
 

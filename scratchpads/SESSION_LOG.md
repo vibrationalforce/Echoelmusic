@@ -39888,3 +39888,12 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - **Review of 3–5 (PASS WITH CONDITIONS)** → `75d27e615` (`PartSplit.keepsWhoPlays` refuses a cut that changes the overlap winner; part bar collapses to icons via ViewThatFits; recovery slot keeps its Session when the live one failed to encode) + `534b0df29` (`ProjectStore.adoptArriving`: every arrival = fresh id, no song). MEDIUM-4 accepted + logged.
 - **Gates:** `7ebb2e322` Build for Testing = success (Run Tests #396 shape). Runs for f43bfe5…534b0df all QUEUED (macOS backlog, 12 deep at 19:35Z) — readings owed.
 - **Device verification owed:** header M/S heard, Open lands on Sound, part list select, refused split label, arrival rows.
+
+## 2026-09-25 21:00Z — Acceptance Test A in the Workstation, TRIM, review of paths 6–9
+
+- **Save gap closed** `c69af8995`: `SaveSessionButton` leaf, enabled by `hasComposed || SessionSaveOpen.songHasUserParts` (the recovery slot's predicate), song read in its own body (freeze law). The Save message now names the song. Guard TheSongAloneCanBeSaved.
+- **Save/Open on the plate** `dc55c2d6e`: `WorkstationProjectRow` posts chrome doors `"save"`/`"open"`; the receiver raises the Studio's existing alert/sheet — zero new presentation modifiers.
+- **Path 5 TRIM** `a246cf91b`: Trim start/end, one bar inward (else one beat); `PartTrim.onlyLetsGo` refuses a trim that changes which part is heard on a tick (asked through `activeRegion`); a refused Split now says why in visible text.
+- **Review of 6–9: PASS WITH CONDITIONS** → `be933a627` (M/S `accessibilityInputLabels`, a selected part in the parts list says where its actions are, test doc comment back on its helper). Device check left: header row at accessibility type sizes (journey step 5).
+- **Journey** (`FOUNDER_DEVICE_SESSION.md` §2c): build `be933a627` or later; step 4 now includes Trim; step 5 includes large type + Voice Control.
+- **Gates:** readings owed for c69af89…be933a6 (macOS backlog). Nothing in this entry is compile-verified until they come back.

@@ -207,7 +207,7 @@ steht schon als `NEEDS-FOUNDER-VERIFY` im genannten Wächter — `founder-verify
 Was KEIN Marker tragen kann, ist die **Reihenfolge**: Acceptance Test A ist eine Kette, und ein
 Schritt prüft nur, was der vorige gebaut hat. Hier steht also nur die Reihenfolge plus der
 Zeiger; der Wortlaut jeder Bitte bleibt am Wächter (#416). Build: der nächste TestFlight mit
-`dc55c2d6e` oder später.
+`be933a627` oder später (Trim, Save/Open auf der Platte, Review-Reparatur).
 
 Antwortformat je Schritt: **OK** · oder **Abweichung + ein Satz + Screenshot**.
 
@@ -218,11 +218,17 @@ Antwortformat je Schritt: **OK** · oder **Abweichung + ein Satz + Screenshot**.
        (`TheWorkstationImportsAudioTests`, `TheSongIsSeenOnOneScaleTests`)
 3. [ ] **Play auf der Workstation** → der Teil ist hörbar und im Takt, der Playhead läuft.
        (`TheWorkstationPlaysTheTimelineTests`)
-4. [ ] **Teil antippen → Teil-Leiste:** Later/Earlier/Copy/Split/Remove, dann **Undo** bringt es
-       zurück. Split an einer Stelle, an der ein ANDERER Teil darüberliegt → die Leiste sagt, dass
+4. [ ] **Teil antippen → Teil-Leiste:** Later/Earlier/**Trim start/Trim end**/Copy/Split/Remove,
+       dann **Undo** bringt es zurück. Trim kürzt nur nach innen, um einen Takt (sonst einen
+       Schlag); liegt ein anderer Teil darüber und würde Trim ihm Takte wegnehmen, ist der Knopf
+       aus. In der Teile-Liste unter dem Inspector sagt ein angetippter Teil, dass seine Aktionen oben
+       liegen. Split an einer Stelle, an der ein ANDERER Teil darüberliegt → die Leiste sagt, dass
        Teilen hier den spielenden Teil ändern würde. (`TheSelectedPartIsCutWhereItIsHeardTests`,
        `TheTrackPartsAreArrangedThroughTheStoreTests`)
-5. [ ] **M und S in der Spur-Zeile, während es spielt.** (`TheTrackHeaderMutesAndSolosTests`)
+5. [ ] **M und S in der Spur-Zeile, während es spielt.** Zusatz (Review MEDIUM, `33d5c0537`):
+       einmal mit der GRÖSSTEN Textgröße (Einstellungen → Bedienungshilfen → Größerer Text) —
+       bleibt die Spur-Zeile lesbar, oder schiebt M/S den Namen weg? Voice Control: „Tippe M“
+       und „Tippe Mute“ treffen beide. (`TheTrackHeaderMutesAndSolosTests`)
 6. [ ] **Echoel-Spur antippen → Open** → die Sound-Platte; Chip „Workstation“ führt zurück.
        (`TheEchoelTrackOpensItsDeviceTests`)
 7. [ ] **Acceptance Test A, der Kern — ohne die Workstation zu verlassen:** unten auf der
