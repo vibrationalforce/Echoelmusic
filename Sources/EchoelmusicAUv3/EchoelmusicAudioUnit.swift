@@ -142,8 +142,10 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     /// Render-owned last-note-priority tracker for the mono voice: the MIDI note number
     /// currently sounding (-1 = none, or the free-running bio drone). A note-off silences
     /// the voice ONLY when it releases THAT note, so releasing a still-held earlier note
-    /// no longer kills the current one. Touched ONLY by the render thread (single-owner),
-    /// so the plain field is safe. `Int32` holds a 7-bit MIDI note plus the -1 sentinel.
+    /// no longer kills the current one. Written by the render thread, and by
+    /// `allocateRenderResources` (the reset to -1 before the drone starts) only while no render
+    /// is in flight — the same contract as `BioRenderState` above — so the plain field is safe.
+    /// `Int32` holds a 7-bit MIDI note plus the -1 sentinel.
     private final class RenderNoteState { nonisolated(unsafe) var current: Int32 = -1 }
     private let renderNoteState = RenderNoteState()
 
