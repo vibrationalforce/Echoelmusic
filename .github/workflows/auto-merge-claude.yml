@@ -91,7 +91,15 @@ jobs:
           echo "Push SHA: ${{ github.sha }}"
           echo "Push branch: ${{ github.ref_name }}"
 
-          git fetch origin ${{ github.sha }} --depth=50 || git fetch origin --all
+          # ⛔ 2026-09-25 (founder-approved): this fetch said `--depth=50`. On a full clone that
+          # does not deepen anything — it makes the repo SHALLOW, cutting the pushed commit's
+          # ancestry 50 commits down. Once the branch ran 113 commits ahead of main (the
+          # 2026-09-24 overnight run), main's tip sat below the cut, `git merge` found no common
+          # ancestor and failed with "refusing to merge unrelated histories", reported in the
+          # Summary as `conflict` — on a commit whose two gates were green. The checkout above
+          # already has full history, so the pushed commit is fetched WITHOUT a depth limit.
+          # Guard: TheAutoMergeWaitsForTheGatesTests (the fetch-depth claim).
+          git fetch origin ${{ github.sha }} || git fetch origin --all
 
           if git cat-file -e ${{ github.sha }}^{commit} 2>/dev/null; then
             echo "commit_exists=true" >> $GITHUB_OUTPUT

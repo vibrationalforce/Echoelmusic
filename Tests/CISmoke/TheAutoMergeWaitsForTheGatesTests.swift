@@ -176,6 +176,35 @@ final class TheAutoMergeWaitsForTheGatesTests: XCTestCase {
             """)
     }
 
+    // MARK: - 5b: the merge can see main's history
+
+    /// ⛔ 2026-09-25: the pushed commit was fetched with a depth limit of 50 on top of a full
+    /// checkout, which made the repo SHALLOW 50 commits below it. At 113 commits ahead of main
+    /// the merge base fell below the cut and every merge failed with "refusing to merge
+    /// unrelated histories" — reported as `conflict`, on commits whose gates were green.
+    ///
+    /// ⚠️ Scans NON-COMMENT lines only: the workflow's own ⛔ note quotes the old flag, and a
+    /// raw scan would be red on the corrected file (#491). The anchor keeps it from passing
+    /// vacuously if the fetch line is renamed away.
+    func testThePushedCommitIsFetchedWithItsWholeHistory() throws {
+        let code = try rawFile(Self.workflow)
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .filter { !$0.trimmingCharacters(in: .whitespaces).hasPrefix("#") }
+        let fetches = code.filter { $0.contains("git fetch origin ${{ github.sha }}") }
+        XCTAssertFalse(fetches.isEmpty, """
+            No `git fetch origin ${{ github.sha }}` line in the workflow — the fetch of the pushed \
+            commit moved or was renamed, so the depth check below would scan nothing. Re-anchor.
+            """)
+        for line in code where line.contains("git fetch") && line.contains("--depth") {
+            XCTFail("""
+                A depth-limited fetch is back: `\(line.trimmingCharacters(in: .whitespaces))`. \
+                On the full checkout this job starts from, `--depth` makes the repo shallow and \
+                a branch further ahead of main than the depth cannot be merged ("refusing to \
+                merge unrelated histories"), whatever the gates say.
+                """)
+        }
+    }
+
     // MARK: - 6: the counterweight — an ungated merge still did not ship
 
     /// ⚠️ THIS IS WHAT KEEPS THE WHOLE STORY PROPORTIONATE. Remove the `if: false` and an
