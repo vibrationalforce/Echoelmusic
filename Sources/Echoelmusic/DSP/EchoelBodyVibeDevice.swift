@@ -208,9 +208,11 @@ public enum EchoelBodyVibeDevice {
     /// ⛔ The AUv3 reported a literal 2.0 s — the release alone — after WA3.3 made the reverb
     /// audible. At full mix on a 55 Hz note the output two seconds after note-off was still far
     /// above −60 dB, so a host bouncing to the tail cut the room off.
-    /// A non-finite reverb decay (a feedback of 1 or more, which nothing sets) returns the
-    /// largest finite value: "keep rendering", without handing a host infinity. A NaN release
-    /// counts as none (`max(0, ·)` in the NaN-safe argument order).
+    /// A non-finite sum returns the largest finite value: "keep rendering", without handing a
+    /// host infinity. Since 2026-09-25 the reverb decay is always finite (`EchoelReverb` clamps
+    /// the room to 0…1, so the loop gain stays below 1); an infinite release is what still
+    /// reaches this edge. A NaN release counts as none (`max(0, ·)` in the NaN-safe argument
+    /// order).
     public static func tailSeconds(synth: EchoelDDSP, reverb: EchoelReverb) -> Double {
         let total = Double(Swift.max(0, synth.release)) + reverb.decayTimeSeconds
         return total.isFinite ? total : .greatestFiniteMagnitude

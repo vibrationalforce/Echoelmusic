@@ -85,7 +85,11 @@ final class TheAUv3TailCoversTheReverbTests: XCTestCase {
         XCTAssertEqual(EchoelBodyVibeDevice.tailSeconds(synth: synth, reverb: reverb),
                        reverb.decayTimeSeconds, "a NaN release must count as none, not poison the tail")
 
-        reverb.roomSize = 1.2   // feedback above 1: nothing sets this, the edge must still hold
+        // The runaway edge. ⛔ This drove it with `reverb.roomSize = 1.2` (loop gain above 1) until
+        // c06ac2167 clamped the room to 0…1 at the type: the decay is now always finite, so that
+        // line went RED on a correct tree (review 12). An infinite release is the one input left
+        // that makes the sum non-finite, and the edge must still hold for it.
+        synth.release = .infinity
         let runaway = EchoelBodyVibeDevice.tailSeconds(synth: synth, reverb: reverb)
         XCTAssertTrue(runaway.isFinite, "a host must never be handed a non-finite tail")
         XCTAssertEqual(runaway, .greatestFiniteMagnitude)
