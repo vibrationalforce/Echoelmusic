@@ -39598,3 +39598,35 @@ transcription before its repair; one defect per commit; checkers exit 0 on every
   width conversions (`MIDIOutput.noteOn` already guards; the port field clamps before `clampPort`;
   `MPEExpression.u7` maps NaN to 127, a ceiling but no trap, and its inputs are sanitized upstream)
   · `TimelineTime.ticks(fromSeconds:)` (already hardened, #1195).
+
+## 2026-09-25 ~02:25–02:40 UTC — overnight P8: review round 3 acted on, the AUv3 slider ranges
+
+- Review round 3 (independent, read-only) over 2c8729781, dcc49fe38, f2bef146d, 52dc0a8fc,
+  a62dbc9de. 2c8729781 and dcc49fe38 clean; the other three correct in code, one prose finding each.
+  · MEDIUM (fixed, `41a817ac7`): `TimelineDocument.rollSlotPan` was a FOURTH reader of
+    `TimelineLane.pan` with the bare clamp (NaN → hard right), while f2bef146d's header said
+    "every site". Now NaN-safe, guard claim 6, header corrected with the grep over ALL Sources.
+  · LOW (fixed, `e68ddfda1`): 52dc0a8fc called `FloatingPointClamp` "the repo's one NaN-safe
+    clamp"; three floor-landing `clamp01` helpers exist (FXModulation, ModulationMatrix,
+    BioNormalizer). Comment-only.
+  · LOW (recorded, not fixed — unreachable): `mergeMixer`/`structurallyEqual` diff lane level/pan
+    by `!=`, and NaN != NaN, so a NaN field would re-push every step. Unreachable: JSONDecoder
+    throws on NaN, both store writers sanitize and have no production caller.
+  · Informational, HALF REFUTED by the code: `TimelineStore.setLaneDetune` is ALREADY NaN-safe
+    (`cents.isFinite ? cents : 0`); `rollSlotDetune` keeps the bare clamp and has ZERO readers
+    (recorded earlier, still not changed).
+- `6ffd8cfbd`: the AUv3 plug-in view restated its 8 slider ranges and 8 addresses as literals
+  beside the canonical table the tree is built from (#416, latent — they agree today). It now
+  reads `range(for:)` from the tree and names `ParameterAddress` cases. Guard
+  `TheAUv3SlidersReadTheTreeRangeTests`. ⛔ My own draft anchored claim 2's tail on a `// MARK:`
+  comment, which `SourceText.codeOnly` blanks — the Python transcription caught it before commit.
+  ⛔ The commit message says the extension is "not in Build for Testing". `project.yml:232` makes
+  it a dependency of the app target, which is the test host — so Build for Testing very likely
+  compiles it too. To be corrected in the guard header; the message cannot be.
+- NEGATIVE sweeps: DSP `Int`-size inits (ModFX floors at 2, WSOLA at 256, FIR/SpaceReverb/
+  decimator/profiler floor at 1, DFT/FFT `precondition` deliberate; `EchoelBiquadCascade
+  (sectionCount:)` traps on a negative count but has ZERO production callers — left) ·
+  `Int(x / y)` conversions (TempoMap `ticksPerBeat` floors at 1, TouchInstrument guards
+  `secondsPerTick > 0`, SpectrumReadout/TempoDetector/AudioKeyAnalysis guarded, `TuningSystem.snap`
+  has no caller) · `OSCReceiver` decode (every read length-checked; live untrusted boundary is
+  clean) · DMX byte packing (every `clampUnit` maps non-finite to 0; universe bytes masked).
