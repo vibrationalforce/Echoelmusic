@@ -32,6 +32,14 @@
 // are REGRESSIONS and ONE finding (#486) — no owned output memory exists there and the loop
 // skips a null pointer. Claim 3 is a COUNTERWEIGHT, green on both trees (the render block never
 // allocates). The file names no `Sources/` symbol, so it compiles on both trees.
+//
+// ⭐ 2026-09-25 (overnight P8u) — claim 4: the returned render CLOSURE reads no
+// `RenderScratch.` static; the getter captures `ownedChannels` into a local before `return {`.
+// A `static let` is a lazily initialised global, and in a Debug build its first read runs a
+// one-time initialiser (`swift_once`) — on the audio thread, if the null-mData branch touches it
+// first. Found by tonight's read-only audio-thread review (its finding 3). SOURCE-TEXT SCAN.
+// Grading, parent `84c899af6`: REGRESSION — one finding (the closure read
+// `RenderScratch.ownedChannels` directly there). Claims 1–3 unchanged.
 
 import Foundation
 import XCTest
@@ -81,6 +89,28 @@ final class TheAUv3SuppliesItsOwnOutputBuffersTests: XCTestCase {
         XCTAssertFalse(render.contains(".allocate("), """
             The render block allocates. Owned output memory belongs in `RenderScratch.init`; \
             malloc on the render thread is a priority inversion.
+            """)
+    }
+
+    // MARK: - claim 4
+
+    func testTheRenderClosureReadsNoStaticOnTheAudioThread() throws {
+        let getter = try renderBlock()
+        let marker = "return { (actionFlags"
+        let closureStart = try XCTUnwrap(getter.range(of: marker),
+                                         "the returned render closure is not found — re-anchor this guard (#456)")
+        let captures = getter[..<closureStart.lowerBound]
+        let closure = try XCTUnwrap(Self.body(startingWith: marker, in: String(getter[closureStart.lowerBound...])),
+                                    "the render closure has no body — re-anchor this guard (#456)")
+        XCTAssertTrue(captures.contains("let ownedChannels = RenderScratch.ownedChannels"), """
+            The owned-channel count is no longer captured before the render closure.
+            """)
+        XCTAssertTrue(closure.contains("channel < ownedChannels"),
+                      "the null-mData branch no longer compares against the captured count")
+        XCTAssertFalse(closure.contains("RenderScratch."), """
+            The render closure reads a `RenderScratch` static. A `static let` is lazily \
+            initialised; in a Debug build its first read runs `swift_once` on the audio thread. \
+            Capture it into a local above `return {`.
             """)
     }
 
