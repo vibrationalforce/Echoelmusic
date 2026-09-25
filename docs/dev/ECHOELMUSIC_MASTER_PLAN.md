@@ -452,6 +452,13 @@ done. WA4 is the first front.
     Colabo Save) goes through `ProjectStore.adoptArriving` — fresh id, no song. **Accepted and
     logged (MEDIUM-4):** the slot's Session stays while the live song holds no user parts — a
     flag set on Open and cleared on the first edit would close it.
+  - **Acceptance Test A gap closed:** the Save tile was `hasComposed`-gated, so a song built
+    only by importing could not be saved. `SaveSessionButton` (`c69af8995`) is enabled by
+    `hasComposed || SessionSaveOpen.songHasUserParts` — the recovery slot's predicate — and reads
+    the song in its own leaf body (freeze law). Guard `TheSongAloneCanBeSavedTests`.
+  - **WA4 path 10 — device proof journey: WRITTEN, execution is the founder's.**
+    `scratchpads/FOUNDER_DEVICE_SESSION.md` §2c orders the nine steps of one sitting (Acceptance
+    Test A in the middle); each ask stays worded at its guard.
   - Evidence ceiling: transcription-graded guards; compile gates are read per commit in
     `scratchpads/SESSION_LOG.md`; **device verification owed** for every slice
     (NEEDS-FOUNDER-VERIFY markers in each guard header).

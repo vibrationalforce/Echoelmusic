@@ -200,6 +200,47 @@ verbracht, genau diese Behauptung wieder zu entfernen, und im App-Store-Text ist
 
 ---
 
+## 2c · WA4 Workstation — die Prüfreise in EINER Sitzung (Pfad 10, 2026-09-25)
+
+**Was diese Liste ist, und warum sie hier steht statt in einem Marker:** jede einzelne Bitte
+steht schon als `NEEDS-FOUNDER-VERIFY` im genannten Wächter — `founder-verify.py` druckt sie.
+Was KEIN Marker tragen kann, ist die **Reihenfolge**: Acceptance Test A ist eine Kette, und ein
+Schritt prüft nur, was der vorige gebaut hat. Hier steht also nur die Reihenfolge plus der
+Zeiger; der Wortlaut jeder Bitte bleibt am Wächter (#416). Build: der nächste TestFlight mit
+`c69af8995` oder später.
+
+Antwortformat je Schritt: **OK** · oder **Abweichung + ein Satz + Screenshot**.
+
+1. [ ] **Frischer Start, NICHT Start drücken.** Chip „Workstation“ → die Platte erscheint.
+       (`TheWorkstationHasADoorTests`)
+2. [ ] **Add Audio Track → Import Audio** (eine Schleife, deren Tempo Du kennst) → der Teil
+       erscheint im Arrange-Raster, die Import-Notiz nennt Tempo/Tonart ehrlich.
+       (`TheWorkstationImportsAudioTests`, `TheSongIsSeenOnOneScaleTests`)
+3. [ ] **Play auf der Workstation** → der Teil ist hörbar und im Takt, der Playhead läuft.
+       (`TheWorkstationPlaysTheTimelineTests`)
+4. [ ] **Teil antippen → Teil-Leiste:** Later/Earlier/Copy/Split/Remove, dann **Undo** bringt es
+       zurück. Split an einer Stelle, an der ein ANDERER Teil darüberliegt → die Leiste sagt, dass
+       Teilen hier den spielenden Teil ändern würde. (`TheSelectedPartIsCutWhereItIsHeardTests`,
+       `TheTrackPartsAreArrangedThroughTheStoreTests`)
+5. [ ] **M und S in der Spur-Zeile, während es spielt.** (`TheTrackHeaderMutesAndSolosTests`)
+6. [ ] **Echoel-Spur antippen → Open** → die Sound-Platte; Chip „Workstation“ führt zurück.
+       (`TheEchoelTrackOpensItsDeviceTests`)
+7. [ ] **Acceptance Test A, der Kern:** Workstation schließen → das **Save**-Tile ist HELL,
+       obwohl nie komponiert wurde → speichern → den Song ändern oder Teil entfernen → **Open a
+       saved session** → das Projekt öffnen → dieselbe Spur, derselbe Teil, **Play = derselbe
+       Klang**. (`TheSongAloneCanBeSavedTests`, `TheSessionSaveOpensTheSameSongTests`)
+       ⚠️ Save und Open sitzen auf der Instrument-Platte, nicht in der Workstation — wenn das
+       beim Durchspielen stört, ist DAS die Antwort, die Pfad 2 (Workstation als eigene Fläche)
+       braucht.
+8. [ ] **Session-Start:** Play → Session → einen Teil antippen, Launch scene, Stop.
+       (`TheSessionLaunchesWhatTheSongPlaysTests`)
+9. [ ] **App in den Hintergrund, beenden, neu starten** → die Bibliothek zeigt einen
+       Autosave-Eintrag mit dem Song. (`TheSessionSaveOpensTheSameSongTests`, Rettungsplatz)
+
+**Was diese Reise NICHT prüft:** Klangqualität der Genres (§3), AUv3 in Fremd-Hosts (§2b).
+
+---
+
 ## 3 · Die zwei Ship-Gate-Checks, die nur ein Mensch schließen kann
 
 Von den fünf Checks des Gates „Instrument-Complete v1" (CLAUDE.md) sind **Kontrolle** und
