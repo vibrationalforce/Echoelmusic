@@ -39776,3 +39776,24 @@ MEASURED, NOT CHANGED:
 - BioEntrainmentDirector: the only caller passes `coherenceForSound` (NaN → 0.5), and NaN → 0 would be the "muffle" its doc warns about.
 - ChannelInsertFX drive, ParamGlide, EchoelDelay's `g`: already guarded, or finite by construction.
 Gates: Compile Check GREEN on 3f39fae12 (05:30; covers 20804097d + ae109565d). aa491798a is queued. ⚠️ A docs-only push ALSO triggers Compile Check and CANCELS the running one (3f39fae12 was a log commit), so nothing is pushed until aa491798a reports. Review 10 (dsp-reviewer) is running over fc116b337, 655194fd9 and bf43cc71b; aa491798a still needs its review.
+
+## 2026-09-25 ~06:10 UTC — Overnight P8: review-10 prose findings closed (three commits)
+
+Review 10 (dsp-reviewer, independent) on fc116b337 · 655194fd9 · bf43cc71b · aa491798a: **no code
+defects**, three LOW prose findings, each closed as its own comment-only commit:
+- `13205c40f`: the widener is NOT the chain's last stage (compressor + limiter follow; both skip their
+  state update on a non-finite sample and pass it on). Its NaN map is NaN-ONLY, unlike the flanger's
+  isFinite→0.
+- `9beaa92ff`: `morphed` is PUBLIC (it lives in `public extension FXPreset`), so "internal, hence
+  @testable" was a false reason.
+- `fee274469`: `PolySynthVoice.setUnison` has NO production caller. The real path is the patch apply,
+  fed by a decoded patch or the Sound-panel binding, which is already finite-mapped. The spread is read
+  only at unisonCount ≥ 2.
+
+⛔ **Commit messages that carry the wrong sentences and cannot be amended** (amend is forbidden):
+- `fc116b337`: "A NaN width did the same at the chain's last stage" and "the same shape as the flanger feedback".
+- `aa491798a`: "PolySynthVoice.setUnison, which sits behind a finite UI field".
+- `655194fd9`: its message is clean; only the guard header was wrong.
+
+The repo text is now correct; read these commit messages against this entry.
+Review 10 was independent. These three prose commits are builder-made and **not independently reviewed**.
