@@ -4353,3 +4353,14 @@ well as its words: the path it says is absent (`Sources/EchoelmusicAUv3`), the s
 code (`pullSharedVitals`), the verb family (`removed|deleted|gone|no longer|does not exist`) near
 the subject. Then check the surviving hits by reading them. A sweep's hit count says how many
 spellings you thought of, not how many copies exist (the #766/#768 law, applied to prose).
+
+**Addendum (same night, P8s→`871285762`).** The playbook itself was then applied to `Sources/` and
+`docs/dev/` only. The same claim sat in ELEVEN more homes of a different KIND — the tool/agent
+layer (`.claude/commands/{verify,tdd,multi-plan}.md`, `.claude/agents/{security,planning,tdd,
+e2e-test}-agent.md`, the ultracode-teams skill), four `memory/` lines, a `scripts/doctor.py`
+comment, and `docs/CLAUDE.md` §5. The tool layer is the most expensive home: `/verify`'s scan list
+had DROPPED `Sources/EchoelmusicAUv3/**`, so the one `AUAudioUnit` render block went unscanned by
+the command that exists to scan it. **Sweep every home by KIND — Sources, docs, memory, .claude
+(commands, agents, skills, rules), scripts, each directory's CLAUDE.md — not only the kind you
+were editing.** One-liner used:
+`git grep -n -i -E "auv3[^.]{0,60}(removed|deleted|gone|does not exist)|AUAudioUnit.{0,40}→ *0" -- .claude scripts memory docs`.
