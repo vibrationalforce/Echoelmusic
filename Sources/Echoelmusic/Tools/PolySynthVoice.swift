@@ -615,7 +615,9 @@ public final class PolySynthVoice {
     /// takes effect on the next note.
     public func setTuningCents(_ cents: [Float]) {
         poly.setTuningCents(cents)
-        if cents.count == 12 { uiTuningCents = cents }
+        // The mirror takes exactly what the engine takes (it refuses a non-finite entry), so
+        // the UI never shows a tone system the voice did not install.
+        if cents.count == 12, cents.allSatisfy({ $0.isFinite }) { uiTuningCents = cents }
     }
 
     // MARK: - Patch recall
