@@ -148,7 +148,11 @@ final class LaunchLogsWhatItWokeUpWithTests: XCTestCase {
     func testTheCallSitsInsideOnAppearAfterEveryRestoreItClaims() throws {
         let lines = try rawLines(Self.sourceFile)
 
-        guard let openIndex = soleIndex(of: ".onAppear {", in: lines, label: "the root .onAppear"),
+        // `excluding: "}"` (2026-09-25): #1331 added a ONE-LINE `.onAppear { … }` further down
+        // the file (the buffer-tier row), which made this anchor ambiguous and the claim red on
+        // a correct tree. A closure that closes on its own line cannot be the root block.
+        guard let openIndex = soleIndex(of: ".onAppear {", in: lines, label: "the root .onAppear",
+                                        excluding: "}"),
               let clampIndex = soleIndex(of: "MusicStyle.offered.contains(style)", in: lines,
                                          label: "the genre-roster clamp"),
               let touchIndex = soleIndex(of: "syncTouchSound() }", in: lines,
