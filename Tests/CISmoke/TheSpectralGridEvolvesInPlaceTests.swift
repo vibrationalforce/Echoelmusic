@@ -22,6 +22,9 @@
 //   · claim 2 is a SOURCE-TEXT SCAN and a FORWARD guard: `grid2DNext` is created by this
 //     commit. It pins DISTINCT rows. `Array(repeating: row, count:)` would share one row 64
 //     times, and the first evolution would copy each of them on the render thread.
+//     ⛔ The first spelling (1a67b2619) read `grid2DSize` inside the `map` closure. That
+//     captures `self` before every member is initialised, and Swift rejects it. Review 5 caught
+//     it before any gate ran. The needle now names the local `gridSize`.
 //   · claim 3 is END-TO-END BEHAVIOUR on the shipped public type and a COUNTERWEIGHT. Five
 //     generations from the R-pentomino seed must match an independent Game-of-Life reference
 //     (toroidal, B3/S23), and the grid must actually change. Green on both trees. The double
@@ -57,7 +60,7 @@ final class TheSpectralGridEvolvesInPlaceTests: XCTestCase {
     func testThePreallocatedGridHasDistinctRows() throws {
         let code = try source(Self.cellular)
         XCTAssertTrue(code.contains(
-            "self.grid2DNext = (0..<grid2DSize).map { _ in [UInt8](repeating: 0, count: grid2DSize) }"),
+            "self.grid2DNext = (0..<gridSize).map { _ in [UInt8](repeating: 0, count: gridSize) }"),
             """
             `grid2DNext` is no longer built row by row. `Array(repeating: row, count:)` shares \
             ONE row buffer 64 times, and the first evolution would copy each on the render thread.

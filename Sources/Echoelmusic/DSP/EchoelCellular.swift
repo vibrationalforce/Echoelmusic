@@ -216,7 +216,10 @@ public final class EchoelCellular: @unchecked Sendable {
 
         // Init 2D grid
         self.grid2D = [[UInt8]](repeating: [UInt8](repeating: 0, count: grid2DSize), count: grid2DSize)
-        self.grid2DNext = (0..<grid2DSize).map { _ in [UInt8](repeating: 0, count: grid2DSize) }
+        // A LOCAL size: a closure that reads `grid2DSize` captures `self` before every member
+        // is initialised, which Swift rejects (review 5 of 1a67b2619).
+        let gridSize = grid2DSize
+        self.grid2DNext = (0..<gridSize).map { _ in [UInt8](repeating: 0, count: gridSize) }
 
         // Seed with single cell in center (classic CA initialization)
         seed(.singleCenter)
