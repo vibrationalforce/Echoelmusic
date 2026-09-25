@@ -597,6 +597,15 @@ public struct Project: Codable, Sendable, Identifiable, Equatable {
         return try enc.encode(take)
     }
 
+    /// Whether sharing this row sends what the row holds. `sharedDocumentData` sends the TAKE
+    /// and strips the Session, so a row with no notes and no raw take whose only content is its
+    /// song would arrive as a genre, a key and a tempo with nothing in them (review of
+    /// `c69af8995`, MEDIUM: since the Save tile opened to song-only saves, a row the user named
+    /// can be exactly that). A take with notes, or a pre-Session row, shares as it always did.
+    public var shareCarriesItsContent: Bool {
+        !(notes.isEmpty && rawTake == nil && sessionEnvelope != nil)
+    }
+
     // MARK: - Decoded accessors (raw → enum, with safe fallbacks)
 
     public var style: MusicStyle { MusicStyle(rawValue: styleRaw) ?? .dubTechno }

@@ -1008,16 +1008,6 @@ struct WorkstationView: View {
 
 }
 
-/// S1 — one imported file's own tempo: a number field, and ÷2 / ×2 on their own line.
-///
-/// ⚠️ THE BUTTONS DO NOT SHARE THE FIELD'S LINE. A labelled field pins its box to a
-/// Dynamic-Type-scaled width that does not compress; a field plus two 44 pt buttons in one
-/// `HStack` overflows a portrait phone at larger text sizes (#1026/#1027, which the founder
-/// rejected twice).
-///
-/// ⚠️ THE DRAFT IS CLEARED WHENEVER THE STORED TEMPO MOVES. A cancelled drag or one that ends
-/// where it began fires no `onCommit`, so without the reset the field would keep showing a
-/// stale draft after a ×2 or a late detection.
 /// WA4 Acceptance Test A inside the workspace — Save and Open for the song, on the plate where
 /// the song is built. Until this row both doors sat only on the instrument plate
 /// (`quickActionRow` / `quickDoorRow`), so the test's middle steps meant leaving the Workstation.
@@ -1028,10 +1018,15 @@ struct WorkstationView: View {
 /// `TrackInspectorView.openDeviceButton` shape. No new modal, so the black-screen budget is
 /// untouched, and the Save still goes through `saveProject()` → `withSession`, the ONE capture.
 ///
-/// ⚠️ Enabled by the same facts as the Studio's tiles, asked rather than restated (#416): Save by
-/// a composed take (`pianoRoll.notes`) or a song holding the user's parts
-/// (`SessionSaveOpen.songHasUserParts`); Open by a non-empty library. The reads sit in this
-/// leaf's own body — none of them is high-frequency, and none reaches the menu host.
+/// ⚠️ Enabled by the same FACTS as the Studio's tiles, not by the same VALUE: Save by a composed
+/// take or a song holding the user's parts (`SessionSaveOpen.songHasUserParts`, asked — the one
+/// predicate); Open by a non-empty library. The take half reads `pianoRoll.notes` because the
+/// Studio's `hasComposed` is view-private `@State`. The two can disagree for up to one bar right
+/// after a first Generate (the Studio arms `hasComposed` before the roll's next bar writes the
+/// notes) — the Workstation's Save lights one bar later, never earlier (review of dc55c2d6e).
+/// ⚠️ The reads sit in this leaf's own body, and `pianoRoll.notes` is written at every bar
+/// boundary while a multi-bar arrangement plays, so this row rebuilds at BAR rate. That is safe
+/// because it is its own leaf and hosts no `.menu` Picker; it must stay that way.
 private struct WorkstationProjectRow: View {
     @Environment(TimelineStore.self) private var timeline
     @Environment(ClipStore.self) private var clips
@@ -1079,6 +1074,16 @@ private struct WorkstationProjectRow: View {
     }
 }
 
+/// S1 — one imported file's own tempo: a number field, and ÷2 / ×2 on their own line.
+///
+/// ⚠️ THE BUTTONS DO NOT SHARE THE FIELD'S LINE. A labelled field pins its box to a
+/// Dynamic-Type-scaled width that does not compress; a field plus two 44 pt buttons in one
+/// `HStack` overflows a portrait phone at larger text sizes (#1026/#1027, which the founder
+/// rejected twice).
+///
+/// ⚠️ THE DRAFT IS CLEARED WHENEVER THE STORED TEMPO MOVES. A cancelled drag or one that ends
+/// where it began fires no `onCommit`, so without the reset the field would keep showing a
+/// stale draft after a ×2 or a late detection.
 private struct PartTempoRow: View {
     let clip: Clip
     let lockedByWarp: Bool

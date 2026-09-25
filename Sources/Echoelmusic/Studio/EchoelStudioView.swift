@@ -1773,7 +1773,7 @@ struct EchoelStudioView: View {
             // turns that guard red on correct code. The first draft of this edit split
             // "stay with / the instrument" and did exactly that — caught by measuring, not by
             // the reviewer. Both pinned runs must stay inside one literal each.
-            Text("Saves the loop with its genre, key, tuning, tempo, Flow/Loop mode, mood, "
+            Text("Saves the composed loop, if there is one, with its genre, key, tuning, tempo, Flow/Loop mode, mood, "
                  + "sound and FX character, and the Workstation's song — its tracks and parts. "
                  + "Your mixer levels and hand-dialled FX stay with the instrument.")
         }
@@ -9601,14 +9601,22 @@ struct EchoelStudioView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            // Review of c69af8995 (MEDIUM): a shared document carries the TAKE and leaves the
+            // song at home (`sharedDocumentData`), so a row that holds only a song would arrive
+            // as a genre and a tempo with nothing in them. Such a row cannot be shared, and the
+            // dim tile tracks `.disabled` exactly (#482).
+            let shareable = p.shareCarriesItsContent
             ShareLink(item: SharedEchoelProject(project: p),
                       preview: SharePreview(p.name)) {
                 Image(systemName: "square.and.arrow.up")
                     .font(.system(size: 15)).foregroundStyle(EchoelTheme.dim)
+                    .opacity(shareable ? 1 : 0.35)
                     .frame(width: 44, height: 44)   // ≥44pt tap target (a11y)
                     .contentShape(Rectangle())
             }
+            .disabled(!shareable)
             .accessibilityLabel("Share \(p.name)")
+            .accessibilityHint(shareable ? "" : "Sharing sends the take only, and this project holds only its song, which stays on this device")
         }
     }
 
@@ -12139,23 +12147,6 @@ private struct StudioZoom: ViewModifier {
     }
 }
 
-/// The RETROACTIVE loop door ("keep the last N bars you just heard").
-///
-/// Its own `View` struct for a reason that is a house law, not a style choice: deciding
-/// whether the ring can still deliver `bars` requires the LIVE tempo, and tempo moves
-/// under bio modulation. Reading `pattern.tempo` from `EchoelStudioView.body` — or from
-/// any computed var that body evaluates — would register the whole root as an observer,
-/// and every tempo tick would tear down an open `.menu` Picker popover. That is the
-/// menu-freeze this app shipped twice (10.76.41, 10.76.50). Confined here, only this
-/// button rebuilds. `pattern` is passed as a REFERENCE: capturing an `@Observable` does
-/// not register observation — only reading a property does, and that read happens in
-/// this body.
-///
-/// The honesty this buys: before #200 the picker offered lengths the ring could not
-/// hold (at 120 BPM anything from ~15 bars up), the tap was accepted, the capture ran,
-/// and only then did an alert say no. Now the control refuses in advance and names a
-/// length that works. The PLANNED door above is untouched — it records live to a file
-/// and has no such limit, which is exactly why 64 bars stays offered there.
 /// The Save tile. WA4 Acceptance Test A (create → import → save → reopen): a song holding the
 /// USER's parts is worth a save even with no composed take — the Session carries it. Before,
 /// the tile was `hasComposed`-gated alone, so a player who only imported audio could not save
@@ -12186,6 +12177,23 @@ private struct SaveSessionButton: View {
     }
 }
 
+/// The RETROACTIVE loop door ("keep the last N bars you just heard").
+///
+/// Its own `View` struct for a reason that is a house law, not a style choice: deciding
+/// whether the ring can still deliver `bars` requires the LIVE tempo, and tempo moves
+/// under bio modulation. Reading `pattern.tempo` from `EchoelStudioView.body` — or from
+/// any computed var that body evaluates — would register the whole root as an observer,
+/// and every tempo tick would tear down an open `.menu` Picker popover. That is the
+/// menu-freeze this app shipped twice (10.76.41, 10.76.50). Confined here, only this
+/// button rebuilds. `pattern` is passed as a REFERENCE: capturing an `@Observable` does
+/// not register observation — only reading a property does, and that read happens in
+/// this body.
+///
+/// The honesty this buys: before #200 the picker offered lengths the ring could not
+/// hold (at 120 BPM anything from ~15 bars up), the tap was accepted, the capture ran,
+/// and only then did an alert say no. Now the control refuses in advance and names a
+/// length that works. The PLANNED door above is untouched — it records live to a file
+/// and has no such limit, which is exactly why 64 bars stays offered there.
 private struct KeepLastLoopButton: View {
     let pattern: PatternEngine
     let bars: LoopBarLength

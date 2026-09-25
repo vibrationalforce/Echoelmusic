@@ -19,6 +19,9 @@
 // 4. SOURCE: the Workstation plate carries the same two doors (`WorkstationProjectRow`), gated on
 //    the same facts, raising the Studio's OWN Save alert and Open sheet through the chrome door —
 //    no presentation modifier of its own (the black-screen budget), and a receiver case per post.
+// 5. SOURCE (review of c69af8995, MEDIUM): a row whose only content is its song cannot be
+//    shared — `sharedDocumentData` strips the Session, so it would arrive empty. The rule is
+//    driven end to end in `TheWorkstationJourneySurvivesSaveAndOpenTests` claim 3.
 //
 // Grading (§0, no Swift toolchain in a web session): all claims driven in Python against this
 // tree. On 8820621fd claims 1–2 are red by ABSENCE of `SaveSessionButton` and the new
@@ -72,6 +75,12 @@ final class TheSongAloneCanBeSavedTests: XCTestCase {
         let raw = try text(Self.studioPath)
         XCTAssertTrue(raw.contains("sound and FX character, and the Workstation's song — its tracks and parts. "),
                       "the Save message must name the song it now carries (#495: under-claiming is still false)")
+        // Review of c69af8995 (LOW): a song-only save has no loop, so the message may not open
+        // by promising one.
+        XCTAssertFalse(raw.contains("Saves the loop with its genre"),
+                       "the Save message promises a loop that a song-only save does not have")
+        XCTAssertTrue(raw.contains("Saves the composed loop, if there is one, with its genre"),
+                      "the Save message says the loop is there only if one was composed")
     }
 
     // MARK: 3 — counterweight: the composer's part is not the user's
@@ -120,6 +129,26 @@ final class TheSongAloneCanBeSavedTests: XCTestCase {
             XCTAssertTrue(receiver.contains(needle),
                           "a posted door with no receiver case is a button that does nothing (#164/#227) — `\(needle)`")
         }
+    }
+
+    // MARK: 5 — a song-only row is not shared as an empty take (review of c69af8995, MEDIUM)
+
+    func testASongOnlyRowCannotBeSharedAsAnEmptyTake() throws {
+        let studio = try code(Self.studioPath)
+        guard let start = studio.range(of: "ShareLink(item: SharedEchoelProject(project: p),") else {
+            return XCTFail("ANCHOR MISSING: the library row's ShareLink (#454)")
+        }
+        let before = String(studio[studio.startIndex..<start.lowerBound].suffix(400))
+        let after = String(studio[start.upperBound...].prefix(700))
+        XCTAssertTrue(before.contains("let shareable = p.shareCarriesItsContent"),
+                      "the row asks `Project.shareCarriesItsContent` — the one rule, next to `sharedDocumentData`")
+        for needle in [".disabled(!shareable)", ".opacity(shareable ? 1 : 0.35)"] {
+            XCTAssertTrue(after.contains(needle),
+                          "the share control lost `\(needle)` — the dim state must track `.disabled` (#482)")
+        }
+        let project = try code("Sources/Echoelmusic/Core/Project.swift")
+        XCTAssertTrue(project.contains("!(notes.isEmpty && rawTake == nil && sessionEnvelope != nil)"),
+                      "the rule is: nothing in the take AND a song that sharing would strip")
     }
 
     // MARK: helpers
