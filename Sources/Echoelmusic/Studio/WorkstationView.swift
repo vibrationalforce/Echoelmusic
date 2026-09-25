@@ -291,6 +291,13 @@ struct WorkstationView: View {
             // surface was told not to grow.
             transportRow
 
+            // MARK: - The Session projection (WA4.2)
+            //
+            // The same song, launched live: parts and scenes loop on their track from the next
+            // bar. Its own leaf, because launching reaches the player for members this file's
+            // transport is not authorised to call (`TheWorkstationPlaysTheTimelineTests` B).
+            SessionLaunchView()
+
             // MARK: - The import door (Audio Import V1, founder 2026-09-22)
             //
             // ⭐ THE FIRST REACHABLE PRODUCER OF AN AUDIO-BEARING REGION. Until this row the
