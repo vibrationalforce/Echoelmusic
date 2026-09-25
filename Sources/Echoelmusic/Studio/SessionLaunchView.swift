@@ -17,14 +17,12 @@
 //  `TimelineScheduling.activeRegion` picks at the scene's tick — the same overlap precedence
 //  the player uses — never a second rule about which of two overlapping parts wins.
 //
-//  ⚠️ ONLY LAUNCHABLE TRACKS ARE SHOWN, by the engine's own gate: `launchRegion` refuses bio,
-//  video and visual lanes, so they get no column here (the #164/#227 "no control that does
-//  nothing" law). And launching is disabled while the song is stopped, because the engine
-//  no-ops then; the caption says so instead of offering a tap that does nothing.
-//  ⚠️ KNOWN LIMIT, stated rather than hidden: a secondary MIDI track beyond the lane rack's
-//  capacity has no physical voice. Its launch is recorded (the state reads "Playing") but it
-//  stays as silent as it is in the arrangement. The rack capacity is private to the player;
-//  exposing it is a separate slice.
+//  ⚠️ ONLY AUDIBLE, LAUNCHABLE TRACKS ARE SHOWN (the #164/#227 "no control that does nothing"
+//  law). `launchRegion` refuses bio, video and visual lanes, and an extra MIDI lane past the
+//  lane rack's capacity has no voice — a launch there would read "Playing" in silence. Both
+//  are decided ONCE, by `TrackMix.role` (the inspector's rule), so the two Workstation views
+//  can never disagree about which tracks sound. And launching is disabled while the song is
+//  stopped, because the engine no-ops then; the caption says so.
 //
 //  Cold reads only. `launchGeneration` bumps on a tap or a fired bar boundary, never per
 //  step, and `isPlaying` changes twice per take — both are safe in a leaf body. The playhead
@@ -63,19 +61,29 @@ enum SessionGrid {
         case stopping
     }
 
-    /// Tracks the engine will launch on: MIDI and audio lanes that are not bio, in
-    /// document order. Mirrors the refusal in `TimelineRegionPlayer.launchRegion`.
-    nonisolated static func tracks(in document: TimelineDocument) -> [Track] {
+    /// Tracks a launch is HEARD on, in document order: the roles `TrackMix.role` gives a
+    /// voice — the Echoel track, a rack-voiced MIDI lane, an audio lane. That excludes what
+    /// `TimelineRegionPlayer.launchRegion` refuses (bio, video, visual) and a MIDI lane with no
+    /// rack voice. `voiceCapacity` is `TimelineRegionPlayer.laneVoiceCapacity`, never defaulted.
+    nonisolated static func tracks(in document: TimelineDocument, voiceCapacity: Int) -> [Track] {
         document.lanes
-            .filter { !$0.isBio && ($0.kind == .midi || $0.kind == .audio) }
+            .filter { lane in
+                guard let role = TrackMix.role(of: lane.id, in: document,
+                                               voiceCapacity: voiceCapacity) else { return false }
+                switch role {
+                case .echoelInstrument, .laneSynth, .audio: return true
+                case .bio, .unplayed, .noVoice:             return false
+                }
+            }
             .map { Track(id: $0.id, name: $0.name) }
     }
 
     /// One scene per distinct tick at which a part starts on a launchable track, ascending.
     /// Each cell is `activeRegion`'s answer at that tick, so a part that started earlier and
     /// is still playing belongs to the scene too — the scene is "what the song plays here".
-    nonisolated static func scenes(in document: TimelineDocument) -> [LaunchScene] {
-        let trackIDs = tracks(in: document).map(\.id)
+    nonisolated static func scenes(in document: TimelineDocument,
+                                   voiceCapacity: Int) -> [LaunchScene] {
+        let trackIDs = tracks(in: document, voiceCapacity: voiceCapacity).map(\.id)
         let launchable = Set(trackIDs)
         let starts = Set(document.regions
             .filter { launchable.contains($0.laneID) && $0.lengthTicks > 0 }
@@ -141,8 +149,9 @@ struct SessionLaunchView: View {
 
     var body: some View {
         let document = timeline.document
-        let tracks = SessionGrid.tracks(in: document)
-        let scenes = SessionGrid.scenes(in: document)
+        let capacity = player.laneVoiceCapacity
+        let tracks = SessionGrid.tracks(in: document, voiceCapacity: capacity)
+        let scenes = SessionGrid.scenes(in: document, voiceCapacity: capacity)
         // Subscribes this leaf to launch changes: a tap or a fired bar, never a step.
         let _ = player.launchGeneration
         let playing = player.isPlaying
@@ -235,8 +244,9 @@ struct SessionLaunchView: View {
                                                : (playing ? EchoelTheme.text : EchoelTheme.dim))
             .padding(.horizontal, 10)
             .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            // Monochrome primary fill, never a green area behind a label (EchoelTheme).
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                .fill(state == .playing ? EchoelTheme.accent : EchoelTheme.fill))
+                .fill(state == .playing ? EchoelTheme.text : EchoelTheme.fill))
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
                 .strokeBorder(state == .queued ? EchoelTheme.accent : Color.clear, lineWidth: 1))
             .contentShape(Rectangle())

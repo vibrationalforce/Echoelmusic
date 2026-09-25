@@ -126,6 +126,12 @@ public final class TimelineRegionPlayer {
     // Disabled (capacity 0) ⇒ single-roll only, bit-identical. The app turns it on
     // once the flag-gated LaneVoiceRack is attached (FeatureFlags.multiRoll).
     @ObservationIgnored private var multiRollCapacity = 0
+    /// How many ADDITIONAL MIDI lanes have a physical rack voice (0 = none, single-roll).
+    /// Read-only; set once by `enableMultiRoll` at app start. Its storage is
+    /// `@ObservationIgnored`, so a view that reads it subscribes to nothing. The Workstation's
+    /// track inspector and Session grid ask it (with `MultiRollFanout.slot`) so a lane with no
+    /// voice is never offered a control or a launch that does nothing.
+    public var laneVoiceCapacity: Int { multiRollCapacity }
     /// Applies one slot's note events to that slot's rack voice. Injected so this
     /// file stays Foundation-only (the rack is AVFoundation). nil ⇒ no fan-out.
     @ObservationIgnored public var slotNoteSink: ((_ slot: Int, _ events: [LaneNotePump.Event]) -> Void)?

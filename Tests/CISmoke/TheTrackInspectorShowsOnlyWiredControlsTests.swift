@@ -49,6 +49,9 @@ final class TheTrackInspectorShowsOnlyWiredControlsTests: XCTestCase {
     private static let audioLane = TimelineLane(name: "Audio 1", kind: .audio)
     private static let visualLane = TimelineLane(name: "Look", kind: .visual)
 
+    /// The lane rack's default capacity (`LaneVoiceRack(capacity: 4)`), as the player reports it.
+    private static let rack = 4
+
     private static let document = TimelineDocument(
         lanes: [bioLane, echoelLane, rackLane, audioLane, visualLane], regions: [])
 
@@ -57,29 +60,29 @@ final class TheTrackInspectorShowsOnlyWiredControlsTests: XCTestCase {
     func testOnlyWiredControlsAreOffered() throws {
         let doc = Self.document
 
-        let echoel = try XCTUnwrap(TrackMix.controls(of: Self.echoelLane.id, in: doc))
+        let echoel = try XCTUnwrap(TrackMix.controls(of: Self.echoelLane.id, in: doc, voiceCapacity: Self.rack))
         XCTAssertEqual(echoel.role, .echoelInstrument)
         XCTAssertTrue(echoel.level)
         XCTAssertTrue(echoel.muteSolo)
         XCTAssertFalse(echoel.pan, "rollSlotPan has no consumer — a pan field here moves nothing")
 
-        let rack = try XCTUnwrap(TrackMix.controls(of: Self.rackLane.id, in: doc))
+        let rack = try XCTUnwrap(TrackMix.controls(of: Self.rackLane.id, in: doc, voiceCapacity: Self.rack))
         XCTAssertEqual(rack.role, .laneSynth(TrackInstrument.sampler.voiceKind))
         XCTAssertTrue(rack.level && rack.pan && rack.muteSolo)
 
-        let audio = try XCTUnwrap(TrackMix.controls(of: Self.audioLane.id, in: doc))
+        let audio = try XCTUnwrap(TrackMix.controls(of: Self.audioLane.id, in: doc, voiceCapacity: Self.rack))
         XCTAssertEqual(audio.role, .audio)
         XCTAssertTrue(audio.level && audio.pan && audio.muteSolo)
 
-        let bio = try XCTUnwrap(TrackMix.controls(of: Self.bioLane.id, in: doc))
+        let bio = try XCTUnwrap(TrackMix.controls(of: Self.bioLane.id, in: doc, voiceCapacity: Self.rack))
         XCTAssertEqual(bio.role, .bio)
         XCTAssertFalse(bio.level || bio.pan || bio.muteSolo, "a bio curve makes no sound")
 
-        let visual = try XCTUnwrap(TrackMix.controls(of: Self.visualLane.id, in: doc))
+        let visual = try XCTUnwrap(TrackMix.controls(of: Self.visualLane.id, in: doc, voiceCapacity: Self.rack))
         XCTAssertEqual(visual.role, .unplayed)
         XCTAssertFalse(visual.level || visual.pan || visual.muteSolo)
 
-        XCTAssertNil(TrackMix.controls(of: UUID(), in: doc), "an unknown track has no inspector")
+        XCTAssertNil(TrackMix.controls(of: UUID(), in: doc, voiceCapacity: Self.rack), "an unknown track has no inspector")
     }
 
     // MARK: 2 — the Echoel track is the roll lane, by the roll lane's own rule
@@ -87,17 +90,52 @@ final class TheTrackInspectorShowsOnlyWiredControlsTests: XCTestCase {
     func testTheEchoelTrackIsTheRollSlotLane() {
         // A rack MIDI lane listed FIRST makes IT the roll lane — the rule is position, not name.
         let doc = TimelineDocument(lanes: [Self.rackLane, Self.echoelLane], regions: [])
-        XCTAssertEqual(TrackMix.role(of: Self.rackLane.id, in: doc), .echoelInstrument)
-        XCTAssertEqual(TrackMix.role(of: Self.echoelLane.id, in: doc), .laneSynth(.poly))
+        XCTAssertEqual(TrackMix.role(of: Self.rackLane.id, in: doc, voiceCapacity: Self.rack), .echoelInstrument)
+        XCTAssertEqual(TrackMix.role(of: Self.echoelLane.id, in: doc, voiceCapacity: Self.rack), .laneSynth(.poly))
         // And its level is the one `rollSlotGain` plays (#416: one rule, two readers).
         XCTAssertEqual(doc.rollSlotGain, doc.effectiveGain(for: Self.rackLane.id))
     }
 
     func testEveryRoleHasADeviceName() {
-        let roles: [TrackMix.Role] = [.echoelInstrument, .laneSynth(.poly), .audio, .bio, .unplayed]
+        let roles: [TrackMix.Role] = [.echoelInstrument, .laneSynth(.poly), .audio, .bio, .unplayed,
+                                      .noVoice(capacity: 4), .noVoice(capacity: 0)]
         for role in roles {
             XCTAssertFalse(TrackMix.deviceName(role).isEmpty, "\(role) has no device name")
         }
+    }
+
+    // MARK: 2b — a MIDI lane past the rack's capacity has no voice, so no mixer
+
+    func testAVoicelessTrackGetsNoMixer() throws {
+        // Roll lane + five extra MIDI lanes: the rack voices the first four extras only.
+        let extras = (1...5).map { TimelineLane(name: "Extra \($0)", kind: .midi) }
+        let doc = TimelineDocument(lanes: [Self.echoelLane] + extras, regions: [])
+        for lane in extras.prefix(4) {
+            XCTAssertEqual(TrackMix.role(of: lane.id, in: doc, voiceCapacity: Self.rack),
+                           .laneSynth(.poly), "\(lane.name) has a rack voice")
+        }
+        let fifth = try XCTUnwrap(extras.last)
+        let controls = try XCTUnwrap(TrackMix.controls(of: fifth.id, in: doc, voiceCapacity: Self.rack))
+        XCTAssertEqual(controls.role, .noVoice(capacity: Self.rack))
+        XCTAssertFalse(controls.level || controls.pan || controls.muteSolo,
+                       "a fader on a track no voice plays moves a number, not the sound")
+        // The same answer the player's own slot rule gives (#416).
+        XCTAssertNil(MultiRollFanout.slot(forLaneID: fifth.id, in: doc,
+                                          rollLane: doc.rollLaneID, capacity: Self.rack))
+        // Multi-roll off: every extra MIDI lane is voiceless; the Echoel track still plays.
+        XCTAssertEqual(TrackMix.role(of: extras[0].id, in: doc, voiceCapacity: 0), .noVoice(capacity: 0))
+        XCTAssertEqual(TrackMix.role(of: Self.echoelLane.id, in: doc, voiceCapacity: 0), .echoelInstrument)
+    }
+
+    func testTheInspectorAsksThePlayersCapacity() throws {
+        let code = try source(Self.inspectorPath)
+        XCTAssertTrue(code.contains("voiceCapacity: player.laneVoiceCapacity"),
+                      "the capacity is the player's, never a literal restated here")
+        let player = try source("Sources/Echoelmusic/Sequencer/TimelineRegionPlayer.swift")
+        XCTAssertTrue(player.contains("public var laneVoiceCapacity: Int { multiRollCapacity }"),
+                      "the getter reads the one capacity `enableMultiRoll` sets")
+        XCTAssertTrue(player.contains("@ObservationIgnored private var multiRollCapacity"),
+                      "unobserved storage — reading it subscribes the inspector to nothing")
     }
 
     // MARK: 3 — counterweight: the premise of "no pan on the Echoel track"

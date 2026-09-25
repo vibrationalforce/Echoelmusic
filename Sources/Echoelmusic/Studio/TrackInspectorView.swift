@@ -22,6 +22,8 @@
 //    there would move a number and not the sound. When a consumer lands, flip `pan` there
 //    and the guard that pins the missing consumer in the same commit.
 //  · a bio lane carries a recorded curve and makes no sound — no mixer at all.
+//  · an extra MIDI lane past the lane rack's capacity has no voice (`MultiRollFanout.slot`
+//    returns nil) — no mixer either, and the device row says why (review of b2913f96b).
 //  ⚠️ And the COUPLINGS with the Studio instrument are stated rather than hidden (review of
 //  b2913f96b): the Echoel track's level is the level the instrument plays at (`rollSlotGain` →
 //  `mixGain`, the one writer in `EchoelmusicApp`), so muting it or pulling it to 0 silences
@@ -45,6 +47,9 @@ enum TrackMix {
         case echoelInstrument
         /// Any other MIDI lane, played by a rack voice of this kind.
         case laneSynth(LaneVoiceKind)
+        /// Another MIDI lane with NO rack voice: the rack plays only the first `capacity`
+        /// additional MIDI lanes (`MultiRollFanout.slot`), the rest stay silent.
+        case noVoice(capacity: Int)
         case audio
         /// A recorded bio curve. It makes no sound.
         case bio
@@ -64,7 +69,10 @@ enum TrackMix {
     static let levelRange: ClosedRange<Double> = 0...2
     static let panRange: ClosedRange<Double> = -1...1
 
-    nonisolated static func role(of laneID: UUID, in document: TimelineDocument) -> Role? {
+    /// `voiceCapacity` is `TimelineRegionPlayer.laneVoiceCapacity` — required, never defaulted
+    /// (#431): a forgotten call site must not quietly assume a voice exists.
+    nonisolated static func role(of laneID: UUID, in document: TimelineDocument,
+                                 voiceCapacity: Int) -> Role? {
         guard let lane = document.lanes.first(where: { $0.id == laneID }) else { return nil }
         if lane.isBio { return .bio }
         switch lane.kind {
@@ -73,20 +81,27 @@ enum TrackMix {
         case .midi:
             // The player's own roll-lane rule (#416: one rule, `rollSlotGain` reads it too).
             if document.rollLaneID == laneID { return .echoelInstrument }
+            // The player's own slot rule: a lane past the rack's capacity has no voice.
+            guard MultiRollFanout.slot(forLaneID: laneID, in: document,
+                                       rollLane: document.rollLaneID,
+                                       capacity: voiceCapacity) != nil else {
+                return .noVoice(capacity: voiceCapacity)
+            }
             return .laneSynth(lane.builtinInstrument?.voiceKind ?? .poly)
         case .video, .visual:
             return .unplayed
         }
     }
 
-    nonisolated static func controls(of laneID: UUID, in document: TimelineDocument) -> Controls? {
-        guard let role = role(of: laneID, in: document) else { return nil }
+    nonisolated static func controls(of laneID: UUID, in document: TimelineDocument,
+                                     voiceCapacity: Int) -> Controls? {
+        guard let role = role(of: laneID, in: document, voiceCapacity: voiceCapacity) else { return nil }
         switch role {
         case .echoelInstrument:
             return Controls(role: role, level: true, pan: false, muteSolo: true)
         case .laneSynth, .audio:
             return Controls(role: role, level: true, pan: true, muteSolo: true)
-        case .bio, .unplayed:
+        case .bio, .unplayed, .noVoice:
             return Controls(role: role, level: false, pan: false, muteSolo: false)
         }
     }
@@ -98,6 +113,10 @@ enum TrackMix {
         case .audio:              return "Audio file player"
         case .bio:                return "Bio curve — no sound"
         case .unplayed:           return "No engine plays this track yet"
+        case .noVoice(let capacity):
+            return capacity > 0
+                ? "No voice — only the first \(capacity) extra MIDI tracks play"
+                : "No voice — extra MIDI tracks are off in this build"
         }
     }
 
@@ -140,6 +159,8 @@ enum TrackMix {
 struct TrackInspectorView: View {
 
     @Environment(TimelineStore.self) private var timeline
+    /// Read for `laneVoiceCapacity` only — a cold, unobserved number set once at start.
+    @Environment(TimelineRegionPlayer.self) private var player
     let laneID: UUID
     /// The name being typed. Local and cold; committed on Return, on focus loss and on close.
     @State private var nameDraft = ""
@@ -148,7 +169,8 @@ struct TrackInspectorView: View {
     var body: some View {
         let document = timeline.document
         if let lane = document.lanes.first(where: { $0.id == laneID }),
-           let controls = TrackMix.controls(of: laneID, in: document) {
+           let controls = TrackMix.controls(of: laneID, in: document,
+                                            voiceCapacity: player.laneVoiceCapacity) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 6) {
                     Text("Device")
