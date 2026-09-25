@@ -3,7 +3,7 @@
 //  Echoelmusic — Studio (WA4 critical path 5: edit the part selected on the Arrange canvas)
 //
 //  WHY THIS EXISTS. The canvas selects a part; this bar acts on it — one bar earlier / later,
-//  split, copy, remove. Every write is `TimelineStore`'s existing method (one call = one undo
+//  trim start / end (one grid step inward, `PartTrim`), split, copy, remove. Every write is `TimelineStore`'s existing method (one call = one undo
 //  step, `snapshotForUndo` inside each); the playing engine chases a structural edit live.
 //  Nothing here is a second truth: the part is resolved from the document on every render,
 //  and a part that no longer exists (after Remove, Undo, Open) simply hides the bar.
@@ -27,8 +27,12 @@
 //  asks the one precedence rule before and after; if any tick changes hands, Split is refused
 //  and its label says why.
 //
+//  ⚠️ TRIM ONLY TAKES AWAY, and under the same rule: a trimmed start moves later and can win an
+//  overlap it used to lose, so `PartTrim.onlyLetsGo` lets a trim change nothing but the ticks
+//  the part gives up — revealing a part underneath is what a trim is for; stealing bars is not.
+//
 //  Cold reads only: the selection and `timeline.document` change on a tap. The song tempo and
-//  the clip are read INSIDE the Split handler, never in `body`.
+//  the clip are read INSIDE the Split and Trim-start handlers, never in `body`.
 //
 
 import SwiftUI
@@ -99,13 +103,97 @@ enum PartSplit {
     }
 }
 
+/// The pure half of Trim (WA4 critical path 5, the verb that was held): each edge moves ONE song
+/// grid step INWARD — never outward. A trim only takes material away, so the name promises
+/// exactly what happens; lengthening a part past its media would be a different act with a
+/// different answer per media kind (silence for audio, a loop for MIDI) and stays out.
+enum PartTrim {
+
+    /// The new start for "Trim start": the first song-grid bar line after the part's start, else
+    /// the first beat, strictly inside the part — or nil when no grid line falls inside it.
+    nonisolated static func startTick(for part: TrackParts.Part) -> Int? {
+        let start = part.startTick
+        let end = part.startTick + part.lengthTicks
+        guard start >= 0, part.lengthTicks > 1 else { return nil }
+        for unit in [TimelineTime.ticksPerBar, TimelineTime.ticksPerBeat] where unit > 0 {
+            let next = (start / unit + 1) * unit
+            if next > start, next < end { return next }
+        }
+        return nil
+    }
+
+    /// The new end for "Trim end": the last song-grid bar line before the part's end, else the
+    /// last beat, strictly inside the part — or nil when no grid line falls inside it.
+    nonisolated static func endTick(for part: TrackParts.Part) -> Int? {
+        let start = part.startTick
+        let end = part.startTick + part.lengthTicks
+        guard start >= 0, part.lengthTicks > 1 else { return nil }
+        for unit in [TimelineTime.ticksPerBar, TimelineTime.ticksPerBeat] where unit > 0 {
+            let previous = ((end - 1) / unit) * unit
+            if previous > start, previous < end { return previous }
+        }
+        return nil
+    }
+
+    /// Whether replacing `regionID` with `trimmed` changes NOTHING but the ticks the part let go
+    /// of. Trimming the START moves the part's start later, and `activeRegion` gives an overlap
+    /// to the later start — so a trim could hand bars the part still covers to it from a part
+    /// that used to win them (or the other way round). The one change a trim may make is the
+    /// part giving up a tick outside its new span; anything else is refused, asked of the one
+    /// precedence rule (#1440) at the bounded set of ticks where the winner can change.
+    nonisolated static func onlyLetsGo(_ trimmed: TimelineRegion, replacing regionID: UUID,
+                                       in document: TimelineDocument) -> Bool {
+        guard let index = document.regions.firstIndex(where: { $0.id == regionID }) else {
+            return false
+        }
+        var after = document
+        after.regions[index] = trimmed
+        let lane = trimmed.laneID
+        let ticks = Set(TimelineScheduling.candidateSampleTicks(in: document, laneID: lane))
+            .union(TimelineScheduling.candidateSampleTicks(in: after, laneID: lane))
+        for sample in ticks {
+            let before = TimelineScheduling.activeRegion(in: document, laneID: lane, at: sample)?.id
+            let now = TimelineScheduling.activeRegion(in: after, laneID: lane, at: sample)?.id
+            if before == now { continue }
+            let stillCovered = sample >= trimmed.startTick && sample < trimmed.endTick
+            if before == regionID, !stillCovered { continue }
+            return false
+        }
+        return true
+    }
+
+    /// The region "Trim start" would leave, or nil when it cannot move or would change who plays.
+    /// The media offset follows at 120 BPM here — it moves no tick, so precedence cannot see it;
+    /// the store's write uses the tempo the media really elapses at (`PartSplit.mediaBPM`).
+    nonisolated static func startTrim(_ part: TrackParts.Part,
+                                      in document: TimelineDocument) -> Int? {
+        guard let tick = startTick(for: part),
+              let region = document.regions.first(where: { $0.id == part.id }),
+              let trimmed = region.trimmedStart(toTick: tick, bpm: 120),
+              trimmed.startTick == tick,
+              onlyLetsGo(trimmed, replacing: part.id, in: document) else { return nil }
+        return tick
+    }
+
+    /// The new length "Trim end" would leave, or nil when it cannot move or would change who plays.
+    nonisolated static func endTrim(_ part: TrackParts.Part,
+                                    in document: TimelineDocument) -> Int? {
+        guard let tick = endTick(for: part),
+              let region = document.regions.first(where: { $0.id == part.id }) else { return nil }
+        var trimmed = region
+        trimmed.lengthTicks = tick - region.startTick
+        guard onlyLetsGo(trimmed, replacing: part.id, in: document) else { return nil }
+        return trimmed.lengthTicks
+    }
+}
+
 /// The actions for the part selected on the Arrange canvas.
 @MainActor
 struct SelectedPartBar: View {
 
     @Environment(WorkstationSelection.self) private var selection
     @Environment(TimelineStore.self) private var timeline
-    /// ⚠️ READ ONLY INSIDE THE SPLIT HANDLER — `preflightTempo` is `@ObservationIgnored` and
+    /// ⚠️ READ ONLY INSIDE THE SPLIT AND TRIM-START HANDLERS — `preflightTempo` is `@ObservationIgnored` and
     /// the clip grid is not this bar's to observe.
     @Environment(TimelineRegionPlayer.self) private var player
     @Environment(ClipStore.self) private var clipStore
@@ -122,23 +210,51 @@ struct SelectedPartBar: View {
             // A cut that would change which overlapping part plays is refused, not made.
             let splittable = cut.map { PartSplit.keepsWhoPlays(regionID: regionID, atTick: $0,
                                                                 in: document) } ?? false
+            let trims = Trims(start: PartTrim.startTrim(part, in: document),
+                              endLength: PartTrim.endTrim(part, in: document))
             VStack(alignment: .leading, spacing: 4) {
                 Text("Selected part · \(title)")
                     .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
-                // Five labelled buttons do not fit a phone at every type size (review
-                // MEDIUM-3): the row falls back to icons, every button keeping its full label.
+                // Seven labelled buttons do not fit a phone at every type size (review
+                // MEDIUM-3): the row falls back to icons, then to two rows of icons — every
+                // button keeping its full spoken label.
                 ViewThatFits(in: .horizontal) {
                     actionRow(part, regionID: regionID, cut: cut, splittable: splittable,
-                              showsTitles: true)
+                              trims: trims, showsTitles: true)
                     actionRow(part, regionID: regionID, cut: cut, splittable: splittable,
-                              showsTitles: false)
+                              trims: trims, showsTitles: false)
+                    VStack(alignment: .leading, spacing: 6) {
+                        moveRow(part, showsTitles: false)
+                        editRow(part, regionID: regionID, cut: cut, splittable: splittable,
+                                trims: trims, showsTitles: false)
+                    }
+                }
+                // Review of 75d27e615 (LOW): a refused Split said why only to VoiceOver — a
+                // sighted player saw a dimmed scissors and no reason.
+                if cut != nil, !splittable {
+                    Text("Split is off here: it would change which overlapping part plays.")
+                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 }
             }
         }
     }
 
+    /// The two edges a trim may move, resolved once per render (nil = unavailable).
+    private struct Trims {
+        let start: Int?
+        let endLength: Int?
+    }
+
     private func actionRow(_ part: TrackParts.Part, regionID: UUID, cut: Int?, splittable: Bool,
-                           showsTitles: Bool) -> some View {
+                           trims: Trims, showsTitles: Bool) -> some View {
+        HStack(spacing: 6) {
+            moveRow(part, showsTitles: showsTitles)
+            editRow(part, regionID: regionID, cut: cut, splittable: splittable, trims: trims,
+                    showsTitles: showsTitles)
+        }
+    }
+
+    private func moveRow(_ part: TrackParts.Part, showsTitles: Bool) -> some View {
         let earlier = TrackParts.earlierStart(part)
         return HStack(spacing: 6) {
             button("Earlier", "chevron.left", enabled: earlier != nil, showsTitle: showsTitles,
@@ -148,6 +264,22 @@ struct SelectedPartBar: View {
             button("Later", "chevron.right", enabled: true, showsTitle: showsTitles,
                    label: "Move the selected part one bar later") {
                 TrackParts.move(part, toStartTick: TrackParts.laterStart(part), timeline: timeline)
+            }
+        }
+    }
+
+    private func editRow(_ part: TrackParts.Part, regionID: UUID, cut: Int?, splittable: Bool,
+                         trims: Trims, showsTitles: Bool) -> some View {
+        HStack(spacing: 6) {
+            button("Trim start", "arrow.right.to.line", enabled: trims.start != nil,
+                   showsTitle: showsTitles, label: trimStartLabel(trims.start)) {
+                if let tick = trims.start { trimStart(regionID, to: tick) }
+            }
+            button("Trim end", "arrow.left.to.line", enabled: trims.endLength != nil,
+                   showsTitle: showsTitles, label: trimEndLabel(part, trims.endLength)) {
+                if let length = trims.endLength {
+                    timeline.resizeRegion(id: regionID, lengthTicks: length)
+                }
             }
             button("Split", "scissors", enabled: splittable, showsTitle: showsTitles,
                    label: splitLabel(cut: cut, splittable: splittable)) {
@@ -162,6 +294,20 @@ struct SelectedPartBar: View {
                 TrackParts.remove(part, timeline: timeline)
             }
         }
+    }
+
+    private func trimStartLabel(_ tick: Int?) -> String {
+        guard let tick else {
+            return "The start cannot be trimmed: no grid line inside the part, or it would change which overlapping part plays"
+        }
+        return "Trim the selected part so it starts at \(SessionGrid.label(forTick: tick))"
+    }
+
+    private func trimEndLabel(_ part: TrackParts.Part, _ length: Int?) -> String {
+        guard let length else {
+            return "The end cannot be trimmed: no grid line inside the part, or it would change which overlapping part plays"
+        }
+        return "Trim the selected part so it ends at \(SessionGrid.label(forTick: part.startTick + length))"
     }
 
     private func splitLabel(cut: Int?, splittable: Bool) -> String {
@@ -180,6 +326,18 @@ struct SelectedPartBar: View {
             return
         }
         timeline.splitRegion(id: regionID, atTick: tick, bpm: bpm)
+    }
+
+    /// Trim start moves the media offset with the cut, so the tempo is the one the part's media
+    /// really elapses at — the same answer Split uses (`PartSplit.mediaBPM`, #416).
+    private func trimStart(_ regionID: UUID, to tick: Int) {
+        guard let region = timeline.document.regions.first(where: { $0.id == regionID }),
+              let bpm = PartSplit.mediaBPM(for: region, clip: clipStore.clip(id: region.clipID),
+                                           projectBPM: player.preflightTempo) else {
+            log.log(.info, category: .audio, "Trim start refused: no usable song tempo")
+            return
+        }
+        timeline.trimRegionStart(id: regionID, toTick: tick, bpm: bpm)
     }
 
     private func button(_ title: String, _ systemImage: String, enabled: Bool, showsTitle: Bool,
