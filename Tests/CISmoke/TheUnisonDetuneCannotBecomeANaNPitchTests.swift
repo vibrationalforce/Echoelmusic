@@ -8,8 +8,12 @@
 // every frequency, and therefore every rendered sample of the stack, is NaN. `setOctaver`, a few
 // lines below in the same type, already refused a non-finite mix: one boundary, two rules (#416).
 //
-// LATENT: the callers are a decoded patch (JSONDecoder rejects NaN) and `PolySynthVoice.setUnison`
-// behind a finite UI field. Closed on the #588 boundary rule.
+// LATENT, and only with unison ON: `noteOn` reads the spread only when `unisonCount` >= 2. The one
+// production caller is the patch apply in `PolySynthVoice` (`poly.setUnison(count: patch.
+// unisonVoices ?? 2, …)`), fed by a decoded patch (JSONDecoder rejects NaN) or by the Sound panel's
+// detune binding, whose setter already maps a non-finite value to 0. `PolySynthVoice.setUnison`,
+// which this guard drives, has NO production caller. Closed on the #588 boundary rule. (⛔ Until
+// review 10 this line named that method as the UI path.)
 //
 // THE REPAIR. `detuneCents.clamped(to: 0...50)`: NaN reads as 0 (no spread); every other value,
 // ±inf included, is unchanged.
