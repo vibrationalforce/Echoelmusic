@@ -23,6 +23,12 @@
 // ⚠️ HONEST GRADING — TRANSCRIBED (§0), no local toolchain. Parent `835cb8e8c`: claim 1 is a
 // REGRESSION — one finding (no refusal exists there). Claim 2 is a COUNTERWEIGHT, green on both
 // trees. The file names no `Sources/` symbol, so it compiles on both.
+//
+// ⭐ 2026-09-25 (overnight P8v) — claim 1 also asserts the block names no `4096` of its own: after
+// the refusal the frame count needs no second bound, and a literal there would re-cap the write if
+// the scratch capacity were raised alone (#416). Found by tonight's read-only audio-thread review
+// (its finding 4). Grading, parent `283dfb093`: REGRESSION — one finding (`min(Int(frameCount),
+// 4096)` there). SOURCE-TEXT SCAN.
 
 import Foundation
 import XCTest
@@ -47,6 +53,11 @@ final class TheAUv3RefusesAnOversizedBlockTests: XCTestCase {
                                         "the synth render call moved — re-anchor this guard (#456)")
         XCTAssertLessThan(refusal.lowerBound, firstRender.lowerBound,
                           "the refusal comes after the voices have rendered — it must come first")
+        XCTAssertFalse(render.contains("4096"), """
+            The render block carries its own frame ceiling again. The refusal against \
+            `scratch.capacity` is the one bound; a second literal re-caps the write when the \
+            capacity alone is raised (#416).
+            """)
     }
 
     // MARK: - claim 2 (COUNTERWEIGHT)

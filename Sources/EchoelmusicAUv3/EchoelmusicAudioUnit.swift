@@ -409,8 +409,9 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     ///
     /// `maximumFramesToRender` is the HOST's to set, so the defence belongs on the contract,
     /// not on the data: clamp what we promise to accept and the host allocates accordingly.
-    /// Added 2026-09-20 (#1385, audio-thread-reviewer). The clamp inside the render block
-    /// stays as a belt-and-braces bound — it is one `min` on scalars and costs nothing.
+    /// Added 2026-09-20 (#1385, audio-thread-reviewer). ⛔ "The clamp inside the render block
+    /// stays as a belt-and-braces bound" stood here: P8j (2026-09-24) replaced it with a REFUSAL
+    /// against `scratch.capacity`, and P8v removed the dead `min` left behind it.
     ///
     /// ⚠️ Raising 4096 here is NOT one number: `RenderScratch` and `EchoelDDSP`'s
     /// `reverbFrameBuffer`/`reverbWetBuffer` (sized `max(frameSize, 4096)` in its init) must
@@ -659,7 +660,11 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
             guard Int(frameCount) <= scratch.capacity else {
                 return kAudioUnitErr_TooManyFramesToProcess
             }
-            let count = min(Int(frameCount), 4096)
+            // ⭐ 2026-09-25 (overnight P8v): no second bound. After the refusal above the count
+            // IS at most the scratch's capacity; the `min(…, 4096)` that stood here was a second
+            // copy of that ceiling (#416). Raise the capacity alone and it would have capped the
+            // write below it again — `noErr` over an unwritten tail, the P8j defect.
+            let count = Int(frameCount)
 
             // MIDI note input (music-device / aumu). Walk the host's realtime event
             // list and drive the mono voice's pitch. This is pure pointer + scalar
