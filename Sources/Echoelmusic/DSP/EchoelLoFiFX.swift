@@ -45,8 +45,13 @@ public final class EchoelBitcrush: @unchecked Sendable {
         let clamped = Swift.min(Swift.max(b, 1), 16)
         return powf(2, clamped) - 1     // e.g. bits 8 → 255 quantisation steps
     }
+    /// ⭐ 2026-09-25 (overnight P8z): `clamped(to:)`, not `min(max(d, 1), 64)`. That spelling
+    /// passes NaN through, and `Int(Float.nan)` is a Swift TRAP — a crash on whichever thread
+    /// set the knob, not silence. NaN now reads as 1 (full rate); every finite value is
+    /// unchanged. No producer emits NaN today (the field is 1…64, JSON rejects NaN); this is
+    /// the #588 boundary rule. Guard: `TheBitcrushDownsampleCannotTrapTests`.
     private static func step(forDownsample d: Float) -> Int {
-        Int(Swift.min(Swift.max(d, 1), 64).rounded())
+        Int(d.clamped(to: 1...64).rounded())
     }
 
     @inline(__always)
