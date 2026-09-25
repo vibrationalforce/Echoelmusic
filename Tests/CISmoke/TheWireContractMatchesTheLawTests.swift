@@ -89,12 +89,34 @@ final class TheWireContractMatchesTheLawTests: XCTestCase {
     }
 
     /// Address-shaped tokens in a text: `/echoelmusic/…` or `/adm/…`.
+    ///
+    /// ⛔ #1255/#1383 WROTE TWO ADDRESS SETS IN BRACE NOTATION (`/echoelmusic/ctrl/{bpm,key,…}`,
+    /// `/echoelmusic/music/{tempo,key/root,…}`), and the first pattern here stopped at the
+    /// COMMA: claim 1 read `/echoelmusic/music/{tempo`, looked for `/echoelmusic/music/` as a
+    /// literal in code, and failed on a correct tree; claim 2 found the five `music` families
+    /// and `ctrl/bpm` "undocumented". A brace GROUP is now one token, and `alternatives(of:)`
+    /// expands it.
     private func addressTokens(in text: String) -> [String] {
-        let pattern = "/(?:echoelmusic|adm)[A-Za-z0-9_/{}<>|+-]*"
+        let pattern = "/(?:echoelmusic|adm)(?:[A-Za-z0-9_/<>|+-]|\\{[^{}\\s]*\\})*"
         guard let rx = try? NSRegularExpression(pattern: pattern) else { return [] }
         let ns = text as NSString
         return rx.matches(in: text, range: NSRange(location: 0, length: ns.length))
             .map { ns.substring(with: $0.range) }
+    }
+
+    /// A documented token with a comma brace group, split into (prefix, leaf, full path) per
+    /// alternative — `/a/{x,y/z}` gives (`/a/`, `x`, `/a/x`) and (`/a/`, `y/z`, `/a/y/z`). A
+    /// token without such a group gives nil. `{n}` has no comma and is a placeholder, not a set.
+    private func alternatives(of token: String) -> [(prefix: String, leaf: String, full: String)]? {
+        guard let open = token.firstIndex(of: "{"),
+              let close = token[open...].firstIndex(of: "}") else { return nil }
+        let inner = token[token.index(after: open)..<close]
+        guard inner.contains(",") else { return nil }
+        let prefix = String(token[..<open])
+        let suffix = String(token[token.index(after: close)...])
+        return inner.split(separator: ",").map { leaf in
+            (prefix: prefix, leaf: String(leaf), full: prefix + String(leaf) + suffix)
+        }
     }
 
     /// claim 1 — every address the CONTRACT names exists in the code. This is the 2026-07-04
@@ -104,6 +126,21 @@ final class TheWireContractMatchesTheLawTests: XCTestCase {
         let documented = Set(addressTokens(in: try lawSection()))
         var missing: [String] = []
         for token in documented.sorted() {
+            // A brace SET is checked per member: the full path written in code (the `music`
+            // family is), OR the set's prefix written in code AND the member quoted as a leaf
+            // (the `ctrl` family is — `OSCReceiver.prefix` plus its `addresses` array).
+            if let members = alternatives(of: token) {
+                for member in members {
+                    let whole = code.contains(member.full + "\"")
+                    let split = code.contains(member.prefix + "\"")
+                        && code.contains("\"" + member.leaf + "\"")
+                    if !whole && !split {
+                        missing.append("\(member.full) (from \(token): neither the full path nor "
+                                       + "its prefix plus the quoted leaf is in code)")
+                    }
+                }
+                continue
+            }
             // `<key>` and `{n}` are placeholders the code fills by interpolation; compare the
             // literal prefix that precedes them.
             let needle = token.components(separatedBy: CharacterSet(charactersIn: "<{"))[0]
@@ -129,6 +166,11 @@ final class TheWireContractMatchesTheLawTests: XCTestCase {
     /// alternation, so demanding each full path would fail on its own chosen notation.
     func testNoUndocumentedAddressFamilyIsSent() throws {
         let law = try lawSection()
+        // The members of every brace set, written out, so a family the law names only inside
+        // `{…,…}` still counts as named.
+        let expanded = addressTokens(in: law)
+            .flatMap { alternatives(of: $0)?.map { $0.full } ?? [] }
+            .joined(separator: "\n")
         var undocumented: [String] = []
         for token in Set(addressTokens(in: try sourcesCode())).sorted() {
             let parts = token.components(separatedBy: "/")           // ["", "echoelmusic", …]
@@ -138,7 +180,9 @@ final class TheWireContractMatchesTheLawTests: XCTestCase {
             // An interpolation can start inside the family segment (`/echoelmusic/mod/\(key)`);
             // compare the literal part before it.
             let literal = family.components(separatedBy: "\\")[0]
-            if !law.contains(literal) { undocumented.append(literal) }
+            if !law.contains(literal) && !expanded.contains(literal) {
+                undocumented.append(literal)
+            }
         }
         XCTAssertTrue(undocumented.isEmpty, """
             Code sends address families the OSC contract does not name: \
