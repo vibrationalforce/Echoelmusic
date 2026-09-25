@@ -661,10 +661,12 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         let textureRef = self.texture
         let gainBox = self.gainMirror
         let scratch = self.renderScratch
-        // ⭐ 2026-09-25 (overnight P8u): read ONCE here, not inside the block. A `static let` is
-        // a lazily initialised global; in an unoptimised (Debug) build its first read goes
-        // through a one-time initialiser (`swift_once`) — on the audio thread, if the null-mData
-        // branch is the first to touch it. Guard: `TheAUv3SuppliesItsOwnOutputBuffersTests`.
+        // ⭐ 2026-09-25 (overnight P8u): read ONCE here, not inside the block — DEFENSIVE. A
+        // `static let` is a lazily initialised global whose first read runs `swift_once`. It can
+        // never be first on the audio thread today (corrected by review 9): `RenderScratch.init`
+        // reads it while the unit is constructed, long before any render block exists. The
+        // capture keeps render free of even the fast-path check if that ever changes.
+        // Guard: `TheAUv3SuppliesItsOwnOutputBuffersTests`.
         let ownedChannels = RenderScratch.ownedChannels
         let bioBox = self.bioMirror
         let bioState = self.bioRenderState

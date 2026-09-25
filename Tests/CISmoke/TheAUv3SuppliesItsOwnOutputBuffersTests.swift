@@ -35,9 +35,12 @@
 //
 // ⭐ 2026-09-25 (overnight P8u) — claim 4: the returned render CLOSURE reads no
 // `RenderScratch.` static; the getter captures `ownedChannels` into a local before `return {`.
-// A `static let` is a lazily initialised global, and in a Debug build its first read runs a
-// one-time initialiser (`swift_once`) — on the audio thread, if the null-mData branch touches it
-// first. Found by tonight's read-only audio-thread review (its finding 3). SOURCE-TEXT SCAN.
+// A `static let` is a lazily initialised global whose first read runs `swift_once`. Found by
+// tonight's read-only audio-thread review (its finding 3). ⚠️ CORRECTED 2026-09-25 (review 9):
+// the render closure can never be that FIRST read — `RenderScratch.init` reads the constant while
+// the unit is constructed. The capture is DEFENSIVE (render skips even the initialised-check),
+// and this claim is a forward pin on that spelling, not the repair of a live audio-thread
+// `swift_once`. SOURCE-TEXT SCAN.
 // Grading, parent `84c899af6`: REGRESSION — one finding (the closure read
 // `RenderScratch.ownedChannels` directly there). Claims 1–3 unchanged.
 
@@ -108,9 +111,9 @@ final class TheAUv3SuppliesItsOwnOutputBuffersTests: XCTestCase {
         XCTAssertTrue(closure.contains("channel < ownedChannels"),
                       "the null-mData branch no longer compares against the captured count")
         XCTAssertFalse(closure.contains("RenderScratch."), """
-            The render closure reads a `RenderScratch` static. A `static let` is lazily \
-            initialised; in a Debug build its first read runs `swift_once` on the audio thread. \
-            Capture it into a local above `return {`.
+            The render closure reads a `RenderScratch` static. Defensive rule: keep render \
+            free of a lazily initialised global's access check (the first read happens in \
+            `RenderScratch.init` today). Capture it into a local above `return {`.
             """)
     }
 
