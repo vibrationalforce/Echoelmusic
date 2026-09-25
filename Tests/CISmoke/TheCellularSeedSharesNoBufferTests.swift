@@ -46,7 +46,9 @@ final class TheCellularSeedSharesNoBufferTests: XCTestCase {
             that makes it share a buffer with the array it was assigned from, and the next \
             in-place write — in `evolve1D()`, on the render thread — copy-on-writes.
             """)
-        XCTAssertTrue(code.contains("self.cellsPrev = [UInt8](repeating: 0, count: cellCount)"),
+        // The count spelling moved with ASmallCellularTextureCannotTrapTests (init now floors the
+        // count into a local, `cellTotal`); the fact pinned is unchanged — a FRESH buffer in init.
+        XCTAssertTrue(code.contains("self.cellsPrev = [UInt8](repeating: 0, count: cellTotal)"),
                       "the one legitimate assignment (a FRESH buffer in init) is gone — re-anchor (#456)")
         let aliasing = code.split(separator: "\n").filter {
             $0.trimmingCharacters(in: .whitespaces).hasSuffix("= cells")

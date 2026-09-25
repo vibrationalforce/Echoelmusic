@@ -191,14 +191,19 @@ public final class EchoelCellular: @unchecked Sendable {
     ///   - cellCount: Number of cells (default 256)
     ///   - sampleRate: Audio sample rate (default 48000)
     public init(cellCount: Int = 256, sampleRate: Float = 48000.0) {
-        self.cellCount = cellCount
+        // At least ONE cell: `seed(.singleCenter)` below writes `cells[cellCount / 2]`, the FM
+        // path reads `smoothedWavetable[0]`, and a negative count traps in
+        // `Array(repeating:count:)` — so 0 or less TRAPPED here, in init, before any of the
+        // `cellCount > 0` guards further down could run (overnight P8).
+        let cellTotal = Swift.max(1, cellCount)
+        self.cellCount = cellTotal
         self.sampleRate = sampleRate
 
-        self.cells = [UInt8](repeating: 0, count: cellCount)
-        self.cellsPrev = [UInt8](repeating: 0, count: cellCount)
-        self.wavetable = [Float](repeating: 0, count: cellCount)
-        self.smoothedWavetable = [Float](repeating: 0, count: cellCount)
-        self.phases = [Float](repeating: 0, count: cellCount)
+        self.cells = [UInt8](repeating: 0, count: cellTotal)
+        self.cellsPrev = [UInt8](repeating: 0, count: cellTotal)
+        self.wavetable = [Float](repeating: 0, count: cellTotal)
+        self.smoothedWavetable = [Float](repeating: 0, count: cellTotal)
+        self.phases = [Float](repeating: 0, count: cellTotal)
 
         // Init 2D grid
         self.grid2D = [[UInt8]](repeating: [UInt8](repeating: 0, count: grid2DSize), count: grid2DSize)
@@ -523,7 +528,9 @@ public final class EchoelCellular: @unchecked Sendable {
     private func renderSpectral2D() -> Float {
         var sample: Float = 0
         let row = grid2D[spectralFrameIndex % grid2DSize]
-        let count = min(partialCount, grid2DSize)
+        // `phases` holds `cellCount` entries, not `grid2DSize`: bound by it too, or a texture
+        // with fewer cells than partials indexes past it on the render thread (overnight P8).
+        let count = min(partialCount, grid2DSize, phases.count)
         guard count > 0 else { return 0 }
         let invCount = 1.0 / Float(count)
 
