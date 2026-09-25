@@ -166,9 +166,23 @@ public final class EchoelReverb: @unchecked Sendable {
     }
 
     private func updateDamping() {
-        combFeedback = roomSize * Self.roomScale + Self.roomOffset
-        combDamp1 = damping
-        combDamp2 = 1.0 - damping
+        // ⭐ 2026-09-25 (overnight P8): both controls are clamped to their documented 0…1 HERE,
+        // at the type. They reached the coefficients raw, and the one writer that is not
+        // range-bound — `FXPreset.apply`, from a decoded preset file with no range check — could
+        // hand over a finite 1.5: room above ~1.07 puts `combFeedback` ≥ 1, damping outside 0…1
+        // makes the damping one-pole grow each sample. Either way the combs diverge to inf, then
+        // NaN, and the tank LATCHES it (the melodic voice falls silent until the stage is
+        // re-enabled or drained); `decayTimeSeconds` reported infinity for the room case. A NaN
+        // did the same directly. `clamped(to:)` maps NaN to 0 and is bit-identical for every
+        // in-range value, which is every value a shipped producer writes (GenreFX, the curated
+        // library, the UI fields and the bio routes are all 0…1). The stored property keeps
+        // what was written, so a preset round-trips unchanged.
+        // Guard: `TheReverbTankCannotBeDrivenUnstableTests`.
+        let room = roomSize.clamped(to: 0...1)
+        let damp = damping.clamped(to: 0...1)
+        combFeedback = room * Self.roomScale + Self.roomOffset
+        combDamp1 = damp
+        combDamp2 = 1.0 - damp
     }
 
     @inline(__always)
