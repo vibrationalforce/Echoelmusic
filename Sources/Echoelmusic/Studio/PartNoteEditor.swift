@@ -28,8 +28,13 @@
 //  ONE commit. The Velocity drag edits a draft in its own leaf (`NoteVelocityRow`) and writes once,
 //  when it ends.
 //
-//  ⚠️ WHAT IT DOES NOT DO, stated so the surface does not read as more: no scale lock or
-//  scale-aware transpose (M4), no playhead, no auto-scroll while dragging (a move stays
+//  Since M4: the rows shade the notes OUTSIDE the session key (`SessionContext.key`, read and
+//  never written here), "Fit" moves the targets to the nearest key notes, and "−1 step" / "+1
+//  step" transpose them by one step of the key's scale — each ONE commit.
+//
+//  ⚠️ WHAT IT DOES NOT DO, stated so the surface does not read as more: no scale LOCK — a tap
+//  or a drag may still place a note outside the key (the shading shows it; Fit repairs it), no
+//  playhead, no auto-scroll while dragging (a move stays
 //  on the rows and inside the part shown), and the grid is touch-only — VoiceOver hears its
 //  summary, not the cells. A composer-owned part is
 //  shown and not edited (evolve rewrites it); a part saved before tick offsets is not shown.
@@ -97,6 +102,10 @@ private struct PartNoteGrid: View {
 
     @Environment(TimelineStore.self) private var timeline
     @Environment(ClipStore.self) private var clipStore
+    /// The key the rows shade and the M4 buttons use. Read, never written: `SessionContext` is
+    /// the one owner of the key, and it changes on a user choice or a composer take — never on
+    /// a clock, so this is a cold read.
+    @Environment(SessionContext.self) private var session
     @State private var picked: RollSelection = .none
     @State private var octaveShift = 0
     /// The pitch the rows centre on — taken when the grid first draws, then held.
@@ -130,6 +139,7 @@ private struct PartNoteGrid: View {
                     ScrollView(.horizontal, showsIndicators: true) {
                         PartNoteCanvas(visible: visible, steps: steps, grid: grid,
                                        picked: picked.ids, editable: editable,
+                                       keyClasses: Set(session.key.pitchClasses),
                                        onTap: { location in
                                            tap(location, visible: visible, region: region,
                                                offset: offset, steps: steps, range: range,
@@ -151,7 +161,7 @@ private struct PartNoteGrid: View {
                         selectionControls(targets: ClipNoteEdit.targets(selected: pickedOnScreen,
                                                                          visible: visible),
                                           pickedCount: pickedCount, clip: clip, region: region,
-                                          offset: offset)
+                                          offset: offset, key: session.key)
                     }
                     if editable {
                         Text(hint(sharedBy: document.regions.filter { $0.clipID == region.clipID }.count))
@@ -265,6 +275,21 @@ private struct PartNoteGrid: View {
         }
     }
 
+    private func fitToKey(_ ids: Set<UUID>, key: MusicalKey, region: TimelineRegion) {
+        guard let clip = clipStore.clip(id: region.clipID),
+              let fitted = ClipNoteEdit.fittingToKey(ids, key: key,
+                                                     in: clip.melody?.notes ?? []) else { return }
+        _ = timeline.setClipNotes(clipID: region.clipID, fitted, clips: clipStore)
+    }
+
+    private func stepInKey(_ ids: Set<UUID>, by degrees: Int, key: MusicalKey,
+                           region: TimelineRegion) {
+        guard let clip = clipStore.clip(id: region.clipID),
+              let moved = ClipNoteEdit.transposingInKey(ids, by: degrees, key: key,
+                                                        in: clip.melody?.notes ?? []) else { return }
+        _ = timeline.setClipNotes(clipID: region.clipID, moved, clips: clipStore)
+    }
+
     private func setVelocity(_ ids: Set<UUID>, to velocity: Float, region: TimelineRegion) {
         guard let clip = clipStore.clip(id: region.clipID),
               let updated = ClipNoteEdit.settingVelocity(ids, to: velocity,
@@ -273,7 +298,8 @@ private struct PartNoteGrid: View {
     }
 
     private func selectionControls(targets: Set<UUID>, pickedCount: Int, clip: Clip,
-                                   region: TimelineRegion, offset: Int) -> some View {
+                                   region: TimelineRegion, offset: Int,
+                                   key: MusicalKey) -> some View {
         let what = pickedCount == 0 ? "every note in this part"
             : pickedCount == 1 ? "the selected note" : "the \(pickedCount) selected notes"
         return VStack(alignment: .leading, spacing: 6) {
@@ -290,6 +316,24 @@ private struct PartNoteGrid: View {
                 }
                 button("+12", "", enabled: true, label: "Move \(what) up an octave") {
                     transpose(targets, by: 12, region: region)
+                }
+            }
+            HStack(spacing: 6) {
+                // M4: the key is the session's (`SessionContext`), named on the row so the
+                // buttons never act on a key the player cannot see.
+                Text(key.name).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                    .lineLimit(1)
+                button("Fit", "", enabled: true,
+                       label: "Move \(what) to the nearest notes of \(key.name)") {
+                    fitToKey(targets, key: key, region: region)
+                }
+                button("−1 step", "", enabled: true,
+                       label: "Move \(what) down one step of \(key.name)") {
+                    stepInKey(targets, by: -1, key: key, region: region)
+                }
+                button("+1 step", "", enabled: true,
+                       label: "Move \(what) up one step of \(key.name)") {
+                    stepInKey(targets, by: 1, key: key, region: region)
                 }
             }
             HStack(spacing: 6) {
@@ -364,6 +408,9 @@ private struct PartNoteCanvas: View {
     let grid: NoteGridGesture.Grid
     let picked: Set<UUID>
     let editable: Bool
+    /// The pitch classes of the session key: rows outside it are shaded (M4). A chromatic key
+    /// has no outside, so the rows fall back to the piano's black keys.
+    let keyClasses: Set<Int>
     let onTap: (CGPoint) -> Void
     let onRelease: (NoteGridGesture) -> Void
 
@@ -388,11 +435,14 @@ private struct PartNoteCanvas: View {
             return CGRect(x: Swift.min(x0, x1), y: Swift.min(y0, y1),
                           width: abs(x1 - x0), height: abs(y1 - y0))
         }()
+        let shaded: Set<Int> = keyClasses.count < 12
+            ? Set(0..<12).subtracting(keyClasses) : [1, 3, 6, 8, 10]
         Canvas { context, size in
-            // Rows: the black keys darker, so a pitch reads without a keyboard.
+            // Rows: the notes OUTSIDE the key darker, so a pitch reads without a keyboard and a
+            // new note lands in the key by eye (in C major these are the black keys).
             for pitch in range {
                 let y = CGFloat(high - pitch) * rowH
-                if [1, 3, 6, 8, 10].contains(((pitch % 12) + 12) % 12) {
+                if shaded.contains(((pitch % 12) + 12) % 12) {
                     context.fill(Path(CGRect(x: 0, y: y, width: size.width, height: rowH)),
                                  with: .color(EchoelTheme.fill))
                 }

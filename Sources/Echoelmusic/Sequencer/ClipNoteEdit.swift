@@ -235,6 +235,57 @@ enum ClipNoteEdit {
         return (clipNotes + copies, Set(copies.map(\.id)))
     }
 
+    // MARK: - M4: operations that know the key
+    //
+    // The key is `SessionContext.key`, read by the caller and handed in — this file never owns
+    // or writes it (`SessionContext` is the one owner of `echoel.keyRoot`/`echoel.keyScale`).
+
+    /// `ids` with each pitch moved to the nearest note of `key` (`MusicalKey.quantize`, lower
+    /// wins a tie); nil when every one is already in the key.
+    nonisolated static func fittingToKey(_ ids: Set<UUID>, key: MusicalKey,
+                                         in clipNotes: [Note]) -> [Note]? {
+        var changed = false
+        let fitted = clipNotes.map { note -> Note in
+            guard ids.contains(note.id) else { return note }
+            let pitch = key.quantize(note.pitch)
+            guard pitch != note.pitch, (0...127).contains(pitch) else { return note }
+            var moved = note
+            moved.pitch = pitch
+            changed = true
+            return moved
+        }
+        return changed ? fitted : nil
+    }
+
+    /// `ids` moved by `degrees` steps OF THE KEY'S SCALE (a diatonic transpose: C→E→G in C major
+    /// is one step each, not four semitones). A note outside the key is first fitted to it, so the
+    /// result is always in the key. nil when a note would leave MIDI 0…127 — the whole group
+    /// refuses rather than folding one note back, which would break the chord's shape — or when
+    /// nothing changes.
+    nonisolated static func transposingInKey(_ ids: Set<UUID>, by degrees: Int, key: MusicalKey,
+                                             in clipNotes: [Note]) -> [Note]? {
+        let intervals = key.scale.intervals
+        let perOctave = intervals.count
+        guard perOctave > 0, degrees != 0, clipNotes.contains(where: { ids.contains($0.id) })
+        else { return nil }
+        var moved: [Note] = []
+        moved.reserveCapacity(clipNotes.count)
+        for note in clipNotes {
+            guard ids.contains(note.id) else { moved.append(note); continue }
+            let relative = key.quantize(note.pitch) - key.root
+            let octave = Int((Double(relative) / 12).rounded(.down))
+            guard let step = intervals.firstIndex(of: relative - 12 * octave) else { return nil }
+            let index = octave * perOctave + step + degrees
+            let newOctave = Int((Double(index) / Double(perOctave)).rounded(.down))
+            let pitch = key.root + 12 * newOctave + intervals[index - newOctave * perOctave]
+            guard (0...127).contains(pitch) else { return nil }
+            var copy = note
+            copy.pitch = pitch
+            moved.append(copy)
+        }
+        return moved == clipNotes ? nil : moved
+    }
+
     /// Where the rows centre when a part's grid opens: its median pitch, C4 when empty. The
     /// view takes this ONCE and keeps it — recomputing it from the live notes moved the rows
     /// under the finger after every add, delete and undo, so a second tap on the note just
