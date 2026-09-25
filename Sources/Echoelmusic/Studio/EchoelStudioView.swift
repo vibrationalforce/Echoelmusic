@@ -860,6 +860,16 @@ struct EchoelStudioView: View {
     /// Low-frequency @State (user taps only), so the root body never churns.
     @State private var activeMenu: StudioMenu?
 
+    /// WA4-P2 — the Workstation is a place a player WORKS in, so a relaunch returns to it
+    /// when the player left from there (founder WA4 directive: "LAUNCH → WORKSTATION").
+    /// ⚠️ It stores ONE fact, not the tab: whether the last plate the player chose was the
+    /// Workstation. Every other plate falls back to Sound exactly as before, so a first launch
+    /// and every launch after leaving from an instrument panel still land on the instrument
+    /// (#325: the tuning banner's default door). The only writer is the `displayedMenu`
+    /// `onChange` in the chip strip — i.e. the player's own selection, by chip or by door; no
+    /// code path opens the Workstation on the player's behalf.
+    @AppStorage("studio.reopensWorkstation") private var reopensWorkstation = false
+
 
 
     /// The menu-bar entries. Each case reuses an EXISTING panel builder as its
@@ -3015,9 +3025,21 @@ struct EchoelStudioView: View {
         // for the same reason the freeze law is not in play: this fires on a TAP, not on a
         // clock. Never do this per frame from a 30 fps source — that is the other law.
         .onChange(of: displayedMenu) { _, menu in
+            // WA4-P2 — the ONE writer of the relaunch memory: whatever plate the player has
+            // just chosen, by chip or by chrome door. Tap rate, never a clock.
+            reopensWorkstation = menu == .workstation
             Task { @MainActor in
                 withAnimation(.easeOut(duration: 0.18)) { proxy.scrollTo(menu.id, anchor: .center) }
             }
+        }
+        // WA4-P2 — the `.onAppear` companion the note below asked for "if `activeMenu` ever
+        // becomes persisted": a relaunch into the Workstation shows a chip that sits far right
+        // in the strip, off-screen on a phone. Deferred one turn for the same reason as the
+        // `onChange` above; no animation — this is where the strip starts, not a move.
+        .onAppear {
+            let menu = displayedMenu
+            guard menu != .sound else { return }
+            Task { @MainActor in proxy.scrollTo(menu.id, anchor: .center) }
         }
         // #607 — the overflow measurement. The transform runs during scrolls, but the
         // `action:` fires only when the REDUCED Bool changes (the documented contract),
@@ -3043,13 +3065,10 @@ struct EchoelStudioView: View {
                     .accessibilityHidden(true)
             }
         }
-        // ⛔ NO `.onAppear` COMPANION, and the reason is worth writing down because the first
-        // draft of this slice had one with a FALSE justification ("a restored `activeMenu`
-        // can already point off-screen at launch"). `activeMenu` is `@State`, not
-        // `@AppStorage` — nothing restores it — so at first appearance `displayedMenu` is
-        // always `.sound`, which is chip one and already at the left edge. The call would be
-        // a guaranteed no-op dressed as a safety net. If `activeMenu` ever becomes persisted,
-        // add it back THEN, together with that change.
+        // (History: this strip had NO `.onAppear` companion until WA4-P2, correctly — at
+        // first appearance `displayedMenu` was always `.sound`, chip one, so the call was a
+        // guaranteed no-op. The note here said to add it back together with a persisted
+        // plate; `reopensWorkstation` is that persistence, and the companion is above.)
         }
     }
 
@@ -3256,7 +3275,12 @@ struct EchoelStudioView: View {
     /// install the invisible tap-blocking layer the two-modals law guards against — so
     /// closing it achieved nothing, while the tab reset was a real side effect. It made
     /// "Master → Routing → dismiss" land the user on Sound with Master gone.
-    private var displayedMenu: StudioMenu { activeMenu ?? .sound }
+    ///
+    /// WA4-P2: the one exception to "an untouched launch shows Sound" is a player who LEFT
+    /// from the Workstation (`reopensWorkstation`) — then the untouched launch is theirs to
+    /// continue. The tuning banner is mounted on that plate too, so #325 still holds for
+    /// whichever plate a launch shows.
+    private var displayedMenu: StudioMenu { activeMenu ?? (reopensWorkstation ? .workstation : .sound) }
 
     /// #1436 — the read-only Workstation plate (founder Phase 3).
     ///
@@ -3268,6 +3292,10 @@ struct EchoelStudioView: View {
     /// churn-prone written here would be paid on every Studio rebuild.
     private var workstationPanel: some View {
         panel("Workstation", "Arrange, launch and mix the song", isExpanded: $showWorkstation) {
+            // #325 on the Workstation plate (WA4-P2): a relaunch can land HERE, so a detuned
+            // instrument is announced here as well. Same builder, renders nothing at 12-TET +
+            // 440 — a child of an existing panel, not a presentation modifier.
+            nonStandardTuningBanner
             WorkstationView()
         }
     }

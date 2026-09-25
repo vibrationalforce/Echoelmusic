@@ -95,13 +95,25 @@ final class DetunedInstrumentSaysSoTests: XCTestCase {
 
         // The default matters as much as the mount: put it on a panel nobody lands on and the
         // guard above still passes while the warning is effectively hidden again.
+        // WA4-P2: an untouched launch shows Sound, OR the Workstation for a player who left
+        // from there — so the banner must be on BOTH plates, and on no third default.
         let code = try codeLines(Self.studio)
         XCTAssertTrue(code.contains(where: {
-            $0.contains("private var displayedMenu: StudioMenu { activeMenu ?? .sound }")
+            $0.contains("private var displayedMenu: StudioMenu { activeMenu ?? (reopensWorkstation ? .workstation : .sound) }")
         }), """
-            the front plate no longer defaults to `.sound`, so mounting the tuning banner there \
-            no longer puts it in front of a player who just opened the app. Re-decide where the \
-            banner lives in the same commit rather than leaving it on a panel nobody reaches.
+            the front plate's launch default is no longer "Sound, or the Workstation the player \
+            left from", so the two plates carrying the tuning banner may no longer be the ones a \
+            player who just opened the app sees. Re-decide where the banner lives in the same \
+            commit rather than leaving it on a panel nobody reaches.
+            """)
+        let workstation = try memberBody(startingWith: "private var workstationPanel: some View",
+                                         in: Self.studio)
+        XCTAssertTrue(workstation.contains(where: {
+            $0.trimmingCharacters(in: .whitespaces) == "nonStandardTuningBanner"
+        }), """
+            `nonStandardTuningBanner` is not mounted in `workstationPanel`, but a relaunch can \
+            land on the Workstation (WA4-P2, `reopensWorkstation`). A detuned instrument would \
+            then be announced on no plate the launch shows — #325's three doorless weeks again.
             """)
     }
 

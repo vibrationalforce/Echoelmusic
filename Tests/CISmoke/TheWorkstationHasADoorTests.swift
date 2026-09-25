@@ -47,7 +47,14 @@
 //     against a Workstation that hides the instrument. #1437 deepened it from "the strip
 //     still lists `.sound`" to "tapping a chip actually routes to it" — an array membership
 //     check cannot fail for the reason the claim's NAME gives (#367), and the mutation that
-//     proves the difference is written at the assertion.
+//     proves the difference is written at the assertion. WA4-P2 amended it once more: the
+//     launch default became "Sound, or the Workstation the player LEFT from", and three new
+//     assertions pin that the memory is the player's (default false, ONE writer, the chosen
+//     plate). On the parent tree the new `displayedMenu` needle and those three are RED for
+//     one reason — no `reopensWorkstation` (#486: one absence); the ban on
+//     `activeMenu = .workstation` stays GREEN on both, and is still the point.
+//     NEEDS-FOUNDER-VERIFY: leave the app on the Workstation plate, quit, relaunch → it opens
+//     on the Workstation with its chip scrolled into view; tap Sound, quit, relaunch → Sound.
 //
 // ⚠️ `SourceText.codeOnly` stays in use, but its load-bearing CASE moved with claim H. It
 // used to be: `WorkstationView`'s header named `TimelineRegionPlayer.play(…)` while claim F's
@@ -408,10 +415,28 @@ final class TheWorkstationHasADoorTests: XCTestCase {
 
     func testTheInstrumentIsStillWhereItWas() throws {
         let src = try code(at: Self.studio)
-        XCTAssertTrue(src.contains("private var displayedMenu: StudioMenu { activeMenu ?? .sound }"), """
+        XCTAssertTrue(src.contains("private var displayedMenu: StudioMenu { activeMenu ?? (reopensWorkstation ? .workstation : .sound) }"), """
             An untouched launch must still land on Sound — the timbre panel, i.e. the \
-            instrument itself. A Workstation that became the default plate would turn a \
-            bio-reactive instrument into a project browser on first run.
+            instrument itself — UNLESS the player left from the Workstation (WA4-P2). A \
+            Workstation that became the default plate would turn a bio-reactive instrument \
+            into a project browser on first run.
+            """)
+        // WA4-P2 — the relaunch memory is the PLAYER'S choice, never the app's. Three facts
+        // make that true, and each is the premise the one above rests on (#343):
+        // it starts false (a first launch is Sound), it has exactly ONE writer, and that
+        // writer is the plate the player has just selected.
+        XCTAssertTrue(src.contains("@AppStorage(\"studio.reopensWorkstation\") private var reopensWorkstation = false"), """
+            The relaunch memory no longer defaults to false — a FIRST launch would then open on \
+            the Workstation, which is the surface opening itself.
+            """)
+        XCTAssertEqual(src.components(separatedBy: "reopensWorkstation =").count - 1, 2, """
+            `reopensWorkstation =` must occur exactly twice: its declaration's default and the \
+            ONE writer in the chip strip's `onChange(of: displayedMenu)`. A second writer is a \
+            code path choosing the Workstation for the player.
+            """)
+        XCTAssertTrue(src.contains("reopensWorkstation = menu == .workstation"), """
+            The one writer must record the plate the player just chose (`menu == .workstation`), \
+            so leaving the Workstation by ANY chip or door clears it.
             """)
         let list = Self.chipList(in: src)
         XCTAssertTrue(list.contains(".sound") && list.contains(".export"), """

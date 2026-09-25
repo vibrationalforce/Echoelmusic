@@ -128,6 +128,9 @@ safe mode, onboarding, or `WorkspaceView`.
 
 **Who owns top-level navigation.** `EchoelStudioView.activeMenu`, a `@State StudioMenu?` that
 nothing persists. `displayedMenu = activeMenu ?? .sound`.
+  ⚠️ Amended by WA4-P2 (2026-09-25): the fallback is now `reopensWorkstation ? .workstation :
+  .sound` — one persisted Bool (`studio.reopensWorkstation`), written only when the player
+  chooses a plate. `activeMenu` itself is still unpersisted `@State`.
 - `WorkspaceView` owns no navigation state. It owns two persistent visual-window keys and posts
   string notifications into the studio.
 - **One receiver** handles those strings: the `.onReceive(.echoelChromeDoor)` on `menuBar`.

@@ -242,6 +242,9 @@ Antwortformat je Schritt: **OK** · oder **Abweichung + ein Satz + Screenshot**.
        (`TheSessionLaunchesWhatTheSongPlaysTests`)
 9. [ ] **App in den Hintergrund, beenden, neu starten** → die Bibliothek zeigt einen
        Autosave-Eintrag mit dem Song. (`TheSessionSaveOpensTheSameSongTests`, Rettungsplatz)
+       Zusatz WA4-P2 (Build nach `5c8de3c59`): der Neustart landet auf der **Workstation**-Platte,
+       ihr Chip ist in der Leiste sichtbar markiert. Gegenprobe: Chip „Sound“ antippen, beenden,
+       neu starten → Sound. (`TheWorkstationHasADoorTests` Anspruch G)
 
 **Was diese Reise NICHT prüft:** Klangqualität der Genres (§3), AUv3 in Fremd-Hosts (§2b).
 
