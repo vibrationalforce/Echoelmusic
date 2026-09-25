@@ -353,6 +353,14 @@ done. WA4 is the first front.
     (2026-09-24).** `EchoelReverb.setSampleRate` in `allocateRenderResources`; `tailTime` =
     release + reverb T60 (`EchoelBodyVibeDevice.tailSeconds`). Guards
     `TheAUv3ReverbFollowsTheHostRateTests`, `TheAUv3TailCoversTheReverbTests`. Host check WA3-6.
+  - **WA3 slice 2 (app instrument) — Echoel instance state, read-only assembly: IMPLEMENTED
+    (2026-09-25).** `Core/EchoelInstanceState.swift` gathers the app instrument's creative state
+    (patch, FX character, genre, mood, variation, articulation, rhythm/pad shape, auto mode,
+    phrase length, role mix, device modulation routes) from today's owners into ONE value and
+    writes nothing. Session state (key, scale, A4, tone system, BPM lock, tempo route), runtime
+    and bio are excluded by a guard; known gaps (bus inserts, live FX-chain parameters,
+    touch/field) are named in the file. Guard `TheEchoelInstanceStateIsAssembledReadOnlyTests`.
+    This closes WA4 prerequisite 4 (`NATIVE_DEVICE_ARCHITECTURE.md` §P); no caller yet.
 
 ### WA4 — Arrange + Session Front
 
