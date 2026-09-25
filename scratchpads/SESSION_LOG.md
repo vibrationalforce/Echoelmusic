@@ -39919,3 +39919,9 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - **Gates:** CI/CD runs 6337→6357 all still QUEUED at 19:38Z (macOS pool, #208). Nothing after `bc261fae` is compile-verified.
 - **Review of `735a91968` (dsp): PASS WITH CONDITIONS** → repair commit: C1 a zero-length render returned AFTER the `defer` stored the target, so the next real block started on it unplayed (the step #202 removes) — `guard n > 0` now runs before any state; C2 stale "one scalar store" doc; the re-allocated AUv3 now un-primes the glide beside its tank reset (`allocateRenderResources`). Guard claims 4 (behaviour, REGRESSION on `735a91968`) + 5 (source scan, REGRESSION). Five checkers clean.
 - **Open, recorded not fixed (review N1/N2):** N1 the glide length is the HOST block size (64 frames ≈ 1.3 ms … 4096 ≈ 85 ms) — continuous but a 1 ms dry-gain fade may still tick on a low drone; a sample-rate-derived one-pole ramp is the later slice. N2 `internalRenderBlock` reads only `.MIDI` render events — address 6 scheduled as `.parameter`/`.parameterRamp` reaches the unit only through the observer at block rate; check before WA3-5 is signed per host.
+
+## 2026-09-25 19:55Z — Founder phase decision: close WA4 on evidence, then CREATION WORKFLOW
+
+- Logged (decisions.csv + memory/decisions.md). WA4 = no new scope; gates first. #202 closed at `33190f820`; #216 held for host evidence.
+- **Gates now moving:** CI/CD 6338 (`f43bfe505`) and 6339 (`c5c938cc`) IN PROGRESS; Xcode Compile Check 2893 on HEAD `33190f820` IN PROGRESS — that one covers every `Sources/` change of WA4 + #202.
+- **Phase 3 prep (read-only):** MIDI-editor recovery census running in the background; no implementation until the WA4 gates close.

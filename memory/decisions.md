@@ -2883,3 +2883,11 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Why:** review MEDIUM-2 (two editors for one part) and #416 (one fact, one control); the modal chain has no headroom; the inspector is a leaf.
 - **Accepted (MEDIUM-4):** the recovery slot keeps its Session while the live song has no user parts. Repair = a flag set on library Open, cleared on the first edit — deferred to the Session-front design.
 - **Review:** 2026-10-25.
+
+### 2026-09-25 — Founder phase decision: close WA4 on evidence, then CREATION WORKFLOW (MIDI editor first)
+- **WA4 closure = evidence, not scope.** Read the queued gates, root-cause the first real red, re-run; no new WA4 features (cross-lane drag, trim handles, outward trim, mixer undo, hold polish, auto-rescale stay backlog). Arm stays absent without a record path. Report "WA4 AUTONOMOUS GATES CLOSED / FOUNDER DEVICE ACCEPTANCE PENDING" when only the device journey remains.
+- **#202 is finished, not an AUv3 program;** #216 (N1 block-size glide, N2 `.parameter` render events) waits for host/device evidence.
+- **Phase 3 = CREATION WORKFLOW.** First target: the selected-MIDI-clip note editor. Recovery pass first (PianoRollModel, RollHitTest, RollNoteOps, RollSelection, the deleted PianoRollView, ClipStore.updateMelody, Clip/Timeline ownership) classified PORT ALGORITHM / PORT INTERACTION IDEA / REBUILD / DO NOT RESTORE. Operations: create, select, multi-select, marquee, move, resize, duplicate, delete, velocity, quantize, transpose, scale-aware, undo/redo.
+- **Performance law for the editor:** touch samples → local preview → ONE bounded canonical commit at gesture end → ONE undo; the Workstation root never observes editor-rate state; playhead in a hot leaf; no second MIDI owner.
+- **Order after MIDI** (amendable by the architecture reviews): MediaAsset + lazy Browser → native DeviceChain → Echoel as flagship Device → Clips/Scenes/Session → Automation editing → Recording/Input. NOT yet: distributed Session, SessionNode, Mapping Fabric, OutputEndpoint graph, compositor, video, XR, broadcast, lighting expansion, laser, plugin hosting.
+- **Every slice ships:** architectural progress + reachable user workflow + behavioural verification. Review 2026-10-25.
