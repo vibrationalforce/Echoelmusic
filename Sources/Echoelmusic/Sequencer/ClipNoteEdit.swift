@@ -131,14 +131,33 @@ enum ClipNoteEdit {
         return changed ? moved : nil
     }
 
-    /// The clip's notes with note `id` made `steps` steps long (M2) — nil when it is gone or
-    /// already that long. The caller bounds `steps` by the part (`NoteGridGesture.resolve`).
-    nonisolated static func resizing(_ id: UUID, toSteps steps: Int, in clipNotes: [Note]) -> [Note]? {
-        guard steps >= 1, let index = clipNotes.firstIndex(where: { $0.id == id }) else { return nil }
-        let ticks = steps * Note.ticksPerStep
-        guard clipNotes[index].lengthTicks != ticks else { return nil }
+    /// The clip's notes with note `id`'s END moved by `dSteps` whole steps (M2) — nil when it is
+    /// gone, when `dSteps` is zero, or when nothing changes.
+    ///
+    /// The end that moves is the one THIS PART DRAWS: a note the part cuts off ends, on screen, at
+    /// the part's end, so a shortening moves that end (WYSIWYG — every part playing the clip
+    /// hears it, which the editor's hint says). A lengthening stops at the part's end and never
+    /// shortens a note that already runs past it. A shortening keeps at least one step (or the
+    /// note's own length, if shorter). An unquantized length keeps its offset: 455 ticks + 1 step
+    /// is 575, not 600. `NoteGridGesture.resolve` bounds `dSteps` the same way for the preview.
+    nonisolated static func resizing(_ id: UUID, bySteps dSteps: Int, in clipNotes: [Note],
+                                     offsetTicks: Int, lengthTicks: Int) -> [Note]? {
+        guard dSteps != 0, lengthTicks > 0,
+              let index = clipNotes.firstIndex(where: { $0.id == id }) else { return nil }
+        let note = clipNotes[index]
+        let windowEnd = Swift.max(0, offsetTicks) + lengthTicks
+        let drawnEnd = Swift.min(note.endTick, windowEnd)
+        let newLength: Int
+        if dSteps > 0 {
+            let end = Swift.min(drawnEnd + dSteps * Note.ticksPerStep, windowEnd)
+            newLength = Swift.max(note.lengthTicks, end - note.startTick)
+        } else {
+            let shortest = Swift.min(note.lengthTicks, Note.ticksPerStep)
+            newLength = Swift.max(shortest, drawnEnd + dSteps * Note.ticksPerStep - note.startTick)
+        }
+        guard newLength != note.lengthTicks else { return nil }
         var resized = clipNotes
-        resized[index].lengthTicks = ticks
+        resized[index].lengthTicks = newLength
         return resized
     }
 

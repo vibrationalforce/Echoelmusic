@@ -21,11 +21,19 @@
 //    the per-sample `.updating` closure writes nothing; the one commit is in `.onEnded`.
 //
 // Grading (§0 — no Swift toolchain here): claims 1–3 were transcribed into Python over models of
-// `RollHitTest.classify/notesInRect/resizedLengthSteps`, `Note`'s step views, `RegionNoteWindow
+// `RollHitTest.classify/notesInRect`, `Note`'s step views, `RegionNoteWindow
 // .windowed` and the two new functions; claim 5 was driven against this tree. On the parent
 // `NoteGridGesture`, `moving` and `resizing` do not exist, so the bundle does not build there: ONE
 // absence, not N findings (#486) — every claim is a FORWARD guard. The M1 guard moved in the same
 // commit (`DragGesture` left its banned list, the writer count went 2 → 4).
+// ⭐ INDEPENDENT REVIEW (M2, ui-state) found one MEDIUM defect and it is repaired here: a stretch
+// was an ABSOLUTE length, so a hold on a note's edge WITHOUT a slide re-stated its drawn length —
+// re-quantizing an imported 455-tick note, or writing a part-cut length into a clip another part
+// plays longer — and pushed an undo step. A stretch is now a DELTA of whole steps (`dSteps`), zero
+// on a hold, and the commit moves the end THIS part draws. Also repaired: the group's LEFT bound
+// counts steps below the earliest start tick, so a note at tick 60 is not squeezed to 0. The four
+// new assertions (hold-without-slide ×2, the tick-60 group, the cut note) are REGRESSIONS against
+// 7674eff6b in intent; there the enum case had another shape, so the file does not build there.
 // ⚠️ Claim 3 is exact for notes that stay clear of the part's end. A note the part CUTS at its end
 // is drawn mid-slide at its cut length, while the commit re-cuts it at the new position — the
 // release can therefore show it a little longer or shorter than the slide did. Starts and
@@ -75,16 +83,25 @@ final class ANoteDragIsOneCommitAtReleaseTests: XCTestCase {
         XCTAssertEqual(NoteGridGesture.resolve(startX: 50, startY: rowY(60), dx: 0, dy: 0,
                                                visible: notes, picked: [], grid: g),
                        .move(ids: [a.id], dPitch: 0, dStep: 0))
-        // Right edge (the last 8 points): a stretch to where the finger is, never past the part.
+        // Right edge (the last 8 points): the END moves by the steps the finger crossed, never
+        // past the part (a DELTA since the M2 review — see claim 2's hold-without-slide cases).
         XCTAssertEqual(NoteGridGesture.resolve(startX: 84, startY: rowY(60), dx: 44, dy: 0,
                                                visible: notes, picked: [], grid: g),
-                       .resize(id: a.id, lengthSteps: 4))
+                       .resize(id: a.id, dSteps: 2), "2 steps long → 4")
         XCTAssertEqual(NoteGridGesture.resolve(startX: 84, startY: rowY(60), dx: 5_000, dy: 0,
                                                visible: notes, picked: [], grid: g),
-                       .resize(id: a.id, lengthSteps: 14), "16 steps in the part, starting at 2")
+                       .resize(id: a.id, dSteps: 12), "16 steps in the part, starting at 2 → 14 long")
         XCTAssertEqual(NoteGridGesture.resolve(startX: 84, startY: rowY(60), dx: -500, dy: 0,
                                                visible: notes, picked: [], grid: g),
-                       .resize(id: a.id, lengthSteps: 1), "never shorter than one step")
+                       .resize(id: a.id, dSteps: -1), "never shorter than one step")
+        // A hold on the edge without a slide — or with the few points of drift every real touch
+        // has — is a ZERO stretch (M2 review: an absolute length re-stated here committed a step).
+        XCTAssertEqual(NoteGridGesture.resolve(startX: 84, startY: rowY(60), dx: 0, dy: 0,
+                                               visible: notes, picked: [], grid: g),
+                       .resize(id: a.id, dSteps: 0))
+        XCTAssertEqual(NoteGridGesture.resolve(startX: 84, startY: rowY(60), dx: 3, dy: 2,
+                                               visible: notes, picked: [], grid: g),
+                       .resize(id: a.id, dSteps: 0))
         // Empty cell: a box; the notes it touches become the selection.
         guard case .marquee(let all, _, _, _, _) =
                 NoteGridGesture.resolve(startX: 0, startY: 0, dx: 300, dy: 200,
@@ -117,6 +134,16 @@ final class ANoteDragIsOneCommitAtReleaseTests: XCTestCase {
         let up = NoteGridGesture.resolve(startX: 50, startY: rowY(60), dx: 0, dy: -14 * 20,
                                          visible: [a, b], picked: both, grid: g)
         XCTAssertEqual(up, .move(ids: both, dPitch: 2, dStep: 0), "the highest note stops on the top row shown")
+
+        // An unquantized note at tick 60 ROUNDS to step 1 but starts in step 0: the group may not
+        // move left at all, or that note would be clamped to 0 and the spacing squeezed (M2 review).
+        let early = Note(pitch: 60, startTick: 60, lengthTicks: 60)
+        let later = Note(pitch: 60, startTick: 300, lengthTicks: 60)
+        XCTAssertEqual(early.startStep, 1, "fixture premise: it draws in column 1")
+        XCTAssertEqual(NoteGridGesture.resolve(startX: 28, startY: rowY(60), dx: -22 * 3, dy: 0,
+                                               visible: [early, later],
+                                               picked: [early.id, later.id], grid: g),
+                       .move(ids: [early.id, later.id], dPitch: 0, dStep: 0))
 
         // A note in the widened last column (it rounds to step 16 of a 16-step part): a hold
         // without a slide must not move it — the defect a note-END bound would have.
@@ -170,12 +197,37 @@ final class ANoteDragIsOneCommitAtReleaseTests: XCTestCase {
                                          offsetTicks: offset, lengthTicks: length),
                      "a note that is gone moves nothing")
 
-        let stretched = try XCTUnwrap(ClipNoteEdit.resizing(n.id, toSteps: 4, in: clip))
+        let stretched = try XCTUnwrap(ClipNoteEdit.resizing(n.id, bySteps: 3, in: clip,
+                                                            offsetTicks: offset, lengthTicks: length))
         XCTAssertEqual(stretched[1].lengthTicks, 4 * Self.step)
         XCTAssertEqual(stretched[1].startTick, n.startTick, "a stretch keeps the start")
-        XCTAssertNil(ClipNoteEdit.resizing(n.id, toSteps: 1, in: clip), "already that long")
-        XCTAssertNil(ClipNoteEdit.resizing(n.id, toSteps: 0, in: clip))
-        XCTAssertNil(ClipNoteEdit.resizing(UUID(), toSteps: 2, in: clip))
+        XCTAssertNil(ClipNoteEdit.resizing(n.id, bySteps: 0, in: clip, offsetTicks: offset,
+                                           lengthTicks: length), "a zero stretch commits nothing")
+        XCTAssertNil(ClipNoteEdit.resizing(n.id, bySteps: -1, in: clip, offsetTicks: offset,
+                                           lengthTicks: length), "never shorter than one step")
+        XCTAssertNil(ClipNoteEdit.resizing(UUID(), bySteps: 2, in: clip, offsetTicks: offset,
+                                           lengthTicks: length))
+
+        // M2 review: an unquantized length keeps its offset — a stretch is never a re-quantize.
+        let imported = Note(pitch: 64, startTick: offset, lengthTicks: 455)
+        let grown = try XCTUnwrap(ClipNoteEdit.resizing(imported.id, bySteps: 1, in: [imported],
+                                                        offsetTicks: offset, lengthTicks: length))
+        XCTAssertEqual(grown[0].lengthTicks, 575, "455 + one step, not 600")
+
+        // M2 review: a note the part cuts off (8 steps from step 14 of a 16-step part). Growing
+        // it changes nothing; shortening moves the end THIS part draws, and every part hears it.
+        let cut = Note(pitch: 65, startTick: offset + 14 * Self.step, lengthTicks: 8 * Self.step)
+        XCTAssertNil(ClipNoteEdit.resizing(cut.id, bySteps: 1, in: [cut], offsetTicks: offset,
+                                           lengthTicks: length),
+                     "a note already running past the part is never cut by a lengthening")
+        let trimmed = try XCTUnwrap(ClipNoteEdit.resizing(cut.id, bySteps: -1, in: [cut],
+                                                          offsetTicks: offset, lengthTicks: length))
+        XCTAssertEqual(trimmed[0].lengthTicks, Self.step, "the drawn 2 steps less one")
+        let cutGrid = NoteGridGesture.Grid(stepWidth: 22, rowHeight: 14, rows: 48...72, partSteps: 16)
+        let cutShown = ClipNoteEdit.visibleNotes([cut], offsetTicks: offset, lengthTicks: length)
+        XCTAssertEqual(NoteGridGesture.resolve(startX: 16 * 22 - 2, startY: rowY(65), dx: 0, dy: 0,
+                                               visible: cutShown, picked: [], grid: cutGrid),
+                       .resize(id: cut.id, dSteps: 0), "a hold on a cut note's edge writes nothing")
     }
 
     // MARK: 3 — the preview is the commit
@@ -198,8 +250,9 @@ final class ANoteDragIsOneCommitAtReleaseTests: XCTestCase {
                        "what the finger sees must be what the part plays after release")
 
         let first = visible[0]
-        let stretch = NoteGridGesture.resize(id: first.id, lengthSteps: 3)
-        let resized = try XCTUnwrap(ClipNoteEdit.resizing(first.id, toSteps: 3, in: clip))
+        let stretch = NoteGridGesture.resize(id: first.id, dSteps: 2)
+        let resized = try XCTUnwrap(ClipNoteEdit.resizing(first.id, bySteps: 2, in: clip,
+                                                          offsetTicks: offset, lengthTicks: length))
         XCTAssertEqual(stretch.applied(to: visible),
                        ClipNoteEdit.visibleNotes(resized, offsetTicks: offset, lengthTicks: length))
     }

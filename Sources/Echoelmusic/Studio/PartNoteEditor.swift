@@ -222,10 +222,12 @@ private struct PartNoteGrid: View {
             if timeline.setClipNotes(clipID: region.clipID, moved, clips: clipStore) {
                 picked = RollSelection(ids: Array(ids))
             }
-        case .resize(let id, let lengthSteps):
+        case .resize(let id, let dSteps):
             guard let clip = clipStore.clip(id: region.clipID),
-                  let resized = ClipNoteEdit.resizing(id, toSteps: lengthSteps,
-                                                      in: clip.melody?.notes ?? []) else { return }
+                  let resized = ClipNoteEdit.resizing(id, bySteps: dSteps,
+                                                      in: clip.melody?.notes ?? [],
+                                                      offsetTicks: offset,
+                                                      lengthTicks: region.lengthTicks) else { return }
             if timeline.setClipNotes(clipID: region.clipID, resized, clips: clipStore) {
                 picked = .single(id)
             }

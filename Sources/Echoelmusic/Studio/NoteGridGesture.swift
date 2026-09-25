@@ -8,7 +8,8 @@
 //  `ClipNoteEdit` exactly once, when the finger lifts.
 //
 //  Where the hold starts decides the gesture, in `RollHitTest`'s own words:
-//  · on a note's RIGHT EDGE → stretch that note (whole steps, at least one, never past the part);
+//  · on a note's RIGHT EDGE → move that note's END by the whole steps the finger crossed (at least
+//    one step long, never past the part; a hold without a slide stretches nothing);
 //  · on a note's BODY → move the selection by whole steps and semitones — the whole on-screen
 //    selection when the note is part of it, otherwise that note alone;
 //  · on an EMPTY cell → a selection box; the notes it touches become the selection.
@@ -16,7 +17,11 @@
 //  ⭐ A MOVE NEVER TAKES A NOTE OUT OF WHAT THE USER CAN SEE OR HEAR. The step delta keeps every
 //  moved note's start inside the part (the player skips a note that starts outside its window),
 //  and the pitch delta keeps every moved note on the rows shown. The clamp is per GROUP, so the
-//  notes keep their spacing; a zero slide is always a zero move.
+//  notes keep their spacing; a zero slide is always a zero move. The LEFT bound counts whole
+//  steps below the earliest START TICK, not its rounded column, so an unquantized note is never
+//  pushed before the part (M2 review). ⚠️ The right bound stays on the rounded column: a part
+//  whose length is not a whole number of steps can therefore draw a moved note's start a few
+//  ticks past where the commit clamps it — same column, never a different pitch or step.
 //  ⛔ `RollHitTest.clampedGroupDelta` (from the deleted roll) is deliberately NOT used: it bounds
 //  a note's END by the part, and an imported note that already reaches past a trimmed part
 //  would give it a negative upper bound — a hold with no slide would then MOVE the note.
@@ -29,8 +34,11 @@ import Foundation
 enum NoteGridGesture: Equatable, Sendable {
     /// Move `ids` by whole semitones and whole steps.
     case move(ids: Set<UUID>, dPitch: Int, dStep: Int)
-    /// Stretch or shorten one note to `lengthSteps`.
-    case resize(id: UUID, lengthSteps: Int)
+    /// Move one note's END by `dSteps` whole steps. A DELTA, never an absolute length (M2 review):
+    /// an absolute length re-stated the note's drawn length on a hold without a slide, and that
+    /// committed a step — re-quantizing an imported 455-tick note, or writing a part-cut length
+    /// into a clip another part plays longer. A zero delta commits nothing, like a zero move.
+    case resize(id: UUID, dSteps: Int)
     /// A selection box from (x0, y0) to (x1, y1); `ids` are the on-screen notes it touches.
     case marquee(ids: Set<UUID>, x0: Double, y0: Double, x1: Double, y1: Double)
 
@@ -65,12 +73,15 @@ enum NoteGridGesture: Equatable, Sendable {
         switch hit {
         case .rightEdge(let id):
             guard let note = onScreen.first(where: { $0.id == id }), grid.stepWidth > 0 else {
-                return .resize(id: id, lengthSteps: 1)
+                return .resize(id: id, dSteps: 0)
             }
+            let origin = Int((startX / grid.stepWidth).rounded(.down))
             let finger = Int(((startX + dx) / grid.stepWidth).rounded(.down))
-            let wanted = RollHitTest.resizedLengthSteps(fingerStep: finger, startStep: note.startStep)
+            let drawn = note.lengthSteps
             let room = Swift.max(1, grid.partSteps - note.startStep)
-            return .resize(id: id, lengthSteps: Swift.min(wanted, room))
+            // Bounded so the drawn length stays 1…room; both bounds contain zero.
+            let dSteps = Swift.min(Swift.max(finger - origin, 1 - drawn), Swift.max(0, room - drawn))
+            return .resize(id: id, dSteps: dSteps)
         case .body(let id):
             let shown = Set(onScreen.map(\.id))
             let ids = picked.contains(id) ? picked.intersection(shown) : [id]
@@ -92,8 +103,12 @@ enum NoteGridGesture: Equatable, Sendable {
     /// shown. Both bounds always contain zero, so no slide means no move.
     static func clampedMove(dPitch: Int, dStep: Int, moving: [Note], rows: ClosedRange<Int>,
                             partSteps: Int) -> (dPitch: Int, dStep: Int) {
+        // The LEFT bound is in whole steps BELOW the earliest start (floor, not the rounded
+        // `startStep`): a note at tick 60 rounds to step 1, and a −1 move would push it before
+        // the part and squeeze the group's spacing (M2 review).
         guard let lowPitch = moving.map(\.pitch).min(), let highPitch = moving.map(\.pitch).max(),
-              let first = moving.map(\.startStep).min(), let last = moving.map(\.startStep).max()
+              let first = moving.map({ Swift.max(0, $0.startTick) / Note.ticksPerStep }).min(),
+              let last = moving.map(\.startStep).max()
         else { return (0, 0) }
         let pitch = Swift.min(Swift.max(dPitch, Swift.min(0, rows.lowerBound - lowPitch)),
                               Swift.max(0, rows.upperBound - highPitch))
@@ -114,11 +129,12 @@ enum NoteGridGesture: Equatable, Sendable {
                 moved.startTick = Swift.max(0, note.startTick + dStep * Note.ticksPerStep)
                 return moved
             }
-        case .resize(let id, let lengthSteps):
+        case .resize(let id, let dSteps):
+            guard dSteps != 0 else { return visible }
             return visible.map { note in
                 guard note.id == id else { return note }
                 var stretched = note
-                stretched.lengthTicks = Swift.max(1, lengthSteps) * Note.ticksPerStep
+                stretched.lengthTicks = Swift.max(1, note.lengthSteps + dSteps) * Note.ticksPerStep
                 return stretched
             }
         case .marquee:
