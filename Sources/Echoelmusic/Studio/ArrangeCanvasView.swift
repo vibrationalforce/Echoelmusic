@@ -64,7 +64,9 @@ struct ArrangeCanvasView: View {
             ForEach(rows) { row in
                 HStack(spacing: Self.gutter) {
                     // A name gutter: one line, truncating, so every lane starts at the same x
-                    // and the rows line up bar for bar. The row grows with the type size.
+                    // and the rows line up bar for bar. Only the NAME grows with the type size;
+                    // the gutter width and the lane's 28 pt height are fixed (review LOW-3) —
+                    // the parts list in the track inspector is the large-type way in.
                     Text(row.name)
                         .font(EchoelTheme.font(12))
                         .foregroundStyle(EchoelTheme.dim)

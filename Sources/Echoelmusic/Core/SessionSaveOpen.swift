@@ -125,9 +125,13 @@ public enum SessionSaveOpen {
                                    existingSlot: Project?) -> Project? {
         guard takeIsLive || songHasUserParts else { return nil }
         guard let slot = existingSlot else { return live }
+        // A live Session of nil while the song holds the user's parts is an encode FAILURE, not
+        // an empty song — it must not replace the slot's good one (review LOW-1).
+        let session = songHasUserParts ? (live.sessionEnvelope ?? slot.sessionEnvelope)
+                                       : live.sessionEnvelope
         if !takeIsLive {
             var kept = slot
-            kept.setSessionEnvelope(live.sessionEnvelope)
+            kept.setSessionEnvelope(session)
             return kept
         }
         if !songHasUserParts, slot.sessionEnvelope != nil {
@@ -135,7 +139,9 @@ public enum SessionSaveOpen {
             row.setSessionEnvelope(slot.sessionEnvelope)
             return row
         }
-        return live
+        var row = live
+        row.setSessionEnvelope(session)
+        return row
     }
 
     /// Whether the song holds anything the USER put there — a part whose clip is not the

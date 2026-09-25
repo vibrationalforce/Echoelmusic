@@ -17,8 +17,12 @@
 //    in the file EXACTLY where the unsplit part would be at the cut (the engine's own position
 //    map) — and the same split at the song tempo does NOT, which is what makes claim 3 able to
 //    fail for its named reason (#367).
+// 3b. END-TO-END (pure): a cut that would change which overlapping part plays is refused —
+//    the second half starts later than its original and would win `activeRegion` over a part
+//    that covered it (review MEDIUM-1). Counterweights: a lone part and a cut after a nested
+//    part has ended are allowed — overlap alone refuses nothing.
 // 4. SOURCE: the bar writes only through the store; its body reads neither the tempo, the clip
-//    grid nor the position; the Workstation is its one door.
+//    grid nor the position; Split is gated on 3b; the Workstation is its one door.
 //
 // Grading (§0, no Swift toolchain in a web session): claims 1–3 HAND-TRACED against the types as
 // written (`TempoMatch.stretchRate`, `StretchPlan.resolve`, `TimelineRegion.split`,
@@ -110,6 +114,37 @@ final class TheSelectedPartIsCutWhereItIsHeardTests: XCTestCase {
             """)
     }
 
+    // MARK: 3b — a cut never changes WHO plays (review MEDIUM-1)
+
+    func testACutThatWouldUnburyAPartIsRefused() {
+        let clipID = UUID()
+        let a = TimelineRegion(laneID: Self.laneID, clipID: clipID, startTick: 0,
+                               lengthTicks: 4 * Self.bar)
+        let b = TimelineRegion(laneID: Self.laneID, clipID: clipID, startTick: Self.bar,
+                               lengthTicks: 4 * Self.bar)
+        let overlapped = TimelineDocument(lanes: [], regions: [a, b])
+        // Bars 2–4 belong to B (the later start). A's second half would start at bar 2 — later
+        // than B — and take bars 2–4 from it.
+        XCTAssertEqual(TimelineScheduling.activeRegion(in: overlapped, laneID: Self.laneID,
+                                                       at: 2 * Self.bar)?.id, b.id,
+                       "precondition: B is heard at the cut")
+        XCTAssertFalse(PartSplit.keepsWhoPlays(regionID: a.id, atTick: 2 * Self.bar, in: overlapped),
+                       "cutting A there would un-bury it over B — the cut must be refused")
+
+        // COUNTERWEIGHTS: overlap alone refuses nothing.
+        let alone = TimelineDocument(lanes: [], regions: [a])
+        XCTAssertTrue(PartSplit.keepsWhoPlays(regionID: a.id, atTick: 2 * Self.bar, in: alone))
+        let long = TimelineRegion(laneID: Self.laneID, clipID: clipID, startTick: 0,
+                                  lengthTicks: 8 * Self.bar)
+        let inner = TimelineRegion(laneID: Self.laneID, clipID: clipID, startTick: Self.bar,
+                                   lengthTicks: Self.bar)
+        let nested = TimelineDocument(lanes: [], regions: [long, inner])
+        XCTAssertTrue(PartSplit.keepsWhoPlays(regionID: long.id, atTick: 4 * Self.bar, in: nested),
+                      "a cut after the inner part has ended changes nobody's turn")
+        XCTAssertFalse(PartSplit.keepsWhoPlays(regionID: UUID(), atTick: Self.bar, in: nested),
+                       "an unknown part cannot be cut")
+    }
+
     // MARK: 4 — source: store-only writes, a cold body, one door
 
     func testTheBarWritesThroughTheStoreAndReadsColdState() throws {
@@ -132,6 +167,10 @@ final class TheSelectedPartIsCutWhereItIsHeardTests: XCTestCase {
         XCTAssertTrue(handler.contains("PartSplit.mediaBPM(for: region, clip: clipStore.clip(id: region.clipID),"),
                       "Split asks the media tempo, never hands the song tempo straight through")
         XCTAssertTrue(handler.contains("timeline.splitRegion(id: regionID, atTick: tick, bpm: bpm)"))
+        XCTAssertTrue(body.contains("PartSplit.keepsWhoPlays(regionID: regionID, atTick: $0,"),
+                      "Split is enabled only when the cut keeps who plays (review MEDIUM-1)")
+        XCTAssertTrue(body.contains("if splittable, let cut { split(regionID, at: cut) }"),
+                      "the action re-checks the same answer the button was enabled by")
 
         let workstation = try code("Sources/Echoelmusic/Studio/WorkstationView.swift")
         XCTAssertEqual(workstation.components(separatedBy: "SelectedPartBar()").count - 1, 1)

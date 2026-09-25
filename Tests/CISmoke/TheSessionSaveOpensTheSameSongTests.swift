@@ -219,6 +219,19 @@ final class TheSessionSaveOpensTheSameSongTests: XCTestCase {
         XCTAssertEqual(SessionSaveOpen.recoveryRow(live: live, takeIsLive: true,
                                                    songHasUserParts: false, existingSlot: bare), live,
                        "a slot with no song has none to keep")
+
+        // LOW-1 — a Session that failed to encode (nil beside the user's parts) keeps the
+        // slot's good one, on both branches that write the live Session.
+        var unencoded = live
+        unencoded.setSessionEnvelope(nil)
+        let failedH1 = try XCTUnwrap(SessionSaveOpen.recoveryRow(live: unencoded, takeIsLive: false,
+                                                                 songHasUserParts: true, existingSlot: slot))
+        XCTAssertEqual(failedH1.sessionEnvelope, slot.sessionEnvelope)
+        let failedBoth = try XCTUnwrap(SessionSaveOpen.recoveryRow(live: unencoded, takeIsLive: true,
+                                                                   songHasUserParts: true, existingSlot: slot))
+        XCTAssertEqual(failedBoth.notes, live.notes, "the new take is still recorded")
+        XCTAssertEqual(failedBoth.sessionEnvelope, slot.sessionEnvelope,
+                       "an encode failure must not erase the song the slot holds")
     }
 
     // MARK: 3 — source: one door restores a song, in the right order
@@ -256,6 +269,10 @@ final class TheSessionSaveOpensTheSameSongTests: XCTestCase {
                       "Save captures the song")
         XCTAssertTrue(code.contains("live: withSession(take), takeIsLive: takeIsLive, songHasUserParts: songHasUserParts,"),
                       "the recovery slot captures the song it is rescuing, through the keep-the-richer rule")
+        // Review LOW-4: the needle above is satisfied by ANY `takeIsLive`; a constant `true`
+        // would silently re-open H1. Pin the derivation — a take is live only with notes.
+        XCTAssertTrue(code.contains("let takeIsLive = hasComposed && !pianoRoll.notes.isEmpty"),
+                      "a take counts as live only when it was composed AND holds notes (H1)")
         XCTAssertTrue(code.contains("existingSlot: projects.project(id: Project.autosaveSlotID)) else { return }"),
                       "…and hands the rule the slot it would overwrite")
         XCTAssertTrue(code.contains("currentSession: { currentProject(named: \"Shared session\") }"),
