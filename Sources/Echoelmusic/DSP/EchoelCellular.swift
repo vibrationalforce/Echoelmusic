@@ -113,6 +113,15 @@ public final class EchoelCellular: @unchecked Sendable {
     /// 2D CA grid (for spectral2D mode)
     private var grid2D: [[UInt8]]
 
+    /// The next generation of `grid2D`, preallocated so `evolve2D()` allocates nothing on the
+    /// render thread. `evolve2D()` writes every cell of it, then swaps the two grids.
+    /// ⛔ `var newGrid = grid2D` stood there (overnight P8, review 4): the copy shares
+    /// `grid2D`'s buffers, and the first write to each row copied it. That was 65 heap
+    /// allocations per generation (the outer array plus 64 rows) on the audio thread. Its rows
+    /// MUST be distinct buffers: `Array(repeating: row, count:)` shares ONE row 64 times, and
+    /// the first write would copy each of them. Guard: `TheSpectralGridEvolvesInPlaceTests`.
+    private var grid2DNext: [[UInt8]]
+
     /// Grid size for 2D mode
     private let grid2DSize: Int = 64
 
@@ -207,6 +216,7 @@ public final class EchoelCellular: @unchecked Sendable {
 
         // Init 2D grid
         self.grid2D = [[UInt8]](repeating: [UInt8](repeating: 0, count: grid2DSize), count: grid2DSize)
+        self.grid2DNext = (0..<grid2DSize).map { _ in [UInt8](repeating: 0, count: grid2DSize) }
 
         // Seed with single cell in center (classic CA initialization)
         seed(.singleCenter)
@@ -343,7 +353,6 @@ public final class EchoelCellular: @unchecked Sendable {
 
     /// Evolve 2D Game of Life by one step
     private func evolve2D() {
-        var newGrid = grid2D
         for y in 0..<grid2DSize {
             for x in 0..<grid2DSize {
                 var neighbors: Int = 0
@@ -357,13 +366,13 @@ public final class EchoelCellular: @unchecked Sendable {
                 }
                 let alive = grid2D[y][x] == 1
                 if alive {
-                    newGrid[y][x] = (neighbors == 2 || neighbors == 3) ? 1 : 0
+                    grid2DNext[y][x] = (neighbors == 2 || neighbors == 3) ? 1 : 0
                 } else {
-                    newGrid[y][x] = neighbors == 3 ? 1 : 0
+                    grid2DNext[y][x] = neighbors == 3 ? 1 : 0
                 }
             }
         }
-        grid2D = newGrid
+        swap(&grid2D, &grid2DNext)
     }
 
     /// Convert cell states to wavetable values
