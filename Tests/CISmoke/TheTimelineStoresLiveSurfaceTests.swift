@@ -81,6 +81,8 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         // (`Studio/TrackPartsView.swift`). `undo`/`redo` got their first production caller
         // in the same file, but stay in `unprovable`: `PianoRollModel` declares both names too.
         "moveRegion", "duplicateRegion", "removeRegion",
+        // WA4.4: "Remove track" in the inspector, reached through `TrackMix.removeTrack`.
+        "removeLaneIfEmpty",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than

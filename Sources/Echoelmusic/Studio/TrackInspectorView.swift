@@ -120,6 +120,42 @@ enum TrackMix {
         }
     }
 
+    /// Whether a track may be removed, and if not, why (WA4 "remove track").
+    enum Removal: Equatable, Sendable {
+        case allowed
+        /// It still holds parts; the store only removes an EMPTY lane, and a part removal is
+        /// undoable where a lane removal is not — so the parts go first, one undo step each.
+        case hasParts(Int)
+        /// It holds parts this build has no editor for (a video or visual lane from an older
+        /// project), so there is no way to empty it — say so rather than ask for the impossible.
+        case uneditableParts(Int)
+        /// The Echoel instrument plays this track. Removing it would silently hand the
+        /// instrument (and its level) to the next MIDI track.
+        case echoelTrack
+        /// A recorded bio curve lives here.
+        case bio
+    }
+
+    nonisolated static func removal(of laneID: UUID, in document: TimelineDocument) -> Removal? {
+        guard let lane = document.lanes.first(where: { $0.id == laneID }) else { return nil }
+        if lane.isBio { return .bio }
+        if document.rollLaneID == laneID { return .echoelTrack }
+        let parts = document.regions.filter { $0.laneID == laneID }.count
+        guard parts > 0 else { return .allowed }
+        return TrackParts.arrangeable(laneID, in: document) ? .hasParts(parts) : .uneditableParts(parts)
+    }
+
+    nonisolated static func removalNote(_ removal: Removal) -> String {
+        switch removal {
+        case .allowed:           return "Removes this empty track. Undo cannot bring the track, or parts it held earlier, back."
+        case .hasParts(let n):   return n == 1 ? "Remove its part first to remove this track."
+                                               : "Remove its \(n) parts first to remove this track."
+        case .uneditableParts:   return "This track holds parts this version cannot edit, so it stays."
+        case .echoelTrack:       return "The Echoel instrument plays this track, so it stays."
+        case .bio:               return "This track holds a recorded bio curve, so it stays."
+        }
+    }
+
     // MARK: Writes — through the store's existing API, nothing else
 
     @MainActor
@@ -140,6 +176,13 @@ enum TrackMix {
     @MainActor
     static func flipSolo(laneID: UUID, timeline: TimelineStore) {
         timeline.toggleSolo(id: laneID)
+    }
+
+    /// Only an EMPTY, non-Echoel, non-bio track; the store refuses a lane with parts anyway.
+    @MainActor
+    static func removeTrack(laneID: UUID, timeline: TimelineStore) {
+        guard removal(of: laneID, in: timeline.document) == .allowed else { return }
+        timeline.removeLaneIfEmpty(id: laneID)
     }
 
     /// Trimmed; an empty name is refused rather than stored (a track row with no name is a
@@ -238,6 +281,9 @@ struct TrackInspectorView: View {
                 // WA4.3 — the track's parts: move, copy, remove, and the part-edit Undo/Redo.
                 // Its own leaf; it hides itself on a track with nothing to arrange.
                 TrackPartsView(laneID: laneID)
+                if let removal = TrackMix.removal(of: laneID, in: document) {
+                    removeRow(removal)
+                }
             }
             .padding(.vertical, 8).padding(.horizontal, 10)
             .padding(.leading, 26)
@@ -253,6 +299,33 @@ struct TrackInspectorView: View {
         if typed == stored { return }
         if !TrackMix.rename(nameDraft, laneID: laneID, timeline: timeline) {
             nameDraft = stored
+        }
+    }
+
+    private func removeRow(_ removal: TrackMix.Removal) -> some View {
+        let allowed = removal == .allowed
+        return VStack(alignment: .leading, spacing: 4) {
+            Button {
+                TrackMix.removeTrack(laneID: laneID, timeline: timeline)
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "minus.circle").font(.system(size: 12, weight: .semibold))
+                    Text("Remove track").font(EchoelTheme.font(12, .semibold))
+                }
+                .foregroundStyle(allowed ? EchoelTheme.text : EchoelTheme.dim)
+                .padding(.horizontal, 12)
+                .frame(minHeight: 44)
+                .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                    .fill(EchoelTheme.fill))
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!allowed)
+            .accessibilityHint(TrackMix.removalNote(removal))
+            Text(TrackMix.removalNote(removal))
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityHidden(true)
         }
     }
 

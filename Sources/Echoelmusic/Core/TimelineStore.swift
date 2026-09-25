@@ -41,6 +41,8 @@
 //        `moveRegion` · `duplicateRegion` · `removeRegion`, and `undo` · `redo`, called from
 //        `TrackParts` / `TrackPartsView` in `Studio/TrackPartsView.swift` (the selected
 //        track's parts). All five leave the caller-less set; re-derive, do not patch digits.
+//        ⭐ WA4.4 added `removeLaneIfEmpty`, called from `TrackMix.removeTrack` (the
+//        inspector's "Remove track", empty non-Echoel non-bio tracks only).
 //   ·  8 used only inside this file — the previous six (automationLaneIndex,
 //        canCombineRegions, migrate, resolveOverlaps, restoreRegions, syncUndoFlags) PLUS
 //        `persist` (46 internal call sites, one per mutating path) and `snapshotForUndo`
