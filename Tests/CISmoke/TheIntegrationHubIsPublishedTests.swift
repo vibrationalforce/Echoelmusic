@@ -91,10 +91,12 @@ final class TheIntegrationHubIsPublishedTests: XCTestCase {
         guard FileManager.default.fileExists(atPath: root.path), let walker = FileManager.default.enumerator(atPath: root.path) else {
             throw XCTSkip("cannot enumerate Sources — refusing to report a green it did not earn")
         }
+        // CODE, not prose (2026-09-25): a doc comment in ADMOSCSender (#1433) names "the one
+        // `NWListener`" while explaining why it has none, and a raw scan counted it as a second.
         var listeners: [String] = []
         for case let relative as String in walker where relative.hasSuffix(".swift") {
             if let code = try? String(contentsOf: root.appendingPathComponent(relative), encoding: .utf8),
-               code.contains("NWListener") { listeners.append(relative) }
+               SourceText.codeOnly(code).contains("NWListener") { listeners.append(relative) }
         }
         XCTAssertEqual(listeners.sorted(), ["Echoelmusic/Sync/OSCReceiver.swift"], "the inbound-socket census moved (\(listeners.sorted())) — the hub's control-input section and the FAQ's OSC-in answer must change in the same commit (#1241/#1255)")
     }

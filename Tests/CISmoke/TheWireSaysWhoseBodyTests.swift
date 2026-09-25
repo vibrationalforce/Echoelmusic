@@ -735,7 +735,9 @@ final class TheWireSaysWhoseBodyTests: XCTestCase {
                 contentsOf: sources.appendingPathComponent(relative), encoding: .utf8)
             else { continue }
             swiftFiles += 1
-            if body.contains("NWListener") { listeners.append(relative) }
+            // CODE, not prose (2026-09-25): ADMOSCSender's doc comment (#1433) names "the one
+            // `NWListener`" while explaining why it has none; a raw scan counted it.
+            if SourceText.codeOnly(body).contains("NWListener") { listeners.append(relative) }
         }
         XCTAssertGreaterThan(swiftFiles, 300, """
             Walked only \(swiftFiles) Swift files — the walk is broken, so the absence it \
