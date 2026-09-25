@@ -317,7 +317,7 @@ final class LaunchLogsWhatItWokeUpWithTests: XCTestCase {
     private func swiftSourcePaths() throws -> [String] {
         let root = try repoRoot()
         let sources = root.appendingPathComponent("Sources")
-        guard let walk = FileManager.default.enumerator(at: sources, includingPropertiesForKeys: nil) else {
+        guard FileManager.default.fileExists(atPath: sources.path), let walk = FileManager.default.enumerator(at: sources, includingPropertiesForKeys: nil) else {
             throw XCTSkip("cannot enumerate \(sources.path)")
         }
         let prefix = root.path.hasSuffix("/") ? root.path : root.path + "/"
