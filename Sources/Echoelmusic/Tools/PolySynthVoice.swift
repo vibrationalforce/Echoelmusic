@@ -348,7 +348,14 @@ public final class PolySynthVoice {
     /// Set the breath-swell depth (0 = off). Low-rate control call (per generate /
     /// mode change). The audio thread ramps to it, so changing it never clicks.
     public func setBreathSwell(depth: Float) {
-        let d = Swift.min(Swift.max(depth, 0), 0.6)
+        // ⭐ 2026-09-25 (overnight P8): `clamped(to:)`, not `min(max(depth, 0), 0.6)` — that
+        // order passes NaN into the target, the render's one-pole (`breathSwellDepth +=
+        // (target - depth) * 0.05`) latches it, and NaN never leaves: every later depth
+        // stays NaN, `> 0.0005` is false, and the swell is skipped for the rest of the
+        // session while `isBreathSwellActive` reports true for the next non-zero call.
+        // NaN now reads as 0 (off); every other value, ±inf included, is unchanged.
+        // Guard: `TheBreathSwellCannotLatchANaNDepthTests`.
+        let d = depth.clamped(to: 0...0.6)
         breathSwellTargetDepth = d
         isBreathSwellActive = d > 0
     }
