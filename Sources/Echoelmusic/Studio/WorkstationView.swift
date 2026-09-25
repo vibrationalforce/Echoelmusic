@@ -443,8 +443,10 @@ struct WorkstationView: View {
                 .onTapGesture { selectedTrack = selected ? nil : row.id }
                 .accessibilityAction { selectedTrack = selected ? nil : row.id }
                 .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
-                .accessibilityHint(selected ? "Closes this track's mixer"
-                                            : "Opens this track's device, level, pan, mute and solo")
+                // Only what every track has is promised; the mixer and the parts list appear
+                // where the track has them (`TrackMix.controls`, `TrackParts.arrangeable`).
+                .accessibilityHint(selected ? "Closes this track's details"
+                                            : "Opens this track's details: its device, and its mixer and parts where it has them")
             // ⚠️ OUTSIDE the combined element, on purpose: `.combine` on the row swallowed the
             // tuning banner's recovery button once (#621) — a control inside a merged element
             // loses its own focus and hint. The facts are ONE sentence; the switch is a switch.

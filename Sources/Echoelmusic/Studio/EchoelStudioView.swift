@@ -967,7 +967,7 @@ struct EchoelStudioView: View {
             // Says READ-ONLY out loud, because a door that only looks is the one kind a
             // listener cannot discover by feeling around inside it (#482's lesson: the spoken
             // name of a door must list what the panel actually holds).
-            case .workstation: return "Workstation — the arrangement: tracks and parts; it plays and imports, it does not move or cut parts"
+            case .workstation: return "Workstation — the arrangement and session: tracks, parts and scenes; it plays, imports, mixes and moves parts, it does not cut them"
             }
         }
     }
@@ -3245,7 +3245,7 @@ struct EchoelStudioView: View {
     /// is evaluated in the ROOT body permanently since #479, and anything expensive or
     /// churn-prone written here would be paid on every Studio rebuild.
     private var workstationPanel: some View {
-        panel("Workstation", "The arrangement — play and import", isExpanded: $showWorkstation) {
+        panel("Workstation", "Arrange, launch and mix the song", isExpanded: $showWorkstation) {
             WorkstationView()
         }
     }
