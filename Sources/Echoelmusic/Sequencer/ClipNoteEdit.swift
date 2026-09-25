@@ -168,9 +168,14 @@ enum ClipNoteEdit {
     // Which ids: `targets` — the on-screen selection, or every note the part shows when nothing
     // is selected (the usual editor rule, stated once here and not in the view).
 
-    /// The ids an M3 operation acts on: the selection, or the whole part when none.
-    nonisolated static func targets(selected: Set<UUID>, visible: [Note]) -> Set<UUID> {
-        selected.isEmpty ? Set(visible.map(\.id)) : selected
+    /// The ids an M3 operation acts on. NOTHING selected → every note of the part. Something
+    /// selected → only the selected notes ON SCREEN (`onScreen`), and possibly none: a selection
+    /// that scrolled or moved off the rows shown must never widen to the whole part (M3 review —
+    /// the Delete law, "never removed unseen", for every operation). `selected` is the selection
+    /// restricted to notes the part still has, so an id an Undo removed does not count.
+    nonisolated static func targets(selected: Set<UUID>, onScreen: Set<UUID>,
+                                    visible: [Note]) -> Set<UUID> {
+        selected.isEmpty ? Set(visible.map(\.id)) : onScreen.intersection(selected)
     }
 
     /// `ids` moved by `semitones`, clamped as a GROUP to MIDI 0…127 so the chord keeps its shape.

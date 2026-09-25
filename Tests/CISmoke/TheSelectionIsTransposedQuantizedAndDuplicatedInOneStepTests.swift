@@ -21,6 +21,13 @@
 // commit moves the writer count in `TheSelectedPartsNotesAreEditedThroughOneWriterTests` 4 → 8.
 // NOT covered: that the buttons render and read well, that the velocity is heard — a device
 // probe, owned by the marker below.
+// ⭐ INDEPENDENT REVIEW (M3, ui-state), six findings, all repaired in the follow-up commit: an
+// off-screen selection widened to the whole part (now: acts on nothing, and the row says so on
+// screen); a velocity draft could outlive an Undo (now dropped on `shown`); the rows followed a
+// clamped "+12" that moved less (now only a real octave, only when the rows can move); every
+// button was enabled even when it could do nothing (now each asks its own op); the scope and the
+// mean were told only to VoiceOver (now on screen: the scope line, "Velocity (avg)"); and this
+// scan could not see a per-sample write (now it pins the setter body and the one commit site).
 // NEEDS-FOUNDER-VERIFY: Notes → select two notes → +1 / Octave up (both move, the chord keeps its
 // shape) → Quantize an off-grid imported note → Velocity drag (one Undo takes the whole drag
 // back) → Duplicate (the copies land right after the selection and stay selected).
@@ -40,8 +47,14 @@ final class TheSelectionIsTransposedQuantizedAndDuplicatedInOneStepTests: XCTest
 
     func testTheTargetIsTheSelectionOrTheWholePart() {
         let a = Note(pitch: 60, startStep: 0), b = Note(pitch: 62, startStep: 2)
-        XCTAssertEqual(ClipNoteEdit.targets(selected: [a.id], visible: [a, b]), [a.id])
-        XCTAssertEqual(ClipNoteEdit.targets(selected: [], visible: [a, b]), [a.id, b.id])
+        XCTAssertEqual(ClipNoteEdit.targets(selected: [a.id], onScreen: [a.id], visible: [a, b]),
+                       [a.id])
+        XCTAssertEqual(ClipNoteEdit.targets(selected: [], onScreen: [], visible: [a, b]),
+                       [a.id, b.id], "nothing selected: the whole part")
+        // M3 review: a selection that moved or scrolled off the rows must NOT widen to the whole
+        // part — the next +1 or Quantize would otherwise act on every note, unseen.
+        XCTAssertEqual(ClipNoteEdit.targets(selected: [a.id], onScreen: [], visible: [a, b]), [],
+                       "a selection that is not on screen acts on nothing")
     }
 
     func testTransposeMovesTheGroupAndKeepsItsShape() throws {
@@ -170,6 +183,39 @@ final class TheSelectionIsTransposedQuantizedAndDuplicatedInOneStepTests: XCTest
         XCTAssertTrue(leaf.contains("onCommit: {"), "the write happens when the edit ends")
         XCTAssertFalse(leaf.contains("onChange: {"),
                        "nothing may be written per drag sample (performance law)")
+        // M3 review: the two checks above stay green for `set: { draft = $0; commit(…) }`, which
+        // IS the per-sample write. So: the setter holds the draft and nothing else, and the one
+        // `commit(` sits inside the brace-matched `onCommit:` body.
+        let setter = try braceBody(after: "set: {", in: leaf)
+        XCTAssertEqual(setter.trimmingCharacters(in: .whitespacesAndNewlines), "draft = $0",
+                       "the binding's setter writes the local draft only")
+        let onCommit = try braceBody(after: "onCommit: {", in: leaf)
+        XCTAssertEqual(leaf.components(separatedBy: "commit(").count - 1, 1,
+                       "one write site in the velocity row")
+        XCTAssertTrue(onCommit.contains("commit("), "…and it is inside onCommit")
+        XCTAssertTrue(leaf.contains(".onChange(of: shown)"),
+                      "a draft no commit cleared is dropped when the notes change under it (Undo)")
+    }
+
+    /// The text between the brace that ends `anchor` and its matching close (#408).
+    private func braceBody(after anchor: String, in code: String) throws -> String {
+        guard let start = code.range(of: anchor) else {
+            XCTFail("ANCHOR MISSING: \(anchor)")
+            throw AnchorMissing(name: anchor)
+        }
+        var depth = 1
+        var index = start.upperBound
+        while index < code.endIndex {
+            let ch = code[index]
+            if ch == "{" { depth += 1 }
+            if ch == "}" {
+                depth -= 1
+                if depth == 0 { return String(code[start.upperBound..<index]) }
+            }
+            index = code.index(after: index)
+        }
+        XCTFail("UNBALANCED: \(anchor)")
+        throw AnchorMissing(name: anchor)
     }
 
     // MARK: helpers

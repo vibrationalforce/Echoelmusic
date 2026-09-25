@@ -24,8 +24,9 @@
 //
 //  Since M3: Transpose (±1, ±12), Quantize (starts to the part's sixteenths), Duplicate (the
 //  copies land right after the selection and become it) and Velocity — each acts on the selection
-//  on screen, or on the whole part when nothing is selected (`ClipNoteEdit.targets`), and each is
-//  ONE commit. The Velocity drag edits a draft in its own leaf (`NoteVelocityRow`) and writes once,
+//  on screen, or on the whole part when nothing is selected (`ClipNoteEdit.targets`); a selection
+//  that is not on screen acts on NOTHING, and the row says which of the three it is. A button is
+//  enabled only when its operation would change something, and each is ONE commit. The Velocity drag edits a draft in its own leaf (`NoteVelocityRow`) and writes once,
 //  when it ends.
 //
 //  Since M4: the rows shade the notes OUTSIDE the session key (`SessionContext.key`, read and
@@ -158,10 +159,15 @@ private struct PartNoteGrid: View {
                              region: region)
                         .onAppear { if centre == nil { centre = heldCentre } }
                     if editable, !visible.isEmpty {
-                        selectionControls(targets: ClipNoteEdit.targets(selected: pickedOnScreen,
+                        let selected = picked.ids.intersection(Set(visible.map(\.id)))
+                        selectionControls(targets: ClipNoteEdit.targets(selected: selected,
+                                                                         onScreen: pickedOnScreen,
                                                                          visible: visible),
-                                          pickedCount: pickedCount, clip: clip, region: region,
-                                          offset: offset, key: session.key)
+                                          scope: Self.scope(selected: selected.count,
+                                                            onScreen: pickedCount),
+                                          clip: clip, region: region, offset: offset,
+                                          range: range, heldCentre: heldCentre,
+                                          key: session.key)
                     }
                     if editable {
                         Text(hint(sharedBy: document.regions.filter { $0.clipID == region.clipID }.count))
@@ -248,14 +254,20 @@ private struct PartNoteGrid: View {
     // when nothing is selected — and each is ONE `setClipNotes`, so ONE Undo takes it back. A
     // button that would change nothing commits nothing (the pure op returns nil).
 
-    private func transpose(_ ids: Set<UUID>, by semitones: Int, region: TimelineRegion) {
-        guard let clip = clipStore.clip(id: region.clipID),
-              let moved = ClipNoteEdit.transposing(ids, by: semitones,
-                                                   in: clip.melody?.notes ?? []) else { return }
-        if timeline.setClipNotes(clipID: region.clipID, moved, clips: clipStore),
-           abs(semitones) == 12 {
-            // The rows follow an octave move, so the notes stay under the finger.
-            octaveShift += semitones > 0 ? 1 : -1
+    private func transpose(_ ids: Set<UUID>, by semitones: Int, region: TimelineRegion,
+                           range: ClosedRange<Int>, heldCentre: Int) {
+        let notes = clipStore.clip(id: region.clipID)?.melody?.notes ?? []
+        guard let moved = ClipNoteEdit.transposing(ids, by: semitones, in: notes),
+              timeline.setClipNotes(clipID: region.clipID, moved, clips: clipStore) else { return }
+        // The rows follow an octave move so the notes stay under the finger — but only a move
+        // that really WAS an octave (a group clamp can make +12 a +5), and only when the rows can
+        // still go that way (M3 review: at the top the shift counted on, invisibly).
+        let before = notes.first { ids.contains($0.id) }?.pitch
+        let after = moved.first { ids.contains($0.id) }?.pitch
+        guard let before, let after, abs(after - before) == 12 else { return }
+        let next = octaveShift + (after > before ? 1 : -1)
+        if ClipNoteEdit.pitchRange(centre: heldCentre, octaveShift: next) != range {
+            octaveShift = next
         }
     }
 
@@ -299,25 +311,45 @@ private struct PartNoteGrid: View {
         _ = timeline.setClipNotes(clipID: region.clipID, updated, clips: clipStore)
     }
 
-    private func selectionControls(targets: Set<UUID>, pickedCount: Int, clip: Clip,
-                                   region: TimelineRegion, offset: Int,
+    /// What the M3/M4 buttons act on, said on screen (M3 review: it reached only VoiceOver).
+    private static func scope(selected: Int, onScreen: Int) -> (visible: String, spoken: String) {
+        if selected == 0 { return ("All notes in this part", "every note in this part") }
+        if onScreen == 0 {
+            return ("Selection not on screen — Lower / Higher to see it", "no note — the selection is not on screen")
+        }
+        return onScreen == 1 ? ("1 selected", "the selected note")
+            : ("\(onScreen) selected", "the \(onScreen) selected notes")
+    }
+
+    private func selectionControls(targets: Set<UUID>, scope: (visible: String, spoken: String),
+                                   clip: Clip, region: TimelineRegion, offset: Int,
+                                   range: ClosedRange<Int>, heldCentre: Int,
                                    key: MusicalKey) -> some View {
-        let what = pickedCount == 0 ? "every note in this part"
-            : pickedCount == 1 ? "the selected note" : "the \(pickedCount) selected notes"
+        let what = scope.spoken
+        let notes = clip.melody?.notes ?? []
+        // Every button is enabled only when its operation would change something (M3 review: an
+        // enabled button that silently does nothing). Cold inputs — the clip and the selection.
+        func can(_ edit: [Note]?) -> Bool { edit != nil }
+        let length = region.lengthTicks
         return VStack(alignment: .leading, spacing: 6) {
+            Text(scope.visible).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             HStack(spacing: 6) {
                 Text("Transpose").font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-                button("−12", "", enabled: true, label: "Move \(what) down an octave") {
-                    transpose(targets, by: -12, region: region)
+                button("−12", "", enabled: can(ClipNoteEdit.transposing(targets, by: -12, in: notes)),
+                       label: "Move \(what) down an octave") {
+                    transpose(targets, by: -12, region: region, range: range, heldCentre: heldCentre)
                 }
-                button("−1", "", enabled: true, label: "Move \(what) down a semitone") {
-                    transpose(targets, by: -1, region: region)
+                button("−1", "", enabled: can(ClipNoteEdit.transposing(targets, by: -1, in: notes)),
+                       label: "Move \(what) down a semitone") {
+                    transpose(targets, by: -1, region: region, range: range, heldCentre: heldCentre)
                 }
-                button("+1", "", enabled: true, label: "Move \(what) up a semitone") {
-                    transpose(targets, by: 1, region: region)
+                button("+1", "", enabled: can(ClipNoteEdit.transposing(targets, by: 1, in: notes)),
+                       label: "Move \(what) up a semitone") {
+                    transpose(targets, by: 1, region: region, range: range, heldCentre: heldCentre)
                 }
-                button("+12", "", enabled: true, label: "Move \(what) up an octave") {
-                    transpose(targets, by: 12, region: region)
+                button("+12", "", enabled: can(ClipNoteEdit.transposing(targets, by: 12, in: notes)),
+                       label: "Move \(what) up an octave") {
+                    transpose(targets, by: 12, region: region, range: range, heldCentre: heldCentre)
                 }
             }
             HStack(spacing: 6) {
@@ -325,31 +357,38 @@ private struct PartNoteGrid: View {
                 // buttons never act on a key the player cannot see.
                 Text(key.name).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .lineLimit(1)
-                button("Fit", "", enabled: true,
+                button("Fit", "", enabled: can(ClipNoteEdit.fittingToKey(targets, key: key, in: notes)),
                        label: "Move \(what) to the nearest notes of \(key.name)") {
                     fitToKey(targets, key: key, region: region)
                 }
-                button("−1 step", "", enabled: true,
+                button("−1 step", "",
+                       enabled: can(ClipNoteEdit.transposingInKey(targets, by: -1, key: key, in: notes)),
                        label: "Move \(what) down one step of \(key.name)") {
                     stepInKey(targets, by: -1, key: key, region: region)
                 }
-                button("+1 step", "", enabled: true,
+                button("+1 step", "",
+                       enabled: can(ClipNoteEdit.transposingInKey(targets, by: 1, key: key, in: notes)),
                        label: "Move \(what) up one step of \(key.name)") {
                     stepInKey(targets, by: 1, key: key, region: region)
                 }
             }
             HStack(spacing: 6) {
-                button("Quantize", "square.grid.3x3", enabled: true,
+                button("Quantize", "square.grid.3x3",
+                       enabled: can(ClipNoteEdit.quantizing(targets, in: notes, offsetTicks: offset,
+                                                            lengthTicks: length)),
                        label: "Snap the starts of \(what) to the nearest sixteenth") {
                     quantize(targets, region: region, offset: offset)
                 }
-                button("Duplicate", "plus.square.on.square", enabled: true,
+                button("Duplicate", "plus.square.on.square",
+                       enabled: ClipNoteEdit.duplicating(targets, in: notes, offsetTicks: offset,
+                                                         lengthTicks: length) != nil,
                        label: "Copy \(what) to right after themselves, and select the copies") {
                     duplicate(targets, region: region, offset: offset)
                 }
             }
-            if let mean = ClipNoteEdit.meanVelocity(targets, in: clip.melody?.notes ?? []) {
-                NoteVelocityRow(shown: mean, targets: targets, what: what) { velocity in
+            if let mean = ClipNoteEdit.meanVelocity(targets, in: notes) {
+                let mixed = Set(notes.filter { targets.contains($0.id) }.map(\.velocity)).count > 1
+                NoteVelocityRow(shown: mean, mixed: mixed, targets: targets, what: what) { velocity in
                     setVelocity(targets, to: velocity, region: region)
                 }
             }
@@ -539,6 +578,9 @@ private extension RollSelection {
 private struct NoteVelocityRow: View {
 
     let shown: Float
+    /// The targets do not share one velocity: the row shows their MEAN, and a commit sets
+    /// every one of them to the new value — said on the label, not only to VoiceOver.
+    let mixed: Bool
     let targets: Set<UUID>
     let what: String
     let commit: (Float) -> Void
@@ -546,15 +588,19 @@ private struct NoteVelocityRow: View {
     @State private var draft: Double?
 
     var body: some View {
-        EchoelValueField(label: "Velocity",
+        EchoelValueField(label: mixed ? "Velocity (avg)" : "Velocity",
                          value: Binding(get: { draft ?? Double(shown) },
                                         set: { draft = $0 }),
                          range: 0...1, decimals: 2,
-                         hint: "Sets \(what) to one velocity when you let go",
+                         hint: "Sets \(what) to one velocity",
                          onCommit: {
                              if let draft { commit(Float(draft)) }
                              draft = nil
                          })
+            // A draft that no commit cleared (a drag the scroll view took, a drag back to its
+            // start) must not outlive the value it was drafted from: an Undo changes `shown`
+            // without changing `targets` (M3 review).
             .onChange(of: targets) { _, _ in draft = nil }
+            .onChange(of: shown) { _, _ in draft = nil }
     }
 }
