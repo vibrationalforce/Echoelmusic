@@ -39832,3 +39832,11 @@ Review 10 was independent. These three prose commits are builder-made and **not 
   - CI/CD Build for Testing GREEN on `38bd67c2b` (02:00); its Run Tests is #396 shape, with 166 observed passing and 0 failures in the window (711 s gap).
   - Later BfT runs are still queued (backlog ~5 h).
   - main = `1e8e4cb91` (unchanged since ~00:30).
+
+## 2026-09-25 13:10Z — RC #6323 settled: the red was one real, stale guard; fixed with founder approval
+
+- **Classification of run #6323 (a3346bc8f): REAL TEST FAILURE, pre-existing, not #396.** `TheProScreenSellsNoWorkThatIsNotHappeningTests.testTheAUv3TargetIsStillAbsent` asserted `Sources/EchoelmusicAUv3` is absent; it exists since #1385. Proof it ran red: `TheAUv3RegistersAndStaysIsolatedTests` reads the same tree via the same `#filePath` root and passed 6/6 in that run's window. xcresult unreachable (egress 403 on api.github.com), so "only failure" is unproven.
+- **Fix `6c333a028` (founder "Ja" to the proposed wording):** Pro row → "AUv3 instrument plugin" / "Loads in AUM — other hosts not yet verified" (CLAIMS §1a boundary). Row SET untouched; `ProGate.auv3Plugin` gates nothing (plug-in ships free) — pricing call stays the founder's for v1.1. Claim 3 flipped to `testTheAUv3RowFollowsTheTarget` (target present AND row says neither "not built" nor "your DAW"); Python transcription: parent red both halves, worktree green.
+- **Gates on 6c333a028:** Compile Check 36138252565 success (6 min). CI/CD 36138252577: Build for Testing success 13:08; Run Tests running.
+- **Founder preference recorded (memory/preferences.md):** no "Shall I continue?" — keep working, stop only for real blockers.
+- **WA3.3 independent review:** two read-only reviewers launched (audio-thread, DSP correctness) against HEAD.

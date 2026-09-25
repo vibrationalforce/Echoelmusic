@@ -46,6 +46,7 @@ User preferences for development workflow, communication, and tooling.
 
 ## Observed (2026-06 session) — demonstrated working preferences
 - **Honesty over cheerleading.** Explicitly asks "Überleg mal ehrlich" / "ehrlich". Wants the real state, including "I never ran it / can't verify from sandbox," not green-washing. Green CI ≠ works.
+- **Kein „Shall I continue?" am Ende jeder Runde (Founder 2026-09-25, wörtlich: „Mach weiter ohne das ich immer sagen muss das du weitermachen sollst").** Nach einem Schritt direkt den nächsten nehmen; Status als kurzen Zwischenstand melden, nicht als Frage. Anhalten NUR für echte Blocker: Produkt-/Preis-/Marken-Entscheidung, TestFlight/App-Store-Deploy, Merge nach `main` außerhalb des Auto-Merge-Wegs, irreversible oder founder-gated Schritte (`.github/workflows/**`, `project.yml`, `Info.plist`).
 - **Strong delegation / autonomy.** Repeatedly says "du entscheidest", "mach alles", "Loop Mode". Prefers me to decide + act + verify rather than ask — but still wants honest checkpoints before outward-facing/irreversible steps.
 - **Fahrplan discipline:** `docs/dev/FEATURE_MATRIX.md` is the roadmap (code-truth). The website MIRRORS code, never drives it ("if the website disagrees, the code wins"). Avoid marketing-driven overclaiming.
 - **Brand purity (hard):** never "wellness"/"meditation"/"healing"/"16K"/"Super Intelligence AI" overclaims in user-facing copy (App Store, Info.plist, website). Biofeedback is core, NOT wellness. Use "self-observation, not medical diagnosis".
