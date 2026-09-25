@@ -8,10 +8,14 @@
 // the curated library, the UI fields, the bio routes clamped by `FXModulation.combine`). The one
 // that is not range-bound is `FXPreset.apply`, from a decoded preset file with no range check —
 // JSON cannot carry NaN, but it carries 1.5. Room above ~1.07 puts the loop gain at or above 1;
-// damping outside 0…1 makes the damping one-pole grow every sample. The combs diverge to inf, then
-// NaN, and the tank latches it: the melodic voice falls silent until the stage is re-enabled or
-// drained, and `decayTimeSeconds` (which sizes the AUv3 `tailTime`) reported infinity. A NaN
-// control did the same directly. Found by tonight's read-only sticky-NaN sweep (its candidate 1).
+// damping above 1 makes the damping one-pole grow every sample, and damping well below 0 lifts the
+// loop gain at Nyquist above 1. The combs diverge to inf, then NaN, and the tank latches it: the
+// melodic voice falls silent, and `reset()` (re-enable edge, idle drain) does not help while the
+// bad value stays stored — only an in-range write ended it. `decayTimeSeconds` reported infinity
+// for the room case (the AUv3 was never affected: nothing writes its room). A NaN control did the
+// same directly. Found by tonight's read-only sticky-NaN sweep (its candidate 1).
+// (⛔ review 12 corrected three sentences of this header: "until re-enabled or drained", "damping
+// outside 0…1 grows the one-pole", and an implied AUv3 `tailTime` impact.)
 //
 // THE REPAIR. Both are `clamped(to: 0...1)` inside `updateDamping()` — at the type, not at the
 // callers. NaN maps to 0; every in-range value is bit-identical. The stored property keeps what

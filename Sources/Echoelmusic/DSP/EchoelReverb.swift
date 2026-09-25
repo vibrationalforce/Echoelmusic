@@ -169,11 +169,14 @@ public final class EchoelReverb: @unchecked Sendable {
         // ⭐ 2026-09-25 (overnight P8): both controls are clamped to their documented 0…1 HERE,
         // at the type. They reached the coefficients raw, and the one writer that is not
         // range-bound — `FXPreset.apply`, from a decoded preset file with no range check — could
-        // hand over a finite 1.5: room above ~1.07 puts `combFeedback` ≥ 1, damping outside 0…1
-        // makes the damping one-pole grow each sample. Either way the combs diverge to inf, then
-        // NaN, and the tank LATCHES it (the melodic voice falls silent until the stage is
-        // re-enabled or drained); `decayTimeSeconds` reported infinity for the room case. A NaN
-        // did the same directly. `clamped(to:)` maps NaN to 0 and is bit-identical for every
+        // hand over a finite 1.5: room above ~1.07 puts `combFeedback` ≥ 1; damping above 1 makes
+        // the damping one-pole grow every sample, and damping well below 0 lifts the loop gain at
+        // Nyquist above 1. The combs diverge to inf, then NaN, and the tank LATCHES it: `reset()`
+        // (re-enable edge, idle drain) clears the tank but not these coefficients, so with the bad
+        // value still stored it diverged again — only an in-range write ended it.
+        // `decayTimeSeconds` reported infinity for the room case (no AUv3 impact: nothing writes
+        // the AUv3's room, and `tailSeconds` maps infinity to a finite value). A NaN did the same
+        // directly. `clamped(to:)` maps NaN to 0 and is bit-identical for every
         // in-range value, which is every value a shipped producer writes (GenreFX, the curated
         // library, the UI fields and the bio routes are all 0…1). The stored property keeps
         // what was written, so a preset round-trips unchanged.
