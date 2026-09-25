@@ -48,3 +48,28 @@ Recovery census: read-only subagent, 2026-09-25 (clone NOT shallow, 8364 commits
 ## 5. Evidence vocabulary per slice
 
 COMPILES (Xcode Compile Check + Build for Testing) · TESTED (named guard observed passing in the window, else "compiles, execution unrecorded") · SIMULATOR · DEVICE (founder) · INDEPENDENTLY REVIEWED (ui-state + code reviewer).
+
+## 6. M1 design detail (read 2026-09-25 20:30Z, no code yet)
+
+- **History step, no global wiring.** `TimelineStore`'s `undoStack`/`redoStack` become `[HistoryStep]`,
+  `enum HistoryStep { case regions([TimelineRegion]); case clipNotes(clipID: UUID, notes: [Note], store: ClipStore) }`.
+  The step CARRIES the (app-lifetime) `ClipStore` it was written through, so `undo()`/`redo()` keep their
+  parameterless signatures (`SongHistoryRow` unchanged) and nothing has to be attached at launch. Undo of a
+  notes step pushes the store's CURRENT notes onto redo, then writes the snapshot through `updateMelody`; a
+  clip that no longer exists drops the step. `replaceDocument` still clears both stacks.
+- **`setClipNotes(clipID:_:clips:) -> Bool`** on `TimelineStore`: guards (clip exists, `.midi`, not
+  `composerOwned`, notes differ) → ONE `snapshot` of the old notes → `clips.updateMelody`. The ONLY production
+  caller of `updateMelody` (guard).
+- **Editor leaf `PartNoteEditor(regionID:)`** mounted under `SelectedPartBar` when the part is MIDI and the
+  "Notes" toggle is on (toggle state local to the bar). Reads `timeline.document` + `clipStore.clip(id:)`
+  cold; NO transport, NO tempo in body. Window = `[contentOffsetTicks, +lengthTicks)`; a LEGACY region
+  (tick offset 0, seconds offset > 0) is shown read-only with one sentence (its window needs a tempo — see
+  `RegionNoteWindow.effectiveOffsetTicks`).
+- Geometry: steps = `ceil(lengthTicks / 120)`, pitch rows from the clip's notes ± an octave via
+  `RollFitMath.medianPitch` (default C3–C5 when empty); tap → `RollHitTest.classify` with region-relative
+  notes; `.empty` → create one 1-step note at velocity 0.8 (`role: .harmony`) at clip tick = offset + step·120;
+  `.body` / `.rightEdge` → select (local `@State RollSelection`); Delete button removes the selection.
+- Read-only cases with one sentence each: composer-owned clip; clip missing; legacy offset. Shared clip
+  (`clipID` used by N>1 regions): editable, hint "Edits change all N copies of this part".
+- Copy/guards to move in the same commit: `WorkstationSummary.swift:177` "does not edit them",
+  `TheWorkstationPlaysTheTimelineTests.swift:810`, `SongHistoryRow` label/hint, `TimelineStore` header :50.
