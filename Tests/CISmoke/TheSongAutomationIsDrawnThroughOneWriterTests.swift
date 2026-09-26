@@ -19,6 +19,9 @@
 //    slot through `PerTrackAutomationResolver` on the first and to nothing on the second.
 // 4. END-TO-END BEHAVIOUR + SOURCE-TEXT SCAN: an automation-only edit takes the player's short
 //    path (`differsOnlyInAutomation`), checked before the chase flushes a single voice.
+// 5. SOURCE-TEXT SCAN: the editor writes only through the one writer and never the older
+//    per-point mutators (they record no Undo); the only finger-rate state is `@GestureState`;
+//    the editor reads no clock; the Workstation mounts it once.
 // 6. END-TO-END BEHAVIOUR (review repair): a hold that travels less than the shared tap slop
 //    moves nothing; a move onto an occupied sixteenth replaces, never stacks; Remove drops only
 //    the emptied lane; removing a track takes its curves with it, and an Undo step that would
@@ -27,10 +30,9 @@
 //    voice's automatable bases the catalog marks eligible, in their order (a projection, #416);
 //    the row opens on the parameter the track already has a curve for (another track's curve does
 //    not count); two parameters on one track are two independent lanes; the choice is a `.menu`
-//    Picker over the projection with one hard-coded base (the default), and switching drops the pick.
-// 5. SOURCE-TEXT SCAN: the editor writes only through the one writer and never the older
-//    per-point mutators (they record no Undo); the only finger-rate state is `@GestureState`;
-//    the editor reads no clock; the Workstation mounts it once.
+//    Picker over the projection with one hard-coded base (the default), and switching drops the pick;
+//    the value field reads and writes the REAL value in the parameter's unit, through the same
+//    `denormalized` playback applies (A2 review H1: attack typed as 0.5 played 5 s).
 //
 // HONEST GRADING (§3), against the parent tree (the S2 doc commit): the file does NOT compile
 // there — `setSongAutomation`, `SongAutomationEdit` and `differsOnlyInAutomation` are new —
@@ -51,10 +53,17 @@
 // absence, #486). Claims 1–6 are A1's, moved onto the new API with the SAME base (Brightness),
 // so their verdicts are unchanged by construction. Counterweight: claim 7's other track opens on
 // the default. Graded by Python transcription of the scans; behaviour by hand-tracing.
+// A2 REVIEW REPAIR (against 4239a4200, where the file compiles): `realValue`/`storedValue`/
+// `decimals(for:)` are new, so the unit claim is FORWARD there (one absence, #486); its
+// counterweight (Brightness reads exactly as stored) and the resolver-agreement premise are
+// the content.
 // NOT HERE — DEVICE PROBE, open.
 // NEEDS-FOUNDER-VERIFY: Workstation → a second MIDI track (poly) → select it → "Automation" →
 // tap three points, hold one and slide it → Play: the track's brightness follows the curve;
 // Undo takes the last point edit back; the Echoel track shows no Automation switch.
+// A2: pick "Envelope attack", pick a point, type 0.5 → the field reads 0.500 s and the track's
+// attack is half a second; draw Amplitude to 0 at the song end, Play, Stop → the track stays
+// silent until the next Play (known, recorded — is that acceptable?).
 
 import Foundation
 import XCTest
@@ -326,6 +335,35 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
         XCTAssertEqual(SongAutomationEdit.points(bright, in: removed, songTicks: song), [])
         XCTAssertEqual(SongAutomationEdit.points(second, in: removed, songTicks: song).map(\.value), [0.9],
                        "removing one parameter's point leaves the other curve alone")
+    }
+
+    func testTheValueFieldSpeaksTheParametersRealUnit() throws {
+        let (doc, _, keys, _) = Self.song()
+        let attack = try XCTUnwrap(SongAutomationEdit.offered.first { $0.keyPath == "ddsp.env.attack" },
+                                   "premise: attack is offered and has a real range in seconds")
+        XCTAssertEqual(attack.unit, "s")
+        XCTAssertEqual(SongAutomationEdit.decimals(for: attack), 3, "0.001 s must be showable")
+        let stored = SongAutomationEdit.storedValue(0.5, of: attack)
+        XCTAssertEqual(SongAutomationEdit.realValue(stored, of: attack), 0.5, accuracy: 1e-5,
+                       "half a second typed is half a second read back")
+        XCTAssertLessThan(stored, 0.06, "and it is NOT stored as 0.5 (that plays ~5 s)")
+        // The premise that makes the field honest: playback denormalizes through the same
+        // descriptor, so the number shown is the number the rack voice gets.
+        let resolved = try XCTUnwrap(PerTrackAutomationResolver.resolve(
+            keyPath: SongAutomationEdit.key(for: keys, base: attack.keyPath), normalized: Float(stored),
+            document: doc, rollLane: doc.rollLaneID, capacity: 4,
+            descriptor: { base in DDSPParameterCatalog.descriptors.first { $0.keyPath == base } }))
+        XCTAssertEqual(Double(resolved.value), 0.5, accuracy: 1e-5)
+        // Counterweight: a 0…1 parameter reads exactly as stored.
+        let bright = try XCTUnwrap(SongAutomationEdit.offered.first { $0.keyPath == Self.brightness })
+        XCTAssertEqual(SongAutomationEdit.realValue(0.37, of: bright), 0.37, accuracy: 1e-6)
+        XCTAssertEqual(SongAutomationEdit.decimals(for: bright), 2)
+
+        let editor = try source(Self.editorPath)
+        XCTAssertTrue(editor.contains("SongAutomationEdit.realValue(shown, of: descriptor)"))
+        XCTAssertTrue(editor.contains("commit(SongAutomationEdit.storedValue(draft, of: descriptor))"))
+        XCTAssertTrue(editor.contains("unit: descriptor.unit"))
+        XCTAssertFalse(editor.contains("range: 0...1"), "the raw 0…1 readout is gone")
     }
 
     func testTheParameterIsANamedChoiceFromTheProjection() throws {

@@ -35,6 +35,10 @@
 //  ⚠️ WHAT IT DOES NOT DO, stated so the surface does not read as more: one parameter SHOWN at a
 //  time (the others keep playing), no curve shape or bend, no multi-select, no playhead. Playback samples the curve
 //  once per sixteenth (the transport step), and after Stop the parameter keeps its last value.
+//  The row's height is the parameter's range, LINEAR, as playback maps it: for a time in seconds
+//  (0.001–10 s) the short, musical times sit near the bottom — the value field shows and takes
+//  the real number with its unit. After Stop a curve that ended low leaves its value (Amplitude
+//  at 0 = a silent track) until the next Play re-applies the patch.
 //  The canvas is touch-only; VoiceOver hears its summary and reaches the picked point's value
 //  field and Remove.
 //
@@ -64,6 +68,24 @@ enum SongAutomationEdit {
     /// router dispatches.
     nonisolated static func key(for laneID: UUID, base: String) -> String {
         PerTrackParameterKeyPath.make(laneID: laneID, base: base)
+    }
+
+    /// The stored point value (0…1, what the curve holds) in the parameter's REAL unit — the
+    /// same linear `denormalized` playback applies (`PerTrackAutomationResolver`), so the number
+    /// the user reads is the number the voice gets. A1 could show 0…1 raw only because
+    /// Brightness IS 0…1; attack runs 0.001–10 s (A2 review H1).
+    nonisolated static func realValue(_ stored: Double, of d: ParameterDescriptor) -> Double {
+        Double(d.denormalized(Float(stored)))
+    }
+
+    /// The inverse: a typed real value back into the curve's 0…1 (clamped by the descriptor).
+    nonisolated static func storedValue(_ real: Double, of d: ParameterDescriptor) -> Double {
+        Double(d.normalized(Float(real)))
+    }
+
+    /// Enough decimals to show the range's floor (0.001 s needs three).
+    nonisolated static func decimals(for d: ParameterDescriptor) -> Int {
+        d.min > 0 && d.min < 0.01 ? 3 : 2
     }
 
     /// Whether this track already carries a curve for the parameter.
@@ -255,7 +277,8 @@ private struct SongAutomationLane: View {
         let offered = SongAutomationEdit.offered
         let base = chosenBase ?? SongAutomationEdit.openingBase(for: laneID, in: lanes)
             ?? SongAutomationEdit.defaultBase
-        let title = offered.first { $0.keyPath == base }?.displayName ?? base
+        let descriptor = offered.first { $0.keyPath == base }
+        let title = descriptor?.displayName ?? base
         let key = SongAutomationEdit.key(for: laneID, base: base)
         let points = SongAutomationEdit.points(key, in: lanes, songTicks: songTicks)
         let chosen = points.first { $0.id == picked }
@@ -276,8 +299,8 @@ private struct SongAutomationLane: View {
                                      onStep: { by in step(by, points: points) })
                     .frame(height: Self.height)
             }
-            if let chosen {
-                pickedControls(chosen)
+            if let chosen, let descriptor {
+                pickedControls(chosen, descriptor: descriptor)
             } else {
                 Text(points.isEmpty ? "Tap the row to add the first point."
                                     : "Tap a point to pick it. Press and hold a point, then slide to move it.")
@@ -299,12 +322,14 @@ private struct SongAutomationLane: View {
         }
     }
 
-    private func pickedControls(_ point: AutomationPoint) -> some View {
+    private func pickedControls(_ point: AutomationPoint,
+                                descriptor: ParameterDescriptor) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Point at \(SessionGrid.label(forTick: point.tick))")
                 .font(EchoelTheme.font(11, .semibold))
                 .foregroundStyle(EchoelTheme.text)
-            SongAutomationValueRow(shown: point.value, pointID: point.id) { value in
+            SongAutomationValueRow(shown: point.value, pointID: point.id,
+                                   descriptor: descriptor) { value in
                 let lanes = SongAutomationEdit.revaluing(point.id, to: value,
                                                          in: timeline.document.automation)
                 timeline.setSongAutomation(lanes)
@@ -513,19 +538,25 @@ private struct SongAutomationCanvas: View {
 @MainActor
 private struct SongAutomationValueRow: View {
 
+    /// The stored 0…1 value; shown and typed in the parameter's real unit.
     let shown: Double
     let pointID: UUID
+    let descriptor: ParameterDescriptor
+    /// Receives the STORED 0…1 value.
     let commit: (Double) -> Void
 
     @State private var draft: Double?
 
     var body: some View {
         EchoelValueField(label: "Value",
-                         value: Binding(get: { draft ?? shown }, set: { draft = $0 }),
-                         range: 0...1, decimals: 2,
+                         value: Binding(get: { draft ?? SongAutomationEdit.realValue(shown, of: descriptor) },
+                                        set: { draft = $0 }),
+                         range: Double(descriptor.min)...Double(descriptor.max),
+                         unit: descriptor.unit,
+                         decimals: SongAutomationEdit.decimals(for: descriptor),
                          hint: "Sets the picked point's value",
                          onCommit: {
-                             if let draft { commit(draft) }
+                             if let draft { commit(SongAutomationEdit.storedValue(draft, of: descriptor)) }
                              draft = nil
                          })
             // A draft no commit cleared must not outlive the point or value it was drafted from

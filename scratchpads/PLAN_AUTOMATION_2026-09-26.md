@@ -50,7 +50,9 @@ Status: A1 SHIPPED (6bcbc731f + repair 1f511b919, gates green, reviewed) · A2 b
   `AutomationStatusStrip` hint can read as if it gated it.
 - After Stop the parameter holds its last automated value.
 - Per-16th sampling can zipper on steep ramps.
-- The Modulation Matrix may also write `ddsp.osc.brightness` (two writers on one parameter).
+- ⛔ CORRECTED (A2 review L1): the Modulation Matrix does NOT reach a track slot — matrix and
+  global lanes bind `polyVoice` (harmony) only; per-track keys dispatch through `bindPerTrack` to
+  `laneVoiceRack`. The real co-writer on the slot is the region-load patch apply (`slotPatchSink`).
 - `ClipAutomationEdit.laneIndex` is not alias-aware (fine for registry keys).
 
 ## Next (not started)
@@ -86,5 +88,22 @@ Status: A1 SHIPPED (6bcbc731f + repair 1f511b919, gates green, reviewed) · A2 b
 · Skeptic: the opening parameter is decided ONCE per track (`onAppear`), so removing a curve's
   last point does not make the row jump to another parameter; switching drops the pick.
 · Shipper: 2 source files (editor + CLAUDE.md line) + the guard; no store/player change.
-Open (unchanged from A1): MED-2 pick radius, LOW-5, LOW-10 (now for every parameter, not only
-brightness), the Mod-Matrix co-writer risk (it can route to the same bases since #1391).
+Open (unchanged from A1): MED-2 pick radius, LOW-5, LOW-10.
+
+## A2 review (4239a4200, independent) — repaired in the next commit
+- HIGH-1 REPAIRED: the value field showed the stored 0…1 number while playback denormalizes
+  (attack typed 0.5 played ~5 s). `SongAutomationEdit.realValue/storedValue/decimals(for:)` —
+  the field reads and writes the parameter's real value and unit; guard pins agreement with
+  `PerTrackAutomationResolver`. The canvas height stays LINEAR over the real range (short
+  times sit low) — stated in the editor header, not fixed.
+- MED-1 RECORDED (was LOW-10, now sharper): after Stop a curve that ended low leaves its value —
+  Amplitude at 0 = a silent rack track until the next Play re-applies the patch. Bounded; stated
+  in the header; NEEDS-FOUNDER-VERIFY in the guard. Fix candidate A3: re-send `slotPatchSink`
+  on stop for slots with per-track lanes.
+- LOW-1 REPAIRED (this plan): the Mod-Matrix co-writer claim was wrong for the slot.
+- LOW-2 REPAIRED: guard header claim order.
+- LOW-3 RECORDED: the projection-equality claim is near-circular (`automationEligible` is
+  derived from `automatableBases`); it proves each base has an inventory entry. A base without
+  a setter is caught elsewhere (`TheMatrixReachesEveryAutomatableParameterTests`).
+- LOW-4 RECORDED: the parameter name shows twice (menu + gutter) — cosmetic, kept for the
+  gutter's alignment with the Arrange names.
