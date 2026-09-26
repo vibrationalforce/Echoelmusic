@@ -74,6 +74,39 @@ public final class MediaAssetStore {
         return true
     }
 
+    /// MA4.5 — point a record at another file of its kind's home, KEEPING ITS ID: a relink of a
+    /// missing source moves the binding, never the identity every linked clip names. The record
+    /// becomes the newest holder of the new name, so `record(boundTo:)` answers it there (a
+    /// record another file already had under that name keeps its own id; nothing is merged or
+    /// deleted). Returns false, writing nothing, for an unknown id or an empty name.
+    @discardableResult
+    public func rebind(id: UUID, toFileName fileName: String) -> Bool {
+        guard !fileName.isEmpty, let index = records.firstIndex(where: { $0.id == id }) else {
+            return false
+        }
+        var record = records.remove(at: index)
+        record.fileName = fileName
+        records.append(record)
+        persist()
+        return true
+    }
+
+    /// One record's binding, as a relink moves it and its Undo moves it back — carried by the
+    /// song's history (`TimelineStore.relinkClipSource`) so the clip and its source change in ONE
+    /// step. The store travels with it for the reason `ClipStore` travels with a notes step: the
+    /// history keeps its parameterless `undo()`.
+    public struct Rebinding {
+        public let store: MediaAssetStore
+        public let recordID: UUID
+        public let fileName: String
+
+        public init(store: MediaAssetStore, recordID: UUID, fileName: String) {
+            self.store = store
+            self.recordID = recordID
+            self.fileName = fileName
+        }
+    }
+
     private func persist() {
         _ = store?.save(records, name: Self.fileName)
     }

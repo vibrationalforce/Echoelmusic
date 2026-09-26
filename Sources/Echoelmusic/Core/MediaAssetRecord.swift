@@ -34,8 +34,9 @@
 // Foundation-only and pure: no store, no file access, no clock. The ONE producer is the landing
 // transaction (`AudioImport.commit` → `establishIdentity` → `MediaAssetStore.register`), and a
 // Clip links to a record by `Clip.mediaAssetID`: a fresh copy registers a new record (MA4.2), a
-// library file adopts the record bound to it (MA4.3). A relink RELEASES the link rather than
-// carrying it to another file (MA4.5 rebinds).
+// library file adopts the record bound to it (MA4.3). A relink of a missing file MOVES the
+// record's binding to the chosen file, keeping its id, once the record does not refute it (MA4.5,
+// `MediaAssetStore.rebind`); without a record the relink releases the link.
 
 import Foundation
 

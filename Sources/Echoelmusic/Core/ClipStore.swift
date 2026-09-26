@@ -185,8 +185,9 @@ public final class ClipStore {
     ///
     /// ⚠️ `mediaAssetID` is written too, and it is REQUIRED (#431): a relink that moved the file
     /// but kept the link would leave the clip playing file B while naming the durable record of
-    /// file A (MA4.2 review). Until the relink rebinds the record itself (MA4.5), the relink
-    /// writes nil and Undo writes the old link back.
+    /// file A (MA4.2 review). The relink keeps the link only when it MOVED that record to the
+    /// new file (MA4.5, `TimelineStore.relinkClipSource`); otherwise it writes nil, and Undo writes
+    /// the old link back either way.
     @discardableResult
     public func relinkAudio(id: UUID, mediaRef: String, nativeDurationSeconds: Double?,
                             mediaAssetID: UUID?) -> Bool {

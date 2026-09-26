@@ -20,6 +20,13 @@
 // fingerprint, so this rule cannot tell them apart; the words the user sees say "same length",
 // never "same recording". A clip that never learned its length takes the file's.
 //
+// ⭐ MA4.5 — THE DURABLE RECORD FOLLOWS THE FILE, WITH ITS ID. When the clip links a record the
+// registry holds, the record must not contradict the chosen file (`recordRefusal`: another length
+// or, once both sides are hashed, another digest), and then its BINDING moves to that file —
+// record id, clip id, region ids, tempo and automation all stay. The record only refutes; it never
+// upgrades "same length" into "same recording". Without a record the link is released (a record
+// must never name a file its clip no longer plays).
+//
 // ⭐ ONE UNDO STEP IN THE CURRENT SESSION (founder 2026-09-26, after review M1 found the first
 // header's "undone by relinking again" false). The write goes through
 // `TimelineStore.relinkClipSource`, which records the old binding as a `.clipSource` history step:
@@ -50,6 +57,10 @@ public enum MediaRelink {
         case unreadable
         /// The clip knows its length and the file is another recording.
         case differentLength(expected: Double, found: Double)
+        /// The clip's durable record carries a content digest and the file's differs: another
+        /// source, whatever its length (MA4.5). Reached only when BOTH sides were hashed — the
+        /// relink itself never hashes on the tap.
+        case differentSource
 
         /// The words the browser shows.
         public var userMessage: String {
@@ -64,6 +75,9 @@ public enum MediaRelink {
                 return String(format: "That file is %.1f s long and the clip's file was %.1f s. "
                               + "Relink only to the same length — Place a different sound as a new part.",
                               found, expected)
+            case .differentSource:
+                return "That file's content differs from the clip's source. "
+                    + "Place a different sound as a new part."
             }
         }
     }
@@ -89,24 +103,66 @@ public enum MediaRelink {
         return .success(found)
     }
 
+    /// MA4.5 — what the clip's durable record says about the chosen file, or nil when it has
+    /// nothing against it. The record REFUTES only; it never makes a file "the same" (founder
+    /// 2026-09-26: a compatible length is not identity) — the same-length rule above still runs.
+    ///
+    /// `contentDigest` is the chosen file's digest when one is already known — the relink itself
+    /// passes nil, because it never hashes on the tap (MA4.4 hashes off the main actor).
+    public static func recordRefusal(_ record: MediaAssetRecord,
+                                     measurement: AudioImport.Measurement,
+                                     contentDigest: String?) -> Refusal? {
+        let candidate = MediaAssetRecord.Evidence(byteSize: 0,
+                                                  sampleRate: measurement.sampleRate,
+                                                  frameCount: measurement.frameCount,
+                                                  channelCount: measurement.channelCount,
+                                                  contentDigest: contentDigest)
+        switch record.match(candidate) {
+        case .differentContent:
+            return .differentSource
+        case .differentDuration:
+            return .differentLength(expected: record.evidence.durationSeconds,
+                                    found: candidate.durationSeconds)
+        case .sameContent, .compatibleDuration, .unmeasured:
+            return nil
+        }
+    }
+
     /// Relink `clipID` to `asset`, through the song's one undoable writer. `measure` and `fileExists` are
     /// injected so the blocking bundle can drive the whole path on paths that exist only as
     /// strings; production passes the real ones (`MediaBrowserView`).
+    ///
+    /// MA4.5 — `assets` (REQUIRED, #431; nil = no registry): when the clip links a record this
+    /// registry holds, the record is checked against the file (`recordRefusal`) and then MOVED
+    /// to it with its id — the clip keeps its link, and one Undo moves both back. A clip with no
+    /// link, or a link this registry does not hold (a project from another device), relinks as
+    /// before and its link is released.
     @MainActor
     public static func relink(_ clipID: UUID,
                               to asset: MediaAsset,
                               clipStore: ClipStore,
                               timeline: TimelineStore,
+                              assets: MediaAssetStore?,
                               fileExists: (String) -> Bool,
                               measure: (URL) -> AudioImport.Measurement?) -> Result<Double, Refusal> {
         guard let clip = clipStore.clip(id: clipID) else { return .failure(.noAudioClip) }
         guard clip.kind == .audio else { return .failure(.noAudioClip) }
         // The list is a snapshot: the file must still be there before anything is measured.
         guard fileExists(asset.url.path) else { return .failure(.fileGone) }
-        let decision = decide(clip, measuredSeconds: measure(asset.url)?.durationSeconds)
+        let measurement = measure(asset.url)
+        let decision = decide(clip, measuredSeconds: measurement?.durationSeconds)
         guard case .success(let seconds) = decision else { return decision }
+        var rebinding: MediaAssetStore.Rebinding?
+        if let assets, let id = clip.mediaAssetID, let record = assets.record(id: id),
+           record.kind == asset.key.kind, let measurement {
+            if let refusal = recordRefusal(record, measurement: measurement, contentDigest: nil) {
+                return .failure(refusal)
+            }
+            rebinding = MediaAssetStore.Rebinding(store: assets, recordID: id, fileName: asset.key.fileName)
+        }
         guard timeline.relinkClipSource(clipID: clipID, mediaRef: asset.url.path,
-                                        nativeDurationSeconds: seconds, clips: clipStore) else {
+                                        nativeDurationSeconds: seconds, rebinding: rebinding,
+                                        clips: clipStore) else {
             return .failure(.noAudioClip)
         }
         return .success(seconds)
@@ -118,8 +174,9 @@ public enum MediaRelink {
     /// import's own measurement (one header read of the chosen file, on the tap).
     @MainActor
     public static func perform(_ clipID: UUID, to asset: MediaAsset,
-                               clipStore: ClipStore, timeline: TimelineStore) -> Result<Double, Refusal> {
-        relink(clipID, to: asset, clipStore: clipStore, timeline: timeline,
+                               clipStore: ClipStore, timeline: TimelineStore,
+                               assets: MediaAssetStore) -> Result<Double, Refusal> {
+        relink(clipID, to: asset, clipStore: clipStore, timeline: timeline, assets: assets,
                fileExists: { FileManager.default.fileExists(atPath: $0) },
                measure: AudioImport.measureWithAVFoundation)
     }
