@@ -40125,3 +40125,5 @@ Founder decision "RELINK SEMANTICS + NEXT MEDIAASSET STEP".
 - Gates: BfT green on `025c2d3ac` (6409); every later run queued; Compile Checks cancel each other on rapid pushes (cancel-in-progress) — pushes spaced from here.
 - MIDI: still NOT CLOSED (no targeted/xcresult evidence).
 - Evidence: all slices TESTED by transcription only; NOT device verified.
+- `bcaeea552` (MA4.2 review MED-1): a relink RELEASES `Clip.mediaAssetID` and Undo restores it (`.clipSource` carries the link; `relinkAudio(…mediaAssetID:)` required). LOW prose repaired.
+- MA4.3 `7a38af018`: `AudioImport.AssetIdentity` — `.freshCopy` always mints; `.libraryFile` adopts the record bound to the name unless the file's measurement refutes it (`MediaAssetRecord.isContradicted`), else adopts one; `.unlinked` spelled out. Place + de-dup landing pass the registry; a reused clip is not rewritten. Review running at log time.
