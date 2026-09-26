@@ -27,6 +27,19 @@
 //    inspector writes the store BEFORE it posts that edit, and asks for a missing instance when
 //    the Echoel track opens (a first MIDI track added after launch).
 //
+// 8./9. EF2 (the genre as the instance's second fact): pure + real store (one instance, two
+//    facts; the Genre row only once the song holds the genre), and a SCAN of every genre writer —
+//    the genre case writes the song first (header Picker + OSC remote), the Workstation posts
+//    "echoelGenre" (never "genre", which would write the OLD copy back), launch adopts the genre
+//    before the FX character and silently, `openFromLibrary` silently after the restore, `open(_:)`
+//    and the Sound reset write the song.
+//    EF2 GRADING, against `fce169210`: the file does NOT compile there (`echoelGenre`,
+//    `settingEchoelGenre`, `TimelineStore.setEchoelGenre`, `Controls.genre`,
+//    `TrackMix.pickEchoelGenre` are new) — every EF2 claim is a FORWARD guard, one absence (#486).
+//    Claim 7's request needle was RE-ANCHORED in the same commit: the body now accepts an empty
+//    slot OR an instance this build reads (a fact was added, none removed). Graded by Python
+//    transcription of every claim-7/9 scan against the worktree: all green.
+//
 // REVIEW OF 6d68bea64 (no HIGH): M3 (a roll lane that appears after launch had no instance and
 // no row) is repaired by `TrackMix.requestEchoelInstanceIfMissing`; L3/L4 sharpened claims 5/7.
 //
@@ -44,6 +57,9 @@
 // NEEDS-FOUNDER-VERIFY: Workstation → tap the Echoel track → Effect: Underwater → the instrument
 // sounds submerged and the Studio's Effects panel shows Underwater. Relaunch: still Underwater.
 // Save the song, set Effect: Hall, Save as another song, Open the first: Underwater again.
+// NEEDS-FOUNDER-VERIFY: EF2 — Workstation → Echoel track → Genre: pick another genre → the header
+// shows it, the instrument recomposes in it; relaunch keeps it; Open a song saved in another
+// genre → that song's genre returns, its saved notes are NOT recomposed.
 
 import Foundation
 import XCTest
@@ -305,7 +321,7 @@ final class TheEchoelIsAnInstanceOnItsTrackTests: XCTestCase {
         // build's instance.
         let request = try body(of: "static func requestEchoelInstanceIfMissing(", in: inspector)
         XCTAssertTrue(request.contains("== .echoelInstrument"))
-        XCTAssertTrue(request.contains("?.deviceChain?.instrument == nil"))
+        XCTAssertTrue(request.contains("instrument == nil || instrument?.echoelFields != nil"))
         XCTAssertTrue(request.contains("object: \"fxCharacter\")"))
         let appear = try body(of: ".onAppear", in: inspector)
         XCTAssertTrue(appear.contains("TrackMix.requestEchoelInstanceIfMissing("))
@@ -313,6 +329,111 @@ final class TheEchoelIsAnInstanceOnItsTrackTests: XCTestCase {
         let row = try body(of: "private var echoelEffectRow: some View", in: inspector)
         XCTAssertTrue(row.contains(".pickerStyle(.menu)"), "a named choice is a Picker, not a number field")
         XCTAssertTrue(row.contains("TrackMix.setEchoelEffect("))
+    }
+
+    // MARK: 8 — EF2: the genre is the instance's second fact
+
+    func testTheGenreIsASecondFactOfTheSameInstance() throws {
+        let fxOnly = DeviceInsert.echoel(fxCharacter: .vinyl)
+        XCTAssertNil(fxOnly.echoelGenre, "an EF1 instance carries no genre yet")
+        let both = try XCTUnwrap(fxOnly.settingEchoelGenre(.selfObservation))
+        XCTAssertEqual(both.echoelGenre, .selfObservation)
+        XCTAssertEqual(both.echoelFXCharacter, .vinyl, "setting the genre keeps the FX character")
+        XCTAssertEqual(both.id, fxOnly.id)
+        XCTAssertEqual(try XCTUnwrap(both.settingEchoelFX(.hall)).echoelGenre, .selfObservation,
+                       "and setting the FX character keeps the genre")
+        XCTAssertNil(Self.laterEchoel.settingEchoelGenre(.selfObservation), "never over a later format")
+        let unknown = DeviceInsert(typeID: DeviceInsert.echoelTypeID, typeVersion: 1, isEnabled: true,
+                                   stateBlob: Data("{\"genre\":\"notAGenreThisBuildKnows\"}".utf8))
+        XCTAssertNil(unknown.echoelGenre)
+        XCTAssertEqual(unknown.settingEchoelGenre(.selfObservation)?.echoelGenre, .selfObservation)
+    }
+
+    func testTheStoreWritesTheGenreBesideTheEffect() throws {
+        let timeline = TimelineStore()
+        let original = timeline.document
+        defer { timeline.replaceDocument(original) }
+
+        let echoel = TimelineLane(name: "MIDI 1", kind: .midi)
+        timeline.replaceDocument(TimelineDocument(lanes: [echoel], regions: []))
+        timeline.setEchoelFXCharacter(.cassette)
+        XCTAssertNil(timeline.document.echoelGenre)
+        let fxOnly = try XCTUnwrap(TrackMix.controls(of: echoel.id, in: timeline.document, voiceCapacity: 4))
+        XCTAssertTrue(fxOnly.effect)
+        XCTAssertFalse(fxOnly.genre, "no genre in the song yet → no Genre row that would guess it")
+
+        timeline.setEchoelGenre(.selfObservation)
+        XCTAssertEqual(timeline.document.echoelGenre, .selfObservation)
+        XCTAssertEqual(timeline.document.echoelFXCharacter, .cassette, "one instance, two facts")
+        XCTAssertEqual(timeline.document.lanes.first?.deviceChain?.instrument?.typeID,
+                       DeviceInsert.echoelTypeID)
+        XCTAssertTrue(try XCTUnwrap(TrackMix.controls(of: echoel.id, in: timeline.document,
+                                                      voiceCapacity: 4)).genre)
+
+        let written = timeline.document
+        timeline.setEchoelGenre(.selfObservation)
+        XCTAssertEqual(timeline.document, written, "re-stating the genre writes nothing")
+    }
+
+    // MARK: 9 — EF2: every writer of the genre's working copy writes the song
+
+    func testEveryGenreWriterWritesTheSongAndTheWorkstationEditIsAUserEdit() throws {
+        let studio = try source(Self.studioPath)
+        let edit = try body(of: "private func handleCompositionEdit(_ field: String?)", in: studio)
+        guard let genreCase = edit.range(of: "case \"genre\":"),
+              let write = edit.range(of: "timelineStore.setEchoelGenre(style)", range: genreCase.upperBound..<edit.endIndex),
+              let scale = edit.range(of: "scale = style.scale", range: genreCase.upperBound..<edit.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the genre case's owner write (#454)")
+        }
+        XCTAssertLessThan(write.lowerBound, scale.lowerBound,
+                          "the header Picker and the OSC remote reach the song through this case, first")
+        XCTAssertTrue(edit.contains("case \"echoelGenre\":"))
+        XCTAssertTrue(edit.contains("adoptEchoelGenreFromSong(announce: true)"),
+                      "the Workstation's genre is a user edit: full genre semantics, recompose included")
+
+        let adopt = try body(of: "private func adoptEchoelGenreFromSong(announce: Bool)", in: studio)
+        XCTAssertTrue(adopt.contains("MusicStyle.offered.contains(songGenre)"),
+                      "an un-offered song genre is replaced, never adopted into an unreachable row")
+        XCTAssertTrue(adopt.contains("if announce { handleCompositionEdit(\"genre\") }"))
+        XCTAssertTrue(adopt.contains("timelineStore.setEchoelGenre(style)"))
+
+        // Launch: the genre is adopted BEFORE the FX character (whose stamp reads `style`), silently.
+        guard let clamp = studio.range(of: "style = StudioDefaultKeys.genre.value"),
+              let genreAdopt = studio.range(of: "adoptEchoelGenreFromSong(announce: false)", range: clamp.upperBound..<studio.endIndex),
+              let fxAdopt = studio.range(of: "adoptEchoelFXFromSong()", range: clamp.upperBound..<studio.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the launch adoptions (#454)")
+        }
+        XCTAssertLessThan(genreAdopt.lowerBound, fxAdopt.lowerBound)
+
+        let fromLibrary = try body(of: "private func openFromLibrary(_ p: Project)", in: studio)
+        guard let restore = fromLibrary.range(of: "SessionSaveOpen.restoreSong("),
+              let silent = fromLibrary.range(of: "adoptEchoelGenreFromSong(announce: false)") else {
+            return XCTFail("ANCHOR MISSING: openFromLibrary's genre adoption (#454)")
+        }
+        XCTAssertLessThan(restore.lowerBound, silent.lowerBound,
+                          "silent, after the song is replaced — a loaded take is never recomposed away")
+
+        let open = try body(of: "private func open(_ p: Project)", in: studio)
+        XCTAssertTrue(open.contains("timelineStore.setEchoelGenre(openStyle)"))
+        let reset = try body(of: "private func resetSoundToDefaults()", in: studio)
+        XCTAssertTrue(reset.contains("timelineStore.setEchoelGenre(StudioDefaultKeys.genre.value)"),
+                      "a reset the song does not follow is undone by the next launch's adoption")
+
+        let inspector = try source(Self.inspectorPath)
+        let setter = try body(of: "static func pickEchoelGenre(_ genre: MusicStyle, timeline: TimelineStore)", in: inspector)
+        guard let store = setter.range(of: "timeline.setEchoelGenre(genre)"),
+              let post = setter.range(of: "object: \"echoelGenre\")") else {
+            return XCTFail("ANCHOR MISSING: the inspector's genre writer (#454)")
+        }
+        XCTAssertLessThan(store.lowerBound, post.lowerBound)
+        XCTAssertFalse(setter.contains("object: \"genre\")"),
+                       "posting \"genre\" would re-derive from the OLD working copy and write it back over the edit")
+        let request = try body(of: "static func requestEchoelInstanceIfMissing(", in: inspector)
+        XCTAssertTrue(request.contains("object: \"echoelGenre\")"), "an EF1 song gains its genre on first open")
+        let row = try body(of: "private var echoelGenreRow: some View", in: inspector)
+        XCTAssertTrue(row.contains("MusicStyle.Subcategory.allCases"), "the header's own curated root")
+        XCTAssertTrue(row.contains("shelf.offeredGenres"))
+        XCTAssertTrue(row.contains(".pickerStyle(.menu)"))
     }
 
     // MARK: helpers

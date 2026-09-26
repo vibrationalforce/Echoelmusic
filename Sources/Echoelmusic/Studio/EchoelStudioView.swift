@@ -1335,9 +1335,11 @@ struct EchoelStudioView: View {
             if !MusicStyle.offered.contains(style) {
                 style = StudioDefaultKeys.genre.value
             }
-            // EF1 — the song's Echoel instance owns the FX character; after the genre clamp,
-            // because an adoption re-stamps the FX room from `style`. A song with no instance
-            // yet imports the working copy once.
+            // EF1/EF2 — the song's Echoel instance owns the genre and the FX character; after
+            // the genre clamp, and the genre FIRST, because an FX adoption re-stamps the room
+            // from `style`. Silent (no genre side effects): `currentPatch` just below derives
+            // from whatever `style` now is. A song with no instance yet imports the copies once.
+            adoptEchoelGenreFromSong(announce: false)
             adoptEchoelFXFromSong()
             // Controls reflect a real sound from the start — honor a restored timbre
             // preset, else the genre's own patch.
@@ -4686,6 +4688,9 @@ struct EchoelStudioView: View {
     private func handleCompositionEdit(_ field: String?) {
         switch field {
         case "genre":
+            // EF2: every genre edit (header Picker, OSC remote) lands on the song's Echoel
+            // instance first — the owner; `style` is its working copy.
+            timelineStore.setEchoelGenre(style)
             scale = style.scale
             // G4 — the genre's own intonation, when it names one. Placed HERE and nowhere else:
             // this method runs on USER interaction only (see the contract above), so a project
@@ -4777,6 +4782,10 @@ struct EchoelStudioView: View {
         case "fxCharacter":
             // EF1: the Workstation's Echoel track wrote the song's instance; adopt and sound it.
             adoptEchoelFXFromSong()
+        case "echoelGenre":
+            // EF2: the Workstation's Echoel track wrote the song's genre; adopt it WITH the genre
+            // semantics above (scale, timbre, echo division, recompose) — a user edit.
+            adoptEchoelGenreFromSong(announce: true)
         case "tempoLock":
             // Lock adoption happens INSIDE BodyTempoField (it glides the clock, and
             // everything that sounds or shows the tempo follows the clock);
@@ -8528,6 +8537,22 @@ struct EchoelStudioView: View {
         }
     }
 
+    /// Phase 3 / EF2 — the genre, on the same terms as the FX character above, plus two:
+    /// · A song genre that is not OFFERED is replaced by the working copy (the launch clamp's own
+    ///   rule, applied to the song) instead of being adopted into an unreachable picker row.
+    /// · `announce` decides the side effects: `true` (the Workstation's edit) runs the genre case
+    ///   of `handleCompositionEdit` — scale, tuning suggestion, timbre, echo division, recompose;
+    ///   `false` (launch, after a library Open) only sets `style`, because a loaded take's saved
+    ///   notes must not be recomposed away.
+    private func adoptEchoelGenreFromSong(announce: Bool) {
+        if let songGenre = timelineStore.document.echoelGenre, MusicStyle.offered.contains(songGenre) {
+            guard songGenre != style else { return }
+            style = songGenre
+            if announce { handleCompositionEdit("genre") }
+        } else {
+            timelineStore.setEchoelGenre(style)
+        }
+    }
 
     /// Stamp the chosen effect character on every live FX chain (independent of genre).
     /// ⚠️ #695 — THIS RE-STAMP DOES NOT REFRESH THE FX PANEL'S MIRRORS, AND TODAY ONLY THE
@@ -9207,6 +9232,9 @@ struct EchoelStudioView: View {
     /// so the running take is no longer the take the settings describe.
     private func resetSoundToDefaults() {
         SoundReset.clear(in: .standard)
+        // EF2: the reset clears the genre's working copy; the song's Echoel follows, or the next
+        // launch's adoption would bring the old genre back.
+        timelineStore.setEchoelGenre(StudioDefaultKeys.genre.value)
         session.resetMusicalIdentity()
         // ⚠️ THE SAME HALF-FIX AS `SessionContext`, one layer down. `MixerStore` reads its four
         // levels once in `init` and holds them in stored properties, so clearing the keys leaves
@@ -11640,6 +11668,8 @@ struct EchoelStudioView: View {
         open(p)
         SessionSaveOpen.restoreSong(of: p, timeline: timelineStore, clips: clipStore,
                                     player: timelinePlayer)
+        // Silent: `open(p)` loaded the take's SAVED notes, and a genre edit would recompose them.
+        adoptEchoelGenreFromSong(announce: false)
         adoptEchoelFXFromSong()
         showOpen = false
     }
@@ -11802,6 +11832,8 @@ struct EchoelStudioView: View {
         // explicit save does.)
         let openStyle = MusicStyle.offered.contains(p.style) ? p.style : StudioDefaultKeys.genre.value
         style = openStyle
+        // EF2: the arriving take's genre is the song's Echoel genre too (after the rescue).
+        timelineStore.setEchoelGenre(openStyle)
         rootIndex = p.keyRoot
         scale = p.scale
         fxCharacter = p.fxCharacter

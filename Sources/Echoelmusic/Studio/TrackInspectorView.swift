@@ -75,6 +75,9 @@ enum TrackMix {
         /// (`TimelineDocument.echoelFXCharacter`). Sub, sampler, bio and audio tracks have no
         /// per-track chain yet, so the row would move a name and not the sound.
         let effect: Bool
+        /// Phase 3 / EF2: the Echoel track's Genre row — only while the song holds the instance's
+        /// genre (`TimelineDocument.echoelGenre`), for the same reason as the Echoel Effect row.
+        let genre: Bool
     }
 
     /// Level is the lane fader, linear: 1 = unchanged, 0 = silent, 2 = +6 dB — the clamp
@@ -112,13 +115,15 @@ enum TrackMix {
         switch role {
         case .echoelInstrument:
             return Controls(role: role, level: true, pan: false, muteSolo: true,
-                            effect: document.echoelFXCharacter != nil)
+                            effect: document.echoelFXCharacter != nil,
+                            genre: document.echoelGenre != nil)
         case .laneSynth(let kind):
-            return Controls(role: role, level: true, pan: true, muteSolo: true, effect: kind == .poly)
+            return Controls(role: role, level: true, pan: true, muteSolo: true, effect: kind == .poly,
+                            genre: false)
         case .audio:
-            return Controls(role: role, level: true, pan: true, muteSolo: true, effect: false)
+            return Controls(role: role, level: true, pan: true, muteSolo: true, effect: false, genre: false)
         case .bio, .unplayed, .noVoice:
-            return Controls(role: role, level: false, pan: false, muteSolo: false, effect: false)
+            return Controls(role: role, level: false, pan: false, muteSolo: false, effect: false, genre: false)
         }
     }
 
@@ -231,12 +236,30 @@ enum TrackMix {
     /// the Effect row appears. Only when the slot is EMPTY — a later build's instance is kept and
     /// the row stays hidden (the store refuses to rewrite it). Posting changes nothing but that
     /// one missing fact: the adoption does not recompose.
+    /// EF2: the same for each FACT the instance lacks — a song written by EF1 carries the FX
+    /// character and no genre — so each missing fact is imported once, never over one present.
     @MainActor
     static func requestEchoelInstanceIfMissing(laneID: UUID, timeline: TimelineStore, voiceCapacity: Int) {
         let document = timeline.document
-        guard role(of: laneID, in: document, voiceCapacity: voiceCapacity) == .echoelInstrument,
-              document.lanes.first(where: { $0.id == laneID })?.deviceChain?.instrument == nil else { return }
-        NotificationCenter.default.post(name: .echoelCompositionEdited, object: "fxCharacter")
+        guard role(of: laneID, in: document, voiceCapacity: voiceCapacity) == .echoelInstrument else { return }
+        let instrument = document.lanes.first(where: { $0.id == laneID })?.deviceChain?.instrument
+        // Writable = an empty slot, or an Echoel instance this build reads.
+        guard instrument == nil || instrument?.echoelFields != nil else { return }
+        if document.echoelFXCharacter == nil {
+            NotificationCenter.default.post(name: .echoelCompositionEdited, object: "fxCharacter")
+        }
+        if document.echoelGenre == nil {
+            NotificationCenter.default.post(name: .echoelCompositionEdited, object: "echoelGenre")
+        }
+    }
+
+    /// EF2 — the Echoel's genre from its track: one store write, then the instrument's own
+    /// `"echoelGenre"` edit, which adopts it with the full genre semantics (scale, timbre, echo
+    /// division, recompose). The choices are the instrument's own curated list.
+    @MainActor
+    static func pickEchoelGenre(_ genre: MusicStyle, timeline: TimelineStore) {
+        timeline.setEchoelGenre(genre)
+        NotificationCenter.default.post(name: .echoelCompositionEdited, object: "echoelGenre")
     }
 
     @MainActor
@@ -347,6 +370,9 @@ struct TrackInspectorView: View {
                         decimals: 2,
                         hint: "−1 left, 0 centre, 1 right")
                 }
+                if controls.genre {
+                    echoelGenreRow
+                }
                 if controls.effect {
                     if controls.role == .echoelInstrument {
                         echoelEffectRow
@@ -426,6 +452,31 @@ struct TrackInspectorView: View {
             }
             .pickerStyle(.menu).tint(EchoelTheme.text)
             .accessibilityHint("Default is this voice's own sound. The track keeps its effect in the song")
+            Spacer(minLength: 0)
+        }
+    }
+
+    /// EF2 — the Echoel instance's genre, the header's curated list grouped by shelf (the same
+    /// `MusicStyle.Subcategory` root, so a genre the header offers is offered here and no other).
+    /// Cold read of the song; the `?? StudioDefaultKeys.genre.value` is unreachable — the row is
+    /// shown only when the instance holds a genre.
+    private var echoelGenreRow: some View {
+        HStack(spacing: 8) {
+            Text("Genre")
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+            Picker("Genre", selection: Binding<MusicStyle>(
+                get: { timeline.document.echoelGenre ?? StudioDefaultKeys.genre.value },
+                set: { TrackMix.pickEchoelGenre($0, timeline: timeline) })) {
+                ForEach(MusicStyle.Subcategory.allCases) { shelf in
+                    if !shelf.offeredGenres.isEmpty {
+                        Section(shelf.title) {
+                            ForEach(shelf.offeredGenres) { s in Text(s.displayName).tag(s) }
+                        }
+                    }
+                }
+            }
+            .pickerStyle(.menu).tint(EchoelTheme.text)
+            .accessibilityHint("The genre the Echoel instrument composes in. The song keeps it")
             Spacer(minLength: 0)
         }
     }

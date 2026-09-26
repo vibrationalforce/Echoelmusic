@@ -66,3 +66,23 @@ EF2 genre onto the instance · EF3 patch identity onto the instance · then Clip
   song's save is newer — decide with EF2.
 - OPEN L2: the owner write rides `.onChange(of: fxCharacter)`; a gesture-only Binding (the #1371
   shape) is the stronger form. Harmless today (programmatic writes re-state the same value).
+
+## EF2 — the genre as the instance's second fact (2026-09-26)
+- SHAPE: same instance, second field `genre` (v1 stays string-valued); `settingEchoelField` is the
+  one rewrite path both facts share (later version / other type / non-v1 state → refused).
+  `TimelineStore.writeEchoelField` is the one store body; `setEchoelGenre` beside
+  `setEchoelFXCharacter`. `TimelineDocument.echoelGenre` reads the roll lane only.
+- OWNER/COPY: the song owns the genre; `StudioDefaultKeys.genre` (`style`) is the working copy.
+  Writers of the copy write the song: the genre case of `handleCompositionEdit` (header Picker +
+  OSC remote both reach it) FIRST, `open(_:)`, the Sound reset. Readers adopt: launch (silent,
+  genre BEFORE the FX character, whose stamp reads `style`), after a library Open (silent — a
+  loaded take's saved notes must not be recomposed), the Workstation edit `"echoelGenre"`
+  (announced: the full genre semantics incl. recompose). An un-offered song genre is replaced by
+  the copy, never adopted into an unreachable row.
+- WORKSTATION: `echoelGenreRow` (menu Picker, header's own shelf root) on the Echoel track, only
+  once the song holds a genre; `requestEchoelInstanceIfMissing` imports each missing fact once
+  (an EF1 song gains its genre on first open).
+- L1 applies to the genre as well (debounced song write vs immediate `@AppStorage`); still OPEN,
+  same candidate fix. Divergence case recorded: a Project whose saved `style` differs from its
+  song's genre — the song wins after a library Open, silently (scale/timbre not re-derived).
+- EVIDENCE: COMPILES pending (gates) · TESTED by claims 8/9 (forward) · REVIEW pending · DEVICE open.

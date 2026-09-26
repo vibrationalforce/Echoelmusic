@@ -91,6 +91,9 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         // `Studio/EchoelStudioView.swift` (adoption, the Effects Picker, `open(_:)`) and
         // `TrackMix.setEchoelEffect`.
         "setEchoelFXCharacter",
+        // Phase 3 / EF2: the instance's genre — the genre case of `handleCompositionEdit`, the
+        // adoption, `open(_:)`, the Sound reset and `TrackMix.pickEchoelGenre`.
+        "setEchoelGenre",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than

@@ -738,15 +738,28 @@ public final class TimelineStore {
     /// · No-op when nothing changes, so an adoption that re-states the same value writes nothing.
     /// Not part of the part-edit undo history, like every other lane mixer value.
     public func setEchoelFXCharacter(_ character: FXCharacter) {
+        writeEchoelField(DeviceInsert.echoelFXKey, character.rawValue)
+    }
+
+    /// Phase 3 / EF2 — the second fact of the same instance: the genre the Echoel composes in.
+    /// Same writer, same terms (roll lane only, one instance, an unreadable one kept, no-op when
+    /// unchanged). The instrument's `@AppStorage("studio.genre")` is the working copy.
+    public func setEchoelGenre(_ genre: MusicStyle) {
+        writeEchoelField(DeviceInsert.echoelGenreKey, genre.rawValue)
+    }
+
+    /// The ONE body behind both public writers — one rule for "which lane", "one instance" and
+    /// "never over a later build's", never two.
+    private func writeEchoelField(_ key: String, _ value: String) {
         guard let roll = document.rollLaneID,
               let i = document.lanes.firstIndex(where: { $0.id == roll }) else { return }
         var lanes = document.lanes
         var chain = lanes[i].deviceChain ?? DeviceChain(inserts: [])
         if let existing = chain.instrument {
-            guard let rewritten = existing.settingEchoelFX(character) else { return }
+            guard let rewritten = existing.settingEchoelField(key, value) else { return }
             chain.instrument = rewritten
         } else {
-            chain.instrument = .echoel(fxCharacter: character)
+            chain.instrument = .echoel(fields: [key: value])
         }
         lanes[i].deviceChain = chain
         for j in lanes.indices where j != i && lanes[j].deviceChain?.instrument?.typeID == DeviceInsert.echoelTypeID {

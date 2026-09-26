@@ -160,11 +160,18 @@ public struct DeviceInsert: Codable, Sendable, Equatable, Identifiable {
     /// typeID is the persisted identity — the two are not reconciled yet.)
     public static let echoelTypeVersion = 1
     static let echoelFXKey = "fxCharacter"
+    /// EF2 — the genre the Echoel composes in (a `MusicStyle` raw value).
+    static let echoelGenreKey = "genre"
 
     /// A fresh Echoel instance carrying one fact.
     public static func echoel(fxCharacter: FXCharacter) -> DeviceInsert {
+        echoel(fields: [echoelFXKey: fxCharacter.rawValue])
+    }
+
+    /// A fresh Echoel instance with exactly these fields.
+    static func echoel(fields: [String: String]) -> DeviceInsert {
         DeviceInsert(typeID: echoelTypeID, typeVersion: echoelTypeVersion, isEnabled: true,
-                     stateBlob: echoelBlob([echoelFXKey: fxCharacter.rawValue]))
+                     stateBlob: echoelBlob(fields))
     }
 
     /// The instance's fields, or nil when this is not an Echoel instance THIS build can read — a
@@ -184,8 +191,26 @@ public struct DeviceInsert: Codable, Sendable, Equatable, Identifiable {
     /// not an Echoel instance this build can read: a later build's instance is never rewritten
     /// with v1 meaning, so the song keeps it byte for byte.
     public func settingEchoelFX(_ character: FXCharacter) -> DeviceInsert? {
+        settingEchoelField(Self.echoelFXKey, character.rawValue)
+    }
+
+    /// EF2 — the genre the instance composes in; nil exactly as for `echoelFXCharacter` (a genre
+    /// this build does not know decodes to nothing). Whether it is OFFERED is the caller's
+    /// question (`MusicStyle.offered`), as it is for the instrument's own launch clamp.
+    public var echoelGenre: MusicStyle? {
+        echoelFields?[Self.echoelGenreKey].flatMap(MusicStyle.init(rawValue:))
+    }
+
+    /// EF2 — this instance with its genre set, every other field kept; nil on the same terms as
+    /// `settingEchoelFX`.
+    public func settingEchoelGenre(_ genre: MusicStyle) -> DeviceInsert? {
+        settingEchoelField(Self.echoelGenreKey, genre.rawValue)
+    }
+
+    /// The one rewrite: a readable v1 instance with one field set, re-stamped as this build's v1.
+    func settingEchoelField(_ key: String, _ value: String) -> DeviceInsert? {
         guard var fields = echoelFields else { return nil }
-        fields[Self.echoelFXKey] = character.rawValue
+        fields[key] = value
         var next = self
         next.typeVersion = Self.echoelTypeVersion
         next.stateBlob = Self.echoelBlob(fields)
