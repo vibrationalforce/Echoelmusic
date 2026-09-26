@@ -383,8 +383,14 @@ public enum AudioImport {
 
     #if canImport(AVFoundation)
 
-    /// The production entry point: hold security-scoped access for the copy, then run the
-    /// transaction with the real three steps.
+    /// The production entry point: hold security-scoped access for the library compare (MA2)
+    /// and the copy, then either land the existing file or run the transaction with the real
+    /// three steps.
+    ///
+    /// ⚠️ NO AUDIO TRACK → NO COMPARE. Without a lane the de-dup branch would refuse with
+    /// `.noAudioLane` before it ever measured, while the copy path reports `.unreadableAudio`
+    /// first — the founder's order (see `plan`). Skipping the compare keeps that order and
+    /// spends no read on an import that cannot land.
     ///
     /// ⚠️ THE SCOPE WRAPS THE WHOLE CALL, not just the copy. `importFile` runs first inside
     /// `commit`, so a narrower scope would still be correct — but "acquire, do the work,
@@ -399,7 +405,8 @@ public enum AudioImport {
         defer { if scoped { pickedURL.stopAccessingSecurityScopedResource() } }
         // MA2 — the same bytes already in the library are the same sound: reuse, do not copy.
         // Inside the scope, because the compare reads the picked file.
-        let matches = MediaLibrary.existingAudio(matching: pickedURL)
+        let matches = firstImportableAudioLane(in: timeline.document) == nil
+            ? [] : MediaLibrary.existingAudio(matching: pickedURL)
         if let existing = preferredExisting(matches, clips: clipStore.slots.compactMap { $0 }) {
             return landExisting(existing, clipStore: clipStore, timeline: timeline, bpm: bpm,
                                 measure: measureWithAVFoundation)

@@ -31,6 +31,13 @@
 // is still there AFTER the library question. Graded by Python transcription of the compare,
 // the size filter, the preference and every scan anchor against the worktree.
 //
+// REVIEW OF 7b691faf8 (no HIGH) moved this file: the compare is CAPPED on the main actor
+// (`dedupByteCeiling`, head probe) because the copy it replaces is an APFS clone, not a read;
+// no compare without an audio track (the founder's refusal order); a reused clip that knows its
+// tempo is not re-analysed; the real library is snapshotted, not only the temp home.
+// ⚠️ Fixture note, inherited from MA1: `replaceDocument(original)` also marks the store as
+// bootstrapped — the document is restored, that flag is not.
+//
 // NOT HERE — DEVICE PROBE, open: a real Files pick (security scope, an iCloud file not yet
 // downloaded has no size and simply copies), and how long the compare takes on a long file.
 // NEEDS-FOUNDER-VERIFY: Import Audio → pick a file → Import Audio → pick THE SAME file again →
@@ -119,9 +126,39 @@ final class TheImportReusesAnIdenticalLibraryFileTests: XCTestCase {
         XCTAssertTrue(MediaLibrary.identicalAudio(to: picked, among: [asset(same, size: 5)]).isEmpty,
                       "the compare runs only on files that survive the size filter")
 
+        // An EMPTY source against an EMPTY library file: equal bytes, and still no match —
+        // so this is red only if the `size > 0` gate goes (review of 7b691faf8).
         let empty = try write([], "empty.wav", in: probe)
-        XCTAssertTrue(MediaLibrary.identicalAudio(to: empty, among: [asset(same, size: 0)]).isEmpty,
+        let emptyInLibrary = try write([], "Empty.wav", in: home)
+        XCTAssertTrue(MediaLibrary.sameBytes(empty, emptyInLibrary), "fixture premise: equal bytes")
+        XCTAssertTrue(MediaLibrary.identicalAudio(to: empty, among: [asset(emptyInLibrary, size: 0)]).isEmpty,
                       "an empty file is no audio and matches nothing — the import refuses it as before")
+
+        // Above the ceiling nothing is compared: the import copies (clones) as before MA2.
+        XCTAssertEqual(MediaLibrary.identicalAudio(to: picked, among: [asset(same, size: 6)],
+                                                   byteCeiling: 6).map(\.key.fileName), ["Same.wav"],
+                       "fixture premise: AT the ceiling it still matches")
+        XCTAssertTrue(MediaLibrary.identicalAudio(to: picked, among: [asset(same, size: 6)],
+                                                  byteCeiling: 5).isEmpty,
+                      "a file above the ceiling is never read on the main actor")
+    }
+
+    /// The head probe: two long files that differ only at the very END still differ, and two
+    /// equal long files are still equal once the loop grows past the probe.
+    func testALongCompareCrossesTheHeadProbe() throws {
+        let (probe, home) = makeHome()
+        defer { try? FileManager.default.removeItem(at: probe) }
+        let length = MediaLibrary.headProbeBytes * 2 + 17
+        let long: [UInt8] = (0..<length).map { index in UInt8(truncatingIfNeeded: index &* 31) }
+        var tail = long
+        tail[length - 1] ^= 0xFF
+        let a = try write(long, "a.wav", in: home)
+        let b = try write(long, "b.wav", in: home)
+        let c = try write(tail, "c.wav", in: home)
+        XCTAssertTrue(MediaLibrary.sameBytes(a, b), "equal long files are equal past the probe")
+        XCTAssertFalse(MediaLibrary.sameBytes(a, c), "a difference in the last byte is still found")
+        XCTAssertLessThanOrEqual(MediaLibrary.dedupByteCeiling, 64 << 20,
+                                 "the main-actor compare stays bounded; raise it only with a measurement")
     }
 
     // MARK: 2 — which copy
@@ -162,6 +199,8 @@ final class TheImportReusesAnIdenticalLibraryFileTests: XCTestCase {
             TimelineRegion(laneID: audio.id, clipID: clip.id, startTick: 0, lengthTicks: 1920),
         ]))
         let filesBefore = fileCount(home)
+        // A regression that COPIED would write into the real `Media/Audio`, not into `home`.
+        let libraryBefore = MediaLibrary.listAudio()?.count
 
         let result = AudioImport.landExisting(asset(file, size: 4), clipStore: clips,
                                               timeline: timeline, bpm: 120,
@@ -175,6 +214,7 @@ final class TheImportReusesAnIdenticalLibraryFileTests: XCTestCase {
         XCTAssertEqual(clips.filledClips.count, 1, "no slot spent")
         XCTAssertEqual(timeline.document.regions.count, 2, "one new part")
         XCTAssertEqual(fileCount(home), filesBefore, "no second copy on disk")
+        XCTAssertEqual(MediaLibrary.listAudio()?.count, libraryBefore, "…and none in the real library")
         XCTAssertTrue(FileManager.default.fileExists(atPath: file.path))
 
         let note = AudioImport.successNote(landing, laneName: "Audio 1")
@@ -199,6 +239,7 @@ final class TheImportReusesAnIdenticalLibraryFileTests: XCTestCase {
         timeline.replaceDocument(TimelineDocument(lanes: [TimelineLane(name: "Audio 1", kind: .audio)],
                                                   regions: []))
         let filesBefore = fileCount(home)
+        let libraryBefore = MediaLibrary.listAudio()?.count
 
         let result = AudioImport.landExisting(asset(file, size: 4), clipStore: clips,
                                               timeline: timeline, bpm: 120, measure: { _ in
@@ -211,6 +252,7 @@ final class TheImportReusesAnIdenticalLibraryFileTests: XCTestCase {
         XCTAssertEqual(clips.clip(id: landing.clip.id), landing.clip, "the landing is what the grid holds")
         XCTAssertEqual(timeline.document.regions.map(\.clipID), [landing.clip.id])
         XCTAssertEqual(fileCount(home), filesBefore, "no copy made")
+        XCTAssertEqual(MediaLibrary.listAudio()?.count, libraryBefore, "…and none in the real library")
     }
 
     func testARefusedIdenticalImportLeavesTheLibraryFile() throws {
@@ -279,6 +321,11 @@ final class TheImportReusesAnIdenticalLibraryFileTests: XCTestCase {
         let scope = try XCTUnwrap(perform.range(of: "startAccessingSecurityScopedResource()"))
         let ask = try XCTUnwrap(perform.range(of: "MediaLibrary.existingAudio(matching: pickedURL)"),
                                 "the import must ask the library whether these bytes are already there")
+        let laneGate = try XCTUnwrap(perform.range(of: "firstImportableAudioLane(in: timeline.document) == nil"),
+                                     "no audio track → no compare, so the founder's refusal order holds")
+        XCTAssertLessThan(laneGate.lowerBound, ask.lowerBound)
+        XCTAssertTrue(perform.contains("preferredExisting(matches, clips: clipStore.slots"),
+                      "the copy a clip already plays wins — fed from the real grid")
         let reuse = try XCTUnwrap(perform.range(of: "return landExisting("))
         let copy = try XCTUnwrap(perform.range(of: "return commit(pickedURL: pickedURL"),
                                  "COUNTERWEIGHT: a new file still takes the copy transaction")
@@ -298,9 +345,14 @@ final class TheImportReusesAnIdenticalLibraryFileTests: XCTestCase {
         XCTAssertEqual(try filesUnderSources(containing: "landExisting("),
                        ["Sequencer/AudioImport.swift"], "the de-dup branch has one door, the import")
 
+        let workstation = try source("Sources/Echoelmusic/Studio/WorkstationView.swift")
+        XCTAssertTrue(workstation.contains("landing.reusedLibraryFile && landing.clip.nativeBPM > 0"),
+                      "a reused clip that knows its tempo is not re-analysed, and its tempo row does not lock")
+
         let library = try source("Sources/Echoelmusic/Core/MediaLibrary.swift")
         let same = try body(of: "static func sameBytes(", in: library)
-        XCTAssertTrue(same.contains("read(upToCount: chunkSize)"), "a long file is read in bounded chunks, never whole")
+        XCTAssertTrue(same.contains("read(upToCount: readSize)"), "a long file is read in bounded chunks, never whole")
+        XCTAssertTrue(same.contains("min(chunkSize, headProbeBytes)"), "every compare starts with the small head probe")
         XCTAssertFalse(same.contains("Data(contentsOf:"), "…and never loaded whole")
     }
 

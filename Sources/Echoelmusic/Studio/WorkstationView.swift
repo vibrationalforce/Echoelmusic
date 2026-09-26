@@ -1042,8 +1042,13 @@ struct WorkstationView: View {
                 // merits, not only on the spelling: `resolveRef` runs up to five
                 // `fileExists` probes, and this is the MAIN ACTOR. `AudioImport` already
                 // held the managed copy, so it reports it.
-                tuningPending = AnalysisRequest(url: landing.managedURL, clipID: landing.clip.id)
-                measuringClip = landing.clip.id
+                // MA2 — a reused clip that already knows its tempo is not analysed again: the
+                // never-clobber adoption would refuse the result anyway, and meanwhile its
+                // tempo row would read "measuring…" and lock (review of 7b691faf8).
+                if !(landing.reusedLibraryFile && landing.clip.nativeBPM > 0) {
+                    tuningPending = AnalysisRequest(url: landing.managedURL, clipID: landing.clip.id)
+                    measuringClip = landing.clip.id
+                }
             case .failure(let failure):
                 importNote = failure.userMessage
             }

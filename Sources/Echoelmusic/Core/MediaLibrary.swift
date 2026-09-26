@@ -95,10 +95,15 @@ public enum MediaLibrary {
     /// Every managed audio file whose CONTENT equals `source`, in the browser's order — empty
     /// when there is none, when the home cannot be read, or when `source` has no readable size.
     ///
-    /// ⭐ WHY IT IS SYNCHRONOUS. Import already copies the picked file on the main actor; a
-    /// compare runs only against files of the EXACT same byte size and reads at most what the
-    /// copy it replaces would read and write. Moving the whole import off-main is its own slice
-    /// (plan MA2). ⚠️ It never writes, never deletes, and never decodes.
+    /// ⚠️ IT RUNS ON THE MAIN ACTOR, SO ITS COST IS CAPPED, NOT ARGUED AWAY (review of
+    /// 7b691faf8). The copy it can replace is NOT a full read: `FileManager.copyItem` clones on
+    /// APFS, so a same-volume pick used to cost about nothing — a byte compare of a long file
+    /// would be a new, visible freeze. So: only a file of at most `dedupByteCeiling` bytes is
+    /// compared (a larger one takes the copy path exactly as before MA2 — de-dup simply does not
+    /// apply to it), only against library files of the EXACT same size, and every compare
+    /// reads a small head first, so two different same-length loops part after 64 KB, not after
+    /// 2 MB. Worst case per candidate: 2 × the ceiling. Moving the whole import off-main is its
+    /// own slice (plan MA2). ⚠️ It never writes, never deletes, and never decodes.
     public static func existingAudio(matching source: URL) -> [MediaAsset] {
         guard let assets = listAudio() else { return [] }
         return identicalAudio(to: source, among: assets)
@@ -107,11 +112,20 @@ public enum MediaLibrary {
     /// The pure-over-files half of `existingAudio`: size first (one stat), bytes second, and
     /// only for the survivors of the size filter.
     static func identicalAudio(to source: URL, among assets: [MediaAsset],
-                               chunkSize: Int = 1 << 20) -> [MediaAsset] {
+                               chunkSize: Int = 1 << 20,
+                               byteCeiling: Int = MediaLibrary.dedupByteCeiling) -> [MediaAsset] {
         guard let size = (try? source.resourceValues(forKeys: [.fileSizeKey]))?.fileSize,
-              size > 0 else { return [] }
+              size > 0, size <= byteCeiling else { return [] }
         return assets.filter { $0.byteSize == Int64(size) && sameBytes(source, $0.url, chunkSize: chunkSize) }
     }
+
+    /// The largest file the import compares on the main actor: 32 MiB, about three minutes of
+    /// 16-bit 44.1 kHz stereo — a loop or a stem, the thing a person imports twice. A larger
+    /// file is copied (cloned) as it always was.
+    static let dedupByteCeiling = 32 << 20
+
+    /// The first read of every compare: small, so files that differ early part cheaply.
+    static let headProbeBytes = 64 << 10
 
     /// Byte-for-byte equality, read in bounded chunks so a long file is never held whole.
     /// A file that cannot be opened or read is never "the same" — the import then copies,
@@ -124,17 +138,19 @@ public enum MediaLibrary {
             try? first.close()
             try? second.close()
         }
+        var readSize = min(chunkSize, headProbeBytes)
         while true {
             let left: Data
             let right: Data
             do {
-                left = try first.read(upToCount: chunkSize) ?? Data()
-                right = try second.read(upToCount: chunkSize) ?? Data()
+                left = try first.read(upToCount: readSize) ?? Data()
+                right = try second.read(upToCount: readSize) ?? Data()
             } catch {
                 return false
             }
             guard left == right else { return false }
             if left.isEmpty { return true }
+            readSize = chunkSize
         }
     }
 
