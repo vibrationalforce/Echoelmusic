@@ -331,11 +331,12 @@ final class TheSelectedPartsNotesAreEditedThroughOneWriterTests: XCTestCase {
         XCTAssertTrue(clipStore.contains("@ObservationIgnored public private(set) var userMelodyGeneration"),
                       "the counter is never observed — a view reading it would churn")
 
-        let mounts = try filesMatching { code, _ in code.contains("PartNoteEditor()") }
+        // M8: the mount hands in the rack's capacity (`TheNoteEditorSaysWhenATrackHasNoVoiceTests`).
+        let mounts = try filesMatching { code, _ in code.contains("PartNoteEditor(voiceCapacity:") }
         XCTAssertEqual(mounts, [Self.workstationPath], "one door, on the Workstation")
         let workstation = try source(Self.workstationPath)
         guard let bar = workstation.range(of: "SelectedPartBar()"),
-              let editorMount = workstation.range(of: "PartNoteEditor()"),
+              let editorMount = workstation.range(of: "PartNoteEditor(voiceCapacity: player.laneVoiceCapacity)"),
               let history = workstation.range(of: "SongHistoryRow()") else {
             return XCTFail("ANCHOR MISSING: the part bar, the editor or the history row (#454)")
         }

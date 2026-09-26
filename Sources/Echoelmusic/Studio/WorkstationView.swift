@@ -275,8 +275,9 @@ struct WorkstationView: View {
                     SelectedPartBar()
                         .padding(.horizontal, 10)
                     // Phase 3 / M1 — the selected MIDI part's notes, behind its own "Notes"
-                    // switch. A leaf: it reads the clip grid, never the transport.
-                    PartNoteEditor()
+                    // switch. A leaf: it reads the clip grid, never the transport — the rack's
+                    // capacity (M8) is handed in as a number, set once at start.
+                    PartNoteEditor(voiceCapacity: player.laneVoiceCapacity)
                         .padding(.horizontal, 10)
                     // Phase 3 / Automation A1 — the selected track's curve, behind its own
                     // "Automation" switch, on the canvas's scale. A leaf with its own store

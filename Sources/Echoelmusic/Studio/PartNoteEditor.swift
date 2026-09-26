@@ -33,6 +33,9 @@
 //  never written here), "Fit" moves the targets to the nearest key notes, and "−1 step" / "+1
 //  step" transpose them by one step of the key's scale — each ONE commit.
 //
+//  Since M8: a part on a MIDI track past the rack's capacity says, under "Notes", that the track
+//  has no voice — its notes can be edited and are never heard. The inspector's line and rule.
+//
 //  ⚠️ WHAT IT DOES NOT DO, stated so the surface does not read as more: no scale LOCK — a tap
 //  or a drag may still place a note outside the key (the shading shows it; Fit repairs it), no
 //  playhead, no auto-scroll while dragging (a move stays
@@ -56,6 +59,9 @@ struct PartNoteEditor: View {
 
     @Environment(WorkstationSelection.self) private var selection
     @Environment(TimelineStore.self) private var timeline
+    /// M8: the rack's capacity (`TimelineRegionPlayer.laneVoiceCapacity`), handed in by the
+    /// Workstation — a number set once at start. The editor reads no transport itself.
+    let voiceCapacity: Int
     /// View state: whether the grid is open. Not part of the song, never persisted.
     @State private var isOpen = false
 
@@ -83,6 +89,13 @@ struct PartNoteEditor: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(isOpen ? "Hide the selected part's notes"
                                            : "Show the selected part's notes")
+                if let line = Self.noVoiceLine(TrackMix.role(of: lane.id, in: document,
+                                                             voiceCapacity: voiceCapacity)) {
+                    Text(line)
+                        .font(EchoelTheme.font(11))
+                        .foregroundStyle(EchoelTheme.dim)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 if isOpen {
                     // Keyed by the part: another part starts with an empty selection and its
                     // own octave, never with the last part's.
@@ -93,6 +106,14 @@ struct PartNoteEditor: View {
                 }
             }
         }
+    }
+
+    /// M8: a track past the rack's capacity has no voice — its notes can be edited and are never
+    /// heard. The line is the inspector's, from the inspector's ONE rule (`TrackMix.role`, #416);
+    /// nil for every track that sounds.
+    nonisolated static func noVoiceLine(_ role: TrackMix.Role?) -> String? {
+        guard let role, case .noVoice = role else { return nil }
+        return TrackMix.deviceName(role)
     }
 }
 
