@@ -34,13 +34,26 @@ defects were in HOW it reloaded, below.
 Guards: `AMidPlayNoteEditKeepsTheBarTests` (end-to-end, real player/store/pattern/roll),
 `AMovedSoundingNoteIsReleasedTests` (pump end-to-end + roll scan).
 
-## Still open (not in M5)
+## Still open after M5 — now closed (M6–M10)
 
-- The STRUCTURE chase (`refreshStructure`, `relocate`, `reapplyLaunched`) still loads the roll with
-  `step: 0` at `lastTick` — a region move/trim while playing has the same one-bar phase risk.
-  Separate slice; touches the relocate law.
-- The editor has no rack-capacity note: a MIDI track beyond `multiRollCapacity` never sounds.
-- Usability: Undo sits about a screen below the grid, Play further; marquee replaces the selection
-  (no add); no deselect-all; no scale lock. Next editor slices, in that order.
+- STRUCTURE chase at `lastTick`/`step: 0` → **M7** `c3f72e956` (`chaseStructure` at this step's
+  tick and step; relocate gets `nextStep`). Reviewed; repair `(M7 review)` commit: relocate half is
+  LATENT (no production caller), ordering anchor after the launch shift, four stale doc blocks.
+  Guard `AStructureEditKeepsTheBarTests`. BfT green (main = `c3f72e956`).
+- Rack-capacity note → **M8** `3723e000d` (`PartNoteEditor.noVoiceLine` over `TrackMix.role`).
+- Marquee replaced the selection → **M9** `6220398fc` (`NoteGridGesture.boxing`, preview = commit).
+- Deselect → M6 (`28ce8dc8a` kept Undo under the editor after the M6 review revert).
+- Play far from the grid, always from the top → **M10** `4ada958a5` ("Play from here" in
+  `SelectedPartBar`'s title row via the Workstation's one start + one `canPlay`, `songCanStart()`).
 
-Evidence: COMPILES pending (gates), TESTED by transcription only, NOT device verified.
+## Open
+
+- **Scale lock** — the last usability slice in the founder's list (in-key note entry).
+- **LOW-3 (M7 review)**: `play()` loads the roll with `step: 0`; if the instrument's own loop is
+  already running mid-bar when the song starts, the roll's bar plan is told "bar line" and repeats
+  one bar. Pre-existing; M10 does not add a way in (it is Stop while playing). Reachability on a
+  device unconfirmed.
+- **LOW-4 (M7 review)**: a rack part starting exactly on the chase tick is loaded twice (benign).
+- Off-grid part starts play from the bar they start in (floor) — by design, documented at the button.
+
+Evidence: COMPILES pending for M8–M10 (gates), TESTED by transcription only, NOT device verified.
