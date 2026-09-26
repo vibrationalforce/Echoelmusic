@@ -261,13 +261,6 @@ struct WorkstationView: View {
                 emptyState
             } else {
                 songLine(summary)
-                // WA4 path 7 — the ONE Undo/Redo for the song's parts, notes and automation.
-                // Outside the canvas's `if`, so removing the last part still leaves the way back
-                // on screen. ABOVE the canvas since M6: under it, Undo sat below the part bar,
-                // the whole note grid and the automation editor — a screen away from the edit
-                // it takes back.
-                SongHistoryRow()
-                    .padding(.horizontal, 10)
                 // WA4 path 4 — the arrangement: every track's parts on the one shared scale,
                 // a part selected by tapping it. Handed the document this body already read;
                 // the canvas observes only the selection, and the playhead is its own leaf.
@@ -291,6 +284,13 @@ struct WorkstationView: View {
                     SongAutomationEditor(songTicks: ArrangementStrip.songTicks(summary))
                         .padding(.horizontal, 10)
                 }
+                // WA4 path 7 — the ONE Undo/Redo for the song's parts. Outside the canvas's
+                // `if`, so removing the last part still leaves the way back on screen. ⛔ M6
+                // moved it above the canvas and was reverted by its own review: with the
+                // automation editor closed (its default), this spot is directly under the note
+                // grid's own controls — the closest place to the edit it takes back.
+                SongHistoryRow()
+                    .padding(.horizontal, 10)
                 ForEach(summary.lanes) { row in
                     laneRow(row)
                     if WorkstationSelection.resolvedTrack(selection.trackID,
