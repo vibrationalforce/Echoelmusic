@@ -235,7 +235,8 @@ public final class TimelineRegionPlayer {
     /// arrangement regions; lanes without a launch play the arrangement untouched
     /// (while the engine `isIdle`, every path below is byte-identical to the
     /// pre-launch code — the golden gate). RUNTIME-ONLY state: never persisted,
-    /// reset on play/stop/relocate. @ObservationIgnored deliberately — `tick`
+    /// reset on play/stop/relocate (`play` then seeds the scene it was asked to start,
+    /// Phase 3 / S2). @ObservationIgnored deliberately — `tick`
     /// runs every transport step and must not register ~8 Hz observation churn;
     /// the UI observes `launchGeneration` instead.
     @ObservationIgnored private var launch = ClipLaunchEngine()
@@ -600,6 +601,8 @@ public final class TimelineRegionPlayer {
     /// at the transport layer (the within-bar phase belongs to the pattern; exact
     /// mid-bar locate is the same M2-class refinement as mid-bar region phase).
     /// A tick beyond the song end folds to the top, like the loop wrap.
+    /// `launching` (Phase 3 / S2): a SCENE's parts to land on that start bar inside this
+    /// call — each launched part is started once, by its launch. Empty = plain Play.
     public func play(
         document: TimelineDocument,
         clips: ClipStore,

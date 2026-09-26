@@ -43,7 +43,8 @@
 //    from the top one step later — the same file twice. `play` now takes the scene's parts and
 //    fires them on the start bar inside the call; the audio prime warms but does not start a
 //    lane its launch owns. END-TO-END against `AudioLanePlayer` with a spy sink (one start,
-//    counterweight: the old order is two) + SOURCE-TEXT order scan of `play`. MED-2: the spoken
+//    counterweight: the old order is two); the `play` → prime link is SOURCE-TEXT only (the
+//    order scan). Review of e245def93: no HIGH/MED. MED-2: the spoken
 //    hint named "Bar 5 beat 3" while the song starts on Bar 5 — `songStartLabel`, end to end.
 //    LOW 1 (a `canPlay` refusal makes the scene button do nothing, as it does Play) and LOW 2
 //    (the old claim was order-only) recorded; LOW 2 is answered by the spy test.
@@ -231,7 +232,8 @@ final class TheSceneLaunchIsASwitchTests: XCTestCase {
         XCTAssertTrue(firstStep.isEmpty, "the first transport step never starts a scene part a second time")
     }
 
-    /// S2 review (MED-1), END-TO-END against the shipped coordinator: a lane whose launch fires
+    /// S2 review (MED-1), END-TO-END against `AudioLanePlayer` (NOT through `play` — the link
+    /// from `play` to this call is held by the order scan below): a lane whose launch fires
     /// in the same call is warmed by `prime` but NOT started — the launch starts it once.
     /// Counterweight: the plain prime still starts the arrangement, and a launch after it is
     /// the second start that was the defect.

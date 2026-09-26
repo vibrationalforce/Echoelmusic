@@ -213,9 +213,11 @@ enum SessionGrid {
         return "Bar \(bar) beat \(inBar / TimelineTime.ticksPerBeat + 1)"
     }
 
-    /// Where a scene STARTS a stopped song (S2 review, MED-2): the transport starts on a bar
-    /// (`TimelineRegionPlayer.barStartTick` floors), so a scene at "Bar 5 beat 3" starts the
-    /// song at "Bar 5" — the label of the floored tick, never the scene's own.
+    /// Where a scene STARTS a stopped song (S2 review, MED-2): the transport starts on a bar,
+    /// so a scene at "Bar 5 beat 3" starts the song at "Bar 5" — the label of the floored tick,
+    /// never the scene's own. The floor here matches the transport's (`barStartTick`) only for a
+    /// tick inside the song, which a scene tick always is (it is a region's start); the
+    /// transport's loop fold has no song length to fold by here.
     nonisolated static func songStartLabel(forTick tick: Int) -> String {
         let t = Swift.max(0, tick)
         return label(forTick: t - t % TimelineTime.ticksPerBar)

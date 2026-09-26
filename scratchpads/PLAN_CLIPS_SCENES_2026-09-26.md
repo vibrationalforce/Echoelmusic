@@ -69,3 +69,8 @@ Status: S1 SHIPPED + REVIEWED · 2026-09-26
   floored bar — `SessionGrid.songStartLabel`.
 - LOW-1 OPEN (recorded): a `canPlay` refusal makes the scene button silent, as it does Play.
 - LOW-2 answered by the spy test (`testAnAudioScenePartStartsOnce`).
+- Review of e245def93 (no HIGH/MED): LOW-2/3/4 docs corrected. LOW-1 OPEN: when the shared
+  PatternEngine is ALREADY running (the instrument playing) and a scene starts the stopped song, the
+  launched roll loads with step 0 (`atStepZero: true`) while the next step is s ≠ 0 — a multi-bar
+  part then plays one bar behind (`ArrangementLoadPlan`). Same as plain Play's existing
+  `loadRollRegion(step: 0)`; not introduced here, fix both together.
