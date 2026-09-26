@@ -336,12 +336,17 @@ final class TheSelectedPartsNotesAreEditedThroughOneWriterTests: XCTestCase {
         let workstation = try source(Self.workstationPath)
         guard let bar = workstation.range(of: "SelectedPartBar()"),
               let editorMount = workstation.range(of: "PartNoteEditor()"),
-              let history = workstation.range(of: "SongHistoryRow()") else {
-            return XCTFail("ANCHOR MISSING: the part bar, the editor or the history row (#454)")
+              let history = workstation.range(of: "SongHistoryRow()"),
+              let canvas = workstation.range(of: "ArrangeCanvasView(rows:") else {
+            return XCTFail("ANCHOR MISSING: the part bar, the editor, the history row or the canvas (#454)")
         }
         XCTAssertLessThan(bar.lowerBound, editorMount.lowerBound, "the editor sits under the part bar")
-        XCTAssertLessThan(editorMount.lowerBound, history.lowerBound,
-                          "…and above the one Undo/Redo it shares")
+        // ⛔ M6 flipped this: the editor sat ABOVE the one Undo/Redo, i.e. Undo was below the
+        // part bar, the open note grid and the automation editor — a screen from the edit.
+        XCTAssertLessThan(history.lowerBound, canvas.lowerBound,
+                          "the one Undo/Redo it shares sits above the canvas, on screen while the grid is open")
+        XCTAssertTrue(editor.contains("self.picked = .none"),
+                      "M6: a selection can be dropped — Deselect clears the whole selection")
     }
 
     // MARK: helpers

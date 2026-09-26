@@ -6,8 +6,9 @@
 //  whichever track was open. Since the Arrange canvas and its part bar edit the song from
 //  above the track list, that was the wrong place twice over: Undo was hidden unless a track
 //  was open, and REMOVING the selected part hid the part bar — so the action you most want to
-//  take back had no visible Undo at all. This is the ONE history control, mounted once under
-//  the canvas for the whole song. It MOVED here; it was not copied (one history, one control).
+//  take back had no visible Undo at all. This is the ONE history control, mounted once for the
+//  whole song — since M6 ABOVE the canvas, so it stays on screen while the note grid and the
+//  automation editor below are open. It MOVED here; it was not copied (one history, one control).
 //
 //  ⚠️ WHAT IT COVERS, stated rather than implied (the store's contract): the history holds the
 //  song's PARTS — moves, copies, splits, removals, imports and the composer's part — and, since

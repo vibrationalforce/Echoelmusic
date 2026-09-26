@@ -418,6 +418,11 @@ private struct PartNoteGrid: View {
                                                : "Delete the \(pickedCount) selected notes") {
                     deletePicked(picked, region: region)
                 }
+                // M6 — the way out of a selection. The whole selection, not only the rows on
+                // screen: a note picked two octaves away still counts, and would otherwise stay
+                // picked with no visible way to drop it.
+                button("Deselect", "xmark", enabled: !self.picked.ids.isEmpty,
+                       label: "Clear the note selection") { self.picked = .none }
             }
         }
     }
