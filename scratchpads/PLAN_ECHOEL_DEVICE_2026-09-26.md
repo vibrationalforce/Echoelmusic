@@ -55,3 +55,14 @@ inspector gating, ESV sync-point scans) · REVIEWED (independent reviewer) · DE
 
 ## Next slices (not started)
 EF2 genre onto the instance · EF3 patch identity onto the instance · then Clips/Scenes/Session.
+
+## As built + review (2026-09-26)
+- EF1 6d68bea64; review repair fce169210 (independent review: no HIGH; M1 doc capture, M2 stale
+  contract, M3 roll lane appearing after launch had no instance → inspector now requests it on
+  appear; L3/L4 guard sharpened; L5–L7 docs).
+- OPEN L1: an Effects pick is written to `@AppStorage` at once, the song after a 250 ms debounce;
+  a kill inside that window lets the older song win at the next launch's adoption (a normal
+  suspend flushes). Candidate fix: flush on the Effects-pick write, or adopt only when the
+  song's save is newer — decide with EF2.
+- OPEN L2: the owner write rides `.onChange(of: fxCharacter)`; a gesture-only Binding (the #1371
+  shape) is the stronger form. Harmless today (programmatic writes re-state the same value).
