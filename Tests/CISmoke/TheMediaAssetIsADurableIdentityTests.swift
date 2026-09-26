@@ -28,7 +28,8 @@
 //    import registers nothing, a landed one registers ONE record whose id the clip carries in the
 //    grid, and `assets: .unlinked` is the pre-MA4.2 transaction. The clip codec keeps the link, an old
 //    clip has none, a damaged link costs only the link.
-// 7. SOURCE-TEXT SCAN (MA4.2/4.3): the landing transaction is the registry's one writer, the app
+// 7. SOURCE-TEXT SCAN (MA4.2/4.3/4.5): the landing transaction is the registry's one REGISTERING
+//    writer and the song's relink step its one REBINDING writer, the app
 //    constructs and injects it, the Workstation's import and the browser's Place hand it on, the
 //    copy path mints a fresh record and the placement adopts, and no argument is defaulted.
 // 8. END-TO-END (MA4.3, real stores): a library file placed as a new clip links the record bound
@@ -39,8 +40,19 @@
 // 9. END-TO-END (MA4.5, real stores): a relink of a linked clip checks the chosen file against
 //    the RECORD (which can refuse where the clip alone could not — a clip that never learned its
 //    length) and then MOVES the record's binding with its id; the clip keeps its link; ONE Undo
-//    moves clip and record back, Redo forward. A link the registry does not hold is released. The
-//    writer refuses a rebinding of another record. `recordRefusal` refutes, never confirms.
+//    moves clip and record back, Redo forward. A link the registry does not hold is replaced by
+//    the chosen file's own record. The writer refuses a move of another record. `recordRefusal`
+//    refutes, never confirms.
+// 10. END-TO-END (MA4.5 review, real stores): a record that has moved on to another file is not
+//    pulled back (the link is released, MED-1); a file with its own record gives the clip THAT
+//    record and nothing moves (MED-2); a record its file's measurement refutes is not adopted.
+//
+// MA4.5 REVIEW GRADING against `9bed36874`: does not compile there (`RelinkIdentity`,
+// `relinkClipSource(…identity:)`) — one absence (#486). Claim 10 is FORWARD; on that tree's
+// logic its MED-1 and MED-2 cases would be REGRESSIONS (the record moved in both). Claim 9's
+// foreign-link case changed meaning (released → adopts the file's record); claim 7's two new
+// needles are FORWARD. Claim 8's L2/L4 additions (`31aa7f3a7`: picked-name provenance, a blank
+// record learns the measurement) were FORWARD there; the learn step now also keeps a digest.
 //
 // MA4.5 GRADING against `7a38af018`: does not compile there (`Rebinding`, `rebind`,
 // `recordRefusal`, `relink(…assets:)` are new) — one absence (#486); claim 9 is FORWARD.
@@ -354,9 +366,12 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertTrue(browser.contains("assets: mediaAssets) {"),
                       "the browser's Relink hands the registry to the relink (MA4.5)")
         let relink = try source("Sources/Echoelmusic/Sequencer/MediaRelink.swift")
-        XCTAssertTrue(relink.contains("recordRefusal(record, measurement: measurement, contentDigest: nil)"),
+        XCTAssertTrue(relink.contains("recordRefusal(linked, measurement: measurement, contentDigest: nil)"),
                       "the relink never hashes on the tap")
-        XCTAssertTrue(relink.contains("rebinding: rebinding,"), "the record moves in the song's one relink step")
+        XCTAssertTrue(relink.contains("identity: identity,"),
+                      "what the clip links is decided once and handed to the song's one relink step")
+        XCTAssertTrue(relink.contains("return .adopt(own.id)"),
+                      "the chosen file's own record comes first (MA4.5 review MED-2)")
         XCTAssertEqual(try filesUnderSources(containing: ".rebind(id:"), ["Core/TimelineStore.swift"],
                        "the record's binding moves only inside the undoable relink step")
     }
@@ -534,16 +549,20 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertEqual(clips.clip(id: gone.id)?.mediaAssetID, source.id)
         XCTAssertEqual(assets.record(id: source.id)?.fileName, "Break (1).wav")
 
-        // A link the registry does not hold is released, as before MA4.5.
+        // A link the registry does not hold is replaced by the chosen file's OWN record — after
+        // the Redo that is the moved source, bound to "Break (1).wav" and measured at 8 s.
         XCTAssertEqual(relink(foreign.id, 8), .success(8))
-        XCTAssertNil(clips.clip(id: foreign.id)?.mediaAssetID)
+        XCTAssertEqual(clips.clip(id: foreign.id)?.mediaAssetID, source.id,
+                       "the clip links the record that describes the file it now plays")
+        XCTAssertEqual(assets.record(id: source.id)?.fileName, "Break (1).wav", "adopting moves nothing")
         timeline.undo()
         XCTAssertEqual(clips.clip(id: foreign.id), foreign, "Undo gives the unknown link back")
 
         // The writer refuses a rebinding of ANOTHER clip's record, writing nothing.
         let stranger = MediaAssetStore.Rebinding(store: assets, recordID: UUID(), fileName: "x.wav")
         XCTAssertFalse(timeline.relinkClipSource(clipID: foreign.id, mediaRef: "/y/Media/Audio/x.wav",
-                                                 nativeDurationSeconds: 8, rebinding: stranger, clips: clips))
+                                                 nativeDurationSeconds: 8, identity: .move(stranger),
+                                                 clips: clips))
         XCTAssertEqual(clips.clip(id: foreign.id), foreign)
 
         // The refusal rule itself: the record refutes, never confirms.
@@ -555,6 +574,73 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertNil(MediaRelink.recordRefusal(hashed, measurement: eight, contentDigest: nil),
                      "no digest on the tap: the length decides, and 8 s is compatible")
         XCTAssertEqual(MediaRelink.Refusal.differentSource.userMessage.contains("same recording"), false)
+    }
+
+    // MARK: 10 — MA4.5 review: a relink never takes another file's identity
+
+    func testARelinkNeverTakesAnotherFilesIdentity() throws {
+        let clips = ClipStore()
+        let timeline = TimelineStore()
+        let originalSlots = clips.slots
+        defer { clips.replaceSlots(originalSlots) }
+        let assets = MediaAssetStore(store: nil)
+        // The source two songs used. Another song already relinked it: it now names "Loop (1).wav",
+        // a file that exists and that song plays.
+        let shared = MediaAssetRecord(kind: .audio, fileName: "Loop (1).wav", originalName: "Loop.wav",
+                                      importedAt: Date(timeIntervalSince1970: 1), evidence: evidence(seconds: 8))
+        // A library file with its OWN identity, at a compatible length.
+        let other = MediaAssetRecord(kind: .audio, fileName: "Other.wav", originalName: "Other.wav",
+                                     importedAt: Date(timeIntervalSince1970: 2), evidence: evidence(seconds: 8))
+        // A record whose name is taken by a file its measurement refutes.
+        let stale = MediaAssetRecord(kind: .audio, fileName: "Short.wav", originalName: "Short.wav",
+                                     importedAt: Date(timeIntervalSince1970: 3), evidence: evidence(seconds: 4))
+        for record in [shared, other, stale] { XCTAssertTrue(assets.register(record), "fixture premise") }
+        // This song's clip still names the missing "Loop.wav" and links the shared record.
+        let song = Clip(name: "Loop", kind: .audio, mediaRef: "/x/Media/Audio/Loop.wav",
+                        mediaAssetID: shared.id, nativeDurationSeconds: 8, nativeBPM: 120)
+        var grid = [Clip?](repeating: nil, count: ClipStore.slotCount)
+        grid[0] = song
+        XCTAssertTrue(clips.replaceSlots(grid), "fixture premise")
+        func relink(to name: String) -> Result<Double, MediaRelink.Refusal> {
+            let asset = MediaAsset(kind: .audio, fileName: name,
+                                   url: URL(fileURLWithPath: "/y/Media/Audio/\(name)"), byteSize: 1)
+            // 384 000 frames at 48 kHz: exactly 8 s (#442).
+            return MediaRelink.relink(song.id, to: asset, clipStore: clips, timeline: timeline, assets: assets,
+                                      fileExists: { _ in true },
+                                      measure: { _ in AudioImport.Measurement(sampleRate: 48_000,
+                                                                              frameCount: 384_000,
+                                                                              channelCount: 2) })
+        }
+        func bindings() -> [String] { assets.records.map(\.fileName) }
+        let before = bindings()
+
+        // MED-1: the record has moved on to a file another song plays — it is NOT pulled back.
+        XCTAssertEqual(relink(to: "Loop (2).wav"), .success(8))
+        XCTAssertNil(clips.clip(id: song.id)?.mediaAssetID,
+                     "the clip lets go of a record that describes another file")
+        XCTAssertEqual(assets.record(id: shared.id)?.fileName, "Loop (1).wav",
+                       "the other song's file keeps its identity")
+        XCTAssertEqual(bindings(), before, "no record moved")
+        timeline.undo()
+        XCTAssertEqual(clips.clip(id: song.id), song, "Undo gives the link back")
+
+        // MED-2: the chosen file has its own record — the clip ADOPTS it; a compatible length
+        // never overwrites that file's identity with another's.
+        XCTAssertEqual(relink(to: "Other.wav"), .success(8))
+        XCTAssertEqual(clips.clip(id: song.id)?.mediaAssetID, other.id)
+        XCTAssertEqual(assets.record(boundTo: MediaAsset.Key(kind: .audio, fileName: "Other.wav"))?.id, other.id,
+                       "the file's name still answers its own record")
+        XCTAssertEqual(bindings(), before, "adopting moves nothing")
+        timeline.undo()
+        XCTAssertEqual(clips.clip(id: song.id), song)
+
+        // Counterweight: a record its file's measurement refutes is not the file's identity.
+        XCTAssertEqual(relink(to: "Short.wav"), .success(8))
+        XCTAssertNil(clips.clip(id: song.id)?.mediaAssetID, "a refuted record is not adopted")
+        XCTAssertEqual(bindings(), before)
+        timeline.undo()
+        XCTAssertEqual(clips.clip(id: song.id), song)
+        XCTAssertFalse(timeline.canUndo, "three relinks, three steps, all undone")
     }
 
     // MARK: - Helpers

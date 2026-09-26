@@ -22,10 +22,18 @@
 //
 // ⭐ MA4.5 — THE DURABLE RECORD FOLLOWS THE FILE, WITH ITS ID. When the clip links a record the
 // registry holds, the record must not contradict the chosen file (`recordRefusal`: another length
-// or, once both sides are hashed, another digest), and then its BINDING moves to that file —
-// record id, clip id, region ids, tempo and automation all stay. The record only refutes; it never
-// upgrades "same length" into "same recording". Without a record the link is released (a record
-// must never name a file its clip no longer plays).
+// or, once both sides are hashed, another digest). Then `identity(…)` decides what the clip links,
+// in this order (MA4.5 review, both MED):
+// 1. the chosen file has its OWN record, not refuted by its measurement → the clip ADOPTS it. A
+//    compatible length never overwrites a file's own identity, and the clip's former record stays
+//    where it is (moving it would give the file two records, the newer carrying another file's
+//    evidence);
+// 2. else the clip's record still describes the missing file THIS clip played → it MOVES there
+//    with its id — record id, clip id, region ids, tempo and automation all stay;
+// 3. else the record has moved on (another project relinked it) → the link is RELEASED; taking the
+//    record back would pull it away from a file another clip plays.
+// The record only refutes; it never upgrades "same length" into "same recording". A record must
+// never name a file its clip no longer plays.
 //
 // ⭐ ONE UNDO STEP IN THE CURRENT SESSION (founder 2026-09-26, after review M1 found the first
 // header's "undone by relinking again" false). The write goes through
@@ -128,15 +136,39 @@ public enum MediaRelink {
         }
     }
 
+    /// What the clip links after a relink to `asset` — the three steps in the header, in order.
+    /// `linked` is the clip's own record when this registry holds it (already checked by
+    /// `recordRefusal`).
+    @MainActor
+    static func identity(for clip: Clip, linked: MediaAssetRecord?, to asset: MediaAsset,
+                         measurement: AudioImport.Measurement,
+                         assets: MediaAssetStore) -> MediaAssetStore.RelinkIdentity {
+        let chosen = MediaAssetRecord.Evidence(byteSize: 0,
+                                               sampleRate: measurement.sampleRate,
+                                               frameCount: measurement.frameCount,
+                                               channelCount: measurement.channelCount,
+                                               contentDigest: nil)
+        if let own = assets.record(boundTo: asset.key), !own.isContradicted(by: chosen) {
+            return .adopt(own.id)
+        }
+        let playedName = clip.mediaRef.map { URL(fileURLWithPath: $0).lastPathComponent }
+        if let linked, linked.fileName == playedName {
+            return .move(MediaAssetStore.Rebinding(store: assets, recordID: linked.id,
+                                                   fileName: asset.key.fileName))
+        }
+        return .release
+    }
+
     /// Relink `clipID` to `asset`, through the song's one undoable writer. `measure` and `fileExists` are
     /// injected so the blocking bundle can drive the whole path on paths that exist only as
     /// strings; production passes the real ones (`MediaBrowserView`).
     ///
-    /// MA4.5 — `assets` (REQUIRED, #431; nil = no registry): when the clip links a record this
-    /// registry holds, the record is checked against the file (`recordRefusal`) and then MOVED
-    /// to it with its id — the clip keeps its link, and one Undo moves both back. A clip with no
-    /// link, or a link this registry does not hold (a project from another device), relinks as
-    /// before and its link is released.
+    /// MA4.5 — `assets` (REQUIRED, #431; nil = no registry, the link is released): when the clip
+    /// links a record this registry holds, the record is checked against the file
+    /// (`recordRefusal`); then `identity(…)` adopts the file's own record, moves the clip's
+    /// record with its id, or releases the link. One Undo restores clip, link and binding. A clip
+    /// with no link, or a link this registry does not hold (a project from another device),
+    /// adopts the file's own record when it has one, else ends unlinked.
     @MainActor
     public static func relink(_ clipID: UUID,
                               to asset: MediaAsset,
@@ -152,16 +184,19 @@ public enum MediaRelink {
         let measurement = measure(asset.url)
         let decision = decide(clip, measuredSeconds: measurement?.durationSeconds)
         guard case .success(let seconds) = decision else { return decision }
-        var rebinding: MediaAssetStore.Rebinding?
-        if let assets, let id = clip.mediaAssetID, let record = assets.record(id: id),
-           record.kind == asset.key.kind, let measurement {
-            if let refusal = recordRefusal(record, measurement: measurement, contentDigest: nil) {
+        var identity = MediaAssetStore.RelinkIdentity.release
+        if let assets, let measurement {
+            let linked = clip.mediaAssetID.flatMap { assets.record(id: $0) }
+                .flatMap { $0.kind == asset.key.kind ? $0 : nil }
+            if let linked,
+               let refusal = recordRefusal(linked, measurement: measurement, contentDigest: nil) {
                 return .failure(refusal)
             }
-            rebinding = MediaAssetStore.Rebinding(store: assets, recordID: id, fileName: asset.key.fileName)
+            identity = Self.identity(for: clip, linked: linked, to: asset, measurement: measurement,
+                                     assets: assets)
         }
         guard timeline.relinkClipSource(clipID: clipID, mediaRef: asset.url.path,
-                                        nativeDurationSeconds: seconds, rebinding: rebinding,
+                                        nativeDurationSeconds: seconds, identity: identity,
                                         clips: clipStore) else {
             return .failure(.noAudioClip)
         }

@@ -16,10 +16,12 @@
 //   founder's "inactive domain ≈ near-zero recurring cost".
 // · Availability is not stored: "is the file there" is asked of the resolver when needed.
 // · One name, one answer: when two records carry the same binding, `record(boundTo:)` returns
-//   the NEWEST — the latest import of a name is what that name means now; the older record keeps
-//   its id, so a clip linked to it is not rewritten. (The library picks collision-free names and
-//   this app deletes no media, so this happens only when a file was removed behind the app's
-//   back and the name reused; the digest slice MA4.4 is what can tell the two files apart.)
+//   the NEWEST — the latest import or rebind of a name is what that name means now; the older
+//   record keeps its id, so a clip linked to it is not rewritten. (The library picks
+//   collision-free names, this app deletes no media, and a relink never moves a record onto a
+//   file that already has its own (`MediaRelink`, MA4.5 review MED-2) — so this happens only when
+//   a file was removed behind the app's back and the name reused; the digest slice MA4.4 is what
+//   can tell the two files apart.)
 // · Element-tolerant decode: one damaged record is dropped, the others survive. Unlike the clip
 //   grid, position means nothing here, so compacting is correct.
 
@@ -89,6 +91,20 @@ public final class MediaAssetStore {
         records.append(record)
         persist()
         return true
+    }
+
+    /// What a relink does to the clip's durable link (MA4.5 review): the writer
+    /// (`TimelineStore.relinkClipSource`) takes exactly one, so "move a record AND link another"
+    /// cannot be spelled.
+    /// · `.release` — the clip ends unlinked: no registry, or no record describes the chosen file.
+    /// · `.adopt(id)` — the chosen file's OWN record (its binding is that file and its measurement
+    ///   does not refute it); the clip's former record stays where it is.
+    /// · `.move(rebinding)` — the clip's own record still describes the missing file this clip
+    ///   played, so it follows the file with its id; the clip keeps its link.
+    public enum RelinkIdentity {
+        case release
+        case adopt(UUID)
+        case move(Rebinding)
     }
 
     /// One record's binding, as a relink moves it and its Undo moves it back — carried by the

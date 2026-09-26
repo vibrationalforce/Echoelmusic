@@ -199,8 +199,8 @@ public final class TimelineStore {
     ///     deliberately NOT stored on the clip, so it does not survive a relaunch. It carries the
     ///     clip's `mediaAssetID` too, and — when the relink moved the clip's durable record
     ///     (MA4.5) — that record's binding, so the clip and its source change back in ONE step.
-    ///     A relink with no record to move releases the link instead (MA4.2 review), and Undo
-    ///     gives it back.
+    ///     A relink that adopts the chosen file's own record or releases the link changes only
+    ///     the link (MA4.5 review), and Undo gives it back.
     /// Deliberately NOT whole-document snapshots: lanes/mixer are not part of this
     /// history, so an undo can never silently revert a fader move, rename, or instrument
     /// assignment made after the edit (reviewer-caught cross-contamination). A notes step
@@ -345,40 +345,54 @@ public final class TimelineStore {
     /// ONE production writer of `ClipStore.relinkAudio` besides Undo/Redo above, and ONE undo
     /// step per call (`.clipSource` — it restores the clip's file, its length and its asset link,
     /// nothing else; the clip id, its parts, name, tempo and automation are never touched).
-    /// MA4.5 — `rebinding` (REQUIRED, #431; nil = no record to move) names the clip's OWN durable
-    /// record and the file it now describes: the record is moved there with its id, the clip keeps
-    /// its link, and the same step moves both back. Without one the link is RELEASED (MA4.2
-    /// review), never carried to a file the record does not describe. Validation — is this file
-    /// that source? — is the caller's (`MediaRelink`); this writer only refuses a rebinding that
-    /// names another record or one no longer registered. Refused (false, nothing
-    /// written, no step): an unknown or non-audio clip, a clip with no reference, an empty new
-    /// reference, a length that is not a positive finite number. An unchanged binding returns
-    /// true without a step. ⚠️ Undo/Redo do not ask whether the song plays — a Redo mid-song onto
-    /// a never-preloaded file can attach a node at its next onset (the M3 pause); the browser's
-    /// own refusal covers only the first relink.
+    /// MA4.5 — `identity` (REQUIRED, #431) says what the clip links afterwards
+    /// (`MediaAssetStore.RelinkIdentity`): `.move` carries the clip's OWN record to the new file
+    /// with its id and the clip keeps its link; `.adopt` links the chosen file's own record;
+    /// `.release` leaves the clip unlinked — a record never names a file its clip no longer plays.
+    /// The same step moves clip, link and record binding back. Validation — is this file that
+    /// source, whose record describes it? — is the caller's (`MediaRelink`); this writer only
+    /// refuses a move of another clip's record or of one no longer registered. Refused (false,
+    /// nothing written, no step): an unknown or non-audio clip, a clip with no reference, an empty
+    /// new reference, a length that is not a positive finite number. A relink that changes nothing
+    /// (reference, length, link and binding all as they are) returns true without a step.
+    /// ⚠️ Clip and record are two stores and two saves, record second: a kill between them leaves
+    /// the clip on the new file while its record still names the old one — playback resolves by
+    /// `mediaRef`, so it plays, and the next relink finds the record describing a missing file.
+    /// ⚠️ Undo/Redo do not ask whether the song plays — a Redo mid-song onto a never-preloaded
+    /// file can attach a node at its next onset (the M3 pause); the browser's own refusal covers
+    /// only the first relink.
     @discardableResult
     public func relinkClipSource(clipID: UUID, mediaRef: String, nativeDurationSeconds: Double,
-                                 rebinding: MediaAssetStore.Rebinding?,
+                                 identity: MediaAssetStore.RelinkIdentity,
                                  clips: ClipStore) -> Bool {
         guard let clip = clips.clip(id: clipID), clip.kind == .audio,
               let before = clip.mediaRef, !before.isEmpty, !mediaRef.isEmpty,
               nativeDurationSeconds.isFinite, nativeDurationSeconds > 0 else { return false }
-        // A rebinding moves the clip's OWN record, still registered — never another clip's.
+        let link: UUID?
+        var rebinding: MediaAssetStore.Rebinding?
         var previous: MediaAssetStore.Rebinding?
-        if let rebinding {
-            guard rebinding.recordID == clip.mediaAssetID, !rebinding.fileName.isEmpty,
-                  let record = rebinding.store.record(id: rebinding.recordID) else { return false }
-            previous = MediaAssetStore.Rebinding(store: rebinding.store, recordID: record.id,
+        switch identity {
+        case .release:
+            link = nil
+        case .adopt(let id):
+            link = id
+        case .move(let move):
+            // A move carries the clip's OWN record, still registered — never another clip's.
+            guard move.recordID == clip.mediaAssetID, !move.fileName.isEmpty,
+                  let record = move.store.record(id: move.recordID) else { return false }
+            link = clip.mediaAssetID
+            rebinding = move
+            previous = MediaAssetStore.Rebinding(store: move.store, recordID: record.id,
                                                  fileName: record.fileName)
         }
-        guard before != mediaRef || clip.nativeDurationSeconds != nativeDurationSeconds else { return true }
+        let bindingMoves = rebinding.map { $0.fileName != previous?.fileName } ?? false
+        guard before != mediaRef || clip.nativeDurationSeconds != nativeDurationSeconds
+                || link != clip.mediaAssetID || bindingMoves else { return true }
         pushUndo(.clipSource(clipID: clipID, mediaRef: before,
                              nativeDurationSeconds: clip.nativeDurationSeconds,
                              mediaAssetID: clip.mediaAssetID, record: previous, clips: clips))
-        // With a record to move, the link stays and the record follows the file; without one the
-        // link is released — the record would name a file the clip no longer plays.
         guard clips.relinkAudio(id: clipID, mediaRef: mediaRef, nativeDurationSeconds: nativeDurationSeconds,
-                                mediaAssetID: rebinding == nil ? nil : clip.mediaAssetID) else { return false }
+                                mediaAssetID: link) else { return false }
         if let rebinding {
             rebinding.store.rebind(id: rebinding.recordID, toFileName: rebinding.fileName)
         }

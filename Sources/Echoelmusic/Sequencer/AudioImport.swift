@@ -34,7 +34,8 @@
 // ⛔ "There is no new store, no new persistence root" stood here; since MA4.2 a successful
 // landing establishes a `MediaAssetRecord` in `MediaAssetStore` — an app-library root of its own —
 // and links the clip to it: a fresh copy REGISTERS one (a third write, described below), a library
-// file ADOPTS the record bound to it and writes nothing there, MA4.3.) There is no new clock and
+// file ADOPTS the record bound to it, MA4.3 — writing there only to teach a record that measured
+// nothing the file's measurement.) There is no new clock and
 // no new playback engine. There is no audio INPUT, no recording, no sample instrument and no grain engine. There
 // is no BPM estimate IN THE TRANSACTION (the landing carries `nativeBPM = 0`; since #B2 the
 // Workstation door runs `AudioTempoAnalysis` AFTER the landing, off the main actor, and a
@@ -53,7 +54,8 @@
 // write fails there is no rollback — the honest statement is that this is a two-write sequence
 // ordered so the failure mode is a spare clip, NOT a cross-store transaction system.
 // ⚠️ Since MA4.2 a THIRD write can precede both: the durable record (`MediaAssetStore.register`)
-// — a fresh copy always, a library file only when it has no record yet (MA4.3).
+// — a fresh copy always, a library file when it has no record yet or its record measured nothing
+// (MA4.3).
 // A record persisted before its clip is an unreferenced record — the harmless direction again —
 // and the clip carries its id only when the register succeeded, so a clip never names a record
 // that was not written.
@@ -367,6 +369,10 @@ public enum AudioImport {
             if existing.evidence.durationSeconds == 0, candidate.evidence.durationSeconds > 0 {
                 var learned = existing
                 learned.evidence = candidate.evidence
+                // A digest the record already carries is kept: the measurement adds lengths, it
+                // does not erase identity evidence (MA4.5 review LOW-3).
+                learned.evidence.contentDigest = existing.evidence.contentDigest
+                    ?? candidate.evidence.contentDigest
                 registry.register(learned)
             }
             return existing.id
