@@ -40089,3 +40089,8 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 
 ### 2026-09-26 07:50Z — A5 gates green; Automation closed (autonomous); Recording/Input census started
 - 0fa53b6b5 + 724c1f9b7 in main (both gates green). Automation's autonomous slices closed; remainder is founder/Arrange scope (plan). Recording/Input recovery census running (read-only subagent).
+
+### 2026-09-26 — Recording R1 built (433f13f26)
+- Door: `Studio/RecordTakeControls.swift` (Record beside Play, Arm per open rack MIDI track). `RecordController.followSongEnd` ends a take at the song end (the recorder counts `absoluteStep` linearly; the arrangement wraps). `droppedTakes` says when the 8-slot grid is full. Guard `TheMIDITakeIsRecordedFromTheWorkstationTests` (end-to-end on real Transport/TimelineStore/ClipStore + scans; scans transcribed on both trees).
+- Evidence: gates pending, independent review running. Device journey NEEDS-FOUNDER-VERIFY.
+- Next: review repairs; prose sweep of the now-false "arm() has zero callers / recorder chain doorless" statements (~16 files) as its own commit.
