@@ -7,7 +7,7 @@
 //  the part selected on the Arrange canvas, inline under its part bar: see the part's notes,
 //  tap an empty cell to add one, tap notes to select them, delete the selection, and take any of
 //  it back with the Workstation's one Undo. Since M2: press and hold, then slide — on a note to
-//  move the selection, on its right edge to stretch it, on an empty cell to box-select. An edit is heard from the next step while the song
+//  move the selection, on its right edge to stretch it, on an empty cell to box-select (since M9 the box adds to the selection, like a tap). An edit is heard from the next step while the song
 //  plays (`TimelineRegionPlayer.refreshNoteContent`), not only from the part's next start.
 //
 //  ⭐ ONE OWNER, ONE WRITER, ONE HISTORY. The notes are the clip's (`ClipStore`,
@@ -243,7 +243,7 @@ private struct PartNoteGrid: View {
     private func finish(_ gesture: NoteGridGesture, region: TimelineRegion, offset: Int) {
         switch gesture {
         case .marquee(let ids, _, _, _, _):
-            picked = RollSelection(ids: Array(ids))
+            picked = RollSelection(ids: Array(NoteGridGesture.boxing(ids, into: picked.ids)))
         case .move(let ids, let dPitch, let dStep):
             guard let clip = clipStore.clip(id: region.clipID),
                   let moved = ClipNoteEdit.moving(ids, dPitch: dPitch, dStep: dStep,
@@ -494,7 +494,7 @@ private struct PartNoteCanvas: View {
         let shown = live?.applied(to: visible) ?? visible
         let lit: Set<UUID> = {
             switch live {
-            case .marquee(let ids, _, _, _, _)?: return ids
+            case .marquee(let ids, _, _, _, _)?: return NoteGridGesture.boxing(ids, into: picked)
             case .move(let ids, _, _)?: return ids
             case .resize(let id, _)?: return [id]
             case nil: return picked

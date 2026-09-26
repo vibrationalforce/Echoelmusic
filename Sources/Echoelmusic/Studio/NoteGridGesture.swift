@@ -150,4 +150,12 @@ enum NoteGridGesture: Equatable, Sendable {
         if next.contains(id) { next.remove(id) } else { next.insert(id) }
         return next
     }
+
+    /// The selection a BOX leaves (M9): the boxed notes JOIN it, like a tap's. A box that
+    /// replaced the selection dropped every note picked elsewhere — two octaves away, or in the
+    /// bar before — so a selection could not be built from two boxes. Deselect clears it. The
+    /// canvas lights the same set while the finger slides, so the preview is the commit.
+    static func boxing(_ ids: Set<UUID>, into picked: Set<UUID>) -> Set<UUID> {
+        picked.union(ids)
+    }
 }
