@@ -213,6 +213,14 @@ enum SessionGrid {
         return "Bar \(bar) beat \(inBar / TimelineTime.ticksPerBeat + 1)"
     }
 
+    /// Where a scene STARTS a stopped song (S2 review, MED-2): the transport starts on a bar
+    /// (`TimelineRegionPlayer.barStartTick` floors), so a scene at "Bar 5 beat 3" starts the
+    /// song at "Bar 5" — the label of the floored tick, never the scene's own.
+    nonisolated static func songStartLabel(forTick tick: Int) -> String {
+        let t = Swift.max(0, tick)
+        return label(forTick: t - t % TimelineTime.ticksPerBar)
+    }
+
     nonisolated static func word(_ state: CellState) -> String? {
         switch state {
         case .idle:     return nil
@@ -231,10 +239,12 @@ struct SessionLaunchView: View {
     @Environment(TimelineRegionPlayer.self) private var player
     @Environment(ClipStore.self) private var clipStore
 
-    /// Phase 3 / S2 — start the stopped song at a bar. HANDED IN by the Workstation, whose
-    /// transport stays the ONE caller of `player.play(` (`TheWorkstationPlaysTheTimelineTests`
-    /// A/B): this view never starts the transport itself, it asks the owner to.
-    let playFrom: (Int) -> Void
+    /// Phase 3 / S2 — start the stopped song at a bar WITH a scene's parts. HANDED IN by the
+    /// Workstation, whose transport stays the ONE caller of `player.play(`
+    /// (`TheWorkstationPlaysTheTimelineTests` A/B): this view never starts the transport itself,
+    /// it asks the owner to. The parts ride along (S2 review, MED-1) so the scene lands on the
+    /// start bar inside that one call instead of one step later.
+    let playFrom: (_ tick: Int, _ parts: [UUID]) -> Void
 
     var body: some View {
         let document = timeline.document
@@ -292,6 +302,7 @@ struct SessionLaunchView: View {
     private func sceneBlock(_ scene: SessionGrid.LaunchScene, tracks: [SessionGrid.Track],
                             playing: Bool, state: SessionGrid.CellState?) -> some View {
         let title = SessionGrid.label(forTick: scene.startTick)
+        let songStart = SessionGrid.songStartLabel(forTick: scene.startTick)
         return VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
                 Text(title)
@@ -324,7 +335,7 @@ struct SessionLaunchView: View {
                 .accessibilityValue(state.flatMap(SessionGrid.word) ?? "Not the current scene")
                 .accessibilityHint(playing
                                    ? "From the next bar, loops every part listed at \(title) and returns every other launched track to the song"
-                                   : "Starts the song at \(title) and loops every part listed there")
+                                   : "Starts the song at the start of \(songStart) and loops every part listed at \(title)")
             }
             ForEach(tracks.filter { scene.cells[$0.id] != nil }) { track in
                 if let regionID = scene.cells[track.id] {
@@ -399,11 +410,16 @@ struct SessionLaunchView: View {
 
     /// A scene is a SWITCH (Phase 3 / S1): one player call, so its parts and the other tracks'
     /// return to the song land on the same bar.
-    /// S2: on a stopped song the owner starts it at the scene's bar FIRST — `play` clears every
-    /// launch, so the order is the whole point — and the launch then lands on that very bar.
+    /// S2: a stopped song is started by the owner at the scene's bar WITH the scene's parts —
+    /// one call, so the parts land on that bar before anything sounds (S2 review, MED-1: a
+    /// launch after `play` restarted an audio part from the top one step in).
     private func launchScene(_ scene: SessionGrid.LaunchScene) {
-        if !player.isPlaying { playFrom(scene.startTick) }
-        player.launchScene(Array(scene.cells.values), quantize: SessionGrid.quantize)
+        let parts = Array(scene.cells.values)
+        if player.isPlaying {
+            player.launchScene(parts, quantize: SessionGrid.quantize)
+        } else {
+            playFrom(scene.startTick, parts)
+        }
     }
 
     /// "Back to song": every launched track returns to the arrangement on the next bar.

@@ -58,3 +58,14 @@ Status: S1 SHIPPED + REVIEWED · 2026-09-26
   disabled while stopped. WA4.2 guard's "scene disabled while stopped" claim changed on purpose.
 - Evidence: forward claims in `TheSceneLaunchIsASwitchTests` §4 (engine end-to-end + scans);
   device open.
+
+## S2 review (526804d0c, independent, no HIGH) — repaired
+- MED-1 REPAIRED: a scene launched AFTER `play` returned let the audio prime start the lane's
+  arrangement file and the launch restart it from the top one step later (same file twice).
+  `play(…, launching:)` now fires the scene on the start bar inside the call; the roll skips its
+  arrangement load for a launched lane, `AudioLanePlayer.prime(…, launchingInThisCall:)` warms
+  but does not start a launch-owned lane, and the launch starts it once. MIDI was already clean.
+- MED-2 REPAIRED: the stopped-state VoiceOver hint named "Bar N beat M"; the song starts on the
+  floored bar — `SessionGrid.songStartLabel`.
+- LOW-1 OPEN (recorded): a `canPlay` refusal makes the scene button silent, as it does Play.
+- LOW-2 answered by the spy test (`testAnAudioScenePartStartsOnce`).

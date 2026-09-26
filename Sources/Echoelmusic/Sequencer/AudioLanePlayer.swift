@@ -311,6 +311,16 @@ public final class AudioLanePlayer {
     /// an already-active region reads `.unchanged` and would never load, so this is
     /// its onset twin — the audio analog of the MIDI `primeSecondaryLanes`.
     public func prime(in doc: TimelineDocument, atTick tick: Int, bpm: Double) {
+        prime(in: doc, atTick: tick, bpm: bpm, launchingInThisCall: [])
+    }
+
+    /// Phase 3 / S2 review (MED-1): the same prime, for the one caller whose LAUNCH fires in the
+    /// same call — `TimelineRegionPlayer.play` starting a scene on its start bar. A lane in
+    /// `launchingInThisCall` is warmed like every other but NOT started from the arrangement:
+    /// the launch's `setLaunchOverride` starts it, once, right after. Without this the lane
+    /// started here and restarted from the top a moment later — the same file twice.
+    public func prime(in doc: TimelineDocument, atTick tick: Int, bpm: Double,
+                      launchingInThisCall: Set<UUID>) {
         for laneID in doc.audioLaneIDs {
             // Warm EVERY lane that has any content: open the files + attach nodes
             // now, while nothing is sounding — the attach pattern pauses the whole
@@ -371,7 +381,7 @@ public final class AudioLanePlayer {
             // are still warmed above; only the arrangement start/stop is skipped.
             // play()/relocate() clear overrides BEFORE prime, so those paths are
             // unaffected (the map is empty there).
-            if overrides[laneID] != nil { continue }
+            if overrides[laneID] != nil || launchingInThisCall.contains(laneID) { continue }
             guard let region = TimelineScheduling.activeRegion(in: doc, laneID: laneID, at: tick) else {
                 sinks[laneID]?.stop()
                 continue

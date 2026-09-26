@@ -291,13 +291,29 @@ public final class TimelineRegionPlayer {
     /// while stopped, like every launch.
     public func launchScene(_ regionIDs: [UUID], quantize: LaunchQuantize) {
         guard isPlaying else { return }
+        launch.requestScene(sceneLaunches(regionIDs), atTick: currentTick, quantize: quantize)
+        launchGeneration &+= 1
+    }
+
+    /// Lane → region for a scene's parts, through the one launch rule. A later part on the same
+    /// lane replaces an earlier one (a lane plays one part).
+    private func sceneLaunches(_ regionIDs: [UUID]) -> [UUID: UUID] {
         var launches: [UUID: UUID] = [:]
         for regionID in regionIDs {
             guard let laneID = launchableLaneID(ofRegion: regionID) else { continue }
             launches[laneID] = regionID
         }
-        launch.requestScene(launches, atTick: currentTick, quantize: quantize)
-        launchGeneration &+= 1
+        return launches
+    }
+
+    /// S2 review (MED-1): queue a starting scene on `tick` — a bar start by construction, which
+    /// the bar quantize maps to itself — and fire it at once. `play` calls this on a launch
+    /// engine it has just emptied, so the only transitions are this scene's starts.
+    private func launchesOnTheStartBar(_ regionIDs: [UUID], atTick tick: Int) -> [LaunchTransition] {
+        let launches = sceneLaunches(regionIDs)
+        guard !launches.isEmpty else { return [] }
+        launch.requestScene(launches, atTick: tick, quantize: .bar)
+        return launch.tick(now: tick)
     }
 
     /// Phase 3 / S1 — "Back to song": every launched track returns to the arrangement on the
@@ -589,7 +605,8 @@ public final class TimelineRegionPlayer {
         clips: ClipStore,
         pattern: PatternEngine,
         pianoRoll: PianoRollModel,
-        fromTick: Int = 0
+        fromTick: Int = 0,
+        launching sceneRegionIDs: [UUID] = []
     ) {
         // ONE definition (#416/#1438): the control the user tapped asked this exact
         // call with this exact argument, so an enabled button can never reach a `return`
@@ -620,9 +637,25 @@ public final class TimelineRegionPlayer {
         isPlaying = true
         pianoRoll.setTimelineAutomation(document.automation)   // arrangement automation (cycle 5)
         pianoRoll.setTimelineAutomationTick(startTick)
-        loadRollRegion(at: startTick)            // whatever is under the playhead
+        // Phase 3 / S2 review (MED-1): a SCENE that starts the song lands on the start bar
+        // INSIDE this call — queued and fired here, before any lane is started — instead of on
+        // the first transport step. Each launched lane is therefore started exactly once, by its
+        // launch: the roll and the secondary lanes already skip a launched lane, and the audio
+        // prime is told which lanes to warm but not start. Launching after `play` returned
+        // started the arrangement's file on an audio lane and restarted it from the top one
+        // step later. Empty (plain Play) ⇒ every line below is the pre-S2 path.
+        let startLaunches = launchesOnTheStartBar(sceneRegionIDs, atTick: startTick)
+        let rollLaunched = rollLane.map { launch.isOverriding(laneID: $0) } ?? false
+        if !rollLaunched {
+            loadRollRegion(at: startTick)        // whatever is under the playhead
+        }
         primeSecondaryLanes(at: startTick)       // secondary lanes active at the start bar
-        audioLanes?.prime(in: document, atTick: startTick, bpm: pattern.tempo)   // audio lanes (A1)
+        audioLanes?.prime(in: document, atTick: startTick, bpm: pattern.tempo,   // audio lanes (A1)
+                          launchingInThisCall: Set(startLaunches.map(\.laneID)))
+        if !startLaunches.isEmpty {
+            applyLaunchTransitions(startLaunches, atTick: startTick, step: 0)
+            launchGeneration &+= 1
+        }
         if !pattern.isPlaying { pattern.play(cause: .timelineRegion) }
     }
 

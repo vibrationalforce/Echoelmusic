@@ -321,7 +321,7 @@ struct WorkstationView: View {
             // bar. Its own leaf, because launching reaches the player for members this file's
             // transport is not authorised to call (`TheWorkstationPlaysTheTimelineTests` B).
             // S2: it may START the song at a scene, through this file's own transport.
-            SessionLaunchView(playFrom: { tick in startTimeline(fromTick: tick) })
+            SessionLaunchView(playFrom: { tick, parts in startTimeline(fromTick: tick, launching: parts) })
 
             // MARK: - The import door (Audio Import V1, founder 2026-09-22)
             //
@@ -754,7 +754,7 @@ struct WorkstationView: View {
             resolveAudio: { player.audioLanes?.resolvedURL(forClipID: $0) })
         return HStack(spacing: 8) {
             Button {
-                if playing { player.stop() } else { startTimeline(fromTick: 0) }
+                if playing { player.stop() } else { startTimeline(fromTick: 0, launching: []) }
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: playing ? "stop.fill" : "play.fill")
@@ -1063,14 +1063,16 @@ struct WorkstationView: View {
     /// owned elsewhere: the document by `TimelineStore`, the clock by `PatternEngine` (the
     /// player calls `pattern.play(cause: .timelineRegion)` itself), the notes by
     /// `PianoRollModel`. Nothing is constructed here.
-    /// `fromTick` is REQUIRED (#431): Play passes 0 (the song from the top), the Session view a
-    /// scene's bar (Phase 3 / S2) — the player floors it to the bar and folds it into the song.
-    private func startTimeline(fromTick: Int) {
+    /// `fromTick` and `launching` are REQUIRED (#431): Play passes 0 and no parts (the song from
+    /// the top), the Session view a scene's bar and its parts (Phase 3 / S2) — the player floors
+    /// the tick to the bar and lands the parts on it inside the same call (S2 review, MED-1).
+    private func startTimeline(fromTick: Int, launching: [UUID]) {
         player.play(document: timeline.document,
                     clips: clipStore,
                     pattern: beatPlayer.pattern,
                     pianoRoll: pianoRoll,
-                    fromTick: fromTick)
+                    fromTick: fromTick,
+                    launching: launching)
     }
 
 }
