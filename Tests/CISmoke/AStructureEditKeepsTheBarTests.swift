@@ -34,10 +34,12 @@
 // on a bar line; claim 2 is red on the parent by ANCHOR ABSENCE (one absence, #486).
 // NOT covered: that it is HEARD in time on a device, and a relocate mid-bar under a running
 // pattern (the rig's pattern never advances, so its next step is 0) — the scan carries that.
+// ⚠️ The relocate half is LATENT: `relocate(toTick:)` has no production caller, and the
+// Workstation may not call it (`TheWorkstationPlaysTheTimelineTests`). There is no playhead drop
+// to try on a device, so it is not on the verify list (M7 review, MED-1).
 // NEEDS-FOUNDER-VERIFY: Workstation → a MIDI part two bars or longer on the first track, a second
 // MIDI track with its own part → Play → while it loops, drag the first part's end one bar longer
-// (or move another part) → both tracks keep their bars in order and together; drop the playhead
-// mid-bar → the bar after the drop is the next bar of the part, not the same one again.
+// (or move another part) → both tracks keep their bars in order and together.
 
 import Foundation
 import XCTest
@@ -176,6 +178,8 @@ final class AStructureEditKeepsTheBarTests: XCTestCase {
         let step = try body(of: "public func transportStep(_ step: Int) {", in: player)
         guard let adopt = step.range(of: "let structureChase = refreshStructure()"),
               let advance = step.range(of: "var newTick = cursor.advance(step: step)"),
+              let shift = step.range(of: "if wrapped, !launch.isIdle { launch.shift(by: -loopTicks) }"),
+              let launched = step.range(of: "applyLaunchTransitions(launchTransitions, atTick: newTick, step: step)"),
               let chase = step.range(of: "chaseStructure(structureChase, atTick: newTick, step: step)"),
               let notes = step.range(of: "refreshNoteContent(atTick: newTick, step: step)")
         else {
@@ -185,6 +189,10 @@ final class AStructureEditKeepsTheBarTests: XCTestCase {
                           "the document is adopted BEFORE the advance — the wrap reads its loop length")
         XCTAssertLessThan(advance.lowerBound, chase.lowerBound,
                           "the voices are re-driven AFTER the advance, at the tick this step sounds")
+        XCTAssertLessThan(shift.lowerBound, chase.lowerBound,
+                          "after the wrap's launch shift — before it, a wrapped step chases past the loop in the old frame")
+        XCTAssertLessThan(launched.lowerBound, chase.lowerBound,
+                          "after the launch transitions — before them, a launch would overwrite the chase")
         XCTAssertLessThan(chase.lowerBound, notes.lowerBound, "structure first, then the note refresh")
 
         let voices = try body(of: "private func chaseStructure(_ chase: StructureChase, atTick tick: Int, step: Int) {",

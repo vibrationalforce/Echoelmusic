@@ -683,8 +683,11 @@ public final class TimelineRegionPlayer {
     /// lands at `bar + patternPhase`. Anchoring the audio-lane files (and the
     /// window edge) there keeps audio and MIDI in lockstep (review HIGH: a
     /// downbeat anchor lagged audio behind MIDI by up to 15/16 bar until the
-    /// next onset) — the exact recipe refreshStructure (lastTick) and the loop
-    /// wrap (newTick) already follow. Bar-granular target (see play(fromTick:)).
+    /// next onset) — the recipe the loop wrap (newTick) follows; since M7 a structural
+    /// edit's voice half (`chaseStructure`) follows it too, at the tick this step sounds.
+    /// Bar-granular target (see play(fromTick:)). ⚠️ No production caller today — the
+    /// Workstation may not call it (`TheWorkstationPlaysTheTimelineTests`), so its M7
+    /// mid-bar step fix is latent until a door exists.
     /// No-op while stopped — the parked playhead is picked up by play(fromTick:).
     /// NEVER call this per drag frame — drag END only (a continuous scrub through
     /// this path is a relocate storm; HARNESS_LEDGER 2026-07-16).
@@ -952,8 +955,8 @@ public final class TimelineRegionPlayer {
     // while `doc.midiLaneIDs` is unchanged. Since CLIP-3 the doc IS mutable during
     // play — refreshStructure() upholds the invariant conservatively: any structural
     // change (incl. lane add/remove/re-type) flushes ALL pumps (offs through the OLD
-    // ranks/bindings) BEFORE the snapshot swap, then re-primes on the new ranks. No
-    // pump ever survives a rank shift.
+    // ranks/bindings) BEFORE the snapshot swap, and chaseStructure() then re-primes on the
+    // new ranks at this step's tick (M7). No pump ever survives a rank shift.
     private func fanOutSecondaryLanes(fromTick: Int, toTick: Int, step: Int) {
         guard let sink = slotNoteSink else { return }
         // P0 Clip-Launch: a LAUNCHED secondary lane ignores ARRANGEMENT onsets/
@@ -1127,7 +1130,7 @@ public final class TimelineRegionPlayer {
     /// merge is cheaper and never re-attacks a voice). Relocation is the honest
     /// DAW "chase": flush the secondary voices (offs through the OLD ranks/
     /// bindings — the H5b order law; ranks may have shifted with the lane set),
-    /// swap the snapshot, and re-drive every layer at the current position via
+    /// swap the snapshot, and hand the voices to `chaseStructure`, which re-drives them via
     /// the SAME prime paths play() and the song-loop wrap already exercise.
     /// The primary roll reloads only when ITS active region actually changed —
     /// an edit on another lane must not restage the sounding melody.
@@ -1421,7 +1424,7 @@ public final class TimelineRegionPlayer {
     }
 
     /// Re-window the region currently LAUNCHED on `laneID` after a structural edit +
-    /// re-prime (`refreshStructure`): reload the launched region as a fresh window at
+    /// re-prime (`chaseStructure`, M7): reload the launched region as a fresh window at
     /// `tick` so its content reflects the EDITED document. Region gone ⇒ fall silently
     /// back to the arrangement (the launch was pruned; this is its defensive twin).
     private func reapplyLaunched(laneID: UUID, atTick tick: Int, step: Int) {
