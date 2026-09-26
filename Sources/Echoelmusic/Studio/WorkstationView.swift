@@ -431,19 +431,10 @@ struct WorkstationView: View {
             if measuringClip == request.clipID { measuringClip = nil }
             let parts = [AudioKeyAnalysis.summarise(tuning), AudioTempoAnalysis.summarise(tempo)]
                 .compactMap { $0 }
-            if !parts.isEmpty, importNote == base {
-                let summary = parts.joined(separator: " ")
-                importNote = base.map { $0 + " " + summary } ?? summary
-            }
-            // MA4.4 — the landed file's content evidence: its SHA-256, streamed in chunks off the
-            // main actor and written to its durable record (only if it has none). Here, after the
-            // analysis and inside the same cancellable task — never at launch, never as a scan.
-            #if canImport(CryptoKit)
-            if let assetID = request.assetID {
-                await MediaContentDigest.learn(recordID: assetID, from: url, into: mediaAssets,
-                                               hash: { try MediaContentDigest.sha256(fileAt: $0) })
-            }
-            #endif
+            guard !parts.isEmpty else { return }
+            let summary = parts.joined(separator: " ")
+            guard importNote == base else { return }
+            importNote = base.map { $0 + " " + summary } ?? summary
             #endif
         }
     }
@@ -1071,6 +1062,7 @@ struct WorkstationView: View {
                 let laneName = timeline.document.lanes
                     .first { $0.id == landing.laneID }?.name ?? "the audio track"
                 importNote = AudioImport.successNote(landing, laneName: laneName)
+                learnContentDigest(of: landing)
                 // ⚠️ THE URL COMES FROM THE TRANSACTION, NOT FROM A SECOND LOOKUP. A first
                 // draft asked `MediaLibrary.resolveRef(landing.clip.mediaRef)` here, which
                 // `TheWorkstationImportsAudioTests` forbids — and the guard was right on the
@@ -1081,8 +1073,7 @@ struct WorkstationView: View {
                 // never-clobber adoption would refuse the result anyway, and meanwhile its
                 // tempo row would read "measuring…" and lock (review of 7b691faf8).
                 if !(landing.reusedLibraryFile && landing.clip.nativeBPM > 0) {
-                    tuningPending = AnalysisRequest(url: landing.managedURL, clipID: landing.clip.id,
-                                                    assetID: landing.clip.mediaAssetID)
+                    tuningPending = AnalysisRequest(url: landing.managedURL, clipID: landing.clip.id)
                     measuringClip = landing.clip.id
                 }
             case .failure(let failure):
@@ -1093,6 +1084,29 @@ struct WorkstationView: View {
             #endif
         }
     }
+
+    #if canImport(AVFoundation)
+    /// MA4.4 — a NEW managed copy's content evidence: its SHA-256, streamed in chunks off the main
+    /// actor (`MediaContentDigest.learn`) and added to the record the landing just registered.
+    /// ⚠️ ITS OWN TASK, NOT THE ANALYSIS TASK (review of 66d37a8c5, M1): `.task(id: tuningPending)`
+    /// is cancelled by the next import tap and by leaving the Workstation, and nothing would ever
+    /// hash that file again — its asset could then never prove a relink. This task is bounded
+    /// (one file, `learn` refuses a second hash of the same record) and survives both.
+    /// A REUSED library file is not hashed here: its record was adopted, not created, and may be a
+    /// legacy record whose evidence predates its binding (review L1) — a relink's C step is the one
+    /// place that backfills a legacy record.
+    private func learnContentDigest(of landing: AudioImport.Landing) {
+        #if canImport(CryptoKit)
+        guard !landing.reusedLibraryFile, let assetID = landing.clip.mediaAssetID else { return }
+        let url = landing.managedURL
+        let assets = mediaAssets
+        Task {
+            await MediaContentDigest.learn(recordID: assetID, from: url, into: assets,
+                                           hash: { try MediaContentDigest.sha256(fileAt: $0) })
+        }
+        #endif
+    }
+    #endif
 
     /// "Would Play start the song?" — the engine's own `canPlay`, with the four inputs `play`
     /// hands it (see `transportRow`). ONE call site in this file, so the transport's Play and the
@@ -1295,8 +1309,6 @@ private struct PartTempoRow: View {
 private struct AnalysisRequest: Equatable {
     let url: URL
     let clipID: UUID
-    /// The durable record the landing linked (MA4.4 learns its digest after the analysis).
-    let assetID: UUID?
 }
 
 #endif

@@ -31,8 +31,9 @@
 // both 8 s). Only a matching content digest says "same content", and `match` keeps the two
 // verdicts apart so no caller can read one as the other.
 //
-// Foundation-only and pure: no store, no file access, no clock. The ONE producer is the landing
-// transaction (`AudioImport.commit` → `establishIdentity` → `MediaAssetStore.register`), and a
+// Foundation-only and pure: no store, no file access, no clock. TWO producers register records:
+// the landing transaction (`AudioImport.commit` → `establishIdentity` → `MediaAssetStore.register`)
+// and a relink whose chosen file has no record (`MediaRelink.identity`, step D — MA4.4); and a
 // Clip links to a record by `Clip.mediaAssetID`: a fresh copy registers a new record (MA4.2), a
 // library file adopts the record bound to it (MA4.3). A relink of a missing file (MA4.5 + MA4.4,
 // `MediaRelink.identity`) MOVES the clip's record with its id (`MediaAssetStore.rebind`) only

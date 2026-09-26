@@ -75,8 +75,8 @@ public enum MediaRelink {
         /// The clip knows its length and the file is another recording.
         case differentLength(expected: Double, found: Double)
         /// The clip's durable record carries a content digest and the file's differs: another
-        /// source, whatever its length (MA4.5). Reached only when BOTH sides were hashed — the
-        /// relink itself never hashes on the tap.
+        /// source, whatever its length. Reached only when BOTH sides were hashed — since MA4.4 the
+        /// relink hashes the chosen file itself, off the main actor, when the record has a digest.
         case differentSource
         /// The song is playing: the relinked clip's lane was never preloaded, and its next onset
         /// would attach a node mid-song — an attach pauses the engine (B2b review M3).

@@ -29,8 +29,8 @@
 //    import registers nothing, a landed one registers ONE record whose id the clip carries in the
 //    grid, and `assets: .unlinked` is the pre-MA4.2 transaction. The clip codec keeps the link, an old
 //    clip has none, a damaged link costs only the link.
-// 7. SOURCE-TEXT SCAN (MA4.2/4.3/4.5): the landing transaction is the registry's one REGISTERING
-//    writer and the song's relink step its one REBINDING writer, the app
+// 7. SOURCE-TEXT SCAN (MA4.2/4.3/4.5/4.4): the landing transaction and the relink's step D are the
+//    registry's two REGISTERING writers and the song's relink step its one REBINDING writer, the app
 //    constructs and injects it, the Workstation's import and the browser's Place hand it on, the
 //    copy path mints a fresh record and the placement adopts, and no argument is defaulted.
 // 8. END-TO-END (MA4.3, real stores): a library file placed as a new clip links the record bound
@@ -56,8 +56,8 @@
 //    before the next chunk; the registry only ADDS a digest, never overwrites; `learn` hashes a
 //    record once, drops failures and malformed results; the relink hashes only when the record
 //    has a digest, never on a wrong length or under a playing song (asked again after the hash),
-//    and a failed hash is `.unreadable`. Scans: learning only in the Workstation's post-import
-//    task, file hashing only there and in the relink, nothing at launch, chunked reads, a
+//    and a failed hash is `.unreadable`. Scans: learning only in the Workstation's own digest
+//    task (fresh copies only, never inside the cancellable analysis task), file hashing only there and in the relink, nothing at launch, chunked reads, a
 //    detached utility task, CryptoKit behind its guard.
 //
 // MA4.4 GRADING against `c6d39b7c3`: does not compile there (`MediaContentDigest`,
@@ -358,7 +358,14 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
 
     func testTheImportDoorHandsTheRegistryToTheOneWriter() throws {
         XCTAssertEqual(try filesUnderSources(containing: "registry.register("), ["Sequencer/AudioImport.swift"],
-                       "the landing transaction is the registry's one production writer")
+                       "the landing transaction registers through its `registry`")
+        // MA4.4 review L2: the registry has TWO registering writers since step D — measured by the
+        // store's own method name, not by one caller's variable name (#867: a needle on
+        // `registry.` could never see `assets.register(`).
+        XCTAssertEqual(try filesUnderSources(containing: ".register(created)"), ["Sequencer/MediaRelink.swift"],
+                       "the relink registers the chosen file's own record (step D), nowhere else")
+        XCTAssertEqual(try filesUnderSources(containing: "assets.register("), ["Sequencer/MediaRelink.swift"],
+                       "no other caller spells a registration through an `assets` store")
         XCTAssertEqual(try filesUnderSources(containing: ".register(candidate)"), ["Sequencer/AudioImport.swift"],
                        "…through `establishIdentity`, and nowhere else")
         let app = try source("Sources/Echoelmusic/EchoelmusicApp.swift")
@@ -792,7 +799,7 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertEqual(assets.record(id: blank.id)?.evidence.contentDigest, sha("a"))
     }
 
-    func testTheImportLearnsItsDigestOnceAndOffTheMainActor() async {
+    func testTheImportLearnsItsDigestOnce() async {
         let assets = MediaAssetStore(store: nil)
         let blank = record(seconds: 8)
         XCTAssertTrue(assets.register(blank))
@@ -889,12 +896,16 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         let unproven = await run(old.id, hash: { _ in calls.count(); return digest })
         XCTAssertEqual(unproven, .success(8))
         XCTAssertEqual(calls.value, 3, "no digest to compare, no hash")
-        XCTAssertEqual(assets.record(id: legacy.id), legacy)
+        XCTAssertEqual(assets.record(id: legacy.id), legacy, "the unprovable legacy record does not move")
+        // Step C (review L3): "Take (1).wav" now carries the proven Take record, which this
+        // length does not refute — the clip adopts the chosen file's own identity.
+        XCTAssertEqual(clips.clip(id: old.id)?.mediaAssetID, hashed.id,
+                       "the clip links the record of the file it now plays (C), not the legacy one")
     }
 
     func testNothingHashesAtLaunchOrAsAScan() throws {
         XCTAssertEqual(try filesUnderSources(containing: "MediaContentDigest.learn("), ["Studio/WorkstationView.swift"],
-                       "a new import's digest is learned in the Workstation's post-import task, nowhere else")
+                       "a new import's digest is learned by the Workstation's import door, nowhere else")
         XCTAssertEqual(try filesUnderSources(containing: "MediaContentDigest.sha256(fileAt:"),
                        ["Sequencer/MediaRelink.swift", "Studio/WorkstationView.swift"],
                        "the file is hashed by the import door and the relink, and by nothing else")
@@ -909,11 +920,23 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertTrue(digest.contains("Task.detached(priority: .utility)"), "off the main actor")
         XCTAssertTrue(digest.contains("#if canImport(CryptoKit)\nimport CryptoKit"),
                       "CryptoKit is the implementation, imported behind its guard")
+        // Review of 66d37a8c5 (M1): the hash runs in ITS OWN task — inside the analysis task the
+        // next import tap cancelled it and the record never got a digest.
         let door = try source("Sources/Echoelmusic/Studio/WorkstationView.swift")
-        let task = try XCTUnwrap(door.range(of: ".task(id: tuningPending)"))
+        let helper = try XCTUnwrap(door.range(of: "private func learnContentDigest(of landing: AudioImport.Landing)"))
         let learn = try XCTUnwrap(door.range(of: "MediaContentDigest.learn("))
-        XCTAssertLessThan(task.lowerBound, learn.lowerBound,
-                          "the import's hash runs inside the cancellable post-import task")
+        XCTAssertLessThan(helper.lowerBound, learn.lowerBound, "the learn call lives in the helper")
+        let helperText = door[helper.lowerBound..<learn.lowerBound]
+        XCTAssertTrue(helperText.contains("guard !landing.reusedLibraryFile"),
+                      "only a NEW managed copy is hashed on import; an adopted record is not (review L1)")
+        XCTAssertTrue(helperText.contains("Task {"), "its own task, not the cancellable analysis task")
+        XCTAssertEqual(door.components(separatedBy: "learnContentDigest(of: landing)").count - 1, 1,
+                       "called once, from the import's success branch")
+        let analysis = try XCTUnwrap(door.range(of: ".task(id: tuningPending)"))
+        let afterAnalysis = door[analysis.lowerBound...]
+        let analysisEnd = try XCTUnwrap(afterAnalysis.range(of: "\n        }\n"))
+        XCTAssertFalse(afterAnalysis[..<analysisEnd.lowerBound].contains("MediaContentDigest"),
+                       "the analysis task does not hash")
     }
 
     // MARK: - Helpers

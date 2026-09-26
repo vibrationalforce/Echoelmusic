@@ -20,7 +20,7 @@
 // result back on the main actor; a cancelled caller cancels the hash.
 //
 // ⛔ WHEN A DIGEST IS COMPUTED — only where identity evidence is needed on ONE file: after a new
-// managed import lands (the Workstation's post-import analysis) and when a relink must prove
+// managed import lands (the Workstation's own digest task) and when a relink must prove
 // that a chosen file is its clip's source (`MediaRelink`). Never at launch, never as a library
 // scan, never periodically, never because the browser opened. A legacy record without a digest
 // stays readable and gains one only when such a workflow touches its file.
@@ -59,7 +59,11 @@ public enum MediaContentDigest {
         guard parts.count == 2, parts[0].lowercased() == algorithm, parts[1].count == 64 else {
             return false
         }
-        return parts[1].allSatisfy(\.isHexDigit)
+        // ASCII only: `Character.isHexDigit` also accepts full-width digits (review L4).
+        return parts[1].unicodeScalars.allSatisfy { scalar in
+            let v = scalar.value
+            return (48...57).contains(v) || (65...70).contains(v) || (97...102).contains(v)
+        }
     }
 
     #if canImport(CryptoKit)
