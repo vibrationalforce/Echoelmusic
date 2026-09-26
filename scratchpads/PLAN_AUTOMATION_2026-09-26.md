@@ -96,7 +96,7 @@ Open (unchanged from A1): MED-2 pick radius, LOW-5, LOW-10.
   the field reads and writes the parameter's real value and unit; guard pins agreement with
   `PerTrackAutomationResolver`. The canvas height stays LINEAR over the real range (short
   times sit low) — stated in the editor header, not fixed.
-- MED-1 RECORDED (was LOW-10, now sharper): after Stop a curve that ended low leaves its value —
+- MED-1 REPAIRED in A4 (e6892d37f, see below) — was: after Stop a curve that ended low leaves its value —
   Amplitude at 0 = a silent rack track until the next Play re-applies the patch. Bounded; stated
   in the header; NEEDS-FOUNDER-VERIFY in the guard. Fix candidate A3: re-send `slotPatchSink`
   on stop for slots with per-track lanes.
@@ -138,3 +138,13 @@ the song-wide curves" — the arrangement curves play regardless of it.
 - LOW-3b RECORDED: the ON copy "Global curves move these parameters" sits above clip/arrangement
   rows it does not govern; `TheSoundPanelNamesItsActualDriverTests`' "no automation writer
   today" comment premise is now stale (harmless). 
+
+## A4 — Stop returns each automated track to its own patch (Council, silent: proceed) — e6892d37f
+Repairs A2 review MED-1. Both stop paths of `TimelineRegionPlayer` call
+`restoreAutomatedSlots()` after releasing the arrangement layer; it re-sends each automated
+track's OWN patch through the same `slotPatchSink` the region load uses (one owner of a slot's
+timbre). Slots from the pure `automatedSlots(in:rollLane:capacity:)` — `MultiRollFanout.slot`,
+exactly the resolver's rule; each once, slot order, within capacity; Echoel/audio/global/emptied
+curves restore nothing. Guard claim 9 (behaviour + scan), FORWARD against 43620c8d6.
+Evidence: transcription; gates pending; not device-verified. Global-voice hold after Stop is
+NOT touched (the global layer has no song writer).

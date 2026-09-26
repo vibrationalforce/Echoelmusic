@@ -40072,3 +40072,6 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 ### 2026-09-26 05:30Z — A2 green; Automation A3 shipped
 - A2 4239a4200 + repair d53c1b351: Compile Check + BfT green (auto-merge moved main to d53c1b351). Task #229 closed.
 - A3 97be5adc3: the Sound panel's automation readout named A1/A2 curves by raw key and "no effect" while they played, and read "No automation recorded" at rest. `SongAutomationEdit.statusScale` (the row's own gate + scale) + strip reads `timeline.document.automation`; switch copy no longer claims the song-wide curves. Guard claim 8; five checkers clean; scans transcribed on both trees. Gates queued; review running; device open.
+
+### 2026-09-26 06:30Z — Automation A4 shipped (e6892d37f)
+- A4: A2 review MED-1 repaired — Stop re-sends each automated rack track's own patch via `slotPatchSink` (`restoreAutomatedSlots` / pure `automatedSlots`), both stop paths, after the arrangement layer is released. Guard claim 9; five checkers clean; scans transcribed (parent: regression shape). Gates pending; independent review running. Not device-verified.
