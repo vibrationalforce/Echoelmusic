@@ -7,8 +7,9 @@
 // ⚠️ TWO NAMES FOR TWO THINGS, AND THE MAPPING IS STATED ONCE HERE. The founder's "MediaAsset" is
 // THIS type. The shipped `MediaAsset` (`Core/MediaAsset.swift`) is the founder's "BrowserItem": a
 // row the directory listing computes when the browser looks, never stored. It keeps its name in
-// this slice because 112 references (52 of them guard needles) would move with a rename; the
-// rename is its own mechanical slice, not a side effect of this one.
+// this slice because a rename moves every reference to it, guard needles included (measure:
+// `git grep -wn MediaAsset -- Sources Tests | wc -l`); the rename is its own mechanical slice,
+// not a side effect of this one.
 //
 // ⭐ WHAT A RECORD HOLDS, AND WHAT IT DELIBERATELY DOES NOT.
 // · A stable `id` that no relink, rebind or rename changes — the identity a Clip points at.
@@ -96,11 +97,15 @@ public struct MediaAssetRecord: Codable, Sendable, Equatable, Identifiable {
             return Double(frameCount) / sampleRate
         }
 
-        /// A digest this build can compare: non-empty and carrying an algorithm prefix.
-        var comparableDigest: String? {
-            guard let digest = contentDigest, digest.contains(":"),
-                  !digest.hasSuffix(":") else { return nil }
-            return digest
+        /// The digest split into its algorithm and its lower-cased value, or nil when either half
+        /// is empty. Two digests are comparable only under the SAME algorithm (see `match`).
+        var comparableDigest: (algorithm: String, value: String)? {
+            guard let digest = contentDigest,
+                  let colon = digest.firstIndex(of: ":") else { return nil }
+            let algorithm = digest[..<colon].lowercased()
+            let value = digest[digest.index(after: colon)...].lowercased()
+            guard !algorithm.isEmpty, !value.isEmpty else { return nil }
+            return (algorithm, value)
         }
     }
 
@@ -130,11 +135,16 @@ public struct MediaAssetRecord: Codable, Sendable, Equatable, Identifiable {
     }
 
     /// Compare a candidate's evidence with this record's. The digest decides when both sides
-    /// have one; only then is "same content" possible. Otherwise the length rule gives a
-    /// compatibility verdict, never an identity one.
+    /// have one under the SAME algorithm; only then is "same content" possible. Digests of two
+    /// different algorithms say nothing about each other, so they fall through to the length
+    /// rule — a compatibility verdict, never an identity one.
+    ///
+    /// ⚠️ Equal digests win over the lengths: the digest is the authority, so a record whose
+    /// measured length disagrees with an identical-bytes candidate is not flagged here.
     public func match(_ candidate: Evidence) -> Match {
-        if let mine = evidence.comparableDigest, let theirs = candidate.comparableDigest {
-            return mine == theirs ? .sameContent : .differentContent
+        if let mine = evidence.comparableDigest, let theirs = candidate.comparableDigest,
+           mine.algorithm == theirs.algorithm {
+            return mine.value == theirs.value ? .sameContent : .differentContent
         }
         let expected = evidence.durationSeconds
         let found = candidate.durationSeconds

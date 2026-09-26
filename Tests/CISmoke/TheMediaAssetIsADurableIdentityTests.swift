@@ -10,7 +10,8 @@
 // 1. END-TO-END BEHAVIOUR (shipped, pure value type): the DIGEST decides identity when both sides
 //    have one — equal is `sameContent`, different is `differentContent` EVEN AT THE SAME LENGTH;
 //    without a comparable digest the verdict is only `compatibleDuration` / `differentDuration`,
-//    never identity; nothing measurable is `unmeasured`; a malformed digest is not comparable.
+//    never identity; nothing measurable is `unmeasured`; a malformed digest is not comparable;
+//    digests of two DIFFERENT algorithms fall back to the length, and the hex is case-blind.
 // 2. END-TO-END + SOURCE-TEXT SCAN: the length rule has ONE definition. `MediaRelink.sameLength`
 //    agrees with `MediaAssetRecord.compatibleDuration` over a grid, and the tolerance literal
 //    occurs once in `Sources/`, in the record's file (#416).
@@ -66,6 +67,15 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertEqual(record(seconds: 8, digest: "sha256:").match(evidence(seconds: 8, digest: "sha256:")),
                        .compatibleDuration)
         XCTAssertEqual(record(seconds: 8, digest: "aa").match(evidence(seconds: 8, digest: "aa")),
+                       .compatibleDuration)
+
+        // Review of ec2ad04a9 (MED): the algorithm is part of the digest. Two algorithms say
+        // nothing about each other, a case difference in the hex is the same bytes, and an
+        // empty algorithm is no digest.
+        XCTAssertEqual(known.match(evidence(seconds: 8, digest: "blake3:aa")), .compatibleDuration,
+                       "a digest of another algorithm must not read as another file")
+        XCTAssertEqual(known.match(evidence(seconds: 8, digest: "SHA256:AA")), .sameContent)
+        XCTAssertEqual(record(seconds: 8, digest: ":aa").match(evidence(seconds: 8, digest: ":bb")),
                        .compatibleDuration)
 
         // Nothing measurable and nothing to compare.
