@@ -58,8 +58,8 @@
 //
 // ⚠️ WHAT THIS FILE CANNOT SHOW, and it is the first thing to say because the whole slice rests
 // on it: nothing here proves any of this is heard or recorded. `RecordController.onStep` opens
-// with `guard armed else { return }`, `arm()` has zero callers in `Sources/`, and #204 records
-// the controller as doorless. The repair is worth making BECAUSE the path is dormant — the same
+// with `guard armed else { return }`, and `arm()`'s one caller (Recording R1's Workstation door)
+// arms rack MIDI tracks only and blocks Record while a bio lane is armed. The repair is worth making BECAUSE the path is dormant — the same
 // arithmetic behind a door would need a device listen, not a test. And what the lane WRITES is
 // this ramp sampled at the transport step rate, so the per-second bound is a property of the
 // signal, not of the difference between two adjacent keyframes.

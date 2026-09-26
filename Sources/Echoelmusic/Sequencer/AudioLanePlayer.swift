@@ -26,7 +26,8 @@
 // MONTHS IT WAS A CAPABILITY CLAIM WITH NO PRODUCER. Wired was true; sounding was not,
 // because nothing a user could reach ever put an audio region on an audio lane — the only
 // audio-bearing creator, `AudioClipFactory`, was called only by `TakeRecorder`, constructed
-// only by `RecordController`, whose `arm()` has ZERO callers (#204/#527). So `apply`/`prime`
+// only by `RecordController`, whose `arm()` then had ZERO callers (#204/#527; since Recording
+// R1 it has one, which records MIDI only — no audio input, #1302). So `apply`/`prime`
 // walked `doc.audioLaneIDs` on every transport step and found nothing to play.
 //
 // ⭐ THAT GAP IS CLOSED (Audio Import V1, founder 2026-09-22). `Sequencer/AudioImport.swift`

@@ -358,8 +358,9 @@ public struct RespirationEstimator {
     /// ⛔ AND THE FIRST DESCRIPTION OF THAT FIFTH BAND WAS WRONG IN BOTH ITS CLAIMS, which is
     /// worth more than the correction itself. It called the window "the most reachable of the
     /// lot … called every step from `RecordController` on live bio … in the shipped path". It is
-    /// DORMANT: `RecordController.onStep` opens with `guard armed else { return }` and `arm()`
-    /// has zero callers in `Sources/` (task #204 records the controller as doorless).
+    /// DORMANT: `RecordController.onStep` opens with `guard armed else { return }`, and `arm()`'s
+    /// one caller (Recording R1's Workstation door) arms rack MIDI tracks only and blocks Record
+    /// while a bio lane is armed — the bio capture this band feeds has no door.
     ///
     /// ⛔ AND MY OWN REBUTTAL OF ITS SECOND HALF WAS A NON-SEQUITUR — caught by review, and the
     /// worse error of the two because it was written in the middle of a correction. It answered

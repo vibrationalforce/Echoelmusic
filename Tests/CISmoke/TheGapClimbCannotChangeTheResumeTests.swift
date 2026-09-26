@@ -84,8 +84,8 @@
 //
 // ⚠️ AND THE LIMIT #434 AND #433 BOTH STATE, WHICH THIS FILE INHERITS UNCHANGED: nothing here
 // proves any of it is heard or recorded. `RecordController.onStep` opens with
-// `guard armed else { return }`, `arm()` has zero callers in `Sources/`, and #204 records the
-// controller as doorless.
+// `guard armed else { return }`, and `arm()`'s one caller (Recording R1's Workstation door) arms
+// rack MIDI tracks only and blocks Record while a bio lane is armed.
 
 import Foundation
 import XCTest

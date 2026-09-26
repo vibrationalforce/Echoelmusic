@@ -56,7 +56,8 @@
 //
 // ⚠️ AND THE LIMIT #433/#434/#444/#448 ALL STATE, INHERITED UNCHANGED: nothing here proves any
 // of it is heard or recorded. `RecordController.onStep` opens with `guard armed else { return }`,
-// `arm()` has zero callers in `Sources/`, and #204 records the controller as doorless. The
+// and `arm()`'s one caller (Recording R1's Workstation door) arms rack MIDI tracks only and
+// blocks Record while a bio lane is armed — no door reaches the bio capture. The
 // repair is worth making BECAUSE the path is dormant — the same arithmetic behind a door would
 // need a device listen, not a test.
 

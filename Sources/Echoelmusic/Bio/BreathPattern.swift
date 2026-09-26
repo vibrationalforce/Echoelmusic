@@ -110,7 +110,8 @@ public struct BreathPattern: Identifiable, Equatable, Sendable {
     /// follows". Both halves are false, and two places in this repo already said so before I
     /// wrote it: `bioNormalized`'s only caller is `RecordController.captureBio` — a recorded
     /// automation lane, not a live audio path — and `RecordController.onStep` opens
-    /// `guard armed else { return }` while `arm()` has ZERO callers in `Sources/`. The #433
+    /// `guard armed else { return }`, and `arm()`'s one caller is Recording R1's Workstation door,
+    /// which arms rack MIDI tracks only and blocks Record while a bio lane is armed. The #433
     /// entry and `RespirationEstimator`'s own doc both record that dormancy; I re-committed the
     /// claim they strike. The consumers that ARE live:
     ///   · `ModulationMatrix` — `.breathRate` has a producer, so it reaches `FXModCarrier`'s

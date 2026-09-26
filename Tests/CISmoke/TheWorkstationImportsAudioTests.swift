@@ -7,8 +7,8 @@
 // injected into it; `#1438` corrected `ClipKind.timelineEngineKinds` to `[.midi, .audio]`
 // because the ENGINE was shipped. What was missing for four months was a PRODUCER — the one
 // type that mints an audio-bearing clip, `AudioClipFactory`, had exactly one caller
-// (`TakeRecorder`), reached only from `RecordController.arm()`, which has zero callers
-// (#204/#527). `Sequencer/AudioImport.swift` is the second caller and the first with a door.
+// (`TakeRecorder`), reached only from `RecordController.arm()`, which then had zero callers
+// (#204/#527; Recording R1's door records MIDI only — no audio input, #1302). `Sequencer/AudioImport.swift` is the second caller and the first with a door.
 //
 // ⚠️ THE LIMIT, FIRST (§1). Most of this file is END-TO-END BEHAVIOUR: `AudioImport.plan`,
 // `validate`, `firstImportableAudioLane`, `successNote`, `AudioClipFactory.coveringBars`,

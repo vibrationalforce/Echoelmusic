@@ -189,8 +189,9 @@ public enum RecordPlan {
 /// — the #444 lesson, third site in this cluster.
 ///
 /// ⚠️ THIS PATH IS DORMANT TODAY and the fix is worth making BECAUSE of that, not in spite of
-/// it. `RecordController.onStep` opens with `guard armed else { return }`, `arm()` has zero
-/// callers in `Sources/`, and task #204 records RecordController as doorless. A review report
+/// it. `RecordController.onStep` opens with `guard armed else { return }`, and `arm()`'s one
+/// caller (Recording R1's Workstation door) arms rack MIDI tracks only and blocks Record while a
+/// bio lane is armed — the BIO leg below stays doorless. A review report
 /// called this "the shipped capture path"; it is not. Repairing arithmetic while nothing rides
 /// on it is free — the same repair after a door exists would need a device listen.
 ///

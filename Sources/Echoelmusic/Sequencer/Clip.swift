@@ -92,7 +92,8 @@ public enum ClipKind: String, Codable, Sendable, CaseIterable {
     /// ⭐ AND THE PRODUCER ARRIVED WITH AUDIO IMPORT V1 (founder 2026-09-22). When #1438
     /// corrected this set, what was still absent was a PRODUCER, not an engine — the only
     /// path that could create an audio-carrying clip was `AudioClipFactory` ←
-    /// `TakeRecorder` ← `RecordController`, whose `arm()` has zero callers (#204/#527).
+    /// `TakeRecorder` ← `RecordController`, whose `arm()` then had zero callers (#204/#527;
+    /// Recording R1's door records MIDI only).
     /// `Sequencer/AudioImport.swift` is the second caller of that factory and the first with
     /// a door (`WorkstationView`'s "Import Audio" row), so an audio region is now something
     /// a user can make.

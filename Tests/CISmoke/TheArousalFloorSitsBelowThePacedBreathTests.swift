@@ -15,8 +15,8 @@
 //  ⚠️ WHAT THIS FILE CANNOT DO, stated first because the reviewer report that started #433 got
 //  it wrong in the other direction: it cannot show that any of this is AUDIBLE or RECORDED
 //  today. The path is dormant — `RecordController.onStep` opens with `guard armed else
-//  { return }`, `arm()` has zero callers in `Sources/`, and task #204 records RecordController
-//  as doorless. These tests pin ARITHMETIC on a pure function. That is the whole claim.
+//  { return }`, and `arm()`'s one caller (Recording R1's Workstation door) arms rack MIDI
+//  tracks only and blocks Record while a bio lane is armed. These tests pin ARITHMETIC on a pure function. That is the whole claim.
 //
 //  FIVE OF THESE EIGHT TESTS ARE RED ON THE OLD WINDOW: the paced-pattern chain, the travel
 //  sweep, the pinned before/after pair, the unmeasured-breath fallback, and — less obviously —

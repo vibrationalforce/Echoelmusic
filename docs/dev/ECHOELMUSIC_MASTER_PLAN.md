@@ -222,7 +222,7 @@ Detail and device status: `FEATURE_STATUS.md` §1. Owners: `scratchpads/PLAN_DOC
 | Phase | Content | State |
 |---|---|---|
 | **PHASE 1 — Foundation & truth** | the shipping instrument; product law R1–R3; export quality E1–E3; Workstation chip with import/play | CLOSED as a phase (items carry their own statuses above) |
-| **PHASE 2 — WORKSTATION ARCHITECTURE** | WA1 → WA2 → WA3 → WA4 (§7) | **CURRENT** — WA1 and WA2 COMPLETE; WA3 APPROVED (WA3.1 CLOSED, WA3.2 IMPLEMENTED, slice 2 IMPLEMENTED); WA4 IMPLEMENTED 2026-09-25 (items 1–9; Arm absent by design, no record path) — compile gates QUEUED for everything after `5bdcd2b`, device journey owed (§2c) |
+| **PHASE 2 — WORKSTATION ARCHITECTURE** | WA1 → WA2 → WA3 → WA4 (§7) | **CURRENT** — WA1 and WA2 COMPLETE; WA3 APPROVED (WA3.1 CLOSED, WA3.2 IMPLEMENTED, slice 2 IMPLEMENTED); WA4 IMPLEMENTED 2026-09-25 (items 1–9; Arm absent by design then — added later by Phase 3 / Recording R1, MIDI only) — compile gates QUEUED for everything after `5bdcd2b`, device journey owed (§2c) |
 | PHASE 3 — Domain recovery | recording/input, note editing, automation editing, undo, video, broadcast, hosting, etc., each through the recovery principle (law §5) into the WA2 owners | PLANNED — order decided by the Founder after WA2 |
 
 **Phase 2 is architecture, not UI construction.** No workstation UI is built until WA1–WA3 are
@@ -439,7 +439,7 @@ done. WA4 is the first front.
   - **WA4 path 6 — track headers: Mute/Solo IMPLEMENTED.** M/S switches in the track row
     (`33d5c0537`), gated on `TrackMix.controls(…).muteSolo`, writing through `TrackMix`; the
     inspector no longer draws them (one door per fact), hints worded once in
-    `TrackMix.muteHint`/`soloHint`. **No Arm** (no record path, #1302). Level/Pan stay in the
+    `TrackMix.muteHint`/`soloHint`. **No Arm** (no record path, #1302) — ⭐ superseded by Phase 3 / Recording R1: Arm now sits under the open track's inspector, rack MIDI tracks only, beside a Record button by Play. Level/Pan stay in the
     inspector (numeric → `EchoelValueField`, too wide for a phone row). Guard
     `TheTrackHeaderMutesAndSolosTests`.
   - **WA4 path 9 — Echoel as a Device on its track: DOOR IMPLEMENTED.** The Echoel track's

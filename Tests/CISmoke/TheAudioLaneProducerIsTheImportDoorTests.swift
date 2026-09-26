@@ -14,7 +14,8 @@
 // WHAT SURVIVES UNCHANGED, AND IT IS MOST OF THE FILE. The census was never an argument for
 // deletion - it was an argument that a SECOND producer must be a decision rather than a
 // drift, and that is exactly as true with one door as with none. Every counterweight below
-// stands: the recorder chain is still doorless, the migration still seeds an EMPTY audio
+// stands: the recorder chain's AUDIO leg is still doorless (Recording R1's door records MIDI
+// only), the migration still seeds an EMPTY audio
 // lane, both MIDI region creators still build `kind: .midi`, and the layer is still wired to
 // the transport. What changed is one number in one set. (S2, 2026-09-23, added a THIRD MIDI
 // region creator — `MIDIImport.plan`, doored by "Import MIDI" — and it too builds
@@ -36,7 +37,8 @@
 //     answer is invisible until someone reads the reason (#367).
 //   - `RecordController` -> `TakeRecorder` -> `AudioClipFactory` is still the DOORLESS
 //     audio-bearing chain: `TakeRecorder` is constructed only from `RecordController`, and
-//     `RecordController.arm()` has zero callers (#204). That chain is untouched by this
+//     `RecordController.arm()` had zero callers (#204; Recording R1's door arms MIDI only, so
+//     the audio leg stays doorless). That chain is untouched by this
 //     slice and must stay untouched - it needs an audio INPUT, which this app does not
 //     have (#1302).
 //   - `AudioImport.plan` is the SECOND caller of `AudioClipFactory` and the FIRST with a
@@ -265,7 +267,7 @@ final class TheAudioLaneProducerIsTheImportDoorTests: XCTestCase {
             bullet, (2) the failure message of `testBothMidiRegionCreatorsMakeMidiClips`, \
             (3) this test's own name and doc. Verify the new door creates `kind: .midi` only; \
             an audio-bearing clip here would be a THIRD audio-bearing producer (after the \
-            doorless recorder chain and the Workstation import door) and falsify this file's \
+            recorder chain, whose audio leg is doorless, and the Workstation import door) and falsify this file's \
             census.
             """)
     }
@@ -295,7 +297,7 @@ final class TheAudioLaneProducerIsTheImportDoorTests: XCTestCase {
             \(factoryCallers.isEmpty ? "nothing" : factoryCallers.joined(separator: ", ")). \
             It is the one thing that mints an audio-bearing clip, and the expected set is \
             exactly two: `AudioImport` (the Workstation door, Audio Import V1) and \
-            `TakeRecorder` (the doorless recorder chain, #204). Losing `AudioImport` takes \
+            `TakeRecorder` (the recorder chain, whose audio leg is doorless, #204/#1302). Losing `AudioImport` takes \
             the audio lanes back to having no reachable producer at all; gaining a third \
             entry is a new path to a sounding audio lane and needs the prose moved with it.
             """)
