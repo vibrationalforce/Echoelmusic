@@ -550,6 +550,14 @@ private struct PartNoteCanvas: View {
                 let shape = Path(roundedRect: rect, cornerRadius: 2)
                 context.fill(shape, with: .color(lit.contains(note.id) ? EchoelTheme.text
                                                                          : EchoelTheme.accent))
+                // A picked note also changes SHAPE, not only colour (WCAG 1.4.1 — modes census
+                // UX C): a 1 pt inner ring in the grid's own surface colour, so the pick reads
+                // as a hollowed block without telling text from accent apart. Skipped on a note
+                // too small to carry a ring (the inset would invert the rect).
+                if lit.contains(note.id), rect.width > 4, rect.height > 4 {
+                    context.stroke(Path(roundedRect: rect.insetBy(dx: 1.5, dy: 1.5), cornerRadius: 1),
+                                   with: .color(EchoelTheme.surface), lineWidth: 1)
+                }
             }
             // The selection box, outline only.
             if let box {
