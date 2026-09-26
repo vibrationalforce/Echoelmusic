@@ -99,6 +99,22 @@ public final class LaneVoiceRack {
     /// a held note (offs arrive raw too).
     @ObservationIgnored private var bioHeldPitchBySlot: [Int: Int] = [:]
 
+    /// DC1 (per-track effect, `DeviceChain`): each slot voice's `fxChain` exactly as it was
+    /// built, captured once at attach. A slot is POOLED — it plays whichever lane holds its rank —
+    /// so a lane WITHOUT an effect must get this back, or it would inherit the last lane's
+    /// character. Control-plane only; never read by a view.
+    @ObservationIgnored private var defaultEffectBySlot: [FXPreset] = []
+    /// The effect each slot's chain currently carries, so a repeated push (every region load,
+    /// every mixer edit through `refreshMixer`) rewrites nothing. `bpm` is rounded to a whole
+    /// beat per minute: a glide must not re-stamp the chain on every load.
+    @ObservationIgnored private var appliedEffectBySlot: [Int: AppliedEffect] = [:]
+
+    private struct AppliedEffect: Equatable {
+        var character: FXCharacter?
+        var roundedBPM: Int
+    }
+
+
     /// ⭐ THE TUNING THIS RACK IS ON — latched, because the rack does not exist yet when the
     /// instrument decides its tuning (#338 reviewer finding, and it is the half a source scan
     /// cannot see).
@@ -120,21 +136,6 @@ public final class LaneVoiceRack {
     /// exposure since it was written — it is an inherited gap, not one #338 created — and
     /// seeding only the tone system would leave the rack's two tuning axes able to disagree at
     /// launch, which is the exact failure mode this task is named after.
-    /// DC1 (per-track effect, `DeviceChain`): each slot voice's `fxChain` exactly as it was
-    /// built, captured once at attach. A slot is POOLED — it plays whichever lane holds its rank —
-    /// so a lane WITHOUT an effect must get this back, or it would inherit the last lane's
-    /// character. Control-plane only; never read by a view.
-    @ObservationIgnored private var defaultEffectBySlot: [FXPreset] = []
-    /// The effect each slot's chain currently carries, so a repeated push (every region load,
-    /// every mixer edit through `refreshMixer`) rewrites nothing. `bpm` is rounded to a whole
-    /// beat per minute: a glide must not re-stamp the chain on every load.
-    @ObservationIgnored private var appliedEffectBySlot: [Int: AppliedEffect] = [:]
-
-    private struct AppliedEffect: Equatable {
-        var character: FXCharacter?
-        var roundedBPM: Int
-    }
-
     @ObservationIgnored private var tuningA4Hz: Double = 440
     @ObservationIgnored private var tuningCents: [Float] = Array(repeating: 0, count: 12)
 
@@ -617,6 +618,12 @@ public final class LaneVoiceRack {
     /// `attached` without any graph work.
     internal func installVoicesForTests(_ testVoices: [PolySynthVoice]) {
         voices = testVoices
+        // DC1: the same attach-time effect snapshot `attachAll` takes, or `setEffect` would
+        // silently no-op for every test that goes through this seam.
+        defaultEffectBySlot = testVoices.map {
+            FXPreset.capture(from: $0.fxChain, fxEnabled: true, name: "Lane default")
+        }
+        appliedEffectBySlot = [:]
         attached = true
     }
     /// TEST SEAM (Debug-only): install kind units WITHOUT an engine so the Xcode

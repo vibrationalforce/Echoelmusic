@@ -196,6 +196,15 @@ public struct GenreFXPreset: Sendable, Equatable {
     /// paragraph whose own subject is over-claiming; a fix that is true of one caller is not
     /// true of the type.**
     ///
+    /// ⚠️ **"ALL FOUR STAMP SITES" IS ABOUT THE INSTRUMENT'S CHAINS, AND SINCE DC1 THERE IS A FIFTH
+    /// SITE THAT IS NOT ONE OF THEM** (review of e061ca2d3). `LaneVoiceRack.setEffect` →
+    /// `applyOwnPreset(to:bpm:)` stamps a character onto a RACK voice's chain (an extra MIDI
+    /// track's effect, `DeviceChain`) and no picker follows it, so on such a track the
+    /// character's OWN division IS what plays. That does not break #240: the Studio picker never
+    /// displays a division for a rack chain — it writes only the instrument's inventory
+    /// (`characterFXChains`), and the rack chain's one writer is `setEffect`. A future per-track
+    /// division control would be the first visible control over it, and would have to write it.
+    ///
     /// ⚠️ ONE CONSEQUENCE OF THE PAIR, worth stating because nothing else states it: with a
     /// character chosen, a genre change now moves the echo TIME (through the picker) while mode,
     /// mix, feedback, tone, spread, wow and drive keep coming from the character. That mixed

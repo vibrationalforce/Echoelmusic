@@ -9,10 +9,17 @@
 // opinions about what a track plays. It joins this type when the Echoel device becomes an
 // instance (the next Phase 3 step), and replaces the derivation then — not beside it.
 //
-// ⭐ AN UNKNOWN INSERT IS KEPT, NEVER DROPPED (WA3 §C2, the #527 law). Its state is an opaque
+// ⭐ AN UNKNOWN INSERT TYPE IS KEPT, NEVER DROPPED (WA3 §C2, the #527 law). Its state is an opaque
 // `stateBlob`, so a song written by a later build round-trips through this one byte for byte,
 // and simply does not sound here. A decoder that dropped what it did not know would silently
 // delete the user's effect the first time an older build saved the song.
+// ⚠️ THE LIMIT, stated rather than implied (review of e061ca2d3): "kept" holds for an unknown
+// TYPE inside THIS envelope (id, typeID, typeVersion, isEnabled, stateBlob). An insert whose
+// ENVELOPE this build cannot decode (a later build that drops `stateBlob`, say) is skipped on
+// decode and gone on the next save. Changing the envelope is therefore a migration, never a
+// field edit. And a character insert of a LATER `typeVersion` is not read as a character here
+// (`DeviceInsert.character`), nor re-stamped in place: choosing an effect replaces its state AND
+// its version, so a later build never finds v1 bytes under a v2 label.
 //
 // ⚠️ DC1 SOUNDS ONE INSERT, AND SAYS SO. A rack voice has ONE `EchoelFXChain`, so the first
 // ENABLED insert of a KNOWN type is what plays (`soundingCharacter`); the inspector writes at most
@@ -58,6 +65,7 @@ public struct DeviceChain: Codable, Sendable, Equatable {
         if let character, character.preset != nil {
             if let index = result.firstIndex(where: { $0.typeID == DeviceInsert.characterTypeID }) {
                 result[index].isEnabled = true
+                result[index].typeVersion = DeviceInsert.characterTypeVersion
                 result[index].stateBlob = DeviceInsert.blob(for: character)
             } else {
                 result.append(DeviceInsert.character(character))
@@ -97,6 +105,8 @@ public struct DeviceInsert: Codable, Sendable, Equatable, Identifiable {
 
     /// The one insert type this build plays: a named effect character on the track's voice chain.
     public static let characterTypeID = "com.echoelmusic.device.fx.character"
+    /// The state format this build writes and reads for a character insert: the raw value, UTF-8.
+    public static let characterTypeVersion = 1
 
     public init(id: UUID = UUID(), typeID: String, typeVersion: Int, isEnabled: Bool, stateBlob: Data) {
         self.id = id
@@ -108,7 +118,7 @@ public struct DeviceInsert: Codable, Sendable, Equatable, Identifiable {
 
     /// A character insert — the state is the character's raw value, UTF-8.
     public static func character(_ character: FXCharacter) -> DeviceInsert {
-        DeviceInsert(typeID: characterTypeID, typeVersion: 1, isEnabled: true,
+        DeviceInsert(typeID: characterTypeID, typeVersion: characterTypeVersion, isEnabled: true,
                      stateBlob: blob(for: character))
     }
 
@@ -116,10 +126,12 @@ public struct DeviceInsert: Codable, Sendable, Equatable, Identifiable {
         Data(character.rawValue.utf8)
     }
 
-    /// The character this insert names, or nil when it is not a character insert or its state
-    /// names no character this build knows (a later build's name decodes to nothing, not a crash).
+    /// The character this insert names, or nil when it is not a character insert, its state is a
+    /// LATER format than this build reads, or its state names no character this build knows (a
+    /// later build's name decodes to nothing, not a crash).
     public var character: FXCharacter? {
         guard typeID == Self.characterTypeID,
+              typeVersion <= Self.characterTypeVersion,
               let raw = String(data: stateBlob, encoding: .utf8) else { return nil }
         return FXCharacter(rawValue: raw)
     }

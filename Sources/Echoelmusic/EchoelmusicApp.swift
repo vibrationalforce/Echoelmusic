@@ -1084,8 +1084,9 @@ struct EchoelmusicApp: App {
                     // Phase 3 / DC1: each SECONDARY lane's effect insert (`DeviceChain`) onto its
                     // rack voice's own FX chain — nil restores the slot's shipped default, because
                     // a pooled slot must not keep the previous lane's character. Poly-only like
-                    // octave. The tempo is read at the push (a tempo-synced echo follows the song
-                    // at the next load, not mid-part).
+                    // octave. The tempo is read at each push — a load, or a mixer edit on any lane
+                    // mid-part (`refreshMixer`) — and the rack re-stamps only when the character or
+                    // the whole-BPM tempo changed; `EchoelDelay` glides the time, so no click.
                     timelinePlayer.slotEffectSink = { [weak laneVoiceRack, weak pattern = beatPlayer.pattern] slot, character in
                         laneVoiceRack?.setEffect(slot: slot, character: character,
                                                  bpm: pattern?.tempo ?? PatternEngine.defaultTempo)

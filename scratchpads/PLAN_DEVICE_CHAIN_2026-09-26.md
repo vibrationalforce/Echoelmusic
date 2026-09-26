@@ -78,3 +78,17 @@ Decided from DC1's device report; not before.
 - `setEffect` writes `voice(slot:)` whatever the slot's binding, exactly like detune/octave: a
   sub/sampler/bio-bound slot's poly voice is silent anyway, and the next poly lane in that slot
   gets its own push before its first note.
+
+### Review of e061ca2d3 (no HIGH) — repaired in the next commit
+- M1: a character insert of a LATER `typeVersion` is not read (`DeviceInsert.character` gates on
+  `characterTypeVersion`), and choosing an effect over it re-stamps version AND state together.
+- L1: the header now states the limit — "kept" is for an unknown TYPE in this envelope; a changed
+  envelope is a migration.
+- L2 (doc moved off the #338 tuning latch) · L3 (GenreFX names the fifth stamp site: a rack
+  chain plays the character's own division, and #240 still holds) · L4 (app comment: the tempo
+  is read at every push, incl. `refreshMixer`) · L5 (`installVoicesForTests` takes the snapshot).
+- L6, OPEN and pre-existing: `KindVoiceAllocator` puts a SECOND sampler/sub/bio lane on
+  `.poly(slot)` when the single unit is taken, while `TrackMix.role` still reports its declared
+  kind — so the Effect row is hidden on a lane that really plays through a poly chain (nil is
+  pushed, the default plays — no inheritance). Fix belongs with "role = the ALLOCATOR's binding",
+  a separate slice (the inspector would need the rack's live binding, not the document).

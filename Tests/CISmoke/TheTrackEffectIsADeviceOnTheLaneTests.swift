@@ -22,8 +22,8 @@
 //    snapshot the rack takes at attach puts it back EXACTLY — the pooled-slot law: a lane with no
 //    effect must not inherit the previous lane's character. `.auto` touches nothing.
 // 6. WHO SEES THE ROW (`TrackMix.controls`): only a POLY rack track.
-// 7. SOURCE-TEXT SCAN: the effect is pushed at every site the octave is (four load sites +
-//    `refreshMixer`), the app wires it to the rack exactly once, the rack restores the snapshot,
+// 7. SOURCE-TEXT SCAN: the effect is pushed at every site the octave is (three load sites +
+//    `refreshMixer`), BEFORE the pump loads the notes, the app wires it to the rack exactly once, the rack restores the snapshot,
 //    and the inspector writes through the store and gates the row on the flag.
 //
 // HONEST GRADING (§3), against the parent tree (`e23c0ed92`): the file does NOT compile there —
@@ -35,6 +35,11 @@
 // asserts the restore (a restore of an unchanged chain proves nothing); claim 6 asserts level/pan
 // stay on the tracks that lose the row. Graded by Python transcription of `settingCharacter`,
 // `soundingCharacter` and every scan anchor against the worktree.
+//
+// REVIEW OF e061ca2d3 (no HIGH) added: a character insert of a LATER `typeVersion` is not read
+// with this build's meaning, and choosing an effect over it re-stamps its version with its state
+// (claim 1); the push-before-load order (claim 7). ⚠️ Stated limit, in `DeviceChain`'s header:
+// "kept" holds for an unknown TYPE in this envelope, not for an insert whose envelope differs.
 //
 // NOT HERE — DEVICE PROBE, open. Whether the effect is HEARD on the right track and only there,
 // and that a second track in the same slot after it plays dry. Nothing here attaches an audio
@@ -110,6 +115,17 @@ final class TheTrackEffectIsADeviceOnTheLaneTests: XCTestCase {
         XCTAssertEqual(one.inserts.map(\.typeID),
                        [DeviceInsert.characterTypeID, Self.unknownInsert.typeID])
         XCTAssertEqual(one.soundingCharacter, .room)
+
+        // Review of e061ca2d3: a LATER state format is not this build's to read or to half-rewrite.
+        let later = DeviceInsert(typeID: DeviceInsert.characterTypeID, typeVersion: 2,
+                                 isEnabled: true, stateBlob: Data("hall".utf8))
+        XCTAssertNil(later.character, "a v2 state that happens to parse is not played with v1 meaning")
+        XCTAssertNil(DeviceChain(inserts: [later]).soundingCharacter)
+        let restamped = try XCTUnwrap(DeviceChain(inserts: [later]).settingCharacter(.room))
+        XCTAssertEqual(restamped.inserts.first?.id, later.id)
+        XCTAssertEqual(restamped.inserts.first?.typeVersion, DeviceInsert.characterTypeVersion,
+                       "v1 bytes under a v2 label would be misread by the later build")
+        XCTAssertEqual(restamped.soundingCharacter, .room)
 
         var off = DeviceInsert.character(.telephone)
         off.isEnabled = false
@@ -296,6 +312,15 @@ final class TheTrackEffectIsADeviceOnTheLaneTests: XCTestCase {
         let mixer = try body(of: "private func refreshMixer()", in: player)
         XCTAssertTrue(mixer.contains("slotEffectSink?("), "a menu change during play must land live")
         XCTAssertTrue(player.contains("MultiRollFanout.effect(forSlot:"))
+        // A pooled slot must carry THIS lane's effect before its first note, not after.
+        let window = try body(of: "private func loadSecondaryWindow(", in: player)
+        guard let push = window.range(of: "slotEffectSink?("),
+              let load = window.range(of: "pump.load(") else {
+            XCTFail("ANCHOR MISSING: the secondary window's push or load moved (#454)")
+            return
+        }
+        XCTAssertLessThan(push.lowerBound, load.lowerBound,
+                          "the effect is pushed after the notes are loaded — the first bar plays the old effect")
     }
 
     func testTheAppWiresTheRackAndTheRackRestoresItsDefault() throws {
