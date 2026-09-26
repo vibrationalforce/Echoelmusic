@@ -40083,3 +40083,6 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - Revert 91d6dd68e + docs: both gates green (main = a143336c4).
 - Remaining findings sorted by who would see them: A3 LOW-1/2 unreachable (closed), A1 LOW-10 closed with MED-1, A1 MED-2 held (needs an Arrange-shared zoom, WA4 scope).
 - A5: the row's curve runs toward the first point past a shortened song end (was drawn flat while playback ramped). Guard claim 9; five checkers clean; scan transcribed (parent: absent). Gates pending; independent review running.
+
+### 2026-09-26 07:25Z — A5 reviewed (no HIGH/MED) + repaired (724c1f9b7)
+- Premise confirmed (Remove/Trim/Earlier shorten the song; playback reads the full lane to document.endTick = songTicks). LOW-1 guard compares at the last played sixteenth; LOW-2 hint + VoiceOver name a point after the song end; LOW-3 recorded; LOW-4 plan prose. Gates pending.
