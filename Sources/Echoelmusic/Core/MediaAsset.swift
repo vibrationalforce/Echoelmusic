@@ -172,4 +172,44 @@ public struct MediaAsset: Sendable, Equatable, Identifiable {
         }
         return result
     }
+
+    // MARK: - Missing on this device (B2)
+
+    /// An audio clip whose file this device cannot find. The creative structure SURVIVES — the
+    /// clip keeps its id, name and settings, its parts stay where they are — only the sound is
+    /// missing, so the name of the clip and of the file it expects is what the user needs to put
+    /// it back (founder media law 2026-09-26: "availability becomes missing, relink stays
+    /// possible").
+    public struct Missing: Equatable, Identifiable, Sendable {
+        public let clipID: UUID
+        public let clipName: String
+        /// The last path component of the stored ref — the file the clip expects to find.
+        public let fileName: String
+        /// Parts on the PLAYABLE audio lanes that play this clip (the `usage` count).
+        public let partCount: Int
+        public var id: UUID { clipID }
+    }
+
+    /// The audio clips that carry a file reference `resolves` cannot find, in slot order.
+    ///
+    /// ⚠️ `resolves` MUST BE THE PLAYING PATH'S OWN RESOLVER (`AudioLanePlayer.resolvedURL`,
+    /// the #1439 law): a second opinion about which file a clip plays would be a second truth
+    /// about what the user hears. The question is RESOLUTION, not decodability — a file that is
+    /// there but will not decode is not "missing" (that stays a playback fact).
+    /// A clip with no ref at all is not listed: it names no file to look for.
+    public static func missing(clips: [Clip], document: TimelineDocument,
+                               resolves: (UUID) -> Bool) -> [Missing] {
+        let playable = Set(document.audioLaneIDs)
+        var parts: [UUID: Int] = [:]
+        for region in document.regions where playable.contains(region.laneID) {
+            parts[region.clipID, default: 0] += 1
+        }
+        return clips.compactMap { clip in
+            guard clip.kind == .audio, let ref = clip.mediaRef, !ref.isEmpty,
+                  !resolves(clip.id) else { return nil }
+            return Missing(clipID: clip.id, clipName: clip.name,
+                           fileName: URL(fileURLWithPath: ref).lastPathComponent,
+                           partCount: parts[clip.id] ?? 0)
+        }
+    }
 }

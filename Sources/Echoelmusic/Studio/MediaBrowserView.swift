@@ -15,6 +15,12 @@
 // ⭐ B1 — A NAME FILTER over the listing already in memory (`MediaAsset.matching`): typing narrows
 // the rows, with no disk and no re-listing; the field is empty again when the list closes.
 //
+// ⭐ B2 — A FILE THIS DEVICE CANNOT FIND IS NAMED, NOT SILENT. Before, a clip whose file was gone
+// just made Play grey out. The open list now says which clip expects which file and how many
+// parts wait for it. The question goes to the PLAYING path's own resolver
+// (`AudioLanePlayer.resolvedURL`, #1439), asked in `.task` while the list is open — never in
+// `body`, never while closed. The clip and its parts are left exactly as they are.
+//
 // ⭐ IT READS ONLY COLD STATE: the clip grid and the song document change on an edit, never on a
 // clock. The tempo a placement spans bars at is `preflightTempo`, `@ObservationIgnored`, read in
 // the tap. The root (`WorkstationView`) mounts this leaf and reads none of its state.
@@ -41,6 +47,8 @@ struct MediaBrowserView: View {
     @State private var note: String?
     /// The name filter (B1). Local to this leaf: typing rebuilds the list, never the Workstation.
     @State private var query = ""
+    /// Clips whose file the player's resolver could not find at the last listing (B2).
+    @State private var missingIDs: Set<UUID> = []
 
     private enum Listing: Equatable {
         case assets([MediaAsset])
@@ -58,6 +66,11 @@ struct MediaBrowserView: View {
         VStack(alignment: .leading, spacing: 8) {
             toggleRow
             if isOpen {
+                let missing = MediaAsset.missing(clips: clips, document: timeline.document,
+                                                 resolves: { !missingIDs.contains($0) })
+                if !missing.isEmpty {
+                    missingSection(missing)
+                }
                 content(usage: MediaAsset.usage(clips: clips, document: timeline.document))
                 if let note {
                     Text(note)
@@ -74,6 +87,15 @@ struct MediaBrowserView: View {
             // landed can finish AFTER the newer one and overwrite it with the older set.
             guard !Task.isCancelled else { return }
             if let assets = result { listing = .assets(assets) } else { listing = .unreadable }
+            // B2: the player's own resolver, a handful of existence checks (eight slots at most).
+            // No player wired means no answer — nothing is called missing on a guess.
+            if let lanes = player.audioLanes {
+                missingIDs = Set(MediaAsset.missing(clips: clipStore.filledClips, document: timeline.document,
+                                                    resolves: { lanes.resolvedURL(forClipID: $0) != nil })
+                    .map(\.clipID))
+            } else {
+                missingIDs = []
+            }
         }
     }
 
@@ -83,6 +105,7 @@ struct MediaBrowserView: View {
             if !isOpen {
                 note = nil
                 query = ""
+                missingIDs = []
             }
         } label: {
             HStack(spacing: 6) {
@@ -147,6 +170,31 @@ struct MediaBrowserView: View {
                 .submitLabel(.done)
                 .accessibilityLabel("Filter by name")
         }
+    }
+
+    /// The clips whose file is gone, above the library (B2). Read-only: the way back is a file of
+    /// that name in the library (the resolver finds it by name); a relink is the next slice.
+    private func missingSection(_ missing: [MediaAsset.Missing]) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Missing on this device")
+                .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
+                .accessibilityAddTraits(.isHeader)
+            ForEach(missing) { item in
+                line(Self.missingText(item))
+            }
+            line("Their parts stay in the song and play again once a file of that name is back in the library.")
+        }
+    }
+
+    /// One missing clip, in the words its row shows.
+    static func missingText(_ item: MediaAsset.Missing) -> String {
+        let parts: String
+        switch item.partCount {
+        case 0:  parts = "no part"
+        case 1:  parts = "1 part"
+        default: parts = "\(item.partCount) parts"
+        }
+        return "\(item.clipName) — expects \(item.fileName) · \(parts)"
     }
 
     /// What the list says when the filter leaves nothing.

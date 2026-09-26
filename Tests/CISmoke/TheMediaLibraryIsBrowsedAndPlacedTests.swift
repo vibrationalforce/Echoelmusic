@@ -27,6 +27,12 @@
 //    listing's key (typing never re-lists), and closing empties it. On the parent (`049e0b765`)
 //    this file does NOT compile — `matching` and `noMatchText` are new: one absence (#486); claim
 //    7 is a FORWARD guard, its counterweights are the empty query and the single listing call.
+// 8. B2 (same order): a MISSING FILE IS NAMED — PURE `MediaAsset.missing` lists the audio clips
+//    whose ref the resolver cannot find, with the expected file name and their parts on playable
+//    audio lanes; a SCAN that the answer comes from the player's own resolver in the open list's
+//    task, and the body only draws it. On the parent (`1013dab43`) this file does NOT compile —
+//    `missing`, `Missing` and `missingText` are new: one absence (#486); claim 8 is a FORWARD
+//    guard, its counterweights are the all-resolve and no-ref cases.
 //
 // HONEST GRADING (§3), against the parent tree (`a57d03f5c`): the file does NOT compile there —
 // `MediaAsset`, `MediaPlacement`, `MediaLibrary.listAudio` and `MediaBrowserView` are all new —
@@ -43,6 +49,9 @@
 // the same sound → the grid did not grow (Import a third file still works) → Undo removes only
 // the new part. Then type part of a name into "Filter by name" → only matching files stay, the
 // "N of M files" line counts them → clear it → all return → close and reopen → the field is empty.
+// Then, in the Files app, move one imported file out of Echoelmusic's media folder (or open a
+// project from another device) → Media Library → "Missing on this device" names the clip, the file
+// it expects and its parts → the parts are still in the song.
 
 import Foundation
 import XCTest
@@ -430,6 +439,54 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         XCTAssertTrue(toggle.contains("query = \"\""), "closing the list empties the filter")
         XCTAssertEqual(occurrences(of: "MediaLibrary.listAudio()", in: browser), 1,
                        "counterweight: still one listing call")
+    }
+
+    // MARK: 8 — B2: a file this device cannot find is named, not silent
+
+    func testAMissingFileIsNamedWithTheClipAndItsParts() {
+        let gone = Clip(name: "Break", kind: .audio, mediaRef: "/x/Media/Audio/Break.wav")
+        let here = Clip(name: "Pad", kind: .audio, mediaRef: "/x/Media/Audio/Pad.wav")
+        let noRef = Clip(name: "Empty", kind: .audio, mediaRef: nil)
+        let keys = Clip(name: "Keys", melody: MelodyClip(notes: [Note(pitch: 60, startStep: 0)]))
+        let audio = TimelineLane(name: "Audio 1", kind: .audio)
+        let midi = TimelineLane(name: "Keys", kind: .midi)
+        let bar = TimelineTime.ticksPerBar
+        let doc = TimelineDocument(lanes: [audio, midi], regions: [
+            TimelineRegion(laneID: audio.id, clipID: gone.id, startTick: 0, lengthTicks: bar),
+            TimelineRegion(laneID: audio.id, clipID: gone.id, startTick: bar, lengthTicks: bar),
+            TimelineRegion(laneID: midi.id, clipID: gone.id, startTick: 0, lengthTicks: bar),
+            TimelineRegion(laneID: audio.id, clipID: here.id, startTick: 2 * bar, lengthTicks: bar),
+        ])
+        let clips = [gone, here, noRef, keys]
+
+        let missing = MediaAsset.missing(clips: clips, document: doc, resolves: { $0 != gone.id })
+        XCTAssertEqual(missing.map(\.clipID), [gone.id],
+                       "only the clip whose file the resolver cannot find — not the one it finds, not a clip with no ref, not MIDI")
+        XCTAssertEqual(missing.first?.fileName, "Break.wav", "the file the clip expects, by name")
+        XCTAssertEqual(missing.first?.clipName, "Break")
+        XCTAssertEqual(missing.first?.partCount, 2,
+                       "parts on playable audio lanes only — the region on a MIDI lane plays nothing of this file")
+        XCTAssertTrue(MediaAsset.missing(clips: clips, document: doc, resolves: { _ in true }).isEmpty,
+                      "counterweight: when everything resolves, nothing is called missing")
+        XCTAssertEqual(MediaAsset.missing(clips: [noRef], document: doc, resolves: { _ in false }), [],
+                       "a clip that names no file is not a missing file")
+        XCTAssertEqual(missing.first.map(MediaBrowserView.missingText), "Break — expects Break.wav · 2 parts")
+    }
+
+    func testMissingIsAskedOfThePlayersResolverWhileTheListIsOpen() throws {
+        let browser = try source(Self.browserPath)
+        let task = try body(of: "sorted()))", in: browser)
+        XCTAssertTrue(task.contains("resolves: { lanes.resolvedURL(forClipID: $0) != nil }"),
+                      "the question goes to the PLAYING path's resolver (#1439), inside the open list's task")
+        XCTAssertTrue(task.contains("if let lanes = player.audioLanes {"),
+                      "no player, no answer — nothing is called missing on a guess")
+        XCTAssertEqual(occurrences(of: "resolvedURL(forClipID:", in: browser), 1,
+                       "asked once, in the task — never in `body`, where typing a filter would re-ask it")
+        XCTAssertFalse(browser.contains("MediaLibrary.resolveRef("), "no second resolver beside the player's")
+        XCTAssertTrue(browser.contains("resolves: { !missingIDs.contains($0) }"),
+                      "the body draws the task's answer; part counts stay fresh from the live song")
+        let toggle = try body(of: "private var toggleRow: some View", in: browser)
+        XCTAssertTrue(toggle.contains("missingIDs = []"), "closing forgets the answer; reopening asks again")
     }
 
     // MARK: helpers
