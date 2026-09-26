@@ -21,6 +21,12 @@
 //    disk — the transaction's cleanup must never reach a user's asset.
 // 6. SOURCE-TEXT SCAN: the listing runs detached and only there; the browser is a mounted leaf
 //    with no modal, no persistence and no model construction; one production caller each.
+// 7. B1 (MA3 revised order, 2026-09-26): a NAME FILTER — PURE `MediaAsset.matching` (case- and
+//    diacritic-insensitive, spaces trimmed, the shown name only, order kept) and a SCAN that the
+//    rows are that projection of the listing in memory, the query is leaf state outside the
+//    listing's key (typing never re-lists), and closing empties it. On the parent (`049e0b765`)
+//    this file does NOT compile — `matching` and `noMatchText` are new: one absence (#486); claim
+//    7 is a FORWARD guard, its counterweights are the empty query and the single listing call.
 //
 // HONEST GRADING (§3), against the parent tree (`a57d03f5c`): the file does NOT compile there —
 // `MediaAsset`, `MediaPlacement`, `MediaLibrary.listAudio` and `MediaBrowserView` are all new —
@@ -35,7 +41,8 @@
 // NEEDS-FOUNDER-VERIFY: Import Audio twice with two files → Media Library → both listed with
 // "in 1 part" → Place the first → a second part appears at the end of the audio track and plays
 // the same sound → the grid did not grow (Import a third file still works) → Undo removes only
-// the new part.
+// the new part. Then type part of a name into "Filter by name" → only matching files stay, the
+// "N of M files" line counts them → clear it → all return → close and reopen → the field is empty.
 
 import Foundation
 import XCTest
@@ -382,6 +389,47 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
                                    "a vanished file must be refused, not placed as a silent part")
         let call = try XCTUnwrap(perform.range(of: "place(asset"))
         XCTAssertLessThan(exists.lowerBound, call.lowerBound, "checked before anything is written")
+    }
+
+    // MARK: 7 — B1: the name filter
+
+    func testTheFilterMatchesTheShownNameAndKeepsTheOrder() {
+        func asset(_ name: String) -> MediaAsset {
+            MediaAsset(kind: .audio, fileName: name, url: URL(fileURLWithPath: "/x/Media/Audio/\(name)"),
+                       byteSize: 1)
+        }
+        let library = MediaAsset.sorted([asset("Kick Loop.wav"), asset("Käse Pad.aif"),
+                                         asset("take 2.wav"), asset("Take 10.wav")])
+        XCTAssertEqual(MediaAsset.matching(library, query: "").map(\.key.fileName),
+                       library.map(\.key.fileName), "counterweight: no query keeps every file, in order")
+        XCTAssertEqual(MediaAsset.matching(library, query: "   ").count, library.count,
+                       "a query of only spaces filters nothing")
+        XCTAssertEqual(MediaAsset.matching(library, query: " LOOP ").map(\.key.fileName), ["Kick Loop.wav"],
+                       "case-insensitive, and the spaces a keyboard leaves are not part of the name")
+        XCTAssertEqual(MediaAsset.matching(library, query: "kase").map(\.key.fileName), ["Käse Pad.aif"],
+                       "diacritic-insensitive, as the Files app searches")
+        XCTAssertEqual(MediaAsset.matching(library, query: "take").map(\.key.fileName),
+                       ["take 2.wav", "Take 10.wav"], "the browser's order survives the filter")
+        XCTAssertTrue(MediaAsset.matching(library, query: "wav").isEmpty,
+                      "the extension is not in the name the row shows, so it is not matched")
+        XCTAssertEqual(MediaBrowserView.noMatchText(" snare "), "No file name contains \u{201C}snare\u{201D}.")
+    }
+
+    func testTheFilterIsAProjectionInTheLeafNotAListing() throws {
+        let browser = try source(Self.browserPath)
+        XCTAssertTrue(browser.contains("let shown = MediaAsset.matching(assets, query: query)"),
+                      "the rows are the filtered projection of the listing in memory")
+        XCTAssertTrue(browser.contains("ForEach(shown)"), "the list draws the filtered rows")
+        XCTAssertFalse(browser.contains("ForEach(assets)"), "no second, unfiltered list")
+        XCTAssertTrue(browser.contains("@State private var query = \"\""),
+                      "the query is the leaf's own state — typing never rebuilds the Workstation")
+        let key = try body(of: "private struct ListingKey: Equatable", in: browser)
+        XCTAssertFalse(key.contains("query"),
+                       "typing must not re-list the directory: the query is not part of the listing's key")
+        let toggle = try body(of: "private var toggleRow: some View", in: browser)
+        XCTAssertTrue(toggle.contains("query = \"\""), "closing the list empties the filter")
+        XCTAssertEqual(occurrences(of: "MediaLibrary.listAudio()", in: browser), 1,
+                       "counterweight: still one listing call")
     }
 
     // MARK: helpers

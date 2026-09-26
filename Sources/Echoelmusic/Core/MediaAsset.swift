@@ -119,6 +119,19 @@ public struct MediaAsset: Sendable, Equatable, Identifiable {
         }
     }
 
+    // MARK: - Filter
+
+    /// The assets whose shown name contains `query` (B1, the browser's name filter): case- and
+    /// diacritic-insensitive and locale-aware, as the Files app searches, over the NAME the row
+    /// shows — never the extension, which the row does not show. A query of only spaces keeps
+    /// every asset, and the order is kept (the caller's, `sorted`). A projection of a listing
+    /// already in memory: no disk, and nothing to do while the browser is closed.
+    public static func matching(_ assets: [MediaAsset], query: String) -> [MediaAsset] {
+        let wanted = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !wanted.isEmpty else { return assets }
+        return assets.filter { $0.displayName.localizedStandardContains(wanted) }
+    }
+
     // MARK: - Who uses it
 
     /// Where an asset is used: the clips that carry it (in slot order) and how many parts of

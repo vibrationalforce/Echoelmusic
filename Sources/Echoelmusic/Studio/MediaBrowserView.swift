@@ -12,6 +12,9 @@
 // library builds only the rows on screen. Nothing here decodes audio: sizes come from the one
 // directory call, lengths from the clips that already measured them.
 //
+// ⭐ B1 — A NAME FILTER over the listing already in memory (`MediaAsset.matching`): typing narrows
+// the rows, with no disk and no re-listing; the field is empty again when the list closes.
+//
 // ⭐ IT READS ONLY COLD STATE: the clip grid and the song document change on an edit, never on a
 // clock. The tempo a placement spans bars at is `preflightTempo`, `@ObservationIgnored`, read in
 // the tap. The root (`WorkstationView`) mounts this leaf and reads none of its state.
@@ -36,6 +39,8 @@ struct MediaBrowserView: View {
     /// nil = not read yet; `.unreadable` = the home could not be read (different from empty).
     @State private var listing: Listing?
     @State private var note: String?
+    /// The name filter (B1). Local to this leaf: typing rebuilds the list, never the Workstation.
+    @State private var query = ""
 
     private enum Listing: Equatable {
         case assets([MediaAsset])
@@ -75,7 +80,10 @@ struct MediaBrowserView: View {
     private var toggleRow: some View {
         Button {
             isOpen.toggle()
-            if !isOpen { note = nil }
+            if !isOpen {
+                note = nil
+                query = ""
+            }
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: isOpen ? "chevron.down" : "chevron.right")
@@ -107,12 +115,43 @@ struct MediaBrowserView: View {
         case .assets(let assets) where assets.isEmpty:
             line("No imported audio yet — Import Audio copies a file here.")
         case .assets(let assets):
-            LazyVStack(alignment: .leading, spacing: 6) {
-                ForEach(assets) { asset in
-                    row(asset, usage: usage[asset.key] ?? .unused)
+            let shown = MediaAsset.matching(assets, query: query)
+            VStack(alignment: .leading, spacing: 6) {
+                filterField
+                if shown.isEmpty {
+                    line(Self.noMatchText(query))
+                } else {
+                    LazyVStack(alignment: .leading, spacing: 6) {
+                        ForEach(shown) { asset in
+                            row(asset, usage: usage[asset.key] ?? .unused)
+                        }
+                    }
+                }
+                if shown.count != assets.count {
+                    line("\(shown.count) of \(assets.count) files")
                 }
             }
         }
+    }
+
+    /// Label above the input (the form rule), a plain field: a name filter, not a search engine.
+    private var filterField: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Filter by name")
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+            TextField("Name contains", text: $query)
+                .font(EchoelTheme.font(13))
+                .textFieldStyle(.roundedBorder)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.done)
+                .accessibilityLabel("Filter by name")
+        }
+    }
+
+    /// What the list says when the filter leaves nothing.
+    static func noMatchText(_ query: String) -> String {
+        "No file name contains \u{201C}\(query.trimmingCharacters(in: .whitespacesAndNewlines))\u{201D}."
     }
 
     private func line(_ text: String) -> some View {
