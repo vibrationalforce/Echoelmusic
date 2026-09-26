@@ -3,20 +3,21 @@
 Rules: `memory/preferences.md` § "Orchestrator hardening". This file is NOT a roadmap — product order
 lives in `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` and the canonical PLAN_* files. Overwrite, don't append.
 
-CURRENT_HEAD: 4735f81e2 (branch claude/echoelmusic-review-optimize-u5jjpd)
-CURRENT_MAIN: 4735f81e2
-ACTIVE_TASK: MA4.4c — a record minted on landing gets its digest (contract in PLAN_MEDIA_ASSET §MA4.4c)
-TASK_STATE: ACTIVE (build). MA4.4 = DONE — AUTONOMOUS GATES CLOSED / FOUNDER DEVICE ACCEPTANCE PENDING (BfT 6429 green, journey test observed passing, main = 4735f81e2)
-OWNED_FILES: Sequencer/AudioImport.swift · Sequencer/MediaPlacement.swift · Studio/WorkstationView.swift ·
-  Tests/CISmoke/{TheMediaAssetIsADurableIdentity,TheImportReusesAnIdenticalLibraryFile}Tests.swift
-CURRENT_INVARIANTS: a shared MediaAssetRecord moves only on equal SHA-256 · digest only ADDED, never
-  overwritten · persisted form `sha256:<64 hex>`, no CryptoKit type stored · no hashing at launch/scan/
-  periodic/browse · relink = one `.clipSource` undo step, no relink under a playing song · physical
-  delete blocked · CLAUDE.md < 150,000 B
-LAST_GREEN_COMPILE: Compile Check 2964 on 4735f81e2 (covers all MA4.4 code)
-LAST_GREEN_TEST: BfT 6429 green on 4735f81e2 (167 pass / 0 fail in window)
+CURRENT_HEAD: 4884c7a47 (branch claude/echoelmusic-review-optimize-u5jjpd)
+CURRENT_MAIN: 4884c7a47
+ACTIVE_TASK: Q3 — Arrange part blocks get VoiceOver move actions (queue: scratchpads/MODES_CENSUS_2026-09-26.md)
+TASK_STATE: ACTIVE (build). MA4.4 / MA4.4c / MA4.4d = DONE — AUTONOMOUS GATES CLOSED / FOUNDER DEVICE
+  ACCEPTANCE PENDING. Media phase: no MA row after MA4.6 → next MA step is BLOCKED_FOUNDER (question 1).
+OWNED_FILES: Studio/ArrangeCanvasView.swift · Tests/CISmoke/TheArrangePartMovesWithoutDragTests.swift
+CURRENT_INVARIANTS: a shared MediaAssetRecord moves only on equal SHA-256 · digest only ADDED · hashing
+  only via MediaContentDigest.learnMinted (import + Place) and the relink · no hashing at launch/scan/
+  browse · physical delete blocked · no new modal (11 on the chain, ceiling 14) · no hot read in host
+  bodies · part moves only through TrackParts.move (one undo step) · CLAUDE.md < 150,000 B
+LAST_GREEN_COMPILE: Compile Check 2968 on 4884c7a47
+LAST_GREEN_TEST: BfT green on 4884c7a47 (auto-merge advanced main)
 KNOWN_RED_GATE: CI/CD conclusion red on every push (#396) — read the "Build for Testing" step
-FOUNDER_PENDING: device acceptance WA4 / R1 / M1–M10 / MA1–MA4 / B3; MIDI "AUTONOMOUS GATES NOT
-  CLOSED" until xcresult; EF3 decision; DC2 paused
-NEXT_3_ACTIONS: 1) build MA4.4c per its contract, checkers, one push  2) independent read-only review →
-  fix HIGH/MED  3) Compile Check + BfT → DONE; then MA4.4d (browser Place door hashes a minted record)
+FOUNDER_PENDING: device acceptance WA4 / R1 / M1–M10 / MA1–MA4.4d / S1–S2 / B3; MIDI "AUTONOMOUS GATES
+  NOT CLOSED"; EF3; DC2 paused; census questions 1–4 (next MA step · Workstation Stop keeps the pulse? ·
+  Perform surface · lift Visual/XR/Output/Broadcast pause)
+NEXT_3_ACTIONS: 1) Q3 VoiceOver move actions on arrange blocks → review → gates  2) Q6 Broadcast-no-door
+  guard (test-only)  3) Q4 keep-awake while the song plays (EchoelStudioView, cold term only)

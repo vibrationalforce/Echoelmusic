@@ -36,6 +36,12 @@
 //  vertical drop has no honest target yet. The long press is new, and deliberate: the canvas
 //  sits inside the Workstation's vertical scroll, and a bare drag on a part would steal it.
 //
+//  ⭐ THE DRAG HAS A NON-DRAG TWIN (modes census 2026-09-26, UX F2). A hold-and-slide cannot
+//  be performed with VoiceOver or Switch Control, so each block carries two named actions —
+//  "Move one bar earlier" / "Move one bar later" — that land through `drop`, i.e. the SAME
+//  `TrackParts.move` commit and the part bar's own `earlierStart`/`laterStart` step (#416: no
+//  tick maths here). "Earlier" is offered only where a bar earlier exists.
+//
 
 import SwiftUI
 
@@ -136,7 +142,8 @@ struct ArrangeCanvasView: View {
                                      laneWidth: width, songTicks: songTicks,
                                      label: "\(row.name), part at " + SessionGrid.label(forTick: start),
                                      onSelect: { selection.selectRegion(block.id, in: document) },
-                                     onDrop: { tick in drop(block.id, onLane: row.id, from: start, to: tick) })
+                                     onDrop: { tick in drop(block.id, onLane: row.id, from: start, to: tick) },
+                                     onStep: { later in step(block.id, onLane: row.id, later: later) })
                 }
             }
         }
@@ -155,6 +162,15 @@ struct ArrangeCanvasView: View {
               let part = TrackParts.parts(onLane: laneID, in: document)
                 .first(where: { $0.id == regionID }) else { return }
         TrackParts.move(part, toStartTick: tick, timeline: timeline)
+    }
+
+    /// The drag's non-drag twin: one bar through the part bar's own step, landed by `drop`.
+    private func step(_ regionID: UUID, onLane laneID: UUID, later: Bool) {
+        guard let part = TrackParts.parts(onLane: laneID, in: document)
+                .first(where: { $0.id == regionID }) else { return }
+        let target: Int? = later ? TrackParts.laterStart(part) : TrackParts.earlierStart(part)
+        guard let target else { return }
+        drop(regionID, onLane: laneID, from: part.startTick, to: target)
     }
 }
 
@@ -203,6 +219,8 @@ struct ArrangePartBlock: View {
     let label: String
     let onSelect: () -> Void
     let onDrop: (Int) -> Void
+    /// The drag's non-drag twin (true = one bar later) — see the file header.
+    let onStep: (Bool) -> Void
 
     @GestureState private var dragPoints: CGFloat = 0
 
@@ -231,6 +249,12 @@ struct ArrangePartBlock: View {
             .accessibilityAddTraits(.isButton)
             .accessibilityAddTraits(isSelected ? .isSelected : [])
             .accessibilityAction { onSelect() }
+            .accessibilityActions {
+                if startTick > 0 {
+                    Button("Move one bar earlier") { onStep(false) }
+                }
+                Button("Move one bar later") { onStep(true) }
+            }
     }
 
     /// Hold first, then slide — so a swipe that starts on a part still scrolls the Workstation.
