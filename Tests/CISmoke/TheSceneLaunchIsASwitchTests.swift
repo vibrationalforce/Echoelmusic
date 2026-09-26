@@ -53,6 +53,24 @@
 //    FORWARD guards, one absence (#486). Transcribed in Python against the worktree: every scan
 //    anchor green.
 //
+// 6. MODES CENSUS Q5 (Clips/Scenes LOW-1): a song — or a scene — started while the shared
+//    PatternEngine is ALREADY running enters its start bar MID-BAR (the next step is
+//    `currentStep`, not 0). `play` loaded every layer as if on a bar line, so the roll's bar plan
+//    staged nothing and a multi-bar part played one bar behind for the rest of the part. `play`
+//    now enters at the phase-consistent tick and step — `relocate`'s own recipe
+//    (`relocateAnchorTick`). END-TO-END on the pure plan (`ArrangementLoadPlan`), driven through a
+//    TRANSCRIPTION of the roll's step-0 staging (`PianoRollModel.trigger` is private — the
+//    transcription is the test double, and it is the reason this is not a device claim):
+//    the mid-bar plan is heard on the right bar at every following bar line, the step-0 plan
+//    applied mid-bar (the old call) repeats a bar — the counterweight that proves the plan
+//    matters. SOURCE-TEXT: `play` derives the step from the pattern and passes it to the roll
+//    load and the scene apply, and no literal `step: 0` is left in `play`.
+//    GRADING: transcribed in Python against both trees — the source claim is red on the parent
+//    (`71e9600f0`: `loadRollRegion(at: startTick, step: 0)`), green here; the plan claim is a
+//    pin on existing, correct behaviour (green on both — the defect was the CALL, not the plan).
+//    ⚠️ NOT fixed, and stated at the call: an AUDIO scene part launched this way still starts
+//    from its top, `entryStep` steps behind the grid (the sub-bar launch phase follow-up).
+//
 // NOT HERE — DEVICE PROBE, open. That the switch is HEARD on one bar, and reads well on iPhone.
 // NEEDS-FOUNDER-VERIFY: Workstation → Play → Session → "Launch scene" at Bar 1, then at a later
 // bar → on the next bar only the second scene's parts loop and the other tracks play the song;
@@ -307,9 +325,9 @@ final class TheSceneLaunchIsASwitchTests: XCTestCase {
         let player = try source(Self.playerPath)
         let play = try body(of: "public func play(", in: player)
         guard let fire = play.range(of: "launchesOnTheStartBar(sceneRegionIDs, atTick: startTick)"),
-              let roll = play.range(of: "loadRollRegion(at: startTick, step: 0)"),
+              let roll = play.range(of: "loadRollRegion(at: entryTick, step: entryStep)"),
               let prime = play.range(of: "launchingInThisCall: Set(startLaunches.map("),
-              let apply = play.range(of: "applyLaunchTransitions(startLaunches, atTick: startTick, step: 0)"),
+              let apply = play.range(of: "applyLaunchTransitions(startLaunches, atTick: entryTick, step: entryStep)"),
               let clock = play.range(of: "pattern.play(cause: .timelineRegion)"),
               let cleared = play.range(of: "launch.removeAll()") else {
             return XCTFail("ANCHOR MISSING: play's start-bar scene sequence (#454)")
@@ -328,6 +346,68 @@ final class TheSceneLaunchIsASwitchTests: XCTestCase {
         let lanes = try source("Sources/Echoelmusic/Sequencer/AudioLanePlayer.swift")
         XCTAssertTrue(lanes.contains("if overrides[laneID] != nil || launchingInThisCall.contains(laneID) { continue }"),
                       "the audio prime skips the start of a lane its launch owns")
+    }
+
+    // MARK: 6 — Q5: a song started on a running pattern enters mid-bar
+
+    /// The roll's step-0 staging, transcribed from `PianoRollModel.trigger` (private): at a bar
+    /// line the staged bar becomes the sounding one, then the counter advances and the next bar
+    /// is staged. Returns the bar index heard after each of `lines` bar lines.
+    private func barsHeard(after plan: ArrangementLoadPlan, barCount n: Int,
+                           playedBars: Int, lines: Int) -> [Int] {
+        var now = plan.nowIndex, pending = plan.pendingIndex, played = playedBars
+        var heard: [Int] = []
+        for _ in 0..<lines {
+            if let staged = pending { now = staged }
+            played += 1
+            pending = (played + plan.phaseOffset) % n
+            heard.append(now)
+        }
+        return heard
+    }
+
+    func testASongStartedMidBarIsHeardOnTheRightBar() {
+        // A 4-bar part entered at its bar 0 while the pattern is 5 steps into a bar and the
+        // roll's global counter reads 7 — every following bar line must sound bars 1, 2, 3, 0.
+        let n = 4, played = 7
+        let midBar = ArrangementLoadPlan.plan(barCount: n, startBar: 0, playedBars: played,
+                                              atStepZero: false, playing: true)
+        XCTAssertEqual(midBar.nowIndex, 0)
+        XCTAssertEqual(barsHeard(after: midBar, barCount: n, playedBars: played, lines: 4), [1, 2, 3, 0])
+
+        // Counterweight: the plan the OLD call chose (a bar line) applied mid-bar repeats bar 0
+        // and stays one bar behind for the rest of the part — the defect.
+        let lineAssumed = ArrangementLoadPlan.plan(barCount: n, startBar: 0, playedBars: played,
+                                                   atStepZero: true, playing: true)
+        XCTAssertEqual(barsHeard(after: lineAssumed, barCount: n, playedBars: played, lines: 4), [0, 1, 2, 3])
+
+        // The entry tick is `relocate`'s: the start bar plus the next step's phase; a stopped
+        // pattern (step 0) enters on the bar itself — the pre-fix path, byte for byte.
+        let step = TimelineTime.ticksPerTransportStep
+        XCTAssertEqual(TimelineRegionPlayer.relocateAnchorTick(targetBarTick: 2 * Self.bar, nextPatternStep: 5),
+                       2 * Self.bar + 5 * step)
+        XCTAssertEqual(TimelineRegionPlayer.relocateAnchorTick(targetBarTick: 2 * Self.bar, nextPatternStep: 0),
+                       2 * Self.bar)
+    }
+
+    func testPlayEntersAtThePatternsNextStep() throws {
+        let player = try source(Self.playerPath)
+        let play = try body(of: "public func play(", in: player)
+        XCTAssertTrue(play.contains("let entryStep = pattern.isPlaying ? pattern.currentStep : 0"),
+                      "the entry step is the running pattern's NEXT step (0 when stopped)")
+        XCTAssertTrue(play.contains("Self.relocateAnchorTick(targetBarTick: startTick, nextPatternStep: entryStep)"),
+                      "the entry tick is relocate's phase-consistent anchor (#416: one recipe)")
+        XCTAssertFalse(play.contains("step: 0)"), """
+            `play` passes a literal `step: 0` again. On a pattern that is already running the \
+            next step is not 0, and a roll load told "bar line" mid-bar plays a multi-bar part \
+            one bar behind (Clips/Scenes LOW-1).
+            """)
+        for layer in ["pianoRoll.setTimelineAutomationTick(entryTick)", "primeSecondaryLanes(at: entryTick)",
+                      "audioLanes?.prime(in: document, atTick: entryTick,", "self.lastTick = entryTick"] {
+            XCTAssertTrue(play.contains(layer), "every layer enters at the same tick: `\(layer)`")
+        }
+        XCTAssertTrue(play.contains("launchesOnTheStartBar(sceneRegionIDs, atTick: startTick)"),
+                      "counterweight: the scene is still requested ON the bar — its boundary")
     }
 
     /// S2 review (MED-2), END-TO-END: the song starts on the bar, so the spoken hint names the

@@ -633,9 +633,18 @@ public final class TimelineRegionPlayer {
         self.rollLane = document.rollLaneID
         self.loopTicks = Self.loopTicks(for: document)
         let startTick = Self.barStartTick(for: fromTick, loopTicks: loopTicks)
+        // Clips/Scenes LOW-1 (modes census Q5): the shared PatternEngine may ALREADY be running
+        // (the instrument playing). Then the next transport step is `currentStep`, not 0 — so
+        // the song enters its start bar mid-bar, and every layer is loaded at the
+        // phase-consistent tick and step, exactly the recipe `relocate` follows. Loading with
+        // step 0 there told the roll "bar line" mid-bar and a multi-bar part played one bar
+        // behind for the rest of the part. A stopped pattern gives step 0 ⇒ `entryTick ==
+        // startTick` and every line below is the pre-fix path.
+        let entryStep = pattern.isPlaying ? pattern.currentStep : 0
+        let entryTick = Self.relocateAnchorTick(targetBarTick: startTick, nextPatternStep: entryStep)
         self.cursor = TimelinePlaybackCursor(startBar: startTick / TimelineTime.ticksPerBar)
-        self.lastTick = startTick
-        self.currentTick = startTick
+        self.lastTick = entryTick
+        self.currentTick = entryTick
         // Fresh multi-roll state: release any lingering take (symmetric with stop —
         // never drop a sounding pitch without its note-off), clear slots, rebuild pool.
         flushPumps()
@@ -643,7 +652,7 @@ public final class TimelineRegionPlayer {
         audioLanes?.clearAllLaunchOverrides()   // S2: pair the audio override reset (prime re-arms the arrangement below)
         isPlaying = true
         pianoRoll.setTimelineAutomation(document.automation)   // arrangement automation (cycle 5)
-        pianoRoll.setTimelineAutomationTick(startTick)
+        pianoRoll.setTimelineAutomationTick(entryTick)
         // Phase 3 / S2 review (MED-1): a SCENE that starts the song lands on the start bar
         // INSIDE this call — queued and fired here, before any lane is started — instead of on
         // the first transport step. Each launched lane is therefore started exactly once, by its
@@ -654,13 +663,18 @@ public final class TimelineRegionPlayer {
         let startLaunches = launchesOnTheStartBar(sceneRegionIDs, atTick: startTick)
         let rollLaunched = rollLane.map { launch.isOverriding(laneID: $0) } ?? false
         if !rollLaunched {
-            loadRollRegion(at: startTick, step: 0)   // whatever is under the playhead (a bar line)
+            loadRollRegion(at: entryTick, step: entryStep)   // whatever is under the playhead
         }
-        primeSecondaryLanes(at: startTick)       // secondary lanes active at the start bar
-        audioLanes?.prime(in: document, atTick: startTick, bpm: pattern.tempo,   // audio lanes (A1)
+        primeSecondaryLanes(at: entryTick)       // secondary lanes active at the start bar
+        audioLanes?.prime(in: document, atTick: entryTick, bpm: pattern.tempo,   // audio lanes (A1)
                           launchingInThisCall: Set(startLaunches.map(\.laneID)))
         if !startLaunches.isEmpty {
-            applyLaunchTransitions(startLaunches, atTick: startTick, step: 0)
+            // The scene is still requested and fired ON the bar (`startTick` above — its
+            // boundary); what it is applied AT is where the transport really is. ⚠️ An AUDIO
+            // scene part still starts from its top when this call runs, so on a running
+            // pattern it sits `entryStep` steps behind the grid — the sub-bar launch phase
+            // `launchedStartBar` already names as the follow-up. A stopped pattern: step 0, exact.
+            applyLaunchTransitions(startLaunches, atTick: entryTick, step: entryStep)
             launchGeneration &+= 1
         }
         if !pattern.isPlaying { pattern.play(cause: .timelineRegion) }
