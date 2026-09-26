@@ -40068,3 +40068,7 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - A1 repair 1f511b919: Compile Check + BfT green (auto-merge moved main to 1f511b919). Task #228 closed.
 - A2 4239a4200: parameter Picker over `SongAutomationEdit.offered` (projection of `automatableBases`), `key(for:base:)` required, `openingBase` pinned onAppear, switching drops the pick; guard claim 7 (forward, scans transcribed True×11); five checkers clean (moved-needles hit = other files). CLAUDE.md 149,635 B. Gates queued; independent review running; device open.
 - A2 review (independent, 1 HIGH): value field showed stored 0…1 while playback denormalizes (attack 0.5 → ~5 s). Repaired d53c1b351: real value + unit via `realValue/storedValue/decimals(for:)`, guard claim pins resolver agreement. MED-1 (Amplitude 0 after Stop = silent until next Play) recorded + verify line; plan co-writer claim corrected. Gates for 4239a4200/d53c1b351 queued.
+
+### 2026-09-26 05:30Z — A2 green; Automation A3 shipped
+- A2 4239a4200 + repair d53c1b351: Compile Check + BfT green (auto-merge moved main to d53c1b351). Task #229 closed.
+- A3 97be5adc3: the Sound panel's automation readout named A1/A2 curves by raw key and "no effect" while they played, and read "No automation recorded" at rest. `SongAutomationEdit.statusScale` (the row's own gate + scale) + strip reads `timeline.document.automation`; switch copy no longer claims the song-wide curves. Guard claim 8; five checkers clean; scans transcribed on both trees. Gates queued; review running; device open.
