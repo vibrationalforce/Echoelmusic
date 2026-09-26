@@ -38,3 +38,21 @@ scene bar would sit at bar 1.
   lines + guard.
 Open after R1: R2 empty-song clock; sub-step timing (`RecordAnchor.tick(afterSeconds:)`); monitor
 through the armed track's voice; R3 bounce; the "arm() has zero callers" prose in ~16 files.
+
+## R1 closed (autonomous) — 2026-09-26
+
+- Commits: 433f13f26 (door) · 0289614d2 (review repair: HIGH-1 running clock, MED-2 sub-step timing,
+  MED-3 caption, MED-4 grid check before the take, MED-5 stale arm blocks by name, LOW-6 refused
+  start cancels) · d130ce840 (prose sweep) · ebd8b19fc (guard tearDown on the main actor).
+- Gates on d130ce840: Xcode Compile Check SUCCESS · Build for Testing SUCCESS · Run Tests = #396
+  shape (169 passing / 0 failures / 0 skips IN THE TAIL WINDOW; the R1 suite is not in the window —
+  execution unrecorded). main = d130ce840. BfT on ebd8b19fc pending (test-only, warning fix).
+- Evidence level: COMPILES + INDEPENDENTLY REVIEWED (one reviewer, repaired). DEVICE: pending.
+- Known and not repaired: LOW-8 (the take's commit re-plans the song at the wrap and cuts notes
+  ringing across it on the pass after a take).
+
+## STOP — Recording/Input paused by founder (2026-09-26 "FINISH R1, THEN RETURN TO CREATION WORKFLOW")
+
+Not started and not to be started until the Creation Workflow catches up: microphone input,
+Info.plist microphone key, audio recording, master-output recording, overdub, take lanes, comping,
+audio input graph. R2 (empty-song clock) and the R3 bounce are likewise parked.
