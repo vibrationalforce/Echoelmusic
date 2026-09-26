@@ -320,7 +320,8 @@ struct WorkstationView: View {
             // The same song, launched live: parts and scenes loop on their track from the next
             // bar. Its own leaf, because launching reaches the player for members this file's
             // transport is not authorised to call (`TheWorkstationPlaysTheTimelineTests` B).
-            SessionLaunchView()
+            // S2: it may START the song at a scene, through this file's own transport.
+            SessionLaunchView(playFrom: { tick in startTimeline(fromTick: tick) })
 
             // MARK: - The import door (Audio Import V1, founder 2026-09-22)
             //
@@ -753,7 +754,7 @@ struct WorkstationView: View {
             resolveAudio: { player.audioLanes?.resolvedURL(forClipID: $0) })
         return HStack(spacing: 8) {
             Button {
-                if playing { player.stop() } else { startTimeline() }
+                if playing { player.stop() } else { startTimeline(fromTick: 0) }
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: playing ? "stop.fill" : "play.fill")
@@ -1062,11 +1063,14 @@ struct WorkstationView: View {
     /// owned elsewhere: the document by `TimelineStore`, the clock by `PatternEngine` (the
     /// player calls `pattern.play(cause: .timelineRegion)` itself), the notes by
     /// `PianoRollModel`. Nothing is constructed here.
-    private func startTimeline() {
+    /// `fromTick` is REQUIRED (#431): Play passes 0 (the song from the top), the Session view a
+    /// scene's bar (Phase 3 / S2) — the player floors it to the bar and folds it into the song.
+    private func startTimeline(fromTick: Int) {
         player.play(document: timeline.document,
                     clips: clipStore,
                     pattern: beatPlayer.pattern,
-                    pianoRoll: pianoRoll)
+                    pianoRoll: pianoRoll,
+                    fromTick: fromTick)
     }
 
 }

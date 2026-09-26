@@ -23,7 +23,8 @@
 //    no-ops while stopped; `launchGeneration` stays OBSERVED and `currentTick` IGNORED (the
 //    leaf-safety argument of the view's header).
 // 5. SOURCE: the view launches and stops through the player's API with the one named quantize,
-//    disables launching while stopped, persists nothing, never starts the transport, never
+//    disables PART launching while stopped (a scene starts the song through the Workstation's
+//    `playFrom` since Phase 3 / S2 — `TheSceneLaunchIsASwitchTests`), persists nothing, never starts the transport, never
 //    reads the playhead; the Workstation constructs it exactly once and still does not launch.
 //
 // Grading (§0, no Swift toolchain in a web session): claims 1–3 were transcribed into Python
@@ -311,8 +312,10 @@ final class TheSessionLaunchesWhatTheSongPlaysTests: XCTestCase {
         XCTAssertTrue(code.contains("clips: clipStore.filledClips,"))
         XCTAssertTrue(code.contains("bpm: player.preflightTempo,"),
                       "the tempo input is the @ObservationIgnored mirror, never the gliding tempo")
-        XCTAssertGreaterThanOrEqual(code.components(separatedBy: ".disabled(!playing)").count - 1, 2,
-                                    "a part and a scene cannot be launched while the song is stopped")
+        // Phase 3 / S2 changed this law ON PURPOSE: a SCENE now starts a stopped song at its bar
+        // (through the Workstation's own transport, `playFrom`); a single PART still cannot.
+        XCTAssertEqual(code.components(separatedBy: ".disabled(!playing)").count - 1, 1,
+                       "a part cannot be launched while the song is stopped — only a scene starts it")
         for banned in ["player.play(", "player.stop()", "relocate", "currentTick", "loopEnabled",
                        "UserDefaults", "@AppStorage", "JSONEncoder", "AppGroupStore",
                        "TimelineStore(", "TimelineLane(", "TimelineDocument(", "TimelineRegion(",
@@ -330,7 +333,7 @@ final class TheSessionLaunchesWhatTheSongPlaysTests: XCTestCase {
 
     func testTheWorkstationIsTheOneDoorAndStillDoesNotLaunch() throws {
         let workstation = try source(Self.workstationPath)
-        XCTAssertEqual(workstation.components(separatedBy: "SessionLaunchView()").count - 1, 1)
+        XCTAssertEqual(workstation.components(separatedBy: "SessionLaunchView(playFrom:").count - 1, 1)
         for member in ["launchRegion", "stopLaunched", "launchState", "launchGeneration"] {
             XCTAssertFalse(workstation.contains(member),
                            "the Workstation's transport is not authorised to launch (claim B there)")

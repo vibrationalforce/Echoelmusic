@@ -47,3 +47,14 @@ Status: S1 SHIPPED + REVIEWED · 2026-09-26
   LOW 7 guard covers the queued-stop / queued-switch compositions.
 - OPEN LOW 4: two scene ticks with identical cells (an unplayable later-placed winner) can both
   read Playing — cosmetic, rare.
+
+## S2 — a scene starts a stopped song (2026-09-26)
+- Council: the "founder call" flagged by the census dissolves — the Workstation stays the ONE
+  `player.play(` caller; it hands `SessionLaunchView` a `playFrom` action. Proceed.
+- Shape: `WorkstationView.startTimeline(fromTick:)` (required argument; Play passes 0, the Session a
+  scene's bar) · `SessionLaunchView(playFrom:)` · the scene button is enabled while stopped: on a
+  stopped song it calls `playFrom(scene.startTick)` FIRST (play clears launches), then
+  `launchScene` — requested on the floored bar, so it lands on that bar. A single PART stays
+  disabled while stopped. WA4.2 guard's "scene disabled while stopped" claim changed on purpose.
+- Evidence: forward claims in `TheSceneLaunchIsASwitchTests` §4 (engine end-to-end + scans);
+  device open.

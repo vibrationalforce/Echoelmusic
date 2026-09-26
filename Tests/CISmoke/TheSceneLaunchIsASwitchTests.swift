@@ -33,10 +33,16 @@
 // two missing composition paths and the queued-stop scene state are driven here. LOW 2/3/5/6
 // repaired in the sources; LOW 4 (two scenes with identical cells both read Playing) recorded.
 //
+// 4. S2 (next commit): a scene starts a STOPPED song at its bar — the view asks the Workstation's
+//    transport (`playFrom`, the Workstation stays the one `player.play(` caller), then launches;
+//    a launch requested on a boundary lands on that bar (engine, end to end).
+//
 // NOT HERE — DEVICE PROBE, open. That the switch is HEARD on one bar, and reads well on iPhone.
 // NEEDS-FOUNDER-VERIFY: Workstation → Play → Session → "Launch scene" at Bar 1, then at a later
 // bar → on the next bar only the second scene's parts loop and the other tracks play the song;
 // the scene header reads "Queued" then "Playing". "Back to song" → every track plays the song.
+// NEEDS-FOUNDER-VERIFY: S2 — song stopped → Session → "Launch scene" at a later bar → the song
+// starts at that bar and the scene loops; Stop, then Play → the song from the top.
 
 import Foundation
 import XCTest
@@ -47,6 +53,7 @@ final class TheSceneLaunchIsASwitchTests: XCTestCase {
 
     private static let playerPath = "Sources/Echoelmusic/Sequencer/TimelineRegionPlayer.swift"
     private static let viewPath = "Sources/Echoelmusic/Studio/SessionLaunchView.swift"
+    private static let workstationPath = "Sources/Echoelmusic/Studio/WorkstationView.swift"
     private static let bar = TimelineTime.ticksPerBar
 
     // MARK: 1 — the engine: a scene is a switch on one boundary
@@ -188,6 +195,44 @@ final class TheSceneLaunchIsASwitchTests: XCTestCase {
         XCTAssertTrue(launchedBlock.contains("if launched.count > 1 {"))
         XCTAssertTrue(launchedBlock.contains("backToSongButton"),
                       "Back to song is on screen while two or more tracks are launched")
+    }
+
+    // MARK: 4 — S2: a scene starts a stopped song at its bar
+
+    func testALaunchOnTheBoundaryLandsOnThatBar() {
+        // `play(fromTick:)` floors to the bar, so the launch that follows it is requested ON a
+        // boundary; `boundaryTick(onOrAfter:)` maps that to itself, so it lands there — not a bar
+        // later.
+        let lane = UUID(), region = UUID()
+        var engine = ClipLaunchEngine()
+        engine.requestScene([lane: region], atTick: 2 * Self.bar, quantize: .bar)
+        let fired = engine.tick(now: 2 * Self.bar)
+        XCTAssertEqual(fired.map(\.atTick), [2 * Self.bar])
+        XCTAssertEqual(engine.state(laneID: lane), .playing(LaunchedRegion(regionID: region, startedAtTick: 2 * Self.bar)))
+    }
+
+    func testAStoppedSongStartsThroughTheWorkstationsTransport() throws {
+        let view = try source(Self.viewPath)
+        XCTAssertTrue(view.contains("let playFrom: (Int) -> Void"))
+        XCTAssertFalse(view.contains("player.play("), "the view asks the owner; it never starts the transport")
+        let scene = try body(of: "private func launchScene(_ scene: SessionGrid.LaunchScene)", in: view)
+        guard let start = scene.range(of: "if !player.isPlaying { playFrom(scene.startTick) }"),
+              let launch = scene.range(of: "player.launchScene(") else {
+            return XCTFail("ANCHOR MISSING: the scene button's start-then-launch (#454)")
+        }
+        XCTAssertLessThan(start.lowerBound, launch.lowerBound, "play clears every launch, so it must come first")
+
+        let workstation = try source(Self.workstationPath)
+        XCTAssertTrue(workstation.contains("SessionLaunchView(playFrom: { tick in startTimeline(fromTick: tick) })"))
+        XCTAssertTrue(workstation.contains("startTimeline(fromTick: 0)"), "Play is still the song from the top")
+        let start2 = try body(of: "private func startTimeline(fromTick: Int)", in: workstation)
+        XCTAssertTrue(start2.contains("fromTick: fromTick"))
+
+        // Premises (#343): play clears launches, and floors the start to a bar.
+        let player = try source(Self.playerPath)
+        let play = try body(of: "public func play(", in: player)
+        XCTAssertTrue(play.contains("launch.removeAll()"))
+        XCTAssertTrue(play.contains("Self.barStartTick(for: fromTick, loopTicks: loopTicks)"))
     }
 
     // MARK: helpers

@@ -231,6 +231,11 @@ struct SessionLaunchView: View {
     @Environment(TimelineRegionPlayer.self) private var player
     @Environment(ClipStore.self) private var clipStore
 
+    /// Phase 3 / S2 — start the stopped song at a bar. HANDED IN by the Workstation, whose
+    /// transport stays the ONE caller of `player.play(` (`TheWorkstationPlaysTheTimelineTests`
+    /// A/B): this view never starts the transport itself, it asks the owner to.
+    let playFrom: (Int) -> Void
+
     var body: some View {
         let document = timeline.document
         let capacity = player.laneVoiceCapacity
@@ -253,7 +258,7 @@ struct SessionLaunchView: View {
                     .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
                 Text(playing
                      ? "Tap a part to loop it on its track from the next bar. A launched part starts from its top — on the Echoel track it continues where the song is. Launch scene switches: its parts start and every other launched track returns to the song on the same bar."
-                     : "Play the song to launch parts.")
+                     : "Launch a scene to start the song at its bar and loop it, or press Play for the song from the top.")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -302,20 +307,24 @@ struct SessionLaunchView: View {
                 } label: {
                     Text("Launch scene")
                         .font(EchoelTheme.font(12, .semibold))
-                        .foregroundStyle(playing ? EchoelTheme.text : EchoelTheme.dim)
+                        .foregroundStyle(EchoelTheme.text)
                         .padding(.horizontal, 12)
                         .frame(minHeight: 44)
                         .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
                             .fill(EchoelTheme.fill))
                         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                            .strokeBorder(playing ? EchoelTheme.border : Color.clear, lineWidth: 1))
+                            .strokeBorder(EchoelTheme.border, lineWidth: 1))
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .disabled(!playing)
+                // S2: enabled while stopped too — a scene starts the song at its bar. A single
+                // PART stays disabled then: which part starts the whole song is not a question
+                // one cell can answer.
                 .accessibilityLabel("Launch scene at \(title)")
                 .accessibilityValue(state.flatMap(SessionGrid.word) ?? "Not the current scene")
-                .accessibilityHint("From the next bar, loops every part listed at \(title) and returns every other launched track to the song")
+                .accessibilityHint(playing
+                                   ? "From the next bar, loops every part listed at \(title) and returns every other launched track to the song"
+                                   : "Starts the song at \(title) and loops every part listed there")
             }
             ForEach(tracks.filter { scene.cells[$0.id] != nil }) { track in
                 if let regionID = scene.cells[track.id] {
@@ -390,7 +399,10 @@ struct SessionLaunchView: View {
 
     /// A scene is a SWITCH (Phase 3 / S1): one player call, so its parts and the other tracks'
     /// return to the song land on the same bar.
+    /// S2: on a stopped song the owner starts it at the scene's bar FIRST — `play` clears every
+    /// launch, so the order is the whole point — and the launch then lands on that very bar.
     private func launchScene(_ scene: SessionGrid.LaunchScene) {
+        if !player.isPlaying { playFrom(scene.startTick) }
         player.launchScene(Array(scene.cells.values), quantize: SessionGrid.quantize)
     }
 
