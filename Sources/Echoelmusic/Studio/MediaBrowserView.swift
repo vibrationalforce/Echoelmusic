@@ -271,7 +271,7 @@ struct MediaBrowserView: View {
             return
         }
         #if canImport(AVFoundation)
-        switch MediaRelink.perform(item.clipID, to: asset, clipStore: clipStore) {
+        switch MediaRelink.perform(item.clipID, to: asset, clipStore: clipStore, timeline: timeline) {
         case .success:
             missingIDs.remove(item.clipID)
             note = "Relinked \u{201C}\(item.clipName)\u{201D} to \(asset.displayName)."

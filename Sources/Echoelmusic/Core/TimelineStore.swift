@@ -192,7 +192,11 @@ public final class TimelineStore {
     ///     went through (an app-lifetime store, carried so `undo()`/`redo()` keep their
     ///     parameterless shape and nothing has to be attached at launch);
     ///   · `.automation` — the song's automation lanes (`document.automation`), Phase 3 /
-    ///     Automation A1: the kind the automation writers were told to wait for.
+    ///     Automation A1: the kind the automation writers were told to wait for;
+    ///   · `.clipSource` — ONE audio clip's media binding (`mediaRef` + its measured length), the
+    ///     Relink of a missing file (founder 2026-09-26: "one normal bounded undoable edit in the
+    ///     current Session"). It lives only in this in-memory history: the previous reference is
+    ///     deliberately NOT stored on the clip, so it does not survive a relaunch.
     /// Deliberately NOT whole-document snapshots: lanes/mixer are not part of this
     /// history, so an undo can never silently revert a fader move, rename, or instrument
     /// assignment made after the edit (reviewer-caught cross-contamination). A notes step
@@ -202,6 +206,7 @@ public final class TimelineStore {
         case regions([TimelineRegion])
         case clipNotes(clipID: UUID, notes: [Note], clips: ClipStore)
         case automation([AutomationLane])
+        case clipSource(clipID: UUID, mediaRef: String, nativeDurationSeconds: Double?, clips: ClipStore)
     }
 
     /// Kept off observation; the observable `canUndo`/`canRedo` flags drive the buttons.
@@ -257,6 +262,16 @@ public final class TimelineStore {
             document.automation = live
             persist()
             return inverse
+        case .clipSource(let clipID, let mediaRef, let seconds, let clips):
+            guard let clip = clips.clip(id: clipID), clip.kind == .audio,
+                  let current = clip.mediaRef, !current.isEmpty else { return nil }
+            let inverse = HistoryStep.clipSource(clipID: clipID, mediaRef: current,
+                                                 nativeDurationSeconds: clip.nativeDurationSeconds,
+                                                 clips: clips)
+            guard clips.relinkAudio(id: clipID, mediaRef: mediaRef, nativeDurationSeconds: seconds) else {
+                return nil
+            }
+            return inverse
         }
     }
 
@@ -306,6 +321,27 @@ public final class TimelineStore {
         guard before != notes else { return true }
         pushUndo(.clipNotes(clipID: clipID, notes: before, clips: clips))
         return clips.updateMelody(id: clipID, notes: notes)
+    }
+
+    /// Phase 3 / Media B2b — point an audio clip at another file (Relink of a missing file): the
+    /// ONE production writer of `ClipStore.relinkAudio` besides Undo/Redo above, and ONE undo
+    /// step per call (`.clipSource` — it restores the clip's file and length, nothing else; the
+    /// clip id, its parts, name, tempo and automation are never touched). Refused (false, nothing
+    /// written, no step): an unknown or non-audio clip, a clip with no reference, an empty new
+    /// reference, a length that is not a positive finite number. An unchanged binding returns
+    /// true without a step. ⚠️ Undo/Redo do not ask whether the song plays — a Redo mid-song onto
+    /// a never-preloaded file can attach a node at its next onset (the M3 pause); the browser's
+    /// own refusal covers only the first relink.
+    @discardableResult
+    public func relinkClipSource(clipID: UUID, mediaRef: String, nativeDurationSeconds: Double,
+                                 clips: ClipStore) -> Bool {
+        guard let clip = clips.clip(id: clipID), clip.kind == .audio,
+              let before = clip.mediaRef, !before.isEmpty, !mediaRef.isEmpty,
+              nativeDurationSeconds.isFinite, nativeDurationSeconds > 0 else { return false }
+        guard before != mediaRef || clip.nativeDurationSeconds != nativeDurationSeconds else { return true }
+        pushUndo(.clipSource(clipID: clipID, mediaRef: before,
+                             nativeDurationSeconds: clip.nativeDurationSeconds, clips: clips))
+        return clips.relinkAudio(id: clipID, mediaRef: mediaRef, nativeDurationSeconds: nativeDurationSeconds)
     }
 
     /// Phase 3 / Automation A1 — replace the song's automation lanes: the ONE production writer

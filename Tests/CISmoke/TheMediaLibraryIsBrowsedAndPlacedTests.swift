@@ -43,6 +43,10 @@
 //    REGRESSIONS on `90270c345` (the refusal and the order scan did not exist), counterweight
 //    the stopped-song case. The rule checks LENGTH only — it cannot tell two equal-length
 //    recordings apart, and no assertion here claims it can.
+//    Founder 2026-09-26: a relink is ONE undo step in the current session
+//    (`TimelineStore.relinkClipSource`, history kind `.clipSource`): Undo restores the old file
+//    and length exactly — including an unknown length — and Redo the new ones; refusals record no
+//    step. REGRESSIONS on `7006ace55` (the relink wrote around the history).
 // 10. B3: PREVIEW — PURE `MediaBrowserView.previewRefusal` refuses while the song, the instrument's
 //    loop plays, or the engine is stopped (the sink's first use attaches a node, which pauses the
 //    engine); a SCAN that the preview plays through `BeatPlayer`'s attached audition path, only
@@ -523,6 +527,7 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         XCTAssertFalse(MediaRelink.sameLength(.nan, 8.0))
 
         let clips = ClipStore()
+        let timeline = TimelineStore()
         let original = clips.slots
         defer { clips.replaceSlots(original) }
         let gone = Clip(name: "Break", kind: .audio, mediaRef: "/x/Media/Audio/Break.wav",
@@ -540,19 +545,20 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         }
 
         // Refusals write nothing.
-        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, fileExists: { _ in false },
+        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, timeline: timeline, fileExists: { _ in false },
                                           measure: measured(8.0)), .failure(.fileGone))
-        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, fileExists: { _ in true },
+        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, timeline: timeline, fileExists: { _ in true },
                                           measure: measured(12.0)),
                        .failure(.differentLength(expected: 8.0, found: 12.0)))
-        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, fileExists: { _ in true },
+        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, timeline: timeline, fileExists: { _ in true },
                                           measure: { _ in nil }), .failure(.unreadable))
-        XCTAssertEqual(MediaRelink.relink(midi.id, to: found, clipStore: clips, fileExists: { _ in true },
+        XCTAssertEqual(MediaRelink.relink(midi.id, to: found, clipStore: clips, timeline: timeline, fileExists: { _ in true },
                                           measure: measured(8.0)), .failure(.noAudioClip))
         XCTAssertEqual(clips.clip(id: gone.id), gone, "every refusal left the clip exactly as it was")
+        XCTAssertFalse(timeline.canUndo, "…and recorded no undo step")
 
         // The same recording: only the source changes.
-        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, fileExists: { _ in true },
+        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, timeline: timeline, fileExists: { _ in true },
                                           measure: measured(8.0)), .success(8.0))
         let after = clips.clip(id: gone.id)
         XCTAssertEqual(after?.mediaRef, found.url.path, "the clip now names the library file")
@@ -562,17 +568,30 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         XCTAssertEqual(clips.filledClips.count, 2, "no new clip, no slot spent")
         XCTAssertEqual(clips.clip(id: midi.id), midi, "counterweight: the other clip is untouched")
 
+        // ONE undo step in the session (founder 2026-09-26): Undo restores the old binding, Redo
+        // the new one; the clip id and everything else are the same object throughout.
+        XCTAssertTrue(timeline.canUndo, "a relink is an undo step")
+        timeline.undo()
+        XCTAssertEqual(clips.clip(id: gone.id), gone, "Undo restores the old file and length exactly")
+        XCTAssertTrue(timeline.canRedo)
+        timeline.redo()
+        XCTAssertEqual(clips.clip(id: gone.id)?.mediaRef, found.url.path, "Redo re-applies the relink")
+        XCTAssertEqual(clips.clip(id: gone.id)?.nativeDurationSeconds, 8.0)
+
         // A clip that never learned its length takes the file's.
         let unmeasured = Clip(name: "Old", kind: .audio, mediaRef: "/x/Media/Audio/Old.wav")
         grid[2] = unmeasured
         XCTAssertTrue(clips.replaceSlots(grid))
-        XCTAssertEqual(MediaRelink.relink(unmeasured.id, to: found, clipStore: clips, fileExists: { _ in true },
+        XCTAssertEqual(MediaRelink.relink(unmeasured.id, to: found, clipStore: clips, timeline: timeline, fileExists: { _ in true },
                                           measure: measured(3.0)), .success(3.0))
         XCTAssertEqual(clips.clip(id: unmeasured.id)?.nativeDurationSeconds, 3.0)
+        timeline.undo()
+        XCTAssertEqual(clips.clip(id: unmeasured.id), unmeasured,
+                       "Undo gives an unmeasured clip back its unknown length, not the file's")
         XCTAssertFalse(clips.relinkAudio(id: midi.id, mediaRef: "/y/x.wav", nativeDurationSeconds: 1),
                        "the writer itself refuses a MIDI clip")
         XCTAssertFalse(clips.relinkAudio(id: gone.id, mediaRef: "", nativeDurationSeconds: 1))
-        XCTAssertFalse(clips.relinkAudio(id: gone.id, mediaRef: "/y/x.wav", nativeDurationSeconds: .nan))
+        XCTAssertFalse(clips.relinkAudio(id: gone.id, mediaRef: "/y/x.wav", nativeDurationSeconds: Double.nan))
     }
 
     func testRelinkIsOneWriterAndTheBrowsersOnlyDoor() throws {
@@ -581,7 +600,7 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
                        "a relink never touches a file")
         let relinkBody = try body(of: "public static func relink(", in: relink)
         let exists = try XCTUnwrap(relinkBody.range(of: "guard fileExists(asset.url.path)"))
-        let write = try XCTUnwrap(relinkBody.range(of: "clipStore.relinkAudio("))
+        let write = try XCTUnwrap(relinkBody.range(of: "timeline.relinkClipSource("))
         XCTAssertLessThan(exists.lowerBound, write.lowerBound, "the file is checked before anything is written")
         let measure = try XCTUnwrap(relinkBody.range(of: "measure(asset.url)"))
         XCTAssertLessThan(exists.lowerBound, measure.lowerBound, "…and before it is measured")
@@ -592,10 +611,13 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         let refused = try XCTUnwrap(relinkTap.range(of: "Self.relinkRefusal(songPlaying: player.isPlaying)"))
         let performed = try XCTUnwrap(relinkTap.range(of: "MediaRelink.perform("))
         XCTAssertLessThan(refused.lowerBound, performed.lowerBound, "the refusal is asked before the write")
-        XCTAssertFalse(relinkBody.contains("timeline"), "no region is written — the parts stay where they are")
+        XCTAssertFalse(relinkBody.contains("Region"), "no part is written — the parts stay where they are")
         XCTAssertEqual(try filesUnderSources(containing: "relinkAudio("),
-                       ["Core/ClipStore.swift", "Sequencer/MediaRelink.swift"],
-                       "one writer, one caller")
+                       ["Core/ClipStore.swift", "Core/TimelineStore.swift"],
+                       "one clip writer, called only by the song's undoable writer and its Undo/Redo")
+        XCTAssertEqual(try filesUnderSources(containing: "relinkClipSource("),
+                       ["Core/TimelineStore.swift", "Sequencer/MediaRelink.swift"],
+                       "one undoable writer, one caller")
         XCTAssertEqual(try filesUnderSources(containing: "MediaRelink.perform("),
                        ["Studio/MediaBrowserView.swift"], "the browser's Relink is the one door")
         let browser = try source(Self.browserPath)

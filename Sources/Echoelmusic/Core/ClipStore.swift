@@ -179,10 +179,15 @@ public final class ClipStore {
     /// `MediaRelink.relink`). It writes the file reference and the length measured from that
     /// file, and nothing else: the id every region points at, the name, the tempo and the
     /// automation stay. Returns false, writing nothing, for an unknown id, a non-audio clip, an
-    /// empty reference or a length that is not a positive finite number.
+    /// empty reference or a length that is not a positive finite number. A nil length is taken
+    /// only to RESTORE a clip that never learned its length (Undo of a relink,
+    /// `TimelineStore.relinkClipSource`).
     @discardableResult
-    public func relinkAudio(id: UUID, mediaRef: String, nativeDurationSeconds: Double) -> Bool {
-        guard !mediaRef.isEmpty, nativeDurationSeconds.isFinite, nativeDurationSeconds > 0,
+    public func relinkAudio(id: UUID, mediaRef: String, nativeDurationSeconds: Double?) -> Bool {
+        if let seconds = nativeDurationSeconds {
+            guard seconds.isFinite, seconds > 0 else { return false }
+        }
+        guard !mediaRef.isEmpty,
               let i = slots.firstIndex(where: { $0?.id == id }),
               var clip = slots[i], clip.kind == .audio
         else { return false }

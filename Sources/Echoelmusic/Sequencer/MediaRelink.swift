@@ -20,12 +20,13 @@
 // fingerprint, so this rule cannot tell them apart; the words the user sees say "same length",
 // never "same recording". A clip that never learned its length takes the file's.
 //
-// ⛔ NOT UNDOABLE (review of `aa7089d90`, M1 — the first header said "undone by relinking again",
-// which is false). Relink is offered only on a MISSING clip; once relinked it resolves, so its row
-// and its Relink are gone, and the old `mediaRef` — the only record of the file it expected — is
-// overwritten. A same-length mistake is therefore permanent. Whether a relink should keep the old
-// reference, or Relink be offered on every audio clip, is a founder decision (plan MA, B2 notes).
-// It is not an Undo step either: `TimelineStore`'s history holds the song, not clip state.
+// ⭐ ONE UNDO STEP IN THE CURRENT SESSION (founder 2026-09-26, after review M1 found the first
+// header's "undone by relinking again" false). The write goes through
+// `TimelineStore.relinkClipSource`, which records the old binding as a `.clipSource` history step:
+// Undo restores the old `mediaRef` and length, Redo the new ones. The old reference is NOT kept
+// on the clip — no schema debt before MediaAsset owns identity — so it does not survive a
+// relaunch. Relink stays a MISSING-media repair: offered only on a missing clip, never on a
+// healthy one (a deliberate substitution would be a future "Replace Source", founder).
 //
 // ⚠️ NOT WHILE THE SONG PLAYS (M3): a lane whose only clip was missing has no preloaded file, so
 // the next onset after a relink would attach a node — and an attach pauses the engine. The
@@ -88,13 +89,14 @@ public enum MediaRelink {
         return .success(found)
     }
 
-    /// Relink `clipID` to `asset`, through the one clip writer. `measure` and `fileExists` are
+    /// Relink `clipID` to `asset`, through the song's one undoable writer. `measure` and `fileExists` are
     /// injected so the blocking bundle can drive the whole path on paths that exist only as
     /// strings; production passes the real ones (`MediaBrowserView`).
     @MainActor
     public static func relink(_ clipID: UUID,
                               to asset: MediaAsset,
                               clipStore: ClipStore,
+                              timeline: TimelineStore,
                               fileExists: (String) -> Bool,
                               measure: (URL) -> AudioImport.Measurement?) -> Result<Double, Refusal> {
         guard let clip = clipStore.clip(id: clipID) else { return .failure(.noAudioClip) }
@@ -103,8 +105,8 @@ public enum MediaRelink {
         guard fileExists(asset.url.path) else { return .failure(.fileGone) }
         let decision = decide(clip, measuredSeconds: measure(asset.url)?.durationSeconds)
         guard case .success(let seconds) = decision else { return decision }
-        guard clipStore.relinkAudio(id: clipID, mediaRef: asset.url.path,
-                                    nativeDurationSeconds: seconds) else {
+        guard timeline.relinkClipSource(clipID: clipID, mediaRef: asset.url.path,
+                                        nativeDurationSeconds: seconds, clips: clipStore) else {
             return .failure(.noAudioClip)
         }
         return .success(seconds)
@@ -116,8 +118,8 @@ public enum MediaRelink {
     /// import's own measurement (one header read of the chosen file, on the tap).
     @MainActor
     public static func perform(_ clipID: UUID, to asset: MediaAsset,
-                               clipStore: ClipStore) -> Result<Double, Refusal> {
-        relink(clipID, to: asset, clipStore: clipStore,
+                               clipStore: ClipStore, timeline: TimelineStore) -> Result<Double, Refusal> {
+        relink(clipID, to: asset, clipStore: clipStore, timeline: timeline,
                fileExists: { FileManager.default.fileExists(atPath: $0) },
                measure: AudioImport.measureWithAVFoundation)
     }

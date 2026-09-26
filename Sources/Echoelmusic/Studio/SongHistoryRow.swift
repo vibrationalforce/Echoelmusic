@@ -12,7 +12,8 @@
 //  ⚠️ WHAT IT COVERS, stated rather than implied (the store's contract): the history holds the
 //  song's PARTS — moves, copies, splits, removals, imports and the composer's part — and, since
 //  Phase 3 / M1, the NOTES of a MIDI part edited in `PartNoteEditor`, and since Automation A1
-//  the song's AUTOMATION drawn in `SongAutomationEditor` — each as its own step kind.
+//  the song's AUTOMATION drawn in `SongAutomationEditor`, and since Media B2b a RELINK of a
+//  missing file in the Media Library (one audio clip's file binding) — each as its own step kind.
 //  Never a mixer change, a rename or a track. A part whose track was removed after the step does
 //  not come back (`TimelineStore.restoreRegions` drops it rather than resurrect an invisible
 //  orphan).
@@ -33,16 +34,16 @@ struct SongHistoryRow: View {
         let canRedo = timeline.canRedo
         HStack(spacing: 6) {
             button("Undo", "arrow.uturn.backward", enabled: canUndo,
-                   label: "Undo the last change to the song's parts, notes or automation") {
+                   label: "Undo the last change to the song's parts, notes, automation or a relinked file") {
                 timeline.undo()
             }
             button("Redo", "arrow.uturn.forward", enabled: canRedo,
-                   label: "Redo the last undone change to the song's parts, notes or automation") {
+                   label: "Redo the last undone change to the song's parts, notes, automation or a relinked file") {
                 timeline.redo()
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityHint("Covers moves, copies, splits, removals, imports, note edits, automation points and the composer's part — never mixer changes")
+        .accessibilityHint("Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files and the composer's part — never mixer changes")
     }
 
     private func button(_ title: String, _ systemImage: String, enabled: Bool, label: String,
