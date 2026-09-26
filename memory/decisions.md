@@ -2990,3 +2990,11 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Exception, stated:** step 1 is where a relink does NOT keep the clip's MediaAsset id — the chosen file already has an identity, and one file must not carry two.
 - **Known limit:** a moved record also linked by a clip in another project that names the old (equally missing) file points past that clip until it is relinked too.
 - **Review date:** 2026-10-26.
+
+### 2026-09-26 — MA4.4 SHA-256 content evidence + relink hierarchy A–D (`66d37a8c5`)
+- **Decision:** CryptoKit SHA-256 (founder approval, MediaAsset content evidence ONLY — no other framework expansion). Persisted as text `sha256:<64 lower-case hex>` in `MediaAssetRecord.Evidence.contentDigest`; CryptoKit types never persisted.
+- **When hashed:** after a new managed import (Workstation's cancellable post-import task) and in a relink only when the clip's record has a digest; never at launch/scan/periodically/on browse. Legacy records stay readable; a relink backfills the chosen file's own record.
+- **Relink:** A equal digest → move with id (own record of the chosen file still wins) · B different → refuse, nothing written · C adopt the file's own unrefuted record · D no proof → register a record for the file. Duration never moves a shared record. Supersedes the MA4.5 "name + duration" move.
+- **Guards:** `TheMediaAssetIsADurableIdentityTests` claims 9–11 (cross-project counterweight in 10), journey test §8.
+- **Review:** 2026-10-26.
+
