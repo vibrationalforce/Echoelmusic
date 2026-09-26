@@ -186,3 +186,11 @@ Reachable via Remove / Trim end / Earlier (`SelectedPartBar`); playback reads th
   at the song end (the right edge clamps there), extending the song, or Undo. A marker would be
   new UI — not built.
 - LOW-4 REPAIRED: plan prose.
+
+## AUTOMATION — autonomous slices CLOSED (2026-09-26 07:50Z, Council silent: proceed to Recording/Input)
+A1–A3 + A5 shipped, gates green (main = 724c1f9b7), each independently reviewed; A4 reverted.
+Left for the founder / other scopes: Echoel-track automation meaning (founder call); MED-2 pick
+radius → needs an Arrange-shared zoom (WA4 scope); A5 LOW-3 edge marker (new UI); curve
+shapes / multi-select / playhead (not asked). Device probes: NEEDS-FOUNDER-VERIFY lines in
+`TheSongAutomationIsDrawnThroughOneWriterTests`. Next per founder order: Recording/Input —
+read-only census first.

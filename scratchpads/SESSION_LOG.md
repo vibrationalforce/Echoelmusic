@@ -40086,3 +40086,6 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 
 ### 2026-09-26 07:25Z — A5 reviewed (no HIGH/MED) + repaired (724c1f9b7)
 - Premise confirmed (Remove/Trim/Earlier shorten the song; playback reads the full lane to document.endTick = songTicks). LOW-1 guard compares at the last played sixteenth; LOW-2 hint + VoiceOver name a point after the song end; LOW-3 recorded; LOW-4 plan prose. Gates pending.
+
+### 2026-09-26 07:50Z — A5 gates green; Automation closed (autonomous); Recording/Input census started
+- 0fa53b6b5 + 724c1f9b7 in main (both gates green). Automation's autonomous slices closed; remainder is founder/Arrange scope (plan). Recording/Input recovery census running (read-only subagent).
