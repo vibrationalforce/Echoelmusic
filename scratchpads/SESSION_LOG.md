@@ -40094,3 +40094,13 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - Door: `Studio/RecordTakeControls.swift` (Record beside Play, Arm per open rack MIDI track). `RecordController.followSongEnd` ends a take at the song end (the recorder counts `absoluteStep` linearly; the arrangement wraps). `droppedTakes` says when the 8-slot grid is full. Guard `TheMIDITakeIsRecordedFromTheWorkstationTests` (end-to-end on real Transport/TimelineStore/ClipStore + scans; scans transcribed on both trees).
 - Evidence: gates pending, independent review running. Device journey NEEDS-FOUNDER-VERIFY.
 - Next: review repairs; prose sweep of the now-false "arm() has zero callers / recorder chain doorless" statements (~16 files) as its own commit.
+
+### 2026-09-26 12:40Z — R1 gates closed; MIDI editor M5–M10 (founder priority correction)
+- R1: AUTONOMOUS GATES CLOSED (main = d130ce840 at the time); device acceptance founder-pending. Recording not expanded (no mic, plist, audio/master recording, overdub, takes, comping).
+- M5 `65ed99950` + M5b `849e4a845`: a note edit while playing keeps the bar (refresh after cursor/wrap/launch at newTick with the real step); rack tracks re-window in place; a moved sounding note is released. M6: Deselect (Undo row move reverted by its own review, `28ce8dc8a`).
+- M7 `c3f72e956`: structural edits while playing — `refreshStructure` adopts the document before the advance, `chaseStructure` re-drives roll + rack at this step's tick/step; `loadRollRegion(at:step:)` step required. Review: no HIGH; repair `608b803bc` (relocate half latent — no production caller; ordering anchor after the launch shift; stale docs). BfT green, main = c3f72e956.
+- M8 `3723e000d`: no-voice line in the note editor (TrackMix.role, capacity handed in). M9 `6220398fc`: a box adds to the selection (`NoteGridGesture.boxing`). Both BfT green (runs 6404/6405; Run Tests #396 shape, 0 fail in window).
+- M10 `4ada958a5`: "Play from here" in the selected part's title row — Workstation's one start (`startTimeline`) + its one `canPlay` (`songCanStart()`), Stop while playing. Guard `APartPlaysFromItsBarTests`.
+- Review of M8–M10: no HIGH/MED; repair `ab1586c95` (a move and a delete keep off-screen picks; button fixedSize + hints; doc drift; LOW-3 wording). Gates pending at log time.
+- Open: scale lock on tap/drag (needs founder yes — M4's shading + Fit + step cover "scale-aware"); M7 LOW-3 (song started under a running instrument loop mid-bar repeats a bar; pre-existing, reachable from both Plays); DC2 (founder device report on DC1); MA3 (ProjectStore reference census first).
+- Evidence: M5–M9 COMPILES (BfT green); M10 + repairs pending; all TESTED by transcription only; NOT device verified.

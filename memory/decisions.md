@@ -2965,3 +2965,9 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Decision:** the row offers `SongAutomationEdit.offered` = `PolySynthVoice.automatableBases` ∩ catalog `automationEligible`, in the voice's order — one lane per parameter per track, same one writer and Undo. A `Picker(.menu)`; the row opens on the parameter the track already has a curve for (else Brightness), decided once per track.
 - **Why:** a second list of bases would rot beside the voice's own (#416); the eligible set already means "no other writer owns it".
 - **Review:** 2026-10-26.
+
+### 2026-09-26 — A structural edit is chased at the tick the step sounds (M7) · Play from the part (M10)
+- **Decision:** `refreshStructure` only adopts the document (before the advance, for the wrap); `chaseStructure` re-drives roll + rack after the advance and the launch transitions, at `newTick` and the real step. `loadRollRegion(at:step:)` has no default step.
+- **Decision:** the part bar's "Play from here" starts through the Workstation's `startTimeline` and is dimmed by `songCanStart()` — the Workstation's single `canPlay` call. No second `player.play(` caller, no second asker.
+- **Why:** at `lastTick`/`step: 0` a multi-bar part ran one bar late after any structural edit; a second start or a second playability rule would be two answers to one question (#416, §E of the timeline guard).
+- **Review date:** 2026-10-26.
