@@ -729,8 +729,9 @@ public final class TimelineStore {
     /// Phase 3 / EF1 — THE one writer of the Echoel instance: set the FX character of the Echoel
     /// on the track it plays (`rollLaneID`). The instrument's `@AppStorage` key is its working
     /// copy, adopted from here (`EchoelStudioView.adoptEchoelFXFromSong`) — never a second owner.
-    /// · ONE instance per song: a stale Echoel instance on any other lane (the track the Echoel
-    ///   played before a reorder) is removed in the same write.
+    /// · ONE instance per song: a stale Echoel instance on any other lane is removed in the same
+    ///   write. (There is no lane-reorder API and the Echoel lane cannot be removed, so a stale
+    ///   one arrives only in a song written elsewhere — this is the cheap guarantee, not a path.)
     /// · An instance this build cannot read (a later `typeVersion`, another instrument type) is
     ///   KEPT and not rewritten: nothing is written, and the song keeps it byte for byte.
     /// · No roll lane (a song without a MIDI track) → nothing to hold the instance; no write.

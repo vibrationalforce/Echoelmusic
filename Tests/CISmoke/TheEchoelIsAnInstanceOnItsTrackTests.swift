@@ -22,9 +22,13 @@
 // 6. WHO SEES THE ROW (`TrackMix.controls`): the Echoel track, only once the song holds a readable
 //    instance; its choices start with `.auto` (the Echoel owns a genre).
 // 7. SOURCE-TEXT SCAN: the four sync points in `EchoelStudioView` — the Effects Picker and
-//    `open(_:)` write the owner; `adoptEchoelFXFromSong()` runs at launch, after `restoreSong` in
-//    `openFromLibrary`, and on the `"fxCharacter"` edit — and the inspector writes the store
-//    BEFORE it posts that edit.
+//    `open(_:)` write the owner; `adoptEchoelFXFromSong()` runs at launch (right after the genre
+//    clamp), after `restoreSong` in `openFromLibrary`, and on the `"fxCharacter"` edit — the
+//    inspector writes the store BEFORE it posts that edit, and asks for a missing instance when
+//    the Echoel track opens (a first MIDI track added after launch).
+//
+// REVIEW OF 6d68bea64 (no HIGH): M3 (a roll lane that appears after launch had no instance and
+// no row) is repaired by `TrackMix.requestEchoelInstanceIfMissing`; L3/L4 sharpened claims 5/7.
 //
 // HONEST GRADING (§3), against the parent tree (`eaebb40cf`): the file does NOT compile there —
 // `DeviceInsert.echoelTypeID`, `DeviceChain.instrument`, `TimelineStore.setEchoelFXCharacter`,
@@ -200,13 +204,15 @@ final class TheEchoelIsAnInstanceOnItsTrackTests: XCTestCase {
                       "an Echoel effect change must not relocate voices mid-play")
         XCTAssertEqual(edited.echoelFXCharacter, .dream)
         XCTAssertNil(playing.echoelFXCharacter)
-        XCTAssertNil(MultiRollFanout.effect(forSlot: 0, in: edited, rollLane: edited.rollLaneID),
-                     "the rack slot plays its own effect, never the Echoel's")
-
-        // Only the roll lane is read: an instance on another lane is not the Echoel's.
+        // Only the roll lane is read: an instance on another lane is not the Echoel's — and a
+        // rack slot whose lane carries an instrument insert plays no effect from it (review of
+        // 6d68bea64, L3: the first form asserted this on a lane with no chain at all, where it
+        // could not fail).
         var misplaced = playing
         misplaced.lanes[1].deviceChain = owned
         XCTAssertNil(misplaced.echoelFXCharacter)
+        XCTAssertNil(MultiRollFanout.effect(forSlot: 0, in: misplaced, rollLane: misplaced.rollLaneID),
+                     "a rack slot reads its INSERTS, never an instrument instance")
     }
 
     // MARK: 6 — who sees the row
@@ -239,6 +245,17 @@ final class TheEchoelIsAnInstanceOnItsTrackTests: XCTestCase {
         let studio = try source(Self.studioPath)
         XCTAssertEqual(studio.components(separatedBy: "adoptEchoelFXFromSong()").count - 1, 4,
                        "declared once + launch + after a library Open + the \"fxCharacter\" edit")
+        // The launch adoption sits AFTER the genre clamp (an adoption re-stamps the FX room from
+        // `style`) — review of 6d68bea64, L4: the count alone survives moving it anywhere.
+        guard let clamp = studio.range(of: "style = StudioDefaultKeys.genre.value"),
+              let launch = studio.range(of: "adoptEchoelFXFromSong()", range: clamp.upperBound..<studio.endIndex),
+              let decl = studio.range(of: "private func adoptEchoelFXFromSong()") else {
+            return XCTFail("ANCHOR MISSING: the launch genre clamp or the launch adoption (#454)")
+        }
+        XCTAssertLessThan(launch.lowerBound, decl.lowerBound, "the first adoption after the clamp is the launch call")
+        let gap = studio[clamp.upperBound..<launch.lowerBound].components(separatedBy: "\n").count
+        XCTAssertLessThan(gap, 12, "the launch adoption follows the genre clamp directly")
+
         let adopt = try body(of: "private func adoptEchoelFXFromSong()", in: studio)
         XCTAssertTrue(adopt.contains("timelineStore.document.echoelFXCharacter"),
                       "the song is read in a FUNCTION, never in `body` (the freeze law)")
@@ -283,6 +300,16 @@ final class TheEchoelIsAnInstanceOnItsTrackTests: XCTestCase {
         }
         XCTAssertLessThan(write.lowerBound, post.lowerBound,
                           "the Studio adopts from the song, so the song must be written first")
+        // Review of 6d68bea64, M3: a first MIDI track added after launch has no instance, so the
+        // inspector asks the instrument to state it — only for an EMPTY slot, never over a later
+        // build's instance.
+        let request = try body(of: "static func requestEchoelInstanceIfMissing(", in: inspector)
+        XCTAssertTrue(request.contains("== .echoelInstrument"))
+        XCTAssertTrue(request.contains("?.deviceChain?.instrument == nil"))
+        XCTAssertTrue(request.contains("object: \"fxCharacter\")"))
+        let appear = try body(of: ".onAppear", in: inspector)
+        XCTAssertTrue(appear.contains("TrackMix.requestEchoelInstanceIfMissing("))
+
         let row = try body(of: "private var echoelEffectRow: some View", in: inspector)
         XCTAssertTrue(row.contains(".pickerStyle(.menu)"), "a named choice is a Picker, not a number field")
         XCTAssertTrue(row.contains("TrackMix.setEchoelEffect("))

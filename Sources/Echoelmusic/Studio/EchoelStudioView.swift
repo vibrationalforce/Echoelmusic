@@ -8511,28 +8511,6 @@ struct EchoelStudioView: View {
         [synth.fxChain, touchSynth?.fxChain].compactMap { $0 }
     }
 
-    /// Stamp the chosen effect character on every live FX chain (independent of genre).
-    /// ⚠️ #695 — THIS RE-STAMP DOES NOT REFRESH THE FX PANEL'S MIRRORS, AND TODAY ONLY THE
-    /// MODAL SAVES IT. `FXViewModel` mirrors all fifteen chain enables and resyncs solely
-    /// through `reseed()`; `EchoelFXView.applyCharacter` calls it, this function does not. (Since
-    /// #1364 `applyCharacter` ALSO re-syncs the delay division through an injected closure, which
-    /// is the reverse direction — panel → Studio — and does not narrow this finding by a word.) So a
-    /// character stamped from HERE while a live `EchoelFXView` existed would leave up to
-    /// fourteen switches reading ON over a chain that is off — the `applyDelaySync` failure
-    /// shape one panel over, multiplied.
-    ///
-    /// ⭐ IT IS UNREACHABLE TODAY, and the reason is presentation, not design: the character
-    /// `Picker` and the "All parameters" door are BOTH in `effectsPanel`, and the panel is
-    /// covered by `.sheet(isPresented: $showAllFX)` — a modal cannot be reached past. Generate
-    /// and `open(_:)` re-stamp too, and are behind the same modal. Dismissing destroys the
-    /// sheet's `@State`, so the next presentation re-seeds from the chain.
-    ///
-    /// ⛔ THAT GUARANTEE IS ONE UI CHANGE THICK. It breaks the day the FX surface stops being
-    /// modal, gains its own character control, or the panel becomes reachable behind it — and
-    /// nothing would go red, because the mirrors are `@State` and no test can see a live one.
-    /// #694 WIDENED the exposure from seven flags to fourteen (it made `.clean` write the seven
-    /// the preset could not), which is why it is written down here rather than left as an
-    /// unstated property of a sheet. The repair, on that day, is a call site — not new code.
     /// Phase 3 / EF1 — the song's Echoel instance (`TimelineDocument.echoelFXCharacter`) is the
     /// ONE owner of the FX character; `fxCharacter` (`@AppStorage`) is the instrument's working
     /// copy, which the Picker and `.auto`-aware stamps read. Owner → copy when the song has a
@@ -8550,6 +8528,31 @@ struct EchoelStudioView: View {
         }
     }
 
+
+    /// Stamp the chosen effect character on every live FX chain (independent of genre).
+    /// ⚠️ #695 — THIS RE-STAMP DOES NOT REFRESH THE FX PANEL'S MIRRORS, AND TODAY ONLY THE
+    /// MODAL SAVES IT. `FXViewModel` mirrors all fifteen chain enables and resyncs solely
+    /// through `reseed()`; `EchoelFXView.applyCharacter` calls it, this function does not. (Since
+    /// #1364 `applyCharacter` ALSO re-syncs the delay division through an injected closure, which
+    /// is the reverse direction — panel → Studio — and does not narrow this finding by a word.) So a
+    /// character stamped from HERE while a live `EchoelFXView` existed would leave up to
+    /// fourteen switches reading ON over a chain that is off — the `applyDelaySync` failure
+    /// shape one panel over, multiplied.
+    ///
+    /// ⭐ IT IS UNREACHABLE TODAY, and the reason is presentation, not design: the character
+    /// `Picker` and the "All parameters" door are BOTH in `effectsPanel`, and the panel is
+    /// covered by `.sheet(isPresented: $showAllFX)` — a modal cannot be reached past. Generate,
+    /// `open(_:)` and — since EF1 — the Workstation's Echoel Effect row (through
+    /// `.echoelCompositionEdited "fxCharacter"` → `adoptEchoelFXFromSong()`) re-stamp too, and all
+    /// three sit behind the same modal (the Workstation plate is part of this view). Dismissing destroys the
+    /// sheet's `@State`, so the next presentation re-seeds from the chain.
+    ///
+    /// ⛔ THAT GUARANTEE IS ONE UI CHANGE THICK. It breaks the day the FX surface stops being
+    /// modal, gains its own character control, or the panel becomes reachable behind it — and
+    /// nothing would go red, because the mirrors are `@State` and no test can see a live one.
+    /// #694 WIDENED the exposure from seven flags to fourteen (it made `.clean` write the seven
+    /// the preset could not), which is why it is written down here rather than left as an
+    /// unstated property of a sheet. The repair, on that day, is a call site — not new code.
     private func applyFX() {
         for chain in characterFXChains {
             fxCharacter.apply(to: chain, bpm: currentTempo, genre: style)
@@ -11619,7 +11622,10 @@ struct EchoelStudioView: View {
     /// with. A Session this build cannot open refuses the whole Open before anything changes
     /// (and says why in the sheet). `open(_:)` runs first, so its rescue records the take and
     /// song being replaced; the song is replaced after it. The two doors that load an ARRIVING
-    /// take (Live Colabo, a shared document) call `open(_:)` alone and leave the song alone.
+    /// take (Live Colabo, a shared document) call `open(_:)` alone and leave the song's PARTS
+    /// alone — ⚠️ since EF1 they DO write one fact of it: `open(_:)` sets the song's Echoel
+    /// instance to the arriving take's FX character (after its rescue), so the song and the
+    /// instrument's working copy never split.
     private func openFromLibrary(_ p: Project) {
         if let refusal = SessionSaveOpen.refusal(for: p) {
             openNote = refusal

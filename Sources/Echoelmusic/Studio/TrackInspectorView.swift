@@ -225,6 +225,20 @@ enum TrackMix {
         NotificationCenter.default.post(name: .echoelCompositionEdited, object: "fxCharacter")
     }
 
+    /// EF1 (review of 6d68bea64, M3) — the Echoel track opened on a song whose roll lane holds NO
+    /// instrument yet (its first MIDI track was added after launch, e.g. by a MIDI import) asks
+    /// the instrument to state its instance: the Studio's adoption imports the working copy, and
+    /// the Effect row appears. Only when the slot is EMPTY — a later build's instance is kept and
+    /// the row stays hidden (the store refuses to rewrite it). Posting changes nothing but that
+    /// one missing fact: the adoption does not recompose.
+    @MainActor
+    static func requestEchoelInstanceIfMissing(laneID: UUID, timeline: TimelineStore, voiceCapacity: Int) {
+        let document = timeline.document
+        guard role(of: laneID, in: document, voiceCapacity: voiceCapacity) == .echoelInstrument,
+              document.lanes.first(where: { $0.id == laneID })?.deviceChain?.instrument == nil else { return }
+        NotificationCenter.default.post(name: .echoelCompositionEdited, object: "fxCharacter")
+    }
+
     @MainActor
     static func flipMute(laneID: UUID, timeline: TimelineStore) {
         timeline.toggleMute(id: laneID)
@@ -351,7 +365,11 @@ struct TrackInspectorView: View {
             }
             .padding(.vertical, 8).padding(.horizontal, 10)
             .padding(.leading, 26)
-            .onAppear { nameDraft = lane.name }
+            .onAppear {
+                nameDraft = lane.name
+                TrackMix.requestEchoelInstanceIfMissing(laneID: laneID, timeline: timeline,
+                                                        voiceCapacity: player.laneVoiceCapacity)
+            }
             .onDisappear { commitName() }
         }
     }

@@ -154,6 +154,10 @@ public struct DeviceInsert: Codable, Sendable, Equatable, Identifiable {
     /// The Echoel instrument as a device instance (WA3 §A.2).
     public static let echoelTypeID = "com.echoelmusic.device.echoel"
     /// The state format this build reads and writes: sorted-keys JSON `[String: String]`.
+    /// ⚠️ v1 is STRING-VALUED by definition: a field of any other JSON type makes the whole state
+    /// unreadable here (not read, not rewritten). A future field that is not a string is v2.
+    /// (`EchoelInstanceState.deviceType` = "echoel.instrument" is an unpersisted LABEL; this
+    /// typeID is the persisted identity — the two are not reconciled yet.)
     public static let echoelTypeVersion = 1
     static let echoelFXKey = "fxCharacter"
 
