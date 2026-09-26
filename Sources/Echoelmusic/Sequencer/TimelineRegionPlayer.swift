@@ -765,8 +765,6 @@ public final class TimelineRegionPlayer {
         // play()-time snapshot until Stop+Play while the UI showed a different
         // arrangement. Runs BEFORE this step's window so the edit sounds this step.
         refreshStructure()
-        // Phase 3 / M1: pull NOTE edits in too — they change a clip, not the document.
-        refreshNoteContent()
         var newTick = cursor.advance(step: step)
         var wrapped = false
         if loopTicks > 0, newTick >= loopTicks {
@@ -794,6 +792,11 @@ public final class TimelineRegionPlayer {
             applyLaunchTransitions(launchTransitions, atTick: newTick, step: step)
             launchGeneration &+= 1
         }
+        // Phase 3 / M1 → M5: pull NOTE edits in too — they change a clip, not the document.
+        // AFTER the cursor and the wrap, at THIS step's tick and step: the reload re-enters
+        // the bar this step sounds in, and the roll's bar plan needs the real step (see the
+        // function). Before the window below, so the edit sounds from this step.
+        refreshNoteContent(atTick: newTick, step: step)
         // A roll-lane transition this tick already made the region decision at
         // newTick (launched load / back-to-arrangement) — skip the incremental
         // arrangement event; an OVERRIDDEN roll lane skips it every tick.
@@ -1187,25 +1190,60 @@ public final class TimelineRegionPlayer {
     /// `refreshStructure` returns at its equality gate — and a part active on both sides of a
     /// song-loop wrap reads `.unchanged` forever. Imported MIDI is exactly that shape (one part
     /// spanning the loop), so an edit was silent until Stop + Play. When a user note write
-    /// happened since the last step, re-load what plays at the current position through the
-    /// SAME chase paths a structure edit uses: the roll region (or its launched content) and
-    /// the secondary lanes. Idle cost is one integer compare per step; the composer's own
-    /// writes do not move the counter, so an evolve never restages through here.
-    private func refreshNoteContent() {
+    /// happened since the last step, re-load what plays at the current position. Idle cost is
+    /// one integer compare per step; the composer's own writes do not move the counter, so an
+    /// evolve never restages through here.
+    ///
+    /// ⛔ M5 — the first version re-loaded at `lastTick` with the roll's `step: 0`, through the
+    /// STRUCTURE chase paths, and that was wrong three ways on a part longer than one bar:
+    /// · `lastTick` is the PREVIOUS step. On a bar line it sits in the bar before, so the roll
+    ///   and every pump re-entered the old bar and played it again.
+    /// · `step: 0` told the roll's bar plan the onset lands on a bar line. Mid-bar it does not,
+    ///   and the plan then stages no next bar and a phase one short — the part ran ONE BAR LATE
+    ///   for the rest of playback (`ArrangementLoadPlan.plan` states both cases).
+    /// · `primeSecondaryLanes` re-binds each slot and resets its pump, which cut every note
+    ///   ringing on every other MIDI track at each edit anywhere.
+    /// Now: `tick`/`step` are THIS step's (the caller runs after the cursor and the wrap), the
+    /// roll loads its sounding region with the real step, and each pump re-windows in place.
+    private func refreshNoteContent(atTick tick: Int, step: Int) {
         guard let generation = clips?.userMelodyGeneration,
               generation != seenMelodyGeneration else { return }
         seenMelodyGeneration = generation
-        if let lane = rollLane, launch.isOverriding(laneID: lane) {
-            reapplyLaunched(laneID: lane, atTick: lastTick)
-        } else {
-            loadedRegionID = nil
-            loadRollRegion(at: lastTick)
+        if let lane = rollLane, let region = soundingRegion(laneID: lane, at: tick) {
+            loadClip(region, atTick: tick, step: step)
         }
-        primeSecondaryLanes(at: lastTick)
-        for laneID in launch.overriddenLaneIDs where laneID != rollLane {
-            reapplyLaunched(laneID: laneID, atTick: lastTick)
+        reloadSecondaryNotes(at: tick)
+        log.log(.info, category: .audio, "timeline: note edit pulled into playback at tick \(tick)")
+    }
+
+    /// The region a lane plays at `tick`: its launched part while a launch overrides it (the
+    /// test `reapplyLaunched` makes), else the arrangement's winner — `activeRegion`, the one
+    /// overlap rule (#1440).
+    private func soundingRegion(laneID: UUID, at tick: Int) -> TimelineRegion? {
+        if let launched = launch.soundingRegion(laneID: laneID) {
+            return doc.regions.first { $0.id == launched.regionID }
         }
-        log.log(.info, category: .audio, "timeline: note edit pulled into playback at tick \(lastTick)")
+        return TimelineScheduling.activeRegion(in: doc, laneID: laneID, at: tick)
+    }
+
+    /// M5: a NOTE edit re-windows each secondary lane's pump IN PLACE — same slot, same
+    /// binding, same entry bar the fan-out would compute, and NO `reset()`: the lane, its kind,
+    /// patch and mix did not change, and `LaneNotePump.load` keeps sounding notes to their own
+    /// release. A lane without a live pump has nothing sounding and waits for its next onset,
+    /// exactly as before the edit. Entry bar: the launch timebase for a launched part
+    /// (`launchedStartBar`), the region-relative bar for an arrangement part — the two rules the
+    /// launch and fan-out paths already use.
+    private func reloadSecondaryNotes(at tick: Int) {
+        guard multiRollCapacity > 0 else { return }
+        for laneID in MultiRollFanout.secondaryLaneIDs(in: doc, rollLane: rollLane) {
+            guard let slot = secondarySlot(forLane: laneID), var pump = pumps[slot],
+                  let region = soundingRegion(laneID: laneID, at: tick) else { continue }
+            let startBar = launch.isOverriding(laneID: laneID)
+                ? launchedStartBar(laneID: laneID, atTick: tick)
+                : max(0, tick - region.startTick) / TimelineTime.ticksPerBar
+            pump.load(bars: windowedBars(for: region), startBar: startBar)
+            pumps[slot] = pump
+        }
     }
 
     /// Release every sounding secondary voice and clear the fan-out state (stop/reset).

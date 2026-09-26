@@ -306,18 +306,25 @@ final class TheSelectedPartsNotesAreEditedThroughOneWriterTests: XCTestCase {
                       "ANCHOR MISSING: the held centre")
         XCTAssertFalse(editor.contains("pitchRange(of:"), "the rows must not follow the live notes")
 
-        // Finding 1: the player pulls a note edit in on the next step.
+        // Finding 1: the player pulls a note edit in on the next step. ⛔ M5 moved the call:
+        // this claim pinned it BEFORE `cursor.advance`, i.e. at the previous step's tick, and
+        // that order is what made a multi-bar part run one bar late after an edit. It now runs
+        // AFTER the cursor and before the roll's window — the bar behaviour is claimed by
+        // `AMidPlayNoteEditKeepsTheBarTests`.
         let player = try source(Self.playerPath)
         guard let step = player.range(of: "public func transportStep(_ step: Int) {"),
-              let structure = player.range(of: "refreshStructure()", range: step.upperBound..<player.endIndex),
-              let notes = player.range(of: "refreshNoteContent()", range: step.upperBound..<player.endIndex),
-              let advance = player.range(of: "cursor.advance(step: step)", range: step.upperBound..<player.endIndex)
+              let advance = player.range(of: "cursor.advance(step: step)", range: step.upperBound..<player.endIndex),
+              let notes = player.range(of: "refreshNoteContent(atTick: newTick, step: step)",
+                                       range: step.upperBound..<player.endIndex),
+              let window = player.range(of: "TimelineScheduling.laneEvent(in: doc, laneID: lane, fromTick: lastTick, toTick: newTick)",
+                                        range: step.upperBound..<player.endIndex)
         else {
             return XCTFail("ANCHOR MISSING: transportStep's chase calls (#454)")
         }
-        XCTAssertLessThan(structure.lowerBound, notes.lowerBound)
-        XCTAssertLessThan(notes.lowerBound, advance.lowerBound,
-                          "note edits are pulled in BEFORE this step's window, like structure edits")
+        XCTAssertLessThan(advance.lowerBound, notes.lowerBound,
+                          "a note edit re-enters the bar THIS step sounds in, so it runs after the cursor")
+        XCTAssertLessThan(notes.lowerBound, window.lowerBound,
+                          "and before this step's window, so the edit is heard from this step")
         XCTAssertTrue(player.contains("self.seenMelodyGeneration = clips.userMelodyGeneration"),
                       "Play must load the current notes and start the count from there")
         let clipStore = try source(Self.clipStorePath)
