@@ -2977,3 +2977,10 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Decision:** MA3 census ran read-only; media remove/delete is on HOLD behind five prerequisites (`scratchpads/PLAN_MEDIA_ASSET_2026-09-26.md` §Revised order). B1 filter (`1013dab43`), B2a missing named (`6bf47f8b9`), B2b relink (`aa7089d90`), review LOWs (`a68bf05fa`).
 - **Why:** founder evidence and media laws of 2026-09-26; relink keeps `Clip.id` and every part, same recording only, not an Undo step, never a file operation; "is it resolvable" is asked only of the playing path's resolver (#1439).
 - **Review date:** 2026-10-26.
+
+### 2026-09-26 — MediaAsset identity: adopt, refute, move (MA4.3 · MA4.5 · MA4.6)
+- **Decision:** a library file adopts the durable record bound to its name unless its measurement REFUTES it (`MediaAssetRecord.isContradicted`: different content or duration); a fresh copy always mints. A relink checks the clip's record (`MediaRelink.recordRefusal`, refute-only) and moves its binding with its id (`MediaAssetStore.rebind`) inside the same `.clipSource` undo step; a clip without a registry record has its link released. Proof: `TheWorkstationJourneySurvivesSaveAndOpenTests`.
+- **Declined:** byte size as a refutation (L1) — the record keeps the source's evidence while the binding moves to a re-export.
+- **Held:** MA4.4 content digest — needs a hash implementation; CryptoKit is a new framework (Council/founder). The `contentDigest:` slot exists.
+- **Note:** a relink moves the record for every clip linked to it — the record IS the source identity. Playback still resolves by `mediaRef` until the resolver slice.
+- **Review date:** 2026-10-26.
