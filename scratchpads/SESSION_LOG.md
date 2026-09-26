@@ -40024,3 +40024,10 @@ Review 10 was independent. These three prose commits are builder-made and **not 
   - Tests: guard `TheTrackEffectIsADeviceOnTheLaneTests`. `setLaneEffect` was added to the `TheTimelineStoresLiveSurfaceTests` liveSurface.
   - Five checkers clean. Graded by transcription only. Independent review running. The decision is logged in `decisions.csv` and `memory/decisions.md`; MA2's main-actor-capped decision is logged too.
 - Next: read the DC1 gates, apply the review findings, then DC2 per the plan (decided from the device report). The next Phase 3 item is "Echoel as flagship Device".
+
+## 2026-09-26 01:56Z — gates: MA2 + DC1 compile; DC1 review repaired
+
+- MA2 e23c0ed92: Xcode Compile Check 2907 SUCCESS (it was not cancelled after all) + BfT 6372 SUCCESS. Run Tests still running.
+- DC1 e061ca2d3: Compile Check 2908 SUCCESS + BfT 6373 SUCCESS. Auto-merge → **main = e061ca2d3**. Run Tests still running.
+- DC1 review (no HIGH): M1 and L1–L5 repaired in 19d35b71a (gates running); L6 is open in the plan.
+- Evidence levels: MA2 and DC1 = COMPILES (Release device + Debug simulator test bundle) + INDEPENDENTLY REVIEWED. Execution unrecorded until Run Tests reads. Device check open.
