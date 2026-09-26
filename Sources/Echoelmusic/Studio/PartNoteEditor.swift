@@ -177,8 +177,18 @@ private struct PartNoteGrid: View {
                             .accessibilityElement()
                             .accessibilityLabel("Note grid: \(visible.count) notes, \(pickedCount) selected")
                             .accessibilityHint(editable
-                                ? "Touch only in this version: tap an empty cell to add a note, tap notes to select them; press and hold, then slide, to move, stretch or box-select"
+                                ? "Use the actions to select the next or previous note; the controls below act on the selection. By touch: tap an empty cell to add a note, tap notes to select them; press and hold, then slide, to move, stretch or box-select"
                                 : "Shown, not edited")
+                            // Modes census UX A: the grid was touch only — a VoiceOver user could
+                            // hear the count and never pick a note. Stepping picks ONE note on
+                            // screen (the rows shown), through the one selection owner, and says
+                            // which; the controls below then act on it as on a tapped pick.
+                            .accessibilityAction(named: "Select next note") {
+                                stepPick(1, among: visible.filter { range.contains($0.pitch) })
+                            }
+                            .accessibilityAction(named: "Select previous note") {
+                                stepPick(-1, among: visible.filter { range.contains($0.pitch) })
+                            }
                     }
                     controls(range: range, picked: pickedOnScreen, editable: editable,
                              region: region)
@@ -214,6 +224,18 @@ private struct PartNoteGrid: View {
     }
 
     // MARK: - Actions (one commit each)
+
+    /// VoiceOver's step through the notes on screen: picks exactly one (the same owner a tap
+    /// writes) and announces it, because VoiceOver does not re-read a label that changed
+    /// after a custom action. Selection only — nothing is edited, so there is no commit.
+    private func stepPick(_ delta: Int, among onScreen: [Note]) {
+        guard let id = ClipNoteEdit.steppedPick(from: picked.ids, in: onScreen, by: delta),
+              let note = onScreen.first(where: { $0.id == id }) else { return }
+        picked = .single(id)
+        let step = note.startStep + 1
+        AccessibilityNotification.Announcement(
+            "\(TuningReference.noteName(forMIDINote: note.pitch)) at step \(step), selected").post()
+    }
 
     private func tap(_ location: CGPoint, visible: [Note], region: TimelineRegion, offset: Int,
                      steps: Int, range: ClosedRange<Int>, editable: Bool) {

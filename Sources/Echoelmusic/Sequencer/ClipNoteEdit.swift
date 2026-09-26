@@ -332,6 +332,29 @@ enum ClipNoteEdit {
         return moved == clipNotes ? nil : moved
     }
 
+    /// VoiceOver's non-touch way through the grid (modes census UX A): the note `delta` places
+    /// after (positive) or before (negative) the current pick, in READING order — start, then
+    /// pitch low to high, then id so equal notes still have one order. Forward from the LAST
+    /// picked note, backward from the FIRST; with nothing picked, forward starts at the first
+    /// note and backward at the last. Wraps at both ends. No notes ⇒ nil, never a trap.
+    nonisolated static func steppedPick(from picked: Set<UUID>, in notes: [Note], by delta: Int) -> UUID? {
+        guard !notes.isEmpty else { return nil }
+        let ordered = notes.sorted { a, b in
+            if a.startTick != b.startTick { return a.startTick < b.startTick }
+            if a.pitch != b.pitch { return a.pitch < b.pitch }
+            return a.id.uuidString < b.id.uuidString
+        }
+        let count = ordered.count
+        let at = ordered.indices.filter { picked.contains(ordered[$0].id) }
+        let target: Int
+        if delta >= 0 {
+            target = at.last.map { $0 + delta } ?? 0
+        } else {
+            target = at.first.map { $0 + delta } ?? (count - 1)
+        }
+        return ordered[((target % count) + count) % count].id
+    }
+
     /// Where the rows centre when a part's grid opens: its median pitch, C4 when empty. The
     /// view takes this ONCE and keeps it — recomputing it from the live notes moved the rows
     /// under the finger after every add, delete and undo, so a second tap on the note just
