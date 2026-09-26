@@ -103,9 +103,20 @@ behavioural verification.
 ### MA2 — de-duplicate on import
 
 - Before copying a picked file, look for a managed Audio asset with the SAME byte size.
-- For such a candidate, compare the content byte-for-byte in chunks, off-main.
+- For such a candidate, compare the content byte-for-byte in chunks.
 - On a match, reuse the asset and its clip (if any) instead of a second copy and a second slot.
-- Needs an async import path (today's `perform` is synchronous on the main actor).
+- ⭐ DESIGN (measured 2026-09-26 00:35Z): the import is ALREADY main-actor synchronous and
+  already COPIES the whole file on the main actor (`MediaLibrary.importAudio` inside
+  `AudioImport.perform`). A compare against a same-size candidate reads at most the bytes the
+  copy it replaces would read and write, and it runs only when sizes match exactly. So MA2 does
+  NOT need the async rewrite; moving the whole import off-main is its own, larger slice (it
+  reshapes `handleImport` and many needles in `TheWorkstationImportsAudioTests`).
+- Shape: `MediaLibrary.existingAudio(matching:)` (size filter over `listAudio`, then a chunked
+  `FileHandle` compare) → if found, `AudioImport.perform` hands the EXISTING asset to
+  `MediaPlacement.place` and reports a `Landing` built from it; else today's copy path,
+  unchanged. The de-dup branch never reaches `commit`'s delete.
+- Guard: equal bytes → no new file in the home and no new slot; one differing byte → a copy; a
+  same-size different file → a copy; the de-dup branch cannot delete.
 
 ### MA3 — asset facts + remove an unused file (HOLD until measured)
 
