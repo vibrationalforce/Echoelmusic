@@ -76,9 +76,11 @@ final class TheMIDITakeIsRecordedFromTheWorkstationTests: XCTestCase {
         return (transport, timeline, clips, controller, lane)
     }
 
-    override func tearDown() {
+    /// `async` so it runs on the class's main actor (the synchronous override is nonisolated and
+    /// warned on every main-actor read, Build for Testing on d130ce840) — `AFailedSaveLeavesATraceTests`.
+    override func tearDown() async throws {
         if let clips = rigClips { for i in clips.slots.indices { clips.clear(at: i) } }
-        super.tearDown()
+        rigClips = nil
     }
 
     /// Steps `from..<to` of the transport, counted from Play (bar = step / 16).
