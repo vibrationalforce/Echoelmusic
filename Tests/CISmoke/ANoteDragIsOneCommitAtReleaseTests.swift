@@ -38,6 +38,12 @@
 // is drawn mid-slide at its cut length, while the commit re-cuts it at the new position — the
 // release can therefore show it a little longer or shorter than the slide did. Starts and
 // pitches never differ.
+// ⭐ M8–M10 REVIEW REPAIR (LOW-1 of the `ab1586c95` review): `ab1586c95` made every finished
+// move UNION the old picks, which also added them back after a drag of an UNPICKED note — lit
+// at release although dark during the drag, and carried into the next Delete. The move's
+// selection is now `NoteGridGesture.afterMove`. On `ab1586c95` this file does NOT compile
+// (`afterMove` is new): one absence (#486); the new claim-1 method is a FORWARD guard whose
+// `resolve` lines are counterweights, and the scan in claim 5 is red there by anchor absence.
 // NOT covered: that the hold is recognised under a scroll view, that the preview follows the
 // finger smoothly, that the result sounds — a device probe, owned by the marker below.
 // NEEDS-FOUNDER-VERIFY: New MIDI Part → Notes → add four notes → press and hold one, slide right
@@ -108,7 +114,7 @@ final class ANoteDragIsOneCommitAtReleaseTests: XCTestCase {
         XCTAssertEqual(NoteGridGesture.resolve(startX: 87, startY: rowY(60), dx: 2, dy: 0,
                                                visible: notes, picked: [], grid: g),
                        .resize(id: a.id, dSteps: 0))
-        // Empty cell: a box; the notes it touches become the selection.
+        // Empty cell: a box; the notes it touches join the selection (M9).
         guard case .marquee(let all, _, _, _, _) =
                 NoteGridGesture.resolve(startX: 0, startY: 0, dx: 300, dy: 200,
                                         visible: notes, picked: [], grid: g) else {
@@ -168,6 +174,32 @@ final class ANoteDragIsOneCommitAtReleaseTests: XCTestCase {
         XCTAssertEqual(NoteGridGesture.toggling(a, in: []), [a])
         XCTAssertEqual(NoteGridGesture.toggling(b, in: [a]), [a, b])
         XCTAssertEqual(NoteGridGesture.toggling(a, in: [a, b]), [b])
+    }
+
+    /// M8–M10 review repair: the selection a finished move leaves, over a move `resolve` really
+    /// produces. A drag of the selection keeps the picks it could not move (off screen); a drag
+    /// of an unpicked note selects that note alone — what the canvas lit during the drag.
+    func testAMoveKeepsTheUnseenPicksAndAnUnpickedDragSelectsAlone() {
+        let a = Note(pitch: 60, startStep: 2, lengthSteps: 2)     // x 44…88
+        let c = Note(pitch: 62, startStep: 10)                    // x 220…242
+        let offScreen = UUID()                                    // picked two octaves away
+        let g = Self.grid
+
+        let group = NoteGridGesture.resolve(startX: 50, startY: rowY(60), dx: 44, dy: 0,
+                                            visible: [a, c], picked: [a.id, offScreen], grid: g)
+        XCTAssertEqual(group, .move(ids: [a.id], dPitch: 0, dStep: 2),
+                       "counterweight: a picked note moves the picks ON screen, not the unseen one")
+        XCTAssertEqual(NoteGridGesture.afterMove([a.id], from: [a.id, offScreen]), [a.id, offScreen],
+                       "the pick it could not move stays picked")
+
+        let alone = NoteGridGesture.resolve(startX: 50, startY: rowY(60), dx: 44, dy: 0,
+                                            visible: [a, c], picked: [c.id], grid: g)
+        XCTAssertEqual(alone, .move(ids: [a.id], dPitch: 0, dStep: 2),
+                       "counterweight: an unpicked note moves alone")
+        XCTAssertEqual(NoteGridGesture.afterMove([a.id], from: [c.id]), [a.id], """
+            an unpicked drag selects the dragged note alone — the old picks, dark during the \
+            drag, must not light up at release and ride along into the next Delete
+            """)
     }
 
     // MARK: 2 — the commit
@@ -325,6 +357,8 @@ final class ANoteDragIsOneCommitAtReleaseTests: XCTestCase {
         let finish = try body(of: "private func finish(", in: editor)
         XCTAssertEqual(finish.components(separatedBy: "timeline.setClipNotes(").count - 1, 2,
                        "a finished move and a finished stretch — one commit each; a box writes nothing")
+        XCTAssertTrue(finish.contains("picked = RollSelection(ids: Array(NoteGridGesture.afterMove(ids, from: picked.ids)))"),
+                      "the move's selection is the one rule claim 1 drives")
 
         let core = try source(Self.corePath)
         XCTAssertFalse(core.contains("import SwiftUI"), "the gesture's meaning is Foundation-only")

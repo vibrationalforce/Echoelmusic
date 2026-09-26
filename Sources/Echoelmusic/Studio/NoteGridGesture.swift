@@ -158,4 +158,14 @@ enum NoteGridGesture: Equatable, Sendable {
     static func boxing(_ ids: Set<UUID>, into picked: Set<UUID>) -> Set<UUID> {
         picked.union(ids)
     }
+
+    /// The selection a finished MOVE leaves (M8–M10 review repair). A drag that grabbed a PICKED
+    /// note moved the picks on screen (`resolve`: `picked ∩ shown`), so the selection keeps the
+    /// ones it did not move — the picks off screen. A drag that grabbed an UNPICKED note moved that
+    /// note alone, and it alone is the selection afterwards: that is what the canvas lit during the
+    /// drag, and folding the old picks back in would light notes the finger never touched and hand
+    /// them to the next Delete.
+    static func afterMove(_ moved: Set<UUID>, from picked: Set<UUID>) -> Set<UUID> {
+        moved.isSubset(of: picked) ? picked.union(moved) : moved
+    }
 }

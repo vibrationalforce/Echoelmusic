@@ -239,8 +239,9 @@ private struct PartNoteGrid: View {
     }
 
     /// The finger lifted: a box adds to the selection (M9); a move or a stretch is ONE commit
-    /// through the one writer, and a gesture that changed nothing commits nothing. A move keeps
-    /// the picks it did not move (off screen) — M9 review: it used to narrow to the moved ones.
+    /// through the one writer, and a gesture that changed nothing commits nothing. A move of the
+    /// selection keeps the picks it did not move (off screen); a move of an unpicked note selects
+    /// that note alone (`NoteGridGesture.afterMove`).
     private func finish(_ gesture: NoteGridGesture, region: TimelineRegion, offset: Int) {
         switch gesture {
         case .marquee(let ids, _, _, _, _):
@@ -252,7 +253,7 @@ private struct PartNoteGrid: View {
                                                   offsetTicks: offset,
                                                   lengthTicks: region.lengthTicks) else { return }
             if timeline.setClipNotes(clipID: region.clipID, moved, clips: clipStore) {
-                picked = RollSelection(ids: Array(picked.ids.union(ids)))
+                picked = RollSelection(ids: Array(NoteGridGesture.afterMove(ids, from: picked.ids)))
             }
         case .resize(let id, let dSteps):
             guard let clip = clipStore.clip(id: region.clipID),
