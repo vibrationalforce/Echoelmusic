@@ -4383,3 +4383,13 @@ new guard that skipped on a missing tree through an enumerator (`guard let walk 
 lines. Do this: when you add a missing-TREE skip, write `FileManager.default.fileExists(atPath:)`
 ON the `guard` line. When you touch any ratchet, re-derive its count with a Python transcription
 of its own scan (at the parent AND the worktree) — the job-log tail will never show the red.
+
+## DEAD-END + PLAYBOOK (2026-09-26, M5 → 4b833694e/250f0838b): two anchor failures no checker sees
+1. A slice END anchor on a `///` line: `SourceText.codeOnly` blanks it, so `range(of:)` is nil on
+   BOTH trees and the guard is red on correct code (AMidPlayNoteEditKeepsTheBarTests claim 3).
+2. Adding an OVERLOAD in front of an existing function: a guard anchored on the name prefix
+   (`private func loadClip(`) now slices the new overload; nothing was REMOVED, so
+   `moved-needles.py` is silent (TheWorkstationPlaysTheTimelineTests claim K).
+Do this: every slice anchor is CODE — transcribe the slice with `ef2_transcribe.strip` before
+pushing; when splitting a function, `git grep '"private func <name>(' -- Tests/CISmoke` first.
+Both were caught by the mandatory independent review, not by a gate.
