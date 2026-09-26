@@ -127,13 +127,60 @@ behavioural verification.
   (a pre-MA2 library can hold two), the one a clip already plays wins, so the reuse spends no
   slot. Guard: `TheImportReusesAnIdenticalLibraryFileTests`. Device: NEEDS-FOUNDER-VERIFY.
 
-### MA3 — asset facts + remove an unused file (HOLD until measured)
+### MA3 — READ-ONLY REFERENCE CENSUS (done 2026-09-26 ~13:10Z, HEAD `818325672`; nothing deleted or migrated)
 
-- Duration, rate and channels, measured lazily per visible row.
-- "Remove from library" only when NO clip in ClipStore AND no saved project in the library
-  references it. Saved projects can carry clips (#527 hazard), so this needs its own census of
-  `ProjectStore` first. It is destructive, so the user confirms. Not started until that census
-  exists.
+Founder direction 2026-09-26 ("CLOSE MIDI EVIDENCE, THEN MEDIA ASSET / BROWSER"): MA3 first as
+read-only forensics. Measured by a read-only census agent, key claims re-read by hand
+(`AudioClipFactory.swift:18-22`, `DMMWProject.swift:117-135`, `MediaAsset.swift:90-108/147-161`,
+`MediaLibrary.swift:179-198`).
+
+| question | answer today |
+|---|---|
+| persistent owner of a media reference | `Clip.mediaRef: String?` — in `ClipStore.slots` (8 fixed, `AppGroupStore "Clips"`) AND in every saved project. `TimelineRegion` holds only `clipID`. A second kind: `TimelineLane.samplePath` (absolute, writer has no production caller; old documents can carry it) |
+| form of `mediaRef` | ABSOLUTE path into the App Group `Media/Audio` home (container UUID can change → `resolveRef` re-roots by file name, H6). Not a bookmark, not relative, not a UUID |
+| writers | `AudioImport.plan` (import, MA2 reuse, orphan placement) · `TakeRecorder.finish` (unreachable, recorder nil since #1302) · wholesale: `ClipStore.replaceSlots` (Open) and `ClipStore.init` (load) |
+| saved projects | `ProjectStore` → `Project.sessionEnvelope: Data?` (opaque) → `DMMWProject.Content { timeline, clipSlots: [Clip?] }` — a FULL COPY of the grid, paths included, in every saved row AND the autosave/recovery row. Decoded only at Open; `.newer`/`.unreadable` envelopes are never decoded. Shares/Colabo strip the envelope |
+| shared use | many regions → one clip (Place reuse, duplicate, split); many clips → one file (orphan placement, pre-MA2 duplicates); many saved rows → one file (every save snapshots the grid) |
+| managed home | App Group `Media/Audio` (fallback Application Support, then temp). Readable collision-free names; `uniqueName` avoids only names that exist NOW → a freed name would be handed out again |
+| missing media | `resolveRef` nil → the part is skipped; Play greys out via `canPlay`. NO missing label, NO relink, NO per-part reason. The library lists only files that exist, so a clip whose file is gone is invisible there |
+| delete helpers | only `AudioImport`'s abort of the copy it just made. `ClipStore.clear(at:)` and `AppGroupStore.delete(name:)` have no caller. Region/lane/project deletes never touch files |
+| outside the home | `resolveRef` accepts ANY existing absolute path (no containment); old documents can hold bare names, `Documents/Videos`, bundle `drum:`/`lib:` refs in `samplePath`. `Documents/Recordings` (RetroCapture) and `Documents/Exports` are unmanaged and unreferenced |
+| derivatives | none on disk (no waveform cache, thumbnails, proxies; analysis → `Clip.nativeBPM` or prose) |
+| launch cost | none from media: listing only while the browser is open (detached); `fileExists` probes in `songCanStart()`/`SessionLaunchView` on document/grid change only |
+| cleanup classification | IMPOSSIBLE today: `MediaAsset.usage` sees the live grid + live song only — not saved rows, not autosave, not `samplePath`, not legacy bare refs (which play but have no key) |
+
+**Hazards a naive "delete unused" would hit:** (1) "not in the song" ≠ unused — a saved project or
+the autosave row may be the only owner; (2) bare-name legacy refs play but count as unused;
+(3) `samplePath` lanes are invisible to usage; (4) `.newer`/`.unreadable` rows make "unreferenced"
+UNPROVABLE; (5) name reuse after a delete silently rebinds old refs to a different file (exact
+path or H6 re-root); (6) H6 matches a dead path by name across all three homes; (7) `resolveRef`
+plays files outside `Media/`; (8) region-less clips still own their file.
+
+### Revised order (Council 2026-09-26, after the census)
+
+- Architect: every browser slice is a PROJECTION over what is already in memory; no index file, no
+  new persistence root. Identity stays (home, file name); `Clip.id` never doubles as it.
+- Skeptic: deletion is the only irreversible step and the census shows it is undecidable today.
+- User-Advocate: a missing file is SILENT today (Play just greys out) — the identity law says
+  availability must read "missing" and relink must stay possible.
+- Shipper: the first browser loop lacks exactly SEARCH/FILTER and PREVIEW. Filter is the smallest.
+- → Gate: proceed with B1; deletion HOLD.
+
+- **B1 — filter by name** (this cycle): a name field in the open list; a pure
+  `MediaAsset.matching(_:query:)` (case- and diacritic-insensitive, order kept) over the listing
+  already in memory. No new I/O, nothing while closed.
+- **B2 — missing media is named, relink stays possible**: a projection of the live grid's audio
+  clips whose `mediaRef` does not resolve (computed in the browser's detached task, only while
+  open); a "Missing on this device" section with the clip name and the parts that use it; Relink =
+  choose a library file → ONE `ClipStore` writer replaces `mediaRef` (+ re-measured length), keeping
+  `Clip.id`, regions and name. Needs its own Council (undo? duration change vs. placed lengths).
+- **B3 — preview** (audition a library file): needs an audio-graph owner (the existing audition
+  voice?) — design first; device-gated for sound.
+- **Remove / delete — HOLD.** Prerequisites before any code: (a) a census that decodes every
+  `ProjectStore` envelope incl. the autosave row and REFUSES when any row is `.newer`/`.unreadable`;
+  (b) counts `samplePath` and bare-name refs by name; (c) "remove from library view" and "delete
+  managed file" are two different actions, the second confirmed; (d) a freed name is never handed
+  out again (or refs carry more than the name); (e) never touches files outside `Media/`.
 
 ## Out of scope (founder list)
 
