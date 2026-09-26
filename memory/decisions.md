@@ -2924,3 +2924,16 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Why:** founder Phase 3 order; WA3 §P; the song carried no trace of its Echoel. One fact first keeps the sync points countable.
 - **Next:** EF2 genre onto the same instance (5 writers today), then patch identity.
 - **Review date:** 2026-10-26
+
+### 2026-09-26 — Echoel genre on the instance, EF2 (Phase 3)
+- **Decision:** the genre is the Echoel instance's second fact (state key `genre`); the song owns
+  it, `@AppStorage("studio.genre")` is the working copy. Both facts rewrite through ONE
+  `DeviceInsert.settingEchoelField` and ONE `TimelineStore.writeEchoelField`.
+- **Sync points:** writers of the copy write the song — the genre case of `handleCompositionEdit`
+  (first line; header Picker and OSC remote reach it), `open(_:)`, the Sound reset. Readers adopt:
+  launch and after a library Open SILENTLY (a loaded take's notes are never recomposed away);
+  the Workstation's `"echoelGenre"` edit ANNOUNCED (full genre semantics, recompose included).
+  The Workstation never posts `"genre"` — that case re-derives from the OLD copy.
+- **Open:** L1 (debounced song save vs immediate `@AppStorage`) applies to the genre too; a
+  Project whose saved style differs from its song's genre adopts the song's silently.
+- **Review date:** 2026-10-26.

@@ -40041,3 +40041,8 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - 6d68bea64 (EF1): Xcode Compile Check 2910 = success; CI/CD 6375 Build for Testing green — proven by auto-merge (main = 6d68bea64; the merge waits on that step). `TheEchoelIsAnInstanceOnItsTrackTests` COMPILES.
 - fce169210 (EF1 review repair: M3 instance request on inspector appear, M1/M2 docs, L3/L4 guard): Compile Check 2911 = success; CI/CD 6376 BfT running.
 - Evidence: EF1 = COMPILES + REVIEWED; TESTED = execution unrecorded until a window shows it; DEVICE open.
+
+### 2026-09-26 02:40Z — EF2 shipped (83b617760)
+- EF2: the Echoel's genre is the instance's second fact. `settingEchoelField` / `writeEchoelField` shared by both facts; `TimelineStore.setEchoelGenre`; `TimelineDocument.echoelGenre`. ESV: genre case writes the song first; launch (genre before FX) and openFromLibrary adopt silently; `"echoelGenre"` edit adopts announced; `open(_:)` + Sound reset write the song. Workstation: Genre row on the Echoel track (menu Picker, shelf root); `requestEchoelInstanceIfMissing` imports each missing fact.
+- Guard claims 8/9 (forward), claim 7 re-anchored; `TrackMix.pickEchoelGenre` named to keep `setEchoelGenre` unique (TheTimelineStoresLiveSurfaceTests). Five checkers clean; claim 7/9 scans transcribed in Python: 20/20 green.
+- Gates: CI/CD 6375/6376/6377 in progress at 02:38Z; Compile Check for 83b617760 queued. Independent review running.
