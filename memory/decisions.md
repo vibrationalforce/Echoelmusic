@@ -2961,3 +2961,7 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Why:** the layer was persisted and played but had no writer since #473; the per-point mutators write no Undo; each drawn point is a persist, and the structural chase would flush voices on every one while playing. The per-track key resolves only on a secondary rack lane — elsewhere the row would draw silence.
 - **Open (founder call):** what automation on the Echoel track means (per-track key silent there, global key harmony-only). Risks recorded in `scratchpads/PLAN_AUTOMATION_2026-09-26.md` (curve ignores the "Play automation" switch; value holds after Stop; 1/16 zipper; Mod Matrix may write the same parameter).
 - **Review:** 2026-10-26.
+### 2026-09-26 — The curve's parameter is a projection of the voice, A2 (Phase 3 / Automation editing)
+- **Decision:** the row offers `SongAutomationEdit.offered` = `PolySynthVoice.automatableBases` ∩ catalog `automationEligible`, in the voice's order — one lane per parameter per track, same one writer and Undo. A `Picker(.menu)`; the row opens on the parameter the track already has a curve for (else Brightness), decided once per track.
+- **Why:** a second list of bases would rot beside the voice's own (#416); the eligible set already means "no other writer owns it".
+- **Review:** 2026-10-26.

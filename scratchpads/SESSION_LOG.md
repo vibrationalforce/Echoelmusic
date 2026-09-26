@@ -40063,3 +40063,7 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 ### 2026-09-26 03:40Z — Automation A1 shipped
 - A1 6bcbc731f: `setSongAutomation` + `HistoryStep.automation`; player automation-only short path; `SongAutomationEditor` (brightness, per-track key, poly rack track only; tap add/pick, hold-slide move, value draft, remove); guard `TheSongAutomationIsDrawnThroughOneWriterTests` (forward, transcribed; five checkers clean). CLAUDE.md 149,605 B.
 - Gates: Compile Check 2918 GREEN on eee089282 (covers S1+S2 Sources). CI/CD 6383 BfT running; A1 runs 6384 / 2919 queued. Independent review of A1 running. Plan: `scratchpads/PLAN_AUTOMATION_2026-09-26.md`.
+
+### 2026-09-26 04:25Z — A1 repair green; Automation A2 shipped
+- A1 repair 1f511b919: Compile Check + BfT green (auto-merge moved main to 1f511b919). Task #228 closed.
+- A2 4239a4200: parameter Picker over `SongAutomationEdit.offered` (projection of `automatableBases`), `key(for:base:)` required, `openingBase` pinned onAppear, switching drops the pick; guard claim 7 (forward, scans transcribed True×11); five checkers clean (moved-needles hit = other files). CLAUDE.md 149,635 B. Gates queued; independent review running; device open.
