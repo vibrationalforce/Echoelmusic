@@ -1,13 +1,16 @@
 //
 //  SongAutomationEditor.swift
-//  Echoelmusic — Studio (Phase 3 / Creation Workflow, Automation editing slice A1)
+//  Echoelmusic — Studio (Phase 3 / Creation Workflow, Automation editing slices A1–A2)
 //
 //  WHY THIS EXISTS. The song has carried an automation layer all along (`TimelineDocument
 //  .automation`, persisted, played every transport step by `AutomationPlayer`), and nothing
 //  could draw into it: the arrangement row that did (`TimelineAutomationRow`) went with #473,
 //  and the store's per-point mutators outlived it with no caller and no Undo. This is the first
-//  way back: on the selected track, a song-wide row for ONE parameter — tap to add a point, tap
-//  a point to pick it, press and hold a point then slide to move it, type its value, remove it.
+//  way back: on the selected track, a song-wide row for one CHOSEN parameter — tap to add a point,
+//  tap a point to pick it, press and hold a point then slide to move it, type its value, remove it.
+//  A2: the parameter is a menu over `SongAutomationEdit.offered`, a PROJECTION of
+//  `PolySynthVoice.automatableBases` ∩ the catalog's `automationEligible` (#416) — each parameter
+//  is its own lane in the song; the row opens on the one the track already has a curve for.
 //
 //  ⭐ ONE OWNER, ONE WRITER, ONE HISTORY. The curve is the song's (`document.automation`). Every
 //  edit builds the whole new lane list locally (`SongAutomationEdit`, over the tested pure cores
@@ -23,14 +26,14 @@
 //
 //  ⚠️ WHERE IT EXISTS, AND WHY ONLY THERE. The row is offered only where the curve SOUNDS: a MIDI
 //  track played by a POLY rack voice (`TrackMix.Role.laneSynth(.poly)`, the DC1 Effect-row gate).
-//  The key it writes is the track's own (`track.<id>.ddsp.osc.brightness`), which
+//  The key it writes is the track's own (`track.<id>.<base>`), which
 //  `PerTrackAutomationResolver` resolves to that track's rack slot. On the Echoel track the
 //  per-track key resolves to nothing and the global key reaches only the harmony voice — which
 //  of the two the Echoel track should mean is a founder call, so it gets no row rather than a
 //  row that draws silence.
 //
-//  ⚠️ WHAT IT DOES NOT DO, stated so the surface does not read as more: one parameter
-//  (Brightness), no curve shape or bend, no multi-select, no playhead. Playback samples the curve
+//  ⚠️ WHAT IT DOES NOT DO, stated so the surface does not read as more: one parameter SHOWN at a
+//  time (the others keep playing), no curve shape or bend, no multi-select, no playhead. Playback samples the curve
 //  once per sixteenth (the transport step), and after Stop the parameter keeps its last value.
 //  The canvas is touch-only; VoiceOver hears its summary and reaches the picked point's value
 //  field and Remove.
@@ -45,24 +48,43 @@ import SwiftUI
 /// lane list. Nothing here touches a store.
 enum SongAutomationEdit {
 
-    /// The one parameter slice A1 draws. Its NAME and eligibility are the catalog's (#416).
-    static let base = "ddsp.osc.brightness"
+    /// The parameter a track opens on when it has no curve yet (A1's one parameter).
+    static let defaultBase = "ddsp.osc.brightness"
 
-    /// The parameter as the catalog describes it — nil when this build does not offer it for
-    /// automation, and then there is no row.
-    nonisolated static var descriptor: ParameterDescriptor? {
-        DDSPParameterCatalog.descriptors.first { $0.keyPath == base && $0.automationEligible }
+    /// Every parameter a rack track's curve can move (A2): the poly voice's automatable bases, in
+    /// their order, each as the catalog describes it — a PROJECTION (#416), never a copy, so a
+    /// base the catalog does not offer for automation is never offered here.
+    nonisolated static var offered: [ParameterDescriptor] {
+        PolySynthVoice.automatableBases.compactMap { base in
+            DDSPParameterCatalog.descriptors.first { $0.keyPath == base && $0.automationEligible }
+        }
     }
 
-    /// The track's own key — `PerTrackParameterKeyPath`, the namespace the router dispatches.
-    nonisolated static func key(for laneID: UUID) -> String {
+    /// The track's own key for one parameter — `PerTrackParameterKeyPath`, the namespace the
+    /// router dispatches.
+    nonisolated static func key(for laneID: UUID, base: String) -> String {
         PerTrackParameterKeyPath.make(laneID: laneID, base: base)
+    }
+
+    /// Whether this track already carries a curve for the parameter.
+    nonisolated static func hasCurve(_ laneID: UUID, base: String,
+                                     in lanes: [AutomationLane]) -> Bool {
+        let key = key(for: laneID, base: base)
+        return lanes.contains { $0.parameter == key && !$0.isEmpty }
+    }
+
+    /// The parameter the row opens on: the first offered one this track already has a curve
+    /// for (so a reopened row shows the work), else the default, else the first offered.
+    nonisolated static func openingBase(for laneID: UUID, in lanes: [AutomationLane]) -> String? {
+        let bases = offered.map(\.keyPath)
+        return bases.first { hasCurve(laneID, base: $0, in: lanes) }
+            ?? (bases.contains(defaultBase) ? defaultBase : bases.first)
     }
 
     /// Whether a curve on this track would SOUND: a poly rack voice plays it.
     nonisolated static func sounds(on laneID: UUID, in document: TimelineDocument,
                                    voiceCapacity: Int) -> Bool {
-        descriptor != nil
+        !offered.isEmpty
             && TrackMix.role(of: laneID, in: document, voiceCapacity: voiceCapacity) == .laneSynth(.poly)
     }
 
@@ -182,7 +204,6 @@ struct SongAutomationEditor: View {
     var body: some View {
         let document = timeline.document
         if let laneID = WorkstationSelection.resolvedTrack(selection.trackID, in: document),
-           let descriptor = SongAutomationEdit.descriptor,
            SongAutomationEdit.sounds(on: laneID, in: document,
                                      voiceCapacity: player.laneVoiceCapacity) {
             VStack(alignment: .leading, spacing: 6) {
@@ -203,9 +224,9 @@ struct SongAutomationEditor: View {
                 .accessibilityLabel(isOpen ? "Hide the selected track's automation"
                                            : "Show the selected track's automation")
                 if isOpen {
-                    // Keyed by the track: another track starts with nothing picked.
-                    SongAutomationLane(laneID: laneID, title: descriptor.displayName,
-                                       songTicks: songTicks)
+                    // Keyed by the track: another track starts with nothing picked and opens on
+                    // its own parameter.
+                    SongAutomationLane(laneID: laneID, songTicks: songTicks)
                         .id(laneID)
                 }
             }
@@ -213,26 +234,33 @@ struct SongAutomationEditor: View {
     }
 }
 
-/// One track's curve for the one parameter, and the picked point's controls.
+/// One track's curve for the chosen parameter, and the picked point's controls.
 @MainActor
 private struct SongAutomationLane: View {
 
     let laneID: UUID
-    let title: String
     let songTicks: Int
 
     @Environment(TimelineStore.self) private var timeline
     /// View state: the picked point. Not part of the song.
     @State private var picked: UUID?
+    /// View state: the parameter the user switched to (A2); nil = the opening parameter. Not
+    /// part of the song — every parameter's curve lives in the song regardless.
+    @State private var chosenBase: String?
 
     private static let height: CGFloat = 72
 
     var body: some View {
-        let key = SongAutomationEdit.key(for: laneID)
-        let points = SongAutomationEdit.points(key, in: timeline.document.automation,
-                                               songTicks: songTicks)
+        let lanes = timeline.document.automation
+        let offered = SongAutomationEdit.offered
+        let base = chosenBase ?? SongAutomationEdit.openingBase(for: laneID, in: lanes)
+            ?? SongAutomationEdit.defaultBase
+        let title = offered.first { $0.keyPath == base }?.displayName ?? base
+        let key = SongAutomationEdit.key(for: laneID, base: base)
+        let points = SongAutomationEdit.points(key, in: lanes, songTicks: songTicks)
         let chosen = points.first { $0.id == picked }
         VStack(alignment: .leading, spacing: 6) {
+            parameterPicker(base, offered: offered, lanes: lanes)
             HStack(alignment: .top, spacing: ArrangeCanvasView.gutter) {
                 Text(title)
                     .font(EchoelTheme.font(11, .semibold))
@@ -260,6 +288,14 @@ private struct SongAutomationLane: View {
         // An undo can take the picked point away; the pick must not outlive it.
         .onChange(of: points.map(\.id)) { _, ids in
             if let picked, !ids.contains(picked) { self.picked = nil }
+        }
+        // The opening parameter is decided ONCE per track, so removing a curve's last point
+        // does not make the row jump to another parameter under the finger.
+        .onAppear {
+            if chosenBase == nil {
+                chosenBase = SongAutomationEdit.openingBase(for: laneID,
+                                                            in: timeline.document.automation)
+            }
         }
     }
 
@@ -309,6 +345,27 @@ private struct SongAutomationLane: View {
                 picked = SongAutomationEdit.points(key, in: lanes, songTicks: songTicks)
                     .first { $0.tick == tick }?.id
             }
+        }
+    }
+
+    /// Which parameter the row draws. A named choice, so a `Picker` (the numeric law does not
+    /// apply). A parameter that already carries a curve on this track says so in the menu.
+    private func parameterPicker(_ base: String, offered: [ParameterDescriptor],
+                                 lanes: [AutomationLane]) -> some View {
+        HStack(spacing: 8) {
+            Text("Parameter")
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+            Picker("Parameter", selection: Binding<String>(
+                get: { base },
+                set: { chosenBase = $0; picked = nil })) {
+                ForEach(offered, id: \.keyPath) { d in
+                    Text(SongAutomationEdit.hasCurve(laneID, base: d.keyPath, in: lanes)
+                         ? "\(d.displayName) · curve" : d.displayName)
+                        .tag(d.keyPath)
+                }
+            }
+            .pickerStyle(.menu).tint(EchoelTheme.text)
+            .accessibilityLabel("Automated parameter")
         }
     }
 

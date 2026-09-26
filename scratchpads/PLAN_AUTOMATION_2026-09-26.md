@@ -1,6 +1,6 @@
 # PLAN — Automation editing (Phase 3, step 6, founder order 2026-09-25)
 
-Status: A1 SHIPPED (6bcbc731f) · review running · gates pending · device open — 2026-09-26
+Status: A1 SHIPPED (6bcbc731f + repair 1f511b919, gates green, reviewed) · A2 built · device open — 2026-09-26
 
 ## Census summary (read-only subagent, measured)
 - `TimelineDocument.automation: [AutomationLane]` is persisted and PLAYED: `AutomationPlayer`
@@ -76,3 +76,15 @@ Status: A1 SHIPPED (6bcbc731f) · review running · gates pending · device open
   flat while playback ramps toward it (comment in `draw` now says so).
 - LOW-10 OPEN: after Stop, or after removing every point while playing, the rack slot keeps
   the last automated brightness until the next patch apply — not told to the user.
+
+## A2 — parameter choice (Council, silent: proceed)
+· Architect: the choice is a PROJECTION of `PolySynthVoice.automatableBases` ∩ catalog
+  `automationEligible` (`SongAutomationEdit.offered`), never a second list (#416); one lane per
+  parameter per track (`track.<id>.<base>`), same one writer, same Undo.
+· User-Advocate: named values → `Picker(.menu)`, not a number; the menu marks parameters that
+  already carry a curve ("· curve"); the row opens on the first such parameter, else Brightness.
+· Skeptic: the opening parameter is decided ONCE per track (`onAppear`), so removing a curve's
+  last point does not make the row jump to another parameter; switching drops the pick.
+· Shipper: 2 source files (editor + CLAUDE.md line) + the guard; no store/player change.
+Open (unchanged from A1): MED-2 pick radius, LOW-5, LOW-10 (now for every parameter, not only
+brightness), the Mod-Matrix co-writer risk (it can route to the same bases since #1391).

@@ -2,8 +2,9 @@
 // Echoel — Phase 3 / Automation editing, slice A1. The song's automation layer
 // (`TimelineDocument.automation`) was persisted and played every transport step, and nothing
 // could draw into it: the row that did went with #473, and the store's per-point mutators
-// outlived it with no caller and no Undo. `SongAutomationEditor` draws ONE parameter
-// (Brightness) on the selected poly rack track through ONE writer with ONE undo step.
+// outlived it with no caller and no Undo. `SongAutomationEditor` draws a parameter (A1: one,
+// Brightness; A2: any the voice offers) on the selected poly rack track through ONE writer with
+// ONE undo step.
 //
 // WHAT IT PINS.
 // 1. END-TO-END BEHAVIOUR (a real `TimelineStore`): `setSongAutomation` writes the lanes and
@@ -22,6 +23,11 @@
 //    moves nothing; a move onto an occupied sixteenth replaces, never stacks; Remove drops only
 //    the emptied lane; removing a track takes its curves with it, and an Undo step that would
 //    only touch that track's lane is skipped, never a no-op that reads as available.
+// 7. A2 — END-TO-END BEHAVIOUR (pure) + SOURCE-TEXT SCAN: the offered parameters ARE the poly
+//    voice's automatable bases the catalog marks eligible, in their order (a projection, #416);
+//    the row opens on the parameter the track already has a curve for (another track's curve does
+//    not count); two parameters on one track are two independent lanes; the choice is a `.menu`
+//    Picker over the projection with one hard-coded base (the default), and switching drops the pick.
 // 5. SOURCE-TEXT SCAN: the editor writes only through the one writer and never the older
 //    per-point mutators (they record no Undo); the only finger-rate state is `@GestureState`;
 //    the editor reads no clock; the Workstation mounts it once.
@@ -39,6 +45,12 @@
 // bystander; the removed track's lane stayed). The new `doc.automation` pin in claim 4 is
 // green on both trees (a pin on a line A1 already wrote).
 //
+// A2 GRADING (against 1f511b919): the file does not compile there — `offered`, `openingBase`,
+// `hasCurve`, `defaultBase` and the two-argument `key(for:base:)` are new, and A1's `base` /
+// `descriptor` are gone — so no assertion has a verdict on the parent; claim 7 is FORWARD (one
+// absence, #486). Claims 1–6 are A1's, moved onto the new API with the SAME base (Brightness),
+// so their verdicts are unchanged by construction. Counterweight: claim 7's other track opens on
+// the default. Graded by Python transcription of the scans; behaviour by hand-tracing.
 // NOT HERE — DEVICE PROBE, open.
 // NEEDS-FOUNDER-VERIFY: Workstation → a second MIDI track (poly) → select it → "Automation" →
 // tap three points, hold one and slide it → Play: the track's brightness follows the curve;
@@ -55,6 +67,7 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
     private static let editorPath = "Sources/Echoelmusic/Studio/SongAutomationEditor.swift"
     private static let playerPath = "Sources/Echoelmusic/Sequencer/TimelineRegionPlayer.swift"
     private static let workstationPath = "Sources/Echoelmusic/Studio/WorkstationView.swift"
+    private static let brightness = "ddsp.osc.brightness"
 
     /// Echoel (the roll lane, first non-bio MIDI lane) + a poly rack track + an audio track.
     private static func song() -> (TimelineDocument, echoel: UUID, keys: UUID, audio: UUID) {
@@ -75,7 +88,7 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
         let (doc, _, keys, _) = Self.song()
         timeline.replaceDocument(doc)
         XCTAssertFalse(timeline.canUndo, "a replaced song starts with no history")
-        let key = SongAutomationEdit.key(for: keys)
+        let key = SongAutomationEdit.key(for: keys, base: Self.brightness)
 
         let one = SongAutomationEdit.adding(tick: Self.bar, value: 0.25, key: key,
                                             to: [], songTicks: 4 * Self.bar)
@@ -115,7 +128,7 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
         XCTAssertEqual(tick, Self.bar, "the sixteenth nearest the finger")
         XCTAssertEqual(value, 0.75, accuracy: 1e-9, "top is high")
 
-        let key = SongAutomationEdit.key(for: UUID())
+        let key = SongAutomationEdit.key(for: UUID(), base: Self.brightness)
         let lanes = SongAutomationEdit.adding(tick: tick, value: value, key: key, to: [],
                                               songTicks: song)
         let points = SongAutomationEdit.points(key, in: lanes, songTicks: song)
@@ -134,7 +147,7 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
 
     func testASlideMovesThePointFromItsOwnPosition() throws {
         let song = 4 * Self.bar
-        let key = SongAutomationEdit.key(for: UUID())
+        let key = SongAutomationEdit.key(for: UUID(), base: Self.brightness)
         let lanes = SongAutomationEdit.adding(tick: Self.bar, value: 0.5, key: key, to: [],
                                               songTicks: song)
         let point = try XCTUnwrap(SongAutomationEdit.points(key, in: lanes, songTicks: song).first)
@@ -164,10 +177,10 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
     // MARK: 3 — offered only where the curve sounds
 
     func testTheRowIsOfferedWhereTheKeyReachesAVoice() throws {
-        let descriptor = try XCTUnwrap(SongAutomationEdit.descriptor,
-                                       "the one parameter must be offered for automation")
-        XCTAssertTrue(PolySynthVoice.automatableBases.contains(SongAutomationEdit.base))
-        XCTAssertEqual(descriptor.keyPath, SongAutomationEdit.base)
+        XCTAssertFalse(SongAutomationEdit.offered.isEmpty, "a rack track must offer a parameter")
+        XCTAssertTrue(PolySynthVoice.automatableBases.contains(SongAutomationEdit.defaultBase))
+        XCTAssertTrue(SongAutomationEdit.offered.contains { $0.keyPath == SongAutomationEdit.defaultBase },
+                      "the row opens on Brightness when the track has no curve")
 
         let (doc, echoel, keys, audio) = Self.song()
         XCTAssertTrue(SongAutomationEdit.sounds(on: keys, in: doc, voiceCapacity: 4))
@@ -182,7 +195,7 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
         // the POLY gate above is what keeps the row away — a slot is not a sounding brightness.)
         func resolves(_ lane: UUID) -> Bool {
             PerTrackAutomationResolver.resolve(
-                keyPath: SongAutomationEdit.key(for: lane), normalized: 0.5, document: doc,
+                keyPath: SongAutomationEdit.key(for: lane, base: Self.brightness), normalized: 0.5, document: doc,
                 rollLane: doc.rollLaneID, capacity: 4,
                 descriptor: { base in DDSPParameterCatalog.descriptors.first { $0.keyPath == base } }) != nil
         }
@@ -196,7 +209,7 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
         let (doc, _, keys, _) = Self.song()
         var drawn = doc
         drawn.automation = SongAutomationEdit.adding(tick: 0, value: 0.5,
-                                                     key: SongAutomationEdit.key(for: keys),
+                                                     key: SongAutomationEdit.key(for: keys, base: Self.brightness),
                                                      to: [], songTicks: 4 * Self.bar)
         XCTAssertTrue(TimelineRegionPlayer.differsOnlyInAutomation(doc, drawn))
         XCTAssertFalse(TimelineRegionPlayer.differsOnlyInAutomation(doc, doc), "no change is not a change")
@@ -223,7 +236,7 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
 
     func testAMoveReplacesAndARemoveTouchesOnlyItsLane() throws {
         let song = 4 * Self.bar
-        let key = SongAutomationEdit.key(for: UUID())
+        let key = SongAutomationEdit.key(for: UUID(), base: Self.brightness)
         var lanes = SongAutomationEdit.adding(tick: Self.bar, value: 0.2, key: key, to: [],
                                               songTicks: song)
         lanes = SongAutomationEdit.adding(tick: 2 * Self.bar, value: 0.8, key: key, to: lanes,
@@ -249,11 +262,11 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
         let (doc, _, keys, _) = Self.song()
         timeline.replaceDocument(doc)
         let song = 4 * Self.bar
-        let global = SongAutomationEdit.adding(tick: 0, value: 0.5, key: SongAutomationEdit.base,
+        let global = SongAutomationEdit.adding(tick: 0, value: 0.5, key: SongAutomationEdit.defaultBase,
                                                to: [], songTicks: song)
         timeline.setSongAutomation(global)
         timeline.setSongAutomation(SongAutomationEdit.adding(
-            tick: Self.bar, value: 0.9, key: SongAutomationEdit.key(for: keys), to: global,
+            tick: Self.bar, value: 0.9, key: SongAutomationEdit.key(for: keys, base: Self.brightness), to: global,
             songTicks: song))
         XCTAssertEqual(timeline.document.automation.count, 2)
 
@@ -267,6 +280,64 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
         timeline.undo()
         XCTAssertEqual(timeline.document.automation, [], "Undo did something visible")
         XCTAssertFalse(timeline.canUndo)
+    }
+
+    // MARK: 7 — A2: which parameter the curve moves
+
+    func testTheOfferedParametersAreAProjectionOfTheVoice() throws {
+        let eligible = Set(DDSPParameterCatalog.descriptors.filter(\.automationEligible).map(\.keyPath))
+        XCTAssertEqual(SongAutomationEdit.offered.map(\.keyPath),
+                       PolySynthVoice.automatableBases.filter { eligible.contains($0) },
+                       "the voice's own list, in its order, never a copy (#416)")
+        XCTAssertGreaterThan(SongAutomationEdit.offered.count, 1, "A2 offers a choice")
+    }
+
+    func testTheRowOpensOnTheParameterThatAlreadyHasACurve() throws {
+        let (_, _, keys, _) = Self.song()
+        let song = 4 * Self.bar
+        XCTAssertEqual(SongAutomationEdit.openingBase(for: keys, in: []), SongAutomationEdit.defaultBase,
+                       "no curve yet: Brightness")
+        let other = try XCTUnwrap(SongAutomationEdit.offered.first {
+            $0.keyPath != SongAutomationEdit.defaultBase })
+        let drawn = SongAutomationEdit.adding(
+            tick: Self.bar, value: 0.3, key: SongAutomationEdit.key(for: keys, base: other.keyPath),
+            to: [], songTicks: song)
+        XCTAssertEqual(SongAutomationEdit.openingBase(for: keys, in: drawn), other.keyPath,
+                       "a reopened row shows the curve the user drew")
+        XCTAssertTrue(SongAutomationEdit.hasCurve(keys, base: other.keyPath, in: drawn))
+        XCTAssertFalse(SongAutomationEdit.hasCurve(keys, base: SongAutomationEdit.defaultBase, in: drawn))
+        // Counterweight: another track's curve is not this track's.
+        XCTAssertEqual(SongAutomationEdit.openingBase(for: UUID(), in: drawn), SongAutomationEdit.defaultBase)
+    }
+
+    func testTwoParametersOnOneTrackAreTwoIndependentCurves() throws {
+        let (_, _, keys, _) = Self.song()
+        let song = 4 * Self.bar
+        let other = try XCTUnwrap(SongAutomationEdit.offered.first {
+            $0.keyPath != SongAutomationEdit.defaultBase })
+        let bright = SongAutomationEdit.key(for: keys, base: Self.brightness)
+        let second = SongAutomationEdit.key(for: keys, base: other.keyPath)
+        XCTAssertNotEqual(bright, second)
+        var lanes = SongAutomationEdit.adding(tick: 0, value: 0.2, key: bright, to: [], songTicks: song)
+        lanes = SongAutomationEdit.adding(tick: 0, value: 0.9, key: second, to: lanes, songTicks: song)
+        XCTAssertEqual(lanes.count, 2, "one lane per parameter")
+        let point = try XCTUnwrap(SongAutomationEdit.points(bright, in: lanes, songTicks: song).first)
+        let removed = SongAutomationEdit.removing(point.id, from: lanes)
+        XCTAssertEqual(SongAutomationEdit.points(bright, in: removed, songTicks: song), [])
+        XCTAssertEqual(SongAutomationEdit.points(second, in: removed, songTicks: song).map(\.value), [0.9],
+                       "removing one parameter's point leaves the other curve alone")
+    }
+
+    func testTheParameterIsANamedChoiceFromTheProjection() throws {
+        let editor = try source(Self.editorPath)
+        XCTAssertTrue(editor.contains(".pickerStyle(.menu)"), "a named choice is a Picker, not a number")
+        XCTAssertTrue(editor.contains("ForEach(offered, id: \\.keyPath)"), "the menu lists the projection")
+        XCTAssertTrue(editor.contains("set: { chosenBase = $0; picked = nil }"),
+                      "switching parameter drops the pick — a point of the old curve is not editable")
+        XCTAssertTrue(editor.contains("chosenBase = SongAutomationEdit.openingBase(for: laneID,"),
+                      "the opening parameter is decided once — removing a curve's last point does not jump the row")
+        XCTAssertEqual(editor.components(separatedBy: "\"ddsp.").count - 1, 1,
+                       "one hard-coded base (the opening default); the rest come from the voice")
     }
 
     // MARK: 5 — one writer, gesture-local preview, no clock
