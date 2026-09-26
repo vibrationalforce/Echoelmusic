@@ -1095,6 +1095,9 @@ struct WorkstationView: View {
     /// A REUSED library file is not hashed here: its record was adopted, not created, and may be a
     /// legacy record whose evidence predates its binding (review L1) — a relink's C step is the one
     /// place that backfills a legacy record.
+    /// ⚠️ KNOWN GAP (re-review of 292d2d4c8): a library file with NO record gets one minted by
+    /// `establishIdentity` here, yet it is skipped too — `Landing` does not say "adopted" vs
+    /// "created". Such a record never proves a relink (C/D only) until `Landing` reports it.
     private func learnContentDigest(of landing: AudioImport.Landing) {
         #if canImport(CryptoKit)
         guard !landing.reusedLibraryFile, let assetID = landing.clip.mediaAssetID else { return }
