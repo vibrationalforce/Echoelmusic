@@ -2955,3 +2955,9 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Why:** the census called start-at-scene a founder call only because it seemed to need a second transport caller; handing the owner's action down dissolves that.
 - **Open:** authored/named scenes (needs a `HistoryStep` case), a >8 clip pool, clip-owned sound (EF3) — founder calls. LOW-1: a `canPlay` refusal leaves the scene button silent, as Play.
 - **Review:** 2026-10-26.
+
+### 2026-09-26 — Song automation has one writer, A1 (Phase 3 / Automation editing)
+- **Decision:** `TimelineStore.setSongAutomation(_:)` is the one writer of `document.automation` besides Undo/Redo — whole lane list, one `HistoryStep.automation` step, unchanged = no step. `SongAutomationEditor` (Workstation, below the note editor) draws `ddsp.osc.brightness` as the per-track key on a selected POLY rack track only. An automation-only edit takes a short path in `TimelineRegionPlayer.refreshStructure`.
+- **Why:** the layer was persisted and played but had no writer since #473; the per-point mutators write no Undo; each drawn point is a persist, and the structural chase would flush voices on every one while playing. The per-track key resolves only on a secondary rack lane — elsewhere the row would draw silence.
+- **Open (founder call):** what automation on the Echoel track means (per-track key silent there, global key harmony-only). Risks recorded in `scratchpads/PLAN_AUTOMATION_2026-09-26.md` (curve ignores the "Play automation" switch; value holds after Stop; 1/16 zipper; Mod Matrix may write the same parameter).
+- **Review:** 2026-10-26.

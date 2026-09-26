@@ -40059,3 +40059,7 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - S2 review (no HIGH): MED-1 (audio part started by prime, restarted by the launch one step later) + MED-2 (VoiceOver hint named the beat) repaired in e245def93 — `play(…, launching:)` fires the scene on the start bar inside the call; `AudioLanePlayer.prime(…, launchingInThisCall:)`; `SessionGrid.songStartLabel`. Guard: spy-sink end-to-end (one start; old order two), play order scan. LOW-1 recorded.
 - Gates: CI/CD 6379 (S1) / 6381 (S2) / 6382 (repair) queued or running; Compile Check 2916 cancelled → 2917 (e245def93) covers S1+S2. main = c5dd5e6b1.
 - Clips/Scenes autonomous slices exhausted (rest = founder calls). Next per founder order: Automation editing — census running; independent review of e245def93 running.
+
+### 2026-09-26 03:40Z — Automation A1 shipped
+- A1 6bcbc731f: `setSongAutomation` + `HistoryStep.automation`; player automation-only short path; `SongAutomationEditor` (brightness, per-track key, poly rack track only; tap add/pick, hold-slide move, value draft, remove); guard `TheSongAutomationIsDrawnThroughOneWriterTests` (forward, transcribed; five checkers clean). CLAUDE.md 149,605 B.
+- Gates: Compile Check 2918 GREEN on eee089282 (covers S1+S2 Sources). CI/CD 6383 BfT running; A1 runs 6384 / 2919 queued. Independent review of A1 running. Plan: `scratchpads/PLAN_AUTOMATION_2026-09-26.md`.
