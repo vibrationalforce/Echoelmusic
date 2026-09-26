@@ -176,3 +176,26 @@ Nutzerwert) verlor die Spitze der Reihenfolge an einen Accessibility-Fix mit
 messbarem Defekt (Navigations-Chips 26 pt statt 44 pt HIG).
 Kanonisch dokumentiert in `docs/dev/PRODUCT_DEFINITION.md` ("Die vier Qualitätsachsen")
 + `decisions.csv` 2026-07-25.
+
+## Orchestrator hardening (founder addendum 2026-09-26 — applies to every autonomous long run)
+- ONE orchestrator owns the queue (next slice, priority, assignment, DONE, unblocking). Specialists
+  return findings; a Builder never picks up another READY item while waiting on CI.
+- Every Builder task gets a handoff contract first: TASK · GOAL · CURRENT HEAD · CANONICAL OWNERS ·
+  ALLOWED FILE AREA · MUST PRESERVE · DO NOT CHANGE · ACCEPTANCE TEST · REQUIRED REVIEWERS · REQUIRED TESTS.
+- Roles: Analyst (read-only, writes the contract) · Builder (one writer, no self-approval) · Reviewer
+  (read-only, HIGH/MED/LOW, never repairs) · Tester (evidence only, never weakens tests) · Orchestrator.
+- One writer per ownership area (files, stores, public models, schema, transport/time, parameter APIs).
+- Lifecycle: ANALYZE → BUILD → REVIEW → FIX HIGH/MED → re-review → focused test → Build for Testing →
+  integration evidence → DONE. Scan ≠ compile ≠ test ≠ simulator ≠ device.
+- Failure packet: FAILED TASK · SHA · STEP · FIRST ACTIONABLE ERROR · REPRO · FILES · LAST GREEN SHA.
+- Retry limit 3 repair cycles per root failure → BLOCKED_TECHNICAL (attempts, evidence, suspected cause,
+  next investigation), then another independent READY task.
+- CI: don't cancel the only useful compile/BfT evidence with tiny pushes; analyse read-only meanwhile.
+- One checkpoint: `scratchpads/EXECUTION_CHECKPOINT.md` (update after each slice, before compaction/
+  handoff, after main advances). No competing roadmap.
+- Queue states only: READY · ACTIVE · VERIFY · BLOCKED_EXTERNAL · BLOCKED_DEPENDENCY · BLOCKED_TECHNICAL ·
+  DONE (device-only: "AUTONOMOUS GATES CLOSED / FOUNDER DEVICE ACCEPTANCE PENDING").
+- Before a Builder slice: inspect HEAD, main, worktree; never reset to an old audit SHA.
+- Founder dependency order is a hard input; READY ≠ next. Success = highest-priority slice built,
+  independently reviewed, behaviourally verified, architecture preserved, concise evidence.
+
