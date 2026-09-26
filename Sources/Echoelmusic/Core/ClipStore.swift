@@ -182,8 +182,14 @@ public final class ClipStore {
     /// empty reference or a length that is not a positive finite number. A nil length is taken
     /// only to RESTORE a clip that never learned its length (Undo of a relink,
     /// `TimelineStore.relinkClipSource`).
+    ///
+    /// ⚠️ `mediaAssetID` is written too, and it is REQUIRED (#431): a relink that moved the file
+    /// but kept the link would leave the clip playing file B while naming the durable record of
+    /// file A (MA4.2 review). Until the relink rebinds the record itself (MA4.5), the relink
+    /// writes nil and Undo writes the old link back.
     @discardableResult
-    public func relinkAudio(id: UUID, mediaRef: String, nativeDurationSeconds: Double?) -> Bool {
+    public func relinkAudio(id: UUID, mediaRef: String, nativeDurationSeconds: Double?,
+                            mediaAssetID: UUID?) -> Bool {
         if let seconds = nativeDurationSeconds {
             guard seconds.isFinite, seconds > 0 else { return false }
         }
@@ -193,6 +199,7 @@ public final class ClipStore {
         else { return false }
         clip.mediaRef = mediaRef
         clip.nativeDurationSeconds = nativeDurationSeconds
+        clip.mediaAssetID = mediaAssetID
         slots[i] = clip
         persist()
         return true

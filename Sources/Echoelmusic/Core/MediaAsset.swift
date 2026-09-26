@@ -1,9 +1,12 @@
 // MediaAsset.swift
-// Echoel — the identity of a file in the managed media library (Phase 3, founder order
-// 2026-09-25: "MediaAsset + lazy Browser"). Pure and Foundation-only; the one impure step,
+// Echoel — the browser's ROW for a file in the managed media library (Phase 3, founder order
+// 2026-09-25: "MediaAsset + lazy Browser"; the founder's 2026-09-26 vocabulary calls this the
+// BrowserItem — the durable identity is `Core/MediaAssetRecord`, see its header). Pure and Foundation-only; the one impure step,
 // listing the directory, is `MediaLibrary.listAudio()`.
 //
-// ⭐ THE IDENTITY IS (home, file name) — THE KEY THE RESOLVER ALREADY HONOURS. It is not the
+// ⭐ THE ROW'S KEY IS (home, file name) — THE KEY THE RESOLVER ALREADY HONOURS. (It is the key a
+// stored reference resolves to, not the durable identity: a record's id survives a rebind, a key
+// does not.) It is not the
 // absolute path: an app update or a device migration changes the App Group container's UUID,
 // and `MediaLibrary.resolveRef` survives that by re-rooting a dead path BY FILE NAME against
 // the media homes (H6). A key built from the absolute path would call the same file two assets

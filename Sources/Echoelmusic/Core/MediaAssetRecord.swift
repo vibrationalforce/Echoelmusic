@@ -31,8 +31,10 @@
 // both 8 s). Only a matching content digest says "same content", and `match` keeps the two
 // verdicts apart so no caller can read one as the other.
 //
-// Foundation-only and pure: no store, no file access, no clock. Constructed nowhere in the app
-// yet — the registry, the Clip link and the import write are the next slices.
+// Foundation-only and pure: no store, no file access, no clock. Since MA4.2 the ONE producer is
+// the import (`AudioImport.commit` → `MediaAssetStore.register`), and a Clip links to a record by
+// `Clip.mediaAssetID`. A library-file placement and the de-dup re-import do not link yet (MA4.3),
+// and a relink RELEASES the link rather than carrying it to another file (MA4.5 rebinds).
 
 import Foundation
 

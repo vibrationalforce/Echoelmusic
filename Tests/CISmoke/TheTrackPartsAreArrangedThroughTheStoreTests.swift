@@ -165,11 +165,12 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
         // Phase 3 / Automation A1 added the `.automation` kind — automation lanes only, never
         // lanes or mixer — and `SongHistoryRow`'s hint moved with it in the same commit. Media
         // B2b added `.clipSource` (founder 2026-09-26: a relink is one undoable edit) — ONE audio
-        // clip's file binding, never a lane or the mixer; the hint moved with it again.
+        // clip's file binding, never a lane or the mixer; the hint moved with it again. The MA4.2 review
+        // added the clip's `mediaAssetID` to that binding — still one clip, still no lane.
         XCTAssertEqual(cases, ["case regions([TimelineRegion])",
                                "case clipNotes(clipID: UUID, notes: [Note], clips: ClipStore)",
                                "case automation([AutomationLane])",
-                               "case clipSource(clipID: UUID, mediaRef: String, nativeDurationSeconds: Double?, clips: ClipStore)"],
+                               "case clipSource(clipID: UUID, mediaRef: String, nativeDurationSeconds: Double?, mediaAssetID: UUID?, clips: ClipStore)"],
                        """
                        The history holds a step kind beyond parts and one clip's notes. The \
                        Workstation promises Undo never reverts a mixer change; if a step now \

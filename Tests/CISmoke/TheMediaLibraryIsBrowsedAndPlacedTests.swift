@@ -47,6 +47,10 @@
 //    (`TimelineStore.relinkClipSource`, history kind `.clipSource`): Undo restores the old file
 //    and length exactly — including an unknown length — and Redo the new ones; refusals record no
 //    step. REGRESSIONS on `7006ace55` (the relink wrote around the history).
+//    MA4.2 review (`eeaee9daf`): the relink RELEASES the clip's `mediaAssetID` (it named the old
+//    file's record) and Undo gives it back — 2 REGRESSIONS there (the link survived the relink,
+//    and Redo kept it); the rest of the claim is unchanged. This commit also adds the required
+//    `mediaAssetID:` to the three writer calls below, so the file does not compile on that parent.
 // 10. B3: PREVIEW — PURE `MediaBrowserView.previewRefusal` refuses while the song, the instrument's
 //    loop plays, or the engine is stopped (the sink's first use attaches a node, which pauses the
 //    engine); a SCAN that the preview plays through `BeatPlayer`'s attached audition path, only
@@ -530,8 +534,9 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         let timeline = TimelineStore()
         let original = clips.slots
         defer { clips.replaceSlots(original) }
+        // MA4.2 review: the clip carries a link to the durable record of its OLD file.
         let gone = Clip(name: "Break", kind: .audio, mediaRef: "/x/Media/Audio/Break.wav",
-                        nativeDurationSeconds: 8.0, nativeBPM: 96)
+                        mediaAssetID: UUID(), nativeDurationSeconds: 8.0, nativeBPM: 96)
         let midi = Clip(name: "Keys", melody: MelodyClip(notes: [Note(pitch: 60, startStep: 0)]))
         var grid = [Clip?](repeating: nil, count: ClipStore.slotCount)
         grid[0] = gone
@@ -565,6 +570,8 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         XCTAssertEqual(after?.id, gone.id, "the id every part points at is kept")
         XCTAssertEqual(after?.name, "Break")
         XCTAssertEqual(after?.nativeBPM, 96, "its tempo is kept — the file has the same length")
+        XCTAssertNil(after?.mediaAssetID,
+                     "the link to the old file's record is released — it would name a file the clip no longer plays")
         XCTAssertEqual(clips.filledClips.count, 2, "no new clip, no slot spent")
         XCTAssertEqual(clips.clip(id: midi.id), midi, "counterweight: the other clip is untouched")
 
@@ -572,11 +579,12 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         // the new one; the clip id and everything else are the same object throughout.
         XCTAssertTrue(timeline.canUndo, "a relink is an undo step")
         timeline.undo()
-        XCTAssertEqual(clips.clip(id: gone.id), gone, "Undo restores the old file and length exactly")
+        XCTAssertEqual(clips.clip(id: gone.id), gone, "Undo restores the old file, length and link exactly")
         XCTAssertTrue(timeline.canRedo)
         timeline.redo()
         XCTAssertEqual(clips.clip(id: gone.id)?.mediaRef, found.url.path, "Redo re-applies the relink")
         XCTAssertEqual(clips.clip(id: gone.id)?.nativeDurationSeconds, 8.0)
+        XCTAssertNil(clips.clip(id: gone.id)?.mediaAssetID, "Redo releases the link again")
 
         // A clip that never learned its length takes the file's.
         let unmeasured = Clip(name: "Old", kind: .audio, mediaRef: "/x/Media/Audio/Old.wav")
@@ -588,10 +596,12 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         timeline.undo()
         XCTAssertEqual(clips.clip(id: unmeasured.id), unmeasured,
                        "Undo gives an unmeasured clip back its unknown length, not the file's")
-        XCTAssertFalse(clips.relinkAudio(id: midi.id, mediaRef: "/y/x.wav", nativeDurationSeconds: 1),
+        XCTAssertFalse(clips.relinkAudio(id: midi.id, mediaRef: "/y/x.wav", nativeDurationSeconds: 1,
+                                         mediaAssetID: nil),
                        "the writer itself refuses a MIDI clip")
-        XCTAssertFalse(clips.relinkAudio(id: gone.id, mediaRef: "", nativeDurationSeconds: 1))
-        XCTAssertFalse(clips.relinkAudio(id: gone.id, mediaRef: "/y/x.wav", nativeDurationSeconds: Double.nan))
+        XCTAssertFalse(clips.relinkAudio(id: gone.id, mediaRef: "", nativeDurationSeconds: 1, mediaAssetID: nil))
+        XCTAssertFalse(clips.relinkAudio(id: gone.id, mediaRef: "/y/x.wav", nativeDurationSeconds: Double.nan,
+                                         mediaAssetID: nil))
     }
 
     func testRelinkIsOneWriterAndTheBrowsersOnlyDoor() throws {

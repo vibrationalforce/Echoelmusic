@@ -30,8 +30,11 @@
 // no `MediaAsset`" stood here; since MA1 `Core/MediaAsset` exists and READS that bridge — the
 // same file is one asset wherever referenced — and `MediaPlacement` is a second caller of
 // `commit`, with an identity copy and a no-op delete. Since MA2 `perform` asks the library first:
-// a picked file whose BYTES are already there lands through `landExisting` — no second copy.) There is no new store, no new persistence root, no new clock and no new playback
-// engine. There is no audio INPUT, no recording, no sample instrument and no grain engine. There
+// a picked file whose BYTES are already there lands through `landExisting` — no second copy.
+// ⛔ "There is no new store, no new persistence root" stood here; since MA4.2 a successful
+// landing registers a `MediaAssetRecord` in `MediaAssetStore` — an app-library root of its own —
+// and links the clip to it. That is a THIRD write, described below.) There is no new clock and
+// no new playback engine. There is no audio INPUT, no recording, no sample instrument and no grain engine. There
 // is no BPM estimate IN THE TRANSACTION (the landing carries `nativeBPM = 0`; since #B2 the
 // Workstation door runs `AudioTempoAnalysis` AFTER the landing, off the main actor, and a
 // KNOWN tempo is adopted through `ClipStore` — founder 2026-09-23 lifted decision 7), no
@@ -48,6 +51,10 @@
 // store exposes a transaction and both `persist()` fire-and-forget, so if the second write's disk
 // write fails there is no rollback — the honest statement is that this is a two-write sequence
 // ordered so the failure mode is a spare clip, NOT a cross-store transaction system.
+// ⚠️ Since MA4.2 a THIRD write precedes both: the durable record (`MediaAssetStore.register`).
+// A record persisted before its clip is an unreferenced record — the harmless direction again —
+// and the clip carries its id only when the register succeeded, so a clip never names a record
+// that was not written.
 //
 // ⚠️ THE LANE PREDICATE IS THE ENGINE'S OWN, NOT A SECOND OPINION (#416). Founder decision 4
 // says "the first existing TimelineLane whose kind is .audio"; `TimelineDocument.audioLaneIDs` —
@@ -433,6 +440,10 @@ public enum AudioImport {
     /// ⚠️ THE SCOPE WRAPS THE WHOLE CALL, not just the copy. `importFile` runs first inside
     /// `commit`, so a narrower scope would still be correct — but "acquire, do the work,
     /// release" has one exit path and cannot be re-ordered into a leak by a later edit.
+    ///
+    /// ⚠️ ONLY THE COPY PATH LINKS A DURABLE RECORD (MA4.2). A picked file whose bytes are already
+    /// in the library lands through `landExisting`, which neither registers nor links — that
+    /// part plays by `mediaRef` exactly as before. Linking it to the file's existing record is MA4.3.
     @MainActor
     @discardableResult
     public static func perform(pickedURL: URL,
