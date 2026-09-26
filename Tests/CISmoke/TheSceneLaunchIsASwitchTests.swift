@@ -64,7 +64,8 @@
 //    the mid-bar plan is heard on the right bar at every following bar line, the step-0 plan
 //    applied mid-bar (the old call) repeats a bar — the counterweight that proves the plan
 //    matters. SOURCE-TEXT: `play` derives the step from the pattern and passes it to the roll
-//    load and the scene apply, and no literal `step: 0` is left in `play`.
+//    load and the scene apply (the ONE step rule `nextTransportStep` that `relocate` asks too),
+//    and neither load carries a literal `step: 0` again (narrowed on review, #364).
 //    GRADING: transcribed in Python against both trees — the source claim is red on the parent
 //    (`71e9600f0`: `loadRollRegion(at: startTick, step: 0)`), green here; the plan claim is a
 //    pin on existing, correct behaviour (green on both — the defect was the CALL, not the plan).
@@ -383,6 +384,9 @@ final class TheSceneLaunchIsASwitchTests: XCTestCase {
 
         // The entry tick is `relocate`'s: the start bar plus the next step's phase; a stopped
         // pattern (step 0) enters on the bar itself — the pre-fix path, byte for byte.
+        XCTAssertEqual(TimelineRegionPlayer.nextTransportStep(isPlaying: true, currentStep: 5), 5)
+        XCTAssertEqual(TimelineRegionPlayer.nextTransportStep(isPlaying: false, currentStep: 5), 0,
+                       "a stopped pattern restarts its phase at 0")
         let step = TimelineTime.ticksPerTransportStep
         XCTAssertEqual(TimelineRegionPlayer.relocateAnchorTick(targetBarTick: 2 * Self.bar, nextPatternStep: 5),
                        2 * Self.bar + 5 * step)
@@ -393,12 +397,15 @@ final class TheSceneLaunchIsASwitchTests: XCTestCase {
     func testPlayEntersAtThePatternsNextStep() throws {
         let player = try source(Self.playerPath)
         let play = try body(of: "public func play(", in: player)
-        XCTAssertTrue(play.contains("let entryStep = pattern.isPlaying ? pattern.currentStep : 0"),
-                      "the entry step is the running pattern's NEXT step (0 when stopped)")
+        XCTAssertTrue(play.contains("let entryStep = Self.nextTransportStep(isPlaying: pattern.isPlaying, currentStep: pattern.currentStep)"),
+                      "the entry step is the running pattern's NEXT step (0 when stopped) — the rule relocate asks too")
+        XCTAssertEqual(player.components(separatedBy: "Self.nextTransportStep(").count - 1, 2,
+                       "`play` and `relocate` ask ONE step rule (#416)")
         XCTAssertTrue(play.contains("Self.relocateAnchorTick(targetBarTick: startTick, nextPatternStep: entryStep)"),
                       "the entry tick is relocate's phase-consistent anchor (#416: one recipe)")
-        XCTAssertFalse(play.contains("step: 0)"), """
-            `play` passes a literal `step: 0` again. On a pattern that is already running the \
+        XCTAssertFalse(play.contains("loadRollRegion(at: startTick, step: 0)")
+                       || play.contains("applyLaunchTransitions(startLaunches, atTick: startTick, step: 0)"), """
+            `play` loads the roll or the scene with a literal `step: 0` again. On a pattern that is already running the \
             next step is not 0, and a roll load told "bar line" mid-bar plays a multi-bar part \
             one bar behind (Clips/Scenes LOW-1).
             """)

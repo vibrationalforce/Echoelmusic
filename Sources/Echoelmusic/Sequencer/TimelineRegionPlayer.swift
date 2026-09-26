@@ -600,10 +600,11 @@ public final class TimelineRegionPlayer {
     /// playhead the user parked — 0 = the top, the old behavior). No-op unless
     /// `canPlay(_:)` — nothing to chain; the caller asks the same question to
     /// decide whether to offer the control at all.
-    /// GRANULARITY: the start folds to the BAR — the shared PatternEngine always
-    /// starts its 16-step phase at 0, so a mid-bar start tick is not representable
-    /// at the transport layer (the within-bar phase belongs to the pattern; exact
-    /// mid-bar locate is the same M2-class refinement as mid-bar region phase).
+    /// GRANULARITY: the requested start folds to the BAR — a stopped PatternEngine starts
+    /// its 16-step phase at 0, so a mid-bar START tick is not representable at the transport
+    /// layer. When the pattern is ALREADY running (the instrument playing), its phase is not
+    /// ours to reset: the song enters that bar at the pattern's next step, at `relocate`'s
+    /// phase-consistent anchor (Clips/Scenes LOW-1, modes census Q5).
     /// A tick beyond the song end folds to the top, like the loop wrap.
     /// `launching` (Phase 3 / S2): a SCENE's parts to land on that start bar inside this
     /// call — each launched part is started once, by its launch. Empty = plain Play.
@@ -640,7 +641,7 @@ public final class TimelineRegionPlayer {
         // step 0 there told the roll "bar line" mid-bar and a multi-bar part played one bar
         // behind for the rest of the part. A stopped pattern gives step 0 ⇒ `entryTick ==
         // startTick` and every line below is the pre-fix path.
-        let entryStep = pattern.isPlaying ? pattern.currentStep : 0
+        let entryStep = Self.nextTransportStep(isPlaying: pattern.isPlaying, currentStep: pattern.currentStep)
         let entryTick = Self.relocateAnchorTick(targetBarTick: startTick, nextPatternStep: entryStep)
         self.cursor = TimelinePlaybackCursor(startBar: startTick / TimelineTime.ticksPerBar)
         self.lastTick = entryTick
@@ -665,15 +666,17 @@ public final class TimelineRegionPlayer {
         if !rollLaunched {
             loadRollRegion(at: entryTick, step: entryStep)   // whatever is under the playhead
         }
-        primeSecondaryLanes(at: entryTick)       // secondary lanes active at the start bar
+        primeSecondaryLanes(at: entryTick)       // secondary lanes active at the entry tick
         audioLanes?.prime(in: document, atTick: entryTick, bpm: pattern.tempo,   // audio lanes (A1)
                           launchingInThisCall: Set(startLaunches.map(\.laneID)))
         if !startLaunches.isEmpty {
             // The scene is still requested and fired ON the bar (`startTick` above — its
             // boundary); what it is applied AT is where the transport really is. ⚠️ An AUDIO
-            // scene part still starts from its top when this call runs, so on a running
-            // pattern it sits `entryStep` steps behind the grid — the sub-bar launch phase
-            // `launchedStartBar` already names as the follow-up. A stopped pattern: step 0, exact.
+            // scene part still starts from its top when this call runs while its loop is
+            // anchored on the bar, so on a running pattern its FIRST pass lags `entryStep`
+            // steps and is cut short by the loop re-fire; from the second pass it is on the
+            // grid. The sub-bar launch phase `launchedStartBar` names is the follow-up. A
+            // stopped pattern: step 0, exact.
             applyLaunchTransitions(startLaunches, atTick: entryTick, step: entryStep)
             launchGeneration &+= 1
         }
@@ -711,7 +714,8 @@ public final class TimelineRegionPlayer {
         // PatternEngine.currentStep is the NEXT step its timer fires (advance()
         // plays `currentStep`, then increments) — exactly the phase the next
         // transportStep will carry. A stopped/absent pattern anchors at 0.
-        let nextStep = (pattern?.isPlaying == true) ? (pattern?.currentStep ?? 0) : 0
+        let nextStep = Self.nextTransportStep(isPlaying: pattern?.isPlaying == true,
+                                              currentStep: pattern?.currentStep ?? 0)
         let anchor = Self.relocateAnchorTick(targetBarTick: target, nextPatternStep: nextStep)
         pianoRoll?.allNotesOff()   // hard locate: cut the primary roll's ringing notes
         flushPumps()               // offs through current bindings (H5b), slots released
@@ -736,6 +740,13 @@ public final class TimelineRegionPlayer {
     /// (clamped 0…15). Pure — the seeded cursor's next advance(step:) produces
     /// exactly this tick, so the post-relocate window (lastTick → newTick] is
     /// empty and nothing double-fires.
+    /// The within-bar step the NEXT transport step will carry — the pattern's `currentStep`
+    /// while it runs (it plays `currentStep`, then increments), 0 while stopped. ONE rule for
+    /// `play` and `relocate` (#416; modes census Q5 review).
+    nonisolated static func nextTransportStep(isPlaying: Bool, currentStep: Int) -> Int {
+        isPlaying ? currentStep : 0
+    }
+
     nonisolated static func relocateAnchorTick(targetBarTick: Int, nextPatternStep: Int) -> Int {
         let phase = min(max(nextPatternStep, 0), 15)
         return targetBarTick + phase * TimelineTime.ticksPerTransportStep
