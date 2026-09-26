@@ -35,6 +35,10 @@
 // the MANAGED COPY, and lands a `Clip(kind: .audio)` in `ClipStore` plus a `TimelineRegion`
 // on the song's first non-bio audio lane. From this file's point of view NOTHING changed —
 // it was always correct and always reconciling; it simply has something to reconcile now.
+// Since MA1 (2026-09-26) a SECOND door reaches the same stores: the Workstation's "Media
+// Library" places a file already in `Media/Audio` (`MediaPlacement`) — a new region on the clip
+// that already carries it, or `AudioImport.commit` on the file where it is. Same lanes, same
+// clip grid, nothing new for this layer to learn.
 //
 // ⚠️ THE HONEST SHAPE OF THE CLAIM IS STILL CONDITIONAL. An audio lane sounds when a user has
 // imported something onto it; the default document seeds an EMPTY `Audio 1` lane, so a fresh

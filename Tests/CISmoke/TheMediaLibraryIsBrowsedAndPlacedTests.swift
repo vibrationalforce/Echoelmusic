@@ -84,19 +84,26 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         let second = Clip(name: "Loop again", kind: .audio, mediaRef: beforeUpdate)
         let midi = Clip(name: "Keys", kind: .midi, mediaRef: today)
         let other = Clip(name: "Pad", kind: .audio, mediaRef: "/x/Media/Audio/Pad.wav")
-        let lane = UUID()
+        let audio = TimelineLane(name: "Audio 1", kind: .audio)
+        let body = TimelineLane(name: "Body", kind: .audio, isBio: true)
+        let keys = TimelineLane(name: "Keys", kind: .midi)
         let regions = [
-            TimelineRegion(laneID: lane, clipID: first.id, startTick: 0, lengthTicks: 1920),
-            TimelineRegion(laneID: lane, clipID: first.id, startTick: 1920, lengthTicks: 1920),
-            TimelineRegion(laneID: lane, clipID: second.id, startTick: 3840, lengthTicks: 1920),
-            TimelineRegion(laneID: lane, clipID: midi.id, startTick: 0, lengthTicks: 1920),
+            TimelineRegion(laneID: audio.id, clipID: first.id, startTick: 0, lengthTicks: 1920),
+            TimelineRegion(laneID: audio.id, clipID: first.id, startTick: 1920, lengthTicks: 1920),
+            TimelineRegion(laneID: audio.id, clipID: second.id, startTick: 3840, lengthTicks: 1920),
+            TimelineRegion(laneID: keys.id, clipID: midi.id, startTick: 0, lengthTicks: 1920),
+            // Not uses: a part on a bio lane and a part whose lane is gone (review of ae3faa1c5).
+            TimelineRegion(laneID: body.id, clipID: first.id, startTick: 0, lengthTicks: 1920),
+            TimelineRegion(laneID: UUID(), clipID: first.id, startTick: 0, lengthTicks: 1920),
         ]
-        let usage = MediaAsset.usage(clips: [first, midi, second, other], regions: regions)
+        let doc = TimelineDocument(lanes: [audio, body, keys], regions: regions)
+        let usage = MediaAsset.usage(clips: [first, midi, second, other], document: doc)
 
         let loop = MediaAsset.Key(kind: .audio, fileName: "Loop.wav")
         XCTAssertEqual(usage[loop]?.clipIDs, [first.id, second.id],
                        "both audio clips carry the file, in slot order; the MIDI clip does not")
-        XCTAssertEqual(usage[loop]?.partCount, 3, "the MIDI part is not a use of the audio file")
+        XCTAssertEqual(usage[loop]?.partCount, 3,
+                       "three parts on the playable audio lane; the MIDI, bio and lane-less parts are not uses")
         XCTAssertEqual(usage[MediaAsset.Key(kind: .audio, fileName: "Pad.wav")],
                        MediaAsset.Usage(clipIDs: [other.id], partCount: 0))
         XCTAssertNil(usage[MediaAsset.Key(kind: .audio, fileName: "Unused.wav")])
@@ -147,6 +154,40 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
             return XCTFail("a known length needs no measurement")
         }
         XCTAssertEqual(same.lengthTicks, region.lengthTicks)
+    }
+
+    func testAReuseOnAWarpedTrackLandsWarped() {
+        let audio = TimelineLane(name: "Audio 1", kind: .audio)
+        let clip = Clip(name: "Loop", kind: .audio, mediaRef: today,
+                        nativeDurationSeconds: 8, nativeBPM: 90)
+        let key = MediaAsset.Key(kind: .audio, fileName: "Loop.wav")
+        let first = TimelineRegion(laneID: audio.id, clipID: clip.id, startTick: 0, lengthTicks: 3840)
+
+        var warped = first
+        warped.warpEnabled = true
+        let onTrack = TimelineDocument(lanes: [audio], regions: [warped])
+        XCTAssertEqual(AudioWarp.state(laneID: audio.id, in: onTrack, clips: [clip]), .on,
+                       "fixture premise: the track's switch reads on")
+        guard case .reuse(let region) = MediaPlacement.plan(key, clips: [clip], document: onTrack,
+                                                             bpm: 120, measuredSeconds: nil) else {
+            return XCTFail("the reuse must land")
+        }
+        XCTAssertTrue(region.warpEnabled, "a new part of a warped track must not flip it to Mixed")
+        XCTAssertEqual(region.lengthTicks,
+                       AudioWarp.spanTicks(for: region, clip: clip, warped: true, bpm: 120),
+                       "the span the switch itself gives a warped part (#416)")
+        var after = onTrack
+        after.regions.append(region)
+        XCTAssertEqual(AudioWarp.state(laneID: audio.id, in: after, clips: [clip]), .on)
+
+        let offTrack = TimelineDocument(lanes: [audio], regions: [first])
+        guard case .reuse(let plain) = MediaPlacement.plan(key, clips: [clip], document: offTrack,
+                                                            bpm: 120, measuredSeconds: nil) else {
+            return XCTFail("the reuse must land")
+        }
+        XCTAssertFalse(plain.warpEnabled, "an unwarped track gets an unwarped part, as Import gives")
+        XCTAssertEqual(plain.lengthTicks,
+                       AudioClipFactory.coveringBars(forDurationSeconds: 8, bpm: 120) * TimelineTime.ticksPerBar)
     }
 
     func testThePlanRefusesWhatItCannotPlace() {
@@ -254,17 +295,17 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         let clips = ClipStore()
         let originalDocument = timeline.document
         let originalSlots = clips.slots
-        let home = FileManager.default.temporaryDirectory
+        let probe = FileManager.default.temporaryDirectory
             .appendingPathComponent("MediaPlacementProbe-\(UUID().uuidString)")
-            .appendingPathComponent("Media/Audio", isDirectory: true)
-        try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
-        let file = home.appendingPathComponent("Keep.wav")
-        try Data([0, 1, 2, 3]).write(to: file)
+        let home = probe.appendingPathComponent("Media/Audio", isDirectory: true)
         defer {
             clips.replaceSlots(originalSlots)
             timeline.replaceDocument(originalDocument)
-            try? FileManager.default.removeItem(at: home.deletingLastPathComponent().deletingLastPathComponent())
+            try? FileManager.default.removeItem(at: probe)
         }
+        try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
+        let file = home.appendingPathComponent("Keep.wav")
+        try Data([0, 1, 2, 3]).write(to: file)
 
         // A full grid of OTHER clips: the plan says `.newClip`, the transaction refuses.
         let full: [Clip?] = (0..<ClipStore.slotCount).map { i in
@@ -292,10 +333,14 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         XCTAssertEqual(occurrences(of: "MediaLibrary.listAudio()", in: browser), 1,
                        "the browser lists the library at exactly one place")
         let task = try body(of: "sorted()))", in: browser)   // the `.task(id: ListingKey(…))` line's end
-        let hop = try XCTUnwrap(task.range(of: "Task.detached(priority: .utility)"),
+        let hop = try XCTUnwrap(task.range(of: "Task.detached("),
                                 "the listing must hop off the main actor")
         let list = try XCTUnwrap(task.range(of: "MediaLibrary.listAudio()"))
         XCTAssertLessThan(hop.lowerBound, list.lowerBound, "…and list INSIDE the hop, not before it")
+        let cancelled = try XCTUnwrap(task.range(of: "guard !Task.isCancelled"),
+                                      "a superseded listing must not overwrite a newer one")
+        let write = try XCTUnwrap(task.range(of: "listing = "))
+        XCTAssertLessThan(cancelled.lowerBound, write.lowerBound, "the check comes BEFORE the write")
         XCTAssertTrue(browser.contains("LazyVStack"), "a long library builds only the rows on screen")
         XCTAssertTrue(browser.contains("MediaPlacement.perform("), "Place writes through the one writer")
         XCTAssertTrue(browser.contains("selection.selectRegion(placed.region.id, in: timeline.document)"),
@@ -307,8 +352,8 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         }
 
         let workstation = try source(Self.workstationPath)
-        XCTAssertTrue(workstation.contains("                MediaBrowserView()\n"),
-                      "the Media Library is mounted on the Workstation plate")
+        XCTAssertEqual(occurrences(of: "MediaBrowserView()", in: workstation), 1,
+                       "the Media Library is mounted on the Workstation plate, once")
         XCTAssertFalse(workstation.contains("MediaLibrary."),
                        "the root still touches no file (TheWorkstationImportsAudioTests claim 16)")
 
@@ -331,6 +376,11 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
                        "a reuse never writes a clip; a new clip is `AudioImport.commit`'s to write")
         XCTAssertTrue(placement.contains("AudioImport.firstImportableAudioLane(in: document)"),
                       "the lane is the import's own predicate (#416)")
+        let perform = try body(of: "public static func perform(", in: placement)
+        let exists = try XCTUnwrap(perform.range(of: "fileExists(atPath: asset.url.path)"),
+                                   "a vanished file must be refused, not placed as a silent part")
+        let call = try XCTUnwrap(perform.range(of: "place(asset"))
+        XCTAssertLessThan(exists.lowerBound, call.lowerBound, "checked before anything is written")
     }
 
     // MARK: helpers

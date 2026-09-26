@@ -300,6 +300,21 @@ final class TheAudioLaneProducerIsTheImportDoorTests: XCTestCase {
             entry is a new path to a sounding audio lane and needs the prose moved with it.
             """)
 
+        // MA1 (2026-09-26) — the SECOND DOOR onto the import transaction. `MediaPlacement`
+        // (the Media Library's "Place") runs `AudioImport.commit` on a library file that no clip
+        // carries, so it mints an audio clip WITHOUT naming `AudioClipFactory` — the census above
+        // could not see it (review of ae3faa1c5: "a guard that survives by aliasing"). Pinned as
+        // a SET of the callers of the transaction itself; `AudioImport.perform` calls `commit(`
+        // unqualified inside its own file, so the qualified needle names only OUTSIDE doors.
+        let transactionCallers = try filesUnderSources(containing: "AudioImport.commit(")
+        XCTAssertEqual(transactionCallers, ["Sequencer/MediaPlacement.swift"], """
+            `AudioImport.commit` is now called from outside its file by \
+            \(transactionCallers.isEmpty ? "nothing" : transactionCallers.joined(separator: ", ")). \
+            The expected outside caller is exactly the Media Library's placement (MA1). A new \
+            one is a new door that mints audio-bearing clips: it needs its own guard, and \
+            `AudioLanePlayer`'s header and CLAUDE.md's register moved in the same commit.
+            """)
+
         let recorderBuilders = try filesUnderSources(containing: "TakeRecorder(")
             .filter { $0 != "Sequencer/TakeRecorder.swift" }
         XCTAssertEqual(recorderBuilders, ["Core/RecordController.swift"], """

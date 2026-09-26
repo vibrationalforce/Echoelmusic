@@ -26,9 +26,10 @@
 // without a device, a file picker or an audio file.
 //
 // ⛔ WHAT THIS SLICE IS NOT, stated here because each one is a thing a reader will look for.
-// There is no `MediaAsset` and no `AudioAsset`: `Clip.id` remains the creative identity and
-// `mediaRef` remains the file-location bridge, so nothing here claims canonical source-media
-// identity. There is no new store, no new persistence root, no new clock and no new playback
+// `Clip.id` remains the creative identity and `mediaRef` the file-location bridge. (⛔ "There is
+// no `MediaAsset`" stood here; since MA1 `Core/MediaAsset` exists and READS that bridge — the
+// same file is one asset wherever referenced — and `MediaPlacement` is a second caller of
+// `commit`, with an identity copy and a no-op delete.) There is no new store, no new persistence root, no new clock and no new playback
 // engine. There is no audio INPUT, no recording, no sample instrument and no grain engine. There
 // is no BPM estimate IN THE TRANSACTION (the landing carries `nativeBPM = 0`; since #B2 the
 // Workstation door runs `AudioTempoAnalysis` AFTER the landing, off the main actor, and a

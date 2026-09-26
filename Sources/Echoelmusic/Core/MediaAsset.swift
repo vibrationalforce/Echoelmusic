@@ -64,8 +64,10 @@ public struct MediaAsset: Sendable, Equatable, Identifiable {
     public var id: Key { key }
 
     /// The file name without its extension — what the import already named the clip.
+    /// String work, not `URL(fileURLWithPath:)`: that initialiser stats the path to decide
+    /// whether it is a directory, and this is read per row in a `body` (review of ae3faa1c5).
     public var displayName: String {
-        let name = URL(fileURLWithPath: key.fileName).deletingPathExtension().lastPathComponent
+        let name = (key.fileName as NSString).deletingPathExtension
         return name.isEmpty ? key.fileName : name
     }
 
@@ -87,6 +89,14 @@ public struct MediaAsset: Sendable, Equatable, Identifiable {
     /// nil for: an empty or missing ref, a bare file name (it carries no home), a path whose
     /// last directories are not an asset home (bundle resources, the legacy `Documents/Videos`),
     /// and a path that ends in a separator.
+    ///
+    /// ⚠️ NARROWER THAN `MediaLibrary.resolveRef`, on purpose. The resolver also re-roots a BARE
+    /// name, or a dead path under another home, by file name — so a legacy clip whose ref is
+    /// just `Loop.wav` PLAYS `Media/Audio/Loop.wav` while this says it names no asset, and the
+    /// browser then counts that file as unused. No writer in this build makes such a ref
+    /// (`AudioImport` writes the managed absolute path); only an old document can carry one.
+    /// Guessing the home from a name alone would be the wider error: it would call two
+    /// different files one asset the day a name repeats across homes.
     public static func key(forRef ref: String?) -> Key? {
         guard let ref, !ref.isEmpty, !ref.hasSuffix("/") else { return nil }
         let parts = ref.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
@@ -112,7 +122,9 @@ public struct MediaAsset: Sendable, Equatable, Identifiable {
     // MARK: - Who uses it
 
     /// Where an asset is used: the clips that carry it (in slot order) and how many parts of
-    /// the song play one of those clips.
+    /// the song play one of those clips — counted on the PLAYABLE audio lanes only
+    /// (`audioLaneIDs`, the set `AudioLanePlayer` walks), so a part whose lane is gone or is a
+    /// bio lane is not a use (review of ae3faa1c5).
     public struct Usage: Equatable, Sendable {
         public var clipIDs: [UUID]
         public var partCount: Int
@@ -132,7 +144,7 @@ public struct MediaAsset: Sendable, Equatable, Identifiable {
     /// ⚠️ ONLY AUDIO CLIPS COUNT. A MIDI clip has no `mediaRef` (its notes live in the clip),
     /// and any other kind with a stray ref would still not be played from this file by the
     /// audio lanes — counting it would say "in use" about a file nothing plays.
-    public static func usage(clips: [Clip], regions: [TimelineRegion]) -> [Key: Usage] {
+    public static func usage(clips: [Clip], document: TimelineDocument) -> [Key: Usage] {
         var clipKey: [UUID: Key] = [:]
         var result: [Key: Usage] = [:]
         for clip in clips where clip.kind == .audio {
@@ -140,7 +152,8 @@ public struct MediaAsset: Sendable, Equatable, Identifiable {
             clipKey[clip.id] = key
             result[key, default: .unused].clipIDs.append(clip.id)
         }
-        for region in regions {
+        let playable = Set(document.audioLaneIDs)
+        for region in document.regions where playable.contains(region.laneID) {
             guard let key = clipKey[region.clipID] else { continue }
             result[key, default: .unused].partCount += 1
         }

@@ -53,13 +53,11 @@ struct MediaBrowserView: View {
         VStack(alignment: .leading, spacing: 8) {
             toggleRow
             if isOpen {
-                content(usage: MediaAsset.usage(clips: clips,
-                                                regions: timeline.document.regions))
+                content(usage: MediaAsset.usage(clips: clips, document: timeline.document))
                 if let note {
                     Text(note)
                         .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                         .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityLabel(note)
                 }
             }
         }
@@ -67,6 +65,9 @@ struct MediaBrowserView: View {
                              refs: clips.filter { $0.kind == .audio }.compactMap(\.mediaRef).sorted())) {
             guard isOpen else { return }
             let result = await Task.detached(priority: .utility) { MediaLibrary.listAudio() }.value
+            // A detached hop does not inherit cancellation: a listing started before an import
+            // landed can finish AFTER the newer one and overwrite it with the older set.
+            guard !Task.isCancelled else { return }
             if let assets = result { listing = .assets(assets) } else { listing = .unreadable }
         }
     }
@@ -90,7 +91,9 @@ struct MediaBrowserView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(isOpen ? "Hide media library" : "Show media library")
+        // The label is the visible words (Voice Control's label-in-name); the state is a value.
+        .accessibilityLabel("Media Library")
+        .accessibilityValue(isOpen ? "Shown" : "Hidden")
         .accessibilityHint("Lists the audio files already imported into the app")
     }
 
@@ -129,6 +132,9 @@ struct MediaBrowserView: View {
                 Text("\(size) · \(use)")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             }
+            // One spoken element for the facts; the button stays its own element.
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(asset.displayName), \(size), \(use)")
             Spacer(minLength: 8)
             Button {
                 place(asset)
@@ -147,8 +153,6 @@ struct MediaBrowserView: View {
             .accessibilityLabel("Place \(asset.displayName)")
             .accessibilityHint("Adds it as a part at the end of the audio track")
         }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(asset.displayName), \(size), \(use)")
     }
 
     /// Where a file is used, in the words the row shows.
