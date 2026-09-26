@@ -39983,3 +39983,15 @@ Review 10 was independent. These three prose commits are builder-made and **not 
   - `Run Tests` was still running at 00:20Z; its reading is owed and limited by the #807 window.
 - **Evidence per slice (M1b, M2, M3, M4):** COMPILES (both gates) + INDEPENDENTLY REVIEWED with repairs + transcription-graded. Not yet TESTED-observed. DEVICE pending (NEEDS-FOUNDER-VERIFY in each guard header).
 - **Next, per founder order:** MediaAsset + lazy Browser. Census and plan come first (`scratchpads/PLAN_MEDIA_ASSET_2026-09-26.md`).
+
+## 2026-09-26 00:55Z — Phase 3 / MA1: MediaAsset + lazy Media Library + Place (`ae3faa1c5`, review repair `4ad1ba1df`)
+
+- **Built:** `Core/MediaAsset` (identity = home + managed file name, the H6 re-root key; no index file), `MediaLibrary.listAudio()` (one directory call, called only detached), `Sequencer/MediaPlacement` (one writer: reuse the carrying clip → one region, one undo, no slot; orphan → `AudioImport.commit` with identity copy + no-op delete), and `Studio/MediaBrowserView` (a "Media Library" leaf on the Workstation, LazyVStack, Place; grouped with the project row so the VStack keeps 10 children, #936).
+- **Moved:** `TheWorkstationImportsAudioTests` claim 14 inverted (one MediaAsset, no asset store); importRow doc; HISTORY_ARCHIVE D7; decisions.csv + memory/decisions.md.
+- **Review (ui-state, 10 findings, 0 HIGH) → repaired in `4ad1ba1df`:**
+  - MEDIUM warp: a reuse on a warped track now lands warped.
+  - MEDIUM census: the `AudioImport.commit(` outside callers are pinned; the prose is moved in AudioImport, the AudioLanePlayer header and the CLAUDE.md register (149,315 B).
+  - LOWs: cancellation, usage counted on playable lanes only, displayName without a stat, accessibility, the vanished-file check, measuring after the lane check. Nits fixed.
+  - Documented, not changed: bare-name refs (no writer).
+- **Evidence:** transcription-graded; five checkers clean; gates pending (check-in 01:11Z). DEVICE: NEEDS-FOUNDER-VERIFY (guard header).
+- **Next:** MA2 import de-dup (design recorded in the plan: synchronous is enough, because the compare replaces a copy).
