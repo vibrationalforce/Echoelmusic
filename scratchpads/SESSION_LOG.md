@@ -40078,3 +40078,8 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 
 ### 2026-09-26 06:25Z — A4 reverted after independent review
 - Review of e6892d37f: the held post-Stop value is inaudible (one `noteOn(slot:` caller; every load re-sends the patch) and the restore re-raised release tails of a faded track. Reverted; A2 MED-1 closed as no defect; editor header + guard verify line corrected; decisions.csv A4 row → REVERSED.
+
+### 2026-09-26 07:15Z — revert gates green; Automation A5 shipped (0fa53b6b5)
+- Revert 91d6dd68e + docs: both gates green (main = a143336c4).
+- Remaining findings sorted by who would see them: A3 LOW-1/2 unreachable (closed), A1 LOW-10 closed with MED-1, A1 MED-2 held (needs an Arrange-shared zoom, WA4 scope).
+- A5: the row's curve runs toward the first point past a shortened song end (was drawn flat while playback ramped). Guard claim 9; five checkers clean; scan transcribed (parent: absent). Gates pending; independent review running.

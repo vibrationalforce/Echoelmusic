@@ -158,3 +158,19 @@ NOT touched (the global layer has no song writer).
 - LOW-1/LOW-2 moot with the revert.
 - LESSON: before repairing a "state persists" finding, name the control that would HEAR it.
   A2 review MED-1 had none.
+
+## After A4 — the remaining findings, measured by who would see them
+- A3 LOW-1 / LOW-2 CLOSED AS UNREACHABLE: no reachable control changes a rack track's device
+  (`setBuiltinInstrument` has no caller) and the Echoel track cannot be removed
+  (`TrackInspectorView.removeTrack` refuses it), so no drawn curve turns unbound, and the only
+  writer writes per-track keys. A legacy document is the one route; recorded, not repaired.
+- A1 LOW-10 CLOSED with A2 MED-1 (inaudible — see the A4 review).
+- A1 MED-2 (pick radius) HELD: the real fix is a zoom SHARED with the Arrange canvas (x is
+  song-absolute; a lane-only zoom breaks the curve/part alignment). There is no zoom anywhere
+  in the Workstation today; that is Arrange scope (WA4, closed) — not autonomous.
+
+## A5 — the drawn curve follows playback past a shortened song end (Council, silent: proceed) — 0fa53b6b5
+A1 review LOW-5. Who sees it: anyone who draws beyond bar N and then removes the parts after
+it — the row's last segment lay flat while playback ramped. `pointPastEnd` + `curvePoints`:
+the curve runs toward the first point past the end; dots and hits stay in-song. Guard claim 9.
+Evidence: transcription; gates pending; review running; not device-verified.
