@@ -40114,3 +40114,14 @@ Founder direction "CLOSE MIDI EVIDENCE, THEN MEDIA ASSET / BROWSER".
 - B1 `1013dab43` filter by name · B2a `6bf47f8b9` missing media named (playing-path resolver, once per open listing) · B2b `aa7089d90` Relink (`MediaRelink` + `ClipStore.relinkAudio`, same recording only, not Undo, no file op) · `a68bf05fa` review LOWs (count line, VoiceOver duplicate, note-canvas move preview = commit).
 - Open: B3 preview (needs an audio-graph owner; device-gated), deletion HOLD, DC2 paused (device-gated), review of B2a/B2b running at log time, gates for 025c…a68b queued at log time.
 - Evidence: all of today's slices TESTED by transcription only; compile gates pending/green as recorded in the plan docs; NOT device verified.
+
+## 2026-09-26 (late afternoon) — relink undo · MediaAsset foundation MA4.1–4.2
+
+Founder decision "RELINK SEMANTICS + NEXT MEDIAASSET STEP".
+- Relink stays a missing-media repair; `bb5a1a534` makes it ONE undoable step in the session (`TimelineStore.relinkClipSource`, history kind `.clipSource`), no previous-ref field on Clip. BfT/Compile queued at log time.
+- B3 preview `90270c345` (BeatPlayer audition, refused while anything plays) — device risk recorded, founder tests.
+- MA4.1 `ec2ad04a9` + review repair `965f5cb8e`: `MediaAssetRecord` (id · binding · provenance · evidence; digest compared only under one algorithm; compatible duration ≠ identity); the one length rule moved into it. decisions.csv row 950 superseded.
+- MA4.2 `eeaee9daf`: `MediaAssetStore` (app-library root, one JSON, no scan/hash), `Clip.mediaAssetID`, `AudioImport.commit(…assets:)` registers the fresh copy's record first. Library placement passes nil (MA4.3). Review running at log time.
+- Gates: BfT green on `025c2d3ac` (6409); every later run queued; Compile Checks cancel each other on rapid pushes (cancel-in-progress) — pushes spaced from here.
+- MIDI: still NOT CLOSED (no targeted/xcresult evidence).
+- Evidence: all slices TESTED by transcription only; NOT device verified.
