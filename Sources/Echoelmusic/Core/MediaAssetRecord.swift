@@ -161,6 +161,13 @@ public struct MediaAssetRecord: Codable, Sendable, Equatable, Identifiable {
     /// BINDING already says "this is the file" (a library file under the record's own name,
     /// MA4.3): there the measurement can refute identity, never establish it. Unmeasured and
     /// compatible say nothing against the binding, so they do not refute.
+    ///
+    /// ⚠️ THE BYTE SIZE IS DELIBERATELY NOT A REFUTATION (MA4.3 review L1). A relink moves a
+    /// record to a re-export of its source (a compatible length, other bytes) and KEEPS the
+    /// source's evidence (MA4.5); a size check would then refute the record against the very
+    /// file it names and mint a second identity for it on the next placement. Exact identity is
+    /// the digest's job (MA4.4), which a re-export also fails — so it too must be compared only
+    /// where "same bytes" is the question.
     public func isContradicted(by candidate: Evidence) -> Bool {
         switch match(candidate) {
         case .differentContent, .differentDuration: return true

@@ -4,8 +4,8 @@
 //
 // WHAT IT PINS. `MediaAssetRecord` is the durable identity of one managed file: a stable id, a
 // binding (the file name in its kind's home), provenance and measured evidence. This slice builds
-// the value type and moves the one length rule into it; nothing in the app constructs a record
-// yet (registry, Clip link, import write and digest are the next slices).
+// the value type and moves the one length rule into it (MA4.1); MA4.2–4.6 added the registry, the
+// Clip link, the import write, library adoption and the relink move — claims 5–9 below.
 //
 // 1. END-TO-END BEHAVIOUR (shipped, pure value type): the DIGEST decides identity when both sides
 //    have one — equal is `sameContent`, different is `differentContent` EVEN AT THE SAME LENGTH;
@@ -26,7 +26,7 @@
 // 6. END-TO-END (MA4.2): `AudioImport.assetRecord` binds the managed copy's name and keeps the
 //    picked name as provenance, with no digest; over REAL `ClipStore`/`TimelineStore` a refused
 //    import registers nothing, a landed one registers ONE record whose id the clip carries in the
-//    grid, and `assets: nil` is the pre-MA4.2 transaction. The clip codec keeps the link, an old
+//    grid, and `assets: .unlinked` is the pre-MA4.2 transaction. The clip codec keeps the link, an old
 //    clip has none, a damaged link costs only the link.
 // 7. SOURCE-TEXT SCAN (MA4.2/4.3): the landing transaction is the registry's one writer, the app
 //    constructs and injects it, the Workstation's import and the browser's Place hand it on, the
@@ -421,13 +421,16 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
                                      evidence: .init(byteSize: 0, sampleRate: 0, frameCount: 0, channelCount: 0))
         XCTAssertTrue(damaged.register(blank))
         XCTAssertEqual(try placed(damaged).mediaAssetID, blank.id)
+        XCTAssertEqual(damaged.record(id: blank.id)?.evidence.durationSeconds ?? 0, 10, accuracy: 1e-9,
+                       "…and learns the file's measurement, so it can refute a later replacement")
 
         // A library file with no record gets exactly one, provenance = its own name.
         let empty = MediaAssetStore(store: nil)
         let adoptedID = try XCTUnwrap(try placed(empty).mediaAssetID)
         let adopted = try XCTUnwrap(empty.record(id: adoptedID))
         XCTAssertEqual(adopted.fileName, "Loop.wav")
-        XCTAssertEqual(adopted.originalName, "Loop.wav", "no picked name was recorded, none is invented")
+        XCTAssertEqual(adopted.originalName, "Loop.wav",
+                       "provenance of an adopted record is the file's own name (on Place the picked URL IS the file)")
         XCTAssertEqual(adopted.evidence.durationSeconds, 10, accuracy: 1e-9)
 
         // A second placement of the same file REUSES the clip and rewrites nothing.
@@ -445,7 +448,7 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         let fresh = MediaAssetStore(store: nil)
         let lookalike = record(seconds: 10)
         XCTAssertTrue(fresh.register(lookalike))
-        let copied = AudioImport.commit(pickedURL: URL(fileURLWithPath: "/tmp/picked/Loop.wav"),
+        let copied = AudioImport.commit(pickedURL: URL(fileURLWithPath: "/tmp/picked/Original Take.wav"),
                                         clipStore: clips, timeline: timeline, bpm: 120,
                                         importFile: { _ in library }, measure: { _ in tenSeconds },
                                         deleteManagedCopy: { _ in }, assets: .freshCopy(fresh))
@@ -453,7 +456,9 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         let freshID = try XCTUnwrap(copy.clip.mediaAssetID)
         XCTAssertNotEqual(freshID, lookalike.id, "a fresh copy is a new record")
         XCTAssertEqual(fresh.records.count, 2)
-        XCTAssertEqual(fresh.record(id: freshID)?.originalName, "Loop.wav", "provenance is the picked name")
+        XCTAssertEqual(fresh.record(id: freshID)?.originalName, "Original Take.wav",
+                       "a fresh copy's provenance is the PICKED name, not the managed one")
+        XCTAssertEqual(fresh.record(id: freshID)?.fileName, "Loop.wav", "…and its binding the managed one")
 
         // The refutation rule itself, on the record.
         XCTAssertFalse(existing.isContradicted(by: evidence(seconds: 10)), "compatible does not refute")

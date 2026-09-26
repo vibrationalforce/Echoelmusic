@@ -292,8 +292,8 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         let asset = MediaAsset(kind: .audio, fileName: "Loop.wav",
                                url: URL(fileURLWithPath: today), byteSize: 1)
         var measured = 0
-        let result = MediaPlacement.place(asset, clipStore: clips, timeline: timeline, bpm: 120, assets: nil,
-                                          measure: { _ in measured += 1; return nil })
+        let result = MediaPlacement.place(asset, clipStore: clips, timeline: timeline, bpm: 120,
+                                          measure: { _ in measured += 1; return nil }, assets: nil)
         guard case .success(let placed) = result else { return XCTFail("the reuse must land") }
         XCTAssertTrue(placed.reusedClip)
         XCTAssertEqual(placed.clipName, "Loop")
@@ -324,10 +324,10 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
                                                   regions: []))
         let url = URL(fileURLWithPath: today)
         let asset = MediaAsset(kind: .audio, fileName: "Loop.wav", url: url, byteSize: 1)
-        let result = MediaPlacement.place(asset, clipStore: clips, timeline: timeline, bpm: 120, assets: nil,
+        let result = MediaPlacement.place(asset, clipStore: clips, timeline: timeline, bpm: 120,
                                           measure: { _ in
             AudioImport.Measurement(sampleRate: 48_000, frameCount: 96_000, channelCount: 2)
-        })
+        }, assets: nil)
         guard case .success(let placed) = result else { return XCTFail("the orphan must land") }
         XCTAssertFalse(placed.reusedClip)
         XCTAssertEqual(clips.filledClips.count, 1, "one clip for the orphan")
@@ -364,10 +364,10 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         timeline.replaceDocument(TimelineDocument(lanes: [TimelineLane(name: "Audio 1", kind: .audio)],
                                                   regions: []))
         let asset = MediaAsset(kind: .audio, fileName: "Keep.wav", url: file, byteSize: 4)
-        let result = MediaPlacement.place(asset, clipStore: clips, timeline: timeline, bpm: 120, assets: nil,
+        let result = MediaPlacement.place(asset, clipStore: clips, timeline: timeline, bpm: 120,
                                           measure: { _ in
             AudioImport.Measurement(sampleRate: 44_100, frameCount: 44_100, channelCount: 1)
-        })
+        }, assets: nil)
         guard case .failure(let failure) = result else { return XCTFail("a full grid must refuse") }
         XCTAssertEqual(failure, .clipGridFull)
         XCTAssertTrue(FileManager.default.fileExists(atPath: file.path),

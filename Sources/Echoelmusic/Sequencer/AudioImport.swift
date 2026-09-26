@@ -32,8 +32,9 @@
 // `commit`, with an identity copy and a no-op delete. Since MA2 `perform` asks the library first:
 // a picked file whose BYTES are already there lands through `landExisting` — no second copy.
 // ⛔ "There is no new store, no new persistence root" stood here; since MA4.2 a successful
-// landing registers a `MediaAssetRecord` in `MediaAssetStore` — an app-library root of its own —
-// and links the clip to it. That is a THIRD write, described below.) There is no new clock and
+// landing establishes a `MediaAssetRecord` in `MediaAssetStore` — an app-library root of its own —
+// and links the clip to it: a fresh copy REGISTERS one (a third write, described below), a library
+// file ADOPTS the record bound to it and writes nothing there, MA4.3.) There is no new clock and
 // no new playback engine. There is no audio INPUT, no recording, no sample instrument and no grain engine. There
 // is no BPM estimate IN THE TRANSACTION (the landing carries `nativeBPM = 0`; since #B2 the
 // Workstation door runs `AudioTempoAnalysis` AFTER the landing, off the main actor, and a
@@ -51,7 +52,8 @@
 // store exposes a transaction and both `persist()` fire-and-forget, so if the second write's disk
 // write fails there is no rollback — the honest statement is that this is a two-write sequence
 // ordered so the failure mode is a spare clip, NOT a cross-store transaction system.
-// ⚠️ Since MA4.2 a THIRD write precedes both: the durable record (`MediaAssetStore.register`).
+// ⚠️ Since MA4.2 a THIRD write can precede both: the durable record (`MediaAssetStore.register`)
+// — a fresh copy always, a library file only when it has no record yet (MA4.3).
 // A record persisted before its clip is an unreferenced record — the harmless direction again —
 // and the clip carries its id only when the register succeeded, so a clip never names a record
 // that was not written.
@@ -359,6 +361,14 @@ public enum AudioImport {
            let existing = registry.record(boundTo: MediaAsset.Key(kind: .audio,
                                                                   fileName: managed.lastPathComponent)),
            !existing.isContradicted(by: candidate.evidence) {
+            // A record that measured nothing (a damaged entry) learns the file's measurement now,
+            // so it can refute a later replacement; one that measured something keeps its own —
+            // after a relink its evidence describes the SOURCE, not the file it now names.
+            if existing.evidence.durationSeconds == 0, candidate.evidence.durationSeconds > 0 {
+                var learned = existing
+                learned.evidence = candidate.evidence
+                registry.register(learned)
+            }
             return existing.id
         }
         return registry.register(candidate) ? candidate.id : nil
@@ -392,7 +402,8 @@ public enum AudioImport {
     /// library file adopts the record bound to it) and the clip carries its id (`mediaAssetID`).
     /// Identity before use: a crash between the two leaves a record for a file that exists, never
     /// a clip naming a record that does not. `.unlinked` is written out by the callers that mean
-    /// it — the tests that do not exercise identity.
+    /// it — `MediaPlacement.place` without a registry (nil), and the tests that do not exercise
+    /// identity.
     @MainActor
     @discardableResult
     public static func commit(
