@@ -6484,8 +6484,8 @@ struct EchoelStudioView: View {
     // ("es soll trotzdem vom iPhone aus spielbar sein") is live. It moved into the Field
     // panel's "Look" group in this same commit — grep `airplayvideo` to find its one home.
 
-    /// Hold the screen on while the instrument is performing or projecting; otherwise
-    /// let it sleep (battery). iOS resets `isIdleTimerDisabled` on background, so this
+    /// Hold the screen on while the instrument is performing or projecting, or a song is
+    /// playing; otherwise let it sleep (battery). iOS resets `isIdleTimerDisabled` on background, so this
     /// is re-applied on scene-active too. No-op off UIKit.
     private func updateKeepAwake() {
         #if canImport(UIKit)
@@ -6561,7 +6561,8 @@ struct EchoelStudioView: View {
         // the Workstation with no body take and no projector made none of them true, so the
         // phone dimmed and locked mid-set. It is a deliberate act with an obvious end (Stop),
         // like projecting, so it costs no battery at rest. COLD: `isPlaying` flips on play and
-        // on stop only — the position lives in `currentTick`, which nothing here reads. Named
+        // on stop only; the player's properties that DO move while a song plays
+        // (`loadedRegionID`, `launchGeneration`) are read nowhere in this view. Named
         // in the `.onChange` expression above for the #1044 reason: a method is never re-read.
         UIApplication.shared.isIdleTimerDisabled =
             running || showMeditation || breathPacer.isRunning

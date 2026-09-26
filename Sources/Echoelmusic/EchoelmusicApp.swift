@@ -955,12 +955,12 @@ struct EchoelmusicApp: App {
                 // graph (silent once stopped); THIS runs the exact ■ stop cascade (⛔ "the
                 // TransportBar stop cascade" until #1107 — the bar is dissolved since #456, the
                 // ■ lives in `startControlRow`) so every player/voice releases through the proven path.
-                // The timeline half of this cascade is gone with ▶'s arrangement branch
-                // (`TransportBar.toggle`): `TimelineRegionPlayer.isPlaying` has one write
-                // site and no production caller reaches it, so the old two-branch form was
-                // a dead choice that still read like a live one — the exact thing the ▶
-                // change removed one file over. Leaving it here would have the repo assert
-                // in one file what it denies in another.
+                // The timeline half needs no branch of its own: a song played from the
+                // Workstation (`WorkstationView` → `TimelineRegionPlayer.play`, #1437) runs the
+                // SAME shared PatternEngine, so `pattern.stop()` below reaches the timeline
+                // through its `timeline` stop subscriber above. ⛔ This said the player's
+                // `isPlaying` had "no production caller" — true before #1437, false since, and
+                // the Workstation keep-awake term now depends on that caller.
                 audioEngine.onOutputDeviceLost = { [weak beatPlayer] in
                     guard beatPlayer?.pattern.isPlaying == true else { return }
                     EchoelCrashLog.breadcrumb("stop source: route-lost (output device gone)")

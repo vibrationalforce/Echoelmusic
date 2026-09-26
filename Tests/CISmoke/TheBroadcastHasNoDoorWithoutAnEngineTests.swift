@@ -13,9 +13,15 @@
 // binding releases; flip a transport to `.live` or door `BroadcastView` WITHOUT an engine and
 // this goes red with the list of what has to move together.
 //
-// 1. PURE: without an engine, `.rtmp`, `.srt` and `.ndi` report `.roadmap`.
+// 1. PURE: without an engine, `.rtmp` and `.srt` report `.roadmap`. ⚠️ `.ndi` is deliberately
+//    NOT bound here: HaishinKit carries RTMP and SRT, never NDI — NDI needs its own SDK (product
+//    law: integrate, never rebuild), so binding it to THIS engine would send a future NDI slice
+//    to the wrong dependency.
 // 2. SOURCE: without an engine, no `BroadcastView(` construction site exists in `Sources/`
 //    (comment-stripped: several files NAME the view in prose).
+//
+// When an engine IS linked, both claims throw `XCTSkip` rather than returning: a released
+// binding must show up in the log as a skip, never read as a pass (#806).
 //
 // Grading (§0, no Swift toolchain in a web session): transcribed against this tree — both
 // claims green today; flipping `.rtmp` to the `.live` arm or adding a construction site makes
@@ -28,13 +34,13 @@ import XCTest
 @MainActor
 final class TheBroadcastHasNoDoorWithoutAnEngineTests: XCTestCase {
 
-    private static let streamTransports: [SignalTransport] = [.rtmp, .srt, .ndi]
+    private static let streamTransports: [SignalTransport] = [.rtmp, .srt]   // HaishinKit's two; NDI is another engine
 
     // MARK: 1 — no engine, no live stream transport
 
-    func testWithoutAnEngineTheStreamTransportsAreRoadmap() {
+    func testWithoutAnEngineTheStreamTransportsAreRoadmap() throws {
         guard !BroadcastPublisher().engineAvailable else {
-            return   // the engine is linked — the binding releases (founder decision)
+            throw XCTSkip("streaming engine linked — the binding releases (founder decision)")
         }
         for transport in Self.streamTransports {
             XCTAssertEqual(transport.status, .roadmap, """
@@ -49,7 +55,9 @@ final class TheBroadcastHasNoDoorWithoutAnEngineTests: XCTestCase {
     // MARK: 2 — no engine, no door
 
     func testWithoutAnEngineTheBroadcastSurfaceHasNoDoor() throws {
-        guard !BroadcastPublisher().engineAvailable else { return }
+        guard !BroadcastPublisher().engineAvailable else {
+            throw XCTSkip("streaming engine linked — the binding releases (founder decision)")
+        }
         let sites = try sourcesContaining("BroadcastView(")
         XCTAssertEqual(sites, [], """
             `BroadcastView(` is constructed in \(sites) while no streaming engine is linked. \

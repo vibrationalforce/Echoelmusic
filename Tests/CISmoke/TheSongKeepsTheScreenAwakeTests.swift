@@ -8,12 +8,16 @@
 //
 // 1. SOURCE: the method's OR carries `timelinePlayer.isPlaying`.
 // 2. COUNTERWEIGHT (the freeze law, 10.76.41/50): the term is COLD — `isPlaying` flips on play
-//    and on stop — and the root never reads the song POSITION (`currentTick`), which is the
-//    hot half of the same object. The trigger expression that re-reads the method is pinned
-//    whole in `TheBreathingPracticeIsInTheMainViewTests` (moved in the same commit).
+//    and on stop — and the root reads neither of the player's OBSERVED properties that move
+//    while a song plays: `loadedRegionID` (every region onset) and `launchGeneration` (every
+//    launch and song wrap). ⚠️ NOT `currentTick`: it is `@ObservationIgnored`, so a body read
+//    registers nothing and cannot churn (it would only show a stale value) — the first version
+//    of this guard banned it for the wrong reason and missed the two that CAN churn (review of
+//    dbc451f8d). The trigger expression that re-reads the method is pinned whole in
+//    `TheBreathingPracticeIsInTheMainViewTests` (moved in the same commit).
 //
 // Grading (§0, no Swift toolchain): transcribed against this tree — claim 1 red on the parent
-// (`4884c7a47`), green here; claim 2 green on both. SOURCE-TEXT scan: it proves the expression
+// (`5d3116308`), green here; claim 2 green on both (a counterweight). SOURCE-TEXT scan: it proves the expression
 // is written this way, never that a device stays awake — a device look.
 // NEEDS-FOUNDER-VERIFY: Workstation, a song with a part, no body take, no projector — press
 // Play and leave the phone untouched past its auto-lock time: the screen stays on; Stop, and
@@ -41,14 +45,16 @@ final class TheSongKeepsTheScreenAwakeTests: XCTestCase {
             """)
     }
 
-    func testTheRootNeverReadsTheSongPosition() throws {
+    func testTheRootReadsNoPlaybackRateStateOfThePlayer() throws {
         let studio = try code(of: Self.studio)
-        XCTAssertFalse(studio.contains("timelinePlayer.currentTick"), """
-            `EchoelStudioView` reads the song POSITION. That is the hot half of the player — \
-            it moves while the song plays — and a read in the root body rebuilds everything \
-            below it and tears down an open `.menu` Picker (10.76.41/50). Read it in a leaf \
-            (`ArrangePlayheadView` is the pattern).
-            """)
+        for hot in ["timelinePlayer.loadedRegionID", "timelinePlayer.launchGeneration"] {
+            XCTAssertFalse(studio.contains(hot), """
+                `EchoelStudioView` reads `\(hot)`. That property is OBSERVED and changes while a \
+                song plays (region onsets, launches, wraps), so a read in the root body rebuilds \
+                everything below it and tears down an open `.menu` Picker (10.76.41/50). Read it \
+                in a leaf (`ArrangePlayheadView` is the pattern).
+                """)
+        }
     }
 
     private func code(of relativePath: String) throws -> String {
