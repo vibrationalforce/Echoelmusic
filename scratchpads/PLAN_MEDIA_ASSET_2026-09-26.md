@@ -42,7 +42,7 @@ behavioural verification.
   naturally grows; do not grow it.
 - **Skeptic:** a content hash is the "real" dedup identity. Reading whole WAVs on the main actor
   at import is a freeze, though, and a hash stored nowhere gets recomputed on every listing.
-  Dedup is a separate slice (MA2), done off-main.
+  Dedup is a separate slice (MA2). (As built it runs on the main actor, CAPPED — see MA2 below.)
 - **Shipper:** MA1 = the type + the lazy list + "Place". That is the smallest slice that gives the
   user something they could not do before: reuse an imported file without Files, without a new
   copy, and without a new slot.
@@ -107,9 +107,13 @@ behavioural verification.
 - On a match, reuse the asset and its clip (if any) instead of a second copy and a second slot.
 - ⭐ DESIGN (measured 2026-09-26 00:35Z): the import is ALREADY main-actor synchronous and
   already COPIES the whole file on the main actor (`MediaLibrary.importAudio` inside
-  `AudioImport.perform`). A compare against a same-size candidate reads at most the bytes the
-  copy it replaces would read and write, and it runs only when sizes match exactly. So MA2 does
-  NOT need the async rewrite; moving the whole import off-main is its own, larger slice (it
+  `AudioImport.perform`). ⛔ The next sentence stood here and the review of 7b691faf8 refuted it:
+  "a compare reads at most the bytes the copy it replaces would read and write" — false, because
+  `FileManager.copyItem` CLONES on APFS, so a same-volume copy costs about nothing and an
+  uncapped compare would be a NEW freeze. As built (e23c0ed92) the compare is CAPPED instead:
+  size filter first, only files ≤ `MediaLibrary.dedupByteCeiling` (32 MiB), a 64 KB head probe,
+  1 MB chunks, and no compare at all without an audio track. So MA2 still does NOT need the
+  async rewrite; moving the whole import off-main is its own, larger slice (it
   reshapes `handleImport` and many needles in `TheWorkstationImportsAudioTests`).
 - Shape: `MediaLibrary.existingAudio(matching:)` (size filter over `listAudio`, then a chunked
   `FileHandle` compare) → if found, `AudioImport.perform` hands the EXISTING asset to

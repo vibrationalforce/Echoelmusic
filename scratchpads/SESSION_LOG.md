@@ -40011,3 +40011,16 @@ Review 10 was independent. These three prose commits are builder-made and **not 
   - `Landing.reusedLibraryFile` is required, and the note says "already in the library … no second copy". `Placed` now carries the clip and the slot.
 - **Guard:** `TheImportReusesAnIdenticalLibraryFileTests` — real files, real stores in a temp home, refusals leave the file, and a scan showing the library is asked inside the scope and before the copy.
 - **Evidence:** five checkers clean; scan anchors transcribed; an independent code review is running; gates pending. DEVICE: NEEDS-FOUNDER-VERIFY (guard header).
+
+## 2026-09-26 01:45Z — MA2 gate + DC1 native DeviceChain shipped
+
+- **MA2 (e23c0ed92):** Build for Testing GREEN (CI/CD run 6372). The Compile Check for e23c was superseded by the DC1 push (cancel-in-progress); the DC1 Compile Check covers both. Run Tests is still running. Evidence: COMPILES (test bundle), REVIEWED. Device verify is still open.
+- **PLAN_MEDIA_ASSET:** the refuted cost claim ("the compare reads at most what the copy does") is now struck with a ⛔, and the as-built cap is stated.
+- **DC1 (e061ca2d3):** new `Core/DeviceChain.swift`.
+  - Storage: `TimelineLane.deviceChain`, under its own key.
+  - Writer: `TimelineStore.setLaneEffect`.
+  - Playback: `slotEffectSink` is pushed at all 4 octave push sites, including refreshMixer. `LaneVoiceRack.setEffect` either applies the character's preset or restores the slot's attach snapshot. It is deduped per slot.
+  - UI: an inspector Effect menu, on POLY rack tracks only.
+  - Tests: guard `TheTrackEffectIsADeviceOnTheLaneTests`. `setLaneEffect` was added to the `TheTimelineStoresLiveSurfaceTests` liveSurface.
+  - Five checkers clean. Graded by transcription only. Independent review running. The decision is logged in `decisions.csv` and `memory/decisions.md`; MA2's main-actor-capped decision is logged too.
+- Next: read the DC1 gates, apply the review findings, then DC2 per the plan (decided from the device report). The next Phase 3 item is "Echoel as flagship Device".
