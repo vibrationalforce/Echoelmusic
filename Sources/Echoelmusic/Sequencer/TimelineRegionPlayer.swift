@@ -255,15 +255,23 @@ public final class TimelineRegionPlayer {
     /// re-triggers the one-shot segment at each loop boundary (S1 golden gate).
     public func launchRegion(_ regionID: UUID, quantize: LaunchQuantize) {
         guard isPlaying else { return }
-        let live = liveDocument?() ?? doc
-        guard let region = live.regions.first(where: { $0.id == regionID })
-                ?? doc.regions.first(where: { $0.id == regionID }) else { return }
-        guard let lane = live.lanes.first(where: { $0.id == region.laneID })
-                ?? doc.lanes.first(where: { $0.id == region.laneID }),
-              (lane.kind == .midi || lane.kind == .audio), !lane.isBio else { return }
-        launch.requestLaunch(laneID: region.laneID, regionID: regionID,
+        guard let laneID = launchableLaneID(ofRegion: regionID) else { return }
+        launch.requestLaunch(laneID: laneID, regionID: regionID,
                              atTick: currentTick, quantize: quantize)
         launchGeneration &+= 1
+    }
+
+    /// The lane a region would launch on, or nil when the launch is refused — the ONE rule
+    /// both `launchRegion` and `launchScene` ask (#416): a known region on a MIDI or audio
+    /// lane that is not bio.
+    private func launchableLaneID(ofRegion regionID: UUID) -> UUID? {
+        let live = liveDocument?() ?? doc
+        guard let region = live.regions.first(where: { $0.id == regionID })
+                ?? doc.regions.first(where: { $0.id == regionID }) else { return nil }
+        guard let lane = live.lanes.first(where: { $0.id == region.laneID })
+                ?? doc.lanes.first(where: { $0.id == region.laneID }),
+              (lane.kind == .midi || lane.kind == .audio), !lane.isBio else { return nil }
+        return region.laneID
     }
 
     /// Queue the lane's launched clip to STOP at the next `quantize` boundary —
@@ -272,6 +280,29 @@ public final class TimelineRegionPlayer {
     public func stopLaunched(laneID: UUID, quantize: LaunchQuantize) {
         guard isPlaying else { return }
         launch.requestStop(laneID: laneID, atTick: currentTick, quantize: quantize)
+        launchGeneration &+= 1
+    }
+
+    /// Phase 3 / S1 — launch a SCENE as a switch (`ClipLaunchEngine.requestScene`): its parts
+    /// launch and every other launched track goes back to the song, all on the same boundary.
+    /// Regions the launch rule refuses are left out (never a lane stopped for them). One
+    /// observation bump for the whole switch. No-op while stopped, like every launch.
+    public func launchScene(_ regionIDs: [UUID], quantize: LaunchQuantize) {
+        guard isPlaying else { return }
+        var launches: [UUID: UUID] = [:]
+        for regionID in regionIDs {
+            guard let laneID = launchableLaneID(ofRegion: regionID) else { continue }
+            launches[laneID] = regionID
+        }
+        launch.requestScene(launches, atTick: currentTick, quantize: quantize)
+        launchGeneration &+= 1
+    }
+
+    /// Phase 3 / S1 — "Back to song": every launched track returns to the arrangement on the
+    /// same boundary. No-op while stopped or when nothing is launched.
+    public func stopAllLaunched(quantize: LaunchQuantize) {
+        guard isPlaying, !launch.isIdle else { return }
+        launch.requestStopAll(atTick: currentTick, quantize: quantize)
         launchGeneration &+= 1
     }
 

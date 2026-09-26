@@ -227,6 +227,31 @@ public struct ClipLaunchEngine: Equatable, Sendable {
         }
     }
 
+    /// Phase 3 / S1 — launch a SCENE as a switch: every lane in `launches` (lane → region)
+    /// launches its region, and every OTHER lane with launch activity is queued to stop — all at
+    /// the SAME boundary, because they share `atTick` and `quantize`. A lane the scene leaves out
+    /// goes back to the arrangement, never to silence: that is what "stop" means in this
+    /// lane-override model. Composed from `requestStop` and `requestLaunch` only, so every law
+    /// of those two holds unchanged (a lane already playing its scene part is a no-op).
+    public mutating func requestScene(_ launches: [UUID: UUID], atTick: Int,
+                                      quantize: LaunchQuantize) {
+        for laneID in lanes.keys.sorted(by: { $0.uuidString < $1.uuidString })
+        where launches[laneID] == nil {
+            requestStop(laneID: laneID, atTick: atTick, quantize: quantize)
+        }
+        for (laneID, regionID) in launches.sorted(by: { $0.key.uuidString < $1.key.uuidString }) {
+            requestLaunch(laneID: laneID, regionID: regionID, atTick: atTick, quantize: quantize)
+        }
+    }
+
+    /// Phase 3 / S1 — "Back to song": every lane with launch activity is queued to stop at the
+    /// same boundary (a launch still waiting from idle is simply cancelled). No-op while idle.
+    public mutating func requestStopAll(atTick: Int, quantize: LaunchQuantize) {
+        for laneID in lanes.keys.sorted(by: { $0.uuidString < $1.uuidString }) {
+            requestStop(laneID: laneID, atTick: atTick, quantize: quantize)
+        }
+    }
+
     // MARK: Transport tick
 
     /// Advance the machine to the transport's song-absolute `now` and return the

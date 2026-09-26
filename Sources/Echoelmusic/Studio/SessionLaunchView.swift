@@ -37,6 +37,13 @@
 //  is the SET of parts the song plays at that bar, not a guarantee that they line up the
 //  way the arrangement had them. The caption says so.
 //
+//  ⭐ A SCENE IS A SWITCH (Phase 3 / S1). "Launch scene" makes ONE player call
+//  (`launchScene`): its parts launch and every other launched track returns to the song, all
+//  on the same bar — before, a per-cell loop left the other tracks looping, so two scenes in a
+//  row played as their union. "Back to song" (`stopAllLaunched`) returns every track at once.
+//  A track a scene leaves out goes back to the SONG, never to silence: that is what stop means
+//  in this lane-override model, and the caption says so.
+//
 //  Cold reads only. `launchGeneration` bumps on a tap or a fired bar boundary, never per
 //  step, and `isPlaying` changes twice per take — both are safe in a leaf body. The playhead
 //  (`currentTick`) is not read here.
@@ -161,6 +168,37 @@ enum SessionGrid {
         }
     }
 
+    /// Phase 3 / S1 — whether a SCENE is what the tracks play now (`.playing`), is about to be
+    /// on the next bar (`.queued`), or neither (nil). Playing = every cell's track loops that
+    /// cell's part AND every other track is back on the song; queued = everything is either
+    /// there or on its way there at the boundary. A track still leaving a DIFFERENT part, or
+    /// switching away, makes it neither — never a scene marked live over a track it does not own.
+    /// `states` holds each track's launch state; a missing entry is `.idle`.
+    nonisolated static func sceneState(_ scene: LaunchScene, tracks: [Track],
+                                       states: [UUID: LaneLaunchState]) -> CellState? {
+        var arriving = false
+        for track in tracks {
+            let state = states[track.id] ?? .idle
+            if let regionID = scene.cells[track.id] {
+                switch state {
+                case .playing(let launched) where launched.regionID == regionID:
+                    continue
+                case .queued(let queued, _, _) where queued == regionID:
+                    arriving = true
+                default:
+                    return nil
+                }
+            } else {
+                switch state {
+                case .idle:       continue
+                case .queuedStop: arriving = true
+                default:          return nil
+                }
+            }
+        }
+        return arriving ? .queued : .playing
+    }
+
     /// A track has something to stop when anything is launched or queued on it.
     nonisolated static func isLaunched(_ state: LaneLaunchState) -> Bool {
         state != .idle
@@ -214,20 +252,25 @@ struct SessionLaunchView: View {
                 Text("Session")
                     .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
                 Text(playing
-                     ? "Tap a part to loop it on its track from the next bar. A launched part starts from its top — on the Echoel track it continues where the song is. Stop hands the track back to the song."
+                     ? "Tap a part to loop it on its track from the next bar. A launched part starts from its top — on the Echoel track it continues where the song is. Launch scene switches: its parts start and every other launched track returns to the song on the same bar."
                      : "Play the song to launch parts.")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
 
-                let launched = tracks.filter { SessionGrid.isLaunched(player.launchState(laneID: $0.id)) }
+                // One read per track per repaint (the repaint is a tap or a fired bar).
+                let states = Dictionary(tracks.map { ($0.id, player.launchState(laneID: $0.id)) },
+                                        uniquingKeysWith: { first, _ in first })
+                let launched = tracks.filter { SessionGrid.isLaunched(states[$0.id] ?? .idle) }
                 if playing && !launched.isEmpty {
+                    backToSongButton
                     ForEach(launched) { track in
                         stopButton(track)
                     }
                 }
 
                 ForEach(scenes.prefix(SessionGrid.sceneLimit)) { scene in
-                    sceneBlock(scene, tracks: tracks, playing: playing)
+                    sceneBlock(scene, tracks: tracks, playing: playing,
+                               state: SessionGrid.sceneState(scene, tracks: tracks, states: states))
                 }
                 if scenes.count > SessionGrid.sceneLimit {
                     Text("\(scenes.count - SessionGrid.sceneLimit) later scenes are not shown.")
@@ -239,12 +282,17 @@ struct SessionLaunchView: View {
     }
 
     private func sceneBlock(_ scene: SessionGrid.LaunchScene, tracks: [SessionGrid.Track],
-                            playing: Bool) -> some View {
+                            playing: Bool, state: SessionGrid.CellState?) -> some View {
         let title = SessionGrid.label(forTick: scene.startTick)
         return VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
                 Text(title)
                     .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
+                if let word = state.flatMap(SessionGrid.word) {
+                    Text(word)
+                        .font(EchoelTheme.font(11, .semibold))
+                        .foregroundStyle(state == .playing ? EchoelTheme.text : EchoelTheme.accent)
+                }
                 Spacer(minLength: 8)
                 Button {
                     launchScene(scene)
@@ -263,7 +311,8 @@ struct SessionLaunchView: View {
                 .buttonStyle(.plain)
                 .disabled(!playing)
                 .accessibilityLabel("Launch scene at \(title)")
-                .accessibilityHint("Loops every part listed at \(title) on its track, from the next bar")
+                .accessibilityValue(state.flatMap(SessionGrid.word) ?? "Not launched")
+                .accessibilityHint("From the next bar, loops every part listed at \(title) and returns every other launched track to the song")
             }
             ForEach(tracks.filter { scene.cells[$0.id] != nil }) { track in
                 if let regionID = scene.cells[track.id] {
@@ -336,9 +385,32 @@ struct SessionLaunchView: View {
         .accessibilityHint("From the next bar the track plays the song again")
     }
 
+    /// A scene is a SWITCH (Phase 3 / S1): one player call, so its parts and the other tracks'
+    /// return to the song land on the same bar.
     private func launchScene(_ scene: SessionGrid.LaunchScene) {
-        for (_, regionID) in scene.cells.sorted(by: { $0.key.uuidString < $1.key.uuidString }) {
-            player.launchRegion(regionID, quantize: SessionGrid.quantize)
+        player.launchScene(Array(scene.cells.values), quantize: SessionGrid.quantize)
+    }
+
+    /// "Back to song": every launched track returns to the arrangement on the next bar.
+    private var backToSongButton: some View {
+        Button {
+            player.stopAllLaunched(quantize: SessionGrid.quantize)
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.uturn.backward").font(.system(size: 11, weight: .semibold))
+                Text("Back to song").font(EchoelTheme.font(12, .semibold)).lineLimit(1)
+            }
+            .foregroundStyle(EchoelTheme.text)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 44)
+            .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                .fill(EchoelTheme.fill))
+            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                .strokeBorder(EchoelTheme.border, lineWidth: 1))
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Back to song")
+        .accessibilityHint("From the next bar every launched track plays the song again")
     }
 }
