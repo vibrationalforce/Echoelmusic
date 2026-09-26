@@ -774,7 +774,7 @@ struct WorkstationView: View {
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: playing ? "stop.fill" : "play.fill")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(EchoelTheme.font(13, .semibold))
                     Text(playing ? "Stop" : "Play")
                         .font(EchoelTheme.font(13, .semibold))
                 }
@@ -843,7 +843,7 @@ struct WorkstationView: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "plus")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(EchoelTheme.font(13, .semibold))
                 Text("Add Audio Track").font(EchoelTheme.font(13, .semibold))
             }
             .foregroundStyle(EchoelTheme.text)
@@ -881,7 +881,7 @@ struct WorkstationView: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "square.and.arrow.down")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(EchoelTheme.font(13, .semibold))
                 Text("Import Audio").font(EchoelTheme.font(13, .semibold))
             }
             .foregroundStyle(EchoelTheme.text)
@@ -910,7 +910,7 @@ struct WorkstationView: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "plus")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(EchoelTheme.font(13, .semibold))
                 Text("Add MIDI Track").font(EchoelTheme.font(13, .semibold))
             }
             .foregroundStyle(EchoelTheme.text)
@@ -938,7 +938,7 @@ struct WorkstationView: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "pianokeys")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(EchoelTheme.font(13, .semibold))
                 Text("Import MIDI").font(EchoelTheme.font(13, .semibold))
             }
             .foregroundStyle(EchoelTheme.text)
@@ -977,7 +977,7 @@ struct WorkstationView: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "square.grid.3x3")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(EchoelTheme.font(13, .semibold))
                 Text("New MIDI Part").font(EchoelTheme.font(13, .semibold))
             }
             .foregroundStyle(EchoelTheme.text)
@@ -1188,7 +1188,7 @@ private struct WorkstationProjectRow: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(EchoelTheme.font(13, .semibold))
                 Text(title).font(EchoelTheme.font(13, .semibold))
             }
             .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)
