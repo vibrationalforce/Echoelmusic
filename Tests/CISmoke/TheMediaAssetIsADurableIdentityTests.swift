@@ -839,6 +839,40 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertEqual(calls.value, 3)
     }
 
+    /// MA4.4d — the one door-side entry: nothing starts unless the landing MINTED a linked
+    /// record, and a minted one gets the file's real SHA-256 exactly once.
+    func testOnlyAMintedRecordStartsAHash() async throws {
+        #if canImport(CryptoKit)
+        let assets = MediaAssetStore(store: nil)
+        let blank = record(seconds: 8)
+        XCTAssertTrue(assets.register(blank))
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ma44d-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let file = folder.appendingPathComponent("loop.wav")
+        try Data("abc".utf8).write(to: file)
+
+        XCTAssertNil(MediaContentDigest.learnMinted(recordID: blank.id, minted: false, from: file, into: assets),
+                     "an adopted record or a reuse starts nothing (review L1)")
+        XCTAssertNil(MediaContentDigest.learnMinted(recordID: nil, minted: true, from: file, into: assets),
+                     "an unlinked landing has no record to teach")
+        XCTAssertNil(assets.record(id: blank.id)?.evidence.contentDigest)
+
+        let task = try XCTUnwrap(MediaContentDigest.learnMinted(recordID: blank.id, minted: true,
+                                                               from: file, into: assets))
+        let learned = await task.value
+        XCTAssertTrue(learned)
+        XCTAssertEqual(assets.record(id: blank.id)?.evidence.contentDigest,
+                       "sha256:ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+                       "the record carries the file's own SHA-256")
+        let again = try XCTUnwrap(MediaContentDigest.learnMinted(recordID: blank.id, minted: true,
+                                                                from: file, into: assets))
+        let twice = await again.value
+        XCTAssertFalse(twice, "a record with a digest is not hashed again")
+        #endif
+    }
+
     func testTheRelinkHashesOnlyWhenItMustAndNeverUnderAPlayingSong() async throws {
         let clips = ClipStore()
         let timeline = TimelineStore()
@@ -916,38 +950,53 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
     }
 
     func testNothingHashesAtLaunchOrAsAScan() throws {
-        XCTAssertEqual(try filesUnderSources(containing: "MediaContentDigest.learn("), ["Studio/WorkstationView.swift"],
-                       "a new import's digest is learned by the Workstation's import door, nowhere else")
+        // MA4.4d: both landing doors go through the ONE entry that holds the minted rule.
+        XCTAssertEqual(try filesUnderSources(containing: "MediaContentDigest.learnMinted("),
+                       ["Studio/MediaBrowserView.swift", "Studio/WorkstationView.swift"],
+                       "the import and the browser's Place hash a minted record, nothing else does")
+        XCTAssertEqual(try filesUnderSources(containing: "MediaContentDigest.learn("), [],
+                       "no door calls `learn` past the minted rule")
         XCTAssertEqual(try filesUnderSources(containing: "MediaContentDigest.sha256(fileAt:"),
-                       ["Sequencer/MediaRelink.swift", "Studio/WorkstationView.swift"],
-                       "the file is hashed by the import door and the relink, and by nothing else")
+                       ["Sequencer/MediaRelink.swift"],
+                       "outside the digest type, only the relink hashes a file")
         XCTAssertFalse(try source("Sources/Echoelmusic/EchoelmusicApp.swift").contains("MediaContentDigest"),
                        "no launch-time hashing")
         XCTAssertFalse(try source("Sources/Echoelmusic/Core/MediaAssetStore.swift").contains("sha256(fileAt:"),
                        "the registry never hashes")
         let digest = try source("Sources/Echoelmusic/Core/MediaContentDigest.swift")
+        let entry = try XCTUnwrap(digest.range(of: "public static func learnMinted("))
+        let entryBody = digest[entry.lowerBound...].prefix(600)
+        XCTAssertTrue(entryBody.contains("guard minted, let recordID else { return nil }"),
+                      "only a linked record THIS landing minted is hashed (MA4.4c)")
+        XCTAssertTrue(entryBody.contains("return Task {"),
+                      "its own task, never a view's cancellable `.task` (review of 66d37a8c5, M1)")
         XCTAssertTrue(digest.contains("handle.read(upToCount: chunkSize)"), "the file is read in bounded chunks")
         XCTAssertFalse(digest.contains("Data(contentsOf") || digest.contains("readToEnd"),
                        "a media file is never read whole to hash it")
         XCTAssertTrue(digest.contains("Task.detached(priority: .utility)"), "off the main actor")
         XCTAssertTrue(digest.contains("#if canImport(CryptoKit)\nimport CryptoKit"),
                       "CryptoKit is the implementation, imported behind its guard")
-        // Review of 66d37a8c5 (M1): the hash runs in ITS OWN task — inside the analysis task the
-        // next import tap cancelled it and the record never got a digest.
+        // Review of 66d37a8c5 (M1) + MA4.4c/d: the Workstation's door hands the transaction's
+        // own answer to the shared entry — never infers it from whether bytes were copied.
         let door = try source("Sources/Echoelmusic/Studio/WorkstationView.swift")
         let helper = try XCTUnwrap(door.range(of: "private func learnContentDigest(of landing: AudioImport.Landing)"))
-        let learn = try XCTUnwrap(door.range(of: "MediaContentDigest.learn("))
+        let learn = try XCTUnwrap(door.range(of: "MediaContentDigest.learnMinted("))
         XCTAssertLessThan(helper.lowerBound, learn.lowerBound, "the learn call lives in the helper")
-        let helperText = door[helper.lowerBound..<learn.lowerBound]
-        // MA4.4c: the door hashes what the landing MINTED — a fresh copy AND an orphan's new
-        // record — and never an adopted one (review L1). The copy question was the wrong proxy.
-        XCTAssertTrue(helperText.contains("guard landing.mintedAssetRecord"),
+        let helperText = door[helper.lowerBound...].prefix(600)
+        XCTAssertTrue(helperText.contains("minted: landing.mintedAssetRecord,"),
                       "the door asks the transaction whether it minted the record")
         XCTAssertFalse(helperText.contains("reusedLibraryFile"),
                        "…and does not infer it from whether bytes were copied (re-review of 292d2d4c8)")
-        XCTAssertTrue(helperText.contains("Task {"), "its own task, not the cancellable analysis task")
         XCTAssertEqual(door.components(separatedBy: "learnContentDigest(of: landing)").count - 1, 1,
                        "called once, from the import's success branch")
+        let browser = try source("Sources/Echoelmusic/Studio/MediaBrowserView.swift")
+        let place = try XCTUnwrap(browser.range(of: "private func place(_ asset: MediaAsset)"))
+        let placeText = browser[place.lowerBound...].prefix(900)
+        XCTAssertTrue(placeText.contains("case .success(let placed):"), "fixture premise: Place's success branch")
+        XCTAssertTrue(placeText.contains("minted: placed.mintedAssetRecord,"),
+                      "the browser's Place hashes what the placement minted (MA4.4d)")
+        XCTAssertTrue(placeText.contains("from: asset.url, into: mediaAssets)"),
+                      "…the placed library file itself, into the same registry")
         let analysis = try XCTUnwrap(door.range(of: ".task(id: tuningPending)"))
         let afterAnalysis = door[analysis.lowerBound...]
         let analysisEnd = try XCTUnwrap(afterAnalysis.range(of: "\n        }\n"))

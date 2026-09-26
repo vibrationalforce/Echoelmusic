@@ -441,6 +441,13 @@ struct MediaBrowserView: View {
         switch MediaPlacement.perform(asset, clipStore: clipStore, timeline: timeline,
                                       assets: mediaAssets, bpm: player.preflightTempo) {
         case .success(let placed):
+            #if canImport(CryptoKit)
+            // MA4.4d: an orphan's record minted by this placement gets its digest, off the main
+            // actor and outside this view's lifetime; an adopted record or a reuse starts nothing.
+            MediaContentDigest.learnMinted(recordID: placed.clip.mediaAssetID,
+                                           minted: placed.mintedAssetRecord,
+                                           from: asset.url, into: mediaAssets)
+            #endif
             selection.selectRegion(placed.region.id, in: timeline.document)
             let laneName = timeline.document.lanes
                 .first { $0.id == placed.region.laneID }?.name ?? "the audio track"

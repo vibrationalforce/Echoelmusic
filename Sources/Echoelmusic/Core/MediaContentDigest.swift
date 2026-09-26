@@ -19,9 +19,10 @@
 // whole. `learn(recordID:from:into:hash:)` runs the hash in a detached task and writes the
 // result back on the main actor; a cancelled caller cancels the hash.
 //
-// ⛔ WHEN A DIGEST IS COMPUTED — only where identity evidence is needed on ONE file: after an
-// import landing MINTS a record (a new managed copy, or a library file that had none — MA4.4c;
-// the Workstation's own digest task) and when a relink must prove
+// ⛔ WHEN A DIGEST IS COMPUTED — only where identity evidence is needed on ONE file: after a
+// landing MINTS a record (a new managed copy, or a library file that had none — MA4.4c; through
+// `learnMinted`, from the Workstation's import and the browser's Place — MA4.4d) and when a
+// relink must prove
 // that a chosen file is its clip's source (`MediaRelink`). Never at launch, never as a library
 // scan, never periodically, never because the browser opened. A legacy record without a digest
 // stays readable and gains one only when such a workflow touches its file.
@@ -130,4 +131,27 @@ public enum MediaContentDigest {
         guard let digest = await compute(url, hash: hash) else { return false }
         return assets.learnDigest(id: recordID, digest: digest)
     }
+
+    #if canImport(CryptoKit)
+    /// MA4.4d — THE ONE DOOR-SIDE ENTRY: a door that just landed a part hands over what the
+    /// transaction said (`AudioImport.Landing.mintedAssetRecord` / `MediaPlacement.Placed`) and
+    /// this decides, in one place, whether a hash starts. Only a record THIS landing minted is
+    /// hashed — an adopted one may be legacy (review L1) and a reuse registered nothing — and
+    /// only a linked one. Nil means nothing started.
+    ///
+    /// ⚠️ ITS OWN TASK (review of 66d37a8c5, M1): not a view's `.task`, which the next tap or
+    /// leaving the surface cancels — then the record would never be hashed again. Bounded: one
+    /// file, and `learn` refuses a second hash of the same record. The task is returned so the
+    /// blocking bundle can await it; the doors discard it.
+    @MainActor
+    @discardableResult
+    public static func learnMinted(recordID: UUID?, minted: Bool, from url: URL,
+                                   into assets: MediaAssetStore) -> Task<Bool, Never>? {
+        guard minted, let recordID else { return nil }
+        return Task {
+            await learn(recordID: recordID, from: url, into: assets,
+                        hash: { try sha256(fileAt: $0) })
+        }
+    }
+    #endif
 }

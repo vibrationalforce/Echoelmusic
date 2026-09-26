@@ -1098,16 +1098,13 @@ struct WorkstationView: View {
     /// predates its binding — a relink backfills it, not an import). Only `establishIdentity`
     /// knows which happened, so the door reads its answer (`mintedAssetRecord`) instead of
     /// inferring it from `reusedLibraryFile` — the inference was the gap the re-review of
-    /// `292d2d4c8` found.
+    /// `292d2d4c8` found. The guard and the task are `MediaContentDigest.learnMinted` (MA4.4d).
     private func learnContentDigest(of landing: AudioImport.Landing) {
         #if canImport(CryptoKit)
-        guard landing.mintedAssetRecord, let assetID = landing.clip.mediaAssetID else { return }
-        let url = landing.managedURL
-        let assets = mediaAssets
-        Task {
-            await MediaContentDigest.learn(recordID: assetID, from: url, into: assets,
-                                           hash: { try MediaContentDigest.sha256(fileAt: $0) })
-        }
+        // MA4.4d: the rule and the task live in `learnMinted`, shared with the browser's Place.
+        MediaContentDigest.learnMinted(recordID: landing.clip.mediaAssetID,
+                                       minted: landing.mintedAssetRecord,
+                                       from: landing.managedURL, into: mediaAssets)
         #endif
     }
     #endif

@@ -278,6 +278,28 @@ the session, clips, saved projects, autosaves, legacy formats and every other ow
   LOW refused-register branch untested — `register` refuses only an empty name, unreachable from a
   landing). Gates: Compile Check 2965 + CI/CD 6430 on `79a1cccdb`, then the repair push.
 
+### MA4.4d — handoff contract (orchestrator, 2026-09-26)
+
+- **TASK:** the browser's Place door hashes a record the placement MINTED, through ONE shared entry.
+- **GOAL:** an orphan library file placed from the browser gets a new record (MA4.3) and — today — no
+  digest, so it can never prove a relink. Same rule as MA4.4c, second door; no second copy of the rule.
+- **CURRENT HEAD / MAIN:** `428be477c` / `428be477c`.
+- **CANONICAL OWNERS:** `MediaContentDigest` (the one door-side entry `learnMinted`), the two doors
+  (`WorkstationView.learnContentDigest`, `MediaBrowserView.place`); the minted fact stays
+  `establishIdentity`'s (`Placed.mintedAssetRecord`).
+- **ALLOWED FILE AREA:** `Core/MediaContentDigest.swift`, `Studio/WorkstationView.swift`,
+  `Studio/MediaBrowserView.swift`; guard `TheMediaAssetIsADurableIdentityTests`.
+- **MUST PRESERVE:** hash off-main, chunked, once per record; never on reuse/adoption; never at launch,
+  scan or browser open (the tap on Place is the bounded workflow); the browser leaf's forbidden strings
+  and quiet-leaf law; the analysis task never hashes.
+- **DO NOT CHANGE:** `MediaRelink`, `MediaAssetStore`, `MediaPlacement`, `AudioImport`.
+- **ACCEPTANCE:** `learnMinted` returns nil and hashes nothing when not minted or unlinked; minted →
+  one task whose result writes the real SHA-256 of the file into the record; both doors call it and
+  nothing else in `Sources/` spells `MediaContentDigest.learn(`; file hashing spelled only by the
+  relink outside the digest type.
+- **REQUIRED REVIEWERS:** one independent read-only reviewer. **REQUIRED TESTS:** the guard above
+  (transcription) + Compile Check + Build for Testing.
+
 ## Out of scope (founder list)
 
 - video / image browsing;
