@@ -87,6 +87,10 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         "setClipNotes",
         // Phase 3 / DC1: the track's effect insert, reached through `TrackMix.setEffect`.
         "setLaneEffect",
+        // Phase 3 / EF1: the Echoel instance's one writer — reached from
+        // `Studio/EchoelStudioView.swift` (adoption, the Effects Picker, `open(_:)`) and
+        // `TrackMix.setEchoelEffect`.
+        "setEchoelFXCharacter",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than

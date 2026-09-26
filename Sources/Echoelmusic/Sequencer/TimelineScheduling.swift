@@ -206,6 +206,14 @@ public extension TimelineDocument {
         lanes.first(where: { $0.kind == .midi && !$0.isBio })?.id
     }
 
+    /// Phase 3 / EF1 — the FX character of the Echoel instance on the track the Echoel plays
+    /// (`rollLaneID`, so WHAT plays stays this one rule): nil when there is no such track, no
+    /// instance on it yet, or one this build cannot read (`DeviceInsert.echoelFXCharacter`).
+    var echoelFXCharacter: FXCharacter? {
+        guard let roll = rollLaneID else { return nil }
+        return lanes.first(where: { $0.id == roll })?.deviceChain?.instrument?.echoelFXCharacter
+    }
+
     /// The audio lanes (in order). Each gets its own `AudioRegionSink`; the production sink
     /// is `TimelineAudioSink` (`EchoelmusicApp` injects it as `makeSink`).
     /// ⛔ This line said "on its own AudioClipPlayer" (#1379). That type has ZERO callers and

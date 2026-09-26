@@ -25,7 +25,9 @@
 //  · an extra MIDI lane past the lane rack's capacity has no voice (`MultiRollFanout.slot`
 //    returns nil) — no mixer either, and the device row says why (review of b2913f96b).
 //  · the Effect row (Phase 3 / DC1, the track's `DeviceChain`) only on a POLY rack track —
-//    the one voice with its own FX chain. The Echoel track's effect is its FX section ("Open").
+//    the one voice with its own FX chain. On the Echoel track (EF1) it sets the song's Echoel
+//    INSTANCE (`DeviceChain.instrument`), shown only once the song holds a readable one — a row
+//    that guessed the value would be a second truth on screen.
 //  ⚠️ And the COUPLINGS with the Studio instrument are stated rather than hidden (review of
 //  b2913f96b): the Echoel track's level is the level the instrument plays at (`rollSlotGain` →
 //  `mixGain`, the one writer in `EchoelmusicApp`), so muting it or pulling it to 0 silences
@@ -68,8 +70,9 @@ enum TrackMix {
         let pan: Bool
         let muteSolo: Bool
         /// Phase 3 / DC1: an effect insert (`DeviceChain`) sounds only on a POLY rack voice —
-        /// the one kind with its own `EchoelFXChain`. The Echoel track's effect is the
-        /// instrument's own FX section ("Open"); sub, sampler, bio and audio tracks have no
+        /// the one kind with its own `EchoelFXChain`. EF1: on the Echoel track the row sets the
+        /// song's Echoel instance, and exists only while the song holds a readable one
+        /// (`TimelineDocument.echoelFXCharacter`). Sub, sampler, bio and audio tracks have no
         /// per-track chain yet, so the row would move a name and not the sound.
         let effect: Bool
     }
@@ -108,7 +111,8 @@ enum TrackMix {
         guard let role = role(of: laneID, in: document, voiceCapacity: voiceCapacity) else { return nil }
         switch role {
         case .echoelInstrument:
-            return Controls(role: role, level: true, pan: false, muteSolo: true, effect: false)
+            return Controls(role: role, level: true, pan: false, muteSolo: true,
+                            effect: document.echoelFXCharacter != nil)
         case .laneSynth(let kind):
             return Controls(role: role, level: true, pan: true, muteSolo: true, effect: kind == .poly)
         case .audio:
@@ -206,6 +210,19 @@ enum TrackMix {
     @MainActor
     static func setEffect(_ character: FXCharacter?, laneID: UUID, timeline: TimelineStore) {
         timeline.setLaneEffect(laneID, character: character)
+    }
+
+    /// EF1 — the Echoel track's effect: every character, `.auto` ("the genre's effect") first,
+    /// because the Echoel instrument DOES own a genre.
+    nonisolated static var echoelEffectChoices: [FXCharacter] { FXCharacter.allCases }
+
+    /// EF1 — one store write (`setEchoelFXCharacter`, the instance's one writer), then the
+    /// instrument's own funnel, so the Studio adopts and SOUNDS it (`adoptEchoelFXFromSong`).
+    /// This leaf reaches into none of the Studio's state.
+    @MainActor
+    static func setEchoelEffect(_ character: FXCharacter, timeline: TimelineStore) {
+        timeline.setEchoelFXCharacter(character)
+        NotificationCenter.default.post(name: .echoelCompositionEdited, object: "fxCharacter")
     }
 
     @MainActor
@@ -317,7 +334,11 @@ struct TrackInspectorView: View {
                         hint: "−1 left, 0 centre, 1 right")
                 }
                 if controls.effect {
-                    effectRow
+                    if controls.role == .echoelInstrument {
+                        echoelEffectRow
+                    } else {
+                        effectRow
+                    }
                 }
                 // WA4 path 6 — Mute and Solo moved to the track HEADER (`WorkstationView.laneRow`):
                 // one control per fact on screen, reachable without opening this inspector.
@@ -387,6 +408,25 @@ struct TrackInspectorView: View {
             }
             .pickerStyle(.menu).tint(EchoelTheme.text)
             .accessibilityHint("Default is this voice's own sound. The track keeps its effect in the song")
+            Spacer(minLength: 0)
+        }
+    }
+
+    /// EF1 — the Echoel instance's effect, a NAMED choice (menu Picker). Reads the song's
+    /// instance, cold; the `?? .auto` is unreachable — the row is shown only when it exists.
+    private var echoelEffectRow: some View {
+        HStack(spacing: 8) {
+            Text("Effect")
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+            Picker("Effect", selection: Binding<FXCharacter>(
+                get: { timeline.document.echoelFXCharacter ?? .auto },
+                set: { TrackMix.setEchoelEffect($0, timeline: timeline) })) {
+                ForEach(TrackMix.echoelEffectChoices) { character in
+                    Text(character.displayName).tag(character)
+                }
+            }
+            .pickerStyle(.menu).tint(EchoelTheme.text)
+            .accessibilityHint("The Echoel instrument's effect. The song keeps it")
             Spacer(minLength: 0)
         }
     }

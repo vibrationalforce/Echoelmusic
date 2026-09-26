@@ -21,7 +21,9 @@
 // 5. END-TO-END on a REAL `EchoelFXChain`: a character's preset changes the chain, and the
 //    snapshot the rack takes at attach puts it back EXACTLY — the pooled-slot law: a lane with no
 //    effect must not inherit the previous lane's character. `.auto` touches nothing.
-// 6. WHO SEES THE ROW (`TrackMix.controls`): only a POLY rack track.
+// 6. WHO SEES THE ROW (`TrackMix.controls`): only a POLY rack track — for an INSERT. Since EF1 the
+//    Echoel track has its own row once the song holds its instance; the lane here has none, so the
+//    `false` below still holds, and `TheEchoelIsAnInstanceOnItsTrackTests` pins the other half.
 // 7. SOURCE-TEXT SCAN: the effect is pushed at every site the octave is (three load sites +
 //    `refreshMixer`), BEFORE the pump loads the notes, the app wires it to the rack exactly once, the rack restores the snapshot,
 //    and the inspector writes through the store and gates the row on the flag.

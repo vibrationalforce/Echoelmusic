@@ -1335,6 +1335,10 @@ struct EchoelStudioView: View {
             if !MusicStyle.offered.contains(style) {
                 style = StudioDefaultKeys.genre.value
             }
+            // EF1 — the song's Echoel instance owns the FX character; after the genre clamp,
+            // because an adoption re-stamps the FX room from `style`. A song with no instance
+            // yet imports the working copy once.
+            adoptEchoelFXFromSong()
             // Controls reflect a real sound from the start — honor a restored timbre
             // preset, else the genre's own patch.
             currentPatch = (presetIndex >= 0 && presetIndex < SynthPatch.factory.count)
@@ -4770,6 +4774,9 @@ struct EchoelStudioView: View {
             // piano roll paints the raster in the NEW tone colours.
             pianoRoll.musicalA4Hz = session.a4Hz
             recomposeIfRunning()
+        case "fxCharacter":
+            // EF1: the Workstation's Echoel track wrote the song's instance; adopt and sound it.
+            adoptEchoelFXFromSong()
         case "tempoLock":
             // Lock adoption happens INSIDE BodyTempoField (it glides the clock, and
             // everything that sounds or shows the tempo follows the clock);
@@ -8378,7 +8385,11 @@ struct EchoelStudioView: View {
                     ForEach(FXCharacter.allCases) { c in Text(c.displayName).tag(c) }
                 }
                 .pickerStyle(.menu).tint(EchoelTheme.text)
-                .onChange(of: fxCharacter) { _, _ in applyFX() }
+                // EF1: the song's Echoel instance is the owner — the pick lands there first.
+                .onChange(of: fxCharacter) { _, picked in
+                    timelineStore.setEchoelFXCharacter(picked)
+                    applyFX()
+                }
                 .accessibilityLabel("Effect character")
             }
             Text(fxCharacter.blurb)
@@ -8522,6 +8533,23 @@ struct EchoelStudioView: View {
     /// #694 WIDENED the exposure from seven flags to fourteen (it made `.clean` write the seven
     /// the preset could not), which is why it is written down here rather than left as an
     /// unstated property of a sheet. The repair, on that day, is a call site — not new code.
+    /// Phase 3 / EF1 — the song's Echoel instance (`TimelineDocument.echoelFXCharacter`) is the
+    /// ONE owner of the FX character; `fxCharacter` (`@AppStorage`) is the instrument's working
+    /// copy, which the Picker and `.auto`-aware stamps read. Owner → copy when the song has a
+    /// readable instance (re-stamping only on a real change); copy → owner once when it has none
+    /// (a song from before EF1). Called at launch, after a library Open, and on the Workstation's
+    /// `"fxCharacter"` edit — never from `body` (the freeze law: `timelineStore.document`
+    /// changes on every edit, so it is read here, in a function).
+    private func adoptEchoelFXFromSong() {
+        if let songFX = timelineStore.document.echoelFXCharacter {
+            guard songFX != fxCharacter else { return }
+            fxCharacter = songFX
+            applyFX()
+        } else {
+            timelineStore.setEchoelFXCharacter(fxCharacter)
+        }
+    }
+
     private func applyFX() {
         for chain in characterFXChains {
             fxCharacter.apply(to: chain, bpm: currentTempo, genre: style)
@@ -11606,6 +11634,7 @@ struct EchoelStudioView: View {
         open(p)
         SessionSaveOpen.restoreSong(of: p, timeline: timelineStore, clips: clipStore,
                                     player: timelinePlayer)
+        adoptEchoelFXFromSong()
         showOpen = false
     }
 
@@ -11770,6 +11799,10 @@ struct EchoelStudioView: View {
         rootIndex = p.keyRoot
         scale = p.scale
         fxCharacter = p.fxCharacter
+        // EF1: every writer of the working copy writes the owner too — an ARRIVING take (Live
+        // Colabo, a shared document) calls this alone and must not leave the song's Echoel on
+        // the old character. `openFromLibrary` then replaces the song and adopts ITS instance.
+        timelineStore.setEchoelFXCharacter(p.fxCharacter)
         // Fallback matches the founder's 8-bar default (H15-LOOPBARS review LOW:
         // this was the last .four literal — an invalid saved rawValue would have
         // silently written 4 into the shared key).

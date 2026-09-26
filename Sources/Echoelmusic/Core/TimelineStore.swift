@@ -726,6 +726,37 @@ public final class TimelineStore {
         persist()
     }
 
+    /// Phase 3 / EF1 — THE one writer of the Echoel instance: set the FX character of the Echoel
+    /// on the track it plays (`rollLaneID`). The instrument's `@AppStorage` key is its working
+    /// copy, adopted from here (`EchoelStudioView.adoptEchoelFXFromSong`) — never a second owner.
+    /// · ONE instance per song: a stale Echoel instance on any other lane (the track the Echoel
+    ///   played before a reorder) is removed in the same write.
+    /// · An instance this build cannot read (a later `typeVersion`, another instrument type) is
+    ///   KEPT and not rewritten: nothing is written, and the song keeps it byte for byte.
+    /// · No roll lane (a song without a MIDI track) → nothing to hold the instance; no write.
+    /// · No-op when nothing changes, so an adoption that re-states the same value writes nothing.
+    /// Not part of the part-edit undo history, like every other lane mixer value.
+    public func setEchoelFXCharacter(_ character: FXCharacter) {
+        guard let roll = document.rollLaneID,
+              let i = document.lanes.firstIndex(where: { $0.id == roll }) else { return }
+        var lanes = document.lanes
+        var chain = lanes[i].deviceChain ?? DeviceChain(inserts: [])
+        if let existing = chain.instrument {
+            guard let rewritten = existing.settingEchoelFX(character) else { return }
+            chain.instrument = rewritten
+        } else {
+            chain.instrument = .echoel(fxCharacter: character)
+        }
+        lanes[i].deviceChain = chain
+        for j in lanes.indices where j != i && lanes[j].deviceChain?.instrument?.typeID == DeviceInsert.echoelTypeID {
+            lanes[j].deviceChain?.instrument = nil
+            if lanes[j].deviceChain?.isEmpty == true { lanes[j].deviceChain = nil }
+        }
+        guard lanes != document.lanes else { return }
+        document.lanes = lanes
+        persist()
+    }
+
     /// EchoelSampler track (S2-W3): assign (or clear, with nil) the persisted
     /// sample REF this lane's sampler unit plays ("drum:<Name>" / "lib:<Category>/
     /// <Name>" bundle refs, or a mediaRef-style absolute path — see

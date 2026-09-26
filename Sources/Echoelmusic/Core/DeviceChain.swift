@@ -3,11 +3,12 @@
 // plan `scratchpads/PLAN_DEVICE_CHAIN_2026-09-26.md`). The WA3 contract's §D shape, minimally:
 // `inserts: [DeviceInsert]` on the lane that owns them.
 //
-// ⭐ THE INSTRUMENT SLOT IS NOT HERE, ON PURPOSE. WA3 §P: "a track's instrument slot is a Device
-// instance, never a lane field" — and today what plays a lane is DERIVED (the roll-lane rule and
-// `builtinInstrument`). A second, stored instrument truth beside that derivation would be two
-// opinions about what a track plays. It joins this type when the Echoel device becomes an
-// instance (the next Phase 3 step), and replaces the derivation then — not beside it.
+// ⭐ THE INSTRUMENT SLOT HOLDS HOW THE ECHOEL IS SET, NEVER WHAT PLAYS (Phase 3 / EF1, plan
+// `scratchpads/PLAN_ECHOEL_DEVICE_2026-09-26.md`). WA3 §P: "a track's instrument slot is a Device
+// instance, never a lane field". What plays a lane stays DERIVED (the roll-lane rule and
+// `builtinInstrument`) — ONE truth; the `instrument` insert is the Echoel instance's STATE on the
+// track that plays it (today one fact: its FX character), so the song carries its Echoel. When the
+// derivation moves into the slot, it REPLACES the rule — never beside it.
 //
 // ⭐ AN UNKNOWN INSERT TYPE IS KEPT, NEVER DROPPED (WA3 §C2, the #527 law). Its state is an opaque
 // `stateBlob`, so a song written by a later build round-trips through this one byte for byte,
@@ -35,10 +36,18 @@ import Foundation
 /// The effects on a track, in signal order.
 public struct DeviceChain: Codable, Sendable, Equatable {
     public var inserts: [DeviceInsert]
+    /// The instrument instance's state (EF1) — on the roll lane, the Echoel device
+    /// (`DeviceInsert.echoelTypeID`). Its own coding key: a chain without one writes the DC1 bytes.
+    /// ⚠️ A DC1-era build does not know this key and drops it on its next save.
+    public var instrument: DeviceInsert?
 
     public init(inserts: [DeviceInsert]) {
         self.inserts = inserts
+        self.instrument = nil
     }
+
+    /// Nothing to store: no insert and no instrument — the lane's field stays absent.
+    public var isEmpty: Bool { inserts.isEmpty && instrument == nil }
 
     /// The character the track's voice plays through, or nil for its shipped default sound: the
     /// first ENABLED insert of the character type whose state names a character that carries its
@@ -53,8 +62,9 @@ public struct DeviceChain: Codable, Sendable, Equatable {
 
     /// This chain with its character effect set to `character` (nil = none). Inserts of any OTHER
     /// type — above all one this build cannot read — are kept, in place, untouched; an existing
-    /// character insert keeps its identity. Returns nil when nothing is left, so a track with no
-    /// effect stores no chain at all (the lane's field stays absent, as before DC1).
+    /// character insert keeps its identity, and the instrument is never touched. Returns nil when
+    /// nothing is left, so a track with no effect stores no chain at all (the lane's field stays
+    /// absent, as before DC1).
     public func settingCharacter(_ character: FXCharacter?) -> DeviceChain? {
         var result = inserts
         let firstCharacter = result.firstIndex { $0.typeID == DeviceInsert.characterTypeID }
@@ -73,17 +83,20 @@ public struct DeviceChain: Codable, Sendable, Equatable {
         } else {
             result.removeAll { $0.typeID == DeviceInsert.characterTypeID }
         }
-        return result.isEmpty ? nil : DeviceChain(inserts: result)
+        var next = self
+        next.inserts = result
+        return next.isEmpty ? nil : next
     }
 
     // A hand-written decoder so one unreadable insert is skipped, not the whole chain — and the
     // chain itself is `try?`-decoded by `TimelineLane`, so a broken chain never costs the lane.
-    private enum CodingKeys: String, CodingKey { case inserts }
+    private enum CodingKeys: String, CodingKey { case inserts, instrument }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let lossy = (try? c.decodeIfPresent([LossyInsert].self, forKey: .inserts)) ?? []
         inserts = lossy.compactMap(\.value)
+        instrument = (try? c.decodeIfPresent(DeviceInsert.self, forKey: .instrument)) ?? nil
     }
 
     private struct LossyInsert: Decodable {
@@ -134,5 +147,51 @@ public struct DeviceInsert: Codable, Sendable, Equatable, Identifiable {
               typeVersion <= Self.characterTypeVersion,
               let raw = String(data: stateBlob, encoding: .utf8) else { return nil }
         return FXCharacter(rawValue: raw)
+    }
+
+    // MARK: - The Echoel instance (EF1)
+
+    /// The Echoel instrument as a device instance (WA3 §A.2).
+    public static let echoelTypeID = "com.echoelmusic.device.echoel"
+    /// The state format this build reads and writes: sorted-keys JSON `[String: String]`.
+    public static let echoelTypeVersion = 1
+    static let echoelFXKey = "fxCharacter"
+
+    /// A fresh Echoel instance carrying one fact.
+    public static func echoel(fxCharacter: FXCharacter) -> DeviceInsert {
+        DeviceInsert(typeID: echoelTypeID, typeVersion: echoelTypeVersion, isEnabled: true,
+                     stateBlob: echoelBlob([echoelFXKey: fxCharacter.rawValue]))
+    }
+
+    /// The instance's fields, or nil when this is not an Echoel instance THIS build can read — a
+    /// LATER `typeVersion`, another type, or a state that is not the v1 shape.
+    var echoelFields: [String: String]? {
+        guard typeID == Self.echoelTypeID, typeVersion <= Self.echoelTypeVersion else { return nil }
+        return try? JSONDecoder().decode([String: String].self, from: stateBlob)
+    }
+
+    /// The FX character the instance is set to — nil when unreadable, unset, or a name this build
+    /// does not know (a later build's character decodes to nothing, not a crash).
+    public var echoelFXCharacter: FXCharacter? {
+        echoelFields?[Self.echoelFXKey].flatMap(FXCharacter.init(rawValue:))
+    }
+
+    /// This instance with its FX character set — every OTHER field kept as it was. Nil when it is
+    /// not an Echoel instance this build can read: a later build's instance is never rewritten
+    /// with v1 meaning, so the song keeps it byte for byte.
+    public func settingEchoelFX(_ character: FXCharacter) -> DeviceInsert? {
+        guard var fields = echoelFields else { return nil }
+        fields[Self.echoelFXKey] = character.rawValue
+        var next = self
+        next.typeVersion = Self.echoelTypeVersion
+        next.stateBlob = Self.echoelBlob(fields)
+        return next
+    }
+
+    /// Sorted keys, so one state has one byte form and "unchanged" is an equality.
+    static func echoelBlob(_ fields: [String: String]) -> Data {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        return (try? encoder.encode(fields)) ?? Data()
     }
 }
