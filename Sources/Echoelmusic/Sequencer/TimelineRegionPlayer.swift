@@ -654,7 +654,7 @@ public final class TimelineRegionPlayer {
         let startLaunches = launchesOnTheStartBar(sceneRegionIDs, atTick: startTick)
         let rollLaunched = rollLane.map { launch.isOverriding(laneID: $0) } ?? false
         if !rollLaunched {
-            loadRollRegion(at: startTick)        // whatever is under the playhead
+            loadRollRegion(at: startTick, step: 0)   // whatever is under the playhead (a bar line)
         }
         primeSecondaryLanes(at: startTick)       // secondary lanes active at the start bar
         audioLanes?.prime(in: document, atTick: startTick, bpm: pattern.tempo,   // audio lanes (A1)
@@ -707,7 +707,7 @@ public final class TimelineRegionPlayer {
         lastTick = anchor
         currentTick = anchor
         loadedRegionID = nil       // force a fresh region decision at the target
-        loadRollRegion(at: anchor)
+        loadRollRegion(at: anchor, step: nextStep)   // M7: mid-bar is not a bar line
         pianoRoll?.setTimelineAutomationTick(anchor)
         primeSecondaryLanes(at: anchor)
         audioLanes?.prime(in: doc, atTick: anchor, bpm: pattern?.tempo ?? Self.fallbackTempo)
@@ -764,7 +764,9 @@ public final class TimelineRegionPlayer {
         // add/remove/reorder, automation) in as well — pre-fix the song played the
         // play()-time snapshot until Stop+Play while the UI showed a different
         // arrangement. Runs BEFORE this step's window so the edit sounds this step.
-        refreshStructure()
+        // M7: the DOCUMENT is adopted here (the wrap below reads its loop length); the voices
+        // are re-driven further down, at the tick and step this transport step sounds.
+        let structureChase = refreshStructure()
         var newTick = cursor.advance(step: step)
         var wrapped = false
         if loopTicks > 0, newTick >= loopTicks {
@@ -792,6 +794,10 @@ public final class TimelineRegionPlayer {
             applyLaunchTransitions(launchTransitions, atTick: newTick, step: step)
             launchGeneration &+= 1
         }
+        // M7: a structural edit's voice half — at THIS step's tick and step, like the note
+        // refresh below. At `lastTick` the roll entered the bar before on a bar line and was told
+        // "bar line" mid-bar; both left it one bar late for the rest of the part.
+        if let structureChase { chaseStructure(structureChase, atTick: newTick, step: step) }
         // Phase 3 / M1 → M5: pull NOTE edits in too — they change a clip, not the document.
         // AFTER the cursor and the wrap, at THIS step's tick and step: the reload re-enters
         // the bar this step sounds in, and the roll's bar plan needs the real step (see the
@@ -843,7 +849,9 @@ public final class TimelineRegionPlayer {
 
     // MARK: - Loading (mirrors ArrangementPlayer.loadCurrentSection — the proven path)
 
-    private func loadRollRegion(at tick: Int) {
+    /// `step` = the transport step this load sounds on — the roll's bar plan differs on a bar
+    /// line and mid-bar (`ArrangementLoadPlan.plan`), so it is required, never a literal 0 (M7).
+    private func loadRollRegion(at tick: Int, step: Int) {
         guard let lane = rollLane,
               let region = TimelineScheduling.activeRegion(in: doc, laneID: lane, at: tick) else {
             clearRoll()
@@ -853,7 +861,7 @@ public final class TimelineRegionPlayer {
         // pushed BEFORE its notes load (extracted so the launch path applies the
         // same lane voice; see applyRollLaneVoice).
         applyRollLaneVoice()
-        loadClip(region, atTick: tick, step: 0)
+        loadClip(region, atTick: tick, step: step)
     }
 
     /// Load a region's clip WINDOWED to the region (M1b, audit wf_9c6f33b7 — the
@@ -1123,9 +1131,11 @@ public final class TimelineRegionPlayer {
     /// the SAME prime paths play() and the song-loop wrap already exercise.
     /// The primary roll reloads only when ITS active region actually changed —
     /// an edit on another lane must not restage the sounding melody.
-    private func refreshStructure() {
-        guard let fresh = liveDocument?() else { return }
-        guard !TimelineDocument.structurallyEqual(doc, fresh) else { return }
+    /// M7: this half adopts the document and primes the audio; the roll and the rack are
+    /// re-driven by `chaseStructure` at the tick this step sounds, from the value returned.
+    private func refreshStructure() -> StructureChase? {
+        guard let fresh = liveDocument?() else { return nil }
+        guard !TimelineDocument.structurallyEqual(doc, fresh) else { return nil }
         // Phase 3 / Automation A1: an AUTOMATION-only edit is not a relocation. The lanes go to
         // `AutomationPlayer` (read from the next `applyStep`); no voice is flushed, no roll
         // reloaded, no audio segment restarted — the chase below would do all three on every
@@ -1133,7 +1143,7 @@ public final class TimelineRegionPlayer {
         if Self.differsOnlyInAutomation(doc, fresh) {
             doc.automation = fresh.automation
             pianoRoll?.setTimelineAutomation(fresh.automation)
-            return
+            return nil
         }
         let oldActive = rollLane.flatMap {
             TimelineScheduling.activeRegion(in: doc, laneID: $0, at: lastTick)
@@ -1168,18 +1178,39 @@ public final class TimelineRegionPlayer {
         let newActive = rollLane.flatMap {
             TimelineScheduling.activeRegion(in: doc, laneID: $0, at: lastTick)
         }
-        if let lane = rollLane, launch.isOverriding(laneID: lane) {
-            reapplyLaunched(laneID: lane, atTick: lastTick)   // launched roll re-windows
-        } else if oldRollOverridden || oldActive != newActive {
-            loadedRegionID = nil                 // force a fresh region decision
-            loadRollRegion(at: lastTick)         // loadClip or clearRoll, mid-region aware
-        }
-        primeSecondaryLanes(at: lastTick)        // skips overridden lanes (see guard there)
-        for laneID in launch.overriddenLaneIDs where laneID != rollLane {
-            reapplyLaunched(laneID: laneID, atTick: lastTick)
-        }
+        // Audio stays on its own window: primed here, then `apply` over (lastTick, newTick].
         audioLanes?.prime(in: doc, atTick: lastTick, bpm: pattern?.tempo ?? Self.fallbackTempo)
         log.log(.info, category: .audio, "timeline: structure edit pulled into playback at tick \(lastTick)")
+        // The region decision is made here, on both documents at the same tick; the roll and
+        // the rack are re-driven by `chaseStructure` once this step's tick is known.
+        return StructureChase(reloadRoll: oldRollOverridden || oldActive != newActive)
+    }
+
+    /// What a structural edit still owes the MIDI voices once the transport step's tick is
+    /// known (M7). `refreshStructure` runs BEFORE the cursor advances, because the wrap reads
+    /// the new document's loop length; the voices must not be loaded there.
+    private struct StructureChase {
+        /// The roll lane's arrangement region changed, or a pruned launch left launched notes.
+        let reloadRoll: Bool
+    }
+
+    /// M7: the voice half of the structure chase, at the tick and step this transport step
+    /// SOUNDS — the rule the note refresh follows since M5. Loaded at the previous step's tick
+    /// with step 0, the roll entered the bar before on a bar line and was told "bar line"
+    /// mid-bar (no next bar staged); the rack re-entered the bar before on a bar line. Each left
+    /// the part one bar late until its next onset. A load of a part whose onset IS this tick is
+    /// repeated by the step's own window below — the same content, bar and step, so it lands once.
+    private func chaseStructure(_ chase: StructureChase, atTick tick: Int, step: Int) {
+        if let lane = rollLane, launch.isOverriding(laneID: lane) {
+            reapplyLaunched(laneID: lane, atTick: tick, step: step)   // launched roll re-windows
+        } else if chase.reloadRoll {
+            loadedRegionID = nil                 // force a fresh region decision
+            loadRollRegion(at: tick, step: step) // loadClip or clearRoll, mid-region aware
+        }
+        primeSecondaryLanes(at: tick)            // skips overridden lanes (see guard there)
+        for laneID in launch.overriddenLaneIDs where laneID != rollLane {
+            reapplyLaunched(laneID: laneID, atTick: tick, step: step)
+        }
     }
 
     /// True when `b` is `a` with only its automation changed — the refresh's short path. Pure.
@@ -1342,7 +1373,7 @@ public final class TimelineRegionPlayer {
                 guard let region = doc.regions.first(where: { $0.id == regionID }) else {
                     if isRoll {
                         loadedRegionID = nil
-                        loadRollRegion(at: tick)
+                        loadRollRegion(at: tick, step: step)
                     } else if let slot = secondarySlot(forLane: t.laneID) {
                         restoreSecondaryArrangement(laneID: t.laneID, slot: slot, at: tick)
                     }
@@ -1358,7 +1389,7 @@ public final class TimelineRegionPlayer {
             case .stopped:
                 if isRoll {
                     loadedRegionID = nil
-                    loadRollRegion(at: tick)          // arrangement region at this tick (mid-region aware)
+                    loadRollRegion(at: tick, step: step)   // arrangement region at this tick (mid-region aware)
                 } else if let slot = secondarySlot(forLane: t.laneID) {
                     restoreSecondaryArrangement(laneID: t.laneID, slot: slot, at: tick)
                 }
@@ -1393,13 +1424,13 @@ public final class TimelineRegionPlayer {
     /// re-prime (`refreshStructure`): reload the launched region as a fresh window at
     /// `tick` so its content reflects the EDITED document. Region gone ⇒ fall silently
     /// back to the arrangement (the launch was pruned; this is its defensive twin).
-    private func reapplyLaunched(laneID: UUID, atTick tick: Int) {
+    private func reapplyLaunched(laneID: UUID, atTick tick: Int, step: Int) {
         let isRoll = (laneID == rollLane)
         guard let launched = launch.soundingRegion(laneID: laneID),
               let region = doc.regions.first(where: { $0.id == launched.regionID }) else {
             if isRoll {
                 loadedRegionID = nil
-                loadRollRegion(at: tick)
+                loadRollRegion(at: tick, step: step)
             } else if let slot = secondarySlot(forLane: laneID) {
                 restoreSecondaryArrangement(laneID: laneID, slot: slot, at: tick)
             }
@@ -1407,7 +1438,7 @@ public final class TimelineRegionPlayer {
         }
         if isRoll {
             applyRollLaneVoice()
-            loadClip(region, startBar: launchedStartBar(laneID: laneID, atTick: tick), step: 0)
+            loadClip(region, startBar: launchedStartBar(laneID: laneID, atTick: tick), step: step)
         } else if let slot = secondarySlot(forLane: laneID) {
             loadSecondaryWindow(region, laneID: laneID, slot: slot,
                                 startBar: launchedStartBar(laneID: laneID, atTick: tick))

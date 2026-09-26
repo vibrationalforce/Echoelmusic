@@ -307,7 +307,7 @@ final class TheSceneLaunchIsASwitchTests: XCTestCase {
         let player = try source(Self.playerPath)
         let play = try body(of: "public func play(", in: player)
         guard let fire = play.range(of: "launchesOnTheStartBar(sceneRegionIDs, atTick: startTick)"),
-              let roll = play.range(of: "loadRollRegion(at: startTick)"),
+              let roll = play.range(of: "loadRollRegion(at: startTick, step: 0)"),
               let prime = play.range(of: "launchingInThisCall: Set(startLaunches.map("),
               let apply = play.range(of: "applyLaunchTransitions(startLaunches, atTick: startTick, step: 0)"),
               let clock = play.range(of: "pattern.play(cause: .timelineRegion)"),
