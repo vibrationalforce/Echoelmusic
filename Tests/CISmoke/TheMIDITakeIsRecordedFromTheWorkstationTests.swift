@@ -26,6 +26,17 @@
 // song end keeps recording past bar 1 (the provider is the one thing that ends it); claim 3's
 // Echoel, audio and capacity-0 tracks cannot be armed. Behaviour graded by hand-tracing
 // `RecordController.onStep` / `TakeRecorder` / `MIDINoteRecorder`.
+// R1 REVIEW REPAIR (independent review of 433f13f26): HIGH-1 arm on an already-running transport
+// (instrument Play / header ▶) anchored the take at the instrument's bar — `arm()` now refuses a
+// running transport and the door reads `Transport.isPlaying`; MED-2 notes are timed inside the
+// step (`Transport.currentTick`), not floored; MED-3 the caption says the take plays over the
+// parts under it; MED-4 a full grid is said before the performance; MED-5 a stale arm the door
+// cannot offer blocks Record by name and shows its switch to disarm; LOW-6 a refused start
+// cancels the arm. Graded against 433f13f26: the new claims name new API (`Plan`, new `state`
+// signature), so the file does not compile there — every new assertion is FORWARD (one absence);
+// by transcription the arm refusal is a REGRESSION there (arm on a running transport armed).
+// Known and not repaired: LOW-8 the take's commit re-plans the song at the wrap and cuts notes
+// ringing across it on the pass after a take.
 // NOT HERE — DEVICE PROBE, open.
 // NEEDS-FOUNDER-VERIFY: Workstation with a part that plays → select a second MIDI track → "Arm for
 // recording" → the row shows ARM → Record → play a MIDI keyboard for a few bars → Stop: a new part
@@ -105,7 +116,10 @@ final class TheMIDITakeIsRecordedFromTheWorkstationTests: XCTestCase {
         let clip = try XCTUnwrap(clips.slots.compactMap { $0 }.first { $0.id == region.clipID })
         let notes = clip.melody?.notes ?? []
         XCTAssertEqual(notes.map(\.pitch), [60], "only the note played inside the song")
-        XCTAssertEqual(notes.first?.startTick, 2 * Self.step, "at the sixteenth it was played")
+        // Notes land where they were played (interpolated inside the step, R1 review MED-2); the
+        // test plays right after the step boundary, so the note sits in step 2, not past it.
+        let start = try XCTUnwrap(notes.first?.startTick)
+        XCTAssertTrue((2 * Self.step)..<(3 * Self.step) ~= start, "in the sixteenth it was played")
         XCTAssertEqual(controller.droppedTakes, 0)
     }
 
@@ -139,8 +153,8 @@ final class TheMIDITakeIsRecordedFromTheWorkstationTests: XCTestCase {
         transport.stop()
         XCTAssertEqual(controller.droppedTakes, 1)
         XCTAssertEqual(timeline.document.regions.count, regionsBefore, "no part without a clip")
-        XCTAssertEqual(RecordTake.droppedSentence(1),
-                       "1 take was not added: the part grid is full (8 parts).")
+        XCTAssertEqual(RecordTake.droppedSentence(1, gridSize: clips.slots.count),
+                       "1 take was not added: the part grid is full (\(clips.slots.count) parts).")
         controller.arm()
         XCTAssertEqual(controller.droppedTakes, 0, "the next take starts with a clean count")
         controller.cancel()
@@ -148,14 +162,58 @@ final class TheMIDITakeIsRecordedFromTheWorkstationTests: XCTestCase {
 
     // MARK: 3 — the door's decisions, pure
 
+    /// R1 review HIGH-1: the instrument's Play and the header ▶ run the shared transport without
+    /// the region player. Armed on that running clock, a take anchored at the instrument's bar.
+    func testATakeCannotBeArmedOnATransportThatIsAlreadyRunning() {
+        let (transport, _, _, controller, _) = rig()
+        transport.play()
+        run(transport, steps: 0..<40)                    // the instrument has run into bar 3
+        controller.arm()
+        XCTAssertFalse(controller.isRecording, "a take starts at bar 1: stop first, then Record")
+        transport.stop()
+        controller.arm()
+        XCTAssertTrue(controller.isRecording, "stopped, the same arm is taken")
+        controller.cancel()
+    }
+
     func testTheDoorSaysWhatStandsBetweenTheUserAndATake() {
-        XCTAssertEqual(RecordTake.state(recording: true, playing: true, armed: true, startable: true), .recording)
-        XCTAssertEqual(RecordTake.state(recording: false, playing: true, armed: true, startable: true), .stopFirst)
-        XCTAssertEqual(RecordTake.state(recording: false, playing: false, armed: false, startable: true), .armFirst)
-        XCTAssertEqual(RecordTake.state(recording: false, playing: false, armed: true, startable: false), .songCannotPlay)
-        XCTAssertEqual(RecordTake.state(recording: false, playing: false, armed: true, startable: true), .ready)
-        XCTAssertTrue(RecordTake.caption(.ready).contains("sixteenth grid"),
-                      "the take is quantised to the step — the caption says so")
+        let one = RecordTake.Plan(armable: [UUID()], foreign: [])
+        let none = RecordTake.Plan(armable: [], foreign: [])
+        let stale = RecordTake.Plan(armable: [UUID()], foreign: ["Breath"])
+        func state(_ recording: Bool, _ running: Bool, _ plan: RecordTake.Plan,
+                   _ free: Int, _ startable: Bool) -> RecordTake.State {
+            RecordTake.state(recording: recording, running: running, plan: plan,
+                             freeSlots: free, startable: startable)
+        }
+        XCTAssertEqual(state(true, true, one, 8, true), .recording)
+        XCTAssertEqual(state(false, true, one, 8, true), .stopFirst,
+                       "any running transport — the region player's or the instrument's")
+        XCTAssertEqual(state(false, false, none, 8, true), .armFirst)
+        XCTAssertEqual(state(false, false, stale, 8, true), .foreignArm("Breath"),
+                       "an arm the door cannot see would be recorded unseen — it blocks, by name")
+        XCTAssertEqual(state(false, false, one, 0, true), .gridFull,
+                       "no room for the take is said BEFORE the performance")
+        XCTAssertEqual(state(false, false, one, 8, false), .songCannotPlay)
+        XCTAssertEqual(state(false, false, one, 8, true), .ready)
+        XCTAssertTrue(RecordTake.caption(.ready, gridSize: 8).contains("instead of the parts under it"),
+                      "a take plays over what the track had there — the caption says so")
+        XCTAssertTrue(RecordTake.caption(.foreignArm("Breath"), gridSize: 8).contains("\"Breath\""))
+        XCTAssertTrue(RecordTake.caption(.gridFull, gridSize: 8).contains("(8 parts)"))
+    }
+
+    /// A stale arm from an older document (the deleted arrange view armed any capturable lane,
+    /// and `isArmed` is persisted) is sorted out of the door's plan by name.
+    func testAStaleArmTheDoorCannotOfferIsNamed() {
+        var echoel = TimelineLane(name: "MIDI 1", kind: .midi)
+        var keys = TimelineLane(name: "Keys", kind: .midi)
+        echoel.isArmed = true
+        keys.isArmed = true
+        let doc = TimelineDocument(lanes: [echoel, keys], regions: [])
+        let plan = RecordTake.plan(in: doc, voiceCapacity: 4)
+        XCTAssertEqual(plan.armable, [keys.id])
+        XCTAssertEqual(plan.foreign, ["MIDI 1"])
+        XCTAssertEqual(RecordPlan.targets(in: doc).count, 2,
+                       "counterweight: the recorder WOULD capture both — which is why the door blocks")
     }
 
     func testOnlyARackMIDITrackCanBeArmed() {
@@ -176,8 +234,10 @@ final class TheMIDITakeIsRecordedFromTheWorkstationTests: XCTestCase {
     func testTheWorkstationMountsTheDoorOnItsOneStart() throws {
         let workstation = try code("Sources/Echoelmusic/Studio/WorkstationView.swift")
         XCTAssertEqual(workstation.components(separatedBy: "RecordTakeButton(playing: playing, startable: startable,").count - 1, 1)
-        XCTAssertTrue(workstation.contains("startSong: { startTimeline(fromTick: 0, launching: []) },"),
-                      "Record starts the song through the Workstation's ONE start, from the top")
+        XCTAssertTrue(workstation.contains("startSong: { startTimeline(fromTick: 0, launching: []); return player.isPlaying },"),
+                      "Record starts the song through the Workstation's ONE start, from the top, "
+                      + "and learns whether it started")
+        XCTAssertTrue(workstation.contains("voiceCapacity: player.laneVoiceCapacity,"))
         XCTAssertTrue(workstation.contains("stopSong: { player.stop() })"))
         XCTAssertEqual(workstation.components(separatedBy: "TrackArmToggle(laneID: row.id)").count - 1, 1)
         XCTAssertFalse(workstation.contains("RecordController"), "the Workstation names no recorder")
@@ -187,6 +247,20 @@ final class TheMIDITakeIsRecordedFromTheWorkstationTests: XCTestCase {
                        "one writer of a track's arm flag")
         XCTAssertEqual(try filesUnderSources(containing: "recorder.arm()"), [door],
                        "one production caller of the recorder's arm")
+        // Receiver-blind on purpose (#1250 idiom): every `.arm()` in Sources — the Body-voice
+        // switch and this door. A second recorder caller under another variable name adds a file.
+        XCTAssertEqual(try filesUnderSources(containing: ".arm()"),
+                       ["Studio/EchoelStudioView.swift", door])
+        let doorCode = try code("Sources/Echoelmusic/Studio/RecordTakeControls.swift")
+        XCTAssertTrue(doorCode.contains("if !startSong() { recorder.cancel() }"),
+                      "a refused start must not leave an armed recorder behind (review LOW-6)")
+        XCTAssertTrue(doorCode.contains("running: playing || transport.isPlaying"),
+                      "the door reads the shared transport, not only the region player (HIGH-1)")
+        // The song end the recorder follows IS the tick the player wraps at: one stored value.
+        let player = try code("Sources/Echoelmusic/Sequencer/TimelineRegionPlayer.swift")
+        XCTAssertTrue(player.contains("public var songEndTick: Int? { isPlaying && loopTicks > 0 ? loopTicks : nil }"))
+        XCTAssertTrue(player.contains("if loopTicks > 0, newTick >= loopTicks {"),
+                      "the wrap compares against the same loopTicks")
         let app = try code("Sources/Echoelmusic/EchoelmusicApp.swift")
         XCTAssertTrue(app.contains("recordController.followSongEnd { [weak timelinePlayer] in timelinePlayer?.songEndTick }"),
                       "the recorder must know where the song wraps")

@@ -14,8 +14,9 @@
 // its file covers, and nothing else. S1 (founder "all tasks", 2026-09-23) lets an imported
 // FILE's own tempo be corrected — ×2, ÷2, or by hand — which is a property of the clip and
 // is inaudible until Warp is on. #165 lets an audio track's parts play higher or lower in
-// whole semitones (per track, while stopped). The surface still cannot move, trim, split, duplicate or
-// delete a part, remove a track, author automation, or record. ⛔ This sentence said "add or
+// whole semitones (per track, while stopped). When this paragraph was written the surface could
+// not move, trim, split, duplicate or delete a part, remove a track, author automation, or record;
+// WA4 (arrange), Automation A1 and Recording R1 each added theirs since. ⛔ This sentence said "add or
 // remove a track" from #F1 until #C1: the header of the file that holds the track button.
 // Each power arrived on its own founder decision.
 //
@@ -798,7 +799,8 @@ struct WorkstationView: View {
             // (from the top) and stopped by the same Stop. A leaf in its own file: this view
             // names neither the recorder nor its controller.
             RecordTakeButton(playing: playing, startable: startable,
-                             startSong: { startTimeline(fromTick: 0, launching: []) },
+                             voiceCapacity: player.laneVoiceCapacity,
+                             startSong: { startTimeline(fromTick: 0, launching: []); return player.isPlaying },
                              stopSong: { player.stop() })
         }
         .padding(.top, 2)

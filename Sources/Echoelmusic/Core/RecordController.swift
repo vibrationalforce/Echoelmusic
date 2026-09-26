@@ -97,8 +97,14 @@ public final class RecordController {
         songEndTick = provider
     }
 
+    /// Where a played note lands: the step it was played in PLUS how far into that step
+    /// (`Transport.currentTick(at:)`, the interpolated 480-PPQ clock the touch path already
+    /// uses). R1 review MED-2: the step floor alone moved a note played just before a sixteenth
+    /// a whole sixteenth early and shrank a note released inside one step to a 1-tick blip. The
+    /// floor stays as the fallback when the clock has not stamped a step yet.
     private var currentTick: Int {
-        (transport?.position.absoluteStep ?? 0) * TimelineTime.ticksPerTransportStep
+        if let tick = transport?.currentTick() { return tick }
+        return (transport?.position.absoluteStep ?? 0) * TimelineTime.ticksPerTransportStep
     }
 
     /// True when at least one lane is armed + recordable (Record button enablement).
@@ -111,6 +117,10 @@ public final class RecordController {
     /// (the UI starts the PatternEngine right after). No-op if nothing is armed.
     public func arm() {
         guard hasArmedTarget() else { return }
+        // R1 review HIGH-1: a take counts ticks from Play (`position.absoluteStep`). Armed on a
+        // transport that is ALREADY running, it would anchor wherever that earlier Play has got
+        // to — not bar 1 — and end one step later at the song end. Arm first, then start.
+        guard transport?.isPlaying != true else { return }
         armed = true
         isRecording = true
         droppedTakes = 0
