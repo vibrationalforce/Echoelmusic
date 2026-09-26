@@ -40136,3 +40136,15 @@ Founder decision "RELINK SEMANTICS + NEXT MEDIAASSET STEP".
 ## 2026-09-26 — MA4.4 SHA-256 content evidence (`66d37a8c5`)
 
 Founder approved CryptoKit for MA4.4. Built as one slice: `Core/MediaContentDigest` (portable `sha256:<hex>`, 1 MiB streamed chunks, cancellation per chunk, detached utility task, `learn` once per record), `MediaAssetStore.learnDigest` (add-only), relink hierarchy A–D (`MediaRelink.identity`, `relink(…candidateDigest:)`, `relinkProvingContent`, async `perform` + `Refusal.songPlaying`), browser relink in `.task(id: relinking)`, Workstation post-import digest. Guards: claims 9–10 rewritten (cross-project counterweight), claim 11 new, journey test extended per §8, library door test follows the async task. Five checkers clean; CLAUDE.md 149,635 B. Pushed while Compile Check 2961 (c6d39b7c3, prose-only over the green 2960) was still queued — it is superseded by the MA4.4 run. Independent review running; gates pending.
+
+## 2026-09-26 (night) — MA4.4c/d · modes census queue Q2–Q9 (usability · accessibility · Perform · Stream)
+
+Founder: "im Loop alles abarbeiten … usability accessibility … Performance and Stream Modus". Queue = `scratchpads/MODES_CENSUS_2026-09-26.md`.
+- MA4.4c `79a1cccdb`+`fe5a715c6` and MA4.4d `6f2e7c8cc`+`4884c7a47` DONE (Compile Check 2966/2968 + BfT green, main = 4884c7a47). Only a MINTED record starts a hash (`learnMinted`).
+- Q3 `53ed18551` + review `7ab869bf9`: Arrange part blocks carry "Move one bar earlier/later" (drag's twin through `drop`), and the landing is ANNOUNCED.
+- Q6 `5d3116308` + review `71e9600f0`: RTMP/SRT stay `.roadmap` and `BroadcastView` doorless WHILE no engine (`.ndi` unbound — another SDK; XCTSkip on release).
+- Q4 `dbc451f8d` + review `71e9600f0`: a playing song keeps the screen awake (cold `isPlaying`; the guard bans the OBSERVED hot props `loadedRegionID`/`launchGeneration`, not `@ObservationIgnored currentTick`).
+- Q5 `e84bc229d` + review `d5d328af0`/`be5334c88`: `play` on a running pattern enters at relocate's anchor via ONE `nextTransportStep` rule — a multi-bar part no longer plays one bar behind. Audio scene part: first pass still lags (follow-up named).
+- Q8 `6224c8e12` Workstation icons scale with Dynamic Type · Q9 `1d19bdd29` three stale stream comments + CLAUDE.md visionOS wording (149,634 B) · Q7 `0c2e7b908` picked note gets a 1 pt ring (WCAG 1.4.1) · Q2 `cf7414c72` note grid: "Select next/previous note" + announcement.
+- Q10 DomeProjection = BLOCKED_FOUNDER (it lives in the paused Visual/XR domain; that is census question 4 option c). Q1 = BLOCKED_FOUNDER (question 2).
+- Evidence: all slices TESTED by transcription only; independent reviews done for Q3–Q6 (no HIGH), batch review of Q2/Q7/Q8/Q9 running at log time; gates on the review-repair heads queued (macOS runners busy); NOTHING device verified.
