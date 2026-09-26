@@ -165,12 +165,16 @@ struct ArrangeCanvasView: View {
     }
 
     /// The drag's non-drag twin: one bar through the part bar's own step, landed by `drop`.
+    /// It says where the part landed: VoiceOver does not re-read a label that changes after a
+    /// custom action, so without the announcement the move is silent to the one user group the
+    /// actions exist for.
     private func step(_ regionID: UUID, onLane laneID: UUID, later: Bool) {
         guard let part = TrackParts.parts(onLane: laneID, in: document)
                 .first(where: { $0.id == regionID }) else { return }
         let target: Int? = later ? TrackParts.laterStart(part) : TrackParts.earlierStart(part)
         guard let target else { return }
         drop(regionID, onLane: laneID, from: part.startTick, to: target)
+        AccessibilityNotification.Announcement("Part at " + SessionGrid.label(forTick: target)).post()
     }
 }
 
