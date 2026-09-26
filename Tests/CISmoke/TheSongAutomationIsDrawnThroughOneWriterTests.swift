@@ -33,6 +33,10 @@
 //    Picker over the projection with one hard-coded base (the default), and switching drops the pick;
 //    the value field reads and writes the REAL value in the parameter's unit, through the same
 //    `denormalized` playback applies (A2 review H1: attack typed as 0.5 played 5 s).
+// 8. A3 — END-TO-END BEHAVIOUR (pure) + SOURCE-TEXT SCAN: the Sound panel's automation readout
+//    names a track's curve by track and parameter, in the parameter's unit, and marks it bound
+//    exactly where the row's own gate says it sounds; the strip reads the SONG's curves, not only
+//    their play-time copy; the switch's off-copy no longer claims the song-wide curves.
 //
 // HONEST GRADING (§3), against the parent tree (the S2 doc commit): the file does NOT compile
 // there — `setSongAutomation`, `SongAutomationEdit` and `differsOnlyInAutomation` are new —
@@ -57,6 +61,10 @@
 // `decimals(for:)` are new, so the unit claim is FORWARD there (one absence, #486); its
 // counterweight (Brightness reads exactly as stored) and the resolver-agreement premise are
 // the content.
+// A3 GRADING (against d53c1b351, where the file compiles): `statusScale` is new, so claim 8's
+// behaviour half is FORWARD (one absence, #486); its scan half is REGRESSIONS there — the strip
+// read `player.timelineLanes` and said "song-wide curves" — each red for its named reason.
+// Counterweights: the Echoel, audio, capacity-0 and global-key cases stay unbound.
 // NOT HERE — DEVICE PROBE, open.
 // NEEDS-FOUNDER-VERIFY: Workstation → a second MIDI track (poly) → select it → "Automation" →
 // tap three points, hold one and slide it → Play: the track's brightness follows the curve;
@@ -376,6 +384,53 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
                       "the opening parameter is decided once — removing a curve's last point does not jump the row")
         XCTAssertEqual(editor.components(separatedBy: "\"ddsp.").count - 1, 1,
                        "one hard-coded base (the opening default); the rest come from the voice")
+    }
+
+    // MARK: 8 — A3: the Sound panel's readout names the track's curve and says it plays
+
+    func testTheReadoutNamesATracksCurveByTrackAndParameter() throws {
+        let (doc, echoel, keys, audio) = Self.song()
+        let attack = try XCTUnwrap(SongAutomationEdit.offered.first { $0.keyPath == "ddsp.env.attack" })
+        let key = SongAutomationEdit.key(for: keys, base: attack.keyPath)
+        let scale = try XCTUnwrap(SongAutomationEdit.statusScale(key, in: doc, voiceCapacity: 4),
+                                  "a curve the row drew on a sounding track is bound")
+        XCTAssertEqual(scale.displayName, "Keys · Envelope attack")
+        XCTAssertEqual(scale.unit, "s")
+        XCTAssertEqual(scale.real(SongAutomationEdit.storedValue(0.5, of: attack)), 0.5, accuracy: 1e-5,
+                       "the readout's span and the value field speak one scale")
+
+        // End to end through the pure reader the strip renders.
+        let lanes = SongAutomationEdit.adding(tick: 0, value: 0.3, key: key, to: [],
+                                              songTicks: 4 * Self.bar)
+        let rows = AutomationStatus.rows(global: [], clip: [], arrangement: lanes,
+                                         globalEnabled: false) { parameter in
+            SongAutomationEdit.statusScale(parameter, in: doc, voiceCapacity: 4)
+        }
+        XCTAssertEqual(rows.count, 1)
+        XCTAssertEqual(rows.first?.displayName, "Keys · Envelope attack")
+        XCTAssertEqual(rows.first?.isBound, true, "it plays — it must not read as \"no effect\"")
+        XCTAssertEqual(rows.first?.isActive, true, "the arrangement layer is outside the global switch")
+
+        // Counterweights: where the track does not sound it, the readout says so.
+        XCTAssertNil(SongAutomationEdit.statusScale(SongAutomationEdit.key(for: echoel, base: attack.keyPath),
+                                                    in: doc, voiceCapacity: 4))
+        XCTAssertNil(SongAutomationEdit.statusScale(SongAutomationEdit.key(for: audio, base: attack.keyPath),
+                                                    in: doc, voiceCapacity: 4))
+        XCTAssertNil(SongAutomationEdit.statusScale(key, in: doc, voiceCapacity: 0))
+        XCTAssertNil(SongAutomationEdit.statusScale(Self.brightness, in: doc, voiceCapacity: 4),
+                     "a global key is not a track's curve")
+    }
+
+    func testTheReadoutReadsTheSongsCurvesNotOnlyTheirPlayingCopy() throws {
+        let strip = try source("Sources/Echoelmusic/Studio/AutomationStatusStrip.swift")
+        XCTAssertTrue(strip.contains("arrangement: document.automation"),
+                      "an unplayed song holding curves must not read \"No automation recorded\"")
+        XCTAssertFalse(strip.contains("arrangement: player.timelineLanes"))
+        XCTAssertTrue(strip.contains("SongAutomationEdit.statusScale(parameter, in: document,"),
+                      "the strip asks the editor's gate, not a second rule (#416)")
+        XCTAssertFalse(strip.contains("this switch is for the song-wide curves"),
+                       "the song's arrangement curves play whatever this switch says")
+        XCTAssertTrue(strip.contains("Clip and arrangement curves still play"))
     }
 
     // MARK: 5 — one writer, gesture-local preview, no clock

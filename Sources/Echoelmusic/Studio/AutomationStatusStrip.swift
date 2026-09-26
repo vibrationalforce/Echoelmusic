@@ -25,8 +25,10 @@
 //
 //  ⚠️ WHAT IT OBSERVES, AND AT WHAT RATE — because "it is a leaf" is a reason to be safe, not a
 //  licence to be careless. It reads `lanes` (edited, never during playback today), `clipLanes`
-//  (installed on a clip/region change — at most about once per bar) and `timelineLanes`
-//  (installed on play/stop and on a structural refresh). It does NOT read the playhead:
+//  (installed on a clip/region change — at most about once per bar) and — since A3 — the SONG's
+//  own curves, `timeline.document.automation` (changes on an edit, never on a clock; the player's
+//  `timelineLanes` is only its play-time copy, so an unplayed song read as "No automation
+//  recorded" while it held curves). It does NOT read the playhead:
 //  `AutomationPlayer.timelineTick` is `@ObservationIgnored` and its declaration says why —
 //  transport-step rate, ~8–16 Hz. A live "value right now" column would cost the instrument its
 //  open Pickers to print a number the ear already has. The readout is the SPAN a curve covers,
@@ -70,6 +72,12 @@ struct AutomationStatusStrip: View {
     /// `nil` therefore reads as "not synthetic" and the wording is unchanged — silence about a
     /// source that is not arriving is correct here, unlike on a row that draws its number.
     @Environment(EngineBus.self) private var bus
+
+    /// A3 — the song's curves (the arrangement layer as RECORDED, not only while it plays) and
+    /// the one cold number that decides whether a track's curve reaches a voice. Both change on
+    /// an edit or a relaunch, never on a clock; `laneVoiceCapacity` is `@ObservationIgnored`.
+    @Environment(TimelineStore.self) private var timeline
+    @Environment(TimelineRegionPlayer.self) private var regionPlayer
 
     var body: some View {
         let rows = statusRows
@@ -136,10 +144,10 @@ struct AutomationStatusStrip: View {
             .toggleStyle(.switch)
             .tint(EchoelTheme.accent)
             .frame(minHeight: 44)
-            .accessibilityHint("Lets recorded parameter curves move the sound while the transport runs")
+            .accessibilityHint("Lets the global parameter curves move the sound while the transport runs")
             Text(player.enabled
-                 ? "Recorded curves move these parameters while the transport runs."
-                 : "Off by default. Clip automation still plays; this switch is for the song-wide curves.")
+                 ? "Global curves move these parameters while the transport runs."
+                 : "Off by default. Clip and arrangement curves still play; this switch is for the global curves.")
                 .font(EchoelTheme.font(10))
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
@@ -154,14 +162,22 @@ struct AutomationStatusStrip: View {
     /// it were the absolute-Hz `ddsp.filter.cutoff` descriptor.
     private var statusRows: [AutomationStatusRow] {
         let descriptors = player.extraAutomatableDescriptors
+        let document = timeline.document
+        let capacity = regionPlayer.laneVoiceCapacity
         return AutomationStatus.rows(
             global: player.lanes,
             clip: player.clipLanes,
-            arrangement: player.timelineLanes,
+            arrangement: document.automation,
             globalEnabled: player.enabled
         ) { parameter in
             if let target = AutomationTarget.forParameter(parameter) {
                 return AutomationScale(target: target)
+            }
+            // A track's own curve (Workstation, A1/A2): named by its track, bound only where
+            // the track still sounds it — the editor's own gate.
+            if let track = SongAutomationEdit.statusScale(parameter, in: document,
+                                                          voiceCapacity: capacity) {
+                return track
             }
             if let descriptor = descriptors.first(where: { $0.keyPath == parameter }) {
                 return AutomationScale(descriptor: descriptor)

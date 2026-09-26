@@ -88,6 +88,23 @@ enum SongAutomationEdit {
         d.min > 0 && d.min < 0.01 ? 3 : 2
     }
 
+    /// How the Sound panel's automation readout (`AutomationStatusStrip`) names and scales a
+    /// curve this editor drew — "Keys · Envelope attack", in seconds — or nil when the key is not
+    /// a per-track key, or its track would not sound it today (removed, now another device, past
+    /// the rack's capacity); the readout then says "no effect", which is then true (A3).
+    /// ⭐ Same gate as the row (`sounds`) and same scale as the value field (`realValue`), so the
+    /// two surfaces cannot disagree about one curve (#416). Before A3 the readout listed these
+    /// curves under their raw `track.<uuid>.…` key and called them "no effect" while they played.
+    nonisolated static func statusScale(_ parameter: String, in document: TimelineDocument,
+                                        voiceCapacity: Int) -> AutomationScale? {
+        guard let (laneID, base) = PerTrackParameterKeyPath.parse(parameter),
+              let d = offered.first(where: { $0.keyPath == base }),
+              sounds(on: laneID, in: document, voiceCapacity: voiceCapacity) else { return nil }
+        let track = document.lanes.first { $0.id == laneID }?.name ?? "Track"
+        return AutomationScale(displayName: "\(track) · \(d.displayName)", unit: d.unit,
+                               decimals: decimals(for: d)) { SongAutomationEdit.realValue($0, of: d) }
+    }
+
     /// Whether this track already carries a curve for the parameter.
     nonisolated static func hasCurve(_ laneID: UUID, base: String,
                                      in lanes: [AutomationLane]) -> Bool {

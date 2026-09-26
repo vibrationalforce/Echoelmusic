@@ -1,6 +1,6 @@
 # PLAN — Automation editing (Phase 3, step 6, founder order 2026-09-25)
 
-Status: A1 SHIPPED (6bcbc731f + repair 1f511b919, gates green, reviewed) · A2 built · device open — 2026-09-26
+Status: A1 + A2 SHIPPED (gates green, reviewed; main = d53c1b351) · A3 built · device open — 2026-09-26
 
 ## Census summary (read-only subagent, measured)
 - `TimelineDocument.automation: [AutomationLane]` is persisted and PLAYED: `AutomationPlayer`
@@ -107,3 +107,17 @@ Open (unchanged from A1): MED-2 pick radius, LOW-5, LOW-10.
   a setter is caught elsewhere (`TheMatrixReachesEveryAutomatableParameterTests`).
 - LOW-4 RECORDED: the parameter name shows twice (menu + gutter) — cosmetic, kept for the
   gutter's alignment with the Arrange names.
+
+## A3 — the Sound panel's readout tells the truth about song curves (Council, silent: proceed)
+Measured before building: `AutomationStatusStrip` read the arrangement layer from
+`player.timelineLanes` (installed only while the Workstation plays) and scaled a key through
+`extraAutomatableDescriptors`, where a per-track key never matches. So an A1/A2 curve showed as
+raw `track.<uuid>.ddsp…` marked "no effect" WHILE it played, and at rest the strip said
+"No automation recorded" while the song held curves. The switch's off-copy said it was "for
+the song-wide curves" — the arrangement curves play regardless of it.
+· Architect: `SongAutomationEdit.statusScale` = the row's own gate (`sounds`) + the value
+  field's scale (`realValue`), so the readout and the editor cannot disagree (#416).
+· Skeptic: the strip now observes `timeline.document` — cold (edits only), in its own leaf;
+  `laneVoiceCapacity` is `@ObservationIgnored`. The empty sentence stays byte-identical
+  (pinned by `TheSoundPanelNamesItsActualDriverTests`) and is now true.
+· Shipper: 2 source files + guard claim 8.
