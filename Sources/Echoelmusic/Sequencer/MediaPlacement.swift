@@ -65,14 +65,20 @@ public enum MediaPlacement {
         public var slotIndex: Int
         /// True when an existing clip was reused — no slot spent.
         public var reusedClip: Bool
+        /// True when the placement registered a new record for the clip (MA4.4c) — the
+        /// transaction's own answer (`AudioImport.Landing.mintedAssetRecord`), never re-derived.
+        /// A reused clip is not rewritten, so it is always false there. Required (#431).
+        public var mintedAssetRecord: Bool
 
         public var clipName: String { clip.name }
 
-        public init(region: TimelineRegion, clip: Clip, slotIndex: Int, reusedClip: Bool) {
+        public init(region: TimelineRegion, clip: Clip, slotIndex: Int, reusedClip: Bool,
+                    mintedAssetRecord: Bool) {
             self.region = region
             self.clip = clip
             self.slotIndex = slotIndex
             self.reusedClip = reusedClip
+            self.mintedAssetRecord = mintedAssetRecord
         }
     }
 
@@ -179,7 +185,8 @@ public enum MediaPlacement {
                 return .failure(.unreadableAudio)
             }
             timeline.addRegion(region)
-            return .success(Placed(region: region, clip: clip, slotIndex: slot, reusedClip: true))
+            return .success(Placed(region: region, clip: clip, slotIndex: slot, reusedClip: true,
+                                   mintedAssetRecord: false))
         case .newClip:
             // MA4.3: the library file's own record, adopted if it has none.
             let identity: AudioImport.AssetIdentity = assets.map { .libraryFile($0) } ?? .unlinked
@@ -192,7 +199,8 @@ public enum MediaPlacement {
                                             deleteManagedCopy: { _ in },
                                             assets: identity)
             return result.map {
-                Placed(region: $0.region, clip: $0.clip, slotIndex: $0.slotIndex, reusedClip: false)
+                Placed(region: $0.region, clip: $0.clip, slotIndex: $0.slotIndex, reusedClip: false,
+                       mintedAssetRecord: $0.mintedAssetRecord)
             }
         }
     }

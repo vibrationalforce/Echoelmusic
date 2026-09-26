@@ -1086,21 +1086,22 @@ struct WorkstationView: View {
     }
 
     #if canImport(AVFoundation)
-    /// MA4.4 — a NEW managed copy's content evidence: its SHA-256, streamed in chunks off the main
-    /// actor (`MediaContentDigest.learn`) and added to the record the landing just registered.
+    /// MA4.4 — the content evidence of a record THIS landing created: its SHA-256, streamed in
+    /// chunks off the main actor (`MediaContentDigest.learn`) and added to that record.
     /// ⚠️ ITS OWN TASK, NOT THE ANALYSIS TASK (review of 66d37a8c5, M1): `.task(id: tuningPending)`
     /// is cancelled by the next import tap and by leaving the Workstation, and nothing would ever
     /// hash that file again — its asset could then never prove a relink. This task is bounded
     /// (one file, `learn` refuses a second hash of the same record) and survives both.
-    /// A REUSED library file is not hashed here: its record was adopted, not created, and may be a
-    /// legacy record whose evidence predates its binding (review L1) — a relink's C step is the one
-    /// place that backfills a legacy record.
-    /// ⚠️ KNOWN GAP (re-review of 292d2d4c8): a library file with NO record gets one minted by
-    /// `establishIdentity` here, yet it is skipped too — `Landing` does not say "adopted" vs
-    /// "created". Such a record never proves a relink (C/D only) until `Landing` reports it.
+    /// ⭐ MA4.4c — THE QUESTION IS "WAS A RECORD MINTED", NOT "WAS THE FILE COPIED". A fresh copy
+    /// and an orphan library file without a record both get a new record here, and both are
+    /// hashed; an ADOPTED record is not (review L1: it may be a legacy record whose evidence
+    /// predates its binding — a relink backfills it, not an import). Only `establishIdentity`
+    /// knows which happened, so the door reads its answer (`mintedAssetRecord`) instead of
+    /// inferring it from `reusedLibraryFile` — the inference was the gap the re-review of
+    /// `292d2d4c8` found.
     private func learnContentDigest(of landing: AudioImport.Landing) {
         #if canImport(CryptoKit)
-        guard !landing.reusedLibraryFile, let assetID = landing.clip.mediaAssetID else { return }
+        guard landing.mintedAssetRecord, let assetID = landing.clip.mediaAssetID else { return }
         let url = landing.managedURL
         let assets = mediaAssets
         Task {

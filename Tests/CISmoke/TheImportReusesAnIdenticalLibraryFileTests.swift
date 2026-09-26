@@ -208,6 +208,7 @@ final class TheImportReusesAnIdenticalLibraryFileTests: XCTestCase {
                                               assets: nil)
         guard case .success(let landing) = result else { return XCTFail("an identical import must land") }
         XCTAssertTrue(landing.reusedLibraryFile)
+        XCTAssertFalse(landing.mintedAssetRecord, "a reused clip mints no record (MA4.4c)")
         XCTAssertEqual(landing.clip, clip, "the landing reports the clip that already plays the file")
         XCTAssertEqual(landing.slotIndex, 2)
         XCTAssertEqual(landing.managedURL, file, "the analysis reads the existing file, not a copy")
@@ -248,6 +249,7 @@ final class TheImportReusesAnIdenticalLibraryFileTests: XCTestCase {
         }, assets: nil)
         guard case .success(let landing) = result else { return XCTFail("an identical orphan must land") }
         XCTAssertTrue(landing.reusedLibraryFile)
+        XCTAssertFalse(landing.mintedAssetRecord, "no registry, no record minted (MA4.4c)")
         XCTAssertEqual(clips.filledClips.count, 1, "one clip for the orphan")
         XCTAssertEqual(landing.clip.mediaRef, file.path, "the clip points at the EXISTING file")
         XCTAssertEqual(clips.clip(id: landing.clip.id), landing.clip, "the landing is what the grid holds")
@@ -313,6 +315,7 @@ final class TheImportReusesAnIdenticalLibraryFileTests: XCTestCase {
             freeSlotIndex: 0, bpm: 120)
         guard case .success(let landing) = planned else { return XCTFail("the fixture must plan") }
         XCTAssertFalse(landing.reusedLibraryFile)
+        XCTAssertFalse(landing.mintedAssetRecord, "`plan` registers nothing; `commit` answers that")
         XCTAssertTrue(AudioImport.successNote(landing, laneName: "Audio 1").hasPrefix("Imported "))
     }
 

@@ -432,8 +432,11 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
             MediaAssetRecord(kind: .audio, fileName: name, originalName: "Loop (picked).wav",
                              importedAt: Date(timeIntervalSince1970: 1), evidence: evidence(seconds: seconds))
         }
+        // MA4.4c: whether the last placement MINTED its record — the fact the import door hashes on.
+        var lastMinted: Bool?
         func placed(_ assets: MediaAssetStore?) throws -> Clip {
             reset()
+            lastMinted = nil
             let result = MediaPlacement.place(asset, clipStore: clips, timeline: timeline, bpm: 120,
                                               measure: { _ in tenSeconds }, assets: assets)
             guard case .success(let placed) = result else {
@@ -441,6 +444,7 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
                 throw AnchorMissing(name: "placement")
             }
             XCTAssertFalse(placed.reusedClip, "fixture premise: no clip carried the file, so a new clip")
+            lastMinted = placed.mintedAssetRecord
             return placed.clip
         }
 
@@ -450,6 +454,7 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertTrue(known.register(existing))
         XCTAssertEqual(try placed(known).mediaAssetID, existing.id, "the library file links its own record")
         XCTAssertEqual(known.records, [existing], "no second record per placement")
+        XCTAssertEqual(lastMinted, false, "an ADOPTED record is not minted, so the door never hashes it (L1)")
 
         // A record whose length contradicts the file describes a file that was replaced: a new
         // record is adopted for what is there now, and the old one keeps its id.
@@ -461,6 +466,7 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertEqual(replaced.records.count, 2)
         XCTAssertEqual(replaced.record(boundTo: asset.key)?.id, relinked, "the name answers the newest")
         XCTAssertEqual(replaced.record(id: stale.id), stale, "the refuted record is kept, not rewritten")
+        XCTAssertEqual(lastMinted, true, "a record registered for what is there now is minted")
 
         // A damaged record (nothing measured) cannot refute its own binding.
         let damaged = MediaAssetStore(store: nil)
@@ -471,6 +477,7 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertEqual(try placed(damaged).mediaAssetID, blank.id)
         XCTAssertEqual(damaged.record(id: blank.id)?.evidence.durationSeconds ?? 0, 10, accuracy: 1e-9,
                        "…and learns the file's measurement, so it can refute a later replacement")
+        XCTAssertEqual(lastMinted, false, "learning a measurement is not minting a record")
 
         // A library file with no record gets exactly one, provenance = its own name.
         let empty = MediaAssetStore(store: nil)
@@ -480,6 +487,8 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertEqual(adopted.originalName, "Loop.wav",
                        "provenance of an adopted record is the file's own name (on Place the picked URL IS the file)")
         XCTAssertEqual(adopted.evidence.durationSeconds, 10, accuracy: 1e-9)
+        XCTAssertEqual(lastMinted, true,
+                       "an orphan's new record is minted by THIS landing — the re-review gap of 292d2d4c8")
 
         // A second placement of the same file REUSES the clip and rewrites nothing.
         let reuse = MediaPlacement.place(asset, clipStore: clips, timeline: timeline, bpm: 120,
@@ -488,7 +497,9 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertTrue(again.reusedClip)
         XCTAssertEqual(again.clip.mediaAssetID, adoptedID)
         XCTAssertEqual(empty.records.count, 1, "a reuse registers nothing")
+        XCTAssertFalse(again.mintedAssetRecord, "…and mints nothing")
         XCTAssertNil(try placed(nil).mediaAssetID, "counterweight: no registry, no link")
+        XCTAssertEqual(lastMinted, false, "…and nothing minted")
 
         // A FRESH COPY never adopts, even a record bound to the very same name at the same length:
         // new bytes are a new source, and a compatible length is not identity.
@@ -503,6 +514,7 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         guard case .success(let copy) = copied else { return XCTFail("copy failed: \(copied)") }
         let freshID = try XCTUnwrap(copy.clip.mediaAssetID)
         XCTAssertNotEqual(freshID, lookalike.id, "a fresh copy is a new record")
+        XCTAssertTrue(copy.mintedAssetRecord, "…minted by this landing")
         XCTAssertEqual(fresh.records.count, 2)
         XCTAssertEqual(fresh.record(id: freshID)?.originalName, "Original Take.wav",
                        "a fresh copy's provenance is the PICKED name, not the managed one")
@@ -927,8 +939,12 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         let learn = try XCTUnwrap(door.range(of: "MediaContentDigest.learn("))
         XCTAssertLessThan(helper.lowerBound, learn.lowerBound, "the learn call lives in the helper")
         let helperText = door[helper.lowerBound..<learn.lowerBound]
-        XCTAssertTrue(helperText.contains("guard !landing.reusedLibraryFile"),
-                      "only a NEW managed copy is hashed on import; an adopted record is not (review L1)")
+        // MA4.4c: the door hashes what the landing MINTED — a fresh copy AND an orphan's new
+        // record — and never an adopted one (review L1). The copy question was the wrong proxy.
+        XCTAssertTrue(helperText.contains("guard landing.mintedAssetRecord"),
+                      "the door asks the transaction whether it minted the record")
+        XCTAssertFalse(helperText.contains("reusedLibraryFile"),
+                       "…and does not infer it from whether bytes were copied (re-review of 292d2d4c8)")
         XCTAssertTrue(helperText.contains("Task {"), "its own task, not the cancellable analysis task")
         XCTAssertEqual(door.components(separatedBy: "learnContentDigest(of: landing)").count - 1, 1,
                        "called once, from the import's success branch")

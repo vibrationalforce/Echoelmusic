@@ -177,14 +177,27 @@ public enum AudioImport {
         /// defaulted flag that no call site writes appears in no diff (#431).
         public var reusedLibraryFile: Bool
 
+        /// True when THIS landing registered a new `MediaAssetRecord` for `clip.mediaAssetID`
+        /// (MA4.4c): a fresh copy, or a library file that had no record (or only a contradicted
+        /// one). False when a record was ADOPTED, a clip was reused, or nothing was linked.
+        ///
+        /// ⚠️ NOT THE SAME QUESTION AS `reusedLibraryFile`, and conflating them was the gap the
+        /// re-review of `292d2d4c8` found: an orphan library file is a reuse of BYTES and still
+        /// gets a record minted here, so a door that hashed "fresh copies only" left that record
+        /// without the content evidence a later relink needs. Only `establishIdentity` knows
+        /// minted from adopted, so the flag is its answer, carried — never re-derived. Required
+        /// (#431).
+        public var mintedAssetRecord: Bool
+
         public init(clip: Clip, region: TimelineRegion, slotIndex: Int, laneID: UUID,
-                    managedURL: URL, reusedLibraryFile: Bool) {
+                    managedURL: URL, reusedLibraryFile: Bool, mintedAssetRecord: Bool) {
             self.clip = clip
             self.region = region
             self.slotIndex = slotIndex
             self.laneID = laneID
             self.managedURL = managedURL
             self.reusedLibraryFile = reusedLibraryFile
+            self.mintedAssetRecord = mintedAssetRecord
         }
     }
 
@@ -295,7 +308,9 @@ public enum AudioImport {
             startTick: document.nextStartTick(inLane: lane.id))
 
         return .success(Landing(clip: clip, region: region, slotIndex: slot,
-                                laneID: lane.id, managedURL: managed, reusedLibraryFile: false))
+                                laneID: lane.id, managedURL: managed, reusedLibraryFile: false,
+                                // `plan` registers nothing; `commit` answers this.
+                                mintedAssetRecord: false))
     }
 
     // MARK: - MA4.2: the import establishes identity
@@ -335,7 +350,9 @@ public enum AudioImport {
 
     /// The record id a landed clip links to, registering or adopting as `identity` says. nil
     /// when there is no registry or the register was refused — the clip then plays by
-    /// `mediaRef`, exactly as before MA4.2.
+    /// `mediaRef`, exactly as before MA4.2. `minted` is true only when THIS call registered a
+    /// new record (MA4.4c) — the one fact a door needs to hash the record it just created and
+    /// never an adopted one.
     ///
     /// ⚠️ THE BINDING IS THE EVIDENCE for a library file, NOT the length. The record names this
     /// very file in the managed home, so it is the file's identity; the measurement can only
@@ -345,11 +362,11 @@ public enum AudioImport {
     @MainActor
     static func establishIdentity(_ identity: AssetIdentity, managed: URL, pickedName: String,
                                   measurement: Measurement, byteSize: Int64,
-                                  importedAt: Date) -> UUID? {
+                                  importedAt: Date) -> (id: UUID?, minted: Bool) {
         let registry: MediaAssetStore
         let isLibraryFile: Bool
         switch identity {
-        case .unlinked: return nil
+        case .unlinked: return (nil, false)
         case .freshCopy(let store): registry = store; isLibraryFile = false
         case .libraryFile(let store): registry = store; isLibraryFile = true
         }
@@ -375,9 +392,10 @@ public enum AudioImport {
                     ?? candidate.evidence.contentDigest
                 registry.register(learned)
             }
-            return existing.id
+            return (existing.id, false)
         }
-        return registry.register(candidate) ? candidate.id : nil
+        guard registry.register(candidate) else { return (nil, false) }
+        return (candidate.id, true)
     }
 
     // MARK: - The transaction
@@ -452,11 +470,13 @@ public enum AudioImport {
             if let measured {
                 // The file's size: one metadata read, no content read. Unknown reads as 0.
                 let size = (try? managed.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
-                landed.clip.mediaAssetID = establishIdentity(assets, managed: managed,
-                                                             pickedName: pickedURL.lastPathComponent,
-                                                             measurement: measured,
-                                                             byteSize: Int64(size),
-                                                             importedAt: Date())
+                let established = establishIdentity(assets, managed: managed,
+                                                    pickedName: pickedURL.lastPathComponent,
+                                                    measurement: measured,
+                                                    byteSize: Int64(size),
+                                                    importedAt: Date())
+                landed.clip.mediaAssetID = established.id
+                landed.mintedAssetRecord = established.minted
             }
             clipStore.setClip(at: landed.slotIndex, landed.clip)    // FIRST — playback
                                                                     // resolves clipID here
@@ -496,7 +516,8 @@ public enum AudioImport {
         MediaPlacement.place(asset, clipStore: clipStore, timeline: timeline, bpm: bpm,
                              measure: measure, assets: assets).map { placed in
             Landing(clip: placed.clip, region: placed.region, slotIndex: placed.slotIndex,
-                    laneID: placed.region.laneID, managedURL: asset.url, reusedLibraryFile: true)
+                    laneID: placed.region.laneID, managedURL: asset.url, reusedLibraryFile: true,
+                    mintedAssetRecord: placed.mintedAssetRecord)
         }
     }
 
