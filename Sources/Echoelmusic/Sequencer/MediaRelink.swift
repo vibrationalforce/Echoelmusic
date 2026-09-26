@@ -12,14 +12,24 @@
 // no region is written. That is the whole reason a relink exists instead of "Place it again":
 // placing makes a NEW part and leaves the silent ones where they were.
 //
-// ⚠️ SAME RECORDING ONLY. A clip that knows its length refuses a file of another length
-// (`sameLength`). A relink to a different sound would keep the old tempo and the old part
-// lengths, so the song would play a different file warped and cut for the one that is gone —
-// silently. A different sound is a new part: Place it. A clip that never learned its length
-// takes the file's.
+// ⚠️ SAME LENGTH ONLY — A GUARD AGAINST THE OBVIOUS MISTAKE, NOT A PROOF OF IDENTITY. A clip that
+// knows its length refuses a file of another length (`sameLength`): a relink to a different sound
+// keeps the old tempo and part lengths, so the song would play it warped and cut for the one that
+// is gone — silently. Two different recordings of the SAME length pass (two 4-bar loops at one
+// tempo are both exactly 8 s; 1 % of a long take is seconds). The clip stores no second
+// fingerprint, so this rule cannot tell them apart; the words the user sees say "same length",
+// never "same recording". A clip that never learned its length takes the file's.
 //
-// ⚠️ NOT AN UNDO STEP. `TimelineStore`'s history holds the SONG (regions, lanes); a clip's file is
-// clip state, like its tempo (`setAuthoredNativeBPM`) — a relink is undone by relinking again.
+// ⛔ NOT UNDOABLE (review of `aa7089d90`, M1 — the first header said "undone by relinking again",
+// which is false). Relink is offered only on a MISSING clip; once relinked it resolves, so its row
+// and its Relink are gone, and the old `mediaRef` — the only record of the file it expected — is
+// overwritten. A same-length mistake is therefore permanent. Whether a relink should keep the old
+// reference, or Relink be offered on every audio clip, is a founder decision (plan MA, B2 notes).
+// It is not an Undo step either: `TimelineStore`'s history holds the song, not clip state.
+//
+// ⚠️ NOT WHILE THE SONG PLAYS (M3): a lane whose only clip was missing has no preloaded file, so
+// the next onset after a relink would attach a node — and an attach pauses the engine. The
+// browser refuses first (`MediaBrowserView.relinkRefusal`); the next Play preloads it silently.
 //
 // ⛔ NEVER A FILE OPERATION. Nothing here copies, moves or deletes; the chosen file is used where
 // it already is in the library, as `MediaPlacement`'s orphan path uses it.
@@ -51,7 +61,7 @@ public enum MediaRelink {
                 return "That file isn't audio this app can read."
             case .differentLength(let expected, let found):
                 return String(format: "That file is %.1f s long and the clip's file was %.1f s. "
-                              + "Relink only to the same recording — Place it as a new part instead.",
+                              + "Relink only to the same length — Place a different sound as a new part.",
                               found, expected)
             }
         }
@@ -59,7 +69,7 @@ public enum MediaRelink {
 
     /// Two lengths that belong to one recording. A re-export or a format change moves the end by
     /// a few milliseconds, so the tolerance is 50 ms or 1 % of the longer length, whichever is
-    /// larger — a different take of a loop differs by far more.
+    /// larger. It cannot tell two recordings of equal length apart (see the header).
     public static func sameLength(_ a: Double, _ b: Double) -> Bool {
         guard a.isFinite, b.isFinite else { return false }
         return abs(a - b) <= Swift.max(0.05, 0.01 * Swift.max(a, b))

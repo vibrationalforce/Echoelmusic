@@ -34,10 +34,15 @@
 //    `missing`, `Missing` and `missingText` are new: one absence (#486); claim 8 is a FORWARD
 //    guard, its counterweights are the all-resolve and no-ref cases.
 // 9. B2b: RELINK — END-TO-END over a REAL `ClipStore`: four refusals (file gone, another length,
-//    unreadable, MIDI) write nothing; the same recording keeps id, name, tempo and slot count and
+//    unreadable, MIDI) write nothing; a file of the same length keeps id, name, tempo and slot count and
 //    only changes `mediaRef` (+ length); the writer refuses bad input itself. SCAN: no file
 //    operation, the file checked before the write, one writer and one door. On `6bf47f8b9` this file
 //    does NOT compile — `MediaRelink` and `relinkAudio` are new: one absence (#486), FORWARD guard.
+//    Review repair (`aa7089d90`, M3/L3): Relink is refused while the song plays
+//    (`relinkRefusal`, asked before the write) and the file is checked before it is MEASURED;
+//    REGRESSIONS on `90270c345` (the refusal and the order scan did not exist), counterweight
+//    the stopped-song case. The rule checks LENGTH only — it cannot tell two equal-length
+//    recordings apart, and no assertion here claims it can.
 // 10. B3: PREVIEW — PURE `MediaBrowserView.previewRefusal` refuses while the song, the instrument's
 //    loop plays, or the engine is stopped (the sink's first use attaches a node, which pauses the
 //    engine); a SCAN that the preview plays through `BeatPlayer`'s attached audition path, only
@@ -61,10 +66,13 @@
 // the same sound → the grid did not grow (Import a third file still works) → Undo removes only
 // the new part. Then type part of a name into "Filter by name" → only matching files stay, the
 // "N of M files" line counts them → clear it → all return → close and reopen → the field is empty.
-// Then, in the Files app, move one imported file out of Echoelmusic's media folder (or open a
-// project from another device) → Media Library → "Missing on this device" names the clip, the file
-// it expects and its parts → the parts are still in the song → Relink → pick the same recording
-// (re-imported) → the row disappears and the old parts sound again; a different file is refused.
+// Then open a project saved on another device (the app's media folder is not visible in the
+// Files app, so there is no in-app way to lose a file) → Media Library → "Missing on this device"
+// names the clip, the file it expects and its parts → the parts are still in the song → with the
+// song stopped, Relink → pick the same recording → the row disappears and the old parts sound
+// again; a file of another length is refused; with the song playing, Relink says to stop it.
+// ⚠️ A different recording of the SAME length is accepted, and a relink cannot be undone
+// (review M1/M2 of `aa7089d90`) — do not test with a file you want to keep the clip away from.
 // Then, with the song stopped, tap Preview on a row → its first seconds sound, the button reads
 // Stop → Stop silences it → Preview again, then press the song's Play → the preview stops → with
 // the song playing, Preview says to stop the song first and nothing sounds.
@@ -506,7 +514,7 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         XCTAssertTrue(toggle.contains("missingIDs = []"), "closing forgets the answer; reopening asks again")
     }
 
-    // MARK: 9 — B2b: relink a missing clip to the same recording
+    // MARK: 9 — B2b: relink a missing clip to a library file of the same length
 
     func testARelinkKeepsTheClipAndItsPartsAndRefusesAnotherRecording() {
         XCTAssertTrue(MediaRelink.sameLength(8.0, 8.04), "a re-export moves the end by milliseconds")
@@ -550,7 +558,7 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         XCTAssertEqual(after?.mediaRef, found.url.path, "the clip now names the library file")
         XCTAssertEqual(after?.id, gone.id, "the id every part points at is kept")
         XCTAssertEqual(after?.name, "Break")
-        XCTAssertEqual(after?.nativeBPM, 96, "its tempo is kept — it is the same recording")
+        XCTAssertEqual(after?.nativeBPM, 96, "its tempo is kept — the file has the same length")
         XCTAssertEqual(clips.filledClips.count, 2, "no new clip, no slot spent")
         XCTAssertEqual(clips.clip(id: midi.id), midi, "counterweight: the other clip is untouched")
 
@@ -575,6 +583,15 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         let exists = try XCTUnwrap(relinkBody.range(of: "guard fileExists(asset.url.path)"))
         let write = try XCTUnwrap(relinkBody.range(of: "clipStore.relinkAudio("))
         XCTAssertLessThan(exists.lowerBound, write.lowerBound, "the file is checked before anything is written")
+        let measure = try XCTUnwrap(relinkBody.range(of: "measure(asset.url)"))
+        XCTAssertLessThan(exists.lowerBound, measure.lowerBound, "…and before it is measured")
+        XCTAssertEqual(MediaBrowserView.relinkRefusal(songPlaying: true), "Stop the song to relink a file.",
+                       "no relink under a playing song — its lane's first attach would pause the engine")
+        XCTAssertNil(MediaBrowserView.relinkRefusal(songPlaying: false), "counterweight: a stopped song relinks")
+        let relinkTap = try body(of: "private func relink(_ item: MediaAsset.Missing", in: try source(Self.browserPath))
+        let refused = try XCTUnwrap(relinkTap.range(of: "Self.relinkRefusal(songPlaying: player.isPlaying)"))
+        let performed = try XCTUnwrap(relinkTap.range(of: "MediaRelink.perform("))
+        XCTAssertLessThan(refused.lowerBound, performed.lowerBound, "the refusal is asked before the write")
         XCTAssertFalse(relinkBody.contains("timeline"), "no region is written — the parts stay where they are")
         XCTAssertEqual(try filesUnderSources(containing: "relinkAudio("),
                        ["Core/ClipStore.swift", "Sequencer/MediaRelink.swift"],

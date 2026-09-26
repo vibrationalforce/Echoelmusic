@@ -20,8 +20,9 @@
 // parts wait for it. The question goes to the PLAYING path's own resolver
 // (`AudioLanePlayer.resolvedURL`, #1439), asked in `.task` while the list is open — never in
 // `body`, never while closed. The clip and its parts are left exactly as they are.
-// ⭐ B2b — RELINK points a missing clip at a library file (`MediaRelink`, the same recording
-// only); its id, name, tempo and every part stay, so the silent parts sound again.
+// ⭐ B2b — RELINK points a missing clip at a library file (`MediaRelink`, same length only, never
+// while the song plays); its id, name, tempo and every part stay, so the silent parts sound again.
+// ⚠️ It is not undoable and cannot tell two equal-length recordings apart (`MediaRelink` header).
 //
 // ⭐ B3 — PREVIEW plays a file's first `previewSeconds` on the audition path `BeatPlayer` already
 // attaches at launch (`audition(url:fromSeconds:lengthSeconds:)`, until now without a caller).
@@ -38,8 +39,9 @@
 // ⚠️ NO MODAL. It is an inline section of the plate, like `PartNoteEditor`, so the black-screen
 // budget on the Studio's modifier chain is untouched.
 //
-// ⛔ IT WRITES NOTHING ITSELF. `MediaPlacement.perform` is the one writer, and it never deletes a
-// file (see that file's header). This view names no `FileManager`, no `Clip(` and no
+// ⛔ IT WRITES NOTHING ITSELF. Two writers are reachable from here — `MediaPlacement.perform`
+// (Place) and `MediaRelink.perform` (Relink) — and neither deletes, copies or moves a file (see
+// their headers). This view names no `FileManager`, no `Clip(` and no
 // `TimelineRegion(`.
 
 import SwiftUI
@@ -230,8 +232,8 @@ struct MediaBrowserView: View {
                 }
             }
             line(candidates.isEmpty
-                 ? "Their parts stay in the song and play again once a file of that name is back in the library."
-                 : "Their parts stay in the song. Relink points a clip at the same recording in the library.")
+                 ? "Their parts stay in the song. Relink offers the library's files once one is there."
+                 : "Their parts stay in the song. Relink points a clip at a library file of the same length.")
         }
     }
 
@@ -253,10 +255,21 @@ struct MediaBrowserView: View {
                 .contentShape(Rectangle())
         }
         .accessibilityLabel("Relink \(item.clipName)")
-        .accessibilityHint("Chooses the same recording from the library")
+        .accessibilityHint("Chooses a library file of the same length")
+    }
+
+    /// B2b review M3: why a relink may not happen now, or nil. The relinked clip's lane was never
+    /// preloaded, so its next onset would attach a node mid-song, and an attach pauses the
+    /// engine. A stopped song preloads it on the next Play, where the pause is silent.
+    static func relinkRefusal(songPlaying: Bool) -> String? {
+        songPlaying ? "Stop the song to relink a file." : nil
     }
 
     private func relink(_ item: MediaAsset.Missing, to asset: MediaAsset) {
+        if let refusal = Self.relinkRefusal(songPlaying: player.isPlaying) {
+            note = refusal
+            return
+        }
         #if canImport(AVFoundation)
         switch MediaRelink.perform(item.clipID, to: asset, clipStore: clipStore) {
         case .success:

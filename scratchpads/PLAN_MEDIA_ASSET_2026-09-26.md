@@ -199,6 +199,23 @@ B2 Council decisions (made while building, recorded here so they are not re-liti
   Relinking again undoes it.
 - **Never a file operation.** The chosen file is used where it is.
 - ⚠️ The measurement runs on the tap (one header read, main actor) — device-unconfirmed.
+- B3 preview `90270c345`: BeatPlayer's attached audition path, first 10 s, refused while the
+  song/loop plays or the engine is stopped; ends itself, on close, on leave, on Play.
+
+Review of B2a/B2b (no HIGH; repaired in the commit after `9d6ffb5cd`):
+- **M1 — a relink is NOT undoable** (the first header said "undone by relinking again": false;
+  Relink only exists on a missing clip, and the old ref is overwritten). **Founder question:**
+  keep the previous reference on the clip, or offer Relink on every audio clip? Until then the
+  header and the device check say so plainly.
+- **M2 — "same length", not "same recording"**: two equal-length loops pass; all user-visible
+  words now say "same length". A second fingerprint would need a new clip field (schema).
+- **M3 — Relink refused while the song plays** (`relinkRefusal`): the lane was never preloaded,
+  so its next onset would attach a node and pause the engine mid-song.
+- **M4 — the hint and the device check named paths the app does not offer** (Files app cannot
+  see the App Group folder; re-import makes a stray clip + part). Both corrected.
+- L1 missing file name is string work, not `URL(fileURLWithPath:)` · L2 header names both
+  writers · L3 file checked before it is measured (pinned). Open LOWs: L4 the note renders below
+  a long list; L6 tolerance may refuse a low-rate AAC re-encode under ~10 s.
 
 Evidence level for all four: compiles only when the gates say so (pending at time of writing);
 execution of claims 7–9 is UNRECORDED until an xcresult or targeted run exists (same #396/#807

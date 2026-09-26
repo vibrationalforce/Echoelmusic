@@ -208,7 +208,9 @@ public struct MediaAsset: Sendable, Equatable, Identifiable {
             guard clip.kind == .audio, let ref = clip.mediaRef, !ref.isEmpty,
                   !resolves(clip.id) else { return nil }
             return Missing(clipID: clip.id, clipName: clip.name,
-                           fileName: URL(fileURLWithPath: ref).lastPathComponent,
+                           // String work, not `URL(fileURLWithPath:)`, which stats the path —
+                           // this runs in the browser's body (review of `6bf47f8b9`, L1).
+                           fileName: ref.split(separator: "/").last.map(String.init) ?? ref,
                            partCount: parts[clip.id] ?? 0)
         }
     }
