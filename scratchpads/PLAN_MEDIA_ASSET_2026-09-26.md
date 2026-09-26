@@ -182,6 +182,29 @@ plays files outside `Media/`; (8) region-less clips still own their file.
   managed file" are two different actions, the second confirmed; (d) a freed name is never handed
   out again (or refs carry more than the name); (e) never touches files outside `Media/`.
 
+### Shipped (2026-09-26)
+
+| slice | commit | what | evidence |
+|---|---|---|---|
+| B1 filter | `1013dab43` | `MediaAsset.matching`, "Filter by name" field, "N of M files" | guard claim 7; reviewed (LOW B1/B2 → `a68bf05fa`) |
+| B2a missing named | `6bf47f8b9` | `MediaAsset.missing`, "Missing on this device" section, asked of `AudioLanePlayer.resolvedURL` once per open listing | guard claim 8; review running |
+| B2b relink | `aa7089d90` | `MediaRelink` + `ClipStore.relinkAudio` (one writer), Relink menu over the filtered library | guard claim 9; review running |
+| review LOWs | `a68bf05fa` | count line only beside a non-empty result; label hidden from VoiceOver; note-canvas move preview = commit | guard claim 5 (drag guard) |
+
+B2 Council decisions (made while building, recorded here so they are not re-litigated):
+- **Same recording only.** A clip with a known length refuses a file of another length
+  (tolerance `max(50 ms, 1 %)`); a different sound is a new part (Place). A clip that never
+  learned its length takes the file's.
+- **Not an Undo step.** The history holds the song; a clip's file is clip state like its tempo.
+  Relinking again undoes it.
+- **Never a file operation.** The chosen file is used where it is.
+- ⚠️ The measurement runs on the tap (one header read, main actor) — device-unconfirmed.
+
+Evidence level for all four: compiles only when the gates say so (pending at time of writing);
+execution of claims 7–9 is UNRECORDED until an xcresult or targeted run exists (same #396/#807
+limit as the MIDI slices); device acceptance is the founder's:
+NEEDS-FOUNDER-VERIFY lives in the guard header.
+
 ## Out of scope (founder list)
 
 - video / image browsing;

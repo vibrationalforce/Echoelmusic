@@ -40104,3 +40104,13 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - Review of M8–M10: no HIGH/MED; repair `ab1586c95` (a move and a delete keep off-screen picks; button fixedSize + hints; doc drift; LOW-3 wording). Gates pending at log time.
 - Open: scale lock on tap/drag (needs founder yes — M4's shading + Fit + step cover "scale-aware"); M7 LOW-3 (song started under a running instrument loop mid-bar repeats a bar; pre-existing, reachable from both Plays); DC2 (founder device report on DC1); MA3 (ProjectStore reference census first).
 - Evidence: M5–M9 COMPILES (BfT green); M10 + repairs pending; all TESTED by transcription only; NOT device verified.
+
+## 2026-09-26 (afternoon) — MIDI evidence forensics · MA3 census · Media browser B1/B2
+
+Founder direction "CLOSE MIDI EVIDENCE, THEN MEDIA ASSET / BROWSER".
+- MIDI evidence: BfT green through `ab1586c95` (6406–6408), Compile Check green (2942/2943); the four M7–M10 guards have 0 hits in the `tail -200` windows → execution UNRECORDED. xcresult route blocked (Azure blob host 403 at the agent proxy), targeted run blocked (no workflow filter input; founder-gated). Status: **MIDI EDITOR AUTONOMOUS GATES NOT CLOSED** (`PLAN_MIDI_EDITOR_2026-09-26_M5.md` §Evidence). Scale lock deferred by founder.
+- `025c2d3ac`: a move keeps unseen picks, an unpicked drag selects alone (`NoteGridGesture.afterMove`).
+- MA3 `049e0b765`: read-only reference census, 8 hazards; deletion HOLD behind five prerequisites.
+- B1 `1013dab43` filter by name · B2a `6bf47f8b9` missing media named (playing-path resolver, once per open listing) · B2b `aa7089d90` Relink (`MediaRelink` + `ClipStore.relinkAudio`, same recording only, not Undo, no file op) · `a68bf05fa` review LOWs (count line, VoiceOver duplicate, note-canvas move preview = commit).
+- Open: B3 preview (needs an audio-graph owner; device-gated), deletion HOLD, DC2 paused (device-gated), review of B2a/B2b running at log time, gates for 025c…a68b queued at log time.
+- Evidence: all of today's slices TESTED by transcription only; compile gates pending/green as recorded in the plan docs; NOT device verified.

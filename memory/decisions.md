@@ -2971,3 +2971,9 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Decision:** the part bar's "Play from here" starts through the Workstation's `startTimeline` and is dimmed by `songCanStart()` — the Workstation's single `canPlay` call. No second `player.play(` caller, no second asker.
 - **Why:** at `lastTick`/`step: 0` a multi-bar part ran one bar late after any structural edit; a second start or a second playability rule would be two answers to one question (#416, §E of the timeline guard).
 - **Review date:** 2026-10-26.
+
+### 2026-09-26 — MIDI evidence stays open · scale lock deferred · media deletion on hold · browser B1/B2
+- **Decision:** M8–M10 are not called closed on a green `Build for Testing` alone; status stays "MIDI EDITOR AUTONOMOUS GATES NOT CLOSED" until an xcresult or targeted run records the four guards (routes and blockers: `scratchpads/PLAN_MIDI_EDITOR_2026-09-26_M5.md` §Evidence). Scale lock is deferred by the founder.
+- **Decision:** MA3 census ran read-only; media remove/delete is on HOLD behind five prerequisites (`scratchpads/PLAN_MEDIA_ASSET_2026-09-26.md` §Revised order). B1 filter (`1013dab43`), B2a missing named (`6bf47f8b9`), B2b relink (`aa7089d90`), review LOWs (`a68bf05fa`).
+- **Why:** founder evidence and media laws of 2026-09-26; relink keeps `Clip.id` and every part, same recording only, not an Undo step, never a file operation; "is it resolvable" is asked only of the playing path's resolver (#1439).
+- **Review date:** 2026-10-26.
