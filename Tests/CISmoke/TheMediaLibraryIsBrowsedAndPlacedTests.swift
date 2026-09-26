@@ -33,6 +33,11 @@
 //    task, and the body only draws it. On the parent (`1013dab43`) this file does NOT compile —
 //    `missing`, `Missing` and `missingText` are new: one absence (#486); claim 8 is a FORWARD
 //    guard, its counterweights are the all-resolve and no-ref cases.
+// 9. B2b: RELINK — END-TO-END over a REAL `ClipStore`: four refusals (file gone, another length,
+//    unreadable, MIDI) write nothing; the same recording keeps id, name, tempo and slot count and
+//    only changes `mediaRef` (+ length); the writer refuses bad input itself. SCAN: no file
+//    operation, the file checked before the write, one writer and one door. On `6bf47f8b9` this file
+//    does NOT compile — `MediaRelink` and `relinkAudio` are new: one absence (#486), FORWARD guard.
 //
 // HONEST GRADING (§3), against the parent tree (`a57d03f5c`): the file does NOT compile there —
 // `MediaAsset`, `MediaPlacement`, `MediaLibrary.listAudio` and `MediaBrowserView` are all new —
@@ -51,7 +56,8 @@
 // "N of M files" line counts them → clear it → all return → close and reopen → the field is empty.
 // Then, in the Files app, move one imported file out of Echoelmusic's media folder (or open a
 // project from another device) → Media Library → "Missing on this device" names the clip, the file
-// it expects and its parts → the parts are still in the song.
+// it expects and its parts → the parts are still in the song → Relink → pick the same recording
+// (re-imported) → the row disappears and the old parts sound again; a different file is refused.
 
 import Foundation
 import XCTest
@@ -64,6 +70,7 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
     private static let browserPath = "Sources/Echoelmusic/Studio/MediaBrowserView.swift"
     private static let workstationPath = "Sources/Echoelmusic/Studio/WorkstationView.swift"
     private static let placementPath = "Sources/Echoelmusic/Sequencer/MediaPlacement.swift"
+    private static let relinkPath = "Sources/Echoelmusic/Sequencer/MediaRelink.swift"
 
     private let today = "/private/var/mobile/Containers/Shared/AppGroup/NEW-UUID/Media/Audio/Loop.wav"
     private let beforeUpdate = "/private/var/mobile/Containers/Shared/AppGroup/OLD-UUID/Media/Audio/Loop.wav"
@@ -487,6 +494,86 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
                       "the body draws the task's answer; part counts stay fresh from the live song")
         let toggle = try body(of: "private var toggleRow: some View", in: browser)
         XCTAssertTrue(toggle.contains("missingIDs = []"), "closing forgets the answer; reopening asks again")
+    }
+
+    // MARK: 9 — B2b: relink a missing clip to the same recording
+
+    func testARelinkKeepsTheClipAndItsPartsAndRefusesAnotherRecording() {
+        XCTAssertTrue(MediaRelink.sameLength(8.0, 8.04), "a re-export moves the end by milliseconds")
+        XCTAssertTrue(MediaRelink.sameLength(60.0, 60.5), "1 % of a long file")
+        XCTAssertFalse(MediaRelink.sameLength(8.0, 8.2), "a different take is another recording")
+        XCTAssertFalse(MediaRelink.sameLength(.nan, 8.0))
+
+        let clips = ClipStore()
+        let original = clips.slots
+        defer { clips.replaceSlots(original) }
+        let gone = Clip(name: "Break", kind: .audio, mediaRef: "/x/Media/Audio/Break.wav",
+                        nativeDurationSeconds: 8.0, nativeBPM: 96)
+        let midi = Clip(name: "Keys", melody: MelodyClip(notes: [Note(pitch: 60, startStep: 0)]))
+        var grid = [Clip?](repeating: nil, count: ClipStore.slotCount)
+        grid[0] = gone
+        grid[1] = midi
+        XCTAssertTrue(clips.replaceSlots(grid), "fixture premise")
+        let found = MediaAsset(kind: .audio, fileName: "Break (1).wav",
+                               url: URL(fileURLWithPath: "/y/Media/Audio/Break (1).wav"), byteSize: 1)
+        func measured(_ seconds: Double) -> (URL) -> AudioImport.Measurement? {
+            { _ in AudioImport.Measurement(sampleRate: 48_000, frameCount: Int64(seconds * 48_000),
+                                           channelCount: 2) }
+        }
+
+        // Refusals write nothing.
+        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, fileExists: { _ in false },
+                                          measure: measured(8.0)), .failure(.fileGone))
+        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, fileExists: { _ in true },
+                                          measure: measured(12.0)),
+                       .failure(.differentLength(expected: 8.0, found: 12.0)))
+        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, fileExists: { _ in true },
+                                          measure: { _ in nil }), .failure(.unreadable))
+        XCTAssertEqual(MediaRelink.relink(midi.id, to: found, clipStore: clips, fileExists: { _ in true },
+                                          measure: measured(8.0)), .failure(.noAudioClip))
+        XCTAssertEqual(clips.clip(id: gone.id), gone, "every refusal left the clip exactly as it was")
+
+        // The same recording: only the source changes.
+        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, fileExists: { _ in true },
+                                          measure: measured(8.0)), .success(8.0))
+        let after = clips.clip(id: gone.id)
+        XCTAssertEqual(after?.mediaRef, found.url.path, "the clip now names the library file")
+        XCTAssertEqual(after?.id, gone.id, "the id every part points at is kept")
+        XCTAssertEqual(after?.name, "Break")
+        XCTAssertEqual(after?.nativeBPM, 96, "its tempo is kept — it is the same recording")
+        XCTAssertEqual(clips.filledClips.count, 2, "no new clip, no slot spent")
+        XCTAssertEqual(clips.clip(id: midi.id), midi, "counterweight: the other clip is untouched")
+
+        // A clip that never learned its length takes the file's.
+        let unmeasured = Clip(name: "Old", kind: .audio, mediaRef: "/x/Media/Audio/Old.wav")
+        grid[2] = unmeasured
+        XCTAssertTrue(clips.replaceSlots(grid))
+        XCTAssertEqual(MediaRelink.relink(unmeasured.id, to: found, clipStore: clips, fileExists: { _ in true },
+                                          measure: measured(3.0)), .success(3.0))
+        XCTAssertEqual(clips.clip(id: unmeasured.id)?.nativeDurationSeconds, 3.0)
+        XCTAssertFalse(clips.relinkAudio(id: midi.id, mediaRef: "/y/x.wav", nativeDurationSeconds: 1),
+                       "the writer itself refuses a MIDI clip")
+        XCTAssertFalse(clips.relinkAudio(id: gone.id, mediaRef: "", nativeDurationSeconds: 1))
+        XCTAssertFalse(clips.relinkAudio(id: gone.id, mediaRef: "/y/x.wav", nativeDurationSeconds: .nan))
+    }
+
+    func testRelinkIsOneWriterAndTheBrowsersOnlyDoor() throws {
+        let relink = try source(Self.relinkPath)
+        XCTAssertFalse(relink.contains("removeItem") || relink.contains("copyItem") || relink.contains("moveItem"),
+                       "a relink never touches a file")
+        let relinkBody = try body(of: "public static func relink(", in: relink)
+        let exists = try XCTUnwrap(relinkBody.range(of: "guard fileExists(asset.url.path)"))
+        let write = try XCTUnwrap(relinkBody.range(of: "clipStore.relinkAudio("))
+        XCTAssertLessThan(exists.lowerBound, write.lowerBound, "the file is checked before anything is written")
+        XCTAssertFalse(relinkBody.contains("timeline"), "no region is written — the parts stay where they are")
+        XCTAssertEqual(try filesUnderSources(containing: "relinkAudio("),
+                       ["Core/ClipStore.swift", "Sequencer/MediaRelink.swift"],
+                       "one writer, one caller")
+        XCTAssertEqual(try filesUnderSources(containing: "MediaRelink.perform("),
+                       ["Studio/MediaBrowserView.swift"], "the browser's Relink is the one door")
+        let browser = try source(Self.browserPath)
+        XCTAssertTrue(browser.contains("candidates = MediaAsset.matching(all, query: query)"),
+                      "the files offered are the rows the filter shows")
     }
 
     // MARK: helpers

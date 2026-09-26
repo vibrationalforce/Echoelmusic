@@ -175,6 +175,24 @@ public final class ClipStore {
         return true
     }
 
+    /// B2b — the ONE writer that points an existing AUDIO clip at another file (a relink,
+    /// `MediaRelink.relink`). It writes the file reference and the length measured from that
+    /// file, and nothing else: the id every region points at, the name, the tempo and the
+    /// automation stay. Returns false, writing nothing, for an unknown id, a non-audio clip, an
+    /// empty reference or a length that is not a positive finite number.
+    @discardableResult
+    public func relinkAudio(id: UUID, mediaRef: String, nativeDurationSeconds: Double) -> Bool {
+        guard !mediaRef.isEmpty, nativeDurationSeconds.isFinite, nativeDurationSeconds > 0,
+              let i = slots.firstIndex(where: { $0?.id == id }),
+              var clip = slots[i], clip.kind == .audio
+        else { return false }
+        clip.mediaRef = mediaRef
+        clip.nativeDurationSeconds = nativeDurationSeconds
+        slots[i] = clip
+        persist()
+        return true
+    }
+
     public func rename(at index: Int, to name: String) {
         guard slots.indices.contains(index), var clip = slots[index] else { return }
         clip.name = name

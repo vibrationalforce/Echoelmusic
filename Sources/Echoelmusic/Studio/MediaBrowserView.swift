@@ -20,6 +20,8 @@
 // parts wait for it. The question goes to the PLAYING path's own resolver
 // (`AudioLanePlayer.resolvedURL`, #1439), asked in `.task` while the list is open — never in
 // `body`, never while closed. The clip and its parts are left exactly as they are.
+// ⭐ B2b — RELINK points a missing clip at a library file (`MediaRelink`, the same recording
+// only); its id, name, tempo and every part stay, so the silent parts sound again.
 //
 // ⭐ IT READS ONLY COLD STATE: the clip grid and the song document change on an edit, never on a
 // clock. The tempo a placement spans bars at is `preflightTempo`, `@ObservationIgnored`, read in
@@ -172,18 +174,68 @@ struct MediaBrowserView: View {
         }
     }
 
-    /// The clips whose file is gone, above the library (B2). Read-only: the way back is a file of
-    /// that name in the library (the resolver finds it by name); a relink is the next slice.
+    /// The clips whose file is gone, above the library (B2). Relink (B2b) offers the library
+    /// files the name filter shows; without any, the way back is a file of that name in the
+    /// library (the resolver finds it by name).
     private func missingSection(_ missing: [MediaAsset.Missing]) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        let candidates: [MediaAsset]
+        if case .assets(let all) = listing {
+            candidates = MediaAsset.matching(all, query: query)
+        } else {
+            candidates = []
+        }
+        return VStack(alignment: .leading, spacing: 4) {
             Text("Missing on this device")
                 .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
                 .accessibilityAddTraits(.isHeader)
             ForEach(missing) { item in
-                line(Self.missingText(item))
+                HStack(spacing: 10) {
+                    line(Self.missingText(item))
+                    Spacer(minLength: 8)
+                    if !candidates.isEmpty {
+                        relinkMenu(item, candidates: candidates)
+                    }
+                }
             }
-            line("Their parts stay in the song and play again once a file of that name is back in the library.")
+            line(candidates.isEmpty
+                 ? "Their parts stay in the song and play again once a file of that name is back in the library."
+                 : "Their parts stay in the song. Relink points a clip at the same recording in the library.")
         }
+    }
+
+    /// The library files a missing clip can be pointed at — the rows the filter shows.
+    private func relinkMenu(_ item: MediaAsset.Missing, candidates: [MediaAsset]) -> some View {
+        Menu {
+            ForEach(candidates) { asset in
+                Button(asset.displayName) { relink(item, to: asset) }
+            }
+        } label: {
+            Text("Relink").font(EchoelTheme.font(13, .semibold))
+                .foregroundStyle(EchoelTheme.text)
+                .padding(.horizontal, 12)
+                .frame(minWidth: 64, minHeight: 44)
+                .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                    .fill(EchoelTheme.fill))
+                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                    .strokeBorder(EchoelTheme.border, lineWidth: 1))
+                .contentShape(Rectangle())
+        }
+        .accessibilityLabel("Relink \(item.clipName)")
+        .accessibilityHint("Chooses the same recording from the library")
+    }
+
+    private func relink(_ item: MediaAsset.Missing, to asset: MediaAsset) {
+        #if canImport(AVFoundation)
+        switch MediaRelink.perform(item.clipID, to: asset, clipStore: clipStore) {
+        case .success:
+            missingIDs.remove(item.clipID)
+            note = "Relinked \u{201C}\(item.clipName)\u{201D} to \(asset.displayName)."
+        case .failure(let refusal):
+            note = refusal.userMessage
+        }
+        #else
+        note = MediaRelink.Refusal.unreadable.userMessage
+        #endif
     }
 
     /// One missing clip, in the words its row shows.
