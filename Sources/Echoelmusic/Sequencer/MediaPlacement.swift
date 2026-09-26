@@ -1,6 +1,8 @@
 // MediaPlacement.swift
 // Echoel — put a file that is ALREADY in the media library onto the song (Phase 3 / MA1, plan:
-// `scratchpads/PLAN_MEDIA_ASSET_2026-09-26.md`). The library browser's "Place" is the only door.
+// `scratchpads/PLAN_MEDIA_ASSET_2026-09-26.md`). Two doors, one decision: the library browser's
+// "Place" (`perform`), and since MA2 Import Audio itself — a picked file whose BYTES are already
+// in the library lands here through `AudioImport.landExisting` instead of being copied again.
 //
 //     asset (MediaLibrary.listAudio) → a clip already carries it?
 //         yes → TimelineRegion on THAT clip → TimelineStore          (no copy, no slot)
@@ -57,13 +59,19 @@ public enum MediaPlacement {
     /// What a successful placement produced, so the browser can select it and say what happened.
     public struct Placed: Equatable, Sendable {
         public var region: TimelineRegion
-        public var clipName: String
+        /// The clip the part plays, and the slot it sits in — what Import's `Landing` reports,
+        /// so the import's de-dup branch (MA2) can report the same shape without a lookup.
+        public var clip: Clip
+        public var slotIndex: Int
         /// True when an existing clip was reused — no slot spent.
         public var reusedClip: Bool
 
-        public init(region: TimelineRegion, clipName: String, reusedClip: Bool) {
+        public var clipName: String { clip.name }
+
+        public init(region: TimelineRegion, clip: Clip, slotIndex: Int, reusedClip: Bool) {
             self.region = region
-            self.clipName = clipName
+            self.clip = clip
+            self.slotIndex = slotIndex
             self.reusedClip = reusedClip
         }
     }
@@ -157,9 +165,15 @@ public enum MediaPlacement {
         case .failure(let failure):
             return .failure(failure)
         case .reuse(let region):
+            // The slot is found BEFORE the write, so a region is never added for a clip this
+            // function then cannot report. `plan` took the clip from these slots, so the
+            // refusal below is unreachable today; it is a refusal, not a trap.
+            guard let slot = clipStore.slots.firstIndex(where: { $0?.id == region.clipID }),
+                  let clip = clipStore.slots[slot] else {
+                return .failure(.unreadableAudio)
+            }
             timeline.addRegion(region)
-            let name = carryingClip(asset.key, in: clips)?.name ?? asset.displayName
-            return .success(Placed(region: region, clipName: name, reusedClip: true))
+            return .success(Placed(region: region, clip: clip, slotIndex: slot, reusedClip: true))
         case .newClip:
             let result = AudioImport.commit(pickedURL: asset.url,
                                             clipStore: clipStore,
@@ -168,7 +182,9 @@ public enum MediaPlacement {
                                             importFile: { $0 },
                                             measure: measure,
                                             deleteManagedCopy: { _ in })
-            return result.map { Placed(region: $0.region, clipName: $0.clip.name, reusedClip: false) }
+            return result.map {
+                Placed(region: $0.region, clip: $0.clip, slotIndex: $0.slotIndex, reusedClip: false)
+            }
         }
     }
 

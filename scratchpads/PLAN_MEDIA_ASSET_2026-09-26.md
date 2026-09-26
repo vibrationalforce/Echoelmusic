@@ -117,6 +117,11 @@ behavioural verification.
   unchanged. The de-dup branch never reaches `commit`'s delete.
 - Guard: equal bytes → no new file in the home and no new slot; one differing byte → a copy; a
   same-size different file → a copy; the de-dup branch cannot delete.
+- **BUILT 2026-09-26** (`MediaLibrary.existingAudio`/`identicalAudio`/`sameBytes`,
+  `AudioImport.preferredExisting`/`landExisting`, `Landing.reusedLibraryFile`, `MediaPlacement.Placed`
+  now carries `clip` + `slotIndex`). One refinement over the design: of several identical files
+  (a pre-MA2 library can hold two), the one a clip already plays wins, so the reuse spends no
+  slot. Guard: `TheImportReusesAnIdenticalLibraryFileTests`. Device: NEEDS-FOUNDER-VERIFY.
 
 ### MA3 — asset facts + remove an unused file (HOLD until measured)
 

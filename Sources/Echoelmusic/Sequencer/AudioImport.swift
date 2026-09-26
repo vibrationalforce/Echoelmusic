@@ -29,7 +29,8 @@
 // `Clip.id` remains the creative identity and `mediaRef` the file-location bridge. (⛔ "There is
 // no `MediaAsset`" stood here; since MA1 `Core/MediaAsset` exists and READS that bridge — the
 // same file is one asset wherever referenced — and `MediaPlacement` is a second caller of
-// `commit`, with an identity copy and a no-op delete.) There is no new store, no new persistence root, no new clock and no new playback
+// `commit`, with an identity copy and a no-op delete. Since MA2 `perform` asks the library first:
+// a picked file whose BYTES are already there lands through `landExisting` — no second copy.) There is no new store, no new persistence root, no new clock and no new playback
 // engine. There is no audio INPUT, no recording, no sample instrument and no grain engine. There
 // is no BPM estimate IN THE TRANSACTION (the landing carries `nativeBPM = 0`; since #B2 the
 // Workstation door runs `AudioTempoAnalysis` AFTER the landing, off the main actor, and a
@@ -160,13 +161,19 @@ public enum AudioImport {
         /// `MediaLibrary.` for exactly that reason, and this field is why it does not need to.
         public var managedURL: URL
 
+        /// True when the picked file's bytes were ALREADY in the library (MA2): no copy was
+        /// made, and `managedURL` is that existing file. Required, never defaulted — a
+        /// defaulted flag that no call site writes appears in no diff (#431).
+        public var reusedLibraryFile: Bool
+
         public init(clip: Clip, region: TimelineRegion, slotIndex: Int, laneID: UUID,
-                    managedURL: URL) {
+                    managedURL: URL, reusedLibraryFile: Bool) {
             self.clip = clip
             self.region = region
             self.slotIndex = slotIndex
             self.laneID = laneID
             self.managedURL = managedURL
+            self.reusedLibraryFile = reusedLibraryFile
         }
     }
 
@@ -226,7 +233,10 @@ public enum AudioImport {
     /// the plate and recognises what they just did.
     public static func successNote(_ landing: Landing, laneName: String) -> String {
         let bars = max(1, landing.region.lengthTicks / TimelineTime.ticksPerBar)
-        return "Imported “\(landing.clip.name)” — \(bars) \(bars == 1 ? "bar" : "bars") on \(laneName)."
+        let span = "\(bars) \(bars == 1 ? "bar" : "bars")"
+        return landing.reusedLibraryFile
+            ? "“\(landing.clip.name)” is already in the library — placed \(span) on \(laneName), no second copy."
+            : "Imported “\(landing.clip.name)” — \(span) on \(laneName)."
     }
 
     // MARK: - The pure plan
@@ -274,7 +284,7 @@ public enum AudioImport {
             startTick: document.nextStartTick(inLane: lane.id))
 
         return .success(Landing(clip: clip, region: region, slotIndex: slot,
-                                laneID: lane.id, managedURL: managed))
+                                laneID: lane.id, managedURL: managed, reusedLibraryFile: false))
     }
 
     // MARK: - The transaction
@@ -341,6 +351,36 @@ public enum AudioImport {
         }
     }
 
+    // MARK: - MA2: the same bytes are already in the library
+
+    /// Which of several identical library files an import reuses: the first one a clip already
+    /// plays (so the new part spends no slot), else the first in the browser's order. Libraries
+    /// written before MA2 can hold the same sound twice; this keeps a third import from
+    /// choosing the copy nothing uses.
+    public static func preferredExisting(_ matches: [MediaAsset], clips: [Clip]) -> MediaAsset? {
+        matches.first { MediaPlacement.carryingClip($0.key, in: clips) != nil } ?? matches.first
+    }
+
+    /// Land an import whose bytes are already in the library, through the library's own
+    /// placement (`MediaPlacement.place`) — so this is the same decision "Place" makes, not a
+    /// second opinion about where a file goes (#416): a clip that carries the asset gets ONE new
+    /// region (no slot), an orphan becomes one clip AT the existing file (no copy).
+    ///
+    /// ⛔ THIS BRANCH NEVER DELETES. There is no copy to clean up, and the file it would reach
+    /// is the user's asset — `place` hands `commit` an identity copy and a no-op delete.
+    @MainActor
+    public static func landExisting(_ asset: MediaAsset,
+                                    clipStore: ClipStore,
+                                    timeline: TimelineStore,
+                                    bpm: Double,
+                                    measure: (URL) -> Measurement?) -> Result<Landing, Failure> {
+        MediaPlacement.place(asset, clipStore: clipStore, timeline: timeline, bpm: bpm,
+                             measure: measure).map { placed in
+            Landing(clip: placed.clip, region: placed.region, slotIndex: placed.slotIndex,
+                    laneID: placed.region.laneID, managedURL: asset.url, reusedLibraryFile: true)
+        }
+    }
+
     #if canImport(AVFoundation)
 
     /// The production entry point: hold security-scoped access for the copy, then run the
@@ -357,6 +397,13 @@ public enum AudioImport {
                                bpm: Double) -> Result<Landing, Failure> {
         let scoped = pickedURL.startAccessingSecurityScopedResource()
         defer { if scoped { pickedURL.stopAccessingSecurityScopedResource() } }
+        // MA2 — the same bytes already in the library are the same sound: reuse, do not copy.
+        // Inside the scope, because the compare reads the picked file.
+        let matches = MediaLibrary.existingAudio(matching: pickedURL)
+        if let existing = preferredExisting(matches, clips: clipStore.slots.compactMap { $0 }) {
+            return landExisting(existing, clipStore: clipStore, timeline: timeline, bpm: bpm,
+                                measure: measureWithAVFoundation)
+        }
         return commit(pickedURL: pickedURL,
                       clipStore: clipStore,
                       timeline: timeline,

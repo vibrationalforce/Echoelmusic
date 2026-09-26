@@ -358,7 +358,8 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
                        "the root still touches no file (TheWorkstationImportsAudioTests claim 16)")
 
         XCTAssertEqual(try filesUnderSources(containing: "MediaLibrary.listAudio("),
-                       ["Studio/MediaBrowserView.swift"], "the one detached caller")
+                       ["Studio/MediaBrowserView.swift"],
+                       "the one QUALIFIED caller, detached (MA2's `existingAudio` reaches it inside MediaLibrary, on the import path)")
         XCTAssertEqual(try filesUnderSources(containing: "MediaPlacement.perform("),
                        ["Studio/MediaBrowserView.swift"], "one door for placing a library file")
     }

@@ -69,7 +69,9 @@ public enum MediaLibrary {
     ///
     /// ⚠️ ONE directory call, sizes included (`includingPropertiesForKeys`), no decoding: the
     /// list is what a person scrolls, and durations belong to the rows they reach (MA3). It is
-    /// still disk I/O, so the only caller runs it DETACHED — `MediaBrowserView`, never a `body`.
+    /// still disk I/O, so the browser runs it DETACHED — `MediaBrowserView`, never a `body`.
+    /// The one other caller is `existingAudio(matching:)` (MA2), on the import path, which is
+    /// already main-actor file I/O (it copies the picked file) and runs once per import.
     /// Hidden files and anything that is not a regular file (a directory someone made, a
     /// symlink) are not assets.
     public static func listAudio() -> [MediaAsset]? {
@@ -86,6 +88,54 @@ public enum MediaLibrary {
                               byteSize: Int64(values.fileSize ?? 0))
         }
         return MediaAsset.sorted(assets)
+    }
+
+    // MARK: - MA2: the same bytes are the same sound
+
+    /// Every managed audio file whose CONTENT equals `source`, in the browser's order — empty
+    /// when there is none, when the home cannot be read, or when `source` has no readable size.
+    ///
+    /// ⭐ WHY IT IS SYNCHRONOUS. Import already copies the picked file on the main actor; a
+    /// compare runs only against files of the EXACT same byte size and reads at most what the
+    /// copy it replaces would read and write. Moving the whole import off-main is its own slice
+    /// (plan MA2). ⚠️ It never writes, never deletes, and never decodes.
+    public static func existingAudio(matching source: URL) -> [MediaAsset] {
+        guard let assets = listAudio() else { return [] }
+        return identicalAudio(to: source, among: assets)
+    }
+
+    /// The pure-over-files half of `existingAudio`: size first (one stat), bytes second, and
+    /// only for the survivors of the size filter.
+    static func identicalAudio(to source: URL, among assets: [MediaAsset],
+                               chunkSize: Int = 1 << 20) -> [MediaAsset] {
+        guard let size = (try? source.resourceValues(forKeys: [.fileSizeKey]))?.fileSize,
+              size > 0 else { return [] }
+        return assets.filter { $0.byteSize == Int64(size) && sameBytes(source, $0.url, chunkSize: chunkSize) }
+    }
+
+    /// Byte-for-byte equality, read in bounded chunks so a long file is never held whole.
+    /// A file that cannot be opened or read is never "the same" — the import then copies,
+    /// which is exactly what it did before MA2.
+    static func sameBytes(_ a: URL, _ b: URL, chunkSize: Int = 1 << 20) -> Bool {
+        guard chunkSize > 0,
+              let first = try? FileHandle(forReadingFrom: a),
+              let second = try? FileHandle(forReadingFrom: b) else { return false }
+        defer {
+            try? first.close()
+            try? second.close()
+        }
+        while true {
+            let left: Data
+            let right: Data
+            do {
+                left = try first.read(upToCount: chunkSize) ?? Data()
+                right = try second.read(upToCount: chunkSize) ?? Data()
+            } catch {
+                return false
+            }
+            guard left == right else { return false }
+            if left.isEmpty { return true }
+        }
     }
 
     /// Resolve a clip's `mediaRef` to an EXISTING file URL — nil for empty refs or
