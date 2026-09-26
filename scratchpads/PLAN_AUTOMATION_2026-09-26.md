@@ -74,7 +74,7 @@ Status: A1 + A2 SHIPPED (gates green, reviewed; main = d53c1b351) · A3 built ·
   within ~28 pt of an existing one land as a pick on long songs (32 bars ≈ 3 bars on a phone).
   Workaround today: add further away, then hold-and-slide. A2 candidate: zoom, or a time-only
   hit radius.
-- LOW-5 OPEN: a point past a shortened song end is not drawn, so the last segment is drawn
+- LOW-5 REPAIRED in A5 (0fa53b6b5): a point past a shortened song end is not drawn, so the last segment is drawn
   flat while playback ramps toward it (comment in `draw` now says so).
 - LOW-10 OPEN: after Stop, or after removing every point while playing, the rack slot keeps
   the last automated brightness until the next patch apply — not told to the user.
@@ -88,7 +88,7 @@ Status: A1 + A2 SHIPPED (gates green, reviewed; main = d53c1b351) · A3 built ·
 · Skeptic: the opening parameter is decided ONCE per track (`onAppear`), so removing a curve's
   last point does not make the row jump to another parameter; switching drops the pick.
 · Shipper: 2 source files (editor + CLAUDE.md line) + the guard; no store/player change.
-Open (unchanged from A1): MED-2 pick radius, LOW-5, LOW-10.
+Open (unchanged from A1): MED-2 pick radius, LOW-5, LOW-10. (Later: LOW-5 repaired in A5, LOW-10 closed with A4, MED-2 held.)
 
 ## A2 review (4239a4200, independent) — repaired in the next commit
 - HIGH-1 REPAIRED: the value field showed the stored 0…1 number while playback denormalizes
@@ -174,3 +174,15 @@ A1 review LOW-5. Who sees it: anyone who draws beyond bar N and then removes the
 it — the row's last segment lay flat while playback ramped. `pointPastEnd` + `curvePoints`:
 the curve runs toward the first point past the end; dots and hits stay in-song. Guard claim 9.
 Evidence: transcription; gates pending; review running; not device-verified.
+
+## A5 review (0fa53b6b5, independent) — no HIGH, no MED; premise confirmed
+Reachable via Remove / Trim end / Earlier (`SelectedPartBar`); playback reads the full lane
+(`AutomationPlayer.dispatchLane`) and its end is `document.endTick` rounded to bars = `songTicks`.
+- LOW-1 REPAIRED: the transport never samples tick `songTicks` (it wraps/stops there); the guard
+  now compares at the last played sixteenth, and the header says "the ramp playback follows".
+- LOW-2 REPAIRED: hint + VoiceOver count name a point after the song end
+  (`SongAutomationEdit.hint` / `countLabel`) instead of "add the first point" / "0 points".
+- LOW-3 RECORDED: the hidden point cannot be picked or removed in place; neutralise by a point
+  at the song end (the right edge clamps there), extending the song, or Undo. A marker would be
+  new UI — not built.
+- LOW-4 REPAIRED: plan prose.

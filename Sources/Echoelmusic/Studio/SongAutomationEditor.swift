@@ -144,6 +144,23 @@ enum SongAutomationEdit {
         (lanes.first { $0.parameter == key }?.points ?? []).first { $0.tick > songTicks }
     }
 
+    /// The row's hint. A curve can run on to a point after a shortened song end — not drawn, not
+    /// hit — so the hint says so rather than "add the first point" over a line it draws (A5 review).
+    nonisolated static func hint(inSongPoints count: Int, continuesPastEnd: Bool) -> String {
+        let past = continuesPastEnd ? " The curve runs on to a point after the song end." : ""
+        if count == 0 {
+            return (continuesPastEnd ? "Tap the row to add a point in the song."
+                                     : "Tap the row to add the first point.") + past
+        }
+        return "Tap a point to pick it. Press and hold a point, then slide to move it." + past
+    }
+
+    /// VoiceOver's count: the song's points, and the one after the end when there is one.
+    nonisolated static func countLabel(inSongPoints count: Int, continuesPastEnd: Bool) -> String {
+        let base = count == 1 ? "1 point" : "\(count) points"
+        return continuesPastEnd ? base + ", and 1 after the song end" : base
+    }
+
     /// The points the drawn curve runs through: the song's own, plus the one past its end.
     nonisolated static func curvePoints(_ shown: [AutomationPoint],
                                         pastEnd: AutomationPoint?) -> [AutomationPoint] {
@@ -315,6 +332,7 @@ private struct SongAutomationLane: View {
         let title = descriptor?.displayName ?? base
         let key = SongAutomationEdit.key(for: laneID, base: base)
         let points = SongAutomationEdit.points(key, in: lanes, songTicks: songTicks)
+        let pastEnd = SongAutomationEdit.pointPastEnd(key, in: lanes, songTicks: songTicks)
         let chosen = points.first { $0.id == picked }
         VStack(alignment: .leading, spacing: 6) {
             parameterPicker(base, offered: offered, lanes: lanes)
@@ -325,8 +343,7 @@ private struct SongAutomationLane: View {
                     .lineLimit(1)
                     .frame(width: ArrangeCanvasView.nameWidth, alignment: .leading)
                 SongAutomationCanvas(points: points,
-                                     pastEnd: SongAutomationEdit.pointPastEnd(key, in: lanes,
-                                                                              songTicks: songTicks),
+                                     pastEnd: pastEnd,
                                      picked: picked, songTicks: songTicks,
                                      title: title,
                                      onTap: { location, size in
@@ -339,8 +356,8 @@ private struct SongAutomationLane: View {
             if let chosen, let descriptor {
                 pickedControls(chosen, descriptor: descriptor)
             } else {
-                Text(points.isEmpty ? "Tap the row to add the first point."
-                                    : "Tap a point to pick it. Press and hold a point, then slide to move it.")
+                Text(SongAutomationEdit.hint(inSongPoints: points.count,
+                                             continuesPastEnd: pastEnd != nil))
                     .font(EchoelTheme.font(11))
                     .foregroundStyle(EchoelTheme.dim)
             }
@@ -496,7 +513,7 @@ private struct SongAutomationCanvas: View {
     }
 
     private var pointCountLabel: String {
-        points.count == 1 ? "1 point" : "\(points.count) points"
+        SongAutomationEdit.countLabel(inSongPoints: points.count, continuesPastEnd: pastEnd != nil)
     }
 
     /// Hold first, then slide — so a swipe that starts on the row still scrolls.

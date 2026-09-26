@@ -38,8 +38,9 @@
 //    exactly where the row's own gate says it sounds; the strip reads the SONG's curves, not only
 //    their play-time copy; the switch's off-copy no longer claims the song-wide curves.
 // 9. A5 — END-TO-END BEHAVIOUR (pure) + SOURCE-TEXT SCAN: after the song is shortened, the drawn
-//    curve runs toward the first point past the end, so at the song end it reads what playback
-//    samples there (A1 review LOW-5: it was drawn flat); that point is still not drawn or hit.
+//    curve runs toward the first point past the end — the ramp playback follows, equal at its last
+//    sixteenth (A1 review LOW-5: it was drawn flat); that point is still not drawn or hit, and the
+//    hint and VoiceOver count name it instead of saying "add the first point" over a drawn line.
 //
 // HONEST GRADING (§3), against the parent tree (the S2 doc commit): the file does NOT compile
 // there — `setSongAutomation`, `SongAutomationEdit` and `differsOnlyInAutomation` are new —
@@ -461,12 +462,18 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
         let pastEnd = SongAutomationEdit.pointPastEnd(key, in: lanes, songTicks: songTicks)
         XCTAssertEqual(pastEnd?.id, beyond.id, "the FIRST point past the end, the only one that shapes the song")
 
-        // End to end: the drawn curve at the song end equals what playback samples there.
-        let played = try XCTUnwrap(lanes.first?.value(atTick: songTicks))
+        // End to end: the drawn curve is the ramp playback follows. Playback's last sample is one
+        // sixteenth before the end (the transport wraps or stops AT `songTicks`); the right edge
+        // shows what the curve holds at the end itself.
         let drawn = AutomationLane(parameter: "",
                                    points: SongAutomationEdit.curvePoints(shown, pastEnd: pastEnd))
-        XCTAssertEqual(try XCTUnwrap(drawn.value(atTick: songTicks)), played, accuracy: 1e-9)
-        XCTAssertEqual(played, 0.5, accuracy: 1e-9, "halfway to the hidden point")
+        let lastPlayed = songTicks - TimelineTime.ticksPerTransportStep
+        XCTAssertEqual(try XCTUnwrap(drawn.value(atTick: lastPlayed)),
+                       try XCTUnwrap(lanes.first?.value(atTick: lastPlayed)), accuracy: 1e-9,
+                       "the last sixteenth playback applies is the value drawn there")
+        let held = try XCTUnwrap(lanes.first?.value(atTick: songTicks))
+        XCTAssertEqual(try XCTUnwrap(drawn.value(atTick: songTicks)), held, accuracy: 1e-9)
+        XCTAssertEqual(held, 0.5, accuracy: 1e-9, "halfway to the hidden point")
         // The regression shape: the song's own points alone draw it flat at 0.
         XCTAssertEqual(try XCTUnwrap(AutomationLane(parameter: "", points: shown).value(atTick: songTicks)),
                        0, accuracy: 1e-9)
@@ -478,9 +485,20 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
                                                      in: lanes, songTicks: songTicks),
                      "another parameter's lane lends no point")
 
+        // The words say it too (review LOW-2): no "first point" over a line that is drawn.
+        XCTAssertEqual(SongAutomationEdit.hint(inSongPoints: 0, continuesPastEnd: false),
+                       "Tap the row to add the first point.")
+        XCTAssertFalse(SongAutomationEdit.hint(inSongPoints: 0, continuesPastEnd: true).contains("first point"))
+        XCTAssertTrue(SongAutomationEdit.hint(inSongPoints: 2, continuesPastEnd: true)
+            .hasSuffix("The curve runs on to a point after the song end."))
+        XCTAssertEqual(SongAutomationEdit.countLabel(inSongPoints: 0, continuesPastEnd: true),
+                       "0 points, and 1 after the song end")
+        XCTAssertEqual(SongAutomationEdit.countLabel(inSongPoints: 1, continuesPastEnd: false), "1 point")
+
         // The canvas draws through it — and still hits only the song's own points.
         let editor = try source(Self.editorPath)
-        XCTAssertTrue(editor.contains("pastEnd: SongAutomationEdit.pointPastEnd(key, in: lanes,"))
+        XCTAssertTrue(editor.contains("let pastEnd = SongAutomationEdit.pointPastEnd(key, in: lanes, songTicks: songTicks)"))
+        XCTAssertTrue(editor.contains("SongAutomationEdit.hint(inSongPoints: points.count,"))
         XCTAssertTrue(editor.contains("points: SongAutomationEdit.curvePoints(points, pastEnd: pastEnd))"))
         XCTAssertTrue(editor.contains("tap(location, size, points: points, key: key)"),
                       "the hit-test keeps the song's own points")
