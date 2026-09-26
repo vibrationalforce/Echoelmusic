@@ -40053,3 +40053,9 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - EF3 (patch on the instance) DEFERRED by Council — the take owns the patch; it is the Clips question. Plan updated.
 - Clips/Scenes/Session census (read-only subagent) → `scratchpads/PLAN_CLIPS_SCENES_2026-09-26.md`.
 - S1 f5b573b9e: scene launch = switch (`ClipLaunchEngine.requestScene` / `requestStopAll`; player `launchScene` / `stopAllLaunched`; one refusal rule `launchableLaneID`); SessionLaunchView scene button = one call, "Back to song", Playing/Queued per scene. Guard `TheSceneLaunchIsASwitchTests` (engine end-to-end; transcribed). Review + gates running.
+
+### 2026-09-26 03:20Z — S2 shipped + reviewed + repaired
+- S2 526804d0c: a scene starts a stopped song at its bar (Workstation `startTimeline(fromTick:)`, `SessionLaunchView(playFrom:)`).
+- S2 review (no HIGH): MED-1 (audio part started by prime, restarted by the launch one step later) + MED-2 (VoiceOver hint named the beat) repaired in e245def93 — `play(…, launching:)` fires the scene on the start bar inside the call; `AudioLanePlayer.prime(…, launchingInThisCall:)`; `SessionGrid.songStartLabel`. Guard: spy-sink end-to-end (one start; old order two), play order scan. LOW-1 recorded.
+- Gates: CI/CD 6379 (S1) / 6381 (S2) / 6382 (repair) queued or running; Compile Check 2916 cancelled → 2917 (e245def93) covers S1+S2. main = c5dd5e6b1.
+- Clips/Scenes autonomous slices exhausted (rest = founder calls). Next per founder order: Automation editing — census running; independent review of e245def93 running.

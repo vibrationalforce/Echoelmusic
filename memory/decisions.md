@@ -2949,3 +2949,9 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Founder calls ahead:** start the song AT a scene (breaks "WorkstationView is the one `play(`
   caller"); authored/named scenes (needs a `HistoryStep` case for one undo step).
 - **Review date:** 2026-10-26.
+
+### 2026-09-26 — A scene starts a stopped song, S2 (Phase 3 / Clips·Scenes·Session)
+- **Decision:** "Launch scene" on a stopped song starts the song at the scene's bar (floored) and loops the scene there. The Workstation stays the ONE `player.play(` caller — it hands `SessionLaunchView` a two-argument `playFrom(tick, parts)`. `TimelineRegionPlayer.play(…, launching:)` queues and fires the scene on the start bar inside the call, so each launched part starts once (review MED-1: launching after `play` returned restarted an audio part from the top one step later). A single part stays disabled while stopped.
+- **Why:** the census called start-at-scene a founder call only because it seemed to need a second transport caller; handing the owner's action down dissolves that.
+- **Open:** authored/named scenes (needs a `HistoryStep` case), a >8 clip pool, clip-owned sound (EF3) — founder calls. LOW-1: a `canPlay` refusal leaves the scene button silent, as Play.
+- **Review:** 2026-10-26.
