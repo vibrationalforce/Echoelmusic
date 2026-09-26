@@ -70,7 +70,8 @@
 //    (`71e9600f0`: `loadRollRegion(at: startTick, step: 0)`), green here; the plan claim is a
 //    pin on existing, correct behaviour (green on both — the defect was the CALL, not the plan).
 //    ⚠️ NOT fixed, and stated at the call: an AUDIO scene part launched this way still starts
-//    from its top, `entryStep` steps behind the grid (the sub-bar launch phase follow-up).
+//    from its top, so its FIRST loop pass lags `entryStep` steps; the loop re-fire puts it on
+//    the grid from the second pass (the sub-bar launch phase follow-up).
 //
 // NOT HERE — DEVICE PROBE, open. That the switch is HEARD on one bar, and reads well on iPhone.
 // NEEDS-FOUNDER-VERIFY: Workstation → Play → Session → "Launch scene" at Bar 1, then at a later
