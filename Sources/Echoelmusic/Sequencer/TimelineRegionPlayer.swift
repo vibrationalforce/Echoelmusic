@@ -869,6 +869,13 @@ public final class TimelineRegionPlayer {
     /// to the region start. Bar-aligned regions (the default snap) are exact; the
     /// region-relative phase for free placements is the M2 cycle.
     private func loadClip(_ region: TimelineRegion, atTick tick: Int, step: Int) {
+        loadClip(region, startBar: max(0, tick - region.startTick) / TimelineTime.ticksPerBar,
+                 step: step)
+    }
+
+    /// The same load with the entry bar given — the arrangement phase above, or a LAUNCHED
+    /// part's own timebase (`launchedStartBar`), which the rack lanes have always used.
+    private func loadClip(_ region: TimelineRegion, startBar: Int, step: Int) {
         guard let clip = clips?.clip(id: region.clipID) else {
             clearRoll()
             return
@@ -894,7 +901,6 @@ public final class TimelineRegionPlayer {
                                                  lengthTicks: region.lengthTicks)
         let bars = RegionNoteWindow.barSlices(notes: windowed,
                                               regionLengthTicks: region.lengthTicks)
-        let startBar = max(0, tick - region.startTick) / TimelineTime.ticksPerBar
         pianoRoll?.loadRegionArrangement(bars, startBar: startBar,
                                          atStepZero: step == 0,
                                          playing: pattern?.isPlaying ?? false)
@@ -1210,7 +1216,7 @@ public final class TimelineRegionPlayer {
               generation != seenMelodyGeneration else { return }
         seenMelodyGeneration = generation
         if let lane = rollLane, let region = soundingRegion(laneID: lane, at: tick) {
-            loadClip(region, atTick: tick, step: step)
+            loadClip(region, startBar: entryBar(laneID: lane, region: region, at: tick), step: step)
         }
         reloadSecondaryNotes(at: tick)
         log.log(.info, category: .audio, "timeline: note edit pulled into playback at tick \(tick)")
@@ -1226,6 +1232,17 @@ public final class TimelineRegionPlayer {
         return TimelineScheduling.activeRegion(in: doc, laneID: laneID, at: tick)
     }
 
+    /// The bar of `region` a lane sounds at `tick`: the launch timebase for a launched part
+    /// (`launchedStartBar`), the region-relative bar for an arrangement part. ONE rule for the
+    /// roll and the rack (M5 review: the roll used the arrangement phase for launched parts).
+    /// ⚠️ An OFF-GRID region start (mid-bar) is the M1b known constraint: the players advance at
+    /// global bar lines, so this region-relative bar can be one off there.
+    private func entryBar(laneID: UUID, region: TimelineRegion, at tick: Int) -> Int {
+        launch.isOverriding(laneID: laneID)
+            ? launchedStartBar(laneID: laneID, atTick: tick)
+            : max(0, tick - region.startTick) / TimelineTime.ticksPerBar
+    }
+
     /// M5: a NOTE edit re-windows each secondary lane's pump IN PLACE — same slot, same
     /// binding, same entry bar the fan-out would compute, and NO `reset()`: the lane, its kind,
     /// patch and mix did not change, and `LaneNotePump.load` keeps sounding notes to their own
@@ -1238,10 +1255,8 @@ public final class TimelineRegionPlayer {
         for laneID in MultiRollFanout.secondaryLaneIDs(in: doc, rollLane: rollLane) {
             guard let slot = secondarySlot(forLane: laneID), var pump = pumps[slot],
                   let region = soundingRegion(laneID: laneID, at: tick) else { continue }
-            let startBar = launch.isOverriding(laneID: laneID)
-                ? launchedStartBar(laneID: laneID, atTick: tick)
-                : max(0, tick - region.startTick) / TimelineTime.ticksPerBar
-            pump.load(bars: windowedBars(for: region), startBar: startBar)
+            pump.load(bars: windowedBars(for: region),
+                      startBar: entryBar(laneID: laneID, region: region, at: tick))
             pumps[slot] = pump
         }
     }
@@ -1275,9 +1290,11 @@ public final class TimelineRegionPlayer {
     // window. The SECONDARY path anchors the loop phase to the launch timebase
     // (`LaunchedRegion.startedAtTick` → whole-bar phase), so a launch fires from the
     // clip's top at its boundary and re-windows at the right whole bar after edits.
-    // The ROLL path reuses `loadClip`, whose startBar is the ARRANGEMENT phase
-    // (tick − region.startTick). Both loop correctly in WHOLE BARS; exact clip-internal
-    // (sub-bar) phase offset is a follow-up slice — `ClipLaunchEngine.loopedContentTick`
+    // ⛔ The ROLL path reused `loadClip`'s ARRANGEMENT phase (tick − region.startTick) until
+    // M5 review: a part placed later than the launch point clamped to bar 0 on every re-load,
+    // an earlier one started mid-clip, and after a song-loop wrap the two timebases parted —
+    // roll and rack in one scene a bar apart. It now takes `launchedStartBar` too. Exact
+    // clip-internal (sub-bar) phase is still a follow-up — `ClipLaunchEngine.loopedContentTick`
     // is the pure reference for it.
 
     /// Apply this tick's launch transitions to the audio side. `.started`/`.switched`
@@ -1333,7 +1350,7 @@ public final class TimelineRegionPlayer {
                 }
                 if isRoll {
                     applyRollLaneVoice()
-                    loadClip(region, atTick: tick, step: step)
+                    loadClip(region, startBar: launchedStartBar(laneID: t.laneID, atTick: tick), step: step)
                 } else if let slot = secondarySlot(forLane: t.laneID) {
                     loadSecondaryWindow(region, laneID: t.laneID, slot: slot,
                                         startBar: launchedStartBar(laneID: t.laneID, atTick: tick))
@@ -1390,7 +1407,7 @@ public final class TimelineRegionPlayer {
         }
         if isRoll {
             applyRollLaneVoice()
-            loadClip(region, atTick: tick, step: 0)
+            loadClip(region, startBar: launchedStartBar(laneID: laneID, atTick: tick), step: 0)
         } else if let slot = secondarySlot(forLane: laneID) {
             loadSecondaryWindow(region, laneID: laneID, slot: slot,
                                 startBar: launchedStartBar(laneID: laneID, atTick: tick))

@@ -29,7 +29,9 @@
 // REGRESSIONS, red for the reason their messages give; claim 1d (the next bar arrives on time
 // after a mid-bar edit, and the added note sounds) is a COUNTERWEIGHT, green on both — mid-bar,
 // `lastTick` and `newTick` share a bar, which is why the lag hid there on a rack track; claim 2 is a COUNTERWEIGHT; claim 3 is red on the parent by
-// ANCHOR ABSENCE (one absence, #486).
+// ANCHOR ABSENCE (one absence, #486). ⛔ The first version of claim 3 ended its slice on a `///`
+// doc line, which `SourceText.codeOnly` blanks — red on BOTH trees (review of 65ed99950, H1).
+// It ends on `private func flushPumps()` now; a slice anchor must be CODE.
 // NOT covered: that the edit is HEARD in time on a device, and the roll's mid-bar phase under a
 // running trigger — a device probe, owned by the marker below.
 // NEEDS-FOUNDER-VERIFY: Workstation → a MIDI part two bars or longer → Play → while it loops, open
@@ -198,18 +200,20 @@ final class AMidPlayNoteEditKeepsTheBarTests: XCTestCase {
               let end = player.range(of: "private func soundingRegion(laneID: UUID, at tick: Int)",
                                      range: head.upperBound..<player.endIndex),
               let reloadHead = player.range(of: "private func reloadSecondaryNotes(at tick: Int) {"),
-              let reloadEnd = player.range(of: "/// Release every sounding secondary voice",
+              let reloadEnd = player.range(of: "private func flushPumps()",
                                            range: reloadHead.upperBound..<player.endIndex)
         else {
             return XCTFail("ANCHOR MISSING: the M5 note refresh (#454)")
         }
         let refresh = String(player[head.upperBound..<end.lowerBound])
         let reload = String(player[reloadHead.upperBound..<reloadEnd.lowerBound])
-        XCTAssertTrue(refresh.contains("loadClip(region, atTick: tick, step: step)"),
-                      "the roll's bar plan gets THIS step (claim 2)")
+        XCTAssertTrue(refresh.contains("loadClip(region, startBar: entryBar(laneID: lane, region: region, at: tick), step: step)"),
+                      "the roll's bar plan gets THIS step (claim 2), and the entry bar the rack uses")
+        XCTAssertTrue(reload.contains("startBar: entryBar(laneID: laneID, region: region, at: tick)"),
+                      "one entry-bar rule for roll and rack — a launched part is on its own timebase in both")
         XCTAssertFalse(refresh.contains("lastTick"), "the refresh reads the tick it is handed, never the previous step's")
         XCTAssertFalse(refresh.contains("primeSecondaryLanes("), "the structure prime re-binds and resets every slot")
-        XCTAssertTrue(reload.contains("pump.load(bars: windowedBars(for: region), startBar: startBar)"))
+        XCTAssertTrue(reload.contains("pump.load(bars: windowedBars(for: region),"))
         XCTAssertFalse(reload.contains(".reset()"), "a note edit cuts no ringing note")
         XCTAssertFalse(reload.contains("Sink?("), "a note edit re-binds no slot and re-sends no patch or mix")
     }
