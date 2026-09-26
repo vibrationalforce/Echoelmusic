@@ -135,6 +135,22 @@ enum SongAutomationEdit {
         (lanes.first { $0.parameter == key }?.points ?? []).filter { $0.tick <= songTicks }
     }
 
+    /// The first point past a shortened song end. It is not drawn or hit, but playback inside
+    /// the song ramps toward it, so the drawn curve must too (A1 review LOW-5: the last segment
+    /// was drawn flat while the sound moved). Only the FIRST matters — later points cannot
+    /// shape any tick inside the song.
+    nonisolated static func pointPastEnd(_ key: String, in lanes: [AutomationLane],
+                                         songTicks: Int) -> AutomationPoint? {
+        (lanes.first { $0.parameter == key }?.points ?? []).first { $0.tick > songTicks }
+    }
+
+    /// The points the drawn curve runs through: the song's own, plus the one past its end.
+    nonisolated static func curvePoints(_ shown: [AutomationPoint],
+                                        pastEnd: AutomationPoint?) -> [AutomationPoint] {
+        guard let pastEnd else { return shown }
+        return shown + [pastEnd]
+    }
+
     /// What a tap means: pick the point under the finger, or add one where it landed.
     enum Tap: Equatable, Sendable {
         case pick(UUID)
@@ -308,7 +324,10 @@ private struct SongAutomationLane: View {
                     .foregroundStyle(EchoelTheme.dim)
                     .lineLimit(1)
                     .frame(width: ArrangeCanvasView.nameWidth, alignment: .leading)
-                SongAutomationCanvas(points: points, picked: picked, songTicks: songTicks,
+                SongAutomationCanvas(points: points,
+                                     pastEnd: SongAutomationEdit.pointPastEnd(key, in: lanes,
+                                                                              songTicks: songTicks),
+                                     picked: picked, songTicks: songTicks,
                                      title: title,
                                      onTap: { location, size in
                                          tap(location, size, points: points, key: key)
@@ -439,6 +458,8 @@ private struct SongAutomationLane: View {
 private struct SongAutomationCanvas: View {
 
     let points: [AutomationPoint]
+    /// Not drawn as a point and not hit — only the curve runs toward it (LOW-5).
+    let pastEnd: AutomationPoint?
     let picked: UUID?
     let songTicks: Int
     let title: String
@@ -457,7 +478,8 @@ private struct SongAutomationCanvas: View {
             } ?? points
             let lit = live?.id ?? picked
             Canvas { context, canvasSize in
-                Self.draw(shown, lit: lit, songTicks: songTicks, in: &context, size: canvasSize)
+                Self.draw(shown, pastEnd: pastEnd, lit: lit, songTicks: songTicks,
+                          in: &context, size: canvasSize)
             }
             .background(EchoelTheme.surface)
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
@@ -508,8 +530,9 @@ private struct SongAutomationCanvas: View {
             width: width, height: height, points: points, songTicks: songTicks)
     }
 
-    private nonisolated static func draw(_ points: [AutomationPoint], lit: UUID?, songTicks: Int,
-                             in context: inout GraphicsContext, size: CGSize) {
+    private nonisolated static func draw(_ points: [AutomationPoint], pastEnd: AutomationPoint?,
+                                         lit: UUID?, songTicks: Int,
+                                         in context: inout GraphicsContext, size: CGSize) {
         guard songTicks > 0, size.width > 0, size.height > 0 else { return }
         let pxPerTick = Double(size.width) / Double(songTicks)
         // Bar lines on the Arrange canvas's scale.
@@ -522,11 +545,11 @@ private struct SongAutomationCanvas: View {
                              with: .color(EchoelTheme.border.opacity(0.6)))
             }
         }
-        guard !points.isEmpty else { return }
-        // The curve through the points drawn here (hold before the first and after the last).
-        // ⚠️ A point past a shortened song end is not in `points`, so the last segment is drawn
-        // flat while playback still ramps toward it — recorded in PLAN_AUTOMATION_2026-09-26.
-        let lane = AutomationLane(parameter: "", points: points)
+        guard !points.isEmpty || pastEnd != nil else { return }
+        // The curve playback follows: through the song's points AND the first one past a
+        // shortened song end (hold before the first; after the last only when none lies beyond).
+        let lane = AutomationLane(parameter: "",
+                                  points: SongAutomationEdit.curvePoints(points, pastEnd: pastEnd))
         var path = Path()
         let columns = max(2, Int(size.width / 2))
         for c in 0...columns {

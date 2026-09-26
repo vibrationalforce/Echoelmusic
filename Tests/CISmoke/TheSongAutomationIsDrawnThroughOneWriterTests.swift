@@ -37,6 +37,9 @@
 //    names a track's curve by track and parameter, in the parameter's unit, and marks it bound
 //    exactly where the row's own gate says it sounds; the strip reads the SONG's curves, not only
 //    their play-time copy; the switch's off-copy no longer claims the song-wide curves.
+// 9. A5 — END-TO-END BEHAVIOUR (pure) + SOURCE-TEXT SCAN: after the song is shortened, the drawn
+//    curve runs toward the first point past the end, so at the song end it reads what playback
+//    samples there (A1 review LOW-5: it was drawn flat); that point is still not drawn or hit.
 //
 // HONEST GRADING (§3), against the parent tree (the S2 doc commit): the file does NOT compile
 // there — `setSongAutomation`, `SongAutomationEdit` and `differsOnlyInAutomation` are new —
@@ -66,6 +69,10 @@
 // TRANSCRIPTION the scan half is a regression shape: at the parent the strip read
 // `player.timelineLanes` and said "song-wide curves", so each needle is on the wrong side.
 // Counterweights: the Echoel, audio, capacity-0 and global-key cases stay unbound.
+// A5 GRADING (against a143336c4): `pointPastEnd`/`curvePoints` are new, so the file does not
+// compile there — claim 9 is FORWARD (one absence, #486). Its content is the flat-vs-ramp pair:
+// the song's own points alone read 0 at the end, playback reads 0.5. Counterweights: no point
+// past the end, and another parameter's lane, lend nothing.
 // NOT HERE — DEVICE PROBE, open.
 // NEEDS-FOUNDER-VERIFY: Workstation → a second MIDI track (poly) → select it → "Automation" →
 // tap three points, hold one and slide it → Play: the track's brightness follows the curve;
@@ -75,6 +82,8 @@
 // the timeline note sink is the only caller of `noteOn(slot:`, and every load re-sends the lane's
 // patch before its notes. A restore-on-Stop was built as A4 and reverted — it re-raised the
 // release tails of a faded-out track after Stop.)
+// A5: draw points to bar 8, remove the parts after bar 4 → the row's curve still rises to the
+// right edge (toward the hidden point) instead of lying flat, and Play sounds what it shows.
 
 import Foundation
 import XCTest
@@ -434,6 +443,47 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
         XCTAssertFalse(strip.contains("this switch is for the song-wide curves"),
                        "the song's arrangement curves play whatever this switch says")
         XCTAssertTrue(strip.contains("Clip and arrangement curves still play"))
+    }
+
+    // MARK: 9 — A5: the drawn curve is the curve playback follows past a shortened song end
+
+    func testTheDrawnCurveRampsTowardAPointPastTheSongEnd() throws {
+        let (_, _, keys, _) = Self.song()
+        let key = SongAutomationEdit.key(for: keys, base: Self.brightness)
+        let start = AutomationPoint(tick: 0, value: 0)
+        let beyond = AutomationPoint(tick: 8 * Self.bar, value: 1)
+        let later = AutomationPoint(tick: 12 * Self.bar, value: 0)
+        let lanes = [AutomationLane(parameter: key, points: [start, beyond, later])]
+        let songTicks = 4 * Self.bar   // the song was shortened from 12 bars to 4
+
+        let shown = SongAutomationEdit.points(key, in: lanes, songTicks: songTicks)
+        XCTAssertEqual(shown.map(\.id), [start.id], "a point past the end is still not drawn or hit")
+        let pastEnd = SongAutomationEdit.pointPastEnd(key, in: lanes, songTicks: songTicks)
+        XCTAssertEqual(pastEnd?.id, beyond.id, "the FIRST point past the end, the only one that shapes the song")
+
+        // End to end: the drawn curve at the song end equals what playback samples there.
+        let played = try XCTUnwrap(lanes.first?.value(atTick: songTicks))
+        let drawn = AutomationLane(parameter: "",
+                                   points: SongAutomationEdit.curvePoints(shown, pastEnd: pastEnd))
+        XCTAssertEqual(try XCTUnwrap(drawn.value(atTick: songTicks)), played, accuracy: 1e-9)
+        XCTAssertEqual(played, 0.5, accuracy: 1e-9, "halfway to the hidden point")
+        // The regression shape: the song's own points alone draw it flat at 0.
+        XCTAssertEqual(try XCTUnwrap(AutomationLane(parameter: "", points: shown).value(atTick: songTicks)),
+                       0, accuracy: 1e-9)
+
+        // Counterweights (#343): with nothing past the end the curve is the song's own points.
+        XCTAssertNil(SongAutomationEdit.pointPastEnd(key, in: lanes, songTicks: 12 * Self.bar))
+        XCTAssertEqual(SongAutomationEdit.curvePoints(shown, pastEnd: nil).map(\.id), [start.id])
+        XCTAssertNil(SongAutomationEdit.pointPastEnd(SongAutomationEdit.key(for: keys, base: "ddsp.env.attack"),
+                                                     in: lanes, songTicks: songTicks),
+                     "another parameter's lane lends no point")
+
+        // The canvas draws through it — and still hits only the song's own points.
+        let editor = try source(Self.editorPath)
+        XCTAssertTrue(editor.contains("pastEnd: SongAutomationEdit.pointPastEnd(key, in: lanes,"))
+        XCTAssertTrue(editor.contains("points: SongAutomationEdit.curvePoints(points, pastEnd: pastEnd))"))
+        XCTAssertTrue(editor.contains("tap(location, size, points: points, key: key)"),
+                      "the hit-test keeps the song's own points")
     }
 
     // MARK: 5 — one writer, gesture-local preview, no clock
