@@ -120,6 +120,21 @@ public final class LaneVoiceRack {
     /// exposure since it was written — it is an inherited gap, not one #338 created — and
     /// seeding only the tone system would leave the rack's two tuning axes able to disagree at
     /// launch, which is the exact failure mode this task is named after.
+    /// DC1 (per-track effect, `DeviceChain`): each slot voice's `fxChain` exactly as it was
+    /// built, captured once at attach. A slot is POOLED — it plays whichever lane holds its rank —
+    /// so a lane WITHOUT an effect must get this back, or it would inherit the last lane's
+    /// character. Control-plane only; never read by a view.
+    @ObservationIgnored private var defaultEffectBySlot: [FXPreset] = []
+    /// The effect each slot's chain currently carries, so a repeated push (every region load,
+    /// every mixer edit through `refreshMixer`) rewrites nothing. `bpm` is rounded to a whole
+    /// beat per minute: a glide must not re-stamp the chain on every load.
+    @ObservationIgnored private var appliedEffectBySlot: [Int: AppliedEffect] = [:]
+
+    private struct AppliedEffect: Equatable {
+        var character: FXCharacter?
+        var roundedBPM: Int
+    }
+
     @ObservationIgnored private var tuningA4Hz: Double = 440
     @ObservationIgnored private var tuningCents: [Float] = Array(repeating: 0, count: 12)
 
@@ -139,6 +154,9 @@ public final class LaneVoiceRack {
         guard !attached else { return }
         voices = (0..<capacity).map { _ in PolySynthVoice(maxVoices: maxVoicesPerSlot) }
         for v in voices { v.attach(to: audioEngine) }
+        defaultEffectBySlot = voices.map {
+            FXPreset.capture(from: $0.fxChain, fxEnabled: true, name: "Lane default")
+        }
         // S2-W2-3: the heterogeneous units, still strictly before
         // audioEngine.start() (attach-before-start law). Flag OFF ⇒ none exist
         // ⇒ the allocator maps every slot to poly ⇒ bit-identical graph.
@@ -478,6 +496,27 @@ public final class LaneVoiceRack {
     /// the one per-lane control.
     public func setOctave(slot: Int, direction: Int) {
         voice(slot: slot)?.setOctaver(direction: direction)
+    }
+
+    /// DC1: the lane's effect insert (`DeviceChain.soundingCharacter`) on this slot's poly voice
+    /// chain — a character's own preset, or the chain's shipped default when `character` is nil.
+    /// Poly-only like detune and octave: a sub, sampler or bio unit has no `EchoelFXChain` of its
+    /// own, and the inspector offers the row only on a poly track. A character without a preset
+    /// (`.auto`) is treated as none. Control-plane writes to the live chain, the `FXViewModel`
+    /// standard; no-op while unattached (multiRoll OFF).
+    public func setEffect(slot: Int, character: FXCharacter?, bpm: Double) {
+        guard let voice = voice(slot: slot), defaultEffectBySlot.indices.contains(slot) else { return }
+        let sounding = character?.preset == nil ? nil : character
+        let safeBPM = bpm.isFinite && bpm > 0 ? bpm : PatternEngine.defaultTempo
+        let wanted = AppliedEffect(character: sounding,
+                                   roundedBPM: sounding == nil ? 0 : Int(safeBPM.rounded()))
+        guard appliedEffectBySlot[slot] != wanted else { return }
+        appliedEffectBySlot[slot] = wanted
+        if let sounding {
+            sounding.applyOwnPreset(to: voice.fxChain, bpm: safeBPM)
+        } else {
+            defaultEffectBySlot[slot].apply(to: voice.fxChain)
+        }
     }
 
     /// A SynthPatch shapes the poly engine — documented no-op for the sub (its

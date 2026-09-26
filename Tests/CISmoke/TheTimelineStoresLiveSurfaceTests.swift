@@ -85,6 +85,8 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         "removeLaneIfEmpty",
         // Phase 3 / M1: the note editor's one writer, reached from `Studio/PartNoteEditor.swift`.
         "setClipNotes",
+        // Phase 3 / DC1: the track's effect insert, reached through `TrackMix.setEffect`.
+        "setLaneEffect",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than

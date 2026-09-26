@@ -120,6 +120,15 @@ public enum MultiRollFanout {
         return document.lanes.first(where: { $0.id == id })?.octaveDouble ?? 0
     }
 
+    /// The effect character slot `slot`'s lane plays through (Phase 3 / DC1), or nil for the
+    /// voice's default sound — also nil for an out-of-range slot. The chain's own answer
+    /// (`DeviceChain.soundingCharacter`), so the rack and the inspector cannot disagree about
+    /// which insert sounds.
+    public static func effect(forSlot slot: Int, in document: TimelineDocument, rollLane: UUID?) -> FXCharacter? {
+        guard let id = laneID(forSlot: slot, in: document, rollLane: rollLane) else { return nil }
+        return document.lanes.first(where: { $0.id == id })?.deviceChain?.soundingCharacter
+    }
+
     /// Whether a secondary lane is audible this tick — mute/foreign-solo/0-level all
     /// silence it, matching the primary roll lane's rollSlotGain→laneAudible gate.
     public static func audible(_ document: TimelineDocument, laneID: UUID) -> Bool {

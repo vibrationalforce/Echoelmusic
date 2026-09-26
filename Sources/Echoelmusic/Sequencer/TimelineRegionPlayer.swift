@@ -161,6 +161,11 @@ public final class TimelineRegionPlayer {
     /// on region load AND live per step (founder 2026-07-14 "transpose detune und
     /// Oktaver"), alongside transpose + detune. nil ⇒ no octave doubling.
     @ObservationIgnored public var slotOctaveSink: ((_ slot: Int, _ direction: Int) -> Void)?
+    /// Phase 3 / DC1: applies a SECONDARY lane's insert effect (`DeviceChain.soundingCharacter`,
+    /// nil = the voice's default sound) to its slot's rack voice at EVERY load and live per step,
+    /// beside transpose/detune/octave. Pushed at every load — never cleared — because slots are
+    /// pooled: whichever lane a slot plays next overwrites it before its first note.
+    @ObservationIgnored public var slotEffectSink: ((_ slot: Int, _ character: FXCharacter?) -> Void)?
     /// Applies the PRIMARY roll lane's OKTAVER direction to the roll voice (the roll
     /// lane plays PianoRollModel, not a rack slot). nil ⇒ no octave doubling.
     @ObservationIgnored public var rollOctaveSink: ((_ direction: Int) -> Void)?
@@ -898,6 +903,7 @@ public final class TimelineRegionPlayer {
                 slotTransposeSink?(slot, MultiRollFanout.transpose(forSlot: slot, in: doc, rollLane: rollLane))
                 slotDetuneSink?(slot, MultiRollFanout.detune(forSlot: slot, in: doc, rollLane: rollLane))
                 slotOctaveSink?(slot, MultiRollFanout.octave(forSlot: slot, in: doc, rollLane: rollLane))
+                slotEffectSink?(slot, MultiRollFanout.effect(forSlot: slot, in: doc, rollLane: rollLane))
                 // H4: the slot voice may be reused from another lane — reset its
                 // mixer position/level to THIS lane's values before its first notes.
                 slotPanSink?(slot, MultiRollFanout.pan(forSlot: slot, in: doc, rollLane: rollLane))
@@ -972,6 +978,7 @@ public final class TimelineRegionPlayer {
             slotTransposeSink?(load.slot, MultiRollFanout.transpose(forSlot: load.slot, in: doc, rollLane: rollLane))
             slotDetuneSink?(load.slot, MultiRollFanout.detune(forSlot: load.slot, in: doc, rollLane: rollLane))
             slotOctaveSink?(load.slot, MultiRollFanout.octave(forSlot: load.slot, in: doc, rollLane: rollLane))
+            slotEffectSink?(load.slot, MultiRollFanout.effect(forSlot: load.slot, in: doc, rollLane: rollLane))
             slotPanSink?(load.slot, MultiRollFanout.pan(forSlot: load.slot, in: doc, rollLane: rollLane))
             slotGainSink?(load.slot, MultiRollFanout.gain(forSlot: load.slot, in: doc, rollLane: rollLane))
             // M1c: same windowing as the fan-out — and the PRIME case is exactly
@@ -1014,6 +1021,7 @@ public final class TimelineRegionPlayer {
             slotTransposeSink?(slot, MultiRollFanout.transpose(forSlot: slot, in: doc, rollLane: rollLane))
             slotDetuneSink?(slot, MultiRollFanout.detune(forSlot: slot, in: doc, rollLane: rollLane))
             slotOctaveSink?(slot, MultiRollFanout.octave(forSlot: slot, in: doc, rollLane: rollLane))
+            slotEffectSink?(slot, MultiRollFanout.effect(forSlot: slot, in: doc, rollLane: rollLane))
         }
     }
 
@@ -1300,6 +1308,7 @@ public final class TimelineRegionPlayer {
         slotTransposeSink?(slot, MultiRollFanout.transpose(forSlot: slot, in: doc, rollLane: rollLane))
         slotDetuneSink?(slot, MultiRollFanout.detune(forSlot: slot, in: doc, rollLane: rollLane))
         slotOctaveSink?(slot, MultiRollFanout.octave(forSlot: slot, in: doc, rollLane: rollLane))
+        slotEffectSink?(slot, MultiRollFanout.effect(forSlot: slot, in: doc, rollLane: rollLane))
         slotPanSink?(slot, MultiRollFanout.pan(forSlot: slot, in: doc, rollLane: rollLane))
         slotGainSink?(slot, MultiRollFanout.gain(forSlot: slot, in: doc, rollLane: rollLane))
         pump.load(bars: windowedBars(for: region), startBar: startBar)

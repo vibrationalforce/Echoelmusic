@@ -710,6 +710,22 @@ public final class TimelineStore {
         persist()
     }
 
+    /// Phase 3 / DC1 — THE one writer of a lane's insert chain: set (or, with nil, remove) the
+    /// track's effect character. Inserts this build cannot read are kept (`DeviceChain
+    /// .settingCharacter`), and a chain left empty is stored as none. State only, like the
+    /// octave: the region player applies it to the lane's rack voice on every load AND live per
+    /// step (`mergeMixer` → `slotEffectSink`). Not part of the part-edit undo history, like
+    /// every other lane mixer value. No-op when nothing changes, so a menu that re-selects the
+    /// current effect writes nothing.
+    public func setLaneEffect(_ laneID: UUID, character: FXCharacter?) {
+        guard let i = document.lanes.firstIndex(where: { $0.id == laneID }) else { return }
+        let current = document.lanes[i].deviceChain ?? DeviceChain(inserts: [])
+        let next = current.settingCharacter(character)
+        guard next != document.lanes[i].deviceChain else { return }
+        document.lanes[i].deviceChain = next
+        persist()
+    }
+
     /// EchoelSampler track (S2-W3): assign (or clear, with nil) the persisted
     /// sample REF this lane's sampler unit plays ("drum:<Name>" / "lib:<Category>/
     /// <Name>" bundle refs, or a mediaRef-style absolute path — see

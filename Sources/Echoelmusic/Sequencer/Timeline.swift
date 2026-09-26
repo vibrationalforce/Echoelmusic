@@ -89,6 +89,13 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
     /// `patch`/`instrument` — a change is structural (what sounds changes), so
     /// it deliberately rides `refreshStructure`, never `mergeMixer`.
     public var samplePath: String?
+    /// The track's INSERT chain (Phase 3 / DC1, WA3 §D): the effects its voice plays through.
+    /// `nil` = none — today's sound, bit-identical, and a nil Optional is not even encoded, so a
+    /// song with no effect writes the same bytes as before. ⚠️ ITS OWN KEY, `deviceChain`: an old
+    /// song can still carry the removed AUv3 `instrument`/`effects` keys, and reusing either name
+    /// would decode a plug-in reference as an effect. Sink-applied per lane like transpose — it
+    /// flows LIVE through `mergeMixer`, never through a relocate. See `Core/DeviceChain.swift`.
+    public var deviceChain: DeviceChain?
 
     public init(id: UUID = UUID(), name: String, kind: ClipKind, isBio: Bool = false,
                 level: Float = 1, isMuted: Bool = false, isSoloed: Bool = false,
@@ -97,7 +104,8 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
                 patch: SynthPatch? = nil, genreOverride: MusicStyle? = nil,
                 mood: MoodProfile? = nil, variationSeed: UInt64? = nil,
                 transposeSemitones: Int = 0, detuneCents: Float = 0,
-                octaveDouble: Int = 0, samplePath: String? = nil) {
+                octaveDouble: Int = 0, samplePath: String? = nil,
+                deviceChain: DeviceChain? = nil) {
         self.id = id
         self.name = name
         self.kind = kind
@@ -116,6 +124,7 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
         self.detuneCents = detuneCents
         self.octaveDouble = octaveDouble
         self.samplePath = samplePath
+        self.deviceChain = deviceChain
     }
 
     /// What this track's record button captures — derived from its kind + built-in
@@ -238,6 +247,10 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
         // Pre-sampler docs carry no sample ref ⇒ decodeIfPresent's nil (no
         // sample, bit-identical) — the back-compat law, like patch/instrument.
         samplePath = try c.decodeIfPresent(String.self, forKey: .samplePath)
+        // Pre-DC1 docs carry no chain ⇒ nil (no effect, bit-identical). `try?` like every
+        // non-primitive field here: a chain this build cannot read costs the EFFECT, never the
+        // lane (and `DeviceChain` itself skips one unreadable insert rather than failing).
+        deviceChain = (try? c.decodeIfPresent(DeviceChain.self, forKey: .deviceChain)) ?? nil
     }
 }
 
@@ -746,6 +759,11 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
             if lanes[i].octaveDouble != live.octaveDouble {
                 lanes[i].octaveDouble = live.octaveDouble; changed = true
             }
+            // DC1: the insert chain is a sink-applied voice value like transpose — a menu
+            // change during playback lands live, never through a relocate.
+            if lanes[i].deviceChain != live.deviceChain {
+                lanes[i].deviceChain = live.deviceChain; changed = true
+            }
         }
         return changed
     }
@@ -772,6 +790,7 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
             n.transposeSemitones = lb.transposeSemitones
             n.detuneCents = lb.detuneCents
             n.octaveDouble = lb.octaveDouble
+            n.deviceChain = lb.deviceChain
             if n != lb { return false }
         }
         return true

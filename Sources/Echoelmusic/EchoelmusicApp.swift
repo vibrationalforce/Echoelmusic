@@ -1081,6 +1081,15 @@ struct EchoelmusicApp: App {
                     timelinePlayer.slotOctaveSink = { [weak laneVoiceRack] slot, direction in
                         laneVoiceRack?.setOctave(slot: slot, direction: direction)
                     }
+                    // Phase 3 / DC1: each SECONDARY lane's effect insert (`DeviceChain`) onto its
+                    // rack voice's own FX chain — nil restores the slot's shipped default, because
+                    // a pooled slot must not keep the previous lane's character. Poly-only like
+                    // octave. The tempo is read at the push (a tempo-synced echo follows the song
+                    // at the next load, not mid-part).
+                    timelinePlayer.slotEffectSink = { [weak laneVoiceRack, weak pattern = beatPlayer.pattern] slot, character in
+                        laneVoiceRack?.setEffect(slot: slot, character: character,
+                                                 bpm: pattern?.tempo ?? PatternEngine.defaultTempo)
+                    }
                     // H4 (healing wave 1, "Pan silently inert"): each SECONDARY lane's
                     // pan + continuous gain reach its rack voice — at region load AND
                     // live on a mid-play mixer edit (the player merges the store's

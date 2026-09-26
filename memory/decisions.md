@@ -2897,3 +2897,20 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Why:** before this slice, reusing an imported file meant picking it from Files again, which made a second copy and spent a second of the 8 slots. A registry would be a fifth persistence root (Ω49).
 - **Next:** MA2 content de-dup on import (size match → chunked byte compare, off-main, async import path). MA3 (lengths per row; remove unused) is held until saved-project references are measured.
 - **Review date:** 2026-10-26
+
+### 2026-09-26 — MA2 import de-dup runs on the main actor, CAPPED (Phase 3 / MA2)
+- **Decision:** Import Audio asks the library first. A file whose bytes are already in `Media/Audio` lands through `MediaPlacement.place`: the clip that carries it gets one region, and an orphan gets one clip at the existing file. There is no copy and no delete. The compare runs on the main actor with a cap: size filter first, then only files ≤ 32 MiB, a 64 KB head probe, and 1 MB chunks. With no audio track there is no compare.
+- **Why:** the plan said "off-main". The review of 7b691faf8 showed the copy being replaced is an APFS clone, which costs almost nothing, so an uncapped compare would have been a new freeze. The cap bounds the cost. Moving the whole import off-main is its own slice.
+- **Review date:** 2026-10-26
+
+### 2026-09-26 — native DeviceChain, DC1 (Phase 3)
+- **Decision:** `TimelineLane.deviceChain: DeviceChain?` under the NEW key `deviceChain`; the legacy AUv3 `instrument`/`effects` keys are never reused.
+  - Shape: `DeviceChain { inserts: [DeviceInsert(id, typeID, typeVersion, isEnabled, stateBlob)] }` (WA3 §D/§C2). An unknown type is kept verbatim.
+  - Instrument slot: NOT on the chain. It stays derived (roll rule / `builtinInstrument`, §P).
+  - What sounds: DC1 sounds ONE insert type, an `FXCharacter` preset, on a POLY rack voice's existing `EchoelFXChain`.
+  - Rack behaviour: every load site plus `refreshMixer` pushes it, like the octave. A slot restores its attach-time default snapshot when its lane has no effect, because slots are pooled. The write is deduplicated per slot.
+  - UI: the Workstation inspector shows an "Effect" menu on poly tracks only.
+  - Interim home: `Core/`, because the EchoelCore target is founder-gated (#95).
+- **Why:** the founder's Phase 3 order ("native DeviceChain"). Every rack slot already renders its own FX chain at the defaults, so a per-track insert needs no new audio node and no render code.
+- **Next:** DC2 is decided from the DC1 device report (effect parameters, or a second insert type). Audio-lane inserts need a graph attach at prime and an avaudio-route-resilience pass first.
+- **Review date:** 2026-10-26

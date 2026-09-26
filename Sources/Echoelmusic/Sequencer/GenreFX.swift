@@ -1615,6 +1615,22 @@ public enum FXCharacter: String, CaseIterable, Sendable, Identifiable {
     /// because the falling edge does not establish that.
     public func apply(to chain: EchoelFXChain, bpm: Double, genre: MusicStyle) {
         (preset ?? genre.fxPreset).apply(to: chain, bpm: bpm)
+        applyCleanBypass(to: chain)
+    }
+
+    /// A character that carries its OWN preset, applied with no genre in hand — the per-track
+    /// effect insert (`DeviceChain`, Phase 3 / DC1). `.auto` has no preset of its own (it means
+    /// "the genre's effect") and answers false, touching nothing. Same preset, same clean
+    /// bypass as `apply(to:bpm:genre:)` — one definition of what a character does (#416).
+    @discardableResult
+    public func applyOwnPreset(to chain: EchoelFXChain, bpm: Double) -> Bool {
+        guard let own = preset else { return false }
+        own.apply(to: chain, bpm: bpm)
+        applyCleanBypass(to: chain)
+        return true
+    }
+
+    private func applyCleanBypass(to chain: EchoelFXChain) {
         guard self == .clean else { return }
         chain.tapeEnabled = false
         chain.bitcrushEnabled = false

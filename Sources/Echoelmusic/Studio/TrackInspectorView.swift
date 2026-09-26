@@ -24,6 +24,8 @@
 //  · a bio lane carries a recorded curve and makes no sound — no mixer at all.
 //  · an extra MIDI lane past the lane rack's capacity has no voice (`MultiRollFanout.slot`
 //    returns nil) — no mixer either, and the device row says why (review of b2913f96b).
+//  · the Effect row (Phase 3 / DC1, the track's `DeviceChain`) only on a POLY rack track —
+//    the one voice with its own FX chain. The Echoel track's effect is its FX section ("Open").
 //  ⚠️ And the COUPLINGS with the Studio instrument are stated rather than hidden (review of
 //  b2913f96b): the Echoel track's level is the level the instrument plays at (`rollSlotGain` →
 //  `mixGain`, the one writer in `EchoelmusicApp`), so muting it or pulling it to 0 silences
@@ -65,6 +67,11 @@ enum TrackMix {
         let level: Bool
         let pan: Bool
         let muteSolo: Bool
+        /// Phase 3 / DC1: an effect insert (`DeviceChain`) sounds only on a POLY rack voice —
+        /// the one kind with its own `EchoelFXChain`. The Echoel track's effect is the
+        /// instrument's own FX section ("Open"); sub, sampler, bio and audio tracks have no
+        /// per-track chain yet, so the row would move a name and not the sound.
+        let effect: Bool
     }
 
     /// Level is the lane fader, linear: 1 = unchanged, 0 = silent, 2 = +6 dB — the clamp
@@ -101,11 +108,13 @@ enum TrackMix {
         guard let role = role(of: laneID, in: document, voiceCapacity: voiceCapacity) else { return nil }
         switch role {
         case .echoelInstrument:
-            return Controls(role: role, level: true, pan: false, muteSolo: true)
-        case .laneSynth, .audio:
-            return Controls(role: role, level: true, pan: true, muteSolo: true)
+            return Controls(role: role, level: true, pan: false, muteSolo: true, effect: false)
+        case .laneSynth(let kind):
+            return Controls(role: role, level: true, pan: true, muteSolo: true, effect: kind == .poly)
+        case .audio:
+            return Controls(role: role, level: true, pan: true, muteSolo: true, effect: false)
         case .bio, .unplayed, .noVoice:
-            return Controls(role: role, level: false, pan: false, muteSolo: false)
+            return Controls(role: role, level: false, pan: false, muteSolo: false, effect: false)
         }
     }
 
@@ -185,6 +194,18 @@ enum TrackMix {
         role == .echoelInstrument
             ? "Plays only the soloed tracks"
             : "Plays only the soloed tracks. This also silences the Studio instrument, whose Start clears the solo"
+    }
+
+    /// The effects a track can carry: every character with its OWN preset. `.auto` is not one —
+    /// it means "the genre's effect", and a track does not own the genre (`soundingCharacter`).
+    nonisolated static var effectChoices: [FXCharacter] {
+        FXCharacter.allCases.filter { $0 != .auto && $0.preset != nil }
+    }
+
+    /// One bounded commit, one persist — the store is the one writer (`setLaneEffect`).
+    @MainActor
+    static func setEffect(_ character: FXCharacter?, laneID: UUID, timeline: TimelineStore) {
+        timeline.setLaneEffect(laneID, character: character)
     }
 
     @MainActor
@@ -295,6 +316,9 @@ struct TrackInspectorView: View {
                         decimals: 2,
                         hint: "−1 left, 0 centre, 1 right")
                 }
+                if controls.effect {
+                    effectRow
+                }
                 // WA4 path 6 — Mute and Solo moved to the track HEADER (`WorkstationView.laneRow`):
                 // one control per fact on screen, reachable without opening this inspector.
                 // WA4.3 — the track's parts: move, copy, remove, and the part-edit Undo/Redo.
@@ -343,6 +367,28 @@ struct TrackInspectorView: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Open the Echoel instrument")
         .accessibilityHint("Shows its sound controls. The Workstation chip brings you back")
+    }
+
+    /// DC1 — the track's effect insert, a NAMED choice, so a menu Picker (the `EchoelValueField`
+    /// law is for numbers). "Default" is the voice's shipped sound, not dry — "Clean (dry)" is dry.
+    /// Cold read of `timeline.document`, one store write per choice.
+    private var effectRow: some View {
+        HStack(spacing: 8) {
+            Text("Effect")
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+            Picker("Effect", selection: Binding<FXCharacter?>(
+                get: { timeline.document.lanes.first(where: { $0.id == laneID })?
+                    .deviceChain?.soundingCharacter },
+                set: { TrackMix.setEffect($0, laneID: laneID, timeline: timeline) })) {
+                Text("Default").tag(FXCharacter?.none)
+                ForEach(TrackMix.effectChoices) { character in
+                    Text(character.displayName).tag(Optional(character))
+                }
+            }
+            .pickerStyle(.menu).tint(EchoelTheme.text)
+            .accessibilityHint("Default is this voice's own sound. The track keeps its effect in the song")
+            Spacer(minLength: 0)
+        }
     }
 
     private func removeRow(_ removal: TrackMix.Removal) -> some View {
