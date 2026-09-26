@@ -208,6 +208,13 @@ public struct Clip: Codable, Sendable, Equatable, Identifiable {
     public var melody: MelodyClip?
     /// Asset/file reference for audio/video/visual clips; nil for a MIDI pattern clip.
     public var mediaRef: String?
+    /// The durable identity of the file this clip plays (`MediaAssetRecord.id`, held by
+    /// `MediaAssetStore`) — MA4.2. nil for MIDI clips and for every audio clip written before
+    /// MA4.2; such a clip keeps playing by `mediaRef`, exactly as before. The LINK lives here
+    /// (and so travels in a project's `clipSlots`); the record it names is an app-library root.
+    /// ⚠️ `mediaRef` stays the path playback resolves today; the resolver slice makes the record's
+    /// binding the truth for a linked clip.
+    public var mediaAssetID: UUID?
     /// The media's NATIVE duration in seconds, measured on device at import (audio/
     /// video). `nil` when unknown (older clips / not measured). The transport players
     /// need it to detect a clip SHORTER than its placed span (video `.exhausted` /
@@ -246,6 +253,7 @@ public struct Clip: Codable, Sendable, Equatable, Identifiable {
         drums: DrumPattern? = nil,
         melody: MelodyClip? = nil,
         mediaRef: String? = nil,
+        mediaAssetID: UUID? = nil,
         nativeDurationSeconds: Double? = nil,
         nativeBPM: Double = 0,
         automation: [AutomationLane] = [],
@@ -258,6 +266,7 @@ public struct Clip: Codable, Sendable, Equatable, Identifiable {
         self.drums = drums
         self.melody = melody
         self.mediaRef = mediaRef
+        self.mediaAssetID = mediaAssetID
         self.nativeDurationSeconds = nativeDurationSeconds
         self.nativeBPM = Clip.clampedNativeBPM(nativeBPM)
         self.automation = automation
@@ -275,7 +284,7 @@ public struct Clip: Codable, Sendable, Equatable, Identifiable {
     private enum CodingKeys: String, CodingKey {
         case schemaVersion
         case id, name, colorIndex, kind, drums, melody, mediaRef, nativeDurationSeconds
-        case nativeBPM, automation, composerOwned
+        case nativeBPM, automation, composerOwned, mediaAssetID
     }
 
     // Forward/backward-compatible decode: clips saved before `kind`/`mediaRef` existed
@@ -296,6 +305,7 @@ public struct Clip: Codable, Sendable, Equatable, Identifiable {
         drums = try? c.decode(DrumPattern.self, forKey: .drums)
         melody = try? c.decode(MelodyClip.self, forKey: .melody)
         mediaRef = try? c.decode(String.self, forKey: .mediaRef)
+        mediaAssetID = try? c.decode(UUID.self, forKey: .mediaAssetID)
         nativeDurationSeconds = try? c.decode(Double.self, forKey: .nativeDurationSeconds)
         // Pre-warp clips carry no tempo — 0 = unknown, never warps (bit-identical).
         nativeBPM = Clip.clampedNativeBPM((try? c.decode(Double.self, forKey: .nativeBPM)) ?? 0)

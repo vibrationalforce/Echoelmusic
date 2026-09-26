@@ -287,6 +287,24 @@ public enum AudioImport {
                                 laneID: lane.id, managedURL: managed, reusedLibraryFile: false))
     }
 
+    // MARK: - MA4.2: the import establishes identity
+
+    /// The durable record a fresh import establishes for its managed copy — pure, so the blocking
+    /// bundle can check every field. The evidence is what the import ALREADY measured (rate,
+    /// frames, channels) plus the copy's size; the content digest is left nil, because hashing
+    /// reads the whole file and belongs off the main actor (MA4.4), never in this transaction.
+    public static func assetRecord(managed: URL, originalName: String, measurement: Measurement,
+                                   byteSize: Int64, importedAt: Date) -> MediaAssetRecord {
+        MediaAssetRecord(kind: .audio,
+                         fileName: managed.lastPathComponent,
+                         originalName: originalName.isEmpty ? managed.lastPathComponent : originalName,
+                         importedAt: importedAt,
+                         evidence: MediaAssetRecord.Evidence(byteSize: byteSize,
+                                                             sampleRate: measurement.sampleRate,
+                                                             frameCount: measurement.frameCount,
+                                                             channelCount: measurement.channelCount))
+    }
+
     // MARK: - The transaction
 
     /// The whole import, with its three impure steps INJECTED so every path — including the
@@ -309,6 +327,13 @@ public enum AudioImport {
     /// ⚠️ AFTER `setClip` THERE IS NO ROLLBACK, and that is stated rather than faked — see the
     /// header. The two writes are ordered so a half-written pair is a spare clip, never a
     /// region pointing at nothing.
+    ///
+    /// ⭐ MA4.2 — `assets` IS REQUIRED, NEVER DEFAULTED (#431): with a registry, the import
+    /// registers the copy's durable record FIRST and the clip carries its id (`mediaAssetID`).
+    /// Identity before use: a crash between the two leaves a record for a file that exists, never
+    /// a clip naming a record that does not. `nil` means "no registry" and is written out at every
+    /// call site that means it — today the library placement (`MediaPlacement`, whose file may
+    /// already have a record; linking it is MA4.3) and the tests that do not exercise identity.
     @MainActor
     @discardableResult
     public static func commit(
@@ -318,7 +343,8 @@ public enum AudioImport {
         bpm: Double,
         importFile: (URL) throws -> URL,
         measure: (URL) -> Measurement?,
-        deleteManagedCopy: (URL) -> Void
+        deleteManagedCopy: (URL) -> Void,
+        assets: MediaAssetStore?
     ) -> Result<Landing, Failure> {
 
         let managed: URL
@@ -333,8 +359,9 @@ public enum AudioImport {
             return .failure(failure)
         }
 
+        let measured = measure(managed)
         let decided = plan(managed: managed,
-                           measurement: measure(managed),
+                           measurement: measured,
                            document: timeline.document,
                            freeSlotIndex: clipStore.firstEmptySlotIndex,
                            bpm: bpm)
@@ -343,11 +370,22 @@ public enum AudioImport {
         case .failure(let failure):
             return abort(failure)
         case .success(let landing):
-            clipStore.setClip(at: landing.slotIndex, landing.clip)  // FIRST — playback
+            // MA4.2 — identity before use: the record is registered before the clip that
+            // names it is written.
+            var landed = landing
+            if let assets, let measured {
+                // The copy's size: one metadata read, no content read. Unknown reads as 0.
+                let size = (try? managed.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+                let record = assetRecord(managed: managed, originalName: pickedURL.lastPathComponent,
+                                         measurement: measured, byteSize: Int64(size),
+                                         importedAt: Date())
+                if assets.register(record) { landed.clip.mediaAssetID = record.id }
+            }
+            clipStore.setClip(at: landed.slotIndex, landed.clip)    // FIRST — playback
                                                                     // resolves clipID here
-            timeline.addRegion(landing.region)                      // SECOND — the pointer,
+            timeline.addRegion(landed.region)                       // SECOND — the pointer,
                                                                     // once its target exists
-            return .success(landing)
+            return .success(landed)
         }
     }
 
@@ -400,6 +438,7 @@ public enum AudioImport {
     public static func perform(pickedURL: URL,
                                clipStore: ClipStore,
                                timeline: TimelineStore,
+                               assets: MediaAssetStore,
                                bpm: Double) -> Result<Landing, Failure> {
         let scoped = pickedURL.startAccessingSecurityScopedResource()
         defer { if scoped { pickedURL.stopAccessingSecurityScopedResource() } }
@@ -417,7 +456,8 @@ public enum AudioImport {
                       bpm: bpm,
                       importFile: { try MediaLibrary.importAudio(from: $0) },
                       measure: measureWithAVFoundation,
-                      deleteManagedCopy: { try? FileManager.default.removeItem(at: $0) })
+                      deleteManagedCopy: { try? FileManager.default.removeItem(at: $0) },
+                      assets: assets)
     }
 
     /// Open the managed copy and report what it is. nil ⇒ it is not audio this build can read.

@@ -181,7 +181,10 @@ public enum MediaPlacement {
                                             bpm: bpm,
                                             importFile: { $0 },
                                             measure: measure,
-                                            deleteManagedCopy: { _ in })
+                                            deleteManagedCopy: { _ in },
+                                            // MA4.3: a library file may already have a record;
+                                            // linking it (reuse, else adopt) is its own slice.
+                                            assets: nil)
             return result.map {
                 Placed(region: $0.region, clip: $0.clip, slotIndex: $0.slotIndex, reusedClip: false)
             }

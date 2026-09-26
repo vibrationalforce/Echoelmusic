@@ -132,6 +132,9 @@ struct EchoelmusicApp: App {
     @State private var pianoRoll: PianoRollModel
     /// Session grid of launchable clips (drum pattern + melody snapshots).
     @State private var clipStore = ClipStore()
+    /// Durable identities of the managed media files (MA4.2) — an app-library root, like the
+    /// patch library: one small JSON read here, nothing listed, opened or hashed at launch.
+    @State private var mediaAssetStore = MediaAssetStore()
     /// Per-part mixer (bass/pad/lead user levels) — Module 1 of the comprehensive interface.
     @State private var mixerStore = MixerStore()
 
@@ -636,6 +639,7 @@ struct EchoelmusicApp: App {
             #endif
             .environment(pianoRoll)
             .environment(clipStore)
+            .environment(mediaAssetStore)
             .environment(mixerStore)
             .environment(trackFXStore)
             .environment(arrangementStore)

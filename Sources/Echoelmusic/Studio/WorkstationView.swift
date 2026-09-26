@@ -211,6 +211,9 @@ struct WorkstationView: View {
     @Environment(BeatPlayer.self) private var beatPlayer
     @Environment(PianoRollModel.self) private var pianoRoll
     @Environment(ClipStore.self) private var clipStore
+    /// MA4.2 — the durable media identities an import registers. Read only in the import
+    /// handler, never in `body`.
+    @Environment(MediaAssetStore.self) private var mediaAssets
 
     /// Audio Import V1 — picker + result, both LOCAL to this leaf on the founder's
     /// instruction. Neither is persisted, neither is read by any other surface, and neither
@@ -1053,6 +1056,7 @@ struct WorkstationView: View {
             switch AudioImport.perform(pickedURL: url,
                                        clipStore: clipStore,
                                        timeline: timeline,
+                                       assets: mediaAssets,
                                        bpm: player.preflightTempo) {
             case .success(let landing):
                 let laneName = timeline.document.lanes

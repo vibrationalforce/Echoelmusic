@@ -20,6 +20,21 @@
 //    decodes with no key (no listing can show it).
 // 4. SOURCE-TEXT SCAN (counterweight): the record touches no file and stores no availability,
 //    placement or tempo, and its file imports Foundation only.
+// 5. END-TO-END (MA4.2, `MediaAssetStore`): one record per id, a name answers the newest, an empty
+//    binding is refused; one damaged element on disk is dropped and the rest survive; a
+//    registration persists.
+// 6. END-TO-END (MA4.2): `AudioImport.assetRecord` binds the managed copy's name and keeps the
+//    picked name as provenance, with no digest; over REAL `ClipStore`/`TimelineStore` a refused
+//    import registers nothing, a landed one registers ONE record whose id the clip carries in the
+//    grid, and `assets: nil` is the pre-MA4.2 transaction. The clip codec keeps the link, an old
+//    clip has none, a damaged link costs only the link.
+// 7. SOURCE-TEXT SCAN (MA4.2): the import is the registry's one writer, the app constructs and
+//    injects it, the Workstation hands it to the transaction, and the argument is not defaulted.
+//
+// MA4.2 GRADING against `965f5cb8e`: this file does not compile there (`MediaAssetStore`,
+// `assetRecord`, `mediaAssetID` and `commit(…assets:)` are new) — one absence (#486); claims 5–7
+// are FORWARD guards. Device probes (not coverable here): an import on a device writes
+// `MediaAssets/assets.json` and relaunch keeps the link.
 //
 // GRADING against the parent (`bb5a1a534`): this file does NOT compile there —
 // `MediaAssetRecord` is new, so no assertion has a verdict (one absence, #486). Claims 1, 3 and
@@ -31,6 +46,7 @@ import Foundation
 import XCTest
 @testable import Echoelmusic
 
+@MainActor
 final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
 
     private static let sourcesRoot = "Sources/Echoelmusic"
@@ -155,6 +171,151 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertEqual(imports, ["import Foundation"])
         XCTAssertTrue(code.contains("public var evidence: Evidence"),
                       "anchor: the stored evidence the verdicts read")
+    }
+
+    // MARK: 5 — MA4.2: the registry
+
+    func testTheRegistryKeepsOneRecordPerIdAndAnswersTheNewestForAName() {
+        let assets = MediaAssetStore(store: nil)
+        XCTAssertTrue(assets.records.isEmpty)
+
+        let first = record(seconds: 8)
+        XCTAssertTrue(assets.register(first))
+        XCTAssertEqual(assets.record(id: first.id), first)
+        XCTAssertEqual(assets.record(boundTo: MediaAsset.Key(kind: .audio, fileName: "loop.wav")), first)
+
+        // Same id: replaced in place, never duplicated.
+        var hashed = first
+        hashed.evidence.contentDigest = "sha256:aa"
+        XCTAssertTrue(assets.register(hashed))
+        XCTAssertEqual(assets.records.count, 1)
+        XCTAssertEqual(assets.record(id: first.id)?.evidence.contentDigest, "sha256:aa")
+
+        // Same name, new id: both kept (a clip linked to the old id is not rewritten), and the
+        // name answers the newest.
+        let newer = record(seconds: 12)
+        XCTAssertTrue(assets.register(newer))
+        XCTAssertEqual(assets.records.count, 2)
+        XCTAssertEqual(assets.record(boundTo: MediaAsset.Key(kind: .audio, fileName: "loop.wav"))?.id,
+                       newer.id)
+        XCTAssertEqual(assets.record(id: first.id)?.id, first.id)
+
+        // No binding, no record.
+        let unbound = MediaAssetRecord(kind: .audio, fileName: "", originalName: "x",
+                                       importedAt: Date(timeIntervalSince1970: 0),
+                                       evidence: evidence(seconds: 1))
+        XCTAssertFalse(assets.register(unbound))
+        XCTAssertNil(assets.record(id: unbound.id))
+    }
+
+    func testTheRegistryDropsOneDamagedRecordAndKeepsTheRest() throws {
+        let disk = AppGroupStore(subdirectory: "MediaAssetsGuard-\(UUID().uuidString)")
+        defer { disk.delete(name: "assets") }
+        let good = record(seconds: 8, digest: "sha256:aa")
+        let goodJSON = try XCTUnwrap(String(data: try JSONEncoder().encode(good), encoding: .utf8))
+        XCTAssertTrue(disk.saveRawForTests(Data("[\(goodJSON), 42, {\"fileName\":\"x.wav\"}]".utf8),
+                                           name: "assets"))
+
+        let reloaded = MediaAssetStore(store: disk)
+        XCTAssertEqual(reloaded.records, [good], "one damaged element must not take the others down")
+
+        XCTAssertTrue(reloaded.register(record(seconds: 4)))
+        XCTAssertEqual(MediaAssetStore(store: disk).records.count, 2, "a registration persists")
+    }
+
+    // MARK: 6 — MA4.2: the import establishes identity
+
+    func testTheImportRegistersTheCopyAndTheClipCarriesItsID() throws {
+        let measured = AudioImport.Measurement(sampleRate: 44_100, frameCount: 441_000, channelCount: 2)
+        let managed = URL(fileURLWithPath: "/tmp/Media/Audio/Loop 2.wav")
+        let built = AudioImport.assetRecord(managed: managed, originalName: "Loop.wav",
+                                            measurement: measured, byteSize: 1_764_044,
+                                            importedAt: Date(timeIntervalSince1970: 5))
+        XCTAssertEqual(built.fileName, "Loop 2.wav", "the binding is the managed copy's name")
+        XCTAssertEqual(built.originalName, "Loop.wav", "provenance is the picked name")
+        XCTAssertEqual(built.kind, .audio)
+        XCTAssertEqual(built.evidence.durationSeconds, 10, accuracy: 1e-9)
+        XCTAssertEqual(built.evidence.channelCount, 2)
+        XCTAssertEqual(built.evidence.byteSize, 1_764_044)
+        XCTAssertNil(built.evidence.contentDigest, "hashing is never part of the import transaction")
+        XCTAssertEqual(AudioImport.assetRecord(managed: managed, originalName: "", measurement: measured,
+                                               byteSize: 0, importedAt: Date()).originalName,
+                       "Loop 2.wav", "an empty picked name falls back to the binding")
+
+        // END-TO-END over the real stores, the way the journey guard drives them.
+        let timeline = TimelineStore()
+        let clips = ClipStore()
+        let originalDocument = timeline.document
+        let originalSlots = clips.slots
+        defer {
+            timeline.replaceDocument(originalDocument)
+            clips.replaceSlots(originalSlots)
+        }
+        timeline.replaceDocument(TimelineDocument(lanes: [], regions: []))
+        AudioImport.addAudioTrack(timeline: timeline)
+        XCTAssertTrue(clips.replaceSlots([Clip?](repeating: nil, count: ClipStore.slotCount)))
+        let assets = MediaAssetStore(store: nil)
+        let picked = URL(fileURLWithPath: "/tmp/picked/Loop.wav")
+        let copy = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ma42-\(UUID().uuidString).wav")
+
+        let refused = AudioImport.commit(pickedURL: picked, clipStore: clips, timeline: timeline,
+                                         bpm: 120, importFile: { _ in copy }, measure: { _ in nil },
+                                         deleteManagedCopy: { _ in }, assets: assets)
+        guard case .failure = refused else { return XCTFail("an unreadable copy must be refused") }
+        XCTAssertTrue(assets.records.isEmpty, "a refused import registers nothing")
+
+        let result = AudioImport.commit(pickedURL: picked, clipStore: clips, timeline: timeline,
+                                        bpm: 120, importFile: { _ in copy }, measure: { _ in measured },
+                                        deleteManagedCopy: { _ in }, assets: assets)
+        guard case .success(let landing) = result else { return XCTFail("import failed: \(result)") }
+        let id = try XCTUnwrap(landing.clip.mediaAssetID, "the landed clip carries its asset id")
+        let registered = try XCTUnwrap(assets.record(id: id), "the id names a registered record")
+        XCTAssertEqual(registered.fileName, copy.lastPathComponent)
+        XCTAssertEqual(registered.originalName, "Loop.wav")
+        XCTAssertEqual(registered.evidence.durationSeconds, 10, accuracy: 1e-9)
+        XCTAssertEqual(clips.clip(id: landing.clip.id)?.mediaAssetID, id, "the grid holds the link")
+        XCTAssertEqual(assets.records.count, 1)
+
+        // Without a registry the import is exactly the pre-MA4.2 transaction.
+        let legacy = AudioImport.commit(pickedURL: picked, clipStore: clips, timeline: timeline,
+                                        bpm: 120, importFile: { _ in copy }, measure: { _ in measured },
+                                        deleteManagedCopy: { _ in }, assets: nil)
+        guard case .success(let plain) = legacy else { return XCTFail("legacy import failed") }
+        XCTAssertNil(plain.clip.mediaAssetID)
+    }
+
+    func testTheLinkSurvivesTheClipCodecAndAnOldClipHasNone() throws {
+        let linked = Clip(name: "Loop", kind: .audio, mediaRef: "/x/Loop.wav", mediaAssetID: UUID(),
+                          nativeDurationSeconds: 8)
+        let decoded = try JSONDecoder().decode(Clip.self, from: try JSONEncoder().encode(linked))
+        XCTAssertEqual(decoded.mediaAssetID, linked.mediaAssetID)
+
+        let old = #"{"id":"6F9619FF-8B86-D011-B42D-00C04FC964FF","name":"Loop","kind":"audio","mediaRef":"/x/Loop.wav"}"#
+        XCTAssertNil(try JSONDecoder().decode(Clip.self, from: Data(old.utf8)).mediaAssetID,
+                     "a clip written before MA4.2 decodes without a link and plays by mediaRef")
+        let damaged = #"{"name":"Loop","kind":"audio","mediaRef":"/x/Loop.wav","mediaAssetID":7}"#
+        let survived = try JSONDecoder().decode(Clip.self, from: Data(damaged.utf8))
+        XCTAssertNil(survived.mediaAssetID)
+        XCTAssertEqual(survived.mediaRef, "/x/Loop.wav", "a damaged link costs the link, not the clip")
+    }
+
+    // MARK: 7 — MA4.2: one writer, wired at the one door
+
+    func testTheImportDoorHandsTheRegistryToTheOneWriter() throws {
+        XCTAssertEqual(try filesUnderSources(containing: "assets.register("), ["Sequencer/AudioImport.swift"],
+                       "the import is the registry's one production writer in MA4.2")
+        let app = try source("Sources/Echoelmusic/EchoelmusicApp.swift")
+        XCTAssertTrue(app.contains("@State private var mediaAssetStore = MediaAssetStore()"))
+        XCTAssertTrue(app.contains(".environment(mediaAssetStore)"))
+        let door = try source("Sources/Echoelmusic/Studio/WorkstationView.swift")
+        XCTAssertTrue(door.contains("@Environment(MediaAssetStore.self) private var mediaAssets"))
+        XCTAssertTrue(door.contains("assets: mediaAssets,"),
+                      "the Workstation's import hands the registry to the transaction")
+        let importer = try source("Sources/Echoelmusic/Sequencer/AudioImport.swift")
+        XCTAssertTrue(importer.contains("assets: assets)"), "perform forwards the registry to commit")
+        XCTAssertFalse(importer.contains("assets: MediaAssetStore? ="),
+                       "the registry argument is required, never defaulted (#431)")
     }
 
     // MARK: - Helpers

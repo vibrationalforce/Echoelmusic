@@ -11,12 +11,14 @@
 // may do that on the main actor. De-duplication of identical CONTENT is its own slice (MA2,
 // `scratchpads/PLAN_MEDIA_ASSET_2026-09-26.md`), done off-main.
 //
-// ⭐ THERE IS NO INDEX FILE, AND THAT IS THE DECISION, NOT AN OMISSION. The directory is the
-// truth for "which files exist" and `ClipStore` is the truth for "who uses them"; an asset list
-// is the JOIN of the two, computed when it is looked at. A stored registry would be a fifth
-// persistence root (Ω49) that can disagree with both — a file deleted behind its back, a clip
-// replaced by Open. Consequence, stated so nobody reads it as a gap to fill: an asset has no
-// name, tag or rating of its own that could survive; its name is its file name.
+// ⭐ THIS TYPE IS THE BROWSER'S ROW, NOT THE DURABLE IDENTITY (founder media decision 2026-09-26).
+// The directory is the truth for "which files exist" and `ClipStore` for "who uses them"; a row
+// is the JOIN of the two, computed when the browser looks and never stored — the founder's
+// "BrowserItem". The durable identity (stable id, binding, provenance, evidence) is
+// `MediaAssetRecord`, held by the ONE registry `MediaAssetStore` (MA4.2). ⛔ Until MA4.2 this
+// paragraph said "there is no index file, and that is the decision"; the MA1 decision behind it
+// is superseded in `decisions.csv`. The row's key is still built here, and the record's `key`
+// is built from it, so "when are two references the same file" keeps ONE answer.
 //
 // ⚠️ ONLY THE AUDIO HOME IS AN ASSET HOME. `MediaLibrary` also creates `Media/Video` and
 // `Media/Image`, but nothing in this build plays either since video was withdrawn (#1304). A

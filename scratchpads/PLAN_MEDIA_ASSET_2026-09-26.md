@@ -240,9 +240,9 @@ relink must write both in ONE undo step. Shipper — first slice is a pure value
 
 | Slice | What | Status |
 |---|---|---|
-| MA4.1 | `MediaAssetRecord` (id, raw kind, binding file name, original name, import date, evidence: bytes/rate/frames/channels + digest?) · `match` keeps IDENTITY (equal digest) apart from COMPATIBILITY (duration) · the one duration rule moves here, `MediaRelink.sameLength` asks it · lossy decode keeps id + binding · guard `TheMediaAssetIsADurableIdentityTests` | this commit |
-| MA4.2 | registry store (App Group, one file, lossy array), `Clip.mediaAssetID` (optional, lossy decode, in the envelope via `clipSlots`); inverts claim 14 of `TheWorkstationImportsAudioTests` and the "no index file" header of `Core/MediaAsset.swift` | next |
-| MA4.3 | import writes the record (fresh copy AND the MA2 reuse path — the reused file gets a record lazily if it has none; no scan) | |
+| MA4.1 | `MediaAssetRecord` (id, raw kind, binding file name, original name, import date, evidence: bytes/rate/frames/channels + digest?) · `match` keeps IDENTITY (equal digest) apart from COMPATIBILITY (duration) · the one duration rule moves here, `MediaRelink.sameLength` asks it · lossy decode keeps id + binding · guard `TheMediaAssetIsADurableIdentityTests` | `ec2ad04a9` + review repair `965f5cb8e` (digest compared only under one algorithm) |
+| MA4.2 | registry store (App Group, one file, lossy array), `Clip.mediaAssetID` (optional, lossy decode, in the envelope via `clipSlots`); inverts claim 14 of `TheWorkstationImportsAudioTests` and the "no index file" header of `Core/MediaAsset.swift`. BUILT together with the fresh-copy half of MA4.3: `AudioImport.commit(…assets:)` (required, #431) registers the copy's record FIRST, the clip carries its id; the library placement passes `nil` for now | this cycle |
+| MA4.3 | the library-file paths: Place (orphan) and the MA2 reuse link the existing file's record, or adopt one lazily if it has none; no scan | |
 | MA4.4 | content digest off-main: SHA-256 streamed in chunks, `Task.detached`, cancellation checked per chunk, one in flight per asset, never at launch; written back through the store | |
 | MA4.5 | relink validates against the record (`match`) and rebinds: record id, clip id, region ids, tempo, automation unchanged; one undo step | |
 | MA4.6 | proof: Save/Reopen keeps the link; missing → relink keeps every creative id; legacy clips without an id keep working by `mediaRef` | |

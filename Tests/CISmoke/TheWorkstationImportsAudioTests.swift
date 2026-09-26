@@ -16,7 +16,7 @@
 // `@testable`-reachable, Foundation-only value code, driven here on real values. The claims
 // that are SOURCE-TEXT SCANS say so in their own doc — named rather than counted a second
 // time (#416/#818): `testTheImportIntroducesNoPersistenceRoot`,
-// `testOneMediaAssetIdentityAndNoAssetStore`, `testTheImportPathCarriesNoInputOrRecordingCode`,
+// `testOneMediaAssetKeyAndOneAssetRegistry`, `testTheImportPathCarriesNoInputOrRecordingCode`,
 // `testTheWorkstationIsTheOnlyImportDoor`, `testNoFileImporterSitsAboveTheImportDoor` (#W1)
 // and `testTheClipIsCommittedBeforeTheRegionAndOnlyOnSuccess`. NOTHING here is a DEVICE PROBE: no file picker
 // runs, no security-scoped URL is acquired, no audio decodes, no sound is made. That the
@@ -493,7 +493,8 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
             pickedURL: picked, clipStore: clipStore, timeline: timeline, bpm: Self.bpm,
             importFile: { _ in managed },
             measure: { _ in nil },
-            deleteManagedCopy: { deleted.append($0) })
+            deleteManagedCopy: { deleted.append($0) },
+            assets: nil)
 
         XCTAssertEqual(try failure(result), AudioImport.Failure.unreadableAudio, """
             A managed copy the decoder could not read did not produce `.unreadableAudio`.
@@ -525,7 +526,8 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
             pickedURL: picked, clipStore: clipStore, timeline: timeline, bpm: Self.bpm,
             importFile: { _ in throw CopyRefused() },
             measure: { _ in nil },
-            deleteManagedCopy: { deletedAfterCopyFailure.append($0) })
+            deleteManagedCopy: { deletedAfterCopyFailure.append($0) },
+            assets: nil)
         XCTAssertEqual(try failure(copyFailure), AudioImport.Failure.copyFailed, """
             A copy that threw did not surface as `.copyFailed`.
             """)
@@ -618,7 +620,8 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
             XCTAssertFalse(importer.contains(forbidden), """
                 `AudioImport.swift` now contains `\(forbidden)`. The import path owns NO \
                 storage: the clip persists through `ClipStore`, the region through \
-                `TimelineStore`, and the file itself through `MediaLibrary`, which already \
+                `TimelineStore`, the durable record through `MediaAssetStore` (MA4.2), \
+                and the file itself through `MediaLibrary`, which already \
                 exists and already owns the `Media/Audio` directory. A new persistence root \
                 here is a fifth place a project can half-exist.
                 """)
@@ -635,8 +638,8 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
         }
     }
 
-    /// CLAIM 14 — ONE media-asset identity type, and no asset STORE. SOURCE-TEXT SCAN over the
-    /// whole of `Sources/`.
+    /// CLAIM 14 — ONE media-asset KEY type, and exactly ONE asset REGISTRY. SOURCE-TEXT SCAN over
+    /// the whole of `Sources/`.
     ///
     /// ⭐ INVERTED 2026-09-26 (Phase 3 / MA1), AS THIS CLAIM WAS WRITTEN TO BE. It used to demand
     /// that no `MediaAsset` exist anywhere — founder decision 2 for Audio Import V1 said "not
@@ -654,10 +657,16 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
     /// ⚠️ MA4.1 (founder media decision 2026-09-26) ADDS THE DURABLE HALF WITHOUT A SECOND KEY:
     /// `Core/MediaAssetRecord.swift` is the stable id + binding + evidence the founder calls
     /// "MediaAsset"; its `key` is built FROM `MediaAsset.Key`, so "when are two references the
-    /// same file" still has one answer. The no-store half below still holds in MA4.1 and is
-    /// INVERTED by the registry slice (MA4.2) — the founder decision it asks for now exists and
-    /// is recorded in the media plan §MA4 and `decisions.csv`.
-    func testOneMediaAssetIdentityAndNoAssetStore() throws {
+    /// same file" still has one answer.
+    ///
+    /// ⭐ INVERTED AGAIN BY MA4.2, AS ITS OWN MESSAGE ASKED: the no-store half demanded "its own
+    /// founder decision, recorded beside the MA1 plan" — that decision is the founder's media
+    /// decision of 2026-09-26, recorded in the plan §MA4 and `decisions.csv` (the MA1 row is
+    /// superseded). What survives is the half that still prevents a drift: exactly ONE registry,
+    /// `MediaAssetStore` in `Core/MediaAssetStore.swift`, the only owner of the `MediaAssets`
+    /// directory — and none of the look-alike names a second registry would arrive under.
+    /// (Renamed from `testOneMediaAssetIdentityAndNoAssetStore`, whose name had become false, #374.)
+    func testOneMediaAssetKeyAndOneAssetRegistry() throws {
         var declarations: [String] = []
         for keyword in ["struct", "class", "enum", "actor", "protocol"] {
             declarations += try filesUnderSources(containing: "\(keyword) MediaAsset ")
@@ -671,14 +680,24 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
             about when two references are the same file.
             """)
 
-        for name in ["AudioAsset", "MediaAssetStore", "AudioAssetStore", "MediaAssetIndex"] {
+        let registries = try filesUnderSources(containing: "final class MediaAssetStore")
+        XCTAssertEqual(registries, ["Core/MediaAssetStore.swift"], """
+            The durable media registry is declared in \(registries.isEmpty ? "no file" : registries.joined(separator: ", ")). \
+            MA4.2 has exactly ONE, `MediaAssetStore` in `Core/MediaAssetStore.swift`.
+            """)
+        let owners = try filesUnderSources(containing: "AppGroupStore(subdirectory: \"MediaAssets\")")
+        XCTAssertEqual(owners, ["Core/MediaAssetStore.swift"], """
+            The `MediaAssets` directory is opened by \(owners.joined(separator: ", ")). Only the \
+            registry may own it; a second writer is a second opinion about which files are which.
+            """)
+
+        for name in ["AudioAsset", "AudioAssetStore", "MediaAssetIndex", "MediaAssetRegistry"] {
             for keyword in ["struct", "class", "enum", "actor", "protocol"] {
                 let found = try filesUnderSources(containing: "\(keyword) \(name)")
                 XCTAssertTrue(found.isEmpty, """
                     `\(keyword) \(name)` is declared in \(found.joined(separator: ", ")). The \
-                    media library has NO store of its own: the directory says which files \
-                    exist and `ClipStore` says who uses them. A registry is a new persistence \
-                    root and needs its own founder decision, recorded beside the MA1 plan.
+                    media library has ONE registry, `MediaAssetStore` (MA4.2); a second one is a \
+                    second persistence root that can disagree with the first.
                     """)
             }
         }
