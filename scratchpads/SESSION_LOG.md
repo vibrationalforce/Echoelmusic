@@ -39995,3 +39995,19 @@ Review 10 was independent. These three prose commits are builder-made and **not 
   - Documented, not changed: bare-name refs (no writer).
 - **Evidence:** transcription-graded; five checkers clean; gates pending (check-in 01:11Z). DEVICE: NEEDS-FOUNDER-VERIFY (guard header).
 - **Next:** MA2 import de-dup (design recorded in the plan: synchronous is enough, because the compare replaces a copy).
+
+## 2026-09-26 01:35Z — MA1 gates read; Phase 3 / MA2: import de-dup (`7b691faf8`)
+
+- **MA1 gates on `4ad1ba1df`** (head_sha compared with HEAD):
+  - `Xcode Compile Check` 2905 = **success**.
+  - CI/CD 6370 `Build for Testing` = **success** (00:46→00:52Z).
+  - `Run Tests` failed in the #396 shape. `gh-test-verdict.py`: 167 passing and 0 failures in the `tail -200` window, with a 1235 s gap in the fetched log. No MA1 suite name appears in the window, so their execution is UNRECORDED (#445).
+  - No new slow type-check warning from MA1 files.
+  - Auto-merge: `main` = `4ad1ba1df`.
+- **MA2 built (`7b691faf8`):**
+  - `MediaLibrary.existingAudio(matching:)` filters by size first, then byte-compares in bounded 1 MB chunks. It never writes, deletes or decodes.
+  - `AudioImport.preferredExisting` picks the identical file a clip already plays; otherwise the first match.
+  - `AudioImport.landExisting` goes through `MediaPlacement.place`, so it makes the same decision "Place" makes. A carried file becomes one region (no slot, no copy); an orphan becomes one clip at the existing file.
+  - `Landing.reusedLibraryFile` is required, and the note says "already in the library … no second copy". `Placed` now carries the clip and the slot.
+- **Guard:** `TheImportReusesAnIdenticalLibraryFileTests` — real files, real stores in a temp home, refusals leave the file, and a scan showing the library is asked inside the scope and before the copy.
+- **Evidence:** five checkers clean; scan anchors transcribed; an independent code review is running; gates pending. DEVICE: NEEDS-FOUNDER-VERIFY (guard header).
