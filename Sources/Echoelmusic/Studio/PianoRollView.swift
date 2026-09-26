@@ -1146,6 +1146,21 @@ public final class PianoRollModel {
                 midiOut?.noteOff(pitch: note.pitch)
             }
         }
+        // M5 — displaced releases, ahead of every attack: an edit can move a SOUNDING note
+        // (same id) onto a later onset inside its own span, with a new pitch or a new role.
+        // The attack below would overwrite `active[id]` and the old sound would never be
+        // released. Same voice/MIDI de-dup as the releases above. `LaneNotePump` does the same.
+        for note in starting where !tiedStart.contains(note.id) {
+            guard let old = active[note.id],
+                  old.pitch != note.pitch || !sameVoice(old.role, note.role) else { continue }
+            active[note.id] = nil
+            if !active.values.contains(where: { $0.pitch == old.pitch && sameVoice($0.role, old.role) }) {
+                outputVoice(for: old.role)?.noteOff(pitch: old.pitch)
+            }
+            if !active.values.contains(where: { $0.pitch == old.pitch }) {
+                midiOut?.noteOff(pitch: old.pitch)
+            }
+        }
         // The body's live 5D expression for this note (only when MIDI-out 5D mode is
         // armed, a fresh bio frame exists, AND that body's source may leave the
         // device): coherence→Slide/brightness, breath→Press, HRV→Glide micro-drift.

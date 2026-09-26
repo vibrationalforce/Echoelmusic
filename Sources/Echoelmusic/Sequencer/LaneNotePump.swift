@@ -101,8 +101,20 @@ public struct LaneNotePump: Sendable, Equatable {
             }
         }
 
+        // M5 — displaced releases, still ahead of every attack: an edit can move a SOUNDING
+        // note (same id) onto a later onset inside its own span with a new pitch. The onset
+        // below would overwrite its entry, and the old pitch would never be released.
+        let starting = notes.filter { $0.startStep % stepCount == s }
+        for note in starting {
+            guard let old = active[note.id], old.pitch != note.pitch else { continue }
+            active[note.id] = nil
+            if !active.values.contains(where: { $0.pitch == old.pitch }) {
+                events.append(Event(pitch: old.pitch, velocity: 0))
+            }
+        }
+
         // Onsets: notes starting on this step. Silent notes (velocity 0) never attack.
-        for note in notes where note.startStep % stepCount == s {
+        for note in starting {
             let v = min(1, max(0, note.velocity))
             guard v > 0 else { continue }
             events.append(Event(pitch: note.pitch, velocity: v))
