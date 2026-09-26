@@ -40046,3 +40046,10 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - EF2: the Echoel's genre is the instance's second fact. `settingEchoelField` / `writeEchoelField` shared by both facts; `TimelineStore.setEchoelGenre`; `TimelineDocument.echoelGenre`. ESV: genre case writes the song first; launch (genre before FX) and openFromLibrary adopt silently; `"echoelGenre"` edit adopts announced; `open(_:)` + Sound reset write the song. Workstation: Genre row on the Echoel track (menu Picker, shelf root); `requestEchoelInstanceIfMissing` imports each missing fact.
 - Guard claims 8/9 (forward), claim 7 re-anchored; `TrackMix.pickEchoelGenre` named to keep `setEchoelGenre` unique (TheTimelineStoresLiveSurfaceTests). Five checkers clean; claim 7/9 scans transcribed in Python: 20/20 green.
 - Gates: CI/CD 6375/6376/6377 in progress at 02:38Z; Compile Check for 83b617760 queued. Independent review running.
+
+### 2026-09-26 03:00Z — EF2 reviewed + repaired; EF closed; S1 scenes shipped (f5b573b9e)
+- EF2 review (no HIGH): MED-1 repaired in c5dd5e6b1 — a library Open writes the TAKE's genre into the song (a recovery row can pair a take with a song from another moment); LOW-1 (OSC genre outside `offered`) + LOW-2 (= L1) recorded; LOW-3 doc fixed.
+- Gates: fce169210 BfT 6376 GREEN (main = fce169210); 83b617760 BfT 6377 GREEN (Run Tests running).
+- EF3 (patch on the instance) DEFERRED by Council — the take owns the patch; it is the Clips question. Plan updated.
+- Clips/Scenes/Session census (read-only subagent) → `scratchpads/PLAN_CLIPS_SCENES_2026-09-26.md`.
+- S1 f5b573b9e: scene launch = switch (`ClipLaunchEngine.requestScene` / `requestStopAll`; player `launchScene` / `stopAllLaunched`; one refusal rule `launchableLaneID`); SessionLaunchView scene button = one call, "Back to song", Playing/Queued per scene. Guard `TheSceneLaunchIsASwitchTests` (engine end-to-end; transcribed). Review + gates running.

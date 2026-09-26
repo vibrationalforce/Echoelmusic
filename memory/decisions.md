@@ -2937,3 +2937,15 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Open:** L1 (debounced song save vs immediate `@AppStorage`) applies to the genre too; a
   Project whose saved style differs from its song's genre adopts the song's silently.
 - **Review date:** 2026-10-26.
+
+### 2026-09-26 — Scenes are a switch, S1 (Phase 3 / Clips·Scenes·Session)
+- **Decision:** "Launch scene" = ONE engine request (`ClipLaunchEngine.requestScene`): the scene's
+  parts launch, every other active lane returns to the song, all on one boundary. "Back to song" =
+  `requestStopAll`. Scenes stay a PROJECTION (start bars of playable parts); nothing persisted.
+- **Stop means back to the song, not silence** in this lane-override model — a silent-track override
+  would be a later engine change.
+- **EF3 deferred:** the patch stays take-owned; whether a clip carries its own sound is decided with
+  the Clips question (8-slot pool, authored scenes).
+- **Founder calls ahead:** start the song AT a scene (breaks "WorkstationView is the one `play(`
+  caller"); authored/named scenes (needs a `HistoryStep` case for one undo step).
+- **Review date:** 2026-10-26.
