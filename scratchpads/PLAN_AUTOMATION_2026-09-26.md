@@ -96,7 +96,7 @@ Open (unchanged from A1): MED-2 pick radius, LOW-5, LOW-10.
   the field reads and writes the parameter's real value and unit; guard pins agreement with
   `PerTrackAutomationResolver`. The canvas height stays LINEAR over the real range (short
   times sit low) — stated in the editor header, not fixed.
-- MED-1 REPAIRED in A4 (e6892d37f, see below) — was: after Stop a curve that ended low leaves its value —
+- MED-1 CLOSED AS NO DEFECT (A4 built and reverted, see below) — was: after Stop a curve that ended low leaves its value —
   Amplitude at 0 = a silent rack track until the next Play re-applies the patch. Bounded; stated
   in the header; NEEDS-FOUNDER-VERIFY in the guard. Fix candidate A3: re-send `slotPatchSink`
   on stop for slots with per-track lanes.
@@ -148,3 +148,13 @@ exactly the resolver's rule; each once, slot order, within capacity; Echoel/audi
 curves restore nothing. Guard claim 9 (behaviour + scan), FORWARD against 43620c8d6.
 Evidence: transcription; gates pending; not device-verified. Global-voice hold after Stop is
 NOT touched (the global layer has no song writer).
+
+## A4 review (e6892d37f, independent) — A4 REVERTED
+- MED-2 (decisive): the premise was false. `noteOn(slot:` has ONE caller (the timeline note
+  sink) and every load re-sends the lane's patch before notes, so the held value is inaudible;
+  the A4 device probe passed on the parent too. Measured: `git grep -n "noteOn(slot:" -- Sources`.
+- MED-1: the restore raised the release tails of a faded track after Stop (patch commands drain
+  before note commands in `PolySynthVoice`). A real regression → reverted.
+- LOW-1/LOW-2 moot with the revert.
+- LESSON: before repairing a "state persists" finding, name the control that would HEAR it.
+  A2 review MED-1 had none.

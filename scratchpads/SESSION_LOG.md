@@ -40075,3 +40075,6 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 
 ### 2026-09-26 06:30Z — Automation A4 shipped (e6892d37f)
 - A4: A2 review MED-1 repaired — Stop re-sends each automated rack track's own patch via `slotPatchSink` (`restoreAutomatedSlots` / pure `automatedSlots`), both stop paths, after the arrangement layer is released. Guard claim 9; five checkers clean; scans transcribed (parent: regression shape). Gates pending; independent review running. Not device-verified.
+
+### 2026-09-26 06:25Z — A4 reverted after independent review
+- Review of e6892d37f: the held post-Stop value is inaudible (one `noteOn(slot:` caller; every load re-sends the patch) and the restore re-raised release tails of a faded track. Reverted; A2 MED-1 closed as no defect; editor header + guard verify line corrected; decisions.csv A4 row → REVERSED.
