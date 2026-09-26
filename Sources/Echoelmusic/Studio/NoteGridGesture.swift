@@ -12,7 +12,7 @@
 //    one step long, never past the part; a hold without a slide stretches nothing);
 //  · on a note's BODY → move the selection by whole steps and semitones — the whole on-screen
 //    selection when the note is part of it, otherwise that note alone;
-//  · on an EMPTY cell → a selection box; the notes it touches become the selection.
+//  · on an EMPTY cell → a selection box; the notes it touches JOIN the selection (M9, `boxing`).
 //
 //  ⭐ A MOVE NEVER TAKES A NOTE OUT OF WHAT THE USER CAN SEE OR HEAR. The step delta keeps every
 //  moved note's start inside the part (the player skips a note that starts outside its window),

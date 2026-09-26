@@ -380,16 +380,19 @@ struct SelectedPartBar: View {
     }
 }
 
-/// M10 — Play the song from the selected part's bar, or Stop it. A leaf, so the only view that
-/// rebuilds when the transport starts or stops is this one button.
+/// M10 — Play the song from the selected part's bar, or Stop it. A leaf: its own reads of the
+/// transport and the song stay in its own body. (The Workstation root rebuilds on start and stop
+/// anyway — its transport row reads `isPlaying` — and hands this button fresh closures when it
+/// does, so `canPlay` runs once there and once here per such render. Cold state, both times.)
 ///
 /// ⚠️ It never calls `player.play(`: `playFrom` is the Workstation's `startTimeline`, which the
 /// player floors to the part's bar (`barStartTick`). A part that starts off the grid plays from
 /// the bar it starts in. And it asks `songCanStart` rather than `canPlay` — the Workstation is
 /// the one control that may ask the engine (`TheWorkstationPlaysTheTimelineTests`), and the
 /// answer is the same one its own Play is dimmed by: a button that is lit here does something.
-/// ⚠️ While the song plays it is Stop, the player's own stop — never a second start: a restart
-/// while the shared pattern runs lands the roll mid-bar (M7 review, LOW-3).
+/// ⚠️ While the song plays it is Stop, the player's own stop — never a second start. It does NOT
+/// cover the instrument's own loop: if that runs while the song is stopped, this button starts
+/// the song under a running pattern, the same M7 review LOW-3 case the Workstation's Play has.
 @MainActor
 private struct PartPlayButton: View {
     let startTick: Int
@@ -408,6 +411,7 @@ private struct PartPlayButton: View {
                     .font(.system(size: 11, weight: .semibold))
                 Text(playing ? "Stop" : "Play from here")
                     .font(EchoelTheme.font(11, .semibold)).lineLimit(1)
+                    .fixedSize()   // the title beside it wraps; the action's name never truncates
             }
             .foregroundStyle(playing ? EchoelTheme.onPrimary
                                      : (startable ? EchoelTheme.text : EchoelTheme.dim))
@@ -420,5 +424,8 @@ private struct PartPlayButton: View {
         .buttonStyle(.plain)
         .disabled(!startable)
         .accessibilityLabel(playing ? "Stop timeline" : "Play the song from the selected part")
+        .accessibilityHint(startable && !playing
+            ? "Plays the arrangement from this part's bar on the shared transport."
+            : WorkstationSummary.transportHint(playing: playing, startable: startable))
     }
 }

@@ -1083,7 +1083,8 @@ struct WorkstationView: View {
     /// "Would Play start the song?" — the engine's own `canPlay`, with the four inputs `play`
     /// hands it (see `transportRow`). ONE call site in this file, so the transport's Play and the
     /// part bar's Play (M10) can never disagree. Evaluated in the caller's `body`, so the reads
-    /// subscribe whichever view asks — the part bar's leaf, not this root.
+    /// subscribe whichever view asks — the part bar's leaf, and this root through `transportRow`
+    /// (which already made exactly these cold reads before M10).
     private func songCanStart() -> Bool {
         TimelineRegionPlayer.canPlay(
             timeline.document,

@@ -965,7 +965,8 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
             """)
         XCTAssertEqual(askers.sorted(),
                        ["Sequencer/TimelineRegionPlayer.swift", "Studio/WorkstationView.swift"], """
-            Only the engine and its one control may ask. Found: \(askers.sorted()).
+            Only the engine and its one control may ask — since M10 through `songCanStart()`, \
+            which the Workstation also hands to the part bar's Play. Found: \(askers.sorted()).
             """)
         let src = try code(at: Self.view)
         for construction in ["ClipStore(", "TimelineStore(", "PatternEngine(", "PianoRollModel("] {
@@ -995,7 +996,9 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
         }
         XCTAssertEqual(callers.sorted(), ["Studio/WorkstationView.swift"], """
             The authorised production caller of `TimelineRegionPlayer.play(…)` is the \
-            Workstation's Play and nothing else. Found: \(callers.sorted()).
+            Workstation's `startTimeline` and nothing else — its Play, and the Session scenes' \
+            and the part bar's Play through the closures it hands them (S2, M10). \
+            Found: \(callers.sorted()).
             · EMPTY means Phase 4 was undone — the arrangement is unplayable and the door \
               leads to a read-only plate again.
             · MORE THAN ONE means a second surface can start the song. That is not a style \

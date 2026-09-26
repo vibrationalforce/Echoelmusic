@@ -21,8 +21,8 @@
 // counterweights are the resolved box touching exactly one note (the premise) and the empty box.
 // Claim 2 is a scan of the same new call.
 // NOT covered: the finger feel on a device.
-// NEEDS-FOUNDER-VERIFY: Workstation → Notes on a part → tap one note → box two others elsewhere
-// → all three are lit, and Delete removes all three; Deselect clears them.
+// NEEDS-FOUNDER-VERIFY: Workstation → Notes on a part → tap one note → box two others in the same
+// octave view → all three are lit, and Delete removes all three; Deselect clears them.
 
 import Foundation
 import XCTest

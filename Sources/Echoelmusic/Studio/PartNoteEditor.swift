@@ -238,8 +238,9 @@ private struct PartNoteGrid: View {
         }
     }
 
-    /// The finger lifted: a box selects; a move or a stretch is ONE commit through the one
-    /// writer, and a gesture that changed nothing commits nothing.
+    /// The finger lifted: a box adds to the selection (M9); a move or a stretch is ONE commit
+    /// through the one writer, and a gesture that changed nothing commits nothing. A move keeps
+    /// the picks it did not move (off screen) — M9 review: it used to narrow to the moved ones.
     private func finish(_ gesture: NoteGridGesture, region: TimelineRegion, offset: Int) {
         switch gesture {
         case .marquee(let ids, _, _, _, _):
@@ -251,7 +252,7 @@ private struct PartNoteGrid: View {
                                                   offsetTicks: offset,
                                                   lengthTicks: region.lengthTicks) else { return }
             if timeline.setClipNotes(clipID: region.clipID, moved, clips: clipStore) {
-                picked = RollSelection(ids: Array(ids))
+                picked = RollSelection(ids: Array(picked.ids.union(ids)))
             }
         case .resize(let id, let dSteps):
             guard let clip = clipStore.clip(id: region.clipID),
@@ -269,7 +270,8 @@ private struct PartNoteGrid: View {
         guard !ids.isEmpty, let clip = clipStore.clip(id: region.clipID) else { return }
         let remaining = ClipNoteEdit.removing(ids, from: clip.melody?.notes ?? [])
         if timeline.setClipNotes(clipID: region.clipID, remaining, clips: clipStore) {
-            picked = .none
+            // Only the deleted notes leave the selection; a pick off screen stays picked (M9 review).
+            picked = RollSelection(ids: Array(picked.ids.subtracting(ids)))
         }
     }
 

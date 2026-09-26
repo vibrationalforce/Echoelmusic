@@ -23,9 +23,10 @@
 // tick the button hands over is heard from the part. On the parent (the M7 review repair) the
 // file COMPILES — it names no new symbol outside strings — and claim 2 is red there by ANCHOR
 // ABSENCE (one absence, #486).
-// NOT covered: that it is seen, reached and heard on a device; a restart while the instrument's
-// own loop is running mid-bar (M7 review LOW-3 — the button offers Stop while the song plays, so
-// it adds no new way into that case).
+// NOT covered: that it is seen, reached and heard on a device; a start while the INSTRUMENT's
+// own loop is running mid-bar (M7 review LOW-3). The button is Stop while the song plays, but the
+// instrument's loop is not the song: this button reaches that case exactly as the Workstation's
+// Play already did (M10 review, LOW-3).
 // NEEDS-FOUNDER-VERIFY: Workstation → a song with a part in a later bar → tap that part → "Play
 // from here" above its notes → the song starts at that part's bar, the button turns to Stop, and
 // Stop stops it; a song with nothing to play shows the button dimmed.
