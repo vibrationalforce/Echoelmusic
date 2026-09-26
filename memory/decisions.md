@@ -2914,3 +2914,13 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Why:** the founder's Phase 3 order ("native DeviceChain"). Every rack slot already renders its own FX chain at the defaults, so a per-track insert needs no new audio node and no render code.
 - **Next:** DC2 is decided from the DC1 device report (effect parameters, or a second insert type). Audio-lane inserts need a graph attach at prime and an avaudio-route-resilience pass first.
 - **Review date:** 2026-10-26
+
+### 2026-09-26 — Echoel as a device instance on its track, EF1 (Phase 3)
+- **Decision:** the Echoel instrument's FX character is owned by the song: an instrument insert (`DeviceChain.instrument`, own coding key) on the roll lane, typeID `com.echoelmusic.device.echoel` (WA3 §A.2), state v1 = sorted-keys JSON `[String: String]`.
+  - One writer: `TimelineStore.setEchoelFXCharacter` — roll lane only, removes a stale Echoel instance from other lanes, never rewrites a later/unreadable instance, no-op when unchanged.
+  - `@AppStorage("studio.fxCharacter")` stays as the instrument's WORKING COPY (the Effects Picker and the `.auto`-aware stamps read it). `EchoelStudioView.adoptEchoelFXFromSong()` syncs song → copy (or imports copy → song once) at launch, after `restoreSong` in `openFromLibrary`, and on the `"fxCharacter"` edit. The Effects Picker and `open(_:)` write the song too.
+  - The Workstation's Echoel track shows an Effect row (Auto first) only once the song holds a readable instance.
+  - What PLAYS a lane stays derived (roll rule); the instance carries only how the Echoel is set. When the derivation moves into the slot, it replaces the rule.
+- **Why:** founder Phase 3 order; WA3 §P; the song carried no trace of its Echoel. One fact first keeps the sync points countable.
+- **Next:** EF2 genre onto the same instance (5 writers today), then patch identity.
+- **Review date:** 2026-10-26
