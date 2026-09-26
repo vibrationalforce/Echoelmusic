@@ -32,8 +32,12 @@
 //    with its id — record id, clip id, region ids, tempo and automation all stay;
 // 3. else the record has moved on (another project relinked it) → the link is RELEASED; taking the
 //    record back would pull it away from a file another clip plays.
-// The record only refutes; it never upgrades "same length" into "same recording". A record must
-// never name a file its clip no longer plays.
+// The record only refutes; it never upgrades "same length" into "same recording". The rule is
+// enforced for the RELINKING clip: a moved record still linked by a clip in another project that
+// names the old file points past that clip until it is relinked too (the record is the source
+// identity, and that clip's file is equally missing).
+// ⚠️ Step 1 is the one exception to "a relink keeps the MediaAsset id": the clip's former record
+// could have moved, but the chosen file already HAS an identity, and moving would give it two.
 //
 // ⭐ ONE UNDO STEP IN THE CURRENT SESSION (founder 2026-09-26, after review M1 found the first
 // header's "undone by relinking again" false). The write goes through

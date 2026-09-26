@@ -22,7 +22,8 @@
 // `body`, never while closed. The clip and its parts are left exactly as they are.
 // ⭐ B2b — RELINK points a missing clip at a library file (`MediaRelink`, same length only, never
 // while the song plays); its id, name, tempo and every part stay, so the silent parts sound again.
-// ⚠️ It is not undoable and cannot tell two equal-length recordings apart (`MediaRelink` header).
+// ⚠️ It is ONE Undo step in the current session and cannot tell two equal-length recordings apart
+// (`MediaRelink` header).
 //
 // ⭐ B3 — PREVIEW plays a file's first `previewSeconds` on the audition path `BeatPlayer` already
 // attaches at launch (`audition(url:fromSeconds:lengthSeconds:)`, until now without a caller).

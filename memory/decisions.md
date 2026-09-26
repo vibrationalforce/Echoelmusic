@@ -2984,3 +2984,9 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Held:** MA4.4 content digest — needs a hash implementation; CryptoKit is a new framework (Council/founder). The `contentDigest:` slot exists.
 - **Note:** a relink moves the record for every clip linked to it — the record IS the source identity. Playback still resolves by `mediaRef` until the resolver slice.
 - **Review date:** 2026-10-26.
+
+### 2026-09-26 — Relink identity order (MA4.5 review repair, `95cb1a16f` + follow-up)
+- **Decision:** `MediaRelink.identity`: (1) the chosen file's OWN unrefuted record is adopted; (2) else the clip's record MOVES with its id while it still names this clip's missing file; (3) else the link is released. One `.clipSource` Undo restores clip, link and binding.
+- **Exception, stated:** step 1 is where a relink does NOT keep the clip's MediaAsset id — the chosen file already has an identity, and one file must not carry two.
+- **Known limit:** a moved record also linked by a clip in another project that names the old (equally missing) file points past that clip until it is relinked too.
+- **Review date:** 2026-10-26.

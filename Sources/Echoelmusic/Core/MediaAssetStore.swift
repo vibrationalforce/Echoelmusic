@@ -19,8 +19,8 @@
 //   the NEWEST — the latest import or rebind of a name is what that name means now; the older
 //   record keeps its id, so a clip linked to it is not rewritten. (The library picks
 //   collision-free names, this app deletes no media, and a relink never moves a record onto a
-//   file that already has its own (`MediaRelink`, MA4.5 review MED-2) — so this happens only when
-//   a file was removed behind the app's back and the name reused; the digest slice MA4.4 is what
+//   file whose own record its measurement does not refute (`MediaRelink`, MA4.5 review MED-2) —
+//   so this happens only when a file was replaced behind the app's back under a reused name; the digest slice MA4.4 is what
 //   can tell the two files apart.)
 // · Element-tolerant decode: one damaged record is dropped, the others survive. Unlike the clip
 //   grid, position means nothing here, so compacting is correct.

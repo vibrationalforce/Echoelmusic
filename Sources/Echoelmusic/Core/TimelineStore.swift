@@ -351,7 +351,10 @@ public final class TimelineStore {
     /// `.release` leaves the clip unlinked — a record never names a file its clip no longer plays.
     /// The same step moves clip, link and record binding back. Validation — is this file that
     /// source, whose record describes it? — is the caller's (`MediaRelink`); this writer only
-    /// refuses a move of another clip's record or of one no longer registered. Refused (false,
+    /// refuses a move of another clip's record or of one no longer registered (an `.adopt` id is
+    /// taken as given — it carries no store to ask). Undo moves a record back without re-asking
+    /// whether it moved on since; within one session's history that needs another relink of the
+    /// same record, which the browser offers only for a missing clip. Refused (false,
     /// nothing written, no step): an unknown or non-audio clip, a clip with no reference, an empty
     /// new reference, a length that is not a positive finite number. A relink that changes nothing
     /// (reference, length, link and binding all as they are) returns true without a step.

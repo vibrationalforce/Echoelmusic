@@ -45,7 +45,9 @@
 //    refutes, never confirms.
 // 10. END-TO-END (MA4.5 review, real stores): a record that has moved on to another file is not
 //    pulled back (the link is released, MED-1); a file with its own record gives the clip THAT
-//    record and nothing moves (MED-2); a record its file's measurement refutes is not adopted.
+//    record and nothing moves (MED-2) — even when the clip's record could legally move, which pins
+//    the ORDER of the steps; a record its file's measurement refutes is not adopted; a file no
+//    record describes takes the move.
 //
 // MA4.5 REVIEW GRADING against `9bed36874`: does not compile there (`RelinkIdentity`,
 // `relinkClipSource(…identity:)`) — one absence (#486). Claim 10 is FORWARD; on that tree's
@@ -594,18 +596,27 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         // A record whose name is taken by a file its measurement refutes.
         let stale = MediaAssetRecord(kind: .audio, fileName: "Short.wav", originalName: "Short.wav",
                                      importedAt: Date(timeIntervalSince1970: 3), evidence: evidence(seconds: 4))
-        for record in [shared, other, stale] { XCTAssertTrue(assets.register(record), "fixture premise") }
+        // A record that STILL names its clip's missing file — the one a move would be legal for.
+        let current = MediaAssetRecord(kind: .audio, fileName: "Take.wav", originalName: "Take.wav",
+                                       importedAt: Date(timeIntervalSince1970: 4), evidence: evidence(seconds: 8))
+        for record in [shared, other, stale, current] {
+            XCTAssertTrue(assets.register(record), "fixture premise")
+        }
         // This song's clip still names the missing "Loop.wav" and links the shared record.
         let song = Clip(name: "Loop", kind: .audio, mediaRef: "/x/Media/Audio/Loop.wav",
                         mediaAssetID: shared.id, nativeDurationSeconds: 8, nativeBPM: 120)
+        let take = Clip(name: "Take", kind: .audio, mediaRef: "/x/Media/Audio/Take.wav",
+                        mediaAssetID: current.id, nativeDurationSeconds: 8)
         var grid = [Clip?](repeating: nil, count: ClipStore.slotCount)
         grid[0] = song
+        grid[1] = take
         XCTAssertTrue(clips.replaceSlots(grid), "fixture premise")
-        func relink(to name: String) -> Result<Double, MediaRelink.Refusal> {
+        func relink(_ clipID: UUID? = nil, to name: String) -> Result<Double, MediaRelink.Refusal> {
             let asset = MediaAsset(kind: .audio, fileName: name,
                                    url: URL(fileURLWithPath: "/y/Media/Audio/\(name)"), byteSize: 1)
             // 384 000 frames at 48 kHz: exactly 8 s (#442).
-            return MediaRelink.relink(song.id, to: asset, clipStore: clips, timeline: timeline, assets: assets,
+            return MediaRelink.relink(clipID ?? song.id, to: asset, clipStore: clips, timeline: timeline,
+                                      assets: assets,
                                       fileExists: { _ in true },
                                       measure: { _ in AudioImport.Measurement(sampleRate: 48_000,
                                                                               frameCount: 384_000,
@@ -640,7 +651,25 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertEqual(bindings(), before)
         timeline.undo()
         XCTAssertEqual(clips.clip(id: song.id), song)
-        XCTAssertFalse(timeline.canUndo, "three relinks, three steps, all undone")
+
+        // THE ORDER (review of `95cb1a16f`): this record still names its clip's missing file, so a
+        // move WOULD be legal — and the chosen file's own identity still wins. Swapping steps 1
+        // and 2 of `MediaRelink.identity` turns this red.
+        XCTAssertEqual(relink(take.id, to: "Other.wav"), .success(8))
+        XCTAssertEqual(clips.clip(id: take.id)?.mediaAssetID, other.id,
+                       "the file's own record comes before moving the clip's")
+        XCTAssertEqual(assets.record(id: current.id)?.fileName, "Take.wav", "the clip's record did not move")
+        XCTAssertEqual(bindings(), before)
+        timeline.undo()
+        XCTAssertEqual(clips.clip(id: take.id), take)
+        // Counterweight: the same clip to a file NO record describes — now the move is taken.
+        XCTAssertEqual(relink(take.id, to: "Take (1).wav"), .success(8))
+        XCTAssertEqual(clips.clip(id: take.id)?.mediaAssetID, current.id, "the link is kept")
+        XCTAssertEqual(assets.record(id: current.id)?.fileName, "Take (1).wav", "…and the record moved")
+        timeline.undo()
+        XCTAssertEqual(clips.clip(id: take.id), take)
+        XCTAssertEqual(assets.record(id: current.id)?.fileName, "Take.wav")
+        XCTAssertFalse(timeline.canUndo, "five relinks, five steps, all undone")
     }
 
     // MARK: - Helpers
