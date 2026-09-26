@@ -41,6 +41,10 @@
 //     paragraphs up ("`sameParameter` is read by `Core/TimelineStore.swift`") is now the
 //     narrower half of the truth and is left standing on purpose, because the tripwire it
 //     describes — deleting this file breaks the store — is what that paragraph is about.
+//   · ⭐ Phase 3 / Automation A1 gave `x(forTick:)` · `tick(forX:)` · `hitPointID` (and
+//     through it `nearestPoint` · `touchRadius`) · `displayPoints` a caller again:
+//     `Studio/SongAutomationEditor.swift`, the song-wide automation row. What follows
+//     describes the time before it, and `tapSlopPoints` still has none.
 //   · `x(forTick:)` · `tick(forX:)` · `nearestPoint` · `hitPointID` ·
 //     `displayPoints` · `touchRadius` · `tapSlopPoints` — ZERO callers in `Sources/`.
 //     Their only one was the unmounted `TimelineAutomationRow` view, and #473 deleted

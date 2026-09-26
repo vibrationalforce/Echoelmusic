@@ -277,6 +277,11 @@ struct WorkstationView: View {
                     // switch. A leaf: it reads the clip grid, never the transport.
                     PartNoteEditor()
                         .padding(.horizontal, 10)
+                    // Phase 3 / Automation A1 — the selected track's curve, behind its own
+                    // "Automation" switch, on the canvas's scale. A leaf with its own store
+                    // write; this view still sends `timeline` nothing but `document`.
+                    SongAutomationEditor(songTicks: ArrangementStrip.songTicks(summary))
+                        .padding(.horizontal, 10)
                 }
                 // WA4 path 7 — the ONE Undo/Redo for the song's parts. Outside the canvas's
                 // `if`, so removing the last part still leaves the way back on screen.

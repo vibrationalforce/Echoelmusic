@@ -47,6 +47,9 @@
 //        `Studio/PartNoteEditor.swift`) plus two private helpers of the typed history,
 //        `pushUndo` and `apply(_:)` — so the internal-only count below is two short too.
 //        (`undo`/`redo` still sit in the caller-less 46 and have had callers since WA4.3.)
+//        ⭐ Phase 3 / Automation A1 added `setSongAutomation` (the automation row's one writer,
+//        called from `Studio/SongAutomationEditor.swift`). The older per-point automation
+//        mutators stay caller-less on purpose — they write no undo step.
 //   ·  8 used only inside this file — the previous six (automationLaneIndex,
 //        canCombineRegions, migrate, resolveOverlaps, restoreRegions, syncUndoFlags) PLUS
 //        `persist` (46 internal call sites, one per mutating path) and `snapshotForUndo`
@@ -187,8 +190,10 @@ public final class TimelineStore {
     ///   · `.regions` — the song's parts (value-type copy of `document.regions`, cheap);
     ///   · `.clipNotes` — ONE MIDI clip's notes, written back through the `ClipStore` the edit
     ///     went through (an app-lifetime store, carried so `undo()`/`redo()` keep their
-    ///     parameterless shape and nothing has to be attached at launch).
-    /// Deliberately NOT whole-document snapshots: lanes/mixer/automation are not part of this
+    ///     parameterless shape and nothing has to be attached at launch);
+    ///   · `.automation` — the song's automation lanes (`document.automation`), Phase 3 /
+    ///     Automation A1: the kind the automation writers were told to wait for.
+    /// Deliberately NOT whole-document snapshots: lanes/mixer are not part of this
     /// history, so an undo can never silently revert a fader move, rename, or instrument
     /// assignment made after the edit (reviewer-caught cross-contamination). A notes step
     /// cannot touch a part and a parts step cannot touch a note — the kinds do not overlap.
@@ -196,6 +201,7 @@ public final class TimelineStore {
     private enum HistoryStep {
         case regions([TimelineRegion])
         case clipNotes(clipID: UUID, notes: [Note], clips: ClipStore)
+        case automation([AutomationLane])
     }
 
     /// Kept off observation; the observable `canUndo`/`canRedo` flags drive the buttons.
@@ -240,6 +246,11 @@ public final class TimelineStore {
             let inverse = HistoryStep.clipNotes(clipID: clipID, notes: clip.melody?.notes ?? [],
                                                 clips: clips)
             guard clips.updateMelody(id: clipID, notes: notes) else { return nil }
+            return inverse
+        case .automation(let lanes):
+            let inverse = HistoryStep.automation(document.automation)
+            document.automation = lanes
+            persist()
             return inverse
         }
     }
@@ -289,6 +300,26 @@ public final class TimelineStore {
         guard before != notes else { return true }
         pushUndo(.clipNotes(clipID: clipID, notes: before, clips: clips))
         return clips.updateMelody(id: clipID, notes: notes)
+    }
+
+    /// Phase 3 / Automation A1 — replace the song's automation lanes: the ONE production writer
+    /// of `document.automation` besides Undo/Redo above, and ONE undo step per call (the
+    /// `.automation` kind — it restores automation and nothing beside it). The editor builds the
+    /// whole new lane list locally and commits it here once per gesture; it never writes per
+    /// finger sample (a persist is a playback refresh — the relocate-storm law below).
+    ///
+    /// An unchanged list returns true without a step. Heard while the song plays: the player's
+    /// `refreshStructure` takes an automation-only change on its own short path (the lanes are
+    /// handed to `AutomationPlayer`; no voice is flushed, no audio segment restarted).
+    /// ⚠️ The older per-point mutators below stay caller-less and write NO undo step — an editor
+    /// goes through here, or its edits cannot be taken back.
+    @discardableResult
+    public func setSongAutomation(_ lanes: [AutomationLane]) -> Bool {
+        guard document.automation != lanes else { return true }
+        pushUndo(.automation(document.automation))
+        document.automation = lanes
+        persist()
+        return true
     }
 
     private func syncUndoFlags() {
@@ -1006,12 +1037,11 @@ public final class TimelineStore {
     // playing song via the existing refreshStructure path. These were the FIRST
     // writers of the field (until T1 it was play-only scaffolding).
     //
-    // UNDO: deliberately OUTSIDE the history — its steps restore parts or one
-    // clip's notes (see `HistoryStep`), never automation, so automation edits
-    // are not undoable today. Documented limit. If they join, they join as a
-    // step KIND of their own (the M1 notes shape), never by widening a parts
-    // snapshot to the whole document — that is the cross-contamination the
-    // typed steps exist to prevent.
+    // UNDO: the per-point mutators below are OUTSIDE the history. Since Phase 3 /
+    // Automation A1 automation has a step KIND of its own (`.automation`) and ONE
+    // writer that records it, `setSongAutomation` — the M1 notes shape, never a
+    // widened parts snapshot (the cross-contamination the typed steps prevent).
+    // These mutators stay caller-less; an editor that used them could not be undone.
 
     /// Lane index for a parameter, matched under EITHER identity (legacy enum
     /// rawValue or registry keyPath alias) so "masterLevel" and

@@ -162,8 +162,11 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
             .components(separatedBy: "\n")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
+        // Phase 3 / Automation A1 added the `.automation` kind — automation lanes only, never
+        // lanes or mixer — and `SongHistoryRow`'s hint moved with it in the same commit.
         XCTAssertEqual(cases, ["case regions([TimelineRegion])",
-                               "case clipNotes(clipID: UUID, notes: [Note], clips: ClipStore)"],
+                               "case clipNotes(clipID: UUID, notes: [Note], clips: ClipStore)",
+                               "case automation([AutomationLane])"],
                        """
                        The history holds a step kind beyond parts and one clip's notes. The \
                        Workstation promises Undo never reverts a mixer change; if a step now \

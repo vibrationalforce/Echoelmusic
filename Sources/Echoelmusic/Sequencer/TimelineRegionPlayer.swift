@@ -1113,6 +1113,15 @@ public final class TimelineRegionPlayer {
     private func refreshStructure() {
         guard let fresh = liveDocument?() else { return }
         guard !TimelineDocument.structurallyEqual(doc, fresh) else { return }
+        // Phase 3 / Automation A1: an AUTOMATION-only edit is not a relocation. The lanes go to
+        // `AutomationPlayer` (read from the next `applyStep`); no voice is flushed, no roll
+        // reloaded, no audio segment restarted — the chase below would do all three on every
+        // drawn point while the song plays.
+        if Self.differsOnlyInAutomation(doc, fresh) {
+            doc.automation = fresh.automation
+            pianoRoll?.setTimelineAutomation(fresh.automation)
+            return
+        }
         let oldActive = rollLane.flatMap {
             TimelineScheduling.activeRegion(in: doc, laneID: $0, at: lastTick)
         }
@@ -1158,6 +1167,15 @@ public final class TimelineRegionPlayer {
         }
         audioLanes?.prime(in: doc, atTick: lastTick, bpm: pattern?.tempo ?? Self.fallbackTempo)
         log.log(.info, category: .audio, "timeline: structure edit pulled into playback at tick \(lastTick)")
+    }
+
+    /// True when `b` is `a` with only its automation changed — the refresh's short path. Pure.
+    nonisolated static func differsOnlyInAutomation(_ a: TimelineDocument,
+                                                    _ b: TimelineDocument) -> Bool {
+        guard a.automation != b.automation else { return false }
+        var same = b
+        same.automation = a.automation
+        return TimelineDocument.structurallyEqual(a, same)
     }
 
     /// Phase 3 / M1 review: a note edit (the Workstation's note editor, or its Undo/Redo)

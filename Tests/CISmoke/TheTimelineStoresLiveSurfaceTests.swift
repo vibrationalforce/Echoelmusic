@@ -94,6 +94,9 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         // Phase 3 / EF2: the instance's genre — the genre case of `handleCompositionEdit`, the
         // adoption, `open(_:)`, the Sound reset and `TrackMix.pickEchoelGenre`.
         "setEchoelGenre",
+        // Phase 3 / Automation A1: the song automation's one writer, reached from
+        // `Studio/SongAutomationEditor.swift`.
+        "setSongAutomation",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than

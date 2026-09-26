@@ -90,8 +90,8 @@ struct ArrangeCanvasView: View {
 
     /// Tall enough to hit with a finger; the rows carry no text inside the lane itself.
     private static let rowHeight: CGFloat = 28
-    private static let nameWidth: CGFloat = 76
-    private static let gutter: CGFloat = 8
+    static let nameWidth: CGFloat = 76
+    static let gutter: CGFloat = 8
 
     var body: some View {
         let selected = WorkstationSelection.resolvedRegion(selection.regionID,
