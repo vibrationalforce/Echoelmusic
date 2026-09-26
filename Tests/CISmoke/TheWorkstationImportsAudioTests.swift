@@ -16,7 +16,7 @@
 // `@testable`-reachable, Foundation-only value code, driven here on real values. The claims
 // that are SOURCE-TEXT SCANS say so in their own doc — named rather than counted a second
 // time (#416/#818): `testTheImportIntroducesNoPersistenceRoot`,
-// `testNoMediaAssetIdentityWasIntroduced`, `testTheImportPathCarriesNoInputOrRecordingCode`,
+// `testOneMediaAssetIdentityAndNoAssetStore`, `testTheImportPathCarriesNoInputOrRecordingCode`,
 // `testTheWorkstationIsTheOnlyImportDoor`, `testNoFileImporterSitsAboveTheImportDoor` (#W1)
 // and `testTheClipIsCommittedBeforeTheRegionAndOnlyOnSuccess`. NOTHING here is a DEVICE PROBE: no file picker
 // runs, no security-scoped URL is acquired, no audio decodes, no sound is made. That the
@@ -635,25 +635,43 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
         }
     }
 
-    /// CLAIM 14 — no media-asset identity type or store was introduced. SOURCE-TEXT SCAN
-    /// over the whole of `Sources/`, because the point is that it exists NOWHERE.
+    /// CLAIM 14 — ONE media-asset identity type, and no asset STORE. SOURCE-TEXT SCAN over the
+    /// whole of `Sources/`.
     ///
-    /// ⚠️ THIS FORBIDS NOTHING PERMANENTLY (#364). Founder decision 2 says "not yet", not
-    /// "never": `Clip.id` remains the creative identity and `mediaRef` remains the
-    /// file-location bridge FOR THIS SLICE. When a canonical media identity does land, this
-    /// claim goes red on the day it does, and its job is to make that a decision rather than
-    /// a drift.
-    func testNoMediaAssetIdentityWasIntroduced() throws {
-        for name in ["MediaAsset", "AudioAsset", "MediaAssetStore", "AudioAssetStore"] {
+    /// ⭐ INVERTED 2026-09-26 (Phase 3 / MA1), AS THIS CLAIM WAS WRITTEN TO BE. It used to demand
+    /// that no `MediaAsset` exist anywhere — founder decision 2 for Audio Import V1 said "not
+    /// yet", and the claim promised to go red "on the day it does" so that the day would be a
+    /// decision rather than a drift. The founder's Phase 3 order ("MediaAsset + lazy Browser",
+    /// 2026-09-25) is that decision; `scratchpads/PLAN_MEDIA_ASSET_2026-09-26.md` records it.
+    ///
+    /// What survives is the half that was never about timing: there is ONE identity type, in
+    /// `Core/MediaAsset.swift`, and there is still NO asset store. The asset list is the join of
+    /// the `Media/Audio` directory and `ClipStore`, computed when looked at — a stored registry
+    /// would be a fifth persistence root that can disagree with both. `Clip.id` stays the
+    /// creative identity and `mediaRef` the file-location bridge; `MediaAsset.key(forRef:)`
+    /// READS that bridge and writes nothing.
+    func testOneMediaAssetIdentityAndNoAssetStore() throws {
+        var declarations: [String] = []
+        for keyword in ["struct", "class", "enum", "actor", "protocol"] {
+            declarations += try filesUnderSources(containing: "\(keyword) MediaAsset ")
+            declarations += try filesUnderSources(containing: "\(keyword) MediaAsset:")
+            declarations += try filesUnderSources(containing: "\(keyword) MediaAsset{")
+        }
+        XCTAssertEqual(declarations, ["Core/MediaAsset.swift"], """
+            `MediaAsset` is declared in \(declarations.isEmpty ? "no file" : declarations.joined(separator: ", ")). \
+            There is exactly ONE media identity type, in `Core/MediaAsset.swift` (Phase 3 / MA1). \
+            None means the identity the library browser keys on is gone; two means two opinions \
+            about when two references are the same file.
+            """)
+
+        for name in ["AudioAsset", "MediaAssetStore", "AudioAssetStore", "MediaAssetIndex"] {
             for keyword in ["struct", "class", "enum", "actor", "protocol"] {
-                let declarations = try filesUnderSources(containing: "\(keyword) \(name)")
-                XCTAssertTrue(declarations.isEmpty, """
-                    `\(keyword) \(name)` is declared in \
-                    \(declarations.joined(separator: ", ")). Founder decision 2 for Audio \
-                    Import V1 is explicit that canonical source-media identity is NOT part \
-                    of this slice — `Clip.id` is the creative identity and `mediaRef` is the \
-                    location bridge. If media identity is genuinely landing, this file's \
-                    doc and CLAUDE.md's register line move in the same commit.
+                let found = try filesUnderSources(containing: "\(keyword) \(name)")
+                XCTAssertTrue(found.isEmpty, """
+                    `\(keyword) \(name)` is declared in \(found.joined(separator: ", ")). The \
+                    media library has NO store of its own: the directory says which files \
+                    exist and `ClipStore` says who uses them. A registry is a new persistence \
+                    root and needs its own founder decision, recorded beside the MA1 plan.
                     """)
             }
         }

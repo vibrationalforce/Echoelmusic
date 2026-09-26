@@ -39973,3 +39973,13 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - **Evidence:** Compile Check 2896 is green on `3cf0a5346`. Every later run is queued or pending (2897 and 2898 were cancelled by newer pushes). Every guard's arithmetic was transcribed in Python, and the five checkers are clean on each commit.
 - **Reviews:** the M3 ui-state review and the M4 + M2-repair code review are running.
 - **NEEDS-FOUNDER-VERIFY** (device, all slices): New MIDI Part → Notes → add notes → hold and slide (move) → hold an edge (stretch; hold without slide = nothing) → box → Transpose / Quantize / Duplicate / Velocity drag → shaded rows → Fit / ±1 step → one Undo each.
+
+## 2026-09-26 00:20Z — MIDI slices M1b–M4: gates read, reviews applied
+
+- **Review repairs:** `dd7f4e028` (M3 ui-state, six findings) and `a57d03f5c` (M4 + M2-repair code review: rounded stretch slide, directional first key step, in-range Fit at MIDI 0/127, key name via `NoteNamingReader`). Kept and documented: a key step can move notes off the shown rows; shrinking a cut note writes the shorter length to the shared clip.
+- **Gates on HEAD `a57d03f5c`** (head_sha compared with `git rev-parse HEAD`):
+  - `Xcode Compile Check` 2903 = **success**. That run is Release/device and covers every M1b–M4 `Sources/` change. 2897–2902 were cancelled by cancel-in-progress.
+  - CI/CD 6368 `Build for Testing` = **success** (Debug/simulator, 00:13→00:18Z). The blocking bundle compiles with every MIDI guard.
+  - `Run Tests` was still running at 00:20Z; its reading is owed and limited by the #807 window.
+- **Evidence per slice (M1b, M2, M3, M4):** COMPILES (both gates) + INDEPENDENTLY REVIEWED with repairs + transcription-graded. Not yet TESTED-observed. DEVICE pending (NEEDS-FOUNDER-VERIFY in each guard header).
+- **Next, per founder order:** MediaAsset + lazy Browser. Census and plan come first (`scratchpads/PLAN_MEDIA_ASSET_2026-09-26.md`).

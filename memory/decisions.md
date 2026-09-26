@@ -2891,3 +2891,9 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Performance law for the editor:** touch samples → local preview → ONE bounded canonical commit at gesture end → ONE undo; the Workstation root never observes editor-rate state; playhead in a hot leaf; no second MIDI owner.
 - **Order after MIDI** (amendable by the architecture reviews): MediaAsset + lazy Browser → native DeviceChain → Echoel as flagship Device → Clips/Scenes/Session → Automation editing → Recording/Input. NOT yet: distributed Session, SessionNode, Mapping Fabric, OutputEndpoint graph, compositor, video, XR, broadcast, lighting expansion, laser, plugin hosting.
 - **Every slice ships:** architectural progress + reachable user workflow + behavioural verification. Review 2026-10-25.
+
+### 2026-09-26 — MediaAsset identity + lazy library browser (Phase 3 / MA1)
+- **Decision:** `MediaAsset` = (home, managed file name). The resolver's H6 re-rooting already honours this key. There is no index file: the asset list is the join of `Media/Audio` (which files exist) and `ClipStore` (who uses them), computed when looked at. The browser (`MediaBrowserView`, "Media Library" on the Workstation plate) lists Audio only, and the listing runs detached. `MediaPlacement` Place reuses the clip that carries the file (one region, one undo step, no slot, no copy). An orphan gets a clip through `AudioImport.commit` with the identity copy and a no-op delete, so a library file is never deleted.
+- **Why:** before this slice, reusing an imported file meant picking it from Files again, which made a second copy and spent a second of the 8 slots. A registry would be a fifth persistence root (Ω49).
+- **Next:** MA2 content de-dup on import (size match → chunked byte compare, off-main, async import path). MA3 (lengths per row; remove unused) is held until saved-project references are measured.
+- **Review date:** 2026-10-26

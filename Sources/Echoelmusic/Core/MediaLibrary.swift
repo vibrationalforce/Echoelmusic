@@ -63,6 +63,31 @@ public enum MediaLibrary {
         try copyIn(source, subdirectory: "Media/Image", fallbackExt: "jpg")
     }
 
+    /// Every file in the Audio home, as assets in the browser's order — nil when the home
+    /// cannot be read at all, which is a different answer from an empty library and is shown
+    /// as one (a silent `[]` would read as "you have imported nothing").
+    ///
+    /// ⚠️ ONE directory call, sizes included (`includingPropertiesForKeys`), no decoding: the
+    /// list is what a person scrolls, and durations belong to the rows they reach (MA3). It is
+    /// still disk I/O, so the only caller runs it DETACHED — `MediaBrowserView`, never a `body`.
+    /// Hidden files and anything that is not a regular file (a directory someone made, a
+    /// symlink) are not assets.
+    public static func listAudio() -> [MediaAsset]? {
+        guard let dir = directory(MediaAsset.Kind.audio.home) else { return nil }
+        let keys: [URLResourceKey] = [.fileSizeKey, .isRegularFileKey]
+        guard let urls = try? FileManager.default.contentsOfDirectory(
+            at: dir, includingPropertiesForKeys: keys, options: [.skipsHiddenFiles]) else {
+            return nil
+        }
+        let assets: [MediaAsset] = urls.compactMap { url in
+            guard let values = try? url.resourceValues(forKeys: Set(keys)),
+                  values.isRegularFile == true else { return nil }
+            return MediaAsset(kind: .audio, fileName: url.lastPathComponent, url: url,
+                              byteSize: Int64(values.fileSize ?? 0))
+        }
+        return MediaAsset.sorted(assets)
+    }
+
     /// Resolve a clip's `mediaRef` to an EXISTING file URL — nil for empty refs or
     /// truly vanished files. THE single resolver for every surface that turns a
     /// region into playable media (timeline audition, audio lanes, the Video

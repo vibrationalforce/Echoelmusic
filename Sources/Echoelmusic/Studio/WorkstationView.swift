@@ -347,10 +347,20 @@ struct WorkstationView: View {
             // need a MIDI file. Same lane and refusals as Import MIDI (`MIDIImport`).
             newMIDIPartRow
             if let note = importNote { importNoteLine(note) }
-            // WA4 Acceptance Test A inside the workspace: create → import → SAVE → reopen
-            // without leaving the plate. The row owns no Studio state; it opens the Studio's
-            // existing Save alert and Open sheet through the chrome door (no new modal).
-            WorkstationProjectRow()
+            // Phase 3 / MA1 — the media library: the audio files already imported, and "Place"
+            // to put one on the song again without Files, a second copy or a second clip slot.
+            // Its own leaf: it lists the directory detached and writes through
+            // `MediaPlacement`; this view reads none of its state.
+            // ⚠️ GROUPED WITH THE PROJECT ROW so this `VStack` keeps ten direct children: past
+            // ten, `ViewBuilder` resolves through the variadic pack (#936). `Group` is
+            // layout-transparent — both rows still sit in this stack at its spacing.
+            Group {
+                MediaBrowserView()
+                // WA4 Acceptance Test A inside the workspace: create → import → SAVE → reopen
+                // without leaving the plate. The row owns no Studio state; it opens the Studio's
+                // existing Save alert and Open sheet through the chrome door (no new modal).
+                WorkstationProjectRow()
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         #if canImport(UniformTypeIdentifiers)
@@ -824,9 +834,11 @@ struct WorkstationView: View {
         .accessibilityHint("Adds an empty audio track to the song, ready for an import")
     }
 
-    /// "Import Audio" — one button, no menu, no browser. The founder's instruction was a
-    /// single action inside the existing plate, and a media browser is the surface this
-    /// phase was told not to grow.
+    /// "Import Audio" — one button, no menu. The founder's instruction was a single action
+    /// inside the existing plate. ⛔ This said "no browser — the surface this phase was told
+    /// not to grow"; that was Audio Import V1's phase. The founder's Phase 3 order (2026-09-25)
+    /// asks for the browser, and it is `MediaBrowserView`, a separate leaf below — this row
+    /// still only picks a NEW file.
     ///
     /// ⚠️ IT IS NEVER DISABLED, deliberately, and that is the opposite of the transport's
     /// rule one row up. Play disables itself because the engine's own `canPlay` can answer

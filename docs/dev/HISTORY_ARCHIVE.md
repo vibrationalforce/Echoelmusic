@@ -368,6 +368,7 @@ Bulk-deletion commits cited below:
 ### D7 · Browser / sample browser / channel rack
 - **Impl:** `BrowserView` / `SampleBrowserView` (→ 07-27), `ChannelRackView` (→ 07-27).
 - **Scope / Class:** YES / **REBUILD** on the managed `MediaLibrary`.
+- **Rebuilt (MA1, 2026-09-26):** `Studio/MediaBrowserView` ("Media Library" on the Workstation plate) over `Core/MediaAsset` (identity = home + file name, no index file) and `Sequencer/MediaPlacement` (Place reuses the clip that already carries the file). Audio only; channel rack stays deleted. Plan: `scratchpads/PLAN_MEDIA_ASSET_2026-09-26.md`.
 
 ### D8 · MPE / MIDI 2
 - **Impl:**
