@@ -51,6 +51,9 @@
 //    file's record) and Undo gives it back — 2 REGRESSIONS there (the link survived the relink,
 //    and Redo kept it); the rest of the claim is unchanged. This commit also adds the required
 //    `mediaAssetID:` to the three writer calls below, so the file does not compile on that parent.
+// 11. SOURCE-TEXT SCAN (review of B2, L4): the outcome note of Place / Relink / Preview is
+//    rendered ONCE, above the missing section and the list — below a long list it was
+//    off-screen. REGRESSION on `31aa7f3a7` (the note sat last); device probe open (that it reads).
 // 10. B3: PREVIEW — PURE `MediaBrowserView.previewRefusal` refuses while the song, the instrument's
 //    loop plays, or the engine is stopped (the sink's first use attaches a node, which pauses the
 //    engine); a SCAN that the preview plays through `BeatPlayer`'s attached audition path, only
@@ -633,6 +636,20 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         let browser = try source(Self.browserPath)
         XCTAssertTrue(browser.contains("candidates = MediaAsset.matching(all, query: query)"),
                       "the files offered are the rows the filter shows")
+    }
+
+    // MARK: 11 — the outcome is shown where the tap was seen
+
+    func testTheOutcomeNoteSitsAboveTheList() throws {
+        let browser = try source(Self.browserPath)
+        let view = try body(of: "var body: some View", in: browser)
+        let note = try XCTUnwrap(view.range(of: "Text(note)"), "the note is rendered in the body")
+        let missing = try XCTUnwrap(view.range(of: "missingSection(missing)"))
+        let list = try XCTUnwrap(view.range(of: "content(usage:"))
+        XCTAssertLessThan(note.lowerBound, missing.lowerBound,
+                          "the outcome sits above the missing section — below a long list it is off-screen")
+        XCTAssertLessThan(note.lowerBound, list.lowerBound, "…and above the library list")
+        XCTAssertEqual(occurrences(of: "Text(note)", in: browser), 1, "one place shows the outcome")
     }
 
     // MARK: 10 — B3 preview

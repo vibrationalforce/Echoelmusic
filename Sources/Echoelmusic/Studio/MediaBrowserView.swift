@@ -84,6 +84,14 @@ struct MediaBrowserView: View {
         VStack(alignment: .leading, spacing: 8) {
             toggleRow
             if isOpen {
+                // The outcome of the last Place / Relink / Preview, FIRST under the toggle: below a
+                // long list it rendered off-screen, so a refusal read as a tap that did nothing
+                // (review of B2, L4).
+                if let note {
+                    Text(note)
+                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 let missing = MediaAsset.missing(clips: clips, document: timeline.document,
                                                  resolves: { !missingIDs.contains($0) })
                 if !missing.isEmpty {
@@ -95,11 +103,6 @@ struct MediaBrowserView: View {
                     .onChange(of: player.isPlaying || beatPlayer.pattern.isPlaying) { _, playing in
                         if playing { stopPreview() }
                     }
-                if let note {
-                    Text(note)
-                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
             }
         }
         // B3: a preview ends itself after `previewSeconds`, and with the Workstation.
