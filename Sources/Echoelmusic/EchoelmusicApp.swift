@@ -171,7 +171,8 @@ struct EchoelmusicApp: App {
     /// AutomationPlayer dispatches through, so per-track automation reaches every
     /// internal DDSP parameter through one path. Constructed in init.
     @State private var parameterRouter: ParameterApplyRouter
-    /// Broadcast (RTMP/SRT) publisher — the phone-native stream-out pillar.
+    /// Broadcast (RTMP/SRT) publisher — a compile-safe scaffold: HaishinKit is not linked and
+    /// `BroadcastView` has no door, so today it streams nothing (`TheBroadcastHasNoDoorWithoutAnEngineTests`).
     @State private var broadcast = BroadcastPublisher()
     #if canImport(CoreHaptics)
     /// Eyes-free haptic feedback (transport pulse). Off until armed.

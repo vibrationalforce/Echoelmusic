@@ -173,7 +173,7 @@ public final class SignalRouter {
             SignalPort(id: "artnet.out",  name: "Art-Net (light)",   kind: .light,      direction: .sink,   transport: .artNet),
             SignalPort(id: "sacn.out",    name: "sACN (light)",      kind: .light,      direction: .sink,   transport: .sacn),
             SignalPort(id: "audio.master", name: "Audio master",     kind: .audio,      direction: .sink,   transport: .audioIO),
-            // Broadcast — sink ports only; the engine is not linked (CUT 2026-07-25), routes here carry nothing today.
+            // Broadcast — sink ports only; the engine is not linked (HaishinKit absent — a founder decision since the 2026-09-24 product law made streaming scope again), routes here carry nothing today.
             SignalPort(id: "rtmp.out",    name: "Broadcast (RTMP)",  kind: .audio,      direction: .sink,   transport: .rtmp),
             SignalPort(id: "srt.out",     name: "Broadcast (SRT)",   kind: .audio,      direction: .sink,   transport: .srt)
         ]

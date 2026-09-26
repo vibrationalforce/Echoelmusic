@@ -14,7 +14,9 @@
 //  (the sole sanctioned external dependency, MIT). It is integrated behind
 //  `#if canImport(HaishinKit)`, so this file COMPILES with or without the package —
 //  without it, broadcast is an honest "streaming engine not installed" state, never
-//  a dead button. The audio/video capture path is wired in the follow-up cycle.
+//  a dead button. No capture path is wired: nothing constructs this publisher's view
+//  and HaishinKit is not linked, so linking the engine is a founder decision (new
+//  dependency) and the capture path would be built with it — not "next cycle".
 //
 
 import Foundation
