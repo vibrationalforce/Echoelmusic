@@ -44,6 +44,10 @@
 // selection is now `NoteGridGesture.afterMove`. On `ab1586c95` this file does NOT compile
 // (`afterMove` is new): one absence (#486); the new claim-1 method is a FORWARD guard whose
 // `resolve` lines are counterweights, and the scan in claim 5 is red there by anchor absence.
+// ⭐ And the canvas lights a move by the SAME rule (review of `025c2d3ac`, A2): it lit only the
+// moved ids, so dragging one of several picks darkened the others mid-slide and re-lit them at
+// release. Claim 5's `lit` scan is a REGRESSION on `025c2d3ac` (its line returned `ids`).
+// Left as it is (A1, cosmetic): a hold without a slide is a zero move and re-lights the picks.
 // NOT covered: that the hold is recognised under a scroll view, that the preview follows the
 // finger smoothly, that the result sounds — a device probe, owned by the marker below.
 // NEEDS-FOUNDER-VERIFY: New MIDI Part → Notes → add four notes → press and hold one, slide right
@@ -359,6 +363,9 @@ final class ANoteDragIsOneCommitAtReleaseTests: XCTestCase {
                        "a finished move and a finished stretch — one commit each; a box writes nothing")
         XCTAssertTrue(finish.contains("picked = RollSelection(ids: Array(NoteGridGesture.afterMove(ids, from: picked.ids)))"),
                       "the move's selection is the one rule claim 1 drives")
+        let lit = try body(of: "let lit: Set<UUID> =", in: editor)
+        XCTAssertTrue(lit.contains("case .move(let ids, _, _)?: return NoteGridGesture.afterMove(ids, from: picked)"),
+                      "while the finger moves, the canvas lights what the release will commit — the same rule")
 
         let core = try source(Self.corePath)
         XCTAssertFalse(core.contains("import SwiftUI"), "the gesture's meaning is Foundation-only")

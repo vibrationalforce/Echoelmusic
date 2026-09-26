@@ -498,7 +498,9 @@ private struct PartNoteCanvas: View {
         let lit: Set<UUID> = {
             switch live {
             case .marquee(let ids, _, _, _, _)?: return NoteGridGesture.boxing(ids, into: picked)
-            case .move(let ids, _, _)?: return ids
+            // Lit as the release will commit it (`finish`): a moved pick keeps the others lit, an
+            // unpicked note moves alone — the preview never disagrees with the result (M9 review).
+            case .move(let ids, _, _)?: return NoteGridGesture.afterMove(ids, from: picked)
             case .resize(let id, _)?: return [id]
             case nil: return picked
             }

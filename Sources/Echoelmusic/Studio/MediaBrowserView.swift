@@ -152,7 +152,9 @@ struct MediaBrowserView: View {
                         }
                     }
                 }
-                if shown.count != assets.count {
+                // Only beside a non-empty result: under "No file name contains …" a
+                // "0 of N files" line says the same thing twice (review of B1).
+                if !shown.isEmpty, shown.count != assets.count {
                     line("\(shown.count) of \(assets.count) files")
                 }
             }
@@ -162,8 +164,11 @@ struct MediaBrowserView: View {
     /// Label above the input (the form rule), a plain field: a name filter, not a search engine.
     private var filterField: some View {
         VStack(alignment: .leading, spacing: 4) {
+            // The field carries the same words as its label; hidden here so VoiceOver says
+            // them once (review of B1).
             Text("Filter by name")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                .accessibilityHidden(true)
             TextField("Name contains", text: $query)
                 .font(EchoelTheme.font(13))
                 .textFieldStyle(.roundedBorder)
