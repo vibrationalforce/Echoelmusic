@@ -50,6 +50,7 @@ struct MediaBrowserView: View {
 
     @Environment(TimelineStore.self) private var timeline
     @Environment(ClipStore.self) private var clipStore
+    @Environment(MediaAssetStore.self) private var mediaAssets
     @Environment(TimelineRegionPlayer.self) private var player
     @Environment(WorkstationSelection.self) private var selection
     /// B3: the preview reuses the audition path that `BeatPlayer` already attaches at launch.
@@ -409,7 +410,7 @@ struct MediaBrowserView: View {
     private func place(_ asset: MediaAsset) {
         #if canImport(AVFoundation)
         switch MediaPlacement.perform(asset, clipStore: clipStore, timeline: timeline,
-                                      bpm: player.preflightTempo) {
+                                      assets: mediaAssets, bpm: player.preflightTempo) {
         case .success(let placed):
             selection.selectRegion(placed.region.id, in: timeline.document)
             let laneName = timeline.document.lanes

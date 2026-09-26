@@ -144,12 +144,18 @@ public enum MediaPlacement {
     /// Reuse is ONE `TimelineStore.addRegion`, so ONE Undo takes the part away and leaves the
     /// clip (which other parts may play) alone. A new clip goes through `AudioImport.commit`,
     /// clip first and region second, for the reason that file's header gives.
+    ///
+    /// MA4.3 — `assets` is REQUIRED (#431; nil = no registry). A new clip for a library file
+    /// links that file's own durable record (`AudioImport.AssetIdentity.libraryFile`), adopting
+    /// one if it has none — never a second record per placement. A REUSED clip is not rewritten:
+    /// the placement adds a region and nothing else, so a clip written before MA4.2 stays unlinked.
     @MainActor
     public static func place(_ asset: MediaAsset,
                              clipStore: ClipStore,
                              timeline: TimelineStore,
                              bpm: Double,
-                             measure: (URL) -> AudioImport.Measurement?) -> Result<Placed, AudioImport.Failure> {
+                             measure: (URL) -> AudioImport.Measurement?,
+                             assets: MediaAssetStore?) -> Result<Placed, AudioImport.Failure> {
         let clips = clipStore.slots.compactMap { $0 }
         // Measure only when the plan will reach the length question: a clip that does not know
         // its length, on a song that HAS an audio track — opening a file for a refusal the lane
@@ -175,6 +181,8 @@ public enum MediaPlacement {
             timeline.addRegion(region)
             return .success(Placed(region: region, clip: clip, slotIndex: slot, reusedClip: true))
         case .newClip:
+            // MA4.3: the library file's own record, adopted if it has none.
+            let identity: AudioImport.AssetIdentity = assets.map { .libraryFile($0) } ?? .unlinked
             let result = AudioImport.commit(pickedURL: asset.url,
                                             clipStore: clipStore,
                                             timeline: timeline,
@@ -182,9 +190,7 @@ public enum MediaPlacement {
                                             importFile: { $0 },
                                             measure: measure,
                                             deleteManagedCopy: { _ in },
-                                            // MA4.3: a library file may already have a record;
-                                            // linking it (reuse, else adopt) is its own slice.
-                                            assets: nil)
+                                            assets: identity)
             return result.map {
                 Placed(region: $0.region, clip: $0.clip, slotIndex: $0.slotIndex, reusedClip: false)
             }
@@ -203,12 +209,13 @@ public enum MediaPlacement {
     public static func perform(_ asset: MediaAsset,
                                clipStore: ClipStore,
                                timeline: TimelineStore,
+                               assets: MediaAssetStore,
                                bpm: Double) -> Result<Placed, AudioImport.Failure> {
         guard FileManager.default.fileExists(atPath: asset.url.path) else {
             return .failure(.unreadableAudio)
         }
         return place(asset, clipStore: clipStore, timeline: timeline, bpm: bpm,
-                     measure: AudioImport.measureWithAVFoundation)
+                     measure: AudioImport.measureWithAVFoundation, assets: assets)
     }
 
     #endif

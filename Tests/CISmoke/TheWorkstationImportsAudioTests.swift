@@ -494,7 +494,7 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
             importFile: { _ in managed },
             measure: { _ in nil },
             deleteManagedCopy: { deleted.append($0) },
-            assets: nil)
+            assets: .unlinked)
 
         XCTAssertEqual(try failure(result), AudioImport.Failure.unreadableAudio, """
             A managed copy the decoder could not read did not produce `.unreadableAudio`.
@@ -527,7 +527,7 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
             importFile: { _ in throw CopyRefused() },
             measure: { _ in nil },
             deleteManagedCopy: { deletedAfterCopyFailure.append($0) },
-            assets: nil)
+            assets: .unlinked)
         XCTAssertEqual(try failure(copyFailure), AudioImport.Failure.copyFailed, """
             A copy that threw did not surface as `.copyFailed`.
             """)

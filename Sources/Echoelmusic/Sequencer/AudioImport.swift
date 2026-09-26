@@ -312,6 +312,58 @@ public enum AudioImport {
                                                              channelCount: measurement.channelCount))
     }
 
+    /// How a landing establishes the durable identity of its file (MA4.3). Explicit at every
+    /// call site, because the two library cases need OPPOSITE answers to the same question.
+    public enum AssetIdentity {
+        /// No registry: the pre-MA4.2 transaction. The clip plays by `mediaRef` and carries no
+        /// link — written out by the callers that mean it (tests that do not exercise identity).
+        case unlinked
+        /// A FRESH COPY of a picked file: new bytes, so ALWAYS a new record. A record that
+        /// happens to be bound to the same name (its file deleted, the name reused) is another
+        /// source and is never adopted.
+        case freshCopy(MediaAssetStore)
+        /// A file ALREADY IN THE LIBRARY (the browser's Place, the import's de-dup landing): the
+        /// record bound to its name is its identity unless the file's own measurement
+        /// CONTRADICTS it; without one, a record is adopted for it now, so the library file gets
+        /// exactly one identity instead of one per placement.
+        case libraryFile(MediaAssetStore)
+    }
+
+    /// The record id a landed clip links to, registering or adopting as `identity` says. nil
+    /// when there is no registry or the register was refused — the clip then plays by
+    /// `mediaRef`, exactly as before MA4.2.
+    ///
+    /// ⚠️ THE BINDING IS THE EVIDENCE for a library file, NOT the length. The record names this
+    /// very file in the managed home, so it is the file's identity; the measurement can only
+    /// REFUTE that (another length or another digest means the file was replaced behind the
+    /// record's back — `MediaAssetRecord.isContradicted`). A compatible length is never used to
+    /// claim identity for a file under ANOTHER name (founder 2026-09-26).
+    @MainActor
+    static func establishIdentity(_ identity: AssetIdentity, managed: URL, pickedName: String,
+                                  measurement: Measurement, byteSize: Int64,
+                                  importedAt: Date) -> UUID? {
+        let registry: MediaAssetStore
+        let isLibraryFile: Bool
+        switch identity {
+        case .unlinked: return nil
+        case .freshCopy(let store): registry = store; isLibraryFile = false
+        case .libraryFile(let store): registry = store; isLibraryFile = true
+        }
+        // An adopted record's provenance is the file's own name: the name it was picked under
+        // was never recorded (it was imported before MA4.2), and nothing here invents one.
+        let candidate = assetRecord(managed: managed,
+                                    originalName: isLibraryFile ? managed.lastPathComponent : pickedName,
+                                    measurement: measurement, byteSize: byteSize,
+                                    importedAt: importedAt)
+        if isLibraryFile,
+           let existing = registry.record(boundTo: MediaAsset.Key(kind: .audio,
+                                                                  fileName: managed.lastPathComponent)),
+           !existing.isContradicted(by: candidate.evidence) {
+            return existing.id
+        }
+        return registry.register(candidate) ? candidate.id : nil
+    }
+
     // MARK: - The transaction
 
     /// The whole import, with its three impure steps INJECTED so every path — including the
@@ -335,12 +387,12 @@ public enum AudioImport {
     /// header. The two writes are ordered so a half-written pair is a spare clip, never a
     /// region pointing at nothing.
     ///
-    /// ⭐ MA4.2 — `assets` IS REQUIRED, NEVER DEFAULTED (#431): with a registry, the import
-    /// registers the copy's durable record FIRST and the clip carries its id (`mediaAssetID`).
+    /// ⭐ MA4.2/MA4.3 — `assets` IS REQUIRED, NEVER DEFAULTED (#431): the landing establishes the
+    /// file's durable record FIRST (`establishIdentity` — a fresh copy registers a new one, a
+    /// library file adopts the record bound to it) and the clip carries its id (`mediaAssetID`).
     /// Identity before use: a crash between the two leaves a record for a file that exists, never
-    /// a clip naming a record that does not. `nil` means "no registry" and is written out at every
-    /// call site that means it — today the library placement (`MediaPlacement`, whose file may
-    /// already have a record; linking it is MA4.3) and the tests that do not exercise identity.
+    /// a clip naming a record that does not. `.unlinked` is written out by the callers that mean
+    /// it — the tests that do not exercise identity.
     @MainActor
     @discardableResult
     public static func commit(
@@ -351,7 +403,7 @@ public enum AudioImport {
         importFile: (URL) throws -> URL,
         measure: (URL) -> Measurement?,
         deleteManagedCopy: (URL) -> Void,
-        assets: MediaAssetStore?
+        assets: AssetIdentity
     ) -> Result<Landing, Failure> {
 
         let managed: URL
@@ -380,13 +432,14 @@ public enum AudioImport {
             // MA4.2 — identity before use: the record is registered before the clip that
             // names it is written.
             var landed = landing
-            if let assets, let measured {
-                // The copy's size: one metadata read, no content read. Unknown reads as 0.
+            if let measured {
+                // The file's size: one metadata read, no content read. Unknown reads as 0.
                 let size = (try? managed.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
-                let record = assetRecord(managed: managed, originalName: pickedURL.lastPathComponent,
-                                         measurement: measured, byteSize: Int64(size),
-                                         importedAt: Date())
-                if assets.register(record) { landed.clip.mediaAssetID = record.id }
+                landed.clip.mediaAssetID = establishIdentity(assets, managed: managed,
+                                                             pickedName: pickedURL.lastPathComponent,
+                                                             measurement: measured,
+                                                             byteSize: Int64(size),
+                                                             importedAt: Date())
             }
             clipStore.setClip(at: landed.slotIndex, landed.clip)    // FIRST — playback
                                                                     // resolves clipID here
@@ -413,14 +466,18 @@ public enum AudioImport {
     ///
     /// ⛔ THIS BRANCH NEVER DELETES. There is no copy to clean up, and the file it would reach
     /// is the user's asset — `place` hands `commit` an identity copy and a no-op delete.
+    ///
+    /// MA4.3: `assets` goes to the placement, so an orphan landing links the library file's own
+    /// record (adopting one if it has none); a reused clip is left as it is.
     @MainActor
     public static func landExisting(_ asset: MediaAsset,
                                     clipStore: ClipStore,
                                     timeline: TimelineStore,
                                     bpm: Double,
-                                    measure: (URL) -> Measurement?) -> Result<Landing, Failure> {
+                                    measure: (URL) -> Measurement?,
+                                    assets: MediaAssetStore?) -> Result<Landing, Failure> {
         MediaPlacement.place(asset, clipStore: clipStore, timeline: timeline, bpm: bpm,
-                             measure: measure).map { placed in
+                             measure: measure, assets: assets).map { placed in
             Landing(clip: placed.clip, region: placed.region, slotIndex: placed.slotIndex,
                     laneID: placed.region.laneID, managedURL: asset.url, reusedLibraryFile: true)
         }
@@ -441,9 +498,10 @@ public enum AudioImport {
     /// `commit`, so a narrower scope would still be correct — but "acquire, do the work,
     /// release" has one exit path and cannot be re-ordered into a leak by a later edit.
     ///
-    /// ⚠️ ONLY THE COPY PATH LINKS A DURABLE RECORD (MA4.2). A picked file whose bytes are already
-    /// in the library lands through `landExisting`, which neither registers nor links — that
-    /// part plays by `mediaRef` exactly as before. Linking it to the file's existing record is MA4.3.
+    /// ⚠️ THE TWO BRANCHES ESTABLISH IDENTITY DIFFERENTLY (MA4.3). The copy path registers a NEW
+    /// record for the new bytes; the de-dup branch (`landExisting`) lands a file that is already
+    /// in the library, so an orphan landing links that file's own record, and a reused clip is
+    /// not rewritten — a clip written before MA4.2 keeps playing by `mediaRef`, unlinked.
     @MainActor
     @discardableResult
     public static func perform(pickedURL: URL,
@@ -459,7 +517,7 @@ public enum AudioImport {
             ? [] : MediaLibrary.existingAudio(matching: pickedURL)
         if let existing = preferredExisting(matches, clips: clipStore.slots.compactMap { $0 }) {
             return landExisting(existing, clipStore: clipStore, timeline: timeline, bpm: bpm,
-                                measure: measureWithAVFoundation)
+                                measure: measureWithAVFoundation, assets: assets)
         }
         return commit(pickedURL: pickedURL,
                       clipStore: clipStore,
@@ -468,7 +526,7 @@ public enum AudioImport {
                       importFile: { try MediaLibrary.importAudio(from: $0) },
                       measure: measureWithAVFoundation,
                       deleteManagedCopy: { try? FileManager.default.removeItem(at: $0) },
-                      assets: assets)
+                      assets: .freshCopy(assets))
     }
 
     /// Open the managed copy and report what it is. nil ⇒ it is not audio this build can read.

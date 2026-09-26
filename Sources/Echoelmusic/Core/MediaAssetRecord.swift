@@ -31,10 +31,11 @@
 // both 8 s). Only a matching content digest says "same content", and `match` keeps the two
 // verdicts apart so no caller can read one as the other.
 //
-// Foundation-only and pure: no store, no file access, no clock. Since MA4.2 the ONE producer is
-// the import (`AudioImport.commit` → `MediaAssetStore.register`), and a Clip links to a record by
-// `Clip.mediaAssetID`. A library-file placement and the de-dup re-import do not link yet (MA4.3),
-// and a relink RELEASES the link rather than carrying it to another file (MA4.5 rebinds).
+// Foundation-only and pure: no store, no file access, no clock. The ONE producer is the landing
+// transaction (`AudioImport.commit` → `establishIdentity` → `MediaAssetStore.register`), and a
+// Clip links to a record by `Clip.mediaAssetID`: a fresh copy registers a new record (MA4.2), a
+// library file adopts the record bound to it (MA4.3). A relink RELEASES the link rather than
+// carrying it to another file (MA4.5 rebinds).
 
 import Foundation
 
@@ -152,6 +153,18 @@ public struct MediaAssetRecord: Codable, Sendable, Equatable, Identifiable {
         let found = candidate.durationSeconds
         guard expected > 0, found > 0 else { return .unmeasured }
         return Self.compatibleDuration(expected, found) ? .compatibleDuration : .differentDuration
+    }
+
+    /// Whether a candidate measurement REFUTES that this record describes the candidate's file —
+    /// another digest under the same algorithm, or an incompatible length. Asked only where the
+    /// BINDING already says "this is the file" (a library file under the record's own name,
+    /// MA4.3): there the measurement can refute identity, never establish it. Unmeasured and
+    /// compatible say nothing against the binding, so they do not refute.
+    public func isContradicted(by candidate: Evidence) -> Bool {
+        switch match(candidate) {
+        case .differentContent, .differentDuration: return true
+        case .sameContent, .compatibleDuration, .unmeasured: return false
+        }
     }
 
     // MARK: - Codable (lossy per field, required identity)

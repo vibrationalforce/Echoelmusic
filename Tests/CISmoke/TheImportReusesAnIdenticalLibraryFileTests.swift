@@ -204,7 +204,8 @@ final class TheImportReusesAnIdenticalLibraryFileTests: XCTestCase {
 
         let result = AudioImport.landExisting(asset(file, size: 4), clipStore: clips,
                                               timeline: timeline, bpm: 120,
-                                              measure: { _ in XCTFail("a known length is not measured"); return nil })
+                                              measure: { _ in XCTFail("a known length is not measured"); return nil },
+                                              assets: nil)
         guard case .success(let landing) = result else { return XCTFail("an identical import must land") }
         XCTAssertTrue(landing.reusedLibraryFile)
         XCTAssertEqual(landing.clip, clip, "the landing reports the clip that already plays the file")
@@ -244,7 +245,7 @@ final class TheImportReusesAnIdenticalLibraryFileTests: XCTestCase {
         let result = AudioImport.landExisting(asset(file, size: 4), clipStore: clips,
                                               timeline: timeline, bpm: 120, measure: { _ in
             AudioImport.Measurement(sampleRate: 44_100, frameCount: 88_200, channelCount: 1)
-        })
+        }, assets: nil)
         guard case .success(let landing) = result else { return XCTFail("an identical orphan must land") }
         XCTAssertTrue(landing.reusedLibraryFile)
         XCTAssertEqual(clips.filledClips.count, 1, "one clip for the orphan")
@@ -275,7 +276,8 @@ final class TheImportReusesAnIdenticalLibraryFileTests: XCTestCase {
         XCTAssertTrue(clips.replaceSlots([Clip?](repeating: nil, count: ClipStore.slotCount)))
         timeline.replaceDocument(TimelineDocument(lanes: [], regions: []))
         guard case .failure(let noLane) = AudioImport.landExisting(
-            asset(file, size: 5), clipStore: clips, timeline: timeline, bpm: 120, measure: two) else {
+            asset(file, size: 5), clipStore: clips, timeline: timeline, bpm: 120, measure: two,
+            assets: nil) else {
             return XCTFail("a song with no audio track must refuse")
         }
         XCTAssertEqual(noLane, .noAudioLane)
@@ -289,7 +291,8 @@ final class TheImportReusesAnIdenticalLibraryFileTests: XCTestCase {
         timeline.replaceDocument(TimelineDocument(lanes: [TimelineLane(name: "Audio 1", kind: .audio)],
                                                   regions: []))
         guard case .failure(let gridFull) = AudioImport.landExisting(
-            asset(file, size: 5), clipStore: clips, timeline: timeline, bpm: 120, measure: two) else {
+            asset(file, size: 5), clipStore: clips, timeline: timeline, bpm: 120, measure: two,
+            assets: nil) else {
             return XCTFail("a full grid must refuse")
         }
         XCTAssertEqual(gridFull, .clipGridFull)
