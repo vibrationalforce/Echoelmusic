@@ -34,11 +34,12 @@
 //
 //  ⚠️ WHAT IT DOES NOT DO, stated so the surface does not read as more: one parameter SHOWN at a
 //  time (the others keep playing), no curve shape or bend, no multi-select, no playhead. Playback samples the curve
-//  once per sixteenth (the transport step), and after Stop the parameter keeps its last value.
+//  once per sixteenth (the transport step).
 //  The row's height is the parameter's range, LINEAR, as playback maps it: for a time in seconds
 //  (0.001–10 s) the short, musical times sit near the bottom — the value field shows and takes
-//  the real number with its unit. After Stop a curve that ended low leaves its value (Amplitude
-//  at 0 = a silent track) until the next Play re-applies the patch.
+//  the real number with its unit. On Stop every track with a curve gets its own patch back
+//  (`TimelineRegionPlayer.restoreAutomatedSlots`, A4), so a curve that ended low does not leave
+//  the track silent.
 //  The canvas is touch-only; VoiceOver hears its summary and reaches the picked point's value
 //  field and Remove.
 //

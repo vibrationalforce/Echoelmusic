@@ -37,6 +37,11 @@
 //    names a track's curve by track and parameter, in the parameter's unit, and marks it bound
 //    exactly where the row's own gate says it sounds; the strip reads the SONG's curves, not only
 //    their play-time copy; the switch's off-copy no longer claims the song-wide curves.
+// 9. A4 — END-TO-END BEHAVIOUR (pure) + SOURCE-TEXT SCAN: Stop re-sends each automated rack
+//    track's own patch (A2 review MED-1: Amplitude drawn to 0 left the track silent until the
+//    next Play) — each track once, in slot order, within capacity; Echoel, audio, global and
+//    emptied curves restore nothing; both stop paths call it after releasing the arrangement
+//    layer, through the one `slotPatchSink`.
 //
 // HONEST GRADING (§3), against the parent tree (the S2 doc commit): the file does NOT compile
 // there — `setSongAutomation`, `SongAutomationEdit` and `differsOnlyInAutomation` are new —
@@ -66,13 +71,18 @@
 // TRANSCRIPTION the scan half is a regression shape: at the parent the strip read
 // `player.timelineLanes` and said "song-wide curves", so each needle is on the wrong side.
 // Counterweights: the Echoel, audio, capacity-0 and global-key cases stay unbound.
+// A4 GRADING (against the A3 prose repair 43620c8d6): `automatedSlots` is new, so the file
+// does not compile there — claim 9 is FORWARD (one absence, #486). By transcription its scan
+// half is a regression shape: neither stop path held `restoreAutomatedSlots()`. Counterweights:
+// the Echoel, audio, global and emptied curves give no slot; capacity 1 drops the second track.
 // NOT HERE — DEVICE PROBE, open.
 // NEEDS-FOUNDER-VERIFY: Workstation → a second MIDI track (poly) → select it → "Automation" →
 // tap three points, hold one and slide it → Play: the track's brightness follows the curve;
 // Undo takes the last point edit back; the Echoel track shows no Automation switch.
 // A2: pick "Envelope attack", pick a point, type 0.5 → the field reads 0.500 s and the track's
-// attack is half a second; draw Amplitude to 0 at the song end, Play, Stop → the track stays
-// silent until the next Play (known, recorded — is that acceptable?).
+// attack is half a second.
+// A4: draw Amplitude to 0 at the song end, Play, let it reach the end, Stop → play a note on that
+// track (or Play again from bar 1): it sounds at its patch level, not silent.
 
 import Foundation
 import XCTest
@@ -432,6 +442,61 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
         XCTAssertFalse(strip.contains("this switch is for the song-wide curves"),
                        "the song's arrangement curves play whatever this switch says")
         XCTAssertTrue(strip.contains("Clip and arrangement curves still play"))
+    }
+
+    // MARK: 9 — A4: Stop gives every automated track its own patch back
+
+    func testAStoppedSongReturnsEachAutomatedTrackToItsPatch() throws {
+        let echoel = TimelineLane(name: "MIDI 1", kind: .midi)
+        let keys = TimelineLane(name: "Keys", kind: .midi)
+        let pad = TimelineLane(name: "Pad", kind: .midi)
+        let audio = TimelineLane(name: "Audio 1", kind: .audio)
+        var doc = TimelineDocument(lanes: [echoel, keys, pad, audio], regions: [])
+        let roll = doc.rollLaneID
+        func curve(_ key: String) -> AutomationLane {
+            AutomationLane(parameter: key, points: [AutomationPoint(tick: 0, value: 0)])
+        }
+        doc.automation = [
+            curve(SongAutomationEdit.key(for: pad.id, base: Self.brightness)),
+            curve(SongAutomationEdit.key(for: pad.id, base: "ddsp.amp.level")),
+            curve(SongAutomationEdit.key(for: keys.id, base: Self.brightness)),
+            curve(SongAutomationEdit.key(for: echoel.id, base: Self.brightness)),
+            curve(SongAutomationEdit.key(for: audio.id, base: Self.brightness)),
+            curve(Self.brightness),
+        ]
+        XCTAssertEqual(TimelineRegionPlayer.automatedSlots(in: doc, rollLane: roll, capacity: 4), [0, 1],
+                       "each automated rack track once, in slot order — two curves on Pad are one restore")
+        XCTAssertEqual(TimelineRegionPlayer.automatedSlots(in: doc, rollLane: roll, capacity: 1), [0],
+                       "a track over capacity has no slot its curve could have moved")
+        XCTAssertEqual(TimelineRegionPlayer.automatedSlots(in: doc, rollLane: roll, capacity: 0), [])
+
+        // Counterweights (#343): the Echoel, audio and global curves reach no rack slot, and an
+        // emptied lane moved nothing — none of them may re-send a patch.
+        var quiet = doc
+        quiet.automation = [
+            AutomationLane(parameter: SongAutomationEdit.key(for: keys.id, base: Self.brightness)),
+            curve(SongAutomationEdit.key(for: echoel.id, base: Self.brightness)),
+            curve(SongAutomationEdit.key(for: audio.id, base: Self.brightness)),
+            curve(Self.brightness),
+        ]
+        XCTAssertEqual(TimelineRegionPlayer.automatedSlots(in: quiet, rollLane: roll, capacity: 4), [])
+
+        // Both stop paths restore, AFTER the arrangement layer is released, through the one
+        // patch sink the region load uses — no second owner of a slot's timbre.
+        let player = try source(Self.playerPath)
+        for anchor in ["public func stop()", "public func handleTransportStopped()"] {
+            let path = try body(of: anchor, in: player)
+            guard let release = path.range(of: "pianoRoll?.setTimelineAutomation([])"),
+                  let restore = path.range(of: "restoreAutomatedSlots()") else {
+                return XCTFail("\(anchor) must restore the automated tracks' patches (A4)")
+            }
+            XCTAssertLessThan(release.lowerBound, restore.lowerBound, anchor)
+        }
+        let restore = try body(of: "private func restoreAutomatedSlots()", in: player)
+        XCTAssertTrue(restore.contains(
+            "slotPatchSink?(slot, MultiRollFanout.patch(forSlot: slot, in: doc, rollLane: rollLane))"))
+        XCTAssertTrue(restore.contains("capacity: multiRollCapacity"),
+                      "the same capacity the resolver's rack reports")
     }
 
     // MARK: 5 — one writer, gesture-local preview, no clock

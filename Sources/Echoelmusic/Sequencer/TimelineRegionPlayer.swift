@@ -731,6 +731,7 @@ public final class TimelineRegionPlayer {
         flushPumps()                           // release every secondary-lane voice
         audioLanes?.stopAll()                  // release every audio lane (A1)
         pianoRoll?.setTimelineAutomation([])   // release the arrangement layer (cycle 5)
+        restoreAutomatedSlots()                // A4: automated tracks back to their own patch
     }
 
     /// Reset follow-state when the transport is stopped from OUTSIDE (the global
@@ -745,6 +746,35 @@ public final class TimelineRegionPlayer {
         flushPumps()                           // release every secondary-lane voice
         audioLanes?.stopAll()                  // release every audio lane (A1)
         pianoRoll?.setTimelineAutomation([])   // release the arrangement layer (cycle 5)
+        restoreAutomatedSlots()                // A4: automated tracks back to their own patch
+    }
+
+    /// A4 (A2 review MED-1): after Stop, a rack track whose song curve moved a parameter kept
+    /// the curve's last value until the next Play re-applied its patch — Amplitude drawn to 0 at
+    /// the song end left the track silent for everything played on it in between. Re-send each
+    /// automated track's OWN patch through the same `slotPatchSink` the region load uses (one
+    /// owner of a slot's timbre, no second path), so its parameters return to what the track's
+    /// patch says. Tracks without a curve are not touched.
+    private func restoreAutomatedSlots() {
+        for slot in Self.automatedSlots(in: doc, rollLane: rollLane, capacity: multiRollCapacity) {
+            slotPatchSink?(slot, MultiRollFanout.patch(forSlot: slot, in: doc, rollLane: rollLane))
+        }
+    }
+
+    /// The rack slots whose track carries a per-track song curve (`track.<laneID>.<base>`), in
+    /// slot order, each once — resolved exactly as `PerTrackAutomationResolver` resolves a curve
+    /// (`MultiRollFanout.slot`), so the restore reaches the slots the curve wrote. Pure.
+    nonisolated static func automatedSlots(in document: TimelineDocument, rollLane: UUID?,
+                                           capacity: Int) -> [Int] {
+        var slots = Set<Int>()
+        for lane in document.automation where !lane.isEmpty {
+            guard let (laneID, _) = PerTrackParameterKeyPath.parse(lane.parameter),
+                  let slot = MultiRollFanout.slot(forLaneID: laneID, in: document,
+                                                  rollLane: rollLane, capacity: capacity)
+            else { continue }
+            slots.insert(slot)
+        }
+        return slots.sorted()
     }
 
     /// Fed every transport step (0…15) by the host. Advances the absolute position,
