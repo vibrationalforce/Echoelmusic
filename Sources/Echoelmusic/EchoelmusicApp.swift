@@ -1394,8 +1394,8 @@ struct EchoelmusicApp: App {
                 // lane's rack voice slot (not the global voice above), so two tracks
                 // automating the same parameter move independently. The roll lane owns
                 // no rack slot ⇒ its params stay on the global path. Byte-identical
-                // no-op until a per-track lane is authored (no namespaced keyPaths
-                // exist yet — the golden gate). Context is read per apply (laneID→slot
+                // no-op until a per-track lane is authored (since Phase 3 / Automation A1
+                // the Workstation's `SongAutomationEditor` authors them). Context is read per apply (laneID→slot
                 // is rank-unstable between plays); the setter writes the slot voice's
                 // own automatable param.
                 parameterRouter.bindPerTrack(

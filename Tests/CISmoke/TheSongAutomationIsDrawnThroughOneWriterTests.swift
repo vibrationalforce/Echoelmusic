@@ -18,6 +18,10 @@
 //    slot through `PerTrackAutomationResolver` on the first and to nothing on the second.
 // 4. END-TO-END BEHAVIOUR + SOURCE-TEXT SCAN: an automation-only edit takes the player's short
 //    path (`differsOnlyInAutomation`), checked before the chase flushes a single voice.
+// 6. END-TO-END BEHAVIOUR (review repair): a hold that travels less than the shared tap slop
+//    moves nothing; a move onto an occupied sixteenth replaces, never stacks; Remove drops only
+//    the emptied lane; removing a track takes its curves with it, and an Undo step that would
+//    only touch that track's lane is skipped, never a no-op that reads as available.
 // 5. SOURCE-TEXT SCAN: the editor writes only through the one writer and never the older
 //    per-point mutators (they record no Undo); the only finger-rate state is `@GestureState`;
 //    the editor reads no clock; the Workstation mounts it once.
@@ -29,6 +33,11 @@
 // track gets NO row and its key resolves to nothing; claim 4's structural edit is NOT short.
 // Graded by Python transcription of the scan anchors against the worktree; the behavioural
 // claims by hand-tracing the pure cores they call.
+// REVIEW REPAIR (against 6bcbc731f, where the file DOES compile): claim 6's slop, replace,
+// single-lane remove and removed-track assertions are REGRESSIONS there — each is red for its
+// named reason (a 3.6-pt travel moved the point; a move stacked two points; Remove pruned the
+// bystander; the removed track's lane stayed). The new `doc.automation` pin in claim 4 is
+// green on both trees (a pin on a line A1 already wrote).
 //
 // NOT HERE — DEVICE PROBE, open.
 // NEEDS-FOUNDER-VERIFY: Workstation → a second MIDI track (poly) → select it → "Automation" →
@@ -135,6 +144,10 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
             startX: 110, startY: 50, dx: 100, dy: -25, width: 400, height: 100,
             points: [point], songTicks: song))
         XCTAssertEqual(move, SongAutomationEdit.Move(id: point.id, tick: 2 * Self.bar, value: 0.75))
+        XCTAssertNil(SongAutomationEdit.resolveMove(startX: 110, startY: 50, dx: 3, dy: 2,
+                                                    width: 400, height: 100, points: [point],
+                                                    songTicks: song),
+                     "a trembling hold (under the tap slop) moves nothing and writes no Undo step")
         XCTAssertNil(SongAutomationEdit.resolveMove(startX: 300, startY: 90, dx: 20, dy: 0,
                                                     width: 400, height: 100, points: [point],
                                                     songTicks: song),
@@ -164,7 +177,9 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
         XCTAssertFalse(SongAutomationEdit.sounds(on: keys, in: doc, voiceCapacity: 0),
                        "a track without a rack voice would draw silence")
 
-        // The premise, end to end: the key resolves to a rack slot exactly where the row is.
+        // The premise, end to end: the key reaches a rack slot on the offered track and nothing
+        // on the Echoel track. (The resolver also finds a slot for a non-poly rack lane; there
+        // the POLY gate above is what keeps the row away — a slot is not a sounding brightness.)
         func resolves(_ lane: UUID) -> Bool {
             PerTrackAutomationResolver.resolve(
                 keyPath: SongAutomationEdit.key(for: lane), normalized: 0.5, document: doc,
@@ -199,7 +214,59 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
         XCTAssertLessThan(short.lowerBound, flush.lowerBound, "decided before a voice is flushed")
         let path = try body(of: "if Self.differsOnlyInAutomation(doc, fresh)", in: refresh)
         XCTAssertTrue(path.contains("pianoRoll?.setTimelineAutomation(fresh.automation)"))
+        XCTAssertTrue(path.contains("doc.automation = fresh.automation"),
+                      "the player's snapshot takes the lanes, or every step re-sends them")
         XCTAssertTrue(path.contains("return"))
+    }
+
+    // MARK: 6 — review repair
+
+    func testAMoveReplacesAndARemoveTouchesOnlyItsLane() throws {
+        let song = 4 * Self.bar
+        let key = SongAutomationEdit.key(for: UUID())
+        var lanes = SongAutomationEdit.adding(tick: Self.bar, value: 0.2, key: key, to: [],
+                                              songTicks: song)
+        lanes = SongAutomationEdit.adding(tick: 2 * Self.bar, value: 0.8, key: key, to: lanes,
+                                          songTicks: song)
+        let first = try XCTUnwrap(SongAutomationEdit.points(key, in: lanes, songTicks: song).first)
+        let moved = SongAutomationEdit.moving(
+            SongAutomationEdit.Move(id: first.id, tick: 2 * Self.bar, value: 0.4),
+            in: lanes, songTicks: song)
+        let after = SongAutomationEdit.points(key, in: moved, songTicks: song)
+        XCTAssertEqual(after.map(\.id), [first.id], "one point per sixteenth — the mover wins")
+        XCTAssertEqual(after.map(\.value), [0.4])
+
+        let bystander = AutomationLane(parameter: "mix.level")   // empty, not this row's
+        let removed = SongAutomationEdit.removing(first.id, from: moved + [bystander])
+        XCTAssertEqual(removed, [bystander], "only the emptied lane goes; another empty lane stays")
+    }
+
+    func testARemovedTrackTakesItsCurvesAndUndoSkipsThem() throws {
+        let timeline = TimelineStore()
+        let original = timeline.document
+        defer { timeline.replaceDocument(original) }
+
+        let (doc, _, keys, _) = Self.song()
+        timeline.replaceDocument(doc)
+        let song = 4 * Self.bar
+        let global = SongAutomationEdit.adding(tick: 0, value: 0.5, key: SongAutomationEdit.base,
+                                               to: [], songTicks: song)
+        timeline.setSongAutomation(global)
+        timeline.setSongAutomation(SongAutomationEdit.adding(
+            tick: Self.bar, value: 0.9, key: SongAutomationEdit.key(for: keys), to: global,
+            songTicks: song))
+        XCTAssertEqual(timeline.document.automation.count, 2)
+
+        timeline.removeLaneIfEmpty(id: keys)
+        XCTAssertFalse(timeline.document.lanes.contains { $0.id == keys }, "premise: the track went")
+        XCTAssertEqual(timeline.document.automation, global,
+                       "its curve went with it; the song-wide lane stays")
+
+        // The newest step would only bring back the removed track's lane — skipped; the one
+        // before it (the global lane's first point) is what Undo takes back.
+        timeline.undo()
+        XCTAssertEqual(timeline.document.automation, [], "Undo did something visible")
+        XCTAssertFalse(timeline.canUndo)
     }
 
     // MARK: 5 — one writer, gesture-local preview, no clock

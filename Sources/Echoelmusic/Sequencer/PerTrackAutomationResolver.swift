@@ -16,8 +16,9 @@
 // between plays, so the caller must call this per step, never cache the result.
 //
 // Foundation-only, Sequencer/ (uses TimelineDocument + ParameterDescriptor);
-// NOT DSP/ (which compiles isolated for the AUv3 target). No consumer yet, so
-// the global automation path stays byte-identical.
+// NOT DSP/ (which compiles isolated for the AUv3 target). Consumer: the per-track
+// dispatch in EchoelmusicApp; producer since Phase 3 / Automation A1: the
+// Workstation's SongAutomationEditor. The global automation path is unchanged.
 
 import Foundation
 

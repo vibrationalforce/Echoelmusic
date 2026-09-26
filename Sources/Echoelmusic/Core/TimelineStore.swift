@@ -248,15 +248,21 @@ public final class TimelineStore {
             guard clips.updateMelody(id: clipID, notes: notes) else { return nil }
             return inverse
         case .automation(let lanes):
+            // A per-track lane whose track has since been removed is dropped, as a part is in
+            // `restoreRegions`; a step that would change nothing else is skipped, so Undo never
+            // reads as available while it only touches a lane nobody can see.
+            let live = liveAutomation(lanes)
+            guard live != document.automation else { return nil }
             let inverse = HistoryStep.automation(document.automation)
-            document.automation = lanes
+            document.automation = live
             persist()
             return inverse
         }
     }
 
-    /// Revert the last edit — of the song's parts or of one part's notes. A notes step whose
-    /// clip has since gone is dropped and the one before it is taken, so Undo never does
+    /// Revert the last edit — of the song's parts, of one part's notes, or of the song's
+    /// automation. A step that can no longer change anything (a notes step whose clip has gone,
+    /// an automation step that only touched a removed track's lane) is dropped and the one before it is taken, so Undo never does
     /// nothing while it reads as available. No-op with an empty history.
     public func undo() {
         while let step = undoStack.popLast() {
@@ -1025,7 +1031,19 @@ public final class TimelineStore {
     public func removeLaneIfEmpty(id: UUID) {
         guard document.regions(in: id).isEmpty else { return }
         document.lanes.removeAll { $0.id == id }
+        // Phase 3 / Automation A1 review: the track's own curves go with it — a per-track lane
+        // for a removed track resolves to no voice and would persist forever.
+        document.automation = liveAutomation(document.automation)
         persist()
+    }
+
+    /// The lanes minus any per-track lane (`PerTrackParameterKeyPath`) whose track is no longer
+    /// in the song. Global lanes are kept as they are.
+    private func liveAutomation(_ lanes: [AutomationLane]) -> [AutomationLane] {
+        lanes.filter { lane in
+            guard let owner = PerTrackParameterKeyPath.parse(lane.parameter)?.laneID else { return true }
+            return document.lanes.contains { $0.id == owner }
+        }
     }
 
     // MARK: - Arrangement automation (T1 — inline timeline automation row)

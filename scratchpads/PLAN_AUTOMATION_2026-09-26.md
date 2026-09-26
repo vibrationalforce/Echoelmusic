@@ -56,3 +56,23 @@ Status: A1 SHIPPED (6bcbc731f) · review running · gates pending · device open
 ## Next (not started)
 - A2 candidates: parameter picker (all `automatableBases`), curve shape per segment, the
   switch/strip honesty fix above. Echoel-track automation = founder call.
+
+## A1 review (6bcbc731f, independent, no HIGH) — repaired in the next commit
+- MED-1 REPAIRED: a held, trembling finger nudged the point and wrote an Undo step —
+  `resolveMove` now returns nil under `TimelineAutomationRowMath.tapSlopPoints` (6 pt).
+- MED-3 REPAIRED: removing a track left its per-track lanes as orphans, and an `.automation`
+  Undo could then change only an orphan — `removeLaneIfEmpty` drops them; `apply(.automation)`
+  filters them and SKIPS a step that would change nothing else (the `.clipNotes` shape).
+- MED-4 REPAIRED: VoiceOver could reach only the mid-song point — "Pick next / previous point"
+  actions, an honest hint, "1 point" grammar.
+- LOW-6/7 REPAIRED: Remove drops only the emptied lane; a move onto an occupied sixteenth
+  replaces it. LOW-8: guard pins `doc.automation = fresh.automation`; claim-3 comment honest.
+  LOW-9: three stale "no producer yet" notes. LOW-11: the pick shows by colour, not size.
+- MED-2 OPEN (design, recorded): the 28-pt pick radius (44-pt touch target) makes a NEW point
+  within ~28 pt of an existing one land as a pick on long songs (32 bars ≈ 3 bars on a phone).
+  Workaround today: add further away, then hold-and-slide. A2 candidate: zoom, or a time-only
+  hit radius.
+- LOW-5 OPEN: a point past a shortened song end is not drawn, so the last segment is drawn
+  flat while playback ramps toward it (comment in `draw` now says so).
+- LOW-10 OPEN: after Stop, or after removing every point while playing, the rack slot keeps
+  the last automated brightness until the next patch apply — not told to the user.

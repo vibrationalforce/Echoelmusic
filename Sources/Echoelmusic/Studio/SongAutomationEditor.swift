@@ -101,12 +101,15 @@ enum SongAutomationEdit {
 
     /// The move a hold-and-slide means: the point under the START of the slide, carried by the
     /// finger's travel from its OWN position (grabbing a point off-centre does not make it jump).
-    /// nil when the slide did not start on a point.
+    /// nil when the slide did not start on a point — or travelled less than the shared tap slop
+    /// (a held, trembling finger moves nothing and writes no Undo step).
     nonisolated static func resolveMove(startX: Double, startY: Double, dx: Double, dy: Double,
                                         width: Double, height: Double,
                                         points: [AutomationPoint], songTicks: Int) -> Move? {
         guard songTicks > 0, width > 0, height > 0,
-              dx.isFinite, dy.isFinite else { return nil }
+              dx.isFinite, dy.isFinite,
+              (dx * dx + dy * dy).squareRoot() >= TimelineAutomationRowMath.tapSlopPoints
+        else { return nil }
         let pxPerTick = width / Double(songTicks)
         guard let id = TimelineAutomationRowMath.hitPointID(atX: startX, y: startY, points: points,
                                                             pxPerTick: pxPerTick, height: height),
@@ -128,15 +131,28 @@ enum SongAutomationEdit {
                                        spanTicks: songTicks)
     }
 
+    /// Move a point; one it lands on (same lane, same sixteenth) is replaced, as a redraw
+    /// replaces — never two points stacked on one step.
     nonisolated static func moving(_ move: Move, in lanes: [AutomationLane],
                                    songTicks: Int) -> [AutomationLane] {
-        ClipAutomationEdit.movePoint(lanes, id: move.id, toTick: move.tick, value: move.value,
-                                     spanTicks: songTicks)
+        var out = ClipAutomationEdit.movePoint(lanes, id: move.id, toTick: move.tick,
+                                               value: move.value, spanTicks: songTicks)
+        guard let i = out.firstIndex(where: { $0.points.contains { $0.id == move.id } }),
+              let landed = out[i].points.first(where: { $0.id == move.id }) else { return out }
+        for other in out[i].points where other.id != move.id && other.tick == landed.tick {
+            out[i].removePoint(id: other.id)
+        }
+        return out
     }
 
-    /// Remove a point; a lane it empties goes with it (no ghost lanes in the song).
+    /// Remove a point; the lane it empties goes with it (no ghost lanes in the song). Only that
+    /// lane — every other lane in the song is left exactly as it was.
     nonisolated static func removing(_ id: UUID, from lanes: [AutomationLane]) -> [AutomationLane] {
-        ClipAutomationEdit.removePoint(lanes, id: id)
+        var out = lanes
+        guard let i = out.firstIndex(where: { $0.points.contains { $0.id == id } }) else { return out }
+        out[i].removePoint(id: id)
+        if out[i].isEmpty { out.remove(at: i) }
+        return out
     }
 
     nonisolated static func revaluing(_ id: UUID, to value: Double,
@@ -228,7 +244,8 @@ private struct SongAutomationLane: View {
                                      onTap: { location, size in
                                          tap(location, size, points: points, key: key)
                                      },
-                                     onRelease: { move in commitMove(move) })
+                                     onRelease: { move in commitMove(move) },
+                                     onStep: { by in step(by, points: points) })
                     .frame(height: Self.height)
             }
             if let chosen {
@@ -295,6 +312,18 @@ private struct SongAutomationLane: View {
         }
     }
 
+    /// VoiceOver's way to a point: pick the next / previous one in song order.
+    private func step(_ by: Int, points: [AutomationPoint]) {
+        guard !points.isEmpty else { return }
+        let next: Int
+        if let current = points.firstIndex(where: { $0.id == picked }) {
+            next = ((current + by) % points.count + points.count) % points.count
+        } else {
+            next = by > 0 ? 0 : points.count - 1
+        }
+        picked = points[next].id
+    }
+
     private func commitMove(_ move: SongAutomationEdit.Move) {
         let lanes = SongAutomationEdit.moving(move, in: timeline.document.automation,
                                               songTicks: songTicks)
@@ -315,6 +344,7 @@ private struct SongAutomationCanvas: View {
     let title: String
     let onTap: (CGPoint, CGSize) -> Void
     let onRelease: (SongAutomationEdit.Move) -> Void
+    let onStep: (Int) -> Void
 
     @GestureState private var live: SongAutomationEdit.Move? = nil
 
@@ -336,9 +366,15 @@ private struct SongAutomationCanvas: View {
             .onTapGesture(coordinateSpace: .local) { location in onTap(location, size) }
             .gesture(edit(size: size))
             .accessibilityElement()
-            .accessibilityLabel("\(title) automation: \(points.count) points")
-            .accessibilityHint("Tap to add a point. Tap a point to pick it; its value and Remove follow below.")
+            .accessibilityLabel("\(title) automation: \(pointCountLabel)")
+            .accessibilityHint("Double-tap adds or picks the point in the middle of the song. Use the actions to pick another point; its value and Remove follow below.")
+            .accessibilityAction(named: "Pick next point") { onStep(1) }
+            .accessibilityAction(named: "Pick previous point") { onStep(-1) }
         }
+    }
+
+    private var pointCountLabel: String {
+        points.count == 1 ? "1 point" : "\(points.count) points"
     }
 
     /// Hold first, then slide — so a swipe that starts on the row still scrolls.
@@ -387,7 +423,9 @@ private struct SongAutomationCanvas: View {
             }
         }
         guard !points.isEmpty else { return }
-        // The curve as playback reads it (hold before the first point and after the last).
+        // The curve through the points drawn here (hold before the first and after the last).
+        // ⚠️ A point past a shortened song end is not in `points`, so the last segment is drawn
+        // flat while playback still ramps toward it — recorded in PLAN_AUTOMATION_2026-09-26.
         let lane = AutomationLane(parameter: "", points: points)
         var path = Path()
         let columns = max(2, Int(size.width / 2))
@@ -404,7 +442,7 @@ private struct SongAutomationCanvas: View {
             let center = CGPoint(
                 x: TimelineAutomationRowMath.x(forTick: point.tick, pxPerTick: pxPerTick),
                 y: AutomationCanvasMath.y(forValue: point.value, height: Double(size.height)))
-            let r: CGFloat = point.id == lit ? 6 : 4
+            let r: CGFloat = 5   // the pick shows by colour, never by size (Uncodixfy)
             context.fill(Path(ellipseIn: CGRect(x: center.x - r, y: center.y - r,
                                                 width: 2 * r, height: 2 * r)),
                          with: .color(point.id == lit ? EchoelTheme.text : EchoelTheme.accent))
