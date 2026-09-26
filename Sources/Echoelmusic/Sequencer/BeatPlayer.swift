@@ -65,9 +65,10 @@ public final class BeatPlayer {
 
     /// Dedicated voice for auditioning a sample file — the kit it used to audition
     /// "against" no longer exists, so this is now simply the one-shot preview player.
-    /// HONEST LIMIT: `audition(url:)` and the region audition below currently have no
-    /// production caller either; they are kept as a working, attached audition path for
-    /// the sampler lane rather than deleted and rebuilt.
+    /// HONEST LIMIT: `audition(url:)` has no production caller; it is kept as a working,
+    /// attached audition path for the sampler lane rather than deleted and rebuilt. The
+    /// region audition below has one since B3: the Media Library's Preview
+    /// (`MediaBrowserView.preview`), refused while anything plays.
     public let previewVoice: SamplerVoice
 
     @ObservationIgnored private weak var audioEngine: AudioEngine?

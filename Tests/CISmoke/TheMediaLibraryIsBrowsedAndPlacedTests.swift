@@ -38,6 +38,13 @@
 //    only changes `mediaRef` (+ length); the writer refuses bad input itself. SCAN: no file
 //    operation, the file checked before the write, one writer and one door. On `6bf47f8b9` this file
 //    does NOT compile — `MediaRelink` and `relinkAudio` are new: one absence (#486), FORWARD guard.
+// 10. B3: PREVIEW — PURE `MediaBrowserView.previewRefusal` refuses while the song, the instrument's
+//    loop plays, or the engine is stopped (the sink's first use attaches a node, which pauses the
+//    engine); a SCAN that the preview plays through `BeatPlayer`'s attached audition path, only
+//    after the refusal, from the browser alone, and ends with the list, the view, a start of the
+//    song or loop, and after `previewSeconds`. On `a68bf05fa` this file does NOT compile —
+//    `previewRefusal` and `previewSeconds` are new: one absence (#486), FORWARD guard; the
+//    all-stopped case is its counterweight.
 //
 // HONEST GRADING (§3), against the parent tree (`a57d03f5c`): the file does NOT compile there —
 // `MediaAsset`, `MediaPlacement`, `MediaLibrary.listAudio` and `MediaBrowserView` are all new —
@@ -58,6 +65,9 @@
 // project from another device) → Media Library → "Missing on this device" names the clip, the file
 // it expects and its parts → the parts are still in the song → Relink → pick the same recording
 // (re-imported) → the row disappears and the old parts sound again; a different file is refused.
+// Then, with the song stopped, tap Preview on a row → its first seconds sound, the button reads
+// Stop → Stop silences it → Preview again, then press the song's Play → the preview stops → with
+// the song playing, Preview says to stop the song first and nothing sounds.
 
 import Foundation
 import XCTest
@@ -574,6 +584,41 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         let browser = try source(Self.browserPath)
         XCTAssertTrue(browser.contains("candidates = MediaAsset.matching(all, query: query)"),
                       "the files offered are the rows the filter shows")
+    }
+
+    // MARK: 10 — B3 preview
+
+    func testAPreviewIsRefusedWhileAnythingPlays() {
+        XCTAssertNil(MediaBrowserView.previewRefusal(songPlaying: false, loopPlaying: false, engineRunning: true),
+                     "counterweight: with everything stopped a preview may play")
+        XCTAssertEqual(MediaBrowserView.previewRefusal(songPlaying: true, loopPlaying: false, engineRunning: true),
+                       "Stop the song to preview a file.")
+        XCTAssertEqual(MediaBrowserView.previewRefusal(songPlaying: false, loopPlaying: true, engineRunning: true),
+                       "Stop the instrument's loop to preview a file.")
+        XCTAssertEqual(MediaBrowserView.previewRefusal(songPlaying: true, loopPlaying: true, engineRunning: true),
+                       "Stop the song to preview a file.", "the song is named first")
+        XCTAssertNotNil(MediaBrowserView.previewRefusal(songPlaying: false, loopPlaying: false, engineRunning: false),
+                        "a stopped engine would light the button and play nothing")
+        XCTAssertTrue(MediaBrowserView.previewSeconds.isFinite && MediaBrowserView.previewSeconds > 0,
+                      "a preview ends itself")
+    }
+
+    func testThePreviewPlaysThroughTheAttachedAuditionAndEndsItself() throws {
+        let browser = try source(Self.browserPath)
+        let start = try body(of: "private func preview(_ asset: MediaAsset)", in: browser)
+        let refusal = try XCTUnwrap(start.range(of: "Self.previewRefusal("))
+        let play = try XCTUnwrap(start.range(of: "beatPlayer.audition(url: asset.url, fromSeconds: 0, lengthSeconds: Self.previewSeconds)"))
+        XCTAssertLessThan(refusal.lowerBound, play.lowerBound, "the refusal is asked before anything sounds")
+        XCTAssertEqual(try filesUnderSources(containing: ".audition(url:"), ["Studio/MediaBrowserView.swift"],
+                       "the browser's Preview is the audition path's one caller")
+        XCTAssertEqual(try filesUnderSources(containing: ".stopAudition()"), ["Studio/MediaBrowserView.swift"])
+        let toggle = try body(of: "private var toggleRow: some View", in: browser)
+        XCTAssertTrue(toggle.contains("stopPreview()"), "closing the list ends a preview")
+        XCTAssertTrue(browser.contains(".onDisappear { stopPreview() }"), "leaving the Workstation ends it")
+        XCTAssertTrue(browser.contains(".onChange(of: player.isPlaying || beatPlayer.pattern.isPlaying)"),
+                      "the song or the loop starting ends it — never two sources over each other")
+        XCTAssertTrue(browser.contains("try? await Task.sleep(for: .seconds(Self.previewSeconds))"),
+                      "a forgotten preview ends itself")
     }
 
     // MARK: helpers

@@ -23,8 +23,16 @@
 // ⭐ B2b — RELINK points a missing clip at a library file (`MediaRelink`, the same recording
 // only); its id, name, tempo and every part stay, so the silent parts sound again.
 //
+// ⭐ B3 — PREVIEW plays a file's first `previewSeconds` on the audition path `BeatPlayer` already
+// attaches at launch (`audition(url:fromSeconds:lengthSeconds:)`, until now without a caller).
+// It is refused while the song or the instrument's loop plays (`previewRefusal`): the sink's
+// first use of a file format attaches a node, which pauses the engine. It ends itself, with the
+// list closing, with the Workstation leaving, and when the song or the loop starts.
+// ⚠️ Not refused: an armed body voice sounding with nothing playing — the first preview of a new
+// file format may cut it for the attach. Device-unconfirmed, like every sound here.
+//
 // ⭐ IT READS ONLY COLD STATE: the clip grid and the song document change on an edit, never on a
-// clock. The tempo a placement spans bars at is `preflightTempo`, `@ObservationIgnored`, read in
+// clock; the two play flags change on a start or a stop. The tempo a placement spans bars at is `preflightTempo`, `@ObservationIgnored`, read in
 // the tap. The root (`WorkstationView`) mounts this leaf and reads none of its state.
 //
 // ⚠️ NO MODAL. It is an inline section of the plate, like `PartNoteEditor`, so the black-screen
@@ -42,6 +50,9 @@ struct MediaBrowserView: View {
     @Environment(ClipStore.self) private var clipStore
     @Environment(TimelineRegionPlayer.self) private var player
     @Environment(WorkstationSelection.self) private var selection
+    /// B3: the preview reuses the audition path that `BeatPlayer` already attaches at launch.
+    @Environment(BeatPlayer.self) private var beatPlayer
+    @Environment(AudioEngine.self) private var audioEngine
 
     @State private var isOpen = false
     /// nil = not read yet; `.unreadable` = the home could not be read (different from empty).
@@ -51,6 +62,8 @@ struct MediaBrowserView: View {
     @State private var query = ""
     /// Clips whose file the player's resolver could not find at the last listing (B2).
     @State private var missingIDs: Set<UUID> = []
+    /// The file a preview is playing (B3). nil = nothing previews.
+    @State private var previewing: MediaAsset.Key?
 
     private enum Listing: Equatable {
         case assets([MediaAsset])
@@ -74,6 +87,11 @@ struct MediaBrowserView: View {
                     missingSection(missing)
                 }
                 content(usage: MediaAsset.usage(clips: clips, document: timeline.document))
+                    // B3: the song or the instrument's loop starting ends a preview — never two
+                    // sources over each other. Observed only while the list is open.
+                    .onChange(of: player.isPlaying || beatPlayer.pattern.isPlaying) { _, playing in
+                        if playing { stopPreview() }
+                    }
                 if let note {
                     Text(note)
                         .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
@@ -81,6 +99,14 @@ struct MediaBrowserView: View {
                 }
             }
         }
+        // B3: a preview ends itself after `previewSeconds`, and with the Workstation.
+        .task(id: previewing) {
+            guard previewing != nil else { return }
+            try? await Task.sleep(for: .seconds(Self.previewSeconds))
+            guard !Task.isCancelled else { return }
+            previewing = nil
+        }
+        .onDisappear { stopPreview() }
         .task(id: ListingKey(open: isOpen,
                              refs: clips.filter { $0.kind == .audio }.compactMap(\.mediaRef).sorted())) {
             guard isOpen else { return }
@@ -105,6 +131,7 @@ struct MediaBrowserView: View {
         Button {
             isOpen.toggle()
             if !isOpen {
+                stopPreview()
                 note = nil
                 query = ""
                 missingIDs = []
@@ -280,6 +307,7 @@ struct MediaBrowserView: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(asset.displayName), \(size), \(use)")
             Spacer(minLength: 8)
+            previewButton(asset)
             Button {
                 place(asset)
             } label: {
@@ -297,6 +325,63 @@ struct MediaBrowserView: View {
             .accessibilityLabel("Place \(asset.displayName)")
             .accessibilityHint("Adds it as a part at the end of the audio track")
         }
+    }
+
+    /// B3: Preview plays the file's first seconds; while it plays the same button is Stop.
+    private func previewButton(_ asset: MediaAsset) -> some View {
+        let playing = previewing == asset.key
+        let label: String = playing ? "Stop preview" : "Preview \(asset.displayName)"
+        let hint: String = playing ? "" : "Plays its first \(Int(Self.previewSeconds)) seconds"
+        return Button {
+            if playing { stopPreview() } else { preview(asset) }
+        } label: {
+            Text(playing ? "Stop" : "Preview").font(EchoelTheme.font(13, .semibold))
+                .foregroundStyle(EchoelTheme.text)
+                .padding(.horizontal, 12)
+                .frame(minWidth: 64, minHeight: 44)
+                .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                    .fill(EchoelTheme.fill))
+                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                    .strokeBorder(EchoelTheme.border, lineWidth: 1))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+        .accessibilityHint(hint)
+    }
+
+    /// B3: how long a preview plays — enough to recognise a recording; a forgotten preview
+    /// ends itself.
+    static let previewSeconds: Double = 10
+
+    /// B3: why a preview may not start now, or nil. The audition sink's first use of a file
+    /// format ATTACHES a node, and an attach pauses the engine — inaudible only while nothing
+    /// plays (the rule `AudioRegionPlayback.auditionWindow` states for the region audition);
+    /// over a playing song a second source would also double-sound. A stopped engine would
+    /// light the button and play nothing.
+    static func previewRefusal(songPlaying: Bool, loopPlaying: Bool,
+                               engineRunning: Bool) -> String? {
+        if songPlaying { return "Stop the song to preview a file." }
+        if loopPlaying { return "Stop the instrument's loop to preview a file." }
+        if !engineRunning { return "Sound is off right now, so a preview can't play." }
+        return nil
+    }
+
+    private func preview(_ asset: MediaAsset) {
+        if let refusal = Self.previewRefusal(songPlaying: player.isPlaying,
+                                             loopPlaying: beatPlayer.pattern.isPlaying,
+                                             engineRunning: audioEngine.isRunning) {
+            note = refusal
+            return
+        }
+        beatPlayer.audition(url: asset.url, fromSeconds: 0, lengthSeconds: Self.previewSeconds)
+        previewing = asset.key
+    }
+
+    private func stopPreview() {
+        guard previewing != nil else { return }
+        beatPlayer.stopAudition()
+        previewing = nil
     }
 
     /// Where a file is used, in the words the row shows.
