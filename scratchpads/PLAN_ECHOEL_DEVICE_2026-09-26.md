@@ -1,6 +1,6 @@
 # PLAN — Echoel as flagship Device (Phase 3, founder order 2026-09-25)
 
-Status: EF1 IN PROGRESS · 2026-09-26
+Status: EF1 + EF2 SHIPPED · EF3 DEFERRED (decision below) · 2026-09-26
 
 ## Census summary (measured before this plan)
 - The Echoel instrument's state is APP-GLOBAL today: genre `@AppStorage studio.genre` (5 writers),
@@ -93,3 +93,15 @@ EF2 genre onto the instance · EF3 patch identity onto the instance · then Clip
   the song until the next launch; pre-existing for the header; an `offered` check in the genre
   case collides with `LaunchLogsWhatItWokeUpWithTests`' sole-index pin — deliberately not done).
   LOW-2 = L1. LOW-3 doc corrected.
+
+## EF3 (patch identity) — DEFERRED, Council 2026-09-26
+· Skeptic: `currentPatch` has 13 writers in `EchoelStudioView`, is NOT persisted across launches
+  (launch = `SynthPatch.factory[studio.presetIndex]` or the genre's patch), and the TAKE already
+  carries it (`Project.patch`, restored by `open(_:)`). Moving it onto the song re-creates the
+  MED-1 take-vs-song conflict on the largest value of all.
+· Aesthetic Maximalist: the sound matters most, but the Sound chip already reaches it (presets,
+  save-as); a song-owned patch adds no new playable range.
+· Shipper / User-Advocate: EF1+EF2 make the instance real, song-carried and Workstation-reachable;
+  the founder's order continues with Clips/Scenes/Session.
+→ EF closes at EF2. Re-open EF3 only with a decision on WHO owns the patch (take vs song), which is
+  the Clips/Scenes question itself — a clip carrying its own sound is where it belongs, if anywhere.
