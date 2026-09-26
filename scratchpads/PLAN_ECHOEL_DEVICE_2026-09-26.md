@@ -85,4 +85,11 @@ EF2 genre onto the instance · EF3 patch identity onto the instance · then Clip
 - L1 applies to the genre as well (debounced song write vs immediate `@AppStorage`); still OPEN,
   same candidate fix. Divergence case recorded: a Project whose saved `style` differs from its
   song's genre — the song wins after a library Open, silently (scale/timbre not re-derived).
-- EVIDENCE: COMPILES pending (gates) · TESTED by claims 8/9 (forward) · REVIEW pending · DEVICE open.
+- EVIDENCE: COMPILES pending (gates) · TESTED by claims 8/9 (forward) · REVIEWED · DEVICE open.
+- REVIEW of 83b617760 (no HIGH): MED-1 REPAIRED — a recovery row can pair a take with a song from
+  another moment, so `openFromLibrary` now writes the TAKE's genre into the song (the loaded
+  notes/scale/timbre are the take's) instead of adopting the song's; the "divergence case" above
+  is therefore resolved in the take's favour. LOW-1 OPEN (an OSC genre outside `offered` reaches
+  the song until the next launch; pre-existing for the header; an `offered` check in the genre
+  case collides with `LaunchLogsWhatItWokeUpWithTests`' sole-index pin — deliberately not done).
+  LOW-2 = L1. LOW-3 doc corrected.

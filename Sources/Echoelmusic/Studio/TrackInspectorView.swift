@@ -237,7 +237,9 @@ enum TrackMix {
     /// the row stays hidden (the store refuses to rewrite it). Posting changes nothing but that
     /// one missing fact: the adoption does not recompose.
     /// EF2: the same for each FACT the instance lacks — a song written by EF1 carries the FX
-    /// character and no genre — so each missing fact is imported once, never over one present.
+    /// character and no genre — so each missing fact is imported once. "Missing" means "reads as
+    /// nil": a v1 field naming a value this build does not know is replaced too, exactly as the
+    /// launch adoption replaces it (review LOW-3).
     @MainActor
     static func requestEchoelInstanceIfMissing(laneID: UUID, timeline: TimelineStore, voiceCapacity: Int) {
         let document = timeline.document

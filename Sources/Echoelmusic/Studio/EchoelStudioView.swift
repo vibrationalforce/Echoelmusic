@@ -8542,8 +8542,8 @@ struct EchoelStudioView: View {
     ///   rule, applied to the song) instead of being adopted into an unreachable picker row.
     /// · `announce` decides the side effects: `true` (the Workstation's edit) runs the genre case
     ///   of `handleCompositionEdit` — scale, tuning suggestion, timbre, echo division, recompose;
-    ///   `false` (launch, after a library Open) only sets `style`, because a loaded take's saved
-    ///   notes must not be recomposed away.
+    ///   `false` (launch) only sets `style`. A library Open does NOT adopt the genre at all: the
+    ///   take it loaded owns the notes, so its genre is written into the song (review MED-1).
     private func adoptEchoelGenreFromSong(announce: Bool) {
         if let songGenre = timelineStore.document.echoelGenre, MusicStyle.offered.contains(songGenre) {
             guard songGenre != style else { return }
@@ -11668,8 +11668,10 @@ struct EchoelStudioView: View {
         open(p)
         SessionSaveOpen.restoreSong(of: p, timeline: timelineStore, clips: clipStore,
                                     player: timelinePlayer)
-        // Silent: `open(p)` loaded the take's SAVED notes, and a genre edit would recompose them.
-        adoptEchoelGenreFromSong(announce: false)
+        // The GENRE goes the other way (EF2 review, MED-1): the take's notes, scale and timbre are
+        // `open(p)`'s, and a recovery row can pair that take with a song from another moment — so
+        // the take's genre is written INTO the song instead of the song's being adopted over it.
+        timelineStore.setEchoelGenre(style)
         adoptEchoelFXFromSong()
         showOpen = false
     }

@@ -31,8 +31,11 @@
 //    facts; the Genre row only once the song holds the genre), and a SCAN of every genre writer —
 //    the genre case writes the song first (header Picker + OSC remote), the Workstation posts
 //    "echoelGenre" (never "genre", which would write the OLD copy back), launch adopts the genre
-//    before the FX character and silently, `openFromLibrary` silently after the restore, `open(_:)`
-//    and the Sound reset write the song.
+//    before the FX character and silently, `openFromLibrary` writes the TAKE's genre into the song
+//    after the restore (review MED-1: the loaded notes are the take's), `open(_:)` and the Sound
+//    reset write the song. REVIEW OF 83b617760: no HIGH; MED-1 repaired here; LOW-1 (an OSC genre
+//    outside `offered` reaches the song until the next launch — pre-existing for the header),
+//    LOW-2 (= EF1 L1) recorded; LOW-3 doc corrected.
 //    EF2 GRADING, against `fce169210`: the file does NOT compile there (`echoelGenre`,
 //    `settingEchoelGenre`, `TimelineStore.setEchoelGenre`, `Controls.genre`,
 //    `TrackMix.pickEchoelGenre` are new) — every EF2 claim is a FORWARD guard, one absence (#486).
@@ -407,11 +410,16 @@ final class TheEchoelIsAnInstanceOnItsTrackTests: XCTestCase {
 
         let fromLibrary = try body(of: "private func openFromLibrary(_ p: Project)", in: studio)
         guard let restore = fromLibrary.range(of: "SessionSaveOpen.restoreSong("),
-              let silent = fromLibrary.range(of: "adoptEchoelGenreFromSong(announce: false)") else {
-            return XCTFail("ANCHOR MISSING: openFromLibrary's genre adoption (#454)")
+              let takeWins = fromLibrary.range(of: "timelineStore.setEchoelGenre(style)") else {
+            return XCTFail("ANCHOR MISSING: openFromLibrary's genre write (#454)")
         }
-        XCTAssertLessThan(restore.lowerBound, silent.lowerBound,
-                          "silent, after the song is replaced — a loaded take is never recomposed away")
+        XCTAssertLessThan(restore.lowerBound, takeWins.lowerBound,
+                          "after the song is replaced, the TAKE's genre is written into it")
+        // Review of 83b617760, MED-1: a recovery row can pair a take with a song from another
+        // moment; adopting the song's genre left the header on it while the loaded notes, scale
+        // and timbre were the take's.
+        XCTAssertFalse(fromLibrary.contains("adoptEchoelGenreFromSong("),
+                       "the take owns the loaded notes — the song's genre is not adopted over them")
 
         let open = try body(of: "private func open(_ p: Project)", in: studio)
         XCTAssertTrue(open.contains("timelineStore.setEchoelGenre(openStyle)"))
