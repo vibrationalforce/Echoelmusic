@@ -68,12 +68,12 @@ public enum MediaRelink {
         }
     }
 
-    /// Two lengths that belong to one recording. A re-export or a format change moves the end by
-    /// a few milliseconds, so the tolerance is 50 ms or 1 % of the longer length, whichever is
-    /// larger. It cannot tell two recordings of equal length apart (see the header).
+    /// Two lengths compatible with one source — the same expected length, never the same
+    /// recording (see the header). The rule has ONE definition since MA4.1,
+    /// `MediaAssetRecord.compatibleDuration` (50 ms or 1 % of the longer length); this asks it
+    /// so the relink and the durable record can never disagree (#416).
     public static func sameLength(_ a: Double, _ b: Double) -> Bool {
-        guard a.isFinite, b.isFinite else { return false }
-        return abs(a - b) <= Swift.max(0.05, 0.01 * Swift.max(a, b))
+        MediaAssetRecord.compatibleDuration(a, b)
     }
 
     /// The pure decision: the length the clip will record, or why not.

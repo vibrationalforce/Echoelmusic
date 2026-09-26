@@ -222,6 +222,36 @@ execution of claims 7–9 is UNRECORDED until an xcresult or targeted run exists
 limit as the MIDI slices); device acceptance is the founder's:
 NEEDS-FOUNDER-VERIFY lives in the guard header.
 
+## MA4 — MediaAsset identity foundation (founder decision 2026-09-26, "RELINK SEMANTICS + NEXT MEDIAASSET STEP")
+
+⛔ **Supersedes the MA1 "NO index/registry file" decision** (decisions.csv row 950 → `superseded-2026-09-26-founder-MA4`).
+The founder's vocabulary is now the law: **MediaAsset** = durable source identity · **Clip** = creative use ·
+**TimelineRegion** = placement · **BrowserItem** = lightweight projection · **Derivative** = waveform/thumbnail/proxy/analysis.
+
+**Naming, stated once:** the founder's MediaAsset is `MediaAssetRecord` (`Core/MediaAssetRecord.swift`). The shipped
+`MediaAsset` (`Core/MediaAsset.swift`, 112 references, 52 of them guard needles) is the founder's BrowserItem and keeps its
+name until a mechanical rename slice of its own.
+
+**Council (compact):** Architect — the registry is an APP root beside the library (like the patch library), not in the
+project envelope; the Clip carries only `mediaAssetID`. Skeptic — during the transition two things say where a file is
+(`Clip.mediaRef` and the record's binding); the resolver slice must make the record the truth for a linked clip, and a
+relink must write both in ONE undo step. Shipper — first slice is a pure value type, no wiring. User-Advocate — words say
+"same length / compatible duration", never "same recording". → proceed.
+
+| Slice | What | Status |
+|---|---|---|
+| MA4.1 | `MediaAssetRecord` (id, raw kind, binding file name, original name, import date, evidence: bytes/rate/frames/channels + digest?) · `match` keeps IDENTITY (equal digest) apart from COMPATIBILITY (duration) · the one duration rule moves here, `MediaRelink.sameLength` asks it · lossy decode keeps id + binding · guard `TheMediaAssetIsADurableIdentityTests` | this commit |
+| MA4.2 | registry store (App Group, one file, lossy array), `Clip.mediaAssetID` (optional, lossy decode, in the envelope via `clipSlots`); inverts claim 14 of `TheWorkstationImportsAudioTests` and the "no index file" header of `Core/MediaAsset.swift` | next |
+| MA4.3 | import writes the record (fresh copy AND the MA2 reuse path — the reused file gets a record lazily if it has none; no scan) | |
+| MA4.4 | content digest off-main: SHA-256 streamed in chunks, `Task.detached`, cancellation checked per chunk, one in flight per asset, never at launch; written back through the store | |
+| MA4.5 | relink validates against the record (`match`) and rebinds: record id, clip id, region ids, tempo, automation unchanged; one undo step | |
+| MA4.6 | proof: Save/Reopen keeps the link; missing → relink keeps every creative id; legacy clips without an id keep working by `mediaRef` | |
+
+**Rules carried from the founder message:** no launch-time hashing or rescans (inactive domain ≈ zero recurring cost);
+availability is derived, never stored; no placement or device state in the record; relink stays a MISSING-media repair
+(Replace Source is a separate future operation); physical delete stays blocked until reference semantics are proven across
+the session, clips, saved projects, autosaves, legacy formats and every other owner.
+
 ## Out of scope (founder list)
 
 - video / image browsing;

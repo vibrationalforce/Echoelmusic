@@ -650,6 +650,13 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
     /// would be a fifth persistence root that can disagree with both. `Clip.id` stays the
     /// creative identity and `mediaRef` the file-location bridge; `MediaAsset.key(forRef:)`
     /// READS that bridge and writes nothing.
+    ///
+    /// ⚠️ MA4.1 (founder media decision 2026-09-26) ADDS THE DURABLE HALF WITHOUT A SECOND KEY:
+    /// `Core/MediaAssetRecord.swift` is the stable id + binding + evidence the founder calls
+    /// "MediaAsset"; its `key` is built FROM `MediaAsset.Key`, so "when are two references the
+    /// same file" still has one answer. The no-store half below still holds in MA4.1 and is
+    /// INVERTED by the registry slice (MA4.2) — the founder decision it asks for now exists and
+    /// is recorded in the media plan §MA4 and `decisions.csv`.
     func testOneMediaAssetIdentityAndNoAssetStore() throws {
         var declarations: [String] = []
         for keyword in ["struct", "class", "enum", "actor", "protocol"] {
