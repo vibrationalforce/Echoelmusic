@@ -1428,6 +1428,8 @@ struct EchoelmusicApp: App {
                 recordController.wire(transport: transport, timeline: timelineStore,
                                       clips: clipStore, bus: bus,
                                       audioRecorder: nil)
+                // Phase 3 / Recording R1: a take ends where the song wraps.
+                recordController.followSongEnd { [weak timelinePlayer] in timelinePlayer?.songEndTick }
                 midiPub.onRecordNoteOn = { [weak recordController] note, velocity in
                     recordController?.recordNoteOn(pitch: note, velocity: velocity)
                 }

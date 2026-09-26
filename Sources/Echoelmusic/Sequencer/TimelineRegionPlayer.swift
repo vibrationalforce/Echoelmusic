@@ -114,6 +114,10 @@ public final class TimelineRegionPlayer {
     @ObservationIgnored private var rollLane: UUID?
     /// Song length rounded UP to whole bars — the loop point. 0 = no bound.
     @ObservationIgnored private var loopTicks = 0
+    /// Where the playing song ends — it wraps (or stops) at this tick. nil while stopped and
+    /// for a song without a length. Read by `RecordController` so a take ends where the song
+    /// does, instead of counting past it (Phase 3 / Recording R1).
+    public var songEndTick: Int? { isPlaying && loopTicks > 0 ? loopTicks : nil }
     @ObservationIgnored private var lastTick = 0
 
     @ObservationIgnored private weak var pattern: PatternEngine?

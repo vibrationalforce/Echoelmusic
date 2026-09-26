@@ -296,6 +296,8 @@ struct WorkstationView: View {
                         // `document`.
                         TrackInspectorView(laneID: row.id)
                             .id(row.id)
+                        // Phase 3 / Recording R1 — record-arm, on a rack MIDI track only.
+                        TrackArmToggle(laneID: row.id)
                     }
                     if row.kind == .audio {
                         pitchField(row)
@@ -757,7 +759,8 @@ struct WorkstationView: View {
             clips: clipStore.filledClips,
             bpm: player.preflightTempo,
             resolveAudio: { player.audioLanes?.resolvedURL(forClipID: $0) })
-        return HStack(spacing: 8) {
+        return VStack(alignment: .leading, spacing: 8) {
+          HStack(spacing: 8) {
             Button {
                 if playing { player.stop() } else { startTimeline(fromTick: 0, launching: []) }
             } label: {
@@ -790,6 +793,13 @@ struct WorkstationView: View {
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityHidden(true)   // the button's own hint already carries this
+          }
+            // Phase 3 / Recording R1 — the MIDI take, started through THIS row's one start
+            // (from the top) and stopped by the same Stop. A leaf in its own file: this view
+            // names neither the recorder nor its controller.
+            RecordTakeButton(playing: playing, startable: startable,
+                             startSong: { startTimeline(fromTick: 0, launching: []) },
+                             stopSong: { player.stop() })
         }
         .padding(.top, 2)
     }

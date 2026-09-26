@@ -29,6 +29,11 @@ public final class RecordController {
     /// Lit while a take is armed/capturing (drives the Record button state).
     public private(set) var isRecording = false
 
+    /// Takes the last commit could not place because the clip grid had no free slot. Counted
+    /// instead of skipped silently, so the door can say so (Phase 3 / Recording R1). Cleared
+    /// on the next `arm()`.
+    public private(set) var droppedTakes = 0
+
     @ObservationIgnored private var recorder = TakeRecorder()
     @ObservationIgnored private weak var transport: Transport?
     @ObservationIgnored private weak var timeline: TimelineStore?
@@ -36,6 +41,12 @@ public final class RecordController {
     @ObservationIgnored private weak var bus: EngineBus?
     @ObservationIgnored private var armed = false
     @ObservationIgnored private var lastTick = 0
+    /// The song's end tick while the arrangement plays (nil = no song running, or one without
+    /// a length). ⚠️ WHY A TAKE NEEDS IT (R1): a take's ticks come from
+    /// `position.absoluteStep`, which counts on linearly, while the arrangement WRAPS to bar 1
+    /// at its end — nothing seeks the transport. Without this, every note played after the
+    /// wrap would land past the song end instead of where it was heard, so a take ENDS there.
+    @ObservationIgnored private var songEndTick: (@MainActor () -> Int?)?
 
     /// Task #13 (PLAN_AUDIO_LANE_RECORDING_2026-07-21.md, S1): an injected mic
     /// recorder for real audio-lane capture. nil (the default, and the shipped
@@ -80,6 +91,12 @@ public final class RecordController {
         }
     }
 
+    /// Tell the recorder where the playing song ends (the app passes the region player's
+    /// `songEndTick`). Separate from `wire` because the region player is not a Core type.
+    public func followSongEnd(_ provider: @escaping @MainActor () -> Int?) {
+        songEndTick = provider
+    }
+
     private var currentTick: Int {
         (transport?.position.absoluteStep ?? 0) * TimelineTime.ticksPerTransportStep
     }
@@ -96,6 +113,7 @@ public final class RecordController {
         guard hasArmedTarget() else { return }
         armed = true
         isRecording = true
+        droppedTakes = 0
     }
 
     /// Cancel an armed/running take without committing anything.
@@ -124,6 +142,15 @@ public final class RecordController {
     private func onStep(_ pos: TransportPosition) {
         guard armed else { return }
         let tick = pos.absoluteStep * TimelineTime.ticksPerTransportStep
+        // R1: the song wraps HERE; the take ends at its end instead of running on past it.
+        // The mic leg (unwired, #1302) keeps its own async stop path.
+        if recorder.isRecording, recordingAudioLaneID == nil,
+           let end = songEndTick?(), end > 0, tick >= end {
+            armed = false
+            isRecording = false
+            commit(recorder.finish(atTick: end), atTick: end)
+            return
+        }
         lastTick = tick
         if !recorder.isRecording {
             guard let timeline else { return }
@@ -216,9 +243,13 @@ public final class RecordController {
         guard let clips, let timeline else { return }
         for take in takes {
             // Captured clips live in a free ClipStore slot (the region resolves its
-            // clipID there). If the 8-slot grid is full, skip honestly — a dedicated
-            // take container is a later cycle.
-            guard let slot = clips.slots.firstIndex(where: { $0 == nil }) else { continue }
+            // clipID there). If the 8-slot grid is full the take cannot be placed — counted
+            // for the door to say so (R1), never dropped silently. A dedicated take container
+            // is a later cycle.
+            guard let slot = clips.slots.firstIndex(where: { $0 == nil }) else {
+                droppedTakes += 1
+                continue
+            }
             clips.setClip(at: slot, take.clip)
             timeline.addRegion(TimelineRegion(
                 laneID: take.laneID,

@@ -320,11 +320,11 @@ final class TheAudioLaneProducerIsTheImportDoorTests: XCTestCase {
         XCTAssertEqual(recorderBuilders, ["Core/RecordController.swift"], """
             `TakeRecorder` is now constructed by \
             \(recorderBuilders.isEmpty ? "nothing" : recorderBuilders.joined(separator: ", ")). \
-            The RECORDER chain runs RecordController → TakeRecorder → AudioClipFactory and is \
-            still inert because its first link is doorless (#204) — and it must stay that \
-            way here: it needs an audio INPUT, which this app does not have (#1302). Audio \
-            Import V1 deliberately did NOT re-door it; it added a parallel producer that \
-            reads a file the user already owns.
+            The RECORDER chain runs RecordController → TakeRecorder → AudioClipFactory. Since \
+            Phase 3 / Recording R1 it has a door for MIDI takes (`RecordTakeControls.swift`), but \
+            its AUDIO leg stays inert: `audioRecorder` is nil and there is no audio INPUT in this \
+            app (#1302). Audio Import V1 deliberately did NOT re-door that leg; it added a \
+            parallel producer that reads a file the user already owns.
             """)
 
         // ⛔ A THIRD ASSERTION WAS DRAFTED HERE AND DELETED BEFORE IT SHIPPED, because it
