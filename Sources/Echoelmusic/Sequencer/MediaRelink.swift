@@ -20,24 +20,29 @@
 // fingerprint, so this rule cannot tell them apart; the words the user sees say "same length",
 // never "same recording". A clip that never learned its length takes the file's.
 //
-// ⭐ MA4.5 — THE DURABLE RECORD FOLLOWS THE FILE, WITH ITS ID. When the clip links a record the
-// registry holds, the record must not contradict the chosen file (`recordRefusal`: another length
-// or, once both sides are hashed, another digest). Then `identity(…)` decides what the clip links,
-// in this order (MA4.5 review, both MED):
-// 1. the chosen file has its OWN record, not refuted by its measurement → the clip ADOPTS it. A
-//    compatible length never overwrites a file's own identity, and the clip's former record stays
-//    where it is (moving it would give the file two records, the newer carrying another file's
-//    evidence);
-// 2. else the clip's record still describes the missing file THIS clip played → it MOVES there
-//    with its id — record id, clip id, region ids, tempo and automation all stay;
-// 3. else the record has moved on (another project relinked it) → the link is RELEASED; taking the
-//    record back would pull it away from a file another clip plays.
-// The record only refutes; it never upgrades "same length" into "same recording". The rule is
-// enforced for the RELINKING clip: a moved record still linked by a clip in another project that
-// names the old file points past that clip until it is relinked too (the record is the source
-// identity, and that clip's file is equally missing).
-// ⚠️ Step 1 is the one exception to "a relink keeps the MediaAsset id": the clip's former record
-// could have moved, but the chosen file already HAS an identity, and moving would give it two.
+// ⭐ MA4.5 + MA4.4 — WHAT THE CLIP LINKS, AND WHEN A SHARED IDENTITY MAY MOVE. The registry is
+// app-wide: one `MediaAssetRecord` can be linked by clips in several saved projects, so moving
+// its binding repairs or corrupts ALL of them at once. The record therefore moves only on
+// PROOF — equal SHA-256 digests (MA4.4, founder 2026-09-26) — never on a compatible length.
+// First the record may REFUSE the file (`recordRefusal`): another digest → `.differentSource`,
+// an incompatible length → `.differentLength`. Then `identity(…)`, in this order:
+// A. the clip's record carries a digest and the chosen file's EQUALS it — same bytes, proven:
+//    the chosen file's own record, if it has another one, is adopted (never hidden); else the
+//    record keeps the clip's link and, while it still names this clip's missing file, its
+//    BINDING MOVES there with its id (record, clip and region ids all stay); a record that
+//    already names another file keeps that binding (it holds the same bytes);
+// C. otherwise, the chosen file has its OWN unrefuted record → the clip ADOPTS it (never
+//    hidden, never stolen);
+// D. otherwise nothing proves the source: the chosen file gets its own new record and the clip
+//    links THAT — a compatible length establishes compatibility, never a move of a shared record.
+//    Without a registry the link is released.
+// (B — digests differ — is the refusal above.) The chosen file is hashed only when the clip's
+// record has a digest to compare (`needsContentProof`), off the main actor, after the cheap
+// length check (`perform`). A digest computed for the relink is also written to the chosen
+// file's own record when that record has none — the one backfill a relink does.
+// ⚠️ Steps A-with-own-record, C and D give the clip ANOTHER MediaAsset id than it had: the
+// chosen file already has, or now gets, its own identity, and the old record keeps describing
+// the missing source for every project that still links it.
 //
 // ⭐ ONE UNDO STEP IN THE CURRENT SESSION (founder 2026-09-26, after review M1 found the first
 // header's "undone by relinking again" false). The write goes through
@@ -73,6 +78,9 @@ public enum MediaRelink {
         /// source, whatever its length (MA4.5). Reached only when BOTH sides were hashed — the
         /// relink itself never hashes on the tap.
         case differentSource
+        /// The song is playing: the relinked clip's lane was never preloaded, and its next onset
+        /// would attach a node mid-song — an attach pauses the engine (B2b review M3).
+        case songPlaying
 
         /// The words the browser shows.
         public var userMessage: String {
@@ -90,6 +98,8 @@ public enum MediaRelink {
             case .differentSource:
                 return "That file's content differs from the clip's source. "
                     + "Place a different sound as a new part."
+            case .songPlaying:
+                return "Stop the song to relink a file."
             }
         }
     }
@@ -119,8 +129,8 @@ public enum MediaRelink {
     /// nothing against it. The record REFUTES only; it never makes a file "the same" (founder
     /// 2026-09-26: a compatible length is not identity) — the same-length rule above still runs.
     ///
-    /// `contentDigest` is the chosen file's digest when one is already known — the relink itself
-    /// passes nil, because it never hashes on the tap (MA4.4 hashes off the main actor).
+    /// `contentDigest` is the chosen file's digest when the relink computed one (`perform` does
+    /// so only when the record has a digest to compare), else nil.
     public static func recordRefusal(_ record: MediaAssetRecord,
                                      measurement: AudioImport.Measurement,
                                      contentDigest: String?) -> Refusal? {
@@ -140,45 +150,71 @@ public enum MediaRelink {
         }
     }
 
-    /// What the clip links after a relink to `asset` — the three steps in the header, in order.
+    /// Whether a relink of `clip` needs the chosen file's digest: only when its record, held by
+    /// this registry, carries a SHA-256 digest to compare. Pure; the answer decides whether
+    /// `perform` hashes at all.
+    @MainActor
+    public static func needsContentProof(_ clip: Clip, assets: MediaAssetStore?) -> Bool {
+        guard let assets, let record = clip.mediaAssetID.flatMap({ assets.record(id: $0) }),
+              let digest = record.evidence.contentDigest else { return false }
+        return MediaContentDigest.isEvidence(digest)
+    }
+
+    /// What the clip links after a relink to `asset` — steps A, C and D of the header, in order.
     /// `linked` is the clip's own record when this registry holds it (already checked by
-    /// `recordRefusal`).
+    /// `recordRefusal`); `candidateDigest` is the chosen file's digest when one was computed.
+    /// Step D registers a new record for the chosen file (it describes that file, whatever the
+    /// relink's Undo later does with the clip).
     @MainActor
     static func identity(for clip: Clip, linked: MediaAssetRecord?, to asset: MediaAsset,
-                         measurement: AudioImport.Measurement,
+                         measurement: AudioImport.Measurement, candidateDigest: String?,
                          assets: MediaAssetStore) -> MediaAssetStore.RelinkIdentity {
-        let chosen = MediaAssetRecord.Evidence(byteSize: 0,
+        let chosen = MediaAssetRecord.Evidence(byteSize: asset.byteSize,
                                                sampleRate: measurement.sampleRate,
                                                frameCount: measurement.frameCount,
                                                channelCount: measurement.channelCount,
-                                               contentDigest: nil)
-        if let own = assets.record(boundTo: asset.key), !own.isContradicted(by: chosen) {
-            return .adopt(own.id)
+                                               contentDigest: candidateDigest)
+        let own = assets.record(boundTo: asset.key).flatMap { $0.isContradicted(by: chosen) ? nil : $0 }
+        if let own, let candidateDigest, own.evidence.contentDigest == nil {
+            assets.learnDigest(id: own.id, digest: candidateDigest)
         }
-        let playedName = clip.mediaRef.map { URL(fileURLWithPath: $0).lastPathComponent }
-        if let linked, linked.fileName == playedName {
-            return .move(MediaAssetStore.Rebinding(store: assets, recordID: linked.id,
-                                                   fileName: asset.key.fileName))
+        // A — the same bytes, proven.
+        if let linked, linked.evidence.contentDigest != nil, linked.match(chosen) == .sameContent {
+            if let own, own.id != linked.id { return .adopt(own.id) }
+            let playedName = clip.mediaRef.map { URL(fileURLWithPath: $0).lastPathComponent }
+            if linked.fileName == playedName, linked.fileName != asset.key.fileName {
+                return .move(MediaAssetStore.Rebinding(store: assets, recordID: linked.id,
+                                                       fileName: asset.key.fileName))
+            }
+            return .adopt(linked.id)
         }
-        return .release
+        // C — the chosen file's own identity.
+        if let own { return .adopt(own.id) }
+        // D — nothing proves the source: the chosen file gets its own identity.
+        var created = AudioImport.assetRecord(managed: asset.url, originalName: asset.key.fileName,
+                                              measurement: measurement, byteSize: asset.byteSize,
+                                              importedAt: Date())
+        created.evidence.contentDigest = candidateDigest
+        return assets.register(created) ? .adopt(created.id) : .release
     }
 
     /// Relink `clipID` to `asset`, through the song's one undoable writer. `measure` and `fileExists` are
     /// injected so the blocking bundle can drive the whole path on paths that exist only as
     /// strings; production passes the real ones (`MediaBrowserView`).
     ///
-    /// MA4.5 — `assets` (REQUIRED, #431; nil = no registry, the link is released): when the clip
-    /// links a record this registry holds, the record is checked against the file
-    /// (`recordRefusal`); then `identity(…)` adopts the file's own record, moves the clip's
-    /// record with its id, or releases the link. One Undo restores clip, link and binding. A clip
-    /// with no link, or a link this registry does not hold (a project from another device),
-    /// adopts the file's own record when it has one, else ends unlinked.
+    /// MA4.5/MA4.4 — `assets` (REQUIRED, #431; nil = no registry, the link is released) and
+    /// `candidateDigest` (REQUIRED; the chosen file's digest, nil when none was computed): when
+    /// the clip links a record this registry holds, the record is checked against the file
+    /// (`recordRefusal`); then `identity(…)` decides the link — see the header. Without a digest
+    /// nothing is proven, so a shared record never moves. One Undo restores clip and link (and
+    /// the binding, when one moved).
     @MainActor
     public static func relink(_ clipID: UUID,
                               to asset: MediaAsset,
                               clipStore: ClipStore,
                               timeline: TimelineStore,
                               assets: MediaAssetStore?,
+                              candidateDigest: String?,
                               fileExists: (String) -> Bool,
                               measure: (URL) -> AudioImport.Measurement?) -> Result<Double, Refusal> {
         guard let clip = clipStore.clip(id: clipID) else { return .failure(.noAudioClip) }
@@ -193,11 +229,11 @@ public enum MediaRelink {
             let linked = clip.mediaAssetID.flatMap { assets.record(id: $0) }
                 .flatMap { $0.kind == asset.key.kind ? $0 : nil }
             if let linked,
-               let refusal = recordRefusal(linked, measurement: measurement, contentDigest: nil) {
+               let refusal = recordRefusal(linked, measurement: measurement, contentDigest: candidateDigest) {
                 return .failure(refusal)
             }
             identity = Self.identity(for: clip, linked: linked, to: asset, measurement: measurement,
-                                     assets: assets)
+                                     candidateDigest: candidateDigest, assets: assets)
         }
         guard timeline.relinkClipSource(clipID: clipID, mediaRef: asset.url.path,
                                         nativeDurationSeconds: seconds, identity: identity,
@@ -207,17 +243,56 @@ public enum MediaRelink {
         return .success(seconds)
     }
 
+    /// The relink with its digest step, every impure part injected: when `needsContentProof`, the
+    /// chosen file is checked for length FIRST (a file that fails it is never hashed), then
+    /// hashed off the main actor by `hash`; a hash that fails or is cancelled refuses the relink
+    /// as unreadable — the file could not be read to the end, so nothing is proven or written.
+    /// `isSongPlaying` is asked before and again after the hash: no relink under a playing song.
+    @MainActor
+    public static func relinkProvingContent(_ clipID: UUID, to asset: MediaAsset,
+                                            clipStore: ClipStore, timeline: TimelineStore,
+                                            assets: MediaAssetStore,
+                                            isSongPlaying: () -> Bool,
+                                            fileExists: (String) -> Bool,
+                                            measure: (URL) -> AudioImport.Measurement?,
+                                            hash: @escaping @Sendable (URL) throws -> String) async
+        -> Result<Double, Refusal> {
+        guard !isSongPlaying() else { return .failure(.songPlaying) }
+        var candidateDigest: String?
+        if let clip = clipStore.clip(id: clipID), needsContentProof(clip, assets: assets) {
+            guard fileExists(asset.url.path) else { return .failure(.fileGone) }
+            let precheck = decide(clip, measuredSeconds: measure(asset.url)?.durationSeconds)
+            guard case .success = precheck else { return precheck }
+            guard let digest = await MediaContentDigest.compute(asset.url, hash: hash) else {
+                return .failure(.unreadable)
+            }
+            candidateDigest = digest
+            // The hash took time: the song may have started meanwhile (M3 holds for the write).
+            guard !isSongPlaying() else { return .failure(.songPlaying) }
+        }
+        return relink(clipID, to: asset, clipStore: clipStore, timeline: timeline, assets: assets,
+                      candidateDigest: candidateDigest, fileExists: fileExists, measure: measure)
+    }
+
     #if canImport(AVFoundation)
 
-    /// The production entry point — the browser's Relink: the real existence check and the
-    /// import's own measurement (one header read of the chosen file, on the tap).
+    /// The production entry point — the browser's Relink: the real existence check, the
+    /// import's own measurement (one header read of the chosen file) and, only when the clip's
+    /// record has a digest to compare, CryptoKit's streamed SHA-256 off the main actor.
     @MainActor
     public static func perform(_ clipID: UUID, to asset: MediaAsset,
                                clipStore: ClipStore, timeline: TimelineStore,
-                               assets: MediaAssetStore) -> Result<Double, Refusal> {
-        relink(clipID, to: asset, clipStore: clipStore, timeline: timeline, assets: assets,
-               fileExists: { FileManager.default.fileExists(atPath: $0) },
-               measure: AudioImport.measureWithAVFoundation)
+                               assets: MediaAssetStore,
+                               isSongPlaying: () -> Bool) async -> Result<Double, Refusal> {
+        #if canImport(CryptoKit)
+        let hash: @Sendable (URL) throws -> String = { try MediaContentDigest.sha256(fileAt: $0) }
+        #else
+        let hash: @Sendable (URL) throws -> String = { _ in throw CocoaError(.featureUnsupported) }
+        #endif
+        return await relinkProvingContent(clipID, to: asset, clipStore: clipStore, timeline: timeline,
+                                          assets: assets, isSongPlaying: isSongPlaying,
+                                          fileExists: { FileManager.default.fileExists(atPath: $0) },
+                                          measure: AudioImport.measureWithAVFoundation, hash: hash)
     }
 
     #endif

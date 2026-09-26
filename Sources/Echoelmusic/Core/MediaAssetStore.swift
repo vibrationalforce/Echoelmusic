@@ -13,15 +13,16 @@
 // ⭐ WHAT IT DOES AND DOES NOT DO.
 // · One small JSON file, read once when the store is constructed at launch and written on each
 //   change. It never lists the media directory, never opens a media file, never hashes — the
-//   founder's "inactive domain ≈ near-zero recurring cost".
+//   founder's "inactive domain ≈ near-zero recurring cost". A digest reaches it only through
+//   `learnDigest`, computed elsewhere (`MediaContentDigest`) and only ever added (MA4.4).
 // · Availability is not stored: "is the file there" is asked of the resolver when needed.
 // · One name, one answer: when two records carry the same binding, `record(boundTo:)` returns
 //   the NEWEST — the latest import or rebind of a name is what that name means now; the older
 //   record keeps its id, so a clip linked to it is not rewritten. (The library picks
 //   collision-free names, this app deletes no media, and a relink never moves a record onto a
 //   file whose own record its measurement does not refute (`MediaRelink`, MA4.5 review MED-2) —
-//   so this happens only when a file was replaced behind the app's back under a reused name; the digest slice MA4.4 is what
-//   can tell the two files apart.)
+//   so this happens only when a file was replaced behind the app's back under a reused name; a
+//   SHA-256 digest (MA4.4) is what can tell the two files apart.)
 // · Element-tolerant decode: one damaged record is dropped, the others survive. Unlike the clip
 //   grid, position means nothing here, so compacting is correct.
 
@@ -76,6 +77,22 @@ public final class MediaAssetStore {
         return true
     }
 
+    /// MA4.4 — give a record its content digest (the portable `"sha256:<hex>"`, computed off the
+    /// main actor by `MediaContentDigest`). Evidence is only ever ADDED: a record that already
+    /// carries the same digest is left alone (true), one that carries ANOTHER is never overwritten
+    /// (false — its evidence describes other bytes), and a malformed digest or an unknown id is
+    /// refused (false). The store itself still never opens or hashes a file.
+    @discardableResult
+    public func learnDigest(id: UUID, digest: String) -> Bool {
+        guard MediaContentDigest.isEvidence(digest),
+              let index = records.firstIndex(where: { $0.id == id }) else { return false }
+        let known = records[index].evidence.contentDigest
+        guard known == nil else { return known?.lowercased() == digest.lowercased() }
+        records[index].evidence.contentDigest = digest.lowercased()
+        persist()
+        return true
+    }
+
     /// MA4.5 — point a record at another file of its kind's home, KEEPING ITS ID: a relink of a
     /// missing source moves the binding, never the identity every linked clip names. The record
     /// becomes the newest holder of the new name, so `record(boundTo:)` answers it there (a
@@ -96,11 +113,13 @@ public final class MediaAssetStore {
     /// What a relink does to the clip's durable link (MA4.5 review): the writer
     /// (`TimelineStore.relinkClipSource`) takes exactly one, so "move a record AND link another"
     /// cannot be spelled.
-    /// · `.release` — the clip ends unlinked: no registry, or no record describes the chosen file.
+    /// · `.release` — the clip ends unlinked: no registry, or no record for the chosen file could
+    ///   be adopted or registered.
     /// · `.adopt(id)` — the chosen file's OWN record (its binding is that file and its measurement
     ///   does not refute it); the clip's former record stays where it is.
-    /// · `.move(rebinding)` — the clip's own record still describes the missing file this clip
-    ///   played, so it follows the file with its id; the clip keeps its link.
+    /// · `.move(rebinding)` — the clip's own record has a SHA-256 equal to the chosen file's
+    ///   (MA4.4) and still names the missing file this clip played, so it follows the file with
+    ///   its id; the clip keeps its link.
     public enum RelinkIdentity {
         case release
         case adopt(UUID)

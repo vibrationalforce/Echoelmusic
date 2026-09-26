@@ -68,10 +68,19 @@ struct MediaBrowserView: View {
     @State private var missingIDs: Set<UUID> = []
     /// The file a preview is playing (B3). nil = nothing previews.
     @State private var previewing: MediaAsset.Key?
+    /// The relink in progress (MA4.4: it may hash the chosen file first). nil = none; one at a time.
+    @State private var relinking: RelinkRequest?
 
     private enum Listing: Equatable {
         case assets([MediaAsset])
         case unreadable
+    }
+
+    /// One relink: which missing clip, to which library file.
+    private struct RelinkRequest: Equatable {
+        let clipID: UUID
+        let clipName: String
+        let asset: MediaAsset
     }
 
     /// Re-list when the list opens, and when the clip grid starts or stops knowing a file.
@@ -114,6 +123,27 @@ struct MediaBrowserView: View {
             previewing = nil
         }
         .onDisappear { stopPreview() }
+        // MA4.4: a relink that must prove its file hashes it off the main actor first. Here, in
+        // `.task(id:)`, so leaving the Workstation cancels the hash and nothing is written.
+        .task(id: relinking) {
+            guard let request = relinking else { return }
+            #if canImport(AVFoundation)
+            let result = await MediaRelink.perform(request.clipID, to: request.asset,
+                                                   clipStore: clipStore, timeline: timeline,
+                                                   assets: mediaAssets,
+                                                   isSongPlaying: { player.isPlaying })
+            switch result {
+            case .success:
+                missingIDs.remove(request.clipID)
+                note = "Relinked \u{201C}\(request.clipName)\u{201D} to \(request.asset.displayName)."
+            case .failure(let refusal):
+                note = refusal.userMessage
+            }
+            #else
+            note = MediaRelink.Refusal.unreadable.userMessage
+            #endif
+            relinking = nil
+        }
         .task(id: ListingKey(open: isOpen,
                              refs: clips.filter { $0.kind == .audio }.compactMap(\.mediaRef).sorted())) {
             guard isOpen else { return }
@@ -267,7 +297,7 @@ struct MediaBrowserView: View {
     /// preloaded, so its next onset would attach a node mid-song, and an attach pauses the
     /// engine. A stopped song preloads it on the next Play, where the pause is silent.
     static func relinkRefusal(songPlaying: Bool) -> String? {
-        songPlaying ? "Stop the song to relink a file." : nil
+        songPlaying ? MediaRelink.Refusal.songPlaying.userMessage : nil
     }
 
     private func relink(_ item: MediaAsset.Missing, to asset: MediaAsset) {
@@ -275,18 +305,12 @@ struct MediaBrowserView: View {
             note = refusal
             return
         }
-        #if canImport(AVFoundation)
-        switch MediaRelink.perform(item.clipID, to: asset, clipStore: clipStore, timeline: timeline,
-                                   assets: mediaAssets) {
-        case .success:
-            missingIDs.remove(item.clipID)
-            note = "Relinked \u{201C}\(item.clipName)\u{201D} to \(asset.displayName)."
-        case .failure(let refusal):
-            note = refusal.userMessage
+        guard relinking == nil else {
+            note = "A relink is still checking its file."
+            return
         }
-        #else
-        note = MediaRelink.Refusal.unreadable.userMessage
-        #endif
+        note = nil
+        relinking = RelinkRequest(clipID: item.clipID, clipName: item.clipName, asset: asset)
     }
 
     /// One missing clip, in the words its row shows.

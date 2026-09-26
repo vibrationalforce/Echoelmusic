@@ -18,8 +18,8 @@
 //   migrations, and the resolver already re-roots by file name (H6).
 // · PROVENANCE: the name the file had when it was picked, and when it was imported.
 // · EVIDENCE: what was measured about the bytes — size, sample rate, frames, channels, and a
-//   content digest once one has been computed (nil until then; computing it is expensive and
-//   happens off the main actor in its own slice).
+//   content digest once one has been computed (nil until then; `MediaContentDigest` streams the
+//   SHA-256 off the main actor, after a new import and when a relink must prove its file — MA4.4).
 // · NOT availability — "is the file there" is DERIVED each time it is asked, never stored, so a
 //   record cannot claim a file that was deleted behind its back.
 // · NOT placement, tempo, automation or device state — those belong to the Clip and the Region.
@@ -34,10 +34,11 @@
 // Foundation-only and pure: no store, no file access, no clock. The ONE producer is the landing
 // transaction (`AudioImport.commit` → `establishIdentity` → `MediaAssetStore.register`), and a
 // Clip links to a record by `Clip.mediaAssetID`: a fresh copy registers a new record (MA4.2), a
-// library file adopts the record bound to it (MA4.3). A relink of a missing file (MA4.5,
-// `MediaRelink.identity`) adopts the chosen file's own unrefuted record first; else MOVES the
-// clip's record to it with its id (`MediaAssetStore.rebind`) while that record still names the
-// missing file; else releases the link.
+// library file adopts the record bound to it (MA4.3). A relink of a missing file (MA4.5 + MA4.4,
+// `MediaRelink.identity`) MOVES the clip's record with its id (`MediaAssetStore.rebind`) only
+// when both SHA-256 digests are equal and the record still names the missing file; a different
+// digest is refused; otherwise the chosen file's own unrefuted record is adopted, or one is
+// created for it. A duration never moves a shared record.
 
 import Foundation
 
@@ -163,12 +164,12 @@ public struct MediaAssetRecord: Codable, Sendable, Equatable, Identifiable {
     /// MA4.3): there the measurement can refute identity, never establish it. Unmeasured and
     /// compatible say nothing against the binding, so they do not refute.
     ///
-    /// ⚠️ THE BYTE SIZE IS DELIBERATELY NOT A REFUTATION (MA4.3 review L1). A relink moves a
-    /// record to a re-export of its source (a compatible length, other bytes) and KEEPS the
-    /// source's evidence (MA4.5); a size check would then refute the record against the very
-    /// file it names and mint a second identity for it on the next placement. Exact identity is
-    /// the digest's job (MA4.4), which a re-export also fails — so it too must be compared only
-    /// where "same bytes" is the question.
+    /// ⚠️ THE BYTE SIZE IS DELIBERATELY NOT A REFUTATION (MA4.3 review L1). Records moved by an
+    /// MA4.5 build (before MA4.4) may name a re-export of their source (a compatible length,
+    /// other bytes) and still carry the source's evidence; a size check would refute such a
+    /// record against the very file it names and mint a second identity on the next placement.
+    /// Since MA4.4 a relink moves a record only on EQUAL digests, so a new move keeps evidence
+    /// that is true of the file it names; exact identity stays the digest's job.
     public func isContradicted(by candidate: Evidence) -> Bool {
         switch match(candidate) {
         case .differentContent, .differentDuration: return true

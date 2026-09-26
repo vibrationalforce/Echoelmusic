@@ -553,20 +553,20 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         }
 
         // Refusals write nothing.
-        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, timeline: timeline, assets: nil, fileExists: { _ in false },
+        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, timeline: timeline, assets: nil, candidateDigest: nil, fileExists: { _ in false },
                                           measure: measured(8.0)), .failure(.fileGone))
-        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, timeline: timeline, assets: nil, fileExists: { _ in true },
+        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, timeline: timeline, assets: nil, candidateDigest: nil, fileExists: { _ in true },
                                           measure: measured(12.0)),
                        .failure(.differentLength(expected: 8.0, found: 12.0)))
-        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, timeline: timeline, assets: nil, fileExists: { _ in true },
+        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, timeline: timeline, assets: nil, candidateDigest: nil, fileExists: { _ in true },
                                           measure: { _ in nil }), .failure(.unreadable))
-        XCTAssertEqual(MediaRelink.relink(midi.id, to: found, clipStore: clips, timeline: timeline, assets: nil, fileExists: { _ in true },
+        XCTAssertEqual(MediaRelink.relink(midi.id, to: found, clipStore: clips, timeline: timeline, assets: nil, candidateDigest: nil, fileExists: { _ in true },
                                           measure: measured(8.0)), .failure(.noAudioClip))
         XCTAssertEqual(clips.clip(id: gone.id), gone, "every refusal left the clip exactly as it was")
         XCTAssertFalse(timeline.canUndo, "…and recorded no undo step")
 
         // The same recording: only the source changes.
-        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, timeline: timeline, assets: nil, fileExists: { _ in true },
+        XCTAssertEqual(MediaRelink.relink(gone.id, to: found, clipStore: clips, timeline: timeline, assets: nil, candidateDigest: nil, fileExists: { _ in true },
                                           measure: measured(8.0)), .success(8.0))
         let after = clips.clip(id: gone.id)
         XCTAssertEqual(after?.mediaRef, found.url.path, "the clip now names the library file")
@@ -593,7 +593,7 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         let unmeasured = Clip(name: "Old", kind: .audio, mediaRef: "/x/Media/Audio/Old.wav")
         grid[2] = unmeasured
         XCTAssertTrue(clips.replaceSlots(grid))
-        XCTAssertEqual(MediaRelink.relink(unmeasured.id, to: found, clipStore: clips, timeline: timeline, assets: nil, fileExists: { _ in true },
+        XCTAssertEqual(MediaRelink.relink(unmeasured.id, to: found, clipStore: clips, timeline: timeline, assets: nil, candidateDigest: nil, fileExists: { _ in true },
                                           measure: measured(3.0)), .success(3.0))
         XCTAssertEqual(clips.clip(id: unmeasured.id)?.nativeDurationSeconds, 3.0)
         timeline.undo()
@@ -622,8 +622,14 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         XCTAssertNil(MediaBrowserView.relinkRefusal(songPlaying: false), "counterweight: a stopped song relinks")
         let relinkTap = try body(of: "private func relink(_ item: MediaAsset.Missing", in: try source(Self.browserPath))
         let refused = try XCTUnwrap(relinkTap.range(of: "Self.relinkRefusal(songPlaying: player.isPlaying)"))
-        let performed = try XCTUnwrap(relinkTap.range(of: "MediaRelink.perform("))
-        XCTAssertLessThan(refused.lowerBound, performed.lowerBound, "the refusal is asked before the write")
+        let requested = try XCTUnwrap(relinkTap.range(of: "relinking = RelinkRequest("))
+        XCTAssertLessThan(refused.lowerBound, requested.lowerBound, "the refusal is asked before the relink starts")
+        XCTAssertFalse(relinkTap.contains("MediaRelink.perform("),
+                       "the tap only requests; the relink runs in the cancellable `.task(id: relinking)` (MA4.4)")
+        let browserText = try source(Self.browserPath)
+        let task = try XCTUnwrap(browserText.range(of: ".task(id: relinking)"))
+        let performed = try XCTUnwrap(browserText.range(of: "MediaRelink.perform("))
+        XCTAssertLessThan(task.lowerBound, performed.lowerBound, "the relink runs inside the view's task")
         XCTAssertFalse(relinkBody.contains("Region"), "no part is written — the parts stay where they are")
         XCTAssertEqual(try filesUnderSources(containing: "relinkAudio("),
                        ["Core/ClipStore.swift", "Core/TimelineStore.swift"],

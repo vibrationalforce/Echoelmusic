@@ -5,7 +5,8 @@
 // WHAT IT PINS. `MediaAssetRecord` is the durable identity of one managed file: a stable id, a
 // binding (the file name in its kind's home), provenance and measured evidence. This slice builds
 // the value type and moves the one length rule into it (MA4.1); MA4.2–4.6 added the registry, the
-// Clip link, the import write, library adoption and the relink move — claims 5–9 below.
+// Clip link, the import write, library adoption and the relink move — claims 5–10 below; MA4.4
+// the SHA-256 content evidence — claim 11.
 //
 // 1. END-TO-END BEHAVIOUR (shipped, pure value type): the DIGEST decides identity when both sides
 //    have one — equal is `sameContent`, different is `differentContent` EVEN AT THE SAME LENGTH;
@@ -37,17 +38,35 @@
 //    old keeps its id); a record with no measurement cannot refute; a file without a record gets
 //    exactly one; a reuse rewrites nothing; a FRESH COPY never adopts a same-name, same-length
 //    record. `isContradicted` is driven directly, digest included.
-// 9. END-TO-END (MA4.5, real stores): a relink of a linked clip checks the chosen file against
-//    the RECORD (which can refuse where the clip alone could not — a clip that never learned its
-//    length) and then MOVES the record's binding with its id; the clip keeps its link; ONE Undo
-//    moves clip and record back, Redo forward. A link the registry does not hold is replaced by
-//    the chosen file's own record. The writer refuses a move of another record. `recordRefusal`
-//    refutes, never confirms.
-// 10. END-TO-END (MA4.5 review, real stores): a record that has moved on to another file is not
-//    pulled back (the link is released, MED-1); a file with its own record gives the clip THAT
-//    record and nothing moves (MED-2) — even when the clip's record could legally move, which pins
-//    the ORDER of the steps; a record its file's measurement refutes is not adopted; a file no
-//    record describes takes the move.
+// 9. END-TO-END (MA4.5 + MA4.4, real stores): a relink of a linked clip checks the chosen file
+//    against the RECORD (which can refuse where the clip alone could not — a clip that never
+//    learned its length). A shared record MOVES only on proven content (A: equal SHA-256) — with
+//    its id, the clip keeps its link, ONE Undo moves both back, Redo forward. Another digest is
+//    refused (B). No digest (D) moves nothing: the chosen file gets its own record. A link the
+//    registry does not hold adopts the file's own record (C). The writer refuses a move of
+//    another record; `recordRefusal` refutes, never confirms.
+// 10. END-TO-END (founder §7, real stores): Projects A and B share record X, B relinks — matching
+//    digest repairs X's binding with X's evidence unchanged; a different digest is refused; a
+//    target that owns a record keeps it and X does not move (both with and without a digest,
+//    pinning the step ORDER); a legacy Y without a digest never moves on duration, with or
+//    without a candidate digest; a refuted own record is not adopted. Project A's clip and X's
+//    evidence are asserted after every case.
+// 11. END-TO-END + SOURCE-TEXT SCAN (MA4.4): the persisted digest is `"sha256:" + 64 hex` (the
+//    standard vectors, chunked = whole, a >2 MiB file streamed = one-shot); cancellation stops
+//    before the next chunk; the registry only ADDS a digest, never overwrites; `learn` hashes a
+//    record once, drops failures and malformed results; the relink hashes only when the record
+//    has a digest, never on a wrong length or under a playing song (asked again after the hash),
+//    and a failed hash is `.unreadable`. Scans: learning only in the Workstation's post-import
+//    task, file hashing only there and in the relink, nothing at launch, chunked reads, a
+//    detached utility task, CryptoKit behind its guard.
+//
+// MA4.4 GRADING against `c6d39b7c3`: does not compile there (`MediaContentDigest`,
+// `learnDigest`, `relink(…candidateDigest:)`, `relinkProvingContent`, `.songPlaying` are new) —
+// one absence (#486). Claim 11 is FORWARD. Claims 9 and 10 changed MEANING: on that tree the
+// digestless relinks moved the shared record on a name match and a compatible length — the
+// founder's 2026-09-26 law makes those REGRESSIONS now (they are cases D and "legacy" here).
+// Claim 7's needles follow the async browser door. Device probes: a relink of a large file shows
+// no hitch; an import's digest appears in `MediaAssets/assets.json` after the import settles.
 //
 // MA4.5 REVIEW GRADING against `9bed36874`: does not compile there (`RelinkIdentity`,
 // `relinkClipSource(…identity:)`) — one absence (#486). Claim 10 is FORWARD; on that tree's
@@ -76,6 +95,9 @@
 
 import Foundation
 import XCTest
+#if canImport(CryptoKit)
+import CryptoKit
+#endif
 @testable import Echoelmusic
 
 @MainActor
@@ -365,11 +387,13 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertTrue(browser.contains("@Environment(MediaAssetStore.self) private var mediaAssets"))
         XCTAssertTrue(browser.contains("assets: mediaAssets, bpm: player.preflightTempo)"),
                       "the browser's Place hands the registry to the placement")
-        XCTAssertTrue(browser.contains("assets: mediaAssets) {"),
+        XCTAssertTrue(browser.contains("assets: mediaAssets,\n"),
                       "the browser's Relink hands the registry to the relink (MA4.5)")
+        XCTAssertTrue(browser.contains("isSongPlaying: { player.isPlaying })"),
+                      "…and asks, after any hash, whether the song started (M3)")
         let relink = try source("Sources/Echoelmusic/Sequencer/MediaRelink.swift")
-        XCTAssertTrue(relink.contains("recordRefusal(linked, measurement: measurement, contentDigest: nil)"),
-                      "the relink never hashes on the tap")
+        XCTAssertTrue(relink.contains("recordRefusal(linked, measurement: measurement, contentDigest: candidateDigest)"),
+                      "the record refutes the chosen file by digest when one was computed (MA4.4)")
         XCTAssertTrue(relink.contains("identity: identity,"),
                       "what the clip links is decided once and handed to the song's one relink step")
         XCTAssertTrue(relink.contains("return .adopt(own.id)"),
@@ -488,16 +512,17 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertFalse(hashed.isContradicted(by: evidence(seconds: 10, digest: "sha256:AA")))
     }
 
-    // MARK: 9 — MA4.5: a relink moves the record with its id
+    // MARK: 9 — MA4.5 + MA4.4: a relink moves a record only on proven content
 
-    func testARelinkMovesTheRecordAndUndoMovesItBack() throws {
+    func testARelinkMovesTheRecordOnlyOnProvenContent() throws {
         let clips = ClipStore()
         let timeline = TimelineStore()
         let originalSlots = clips.slots
         defer { clips.replaceSlots(originalSlots) }
         let assets = MediaAssetStore(store: nil)
         let source = MediaAssetRecord(kind: .audio, fileName: "Break.wav", originalName: "Break.wav",
-                                      importedAt: Date(timeIntervalSince1970: 1), evidence: evidence(seconds: 8))
+                                      importedAt: Date(timeIntervalSince1970: 1),
+                                      evidence: evidence(seconds: 8, digest: sha("a")))
         XCTAssertTrue(assets.register(source))
         let gone = Clip(name: "Break", kind: .audio, mediaRef: "/x/Media/Audio/Break.wav",
                         mediaAssetID: source.id, nativeDurationSeconds: 8, nativeBPM: 96)
@@ -514,25 +539,30 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertTrue(clips.replaceSlots(grid), "fixture premise")
         let found = MediaAsset(kind: .audio, fileName: "Break (1).wav",
                                url: URL(fileURLWithPath: "/y/Media/Audio/Break (1).wav"), byteSize: 1)
-        func measured(_ seconds: Double) -> (URL) -> AudioImport.Measurement? {
-            { _ in AudioImport.Measurement(sampleRate: 48_000, frameCount: Int64(seconds * 48_000),
-                                           channelCount: 2) }
-        }
-        func relink(_ id: UUID, _ seconds: Double) -> Result<Double, MediaRelink.Refusal> {
+        func relink(_ id: UUID, _ seconds: Double, digest: String?) -> Result<Double, MediaRelink.Refusal> {
             MediaRelink.relink(id, to: found, clipStore: clips, timeline: timeline, assets: assets,
-                               fileExists: { _ in true }, measure: measured(seconds))
+                               candidateDigest: digest, fileExists: { _ in true },
+                               measure: { _ in AudioImport.Measurement(sampleRate: 48_000,
+                                                                       frameCount: Int64(seconds * 48_000),
+                                                                       channelCount: 2) })
         }
 
-        // The RECORD refutes a file the clip alone could not judge.
-        XCTAssertEqual(relink(lengthless.id, 12), .failure(.differentLength(expected: 8, found: 12)),
+        // The record's LENGTH refutes a file the clip alone could not judge.
+        XCTAssertEqual(relink(lengthless.id, 12, digest: nil), .failure(.differentLength(expected: 8, found: 12)),
                        "the record's length speaks for a clip that never learned its own")
         XCTAssertEqual(clips.clip(id: lengthless.id), lengthless, "the refusal wrote nothing")
         XCTAssertEqual(assets.records, [source], "…to the record either")
         XCTAssertFalse(timeline.canUndo)
 
-        // The same source: the clip plays the new file, the record FOLLOWS it with its id.
+        // B — another digest is another source, at a compatible length: refused, nothing moves.
+        XCTAssertEqual(relink(gone.id, 8, digest: sha("b")), .failure(.differentSource))
+        XCTAssertEqual(clips.clip(id: gone.id), gone)
+        XCTAssertEqual(assets.records, [source])
+        XCTAssertFalse(timeline.canUndo)
+
+        // A — the SAME digest proves the same bytes: the record follows the file with its id.
         // 8.03125 s is exact in binary (and 385 500 frames), so the round trip is exact (#442).
-        XCTAssertEqual(relink(gone.id, 8.03125), .success(8.03125))
+        XCTAssertEqual(relink(gone.id, 8.03125, digest: sha("a")), .success(8.03125))
         let after = try XCTUnwrap(clips.clip(id: gone.id))
         XCTAssertEqual(after.mediaRef, found.url.path)
         XCTAssertEqual(after.mediaAssetID, source.id, "the clip keeps its link — the record moved with it")
@@ -540,9 +570,8 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertEqual(after.nativeBPM, 96)
         XCTAssertEqual(assets.records.count, 1, "no second record")
         XCTAssertEqual(assets.record(id: source.id)?.fileName, "Break (1).wav", "the binding moved")
-        XCTAssertEqual(assets.record(id: source.id)?.evidence, source.evidence, "the evidence is the source's, kept")
+        XCTAssertEqual(assets.record(id: source.id)?.evidence, source.evidence, "the evidence is kept")
         XCTAssertEqual(assets.record(boundTo: found.key)?.id, source.id, "the new name answers the record")
-
         // ONE step moves both back, and Redo both forward.
         timeline.undo()
         XCTAssertEqual(clips.clip(id: gone.id), gone, "Undo restores the clip exactly")
@@ -550,17 +579,31 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         timeline.redo()
         XCTAssertEqual(clips.clip(id: gone.id)?.mediaAssetID, source.id)
         XCTAssertEqual(assets.record(id: source.id)?.fileName, "Break (1).wav")
+        timeline.undo()
+        XCTAssertEqual(assets.record(id: source.id)?.fileName, "Break.wav")
 
-        // A link the registry does not hold is replaced by the chosen file's OWN record — after
-        // the Redo that is the moved source, bound to "Break (1).wav" and measured at 8 s.
-        XCTAssertEqual(relink(foreign.id, 8), .success(8))
-        XCTAssertEqual(clips.clip(id: foreign.id)?.mediaAssetID, source.id,
+        // D — no digest for the chosen file: a compatible length proves nothing, so the shared
+        // record does NOT move; the chosen file gets its own identity and the clip links it.
+        XCTAssertEqual(relink(gone.id, 8.03125, digest: nil), .success(8.03125))
+        let weak = try XCTUnwrap(clips.clip(id: gone.id))
+        XCTAssertEqual(weak.mediaRef, found.url.path)
+        XCTAssertNotEqual(weak.mediaAssetID, source.id, "an unproven file is not the source's identity")
+        let own = try XCTUnwrap(weak.mediaAssetID.flatMap { assets.record(id: $0) })
+        XCTAssertEqual(own.fileName, "Break (1).wav")
+        XCTAssertNil(own.evidence.contentDigest, "nothing was hashed, so nothing is claimed")
+        XCTAssertEqual(assets.record(id: source.id), source, "the source record is untouched")
+        timeline.undo()
+        XCTAssertEqual(clips.clip(id: gone.id), gone, "Undo gives the source link back")
+        XCTAssertEqual(assets.record(id: own.id), own, "the file's record stays — it describes that file")
+
+        // C — a link the registry does not hold adopts the chosen file's OWN record.
+        XCTAssertEqual(relink(foreign.id, 8, digest: nil), .success(8))
+        XCTAssertEqual(clips.clip(id: foreign.id)?.mediaAssetID, own.id,
                        "the clip links the record that describes the file it now plays")
-        XCTAssertEqual(assets.record(id: source.id)?.fileName, "Break (1).wav", "adopting moves nothing")
         timeline.undo()
         XCTAssertEqual(clips.clip(id: foreign.id), foreign, "Undo gives the unknown link back")
 
-        // The writer refuses a rebinding of ANOTHER clip's record, writing nothing.
+        // The writer refuses a move of ANOTHER clip's record, writing nothing.
         let stranger = MediaAssetStore.Rebinding(store: assets, recordID: UUID(), fileName: "x.wav")
         XCTAssertFalse(timeline.relinkClipSource(clipID: foreign.id, mediaRef: "/y/Media/Audio/x.wav",
                                                  nativeDurationSeconds: 8, identity: .move(stranger),
@@ -574,105 +617,311 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         XCTAssertEqual(MediaRelink.recordRefusal(hashed, measurement: eight, contentDigest: "sha256:bb"),
                        .differentSource, "another digest is another source, at the same length")
         XCTAssertNil(MediaRelink.recordRefusal(hashed, measurement: eight, contentDigest: nil),
-                     "no digest on the tap: the length decides, and 8 s is compatible")
+                     "no digest: the length decides, and 8 s is compatible")
         XCTAssertEqual(MediaRelink.Refusal.differentSource.userMessage.contains("same recording"), false)
     }
 
-    // MARK: 10 — MA4.5 review: a relink never takes another file's identity
+    // MARK: 10 — founder §7: one project's relink cannot corrupt another project's asset
 
-    func testARelinkNeverTakesAnotherFilesIdentity() throws {
+    func testARelinkInOneProjectLeavesAnotherProjectsAssetTrue() throws {
         let clips = ClipStore()
         let timeline = TimelineStore()
         let originalSlots = clips.slots
         defer { clips.replaceSlots(originalSlots) }
         let assets = MediaAssetStore(store: nil)
-        // The source two songs used. Another song already relinked it: it now names "Loop (1).wav",
-        // a file that exists and that song plays.
-        let shared = MediaAssetRecord(kind: .audio, fileName: "Loop (1).wav", originalName: "Loop.wav",
-                                      importedAt: Date(timeIntervalSince1970: 1), evidence: evidence(seconds: 8))
-        // A library file with its OWN identity, at a compatible length.
+        // Asset X, with a digest, used by Project A (still playing it) and Project B (missing).
+        let x = MediaAssetRecord(kind: .audio, fileName: "Loop.wav", originalName: "Loop.wav",
+                                 importedAt: Date(timeIntervalSince1970: 1),
+                                 evidence: evidence(seconds: 8, digest: sha("a")))
+        // A legacy asset Y without a digest, used by both projects the same way.
+        let y = MediaAssetRecord(kind: .audio, fileName: "Legacy.wav", originalName: "Legacy.wav",
+                                 importedAt: Date(timeIntervalSince1970: 2), evidence: evidence(seconds: 8))
+        // A library file with its OWN identity.
         let other = MediaAssetRecord(kind: .audio, fileName: "Other.wav", originalName: "Other.wav",
-                                     importedAt: Date(timeIntervalSince1970: 2), evidence: evidence(seconds: 8))
-        // A record whose name is taken by a file its measurement refutes.
-        let stale = MediaAssetRecord(kind: .audio, fileName: "Short.wav", originalName: "Short.wav",
-                                     importedAt: Date(timeIntervalSince1970: 3), evidence: evidence(seconds: 4))
-        // A record that STILL names its clip's missing file — the one a move would be legal for.
-        let current = MediaAssetRecord(kind: .audio, fileName: "Take.wav", originalName: "Take.wav",
-                                       importedAt: Date(timeIntervalSince1970: 4), evidence: evidence(seconds: 8))
-        for record in [shared, other, stale, current] {
-            XCTAssertTrue(assets.register(record), "fixture premise")
-        }
-        // This song's clip still names the missing "Loop.wav" and links the shared record.
-        let song = Clip(name: "Loop", kind: .audio, mediaRef: "/x/Media/Audio/Loop.wav",
-                        mediaAssetID: shared.id, nativeDurationSeconds: 8, nativeBPM: 120)
-        let take = Clip(name: "Take", kind: .audio, mediaRef: "/x/Media/Audio/Take.wav",
-                        mediaAssetID: current.id, nativeDurationSeconds: 8)
+                                     importedAt: Date(timeIntervalSince1970: 3), evidence: evidence(seconds: 8))
+        for record in [x, y, other] { XCTAssertTrue(assets.register(record), "fixture premise") }
+        // ONE registry is app-wide, so two projects are two clips linking the same record.
+        let projectA = Clip(name: "A", kind: .audio, mediaRef: "/x/Media/Audio/Loop.wav",
+                            mediaAssetID: x.id, nativeDurationSeconds: 8)
+        let projectB = Clip(name: "B", kind: .audio, mediaRef: "/x/Media/Audio/Loop.wav",
+                            mediaAssetID: x.id, nativeDurationSeconds: 8)
+        let legacyA = Clip(name: "LA", kind: .audio, mediaRef: "/x/Media/Audio/Legacy.wav",
+                           mediaAssetID: y.id, nativeDurationSeconds: 8)
+        let legacyB = Clip(name: "LB", kind: .audio, mediaRef: "/x/Media/Audio/Legacy.wav",
+                           mediaAssetID: y.id, nativeDurationSeconds: 8)
         var grid = [Clip?](repeating: nil, count: ClipStore.slotCount)
-        grid[0] = song
-        grid[1] = take
+        grid[0] = projectA
+        grid[1] = projectB
+        grid[2] = legacyA
+        grid[3] = legacyB
         XCTAssertTrue(clips.replaceSlots(grid), "fixture premise")
-        func relink(_ clipID: UUID? = nil, to name: String) -> Result<Double, MediaRelink.Refusal> {
+        func relink(_ id: UUID, to name: String, digest: String?) -> Result<Double, MediaRelink.Refusal> {
             let asset = MediaAsset(kind: .audio, fileName: name,
                                    url: URL(fileURLWithPath: "/y/Media/Audio/\(name)"), byteSize: 1)
             // 384 000 frames at 48 kHz: exactly 8 s (#442).
-            return MediaRelink.relink(clipID ?? song.id, to: asset, clipStore: clips, timeline: timeline,
-                                      assets: assets,
-                                      fileExists: { _ in true },
+            return MediaRelink.relink(id, to: asset, clipStore: clips, timeline: timeline, assets: assets,
+                                      candidateDigest: digest, fileExists: { _ in true },
                                       measure: { _ in AudioImport.Measurement(sampleRate: 48_000,
                                                                               frameCount: 384_000,
                                                                               channelCount: 2) })
         }
-        func bindings() -> [String] { assets.records.map(\.fileName) }
-        let before = bindings()
+        func projectAStillTrue(_ line: UInt = #line) {
+            XCTAssertEqual(clips.clip(id: projectA.id), projectA, "Project A's clip is untouched", line: line)
+            XCTAssertEqual(assets.record(id: x.id)?.evidence, x.evidence,
+                           "X's evidence still describes Project A's content", line: line)
+        }
 
-        // MED-1: the record has moved on to a file another song plays — it is NOT pulled back.
-        XCTAssertEqual(relink(to: "Loop (2).wav"), .success(8))
-        XCTAssertNil(clips.clip(id: song.id)?.mediaAssetID,
-                     "the clip lets go of a record that describes another file")
-        XCTAssertEqual(assets.record(id: shared.id)?.fileName, "Loop (1).wav",
-                       "the other song's file keeps its identity")
-        XCTAssertEqual(bindings(), before, "no record moved")
+        // MATCHING DIGEST — proven same bytes: X may be repaired with its id; its evidence is
+        // unchanged, so it still describes exactly what Project A plays.
+        XCTAssertEqual(relink(projectB.id, to: "Loop (1).wav", digest: sha("a")), .success(8))
+        XCTAssertEqual(clips.clip(id: projectB.id)?.mediaAssetID, x.id)
+        XCTAssertEqual(assets.record(id: x.id)?.fileName, "Loop (1).wav", "the binding is repaired")
+        projectAStillTrue()
         timeline.undo()
-        XCTAssertEqual(clips.clip(id: song.id), song, "Undo gives the link back")
+        XCTAssertEqual(clips.clip(id: projectB.id), projectB)
+        XCTAssertEqual(assets.record(id: x.id), x)
 
-        // MED-2: the chosen file has its own record — the clip ADOPTS it; a compatible length
-        // never overwrites that file's identity with another's.
-        XCTAssertEqual(relink(to: "Other.wav"), .success(8))
-        XCTAssertEqual(clips.clip(id: song.id)?.mediaAssetID, other.id)
-        XCTAssertEqual(assets.record(boundTo: MediaAsset.Key(kind: .audio, fileName: "Other.wav"))?.id, other.id,
-                       "the file's name still answers its own record")
-        XCTAssertEqual(bindings(), before, "adopting moves nothing")
-        timeline.undo()
-        XCTAssertEqual(clips.clip(id: song.id), song)
+        // DIFFERENT DIGEST — refused; neither the identity nor the binding changes.
+        XCTAssertEqual(relink(projectB.id, to: "Loop (1).wav", digest: sha("b")), .failure(.differentSource))
+        XCTAssertEqual(clips.clip(id: projectB.id), projectB)
+        XCTAssertEqual(assets.record(id: x.id), x)
+        projectAStillTrue()
 
-        // Counterweight: a record its file's measurement refutes is not the file's identity.
-        XCTAssertEqual(relink(to: "Short.wav"), .success(8))
-        XCTAssertNil(clips.clip(id: song.id)?.mediaAssetID, "a refuted record is not adopted")
-        XCTAssertEqual(bindings(), before)
-        timeline.undo()
-        XCTAssertEqual(clips.clip(id: song.id), song)
+        // TARGET OWNS ANOTHER RECORD — adopted, never hidden or stolen: even with X PROVEN (the
+        // step order), the file's own identity wins, and X stays where Project A needs it.
+        for digest in [sha("a"), nil] {
+            XCTAssertEqual(relink(projectB.id, to: "Other.wav", digest: digest), .success(8))
+            XCTAssertEqual(clips.clip(id: projectB.id)?.mediaAssetID, other.id)
+            XCTAssertEqual(assets.record(boundTo: MediaAsset.Key(kind: .audio, fileName: "Other.wav"))?.id,
+                           other.id, "the file's name still answers its own record")
+            XCTAssertEqual(assets.record(id: x.id), x, "X did not move")
+            projectAStillTrue()
+            timeline.undo()
+            XCTAssertEqual(clips.clip(id: projectB.id), projectB)
+        }
+        XCTAssertEqual(assets.record(id: other.id)?.evidence.contentDigest, sha("a"),
+                       "the digest the relink computed was written to the file's own record — the one backfill")
 
-        // THE ORDER (review of `95cb1a16f`): this record still names its clip's missing file, so a
-        // move WOULD be legal — and the chosen file's own identity still wins. Swapping steps 1
-        // and 2 of `MediaRelink.identity` turns this red.
-        XCTAssertEqual(relink(take.id, to: "Other.wav"), .success(8))
-        XCTAssertEqual(clips.clip(id: take.id)?.mediaAssetID, other.id,
-                       "the file's own record comes before moving the clip's")
-        XCTAssertEqual(assets.record(id: current.id)?.fileName, "Take.wav", "the clip's record did not move")
-        XCTAssertEqual(bindings(), before)
+        // LEGACY SOURCE WITHOUT A DIGEST — duration alone moves nothing global: Y keeps its
+        // binding and evidence for Project A; Project B's clip links the chosen file's OWN new
+        // identity (D). A second relink to that file adopts that identity (C), and a digest the
+        // relink computed lands there — Y still cannot be proven, so it still does not move.
+        let before = assets.records.count
+        XCTAssertEqual(relink(legacyB.id, to: "Legacy (1).wav", digest: nil), .success(8))
+        let fresh = try XCTUnwrap(clips.clip(id: legacyB.id)?.mediaAssetID)
+        XCTAssertNotEqual(fresh, y.id, "an unproven file never takes the shared identity")
+        XCTAssertEqual(assets.records.count, before + 1, "one new identity for the chosen file")
+        XCTAssertNil(assets.record(id: fresh)?.evidence.contentDigest)
+        XCTAssertEqual(assets.record(id: y.id), y, "Y is untouched")
+        XCTAssertEqual(clips.clip(id: legacyA.id), legacyA, "Project A still plays Y")
         timeline.undo()
-        XCTAssertEqual(clips.clip(id: take.id), take)
-        // Counterweight: the same clip to a file NO record describes — now the move is taken.
-        XCTAssertEqual(relink(take.id, to: "Take (1).wav"), .success(8))
-        XCTAssertEqual(clips.clip(id: take.id)?.mediaAssetID, current.id, "the link is kept")
-        XCTAssertEqual(assets.record(id: current.id)?.fileName, "Take (1).wav", "…and the record moved")
+        XCTAssertEqual(clips.clip(id: legacyB.id), legacyB)
+        XCTAssertEqual(relink(legacyB.id, to: "Legacy (1).wav", digest: sha("c")), .success(8))
+        XCTAssertEqual(clips.clip(id: legacyB.id)?.mediaAssetID, fresh, "the file's own identity, again")
+        XCTAssertEqual(assets.record(id: fresh)?.evidence.contentDigest, sha("c"),
+                       "the file's own record gained the digest of the file it describes")
+        XCTAssertEqual(assets.records.count, before + 1, "no third identity")
+        XCTAssertEqual(assets.record(id: y.id), y, "a digest on one side proves nothing about Y")
+        XCTAssertEqual(clips.clip(id: legacyA.id), legacyA)
         timeline.undo()
-        XCTAssertEqual(clips.clip(id: take.id), take)
-        XCTAssertEqual(assets.record(id: current.id)?.fileName, "Take.wav")
-        XCTAssertFalse(timeline.canUndo, "five relinks, five steps, all undone")
+
+        // A file whose own record its measurement REFUTES is not adopted: that record describes
+        // other bytes, so the clip gets a fresh identity and the refuted record is left alone.
+        let short = MediaAssetRecord(kind: .audio, fileName: "Short.wav", originalName: "Short.wav",
+                                     importedAt: Date(timeIntervalSince1970: 4), evidence: evidence(seconds: 4))
+        XCTAssertTrue(assets.register(short))
+        XCTAssertEqual(relink(legacyB.id, to: "Short.wav", digest: nil), .success(8))
+        XCTAssertNotEqual(clips.clip(id: legacyB.id)?.mediaAssetID, short.id)
+        XCTAssertNotEqual(clips.clip(id: legacyB.id)?.mediaAssetID, y.id)
+        XCTAssertEqual(assets.record(id: short.id), short, "the refuted record is not rewritten")
+        timeline.undo()
+    }
+
+    // MARK: 11 — MA4.4: the digest is portable SHA-256, streamed, and taken only where needed
+
+    func testTheDigestIsPortableSHA256ReadInChunks() throws {
+        XCTAssertEqual(MediaContentDigest.algorithm, "sha256")
+        XCTAssertEqual(MediaContentDigest.evidence(digestBytes: [UInt8](repeating: 0xAB, count: 32)),
+                       "sha256:" + String(repeating: "ab", count: 32), "text: algorithm, colon, 64 hex digits")
+        XCTAssertNil(MediaContentDigest.evidence(digestBytes: [UInt8](repeating: 0, count: 31)))
+        XCTAssertTrue(MediaContentDigest.isEvidence(sha("a")))
+        XCTAssertTrue(MediaContentDigest.isEvidence("SHA256:" + String(repeating: "AB", count: 32)))
+        XCTAssertFalse(MediaContentDigest.isEvidence("md5:" + String(repeating: "a", count: 64)))
+        XCTAssertFalse(MediaContentDigest.isEvidence("sha256:" + String(repeating: "a", count: 63)))
+        XCTAssertFalse(MediaContentDigest.isEvidence("sha256:" + String(repeating: "g", count: 64)))
+        XCTAssertFalse(MediaContentDigest.isEvidence(String(repeating: "a", count: 64)))
+        #if canImport(CryptoKit)
+        // The standard SHA-256 vectors — any platform's implementation must print these.
+        func hash(_ chunks: [String]) throws -> String {
+            var queue = chunks.map { Data($0.utf8) }
+            return try MediaContentDigest.sha256(readChunk: { queue.isEmpty ? nil : queue.removeFirst() },
+                                                 isCancelled: { false })
+        }
+        let abc = "sha256:ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        XCTAssertEqual(try hash(["abc"]), abc)
+        XCTAssertEqual(try hash(["a", "b", "c"]), abc, "chunked equals whole")
+        XCTAssertEqual(try hash([]), "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+        let reads = HashCalls()
+        XCTAssertThrowsError(try MediaContentDigest.sha256(readChunk: { reads.count(); return Data([1]) },
+                                                           isCancelled: { reads.value >= 2 }),
+                             "cancellation is checked before every chunk")
+        XCTAssertEqual(reads.value, 2)
+        // A real file across chunk boundaries: 2.5 MiB + 7 bytes, read 1 MiB at a time.
+        let bytes = Data((0..<(5 * (1 << 19) + 7)).map { UInt8(truncatingIfNeeded: $0 &* 31) })
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ma44-\(UUID().uuidString).bin")
+        try bytes.write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+        XCTAssertEqual(try MediaContentDigest.sha256(fileAt: url),
+                       MediaContentDigest.evidence(digestBytes: Array(SHA256.hash(data: bytes))),
+                       "the streamed file digest equals the one-shot digest of the same bytes")
+        #endif
+    }
+
+    func testTheRegistryOnlyEverAddsDigestEvidence() {
+        let assets = MediaAssetStore(store: nil)
+        let blank = record(seconds: 8)
+        XCTAssertTrue(assets.register(blank))
+        XCTAssertFalse(assets.learnDigest(id: blank.id, digest: "sha256:zz"), "a malformed digest is refused")
+        XCTAssertFalse(assets.learnDigest(id: UUID(), digest: sha("a")), "an unknown id is refused")
+        XCTAssertNil(assets.record(id: blank.id)?.evidence.contentDigest)
+        XCTAssertTrue(assets.learnDigest(id: blank.id, digest: "SHA256:" + String(repeating: "A", count: 64)))
+        XCTAssertEqual(assets.record(id: blank.id)?.evidence.contentDigest, sha("a"), "stored lower-cased")
+        XCTAssertTrue(assets.learnDigest(id: blank.id, digest: sha("a")), "the same digest again is no change")
+        XCTAssertFalse(assets.learnDigest(id: blank.id, digest: sha("b")), "a digest is never overwritten")
+        XCTAssertEqual(assets.record(id: blank.id)?.evidence.contentDigest, sha("a"))
+    }
+
+    func testTheImportLearnsItsDigestOnceAndOffTheMainActor() async {
+        let assets = MediaAssetStore(store: nil)
+        let blank = record(seconds: 8)
+        XCTAssertTrue(assets.register(blank))
+        let url = URL(fileURLWithPath: "/y/Media/Audio/loop.wav")
+        let calls = HashCalls()
+        let digest = sha("a")
+        let failed = await MediaContentDigest.learn(recordID: blank.id, from: url, into: assets,
+                                                    hash: { _ in calls.count(); throw CocoaError(.fileReadNoSuchFile) })
+        XCTAssertFalse(failed, "an unreadable file teaches nothing")
+        XCTAssertNil(assets.record(id: blank.id)?.evidence.contentDigest)
+        let malformed = await MediaContentDigest.learn(recordID: blank.id, from: url, into: assets,
+                                                       hash: { _ in calls.count(); return "sha256:12" })
+        XCTAssertFalse(malformed, "a hash that is not SHA-256 evidence is dropped")
+        let learned = await MediaContentDigest.learn(recordID: blank.id, from: url, into: assets,
+                                                     hash: { _ in calls.count(); return digest })
+        XCTAssertTrue(learned)
+        XCTAssertEqual(assets.record(id: blank.id)?.evidence.contentDigest, digest)
+        let again = await MediaContentDigest.learn(recordID: blank.id, from: url, into: assets,
+                                                   hash: { _ in calls.count(); return digest })
+        XCTAssertFalse(again, "a record with a digest is not hashed again")
+        XCTAssertEqual(calls.value, 3, "the fourth call never hashed")
+        let unknown = await MediaContentDigest.learn(recordID: UUID(), from: url, into: assets,
+                                                     hash: { _ in calls.count(); return digest })
+        XCTAssertFalse(unknown)
+        XCTAssertEqual(calls.value, 3)
+    }
+
+    func testTheRelinkHashesOnlyWhenItMustAndNeverUnderAPlayingSong() async throws {
+        let clips = ClipStore()
+        let timeline = TimelineStore()
+        let originalSlots = clips.slots
+        defer { clips.replaceSlots(originalSlots) }
+        let assets = MediaAssetStore(store: nil)
+        let hashed = MediaAssetRecord(kind: .audio, fileName: "Take.wav", originalName: "Take.wav",
+                                      importedAt: Date(timeIntervalSince1970: 1),
+                                      evidence: evidence(seconds: 8, digest: sha("a")))
+        let legacy = MediaAssetRecord(kind: .audio, fileName: "Old.wav", originalName: "Old.wav",
+                                      importedAt: Date(timeIntervalSince1970: 2), evidence: evidence(seconds: 8))
+        XCTAssertTrue(assets.register(hashed))
+        XCTAssertTrue(assets.register(legacy))
+        let take = Clip(name: "Take", kind: .audio, mediaRef: "/x/Media/Audio/Take.wav",
+                        mediaAssetID: hashed.id, nativeDurationSeconds: 8)
+        let old = Clip(name: "Old", kind: .audio, mediaRef: "/x/Media/Audio/Old.wav",
+                       mediaAssetID: legacy.id, nativeDurationSeconds: 8)
+        var grid = [Clip?](repeating: nil, count: ClipStore.slotCount)
+        grid[0] = take
+        grid[1] = old
+        XCTAssertTrue(clips.replaceSlots(grid), "fixture premise")
+        XCTAssertTrue(MediaRelink.needsContentProof(take, assets: assets))
+        XCTAssertFalse(MediaRelink.needsContentProof(old, assets: assets), "nothing to compare, nothing hashed")
+        XCTAssertFalse(MediaRelink.needsContentProof(take, assets: nil))
+        let target = MediaAsset(kind: .audio, fileName: "Take (1).wav",
+                                url: URL(fileURLWithPath: "/y/Media/Audio/Take (1).wav"), byteSize: 1)
+        let calls = HashCalls()
+        func run(_ clipID: UUID, seconds: Double = 8, playing: @escaping (Int) -> Bool = { _ in false },
+                 hash: @escaping @Sendable (URL) throws -> String) async -> Result<Double, MediaRelink.Refusal> {
+            var asked = 0
+            return await MediaRelink.relinkProvingContent(
+                clipID, to: target, clipStore: clips, timeline: timeline, assets: assets,
+                isSongPlaying: { asked += 1; return playing(asked) },
+                fileExists: { _ in true },
+                measure: { _ in AudioImport.Measurement(sampleRate: 48_000,
+                                                        frameCount: Int64(seconds * 48_000),
+                                                        channelCount: 2) },
+                hash: hash)
+        }
+        let digest = sha("a")
+        // A file of the wrong length is never hashed.
+        let short = await run(take.id, seconds: 12, hash: { _ in calls.count(); return digest })
+        XCTAssertEqual(short, .failure(.differentLength(expected: 8, found: 12)))
+        XCTAssertEqual(calls.value, 0)
+        // Never under a playing song — before the hash, and again after it.
+        let before = await run(take.id, playing: { _ in true }, hash: { _ in calls.count(); return digest })
+        XCTAssertEqual(before, .failure(.songPlaying))
+        XCTAssertEqual(calls.value, 0)
+        let during = await run(take.id, playing: { $0 > 1 }, hash: { _ in calls.count(); return digest })
+        XCTAssertEqual(during, .failure(.songPlaying), "the song started while the file was hashed")
+        XCTAssertEqual(calls.value, 1)
+        XCTAssertEqual(clips.clip(id: take.id), take, "nothing written")
+        XCTAssertEqual(MediaBrowserView.relinkRefusal(songPlaying: true),
+                       MediaRelink.Refusal.songPlaying.userMessage, "one sentence for one refusal (#416)")
+        // A hash that fails proves nothing: refused as unreadable, nothing written.
+        let broken = await run(take.id, hash: { _ in calls.count(); throw CocoaError(.fileReadCorruptFile) })
+        XCTAssertEqual(broken, .failure(.unreadable))
+        XCTAssertEqual(calls.value, 2)
+        XCTAssertEqual(assets.record(id: hashed.id), hashed)
+        // Proven: the record moves with its id.
+        let proven = await run(take.id, hash: { _ in calls.count(); return digest })
+        XCTAssertEqual(proven, .success(8))
+        XCTAssertEqual(calls.value, 3)
+        XCTAssertEqual(assets.record(id: hashed.id)?.fileName, "Take (1).wav")
+        XCTAssertEqual(clips.clip(id: take.id)?.mediaAssetID, hashed.id)
+        // A legacy record has nothing to compare: no hash at all, and nothing global moves.
+        let unproven = await run(old.id, hash: { _ in calls.count(); return digest })
+        XCTAssertEqual(unproven, .success(8))
+        XCTAssertEqual(calls.value, 3, "no digest to compare, no hash")
+        XCTAssertEqual(assets.record(id: legacy.id), legacy)
+    }
+
+    func testNothingHashesAtLaunchOrAsAScan() throws {
+        XCTAssertEqual(try filesUnderSources(containing: "MediaContentDigest.learn("), ["Studio/WorkstationView.swift"],
+                       "a new import's digest is learned in the Workstation's post-import task, nowhere else")
+        XCTAssertEqual(try filesUnderSources(containing: "MediaContentDigest.sha256(fileAt:"),
+                       ["Sequencer/MediaRelink.swift", "Studio/WorkstationView.swift"],
+                       "the file is hashed by the import door and the relink, and by nothing else")
+        XCTAssertFalse(try source("Sources/Echoelmusic/EchoelmusicApp.swift").contains("MediaContentDigest"),
+                       "no launch-time hashing")
+        XCTAssertFalse(try source("Sources/Echoelmusic/Core/MediaAssetStore.swift").contains("sha256(fileAt:"),
+                       "the registry never hashes")
+        let digest = try source("Sources/Echoelmusic/Core/MediaContentDigest.swift")
+        XCTAssertTrue(digest.contains("handle.read(upToCount: chunkSize)"), "the file is read in bounded chunks")
+        XCTAssertFalse(digest.contains("Data(contentsOf") || digest.contains("readToEnd"),
+                       "a media file is never read whole to hash it")
+        XCTAssertTrue(digest.contains("Task.detached(priority: .utility)"), "off the main actor")
+        XCTAssertTrue(digest.contains("#if canImport(CryptoKit)\nimport CryptoKit"),
+                      "CryptoKit is the implementation, imported behind its guard")
+        let door = try source("Sources/Echoelmusic/Studio/WorkstationView.swift")
+        let task = try XCTUnwrap(door.range(of: ".task(id: tuningPending)"))
+        let learn = try XCTUnwrap(door.range(of: "MediaContentDigest.learn("))
+        XCTAssertLessThan(task.lowerBound, learn.lowerBound,
+                          "the import's hash runs inside the cancellable post-import task")
     }
 
     // MARK: - Helpers
+
+    /// A well-formed persisted digest made of one repeated hex digit.
+    private func sha(_ digit: Character) -> String {
+        "sha256:" + String(repeating: String(digit), count: 64)
+    }
 
     private struct AnchorMissing: Error { let name: String }
 
@@ -706,4 +955,13 @@ final class TheMediaAssetIsADurableIdentityTests: XCTestCase {
         }
         return hits.sorted()
     }
+}
+
+/// Counts calls — hash calls from the detached task `MediaContentDigest.compute` runs them in,
+/// and chunk reads in the cancellation claim.
+private final class HashCalls: @unchecked Sendable {
+    private let lock = NSLock()
+    private var calls = 0
+    func count() { lock.lock(); calls += 1; lock.unlock() }
+    var value: Int { lock.lock(); defer { lock.unlock() }; return calls }
 }

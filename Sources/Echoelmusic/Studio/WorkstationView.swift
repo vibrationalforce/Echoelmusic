@@ -431,10 +431,19 @@ struct WorkstationView: View {
             if measuringClip == request.clipID { measuringClip = nil }
             let parts = [AudioKeyAnalysis.summarise(tuning), AudioTempoAnalysis.summarise(tempo)]
                 .compactMap { $0 }
-            guard !parts.isEmpty else { return }
-            let summary = parts.joined(separator: " ")
-            guard importNote == base else { return }
-            importNote = base.map { $0 + " " + summary } ?? summary
+            if !parts.isEmpty, importNote == base {
+                let summary = parts.joined(separator: " ")
+                importNote = base.map { $0 + " " + summary } ?? summary
+            }
+            // MA4.4 — the landed file's content evidence: its SHA-256, streamed in chunks off the
+            // main actor and written to its durable record (only if it has none). Here, after the
+            // analysis and inside the same cancellable task — never at launch, never as a scan.
+            #if canImport(CryptoKit)
+            if let assetID = request.assetID {
+                await MediaContentDigest.learn(recordID: assetID, from: url, into: mediaAssets,
+                                               hash: { try MediaContentDigest.sha256(fileAt: $0) })
+            }
+            #endif
             #endif
         }
     }
@@ -1072,7 +1081,8 @@ struct WorkstationView: View {
                 // never-clobber adoption would refuse the result anyway, and meanwhile its
                 // tempo row would read "measuring…" and lock (review of 7b691faf8).
                 if !(landing.reusedLibraryFile && landing.clip.nativeBPM > 0) {
-                    tuningPending = AnalysisRequest(url: landing.managedURL, clipID: landing.clip.id)
+                    tuningPending = AnalysisRequest(url: landing.managedURL, clipID: landing.clip.id,
+                                                    assetID: landing.clip.mediaAssetID)
                     measuringClip = landing.clip.id
                 }
             case .failure(let failure):
@@ -1285,6 +1295,8 @@ private struct PartTempoRow: View {
 private struct AnalysisRequest: Equatable {
     let url: URL
     let clipID: UUID
+    /// The durable record the landing linked (MA4.4 learns its digest after the analysis).
+    let assetID: UUID?
 }
 
 #endif

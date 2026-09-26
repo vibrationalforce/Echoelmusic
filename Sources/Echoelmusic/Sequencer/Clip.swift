@@ -210,9 +210,10 @@ public struct Clip: Codable, Sendable, Equatable, Identifiable {
     public var mediaRef: String?
     /// The durable identity of the file this clip plays (`MediaAssetRecord.id`, held by
     /// `MediaAssetStore`) — MA4.2. nil for MIDI clips, for every audio clip written before MA4.2,
-    /// for one placed without a registry, and for one relinked to a file no record describes while
-    /// its own record could not move there (absent on this device, or already naming another file —
-    /// MA4.5); such a clip keeps playing by `mediaRef`, exactly as before. The LINK lives here
+    /// and for one placed or relinked without a registry; such a clip keeps playing by `mediaRef`,
+    /// exactly as before. A relink (MA4.5 + MA4.4) keeps this id only when the chosen file's
+    /// SHA-256 equals the record's; otherwise it links the chosen file's own record (adopted or
+    /// newly registered), never moving a record another clip may share on a duration alone. The LINK lives here
     /// (and so travels in a project's `clipSlots`); the record it names is an app-library root.
     /// ⚠️ `mediaRef` stays the path playback resolves today; the resolver slice makes the record's
     /// binding the truth for a linked clip.
