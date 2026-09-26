@@ -40031,3 +40031,8 @@ Review 10 was independent. These three prose commits are builder-made and **not 
 - DC1 e061ca2d3: Compile Check 2908 SUCCESS + BfT 6373 SUCCESS. Auto-merge → **main = e061ca2d3**. Run Tests still running.
 - DC1 review (no HIGH): M1 and L1–L5 repaired in 19d35b71a (gates running); L6 is open in the plan.
 - Evidence levels: MA2 and DC1 = COMPILES (Release device + Debug simulator test bundle) + INDEPENDENTLY REVIEWED. Execution unrecorded until Run Tests reads. Device check open.
+
+### 2026-09-26 02:20Z — gates read; EF1 shipped (6d68bea64)
+- 19d35b71a (DC1 review repair): Xcode Compile Check 2909 = success · CI/CD 6374 Build for Testing = success (Run Tests running).
+- Run Tests read via gh-test-verdict.py: run 6372 (MA2, job 108310006654) and 6373 (DC1, job 108311965231) — #396 shape, 169 / 168 observed passing, 0 failures, 0 skips IN THE WINDOW; log gaps 927 s / 1026 s, so this describes the tail only. DC1/MA2 suites not in the window → execution unrecorded (#445).
+- EF1 (6d68bea64): the Echoel FX character is owned by the song — `DeviceChain.instrument` (type `com.echoelmusic.device.echoel`) on the roll lane; `TimelineStore.setEchoelFXCharacter` the one writer; ESV adopts at launch / after restoreSong / on the "fxCharacter" edit; the Workstation's Echoel track gets an Effect row once the song holds the instance. Guard `TheEchoelIsAnInstanceOnItsTrackTests` (forward). Gates 2910 / 6375 running; independent review running.
