@@ -1087,11 +1087,11 @@ struct WorkstationView: View {
 
     #if canImport(AVFoundation)
     /// MA4.4 — the content evidence of a record THIS landing created: its SHA-256, streamed in
-    /// chunks off the main actor (`MediaContentDigest.learn`) and added to that record.
-    /// ⚠️ ITS OWN TASK, NOT THE ANALYSIS TASK (review of 66d37a8c5, M1): `.task(id: tuningPending)`
-    /// is cancelled by the next import tap and by leaving the Workstation, and nothing would ever
-    /// hash that file again — its asset could then never prove a relink. This task is bounded
-    /// (one file, `learn` refuses a second hash of the same record) and survives both.
+    /// chunks off the main actor and added to that record, through `MediaContentDigest.learnMinted`
+    /// (MA4.4d — the rule and the task live there, shared with the browser's Place).
+    /// ⚠️ NOT THE ANALYSIS TASK (review of 66d37a8c5, M1): `.task(id: tuningPending)` is
+    /// cancelled by the next import tap and by leaving the Workstation, and nothing would ever
+    /// hash that file again — `learnMinted` starts its own bounded task, which survives both.
     /// ⭐ MA4.4c — THE QUESTION IS "WAS A RECORD MINTED", NOT "WAS THE FILE COPIED". A fresh copy
     /// and an orphan library file without a record both get a new record here, and both are
     /// hashed; an ADOPTED record is not (review L1: it may be a legacy record whose evidence

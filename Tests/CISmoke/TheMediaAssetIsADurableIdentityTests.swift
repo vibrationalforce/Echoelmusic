@@ -56,9 +56,11 @@
 //    before the next chunk; the registry only ADDS a digest, never overwrites; `learn` hashes a
 //    record once, drops failures and malformed results; the relink hashes only when the record
 //    has a digest, never on a wrong length or under a playing song (asked again after the hash),
-//    and a failed hash is `.unreadable`. Scans: learning only in the Workstation's own digest
-//    task (records the landing MINTED only — MA4.4c; never inside the cancellable analysis task), file hashing only there and in the relink, nothing at launch, chunked reads, a
-//    detached utility task, CryptoKit behind its guard.
+//    and a failed hash is `.unreadable`. Scans: learning only through
+//    `MediaContentDigest.learnMinted` (records a landing MINTED only — MA4.4c), from the
+//    Workstation's import and the browser's Place (MA4.4d), never inside the cancellable analysis
+//    task; outside the digest type, file hashing only in the relink; nothing at launch, chunked
+//    reads, a detached utility task, CryptoKit behind its guard.
 //
 // MA4.4 GRADING against `c6d39b7c3`: does not compile there (`MediaContentDigest`,
 // `learnDigest`, `relink(…candidateDigest:)`, `relinkProvingContent`, `.songPlaying` are new) —
