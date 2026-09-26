@@ -285,8 +285,10 @@ public final class TimelineRegionPlayer {
 
     /// Phase 3 / S1 — launch a SCENE as a switch (`ClipLaunchEngine.requestScene`): its parts
     /// launch and every other launched track goes back to the song, all on the same boundary.
-    /// Regions the launch rule refuses are left out (never a lane stopped for them). One
-    /// observation bump for the whole switch. No-op while stopped, like every launch.
+    /// A region the launch rule refuses (or that was deleted since the grid was drawn) is left
+    /// out, so its lane counts as NOT in the scene — a launched lane there returns to the song,
+    /// which is the switch doing its job. One observation bump for the whole switch. No-op
+    /// while stopped, like every launch.
     public func launchScene(_ regionIDs: [UUID], quantize: LaunchQuantize) {
         guard isPlaying else { return }
         var launches: [UUID: UUID] = [:]

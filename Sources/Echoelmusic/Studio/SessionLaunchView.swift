@@ -262,7 +262,10 @@ struct SessionLaunchView: View {
                                         uniquingKeysWith: { first, _ in first })
                 let launched = tracks.filter { SessionGrid.isLaunched(states[$0.id] ?? .idle) }
                 if playing && !launched.isEmpty {
-                    backToSongButton
+                    // With one launched track its own Stop row IS "back to song" — one 44-pt row.
+                    if launched.count > 1 {
+                        backToSongButton
+                    }
                     ForEach(launched) { track in
                         stopButton(track)
                     }
@@ -291,7 +294,7 @@ struct SessionLaunchView: View {
                 if let word = state.flatMap(SessionGrid.word) {
                     Text(word)
                         .font(EchoelTheme.font(11, .semibold))
-                        .foregroundStyle(state == .playing ? EchoelTheme.text : EchoelTheme.accent)
+                        .foregroundStyle(state == .playing ? EchoelTheme.text : EchoelTheme.dim)
                 }
                 Spacer(minLength: 8)
                 Button {
@@ -311,7 +314,7 @@ struct SessionLaunchView: View {
                 .buttonStyle(.plain)
                 .disabled(!playing)
                 .accessibilityLabel("Launch scene at \(title)")
-                .accessibilityValue(state.flatMap(SessionGrid.word) ?? "Not launched")
+                .accessibilityValue(state.flatMap(SessionGrid.word) ?? "Not the current scene")
                 .accessibilityHint("From the next bar, loops every part listed at \(title) and returns every other launched track to the song")
             }
             ForEach(tracks.filter { scene.cells[$0.id] != nil }) { track in

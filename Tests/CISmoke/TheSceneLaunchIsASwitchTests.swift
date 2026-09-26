@@ -28,6 +28,11 @@
 // refuses on its own (`TheSessionLaunchesWhatTheSongPlaysTests` pins the literal's range).
 // Graded by Python transcription of the engine laws and every scan anchor against the worktree.
 //
+// REVIEW OF f5b573b9e (no HIGH): MED — the Back-to-song claim was satisfied by the DECLARATION;
+// it now scans the launched-tracks block for the USE (mutant without the use: red). LOW 7 — the
+// two missing composition paths and the queued-stop scene state are driven here. LOW 2/3/5/6
+// repaired in the sources; LOW 4 (two scenes with identical cells both read Playing) recorded.
+//
 // NOT HERE — DEVICE PROBE, open. That the switch is HEARD on one bar, and reads well on iPhone.
 // NEEDS-FOUNDER-VERIFY: Workstation → Play → Session → "Launch scene" at Bar 1, then at a later
 // bar → on the next bar only the second scene's parts loop and the other tracks play the song;
@@ -82,6 +87,16 @@ final class TheSceneLaunchIsASwitchTests: XCTestCase {
         engine.requestScene([lane: region], atTick: 700, quantize: .bar)
         XCTAssertEqual(engine.state(laneID: lane), .playing(LaunchedRegion(regionID: region, startedAtTick: 0)),
                        "re-launching the same scene never restarts a part that is already looping")
+
+        // Review of f5b573b9e, LOW 7: the two other composition paths.
+        engine.requestStop(laneID: lane, atTick: 800, quantize: .bar)
+        engine.requestScene([lane: region], atTick: 900, quantize: .bar)
+        XCTAssertEqual(engine.state(laneID: lane), .playing(LaunchedRegion(regionID: region, startedAtTick: 0)),
+                       "a scene that keeps the part cancels its queued stop")
+        engine.requestLaunch(laneID: lane, regionID: UUID(), atTick: 1000, quantize: .bar)
+        engine.requestScene([lane: region], atTick: 1100, quantize: .bar)
+        XCTAssertEqual(engine.state(laneID: lane), .playing(LaunchedRegion(regionID: region, startedAtTick: 0)),
+                       "a scene that keeps the sounding part cancels a queued switch away from it")
     }
 
     func testBackToSongStopsEveryLaneOnOneBoundary() {
@@ -132,6 +147,10 @@ final class TheSceneLaunchIsASwitchTests: XCTestCase {
                         current: LaunchedRegion(regionID: r1, startedAtTick: 0)),
             t2: looping(r2)
         ]), "a track switching AWAY from the scene's part is not the scene")
+        XCTAssertNil(SessionGrid.sceneState(scene, tracks: tracks, states: [
+            t1: .queuedStop(current: LaunchedRegion(regionID: r1, startedAtTick: 0), stopAtTick: Self.bar),
+            t2: looping(r2)
+        ]), "a scene part on its way back to the song is not the scene")
     }
 
     // MARK: 3 — one rule, one call
@@ -162,7 +181,13 @@ final class TheSceneLaunchIsASwitchTests: XCTestCase {
         let back = try body(of: "private var backToSongButton: some View", in: view)
         XCTAssertTrue(back.contains("player.stopAllLaunched(quantize: SessionGrid.quantize)"))
         XCTAssertTrue(view.contains("SessionGrid.sceneState(scene, tracks: tracks, states: states)"))
-        XCTAssertTrue(view.contains("backToSongButton"), "Back to song is on screen while a track is launched")
+        // Review of f5b573b9e, MED: the DECLARATION satisfied a bare `contains`; the USE is what
+        // puts the button on screen — inside the launched-tracks block, from two tracks on.
+        // Anchor WITHOUT the brace: `body(of:)` opens at the first `{` after the anchor.
+        let launchedBlock = try body(of: "if playing && !launched.isEmpty", in: view)
+        XCTAssertTrue(launchedBlock.contains("if launched.count > 1 {"))
+        XCTAssertTrue(launchedBlock.contains("backToSongButton"),
+                      "Back to song is on screen while two or more tracks are launched")
     }
 
     // MARK: helpers

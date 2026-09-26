@@ -1,6 +1,6 @@
 # PLAN — Clips · Scenes · Session (Phase 3, founder order 2026-09-25)
 
-Status: S1 IN PROGRESS · 2026-09-26
+Status: S1 SHIPPED + REVIEWED · 2026-09-26
 
 ## Census summary (read-only subagent, HEAD 34658ea88 — measured, file:line in the report)
 - `SessionLaunchView` (WA4.2) is a PROJECTION: tracks = launchable lanes, scene = every distinct
@@ -38,3 +38,12 @@ Status: S1 IN PROGRESS · 2026-09-26
 - S2 candidates: start the song AT a scene (changes "WorkstationView is the one `play(` caller" —
   founder call) · authored/named scenes as a projection over song form (needs a `HistoryStep` case
   for ONE undo step) · raise the 8-clip pool + decide clip-owned sound (EF3) — "the Clips question".
+
+## S1 as built + review
+- f5b573b9e; review (no HIGH) repaired next commit: MED guard claim now scans the USE of Back to
+  song; LOW 2 doc (a deleted region's lane counts as not-in-scene → returns to the song); LOW 3
+  a11y value "Not the current scene"; LOW 5 Queued word in `dim`, not the signal accent; LOW 6
+  Back to song only from two launched tracks (one track's own Stop row is the same action);
+  LOW 7 guard covers the queued-stop / queued-switch compositions.
+- OPEN LOW 4: two scene ticks with identical cells (an unplayable later-placed winner) can both
+  read Playing — cosmetic, rare.
