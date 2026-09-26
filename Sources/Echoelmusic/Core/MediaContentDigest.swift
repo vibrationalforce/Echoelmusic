@@ -19,8 +19,9 @@
 // whole. `learn(recordID:from:into:hash:)` runs the hash in a detached task and writes the
 // result back on the main actor; a cancelled caller cancels the hash.
 //
-// ⛔ WHEN A DIGEST IS COMPUTED — only where identity evidence is needed on ONE file: after a new
-// managed import lands (the Workstation's own digest task) and when a relink must prove
+// ⛔ WHEN A DIGEST IS COMPUTED — only where identity evidence is needed on ONE file: after an
+// import landing MINTS a record (a new managed copy, or a library file that had none — MA4.4c;
+// the Workstation's own digest task) and when a relink must prove
 // that a chosen file is its clip's source (`MediaRelink`). Never at launch, never as a library
 // scan, never periodically, never because the browser opened. A legacy record without a digest
 // stays readable and gains one only when such a workflow touches its file.

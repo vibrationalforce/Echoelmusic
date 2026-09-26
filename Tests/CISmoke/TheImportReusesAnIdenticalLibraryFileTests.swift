@@ -256,7 +256,36 @@ final class TheImportReusesAnIdenticalLibraryFileTests: XCTestCase {
         XCTAssertEqual(timeline.document.regions.map(\.clipID), [landing.clip.id])
         XCTAssertEqual(fileCount(home), filesBefore, "no copy made")
         XCTAssertEqual(MediaLibrary.listAudio()?.count, libraryBefore, "…and none in the real library")
+
+        // MA4.4c review MED: WITH a registry, the import door's orphan landing reports the record
+        // it minted — the exact path (`landExisting` → `place` → `commit(.libraryFile)`) the
+        // re-review of 292d2d4c8 found unhashed. `Placed` alone is claim 8's; this is `Landing`.
+        func landOrphan(_ registry: MediaAssetStore) throws -> AudioImport.Landing {
+            XCTAssertTrue(clips.replaceSlots([Clip?](repeating: nil, count: ClipStore.slotCount)))
+            timeline.replaceDocument(TimelineDocument(lanes: [TimelineLane(name: "Audio 1", kind: .audio)],
+                                                      regions: []))
+            let landed = AudioImport.landExisting(asset(file, size: 4), clipStore: clips,
+                                                  timeline: timeline, bpm: 120, measure: { _ in
+                AudioImport.Measurement(sampleRate: 44_100, frameCount: 88_200, channelCount: 1)
+            }, assets: registry)
+            guard case .success(let landing) = landed else {
+                XCTFail("an identical orphan must land with a registry: \(landed)")
+                throw LandingMissing()
+            }
+            return landing
+        }
+        let registry = MediaAssetStore(store: nil)
+        let first = try landOrphan(registry)
+        XCTAssertTrue(first.mintedAssetRecord, "the orphan's new record was minted by this landing")
+        let firstID = try XCTUnwrap(first.clip.mediaAssetID, "a registry links the landing")
+        XCTAssertEqual(registry.records.map(\.id), [firstID])
+        let second = try landOrphan(registry)
+        XCTAssertFalse(second.mintedAssetRecord, "…and the next landing ADOPTS it: nothing minted, nothing hashed")
+        XCTAssertEqual(second.clip.mediaAssetID, first.clip.mediaAssetID)
+        XCTAssertEqual(registry.records.count, 1)
     }
+
+    private struct LandingMissing: Error {}
 
     func testARefusedIdenticalImportLeavesTheLibraryFile() throws {
         let timeline = TimelineStore()
