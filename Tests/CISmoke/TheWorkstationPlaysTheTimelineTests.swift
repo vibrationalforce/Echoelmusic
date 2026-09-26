@@ -1128,7 +1128,10 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
         let engine = try code(at: Self.player)
         // Name-anchored rather than counted (#903/#408): a count pin goes stale the day a
         // legitimate fourth consumer appears, and says nothing about WHICH sites comply.
-        for (anchor, who) in [("private func loadClip(", "the primary roll loader"),
+        // ⛔ The loader anchor read `private func loadClip(` until 4b833694e split it into a
+        // tick wrapper plus the `startBar:` body; the first match then became the two-line
+        // wrapper and this claim went red on a correct tree. It names the body now.
+        for (anchor, who) in [("private func loadClip(_ region: TimelineRegion, startBar:", "the primary roll loader"),
                               ("private func windowedBars(", "the secondary-lane loader"),
                               ("static func executableNotes(", "the Play predicate")] {
             guard let head = engine.range(of: anchor),
