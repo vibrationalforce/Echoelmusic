@@ -4,12 +4,12 @@
 //
 //  #559, slice 2 of `scratchpads/PLAN_AUTOMATION_IN_DER_SPUR.md`: "Sichtbarkeit vor
 //  Editierbarkeit". The first surface anywhere in the app that says what the automation chain
-//  is doing. It answers the player's question — "why is this changing by itself?" — and, on
-//  every install today, answers it with an honest "nothing is".
+//  is doing. It answers the player's question — "why is this changing by itself?" — and, until
+//  a song curve is drawn (Workstation, Phase 3 / A1), answers it with an honest "nothing is".
 //
 //  ⭐ WHY VISIBILITY BEFORE EDITING, and it is not an ordering preference. Section 5 of the
 //  plan states that none of the eight measured automation layers has ever been observed on a
-//  device: `enabled` is `false`, the mutation API has had no caller since #473, and
+//  device (as of #559): `enabled` was `false`, the mutation API had no caller since #473, and
 //  `RecordController.arm()` none since #204. "~90 % built" is a claim about CODE. This strip is
 //  the cheapest thing that turns any of it into something a person can look at, and it needs no
 //  writer, no gesture and no route decision — which is also why it is word-for-word identical
@@ -192,7 +192,7 @@ struct AutomationStatusStrip: View {
 ///
 /// The three "stopped" states are deliberately different words rather than one greyed-out
 /// style, because they have different repairs and a player cannot act on a colour: **off** =
-/// the global master switch is down (no in-app setter today — slice 4); **overridden** = a
+/// the global master switch is down (its setter is the "Play automation" row, #561); **overridden** = a
 /// later layer holds the same parameter and wins each step; **no effect** = nothing is bound to
 /// that keyPath, so the curve replays into the router's nil return (slice 1's silent no-op).
 @MainActor

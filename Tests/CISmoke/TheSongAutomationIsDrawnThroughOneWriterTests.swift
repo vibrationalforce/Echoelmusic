@@ -61,9 +61,10 @@
 // `decimals(for:)` are new, so the unit claim is FORWARD there (one absence, #486); its
 // counterweight (Brightness reads exactly as stored) and the resolver-agreement premise are
 // the content.
-// A3 GRADING (against d53c1b351, where the file compiles): `statusScale` is new, so claim 8's
-// behaviour half is FORWARD (one absence, #486); its scan half is REGRESSIONS there — the strip
-// read `player.timelineLanes` and said "song-wide curves" — each red for its named reason.
+// A3 GRADING (against d53c1b351): this file calls `statusScale`, which is new, so it does NOT
+// compile there — no assertion has a verdict on the parent (one absence, #486). By
+// TRANSCRIPTION the scan half is a regression shape: at the parent the strip read
+// `player.timelineLanes` and said "song-wide curves", so each needle is on the wrong side.
 // Counterweights: the Echoel, audio, capacity-0 and global-key cases stay unbound.
 // NOT HERE — DEVICE PROBE, open.
 // NEEDS-FOUNDER-VERIFY: Workstation → a second MIDI track (poly) → select it → "Automation" →

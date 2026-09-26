@@ -121,3 +121,20 @@ the song-wide curves" — the arrangement curves play regardless of it.
   `laneVoiceCapacity` is `@ObservationIgnored`. The empty sentence stays byte-identical
   (pinned by `TheSoundPanelNamesItsActualDriverTests`) and is now true.
 · Shipper: 2 source files + guard claim 8.
+
+## A3 review (97be5adc3, independent) — no HIGH, no MED
+- LOW-3 REPAIRED (prose only): `AutomationPlayer.enabled` doc ("never writes a parameter" was
+  false — clip and arrangement lanes write outside the gate), `AutomationStatus` header and
+  empty-sentence doc, strip header and the "no in-app setter" row doc (#561 is the setter).
+- LOW-4 REPAIRED: the A3 grading claimed regressions "where the file compiles" — it does not
+  compile at the parent; reworded to "regression shape by transcription, no verdict there".
+- LOW-1 RECORDED: a legacy GLOBAL-key lane in the song document now lists as an active
+  Arrangement row while the Workstation is stopped (the layer applies only while it plays), and
+  can mark a global row "overridden" at rest. Unreachable today — the only writer writes
+  per-track keys. Fix candidate: gate arrangement `isActive` on the region player's playing.
+- LOW-2 RECORDED: a per-track curve that no longer sounds (track turned into Sub/Sampler, past
+  capacity) shows its raw `track.<uuid>.…` key with "no effect" — true but unreadable. Fix needs
+  `AutomationStatus.rows` to take the name separately from the binding.
+- LOW-3b RECORDED: the ON copy "Global curves move these parameters" sits above clip/arrangement
+  rows it does not govern; `TheSoundPanelNamesItsActualDriverTests`' "no automation writer
+  today" comment premise is now stale (harmless). 

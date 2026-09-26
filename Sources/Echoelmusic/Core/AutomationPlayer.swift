@@ -224,7 +224,8 @@ public final class AutomationPlayer {
     /// One bar = 16 steps = 4 quarter-note beats.
     public static let beatsPerBar = 4
 
-    /// Master switch — when off, automation never writes a parameter.
+    /// Master switch for the GLOBAL lanes — when off, those never write; clip lanes and the
+    /// arrangement's song lanes are applied outside this gate and still do (A3 review).
     public var enabled: Bool { didSet { persist() } }
 
     /// One lane per target (created lazily, kept for the lifetime of the doc).

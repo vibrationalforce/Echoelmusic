@@ -2,8 +2,8 @@
 // Echoel — #559, slice 2 of `scratchpads/PLAN_AUTOMATION_IN_DER_SPUR.md`
 // ("Sichtbarkeit vor Editierbarkeit", route-neutral: identical under Route A and Route B).
 //
-// WHAT THIS IS. The pure reading of the automation chain: given the three lane layers the
-// player holds and a way to name/scale a parameter, it answers the player's question — WHICH
+// WHAT THIS IS. The pure reading of the automation chain: given the three lane layers (global and clip from
+// the player; since A3 the arrangement layer from the song document itself) and a way to name/scale a parameter, it answers the player's question — WHICH
 // parameters change by themselves, over what span, from which layer, and whether that lane
 // reaches audio at all. No view, no clock, no engine; `Studio/AutomationStatusStrip.swift`
 // renders it.
@@ -157,8 +157,9 @@ public struct AutomationStatusRow: Identifiable, Sendable, Equatable {
 
 public enum AutomationStatus {
 
-    /// The sentence shown when no lane anywhere holds a keyframe — which is the state of
-    /// every install today, and saying so plainly is the point of the slice. It states the
+    /// The sentence shown when no lane anywhere holds a keyframe — the state of every install
+    /// until the user draws a song curve (Workstation, since Phase 3 / A1), and saying so
+    /// plainly is the point of the slice. It states the
     /// ABSENCE of a writer rather than promising a feature: the mutation API has had no
     /// caller since #473 and `RecordController.arm()` none since #204, so "nothing yet" is
     /// not a state the player can leave by looking harder.
