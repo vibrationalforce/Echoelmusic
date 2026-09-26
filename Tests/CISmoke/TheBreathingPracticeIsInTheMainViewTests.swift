@@ -354,16 +354,18 @@ final class TheBreathingPracticeIsInTheMainViewTests: XCTestCase {
             .split(whereSeparator: { $0.isWhitespace })
             .joined(separator: " ")
         XCTAssertEqual(expression,
-                       ".onChange(of: showMeditation || breathPacer.isRunning || isProjectingExternally || floatingVisualIsFullscreen || cameraRPPG.isRunning", """
-        the keep-awake trigger changed shape. It must stay ONE modifier covering ALL FIVE \
+                       ".onChange(of: showMeditation || breathPacer.isRunning || isProjectingExternally || floatingVisualIsFullscreen || cameraRPPG.isRunning || timelinePlayer.isPlaying", """
+        the keep-awake trigger changed shape. It must stay ONE modifier covering ALL SIX \
         flags: splitting it up regrows the root body's modifier chain for no behaviour \
         (10.76.34); dropping `showMeditation` un-wires an unreachable surface silently \
         instead of leaving it ready for a re-door; dropping `isProjectingExternally` \
         leaves #1044's term in `updateKeepAwake()` correct but never re-read, because this \
         expression is the only thing that observes the bridge; and dropping \
         `floatingVisualIsFullscreen` or `cameraRPPG.isRunning` leaves #1069's conjunctive \
-        fullscreen term correct but never re-armed. A sixth flag: add it here in the same \
-        commit, whitespace does not matter.
+        fullscreen term correct but never re-armed; dropping `timelinePlayer.isPlaying` \
+        (modes census 2026-09-26) leaves the song's term correct but never re-read, so a \
+        song played from the Workstation lets the phone lock mid-set. A seventh flag: add it \
+        here in the same commit, whitespace does not matter.
 
         Expression found: \(expression)
         """)

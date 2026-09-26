@@ -1665,7 +1665,8 @@ struct EchoelStudioView: View {
         // naming it here is what makes `body` re-evaluate on connect — without it the new
         // term in `updateKeepAwake()` would be correct and never re-read.
         .onChange(of: showMeditation || breathPacer.isRunning || isProjectingExternally
-                  || floatingVisualIsFullscreen || cameraRPPG.isRunning) { _, _ in
+                  || floatingVisualIsFullscreen || cameraRPPG.isRunning
+                  || timelinePlayer.isPlaying) { _, _ in
             // #1069 — the two new terms are what RE-ARM the conjunctive fullscreen rule,
             // for the reason the #1044 note above already gives: `updateKeepAwake()` is a
             // METHOD, so naming a property here is the only thing that makes `body`
@@ -6554,10 +6555,19 @@ struct EchoelStudioView: View {
         // strip). Neither is the ~10 Hz kind the 10.76.41/50 freeze law is about, and the
         // read lives in a method — the `.onChange` expression names the two properties, not
         // the objects.
+        //
+        // ⭐ MODES CENSUS 2026-09-26 (Performance D2) — `timelinePlayer.isPlaying` IS THE SONG.
+        // Every term above describes the instrument, a pacer or a picture; a song played from
+        // the Workstation with no body take and no projector made none of them true, so the
+        // phone dimmed and locked mid-set. It is a deliberate act with an obvious end (Stop),
+        // like projecting, so it costs no battery at rest. COLD: `isPlaying` flips on play and
+        // on stop only — the position lives in `currentTick`, which nothing here reads. Named
+        // in the `.onChange` expression above for the #1044 reason: a method is never re-read.
         UIApplication.shared.isIdleTimerDisabled =
             running || showMeditation || breathPacer.isRunning
             || isProjectingExternally
             || (floatingVisualIsFullscreen && cameraRPPG.isRunning)
+            || timelinePlayer.isPlaying
         #endif
     }
 
