@@ -65,12 +65,12 @@ Guards: `AMidPlayNoteEditKeepsTheBarTests` (end-to-end, real player/store/patter
 |---|---|---|---|
 | Xcode Compile Check | cancelled (superseded) | success (2942) | **success (2943)** |
 | CI/CD Build for Testing | success (6406) | success (6407) | **success (6408)**; main = `ab1586c95` |
-| Run Tests | failure, #396 shape | failure, #396 shape | in progress at last read |
-| independent review | M7 reviewed | M8–M10 reviewed (no HIGH/MED) | review running |
+| Run Tests | failure, #396 shape | failure, #396 shape | failure, #396 shape (169 observed passing, 0 fail, 0 skip, 1727 s gap) |
+| independent review | M7 reviewed | M8–M10 reviewed (no HIGH/MED) | reviewed: no HIGH/MED; LOWs fixed in `025c2d3ac`, `a68bf05fa` |
 
 Run Tests reading (`gh-test-verdict.py`): 6406 = 168 observed passing, 0 failures, 0 skipped,
 `TEST EXECUTE FAILED`, no launch-failure line, 1028 s silence in the fetched log; 6407 = 167 / 0 / 0,
-973 s silence. **None of the four MIDI guards occurs in either window**
+973 s silence; 6408 = 169 / 0 / 0, 1727 s silence. **None of the four MIDI guards occurs in any of the three windows**
 (`TheNoteEditorSaysWhenATrackHasNoVoiceTests`, `ABoxAddsToTheSelectionTests`,
 `APartPlaysFromItsBarTests`, `AStructureEditKeepsTheBarTests`: 0 hits each). Per #445/#807 their
 ABSENCE proves nothing: they are **compiled, execution UNRECORDED** — not green, not red.
