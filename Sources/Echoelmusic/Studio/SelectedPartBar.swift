@@ -34,6 +34,13 @@
 //  Cold reads only: the selection and `timeline.document` change on a tap. The song tempo and
 //  the clip are read INSIDE the Split and Trim-start handlers, never in `body`.
 //
+//  ⭐ M10 — PLAY FROM THE PART, ONE TAP ABOVE ITS NOTES. The loop OPEN → EDIT → PLAY ended at
+//  the Workstation's Play, below every track row and far from the note grid — and it always
+//  started the song from the top. `PartPlayButton` starts it from the selected part's bar. It
+//  starts nothing itself: `playFrom` is the Workstation's one start (`startTimeline`, the one
+//  `player.play(` caller) and `songCanStart` its one `canPlay` question, both handed in. The
+//  button reads `player.isPlaying` in its OWN body (twice per take), never in this bar's.
+//
 
 import SwiftUI
 
@@ -198,6 +205,11 @@ struct SelectedPartBar: View {
     @Environment(TimelineRegionPlayer.self) private var player
     @Environment(ClipStore.self) private var clipStore
 
+    /// The Workstation's one start, from a tick (M10). Required (#431).
+    let playFrom: (Int) -> Void
+    /// The Workstation's one "would Play start the song?" (M10) — asked in the button's body.
+    let songCanStart: () -> Bool
+
     var body: some View {
         let document = timeline.document
         if let regionID = WorkstationSelection.resolvedRegion(selection.regionID,
@@ -213,8 +225,13 @@ struct SelectedPartBar: View {
             let trims = Trims(start: PartTrim.startTrim(part, in: document),
                               endLength: PartTrim.endTrim(part, in: document))
             VStack(alignment: .leading, spacing: 4) {
-                Text("Selected part · \(title)")
-                    .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
+                HStack(spacing: 8) {
+                    Text("Selected part · \(title)")
+                        .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
+                    Spacer(minLength: 8)
+                    PartPlayButton(startTick: part.startTick, playFrom: playFrom,
+                                   songCanStart: songCanStart)
+                }
                 // Seven labelled buttons do not fit a phone at every type size (review
                 // MEDIUM-3): the row falls back to icons, then to two rows of icons — every
                 // button keeping its full spoken label.
@@ -360,5 +377,48 @@ struct SelectedPartBar: View {
         .buttonStyle(.plain)
         .disabled(!enabled)
         .accessibilityLabel(label)
+    }
+}
+
+/// M10 — Play the song from the selected part's bar, or Stop it. A leaf, so the only view that
+/// rebuilds when the transport starts or stops is this one button.
+///
+/// ⚠️ It never calls `player.play(`: `playFrom` is the Workstation's `startTimeline`, which the
+/// player floors to the part's bar (`barStartTick`). A part that starts off the grid plays from
+/// the bar it starts in. And it asks `songCanStart` rather than `canPlay` — the Workstation is
+/// the one control that may ask the engine (`TheWorkstationPlaysTheTimelineTests`), and the
+/// answer is the same one its own Play is dimmed by: a button that is lit here does something.
+/// ⚠️ While the song plays it is Stop, the player's own stop — never a second start: a restart
+/// while the shared pattern runs lands the roll mid-bar (M7 review, LOW-3).
+@MainActor
+private struct PartPlayButton: View {
+    let startTick: Int
+    let playFrom: (Int) -> Void
+    let songCanStart: () -> Bool
+    @Environment(TimelineRegionPlayer.self) private var player
+
+    var body: some View {
+        let playing = player.isPlaying
+        let startable = playing || songCanStart()
+        Button {
+            if playing { player.stop() } else { playFrom(startTick) }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: playing ? "stop.fill" : "play.fill")
+                    .font(.system(size: 11, weight: .semibold))
+                Text(playing ? "Stop" : "Play from here")
+                    .font(EchoelTheme.font(11, .semibold)).lineLimit(1)
+            }
+            .foregroundStyle(playing ? EchoelTheme.onPrimary
+                                     : (startable ? EchoelTheme.text : EchoelTheme.dim))
+            .padding(.horizontal, 8)
+            .frame(minWidth: 44, minHeight: 44)
+            .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                .fill(playing ? EchoelTheme.accent : EchoelTheme.fill))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!startable)
+        .accessibilityLabel(playing ? "Stop timeline" : "Play the song from the selected part")
     }
 }

@@ -335,7 +335,7 @@ final class TheSelectedPartsNotesAreEditedThroughOneWriterTests: XCTestCase {
         let mounts = try filesMatching { code, _ in code.contains("PartNoteEditor(voiceCapacity:") }
         XCTAssertEqual(mounts, [Self.workstationPath], "one door, on the Workstation")
         let workstation = try source(Self.workstationPath)
-        guard let bar = workstation.range(of: "SelectedPartBar()"),
+        guard let bar = workstation.range(of: "SelectedPartBar(playFrom:"),
               let editorMount = workstation.range(of: "PartNoteEditor(voiceCapacity: player.laneVoiceCapacity)"),
               let history = workstation.range(of: "SongHistoryRow()") else {
             return XCTFail("ANCHOR MISSING: the part bar, the editor or the history row (#454)")

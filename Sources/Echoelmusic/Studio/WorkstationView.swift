@@ -272,7 +272,10 @@ struct WorkstationView: View {
                         .padding(.horizontal, 10)
                     // WA4 path 5 — the actions for the part selected on the canvas. Its own
                     // leaf: it reads the song tempo and the clip only inside Split.
-                    SelectedPartBar()
+                    // M10: Play from the selected part, one tap above its notes — started
+                    // through THIS view's one start, asked by the same question as Play.
+                    SelectedPartBar(playFrom: { startTimeline(fromTick: $0, launching: []) },
+                                    songCanStart: { songCanStart() })
                         .padding(.horizontal, 10)
                     // Phase 3 / M1 — the selected MIDI part's notes, behind its own "Notes"
                     // switch. A leaf: it reads the clip grid, never the transport — the rack's
@@ -759,11 +762,8 @@ struct WorkstationView: View {
         // has notes never touches the filesystem, and an audio-first song probes only until
         // one region resolves. Do not "optimise" this into a cached set — a cache is a
         // second answer, and the whole point is that there is one (§2).
-        let startable = TimelineRegionPlayer.canPlay(
-            timeline.document,
-            clips: clipStore.filledClips,
-            bpm: player.preflightTempo,
-            resolveAudio: { player.audioLanes?.resolvedURL(forClipID: $0) })
+        // M10: asked through `songCanStart()`, the one call site — the part bar's Play asks it too.
+        let startable = songCanStart()
         return VStack(alignment: .leading, spacing: 8) {
           HStack(spacing: 8) {
             Button {
@@ -1078,6 +1078,18 @@ struct WorkstationView: View {
             importNote = AudioImport.Failure.unreadableAudio.userMessage
             #endif
         }
+    }
+
+    /// "Would Play start the song?" — the engine's own `canPlay`, with the four inputs `play`
+    /// hands it (see `transportRow`). ONE call site in this file, so the transport's Play and the
+    /// part bar's Play (M10) can never disagree. Evaluated in the caller's `body`, so the reads
+    /// subscribe whichever view asks — the part bar's leaf, not this root.
+    private func songCanStart() -> Bool {
+        TimelineRegionPlayer.canPlay(
+            timeline.document,
+            clips: clipStore.filledClips,
+            bpm: player.preflightTempo,
+            resolveAudio: { player.audioLanes?.resolvedURL(forClipID: $0) })
     }
 
     /// Start the arrangement on the ONE transport. Everything this hands over is already

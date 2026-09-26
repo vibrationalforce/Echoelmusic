@@ -252,7 +252,7 @@ final class TheSelectedPartIsCutWhereItIsHeardTests: XCTestCase {
                        "Split AND Trim start ask the media tempo — the start trim moves the media offset too")
 
         let workstation = try code("Sources/Echoelmusic/Studio/WorkstationView.swift")
-        XCTAssertEqual(workstation.components(separatedBy: "SelectedPartBar()").count - 1, 1)
+        XCTAssertEqual(workstation.components(separatedBy: "SelectedPartBar(playFrom:").count - 1, 1)
     }
 
     // MARK: helpers
