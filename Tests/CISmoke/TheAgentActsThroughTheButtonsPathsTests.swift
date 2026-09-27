@@ -562,13 +562,13 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         })
         XCTAssertEqual(members, ["document", "documentGeneration", "laneLevelWrites"],
                        "the executor touches the store beyond reading its document, its generation and the level write count")
+        // Review repair 2b: the write count is bumped at the ONE lane-level writer, on every write.
+        let store = try code("Sources/Echoelmusic/Core/TimelineStore.swift")
         // Review 4a: the generation moves at BOTH wholesale replacements, and nowhere else.
         XCTAssertEqual(store.components(separatedBy: "documentGeneration += 1").count - 1, 2,
                        "`documentGeneration` is bumped at `replaceDocument` and `bootstrapIfNeeded` — one per Open path")
         XCTAssertTrue(store.contains("@ObservationIgnored public private(set) var documentGeneration = 0"),
                       "not observed (nothing renders it), not writable from outside the store")
-        // Review repair 2b: the write count is bumped at the ONE lane-level writer, on every write.
-        let store = try code("Sources/Echoelmusic/Core/TimelineStore.swift")
         guard let head = store.range(of: "public func setLaneLevel(id: UUID, _ level: Float) {"),
               let tail = store.range(of: "persist()", range: head.upperBound..<store.endIndex) else {
             return XCTFail("`TimelineStore.setLaneLevel` or its `persist()` moved — re-anchor")
