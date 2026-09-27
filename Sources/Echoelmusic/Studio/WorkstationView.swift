@@ -396,6 +396,12 @@ struct WorkstationView: View {
             // layout-transparent — both rows still sit in this stack at its spacing.
             Group {
                 MediaBrowserView()
+                // MS3 (founder order 2026-09-27) — a photo's colour, brightness and contrast shape
+                // the live visual, with Undo. Its own leaf beside the library: it presents the
+                // system photo picker itself (no modifier here) and this view reads none of its state.
+                #if canImport(PhotosUI) && canImport(ImageIO)
+                PhotoSeedCard()
+                #endif
                 // WA4 Acceptance Test A inside the workspace: create → import → SAVE → reopen
                 // without leaving the plate. The row owns no Studio state; it opens the Studio's
                 // existing Save alert and Open sheet through the chrome door (no new modal).
