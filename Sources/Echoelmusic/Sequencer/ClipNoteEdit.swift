@@ -262,18 +262,28 @@ enum ClipNoteEdit {
         return changed ? updated : nil
     }
 
-    /// How strongly the note grid draws a note (design slice 12): its velocity as the fill's
-    /// opacity, from `quietestNoteOpacity` for a silent note to 1 for a full one — so a part's
-    /// dynamics read at a glance instead of only through the velocity row of a selection. Never
-    /// invisible: a note you cannot see you cannot pick. A non-finite velocity draws as the
-    /// quietest (the NaN-safe clamp's lower bound), never as a missing note.
-    nonisolated static func noteOpacity(velocity: Float) -> Double {
+    /// How strongly the note grid colours a note (design slice 12): the share of the accent in
+    /// an OPAQUE mix of the grid's surface and the accent, from `quietestNoteShade` for a silent
+    /// note to 1 for a full one — so a part's dynamics read at a glance instead of only through
+    /// the velocity row of a selection. A non-finite velocity draws as the quietest (the NaN-safe
+    /// clamp's lower bound), never as a missing note.
+    ///
+    /// ⛔ WHY A MIX AND NOT AN OPACITY (review of aad532d33, MED-1/2). The first cut drew the
+    /// accent TRANSLUCENT. A quiet unpicked note drawn over a picked one then let the picked
+    /// note's white fill and ring show through — it looked picked while a tap hit the note on top
+    /// (`RollHitTest` reads the draw order); stacked quiet notes read louder than either; bar
+    /// lines showed through a long note; and at 35 % the note sat at 2.24:1 against the surface,
+    /// under the 3:1 a tappable object needs (WCAG 1.4.11). An opaque mix hides what is under it.
+    nonisolated static func noteShade(velocity: Float) -> Double {
         let v = Double(velocity.clamped(to: 0...1))
-        return quietestNoteOpacity + (1 - quietestNoteOpacity) * v
+        return quietestNoteShade + (1 - quietestNoteShade) * v
     }
 
-    /// The fill opacity of a velocity-0 note — the floor that keeps every note visible.
-    static let quietestNoteOpacity = 0.35
+    /// The accent share of a velocity-0 note. 0.55 keeps it at ≥ 3:1 against the grid's surface
+    /// — computed, not measured on glass: 3.49:1 in OKLab (SwiftUI's `.perceptual` mix), 3.87:1
+    /// in sRGB; 0.50 would sit at 3.04:1, too close to the line to leave room for the shaded
+    /// out-of-key rows.
+    static let quietestNoteShade = 0.55
 
     /// The mean velocity of `ids` — what the velocity row shows for a mixed selection.
     nonisolated static func meanVelocity(_ ids: Set<UUID>, in clipNotes: [Note]) -> Float? {
