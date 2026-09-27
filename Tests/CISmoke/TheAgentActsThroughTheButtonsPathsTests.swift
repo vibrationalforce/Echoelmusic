@@ -38,6 +38,9 @@
 // Undo removed) and from "kept" — `EchoelUndoSummary` is the one text; `partlyUndone` carries both
 // counts. Mutant: a removed copy counted as restored → "Took back my last change." where nothing
 // was taken back, claim 6 red.
+// Review repair 3b: claim 4 adds a part whose TAIL reaches into the copy's place — refused as
+// `.placeTaken` like one that starts there. Mutant: the old start-only test (`place.contains(
+// $0.startTick)`) → the copy is placed under the tail, claim 4 red.
 
 import Foundation
 import XCTest
@@ -180,6 +183,21 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         XCTAssertEqual(twice.steps.map(\.outcome), [.failed(.placeTaken), .notRun],
                        "the first copy of this test already holds the place")
         XCTAssertEqual(timeline.document.regions.count, Self.fixture.regions.count + 1, "still exactly one copy")
+
+        // A part that starts BEFORE the place and reaches into it holds it just the same (review
+        // repair 3b): the copy would sit under its tail, the later-placed copy wins the shared
+        // ticks (#1440), and the person would hear the copy where the older part was.
+        timeline.replaceDocument(Self.fixture)
+        let tail = TimelineRegion(laneID: Self.loopLane.id, clipID: Self.clip,
+                                  startTick: 2 * Self.bar, lengthTicks: 2 * Self.bar)
+        timeline.addRegion(tail)
+        selection.selectRegion(Self.loopPart.id, in: timeline.document)
+        let under = await executor.execute(plan([.duplicatePart(part: .selected)], on: executor))
+        XCTAssertEqual(under.steps.map(\.outcome), [.failed(.placeTaken)],
+                       "the tail reaches one bar into the place — it is taken")
+        XCTAssertEqual(timeline.document.regions.count, Self.fixture.regions.count + 1, "nothing copied")
+        XCTAssertEqual(EchoelCommandError.placeTaken.message,
+                       "There is already a part in the place right after it, so I did not copy it on top.")
     }
 
     // MARK: 5 — a stale selection, a changed song, a repeated request

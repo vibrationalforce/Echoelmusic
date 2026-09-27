@@ -312,11 +312,14 @@ final class EchoelCommandExecutor {
         case .failure(let error): return .failed(error)
         }
         guard TrackParts.arrangeable(original.laneID, in: document) else { return .failed(.notArrangeable) }
-        // The copy lands at the original's end. A part already starting inside that place would be
-        // stacked under — the song gains a part nobody hears, while the report says "copied".
+        // The copy lands at the original's end. Any part that OVERLAPS that place holds it — one
+        // starting inside it, and one that starts earlier and reaches into it (review repair 3b:
+        // the first version asked only where a part STARTS, so a long part's tail was copied over;
+        // the later-placed copy then wins the shared ticks, #1440, and the person hears the copy
+        // where the older part was, while the report says "copied").
         let place = original.endTick..<(original.endTick + original.lengthTicks)
         if document.regions.contains(where: { $0.laneID == original.laneID && $0.id != original.id
-                                              && place.contains($0.startTick) }) {
+                                              && $0.startTick < place.upperBound && $0.endTick > place.lowerBound }) {
             return .failed(.placeTaken)
         }
         let known = Set(document.regions.map(\.id))

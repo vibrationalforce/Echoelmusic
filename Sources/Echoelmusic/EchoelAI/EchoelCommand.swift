@@ -229,7 +229,7 @@ enum EchoelCommandError: Error, Equatable, Sendable {
         case .notArrangeable:
             return "Parts on this track cannot be copied."
         case .placeTaken:
-            return "There is already a part right after it, so I did not copy it on top."
+            return "There is already a part in the place right after it, so I did not copy it on top."
         case .unknownArgument(let key):
             return "I do not know what \"\(key)\" means for this action, so I did nothing."
         case .requestIDReused:
