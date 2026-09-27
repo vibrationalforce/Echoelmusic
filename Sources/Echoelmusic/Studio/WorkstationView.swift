@@ -837,6 +837,9 @@ struct WorkstationView: View {
             // leaf: this row reads `isPlaying` only, never the position.
             if playing {
                 SongPositionReadout()
+                // Design slice 13 — the mix level beside the position. Its own leaf: the level
+                // is rewritten at 60 Hz, and this row names no engine.
+                WorkstationMixMeter()
             }
           }
             Text(WorkstationSummary.transportCaption(playing: playing, startable: startable,

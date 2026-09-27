@@ -252,18 +252,11 @@ struct MasterLoudnessGrid: View {
         .onDisappear { audioEngine.releaseDetailedMetering(.masterPanel) }
     }
 
-    /// One channel's level bar — fill proportional to level, turning warning near clip.
+    /// One channel's level bar — fill proportional to level, turning warning near clip. Drawn by
+    /// `MixLevelBar`, the one bar the Workstation's transport meter uses too (design slice 13,
+    /// #416): one warn threshold, and a non-finite reading draws nothing instead of a NaN width.
     private func levelBar(_ level: Float) -> some View {
-        let v = CGFloat(min(max(level, 0), 1))
-        return GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 2).fill(EchoelTheme.fill)
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(level > 0.9 ? EchoelTheme.danger : EchoelTheme.accent)
-                    .frame(width: geo.size.width * v)
-            }
-        }
-        .frame(height: 5)
+        MixLevelBar(level: level)
     }
 
     // ⛔ `integratedColor` and `truePeakColor` LIVED HERE and were deleted by #316; the file

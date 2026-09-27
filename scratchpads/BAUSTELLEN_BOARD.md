@@ -186,6 +186,12 @@ laufenden b1a38b9/0bc1a9d/etc.-Stand.
 > Schnelles: `currentToneHz` = `session.a4Hz` + `rootIndex`, `autoMode`/`spectralDonuts` sind
 > `@AppStorage`. **Das Freeze-Gesetz redet über VORFAHREN eines Menü-Wirts** — Geschwister-Churn
 > ist harmlos.
+> ⭐ **DRITTER LESER seit Design-Scheibe 13 (2026-09-27): `WorkstationMixMeter`** — der L/R-Mix-Pegel
+> neben der Song-Position der Workstation, nur während der Song spielt. Sicher aus demselben Grund:
+> ein eigener `View`-`struct` in eigener Datei (echte Beobachtungsgrenze), von `WorkstationView` nur
+> MONTIERT, als GESCHWISTER von Play, Click und `SongPositionReadout` — kein Vorfahre eines Pickers.
+> `WorkstationView` selbst nennt kein Engine-Objekt. Die Bars zeichnet `MixLevelBar`, dieselbe wie im
+> Master-Panel (eine Warnschwelle, #416).
 > ⚠️ Die Lehre ist die #756-Form: **eine richtige Schlussfolgerung mit falsch gewordenem Beleg ist
 > schlimmer als ein offener Posten** — wer sie später als Prämisse benutzt („nichts sonst liest die
 > Meter"), leitet daraus eine Freigabe ab, die der Beleg nicht mehr trägt.
