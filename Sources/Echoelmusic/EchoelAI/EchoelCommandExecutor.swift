@@ -26,9 +26,11 @@
 // ⭐ THE AGENT'S UNDO IS ITS OWN, AND IT CHECKS. The level is not in the song's history (the store
 // keeps mixer moves out of it on purpose), so the agent keeps a journal of exact inverses, one
 // group per request. "Take back your last change" restores each value ONLY if it still reads
-// what the agent left; a value a person moved since is kept, and the report says so. The song's
-// own Undo button is untouched — a taken-back copy is removed through the store, which records
-// that removal as one ordinary song step.
+// what the agent left AND nobody has written that level since (`TimelineStore.laneLevelWrites`,
+// counted per write, so the same number entered again by hand is a later decision — review
+// repair 2b); a value a person moved since is kept, and the report says so. The song's own Undo
+// button is untouched — a taken-back copy is removed through the store, which records that
+// removal as one ordinary song step.
 //
 // ⭐ A MEDIA LOOK GOES THROUGH THE CARDS' OWN OWNER (step 2b). "Use the colours of this photo" is
 // `MediaLookUndo.apply(photo:on:)` — the call the photo card's Apply makes — with the seed that
@@ -55,7 +57,8 @@ final class EchoelCommandExecutor {
     static let journalDepth = 20
 
     private enum Inverse {
-        case level(laneID: UUID, before: Float, after: Float)
+        /// `write` is the store's write count for that lane right after the agent's write.
+        case level(laneID: UUID, before: Float, after: Float, write: Int)
         case removeCopy(TimelineRegion)
         /// The look and the owner's `generation` right after it was recorded — an equal look
         /// applied again by hand is a different generation, and is the person's (review MED-2).
@@ -288,7 +291,10 @@ final class EchoelCommandExecutor {
         guard let after = timeline.document.lanes.first(where: { $0.id == laneID })?.level else {
             return .failed(.verificationFailed("the track is gone"))
         }
-        if after != before { group.append(.level(laneID: laneID, before: before, after: after)) }
+        if after != before {
+            group.append(.level(laneID: laneID, before: before, after: after,
+                                write: timeline.laneLevelWrites[laneID] ?? 0))
+        }
         guard after == asked else {
             return .failed(.verificationFailed("the level reads \(TrackMix.decibelText(Double(after))), "
                 + "not \(TrackMix.decibelText(linear))"))
@@ -396,12 +402,14 @@ final class EchoelCommandExecutor {
         var kept: [String] = []
         for entry in entries.reversed() {
             switch entry {
-            case .level(let laneID, let before, let after):
+            case .level(let laneID, let before, let after, let write):
                 guard let lane = timeline.document.lanes.first(where: { $0.id == laneID }) else {
                     kept.append("A removed track")
                     continue
                 }
-                guard lane.level == after else {
+                // Moved since, OR written since — even to the same number: that is the person's
+                // decision now, not the agent's leftover.
+                guard lane.level == after, timeline.laneLevelWrites[laneID] ?? 0 == write else {
                     kept.append("The level of \(lane.name)")
                     continue
                 }

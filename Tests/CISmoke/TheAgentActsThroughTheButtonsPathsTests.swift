@@ -31,6 +31,9 @@
 // its two `.selected` cases accordingly, and claim 9 drives the case the old shape allowed: a
 // selection made AFTER the plan was never resolved live. Mutant: executor resolving `.selected`
 // from the live selection at step time → claim 9 red (Keys quieter, the person never asked).
+// Review repair 2b: claim 6 also re-enters the agent's own value by hand and expects Undo to keep
+// it (`TimelineStore.laneLevelWrites`, counted per write); claim 8 pins the counter at the writer.
+// Mutant: undo comparing the value only → the re-entered value is overwritten, claim 6 red.
 
 import Foundation
 import XCTest
@@ -241,6 +244,21 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         XCTAssertEqual(conflict.steps.first?.outcome, .failed(.changedSince("The level of Keys")))
         XCTAssertEqual(level(Self.keysLane, in: timeline), 1.5, "the person's later value is kept")
 
+        // Review repair 2b: the person re-enters the SAME number the agent left (the inspector's
+        // field, so the value reads unchanged) — that is their decision now, and Undo leaves it.
+        _ = await executor.execute(plan([.setTrackLevel(track: .selected, change: .absoluteDecibels(-6))], on: executor))
+        let agentsValue = try XCTUnwrap(level(Self.keysLane, in: timeline))
+        let writesAfterAgent = try XCTUnwrap(timeline.laneLevelWrites[Self.keysLane.id])
+        TrackMix.setLevel(Double(agentsValue), laneID: Self.keysLane.id, timeline: timeline)
+        XCTAssertEqual(level(Self.keysLane, in: timeline), agentsValue, "the value itself did not move")
+        XCTAssertEqual(timeline.laneLevelWrites[Self.keysLane.id], writesAfterAgent + 1, "but the store counted the write")
+        let reentered = await executor.execute(plan([.undoAgentChange], on: executor))
+        XCTAssertEqual(reentered.steps.first?.outcome, .failed(.changedSince("The level of Keys")),
+                       "a value written since — even the same one — is the person's")
+        XCTAssertEqual(level(Self.keysLane, in: timeline), agentsValue)
+        XCTAssertFalse(executor.canUndoAgentChange, "the entry is spent, not retried forever")
+        TrackMix.setLevel(1.5, laneID: Self.keysLane.id, timeline: timeline)   // back to where this block found it
+
         // Half of a request moved on since: the other half IS taken back, and the report says both.
         selection.selectRegion(Self.loopPart.id, in: timeline.document)
         _ = await executor.execute(plan([.setTrackLevel(track: .selected, change: .relativeDecibels(-3)),
@@ -348,7 +366,18 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         let members = Set(regex.matches(in: executor, range: range).compactMap { match in
             Range(match.range(at: 1), in: executor).map { String(executor[$0]) }
         })
-        XCTAssertEqual(members, ["document"], "the executor touches the store beyond reading its document")
+        XCTAssertEqual(members, ["document", "laneLevelWrites"],
+                       "the executor touches the store beyond reading its document and the level write count")
+        // Review repair 2b: the write count is bumped at the ONE lane-level writer, on every write.
+        let store = try code("Sources/Echoelmusic/Core/TimelineStore.swift")
+        guard let head = store.range(of: "public func setLaneLevel(id: UUID, _ level: Float) {"),
+              let tail = store.range(of: "persist()", range: head.upperBound..<store.endIndex) else {
+            return XCTFail("`TimelineStore.setLaneLevel` or its `persist()` moved — re-anchor")
+        }
+        XCTAssertTrue(store[head.upperBound..<tail.lowerBound].contains("laneLevelWrites[id, default: 0] += 1"),
+                      "the same number entered again must count as a write, or the agent's Undo overwrites a decision")
+        XCTAssertTrue(store.contains("@ObservationIgnored public private(set) var laneLevelWrites: [UUID: Int]"),
+                      "not observed (nothing renders it), not writable from outside the store")
         XCTAssertTrue(executor.contains("run(Self.pinned(command, to: plan.basis), seen: plan.basis"),
                       "\"the selection\" is resolved from the state the plan saw, not re-read between steps (review MED)")
         // Review repair 2a: the live selection is read in ONE place, `snapshot()` — a resolver that

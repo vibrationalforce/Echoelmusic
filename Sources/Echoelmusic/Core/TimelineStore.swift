@@ -794,8 +794,16 @@ public final class TimelineStore {
         // Non-finite → 0 (silent), as `TimelineDocument.effectiveGain` plays it; a bare
         // `min(2, NaN)` would STORE double gain.
         document.lanes[i].level = level.isFinite ? max(0, min(2, level)) : 0
+        laneLevelWrites[id, default: 0] += 1
         persist()
     }
+
+    /// How many times each lane's level has been WRITTEN through `setLaneLevel`, whatever the
+    /// value — the same number entered again counts. Not persisted, not observed, never reset:
+    /// it answers the one question the value cannot, "has anyone set this level since I did?".
+    /// A person who re-enters the number the agent left has made a decision, and the agent's
+    /// Undo must leave it (EchoelAI review repair 2b). Read by `EchoelCommandExecutor`.
+    @ObservationIgnored public private(set) var laneLevelWrites: [UUID: Int] = [:]
 
     /// B2 stereo position, clamped −1…1 (0 = center). State only, like level. Audio lanes
     /// (`AudioLanePlayer`) and rack lanes (`slotPanSink`) read it live. ⛔ "the surface pushes
