@@ -509,7 +509,7 @@ struct TrackInspectorView: View {
                 TrackMix.removeTrack(laneID: laneID, timeline: timeline)
             } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: "minus.circle").font(.system(size: 12, weight: .semibold))
+                    Image(systemName: "minus.circle").font(EchoelTheme.font(12, .semibold))
                     Text("Remove track").font(EchoelTheme.font(12, .semibold))
                 }
                 .foregroundStyle(allowed ? EchoelTheme.text : EchoelTheme.dim)

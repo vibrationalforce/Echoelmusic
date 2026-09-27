@@ -283,7 +283,7 @@ struct SongAutomationEditor: View {
                 Button { isOpen.toggle() } label: {
                     HStack(spacing: 4) {
                         Image(systemName: isOpen ? "chevron.down" : "chevron.right")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(EchoelTheme.font(11, .semibold))
                         Text("Automation").font(EchoelTheme.font(12, .semibold))
                     }
                     .foregroundStyle(EchoelTheme.text)
@@ -393,7 +393,7 @@ private struct SongAutomationLane: View {
                 if timeline.setSongAutomation(lanes) { picked = nil }
             } label: {
                 HStack(spacing: 4) {
-                    Image(systemName: "trash").font(.system(size: 11, weight: .semibold))
+                    Image(systemName: "trash").font(EchoelTheme.font(11, .semibold))
                     Text("Remove point").font(EchoelTheme.font(11, .semibold))
                 }
                 .foregroundStyle(EchoelTheme.text)

@@ -359,7 +359,7 @@ struct SessionLaunchView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: lit ? "play.fill" : "play")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(EchoelTheme.font(11, .semibold))
                 Text(track.name)
                     .font(EchoelTheme.font(12))
                     .lineLimit(1)
@@ -393,7 +393,7 @@ struct SessionLaunchView: View {
             player.stopLaunched(laneID: track.id, quantize: SessionGrid.quantize)
         } label: {
             HStack(spacing: 8) {
-                Image(systemName: "stop.fill").font(.system(size: 11, weight: .semibold))
+                Image(systemName: "stop.fill").font(EchoelTheme.font(11, .semibold))
                 Text("Stop \(track.name)").font(EchoelTheme.font(12, .semibold)).lineLimit(1)
             }
             .foregroundStyle(EchoelTheme.text)
@@ -430,7 +430,7 @@ struct SessionLaunchView: View {
             player.stopAllLaunched(quantize: SessionGrid.quantize)
         } label: {
             HStack(spacing: 8) {
-                Image(systemName: "arrow.uturn.backward").font(.system(size: 11, weight: .semibold))
+                Image(systemName: "arrow.uturn.backward").font(EchoelTheme.font(11, .semibold))
                 Text("Back to song").font(EchoelTheme.font(12, .semibold)).lineLimit(1)
             }
             .foregroundStyle(EchoelTheme.text)
