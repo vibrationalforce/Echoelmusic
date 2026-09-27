@@ -361,6 +361,34 @@ enum ClipNoteEdit {
 
     /// What VoiceOver hears for the grid: the notes it can step through, and — when the octave
     /// window hides some — how many the part holds, so a listener who wraps early knows why.
+    /// A row's name in the reader's note-name system plus its octave — "C4", "Do4", "Sa4" —
+    /// with middle C (MIDI 60) in octave 4, the convention the grid always used. Design slice
+    /// 3: the grid printed "C\(octave)" in English whatever the reader had chosen.
+    nonisolated static func rowName(pitch: Int, naming: NoteNaming, preferFlats: Bool) -> String {
+        let octave = (pitch >= 0 ? pitch / 12 : (pitch - 11) / 12) - 1
+        return naming.name(pitchClass: pitch, preferFlats: preferFlats) + "\(octave)"
+    }
+
+    /// One picked note, said in words under the grid (design slice 3): its name, where it
+    /// starts in the part (bar and beat, 1-based, as every other surface counts) and how long
+    /// it is in sixteenths. `note` is REGION-relative — the grid's own `visibleNotes`.
+    /// `spoken` expands ♯/♭ for VoiceOver (`NoteNaming.spokenName`), so a sighted and a blind
+    /// reader get the same name in the form each can use.
+    nonisolated static func pickedNoteLine(_ note: Note, naming: NoteNaming, preferFlats: Bool,
+                                           spoken: Bool) -> String {
+        let perBar = TimelineTime.ticksPerBar
+        let perBeat = TimelineTime.ticksPerBeat
+        let start = Swift.max(0, note.startTick)
+        let bar = perBar > 0 ? start / perBar + 1 : 1
+        let beat = perBar > 0 && perBeat > 0 ? (start % perBar) / perBeat + 1 : 1
+        let steps = note.lengthSteps
+        let length = steps == 1 ? "1 sixteenth" : "\(steps) sixteenths"
+        let octave = (note.pitch >= 0 ? note.pitch / 12 : (note.pitch - 11) / 12) - 1
+        let name = spoken ? naming.spokenName(pitchClass: note.pitch, preferFlats: preferFlats) + " \(octave)"
+                          : rowName(pitch: note.pitch, naming: naming, preferFlats: preferFlats)
+        return "\(name) · bar \(bar), beat \(beat) · \(length)"
+    }
+
     /// How many notes the part holds — the SAME windowing the grid draws and the player plays
     /// (`visibleNotes`), so the count on the "Notes" switch and the grid's own label agree.
     /// nil where the grid would not open a clip: no clip, not MIDI, or a legacy seconds offset.

@@ -173,7 +173,7 @@ private struct PartNoteGrid: View {
                         stepWidth: Double(Self.stepWidth), rowHeight: Double(Self.rowHeight),
                         rows: range, partSteps: ClipNoteEdit.stepCount(lengthTicks: region.lengthTicks))
                     ScrollView(.horizontal, showsIndicators: true) {
-                        PartNoteCanvas(visible: visible, steps: steps, grid: grid,
+                        PartNoteCanvas(visible: visible, steps: steps, grid: grid, naming: naming,
                                        picked: picked.ids, editable: editable,
                                        keyClasses: Set(session.key.pitchClasses),
                                        onTap: { location in
@@ -206,6 +206,19 @@ private struct PartNoteGrid: View {
                         .onAppear { if centre == nil { centre = heldCentre } }
                     if editable, !visible.isEmpty {
                         let selected = picked.ids.intersection(Set(visible.map(\.id)))
+                        // Design slice 3: ONE picked note is said in words — the grid shows
+                        // it as a block, and the name, bar and length are what a musician asks.
+                        if selected.count == 1, let one = visible.first(where: { selected.contains($0.id) }) {
+                            let flats = session.key.prefersFlatSpelling
+                            Text(ClipNoteEdit.pickedNoteLine(one, naming: naming, preferFlats: flats,
+                                                             spoken: false))
+                                .font(EchoelTheme.font(11).monospacedDigit())
+                                .foregroundStyle(EchoelTheme.text)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .accessibilityLabel(ClipNoteEdit.pickedNoteLine(one, naming: naming,
+                                                                                preferFlats: flats,
+                                                                                spoken: true))
+                        }
                         selectionControls(targets: ClipNoteEdit.targets(selected: selected,
                                                                          onScreen: pickedOnScreen,
                                                                          visible: visible),
@@ -516,6 +529,8 @@ private struct PartNoteCanvas: View {
     let visible: [Note]
     let steps: Int
     let grid: NoteGridGesture.Grid
+    /// The reader's note names, for the C-row labels (design slice 3).
+    let naming: NoteNaming
     let picked: Set<UUID>
     let editable: Bool
     /// The pitch classes of the session key: rows outside it are shaded (M4). A chromatic key
@@ -567,10 +582,12 @@ private struct PartNoteCanvas: View {
                 context.fill(Path(CGRect(x: x, y: 0, width: step % 16 == 0 ? 1 : 0.5,
                                          height: size.height)), with: .color(color))
             }
-            // Octave names on the C rows.
+            // Octave names on the C rows, in the reader's note names (a C has no accidental,
+            // so the key's flat preference cannot change it).
             for pitch in range where pitch % 12 == 0 {
                 let y = CGFloat(high - pitch) * rowH + rowH / 2
-                context.draw(Text("C\(pitch / 12 - 1)").font(EchoelTheme.font(9))
+                context.draw(Text(ClipNoteEdit.rowName(pitch: pitch, naming: naming, preferFlats: false))
+                                .font(EchoelTheme.font(9))
                                 .foregroundStyle(EchoelTheme.dim),
                              at: CGPoint(x: 3, y: y), anchor: .leading)
             }
