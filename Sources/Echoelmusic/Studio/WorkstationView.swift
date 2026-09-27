@@ -221,6 +221,10 @@ struct WorkstationView: View {
     /// either in the permanent Studio root would have made the whole Studio rebuild on a
     /// file-picker dismissal, and `importNote` would have become a sixth thing the root
     /// carries between plate switches for no reason.
+    /// Where THIS view last started the song — the caption names its bar (design D1b). Every
+    /// start goes through `startTimeline`, so it is set there and nowhere else; it is read only
+    /// while the song plays.
+    @State private var playedFromTick = 0
     @State private var importPresented = false
     @State private var importNote: String?
 
@@ -802,7 +806,8 @@ struct WorkstationView: View {
             if playing {
                 SongPositionReadout()
             }
-            Text(WorkstationSummary.transportCaption(playing: playing, startable: startable))
+            Text(WorkstationSummary.transportCaption(playing: playing, startable: startable,
+                                                     fromTick: playedFromTick))
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityHidden(true)   // the button's own hint already carries this
@@ -1135,6 +1140,7 @@ struct WorkstationView: View {
     /// the top), the Session view a scene's bar and its parts (Phase 3 / S2) — the player floors
     /// the tick to the bar and lands the parts on it inside the same call (S2 review, MED-1).
     private func startTimeline(fromTick: Int, launching: [UUID]) {
+        playedFromTick = fromTick
         player.play(document: timeline.document,
                     clips: clipStore,
                     pattern: beatPlayer.pattern,

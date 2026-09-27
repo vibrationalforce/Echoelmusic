@@ -11,6 +11,9 @@
 // 2. SOURCE: the readout is its own self-driving leaf — a 15 Hz `TimelineView` paused while
 //    stopped, the ONLY reader of `currentTick` in its file, speaking as "Song position" with a
 //    frequently-updating value — and does nothing but show.
+// 4. BEHAVIOUR + SOURCE (D1b): the playing caption said "from the top" whatever the start; it now
+//    names the start bar, recorded by the ONE start (`startTimeline`) — red on the parent, where
+//    `transportCaption` took no tick.
 // 3. SOURCE: `WorkstationView` mounts it once, only while playing, in the transport row. That the
 //    view itself never names `currentTick` is pinned ONCE, by
 //    `TheWorkstationPlaysTheTimelineTests.testTheControlDoesNotReadThePlayhead` (#416).
@@ -91,6 +94,35 @@ final class TheSongPositionIsReadAsANumberTests: XCTestCase {
                        "the readout sits INSIDE the playing branch — a stopped song has no position to show")
         XCTAssertEqual(code.components(separatedBy: "SongPositionReadout()").count - 1, 1,
                        "one position readout on the plate")
+    }
+
+    // MARK: 4 — the caption names where the take started (D1b)
+
+    func testThePlayingCaptionNamesTheStartBar() throws {
+        let bar = TimelineTime.ticksPerBar
+        XCTAssertEqual(WorkstationSummary.transportCaption(playing: true, startable: true, fromTick: 0),
+                       "Playing from the top on the shared transport.")
+        XCTAssertEqual(WorkstationSummary.transportCaption(playing: true, startable: true, fromTick: 8 * bar),
+                       "Playing from bar 9 on the shared transport.",
+                       "Play from a part at bar 9 must not be captioned 'from the top'")
+        XCTAssertEqual(WorkstationSummary.transportCaption(playing: true, startable: true, fromTick: bar - 1),
+                       "Playing from the top on the shared transport.",
+                       "a tick inside bar 1 starts on bar 1 — the transport starts on the bar")
+        XCTAssertEqual(WorkstationSummary.transportCaption(playing: false, startable: true, fromTick: 8 * bar),
+                       WorkstationSummary.transportCaption(playing: false, startable: true, fromTick: 0),
+                       "a stopped song's caption does not depend on where the last take started")
+
+        let code = try source(Self.workstation)
+        guard let head = code.range(of: "private func startTimeline(fromTick: Int, launching: [UUID]) {"),
+              let set = code.range(of: "playedFromTick = fromTick", range: head.upperBound..<code.endIndex),
+              let play = code.range(of: "player.play(", range: head.upperBound..<code.endIndex) else {
+            return XCTFail("ANCHOR MISSING: `startTimeline` recording `playedFromTick` (#454)")
+        }
+        XCTAssertLessThan(set.lowerBound, play.lowerBound, "the start is recorded where the song is started")
+        let writes = code.components(separatedBy: "playedFromTick =").count
+            - code.components(separatedBy: "var playedFromTick =").count
+        XCTAssertEqual(writes, 1, "ONE writer (the declaration aside): every start goes through `startTimeline`")
+        XCTAssertTrue(code.contains("fromTick: playedFromTick))"), "the caption is fed the recorded start")
     }
 
     // MARK: helpers

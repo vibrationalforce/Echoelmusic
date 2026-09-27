@@ -186,8 +186,17 @@ public struct WorkstationSummary: Equatable, Sendable {
     /// WA4 put move, trim and split on the part bar; with the note editor it would deny the
     /// surface's own purpose. A caption states what the BUTTON does — it is not where the
     /// editing boundary is kept (that is each editor's own refusal sentence).
-    public static func transportCaption(playing: Bool, startable: Bool) -> String {
-        if playing { return "Playing from the top on the shared transport." }
+    ///
+    /// ⛔ The playing line said "from the top" whatever the start (design D1b): Play from a part
+    /// and a scene launch both start mid-song, and the caption denied it beside the position
+    /// readout that showed otherwise. `fromTick` is where THIS take was started; the transport
+    /// starts on that tick's bar, so the bar is named through the one bar-number rule.
+    public static func transportCaption(playing: Bool, startable: Bool, fromTick: Int) -> String {
+        if playing {
+            let bar = barNumber(forTick: fromTick)
+            return bar > 1 ? "Playing from bar \(bar) on the shared transport."
+                           : "Playing from the top on the shared transport."
+        }
         if startable { return "Plays the song's parts from the top." }
         return "Nothing to play yet."
     }

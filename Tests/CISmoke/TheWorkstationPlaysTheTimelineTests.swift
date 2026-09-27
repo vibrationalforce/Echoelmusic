@@ -794,9 +794,11 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
         // caption "…this view still does not edit them", i.e. the one sentence that STATES
         // the boundary. A needle that cannot distinguish a claim from its denial is not a
         // needle (#367). What is forbidden is an OFFER — an imperative or a capability.
-        let captions = [WorkstationSummary.transportCaption(playing: false, startable: true),
-                        WorkstationSummary.transportCaption(playing: true, startable: true),
-                        WorkstationSummary.transportCaption(playing: false, startable: false)]
+        let captions = [WorkstationSummary.transportCaption(playing: false, startable: true, fromTick: 0),
+                        WorkstationSummary.transportCaption(playing: true, startable: true, fromTick: 0),
+                        WorkstationSummary.transportCaption(playing: false, startable: false, fromTick: 0),
+                        WorkstationSummary.transportCaption(playing: true, startable: true,
+                                                            fromTick: 8 * TimelineTime.ticksPerBar)]
         for words in captions + [ready, running, blocked] {
             for offer in ["tap to ", "you can ", "drag ", "record ", "import ", "trim "] {
                 XCTAssertFalse(words.lowercased().contains(offer), """
