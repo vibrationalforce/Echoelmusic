@@ -3,41 +3,63 @@
 Rules: `memory/preferences.md` § "Orchestrator hardening". This file is NOT a roadmap — product order
 lives in `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` and the canonical PLAN_* files. Overwrite, don't append.
 
-CURRENT_HEAD: feature/media-seed-2026-09-27 (LOCAL ONLY, founder order: kein Push) on top of dfe9525e6;
-  designated branch claude/echoelmusic-review-optimize-u5jjpd holds 23212ad85 (slice-13 review repair), ALSO
-  local and unpushed. Neither has been seen by any gate.
-CURRENT_MAIN: 4884c7a47 (unchanged this session)
-MEDIA SEED (founder order 2026-09-27): MS1 2b2e2d1d7 · MS2 92a9dfd2e · MS3 68f9d9a01 · MV1 0b1a2d8f3 ·
-  review c9769ca9b/81ab083b3/f2025268b · MV2a 34e5897d1 · MV2b d695503ec — NOT COMPILED, transcribed only.
-  MS4/MS5 (arrangement + performance) HELD until a gate has run: scratchpads/PLAN_MEDIA_SEED_2026-09-27.md §5.
-ECHOELAI AGENT step 1 (founder addendum 2026-09-27): command layer 7d245c76a · executor d6a08669a —
-  NOT COMPILED, transcribed only. No language model connected (seam `EchoelActionPlanning` only).
-  Coverage matrix + next slices: scratchpads/PLAN_ECHOELAI_ACTIONS_2026-09-27.md.
-ECHOELAI AGENT step 2 (photo/video): one writer 9132870a9 · `media.applyLook` c31a38284 — NOT COMPILED,
-  transcribed only. Branch HEAD = local feature/media-seed-2026-09-27, NOTHING pushed.
-QUEUE: scratchpads/MODES_CENSUS_2026-09-26.md (Q1–Q10 + design slices 1–12)
-TASK_STATE:
-  Q2–Q9, D1, design slices 1–12 (incl. slice 10 click 54b2e28cf/9d64dd8a8/887bbafd1/ce04926b5)
-                       AUTONOMOUS GATES CLOSED / FOUNDER DEVICE ACCEPTANCE PENDING
-                       — Compile Check 2997 success on ce04926b5 (Release/device, covers 6c69dacad…ce04926b5)
-                       — CI/CD 6462 `Build for Testing` success on ce04926b5 (Debug/sim, Tests/CISmoke compiles)
-                       — Run Tests: #396 shape, 169 passing / 0 failing / 0 skipped IN THE WINDOW; 1344 s gap;
-                         the two click guards are NOT in the window → execution unrecorded (#445/#807)
-  DEPLOY               v10.79.483 = TestFlight run 2603 (36304652158) on 5683fb72d: SUCCESS — Compile Check,
-                       Archive, Export & Upload, "Verify build landed in App Store Connect" all green
-                       (08:03Z). Build 2603 is in App Store Connect. Checklist T1–T8 in .deploy/release.
-  Loop toggle          BLOCKED_FOUNDER
-  Q1 (Workstation Stop keeps pulse) — BLOCKED_FOUNDER (question 2)
-  Q10 (DomeProjection core)  — BLOCKED_FOUNDER (paused Visual/XR domain, question 4)
-CURRENT_INVARIANTS: no new modal (11 on the chain, ceiling 14) · no hot read in host bodies (`currentTick`
-  only in self-driving leaves; `metronome.bpm` never in a view leaf) · part moves only through
-  TrackParts.move · the click has ONE anchor writer (the transport's "metronome" step subscriber) ·
-  CLAUDE.md < 150,000 B · .deploy/release NOT to be touched again without an intended deploy
-LAST_GREEN_COMPILE: Compile Check 2997 on ce04926b5 (+ TestFlight Compile Check/Archive on 5683fb72d)
-LAST_GREEN_TEST: BfT 6462 on ce04926b5
-KNOWN_RED_GATE: CI/CD conclusion red on every push (#396) — read the "Build for Testing" step
-FOUNDER_PENDING: device acceptance on build 2603 — WA4 / R1 / M1–M10 / MA1–MA4.4d / S1–S2 / B3 + Q2–Q9 + D1 +
-  design slices 1–12 (T1–T8); MIDI "AUTONOMOUS GATES NOT CLOSED"; EF3; DC2 paused; census questions 1–4
-NEXT_3_ACTIONS: 1) the stack hold is lifted — next slice may touch Sources again (≤3 files, review before
-  push)  2) the next Sources/Tests push re-triggers auto-merge; confirm main moves  3) founder device
-  report on build 2603 decides what comes first
+CURRENT_HEAD: 33a70c329 on claude/echoelmusic-review-optimize-u5jjpd (PUSHED; the checked-out local branch
+  feature/media-seed-2026-09-27 mirrors it). Review base dfe9525e6 · review commit 9d479f922 (22 commits
+  media workstation + EchoelAI, transcribed only, NEVER compiled before step 1 below).
+CURRENT_MAIN: see `git ls-remote origin refs/heads/main` — auto-merge waits for the two gates (#1405); a
+  red `Build for Testing` (02bcb429f…9cb151b20, see 4a) holds main until 33a70c329 is green.
+CODEX HANDOVER (portable, outside the worktree — scratchpad `codex-handover/`): full bundle in 4 parts
+  (sha256 3131556d…) · thin bundle from dfe9525e6 · FABLE_REVIEW_9d479f922.md · IMPORT_ANLEITUNG.md ·
+  SHA256SUMS.txt. Verified with `git bundle verify` and a fresh import (both SHAs + diff readable).
+
+REPAIR ROUND on 9d479f922 (founder release 2026-09-27; per package: SHA · findings · SHA-exact CI):
+  step 1  226ba8dd5  compile fix                — Compile Check 36353468431 SUCCESS · BfT 36353468460 SUCCESS ·
+                                                  Run Tests job 108716569099: 169 pass, 1 fail = PRE-EXISTING #249
+  step 2  7331ff86a…2e04fc931  repairs 2a–2e     — Compile Check 36354828282 SUCCESS · BfT 36354828297 SUCCESS ·
+          (2a selection pinned before step 1 · 2b   Run Tests job 108720517282: #396 shape, 170 pass / 0 fail
+          same-number re-entry counts as a write · IN THE WINDOW (1281 s gap)
+          2c "taken back" vs "had already been taken
+          back" · 2d look undo on the display grid ·
+          2e read publishes only while the card is open)
+  step 3a 456b6b213  MED-8 grey-Apply reason in    — Compile Check 36355497435 CANCELLED (covered by 36355582407) ·
+          sight + spoken; MED-2 lifecycle doc       BfT 36355497368 SUCCESS · Run Tests job 108722468987: xcodebuild
+                                                  ABORT (tool, not a test); 117 pass, 1 fail = PRE-EXISTING #250
+  step 3b 860007368  placeTaken = overlap, not     — Compile Check 36355582407 SUCCESS · BfT 36355582304 SUCCESS ·
+          start-only (#1440 law); message           Run Tests job 108722669251: PENDING at 23:00Z
+  docs    b29a4f7de  CENSUS_MUSICAL_EVENTS + log   — docs only, no gate (#1176)
+  4a      02bcb429f  Codex 1: project binding —    — Compile Check 36356779303 CANCELLED (covered by fcb53dc05's
+          `TimelineStore.documentGeneration` in     36356878358, pending) · BfT 36356779325 FAIL: test-only compile
+          the plan basis + journal pruned across    error (`store` used before declaration in claim 8) — repaired
+          an Open; reproduced via the REAL          in 33a70c329. Sources: TimelineStore · EchoelCommand ·
+          Save/Open path (claim 10)                 EchoelCommandExecutor (3 files)
+  4b      fcb53dc05  Codex 4 (selection gap between — test only; BfT red until 33a70c329 (carries the 4a test error)
+          steps after preflight): claim 11
+  4d      fc719443e  Codex 3: number / display grid — test only (new file TheLevelRequestSeparatesNumberGridAndWrite
+          / write responsibility, 3 claims           Tests); BfT red until 33a70c329
+  4e      9cb151b20  Codex 4: result invalidation  — test only (TheMediaLookHasOneWriterTests claim 5); BfT red until
+          = same main-actor turn as the check       33a70c329
+  fix     33a70c329  claim 8 anchor order          — gates PENDING; its BfT is the verdict for 4a–4e
+  Not repaired, reported (user-impact order): MED-9 video import copies the full file before the duration check,
+  no cancel button (temp copy removed, newer pick cancels) · MED-11 meter warning colour-only · LOW rest ·
+  Codex 2 (look half): a same-value re-entry of a LOOK parameter is indistinguishable and is taken back
+  (`MediaSeedApplication.undo`, display grid) — the level path keeps it (2b); a look write journal would route
+  39 `@AppStorage(StudioDefaultKeys.visual…)` bindings in 4 files + 1 `set(forKey:)` through an owner = the
+  state architecture Codex excluded → recorded, not built · the agent's "0.0 dB → 0.0 dB" answer for a
+  sub-grid level change (pinned as is in 4d claim 2; wording decision open) · needle-reachability: 3 findings,
+  all interpolation false alarms, none touched by this round.
+  Agent findings are LATENT INFRASTRUCTURE: `EchoelCommandExecutor(` has 0 production callers.
+
+CURRENT_INVARIANTS: no new modal (11 on the chain, ceiling 14) · no hot read in host bodies · one media-look
+  writer (`MediaLookUndo`) · executor writes only through the button writers (claim 8 allow-list: document ·
+  documentGeneration · laneLevelWrites) · CLAUDE.md < 150,000 B · .deploy/release NOT touched · no TestFlight
+LAST_GREEN_COMPILE: Compile Check 36355582407 on 860007368 (Sources of 4a not yet compiled by any gate)
+LAST_GREEN_TEST: BfT 36355582304 on 860007368
+KNOWN_RED_GATE: CI/CD conclusion red on every push (#396) — read the "Build for Testing" step · two PRE-EXISTING
+  red guards in the blocking bundle, both in main before this round: #249 TheDetectedTempoIsHonestTests claim 12
+  (since 6f88bb3d7) · #250 AutoModeStartsOffAndOwnsNoTempoTests claim 9 (`autoAttuned: autoMode` left
+  EchoelStudioView with #1069) — founder decides whether this round fixes them
+FOUNDER_PENDING: device checks for the whole media/agent stack (nothing here is device-verified) · #249/#250 ·
+  MED-9 cancel button · "0.0 dB → 0.0 dB" wording · TestFlight (NOT triggered, per order)
+NEXT_3_ACTIONS: 1) read Compile Check + BfT + Run Tests of 33a70c329 (SHA-exact) and the Run Tests of
+  860007368; repair precisely if red  2) final report (repaired / open / SHAs / gates / device checks)
+  3) no new features; the next Sources slice only on a green 33a70c329
