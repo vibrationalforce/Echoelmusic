@@ -91,7 +91,12 @@ final class AVideoCardSaysWhatWasMeasuredTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(buttons, 3)
         XCTAssertGreaterThanOrEqual(card.components(separatedBy: ".accessibilityLabel(").count - 1, buttons + 1,
                                     "every action — the picker included — carries a spoken name")
-        XCTAssertTrue(card.contains(".frame(minWidth: 92, minHeight: 44)"), "44 pt targets")
+        XCTAssertTrue(card.contains(".frame(minWidth: 92, minHeight: 44)"), "44 pt targets (the header)")
+        // Same shared face as the photo card — see APhotoIsReadSmallAndOffTheStageTests claim 3.
+        XCTAssertEqual(card.components(separatedBy: "MediaActionLabel(title:").count - 1, 3)
+        XCTAssertFalse(card.contains("func actionLabel("), "the isolated helper is the compile error")
+        XCTAssertTrue(try code("Sources/Echoelmusic/Studio/MediaActionLabel.swift")
+            .contains(".frame(minWidth: 92, minHeight: 44)"), "44 pt targets (the actions)")
     }
 
     // MARK: 3 — mounted once, beside the photo card, on a plate that still owns no modal

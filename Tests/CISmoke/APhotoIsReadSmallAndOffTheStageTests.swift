@@ -148,7 +148,17 @@ final class APhotoIsReadSmallAndOffTheStageTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(buttons, 3)
         XCTAssertGreaterThanOrEqual(card.components(separatedBy: ".accessibilityLabel(").count - 1, buttons + 1,
                                     "every action — the picker included — carries a spoken name")
-        XCTAssertTrue(card.contains(".frame(minWidth: 92, minHeight: 44)"), "44 pt targets")
+        XCTAssertTrue(card.contains(".frame(minWidth: 92, minHeight: 44)"), "44 pt targets (the header)")
+        // The three action faces are ONE shared `View` type, not a helper method on the card: a
+        // main-actor-isolated `func … -> some View` cannot return into `PhotosPicker`'s nonisolated
+        // label closure (both gates red on 9d479f922). Its 44 pt floor lives with it.
+        XCTAssertEqual(card.components(separatedBy: "MediaActionLabel(title:").count - 1, 3)
+        XCTAssertFalse(card.contains("func actionLabel("), "the isolated helper is the compile error")
+        let face = try code("Sources/Echoelmusic/Studio/MediaActionLabel.swift")
+        XCTAssertTrue(face.contains("struct MediaActionLabel: View"))
+        XCTAssertTrue(face.contains(".frame(minWidth: 92, minHeight: 44)"), "44 pt targets (the actions)")
+        XCTAssertFalse(face.contains("nonisolated") || face.contains("unchecked Sendable"),
+                       "the type sits where the isolation wants it; no exemption")
 
         let decoder = try code("Sources/Echoelmusic/Studio/PhotoSeedDecoder.swift")
         XCTAssertTrue(decoder.contains("kCGImageSourceThumbnailMaxPixelSize"))

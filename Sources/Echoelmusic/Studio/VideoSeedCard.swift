@@ -174,7 +174,7 @@ struct VideoSeedCard: View {
     @ViewBuilder
     private var content: some View {
         PhotosPicker(selection: $item, matching: .videos) {
-            actionLabel("Choose Video", systemImage: "film")
+            MediaActionLabel(title: "Choose Video", systemImage: "film")
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Choose video")
@@ -258,7 +258,7 @@ struct VideoSeedCard: View {
             appliedHere = true
             appliedCount += 1
         } label: {
-            actionLabel("Apply to Visuals", systemImage: "wand.and.stars")
+            MediaActionLabel(title: "Apply to Visuals", systemImage: "wand.and.stars")
         }
         .buttonStyle(.plain)
         .disabled(undo.pending != nil)
@@ -273,26 +273,12 @@ struct VideoSeedCard: View {
             undo.undo(on: .standard)
             appliedHere = false
         } label: {
-            actionLabel("Undo", systemImage: "arrow.uturn.backward")
+            MediaActionLabel(title: "Undo", systemImage: "arrow.uturn.backward")
         }
         .buttonStyle(.plain)
         .disabled(undo.pending == nil)
         .accessibilityLabel(undo.pending == nil ? "Undo" : "Undo \(undo.medium) look")
         .accessibilityHint("Puts the visuals back the way they were before. A value you changed since stays.")
-    }
-
-    private func actionLabel(_ title: String, systemImage: String) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: systemImage).font(EchoelTheme.font(13, .semibold))
-            Text(title).font(EchoelTheme.font(13, .semibold))
-        }
-        .foregroundStyle(EchoelTheme.text)
-        .padding(.horizontal, 14)
-        .frame(minWidth: 92, minHeight: 44)
-        .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
-        .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-            .strokeBorder(EchoelTheme.border, lineWidth: 1))
-        .contentShape(Rectangle())
     }
 
     /// Reads a newly picked video. The tempo is read here, once. The read runs in THIS task (the
