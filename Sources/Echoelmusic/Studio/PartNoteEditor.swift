@@ -59,6 +59,9 @@ struct PartNoteEditor: View {
 
     @Environment(WorkstationSelection.self) private var selection
     @Environment(TimelineStore.self) private var timeline
+    /// Design slice 2: the part's note count on the switch. Cold — the clip grid moves on a note
+    /// edit or a composer take, never on a clock; the grid below already reads it.
+    @Environment(ClipStore.self) private var clipStore
     /// M8: the rack's capacity (`TimelineRegionPlayer.laneVoiceCapacity`), handed in by the
     /// Workstation — a number set once at start. The editor reads no transport itself.
     let voiceCapacity: Int
@@ -72,12 +75,14 @@ struct PartNoteEditor: View {
            let region = document.regions.first(where: { $0.id == regionID }),
            let lane = document.lanes.first(where: { $0.id == region.laneID }),
            lane.kind == .midi, !lane.isBio {
+            let count = ClipNoteEdit.noteCount(clip: clipStore.clip(id: region.clipID), region: region)
+            let spokenCount: String = count.map { $0 == 1 ? "1 note" : "\($0) notes" } ?? ""
             VStack(alignment: .leading, spacing: 6) {
                 Button { isOpen.toggle() } label: {
                     HStack(spacing: 4) {
                         Image(systemName: isOpen ? "chevron.down" : "chevron.right")
                             .font(EchoelTheme.font(11, .semibold))
-                        Text("Notes").font(EchoelTheme.font(12, .semibold))
+                        Text(ClipNoteEdit.notesSwitchTitle(count: count)).font(EchoelTheme.font(12, .semibold))
                     }
                     .foregroundStyle(EchoelTheme.text)
                     .padding(.horizontal, 8)
@@ -89,6 +94,7 @@ struct PartNoteEditor: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(isOpen ? "Hide the selected part's notes"
                                            : "Show the selected part's notes")
+                .accessibilityValue(spokenCount)
                 if let line = Self.noVoiceLine(TrackMix.role(of: lane.id, in: document,
                                                              voiceCapacity: voiceCapacity)) {
                     Text(line)

@@ -361,6 +361,22 @@ enum ClipNoteEdit {
 
     /// What VoiceOver hears for the grid: the notes it can step through, and — when the octave
     /// window hides some — how many the part holds, so a listener who wraps early knows why.
+    /// How many notes the part holds — the SAME windowing the grid draws and the player plays
+    /// (`visibleNotes`), so the count on the "Notes" switch and the grid's own label agree.
+    /// nil where the grid would not open a clip: no clip, not MIDI, or a legacy seconds offset.
+    nonisolated static func noteCount(clip: Clip?, region: TimelineRegion) -> Int? {
+        guard let clip, clip.kind == .midi, let offset = windowOffset(of: region) else { return nil }
+        return visibleNotes(clip.melody?.notes ?? [], offsetTicks: offset,
+                            lengthTicks: region.lengthTicks).count
+    }
+
+    /// The "Notes" switch: "Notes · 32" once the part's notes are known, plain "Notes" otherwise
+    /// (design slice 2 — the mockup's note count, on the control that opens them).
+    nonisolated static func notesSwitchTitle(count: Int?) -> String {
+        guard let count else { return "Notes" }
+        return "Notes · \(count)"
+    }
+
     nonisolated static func gridLabel(shown: Int, total: Int, picked: Int) -> String {
         let notes = shown == total ? "\(total) \(total == 1 ? "note" : "notes")"
                                    : "\(shown) of \(total) \(total == 1 ? "note" : "notes") shown"
