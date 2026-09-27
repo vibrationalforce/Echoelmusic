@@ -82,14 +82,15 @@ final class TheSelectionIsTransposedQuantizedAndDuplicatedInOneStepTests: XCTest
         let clip = [early, lateHalf, edge, outside]
         let ids = Set(clip.map(\.id))
         let snapped = try XCTUnwrap(ClipNoteEdit.quantizing(ids, in: clip, offsetTicks: offset,
-                                                            lengthTicks: length))
+                                                            lengthTicks: length, gridSteps: 1))
         XCTAssertEqual(snapped[0].startTick, offset + 2 * Self.step)
         XCTAssertEqual(snapped[1].startTick, offset + 6 * Self.step)
         XCTAssertEqual(snapped[2].startTick, offset + 15 * Self.step,
                        "a note in the last half-step snaps to the part's last step, not past it")
         XCTAssertEqual(snapped[3], outside, "a note the part does not show is never moved")
         XCTAssertEqual(snapped.map(\.lengthTicks), clip.map(\.lengthTicks), "lengths are untouched")
-        XCTAssertNil(ClipNoteEdit.quantizing(ids, in: snapped, offsetTicks: offset, lengthTicks: length),
+        XCTAssertNil(ClipNoteEdit.quantizing(ids, in: snapped, offsetTicks: offset, lengthTicks: length,
+                                             gridSteps: 1),
                      "quantizing a quantized part commits nothing")
     }
 
@@ -156,7 +157,7 @@ final class TheSelectionIsTransposedQuantizedAndDuplicatedInOneStepTests: XCTest
 
         let steps: [[Note]] = try [
             XCTUnwrap(ClipNoteEdit.transposing(ids, by: 12, in: notes)),
-            XCTUnwrap(ClipNoteEdit.quantizing(ids, in: notes, offsetTicks: 0, lengthTicks: Self.bar)),
+            XCTUnwrap(ClipNoteEdit.quantizing(ids, in: notes, offsetTicks: 0, lengthTicks: Self.bar, gridSteps: 1)),
             XCTUnwrap(ClipNoteEdit.settingVelocity(ids, to: 0.3, in: notes)),
             XCTUnwrap(ClipNoteEdit.duplicating(ids, in: notes, offsetTicks: 0, lengthTicks: Self.bar)).notes,
         ]

@@ -195,19 +195,50 @@ enum ClipNoteEdit {
         }
     }
 
-    /// `ids` with their starts snapped to the nearest sixteenth OF THE PART (the grid the editor
-    /// draws), each kept inside the part's window; lengths untouched.
+    /// The grid Quantize snaps to (design slice 6), in sixteenths: 1/16, 1/8 or 1/4. A NAMED
+    /// choice, so the editor offers it as a segmented `Picker`, never a number field.
+    enum QuantizeGrid: Int, CaseIterable, Identifiable, Sendable {
+        case sixteenth = 1
+        case eighth = 2
+        case quarter = 4
+
+        var id: Int { rawValue }
+        /// How many of the grid's sixteenth steps one cell of this grid spans.
+        var steps: Int { rawValue }
+        var label: String {
+            switch self {
+            case .sixteenth: return "1/16"
+            case .eighth:    return "1/8"
+            case .quarter:   return "1/4"
+            }
+        }
+        /// What VoiceOver says for it — "1/16" would be read as a date or a fraction.
+        var spoken: String {
+            switch self {
+            case .sixteenth: return "sixteenth"
+            case .eighth:    return "eighth"
+            case .quarter:   return "quarter note"
+            }
+        }
+    }
+
+    /// `ids` with their starts snapped to the nearest cell of a `gridSteps`-sixteenth grid OF THE
+    /// PART (1 = the sixteenths the editor draws), each kept inside the part's window — a note
+    /// that would round past the last cell lands ON it; lengths untouched. `gridSteps` is
+    /// REQUIRED (#431): the one call that forgot it would silently keep quantizing to sixteenths.
+    /// Below 1 it snaps nothing.
     nonisolated static func quantizing(_ ids: Set<UUID>, in clipNotes: [Note], offsetTicks: Int,
-                                       lengthTicks: Int) -> [Note]? {
-        guard !ids.isEmpty, lengthTicks > 0 else { return nil }
+                                       lengthTicks: Int, gridSteps: Int) -> [Note]? {
+        guard !ids.isEmpty, lengthTicks > 0, gridSteps >= 1 else { return nil }
         let offset = Swift.max(0, offsetTicks)
-        let lastStep = stepCount(lengthTicks: lengthTicks) - 1
+        let cell = gridSteps * Note.ticksPerStep
+        let lastCellStep = ((stepCount(lengthTicks: lengthTicks) - 1) / gridSteps) * gridSteps
         var changed = false
         let snapped = clipNotes.map { note -> Note in
             guard ids.contains(note.id) else { return note }
             let relative = note.startTick - offset
             guard relative >= 0, relative < lengthTicks else { return note }
-            let step = Swift.min((relative + Note.ticksPerStep / 2) / Note.ticksPerStep, lastStep)
+            let step = Swift.min((relative + cell / 2) / cell * gridSteps, lastCellStep)
             var moved = note
             moved.startTick = offset + step * Note.ticksPerStep
             if moved.startTick != note.startTick { changed = true }

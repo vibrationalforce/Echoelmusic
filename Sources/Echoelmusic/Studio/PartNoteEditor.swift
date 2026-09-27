@@ -142,6 +142,9 @@ private struct PartNoteGrid: View {
     @State private var octaveShift = 0
     /// The pitch the rows centre on — taken when the grid first draws, then held.
     @State private var centre: Int?
+    /// Design slice 6 — the grid Quantize snaps to. Local to the open grid (a choice for the
+    /// next tap, like the octave shift), so it resets to sixteenths when the part changes.
+    @State private var quantizeGrid: ClipNoteEdit.QuantizeGrid = .sixteenth
 
     private static let stepWidth: CGFloat = 22
     private static let rowHeight: CGFloat = 14
@@ -353,7 +356,8 @@ private struct PartNoteGrid: View {
         guard let clip = clipStore.clip(id: region.clipID),
               let snapped = ClipNoteEdit.quantizing(ids, in: clip.melody?.notes ?? [],
                                                     offsetTicks: offset,
-                                                    lengthTicks: region.lengthTicks) else { return }
+                                                    lengthTicks: region.lengthTicks,
+                                                    gridSteps: quantizeGrid.steps) else { return }
         _ = timeline.setClipNotes(clipID: region.clipID, snapped, clips: clipStore)
     }
 
@@ -453,11 +457,20 @@ private struct PartNoteGrid: View {
                     stepInKey(targets, by: 1, key: key, region: region)
                 }
             }
+            // Design slice 6 — WHICH grid Quantize snaps to. Segmented, not a `.menu`: no
+            // popover for a re-render to tear down, and three short names fit one row.
+            Picker("Quantize grid", selection: $quantizeGrid) {
+                ForEach(ClipNoteEdit.QuantizeGrid.allCases) { grid in
+                    Text(grid.label).accessibilityLabel(grid.spoken).tag(grid)
+                }
+            }
+            .pickerStyle(.segmented)
+            .accessibilityHint("The grid Quantize snaps note starts to")
             HStack(spacing: 6) {
                 button("Quantize", "square.grid.3x3",
                        enabled: can(ClipNoteEdit.quantizing(targets, in: notes, offsetTicks: offset,
-                                                            lengthTicks: length)),
-                       label: "Snap the starts of \(what) to the nearest sixteenth") {
+                                                            lengthTicks: length, gridSteps: quantizeGrid.steps)),
+                       label: "Snap the starts of \(what) to the nearest \(quantizeGrid.spoken)") {
                     quantize(targets, region: region, offset: offset)
                 }
                 button("Duplicate", "plus.square.on.square",
