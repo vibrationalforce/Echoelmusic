@@ -176,7 +176,7 @@ struct MediaBrowserView: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: isOpen ? "chevron.down" : "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(EchoelTheme.font(12, .semibold))
                 Text("Media Library").font(EchoelTheme.font(13, .semibold))
             }
             .foregroundStyle(EchoelTheme.text)

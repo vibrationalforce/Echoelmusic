@@ -75,7 +75,7 @@ struct RecordTakeButton: View {
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: recording ? "stop.circle.fill" : "record.circle")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(EchoelTheme.font(13, .semibold))
                     Text(recording ? "Stop recording" : "Record")
                         .font(EchoelTheme.font(13, .semibold))
                 }

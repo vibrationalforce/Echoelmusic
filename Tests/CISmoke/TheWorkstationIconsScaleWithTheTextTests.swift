@@ -38,6 +38,7 @@ final class TheWorkstationIconsScaleWithTheTextTests: XCTestCase {
     private static let plate = [workstation] + [
         "PartNoteEditor", "SelectedPartBar", "SongHistoryRow",
         "SessionLaunchView", "SongAutomationEditor", "TrackInspectorView",
+        "MediaBrowserView", "RecordTakeControls",
     ].map { "Sources/Echoelmusic/Studio/\($0).swift" }
 
     func testTheWorkstationHasNoFixedSizeFont() throws {
