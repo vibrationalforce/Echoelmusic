@@ -181,6 +181,14 @@ public struct WorkstationSummary: Equatable, Sendable {
         return "Unavailable: this song has no parts on a track that plays."
     }
 
+    /// The Click switch's hint (design slice 10). Says what the switch does and no more: the
+    /// click plays at the current tempo, and while the song plays it lands on the transport's
+    /// beats (54b2e28cf). It does not promise a count-in or a pre-roll — there is none.
+    public static func clickHint(on: Bool) -> String {
+        on ? "Turns the click off."
+           : "Plays a steady click at the current tempo, on the song's beats while it plays."
+    }
+
     /// The sentence beside the button: what Play does, and nothing it cannot. ⛔ Until Phase 3 /
     /// M1 it ended "— this view still does not edit them", and that denial had been false since
     /// WA4 put move, trim and split on the part bar; with the note editor it would deny the

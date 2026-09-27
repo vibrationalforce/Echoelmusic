@@ -829,6 +829,10 @@ struct WorkstationView: View {
             .accessibilityLabel(playing ? "Stop timeline" : "Play timeline")
             .accessibilityHint(WorkstationSummary.transportHint(playing: playing, startable: startable))
 
+            // Design slice 10 — the click, armed where the song is played. Its own leaf: this
+            // view names no voice, and the leaf reads only the cold on/off.
+            WorkstationClickToggle()
+
             // Design D1 — the song position as a number while it plays. Its own self-driving
             // leaf: this row reads `isPlaying` only, never the position.
             if playing {
