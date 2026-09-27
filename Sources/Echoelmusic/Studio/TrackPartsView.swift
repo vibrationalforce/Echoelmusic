@@ -90,7 +90,8 @@ enum TrackParts {
     /// a fixed 1…999 range one swipe jumped about 20 bars and a point of drag about 5; bars in
     /// between could only be typed. On a song's own length the raw step is a fiftieth of the
     /// span, and the field snaps every value to whole bars (`ScrubPrecision.snapped`), so a swipe
-    /// moves round(span / 50) bars: exactly one while the raw step stays under 1.5 — a span under
+    /// moves max(1, round(span / 50)) bars (review of 3bab7f277, LOW-8 — a span under 25 rounds
+    /// to zero and the grid unit holds it at one): exactly one while the raw step stays under 1.5 — a span under
     /// seventy-five, i.e. a song up to sixty-seven bars — and a 128-bar song (span 135, raw step
     /// 2.7) moves three (review of c51b1645a, LOW-2: the previous wording said "a fiftieth").
     ///

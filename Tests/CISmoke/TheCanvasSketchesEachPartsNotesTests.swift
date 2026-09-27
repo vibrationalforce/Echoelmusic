@@ -197,6 +197,13 @@ final class TheCanvasSketchesEachPartsNotesTests: XCTestCase {
         XCTAssertTrue(drawing.contains("let rect = CGRect(x: CGFloat(mark.start) * size.width,"))
         XCTAssertTrue(drawing.contains("y: CGFloat(mark.height) * (size.height - dash),"))
         XCTAssertTrue(drawing.contains("context.fill(Path(rect), with: .color(EchoelTheme.surface))"))
+        // Review of 3bab7f277, LOW-11: the fill sits INSIDE the per-mark loop — one dash per
+        // mark. A fill before the loop draws one rect for no mark at all.
+        if let loop = drawing.range(of: "for mark in noteMarks {"),
+           let fillAt = drawing.range(of: "context.fill(Path(rect),") {
+            XCTAssertLessThan(loop.lowerBound, fillAt.lowerBound, "the dash is filled inside the loop over the marks")
+        }
+        XCTAssertEqual(drawing.components(separatedBy: "context.fill(").count - 1, 1, "one fill: the dash")
         XCTAssertTrue(drawing.contains(".allowsHitTesting(false)"),
                       "a tap or a hold on the dashes reaches the block — select and drag stay whole")
         XCTAssertTrue(drawing.contains(".accessibilityHidden(true)"), "the block speaks for the part")

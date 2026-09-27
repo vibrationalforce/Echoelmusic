@@ -165,7 +165,7 @@ final class TheSongIsSeenOnOneScaleTests: XCTestCase {
             XCTAssertFalse(canvas.contains(banned), """
                 ArrangeCanvasView contains `\(banned)`. The canvas is a cold picture of the \
                 document, the selection and the clip grid (its note sketches): no position read (the hot-state law), no read of \
-                the store (it holds it only to COMMIT a drop), no clock, and no drag of its own \
+                the `TimelineStore` (it holds it only to COMMIT a drop), no clock, and no drag of its own \
                 — the finger-rate state lives in `ArrangePartBlock`.
                 """)
         }

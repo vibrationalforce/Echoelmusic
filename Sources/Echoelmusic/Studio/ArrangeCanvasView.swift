@@ -257,8 +257,10 @@ struct ArrangeCanvasView: View {
     /// Only to sketch each part's notes (design slice 11). Cold for the freeze law — nothing
     /// writes the clip grid per step or per frame, and this canvas hosts no `.menu` Picker —
     /// but not rare (review of c51b1645a, LOW-5): a note edit or undo, an import, Generate, an
-    /// evolve (~25–45 s), and the Mix fader's re-bake (`scheduleRebalance`, debounced 350 ms —
-    /// a few writes a second during a stepwise drag) all rewrite it.
+    /// evolve (~25–45 s), and the Mix fader's re-bake (`scheduleRebalance`, a TRAILING-edge
+    /// 350 ms debounce: it writes once the fader has rested that long, so a continuous drag writes
+    /// once at its end and a drag with pauses once per pause — review of 3bab7f277, LOW-12) all
+    /// rewrite it.
     ///
     /// ⚠️ THE COST (LOW-7): every canvas render rebuilds every part's sketch — a window, a sort
     /// and a map per part — and the canvas also renders per event while the track inspector's
