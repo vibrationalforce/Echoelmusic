@@ -1316,7 +1316,7 @@ beschränken (#292, `afcf3aa`).
   App-Gruppe. Die *Produzenten*-Hälfte (Handgelenk-HealthKit-HR → App Group → Telefon) ist im
   Dateikopf selbst als „C7" markiert und nie gelandet. Harte Grenze bleibt: ~4–5 s Latenz →
   Anzeige, Trend, langsame Modulation (HRV/Kohärenz), **niemals Beat-Sync**.
-- **Vision/XR:** kein Target; `visionOS` erscheint in `Sources/` nur in Plattform-Guards. Der
+- **Vision/XR:** kein Target; `visionOS` erscheint in `Sources/` nur in zwei Kopfkommentaren (`SPSCQueue`, `MemoryPressureHandler`), nicht in Plattform-Guards (korrigiert 2026-09-27). Der
   natürliche Sitz ist die AUSGABE-Stufe, die schon existiert (`ImmersiveStageView` — türlos und
   absichtlich so, Ship-Gate 4 sagt „demonstrierbar, nicht erforderlich" —, ADM-OSC-Raum, das
   Visual). Die Bio-Quelle bliebe dort Telefon oder BLE-Gurt.
