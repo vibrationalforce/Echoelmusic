@@ -903,3 +903,19 @@ nicht bauendes Test-Bündel dort ab (#1337). Das repariert kein Reviewer, sonder
 `needs:` — und die ist **founder-gated** (`.github/workflows/**` = berichten, nicht editieren).
 Ein PR-Review-Agent auf einen Fluss ohne PRs zu setzen, während der eigentliche Defekt eine
 ungeprüfte Direkt-Push-Route ist, wäre ein Schloss an einer Tür neben dem offenen Fenster.
+
+## 2026-09-26 — Zwei ChatGPT-Mockups der Oberfläche (Founder: „du bist der wahre magische Designer")
+
+**Verdikt: ADOPT→PRODUCT, teilweise — als Inspiration, nicht als Spezifikation.** Das Telefon-Mockup
+zeichnet zu großen Teilen, was schon ausgeliefert ist (Selected-Part-Leiste mit Earlier/Later/Trim/
+Split/Duplicate/Delete, „Play from here", Media Library mit Place/Relink, Add/Import-Türen,
+Track-Inspector). Übernommen wird nur, was eine AUSGELIEFERTE Fähigkeit lesbarer oder zugänglicher
+macht, je eine Scheibe mit Wächter:
+- **D1** Song-Position „Bar 12 · Beat 3" neben Play/Stop, eigenes Blatt (`SongPositionReadout`, e1036b874).
+- **D1b** die Caption sagte „from the top" auch beim Start aus einem Teil — jetzt nennt sie den Start-Takt (b91cdcdf0).
+- weitere Scheiben aus einem Lese-Zensus Mockup ↔ Code (MODES_CENSUS § Design).
+
+**REJECT:** „MUSIC FOR A CALMER WORLD" (wellness-nah) · AI Assist (`FeatureFlags.echoelAI` ohne
+Leser) · Drum-Anmutung (#167) · „Arm for recording" als Mikrofon (#1302) · Neon/Glow (Uncodixfy).
+**PAUSIERT (Founder-Frage 4):** die Tablet-Domänen-Tabs Visual/Spatial/Light/Stream/XR; iPad als
+Instrumenten-Fläche (v1.0 = iPhone, Sensor-Grund). Zeile in `inspiration.csv`.
