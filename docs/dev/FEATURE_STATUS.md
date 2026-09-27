@@ -85,6 +85,7 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed�
 | `CloudSync`, `BioSpaceMap`, `VisualModulation`, `AudioFeatureExtractor` | reine Kerne, kein Aufrufer | je ein Aufrufer |
 | Watch-App | Target existiert, wird nicht mit ausgeliefert | Transport Telefon→Uhr (`WCSession`, neues Framework) |
 | Mehrspur-Aufnahme | Kette gebaut, flag-aus | ein Audio-EINGANG, den es nicht mehr gibt |
+| EchoelAI-Bedienagent (`EchoelAI/EchoelCommand`, `EchoelCommandExecutor`) | Befehlsschicht + Ausführer gebaut und getestet (Auswahl lesen · Spurpegel · Teil kopieren · eigenes Undo), kein Aufrufer | ein Sprachmodell als Planer + eine Fläche ohne neuen Modal |
 
 ⚠️ **Zehn Feature-Flags haben null Leser** (`spatialEngine`, `bioSpace`, `echoelRender`, `motionEngine`,
 `showControl`, `avObjects`, `performerTracking`, `liveCollab`, `headTracking`, `echoelAI`). Hinter

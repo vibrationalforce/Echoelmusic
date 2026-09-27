@@ -69,9 +69,17 @@ gesendeten Daten; Medien- und Bio-Rohdaten standardmäßig nie.
 4. Foto-Seed an einen Besitzer heben → „Nutze die Farben dieses Fotos".
 5. Store-Revision → Song-Undo als Befehl mit Nachprüfung.
 
+## 5b. Review-Reparatur (`eff951966`)
+
+Unabhängige Prüfung: 1 HIGH (unbekannte Argumente wurden still verworfen → „kopiere es viermal"
+lief einmal und meldete Fertig) · 4 MED (Auswahl zwischen Schritten neu gelesen; Vorbedingung
+behauptet, nicht erzwungen; Teil-Undo als bloßer Fehler; zweite Kopie unter der ersten) · LOWs.
+Alle repariert außer zwei aufgeschriebenen: ein Alt-Pegel über 2 lässt sich relativ nicht senken;
+Einwilligungen sind per Konvention, nicht per Typ, dem Menschen vorbehalten.
+
 ## 6. Prüfung
 
 Kein Swift hier. Beide Wächter per Python transkribiert (Treiber im Session-Scratchpad), sieben
-Mutanten je aus dem genannten Grund rot. `dead-needles` · `count-pins` (0 RED) ·
+Mutanten (nach der Reparatur elf) je aus dem genannten Grund rot. `dead-needles` · `count-pins` (0 RED) ·
 `swift-escapes` · `foreign-needles` · `moved-needles` sauber. **Nicht kompiliert, nicht gepusht,
 nicht auf dem Gerät.**
