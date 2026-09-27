@@ -281,8 +281,9 @@ enum ClipNoteEdit {
 
     /// The accent share of a velocity-0 note. 0.55 keeps it at ≥ 3:1 against the grid's surface
     /// — computed, not measured on glass: 3.49:1 in OKLab (SwiftUI's `.perceptual` mix), 3.87:1
-    /// in sRGB; 0.50 would sit at 3.04:1, too close to the line to leave room for the shaded
-    /// out-of-key rows.
+    /// in sRGB; 0.50 would sit at 3.04:1. The binding case is the SHADED out-of-key row
+    /// (`EchoelTheme.fill` over the surface): 3.12:1 at 0.55, 2.72:1 at 0.50 (gamma
+    /// compositing, review 11) — so this is a floor, not a taste value.
     static let quietestNoteShade = 0.55
 
     /// The mean velocity of `ids` — what the velocity row shows for a mixed selection.

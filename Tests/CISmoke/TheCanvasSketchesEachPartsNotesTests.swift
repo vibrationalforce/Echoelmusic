@@ -197,11 +197,18 @@ final class TheCanvasSketchesEachPartsNotesTests: XCTestCase {
         XCTAssertTrue(drawing.contains("let rect = CGRect(x: CGFloat(mark.start) * size.width,"))
         XCTAssertTrue(drawing.contains("y: CGFloat(mark.height) * (size.height - dash),"))
         XCTAssertTrue(drawing.contains("context.fill(Path(rect), with: .color(EchoelTheme.surface))"))
-        // Review of 3bab7f277, LOW-11: the fill sits INSIDE the per-mark loop — one dash per
-        // mark. A fill before the loop draws one rect for no mark at all.
-        if let loop = drawing.range(of: "for mark in noteMarks {"),
-           let fillAt = drawing.range(of: "context.fill(Path(rect),") {
-            XCTAssertLessThan(loop.lowerBound, fillAt.lowerBound, "the dash is filled inside the loop over the marks")
+        // Review of 3bab7f277, LOW-11 (tightened in review 11, LOW-3): the fill sits INSIDE the
+        // per-mark loop — one dash per mark. The loop body is brace-matched, so a fill before the
+        // loop or after its closing brace (one rect for no mark at all) is outside it.
+        if let loop = drawing.range(of: "for mark in noteMarks {") {
+            var depth = 1
+            var end = loop.upperBound
+            while end < drawing.endIndex, depth > 0 {
+                if drawing[end] == "{" { depth += 1 } else if drawing[end] == "}" { depth -= 1 }
+                if depth > 0 { end = drawing.index(after: end) }
+            }
+            XCTAssertTrue(drawing[loop.upperBound..<end].contains("context.fill(Path(rect),"),
+                          "the dash is filled inside the loop over the marks")
         }
         XCTAssertEqual(drawing.components(separatedBy: "context.fill(").count - 1, 1, "one fill: the dash")
         XCTAssertTrue(drawing.contains(".allowsHitTesting(false)"),

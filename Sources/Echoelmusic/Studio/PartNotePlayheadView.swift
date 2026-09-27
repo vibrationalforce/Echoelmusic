@@ -18,8 +18,9 @@
 //
 // ⚠️ THE LINE STEPS, IT DOES NOT GLIDE (review of e091712e5, LOW-7). The player advances
 // `currentTick` once per transport step — 120 ticks, exactly one grid column — so the line
-// jumps a column at a time — NOMINALLY at most one per redraw (a dropped vsync or a main-thread
-// stall can land more; review of 3bab7f277, LOW-9) while the song makes at most fifteen steps a
+// jumps a column at a time — NOMINALLY at most one per redraw (a gap between redraws longer than
+// one step period can land more — one dropped frame is enough only above ~180 BPM, a longer
+// main-thread stall at any tempo; review 11, LOW-5) while the song makes at most fifteen steps a
 // second (225 BPM in sixteenths); between 225 and `Transport.maxTempo` (300) a redraw can land
 // two columns on (review of c51b1645a, LOW-3). The fractional step below is exact arithmetic, and it is visible
 // only for a part whose start sits off the 120-tick grid, where the line stands between two

@@ -7,14 +7,16 @@
 // accent, quiet is darker, and nothing under a note ever shows through it.
 //
 // 1. END-TO-END BEHAVIOUR (`ClipNoteEdit.noteShade`, pure): full velocity mixes 1 (all accent),
-//    zero mixes `quietestNoteShade`, which stays at or above the share that keeps 3:1 against
-//    the surface (0.5 → 3.04:1 computed in OKLab; the floor is higher), linear and strictly
+//    zero mixes `quietestNoteShade`, which stays at or above 0.55 — the share that keeps 3:1 on
+//    the SHADED out-of-key rows too (3.12:1 there; 0.50 gives 2.72:1, computed with gamma
+//    compositing — review 11, MED-1), linear and strictly
 //    rising between, clamped outside 0…1, and a NaN draws at the floor — never as no note.
 // 2. SOURCE: the grid's note fill asks that function with the note's own velocity, on the
 //    unpicked branch only, through `surface.mix(with: accent, by:)` — never a translucent
 //    accent; a picked note keeps the full text colour (and its ring, pinned by
 //    `APickedNoteChangesShapeNotOnlyColourTests`). The canvas sets no context opacity or blend
-//    mode that would fade every note, and fills each note once.
+//    mode and its view carries no `.opacity(` modifier — either would fade every note, the pick
+//    included — and it fills each note once.
 //
 // Grading (§0, no Swift toolchain): `noteShade` and `quietestNoteShade` do not exist on the
 // parent (`3bab7f277`, which still carries the translucent `noteOpacity` cut), so this file does
@@ -44,8 +46,11 @@ final class TheNoteGridShowsHowLoudEachNoteIsTests: XCTestCase {
 
     func testALoudNoteIsFullAndAQuietOneIsDarkerButLegible() {
         let floor = ClipNoteEdit.quietestNoteShade
-        XCTAssertGreaterThanOrEqual(floor, 0.5,
-                                    "at 0.50 the quietest note sits at 3.04:1 against the surface — the floor may not go lower")
+        XCTAssertGreaterThanOrEqual(floor, 0.55, """
+            the quietest note must keep 3:1 on the SHADED out-of-key rows (`EchoelTheme.fill` over \
+            the surface): 3.12:1 at 0.55, 2.72:1 at 0.50 (computed, gamma compositing — review 11, \
+            MED-1). Raising the floor is free; lowering it needs that arithmetic redone first.
+            """)
         XCTAssertLessThan(floor, 1, "and quieter than a full one, or velocity would not show")
         XCTAssertEqual(ClipNoteEdit.noteShade(velocity: 1), 1, accuracy: 1e-12)
         XCTAssertEqual(ClipNoteEdit.noteShade(velocity: 0), floor, accuracy: 1e-12)
@@ -88,10 +93,23 @@ final class TheNoteGridShowsHowLoudEachNoteIsTests: XCTestCase {
         for banned in ["accent.opacity(", "EchoelTheme.text.opacity("] {
             XCTAssertFalse(loop.contains(banned), "the note loop draws `\(banned)` — a note is never translucent")
         }
-        let body = String(code[canvas.upperBound...])
+        // Review 11, LOW-2: bounded to `PartNoteCanvas` itself — the structs after it are not the grid.
+        guard let next = code.range(of: "\nprivate struct ", range: canvas.upperBound..<code.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the struct after `PartNoteCanvas` (#454)")
+        }
+        let body = String(code[canvas.upperBound..<next.lowerBound])
         for banned in ["context.opacity", "blendMode"] {
             XCTAssertFalse(body.contains(banned), "the grid sets `\(banned)` — that would fade or blend every note, the pick included")
         }
+        // …and the Canvas's own modifier chain: a view `.opacity(` there fades every note too.
+        guard let chain = body.range(of: ".frame(width: CGFloat(steps) * stepW, height: CGFloat(range.count) * rowH)"),
+              let chainEnd = body.range(of: "private var edit: some Gesture {", range: chain.upperBound..<body.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the Canvas's modifier chain and the gesture after it (#454)")
+        }
+        let modifiers = String(body[chain.lowerBound..<chainEnd.lowerBound])
+        XCTAssertTrue(modifiers.contains(".background(EchoelTheme.surface)"),
+                      "counterweight: the grid is drawn over `surface` — the colour the shade is mixed and measured against")
+        XCTAssertFalse(modifiers.contains(".opacity("), "the grid's view is faded — every note, the pick included")
     }
 
     // MARK: helpers
