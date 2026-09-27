@@ -125,7 +125,8 @@ public enum AudioImport {
         /// `addInstrumentTrack` had zero production callers. So on a fresh install this was
         /// the only outcome the build could reach and no control could resolve it. That is
         /// what the founder unblocked: `AudioImport.addAudioTrack` now has a door in
-        /// `WorkstationView`, one row above Import.
+        /// `WorkstationView`, the door paired with Import (beside it, or above it when the pair
+        /// stacks — design slice 4).
         ///
         /// ⚠️ THE TWO HALVES MUST MOVE TOGETHER, AND A GUARD MAKES THEM. Claim 18 of
         /// `TheWorkstationImportsAudioTests` is a BICONDITIONAL between this wording and

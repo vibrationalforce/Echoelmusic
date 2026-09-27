@@ -108,7 +108,8 @@
 // the file and its bar span. (10) Play then SOUNDS that file at its recorded speed, and Stop
 // silences it. (11) A second import appends AFTER the first rather than on top of it. (12)
 // With no audio track the button still taps and says "add an audio track first" — and the
-// button that does it is the row directly above, so the instruction is obeyable in one tap.
+// button that does it, "Add Audio Track", sits BESIDE it (design slice 4; above it when the pair
+// stacks at large text), so the instruction is obeyable in one tap.
 // ⛔ That sentence was demoted to a bare report on 2026-09-22 because it named an action no
 // production path could perform, and RESTORED on 2026-09-23 when the founder approved the
 // creator. Founder decision 4 is untouched: the import still never creates a lane by itself.
@@ -388,8 +389,9 @@ struct WorkstationView: View {
             // to put one on the song again without Files, a second copy or a second clip slot.
             // Its own leaf: it lists the directory detached and writes through
             // `MediaPlacement`; this view reads none of its state.
-            // ⚠️ GROUPED WITH THE PROJECT ROW so this `VStack` keeps ten direct children: past
-            // ten, `ViewBuilder` resolves through the variadic pack (#936). `Group` is
+            // ⚠️ GROUPED WITH THE PROJECT ROW so this `VStack` stays under ten direct children
+            // (eight since design slice 4 paired the creation doors): past ten, `ViewBuilder`
+            // resolves through the variadic pack (#936). `Group` is
             // layout-transparent — both rows still sit in this stack at its spacing.
             Group {
                 MediaBrowserView()
@@ -896,9 +898,12 @@ struct WorkstationView: View {
 
     /// Two creation doors side by side while they fit, stacked otherwise — the
     /// `WorkstationProjectRow` shape (Save | Open). The HORIZONTAL candidate comes first:
-    /// `ViewThatFits` takes the first that fits. It measures honestly here because none of
-    /// these doors scales its text down (no `minimumScaleFactor`), so a pair that does not fit
-    /// reports so — unlike the song-position readout (the BioStripView trap).
+    /// `ViewThatFits` takes the first that fits, by each candidate's ideal width, which grows
+    /// with the text (`EchoelTheme.font` scales with Dynamic Type). None of these doors scales
+    /// its text down; the claim that a `minimumScaleFactor` would make the row always "fit" is
+    /// inherited from BioStripView and unmeasured (review of 60f1bd2ab), so it is kept out
+    /// rather than argued. The two pairs decide independently: at an in-between size one can
+    /// sit side by side while the other stacks.
     private func creationPair<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 8) {

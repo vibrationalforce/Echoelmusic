@@ -74,7 +74,7 @@ public enum MIDIImport {
         /// More than `maxBars` bars or `maxNotes` notes.
         case tooLong
         /// The song has no MIDI track. Never created behind the user's back — `addMIDITrack`
-        /// is a separate, deliberate tap, one row above Import MIDI.
+        /// is a separate, deliberate tap on the door paired with Import MIDI.
         case noMIDILane
         /// All eight `ClipStore` slots are taken. Fail, never overwrite.
         case clipGridFull

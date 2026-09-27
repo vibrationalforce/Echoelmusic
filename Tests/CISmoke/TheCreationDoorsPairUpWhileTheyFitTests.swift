@@ -12,9 +12,10 @@
 // 2. SOURCE: the mount order is unchanged — audio pair, MIDI pair, New MIDI Part, then the one
 //    note line — and every door is mounted exactly once.
 // 3. COUNTERWEIGHT: the refusals and the empty plate name the doors by LABEL, never by position
-//    ("above" / "below"), so moving a door beside its partner changes no sentence. And no door
-//    scales its text down — a `minimumScaleFactor` would make the row candidate always report a
-//    fit (the BioStripView trap `transportRow` documents), and the fallback would never show.
+//    ("above", "below", "beside", …), so moving a door beside its partner changes no sentence.
+//    And no door scales its text down: `ViewThatFits` must see each label at its real width. (That
+//    a `minimumScaleFactor` would make the row always "fit" is the BioStripView premise, inherited
+//    and unmeasured — review of 60f1bd2ab; the pin keeps the question from arising.)
 //
 // Grading (§0, no Swift toolchain): on the parent (`8a0202491`) `creationPair` does not exist,
 // so claims 1-2 are red by ONE absence (#486) — FORWARD guards, not regressions. Claim 3 is a
@@ -25,7 +26,8 @@
 // NEEDS-FOUNDER-VERIFY: Workstation on the phone at the default text size → "Add Audio Track"
 // and "Import Audio" side by side, "Add MIDI Track" and "Import MIDI" side by side, "New MIDI
 // Part" alone below; at the largest accessibility size every door stands on its own line again
-// with its whole label readable.
+// with its whole label readable; and at one or two sizes in between, whether one pair stacking
+// while the other stays side by side looks acceptable (the two pairs decide independently).
 
 import Foundation
 import XCTest
@@ -34,6 +36,9 @@ final class TheCreationDoorsPairUpWhileTheyFitTests: XCTestCase {
 
     private static let viewPath = "Sources/Echoelmusic/Studio/WorkstationView.swift"
     private static let doors = ["addTrackRow", "importRow", "addMIDITrackRow", "importMIDIRow", "newMIDIPartRow"]
+    /// Words that place a door by where it sits. `left`/`right` are left out: they occur inside
+    /// ordinary words and would false-alarm (#364).
+    private static let positionWords = [" above", " below", " beside", "next to", " underneath", "one row"]
 
     // MARK: 1 — the pair's two candidates
 
@@ -80,19 +85,14 @@ final class TheCreationDoorsPairUpWhileTheyFitTests: XCTestCase {
     // MARK: 3 — counterweights: nothing names a position, nothing hides the misfit
 
     func testNoSentenceNamesADoorByPositionAndNoDoorShrinksItsLabel() throws {
+        // Review of 60f1bd2ab, LOW: every sentence the two import types SAY — refusals, the
+        // success note, the empty-part note — not only `userMessage`. Comments are stripped, so
+        // a doc comment may still explain the layout; a string literal may not.
         for path in ["Sources/Echoelmusic/Sequencer/AudioImport.swift", "Sources/Echoelmusic/Sequencer/MIDIImport.swift"] {
-            let raw = try rawSource(path)
-            guard let messages = raw.range(of: "var userMessage: String {") else {
-                XCTFail("ANCHOR MISSING: `userMessage` in \(path) (#454)"); continue
-            }
-            // Brace-bounded (#408): the computed property closes at its own eight-space `}`.
-            guard let close = raw.range(of: "\n        }\n", range: messages.upperBound..<raw.endIndex) else {
-                XCTFail("ANCHOR MISSING: the end of `userMessage` in \(path) (#454)"); continue
-            }
-            let tail = String(raw[messages.upperBound..<close.lowerBound])
-            XCTAssertTrue(tail.contains("track first."), "\(path): the refusal still asks for a track by name")
-            for word in [" above", " below"] {
-                XCTAssertFalse(tail.contains(word), "\(path): a refusal names a door by position (`\(word)`) — the doors move")
+            let code = try source(path)
+            XCTAssertTrue(code.contains("track first.\""), "\(path): the refusal still asks for a track by name")
+            for word in Self.positionWords {
+                XCTAssertFalse(code.contains(word), "\(path): a sentence names a door by position (`\(word)`) — the doors move")
             }
         }
         let code = try source(Self.viewPath)
@@ -101,18 +101,26 @@ final class TheCreationDoorsPairUpWhileTheyFitTests: XCTestCase {
                 XCTFail("ANCHOR MISSING: `\(door)` (#454)"); continue
             }
             let rest = code[start.upperBound...]
-            let end = rest.range(of: "\n    private ")?.lowerBound ?? rest.endIndex
+            guard let end = rest.range(of: "\n    private ")?.lowerBound else {
+                XCTFail("ANCHOR MISSING: the member after `\(door)` (#454)"); continue
+            }
             XCTAssertFalse(rest[..<end].contains("minimumScaleFactor"),
-                           "`\(door)` shrinks its label — the paired row would then always report a fit")
+                           "`\(door)` shrinks its label — the pair's fit test should see every label at its real width")
         }
         let view = try rawSource(Self.viewPath)
         guard let plate = view.range(of: ".accessibilityLabel(\"No tracks yet. Tap Add Audio Track, then Import Audio"),
               let plateEnd = view.range(of: "\")", range: plate.upperBound..<view.endIndex) else {
             return XCTFail("the empty plate no longer walks the doors by their labels")
         }
-        for word in [" above", " below"] {
+        guard let shown = view.range(of: "Text(\"Tap Add Audio Track, then Import Audio"),
+              let shownEnd = view.range(of: "\")", range: shown.upperBound..<view.endIndex) else {
+            return XCTFail("the empty plate's visible sentence no longer walks the doors by their labels")
+        }
+        for word in Self.positionWords {
             XCTAssertFalse(view[plate.lowerBound..<plateEnd.lowerBound].contains(word),
-                           "the empty plate names a door by position (`\(word)`) — the doors move")
+                           "the empty plate's spoken sentence names a door by position (`\(word)`) — the doors move")
+            XCTAssertFalse(view[shown.lowerBound..<shownEnd.lowerBound].contains(word),
+                           "the empty plate's visible sentence names a door by position (`\(word)`) — the doors move")
         }
     }
 
