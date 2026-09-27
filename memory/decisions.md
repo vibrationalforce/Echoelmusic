@@ -2998,3 +2998,8 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Guards:** `TheMediaAssetIsADurableIdentityTests` claims 9–11 (cross-project counterweight in 10), journey test §8.
 - **Review:** 2026-10-26.
 
+
+### 2026-09-27 — Media look: global app setting, undo per process (review MED-2, `456b6b213`)
+- **Decision:** The photo/video look stays a GLOBAL setting (`UserDefaults.standard`, `StudioDefaultKeys.visual*`), not a project field; `MediaLookUndo.pending` lives for the process and is not persisted. Documented in the owner's header, not changed.
+- **Rationale:** `Project` carries no visual field and `saveProject`/`openFromLibrary` touch no visual key — opening another project neither adopts nor restores a look, so no cross-project leak exists. A persisted undo was explicitly not a requirement (founder 2026-09-27).
+- **Review:** 2026-10-27 — if a per-project look is ever wanted, it is a new Project field plus a migration, never a card-side hack.
