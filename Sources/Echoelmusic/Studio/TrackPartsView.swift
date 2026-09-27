@@ -80,6 +80,17 @@ enum TrackParts {
         "\(SessionGrid.label(forTick: part.startTick)) · \(lengthText(part.lengthTicks))"
     }
 
+    /// The selected part's heading: `title`, plus the last bar it reaches when it spans more
+    /// than one — "Bar 9 · 4 bars · to bar 12" (design slice 2, 2026-09-27). The end is the one
+    /// number a musician otherwise adds up. Both bars come from the Workstation's one pair of
+    /// bar rules (`barNumber` / `endBarNumber`, #416), so an off-grid or partial last bar is
+    /// counted exactly as the lane summary counts it.
+    nonisolated static func spanTitle(_ part: Part) -> String {
+        let from = WorkstationSummary.barNumber(forTick: part.startTick)
+        let to = WorkstationSummary.endBarNumber(forTick: part.startTick + part.lengthTicks)
+        return to > from ? "\(title(part)) · to bar \(to)" : title(part)
+    }
+
     nonisolated static func lengthText(_ ticks: Int) -> String {
         let bar = TimelineTime.ticksPerBar
         let beat = TimelineTime.ticksPerBeat

@@ -217,7 +217,7 @@ struct SelectedPartBar: View {
            let trackID = selection.trackID,
            TrackParts.arrangeable(trackID, in: document),
            let part = TrackParts.parts(onLane: trackID, in: document).first(where: { $0.id == regionID }) {
-            let title = TrackParts.title(part)
+            let title = TrackParts.spanTitle(part)
             let cut = PartSplit.tick(for: part)
             // A cut that would change which overlapping part plays is refused, not made.
             let splittable = cut.map { PartSplit.keepsWhoPlays(regionID: regionID, atTick: $0,
