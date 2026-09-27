@@ -187,6 +187,13 @@ private struct PartNoteGrid: View {
                                        onRelease: { gesture in
                                            finish(gesture, region: region, offset: offset)
                                        })
+                            // Design slice 9: where the song is, inside this part. The position
+                            // is read in that leaf's own file — this one hands it cold numbers.
+                            .overlay(alignment: .leading) {
+                                PartNotePlayheadView(partStartTick: region.startTick,
+                                                     lengthTicks: region.lengthTicks,
+                                                     stepWidth: Self.stepWidth)
+                            }
                             .accessibilityElement()
                             .accessibilityLabel(ClipNoteEdit.gridLabel(shown: onScreen.count, total: visible.count,
                                                                        picked: pickedCount))
