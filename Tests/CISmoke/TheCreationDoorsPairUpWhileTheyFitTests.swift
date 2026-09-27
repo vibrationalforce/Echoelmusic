@@ -91,13 +91,21 @@ final class TheCreationDoorsPairUpWhileTheyFitTests: XCTestCase {
         for path in ["Sources/Echoelmusic/Sequencer/AudioImport.swift", "Sources/Echoelmusic/Sequencer/MIDIImport.swift"] {
             let code = try source(path)
             XCTAssertTrue(code.contains("track first.\""), "\(path): the refusal still asks for a track by name")
+            // Review of 4f62d6867, LOW-7: only the STRING LITERALS — an identifier or a log
+            // line is not a sentence a musician reads (#364).
+            let said = stringLiterals(in: code)
+            XCTAssertFalse(said.isEmpty, "\(path): no string literal found — a scan that saw nothing is not a pass")
             for word in Self.positionWords {
-                XCTAssertFalse(code.contains(word), "\(path): a sentence names a door by position (`\(word)`) — the doors move")
+                XCTAssertFalse(said.contains { $0.contains(word) },
+                               "\(path): a sentence names a door by position (`\(word)`) — the doors move")
             }
         }
         let code = try source(Self.viewPath)
-        for door in Self.doors {
-            guard let start = code.range(of: "private var \(door): some View {") else {
+        for door in Self.doors + ["creationPair"] {
+            let declaration = door == "creationPair"
+                ? "private func creationPair<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {"
+                : "private var \(door): some View {"
+            guard let start = code.range(of: declaration) else {
                 XCTFail("ANCHOR MISSING: `\(door)` (#454)"); continue
             }
             let rest = code[start.upperBound...]
@@ -141,6 +149,26 @@ final class TheCreationDoorsPairUpWhileTheyFitTests: XCTestCase {
             from = first.upperBound
         }
         return nil
+    }
+
+    /// The contents of every `"…"` literal in comment-stripped source, escapes kept as written.
+    /// Multi-line `"""` literals are not split out — neither import type uses one for a sentence.
+    private func stringLiterals(in code: String) -> [String] {
+        var found: [String] = []
+        var current = ""
+        var inside = false
+        var escaped = false
+        for ch in code {
+            if inside {
+                if escaped { current.append(ch); escaped = false }
+                else if ch == "\\" { current.append(ch); escaped = true }
+                else if ch == "\"" { found.append(current); current = ""; inside = false }
+                else { current.append(ch) }
+            } else if ch == "\"" {
+                inside = true
+            }
+        }
+        return found
     }
 
     private func rawSource(_ relativePath: String) throws -> String {

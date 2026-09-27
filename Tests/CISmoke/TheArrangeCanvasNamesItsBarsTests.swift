@@ -152,8 +152,14 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
               let gutterEnd = body.range(of: "private func laneRow(", range: gutter.upperBound..<body.endIndex) else {
             return XCTFail("ANCHOR MISSING: `nameGutter` before `laneRow` (#454)")
         }
-        XCTAssertTrue(body[gutter.upperBound..<gutterEnd.lowerBound].contains(".frame(width: Self.nameWidth, alignment: .leading)"),
-                      "the lane name keeps the width the ruler's gutter copies")
+        // Review of 94395338f, LOW-5: the width must close the gutter's OUTER stack. On the `Text`
+        // alone, a symbol-led row would be 3 pt + the symbol wider than the ruler's gutter.
+        let gutterBody = String(body[gutter.upperBound..<gutterEnd.lowerBound])
+        XCTAssertNotNil(sequence([".lineLimit(1)", "}", ".frame(width: Self.nameWidth, alignment: .leading)"],
+                                 in: gutterBody),
+                        "the gutter's whole stack — symbol and name — keeps the width the ruler's gutter copies")
+        XCTAssertEqual(gutterBody.components(separatedBy: "Self.nameWidth").count - 1, 1,
+                       "one width in the gutter, on its outer stack")
     }
 
     // MARK: helpers

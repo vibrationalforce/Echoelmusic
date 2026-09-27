@@ -10,8 +10,9 @@
 //
 // 1. END-TO-END BEHAVIOUR (`ArrangeCanvas.hearing`, pure, over real `TimelineDocument`s): the
 //    state follows the mixer's own rule — DRIVEN against `TimelineDocument.effectiveGain` over
-//    every mute/solo combination of three tracks, so the picture and the sound cannot disagree
-//    (#416: one rule, checked, not restated by hand).
+//    every mute/solo combination of three tracks at full level, so the picture and the mixer's
+//    mute/solo cannot disagree (#416: one rule, checked, not restated by hand). A zero level or
+//    a track without a voice is silent too and is NOT dimmed — the scope is mute and solo.
 // 2. END-TO-END BEHAVIOUR: each silenced state has a symbol AND a spoken word, so the cue is
 //    never colour or opacity alone; a playing track adds nothing.
 // 3. SOURCE: the canvas reads the state from that one function, dims the lane (opacity only),

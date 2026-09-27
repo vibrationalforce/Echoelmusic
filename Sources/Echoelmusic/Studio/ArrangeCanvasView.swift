@@ -73,9 +73,7 @@ enum ArrangeCanvas {
         summary.lanes.filter { !$0.isBio && $0.regionCount > 0 }
     }
 
-    /// Where the playhead sits on the song's scale, 0…1, or nil when there is no scale. A
-    /// position past the end (a loop running on) pins to the end instead of leaving the canvas.
-    /// What a track does in the mix, as the canvas shows it.
+    /// What a track's MUTE and SOLO do to it, as the canvas shows it.
     enum Hearing: Equatable, Sendable {
         case plays
         case muted
@@ -87,8 +85,15 @@ enum ArrangeCanvas {
     /// The track's mute/solo state in `TimelineDocument.effectiveGain`'s order: mute wins over
     /// its own solo, then a solo anywhere silences every track that is not soloed. An unknown
     /// track plays (nothing to dim). The equivalence with `effectiveGain` is DRIVEN by
-    /// `TheCanvasShowsWhatIsSilentTests` over every mute/solo combination, so the two cannot
-    /// drift apart silently.
+    /// `TheCanvasShowsWhatIsSilentTests` over every mute/solo combination at full level, so the
+    /// two cannot drift apart silently.
+    ///
+    /// ⚠️ MUTE AND SOLO ONLY — NOT EVERY SILENCE. A track whose level is at zero, or one with no
+    /// voice to play it, is silent too, and `effectiveGain` knows the level; the canvas does not
+    /// dim either (the track header's level and voice readouts say those). And it reads the
+    /// STORE's document: while the song plays, a track added mid-play is not in the player's
+    /// snapshot until Stop (`TimelineDocument.mergeMixer`, KNOWN ASYMMETRY), so a solo on it
+    /// dims the other rows before it silences them — the header's SOLO tag shares that.
     nonisolated static func hearing(of laneID: UUID, in document: TimelineDocument) -> Hearing {
         guard let lane = document.lanes.first(where: { $0.id == laneID }) else { return .plays }
         if lane.isMuted { return .muted }
@@ -97,7 +102,8 @@ enum ArrangeCanvas {
         return .plays
     }
 
-    /// Whether the track's parts are drawn dimmed — they make no sound.
+    /// Whether the track's parts are drawn dimmed — its mute, or another track's solo, keeps
+    /// them from sounding.
     nonisolated static func isSilenced(_ hearing: Hearing) -> Bool {
         hearing == .muted || hearing == .silencedBySolo
     }
@@ -122,6 +128,8 @@ enum ArrangeCanvas {
         }
     }
 
+    /// Where the playhead sits on the song's scale, 0…1, or nil when there is no scale. A
+    /// position past the end (a loop running on) pins to the end instead of leaving the canvas.
     nonisolated static func playheadFraction(tick: Int, songTicks: Int) -> Double? {
         guard songTicks > 0 else { return nil }
         return (Double(tick) / Double(songTicks)).clamped(to: 0...1)
@@ -213,9 +221,11 @@ struct ArrangeCanvasView: View {
             ForEach(rows) { row in
                 HStack(spacing: Self.gutter) {
                     // A name gutter: one line, truncating, so every lane starts at the same x
-                    // and the rows line up bar for bar. Only the NAME grows with the type size;
-                    // the gutter width and the lane's 28 pt height are fixed (review LOW-3) —
-                    // the parts list in the track inspector is the large-type way in.
+                    // and the rows line up bar for bar. The name AND its mute/solo symbol grow
+                    // with the type size inside a FIXED gutter width and 28 pt lane height
+                    // (review LOW-3), so at the largest sizes a silenced track's name shrinks to
+                    // a few letters — the row and every part still SAY name and state, and the
+                    // parts list in the track inspector is the large-type way in.
                     nameGutter(row)
                     laneRow(row, selected: selected)
                 }
