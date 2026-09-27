@@ -113,9 +113,18 @@ struct PhotoSeedCard: View {
         }
     }
 
+    /// The seed of the photo this card has read, if any.
+    private var shownSeed: MediaSeed? {
+        if case .ready(let decoded, _) = phase { return decoded.seed }
+        return nil
+    }
+
     private var header: some View {
         Button {
             isOpen.toggle()
+            // Collapsed, the photo is not on screen, so it is not "this photo" to the agent
+            // (EchoelAI review MED-1). Opened again, the one still read is offered again.
+            MediaLookUndo.shared.showPhoto(isOpen ? shownSeed : nil)
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: isOpen ? "chevron.down" : "chevron.right")
@@ -204,8 +213,10 @@ struct PhotoSeedCard: View {
         .accessibilityElement(children: .combine)
 
         let after = before.applying(seed)
+        // Applied here, or by EchoelAI through the same owner with this photo (review LOW-3).
+        let isLive = appliedHere || undo.pending == MediaSeedApplication(before: before, after: after)
         VStack(alignment: .leading, spacing: 2) {
-            Text(appliedHere ? "Applied:" : "With this photo:")
+            Text(isLive ? "Applied:" : "With this photo:")
                 .font(EchoelTheme.font(13, .semibold))
             ForEach(PhotoSeedText.changes(from: before, to: after), id: \.self) { line in
                 Text(line)

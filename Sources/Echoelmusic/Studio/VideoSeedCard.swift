@@ -134,9 +134,18 @@ struct VideoSeedCard: View {
         }
     }
 
+    /// The seed of the video this card has read, if any.
+    private var shownSeed: VideoSeed? {
+        if case .ready(let read, _, _) = phase { return read.seed }
+        return nil
+    }
+
     private var header: some View {
         Button {
             isOpen.toggle()
+            // Collapsed, the video is not on screen, so it is not "this video" to the agent
+            // (EchoelAI review MED-1). Opened again, the one still read is offered again.
+            MediaLookUndo.shared.showVideo(isOpen ? shownSeed : nil)
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: isOpen ? "chevron.down" : "chevron.right")
@@ -220,8 +229,10 @@ struct VideoSeedCard: View {
         .accessibilityElement(children: .combine)
 
         let after = before.applying(seed)
+        // Applied here, or by EchoelAI through the same owner with this video (review LOW-3).
+        let isLive = appliedHere || undo.pending == MediaSeedApplication(before: before, after: after)
         VStack(alignment: .leading, spacing: 2) {
-            Text(appliedHere ? "Applied:" : "With this video:")
+            Text(isLive ? "Applied:" : "With this video:")
                 .font(EchoelTheme.font(13, .semibold))
             ForEach(VideoSeedText.changes(from: before, to: after), id: \.self) { line in
                 Text(line)

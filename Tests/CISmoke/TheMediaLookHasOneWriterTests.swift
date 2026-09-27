@@ -19,6 +19,8 @@
 // owner writing while a look is pending (claim 1), an implausible video recorded (claim 1), a
 // card keeping its inline `MediaSeedApplication.apply` (claim 3), a card that never withdraws its
 // seed on disappear (claim 3).
+// Review repair (MED-1/MED-2): claim 1 pins the `generation` count (mutant: no bump → red), claim 3
+// the withdrawal when the card is collapsed (mutant: the header only toggles → red).
 
 import Foundation
 import XCTest
@@ -56,8 +58,10 @@ final class TheMediaLookHasOneWriterTests: XCTestCase {
         look.write(to: defaults)
         let owner = MediaLookUndo()
 
+        XCTAssertEqual(owner.generation, 0)
         let applied = try XCTUnwrap(owner.apply(photo: photo(brightness: 0.9), on: defaults))
         XCTAssertEqual(owner.pending, applied, "the write and its way back are one step")
+        XCTAssertEqual(owner.generation, 1, "every recorded look is told apart, even an equal one")
         XCTAssertEqual(owner.medium, "photo")
         XCTAssertEqual(applied.before, look)
         XCTAssertEqual(VisualLookSnapshot.read(from: defaults), applied.after)
@@ -65,6 +69,7 @@ final class TheMediaLookHasOneWriterTests: XCTestCase {
         XCTAssertNil(owner.apply(video: video(motion: 1), on: defaults), "a pending look blocks a second")
         XCTAssertNil(owner.apply(photo: photo(brightness: 0.1), on: defaults))
         XCTAssertEqual(VisualLookSnapshot.read(from: defaults), applied.after, "the refused writes wrote nothing")
+        XCTAssertEqual(owner.generation, 1, "a refused write records nothing")
 
         owner.undo(on: defaults)
         XCTAssertNil(owner.pending)
@@ -75,6 +80,7 @@ final class TheMediaLookHasOneWriterTests: XCTestCase {
         XCTAssertEqual(VisualLookSnapshot.read(from: defaults), look)
         let moved = try XCTUnwrap(owner.apply(video: video(motion: 1), on: defaults))
         XCTAssertEqual(owner.medium, "video")
+        XCTAssertEqual(owner.generation, 2)
         XCTAssertEqual(VisualLookSnapshot.read(from: defaults), moved.after)
     }
 
@@ -123,6 +129,9 @@ final class TheMediaLookHasOneWriterTests: XCTestCase {
         XCTAssertEqual(photoCard.components(separatedBy: "MediaLookUndo.shared.showPhoto(nil)").count - 1, 2,
                        "withdrawn when a new read starts and when the card goes away")
         XCTAssertEqual(videoCard.components(separatedBy: "MediaLookUndo.shared.showVideo(nil)").count - 1, 2)
+        // Review MED-1: a collapsed card does not show its photo, so it withdraws it too.
+        XCTAssertTrue(photoCard.contains("MediaLookUndo.shared.showPhoto(isOpen ? shownSeed : nil)"))
+        XCTAssertTrue(videoCard.contains("MediaLookUndo.shared.showVideo(isOpen ? shownSeed : nil)"))
 
         let owner = try code("Sources/Echoelmusic/Studio/MediaLookUndo.swift")
         for persisted in ["UserDefaults.standard", "FileManager", "Codable", ".set("] {

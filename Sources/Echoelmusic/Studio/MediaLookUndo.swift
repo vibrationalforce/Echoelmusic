@@ -35,6 +35,10 @@ final class MediaLookUndo {
     private(set) var pending: MediaSeedApplication?
     /// The medium that applied it, for plain words on the button ("photo", "video").
     private(set) var medium = ""
+    /// Counts every recorded application. Two applications of the same seed to the same look are
+    /// EQUAL values, so "is the pending look still the one I applied?" is asked with this, not
+    /// with the value (EchoelAI review MED-2: undo, then Apply again by hand, read as the agent's).
+    private(set) var generation = 0
     /// The photo the photo card has read and holds, if any — "this photo".
     private(set) var shownPhoto: MediaSeed?
     /// The video the video card has read and holds, if any — "this video".
@@ -49,6 +53,7 @@ final class MediaLookUndo {
         guard pending == nil else { return false }
         pending = application
         self.medium = medium
+        generation &+= 1
         return true
     }
 
