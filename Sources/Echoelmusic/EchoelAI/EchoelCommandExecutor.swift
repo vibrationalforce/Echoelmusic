@@ -53,7 +53,9 @@ final class EchoelCommandExecutor {
     private enum Inverse {
         case level(laneID: UUID, before: Float, after: Float)
         case removeCopy(TimelineRegion)
-        case mediaLook(MediaSeedApplication)
+        /// The look and the owner's `generation` right after it was recorded — an equal look
+        /// applied again by hand is a different generation, and is the person's (review MED-2).
+        case mediaLook(MediaSeedApplication, generation: Int)
     }
 
     private let timeline: TimelineStore
@@ -316,28 +318,52 @@ final class EchoelCommandExecutor {
                            into group: inout [Inverse]) -> EchoelStepResult.Outcome {
         guard mediaLooks.pending == nil else { return .failed(.lookStillApplied(mediaLooks.medium)) }
         let applied: MediaSeedApplication?
+        let hasColour: Bool
         switch medium {
         case .photo:
             guard let seed = mediaLooks.shownPhoto else { return .failed(.nothingShown(.photo)) }
             guard seed == seen.photo else { return .failed(.projectChanged) }
+            hasColour = seed.hasDominantColour
             applied = mediaLooks.apply(photo: seed, on: visualDefaults)
         case .video:
             guard let seed = mediaLooks.shownVideo else { return .failed(.nothingShown(.video)) }
             guard seed == seen.video else { return .failed(.projectChanged) }
+            hasColour = seed.hasDominantColour
             applied = mediaLooks.apply(video: seed, on: visualDefaults)
         }
         guard let application = applied else {
             return .failed(.invalidArgument("that \(medium.rawValue)'s reading"))
         }
-        group.append(.mediaLook(application))
+        group.append(.mediaLook(application, generation: mediaLooks.generation))
         guard mediaLooks.pending == application,
               VisualLookSnapshot.read(from: visualDefaults) == application.after else {
             return .failed(.verificationFailed("the visual look does not read as the \(medium.rawValue) set it"))
+        }
+        // A grey photo or video leaves the hue as it was (`MediaSeedLook`), so it says so rather
+        // than claiming its colours (review LOW-4).
+        guard hasColour else {
+            return .done("The visuals now use the look of the \(medium.rawValue). It has no main colour, so the hue stays.")
         }
         switch medium {
         case .photo: return .done("The visuals now use the colours of the photo.")
         case .video: return .done("The visuals now use the colour and motion of the video.")
         }
+    }
+
+    /// The look settings a taken-back look could NOT put back, in plain words, or nil when all
+    /// of them read as before.
+    private static func keptSettings(_ live: VisualLookSnapshot, before: VisualLookSnapshot) -> String? {
+        let names: [(String, Bool)] = [("intensity", live.intensity != before.intensity),
+                                       ("detail", live.detail != before.detail),
+                                       ("motion", live.motion != before.motion),
+                                       ("spread", live.spread != before.spread),
+                                       ("hue", live.hue != before.hue),
+                                       ("saturation", live.saturation != before.saturation),
+                                       ("preset", live.presetID != before.presetID)]
+        let kept = names.filter { $0.1 }.map { $0.0 }
+        guard let last = kept.last else { return nil }
+        let list = kept.count == 1 ? last : kept.dropLast().joined(separator: ", ") + " and " + last
+        return "The visual \(list)"
     }
 
     private func undoLast(_ group: inout [Inverse]) -> EchoelStepResult.Outcome {
@@ -386,20 +412,23 @@ final class EchoelCommandExecutor {
                 } else {
                     restored += 1
                 }
-            case .mediaLook(let application):
-                // Not the pending look any more: a card's Undo took it back already.
-                guard mediaLooks.pending == application else {
+            case .mediaLook(let application, let generation):
+                // Not the pending look any more — a card's Undo took it back, and anything applied
+                // since, even an equal look, is the person's.
+                guard mediaLooks.pending == application, mediaLooks.generation == generation else {
                     restored += 1
                     continue
                 }
-                let untouched = VisualLookSnapshot.read(from: visualDefaults) == application.after
+                let beforeUndo = VisualLookSnapshot.read(from: visualDefaults)
                 mediaLooks.undo(on: visualDefaults)
-                if untouched, mediaLooks.pending == nil,
-                   VisualLookSnapshot.read(from: visualDefaults) == application.before {
+                let afterUndo = VisualLookSnapshot.read(from: visualDefaults)
+                guard let settings = Self.keptSettings(afterUndo, before: application.before) else {
                     restored += 1
-                } else {
-                    kept.append("Part of the visual look")
+                    continue
                 }
+                // Some settings went back and some a person had moved: both are said (review LOW-1).
+                if afterUndo != beforeUndo { restored += 1 }
+                kept.append(settings)
             }
         }
         guard kept.isEmpty else {

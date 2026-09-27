@@ -20,6 +20,10 @@
 // pending (claim 2), applying a photo the card no longer shows (claim 3), an undo that reverts a
 // setting the person moved (claim 4), an undo that writes again after the card's Undo (claim 4),
 // an unknown argument dropped (claim 5).
+// Review repair (MED-2, LOW-1, LOW-4) added claim 6 and changed claim 4's report: mutants — undo
+// asked by value only (claim 6, the person's Apply is taken back), a partly kept look counted as
+// nothing restored (claim 4), a setting moved back reported as kept (claim 6), a grey photo
+// reported as "colours" (claim 6).
 
 import Foundation
 import XCTest
@@ -35,6 +39,12 @@ final class TheAgentAppliesTheLookOfTheOpenPhotoTests: XCTestCase {
         MediaSeed(version: MediaSeed.formatVersion, hue: 0.6, dominantRed: 0.2, dominantGreen: 0.3,
                   dominantBlue: 0.8, brightness: brightness, saturation: 0.7, contrast: 0.5,
                   hasDominantColour: true, sampledPixels: 64)
+    }
+
+    private func greyPhoto() -> MediaSeed {
+        MediaSeed(version: MediaSeed.formatVersion, hue: 0, dominantRed: 0.5, dominantGreen: 0.5,
+                  dominantBlue: 0.5, brightness: 0.5, saturation: 0.05, contrast: 0.4,
+                  hasDominantColour: false, sampledPixels: 64)
     }
 
     private func video(motion: Double) -> VideoSeed {
@@ -155,7 +165,9 @@ final class TheAgentAppliesTheLookOfTheOpenPhotoTests: XCTestCase {
         byHand.intensity = moved
         byHand.write(to: defaults)
         let kept = await executor.execute(plan([.undoAgentChange], on: executor))
-        XCTAssertEqual(kept.steps.first?.outcome, .failed(.changedSince("Part of the visual look")))
+        XCTAssertEqual(kept.steps.first?.outcome,
+                       .failed(.partlyUndone(restored: 1, kept: "The visual intensity")),
+                       "the rest went back, and the one setting the person moved is named (review LOW-1)")
         var expected = look
         expected.intensity = moved
         XCTAssertEqual(VisualLookSnapshot.read(from: defaults), expected,
@@ -176,6 +188,39 @@ final class TheAgentAppliesTheLookOfTheOpenPhotoTests: XCTestCase {
         let already = await executor.execute(plan([.undoAgentChange], on: executor))
         XCTAssertEqual(already.steps.first?.outcome, .done("Took back my last change."))
         XCTAssertEqual(VisualLookSnapshot.read(from: defaults), later, "nothing was written again")
+    }
+
+    // MARK: 6 — review repairs: an equal look applied by hand is the person's; a setting moved back
+    //           by hand is not "kept"; a grey photo does not claim its colours
+
+    func testAnEqualLookAppliedByHandIsThePersonsAndGreyIsSaidPlainly() async throws {
+        let (_, executor, owner, defaults) = try rig()
+        owner.showPhoto(photo(brightness: 0.9))
+        _ = await executor.execute(plan([.applyMediaLook(medium: .photo)], on: executor))
+        let agents = try XCTUnwrap(owner.pending)
+        owner.undo(on: defaults)
+        let persons = try XCTUnwrap(owner.apply(photo: photo(brightness: 0.9), on: defaults))
+        XCTAssertEqual(persons, agents, "the same photo on the same look is an EQUAL value")
+        let undo = await executor.execute(plan([.undoAgentChange], on: executor))
+        XCTAssertEqual(undo.steps.first?.outcome, .done("Took back my last change."))
+        XCTAssertEqual(owner.pending, persons, "the person's own Apply is not taken back (review MED-2)")
+        XCTAssertEqual(VisualLookSnapshot.read(from: defaults), persons.after)
+        owner.undo(on: defaults)
+
+        // The person moves a setting away and back again: nothing is kept, all of it is back.
+        _ = await executor.execute(plan([.applyMediaLook(medium: .photo)], on: executor))
+        var away = VisualLookSnapshot.read(from: defaults)
+        away.intensity = look.intensity
+        away.write(to: defaults)
+        let back = await executor.execute(plan([.undoAgentChange], on: executor))
+        XCTAssertEqual(back.steps.first?.outcome, .done("Took back my last change."))
+        XCTAssertEqual(VisualLookSnapshot.read(from: defaults), look)
+
+        owner.showPhoto(greyPhoto())
+        let grey = await executor.execute(plan([.applyMediaLook(medium: .photo)], on: executor))
+        XCTAssertEqual(grey.steps.first?.outcome,
+                       .done("The visuals now use the look of the photo. It has no main colour, so the hue stays."))
+        XCTAssertEqual(VisualLookSnapshot.read(from: defaults).hue, look.hue)
     }
 
     // MARK: 5 — the proposal names a medium, and nothing else

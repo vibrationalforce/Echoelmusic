@@ -279,7 +279,10 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
             // private suite — but the agent never picks the app's own, and never writes a key.
             for forbidden in ["AudioEngine", "EngineBus", "renderBlock", "AVAudio", "DispatchQueue", "URLSession",
                               "FileManager", "UserDefaults.standard", ".set(", "forKey:",
-                              "removeObject", "Task.detached", "Thread."] {
+                              "removeObject", "Task.detached", "Thread.",
+                              // review LOW-2: the other ways to reach the app's own defaults or owner
+                              "UserDefaults(", "PersistentDomain", "register(defaults", "= .standard",
+                              "MediaLookUndo.shared"] {
                 XCTAssertFalse(file.contains(forbidden), "the agent layer names `\(forbidden)`")
             }
         }
