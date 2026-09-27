@@ -177,6 +177,17 @@ enum TrackMix {
         }
     }
 
+    /// The track level as a mixing engineer reads it — "−6.0 dB", "+6.0 dB", "0.0 dB", and
+    /// "−∞ dB" for silence (design slice 8, the mockup's dB fader). The field stays linear
+    /// (0…2, `levelRange`); this is a static reading of the stored gain, never a meter.
+    /// A non-finite or non-positive level is silence, not a number.
+    nonisolated static func decibelText(_ level: Double) -> String {
+        guard level.isFinite, level > 0 else { return "−∞ dB" }
+        let db = (20 * log10(level) * 10).rounded() / 10
+        if db == 0 { return "0.0 dB" }
+        return (db > 0 ? "+" : "−") + String(format: "%.1f", abs(db)) + " dB"
+    }
+
     // MARK: Writes — through the store's existing API, nothing else
 
     @MainActor
@@ -349,6 +360,7 @@ struct TrackInspectorView: View {
                 }
 
                 if controls.level {
+                    let level = Double(timeline.document.lanes.first(where: { $0.id == laneID })?.level ?? 1)
                     EchoelValueField(
                         label: "Level",
                         value: Binding(
@@ -360,6 +372,13 @@ struct TrackInspectorView: View {
                         hint: controls.role == .echoelInstrument
                             ? "1.00 unchanged, 0 silent. This is also the level the Studio instrument plays at; its Start lifts 0 back to 1.00"
                             : "1.00 unchanged, 0 silent, 2.00 is +6 dB")
+                    // Design slice 8: the same stored gain, read in decibels. Cold — the level
+                    // moves on an edit, never on a clock.
+                    Text(TrackMix.decibelText(level))
+                        .font(EchoelTheme.font(11).monospacedDigit())
+                        .foregroundStyle(EchoelTheme.dim)
+                        .accessibilityLabel("Level in decibels")
+                        .accessibilityValue(TrackMix.decibelText(level))
                 }
                 if controls.pan {
                     EchoelValueField(
