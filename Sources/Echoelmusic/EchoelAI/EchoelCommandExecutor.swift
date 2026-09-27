@@ -18,6 +18,10 @@
 // changed since is refused before its first step (the question state), never re-targeted:
 // "the selection" is resolved ONCE, from the state the plan was made against, so a tap during
 // the request (it yields between steps) cannot move a later step onto another track or part.
+// A step that names "the selection" while the plan saw NONE is refused before the first step,
+// as a clear error ("No track is selected") — never resolved live when it runs, because live
+// would adopt a selection made after the plan, a target the person never saw the agent aim at
+// (review repair 2a). The live selection is read in exactly one place: `snapshot()`.
 //
 // ⭐ THE AGENT'S UNDO IS ITS OWN, AND IT CHECKS. The level is not in the song's history (the store
 // keeps mixer moves out of it on purpose), so the agent keeps a journal of exact inverses, one
@@ -132,6 +136,7 @@ final class EchoelCommandExecutor {
                 return refused(plan, .consentRequired(consent))
             }
         }
+        if let missing = Self.missingTarget(in: plan) { return refused(plan, missing) }
         guard snapshot() == plan.basis else { return refused(plan, .projectChanged) }
 
         runningRequest = plan.requestID
@@ -172,8 +177,25 @@ final class EchoelCommandExecutor {
                               replayed: false, refusal: reason)
     }
 
-    /// "The selection" as the plan saw it. A plan made with nothing selected keeps `.selected`,
-    /// which then resolves live — and, since the basis matched, live is also nothing.
+    /// A step that names "the selection" while the plan saw none: refused BEFORE the first step,
+    /// so no step ever runs against a target the plan did not carry (review repair 2a).
+    private static func missingTarget(in plan: EchoelActionPlan) -> EchoelCommandError? {
+        for command in plan.steps {
+            switch command {
+            case .setTrackLevel(.selected, _) where plan.basis.track == nil:
+                return .nothingSelected("track")
+            case .duplicatePart(.selected) where plan.basis.part == nil:
+                return .nothingSelected("part")
+            case .describeState, .setTrackLevel, .duplicatePart, .undoAgentChange, .applyMediaLook:
+                continue
+            }
+        }
+        return nil
+    }
+
+    /// "The selection" as the plan saw it — an id, because `missingTarget` refused the plan
+    /// otherwise. Should `.selected` ever get past both, the resolvers refuse it (below); they
+    /// never read the live selection.
     private static func pinned(_ command: EchoelCommand, to basis: EchoelProjectSnapshot) -> EchoelCommand {
         switch command {
         case .setTrackLevel(.selected, let change):
@@ -216,11 +238,9 @@ final class EchoelCommandExecutor {
     private func track(_ target: EchoelTarget, in document: TimelineDocument) -> Result<UUID, EchoelCommandError> {
         switch target {
         case .selected:
-            guard selection.trackID != nil else { return .failure(.nothingSelected("track")) }
-            guard let id = WorkstationSelection.resolvedTrack(selection.trackID, in: document) else {
-                return .failure(.targetGone("track"))
-            }
-            return .success(id)
+            // Never resolved here (see `missingTarget` / `pinned`): reading the live selection at
+            // step time is how a selection made after the plan would become the target.
+            return .failure(.nothingSelected("track"))
         case .id(let id):
             return document.lanes.contains(where: { $0.id == id }) ? .success(id) : .failure(.targetGone("track"))
         }
@@ -230,13 +250,8 @@ final class EchoelCommandExecutor {
         let id: UUID
         switch target {
         case .selected:
-            guard selection.regionID != nil else { return .failure(.nothingSelected("part")) }
-            let track = WorkstationSelection.resolvedTrack(selection.trackID, in: document)
-            guard let resolved = WorkstationSelection.resolvedRegion(selection.regionID, track: track,
-                                                                     in: document) else {
-                return .failure(.targetGone("part"))
-            }
-            id = resolved
+            // Never resolved here, for the same reason as `track(_:in:)`.
+            return .failure(.nothingSelected("part"))
         case .id(let named):
             id = named
         }

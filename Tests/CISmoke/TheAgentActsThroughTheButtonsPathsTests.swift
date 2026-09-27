@@ -26,6 +26,11 @@
 // was forbidden and is now allowed as a TYPE — the look lives there and a test must hand in a
 // private suite — while `UserDefaults.standard`, `.set(`, `forKey:` and `removeObject` stay out,
 // and `MediaSeedApplication.apply(`, `.write(to:` and `mediaLooks.record(` join the bypass list.
+// Review repair 2a (2026-09-27): a step naming "the selection" while the plan saw none is now a
+// REFUSAL before the first step (`report.refusal`, a clear error), not a step failure — claim 3 moved
+// its two `.selected` cases accordingly, and claim 9 drives the case the old shape allowed: a
+// selection made AFTER the plan was never resolved live. Mutant: executor resolving `.selected`
+// from the live selection at step time → claim 9 red (Keys quieter, the person never asked).
 
 import Foundation
 import XCTest
@@ -111,11 +116,9 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         let (timeline, selection, executor, original) = rig()
         defer { timeline.replaceDocument(original) }
         let cases: [(EchoelCommand, EchoelCommandError)] = [
-            (.setTrackLevel(track: .selected, change: .relativeDecibels(-3)), .nothingSelected("track")),
             (.setTrackLevel(track: .id(Self.bioLane.id), change: .relativeDecibels(-3)), .noLevel("Bio curve — no sound")),
             (.setTrackLevel(track: .id(Self.quietLane.id), change: .relativeDecibels(3)), .levelIsSilent),
             (.setTrackLevel(track: .id(UUID()), change: .absoluteDecibels(0)), .targetGone("track")),
-            (.duplicatePart(part: .selected), .nothingSelected("part")),
             (.duplicatePart(part: .id(UUID())), .targetGone("part")),
             (.undoAgentChange, .nothingToUndo),
         ]
@@ -124,6 +127,18 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
             XCTAssertEqual(report.steps.first?.outcome, .failed(expected), "\(command)")
             XCTAssertEqual(timeline.document, Self.fixture, "a refused `\(command)` changed the song")
         }
+        // "The selection" with nothing selected is refused BEFORE the first step — a clear error,
+        // not a half-run request (review repair 2a).
+        for (command, expected) in [(EchoelCommand.setTrackLevel(track: .selected, change: .relativeDecibels(-3)),
+                                     EchoelCommandError.nothingSelected("track")),
+                                    (.duplicatePart(part: .selected), .nothingSelected("part"))] {
+            let report = await executor.execute(plan([.describeState, command], on: executor))
+            XCTAssertEqual(report.refusal, expected, "\(command)")
+            XCTAssertEqual(report.steps.map(\.outcome), [.notRun, .notRun], "nothing ran, not even the read")
+            XCTAssertEqual(report.state, .failed(expected.message))
+            XCTAssertEqual(timeline.document, Self.fixture)
+        }
+        XCTAssertEqual(EchoelCommandError.nothingSelected("track").message, "No track is selected. Select one first.")
         selection.toggleTrack(Self.keysLane.id)
         let loud = await executor.execute(plan([.setTrackLevel(track: .selected, change: .absoluteDecibels(9))],
                                                on: executor))
@@ -255,6 +270,45 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         XCTAssertEqual(timeline.document, Self.fixture)
     }
 
+    // MARK: 9 — a selection made AFTER the plan is never the target (review repair 2a)
+
+    func testASelectionMadeAfterThePlanIsNeverAdopted() async throws {
+        let (timeline, selection, executor, original) = rig()
+        defer { timeline.replaceDocument(original) }
+        // Planned with nothing selected; the person selects Keys before the request runs.
+        let unaimed = plan([.setTrackLevel(track: .selected, change: .relativeDecibels(-3))], on: executor)
+        XCTAssertNil(unaimed.basis.track)
+        selection.toggleTrack(Self.keysLane.id)
+        let refused = await executor.execute(unaimed)
+        XCTAssertEqual(refused.refusal, .nothingSelected("track"), "the plan carried no target, so none is guessed")
+        XCTAssertEqual(level(Self.keysLane, in: timeline), 1, "Keys is untouched — the person never asked for it")
+        XCTAssertFalse(executor.canUndoAgentChange)
+
+        // Planned on Loop; the person moves the selection to Keys before it runs: a question, and
+        // neither track moves.
+        selection.toggleTrack(Self.keysLane.id)   // clears
+        selection.toggleTrack(Self.loopLane.id)
+        let aimedAtLoop = plan([.setTrackLevel(track: .selected, change: .relativeDecibels(-3))], on: executor)
+        XCTAssertEqual(aimedAtLoop.basis.track?.id, Self.loopLane.id)
+        selection.toggleTrack(Self.keysLane.id)
+        let moved = await executor.execute(aimedAtLoop)
+        XCTAssertEqual(moved.refusal, .projectChanged)
+        XCTAssertEqual(moved.state, .needsAnswer(EchoelCommandError.projectChanged.message))
+        XCTAssertEqual(level(Self.keysLane, in: timeline), 1)
+        XCTAssertEqual(level(Self.loopLane, in: timeline), 1)
+
+        // Planned on Loop and unchanged: both steps land on the plan's track (the id was pinned
+        // before the first step, so nothing between the steps could move the second one).
+        selection.toggleTrack(Self.loopLane.id)
+        let onLoop = plan([.setTrackLevel(track: .selected, change: .relativeDecibels(-3)),
+                           .setTrackLevel(track: .selected, change: .relativeDecibels(-3))], on: executor)
+        let done = await executor.execute(onLoop)
+        XCTAssertEqual(done.state, .done)
+        let loop = try XCTUnwrap(level(Self.loopLane, in: timeline))
+        XCTAssertEqual(loop, Float(pow(10, -6.0 / 20)), accuracy: 1e-6, "two steps of −3 dB")
+        XCTAssertEqual(level(Self.keysLane, in: timeline), 1)
+    }
+
     // MARK: 8 — same writers as the buttons; nothing on the audio side, the disk or the network
 
     func testTheExecutorWritesOnlyThroughTheButtonWriters() throws {
@@ -297,5 +351,11 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         XCTAssertEqual(members, ["document"], "the executor touches the store beyond reading its document")
         XCTAssertTrue(executor.contains("run(Self.pinned(command, to: plan.basis), seen: plan.basis"),
                       "\"the selection\" is resolved from the state the plan saw, not re-read between steps (review MED)")
+        // Review repair 2a: the live selection is read in ONE place, `snapshot()` — a resolver that
+        // read it at step time would adopt a selection made after the plan.
+        XCTAssertEqual(executor.components(separatedBy: "selection.trackID").count - 1, 1)
+        XCTAssertEqual(executor.components(separatedBy: "selection.regionID").count - 1, 1)
+        XCTAssertTrue(executor.contains("if let missing = Self.missingTarget(in: plan) { return refused(plan, missing) }"),
+                      "a missing target is a refusal before the first step")
     }
 }
