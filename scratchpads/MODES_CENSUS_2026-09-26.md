@@ -449,15 +449,15 @@ modal, and adds no hot read in a parent body.
 | # | Slice | Files | State |
 |---|---|---|---|
 | 1 | Bar ruler over the Arrange canvas (`ArrangeCanvas.rulerMarks`, cold `ArrangeBarRuler`) | ArrangeCanvasView | BUILT `d16d764b1` — VERIFY (gates + review) |
-| 2 | Selected part: end bar (`barSpan`, joiner "–") + note count on the "Notes" toggle | SelectedPartBar, PartNoteEditor | READY |
-| 3 | Note-grid row names through the reader's `NoteNaming` + one line describing a single picked note | PartNoteEditor | READY |
-| 4 | Creation buttons in a `ViewThatFits` (row first, stack fallback; order unchanged) | WorkstationView | READY |
-| 5 | Muted/soloed visible on the canvas (opacity + shape cue + VoiceOver), no second M/S control | ArrangeCanvasView | READY |
-| 6 | Quantize grid choice 1/16 · 1/8 · 1/4 (named menu Picker; required `gridSteps`, #431) | ClipNoteEdit, PartNoteEditor | READY |
-| 7 | Part start as an `EchoelValueField`, commit-only, one `TrackParts.move` | SelectedPartBar | READY |
-| 8 | Track level also read in dB (static caption, never a meter) | TrackInspectorView | READY |
-| 9 | Note-grid playhead as its own self-driving leaf | PartNoteEditor | READY (hot-state care) |
-| 10 | Metronome toggle on the Workstation | — | NEEDS a resync of the owner first |
+| 2 | Selected part: end bar (`barSpan`, joiner "–") + note count on the "Notes" toggle | SelectedPartBar, PartNoteEditor | BUILT + reviewed — VERIFY (gates) |
+| 3 | Note-grid row names through the reader's `NoteNaming` + one line describing a single picked note | PartNoteEditor | BUILT + reviewed (MED part-relative bars fixed `da3feb02d`) — VERIFY |
+| 4 | Creation buttons in a `ViewThatFits` (row first, stack fallback; order unchanged) | WorkstationView | BUILT + reviewed — VERIFY |
+| 5 | Muted/soloed visible on the canvas (opacity + shape cue + VoiceOver), no second M/S control | ArrangeCanvasView | BUILT + reviewed (LOWs `b8e3c1e0f`) — VERIFY |
+| 6 | Quantize grid choice 1/16 · 1/8 · 1/4 (named SEGMENTED Picker; required `gridSteps`, #431) | ClipNoteEdit, PartNoteEditor | BUILT `f0d2b55fe` — VERIFY |
+| 7 | Part start as an `EchoelValueField`, commit-only, one `TrackParts.move` | SelectedPartBar | BUILT `6c69dacad` + review repair `8c40b0fd0` (range follows the song) — VERIFY |
+| 8 | Track level also read in dB (static caption, never a meter) | TrackInspectorView | BUILT `8a0202491` — VERIFY |
+| 9 | Note-grid playhead as its own self-driving leaf | PartNotePlayheadView (new) + mount | BUILT `e091712e5` — REVIEW, VERIFY |
+| 10 | Metronome toggle on the Workstation | — | NEEDS DESIGN: `MetronomeVoice.resync()` aligns "next beat = downbeat" from the call, but the Workstation starts mid-bar (part on beat 3); a correct click needs a beat-phase offset in the RENDER path — audio-thread work, device-verified only. Not built blind. |
 | — | Loop toggle | — | BLOCKED_FOUNDER |
 
 REJECTED from the mockups (vision gate): glow/neon accents and pill radii (Uncodixfy), decorative
