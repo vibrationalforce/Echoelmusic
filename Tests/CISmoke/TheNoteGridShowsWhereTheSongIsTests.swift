@@ -6,7 +6,8 @@
 // now crosses the open part's grid at the song's column, while the song plays inside that part.
 //
 // 1. END-TO-END BEHAVIOUR (`PartNotePlayhead.step`, pure): the step is measured from the part's
-//    START in the note grid's own unit (`Note.ticksPerStep`), glides between columns, and is nil
+//    START in the note grid's own unit (`Note.ticksPerStep`), is fractional off the column grid
+//    (the player itself moves a whole column per transport step — review of e091712e5, LOW-7), and is nil
 //    before the part, at or after its end, and for a part with no length.
 // 2. SOURCE: the position is read ONLY in `PartNotePlayheadView`'s own file, once, inside a
 //    `TimelineView` that pauses while the song is stopped — the self-driving-leaf shape of
@@ -59,7 +60,7 @@ final class TheNoteGridShowsWhereTheSongIsTests: XCTestCase {
             }
         }
         XCTAssertEqual(PartNotePlayhead.step(atTick: 3_840 + 60, partStartTick: 3_840, lengthTicks: 960), 0.5,
-                       "half a sixteenth in — the line glides between columns")
+                       "half a column in — exact for a part that starts off the column grid")
         XCTAssertNil(PartNotePlayhead.step(atTick: 0, partStartTick: 0, lengthTicks: 0), "a part with no length shows no line")
         XCTAssertNil(PartNotePlayhead.step(atTick: 0, partStartTick: 0, lengthTicks: -5))
     }
@@ -82,6 +83,11 @@ final class TheNoteGridShowsWhereTheSongIsTests: XCTestCase {
                           "the position is read INSIDE the `TimelineView` — hoisted, it is read once and the line stands still")
         XCTAssertEqual(code.components(separatedBy: "currentTick").count - 1, 1, "ONE read of the position in this file")
         XCTAssertTrue(body.contains("if playing,"), "no line while the song is stopped")
+        // Review of e091712e5, LOW-8: the two premises the pause and the geometry stand on.
+        XCTAssertTrue(body.contains("let playing = player.isPlaying"),
+                      "the pause and the absence follow the player — a constant would leave a line standing while stopped")
+        XCTAssertTrue(body.contains(".offset(x: stepWidth * CGFloat(step))"),
+                      "the line sits at `step × stepWidth` — the width the grid places its notes with")
         XCTAssertTrue(body.contains(".allowsHitTesting(false)"), "the line never takes a tap meant for the grid")
         XCTAssertTrue(body.contains(".accessibilityHidden(true)"),
                       "a moving line has nothing to say; the song-position readout speaks the place")

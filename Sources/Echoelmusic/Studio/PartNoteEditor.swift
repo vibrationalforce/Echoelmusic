@@ -38,7 +38,7 @@
 //
 //  ⚠️ WHAT IT DOES NOT DO, stated so the surface does not read as more: no scale LOCK — a tap
 //  or a drag may still place a note outside the key (the shading shows it; Fit repairs it), no
-//  playhead, no auto-scroll while dragging (a move stays
+//  auto-scroll while dragging (a move stays
 //  on the rows and inside the part shown), and the grid is touch-only — VoiceOver hears its
 //  summary, not the cells. A composer-owned part is
 //  shown and not edited (evolve rewrites it); a part saved before tick offsets is not shown.
@@ -48,7 +48,9 @@
 //
 //  Cold reads only: the selection, `timeline.document` and the clip grid change on a tap, an
 //  import or a composer evolve (~25–45 s) — never on a clock. No transport, tempo or playhead is
-//  read here, so the leaf cannot churn the menu host above it.
+//  read here, so the leaf cannot churn the menu host above it. The grid's playhead (design
+//  slice 9) is `PartNotePlayheadView`, mounted as an overlay with three cold numbers — the
+//  position is read in THAT file, never in this one (review of e091712e5, LOW-6).
 //
 
 import SwiftUI

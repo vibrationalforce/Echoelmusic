@@ -88,8 +88,16 @@ enum TrackParts {
     /// MED-1/2). A VoiceOver swipe moves by `ScrubPrecision.adjustmentStep` — a fiftieth of the
     /// span, at least one grid unit — and a drag crosses the whole span in a fixed distance. On
     /// a fixed 1…999 range one swipe jumped about 20 bars and a point of drag about 5; bars in
-    /// between could only be typed. On a song's own length a swipe is one bar up to a span of
-    /// fifty bars and rounds to one up to about seventy-five; typing still reaches any bar.
+    /// between could only be typed. On a song's own length a swipe is exactly one bar while the
+    /// span stays under fifty bars (a song up to about forty-two); a longer song steps a fiftieth
+    /// of its span per swipe, so a 128-bar song moves about three bars per swipe.
+    ///
+    /// ⚠️ THE PRICE, stated because the first wording of this doc denied it (review of
+    /// 8c40b0fd0, MED-1): the number pad clamps to this SAME range, so a TYPED bar reaches only
+    /// the song's end plus `startBarRoom` too. On a 20-bar song, typing 50 lands on bar 28.
+    /// Further out takes a second commit — the song has grown by then, so the range has too —
+    /// at one undo step each. Chosen over the fixed range because a VoiceOver swipe that skips
+    /// twenty bars cannot place a part at all, while a part far past the song's end is rare.
     nonisolated static func startBarRange(for part: Part, songBars: Int) -> ClosedRange<Double> {
         let current = WorkstationSummary.barNumber(forTick: part.startTick)
         // Clamped BEFORE the addition: a song length near `Int.max` would otherwise trap here.
@@ -102,14 +110,17 @@ enum TrackParts {
     /// named bar, at the SAME place within the bar the part holds now — exactly what repeated
     /// Earlier/Later would reach, so a part that starts on beat 3 still starts on beat 3.
     /// Bars are counted by `WorkstationSummary.barNumber` (#416), so the field shows the bar
-    /// the heading shows. Nil when the value is not finite, below bar 1, past `maxStartBar`,
+    /// the heading shows. Nil when the value is not finite, below bar 1, past `maxStartBar`
+    /// (or past the part's own bar, for a part already beyond it — the field's range reaches
+    /// that bar, so a value it offers is always one this accepts; review of 8c40b0fd0, LOW-4),
     /// or names the bar the part already starts in — nothing to move, nothing to undo.
     nonisolated static func startTick(forBar bar: Double, keeping part: Part) -> Int? {
-        guard bar.isFinite, bar >= 1, bar <= Double(maxStartBar) else { return nil }
+        let current = WorkstationSummary.barNumber(forTick: part.startTick)
+        guard bar.isFinite, bar >= 1, bar <= Double(Swift.max(maxStartBar, current)) else { return nil }
         let perBar = TimelineTime.ticksPerBar
         guard perBar > 0 else { return nil }
         let target = Int(bar.rounded())
-        guard target != WorkstationSummary.barNumber(forTick: part.startTick) else { return nil }
+        guard target != current else { return nil }
         let within = Swift.max(0, part.startTick) % perBar
         return (target - 1) * perBar + within
     }

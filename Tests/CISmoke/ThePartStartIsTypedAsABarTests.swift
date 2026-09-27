@@ -12,8 +12,10 @@
 //    same offset within the bar, and equals what repeated `laterStart`/`earlierStart` reach; it
 //    rounds a fractional draft to the nearest bar; it answers nil for the bar the part is already
 //    in (no move, no undo step), for a non-finite draft, below bar 1 and past `maxStartBar`.
-// 2. SOURCE: the field is a private LEAF mounted once in the part bar's body; it states its grid
-//    (`decimals: 0`), takes its range from `maxStartBar` (#416), writes a DRAFT while dragging and
+// 2. SOURCE: the field is a private LEAF mounted once in the part bar's body, handed the song's
+//    own length; it states its grid (`decimals: 0`), takes its range from `startBarRange` (#416)
+//    — the song's end plus `startBarRoom`, so a TYPED bar is clamped there too (review of
+//    8c40b0fd0, MED-1: the price is stated at `startBarRange`) — writes a DRAFT while dragging and
 //    moves the part only in `commitDraft` — through `TrackParts.move`, the one writer the buttons
 //    and the canvas use — and drops the draft whenever the part's start moves.
 //
@@ -24,6 +26,10 @@
 // (the move written in the Binding's setter, the reset dropped, `decimals: 0` removed, a literal
 // range, `onChange` routed to the commit, the mount put inside a condition): each red. Review of
 // 6c69dacad added the range claim: the field's reach follows the song, so one swipe is one bar.
+// Review of 8c40b0fd0 added three: the song length the bar hands over (mutant `songBars: 999`
+// red), room past the end (mutant `startBarRoom = 0` red), and a part already past the clamp
+// (red on the parent `8c40b0fd0`, where `startTick` refused every bar above 9 999 — ONE
+// regression, three assertions).
 // NOT covered: how the field reads under the title on glass, and whether a drag across many bars
 // feels right — a device look.
 // NEEDS-FOUNDER-VERIFY: Workstation → select a part that starts on beat 3 of bar 2 → "Starts at
@@ -77,7 +83,20 @@ final class ThePartStartIsTypedAsABarTests: XCTestCase {
             XCTAssertNil(TrackParts.startTick(forBar: bad, keeping: part), "\(bad) moves nothing")
         }
         XCTAssertEqual(TrackParts.startTick(forBar: Double(TrackParts.maxStartBar), keeping: part),
-                       (TrackParts.maxStartBar - 1) * Self.bar + 480, "the last bar the field offers is reachable")
+                       (TrackParts.maxStartBar - 1) * Self.bar + 480,
+                       "the overflow clamp's own bar is accepted — the FIELD offers only the song's reach")
+        // Review of 8c40b0fd0, LOW-4: a part already past the clamp (the drag and Later do not
+        // stop there) is offered its own bar and everything below it, and all of it moves.
+        let far = TrackParts.Part(id: UUID(), startTick: (TrackParts.maxStartBar + 40) * Self.bar,
+                                  lengthTicks: Self.bar)
+        let farBar = WorkstationSummary.barNumber(forTick: far.startTick)
+        XCTAssertEqual(TrackParts.startBarRange(for: far, songBars: 16).upperBound, Double(farBar))
+        let inside: [Int] = [farBar - 1, TrackParts.maxStartBar + 1, 3]   // annotated (#E2)
+        for bar in inside {
+            XCTAssertEqual(TrackParts.startTick(forBar: Double(bar), keeping: far).map { WorkstationSummary.barNumber(forTick: $0) },
+                           bar, "bar \(bar) is inside the far part's range, so the release moves it there")
+        }
+        XCTAssertNil(TrackParts.startTick(forBar: Double(farBar + 1), keeping: far), "and nothing past its own bar")
     }
 
     func testTheFieldReachesTheSongAndSwipesOneBar() {
@@ -97,6 +116,9 @@ final class ThePartStartIsTypedAsABarTests: XCTestCase {
                        "never below the bar the part is on — the field's value stays inside its range")
         XCTAssertEqual(TrackParts.startBarRange(for: part, songBars: .max).upperBound, Double(TrackParts.maxStartBar),
                        "and never past the overflow clamp")
+        // Review of 8c40b0fd0, LOW-3: the room past the end is the point of the reach — pinned
+        // as a property, not as its value (#364).
+        XCTAssertGreaterThanOrEqual(TrackParts.startBarRoom, 1, "a part can be moved past the song's last bar")
     }
 
     // MARK: 2 — the leaf, its draft and its one write
@@ -117,6 +139,10 @@ final class ThePartStartIsTypedAsABarTests: XCTestCase {
                                       options: .regularExpression),
                         "the field sits unconditionally under the title row")
         XCTAssertEqual(code.components(separatedBy: "PartStartField(").count - 1, 1, "and nowhere else")
+        // Review of 8c40b0fd0, LOW-3: what the bar hands over IS the reach — a literal here
+        // brings back the twenty-bar swipe and nothing else would notice.
+        XCTAssertTrue(barBody.contains("PartStartField(part: part, songBars: WorkstationSummary(document: document).lengthBars)"),
+                      "the field is handed the song's own length, by the Workstation's own summary (#416)")
         XCTAssertLessThan(bodyEnd.lowerBound, leaf.lowerBound, "the leaf is its own struct, outside the bar")
 
         let field = String(code[leaf.upperBound...])

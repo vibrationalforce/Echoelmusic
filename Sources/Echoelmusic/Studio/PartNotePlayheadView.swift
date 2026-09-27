@@ -13,14 +13,22 @@
 // `ArrangePlayheadView` and `SongPositionReadout` do it; the grid hands over three cold numbers.
 //
 // ⚠️ `currentTick` is read INSIDE the `TimelineView` closure, per frame. Hoisted above it, the
-// value would be read once and the line would not move (review of 82ee9350b, LOW-6).
+// value would be read once and the line would not move — the shape `SongPositionReadout`'s
+// review settled, copied here rather than reviewed here.
+//
+// ⚠️ THE LINE STEPS, IT DOES NOT GLIDE (review of e091712e5, LOW-7). The player advances
+// `currentTick` once per transport step — 120 ticks, exactly one grid column — so the line
+// jumps a column at a time. The fractional step below is exact arithmetic, and it is visible
+// only for a part whose start sits off the 120-tick grid, where the line stands between two
+// columns by the same fraction the part does.
 
 import SwiftUI
 
 /// The pure half: which column of a part's grid the song is on.
 enum PartNotePlayhead {
 
-    /// The playhead's position in grid STEPS (fractional — it glides between columns), or nil
+    /// The playhead's position in grid STEPS (fractional, though the player's position moves a
+    /// whole column at a time — see the file header), or nil
     /// when the song is not inside the part: before its start, at or past its end, or when the
     /// part has no length. Measured from the part's START, the grid's x = 0 — the notes the grid
     /// draws are windowed to the part (`ClipNoteEdit.visibleNotes`), not to the clip.
