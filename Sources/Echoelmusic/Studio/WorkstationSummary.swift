@@ -146,6 +146,19 @@ public struct WorkstationSummary: Equatable, Sendable {
         barNumber(forTick: Swift.max(0, tick - 1))
     }
 
+    /// "Bar 12 · Beat 3" — where the playing song IS (design D1, `SongPositionReadout`). Always
+    /// names the beat, unlike `SessionGrid.label`, which drops it on a bar line: a readout that
+    /// changes WIDTH on every downbeat jitters beside the button it sits next to. The bar comes
+    /// from `barNumber(forTick:)`, the one bar-number rule (#416); a negative tick folds to the
+    /// top like it does there.
+    public static func positionText(forTick tick: Int) -> String {
+        let t = Swift.max(0, tick)
+        let perBar = TimelineTime.ticksPerBar
+        let perBeat = TimelineTime.ticksPerBeat
+        let beat = perBar > 0 && perBeat > 0 ? (t % perBar) / perBeat + 1 : 1
+        return "Bar \(barNumber(forTick: t)) · Beat \(beat)"
+    }
+
     /// "bar 3" or "bars 3 to 7" — the span a lane's content occupies, said once so the printed
     /// and spoken forms cannot disagree (#416).
     public static func barSpan(firstTick: Int, lastTick: Int, joiner: String) -> String {

@@ -797,6 +797,11 @@ struct WorkstationView: View {
             .accessibilityLabel(playing ? "Stop timeline" : "Play timeline")
             .accessibilityHint(WorkstationSummary.transportHint(playing: playing, startable: startable))
 
+            // Design D1 — the song position as a number while it plays. Its own self-driving
+            // leaf: this row reads `isPlaying` only, never the position.
+            if playing {
+                SongPositionReadout()
+            }
             Text(WorkstationSummary.transportCaption(playing: playing, startable: startable))
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
