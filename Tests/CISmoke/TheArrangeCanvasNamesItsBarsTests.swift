@@ -58,6 +58,26 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
                        "a song too short for a second number still names its first bar")
     }
 
+    func testTheRulerSharesTheBlocksScaleAndStaysOnTheLane() {
+        // Review of d16d764b1, LOW-1: 8½ bars — the blocks divide by the song's ticks, so must
+        // the ruler, or every number drifts off its downbeat.
+        let half = 8 * Self.bar + Self.bar / 2
+        let marks = ArrangeCanvas.rulerMarks(songTicks: half, laneWidth: 340, minSpacing: 28)
+        XCTAssertEqual(marks.map(\.bar), [1, 2, 3, 4, 5, 6, 7, 8])
+        for mark in marks {
+            XCTAssertEqual(mark.fraction, Double((mark.bar - 1) * Self.bar) / Double(half), accuracy: 1e-12,
+                           "bar \(mark.bar) sits where a part starting on it is drawn")
+        }
+        // LOW-2: 41 bars on 250 pt steps by 8; bar 41 would sit 6 pt from the end — left out.
+        let long = ArrangeCanvas.rulerMarks(songTicks: 41 * Self.bar, laneWidth: 250, minSpacing: 28)
+        XCTAssertEqual(long.map(\.bar), [1, 9, 17, 25, 33])
+        for mark in long.dropFirst() {
+            XCTAssertLessThanOrEqual(mark.fraction * 250 + 28, 250, "no number spills past the lane")
+        }
+        XCTAssertEqual(ArrangeCanvas.rulerMarks(songTicks: Self.bar, laneWidth: 10, minSpacing: 28).map(\.bar), [1],
+                       "bar 1 is always named, even on a lane too narrow for it")
+    }
+
     func testDegenerateGeometryNamesNothing() {
         XCTAssertEqual(ArrangeCanvas.rulerMarks(songTicks: 0, laneWidth: 320, minSpacing: 28), [])
         XCTAssertEqual(ArrangeCanvas.rulerMarks(songTicks: Self.bar - 1, laneWidth: 320, minSpacing: 28), [],
@@ -97,19 +117,50 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
     func testTheCanvasMountsTheRulerAboveItsLanes() throws {
         let file = try source(Self.canvasPath)
         XCTAssertEqual(file.components(separatedBy: "ArrangeBarRuler(").count - 1, 1, "one ruler on the canvas")
+        // Review of d16d764b1, LOW-3: every search is bounded by the canvas struct, and the row's
+        // SPACING is pinned with its gutter — the lanes are `HStack(spacing: Self.gutter)` after
+        // a `nameWidth` name, so the ruler row must be the same or every number shifts.
         guard let canvas = file.range(of: "struct ArrangeCanvasView: View {"),
-              let gutter = file.range(of: "Color.clear.frame(width: Self.nameWidth, height: 1)",
-                                      range: canvas.upperBound..<file.endIndex),
-              let mount = file.range(of: "ArrangeBarRuler(songTicks: songTicks)", range: canvas.upperBound..<file.endIndex),
-              let lanes = file.range(of: "ForEach(rows) { row in", range: canvas.upperBound..<file.endIndex) else {
-            return XCTFail("the canvas no longer mounts `ArrangeBarRuler` behind an empty name gutter, before its lanes")
+              let canvasEnd = file.range(of: "struct ArrangeBarRuler: View {", range: canvas.upperBound..<file.endIndex) else {
+            return XCTFail("ANCHOR MISSING: `ArrangeCanvasView` before `ArrangeBarRuler` (#454)")
         }
-        XCTAssertLessThan(gutter.lowerBound, mount.lowerBound,
-                          "the empty gutter comes first, so the numbers start where the lanes do")
-        XCTAssertLessThan(mount.lowerBound, lanes.lowerBound, "the ruler sits above the lanes")
+        let body = String(file[canvas.upperBound..<canvasEnd.lowerBound])
+        // Token sequences with ONLY whitespace between them, so a re-indent is not a regression
+        // and each token exists verbatim in the source.
+        guard let row = sequence(["HStack(spacing: Self.gutter) {",
+                                  "Color.clear.frame(width: Self.nameWidth, height: 1)",
+                                  "ArrangeBarRuler(songTicks: songTicks)", "}"], in: body),
+              let lanes = sequence(["ForEach(rows) { row in", "HStack(spacing: Self.gutter) {", "Text(row.name)"],
+                                   in: body) else {
+            return XCTFail("""
+                the ruler row is no longer `HStack(spacing: Self.gutter)` holding an empty \
+                `nameWidth` gutter and then the ruler — or the lane rows no longer open with the \
+                same spacing and their name — so the numbers no longer sit over their bars
+                """)
+        }
+        XCTAssertLessThan(row.lowerBound, lanes.lowerBound, "the ruler sits above the lanes")
+        XCTAssertTrue(body.contains(".frame(width: Self.nameWidth, alignment: .leading)"),
+                      "the lane name keeps the width the ruler's gutter copies")
     }
 
     // MARK: helpers
+
+    /// Where `tokens` occur in order with nothing but whitespace between them, or nil.
+    private func sequence(_ tokens: [String], in text: String) -> Range<String.Index>? {
+        var from = text.startIndex
+        while let first = text.range(of: tokens[0], range: from..<text.endIndex) {
+            var end = first.upperBound
+            var matched = true
+            for token in tokens.dropFirst() {
+                guard let next = text.range(of: token, range: end..<text.endIndex),
+                      text[end..<next.lowerBound].allSatisfy(\.isWhitespace) else { matched = false; break }
+                end = next.upperBound
+            }
+            if matched { return first.lowerBound..<end }
+            from = first.upperBound
+        }
+        return nil
+    }
 
     private func source(_ relativePath: String) throws -> String {
         var root = URL(fileURLWithPath: #filePath)

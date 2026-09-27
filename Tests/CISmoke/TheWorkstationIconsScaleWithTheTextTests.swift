@@ -83,7 +83,7 @@ final class TheWorkstationIconsScaleWithTheTextTests: XCTestCase {
         XCTAssertLessThan(row.lowerBound, stack.lowerBound, "the row is the first choice, the stack the fallback")
         for door in ["door(\"Save\"", "door(\"Open\""] {
             XCTAssertEqual(body.components(separatedBy: door).count - 1, 1,
-                           "`\(door)` — each door is built ONCE and placed in both layouts; two builds could drift apart")
+                           "`\(door)` is built more than once — build each door ONCE and place it in both layouts; two builds could drift apart")
         }
     }
 

@@ -65,7 +65,12 @@ final class TheSongPositionIsReadAsANumberTests: XCTestCase {
         XCTAssertTrue(body.contains("WorkstationSummary.positionText(forTick: player.currentTick)"),
                       "the words come from the one pure rule, fed the player's position")
         XCTAssertEqual(code.components(separatedBy: "currentTick").count - 1, 1,
-                       "ONE read of the position in this file, inside the `TimelineView` (review of e1036b874, LOW)")
+                       "ONE read of the position in this file (review of e1036b874, LOW)")
+        // Review of 82ee9350b, LOW-6: and that read is INSIDE the self-driving view — hoisted
+        // above it, an `@ObservationIgnored` value is read once and never again.
+        if let clock = body.range(of: "TimelineView("), let read = body.range(of: "player.currentTick") {
+            XCTAssertLessThan(clock.lowerBound, read.lowerBound, "the position is read inside the `TimelineView`, per frame")
+        }
         XCTAssertTrue(body.contains(".accessibilityLabel(\"Song position\")"))
         XCTAssertTrue(body.contains(".accessibilityValue(text)"))
         XCTAssertTrue(body.contains(".accessibilityAddTraits(.updatesFrequently)"),
@@ -96,6 +101,22 @@ final class TheSongPositionIsReadAsANumberTests: XCTestCase {
                        "the readout sits INSIDE the playing branch — a stopped song has no position to show")
         XCTAssertEqual(code.components(separatedBy: "SongPositionReadout()").count - 1, 1,
                        "one position readout on the plate")
+        // Review of 82ee9350b, LOW-4: the MED fix itself. Play + readout switch to a stack at
+        // accessibility sizes, and the caption lives OUTSIDE that group, on its own line.
+        XCTAssertTrue(transport.contains("let controls = dynamicTypeSize.isAccessibilitySize"),
+                      "the Play row's arrangement follows the text size")
+        XCTAssertTrue(transport.contains("? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))"),
+                      "at accessibility sizes Play and the readout stack")
+        guard let group = transport.range(of: "controls {"),
+              let caption = transport.range(of: "WorkstationSummary.transportCaption(", range: group.upperBound..<transport.endIndex) else {
+            return XCTFail("the transport row no longer groups Play in `controls { … }` ahead of its caption")
+        }
+        XCTAssertLessThan(group.lowerBound, mount.lowerBound, "the readout is inside the switching group")
+        let between = transport[group.upperBound..<caption.lowerBound]
+        XCTAssertEqual(between.filter { $0 == "{" }.count + 1, between.filter { $0 == "}" }.count, """
+            the caption is back inside the Play group — at large sizes it becomes a narrow column \
+            that re-wraps whenever the readout comes and goes. It has its own line.
+            """)
     }
 
     // MARK: 4 — the caption names where the take started (D1b)

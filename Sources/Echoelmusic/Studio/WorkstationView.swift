@@ -778,10 +778,11 @@ struct WorkstationView: View {
         // Review of e1036b874 (MED): Play, the position readout and the caption shared one row,
         // so at accessibility sizes the readout lost its beat and the caption became a narrow
         // column that re-wrapped whenever the readout came and went. The caption now has its
-        // own line, and Play + readout stack at accessibility sizes. ⛔ NOT `ViewThatFits`: the
-        // readout's `minimumScaleFactor` makes the row candidate always report a fit, so the
-        // stack would never be chosen (`BioStripView`, the same trap). `AnyLayout` keeps the
-        // readout's identity across the switch — ONE mount, in either arrangement.
+        // own line, and Play + readout stack at accessibility sizes. Not `ViewThatFits`, for a
+        // reason INHERITED from `BioStripView` rather than measured here (review of 82ee9350b,
+        // LOW-5): that a `minimumScaleFactor` child makes the row candidate report a fit. The
+        // measured reason for `AnyLayout` stands on its own: it keeps the readout's identity
+        // across the switch — ONE mount, in either arrangement.
         let controls = dynamicTypeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
             : AnyLayout(HStackLayout(spacing: 8))

@@ -102,18 +102,27 @@ enum ArrangeCanvas {
     /// The bars the ruler names over a lane `laneWidth` points wide: bar 1, then every `step`-th
     /// bar, `step` the smallest power of two that leaves at least `minSpacing` points between two
     /// numbers — a long song thins its labels instead of overprinting them, and every label
-    /// still sits on a downbeat. The song's end is not a bar and is not named. Degenerate
-    /// geometry, or a song shorter than one bar, names nothing.
+    /// still sits on its downbeat. Positions divide by `songTicks`, exactly as the blocks, the
+    /// playhead and `dropTick` do, so a song that is not a whole number of bars still lines up
+    /// (review of d16d764b1, LOW-1). A number too close to the lane's end to be printed there
+    /// is left out rather than spilling past it (LOW-2) — bar 1 always stays. The song's end is
+    /// not a bar and is not named. Degenerate geometry, or a song shorter than one bar, names
+    /// nothing.
     nonisolated static func rulerMarks(songTicks: Int, laneWidth: CGFloat,
                                        minSpacing: CGFloat) -> [RulerMark] {
-        let bars = songTicks / TimelineTime.ticksPerBar
+        let perBar = TimelineTime.ticksPerBar
+        let bars = perBar > 0 ? songTicks / perBar : 0
         guard bars > 0, laneWidth.isFinite, laneWidth > 0,
               minSpacing.isFinite, minSpacing > 0 else { return [] }
-        let pointsPerBar = Double(laneWidth) / Double(bars)
+        let width = Double(laneWidth)
+        let spacing = Double(minSpacing)
+        let pointsPerBar = width * Double(perBar) / Double(songTicks)
         var step = 1
-        while step < bars, Double(step) * pointsPerBar < Double(minSpacing) { step *= 2 }
-        return stride(from: 1, through: bars, by: step).map {
-            RulerMark(bar: $0, fraction: Double($0 - 1) / Double(bars))
+        while step < bars, Double(step) * pointsPerBar < spacing { step *= 2 }
+        return stride(from: 1, through: bars, by: step).compactMap { bar in
+            let fraction = Double((bar - 1) * perBar) / Double(songTicks)
+            guard bar == 1 || fraction * width + spacing <= width else { return nil }
+            return RulerMark(bar: bar, fraction: fraction)
         }
     }
 }
