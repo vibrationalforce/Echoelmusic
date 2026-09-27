@@ -74,6 +74,26 @@ enum TrackParts {
         part.startTick + stepTicks
     }
 
+    /// The highest bar a typed start may name — the field's range, and the clamp that keeps
+    /// the tick arithmetic below far from `Int` overflow.
+    static let maxStartBar = 999
+
+    /// Where the part lands when its start is typed as a bar number (design slice 7): the
+    /// named bar, at the SAME place within the bar the part holds now — exactly what repeated
+    /// Earlier/Later would reach, so a part that starts on beat 3 still starts on beat 3.
+    /// Bars are counted by `WorkstationSummary.barNumber` (#416), so the field shows the bar
+    /// the heading shows. Nil when the value is not finite, below bar 1, past `maxStartBar`,
+    /// or names the bar the part already starts in — nothing to move, nothing to undo.
+    nonisolated static func startTick(forBar bar: Double, keeping part: Part) -> Int? {
+        guard bar.isFinite, bar >= 1, bar <= Double(maxStartBar) else { return nil }
+        let perBar = TimelineTime.ticksPerBar
+        guard perBar > 0 else { return nil }
+        let target = Int(bar.rounded())
+        guard target != WorkstationSummary.barNumber(forTick: part.startTick) else { return nil }
+        let within = Swift.max(0, part.startTick) % perBar
+        return (target - 1) * perBar + within
+    }
+
     /// "Bar 5 · 4 bars" — the start as `SessionGrid.label` names it (one label rule, #416)
     /// and the length in the largest whole unit that fits.
     nonisolated static func title(_ part: Part) -> String {

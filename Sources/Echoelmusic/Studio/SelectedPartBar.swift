@@ -232,6 +232,7 @@ struct SelectedPartBar: View {
                     PartPlayButton(startTick: part.startTick, playFrom: playFrom,
                                    songCanStart: songCanStart)
                 }
+                PartStartField(part: part)
                 // Seven labelled buttons do not fit a phone at every type size (review
                 // MEDIUM-3): the row falls back to icons, then to two rows of icons — every
                 // button keeping its full spoken label.
@@ -427,5 +428,50 @@ private struct PartPlayButton: View {
         .accessibilityHint(startable && !playing
             ? "Plays the arrangement from this part's bar on the shared transport."
             : WorkstationSummary.transportHint(playing: playing, startable: startable))
+    }
+}
+
+/// Design slice 7 — the selected part's start, typed as a bar number.
+///
+/// Earlier/Later step one bar per tap; a part that belongs twelve bars away took twelve taps
+/// and twelve undo steps. The field names the bar and moves there in ONE `TrackParts.move` —
+/// one undo step, through the same writer the buttons and the canvas drag use. The place
+/// within the bar is kept (`TrackParts.startTick(forBar:keeping:)`), so the field lands where
+/// the buttons would have.
+///
+/// ⚠️ THE MOVE HAPPENS ON COMMIT, NOT PER DRAG STEP. A vertical-fader drag passes through
+/// every bar on the way; writing each one would put a dozen undo steps on the song and
+/// re-render the canvas per step. The drag edits a draft; the release writes once (the
+/// `PartTempoRow` pattern).
+///
+/// ⚠️ THE DRAFT IS CLEARED WHENEVER THE PART'S START MOVES — by Earlier/Later, a canvas drag,
+/// an undo — because a cancelled drag fires no `onCommit` and would otherwise keep showing a
+/// bar the part is not on.
+@MainActor
+private struct PartStartField: View {
+    let part: TrackParts.Part
+    @Environment(TimelineStore.self) private var timeline
+    @State private var draft: Double? = nil
+
+    var body: some View {
+        EchoelValueField(label: "Starts at bar",
+                         value: Binding(get: { shownBar }, set: { draft = $0 }),
+                         range: 1...Double(TrackParts.maxStartBar),
+                         decimals: 0,
+                         hint: "Moves the part to start on this bar; its place within the bar is kept.",
+                         onCommit: { commitDraft() })
+            .onChange(of: part.startTick) { _, _ in draft = nil }
+    }
+
+    private var shownBar: Double {
+        draft ?? Double(WorkstationSummary.barNumber(forTick: part.startTick))
+    }
+
+    private func commitDraft() {
+        guard let bar = draft else { return }
+        draft = nil
+        if let tick = TrackParts.startTick(forBar: bar, keeping: part) {
+            TrackParts.move(part, toStartTick: tick, timeline: timeline)
+        }
     }
 }
