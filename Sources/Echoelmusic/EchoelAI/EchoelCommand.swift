@@ -8,8 +8,9 @@
 // (`EchoelCommandSpec`). A model never writes state: it PROPOSES `EchoelProposedAction`s — plain
 // data — and `EchoelCommandParser` turns each into a command or a concrete error. Only
 // `EchoelCommandExecutor` executes, and it executes through the SAME store paths the buttons use
-// (`TrackMix.setLevel`, `TrackParts.duplicate`, `TrackParts.remove`) — no second engine, no second
-// timeline, no simulated taps.
+// (`TrackMix.setLevel`, `TrackParts.duplicate`, `TrackParts.remove`, and for a media look the
+// photo and video cards' own owner `MediaLookUndo`) — no second engine, no second timeline, no
+// simulated taps.
 //
 // ⭐ WHAT IS NOT HERE, SAID PLAINLY. No language model proposes these actions yet. The existing
 // `EchoelLanguageModel` / `EchoelAIRouter` answer text; `FoundationModelsBrain` has no caller and
@@ -37,6 +38,14 @@ enum EchoelCommandID: String, CaseIterable, Sendable, Codable {
     case duplicatePart = "part.duplicateAfter"
     /// Take back the agent's own last change — and only that.
     case undoAgentChange = "agent.undoLast"
+    /// Give the visuals the look of the photo or video that is open on its card — the card's Apply.
+    case applyMediaLook = "media.applyLook"
+}
+
+/// Which card a media command means. "This photo" is the one the photo card has read and shows.
+enum EchoelMedium: String, CaseIterable, Sendable, Codable {
+    case photo
+    case video
 }
 
 /// A command's target: whatever is selected when it runs, or one stable id.
@@ -59,6 +68,7 @@ enum EchoelCommand: Equatable, Sendable {
     case setTrackLevel(track: EchoelTarget, change: EchoelLevelChange)
     case duplicatePart(part: EchoelTarget)
     case undoAgentChange
+    case applyMediaLook(medium: EchoelMedium)
 
     var id: EchoelCommandID {
         switch self {
@@ -66,6 +76,7 @@ enum EchoelCommand: Equatable, Sendable {
         case .setTrackLevel: return .setTrackLevel
         case .duplicatePart: return .duplicatePart
         case .undoAgentChange: return .undoAgentChange
+        case .applyMediaLook: return .applyMediaLook
         }
     }
 }
@@ -155,6 +166,15 @@ enum EchoelCommandRegistry {
                                 "each value is still what the agent left — a value changed since is kept"],
                 effect: "Restores each value the agent's last request changed.",
                 undo: .isTheUndo, permission: .reversibleEdit)
+        case .applyMediaLook:
+            return EchoelCommandSpec(
+                id: id, summary: "Give the visuals the look of the open photo or video",
+                parameters: ["medium: photo | video"],
+                preconditions: ["that card has read a photo or video and shows it",
+                                "no look from a photo or video is still applied — take it back first"],
+                effect: "Sets the visual look from the colours (and for a video, the motion) the card "
+                    + "measured — through the card's own Apply path.",
+                undo: .agentJournal, permission: .reversibleEdit)
         }
     }
 
@@ -184,6 +204,8 @@ enum EchoelCommandError: Error, Equatable, Sendable {
     case verificationFailed(String)
     case modelUnavailable
     case modelFailed
+    case nothingShown(EchoelMedium)
+    case lookStillApplied(String)
 
     /// What the person reads. Plain, specific, never "error".
     var message: String {
@@ -228,6 +250,11 @@ enum EchoelCommandError: Error, Equatable, Sendable {
             return "No language model is connected. The buttons do all of this without one."
         case .modelFailed:
             return "The language model did not answer. Nothing was changed."
+        case .nothingShown(let medium):
+            return "No \(medium.rawValue) is open. Pick one on its card first."
+        case .lookStillApplied(let medium):
+            let from = medium.isEmpty ? "a photo or video" : "a \(medium)"
+            return "The visuals still use the look of \(from). Take that back first."
         }
     }
 }
@@ -289,6 +316,11 @@ enum EchoelCommandParser {
             return .success(.undoAgentChange)
         case .duplicatePart:
             return target(proposal.arguments["part"], naming: "that part").map { EchoelCommand.duplicatePart(part: $0) }
+        case .applyMediaLook:
+            guard let raw = proposal.arguments["medium"], let medium = EchoelMedium(rawValue: raw) else {
+                return .failure(.invalidArgument("the medium — photo or video"))
+            }
+            return .success(.applyMediaLook(medium: medium))
         case .setTrackLevel:
             let track: EchoelTarget
             switch target(proposal.arguments["track"], naming: "that track") {
@@ -315,6 +347,7 @@ enum EchoelCommandParser {
         case .describeState, .undoAgentChange: return []
         case .duplicatePart: return ["part"]
         case .setTrackLevel: return ["track", "decibels", "mode"]
+        case .applyMediaLook: return ["medium"]
         }
     }
 
@@ -345,11 +378,23 @@ struct EchoelProjectSnapshot: Equatable, Sendable {
         let startTick: Int
         let lengthTicks: Int
     }
+    /// What the photo and video cards show, and the media look that is applied, if any — read
+    /// from their one owner, `MediaLookUndo`.
+    struct Media: Equatable, Sendable {
+        let photo: MediaSeed?
+        let video: VideoSeed?
+        let appliedLook: MediaSeedApplication?
+        /// "photo" or "video" while a look is applied; empty otherwise.
+        let appliedFrom: String
+
+        static let none = Media(photo: nil, video: nil, appliedLook: nil, appliedFrom: "")
+    }
     let track: Track?
     let part: Part?
     let trackCount: Int
     let partCount: Int
     let agentCanUndo: Bool
+    let media: Media
 }
 
 /// A request: its id (a repeat of the same id never runs twice), its steps in order, the state

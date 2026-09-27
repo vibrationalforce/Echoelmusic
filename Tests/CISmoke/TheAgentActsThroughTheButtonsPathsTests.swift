@@ -21,6 +21,11 @@
 // original's start (claim 3), a repeated request that runs again (claim 5), an undo that restores
 // a level the person has moved since (claim 6), the executor writing `setLaneLevel` directly
 // instead of through `TrackMix.setLevel` (claim 8).
+// Step 2b (`media.applyLook`) widened the rig and claim 8: the executor now takes the media-look
+// owner and a defaults suite, and claim 8 names the owner's writers. `UserDefaults` as a bare word
+// was forbidden and is now allowed as a TYPE — the look lives there and a test must hand in a
+// private suite — while `UserDefaults.standard`, `.set(`, `forKey:` and `removeObject` stay out,
+// and `MediaSeedApplication.apply(`, `.write(to:` and `mediaLooks.record(` join the bypass list.
 
 import Foundation
 import XCTest
@@ -49,7 +54,11 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         let original = timeline.document
         timeline.replaceDocument(Self.fixture)
         let selection = WorkstationSelection()
-        let executor = EchoelCommandExecutor(timeline: timeline, selection: selection, voiceCapacity: { 4 })
+        // No claim here applies a media look, so the defaults are never written; a fixed suite name
+        // always resolves, and the fallback is never the app's own domain being touched.
+        let looks = UserDefaults(suiteName: "echoel.tests.agentButtonsPaths") ?? UserDefaults()
+        let executor = EchoelCommandExecutor(timeline: timeline, selection: selection, voiceCapacity: { 4 },
+                                             mediaLooks: MediaLookUndo(), visualDefaults: looks)
         return (timeline, selection, executor, original)
     }
 
@@ -256,16 +265,21 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         }
         let executor = try code("Sources/Echoelmusic/EchoelAI/EchoelCommandExecutor.swift")
         let commands = try code("Sources/Echoelmusic/EchoelAI/EchoelCommand.swift")
-        for writer in ["TrackMix.setLevel(", "TrackParts.duplicate(", "TrackParts.remove("] {
+        for writer in ["TrackMix.setLevel(", "TrackParts.duplicate(", "TrackParts.remove(",
+                       "mediaLooks.apply(photo:", "mediaLooks.apply(video:", "mediaLooks.undo(on:"] {
             XCTAssertTrue(executor.contains(writer), "the executor writes through `\(writer)`, the buttons' path")
         }
         for direct in ["setLaneLevel(", "duplicateRegion(", "removeRegion(", "replaceDocument(", "timeline.undo(",
-                       "document.regions.append", "document.lanes["] {
+                       "document.regions.append", "document.lanes[", "MediaSeedApplication.apply(", ".write(to:",
+                       "mediaLooks.record("] {
             XCTAssertFalse(executor.contains(direct), "the executor bypasses the button writers with `\(direct)`")
         }
         for file in [executor, commands] {
+            // `UserDefaults` may be NAMED — the visual look lives there and the test hands in a
+            // private suite — but the agent never picks the app's own, and never writes a key.
             for forbidden in ["AudioEngine", "EngineBus", "renderBlock", "AVAudio", "DispatchQueue", "URLSession",
-                              "FileManager", "UserDefaults", "Task.detached", "Thread."] {
+                              "FileManager", "UserDefaults.standard", ".set(", "forKey:",
+                              "removeObject", "Task.detached", "Thread."] {
                 XCTAssertFalse(file.contains(forbidden), "the agent layer names `\(forbidden)`")
             }
         }
@@ -278,7 +292,7 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
             Range(match.range(at: 1), in: executor).map { String(executor[$0]) }
         })
         XCTAssertEqual(members, ["document"], "the executor touches the store beyond reading its document")
-        XCTAssertTrue(executor.contains("run(Self.pinned(command, to: plan.basis)"),
+        XCTAssertTrue(executor.contains("run(Self.pinned(command, to: plan.basis), seen: plan.basis"),
                       "\"the selection\" is resolved from the state the plan saw, not re-read between steps (review MED)")
     }
 }

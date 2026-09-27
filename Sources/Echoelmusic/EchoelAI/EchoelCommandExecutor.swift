@@ -26,6 +26,14 @@
 // own Undo button is untouched — a taken-back copy is removed through the store, which records
 // that removal as one ordinary song step.
 //
+// ⭐ A MEDIA LOOK GOES THROUGH THE CARDS' OWN OWNER (step 2b). "Use the colours of this photo" is
+// `MediaLookUndo.apply(photo:on:)` — the call the photo card's Apply makes — with the seed that
+// card has read and SHOWS; the video likewise. The executor never writes a visual setting itself:
+// it hands the owner the defaults and reads the look back to confirm it. One look at a time, as on
+// the cards: while one is applied, a second is refused until it is taken back. The agent's Undo
+// asks the same owner, only while the look it applied is still the pending one; a setting a person
+// moved since is kept, as the card's Undo keeps it.
+//
 // ⚠️ CANCEL. Steps are instant main-actor writes; a request yields between them. Cancel (or the
 // surrounding task's cancellation) ends every step not yet started; a step that has run stays
 // done and is reported as done — Undo is the way back, not Cancel.
@@ -45,6 +53,7 @@ final class EchoelCommandExecutor {
     private enum Inverse {
         case level(laneID: UUID, before: Float, after: Float)
         case removeCopy(TimelineRegion)
+        case mediaLook(MediaSeedApplication)
     }
 
     private let timeline: TimelineStore
@@ -52,6 +61,10 @@ final class EchoelCommandExecutor {
     /// `TimelineRegionPlayer.laneVoiceCapacity` — asked, never assumed (#431: which lanes have a
     /// level depends on it, exactly as it does for the inspector).
     private let voiceCapacity: () -> Int
+    /// The one owner of a media look — `MediaLookUndo.shared` in the app, a fresh one in a test.
+    private let mediaLooks: MediaLookUndo
+    /// Where the visual look lives. Handed to `mediaLooks`, and read back only to confirm.
+    private let visualDefaults: UserDefaults
 
     private var journal: [[Inverse]] = []
     private var finished: [UUID: (steps: [EchoelCommand], report: EchoelExecutionReport)] = [:]
@@ -59,10 +72,13 @@ final class EchoelCommandExecutor {
     private(set) var runningRequest: UUID?
     private var cancelRequested = false
 
-    init(timeline: TimelineStore, selection: WorkstationSelection, voiceCapacity: @escaping () -> Int) {
+    init(timeline: TimelineStore, selection: WorkstationSelection, voiceCapacity: @escaping () -> Int,
+         mediaLooks: MediaLookUndo, visualDefaults: UserDefaults) {
         self.timeline = timeline
         self.selection = selection
         self.voiceCapacity = voiceCapacity
+        self.mediaLooks = mediaLooks
+        self.visualDefaults = visualDefaults
     }
 
     var canUndoAgentChange: Bool { !journal.isEmpty }
@@ -86,8 +102,12 @@ final class EchoelCommandExecutor {
             part = EchoelProjectSnapshot.Part(id: region.id, laneID: region.laneID, clipID: region.clipID,
                                               startTick: region.startTick, lengthTicks: region.lengthTicks)
         }
+        let media = EchoelProjectSnapshot.Media(photo: mediaLooks.shownPhoto, video: mediaLooks.shownVideo,
+                                                appliedLook: mediaLooks.pending,
+                                                appliedFrom: mediaLooks.pending == nil ? "" : mediaLooks.medium)
         return EchoelProjectSnapshot(track: track, part: part, trackCount: document.lanes.count,
-                                     partCount: document.regions.count, agentCanUndo: canUndoAgentChange)
+                                     partCount: document.regions.count, agentCanUndo: canUndoAgentChange,
+                                     media: media)
     }
 
     // MARK: Running
@@ -127,7 +147,7 @@ final class EchoelCommandExecutor {
                 results.append(EchoelStepResult(command: command, outcome: .cancelled))
                 continue
             }
-            let outcome = run(Self.pinned(command, to: plan.basis), into: &group)
+            let outcome = run(Self.pinned(command, to: plan.basis), seen: plan.basis, into: &group)
             if case .failed = outcome { stopped = true }
             results.append(EchoelStepResult(command: command, outcome: outcome))
         }
@@ -160,7 +180,7 @@ final class EchoelCommandExecutor {
         case .duplicatePart(.selected):
             guard let id = basis.part?.id else { return command }
             return .duplicatePart(part: .id(id))
-        case .describeState, .setTrackLevel, .duplicatePart, .undoAgentChange:
+        case .describeState, .setTrackLevel, .duplicatePart, .undoAgentChange, .applyMediaLook:
             return command
         }
     }
@@ -173,7 +193,8 @@ final class EchoelCommandExecutor {
         }
     }
 
-    private func run(_ command: EchoelCommand, into group: inout [Inverse]) -> EchoelStepResult.Outcome {
+    private func run(_ command: EchoelCommand, seen basis: EchoelProjectSnapshot,
+                     into group: inout [Inverse]) -> EchoelStepResult.Outcome {
         switch command {
         case .describeState:
             return .done(EchoelStateText.describe(snapshot()))
@@ -183,6 +204,8 @@ final class EchoelCommandExecutor {
             return duplicate(target, into: &group)
         case .undoAgentChange:
             return undoLast(&group)
+        case .applyMediaLook(let medium):
+            return applyLook(medium, seen: basis.media, into: &group)
         }
     }
 
@@ -287,6 +310,36 @@ final class EchoelCommandExecutor {
         return .done("Copied the part to \(TrackParts.title(placed)).")
     }
 
+    /// "This photo" is the one the card showed when the plan was made. A card that has since
+    /// read another one, or none, is a changed project — never a different photo applied.
+    private func applyLook(_ medium: EchoelMedium, seen: EchoelProjectSnapshot.Media,
+                           into group: inout [Inverse]) -> EchoelStepResult.Outcome {
+        guard mediaLooks.pending == nil else { return .failed(.lookStillApplied(mediaLooks.medium)) }
+        let applied: MediaSeedApplication?
+        switch medium {
+        case .photo:
+            guard let seed = mediaLooks.shownPhoto else { return .failed(.nothingShown(.photo)) }
+            guard seed == seen.photo else { return .failed(.projectChanged) }
+            applied = mediaLooks.apply(photo: seed, on: visualDefaults)
+        case .video:
+            guard let seed = mediaLooks.shownVideo else { return .failed(.nothingShown(.video)) }
+            guard seed == seen.video else { return .failed(.projectChanged) }
+            applied = mediaLooks.apply(video: seed, on: visualDefaults)
+        }
+        guard let application = applied else {
+            return .failed(.invalidArgument("that \(medium.rawValue)'s reading"))
+        }
+        group.append(.mediaLook(application))
+        guard mediaLooks.pending == application,
+              VisualLookSnapshot.read(from: visualDefaults) == application.after else {
+            return .failed(.verificationFailed("the visual look does not read as the \(medium.rawValue) set it"))
+        }
+        switch medium {
+        case .photo: return .done("The visuals now use the colours of the photo.")
+        case .video: return .done("The visuals now use the colour and motion of the video.")
+        }
+    }
+
     private func undoLast(_ group: inout [Inverse]) -> EchoelStepResult.Outcome {
         // A change made earlier in THIS request is the last change; otherwise the last request's.
         let entries: [Inverse]
@@ -333,6 +386,20 @@ final class EchoelCommandExecutor {
                 } else {
                     restored += 1
                 }
+            case .mediaLook(let application):
+                // Not the pending look any more: a card's Undo took it back already.
+                guard mediaLooks.pending == application else {
+                    restored += 1
+                    continue
+                }
+                let untouched = VisualLookSnapshot.read(from: visualDefaults) == application.after
+                mediaLooks.undo(on: visualDefaults)
+                if untouched, mediaLooks.pending == nil,
+                   VisualLookSnapshot.read(from: visualDefaults) == application.before {
+                    restored += 1
+                } else {
+                    kept.append("Part of the visual look")
+                }
             }
         }
         guard kept.isEmpty else {
@@ -361,6 +428,11 @@ enum EchoelStateText {
             lines.append("Selected part: \(span).")
         }
         lines.append("The song has \(count(state.trackCount, "track")) and \(count(state.partCount, "part")).")
+        if state.media.photo != nil { lines.append("A photo is open on its card.") }
+        if state.media.video != nil { lines.append("A video is open on its card.") }
+        if state.media.appliedLook != nil {
+            lines.append("The visuals use the look of a \(state.media.appliedFrom).")
+        }
         if state.agentCanUndo { lines.append("I can take back my last change.") }
         return lines.joined(separator: " ")
     }
