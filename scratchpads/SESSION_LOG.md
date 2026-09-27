@@ -40157,3 +40157,12 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - NICHT kompiliert (kein Swift hier, kein Push erlaubt). Jeder Wächter per Python transkribiert, Mutanten rot; fünf Prüfskripte vor jedem Commit sauber.
 - MS4/MS5 (Arrangement + Performance) BEWUSST gehalten: Plan §5 — ohne Gate-Lauf nicht den Wiedergabe-Motor umbauen. Design baufertig im Plan.
 - Blockiert (Founder/Info.plist): Kamera-Aufnahme, Bio-Shutter (CoreMotion), Video-Ton als Beat-Quelle (nicht gebaut, Integrationspunkt benannt).
+
+## 2026-09-27 — EchoelAI als Bedienagent, Schritt 1 (gleicher lokaler Branch)
+
+- Founder-Ergänzung: EchoelAI soll jede Nutzerfunktion bedienen, echt ausführen, nachprüfen, nie etwas Unfertiges als Erfolg melden.
+- Vermessen: `EchoelLanguageModel`/Router beantworten Text, `FoundationModelsBrain` null Aufrufer, `FeatureFlags.echoelAI` null Leser, Pegel liegt absichtlich NICHT im Song-Undo.
+- Gebaut: `7d245c76a` typisierte Befehlsschicht (Registry, Parser, Pegel-Mathe verweigert statt zu klammern, Planer-Naht mit ehrlichen Fehlern) · `d6a08669a` Ausführer über `TrackMix.setLevel` / `TrackParts.duplicate` / `TrackParts.remove`, Nachprüfung, Idempotenz je Anfrage-ID, Teil-Erfolg, Abbruch, eigenes Undo-Journal mit Konfliktschutz.
+- Befehle: `project.describeState`, `track.setLevel`, `part.duplicateAfter`, `agent.undoLast`. Matrix + Lücken: `scratchpads/PLAN_ECHOELAI_ACTIONS_2026-09-27.md`.
+- Keine Sprachanbindung, keine Agenten-Fläche (bewusst: ohne Planer wäre sie eine Tür zu „No language model is connected").
+- NICHT kompiliert, nicht gepusht; zwei Wächter transkribiert, Mutanten rot.

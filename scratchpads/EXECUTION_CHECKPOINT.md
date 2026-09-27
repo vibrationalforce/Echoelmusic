@@ -10,6 +10,9 @@ CURRENT_MAIN: 4884c7a47 (unchanged this session)
 MEDIA SEED (founder order 2026-09-27): MS1 2b2e2d1d7 · MS2 92a9dfd2e · MS3 68f9d9a01 · MV1 0b1a2d8f3 ·
   review c9769ca9b/81ab083b3/f2025268b · MV2a 34e5897d1 · MV2b d695503ec — NOT COMPILED, transcribed only.
   MS4/MS5 (arrangement + performance) HELD until a gate has run: scratchpads/PLAN_MEDIA_SEED_2026-09-27.md §5.
+ECHOELAI AGENT step 1 (founder addendum 2026-09-27): command layer 7d245c76a · executor d6a08669a —
+  NOT COMPILED, transcribed only. No language model connected (seam `EchoelActionPlanning` only).
+  Coverage matrix + next slices: scratchpads/PLAN_ECHOELAI_ACTIONS_2026-09-27.md.
 QUEUE: scratchpads/MODES_CENSUS_2026-09-26.md (Q1–Q10 + design slices 1–12)
 TASK_STATE:
   Q2–Q9, D1, design slices 1–12 (incl. slice 10 click 54b2e28cf/9d64dd8a8/887bbafd1/ce04926b5)
