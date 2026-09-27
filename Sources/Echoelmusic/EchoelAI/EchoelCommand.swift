@@ -427,6 +427,11 @@ struct EchoelProjectSnapshot: Equatable, Sendable {
     let partCount: Int
     let agentCanUndo: Bool
     let media: Media
+    /// `TimelineStore.documentGeneration` when the plan was made. Two snapshots of a project
+    /// opened twice are equal in every field above — the persisted ids come back — and differ
+    /// here, so a plan never crosses an Open, not even into the same file opened again (Codex
+    /// review of 9d479f922, finding 1).
+    let documentGeneration: Int
 }
 
 /// A request: its id (a repeat of the same id never runs twice), its steps in order, the state

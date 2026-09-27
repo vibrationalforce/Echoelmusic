@@ -23,7 +23,7 @@ import XCTest
 final class TheAgentProposesOnlyRegisteredCommandsTests: XCTestCase {
 
     private let basis = EchoelProjectSnapshot(track: nil, part: nil, trackCount: 2, partCount: 3,
-                                              agentCanUndo: false, media: .none)
+                                              agentCanUndo: false, media: .none, documentGeneration: 0)
 
     // MARK: 1 — the registry: stable ids, every command specified, nothing irreversible reachable
 

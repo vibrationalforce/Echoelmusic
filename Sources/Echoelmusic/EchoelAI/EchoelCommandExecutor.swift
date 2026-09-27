@@ -77,7 +77,11 @@ final class EchoelCommandExecutor {
     /// Where the visual look lives. Handed to `mediaLooks`, and read back only to confirm.
     private let visualDefaults: UserDefaults
 
-    private var journal: [[Inverse]] = []
+    /// Each group is stamped with the song generation it was written in. An Open replaces the
+    /// whole song and clears the store's own undo for that reason (`replaceDocument`); the agent's
+    /// journal follows the same rule — inverses of the song before an Open are not offered against
+    /// the song after it, even when that song is the same file opened again (Codex finding 1).
+    private var journal: [(generation: Int, entries: [Inverse])] = []
     private var finished: [UUID: (steps: [EchoelCommand], report: EchoelExecutionReport)] = [:]
     private var finishedOrder: [UUID] = []
     private(set) var runningRequest: UUID?
@@ -92,7 +96,15 @@ final class EchoelCommandExecutor {
         self.visualDefaults = visualDefaults
     }
 
-    var canUndoAgentChange: Bool { !journal.isEmpty }
+    var canUndoAgentChange: Bool {
+        pruneJournal()
+        return !journal.isEmpty
+    }
+
+    /// Drops every journal group written before the current song generation (see `journal`).
+    private func pruneJournal() {
+        journal.removeAll { $0.generation != timeline.documentGeneration }
+    }
 
     // MARK: Reading
 
@@ -118,7 +130,7 @@ final class EchoelCommandExecutor {
                                                 appliedFrom: mediaLooks.pending == nil ? "" : mediaLooks.medium)
         return EchoelProjectSnapshot(track: track, part: part, trackCount: document.lanes.count,
                                      partCount: document.regions.count, agentCanUndo: canUndoAgentChange,
-                                     media: media)
+                                     media: media, documentGeneration: timeline.documentGeneration)
     }
 
     // MARK: Running
@@ -164,7 +176,7 @@ final class EchoelCommandExecutor {
             results.append(EchoelStepResult(command: command, outcome: outcome))
         }
         if !group.isEmpty {
-            journal.append(group)
+            journal.append((generation: timeline.documentGeneration, entries: group))
             if journal.count > Self.journalDepth { journal.removeFirst() }
         }
         let report = EchoelExecutionReport(requestID: plan.requestID, steps: results, replayed: false,
@@ -388,12 +400,13 @@ final class EchoelCommandExecutor {
 
     private func undoLast(_ group: inout [Inverse]) -> EchoelStepResult.Outcome {
         // A change made earlier in THIS request is the last change; otherwise the last request's.
+        pruneJournal()
         let entries: [Inverse]
         if !group.isEmpty {
             entries = group
             group.removeAll()
         } else if let last = journal.popLast() {
-            entries = last
+            entries = last.entries
         } else {
             return .failed(.nothingToUndo)
         }

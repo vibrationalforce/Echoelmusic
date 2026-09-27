@@ -5,7 +5,8 @@
 // change after it is made.
 //
 // WHAT KIND OF GREEN THIS IS (§1):
-//   · Claims 1–7 are END-TO-END over a REAL `TimelineStore` and `WorkstationSelection`.
+//   · Claims 1–7, 9 and 10 are END-TO-END over a REAL `TimelineStore` and `WorkstationSelection`
+//     (claim 10 also over a real `ClipStore` and the shipped Save/Open path).
 //     Assertions are on the fixture's OWN ids; the store's prior document is restored after
 //     each claim (`TimelineStore()` loads whatever an earlier run persisted).
 //   · Claim 8 is a SOURCE-TEXT SCAN: the executor writes only through the button writers and
@@ -41,6 +42,17 @@
 // Review repair 3b: claim 4 adds a part whose TAIL reaches into the copy's place — refused as
 // `.placeTaken` like one that starts there. Mutant: the old start-only test (`place.contains(
 // $0.startTick)`) → the copy is placed under the tail, claim 4 red.
+// Review 4a (Codex finding 1, reproduced through the REAL Open path): claim 10 saves the fixture
+// song the way the Studio's Save does (`SessionSaveOpen.capturing`) and opens it again through
+// `SessionSaveOpen.restoreSong` → `TimelineStore.replaceDocument`. The reopened song is EQUAL to
+// the one the plan saw — same persisted ids, same levels — so before 4a `snapshot() == plan.basis`
+// held and the plan ran in the reopened project (the reproduction is asserted: every content field
+// of the two snapshots is equal). `TimelineStore.documentGeneration` now moves on every wholesale
+// replacement and travels in the basis, so the plan is refused as `.projectChanged`; the agent's
+// undo journal follows the store's own rule (an Open clears undo) and offers nothing across it.
+// Mutants, each driven: generation not bumped in `replaceDocument` → the stale plan copies a part
+// in the reopened song, claim 10 red; journal not pruned → `agentCanUndo` true after the Open and
+// the pre-Open level is written into the reopened song, claim 10 red.
 
 import Foundation
 import XCTest
@@ -394,6 +406,77 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         XCTAssertEqual(level(Self.keysLane, in: timeline), 1)
     }
 
+    // MARK: 10 — the same project opened again is not the project the plan saw (review 4a)
+
+    func testAReopenedIdenticalProjectIsNotThePlannedOne() async throws {
+        let (timeline, selection, executor, original) = rig()
+        let clips = ClipStore()
+        let originalSlots = clips.slots
+        defer {
+            timeline.replaceDocument(original)
+            _ = clips.replaceSlots(originalSlots)
+        }
+        XCTAssertTrue(clips.replaceSlots([Clip?](repeating: nil, count: ClipStore.slotCount)))
+        // SAVE and OPEN AGAIN — the Studio's own path, ending in `TimelineStore.replaceDocument`.
+        let take = Project(name: "Reopened", styleRaw: "ambient", keyRoot: 0, scaleRaw: "major", bpm: 96,
+                           modeRaw: "flowFree", fxCharacterRaw: "warm", loopBars: 4, a4Hz: 440,
+                           toneSystemID: nil, moodFields: nil, artist: "",
+                           patch: SynthPatch(name: "Default"), notes: [], rawTake: nil,
+                           drumSteps: [], drumAccents: [])
+        func saveAndReopen() throws {
+            let saved = SessionSaveOpen.capturing(take, timeline: timeline.document, clipSlots: clips.slots,
+                                                  songForm: Arrangement(), playerAutomation: [], sampleRate: 48_000)
+            XCTAssertNil(SessionSaveOpen.refusal(for: saved))
+            let songBefore = timeline.document
+            XCTAssertTrue(SessionSaveOpen.restoreSong(of: saved, timeline: timeline, clips: clips,
+                                                      player: TimelineRegionPlayer()))
+            XCTAssertEqual(timeline.document, songBefore, "the SAME song came back — same ids, same levels")
+        }
+
+        // A — THE REPRODUCTION (Codex finding 1). The agent plans a copy of Keys' part; the person
+        // opens the same project again; by content, the reopened project IS the planned one.
+        selection.selectRegion(Self.keysPart.id, in: timeline.document)
+        let copyIt = plan([.duplicatePart(part: .selected)], on: executor)
+        XCTAssertEqual(copyIt.basis.part?.id, Self.keysPart.id)
+        try saveAndReopen()
+        let reopened = executor.snapshot()
+        XCTAssertEqual(reopened.track, copyIt.basis.track)
+        XCTAssertEqual(reopened.part, copyIt.basis.part)
+        XCTAssertEqual(reopened.trackCount, copyIt.basis.trackCount)
+        XCTAssertEqual(reopened.partCount, copyIt.basis.partCount)
+        XCTAssertEqual(reopened.agentCanUndo, copyIt.basis.agentCanUndo)
+        XCTAssertEqual(reopened.media, copyIt.basis.media)
+        // What tells them apart, and the only thing that does:
+        XCTAssertNotEqual(reopened.documentGeneration, copyIt.basis.documentGeneration,
+                          "an Open moves the generation even when nothing in the song differs")
+        XCTAssertNotEqual(reopened, copyIt.basis)
+        // The plan made before the Open never reaches a writer.
+        let stale = await executor.execute(copyIt)
+        XCTAssertEqual(stale.refusal, .projectChanged)
+        XCTAssertEqual(timeline.document.regions.count, Self.fixture.regions.count, "nothing copied")
+
+        // B — the journal follows the store's own rule (`replaceDocument` clears undo): a change
+        // the agent made before an Open is not offered against the song after it.
+        selection.toggleTrack(Self.keysLane.id)
+        let quieter = await executor.execute(plan([.setTrackLevel(track: .selected, change: .relativeDecibels(-3))],
+                                                  on: executor))
+        XCTAssertEqual(quieter.state, .done)
+        let lowered = try XCTUnwrap(level(Self.keysLane, in: timeline))
+        XCTAssertTrue(executor.canUndoAgentChange)
+        try saveAndReopen()
+        XCTAssertFalse(executor.canUndoAgentChange, "a change made in the song before the Open is not the agent's to take back here")
+        XCTAssertFalse(executor.snapshot().agentCanUndo)
+        let nothing = await executor.execute(plan([.undoAgentChange], on: executor))
+        XCTAssertEqual(nothing.steps.first?.outcome, .failed(.nothingToUndo))
+        XCTAssertEqual(level(Self.keysLane, in: timeline), lowered, "the reopened level stands as saved")
+
+        // C — a plan made AFTER the Open runs: the generation is a fence, not a lock.
+        selection.selectRegion(Self.keysPart.id, in: timeline.document)
+        let fresh = await executor.execute(plan([.duplicatePart(part: .selected)], on: executor))
+        XCTAssertEqual(fresh.state, .done)
+        XCTAssertEqual(timeline.document.regions.count, Self.fixture.regions.count + 1)
+    }
+
     // MARK: 8 — same writers as the buttons; nothing on the audio side, the disk or the network
 
     func testTheExecutorWritesOnlyThroughTheButtonWriters() throws {
@@ -433,8 +516,13 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         let members = Set(regex.matches(in: executor, range: range).compactMap { match in
             Range(match.range(at: 1), in: executor).map { String(executor[$0]) }
         })
-        XCTAssertEqual(members, ["document", "laneLevelWrites"],
-                       "the executor touches the store beyond reading its document and the level write count")
+        XCTAssertEqual(members, ["document", "documentGeneration", "laneLevelWrites"],
+                       "the executor touches the store beyond reading its document, its generation and the level write count")
+        // Review 4a: the generation moves at BOTH wholesale replacements, and nowhere else.
+        XCTAssertEqual(store.components(separatedBy: "documentGeneration += 1").count - 1, 2,
+                       "`documentGeneration` is bumped at `replaceDocument` and `bootstrapIfNeeded` — one per Open path")
+        XCTAssertTrue(store.contains("@ObservationIgnored public private(set) var documentGeneration = 0"),
+                      "not observed (nothing renders it), not writable from outside the store")
         // Review repair 2b: the write count is bumped at the ONE lane-level writer, on every write.
         let store = try code("Sources/Echoelmusic/Core/TimelineStore.swift")
         guard let head = store.range(of: "public func setLaneLevel(id: UUID, _ level: Float) {"),

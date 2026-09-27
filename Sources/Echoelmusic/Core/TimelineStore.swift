@@ -141,6 +141,7 @@ public final class TimelineStore {
     /// regions and launch state (`TimelineRegionPlayer`).
     public func replaceDocument(_ replacement: TimelineDocument) {
         document = replacement
+        documentGeneration += 1
         needsBootstrap = false
         undoStack.removeAll()
         redoStack.removeAll()
@@ -155,6 +156,7 @@ public final class TimelineStore {
         guard needsBootstrap else { return }
         needsBootstrap = false
         document = Self.migrate(sections: sections)
+        documentGeneration += 1
         persist()
     }
 
@@ -804,6 +806,16 @@ public final class TimelineStore {
     /// A person who re-enters the number the agent left has made a decision, and the agent's
     /// Undo must leave it (EchoelAI review repair 2b). Read by `EchoelCommandExecutor`.
     @ObservationIgnored public private(set) var laneLevelWrites: [UUID: Int] = [:]
+
+    /// Counts every WHOLESALE replacement of the song — an Open (`replaceDocument`), the one-time
+    /// legacy migration (`bootstrapIfNeeded`). Per-edit writes do not move it.
+    /// Why it exists (Codex review of 9d479f922, finding 1): the agent's plan basis compares the
+    /// song by CONTENT — ids, names, levels, counts — and a project opened AGAIN is content-equal
+    /// to itself (the same persisted ids come back). A plan made before that Open would then pass
+    /// the "nothing changed" check and reach a writer in a song the person has since re-opened.
+    /// Carried in `EchoelProjectSnapshot.documentGeneration`, so the check sees the Open even
+    /// when no part and no level differs. Not observed: nothing renders it.
+    @ObservationIgnored public private(set) var documentGeneration = 0
 
     /// B2 stereo position, clamped −1…1 (0 = center). State only, like level. Audio lanes
     /// (`AudioLanePlayer`) and rack lanes (`slotPanSink`) read it live. ⛔ "the surface pushes
