@@ -3003,3 +3003,10 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Decision:** The photo/video look stays a GLOBAL setting (`UserDefaults.standard`, `StudioDefaultKeys.visual*`), not a project field; `MediaLookUndo.pending` lives for the process and is not persisted. Documented in the owner's header, not changed.
 - **Rationale:** `Project` carries no visual field and `saveProject`/`openFromLibrary` touch no visual key — opening another project neither adopts nor restores a look, so no cross-project leak exists. A persisted undo was explicitly not a requirement (founder 2026-09-27).
 - **Review:** 2026-10-27 — if a per-project look is ever wanted, it is a new Project field plus a migration, never a card-side hack.
+
+### 2026-09-27 — Plan basis carries the song GENERATION, not only its content (Codex finding 1, `02bcb429f`)
+
+- **Decision:** `TimelineStore.documentGeneration` counts every wholesale replacement of the song (Open, legacy migration) and travels in `EchoelProjectSnapshot`; the agent's undo journal is stamped with it and pruned across an Open.
+- **Rationale:** a project opened again is content-equal to itself (persisted ids come back), so a content-only basis let a pre-Open plan reach a writer. The store already clears its own undo on Open for the same reason; the agent follows the store's rule instead of keeping its own count.
+- **Not done, on purpose:** no write journal for LOOK parameters (39 `@AppStorage` bindings would have to route through an owner — a state architecture, excluded); the divergence to the level semantics (2b) is recorded in the checkpoint and the 4d guard header.
+- **Review:** 2026-10-27 — if a second reader of the song appears, it must read the same generation, never keep its own.
