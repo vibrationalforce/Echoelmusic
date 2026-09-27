@@ -66,7 +66,10 @@ final class APhotoIsReadSmallAndOffTheStageTests: XCTestCase {
                                  "the numbers come from the small thumbnail — the work is bounded")
         XCTAssertGreaterThan(decoded.seed.sampledPixels, 0)
         XCTAssertTrue(decoded.seed.hasDominantColour)
-        XCTAssertEqual(decoded.seed.hue, 0, accuracy: 0.01, "a red picture reads as red")
+        // Hue is a TURN: red sits on the wrap, so one stray unit of blue from colour matching reads
+        // 0.999…, which is 0.02° from red. The distance is measured around the circle (review MED).
+        let turn = decoded.seed.hue
+        XCTAssertLessThan(Swift.min(turn, 1 - turn), 0.01, "a red picture reads as red — got \(turn)")
         XCTAssertEqual(decoded.seed.contrast, 0, accuracy: 0.01, "a flat picture has no contrast")
     }
 

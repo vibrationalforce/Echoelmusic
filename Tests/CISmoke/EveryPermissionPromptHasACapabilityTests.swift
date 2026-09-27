@@ -164,8 +164,14 @@ final class EveryPermissionPromptHasACapabilityTests: XCTestCase {
     /// WITHOUT it. On iOS an `NS…UsageDescription` is not optional garnish — activating a record
     /// category, or opening the camera, without the string TERMINATES the app on the spot. So
     /// claim 4 now asserts the two sides agree in BOTH directions rather than pinning either one.
+    ///
+    /// ⛔ `"import Photos"` STOOD HERE WITHOUT ITS LINE END, and `import PhotosUI` contains it.
+    /// MS3 (2026-09-27) mounted a `PhotosPicker`, which needs NO permission — it runs out of
+    /// process — and this row would have demanded the add-to-library key back for it. The needle
+    /// is the whole import LINE now (`SourceText.codeOnly` keeps line ends); `PHPhotoLibrary`
+    /// stays the symbol only library access can reach (the ⭐ law above, one module over).
     private static let retiredPrompts: [String: [String]] = [
-        "NSPhotoLibraryAddUsageDescription": ["PHPhotoLibrary", "import Photos"],
+        "NSPhotoLibraryAddUsageDescription": ["PHPhotoLibrary", "import Photos\n"],
         "NSMicrophoneUsageDescription":
             ["requestRecordPermission", ".inputNode", "availableInputs", "AVAudioRecorder"]
     ]
