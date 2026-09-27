@@ -193,8 +193,11 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
                       "the new part must be selected, so the part bar and Notes open on it")
         XCTAssertTrue(row.contains("importNote = failure.userMessage"),
                       "every refusal must say what happened on the one note line")
-        XCTAssertTrue(view.contains("            importMIDIRow\n") && view.contains("            newMIDIPartRow\n"),
-                      "the row must be mounted beside Import MIDI")
+        // Design slice 4 paired Import MIDI with Add MIDI Track (`creationPair`, one level
+        // deeper); New MIDI Part stays on its own line directly after that pair.
+        XCTAssertTrue(view.contains("                importMIDIRow\n            }\n")
+                        && view.contains("            newMIDIPartRow\n"),
+                      "the row must be mounted right after the Import MIDI pair")
 
         XCTAssertEqual(try filesUnderSources(containing: "MIDIImport.addEmptyPart("),
                        ["Studio/WorkstationView.swift"],

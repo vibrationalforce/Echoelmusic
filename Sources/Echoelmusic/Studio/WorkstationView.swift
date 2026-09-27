@@ -358,18 +358,28 @@ struct WorkstationView: View {
             // nothing, for four months, with the engine shipped and injected the whole time.
             // MARK: - The lane door (founder 2026-09-23, unblocking the #E3 hold)
             //
-            // ⭐ IT SITS ABOVE IMPORT BECAUSE THAT IS THE ORDER OF THE SENTENCE the refusal
-            // one row down speaks: "add an audio track first". Until this row that sentence
+            // ⭐ IT COMES BEFORE IMPORT BECAUSE THAT IS THE ORDER OF THE SENTENCE the Import
+            // door's refusal speaks: "add an audio track first". Until this row that sentence
             // named an action no production path could perform — `bootstrapIfNeeded`,
             // `addLane` and `addInstrumentTrack` each had zero callers outside
             // `Core/TimelineStore.swift`, so a fresh `TimelineDocument()` stayed `lanes: []`
             // forever and the import door was unreachable on a clean install.
-            addTrackRow
-            importRow
+            // ⭐ PAIRED WHILE THEY FIT (modes census 2026-09-26, design slice 4): five
+            // full-width-stacked doors pushed the song itself below the fold on a phone. Each
+            // track door now sits BESIDE its import, left to right in the old top-to-bottom
+            // order, and stacks again at sizes where the pair does not fit. The refusals name
+            // the doors by LABEL ("add an audio track first"), never by position, so moving
+            // them beside each other changes no sentence.
+            creationPair {
+                addTrackRow
+                importRow
+            }
             // S2 — the MIDI pair, in the same order and for the same reason: the refusal
-            // "add a MIDI track first" names the row directly above Import MIDI.
-            addMIDITrackRow
-            importMIDIRow
+            // "add a MIDI track first" names the door beside Import MIDI.
+            creationPair {
+                addMIDITrackRow
+                importMIDIRow
+            }
             // Phase 3 / M1b — an EMPTY part for the note editor, so writing notes does not
             // need a MIDI file. Same lane and refusals as Import MIDI (`MIDIImport`).
             newMIDIPartRow
@@ -882,6 +892,23 @@ struct WorkstationView: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Add audio track")
         .accessibilityHint("Adds an empty audio track to the song, ready for an import")
+    }
+
+    /// Two creation doors side by side while they fit, stacked otherwise — the
+    /// `WorkstationProjectRow` shape (Save | Open). The HORIZONTAL candidate comes first:
+    /// `ViewThatFits` takes the first that fits. It measures honestly here because none of
+    /// these doors scales its text down (no `minimumScaleFactor`), so a pair that does not fit
+    /// reports so — unlike the song-position readout (the BioStripView trap).
+    private func creationPair<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                content()
+                Spacer(minLength: 0)
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                content()
+            }
+        }
     }
 
     /// "Import Audio" — one button, no menu. The founder's instruction was a single action
