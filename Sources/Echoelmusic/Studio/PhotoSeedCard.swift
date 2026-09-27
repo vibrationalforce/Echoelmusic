@@ -120,7 +120,8 @@ struct PhotoSeedCard: View {
     }
 
     private var header: some View {
-        Button {
+        let undo = MediaLookUndo.shared
+        return Button {
             isOpen.toggle()
             // Collapsed, the photo is not on screen, so it is not "this photo" to the agent
             // (EchoelAI review MED-1). Opened again, the one still read is offered again.
@@ -130,6 +131,10 @@ struct PhotoSeedCard: View {
                 Image(systemName: isOpen ? "chevron.down" : "chevron.right")
                     .font(EchoelTheme.font(12, .semibold))
                 Text("Photo to Visuals").font(EchoelTheme.font(13, .semibold))
+                // Collapsed, the card still says that ITS look is live (review MED-8).
+                if undo.pending != nil, undo.medium == MediaLookUndo.photoMedium {
+                    Text("· look applied").font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
+                }
             }
             .foregroundStyle(EchoelTheme.text)
             .padding(.horizontal, 14)
@@ -141,7 +146,8 @@ struct PhotoSeedCard: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Photo to Visuals")
-        .accessibilityValue(isOpen ? "Expanded" : "Collapsed")
+        .accessibilityValue((isOpen ? "Expanded" : "Collapsed")
+                            + (undo.pending != nil && undo.medium == MediaLookUndo.photoMedium ? ", look applied" : ""))
         .accessibilityHint("Choose a photo; its colour, brightness and contrast can shape the visuals")
     }
 
@@ -233,6 +239,14 @@ struct PhotoSeedCard: View {
             HStack(spacing: 8) { applyButton(decoded, undo: undo); undoButton(undo) }
             VStack(alignment: .leading, spacing: 8) { applyButton(decoded, undo: undo); undoButton(undo) }
         }
+        // Why Apply is grey, in sight and not only under VoiceOver (review MED-8). Not shown while the
+        // applied look is this photo's own — "Applied:" above already says so.
+        if !isLive, let reason = undo.applyBlockedReason {
+            Text(reason)
+                .font(EchoelTheme.font(13))
+                .foregroundStyle(EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     private func applyButton(_ decoded: PhotoSeedDecoder.Decoded, undo: MediaLookUndo) -> some View {
@@ -248,9 +262,7 @@ struct PhotoSeedCard: View {
         .buttonStyle(.plain)
         .disabled(undo.pending != nil)
         .accessibilityLabel("Apply to visuals")
-        .accessibilityHint(undo.pending == nil
-                           ? "Sets the visuals' intensity, detail, hue and saturation from the photo"
-                           : "A \(undo.medium) look is applied. Undo it first to apply this one.")
+        .accessibilityHint(undo.applyBlockedReason ?? "Sets the visuals' intensity, detail, hue and saturation from the photo")
     }
 
     private func undoButton(_ undo: MediaLookUndo) -> some View {

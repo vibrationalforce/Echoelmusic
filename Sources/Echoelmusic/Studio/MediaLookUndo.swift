@@ -20,6 +20,18 @@
 //
 // ⚠️ It is read in a card's `body`, and that is safe: it changes only on a tap (Apply / Undo) or
 // when a read finishes, never at a rate — nothing hot (the #10.76.50 law is about 10 Hz readers).
+//
+// ⭐ LIFECYCLE OF A MEDIA LOOK (review MED-2, measured 2026-09-27) — three different lifetimes, and
+// none of them is the project's:
+//   · The LOOK ITSELF is the six `StudioDefaultKeys.visual*` values plus `visual.preset`, written to
+//     `UserDefaults.standard` — a GLOBAL app setting. `Project` carries no visual field
+//     (`git grep -c visual Sources/Echoelmusic/Core/Project.swift` → 0) and `saveProject` /
+//     `openFromLibrary` touch none of these keys: opening another project neither adopts a
+//     foreign look nor restores one of its own. The look survives a relaunch.
+//   · THIS UNDO (`pending`) lives for the PROCESS. After a relaunch the look is still applied and
+//     the way back through Undo is gone; the Visual panel's own fields and presets are then the
+//     way back. That is stated, not repaired — a persisted undo is not a requirement.
+//   · THE SHOWN SEED (`shownPhoto` / `shownVideo`) lives as long as the card SHOWS it.
 
 import Foundation
 import Observation
@@ -35,6 +47,16 @@ final class MediaLookUndo {
     private(set) var pending: MediaSeedApplication?
     /// The medium that applied it, for plain words on the button ("photo", "video").
     private(set) var medium = ""
+    /// The two words a medium is named by — one spelling, read by the cards' headers.
+    static let photoMedium = "photo"
+    static let videoMedium = "video"
+
+    /// Why a card's Apply is grey, in ONE sentence (nil while nothing is pending). The cards show
+    /// it under the buttons AND speak it as the button's hint (review MED-8: the reason used to be
+    /// VoiceOver-only, so a sighted person saw a grey button and no reason).
+    var applyBlockedReason: String? {
+        pending == nil ? nil : "A \(medium) look is applied. Undo it first to apply this one."
+    }
     /// Counts every recorded application. Two applications of the same seed to the same look are
     /// EQUAL values, so "is the pending look still the one I applied?" is asked with this, not
     /// with the value (EchoelAI review MED-2: undo, then Apply again by hand, read as the agent's).
@@ -68,7 +90,7 @@ final class MediaLookUndo {
     func apply(photo seed: MediaSeed, on defaults: UserDefaults) -> MediaSeedApplication? {
         guard pending == nil else { return nil }
         let application = MediaSeedApplication.apply(seed, to: defaults)
-        record(application, from: "photo")
+        record(application, from: Self.photoMedium)
         return application
     }
 
@@ -76,7 +98,7 @@ final class MediaLookUndo {
     @discardableResult
     func apply(video seed: VideoSeed, on defaults: UserDefaults) -> MediaSeedApplication? {
         guard pending == nil, let application = MediaSeedApplication.apply(seed, to: defaults) else { return nil }
-        record(application, from: "video")
+        record(application, from: Self.videoMedium)
         return application
     }
 

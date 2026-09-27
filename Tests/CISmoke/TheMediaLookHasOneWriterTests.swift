@@ -10,6 +10,9 @@
 //   · Claim 3 is a SOURCE-TEXT SCAN: exactly one file under `Sources/` calls
 //     `MediaSeedApplication.apply(`, and both cards route Apply through the owner and hand it the
 //     seed they show. The cards are SwiftUI views no test can render.
+//   · Claim 4 is END-TO-END on the owner's `applyBlockedReason`, then a SOURCE-TEXT SCAN of where
+//     the cards put that sentence (in sight, in the hint, in the header). Whether it READS well on
+//     a phone is a device probe.
 //   · DEVICE PROBE, open: pick a photo, Apply, Undo; pick a video; leave the Workstation and come
 //     back — nothing is offered that the screen does not show. NEEDS-FOUNDER-VERIFY.
 //
@@ -25,6 +28,11 @@
 // its seed anyway (`showPhoto(decoded.seed)` unconditionally) — the agent then saw "A photo is open"
 // on a closed card. Claim 3 now pins the `if isOpen` gate at both publish sites, and the two
 // cancellation lines that cover the newer-pick and gone-card cases. Mutant: the bare call → red.
+// Review repair 3a (MED-8, 2026-09-27): why Apply is grey was VoiceOver-only. Claim 4 drives
+// `applyBlockedReason` END-TO-END (nil / one sentence / nil again) and SCANS that both cards render
+// it in sight, speak it as the hint, and name their live look in the collapsed header — and that
+// the sentence has ONE home (neither card spells "Undo it first"). Mutants: a card keeping its own
+// inline sentence → red; the visible `Text(reason)` removed → red.
 
 import Foundation
 import XCTest
@@ -148,6 +156,42 @@ final class TheMediaLookHasOneWriterTests: XCTestCase {
         let owner = try code("Sources/Echoelmusic/Studio/MediaLookUndo.swift")
         for persisted in ["UserDefaults.standard", "FileManager", "Codable", ".set("] {
             XCTAssertFalse(owner.contains(persisted), "the shown seed must stay in memory — the owner names `\(persisted)`")
+        }
+    }
+
+    // MARK: 4 — why Apply is grey is one sentence, in sight and spoken, from one home
+
+    func testTheReasonAGreyApplyGivesIsOneSentenceInSightAndSpoken() throws {
+        let defaults = try freshDefaults()
+        look.write(to: defaults)
+        let owner = MediaLookUndo()
+        XCTAssertNil(owner.applyBlockedReason, "nothing pending — nothing blocks")
+        _ = try XCTUnwrap(owner.apply(photo: photo(brightness: 0.9), on: defaults))
+        XCTAssertEqual(owner.applyBlockedReason, "A photo look is applied. Undo it first to apply this one.")
+        owner.undo(on: defaults)
+        XCTAssertNil(owner.applyBlockedReason, "taken back — Apply is free again")
+        _ = try XCTUnwrap(owner.apply(video: video(motion: 1), on: defaults))
+        XCTAssertEqual(owner.applyBlockedReason, "A video look is applied. Undo it first to apply this one.")
+
+        var root = URL(fileURLWithPath: #filePath)
+        for _ in 0..<3 { root.deleteLastPathComponent() }
+        func code(_ path: String) throws -> String {
+            SourceText.codeOnly(try String(contentsOf: root.appendingPathComponent(path), encoding: .utf8))
+        }
+        let ownerCode = try code("Sources/Echoelmusic/Studio/MediaLookUndo.swift")
+        XCTAssertTrue(ownerCode.contains("var applyBlockedReason: String?"), "the sentence's one home")
+        let cards = [("Sources/Echoelmusic/Studio/PhotoSeedCard.swift", "photoMedium"),
+                     ("Sources/Echoelmusic/Studio/VideoSeedCard.swift", "videoMedium")]
+        for (path, medium) in cards {
+            let card = try code(path)
+            XCTAssertTrue(card.contains("if !isLive, let reason = undo.applyBlockedReason {"),
+                          "\(path): the reason is shown, and not while the applied look is this card's own")
+            XCTAssertTrue(card.contains("Text(reason)"), "\(path): shown in sight, not only spoken")
+            XCTAssertTrue(card.contains(".accessibilityHint(undo.applyBlockedReason ??"),
+                          "\(path): the same sentence is the button's hint")
+            XCTAssertTrue(card.contains("undo.medium == MediaLookUndo.\(medium)"),
+                          "\(path): the collapsed header names ITS live look, not the other card's")
+            XCTAssertFalse(card.contains("Undo it first"), "\(path): the sentence has one home (#416)")
         }
     }
 }
