@@ -60,3 +60,55 @@ also **kein Compile-Beleg**: CI ist der einzige Compiler, und CI läuft nur auf 
    Muxer werden NICHT zurückkopiert. Diese Scheiben lesen Videos, sie nehmen keine auf.
 7. **Farbe ist eine DREHUNG, kein Ziel.** `visual.hue` dreht die physikalische Ton→Licht-Farbe (`echoelHue`).
    Ein Foto-Seed setzt die Drehung = Foto-Farbton; das Bild wird dadurch nicht „die Fotofarbe“. Die UI sagt das.
+
+## 4. Stand 2026-09-27 (Branch `feature/media-seed-2026-09-27`, lokal, NICHT gepusht, NICHTS kompiliert)
+
+| Scheibe | Commit | Was |
+|---|---|---|
+| MS1 | `2b2e2d1d7` | `Core/MediaSeed.swift` — reiner Foto-Kern |
+| MS2 | `92a9dfd2e` | `Studio/MediaSeedLook.swift` — Seed → sechs `visual.*`-Schlüssel + Chip, Undo |
+| MS3 | `68f9d9a01` | „Photo to Visuals“: Decoder (ImageIO-Thumbnails) + Karte + Montage |
+| MV1 | `0b1a2d8f3` | `Core/VideoSeed.swift` — reiner Video-Kern (Bewegung, Transienten, Takte) |
+| Review-HIGH/MED | `c9769ca9b` | Permission-Wächter: `import PhotosUI` ≠ `import Photos`; Rot-Farbton zirkulär |
+| MV2a | `34e5897d1` | `VideoSeedReader` (AVFoundation, ≤ 48 Frames, Toleranz 0, abbrechbar) + Video → Visual |
+| Review-MED | `81ab083b3` | EIN geteiltes `MediaLookUndo`; Undo pro Wert; Anzeige-Raster; „Hue“ |
+| Review-LOW | `f2025268b` | Überlauf-Schutz der Zeilenlänge; Kontrast zweipassig (flach = 0) |
+| MV2b | `d695503ec` | „Video to Visuals“: Karte + Montage |
+
+## 5. MS4 + MS5 — BEWUSST NICHT GEBAUT in dieser Sitzung, und warum
+
+**Grund (Council, Shipper + Skeptiker):** MS4 allein wäre eine Tür zu einem unsichtbaren Teil — die
+Arrange-Fläche zeigt `.visual` nicht (`TrackParts.arrangeable`), der Spieler führt es nicht aus
+(`isExecutable` → false, zwei unabhängige Tore). „Place in Song“ ohne MS5 wäre ein Knopf, nach dem nichts
+Sichtbares passiert. MS5 fasst `TimelineRegionPlayer` an (1 542 Zeilen, der am dichtesten bewachte Motor) und
+dreht mindestens vier Wächter um (#364). Das auf neun UNKOMPILIERTE Commits zu stapeln, ohne dass ein Gate
+je gelaufen ist, ist die billigste Art, falsch zu liegen. **Erst ein Gate-Lauf über MS1–MV2, dann MS4+MS5.**
+
+### Design, baufertig (je ≤ 3 Sources-Dateien)
+
+- **MS4a — Datenmodell.** `Sequencer/MediaLook.swift` (neu): `enum MediaLook: Codable, Sendable, Equatable
+  { case photo(MediaSeed), video(VideoSeed) }` + `isPlausible`. `Clip.mediaLook: MediaLook?` (Property,
+  Init-Parameter mit Default nil, `CodingKeys`, `try?`-Decode — ein alter Build liest den Schlüssel nicht und
+  verliert nichts). `.visual`-Clip: `mediaRef` = die verwaltete Kopie (`MediaLibrary.importImage` bzw.
+  `importVideo`, beide haben heute NULL Aufrufer), `isEmpty` bleibt die Regel.
+- **MS4b — Platzieren.** `Sequencer/VisualPlacement.swift`: reiner Plan (erste Visual-Spur oder neue,
+  Start = Ende der letzten Visual-Region auf dem Takt, Länge = 4 Takte Foto / `VideoSeedAnalysis.bars` Video)
+  + `@MainActor perform` über `ClipStore` + `TimelineStore.addRegion` (EIN Undo-Schritt). ⚠️ `addLane(kind:)`
+  hat KEIN Undo — Spur zuerst, Region danach, und das in der Karte so sagen.
+- **MS4c — Arrange zeigt es.** `TrackParts.arrangeable` nimmt `.visual` auf (verschieben/trimmen/
+  duplizieren/entfernen laufen dann über die VORHANDENEN `TrackParts`-Wege, quantisiert auf den Takt).
+  Wächter mitziehen: `TheTrackInspectorShowsOnlyWiredControlsTests`, `TheTrackPartsAreArrangedThroughTheStoreTests`.
+- **MS5a — Ausführen.** `ClipKind.timelineEngineKinds` += `.visual` (Maschine UND Erzeuger jetzt beide da —
+  die #1438-Doppelfrage, getrennt beantwortet); `isExecutable(.visual)` = `clip.mediaLook?.isPlausible`.
+  `.video` bleibt zu (`testAPartOnlyOnAVideoLaneIsNotASong` bleibt grün).
+- **MS5b — Folgen.** Injizierter `VisualLookSink` am Spieler (`begin()` = Schnappschuss bei `play`,
+  `show(MediaLook?)` nur bei WECHSEL des klingenden Teils über `soundingRegion(laneID:at:)` — das deckt
+  Launch UND Arrangement mit EINER Regel ab —, `end()` in `stop()` UND `handleTransportStopped()` stellt den
+  Schnappschuss wieder her = deterministischer Stop). Kein Schreiben pro Schritt, nichts auf dem Audio-Thread
+  (Transport-Schritt ist Main-Actor). `launchableLaneID` nimmt `.visual` auf; `applyLaunchTransitions` muss
+  eine Visual-Spur ignorieren (prüfen!). Wächter: `TheSessionLaunchesWhatTheSongPlaysTests` („Look“-Spur).
+
+## 6. Offene Stufen danach
+Kamera-Aufnahme (Info.plist-Text, Founder) → Bio-Shutter (CMDeviceMotion + `NSMotionUsageDescription`,
+Founder; „Ruhiger Moment“ nur bei echter Atemquelle) → Video-Ton als Beat-Quelle (AVAssetReader →
+`Media/Audio` → `AudioImport.commit`) → Transienten → Slices → XR/Installation (pausiert).

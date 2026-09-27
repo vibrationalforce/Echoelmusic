@@ -40148,3 +40148,12 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - Q8 `6224c8e12` Workstation icons scale with Dynamic Type · Q9 `1d19bdd29` three stale stream comments + CLAUDE.md visionOS wording (149,634 B) · Q7 `0c2e7b908` picked note gets a 1 pt ring (WCAG 1.4.1) · Q2 `cf7414c72` note grid: "Select next/previous note" + announcement.
 - Q10 DomeProjection = BLOCKED_FOUNDER (it lives in the paused Visual/XR domain; that is census question 4 option c). Q1 = BLOCKED_FOUNDER (question 2).
 - Evidence: all slices TESTED by transcription only; independent reviews done for Q3–Q6 (no HIGH), batch review of Q2/Q7/Q8/Q9 running at log time; gates on the review-repair heads queued (macOS runners busy); NOTHING device verified.
+
+## 2026-09-27 — Foto/Video als kreatives Material (MediaSeed), lokaler Branch `feature/media-seed-2026-09-27`
+
+- Founder-Auftrag (eingefügter Prompt): Foto/Video → Seed → Visual, Arrangement, Performance, Bio-Shutter, barrierearm. Kein Push, kein Deploy, `.deploy/release` unberührt.
+- Gebaut: MS1 `2b2e2d1d7` (Foto-Kern) · MS2 `92a9dfd2e` (Seed → Visual + Undo) · MS3 `68f9d9a01` („Photo to Visuals“) · MV1 `0b1a2d8f3` (Video-Kern) · MV2a `34e5897d1` (VideoSeedReader + Video → Visual) · MV2b `d695503ec` („Video to Visuals“).
+- Review (ui-state-reviewer, MS1–MS3): 1 HIGH (Permission-Wächter hätte `import PhotosUI` als `import Photos` gelesen und den Bibliotheks-Text zurückverlangt) + 2 MED + 6 LOW → `c9769ca9b`, `81ab083b3`, `f2025268b`. Offen und aufgeschrieben: feste statt zirkuläre Farbton-Bins.
+- NICHT kompiliert (kein Swift hier, kein Push erlaubt). Jeder Wächter per Python transkribiert, Mutanten rot; fünf Prüfskripte vor jedem Commit sauber.
+- MS4/MS5 (Arrangement + Performance) BEWUSST gehalten: Plan §5 — ohne Gate-Lauf nicht den Wiedergabe-Motor umbauen. Design baufertig im Plan.
+- Blockiert (Founder/Info.plist): Kamera-Aufnahme, Bio-Shutter (CoreMotion), Video-Ton als Beat-Quelle (nicht gebaut, Integrationspunkt benannt).

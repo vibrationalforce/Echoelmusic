@@ -3,10 +3,13 @@
 Rules: `memory/preferences.md` § "Orchestrator hardening". This file is NOT a roadmap — product order
 lives in `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` and the canonical PLAN_* files. Overwrite, don't append.
 
-CURRENT_HEAD: 5683fb72d (branch claude/echoelmusic-review-optimize-u5jjpd; last Sources/Tests commit ce04926b5)
-CURRENT_MAIN: 4884c7a47 — did NOT move: auto-merge 3897 on ce04926b5 ended `failure` at 03:11Z, its gate
-  poll timed out while BfT was still queued (BfT started 04:04Z). Abwesenheit = Ablehnung, by design; the
-  next Sources/Tests push re-runs the merge over the whole (now green) stack.
+CURRENT_HEAD: feature/media-seed-2026-09-27 (LOCAL ONLY, founder order: kein Push) on top of dfe9525e6;
+  designated branch claude/echoelmusic-review-optimize-u5jjpd holds 23212ad85 (slice-13 review repair), ALSO
+  local and unpushed. Neither has been seen by any gate.
+CURRENT_MAIN: 4884c7a47 (unchanged this session)
+MEDIA SEED (founder order 2026-09-27): MS1 2b2e2d1d7 · MS2 92a9dfd2e · MS3 68f9d9a01 · MV1 0b1a2d8f3 ·
+  review c9769ca9b/81ab083b3/f2025268b · MV2a 34e5897d1 · MV2b d695503ec — NOT COMPILED, transcribed only.
+  MS4/MS5 (arrangement + performance) HELD until a gate has run: scratchpads/PLAN_MEDIA_SEED_2026-09-27.md §5.
 QUEUE: scratchpads/MODES_CENSUS_2026-09-26.md (Q1–Q10 + design slices 1–12)
 TASK_STATE:
   Q2–Q9, D1, design slices 1–12 (incl. slice 10 click 54b2e28cf/9d64dd8a8/887bbafd1/ce04926b5)
