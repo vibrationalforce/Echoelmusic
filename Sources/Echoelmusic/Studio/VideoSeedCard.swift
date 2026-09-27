@@ -128,7 +128,10 @@ struct VideoSeedCard: View {
             if isOpen { content }
         }
         .sensoryFeedback(.success, trigger: appliedCount)
-        .onDisappear { loadTask?.cancel() }
+        .onDisappear {
+            loadTask?.cancel()
+            MediaLookUndo.shared.showVideo(nil)
+        }
     }
 
     private var header: some View {
@@ -239,9 +242,7 @@ struct VideoSeedCard: View {
 
     private func applyButton(_ read: VideoSeedReader.Read, bpm: Double, undo: MediaLookUndo) -> some View {
         Button {
-            guard undo.pending == nil,
-                  let application = MediaSeedApplication.apply(read.seed, to: .standard) else { return }
-            undo.record(application, from: "video")
+            guard let application = undo.apply(video: read.seed, on: .standard) else { return }
             phase = .ready(read, application.before, bpm: bpm)
             appliedHere = true
             appliedCount += 1
@@ -292,6 +293,7 @@ struct VideoSeedCard: View {
         loadTask?.cancel()
         appliedHere = false
         phase = .reading
+        MediaLookUndo.shared.showVideo(nil)
         let bpm = beatPlayer.pattern.tempo
         loadTask = Task {
             var read: VideoSeedReader.Read?
@@ -302,6 +304,7 @@ struct VideoSeedCard: View {
             guard !Task.isCancelled else { return }
             if let read {
                 phase = .ready(read, VisualLookSnapshot.read(from: .standard), bpm: bpm)
+                MediaLookUndo.shared.showVideo(read.seed)
             } else {
                 phase = .failed(VideoSeedText.unreadable)
                 // Clear the selection, or picking the same video again would change nothing.

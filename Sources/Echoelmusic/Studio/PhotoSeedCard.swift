@@ -107,7 +107,10 @@ struct PhotoSeedCard: View {
             if isOpen { content }
         }
         .sensoryFeedback(.success, trigger: appliedCount)
-        .onDisappear { loadTask?.cancel() }
+        .onDisappear {
+            loadTask?.cancel()
+            MediaLookUndo.shared.showPhoto(nil)
+        }
     }
 
     private var header: some View {
@@ -223,9 +226,7 @@ struct PhotoSeedCard: View {
 
     private func applyButton(_ decoded: PhotoSeedDecoder.Decoded, undo: MediaLookUndo) -> some View {
         Button {
-            guard undo.pending == nil else { return }
-            let application = MediaSeedApplication.apply(decoded.seed, to: .standard)
-            undo.record(application, from: "photo")
+            guard let application = undo.apply(photo: decoded.seed, on: .standard) else { return }
             // The lines above now read from the look that was really live at the tap.
             phase = .ready(decoded, application.before)
             appliedHere = true
@@ -276,6 +277,7 @@ struct PhotoSeedCard: View {
         loadTask?.cancel()
         appliedHere = false
         phase = .reading
+        MediaLookUndo.shared.showPhoto(nil)
         loadTask = Task {
             var decoded: PhotoSeedDecoder.Decoded?
             if let file = try? await picked.loadTransferable(type: PickedImageFile.self) {
@@ -288,6 +290,7 @@ struct PhotoSeedCard: View {
             guard !Task.isCancelled else { return }
             if let decoded {
                 phase = .ready(decoded, VisualLookSnapshot.read(from: .standard))
+                MediaLookUndo.shared.showPhoto(decoded.seed)
             } else {
                 phase = .failed(PhotoSeedText.unreadable)
                 // Clear the selection, or picking the same photo again would change nothing and
