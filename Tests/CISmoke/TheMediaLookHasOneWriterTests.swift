@@ -33,6 +33,12 @@
 // it in sight, speak it as the hint, and name their live look in the collapsed header — and that
 // the sentence has ONE home (neither card spells "Undo it first"). Mutants: a card keeping its own
 // inline sentence → red; the visible `Text(reason)` removed → red.
+// Review 4e (Codex, 2026-09-27): "the result must be invalidated; cancellation alone need not be
+// enough". Claim 5 pins WHY it is enough here: the cancellation check and the gated publish are one
+// main-actor turn (no `await`, no new task between them), and every path that invalidates a read —
+// a newer pick, the card going away — runs on that same actor BEFORE the next task starts; collapse
+// does not cancel, it flips `isOpen`, which the publish reads. Mutant: an `await` moved between the
+// check and the publish → red; the cancel moved after `loadTask = Task {` → red.
 
 import Foundation
 import XCTest
@@ -192,6 +198,51 @@ final class TheMediaLookHasOneWriterTests: XCTestCase {
             XCTAssertTrue(card.contains("undo.medium == MediaLookUndo.\(medium)"),
                           "\(path): the collapsed header names ITS live look, not the other card's")
             XCTAssertFalse(card.contains("Undo it first"), "\(path): the sentence has one home (#416)")
+        }
+    }
+
+    // MARK: 5 — a read's RESULT is invalidated, not merely its task cancelled (review 4e)
+
+    func testACompletedReadPublishesInTheSameMainActorTurnAsItsCancellationCheck() throws {
+        var root = URL(fileURLWithPath: #filePath)
+        for _ in 0..<3 { root.deleteLastPathComponent() }
+        for (path, publish, withdraw) in [
+            ("Sources/Echoelmusic/Studio/PhotoSeedCard.swift",
+             "if isOpen { MediaLookUndo.shared.showPhoto(decoded.seed) }", "MediaLookUndo.shared.showPhoto(nil)"),
+            ("Sources/Echoelmusic/Studio/VideoSeedCard.swift",
+             "if isOpen { MediaLookUndo.shared.showVideo(read.seed) }", "MediaLookUndo.shared.showVideo(nil)"),
+        ] {
+            let code = SourceText.codeOnly(try String(contentsOf: root.appendingPathComponent(path), encoding: .utf8))
+            // (a) Between the cancellation check and the publish: no suspension, no new task. A
+            // newer pick cancels on the main actor, so a read that passes the check publishes before
+            // the pick can run, and one the pick cancelled never passes it.
+            XCTAssertEqual(code.components(separatedBy: "guard !Task.isCancelled else { return }").count - 1, 1,
+                           "\(path): ONE cancellation check — the anchor below relies on it")
+            guard let check = code.range(of: "guard !Task.isCancelled else { return }"),
+                  let publishAt = code.range(of: publish, range: check.upperBound..<code.endIndex) else {
+                return XCTFail("\(path): the cancellation check or the gated publish moved — re-anchor")
+            }
+            let between = code[check.upperBound..<publishAt.lowerBound]
+            XCTAssertFalse(between.contains("await"),
+                           "\(path): a suspension between the check and the publish reopens the window Codex named")
+            XCTAssertFalse(between.contains("Task {") || between.contains("Task.detached"),
+                           "\(path): a hop between the check and the publish reopens it too")
+            // (b) The invalidating paths come BEFORE the next task, in the same function on the same
+            // actor: the older task is cancelled and its seed withdrawn, then the new task starts.
+            XCTAssertEqual(code.components(separatedBy: "private func load(").count - 1, 1, "\(path): one read entry")
+            guard let entry = code.range(of: "private func load("),
+                  let start = code.range(of: "loadTask = Task {", range: entry.upperBound..<code.endIndex) else {
+                return XCTFail("\(path): `load(` or its task start moved — re-anchor")
+            }
+            let prologue = code[entry.upperBound..<start.lowerBound]
+            XCTAssertTrue(prologue.contains("loadTask?.cancel()"), "\(path): the older read is cancelled before the new one starts")
+            XCTAssertTrue(prologue.contains(withdraw), "\(path): the older seed is withdrawn before the new read starts")
+            XCTAssertFalse(prologue.contains("await"), "\(path): nothing suspends between cancel, withdraw and the new task")
+            // (c) Collapse is not a cancel: it withdraws by `isOpen`, which the publish reads.
+            XCTAssertTrue(code.contains("isOpen.toggle()"), "\(path): the header toggles the card")
+            XCTAssertEqual(code.components(separatedBy: "loadTask?.cancel()").count - 1, 2,
+                           "\(path): cancel at a newer pick and at disappear — not at collapse (a collapsed card that is "
+                           + "opened again during the read shows the result; the publish reads `isOpen`)")
         }
     }
 }
