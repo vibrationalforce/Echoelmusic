@@ -457,7 +457,9 @@ modal, and adds no hot read in a parent body.
 | 7 | Part start as an `EchoelValueField`, commit-only, one `TrackParts.move` | SelectedPartBar | BUILT `6c69dacad` + review repair `8c40b0fd0` (range follows the song) — VERIFY |
 | 8 | Track level also read in dB (static caption, never a meter) | TrackInspectorView | BUILT `8a0202491` — VERIFY |
 | 9 | Note-grid playhead as its own self-driving leaf | PartNotePlayheadView (new) + mount | BUILT `e091712e5` — REVIEW, VERIFY |
-| 10 | Metronome toggle on the Workstation | — | NEEDS DESIGN: `MetronomeVoice.resync()` aligns "next beat = downbeat" from the call, but the Workstation starts mid-bar (part on beat 3); a correct click needs a beat-phase offset in the RENDER path — audio-thread work, device-verified only. Not built blind. |
+| 10 | Metronome on the Workstation — first a timing repair, then the switch | MetronomeVoice + EchoelmusicApp (anchor) · WorkstationClickToggle (new) + WorkstationSummary + mount | BUILT `54b2e28cf` (the transport's step subscriber anchors the click on every beat; the instrument's old `resync()` struck one 16th EARLY — the same defect #300 fixed for MIDI Start) + `9d64dd8a8` (the switch). ⛔ The parked diagnosis here ("the Workstation starts mid-bar, needs a render-path phase offset") was WRONG: `TimelineRegionPlayer.play` floors the start to the bar. REVIEW (audio-thread) running — VERIFY; timing on glass NEEDS-FOUNDER-VERIFY |
+| 11 | A part on the Arrange canvas shows its notes (cold sketch) | ArrangeCanvasView + TrackPartsView | BUILT `c51b1645a` + review-9 repair `0c0735a6e`/`3bab7f277` — VERIFY |
+| 12 | The note grid shows how loud each note is (opaque surface/accent mix, floor 0.55) | ClipNoteEdit + PartNoteEditor | BUILT `aad532d33` + reviews 10/11 repaired `c2ad1ed33`/`e845ba35e`/`13cdb3572` — VERIFY (watch `Color.mix(with:by:)` in Compile Check) |
 | — | Loop toggle | — | BLOCKED_FOUNDER |
 
 REJECTED from the mockups (vision gate): glow/neon accents and pill radii (Uncodixfy), decorative
