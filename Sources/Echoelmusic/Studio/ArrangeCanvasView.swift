@@ -42,6 +42,16 @@
 //  `TrackParts.move` commit and the part bar's own `earlierStart`/`laterStart` step (#416: no
 //  tick maths here). "Earlier" is offered only where a bar earlier exists.
 //
+//  ⭐ THE BAR RULER (modes census 2026-09-26, design slice 1). The lanes showed WHERE parts sit
+//  and nothing said at WHICH bar — the one number the part bar, the parts list and the
+//  position readout all speak in. A row of bar numbers now runs above the lanes, on the same
+//  scale as the blocks (`nameWidth + gutter` in, `laneWidth` wide). `ArrangeCanvas.rulerMarks`
+//  thins the numbers by powers of two so a long song never overprints, and the minimum label
+//  spacing is a `@ScaledMetric`, so at large text sizes the numbers thin further instead of
+//  colliding. The ruler is COLD (it reads the song length, never the position) and hidden from
+//  VoiceOver: every part already speaks its bar (`SessionGrid.label`), and a list of bare
+//  numbers would be noise between the rows.
+//
 
 import SwiftUI
 
@@ -80,6 +90,32 @@ enum ArrangeCanvas {
         guard songTicks > 0, laneWidth.isFinite, laneWidth > 0 else { return 0 }
         return CGFloat(tick - startTick) / CGFloat(songTicks) * laneWidth
     }
+
+    /// One number on the bar ruler: the bar (1-based, as every other surface names it) and
+    /// where its downbeat sits on the lane, 0…1 — the scale the blocks are placed on.
+    struct RulerMark: Identifiable, Equatable, Sendable {
+        let bar: Int
+        let fraction: Double
+        var id: Int { bar }
+    }
+
+    /// The bars the ruler names over a lane `laneWidth` points wide: bar 1, then every `step`-th
+    /// bar, `step` the smallest power of two that leaves at least `minSpacing` points between two
+    /// numbers — a long song thins its labels instead of overprinting them, and every label
+    /// still sits on a downbeat. The song's end is not a bar and is not named. Degenerate
+    /// geometry, or a song shorter than one bar, names nothing.
+    nonisolated static func rulerMarks(songTicks: Int, laneWidth: CGFloat,
+                                       minSpacing: CGFloat) -> [RulerMark] {
+        let bars = songTicks / TimelineTime.ticksPerBar
+        guard bars > 0, laneWidth.isFinite, laneWidth > 0,
+              minSpacing.isFinite, minSpacing > 0 else { return [] }
+        let pointsPerBar = Double(laneWidth) / Double(bars)
+        var step = 1
+        while step < bars, Double(step) * pointsPerBar < Double(minSpacing) { step *= 2 }
+        return stride(from: 1, through: bars, by: step).map {
+            RulerMark(bar: $0, fraction: Double($0 - 1) / Double(bars))
+        }
+    }
 }
 
 /// Every track's parts on one scale, each part tappable to select it.
@@ -103,6 +139,11 @@ struct ArrangeCanvasView: View {
         let selected = WorkstationSelection.resolvedRegion(selection.regionID,
                                                            track: selection.trackID, in: document)
         VStack(spacing: 4) {
+            // The bar ruler — the gutter left empty so its numbers start where the lanes do.
+            HStack(spacing: Self.gutter) {
+                Color.clear.frame(width: Self.nameWidth, height: 1)
+                ArrangeBarRuler(songTicks: songTicks)
+            }
             ForEach(rows) { row in
                 HStack(spacing: Self.gutter) {
                     // A name gutter: one line, truncating, so every lane starts at the same x
@@ -175,6 +216,42 @@ struct ArrangeCanvasView: View {
         guard let target else { return }
         drop(regionID, onLane: laneID, from: part.startTick, to: target)
         AccessibilityNotification.Announcement("Part at " + SessionGrid.label(forTick: target)).post()
+    }
+}
+
+/// The bar numbers over the lanes. Cold: it reads the song length it is handed and nothing
+/// else — no position, no store, no selection.
+struct ArrangeBarRuler: View {
+
+    let songTicks: Int
+
+    /// Scaled with the text, so a larger size thins the numbers rather than colliding them.
+    @ScaledMetric(relativeTo: .body) private var labelSpacing: CGFloat = 28
+    @ScaledMetric(relativeTo: .body) private var height: CGFloat = 14
+
+    var body: some View {
+        GeometryReader { geometry in
+            let width = geometry.size.width
+            ZStack(alignment: .topLeading) {
+                ForEach(ArrangeCanvas.rulerMarks(songTicks: songTicks, laneWidth: width,
+                                                 minSpacing: labelSpacing)) { mark in
+                    HStack(spacing: 3) {
+                        Rectangle()
+                            .fill(EchoelTheme.border)
+                            .frame(width: 1)
+                        Text("\(mark.bar)")
+                            .font(EchoelTheme.font(10).monospacedDigit())
+                            .foregroundStyle(EchoelTheme.dim)
+                            .lineLimit(1)
+                            .fixedSize()
+                    }
+                    .offset(x: width * mark.fraction)
+                }
+            }
+        }
+        .frame(height: height)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }
 
