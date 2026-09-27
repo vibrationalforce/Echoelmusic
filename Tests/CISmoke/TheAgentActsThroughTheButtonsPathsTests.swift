@@ -5,7 +5,7 @@
 // change after it is made.
 //
 // WHAT KIND OF GREEN THIS IS (§1):
-//   · Claims 1–7, 9 and 10 are END-TO-END over a REAL `TimelineStore` and `WorkstationSelection`
+//   · Claims 1–7 and 9–11 are END-TO-END over a REAL `TimelineStore` and `WorkstationSelection`
 //     (claim 10 also over a real `ClipStore` and the shipped Save/Open path).
 //     Assertions are on the fixture's OWN ids; the store's prior document is restored after
 //     each claim (`TimelineStore()` loads whatever an earlier run persisted).
@@ -53,6 +53,10 @@
 // Mutants, each driven: generation not bumped in `replaceDocument` → the stale plan copies a part
 // in the reopened song, claim 10 red; journal not pruned → `agentCanUndo` true after the Open and
 // the pre-Open level is written into the reopened song, claim 10 red.
+// Review 4b (Codex): claim 11 drives the gap AFTER the preflight — a selection moved in the yield
+// between two steps. Pinning (2a) is what holds there; the mutant "resolve `.selected` live at
+// step time" puts step two on Keys, claim 11 red. Claim 9's third block only asserted pinning with
+// the selection at rest; this one moves it.
 
 import Foundation
 import XCTest
@@ -475,6 +479,46 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         let fresh = await executor.execute(plan([.duplicatePart(part: .selected)], on: executor))
         XCTAssertEqual(fresh.state, .done)
         XCTAssertEqual(timeline.document.regions.count, Self.fixture.regions.count + 1)
+    }
+
+    // MARK: 11 — a selection moved BETWEEN two steps, after the preflight (review 4b, Codex)
+
+    /// Claim 9 moves the selection before the request runs (the preflight refuses). Codex named the
+    /// gap the preflight cannot see: the executor yields between steps (`await Task.yield()` from
+    /// the second step on), and a main-actor job queued behind the request — a tap on another
+    /// track — runs INSIDE that yield. The selection then differs from the plan while step two
+    /// runs, and nothing re-checks the basis mid-request. What holds instead: every step's target
+    /// was pinned to the plan's ids BEFORE the first step (`pinned(_:to:)`), so step two lands on
+    /// Loop although Keys is selected by then.
+    /// The ordering is the main actor's own: the toggle is queued from ON the main actor while the
+    /// request is about to run, so it cannot run before the preflight (nothing suspends before it)
+    /// and must run at the first suspension — the yield between the steps.
+    func testASelectionMovedBetweenTwoStepsDoesNotMoveTheSecondStep() async throws {
+        let (timeline, selection, executor, original) = rig()
+        defer { timeline.replaceDocument(original) }
+        selection.toggleTrack(Self.loopLane.id)
+        let twoSteps = plan([.setTrackLevel(track: .selected, change: .relativeDecibels(-3)),
+                             .setTrackLevel(track: .selected, change: .relativeDecibels(-3))], on: executor)
+        XCTAssertEqual(twoSteps.basis.track?.id, Self.loopLane.id)
+
+        let report = await Task { @MainActor in
+            // Queued behind the request, on the same actor: runs in the yield between the steps.
+            Task { @MainActor in selection.toggleTrack(Self.keysLane.id) }
+            return await executor.execute(twoSteps)
+        }.value
+
+        XCTAssertEqual(selection.trackID, Self.keysLane.id, "the tap landed while the request ran")
+        XCTAssertNil(report.refusal, "the preflight saw the plan's state — the tap came after it")
+        XCTAssertEqual(report.state, .done)
+        let loop = try XCTUnwrap(level(Self.loopLane, in: timeline))
+        XCTAssertEqual(loop, Float(pow(10, -6.0 / 20)), accuracy: 1e-6, "BOTH steps on Loop, the plan's track")
+        XCTAssertEqual(level(Self.keysLane, in: timeline), 1, "Keys, selected between the steps, is untouched")
+        // And the answer names the track the plan saw, not the one selected by the end.
+        for step in report.steps {
+            guard case .done(let text) = step.outcome else { return XCTFail("\(step.outcome)") }
+            XCTAssertTrue(text.contains("Loop"), text)
+            XCTAssertFalse(text.contains("Keys"), text)
+        }
     }
 
     // MARK: 8 — same writers as the buttons; nothing on the audio side, the disk or the network
