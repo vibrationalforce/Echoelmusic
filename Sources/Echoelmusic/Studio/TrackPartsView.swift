@@ -74,9 +74,29 @@ enum TrackParts {
         part.startTick + stepTicks
     }
 
-    /// The highest bar a typed start may name — the field's range, and the clamp that keeps
-    /// the tick arithmetic below far from `Int` overflow.
-    static let maxStartBar = 999
+    /// The highest bar a typed start may name at all — an overflow clamp for the tick
+    /// arithmetic below, far past any song. The field's REACH is `startBarRange`, not this.
+    static let maxStartBar = 9_999
+
+    /// Bars the start field reaches past the song's last bar — room to move a part off the end.
+    static let startBarRoom = 8
+
+    /// The start field's range: bar 1 up to the song's last bar plus `startBarRoom`, never below
+    /// the bar the part is on, never above `maxStartBar`.
+    ///
+    /// ⚠️ IT FOLLOWS THE SONG BECAUSE THE FIELD'S STEP FOLLOWS ITS RANGE (review of 6c69dacad,
+    /// MED-1/2). A VoiceOver swipe moves by `ScrubPrecision.adjustmentStep` — a fiftieth of the
+    /// span, at least one grid unit — and a drag crosses the whole span in a fixed distance. On
+    /// a fixed 1…999 range one swipe jumped about 20 bars and a point of drag about 5; bars in
+    /// between could only be typed. On a song's own length a swipe is one bar up to a span of
+    /// fifty bars and rounds to one up to about seventy-five; typing still reaches any bar.
+    nonisolated static func startBarRange(for part: Part, songBars: Int) -> ClosedRange<Double> {
+        let current = WorkstationSummary.barNumber(forTick: part.startTick)
+        // Clamped BEFORE the addition: a song length near `Int.max` would otherwise trap here.
+        let song = Swift.min(Swift.max(1, songBars), maxStartBar)
+        let reach = Swift.min(maxStartBar, song + startBarRoom)
+        return 1...Double(Swift.max(current, reach))
+    }
 
     /// Where the part lands when its start is typed as a bar number (design slice 7): the
     /// named bar, at the SAME place within the bar the part holds now — exactly what repeated

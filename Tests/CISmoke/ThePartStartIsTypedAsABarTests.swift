@@ -22,7 +22,8 @@
 // — every claim is a FORWARD guard, one absence (#486). Claim 1 transcribed into Python and
 // driven over targets 1…40 from twelve start bars at eight offsets; claim 2 transcribed against this tree, with mutants
 // (the move written in the Binding's setter, the reset dropped, `decimals: 0` removed, a literal
-// 999 in the range): each red.
+// range, `onChange` routed to the commit, the mount put inside a condition): each red. Review of
+// 6c69dacad added the range claim: the field's reach follows the song, so one swipe is one bar.
 // NOT covered: how the field reads under the title on glass, and whether a drag across many bars
 // feels right — a device look.
 // NEEDS-FOUNDER-VERIFY: Workstation → select a part that starts on beat 3 of bar 2 → "Starts at
@@ -79,6 +80,25 @@ final class ThePartStartIsTypedAsABarTests: XCTestCase {
                        (TrackParts.maxStartBar - 1) * Self.bar + 480, "the last bar the field offers is reachable")
     }
 
+    func testTheFieldReachesTheSongAndSwipesOneBar() {
+        // Review of 6c69dacad, MED-1/2: on a fixed 1…999 range one VoiceOver swipe moved ~20 bars.
+        let part = TrackParts.Part(id: UUID(), startTick: 2 * Self.bar, lengthTicks: Self.bar)   // bar 3
+        let songs: [Int] = [0, 1, 4, 16, 32, 42]
+        for songBars in songs {
+            let range = TrackParts.startBarRange(for: part, songBars: songBars)
+            XCTAssertEqual(range.lowerBound, 1)
+            XCTAssertEqual(range.upperBound, Double(Swift.max(1, songBars) + TrackParts.startBarRoom),
+                           "a \(songBars)-bar song: the field reaches its last bar and a little past it")
+            XCTAssertEqual(ScrubPrecision.adjustmentStep(span: range.upperBound - range.lowerBound, decimals: 0), 1,
+                           "one swipe is one bar on a \(songBars)-bar song — the step the field itself uses")
+        }
+        let late = TrackParts.Part(id: UUID(), startTick: 59 * Self.bar, lengthTicks: Self.bar)   // bar 60
+        XCTAssertEqual(TrackParts.startBarRange(for: late, songBars: 16).upperBound, 60,
+                       "never below the bar the part is on — the field's value stays inside its range")
+        XCTAssertEqual(TrackParts.startBarRange(for: part, songBars: .max).upperBound, Double(TrackParts.maxStartBar),
+                       "and never past the overflow clamp")
+    }
+
     // MARK: 2 — the leaf, its draft and its one write
 
     func testTheFieldIsALeafThatMovesOnceOnCommit() throws {
@@ -90,8 +110,12 @@ final class ThePartStartIsTypedAsABarTests: XCTestCase {
             return XCTFail("ANCHOR MISSING: the part bar's body, or `PartStartField` (#454)")
         }
         let barBody = String(code[body.upperBound..<bodyEnd.lowerBound])
-        XCTAssertEqual(barBody.components(separatedBy: "PartStartField(part: part)").count - 1, 1,
+        XCTAssertEqual(barBody.components(separatedBy: "PartStartField(part: part,").count - 1, 1,
                        "the field is mounted once, in the part bar")
+        // Review of 6c69dacad, LOW-5: directly under the title row — not inside a condition.
+        XCTAssertNotNil(barBody.range(of: #"songCanStart:\s*songCanStart\)\s*\}\s*PartStartField\(part: part,"#,
+                                      options: .regularExpression),
+                        "the field sits unconditionally under the title row")
         XCTAssertEqual(code.components(separatedBy: "PartStartField(").count - 1, 1, "and nowhere else")
         XCTAssertLessThan(bodyEnd.lowerBound, leaf.lowerBound, "the leaf is its own struct, outside the bar")
 
@@ -102,7 +126,7 @@ final class ThePartStartIsTypedAsABarTests: XCTestCase {
         }
         let fieldCall = String(field[call.upperBound..<commit.lowerBound])
         for needle in ["value: Binding(get: { shownBar }, set: { draft = $0 }),",
-                       "range: 1...Double(TrackParts.maxStartBar),",
+                       "range: TrackParts.startBarRange(for: part, songBars: songBars),",
                        "decimals: 0,",
                        "onCommit: { commitDraft() })",
                        ".onChange(of: part.startTick) { _, _ in draft = nil }"] {
@@ -110,6 +134,10 @@ final class ThePartStartIsTypedAsABarTests: XCTestCase {
         }
         XCTAssertFalse(fieldCall.contains("TrackParts.move("),
                        "the drag writes a DRAFT — a move per step would stack an undo step per bar crossed")
+        // Review of 6c69dacad, MED-3: the per-event `onChange` must not reach the commit either.
+        XCTAssertFalse(fieldCall.contains("onChange:"),
+                       "`onChange` fires per drag event — routed to the commit, every bar crossed is a move")
+        XCTAssertEqual(fieldCall.components(separatedBy: "commitDraft()").count - 1, 1, "committed from `onCommit` only")
         let commitBody = String(field[commit.upperBound...])
         XCTAssertTrue(commitBody.contains("if let tick = TrackParts.startTick(forBar: bar, keeping: part) {"))
         XCTAssertTrue(commitBody.contains("TrackParts.move(part, toStartTick: tick, timeline: timeline)"),

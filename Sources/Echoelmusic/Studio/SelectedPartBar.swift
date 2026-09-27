@@ -232,7 +232,7 @@ struct SelectedPartBar: View {
                     PartPlayButton(startTick: part.startTick, playFrom: playFrom,
                                    songCanStart: songCanStart)
                 }
-                PartStartField(part: part)
+                PartStartField(part: part, songBars: WorkstationSummary(document: document).lengthBars)
                 // Seven labelled buttons do not fit a phone at every type size (review
                 // MEDIUM-3): the row falls back to icons, then to two rows of icons — every
                 // button keeping its full spoken label.
@@ -445,18 +445,24 @@ private struct PartPlayButton: View {
 /// `PartTempoRow` pattern).
 ///
 /// ⚠️ THE DRAFT IS CLEARED WHENEVER THE PART'S START MOVES — by Earlier/Later, a canvas drag,
-/// an undo — because a cancelled drag fires no `onCommit` and would otherwise keep showing a
-/// bar the part is not on.
+/// an undo — while a draft is held; the field would otherwise keep showing the bar it was
+/// dragged to, not the bar the part is on. (A CANCELLED drag needs no reset: the field puts
+/// the draft back itself, #378.)
+///
+/// ⚠️ THE RANGE FOLLOWS THE SONG (`TrackParts.startBarRange`), because the field's swipe step
+/// and drag distance follow its range — see there.
 @MainActor
 private struct PartStartField: View {
     let part: TrackParts.Part
+    /// The song's length in whole bars (`WorkstationSummary.lengthBars`) — cold, per render.
+    let songBars: Int
     @Environment(TimelineStore.self) private var timeline
     @State private var draft: Double? = nil
 
     var body: some View {
         EchoelValueField(label: "Starts at bar",
                          value: Binding(get: { shownBar }, set: { draft = $0 }),
-                         range: 1...Double(TrackParts.maxStartBar),
+                         range: TrackParts.startBarRange(for: part, songBars: songBars),
                          decimals: 0,
                          hint: "Moves the part to start on this bar; its place within the bar is kept.",
                          onCommit: { commitDraft() })
