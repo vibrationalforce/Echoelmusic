@@ -1,4 +1,4 @@
-build: v10.79.482 — Release Candidate: AUv3-Hall hörbar und gehärtet, Export nach Lautheit, NaN-Härtung (WA3, E1–E3, P8)
+build: v10.79.483 — Workstation wird Studio: Noten-Editor, MIDI-Aufnahme, Automation, Medienbibliothek, Szenen, Click (WA4, M1–M10, R1, A1–A5, MA, S1–S2, Design 1–12)
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,72 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (v10.79.483) ──────────────────────────────
+
+  ⭐ DER WORKSTATION-BUILD (Founder 2026-09-27: „Du hast Alleinunterhalter Kontrolle … mache
+  TestFlight"). Alles seit 10.79.482 (Build 2602) — die Workstation wird ein Ort zum Arbeiten,
+  nicht nur zum Abspielen. Tür für fast alles: Workstation-Chip.
+
+  ⚠️ EHRLICH ZUM STAND: gebaut wird der Kopf des Branches. Die ersten 182 Commits (bis main
+  4884c7a47) haben Xcode Compile Check und Build for Testing grün bestanden. Die letzten rund
+  60 (Design-Scheiben 1–12, Click) waren beim Anheben dieser Datei noch NICHT kompiliert —
+  die Runner standen seit Stunden in der Warteschlange. Der TestFlight-Lauf kompiliert selbst;
+  scheitert er, kommt KEIN Build an und nichts Kaputtes auf dein Telefon.
+
+  ── POSTEN 1: SPUREN UND TEILE (WA4) ──
+  Workstation-Chip: Spur antippen → Inspector (Name, Pegel, Pan, Mute, Solo, Gerät).
+  Teile auf der Arrange-Fläche ziehen, kopieren, entfernen, trimmen, teilen — Undo holt alles
+  zurück. „Add MIDI Track" / „Add Audio Track". Nach einem Neustart öffnet die App wieder die
+  Workstation, wenn du dort warst.
+
+  ── POSTEN 2: DER NOTEN-EDITOR (M1–M10) ──
+  Ein MIDI-Teil wählen → „Notes": Noten setzen, ziehen, löschen; Box-Auswahl; Transpose,
+  Quantize (1/16 · 1/8 · 1/4) und Duplicate in einem Schritt; „New MIDI Part" legt ein leeres
+  Teil an und öffnet den Editor. Das Raster zeigt Notennamen, die Lautstärke jeder Note als
+  Farbtiefe und die Abspielposition.
+
+  ── POSTEN 3: AUFNEHMEN, AUTOMATION, SZENEN ──
+  R1: Spur scharf schalten („Arm for recording"), „Record" neben Play — ein externes
+  MIDI-Keyboard wird als neues Teil ab Takt 1 aufgenommen. A1–A5: „Automation" an einer
+  POLY-Spur zeichnet eine Kurve je Parameter. S1–S2: „Launch scene" startet eine Szene aus
+  der Session.
+
+  ── POSTEN 4: MEDIENBIBLIOTHEK (MA1–MA4.4d) ──
+  „Media Library": importierte Dateien wiederfinden, filtern, erneut platzieren („Place");
+  eine identische Datei wird nicht doppelt gespeichert; fehlt eine Datei auf diesem Gerät,
+  steht „Missing on this device" mit „Relink".
+
+  ── POSTEN 5: DESIGN-SCHEIBEN 1–12 UND DER CLICK ──
+  Taktlineal über der Arrange-Fläche, Ende-Takt und Notenzahl am gewählten Teil, Start-Takt
+  als Zahl eingebbar, Spur-Pegel auch in dB, Mute/Solo auf der Fläche sichtbar, Noten-Skizze
+  in jedem Teil. NEU: „Click" neben Play auf der Workstation. Der Click folgt jetzt den
+  Schlägen des Transports — vorher kam seine Eins eine Sechzehntel zu früh und lief danach
+  auf eigener Uhr.
+
+  ── PRÜFLISTE ──
+  T1  Normaler Start, kein Black Screen, Menüs frieren nicht (Ship-Gate 5).
+  T2  Workstation-Chip → Spur wählen → Inspector: Pegel/Pan/Mute/Solo wirken hörbar.
+  T3  Teil ziehen, trimmen, teilen, dann Undo — alles kommt zurück.
+  T4  „New MIDI Part" → Noten setzen, Quantize, Transpose → Play: klingt, was du siehst?
+  T5  Externes MIDI-Keyboard: Spur scharf, „Record", spielen, Stop — neues Teil da?
+  T6  „Click" an, Play auf der Workstation: Akzent auf jeder Eins, bleibt eine Minute im Takt.
+      Tempo-Panel → Click, Play im Instrument: erster Click MIT der ersten Note, nicht davor.
+  T7  „Media Library": Datei platzieren; nach Neustart noch da.
+  T8  VoiceOver auf „Click": sagt es „Click, Aus, Taste/Schalter"?
+
+  ── PRÜF-BITTEN, DIE DIESER BUILD NEU BEANTWORTBAR MACHT ──
+  Gedruckt: python3 scripts/founder-verify.py --since de0451978
+  → 53 NEU oder UMFORMULIERT, von 237 offenen. Nach Bereich: other 37 · audio 10 · ui 3 ·
+  sync 2 · visual 1. Die ganze Liste druckt der Befehl oben; die Prüfliste T1–T8 deckt die
+  Kerne davon ab (Workstation, Noten-Raster, Aufnahme, Click).
+
+  ── STAND DER GATES ──
+  main = 4884c7a47: Xcode Compile Check 2968 und CI/CD Build for Testing grün. Branch-Kopf
+  beim Anheben (ce04926b5 + Protokoll-Commits): Compile Check und Build for Testing in der
+  Warteschlange, nicht gelesen. Info.plist, Entitlements, project.yml und Workflows unverändert.
+
+  Der Vorgänger ist 10.79.482 (Build 2602), davor 10.79.481.
 
   ── WAS IN DIESEM BUILD NEU IST (v10.79.482) ──────────────────────────────
 
