@@ -18,6 +18,9 @@
 // the gate alone. Mutants driven: the card presenting a `.sheet`, the decode moved out of the
 // detached task, the temp copy never removed, the full-size decode `CGImageSourceCreateImageAtIndex`,
 // a second mount — each red for its named reason.
+// REVIEW REPAIR (2026-09-27): claim 2 now names "Hue" (the Visual panel's own label) and decides
+// "unchanged" on the display grid; claim 3 requires the shared `MediaLookUndo` and forbids a
+// card-local undo — red on the MS3 tree, which kept it in `@State` (a REGRESSION guard).
 
 import Foundation
 import XCTest
@@ -108,13 +111,15 @@ final class APhotoIsReadSmallAndOffTheStageTests: XCTestCase {
         XCTAssertTrue(PhotoSeedText.change("Detail", 40, 40).hasSuffix("unchanged"),
                       "an unchanged value says so instead of showing an arrow to itself")
         XCTAssertTrue(PhotoSeedText.change("Detail", 40, 58).contains("→"))
+        XCTAssertTrue(PhotoSeedText.change("Detail", 40, 40.3, digits: 0).hasSuffix("unchanged"),
+                      "unchanged is decided on the display grid — never \"40 → 40\" (review LOW)")
         XCTAssertFalse(PhotoSeedText.unreadable.contains("error"), "an everyday sentence, not an error code")
 
         let before = VisualLookSnapshot(intensity: 1, detail: 40, motion: 1, spread: 1, hue: 0, saturation: 1.05,
                                         presetID: "vapor")
         let lines = PhotoSeedText.changes(from: before, to: before.applying(seed(hue: 0.5, coloured: true)))
         XCTAssertEqual(lines.count, 4)
-        for name in ["Intensity", "Detail", "Colour turn", "Saturation"] {
+        for name in ["Intensity", "Detail", "Hue", "Saturation"] {
             XCTAssertEqual(lines.filter { $0.hasPrefix(name + " ") }.count, 1, "one line names `\(name)`")
         }
     }
@@ -132,6 +137,9 @@ final class APhotoIsReadSmallAndOffTheStageTests: XCTestCase {
         XCTAssertTrue(card.contains("FileManager.default.removeItem(at: url)"), "the temporary copy is removed")
         XCTAssertTrue(card.contains("guard !Task.isCancelled else { return }"),
                       "a newer pick discards an older pick's result")
+        XCTAssertTrue(card.contains("MediaLookUndo.shared"), "the way back lives outside the card")
+        XCTAssertFalse(card.contains("@State private var application"),
+                       "a card-local undo is lost on a second pick or an unmount (review MED)")
         for hot in ["masterLevel", "currentTick", "latestBio", "cameraRPPG", "metronome."] {
             XCTAssertFalse(card.contains(hot), "the card reads the hot value `\(hot)`")
         }

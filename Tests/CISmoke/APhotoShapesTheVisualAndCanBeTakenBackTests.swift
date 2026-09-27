@@ -16,6 +16,11 @@
 // Hand-transcribed in Python; mutants driven, each red for its named reason: a grey picture
 // rotating the hue (claim 2), motion taken from the photo (claim 2), undo writing "" for an unset
 // chip (claim 3), a NaN stored value copied into the snapshot (claim 4).
+//
+// REVIEW REPAIR (MS1–MS3 review, 2026-09-27): claim 6 is new — undo restores per value and leaves a
+// value moved since; one `MediaLookUndo` refuses a second pending look. FORWARD guards (they name
+// `MediaLookUndo`, created in the same commit). Transcribed; mutants red: undo writing all seven
+// keys (claim 6a), a holder that accepts a second look (claim 6b).
 
 import Foundation
 import XCTest
@@ -120,6 +125,36 @@ final class APhotoShapesTheVisualAndCanBeTakenBackTests: XCTestCase {
         let snapshot = VisualLookSnapshot.read(from: defaults)
         XCTAssertEqual(snapshot.hue, StudioDefaultKeys.visualHue.value)
         XCTAssertEqual(snapshot.intensity, StudioDefaultKeys.visualIntensity.value)
+    }
+
+    // MARK: 6 — undo takes back only what still shows the photo; one way back app-wide (review)
+
+    func testUndoLeavesAValueThePlayerMovedSince() throws {
+        let defaults = try freshDefaults()
+        let original = VisualLookSnapshot.read(from: defaults)
+        let application = MediaSeedApplication.apply(seed(hue: 0.6, brightness: 0.9, contrast: 0.9), to: defaults)
+        defaults.set(0.33, forKey: StudioDefaultKeys.visualIntensity.key)   // moved by hand after Apply
+        application.undo(on: defaults)
+        let back = VisualLookSnapshot.read(from: defaults)
+        XCTAssertEqual(back.intensity, 0.33, "a value moved since belongs to the player — undo leaves it")
+        XCTAssertEqual(back.detail, original.detail, "the rest goes back")
+        XCTAssertEqual(back.hue, original.hue)
+        XCTAssertEqual(back.presetID, original.presetID)
+    }
+
+    @MainActor
+    func testThereIsOneWayBackAndASecondApplyIsRefused() throws {
+        let defaults = try freshDefaults()
+        let original = VisualLookSnapshot.read(from: defaults)
+        let undo = MediaLookUndo()
+        XCTAssertTrue(undo.record(MediaSeedApplication.apply(seed(brightness: 0.1), to: defaults), from: "photo"))
+        let second = MediaSeedApplication.apply(seed(brightness: 0.9), to: defaults)
+        XCTAssertFalse(undo.record(second, from: "photo"),
+                       "a second look while one is pending would make the first `before` unreachable")
+        second.undo(on: defaults)
+        undo.undo(on: defaults)
+        XCTAssertNil(undo.pending)
+        XCTAssertEqual(VisualLookSnapshot.read(from: defaults), original, "the look from before any photo is back")
     }
 
     // MARK: 5 — the keys written are the keys the surfaces read

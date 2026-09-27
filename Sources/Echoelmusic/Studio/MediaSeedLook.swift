@@ -11,7 +11,9 @@
 // a preset may use. Writing the keys is what `VisualMoodMap.apply` already does from the mood pad.
 //
 // ⭐ UNDO IS A SNAPSHOT, NOT A HISTORY. Applying returns the look from BEFORE the photo; writing
-// that snapshot back is the undo. `TimelineStore`'s history deliberately holds regions, notes,
+// that snapshot back is the undo — per value, and only where the value still shows what the photo
+// wrote (a value moved since belongs to the player). One pending application app-wide:
+// `MediaLookUndo`. `TimelineStore`'s history deliberately holds regions, notes,
 // automation and clip sources only — visual settings are not in it, and folding them in would
 // change what its undo means everywhere.
 //
@@ -179,8 +181,19 @@ struct MediaSeedApplication: Equatable, Sendable {
         return MediaSeedApplication(before: before, after: after)
     }
 
-    /// Puts the look from before the photo or video back.
+    /// Puts the look from before the photo or video back — but only for the values that still
+    /// show what the application wrote. A value the player moved since (on another surface, by
+    /// hand) is theirs now, and undo leaves it alone rather than silently reverting it.
     func undo(on defaults: UserDefaults) {
-        before.write(to: defaults)
+        let live = VisualLookSnapshot.read(from: defaults)
+        var target = live
+        if live.intensity == after.intensity { target.intensity = before.intensity }
+        if live.detail == after.detail { target.detail = before.detail }
+        if live.motion == after.motion { target.motion = before.motion }
+        if live.spread == after.spread { target.spread = before.spread }
+        if live.hue == after.hue { target.hue = before.hue }
+        if live.saturation == after.saturation { target.saturation = before.saturation }
+        if live.presetID == after.presetID { target.presetID = before.presetID }
+        target.write(to: defaults)
     }
 }
