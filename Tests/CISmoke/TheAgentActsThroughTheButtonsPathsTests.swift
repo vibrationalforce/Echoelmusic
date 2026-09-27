@@ -141,6 +141,14 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         XCTAssertEqual(report.steps.first?.outcome, .done("Copied the part to Bar 4 · 2 bars."))
         XCTAssertEqual(selection.regionID, Self.loopPart.id, "the selection stays, as the part bar's Copy leaves it")
         XCTAssertTrue(timeline.canUndo, "the copy is one ordinary song step, like the button's")
+
+        // "Copy it twice" in one request: the second copy would land UNDER the first (the copy
+        // always starts at the original's end) — refused, never reported as a second copy.
+        let twice = await executor.execute(plan([.duplicatePart(part: .selected), .duplicatePart(part: .selected)],
+                                                on: executor))
+        XCTAssertEqual(twice.steps.map(\.outcome), [.failed(.placeTaken), .notRun],
+                       "the first copy of this test already holds the place")
+        XCTAssertEqual(timeline.document.regions.count, Self.fixture.regions.count + 1, "still exactly one copy")
     }
 
     // MARK: 5 — a stale selection, a changed song, a repeated request
@@ -166,6 +174,10 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         XCTAssertTrue(second.replayed, "the repeat returns the first answer")
         XCTAssertEqual(second.steps, first.steps)
         XCTAssertEqual(timeline.document.regions.count, Self.fixture.regions.count + 1, "exactly one copy")
+        let reused = await executor.execute(EchoelActionPlan(requestID: once.requestID, steps: [.undoAgentChange],
+                                                             basis: executor.snapshot(), consents: []))
+        XCTAssertEqual(reused.refusal, .requestIDReused, "an id names one request; another plan under it never runs")
+        XCTAssertEqual(timeline.document.regions.count, Self.fixture.regions.count + 1)
 
         // The selected part is removed by the person: the selection is stale, nothing is guessed.
         timeline.removeRegion(id: Self.keysPart.id)
@@ -204,6 +216,16 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         let conflict = await executor.execute(plan([.undoAgentChange], on: executor))
         XCTAssertEqual(conflict.steps.first?.outcome, .failed(.changedSince("The level of Keys")))
         XCTAssertEqual(level(Self.keysLane, in: timeline), 1.5, "the person's later value is kept")
+
+        // Half of a request moved on since: the other half IS taken back, and the report says both.
+        selection.selectRegion(Self.loopPart.id, in: timeline.document)
+        _ = await executor.execute(plan([.setTrackLevel(track: .selected, change: .relativeDecibels(-3)),
+                                         .duplicatePart(part: .selected)], on: executor))
+        timeline.setLaneLevel(id: Self.loopLane.id, 0.25)
+        let half = await executor.execute(plan([.undoAgentChange], on: executor))
+        XCTAssertEqual(half.steps.first?.outcome, .failed(.partlyUndone(restored: 1, kept: "The level of Loop")))
+        XCTAssertEqual(timeline.document.regions, Self.fixture.regions, "the copy is gone")
+        XCTAssertEqual(level(Self.loopLane, in: timeline), 0.25, "the person's level stays")
     }
 
     // MARK: 7 — Cancel ends what has not started
@@ -248,5 +270,15 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
             }
         }
         XCTAssertTrue(executor.contains("@MainActor\nfinal class EchoelCommandExecutor"))
+        // Allow-list, not only a deny-list (review LOW): the store is READ through `document`,
+        // and every write goes through a button writer that is handed the store.
+        let regex = try NSRegularExpression(pattern: "\\btimeline\\.([A-Za-z_]+)")
+        let range = NSRange(executor.startIndex..., in: executor)
+        let members = Set(regex.matches(in: executor, range: range).compactMap { match in
+            Range(match.range(at: 1), in: executor).map { String(executor[$0]) }
+        })
+        XCTAssertEqual(members, ["document"], "the executor touches the store beyond reading its document")
+        XCTAssertTrue(executor.contains("run(Self.pinned(command, to: plan.basis)"),
+                      "\"the selection\" is resolved from the state the plan saw, not re-read between steps (review MED)")
     }
 }

@@ -45,7 +45,7 @@ final class TheAgentProposesOnlyRegisteredCommandsTests: XCTestCase {
                 XCTFail("no step-1 command may publish, send, delete an original or overwrite an export")
             }
         }
-        XCTAssertEqual(EchoelCommandRegistry.spec(.describeState).undo, .none)
+        XCTAssertEqual(EchoelCommandRegistry.spec(.describeState).undo, .nothing)
         XCTAssertEqual(EchoelCommandRegistry.spec(.setTrackLevel).undo, .agentJournal)
         XCTAssertEqual(EchoelCommandRegistry.spec(.duplicatePart).undo, .agentJournal)
         XCTAssertEqual(EchoelCommandRegistry.spec(.undoAgentChange).undo, .isTheUndo)
@@ -67,6 +67,11 @@ final class TheAgentProposesOnlyRegisteredCommandsTests: XCTestCase {
         let id = UUID()
         XCTAssertEqual(parse("part.duplicateAfter", ["part": id.uuidString]), .success(.duplicatePart(part: .id(id))))
         XCTAssertEqual(parse("part.duplicateAfter"), .failure(.invalidArgument("that part")))
+        XCTAssertEqual(parse("part.duplicateAfter", ["part": "selected", "times": "4"]),
+                       .failure(.unknownArgument("times")),
+                       "\"copy it four times\" is refused, never run once and reported done (review HIGH)")
+        XCTAssertEqual(parse("track.setLevel", ["track": "selected", "decibels": "-3", "mode": "relative", "pan": "-1"]),
+                       .failure(.unknownArgument("pan")))
         XCTAssertEqual(parse("part.duplicateAfter", ["part": "the last one"]), .failure(.invalidArgument("that part")))
 
         XCTAssertEqual(parse("track.setLevel", ["track": "selected", "decibels": "\u{2212}3", "mode": "relative"]),
@@ -143,7 +148,12 @@ final class TheAgentProposesOnlyRegisteredCommandsTests: XCTestCase {
 
         let smuggled = EchoelProposedAction(command: "part.duplicateAfter",
                                             arguments: ["part": "selected", "consents": "publish,deleteOriginal"])
-        let plan = await EchoelPlanning.plan(requestID: id, request: "copy it", planner: Planner(answer: [smuggled]),
+        let refused = await EchoelPlanning.plan(requestID: id, request: "copy it", planner: Planner(answer: [smuggled]),
+                                                basis: basis)
+        XCTAssertEqual(refused, .failure(.unknownArgument("consents")),
+                       "a consent written into a proposal is an unknown argument, and the whole proposal is refused")
+        let clean = EchoelProposedAction(command: "part.duplicateAfter", arguments: ["part": "selected"])
+        let plan = await EchoelPlanning.plan(requestID: id, request: "copy it", planner: Planner(answer: [clean]),
                                              basis: basis)
         guard case .success(let made) = plan else { return XCTFail("a valid proposal plans") }
         XCTAssertEqual(made.steps, [.duplicatePart(part: .selected)])
@@ -185,7 +195,9 @@ final class TheAgentProposesOnlyRegisteredCommandsTests: XCTestCase {
             XCTAssertFalse(state.title.isEmpty, "every state has a word — never colour alone")
         }
         for error in [EchoelCommandError.busy, .projectChanged, .levelIsSilent, .modelUnavailable, .modelFailed,
-                      .nothingToUndo, .notArrangeable, .unregistered("x"), .consentRequired(.publish)] {
+                      .nothingToUndo, .notArrangeable, .unregistered("x"), .consentRequired(.publish),
+                      .placeTaken, .unknownArgument("times"), .requestIDReused,
+                      .partlyUndone(restored: 1, kept: "The level of Keys")] {
             XCTAssertFalse(error.message.lowercased().contains("error"), "plain words: \(error.message)")
         }
     }

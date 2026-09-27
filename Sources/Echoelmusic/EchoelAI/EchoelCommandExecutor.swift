@@ -15,7 +15,9 @@
 // ⭐ ONE REQUEST RUNS ONCE. A request id that already ran returns its stored report, marked
 // `replayed`, and changes nothing — a repeated "copy that" never makes two copies. A second
 // request while one runs is refused as busy. A plan made against a selection or song that has
-// changed since is refused before its first step (the question state), never re-targeted.
+// changed since is refused before its first step (the question state), never re-targeted:
+// "the selection" is resolved ONCE, from the state the plan was made against, so a tap during
+// the request (it yields between steps) cannot move a later step onto another track or part.
 //
 // ⭐ THE AGENT'S UNDO IS ITS OWN, AND IT CHECKS. The level is not in the song's history (the store
 // keeps mixer moves out of it on purpose), so the agent keeps a journal of exact inverses, one
@@ -52,7 +54,7 @@ final class EchoelCommandExecutor {
     private let voiceCapacity: () -> Int
 
     private var journal: [[Inverse]] = []
-    private var finished: [UUID: EchoelExecutionReport] = [:]
+    private var finished: [UUID: (steps: [EchoelCommand], report: EchoelExecutionReport)] = [:]
     private var finishedOrder: [UUID] = []
     private(set) var runningRequest: UUID?
     private var cancelRequested = false
@@ -97,8 +99,9 @@ final class EchoelCommandExecutor {
 
     func execute(_ plan: EchoelActionPlan) async -> EchoelExecutionReport {
         if let earlier = finished[plan.requestID] {
-            return EchoelExecutionReport(requestID: earlier.requestID, steps: earlier.steps,
-                                         replayed: true, refusal: earlier.refusal)
+            guard earlier.steps == plan.steps else { return refused(plan, .requestIDReused) }
+            return EchoelExecutionReport(requestID: earlier.report.requestID, steps: earlier.report.steps,
+                                         replayed: true, refusal: earlier.report.refusal)
         }
         guard runningRequest == nil else { return refused(plan, .busy) }
         for command in plan.steps {
@@ -116,15 +119,15 @@ final class EchoelCommandExecutor {
         var stopped = false
         for (index, command) in plan.steps.enumerated() {
             if index > 0 { await Task.yield() }
-            if cancelRequested || Task.isCancelled {
-                results.append(EchoelStepResult(command: command, outcome: .cancelled))
-                continue
-            }
             if stopped {
                 results.append(EchoelStepResult(command: command, outcome: .notRun))
                 continue
             }
-            let outcome = run(command, into: &group)
+            if cancelRequested || Task.isCancelled {
+                results.append(EchoelStepResult(command: command, outcome: .cancelled))
+                continue
+            }
+            let outcome = run(Self.pinned(command, to: plan.basis), into: &group)
             if case .failed = outcome { stopped = true }
             results.append(EchoelStepResult(command: command, outcome: outcome))
         }
@@ -134,7 +137,7 @@ final class EchoelCommandExecutor {
         }
         let report = EchoelExecutionReport(requestID: plan.requestID, steps: results, replayed: false,
                                            refusal: nil)
-        remember(report)
+        remember(report, steps: plan.steps)
         runningRequest = nil
         cancelRequested = false
         return report
@@ -147,8 +150,23 @@ final class EchoelCommandExecutor {
                               replayed: false, refusal: reason)
     }
 
-    private func remember(_ report: EchoelExecutionReport) {
-        finished[report.requestID] = report
+    /// "The selection" as the plan saw it. A plan made with nothing selected keeps `.selected`,
+    /// which then resolves live — and, since the basis matched, live is also nothing.
+    private static func pinned(_ command: EchoelCommand, to basis: EchoelProjectSnapshot) -> EchoelCommand {
+        switch command {
+        case .setTrackLevel(.selected, let change):
+            guard let id = basis.track?.id else { return command }
+            return .setTrackLevel(track: .id(id), change: change)
+        case .duplicatePart(.selected):
+            guard let id = basis.part?.id else { return command }
+            return .duplicatePart(part: .id(id))
+        case .describeState, .setTrackLevel, .duplicatePart, .undoAgentChange:
+            return command
+        }
+    }
+
+    private func remember(_ report: EchoelExecutionReport, steps: [EchoelCommand]) {
+        finished[report.requestID] = (steps, report)
         finishedOrder.append(report.requestID)
         if finishedOrder.count > Self.rememberedRequests {
             finished[finishedOrder.removeFirst()] = nil
@@ -246,6 +264,13 @@ final class EchoelCommandExecutor {
         case .failure(let error): return .failed(error)
         }
         guard TrackParts.arrangeable(original.laneID, in: document) else { return .failed(.notArrangeable) }
+        // The copy lands at the original's end. A part already starting inside that place would be
+        // stacked under — the song gains a part nobody hears, while the report says "copied".
+        let place = original.endTick..<(original.endTick + original.lengthTicks)
+        if document.regions.contains(where: { $0.laneID == original.laneID && $0.id != original.id
+                                              && place.contains($0.startTick) }) {
+            return .failed(.placeTaken)
+        }
         let known = Set(document.regions.map(\.id))
         TrackParts.duplicate(TrackParts.Part(id: original.id, startTick: original.startTick,
                                              lengthTicks: original.lengthTicks), timeline: timeline)
@@ -310,7 +335,10 @@ final class EchoelCommandExecutor {
                 }
             }
         }
-        guard kept.isEmpty else { return .failed(.changedSince(kept.joined(separator: ", "))) }
+        guard kept.isEmpty else {
+            let what = kept.joined(separator: ", ")
+            return .failed(restored > 0 ? .partlyUndone(restored: restored, kept: what) : .changedSince(what))
+        }
         return .done(restored == 1 ? "Took back my last change." : "Took back my last \(restored) changes.")
     }
 }

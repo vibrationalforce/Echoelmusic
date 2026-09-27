@@ -93,7 +93,7 @@ enum EchoelConsent: String, CaseIterable, Sendable, Codable {
 /// How a command is taken back.
 enum EchoelUndoBehaviour: Equatable, Sendable {
     /// Nothing to take back — it changes nothing.
-    case none
+    case nothing
     /// The agent records the exact inverse and checks, before applying it, that nothing has
     /// changed the same value since.
     case agentJournal
@@ -110,7 +110,7 @@ struct EchoelCommandSpec: Equatable, Sendable {
     let undo: EchoelUndoBehaviour
     let permission: EchoelPermission
 
-    var changesProject: Bool { undo != .none }
+    var changesProject: Bool { undo != .nothing }
 }
 
 /// The ONE registry. A command that is not in it cannot be parsed, planned or executed.
@@ -124,7 +124,7 @@ enum EchoelCommandRegistry {
                 parameters: [],
                 preconditions: [],
                 effect: "None — it reads the selection and the song.",
-                undo: .none, permission: .readOnly)
+                undo: .nothing, permission: .readOnly)
         case .setTrackLevel:
             return EchoelCommandSpec(
                 id: id, summary: "Make a track louder or quieter",
@@ -141,8 +141,9 @@ enum EchoelCommandRegistry {
             return EchoelCommandSpec(
                 id: id, summary: "Copy a part to right after it",
                 parameters: ["part: selected | part id"],
-                preconditions: ["the part exists and sits on the selected track",
-                                "its track holds arrangeable parts (MIDI or audio, not bio)"],
+                preconditions: ["the part exists — the selected one, or one named by its id",
+                                "its track holds arrangeable parts (MIDI or audio, not bio)",
+                                "no part already starts inside the place right after it"],
                 effect: "Adds one copy that starts where the part ends, on the same track, "
                     + "playing the same clip — the part bar's Copy.",
                 undo: .agentJournal, permission: .reversibleEdit)
@@ -171,6 +172,10 @@ enum EchoelCommandError: Error, Equatable, Sendable {
     case levelIsSilent
     case outOfRange(String)
     case notArrangeable
+    case placeTaken
+    case unknownArgument(String)
+    case requestIDReused
+    case partlyUndone(restored: Int, kept: String)
     case projectChanged
     case consentRequired(EchoelConsent)
     case busy
@@ -199,6 +204,14 @@ enum EchoelCommandError: Error, Equatable, Sendable {
             return detail
         case .notArrangeable:
             return "Parts on this track cannot be copied."
+        case .placeTaken:
+            return "There is already a part right after it, so I did not copy it on top."
+        case .unknownArgument(let key):
+            return "I do not know what \"\(key)\" means for this action, so I did nothing."
+        case .requestIDReused:
+            return "That request id belongs to another request. Please ask again."
+        case .partlyUndone(let restored, let kept):
+            return "I took back \(restored) of my changes. \(kept) changed after my edit, so I left it as it is."
         case .projectChanged:
             return "The song or the selection changed since I read it. Please ask again."
         case .consentRequired(let consent):
@@ -241,9 +254,9 @@ enum EchoelLevelMath {
         }
         guard linear.isFinite, linear > 0 else { return .failure(.invalidArgument("that number of decibels")) }
         guard linear <= TrackMix.levelRange.upperBound else {
-            return .failure(.outOfRange("That would pass "
-                + TrackMix.decibelText(TrackMix.levelRange.upperBound)
-                + ", the loudest this track goes. It is at " + TrackMix.decibelText(current) + " now."))
+            let ceiling = TrackMix.decibelText(TrackMix.levelRange.upperBound)
+            let now = TrackMix.decibelText(current)
+            return .failure(.outOfRange("That would pass \(ceiling), the loudest this track goes. It is at \(now) now."))
         }
         return .success(linear)
     }
@@ -262,6 +275,12 @@ enum EchoelCommandParser {
     static func parse(_ proposal: EchoelProposedAction) -> Result<EchoelCommand, EchoelCommandError> {
         guard let id = EchoelCommandID(rawValue: proposal.command) else {
             return .failure(.unregistered(String(proposal.command.prefix(60))))
+        }
+        // An argument the command does not take is a part of the request nobody would carry out
+        // ("copy it four times" → `times`). Refused, never dropped — a dropped one would be
+        // reported as done.
+        if let unknown = proposal.arguments.keys.sorted().first(where: { !argumentKeys(id).contains($0) }) {
+            return .failure(.unknownArgument(String(unknown.prefix(40))))
         }
         switch id {
         case .describeState:
@@ -287,6 +306,15 @@ enum EchoelCommandParser {
             case "absolute": return .success(.setTrackLevel(track: track, change: .absoluteDecibels(db)))
             default: return .failure(.invalidArgument("the level mode — relative or absolute"))
             }
+        }
+    }
+
+    /// The argument keys each command takes — nothing else is accepted.
+    static func argumentKeys(_ id: EchoelCommandID) -> Set<String> {
+        switch id {
+        case .describeState, .undoAgentChange: return []
+        case .duplicatePart: return ["part"]
+        case .setTrackLevel: return ["track", "decibels", "mode"]
         }
     }
 
