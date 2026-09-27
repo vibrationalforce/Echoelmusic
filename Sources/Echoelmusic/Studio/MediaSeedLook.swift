@@ -22,6 +22,11 @@
 //   colour (grey, black and white) leaves the hue where it is.
 // · Motion and Spread stay: a still has no motion to give.
 // · The preset chip is cleared — the result is no factory preset, and a lit chip would claim one.
+//
+// ⭐ A VIDEO (MV2) TAKES THE SAME ROAD, with one difference in what it gives: brightness and colour
+// follow the photo rules, and its measured picture change (`VideoSeed.motionEnergy`) sets Motion —
+// the one thing a still cannot give. Detail stays, because a video's contrast is not measured.
+// A stored video seed that fails `isPlausible` applies nothing.
 
 import Foundation
 
@@ -50,6 +55,29 @@ enum MediaSeedLook {
                             blurb: "colour, brightness and contrast of a photo",
                             hue: hue,
                             saturation: Float(saturationFloor + saturationSpan * unit(seed.saturation)))
+    }
+}
+
+/// The mapping from a video's seed to the visual preset it applies.
+enum VideoSeedLook {
+
+    /// Motion at a still clip and its rise to full picture change (VisualPreset range 0…1.5). A
+    /// still clip slows the visual; it does not freeze it.
+    static let motionFloor = 0.15
+    static let motionSpan = 1.2
+
+    /// The preset a video seed applies. Detail and spread are the CURRENT ones, kept.
+    static func preset(for seed: VideoSeed, keepingDetail detail: Double, spread: Double) -> VisualPreset {
+        func unit(_ v: Double) -> Double { v.isFinite ? Swift.min(1, Swift.max(0, v)) : 0 }
+        let hue: Float? = seed.hasDominantColour && seed.hue.isFinite ? Float(seed.hue) : nil
+        return VisualPreset(id: "", name: "From video",
+                            intensity: Float(MediaSeedLook.intensityFloor + MediaSeedLook.intensitySpan * unit(seed.brightness)),
+                            detail: Float(detail.isFinite ? detail : 40),
+                            motion: Float(motionFloor + motionSpan * unit(seed.motionEnergy)),
+                            spread: Float(spread.isFinite ? spread : 1),
+                            blurb: "brightness, colour and picture change of a video",
+                            hue: hue,
+                            saturation: Float(MediaSeedLook.saturationFloor + MediaSeedLook.saturationSpan * unit(seed.saturation)))
     }
 }
 
@@ -101,7 +129,22 @@ struct VisualLookSnapshot: Equatable, Sendable {
 
     /// The look after a seed is applied to this one. Pure: nothing is written.
     func applying(_ seed: MediaSeed) -> VisualLookSnapshot {
-        let preset = MediaSeedLook.preset(for: seed, keepingMotion: motion, spread: spread)
+        var next = adopting(MediaSeedLook.preset(for: seed, keepingMotion: motion, spread: spread))
+        next.motion = motion   // kept EXACTLY — the preset's Float would round it
+        next.spread = spread
+        return next
+    }
+
+    /// The look after a video seed is applied to this one. Pure: nothing is written.
+    func applying(_ video: VideoSeed) -> VisualLookSnapshot {
+        var next = adopting(VideoSeedLook.preset(for: video, keepingDetail: detail, spread: spread))
+        next.detail = detail   // kept EXACTLY — the preset's Float would round it
+        next.spread = spread
+        return next
+    }
+
+    /// This look with a preset's values; a preset without a hue or saturation keeps this one's.
+    private func adopting(_ preset: VisualPreset) -> VisualLookSnapshot {
         var next = self
         next.intensity = Double(preset.intensity)
         next.detail = Double(preset.detail)
@@ -127,7 +170,16 @@ struct MediaSeedApplication: Equatable, Sendable {
         return MediaSeedApplication(before: before, after: after)
     }
 
-    /// Puts the look from before the photo back.
+    /// The same for a video. nil — and nothing written — when the seed is not plausible.
+    static func apply(_ video: VideoSeed, to defaults: UserDefaults) -> MediaSeedApplication? {
+        guard video.isPlausible else { return nil }
+        let before = VisualLookSnapshot.read(from: defaults)
+        let after = before.applying(video)
+        after.write(to: defaults)
+        return MediaSeedApplication(before: before, after: after)
+    }
+
+    /// Puts the look from before the photo or video back.
     func undo(on defaults: UserDefaults) {
         before.write(to: defaults)
     }
