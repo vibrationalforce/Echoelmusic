@@ -78,8 +78,11 @@ public enum MediaSeedAnalysis {
                                     bytesPerRow: Int) -> MediaSeed? {
         guard width > 0, height > 0,
               width <= maxAnalysisSide, height <= maxAnalysisSide,
-              bytesPerRow >= width * 4,
-              bytes.count >= bytesPerRow * (height - 1) + width * 4 else { return nil }
+              bytesPerRow >= width * 4 else { return nil }
+        // A stride from a broken caller must give nil, not an overflow trap (review LOW).
+        let (rowsBefore, overflowed) = bytesPerRow.multipliedReportingOverflow(by: height - 1)
+        guard !overflowed, rowsBefore <= Int.max - width * 4,
+              bytes.count >= rowsBefore + width * 4 else { return nil }
 
         var binWeight = [Double](repeating: 0, count: hueBins)
         var binHue = [Double](repeating: 0, count: hueBins)
@@ -87,7 +90,7 @@ public enum MediaSeedAnalysis {
         var binG = [Double](repeating: 0, count: hueBins)
         var binB = [Double](repeating: 0, count: hueBins)
         var sumR = 0.0, sumG = 0.0, sumB = 0.0
-        var sumLuma = 0.0, sumLumaSquared = 0.0, sumSaturation = 0.0
+        var sumLuma = 0.0, sumSaturation = 0.0
         var voters = 0
 
         for y in 0..<height {
@@ -100,7 +103,6 @@ public enum MediaSeedAnalysis {
                 sumR += r; sumG += g; sumB += b
                 let luma = 0.2126 * r + 0.7152 * g + 0.0722 * b
                 sumLuma += luma
-                sumLumaSquared += luma * luma
                 let hsv = Self.hsv(r, g, b)
                 sumSaturation += hsv.s
                 guard hsv.s >= chromaFloor, hsv.v >= valueFloor else { continue }
@@ -117,7 +119,20 @@ public enum MediaSeedAnalysis {
 
         let count = Double(width * height)
         let meanLuma = sumLuma / count
-        let variance = Swift.max(0, sumLumaSquared / count - meanLuma * meanLuma)
+        // Two passes, not E[x²] − E[x]²: the one-pass form cancels and gave a flat picture a
+        // contrast of ~2e-7 instead of 0 (review LOW).
+        var sumSquaredDeviation = 0.0
+        for y in 0..<height {
+            let row = y * bytesPerRow
+            for x in 0..<width {
+                let i = row + x * 4
+                // The same expression as the first pass, so a flat picture deviates by exactly 0.
+                let luma = 0.2126 * (Double(bytes[i]) / 255) + 0.7152 * (Double(bytes[i + 1]) / 255)
+                    + 0.0722 * (Double(bytes[i + 2]) / 255)
+                sumSquaredDeviation += (luma - meanLuma) * (luma - meanLuma)
+            }
+        }
+        let variance = sumSquaredDeviation / count
         let contrast = Swift.min(1, variance.squareRoot() / 0.5)
 
         // First maximum wins, so ties resolve to the lowest hue: the same bytes, the same seed.

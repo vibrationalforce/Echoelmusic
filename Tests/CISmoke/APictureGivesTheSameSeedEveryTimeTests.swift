@@ -14,6 +14,11 @@
 // tree; mutants driven, each red for its named reason: `>=` in the bin arg-max (claim 4), the
 // size limit removed (claim 3), the colour-share floor removed (claim 5), padding bytes read as
 // pixels (claim 1b), contrast not normalised (claim 2).
+// REVIEW REPAIR (2026-09-27): an overflowing stride gives nil instead of a trap (claim 3, a
+// REGRESSION guard — it traps on the MS1 tree), and a flat picture has contrast 0 (claim 3b,
+// REGRESSION: the MS1 one-pass variance gives 1.86e-9 for solid blue, transcribed). Hue bins
+// stay fixed, not circular — a red split across bins 35 and 0 can lose to a smaller orange
+// bin; recorded as a known limit, not fixed.
 
 import Foundation
 import XCTest
@@ -118,6 +123,14 @@ final class APictureGivesTheSameSeedEveryTimeTests: XCTestCase {
         XCTAssertNil(MediaSeedAnalysis.analyzeRGBA8(Array(good.dropLast()), width: 8, height: 8, bytesPerRow: 32),
                      "one byte short of the last row")
         XCTAssertNil(MediaSeedAnalysis.analyzeRGBA8([], width: 1, height: 1, bytesPerRow: 4))
+        XCTAssertNil(MediaSeedAnalysis.analyzeRGBA8(good, width: 8, height: 8, bytesPerRow: Int.max / 2),
+                     "a stride from a broken caller gives nil — it must not trap on overflow (review)")
+    }
+
+    func testAFlatPictureHasNoContrastAtAll() throws {
+        // The one-pass variance cancelled here and gave ~2e-9 (review LOW); two passes give 0.
+        let seed = try XCTUnwrap(MediaSeedAnalysis.analyzeRGBA8(solid(0, 0, 255), width: 8, height: 8, bytesPerRow: 32))
+        XCTAssertEqual(seed.contrast, 0, accuracy: 1e-12)
     }
 
     func testTheAnalysisRefusesAPictureTheDecoderDidNotShrink() {
