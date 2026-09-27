@@ -24,6 +24,9 @@
 // asked by value only (claim 6, the person's Apply is taken back), a partly kept look counted as
 // nothing restored (claim 4), a setting moved back reported as kept (claim 6), a grey photo
 // reported as "colours" (claim 6).
+// Review repair 2c: the two "the card already took it back" cases in claims 4 and 6 now read
+// "My last change had already been taken back." (they used to claim a fresh Undo); `partlyUndone`
+// carries `alreadyUndone:`. Mutant: an absent pending look counted as restored → both red.
 
 import Foundation
 import XCTest
@@ -166,7 +169,7 @@ final class TheAgentAppliesTheLookOfTheOpenPhotoTests: XCTestCase {
         byHand.write(to: defaults)
         let kept = await executor.execute(plan([.undoAgentChange], on: executor))
         XCTAssertEqual(kept.steps.first?.outcome,
-                       .failed(.partlyUndone(restored: 1, kept: "The visual intensity")),
+                       .failed(.partlyUndone(restored: 1, alreadyUndone: 0, kept: "The visual intensity")),
                        "the rest went back, and the one setting the person moved is named (review LOW-1)")
         var expected = look
         expected.intensity = moved
@@ -186,7 +189,8 @@ final class TheAgentAppliesTheLookOfTheOpenPhotoTests: XCTestCase {
         later.hue = 0.77
         later.write(to: defaults)
         let already = await executor.execute(plan([.undoAgentChange], on: executor))
-        XCTAssertEqual(already.steps.first?.outcome, .done("Took back my last change."))
+        XCTAssertEqual(already.steps.first?.outcome, .done("My last change had already been taken back."),
+                       "the card's Undo took it back — said as such, not as a fresh Undo (review repair 2c)")
         XCTAssertEqual(VisualLookSnapshot.read(from: defaults), later, "nothing was written again")
     }
 
@@ -202,7 +206,8 @@ final class TheAgentAppliesTheLookOfTheOpenPhotoTests: XCTestCase {
         let persons = try XCTUnwrap(owner.apply(photo: photo(brightness: 0.9), on: defaults))
         XCTAssertEqual(persons, agents, "the same photo on the same look is an EQUAL value")
         let undo = await executor.execute(plan([.undoAgentChange], on: executor))
-        XCTAssertEqual(undo.steps.first?.outcome, .done("Took back my last change."))
+        XCTAssertEqual(undo.steps.first?.outcome, .done("My last change had already been taken back."),
+                       "the agent's look went with the card's Undo; the equal look now applied is the person's")
         XCTAssertEqual(owner.pending, persons, "the person's own Apply is not taken back (review MED-2)")
         XCTAssertEqual(VisualLookSnapshot.read(from: defaults), persons.after)
         owner.undo(on: defaults)

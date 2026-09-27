@@ -195,7 +195,9 @@ enum EchoelCommandError: Error, Equatable, Sendable {
     case placeTaken
     case unknownArgument(String)
     case requestIDReused
-    case partlyUndone(restored: Int, kept: String)
+    /// `restored` were put back now, `alreadyUndone` had been taken back before (the song's Undo,
+    /// a card's Undo), `kept` names what a person changed since and so stays (review repair 2c).
+    case partlyUndone(restored: Int, alreadyUndone: Int, kept: String)
     case projectChanged
     case consentRequired(EchoelConsent)
     case busy
@@ -232,8 +234,14 @@ enum EchoelCommandError: Error, Equatable, Sendable {
             return "I do not know what \"\(key)\" means for this action, so I did nothing."
         case .requestIDReused:
             return "That request id belongs to another request. Please ask again."
-        case .partlyUndone(let restored, let kept):
-            return "I took back \(restored) of my changes. \(kept) changed after my edit, so I left it as it is."
+        case .partlyUndone(let restored, let alreadyUndone, let kept):
+            var parts: [String] = []
+            if restored > 0 { parts.append("I took back \(restored) of my changes.") }
+            if alreadyUndone > 0 {
+                parts.append("\(alreadyUndone) of my changes had already been taken back.")
+            }
+            parts.append("\(kept) changed after my edit, so I left it as it is.")
+            return parts.joined(separator: " ")
         case .projectChanged:
             return "The song or the selection changed since I read it. Please ask again."
         case .consentRequired(let consent):
@@ -255,6 +263,30 @@ enum EchoelCommandError: Error, Equatable, Sendable {
         case .lookStillApplied(let medium):
             let from = medium.isEmpty ? "a photo or video" : "a \(medium)"
             return "The visuals still use the look of \(from). Take that back first."
+        }
+    }
+}
+
+// MARK: - Undo, in plain words (one place, pure)
+
+enum EchoelUndoSummary {
+
+    /// What a fully successful Undo says — the three results the agent distinguishes are
+    /// "taken back now", "had already been taken back" (the song's Undo, a card's Undo, a removed
+    /// copy) and, on the failure side, "kept because a person changed it since" (review repair 2c).
+    /// Both counts zero cannot happen for a journal group (a group is never empty); it reads as
+    /// nothing left, never as a success.
+    static func text(restored: Int, alreadyUndone: Int) -> String {
+        switch (restored, alreadyUndone) {
+        case (0, 0):
+            return "Nothing was left to take back."
+        case (_, 0):
+            return restored == 1 ? "Took back my last change." : "Took back my last \(restored) changes."
+        case (0, _):
+            return alreadyUndone == 1 ? "My last change had already been taken back."
+                                      : "My last \(alreadyUndone) changes had already been taken back."
+        default:
+            return "Took back \(restored) of my changes; \(alreadyUndone) had already been taken back."
         }
     }
 }

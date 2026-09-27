@@ -34,6 +34,10 @@
 // Review repair 2b: claim 6 also re-enters the agent's own value by hand and expects Undo to keep
 // it (`TimelineStore.laneLevelWrites`, counted per write); claim 8 pins the counter at the writer.
 // Mutant: undo comparing the value only → the re-entered value is overwritten, claim 6 red.
+// Review repair 2c: claim 6 tells "taken back" from "had already been taken back" (a copy the song's
+// Undo removed) and from "kept" — `EchoelUndoSummary` is the one text; `partlyUndone` carries both
+// counts. Mutant: a removed copy counted as restored → "Took back my last change." where nothing
+// was taken back, claim 6 red.
 
 import Foundation
 import XCTest
@@ -265,9 +269,54 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
                                          .duplicatePart(part: .selected)], on: executor))
         timeline.setLaneLevel(id: Self.loopLane.id, 0.25)
         let half = await executor.execute(plan([.undoAgentChange], on: executor))
-        XCTAssertEqual(half.steps.first?.outcome, .failed(.partlyUndone(restored: 1, kept: "The level of Loop")))
+        XCTAssertEqual(half.steps.first?.outcome,
+                       .failed(.partlyUndone(restored: 1, alreadyUndone: 0, kept: "The level of Loop")))
         XCTAssertEqual(timeline.document.regions, Self.fixture.regions, "the copy is gone")
         XCTAssertEqual(level(Self.loopLane, in: timeline), 0.25, "the person's level stays")
+
+        // Review repair 2c: a copy the SONG's Undo already removed is "already taken back", not
+        // "taken back" — and the two are told apart when they meet in one group.
+        selection.selectRegion(Self.loopPart.id, in: timeline.document)
+        _ = await executor.execute(plan([.duplicatePart(part: .selected)], on: executor))
+        XCTAssertEqual(timeline.document.regions.count, Self.fixture.regions.count + 1)
+        timeline.undo()   // the person's own Undo button
+        XCTAssertEqual(timeline.document.regions, Self.fixture.regions)
+        let already = await executor.execute(plan([.undoAgentChange], on: executor))
+        XCTAssertEqual(already.steps.first?.outcome, .done("My last change had already been taken back."))
+        XCTAssertEqual(timeline.document.regions, Self.fixture.regions, "nothing removed twice")
+        XCTAssertFalse(executor.canUndoAgentChange)
+
+        let levelBefore = try XCTUnwrap(level(Self.loopLane, in: timeline))
+        _ = await executor.execute(plan([.setTrackLevel(track: .selected, change: .relativeDecibels(-3)),
+                                         .duplicatePart(part: .selected)], on: executor))
+        timeline.undo()   // takes the copy, leaves the level (not a song step)
+        XCTAssertEqual(timeline.document.regions, Self.fixture.regions)
+        XCTAssertNotEqual(level(Self.loopLane, in: timeline), levelBefore)
+        let mixedUndo = await executor.execute(plan([.undoAgentChange], on: executor))
+        XCTAssertEqual(mixedUndo.steps.first?.outcome,
+                       .done("Took back 1 of my changes; 1 had already been taken back."))
+        XCTAssertEqual(level(Self.loopLane, in: timeline), levelBefore, "the level is back")
+
+        // All three at once: level moved by hand (kept), copy song-undone (already), and nothing
+        // restored — the failure names both counts.
+        _ = await executor.execute(plan([.setTrackLevel(track: .selected, change: .relativeDecibels(-3)),
+                                         .duplicatePart(part: .selected)], on: executor))
+        timeline.undo()
+        timeline.setLaneLevel(id: Self.loopLane.id, 0.4)
+        let threeWay = await executor.execute(plan([.undoAgentChange], on: executor))
+        XCTAssertEqual(threeWay.steps.first?.outcome,
+                       .failed(.partlyUndone(restored: 0, alreadyUndone: 1, kept: "The level of Loop")))
+        XCTAssertEqual(EchoelCommandError.partlyUndone(restored: 0, alreadyUndone: 1, kept: "The level of Loop").message,
+                       "1 of my changes had already been taken back. The level of Loop changed after my edit, so I left it as it is.")
+        XCTAssertEqual(level(Self.loopLane, in: timeline), 0.4)
+
+        // The summary is ONE definition, driven directly.
+        XCTAssertEqual(EchoelUndoSummary.text(restored: 1, alreadyUndone: 0), "Took back my last change.")
+        XCTAssertEqual(EchoelUndoSummary.text(restored: 3, alreadyUndone: 0), "Took back my last 3 changes.")
+        XCTAssertEqual(EchoelUndoSummary.text(restored: 0, alreadyUndone: 2), "My last 2 changes had already been taken back.")
+        XCTAssertEqual(EchoelUndoSummary.text(restored: 2, alreadyUndone: 1), "Took back 2 of my changes; 1 had already been taken back.")
+        XCTAssertFalse(EchoelUndoSummary.text(restored: 0, alreadyUndone: 0).hasPrefix("Took back"),
+                       "an empty result never reads as a success")
     }
 
     // MARK: 7 — Cancel ends what has not started

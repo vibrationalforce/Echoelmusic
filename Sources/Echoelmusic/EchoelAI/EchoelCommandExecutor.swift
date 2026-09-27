@@ -28,9 +28,11 @@
 // group per request. "Take back your last change" restores each value ONLY if it still reads
 // what the agent left AND nobody has written that level since (`TimelineStore.laneLevelWrites`,
 // counted per write, so the same number entered again by hand is a later decision — review
-// repair 2b); a value a person moved since is kept, and the report says so. The song's own Undo
-// button is untouched — a taken-back copy is removed through the store, which records that
-// removal as one ordinary song step.
+// repair 2b); a value a person moved since is kept, and the report says so. The report tells
+// three results apart (review repair 2c): taken back now · had already been taken back (the
+// song's Undo removed the copy, a card's Undo took the look back) · kept because a person changed
+// it since. The song's own Undo button is untouched — a taken-back copy is removed through the
+// store, which records that removal as one ordinary song step.
 //
 // ⭐ A MEDIA LOOK GOES THROUGH THE CARDS' OWN OWNER (step 2b). "Use the colours of this photo" is
 // `MediaLookUndo.apply(photo:on:)` — the call the photo card's Apply makes — with the seed that
@@ -399,6 +401,7 @@ final class EchoelCommandExecutor {
             return .failed(.nothingToUndo)
         }
         var restored = 0
+        var alreadyUndone = 0   // taken back before this Undo — by the song's Undo, a card's Undo
         var kept: [String] = []
         for entry in entries.reversed() {
             switch entry {
@@ -421,7 +424,7 @@ final class EchoelCommandExecutor {
                 }
             case .removeCopy(let copy):
                 guard let live = timeline.document.regions.first(where: { $0.id == copy.id }) else {
-                    restored += 1   // already gone: the song is as it was before the copy
+                    alreadyUndone += 1   // the song's Undo or Remove took it back before this
                     continue
                 }
                 guard live == copy else {
@@ -439,7 +442,7 @@ final class EchoelCommandExecutor {
                 // Not the pending look any more — a card's Undo took it back, and anything applied
                 // since, even an equal look, is the person's.
                 guard mediaLooks.pending == application, mediaLooks.generation == generation else {
-                    restored += 1
+                    alreadyUndone += 1
                     continue
                 }
                 let beforeUndo = VisualLookSnapshot.read(from: visualDefaults)
@@ -456,9 +459,10 @@ final class EchoelCommandExecutor {
         }
         guard kept.isEmpty else {
             let what = kept.joined(separator: ", ")
-            return .failed(restored > 0 ? .partlyUndone(restored: restored, kept: what) : .changedSince(what))
+            guard restored > 0 || alreadyUndone > 0 else { return .failed(.changedSince(what)) }
+            return .failed(.partlyUndone(restored: restored, alreadyUndone: alreadyUndone, kept: what))
         }
-        return .done(restored == 1 ? "Took back my last change." : "Took back my last \(restored) changes.")
+        return .done(EchoelUndoSummary.text(restored: restored, alreadyUndone: alreadyUndone))
     }
 }
 

@@ -199,7 +199,9 @@ final class TheAgentProposesOnlyRegisteredCommandsTests: XCTestCase {
         for error in [EchoelCommandError.busy, .projectChanged, .levelIsSilent, .modelUnavailable, .modelFailed,
                       .nothingToUndo, .notArrangeable, .unregistered("x"), .consentRequired(.publish),
                       .placeTaken, .unknownArgument("times"), .requestIDReused,
-                      .partlyUndone(restored: 1, kept: "The level of Keys")] {
+                      .partlyUndone(restored: 1, alreadyUndone: 0, kept: "The level of Keys"),
+                      .partlyUndone(restored: 1, alreadyUndone: 1, kept: "The level of Keys"),
+                      .partlyUndone(restored: 0, alreadyUndone: 1, kept: "The level of Keys")] {
             XCTAssertFalse(error.message.lowercased().contains("error"), "plain words: \(error.message)")
         }
     }
