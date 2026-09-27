@@ -52,6 +52,15 @@
 //  VoiceOver: every part already speaks its bar (`SessionGrid.label`), and a list of bare
 //  numbers would be noise between the rows.
 //
+//  ⭐ WHAT IS SILENT IS SEEN (modes census 2026-09-26, design slice 5). A muted track, and every
+//  track another track's solo silences, looked exactly like a playing one — the canvas is where
+//  a musician looks to see what the song is doing, and it showed parts that make no sound.
+//  `ArrangeCanvas.hearing` names the state; a silenced lane's parts dim, the name gutter
+//  carries a SHAPE (a speaker with a slash; headphones for the soloed track), never colour
+//  alone, and VoiceOver hears the state on the row and on every part. The rule is the mixer's
+//  (`TimelineDocument.effectiveGain`): mute wins over its own solo. Nothing here is tappable —
+//  Mute and Solo stay the track header's switches, the ONE control for each.
+//
 
 import SwiftUI
 
@@ -66,6 +75,53 @@ enum ArrangeCanvas {
 
     /// Where the playhead sits on the song's scale, 0…1, or nil when there is no scale. A
     /// position past the end (a loop running on) pins to the end instead of leaving the canvas.
+    /// What a track does in the mix, as the canvas shows it.
+    enum Hearing: Equatable, Sendable {
+        case plays
+        case muted
+        case soloed
+        /// Another track is soloed and this one is not.
+        case silencedBySolo
+    }
+
+    /// The track's mute/solo state in `TimelineDocument.effectiveGain`'s order: mute wins over
+    /// its own solo, then a solo anywhere silences every track that is not soloed. An unknown
+    /// track plays (nothing to dim). The equivalence with `effectiveGain` is DRIVEN by
+    /// `TheCanvasShowsWhatIsSilentTests` over every mute/solo combination, so the two cannot
+    /// drift apart silently.
+    nonisolated static func hearing(of laneID: UUID, in document: TimelineDocument) -> Hearing {
+        guard let lane = document.lanes.first(where: { $0.id == laneID }) else { return .plays }
+        if lane.isMuted { return .muted }
+        if lane.isSoloed { return .soloed }
+        if document.lanes.contains(where: { $0.isSoloed }) { return .silencedBySolo }
+        return .plays
+    }
+
+    /// Whether the track's parts are drawn dimmed — they make no sound.
+    nonisolated static func isSilenced(_ hearing: Hearing) -> Bool {
+        hearing == .muted || hearing == .silencedBySolo
+    }
+
+    /// The SF Symbol in the name gutter, or nil for a track that simply plays.
+    nonisolated static func symbol(_ hearing: Hearing) -> String? {
+        switch hearing {
+        case .plays:          return nil
+        case .muted:          return "speaker.slash.fill"
+        case .silencedBySolo: return "speaker.slash"
+        case .soloed:         return "headphones"
+        }
+    }
+
+    /// What VoiceOver adds after the track's name — empty for a track that simply plays.
+    nonisolated static func spokenState(_ hearing: Hearing) -> String {
+        switch hearing {
+        case .plays:          return ""
+        case .muted:          return ", muted"
+        case .soloed:         return ", soloed"
+        case .silencedBySolo: return ", silent while another track is soloed"
+        }
+    }
+
     nonisolated static func playheadFraction(tick: Int, songTicks: Int) -> Double? {
         guard songTicks > 0 else { return nil }
         return (Double(tick) / Double(songTicks)).clamped(to: 0...1)
@@ -159,12 +215,7 @@ struct ArrangeCanvasView: View {
                     // and the rows line up bar for bar. Only the NAME grows with the type size;
                     // the gutter width and the lane's 28 pt height are fixed (review LOW-3) —
                     // the parts list in the track inspector is the large-type way in.
-                    Text(row.name)
-                        .font(EchoelTheme.font(12))
-                        .foregroundStyle(EchoelTheme.dim)
-                        .lineLimit(1)
-                        .frame(width: Self.nameWidth, alignment: .leading)
-                        .accessibilityHidden(true)
+                    nameGutter(row)
                     laneRow(row, selected: selected)
                 }
                 .frame(minHeight: Self.rowHeight)
@@ -176,7 +227,28 @@ struct ArrangeCanvasView: View {
         }
     }
 
+    /// The track's name, led by its mute/solo symbol when it has one. Hidden from VoiceOver:
+    /// the row and every part speak the name AND the state themselves.
+    private func nameGutter(_ row: WorkstationSummary.LaneRow) -> some View {
+        let hearing = ArrangeCanvas.hearing(of: row.id, in: document)
+        return HStack(spacing: 3) {
+            if let symbol = ArrangeCanvas.symbol(hearing) {
+                Image(systemName: symbol)
+                    .font(EchoelTheme.font(10))
+                    .foregroundStyle(EchoelTheme.dim)
+            }
+            Text(row.name)
+                .font(EchoelTheme.font(12))
+                .foregroundStyle(EchoelTheme.dim)
+                .lineLimit(1)
+        }
+        .frame(width: Self.nameWidth, alignment: .leading)
+        .accessibilityHidden(true)
+    }
+
     private func laneRow(_ row: WorkstationSummary.LaneRow, selected: UUID?) -> some View {
+        let hearing = ArrangeCanvas.hearing(of: row.id, in: document)
+        let spokenName = row.name + ArrangeCanvas.spokenState(hearing)
         let blocks = ArrangementStrip.blocks(onLane: row.id, in: document, songTicks: songTicks)
         let starts = Dictionary(TrackParts.parts(onLane: row.id, in: document)
             .map { ($0.id, $0.startTick) }, uniquingKeysWith: { first, _ in first })
@@ -190,18 +262,21 @@ struct ArrangeCanvasView: View {
                     ArrangePartBlock(block: block, startTick: start,
                                      isSelected: block.id == selected,
                                      laneWidth: width, songTicks: songTicks,
-                                     label: "\(row.name), part at " + SessionGrid.label(forTick: start),
+                                     label: "\(spokenName), part at " + SessionGrid.label(forTick: start),
                                      onSelect: { selection.selectRegion(block.id, in: document) },
                                      onDrop: { tick in drop(block.id, onLane: row.id, from: start, to: tick) },
                                      onStep: { later in step(block.id, onLane: row.id, later: later) })
                 }
             }
+            // Dimmed, not hidden: the parts are still there to select and move — they make no
+            // sound. Opacity only (Uncodixfy), and never the only cue (the gutter's symbol).
+            .opacity(ArrangeCanvas.isSilenced(hearing) ? 0.45 : 1)
         }
         .frame(height: Self.rowHeight)
         // The row speaks as a group — the track and where its parts start (the one label
         // rule, `ArrangementStrip.spoken`) — and each part inside it is its own button.
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(row.name): " + ArrangementStrip.spoken(onLane: row.id, in: document))
+        .accessibilityLabel("\(spokenName): " + ArrangementStrip.spoken(onLane: row.id, in: document))
     }
 
     /// The release of a drag: select the part, then ONE store edit — or nothing, when it lands

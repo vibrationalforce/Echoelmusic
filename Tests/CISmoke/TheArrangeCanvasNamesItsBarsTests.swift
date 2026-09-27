@@ -130,7 +130,9 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
         guard let row = sequence(["HStack(spacing: Self.gutter) {",
                                   "Color.clear.frame(width: Self.nameWidth, height: 1)",
                                   "ArrangeBarRuler(songTicks: songTicks)", "}"], in: body),
-              let lanes = sequence(["ForEach(rows) { row in", "HStack(spacing: Self.gutter) {", "Text(row.name)"],
+              // Design slice 5 moved the name into `nameGutter` (it now leads with a mute/solo
+              // symbol); the row still opens with the same spacing and that gutter.
+              let lanes = sequence(["ForEach(rows) { row in", "HStack(spacing: Self.gutter) {", "nameGutter(row)"],
                                    in: body) else {
             return XCTFail("""
                 the ruler row is no longer `HStack(spacing: Self.gutter)` holding an empty \
@@ -139,7 +141,11 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
                 """)
         }
         XCTAssertLessThan(row.lowerBound, lanes.lowerBound, "the ruler sits above the lanes")
-        XCTAssertTrue(body.contains(".frame(width: Self.nameWidth, alignment: .leading)"),
+        guard let gutter = body.range(of: "private func nameGutter(_ row: WorkstationSummary.LaneRow) -> some View {"),
+              let gutterEnd = body.range(of: "private func laneRow(", range: gutter.upperBound..<body.endIndex) else {
+            return XCTFail("ANCHOR MISSING: `nameGutter` before `laneRow` (#454)")
+        }
+        XCTAssertTrue(body[gutter.upperBound..<gutterEnd.lowerBound].contains(".frame(width: Self.nameWidth, alignment: .leading)"),
                       "the lane name keeps the width the ruler's gutter copies")
     }
 
