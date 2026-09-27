@@ -86,7 +86,7 @@ public final class MetronomeVoice {
     @ObservationIgnored nonisolated(unsafe) private var audioBeatsPerBar = 4
     @ObservationIgnored nonisolated(unsafe) private var audioLevel: Float = 0.6
     @ObservationIgnored nonisolated(unsafe) private var audioAccent = true
-    /// Set on MainActor (resync / arm), consumed on the audio thread. Bool is
+    /// Set on MainActor (the arm, `enabled`'s didSet), consumed on the audio thread. Bool is
     /// atomic-width → no torn read; a one-frame race only shifts the first click by
     /// a single buffer, which is inaudible.
     @ObservationIgnored nonisolated(unsafe) private var pendingResync = false
@@ -113,6 +113,11 @@ public final class MetronomeVoice {
     /// about to be overwritten by the resync two lines below.
     @ObservationIgnored nonisolated(unsafe) private var lastPerBeat: Double = 0
     @ObservationIgnored nonisolated(unsafe) private var beatIndex: Int = 0
+    /// Samples rendered since the last transport anchor was applied — `.infinity` until the
+    /// first one after an arm. It tells `anchored` whether the click is already RIDING the
+    /// transport's beats (an anchor a beat ago) or has been free-running (the arm, a stopped
+    /// song, a first Play). Audio-thread-only; the arm resets it where it resets the bar.
+    @ObservationIgnored nonisolated(unsafe) private var samplesSinceAnchor: Double = .infinity
     @ObservationIgnored nonisolated(unsafe) private var clickEnv: Float = 0   // 0…1 decaying amplitude
     @ObservationIgnored nonisolated(unsafe) private var clickPhase: Float = 0
     @ObservationIgnored nonisolated(unsafe) private var clickFreq: Float = 1046  // C6, retuned per beat
@@ -179,41 +184,65 @@ public final class MetronomeVoice {
         pendingAnchor = Self.anchorWord(beat: beat, of: beatsInBar, accentEvery: beatsPerBar)
     }
 
-    /// What the render is told for a transport beat. The click's own count follows the
-    /// transport's beat only while its accent period IS the bar; with "Accent every" set to
-    /// another length the anchor moves the TIME and leaves the count alone, so the accent
-    /// keeps its own cycle across bars (the documented meaning of that row).
+    /// What the render is told for a transport beat. The click's count follows the transport
+    /// whenever its accent period DIVIDES the bar — beat `b` is then accent-cycle beat
+    /// `b % accentEvery`, so "Accent every 4" lands on each bar's first beat and "every 2" on
+    /// beats 1 and 3. (⛔ Review of 54b2e28cf, MED-LOW: the first version named the beat only
+    /// when the period WAS the bar, so "every 2" kept whatever phase the practice click had.)
+    /// A period that does not divide the bar (3, 5, 8, 12 …) moves the TIME and leaves the
+    /// count alone, so that accent keeps its own cycle across bars (the documented meaning of
+    /// that row) — 8 and 12 would need the bar NUMBER, which a step subscriber does not carry.
     public nonisolated static func anchorWord(beat: Int, of beatsInBar: Int, accentEvery: Int) -> Int {
         guard beatsInBar > 0 else { return noAnchor }
-        guard accentEvery == beatsInBar else { return timingOnlyAnchor }
-        return ((beat % beatsInBar) + beatsInBar) % beatsInBar
+        guard accentEvery > 0, beatsInBar % accentEvery == 0 else { return timingOnlyAnchor }
+        return ((beat % accentEvery) + accentEvery) % accentEvery
     }
 
     /// Where the click stands after an anchor: `(beatIndex, sampleCounter)` — pure, so the
-    /// render path is testable without a device. Two cases:
-    /// · the click STRUCK this beat a moment ago (the counter is under `anchorAbsorbShare` of
-    ///   a beat, and — for a named anchor — it struck the SAME beat): keep that click and
-    ///   measure the next beat from now. Striking again would be a flam.
-    /// · otherwise: strike now, as the named beat (or the click's own next beat).
+    /// render path is testable without a device. Two outcomes:
+    /// · RE-TIME: the click already struck this beat — keep that click and measure the next
+    ///   beat from now. Striking again would be the same beat twice.
+    /// · STRIKE: otherwise — strike now, as the named beat (or the click's own next beat).
+    ///
+    /// How long ago "already struck" may be depends on `streaming` (an anchor arrived about a
+    /// beat ago, so the click is riding the transport):
+    /// · streaming, named: a whole beat. The click's own clock struck beat k one beat after
+    ///   the last anchor; an anchor naming k that comes later is the MAIN THREAD running late
+    ///   (a stall, a big tempo drop), not a new beat. ⛔ Review of 54b2e28cf (MED): the first
+    ///   version absorbed only a quarter beat here, so any stall longer than one step played
+    ///   that beat TWICE — and, with "Accent every" off the bar, shifted the accent for good.
+    /// · streaming, timing-only: half a beat — with no name, an anchor in the second half is
+    ///   more likely the next beat arriving early than this one arriving late.
+    /// · not streaming (first anchor after an arm, or after the song was stopped): only
+    ///   `anchorAbsorbShare`. The click was free-running, so a beat it struck long ago is NOT
+    ///   the song's beat — the song's downbeat must sound (an arm mid-song, a Play after a
+    ///   practice click).
     /// A non-finite or non-positive beat length changes nothing; a NaN counter strikes now,
     /// which also heals it.
     nonisolated static func anchored(word: Int, beatIndex: Int, sampleCounter: Double,
-                                     perBeat: Double, bars: Int) -> (beatIndex: Int, sampleCounter: Double) {
+                                     perBeat: Double, bars: Int,
+                                     streaming: Bool) -> (beatIndex: Int, sampleCounter: Double) {
         guard word != noAnchor, perBeat > 0, perBeat.isFinite, bars > 0 else {
             return (beatIndex, sampleCounter)
         }
         let named = word >= 0
         let target = named ? word % bars : beatIndex
-        if sampleCounter < perBeat * anchorAbsorbShare && (!named || beatIndex == target) {
+        let share = streaming ? (named ? 1 : timingOnlyStreamShare) : anchorAbsorbShare
+        if sampleCounter < perBeat * share && (!named || beatIndex == target) {
             return (beatIndex, 0)
         }
         return (named ? (target - 1 + bars) % bars : beatIndex, perBeat)
     }
 
-    /// How late an anchor may arrive after the click struck the same beat and still count as
-    /// that beat — a quarter of a beat (125 ms at 120 BPM, 50 ms at the transport's 300 BPM
-    /// ceiling), well above the main-actor timer's jitter and far below a beat.
+    /// How late the FIRST anchor (after an arm or a stop) may arrive after the click struck the
+    /// same beat and still count as that beat — a quarter of a beat (125 ms at 120 BPM, 50 ms
+    /// at the transport's 300 BPM ceiling), well above the main-actor timer's jitter.
     @ObservationIgnored nonisolated static let anchorAbsorbShare = 0.25
+    /// The same bound for a timing-only anchor while streaming (see `anchored`).
+    @ObservationIgnored nonisolated static let timingOnlyStreamShare = 0.5
+    /// The click counts as riding the transport while the last anchor is less than this many
+    /// beats old. Anchors come once a beat, so two beats tolerates one late or lost anchor.
+    @ObservationIgnored nonisolated static let anchorStreamBeats = 2.0
     @ObservationIgnored nonisolated static let noAnchor = -1
     @ObservationIgnored nonisolated static let timingOnlyAnchor = -2
 
@@ -300,6 +329,7 @@ public final class MetronomeVoice {
             pendingResync = false
             sampleCounter = perBeat               // fire on the very next frame
             beatIndex = audioBeatsPerBar - 1      // → next beat becomes index 0 (downbeat)
+            samplesSinceAnchor = .infinity        // free-running again until the transport speaks
         }
 
         // Design slice 10: the transport's beat, if one arrived since the last buffer. Read
@@ -308,10 +338,13 @@ public final class MetronomeVoice {
         if anchor != Self.noAnchor {
             pendingAnchor = Self.noAnchor
             let landed = Self.anchored(word: anchor, beatIndex: beatIndex, sampleCounter: sampleCounter,
-                                       perBeat: perBeat, bars: max(1, audioBeatsPerBar))
+                                       perBeat: perBeat, bars: max(1, audioBeatsPerBar),
+                                       streaming: samplesSinceAnchor < perBeat * Self.anchorStreamBeats)
             beatIndex = landed.beatIndex
             sampleCounter = landed.sampleCounter
+            samplesSinceAnchor = 0
         }
+        samplesSinceAnchor += Double(frameCount)
 
         let abl = UnsafeMutableAudioBufferListPointer(audioBufferList)
         let sr = Float(Self.sampleRate)
