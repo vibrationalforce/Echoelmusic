@@ -61,6 +61,15 @@
 //  (`TimelineDocument.effectiveGain`): mute wins over its own solo. Nothing here is tappable —
 //  Mute and Solo stay the track header's switches, the ONE control for each.
 //
+//  ⭐ A PART SHOWS ITS NOTES (modes census 2026-09-26, design slice 11). Every block was the same
+//  grey bar, so two parts of one track looked alike and a composer evolve changed nothing on
+//  screen. A MIDI part's block now carries one short dash per note, placed along the part and
+//  by pitch (`ArrangeCanvas.noteMarks`) — the notes the part PLAYS, windowed by the note
+//  editor's own `ClipNoteEdit.visibleNotes`, so a trimmed part shows only what it sounds. The
+//  canvas reads the clip grid (cold: an edit, an import, an evolve) and hands each block its
+//  marks; the block draws them under its border, they travel with a drag, take no touches and
+//  say nothing. An audio part stays plain — its waveform is not read here.
+//
 
 import SwiftUI
 
@@ -190,6 +199,51 @@ enum ArrangeCanvas {
             return RulerMark(bar: bar, fraction: fraction)
         }
     }
+
+    /// One note sketched inside a part's block: where it starts and how far it runs along the
+    /// part (0…1 of the part's length), and its height (0 = the part's highest note, 1 = its
+    /// lowest; a part whose notes share one pitch draws them at the middle).
+    struct NoteMark: Equatable, Sendable {
+        let start: Double
+        let length: Double
+        let height: Double
+    }
+
+    /// The most notes one block sketches. A denser part is thinned EVENLY along its length —
+    /// never cut after the first notes, which would draw a busy part as silent at its end.
+    static let maxNoteMarks = 192
+
+    /// A part's notes as the block sketches them — the notes the part PLAYS, windowed exactly
+    /// as the note editor and the player window them (`ClipNoteEdit.visibleNotes`), so a trimmed
+    /// part shows only what it sounds. An audio part, a part without a clip, and a part whose
+    /// window is still in seconds (`windowOffset` = nil) sketch nothing.
+    nonisolated static func noteMarks(for region: TimelineRegion, clip: Clip?) -> [NoteMark] {
+        guard let clip, clip.kind == .midi,
+              let offset = ClipNoteEdit.windowOffset(of: region) else { return [] }
+        let notes = ClipNoteEdit.visibleNotes(clip.melody?.notes ?? [], offsetTicks: offset,
+                                              lengthTicks: region.lengthTicks)
+        return noteMarks(notes, lengthTicks: region.lengthTicks)
+    }
+
+    /// The sketch of part-relative notes over a part `lengthTicks` long, in start order. The
+    /// pitch span is taken over ALL the notes before any thinning, so thinning a dense part
+    /// never changes the height at which a kept note is drawn.
+    nonisolated static func noteMarks(_ notes: [Note], lengthTicks: Int) -> [NoteMark] {
+        guard lengthTicks > 0,
+              let low = notes.map(\.pitch).min(),
+              let high = notes.map(\.pitch).max() else { return [] }
+        let ordered = notes.sorted { ($0.startTick, $0.pitch) < ($1.startTick, $1.pitch) }
+        let every = (ordered.count + maxNoteMarks - 1) / maxNoteMarks
+        let span = Double(high - low)
+        let length = Double(lengthTicks)
+        return stride(from: 0, to: ordered.count, by: Swift.max(1, every)).map { index in
+            let note = ordered[index]
+            let start = (Double(note.startTick) / length).clamped(to: 0...1)
+            let end = (Double(note.startTick + note.lengthTicks) / length).clamped(to: 0...1)
+            return NoteMark(start: start, length: Swift.max(0, end - start),
+                            height: span > 0 ? Double(high - note.pitch) / span : 0.5)
+        }
+    }
 }
 
 /// Every track's parts on one scale, each part tappable to select it.
@@ -199,6 +253,9 @@ struct ArrangeCanvasView: View {
     /// Only for the drop's ONE commit (`TrackParts.move`); the canvas reads the song from the
     /// `document` it is handed, never from the store.
     @Environment(TimelineStore.self) private var timeline
+    /// Only to sketch each part's notes (design slice 11). Cold: the clip grid changes on an
+    /// edit, an import or a composer evolve (~25–45 s) — the same reads the note editor makes.
+    @Environment(ClipStore.self) private var clipStore
 
     let rows: [WorkstationSummary.LaneRow]
     let document: TimelineDocument
@@ -263,6 +320,9 @@ struct ArrangeCanvasView: View {
         let blocks = ArrangementStrip.blocks(onLane: row.id, in: document, songTicks: songTicks)
         let starts = Dictionary(TrackParts.parts(onLane: row.id, in: document)
             .map { ($0.id, $0.startTick) }, uniquingKeysWith: { first, _ in first })
+        let sketches = Dictionary(document.regions.filter { $0.laneID == row.id }
+            .map { ($0.id, ArrangeCanvas.noteMarks(for: $0, clip: clipStore.clip(id: $0.clipID))) },
+                                  uniquingKeysWith: { first, _ in first })
         return GeometryReader { geometry in
             let width = geometry.size.width
             ZStack(alignment: .leading) {
@@ -274,6 +334,7 @@ struct ArrangeCanvasView: View {
                                      isSelected: block.id == selected,
                                      laneWidth: width, songTicks: songTicks,
                                      label: "\(spokenName), part at " + SessionGrid.label(forTick: start),
+                                     noteMarks: sketches[block.id] ?? [],
                                      onSelect: { selection.selectRegion(block.id, in: document) },
                                      onDrop: { tick in drop(block.id, onLane: row.id, from: start, to: tick) },
                                      onStep: { later in step(block.id, onLane: row.id, later: later) })
@@ -393,6 +454,8 @@ struct ArrangePartBlock: View {
     let laneWidth: CGFloat
     let songTicks: Int
     let label: String
+    /// The part's notes, sketched small (design slice 11) — empty for an audio part.
+    let noteMarks: [ArrangeCanvas.NoteMark]
     let onSelect: () -> Void
     let onDrop: (Int) -> Void
     /// The drag's non-drag twin (true = one bar later) — see the file header.
@@ -408,6 +471,7 @@ struct ArrangePartBlock: View {
         let moving = dragPoints != 0
         RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
             .fill(EchoelTheme.dim)
+            .overlay { noteSketch }
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
                 .strokeBorder(isSelected || moving ? EchoelTheme.accent : EchoelTheme.border,
                               lineWidth: isSelected || moving ? 2 : 1))
@@ -432,6 +496,29 @@ struct ArrangePartBlock: View {
                 Button("Move one bar later") { onStep(true) }
             }
     }
+
+    /// The notes, one short dash each, drawn inside the block (design slice 11): the part shows
+    /// its melody's shape, and it travels with the block while it is dragged. It takes no
+    /// touches and says nothing — the block speaks for the part.
+    private var noteSketch: some View {
+        Canvas { context, size in
+            let dash = Swift.min(Self.dashHeight, size.height)
+            for mark in noteMarks {
+                let rect = CGRect(x: CGFloat(mark.start) * size.width,
+                                  y: CGFloat(mark.height) * (size.height - dash),
+                                  width: Swift.max(1, CGFloat(mark.length) * size.width),
+                                  height: dash)
+                context.fill(Path(rect), with: .color(EchoelTheme.surface))
+            }
+        }
+        .padding(.horizontal, 2)
+        .padding(.vertical, 4)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
+    /// How thick one note is drawn — thin enough that a busy part still reads as a shape.
+    private static let dashHeight: CGFloat = 2
 
     /// Hold first, then slide — so a swipe that starts on a part still scrolls the Workstation.
     private var move: some Gesture {
