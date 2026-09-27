@@ -917,6 +917,16 @@ struct EchoelmusicApp: App {
                 transport.onTempoChange(id: "metronome") { [weak metronome] bpm in
                     metronome?.bpm = bpm
                 }
+                // Design slice 10: the click also follows the transport's BEATS. Every step that
+                // starts a beat anchors it, so the downbeat sounds WITH step 0 (one step after
+                // the play decision — the old resync struck it a sixteenth early) and the click
+                // cannot drift away from the notes on its own sample clock. It writes one
+                // `@ObservationIgnored` word, never an observed property, so no body churns
+                // (#928). Late in the fan-out: it must never reorder the note path.
+                transport.addStepSubscriber("metronome", priority: 990) { [weak metronome] pos in
+                    guard pos.step % Transport.stepsPerBeat == 0 else { return }
+                    metronome?.anchorBeat(pos.step / Transport.stepsPerBeat, of: Transport.beatsPerBar)
+                }
                 // #1439: the Workstation's Play preflight must judge a legacy seconds-trimmed
                 // MIDI region at the SAME offset `loadClip` will derive, and that derivation
                 // needs the live tempo. The only caller is a SwiftUI `body`, and both

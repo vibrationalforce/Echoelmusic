@@ -10972,7 +10972,9 @@ struct EchoelStudioView: View {
         // re-seed must not restart a transport the user stopped from the transport bar.
         if !wasPlaying && startTransport {
             beatPlayer.pattern.play(cause: .generate)
-            metronome.resync()   // align the click's downbeat to the start
+            // No click resync here (design slice 10): the transport's step subscriber anchors
+            // the click on step 0, which sounds one step AFTER this call — a resync here
+            // struck the downbeat a sixteenth early.
         }
         // SILENCE DIAG (founder "alles ist still", 2026-07-14): the melody only sounds
         // when the roll-slot lane is audible — pianoRoll.mixGain mirrors the first MIDI
