@@ -33,6 +33,9 @@
 //  never written here), "Fit" moves the targets to the nearest key notes, and "−1 step" / "+1
 //  step" transpose them by one step of the key's scale — each ONE commit.
 //
+//  Since design slice 12: a note's fill carries its velocity as opacity
+//  (`ClipNoteEdit.noteOpacity`), so a part's dynamics read without selecting anything.
+//
 //  Since M8: a part on a MIDI track past the rack's capacity says, under "Notes", that the track
 //  has no voice — its notes can be edited and are never heard. The inspector's line and rule.
 //
@@ -624,8 +627,10 @@ private struct PartNoteCanvas: View {
                                   width: Swift.max(2, CGFloat(note.lengthSteps) * stepW - 2),
                                   height: rowH - 2)
                 let shape = Path(roundedRect: rect, cornerRadius: 2)
+                // Velocity reads as depth of colour (design slice 12); a picked note keeps the
+                // full text colour, so the pick never fades with a quiet note.
                 context.fill(shape, with: .color(lit.contains(note.id) ? EchoelTheme.text
-                                                                         : EchoelTheme.accent))
+                    : EchoelTheme.accent.opacity(ClipNoteEdit.noteOpacity(velocity: note.velocity))))
                 // A picked note also changes SHAPE, not only colour (WCAG 1.4.1 — modes census
                 // UX C): a 1 pt inner ring in the grid's own surface colour, so the pick reads
                 // as a hollowed block without telling text from accent apart. Skipped on a note

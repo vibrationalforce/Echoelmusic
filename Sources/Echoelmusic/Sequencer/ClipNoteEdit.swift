@@ -262,6 +262,19 @@ enum ClipNoteEdit {
         return changed ? updated : nil
     }
 
+    /// How strongly the note grid draws a note (design slice 12): its velocity as the fill's
+    /// opacity, from `quietestNoteOpacity` for a silent note to 1 for a full one — so a part's
+    /// dynamics read at a glance instead of only through the velocity row of a selection. Never
+    /// invisible: a note you cannot see you cannot pick. A non-finite velocity draws as the
+    /// quietest (the NaN-safe clamp's lower bound), never as a missing note.
+    nonisolated static func noteOpacity(velocity: Float) -> Double {
+        let v = Double(velocity.clamped(to: 0...1))
+        return quietestNoteOpacity + (1 - quietestNoteOpacity) * v
+    }
+
+    /// The fill opacity of a velocity-0 note — the floor that keeps every note visible.
+    static let quietestNoteOpacity = 0.35
+
     /// The mean velocity of `ids` — what the velocity row shows for a mixed selection.
     nonisolated static func meanVelocity(_ ids: Set<UUID>, in clipNotes: [Note]) -> Float? {
         let values = clipNotes.filter { ids.contains($0.id) }.map(\.velocity)
