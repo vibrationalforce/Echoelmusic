@@ -92,6 +92,17 @@ behauptet, nicht erzwungen; Teil-Undo als bloßer Fehler; zweite Kopie unter der
 Alle repariert außer zwei aufgeschriebenen: ein Alt-Pegel über 2 lässt sich relativ nicht senken;
 Einwilligungen sind per Konvention, nicht per Typ, dem Menschen vorbehalten.
 
+## 5c. Review-Reparatur Schritt 2 (`0576bd558`, `50155bdbc`)
+
+Unabhängige Prüfung von 2a/2b: kein HIGH, keine Compile-Gefahr gefunden, alle Wächter-Literale
+bis zum Erzeuger verfolgt. Repariert: MED-1 eingeklappte Karte bot ihr Foto weiter an ·
+MED-2 Undo erkannte „meinen Look" am WERT (Undo + gleiches Foto von Hand las sich als der des
+Agenten) → `MediaLookUndo.generation` · LOW-1 teilweises Undo hieß „nichts zurück" → benennt die
+gebliebenen Einstellungen · LOW-2 Claim-8-Liste geschärft · LOW-3 „Applied:" folgt dem Besitzer ·
+LOW-4 graues Foto behauptete „Farben". Offen und aufgeschrieben: eine in einer nicht-lazy
+ScrollView weggescrollte Karte gilt weiter als „offen" (kein `onDisappear`) — „offen auf ihrer
+Karte" ist dann wörtlich wahr, sichtbar ist sie nicht.
+
 ## 6. Prüfung
 
 Schritt 2: beide neuen Wächter per Python transkribiert — 2a (Schreiber-Scan + Mutant „Karte
