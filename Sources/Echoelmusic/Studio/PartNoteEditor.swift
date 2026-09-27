@@ -76,7 +76,7 @@ struct PartNoteEditor: View {
                 Button { isOpen.toggle() } label: {
                     HStack(spacing: 4) {
                         Image(systemName: isOpen ? "chevron.down" : "chevron.right")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(EchoelTheme.font(11, .semibold))
                         Text("Notes").font(EchoelTheme.font(12, .semibold))
                     }
                     .foregroundStyle(EchoelTheme.text)
@@ -483,7 +483,7 @@ private struct PartNoteGrid: View {
         Button(action: action) {
             HStack(spacing: 4) {
                 if !systemImage.isEmpty {
-                    Image(systemName: systemImage).font(.system(size: 11, weight: .semibold))
+                    Image(systemName: systemImage).font(EchoelTheme.font(11, .semibold))
                 }
                 Text(title).font(EchoelTheme.font(11, .semibold)).lineLimit(1)
             }

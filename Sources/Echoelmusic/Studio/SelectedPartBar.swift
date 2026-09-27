@@ -361,7 +361,7 @@ struct SelectedPartBar: View {
                         label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 4) {
-                Image(systemName: systemImage).font(.system(size: 11, weight: .semibold))
+                Image(systemName: systemImage).font(EchoelTheme.font(11, .semibold))
                 if showsTitle {
                     Text(title).font(EchoelTheme.font(11, .semibold)).lineLimit(1)
                         .fixedSize()
@@ -408,7 +408,7 @@ private struct PartPlayButton: View {
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: playing ? "stop.fill" : "play.fill")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(EchoelTheme.font(11, .semibold))
                 Text(playing ? "Stop" : "Play from here")
                     .font(EchoelTheme.font(11, .semibold)).lineLimit(1)
                     .fixedSize()   // the title beside it wraps; the action's name never truncates

@@ -7,8 +7,8 @@
 // system size does not — at large text sizes the icon stayed 13 pt beside a much larger word.
 // The icon now takes the label's own font, so both scale together.
 //
-// 1. SOURCE: `WorkstationView.swift` contains no `.system(size:` — scoped to this ONE file on
-//    purpose (#364): other files keep legitimate fixed icons (`CoachingTextScalesTests` names
+// 1. SOURCE: `WorkstationView.swift` and the leaves it hosts (a NAMED list, grown slice by slice
+//    since the review of 0c2e7b908) contain no `.system(size:` — scoped on purpose (#364): other files keep legitimate fixed icons (`CoachingTextScalesTests` names
 //    `infoButton` as one), and this guard does not reach them.
 // 2. COUNTERWEIGHTS (#343): the file still draws SF Symbols (a scan over a file with no icons
 //    would pass for nothing), and `EchoelTheme.font` is still the scaling face
@@ -32,19 +32,29 @@ final class TheWorkstationIconsScaleWithTheTextTests: XCTestCase {
 
     private static let workstation = "Sources/Echoelmusic/Studio/WorkstationView.swift"
     private static let theme = "Sources/Echoelmusic/Studio/EchoelTheme.swift"
+    /// The plate and the leaves it hosts (review of 0c2e7b908, LOW: the same defect sat one
+    /// file over, in the editors the Workstation opens). A NAMED list, not a directory walk
+    /// (#364): other surfaces keep legitimate fixed icons.
+    private static let plate = [workstation] + [
+        "PartNoteEditor", "SelectedPartBar", "SongHistoryRow",
+    ].map { "Sources/Echoelmusic/Studio/\($0).swift" }
 
     func testTheWorkstationHasNoFixedSizeFont() throws {
-        let code = try source(Self.workstation)
-        XCTAssertFalse(code.contains(".system(size:"), """
-            `WorkstationView` sets an absolute `.system(size:)` again. It does not scale with \
-            Dynamic Type, so the icon stays small beside a label that grows. Use the label's own \
-            `EchoelTheme.font(_:_:)` on the `Image(systemName:)`.
-            """)
+        for path in Self.plate {
+            let code = try source(path)
+            XCTAssertFalse(code.contains(".system(size:"), """
+                `\(path)` sets an absolute `.system(size:)` again. It does not scale with Dynamic \
+                Type, so the icon stays small beside a label that grows. Use the label's own \
+                `EchoelTheme.font(_:_:)` on the `Image(systemName:)`.
+                """)
+        }
     }
 
     func testTheIconsStillExistAndTheFaceStillScales() throws {
-        let code = try source(Self.workstation)
-        XCTAssertTrue(code.contains("Image(systemName:"), "the scan above only means something while the file draws icons")
+        for path in Self.plate {
+            XCTAssertTrue(try source(path).contains("Image(systemName:"),
+                          "the scan above only means something while `\(path)` draws icons")
+        }
         let theme = try source(Self.theme)
         XCTAssertTrue(theme.contains("return .custom(faceName(weight), size: size, relativeTo: .body)"),
                       "`EchoelTheme.font` must stay the Dynamic-Type-scaling face, or the swap fixed nothing")

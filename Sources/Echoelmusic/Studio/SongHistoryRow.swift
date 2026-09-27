@@ -50,7 +50,7 @@ struct SongHistoryRow: View {
                         action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 4) {
-                Image(systemName: systemImage).font(.system(size: 11, weight: .semibold))
+                Image(systemName: systemImage).font(EchoelTheme.font(11, .semibold))
                 Text(title).font(EchoelTheme.font(11, .semibold)).lineLimit(1)
             }
             .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)
