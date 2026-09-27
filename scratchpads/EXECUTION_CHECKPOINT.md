@@ -3,7 +3,7 @@
 Rules: `memory/preferences.md` § "Orchestrator hardening". This file is NOT a roadmap — product order
 lives in `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` and the canonical PLAN_* files. Overwrite, don't append.
 
-CURRENT_HEAD: 9d64dd8a8 (branch claude/echoelmusic-review-optimize-u5jjpd)
+CURRENT_HEAD: ce04926b5 (branch claude/echoelmusic-review-optimize-u5jjpd)
 CURRENT_MAIN: 4884c7a47
 QUEUE: scratchpads/MODES_CENSUS_2026-09-26.md (Q1–Q10 + design slices 1–12; founder mockups 2026-09-26 =
   inspiration only, filtered through product law / brand / Uncodixfy)
@@ -15,7 +15,10 @@ TASK_STATE:
                        MED-1 floor 0.55 fixed) — VERIFY; ⚠️ watch Compile Check for `Color.mix(with:by:)`
   Design slice 10      the click — 54b2e28cf (timing: the transport anchors the click on every beat; the
                        instrument's old resync struck one 16th early) + 9d64dd8a8 (Workstation switch).
-                       Audio-thread review + UI review RUNNING. Timing on glass NEEDS-FOUNDER-VERIFY.
+                       Reviewed twice (audio-thread: 1 MED + 1 MED-LOW; UI: 1 MED) — all fixed in
+                       887bbafd1 (late anchor re-times while riding the transport; "Accent every 2"
+                       named) + ce04926b5 (guard derives the receiver; label fixedSize). 0 HIGH/MED open.
+                       Timing on glass NEEDS-FOUNDER-VERIFY.
   Loop toggle          BLOCKED_FOUNDER
   Q1 (Workstation Stop keeps pulse) — BLOCKED_FOUNDER (question 2)
   Q10 (DomeProjection core)  — BLOCKED_FOUNDER (paused Visual/XR domain, question 4)
@@ -31,6 +34,6 @@ GATE_STATE: runners backlogged — every CI/CD run from 6449 (f0d2b55fe) to 6460
 KNOWN_RED_GATE: CI/CD conclusion red on every push (#396) — read the "Build for Testing" step
 FOUNDER_PENDING: device acceptance WA4 / R1 / M1–M10 / MA1–MA4.4d / S1–S2 / B3 + Q2–Q9 + D1 + design
   slices 1–12; MIDI "AUTONOMOUS GATES NOT CLOSED"; EF3; DC2 paused; census questions 1–4
-NEXT_3_ACTIONS: 1) fix HIGH/MED from the two slice-10 reviews, in ONE push (runner queue is the bottleneck)
-  2) read Compile Check + BfT on the head when a runner frees  3) no further Sources slice until a compile
-  has returned on the head — 12 uncompiled Sources commits is the ceiling of what is safe to stack
+NEXT_3_ACTIONS: 1) read Compile Check + BfT on the head (ce04926b5) when a runner frees; a red names the
+  first uncompiled commit to bisect  2) NO further Sources slice until a compile has returned on the head —
+  the uncompiled stack (6c69dacad…ce04926b5) is at its ceiling  3) meanwhile: docs/census only
