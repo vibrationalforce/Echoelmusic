@@ -37,6 +37,9 @@ struct WorkstationClickToggle: View {
                 Text("Click")
                     .font(EchoelTheme.font(13, .semibold))
             }
+            // Never truncated to "Cl…" on a narrow phone at large text: the position readout
+            // beside it can shrink (`minimumScaleFactor`), a one-word label cannot (review LOW-2).
+            .fixedSize()
             // The armCard idiom of the Play beside it: accent + onPrimary while it is ON,
             // fill + border while it is off. Never dimmed — the click is always available.
             .foregroundStyle(on ? EchoelTheme.onPrimary : EchoelTheme.text)

@@ -48,15 +48,26 @@ final class TheWorkstationArmsTheClickTests: XCTestCase {
             return XCTFail("ANCHOR MISSING: `struct WorkstationClickToggle: View {` (#454)")
         }
         let body = String(code[start.upperBound...])
-        XCTAssertTrue(body.contains("@Environment(MetronomeVoice.self) private var metronome"),
-                      "the leaf resolves the ONE metronome the app injects — never a second voice")
-        XCTAssertTrue(body.contains("metronome.enabled.toggle()"), "the tap flips the click")
-        // Every member this leaf touches on the voice must be the cold switch. `metronome.bpm`
-        // is pushed by the "metronome" tempo relay during a glide (`TheMenuHostReadsNoHotStateTests`),
-        // and this leaf sits under the menu host (#479).
+        // The receiver is DERIVED from the declaration, never assumed (review of 9d64dd8a8, MED —
+        // the #408 blind spot `TheMenuHostReadsNoHotStateTests` closed with `environmentReceiver`):
+        // renamed to `click`, a scan for the literal `metronome.` would see nothing and pass.
+        let declaration = "@Environment(MetronomeVoice.self) private var "
+        guard let decl = body.range(of: declaration) else {
+            return XCTFail("the leaf no longer resolves the ONE metronome the app injects through `@Environment(MetronomeVoice.self)` (#454)")
+        }
+        let receiver = String(body[decl.upperBound...].prefix { $0.isLetter || $0.isNumber || $0 == "_" })
+        XCTAssertFalse(receiver.isEmpty, "the voice binding has a name")
+        XCTAssertTrue(body.contains("\(receiver).enabled.toggle()"), "the tap flips the click")
+        // No alias the member scan below could not follow — `@Bindable var m = …` or `let m = …`.
+        XCTAssertFalse(body.contains("@Bindable"), "the leaf binds nothing — a Bindable alias hides its reads")
+        XCTAssertFalse(body.contains("= \(receiver)\n") || body.contains("= \(receiver) "),
+                       "the voice is not aliased to a second name")
+        // Every member this leaf touches on the voice must be the cold switch. `bpm` is pushed by
+        // the "metronome" tempo relay during a glide (`TheMenuHostReadsNoHotStateTests`), and this
+        // leaf sits under the menu host (#479).
         var members: Set<String> = []
         var rest = body[...]
-        while let hit = rest.range(of: "metronome.") {
+        while let hit = rest.range(of: "\(receiver).") {
             let tail = rest[hit.upperBound...]
             let name = String(tail.prefix { $0.isLetter || $0.isNumber || $0 == "_" })
             members.insert(name)
@@ -101,7 +112,9 @@ final class TheWorkstationArmsTheClickTests: XCTestCase {
         let lead = transport[group.upperBound..<mount.lowerBound]
         XCTAssertEqual(lead.filter { $0 == "{" }.count - lead.filter { $0 == "}" }.count, 0,
                        "the switch is a direct, unconditional child of the Play group")
-        for name in ["MetronomeVoice", "metronome"] {
+        // Narrow on purpose (review of 9d64dd8a8, LOW-4, #364): the TYPE and a member read. A
+        // symbol name, a copy string or a helper that merely says "metronome" is not a voice.
+        for name in ["MetronomeVoice", "metronome."] {
             XCTAssertFalse(code.contains(name), """
                 `WorkstationView` names `\(name)` — the view names no voice; the click lives in \
                 its own leaf (`WorkstationClickToggle`), as the recorder does (`RecordTakeControls`).
