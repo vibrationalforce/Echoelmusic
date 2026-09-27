@@ -1169,14 +1169,25 @@ private struct WorkstationProjectRow: View {
         let canSave = !pianoRoll.notes.isEmpty
             || SessionSaveOpen.songHasUserParts(timeline.document, clips: clips.filledClips)
         let canOpen = !projects.projects.isEmpty
-        HStack(spacing: 8) {
-            door("Save", systemImage: "tray.and.arrow.down", object: "save", enabled: canSave,
-                 spoken: "Save this session",
-                 hint: "Names the session and saves it, with the song on this plate")
-            door("Open", systemImage: "tray.and.arrow.up", object: "open", enabled: canOpen,
-                 spoken: "Open a saved session",
-                 hint: "Shows your saved sessions. Opening one replaces the song on this plate")
-            Spacer(minLength: 0)
+        let save = door("Save", systemImage: "tray.and.arrow.down", object: "save", enabled: canSave,
+                        spoken: "Save this session",
+                        hint: "Names the session and saves it, with the song on this plate")
+        let open = door("Open", systemImage: "tray.and.arrow.up", object: "open", enabled: canOpen,
+                        spoken: "Open a saved session",
+                        hint: "Shows your saved sessions. Opening one replaces the song on this plate")
+        // Side by side while they fit; stacked at the largest text sizes. Since the icons grow
+        // with the label (modes census UX D), two 92 pt-minimum doors no longer fit one phone
+        // row at AX4–AX5 — the words would compress instead (review of 0c2e7b908, MEDIUM).
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                save
+                open
+                Spacer(minLength: 0)
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                save
+                open
+            }
         }
         .padding(.horizontal, 10)
     }

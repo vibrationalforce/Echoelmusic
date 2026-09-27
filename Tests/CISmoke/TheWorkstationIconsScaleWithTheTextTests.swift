@@ -14,8 +14,13 @@
 //    would pass for nothing), and `EchoelTheme.font` is still the scaling face
 //    (`relativeTo: .body`) — the premise that makes the swap a fix.
 //
+// 3. SOURCE: the icons that now grow must still FIT. The Save/Open pair shares one row with a
+//    92 pt minimum per door; at AX4–AX5 that row outgrew a phone (review of 0c2e7b908, MEDIUM),
+//    so it sits in a `ViewThatFits` whose fallback STACKS the two doors.
+//
 // Grading (§0, no Swift toolchain): transcribed against both trees — claim 1 red on the parent
-// (`e84bc229d`, seven `.system(size: 13, weight: .semibold)`), green here; claim 2 green on both.
+// (`e84bc229d`, seven `.system(size: 13, weight: .semibold)`), green here; claim 2 green on both;
+// claim 3 red on `0c2e7b908` (a bare `HStack`), green here — a regression pin for the review.
 // SOURCE-TEXT scan: it proves the font is written this way, never how it reads on glass.
 // NEEDS-FOUNDER-VERIFY: Settings → Accessibility → Larger Text at the largest size → Workstation:
 // the Play / Add Audio Track / Import icons grow with their labels and nothing clips.
@@ -43,6 +48,25 @@ final class TheWorkstationIconsScaleWithTheTextTests: XCTestCase {
         let theme = try source(Self.theme)
         XCTAssertTrue(theme.contains("return .custom(faceName(weight), size: size, relativeTo: .body)"),
                       "`EchoelTheme.font` must stay the Dynamic-Type-scaling face, or the swap fixed nothing")
+    }
+
+    func testTheSaveAndOpenDoorsStackWhenTheyNoLongerFit() throws {
+        let code = try source(Self.workstation)
+        guard let start = code.range(of: "private struct WorkstationProjectRow: View {"),
+              let end = code.range(of: "private func door(", range: start.upperBound..<code.endIndex) else {
+            return XCTFail("ANCHOR MISSING: `WorkstationProjectRow` and its `door(` helper (#454)")
+        }
+        let body = String(code[start.upperBound..<end.lowerBound])
+        guard let fits = body.range(of: "ViewThatFits(in: .horizontal) {"),
+              let row = body.range(of: "HStack(spacing: 8) {", range: fits.upperBound..<body.endIndex),
+              let stack = body.range(of: "VStack(alignment: .leading, spacing: 8) {", range: row.upperBound..<body.endIndex) else {
+            return XCTFail("""
+                Save and Open no longer sit in a `ViewThatFits` whose first choice is the row and                 whose fallback is a stack. Their icons grow with the text now; at the largest sizes                 two 92 pt doors do not fit one phone row, and the words compress instead.
+                """)
+        }
+        XCTAssertLessThan(row.lowerBound, stack.lowerBound, "the row is the first choice, the stack the fallback")
+        XCTAssertEqual(body.components(separatedBy: "door(\"Save\"").count - 1, 1,
+                       "each door is built ONCE and placed in both layouts — two builds could drift apart")
     }
 
     private func source(_ relativePath: String) throws -> String {
