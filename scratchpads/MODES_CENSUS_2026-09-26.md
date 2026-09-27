@@ -435,3 +435,32 @@ Caveat: you told me the MIDI editor stays "autonomous gates not closed". Slice A
 - **Audio thread.** Not touched.
 - **Overclaiming.** Do not state "VoiceOver-complete note editor" anywhere, including `ContentPipeline/CLAIMS.md` and `fastlane`. After Slice A the grid can select and step through notes but still cannot resize or place notes freely.
 - **Verification.** All of this compiles and can be checked by reading only. Whether VoiceOver actually reads it well needs a device test, and that is still outstanding.
+---
+
+# Design — mockup vs. shipped Workstation (2026-09-27)
+
+Source: the founder's two ChatGPT mockups (phone + tablet, 2026-09-26), run through the vision
+gate (`inspiration.csv`, ADOPT-PRODUCT-TEILWEISE). A read-only census compared them with HEAD
+`e1036b874`. Verdict: the shipped Workstation already covers roughly 70 % of the phone
+mockup's FUNCTION; the gap is LEGIBILITY (no bar ruler, unlabelled blocks, sparse note-grid
+labels, a tall button stack), not capability. Every slice reuses an existing owner, adds no
+modal, and adds no hot read in a parent body.
+
+| # | Slice | Files | State |
+|---|---|---|---|
+| 1 | Bar ruler over the Arrange canvas (`ArrangeCanvas.rulerMarks`, cold `ArrangeBarRuler`) | ArrangeCanvasView | BUILT `d16d764b1` — VERIFY (gates + review) |
+| 2 | Selected part: end bar (`barSpan`, joiner "–") + note count on the "Notes" toggle | SelectedPartBar, PartNoteEditor | READY |
+| 3 | Note-grid row names through the reader's `NoteNaming` + one line describing a single picked note | PartNoteEditor | READY |
+| 4 | Creation buttons in a `ViewThatFits` (row first, stack fallback; order unchanged) | WorkstationView | READY |
+| 5 | Muted/soloed visible on the canvas (opacity + shape cue + VoiceOver), no second M/S control | ArrangeCanvasView | READY |
+| 6 | Quantize grid choice 1/16 · 1/8 · 1/4 (named menu Picker; required `gridSteps`, #431) | ClipNoteEdit, PartNoteEditor | READY |
+| 7 | Part start as an `EchoelValueField`, commit-only, one `TrackParts.move` | SelectedPartBar | READY |
+| 8 | Track level also read in dB (static caption, never a meter) | TrackInspectorView | READY |
+| 9 | Note-grid playhead as its own self-driving leaf | PartNoteEditor | READY (hot-state care) |
+| 10 | Metronome toggle on the Workstation | — | NEEDS a resync of the owner first |
+| — | Loop toggle | — | BLOCKED_FOUNDER |
+
+REJECTED from the mockups (vision gate): glow/neon accents and pill radii (Uncodixfy), decorative
+KPI tiles, a second M/S control on the canvas, a live per-lane meter (no per-lane meter source
+exists — it would be a hot read with no producer), and every Visual/XR/Broadcast/Output panel
+(paused without a founder decision).
