@@ -40,7 +40,9 @@ REPAIR ROUND on 9d479f922 (founder release 2026-09-27; per package: SHA · findi
           = same main-actor turn as the check       33a70c329
   fix     33a70c329  claim 8 anchor order          — Compile Check 36357182443 SUCCESS (first Release/device compile of
                                                   the 4a Sources) · BfT 36357182490 SUCCESS (the bundle with 4a–4e builds)
-                                                  · Run Tests job 108728801787: PENDING at 23:35Z
+                                                  · Run Tests job 108728801787: #396 shape, 169 pass / 0 fail IN THE
+                                                  WINDOW (1701 s gap); none of this round's suites in the window →
+                                                  execution unrecorded (#445/#807), compile proven
   Not repaired, reported (user-impact order): MED-9 video import copies the full file before the duration check,
   no cancel button (temp copy removed, newer pick cancels) · MED-11 meter warning colour-only · LOW rest ·
   Codex 2 (look half): a same-value re-entry of a LOOK parameter is indistinguishable and is taken back
@@ -62,5 +64,5 @@ KNOWN_RED_GATE: CI/CD conclusion red on every push (#396) — read the "Build fo
   EchoelStudioView with #1069) — founder decides whether this round fixes them
 FOUNDER_PENDING: device checks for the whole media/agent stack (nothing here is device-verified) · #249/#250 ·
   MED-9 cancel button · "0.0 dB → 0.0 dB" wording · TestFlight (NOT triggered, per order)
-NEXT_3_ACTIONS: 1) read Run Tests of 33a70c329 (job 108728801787) with gh-test-verdict.py; repair precisely if red  2) final report (repaired / open / SHAs / gates / device checks)
+NEXT_3_ACTIONS: 1) founder: read the final report; decide #249/#250, MED-9, the "0.0 dB → 0.0 dB" wording  2) final report (repaired / open / SHAs / gates / device checks)
   3) no new features; the next Sources slice only on a green 33a70c329
