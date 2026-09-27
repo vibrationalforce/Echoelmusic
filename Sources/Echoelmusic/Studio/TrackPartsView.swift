@@ -88,9 +88,11 @@ enum TrackParts {
     /// MED-1/2). A VoiceOver swipe moves by `ScrubPrecision.adjustmentStep` — a fiftieth of the
     /// span, at least one grid unit — and a drag crosses the whole span in a fixed distance. On
     /// a fixed 1…999 range one swipe jumped about 20 bars and a point of drag about 5; bars in
-    /// between could only be typed. On a song's own length a swipe is exactly one bar while the
-    /// span stays under fifty bars (a song up to about forty-two); a longer song steps a fiftieth
-    /// of its span per swipe, so a 128-bar song moves about three bars per swipe.
+    /// between could only be typed. On a song's own length the raw step is a fiftieth of the
+    /// span, and the field snaps every value to whole bars (`ScrubPrecision.snapped`), so a swipe
+    /// moves round(span / 50) bars: exactly one while the raw step stays under 1.5 — a span under
+    /// seventy-five, i.e. a song up to sixty-seven bars — and a 128-bar song (span 135, raw step
+    /// 2.7) moves three (review of c51b1645a, LOW-2: the previous wording said "a fiftieth").
     ///
     /// ⚠️ THE PRICE, stated because the first wording of this doc denied it (review of
     /// 8c40b0fd0, MED-1): the number pad clamps to this SAME range, so a TYPED bar reaches only

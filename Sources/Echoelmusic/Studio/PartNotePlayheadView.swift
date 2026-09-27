@@ -18,7 +18,9 @@
 //
 // ⚠️ THE LINE STEPS, IT DOES NOT GLIDE (review of e091712e5, LOW-7). The player advances
 // `currentTick` once per transport step — 120 ticks, exactly one grid column — so the line
-// jumps a column at a time. The fractional step below is exact arithmetic, and it is visible
+// jumps a column at a time — at most one per redraw while the song makes at most fifteen steps a
+// second (225 BPM in sixteenths); between 225 and `Transport.maxTempo` (300) a redraw can land
+// two columns on (review of c51b1645a, LOW-3). The fractional step below is exact arithmetic, and it is visible
 // only for a part whose start sits off the 120-tick grid, where the line stands between two
 // columns by the same fraction the part does.
 

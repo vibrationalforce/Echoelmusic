@@ -28,8 +28,9 @@
 // 6c69dacad added the range claim: the field's reach follows the song, so one swipe is one bar.
 // Review of 8c40b0fd0 added three: the song length the bar hands over (mutant `songBars: 999`
 // red), room past the end (mutant `startBarRoom = 0` red), and a part already past the clamp
-// (red on the parent `8c40b0fd0`, where `startTick` refused every bar above 9 999 — ONE
-// regression, three assertions).
+// (red on `8c40b0fd0` — `TrackPartsView.swift` there is identical to the commit's parent
+// `3e4b47b50`, which is the tree to grade against — where `startTick` refused every bar above
+// 9 999: ONE regression, three assertions; review of c51b1645a, LOW-4).
 // NOT covered: how the field reads under the title on glass, and whether a drag across many bars
 // feels right — a device look.
 // NEEDS-FOUNDER-VERIFY: Workstation → select a part that starts on beat 3 of bar 2 → "Starts at
