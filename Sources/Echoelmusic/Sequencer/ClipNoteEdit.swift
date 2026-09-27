@@ -333,15 +333,19 @@ enum ClipNoteEdit {
     }
 
     /// VoiceOver's non-touch way through the grid (modes census UX A): the note `delta` places
-    /// after (positive) or before (negative) the current pick, in READING order — start, then
-    /// pitch low to high, then id so equal notes still have one order. Forward from the LAST
+    /// after (positive) or before (negative) the current pick, in READING order — the drawn
+    /// column (`startStep`, rounded like the grid draws it), then pitch low to high, then the
+    /// exact tick and id so equal notes still have one order. ⛔ It sorted by `startTick` first
+    /// (review of cf7414c72, LOW): two unquantized notes in one drawn column were then spoken
+    /// by tick, not low to high as they sit on screen. Forward from the LAST
     /// picked note, backward from the FIRST; with nothing picked, forward starts at the first
     /// note and backward at the last. Wraps at both ends. No notes ⇒ nil, never a trap.
     nonisolated static func steppedPick(from picked: Set<UUID>, in notes: [Note], by delta: Int) -> UUID? {
         guard !notes.isEmpty else { return nil }
         let ordered = notes.sorted { a, b in
-            if a.startTick != b.startTick { return a.startTick < b.startTick }
+            if a.startStep != b.startStep { return a.startStep < b.startStep }
             if a.pitch != b.pitch { return a.pitch < b.pitch }
+            if a.startTick != b.startTick { return a.startTick < b.startTick }
             return a.id.uuidString < b.id.uuidString
         }
         let count = ordered.count
@@ -353,6 +357,14 @@ enum ClipNoteEdit {
             target = at.first.map { $0 + delta } ?? (count - 1)
         }
         return ordered[((target % count) + count) % count].id
+    }
+
+    /// What VoiceOver hears for the grid: the notes it can step through, and — when the octave
+    /// window hides some — how many the part holds, so a listener who wraps early knows why.
+    nonisolated static func gridLabel(shown: Int, total: Int, picked: Int) -> String {
+        let notes = shown == total ? "\(total) \(total == 1 ? "note" : "notes")"
+                                   : "\(shown) of \(total) notes shown"
+        return "Note grid: \(notes), \(picked) selected"
     }
 
     /// Where the rows centre when a part's grid opens: its median pitch, C4 when empty. The

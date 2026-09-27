@@ -6,8 +6,8 @@
 // (Delete, Transpose, Quantize, velocity) was unreachable without sight. The grid now carries
 // two named actions, "Select next note" / "Select previous note", backed by a pure step.
 //
-// 1. END-TO-END BEHAVIOUR (`ClipNoteEdit.steppedPick`, pure): reading order is start, then pitch
-//    low to high; forward runs from the LAST pick, backward from the FIRST; nothing picked starts
+// 1. END-TO-END BEHAVIOUR (`ClipNoteEdit.steppedPick`, pure): reading order is the DRAWN column
+//    (`startStep`), then pitch low to high; forward runs from the LAST pick, backward from the FIRST; nothing picked starts
 //    forward at the first note and backward at the last; both ends wrap; an empty list is nil,
 //    never a trap.
 // 2. SOURCE: the grid element carries both actions over the notes ON SCREEN, the hint no longer
@@ -18,10 +18,14 @@
 // parent (`0c2e7b908`), so the file does not compile there — FORWARD guards, one absence (#486);
 // the step algebra was transcribed into Python and driven on the cases below. Claim 2 transcribed
 // against this tree: green; on the parent the hint reads "Touch only in this version".
+// Review repair (of cf7414c72): the column order, `gridLabel` ("N of M notes shown" when the
+// octave window hides some) and the hoisted `onScreen` — the column case and `gridLabel` are
+// FORWARD (red on cf7414c72 by tick order / absence), transcribed and driven in Python.
 // NOT covered: that VoiceOver speaks the actions and the announcement well — a device probe.
 // NEEDS-FOUNDER-VERIFY: VoiceOver on, Workstation → a MIDI part → Edit notes → focus the grid,
 // swipe up/down to "Select next note", double-tap: VoiceOver says e.g. "C4 at step 1, selected";
-// repeat to walk the notes left to right; Delete below removes the one it named.
+// repeat to walk the notes left to right; Delete below removes the one it named. Listen that a
+// sharp is said as "sharp" (the name is `C#4`) — if VoiceOver says "pound", report it.
 
 import Foundation
 import XCTest
@@ -55,6 +59,24 @@ final class ThePartNoteGridSpeaksTests: XCTestCase {
                        "a pick that is not on screen counts as nothing picked")
         XCTAssertNil(ClipNoteEdit.steppedPick(from: [], in: [], by: 1), "no notes: nil, never a trap")
         XCTAssertNil(ClipNoteEdit.steppedPick(from: [low.id], in: [], by: -1))
+
+        // Review of cf7414c72 (LOW): the order is the DRAWN column. Two unquantized notes that
+        // round into one column go low to high, as they sit — not by their exact tick.
+        var earlyHigh = Note(pitch: 72, startStep: 2)
+        earlyHigh.startTick -= Note.ticksPerStep / 4            // still draws in column 2
+        var lateLow = Note(pitch: 48, startStep: 2)
+        lateLow.startTick += Note.ticksPerStep / 4              // still draws in column 2
+        XCTAssertEqual(earlyHigh.startStep, lateLow.startStep, "premise: one drawn column")
+        XCTAssertLessThan(earlyHigh.startTick, lateLow.startTick, "premise: the high note is earlier by tick")
+        XCTAssertEqual(ClipNoteEdit.steppedPick(from: [], in: [earlyHigh, lateLow], by: 1), lateLow.id,
+                       "in one drawn column the LOW note is read first, as on screen")
+    }
+
+    func testTheLabelCountsWhatTheStepsWalk() {
+        XCTAssertEqual(ClipNoteEdit.gridLabel(shown: 3, total: 3, picked: 1), "Note grid: 3 notes, 1 selected")
+        XCTAssertEqual(ClipNoteEdit.gridLabel(shown: 1, total: 1, picked: 0), "Note grid: 1 note, 0 selected")
+        XCTAssertEqual(ClipNoteEdit.gridLabel(shown: 8, total: 12, picked: 0), "Note grid: 8 of 12 notes shown, 0 selected",
+                       "notes outside the drawn rows are named, so a listener who wraps early knows why")
     }
 
     // MARK: 2 — the grid offers it, and it only selects
@@ -64,8 +86,13 @@ final class ThePartNoteGridSpeaksTests: XCTestCase {
         XCTAssertFalse(code.contains("Touch only"), "the hint still tells a VoiceOver user the grid is touch only")
         XCTAssertTrue(code.contains(".accessibilityAction(named: \"Select next note\") {"))
         XCTAssertTrue(code.contains(".accessibilityAction(named: \"Select previous note\") {"))
-        XCTAssertEqual(code.components(separatedBy: "among: visible.filter { range.contains($0.pitch) })").count - 1, 2,
-                       "both actions step over the notes ON SCREEN — the rows the grid draws")
+        XCTAssertTrue(code.contains("let onScreen = visible.filter { range.contains($0.pitch) }"),
+                      "the notes on screen are the rows the grid draws")
+        XCTAssertTrue(code.contains("stepPick(1, among: onScreen)") && code.contains("stepPick(-1, among: onScreen)"),
+                      "both actions step over the notes ON SCREEN")
+        XCTAssertTrue(code.contains("ClipNoteEdit.gridLabel(shown: onScreen.count, total: visible.count,"),
+                      "the label counts the same notes the steps walk (review of cf7414c72, LOW)")
+        XCTAssertFalse(code.contains("among: visible)"), "stepping over every note walks rows the grid does not draw")
 
         guard let head = code.range(of: "private func stepPick(_ delta: Int, among onScreen: [Note]) {"),
               let next = code.range(of: "private func ", range: head.upperBound..<code.endIndex) else {

@@ -159,6 +159,10 @@ private struct PartNoteGrid: View {
                         range.contains($0.pitch) && picked.contains($0.id)
                     }.map(\.id))
                     let pickedCount = pickedOnScreen.count
+                    // The notes in the rows drawn — what stepping walks and what the label counts
+                    // first (review of cf7414c72, LOW: the label counted every note while the
+                    // actions walked only these, so a listener wrapped early, unwarned).
+                    let onScreen = visible.filter { range.contains($0.pitch) }
                     let grid = NoteGridGesture.Grid(
                         stepWidth: Double(Self.stepWidth), rowHeight: Double(Self.rowHeight),
                         rows: range, partSteps: ClipNoteEdit.stepCount(lengthTicks: region.lengthTicks))
@@ -175,7 +179,8 @@ private struct PartNoteGrid: View {
                                            finish(gesture, region: region, offset: offset)
                                        })
                             .accessibilityElement()
-                            .accessibilityLabel("Note grid: \(visible.count) notes, \(pickedCount) selected")
+                            .accessibilityLabel(ClipNoteEdit.gridLabel(shown: onScreen.count, total: visible.count,
+                                                                       picked: pickedCount))
                             .accessibilityHint(editable
                                 ? "Use the actions to select the next or previous note; the controls below act on the selection. By touch: tap an empty cell to add a note, tap notes to select them; press and hold, then slide, to move, stretch or box-select"
                                 : "Shown, not edited")
@@ -184,10 +189,10 @@ private struct PartNoteGrid: View {
                             // screen (the rows shown), through the one selection owner, and says
                             // which; the controls below then act on it as on a tapped pick.
                             .accessibilityAction(named: "Select next note") {
-                                stepPick(1, among: visible.filter { range.contains($0.pitch) })
+                                stepPick(1, among: onScreen)
                             }
                             .accessibilityAction(named: "Select previous note") {
-                                stepPick(-1, among: visible.filter { range.contains($0.pitch) })
+                                stepPick(-1, among: onScreen)
                             }
                     }
                     controls(range: range, picked: pickedOnScreen, editable: editable,

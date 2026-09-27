@@ -39,17 +39,19 @@ final class APickedNoteChangesShapeNotOnlyColourTests: XCTestCase {
 
     func testAPickedNoteCarriesARing() throws {
         let loop = try noteLoop()
-        guard let fill = loop.range(of: "context.fill(shape,"),
-              let branch = loop.range(of: "if lit.contains(note.id), rect.width > 4, rect.height > 4 {"),
-              let ring = loop.range(of: "context.stroke(Path(roundedRect: rect.insetBy(dx: 1.5, dy: 1.5), cornerRadius: 1),") else {
+        // Review of cf7414c72 (LOW, #408): one shared `guard` blamed "colour alone" for a mere
+        // re-spelling. The fill is an ANCHOR; the branch and the ring are the CLAIM, and a
+        // reformat of the stroke's arguments must not read as the ring being gone.
+        guard let fill = loop.range(of: "context.fill(shape,") else {
+            return XCTFail("ANCHOR MISSING: the note fill `context.fill(shape,` (#454)")
+        }
+        guard let branch = loop.range(of: "if lit.contains(note.id)", range: fill.upperBound..<loop.endIndex),
+              let ring = loop.range(of: "context.stroke(Path(roundedRect:", range: branch.upperBound..<loop.endIndex) else {
             return XCTFail("""
-                a picked note is marked by colour alone again — the loop has no ring for the \
-                `lit` set. WCAG 1.4.1: a state carried only by colour is unreadable to a \
-                colour-vision deficiency.
+                a picked note is marked by colour alone again — after the fill, the loop has no                 `lit` branch that strokes a ring. WCAG 1.4.1: a state carried only by colour is                 unreadable to a colour-vision deficiency.
                 """)
         }
-        XCTAssertLessThan(fill.lowerBound, branch.lowerBound, "the ring is drawn over the fill")
-        XCTAssertLessThan(branch.lowerBound, ring.lowerBound)
+        XCTAssertLessThan(branch.upperBound, ring.lowerBound, "the ring is drawn inside the picked branch")
         XCTAssertTrue(loop.contains("with: .color(EchoelTheme.surface), lineWidth: 1)"),
                       "a 1 pt ring in the grid's own surface token — no new colour")
     }
