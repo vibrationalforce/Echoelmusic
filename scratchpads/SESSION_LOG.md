@@ -40166,3 +40166,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - Befehle: `project.describeState`, `track.setLevel`, `part.duplicateAfter`, `agent.undoLast`. Matrix + Lücken: `scratchpads/PLAN_ECHOELAI_ACTIONS_2026-09-27.md`.
 - Keine Sprachanbindung, keine Agenten-Fläche (bewusst: ohne Planer wäre sie eine Tür zu „No language model is connected").
 - NICHT kompiliert, nicht gepusht; zwei Wächter transkribiert, Mutanten rot.
+
+## 2026-09-27 — EchoelAI Schritt 2: Foto/Video angebunden (gleicher lokaler Branch)
+
+- 2a `9132870a9`: `MediaLookUndo` ist der EINE Schreiber eines Medien-Looks (`apply(photo:on:)`/`apply(video:on:)`: verweigern bei offenem Look, schreiben, merken in einem Aufruf); beide Karten gehen darüber; der Besitzer hält den gezeigten Seed je Karte (nur Speicher, beim Verschwinden/Neu-Lesen zurückgezogen). Wächter `TheMediaLookHasOneWriterTests`.
+- 2b `c31a38284`: Befehl `media.applyLook` (photo|video) über denselben Besitzer mit dem gezeigten Seed; Snapshot trägt gezeigte Seeds + offenen Look (Karte wechselt → Plan veraltet); Undo nur solange der eigene Look offen ist, von Hand verstellte Werte bleiben, nach Karten-Undo schreibt der Agent nichts. Wächter `TheAgentAppliesTheLookOfTheOpenPhotoTests`; Claim 8 des Schritt-1-Wächters erlaubt `UserDefaults` als TYP (Test-Suite), verbietet weiter `.standard`/`.set(`/`forKey:`/`removeObject` und neu `MediaSeedApplication.apply(`/`.write(to:`/`mediaLooks.record(`.
+- Szene „am nächsten Takt": Pfad existiert (`TimelineRegionPlayer.launchScene` + bestätigbar über `launchState(laneID:)` → `.queued`); nächste Scheibe braucht eine Transport-Naht (gestoppt = Start-Closure der Workstation, die EINZIGE `play(`-Aufruferin bleiben muss). Nicht gebaut.
+- NICHT kompiliert, nicht gepusht; transkribiert, 6 Mutanten rot, fünf Prüfwerkzeuge sauber.

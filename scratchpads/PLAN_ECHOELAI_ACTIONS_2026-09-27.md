@@ -33,6 +33,20 @@ kanonischen Besitzer und schreibt über dieselben Schreiber wie die Buttons.
   Idempotenz je Anfrage-ID, busy, Abbruch zwischen Schritten, Teil-Erfolg, Nachprüfung nach
   jedem Schritt, eigenes Undo-Journal mit Konfliktschutz.
 
+## 2b. Gebaut (Schritt 2 — Foto/Video angebunden)
+
+- **2a** (`9132870a9`): `MediaLookUndo` ist der EINE Schreiber eines Medien-Looks —
+  `apply(photo:on:)` / `apply(video:on:)` verweigern bei offenem Look, schreiben und merken den
+  Rückweg in EINEM Aufruf. Beide Karten gehen darüber; `MediaSeedApplication.apply(` hat in
+  `Sources/` genau einen Aufrufer. Der Besitzer hält außerdem den Seed, den jede Karte GELESEN
+  UND ANGEZEIGT hat (`shownPhoto`/`shownVideo`, nur im Speicher; beim Verschwinden der Karte und
+  beim Start eines neuen Lesens zurückgezogen). Wächter `TheMediaLookHasOneWriterTests`.
+- **2b** (`c31a38284`): Befehl `media.applyLook` (medium: photo | video) — über denselben
+  Besitzer, mit dem angezeigten Seed. Der Snapshot trägt die gezeigten Seeds und den offenen
+  Look, also ist ein Plan veraltet, sobald die Karte etwas anderes zeigt. Undo nur, solange der
+  eigene Look noch der offene ist; von Hand verstellte Werte bleiben. Wächter
+  `TheAgentAppliesTheLookOfTheOpenPhotoTests`.
+
 ## 3. Abdeckungsmatrix — Nutzerfunktion → Befehl → Test → Lücke
 
 | Nutzerfunktion (Tür) | Befehl | Test | Lücke |
@@ -46,7 +60,8 @@ kanonischen Besitzer und schreibt über dieselben Schreiber wie die Buttons.
 | Teil verschieben · trimmen · teilen · entfernen | — | — | Schreiber existieren (`TrackParts.move/remove`, `resizeRegion`, `splitRegion`); Teilen braucht das Medien-Tempo wie `SelectedPartBar` |
 | Spur hinzufügen / entfernen | — | — | `AudioImport.addAudioTrack`, `TrackMix.removeTrack` (Regel `TrackMix.removal`) |
 | Szene starten „am nächsten Takt" | — | — | Weg existiert: `TimelineRegionPlayer.launchScene(_:quantize:)` bzw. `playFrom` — der TRANSPORT quantisiert, das Modell ist keine Uhr. Der Ausführer braucht dafür den Player als Abhängigkeit |
-| Foto-Farben für die Visuals | — | — | `MediaSeedApplication` + `MediaLookUndo.shared` sind echt; der gewählte Seed lebt aber im `@State` der Karte. Erst den zuletzt gelesenen Seed an einen Besitzer heben, dann der Befehl (Undo gibt es schon) |
+| Foto-Farben für die Visuals (Karte „Apply") | `media.applyLook` (photo) | `TheAgentAppliesTheLookOfTheOpenPhotoTests` Claims 1–5 | Die App konstruiert den Ausführer noch nirgends (türlos wie Schritt 1): Produktion übergäbe `MediaLookUndo.shared` + `.standard` |
+| Video-Look für die Visuals (Karte „Apply") | `media.applyLook` (video) | dieselben Claims 2–4 | wie oben |
 | Video → „vier spielbare Ausschnitte" | — | — | NICHT ausführbar: MS4/MS5 gehalten (`PLAN_MEDIA_SEED_2026-09-27.md` §5). Der Agent darf es nicht behaupten |
 | Alles stoppen | — | — | bleibt bewusst beim Menschen (`EchoelStudioView.stopEverything`, Transport ■), unabhängig vom Agenten |
 | Veröffentlichen · Senden · Original löschen · Export überschreiben | Klasse `explicitConsent` | Claim 1 (Registry) | kein solcher Befehl registriert; die Klasse und die Prüfung im Ausführer stehen |
@@ -66,7 +81,7 @@ gesendeten Daten; Medien- und Bio-Rohdaten standardmäßig nie.
    eine Tür zu „No language model is connected".
 2. Pan · Mute · Solo · Umbenennen als Befehle (gleiches Muster).
 3. Szene am nächsten Takt über den Player.
-4. Foto-Seed an einen Besitzer heben → „Nutze die Farben dieses Fotos".
+4. ~~Foto-Seed an einen Besitzer heben → „Nutze die Farben dieses Fotos".~~ Gebaut (2a/2b).
 5. Store-Revision → Song-Undo als Befehl mit Nachprüfung.
 
 ## 5b. Review-Reparatur (`eff951966`)
@@ -78,6 +93,12 @@ Alle repariert außer zwei aufgeschriebenen: ein Alt-Pegel über 2 lässt sich r
 Einwilligungen sind per Konvention, nicht per Typ, dem Menschen vorbehalten.
 
 ## 6. Prüfung
+
+Schritt 2: beide neuen Wächter per Python transkribiert — 2a (Schreiber-Scan + Mutant „Karte
+behält den Inline-Aufruf") und 2b (Modell von Besitzer + wertweisem Undo; sechs Mutanten je aus
+dem genannten Grund rot: Selbstschreiben, keine Offen-Prüfung, Medien fehlen im Snapshot,
+Undo setzt alles zurück, Undo schreibt nach Karten-Undo erneut, unbekanntes Argument
+verworfen). Claim 8 gegen die echten Dateien transkribiert. Fünf Prüfwerkzeuge sauber.
 
 Kein Swift hier. Beide Wächter per Python transkribiert (Treiber im Session-Scratchpad), sieben
 Mutanten (nach der Reparatur elf) je aus dem genannten Grund rot. `dead-needles` · `count-pins` (0 RED) ·
