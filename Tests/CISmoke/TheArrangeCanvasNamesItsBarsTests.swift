@@ -15,9 +15,12 @@
 //    cold is pinned ONCE, by `TheSongIsSeenOnOneScaleTests` (the ruler sits inside that slice).
 //
 // Grading (§0, no Swift toolchain): `rulerMarks` and `ArrangeBarRuler` do not exist on the parent
-// (`82ee9350b`), so this file does not compile there — every claim is a FORWARD guard, one
-// absence (#486). Claim 1 was transcribed into Python and driven on the cases below; claims 2 and
-// 3 transcribed against this tree: green.
+// (`82ee9350b`), so this file does not compile there — every claim was a FORWARD guard, one
+// absence (#486). Re-graded after the review repair `645b056c0` (parent `292a932af`): the 8½-bar
+// fractions and the 41-bar list are REGRESSIONS there (red for their named reason: whole-bar
+// division, a spilled last number); "bar 1 on a 10 pt lane" and the row-spacing, closing-brace
+// and trailing-modifier pins are COUNTERWEIGHTS (green there). Claim 1 transcribed into Python
+// and driven on the cases below; claims 2 and 3 transcribed against this tree with mutants.
 // NOT covered: that the numbers line up with the blocks on glass and stay legible at the largest
 // text sizes — a device look.
 // NEEDS-FOUNDER-VERIFY: Workstation with an 8-bar song → the numbers 1…8 sit above the lanes, each
@@ -141,6 +144,10 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
                 """)
         }
         XCTAssertLessThan(row.lowerBound, lanes.lowerBound, "the ruler sits above the lanes")
+        // Review of 645b056c0, LOW-8: a modifier on the ruler ROW (a `.padding(.leading, …)` after
+        // its closing brace) shifts every number off its bar as surely as one inside it.
+        let after = body[row.upperBound...].drop { $0.isWhitespace }
+        XCTAssertFalse(after.hasPrefix("."), "the ruler row carries a modifier after its `}` — the numbers leave their bars")
         guard let gutter = body.range(of: "private func nameGutter(_ row: WorkstationSummary.LaneRow) -> some View {"),
               let gutterEnd = body.range(of: "private func laneRow(", range: gutter.upperBound..<body.endIndex) else {
             return XCTFail("ANCHOR MISSING: `nameGutter` before `laneRow` (#454)")

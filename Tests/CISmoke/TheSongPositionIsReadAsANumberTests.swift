@@ -19,9 +19,13 @@
 //    `TheWorkstationPlaysTheTimelineTests.testTheControlDoesNotReadThePlayhead` (#416).
 //
 // Grading (§0, no Swift toolchain): `positionText` and `SongPositionReadout` do not exist on the
-// parent (`ce4b422dc`), so this file does not compile there — every claim is a FORWARD guard, one
+// parent (`ce4b422dc`), so this file does not compile there — claims 1-3 were FORWARD guards, one
 // absence (#486). Claim 1's arithmetic was transcribed into Python and driven on the cases below;
-// claims 2 and 3 transcribed against this tree: green.
+// claims 2 and 3 transcribed against this tree: green. Re-graded after the D1 review repairs
+// (82ee9350b, 645b056c0): the claim-3 layout pins (dynamicTypeSize, AnyLayout, the caption's
+// brace balance, the readout inside the group) and claim 2's one-read and read-inside-the-clock
+// pins are COUNTERWEIGHTS against those parents — green there — mutation-driven instead
+// (caption back in the group, readout after the group's brace, read hoisted above the clock).
 // NOT covered: that the number keeps up with the sound on glass, and how VoiceOver paces an
 // `.updatesFrequently` value — a device probe.
 // NEEDS-FOUNDER-VERIFY: Workstation → Play: "Bar 1 · Beat 1" appears beside Stop and counts with
@@ -111,7 +115,17 @@ final class TheSongPositionIsReadAsANumberTests: XCTestCase {
               let caption = transport.range(of: "WorkstationSummary.transportCaption(", range: group.upperBound..<transport.endIndex) else {
             return XCTFail("the transport row no longer groups Play in `controls { … }` ahead of its caption")
         }
-        XCTAssertLessThan(group.lowerBound, mount.lowerBound, "the readout is inside the switching group")
+        XCTAssertLessThan(group.lowerBound, mount.lowerBound, "the readout comes after the switching group opens")
+        // Review of 645b056c0, LOW-7: and before it CLOSES — moved between the group's `}` and the
+        // caption, the readout would sit after the group and the delta above would not see it.
+        if group.upperBound < mount.lowerBound {
+            let lead = transport[group.upperBound..<mount.lowerBound]
+            // Inside: the group is still open AND so is the `if playing {` that holds the
+            // readout, so opens exceed closes by at least one. After the group's `}`, that
+            // brace cancels the `if` and the balance falls to zero.
+            XCTAssertGreaterThanOrEqual(lead.filter { $0 == "{" }.count - lead.filter { $0 == "}" }.count, 1,
+                                        "the readout is inside the switching group, not after its closing brace")
+        }
         let between = transport[group.upperBound..<caption.lowerBound]
         XCTAssertEqual(between.filter { $0 == "{" }.count + 1, between.filter { $0 == "}" }.count, """
             the caption is back inside the Play group — at large sizes it becomes a narrow column \

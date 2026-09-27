@@ -16,9 +16,11 @@
 //    `TheSelectedPartIsCutWhereItIsHeardTests` (#416) — the end bar needs none.
 //
 // Grading (§0, no Swift toolchain): `spanTitle`, `noteCount` and `notesSwitchTitle` do not exist
-// on the parent (`0f4a5e128`), so this file does not compile there — every claim is a FORWARD
-// guard, one absence (#486). Claims 1-2 transcribed into Python and driven on the cases below;
-// claim 3 transcribed against this tree: green.
+// on the parent (`0f4a5e128`), so this file does not compile there — the claims naming them are
+// FORWARD guards, one absence (#486). `Text("Selected part · \(title)")` and the no-`setClipNotes`
+// check are COUNTERWEIGHTS (green there too). The spoken-count pin (review of 705f771fd, LOW-6)
+// is a FORWARD guard of that repair. Claims 1-2 transcribed into Python and driven on the cases
+// below; claim 3 transcribed against this tree: green.
 // NOT covered: how the longer heading wraps at the largest text sizes — a device look.
 // NEEDS-FOUNDER-VERIFY: Workstation → select a 4-bar part at bar 9 → the bar reads "Selected part
 // · Bar 9 · 4 bars · to bar 12"; on a MIDI part the switch reads "Notes · N" with N the notes the
@@ -90,6 +92,8 @@ final class TheSelectedPartSaysItsEndAndItsNotesTests: XCTestCase {
         XCTAssertTrue(switchView.contains("ClipNoteEdit.noteCount(clip: clipStore.clip(id: region.clipID), region: region)"),
                       "the count is asked of the one windowing rule, on the part's own clip")
         XCTAssertTrue(switchView.contains("Text(ClipNoteEdit.notesSwitchTitle(count: count))"))
+        XCTAssertTrue(switchView.contains("let spokenCount: String = count.map { $0 == 1 ? \"1 note\" : \"\\($0) notes\" } ?? \"\""),
+                      "the spoken value is the count in words (review of 705f771fd, LOW-6: an empty value passed)")
         XCTAssertTrue(switchView.contains(".accessibilityValue(spokenCount)"), "VoiceOver hears the count too")
         XCTAssertFalse(switchView.contains("setClipNotes"), "the switch counts, it never edits")
     }

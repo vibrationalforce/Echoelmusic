@@ -159,8 +159,9 @@ enum ArrangeCanvas {
     /// bar, `step` the smallest power of two that leaves at least `minSpacing` points between two
     /// numbers — a long song thins its labels instead of overprinting them, and every label
     /// still sits on its downbeat. Positions divide by `songTicks`, exactly as the blocks, the
-    /// playhead and `dropTick` do, so a song that is not a whole number of bars still lines up
-    /// (review of d16d764b1, LOW-1). A number too close to the lane's end to be printed there
+    /// playhead and `dropTick` do, so a song that is not a whole number of bars would still line
+    /// up (review of d16d764b1, LOW-1 — latent today: `ArrangementStrip.songTicks` is always whole
+    /// bars, so the two scales agreed; this keeps them agreeing if that ever changes). A number too close to the lane's end to be printed there
     /// is left out rather than spilling past it (LOW-2) — bar 1 always stays. The song's end is
     /// not a bar and is not named. Degenerate geometry, or a song shorter than one bar, names
     /// nothing.

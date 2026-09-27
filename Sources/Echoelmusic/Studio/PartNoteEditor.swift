@@ -208,15 +208,19 @@ private struct PartNoteGrid: View {
                         let selected = picked.ids.intersection(Set(visible.map(\.id)))
                         // Design slice 3: ONE picked note is said in words — the grid shows
                         // it as a block, and the name, bar and length are what a musician asks.
-                        if selected.count == 1, let one = visible.first(where: { selected.contains($0.id) }) {
+                        // Only a pick ON SCREEN (review of 292a932af, LOW-4): a pick scrolled
+                        // off the rows is the scope line's "Selection not on screen", and the
+                        // controls act on nothing, so describing it would contradict them. The
+                        // bar is the SONG's, like the heading above (the MED of that review).
+                        if pickedCount == 1, let one = visible.first(where: { pickedOnScreen.contains($0.id) }) {
                             let flats = session.key.prefersFlatSpelling
-                            Text(ClipNoteEdit.pickedNoteLine(one, naming: naming, preferFlats: flats,
-                                                             spoken: false))
+                            Text(ClipNoteEdit.pickedNoteLine(one, partStartTick: region.startTick, naming: naming,
+                                                             preferFlats: flats, spoken: false))
                                 .font(EchoelTheme.font(11).monospacedDigit())
                                 .foregroundStyle(EchoelTheme.text)
                                 .fixedSize(horizontal: false, vertical: true)
-                                .accessibilityLabel(ClipNoteEdit.pickedNoteLine(one, naming: naming,
-                                                                                preferFlats: flats,
+                                .accessibilityLabel(ClipNoteEdit.pickedNoteLine(one, partStartTick: region.startTick,
+                                                                                naming: naming, preferFlats: flats,
                                                                                 spoken: true))
                         }
                         selectionControls(targets: ClipNoteEdit.targets(selected: selected,
