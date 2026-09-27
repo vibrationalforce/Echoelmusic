@@ -402,6 +402,11 @@ struct WorkstationView: View {
                 #if canImport(PhotosUI) && canImport(ImageIO)
                 PhotoSeedCard()
                 #endif
+                // MV2: the same for a short video — brightness, colour and picture change shape the
+                // visual, and its length is read in bars. Its own leaf; one shared Undo with the photo.
+                #if canImport(PhotosUI) && canImport(AVFoundation)
+                VideoSeedCard()
+                #endif
                 // WA4 Acceptance Test A inside the workspace: create → import → SAVE → reopen
                 // without leaving the plate. The row owns no Studio state; it opens the Studio's
                 // existing Save alert and Open sheet through the chrome door (no new modal).
