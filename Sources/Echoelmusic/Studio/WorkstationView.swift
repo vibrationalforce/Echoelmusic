@@ -214,6 +214,10 @@ struct WorkstationView: View {
     /// MA4.2 — the durable media identities an import registers. Read only in the import
     /// handler, never in `body`.
     @Environment(MediaAssetStore.self) private var mediaAssets
+    /// A SETTING, not a signal: it changes when the user changes the text size, never while a
+    /// song plays, so reading it in `body` subscribes to nothing hot. `transportRow` stacks
+    /// Play and the position readout on it (review of e1036b874, MED).
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     /// Audio Import V1 — picker + result, both LOCAL to this leaf on the founder's
     /// instruction. Neither is persisted, neither is read by any other surface, and neither
@@ -771,8 +775,18 @@ struct WorkstationView: View {
         // second answer, and the whole point is that there is one (§2).
         // M10: asked through `songCanStart()`, the one call site — the part bar's Play asks it too.
         let startable = songCanStart()
+        // Review of e1036b874 (MED): Play, the position readout and the caption shared one row,
+        // so at accessibility sizes the readout lost its beat and the caption became a narrow
+        // column that re-wrapped whenever the readout came and went. The caption now has its
+        // own line, and Play + readout stack at accessibility sizes. ⛔ NOT `ViewThatFits`: the
+        // readout's `minimumScaleFactor` makes the row candidate always report a fit, so the
+        // stack would never be chosen (`BioStripView`, the same trap). `AnyLayout` keeps the
+        // readout's identity across the switch — ONE mount, in either arrangement.
+        let controls = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(spacing: 8))
         return VStack(alignment: .leading, spacing: 8) {
-          HStack(spacing: 8) {
+          controls {
             Button {
                 if playing { player.stop() } else { startTimeline(fromTick: 0, launching: []) }
             } label: {
@@ -806,12 +820,12 @@ struct WorkstationView: View {
             if playing {
                 SongPositionReadout()
             }
+          }
             Text(WorkstationSummary.transportCaption(playing: playing, startable: startable,
                                                      fromTick: playedFromTick))
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityHidden(true)   // the button's own hint already carries this
-          }
             // Phase 3 / Recording R1 — the MIDI take, started through THIS row's one start
             // (from the top) and stopped by the same Stop. A leaf in its own file: this view
             // names neither the recorder nor its controller.

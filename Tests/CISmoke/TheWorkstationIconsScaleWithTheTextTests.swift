@@ -69,16 +69,22 @@ final class TheWorkstationIconsScaleWithTheTextTests: XCTestCase {
             return XCTFail("ANCHOR MISSING: `WorkstationProjectRow` and its `door(` helper (#454)")
         }
         let body = String(code[start.upperBound..<end.lowerBound])
+        // Review of e1036b874 (LOW): both searches start at `fits`, independently — searching the
+        // stack from AFTER the row made the order assertion below true by construction.
         guard let fits = body.range(of: "ViewThatFits(in: .horizontal) {"),
               let row = body.range(of: "HStack(spacing: 8) {", range: fits.upperBound..<body.endIndex),
-              let stack = body.range(of: "VStack(alignment: .leading, spacing: 8) {", range: row.upperBound..<body.endIndex) else {
+              let stack = body.range(of: "VStack(alignment: .leading, spacing: 8) {", range: fits.upperBound..<body.endIndex) else {
             return XCTFail("""
-                Save and Open no longer sit in a `ViewThatFits` whose first choice is the row and                 whose fallback is a stack. Their icons grow with the text now; at the largest sizes                 two 92 pt doors do not fit one phone row, and the words compress instead.
+                Save and Open no longer sit in a `ViewThatFits` whose first choice is the row and \
+                whose fallback is a stack. Their icons grow with the text now; at the largest sizes \
+                two 92 pt doors do not fit one phone row, and the words compress instead.
                 """)
         }
         XCTAssertLessThan(row.lowerBound, stack.lowerBound, "the row is the first choice, the stack the fallback")
-        XCTAssertEqual(body.components(separatedBy: "door(\"Save\"").count - 1, 1,
-                       "each door is built ONCE and placed in both layouts — two builds could drift apart")
+        for door in ["door(\"Save\"", "door(\"Open\""] {
+            XCTAssertEqual(body.components(separatedBy: door).count - 1, 1,
+                           "`\(door)` — each door is built ONCE and placed in both layouts; two builds could drift apart")
+        }
     }
 
     private func source(_ relativePath: String) throws -> String {

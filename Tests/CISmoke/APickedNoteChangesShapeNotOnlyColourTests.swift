@@ -48,10 +48,17 @@ final class APickedNoteChangesShapeNotOnlyColourTests: XCTestCase {
         guard let branch = loop.range(of: "if lit.contains(note.id)", range: fill.upperBound..<loop.endIndex),
               let ring = loop.range(of: "context.stroke(Path(roundedRect:", range: branch.upperBound..<loop.endIndex) else {
             return XCTFail("""
-                a picked note is marked by colour alone again — after the fill, the loop has no                 `lit` branch that strokes a ring. WCAG 1.4.1: a state carried only by colour is                 unreadable to a colour-vision deficiency.
+                a picked note is marked by colour alone again — after the fill, the loop has no \
+                `lit` branch that strokes a ring. WCAG 1.4.1: a state carried only by colour is \
+                unreadable to a colour-vision deficiency.
                 """)
         }
-        XCTAssertLessThan(branch.upperBound, ring.lowerBound, "the ring is drawn inside the picked branch")
+        // Review of e1036b874 (LOW): `ring` is searched after `branch`, so an order check was
+        // true by construction. The claim is that the branch's brace is still OPEN at the ring —
+        // a ring stroked after the closing `}` would ring every note and mark nothing.
+        let between = loop[branch.upperBound..<ring.lowerBound]
+        XCTAssertGreaterThan(between.filter { $0 == "{" }.count, between.filter { $0 == "}" }.count,
+                             "the ring is drawn inside the picked branch, not after it")
         XCTAssertTrue(loop.contains("with: .color(EchoelTheme.surface), lineWidth: 1)"),
                       "a 1 pt ring in the grid's own surface token — no new colour")
     }

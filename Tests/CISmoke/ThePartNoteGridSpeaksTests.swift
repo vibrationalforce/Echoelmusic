@@ -77,6 +77,8 @@ final class ThePartNoteGridSpeaksTests: XCTestCase {
         XCTAssertEqual(ClipNoteEdit.gridLabel(shown: 1, total: 1, picked: 0), "Note grid: 1 note, 0 selected")
         XCTAssertEqual(ClipNoteEdit.gridLabel(shown: 8, total: 12, picked: 0), "Note grid: 8 of 12 notes shown, 0 selected",
                        "notes outside the drawn rows are named, so a listener who wraps early knows why")
+        XCTAssertEqual(ClipNoteEdit.gridLabel(shown: 0, total: 1, picked: 0), "Note grid: 0 of 1 note shown, 0 selected",
+                       "one note is singular in the windowed form too (review of e1036b874, LOW)")
     }
 
     // MARK: 2 — the grid offers it, and it only selects

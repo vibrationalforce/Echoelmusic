@@ -64,6 +64,8 @@ final class TheSongPositionIsReadAsANumberTests: XCTestCase {
                       "the readout redraws itself at the playhead's rate and stops while the song is stopped")
         XCTAssertTrue(body.contains("WorkstationSummary.positionText(forTick: player.currentTick)"),
                       "the words come from the one pure rule, fed the player's position")
+        XCTAssertEqual(code.components(separatedBy: "currentTick").count - 1, 1,
+                       "ONE read of the position in this file, inside the `TimelineView` (review of e1036b874, LOW)")
         XCTAssertTrue(body.contains(".accessibilityLabel(\"Song position\")"))
         XCTAssertTrue(body.contains(".accessibilityValue(text)"))
         XCTAssertTrue(body.contains(".accessibilityAddTraits(.updatesFrequently)"),

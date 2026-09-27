@@ -363,7 +363,7 @@ enum ClipNoteEdit {
     /// window hides some — how many the part holds, so a listener who wraps early knows why.
     nonisolated static func gridLabel(shown: Int, total: Int, picked: Int) -> String {
         let notes = shown == total ? "\(total) \(total == 1 ? "note" : "notes")"
-                                   : "\(shown) of \(total) notes shown"
+                                   : "\(shown) of \(total) \(total == 1 ? "note" : "notes") shown"
         return "Note grid: \(notes), \(picked) selected"
     }
 
