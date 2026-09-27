@@ -21,6 +21,10 @@
 // seed on disappear (claim 3).
 // Review repair (MED-1/MED-2): claim 1 pins the `generation` count (mutant: no bump → red), claim 3
 // the withdrawal when the card is collapsed (mutant: the header only toggles → red).
+// Review repair 2e (2026-09-27): a read that finishes AFTER the card was collapsed used to publish
+// its seed anyway (`showPhoto(decoded.seed)` unconditionally) — the agent then saw "A photo is open"
+// on a closed card. Claim 3 now pins the `if isOpen` gate at both publish sites, and the two
+// cancellation lines that cover the newer-pick and gone-card cases. Mutant: the bare call → red.
 
 import Foundation
 import XCTest
@@ -124,8 +128,16 @@ final class TheMediaLookHasOneWriterTests: XCTestCase {
         let videoCard = try code("Sources/Echoelmusic/Studio/VideoSeedCard.swift")
         XCTAssertTrue(photoCard.contains("undo.apply(photo: decoded.seed, on: .standard)"))
         XCTAssertTrue(videoCard.contains("undo.apply(video: read.seed, on: .standard)"))
-        XCTAssertTrue(photoCard.contains("MediaLookUndo.shared.showPhoto(decoded.seed)"), "a read photo is offered")
-        XCTAssertTrue(videoCard.contains("MediaLookUndo.shared.showVideo(read.seed)"), "a read video is offered")
+        XCTAssertTrue(photoCard.contains("if isOpen { MediaLookUndo.shared.showPhoto(decoded.seed) }"),
+                      "a read photo is offered — only while the card is open (review repair 2e)")
+        XCTAssertTrue(videoCard.contains("if isOpen { MediaLookUndo.shared.showVideo(read.seed) }"),
+                      "a read video is offered — only while the card is open (review repair 2e)")
+        // The newer-pick and gone-card cases are the cancellation before that line: every read
+        // checks `Task.isCancelled` after its awaits, and `onDisappear` cancels.
+        for card in [photoCard, videoCard] {
+            XCTAssertTrue(card.contains("guard !Task.isCancelled else { return }"), "a cancelled read publishes nothing")
+            XCTAssertTrue(card.contains(".onDisappear {\n            loadTask?.cancel()"), "a card that went away cancels its read")
+        }
         XCTAssertEqual(photoCard.components(separatedBy: "MediaLookUndo.shared.showPhoto(nil)").count - 1, 2,
                        "withdrawn when a new read starts and when the card goes away")
         XCTAssertEqual(videoCard.components(separatedBy: "MediaLookUndo.shared.showVideo(nil)").count - 1, 2)

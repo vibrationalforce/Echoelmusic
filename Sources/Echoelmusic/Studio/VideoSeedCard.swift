@@ -301,7 +301,10 @@ struct VideoSeedCard: View {
             guard !Task.isCancelled else { return }
             if let read {
                 phase = .ready(read, VisualLookSnapshot.read(from: .standard), bpm: bpm)
-                MediaLookUndo.shared.showVideo(read.seed)
+                // Offered to the agent only while the card is OPEN: a read that finishes after the
+                // person collapsed the card must not re-publish a picture nobody sees (review
+                // repair 2e). Opening the card again offers it (`header`).
+                if isOpen { MediaLookUndo.shared.showVideo(read.seed) }
             } else {
                 phase = .failed(VideoSeedText.unreadable)
                 // Clear the selection, or picking the same video again would change nothing.

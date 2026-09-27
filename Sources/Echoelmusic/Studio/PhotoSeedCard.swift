@@ -287,7 +287,10 @@ struct PhotoSeedCard: View {
             guard !Task.isCancelled else { return }
             if let decoded {
                 phase = .ready(decoded, VisualLookSnapshot.read(from: .standard))
-                MediaLookUndo.shared.showPhoto(decoded.seed)
+                // Offered to the agent only while the card is OPEN: a read that finishes after the
+                // person collapsed the card must not re-publish a picture nobody sees (review
+                // repair 2e). Opening the card again offers it (`header`).
+                if isOpen { MediaLookUndo.shared.showPhoto(decoded.seed) }
             } else {
                 phase = .failed(PhotoSeedText.unreadable)
                 // Clear the selection, or picking the same photo again would change nothing and
