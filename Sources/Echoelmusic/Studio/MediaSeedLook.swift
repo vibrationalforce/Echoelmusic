@@ -12,8 +12,11 @@
 //
 // ⭐ UNDO IS A SNAPSHOT, NOT A HISTORY. Applying returns the look from BEFORE the photo; writing
 // that snapshot back is the undo — per value, and only where the value still shows what the photo
-// wrote (a value moved since belongs to the player). One pending application app-wide:
-// `MediaLookUndo`. `TimelineStore`'s history deliberately holds regions, notes,
+// wrote (a value moved since belongs to the player). "Still shows" is decided ON THE ROW'S DISPLAY
+// GRID (`VisualLookSnapshot.sameOnDisplayGrid`, review repair 2d): a preset value is a `Float`
+// widened to `Double` (0.800000011920929), and a person who re-types the "0.80" the row shows has
+// not moved it — while one grid step (0.81) is a real move and is never swallowed. One pending
+// application app-wide: `MediaLookUndo`. `TimelineStore`'s history deliberately holds regions, notes,
 // automation and clip sources only — visual settings are not in it, and folding them in would
 // change what its undo means everywhere.
 //
@@ -159,6 +162,49 @@ struct VisualLookSnapshot: Equatable, Sendable {
     }
 }
 
+extension VisualLookSnapshot {
+
+    /// The grid each value is displayed and snapped on — the `decimals:` of the six rows in
+    /// `EchoelStudioView.visualAdjustFields`. ⚠️ Spelled a SECOND time on purpose (#416 noted):
+    /// `VisualPresetValuesAreReachableTests` requires each row to carry a literal `decimals:`, so
+    /// the rows cannot read these; `TheMediaLookUndoComparesOnTheDisplayGridTests` pins the two
+    /// spellings to each other by label. A grid change lands in both or goes red.
+    enum DisplayGrid {
+        static let intensity = 2
+        static let detail = 0
+        static let motion = 2
+        static let spread = 2
+        static let hue = 2
+        static let saturation = 2
+        /// By row label, for the guard above.
+        static let byLabel: [String: Int] = ["Intensity": intensity, "Detail": detail, "Motion": motion,
+                                             "Spread": spread, "Hue": hue, "Saturation": saturation]
+    }
+
+    /// Equal as the row shows them — `ScrubPrecision.gridded`, the ONE grid the rows commit on.
+    /// Not a tolerance: two values one grid step apart are different, two values that round to the
+    /// same shown number are the same. A non-finite value is never equal to anything.
+    static func sameOnDisplayGrid(_ a: Double, _ b: Double, decimals: Int) -> Bool {
+        guard a.isFinite, b.isFinite else { return false }
+        return ScrubPrecision.gridded(a, decimals: decimals) == ScrubPrecision.gridded(b, decimals: decimals)
+    }
+
+    /// The settings that differ from `other` AS DISPLAYED, in row order, named in lower case
+    /// ("intensity" … "saturation", "preset" for the chip). Empty means: the same look on screen.
+    /// The ONE per-setting comparison — `MediaSeedApplication.undo` and the agent's report both ask it.
+    func settingsDifferingOnDisplay(from other: VisualLookSnapshot) -> [String] {
+        var differing: [String] = []
+        if !Self.sameOnDisplayGrid(intensity, other.intensity, decimals: DisplayGrid.intensity) { differing.append("intensity") }
+        if !Self.sameOnDisplayGrid(detail, other.detail, decimals: DisplayGrid.detail) { differing.append("detail") }
+        if !Self.sameOnDisplayGrid(motion, other.motion, decimals: DisplayGrid.motion) { differing.append("motion") }
+        if !Self.sameOnDisplayGrid(spread, other.spread, decimals: DisplayGrid.spread) { differing.append("spread") }
+        if !Self.sameOnDisplayGrid(hue, other.hue, decimals: DisplayGrid.hue) { differing.append("hue") }
+        if !Self.sameOnDisplayGrid(saturation, other.saturation, decimals: DisplayGrid.saturation) { differing.append("saturation") }
+        if presetID != other.presetID { differing.append("preset") }
+        return differing
+    }
+}
+
 /// One application of a seed: the look before and after. `undo` writes `before` back.
 struct MediaSeedApplication: Equatable, Sendable {
     let before: VisualLookSnapshot
@@ -182,18 +228,21 @@ struct MediaSeedApplication: Equatable, Sendable {
     }
 
     /// Puts the look from before the photo or video back — but only for the values that still
-    /// show what the application wrote. A value the player moved since (on another surface, by
-    /// hand) is theirs now, and undo leaves it alone rather than silently reverting it.
+    /// show what the application wrote, ON THE ROW'S DISPLAY GRID (review repair 2d). A value the
+    /// player moved since (on another surface, by hand) is theirs now, and undo leaves it alone
+    /// rather than silently reverting it; a value re-entered as the number the row shows is not a
+    /// move.
     func undo(on defaults: UserDefaults) {
         let live = VisualLookSnapshot.read(from: defaults)
+        let moved = Set(live.settingsDifferingOnDisplay(from: after))
         var target = live
-        if live.intensity == after.intensity { target.intensity = before.intensity }
-        if live.detail == after.detail { target.detail = before.detail }
-        if live.motion == after.motion { target.motion = before.motion }
-        if live.spread == after.spread { target.spread = before.spread }
-        if live.hue == after.hue { target.hue = before.hue }
-        if live.saturation == after.saturation { target.saturation = before.saturation }
-        if live.presetID == after.presetID { target.presetID = before.presetID }
+        if !moved.contains("intensity") { target.intensity = before.intensity }
+        if !moved.contains("detail") { target.detail = before.detail }
+        if !moved.contains("motion") { target.motion = before.motion }
+        if !moved.contains("spread") { target.spread = before.spread }
+        if !moved.contains("hue") { target.hue = before.hue }
+        if !moved.contains("saturation") { target.saturation = before.saturation }
+        if !moved.contains("preset") { target.presetID = before.presetID }
         target.write(to: defaults)
     }
 }

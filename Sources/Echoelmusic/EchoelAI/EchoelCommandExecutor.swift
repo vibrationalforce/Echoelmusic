@@ -374,16 +374,10 @@ final class EchoelCommandExecutor {
     }
 
     /// The look settings a taken-back look could NOT put back, in plain words, or nil when all
-    /// of them read as before.
+    /// of them read as before — as the rows DISPLAY them (`settingsDifferingOnDisplay`, the one
+    /// comparison the card's Undo uses too; review repair 2d).
     private static func keptSettings(_ live: VisualLookSnapshot, before: VisualLookSnapshot) -> String? {
-        let names: [(String, Bool)] = [("intensity", live.intensity != before.intensity),
-                                       ("detail", live.detail != before.detail),
-                                       ("motion", live.motion != before.motion),
-                                       ("spread", live.spread != before.spread),
-                                       ("hue", live.hue != before.hue),
-                                       ("saturation", live.saturation != before.saturation),
-                                       ("preset", live.presetID != before.presetID)]
-        let kept = names.filter { $0.1 }.map { $0.0 }
+        let kept = live.settingsDifferingOnDisplay(from: before)
         guard let last = kept.last else { return nil }
         let list = kept.count == 1 ? last : kept.dropLast().joined(separator: ", ") + " and " + last
         return "The visual \(list)"
