@@ -24,6 +24,10 @@
 // 1…1000 notes, the window over a trimmed and an untrimmed part); claim 3 transcribed against
 // this tree, with mutants (the sketch overlay moved above the border, the hit-test line
 // dropped, the store read inside the block, the marks built from the clip's raw notes): each red.
+// Review of c51b1645a added: a fixture whose thinning drops BOTH extreme pitches (MED-1 — the
+// span taken over the kept notes was green on the first fixture; red now), the fill and its
+// geometry (LOW-9: a loop that never fills, every dash at y = 0 — each red), the editor's own
+// window offset in the expected value, and an order check before slicing (LOW-8).
 // NOT covered: whether a 2 pt dash in `surface` reads on the `dim` block on glass, and how a
 // busy part looks at the smallest lane width — a device look.
 // NEEDS-FOUNDER-VERIFY: Workstation → a MIDI part with a melody → its block on the canvas
@@ -90,6 +94,21 @@ final class TheCanvasSketchesEachPartsNotesTests: XCTestCase {
                                "\(count) notes: thinning does not move the note at step \(index)")
             }
         }
+        // Review of c51b1645a, MED-1: the loop above keeps both extreme pitches at every count,
+        // so a span taken over the KEPT notes passed it too. Here the only highest and the only
+        // lowest note sit at ODD indices while the part thins by two — both are dropped, and a
+        // kept note's height must still be measured against them.
+        let count = 2 * limit
+        var notes = (0..<count).map { (i: Int) -> Note in Note(pitch: 60, startTick: i * 120, lengthTicks: 120) }
+        notes[1] = Note(pitch: 90, startTick: 120, lengthTicks: 120)
+        notes[3] = Note(pitch: 30, startTick: 360, lengthTicks: 120)
+        notes[4] = Note(pitch: 70, startTick: 480, lengthTicks: 120)
+        let thinned = ArrangeCanvas.noteMarks(notes, lengthTicks: count * 120)
+        XCTAssertEqual(thinned.count, limit, "every second note is kept")
+        XCTAssertEqual(thinned[0].height, 0.5, accuracy: 1e-12,
+                       "pitch 60 in a 30…90 part is the middle — over ALL notes, not the kept ones")
+        XCTAssertEqual(thinned[2].height, 20.0 / 60.0, accuracy: 1e-12,
+                       "pitch 70 sits a third down from the dropped 90, not at the top")
     }
 
     // MARK: 2 — the notes the part plays
@@ -104,9 +123,10 @@ final class TheCanvasSketchesEachPartsNotesTests: XCTestCase {
         let trimmed = TimelineRegion(laneID: lane, clipID: clip.id, startTick: 0, lengthTicks: Self.bar,
                                      contentOffsetTicks: 480)
         for region in [whole, trimmed] {
+            // LOW-9: the offset the note editor uses, step alignment included.
             let expected = ArrangeCanvas.noteMarks(
                 ClipNoteEdit.visibleNotes(clip.melody?.notes ?? [],
-                                          offsetTicks: region.contentOffsetTicks,
+                                          offsetTicks: ClipNoteEdit.windowOffset(of: region) ?? -1,
                                           lengthTicks: region.lengthTicks),
                 lengthTicks: region.lengthTicks)
             XCTAssertEqual(ArrangeCanvas.noteMarks(for: region, clip: clip), expected,
@@ -138,6 +158,10 @@ final class TheCanvasSketchesEachPartsNotesTests: XCTestCase {
               let pureEnd = file.range(of: "nonisolated static func noteMarks(_ notes: [Note], lengthTicks: Int) -> [NoteMark] {") else {
             return XCTFail("ANCHOR MISSING: the canvas, the ruler, the block or the two `noteMarks` (#454)")
         }
+        // LOW-8: a reorder is one named failure, never a range trap that ends the bundle.
+        guard canvasStart.upperBound <= rulerStart.lowerBound, pure.upperBound <= pureEnd.lowerBound else {
+            return XCTFail("the canvas no longer precedes the ruler, or the two `noteMarks` swapped order — re-anchor (#454)")
+        }
         let canvas = String(file[canvasStart.upperBound..<rulerStart.lowerBound])
         let block = String(file[blockStart.upperBound...])
         let window = String(file[pure.upperBound..<pureEnd.lowerBound])
@@ -162,12 +186,17 @@ final class TheCanvasSketchesEachPartsNotesTests: XCTestCase {
         XCTAssertLessThan(fill.lowerBound, sketch.lowerBound)
         XCTAssertLessThan(sketch.lowerBound, border.lowerBound,
                           "the dashes sit UNDER the border — the selection ring stays on top")
-        guard let drawer = block.range(of: "private var noteSketch: some View {") else {
-            return XCTFail("ANCHOR MISSING: `noteSketch` (#454)")
+        guard let drawer = block.range(of: "private var noteSketch: some View {"),
+              let drawerEnd = block.range(of: "private static let dashHeight: CGFloat", range: drawer.upperBound..<block.endIndex) else {
+            return XCTFail("ANCHOR MISSING: `noteSketch` or `dashHeight` after it (#454)")
         }
-        let drawing = String(block[drawer.upperBound...])
+        let drawing = String(block[drawer.upperBound..<drawerEnd.lowerBound])
         XCTAssertTrue(drawing.contains("Canvas { context, size in"))
         XCTAssertTrue(drawing.contains("for mark in noteMarks {"))
+        // LOW-9: the dash is FILLED, at the mark's own place and height.
+        XCTAssertTrue(drawing.contains("let rect = CGRect(x: CGFloat(mark.start) * size.width,"))
+        XCTAssertTrue(drawing.contains("y: CGFloat(mark.height) * (size.height - dash),"))
+        XCTAssertTrue(drawing.contains("context.fill(Path(rect), with: .color(EchoelTheme.surface))"))
         XCTAssertTrue(drawing.contains(".allowsHitTesting(false)"),
                       "a tap or a hold on the dashes reaches the block — select and drag stay whole")
         XCTAssertTrue(drawing.contains(".accessibilityHidden(true)"), "the block speaks for the part")

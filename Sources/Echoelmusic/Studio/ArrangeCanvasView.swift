@@ -14,7 +14,8 @@
 //  lets play (#1440). The part you tap on top is the part you hear.
 //
 //  ⚠️ THE CANVAS IS COLD; THE PLAYHEAD IS ITS OWN LEAF. The canvas re-renders only when the
-//  document or the selection changes (both on a tap). The position is `@ObservationIgnored`
+//  document, the selection or the clip grid changes (a tap, a commit, a debounced re-bake — never
+//  a clock; since design slice 11 it reads `ClipStore` for the note sketches). The position is `@ObservationIgnored`
 //  ~8 Hz state; `ArrangePlayheadView` self-drives with `TimelineView(.animation)` at 15 Hz,
 //  paused while the timeline is stopped, and is the ONLY reader of `currentTick` here. A body
 //  read of the position in this canvas or in the Workstation would make every ancestor a hot
@@ -253,8 +254,17 @@ struct ArrangeCanvasView: View {
     /// Only for the drop's ONE commit (`TrackParts.move`); the canvas reads the song from the
     /// `document` it is handed, never from the store.
     @Environment(TimelineStore.self) private var timeline
-    /// Only to sketch each part's notes (design slice 11). Cold: the clip grid changes on an
-    /// edit, an import or a composer evolve (~25–45 s) — the same reads the note editor makes.
+    /// Only to sketch each part's notes (design slice 11). Cold for the freeze law — nothing
+    /// writes the clip grid per step or per frame, and this canvas hosts no `.menu` Picker —
+    /// but not rare (review of c51b1645a, LOW-5): a note edit or undo, an import, Generate, an
+    /// evolve (~25–45 s), and the Mix fader's re-bake (`scheduleRebalance`, debounced 350 ms —
+    /// a few writes a second during a stepwise drag) all rewrite it.
+    ///
+    /// ⚠️ THE COST (LOW-7): every canvas render rebuilds every part's sketch — a window, a sort
+    /// and a map per part — and the canvas also renders per event while the track inspector's
+    /// Level or Pan is dragged (the document changes). Negligible for generated parts; a song of
+    /// several imported parts with thousands of notes each pays it per drag event. Measure on a
+    /// device before caching — a cache keyed on the clip is a second source of truth.
     @Environment(ClipStore.self) private var clipStore
 
     let rows: [WorkstationSummary.LaneRow]

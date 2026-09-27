@@ -275,7 +275,8 @@ struct WorkstationView: View {
                 songLine(summary)
                 // WA4 path 4 — the arrangement: every track's parts on the one shared scale,
                 // a part selected by tapping it. Handed the document this body already read;
-                // the canvas observes only the selection, and the playhead is its own leaf.
+                // the canvas observes the selection and the clip grid (its note sketches, design
+                // slice 11 — both cold), and the playhead is its own leaf.
                 // (Replaces the WA4.5 per-row strips — one picture of the song, not two.)
                 let arrangeRows = ArrangeCanvas.rows(summary)
                 if !arrangeRows.isEmpty {
