@@ -124,6 +124,12 @@ CANDIDATE_f84d4121e_TRIAGE (2026-09-28, founder order "alle 21 bekannten fehlges
   Abort trap, 11:13:45→11:36:53): the TOOL died → execution of every suite after the abort point is UNRECORDED, not
   failed and not passed; by (4) a test trap is not excluded until the xcresult names the last test started.
   NEXT: the per-case list — founder pastes it, or allows *.blob.core.windows.net in the environment's network policy.
+  EXTERNAL_CLAIMS_f84d4121e (source: an external evaluation of artifact 10968101637, relayed by the founder in chat
+  2026-09-28; its file "Echoelmusic-21-Testfehler-f84d4121e.md" did NOT arrive in this session — only its summary did,
+  so nothing below is re-checked here): (a) all twelve executor tests PASSED, including claims 5, 10 and 12 → if the file
+  confirms it, claims 5/10/12 are EXECUTED GREEN and leave class B · (b) all 21 failures were already present on e9999dc58
+  → pre-existing relative to this round, cause still to be read per case · (c) hook selftest 56/56 and the copy case
+  denies in auto mode (this one IS re-checked here, 8ca99e82e). Classification of the 21 waits for the file itself.
 FOUNDER_PENDING: device checks for the whole media/agent stack (nothing here is device-verified) · #249/#250 ·
   MED-9 cancel button · "0.0 dB → 0.0 dB" wording · TestFlight (NOT triggered, per order)
 VISUAL_PLAN: Photism principles → V1–V4 in `scratchpads/PLAN_MEDIA_SEED_2026-09-27.md` §7 (planned 2026-09-28, NOT released;
