@@ -258,6 +258,15 @@ RUN_TESTS_7e6aea965 (Claude, 2026-09-28 18:26 UTC): CI/CD run 36460879114 attemp
   in the window (10 other TheDetectedTempoIsHonestTests methods are). xcresult = artifact 10989640775 ("test-results-ios-iPhone
   17", 7,971,579 B, sha256 9d823ea4…786d4c2) — blob host 403 here; it decides the pass/fail count on the candidate.
   Expectation if nothing else moved: 4,373 passed / 14 failed (case-20 test green).
+XCRESULT_7e6aea965 (founder report 2026-09-28, full xcresult artifact 10989640775, read OUTSIDE this environment — the
+  blob host still answers 403 here, re-tried 19:01 UTC): Compile Check 36460878913 green · Build for Testing green · Run
+  Tests 4,373 passed / 14 failed, exit 65, no tool abort. The AUv3 manifest test is GREEN; all 20 repaired tests stay green.
+  #249 is CONFIRMED among the 14 (TheDetectedTempoIsHonestTests/testADegenerateInputIsRefusedRatherThanGuessed). The other
+  failures by the founder's topic list (names not available here): LFO values off the UI grid · MPE roadmap text on the
+  website · cumbia bass longer than the pad · inspiration.csv malformed table + only two rows · Andean genre roster · four
+  divergent section headings · psy/prog/house preset distinction · MIDI recording with the transport already running · two
+  genres with the same scale mapping · missing fourth interactive header outline · wrong brightness extremes of two patches
+  · wrong path expectation around TuningDetector. Triage against product code + tests: IN PROGRESS (TRIAGE_14 below).
 XCRESULT_READ (founder report 2026-09-28, full xcresults of aa18f7edc and 30503f2b0, attempt 1 each — read OUTSIDE this
   environment; the blob host still answers 403 here, re-tried 18:07 UTC for artifact 10988221716; the job log of 30503f2b0
   carries no failing-test names — no "Failing tests:" list, no `error: -[` line — so NOTHING below is re-derived by Claude):
