@@ -27,6 +27,9 @@ WHAT IT DOES
 "ask" and never "deny", on purpose: the founder releases ONE action by answering the
 permission prompt. There is deliberately no token, file or variable the agent could set to
 release itself. A headless `claude -p` has no one to answer, so "ask" blocks there.
+MEASURED 2026-09-28: in the phone cloud session (2.1.283) an "ask" from this hook was
+resolved WITHOUT the founder (a probe he was told to deny ran 3.4 s later) — there it is a
+notice, not a lock. README "Handy-Probe".
 
 PROTECTED (founder-gated, CLAUDE.md "DO NOT" + .claude/rules/context.md §3):
   .github/workflows/**   project.yml   Resources/iOS/Info.plist   .deploy/release
@@ -55,7 +58,10 @@ LIMITS = """\
   paths). An agent could edit them; that shows up in the diff and in the commit.
 - Only Claude's own tool calls pass through here. CI, the founder's editor and the
   founder's own terminal are untouched.
-- `bypassPermissions` mode skips "ask" (docs). This repo's cloud sessions run in `auto`.
+- Measured with Claude Code 2.1.283 in `default` and `auto` only. `bypassPermissions`
+  skipping "ask" is from the docs, NOT measured; other modes and versions are untested.
+- Phone cloud session (2.1.283, measured): an "ask" was resolved without the founder, so
+  there the hook reports and does NOT block. Whether it should "deny" instead is open.
 - Fail-open on an internal error, EXCEPT when the raw command names a protected path —
   then it asks.
 """
@@ -110,7 +116,10 @@ def code_writes(unit, lit_pattern):
     direct = [
         r"open\(\s*" + L + r"\s*,\s*" + WRITE_MODE,
         r"Path\(\s*" + L + r"\s*\)\s*\.(?:write_text|write_bytes|unlink|rename|replace|touch|open\(\s*" + WRITE_MODE + r")",
-        r"\b(?:shutil\.\w+|os\.(?:replace|rename|remove|unlink|truncate))\([^)]*" + L,
+        # copy family writes only its DESTINATION: a protected SOURCE is a read
+        r"\bshutil\.copy\w*\((?!\s*" + L + r"\s*,)[^\n]*?" + L,
+        # move/rename/remove change the source too, so any position counts
+        r"\b(?:shutil\.(?:move|rmtree)|os\.(?:replace|rename|remove|unlink|truncate))\([^)]*" + L,
         r"\bfs\.(?:writeFile|writeFileSync|appendFile|appendFileSync|rmSync|unlinkSync|renameSync)\(\s*" + L,
     ]
     if any(re.search(d, unit) for d in direct):
@@ -121,7 +130,8 @@ def code_writes(unit, lit_pattern):
             r"open\(\s*" + v + r"\s*,\s*" + WRITE_MODE,
             r"\b" + v + r"\.(?:write_text|write_bytes|unlink|rename|replace|touch)\(",
             r"Path\(\s*" + v + r"\s*\)\s*\.(?:write_text|write_bytes|unlink|rename|replace|touch)",
-            r"\b(?:shutil\.\w+|os\.(?:replace|rename|remove|unlink|truncate))\([^)]*\b" + v + r"\b",
+            r"\bshutil\.copy\w*\((?!\s*" + v + r"\s*,)[^\n]*?\b" + v + r"\b",
+            r"\b(?:shutil\.(?:move|rmtree)|os\.(?:replace|rename|remove|unlink|truncate))\([^)]*\b" + v + r"\b",
             r"\bfs\.(?:writeFile|writeFileSync|appendFile|appendFileSync)\(\s*" + v + r"\b",
         ]
         if any(re.search(x, unit) for x in via):
@@ -240,13 +250,61 @@ def _git_names(cwd, args):
     return [ln.strip() for ln in out.stdout.splitlines() if ln.strip()] if out.returncode == 0 else []
 
 
-def commit_rule(command, cwd, lister=_git_names):
-    """Rule 2. Protected paths this commit would carry."""
+_GIT_PREFIX = r"\bgit\b(?:\s+-[Cc]\s+\S+|\s+--?[\w.-]+(?:=\S+)?)*\s+"
+STAGE_RE = re.compile(_GIT_PREFIX + r"(?:add|stage)\b([^\n;&|]*)")
+COMMIT_ARGS_RE = re.compile(_GIT_PREFIX + r"commit\b([^\n;&|]*)")
+# commit options that take a VALUE — the next token is not a pathspec
+_COMMIT_VALUE_OPTS = {"-m", "-F", "-C", "-c", "-t", "--message", "--file", "--author", "--date",
+                      "--template", "--reuse-message", "--reedit-message", "--fixup", "--squash",
+                      "--trailer", "--cleanup", "--pathspec-from-file"}
+_STAGE_ALL = {".", ":/", ":", "-A", "--all", "-u", "--update", "--no-ignore-removal"}
+
+
+def _pathspecs(args, value_opts=()):
+    """Non-option tokens of a git argument string. Quoted prose (a -m message) is blanked
+    first, so a message that names a protected path is never read as a pathspec."""
+    out, skip, after_dashdash = [], False, False
+    for tok in without_prose(args).split():
+        if skip:
+            skip = False
+        elif after_dashdash:
+            out.append(tok)
+        elif tok == "--":
+            after_dashdash = True
+        elif tok in _STAGE_ALL:
+            out.append(tok)
+        elif tok.startswith("-"):
+            skip = tok in value_opts
+        elif not tok.startswith(("<", ">", "_")):
+            out.append(tok)
+    return out
+
+
+def _covers(spec, name, project_dir):
+    """Would pathspec `spec` (as written in the command) stage worktree path `name`?"""
+    for prefix in ("./", (project_dir.rstrip("/") + "/") if project_dir else None):
+        if prefix and spec.startswith(prefix):
+            spec = spec[len(prefix):]
+    spec = spec.strip("'\"")
+    if spec in _STAGE_ALL or any(ch in spec for ch in "*?["):
+        return True                                   # everything dirty, conservatively
+    return name == spec or name.startswith(spec.rstrip("/") + "/")
+
+
+def commit_rule(command, cwd, lister=_git_names, project_dir=""):
+    """Rule 2. Protected paths this commit would carry. The index is read BEFORE the command
+    runs, so paths the same command stages first (`git add x && git commit`, or a pathspec
+    commit `git commit x`) are taken from the working tree instead."""
     if not COMMIT_RE.search(command):
         return []
     names = lister(cwd, ["diff", "--cached", "--name-only"])
-    if COMMIT_ALL_RE.search(command):
-        names += lister(cwd, ["diff", "--name-only"])
+    specs = [p for m in STAGE_RE.finditer(command) for p in _pathspecs(m.group(1))]
+    specs += [p for m in COMMIT_ARGS_RE.finditer(command) for p in _pathspecs(m.group(1), _COMMIT_VALUE_OPTS)]
+    if COMMIT_ALL_RE.search(command) or specs:
+        dirty = lister(cwd, ["diff", "--name-only"]) + lister(cwd, ["ls-files", "--others", "--exclude-standard"])
+        if COMMIT_ALL_RE.search(command):
+            names += dirty
+        names += [n for n in dirty if any(_covers(sp, n, project_dir) for sp in specs)]
     return sorted({n for n in names if is_protected(n)})
 
 
@@ -259,7 +317,7 @@ def decide(payload, lister=_git_names):
     if hit:
         return (f"Founder-gated path '{hit}': this Bash command writes it. "
                 "Only the founder releases this, one action at a time.")
-    carried = commit_rule(command, cwd, lister)
+    carried = commit_rule(command, cwd, lister, os.environ.get("CLAUDE_PROJECT_DIR", ""))
     if carried:
         return ("This commit carries founder-gated path(s): " + ", ".join(carried) +
                 ". Only the founder releases this, one action at a time.")
@@ -311,6 +369,11 @@ def selftest():
         ("sed -i 's/a/b/' Resources/iOS/Info.plist", [], [], True, "sed -i"),
         ("cp notes.md Resources/iOS/Info.plist", [], [], True, "cp onto"),
         ("cp .deploy/release /tmp/release.prev", [], [], False, "cp FROM a protected file is a read"),
+        # regression 2026-09-28: shutil.copy FROM a protected source is a read
+        ("python3 -c \"import shutil; shutil.copy('.deploy/release', '/tmp/r')\"", [], [], False, "shutil.copy from a protected source"),
+        ("python3 -c \"import shutil; p='.deploy/release'; shutil.copy2(p, 'out.txt')\"", [], [], False, "shutil.copy2 from a protected variable"),
+        ("python3 -c \"import shutil; shutil.copy('/tmp/r', '.deploy/release')\"", [], [], True, "shutil.copy onto a protected target"),
+        ("python3 -c \"import shutil; shutil.move('.deploy/release', '/tmp/r')\"", [], [], True, "shutil.move removes the protected source"),
         ("python3 - <<'EOF'\nnote = open('.deploy/release').read().replace('*','')\nopen('out.txt','w').write(note)\nEOF",
          [], [], False, "python reads the protected file, writes another"),
         ("python3 - <<'EOF'\np = '.deploy/release'\ns = open(p, encoding='utf-8').read()\nopen(p, 'w', encoding='utf-8').write(s)\nEOF",
@@ -339,6 +402,13 @@ def selftest():
         ("git -c user.name=C commit -q -F - <<'EOF'\nmsg\nEOF", ["project.yml"], [], True, "commit carries project.yml"),
         ("git commit -am x", [], [".deploy/release"], True, "commit -a picks up worktree"),
         ("git commit -m x", [], [".deploy/release"], False, "unstaged, no -a: not carried"),
+        # regression 2026-09-28: staging and commit in ONE command (index read before it runs)
+        ("git add project.yml && git commit -m x", [], ["project.yml"], True, "add + commit in one command"),
+        ("git add -A && git commit -q -m 'touch project.yml'", [], [".deploy/release"], True, "add -A + commit"),
+        ("git add .github && git commit -m x", [], [".github/workflows/ci.yml"], True, "add a covering dir + commit"),
+        ("git commit -m x -- project.yml", [], ["project.yml"], True, "pathspec commit stages the path"),
+        ("git add notes.md && git commit -m 'edit project.yml later'", [], ["notes.md", "project.yml"], False,
+         "add + commit of an unprotected file; message prose is no pathspec"),
         ("f=$(echo cHJvamVjdC55bWw= | base64 -d); echo x > $f", [], [], False, "encoded path: rule 1 blind (limit)"),
     ]
     os.environ["CLAUDE_PROJECT_DIR"] = "/REPO"

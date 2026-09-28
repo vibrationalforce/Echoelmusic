@@ -40229,3 +40229,11 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - Gebaut: `permissions.ask` (4 Pfade, `/`-verankert) + PreToolUse-Hook `.claude/hooks/protect-founder-gated.py` (Regel 1 Text, Regel 2 Commit) + `.claude/hooks/README.md` + ein Satz in `.claude/rules/context.md` §3.
 - Belege: Selbsttest 40/40 · 9/9 Mutanten gefangen (2 anfangs wirkungslose Mutanten erkannt und ersetzt) · Sitzungs-Abgleich ~14 800 Befehle: Treffer fast nur echte, founder-freigegebene Schreibzugriffe · Test-Repo `default`: python-Schreiben, Edit-Werkzeug, `printf >` gesperrt; `cat`, python/Edit auf notes.md erlaubt · `auto`: python -c, python-Heredoc über Variable, Commit mit gestagter Workflow-Datei gesperrt; `git restore --staged` (nach Reparatur eines Fehlalarms) und Commit nur mit notes.md erlaubt.
 - Grenzen: README. Nebenbefund `safety`-Block nicht durchgesetzt — berichtet, nicht geändert. Kein TestFlight-Deploy.
+
+## 2026-09-28 — Nachbesserung Pfad-Schutz (Hook) + Handy-Probe
+
+- Founder: „Bitte begrenze die Nachbesserung auf diese Befunde: Commit-Sicherung für gemeinsames Staging und Commit … shutil.copy … Schutzversprechen … auf die tatsächlich geprüfte Claude-Version begrenzen. Prüfe die Freigabe auf dem Handy …"
+- Repariert: Regel 2 las den Index VOR dem Befehl → `git add project.yml && git commit` und `git commit -- project.yml` gingen durch; jetzt rechnet sie das Stagen desselben Befehls mit. `shutil.copy(<geschützt>, <anders>)` fragte fälschlich; jetzt zählt die Copy-Familie nur ihr Ziel. Selbsttest 49/49, 16 Mutanten gefangen (7 neu), Echt-git-Lauf belegt.
+- Versprechen begrenzt: Claude Code 2.1.283, `default`/`auto`, verschachteltes `claude -p` — README, Hook-LIMITS, context.md §3, decisions.csv, memory.
+- Probe `toolu_0177…` nachgespielt (gleicher Ordner, CLAUDE_PROJECT_DIR, Hook-Stand): Exit 0, ask-JSON auf stdout, stderr leer = Sitzungsprotokoll. Auslöser direkt auf oberster Ebene (`printf … > project.yml` nach `cd`), kein Testskript. Der Hook arbeitete; die Rückfrage wurde danach aufgelöst.
+- ⚠️ Handy-Probe WIDERLEGT die Freigabe in dieser Cloud-Sitzung: Ablehn-Probe lief 3,4 s nach dem ask. Der Hook meldet hier, er sperrt nicht. Offene Founder-Entscheidung: `deny` im Auto-Modus vs. nur Klassifikator. Eingebaute `permissions.ask` in der Cloud-Sitzung: ungemessen.

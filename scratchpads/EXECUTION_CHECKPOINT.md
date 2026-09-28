@@ -115,8 +115,11 @@ FOUNDER_PENDING: device checks for the whole media/agent stack (nothing here is 
 VISUAL_PLAN: Photism principles → V1–V4 in `scratchpads/PLAN_MEDIA_SEED_2026-09-27.md` §7 (planned 2026-09-28, NOT released;
   V1(c) = AudioFeatureChannel producer as a MASTER-output tap, audio-thread review mandatory; MPE two-note acceptance blocked).
 GATE_PROTECTION: 2026-09-28 — the four founder-gated paths ASK before any Claude write (`permissions.ask` + Bash hook
-  `.claude/hooks/protect-founder-gated.py`); release = answer the prompt, one action each; the next deploy will prompt per
-  write of `.deploy/release`. Measured + limits: `.claude/hooks/README.md`.
+  `.claude/hooks/protect-founder-gated.py`); release = answer the prompt, one action each — measured in nested `claude -p`
+  only. Fix-up (same day): same-command staging + pathspec commit now caught; shutil.copy FROM a protected file no longer
+  asks (selftest 49/49, both regressions). ⚠️ PHONE PROBE: in this cloud session a hook "ask" ran WITHOUT the founder (deny
+  probe executed 3.4 s after the ask) → here the hook REPORTS, it does not block. OPEN founder decision: `deny` in auto
+  mode vs classifier-only. Measured + limits: `.claude/hooks/README.md` „Handy-Probe".
 NEXT_3_ACTIONS: 1) founder: decide V1 release (audio tap first) and #249/#250, MED-9, the "0.0 dB → 0.0 dB" wording
   2) founder: allow the artifact host (productionresultssa*.blob.core.windows.net) in the environment's network policy if the
   xcresult should be readable from a session — until then execution evidence stays the 200-line window  3) no new features; no TestFlight
