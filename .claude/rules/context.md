@@ -109,7 +109,9 @@ what a missing test name does and does not prove) lives in **`Tests/CISmoke/CLAU
 it is not repeated here (#416).
 
 **`.github/workflows/**`, `project.yml` and `Resources/iOS/Info.plist` are founder-gated:
-report, do not edit.**
+report, do not edit.** Since 2026-09-28 these three plus `.deploy/release` ASK before any
+Claude write (`permissions.ask` + a Bash hook); the founder releases one action by answering
+the prompt. How, what was measured, and the limits: `.claude/hooks/README.md`.
 
 ## 4. Handling large tool output
 

@@ -131,9 +131,27 @@
       "Bash(tail:*)",
       "Bash(wc:*)",
       "Bash(python3 -c:*)"
+    ],
+    "ask": [
+      "Edit(/project.yml)",
+      "Edit(/Resources/iOS/Info.plist)",
+      "Edit(/.github/workflows/**)",
+      "Edit(/.deploy/release)"
     ]
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-founder-gated.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "hooks": [

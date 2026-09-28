@@ -40221,3 +40221,11 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - Nachtrag Gates f84d4121e: Compile Check 36413615068 GRÜN · Build for Testing (Lauf 36413614937, Job 108899686909, Schritt 9) GRÜN · Run Tests Schritt 11 = xcodebuild-ABBRUCH (exit 134, Abort trap — Werkzeug, kein Testergebnis, nicht die #396-Form), Fenster 118 grün / 0 rot mit 1387-s-Lücke, keine unserer Suiten im Fenster → Ansprüche 5/10/12 hier unbelegt. Artefakt 10968101637 hochgeladen (nur aus einer Sitzung mit freigegebenem Blob-Host lesbar). main = f84d4121e.
 - Stand der Aussagen: 5.2 ausgeführt grün (xcresult e9999dc58). 5.1 auf f84d4121e: kompiliert + transkribiert (alter Stand reproduziert die xcresult-Zahlen, neuer besteht) — ausgeführter Nachweis steht noch aus. Kein TestFlight.
 
+
+## 2026-09-28 — Auftrag K: Schutz der vier founder-gesperrten Pfade (eingebaute Regeln + ein Hook)
+
+- Founder: „Ja, die zusätzliche Absicherung ist freigegeben, als kleine separate Änderung … Hook nur bei belegtem Bedarf … Belege erlaubte und gesperrte Zugriffe in einer Testumgebung und dokumentiere verbleibende Grenzen."
+- Gemessen (Wegwerf-Repo, verschachteltes `claude -p`, 2.1.283): eingebaute `Edit(...)`-Regeln fangen Edit/Write, `>`, `cp`, `sed -i`, Variablen-Umleitung, `git mv`; NICHT `python3 -c` → im `default`-Modus schrieb es `project.yml` (Run5). Bedarf belegt.
+- Gebaut: `permissions.ask` (4 Pfade, `/`-verankert) + PreToolUse-Hook `.claude/hooks/protect-founder-gated.py` (Regel 1 Text, Regel 2 Commit) + `.claude/hooks/README.md` + ein Satz in `.claude/rules/context.md` §3.
+- Belege: Selbsttest 40/40 · 9/9 Mutanten gefangen (2 anfangs wirkungslose Mutanten erkannt und ersetzt) · Sitzungs-Abgleich ~14 800 Befehle: Treffer fast nur echte, founder-freigegebene Schreibzugriffe · Test-Repo `default`: python-Schreiben, Edit-Werkzeug, `printf >` gesperrt; `cat`, python/Edit auf notes.md erlaubt · `auto`: python -c, python-Heredoc über Variable, Commit mit gestagter Workflow-Datei gesperrt; `git restore --staged` (nach Reparatur eines Fehlalarms) und Commit nur mit notes.md erlaubt.
+- Grenzen: README. Nebenbefund `safety`-Block nicht durchgesetzt — berichtet, nicht geändert. Kein TestFlight-Deploy.
