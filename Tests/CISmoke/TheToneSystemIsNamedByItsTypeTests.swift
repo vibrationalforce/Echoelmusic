@@ -221,10 +221,14 @@ final class TheToneSystemIsNamedByItsTypeTests: XCTestCase {
             let contents = try String(contentsOf: dir.appendingPathComponent(rel), encoding: .utf8)
             if SourceText.codeOnly(contents).contains("TuningDetector") { callers.append(rel) }
         }
-        XCTAssertEqual(callers, ["Sequencer/AudioKeyAnalysis.swift"], """
+        // ⛔ THE EXPECTED PATH LACKED THE `Echoelmusic/` PREFIX and was red since c8b1c5c63 (#E1):
+        // the walker runs over `Sources/`, which holds four targets, so a relative path starts
+        // with the target directory — the form `TheIntegrationHubIsPublishedTests` already expects
+        // ("Echoelmusic/Sync/OSCReceiver.swift"). Exactly one caller, still named.
+        XCTAssertEqual(callers, ["Echoelmusic/Sequencer/AudioKeyAnalysis.swift"], """
             `TuningDetector`'s production callers are \
             \(callers.isEmpty ? "NONE" : callers.joined(separator: ", ")) — expected exactly \
-            `Sequencer/AudioKeyAnalysis.swift`. If the list is EMPTY the producer was lost and \
+            `Echoelmusic/Sequencer/AudioKeyAnalysis.swift`. If the list is EMPTY the producer was lost and \
             the detector is an orphan again: CLAUDE.md's register entry and this file's header \
             must go back to saying so. If there is a SECOND caller, say what it is and why it \
             is not a duplicate estimator — #C1 recorded that the value and the estimator \
