@@ -95,8 +95,8 @@ beantwortet hast (Antwort auf Probe 1: „Ich glaube“). Im verschachtelten `cl
 dasselbe `ask` als Sperre, weil dort niemand antworten kann — zwei Umgebungen, kein Widerspruch.
 **Daraus folgt nur: im Modus `auto` war `ask` keine verlässliche Sperre.** Deshalb Variante A.
 
-**Nicht gemessen:** ob die EINGEBAUTEN `permissions.ask`-Regeln (`Edit(/project.yml)` …) in dieser
-Sitzung wirklich fragen — eine harmlose Probe wäre nur an den echten Dateien möglich.
+**Inzwischen gemessen (Grenze 6):** die EINGEBAUTEN `permissions.ask`-Regeln haben ein Edit auf
+`project.yml` in dieser Sitzung (`auto`) nicht aufgehalten; gehalten hat die Commit-Regel.
 
 ## Deny-Beleg in derselben Cloud-Sitzung (2026-09-28, nach Variante A)
 
@@ -133,8 +133,13 @@ wichtigsten Punkte:
    oder das Bearbeiten dieses Hooks selbst. Ein Fehlalarm kostet eine Rückfrage, nie einen
    stillen Durchlauf.
 6. **„deny“ gilt nur für Bash-Befehle, die der Hook erkennt.** Das Edit-/Write-Werkzeug läuft
-   über die eingebauten `permissions.ask`-Regeln — ob die im Modus `auto` halten, ist
-   UNGEMESSEN (eine harmlose Probe ginge nur an den echten Dateien). Grenzen 1 und 2 gelten
+   über die eingebauten `permissions.ask`-Regeln — und die haben im Modus `auto` NICHT
+   gesperrt: am 2026-09-28 hat das Edit-Werkzeug `project.yml` in dieser Cloud-Sitzung ohne
+   sichtbare Rückfrage geändert (Fall 20, vom Founder freigegeben, danach wieder auf HEAD
+   gesetzt). Ob eine Rückfrage erzeugt und automatisch beantwortet wurde, ist unbekannt; die
+   Wirkung ist gemessen. Die eigentliche Sperre war danach die Commit-Regel des Hooks: der
+   Commit mit `project.yml` wurde abgelehnt. **Im Modus `auto` schützt also der COMMIT, nicht
+   das Schreiben.** Grenzen 1 und 2 gelten
    unverändert: was der Hook nicht erkennt, lehnt er auch nicht ab.
 7. **Eine Freigabe per Handy ist in keinem Modus belegt** (Abschnitt „Wie deine gezielten
    Freigaben funktionieren“).
