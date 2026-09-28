@@ -3010,3 +3010,16 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Rationale:** a project opened again is content-equal to itself (persisted ids come back), so a content-only basis let a pre-Open plan reach a writer. The store already clears its own undo on Open for the same reason; the agent follows the store's rule instead of keeping its own count.
 - **Not done, on purpose:** no write journal for LOOK parameters (39 `@AppStorage` bindings would have to route through an owner — a state architecture, excluded); the divergence to the level semantics (2b) is recorded in the checkpoint and the 4d guard header.
 - **Review:** 2026-10-27 — if a second reader of the song appears, it must read the same generation, never keep its own.
+
+### 2026-09-28 — The gap between two agent steps is DRIVEN, not scheduled; own writes move own marks (review 5.1/5.2, `1cf2f92af` + `60565f846`)
+
+- **Decision:** `EchoelCommandExecutor` takes a `betweenSteps` seam (the app's plain `Task.yield()` by default). After every suspension it compares `timeline.documentGeneration` with the plan basis: a change fails that step as `.projectChanged`, the rest are `.notRun`, no further writer runs, and the journal group is stamped with the PLAN generation. Every own level write (a change or an Undo restore) advances the `write` mark of every own `.level` entry for that lane, so own Undo is never read as "a person wrote since"; a hand re-entry of the same number moves no mark and still blocks. `canUndoAgentChange` getter left unchanged (cleanup only if a repair needed it — none did).
+- **Why a seam:** the founder asked for the switch to be tested BETWEEN two steps without relying on task scheduling; the seam is the gap, the test hands in what happens there (claim 11 = a tap, claim 12 = a real Save/Open through `SessionSaveOpen.restoreSong`).
+- **Reach:** `EchoelCommandExecutor(` has 0 production callers — both were latent API defects, not reachable user errors.
+- **Review:** 2026-10-28.
+
+### 2026-09-28 — Photism as principles, planned as V1–V4, not released (`PLAN_MEDIA_SEED_2026-09-27.md` §7)
+
+- **Decision:** adopt the PRINCIPLES (few named macros with one owner; scene ≠ palette; stage output separate from the UI; deterministic export; automation below hand), never a shader or asset. Order: V1 data paths + the `AudioFeatureChannel` producer as a MASTER-output tap (audio-thread review mandatory) → V2 one scene, three macros (HEAT/REACT/BRIGHT as principle) with bit-identical neutral state → V3 presets/transitions/registered parameters → V4 image material, stage, export each separately. Video export stays REBUILD class with a device-log review first (#1304, F3).
+- **Evidence limits recorded in the plan:** photism.app is egress-blocked in this environment (secondary evidence only); MPE two-note acceptance is blocked by the monophonic consumer; `sectionIndex`/`trackLevels` have neither producer nor consumer; no PNG export exists.
+- **Review:** 2026-10-28.

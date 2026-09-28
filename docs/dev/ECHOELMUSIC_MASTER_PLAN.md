@@ -523,6 +523,7 @@ done. WA4 is the first front.
 | Dependabot | zero dependencies today | the first linked dependency |
 | Claude harness cleanup | `.claude/` hygiene | a quiet cycle, never mid-slice |
 | M5 local-Xcode migration | web sessions have no Swift toolchain | local machine available (see below) |
+| Visual macros V1–V4 (Photism principles: hits/bass/brightness macros, presets + transitions, stage, export) | planned 2026-09-28 in `scratchpads/PLAN_MEDIA_SEED_2026-09-27.md` §7; audio-stability first — V1(c) is an audio-path tap | Founder releases V1; V2–V4 depend on it |
 
 **Developer Harness / M5 migration: TRIGGER WHEN LOCAL M5/APPLE-SILICON DEVELOPMENT MACHINE IS
 AVAILABLE.** Until then, machine truth is CI, and guards are graded by transcription
