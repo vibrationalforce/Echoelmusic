@@ -378,6 +378,13 @@ final class TheDecisionLogIsMachineReadableTests: XCTestCase {
     /// RFC 4180: `,` separates, `"` quotes, `""` is a literal quote inside a quoted
     /// field, and a quoted field may span newlines — which is exactly how one row
     /// here swallowed two others, so a line-based reader could not have found it.
+    ///
+    /// ⛔ AND RFC 4180 ENDS A RECORD WITH CRLF — which Swift reads as ONE `Character`. `"\r\n"` is
+    /// a single grapheme equal to neither `"\n"` nor `"\r"`, so this parser saw a row break only
+    /// at a bare LF. `inspiration.csv` has ended every line but the last in CRLF since f005a1df5
+    /// (a Python `csv.writer` default), and the two inspiration claims parsed it as TWO rows —
+    /// red since the commit that wrote them; a code-point parser (Python) reads 231 rows × 8, so
+    /// every transcription said green. `testTheParserEndsARowAtCRLF` pins the grapheme case.
     private func parseCSV(_ text: String) -> [[String]] {
         var rows: [[String]] = []
         var row: [String] = []
@@ -402,7 +409,7 @@ final class TheDecisionLogIsMachineReadableTests: XCTestCase {
                 switch ch {
                 case "\"": inQuotes = true
                 case ",": row.append(field); field = ""
-                case "\n": row.append(field); rows.append(row); row = []; field = ""
+                case "\n", "\r\n": row.append(field); rows.append(row); row = []; field = ""
                 case "\r": break
                 default: field.append(ch)
                 }
@@ -530,6 +537,16 @@ final class TheDecisionLogIsMachineReadableTests: XCTestCase {
     /// wieder angesehen werden muss, legitim — daraus einen Anspruch zu machen hieße,
     /// korrekte Arbeit rot zu färben (#364). Die Messung steht hier, damit die nächste Sitzung
     /// nicht glaubt, die Spalte sei ungeprüft.
+    /// The parser must end a record at CRLF — Swift's single-`Character` `"\r\n"` — exactly as at
+    /// a bare LF, or a CRLF file reads as one row. Driven with literals, so it holds whatever
+    /// line endings the ledger files happen to have on disk.
+    func testTheParserEndsARowAtCRLF() {
+        let crlf = parseCSV("a,b\r\nc,\"d\r\ne\"\r\nf,g")
+        XCTAssertEqual(crlf, [["a", "b"], ["c", "d\r\ne"], ["f", "g"]],
+                       "CRLF must end a row outside quotes and stay content inside them")
+        XCTAssertEqual(parseCSV("a,b\nc,d\n"), [["a", "b"], ["c", "d"]], "LF still ends a row")
+    }
+
     func testTheInspirationLedgerIsStillPopulatedAndDated() throws {
         let rows = try inspirationRows()
         XCTAssertGreaterThan(rows.count, 50, """
