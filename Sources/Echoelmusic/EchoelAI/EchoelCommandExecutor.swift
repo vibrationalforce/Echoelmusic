@@ -18,6 +18,10 @@
 // changed since is refused before its first step (the question state), never re-targeted:
 // "the selection" is resolved ONCE, from the state the plan was made against, so a tap during
 // the request (it yields between steps) cannot move a later step onto another track or part.
+// The song's GENERATION is checked again after every suspension between steps: a project opened
+// again inside that gap ends the request before its next step (`.projectChanged` on that step, the
+// rest not run), and the journal group is stamped with the generation the steps ran in, never the
+// one found afterwards (review 5.1).
 // A step that names "the selection" while the plan saw NONE is refused before the first step,
 // as a clear error ("No track is selected") — never resolved live when it runs, because live
 // would adopt a selection made after the plan, a target the person never saw the agent aim at
@@ -76,6 +80,9 @@ final class EchoelCommandExecutor {
     private let mediaLooks: MediaLookUndo
     /// Where the visual look lives. Handed to `mediaLooks`, and read back only to confirm.
     private let visualDefaults: UserDefaults
+    /// The suspension between two steps. In the app a plain yield; a test hands in what happens in
+    /// that gap (a tap, an Open) so the gap is driven, not left to scheduling (review 5.1).
+    private let betweenSteps: @MainActor () async -> Void
 
     /// Each group is stamped with the song generation it was written in. An Open replaces the
     /// whole song and clears the store's own undo for that reason (`replaceDocument`); the agent's
@@ -88,12 +95,14 @@ final class EchoelCommandExecutor {
     private var cancelRequested = false
 
     init(timeline: TimelineStore, selection: WorkstationSelection, voiceCapacity: @escaping () -> Int,
-         mediaLooks: MediaLookUndo, visualDefaults: UserDefaults) {
+         mediaLooks: MediaLookUndo, visualDefaults: UserDefaults,
+         betweenSteps: @escaping @MainActor () async -> Void = { await Task.yield() }) {
         self.timeline = timeline
         self.selection = selection
         self.voiceCapacity = voiceCapacity
         self.mediaLooks = mediaLooks
         self.visualDefaults = visualDefaults
+        self.betweenSteps = betweenSteps
     }
 
     var canUndoAgentChange: Bool {
@@ -162,7 +171,17 @@ final class EchoelCommandExecutor {
         var results: [EchoelStepResult] = []
         var stopped = false
         for (index, command) in plan.steps.enumerated() {
-            if index > 0 { await Task.yield() }
+            if index > 0 {
+                await betweenSteps()
+                // The project may have been opened again while this request was suspended — the
+                // same file too, which no content check can see (review 5.1). No further writer
+                // runs against it: this step fails as a changed project, the rest do not run.
+                if !stopped, timeline.documentGeneration != plan.basis.documentGeneration {
+                    results.append(EchoelStepResult(command: command, outcome: .failed(.projectChanged)))
+                    stopped = true
+                    continue
+                }
+            }
             if stopped {
                 results.append(EchoelStepResult(command: command, outcome: .notRun))
                 continue
@@ -176,7 +195,9 @@ final class EchoelCommandExecutor {
             results.append(EchoelStepResult(command: command, outcome: outcome))
         }
         if !group.isEmpty {
-            journal.append((generation: timeline.documentGeneration, entries: group))
+            // Stamped with the generation the steps RAN in (the check above guarantees they all did),
+            // never with one found afterwards.
+            journal.append((generation: plan.basis.documentGeneration, entries: group))
             if journal.count > Self.journalDepth { journal.removeFirst() }
         }
         let report = EchoelExecutionReport(requestID: plan.requestID, steps: results, replayed: false,

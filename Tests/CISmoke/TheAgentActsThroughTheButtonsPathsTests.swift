@@ -5,7 +5,7 @@
 // change after it is made.
 //
 // WHAT KIND OF GREEN THIS IS (§1):
-//   · Claims 1–7 and 9–11 are END-TO-END over a REAL `TimelineStore` and `WorkstationSelection`
+//   · Claims 1–7 and 9–12 are END-TO-END over a REAL `TimelineStore` and `WorkstationSelection`
 //     (claim 10 also over a real `ClipStore` and the shipped Save/Open path).
 //     Assertions are on the fixture's OWN ids; the store's prior document is restored after
 //     each claim (`TimelineStore()` loads whatever an earlier run persisted).
@@ -53,10 +53,17 @@
 // Mutants, each driven: generation not bumped in `replaceDocument` → the stale plan copies a part
 // in the reopened song, claim 10 red; journal not pruned → `agentCanUndo` true after the Open and
 // the pre-Open level is written into the reopened song, claim 10 red.
-// Review 4b (Codex): claim 11 drives the gap AFTER the preflight — a selection moved in the yield
-// between two steps. Pinning (2a) is what holds there; the mutant "resolve `.selected` live at
-// step time" puts step two on Keys, claim 11 red. Claim 9's third block only asserted pinning with
-// the selection at rest; this one moves it.
+// Review 4b (Codex): claim 11 drives the gap AFTER the preflight — a selection moved in the
+// suspension between two steps. Pinning (2a) is what holds there; the mutant "resolve `.selected`
+// live at step time" puts step two on Keys, claim 11 red.
+// Review 5.1 (founder 2026-09-28): the gap is now DRIVEN, not scheduled — the executor takes a
+// `betweenSteps` seam (the app's plain yield by default), and the rig hands it whatever the claim
+// puts there. Claim 12 puts an Open there (the same file, through `SessionSaveOpen.restoreSong`):
+// the executor re-checks the song generation after every suspension and ends the request on the
+// step after it (`.failed(.projectChanged)`, the rest `.notRun`), and the group is stamped with
+// the generation the steps ran in. Mutants: no re-check after the gap → step two writes the
+// reopened song, claim 12 red; group stamped with the generation found afterwards → `agentCanUndo`
+// true after the Open, claim 12 red.
 
 import Foundation
 import XCTest
@@ -79,6 +86,10 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
     private static let fixture = TimelineDocument(lanes: [bioLane, keysLane, loopLane, quietLane],
                                                   regions: [keysPart, loopPart])
 
+    /// What happens in the suspension between two steps of a request — set by a claim that drives
+    /// that gap (11, 12). nil = the app's plain yield. One test-case instance per method, so no leak.
+    private var betweenSteps: (@MainActor () async -> Void)?
+
     /// The store loaded fresh, its prior document handed back so each claim restores it.
     private func rig() -> (TimelineStore, WorkstationSelection, EchoelCommandExecutor, TimelineDocument) {
         let timeline = TimelineStore()
@@ -89,7 +100,10 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         // always resolves, and the fallback is never the app's own domain being touched.
         let looks = UserDefaults(suiteName: "echoel.tests.agentButtonsPaths") ?? UserDefaults()
         let executor = EchoelCommandExecutor(timeline: timeline, selection: selection, voiceCapacity: { 4 },
-                                             mediaLooks: MediaLookUndo(), visualDefaults: looks)
+                                             mediaLooks: MediaLookUndo(), visualDefaults: looks,
+                                             betweenSteps: { [weak self] in
+                                                 if let gap = self?.betweenSteps { await gap() } else { await Task.yield() }
+                                             })
         return (timeline, selection, executor, original)
     }
 
@@ -484,15 +498,11 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
     // MARK: 11 — a selection moved BETWEEN two steps, after the preflight (review 4b, Codex)
 
     /// Claim 9 moves the selection before the request runs (the preflight refuses). Codex named the
-    /// gap the preflight cannot see: the executor yields between steps (`await Task.yield()` from
-    /// the second step on), and a main-actor job queued behind the request — a tap on another
-    /// track — runs INSIDE that yield. The selection then differs from the plan while step two
-    /// runs, and nothing re-checks the basis mid-request. What holds instead: every step's target
-    /// was pinned to the plan's ids BEFORE the first step (`pinned(_:to:)`), so step two lands on
+    /// gap the preflight cannot see: the suspension between two steps. The executor's
+    /// `betweenSteps` seam IS that gap, and the test hands in what happens there — no scheduling
+    /// trick, no race (review 5.1 replaced the queued-task form). What holds: every step's target
+    /// was pinned to the plan's ids before the first step (`pinned(_:to:)`), so step two lands on
     /// Loop although Keys is selected by then.
-    /// The ordering is the main actor's own: the toggle is queued from ON the main actor while the
-    /// request is about to run, so it cannot run before the preflight (nothing suspends before it)
-    /// and must run at the first suspension — the yield between the steps.
     func testASelectionMovedBetweenTwoStepsDoesNotMoveTheSecondStep() async throws {
         let (timeline, selection, executor, original) = rig()
         defer { timeline.replaceDocument(original) }
@@ -501,13 +511,12 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
                              .setTrackLevel(track: .selected, change: .relativeDecibels(-3))], on: executor)
         XCTAssertEqual(twoSteps.basis.track?.id, Self.loopLane.id)
 
-        let report = await Task { @MainActor in
-            // Queued behind the request, on the same actor: runs in the yield between the steps.
-            Task { @MainActor in selection.toggleTrack(Self.keysLane.id) }
-            return await executor.execute(twoSteps)
-        }.value
+        var gaps = 0
+        betweenSteps = { gaps += 1; selection.toggleTrack(Self.keysLane.id) }
+        let report = await executor.execute(twoSteps)
 
-        XCTAssertEqual(selection.trackID, Self.keysLane.id, "the tap landed while the request ran")
+        XCTAssertEqual(gaps, 1, "one suspension between two steps, and the tap landed in it")
+        XCTAssertEqual(selection.trackID, Self.keysLane.id)
         XCTAssertNil(report.refusal, "the preflight saw the plan's state — the tap came after it")
         XCTAssertEqual(report.state, .done)
         let loop = try XCTUnwrap(level(Self.loopLane, in: timeline))
@@ -519,6 +528,72 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
             XCTAssertTrue(text.contains("Loop"), text)
             XCTAssertFalse(text.contains("Keys"), text)
         }
+    }
+
+    // MARK: 12 — the project opened again BETWEEN two steps ends the request there (review 5.1)
+
+    /// Claim 10 puts the Open before the request (the preflight refuses). Here the Open happens in
+    /// the suspension after step one — the same file opened again, so no content differs. Step two
+    /// must not reach a writer, the rest must not run, and the group step one wrote belongs to the
+    /// song BEFORE the Open: not offered against the song after it.
+    func testAProjectOpenedAgainBetweenTwoStepsEndsTheRequestThere() async throws {
+        let (timeline, selection, executor, original) = rig()
+        let clips = ClipStore()
+        let originalSlots = clips.slots
+        defer {
+            timeline.replaceDocument(original)
+            _ = clips.replaceSlots(originalSlots)
+        }
+        XCTAssertTrue(clips.replaceSlots([Clip?](repeating: nil, count: ClipStore.slotCount)))
+        let take = Project(name: "Reopened mid-request", styleRaw: "ambient", keyRoot: 0, scaleRaw: "major", bpm: 96,
+                           modeRaw: "flowFree", fxCharacterRaw: "warm", loopBars: 4, a4Hz: 440,
+                           toneSystemID: nil, moodFields: nil, artist: "",
+                           patch: SynthPatch(name: "Default"), notes: [], rawTake: nil,
+                           drumSteps: [], drumAccents: [])
+        selection.toggleTrack(Self.loopLane.id)
+        let threeSteps = plan([.setTrackLevel(track: .selected, change: .relativeDecibels(-3)),
+                               .setTrackLevel(track: .selected, change: .relativeDecibels(-3)),
+                               .setTrackLevel(track: .selected, change: .relativeDecibels(-3))], on: executor)
+        let generationBefore = threeSteps.basis.documentGeneration
+
+        // In the gap after step one: SAVE and OPEN AGAIN through the Studio's own path.
+        var reopened = 0
+        betweenSteps = {
+            let saved = SessionSaveOpen.capturing(take, timeline: timeline.document, clipSlots: clips.slots,
+                                                  songForm: Arrangement(), playerAutomation: [], sampleRate: 48_000)
+            let songBefore = timeline.document
+            if SessionSaveOpen.restoreSong(of: saved, timeline: timeline, clips: clips, player: TimelineRegionPlayer()) {
+                reopened += 1
+            }
+            XCTAssertEqual(timeline.document, songBefore, "the same song, step one's level included, came back")
+        }
+        let report = await executor.execute(threeSteps)
+
+        XCTAssertEqual(reopened, 1, "the Open ran once, in the first gap; the second gap never came")
+        XCTAssertEqual(timeline.documentGeneration, generationBefore + 1)
+        XCTAssertNil(report.refusal, "the preflight passed — the Open came after it")
+        XCTAssertEqual(report.steps.map(\.outcome).count, 3)
+        guard case .done = report.steps[0].outcome else { return XCTFail("step one ran before the Open: \(report.steps[0].outcome)") }
+        XCTAssertEqual(report.steps[1].outcome, .failed(.projectChanged), "the step after the Open does not reach a writer")
+        XCTAssertEqual(report.steps[2].outcome, .notRun)
+        XCTAssertEqual(report.state, .failed("1 of 3 done. \(EchoelCommandError.projectChanged.message)"))
+        let loop = try XCTUnwrap(level(Self.loopLane, in: timeline))
+        XCTAssertEqual(loop, Float(pow(10, -3.0 / 20)), accuracy: 1e-6, "ONE step's worth — nothing after the Open")
+
+        // Step one's change belongs to the song before the Open: no Undo of it in the reopened one.
+        XCTAssertFalse(executor.canUndoAgentChange, "the group is stamped with the generation it ran in, not the one found after")
+        betweenSteps = nil
+        let nothing = await executor.execute(plan([.undoAgentChange], on: executor))
+        XCTAssertEqual(nothing.steps.first?.outcome, .failed(.nothingToUndo))
+        XCTAssertEqual(level(Self.loopLane, in: timeline), loop, "the reopened level stands as saved")
+
+        // A request planned after the Open runs to the end — the check is a fence, not a lock.
+        // (The selection is not part of the song; Loop is still selected.)
+        XCTAssertEqual(selection.trackID, Self.loopLane.id)
+        let fresh = await executor.execute(plan([.setTrackLevel(track: .selected, change: .relativeDecibels(-3)),
+                                                 .setTrackLevel(track: .selected, change: .relativeDecibels(-3))], on: executor))
+        XCTAssertEqual(fresh.state, .done)
+        XCTAssertEqual(try XCTUnwrap(level(Self.loopLane, in: timeline)), Float(pow(10, -9.0 / 20)), accuracy: 1e-6)
     }
 
     // MARK: 8 — same writers as the buttons; nothing on the audio side, the disk or the network
