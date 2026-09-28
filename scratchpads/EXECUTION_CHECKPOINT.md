@@ -208,6 +208,26 @@ TRIAGE_21_f84d4121e (2026-09-28, read against test + product code AT f84d4121e; 
   + incomplete xcresult → NOT "closed"; the 21 are known-red, none a product regression; 15 tests of e9999dc58's 39
   have no result on f84d4121e and the Xcode abort (Code=14, exit 134) has no identified trigger → both stay open ·
   (5) no deploy without a founder order + .deploy/release (hook denies in auto). No deploy order exists.
+REPAIR_21_f84d4121e (2026-09-28, founder order "Nachbesserung … nächster belastbar geprüfter TestFlight-Kandidat"):
+  CANDIDATE SHA = 30503f2b0 (branch claude/echoelmusic-review-optimize-u5jjpd). Commits: d6fc6ec51 case 20 test (per
+  bundle: App, Widget, AUv3 each; no target-level `resources:` key) + FOUNDER_APPLY diff · bce8dd9e5 cases 1-13,15-18,21 ·
+  e49a4d284 case 14 · 327174c2d case 19 · aa18f7edc hooks README (Edit on project.yml passed in auto; commit rule held) ·
+  30503f2b0 review repair (independent reviewer: no build-break, 3 low findings fixed; 1 nit kept: the latch exemption
+  recognises only `var x = false` and fails CLOSED on a restyle).
+  CASE 20: project.yml NOT changed — the hook denies a commit carrying it in auto mode. Exact diff for the founder:
+  scratchpads/FOUNDER_APPLY_case20_auv3_privacy_manifest.diff (git apply --check passes). UNTIL APPLIED the case-20 test is
+  RED BY DESIGN (it names the AUv3 entry that is missing) and the .appex ships WITHOUT PrivacyInfo.xcprivacy. Generated
+  project / built .appex could NOT be inspected here (no xcodegen/Xcode); check after applying: Compile Check log shows
+  `CpResource … PrivacyInfo.xcprivacy` for EchoelmusicAUv3, and the .appex in the TestFlight IPA contains it.
+  CASE 14: ratchet stays 75; scan now counts XCTSkipIf/XCTSkipUnless; third class PRECONDITION-SKIP (own ratchet 5); one
+  hidden real anchor miss (Pythagorean) → XCTFail. Transcribed: 75/5/403; 6 mutants all red; claim 5 drives the
+  classifier on 7 synthetic cases. CASE 7: ONE ASSERTION REMOVED (ascending order, never promised). CASE 5: registry now
+  filled → downstream needles run (transcribed green). CASE 19: NOT confirmed by execution yet — claim 2 compares decoded
+  value + byte multiset; claim 2b (new) encodes 64× and records the distinct count as an xcresult attachment ("ColabPayload
+  distinct raw encodings over 64 calls: N"). Confirmed only when a run shows N>1 with 2b green.
+  NOT DONE / OPEN: no targeted test route exists (no -only-testing dispatch without editing workflows); the 15 unresulted
+  tests of e9999dc58 and the affected tests get evidence only from the full Run Tests step + the xcresult (blob host
+  denied here) — execution stays OPEN until someone reads that xcresult. Gates on 30503f2b0: pending at write time.
 FOUNDER_PENDING: device checks for the whole media/agent stack (nothing here is device-verified) · #249/#250 ·
   MED-9 cancel button · "0.0 dB → 0.0 dB" wording · TestFlight (NOT triggered, per order)
 VISUAL_PLAN: Photism principles → V1–V4 in `scratchpads/PLAN_MEDIA_SEED_2026-09-27.md` §7 (planned 2026-09-28, NOT released;
@@ -219,6 +239,7 @@ GATE_PROTECTION: 2026-09-28 — the four founder-gated paths ASK before any Clau
   `permission_mode` auto, asks otherwise; live proof in this session (throwaway repo write refused, file unchanged).
   copy protected→protected now caught; selftest 56/56. Release = founder edits himself; phone release proven in no mode;
   Edit/Write in auto relies on built-in ask rules (unmeasured). `.claude/hooks/README.md` „Deny-Beleg".
-NEXT_3_ACTIONS: 1) founder: decide V1 release (audio tap first) and #249/#250, MED-9, the "0.0 dB → 0.0 dB" wording
-  2) founder: allow the artifact host (productionresultssa*.blob.core.windows.net) in the environment's network policy if the
-  xcresult should be readable from a session — until then execution evidence stays the 200-line window  3) no new features; no TestFlight
+NEXT_3_ACTIONS: 1) founder: apply scratchpads/FOUNDER_APPLY_case20_auv3_privacy_manifest.diff (project.yml) BEFORE the next
+  upload; then verify the AUv3 bundle carries PrivacyInfo.xcprivacy  2) read Compile Check / Build for Testing / Run Tests on
+  30503f2b0 (and the xcresult: the 20 repaired + 15 unresulted tests, claim 2b's attachment N)  3) founder: deploy order
+  + .deploy/release (unchanged, untouched) — no TestFlight before 1) and 2); #249 still open

@@ -40247,3 +40247,12 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - Handy-Probe korrigiert auf das Belegte: ask ausgegeben, Befehl ausgeführt, auflösende Instanz unbekannt (die erste Fassung sagte „ohne den Founder" — nicht belegt).
 - Grenzen: deny nur für erkannte Bash-Zugriffe; Edit/Write in auto über die eingebauten ask-Regeln, dort ungemessen; eine Handy-Freigabe ist in keinem Modus belegt.
 - Nebenbefund: eine Umleitung mit leerem `$CLAUDE_PROJECT_DIR` hat `/st.out` (2231 B, Selbsttest-Ausgabe) angelegt; das Löschen hat die eingebaute Sicherheitsprüfung abgelehnt — liegt noch da, harmlos.
+
+## 2026-09-28 — Nachbesserung 3: die 21 Fehlschläge von f84d4121e reparieren
+
+- Founder-Auftrag: Fall 20 zuerst (Privacy-Manifest AUv3, project.yml freigegeben), dann 20 Test-Reparaturen, Fall 14 ohne Grenzerhöhung, Fall 19 per Swift-Ausführung prüfen, Gates getrennt berichten, Checkpoint aktualisieren; `.deploy/release` unberührt.
+- Fall 20: Test prüft App/Widget/AUv3 einzeln (d6fc6ec51). `project.yml`-Edit ging im Auto-Modus durch, der COMMIT wurde vom Hook abgelehnt → exakter Diff `scratchpads/FOUNDER_APPLY_case20_auv3_privacy_manifest.diff`, Arbeitsbaum auf HEAD zurück. Bis zur Anwendung ist der Test absichtlich rot.
+- Fälle 1–13, 15–18, 21 (bce8dd9e5): Anker/Fixtures/Erwartungen, je mit Begründung im Test; Fall 7 eine Zusicherung entfernt (nie versprochene Reihenfolge).
+- Fall 14 (e49a4d284): Ratchet bleibt 75, Scan zählt XCTSkipIf/Unless, neue Klasse PRECONDITION-SKIP (Ratchet 5); ein versteckter echter Ankerfehler → XCTFail; 6 Mutanten rot.
+- Fall 19 (327174c2d): Vergleich über dekodierten Wert + Byte-Multimenge; Experiment-Test 2b mit Anhang im xcresult. Bestätigung der Schlüsselreihenfolge steht aus (kein Swift hier).
+- Review (unabhängig): kein Build-Bruch, 3 kleine Punkte behoben (30503f2b0). Kandidat: 30503f2b0; Gates ausstehend beim Schreiben.
