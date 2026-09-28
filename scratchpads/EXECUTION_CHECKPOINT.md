@@ -124,12 +124,22 @@ CANDIDATE_f84d4121e_TRIAGE (2026-09-28, founder order "alle 21 bekannten fehlges
   Abort trap, 11:13:45→11:36:53): the TOOL died → execution of every suite after the abort point is UNRECORDED, not
   failed and not passed; by (4) a test trap is not excluded until the xcresult names the last test started.
   NEXT: the per-case list — founder pastes it, or allows *.blob.core.windows.net in the environment's network policy.
-  EXTERNAL_CLAIMS_f84d4121e (source: an external evaluation of artifact 10968101637, relayed by the founder in chat
-  2026-09-28; its file "Echoelmusic-21-Testfehler-f84d4121e.md" did NOT arrive in this session — only its summary did,
-  so nothing below is re-checked here): (a) all twelve executor tests PASSED, including claims 5, 10 and 12 → if the file
-  confirms it, claims 5/10/12 are EXECUTED GREEN and leave class B · (b) all 21 failures were already present on e9999dc58
-  → pre-existing relative to this round, cause still to be read per case · (c) hook selftest 56/56 and the copy case
-  denies in auto mode (this one IS re-checked here, 8ca99e82e). Classification of the 21 waits for the file itself.
+XCRESULT_f84d4121e (EXTERNAL — Codex evaluation 2026-09-28, relayed as text by the founder; artifact 10968101637 of
+  job 108899686909, run 36413614937 attempt 1, ZIP 3,680,211 B, SHA-256 0a44e91d…c7613593 = GitHub artifact digest; NOT
+  reproducible here, blob host denied): the xcresult is INCOMPLETE (no final ActionsInvocationRecord, no Info.plist). From
+  the data objects: 2,293 unique ActionTestSummary records = 2,272 Success · 21 Failure · 0 Skipped — NOT a complete run and
+  no statement about the planned total. EXECUTED GREEN on f84d4121e: all 12 tests of TheAgentActsThroughTheButtonsPathsTests,
+  incl. claim 5 testStaleSelectionChangedSongAndRepeatsAreSafe · claim 10 testAReopenedIdenticalProjectIsNotThePlannedOne ·
+  claim 12 testAProjectOpenedAgainBetweenTwoStepsEndsTheRequestThere (all three Failure on e9999dc58); suite log
+  Session-EchoelmusicTests-2026-09-28_111352-Nu761o.log: 12 tests, 0 failures at 11:22:47 UTC. testOwnLaterWritesDoNotBlock
+  OwnEarlierUndoEntries (5.2): Success on e9999dc58, NO completed result on f84d4121e → no new pass claimed.
+  History: all 21 Failure IDs were already Failure in artifact 10963874977 (e9999dc58); of e9999dc58's 39 Failures: 21 again
+  Failure, 3 Success (claims 5/10/12), 15 without a completed result (= unrecorded, not passed, not "never started").
+  "Red on e9999dc58" ≠ "red before the whole repair round". Abort: 11:36:25 XCTHTestOperationCoordinatorErrorDomain Code=14
+  "The test runner timed out while preparing to run tests" (Session-…_111709-WENENc.log + scheduling.log), 11:36:52 Abort
+  trap: 6 / exit 134, NSInternalInconsistencyException "Unexpected operation <IDERunOperation …>, current operation is
+  (null)" → runner/Xcode abort proven; no test identified as trigger; #396 attribution not proven by this alone. The 21
+  recorded Failures stand; the abort does not cancel them. Hook re-check by Codex: selftest 56/56, copy case → deny (auto).
 FOUNDER_PENDING: device checks for the whole media/agent stack (nothing here is device-verified) · #249/#250 ·
   MED-9 cancel button · "0.0 dB → 0.0 dB" wording · TestFlight (NOT triggered, per order)
 VISUAL_PLAN: Photism principles → V1–V4 in `scratchpads/PLAN_MEDIA_SEED_2026-09-27.md` §7 (planned 2026-09-28, NOT released;
