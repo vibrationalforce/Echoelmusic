@@ -250,6 +250,17 @@ REPAIR_21_f84d4121e (2026-09-28, founder order "Nachbesserung … nächster bela
   `CpResource …/EchoelmusicAUv3.appex/PrivacyInfo.xcprivacy` (3 copies: app, widget, AUv3) while 30503f2b0's log
   (job 109047230296) shows 2 (app, widget) — the BUILT .appex now carries the manifest, measured, not inferred. The
   archived/TestFlight IPA is not inspected (no deploy). CI/CD 36460879114: Build for Testing = SUCCESS; Run Tests running.
+XCRESULT_READ (founder report 2026-09-28, full xcresults of aa18f7edc and 30503f2b0, attempt 1 each — read OUTSIDE this
+  environment; the blob host still answers 403 here, re-tried 18:07 UTC for artifact 10988221716; the job log of 30503f2b0
+  carries no failing-test names — no "Failing tests:" list, no `error: -[` line — so NOTHING below is re-derived by Claude):
+  both SHAs: Compile Check green · Build for Testing green · Run Tests 4,372 passed / 15 failed, exit 65, NO exit-134 abort.
+  ALL 20 REPAIRED CASES PASSED. CASE 19 CONFIRMED: 64 encodings gave THREE distinct key orders (attachment N=3, claim 2b
+  green) — the nondeterminism diagnosis holds and the test now pins the real contract. The 15 formerly unresulted tests of
+  e9999dc58 now HAVE results: 1 passed · 14 failed — cause analysis OPEN (names not readable here; the founder/xcresult
+  holds them). The 15th failure = the case-20 test, red by design on both SHAs (manifest fix 7e6aea965 postdates them).
+  #249 was not among the 21 and is therefore most likely one of the 14 — UNVERIFIED until the list is read.
+  Tally: 4,372 + 15 = 4,387 cases vs 4,385 on e9999dc58 (+2; this round added at least claim 2b and ratchet claim 5 —
+  not itemized against the xcresult, so the +2 is consistent, not proven).
 FOUNDER_PENDING: device checks for the whole media/agent stack (nothing here is device-verified) · #249/#250 ·
   MED-9 cancel button · "0.0 dB → 0.0 dB" wording · TestFlight (NOT triggered, per order)
 VISUAL_PLAN: Photism principles → V1–V4 in `scratchpads/PLAN_MEDIA_SEED_2026-09-27.md` §7 (planned 2026-09-28, NOT released;
@@ -261,8 +272,8 @@ GATE_PROTECTION: 2026-09-28 — the four founder-gated paths ASK before any Clau
   `permission_mode` auto, asks otherwise; live proof in this session (throwaway repo write refused, file unchanged).
   copy protected→protected now caught; selftest 56/56. Release = founder edits himself; phone release proven in no mode;
   Edit/Write in auto relies on built-in ask rules (unmeasured). `.claude/hooks/README.md` „Deny-Beleg".
-NEXT_3_ACTIONS: 1) incorporate remote 7e6aea965 and this checkpoint without overwriting local work; read Compile Check /
-  Build for Testing / Run Tests on 7e6aea965 (and the xcresult: the 20 repaired + 15 unresulted tests, claim 2b's attachment N)
-  2) verify the built AUv3 bundle contains PrivacyInfo.xcprivacy; the source patch is already applied, no manual founder edit
-  remains for case 20  3) founder: deploy order + .deploy/release (unchanged, untouched) after the evidence is assessed;
-  #249 and the previously unexplained Xcode abort stay open
+NEXT_3_ACTIONS: 1) read Run Tests on 7e6aea965 (CI/CD 36460879114 job 109059130899 step 11) + its xcresult: expected
+  4,373 passed / 14 failed if the case-20 test turns green and nothing else moves  2) the 14 failures: get the names +
+  failure messages from the xcresult (founder/Codex — not readable here), then triage each like TRIAGE_21 (kind P/T/A/N/E/U,
+  cause commit, fix); test-only fixes under the same founder order, product changes only with a new release  3) founder:
+  deploy order + .deploy/release (unchanged, untouched) after 1) and 2) are assessed; archive/IPA manifest not inspected
