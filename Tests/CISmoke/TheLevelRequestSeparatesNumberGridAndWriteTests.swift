@@ -158,30 +158,40 @@ final class TheLevelRequestSeparatesNumberGridAndWriteTests: XCTestCase {
             basis: executor.snapshot(), consents: []))
         XCTAssertEqual(twice.state, .done)
         XCTAssertEqual(try XCTUnwrap(level(in: timeline)), minus6, accuracy: 1e-6)
-        XCTAssertEqual(await undo(), .done(EchoelUndoSummary.text(restored: 2, alreadyUndone: 0)),
+        let step1 = await undo()
+        XCTAssertEqual(step1, .done(EchoelUndoSummary.text(restored: 2, alreadyUndone: 0)),
                        "the restore of the second change is the agent's own write, not a person's")
         XCTAssertEqual(level(in: timeline), 1, "both steps taken back")
         XCTAssertFalse(executor.canUndoAgentChange)
 
         // (b) Two requests, one change each: two Undos, newest first, each restoring exactly one.
-        XCTAssertEqual(await ask(.relativeDecibels(-3), on: executor), .done("Keys: 0.0 dB → −3.0 dB."))
-        XCTAssertEqual(await ask(.relativeDecibels(-3), on: executor), .done("Keys: −3.0 dB → −6.0 dB."))
-        XCTAssertEqual(await undo(), .done(EchoelUndoSummary.text(restored: 1, alreadyUndone: 0)))
+        let step2 = await ask(.relativeDecibels(-3), on: executor)
+        XCTAssertEqual(step2, .done("Keys: 0.0 dB → −3.0 dB."))
+        let step3 = await ask(.relativeDecibels(-3), on: executor)
+        XCTAssertEqual(step3, .done("Keys: −3.0 dB → −6.0 dB."))
+        let step4 = await undo()
+        XCTAssertEqual(step4, .done(EchoelUndoSummary.text(restored: 1, alreadyUndone: 0)))
         XCTAssertEqual(try XCTUnwrap(level(in: timeline)), minus3, accuracy: 1e-6, "the newer change is back")
-        XCTAssertEqual(await undo(), .done(EchoelUndoSummary.text(restored: 1, alreadyUndone: 0)),
+        let step5 = await undo()
+        XCTAssertEqual(step5, .done(EchoelUndoSummary.text(restored: 1, alreadyUndone: 0)),
                        "the first Undo's write was the agent's own — it does not block the older entry")
         XCTAssertEqual(level(in: timeline), 1)
-        XCTAssertEqual(await undo(), .failed(.nothingToUndo))
+        let step6 = await undo()
+        XCTAssertEqual(step6, .failed(.nothingToUndo))
 
         // (c) The person's same-number re-entry between two of the agent's changes still blocks —
         //     the protection of 2b is untouched by 5.2.
-        XCTAssertEqual(await ask(.relativeDecibels(-3), on: executor), .done("Keys: 0.0 dB → −3.0 dB."))
+        let step7 = await ask(.relativeDecibels(-3), on: executor)
+        XCTAssertEqual(step7, .done("Keys: 0.0 dB → −3.0 dB."))
         TrackMix.setLevel(Double(minus3), laneID: Self.keysLane.id, timeline: timeline)   // the person, same number
-        XCTAssertEqual(await ask(.relativeDecibels(-3), on: executor), .done("Keys: −3.0 dB → −6.0 dB."))
-        XCTAssertEqual(await undo(), .done(EchoelUndoSummary.text(restored: 1, alreadyUndone: 0)),
+        let step8 = await ask(.relativeDecibels(-3), on: executor)
+        XCTAssertEqual(step8, .done("Keys: −3.0 dB → −6.0 dB."))
+        let step9 = await undo()
+        XCTAssertEqual(step9, .done(EchoelUndoSummary.text(restored: 1, alreadyUndone: 0)),
                        "the agent's newest change is its own to take back")
         XCTAssertEqual(try XCTUnwrap(level(in: timeline)), minus3, accuracy: 1e-6)
-        XCTAssertEqual(await undo(), .failed(.changedSince("The level of Keys")),
+        let step10 = await undo()
+        XCTAssertEqual(step10, .failed(.changedSince("The level of Keys")),
                        "but the level the person entered by hand — the same number — is theirs and stays")
         XCTAssertEqual(try XCTUnwrap(level(in: timeline)), minus3, accuracy: 1e-6)
     }
