@@ -3,10 +3,12 @@
 Rules: `memory/preferences.md` § "Orchestrator hardening". This file is NOT a roadmap — product order
 lives in `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` and the canonical PLAN_* files. Overwrite, don't append.
 
-CURRENT_HEAD: f84d4121e on claude/echoelmusic-review-optimize-u5jjpd (PUSHED; the checked-out local branch
-  feature/media-seed-2026-09-27 mirrors it). Repair SHAs of the 5.1/5.2 round: 1cf2f92af · 60565f846 · e9999dc58 · adae9432c · f84d4121e. Review base dfe9525e6 · review commit 9d479f922 (22 commits
+CURRENT_HEAD: 7e6aea965 on claude/echoelmusic-review-optimize-u5jjpd (PUSHED code/gate SHA; subsequent docs commits
+  may advance the branch tip). Codex applied the prepared, founder-authorized case-20 manifest patch through the connected
+  GitHub tools; Claude's local checkout was not inspected and must incorporate the remote commit before its next push.
+  Repair SHAs of the 5.1/5.2 round: 1cf2f92af · 60565f846 · e9999dc58 · adae9432c · f84d4121e. Review base dfe9525e6 · review commit 9d479f922 (22 commits
   media workstation + EchoelAI, transcribed only, NEVER compiled before step 1 below).
-CURRENT_MAIN: f84d4121e (read via `git ls-remote origin refs/heads/main` after Compile Check 36413615068 + BfT went green).
+CURRENT_MAIN: 30503f2b0 (read via the GitHub branch API after 7e6aea965 was pushed; not a gate result for 7e6aea965).
 CODEX HANDOVER (portable, outside the worktree — scratchpad `codex-handover/`): full bundle in 4 parts
   (sha256 3131556d…) · thin bundle from dfe9525e6 · FABLE_REVIEW_9d479f922.md · IMPORT_ANLEITUNG.md ·
   SHA256SUMS.txt. Verified with `git bundle verify` and a fresh import (both SHAs + diff readable).
@@ -209,16 +211,21 @@ TRIAGE_21_f84d4121e (2026-09-28, read against test + product code AT f84d4121e; 
   have no result on f84d4121e and the Xcode abort (Code=14, exit 134) has no identified trigger → both stay open ·
   (5) no deploy without a founder order + .deploy/release (hook denies in auto). No deploy order exists.
 REPAIR_21_f84d4121e (2026-09-28, founder order "Nachbesserung … nächster belastbar geprüfter TestFlight-Kandidat"):
-  CANDIDATE SHA = 30503f2b0 (branch claude/echoelmusic-review-optimize-u5jjpd). Commits: d6fc6ec51 case 20 test (per
+  TEST-REPAIR SHA = 30503f2b0; CURRENT CANDIDATE = 7e6aea965 (same branch, adds only the prepared project.yml fix).
+  Commits: d6fc6ec51 case 20 test (per
   bundle: App, Widget, AUv3 each; no target-level `resources:` key) + FOUNDER_APPLY diff · bce8dd9e5 cases 1-13,15-18,21 ·
   e49a4d284 case 14 · 327174c2d case 19 · aa18f7edc hooks README (Edit on project.yml passed in auto; commit rule held) ·
   30503f2b0 review repair (independent reviewer: no build-break, 3 low findings fixed; 1 nit kept: the latch exemption
   recognises only `var x = false` and fails CLOSED on a restyle).
-  CASE 20: project.yml NOT changed — the hook denies a commit carrying it in auto mode. Exact diff for the founder:
-  scratchpads/FOUNDER_APPLY_case20_auv3_privacy_manifest.diff (git apply --check passes). UNTIL APPLIED the case-20 test is
-  RED BY DESIGN (it names the AUv3 entry that is missing) and the .appex ships WITHOUT PrivacyInfo.xcprivacy. Generated
-  project / built .appex could NOT be inspected here (no xcodegen/Xcode); check after applying: Compile Check log shows
-  `CpResource … PrivacyInfo.xcprivacy` for EchoelmusicAUv3, and the .appex in the TestFlight IPA contains it.
+  CASE 20: APPLIED by Codex in 7e6aea965b01c822ca87e1f4127b492c6b53a239 after the founder asked the agents to handle the
+  repository work. This is exactly scratchpads/FOUNDER_APPLY_case20_auv3_privacy_manifest.diff; remote project.yml blob
+  e41e906ac97934092757d807ab5849b56639dc26 matches the prepared patch. YAML parsing and structural comparison passed:
+  only the AUv3 manifest resource entry changes, and app/widget/AUv3 each declare it under sources with buildPhase: resources.
+  The Claude hook/settings were NOT changed. This records this authorized patch, not a general permission exception.
+  Static validation is NOT an executed Swift test or a bundle check. Still verify the generated project / built .appex:
+  `CpResource … PrivacyInfo.xcprivacy` for EchoelmusicAUv3 and the manifest inside the actual AUv3 bundle.
+  Gates for 7e6aea965, attempt 1: Compile Check 36460878913 in progress at the first read; CI/CD 36460879114,
+  Build for Testing job 109059130899 queued, Run Tests not started. Follow each stage separately on this SHA.
   CASE 14: ratchet stays 75; scan now counts XCTSkipIf/XCTSkipUnless; third class PRECONDITION-SKIP (own ratchet 5); one
   hidden real anchor miss (Pythagorean) → XCTFail. Transcribed: 75/5/403; 6 mutants all red; claim 5 drives the
   classifier on 7 synthetic cases. CASE 7: ONE ASSERTION REMOVED (ascending order, never promised). CASE 5: registry now
@@ -227,7 +234,9 @@ REPAIR_21_f84d4121e (2026-09-28, founder order "Nachbesserung … nächster bela
   distinct raw encodings over 64 calls: N"). Confirmed only when a run shows N>1 with 2b green.
   NOT DONE / OPEN: no targeted test route exists (no -only-testing dispatch without editing workflows); the 15 unresulted
   tests of e9999dc58 and the affected tests get evidence only from the full Run Tests step + the xcresult (blob host
-  denied here) — execution stays OPEN until someone reads that xcresult. Gates on 30503f2b0: pending at write time.
+  denied in Claude's environment; the prior artifact was readable in Codex) — execution stays OPEN until that xcresult is read.
+  Gates on 30503f2b0, attempt 1: Compile Check 36457431078 SUCCESS; Build for Testing run 36457429861 job 109047541763
+  SUCCESS; Run Tests was in progress at Codex's preceding read. Do not transfer these passes to 7e6aea965.
 FOUNDER_PENDING: device checks for the whole media/agent stack (nothing here is device-verified) · #249/#250 ·
   MED-9 cancel button · "0.0 dB → 0.0 dB" wording · TestFlight (NOT triggered, per order)
 VISUAL_PLAN: Photism principles → V1–V4 in `scratchpads/PLAN_MEDIA_SEED_2026-09-27.md` §7 (planned 2026-09-28, NOT released;
@@ -239,7 +248,8 @@ GATE_PROTECTION: 2026-09-28 — the four founder-gated paths ASK before any Clau
   `permission_mode` auto, asks otherwise; live proof in this session (throwaway repo write refused, file unchanged).
   copy protected→protected now caught; selftest 56/56. Release = founder edits himself; phone release proven in no mode;
   Edit/Write in auto relies on built-in ask rules (unmeasured). `.claude/hooks/README.md` „Deny-Beleg".
-NEXT_3_ACTIONS: 1) founder: apply scratchpads/FOUNDER_APPLY_case20_auv3_privacy_manifest.diff (project.yml) BEFORE the next
-  upload; then verify the AUv3 bundle carries PrivacyInfo.xcprivacy  2) read Compile Check / Build for Testing / Run Tests on
-  30503f2b0 (and the xcresult: the 20 repaired + 15 unresulted tests, claim 2b's attachment N)  3) founder: deploy order
-  + .deploy/release (unchanged, untouched) — no TestFlight before 1) and 2); #249 still open
+NEXT_3_ACTIONS: 1) incorporate remote 7e6aea965 and this checkpoint without overwriting local work; read Compile Check /
+  Build for Testing / Run Tests on 7e6aea965 (and the xcresult: the 20 repaired + 15 unresulted tests, claim 2b's attachment N)
+  2) verify the built AUv3 bundle contains PrivacyInfo.xcprivacy; the source patch is already applied, no manual founder edit
+  remains for case 20  3) founder: deploy order + .deploy/release (unchanged, untouched) after the evidence is assessed;
+  #249 and the previously unexplained Xcode abort stay open
