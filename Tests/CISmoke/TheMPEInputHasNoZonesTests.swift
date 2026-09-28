@@ -1297,7 +1297,17 @@ final class TheMPEInputHasNoZonesTests: XCTestCase {
     /// Tag-stripped sentences. ⛔ THE FIRST VERSION OF #775 SCANNED LINES AND FOUND NINE OF THE
     /// TEN OCCURRENCES — `docs/press.html` split its claim across a line the needle could not
     /// see, and only a sentence-level pass found it. A claim does not respect line boundaries.
+    ///
+    /// ⛔ AND A LIST ITEM IS A SENTENCE BOUNDARY, WHETHER OR NOT IT ENDS IN A PERIOD. Stripping
+    /// the tags left `</li><li>` as whitespace, so the EchoelFX item of `docs/faq.html`
+    /// ("… (modelled analog compressors Planned)") ran straight into the EchoelMIDI item ("… MPE
+    /// output behind two more.") and the compressors' "Planned" was read as a claim about MPE
+    /// output — red on an honest page since 377cb0f9c. `</li>` now ends the sentence; transcribed
+    /// over the #775 parent tree (342f3df83^) the planted claims are found exactly as before
+    /// (17 hits with and without the boundary), so the guard lost nothing.
     private func sentences(in html: String) -> [String] {
+        let listItemEnd: Character = "\u{2029}"
+        let html = html.replacingOccurrences(of: "</li>", with: "</li>\u{2029}")
         var text = ""
         var inTag = false
         for ch in html {
@@ -1319,6 +1329,12 @@ final class TheMPEInputHasNoZonesTests: XCTestCase {
         var i = 0
         while i < chars.count {
             let ch = chars[i]
+            if ch == listItemEnd {
+                out.append(current)
+                current = ""
+                i += 1
+                continue
+            }
             current.append(ch)
             i += 1
             guard ch == "." || ch == "!" || ch == "?" else { continue }
