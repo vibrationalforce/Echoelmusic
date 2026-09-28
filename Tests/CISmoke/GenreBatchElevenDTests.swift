@@ -113,8 +113,17 @@ final class GenreBatchElevenDTests: XCTestCase {
         // Axis 3 — the lead voice.
         XCTAssertNotEqual(addition.leadPatchName, metal.leadPatchName)
 
-        // Axis 4 — register.
-        XCTAssertNotEqual(addition.harmonicProfile.padOctave, metal.harmonicProfile.padOctave)
+        // Axis 4 — arpeggiation: the tune moves in pad figures, the power chord stands.
+        // ⛔ "Axis 4 — register" (`padOctave` not equal) STOOD HERE AND WAS RED FROM THE COMMIT
+        // THAT WROTE IT (55dc34dce, #1295b): that same commit set this arm to `padOctave: 4`,
+        // and `blackMetal` was already at 4. The case doc never claimed register — its measured
+        // axes are voicing and progression, with scale and tempo named as NOT axes. The fourth
+        // separation that IS measured is arpeggiation (claim 2 pins this arm's side of it), so
+        // it replaces register here rather than the line being dropped. Register is NOT an
+        // axis between these two; it is left unasserted so a future octave move stays free (#364).
+        XCTAssertNotEqual(addition.harmonicProfile.arpeggiated, metal.harmonicProfile.arpeggiated,
+                          "balkanModal arpeggiates and blackMetal does not — if they now agree, "
+                          + "the pair is separated on three axes, and the case doc must say so")
 
         // ⚠️ NOT an axis, and asserted so nobody promotes it to one: the tempo windows OVERLAP.
         // blackMetal 160…200 against 120…170. Naming it here is the same discipline its own doc

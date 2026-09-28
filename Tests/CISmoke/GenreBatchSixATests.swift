@@ -92,8 +92,8 @@ final class GenreBatchSixATests: XCTestCase {
         // hungarianMinor genre is still a visible decision here rather than a silent overlap.
         XCTAssertEqual(otherHungarian.map(\.rawValue), ["balkanModal"], """
             \(otherHungarian.map(\.rawValue)) use hungarianMinor besides blackMetal. balkanModal \
-            shares it on purpose (#1295b) and is told apart by voicing, progression, arpeggiation \
-            and register (GenreBatchElevenDTests claim 3). Anything else is a new overlap — \
+            shares it on purpose (#1295b) and is told apart by voicing, progression, lead voice \
+            and arpeggiation (GenreBatchElevenDTests claim 3). Anything else is a new overlap — \
             separate it on the same axes and name it here.
             """)
         // The counterweight that keeps the sharing honest: if nobody else carried the power
