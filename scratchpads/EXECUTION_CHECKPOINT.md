@@ -140,6 +140,74 @@ XCRESULT_f84d4121e (EXTERNAL — Codex evaluation 2026-09-28, relayed as text by
   trap: 6 / exit 134, NSInternalInconsistencyException "Unexpected operation <IDERunOperation …>, current operation is
   (null)" → runner/Xcode abort proven; no test identified as trigger; #396 attribution not proven by this alone. The 21
   recorded Failures stand; the abort does not cancel them. Hook re-check by Codex: selftest 56/56, copy case → deny (auto).
+TRIAGE_21_f84d4121e (2026-09-28, read against test + product code AT f84d4121e; failure KIND and HISTORY kept apart.
+  "cause commit" = the commit that made the assertion red; every one listed is an ancestor of 9d479f922 (the start of the
+  repair round) — that is a git fact per commit, NOT an inference from "red on e9999dc58". Kinds: P product defect ·
+  T test/fixture defect · A stale anchor/needle · N nondeterministic expectation · E environment · U unexplained.)
+   1 A  TheHomePageLeadsWithTheMechanismTests.testTheOverviewSellsThePlayablePicture — docs/overview.html:167 heading went
+        h4→h3 (77598dbdd, #1399 a11y), content intact · fix: needle <h3>EchoelVis</h3> · unc.: none
+   2 A  TheCaptureTapDoesNotTouchTheDiskTests.testTheOverrunTestComparesMonotonicCounters — the "not held" note was
+        rewritten because #1429 (40bed1424) ADDED the fence (enum RetroRingCursor, RetroCapture.swift:44; pinned by
+        TheRingCursorPublishesWithABarrierTests) · fix: needle on the new text · unc.: fence not device-verified
+   3 A  TheGenreListsMatchTheirOwnCountTests.testTheStatedNumberIsTheRosterCount — `spelled` lacks "Forty-one"/
+        "Einundvierzig"; all four surfaces and the roster say 41 (275fba7b8, #1382) · fix: add both spellings
+   4 T  TheLightingLookIsACanonicalParameterTests.testEligibilityGovernsRegardlessOfBindingOrder — expected list built in
+        automatableBases order, product returns registry order (ParameterApplyRouter.swift:222-223) (4879829ec) · fix: build
+        expectation from DDSPParameterCatalog order
+   5 T  TheAutomatableSetHasOneWriterTests.testBrightnessIsAutomatableOnlyWhileItsSentinelIsOutOfRange — fixture registry
+        never filled (EchoelParameterRegistry init empty, :41) (15990f2a1/a055043be) · unc.: downstream needles never ran
+   6 A  TheMIDI2SourceIsSwitchableTests.testTheRoutingModelCallsMIDI2Live — "no MIDI-CI" sits in a trailing comment
+        (SignalRouting.swift:68), test reads codeOnly (8116b3663; its body claimed "both pass" — wrong) · fix: raw text
+   7 A  GenrePadGrammarTests.testResolvedOnsetsAreClippedIntoTheSection — asserts ascending order the resolver never
+        promised; one consumer (BioComposer.swift:2813), order-agnostic playback; `padGrammar` returns nil for EVERY genre
+        (PadGrammar.swift:172-176) → branch unreachable in production. Red since birth (cdf9edee3) · fix: sort in `onsets`
+        or drop the order assertion
+   8 T  TheWorkstationPlaysTheTimelineTests.testALegacySecondsTrimThatLeavesANoteStillPlays — region points at clip.id,
+        but `clips:` gets a NEW clip `snapped` with a fresh UUID (test :475/:478) → lookup misses before any snapping;
+        product snap 499→480 correct (RegionNoteWindow.swift:84-87,118-123). Red since birth (fa21213a9, #1439)
+   9 A  LaunchLogsWhatItWokeUpWithTests.testTheCallSitsInsideOnAppearAfterEveryRestoreItClaims — a 2nd `.onAppear`
+        (chip ScrollView, :3050, b4c2179bf WA4-P2) is picked; the root one (:1316) still runs the log after the restores
+  10 A  TheAlwaysOnRowsSayWhoseBodyTests.testTheSourceSetIsStillTheSevenClaimOneEnumerates — BioSource has 6 cases since
+        #1301 removed faceCam (fab8054b2); claim 1 already lists six · fix: 7→6
+  11 A  ThePickerDoesNotOwnEverySourceTests.testBothDoorsSayThePickerOwnsOnlyItsOwnSources — doc reworded to "THREE
+        PUBLISHERS THIS PICKER OWNS" (7606d9f11, #1319)
+  12 A  AutoModeStartsOffAndOwnsNoTempoTests.testTheVisualFlagIsThreadedNotObserved = TASK #250 (task names exactly this
+        test; checkpoint names claim 9). Host list still names EchoelStudioView (host gone with #1069, 8577ff6bf); both live
+        MetalBioView sites pass autoAttuned (FloatingVisualWindow.swift:845-846, ExternalDisplayScene.swift:255-256)
+  13 A  ScrubNotifiesOnlyOnRealChangeTests.testACancelledGestureHasAPathToClearItsLatches — #392 (08e5cd5a9) put the
+        axis-dominance decline between `if !scrubbing {` and the stamp; semantics hold. Needle present at 08e5cd5a9^,
+        absent from 08e5cd5a9 on (red ~8 weeks behind #396)
+  14 T  TheAnchorMissSkipsDoNotGrowTests.testAnchorMissSkipsDoNotGrow — 77 > 75: two new condition skips in
+        TheBroadcastHasNoDoorWithoutAnEngineTests.swift:43,:59 (71e9600f0); "New sites" = suffix(3), alphabetical, not new ·
+        open: ratchet policy (raise to 77 vs XCTSkipIf form)
+  15 T  MIDIOutLeavesAReadableTrailTests.testNoBreadcrumbOnTheSendPath — the one logOutcome in noteOn is a once-per-process
+        latch on a refused non-finite velocity (MIDIOutput.swift:329-337, latch :179 no other writer), main actor, not
+        reachable by today's four callers (08afc57ea, #1378) · unc.: assumes one MIDIOutput instance
+  16 T  TheMemoryVerdictComesFromTheSystemTests.testTheMisleadingByteCountIsStillLabelled — label is in a `///` doc
+        (MemoryPressureHandler.swift:110), test searches codeOnly (8d01fb577)
+  17 A  OneChromeControlHeightTests.testBothSmallHeaderTilesAreOnTheConstant — clips tile deleted with #1304 (122724de3);
+        Lux remains (HeaderMonitors.swift:618) · fix: expect 1
+  18 A  FXPanelReachesEveryChainTests.testEveryWriteThroughFansOutOverTheInventory — didSet count 58 after #1305
+        (012766562) removed 12 harmonizer/granular observers by founder decision; fan-out intact
+  19 N  TheShareDoorReportsWhatItCannotSendTests.testTheTwoFormsProduceTheSameBytesForAWritableValue — JSONEncoder without
+        .sortedKeys (ColabPayload.swift:259) → key order unstable (513685d6e); decoder order-agnostic · unc.: Foundation
+        internals recalled, not measured
+  20 A+P ThePrivacyManifestIsDeclaredForBothTargetsTests.testTheManifestIsDeclaredTwiceAsAResourceFile — line 69 A (AUv3 is
+        the 3rd bundle). Line 80 CONFIG DEFECT (verified here): project.yml:278-283 declares the AUv3 manifest under a
+        target-level `resources:` key that XcodeGen 2.42.0 drops (project.yml's own note :93-99) → the .appex ships WITHOUT
+        PrivacyInfo.xcprivacy while it uses App-Group UserDefaults (required-reason API). Since f6f2b6c9f (#1385). Counter-
+        evidence: TestFlight builds since (e.g. 2595) uploaded and processed → not an upload blocker; App-Store compliance
+        risk; ITMS warning mails unknowable from the repo. Fix = founder-gated project.yml (move under sources: with
+        buildPhase: resources) + test 2→3
+  21 A  GenreBatchSixATests.testTheMetalChordIsAPowerChordAndTheModeIsWhatIsNew — balkanModal shares hungarianMinor on
+        purpose (#1295b, 55dc34dce; pinned GenreBatchElevenDTests:93)
+  TALLY (21): anchor 13 · test/fixture 6 · nondeterministic 1 · mixed anchor+config 1 (case 20) · product defect in app
+  code 0 · environment 0 · unexplained 0. The ONE shipped-artefact defect is case 20 line 80 (config, founder-gated).
+  #249: no attribution evidence ties it to any of the 21 → NOT attached. #250 = case 12 (evidence above).
+  RELEASE RULES on f84d4121e: (1) Compile Check + BfT green → the auto-merge/TestFlight bar is met · (2) Run Tests red
+  + incomplete xcresult → NOT "closed"; the 21 are known-red, none a product regression; 15 tests of e9999dc58's 39
+  have no result on f84d4121e and the Xcode abort (Code=14, exit 134) has no identified trigger → both stay open ·
+  (5) no deploy without a founder order + .deploy/release (hook denies in auto). No deploy order exists.
 FOUNDER_PENDING: device checks for the whole media/agent stack (nothing here is device-verified) · #249/#250 ·
   MED-9 cancel button · "0.0 dB → 0.0 dB" wording · TestFlight (NOT triggered, per order)
 VISUAL_PLAN: Photism principles → V1–V4 in `scratchpads/PLAN_MEDIA_SEED_2026-09-27.md` §7 (planned 2026-09-28, NOT released;
