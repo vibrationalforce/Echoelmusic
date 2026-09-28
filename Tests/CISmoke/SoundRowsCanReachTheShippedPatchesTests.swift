@@ -24,6 +24,12 @@
 //                     a 2-decimal grid maps onto the SAME 0.01. Two designed noise floors made
 //                     indistinguishable, one field over. → 3 decimals.
 //
+//    · `filterLFODepth` (added 2026-09-28, founder release) — the genre bank ships 0.045
+//                     ("Lilt Keys", #1357) and 0.035 ("Marcato Reed", #1358). `Float(0.045)` is
+//                     0.0450000018, so a 2-decimal grid rewrote it to 0.05, and 0.035 to 0.04:
+//                     claim 2 was red on 7e6aea965 for exactly these two. The patch values stay;
+//                     the row got finer. → 3 decimals.
+//
 //  And one row must be COARSER: `filterCutoff` spans 20…18000 Hz and all 44 distinct shipped
 //  values (160…8000) are whole numbers, so 0 decimals — which is what the app's three OTHER
 //  cutoff rows already say (`EchoelFXView:480`, `EchoelStudioView:2474` and `:2502`). A row that
@@ -123,7 +129,7 @@ final class SoundRowsCanReachTheShippedPatchesTests: XCTestCase {
             Row("Resonance",     0...1,      2)                     { $0.filterResonance },
             Row("LFO→filter",    0...1,      2)                     { $0.lfoToFilterDepth },
             Row("LFO rate",      0...20,     2)                     { $0.filterLFORate },
-            Row("LFO depth",     0...1,      2)                     { $0.filterLFODepth },
+            Row("LFO depth",     0...1,      3)                     { $0.filterLFODepth },
             Row("Attack",        0...5,      3)                     { $0.attack },
             Row("Decay",         0...10,     2)                     { $0.decay },
             Row("Sustain",       0...1,      2)                     { $0.sustain },
@@ -267,7 +273,7 @@ final class SoundRowsCanReachTheShippedPatchesTests: XCTestCase {
     func testTheFinerGridsAreEarnedByRealValues() throws {
         let all = Bank.allCases.flatMap { $0.patches() }
 
-        for label in ["Attack", "Noise"] {
+        for label in ["Attack", "Noise", "LFO depth"] {
             let row = try XCTUnwrap(Self.rows.first { $0.label == label }, """
                 The \(label) row is gone from this file's model of the panel. Retarget the test \
                 rather than deleting it.
@@ -290,7 +296,8 @@ final class SoundRowsCanReachTheShippedPatchesTests: XCTestCase {
                 Re-decide it on purpose rather than leaving an unexplained exception. \
                 (At #430 the evidence was Attack 0.002/0.003/0.004/0.005/0.008 s — four of \
                 them collapsing to zero — and Noise 0.006 and 0.008, which a 2-decimal grid \
-                maps onto the same 0.01.)
+                maps onto the same 0.01. LFO depth joined on 2026-09-28: the genre bank's \
+                0.045 and 0.035, rewritten to 0.05 and 0.04 on a 2-decimal grid.)
                 """)
         }
     }
@@ -396,6 +403,8 @@ final class SoundRowsCanReachTheShippedPatchesTests: XCTestCase {
              "all 44 shipped cutoffs are whole Hz, and the app's three other cutoff rows say 0"),
             ("Attack", #"param("Attack", $currentPatch.attack, SynthPatch.Bounds.attack, unit: "s", decimals: 3)"#,
              "0.002/0.003/0.004/0.005 s all collapse to 0.00 on a 2-decimal grid"),
+            ("LFO depth", #"knob("LFO depth", $currentPatch.filterLFODepth, SynthPatch.Bounds.filterLFODepth, decimals: 3)"#,
+             "the genre bank's 0.045 and 0.035 become 0.05 and 0.04 on a 2-decimal grid"),
             ("Decay", #"param("Decay", $currentPatch.decay, SynthPatch.Bounds.decay, unit: "s", decimals: 2)"#,
              "the row must read the shared bound, not a fourth spelling of 0...10")
         ]

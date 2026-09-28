@@ -7747,7 +7747,10 @@ struct EchoelStudioView: View {
                 knob("Resonance", $currentPatch.filterResonance, SynthPatch.Bounds.filterResonance, decimals: 2)
                 knob("LFO→filter", $currentPatch.lfoToFilterDepth, SynthPatch.Bounds.lfoToFilterDepth, decimals: 2)
                 knob("LFO rate", $currentPatch.filterLFORate, SynthPatch.Bounds.filterLFORate, unit: "Hz", decimals: 2)
-                knob("LFO depth", $currentPatch.filterLFODepth, SynthPatch.Bounds.filterLFODepth, decimals: 2)
+                // 3 decimals, not the house 2: the genre bank ships 0.045 ("Lilt Keys") and 0.035
+                // ("Marcato Reed"), which a centesimal grid rewrote to 0.05/0.04 on first touch
+                // (#427). Pinned in `SoundRowsCanReachTheShippedPatchesTests`.
+                knob("LFO depth", $currentPatch.filterLFODepth, SynthPatch.Bounds.filterLFODepth, decimals: 3)
             }
 
             groupHeader("Envelope")
