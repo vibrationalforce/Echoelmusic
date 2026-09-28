@@ -24,12 +24,12 @@ WHAT IT DOES
      functions, `cd` first).
   Everything else: no output, exit 0 -> Claude Code's normal permission flow decides.
 
-"ask" and never "deny", on purpose: the founder releases ONE action by answering the
-permission prompt. There is deliberately no token, file or variable the agent could set to
-release itself. A headless `claude -p` has no one to answer, so "ask" blocks there.
-MEASURED 2026-09-28: in the phone cloud session (2.1.283) an "ask" from this hook was
-resolved WITHOUT the founder (a probe he was told to deny ran 3.4 s later) — there it is a
-notice, not a lock. README "Handy-Probe".
+DECISION (founder 2026-09-28, variant A): "deny" when the payload says
+permission_mode == "auto", "ask" otherwise. Why: in the phone cloud session (2.1.283,
+auto) this hook emitted "ask" and the command ran anyway; WHICH instance resolved the ask
+is unknown. After the switch a recognised write in that session was refused and did not
+run (README "Deny-Beleg"). There is deliberately no token, file or variable the agent could
+set to release itself. A headless `claude -p` has no one to answer, so "ask" blocks there.
 
 PROTECTED (founder-gated, CLAUDE.md "DO NOT" + .claude/rules/context.md §3):
   .github/workflows/**   project.yml   Resources/iOS/Info.plist   .deploy/release
@@ -60,10 +60,11 @@ LIMITS = """\
   founder's own terminal are untouched.
 - Measured with Claude Code 2.1.283 in `default` and `auto` only. `bypassPermissions`
   skipping "ask" is from the docs, NOT measured; other modes and versions are untested.
-- Phone cloud session (2.1.283, measured): an "ask" was resolved without the founder, so
-  there the hook reports and does NOT block. Whether it should "deny" instead is open.
+- "deny" covers only what THIS hook recognises in Bash. The Edit/Write tools go through
+  the built-in `permissions.ask` rules, and whether those hold in auto mode is UNMEASURED.
+- A payload without `permission_mode` (other versions) falls back to "ask".
 - Fail-open on an internal error, EXCEPT when the raw command names a protected path —
-  then it asks.
+  then it asks (denies in auto mode).
 """
 
 _PATHS = "|".join([re.escape(p) for p in PROTECTED_FILES] + [re.escape(d.rstrip("/")) for d in PROTECTED_DIRS])
@@ -116,8 +117,9 @@ def code_writes(unit, lit_pattern):
     direct = [
         r"open\(\s*" + L + r"\s*,\s*" + WRITE_MODE,
         r"Path\(\s*" + L + r"\s*\)\s*\.(?:write_text|write_bytes|unlink|rename|replace|touch|open\(\s*" + WRITE_MODE + r")",
-        # copy family writes only its DESTINATION: a protected SOURCE is a read
-        r"\bshutil\.copy\w*\((?!\s*" + L + r"\s*,)[^\n]*?" + L,
+        # copy family writes only its DESTINATION (an argument after a comma, or dst=):
+        # a protected SOURCE is a read, and a protected source must not hide a protected target
+        r"\bshutil\.copy\w*\([^\n]*?(?:,\s*|\bdst\s*=\s*)" + L,
         # move/rename/remove change the source too, so any position counts
         r"\b(?:shutil\.(?:move|rmtree)|os\.(?:replace|rename|remove|unlink|truncate))\([^)]*" + L,
         r"\bfs\.(?:writeFile|writeFileSync|appendFile|appendFileSync|rmSync|unlinkSync|renameSync)\(\s*" + L,
@@ -130,7 +132,7 @@ def code_writes(unit, lit_pattern):
             r"open\(\s*" + v + r"\s*,\s*" + WRITE_MODE,
             r"\b" + v + r"\.(?:write_text|write_bytes|unlink|rename|replace|touch)\(",
             r"Path\(\s*" + v + r"\s*\)\s*\.(?:write_text|write_bytes|unlink|rename|replace|touch)",
-            r"\bshutil\.copy\w*\((?!\s*" + v + r"\s*,)[^\n]*?\b" + v + r"\b",
+            r"\bshutil\.copy\w*\([^\n]*?(?:,\s*|\bdst\s*=\s*)" + v + r"\b",
             r"\b(?:shutil\.(?:move|rmtree)|os\.(?:replace|rename|remove|unlink|truncate))\([^)]*\b" + v + r"\b",
             r"\bfs\.(?:writeFile|writeFileSync|appendFile|appendFileSync)\(\s*" + v + r"\b",
         ]
@@ -324,23 +326,39 @@ def decide(payload, lister=_git_names):
     return None
 
 
-def emit_ask(reason):
+def decision_for(payload):
+    """"deny" in auto mode, "ask" otherwise (founder 2026-09-28, variant A). Measured in the
+    phone cloud session: an "ask" was emitted and the command ran anyway, resolved by an
+    instance nobody could name. In auto mode "ask" is therefore not a lock. A missing or
+    unknown permission_mode keeps "ask" — the measured behaviour of default mode."""
+    return "deny" if isinstance(payload, dict) and payload.get("permission_mode") == "auto" else "ask"
+
+
+def emit(decision, reason):
+    if decision == "deny":
+        reason += (" Denied because the session runs in auto mode, where an \"ask\" did not"
+                   " hold. Release: the founder edits it himself, or runs this step in"
+                   " default mode.")
     print(json.dumps({"hookSpecificOutput": {
         "hookEventName": "PreToolUse",
-        "permissionDecision": "ask",
+        "permissionDecision": decision,
         "permissionDecisionReason": reason,
     }}))
 
 
 def main():
     raw = sys.stdin.read()
+    payload = None
     try:
-        reason = decide(json.loads(raw))
+        payload = json.loads(raw)
+        reason = decide(payload)
     except Exception:  # noqa: BLE001 — fail-open, but never on a protected mention
         reason = ("Hook error while checking a command that names a founder-gated path."
                   if mention_re("").search(raw) else None)
     if reason:
-        emit_ask(reason)
+        if payload is None and re.search(r'"permission_mode"\s*:\s*"auto"', raw):
+            payload = {"permission_mode": "auto"}
+        emit(decision_for(payload), reason)
     return 0
 
 
@@ -372,6 +390,9 @@ def selftest():
         # regression 2026-09-28: shutil.copy FROM a protected source is a read
         ("python3 -c \"import shutil; shutil.copy('.deploy/release', '/tmp/r')\"", [], [], False, "shutil.copy from a protected source"),
         ("python3 -c \"import shutil; p='.deploy/release'; shutil.copy2(p, 'out.txt')\"", [], [], False, "shutil.copy2 from a protected variable"),
+        ("python3 -c \"import shutil; shutil.copy('project.yml', '.deploy/release')\"", [], [], True, "shutil.copy protected -> protected: the target counts"),
+        ("python3 -c \"import shutil; p='project.yml'; q='.deploy/release'; shutil.copy(p, q)\"", [], [], True, "shutil.copy protected var -> protected var"),
+        ("python3 -c \"import shutil; shutil.copyfile(dst='.deploy/release', src='/tmp/r')\"", [], [], True, "shutil.copyfile dst= keyword FIRST (no comma before it)"),
         ("python3 -c \"import shutil; shutil.copy('/tmp/r', '.deploy/release')\"", [], [], True, "shutil.copy onto a protected target"),
         ("python3 -c \"import shutil; shutil.move('.deploy/release', '/tmp/r')\"", [], [], True, "shutil.move removes the protected source"),
         ("python3 - <<'EOF'\nnote = open('.deploy/release').read().replace('*','')\nopen('out.txt','w').write(note)\nEOF",
@@ -422,7 +443,17 @@ def selftest():
     none = decide({"tool_name": "Edit", "tool_input": {"file_path": "project.yml"}}, fake)
     print(f"{'ok ' if none is None else 'BAD'} pass  Edit tool is the built-in rules' job")
     bad += none is not None
-    print(f"\n{len(cases) + 1 - bad}/{len(cases) + 1} selftest cases hold")
+    # variant A: the DECISION a recognised write gets, per permission mode
+    modes = [({"permission_mode": "auto"}, "deny"), ({"permission_mode": "default"}, "ask"),
+             ({}, "ask"), (None, "ask")]
+    for payload, want in modes:
+        got = decision_for(payload)
+        ok = got == want
+        bad += not ok
+        mode = None if payload is None else payload.get("permission_mode")
+        print(f"{'ok ' if ok else 'BAD'} {got:<4}  permission_mode={mode}")
+    total = len(cases) + 1 + len(modes)
+    print(f"\n{total - bad}/{total} selftest cases hold")
     return 1 if bad else 0
 
 

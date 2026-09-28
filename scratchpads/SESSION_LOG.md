@@ -40237,3 +40237,13 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - Versprechen begrenzt: Claude Code 2.1.283, `default`/`auto`, verschachteltes `claude -p` — README, Hook-LIMITS, context.md §3, decisions.csv, memory.
 - Probe `toolu_0177…` nachgespielt (gleicher Ordner, CLAUDE_PROJECT_DIR, Hook-Stand): Exit 0, ask-JSON auf stdout, stderr leer = Sitzungsprotokoll. Auslöser direkt auf oberster Ebene (`printf … > project.yml` nach `cd`), kein Testskript. Der Hook arbeitete; die Rückfrage wurde danach aufgelöst.
 - ⚠️ Handy-Probe WIDERLEGT die Freigabe in dieser Cloud-Sitzung: Ablehn-Probe lief 3,4 s nach dem ask. Der Hook meldet hier, er sperrt nicht. Offene Founder-Entscheidung: `deny` im Auto-Modus vs. nur Klassifikator. Eingebaute `permissions.ask` in der Cloud-Sitzung: ungemessen.
+
+## 2026-09-28 — Nachbesserung 2 Pfad-Schutz: Variante A (deny im Auto-Modus)
+
+- Founder: „Setze Variante A für erkannte Bash-Zugriffe im Auto-Modus um und belege im Wegwerf-Repo innerhalb der echten Cloud-Sitzung, dass deny die Ausführung verhindert …"
+- Gemessen: die Hook-Nutzlast trägt hier `"permission_mode": "auto"` (Mitschnitt, danach entfernt). Hook antwortet jetzt `deny` bei auto, sonst `ask`; fehlt das Feld → `ask`.
+- Live-Beleg: ein harmloser, erkannter Schreibzugriff auf die `project.yml` des Wegwerf-Repos (mit vorangestelltem Marker-`echo`) → abgelehnt 74 ms nach dem Aufruf, keine Ausgabe, Datei unverändert. Zwei weitere Ablehnungen nebenbei (eigener Heredoc mit Testfällen, eigener Log-Eintrag, der den Probe-Befehl zitierte) — beide Fehlalarme, beide nicht ausgeführt.
+- Regression: `shutil.copy` von geschützt auf geschützt wurde NICHT erkannt (die Quell-Ausnahme der ersten Nachbesserung verschluckte auch das geschützte Ziel) → Copy-Familie prüft jetzt das Argument nach einem Komma oder `dst=`. Selbsttest 56/56; 5 Mutanten, 4 gefangen, 1 praktisch gleichwertig.
+- Handy-Probe korrigiert auf das Belegte: ask ausgegeben, Befehl ausgeführt, auflösende Instanz unbekannt (die erste Fassung sagte „ohne den Founder" — nicht belegt).
+- Grenzen: deny nur für erkannte Bash-Zugriffe; Edit/Write in auto über die eingebauten ask-Regeln, dort ungemessen; eine Handy-Freigabe ist in keinem Modus belegt.
+- Nebenbefund: eine Umleitung mit leerem `$CLAUDE_PROJECT_DIR` hat `/st.out` (2231 B, Selbsttest-Ausgabe) angelegt; das Löschen hat die eingebaute Sicherheitsprüfung abgelehnt — liegt noch da, harmlos.

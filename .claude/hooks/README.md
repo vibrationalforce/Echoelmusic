@@ -17,7 +17,7 @@ hat sie der Founder am 2026-09-28 als kleine, separate Änderung.
 | Schicht | Wo | Was sie fängt |
 |---|---|---|
 | **Eingebaute Regeln** `permissions.ask` | `.claude/settings.json` | Edit/Write-Werkzeug; Bash-Schreibzugriffe, die Claude Code selbst parst (Umleitung `>`, `cp`, `sed -i`, `git mv`) |
-| **Hook** `protect-founder-gated.py` (PreToolUse, Matcher `Bash`) | dieses Verzeichnis | (1) Schreiben aus einem Interpreter heraus (`python3 -c`, `python3 - <<EOF`, `node -e` …), (2) `git commit`, der einen geschützten Pfad mitnimmt |
+| **Hook** `protect-founder-gated.py` (PreToolUse, Matcher `Bash`) | dieses Verzeichnis | (1) Schreiben aus einem Interpreter heraus (`python3 -c`, `python3 - <<EOF`, `node -e` …), (2) `git commit`, der einen geschützten Pfad mitnimmt. Antwort: **`deny` im Modus `auto`**, sonst `ask` |
 
 **Warum es den Hook braucht (belegt, nicht angenommen).** Gemessen am 2026-09-28 in einem
 Wegwerf-Repo mit verschachteltem `claude -p`: Nur mit den eingebauten Regeln ging
@@ -28,12 +28,18 @@ keine Regel.
 
 ## Wie deine gezielten Freigaben funktionieren
 
-- Beide Schichten antworten mit **„ask“**, nie mit „deny“. Ein ERKANNTER Zugriff löst eine
-  **Berechtigungsabfrage** aus (in 2.1.283, `default` und `auto`, gemessen im
-  verschachtelten `claude -p`). **Wo dich die Abfrage erreicht, gibst du genau diese eine
-  Aktion frei, indem du sie bestätigst**; die nächste Aktion fragt wieder.
-  ⚠️ **In der Cloud-Sitzung vom Handy aus hat dich die Abfrage NICHT erreicht** — sie wurde ohne
-  dich aufgelöst (Abschnitt „Handy-Probe“ unten). Dort ist das Versprechen widerlegt.
+- **Im Modus `auto` lehnt der Hook einen erkannten Bash-Zugriff ab („deny“)** — seit
+  2026-09-28, Variante A. Dort gibt es KEINE Freigabe per Abfrage mehr. In jedem anderen
+  Modus antwortet er „ask“; die eingebauten Regeln antworten immer „ask“.
+- **Was als Freigabeweg tatsächlich geprüft ist — ehrlich, weil es wenig ist:**
+  · *geprüft:* im Modus `auto` verhindert „deny“ die Ausführung (Abschnitt „Deny-Beleg“);
+    im verschachtelten `claude -p` (`default`) wirkte „ask“ als Sperre, weil niemand antwortete.
+  · *NICHT geprüft:* dass eine Abfrage dich auf dem Handy erreicht und deine Bestätigung genau
+    eine Aktion freigibt — in keinem Modus, in keiner Sitzung.
+  · *nicht über Claude:* deine eigene Änderung (Editor, Terminal, GitHub-Weboberfläche) läuft
+    an beiden Schichten vorbei — das ist Bauart, keine Messung.
+  **Freigabe heißt deshalb heute: du machst die Änderung selbst**, oder du lässt einen Schritt
+  im Modus `default` laufen und prüfst dabei, ob die Abfrage dich erreicht.
 - Der Agent kann sich **nicht selbst freischalten**. Es gibt kein Token, keine Datei und keine
   Variable dafür, und das ist Absicht.
 - Deine eigenen Änderungen (Editor, Terminal, GitHub-Weboberfläche) und die CI laufen **nicht**
@@ -61,14 +67,16 @@ Zusätzlich:
 
 - **Selbsttest:** `python3 .claude/hooks/protect-founder-gated.py --selftest` — Fallzahl druckt er
   selbst; darunter die Regressionsfälle der Nachbesserung (Stagen + Commit in einem Befehl,
-  Pfad-Commit, `shutil.copy` von geschützter Quelle).
-- **Mutanten:** jeder absichtlich eingebaute Fehler (16, davon 7 für die Nachbesserung) macht
-  mindestens einen Fall rot.
+  Pfad-Commit, `shutil.copy` von geschützter Quelle, `shutil.copy` von geschützt auf
+  geschützt, `dst=` vorn) und die Entscheidung je Modus (`auto` → `deny`, sonst `ask`).
+- **Mutanten:** 16 aus der ersten Nachbesserung, jeder macht mindestens einen Fall rot. Aus der
+  zweiten 5: 4 gefangen; der fünfte (Kopieren über Variablen, altes Muster) ist praktisch
+  gleichwertig — er unterscheidet sich nur bei `shutil.copy(q, q)`, einer Kopie auf sich selbst.
 - **Abgleich mit der Sitzungshistorie:** Rund 14 800 frühere Bash-Befehle dieser Sitzung liefen
   durch den Hook. Er hätte vor allem die echten, von dir freigegebenen Schreibzugriffe auf die
   vier Pfade gemeldet.
 
-## Handy-Probe in der Cloud-Sitzung (2026-09-28) — Freigabe per Handy NICHT belegt, sondern widerlegt
+## Handy-Probe in der Cloud-Sitzung (2026-09-28, vor Variante A)
 
 Gemessen in DIESER Cloud-Sitzung (`entrypoint remote_mobile`, Claude Code 2.1.283), jeweils mit
 einem harmlosen Schreibzugriff auf die `project.yml` des Wegwerf-Repos `scratchpad/gatetest`
@@ -78,23 +86,29 @@ einem harmlosen Schreibzugriff auf die `project.yml` des Wegwerf-Repos `scratchp
 |---|---|---|---|
 | `toolu_0177…` (Echt-git-Test, direkter `printf … > project.yml`, KEIN Testskript) | `ask`, Exit 0, stderr leer — nachgespielt mit derselben Hook-Logik: identisch | lief, Ergebnis 18 s nach der Rückfrage | keine |
 | Probe 1 (`printf 'phone-probe'`) | `ask` | Hook-Lauf 14:58:50.8 → Befehl 14:58:51 UTC (≈1 s) | „bestätigen“ — Antwort: „Ich glaube“ |
-| **Probe 2 (`printf 'deny-probe'`)** | `ask` | **Hook-Lauf 15:04:17.9 → Befehl 15:04:21 UTC (3,4 s)** | **„ABLEHNEN“** |
+| **Probe 2 (`printf 'deny-probe'`)** | `ask` | **Hook-Lauf 15:04:17.9 → Befehl 15:04:21 UTC (3,4 s)** | „ablehnen“ |
 
-**Schluss:** in diesem Sitzungstyp wird ein `ask` des Hooks OHNE den Founder aufgelöst — der
-Befehl lief nach einer abgelehnten Freigabe-Anweisung in 3,4 s. Wer auflöst, steht in keinem
-Protokoll (Sitzungsdatei und Diagnosedateien führen keine Berechtigungsentscheidung); Zeitmuster
-und Modus passen zur Auto-Modus-Prüfung. ⚠️ **Der Hook ist in diesem Sitzungstyp also eine
-Meldung, keine Sperre.** Im verschachtelten `claude -p` (Tabelle oben) wirkte dasselbe `ask`
-als Sperre, weil dort niemand antworten kann — die beiden Messungen widersprechen sich nicht,
-sie messen zwei verschiedene Umgebungen.
+**Belegt ist genau das: der Hook gab `ask` aus, der Befehl wurde ausgeführt, und WELCHE Instanz
+die Rückfrage aufgelöst hat, ist unbekannt.** Weder die Sitzungsdatei noch die Diagnosedateien
+führen eine Berechtigungsentscheidung. Nicht belegt ist, ob du eine Abfrage gesehen oder
+beantwortet hast (Antwort auf Probe 1: „Ich glaube“). Im verschachtelten `claude -p` wirkte
+dasselbe `ask` als Sperre, weil dort niemand antworten kann — zwei Umgebungen, kein Widerspruch.
+**Daraus folgt nur: im Modus `auto` war `ask` keine verlässliche Sperre.** Deshalb Variante A.
 
 **Nicht gemessen:** ob die EINGEBAUTEN `permissions.ask`-Regeln (`Edit(/project.yml)` …) in dieser
 Sitzung wirklich fragen — eine harmlose Probe wäre nur an den echten Dateien möglich.
 
-**Offene Entscheidung (Founder):** soll der Hook im Auto-Modus `deny` statt `ask` liefern?
-Dann ist er eine echte Sperre, aber „eine Aktion per Handy freigeben“ gibt es nicht mehr —
-Freigabe hieße: du machst die Änderung selbst, oder die Sitzung läuft für diesen Schritt im
-Modus `default`.
+## Deny-Beleg in derselben Cloud-Sitzung (2026-09-28, nach Variante A)
+
+Gemessen in DIESER Sitzung; der Hook bekommt dort `"permission_mode": "auto"` (Nutzlast
+mitgeschnitten, danach die Mitschnitt-Zeilen wieder entfernt).
+
+| Aufruf | Hook | Ergebnis |
+|---|---|---|
+| `cd …/gatetest && echo DENY-PROBE-RAN && printf 'name: deny-live-probe\n' > project.yml` | `deny` | Aufruf 15:27:50.455 → Fehler 15:27:50.529 UTC; **kein** `DENY-PROBE-RAN`; `project.yml` danach unverändert (`name: x`, gleiche mtime, 8 B); echtes `project.yml` ohne Diff |
+| unbeabsichtigt: mein eigener Python-Heredoc, der Selbsttest-Fälle mit `shutil.copy(…, '.deploy/release')` in den Hook schreiben wollte | `deny` | nicht ausgeführt — keiner der neuen Fälle stand danach in der Datei (Fehlalarm, Grenze 5) |
+
+Der ganze Befehl wird abgelehnt, nicht nur der erkannte Teil.
 
 ## Verbleibende Grenzen
 
@@ -112,15 +126,18 @@ wichtigsten Punkte:
 3. **Hook und `settings.json` sind selbst nicht geschützt.** Das ist eine bewusste Grenze des
    Auftrags. Eine Änderung daran bleibt in Diff und Commit sichtbar.
 4. **Nur `default` und `auto` sind geprüft.** Dass `bypassPermissions` „ask“ überspringt, steht
-   in der Doku und ist hier NICHT gemessen (als root verweigert). `plan`, `acceptEdits` und
-   `dontAsk` sind ungeprüft. In der Cloud-Sitzung, in der das gebaut wurde, wurde ein `ask`
-   ohne den Founder aufgelöst (Grenze 6).
+   in der Doku und ist hier NICHT gemessen (als root verweigert); dort antwortet der Hook
+   weiterhin `ask`. `plan`, `acceptEdits` und `dontAsk` sind ungeprüft. Fehlt
+   `permission_mode` in der Nutzlast (andere Version), antwortet er `ask`.
 5. **Fehlalarme sind möglich:** ein `cd` in ein anderes Verzeichnis plus derselbe Dateiname,
    oder das Bearbeiten dieses Hooks selbst. Ein Fehlalarm kostet eine Rückfrage, nie einen
    stillen Durchlauf.
-6. **Die Handy-Freigabe ist in der Cloud-Sitzung widerlegt** (Abschnitt „Handy-Probe“): ein
-   `ask` des Hooks lief dort ohne dich durch. Bis zur Entscheidung oben gilt: der Hook MELDET in
-   diesem Sitzungstyp, er sperrt nicht.
+6. **„deny“ gilt nur für Bash-Befehle, die der Hook erkennt.** Das Edit-/Write-Werkzeug läuft
+   über die eingebauten `permissions.ask`-Regeln — ob die im Modus `auto` halten, ist
+   UNGEMESSEN (eine harmlose Probe ginge nur an den echten Dateien). Grenzen 1 und 2 gelten
+   unverändert: was der Hook nicht erkennt, lehnt er auch nicht ab.
+7. **Eine Freigabe per Handy ist in keinem Modus belegt** (Abschnitt „Wie deine gezielten
+   Freigaben funktionieren“).
 
 ## Nebenbefund, nicht Teil dieses Auftrags
 

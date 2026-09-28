@@ -117,9 +117,10 @@ VISUAL_PLAN: Photism principles → V1–V4 in `scratchpads/PLAN_MEDIA_SEED_2026
 GATE_PROTECTION: 2026-09-28 — the four founder-gated paths ASK before any Claude write (`permissions.ask` + Bash hook
   `.claude/hooks/protect-founder-gated.py`); release = answer the prompt, one action each — measured in nested `claude -p`
   only. Fix-up (same day): same-command staging + pathspec commit now caught; shutil.copy FROM a protected file no longer
-  asks (selftest 49/49, both regressions). ⚠️ PHONE PROBE: in this cloud session a hook "ask" ran WITHOUT the founder (deny
-  probe executed 3.4 s after the ask) → here the hook REPORTS, it does not block. OPEN founder decision: `deny` in auto
-  mode vs classifier-only. Measured + limits: `.claude/hooks/README.md` „Handy-Probe".
+  asks. Phone probe: "ask" emitted, command ran, resolving instance UNKNOWN. → Variant A (founder order): hook DENIES in
+  `permission_mode` auto, asks otherwise; live proof in this session (throwaway repo write refused, file unchanged).
+  copy protected→protected now caught; selftest 56/56. Release = founder edits himself; phone release proven in no mode;
+  Edit/Write in auto relies on built-in ask rules (unmeasured). `.claude/hooks/README.md` „Deny-Beleg".
 NEXT_3_ACTIONS: 1) founder: decide V1 release (audio tap first) and #249/#250, MED-9, the "0.0 dB → 0.0 dB" wording
   2) founder: allow the artifact host (productionresultssa*.blob.core.windows.net) in the environment's network policy if the
   xcresult should be readable from a session — until then execution evidence stays the 200-line window  3) no new features; no TestFlight
