@@ -177,7 +177,20 @@ final class GenreBatchFourteenCTests: XCTestCase {
         // pinning: the pad is the file's brightest voice and the sub its darkest. A superlative
         // is a date (#818) — if a brighter patch ships, this claim and BOTH doc comments move
         // together (#456), which is exactly what this assertion is for.
-        let brights = SynthPatch.factory.map(\.brightness)
+        //
+        // ⛔ THE POPULATION WAS `SynthPatch.factory` — the 20 factory presets (0.1…0.8) — while
+        // the claim and both doc comments are about the GENRE bank, "the file" GenrePatches.swift.
+        // Red since 275fba7b8: the xcresult read 0.734 ≠ 0.8 and 0.1355 ≠ 0.1. Compared now in
+        // ONE processing state: every genre pad (`synthPatch`) and every genre bass (`bassPatch`)
+        // as the app plays them, i.e. after `GenrePatches.patch(...)`'s shared brightness lift
+        // (`loudnessNormalized` sets only `outputLevel`). So 0.734/0.1355 are compared against
+        // lifted neighbours, never the raw literals 0.72/0.09 against lifted ones or vice versa.
+        let genreVoices = MusicStyle.allCases.flatMap { style -> [SynthPatch] in
+            [style.synthPatch] + (style.bassPatch.map { [$0] } ?? [])
+        }
+        XCTAssertGreaterThan(genreVoices.count, MusicStyle.allCases.count,
+                             "premise: the genre bank holds pads AND basses")
+        let brights = genreVoices.map(\.brightness)
         XCTAssertEqual(pad.brightness, brights.max(),
                        "`Thin Air Pad` is no longer the file's brightest voice — update its "
                        + "doc comment in GenrePatches.swift in this same commit")
