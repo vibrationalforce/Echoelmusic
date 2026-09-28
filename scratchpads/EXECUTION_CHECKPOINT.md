@@ -266,7 +266,50 @@ XCRESULT_7e6aea965 (founder report 2026-09-28, full xcresult artifact 1098964077
   website · cumbia bass longer than the pad · inspiration.csv malformed table + only two rows · Andean genre roster · four
   divergent section headings · psy/prog/house preset distinction · MIDI recording with the transport already running · two
   genres with the same scale mapping · missing fourth interactive header outline · wrong brightness extremes of two patches
-  · wrong path expectation around TuningDetector. Triage against product code + tests: IN PROGRESS (TRIAGE_14 below).
+  · wrong path expectation around TuningDetector. Triage: DONE, see TRIAGE_14_7e6aea965.
+TRIAGE_14_7e6aea965 (2026-09-28, 4 read-only agents + spot checks by Claude in the tree; transcription, no Swift run;
+  test NAMES inferred from the founder's topic list where not given — each inferred assertion evaluates false by
+  transcription and no checked sibling does; the xcresult names would confirm. Kinds as TRIAGE_21.)
+   1 P  LFO off the UI grid — SoundRowsCanReachTheShippedPatchesTests.testEveryAuthoredValueIsExactlyOnItsRowsGrid (~:214):
+        GenrePatches "Lilt Keys" lfoDepth 0.045 (:353, ab70f2d7d) and "Marcato Reed" 0.035 (:377, 2ddbb5a10) vs row
+        `decimals: 2` (EchoelStudioView:7750) → touching the row rewrites the designed value (#427). Fix = PRODUCT: row to
+        3 decimals (sound unchanged) or re-author both values (ear check). NOT authorized yet.
+   2 T  MPE roadmap text — TheMPEInputHasNoZonesTests.testTheSiteDoesNotSellShippedMPEOutputAsRoadmap (~:752): sentence
+        splitter ignores </li>, so the EchoelFX item's "Planned" (compressors) merges into the MPE-output item
+        (docs/faq.html:114; 377cb0f9c). Site honest. Fix = test: </li> as sentence boundary (#775 tree still 12 hits).
+   3 P  cumbia bass longer than pad — TheBassRoleHasItsOwnVoiceTests.testEveryBassPatchIsADarkerShorterLowerMonoCousinOfItsPad
+        (:45): "Lilt Sub" r 0.26 (GenrePatches:1090) vs "Lilt Keys" r 0.24 (:351), ab70f2d7d; only violation of 25 bass arms.
+        Fix = PRODUCT data (shorten Lilt Sub or lengthen Lilt Keys + move quoting comments); exempting cumbia = founder
+        call. Side: Lilt Keys comment "0.004+0.26+0.24 fits a 0.313 s eighth" is false (0.504 s).
+   4 T  inspiration.csv (2 of the 14) — TheDecisionLogIsMachineReadableTests.testEveryInspirationRowHasTheHeaderShape +
+        testTheInspirationLedgerIsStillPopulatedAndDated: file has 230 CR / 231 LF (measured); Swift's "\r\n" is ONE
+        Character ≠ "\n" → parseCSV yields 2 rows. f005a1df5 wrote the test and CRLF-rewrote the CSV. Fix = test: accept
+        "\r\n" (RFC 4180); optionally normalise the file to LF (data).
+   5 A  Andean roster — GenreBatchFourteenBTests.testTheGenreIsOfferedAndTheShelfHoldsTwo (:100) expects {cumbia,
+        tangoMarcato}; shelf holds andeanHighland too since 275fba7b8. Fix = test: subset + rename (#374).
+   6 A  four section headings — SectionHeadingIsOneTreatmentTests.testEverySectionHeadingCallsTheBuilder (:132): Look/Voice/
+        Self-play now collapsibleGroupHeader (765f616e6, same font/colour), Signal removed (45764be75). Fix = test.
+   7 T  psy/prog/house — GenrePsyProgHouseTests.testTheFXSharesPsytrancesEchoButIsNotItsPreset (:93)
+        XCTAssertFalse(psy.reverbEnabled) vs the room floor (0687996ef) that predates the test (0a1ba7ce1). Fix = test:
+        pin psy's reverb at the floor mix / below prog.
+   8 T  MIDI record while running — TheMIDITakeIsRecordedFromTheWorkstationTests.testATakeCannotBeArmedOnATransportThat
+        IsAlreadyRunning (:177): rig()'s TimelineStore discarded (`_`), RecordController holds it weak → arm() no-ops.
+        Product correct. 0289614d2. Fix = test: keep the store alive.
+   9 T  same scale two genres — GenreBatchElevenDTests.testItIsSeparatedFromTheOnlyOtherGenreOnThisScale (:117): balkanModal
+        and blackMetal both padOctave 4 since the test's own commit 55dc34dce. WEAKEST name mapping. Fix = test: axis 4 =
+        arpeggiation (true vs false), register as "NOT an axis".
+  10 A  4th header outline — ControlBoundaryIsInteractiveTests.testEveryAlwaysOnHeaderElementIsOutlinedAsAControl (:183):
+        3 ≠ 4, Clips tile deleted with #1304 (122724de3). Fix = test: 3.
+  11 T  brightness extremes — GenreBatchFourteenCTests.testThePairOwnsBothEndsOfTheBrightnessAxis (:180-196) compares
+        against SynthPatch.factory, not the genre bank where 0.72/0.09 ARE the extremes (275fba7b8). Fix = test.
+  12 T  TuningDetector path — TheToneSystemIsNamedByItsTypeTests...ItIsTheFileAnalysis (:224) expects
+        "Sequencer/AudioKeyAnalysis.swift", walker yields "Echoelmusic/Sequencer/..." (c8b1c5c63). Fix = test.
+  13 T  #249 TheDetectedTempoIsHonestTests.testADegenerateInputIsRefusedRatherThanGuessed (:321): constant 0.5 envelope →
+        zero-padded smoothing + edge mean leave non-zero edges → estimate bpm 122.4, confidence 0.00014 (isKnown false),
+        not nil (6f88bb3d7). Input unrealistic (steady input gives 0). Fix = test: zero envelope, or assert !isKnown.
+        Side: estimate's doc "nil when … no onsets" does not hold for a constant non-zero envelope.
+  TALLY (14 failures, 13 causes): product data 2 (cases 1, 3 — genre-table values from #1357/#1358, need founder
+  release) · test/fixture/stale 12 (11 causes). Red-since-birth: 2, 3, 4, 7, 8, 9, 11, 12, 13. No app-logic defect.
 XCRESULT_READ (founder report 2026-09-28, full xcresults of aa18f7edc and 30503f2b0, attempt 1 each — read OUTSIDE this
   environment; the blob host still answers 403 here, re-tried 18:07 UTC for artifact 10988221716; the job log of 30503f2b0
   carries no failing-test names — no "Failing tests:" list, no `error: -[` line — so NOTHING below is re-derived by Claude):
@@ -289,8 +332,6 @@ GATE_PROTECTION: 2026-09-28 — the four founder-gated paths ASK before any Clau
   `permission_mode` auto, asks otherwise; live proof in this session (throwaway repo write refused, file unchanged).
   copy protected→protected now caught; selftest 56/56. Release = founder edits himself; phone release proven in no mode;
   Edit/Write in auto relies on built-in ask rules (unmeasured). `.claude/hooks/README.md` „Deny-Beleg".
-NEXT_3_ACTIONS: 1) read the xcresult of 7e6aea965 (artifact 10989640775; the job log is read, see RUN_TESTS_7e6aea965):
-  expected 4,373 passed / 14 failed if the case-20 test turns green and nothing else moves  2) the 14 failures: get the names +
-  failure messages from the xcresult (founder/Codex — not readable here), then triage each like TRIAGE_21 (kind P/T/A/N/E/U,
-  cause commit, fix); test-only fixes under the same founder order, product changes only with a new release  3) founder:
-  deploy order + .deploy/release (unchanged, untouched) after 1) and 2) are assessed; archive/IPA manifest not inspected
+NEXT_3_ACTIONS: 1) founder: release a test-only repair round for the 12 test-side failures (TRIAGE_14 cases 2,4-13)
+  2) founder: decide the two product-data cases (1 LFO row decimals vs re-author; 3 cumbia release values vs exemption)
+  3) after 1+2: push, read Compile Check / Build for Testing / Run Tests + xcresult; then deploy order + .deploy/release
