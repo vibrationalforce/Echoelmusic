@@ -6,7 +6,7 @@ lives in `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` and the canonical PLAN_* files. O
 CURRENT_HEAD: f84d4121e on claude/echoelmusic-review-optimize-u5jjpd (PUSHED; the checked-out local branch
   feature/media-seed-2026-09-27 mirrors it). Repair SHAs of the 5.1/5.2 round: 1cf2f92af · 60565f846 · e9999dc58 · adae9432c · f84d4121e. Review base dfe9525e6 · review commit 9d479f922 (22 commits
   media workstation + EchoelAI, transcribed only, NEVER compiled before step 1 below).
-CURRENT_MAIN: e9999dc58 (read via `git ls-remote origin refs/heads/main` after e9999dc58's Compile Check 36407799896 + BfT went green).
+CURRENT_MAIN: f84d4121e (read via `git ls-remote origin refs/heads/main` after Compile Check 36413615068 + BfT went green).
 CODEX HANDOVER (portable, outside the worktree — scratchpad `codex-handover/`): full bundle in 4 parts
   (sha256 3131556d…) · thin bundle from dfe9525e6 · FABLE_REVIEW_9d479f922.md · IMPORT_ANLEITUNG.md ·
   SHA256SUMS.txt. Verified with `git bundle verify` and a fresh import (both SHAs + diff readable).
@@ -83,8 +83,14 @@ XCRESULT_e9999dc58 (EXTERNAL — read in another session from artifact 109638749
   label covers the clone crash / exit 65 shape of the step, never a named failing test).
   ⚠️ "5.1 behoben" is therefore TRUE only as of adae9432c AND only once a run shows claim 12 passing; on e9999dc58 it was red.
   "5.2 behoben" is executed evidence (SUCCESS in the xcresult).
-GATES_f84d4121e: PENDING at the time of writing — Compile Check (Sources changed in adae9432c) · Build for Testing · Run Tests
-  window · and, if the other session reads it, the xcresult per-case result of claims 5/10/12.
+GATES_f84d4121e: Compile Check 36413615068 SUCCESS · Build for Testing run 36413614937, job 108899686909 step 9 SUCCESS ·
+  Run Tests step 11 = xcodebuild ABORT (exit 134, Abort trap — the TOOL died, not #396's clone shape and not a test result);
+  window tail -200 with a 1387 s gap, 118 tests observed passing, 0 failures, 0 skips IN THE WINDOW; none of the four suites of
+  this round in the window → claims 5/10/12 EXECUTION UNRECORDED here. Artifact `test-results-ios-iPhone 17` id 10968101637
+  (3.68 MB) was uploaded — readable only from a session whose network policy allows the blob host; the other session's
+  per-case reading of THAT artifact is what closes claims 5/10/12. main = f84d4121e (auto-merge; ls-remote).
+  ⚠️ So on f84d4121e: 5.1 = COMPILES + transcribed (old form reproduces the xcresult numbers, new form passes); EXECUTED evidence
+  still owed. 5.2 = executed SUCCESS (xcresult of e9999dc58; unchanged since).
   Not repaired, reported (user-impact order): MED-9 video import copies the full file before the duration check,
   no cancel button (temp copy removed, newer pick cancels) · MED-11 meter warning colour-only · LOW rest ·
   Codex 2 (look half): a same-value re-entry of a LOOK parameter is indistinguishable and is taken back
@@ -98,8 +104,8 @@ GATES_f84d4121e: PENDING at the time of writing — Compile Check (Sources chang
 CURRENT_INVARIANTS: no new modal (11 on the chain, ceiling 14) · no hot read in host bodies · one media-look
   writer (`MediaLookUndo`) · executor writes only through the button writers (claim 8 allow-list: document ·
   documentGeneration · laneLevelWrites) · CLAUDE.md < 150,000 B · .deploy/release NOT touched · no TestFlight
-LAST_GREEN_COMPILE: Compile Check 36407799896 on e9999dc58 (f84d4121e pending)
-LAST_GREEN_TEST: BfT run 36407799979 (job 108880923546 step 9) on e9999dc58 (f84d4121e pending)
+LAST_GREEN_COMPILE: Compile Check 36413615068 on f84d4121e
+LAST_GREEN_TEST: BfT run 36413614937 (job 108899686909 step 9) on f84d4121e
 KNOWN_RED_GATE: CI/CD conclusion red on every push (#396) — read the "Build for Testing" step · two PRE-EXISTING
   red guards in the blocking bundle, both in main before this round: #249 TheDetectedTempoIsHonestTests claim 12
   (since 6f88bb3d7) · #250 AutoModeStartsOffAndOwnsNoTempoTests claim 9 (`autoAttuned: autoMode` left
