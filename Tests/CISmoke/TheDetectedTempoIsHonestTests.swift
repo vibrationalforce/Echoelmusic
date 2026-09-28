@@ -318,8 +318,34 @@ final class TheDetectedTempoIsHonestTests: XCTestCase {
         XCTAssertNil(TempoDetector.estimate(envelope: envelope, envelopeRate: 0, mediaDurationSeconds: 10))
         XCTAssertNil(TempoDetector.estimate(envelope: envelope, envelopeRate: .nan, mediaDurationSeconds: 10))
         XCTAssertNil(TempoDetector.estimate(envelope: envelope, envelopeRate: 200, mediaDurationSeconds: .nan))
-        XCTAssertNil(TempoDetector.estimate(envelope: envelope, envelopeRate: 200, mediaDurationSeconds: 10),
-                     "a constant envelope has no onsets after detrending — nothing to estimate")
+
+        // ⛔ THIS LINE ASSERTED `XCTAssertNil` FOR THE CONSTANT 0.5 ENVELOPE AND WAS RED SINCE ITS
+        // OWN COMMIT (6f88bb3d7, #249). `condition` smooths with zero padding and divides the edge
+        // means by the FULL window, so a constant non-zero envelope keeps small non-zero edges: the
+        // estimator returns a value (measured by transcription 2026-09-28: bpm ≈ 122.4, confidence
+        // ≈ 0.00014), not nil. The input stays — it is the degenerate case worth guarding. What
+        // the guard protects is that NOTHING DOWNSTREAM NAMES A TEMPO FOR IT: not KNOWN, no BPM in
+        // the sentence a person reads, no native tempo adopted by a clip. Those three hold whether
+        // the estimator answers nil or an unknown value, so a later product change to return nil
+        // keeps this green (founder order 2026-09-28: keep 0.5, check the three, silence apart).
+        let flat = TempoDetector.estimate(envelope: envelope, envelopeRate: 200, mediaDurationSeconds: 10)
+        XCTAssertFalse(flat?.isKnown ?? false, """
+            a constant envelope has no onsets; it was KNOWN at \(flat?.bpm ?? 0) BPM, \
+            confidence \(flat?.confidence ?? 0)
+            """)
+        let sentence = AudioTempoAnalysis.summarise(flat)
+        XCTAssertFalse(sentence?.contains("BPM") ?? false,
+                       "a person who sees a BPM will use it; the note said: \(sentence ?? "nil")")
+        XCTAssertFalse(sentence?.contains(where: \.isNumber) ?? false,
+                       "no number may reach the import note for a constant envelope: \(sentence ?? "nil")")
+        XCTAssertNil(AudioTempoAnalysis.adoptableNativeBPM(current: 0, detected: flat),
+                     "a clip must not adopt a tempo from a constant envelope")
+
+        // Silence is a DIFFERENT degenerate input and keeps the strict form: an all-zero envelope
+        // conditions to all zeros, its zero-lag energy is 0, and `estimate` returns nil.
+        let silent = [Double](repeating: 0, count: 1_000)
+        XCTAssertNil(TempoDetector.estimate(envelope: silent, envelopeRate: 200, mediaDurationSeconds: 10),
+                     "an all-zero envelope has no energy at all — nothing to estimate")
     }
 
     /// 13. KNOWN needs the floor AND either enough length or a whole loop.
