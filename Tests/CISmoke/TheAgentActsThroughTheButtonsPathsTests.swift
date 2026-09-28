@@ -259,10 +259,19 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         XCTAssertEqual(timeline.document.regions.count, Self.fixture.regions.count + 1)
 
         // The selected part is removed by the person: the selection is stale, nothing is guessed.
+        // Since review repair 2a the plan carries NO part (the resolver drops the removed id), so the
+        // request is refused BEFORE its first step — no step outcome, a refusal. The older form of
+        // this block expected a step-level `.targetGone("part")`, which was the pre-2a contract
+        // (live resolution at step time); it was never executed until xcresult e9999dc58 read it red.
         timeline.removeRegion(id: Self.keysPart.id)
-        let stale = await executor.execute(plan([.duplicatePart(part: .selected)], on: executor))
-        XCTAssertEqual(stale.steps.first?.outcome, .failed(.targetGone("part")))
+        let stalePlan = plan([.duplicatePart(part: .selected)], on: executor)
+        XCTAssertNil(stalePlan.basis.part, "the removed part does not resolve into the plan")
+        let stale = await executor.execute(stalePlan)
+        XCTAssertEqual(stale.refusal, .nothingSelected("part"))
+        XCTAssertEqual(stale.steps.first?.outcome, .notRun, "a refused request has no step outcome")
         XCTAssertEqual(timeline.document.regions.count, Self.fixture.regions.count, "one removed, none added")
+        // `.targetGone` is still the answer for an id the plan DID carry and that is gone by run time —
+        // claim 3 pins that path; a stale *selection* never gets that far.
     }
 
     // MARK: 6 — partial success is named; the agent's Undo takes back the whole request and
@@ -475,7 +484,9 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
 
         // B — the journal follows the store's own rule (`replaceDocument` clears undo): a change
         // the agent made before an Open is not offered against the song after it.
-        selection.toggleTrack(Self.keysLane.id)
+        // Keys is ALREADY the selected track (`selectRegion` selects the part's lane); toggling it
+        // here would clear the selection — xcresult e9999dc58 read "No track is selected" for it.
+        XCTAssertEqual(selection.trackID, Self.keysLane.id)
         let quieter = await executor.execute(plan([.setTrackLevel(track: .selected, change: .relativeDecibels(-3))],
                                                   on: executor))
         XCTAssertEqual(quieter.state, .done)
