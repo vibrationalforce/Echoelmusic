@@ -246,6 +246,10 @@ REPAIR_21_f84d4121e (2026-09-28, founder order "Nachbesserung … nächster bela
   xcresult = artifact 10988221716 ("test-results-ios-iPhone 17", 7,991,538 B, sha256 36b503fc…816edf) — larger than the
   incomplete f84d4121e bundle (3,680,211 B); not readable here. It decides: the 20 repairs, the 15 unresulted tests,
   claim 2b's attachment N (case 19), and the case-20 test (red on 30503f2b0 by design; the fix 7e6aea965 postdates this run).
+  7e6aea965 (founder's case-20 fix) — Compile Check 36460878913 attempt 1 = SUCCESS; its Release-iphoneos log shows
+  `CpResource …/EchoelmusicAUv3.appex/PrivacyInfo.xcprivacy` (3 copies: app, widget, AUv3) while 30503f2b0's log
+  (job 109047230296) shows 2 (app, widget) — the BUILT .appex now carries the manifest, measured, not inferred. The
+  archived/TestFlight IPA is not inspected (no deploy). CI/CD 36460879114: Build for Testing = SUCCESS; Run Tests running.
 FOUNDER_PENDING: device checks for the whole media/agent stack (nothing here is device-verified) · #249/#250 ·
   MED-9 cancel button · "0.0 dB → 0.0 dB" wording · TestFlight (NOT triggered, per order)
 VISUAL_PLAN: Photism principles → V1–V4 in `scratchpads/PLAN_MEDIA_SEED_2026-09-27.md` §7 (planned 2026-09-28, NOT released;
