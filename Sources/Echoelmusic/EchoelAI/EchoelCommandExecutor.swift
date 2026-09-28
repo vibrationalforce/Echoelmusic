@@ -32,7 +32,9 @@
 // group per request. "Take back your last change" restores each value ONLY if it still reads
 // what the agent left AND nobody has written that level since (`TimelineStore.laneLevelWrites`,
 // counted per write, so the same number entered again by hand is a later decision — review
-// repair 2b); a value a person moved since is kept, and the report says so. The report tells
+// repair 2b); a value a person moved since is kept, and the report says so. The agent's OWN later
+// writes to that lane — a second change, an Undo — move the journal's marks with them, so they never
+// block an earlier entry of its own (review 5.2). The report tells
 // three results apart (review repair 2c): taken back now · had already been taken back (the
 // song's Undo removed the copy, a card's Undo took the look back) · kept because a person changed
 // it since. The song's own Undo button is untouched — a taken-back copy is removed through the
@@ -297,6 +299,23 @@ final class EchoelCommandExecutor {
         return .success(region)
     }
 
+    /// Every write the agent itself makes to a lane's level — a change, or a restore in Undo — moves
+    /// that lane's store count by one, and the journal's `write` marks for that lane move with it.
+    /// So an earlier entry of the agent's own still reads as the agent's after its later change or
+    /// its Undo, while a write that moved NO mark is a person's and blocks (review 5.2). Called
+    /// right after the write and before a new entry is appended; `pending` is whatever the caller
+    /// holds outside the journal (the request's group, or the entries an Undo is walking).
+    private func noteOwnLevelWrite(on laneID: UUID, pending: inout [Inverse]) {
+        func advanced(_ entry: Inverse) -> Inverse {
+            if case .level(let id, let before, let after, let write) = entry, id == laneID {
+                return .level(laneID: id, before: before, after: after, write: write + 1)
+            }
+            return entry
+        }
+        pending = pending.map(advanced)
+        journal = journal.map { (generation: $0.generation, entries: $0.entries.map(advanced)) }
+    }
+
     // MARK: Commands
 
     private func setLevel(_ target: EchoelTarget, _ change: EchoelLevelChange,
@@ -323,6 +342,7 @@ final class EchoelCommandExecutor {
             return .done("\(lane.name) is already at \(TrackMix.decibelText(Double(before))).")
         }
         TrackMix.setLevel(linear, laneID: laneID, timeline: timeline)
+        noteOwnLevelWrite(on: laneID, pending: &group)
         guard let after = timeline.document.lanes.first(where: { $0.id == laneID })?.level else {
             return .failed(.verificationFailed("the track is gone"))
         }
@@ -422,7 +442,7 @@ final class EchoelCommandExecutor {
     private func undoLast(_ group: inout [Inverse]) -> EchoelStepResult.Outcome {
         // A change made earlier in THIS request is the last change; otherwise the last request's.
         pruneJournal()
-        let entries: [Inverse]
+        var entries: [Inverse]
         if !group.isEmpty {
             entries = group
             group.removeAll()
@@ -434,8 +454,8 @@ final class EchoelCommandExecutor {
         var restored = 0
         var alreadyUndone = 0   // taken back before this Undo — by the song's Undo, a card's Undo
         var kept: [String] = []
-        for entry in entries.reversed() {
-            switch entry {
+        for index in entries.indices.reversed() {
+            switch entries[index] {
             case .level(let laneID, let before, let after, let write):
                 guard let lane = timeline.document.lanes.first(where: { $0.id == laneID }) else {
                     kept.append("A removed track")
@@ -448,6 +468,7 @@ final class EchoelCommandExecutor {
                     continue
                 }
                 TrackMix.setLevel(Double(before), laneID: laneID, timeline: timeline)
+                noteOwnLevelWrite(on: laneID, pending: &entries)   // `group` is empty here by construction
                 if timeline.document.lanes.first(where: { $0.id == laneID })?.level == before {
                     restored += 1
                 } else {

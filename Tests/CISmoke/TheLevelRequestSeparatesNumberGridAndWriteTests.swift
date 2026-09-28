@@ -17,6 +17,11 @@
 //      as the person's decision: Undo keeps it (`laneLevelWrites`, review repair 2b). Claim 6 of
 //      TheAgentActsThroughTheButtonsPathsTests drives the longer form; this is the short one beside
 //      its two siblings so the three answers are read together.
+//   4. OWN WRITES (review 5.2, founder 2026-09-28) — the agent's own later writes to the same lane,
+//      a second change or its own Undo, are not "a person's write since": the journal's marks move
+//      with them. Two changes in ONE request undo together; two requests undo one after the other;
+//      and the person's same-number re-entry between them still blocks. Before 5.2 the agent's own
+//      Undo write blocked its own earlier entry — the second Undo said "changed after my edit".
 //
 // WHAT KIND OF GREEN THIS IS (§1): END-TO-END over a real `TimelineStore` and `WorkstationSelection`.
 // Expected numbers are derived from the algebra (#442), not read off a run: 1·10^(−1e−9/20) rounds
@@ -26,7 +31,10 @@
 // the parent already has; the file's value is the separation. Mutants driven in transcription, each
 // red for its named reason: the executor comparing the Double target with the current level
 // (claim 1 writes a no-op and journals it) · the executor treating equal dB TEXT as "already at"
-// (claim 2 refuses a real change) · Undo comparing the value only (claim 3 overwrites the re-entry).
+// (claim 2 refuses a real change) · Undo comparing the value only (claim 3 overwrites the re-entry) ·
+// the marks not moved on the agent's own write (claim 4: the second change of one request is taken
+// back, the first is "kept" — red; and the second of two requests blocks the first — red).
+// Claim 4 was RED on the parent (33a70c329) for exactly that reason: ONE regression, named.
 
 import Foundation
 import XCTest
@@ -128,5 +136,53 @@ final class TheLevelRequestSeparatesNumberGridAndWriteTests: XCTestCase {
                                                             basis: executor.snapshot(), consents: []))
         XCTAssertEqual(taken.steps.first?.outcome, .failed(.changedSince("The level of Keys")))
         XCTAssertEqual(level(in: timeline), agents, "kept: entering it again made it the person's")
+    }
+
+    // MARK: 4 — the agent's own later writes never block its own earlier entries (review 5.2)
+
+    func testOwnLaterWritesDoNotBlockOwnEarlierUndoEntries() async throws {
+        let (timeline, executor, original) = rig()
+        defer { timeline.replaceDocument(original) }
+        let minus3 = Float(pow(10, -3.0 / 20))
+        let minus6 = Float(pow(10, -6.0 / 20))
+        func undo() async -> EchoelStepResult.Outcome? {
+            await executor.execute(EchoelActionPlan(requestID: UUID(), steps: [.undoAgentChange],
+                                                    basis: executor.snapshot(), consents: [])).steps.first?.outcome
+        }
+
+        // (a) Two changes of the same track in ONE request: one Undo takes both back.
+        let twice = await executor.execute(EchoelActionPlan(
+            requestID: UUID(),
+            steps: [.setTrackLevel(track: .selected, change: .relativeDecibels(-3)),
+                    .setTrackLevel(track: .selected, change: .relativeDecibels(-3))],
+            basis: executor.snapshot(), consents: []))
+        XCTAssertEqual(twice.state, .done)
+        XCTAssertEqual(try XCTUnwrap(level(in: timeline)), minus6, accuracy: 1e-6)
+        XCTAssertEqual(await undo(), .done(EchoelUndoSummary.text(restored: 2, alreadyUndone: 0)),
+                       "the restore of the second change is the agent's own write, not a person's")
+        XCTAssertEqual(level(in: timeline), 1, "both steps taken back")
+        XCTAssertFalse(executor.canUndoAgentChange)
+
+        // (b) Two requests, one change each: two Undos, newest first, each restoring exactly one.
+        XCTAssertEqual(await ask(.relativeDecibels(-3), on: executor), .done("Keys: 0.0 dB → −3.0 dB."))
+        XCTAssertEqual(await ask(.relativeDecibels(-3), on: executor), .done("Keys: −3.0 dB → −6.0 dB."))
+        XCTAssertEqual(await undo(), .done(EchoelUndoSummary.text(restored: 1, alreadyUndone: 0)))
+        XCTAssertEqual(try XCTUnwrap(level(in: timeline)), minus3, accuracy: 1e-6, "the newer change is back")
+        XCTAssertEqual(await undo(), .done(EchoelUndoSummary.text(restored: 1, alreadyUndone: 0)),
+                       "the first Undo's write was the agent's own — it does not block the older entry")
+        XCTAssertEqual(level(in: timeline), 1)
+        XCTAssertEqual(await undo(), .failed(.nothingToUndo))
+
+        // (c) The person's same-number re-entry between two of the agent's changes still blocks —
+        //     the protection of 2b is untouched by 5.2.
+        XCTAssertEqual(await ask(.relativeDecibels(-3), on: executor), .done("Keys: 0.0 dB → −3.0 dB."))
+        TrackMix.setLevel(Double(minus3), laneID: Self.keysLane.id, timeline: timeline)   // the person, same number
+        XCTAssertEqual(await ask(.relativeDecibels(-3), on: executor), .done("Keys: −3.0 dB → −6.0 dB."))
+        XCTAssertEqual(await undo(), .done(EchoelUndoSummary.text(restored: 1, alreadyUndone: 0)),
+                       "the agent's newest change is its own to take back")
+        XCTAssertEqual(try XCTUnwrap(level(in: timeline)), minus3, accuracy: 1e-6)
+        XCTAssertEqual(await undo(), .failed(.changedSince("The level of Keys")),
+                       "but the level the person entered by hand — the same number — is theirs and stays")
+        XCTAssertEqual(try XCTUnwrap(level(in: timeline)), minus3, accuracy: 1e-6)
     }
 }
