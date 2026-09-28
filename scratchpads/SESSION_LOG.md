@@ -40256,3 +40256,4 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - Fall 14 (e49a4d284): Ratchet bleibt 75, Scan zählt XCTSkipIf/Unless, neue Klasse PRECONDITION-SKIP (Ratchet 5); ein versteckter echter Ankerfehler → XCTFail; 6 Mutanten rot.
 - Fall 19 (327174c2d): Vergleich über dekodierten Wert + Byte-Multimenge; Experiment-Test 2b mit Anhang im xcresult. Bestätigung der Schlüsselreihenfolge steht aus (kein Swift hier).
 - Review (unabhängig): kein Build-Bruch, 3 kleine Punkte behoben (30503f2b0). Kandidat: 30503f2b0; Gates ausstehend beim Schreiben.
+- Gates 30503f2b0: Compile Check 36457431078 GRÜN · Build for Testing (CI/CD 36457429861, Job 109047541763, Schritt 9) GRÜN · Run Tests Schritt 11 ROT (exit 65, kein xcodebuild-Abbruch diesmal); Fenster 169 bestanden / 0 Fehler / 0 Skips, von den reparierten Suiten nur TheShippedShaderActuallyCompilesTests darin. xcresult = Artefakt 10988221716 (hier nicht lesbar).

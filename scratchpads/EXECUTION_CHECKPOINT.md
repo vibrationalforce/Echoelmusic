@@ -236,7 +236,16 @@ REPAIR_21_f84d4121e (2026-09-28, founder order "Nachbesserung … nächster bela
   tests of e9999dc58 and the affected tests get evidence only from the full Run Tests step + the xcresult (blob host
   denied in Claude's environment; the prior artifact was readable in Codex) — execution stays OPEN until that xcresult is read.
   Gates on 30503f2b0, attempt 1: Compile Check 36457431078 SUCCESS; Build for Testing run 36457429861 job 109047541763
-  SUCCESS; Run Tests was in progress at Codex's preceding read. Do not transfer these passes to 7e6aea965.
+  SUCCESS; Run Tests was in progress at Codex's preceding read (final read below). Do not transfer these passes to 7e6aea965.
+  FINAL READ of 30503f2b0 (Claude, 2026-09-28 17:58 UTC): Xcode Compile Check run 36457431078 attempt 1 = SUCCESS · CI/CD run
+  36457429861 attempt 1, job 109047541763: Build for Testing (step 9) = SUCCESS · Run Tests (step 11) = FAILURE, exit 65,
+  `** TEST EXECUTE FAILED **`, NO xcodebuild abort this time (no Abort trap / Code=14 / exit 134), both clones printed.
+  Window (tail-200): 169 passed · 0 failed · 0 skipped, 23 suites; of the repaired suites only
+  TheShippedShaderActuallyCompilesTests is in it (2/2 passed) → execution of the other repairs is UNRECORDED, not passed.
+  TheDetectedTempoIsHonestTests 9 methods passed in window, #249's method not among them (still open).
+  xcresult = artifact 10988221716 ("test-results-ios-iPhone 17", 7,991,538 B, sha256 36b503fc…816edf) — larger than the
+  incomplete f84d4121e bundle (3,680,211 B); not readable here. It decides: the 20 repairs, the 15 unresulted tests,
+  claim 2b's attachment N (case 19), and the case-20 test (red on 30503f2b0 by design; the fix 7e6aea965 postdates this run).
 FOUNDER_PENDING: device checks for the whole media/agent stack (nothing here is device-verified) · #249/#250 ·
   MED-9 cancel button · "0.0 dB → 0.0 dB" wording · TestFlight (NOT triggered, per order)
 VISUAL_PLAN: Photism principles → V1–V4 in `scratchpads/PLAN_MEDIA_SEED_2026-09-27.md` §7 (planned 2026-09-28, NOT released;
