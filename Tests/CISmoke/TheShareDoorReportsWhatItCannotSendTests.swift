@@ -115,10 +115,12 @@ final class TheShareDoorReportsWhatItCannotSendTests: XCTestCase {
         // `.sortedKeys`). The WIRE CONTRACT is what a peer's `ColabPayload.decode` reads,
         // and that is order-free. What this claim guards survives in two halves that key
         // order cannot move: the decoded value is identical, and the bytes are the same
-        // MULTISET — an `outputFormatting` (`.prettyPrinted` adds whitespace,
-        // `.withoutEscapingSlashes` drops backslashes) or a different float/date strategy
-        // changes the multiset, so the #416 back door this was written for still reds.
-        // Claim 2b drives the hypothesis itself.
+        // MULTISET — so a formatting difference on one path (`.prettyPrinted` adds whitespace)
+        // still reds. ⚠️ Limit, stated rather than implied: this fixture has no `/`, no date
+        // and only finite floats, so an escaping, date or float STRATEGY set on one path would
+        // pass here — exactly as it passed the old byte comparison. The guard against a second
+        // encoder definition is claim 7 (one `JSONEncoder()` in the file), not this one.
+        // Claim 2b drives the key-order hypothesis itself.
         XCTAssertEqual(ColabPayload.decode(viaOptional), ColabPayload.decode(viaThrowing), """
             The two forms decode to different values. That is a second definition of the \
             wire format (#416), not key order — claim 7 exists to prevent exactly this.

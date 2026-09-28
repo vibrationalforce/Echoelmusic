@@ -66,7 +66,13 @@ final class TheAnchorMissSkipsDoNotGrowTests: XCTestCase {
     /// The conditional forms. They skip exactly like `throw XCTSkip`, and a scan that did not
     /// count them turned a switch to `XCTSkipIf` into a way out of the ratchet.
     private static let conditionalNeedles: [String] = ["XCT" + "SkipIf(", "XCT" + "SkipUnless("]
-    /// A declared runtime/data precondition. Must carry a reason after the colon.
+    /// A declared precondition. Must carry a reason after the colon. Three kinds qualify, and
+    /// only these: RUNTIME state (an engine that is not linked), DATA state (a factory with one
+    /// entry), and a deliberate STAND-DOWN whose condition is text but whose absence is a
+    /// legitimate product state, not a moved anchor (#364 — e.g. a renderer that no longer
+    /// reads a uniform). A skip that FOLLOWS a helper which has already called `XCTFail` on the
+    /// missing anchor also qualifies, because it cannot fail open. A skip for an anchor that
+    /// simply moved never does — that is an `XCTFail`.
     private static let preconditionMarker = "PRECONDITION" + "-SKIP:"
     /// Declared precondition skips today. Moves DOWN only, like `ratchet`; a new one is a
     /// visible decision in the diff, never a silent side door.

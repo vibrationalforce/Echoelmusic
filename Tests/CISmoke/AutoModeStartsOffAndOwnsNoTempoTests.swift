@@ -539,7 +539,10 @@ final class AutoModeStartsOffAndOwnsNoTempoTests: XCTestCase {
         // stops constructing one, both turn this red.
         let hosts = ["Sources/Echoelmusic/Studio/FloatingVisualWindow.swift",
                      "Sources/Echoelmusic/Studio/ExternalDisplayScene.swift"]
-        XCTAssertEqual(try Self.metalBioViewConstructionSites(), Set(hosts), """
+        // Evaluated OUTSIDE the assertion: a skip thrown inside XCTAssertEqual's autoclosure
+        // would be recorded as a thrown-error failure, not as the missing-tree skip it is.
+        let constructionSites = try Self.metalBioViewConstructionSites()
+        XCTAssertEqual(constructionSites, Set(hosts), """
             The files that construct `MetalBioView(` are no longer exactly the two hosts this \
             claim checks. Every instance must receive `autoAttuned: autoMode` — add a new host \
             to `hosts`, or remove a vanished one, in the same commit.
