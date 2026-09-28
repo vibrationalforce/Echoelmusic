@@ -250,6 +250,14 @@ REPAIR_21_f84d4121e (2026-09-28, founder order "Nachbesserung … nächster bela
   `CpResource …/EchoelmusicAUv3.appex/PrivacyInfo.xcprivacy` (3 copies: app, widget, AUv3) while 30503f2b0's log
   (job 109047230296) shows 2 (app, widget) — the BUILT .appex now carries the manifest, measured, not inferred. The
   archived/TestFlight IPA is not inspected (no deploy). CI/CD 36460879114: Build for Testing = SUCCESS; Run Tests running.
+RUN_TESTS_7e6aea965 (Claude, 2026-09-28 18:26 UTC): CI/CD run 36460879114 attempt 1, job 109059130899 — Build for
+  Testing (step 9) SUCCESS · Run Tests (step 11) FAILURE, exit 65, `** TEST EXECUTE FAILED **`, 17:56:55→18:18:56; NO abort
+  marker (no Abort trap / exit 134 / Code=14 / "timed out while preparing"), both clones printed. Window (tail-200, plus a
+  1321 s gap in the fetched log): 170 passed · 0 failed · 0 skipped. ThePrivacyManifestIsDeclaredForBothTargetsTests,
+  TheShareDoor… and TheAnchorMiss… are NOT in the window → their result on this SHA is UNRECORDED here. #249's method is not
+  in the window (10 other TheDetectedTempoIsHonestTests methods are). xcresult = artifact 10989640775 ("test-results-ios-iPhone
+  17", 7,971,579 B, sha256 9d823ea4…786d4c2) — blob host 403 here; it decides the pass/fail count on the candidate.
+  Expectation if nothing else moved: 4,373 passed / 14 failed (case-20 test green).
 XCRESULT_READ (founder report 2026-09-28, full xcresults of aa18f7edc and 30503f2b0, attempt 1 each — read OUTSIDE this
   environment; the blob host still answers 403 here, re-tried 18:07 UTC for artifact 10988221716; the job log of 30503f2b0
   carries no failing-test names — no "Failing tests:" list, no `error: -[` line — so NOTHING below is re-derived by Claude):
@@ -272,8 +280,8 @@ GATE_PROTECTION: 2026-09-28 — the four founder-gated paths ASK before any Clau
   `permission_mode` auto, asks otherwise; live proof in this session (throwaway repo write refused, file unchanged).
   copy protected→protected now caught; selftest 56/56. Release = founder edits himself; phone release proven in no mode;
   Edit/Write in auto relies on built-in ask rules (unmeasured). `.claude/hooks/README.md` „Deny-Beleg".
-NEXT_3_ACTIONS: 1) read Run Tests on 7e6aea965 (CI/CD 36460879114 job 109059130899 step 11) + its xcresult: expected
-  4,373 passed / 14 failed if the case-20 test turns green and nothing else moves  2) the 14 failures: get the names +
+NEXT_3_ACTIONS: 1) read the xcresult of 7e6aea965 (artifact 10989640775; the job log is read, see RUN_TESTS_7e6aea965):
+  expected 4,373 passed / 14 failed if the case-20 test turns green and nothing else moves  2) the 14 failures: get the names +
   failure messages from the xcresult (founder/Codex — not readable here), then triage each like TRIAGE_21 (kind P/T/A/N/E/U,
   cause commit, fix); test-only fixes under the same founder order, product changes only with a new release  3) founder:
   deploy order + .deploy/release (unchanged, untouched) after 1) and 2) are assessed; archive/IPA manifest not inspected
