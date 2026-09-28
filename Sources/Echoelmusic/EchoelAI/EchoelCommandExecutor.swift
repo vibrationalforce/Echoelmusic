@@ -21,7 +21,7 @@
 // The song's GENERATION is checked again after every suspension between steps: a project opened
 // again inside that gap ends the request before its next step (`.projectChanged` on that step, the
 // rest not run), and the journal group is stamped with the generation the steps ran in, never the
-// one found afterwards (review 5.1).
+// one found afterwards (review 5.1). After a final stop no further between-step suspension runs.
 // A step that names "the selection" while the plan saw NONE is refused before the first step,
 // as a clear error ("No track is selected") — never resolved live when it runs, because live
 // would adopt a selection made after the plan, a target the person never saw the agent aim at
@@ -173,12 +173,15 @@ final class EchoelCommandExecutor {
         var results: [EchoelStepResult] = []
         var stopped = false
         for (index, command) in plan.steps.enumerated() {
-            if index > 0 {
+            // The suspension between two steps exists for the NEXT writer; once the request has
+            // stopped for good there is no next writer, so no hook runs either (the xcresult of
+            // e9999dc58 showed the Open hook firing a second time behind a stopped step).
+            if index > 0, !stopped {
                 await betweenSteps()
                 // The project may have been opened again while this request was suspended — the
                 // same file too, which no content check can see (review 5.1). No further writer
                 // runs against it: this step fails as a changed project, the rest do not run.
-                if !stopped, timeline.documentGeneration != plan.basis.documentGeneration {
+                if timeline.documentGeneration != plan.basis.documentGeneration {
                     results.append(EchoelStepResult(command: command, outcome: .failed(.projectChanged)))
                     stopped = true
                     continue

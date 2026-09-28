@@ -569,7 +569,7 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         }
         let report = await executor.execute(threeSteps)
 
-        XCTAssertEqual(reopened, 1, "the Open ran once, in the first gap; the second gap never came")
+        XCTAssertEqual(reopened, 1, "the Open ran once, in the first gap; after the stop no further suspension runs (xcresult e9999dc58: it ran twice)")
         XCTAssertEqual(timeline.documentGeneration, generationBefore + 1)
         XCTAssertNil(report.refusal, "the preflight passed — the Open came after it")
         XCTAssertEqual(report.steps.map(\.outcome).count, 3)
