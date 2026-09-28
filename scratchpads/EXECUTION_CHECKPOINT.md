@@ -6,8 +6,7 @@ lives in `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` and the canonical PLAN_* files. O
 CURRENT_HEAD: e9999dc58 (+ docs commit d4a3ee216) on claude/echoelmusic-review-optimize-u5jjpd (PUSHED; the checked-out local
   branch feature/media-seed-2026-09-27 mirrors it). Review base dfe9525e6 · review commit 9d479f922 (22 commits
   media workstation + EchoelAI, transcribed only, NEVER compiled before step 1 below).
-CURRENT_MAIN: 33a70c329 at the time of writing; e9999dc58's Compile Check 36407799896 + BfT (run 36407799979) are green, so auto-merge
-  is expected to move main to e9999dc58 — READ, do not assume (`mcp__github__list_commits` on main).
+CURRENT_MAIN: e9999dc58 (read via `git ls-remote origin refs/heads/main` after e9999dc58's Compile Check 36407799896 + BfT went green).
 CODEX HANDOVER (portable, outside the worktree — scratchpad `codex-handover/`): full bundle in 4 parts
   (sha256 3131556d…) · thin bundle from dfe9525e6 · FABLE_REVIEW_9d479f922.md · IMPORT_ANLEITUNG.md ·
   SHA256SUMS.txt. Verified with `git bundle verify` and a fresh import (both SHAs + diff readable).
@@ -56,7 +55,11 @@ REPAIR ROUND on 9d479f922 (founder release 2026-09-27; per package: SHA · findi
   fix     e9999dc58  claim 4 awaited results bound — Compile Check 36407799896 SUCCESS · BfT run 36407799979 job 108880923546
           to locals                                  step 9 SUCCESS · Run Tests: see RUN_TESTS_e9999dc58 below
   docs    d4a3ee216  Photism → V1–V4 plan + 2 decisions — docs only, no gate (#1176)
-RUN_TESTS_e9999dc58: PENDING at the time of writing (job 108880923546 step 11 in progress) — the next line to overwrite.
+RUN_TESTS_e9999dc58: job 108880923546 step 11 FAILURE = #396 shape (TEST EXECUTE FAILED, exit 65, no launch-failure line,
+  0 crash markers) · WINDOW = tail -200 · 1431 s gap 10:13:56→10:37:47 · 169 tests observed passing, 0 failures, 0 skips IN THE
+  WINDOW · NONE of this round's suites (TheAgentActsThroughTheButtonsPathsTests · TheLevelRequestSeparatesNumberGridAndWriteTests ·
+  TheMediaLookHasOneWriterTests · TheAgentProposesOnlyRegisteredCommandsTests) appears in the window → their EXECUTION IS
+  UNRECORDED (#445/#807); they COMPILE (BfT green). Neither pre-existing red (#249/#250) is in the window either — absence proves nothing.
   ⚠️ The complete result bundle (`test-results-ios-iPhone 17`, xcresult) exists as an artifact but its download host
   (productionresultssa*.blob.core.windows.net) is denied by this environment's network policy → only the 200-line window is
   readable here; a suite absent from the window = execution unrecorded (#445/#807), never "passed".
@@ -85,4 +88,5 @@ FOUNDER_PENDING: device checks for the whole media/agent stack (nothing here is 
 VISUAL_PLAN: Photism principles → V1–V4 in `scratchpads/PLAN_MEDIA_SEED_2026-09-27.md` §7 (planned 2026-09-28, NOT released;
   V1(c) = AudioFeatureChannel producer as a MASTER-output tap, audio-thread review mandatory; MPE two-note acceptance blocked).
 NEXT_3_ACTIONS: 1) founder: decide V1 release (audio tap first) and #249/#250, MED-9, the "0.0 dB → 0.0 dB" wording
-  2) read RUN_TESTS_e9999dc58 when the job ends and overwrite the line above  3) no new features; no TestFlight
+  2) founder: allow the artifact host (productionresultssa*.blob.core.windows.net) in the environment's network policy if the
+  xcresult should be readable from a session — until then execution evidence stays the 200-line window  3) no new features; no TestFlight
