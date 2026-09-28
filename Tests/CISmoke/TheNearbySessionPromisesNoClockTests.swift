@@ -192,6 +192,8 @@ final class TheNearbySessionPromisesNoClockTests: XCTestCase {
         // The field whose absence makes the HRV claim false. Its presence is the OPPOSITE of a
         // failure — it means somebody did the work, so this claim stands down (#364).
         let hrvFieldIsWired = renderer.contains("vp.complexity")
+        // PRECONDITION-SKIP: deliberate stand-down (#364) — the claim retires when the HRV
+        // path is wired; the message says what to replace it with.
         try XCTSkipIf(hrvFieldIsWired, """
             `MetalBioView` now reads `vp.complexity` — the HRV→picture path. This claim asserted
             the copy must NOT name HRV; that reason has expired. Re-read the four driver

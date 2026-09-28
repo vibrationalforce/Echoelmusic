@@ -134,6 +134,8 @@ final class TheShippedShaderActuallyCompilesTests: XCTestCase {
     func testTheShaderBuilds() throws {
         #if canImport(Metal)
         let source = try shaderSource()
+        // PRECONDITION-SKIP: follows a RECORDED failure — `shaderSource()` already called
+        // XCTFail for the missing anchor, so this stop is not fail-open.
         try XCTSkipIf(source.isEmpty, "Anchor failed above; that failure is the finding.")
         guard let device = MTLCreateSystemDefaultDevice() else {
             throw XCTSkip("No Metal device on this runner, so the shipped shader was NOT "

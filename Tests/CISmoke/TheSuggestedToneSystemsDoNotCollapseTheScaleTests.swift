@@ -69,10 +69,16 @@ final class TheSuggestedToneSystemsDoNotCollapseTheScaleTests: XCTestCase {
         }
 
         let pythagorean = TuningSystem.named("pythagorean")
-        try XCTSkipIf(pythagorean.id != "pythagorean", """
+        // ⛔ This was a conditional skip on the same comparison — an ANCHOR MISS that skipped
+        // instead of failing, invisible to the #1240 ratchet because the ratchet only counted
+        // the unconditional form. Found when the ratchet learned to count the conditional form
+        // (triage of f84d4121e, case 14). A missing counterweight is a red (#454).
+        guard pythagorean.id == "pythagorean" else {
+            return XCTFail("""
             the library no longer carries Pythagorean — re-anchor this counterweight on another \
             system with fewer than twelve degrees, and re-measure which scales it collapses
             """)
+        }
         XCTAssertTrue(collapsedDegrees(pythagorean, scale: .major).isEmpty, """
             Pythagorean now collapses the major scale. It is a diatonic MAJOR system, so this \
             is the pairing it was built for; if this is red the detector has become too strict \

@@ -121,6 +121,8 @@ final class FieldSoundSurvivesRelaunchTests: XCTestCase {
     /// Last rung: a library with no default at all still yields something playable.
     func testALibraryWithoutTheDefaultStillYieldsAPatch() throws {
         let withoutDefault = SynthPatch.factory.filter { $0.id != SynthPatch.touchDefaultID }
+        // PRECONDITION-SKIP: data precondition — a factory holding only the default has no
+        // second patch to fall through to; no text anchor is read here.
         try XCTSkipIf(withoutDefault.isEmpty, "factory holds only the default — nothing to test")
         let resolved = SynthPatch.launchTouchPatch(storedID: "", in: withoutDefault)
         XCTAssertEqual(resolved?.id, withoutDefault.first?.id, """

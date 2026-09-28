@@ -40,6 +40,8 @@ final class TheBroadcastHasNoDoorWithoutAnEngineTests: XCTestCase {
 
     func testWithoutAnEngineTheStreamTransportsAreRoadmap() throws {
         guard !BroadcastPublisher().engineAvailable else {
+            // PRECONDITION-SKIP: runtime engine state, not a text anchor — a linked streaming
+            // engine releases this binding by founder decision (#1240 ratchet, class 2).
             throw XCTSkip("streaming engine linked — the binding releases (founder decision)")
         }
         for transport in Self.streamTransports {
@@ -56,6 +58,8 @@ final class TheBroadcastHasNoDoorWithoutAnEngineTests: XCTestCase {
 
     func testWithoutAnEngineTheBroadcastSurfaceHasNoDoor() throws {
         guard !BroadcastPublisher().engineAvailable else {
+            // PRECONDITION-SKIP: runtime engine state, not a text anchor — a linked streaming
+            // engine releases this binding by founder decision (#1240 ratchet, class 2).
             throw XCTSkip("streaming engine linked — the binding releases (founder decision)")
         }
         let sites = try sourcesContaining("BroadcastView(")

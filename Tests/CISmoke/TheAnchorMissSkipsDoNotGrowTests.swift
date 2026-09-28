@@ -35,6 +35,21 @@
 // `FileManager.default.fileExists(atPath:)` on the guard line, which changes no verdict. Four
 // were real anchor misses (`bodyOfMember` in TheAUv3FollowsTheHostSampleRateTests and
 // TheSensitivityWindowHasADoorTests: missing anchor + unbalanced braces) and now `XCTFail`.
+//
+// ⭐ THREE CLASSES, NOT TWO (2026-09-28, founder order; triage of f84d4121e, case 14). The count
+// reached 77 when the broadcast guard (5d3116308/71e9600f0) added two skips on a RUNTIME
+// condition — "a streaming engine is linked" — which is neither a missing tree nor a missing
+// text anchor. Raising the
+// ratchet would have hidden the next real anchor miss behind them; converting them to
+// `XCTSkipIf` would have hidden them from the scan altogether, because the scan only counted
+// `throw XCTSkip`. So the scan now (a) COUNTS the conditional forms `XCTSkipIf(`/
+// `XCTSkipUnless(` as skip sites too, and (b) knows an explicit third class: a skip whose window
+// carries the marker `PRECONDITION-SKIP:` with a reason is a declared precondition, counted
+// against its OWN ratchet (`preconditionRatchet`), which also moves down only. The anchor-miss
+// ratchet stays 75. Widening the scan found one real anchor miss that `XCTSkipIf` had hidden
+// (the Pythagorean counterweight in TheSuggestedToneSystemsDoNotCollapseTheScaleTests), now
+// an `XCTFail`. Claim 5 proves the classifier on synthetic input: an unmarked skip of either
+// form is an anchor miss, a marker without a reason is an anchor miss, a tree check is not.
 
 import Foundation
 import XCTest
@@ -48,15 +63,34 @@ final class TheAnchorMissSkipsDoNotGrowTests: XCTestCase {
     private static let ownFile = "TheAnchorMissSkipsDoNotGrowTests.swift"
     /// Assembled so this file's own text never matches its own needle even if the exclusion moved.
     private static let skipNeedle = "throw XCT" + "Skip"
+    /// The conditional forms. They skip exactly like `throw XCTSkip`, and a scan that did not
+    /// count them turned a switch to `XCTSkipIf` into a way out of the ratchet.
+    private static let conditionalNeedles: [String] = ["XCT" + "SkipIf(", "XCT" + "SkipUnless("]
+    /// A declared runtime/data precondition. Must carry a reason after the colon.
+    private static let preconditionMarker = "PRECONDITION" + "-SKIP:"
+    /// Declared precondition skips today. Moves DOWN only, like `ratchet`; a new one is a
+    /// visible decision in the diff, never a silent side door.
+    private static let preconditionRatchet = 5
+    /// Lines BELOW a conditional skip that still belong to its call (the condition may wrap).
+    private static let conditionalTailLines = 2
 
     /// Claim 1 — the ratchet.
     func testAnchorMissSkipsDoNotGrow() throws {
-        let (anchorMiss, sites) = try scan()
+        let result = try scan()
+        let anchorMiss = result.anchorMiss
         XCTAssertLessThanOrEqual(anchorMiss.count, Self.ratchet, """
             \(anchorMiss.count) anchor-miss skips, ratchet is \(Self.ratchet). A missed ANCHOR is a red, \
             not a skip: use XCTFail (and `throw` your own Error if the caller needs to stop); XCTSkip is \
-            for a missing TREE only (`fileExists` within \(Self.windowLines) lines above). New sites: \
-            \(anchorMiss.suffix(3).map { "\($0.file):\($0.line)" }.joined(separator: ", ")) (#1240, of \(sites) skip sites)
+            for a missing TREE only (`fileExists` within \(Self.windowLines) lines above) or a DECLARED \
+            runtime precondition (`\(Self.preconditionMarker) <reason>` within the same window). \
+            All anchor-miss sites, in file order (the list does not know which are new): \
+            \(anchorMiss.map { "\($0.file):\($0.line)" }.joined(separator: ", ")) (#1240, of \(result.total) skip sites)
+            """)
+        XCTAssertLessThanOrEqual(result.precondition.count, Self.preconditionRatchet, """
+            \(result.precondition.count) declared precondition skips, ratchet is \
+            \(Self.preconditionRatchet). The marker is for a RUNTIME or DATA condition (an engine \
+            that is not linked, a factory with one entry), never for a text anchor that moved. \
+            Sites: \(result.precondition.map { "\($0.file):\($0.line)" }.joined(separator: ", "))
             """)
     }
 
@@ -86,35 +120,95 @@ final class TheAnchorMissSkipsDoNotGrowTests: XCTestCase {
 
     /// Claim 4 — counterweight: the scan finds skip sites at all.
     func testTheScanFindsSkipSites() throws {
-        let (_, sites) = try scan()
+        let sites = try scan().total
         XCTAssertGreaterThan(sites, 100,
                              "the scan found \(sites) `throw XCTSkip` sites — the bundle has hundreds; a scan that finds none is a broken scan, not a clean bundle (#1240)")
+    }
+
+    /// Claim 5 — the classifier on synthetic input, so "echte Ankerfehler werden weiter erkannt"
+    /// is a measurement and not a promise. Each case is one skip site in a tiny fake file.
+    func testTheClassifierStillCatchesARealAnchorMiss() {
+        let skip = "throw XCT" + "Skip(\"x\")"
+        let skipIf = "try XCT" + "SkipIf(flag, \"x\")"
+        let skipUnless = "try XCT" + "SkipUnless("
+        // Concatenations hoisted out of the array literal: the literal below then holds only
+        // plain strings and names, which keeps the type-checker off the #E2 path (§2 of
+        // Tests/CISmoke/CLAUDE.md).
+        let bareMarker = "// " + Self.preconditionMarker
+        let reasonedMarker = "// " + Self.preconditionMarker + " engine linked"
+        let cases: [(name: String, lines: [String], expected: SkipClass)] = [
+            ("bare throw, no tree check, no marker",
+             ["guard let a = text.range(of: \"anchor\") else {", skip, "}"], .anchorMiss),
+            ("conditional form, no tree check, no marker",
+             ["let found = text.contains(\"anchor\")", skipIf], .anchorMiss),
+            ("marker WITHOUT a reason",
+             [bareMarker, skip], .anchorMiss),
+            ("marker too far above the skip",
+             [reasonedMarker, "", "", "", "", skip], .anchorMiss),
+            ("tree check above a throw",
+             ["guard FileManager.default.fileExists(atPath: p) else {", skip, "}"], .missingTree),
+            ("tree check inside a wrapped conditional",
+             [skipUnless, "    FileManager.default.fileExists(atPath: p),", "    \"x\")"], .missingTree),
+            ("declared precondition with a reason",
+             ["guard !engineAvailable else {", reasonedMarker, skip, "}"], .precondition),
+        ]
+        for c in cases {
+            let site = c.lines.firstIndex { $0.contains("XCT" + "Skip") } ?? 0
+            XCTAssertEqual(Self.classify(lines: c.lines, at: site), c.expected,
+                           "classifier case \"\(c.name)\" — if this moved, the ratchet no longer measures what it says")
+        }
     }
 
     // MARK: - Scan
 
     private struct Site { let file: String; let line: Int }
+    enum SkipClass { case missingTree, precondition, anchorMiss }
+    private struct ScanResult { var anchorMiss: [Site] = []; var precondition: [Site] = []; var total = 0 }
 
-    /// (anchor-miss sites, total skip sites) over `Tests/CISmoke/*.swift`, this file excluded.
-    private func scan() throws -> ([Site], Int) {
+    /// Every skip site over `Tests/CISmoke/*.swift`, this file excluded, by class.
+    private func scan() throws -> ScanResult {
         let dir = try repoRoot().appendingPathComponent("Tests/CISmoke")
         guard FileManager.default.fileExists(atPath: dir.path) else {
             throw XCTSkip("Tests/CISmoke is not at \(dir.path) — this scan reads the bundle's own files and cannot run without them")
         }
         let names = try FileManager.default.contentsOfDirectory(atPath: dir.path)
             .filter { $0.hasSuffix(".swift") && $0 != Self.ownFile }.sorted()
-        var anchorMiss: [Site] = []
-        var total = 0
+        var result = ScanResult()
         for name in names {
             let lines = try String(contentsOf: dir.appendingPathComponent(name), encoding: .utf8)
                 .components(separatedBy: "\n")
-            for (index, line) in lines.enumerated() where line.contains(Self.skipNeedle) {
-                total += 1
-                let window = lines[max(0, index - Self.windowLines)...index].joined(separator: "\n")
-                if !window.contains("fileExists") { anchorMiss.append(Site(file: name, line: index + 1)) }
+            for index in lines.indices where Self.isSkipSite(lines[index]) {
+                result.total += 1
+                switch Self.classify(lines: lines, at: index) {
+                case .missingTree: break
+                case .precondition: result.precondition.append(Site(file: name, line: index + 1))
+                case .anchorMiss: result.anchorMiss.append(Site(file: name, line: index + 1))
+                }
             }
         }
-        return (anchorMiss, total)
+        return result
+    }
+
+    private static func isSkipSite(_ line: String) -> Bool {
+        line.contains(skipNeedle) || conditionalNeedles.contains { line.contains($0) }
+    }
+
+    /// The window is the skip line plus `windowLines` above it; a conditional skip also owns
+    /// the next `conditionalTailLines`, because its condition may wrap onto them. A tree check
+    /// anywhere in that window wins; otherwise a marker with a non-empty reason in the lines
+    /// ABOVE (or on) the skip makes it a precondition; anything else is an anchor miss.
+    static func classify(lines: [String], at index: Int) -> SkipClass {
+        let above = lines[max(0, index - windowLines)...index]
+        let conditional = conditionalNeedles.contains { lines[index].contains($0) }
+        let tail = conditional ? lines[index..<min(lines.count, index + 1 + conditionalTailLines)] : []
+        if above.contains(where: { $0.contains("fileExists") }) || tail.contains(where: { $0.contains("fileExists") }) {
+            return .missingTree
+        }
+        let declared = above.contains { line in
+            guard let at = line.range(of: preconditionMarker) else { return false }
+            return !line[at.upperBound...].trimmingCharacters(in: .whitespaces).isEmpty
+        }
+        return declared ? .precondition : .anchorMiss
     }
 
     private func repoRoot() throws -> URL {
