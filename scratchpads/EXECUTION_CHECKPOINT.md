@@ -3,8 +3,8 @@
 Rules: `memory/preferences.md` § "Orchestrator hardening". This file is NOT a roadmap — product order
 lives in `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` and the canonical PLAN_* files. Overwrite, don't append.
 
-CURRENT_HEAD: e9999dc58 (+ docs commit d4a3ee216) on claude/echoelmusic-review-optimize-u5jjpd (PUSHED; the checked-out local
-  branch feature/media-seed-2026-09-27 mirrors it). Review base dfe9525e6 · review commit 9d479f922 (22 commits
+CURRENT_HEAD: f84d4121e on claude/echoelmusic-review-optimize-u5jjpd (PUSHED; the checked-out local branch
+  feature/media-seed-2026-09-27 mirrors it). Repair SHAs of the 5.1/5.2 round: 1cf2f92af · 60565f846 · e9999dc58 · adae9432c · f84d4121e. Review base dfe9525e6 · review commit 9d479f922 (22 commits
   media workstation + EchoelAI, transcribed only, NEVER compiled before step 1 below).
 CURRENT_MAIN: e9999dc58 (read via `git ls-remote origin refs/heads/main` after e9999dc58's Compile Check 36407799896 + BfT went green).
 CODEX HANDOVER (portable, outside the worktree — scratchpad `codex-handover/`): full bundle in 4 parts
@@ -64,6 +64,27 @@ RUN_TESTS_e9999dc58: job 108880923546 step 11 FAILURE = #396 shape (TEST EXECUTE
   (productionresultssa*.blob.core.windows.net) is denied by this environment's network policy → only the 200-line window is
   readable here; a suite absent from the window = execution unrecorded (#445/#807), never "passed".
   Reach: `EchoelCommandExecutor(` has 0 production callers → 5.1/5.2 were LATENT API defects, not reachable user errors.
+  5.1b    adae9432c  no between-step suspension — Sources: EchoelCommandExecutor (`betweenSteps()` + generation check gated on
+          after the request has stopped        `!stopped`). Found by the FULL xcresult of e9999dc58, read in ANOTHER SESSION
+                                               (artifact 10963874977): claim 12 red, hook ran twice ("2 statt 1"), generation
+                                               moved by two ("3 statt 2"). Gates: see GATES_f84d4121e
+  tests   f84d4121e  claim 10 fixture (toggleTrack — test only. Claim 10 block B: `selectRegion` had already selected Keys, the
+          after selectRegion CLEARED the         toggle cleared it → "No track is selected" (xcresult). Claim 5 last block: since
+          selection) · claim 5 contract (2a:     2a (7331ff86a) a removed selected part yields NO plan target → refusal
+          refusal, not step-level targetGone)    `.nothingSelected("part")` + `.notRun`; the block still expected the pre-2a
+                                               step-level `.targetGone("part")` — never executed until the xcresult read it.
+XCRESULT_e9999dc58 (EXTERNAL — read in another session from artifact 10963874977 of job 108880923546; NOT reproducible here,
+  the blob host is denied by this environment's network policy): 4,385 test cases · 4,346 Success · 39 Failure; the per-case
+  count agrees with the ActionsInvocationRecord aggregates. Of ours: testOwnLaterWritesDoNotBlockOwnEarlierUndoEntries (5.2)
+  SUCCESS · testAProjectOpenedAgainBetweenTwoStepsEndsTheRequestThere FAILURE (→ adae9432c) ·
+  testAReopenedIdenticalProjectIsNotThePlannedOne FAILURE (→ f84d4121e, fixture) · testStaleSelectionChangedSongAndRepeatsAreSafe
+  FAILURE (→ f84d4121e, contract). The other 35 failures are NOT named in this session's evidence: #249 and #250 are known
+  pre-existing reds; the remaining ones need the per-case list from the xcresult — they are NOT attributed to #396 (that
+  label covers the clone crash / exit 65 shape of the step, never a named failing test).
+  ⚠️ "5.1 behoben" is therefore TRUE only as of adae9432c AND only once a run shows claim 12 passing; on e9999dc58 it was red.
+  "5.2 behoben" is executed evidence (SUCCESS in the xcresult).
+GATES_f84d4121e: PENDING at the time of writing — Compile Check (Sources changed in adae9432c) · Build for Testing · Run Tests
+  window · and, if the other session reads it, the xcresult per-case result of claims 5/10/12.
   Not repaired, reported (user-impact order): MED-9 video import copies the full file before the duration check,
   no cancel button (temp copy removed, newer pick cancels) · MED-11 meter warning colour-only · LOW rest ·
   Codex 2 (look half): a same-value re-entry of a LOOK parameter is indistinguishable and is taken back
@@ -77,8 +98,8 @@ RUN_TESTS_e9999dc58: job 108880923546 step 11 FAILURE = #396 shape (TEST EXECUTE
 CURRENT_INVARIANTS: no new modal (11 on the chain, ceiling 14) · no hot read in host bodies · one media-look
   writer (`MediaLookUndo`) · executor writes only through the button writers (claim 8 allow-list: document ·
   documentGeneration · laneLevelWrites) · CLAUDE.md < 150,000 B · .deploy/release NOT touched · no TestFlight
-LAST_GREEN_COMPILE: Compile Check 36407799896 on e9999dc58
-LAST_GREEN_TEST: BfT run 36407799979 (job 108880923546 step 9) on e9999dc58
+LAST_GREEN_COMPILE: Compile Check 36407799896 on e9999dc58 (f84d4121e pending)
+LAST_GREEN_TEST: BfT run 36407799979 (job 108880923546 step 9) on e9999dc58 (f84d4121e pending)
 KNOWN_RED_GATE: CI/CD conclusion red on every push (#396) — read the "Build for Testing" step · two PRE-EXISTING
   red guards in the blocking bundle, both in main before this round: #249 TheDetectedTempoIsHonestTests claim 12
   (since 6f88bb3d7) · #250 AutoModeStartsOffAndOwnsNoTempoTests claim 9 (`autoAttuned: autoMode` left
