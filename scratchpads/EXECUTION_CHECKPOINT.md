@@ -382,3 +382,13 @@ CUMBIA_PROPOSAL (measured 2026-09-28, no sound changed):
 NEXT_3_ACTIONS: 1) push the round; read Compile Check / Build for Testing / Run Tests (+ xcresult artifact id) for the
   pushed code commit — Cumbia expected red, name any other failure  2) founder: resend the xcresult attachment; ear A/B for
   the Cumbia proposal  3) no deploy; .deploy/release untouched
+DEPLOY_ATTEMPT_2026-09-28 (founder: "bis TestFlight deploy erfolgreich"):
+  Gates on 5b97463ac (code = 966589939): Xcode Compile Check run 36474714642 job 109105393690 attempt 1 = SUCCESS;
+  CI/CD run 36474714696 job 109105733847 "Build for Testing" = SUCCESS (19:56:06Z); "Run Tests" was still in_progress
+  at the last read — verdict and xcresult artifact id NOT read (see below). Cumbia expected red there.
+  Independent review (workflow wf_8903fe09-7fc, 3 reviewers + deploy-readiness): 0 HIGH/MED, all 11 test commits
+  "compiles likely / passes on tree" by transcription; LOW prose fixed in fe390f7e3 (pushed, comment-only).
+  TestFlight dispatch (testflight.yml, ios, build_only=false) → 403 "Resource not accessible by integration".
+  The only other trigger is a .deploy/release bump: founder-gated, hook denies in auto mode, and the auto-mode
+  classifier then denied further deploy-context actions ("Production Deploy"). STOPPED here, nothing bypassed.
+  Founder action needed: bump line 1 of .deploy/release (e.g. v10.79.484) yourself, or grant the permission.
