@@ -110,6 +110,20 @@ KNOWN_RED_GATE: CI/CD conclusion red on every push (#396) — read the "Build fo
   red guards in the blocking bundle, both in main before this round: #249 TheDetectedTempoIsHonestTests claim 12
   (since 6f88bb3d7) · #250 AutoModeStartsOffAndOwnsNoTempoTests claim 9 (`autoAttuned: autoMode` left
   EchoelStudioView with #1069) — founder decides whether this round fixes them
+CANDIDATE_f84d4121e_TRIAGE (2026-09-28, founder order "alle 21 bekannten fehlgeschlagenen Tests sowie den Xcode-Abbruch
+  einordnen"): the per-case list of the 21 is NOT in this repo and NOT readable from this session — artifact 10968101637
+  (job 108899686909) → download URL issued, CONNECT to productionresultssa13.blob.core.windows.net denied 403 again
+  (15:3x UTC). Rules that decide it, all pre-existing: (1) auto-merge/TestFlight bar = Compile Check conclusion + BfT
+  STEP green — both green on f84d4121e · (2) decisions.csv 2026-09-26: nothing is declared CLOSED on green BfT while Run
+  Tests is red; the 200-line window is not evidence, only an xcresult or a targeted run is · (3) #396: the step's
+  conclusion is red by design · (4) decisions.csv 2026-09-09 (#1174): a TRAP looks like a tool death — discriminator is
+  the step history · (5) deploy = founder order + .deploy/release (founder-gated; in auto mode the hook now DENIES).
+  Classes each of the 21 must land in: A pre-existing in main before this round (#249, #250 known) → known red, founder
+  decides · B caused by this round's commits (claims 5/10/12 of the agent suites) → blocks "closed", fix first ·
+  C test-only fixture/contract error → fix the test · D not yet classifiable. Xcode abort (Run Tests step 11, exit 134,
+  Abort trap, 11:13:45→11:36:53): the TOOL died → execution of every suite after the abort point is UNRECORDED, not
+  failed and not passed; by (4) a test trap is not excluded until the xcresult names the last test started.
+  NEXT: the per-case list — founder pastes it, or allows *.blob.core.windows.net in the environment's network policy.
 FOUNDER_PENDING: device checks for the whole media/agent stack (nothing here is device-verified) · #249/#250 ·
   MED-9 cancel button · "0.0 dB → 0.0 dB" wording · TestFlight (NOT triggered, per order)
 VISUAL_PLAN: Photism principles → V1–V4 in `scratchpads/PLAN_MEDIA_SEED_2026-09-27.md` §7 (planned 2026-09-28, NOT released;
