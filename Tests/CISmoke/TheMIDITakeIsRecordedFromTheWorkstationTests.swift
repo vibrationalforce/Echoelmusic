@@ -55,6 +55,13 @@ final class TheMIDITakeIsRecordedFromTheWorkstationTests: XCTestCase {
     private static let step = TimelineTime.ticksPerTransportStep
 
     private var rigClips: ClipStore?
+    /// The rig's `TimelineStore`, held for the whole test. `RecordController` keeps its timeline
+    /// WEAK, and nothing else in the rig holds the store strongly, so a test that destructures
+    /// `rig()` with `_` for the timeline freed it before the first `arm()` — every arm then
+    /// no-oped on `guard let timeline`. That is how the already-running claim (section 3) was red
+    /// since 0289614d2: its refusal passed for the wrong reason and its acceptance could never
+    /// happen. Held here, not per test, so no future test can repeat it.
+    private var rigTimeline: TimelineStore?
 
     /// A real rig. `ClipStore` persists to the shared App Group file and reloads it, so the grid
     /// is cleared first and last (the `RecordControllerAudioHookTests` idiom).
@@ -63,6 +70,7 @@ final class TheMIDITakeIsRecordedFromTheWorkstationTests: XCTestCase {
         for i in clips.slots.indices { clips.clear(at: i) }
         rigClips = clips
         let timeline = TimelineStore()
+        rigTimeline = timeline
         timeline.addLane(kind: .midi, name: "Keys \(UUID().uuidString)")
         let lane = timeline.document.lanes.last?.id ?? UUID()
         // The store reloads the persisted song, so another test's armed track would record too.
@@ -81,6 +89,7 @@ final class TheMIDITakeIsRecordedFromTheWorkstationTests: XCTestCase {
     override func tearDown() async throws {
         if let clips = rigClips { for i in clips.slots.indices { clips.clear(at: i) } }
         rigClips = nil
+        rigTimeline = nil
     }
 
     /// Steps `from..<to` of the transport, counted from Play (bar = step / 16).
@@ -167,7 +176,13 @@ final class TheMIDITakeIsRecordedFromTheWorkstationTests: XCTestCase {
     /// R1 review HIGH-1: the instrument's Play and the header ▶ run the shared transport without
     /// the region player. Armed on that running clock, a take anchored at the instrument's bar.
     func testATakeCannotBeArmedOnATransportThatIsAlreadyRunning() {
-        let (transport, _, _, controller, _) = rig()
+        let (transport, timeline, _, controller, lane) = rig()
+        // Premise: the rig's store is alive and its lane is armed, so a refusal below can only
+        // come from the running transport — not from a timeline the controller no longer sees.
+        XCTAssertTrue(timeline.document.lanes.contains { $0.id == lane && $0.isArmed },
+                      "premise: the rig armed its lane")
+        XCTAssertTrue(controller.hasArmedTarget(),
+                      "premise: the controller still sees the armed lane (it holds the timeline weak)")
         transport.play()
         run(transport, steps: 0..<40)                    // the instrument has run into bar 3
         controller.arm()
