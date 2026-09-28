@@ -13,8 +13,9 @@
 //  ⭐ `decimals` IS NOT A DISPLAY CHOICE — IT IS THE SNAP GRID. `ScrubPrecision.snapped` rounds
 //  every commit to `10^-decimals`, and since #431 the keypad refuses a digit it cannot keep. So
 //  the number is two promises at once: what the row SHOWS and what it can HOLD. That is why
-//  this guard is not "assert 2 everywhere" — two of the twenty-one rows must be finer, and
-//  which two was MEASURED from the shipped patch data, not chosen:
+//  this guard is not "assert 2 everywhere" — three of the rows must be finer, and
+//  which three was MEASURED from the shipped patch data, not chosen (`LFO depth` joined the
+//  first two on 2026-09-28, founder release — see its bullet):
 //
 //    · `attack`     — the bank ships 0.002 / 0.003 / 0.004 / 0.005 / 0.008 s. On a centisecond
 //                     grid the first FOUR collapse to 0.00 — including 0.005, because
@@ -262,11 +263,11 @@ final class SoundRowsCanReachTheShippedPatchesTests: XCTestCase {
     // failure was a spurious one. Deleted rather than weakened; the measured drift is recorded in
     // the header, where a number that nothing can check belongs.
 
-    // MARK: - Why two rows are finer than the rest
+    // MARK: - Why three rows are finer than the rest
 
-    /// THE TWO ROWS THAT ARE DELIBERATELY FINER — pinned so the reason cannot be lost.
+    /// THE THREE ROWS THAT ARE DELIBERATELY FINER — pinned so the reason cannot be lost.
     ///
-    /// Without this, a later cycle reads fourteen rows on 2, two on 3 and one on 0, calls it an
+    /// Without this, a later cycle reads most rows on 2, a few on 3 and one on 0, calls it an
     /// inconsistency, and "fixes" it. Each half asserts BOTH directions: the value exists, AND
     /// it is genuinely unreachable one decimal coarser. The second half is the whole argument,
     /// so it is an assertion and not a comment.
@@ -324,7 +325,7 @@ final class SoundRowsCanReachTheShippedPatchesTests: XCTestCase {
     /// The compiler already forces every call site to state `decimals:` — but only for as long
     /// as the parameter has no default. Re-adding `= 2` would silently restore exactly the
     /// failure this slice removed: an argument nobody writes, so no diff ever shows it, and the
-    /// two rows that need 3 quietly become 2. That is the whole mechanism by which seventeen
+    /// rows that need 3 quietly become 2. That is the whole mechanism by which seventeen
     /// rows sat on 4 for a month, so the ABSENCE of a default is the thing worth pinning.
     ///
     /// ⚠️ A scan, not a behaviour — it cannot fail for the right reason if the helpers are
@@ -355,7 +356,7 @@ final class SoundRowsCanReachTheShippedPatchesTests: XCTestCase {
             """)
     }
 
-    /// THE FOUR ROWS WHOSE NUMBERS ARE NOT THE HOUSE DEFAULT — pinned in the SOURCE, not just in
+    /// THE ROWS WHOSE NUMBERS ARE NOT THE HOUSE DEFAULT — pinned in the SOURCE, not just in
     /// this file's table.
     ///
     /// Without this the model above can drift from the panel with every test green: coarsen
@@ -363,9 +364,10 @@ final class SoundRowsCanReachTheShippedPatchesTests: XCTestCase {
     /// copy. That is the same gap #427's sibling guard closed with a per-row scan, and the
     /// precedent is why this is a scan and not an argument.
     ///
-    /// Only the four rows that DEVIATE are pinned, and deliberately so: asserting all seventeen
+    /// Only the rows that DEVIATE are pinned, and deliberately so: asserting all seventeen
     /// would make every ordinary panel edit red for no reason, which is how a guard gets deleted.
-    /// Three deviate in `decimals` (each earned by shipped data, see the header).
+    /// Four deviate in `decimals` (each earned by shipped data, see the header) — no count is
+    /// pinned here; the pin list below IS the set.
     ///
     /// ⛔ A FOURTH USED TO DEVIATE IN RANGE AND THIS LINE STILL SAID SO ONE COMMIT AFTER IT DID
     /// NOT: "one in RANGE — Decay's 0…10 is what makes `Drone Bed`'s 6.0 s reachable". #441 moved
@@ -378,7 +380,7 @@ final class SoundRowsCanReachTheShippedPatchesTests: XCTestCase {
     /// `OneDefinitionOfAParameterRangeTests` (all three banks — `Drone Bed` lives in the GENRE
     /// bank, which is why sweeping `SynthPatch.factory` alone did not touch it).
     ///
-    /// ⚠️ A scan: it pins the literal text of four call sites and can go red for a harmless
+    /// ⚠️ A scan: it pins the literal text of each deviating call site and can go red for a harmless
     /// reformat. That is the trade — a false red here costs one edit, a silent drift costs the
     /// two grids the whole slice exists for.
     func testEveryRowStatesItsOwnGridInTheSource() throws {

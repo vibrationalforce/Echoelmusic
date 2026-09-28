@@ -848,7 +848,9 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// deliberately, because the raised fourth IS the Balkan modal colour. The two are
     /// separated by VOICING on that shared array (`[0, 4, 7]` here resolves to 0, 7, 12 — a
     /// power chord with no third; `[0, 2, 4]` there resolves to 0, 3, 7 — a plain minor
-    /// triad), by progression (`[0, 1, 6]` vs `[0, 4, 3]`) and by register. The retraction is
+    /// triad), by progression (`[0, 1, 6]` vs `[0, 4, 3]`), by lead voice and by arpeggiation (the
+    /// tune arpeggiates, this pad does not). ⛔ "and by register" stood here; both pads sit at
+    /// `padOctave: 4`, so it was never true (#1295b). The retraction is
     /// written here rather than only at the new arm, because THIS is the doc a session reads
     /// when it asks whether the scale is free.** The scale is a minor
     /// scale with a RAISED FOURTH and a raised seventh, so the fourth degree sits a tritone over

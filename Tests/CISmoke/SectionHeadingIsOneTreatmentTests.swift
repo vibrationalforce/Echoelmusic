@@ -98,7 +98,7 @@ final class SectionHeadingIsOneTreatmentTests: XCTestCase {
     /// The collapsible heading (#1068) is a second BUILDER, not a second TREATMENT. Its label must
     /// spell exactly what `groupHeader` spells — 11 pt semibold (the weight that maps onto the
     /// Bold face) in `dim` — or accepting it above would reopen the #362 drift through a door
-    /// the heading list cannot see. Same five-line window as the claim above.
+    /// the heading list cannot see. An eight-line window: the label sits below the `Button` wrapper.
     func testTheCollapsibleHeaderIsTheSameTreatment() throws {
         let studio = try codeLines(Self.studio)
         guard let def = studio.firstIndex(where: {
