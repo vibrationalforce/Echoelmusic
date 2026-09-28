@@ -40261,3 +40261,11 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - 7e6aea965: Compile Check grün (AUv3-.appex bekommt PrivacyInfo.xcprivacy, 3 statt 2 CpResource), Build for Testing grün, Run Tests läuft. Erwartung bei unveränderter Lage: 4.373 / 14.
 - Run Tests 7e6aea965 (CI/CD 36460879114, Versuch 1, Job 109059130899, Schritt 11): ROT, exit 65, kein Abbruch-Marker, beide Klone ausgegeben. Fenster 170 bestanden / 0 Fehler / 0 Skips (dazu 1321 s Lücke im Log). Manifest-Test, Fall-19- und Fall-14-Suiten NICHT im Fenster → Ergebnis hier unbelegt. xcresult = Artefakt 10989640775 (hier 403). Erwartung 4.373 / 14.
 - xcresult 7e6aea965 (Founder): 4.373 bestanden / 14 fehlgeschlagen, Manifest-Test grün, #249 bestätigt. Einordnung der 14 (4 Lese-Agenten + Stichproben): 2 Produktdaten (LFO-Tiefe 0,045/0,035 außerhalb des 2-Nachkomma-Reglers; Cumbia „Lilt Sub" r 0,26 > „Lilt Keys" r 0,24) → Founder-Freigabe nötig; 12 testseitig (veraltete Anker, falsche Grundgesamtheit, CRLF-Grapheme in inspiration.csv = 2 Tests, freigegebener TimelineStore, Pfadpräfix, Satzgrenze </li>, #249 unrealistische Eingabe). Kein App-Logik-Fehler. Details: Checkpoint TRIAGE_14_7e6aea965.
+
+## 2026-09-28 — Reparaturrunde: 12 testseitige Fehlschläge + LFO-Depth-Raster (Freigabe Founder)
+
+- Die angekündigte Datei (14 Testnamen, 20 Fehlermeldungen aus dem xcresult) ist in dieser Sitzung NICHT angekommen — Zuordnung bleibt die TRIAGE_14-Inferenz; offen im Checkpoint.
+- LFO depth: Zeile auf 3 Nachkommastellen (Anzeige, Raster, Tastatur), 0,045/0,035 unverändert (0759b2f15).
+- Elf Test-Commits für zwölf Fehlschläge (fe02476cd … 966589939), je ein Grund, jede geänderte Erwartung mit ⛔-Vermerk + SHA; keine Assertion ersatzlos entfernt. Details: `EXECUTION_CHECKPOINT.md` REPAIR_ROUND_2026-09-28.
+- Cumbia klanglich unverändert; Vorschlag (Geräte-A/B Lilt Sub Release 0,26 vs 0,22) im Checkpoint CUMBIA_PROPOSAL. Befund: das Nachklingen trägt der RELEASE (noteOff → release), nicht der Decay; Lilt-Keys-Kommentar rechnet falsch (0,504 s ≠ „passt in 0,313 s").
+- Kein Deploy; `.deploy/release` unberührt.

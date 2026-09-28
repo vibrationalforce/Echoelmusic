@@ -332,6 +332,53 @@ GATE_PROTECTION: 2026-09-28 — the four founder-gated paths ASK before any Clau
   `permission_mode` auto, asks otherwise; live proof in this session (throwaway repo write refused, file unchanged).
   copy protected→protected now caught; selftest 56/56. Release = founder edits himself; phone release proven in no mode;
   Edit/Write in auto relies on built-in ask rules (unmeasured). `.claude/hooks/README.md` „Deny-Beleg".
-NEXT_3_ACTIONS: 1) founder: release a test-only repair round for the 12 test-side failures (TRIAGE_14 cases 2,4-13)
-  2) founder: decide the two product-data cases (1 LFO row decimals vs re-author; 3 cumbia release values vs exemption)
-  3) after 1+2: push, read Compile Check / Build for Testing / Run Tests + xcresult; then deploy order + .deploy/release
+REPAIR_ROUND_2026-09-28 (founder release 2026-09-28: the 12 test-side repairs + the LFO-depth row; Cumbia NOT released):
+  ATTACHMENT: the founder announced "die beigefügte Datei" with the 14 xcresult test names + 20 failure messages. It did
+  NOT arrive in this session (no attachment in chat; git fetch of all branches and a filesystem search found nothing new).
+  So the names/messages are NOT transcribed here — the mapping below is still the TRIAGE_14 inference, confirmed only
+  by the founder's topic list and his #249 name. OPEN: resend/paste the file, then transcribe it verbatim here.
+  xcresult figures from the founder's text (not re-derived): #249 brightness pair 0.734 / 0.1355 are the PROCESSED values;
+  0.72 / 0.09 are raw GenrePatches values before the shared lift.
+  Commits (local order, one cause each):
+   1 P 0759b2f15 LFO depth row decimals 2→3 (EchoelStudioView:7750, display+snap+keypad); patch values 0.045/0.035 kept;
+               SoundRowsCanReachTheShippedPatchesTests: row table 3 decimals, finer-grid claim, source pin.
+  13 T fe02476cd #249 keeps the constant 0.5 envelope; asserts not isKnown, summarise has no "BPM" and no digit,
+               adoptableNativeBPM == nil; silence (zero envelope) → nil asserted SEPARATELY.
+   8 T fcb0913d9 MIDI rig keeps the TimelineStore alive (rigTimeline), premises armed lane + hasArmedTarget; both claims
+               (reject while running, accept when stopped) unchanged.
+  11 T 6826adb52 brightness extremes measured over genre pads AND genre basses, both through MusicStyle (same processing).
+   2 T 0e2eceffa MPE site scan: </li> ends a sentence (U+2029 marker); HEAD 0 hits, 342f3df83^ 17 hits (transcribed).
+   4 T 83e5c3a9f parseCSV ends a row at "\r\n" (one Swift Character); new claim testTheParserEndsARowAtCRLF; data untouched.
+  12 T ad870806f TuningDetector census expects the walker's target-relative path "Echoelmusic/Sequencer/AudioKeyAnalysis.swift".
+   5 A d7ed024e5 Latin-America shelf: superset {cumbia, tangoMarcato}, renamed (#374); full roster stays in 14C claim 1.
+   6 A 8f54cf4dd section headings accept collapsibleGroupHeader (#1068); Signal leaves the presence list, stays in the
+               inline-10pt ban; NEW claim pins collapsibleGroupHeader = 11 pt semibold + dim (same treatment).
+   7 T 4ef9b1220 psy vs psy-prog: prog reverb mix > psy and room > psy (psy = room floor 0687996ef); no floor restated.
+   9 T 8910b15c3 balkanModal vs blackMetal: axis 4 = arpeggiation (register never differed — red since 55dc34dce);
+               GenreBatchSixATests prose follows.
+  10 A 966589939 header outlines 4→3 (Clips tile gone with #1304); EchoelTheme.borderStrong list follows (comment only).
+  No assertion removed without a replacement; every changed expectation carries a ⛔ note with the SHA that moved it.
+  Local checkers on the tree: moved-needles OK · swift-escapes OK · dead-needles OK (698 files).
+  CUMBIA (case 3) — UNCHANGED, still red by design; proposal below. Expected result of the next Run Tests: 1 known failure
+  (TheBassRoleHasItsOwnVoiceTests.testEveryBassPatchIsADarkerShorterLowerMonoCousinOfItsPad, "cumbia: bass must be shorter
+  than its pad"), everything else is a new finding.
+CUMBIA_PROPOSAL (measured 2026-09-28, no sound changed):
+  The conflict is 0.02 s: Lilt Sub release 0.26 vs Lilt Keys release 0.24 — the only one of the bass/pad pairs out of
+  order (parsed table: next-smallest margins modalJazz +0.02, dubEcho +0.03, rootsReggae +0.08).
+  Where the ring really comes from: offbeatEighths hits are 2 steps long (BassGrammar:96-99), i.e. one eighth = 0.3125 s
+  at 96 BPM, and the next onset follows 0.3125 s after note-off. EchoelDDSP.noteOff (:1285) jumps to RELEASE from the
+  current level, so the decay (0.42) stops at note-off; what rings THROUGH the gap is the RELEASE — 0.26 s = 83 % of it.
+  The Lilt Sub comment credits the decay; that is wrong in mechanism, right in intent. Lilt Keys's comment
+  "0.004 + 0.26 + 0.24 fits inside [0.313 s]" is arithmetically false (sum 0.504 s).
+  The rule's purpose (#983 S2): the bass must not smear longer than the harmony. Cumbia inverts the roles on purpose
+  (pad = short chuck, bass = the lilt), which is idiomatic — but rootsReggae (Roll Sub 0.22 < Roots Organ 0.30) and dubEcho
+  (Dub Sub 0.32 < Echo Stab 0.35) play the SAME offbeat figure and satisfy the rule.
+  PROPOSAL, one step, ear-gated: device A/B of cumbia with Lilt Sub release 0.26 (today) vs 0.22 (the rootsReggae value on
+  the same figure; rings through 70 % of the gap instead of 83 %). If the lilt survives → adopt 0.22, correct both false
+  comments in the same commit, the rule stays general. If it does not → the rule is re-worded to its purpose for EVERY
+  genre, not exempted for one (candidate: "the bass release ends before its figure's next onset", which cumbia's 0.26 <
+  0.3125 meets) — a founder decision, drafted and re-measured over all genres only after the A/B. NOT recommended: lengthening Lilt Keys (defeats the chuck)
+  or a cumbia-only skip (unjustified exception, per order).
+NEXT_3_ACTIONS: 1) push the round; read Compile Check / Build for Testing / Run Tests (+ xcresult artifact id) for the
+  pushed code commit — Cumbia expected red, name any other failure  2) founder: resend the xcresult attachment; ear A/B for
+  the Cumbia proposal  3) no deploy; .deploy/release untouched
