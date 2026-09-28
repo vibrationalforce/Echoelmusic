@@ -352,10 +352,15 @@ final class TheLightingLookIsACanonicalParameterTests: XCTestCase {
         XCTAssertFalse(
             router.automatableDescriptors().map(\.keyPath).contains(Self.key),
             "binding the lighting parameter EARLY put it into the automatable set.")
+        // The expectation is built in REGISTRY order, because that is what the message and the
+        // router promise (`registry.all().filter`). It used to walk `automatableBases`, whose
+        // order is PolySynthVoice's and not the registry's — the same eleven keys in a different
+        // sequence, so this counterweight went red on a correct filter (triage of f84d4121e,
+        // case 4, since 4879829ec).
         XCTAssertEqual(
             router.modulatableDescriptors().map(\.keyPath),
-            PolySynthVoice.automatableBases.filter { base in
-                DDSPParameterCatalog.descriptors.contains { $0.keyPath == base }
+            DDSPParameterCatalog.descriptors.map(\.keyPath).filter { key in
+                PolySynthVoice.automatableBases.contains(key)
             },
             "the modulatable set is no longer exactly the eligible AUDIO parameters, in "
             + "registry order. ⚠️ This is a COUNTERWEIGHT (#343): if it goes red together with "

@@ -204,7 +204,17 @@ final class TheMIDI2SourceIsSwitchableTests: XCTestCase {
             the anchors moved. Re-anchor: a claim that cannot find its subject proves \
             nothing (#367).
             """)
-        XCTAssertTrue(routing.contains("no MIDI-CI"), """
+        // The note is a TRAILING COMMENT on the case line (`case midi2 // … no MIDI-CI`), so it
+        // cannot be found in the comment-stripped `routing` — that is why this assertion was
+        // red from its first commit (8116b3663; triage of f84d4121e, case 6). It reads the RAW
+        // case line instead: the note must sit on the `.midi2` declaration itself, which is
+        // stricter than "anywhere in the file" and cannot be satisfied by the ⛔ retraction
+        // block above the case.
+        let rawRouting = try text("Sources/Echoelmusic/Core/SignalRouting.swift")
+        let midi2Line = rawRouting.split(separator: "\n").first {
+            $0.trimmingCharacters(in: .whitespaces).hasPrefix("case midi2")
+        } ?? ""
+        XCTAssertTrue(midi2Line.contains("no MIDI-CI"), """
             The `.midi2` case no longer records that MIDI-CI is absent. It used to claim \
             "(+ MIDI-CI capability inquiry)" with ZERO code behind it — one occurrence in \
             all of `Sources/`, namely the claim — on the register that answers "which \

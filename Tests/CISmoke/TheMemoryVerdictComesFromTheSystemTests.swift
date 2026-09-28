@@ -113,8 +113,22 @@ final class TheMemoryVerdictComesFromTheSystemTests: XCTestCase {
     // MARK: - 4. counterweight — the surviving subtraction is labelled
 
     func testTheMisleadingByteCountIsStillLabelled() throws {
-        let code = try source()
-        XCTAssertTrue(code.contains("NOT this app's memory footprint"), """
+        // ⛔ This read `source()`, which is COMMENT-STRIPPED — and the label is a `///` doc
+        // comment, so the needle could never be found and the claim was red on a correct tree
+        // (triage of f84d4121e, case 16). The label is read from the RAW text now, and only
+        // from the contiguous doc block directly above the declaration, so it still means
+        // "labelled AT its declaration" and not "mentioned somewhere in the file".
+        let raw = try rawLines()
+        guard let decl = raw.firstIndex(where: { $0.contains("var usedMemoryBytes") }) else {
+            return XCTFail("`usedMemoryBytes` is gone from \(Self.owner) — re-anchor this claim (#454)")
+        }
+        var docBlock: [String] = []
+        var cursor = decl - 1
+        while cursor >= 0, raw[cursor].trimmingCharacters(in: .whitespaces).hasPrefix("///") {
+            docBlock.append(raw[cursor])
+            cursor -= 1
+        }
+        XCTAssertTrue(docBlock.joined(separator: "\n").contains("NOT this app's memory footprint"), """
             `usedMemoryBytes` lost the warning at its declaration. The property still holds \
             `physicalMemory − os_proc_available_memory()`, which names nothing; it is kept only \
             because it is public API. Without the label the next reader adopts the number, \
@@ -134,6 +148,19 @@ final class TheMemoryVerdictComesFromTheSystemTests: XCTestCase {
             throw XCTSkip("\(Self.owner) not reachable — source tree not co-located.")
         }
         return SourceText.codeOnly(try String(contentsOf: path, encoding: .utf8))
+    }
+
+    /// The owner file as written, comments included — for the ONE claim whose subject is a
+    /// doc comment. Everything else reads `source()`.
+    private func rawLines() throws -> [String] {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let path = root.appendingPathComponent(Self.owner)
+        guard FileManager.default.fileExists(atPath: path.path) else {
+            throw XCTSkip("\(Self.owner) not reachable — source tree not co-located.")
+        }
+        return try String(contentsOf: path, encoding: .utf8)
+            .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
     }
 
     /// Lines of a member, by BRACE-matched indentation rather than a line count (#408): this

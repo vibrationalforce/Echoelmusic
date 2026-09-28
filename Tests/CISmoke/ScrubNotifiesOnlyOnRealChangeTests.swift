@@ -369,7 +369,25 @@ final class ScrubNotifiesOnlyOnRealChangeTests: XCTestCase {
         // the file — it would have stayed green with the stamp moved into every event (which
         // defeats it completely) and, worse, it stayed green while the stamp sat in a branch the
         // cancel path could not reach. Pin it to the anchor branch's first two statements.
-        XCTAssertTrue(squashed.contains("if!scrubbing{scrubbing=truegestureSeq&+=1"), """
+        //
+        // ⚠️ "First two statements" became "first two statements AFTER the axis-dominance
+        // decline" with #392 (08e5cd5a9): a sideways sweep must not anchor a scrub, so the
+        // branch now opens with a guarded early `return` and ~60 lines of comment before the
+        // anchor. The adjacency needle `if!scrubbing{scrubbing=truegestureSeq&+=1` could no
+        // longer match and this claim was red for ~8 weeks behind #396 (triage of f84d4121e,
+        // case 13). The placement is pinned by ORDER instead: inside the ONE `if !scrubbing {`
+        // branch, the first `scrubbing = true` is immediately followed by the stamp, and no
+        // stamp occurs between the branch opening and that anchor.
+        let anchorStamp: Bool = {
+            let open = squashed.components(separatedBy: "if!scrubbing{")
+            guard open.count == 2 else { return false }        // exactly one anchor branch
+            let branch = open[1]
+            guard let anchor = branch.range(of: "scrubbing=true") else { return false }
+            let beforeAnchor = branch[..<anchor.lowerBound]
+            return branch[anchor.lowerBound...].hasPrefix("scrubbing=truegestureSeq&+=1")
+                && !beforeAnchor.contains("gestureSeq&+=1")
+        }()
+        XCTAssertTrue(anchorStamp, """
             The gesture stamp left the anchor branch. It has to be the thing that fires when a \
             NEW drag begins, because that is the only event the deferred cancel check can use to \
             recognise that the drag it saw end is no longer the drag in flight.

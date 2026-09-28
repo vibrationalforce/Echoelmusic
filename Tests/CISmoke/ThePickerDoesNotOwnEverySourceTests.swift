@@ -138,8 +138,12 @@ final class ThePickerDoesNotOwnEverySourceTests: XCTestCase {
     //     negative scan for the old sentences would match the ⛔ blocks that retract them (#491).
     func testBothDoorsSayThePickerOwnsOnlyItsOwnSources() throws {
         let text = try source(Self.studio)
+        // "THREE PUBLISHERS", not "THREE SOURCES", since #1319 (7606d9f11): the menu grew a
+        // fourth ENTRY ("Apple Health", which starts nothing) while the picker still owns three
+        // PUBLISHERS, and the doc reworded the count to match — keeping the qualifier this claim
+        // exists for. The needle stayed on the old noun (triage of f84d4121e, case 11).
         for phrase in ["Stop every bio publisher THIS PICKER OWNS",
-                       "Only one of the THREE SOURCES THIS PICKER OWNS"] {
+                       "Only one of the THREE PUBLISHERS THIS PICKER OWNS"] {
             XCTAssertTrue(text.contains(phrase), """
                 The doc summary "\(phrase)" is gone. Both doors previously claimed the bus had a \
                 single writer, and three slices each paid a cycle rediscovering that it does not. \

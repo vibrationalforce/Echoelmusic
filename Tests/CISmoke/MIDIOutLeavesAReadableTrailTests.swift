@@ -104,6 +104,7 @@ final class MIDIOutLeavesAReadableTrailTests: XCTestCase {
                           + "event-path entry points before trusting a green here.")
         }
         var offenders: [String] = []
+        var latched: [String] = []
         for (index, line) in lines.enumerated() where hot.contains(where: { line.contains($0) }) {
             let indent = line.prefix { $0 == " " }.count
             var cursor = index + 1
@@ -116,7 +117,11 @@ final class MIDIOutLeavesAReadableTrailTests: XCTestCase {
                     break
                 }
                 if body.contains("logOutcome(") || body.contains("EchoelCrashLog.breadcrumb(") {
-                    offenders.append(trimmed)
+                    if Self.isLatchedOneShot(lines, at: cursor) {
+                        latched.append(trimmed)
+                    } else {
+                        offenders.append(trimmed)
+                    }
                 }
                 cursor += 1
             }
@@ -134,6 +139,50 @@ final class MIDIOutLeavesAReadableTrailTests: XCTestCase {
             that is file I/O per event, from a timer — the audio-thread ban in everything but \
             name. Report state CHANGES only: port lifecycle and preference edges.
             """)
+
+        // ⭐ THE ONE EXCEPTION, AND WHY IT IS NOT A HOLE (2026-09-28, triage of f84d4121e,
+        // case 15). #1378 put a breadcrumb inside `noteOn` on purpose: a refused NON-FINITE
+        // velocity, reported through a ONE-SHOT latch — `if !latch { latch = true; log }` with
+        // the latch declared `false` and never written anywhere else. That costs one `write(2)`
+        // per process, not one per note, which is exactly the budget this claim protects. The
+        // claim used to be red on it for a reason that no longer exists (#367). The exemption is
+        // narrow by construction: the latch must be set on the line right after its `if`, and
+        // the file may write it exactly twice (the `false` declaration and that `true`). A reset
+        // anywhere turns it back into a per-event write and back into an offender — the two
+        // synthetic cases below drive that, so the exemption cannot quietly widen.
+        XCTAssertLessThanOrEqual(latched.count, 1, """
+            \(latched.count) latched breadcrumbs on an event path (\(latched.joined(separator: " | "))). \
+            One is #1378's non-finite-velocity report; a second is a new decision — name it here.
+            """)
+        let fakeBare = ["func noteOn(", "    logOutcome(\"x\")", "}"]
+        XCTAssertFalse(Self.isLatchedOneShot(fakeBare, at: 1),
+                       "an unlatched breadcrumb was classified as a one-shot — the exemption leaks")
+        let fakeReset = ["var seen = false", "func noteOn(", "    if !seen {", "        seen = true",
+                         "        logOutcome(\"x\")", "    }", "    seen = false", "}"]
+        XCTAssertFalse(Self.isLatchedOneShot(fakeReset, at: 4),
+                       "a latch that is RESET was classified as a one-shot — it fires per event")
+        let fakeLatched = ["var seen = false", "func noteOn(", "    if !seen {", "        seen = true",
+                           "        logOutcome(\"x\")", "    }", "}"]
+        XCTAssertTrue(Self.isLatchedOneShot(fakeLatched, at: 4),
+                      "the one-shot shape itself is no longer recognised — the classifier broke")
+    }
+
+    /// `if !<latch> {` within three lines above, `<latch> = true` on the line right after it,
+    /// and exactly two writes of `<latch>` in the whole file: its `var <latch> = false`
+    /// declaration and that `true`.
+    private static func isLatchedOneShot(_ lines: [String], at index: Int) -> Bool {
+        for back in 1...3 where index - back >= 0 {
+            let head = lines[index - back].trimmingCharacters(in: .whitespaces)
+            guard head.hasPrefix("if !"), head.hasSuffix("{") else { continue }
+            let name = String(head.dropFirst(4).dropLast()).trimmingCharacters(in: .whitespaces)
+            guard !name.isEmpty,
+                  name.allSatisfy({ $0.isLetter || $0.isNumber || $0 == "_" }),
+                  lines[index - back + 1].trimmingCharacters(in: .whitespaces) == name + " = true"
+            else { return false }
+            let writes = lines.filter { $0.contains(name + " = ") }
+            return writes.count == 2 && writes.contains { $0.contains("var " + name + " = false") }
+        }
+        return false
     }
 
     // MARK: - Helpers

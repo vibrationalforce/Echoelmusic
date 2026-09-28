@@ -148,12 +148,7 @@ final class LaunchLogsWhatItWokeUpWithTests: XCTestCase {
     func testTheCallSitsInsideOnAppearAfterEveryRestoreItClaims() throws {
         let lines = try rawLines(Self.sourceFile)
 
-        // `excluding: "}"` (2026-09-25): #1331 added a ONE-LINE `.onAppear { … }` further down
-        // the file (the buffer-tier row), which made this anchor ambiguous and the claim red on
-        // a correct tree. A closure that closes on its own line cannot be the root block.
-        guard let openIndex = soleIndex(of: ".onAppear {", in: lines, label: "the root .onAppear",
-                                        excluding: "}"),
-              let clampIndex = soleIndex(of: "MusicStyle.offered.contains(style)", in: lines,
+        guard let clampIndex = soleIndex(of: "MusicStyle.offered.contains(style)", in: lines,
                                          label: "the genre-roster clamp"),
               let touchIndex = soleIndex(of: "syncTouchSound() }", in: lines,
                                          label: "the launch touch-patch restore"),
@@ -161,19 +156,39 @@ final class LaunchLogsWhatItWokeUpWithTests: XCTestCase {
                                         label: "the breadcrumb call", excluding: "func ")
         else { return }   // soleIndex already recorded the failure
 
-        // Walk to the line that closes `.onAppear {`.
-        var depth = 0
-        var closeIndex: Int?
-        for i in openIndex..<lines.count {
-            let code = Self.stripComment(lines[i])
-            depth += code.filter { $0 == "{" }.count
-            depth -= code.filter { $0 == "}" }.count
-            if depth <= 0 { closeIndex = i; break }
+        // The ROOT `.onAppear` is the one whose closure CONTAINS the restore clamp. It used to
+        // be found as "the only multi-line `.onAppear {` in the file", and that anchor broke
+        // twice: #1331 added a one-line `.onAppear { … }` (answered with `excluding: "}"`), and
+        // WA4-P2 (b4c2179bf) added a second multi-line one on the chip ScrollView, which made
+        // the claim red on a correct tree (triage of f84d4121e, case 9). Selecting by
+        // containment asks the question the claim is about, and still reports red — never
+        // quiet — if zero or two closures contain the clamp.
+        var rootClosures: [(open: Int, close: Int)] = []
+        for (i, raw) in lines.enumerated() {
+            let code = Self.stripComment(raw)
+            guard code.contains(".onAppear {"), !code.contains("}") else { continue }
+            var depth = 0
+            for j in i..<lines.count {
+                let inner = Self.stripComment(lines[j])
+                depth += inner.filter { $0 == "{" }.count
+                depth -= inner.filter { $0 == "}" }.count
+                if depth <= 0 {
+                    if i < clampIndex && clampIndex < j { rootClosures.append((i, j)) }
+                    break
+                }
+            }
         }
-        guard let end = closeIndex else {
-            XCTFail("could not find the line closing `.onAppear {` (opened at line \(openIndex + 1))")
+        guard rootClosures.count == 1, let root = rootClosures.first else {
+            XCTFail("""
+            expected exactly ONE `.onAppear {` closure in \(Self.sourceFile) that contains the \
+            genre-roster clamp (line \(clampIndex + 1)), found \(rootClosures.count) at lines \
+            \(rootClosures.map { $0.open + 1 }). The ordering this file guards cannot be checked \
+            while the root closure is ambiguous or gone, so it reports red rather than quiet.
+            """)
             return
         }
+        let openIndex = root.open
+        let end = root.close
 
         XCTAssertTrue(callIndex > openIndex && callIndex < end, """
         `\(Self.emitter)()` is at line \(callIndex + 1), outside the root `.onAppear` closure \

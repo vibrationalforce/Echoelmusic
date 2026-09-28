@@ -144,17 +144,18 @@ final class OneChromeControlHeightTests: XCTestCase {
         }
     }
 
-    /// The header tiles are the REFERENCE, so both 38-wide ones must be on the constant too.
-    /// Split from the case above only because they share one anchor and a count of 2 is the
-    /// assertion rather than an ambiguity.
-    func testBothSmallHeaderTilesAreOnTheConstant() throws {
+    /// The header tiles are the REFERENCE, so the 38-wide one must be on the constant too.
+    /// ⛔ This was "both" and pinned 2 (clips + Lux) — the clips tile went with the video
+    /// capture (#1304, 122724de3), so the count read 1 on a correct tree and the claim was red
+    /// for a reason that no longer exists (triage of f84d4121e, case 17). Renamed with it (#374).
+    func testTheSmallHeaderTileIsOnTheConstant() throws {
         let lines = try codeLines(Self.monitors)
         let hits = lines.filter { $0.contains(".frame(width: 38, height: EchoelTheme.controlHeight)") }.count
-        XCTAssertEqual(hits, 2, """
-            Expected exactly 2 header tiles at 38 × controlHeight (clips and Lux), found \
-            \(hits). These two plus the 54-wide immersive tile are the size the founder \
-            named as the reference; if one drifts back to a literal, the thing every other \
-            control is being measured against has itself moved.
+        XCTAssertEqual(hits, 1, """
+            Expected exactly 1 header tile at 38 × controlHeight (Lux), found \(hits). It plus \
+            the 54-wide immersive tile are the size the founder named as the reference; if it \
+            drifts back to a literal, the thing every other control is being measured against \
+            has itself moved. A second one is a new tile — raise this count with it.
             """)
     }
 

@@ -55,11 +55,13 @@ final class TheGenreListsMatchTheirOwnCountTests: XCTestCase {
     private static let spelled: [String: Int] = [
         "Thirty-two": 32, "Thirty-three": 33, "Thirty-four": 34, "Thirty-five": 35,
         "Thirty-six": 36, "Thirty-seven": 37, "Thirty-eight": 38, "Thirty-nine": 39,
-        "Forty": 40,
+        "Forty": 40, "Forty-one": 41, "Forty-two": 42, "Forty-three": 43, "Forty-four": 44,
+        "Forty-five": 45,
         "Zweiunddrei\u{00DF}ig": 32, "Dreiunddrei\u{00DF}ig": 33, "Vierunddrei\u{00DF}ig": 34,
         "F\u{00FC}nfunddrei\u{00DF}ig": 35, "Sechsunddrei\u{00DF}ig": 36,
         "Siebenunddrei\u{00DF}ig": 37, "Achtunddrei\u{00DF}ig": 38, "Neununddrei\u{00DF}ig": 39,
-        "Vierzig": 40,
+        "Vierzig": 40, "Einundvierzig": 41, "Zweiundvierzig": 42, "Dreiundvierzig": 43,
+        "Vierundvierzig": 44, "F\u{00FC}nfundvierzig": 45,
     ]
 
     /// Claim 1 — every OFFERED genre's display name appears on every enumerating surface.

@@ -165,13 +165,23 @@ final class TheCaptureTapDoesNotTouchTheDiskTests: XCTestCase {
             `drainFrame` is being wrapped. It is ABSOLUTE on purpose; `writeRange` does the only
             modulo this design needs.
             """)
-        // The honest half must stay written down too: a future reader has to know the ordering
-        // is NOT fenced, or the next person to touch the tap will assume it is.
-        XCTAssertTrue(text.contains("What is NOT held is the ORDERING"), """
-            The note recording that the cursor publish carries no release/acquire pair is gone.
-            Either the fence was added — then say so here and replace this needle in the same
-            commit — or the limitation was deleted while it still applies, which is worse than
+        // The honest half must stay written down too. Until #1429 that half was "the ordering
+        // is NOT fenced"; #1429 (40bed1424) added the fence — `RetroRingCursor` publishes and
+        // acquires with `OSMemoryBarrier()`, pinned by `TheRingCursorPublishesWithABarrierTests`
+        // — and rewrote the note, but left this needle on the retired sentence (triage of
+        // f84d4121e, case 2). What the note now records as NOT held is the set of
+        // plain cells beside the cursor; that is the limitation a reader must still be told.
+        XCTAssertTrue(text.contains("THE ORDERING IS HELD SINCE #1429") && text.contains("enum RetroRingCursor"), """
+            The note recording that the cursor ordering is fenced (#1429) — or the fence itself,
+            `enum RetroRingCursor` — is gone. If the fence was removed, the note has to say the
+            ordering is NOT held again, in the same commit; a silent removal is worse than
             never having written it down.
+            """)
+        XCTAssertTrue(text.contains("WHAT IS STILL NOT SYNCHRONISED"), """
+            The note naming what is still NOT synchronised (`writeFailure`, `droppedFrames`,
+            `isActive` as plain cells) is gone. Either those cells were fenced — then say so here
+            and replace this needle in the same commit — or the limitation was deleted while it
+            still applies.
             """)
     }
 

@@ -57,7 +57,10 @@ final class TheHomePageLeadsWithTheMechanismTests: XCTestCase {
     /// Claim 3 — the overview's EchoelVis row sells the playable picture.
     func testTheOverviewSellsThePlayablePicture() throws {
         let html = try text("docs/overview.html")
-        guard let row = html.range(of: "<h4>EchoelVis</h4>") else {
+        // The row's heading level is not the claim: #1399 (accessibility, 2026-09-20) moved the
+        // engine rows from <h4> to <h3> so the outline has no skipped level, and a needle pinned
+        // to <h4> then reported the row "gone" while its text was intact. Either level anchors.
+        guard let row = html.range(of: "<h3>EchoelVis</h3>") ?? html.range(of: "<h4>EchoelVis</h4>") else {
             return XCTFail("the EchoelVis row is gone from docs/overview.html (#1238)")
         }
         XCTAssertTrue(String(html[row.upperBound...].prefix(700)).contains("your fingers become notes"),

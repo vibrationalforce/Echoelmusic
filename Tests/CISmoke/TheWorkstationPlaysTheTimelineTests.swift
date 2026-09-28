@@ -472,10 +472,15 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
         // loader snaps (`RegionNoteWindow.stepAligned`) and a predicate that skipped the snap
         // would dim Play over content the loader does play. A mutation run found this gap:
         // dropping the snap left every other claim here green.
-        let offGrid = TimelineRegion(laneID: midi.id, clipID: clip.id,
+        // The region must point at the clip it is handed. It used to name `clip.id` while the
+        // document carried only `snapped` — a fresh `Clip` with its own UUID — so the lookup
+        // missed before any window was computed and this claim was red on a predicate that
+        // does snap (since fa21213a9; triage of f84d4121e, case 8). A lookup miss proves
+        // nothing about the snap; this line is what makes the claim test what it names.
+        let snapped = Self.midiClip([Note(pitch: 60, startStep: 4)])   // tick 480
+        let offGrid = TimelineRegion(laneID: midi.id, clipID: snapped.id,
                                      startTick: 0, lengthTicks: Self.bar,
                                      contentOffsetSeconds: 0.52)
-        let snapped = Self.midiClip([Note(pitch: 60, startStep: 4)])   // tick 480
         XCTAssertTrue(Self.startable(TimelineDocument(lanes: [midi], regions: [offGrid]),
                                      clips: [snapped], bpm: 120), """
             The predicate must snap the window onto the 16th grid exactly as `loadClip` does. \

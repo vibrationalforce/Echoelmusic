@@ -84,9 +84,17 @@ final class GenreBatchSixATests: XCTestCase {
         let otherHungarian = MusicStyle.allCases.filter {
             $0 != .blackMetal && $0.scale == .hungarianMinor
         }
-        XCTAssertTrue(otherHungarian.isEmpty, """
-            \(otherHungarian.map(\.rawValue)) also use hungarianMinor. The case doc rests the \
-            whole separation on the mode being this genre's alone.
+        // ⛔ This asserted the set was EMPTY. #1295b (55dc34dce) gave `balkanModal` the same
+        // scale on purpose, retracted the case doc's "used by no other genre" in the same
+        // commit, and moved the separation to four other axes that GenreBatchElevenDTests
+        // claim 3 pins. The claim was red on a correct tree (triage of f84d4121e, case 21).
+        // What survives is the stronger form: EXACTLY that one sharer, so a THIRD
+        // hungarianMinor genre is still a visible decision here rather than a silent overlap.
+        XCTAssertEqual(otherHungarian.map(\.rawValue), ["balkanModal"], """
+            \(otherHungarian.map(\.rawValue)) use hungarianMinor besides blackMetal. balkanModal \
+            shares it on purpose (#1295b) and is told apart by voicing, progression, arpeggiation \
+            and register (GenreBatchElevenDTests claim 3). Anything else is a new overlap — \
+            separate it on the same axes and name it here.
             """)
         // The counterweight that keeps the sharing honest: if nobody else carried the power
         // chord, the doc's "shared on purpose" would be a sentence about nothing.

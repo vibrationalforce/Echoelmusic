@@ -180,7 +180,12 @@ final class TheAutomatableSetHasOneWriterTests: XCTestCase {
     @MainActor
     func testBrightnessIsAutomatableOnlyWhileItsSentinelIsOutOfRange() throws {
         let dsp = try codeText(Self.ddsp)
+        // `EchoelParameterRegistry.init()` is EMPTY; the app registers the catalog at start.
+        // Without this line the lookup below could never succeed, so this case reported
+        // "left the registry" on every tree and none of its three invariants ever ran
+        // (triage of f84d4121e, case 5).
         let registry = EchoelParameterRegistry()
+        registry.register(DDSPParameterCatalog.descriptors)
         guard let brightness = registry.descriptor(for: "ddsp.osc.brightness") else {
             return XCTFail("`ddsp.osc.brightness` left the registry — re-anchor this case (#454).")
         }

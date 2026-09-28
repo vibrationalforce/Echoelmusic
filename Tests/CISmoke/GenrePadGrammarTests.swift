@@ -101,8 +101,16 @@ final class GenrePadGrammarTests: XCTestCase {
                     // kind of construct #689 had to re-measure before trusting, and a closure
                     // costs nothing. `\.padGrammar` below is a key path onto a TYPE and is fine.
                     let starts = onsets.map { $0.start }
-                    XCTAssertEqual(starts, starts.sorted(),
-                                   "\(grammar) resolved out of order at secStart \(secStart)")
+                    // ⛔ AN ASCENDING-ORDER ASSERTION STOOD HERE, red since this file was born
+                    // (cdf9edee3; triage of f84d4121e, case 7). `onsets` walks the HITS in phase
+                    // order and places each at the first matching step of the section, so in a
+                    // section that does not start on a bar line an early phase wraps into the
+                    // next bar: pushedOffbeats at secStart 5 resolves [19, 7, 11, 15]. The doc
+                    // promises "resolved into this section's ABSOLUTE steps, clipped to it" —
+                    // not an order — and the one consumer (`BioComposer`'s pad branch) writes a
+                    // note per onset and plays by `startStep`, so order changes nothing audible.
+                    // Clipping and uniqueness are the contract and stay asserted. If a consumer
+                    // ever needs sorted onsets, sort in the resolver and re-add the assertion.
                     XCTAssertEqual(Set(starts).count, onsets.count, """
                         \(grammar) resolved two hits onto the SAME step at secStart \(secStart) \
                         len \(secLen). The composer's take is one bar, so at most one step per \

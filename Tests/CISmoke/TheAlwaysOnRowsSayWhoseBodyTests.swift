@@ -271,7 +271,7 @@ final class TheAlwaysOnRowsSayWhoseBodyTests: XCTestCase {
     ///    `Set(0...6)` — cannot fail for its named reason (#367): adding `case emg = 7` leaves
     ///    both sides untouched and the test green. `BioSource` is not `CaseIterable`, so the
     ///    only thing that actually sees a new case is the declaration itself.
-    func testTheSourceSetIsStillTheSevenClaimOneEnumerates() throws {
+    func testTheSourceSetIsStillTheSixClaimOneEnumerates() throws {
         let lines = try codeLines("Sources/Echoelmusic/Core/EngineBus.swift")
         // Double-anchored (#619b/#621b): both must be unique, so a rename fails loudly here
         // instead of silently selecting the wrong region.
@@ -298,8 +298,11 @@ final class TheAlwaysOnRowsSayWhoseBodyTests: XCTestCase {
             guard let eq = s.firstIndex(of: "=") else { return true }   // implicit raw value
             return Int(s[s.index(after: eq)...].trimmingCharacters(in: .whitespaces)) != nil
         }
-        XCTAssertEqual(declared.count, 7, """
-            `BioSource` declares \(declared.count) cases, not the seven claim 1 enumerates: \
+        // SIX since #1301 (fab8054b2, 2026-09-12) removed `faceCam` with the face input; claim 1
+        // already lists six (fallback + five bodies), and this count stayed at seven — red on a
+        // correct tree (triage of f84d4121e, case 10). The method name followed the number.
+        XCTAssertEqual(declared.count, 6, """
+            `BioSource` declares \(declared.count) cases, not the six claim 1 enumerates: \
             \(declared.map { $0.trimmingCharacters(in: .whitespaces) }). A new source must be \
             added to that list AND decided — is it a body, or is it generated? Nothing else in \
             this bundle would notice, because `BioSource` is not CaseIterable.

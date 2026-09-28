@@ -107,9 +107,13 @@ final class FXPanelReachesEveryChainTests: XCTestCase {
             <mirror> } }` — field by field, never a whole nested struct, because `EchoelDelay` \
             and friends carry per-chain delay-line state.
             """)
-        XCTAssertGreaterThanOrEqual(fanned, 60, """
+        // ⛔ The floor was 60 and #1305 (012766562) removed the harmonizer and granular stages
+        // by founder decision, taking 12 observers with them (70 → 58, measured on both sides
+        // of that commit). The anti-vacuity floor moved with the surface, as the message below
+        // asks; it did not move because a fan-out broke (triage of f84d4121e, case 18).
+        XCTAssertGreaterThanOrEqual(fanned, 58, """
             only \(fanned) fanned-out `didSet` observers found in `FXViewModel`, expected at \
-            least 60 (there were 63 when #318 shipped).
+            least 58 (63 when #318 shipped, 70 before #1305 removed harmonizer + granular).
 
             This is the anti-vacuity half: the assertion above passes trivially if the \
             observers stopped existing. If the surface genuinely shrank, lower this number in \

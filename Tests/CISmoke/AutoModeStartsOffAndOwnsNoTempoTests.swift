@@ -529,16 +529,22 @@ final class AutoModeStartsOffAndOwnsNoTempoTests: XCTestCase {
             body's "calms the figure" half of the visual claim is then a no-op — the \
             shader reads THIS product, not `vp.complexity`.
             """)
-        for (host, needle) in [
-            ("Sources/Echoelmusic/Studio/FloatingVisualWindow.swift", "autoAttuned: autoMode"),
-            ("Sources/Echoelmusic/Studio/ExternalDisplayScene.swift", "autoAttuned: autoMode"),
-            // #609b (review finding 3): the third host. It was pinned while UNREACHABLE
-            // (#270, `showVisual` had no true-writer) so the flag could not silently rot out
-            // of the copy that would wake up with a door. #747 built that door, so this host
-            // is live and the pin is now an ordinary one — the foresight paid off rather than
-            // expiring.
-            ("Sources/Echoelmusic/Studio/EchoelStudioView.swift", "autoAttuned: autoMode"),
-        ] {
+        // ⛔ A THIRD HOST STOOD IN THIS LIST: `EchoelStudioView.swift`. #609b pinned it while it
+        // was unreachable, #747 gave it a door — and #1069 (8577ff6bf) DELETED that full-screen
+        // host, so the list demanded a flag from a file that no longer constructs a
+        // `MetalBioView` at all, and this claim was red on a correct tree (#250; triage of
+        // f84d4121e, case 12). A hand-written host list is exactly how a new or a vanished
+        // instance goes unnoticed, so the list is now CHECKED against a census of every
+        // construction site in `Sources/`: a new instance without the flag, or a host that
+        // stops constructing one, both turn this red.
+        let hosts = ["Sources/Echoelmusic/Studio/FloatingVisualWindow.swift",
+                     "Sources/Echoelmusic/Studio/ExternalDisplayScene.swift"]
+        XCTAssertEqual(try Self.metalBioViewConstructionSites(), Set(hosts), """
+            The files that construct `MetalBioView(` are no longer exactly the two hosts this \
+            claim checks. Every instance must receive `autoAttuned: autoMode` — add a new host \
+            to `hosts`, or remove a vanished one, in the same commit.
+            """)
+        for (host, needle) in hosts.map({ ($0, "autoAttuned: autoMode") }) {
             let code = try source(host)
             XCTAssertTrue(code.contains(needle), """
                 \(host) no longer passes `autoAttuned: autoMode` into `MetalBioView`. \
@@ -720,6 +726,28 @@ final class AutoModeStartsOffAndOwnsNoTempoTests: XCTestCase {
     }
 
     private struct AnchorMissing: Error { let reason: String }
+
+    /// Every file under `Sources/` with a CODE line constructing `MetalBioView(` — comments
+    /// stripped, because several files name the view in prose.
+    private static func metalBioViewConstructionSites() throws -> Set<String> {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let sources = root.appendingPathComponent("Sources")
+        guard FileManager.default.fileExists(atPath: sources.path),
+              let walker = FileManager.default.enumerator(atPath: sources.path) else {
+            throw XCTSkip("source tree not present under \(root.path)")
+        }
+        var sites: Set<String> = []
+        for case let relative as String in walker where relative.hasSuffix(".swift") {
+            let text = try String(contentsOf: sources.appendingPathComponent(relative), encoding: .utf8)
+            let constructs = text.split(separator: "\n").contains { line in
+                let code = line.components(separatedBy: "//").first ?? ""
+                return code.contains("MetalBioView(")
+            }
+            if constructs { sites.insert("Sources/" + relative) }
+        }
+        return sites
+    }
 
     private func source(_ relativePath: String) throws -> String {
         let here = URL(fileURLWithPath: #filePath)
