@@ -95,6 +95,34 @@ final class SectionHeadingIsOneTreatmentTests: XCTestCase {
             """)
     }
 
+    /// The collapsible heading (#1068) is a second BUILDER, not a second TREATMENT. Its label must
+    /// spell exactly what `groupHeader` spells — 11 pt semibold (the weight that maps onto the
+    /// Bold face) in `dim` — or accepting it above would reopen the #362 drift through a door
+    /// the heading list cannot see. Same five-line window as the claim above.
+    func testTheCollapsibleHeaderIsTheSameTreatment() throws {
+        let studio = try codeLines(Self.studio)
+        guard let def = studio.firstIndex(where: {
+            $0.contains("private func collapsibleGroupHeader(_ title: String, isOpen: Binding<Bool>)")
+        }) else {
+            return XCTFail("""
+                `collapsibleGroupHeader` is gone from EchoelStudioView. If the Field panel's \
+                disclosure headings were folded back into `groupHeader`, drop the alternative \
+                from `testEverySectionHeadingCallsTheBuilder` in the same commit; if the builder \
+                was renamed, re-anchor here.
+                """)
+        }
+        let body = studio[def..<min(def + 8, studio.count)].joined(separator: "\n")
+        XCTAssertTrue(body.contains("Text(title)"), "the disclosure heading no longer labels itself with its title")
+        XCTAssertTrue(body.contains(".font(EchoelTheme.font(11, .semibold))"), """
+            `collapsibleGroupHeader`'s label is no longer 11 pt semibold — the Field panel's \
+            disclosure headings now read differently from every other section heading (#362).
+            """)
+        XCTAssertTrue(body.contains(".foregroundStyle(EchoelTheme.dim)"), """
+            `collapsibleGroupHeader`'s label is no longer `dim` — it would sit at the weight \
+            and colour of the panel title (#362).
+            """)
+    }
+
     /// The mapping `groupHeader` depends on, pinned where it lives. Without this, someone
     /// could "tidy" `EchoelTheme.font`'s switch and turn every heading in the app back into
     /// Regular with no test anywhere going red.
@@ -128,13 +156,29 @@ final class SectionHeadingIsOneTreatmentTests: XCTestCase {
         // the plot is parked and a heading with nothing under it is a promise of content that
         // is not there, so it came out with it. Restoring the plot means restoring the heading
         // AND this entry in the same commit — that pairing is exactly what this list is for.
-        for title in ["Look", "Signal", "Voice", "Self-play"] {
-            XCTAssertTrue(joined.contains("groupHeader(\"\(title)\")"), """
-                The "\(title)" section heading no longer calls `groupHeader`. It was one of \
-                the seven #362 unified; spelling a heading inline is how the panels drifted \
-                apart in the first place, and the drift is invisible in a per-file review \
-                because each panel stays consistent with itself.
+        //
+        // ⛔ THIS LOOP WAS RED FOUR TIMES SINCE 765f616e6 (#1068), ONCE PER TITLE, on a correct
+        // tree. #1068 made the Field panel's "Look", "Voice" and "Self-play" groups collapsible,
+        // so they call `collapsibleGroupHeader("X", isOpen: …)` — a needle of `groupHeader("X")`
+        // cannot match that (capital G, and a comma after the title). Both builders are the ONE
+        // treatment; `testTheCollapsibleHeaderIsTheSameTreatment` below pins that, so accepting
+        // either call keeps the #362 guarantee instead of loosening it.
+        // ⛔ AND "Signal" LEFT THE PANEL WITH ITS WHOLE BLOCK ON 2026-08-13 (#575, 45764be75,
+        // founder: "Das Brauch da nicht sein"). Like "Body" above it is no longer asked to be
+        // PRESENT — but it stays in the inline-spelling ban below, so it cannot return in the
+        // old 10 pt form either.
+        for title in ["Look", "Voice", "Self-play"] {
+            let viaBuilder = joined.contains("groupHeader(\"\(title)\")")
+                || joined.contains("collapsibleGroupHeader(\"\(title)\",")
+            XCTAssertTrue(viaBuilder, """
+                The "\(title)" section heading no longer calls `groupHeader` or \
+                `collapsibleGroupHeader`. It was one of the seven #362 unified; spelling a \
+                heading inline is how the panels drifted apart in the first place, and the \
+                drift is invisible in a per-file review because each panel stays consistent \
+                with itself.
                 """)
+        }
+        for title in ["Look", "Signal", "Voice", "Self-play"] {
             XCTAssertFalse(joined.contains("Text(\"\(title)\").font(EchoelTheme.font(10"), """
                 The "\(title)" heading is spelled inline at 10 pt again. That size came with \
                 `.medium`, a weight this app cannot render — see the header.
