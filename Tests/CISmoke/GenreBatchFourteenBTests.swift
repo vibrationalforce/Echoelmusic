@@ -85,9 +85,17 @@ import XCTest
 
 final class GenreBatchFourteenBTests: XCTestCase {
 
-    // MARK: - 1 · The genre is offered, and its shelf now holds two
+    // MARK: - 1 · The genre is offered, and shares its shelf with cumbia
 
-    func testTheGenreIsOfferedAndTheShelfHoldsTwo() {
+    /// ⛔ THIS WAS `…AndTheShelfHoldsTwo` AND ASSERTED THE SHELF IS EXACTLY `{cumbia, tangoMarcato}`.
+    /// #1382 (275fba7b8) put `andeanHighland` on the same shelf on purpose and moved the exact-set
+    /// claim to `GenreBatchFourteenCTests` claim 1 ("holds three"), but left this one saying two —
+    /// red since. The guard this slice owns is narrower: THIS genre and its shelf-opener are both
+    /// OFFERED and both on the shelf, so the picker cannot render a section that silently omits
+    /// one. That is asserted as containment here; the whole roster stays pinned in ONE place, so a
+    /// fourth resident moves one line, not two (#416). Renamed because the old name became a false
+    /// statement (#374).
+    func testTheGenreIsOfferedAndSharesTheShelfWithCumbia() {
         let style = MusicStyle.tangoMarcato
         XCTAssertEqual(style.displayName, "Tango Marcato")
         XCTAssertTrue(MusicStyle.offered.contains(style),
@@ -96,8 +104,11 @@ final class GenreBatchFourteenBTests: XCTestCase {
 
         // The shelf `cumbia` opened (#1357) stops being a one-genre drawer. Both must be
         // OFFERED, or the picker renders a section that silently omits one.
-        let residents = MusicStyle.offered.filter { $0.subcategory == .latinAmerica }
-        XCTAssertEqual(Set(residents), [.cumbia, .tangoMarcato])
+        let residents = Set(MusicStyle.offered.filter { $0.subcategory == .latinAmerica })
+        XCTAssertTrue(residents.isSuperset(of: [.cumbia, .tangoMarcato]), """
+            the Latin America shelf offers \(residents.map(\.rawValue).sorted()) — cumbia and \
+            tangoMarcato must both be on it and both be offered
+            """)
 
         // And `.folk`'s shelves stay contiguous — no new shelf was added by this slice, so this
         // is a counterweight: it must read exactly as it did before.
