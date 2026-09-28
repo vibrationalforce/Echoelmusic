@@ -919,3 +919,11 @@ macht, je eine Scheibe mit Wächter:
 Leser) · Drum-Anmutung (#167) · „Arm for recording" als Mikrofon (#1302) · Neon/Glow (Uncodixfy).
 **PAUSIERT (Founder-Frage 4):** die Tablet-Domänen-Tabs Visual/Spatial/Light/Stream/XR; iPad als
 Instrumenten-Fläche (v1.0 = iPhone, Sensor-Grund). Zeile in `inspiration.csv`.
+
+## 2026-09-28 — Instagram-Reel „Anthropic's AI-Native SDLC Playbook" (@aiwithbuntyshah)
+
+Founder-Upload, 51,6 s, 14 Einzelbilder gelesen; Ton ohne Transkript, eingebrannte Untertitel nur bruchstückhaft. Der zitierte Blogpost (claude.com/blog, Aug 2026) ist von hier nicht prüfbar; die Wochenzahlen nennt das Reel selbst „illustrative".
+
+- **Schon da (keine Übernahme):** CLAUDE.md als Team-Regeln · Skills als Regel-Schicht · Datei-Spur je Stufe (PLAN_*.md, EXECUTION_CHECKPOINT, decisions.csv, SESSION_LOG) · Check-Fix-Schleife (Ralph + sieben Prüfskripte) · Reviewer-Agenten.
+- **ADOPT-PIPELINE-Kandidat, Founder entscheidet:** Schicht 2 „Hooks, die blockieren". Gemessen: `.claude/settings.json` trägt nur einen SessionStart-Hook. Die founder-gesperrten Pfade sind reine Prosa — genau der Fall „one slips past" aus dem Reel. Ein PreToolUse-Hook auf Edit/Write für `.github/workflows/**`, `project.yml`, `Resources/iOS/Info.plist`, `.deploy/release` wäre die kleinste Übernahme.
+- **WATCH:** „Autor gibt nicht frei" — Agenten-Code erreicht main per Auto-Merge nach zwei Gates; menschliche Freigabe sitzt bei TestFlight/Gerät (#1405, bewusst). **WATCH:** Geräte-Monitoring — MetricKit kommt in `Sources/` nicht vor; wäre Produktcode, nicht in einer Reparaturrunde.
