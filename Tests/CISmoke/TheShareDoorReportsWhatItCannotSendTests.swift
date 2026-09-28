@@ -107,12 +107,70 @@ final class TheShareDoorReportsWhatItCannotSendTests: XCTestCase {
         let viaOptional = try XCTUnwrap(good.encoded())
         let viaThrowing = try good.encodedThrowing()
 
-        XCTAssertEqual(viaOptional, viaThrowing, """
-            Adding the throwing form must not change a single byte on the wire. If these \
-            diverge, someone gave one path an `outputFormatting` or a date strategy the other \
-            does not have — which is the two-definitions failure (#416) that claim 7 exists to \
-            prevent, arriving through the back door instead.
+        // ⛔ THIS COMPARED THE RAW BYTES, and was red on f84d4121e with two 106-byte values
+        // that differed (triage case 19). Both forms are ONE call — `encoded()` is
+        // `try? encodedThrowing()`, which is `try JSONEncoder().encode(self)` — so unequal
+        // bytes of equal length from one call cannot be a second definition; they are the
+        // default encoder writing keyed containers in an order it does not promise (no
+        // `.sortedKeys`). The WIRE CONTRACT is what a peer's `ColabPayload.decode` reads,
+        // and that is order-free. What this claim guards survives in two halves that key
+        // order cannot move: the decoded value is identical, and the bytes are the same
+        // MULTISET — an `outputFormatting` (`.prettyPrinted` adds whitespace,
+        // `.withoutEscapingSlashes` drops backslashes) or a different float/date strategy
+        // changes the multiset, so the #416 back door this was written for still reds.
+        // Claim 2b drives the hypothesis itself.
+        XCTAssertEqual(ColabPayload.decode(viaOptional), ColabPayload.decode(viaThrowing), """
+            The two forms decode to different values. That is a second definition of the \
+            wire format (#416), not key order — claim 7 exists to prevent exactly this.
             """)
+        XCTAssertEqual(viaOptional.sorted(), viaThrowing.sorted(), """
+            The two forms write different BYTES, not just a different key order. If these \
+            diverge, someone gave one path an `outputFormatting` or a strategy the other does \
+            not have — the two-definitions failure (#416) claim 7 exists to prevent.
+            """)
+    }
+
+    /// Claim 2b — the EXPERIMENT the triage owed (founder 2026-09-28: investigate the key-order
+    /// hypothesis by running Swift, do not infer it). It encodes ONE value repeatedly, each
+    /// time through a fresh default `JSONEncoder` — exactly what `encodedThrowing()` does per
+    /// call — and asserts the one thing the hypothesis predicts: every encoding, whatever its
+    /// order, canonicalises (`JSONSerialization` with `.sortedKeys`) to the SAME bytes. The
+    /// raw distinct-count is recorded as a named attachment in the result
+    /// bundle, because the job log is a 200-line tail (Tests/CISmoke/CLAUDE.md §5, #807).
+    /// Reading it: count > 1 with this claim green CONFIRMS the hypothesis (the order moves,
+    /// nothing else does); count == 1 means this run did not reproduce the variation, which
+    /// is not a refutation. RED means something other than order differs — then claim 2's
+    /// relaxation was wrong and must be undone.
+    @MainActor
+    func testRepeatedEncodingsDifferOnlyInKeyOrder() throws {
+        let peek = BioPeek(bpm: 61.5, coherence: 0.25, hrvNormalized: 0.75, breathRate: 5.5)
+        let value = ColabPayload(kind: "bio", senderName: "me", bio: peek)
+        var distinct: [Data] = []
+        for _ in 0..<64 {
+            let bytes = try value.encodedThrowing()
+            if !distinct.contains(bytes) { distinct.append(bytes) }
+        }
+        let canonical: [Data] = try distinct.map { raw in
+            let object = try JSONSerialization.jsonObject(with: raw)
+            return try JSONSerialization.data(withJSONObject: object, options: [.sortedKeys])
+        }
+        // The evidence goes into the result bundle as a named attachment (the name carries the
+        // count). `@MainActor` on this method, because XCTest's activity/attachment API is
+        // main-actor-isolated under Swift 6 and nothing else in this bundle calls it yet.
+        let text = distinct.map { String(decoding: $0, as: UTF8.self) }.joined(separator: "\n")
+        let attachment = XCTAttachment(string: text)
+        attachment.name = "ColabPayload distinct raw encodings over 64 calls: \(distinct.count)"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        XCTAssertEqual(Set(canonical).count, 1, """
+            \(distinct.count) distinct raw encodings of ONE value canonicalise to \
+            \(Set(canonical).count) different documents. Something other than key order varies \
+            between calls — claim 2's order-free comparison is then too weak; undo it.
+            """)
+        for raw in distinct {
+            XCTAssertEqual(ColabPayload.decode(raw), value,
+                           "an encoding of the value does not decode back to it")
+        }
     }
 
     // MARK: - 3. The share door asks the form that keeps the error
