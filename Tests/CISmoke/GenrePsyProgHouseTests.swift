@@ -90,7 +90,22 @@ final class GenrePsyProgHouseTests: XCTestCase {
         XCTAssertLessThan(prog.delayMix, psy.delayMix, "the chord stays legible under the echo")
         XCTAssertLessThan(prog.delayFeedback, psy.delayFeedback)
         XCTAssertTrue(prog.chorusEnabled); XCTAssertFalse(psy.chorusEnabled)
-        XCTAssertTrue(prog.reverbEnabled); XCTAssertFalse(psy.reverbEnabled)
+        // ⛔ `XCTAssertFalse(psy.reverbEnabled)` STOOD HERE AND WAS RED SINCE THIS FILE WAS
+        // WRITTEN (0a1ba7ce1, 2026-09-04): `fxPreset` is not the genre arm, it is the arm plus
+        // the audit-A3 ROOM FLOOR (0687996ef, 2026-07-04), which switches a subtle room on for
+        // every arm that designs none. psytrance designs none, so its PUBLIC preset has reverb
+        // on — the arm is dry, the preset is not. The distinction the line meant survives
+        // intact and is asked here as it is heard: psy-prog DESIGNS a room, psytrance only gets
+        // the floor, so prog's room is both wetter and larger. No floor number is restated
+        // here (#416) — it lives once, in `fxPreset`.
+        XCTAssertTrue(prog.reverbEnabled)
+        XCTAssertGreaterThan(prog.reverbMix, psy.reverbMix, """
+            psytrance's reverb is only the room floor; psy-prog's is a designed room and must \
+            sit audibly wetter, or the two presets share a space.
+            """)
+        XCTAssertGreaterThan(prog.reverbRoom, psy.reverbRoom, """
+            psy-prog's medium room must be larger than the floor psytrance falls back to.
+            """)
         XCTAssertGreaterThan(prog.reverbRoom, MusicStyle.techHouse.fxPreset.reverbRoom)
         XCTAssertLessThan(prog.reverbRoom, MusicStyle.detroitTechno.fxPreset.reverbRoom)
         let otherPingPongFourOnFloor = MusicStyle.offered.filter {
