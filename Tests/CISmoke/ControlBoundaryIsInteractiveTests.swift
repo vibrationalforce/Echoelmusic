@@ -180,12 +180,16 @@ final class ControlBoundaryIsInteractiveTests: XCTestCase {
             \(offenders.map { $0.trimmingCharacters(in: .whitespaces) })
             """)
         let interactive = source.filter { $0.contains("EchoelTheme.borderStrong") }
-        XCTAssertEqual(interactive.count, 4, """
-            #367: this file should carry exactly FOUR interactive outlines — the pulse \
-            monitor, Immersive, Lux, Clips. Found \(interactive.count). If a fifth chrome \
-            element was added, add it to `EchoelTheme.borderStrong`'s applied-to list in the \
-            same commit and raise this number; that list is the contract and it has already \
-            drifted twice.
+        // ⛔ This pinned FOUR, and the fourth was the Clips tile — deleted with the video
+        // capture (#1304, founder 2026-09-12 "Kein Video Capture"), so the pin was red on a
+        // correct tree. The count follows the tiles, not the other way round; the offenders
+        // check above is untouched and still bans the decorative token on every survivor.
+        XCTAssertEqual(interactive.count, 3, """
+            #367: this file should carry exactly THREE interactive outlines — the pulse \
+            monitor, Immersive, Lux. Found \(interactive.count). If a chrome element was \
+            added or removed, update `EchoelTheme.borderStrong`'s applied-to list in the \
+            same commit and move this number; that list is the contract and it has already \
+            drifted three times.
             """)
     }
 

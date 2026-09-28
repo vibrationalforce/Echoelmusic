@@ -71,8 +71,8 @@ enum EchoelTheme {
     /// compositing is the conservative choice, not a flattering one.
     ///
     /// Applied to: the front-plate tab chips, the Notes chip, `EchoelValueField` and its
-    /// fader capsule, `EchoelNumberPad`'s keys, the always-on header tiles (Immersive, Lux,
-    /// Clips), the pulse monitor — which since #289 sits in the studio's control row, NOT in
+    /// fader capsule, `EchoelNumberPad`'s keys, the always-on header tiles (Immersive, Lux —
+    /// ⛔ Clips stood here; its tile went with the video capture, #1304), the pulse monitor — which since #289 sits in the studio's control row, NOT in
     /// the header (the first version of this line said "beside them", inventing an adjacency
     /// from file order the way the paragraph below warns about) — the header overflow-menu
     /// button, `masterDoorButton`, and, since #367, the primary transport Play/Pause
