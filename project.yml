@@ -275,12 +275,17 @@ targets:
       # to it (more-refined than the Comparable one), so the plugin's shared DDSP
       # gets the same NaN→lowerBound safety as the app. Foundation-only; no Core types.
       - path: Sources/Echoelmusic/Core/FloatingPointClamp.swift
-    resources:
       # Privacy manifest: the extension uses a required-reason API (App-Group
       # UserDefaults via BioFeedbackManager) — each shipped .appex bundles the
       # shared manifest (App Store audit 2026-07-16; same pattern as the app).
+      # Under `sources:` with `buildPhase: resources`, like the app and the
+      # widget. Until 2026-09-28 this sat under a target-level `resources:` key,
+      # which XcodeGen 2.42.0 does not read (see the note on the app target), so
+      # the .appex shipped WITHOUT a manifest since #1385 (founder release
+      # 2026-09-28, scope: this entry only).
       - path: Resources/PrivacyInfo.xcprivacy
         type: file
+        buildPhase: resources
     info:
       path: Resources/EchoelmusicAUv3/Info.plist
       properties:
