@@ -3,10 +3,11 @@
 Rules: `memory/preferences.md` § "Orchestrator hardening". This file is NOT a roadmap — product order
 lives in `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` and the canonical PLAN_* files. Overwrite, don't append.
 
-CURRENT_HEAD: 33a70c329 (+ docs commits) on claude/echoelmusic-review-optimize-u5jjpd (PUSHED; the checked-out local branch
-  feature/media-seed-2026-09-27 mirrors it). Review base dfe9525e6 · review commit 9d479f922 (22 commits
+CURRENT_HEAD: e9999dc58 (+ docs commit d4a3ee216) on claude/echoelmusic-review-optimize-u5jjpd (PUSHED; the checked-out local
+  branch feature/media-seed-2026-09-27 mirrors it). Review base dfe9525e6 · review commit 9d479f922 (22 commits
   media workstation + EchoelAI, transcribed only, NEVER compiled before step 1 below).
-CURRENT_MAIN: 33a70c329 (auto-merge moved main after Compile Check 36357182443 + BfT 36357182490 went green).
+CURRENT_MAIN: 33a70c329 at the time of writing; e9999dc58's Compile Check 36407799896 + BfT (run 36407799979) are green, so auto-merge
+  is expected to move main to e9999dc58 — READ, do not assume (`mcp__github__list_commits` on main).
 CODEX HANDOVER (portable, outside the worktree — scratchpad `codex-handover/`): full bundle in 4 parts
   (sha256 3131556d…) · thin bundle from dfe9525e6 · FABLE_REVIEW_9d479f922.md · IMPORT_ANLEITUNG.md ·
   SHA256SUMS.txt. Verified with `git bundle verify` and a fresh import (both SHAs + diff readable).
@@ -43,6 +44,23 @@ REPAIR ROUND on 9d479f922 (founder release 2026-09-27; per package: SHA · findi
                                                   · Run Tests job 108728801787: #396 shape, 169 pass / 0 fail IN THE
                                                   WINDOW (1701 s gap); none of this round's suites in the window →
                                                   execution unrecorded (#445/#807), compile proven
+  5.1     1cf2f92af  generation re-checked after  — Sources: EchoelCommandExecutor (`betweenSteps` seam, default Task.yield;
+          EVERY suspension between steps;          `.projectChanged` on the step after an Open, rest `.notRun`; group stamped
+          claim 11 rewritten onto the seam,          with the PLAN generation). Compile Check 36406926161 SUCCESS (on 60565f846,
+          claim 12 = real Save/Open in the gap       covers) · Compile Check 36407799896 SUCCESS (e9999dc58)
+  5.2     60565f846  own later level writes move   — Sources: EchoelCommandExecutor (`noteOwnLevelWrite`: change + Undo restore
+          own journal marks; claim 4 (a) one        advance the `write` mark of own `.level` entries; check unchanged, hand
+          request two changes → one Undo, (b) two    re-entry still blocks). BfT 36406925949 FAIL: test-only compile error
+          requests → two Undos, (c) hand re-entry    (await inside XCTAssertEqual's autoclosure, ×10) → repaired in e9999dc58
+          still blocks
+  fix     e9999dc58  claim 4 awaited results bound — Compile Check 36407799896 SUCCESS · BfT run 36407799979 job 108880923546
+          to locals                                  step 9 SUCCESS · Run Tests: see RUN_TESTS_e9999dc58 below
+  docs    d4a3ee216  Photism → V1–V4 plan + 2 decisions — docs only, no gate (#1176)
+RUN_TESTS_e9999dc58: PENDING at the time of writing (job 108880923546 step 11 in progress) — the next line to overwrite.
+  ⚠️ The complete result bundle (`test-results-ios-iPhone 17`, xcresult) exists as an artifact but its download host
+  (productionresultssa*.blob.core.windows.net) is denied by this environment's network policy → only the 200-line window is
+  readable here; a suite absent from the window = execution unrecorded (#445/#807), never "passed".
+  Reach: `EchoelCommandExecutor(` has 0 production callers → 5.1/5.2 were LATENT API defects, not reachable user errors.
   Not repaired, reported (user-impact order): MED-9 video import copies the full file before the duration check,
   no cancel button (temp copy removed, newer pick cancels) · MED-11 meter warning colour-only · LOW rest ·
   Codex 2 (look half): a same-value re-entry of a LOOK parameter is indistinguishable and is taken back
@@ -56,13 +74,15 @@ REPAIR ROUND on 9d479f922 (founder release 2026-09-27; per package: SHA · findi
 CURRENT_INVARIANTS: no new modal (11 on the chain, ceiling 14) · no hot read in host bodies · one media-look
   writer (`MediaLookUndo`) · executor writes only through the button writers (claim 8 allow-list: document ·
   documentGeneration · laneLevelWrites) · CLAUDE.md < 150,000 B · .deploy/release NOT touched · no TestFlight
-LAST_GREEN_COMPILE: Compile Check 36357182443 on 33a70c329
-LAST_GREEN_TEST: BfT 36357182490 on 33a70c329
+LAST_GREEN_COMPILE: Compile Check 36407799896 on e9999dc58
+LAST_GREEN_TEST: BfT run 36407799979 (job 108880923546 step 9) on e9999dc58
 KNOWN_RED_GATE: CI/CD conclusion red on every push (#396) — read the "Build for Testing" step · two PRE-EXISTING
   red guards in the blocking bundle, both in main before this round: #249 TheDetectedTempoIsHonestTests claim 12
   (since 6f88bb3d7) · #250 AutoModeStartsOffAndOwnsNoTempoTests claim 9 (`autoAttuned: autoMode` left
   EchoelStudioView with #1069) — founder decides whether this round fixes them
 FOUNDER_PENDING: device checks for the whole media/agent stack (nothing here is device-verified) · #249/#250 ·
   MED-9 cancel button · "0.0 dB → 0.0 dB" wording · TestFlight (NOT triggered, per order)
-NEXT_3_ACTIONS: 1) founder: read the final report; decide #249/#250, MED-9, the "0.0 dB → 0.0 dB" wording  2) final report (repaired / open / SHAs / gates / device checks)
-  3) no new features; the next Sources slice only on a green 33a70c329
+VISUAL_PLAN: Photism principles → V1–V4 in `scratchpads/PLAN_MEDIA_SEED_2026-09-27.md` §7 (planned 2026-09-28, NOT released;
+  V1(c) = AudioFeatureChannel producer as a MASTER-output tap, audio-thread review mandatory; MPE two-note acceptance blocked).
+NEXT_3_ACTIONS: 1) founder: decide V1 release (audio tap first) and #249/#250, MED-9, the "0.0 dB → 0.0 dB" wording
+  2) read RUN_TESTS_e9999dc58 when the job ends and overwrite the line above  3) no new features; no TestFlight
