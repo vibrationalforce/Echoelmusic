@@ -1000,7 +1000,9 @@ struct EchoelStudioView: View {
         var area: StudioArea {
             switch self {
             case .workstation, .composition, .mood:          return .compose
-            case .sound, .effects, .mix, .master, .bio:      return .perform
+            // Bio first ON PURPOSE: `SaveDoorNamingTests` finds the chip strip as the FIRST
+            // line spelling the strip's opening pair, so no other line may start that way.
+            case .bio, .sound, .mix, .effects, .master:      return .perform
             case .field:                                     return .visuals
             case .export:                                    return .settings
             }
@@ -3146,6 +3148,9 @@ struct EchoelStudioView: View {
     private func selectArea(_ area: StudioArea) {
         guard let home = Self.areaHome(area) else {
             // Library → the existing project-library sheet, exactly as the "open" door does.
+            // The three medium-detent sheets leave this row tappable underneath; opening a
+            // second modal over one of them is the two-modals hang. Close yours first.
+            guard !showRouting, !showAllFX, !showLiveColabo else { return }
             openNote = nil
             showOpen = true
             return
