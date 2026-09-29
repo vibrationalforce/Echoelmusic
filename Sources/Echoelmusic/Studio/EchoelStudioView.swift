@@ -9539,6 +9539,7 @@ struct EchoelStudioView: View {
         let autosaved = projects.projects.filter { $0.id == Project.autosaveSlotID }
         return NavigationStack {
             List {
+                ProjectSaveStatusView()
                 if let importNote {
                     // WHY A PLAIN LINE AND NOT AN ALERT — the same reason as `exportFailure`
                     // (#216; its line lives in `startControlRow` since #993, not one screen up
@@ -9642,7 +9643,8 @@ struct EchoelStudioView: View {
                         _ = try projects.importProject(fromDocument: url)
                         importNote = nil
                     } catch {
-                        importNote = ProjectStore.importFailureNote(error)
+                        importNote = ProjectStore.isPersistenceFailure(error)
+                            ? nil : ProjectStore.importFailureNote(error)
                     }
                 case .failure(let error):
                     // ⚠️ CANCELLING IS NOT A FAILURE TO REPORT, and this branch is written to
@@ -11752,7 +11754,7 @@ struct EchoelStudioView: View {
         let takeIsLive = hasComposed && !pianoRoll.notes.isEmpty
         guard let row = SessionSaveOpen.recoveryRow(
             live: withSession(take), takeIsLive: takeIsLive, songHasUserParts: songHasUserParts,
-            existingSlot: projects.project(id: Project.autosaveSlotID)) else { return }
+            existingSlot: projects.recoveryProject(id: Project.autosaveSlotID)) else { return }
         projects.save(row)
     }
 

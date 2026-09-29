@@ -10,12 +10,20 @@ public final class ProjectStore {
 
     /// Saved projects, newest first.
     public private(set) var projects: [Project] = []
+    public private(set) var saveError: String?
+    public private(set) var lastSavedAt: Date?
+
+    @ObservationIgnored private var pendingProjects: [Project]?
+    @ObservationIgnored private let writeProjects: ([Project]) -> Bool
+    public var hasPendingSave: Bool { saveError != nil }
 
     @ObservationIgnored private let store: AppGroupStore
     @ObservationIgnored private let fileName = "projects.json"
 
-    public init(store: AppGroupStore = AppGroupStore()) {
+    public init(store: AppGroupStore = AppGroupStore(),
+                writeProjects: (([Project]) -> Bool)? = nil) {
         self.store = store
+        self.writeProjects = writeProjects ?? { store.save($0, name: "projects.json") }
         // Element-tolerant (see AppGroupStore.loadLossyArray): one unreadable project is
         // dropped instead of taking the whole library down with it — the previous decode
         // returned nil for the entire file and the next save wrote the emptied list back.
@@ -25,25 +33,33 @@ public final class ProjectStore {
             .sorted { $0.savedAt > $1.savedAt }
     }
 
-    /// Insert or update a project (matched by id), then persist. Returns the saved
-    /// project (with a refreshed `savedAt`).
+    /// Attempt to save a project. The returned snapshot has a refreshed date;
+    /// only a successful write updates the confirmed library. Failure is retained
+    /// in saveError and can be retried without discarding the pending snapshots.
     @discardableResult
     public func save(_ project: Project) -> Project {
         var p = project
         p.savedAt = Date()
-        projects.removeAll { $0.id == p.id }
-        projects.insert(p, at: 0)
-        persist()
+        var next = pendingProjects ?? projects
+        next.removeAll { $0.id == p.id }
+        next.insert(p, at: 0)
+        persist(next)
         return p
     }
 
     public func delete(id: UUID) {
-        projects.removeAll { $0.id == id }
-        persist()
+        let next = (pendingProjects ?? projects).filter { $0.id != id }
+        persist(next)
     }
 
     public func project(id: UUID) -> Project? {
         projects.first { $0.id == id }
+    }
+
+    /// Recovery must also see snapshots retained after a failed disk write.
+    /// The visible library continues to contain confirmed writes only.
+    public func recoveryProject(id: UUID) -> Project? {
+        (pendingProjects ?? projects).first { $0.id == id }
     }
 
     // MARK: - Sharing (cross-device / community)
@@ -98,7 +114,9 @@ public final class ProjectStore {
     /// what the reachable door uses.
     public func importProject(fromDocument data: Data) throws -> Project {
         let p = try JSONDecoder().decode(Project.self, from: data)
-        return adoptArriving(p)
+        let imported = adoptArriving(p)
+        if saveError != nil { throw PersistenceFailure() }
+        return imported
     }
 
     /// Saves a take that came from OUTSIDE this device — a file or a Live Colabo peer — as a
@@ -156,6 +174,9 @@ public final class ProjectStore {
     /// were never a document), and printing "field: " with nothing after it would be the
     /// fabricated-detail defect this repo has paid for repeatedly (#424/#426/#433/#461).
     nonisolated public static func importFailureNote(_ error: Error) -> String {
+        if error is PersistenceFailure {
+            return "The file was read, but could not be saved. Retry the pending save."
+        }
         guard let decoding = error as? DecodingError else {
             // Everything that is not a decode problem: unreadable file, revoked permission,
             // a deleted iCloud placeholder. Deliberately NOT called "invalid session" — the
@@ -182,7 +203,30 @@ public final class ProjectStore {
             : "That file isn't a readable Echoel session — \(field)."
     }
 
-    private func persist() {
-        _ = store.save(projects, name: fileName)
+    /// Retry the exact pending library, including projects queued by later saves.
+    @discardableResult
+    public func retrySave() -> Bool {
+        guard let pendingProjects else { return true }
+        return persist(pendingProjects)
+    }
+
+    private struct PersistenceFailure: Error {}
+
+    nonisolated public static func isPersistenceFailure(_ error: Error) -> Bool {
+        error is PersistenceFailure
+    }
+
+    @discardableResult
+    private func persist(_ next: [Project]) -> Bool {
+        guard writeProjects(next) else {
+            pendingProjects = next
+            saveError = "Could not save this project. Your changes are still here. Free device storage or retry."
+            return false
+        }
+        projects = next
+        pendingProjects = nil
+        saveError = nil
+        lastSavedAt = Date()
+        return true
     }
 }

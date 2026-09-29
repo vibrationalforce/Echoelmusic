@@ -234,6 +234,7 @@ struct WorkspaceView: View {
                 }
                 .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                 Divider().overlay(EchoelTheme.border)
+                ProjectSaveStatusView()
                 // (The standalone Tempo row is gone — the tempo control moved UP into
                 //  the transport bar next to Play, founder 2026-07-15 "Das soll da oben
                 //  hin". Its vertical band is reclaimed for the timeline.)
