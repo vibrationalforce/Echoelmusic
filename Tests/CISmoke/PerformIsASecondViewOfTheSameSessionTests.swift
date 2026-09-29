@@ -175,6 +175,13 @@ final class PerformIsASecondViewOfTheSameSessionTests: XCTestCase {
         XCTAssertTrue(PerformSessionView.instrumentRunningNote.contains("Stop it in the header"),
                       "the note names the control that resolves it")
         XCTAssertTrue(PerformSessionView.instrumentRunningNote.contains("scene"))
+        // Review LOW: the toggle's spoken hint used to promise "Launch the song's scenes" in the
+        // one state where the scenes are hidden. It now names that state and its way out — the
+        // same Stop the note names.
+        XCTAssertTrue(PerformSessionView.sectionHint.contains("plays on its own"),
+                      "the hint names the state in which no scene is offered")
+        XCTAssertTrue(PerformSessionView.sectionHint.contains("stop it in the header"),
+                      "and the control that resolves it, the note's own Stop")
     }
 
     func testTheSectionAsksTheOneRunningTruthAndOpensOnDemand() throws {
@@ -199,6 +206,8 @@ final class PerformIsASecondViewOfTheSameSessionTests: XCTestCase {
         let toggle = try member("private var sectionToggle: some View {", in: leaf)
         XCTAssertTrue(toggle.contains(".frame(minHeight: 44)"), "a 44-pt target")
         XCTAssertTrue(toggle.contains(".accessibilityValue(isOpen ? \"Open\" : \"Closed\")"))
+        XCTAssertTrue(toggle.contains(".accessibilityHint(Self.sectionHint)"),
+                      "the toggle speaks the one hint that is true in both states")
         // #482: the Sound chip opens this panel, so its spoken name lists what it now reaches.
         let studio = try source(Self.studioPath)
         XCTAssertTrue(studio.contains(

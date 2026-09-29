@@ -50,6 +50,11 @@
 //        ⭐ Phase 3 / Automation A1 added `setSongAutomation` (the automation row's one writer,
 //        called from `Studio/SongAutomationEditor.swift`). The older per-point automation
 //        mutators stay caller-less on purpose — they write no undo step.
+//        ⭐ WA4 path 5 gave `resizeRegion` its caller (the part bar's Trim,
+//        `Studio/SelectedPartBar.swift`), and DMMW Phase 4 · slice 2 gave
+//        `setBuiltinInstrument` its caller (`TrackMix.setInstrument`, the inspector's
+//        Instrument row) plus a test. Of the untested nine, FOUR remain with neither:
+//        bootstrapIfNeeded · setAudioRegionWindow · setLaneOctave · setLaneSample.
 //   ·  8 used only inside this file — the previous six (automationLaneIndex,
 //        canCombineRegions, migrate, resolveOverlaps, restoreRegions, syncUndoFlags) PLUS
 //        `persist` (46 internal call sites, one per mutating path) and `snapshotForUndo`

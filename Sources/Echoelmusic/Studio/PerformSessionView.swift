@@ -124,10 +124,14 @@ struct PerformSessionView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(Self.sectionTitle)
         .accessibilityValue(isOpen ? "Open" : "Closed")
-        .accessibilityHint("Launch the song's scenes and mute or solo its tracks while you perform")
+        .accessibilityHint(Self.sectionHint)
     }
 
     static let sectionTitle = "Scenes and tracks"
+
+    /// Honest in both states: while the Echoel plays alone the section shows the Stop note in
+    /// place of the scenes, so the hint names that condition instead of promising a launch.
+    static let sectionHint = "Shows the song's scenes to launch on the bar, and Mute and Solo for its tracks. While the Echoel plays on its own, stop it in the header to launch a scene."
 
     /// One heard track's Mute/Solo state, read from the document — the ONE truth both views show.
     struct MixRow: Identifiable, Equatable, Sendable {
