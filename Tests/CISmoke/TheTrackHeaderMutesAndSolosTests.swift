@@ -16,6 +16,10 @@
 // 3. SOURCE: ONE door — `TimelineStore.toggleMute`/`toggleSolo` have exactly one production
 //    caller each (inside `TrackMix`), and the only callers of `TrackMix.flipMute`/`flipSolo` are
 //    the header's; the inspector draws neither any more.
+//    ⚠️ DMMW Phase 3 · slice 2 (2026-09-29) added the SECOND view of the same flags: the Perform
+//    plate's track rows (`PerformSessionView.mixRow`) call the same two `TrackMix` doors. This
+//    file still pins the Workstation's own count; the tree-wide census of both doors lives in
+//    `PerformIsASecondViewOfTheSameSessionTests`.
 //
 // Grading (§0, no Swift toolchain in a web session): claim 1 HAND-TRACED against `TrackMix` as
 // written; claims 2–3 driven in Python against this tree. On the parent (048b4c69c)

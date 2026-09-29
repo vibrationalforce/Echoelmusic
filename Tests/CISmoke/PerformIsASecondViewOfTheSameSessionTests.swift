@@ -31,9 +31,16 @@
 // computation and start/stop (the Workstation's path, unchanged). Transcribed in Python against
 // THIS tree (no toolchain here): each scan needle found, each ban absent.
 //
-// ⛔ HONEST LIMITS. Mute and part SWITCHING by tapping a single cell while stopped are not in
-// this slice: the grid's per-part launch is disabled while the song is stopped (a scene starts
-// it), and mute lives in the Workstation's track inspector. Both are the next Phase 3 slices.
+// 4. SLICE 2 — Mute and Solo. END-TO-END over a real `TimelineStore`: `mixRows` offers exactly
+//    the HEARD tracks (`TrackMix.controls(…).muteSolo`, the track header's rule), and a flip
+//    through `TrackMix.flipMute`/`flipSolo` is the same lane flag the Workstation's header reads.
+//    SOURCE: the switches write only through those two doors and speak `TrackMix.muteHint`/
+//    `soloHint`; 44-pt targets; toggle trait and value for VoiceOver.
+//    GRADING: `mixRows` is new, so again no verdict on the parent — FORWARD guards.
+//
+// ⛔ HONEST LIMITS. Part SWITCHING by tapping a single cell while stopped is not here: the grid's
+// per-part launch is disabled while the song is stopped (a scene starts it). Mute and Solo are
+// not undoable in either view — the store's toggles never were; the same truth in both places.
 // That the grid reads well on the Sound panel, on an iPhone, with VoiceOver, is a DEVICE PROBE.
 // NEEDS-FOUNDER-VERIFY: Compose → write a part → Perform → the part's bar appears as a scene →
 // "Launch scene" starts the song there → the header's Stop ends it; VoiceOver reads the scene.
@@ -149,6 +156,55 @@ final class PerformIsASecondViewOfTheSameSessionTests: XCTestCase {
                        ".popover(", "Timer", ".task", ".onReceive(", "launchRegion", "launchScene("] {
             XCTAssertFalse(leaf.contains(banned), "the Perform leaf must not use \(banned)")
         }
+    }
+
+    // MARK: 4 — slice 2: Mute and Solo, one lane flag seen from both views
+
+    func testPerformMutesTheSameLaneFlagComposeShows() {
+        let timeline = TimelineStore()
+        let originalDocument = timeline.document
+        restore.append { timeline.replaceDocument(originalDocument) }
+        let keys = TimelineLane(name: "Keys", kind: .midi)
+        let body = TimelineLane(name: "Body", kind: .midi, isBio: true)
+        let loop = TimelineLane(name: "Loop", kind: .audio)
+        let look = TimelineLane(name: "Look", kind: .visual)
+        timeline.replaceDocument(TimelineDocument(lanes: [keys, body, loop, look], regions: []))
+
+        let rows = PerformSessionView.mixRows(in: timeline.document, voiceCapacity: 0)
+        XCTAssertEqual(rows.map(\.id), [keys.id, loop.id], """
+            only HEARD tracks get a switch — the bio curve and a visual lane make no sound, so a \
+            Mute there would move nothing (#164/#227)
+            """)
+        XCTAssertEqual(rows.map(\.id).filter { id in
+            TrackMix.controls(of: id, in: timeline.document, voiceCapacity: 0)?.muteSolo == true
+        }, rows.map(\.id), "the rule is the track header's own (`TrackMix.controls`)")
+
+        TrackMix.flipMute(laneID: loop.id, timeline: timeline)
+        TrackMix.flipSolo(laneID: keys.id, timeline: timeline)
+        let after = PerformSessionView.mixRows(in: timeline.document, voiceCapacity: 0)
+        XCTAssertEqual(after.first { $0.id == loop.id }?.isMuted, true)
+        XCTAssertEqual(after.first { $0.id == keys.id }?.isSoloed, true)
+        // Compose's header reads the SAME document flags — no copy to drift.
+        XCTAssertEqual(timeline.document.lanes.first { $0.id == loop.id }?.isMuted, true)
+        XCTAssertEqual(timeline.document.lanes.first { $0.id == keys.id }?.isSoloed, true)
+        TrackMix.flipMute(laneID: loop.id, timeline: timeline)
+        XCTAssertEqual(PerformSessionView.mixRows(in: timeline.document, voiceCapacity: 0)
+                        .first { $0.id == loop.id }?.isMuted, false, "and a second tap clears it")
+    }
+
+    func testTheSwitchesWriteThroughTheTrackHeadersDoors() throws {
+        let leaf = try source(Self.leafPath)
+        let row = try member("private func mixRow(_ row: MixRow) -> some View {", in: leaf)
+        XCTAssertTrue(row.contains("TrackMix.flipMute(laneID: row.id, timeline: timeline)"))
+        XCTAssertTrue(row.contains("TrackMix.flipSolo(laneID: row.id, timeline: timeline)"))
+        XCTAssertTrue(row.contains("hint: TrackMix.muteHint(row.role)"), "one wording of what Mute does (#416)")
+        XCTAssertTrue(row.contains("hint: TrackMix.soloHint(row.role)"))
+        XCTAssertFalse(leaf.contains("toggleMute("), "never the store directly — `TrackMix` is the door")
+        XCTAssertFalse(leaf.contains("toggleSolo("))
+        let control = try member("private func mixSwitch(", in: leaf)
+        XCTAssertTrue(control.contains(".frame(minWidth: 44, minHeight: 44)"), "a 44-pt target")
+        XCTAssertTrue(control.contains(".accessibilityAddTraits(.isToggle)"))
+        XCTAssertTrue(control.contains(".accessibilityValue(on ? \"On\" : \"Off\")"))
     }
 
     // MARK: 3 — the words
