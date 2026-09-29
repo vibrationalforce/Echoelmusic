@@ -97,6 +97,9 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         // Phase 3 / Automation A1: the song automation's one writer, reached from
         // `Studio/SongAutomationEditor.swift`.
         "setSongAutomation",
+        // DMMW Phase 4 · slice 2: the track's instrument, reached through
+        // `TrackMix.setInstrument` (`Studio/TrackInspectorView.swift`).
+        "setBuiltinInstrument",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than

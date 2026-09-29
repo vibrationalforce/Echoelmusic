@@ -216,6 +216,43 @@ enum TrackMix {
             : "Plays only the soloed tracks. This also silences the Studio instrument, whose Start clears the solo"
     }
 
+    /// DMMW Phase 4 · slice 2 — the instruments a track can be switched to: exactly the kinds
+    /// the lane rack binds on a SECONDARY slot (`LaneVoiceRack.setKind` → `KindVoiceAllocator`),
+    /// so only on a `.laneSynth` track. NOT on the Echoel track: its kind sink swaps the
+    /// generative instrument's own voice (`rollKindSink`), which would replace the instrument
+    /// rather than choose a track's sound. The sampler is left out — it needs a sample before it
+    /// makes a sound, and this row assigns none. A legacy choice (EchoelDrums, EchoelBreak,
+    /// EchoelSampler) is kept as the current value by the row, never offered anew.
+    nonisolated static func instrumentChoices(_ role: Role) -> [TrackInstrument] {
+        guard case .laneSynth = role else { return [] }
+        return [.polySynth, .subBass, .bioVoice]
+    }
+
+    /// What the row shows as chosen: the lane's instrument, or EchoelSynth — the voice a lane
+    /// without one plays (`builtinInstrument?.voiceKind ?? .poly`, the player's own fallback).
+    nonisolated static func currentInstrument(of laneID: UUID, in document: TimelineDocument) -> TrackInstrument {
+        document.lanes.first(where: { $0.id == laneID })?.builtinInstrument ?? .polySynth
+    }
+
+    /// The Picker's entries: the choices, plus a legacy current value so the menu can show it.
+    nonisolated static func instrumentMenu(_ role: Role, current: TrackInstrument) -> [TrackInstrument] {
+        let choices = instrumentChoices(role)
+        guard !choices.isEmpty, !choices.contains(current) else { return choices }
+        return [current] + choices
+    }
+
+    /// The rack holds ONE sub-bass and ONE body voice (`LaneVoiceRack.attachAll`); a further track
+    /// that picks either plays the synth instead (`KindVoiceAllocator`: never silence).
+    nonisolated static let instrumentHint =
+        "The voice this track plays its parts with. EchoelBass and EchoelBodyVibe each play one track at a time; another track that picks one plays EchoelSynth"
+
+    /// One store write through the lane's existing writer (`setBuiltinInstrument`) — the field
+    /// the player already reads when a part loads (`MultiRollFanout.voiceKind`).
+    @MainActor
+    static func setInstrument(_ instrument: TrackInstrument, laneID: UUID, timeline: TimelineStore) {
+        timeline.setBuiltinInstrument(id: laneID, instrument)
+    }
+
     /// The effects a track can carry: every character with its OWN preset. `.auto` is not one —
     /// it means "the genre's effect", and a track does not own the genre (`soundingCharacter`).
     nonisolated static var effectChoices: [FXCharacter] {
@@ -338,6 +375,12 @@ struct TrackInspectorView: View {
                         openDeviceButton
                     }
                 }
+                // Phase 4 · slice 2 — which instrument this rack track plays (empty elsewhere).
+                let instruments = TrackMix.instrumentMenu(
+                    controls.role, current: TrackMix.currentInstrument(of: laneID, in: document))
+                if !instruments.isEmpty {
+                    instrumentRow(instruments)
+                }
                 // What this Echoel is set to — genre and FX character, read-only, from the
                 // instrument's own keys (`EchoelInstanceLine`; the inspector owns no persistence).
                 if controls.role == .echoelInstrument {
@@ -453,6 +496,26 @@ struct TrackInspectorView: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Open the Echoel instrument")
         .accessibilityHint("Shows its sound controls. The Workstation chip brings you back")
+    }
+
+    /// Phase 4 · slice 2 — the track's instrument, a NAMED choice (menu Picker, not a number).
+    /// Cold read of the song, one store write per choice.
+    private func instrumentRow(_ instruments: [TrackInstrument]) -> some View {
+        HStack(spacing: 8) {
+            Text("Instrument")
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+            Picker("Instrument", selection: Binding<TrackInstrument>(
+                get: { TrackMix.currentInstrument(of: laneID, in: timeline.document) },
+                set: { TrackMix.setInstrument($0, laneID: laneID, timeline: timeline) })) {
+                ForEach(instruments, id: \.self) { instrument in
+                    Text(instrument.displayName).tag(instrument)
+                }
+            }
+            .pickerStyle(.menu).tint(EchoelTheme.text)
+            .frame(minHeight: 44)
+            .accessibilityHint(TrackMix.instrumentHint)
+            Spacer(minLength: 0)
+        }
     }
 
     /// DC1 — the track's effect insert, a NAMED choice, so a menu Picker (the `EchoelValueField`
