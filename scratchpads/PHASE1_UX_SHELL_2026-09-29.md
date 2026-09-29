@@ -86,3 +86,45 @@ Dateien: `Studio/StudioArea.swift` (neu, rein), `Studio/EchoelStudioView.swift`,
 - **Die Zeile kostet eine Zeile Höhe** (44 pt) über der Platte.
 - **NEEDS-FOUNDER-VERIFY:** Aussehen, Passform auf dem Telefon und VoiceOver-Ansage sind
   nur am Gerät prüfbar.
+
+## Scheibe 2 — „Create a piece“ (Compose-Einstieg), 2026-09-29
+
+Commits: `c672c2adf` (Leitfaden) · `a28913e09` (Erststart öffnet Compose) · `0170f8ed1` (Review-Reparatur).
+
+**Was der Nutzer sieht.** Eine frische Installation öffnet jetzt die Workstation (Compose), und ganz
+oben auf der Platte steht die Karte „Create a piece“ mit fünf Schritten. Jeder Schritt ist eine Tür,
+die es schon gab:
+
+| Schritt | Aktion (bestehender Pfad) |
+|---|---|
+| 1 Add a MIDI track | `MIDIImport.addMIDITrack` |
+| 2 Add a part | `MIDIImport.addEmptyPart` (+ Auswahl der Region) |
+| 3 Write notes | wählt den ersten leeren Part → „Notes“ öffnet darauf |
+| 4 Play / Stop the song | `startTimeline(fromTick: 0)` / `player.stop()` — der EINE Workstation-Transport |
+| 5 Save the piece | Chrome-Tür „save“ (bestehender Save-Alert), Library öffnet es wieder |
+
+- Der Zustand jedes Schritts wird aus Dokument, Clip-Raster, `songCanStart()` und `isPlaying`
+  ABGELEITET (`ComposeGuide`, rein) — keine eigenen „erledigt“-Flags, also kein Widerspruch nach Undo.
+- Die Kopfzeile nennt den nächsten Schritt („Next: …“), keine Zählung, die rückwärts laufen kann.
+- Ein wartender Schritt bleibt sichtbar, ist deaktiviert und sagt, worauf er wartet.
+- Barrierefreiheit: 44-pt-Ziele, VoiceOver „Step N of 5, <Titel>, <Status>“ + Hint, Text bricht um statt
+  zu schrumpfen, keine Wisch- oder Fokus-Aktion.
+- Gesetze: kein neuer Modal (Save über die Chrome-Tür), kein Hot-Read im `body`, die Platten-`VStack`
+  hat jetzt 9 Kinder (#936: eins frei).
+- Bestehende Installationen behalten die Platte, die ihr Spieler zuletzt gewählt hat. Safe Mode schreibt
+  jetzt `false` (Sound) statt den Schlüssel zu löschen, weil der Default `true` ist.
+
+Wächter: `ThePlateShowsHowAPieceIsMadeTests` (neu) · `TheWorkstationHasADoorTests` Claim G invertiert
+(nicht gestrichen) · `ANewMIDIPartOpensTheNoteEditorTests` Claim 4 liest die Nadeln aus `newMIDIPart()`.
+
+**Offen / bewusst nicht gebaut:**
+- globaler, dauerhaft sichtbarer Transport + Projektkopf (Instrument- und Workstation-Transport sind
+  weiter getrennt)
+- Perform als eigene Ansicht desselben Projekts (heute: Area „Perform“ → Sound-Platte)
+- Instrumentenwahl je Spur
+- Noten EINSPIELEN in die Leitfaden-Spur (Record-Arm nur auf Rack-Spuren, `RecordTake.canArm`)
+- „Notes“ öffnet nicht automatisch (ein Tipp mehr)
+- Save im Leitfaden ignoriert den Instrument-Take (`pianoRoll.notes`), `WorkstationProjectRow` zählt ihn
+  mit — Reparatur braucht ein Blatt (Freeze-Gesetz)
+- Library = nur Projekte
+- NEEDS-FOUNDER-VERIFY: Aussehen, Passform, VoiceOver-Ansage am Gerät
