@@ -9912,9 +9912,10 @@ struct EchoelStudioView: View {
             }
             .buttonStyle(.plain)
             .accessibilityHint(Self.libraryRowHint)
-            // Slice 3 — delete without a horizontal swipe: VoiceOver's actions rotor, and the
-            // row's long-press menu below. Both call the ONE writer the swipe calls.
-            .accessibilityAction(named: "Delete") { deleteFromLibrary(p) }
+            // Slice 3 — delete without a horizontal swipe: the row's long-press menu below.
+            // ⛔ No `.accessibilityAction(named: "Delete")` here (review of 648799434, LOW): the
+            // List's `.onDelete` already gives every row VoiceOver's "Delete" action, and a
+            // second one would list Delete twice in the rotor.
             // Slice 4 — Rename, offered only where it can hold: never on the recovery slot,
             // whose name every autosave rewrites (`ProjectStore.rename` refuses it too).
             .accessibilityActions {
@@ -9955,10 +9956,11 @@ struct EchoelStudioView: View {
         }
     }
 
-    /// DMMW Phase 5 · slice 3 — the ONE library delete for a single row, shared by the VoiceOver
-    /// action and the long-press menu. The swipe keeps its own `IndexSet` handlers, each mapped
-    /// through its OWN section's array (`LibraryAutosaveSectionTests`); all three reach
-    /// `ProjectStore.delete(id:)`, which also forgets the header's name when it was the open row.
+    /// DMMW Phase 5 · slice 3 — the ONE library delete for a single row, called by the long-press
+    /// menu. The swipe — and VoiceOver's Delete action, which `.onDelete` provides — keeps its
+    /// own `IndexSet` handlers, each mapped through its OWN section's array
+    /// (`LibraryAutosaveSectionTests`); both reach `ProjectStore.delete(id:)`, which also forgets
+    /// the header's name when it was the open row.
     private func deleteFromLibrary(_ p: Project) {
         projects.delete(id: p.id)
     }
@@ -12119,7 +12121,16 @@ struct EchoelStudioView: View {
     private func open(_ p: Project) {
         if p.id != Project.autosaveSlotID { autosaveTake() }
         // DMMW Phase 1 · slice 3 — the persistent project header names what was opened.
-        projects.noteCurrent(p)
+        // ⛔ Review of b884e7a52 (HIGH): `noteCurrent` SKIPS the recovery slot, so opening the
+        // Autosave row used to leave the PREVIOUS row as the open project — and since Phase 5 ·
+        // slice 2 the Save alert then offered "Save changes", writing the recovered take over that
+        // other piece under its name, with no undo. What is open after a recovery is no named
+        // project: say so, and the alert offers the one Save (a new row).
+        if p.id == Project.autosaveSlotID {
+            projects.clearCurrent()
+        } else {
+            projects.noteCurrent(p)
+        }
         // Same clamp as launch: a project saved before the genre re-curation (#125) can
         // carry a style that is no longer offered, which would leave the picker showing
         // nothing selected while that genre composed every take. Bound ONCE and reused

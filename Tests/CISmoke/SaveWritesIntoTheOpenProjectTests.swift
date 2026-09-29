@@ -26,6 +26,9 @@
 // FORWARD guards, no verdict on the parent. Claim 2 is red on the parent by anchor absence
 // (`saveIntoOpenProject`, "Save changes") — one absence, not several (#486). The counterweights
 // (the recovery slot, delete, clearCurrent) are premises this slice relies on and did not change.
+// Added with the review of b884e7a52 (HIGH): opening the AUTOSAVE row clears the open project —
+// before, it kept the previous row open, and "Save changes" overwrote that piece with the recovered
+// take. Red on b884e7a52 by anchor absence (the branch did not exist): one finding.
 // ⛔ HONEST LIMITS. Alert button rendering and VoiceOver reading are a DEVICE PROBE. The
 // library row keeps its place only by `storeRow`'s "newest first" — a Save changes moves the
 // piece to the top, which is the store's rule for every write, not something this slice chose.
@@ -177,6 +180,39 @@ final class SaveWritesIntoTheOpenProjectTests: XCTestCase {
             """)
         XCTAssertEqual(code.components(separatedBy: "showSaveDialog = true").count - 1, 2,
                        "the two doors, and no third that skips the prefill")
+    }
+
+    /// ⛔ Review of b884e7a52 (HIGH). `noteCurrent` skips the recovery slot, so opening the
+    /// Autosave row left the PREVIOUS row as the open project, and "Save changes" then wrote the
+    /// recovered take over that other piece under its name. After a recovery nothing named is
+    /// open: `open(_:)` must forget the open id for the slot and note it for every other row.
+    func testOpeningTheAutosaveRowLeavesNoPieceToSaveOver() throws {
+        let code = try source(Self.studio)
+        let open = try member("private func open(_ p: Project) {", in: code)
+        guard let branch = open.range(of: "if p.id == Project.autosaveSlotID {"),
+              let clear = open.range(of: "projects.clearCurrent()"),
+              let otherwise = open.range(of: "} else {"),
+              let note = open.range(of: "projects.noteCurrent(p)") else {
+            return XCTFail("ANCHOR MISSING: open(_:)'s open-project branch (#454)")
+        }
+        XCTAssertTrue(branch.upperBound <= clear.lowerBound && clear.upperBound <= otherwise.lowerBound
+                        && otherwise.upperBound <= note.lowerBound,
+                      "the recovery slot clears the open project; every other row becomes it")
+        XCTAssertEqual(open.components(separatedBy: "projects.noteCurrent(").count - 1, 1,
+                       "no unconditional noteCurrent left beside the branch")
+
+        // The store half the branch relies on, end to end: after a recovery the alert's
+        // condition (`currentProjectName != nil`) is false and there is no id to save over.
+        let store = isolatedStore("recover")
+        store.save(take(named: "B"))
+        var auto = take(named: Project.autosaveNamePrefix + "Session")
+        auto.id = Project.autosaveSlotID
+        store.save(auto)
+        store.noteCurrent(auto)
+        XCTAssertNotNil(store.currentProjectID, "noteCurrent alone skips the slot — the defect's premise")
+        store.clearCurrent()
+        XCTAssertNil(store.currentProjectName)
+        XCTAssertNil(store.currentProjectID)
     }
 
     func testTheOpenIdHasOneOwner() throws {

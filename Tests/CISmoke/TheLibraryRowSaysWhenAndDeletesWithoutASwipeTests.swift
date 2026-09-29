@@ -4,25 +4,29 @@
 //   · `Project.savedAt` was stored on every row and shown on none — two saves of one piece read
 //     identically, and the only way to tell them apart was to open one.
 //   · Delete existed ONLY as the List's horizontal swipe (`.onDelete`), and a full swipe deletes at
-//     once. VoiceOver users reach a swipe only through a gesture they must know; nobody else had a
-//     second road at all.
+//     once. VoiceOver already reaches it — `.onDelete` gives each row a "Delete" action — but a
+//     sighted player without the swipe had no second road at all.
+//     ⛔ The first version of this header said VoiceOver reached the swipe "only through a gesture
+//     they must know" and added its own Delete action; that duplicated the one `.onDelete` already
+//     provides (review of 648799434, LOW). The action is gone and claim 1 now forbids it.
 //
 // What the slice does, on the existing owners (no modal, no store method, no new presentation
 // modifier — `.contextMenu` is not one):
 //   · a third caption line, `Self.savedLine(p.savedAt)`;
 //   · the open button is at least 44 pt tall and carries a VoiceOver hint;
-//   · "Delete" as a VoiceOver action and as the row's long-press menu, both through ONE private
-//     writer, `deleteFromLibrary`, which calls `ProjectStore.delete(id:)` — the swipe's own store call.
+//   · "Delete" in the row's long-press menu, through ONE private writer, `deleteFromLibrary`,
+//     which calls `ProjectStore.delete(id:)` — the swipe's own store call.
 //
 // Claims, labelled per `Tests/CISmoke/CLAUDE.md` §1:
 //   1. SOURCE-TEXT SCAN — `projectRow` mounts the date line, the 44-pt frame, the hint, the action
-//      and the menu; both new doors call `deleteFromLibrary(p)`; the writer is one store call.
+//      and the menu; the menu calls `deleteFromLibrary(p)`; the writer is one store call; the row
+//      carries no second VoiceOver Delete beside the one `.onDelete` provides.
 //   2. SOURCE-TEXT SCAN, COUNTERWEIGHTS — the swipe still maps through its OWN section arrays (the
 //      data-loss rule `LibraryAutosaveSectionTests` owns; re-read here because this slice adds a
 //      second delete road beside it) and the row still leads with the name.
 //   3. END-TO-END over shipped value code — `savedLine` names the moment and tells two times of one
 //      day apart; the hint promises no rescue; a delete of the OPEN row through the store forgets
-//      the header name (the premise the VoiceOver action relies on).
+//      the header name (the premise the menu's Delete relies on).
 // GRADING against the parent: claim 1 is red there by ANCHOR ABSENCE — `deleteFromLibrary`,
 // `savedLine` and `libraryRowHint` do not exist — ONE absence, reported per needle (#486). Claim 3
 // does not compile against the parent (it names `savedLine`/`libraryRowHint`): FORWARD guards, no
@@ -63,18 +67,20 @@ final class TheLibraryRowSaysWhenAndDeletesWithoutASwipeTests: XCTestCase {
         XCTAssertTrue(row.contains(".accessibilityHint(Self.libraryRowHint)"))
     }
 
-    func testDeleteHasTwoRoadsBesideTheSwipeAndBothTakeTheOneWriter() throws {
+    func testDeleteHasARoadBesideTheSwipeAndItTakesTheOneWriter() throws {
         let code = try source(Self.studio)
         let row = try member("private func projectRow(_ p: Project) -> some View {", in: code)
-        XCTAssertTrue(row.contains(".accessibilityAction(named: \"Delete\") { deleteFromLibrary(p) }"),
-                      "VoiceOver reaches Delete through the actions rotor, not only by a swipe")
+        XCTAssertFalse(row.contains("accessibilityAction(named: \"Delete\")"), """
+            `.onDelete` already gives each row VoiceOver's Delete action; a second one lists Delete \
+            twice in the rotor (review of 648799434)
+            """)
         guard let menu = row.range(of: ".contextMenu {"),
               let destructive = row.range(of: "Button(role: .destructive) { deleteFromLibrary(p) }") else {
             return XCTFail("ANCHOR MISSING: the row's long-press Delete (#454)")
         }
         XCTAssertTrue(menu.upperBound <= destructive.lowerBound, "the destructive button sits inside the row's menu")
-        XCTAssertEqual(code.components(separatedBy: ".contextMenu {").count - 1, 1,
-                       "one library menu in this file — the row's, built by the one row builder")
+        XCTAssertEqual(row.components(separatedBy: ".contextMenu {").count - 1, 1,
+                       "one menu on the row, built by the one row builder")
 
         let writer = try member("private func deleteFromLibrary(_ p: Project) {", in: code)
         XCTAssertTrue(writer.contains("projects.delete(id: p.id)"), "the store's own delete — it also forgets the open id")

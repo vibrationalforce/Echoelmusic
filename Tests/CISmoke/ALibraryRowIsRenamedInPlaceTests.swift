@@ -23,7 +23,7 @@
 // GRADING against the parent: claim 1 does not compile there (`rename(id:to:)` does not exist) —
 // FORWARD guards, no verdict; hand-transcribed. Claim 2 is red there by ANCHOR ABSENCE
 // (`libraryRow`, `beginRename`, `LibraryRenameRow`) — one absence (#486). Counterweights inside
-// claim 2 (the Delete doors of slice 3, the swipe's own section arrays) are green on both trees.
+// claim 2 (the Delete menu item of slice 3, the swipe's own section arrays) are green on both trees.
 // ⛔ HONEST LIMITS. The field's focus, the keyboard and VoiceOver reading the action are a DEVICE
 // PROBE. At the largest Dynamic Type sizes the field and its two buttons share one line and the
 // field narrows; it does not wrap. NEEDS-FOUNDER-VERIFY: Open → long-press a saved piece →
@@ -142,8 +142,9 @@ final class ALibraryRowIsRenamedInPlaceTests: XCTestCase {
         }
         XCTAssertTrue(gate.upperBound <= rename.lowerBound && rename.upperBound <= delete.lowerBound,
                       "Rename sits behind the recovery-slot gate, before Delete")
-        // Counterweight: slice 3's Delete action is untouched.
-        XCTAssertTrue(row.contains(".accessibilityAction(named: \"Delete\") { deleteFromLibrary(p) }"))
+        // Counterweight: Delete stays in the menu and nowhere else on the row — VoiceOver's Delete
+        // comes from `.onDelete` (review of 648799434).
+        XCTAssertFalse(row.contains("accessibilityAction(named: \"Delete\")"))
 
         let begin = try member("private func beginRename(_ p: Project) {", in: code)
         XCTAssertTrue(begin.contains("guard p.id != Project.autosaveSlotID else { return }"))
