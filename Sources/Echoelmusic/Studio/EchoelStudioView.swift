@@ -9854,6 +9854,11 @@ struct EchoelStudioView: View {
                     Text(p.name).font(.callout.weight(.medium)).foregroundStyle(EchoelTheme.text)
                     Text("\(p.style.displayName) · \(p.key.shortName) · \(EchoelDecimalText.string(p.bpm, decimals: 0)) BPM")
                         .font(.caption).foregroundStyle(EchoelTheme.dim)
+                    // DMMW Phase 5 · slice 3 — WHEN. `savedAt` was stored on every row and shown on
+                    // none, so two takes of one piece read identically. Same caption treatment as the
+                    // line above (#362/#363: no third type size in one row).
+                    Text(Self.savedLine(p.savedAt))
+                        .font(.caption).foregroundStyle(EchoelTheme.dim)
                     // #521 — the take says who made it, and ONLY when that is not you. The
                     // decision (and every reason for it) lives in `Project.attribution`; this
                     // site owns two things and no more: the reader's own name comes from the
@@ -9883,10 +9888,14 @@ struct EchoelStudioView: View {
                         Text("by \(credit)").font(.caption).foregroundStyle(EchoelTheme.dim)
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityHint(Self.libraryRowHint)
+            // Slice 3 — delete without a horizontal swipe: VoiceOver's actions rotor, and the
+            // row's long-press menu below. Both call the ONE writer the swipe calls.
+            .accessibilityAction(named: "Delete") { deleteFromLibrary(p) }
             // Review of c69af8995 (MEDIUM): a shared document carries the TAKE and leaves the
             // song at home (`sharedDocumentData`), so a row that holds only a song would arrive
             // as a genre and a tempo with nothing in them. Such a row cannot be shared, and the
@@ -9904,7 +9913,36 @@ struct EchoelStudioView: View {
             .accessibilityLabel("Share \(p.name)")
             .accessibilityHint(shareable ? "" : "Sharing sends the take only, and this project holds only its song, which stays on this device")
         }
+        // A long press is a deliberate second step (hold, then choose), where the swipe's full
+        // travel deletes at once. `.contextMenu` builds its content only while shown and is not a
+        // presentation modifier on the root chain (the black-screen law counts `.sheet`/`.alert`/
+        // `.fullScreenCover`/`.confirmationDialog`/`.fileImporter`/`.popover`).
+        .contextMenu {
+            Button(role: .destructive) { deleteFromLibrary(p) } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
     }
+
+    /// DMMW Phase 5 · slice 3 — the ONE library delete for a single row, shared by the VoiceOver
+    /// action and the long-press menu. The swipe keeps its own `IndexSet` handlers, each mapped
+    /// through its OWN section's array (`LibraryAutosaveSectionTests`); all three reach
+    /// `ProjectStore.delete(id:)`, which also forgets the header's name when it was the open row.
+    private func deleteFromLibrary(_ p: Project) {
+        projects.delete(id: p.id)
+    }
+
+    /// The row's third line: when this take was written. Abbreviated date plus time, in the
+    /// reader's locale, because two saves of one piece on one day differ only by the time.
+    static func savedLine(_ date: Date) -> String {
+        "Saved " + date.formatted(date: .abbreviated, time: .shortened)
+    }
+
+    /// What tapping a row does, for VoiceOver. It names only what is true for EVERY row — the
+    /// autosave row included; an open replaces the song AND the instrument's take, so it says
+    /// "piece", not "song" — and promises no rescue: `autosaveTake()` writes only when there is
+    /// something to keep (`newPieceNote` states that predicate; this hint does not repeat it).
+    static let libraryRowHint = "Opens this piece in place of the one you have now."
 
     // MARK: - Biofeedback lifecycle
 
