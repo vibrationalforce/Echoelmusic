@@ -27,6 +27,13 @@ public final class WorkstationSelection {
 
     public private(set) var trackID: UUID?
     public private(set) var regionID: UUID?
+    /// DMMW Phase 2 · slice 1 — whether the selected part's note grid is open (the "Notes"
+    /// switch of `PartNoteEditor`). It was `@State` in the editor, so nothing else could open
+    /// it: "Write notes" selected a part and then said "Tap Notes" — a hidden step. Held here,
+    /// beside the ids it belongs to, so the compose guide and "New MIDI Part" open it too.
+    /// View state like the ids: cold (a tap), never persisted, kept across a change of part
+    /// (the editor's old behaviour — it stayed mounted, and so did its switch).
+    public private(set) var notesOpen = false
 
     public init() {}
 
@@ -46,6 +53,12 @@ public final class WorkstationSelection {
         guard let region = document.regions.first(where: { $0.id == id }) else { return }
         regionID = region.id
         trackID = region.laneID
+    }
+
+    /// Open or close the selected part's notes — the editor's switch, and the doors that
+    /// promise the notes ("Write notes", "New MIDI Part").
+    public func setNotesOpen(_ open: Bool) {
+        notesOpen = open
     }
 
     public func clear() {

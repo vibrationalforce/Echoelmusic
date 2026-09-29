@@ -72,11 +72,11 @@ struct PartNoteEditor: View {
     /// M8: the rack's capacity (`TimelineRegionPlayer.laneVoiceCapacity`), handed in by the
     /// Workstation — a number set once at start. The editor reads no transport itself.
     let voiceCapacity: Int
-    /// View state: whether the grid is open. Not part of the song, never persisted.
-    @State private var isOpen = false
-
     var body: some View {
         let document = timeline.document
+        // Whether the grid is open — held by the selection owner since DMMW Phase 2, so "Write
+        // notes" and "New MIDI Part" can open it (view state, never persisted).
+        let isOpen = selection.notesOpen
         if let regionID = WorkstationSelection.resolvedRegion(selection.regionID,
                                                               track: selection.trackID, in: document),
            let region = document.regions.first(where: { $0.id == regionID }),
@@ -85,7 +85,7 @@ struct PartNoteEditor: View {
             let count = ClipNoteEdit.noteCount(clip: clipStore.clip(id: region.clipID), region: region)
             let spokenCount: String = count.map { $0 == 1 ? "1 note" : "\($0) notes" } ?? ""
             VStack(alignment: .leading, spacing: 6) {
-                Button { isOpen.toggle() } label: {
+                Button { selection.setNotesOpen(!isOpen) } label: {
                     HStack(spacing: 4) {
                         Image(systemName: isOpen ? "chevron.down" : "chevron.right")
                             .font(EchoelTheme.font(11, .semibold))

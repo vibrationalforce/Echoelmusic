@@ -1234,6 +1234,8 @@ struct WorkstationView: View {
         switch MIDIImport.addEmptyPart(clipStore: clipStore, timeline: timeline) {
         case .success(let landing):
             selection.selectRegion(landing.region.id, in: timeline.document)
+            // DMMW Phase 2: an empty part is made to be written into — its notes open at once.
+            selection.setNotesOpen(true)
             let laneName = timeline.document.lanes
                 .first { $0.id == landing.laneID }?.name ?? "the MIDI track"
             importNote = MIDIImport.emptyPartNote(laneName: laneName,
@@ -1266,8 +1268,11 @@ struct WorkstationView: View {
                 guideNote = importNote
                 importNote = nil
             case .notes:
+                // DMMW Phase 2 · slice 1: "Write notes" OPENS the notes — no hidden "tap Notes".
                 if let id = ComposeGuide.partToWrite(document: timeline.document, clips: clips) {
                     selection.selectRegion(id, in: timeline.document)
+                    selection.setNotesOpen(true)
+                    guideNote = ComposeGuide.notesOpenedNote
                 }
             case .play:
                 if player.isPlaying { player.stop() } else { startTimeline(fromTick: 0, launching: []) }

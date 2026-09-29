@@ -132,7 +132,7 @@ enum ComposeGuide {
     /// ⚠️ A DONE "Add a MIDI track" is NOT actionable (review of c672c2adf, MED): tapping it
     /// would add a SECOND MIDI track, and step 2 always lands on the FIRST one — a checked row
     /// that silently does something else. A done "Add a part" stays actionable because its
-    /// detail line says "another" part, and a done "Write notes" only re-selects a part.
+    /// detail line says "another" part, and a done "Write notes" re-opens a part's notes.
     /// "Play" while playing is the Stop, so it stays actionable too.
     static func isActionable(_ step: Step, _ facts: Facts) -> Bool {
         let state = state(of: step, facts)
@@ -160,11 +160,15 @@ enum ComposeGuide {
                                            : "An instrument track for the notes of your piece."
         case .part:  return state == .done ? "Adds another empty four-bar part after the last one."
                                            : "An empty four-bar part on that track."
-        case .notes: return "Selects the part. Tap Notes to write into it."
+        case .notes: return "Opens the part's notes under the arrangement."
         case .play:  return facts.isPlaying ? "Stops the song." : "Plays the song from the top."
         case .save:  return "Names the piece and saves it. Library opens it again."
         }
     }
+
+    /// What the card says after "Write notes": where the grid it just opened sits, because on a
+    /// phone it is below the canvas and may be off screen.
+    static let notesOpenedNote = "The part's notes are open under the arrangement. Tap a cell to write a note."
 
     private static func waitingReason(_ step: Step, _ facts: Facts) -> String {
         switch step {

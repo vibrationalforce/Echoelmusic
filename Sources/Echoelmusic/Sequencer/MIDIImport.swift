@@ -198,7 +198,7 @@ public enum MIDIImport {
     /// a user part at the song's start makes the instrument's Generate yield
     /// (`userPartWouldBeShadowed` counts it, empty or not) — both said, neither left for the ear.
     public static func emptyPartNote(laneName: String, atSongStart: Bool) -> String {
-        var note = "Added an empty \(emptyPartBars)-bar part on \(laneName). Tap Notes to write into it"
+        var note = "Added an empty \(emptyPartBars)-bar part on \(laneName). Its notes are open under the arrangement"
             + " — once it has notes, it plays at the song tempo, with the instrument stopped."
         if atSongStart { note += " Generate won't place its take over this part." }
         return note
