@@ -23,7 +23,8 @@
 //      pitch classes; and a deviating pitch class gets a colour different from its 12-TET one.
 //   3. END-TO-END — a malformed or non-finite table publishes the 12-TET pitch, never a NaN.
 //   4. SOURCE-TEXT SCAN — the tick hands the model's table to the frame; `applyTuning` pushes the
-//      same `cents` it gives the voices; the parameter has no default.
+//      same `cents` it gives the voices; the parameter has no default; the frame's A4 rides
+//      `applyConcertPitch` (review LOW-3 — a forward pin, red on the parent by one absence).
 // GRADING against the parent: the parent's `musicalFrame` has no `pitchClassCents:` label and no
 // `equalTemperamentCents`, so this file does NOT compile against it — no assertion has a verdict
 // there; hand-transcribed instead. Claims 1 and 3 are FORWARD guards (the 12-TET half would have
@@ -146,6 +147,13 @@ final class AGeneratedNoteIsLitByItsTunedPitchTests: XCTestCase {
         XCTAssertLessThan(voices.lowerBound, frame.lowerBound, "same `cents`, same function")
         XCTAssertEqual(apply.components(separatedBy: "let cents = ").count - 1, 1,
                        "ONE table computed, handed to voices and frame alike")
+
+        // The frame's A4 rides the one concert-pitch fan, so opening a project at 432 cannot
+        // leave the frame on the old pitch with the new table (review LOW-3).
+        let concert = try member("private func applyConcertPitch(_ a4Hz: Double) {", in: studio)
+        XCTAssertTrue(concert.contains("synth.setTuning(a4Hz: a4Hz)"), "ANCHOR: the voice fan")
+        XCTAssertTrue(concert.contains("pianoRoll.musicalA4Hz = a4Hz"),
+                      "the frame takes the concert pitch from the same fan as the voices")
     }
 
     // MARK: - Helpers

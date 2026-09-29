@@ -4608,7 +4608,7 @@ struct EchoelStudioView: View {
         synth.setTuningCents(cents)
         // The published MusicalFrame takes the SAME table (through the same Float rounding the
         // voices and the touch colour see), so a generated note's light is its sounding pitch
-        // (DMMW Phase 6 · slice 3). Beside `musicalA4Hz`, which is pushed the same way.
+        // (DMMW Phase 6 · slice 3). Its A4 comes from `applyConcertPitch`, the fan every concert pitch takes.
         pianoRoll.musicalPitchClassCents = cents.map { Double($0) }
         // The touch instrument plays the same tone system — and its note→colour
         // mapping reads this table, so the colour follows the SOUNDING pitch.
@@ -4686,6 +4686,11 @@ struct EchoelStudioView: View {
         bioVoice.setTuning(a4Hz: a4Hz)
         leadSynth?.setTuning(a4Hz: a4Hz)
         bassSynth?.setTuning(a4Hz: a4Hz)   // #983 S2
+        // The published MusicalFrame follows the same concert pitch, from the same fan. Before
+        // this line only four callers pushed it by hand, and `open(_:)` and the launch restore
+        // were not among them: after opening a project at 432 the frame lit notes by the old A4
+        // (with the new cents) until the next generate (review of 24297e7d7, LOW-3).
+        pianoRoll.musicalA4Hz = a4Hz
     }
 
     /// ⭐ THE MUSICAL IDENTITY THIS INSTALL WOKE UP WITH — one line, once, at the end of the
