@@ -119,7 +119,7 @@ struct ProjectHeader: View {
                 stopAll()
             } else {
                 switch play {
-                case .startSong:        startSong()
+                case .startSong, .startSongAndInstrument: startSong()
                 case .resumeInstrument: ProjectTransport.resumeInstrument(pattern: beatPlayer.pattern)
                 case .unavailable:      break
                 }

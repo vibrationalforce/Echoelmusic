@@ -12,8 +12,11 @@
 //    stopped, the ONLY reader of `currentTick` in its file, speaking as "Song position" with a
 //    frequently-updating value — and does nothing but show.
 // 4. BEHAVIOUR + SOURCE (D1b): the playing caption said "from the top" whatever the start; it now
-//    names the start bar, recorded by the ONE start (`startTimeline`) — red on the parent, where
-//    `transportCaption` took no tick.
+//    names the start bar — red on the parent, where `transportCaption` took no tick. Since the
+//    review of 09d35f56e (MED-5) the bar is recorded by the PLAYER inside `play`
+//    (`startedFromTick`), so every door into the one start names its own bar; the behavioural
+//    half (a header start after a bar-3 start reads "from the top") lives in
+//    `TheProjectHeaderRunsOneTransportTests`, which owns the real-clock fixture.
 // 3. SOURCE: `WorkstationView` mounts it once, only while playing, in the transport row. That the
 //    view itself never names `currentTick` is pinned ONCE, by
 //    `TheWorkstationPlaysTheTimelineTests.testTheControlDoesNotReadThePlayhead` (#416).
@@ -39,6 +42,7 @@ final class TheSongPositionIsReadAsANumberTests: XCTestCase {
 
     private static let leaf = "Sources/Echoelmusic/Studio/SongPositionReadout.swift"
     private static let workstation = "Sources/Echoelmusic/Studio/WorkstationView.swift"
+    private static let player = "Sources/Echoelmusic/Sequencer/TimelineRegionPlayer.swift"
 
     // MARK: 1 — the words, pure
 
@@ -149,17 +153,24 @@ final class TheSongPositionIsReadAsANumberTests: XCTestCase {
                        WorkstationSummary.transportCaption(playing: false, startable: true, fromTick: 0),
                        "a stopped song's caption does not depend on where the last take started")
 
-        let code = try source(Self.workstation)
-        guard let head = code.range(of: "private func startTimeline(fromTick: Int, launching: [UUID]) {"),
-              let set = code.range(of: "playedFromTick = fromTick", range: head.upperBound..<code.endIndex),
-              let play = code.range(of: "player.play(", range: head.upperBound..<code.endIndex) else {
-            return XCTFail("ANCHOR MISSING: `startTimeline` recording `playedFromTick` (#454)")
+        // Review of 09d35f56e, MED-5: the start bar is recorded by the PLAYER, inside `play` — the
+        // one place every door (the Workstation's Play, the part bar, a scene, the project header)
+        // ends up. A view-local copy was written by the Workstation's own Play only, so after a
+        // header start the caption named an older take's bar.
+        let player = try source(Self.player)
+        guard let head = player.range(of: "public func play("),
+              let set = player.range(of: "self.startedFromTick = startTick", range: head.upperBound..<player.endIndex),
+              let floor = player.range(of: "let startTick = Self.barStartTick(for: fromTick, loopTicks: loopTicks)",
+                                       range: head.upperBound..<player.endIndex) else {
+            return XCTFail("ANCHOR MISSING: `play` recording `startedFromTick` (#454)")
         }
-        XCTAssertLessThan(set.lowerBound, play.lowerBound, "the start is recorded where the song is started")
-        let writes = code.components(separatedBy: "playedFromTick =").count
-            - code.components(separatedBy: "var playedFromTick =").count
-        XCTAssertEqual(writes, 1, "ONE writer (the declaration aside): every start goes through `startTimeline`")
-        XCTAssertTrue(code.contains("fromTick: playedFromTick))"), "the caption is fed the recorded start")
+        XCTAssertLessThan(floor.lowerBound, set.lowerBound, "the recorded start is the FLOORED bar the song starts on")
+        let writes = player.components(separatedBy: "startedFromTick =").count
+            - player.components(separatedBy: "var startedFromTick =").count
+        XCTAssertEqual(writes, 1, "ONE writer (the declaration aside): `play`")
+        let code = try source(Self.workstation)
+        XCTAssertTrue(code.contains("fromTick: player.startedFromTick))"), "the caption is fed the player's recorded start")
+        XCTAssertFalse(code.contains("playedFromTick"), "no second, view-local copy of the start")
     }
 
     // MARK: helpers

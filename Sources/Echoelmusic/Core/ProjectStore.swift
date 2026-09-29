@@ -19,6 +19,9 @@ public final class ProjectStore {
     /// Cold — written on Save and Open only. Not persisted: after a relaunch the working copy
     /// is the recovery slot, not a named project, and claiming otherwise would be a guess.
     public private(set) var currentProjectName: String?
+    /// The row `currentProjectName` came from, so deleting THAT row takes the name back
+    /// (review of 09d35f56e, LOW) — a header must not name a project the library no longer has.
+    @ObservationIgnored private var currentProjectID: UUID?
 
     @ObservationIgnored private var pendingProjects: [Project]?
     @ObservationIgnored private let writeProjects: ([Project]) -> Bool
@@ -45,13 +48,22 @@ public final class ProjectStore {
     /// in saveError and can be retried without discarding the pending snapshots.
     @discardableResult
     public func save(_ project: Project) -> Project {
+        let p = storeRow(project)
+        noteCurrent(p)
+        return p
+    }
+
+    /// Writes a row WITHOUT making it the project the player works on. `save` is this plus
+    /// `noteCurrent`; an ARRIVAL (`adoptArriving`: a file import or a Live Colabo peer's Save)
+    /// is this alone — review of 09d35f56e, MED-4: it only adds a row to the library, the
+    /// working take is unchanged, so the header must keep naming what the player works on.
+    private func storeRow(_ project: Project) -> Project {
         var p = project
         p.savedAt = Date()
         var next = pendingProjects ?? projects
         next.removeAll { $0.id == p.id }
         next.insert(p, at: 0)
         persist(next)
-        noteCurrent(p)
         return p
     }
 
@@ -60,11 +72,16 @@ public final class ProjectStore {
     public func noteCurrent(_ project: Project) {
         guard project.id != Project.autosaveSlotID else { return }
         currentProjectName = project.name
+        currentProjectID = project.id
     }
 
     public func delete(id: UUID) {
         let next = (pendingProjects ?? projects).filter { $0.id != id }
         persist(next)
+        if currentProjectID == id {
+            currentProjectName = nil
+            currentProjectID = nil
+        }
     }
 
     public func project(id: UUID) -> Project? {
@@ -146,7 +163,7 @@ public final class ProjectStore {
         var p = project
         p.id = UUID()
         p.setSessionEnvelope(nil)
-        return save(p)
+        return storeRow(p)
     }
 
     /// Import from a (security-scoped) file URL — the `fileImporter` path, throwing.

@@ -869,7 +869,7 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
         // exactly three of them, and anything else is scope this phase did not authorise.
         let reached = Set(Self.messages(to: "player", in: src))
         XCTAssertEqual(reached, ["play", "stop", "isPlaying", "preflightTempo", "audioLanes",
-                                 "laneVoiceCapacity"], """
+                                 "laneVoiceCapacity", "startedFromTick"], """
             The surface reaches the player for \(reached.sorted()). Phase 4 authorised a \
             transport, not an editor: `relocate`, `launchRegion`, `loopEnabled` and the sinks \
             are all one tap away and all out of bounds here.
@@ -883,6 +883,7 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
             `@ObservationIgnored private var multiRollCapacity`, set once at start. The track \
             header asks it — through `TrackMix.controls`, the inspector's own rule — so Mute \
             and Solo appear only on a track that has a voice to silence.
+            ⚠️ The review of 09d35f56e (MED-5) ARGUED THE FOURTH: `startedFromTick` is read-only             here, written ONLY inside `play`, and changes once per start — the same cadence as             `isPlaying`, so it adds no subscription rate. It replaced a view-local copy that only             this view's own Play wrote, so the caption named an older take's bar after a header             start.
             """)
     }
 

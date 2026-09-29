@@ -68,6 +68,12 @@ enum ProjectTransport {
     enum PlayAction: Equatable, Sendable {
         /// The song, from the top, through the Workstation's one start.
         case startSong
+        /// The SAME start, while a bio session is held with its music paused. It is its own case
+        /// only so the words can say what the tap does (review of 09d35f56e, MED-1): the song's
+        /// start runs the one clock, and the Studio's ONE-Stop observer reads a clock start
+        /// during a held session as `.resume` (`TransportTransition.decide`) — so the
+        /// instrument's music comes back WITH the song. "Play the song" alone hid that half.
+        case startSongAndInstrument
         /// A held bio session: the music comes back, the session never left.
         case resumeInstrument
         /// Nothing to play — the button is dimmed and says why.
@@ -78,7 +84,7 @@ enum ProjectTransport {
     /// falls back to resuming the instrument, so the header's Play is never dimmed while the
     /// instrument's own ▶ would work.
     static func playAction(_ facts: Facts) -> PlayAction {
-        if facts.songStartable { return .startSong }
+        if facts.songStartable { return facts.sessionRunning ? .startSongAndInstrument : .startSong }
         if facts.sessionRunning { return .resumeInstrument }
         return .unavailable
     }
@@ -140,24 +146,35 @@ enum ProjectTransport {
         if running { return "Stop all playback" }
         switch play {
         case .startSong:        return "Play the song"
+        case .startSongAndInstrument: return "Play the song and the instrument"
         case .resumeInstrument: return "Play the instrument"
         case .unavailable:      return "Play"
         }
     }
 
     static func buttonHint(running: Bool, play: PlayAction) -> String {
-        if running { return "Stops the song, the instrument and any recording, everywhere in the app." }
+        if running { return stopHint }
         switch play {
         case .startSong:        return "Plays the song from the top on the shared transport."
+        case .startSongAndInstrument:
+            return "Plays the song from the top. Your held session's music comes back with it."
         case .resumeInstrument: return "Brings the music back. Your session and pulse reading keep running."
         case .unavailable:      return "Unavailable: add a part with notes or audio, or start the instrument."
         }
     }
 
+    /// The ONE Stop's hint, on every surface that wears it (the header and the Workstation).
+    /// It names the session because the Stop ends it (review of 09d35f56e, MED-2): the clock
+    /// stop reaches the Studio's ONE-Stop observer as `.endSession`, which turns the camera off
+    /// and costs a pulse re-lock. The instrument's own pause is the control that keeps it, and
+    /// the hint names it by ITS label ("Pause the music", `PlaybackToggleButton`) rather than
+    /// letting a listener find out afterwards.
+    static let stopHint = "Stops the song, the instrument and any recording, everywhere in the app. A running pulse session ends too; Pause the music keeps it."
+
     /// The Workstation's caption while the instrument (not the song) plays on the one clock —
     /// its button then reads Stop, and the song's own caption ("Plays the song's parts from the
     /// top.") would describe a tap the button no longer makes.
-    static let instrumentRunningCaption = "The instrument is playing. Stop ends all playback."
+    static let instrumentRunningCaption = "The instrument is playing. Stop ends all playback and the pulse session."
 
     /// The header never invents a name: a run that has neither saved nor opened a project says so.
     static let unsavedName = "Unsaved session"

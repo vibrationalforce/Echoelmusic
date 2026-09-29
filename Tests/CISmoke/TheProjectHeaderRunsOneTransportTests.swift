@@ -66,8 +66,22 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
     }
 
     func testPlayMeansTheSongFirstThenAHeldSession() {
-        XCTAssertEqual(ProjectTransport.playAction(facts(session: true, startable: true)), .startSong,
+        XCTAssertEqual(ProjectTransport.playAction(facts(startable: true)), .startSong,
                        "the canonical project is the arrangement")
+        // Review of 09d35f56e, MED-1: during a held session the song's start also brings the
+        // instrument's music back (the ONE-Stop observer reads a clock start as `.resume`), so
+        // the SAME start gets its own words — never "Play the song" over a tap that plays two.
+        XCTAssertEqual(ProjectTransport.playAction(facts(session: true, startable: true)), .startSongAndInstrument,
+                       "the canonical project is still the arrangement — the session only changes the words")
+        XCTAssertEqual(ProjectTransport.buttonLabel(running: false, play: .startSongAndInstrument),
+                       "Play the song and the instrument")
+        XCTAssertTrue(ProjectTransport.buttonHint(running: false, play: .startSongAndInstrument)
+                        .contains("music comes back"), "the hint says the held music returns with the song")
+        // MED-2: the one Stop ends the pulse session, and its hint says so on EVERY surface.
+        XCTAssertTrue(ProjectTransport.stopHint.contains("pulse session ends"))
+        XCTAssertEqual(ProjectTransport.buttonHint(running: true, play: .startSong), ProjectTransport.stopHint)
+        XCTAssertEqual(WorkstationSummary.transportHint(playing: true, startable: true), ProjectTransport.stopHint,
+                       "the Workstation's Stop is the same Stop, so it reads the same")
         XCTAssertEqual(ProjectTransport.playAction(facts(session: true)), .resumeInstrument)
         XCTAssertEqual(ProjectTransport.playAction(facts()), .unavailable)
         XCTAssertEqual(ProjectTransport.buttonLabel(running: true, play: .startSong), "Stop all playback",
@@ -155,6 +169,27 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
         XCTAssertEqual(stopped, .stopped, "and the status flips back")
         XCTAssertNotEqual(ProjectTransport.statusWord(playing), ProjectTransport.statusWord(stopped),
                           "the change is visible, not only internal")
+
+        // Review of 09d35f56e, MED-5: the Workstation's caption names the bar the PLAYER started
+        // from, so a header start (always from the top) after a start at the part's bar reads
+        // "from the top" — never the older take's bar.
+        let bar = TimelineTime.ticksPerBar
+        WorkstationView.startSong(player: player, timeline: song.timeline, clipStore: song.clips,
+                                  pattern: pattern, pianoRoll: PianoRollModel(),
+                                  fromTick: song.region.startTick, launching: [])
+        XCTAssertEqual(player.startedFromTick, 2 * bar, "a start at the part records the part's bar")
+        XCTAssertEqual(WorkstationSummary.transportCaption(playing: true, startable: true,
+                                                           fromTick: player.startedFromTick),
+                       "Playing from bar 3 on the shared transport.")
+        ProjectTransport.stop(song: player, pattern: pattern, source: "test")
+        WorkstationView.startSong(player: player, timeline: song.timeline, clipStore: song.clips,
+                                  pattern: pattern, pianoRoll: PianoRollModel(),
+                                  fromTick: 0, launching: [])
+        XCTAssertEqual(player.startedFromTick, 0, "the header's start from the top is recorded too")
+        XCTAssertEqual(WorkstationSummary.transportCaption(playing: true, startable: true,
+                                                           fromTick: player.startedFromTick),
+                       "Playing from the top on the shared transport.")
+        ProjectTransport.stop(song: player, pattern: pattern, source: "test")
     }
 
     func testTheGlobalStopEndsTheInstrumentsClockAndAClockStopEndsTheSong() {
@@ -205,6 +240,22 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
         store.save(project)
         XCTAssertEqual(store.currentProjectName, "Night drive",
                        "the recovery slot is not the project the user named")
+
+        // Review of 09d35f56e, MED-4: an ARRIVAL (a file import, a Live Colabo peer's Save) only
+        // adds a row — the working take is unchanged, so the header keeps its name.
+        var arriving = project
+        arriving.id = UUID()
+        arriving.name = "Peer take"
+        let adopted = store.adoptArriving(arriving)
+        XCTAssertNotNil(store.project(id: adopted.id), "premise: the arrival IS in the library")
+        XCTAssertEqual(store.currentProjectName, "Night drive",
+                       "an arrival is not the project the player works on")
+        // Review LOW: deleting the named row takes the name back; deleting another row does not.
+        store.delete(id: adopted.id)
+        XCTAssertEqual(store.currentProjectName, "Night drive", "another row's delete keeps the name")
+        let named = try XCTUnwrap(store.projects.first { $0.name == "Night drive" })
+        store.delete(id: named.id)
+        XCTAssertNil(store.currentProjectName, "the header never names a project the library no longer has")
 
         let studio = try source(Self.studio)
         let open = try body(of: "private func open(_ p: Project)", in: studio)
@@ -271,6 +322,8 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
         XCTAssertTrue(header.contains("WorkstationView.startSong(player: player, timeline: timeline, clipStore: clipStore,"),
                       "the header's Play is the Workstation's one start")
         XCTAssertTrue(header.contains("ProjectTransport.stop(song: player, pattern: beatPlayer.pattern, source: \"project header\")"))
+        XCTAssertTrue(header.contains("case .startSong, .startSongAndInstrument: startSong()"),
+                      "both song cases take the ONE song start — the second case only changes the words")
 
         let workstation = try source(Self.workstation)
         XCTAssertTrue(workstation.contains("ProjectTransport.stop(song: player, pattern: beatPlayer.pattern, source: \"workstation\")"),

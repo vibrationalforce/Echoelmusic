@@ -176,7 +176,10 @@ public struct WorkstationSummary: Equatable, Sendable {
     /// function is DRIVEN by the blocking bundle, while the same words inside a `private`
     /// SwiftUI body would only ever be scanned (#1436's split, kept).
     public static func transportHint(playing: Bool, startable: Bool) -> String {
-        if playing { return "Stops the arrangement and the transport." }
+        // The Workstation's Stop is the ONE Stop (`ProjectTransport.stop`) since the project
+        // header — so its hint is the one Stop's hint, not a narrower sentence that said
+        // nothing about the instrument or the session it also ends (review of 09d35f56e, MED-2).
+        if playing { return ProjectTransport.stopHint }
         if startable { return "Plays the arrangement from the top on the shared transport." }
         return "Unavailable: this song has no parts on a track that plays."
     }

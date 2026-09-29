@@ -23,10 +23,12 @@
 // tick the button hands over is heard from the part. On the parent (the M7 review repair) the
 // file COMPILES — it names no new symbol outside strings — and claim 2 is red there by ANCHOR
 // ABSENCE (one absence, #486).
-// NOT covered: that it is seen, reached and heard on a device; a start while the INSTRUMENT's
-// own loop is running mid-bar (M7 review LOW-3). The button is Stop while the song plays, but the
-// instrument's loop is not the song: this button reaches that case exactly as the Workstation's
-// Play already did (M10 review, LOW-3).
+// NOT covered: that it is seen, reached and heard on a device.
+// ⭐ The old second limit — a start while the INSTRUMENT's own loop runs (M7/M10 review LOW-3) —
+// is CLOSED by the review of 09d35f56e (MED-3): the button now reads the transport row's running
+// truth, so while the instrument runs it IS the one Stop and cannot start the song under it.
+// Claim 2 pins that (graded against the parent `c72161491`: the new needles are red there by
+// ANCHOR ABSENCE — one absence, #486 — and green here by transcription).
 // NEEDS-FOUNDER-VERIFY: Workstation → a song with a part in a later bar → tap that part → "Play
 // from here" above its notes → the song starts at that part's bar, the button turns to Stop, and
 // Stop stops it; a song with nothing to play shows the button dimmed.
@@ -113,8 +115,15 @@ final class APartPlaysFromItsBarTests: XCTestCase {
         XCTAssertTrue(partBar.contains("PartPlayButton(startTick: part.startTick, playFrom: playFrom,"),
                       "the button is handed the selected part's start tick")
         let button = try body(of: "private struct PartPlayButton: View {", in: partBar)
-        XCTAssertTrue(button.contains("if playing { player.stop() } else { playFrom(startTick) }"),
-                      "Play hands the tick to the Workstation's start; while playing it is the player's own Stop")
+        // Review of 09d35f56e, MED-3: "playing" is the transport row's running truth (the song OR
+        // the one clock), and the Stop is the app's ONE Stop — never the song's alone.
+        XCTAssertTrue(button.contains("let playing = ProjectTransport.isRunning(clockRunning: transport.isPlaying,"),
+                      "the part bar reads the same running truth as the transport row and the header")
+        XCTAssertTrue(button.contains("ProjectTransport.stop(song: player, pattern: beatPlayer.pattern, source: \"part bar\")"),
+                      "while anything runs it is the ONE Stop")
+        XCTAssertTrue(button.contains("playFrom(startTick)"),
+                      "Play hands the tick to the Workstation's start")
+        XCTAssertFalse(button.contains("player.stop()"), "no second, narrower Stop beside the one Stop")
         XCTAssertTrue(button.contains("let startable = playing || songCanStart()"))
         XCTAssertTrue(button.contains(".disabled(!startable)"),
                       "dimmed by the same answer as the Workstation's Play — a lit button does something")

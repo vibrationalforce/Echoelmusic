@@ -69,6 +69,13 @@ public final class TimelineRegionPlayer {
     /// The region loaded on the roll lane now (nil = a gap / silence). Lets the UI
     /// and tests observe what is playing.
     public private(set) var loadedRegionID: UUID?
+    /// The song-absolute BAR tick the current (or last) take started at — `play`'s floored and
+    /// folded `startTick`, written there and nowhere else. The Workstation's caption names its
+    /// bar. Review of 09d35f56e, MED-5: the caption read a view-local copy, which only the
+    /// Workstation's own Play wrote, so after a header start (or any other door into the ONE
+    /// start) it named the bar of an older take. One owner, every door. Cold — it changes once
+    /// per `play`, never per step.
+    public private(set) var startedFromTick = 0
     /// Loop the whole song (rounded up to whole bars) when it reaches the end.
     public var loopEnabled = true
 
@@ -634,6 +641,7 @@ public final class TimelineRegionPlayer {
         self.rollLane = document.rollLaneID
         self.loopTicks = Self.loopTicks(for: document)
         let startTick = Self.barStartTick(for: fromTick, loopTicks: loopTicks)
+        self.startedFromTick = startTick
         // Clips/Scenes LOW-1 (modes census Q5): the shared PatternEngine may ALREADY be running
         // (the instrument playing). Then the next transport step is `currentStep`, not 0 — so
         // the song enters its start bar mid-bar, and every layer is loaded at the

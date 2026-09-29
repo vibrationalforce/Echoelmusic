@@ -391,21 +391,32 @@ struct SelectedPartBar: View {
 /// the bar it starts in. And it asks `songCanStart` rather than `canPlay` — the Workstation is
 /// the one control that may ask the engine (`TheWorkstationPlaysTheTimelineTests`), and the
 /// answer is the same one its own Play is dimmed by: a button that is lit here does something.
-/// ⚠️ While the song plays it is Stop, the player's own stop — never a second start. It does NOT
-/// cover the instrument's own loop: if that runs while the song is stopped, this button starts
-/// the song under a running pattern, the same M7 review LOW-3 case the Workstation's Play has.
+/// ⚠️ While anything runs on the one clock it is Stop — the app's ONE Stop
+/// (`ProjectTransport.stop`), never a second start. Review of 09d35f56e, MED-3: it read the song
+/// alone, so while the instrument ran it said Play beside a transport row that said Stop, and a
+/// tap started the song under the running pattern. It now reads the same running truth as the
+/// transport row and the header (`ProjectTransport.isRunning`).
 @MainActor
 private struct PartPlayButton: View {
     let startTick: Int
     let playFrom: (Int) -> Void
     let songCanStart: () -> Bool
     @Environment(TimelineRegionPlayer.self) private var player
+    /// Cold: `isPlaying` flips on a start or a stop, never per step.
+    @Environment(Transport.self) private var transport
+    /// ⚠️ READ ONLY IN THE TAP HANDLER: `beatPlayer.pattern` leads to the gliding tempo.
+    @Environment(BeatPlayer.self) private var beatPlayer
 
     var body: some View {
-        let playing = player.isPlaying
+        let playing = ProjectTransport.isRunning(clockRunning: transport.isPlaying,
+                                                 songPlaying: player.isPlaying)
         let startable = playing || songCanStart()
         Button {
-            if playing { player.stop() } else { playFrom(startTick) }
+            if playing {
+                ProjectTransport.stop(song: player, pattern: beatPlayer.pattern, source: "part bar")
+            } else {
+                playFrom(startTick)
+            }
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: playing ? "stop.fill" : "play.fill")
@@ -424,7 +435,7 @@ private struct PartPlayButton: View {
         }
         .buttonStyle(.plain)
         .disabled(!startable)
-        .accessibilityLabel(playing ? "Stop timeline" : "Play the song from the selected part")
+        .accessibilityLabel(playing ? "Stop all playback" : "Play the song from the selected part")
         .accessibilityHint(startable && !playing
             ? "Plays the arrangement from this part's bar on the shared transport."
             : WorkstationSummary.transportHint(playing: playing, startable: startable))

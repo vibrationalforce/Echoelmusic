@@ -230,10 +230,6 @@ struct WorkstationView: View {
     /// either in the permanent Studio root would have made the whole Studio rebuild on a
     /// file-picker dismissal, and `importNote` would have become a sixth thing the root
     /// carries between plate switches for no reason.
-    /// Where THIS view last started the song — the caption names its bar (design D1b). Every
-    /// start goes through `startTimeline`, so it is set there and nowhere else; it is read only
-    /// while the song plays.
-    @State private var playedFromTick = 0
     @State private var importPresented = false
     @State private var importNote: String?
     /// DMMW Phase 1 — the outcome of the compose guide's own step, shown IN the guide (review of
@@ -878,7 +874,7 @@ struct WorkstationView: View {
             Text(running && !playing
                  ? ProjectTransport.instrumentRunningCaption
                  : WorkstationSummary.transportCaption(playing: playing, startable: startable,
-                                                       fromTick: playedFromTick))
+                                                       fromTick: player.startedFromTick))
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityHidden(true)   // the button's own hint already carries this
@@ -1260,8 +1256,13 @@ struct WorkstationView: View {
     /// subscription and nothing is a new modal: Save is the chrome door the project row posts.
     private var composeGuide: some View {
         let clips = clipStore.filledClips
+        // Review of 09d35f56e, MED-3: the guide's Play/Stop reads the SAME running truth as the
+        // transport row and the header — anything on the one clock — so the plate never shows
+        // Stop on one control and Play on the next while the instrument runs.
+        let running = ProjectTransport.isRunning(clockRunning: transport.isPlaying,
+                                                 songPlaying: player.isPlaying)
         let facts = ComposeGuide.facts(document: timeline.document, clips: clips,
-                                       canPlay: songCanStart(), isPlaying: player.isPlaying)
+                                       canPlay: songCanStart(), isPlaying: running)
         return ComposeGuideCard(facts: facts, note: guideNote) { step in
             // Review of c672c2adf (LOW): a refusal from step 2 (a full clip grid) was written to
             // the note line far below the guide, so the tap looked like nothing. The guide shows
@@ -1284,7 +1285,11 @@ struct WorkstationView: View {
                     guideNote = ComposeGuide.notesOpenedNote
                 }
             case .play:
-                if player.isPlaying { player.stop() } else { startTimeline(fromTick: 0, launching: []) }
+                if running {
+                    ProjectTransport.stop(song: player, pattern: beatPlayer.pattern, source: "compose guide")
+                } else {
+                    startTimeline(fromTick: 0, launching: [])
+                }
             case .save:
                 NotificationCenter.default.post(name: .echoelChromeDoor, object: "save")
             }
@@ -1299,7 +1304,6 @@ struct WorkstationView: View {
     /// the top), the Session view a scene's bar and its parts (Phase 3 / S2) — the player floors
     /// the tick to the bar and lands the parts on it inside the same call (S2 review, MED-1).
     private func startTimeline(fromTick: Int, launching: [UUID]) {
-        playedFromTick = fromTick
         Self.startSong(player: player, timeline: timeline, clipStore: clipStore,
                        pattern: beatPlayer.pattern, pianoRoll: pianoRoll,
                        fromTick: fromTick, launching: launching)
@@ -1308,8 +1312,8 @@ struct WorkstationView: View {
     /// DMMW Phase 1 · slice 3 — the song's ONE start, reachable by the persistent project header
     /// as well. It stays in THIS file (the one `player.play(` caller, claim A) and constructs
     /// nothing: every argument is an owner the caller already holds from the environment.
-    /// ⚠️ A header start does not write this view's `playedFromTick` (view state): the caption
-    /// keeps the last bar THIS plate started from. The header always starts from the top.
+    /// The caption's start bar is the PLAYER's (`startedFromTick`, written inside `play`), so a
+    /// start from any door names its own bar (review of 09d35f56e, MED-5).
     static func startSong(player: TimelineRegionPlayer, timeline: TimelineStore, clipStore: ClipStore,
                           pattern: PatternEngine, pianoRoll: PianoRollModel,
                           fromTick: Int, launching: [UUID]) {

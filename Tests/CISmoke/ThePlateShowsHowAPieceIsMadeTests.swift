@@ -103,8 +103,10 @@ final class ThePlateShowsHowAPieceIsMadeTests: XCTestCase {
         let playing = facts(TimelineDocument(lanes: [keys], regions: [region]), [written],
                             canPlay: true, isPlaying: true)
         XCTAssertEqual(ComposeGuide.state(of: .play, playing), .done)
-        XCTAssertEqual(ComposeGuide.title(.play, playing), "Stop the song",
-                       "while the song plays, step 4 is its Stop — the one transport, both ways")
+        XCTAssertEqual(ComposeGuide.title(.play, playing), "Stop all playback",
+                       "while anything plays, step 4 is the ONE Stop — the one transport, both ways")
+        XCTAssertTrue(ComposeGuide.detail(.play, playing).contains("pulse session"),
+                      "the Stop's line says it ends the pulse session too (review of 09d35f56e, MED-2)")
         XCTAssertEqual(ComposeGuide.state(of: .save, playing), .next)
         XCTAssertEqual(ComposeGuide.doneCount(playing), 4,
                        "Save never reads as done — nothing here can know the song is unchanged since")
@@ -194,13 +196,17 @@ final class ThePlateShowsHowAPieceIsMadeTests: XCTestCase {
             """)
 
         let guide = try member("private var composeGuide: some View {", in: code)
-        for needle in ["canPlay: songCanStart(), isPlaying: player.isPlaying",
+        // Review of 09d35f56e, MED-3: the guide reads the transport row's running truth and
+        // stops through the app's ONE Stop — never the song's `isPlaying` alone.
+        for needle in ["let running = ProjectTransport.isRunning(clockRunning: transport.isPlaying,",
+                       "canPlay: songCanStart(), isPlaying: running)",
                        "case .track:", "addMIDITrack()",
                        "case .part:", "newMIDIPart()",
                        "case .notes:", "ComposeGuide.partToWrite(document: timeline.document, clips: clips)",
                        "selection.selectRegion(id, in: timeline.document)",
                        "case .play:",
-                       "if player.isPlaying { player.stop() } else { startTimeline(fromTick: 0, launching: []) }",
+                       "ProjectTransport.stop(song: player, pattern: beatPlayer.pattern, source: \"compose guide\")",
+                       "startTimeline(fromTick: 0, launching: [])",
                        "case .save:",
                        "NotificationCenter.default.post(name: .echoelChromeDoor, object: \"save\")"] {
             XCTAssertTrue(guide.contains(needle), "the guide no longer runs `\(needle)` — each step must be an existing path")

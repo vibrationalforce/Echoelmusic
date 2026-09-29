@@ -7,14 +7,17 @@ import Foundation
 /// ⭐ IT OWNS NO STATE AND WRITES NOTHING. Every step is DERIVED from facts that already have one
 /// owner — the document (`TimelineStore`), the clip grid (`ClipStore`), the engine's own start
 /// guard (`TimelineRegionPlayer.canPlay`, asked by the Workstation's `songCanStart()`) and the
-/// player's `isPlaying`. A guide that kept its own "step 3 done" flag would be a second answer
-/// to "does this part have notes?", and the first Undo would make the two disagree.
+/// transport's running truth (`ProjectTransport.isRunning` — the song OR the one clock, the same
+/// answer the transport row and the header show; review of 09d35f56e, MED-3). A guide that kept
+/// its own "step 3 done" flag would be a second answer to "does this part have notes?", and the
+/// first Undo would make the two disagree.
 ///
 /// ⭐ EVERY STEP'S ACTION IS AN EXISTING PATH, never a new one: Add MIDI Track
 /// (`MIDIImport.addMIDITrack`), New MIDI Part (`MIDIImport.addEmptyPart`), selecting the part the
-/// note editor opens on (`WorkstationSelection.selectRegion`), the Workstation's one Play/Stop
-/// (`startTimeline` / `player.stop()`), and the Studio's Save alert through the chrome door. The
-/// guide is a map of doors that already exist, in the order a piece needs them.
+/// note editor opens on (`WorkstationSelection.selectRegion`), the Workstation's one Play and
+/// the app's ONE Stop (`startTimeline` / `ProjectTransport.stop`), and the Studio's Save alert
+/// through the chrome door. The guide is a map of doors that already exist, in the order a
+/// piece needs them.
 ///
 /// ⚠️ STEP 3 SAYS "WRITE", NOT "RECORD", on purpose: the guide's track is the import's track, and
 /// record-arm is offered on a rack track only (`RecordTake.canArm` — `.laneSynth` role), which that
@@ -146,7 +149,7 @@ enum ComposeGuide {
         case .track: return "Add a MIDI track"
         case .part:  return "Add a part"
         case .notes: return "Write notes"
-        case .play:  return facts.isPlaying ? "Stop the song" : "Play the song"
+        case .play:  return facts.isPlaying ? "Stop all playback" : "Play the song"
         case .save:  return "Save the piece"
         }
     }
@@ -161,7 +164,8 @@ enum ComposeGuide {
         case .part:  return state == .done ? "Adds another empty four-bar part after the last one."
                                            : "An empty four-bar part on that track."
         case .notes: return "Opens the part's notes under the arrangement."
-        case .play:  return facts.isPlaying ? "Stops the song." : "Plays the song from the top."
+        case .play:  return facts.isPlaying ? "Stops the song, the instrument and the pulse session."
+                                            : "Plays the song from the top."
         case .save:  return "Names the piece and saves it. Library opens it again."
         }
     }
