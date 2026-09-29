@@ -141,8 +141,8 @@ public enum MIDIImport {
 
     /// The sentence after "Add MIDI Track" (DMMW Phase 2 · slice 2): which track was made and
     /// where it is, since the tap selects it and opens its details in the track list.
-    /// ⚠️ It promises NOTHING about where the next part goes: "New MIDI Part" lands on the roll
-    /// lane (the header above says why), which is this track only when it is the first MIDI one.
+    /// ⚠️ It promises NOTHING about where the next part goes: "New MIDI Part" lands on this track
+    /// only when a voice plays it here (`emptyPartLane`), otherwise on the roll lane.
     public static func addedTrackNote(laneName: String) -> String {
         "Added \(laneName). It is selected in the track list."
     }
@@ -153,8 +153,8 @@ public enum MIDIImport {
     /// pattern. The grid scrolls, so this is a starting length, not a ceiling.
     public static let emptyPartBars = 4
 
-    /// An EMPTY part for the user's own notes — the import's decision without a file: the same
-    /// lane (the roll lane, `firstImportableMIDILane`, #416), the same refusals, the same
+    /// An EMPTY part for the user's own notes — the import's decision without a file: the lane
+    /// `emptyPartLane` picks (the roll lane unless a voiced track is selected), the same refusals, the same
     /// ownership (`composerOwned: false`, so evolve never rewrites what the user writes into it).
     ///
     /// ⭐ WHY IT EXISTS: until this row the note editor (`PartNoteEditor`) could only open a part
@@ -215,7 +215,7 @@ public enum MIDIImport {
 
     /// The "New MIDI Part" row's spoken hint — the SAME rule `emptyPartLane` implements, in
     /// one place beside it (#416), so the words cannot name a lane rule the code does not follow.
-    public static let newPartHint = "Adds an empty four-bar part to the selected MIDI track when it has a voice, otherwise to the first MIDI track, and selects it"
+    public static let newPartHint = "Adds an empty \(emptyPartBars)-bar part to the selected MIDI track when it has a voice, otherwise to the first MIDI track, and selects it"
 
     /// The lane a NEW empty part lands on: the selected track when a part there is certainly
     /// played — the roll lane, or a non-bio MIDI lane holding a rack voice (`MultiRollFanout

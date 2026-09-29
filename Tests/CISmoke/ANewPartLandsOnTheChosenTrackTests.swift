@@ -22,6 +22,14 @@
 // behaviour and are green in intent on both trees. Transcribed in Python against THIS tree (no
 // toolchain here): the lane rule over the fixture, and each scan needle.
 //
+// 5. REVIEW OF 324c8e9b3 (HIGH + MED), added in the repair commit: the compose guide's "Part"
+//    step counts parts only on its own track (the import's track, the roll lane), so it points
+//    the ONE part action at that track first — otherwise a part landed on a selected rack
+//    track, "Part" stayed next and every tap spent a clip slot. And the "Generate won't place
+//    its take over this part" sentence is said only for a part on the roll lane, the only lane
+//    Generate yields on. END-TO-END over real stores for the loop, SOURCE for the two call sites;
+//    the premise that the guide counts only its own track is a counterweight (green on both).
+//
 // ⛔ HONEST LIMITS. A part on a rack lane is played by that lane's rack voice (its own patch),
 // not by the Echoel instrument — whether it SOUNDS right is a device probe. The MIDI FILE
 // import still lands on the roll lane (unchanged here).
@@ -36,6 +44,7 @@ import XCTest
 final class ANewPartLandsOnTheChosenTrackTests: XCTestCase {
 
     private static let workstationPath = "Sources/Echoelmusic/Studio/WorkstationView.swift"
+    private static let composeGuidePath = "Sources/Echoelmusic/Studio/ComposeGuide.swift"
 
     private static let keys = TimelineLane(name: "Keys", kind: .midi)
     private static let lead = TimelineLane(name: "Lead", kind: .midi)
@@ -159,6 +168,67 @@ final class ANewPartLandsOnTheChosenTrackTests: XCTestCase {
         XCTAssertTrue(row.contains(".accessibilityHint(MIDIImport.newPartHint)"))
         XCTAssertTrue(MIDIImport.newPartHint.contains("selected MIDI track when it has a voice"))
         XCTAssertTrue(MIDIImport.newPartHint.contains("otherwise to the first MIDI track"))
+    }
+
+    // MARK: 5 — review of 324c8e9b3: the guide's Part lands where the guide counts
+
+    func testTheGuidesPartLandsOnTheTrackTheGuideCounts() throws {
+        let timeline = TimelineStore()
+        let clips = ClipStore()
+        let originalDocument = timeline.document
+        let originalSlots = clips.slots
+        restore.append { clips.replaceSlots(originalSlots); timeline.replaceDocument(originalDocument) }
+        clips.replaceSlots([Clip?](repeating: nil, count: ClipStore.slotCount))
+        timeline.replaceDocument(TimelineDocument(lanes: [Self.keys, Self.lead], regions: []))
+        func facts() -> ComposeGuide.Facts {
+            ComposeGuide.facts(document: timeline.document, clips: clips.filledClips, canPlay: false, isPlaying: false)
+        }
+
+        // The loop's premise: a part on the selected rack track is not one the guide counts.
+        guard case .success(let onRack) = MIDIImport.addEmptyPart(clipStore: clips, timeline: timeline,
+                                                                  selectedTrack: Self.lead.id,
+                                                                  voiceCapacity: 4) else {
+            return XCTFail("ANCHOR: a rack-voiced track takes a part")
+        }
+        XCTAssertEqual(onRack.laneID, Self.lead.id)
+        XCTAssertFalse(facts().hasPart, "premise: the guide counts only its own track's parts")
+        XCTAssertEqual(ComposeGuide.nextStep(facts()), .part, "…so without the repair \"Part\" stays next")
+
+        // The repair: the guide's track, handed to the same action, takes the part.
+        let guideTrack = try XCTUnwrap(MIDIImport.firstImportableMIDILane(in: timeline.document))
+        XCTAssertEqual(guideTrack.id, Self.keys.id, "the guide's track is the roll lane")
+        guard case .success(let onGuide) = MIDIImport.addEmptyPart(clipStore: clips, timeline: timeline,
+                                                                   selectedTrack: guideTrack.id,
+                                                                   voiceCapacity: 4) else {
+            return XCTFail("the roll lane always takes an empty part")
+        }
+        XCTAssertEqual(onGuide.laneID, Self.keys.id)
+        XCTAssertTrue(facts().hasPart)
+        XCTAssertEqual(ComposeGuide.nextStep(facts()), .notes, "the guide moves on — no loop")
+    }
+
+    func testTheGuidePointsTheActionAtItsTrackAndTheSentenceAtTheRollLane() throws {
+        let view = try source(Self.workstationPath)
+        let guide = try member("private var composeGuide: some View {", in: view)
+        guard let part = guide.range(of: "case .part:"),
+              let point = guide.range(of: "selection.selectTrack(guideTrack.id)",
+                                      range: part.upperBound..<guide.endIndex),
+              let act = guide.range(of: "newMIDIPart()", range: part.upperBound..<guide.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the guide's Part step (#454): \(guide)")
+        }
+        XCTAssertLessThan(point.lowerBound, act.lowerBound, "point at the guide's track, THEN add the part")
+        XCTAssertTrue(guide.contains("if let guideTrack = MIDIImport.firstImportableMIDILane(in: timeline.document) {"),
+                      "the guide's track is the import's track — the one `ComposeGuide` counts")
+        let action = try member("private func newMIDIPart() {", in: view)
+        XCTAssertTrue(action.contains("atSongStart: landing.region.startTick == 0"))
+        XCTAssertTrue(action.contains("&& landing.laneID == timeline.document.rollLaneID,"), """
+            Generate yields only to user parts on the roll lane — a part elsewhere must not be told \
+            "Generate won't place its take over this part"
+            """)
+        // Counterweight (#343): the premise the repair rests on.
+        let guideModel = try source(Self.composeGuidePath)
+        XCTAssertTrue(guideModel.contains("guard let lane = MIDIImport.firstImportableMIDILane(in: document) else { return [] }"),
+                      "the guide counts parts on the import's track only")
     }
 
     // MARK: - helpers

@@ -1250,8 +1250,11 @@ struct WorkstationView: View {
             let missed = selected.flatMap { id in
                 id == landing.laneID ? nil : lanes.first { $0.id == id }?.name
             }
+            // Review of 324c8e9b3 (MED): Generate yields only to user parts on the ROLL lane
+            // (`syncPrimaryRollClip`), so only a part there earns the "won't place over" sentence.
             importNote = MIDIImport.emptyPartNote(laneName: laneName,
-                                                  atSongStart: landing.region.startTick == 0,
+                                                  atSongStart: landing.region.startTick == 0
+                                                      && landing.laneID == timeline.document.rollLaneID,
                                                   notOnSelected: missed)
         case .failure(let failure):
             importNote = failure.userMessage
@@ -1284,6 +1287,12 @@ struct WorkstationView: View {
                 guideNote = importNote
                 importNote = nil
             case .part:
+                // Review of 324c8e9b3 (HIGH): the guide's track is the import's track — the one
+                // `ComposeGuide` counts parts on. Point the ONE part action at it first, or a part
+                // lands on a selected rack track, "Part" stays next and every tap spends a slot.
+                if let guideTrack = MIDIImport.firstImportableMIDILane(in: timeline.document) {
+                    selection.selectTrack(guideTrack.id)
+                }
                 newMIDIPart()
                 guideNote = importNote
                 importNote = nil
