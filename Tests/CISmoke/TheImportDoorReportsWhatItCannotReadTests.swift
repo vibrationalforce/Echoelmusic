@@ -232,6 +232,12 @@ final class TheImportDoorReportsWhatItCannotReadTests: XCTestCase {
             sentence at the call site would be a second definition of "what a failed import \
             says" (#416), in a view no test bundle can drive.
             """)
+        // ⚠️ The needle above also matches the `.failure` branch, so since 2c33f00c3 it no
+        // longer proves the SUCCESS-path catch maps the error. This one does.
+        XCTAssertTrue(body.contains("? nil : ProjectStore.importFailureNote(error)"), """
+            The catch after a throwing import must still map every non-persistence error \
+            through the shared mapper. A persistence failure shows the retry banner instead.
+            """)
         XCTAssertFalse(body.contains("projects.importProject(from: url)"), """
             The discarding call is back. `@discardableResult` plus an ignored `.failure` is \
             exactly how this door went silent: every outcome — success, corrupt document, \
