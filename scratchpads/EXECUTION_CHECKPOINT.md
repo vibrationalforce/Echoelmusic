@@ -430,3 +430,12 @@ DEVICE_TEST_PREP_2026-09-29 (founder order: internal TestFlight device test, fou
   - Changed needles: `adoptArriving(p)` 1 hit in ProjectStore; `existingSlot: projects.recoveryProject(id: Project.autosaveSlotID)) else { return }` at EchoelStudioView.swift:11757.
   - Sweep: 0 CISmoke `contains("…")` needles point at a line 2c33f00c3 removed.
 - Conclusion allowed: NO evidence of a regression by 2c33f00c3. NOT allowed: "only cumbia is red". TestFlight stays blocked until the xcresult is read.
+
+## GATES_9ce3dfd50_2026-09-29 — Run Tests GREEN
+
+- Commits: 04c704a55 fix(sound) cumbia Lilt Sub r 0.26→0.23 (+3 comments; NEEDS-FOUNDER-VERIFY listen) · 9ce3dfd50 test: re-pin the success-path import catch.
+- Tasks #249/#250 closed (fixed earlier by fe02476cd and bce8dd9e5+30503f2b0).
+- Xcode Compile Check 36560451034: success.
+- CI/CD 36560450977, job 109380008327: conclusion success · Build for Testing success · `▸ Test build Succeeded` · Run Tests success · `▸ Test execute Succeeded` (11:19:52→11:38:11). The step runs `set -o pipefail; xcodebuild test-without-building … | tee test.log | xcpretty`, so exit 0 = xcodebuild reported zero failing tests. #396 (clone death) did NOT occur on this run.
+- Not proven without the xcresult: executed/skipped counts. New artifact 11029684978 (blob host still blocked here).
+- main = 9ce3dfd50 (auto-merge). TestFlight: not started — the founder's rule forbids dispatch/bump by me; the authorized path is the founder's "Run workflow" on main.
