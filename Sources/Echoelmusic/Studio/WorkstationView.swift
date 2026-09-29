@@ -232,6 +232,9 @@ struct WorkstationView: View {
     @State private var playedFromTick = 0
     @State private var importPresented = false
     @State private var importNote: String?
+    /// DMMW Phase 1 — the outcome of the compose guide's own step, shown IN the guide (review of
+    /// c672c2adf). View state only.
+    @State private var guideNote: String?
 
     /// S2 — which file the ONE importer is asking for. One `.fileImporter` whose content type
     /// switches, never a second one: two importers on one view is the shape that can shadow a
@@ -396,7 +399,8 @@ struct WorkstationView: View {
             // Its own leaf: it lists the directory detached and writes through
             // `MediaPlacement`; this view reads none of its state.
             // ⚠️ GROUPED WITH THE PROJECT ROW so this `VStack` stays under ten direct children
-            // (eight since design slice 4 paired the creation doors): past ten, `ViewBuilder`
+            // (nine since DMMW Phase 1 mounted `composeGuide` first — ONE slot of headroom left):
+            // past ten, `ViewBuilder`
             // resolves through the variadic pack (#936). `Group` is
             // layout-transparent — both rows still sit in this stack at its spacing.
             Group {
@@ -1226,12 +1230,18 @@ struct WorkstationView: View {
         let clips = clipStore.filledClips
         let facts = ComposeGuide.facts(document: timeline.document, clips: clips,
                                        canPlay: songCanStart(), isPlaying: player.isPlaying)
-        return ComposeGuideCard(facts: facts) { step in
+        return ComposeGuideCard(facts: facts, note: guideNote) { step in
+            // Review of c672c2adf (LOW): a refusal from step 2 (a full clip grid) was written to
+            // the note line far below the guide, so the tap looked like nothing. The guide shows
+            // its own step's outcome in the card; the lower line is left to the rows.
+            guideNote = nil
             switch step {
             case .track:
                 addMIDITrack()
             case .part:
                 newMIDIPart()
+                guideNote = importNote
+                importNote = nil
             case .notes:
                 if let id = ComposeGuide.partToWrite(document: timeline.document, clips: clips) {
                     selection.selectRegion(id, in: timeline.document)
@@ -1460,19 +1470,22 @@ private struct AnalysisRequest: Equatable {
 /// plain disclosure line; there is no panel around them. The next step wears the accent border,
 /// and its state is ALSO in words — the icon and colour are never the only carrier.
 ///
-/// The fold is view state, never persisted: open while no part holds notes, folded to its header
-/// once one does (the arrangement is then the better picture), and the player's own tap wins.
+/// The fold is view state, never persisted: open by default, and the player's own tap on the
+/// header folds or opens it.
 private struct ComposeGuideCard: View {
     let facts: ComposeGuide.Facts
+    /// The outcome of the last step run from here (a refusal must be seen where it was tapped).
+    let note: String?
     let perform: (ComposeGuide.Step) -> Void
-    /// nil = automatic (see the type header); a tap on the header records the player's choice.
-    @State private var expandedByPlayer: Bool? = nil
+    /// Open by default; a tap on the header records the player's choice. ⛔ It folded itself
+    /// once a part held notes (review of c672c2adf) — exactly when Play and Save become the
+    /// next steps, so the two steps a finished part needs were hidden by default.
+    @State private var expanded = true
 
     var body: some View {
-        let expanded = expandedByPlayer ?? !facts.hasNotes
         VStack(alignment: .leading, spacing: 6) {
             Button {
-                expandedByPlayer = !expanded
+                expanded.toggle()
             } label: {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Image(systemName: expanded ? "chevron.down" : "chevron.right")
@@ -1481,7 +1494,7 @@ private struct ComposeGuideCard: View {
                         Text("Create a piece")
                             .font(EchoelTheme.font(13, .semibold))
                             .foregroundStyle(EchoelTheme.text)
-                        Text("\(ComposeGuide.doneCount(facts)) of \(ComposeGuide.Step.allCases.count) steps done")
+                        Text(ComposeGuide.headerDetail(facts))
                             .font(EchoelTheme.font(12))
                             .foregroundStyle(EchoelTheme.dim)
                     }
@@ -1500,6 +1513,13 @@ private struct ComposeGuideCard: View {
                 ForEach(ComposeGuide.Step.allCases) { step in
                     stepRow(step)
                 }
+                if let note {
+                    Text(note)
+                        .font(EchoelTheme.font(11))
+                        .foregroundStyle(EchoelTheme.dim)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityLabel(note)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1507,14 +1527,16 @@ private struct ComposeGuideCard: View {
 
     private func stepRow(_ step: ComposeGuide.Step) -> some View {
         let state = ComposeGuide.state(of: step, facts)
-        let lit = state == .done || state == .next
         return Button {
             perform(step)
         } label: {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Image(systemName: Self.symbol(state))
                     .font(EchoelTheme.font(13, .semibold))
-                    .foregroundStyle(lit ? EchoelTheme.accent : EchoelTheme.dim)
+                    // Accent only for the ONE step to do now (an active state, the token's use);
+                    // a done tick is plain text colour (review of c672c2adf).
+                    .foregroundStyle(state == .next ? EchoelTheme.accent
+                                                    : (state == .done ? EchoelTheme.text : EchoelTheme.dim))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(step.rawValue). \(ComposeGuide.title(step, facts))")
                         .font(EchoelTheme.font(13, .semibold))
@@ -1536,7 +1558,7 @@ private struct ComposeGuideCard: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(state == .waiting)
+        .disabled(!ComposeGuide.isActionable(step, facts))
         .accessibilityLabel(ComposeGuide.spokenLabel(step, facts))
         .accessibilityHint(ComposeGuide.detail(step, facts))
     }

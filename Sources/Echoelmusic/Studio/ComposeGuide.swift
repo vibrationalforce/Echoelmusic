@@ -118,9 +118,27 @@ enum ComposeGuide {
         }
     }
 
-    /// How many of the five steps are done — the header's count.
+    /// How many of the five steps are done.
     static func doneCount(_ facts: Facts) -> Int {
         Step.allCases.filter { state(of: $0, facts) == .done }.count
+    }
+
+    /// The step to do now, if any — what the header names.
+    static func nextStep(_ facts: Facts) -> Step? {
+        Step.allCases.first { state(of: $0, facts) == .next }
+    }
+
+    /// Whether tapping the row does something the row's own words promise.
+    /// ⚠️ A DONE "Add a MIDI track" is NOT actionable (review of c672c2adf, MED): tapping it
+    /// would add a SECOND MIDI track, and step 2 always lands on the FIRST one — a checked row
+    /// that silently does something else. A done "Add a part" stays actionable because its
+    /// detail line says "another" part, and a done "Write notes" only re-selects a part.
+    /// "Play" while playing is the Stop, so it stays actionable too.
+    static func isActionable(_ step: Step, _ facts: Facts) -> Bool {
+        let state = state(of: step, facts)
+        if state == .waiting { return false }
+        if step == .track, state == .done { return false }
+        return true
     }
 
     static func title(_ step: Step, _ facts: Facts) -> String {
@@ -135,10 +153,13 @@ enum ComposeGuide {
 
     /// One visible line under the title: what the tap does, or what it is waiting for.
     static func detail(_ step: Step, _ facts: Facts) -> String {
-        if state(of: step, facts) == .waiting { return waitingReason(step, facts) }
+        let state = state(of: step, facts)
+        if state == .waiting { return waitingReason(step, facts) }
         switch step {
-        case .track: return "An instrument track for the notes of your piece."
-        case .part:  return "An empty four-bar part on that track."
+        case .track: return state == .done ? "Your piece has its MIDI track."
+                                           : "An instrument track for the notes of your piece."
+        case .part:  return state == .done ? "Adds another empty four-bar part after the last one."
+                                           : "An empty four-bar part on that track."
         case .notes: return "Selects the part. Tap Notes to write into it."
         case .play:  return facts.isPlaying ? "Stops the song." : "Plays the song from the top."
         case .save:  return "Names the piece and saves it. Library opens it again."
@@ -150,7 +171,11 @@ enum ComposeGuide {
         case .track: return ""
         case .part:  return "Add a MIDI track first."
         case .notes: return "Add a part first."
-        case .play:  return facts.hasPart ? "Write notes into a part first." : "Add a part with notes first."
+        // Review of c672c2adf (LOW): `hasNotes` and the engine's `canPlay` can disagree (a
+        // written part covered by a later one, #1440) — then "write notes" would be false.
+        case .play:
+            if facts.hasNotes { return "Nothing in the song can play yet — no part with notes is heard." }
+            return facts.hasPart ? "Write notes into a part first." : "Add a part with notes first."
         case .save:  return "Add a part first."
         }
     }
@@ -169,8 +194,17 @@ enum ComposeGuide {
         return "Step \(step.rawValue) of \(count), \(title(step, facts)), \(status)"
     }
 
-    /// The header, spoken: how far the piece has come.
+    /// The header's line under "Create a piece": the step to do now, never a done-count.
+    /// ⛔ It was "N of 5 steps done" (review of c672c2adf): Save can never be done and Play is
+    /// done only while playing, so the count peaked at 4 and fell back on Stop — a progress
+    /// figure that goes backwards reads as lost work.
+    static func headerDetail(_ facts: Facts) -> String {
+        guard let next = nextStep(facts) else { return "Every step is available below." }
+        return "Next: \(title(next, facts))"
+    }
+
+    /// The header, spoken.
     static func headerLabel(_ facts: Facts) -> String {
-        "Create a piece, \(doneCount(facts)) of \(Step.allCases.count) steps done"
+        "Create a piece. \(headerDetail(facts))"
     }
 }

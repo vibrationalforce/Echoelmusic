@@ -59,7 +59,7 @@ final class ThePlateShowsHowAPieceIsMadeTests: XCTestCase {
             as available would be a door that does nothing (#164/#227).
             """)
         XCTAssertEqual(ComposeGuide.doneCount(f), 0)
-        XCTAssertEqual(ComposeGuide.headerLabel(f), "Create a piece, 0 of 5 steps done")
+        XCTAssertEqual(ComposeGuide.headerLabel(f), "Create a piece. Next: Add a MIDI track")
     }
 
     // MARK: - 2. the steps advance off the song itself
@@ -68,6 +68,11 @@ final class ThePlateShowsHowAPieceIsMadeTests: XCTestCase {
         let keys = TimelineLane(name: "Keys", kind: .midi)
         let trackOnly = facts(TimelineDocument(lanes: [keys], regions: []), [])
         XCTAssertEqual(states(trackOnly), [.done, .next, .waiting, .waiting, .waiting])
+        // Review of c672c2adf (MED): a DONE "Add a MIDI track" must not add a SECOND track —
+        // step 2 always lands on the first, so the checked row would silently do something else.
+        XCTAssertFalse(ComposeGuide.isActionable(.track, trackOnly))
+        XCTAssertTrue(ComposeGuide.isActionable(.part, trackOnly))
+        XCTAssertFalse(ComposeGuide.isActionable(.notes, trackOnly), "a waiting step does nothing")
 
         let empty = Clip(name: "part", kind: .midi, melody: MelodyClip(notes: []))
         let region = TimelineRegion(laneID: keys.id, clipID: empty.id, startTick: 0,
@@ -84,6 +89,16 @@ final class ThePlateShowsHowAPieceIsMadeTests: XCTestCase {
                               canPlay: true)
         XCTAssertEqual(states(withNotes), [.done, .done, .done, .next, .ready])
         XCTAssertEqual(ComposeGuide.title(.play, withNotes), "Play the song")
+        XCTAssertTrue(ComposeGuide.isActionable(.part, withNotes),
+                      "a done \"Add a part\" says it adds ANOTHER part, so it stays a door")
+        XCTAssertTrue(ComposeGuide.detail(.part, withNotes).contains("another"))
+        XCTAssertEqual(ComposeGuide.headerDetail(withNotes), "Next: Play the song")
+
+        // Review of c672c2adf (LOW): notes exist but the engine cannot start (a written part
+        // covered by a later one, #1440) — the reason must not ask for notes that are there.
+        let covered = facts(TimelineDocument(lanes: [keys], regions: [region]), [written], canPlay: false)
+        XCTAssertEqual(ComposeGuide.state(of: .play, covered), .waiting)
+        XCTAssertFalse(ComposeGuide.detail(.play, covered).contains("Write notes"))
 
         let playing = facts(TimelineDocument(lanes: [keys], regions: [region]), [written],
                             canPlay: true, isPlaying: true)
@@ -93,6 +108,9 @@ final class ThePlateShowsHowAPieceIsMadeTests: XCTestCase {
         XCTAssertEqual(ComposeGuide.state(of: .save, playing), .next)
         XCTAssertEqual(ComposeGuide.doneCount(playing), 4,
                        "Save never reads as done — nothing here can know the song is unchanged since")
+        XCTAssertTrue(ComposeGuide.isActionable(.play, playing), "while playing, step 4 is the Stop")
+        XCTAssertEqual(ComposeGuide.headerDetail(playing), "Next: Save the piece",
+                       "the header names the next step — never a done-count that falls back on Stop")
     }
 
     // MARK: - 3. the composer's take is not the user's part
@@ -217,8 +235,10 @@ final class ThePlateShowsHowAPieceIsMadeTests: XCTestCase {
                        "both buttons keep a 44 pt target")
         XCTAssertTrue(card.contains(".accessibilityLabel(ComposeGuide.spokenLabel(step, facts))"))
         XCTAssertTrue(card.contains(".accessibilityLabel(ComposeGuide.headerLabel(facts))"))
-        XCTAssertTrue(card.contains(".disabled(state == .waiting)"),
-                      "a waiting step is disabled — and its detail line says why (claim 5)")
+        XCTAssertTrue(card.contains(".disabled(!ComposeGuide.isActionable(step, facts))"),
+                      "the row's availability is the model's ONE rule — a waiting step says why (claim 5)")
+        XCTAssertTrue(card.contains("if let note {"),
+                      "the guide shows its own step's outcome where the step was tapped")
         XCTAssertFalse(card.contains("minimumScaleFactor"), "Dynamic Type grows the text, never shrinks it")
     }
 
