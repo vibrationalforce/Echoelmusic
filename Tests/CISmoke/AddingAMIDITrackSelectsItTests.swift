@@ -76,6 +76,10 @@ final class AddingAMIDITrackSelectsItTests: XCTestCase {
         let note = MIDIImport.addedTrackNote(laneName: added.name)
         XCTAssertTrue(note.hasPrefix("Added \(added.name)."), "the sentence names the track it made: \(note)")
         XCTAssertTrue(note.contains("selected"), "and says where it is")
+        XCTAssertFalse(note.contains("add a part"), """
+            New MIDI Part lands on the ROLL lane (MIDIImport header), which is this track only when \
+            it is the first MIDI one — the sentence must not promise the part lands here.
+            """)
     }
 
     // MARK: - 3. the view selects what it made

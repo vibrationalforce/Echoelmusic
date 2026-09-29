@@ -137,8 +137,10 @@ public enum MIDIImport {
 
     /// The sentence after "Add MIDI Track" (DMMW Phase 2 · slice 2): which track was made and
     /// where it is, since the tap selects it and opens its details in the track list.
+    /// ⚠️ It promises NOTHING about where the next part goes: "New MIDI Part" lands on the roll
+    /// lane (the header above says why), which is this track only when it is the first MIDI one.
     public static func addedTrackNote(laneName: String) -> String {
-        "Added \(laneName). It is selected in the track list — add a part to write notes."
+        "Added \(laneName). It is selected in the track list."
     }
 
     // MARK: - The empty part (Phase 3 / M1b — "New MIDI Part")
