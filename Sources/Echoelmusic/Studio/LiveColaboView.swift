@@ -32,6 +32,7 @@ struct LiveColaboView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    ProjectSaveStatusView()
                     goLiveRow
                     Text(colab.status)
                         .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)

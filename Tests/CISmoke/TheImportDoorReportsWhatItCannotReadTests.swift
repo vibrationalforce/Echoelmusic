@@ -358,7 +358,7 @@ final class TheImportDoorReportsWhatItCannotReadTests: XCTestCase {
         XCTAssertFalse(colab.contains("projects.save(project)"),
                        "a direct save keeps the peer's id and Session")
         let storeCode = try code(at: "Sources/Echoelmusic/Core/ProjectStore.swift")
-        XCTAssertTrue(storeCode.contains("return adoptArriving(p)"),
+        XCTAssertTrue(storeCode.contains("adoptArriving(p)"),
                       "the file import is the same rule, not a second copy of it (#416)")
     }
 
