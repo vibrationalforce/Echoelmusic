@@ -9652,6 +9652,9 @@ struct EchoelStudioView: View {
         return NavigationStack {
             List {
                 ProjectSaveStatusView()
+                // DMMW Phase 5 · slice 1 — the flow's first step, "Neues Stück". Inside this
+                // sheet's content, so no presentation modifier is added (black-screen law).
+                newPieceRow
                 if let importNote {
                     // WHY A PLAIN LINE AND NOT AN ALERT — the same reason as `exportFailure`
                     // (#216; its line lives in `startControlRow` since #993, not one screen up
@@ -9775,6 +9778,56 @@ struct EchoelStudioView: View {
             #endif
         }
     }
+
+    /// DMMW Phase 5 · slice 1 — "New piece". There was no way to start an empty song: the
+    /// library could only open what was saved, and the flow Neues Stück → Spur → Part → Noten had
+    /// no first step. One row, one action (`startNewPiece`), and a sentence that says what is kept.
+    private var newPieceRow: some View {
+        Section {
+            Button {
+                startNewPiece()
+            } label: {
+                Label("New piece", systemImage: "plus.square")
+                    .font(.callout.weight(.medium)).foregroundStyle(EchoelTheme.text)
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(Self.newPieceNote)
+        } footer: {
+            Text(Self.newPieceNote).foregroundStyle(EchoelTheme.dim)
+        }
+    }
+
+    /// What "New piece" does, said once for the footer and VoiceOver (#416). It names the Autosave
+    /// row, where the song being replaced goes, and says the instrument keeps its sound.
+    static let newPieceNote = "Starts an empty song and opens Compose. The song you had is kept in Autosave below; the instrument keeps its sound."
+
+    /// DMMW Phase 5 · slice 1 — rescue, then replace, in `openFromLibrary`'s order and through its
+    /// owners: the live take and song go to the ONE recovery slot (`autosaveTake`, the rescue Open
+    /// runs), the song becomes `SessionSaveOpen.emptySong`, the header names nothing, the song's
+    /// Echoel instance is re-stated from the instrument (the same two lines Open ends with), and
+    /// the Compose area opens — the player asked for it by tapping the row that says so. The
+    /// instrument's own take, genre and sound stay.
+    private func startNewPiece() {
+        autosaveTake()
+        openNote = nil
+        guard SessionSaveOpen.startEmptySong(timeline: timelineStore, clips: clipStore,
+                                             player: timelinePlayer) else {
+            openNote = Self.newPieceRefusedNote
+            return
+        }
+        projects.clearCurrent()
+        timelineStore.setEchoelGenre(style)
+        adoptEchoelFXFromSong()
+        EchoelCrashLog.breadcrumb("New piece: empty song")
+        showOpen = false
+        // Through the Compose AREA door the area row taps — never a direct plate assignment:
+        // nothing may force the plate to the Workstation (`TheWorkstationHasADoorTests`).
+        selectArea(.compose)
+    }
+
+    static let newPieceRefusedNote = "Couldn't start a new piece. Your song is unchanged."
 
     /// One library row. Extracted when #285 split the list in two so the two sections cannot
     /// drift apart — a row that looked different in the autosave section would read as a

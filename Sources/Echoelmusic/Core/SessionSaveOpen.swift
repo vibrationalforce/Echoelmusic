@@ -98,14 +98,35 @@ public enum SessionSaveOpen {
         let song: (document: TimelineDocument, slots: [Clip?])
         switch project.readSession() {
         case .absent:
-            song = (TimelineStore.migrate(sections: []),
-                    [Clip?](repeating: nil, count: ClipStore.slotCount))
+            song = emptySong
         case .restorable(let session):
             guard session.content.clipSlots.count == ClipStore.slotCount else { return false }
             song = (session.content.timeline, session.content.clipSlots)
         case .newer, .unreadable:
             return false
         }
+        player.stop()
+        guard clips.replaceSlots(song.slots) else { return false }
+        timeline.replaceDocument(song.document)
+        return true
+    }
+
+    /// The song a project saved before Sessions opens into, and the song "New piece" starts —
+    /// ONE definition (#416): the default MIDI and audio track, no parts, an empty clip grid.
+    public static var emptySong: (document: TimelineDocument, slots: [Clip?]) {
+        (TimelineStore.migrate(sections: []), [Clip?](repeating: nil, count: ClipStore.slotCount))
+    }
+
+    /// DMMW Phase 5 · slice 1 — "New piece": replace the Workstation's song with `emptySong`,
+    /// in `restoreSong`'s load-bearing order (player stopped, grid before timeline). The caller
+    /// rescues the live take and song into the recovery slot FIRST, exactly as Open does; this
+    /// function only replaces. Returns false (and changes nothing past the stop) when the grid
+    /// refuses its slots.
+    @MainActor
+    @discardableResult
+    public static func startEmptySong(timeline: TimelineStore, clips: ClipStore,
+                                      player: TimelineRegionPlayer) -> Bool {
+        let song = emptySong
         player.stop()
         guard clips.replaceSlots(song.slots) else { return false }
         timeline.replaceDocument(song.document)

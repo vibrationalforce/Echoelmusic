@@ -75,6 +75,13 @@ public final class ProjectStore {
         currentProjectID = project.id
     }
 
+    /// DMMW Phase 5 · slice 1 — "New piece": the header names nothing until the new piece is
+    /// saved or another project is opened.
+    public func clearCurrent() {
+        currentProjectName = nil
+        currentProjectID = nil
+    }
+
     public func delete(id: UUID) {
         let next = (pendingProjects ?? projects).filter { $0.id != id }
         persist(next)

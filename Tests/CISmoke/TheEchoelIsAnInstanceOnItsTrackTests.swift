@@ -262,8 +262,11 @@ final class TheEchoelIsAnInstanceOnItsTrackTests: XCTestCase {
 
     func testEveryWriterOfTheWorkingCopyWritesTheSongAndEveryReaderAdopts() throws {
         let studio = try source(Self.studioPath)
-        XCTAssertEqual(studio.components(separatedBy: "adoptEchoelFXFromSong()").count - 1, 4,
-                       "declared once + launch + after a library Open + the \"fxCharacter\" edit")
+        // DMMW Phase 5 · slice 1 added the fifth: "New piece" replaces the song exactly as Open
+        // does, so it adopts after the replacement too (`ANewPieceStartsAnEmptySongTests` pins
+        // that order inside `startNewPiece`).
+        XCTAssertEqual(studio.components(separatedBy: "adoptEchoelFXFromSong()").count - 1, 5,
+                       "declared once + launch + after a library Open + after a New piece + the \"fxCharacter\" edit")
         // The launch adoption sits AFTER the genre clamp (an adoption re-stamps the FX room from
         // `style`) — review of 6d68bea64, L4: the count alone survives moving it anywhere.
         guard let clamp = studio.range(of: "style = StudioDefaultKeys.genre.value"),
