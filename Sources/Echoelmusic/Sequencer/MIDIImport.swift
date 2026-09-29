@@ -10,11 +10,13 @@
 // `Clip.melody` is the content, persisted with the clip grid. So nothing on disk can go missing
 // behind the part, and the file the user picked is read once and released.
 //
-// ⭐ THE LANE IS THE ENGINE'S ROLL LANE, NOT A SECOND OPINION (#416). `TimelineRegionPlayer`
+// ⭐ A FILE IMPORT'S LANE IS THE ENGINE'S ROLL LANE (#416). `TimelineRegionPlayer`
 // plays exactly one MIDI lane through `PianoRollModel` — `TimelineDocument.rollLaneID`, the first
 // non-bio MIDI lane. Landing anywhere else would place a part that plays only while the
 // secondary-lane rack has capacity, which `canPlay` does not check. So the import lands where the
 // engine certainly plays it, and `firstImportableMIDILane` IS `rollLaneID`.
+// New MIDI Part is a separate creation command: it uses the explicitly selected MIDI lane
+// and verifies secondary-lane capacity through the player's own `MultiRollFanout.slot` rule.
 //
 // ⭐ THE PART IS USER-OWNED (`composerOwned: false`, the `Clip.init` default, written out on
 // purpose). `ClipStore.updateComposerMelody` refuses every clip that is not composer-owned, so
@@ -76,6 +78,10 @@ public enum MIDIImport {
         /// The song has no MIDI track. Never created behind the user's back — `addMIDITrack`
         /// is a separate, deliberate tap on the door paired with Import MIDI.
         case noMIDILane
+        /// Creating a part needs an existing non-bio MIDI selection; never redirect to another track.
+        case noSelectedMIDILane
+        /// The selected secondary lane has no physical rack voice in this build.
+        case selectedTrackHasNoVoice
         /// All eight `ClipStore` slots are taken. Fail, never overwrite.
         case clipGridFull
 
@@ -91,6 +97,10 @@ public enum MIDIImport {
             case .noMelodicNotes: return "That MIDI file has no notes to play — drum channel 10 is skipped."
             case .tooLong:        return "That MIDI file is too long — a part holds up to \(MIDIImport.maxBars) bars and \(MIDIImport.maxNotes) notes."
             case .noMIDILane:     return "This project has no MIDI track — add a MIDI track first."
+            case .noSelectedMIDILane:
+                return "Select a MIDI track before adding a part."
+            case .selectedTrackHasNoVoice:
+                return "This MIDI track has no playback voice — select a playable MIDI track."
             case .clipGridFull:   return "The clip grid is full — all 8 slots are in use."
             }
         }
@@ -131,8 +141,12 @@ public enum MIDIImport {
     /// same reason (`TheWorkstationHasADoorTests` claim F: the view sends the store nothing but
     /// `document`). It APPENDS; it does not "ensure".
     @MainActor
-    public static func addMIDITrack(timeline: TimelineStore) {
+    @discardableResult
+    public static func addMIDITrack(timeline: TimelineStore) -> UUID? {
         timeline.addLane(kind: .midi)
+        // addLane appends synchronously on this actor. Return that new identity so the view
+        // can select the track it just created, without inventing another selection owner.
+        return timeline.document.lanes.last?.id
     }
 
     // MARK: - The empty part (Phase 3 / M1b — "New MIDI Part")
@@ -141,8 +155,9 @@ public enum MIDIImport {
     /// pattern. The grid scrolls, so this is a starting length, not a ceiling.
     public static let emptyPartBars = 4
 
-    /// An EMPTY part for the user's own notes — the import's decision without a file: the same
-    /// lane (the roll lane, `firstImportableMIDILane`, #416), the same refusals, the same
+    /// An EMPTY part for the user's own notes on the explicitly selected, playable MIDI lane.
+    /// A missing, incompatible or voiceless selection is refused before choosing a clip slot.
+    /// Unlike file import, this command can use a secondary track. It keeps the same
     /// ownership (`composerOwned: false`, so evolve never rewrites what the user writes into it).
     ///
     /// ⭐ WHY IT EXISTS: until this row the note editor (`PartNoteEditor`) could only open a part
@@ -161,9 +176,17 @@ public enum MIDIImport {
     ///
     /// ⚠️ IT STARTS ON A BAR: after the lane's last part, rounded up to the next barline, so the
     /// grid's first column is a downbeat even when a trimmed part ends mid-bar.
-    public static func planEmptyPart(document: TimelineDocument,
-                                     slots: [Clip?]) -> Result<Landing, Failure> {
-        guard let lane = firstImportableMIDILane(in: document) else { return .failure(.noMIDILane) }
+    public static func planEmptyPart(document: TimelineDocument, slots: [Clip?],
+                                     laneID: UUID?, voiceCapacity: Int) -> Result<Landing, Failure> {
+        guard document.rollLaneID != nil else { return .failure(.noMIDILane) }
+        guard let laneID,
+              let lane = document.lanes.first(where: { $0.id == laneID }),
+              lane.kind == .midi, !lane.isBio else { return .failure(.noSelectedMIDILane) }
+        guard laneID == document.rollLaneID
+                || MultiRollFanout.slot(forLaneID: laneID, in: document,
+                                        rollLane: document.rollLaneID, capacity: voiceCapacity) != nil else {
+            return .failure(.selectedTrackHasNoVoice)
+        }
         let name = "MIDI · \(lane.name)"
         let played = Set(document.regions.map(\.clipID))
         let clip: Clip
@@ -209,8 +232,10 @@ public enum MIDIImport {
     @MainActor
     @discardableResult
     public static func addEmptyPart(clipStore: ClipStore,
-                                    timeline: TimelineStore) -> Result<Landing, Failure> {
-        switch planEmptyPart(document: timeline.document, slots: clipStore.slots) {
+                                    timeline: TimelineStore, laneID: UUID?,
+                                    voiceCapacity: Int) -> Result<Landing, Failure> {
+        switch planEmptyPart(document: timeline.document, slots: clipStore.slots,
+                             laneID: laneID, voiceCapacity: voiceCapacity) {
         case .failure(let failure):
             return .failure(failure)
         case .success(let landing):

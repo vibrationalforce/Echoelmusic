@@ -4,10 +4,14 @@
 // WHAT IT PINS. M1 gave the Workstation a note editor for the selected MIDI part, but the only
 // thing that could MAKE an editable part was a MIDI file (`MIDIImport.perform`). On a fresh
 // install with no file at hand the editor had nothing to open. "New MIDI Part" is the second
-// producer: an EMPTY, user-owned MIDI part on the roll lane, selected at once.
+// producer: an EMPTY, user-owned MIDI part, selected at once.
+// CUX-1 (2026-09-29): the selected playable MIDI track is now the explicit destination.
+// The original roll-lane cases below remain counterweights; the new second-track and refusal
+// cases pin the regression. The new required arguments do not compile against the parent;
+// Python transcription can compare behaviour, but is not Swift execution or device evidence.
 //
 // 1. PURE (`MIDIImport.planEmptyPart`, END-TO-END BEHAVIOUR on shipped value types): the part
-//    lands on the import's lane (`rollLaneID`, #416), four bars, on a barline after the lane's
+//    lands on the selected playable lane, four bars, on a barline after that lane's
 //    last part; its clip is user-owned, MIDI and empty, and the note editor ACCEPTS it
 //    (`ClipNoteEdit.refusal` is nil) — the reason this door exists.
 // 2. PURE: an orphaned EMPTY user clip is reused by id; a clip with notes, a composer clip, or a
@@ -59,10 +63,11 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
         XCTAssertEqual(empty.rollLaneID, keys.id, "fixture premise: the roll lane skips the bio lane")
 
         let slots = [Clip?](repeating: nil, count: ClipStore.slotCount)
-        guard case .success(let first) = MIDIImport.planEmptyPart(document: empty, slots: slots) else {
+        guard case .success(let first) = MIDIImport.planEmptyPart(document: empty, slots: slots,
+                                                                 laneID: keys.id, voiceCapacity: 1) else {
             return XCTFail("an empty song with a MIDI track must get a part")
         }
-        XCTAssertEqual(first.laneID, keys.id, "the import's lane, never a second opinion (#416)")
+        XCTAssertEqual(first.laneID, keys.id, "the selected primary lane stays supported")
         XCTAssertEqual(first.region.laneID, keys.id)
         XCTAssertEqual(first.region.startTick, 0)
         XCTAssertEqual(first.region.lengthTicks, MIDIImport.emptyPartBars * Self.bar)
@@ -78,7 +83,8 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
         let trimmed = TimelineRegion(laneID: keys.id, clipID: UUID(), startTick: 0,
                                      lengthTicks: 2 * Self.bar + 100)
         let busy = TimelineDocument(lanes: [bio, keys, second], regions: [trimmed])
-        guard case .success(let after) = MIDIImport.planEmptyPart(document: busy, slots: slots) else {
+        guard case .success(let after) = MIDIImport.planEmptyPart(document: busy, slots: slots,
+                                                                 laneID: keys.id, voiceCapacity: 1) else {
             return XCTFail("a lane with a part must still take a new one")
         }
         XCTAssertEqual(after.region.startTick, 3 * Self.bar, "after the last part, on a barline")
@@ -116,7 +122,8 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
         grid[3] = playedEmpty
         grid[4] = oldBeat
         grid[5] = orphanEmpty
-        guard case .success(let reused) = MIDIImport.planEmptyPart(document: doc, slots: grid) else {
+        guard case .success(let reused) = MIDIImport.planEmptyPart(document: doc, slots: grid,
+                                                                  laneID: keys.id, voiceCapacity: 1) else {
             return XCTFail("a free grid must take a part")
         }
         XCTAssertEqual(reused.slotIndex, 5, "the one orphaned EMPTY user clip is reused")
@@ -127,7 +134,8 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
 
         // Without it: a free slot, never one of the three that hold something.
         grid[5] = nil
-        guard case .success(let fresh) = MIDIImport.planEmptyPart(document: doc, slots: grid) else {
+        guard case .success(let fresh) = MIDIImport.planEmptyPart(document: doc, slots: grid,
+                                                                 laneID: keys.id, voiceCapacity: 1) else {
             return XCTFail("a free grid must take a part")
         }
         XCTAssertEqual(fresh.slotIndex, 0)
@@ -138,11 +146,13 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
         let full: [Clip?] = (0..<ClipStore.slotCount).map { i in
             Clip(name: "n\(i)", kind: .midi, melody: MelodyClip(notes: [Note(pitch: 60, startStep: i)]))
         }
-        XCTAssertEqual(MIDIImport.planEmptyPart(document: doc, slots: full).failureValue, .clipGridFull)
+        XCTAssertEqual(MIDIImport.planEmptyPart(document: doc, slots: full,
+                                                laneID: keys.id, voiceCapacity: 1).failureValue, .clipGridFull)
 
         // No MIDI track → refused with the sentence the row above can act on.
         let audioOnly = TimelineDocument(lanes: [TimelineLane(name: "Audio", kind: .audio)], regions: [])
-        XCTAssertEqual(MIDIImport.planEmptyPart(document: audioOnly, slots: grid).failureValue,
+        XCTAssertEqual(MIDIImport.planEmptyPart(document: audioOnly, slots: grid,
+                                                laneID: nil, voiceCapacity: 1).failureValue,
                        .noMIDILane)
     }
 
@@ -163,7 +173,8 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
         timeline.replaceDocument(TimelineDocument(lanes: [keys], regions: []))
         XCTAssertFalse(timeline.canUndo, "fixture premise: a fresh history")
 
-        guard case .success(let landing) = MIDIImport.addEmptyPart(clipStore: clips, timeline: timeline) else {
+        guard case .success(let landing) = MIDIImport.addEmptyPart(clipStore: clips, timeline: timeline,
+                                                                  laneID: keys.id, voiceCapacity: 1) else {
             return XCTFail("the transaction must land")
         }
         XCTAssertEqual(timeline.document.regions.map(\.id), [landing.region.id])
@@ -174,7 +185,8 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
         XCTAssertFalse(timeline.canUndo)
 
         for _ in 0..<3 {
-            _ = MIDIImport.addEmptyPart(clipStore: clips, timeline: timeline)
+            _ = MIDIImport.addEmptyPart(clipStore: clips, timeline: timeline,
+                                        laneID: keys.id, voiceCapacity: 1)
             timeline.undo()
         }
         XCTAssertEqual(clips.filledClips.count, 1,
@@ -187,8 +199,14 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
         let view = try source(Self.workstationPath)
         let row = try body(of: "private var newMIDIPartRow: some View {", in: view)
         XCTAssertTrue(row.contains("Text(\"New MIDI Part\")"), "the row is no longer labelled")
-        XCTAssertTrue(row.contains("MIDIImport.addEmptyPart(clipStore: clipStore, timeline: timeline)"),
+        XCTAssertTrue(row.contains("MIDIImport.addEmptyPart(clipStore: clipStore, timeline: timeline,"),
                       "the view hands both stores over; the write is `MIDIImport`'s (claim F)")
+        XCTAssertTrue(row.contains("laneID: selection.trackID"), "the selected track is the destination")
+        XCTAssertTrue(row.contains("voiceCapacity: player.laneVoiceCapacity"),
+                      "ask the actual rack capacity, never assume a voice exists")
+        XCTAssertTrue(row.contains(".accessibilityValue(targetName"), "the target is spoken as well as shown")
+        let addTrack = try body(of: "private var addMIDITrackRow: some View {", in: view)
+        XCTAssertTrue(addTrack.contains("selection.toggleTrack(laneID)"), "select the newly created track")
         XCTAssertTrue(row.contains("selection.selectRegion(landing.region.id, in: timeline.document)"),
                       "the new part must be selected, so the part bar and Notes open on it")
         XCTAssertTrue(row.contains("importNote = failure.userMessage"),
@@ -211,6 +229,94 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
                           "clip FIRST, region SECOND — playback resolves `clipID` through the grid")
         let refusal = try XCTUnwrap(commit.range(of: "case .failure"))
         XCTAssertLessThan(refusal.lowerBound, clip.lowerBound, "a refusal must return before any write")
+    }
+
+    // MARK: CUX-1 — the selected track, not the import's default
+
+    func testTheSelectedSecondTrackOwnsTheNewPartAndItsInsertionBar() throws {
+        let keys = TimelineLane(name: "Keys", kind: .midi)
+        let bass = TimelineLane(name: "Bass", kind: .midi)
+        let first = TimelineRegion(laneID: keys.id, clipID: UUID(), startTick: 0,
+                                   lengthTicks: 12 * Self.bar)
+        let second = TimelineRegion(laneID: bass.id, clipID: UUID(), startTick: 0,
+                                    lengthTicks: 2 * Self.bar + 100)
+        let document = TimelineDocument(lanes: [keys, bass], regions: [first, second])
+        let slots = [Clip?](repeating: nil, count: ClipStore.slotCount)
+        guard case .success(let landing) = MIDIImport.planEmptyPart(document: document, slots: slots,
+                                                                   laneID: bass.id, voiceCapacity: 1) else {
+            return XCTFail("the selected second MIDI track has a rack voice")
+        }
+        XCTAssertEqual(landing.laneID, bass.id)
+        XCTAssertEqual(landing.region.laneID, bass.id)
+        XCTAssertEqual(landing.region.startTick, 3 * Self.bar, "after THIS track, not after Keys")
+        XCTAssertEqual(landing.region.lengthTicks, MIDIImport.emptyPartBars * Self.bar)
+        XCTAssertFalse(landing.clip.composerOwned)
+        XCTAssertNil(ClipNoteEdit.refusal(clip: landing.clip, region: landing.region))
+        XCTAssertEqual(MIDIImport.firstImportableMIDILane(in: document)?.id, keys.id,
+                       "MIDI-file import keeps its separate primary-lane contract")
+    }
+
+    func testAnInvalidOrVoicelessSelectionNeverFallsBackToTheFirstTrack() throws {
+        let keys = TimelineLane(name: "Keys", kind: .midi)
+        let bass = TimelineLane(name: "Bass", kind: .midi)
+        let overflow = TimelineLane(name: "Overflow", kind: .midi)
+        let audio = TimelineLane(name: "Audio", kind: .audio)
+        let bio = TimelineLane(name: "Bio", kind: .midi, isBio: true)
+        let document = TimelineDocument(lanes: [audio, bio, keys, bass, overflow], regions: [])
+        let slots = [Clip?](repeating: nil, count: ClipStore.slotCount)
+        let invalidTargets: [UUID?] = [nil, UUID(), audio.id, bio.id]
+        for target in invalidTargets {
+            XCTAssertEqual(MIDIImport.planEmptyPart(document: document, slots: slots,
+                                                    laneID: target, voiceCapacity: 1).failureValue,
+                           .noSelectedMIDILane)
+        }
+        for target in [bass.id, overflow.id] {
+            XCTAssertEqual(MIDIImport.planEmptyPart(document: document, slots: slots,
+                                                    laneID: target, voiceCapacity: 0).failureValue,
+                           .selectedTrackHasNoVoice)
+        }
+        XCTAssertEqual(MIDIImport.planEmptyPart(document: document, slots: slots,
+                                                laneID: overflow.id, voiceCapacity: 1).failureValue,
+                       .selectedTrackHasNoVoice)
+        XCTAssertNil(MIDIImport.planEmptyPart(document: document, slots: slots,
+                                              laneID: keys.id, voiceCapacity: 0).failureValue,
+                     "the primary instrument does not spend a rack slot")
+        XCTAssertFalse(MIDIImport.Failure.noSelectedMIDILane.userMessage.isEmpty)
+        XCTAssertFalse(MIDIImport.Failure.selectedTrackHasNoVoice.userMessage.isEmpty)
+    }
+
+    func testAddingATrackReturnsItsIdentityAndARefusalWritesNothing() throws {
+        let timeline = TimelineStore()
+        let clips = ClipStore()
+        let originalDocument = timeline.document
+        let originalSlots = clips.slots
+        defer {
+            clips.replaceSlots(originalSlots)
+            timeline.replaceDocument(originalDocument)
+        }
+        timeline.replaceDocument(TimelineDocument(lanes: [], regions: []))
+        XCTAssertTrue(clips.replaceSlots([Clip?](repeating: nil, count: ClipStore.slotCount)))
+        let firstID = try XCTUnwrap(MIDIImport.addMIDITrack(timeline: timeline))
+        let secondID = try XCTUnwrap(MIDIImport.addMIDITrack(timeline: timeline))
+        XCTAssertNotEqual(firstID, secondID)
+        XCTAssertEqual(timeline.document.lanes.map(\.id), [firstID, secondID])
+        let before = timeline.document
+        let beforeSlots = clips.slots
+        let beforeUndo = timeline.canUndo
+        XCTAssertEqual(MIDIImport.addEmptyPart(clipStore: clips, timeline: timeline,
+                                               laneID: secondID, voiceCapacity: 0).failureValue,
+                       .selectedTrackHasNoVoice)
+        XCTAssertEqual(timeline.document, before)
+        XCTAssertEqual(clips.slots, beforeSlots)
+        XCTAssertEqual(timeline.canUndo, beforeUndo)
+        guard case .success(let landing) = MIDIImport.addEmptyPart(clipStore: clips, timeline: timeline,
+                                                                  laneID: secondID, voiceCapacity: 1) else {
+            return XCTFail("the second track must accept a part when the rack has a voice")
+        }
+        XCTAssertEqual(timeline.document.regions.map(\.laneID), [secondID])
+        XCTAssertEqual(clips.clip(id: landing.clip.id), landing.clip)
+        timeline.undo()
+        XCTAssertTrue(timeline.document.regions.isEmpty)
     }
 
     // MARK: helpers

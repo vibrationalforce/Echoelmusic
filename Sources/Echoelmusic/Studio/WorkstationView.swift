@@ -383,7 +383,7 @@ struct WorkstationView: View {
                 importMIDIRow
             }
             // Phase 3 / M1b — an EMPTY part for the note editor, so writing notes does not
-            // need a MIDI file. Same lane and refusals as Import MIDI (`MIDIImport`).
+            // need a MIDI file. Uses the selected playable MIDI track (`MIDIImport`).
             newMIDIPartRow
             if let note = importNote { importNoteLine(note) }
             // Phase 3 / MA1 — the media library: the audio files already imported, and "Place"
@@ -982,7 +982,9 @@ struct WorkstationView: View {
     private var addMIDITrackRow: some View {
         Button {
             importNote = nil
-            MIDIImport.addMIDITrack(timeline: timeline)
+            if let laneID = MIDIImport.addMIDITrack(timeline: timeline) {
+                selection.toggleTrack(laneID)
+            }
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "plus")
@@ -1030,17 +1032,22 @@ struct WorkstationView: View {
         .accessibilityHint("Adds a MIDI file's notes to the song's first MIDI track")
     }
 
-    /// Phase 3 / M1b — "New MIDI Part": an empty part on the MIDI track, selected at once so the
+    /// CUX-1 — "New MIDI Part": an empty part on the selected playable MIDI track, selected so the
     /// part bar and the note editor below the canvas open on it. The stores are handed to
     /// `MIDIImport.addEmptyPart`, never messaged (claim F); selecting reads only `document`.
     ///
     /// ⚠️ NEVER DISABLED, for `importMIDIRow`'s reason: a missing track or a full clip grid is
     /// known to the plan, and each refusal says so in words on the one note line.
     private var newMIDIPartRow: some View {
-        Button {
+        let targetName = timeline.document.lanes.first {
+            $0.id == selection.trackID && $0.kind == .midi && !$0.isBio
+        }?.name
+        return Button {
             importNote = nil
             tuningPending = nil
-            switch MIDIImport.addEmptyPart(clipStore: clipStore, timeline: timeline) {
+            switch MIDIImport.addEmptyPart(clipStore: clipStore, timeline: timeline,
+                                           laneID: selection.trackID,
+                                           voiceCapacity: player.laneVoiceCapacity) {
             case .success(let landing):
                 selection.selectRegion(landing.region.id, in: timeline.document)
                 let laneName = timeline.document.lanes
@@ -1054,7 +1061,12 @@ struct WorkstationView: View {
             HStack(spacing: 6) {
                 Image(systemName: "square.grid.3x3")
                     .font(EchoelTheme.font(13, .semibold))
-                Text("New MIDI Part").font(EchoelTheme.font(13, .semibold))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("New MIDI Part").font(EchoelTheme.font(13, .semibold))
+                    Text(targetName.map { "On \($0)" } ?? "Select a MIDI track")
+                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .foregroundStyle(EchoelTheme.text)
             .padding(.horizontal, 14)
@@ -1066,7 +1078,8 @@ struct WorkstationView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("New MIDI part")
-        .accessibilityHint("Adds an empty four-bar part to the MIDI track Import MIDI uses, and selects it")
+        .accessibilityValue(targetName ?? "No MIDI track selected")
+        .accessibilityHint("Adds and selects an empty four-bar part after the selected track's last part")
     }
 
     /// S2 — run the MIDI import and say what happened. `handleImport`'s shape without the
