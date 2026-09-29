@@ -113,7 +113,8 @@ final class PerformIsASecondViewOfTheSameSessionTests: XCTestCase {
         XCTAssertTrue(player.isPlaying, "the song runs")
         XCTAssertTrue(transport.isPlaying, "on the ONE clock")
         XCTAssertEqual(player.startedFromTick, 2 * bar, "from the scene's bar")
-        XCTAssertEqual(player.launchState(laneID: lane.id), .playing(regionID: region.id), """
+        XCTAssertEqual(player.launchState(laneID: lane.id),
+                       .playing(LaunchedRegion(regionID: region.id, startedAtTick: 2 * bar)), """
             the scene's part is launched on its lane — the same region id, on the same player \
             the Workstation's Session grid reads
             """)
