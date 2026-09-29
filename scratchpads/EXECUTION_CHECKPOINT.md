@@ -419,3 +419,14 @@ DEVICE_TEST_PREP_2026-09-29 (founder order: internal TestFlight device test, fou
 - xcresult artifact 11023518644 ("test-results-ios-iPhone 17", 7.97 MB, expires 2026-12-28). Download from this container is refused by the egress proxy (blob.core.windows.net, 403), so the names are UNREAD here.
 - auto-merge moved main to 012d9fff7.
 - 69dece6 / 761a264 / 71f8fd4: GitHub answers 422 "No commit found"; not in this container. They were never pushed.
+
+## RED_RUN_TESTS_012d9fff7_ANALYSIS_2026-09-29 (NOT a test result)
+
+- Artifact 11023518644 still refused by the egress proxy (blob host, 403, policy). Check-run 109333770719 carries no annotations. Only environment: "Default" (trusted network).
+- Baseline (founder-confirmed xcresult, fe390f7e3): 4,388 passed / 1 failed = TheBassRoleHasItsOwnVoiceTests.testEveryBassPatchIsADarkerShorterLowerMonoCousinOfItsPad (cumbia).
+- The only Sources/Tests delta fe390f7e3→012d9fff7 is 2c33f00c3 (8 files; GenrePatches untouched → the cumbia red is expected to persist).
+- Hand transcription on 012d9fff7:
+  - AFailedProjectSaveCanBeRetriedTests: all 4 methods trace to PASS (ProjectStore.persist/retrySave/recoveryProject; SessionSaveOpen.recoveryRow branch `!songHasUserParts, slot.sessionEnvelope != nil`; Project decodes name-only JSON via decodeIfPresent).
+  - Changed needles: `adoptArriving(p)` 1 hit in ProjectStore; `existingSlot: projects.recoveryProject(id: Project.autosaveSlotID)) else { return }` at EchoelStudioView.swift:11757.
+  - Sweep: 0 CISmoke `contains("…")` needles point at a line 2c33f00c3 removed.
+- Conclusion allowed: NO evidence of a regression by 2c33f00c3. NOT allowed: "only cumbia is red". TestFlight stays blocked until the xcresult is read.
