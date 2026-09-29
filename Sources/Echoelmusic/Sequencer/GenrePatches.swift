@@ -1069,7 +1069,7 @@ public extension MusicStyle {
             // #1357 G14 — LILT SUB. The SIXTH owner of `offbeatEighths` — figure shared, voice
             // never. Numbers from `--patch` at full coverage.
             //
-            // `d: 0.42` and the envelope total 1.29 are both SOLE HOLDERS. The decay is the
+            // `d: 0.42` and the envelope total 1.26 are both SOLE HOLDERS. The decay is the
             // point and it is measured against the two subs this figure puts it beside: at 96
             // BPM the gap between two offbeats is 0.313 s, so a bass that decays over 0.42 s
             // rings THROUGH the gap and reads as a lilt rather than a pump. `deepHouse`'s
@@ -1081,13 +1081,21 @@ public extension MusicStyle {
             // comment names it rather than claiming a darkness it does not own. Checked with the
             // tool before writing the sentence (#1352, where a first draft defended a separation
             // from a patch it had also mis-named). The two part on everything else, and by a
-            // wide margin: attack 0.010 against 0.09, sustain 0.60 against 0.92, release 0.26
-            // against 0.60, envelope 1.29 against 2.01 — a bordun is written never to finish
+            // wide margin: attack 0.010 against 0.09, sustain 0.60 against 0.92, release 0.23
+            // against 0.60, envelope 1.26 against 2.01 — a bordun is written never to finish
             // inside a bar, this one has to finish inside half a beat. ⚠️ The DECAYS are the
             // one pair that nearly meet (0.42 against 0.40) and no separation is claimed there.
             // Same corner frequency, different note.
+            //
+            // ⛔ `r:` WAS 0.26 UNTIL 2026-09-29 and broke the role law this file states at
+            // `bassPatch` — every bass is SHORTER than its own pad — against `Lilt Keys`' 0.24
+            // (`TheBassRoleHasItsOwnVoiceTests`, the one red of the fe390f7e3 xcresult). 0.23,
+            // not the 0.22 proposed first: 0.22 makes the envelope total 1.25, which `Dark Sub`
+            // already holds, and would falsify the SOLE-HOLDER sentence above. The lilt survives:
+            // the DECAY 0.42 still outlasts the 0.313 s offbeat gap; the tail is 30 ms shorter.
+            // NEEDS-FOUNDER-VERIFY: cumbia on device, 0.23 against the old 0.26.
             return patch("76", "Lilt Sub",
-                a: 0.010, d: 0.42, s: 0.60, r: 0.26,
+                a: 0.010, d: 0.42, s: 0.60, r: 0.23,
                 harm: 0.92, hl: 0.26, bright: 0.11, noise: 0.0, color: "Pink", shape: "Dark",
                 cutoff: 660, res: 0.08, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
                 revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
@@ -1102,7 +1110,7 @@ public extension MusicStyle {
             // called it "the shortest sub", and measured it is the fifth-shortest of twenty-one
             // (`Void Sub` 0.373, `Snap Sub` 0.494, `Cold Sub` 0.538, `Cadence Sub` 0.706 are all
             // below it; `House Sub` 0.806 is the nearest above). What IS the point is the
-            // contrast on this shelf: `Lilt Sub` two arms up totals 1.29 and is written to ring
+            // contrast on this shelf: `Lilt Sub` two arms up totals 1.26 and is written to ring
             // THROUGH the gap between two offbeats, while this one has to STOP so the next stomp
             // reads as a separate attack. Same shelf, opposite envelopes, and that is the
             // marcato.
