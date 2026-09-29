@@ -1222,6 +1222,13 @@ struct WorkstationView: View {
     private func addMIDITrack() {
         importNote = nil
         MIDIImport.addMIDITrack(timeline: timeline)
+        // DMMW Phase 2 · slice 2: the new track is SELECTED, so its row is marked and its
+        // details open under it — a tap that visibly made something. `addLane` appends, so the
+        // last lane is the one just made; the kind check refuses anything else.
+        if let added = timeline.document.lanes.last, added.kind == .midi, !added.isBio {
+            selection.selectTrack(added.id)
+            importNote = MIDIImport.addedTrackNote(laneName: added.name)
+        }
     }
 
     /// "New MIDI Part" — the row's action and the guide's step 2, one body (#416). The stores
@@ -1263,6 +1270,8 @@ struct WorkstationView: View {
             switch step {
             case .track:
                 addMIDITrack()
+                guideNote = importNote
+                importNote = nil
             case .part:
                 newMIDIPart()
                 guideNote = importNote

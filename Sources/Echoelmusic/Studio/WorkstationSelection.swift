@@ -48,6 +48,14 @@ public final class WorkstationSelection {
         }
     }
 
+    /// Select a track WITHOUT toggling — a door that just made the track ("Add MIDI Track")
+    /// must open it, never close it. A part on another track is deselected with it.
+    public func selectTrack(_ id: UUID) {
+        guard trackID != id else { return }
+        trackID = id
+        regionID = nil
+    }
+
     /// Select a part — and, with it, the track it sits on. Unknown ids select nothing.
     public func selectRegion(_ id: UUID, in document: TimelineDocument) {
         guard let region = document.regions.first(where: { $0.id == id }) else { return }

@@ -135,6 +135,12 @@ public enum MIDIImport {
         timeline.addLane(kind: .midi)
     }
 
+    /// The sentence after "Add MIDI Track" (DMMW Phase 2 · slice 2): which track was made and
+    /// where it is, since the tap selects it and opens its details in the track list.
+    public static func addedTrackNote(laneName: String) -> String {
+        "Added \(laneName). It is selected in the track list — add a part to write notes."
+    }
+
     // MARK: - The empty part (Phase 3 / M1b — "New MIDI Part")
 
     /// Bars in a part made by "New MIDI Part": four, the length most MIDI hosts give a new
