@@ -410,3 +410,12 @@ DEVICE_TEST_PREP_2026-09-29 (founder order: internal TestFlight device test, fou
 - Apple: log line `##[notice]build_number=2604 id=0c046a5d-d741-4e1f-8c81-52fa309af313 state=VALID uploaded=2026-09-28T22:40:57-07:00` (attempt 3, 05:42:17). Job iOS conclusion success.
 - NOT proven from here: installable for the tester group — founder confirms in the TestFlight app.
 - Why the chat could not deploy: chat deploys were always a `.deploy/release` bump; 1e453b959 (2026-09-28) put that file under ask + hook, and auto mode blocks self-modification. Founder remedy: drop `"Edit(/.deploy/release)"` (settings.json:139) and `".deploy/release"` (protect-founder-gated.py:45).
+
+## GATES_012d9fff7_2026-09-29 (handoff 2c33f00c3)
+
+- Founder approved in chat ("Du kannst das alles"). Merged codex/unified-workspace-20260929 (2c33f00c3) into this branch as 012d9fff7. Sources/Tests/Package.swift/project.yml diff vs 2c33f00c3 = 0 lines.
+- Xcode Compile Check 36546321394: success (also 36542024240 success on 2c33f00c3 itself).
+- CI/CD 36546321392, job 109333770719: Build for Testing success · Run Tests failure (exit 65, TEST EXECUTE FAILED, #396 shape). Log window is the last 200 lines only, with a 1415 s gap: 169 observed passing, 0 failures IN WINDOW. The failing test NAMES are not in the log.
+- xcresult artifact 11023518644 ("test-results-ios-iPhone 17", 7.97 MB, expires 2026-12-28). Download from this container is refused by the egress proxy (blob.core.windows.net, 403), so the names are UNREAD here.
+- auto-merge moved main to 012d9fff7.
+- 69dece6 / 761a264 / 71f8fd4: GitHub answers 422 "No commit found"; not in this container. They were never pushed.
