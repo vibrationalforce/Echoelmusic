@@ -280,10 +280,12 @@ public enum SpectralColor {
     /// Display-ready sRGB components (gamma-encoded 1/2.2, with a small white lift so
     /// deep red/violet still read on the near-black Echoel field) for the PHYSICAL
     /// colour of a heard tone — CIE fit of the octave-transposed frequency, so the
-    /// tint shifts with the ACTUAL sounding frequency: Kammerton (A4), tuning cents,
-    /// transpose all move it. The ONE helper every note-grid surface uses (touch
-    /// fretboard, piano roll rows, note blocks), so all grids recolour identically
-    /// when the concert pitch changes (founder 2026-07-12).
+    /// tint follows whatever frequency the caller hands in. The one production caller
+    /// is the touch fretboard, which passes the voice's concert pitch (A4) and its
+    /// tone-system cents — not the per-voice transpose or detune. (The piano-roll rows
+    /// and note blocks that shared it were deleted with `PianoRollView`, #475.) Any
+    /// future grid uses this helper so all grids recolour identically when the concert
+    /// pitch changes (founder 2026-07-12).
     public static func displayComponents(forToneHz hz: Double, lift: Double = 0.22)
         -> (r: Double, g: Double, b: Double) {
         // Closed-circle tone colour (purple-line seam) — F at 440 is a colour,

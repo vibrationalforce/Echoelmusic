@@ -89,8 +89,10 @@ L1  TRANSPORT / TIMELINE  One clock, one arrangement (sections/clips/patterns). 
 
 ## Music → multimedia mappings (the differentiator)
 The MusicalFrame (L3) drives the renderers (L4):
-- **pitch/chord → colour**: `SpectralColor` (OKLab, octave-equivalent hue, chord =
-  additive mix) ✅ built — feeds Visual + Light.
+- **pitch/chord → colour**: `SpectralColor` (physical: the tone's frequency is
+  octave-transposed into the visible band → CIE 1931 → linear sRGB; a chord is the
+  amplitude-weighted mix in OKLab) ✅ built — feeds Visual + Light. The OKLCH
+  pitch-class hue circle this line used to name was retired 2026-07-28.
 - **tempo/section → motion/scene**: visual pace + light cues follow the arrangement.
 - **per-track level/transient → element reactivity**: drums punch the visual, bass
   drives low-freq fields ("novel oscilloscope", cycles E/F).
