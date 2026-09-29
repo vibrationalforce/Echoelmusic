@@ -110,15 +110,64 @@ public enum TouchPitchMap {
     /// sounding Hz. `a4Hz` is the take's concert pitch, so a re-tuned instrument still lands
     /// on its own cells.
     ///
+    /// `pitchClassCents` is the voices' tone-system table (the one `applyTuning` installs), and
+    /// it is REQUIRED (#431). A sounding Hz under a non-12-TET system is not a 12-TET pitch:
+    /// in Maqām Bayātī on C the written E sounds 100 cents low, i.e. at E♭'s frequency, and a
+    /// plain 12-TET inversion put that cloud on E♭ — not in C major, so it left the grid
+    /// (review of 24297e7d7, once the generated notes started carrying their cents). The
+    /// inversion therefore asks which WRITTEN pitch sounds here (`writtenPitch`).
+    ///
     /// `key` is OPTIONAL here and non-optional above, deliberately: nil means "no play grid
     /// under this field", which is a real state for two of the three mounts, and folding it in
     /// here keeps the caller a single expression instead of a branch it would have to repeat.
-    public static func fieldPosition(forHz hz: Double, a4Hz: Double,
+    public static func fieldPosition(forHz hz: Double, a4Hz: Double, pitchClassCents: [Float],
                                      key: MusicalKey?) -> (x: Double, y: Double)? {
         guard let key, hz > 0, hz.isFinite, a4Hz > 0, a4Hz.isFinite else { return nil }
         let semitones = 69.0 + 12.0 * Foundation.log2(hz / a4Hz)
         guard semitones.isFinite, semitones > -1000, semitones < 1000 else { return nil }
-        return fieldPosition(forPitch: Int(semitones.rounded()), key: key)
+        return fieldPosition(forPitch: writtenPitch(forSemitones: semitones,
+                                                    pitchClassCents: pitchClassCents, key: key),
+                             key: key)
+    }
+
+    /// The written pitch whose TUNED position (`p + cents[p mod 12] / 100`) lies nearest to
+    /// `semitones` — the inverse of what `EchoelPolyDDSP.noteOn` does to a written note.
+    ///
+    /// Two written pitches can sound at the SAME frequency (Bayātī on C: E at −100 cents and
+    /// E♭ at 0 both sound E♭; D♭ at +50 and D at −50 both sound the quarter tone between). The
+    /// Hz cannot tell them apart, so on an exact tie the pitch IN THE KEY wins — the grid can
+    /// only show that one, and the generative bed writes in-key notes. Two tied pitches both in
+    /// the key (a chromatic scale) resolve to the LOWER, deterministically.
+    ///
+    /// The search spans ±6 semitones around the 12-TET guess, i.e. every pitch class once, so
+    /// any table the library can produce is covered (its entries are the distance to the
+    /// nearest degree, at most ±600 cents). A table that is not twelve finite entries reads as
+    /// 12-TET — the same refusal `setTuningCents` applies, so the map never inverts a table the
+    /// voices would not have installed. Pure arithmetic; the key's degrees are read once.
+    static func writtenPitch(forSemitones semitones: Double, pitchClassCents: [Float],
+                             key: MusicalKey) -> Int {
+        let guess = Int(semitones.rounded())
+        guard pitchClassCents.count == 12, pitchClassCents.allSatisfy({ $0.isFinite }) else {
+            return guess
+        }
+        let degrees = key.pitchClasses
+        let tie = 1e-6
+        var best = guess
+        var bestDistance = Double.greatestFiniteMagnitude
+        var bestInKey = false
+        for pitch in (guess - 6)...(guess + 6) {
+            let pitchClass = ((pitch % 12) + 12) % 12
+            let tuned = Double(pitch) + Double(pitchClassCents[pitchClass]) / 100.0
+            let distance = abs(semitones - tuned)
+            let inKey = degrees.contains(pitchClass)
+            if distance < bestDistance - tie
+                || (abs(distance - bestDistance) <= tie && inKey && !bestInKey) {
+                best = pitch
+                bestDistance = distance
+                bestInKey = inKey
+            }
+        }
+        return best
     }
 
     /// Velocity from contact: whichever of pressure (0…1, 0 where the hardware

@@ -1487,6 +1487,11 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             //    and chase each held slot's exact note colour per-channel AND its
             //    pitch-space place (anti-strobe law: neither colour nor position can
             //    ever jump on a visible cloud, at any retrigger/steal rate).
+            // The voices' tone-system table, read ONCE per frame: a slot's Hz under a maqām or
+            // just system is not a 12-TET pitch, and the cell it lands on is its WRITTEN pitch
+            // (`TouchPitchMap.writtenPitch`). Read here in the draw callback, not in a SwiftUI
+            // body, so it registers no observer; an empty table reads as 12-TET.
+            let cloudCents = synth?.uiTuningCents ?? []
             for k in 0..<5 {
                 if !cloudSeeded {
                     // BIRTH SNAP (B9c, founder "immer noch grau" 2026-07-13): a fresh
@@ -1527,6 +1532,7 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
                 // fallback also covers a note whose pitch class is not in the key at all.
                 let p = TouchPitchMap.fieldPosition(forHz: cloudHzSlot[k],
                                                     a4Hz: Double(synth?.poly.a4Hz ?? 440),
+                                                    pitchClassCents: cloudCents,
                                                     key: noteFieldKey)
                     ?? SpectralColor.notePosition(forHz: cloudHzSlot[k])
                 let tp = SIMD2<Float>(Float(p.x), Float(p.y))

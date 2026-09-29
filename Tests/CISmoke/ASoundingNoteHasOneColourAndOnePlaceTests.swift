@@ -104,7 +104,7 @@ final class ASoundingNoteHasOneColourAndOnePlaceTests: XCTestCase {
             let hz = try publishedHz(pitch: 69, a4: a4)
             XCTAssertEqual(hz, a4, accuracy: 1e-9, "the written A4 sounds at the concert pitch itself")
             colours.append(SpectralColor.toneLinearRGB(forToneHz: hz))
-            let here = try XCTUnwrap(TouchPitchMap.fieldPosition(forHz: hz, a4Hz: a4, key: key))
+            let here = try XCTUnwrap(TouchPitchMap.fieldPosition(forHz: hz, a4Hz: a4, pitchClassCents: Array(repeating: 0, count: 12), key: key))
             if let cell {
                 XCTAssertEqual(here.x, cell.x, accuracy: 1e-9, "A stays in A's column at A4 = \(a4)")
                 XCTAssertEqual(here.y, cell.y, accuracy: 1e-9)

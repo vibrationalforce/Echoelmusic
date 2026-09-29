@@ -124,8 +124,8 @@ final class ThePlayedColourLandsOnTheTouchedCellTests: XCTestCase {
             pitch-space position. Inventing a nearest column would put a chromatic passing \
             note on top of a diatonic one.
             """)
-        XCTAssertNil(TouchPitchMap.fieldPosition(forHz: 0, a4Hz: 440, key: cMajor))
-        XCTAssertNil(TouchPitchMap.fieldPosition(forHz: 440, a4Hz: 440, key: nil), """
+        XCTAssertNil(TouchPitchMap.fieldPosition(forHz: 0, a4Hz: 440, pitchClassCents: Array(repeating: 0, count: 12), key: cMajor))
+        XCTAssertNil(TouchPitchMap.fieldPosition(forHz: 440, a4Hz: 440, pitchClassCents: Array(repeating: 0, count: 12), key: nil), """
             A nil key produced a position. nil means "no play grid under this field", which is \
             the real state of the fullscreen cover and the external stage; answering with a \
             cell would place colours by a grid the viewer cannot see.
@@ -139,8 +139,8 @@ final class ThePlayedColourLandsOnTheTouchedCellTests: XCTestCase {
             a false CLAIM from its doc, not the function.
             """)
         // A4 concert pitch actually matters — a re-tuned instrument must still land.
-        let at440 = TouchPitchMap.fieldPosition(forHz: 440, a4Hz: 440, key: MusicalKey(root: 9, scale: .minor))
-        let at432 = TouchPitchMap.fieldPosition(forHz: 432, a4Hz: 432, key: MusicalKey(root: 9, scale: .minor))
+        let at440 = TouchPitchMap.fieldPosition(forHz: 440, a4Hz: 440, pitchClassCents: Array(repeating: 0, count: 12), key: MusicalKey(root: 9, scale: .minor))
+        let at432 = TouchPitchMap.fieldPosition(forHz: 432, a4Hz: 432, pitchClassCents: Array(repeating: 0, count: 12), key: MusicalKey(root: 9, scale: .minor))
         XCTAssertEqual(at440?.x, at432?.x, """
             The same DEGREE lands in different columns at two concert pitches. `a4Hz` is \
             threaded so a re-tuned take still maps onto its own cells; ignoring it would send \
