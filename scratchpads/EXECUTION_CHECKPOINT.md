@@ -534,3 +534,51 @@ Push-Regel: ein SHA nach dem anderen, jeweils nach dem Compile Check des vorigen
 Review 2026-09-29 (read-only, unabhängig) über 24209fb80/24297e7d7/81a0cb805: 0 HIGH · MED-1 → `2836f7e3b` · LOW-1 (Init-Muster `uiA4Hz` mit Default in Phase 1, ~85 % sicher kompilierbar) → Compile Check auf 24209fb80 entscheidet · LOW-2 Freeze-Gesetz hält (informativ) · LOW-3 → `f5d340ea7`.
 
 Gate-Lesung CI/CD (Stand 21:36): 6494 (`1cea7fca8`), 6495 (`c72161491`), 6496 (`fec4463dc`) — **Workflow-Conclusion success**, d. h. Build for Testing UND Run Tests grün. 6497–6501 laufen/warten (Runner-Stau).
+
+### Gate-Lesung Phase 5 (Rest) + Phase 6 — vollständig (Stand 23:10 UTC)
+
+| Lauf | SHA | Compile Check | Build for Testing | Run Tests | Einordnung |
+|---|---|---|---|---|---|
+| CI/CD 6497 | `7f70e4e3d` | — | success | success | grün |
+| CI/CD 6498 | `a27b583f1` | 3034 success | success (157 beobachtet) | **failure** | **FLAKE**, siehe unten |
+| CI/CD 6499 | `648799434` | 3035 success | success | success | grün |
+| CI/CD 6500 | `832d63cb3` | 3036 success | success | success | grün |
+| CI/CD 6501 | `2978e401d` | 3037 success | success | **failure** | **WERKZEUG-ABSTURZ**, siehe unten |
+| CI/CD 6502 | `24209fb80` | 3038 success | success | success | grün |
+| CI/CD 6503 | `24297e7d7` | 3039 success | success | **failure** | **FLAKE** (derselbe), siehe unten |
+| CI/CD 6504 | `2836f7e3b` | 3040 success | success | success | grün |
+| CI/CD 6505 | `5d6ac6080` | 3041 success | success | success — `▸ Test execute Succeeded` | **grün, ganze Suite** |
+
+`main` = `5d6ac6080` (auto-merge nach grünem Gate).
+
+**Flakes, getrennt dokumentiert — keiner ist ein Produktfehler, keiner wurde angefasst oder abgeschwächt:**
+
+1. `TheOSCControlInputIsAWhitelistTests.testALoopbackCueReachesTheDispatch()` — **zweimal** rot:
+   6498 (71,5 s, Log-Lücke 1774 s = Runner-Stau) und 6503 (106,3 s, `Clone 2`). Der Test
+   wartet mit 8 s Timeout auf ein UDP-Loopback-Paket im Simulator; die Laufzeiten sind
+   Wanduhr-Zeiten eines blockierten Clones, nicht 8 s. Kein Commit in `7f70e4e3d..5d6ac6080`
+   berührt `Sync/OSCReceiver*`, den Test oder den Dispatch (`git diff --stat` über den Bereich:
+   null OSC-Dateien). Alle acht Geschwister-Ansprüche derselben Suite in 6503 **passed**, und
+   die Nachfolger 6499/6504/6505 laufen vollständig grün. **Wiederkehrend (2 von 9 Läufen)** —
+   eine Härtung des Timeouts wäre eine Test-Änderung und ist hier bewusst NICHT gemacht
+   (Auftrag: keine Tests abschwächen); als Befund offen.
+2. 6501 (`2978e401d`): `xcodebuild` selbst stirbt — `NSInternalInconsistencyException:
+   Unexpected operation <IDERunOperation …>` in `XCTHarness … testCaseWithIdentifier…`,
+   `Abort trap: 6`, Exit 134. Null `failed on`-Zeilen im Fenster, alle sichtbaren Tests
+   `passed`. Ein Absturz des Test-Werkzeugs, nicht der App und nicht eines Tests; derselbe
+   Baum ist in 6502 ff. enthalten und dort grün. (Gleiche Form wie #189 in der Aufgabenliste.)
+
+**Phase-6-Wächter beobachtet PASSING (6503-Fenster):** `ASoundingNoteHasOneColourAndOnePlaceTests`
+5/5 · `TheGridRepaintsWhenTheVoiceRetunesTests` 5/5 · `AGeneratedNoteIsLitByItsTunedPitchTests` 4/4.
+`ARetunedNoteLandsOnItsWrittenCellTests` und `TheGridSaysItsNotesWithoutColourOrMotionTests`:
+kompilieren nachweislich (BfT 6504/6505), und 6505 meldet `Test execute Succeeded` für die
+GANZE Suite — also liefen sie grün; einzeln im `tail -200`-Fenster nicht sichtbar (#807).
+
+## ⭐ RELEASE CANDIDATE — Phase 7
+
+**RC = `5d6ac6080`** (Swift-Stand; der TestFlight-Build läuft auf der Branch-Spitze, deren
+Nachfolge-Commits nur `scratchpads/` ändern — Swift-identisch). Beide Gates plus Run Tests grün,
+Flakes oben getrennt, keine unklare Produktregression. Deploy über den bestehenden
+`testflight.yml` per `workflow_dispatch` (ios, `build_only=false`); `.deploy/release` bleibt
+unberührt (Auftrag), MARKETING_VERSION bleibt daher `10.79.483`, die Build-Nummer ist die
+run_number des Workflows. Beleg der Landung = Notice-Zeile `state=VALID` im Verify-Schritt.
