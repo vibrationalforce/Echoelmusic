@@ -675,6 +675,10 @@ struct EchoelStudioView: View {
     @State private var showOpen = false
     @State private var showSaveDialog = false
     @State private var saveName = ""
+    /// DMMW Phase 5 · slice 4 — the ONE library row being renamed in place (nil = none). Only the
+    /// id lives here; the typed text is `LibraryRenameRow`'s own state, so keystrokes rebuild that
+    /// leaf and never this body (the leaf rule of the 10.76.41/50 freeze law).
+    @State private var renamingProjectID: UUID?
     @State private var share: ExportedFile?
     /// Finished visual recording, presented via a cover-scoped share sheet (kept
     /// separate from `share` so it never competes with the root-body share modal).
@@ -9706,7 +9710,7 @@ struct EchoelStudioView: View {
                 // autosave — an empty grey band would sit above the only row in the list.
                 if !saved.isEmpty {
                     Section {
-                        ForEach(saved) { p in projectRow(p) }
+                        ForEach(saved) { p in libraryRow(p) }
                             .onDelete { idx in
                                 idx.map { saved[$0].id }.forEach { projects.delete(id: $0) }
                             }
@@ -9714,7 +9718,7 @@ struct EchoelStudioView: View {
                 }
                 if !autosaved.isEmpty {
                     Section {
-                        ForEach(autosaved) { p in projectRow(p) }
+                        ForEach(autosaved) { p in libraryRow(p) }
                             .onDelete { idx in
                                 idx.map { autosaved[$0].id }.forEach { projects.delete(id: $0) }
                             }
@@ -9739,6 +9743,8 @@ struct EchoelStudioView: View {
                     }
                 }
             }
+            // A rename left open when the sheet closes must not greet the next visit.
+            .onDisappear { renamingProjectID = nil }
             .navigationTitle("Open project")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -9843,6 +9849,19 @@ struct EchoelStudioView: View {
 
     static let newPieceRefusedNote = "Couldn't start a new piece. Your song is unchanged."
 
+    /// DMMW Phase 5 · slice 4 — a row is either the project row or, while it is being renamed,
+    /// the in-place rename field. ONE switch for both sections, so they cannot drift (#285).
+    @ViewBuilder
+    private func libraryRow(_ p: Project) -> some View {
+        if renamingProjectID == p.id {
+            LibraryRenameRow(currentName: p.name,
+                             commit: { name in commitRename(p, to: name) },
+                             cancel: { renamingProjectID = nil })
+        } else {
+            projectRow(p)
+        }
+    }
+
     /// One library row. Extracted when #285 split the list in two so the two sections cannot
     /// drift apart — a row that looked different in the autosave section would read as a
     /// different KIND of thing, and it is the same project.
@@ -9896,6 +9915,13 @@ struct EchoelStudioView: View {
             // Slice 3 — delete without a horizontal swipe: VoiceOver's actions rotor, and the
             // row's long-press menu below. Both call the ONE writer the swipe calls.
             .accessibilityAction(named: "Delete") { deleteFromLibrary(p) }
+            // Slice 4 — Rename, offered only where it can hold: never on the recovery slot,
+            // whose name every autosave rewrites (`ProjectStore.rename` refuses it too).
+            .accessibilityActions {
+                if p.id != Project.autosaveSlotID {
+                    Button("Rename") { beginRename(p) }
+                }
+            }
             // Review of c69af8995 (MEDIUM): a shared document carries the TAKE and leaves the
             // song at home (`sharedDocumentData`), so a row that holds only a song would arrive
             // as a genre and a tempo with nothing in them. Such a row cannot be shared, and the
@@ -9918,6 +9944,11 @@ struct EchoelStudioView: View {
         // presentation modifier on the root chain (the black-screen law counts `.sheet`/`.alert`/
         // `.fullScreenCover`/`.confirmationDialog`/`.fileImporter`/`.popover`).
         .contextMenu {
+            if p.id != Project.autosaveSlotID {
+                Button { beginRename(p) } label: {
+                    Label("Rename", systemImage: "pencil")
+                }
+            }
             Button(role: .destructive) { deleteFromLibrary(p) } label: {
                 Label("Delete", systemImage: "trash")
             }
@@ -9930,6 +9961,21 @@ struct EchoelStudioView: View {
     /// `ProjectStore.delete(id:)`, which also forgets the header's name when it was the open row.
     private func deleteFromLibrary(_ p: Project) {
         projects.delete(id: p.id)
+    }
+
+    /// DMMW Phase 5 · slice 4 — open the in-place rename for one row. The recovery slot is
+    /// refused here as well as in the store, so no door can open a field whose Save would fail.
+    private func beginRename(_ p: Project) {
+        guard p.id != Project.autosaveSlotID else { return }
+        renamingProjectID = p.id
+    }
+
+    /// The rename's ONE writer: `ProjectStore.rename(id:to:)`, which keeps the row's id, place
+    /// and saved time and moves the header's name when this is the open piece. A failed disk
+    /// write surfaces through `ProjectSaveStatusView` at the top of this list, like every save.
+    private func commitRename(_ p: Project, to name: String) {
+        projects.rename(id: p.id, to: name)
+        renamingProjectID = nil
     }
 
     /// The row's third line: when this take was written. Abbreviated date plus time, in the
@@ -12512,6 +12558,57 @@ private struct StudioZoom: ViewModifier {
 /// document and the clip grid in its OWN body. Inlined into `quickActionRow`, those reads would
 /// make `EchoelStudioView.body` — which hosts every `.menu` Picker — rebuild on every song edit
 /// and on every composer re-seed.
+/// DMMW Phase 5 · slice 4 — renaming a library row in place. Its own `View` so the typed text is
+/// ITS state: keystrokes rebuild this leaf only, never `EchoelStudioView`'s body. No modal: it
+/// replaces the row inside the library sheet that is already presented. Save is disabled while
+/// the trimmed name is empty — `ProjectStore.rename` would refuse it, and a button that silently
+/// does nothing is the lying-control class.
+private struct LibraryRenameRow: View {
+    let currentName: String
+    let commit: (String) -> Void
+    let cancel: () -> Void
+    @State private var text = ""
+    @FocusState private var focused: Bool
+
+    private var canSave: Bool {
+        !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            TextField("Name", text: $text)
+                .font(.callout).foregroundStyle(EchoelTheme.text)
+                .submitLabel(.done)
+                .focused($focused)
+                .onSubmit { if canSave { commit(text) } }
+                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                .accessibilityLabel("New name for \(currentName)")
+            Button { cancel() } label: {
+                Text("Cancel").font(.callout).foregroundStyle(EchoelTheme.dim)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            Button { commit(text) } label: {
+                Text("Save").font(.callout.weight(.semibold))
+                    .foregroundStyle(canSave ? EchoelTheme.text : EchoelTheme.dim)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!canSave)
+            .accessibilityHint(Self.saveHint)
+        }
+        .onAppear {
+            text = currentName
+            focused = true
+        }
+    }
+
+    /// True for what `ProjectStore.rename` does: the row keeps its place and its saved time.
+    static let saveHint = "Renames this piece. Its place in the list and its saved time stay."
+}
+
 private struct SaveSessionButton: View {
     let hasComposed: Bool
     let action: () -> Void

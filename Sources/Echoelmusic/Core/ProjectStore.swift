@@ -70,6 +70,26 @@ public final class ProjectStore {
         return p
     }
 
+    /// DMMW Phase 5 · slice 4 — rename one row IN PLACE. A name is not a new take, so the row
+    /// keeps its id, its place in the list and its `savedAt` (unlike `storeRow`, which stamps and
+    /// moves to the top). Whitespace is trimmed; an empty name is refused, and so is the recovery
+    /// slot — its name is rewritten by every autosave, so a rename there could not hold. When the
+    /// renamed row is the open project the header follows. Returns whether the rename is
+    /// CONFIRMED on disk; a failed write is retained like any other (`saveError`, retry) and the
+    /// header keeps the confirmed name until then.
+    @discardableResult
+    public func rename(id: UUID, to newName: String) -> Bool {
+        let name = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty, id != Project.autosaveSlotID else { return false }
+        var next = pendingProjects ?? projects
+        guard let index = next.firstIndex(where: { $0.id == id }) else { return false }
+        if next[index].name == name { return true }
+        next[index].name = name
+        guard persist(next) else { return false }
+        if currentProjectID == id { currentProjectName = name }
+        return true
+    }
+
     /// Record `project` as the one the player is working on (Save and library Open). The
     /// recovery slot is skipped — see `currentProjectName`.
     public func noteCurrent(_ project: Project) {
