@@ -454,3 +454,20 @@ DEVICE_TEST_PREP_2026-09-29 (founder order: internal TestFlight device test, fou
 - Apple line: `build_number=2605 id=55c165ed-290f-42b9-8be5-65693e0079d3 state=VALID uploaded=2026-09-29T06:51:41-07:00`.
 - Version v10.79.483 (no .deploy/release bump). Contains 2c33f00c3 (Retry save) + 04c704a55 (cumbia Lilt Sub 0.23). Not contained: 69dece6, 761a264, 71f8fd4.
 - Open: founder device listen, cumbia 0.23 vs 0.26 (NEEDS-FOUNDER-VERIFY).
+
+## PHASE1_GATES (2026-09-29 15:40Z)
+
+- `1d4e36fd8` (area row): Compile Check cancelled (superseded); CI/CD 6486 Build for Testing
+  green, Run Tests exit 65, 0 failures in the 200-line window (the SaveDoorNamingTests red the
+  review predicted sits outside the window — not observed, not refuted).
+- `90114535b` (review repair): Xcode Compile Check 36585795843 **success**; CI/CD 36585795838
+  Build for Testing **success**; Run Tests exit 65 with **one** failure in the window:
+  `TheOSCControlInputIsAWhitelistTests.testALoopbackCueReachesTheDispatch()` on Clone 2,
+  95.5 s (its own waits sum to 13 s). 154 passed in the window, including all five
+  `EveryPlateBelongsToOneAreaTests`.
+- The failing test is a real UDP loopback through `OSCReceiver`; neither `OSCReceiver` nor the
+  test is in the diff `9ce3dfd50..90114535b` (StudioArea, EchoelStudioView, the new guard,
+  scratchpads). It passed on `9ce3dfd50` (Test execute Succeeded). Classification: NOT this
+  phase's code — suspected simulator-clone network stall, UNPROVEN: `rerun_failed_jobs`
+  returned 403 for this integration. The founder can re-run it once.
+- TestFlight: held (rule 10) until that re-run is green.
