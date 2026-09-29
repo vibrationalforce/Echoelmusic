@@ -23,6 +23,13 @@
 // counterweights in claim 3 are green in intent on both trees. Transcribed in Python against
 // THIS tree (no toolchain): the role rule over the fixture, and every scan needle.
 //
+// 5. REVIEW OF 895cf025a (4 MED + 1 LOW), added in the repair commit: the Pan field is offered
+//    only where `LaneVoiceRack.setPan` moves the sound (not the sub-bass, not the sampler); the
+//    Device row names the voice by the Instrument row's name (one name per voice); the hint says
+//    a track on EchoelBodyVibe cannot be armed — measured end to end through `RecordTake.canArm`;
+//    and a pick of what already plays writes nothing. FORWARD guards; the `setPan` no-op and the
+//    body voice's record source are counterweights (green on both trees).
+//
 // ⛔ HONEST LIMITS. Not undoable (the store's lane dials never were). The Echoel track keeps
 // its instrument. The sampler is not offered (it needs a sample first). With
 // `FeatureFlags.voiceKindRouting` off the rack has no sub or body unit and every choice plays
@@ -155,6 +162,60 @@ final class TheTrackChoosesItsInstrumentTests: XCTestCase {
         XCTAssertTrue(body.contains("if !instruments.isEmpty {"), "no row where there is no choice")
         XCTAssertEqual(code.components(separatedBy: "instrumentRow(").count - 1, 2,
                        "declared once, mounted once")
+    }
+
+    // MARK: 5 — review of 895cf025a
+
+    func testEveryInstrumentGetsOnlyTheControlsThatMoveItsSound() throws {
+        let lanes = [Self.keys, TimelineLane(name: "Sub", kind: .midi, builtinInstrument: .subBass),
+                     TimelineLane(name: "Body voice", kind: .midi, builtinInstrument: .bioVoice),
+                     TimelineLane(name: "Pad", kind: .midi, builtinInstrument: .polySynth)]
+        let document = TimelineDocument(lanes: lanes, regions: [])
+        func controls(_ i: Int) throws -> TrackMix.Controls {
+            try XCTUnwrap(TrackMix.controls(of: lanes[i].id, in: document, voiceCapacity: 4))
+        }
+        XCTAssertFalse(try controls(1).pan, "`setPan` is a no-op for the sub-bass unit")
+        XCTAssertTrue(try controls(2).pan, "the body unit pans at its mixer stage")
+        XCTAssertTrue(try controls(3).pan, "the synth pans")
+        // One name per voice: the Device row says what the Instrument row says.
+        XCTAssertEqual(TrackMix.deviceName(.laneSynth(.subBass)), TrackInstrument.subBass.displayName)
+        XCTAssertEqual(TrackMix.deviceName(.laneSynth(.bioVoice)), TrackInstrument.bioVoice.displayName)
+        XCTAssertEqual(TrackMix.deviceName(.laneSynth(.poly)), TrackInstrument.polySynth.displayName)
+        // The pan premise, at the rack.
+        let rack = try source(Self.rackPath)
+        let setPan = try member("public func setPan(slot: Int, _ pan: Float) {", in: rack)
+        XCTAssertTrue(setPan.contains("case .subBass, .sampler:"), """
+            the sub-bass and sampler units still take no pan — if one gains a pan stage, offer the \
+            field in `TrackMix.controls` in the same commit
+            """)
+    }
+
+    func testTheBodyVoiceTrackSaysItCannotBeArmed() {
+        let body = TimelineLane(name: "Body voice", kind: .midi, builtinInstrument: .bioVoice)
+        let synth = TimelineLane(name: "Pad", kind: .midi)
+        let document = TimelineDocument(lanes: [Self.keys, body, synth], regions: [])
+        XCTAssertEqual(TrackInstrument.bioVoice.recordSource, .bio, "premise: the body voice records the body")
+        XCTAssertFalse(RecordTake.canArm(body.id, in: document, voiceCapacity: 4),
+                       "a track on EchoelBodyVibe cannot be armed for MIDI")
+        XCTAssertTrue(RecordTake.canArm(synth.id, in: document, voiceCapacity: 4), "counterweight: a synth track can")
+        XCTAssertTrue(TrackMix.instrumentHint.contains("A track on EchoelBodyVibe cannot be armed to record MIDI"),
+                      "the choice says what it costs before it is made")
+        XCTAssertTrue(TrackMix.instrumentHint.contains("the higher one in the list"),
+                      "the allocator's first-rank-wins rule, in the player's words")
+    }
+
+    func testAPickOfWhatAlreadyPlaysWritesNothing() {
+        let timeline = TimelineStore()
+        let originalDocument = timeline.document
+        restore.append { timeline.replaceDocument(originalDocument) }
+        timeline.replaceDocument(TimelineDocument(lanes: [Self.keys, Self.lead], regions: []))
+        let before = timeline.document
+        TrackMix.setInstrument(.polySynth, laneID: Self.lead.id, timeline: timeline)
+        XCTAssertEqual(timeline.document, before, "EchoelSynth already plays a lane without an instrument")
+        XCTAssertNil(timeline.document.lanes.first { $0.id == Self.lead.id }?.builtinInstrument)
+        TrackMix.setInstrument(.subBass, laneID: Self.lead.id, timeline: timeline)
+        XCTAssertEqual(timeline.document.lanes.first { $0.id == Self.lead.id }?.builtinInstrument, .subBass,
+                       "counterweight: a real change still writes")
     }
 
     // MARK: - helpers

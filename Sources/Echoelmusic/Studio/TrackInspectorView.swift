@@ -118,8 +118,10 @@ enum TrackMix {
                             effect: document.echoelFXCharacter != nil,
                             genre: document.echoelGenre != nil)
         case .laneSynth(let kind):
-            return Controls(role: role, level: true, pan: true, muteSolo: true, effect: kind == .poly,
-                            genre: false)
+            // Review of 895cf025a (MED): `LaneVoiceRack.setPan` is a documented no-op for the
+            // sub-bass and the sampler unit — a pan field there would move a number, not the sound.
+            return Controls(role: role, level: true, pan: kind != .subBass && kind != .sampler,
+                            muteSolo: true, effect: kind == .poly, genre: false)
         case .audio:
             return Controls(role: role, level: true, pan: true, muteSolo: true, effect: false, genre: false)
         case .bio, .unplayed, .noVoice:
@@ -130,7 +132,7 @@ enum TrackMix {
     nonisolated static func deviceName(_ role: Role) -> String {
         switch role {
         case .echoelInstrument:   return "Echoel instrument"
-        case .laneSynth(let kind): return kind.displayName
+        case .laneSynth(let kind): return voiceName(kind)
         case .audio:              return "Audio file player"
         case .bio:                return "Bio curve — no sound"
         case .unplayed:           return "No engine plays this track yet"
@@ -138,6 +140,18 @@ enum TrackMix {
             return capacity > 0
                 ? "No voice — only the first \(capacity) extra MIDI tracks play"
                 : "No voice — extra MIDI tracks are off in this build"
+        }
+    }
+
+    /// A rack voice by the name the Instrument row gives it — ONE name per voice on one screen
+    /// (review of 895cf025a, MED: the Device row said "Sub bass" above "Instrument EchoelBass").
+    nonisolated static func voiceName(_ kind: LaneVoiceKind) -> String {
+        switch kind {
+        case .poly:     return TrackInstrument.polySynth.displayName
+        case .subBass:  return TrackInstrument.subBass.displayName
+        case .bioVoice: return TrackInstrument.bioVoice.displayName
+        case .sampler:  return TrackInstrument.sampler.displayName
+        case .drums:    return kind.displayName
         }
     }
 
@@ -242,14 +256,20 @@ enum TrackMix {
     }
 
     /// The rack holds ONE sub-bass and ONE body voice (`LaneVoiceRack.attachAll`); a further track
-    /// that picks either plays the synth instead (`KindVoiceAllocator`: never silence).
+    /// that picks either plays the synth instead (`KindVoiceAllocator`: never silence), and the
+    /// allocator serves the tracks in list order, so the higher track wins. EchoelBodyVibe's
+    /// record source is the body (`TrackInstrument.recordSource`), and `RecordTake.canArm` arms
+    /// MIDI input only — so its track cannot be armed (review of 895cf025a, MED).
     nonisolated static let instrumentHint =
-        "The voice this track plays its parts with. EchoelBass and EchoelBodyVibe each play one track at a time; another track that picks one plays EchoelSynth"
+        "The voice this track plays its parts with. EchoelBass and EchoelBodyVibe each play one track at a time, the higher one in the list; another track that picks one plays EchoelSynth. A track on EchoelBodyVibe cannot be armed to record MIDI"
 
     /// One store write through the lane's existing writer (`setBuiltinInstrument`) — the field
     /// the player already reads when a part loads (`MultiRollFanout.voiceKind`).
     @MainActor
     static func setInstrument(_ instrument: TrackInstrument, laneID: UUID, timeline: TimelineStore) {
+        // A pick of what already plays is not an edit: the field is structural, and a write would
+        // flush and re-prime every rack lane mid-playback for nothing audible (review LOW).
+        guard instrument != currentInstrument(of: laneID, in: timeline.document) else { return }
         timeline.setBuiltinInstrument(id: laneID, instrument)
     }
 
@@ -504,6 +524,7 @@ struct TrackInspectorView: View {
         HStack(spacing: 8) {
             Text("Instrument")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                .accessibilityHidden(true)   // the Picker speaks the label once (review LOW)
             Picker("Instrument", selection: Binding<TrackInstrument>(
                 get: { TrackMix.currentInstrument(of: laneID, in: timeline.document) },
                 set: { TrackMix.setInstrument($0, laneID: laneID, timeline: timeline) })) {

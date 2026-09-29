@@ -288,8 +288,11 @@ final class TheTrackEffectIsADeviceOnTheLaneTests: XCTestCase {
             let controls = try XCTUnwrap(TrackMix.controls(of: lane.id, in: doc, voiceCapacity: 4))
             XCTAssertFalse(controls.effect, "\(lane.name) has no per-track chain the row could move")
         }
-        // Counterweight: losing the Effect row did not cost these tracks their mixer.
-        XCTAssertTrue(try XCTUnwrap(TrackMix.controls(of: sampler.id, in: doc, voiceCapacity: 4)).pan)
+        // Counterweight: losing the Effect row did not cost these tracks their mixer. (Review of
+        // 895cf025a: this read `.pan` on the sampler — a documented no-op in `LaneVoiceRack.setPan`,
+        // so the field it pinned moved nothing. The mixer the sampler track keeps is level + mute/solo.)
+        let samplerControls = try XCTUnwrap(TrackMix.controls(of: sampler.id, in: doc, voiceCapacity: 4))
+        XCTAssertTrue(samplerControls.level && samplerControls.muteSolo)
         XCTAssertTrue(try XCTUnwrap(TrackMix.controls(of: echoel.id, in: doc, voiceCapacity: 4)).level)
         XCTAssertFalse(try XCTUnwrap(TrackMix.controls(of: poly.id, in: doc, voiceCapacity: 0)).effect,
                        "a track past the rack has no voice and no effect")

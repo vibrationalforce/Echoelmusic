@@ -9,7 +9,11 @@
 //
 // 1. END-TO-END over the real `TimelineDocument`: the Echoel instrument's track (the first
 //    non-bio MIDI lane) gets level + mute/solo and NO pan; any other MIDI lane and every audio
-//    lane get all three; a bio lane and an unplayed kind get none; an unknown id gets nil.
+//    lane get all three — EXCEPT a rack lane on the sampler or the sub-bass, whose pan is a
+//    documented no-op in `LaneVoiceRack.setPan` (review of 895cf025a: this guard pinned
+//    `pan == true` on the sampler lane, i.e. the lying control it exists to forbid; corrected in
+//    the same commit as the source, with the poly lane added as the counterweight);
+//    a bio lane and an unplayed kind get none; an unknown id gets nil.
 // 2. The Echoel track is chosen by the SAME rule `rollSlotGain` uses (#416) — a second MIDI lane
 //    is a rack lane even when it was added first by name.
 // 3. COUNTERWEIGHT (#343): the premise of "no pan on the Echoel track" — `rollSlotPan` still has
@@ -71,7 +75,14 @@ final class TheTrackInspectorShowsOnlyWiredControlsTests: XCTestCase {
 
         let rack = try XCTUnwrap(TrackMix.controls(of: Self.rackLane.id, in: doc, voiceCapacity: Self.rack))
         XCTAssertEqual(rack.role, .laneSynth(TrackInstrument.sampler.voiceKind))
-        XCTAssertTrue(rack.level && rack.pan && rack.muteSolo)
+        XCTAssertTrue(rack.level && rack.muteSolo)
+        XCTAssertFalse(rack.pan, "the sampler unit has no pan stage (`LaneVoiceRack.setPan` no-op) — a pan field moves nothing")
+        // Counterweight (#343): a rack lane on the synth pans.
+        let plain = TimelineLane(name: "Pad", kind: .midi)
+        let synthDoc = TimelineDocument(lanes: [Self.echoelLane, plain], regions: [])
+        let synth = try XCTUnwrap(TrackMix.controls(of: plain.id, in: synthDoc, voiceCapacity: Self.rack))
+        XCTAssertEqual(synth.role, .laneSynth(.poly))
+        XCTAssertTrue(synth.level && synth.pan && synth.muteSolo)
 
         let audio = try XCTUnwrap(TrackMix.controls(of: Self.audioLane.id, in: doc, voiceCapacity: Self.rack))
         XCTAssertEqual(audio.role, .audio)

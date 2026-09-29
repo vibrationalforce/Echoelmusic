@@ -44,7 +44,8 @@ struct PerformSessionView: View {
     @Environment(PianoRollModel.self) private var pianoRoll
     /// Cold: `isPlaying` flips at a take's start and stop, never per step.
     @Environment(Transport.self) private var transport
-    /// Collapsed on every launch: the patch rows below stay where a player expects them.
+    /// Collapsed each time the Sound panel opens (view state, never persisted): the patch rows
+    /// below stay where a player expects them.
     @State private var isOpen = false
 
     var body: some View {
