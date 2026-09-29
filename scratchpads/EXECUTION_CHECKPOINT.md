@@ -471,3 +471,21 @@ DEVICE_TEST_PREP_2026-09-29 (founder order: internal TestFlight device test, fou
   phase's code — suspected simulator-clone network stall, UNPROVEN: `rerun_failed_jobs`
   returned 403 for this integration. The founder can re-run it once.
 - TestFlight: held (rule 10) until that re-run is green.
+
+## PHASE1_COMPOSE_GATES (2026-09-29 18:20Z)
+
+- `c672c2adf` (Leitfaden): Compile Check cancelled (superseded) — abgedeckt durch die folgenden.
+- `a28913e09` (Erststart öffnet Compose): Xcode Compile Check 36604615389 **success**; CI/CD
+  36604615252 (run 6489) Build for Testing **success**, **Run Tests success** (exit 0 = xcodebuild
+  meldet null fehlgeschlagene Tests; Job-Conclusion success).
+- `0170f8ed1` (Review-Reparatur): Xcode Compile Check 36606251634 **success**; CI/CD 36606251612
+  (run 6490) Build for Testing **success**; Run Tests exit 65 mit **einem** Fehlschlag im Fenster:
+  `TheOSCControlInputIsAWhitelistTests.testALoopbackCueReachesTheDispatch()` auf Clone 2, 93,5 s.
+  Im Fenster namentlich bestanden: alle 8 `ThePlateShowsHowAPieceIsMadeTests`, alle 5
+  `EveryPlateBelongsToOneAreaTests`. main = `0170f8ed1` (auto-merge).
+- OSC-Loopback: rot auf `90114535b`, **grün auf `a28913e09`** (enthält 90114535b), rot auf
+  `0170f8ed1` (Delta zu a28913e09: nur ComposeGuide/WorkstationView/Guard). Kein OSC-/Netzwerk-Pfad
+  im Diff `9ce3dfd50..0170f8ed1`. Einordnung: intermittierend (UDP-Loopback auf Simulator-Clone 2),
+  NICHT diese Phase — belegt durch den grünen Lauf dazwischen, nicht bloß vermutet. Ursache des
+  Hängers (93 s bei 8 s Wartezeit) bleibt offen; eigener Posten, kein Phase-1-Blocker.
+- TestFlight: nicht ausgelöst (Founder-Anweisung).
