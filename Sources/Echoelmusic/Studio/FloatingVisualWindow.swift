@@ -911,7 +911,11 @@ struct FloatingVisualWindow: View {
                                         // what a saved setting means.
                                         autoPlay: fieldAutoPlay,
                                         autoPlaySeed: 0,
-                                        noteNaming: NoteNaming(stored: noteNamingRaw))
+                                        noteNaming: NoteNaming(stored: noteNamingRaw),
+                                        // The grid repaints when the voice RETUNES (A4, tone
+                                        // system), not only when it is swapped. Cold reads:
+                                        // both mirrors change on an edit, never per frame.
+                                        tuning: TouchGridTuning(of: touchSynth ?? synth))
                     // S4c — while a meter is on screen the play surface stays MOUNTED (the
                     // Field's self-play keeps sounding, #311) but is invisible, untouchable
                     // and silent to VoiceOver, so every tap reaches the meter's own controls.

@@ -377,8 +377,12 @@ public final class PolySynthVoice {
         // dense chords back inside the real-time render deadline so they stop dropping
         // out. 32 harmonics is still rich (most perceptual energy is in the first ~16);
         // the nyquist trim already discarded most of the upper 32 on all but bass notes.
-        self.poly = EchoelPolyDDSP(maxVoices: maxVoices, harmonicCount: 32,
-                                   sampleRate: Float(Self.sampleRate))
+        // A LOCAL first: reading `self.poly` before every stored property is set is a
+        // phase-1 initialisation error in a class.
+        let engine = EchoelPolyDDSP(maxVoices: maxVoices, harmonicCount: 32,
+                                    sampleRate: Float(Self.sampleRate))
+        self.poly = engine
+        self.uiA4Hz = Double(engine.a4Hz)
         self.fxChain = EchoelFXChain(sampleRate: Float(Self.sampleRate))
         self.scratchL = Array(repeating: 0, count: Self.maxBlockFrames)
         self.scratchR = Array(repeating: 0, count: Self.maxBlockFrames)
@@ -570,6 +574,7 @@ public final class PolySynthVoice {
         // rule `BioReactiveSynthVoice.setTuning` has always applied.
         guard a4Hz.isFinite else { return }
         poly.a4Hz = Float(min(max(a4Hz, 380), 500))
+        uiA4Hz = Double(poly.a4Hz)
         #if DEBUG
         lastTuningForTests = a4Hz
         #endif
@@ -607,8 +612,23 @@ public final class PolySynthVoice {
     /// Main-actor mirror of the active retune table so UI code (the touch
     /// instrument's note→colour mapping) can compute the SOUNDING frequency of a
     /// pitch — including Pythagorean/just/maqām offsets — without touching the
-    /// audio-thread table. Rare writes (tone-system change), imperative reads.
-    @ObservationIgnored public private(set) var uiTuningCents: [Float] = Array(repeating: 0, count: 12)
+    /// audio-thread table. Rare writes (tone-system change).
+    ///
+    /// OBSERVED on purpose (DMMW Phase 6 · slice 2). It was `@ObservationIgnored`, and the
+    /// grid tint that reads it was rebuilt only when the synth INSTANCE changed — so picking
+    /// another tone system retuned every voice and left the note grid in the old colours
+    /// until the key or the grid toggle happened to move. The touch surface now passes this
+    /// table (with `uiA4Hz`) as its rebuild trigger, which needs SwiftUI to see the write.
+    /// Cold state: written on a tone-system, key or project change, never per frame — so the
+    /// freeze law's hot-read rule does not apply to a body that reads it.
+    public private(set) var uiTuningCents: [Float] = Array(repeating: 0, count: 12)
+
+    /// Main-actor, OBSERVED mirror of the concert pitch the engine actually took — the
+    /// clamped value `setTuning(a4Hz:)` wrote into `poly.a4Hz`, never the requested one. The
+    /// touch grid colours from it and rebuilds when it changes (same reason as
+    /// `uiTuningCents`). `init` copies the engine's own starting value, so the two agree
+    /// before any call (the 440 here is only the placeholder that copy overwrites).
+    public private(set) var uiA4Hz: Double = 440
 
     /// Install a microtonal pitch-class retune table (12 entries, cents from 12-TET).
     /// All zeros = standard equal temperament. Safe to call while a loop plays;

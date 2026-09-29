@@ -333,6 +333,11 @@ struct TouchInstrumentView: UIViewRepresentable {
     /// `UserDefaults` down in the UIKit view: a draw-time read would not know when to
     /// redraw, and the setting has to take effect the moment it is chosen.
     var noteNaming: NoteNaming = .english
+    /// What the grid colours are computed FROM — the synth's concert pitch and retune table
+    /// (DMMW Phase 6 · slice 2). A REBUILD TRIGGER only: the colours still read the voice
+    /// itself (`frequency(of:)`), so this value can never paint a tuning the voice did not
+    /// take. `nil` = no trigger, the pre-slice behaviour.
+    var tuning: TouchGridTuning?
 
     func makeUIView(context: Context) -> TouchInstrumentUIView {
         let v = TouchInstrumentUIView()
@@ -350,6 +355,7 @@ struct TouchInstrumentView: UIViewRepresentable {
         v.musicalNow = musicalNow
         v.autoPlaySeed = autoPlaySeed
         v.noteNaming = noteNaming
+        v.tuning = tuning
         // Set last so the seed is in place before the clock could ever look at it. The clock
         // does NOT start here — `startAutoPlay` requires a window and this view has none yet;
         // `didMoveToWindow` is what starts it. (An earlier comment on this line claimed the
@@ -373,7 +379,23 @@ struct TouchInstrumentView: UIViewRepresentable {
         uiView.musicalNow = musicalNow
         uiView.autoPlaySeed = autoPlaySeed
         uiView.noteNaming = noteNaming
+        uiView.tuning = tuning
         uiView.autoPlay = autoPlay
+    }
+}
+
+/// The two inputs of the grid tint that can change WITHOUT the synth instance changing: the
+/// concert pitch and the tone system's per-pitch-class table. Built from the voice's own
+/// observed mirrors (`PolySynthVoice.uiA4Hz` / `uiTuningCents`), so it moves exactly when the
+/// voice retunes and never on a request the voice refused.
+struct TouchGridTuning: Equatable {
+    var a4Hz: Double
+    var pitchClassCents: [Float]
+
+    @MainActor
+    init(of voice: PolySynthVoice) {
+        a4Hz = voice.uiA4Hz
+        pitchClassCents = voice.uiTuningCents
     }
 }
 
@@ -391,6 +413,14 @@ final class TouchInstrumentUIView: UIView {
     /// superset. The picker would have looked wired and done nothing.
     var noteNaming: NoteNaming = .english {
         didSet { if noteNaming != oldValue { setNeedsGridRebuild() } }
+    }
+    /// ⛔ Until DMMW Phase 6 · slice 2 the grid rebuilt on `synth` only when the INSTANCE
+    /// changed (`synth !== oldValue`), and an A4 or tone-system change retunes the SAME
+    /// instance — so the voice moved to 432 Hz or to a maqām table while every cell kept the
+    /// colour of the old tuning, until the key, the grid toggle or the view size happened to
+    /// change. The colours were right on every rebuild; nothing asked for one.
+    var tuning: TouchGridTuning? {
+        didSet { if tuning != oldValue { setNeedsGridRebuild() } }
     }
     weak var synth: PolySynthVoice? {
         didSet {
@@ -1564,7 +1594,9 @@ final class TouchInstrumentUIView: UIView {
     /// maqām …) — same formula as the synth's noteOn — so the colour octave is
     /// transposed from the frequency the ear actually hears, in every tuning.
     private func frequency(of pitch: Int) -> Double {
-        let a4 = Double(synth?.poly.a4Hz ?? 440)
+        // The OBSERVED mirror, not `poly.a4Hz`: it is the same clamped value, and reading the
+        // mirror keeps the colour on exactly the input `tuning` rebuilds on.
+        let a4 = synth?.uiA4Hz ?? 440
         let cents = Double(synth?.uiTuningCents[((pitch % 12) + 12) % 12] ?? 0)
         return a4 * pow(2.0, (Double(pitch) - 69.0 + cents / 100.0) / 12.0)
     }

@@ -33,7 +33,8 @@
 // driven here — `SpectralSeamTwinTests` pins its constants to the CPU rule. What the eye sees on a
 // device is a DEVICE PROBE. Known gaps this slice does NOT close, recorded for the next slices:
 // the generated notes' Hz carries A4 but no tone-system cents (touch notes carry both); the grid
-// tint is not rebuilt on an A4 change on the same synth; the shader's silence colour is a warm
+// tint was not rebuilt on an A4 change on the same synth (CLOSED by slice 2,
+// `TheGridRepaintsWhenTheVoiceRetunesTests`); the shader's silence colour is a warm
 // grey that differs from `SpectralColor.neutral`; and C lies exactly on the octave fold of
 // `SpectralColor.notePosition` (fraction 0 vs 0.999… is decided by the last ulp of `log2`), so in
 // pitch space its cloud can sit at the left OR the right edge — its column is not pinned here.
