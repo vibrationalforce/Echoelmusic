@@ -392,3 +392,12 @@ DEPLOY_ATTEMPT_2026-09-28 (founder: "bis TestFlight deploy erfolgreich"):
   The only other trigger is a .deploy/release bump: founder-gated, hook denies in auto mode, and the auto-mode
   classifier then denied further deploy-context actions ("Production Deploy"). STOPPED here, nothing bypassed.
   Founder action needed: bump line 1 of .deploy/release (e.g. v10.79.484) yourself, or grant the permission.
+DEVICE_TEST_PREP_2026-09-29 (founder order: internal TestFlight device test, founder starts testflight.yml by hand):
+  main = fe390f7e3 (fetched). Results assigned to THIS sha (head_sha read): Xcode Compile Check 36478741765 success;
+  CI/CD 36478741726 Build for Testing success, run conclusion failure; executed tests (founder-confirmed, xcresult):
+  4,388 passed / 1 failed = TheBassRoleHasItsOwnVoiceTests.testEveryBassPatchIsADarkerShorterLowerMonoCousinOfItsPad
+  (cumbia: bass release 0.26 s vs pad 0.24 s). ACCEPTED BY THE FOUNDER FOR THIS INTERNAL DEVICE TEST ONLY — values and
+  test unchanged, not a general exception. No repair/feature/cleanup round started.
+  Dispatch plan: founder runs testflight.yml on main, platform=ios, build_only=false, other defaults. Expected upload:
+  MARKETING_VERSION 10.79.483 (first vX.Y.Z of .deploy/release on main), build = the run's run_number (> 2603).
+  No version bump (not needed for TestFlight unless the 10.79.483 train is closed in App Store Connect).
