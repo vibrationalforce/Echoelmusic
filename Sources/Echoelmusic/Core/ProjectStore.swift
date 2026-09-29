@@ -21,7 +21,10 @@ public final class ProjectStore {
     public private(set) var currentProjectName: String?
     /// The row `currentProjectName` came from, so deleting THAT row takes the name back
     /// (review of 09d35f56e, LOW) — a header must not name a project the library no longer has.
-    @ObservationIgnored private var currentProjectID: UUID?
+    /// DMMW Phase 5 · slice 2: readable, because "Save changes" writes the take back into THIS
+    /// row (same id → `storeRow` replaces it) instead of adding a copy on every Save. Written
+    /// only by `noteCurrent`, `clearCurrent` and `delete` — the one owner stays the store.
+    @ObservationIgnored public private(set) var currentProjectID: UUID?
 
     @ObservationIgnored private var pendingProjects: [Project]?
     @ObservationIgnored private let writeProjects: ([Project]) -> Bool

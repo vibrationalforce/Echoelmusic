@@ -1284,7 +1284,7 @@ struct EchoelStudioView: View {
                     // the same slots `quickActionRow`/`quickDoorRow` set, no new modal, and the
                     // save still goes through `saveProject()` → `withSession`.
                     case "save":
-                        saveName = session.sessionName(bpm: beatPlayer.pattern.tempo)
+                        saveName = projects.currentProjectName ?? session.sessionName(bpm: beatPlayer.pattern.tempo)
                         showSaveDialog = true
                     case "open":
                         openNote = nil
@@ -1781,7 +1781,16 @@ struct EchoelStudioView: View {
         #endif
         .alert("Save project", isPresented: $showSaveDialog) {
             TextField("Name", text: $saveName)
-            Button("Save") { saveProject() }
+            // DMMW Phase 5 · slice 2 — with a project open, Save writes INTO it (one row per
+            // piece, renamed if the name was edited) and "Save as new" is the deliberate copy.
+            // Nothing open (a New piece, a fresh launch): the one Save adds a row, as before.
+            // `currentProjectName` is cold — written on Save, Open, New piece and delete only.
+            if projects.currentProjectName != nil {
+                Button("Save changes") { saveIntoOpenProject() }
+                Button("Save as new") { saveProject() }
+            } else {
+                Button("Save") { saveProject() }
+            }
             Button("Cancel", role: .cancel) {}
         } message: {
             // #495 — THE PROMISE HAD TO CATCH UP WITH THE SAVE. "the current sound, key, tempo
@@ -2415,7 +2424,7 @@ struct EchoelStudioView: View {
             // with no composed take. The leaf reads the song itself: the root body must not
             // observe the timeline document (freeze law), exactly the `KeepLastLoopButton` shape.
             SaveSessionButton(hasComposed: hasComposed) {
-                saveName = session.sessionName(bpm: beatPlayer.pattern.tempo)
+                saveName = projects.currentProjectName ?? session.sessionName(bpm: beatPlayer.pattern.tempo)
                 showSaveDialog = true
             }
 
@@ -11809,6 +11818,18 @@ struct EchoelStudioView: View {
 
     private func saveProject() {
         projects.save(withSession(currentProject()))
+    }
+
+    /// DMMW Phase 5 · slice 2 — "Save changes": the same snapshot as `saveProject()`, carrying
+    /// the OPEN project's id, so `ProjectStore.storeRow` replaces that row instead of adding a
+    /// copy. The id is set BEFORE `withSession` so the Session is captured onto the row it
+    /// belongs to. No open project (the store forgot it — deleted, New piece): a new row,
+    /// never a silent drop of the take.
+    private func saveIntoOpenProject() {
+        guard let openID = projects.currentProjectID else { saveProject(); return }
+        var take = currentProject()
+        take.id = openID
+        projects.save(withSession(take))
     }
 
     /// WA4-S3 — the take plus the Workstation's song, as the project row's Session. Save and
