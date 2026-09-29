@@ -439,3 +439,10 @@ DEVICE_TEST_PREP_2026-09-29 (founder order: internal TestFlight device test, fou
 - CI/CD 36560450977, job 109380008327: conclusion success · Build for Testing success · `▸ Test build Succeeded` · Run Tests success · `▸ Test execute Succeeded` (11:19:52→11:38:11). The step runs `set -o pipefail; xcodebuild test-without-building … | tee test.log | xcpretty`, so exit 0 = xcodebuild reported zero failing tests. #396 (clone death) did NOT occur on this run.
 - Not proven without the xcresult: executed/skipped counts. New artifact 11029684978 (blob host still blocked here).
 - main = 9ce3dfd50 (auto-merge). TestFlight: not started — the founder's rule forbids dispatch/bump by me; the authorized path is the founder's "Run workflow" on main.
+
+## RELEASE_CANDIDATE_2026-09-29 — 9ce3dfd50
+
+- Founder 2026-09-29: "den grünen Stand 9ce3dfd50 als Release-Kandidat markieren, den vorgesehenen TestFlight-Workflow auslösen, den Upload bis state=VALID überwachen".
+- Candidate: 9ce3dfd50 (= origin/main at dispatch time). Version from `.deploy/release` unchanged (v10.79.483, no bump). Gates: Compile Check 36560451034 ✅, CI/CD 36560450977 (run 6485) ✅, artifact 11029684978.
+- NOT in this build: 69dece6, 761a264, 71f8fd4 (lost, founder: do not rebuild).
+- Open after VALID: founder device listen, cumbia Lilt Sub release 0.23 vs 0.26 (−30 ms).
