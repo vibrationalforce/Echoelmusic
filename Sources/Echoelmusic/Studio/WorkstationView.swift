@@ -269,6 +269,11 @@ struct WorkstationView: View {
     var body: some View {
         let summary = WorkstationSummary(document: timeline.document)
         VStack(alignment: .leading, spacing: 10) {
+            // DMMW Phase 1 (founder 2026-09-29) — "show at once how to make a piece": the five
+            // steps, each one a door that already exists below, read off the song (`ComposeGuide`).
+            // Its own leaf with no store reads; everything it shows is handed in from the cold
+            // reads this body already makes (document, clip grid, `isPlaying`).
+            composeGuide
             if summary.isEmpty {
                 emptyState
             } else {
@@ -981,8 +986,7 @@ struct WorkstationView: View {
     /// unless a user part already sits at its start — then the composer yields.
     private var addMIDITrackRow: some View {
         Button {
-            importNote = nil
-            MIDIImport.addMIDITrack(timeline: timeline)
+            addMIDITrack()
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "plus")
@@ -1038,18 +1042,7 @@ struct WorkstationView: View {
     /// known to the plan, and each refusal says so in words on the one note line.
     private var newMIDIPartRow: some View {
         Button {
-            importNote = nil
-            tuningPending = nil
-            switch MIDIImport.addEmptyPart(clipStore: clipStore, timeline: timeline) {
-            case .success(let landing):
-                selection.selectRegion(landing.region.id, in: timeline.document)
-                let laneName = timeline.document.lanes
-                    .first { $0.id == landing.laneID }?.name ?? "the MIDI track"
-                importNote = MIDIImport.emptyPartNote(laneName: laneName,
-                                                      atSongStart: landing.region.startTick == 0)
-            case .failure(let failure):
-                importNote = failure.userMessage
-            }
+            newMIDIPart()
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "square.grid.3x3")
@@ -1196,6 +1189,59 @@ struct WorkstationView: View {
             clips: clipStore.filledClips,
             bpm: player.preflightTempo,
             resolveAudio: { player.audioLanes?.resolvedURL(forClipID: $0) })
+    }
+
+    /// "Add MIDI Track" — the row's action and the guide's step 1, one body (#416).
+    private func addMIDITrack() {
+        importNote = nil
+        MIDIImport.addMIDITrack(timeline: timeline)
+    }
+
+    /// "New MIDI Part" — the row's action and the guide's step 2, one body (#416). The stores
+    /// are handed to `MIDIImport.addEmptyPart`, never messaged (claim F); the new part is
+    /// selected so the part bar and the note editor open on it; every outcome says what
+    /// happened on the one note line.
+    private func newMIDIPart() {
+        importNote = nil
+        tuningPending = nil
+        switch MIDIImport.addEmptyPart(clipStore: clipStore, timeline: timeline) {
+        case .success(let landing):
+            selection.selectRegion(landing.region.id, in: timeline.document)
+            let laneName = timeline.document.lanes
+                .first { $0.id == landing.laneID }?.name ?? "the MIDI track"
+            importNote = MIDIImport.emptyPartNote(laneName: laneName,
+                                                  atSongStart: landing.region.startTick == 0)
+        case .failure(let failure):
+            importNote = failure.userMessage
+        }
+    }
+
+    // MARK: - The compose guide (DMMW Phase 1, founder 2026-09-29)
+
+    /// The five steps, handed their facts and their actions. The facts are the cold reads this
+    /// body already makes — the document, the clip grid, `isPlaying`, and the engine's own start
+    /// guard through `songCanStart()` (the one question Play asks, #416). Nothing here is a new
+    /// subscription and nothing is a new modal: Save is the chrome door the project row posts.
+    private var composeGuide: some View {
+        let clips = clipStore.filledClips
+        let facts = ComposeGuide.facts(document: timeline.document, clips: clips,
+                                       canPlay: songCanStart(), isPlaying: player.isPlaying)
+        return ComposeGuideCard(facts: facts) { step in
+            switch step {
+            case .track:
+                addMIDITrack()
+            case .part:
+                newMIDIPart()
+            case .notes:
+                if let id = ComposeGuide.partToWrite(document: timeline.document, clips: clips) {
+                    selection.selectRegion(id, in: timeline.document)
+                }
+            case .play:
+                if player.isPlaying { player.stop() } else { startTimeline(fromTick: 0, launching: []) }
+            case .save:
+                NotificationCenter.default.post(name: .echoelChromeDoor, object: "save")
+            }
+        }
     }
 
     /// Start the arrangement on the ONE transport. Everything this hands over is already
@@ -1398,6 +1444,111 @@ private struct PartTempoRow: View {
 private struct AnalysisRequest: Equatable {
     let url: URL
     let clipID: UUID
+}
+
+/// DMMW Phase 1 (founder 2026-09-29) — the compose guide: "Create a piece" and its five steps,
+/// at the top of the Workstation, so the first thing the plate says is how a piece is made.
+///
+/// ⭐ A LEAF WITH NO STORE READS. The facts arrive as a value (`ComposeGuide.Facts`) and every tap
+/// is handed back to the Workstation, which runs the existing path — so this view cannot start,
+/// write or select anything the Workstation's own doors could not.
+///
+/// ⚠️ ACTIVATION ONLY. Each step is a `Button`: VoiceOver focus reads it, a double-tap runs it —
+/// exploring the list never adds a track or starts the song. Nothing here is a swipe gesture.
+///
+/// ⚠️ NO NESTED CARD (Uncodixfy): the steps are bordered doors in the house idiom, the header is a
+/// plain disclosure line; there is no panel around them. The next step wears the accent border,
+/// and its state is ALSO in words — the icon and colour are never the only carrier.
+///
+/// The fold is view state, never persisted: open while no part holds notes, folded to its header
+/// once one does (the arrangement is then the better picture), and the player's own tap wins.
+private struct ComposeGuideCard: View {
+    let facts: ComposeGuide.Facts
+    let perform: (ComposeGuide.Step) -> Void
+    /// nil = automatic (see the type header); a tap on the header records the player's choice.
+    @State private var expandedByPlayer: Bool? = nil
+
+    var body: some View {
+        let expanded = expandedByPlayer ?? !facts.hasNotes
+        VStack(alignment: .leading, spacing: 6) {
+            Button {
+                expandedByPlayer = !expanded
+            } label: {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Image(systemName: expanded ? "chevron.down" : "chevron.right")
+                        .font(EchoelTheme.font(11, .semibold))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Create a piece")
+                            .font(EchoelTheme.font(13, .semibold))
+                            .foregroundStyle(EchoelTheme.text)
+                        Text("\(ComposeGuide.doneCount(facts)) of \(ComposeGuide.Step.allCases.count) steps done")
+                            .font(EchoelTheme.font(12))
+                            .foregroundStyle(EchoelTheme.dim)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .foregroundStyle(EchoelTheme.text)
+                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(ComposeGuide.headerLabel(facts))
+            .accessibilityValue(expanded ? "Expanded" : "Collapsed")
+            .accessibilityHint(expanded ? "Hides the steps" : "Shows the steps")
+
+            if expanded {
+                ForEach(ComposeGuide.Step.allCases) { step in
+                    stepRow(step)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func stepRow(_ step: ComposeGuide.Step) -> some View {
+        let state = ComposeGuide.state(of: step, facts)
+        let lit = state == .done || state == .next
+        return Button {
+            perform(step)
+        } label: {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                Image(systemName: Self.symbol(state))
+                    .font(EchoelTheme.font(13, .semibold))
+                    .foregroundStyle(lit ? EchoelTheme.accent : EchoelTheme.dim)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(step.rawValue). \(ComposeGuide.title(step, facts))")
+                        .font(EchoelTheme.font(13, .semibold))
+                        .foregroundStyle(state == .waiting ? EchoelTheme.dim : EchoelTheme.text)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(ComposeGuide.detail(step, facts))
+                        .font(EchoelTheme.font(12))
+                        .foregroundStyle(EchoelTheme.dim)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
+            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                .strokeBorder(state == .next ? EchoelTheme.accent : EchoelTheme.border, lineWidth: 1))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(state == .waiting)
+        .accessibilityLabel(ComposeGuide.spokenLabel(step, facts))
+        .accessibilityHint(ComposeGuide.detail(step, facts))
+    }
+
+    private static func symbol(_ state: ComposeGuide.State) -> String {
+        switch state {
+        case .done:    return "checkmark.circle.fill"
+        case .next:    return "arrow.right.circle.fill"
+        case .ready:   return "circle"
+        case .waiting: return "circle.dashed"
+        }
+    }
 }
 
 #endif

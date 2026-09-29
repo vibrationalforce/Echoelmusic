@@ -1,0 +1,176 @@
+import Foundation
+
+/// DMMW Phase 1 (founder 2026-09-29): "Die Oberfläche muss nach dem Start sofort zeigen, wie man
+/// ein Stück erstellt. Keine leeren Platzhalter ohne Aktion." — the five steps from an empty song
+/// to a saved piece, read off the song itself.
+///
+/// ⭐ IT OWNS NO STATE AND WRITES NOTHING. Every step is DERIVED from facts that already have one
+/// owner — the document (`TimelineStore`), the clip grid (`ClipStore`), the engine's own start
+/// guard (`TimelineRegionPlayer.canPlay`, asked by the Workstation's `songCanStart()`) and the
+/// player's `isPlaying`. A guide that kept its own "step 3 done" flag would be a second answer
+/// to "does this part have notes?", and the first Undo would make the two disagree.
+///
+/// ⭐ EVERY STEP'S ACTION IS AN EXISTING PATH, never a new one: Add MIDI Track
+/// (`MIDIImport.addMIDITrack`), New MIDI Part (`MIDIImport.addEmptyPart`), selecting the part the
+/// note editor opens on (`WorkstationSelection.selectRegion`), the Workstation's one Play/Stop
+/// (`startTimeline` / `player.stop()`), and the Studio's Save alert through the chrome door. The
+/// guide is a map of doors that already exist, in the order a piece needs them.
+///
+/// ⚠️ STEP 3 SAYS "WRITE", NOT "RECORD", on purpose: the guide's track is the import's track, and
+/// record-arm is offered on a rack track only (`RecordTake.canArm` — `.laneSynth` role), which that
+/// track usually is not. A step promising "or record" would name a control its own part lacks.
+///
+/// ⚠️ THE MIDI TRACK IS THE IMPORT'S TRACK (`MIDIImport.firstImportableMIDILane`, the roll lane)
+/// and "a part" is a USER part — composer-owned clips are excluded exactly as
+/// `SessionSaveOpen.songHasUserParts` excludes them (#416): the generated take is the
+/// instrument's, and it must not tick off "you wrote notes".
+enum ComposeGuide {
+
+    enum Step: Int, CaseIterable, Identifiable, Sendable {
+        case track = 1, part, notes, play, save
+        var id: Int { rawValue }
+    }
+
+    /// What a step shows. `next` is the ONE step to do now; `waiting` names a step whose
+    /// prerequisite is missing — shown, never hidden, and disabled with the reason spoken.
+    enum State: Equatable, Sendable {
+        case done, next, ready, waiting
+    }
+
+    /// The facts the five steps are read from — each one owned elsewhere (see the type header).
+    struct Facts: Equatable, Sendable {
+        var hasMIDITrack: Bool
+        var hasPart: Bool
+        var hasNotes: Bool
+        var canPlay: Bool
+        var isPlaying: Bool
+        var canSave: Bool
+    }
+
+    // MARK: - Reading the song
+
+    /// The user's MIDI parts on the import's track, earliest first. A region whose clip is
+    /// missing, not MIDI, or composer-owned is not the user's part.
+    static func userParts(document: TimelineDocument, clips: [Clip]) -> [UserPart] {
+        guard let lane = MIDIImport.firstImportableMIDILane(in: document) else { return [] }
+        var byID: [UUID: Clip] = [:]
+        for clip in clips where byID[clip.id] == nil { byID[clip.id] = clip }
+        let onLane: [TimelineRegion] = document.regions
+            .filter { $0.laneID == lane.id }
+            .sorted { $0.startTick < $1.startTick }
+        var parts: [UserPart] = []
+        for region in onLane {
+            guard let clip = byID[region.clipID], clip.kind == .midi, !clip.composerOwned else { continue }
+            parts.append(UserPart(region: region, clip: clip))
+        }
+        return parts
+    }
+
+    /// One user part and the clip it plays.
+    struct UserPart: Sendable {
+        let region: TimelineRegion
+        let clip: Clip
+
+        /// The notes the part holds — the note editor's own count (`ClipNoteEdit.noteCount`,
+        /// the grid's windowing), so the guide and the "Notes" switch never disagree.
+        var noteCount: Int { ClipNoteEdit.noteCount(clip: clip, region: region) ?? 0 }
+    }
+
+    static func facts(document: TimelineDocument, clips: [Clip],
+                      canPlay: Bool, isPlaying: Bool) -> Facts {
+        let parts = userParts(document: document, clips: clips)
+        let hasNotes = parts.contains { $0.noteCount > 0 }
+        return Facts(hasMIDITrack: MIDIImport.firstImportableMIDILane(in: document) != nil,
+                     hasPart: !parts.isEmpty,
+                     hasNotes: hasNotes,
+                     canPlay: canPlay,
+                     isPlaying: isPlaying,
+                     canSave: SessionSaveOpen.songHasUserParts(document, clips: clips))
+    }
+
+    /// The part "Write notes" opens: the first one still empty, else the first one. nil when
+    /// there is no user part — the step is then `waiting`, never a silent no-op.
+    static func partToWrite(document: TimelineDocument, clips: [Clip]) -> UUID? {
+        let parts = userParts(document: document, clips: clips)
+        let empty = parts.first { $0.noteCount == 0 }
+        return (empty ?? parts.first)?.region.id
+    }
+
+    // MARK: - The steps
+
+    static func state(of step: Step, _ facts: Facts) -> State {
+        let base = baseState(of: step, facts)
+        guard base == .ready else { return base }
+        // The first step that is ready and not done is THE next step; later ready steps stay
+        // ready (still tappable — adding a second track or part is legitimate work).
+        let firstReady = Step.allCases.first { baseState(of: $0, facts) == .ready }
+        return firstReady == step ? .next : .ready
+    }
+
+    private static func baseState(of step: Step, _ f: Facts) -> State {
+        switch step {
+        case .track: return f.hasMIDITrack ? .done : .ready
+        case .part:  return !f.hasMIDITrack ? .waiting : (f.hasPart ? .done : .ready)
+        case .notes: return !f.hasPart ? .waiting : (f.hasNotes ? .done : .ready)
+        case .play:  return f.isPlaying ? .done : (f.canPlay ? .ready : .waiting)
+        // Saving is never "done": nothing here can know the song has not changed since.
+        case .save:  return f.canSave ? .ready : .waiting
+        }
+    }
+
+    /// How many of the five steps are done — the header's count.
+    static func doneCount(_ facts: Facts) -> Int {
+        Step.allCases.filter { state(of: $0, facts) == .done }.count
+    }
+
+    static func title(_ step: Step, _ facts: Facts) -> String {
+        switch step {
+        case .track: return "Add a MIDI track"
+        case .part:  return "Add a part"
+        case .notes: return "Write notes"
+        case .play:  return facts.isPlaying ? "Stop the song" : "Play the song"
+        case .save:  return "Save the piece"
+        }
+    }
+
+    /// One visible line under the title: what the tap does, or what it is waiting for.
+    static func detail(_ step: Step, _ facts: Facts) -> String {
+        if state(of: step, facts) == .waiting { return waitingReason(step, facts) }
+        switch step {
+        case .track: return "An instrument track for the notes of your piece."
+        case .part:  return "An empty four-bar part on that track."
+        case .notes: return "Selects the part. Tap Notes to write into it."
+        case .play:  return facts.isPlaying ? "Stops the song." : "Plays the song from the top."
+        case .save:  return "Names the piece and saves it. Library opens it again."
+        }
+    }
+
+    private static func waitingReason(_ step: Step, _ facts: Facts) -> String {
+        switch step {
+        case .track: return ""
+        case .part:  return "Add a MIDI track first."
+        case .notes: return "Add a part first."
+        case .play:  return facts.hasPart ? "Write notes into a part first." : "Add a part with notes first."
+        case .save:  return "Add a part first."
+        }
+    }
+
+    /// The whole row, spoken: position, title, state. The state is words, never only a colour
+    /// or an icon.
+    static func spokenLabel(_ step: Step, _ facts: Facts) -> String {
+        let count = Step.allCases.count
+        let status: String
+        switch state(of: step, facts) {
+        case .done:    status = step == .play ? "playing" : "done"
+        case .next:    status = "next step"
+        case .ready:   status = "available"
+        case .waiting: status = "not yet available"
+        }
+        return "Step \(step.rawValue) of \(count), \(title(step, facts)), \(status)"
+    }
+
+    /// The header, spoken: how far the piece has come.
+    static func headerLabel(_ facts: Facts) -> String {
+        "Create a piece, \(doneCount(facts)) of \(Step.allCases.count) steps done"
+    }
+}

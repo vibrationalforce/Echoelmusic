@@ -187,12 +187,20 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
         let view = try source(Self.workstationPath)
         let row = try body(of: "private var newMIDIPartRow: some View {", in: view)
         XCTAssertTrue(row.contains("Text(\"New MIDI Part\")"), "the row is no longer labelled")
-        XCTAssertTrue(row.contains("MIDIImport.addEmptyPart(clipStore: clipStore, timeline: timeline)"),
+        // DMMW Phase 1 (2026-09-29): the row's action moved into ONE function, because the
+        // compose guide's step 2 runs the same transaction (#416 — one body, two doors). The
+        // three needles below are unchanged; they are read where the action now lives, and the
+        // row must still call it.
+        XCTAssertTrue(row.contains("newMIDIPart()"), "the row no longer runs the empty-part action")
+        let action = try body(of: "private func newMIDIPart() {", in: view)
+        XCTAssertTrue(action.contains("MIDIImport.addEmptyPart(clipStore: clipStore, timeline: timeline)"),
                       "the view hands both stores over; the write is `MIDIImport`'s (claim F)")
-        XCTAssertTrue(row.contains("selection.selectRegion(landing.region.id, in: timeline.document)"),
+        XCTAssertTrue(action.contains("selection.selectRegion(landing.region.id, in: timeline.document)"),
                       "the new part must be selected, so the part bar and Notes open on it")
-        XCTAssertTrue(row.contains("importNote = failure.userMessage"),
+        XCTAssertTrue(action.contains("importNote = failure.userMessage"),
                       "every refusal must say what happened on the one note line")
+        XCTAssertEqual(view.components(separatedBy: "MIDIImport.addEmptyPart(").count - 1, 1,
+                       "ONE call of the transaction in the view — the row and the guide share it")
         // Design slice 4 paired Import MIDI with Add MIDI Track (`creationPair`, one level
         // deeper); New MIDI Part stays on its own line directly after that pair.
         XCTAssertTrue(view.contains("                importMIDIRow\n            }\n")
