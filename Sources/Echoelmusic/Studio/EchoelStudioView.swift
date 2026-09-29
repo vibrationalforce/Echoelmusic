@@ -957,7 +957,7 @@ struct EchoelStudioView: View {
             switch self {
             case .bio:         return "Bio — pulse, HRV, coherence, source"
             case .composition: return "Tempo and variations — tap tempo, metronome, haptic beat, variation ideas"
-            case .sound:       return "Sound and texture"
+            case .sound:       return "Sound and texture, plus the song's scenes and tracks"
             case .mix:         return "Mix — level per part"
             case .effects:     return "Effects"
             case .master:      return "Master"

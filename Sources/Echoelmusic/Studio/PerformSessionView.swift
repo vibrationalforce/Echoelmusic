@@ -12,10 +12,18 @@
 //
 // ⚠️ A LEAF, AND THAT IS THE FREEZE LAW, NOT STYLE. The Sound panel is built inside
 // `EchoelStudioView`'s `dropdownContent`, which the ROOT body evaluates. Every read below —
-// the document, the clip grid, `songCanStart`'s cold inputs, and `SessionLaunchView`'s
-// `launchGeneration` (a tap or a fired bar, never a step) — happens in THIS body, so a change
-// rebuilds this leaf only. `beatPlayer.pattern` (it leads to the gliding tempo) and `pianoRoll`
-// are read only inside the start closure, at tap time.
+// the document, `songCanStart`'s cold inputs, `player.isPlaying` and `transport.isPlaying`
+// (each flips twice per take, never per step) — happens in THIS body, and `SessionLaunchView`
+// reads `launchGeneration` (a tap or a fired bar) in its OWN body, so a change rebuilds these
+// leaves only. `beatPlayer.pattern` (it leads to the gliding tempo) and `pianoRoll` are read
+// only inside the start closure, at tap time.
+//
+// Review repair (2026-09-29): the section is COLLAPSED by default — the Sound panel is the
+// instrument's home and the untouched-launch plate, and up to `SessionGrid.sceneLimit` scenes
+// must not push its patch rows down for a player who never composes. And while the instrument
+// runs on the clock with the song stopped, NO scene can start the song: a launch there would
+// start the song under the running pattern (the second running truth the header's review
+// closed). The ONE truth asked is `ProjectTransport.isRunning`; the section says why instead.
 //
 // Slice 2: Mute and Solo per heard track, through the same `TrackMix` doors Compose's track
 // header uses — one lane flag, two views of it. (Not undoable in either view: the store's
@@ -34,15 +42,37 @@ struct PerformSessionView: View {
     /// ⚠️ READ ONLY INSIDE THE START CLOSURE — `pattern` leads to the gliding tempo.
     @Environment(BeatPlayer.self) private var beatPlayer
     @Environment(PianoRollModel.self) private var pianoRoll
+    /// Cold: `isPlaying` flips at a take's start and stop, never per step.
+    @Environment(Transport.self) private var transport
+    /// Collapsed on every launch: the patch rows below stay where a player expects them.
+    @State private var isOpen = false
 
     var body: some View {
-        // The Workstation's own start guard (the one `canPlay` question, #416): while the song
-        // has nothing that would play, the projection shows no scene — say so, and where parts
-        // come from, instead of an empty space on the Perform plate.
-        let startable = WorkstationView.songCanStart(player: player, timeline: timeline,
-                                                     clipStore: clipStore)
         VStack(alignment: .leading, spacing: 6) {
-            if !startable && !player.isPlaying {
+            sectionToggle
+            if isOpen {
+                openContent
+            }
+        }
+    }
+
+    /// Everything the open section shows. Only evaluated while open, so a closed section costs
+    /// no `canPlay` preflight and no grid build.
+    @ViewBuilder private var openContent: some View {
+        let songPlaying = player.isPlaying
+        let instrumentOnly = Self.instrumentOnly(
+            running: ProjectTransport.isRunning(clockRunning: transport.isPlaying, songPlaying: songPlaying),
+            songPlaying: songPlaying)
+        if instrumentOnly {
+            Text(Self.instrumentRunningNote)
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
+        } else {
+            // The Workstation's own start guard (the one `canPlay` question, #416): while the
+            // song has nothing that would play, the projection shows no scene — say so, and
+            // where parts come from, instead of an empty space.
+            if !songPlaying && !WorkstationView.songCanStart(player: player, timeline: timeline,
+                                                             clipStore: clipStore) {
                 Text(Self.emptyNote)
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
@@ -52,21 +82,51 @@ struct PerformSessionView: View {
                                           pattern: beatPlayer.pattern, pianoRoll: pianoRoll,
                                           fromTick: tick, launching: parts)
             })
-            // Slice 2 — Mute and Solo while performing, on the SAME lane flags Compose's track
-            // header flips (`TrackMix.flipMute`/`flipSolo` → `TimelineStore`). Both views read
-            // the document, so a switch flipped here is lit there. Only tracks that are HEARD
-            // get a row (the inspector's rule, `TrackMix.controls(…).muteSolo`).
-            let rows = Self.mixRows(in: timeline.document, voiceCapacity: player.laneVoiceCapacity)
-            if !rows.isEmpty {
-                Text("Tracks")
-                    .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
-                    .padding(.top, 4)
-                ForEach(rows) { row in
-                    mixRow(row)
-                }
+        }
+        // Slice 2 — Mute and Solo while performing, on the SAME lane flags Compose's track
+        // header flips (`TrackMix.flipMute`/`flipSolo` → `TimelineStore`). Both views read
+        // the document, so a switch flipped here is lit there. Only tracks that are HEARD
+        // get a row (the inspector's rule, `TrackMix.controls(…).muteSolo`).
+        let rows = Self.mixRows(in: timeline.document, voiceCapacity: player.laneVoiceCapacity)
+        if !rows.isEmpty {
+            Text("Tracks")
+                .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
+                .padding(.top, 4)
+            ForEach(rows) { row in
+                mixRow(row)
             }
         }
     }
+
+    /// Scenes are hidden (not refused by a caption that invites the tap) exactly when the one
+    /// clock runs the instrument alone. Pure, so the rule is testable without a view.
+    nonisolated static func instrumentOnly(running: Bool, songPlaying: Bool) -> Bool {
+        running && !songPlaying
+    }
+
+    /// One 44-pt row that opens and closes the section; a disclosure, not a new surface.
+    private var sectionToggle: some View {
+        Button {
+            isOpen.toggle()
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: isOpen ? "chevron.down" : "chevron.right")
+                    .font(EchoelTheme.font(11, .semibold)).foregroundStyle(EchoelTheme.dim)
+                    .accessibilityHidden(true)
+                Text(Self.sectionTitle)
+                    .font(EchoelTheme.font(11, .semibold)).foregroundStyle(EchoelTheme.dim)
+                Spacer(minLength: 0)
+            }
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Self.sectionTitle)
+        .accessibilityValue(isOpen ? "Open" : "Closed")
+        .accessibilityHint("Launch the song's scenes and mute or solo its tracks while you perform")
+    }
+
+    static let sectionTitle = "Scenes and tracks"
 
     /// One heard track's Mute/Solo state, read from the document — the ONE truth both views show.
     struct MixRow: Identifiable, Equatable, Sendable {
@@ -131,5 +191,9 @@ struct PerformSessionView: View {
     /// What the Perform plate says while the song has nothing to launch. It names the area that
     /// makes parts (Compose) rather than a control on another plate, so it cannot go stale when
     /// that plate's rows move.
-    static let emptyNote = "Session: nothing to launch yet. Parts you write in Compose appear here as scenes to launch on the bar."
+    static let emptyNote = "Nothing to launch yet. Parts you write in Compose, and the Echoel's generated take, appear here as scenes to launch on the bar."
+
+    /// Why no scene is offered while the instrument plays alone: a launch would start the song
+    /// under the running pattern. Names the control that resolves it — the header's Stop.
+    static let instrumentRunningNote = "The Echoel is playing. Stop it in the header to launch a scene — the song then starts on the scene's bar."
 }

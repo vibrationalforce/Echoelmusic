@@ -138,7 +138,8 @@ final class PerformIsASecondViewOfTheSameSessionTests: XCTestCase {
 
     func testTheLeafStartsThroughTheOneStartAndOwnsNothing() throws {
         let leaf = try source(Self.leafPath)
-        let body = try member("var body: some View {", in: leaf)
+        // Review repair: the grid lives in the OPEN section's builder, not in `body` itself.
+        let body = try member("@ViewBuilder private var openContent: some View {", in: leaf)
         let mount = try XCTUnwrap(body.range(of: "SessionLaunchView(playFrom: { tick, parts in"))
         let closure = String(body[mount.lowerBound...])
         XCTAssertTrue(closure.contains("WorkstationView.startSong(player: player, timeline: timeline, clipStore: clipStore,"))
@@ -157,6 +158,51 @@ final class PerformIsASecondViewOfTheSameSessionTests: XCTestCase {
                        ".popover(", "Timer", ".task", ".onReceive(", "launchRegion", "launchScene("] {
             XCTAssertFalse(leaf.contains(banned), "the Perform leaf must not use \(banned)")
         }
+    }
+
+    // MARK: 2b — review repair: closed by default, no launch under the running instrument
+
+    func testNoSceneIsOfferedWhileTheInstrumentPlaysAlone() {
+        // END-TO-END over the pure rule, every row of the truth table.
+        XCTAssertTrue(PerformSessionView.instrumentOnly(running: true, songPlaying: false), """
+            the instrument runs on the clock and the song is stopped: a launch would start the \
+            song under the running pattern — no scene is offered
+            """)
+        XCTAssertFalse(PerformSessionView.instrumentOnly(running: true, songPlaying: true),
+                       "the song plays: scenes switch on the bar")
+        XCTAssertFalse(PerformSessionView.instrumentOnly(running: false, songPlaying: false),
+                       "nothing runs: a scene starts the song at its bar")
+        XCTAssertTrue(PerformSessionView.instrumentRunningNote.contains("Stop it in the header"),
+                      "the note names the control that resolves it")
+        XCTAssertTrue(PerformSessionView.instrumentRunningNote.contains("scene"))
+    }
+
+    func testTheSectionAsksTheOneRunningTruthAndOpensOnDemand() throws {
+        let leaf = try source(Self.leafPath)
+        let open = try member("@ViewBuilder private var openContent: some View {", in: leaf)
+        XCTAssertTrue(open.contains(
+            "ProjectTransport.isRunning(clockRunning: transport.isPlaying, songPlaying: songPlaying)"),
+                      "the ONE running truth the header reads (#416), not the song alone")
+        guard let gate = open.range(of: "if instrumentOnly {"),
+              let otherwise = open.range(of: "} else {", range: gate.upperBound..<open.endIndex),
+              let grid = open.range(of: "SessionLaunchView(playFrom:") else {
+            return XCTFail("ANCHOR MISSING: the instrument-only branch or the grid (#454)")
+        }
+        XCTAssertTrue(otherwise.upperBound <= grid.lowerBound,
+                      "the grid is mounted only in the branch where the instrument does not run alone")
+        XCTAssertTrue(leaf.contains("@State private var isOpen = false"),
+                      "closed on every launch: the patch rows below stay in place")
+        let body = try member("var body: some View {", in: leaf)
+        XCTAssertTrue(body.contains("if isOpen {"))
+        XCTAssertFalse(body.contains("songCanStart("),
+                       "a closed section runs no preflight and builds no grid")
+        let toggle = try member("private var sectionToggle: some View {", in: leaf)
+        XCTAssertTrue(toggle.contains(".frame(minHeight: 44)"), "a 44-pt target")
+        XCTAssertTrue(toggle.contains(".accessibilityValue(isOpen ? \"Open\" : \"Closed\")"))
+        // #482: the Sound chip opens this panel, so its spoken name lists what it now reaches.
+        let studio = try source(Self.studioPath)
+        XCTAssertTrue(studio.contains(
+            "case .sound:       return \"Sound and texture, plus the song's scenes and tracks\""))
     }
 
     // MARK: 4 — slice 2: Mute and Solo, one lane flag seen from both views
