@@ -11950,6 +11950,8 @@ struct EchoelStudioView: View {
     /// take and replaces only its Session (review H1 of `2eb3cb84d`).
     private func open(_ p: Project) {
         if p.id != Project.autosaveSlotID { autosaveTake() }
+        // DMMW Phase 1 · slice 3 — the persistent project header names what was opened.
+        projects.noteCurrent(p)
         // Same clamp as launch: a project saved before the genre re-curation (#125) can
         // carry a style that is no longer offered, which would leave the picker showing
         // nothing selected while that genre composed every take. Bound ONCE and reused

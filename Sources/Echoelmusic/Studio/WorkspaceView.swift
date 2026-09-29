@@ -231,6 +231,10 @@ struct WorkspaceView: View {
                     // Tone system · Concert pitch A4 — lives HERE in the chrome, always
                     // visible, one thin row. A LEAF (low-frequency reads only).
                     CompositionHeaderStrip()
+                    // DMMW Phase 1 · slice 3 — the persistent project header: name, place, tempo,
+                    // status and the ONE Play/Stop/Record, above every area. Its own leaf; it
+                    // reads nothing hot here (the tempo lives in its own sub-leaf).
+                    ProjectHeader()
                 }
                 .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                 Divider().overlay(EchoelTheme.border)

@@ -1040,20 +1040,26 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
 
     func testThePlayControlDisablesItselfRatherThanLying() throws {
         let src = try code(at: Self.view)
-        XCTAssertTrue(src.contains(".disabled(!playing && !startable)"), """
+        XCTAssertTrue(src.contains(".disabled(!running && !startable)"), """
             A control that can be tapped and does nothing is a lying control, and this repo \
             has paid for that shape before. The disable must be exactly "not running AND not \
             startable": disabling it while PLAYING would strand the user with a running \
             transport and no way to stop it from the surface that started it.
+            DMMW Phase 1 · slice 3: `running` is the ONE running truth \
+            (`ProjectTransport.isRunning` over the clock and the song), so the plate says Stop \
+            while the instrument plays — the same answer the project header gives.
             """)
+        XCTAssertTrue(src.contains("let running = ProjectTransport.isRunning(clockRunning: transport.isPlaying, songPlaying: playing)"),
+                      "the plate's Play/Stop reads the shared running truth, not the song alone")
         XCTAssertTrue(src.contains("minHeight: 44"), """
             The transport is a primary control and must carry the 44 pt HIG tap target the \
             chip strip already does (#113/#353b).
             """)
-        XCTAssertTrue(src.contains("accessibilityLabel(playing ? \"Stop timeline\" : \"Play timeline\")"), """
+        XCTAssertTrue(src.contains("accessibilityLabel(running ? \"Stop all playback\" : \"Play timeline\")"), """
             The button is icon-plus-word on screen and a LABEL to VoiceOver. It must name the \
             thing it acts on — "Play" alone, on a plate that also holds the instrument's own \
-            transport, does not say WHICH.
+            transport, does not say WHICH. Since slice 3 its Stop is the ONE Stop \
+            (`ProjectTransport.stop`), so the label says what that does: everything stops.
             """)
     }
 

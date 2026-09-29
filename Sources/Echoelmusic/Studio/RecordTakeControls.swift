@@ -50,6 +50,11 @@ struct RecordTakeButton: View {
     let startSong: () -> Bool
     /// The Workstation's Stop — it commits the take.
     let stopSong: () -> Void
+    /// DMMW Phase 1 · slice 3 — the persistent project header mounts this SAME door without its
+    /// two caption lines (it has no room for them; VoiceOver still hears the caption as the
+    /// hint). Defaulted to the full form on purpose: the Workstation's mount is the full door
+    /// and must not change, the header's is the one site that writes `compact: true`.
+    var compact = false
 
     var body: some View {
         let recording = recorder.isRecording
@@ -76,13 +81,15 @@ struct RecordTakeButton: View {
                 HStack(spacing: 6) {
                     Image(systemName: recording ? "stop.circle.fill" : "record.circle")
                         .font(EchoelTheme.font(13, .semibold))
-                    Text(recording ? "Stop recording" : "Record")
-                        .font(EchoelTheme.font(13, .semibold))
+                    if !compact {
+                        Text(recording ? "Stop recording" : "Record")
+                            .font(EchoelTheme.font(13, .semibold))
+                    }
                 }
                 .foregroundStyle(recording ? EchoelTheme.onPrimary
                                            : (state == .ready ? EchoelTheme.text : EchoelTheme.dim))
-                .padding(.horizontal, 14)
-                .frame(minHeight: 44)
+                .padding(.horizontal, compact ? 0 : 14)
+                .frame(minWidth: 44, minHeight: 44)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                     .fill(recording ? EchoelTheme.warning : EchoelTheme.fill))
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
@@ -94,11 +101,13 @@ struct RecordTakeButton: View {
             .accessibilityLabel(recording ? "Stop recording" : "Record")
             .accessibilityHint(caption)
 
+            if !compact {
             Text(caption)
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityHidden(true)   // the button's hint carries it
-            if recorder.droppedTakes > 0 {
+            }
+            if !compact, recorder.droppedTakes > 0 {
                 Text(RecordTake.droppedSentence(recorder.droppedTakes, gridSize: clipStore.slots.count))
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.warning)
                     .fixedSize(horizontal: false, vertical: true)

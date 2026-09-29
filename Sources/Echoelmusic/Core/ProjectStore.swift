@@ -12,6 +12,13 @@ public final class ProjectStore {
     public private(set) var projects: [Project] = []
     public private(set) var saveError: String?
     public private(set) var lastSavedAt: Date?
+    /// DMMW Phase 1 · slice 3 — the name of the project the player last SAVED or OPENED from
+    /// the library, which the persistent project header shows. nil = this run has neither
+    /// saved nor opened a named project, and the header says so instead of inventing a name.
+    /// The recovery slot never becomes it: a row the user did not name is not "the project".
+    /// Cold — written on Save and Open only. Not persisted: after a relaunch the working copy
+    /// is the recovery slot, not a named project, and claiming otherwise would be a guess.
+    public private(set) var currentProjectName: String?
 
     @ObservationIgnored private var pendingProjects: [Project]?
     @ObservationIgnored private let writeProjects: ([Project]) -> Bool
@@ -44,7 +51,15 @@ public final class ProjectStore {
         next.removeAll { $0.id == p.id }
         next.insert(p, at: 0)
         persist(next)
+        noteCurrent(p)
         return p
+    }
+
+    /// Record `project` as the one the player is working on (Save and library Open). The
+    /// recovery slot is skipped — see `currentProjectName`.
+    public func noteCurrent(_ project: Project) {
+        guard project.id != Project.autosaveSlotID else { return }
+        currentProjectName = project.name
     }
 
     public func delete(id: UUID) {

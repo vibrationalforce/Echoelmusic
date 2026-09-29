@@ -212,6 +212,10 @@ struct WorkstationView: View {
     @Environment(BeatPlayer.self) private var beatPlayer
     @Environment(PianoRollModel.self) private var pianoRoll
     @Environment(ClipStore.self) private var clipStore
+    /// DMMW Phase 1 · slice 3 — the one clock's own run flag, read so this plate's Play/Stop
+    /// says what the persistent project header says (`ProjectTransport`). Cold: `isPlaying`
+    /// flips on a start or a stop, never per step. The tempo is NOT read here (claim N).
+    @Environment(Transport.self) private var transport
     /// MA4.2 — the durable media identities an import registers. Read only in the import
     /// handler, never in `body`.
     @Environment(MediaAssetStore.self) private var mediaAssets
@@ -789,6 +793,10 @@ struct WorkstationView: View {
         // TWICE per take, not per step (`currentTick` is `@ObservationIgnored` precisely so
         // a reader like this one cannot subscribe to the ~8 Hz position).
         let playing = player.isPlaying
+        // DMMW Phase 1 · slice 3 — ONE running truth. The button reads the one clock too, so it
+        // says Stop while the instrument plays the music, exactly as the project header does;
+        // `playing` (the song) still gates the song's own position, meter and caption.
+        let running = ProjectTransport.isRunning(clockRunning: transport.isPlaying, songPlaying: playing)
         // ⚠️ THE CLIPS ARE PART OF THE QUESTION (#1438). A placed region is a POINTER; the
         // engine can only start if at least one of them resolves into content it would
         // execute, so the control must hand over the same clip values `play(...)` will.
@@ -822,32 +830,37 @@ struct WorkstationView: View {
         return VStack(alignment: .leading, spacing: 8) {
           controls {
             Button {
-                if playing { player.stop() } else { startTimeline(fromTick: 0, launching: []) }
+                // The ONE Stop (slice 3): song and clock alike, the same function the header runs.
+                if running {
+                    ProjectTransport.stop(song: player, pattern: beatPlayer.pattern, source: "workstation")
+                } else {
+                    startTimeline(fromTick: 0, launching: [])
+                }
             } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: playing ? "stop.fill" : "play.fill")
+                    Image(systemName: running ? "stop.fill" : "play.fill")
                         .font(EchoelTheme.font(13, .semibold))
-                    Text(playing ? "Stop" : "Play")
+                    Text(running ? "Stop" : "Play")
                         .font(EchoelTheme.font(13, .semibold))
                 }
                 // The armCard idiom, unchanged: accent + onPrimary while it is RUNNING,
                 // fill + border while it is not. Dim only where the control is unavailable,
                 // so "off" and "cannot" do not wear the same colour.
-                .foregroundStyle(playing ? EchoelTheme.onPrimary
+                .foregroundStyle(running ? EchoelTheme.onPrimary
                                          : (startable ? EchoelTheme.text : EchoelTheme.dim))
                 .padding(.horizontal, 14)
                 .frame(minWidth: 92, minHeight: 44)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .fill(playing ? EchoelTheme.accent : EchoelTheme.fill))
+                    .fill(running ? EchoelTheme.accent : EchoelTheme.fill))
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .strokeBorder(playing || !startable ? Color.clear : EchoelTheme.border,
+                    .strokeBorder(running || !startable ? Color.clear : EchoelTheme.border,
                                   lineWidth: 1))
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .disabled(!playing && !startable)
-            .accessibilityLabel(playing ? "Stop timeline" : "Play timeline")
-            .accessibilityHint(WorkstationSummary.transportHint(playing: playing, startable: startable))
+            .disabled(!running && !startable)
+            .accessibilityLabel(running ? "Stop all playback" : "Play timeline")
+            .accessibilityHint(WorkstationSummary.transportHint(playing: running, startable: startable))
 
             // Design slice 10 — the click, armed where the song is played. Its own leaf: this
             // view names no voice, and the leaf reads only the cold on/off.
@@ -862,8 +875,10 @@ struct WorkstationView: View {
                 WorkstationMixMeter()
             }
           }
-            Text(WorkstationSummary.transportCaption(playing: playing, startable: startable,
-                                                     fromTick: playedFromTick))
+            Text(running && !playing
+                 ? ProjectTransport.instrumentRunningCaption
+                 : WorkstationSummary.transportCaption(playing: playing, startable: startable,
+                                                       fromTick: playedFromTick))
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityHidden(true)   // the button's own hint already carries this
@@ -1188,6 +1203,14 @@ struct WorkstationView: View {
     /// subscribe whichever view asks — the part bar's leaf, and this root through `transportRow`
     /// (which already made exactly these cold reads before M10).
     private func songCanStart() -> Bool {
+        Self.songCanStart(player: player, timeline: timeline, clipStore: clipStore)
+    }
+
+    /// DMMW Phase 1 · slice 3 — the same question for the persistent project header, which has
+    /// no instance of this view. STILL the one `canPlay` call in this file: the instance form
+    /// above only hands its environment over.
+    static func songCanStart(player: TimelineRegionPlayer, timeline: TimelineStore,
+                             clipStore: ClipStore) -> Bool {
         TimelineRegionPlayer.canPlay(
             timeline.document,
             clips: clipStore.filledClips,
@@ -1263,9 +1286,22 @@ struct WorkstationView: View {
     /// the tick to the bar and lands the parts on it inside the same call (S2 review, MED-1).
     private func startTimeline(fromTick: Int, launching: [UUID]) {
         playedFromTick = fromTick
+        Self.startSong(player: player, timeline: timeline, clipStore: clipStore,
+                       pattern: beatPlayer.pattern, pianoRoll: pianoRoll,
+                       fromTick: fromTick, launching: launching)
+    }
+
+    /// DMMW Phase 1 · slice 3 — the song's ONE start, reachable by the persistent project header
+    /// as well. It stays in THIS file (the one `player.play(` caller, claim A) and constructs
+    /// nothing: every argument is an owner the caller already holds from the environment.
+    /// ⚠️ A header start does not write this view's `playedFromTick` (view state): the caption
+    /// keeps the last bar THIS plate started from. The header always starts from the top.
+    static func startSong(player: TimelineRegionPlayer, timeline: TimelineStore, clipStore: ClipStore,
+                          pattern: PatternEngine, pianoRoll: PianoRollModel,
+                          fromTick: Int, launching: [UUID]) {
         player.play(document: timeline.document,
                     clips: clipStore,
-                    pattern: beatPlayer.pattern,
+                    pattern: pattern,
                     pianoRoll: pianoRoll,
                     fromTick: fromTick,
                     launching: launching)
