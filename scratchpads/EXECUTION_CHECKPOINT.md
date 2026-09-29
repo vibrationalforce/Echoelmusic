@@ -446,3 +446,11 @@ DEVICE_TEST_PREP_2026-09-29 (founder order: internal TestFlight device test, fou
 - Candidate: 9ce3dfd50 (= origin/main at dispatch time). Version from `.deploy/release` unchanged (v10.79.483, no bump). Gates: Compile Check 36560451034 ✅, CI/CD 36560450977 (run 6485) ✅, artifact 11029684978.
 - NOT in this build: 69dece6, 761a264, 71f8fd4 (lost, founder: do not rebuild).
 - Open after VALID: founder device listen, cumbia Lilt Sub release 0.23 vs 0.26 (−30 ms).
+
+## DEPLOY_2605_2026-09-29 — TestFlight VALID
+
+- Run 36577287774 (#2605), workflow_dispatch by the founder on main, head_sha 9ce3dfd504c69f0af67b8a14ac3a9292513b053a (= the release candidate).
+- Preflight ✅ · Setup Signing ✅ · Archive ✅ (13:44:48–13:49:46) · Export & Upload to TestFlight ✅ · Verify ✅.
+- Apple line: `build_number=2605 id=55c165ed-290f-42b9-8be5-65693e0079d3 state=VALID uploaded=2026-09-29T06:51:41-07:00`.
+- Version v10.79.483 (no .deploy/release bump). Contains 2c33f00c3 (Retry save) + 04c704a55 (cumbia Lilt Sub 0.23). Not contained: 69dece6, 761a264, 71f8fd4.
+- Open: founder device listen, cumbia 0.23 vs 0.26 (NEEDS-FOUNDER-VERIFY).
