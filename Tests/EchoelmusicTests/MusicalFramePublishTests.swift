@@ -12,7 +12,7 @@ import Foundation
 final class MusicalFramePublishTests: XCTestCase {
 
     func testEmptyChord_isSilent() {
-        let f = PianoRollModel.musicalFrame(forActive: [], a4Hz: 440,
+        let f = PianoRollModel.musicalFrame(forActive: [], a4Hz: 440, pitchClassCents: PianoRollModel.equalTemperamentCents,
                                             rootPitchClass: 9, scaleName: "minor",
                                             tempoBPM: 120, beatPhase: 0.5)
         XCTAssertTrue(f.notes.isEmpty)
@@ -24,7 +24,7 @@ final class MusicalFramePublishTests: XCTestCase {
 
     func testA4_mapsTo440_atStandardConcertPitch() {
         let f = PianoRollModel.musicalFrame(forActive: [Note(pitch: 69, startStep: 0)],
-                                            a4Hz: 440, rootPitchClass: 9, scaleName: "major",
+                                            a4Hz: 440, pitchClassCents: PianoRollModel.equalTemperamentCents, rootPitchClass: 9, scaleName: "major",
                                             tempoBPM: 90, beatPhase: 0)
         XCTAssertEqual(f.notes.count, 1)
         XCTAssertEqual(f.notes[0].frequencyHz, 440, accuracy: 1e-6)
@@ -34,7 +34,7 @@ final class MusicalFramePublishTests: XCTestCase {
 
     func testConcertPitch_shiftsFrequency() {
         let f = PianoRollModel.musicalFrame(forActive: [Note(pitch: 69, startStep: 0)],
-                                            a4Hz: 432, rootPitchClass: -1, scaleName: "",
+                                            a4Hz: 432, pitchClassCents: PianoRollModel.equalTemperamentCents, rootPitchClass: -1, scaleName: "",
                                             tempoBPM: 0, beatPhase: 0)
         XCTAssertEqual(f.notes[0].frequencyHz, 432, accuracy: 1e-6)
     }
@@ -42,12 +42,12 @@ final class MusicalFramePublishTests: XCTestCase {
     func testMaster_sumsVelocities_andClamps() {
         let two = [Note(pitch: 60, startStep: 0, lengthSteps: 1, velocity: 0.4),
                    Note(pitch: 64, startStep: 0, lengthSteps: 1, velocity: 0.3)]
-        let f = PianoRollModel.musicalFrame(forActive: two, a4Hz: 440, rootPitchClass: 0,
+        let f = PianoRollModel.musicalFrame(forActive: two, a4Hz: 440, pitchClassCents: PianoRollModel.equalTemperamentCents, rootPitchClass: 0,
                                             scaleName: "major", tempoBPM: 100, beatPhase: 0.25)
         XCTAssertEqual(f.masterLevel, 0.7, accuracy: 1e-6)
 
         let loud = (0..<5).map { Note(pitch: 60 + $0, startStep: 0, lengthSteps: 1, velocity: 0.5) }
-        let g = PianoRollModel.musicalFrame(forActive: loud, a4Hz: 440, rootPitchClass: 0,
+        let g = PianoRollModel.musicalFrame(forActive: loud, a4Hz: 440, pitchClassCents: PianoRollModel.equalTemperamentCents, rootPitchClass: 0,
                                             scaleName: "major", tempoBPM: 100, beatPhase: 0)
         XCTAssertEqual(g.masterLevel, 1.0, accuracy: 1e-9)   // 2.5 → clamped
     }
@@ -75,7 +75,7 @@ final class MusicalFramePublishTests: XCTestCase {
         let silent = (0..<5).map {
             Note(pitch: 60 + $0, startStep: 0, lengthSteps: 1, velocity: 0.000425)
         }
-        let f = PianoRollModel.musicalFrame(forActive: silent, a4Hz: 440, rootPitchClass: 0,
+        let f = PianoRollModel.musicalFrame(forActive: silent, a4Hz: 440, pitchClassCents: PianoRollModel.equalTemperamentCents, rootPitchClass: 0,
                                             scaleName: "minor", tempoBPM: 120, beatPhase: 0)
         XCTAssertTrue(f.notes.isEmpty, "an inaudible chord must publish as a rest")
         XCTAssertEqual(f.masterLevel, 0, accuracy: 1e-9)
@@ -88,7 +88,7 @@ final class MusicalFramePublishTests: XCTestCase {
         let mixed = [Note(pitch: 60, startStep: 0, lengthSteps: 1, velocity: 0.0001),
                      Note(pitch: 64, startStep: 0, lengthSteps: 1, velocity: 0.6),
                      Note(pitch: 67, startStep: 0, lengthSteps: 1, velocity: 0.0)]
-        let f = PianoRollModel.musicalFrame(forActive: mixed, a4Hz: 440, rootPitchClass: 0,
+        let f = PianoRollModel.musicalFrame(forActive: mixed, a4Hz: 440, pitchClassCents: PianoRollModel.equalTemperamentCents, rootPitchClass: 0,
                                             scaleName: "minor", tempoBPM: 120, beatPhase: 0)
         XCTAssertEqual(f.notes.count, 1)
         XCTAssertEqual(f.notes[0].amplitude, 0.6, accuracy: 1e-6)
@@ -105,7 +105,7 @@ final class MusicalFramePublishTests: XCTestCase {
 
         func note(_ v: Float) -> [Note] { [Note(pitch: 60, startStep: 0, lengthSteps: 1, velocity: v)] }
         func frame(_ v: Float) -> MusicalFrame {
-            PianoRollModel.musicalFrame(forActive: note(v), a4Hz: 440, rootPitchClass: 0,
+            PianoRollModel.musicalFrame(forActive: note(v), a4Hz: 440, pitchClassCents: PianoRollModel.equalTemperamentCents, rootPitchClass: 0,
                                         scaleName: "", tempoBPM: 120, beatPhase: 0)
         }
         func sub(_ v: Float) -> Int? {
@@ -130,19 +130,19 @@ final class MusicalFramePublishTests: XCTestCase {
         // founder's pasted log. `inaudibleNoteCount` is what keeps the two apart — it is
         // diagnostic only, and no renderer may react to it.
         let silent = (0..<5).map { Note(pitch: 60 + $0, startStep: 0, lengthSteps: 1, velocity: 0.000425) }
-        let f = PianoRollModel.musicalFrame(forActive: silent, a4Hz: 440, rootPitchClass: 0,
+        let f = PianoRollModel.musicalFrame(forActive: silent, a4Hz: 440, pitchClassCents: PianoRollModel.equalTemperamentCents, rootPitchClass: 0,
                                             scaleName: "", tempoBPM: 120, beatPhase: 0)
         XCTAssertEqual(f.notes.count, 0)
         XCTAssertEqual(f.inaudibleNoteCount, 5)
 
         // A genuine rest must NOT look like a silenced chord.
-        let rest = PianoRollModel.musicalFrame(forActive: [], a4Hz: 440, rootPitchClass: 0,
+        let rest = PianoRollModel.musicalFrame(forActive: [], a4Hz: 440, pitchClassCents: PianoRollModel.equalTemperamentCents, rootPitchClass: 0,
                                                scaleName: "", tempoBPM: 120, beatPhase: 0)
         XCTAssertEqual(rest.inaudibleNoteCount, 0)
 
         // Nor a fully audible chord.
         let loud = (0..<3).map { Note(pitch: 60 + $0, startStep: 0, lengthSteps: 1, velocity: 0.5) }
-        XCTAssertEqual(PianoRollModel.musicalFrame(forActive: loud, a4Hz: 440, rootPitchClass: 0,
+        XCTAssertEqual(PianoRollModel.musicalFrame(forActive: loud, a4Hz: 440, pitchClassCents: PianoRollModel.equalTemperamentCents, rootPitchClass: 0,
                                                    scaleName: "", tempoBPM: 120,
                                                    beatPhase: 0).inaudibleNoteCount, 0)
     }

@@ -32,7 +32,8 @@
 // ⛔ HONEST LIMITS. The shader copy of the colour rule (`toneColour` in `MetalBioView`'s MSL) is not
 // driven here — `SpectralSeamTwinTests` pins its constants to the CPU rule. What the eye sees on a
 // device is a DEVICE PROBE. Known gaps this slice does NOT close, recorded for the next slices:
-// the generated notes' Hz carries A4 but no tone-system cents (touch notes carry both); the grid
+// the generated notes' Hz carried A4 but no tone-system cents (CLOSED by slice 3,
+// `AGeneratedNoteIsLitByItsTunedPitchTests`; touch notes carried both); the grid
 // tint was not rebuilt on an A4 change on the same synth (CLOSED by slice 2,
 // `TheGridRepaintsWhenTheVoiceRetunesTests`); the shader's silence colour is a warm
 // grey that differs from `SpectralColor.neutral`; and C lies exactly on the octave fold of
@@ -54,7 +55,7 @@ final class ASoundingNoteHasOneColourAndOnePlaceTests: XCTestCase {
     /// The Hz the ONE publisher gives a written pitch — the path every generated note takes.
     private func publishedHz(pitch: Int, a4: Double) throws -> Double {
         let frame = PianoRollModel.musicalFrame(
-            forActive: [Note(pitch: pitch, startStep: 0, velocity: 0.8)], a4Hz: a4,
+            forActive: [Note(pitch: pitch, startStep: 0, velocity: 0.8)], a4Hz: a4, pitchClassCents: PianoRollModel.equalTemperamentCents,
             rootPitchClass: 0, scaleName: "major", tempoBPM: 120, beatPhase: 0)
         return try XCTUnwrap(frame.notes.first?.frequencyHz)
     }
@@ -152,7 +153,7 @@ final class ASoundingNoteHasOneColourAndOnePlaceTests: XCTestCase {
         XCTAssertEqual(neutral.r, neutral.g, accuracy: 1e-9, "the neutral carries no hue")
         XCTAssertEqual(neutral.g, neutral.b, accuracy: 1e-9)
 
-        let silent = PianoRollModel.musicalFrame(forActive: [], a4Hz: 440, rootPitchClass: 0,
+        let silent = PianoRollModel.musicalFrame(forActive: [], a4Hz: 440, pitchClassCents: PianoRollModel.equalTemperamentCents, rootPitchClass: 0,
                                                  scaleName: "major", tempoBPM: 120, beatPhase: 0)
         XCTAssertTrue(silent.notes.isEmpty)
         XCTAssertEqual(silent.masterLevel, 0)
@@ -169,7 +170,7 @@ final class ASoundingNoteHasOneColourAndOnePlaceTests: XCTestCase {
 
         func frame(_ velocity: Float) -> MusicalFrame {
             PianoRollModel.musicalFrame(forActive: [Note(pitch: 67, startStep: 0, velocity: velocity)],
-                                        a4Hz: 440, rootPitchClass: 0, scaleName: "major",
+                                        a4Hz: 440, pitchClassCents: PianoRollModel.equalTemperamentCents, rootPitchClass: 0, scaleName: "major",
                                         tempoBPM: 120, beatPhase: 0)
         }
         XCTAssertLessThan(frame(0.2).masterLevel, frame(0.8).masterLevel, "the level lives in the frame's level")

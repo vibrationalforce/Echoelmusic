@@ -37,8 +37,8 @@
 // representable's `updateUIView` and UIKit's layout pass are not driven here. The ORDER argument —
 // the edit handler retunes the voice synchronously inside the header's binding `set` (the
 // notification is delivered synchronously), and the layout pass that rebuilds the grid runs at
-// the end of that run-loop turn — is read from source, not measured. Generated notes still carry
-// no tone-system cents (slice 3). NEEDS-FOUNDER-VERIFY: open the Visual window, switch the note
+// the end of that run-loop turn — is read from source, not measured. (Generated notes' cents:
+// slice 3, `AGeneratedNoteIsLitByItsTunedPitchTests`.) NEEDS-FOUNDER-VERIFY: open the Visual window, switch the note
 // grid on, change A4 and the tone system — the cells change colour at once.
 
 import Foundation

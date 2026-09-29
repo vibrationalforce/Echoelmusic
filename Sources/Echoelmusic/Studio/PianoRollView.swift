@@ -214,6 +214,13 @@ public final class PianoRollModel {
     /// Live musical context for the published frame, pushed by the Studio when the
     /// take re-seeds (key/scale/tempo/concert-pitch). Defaults are inert (root -1).
     @ObservationIgnored public var musicalA4Hz: Double = 440
+    /// The active tone system's per-pitch-class retune table (cents from 12-TET, relative to the
+    /// key root) — the SAME table every pitched voice installs (`applyTuning`), pushed beside
+    /// `musicalA4Hz` so a published note's Hz is the pitch that SOUNDS (DMMW Phase 6 · slice 3).
+    /// ⛔ Until then the frame carried A4 and no cents: in a maqām, just or Pythagorean system the
+    /// generated notes were coloured from 12-TET while the voices — and the touch surface, whose
+    /// colour already read the table — sounded the retuned pitch. One note, two colours.
+    @ObservationIgnored public var musicalPitchClassCents: [Double] = PianoRollModel.equalTemperamentCents
     @ObservationIgnored public var musicalRootPitchClass: Int = -1
     @ObservationIgnored public var musicalScaleName: String = ""
     @ObservationIgnored public var musicalTempoBPM: Double = 0
@@ -1230,7 +1237,8 @@ public final class PianoRollModel {
         // move with the music (DMMW backbone). 16 steps = 4 beats → beatPhase per beat.
         bus?.publish(musical: Self.musicalFrame(
             forActive: activeNotes,
-            a4Hz: musicalA4Hz, rootPitchClass: musicalRootPitchClass,
+            a4Hz: musicalA4Hz, pitchClassCents: musicalPitchClassCents,
+            rootPitchClass: musicalRootPitchClass,
             scaleName: musicalScaleName, tempoBPM: musicalTempoBPM,
             beatPhase: Double(step % 4) / 4.0))
     }
@@ -1251,6 +1259,11 @@ public final class PianoRollModel {
     /// same number, different dimension, deliberately not shared. A future change to either
     /// must not assume it moves the other.
     private static let audibleVelocityFloor: Float = 0.001
+
+    /// Twelve zeros: equal temperament, the table under which `musicalFrame` reproduces plain
+    /// `a4 · 2^((p − 69)/12)` exactly (a zero offset adds nothing). The default of
+    /// `musicalPitchClassCents`, and what a caller with no tone system passes.
+    nonisolated public static let equalTemperamentCents: [Double] = Array(repeating: 0, count: 12)
 
     #if DEBUG
     /// TEST SEAM (Debug-only; same `#if DEBUG` + `internal` intent as
@@ -1355,12 +1368,20 @@ public final class PianoRollModel {
     /// release branch — and in log 2472 its frame branch never even ran (`touch=1`, so a
     /// finger drove the colour). Its floor stays load-bearing for the band between 0.001
     /// and 0.02 and must not be deleted as redundant on the strength of this filter.
+    ///
+    /// `pitchClassCents` has NO default (#431): a caller that forgets it would publish 12-TET
+    /// colours over a retuned voice and no diff would show it. A table that is not twelve finite
+    /// entries is read as 12-TET — the same refusal `PolySynthVoice.setTuningCents` applies, so
+    /// the frame can never carry a pitch the voices refused, and never a NaN Hz.
     public static func musicalFrame(forActive notes: [Note], a4Hz: Double,
+                                    pitchClassCents: [Double],
                                     rootPitchClass: Int, scaleName: String,
                                     tempoBPM: Double, beatPhase: Double) -> MusicalFrame {
         let audible = notes.filter { $0.velocity > audibleVelocityFloor }
+        let tableUsable = pitchClassCents.count == 12 && pitchClassCents.allSatisfy { $0.isFinite }
         let mnotes = audible.map { n -> MusicalNote in
-            let hz = a4Hz * pow(2.0, Double(n.pitch - 69) / 12.0)
+            let cents = tableUsable ? pitchClassCents[((n.pitch % 12) + 12) % 12] : 0
+            let hz = a4Hz * pow(2.0, (Double(n.pitch - 69) + cents / 100.0) / 12.0)
             return MusicalNote(frequencyHz: hz, amplitude: Double(n.velocity))
         }
         let master = audible.isEmpty ? 0 : Swift.min(1.0, audible.reduce(0.0) { $0 + Double($1.velocity) })

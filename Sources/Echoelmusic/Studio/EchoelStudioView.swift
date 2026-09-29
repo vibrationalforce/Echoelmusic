@@ -4606,6 +4606,10 @@ struct EchoelStudioView: View {
     private func applyTuning() {
         let cents = TuningSystem.named(tuningID).pitchClassCents(root: rootIndex).map { Float($0) }
         synth.setTuningCents(cents)
+        // The published MusicalFrame takes the SAME table (through the same Float rounding the
+        // voices and the touch colour see), so a generated note's light is its sounding pitch
+        // (DMMW Phase 6 · slice 3). Beside `musicalA4Hz`, which is pushed the same way.
+        pianoRoll.musicalPitchClassCents = cents.map { Double($0) }
         // The touch instrument plays the same tone system — and its note→colour
         // mapping reads this table, so the colour follows the SOUNDING pitch.
         touchSynth?.setTuningCents(cents)
