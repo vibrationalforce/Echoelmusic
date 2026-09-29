@@ -39,7 +39,7 @@ enum StudioArea: String, CaseIterable, Identifiable, Sendable {
     var spokenHint: String {
         switch self {
         case .compose:  return "Arrangement, tempo and mood. Opens the Workstation."
-        case .perform:  return "Sound, effects, mix, master and body input. Opens the Sound panel."
+        case .perform:  return "The song's scenes, sound, effects, mix, master and body input. Opens the Sound panel."
         case .visuals:  return "The visual field you play with your fingers. Opens the Field panel."
         case .library:  return "Your saved projects. Opens the project list."
         case .settings: return "Loop length, place in the name, reset sound and diagnostics. Opens the Save and Export panel."

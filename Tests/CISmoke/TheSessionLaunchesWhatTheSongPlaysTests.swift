@@ -26,6 +26,9 @@
 //    disables PART launching while stopped (a scene starts the song through the Workstation's
 //    `playFrom` since Phase 3 / S2 — `TheSceneLaunchIsASwitchTests`), persists nothing, never starts the transport, never
 //    reads the playhead; the Workstation constructs it exactly once and still does not launch.
+//    DMMW Phase 3 (2026-09-29): the Perform plate (`PerformSessionView`) is the SECOND door; it
+//    too constructs it once, launches nothing itself, and starts a stopped song through
+//    `WorkstationView.startSong` — same ids, same one start (`PerformIsASecondViewOfTheSameSessionTests`).
 //
 // Grading (§0, no Swift toolchain in a web session): claims 1–3 were transcribed into Python
 // over a model of `SessionGrid` and `TimelineScheduling.activeRegion`; claims 4–5 were driven
@@ -50,6 +53,7 @@ final class TheSessionLaunchesWhatTheSongPlaysTests: XCTestCase {
 
     private static let viewPath = "Sources/Echoelmusic/Studio/SessionLaunchView.swift"
     private static let workstationPath = "Sources/Echoelmusic/Studio/WorkstationView.swift"
+    private static let performPath = "Sources/Echoelmusic/Studio/PerformSessionView.swift"
     private static let playerPath = "Sources/Echoelmusic/Sequencer/TimelineRegionPlayer.swift"
     private static let sourcesRoot = "Sources/Echoelmusic"
 
@@ -331,15 +335,30 @@ final class TheSessionLaunchesWhatTheSongPlaysTests: XCTestCase {
         XCTAssertEqual(Set(storeMessages), ["document"])
     }
 
-    func testTheWorkstationIsTheOneDoorAndStillDoesNotLaunch() throws {
+    func testTheTwoDoorsStartThroughTheOneStartAndDoNotLaunch() throws {
         let workstation = try source(Self.workstationPath)
+        let perform = try source(Self.performPath)
         XCTAssertEqual(workstation.components(separatedBy: "SessionLaunchView(playFrom:").count - 1, 1)
-        for member in ["launchRegion", "stopLaunched", "launchState", "launchGeneration"] {
-            XCTAssertFalse(workstation.contains(member),
-                           "the Workstation's transport is not authorised to launch (claim B there)")
+        XCTAssertEqual(perform.components(separatedBy: "SessionLaunchView(playFrom:").count - 1, 1)
+        for (path, code) in [(Self.workstationPath, workstation), (Self.performPath, perform)] {
+            for member in ["launchRegion", "stopLaunched", "launchState", "launchGeneration"] {
+                XCTAssertFalse(code.contains(member),
+                               "\(path): a door hands the grid a start, it does not launch itself (claim B there)")
+            }
         }
+        // DMMW Phase 3 (founder 2026-09-29: "Compose und Perform als zwei Sichten derselben
+        // Session"): the Perform plate is the SECOND door, and it starts a stopped song through
+        // the Workstation's ONE start — never its own `player.play(`.
+        XCTAssertTrue(perform.contains("WorkstationView.startSong(player: player, timeline: timeline, clipStore: clipStore,"),
+                      "the Perform door must start through the Workstation's one start")
+        XCTAssertTrue(perform.contains("fromTick: tick, launching: parts)"),
+                      "and hand it the scene's bar and parts unchanged")
+        XCTAssertFalse(perform.contains("player.play("))
         let doors = try filesMatching { code, _ in code.contains("SessionLaunchView(") }
-        XCTAssertEqual(doors, [Self.workstationPath])
+        XCTAssertEqual(doors, [Self.performPath, Self.workstationPath].sorted(), """
+            a third door onto the Session projection must say where it starts the song — \
+            extend this list together with that proof (#364: not forbidden, argued).
+            """)
     }
 
     // MARK: Source helpers

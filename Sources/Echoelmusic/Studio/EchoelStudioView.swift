@@ -7742,6 +7742,11 @@ struct EchoelStudioView: View {
             // root `VStack` and NOT a presentation modifier. The black-screen law counts the
             // root body's aggregate generic type and the `.sheet` chain; both are untouched.
             nonStandardTuningBanner
+            // DMMW Phase 3 · slice 1 — Perform's view of the SAME session: the song's scenes,
+            // launched on the bar, through the Workstation's one start. A leaf in its own file
+            // (`PerformSessionView`): every read of the song and the launch state happens in ITS
+            // body, never in this root-evaluated builder (the freeze law). Not a modal.
+            PerformSessionView()
             presetRow
             promptRow
             randomizeButton
