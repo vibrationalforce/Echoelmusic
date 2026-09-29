@@ -27,10 +27,13 @@
 // against THIS tree (no toolchain here): the lane shape of `migrate(sections: [])`, the guide's
 // part step, and every scan needle.
 //
-// ⛔ HONEST LIMITS. "The song you had is kept in Autosave" rests on `autosaveTake()`, which
-// writes only when there is something worth keeping (a user part or a composed take) and keeps
-// the richer of slot and live per half (`recoveryRow`) — a song with nothing in it is not saved
-// because there is nothing to lose. The refusal branch (`replaceSlots` false) cannot be driven:
+// ⛔ HONEST LIMITS. "kept in Autosave" rests on `autosaveTake()`, which writes only a song with
+// a user part or a composed take and keeps the richer of slot and live per half (`recoveryRow`).
+// ⛔ The first header said "a song with nothing in it is not saved because there is nothing to
+// lose" — but tracks, names and instrument picks with no part yet ARE the player's work, and
+// they are NOT rescued (review of 04551fa36, MED). The sentence now says so; widening the
+// rescue is a slot-semantics change left open. From another Compose plate (Mood, Composition)
+// `selectArea(.compose)` keeps that plate — Compose, not necessarily the Workstation. The refusal branch (`replaceSlots` false) cannot be driven:
 // `emptySong` always carries `slotCount` slots; it is defensive. The instrument's take, genre and
 // sound are untouched on purpose. Whether the row reads well and VoiceOver speaks it is a device
 // probe. NEEDS-FOUNDER-VERIFY: Library → New piece → Compose opens on an empty song with
@@ -191,6 +194,36 @@ final class ANewPieceStartsAnEmptySongTests: XCTestCase {
         XCTAssertTrue(EchoelStudioView.newPieceNote.contains("opens Compose"))
         XCTAssertTrue(EchoelStudioView.newPieceNote.contains("kept in Autosave"))
         XCTAssertTrue(EchoelStudioView.newPieceRefusedNote.contains("unchanged"))
+    }
+
+    /// Review of 04551fa36, MED: the sentence promised "The song you had is kept in Autosave"
+    /// for every song, while the rescue writes only a song with the player's PARTS (or a composed
+    /// loop). A song of tracks with no parts yet — the flow between "Spur" and "Part" — was
+    /// replaced and the sentence said it was kept. The sentence now states the predicate, and the
+    /// premise that makes it true is driven here, so a widened rescue must move both together.
+    func testTheSentenceStatesWhatTheRescueActuallyKeeps() {
+        let tracksOnly = TimelineDocument(lanes: [TimelineLane(name: "Keys", kind: .midi),
+                                                  TimelineLane(name: "Bass", kind: .midi)],
+                                          regions: [])
+        XCTAssertFalse(SessionSaveOpen.songHasUserParts(tracksOnly, clips: []), """
+            premise: tracks with no parts are not something the rescue writes — if this turns \
+            green the other way, the sentence below under-claims and must say so
+            """)
+        XCTAssertTrue(EchoelStudioView.newPieceNote.contains("parts or a composed loop"),
+                      "the sentence names what is kept")
+        XCTAssertTrue(EchoelStudioView.newPieceNote.contains("tracks with no parts yet are not"),
+                      "and what is not — never a promise the rescue does not keep")
+        XCTAssertFalse(EchoelStudioView.newPieceNote.contains("The song you had is kept"),
+                       "the unconditional promise is gone")
+    }
+
+    /// Review of 04551fa36, LOW: New piece is a THIRD writer of the recovery slot, and the one
+    /// sentence that says what the Autosave row holds named two (`OpeningAProjectRescues…` pins
+    /// the open; this pins the third, so the row cannot claim an older state than it holds).
+    func testTheAutosaveCaptionNamesTheNewPieceTrigger() throws {
+        let code = try source(Self.studioPath)
+        XCTAssertTrue(code.contains(
+            "Text(\"Kept automatically when you leave the app, before you open another take and before a New piece. Overwritten each time.\")"))
     }
 
     func testTheReplacementKeepsOpensOrderAndOneEmptySong() throws {

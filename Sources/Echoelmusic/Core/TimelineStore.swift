@@ -59,6 +59,8 @@
 //        canCombineRegions, migrate, resolveOverlaps, restoreRegions, syncUndoFlags) PLUS
 //        `persist` (46 internal call sites, one per mutating path) and `snapshotForUndo`
 //        (15). Both are private; internal is the only place they COULD be called from.
+//        ⚠️ `migrate` is no longer internal-only: `SessionSaveOpen.emptySong` calls it (the
+//        song a pre-Session project opens into and a New piece starts). Re-derive the counts.
 //   · 46 with NO caller anywhere in `Sources/` — the previous 42 plus `undo`, `redo`,
 //        `healRollSlotAudibility`, `unsilenceRollSlot`. ⚠️ The last two are NOT dead logic:
 //        this store's versions delegate to `TimelineDocument`'s same-named methods, and the

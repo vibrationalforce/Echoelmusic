@@ -113,6 +113,10 @@ public enum SessionSaveOpen {
 
     /// The song a project saved before Sessions opens into, and the song "New piece" starts —
     /// ONE definition (#416): the default MIDI and audio track, no parts, an empty clip grid.
+    /// `@MainActor` because `TimelineStore.migrate` and `ClipStore.slotCount` are main-actor
+    /// isolated (review of 04551fa36, HIGH: without it this does not compile under Swift 6);
+    /// every caller — `restoreSong`, `startEmptySong`, the guard — already runs there.
+    @MainActor
     public static var emptySong: (document: TimelineDocument, slots: [Clip?]) {
         (TimelineStore.migrate(sections: []), [Clip?](repeating: nil, count: ClipStore.slotCount))
     }

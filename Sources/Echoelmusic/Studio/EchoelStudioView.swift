@@ -9734,7 +9734,7 @@ struct EchoelStudioView: View {
                         // One line, not a `+` concatenation: the guard matches this sentence
                         // as a single string, and this bundle has been red once on the cost of
                         // concatenated literals (#287).
-                        Text("Kept automatically when you leave the app and before you open another take. Overwritten each time.")
+                        Text("Kept automatically when you leave the app, before you open another take and before a New piece. Overwritten each time.")
                             .foregroundStyle(EchoelTheme.dim)
                     }
                 }
@@ -9810,7 +9810,12 @@ struct EchoelStudioView: View {
 
     /// What "New piece" does, said once for the footer and VoiceOver (#416). It names the Autosave
     /// row, where the song being replaced goes, and says the instrument keeps its sound.
-    static let newPieceNote = "Starts an empty song and opens Compose. The song you had is kept in Autosave below; the instrument keeps its sound."
+    /// ⛔ The first wording said "The song you had is kept in Autosave below" unconditionally —
+    /// false for a song of tracks with no parts yet, which `autosaveTake()` does not write
+    /// (`SessionSaveOpen.songHasUserParts` counts parts only), and "below" pointed at nothing on
+    /// a fresh install (review of 04551fa36, MED). The sentence now states the rescue's actual
+    /// predicate; widening the predicate itself is a slot-semantics change, left as a limit.
+    static let newPieceNote = "Starts an empty song and opens Compose. A song with parts or a composed loop is kept in Autosave first; tracks with no parts yet are not. The instrument keeps its sound."
 
     /// DMMW Phase 5 · slice 1 — rescue, then replace, in `openFromLibrary`'s order and through its
     /// owners: the live take and song go to the ONE recovery slot (`autosaveTake`, the rescue Open
