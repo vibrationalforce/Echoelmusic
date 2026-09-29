@@ -95,8 +95,9 @@ final class DetunedInstrumentSaysSoTests: XCTestCase {
 
         // The default matters as much as the mount: put it on a panel nobody lands on and the
         // guard above still passes while the warning is effectively hidden again.
-        // WA4-P2: an untouched launch shows Sound, OR the Workstation for a player who left
-        // from there — so the banner must be on BOTH plates, and on no third default.
+        // WA4-P2 + DMMW Phase 1: an untouched launch shows the Workstation (first launch, or a
+        // player who left from there) OR Sound (a player who left from an instrument panel) — so
+        // the banner must be on BOTH plates, and on no third default.
         let code = try codeLines(Self.studio)
         XCTAssertTrue(code.contains(where: {
             $0.contains("private var displayedMenu: StudioMenu { activeMenu ?? (reopensWorkstation ? .workstation : .sound) }")

@@ -477,9 +477,11 @@ struct EchoelmusicApp: App {
                     LaunchGuard.reset()
                     // WA4-P2 review M1 — the last launch crashed, and the relaunch memory would
                     // send "Continue" and every later launch straight back to the Workstation
-                    // plate if that is what crashed. Forget it: the next Studio start shows
-                    // Sound, the plate an untouched launch has always shown. Clear only.
-                    UserDefaults.standard.removeObject(forKey: EchoelStudioView.reopensWorkstationKey)
+                    // plate if that is what crashed. Point it at Sound: FALSE, never true.
+                    // ⚠️ DMMW Phase 1 made the key's DEFAULT true (a first launch opens the
+                    // Workstation), so clearing it would now mean "Workstation" — the recovery
+                    // writes the instrument instead of forgetting.
+                    UserDefaults.standard.set(false, forKey: EchoelStudioView.reopensWorkstationKey)
                 }
             } else if hasCompletedOnboarding {
                 mainContent

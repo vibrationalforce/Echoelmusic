@@ -863,16 +863,23 @@ struct EchoelStudioView: View {
     /// WA4-P2 — the Workstation is a place a player WORKS in, so a relaunch returns to it
     /// when the player left from there (founder WA4 directive: "LAUNCH → WORKSTATION").
     /// ⚠️ It stores ONE fact, not the tab: whether the last plate the player chose was the
-    /// Workstation. Every other plate falls back to Sound exactly as before, so a first launch
-    /// and every launch after leaving from an instrument panel still land on the instrument
-    /// (#325: the tuning banner's default door). The only writer is the `displayedMenu`
-    /// `onChange` in the chip strip — i.e. the player's own selection, by chip or by door; no
-    /// code path opens the Workstation on the player's behalf.
-    /// ⚠️ The ONE other hand on the key is Safe Mode, and it only CLEARS it
+    /// Workstation. Every other plate falls back to Sound exactly as before, so every launch
+    /// after leaving from an instrument panel still lands on the instrument (#325: the tuning
+    /// banner is mounted on both plates). The only writer in this view is the `displayedMenu`
+    /// `onChange` in the chip strip — i.e. the player's own selection, by chip or by door.
+    /// ⭐ DMMW Phase 1 (founder 2026-09-29: "Die Oberfläche muss nach dem Start sofort zeigen,
+    /// wie man ein Stück erstellt"): the default is TRUE, so a FIRST launch opens the
+    /// Workstation, where "Create a piece" walks the five steps. ⛔ It was `false` ("a first
+    /// launch is Sound") under the pure-instrument phase; the product law of 2026-09-24 retired
+    /// that scope, and the founder's order names the first screen. Nothing else changed: the
+    /// player's last choice still wins on every later launch.
+    /// ⚠️ The ONE other hand on the key is Safe Mode, and it may only write FALSE
     /// (`EchoelmusicApp`, the recovery screen's `onAppear`): a plate that crashed at render
-    /// must not be the plate every relaunch returns to (review of b4c2179bf, M1).
+    /// must not be the plate every relaunch returns to (review of b4c2179bf, M1). With a TRUE
+    /// default, merely clearing the key would send the next launch straight back to the
+    /// Workstation — so Safe Mode writes the instrument instead of forgetting.
     static let reopensWorkstationKey = "studio.reopensWorkstation"
-    @AppStorage(EchoelStudioView.reopensWorkstationKey) private var reopensWorkstation = false
+    @AppStorage(EchoelStudioView.reopensWorkstationKey) private var reopensWorkstation = true
 
 
 
@@ -3387,10 +3394,10 @@ struct EchoelStudioView: View {
     /// closing it achieved nothing, while the tab reset was a real side effect. It made
     /// "Master → Routing → dismiss" land the user on Sound with Master gone.
     ///
-    /// WA4-P2: the one exception to "an untouched launch shows Sound" is a player who LEFT
-    /// from the Workstation (`reopensWorkstation`) — then the untouched launch is theirs to
-    /// continue. The tuning banner is mounted on that plate too, so #325 still holds for
-    /// whichever plate a launch shows.
+    /// WA4-P2 + DMMW Phase 1: an untouched launch shows the Workstation on a FIRST launch and
+    /// for a player who LEFT from there (`reopensWorkstation`), and Sound for a player who left
+    /// from an instrument panel. The tuning banner is mounted on both plates, so #325 still
+    /// holds for whichever plate a launch shows.
     private var displayedMenu: StudioMenu { activeMenu ?? (reopensWorkstation ? .workstation : .sound) }
 
     /// #1436 — the read-only Workstation plate (founder Phase 3).

@@ -417,29 +417,41 @@ final class TheWorkstationHasADoorTests: XCTestCase {
     func testTheInstrumentIsStillWhereItWas() throws {
         let src = try code(at: Self.studio)
         XCTAssertTrue(src.contains("private var displayedMenu: StudioMenu { activeMenu ?? (reopensWorkstation ? .workstation : .sound) }"), """
-            An untouched launch must still land on Sound — the timbre panel, i.e. the \
-            instrument itself — UNLESS the player left from the Workstation (WA4-P2). A \
-            Workstation that became the default plate would turn a bio-reactive instrument \
-            into a project browser on first run.
+            An untouched launch must land on the Workstation or on Sound — the timbre panel, \
+            i.e. the instrument itself — and on nothing else (WA4-P2, DMMW Phase 1). The \
+            instrument stays one tap away on every launch.
             """)
-        // WA4-P2 — the relaunch memory is the PLAYER'S choice, never the app's. Three facts
-        // make that true, and each is the premise the one above rests on (#343):
-        // it starts false (a first launch is Sound), it has exactly ONE writer, and that
-        // writer is the plate the player has just selected.
-        XCTAssertTrue(src.contains("@AppStorage(EchoelStudioView.reopensWorkstationKey) private var reopensWorkstation = false"), """
-            The relaunch memory no longer defaults to false — a FIRST launch would then open on \
-            the Workstation, which is the surface opening itself.
+        // ⭐ DMMW Phase 1 (founder 2026-09-29: "Die Oberfläche muss nach dem Start sofort zeigen,
+        // wie man ein Stück erstellt") — the relaunch memory DEFAULTS TO TRUE, so a first launch
+        // opens the Workstation, where "Create a piece" walks the five steps. ⛔ This claim pinned
+        // `= false` ("a first launch is Sound") under the pure-instrument phase; the product law
+        // of 2026-09-24 retired that scope and the founder's order names the first screen, so the
+        // pin is INVERTED here, not dropped — a silent flip back to Sound must still go red.
+        // The other premises (#343) stand unchanged: exactly ONE writer in the view, and that
+        // writer is the plate the player has just selected — so after a first launch, the
+        // player's own last choice wins every later launch.
+        XCTAssertTrue(src.contains("@AppStorage(EchoelStudioView.reopensWorkstationKey) private var reopensWorkstation = true"), """
+            The relaunch memory no longer defaults to true — a FIRST launch would then open on \
+            Sound, and the founder's order is that the first screen shows how a piece is made.
             """)
         XCTAssertTrue(src.contains("static let reopensWorkstationKey = \"studio.reopensWorkstation\""))
-        // Review of b4c2179bf, M1: Safe Mode FORGETS the memory, so a plate that crashed at
-        // render is not the plate every relaunch returns to. It may only clear, never set.
+        // Review of b4c2179bf, M1: after a crash, Safe Mode points the memory at SOUND, so a
+        // plate that crashed at render is not the plate every relaunch returns to. With a TRUE
+        // default, clearing the key would now MEAN "Workstation" — so the recovery must write
+        // false, once, and nothing in the app may ever write true.
         let app = try code(at: Self.app)
-        XCTAssertEqual(app.components(separatedBy: "UserDefaults.standard.removeObject(forKey: EchoelStudioView.reopensWorkstationKey)").count - 1, 1, """
-            The Safe-Mode recovery screen must clear the relaunch memory once — otherwise a \
-            Workstation plate that crashes at render is reopened by "Continue" and by every \
-            later launch.
+        XCTAssertEqual(app.components(separatedBy: "UserDefaults.standard.set(false, forKey: EchoelStudioView.reopensWorkstationKey)").count - 1, 1, """
+            The Safe-Mode recovery screen must point the relaunch memory at Sound once — \
+            otherwise a Workstation plate that crashes at render is reopened by "Continue" and \
+            by every later launch.
             """)
-        XCTAssertFalse(app.contains("reopensWorkstation ="), "the app may clear the memory, never set it")
+        XCTAssertFalse(app.contains("removeObject(forKey: EchoelStudioView.reopensWorkstationKey)"), """
+            Safe Mode CLEARS the memory again — with a true default that sends the next launch \
+            straight back to the Workstation that may have crashed.
+            """)
+        XCTAssertFalse(app.contains("set(true, forKey: EchoelStudioView.reopensWorkstationKey)"),
+                       "the app may point the memory at Sound, never at the Workstation")
+        XCTAssertFalse(app.contains("reopensWorkstation ="), "the app may write false through UserDefaults only, never bind the memory")
         XCTAssertEqual(src.components(separatedBy: "reopensWorkstation =").count - 1, 2, """
             `reopensWorkstation =` must occur exactly twice: its declaration's default and the \
             ONE writer in the chip strip's `onChange(of: displayedMenu)`. A second writer is a \
