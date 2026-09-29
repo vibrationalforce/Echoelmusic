@@ -15,6 +15,10 @@
 // non-bio MIDI lane. Landing anywhere else would place a part that plays only while the
 // secondary-lane rack has capacity, which `canPlay` does not check. So the import lands where the
 // engine certainly plays it, and `firstImportableMIDILane` IS `rollLaneID`.
+// ⚠️ DMMW Phase 4 · slice 1: that holds for the FILE import. An EMPTY part ("New MIDI Part")
+// lands on the SELECTED track when the engine certainly plays it there — the roll lane, or a
+// rack-voiced MIDI lane (`emptyPartLane`, asking `MultiRollFanout.slot`, the player's rule) —
+// and on the roll lane otherwise, saying so.
 //
 // ⭐ THE PART IS USER-OWNED (`composerOwned: false`, the `Clip.init` default, written out on
 // purpose). `ClipStore.updateComposerMelody` refuses every clip that is not composer-owned, so
@@ -169,9 +173,17 @@ public enum MIDIImport {
     ///
     /// ⚠️ IT STARTS ON A BAR: after the lane's last part, rounded up to the next barline, so the
     /// grid's first column is a downbeat even when a trimmed part ends mid-bar.
+    ///
+    /// ⭐ DMMW Phase 4 · slice 1 (founder 2026-09-29, "Instrument/Spur → Part"): it lands on the
+    /// SELECTED track when the engine certainly plays a part there (`emptyPartLane`), not
+    /// always on the roll lane — "Add MIDI Track" then "New MIDI Part" writes onto the track
+    /// the player just made. `selectedTrack` and `voiceCapacity` are required (#431).
     public static func planEmptyPart(document: TimelineDocument,
-                                     slots: [Clip?]) -> Result<Landing, Failure> {
-        guard let lane = firstImportableMIDILane(in: document) else { return .failure(.noMIDILane) }
+                                     slots: [Clip?],
+                                     selectedTrack: UUID?,
+                                     voiceCapacity: Int) -> Result<Landing, Failure> {
+        guard let lane = emptyPartLane(in: document, selectedTrack: selectedTrack,
+                                       voiceCapacity: voiceCapacity) else { return .failure(.noMIDILane) }
         let name = "MIDI · \(lane.name)"
         let played = Set(document.regions.map(\.clipID))
         let clip: Clip
@@ -201,13 +213,40 @@ public enum MIDIImport {
                                 skippedDrumNotes: 0, heldForOneBar: 0))
     }
 
+    /// The "New MIDI Part" row's spoken hint — the SAME rule `emptyPartLane` implements, in
+    /// one place beside it (#416), so the words cannot name a lane rule the code does not follow.
+    public static let newPartHint = "Adds an empty four-bar part to the selected MIDI track when it has a voice, otherwise to the first MIDI track, and selects it"
+
+    /// The lane a NEW empty part lands on: the selected track when a part there is certainly
+    /// played — the roll lane, or a non-bio MIDI lane holding a rack voice (`MultiRollFanout
+    /// .slot`, the player's own rule, #416; `canPlay` does not check rack capacity, so a part
+    /// on a voiceless lane would start a clock over silence) — otherwise the roll lane.
+    /// `voiceCapacity` is `TimelineRegionPlayer.laneVoiceCapacity`.
+    public static func emptyPartLane(in document: TimelineDocument, selectedTrack: UUID?,
+                                     voiceCapacity: Int) -> TimelineLane? {
+        if let id = selectedTrack,
+           let lane = document.lanes.first(where: { $0.id == id }),
+           lane.kind == .midi, !lane.isBio,
+           id == document.rollLaneID
+            || MultiRollFanout.slot(forLaneID: id, in: document, rollLane: document.rollLaneID,
+                                    capacity: voiceCapacity) != nil {
+            return lane
+        }
+        return firstImportableMIDILane(in: document)
+    }
+
     /// The sentence after "New MIDI Part": where it landed, how to write into it, and what it
-    /// does NOT do yet. An empty part plays nothing (`canPlay` refuses a song of empty parts), and
+    /// does NOT do yet. `notOnSelected` names the selected track when the part could NOT land
+    /// there (no voice plays it), so the move to another track is said, never discovered. An empty part plays nothing (`canPlay` refuses a song of empty parts), and
     /// a user part at the song's start makes the instrument's Generate yield
     /// (`userPartWouldBeShadowed` counts it, empty or not) — both said, neither left for the ear.
-    public static func emptyPartNote(laneName: String, atSongStart: Bool) -> String {
+    public static func emptyPartNote(laneName: String, atSongStart: Bool,
+                                     notOnSelected: String?) -> String {
         var note = "Added an empty \(emptyPartBars)-bar part on \(laneName). Its notes are open under the arrangement"
             + " — once it has notes, it plays at the song tempo, with the instrument stopped."
+        if let selected = notOnSelected {
+            note += " \(selected) cannot play a MIDI part, so it went on \(laneName)."
+        }
         if atSongStart { note += " Generate won't place its take over this part." }
         return note
     }
@@ -217,8 +256,11 @@ public enum MIDIImport {
     @MainActor
     @discardableResult
     public static func addEmptyPart(clipStore: ClipStore,
-                                    timeline: TimelineStore) -> Result<Landing, Failure> {
-        switch planEmptyPart(document: timeline.document, slots: clipStore.slots) {
+                                    timeline: TimelineStore,
+                                    selectedTrack: UUID?,
+                                    voiceCapacity: Int) -> Result<Landing, Failure> {
+        switch planEmptyPart(document: timeline.document, slots: clipStore.slots,
+                             selectedTrack: selectedTrack, voiceCapacity: voiceCapacity) {
         case .failure(let failure):
             return .failure(failure)
         case .success(let landing):

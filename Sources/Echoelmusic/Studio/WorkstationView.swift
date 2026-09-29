@@ -1074,7 +1074,7 @@ struct WorkstationView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("New MIDI part")
-        .accessibilityHint("Adds an empty four-bar part to the MIDI track Import MIDI uses, and selects it")
+        .accessibilityHint(MIDIImport.newPartHint)
     }
 
     /// S2 — run the MIDI import and say what happened. `handleImport`'s shape without the
@@ -1234,15 +1234,25 @@ struct WorkstationView: View {
     private func newMIDIPart() {
         importNote = nil
         tuningPending = nil
-        switch MIDIImport.addEmptyPart(clipStore: clipStore, timeline: timeline) {
+        // DMMW Phase 4: the part lands on the SELECTED track when a voice plays it there.
+        // `laneVoiceCapacity` is cold (`@ObservationIgnored`, set once at app start).
+        let selected = selection.trackID
+        switch MIDIImport.addEmptyPart(clipStore: clipStore, timeline: timeline,
+                                       selectedTrack: selected,
+                                       voiceCapacity: player.laneVoiceCapacity) {
         case .success(let landing):
             selection.selectRegion(landing.region.id, in: timeline.document)
             // DMMW Phase 2: an empty part is made to be written into — its notes open at once.
             selection.setNotesOpen(true)
-            let laneName = timeline.document.lanes
-                .first { $0.id == landing.laneID }?.name ?? "the MIDI track"
+            let lanes = timeline.document.lanes
+            let laneName = lanes.first { $0.id == landing.laneID }?.name ?? "the MIDI track"
+            // Said, never discovered: the selected track could not take the part.
+            let missed = selected.flatMap { id in
+                id == landing.laneID ? nil : lanes.first { $0.id == id }?.name
+            }
             importNote = MIDIImport.emptyPartNote(laneName: laneName,
-                                                  atSongStart: landing.region.startTick == 0)
+                                                  atSongStart: landing.region.startTick == 0,
+                                                  notOnSelected: missed)
         case .failure(let failure):
             importNote = failure.userMessage
         }

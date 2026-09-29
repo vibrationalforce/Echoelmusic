@@ -75,7 +75,7 @@ final class WriteNotesOpensTheNoteEditorTests: XCTestCase {
         XCTAssertTrue(ComposeGuide.notesOpenedNote.contains("under the arrangement"),
                       "on a phone the grid can be off screen — the card says where it opened")
 
-        let note = MIDIImport.emptyPartNote(laneName: "Keys", atSongStart: true)
+        let note = MIDIImport.emptyPartNote(laneName: "Keys", atSongStart: true, notOnSelected: nil)
         XCTAssertFalse(note.contains("Tap Notes"), "New MIDI Part opens the notes too")
         XCTAssertTrue(note.contains("Its notes are open under the arrangement"))
         XCTAssertTrue(note.contains("once it has notes"), "what an empty part does not do yet stays said (M1b review)")
