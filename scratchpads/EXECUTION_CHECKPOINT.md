@@ -401,3 +401,12 @@ DEVICE_TEST_PREP_2026-09-29 (founder order: internal TestFlight device test, fou
   Dispatch plan: founder runs testflight.yml on main, platform=ios, build_only=false, other defaults. Expected upload:
   MARKETING_VERSION 10.79.483 (first vX.Y.Z of .deploy/release on main), build = the run's run_number (> 2603).
   No version bump (not needed for TestFlight unless the 10.79.483 train is closed in App Store Connect).
+
+## DEPLOY_2604_2026-09-29
+
+- Founder dispatched testflight.yml by hand (GitHub app), run 36526763299, run_number 2604.
+- head_sha fe390f7e3 (= main), version v10.79.483 (.deploy/release untouched), BUILD_NUMBER 2604.
+- Preflight success · Archive success (05:34:39–05:38:19) · Signing success · Export & Upload success (05:40:13).
+- Apple: log line `##[notice]build_number=2604 id=0c046a5d-d741-4e1f-8c81-52fa309af313 state=VALID uploaded=2026-09-28T22:40:57-07:00` (attempt 3, 05:42:17). Job iOS conclusion success.
+- NOT proven from here: installable for the tester group — founder confirms in the TestFlight app.
+- Why the chat could not deploy: chat deploys were always a `.deploy/release` bump; 1e453b959 (2026-09-28) put that file under ask + hook, and auto mode blocks self-modification. Founder remedy: drop `"Edit(/.deploy/release)"` (settings.json:139) and `".deploy/release"` (protect-founder-gated.py:45).
