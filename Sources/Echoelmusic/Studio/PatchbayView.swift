@@ -631,7 +631,8 @@ struct PatchbayView: View {
             Text("Light").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
             pairedRow(spacing: 10) {
                 EchoelValueField(label: "Master", value: grandMasterBinding,
-                                 range: 0...1, unit: "", decimals: 2)
+                                 range: 0...1, unit: "", decimals: 2,
+                                 standard: ArtNetSender.defaultGrandMaster)
             } second: {
                 Button {
                     let newState = !artNet.blackout

@@ -3287,3 +3287,11 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Guards:** `TheTextSizeHasButtonsTests` claims 1/3/4 rewritten as the decision (studio 1 reader + root 1 reader; `\nstruct StudioZoom` slice; modifier once in the root, zero in the instrument, not `private`). Transcribed: WORK 1–4 GREEN, HEAD 1/3/4 RED. `ChromeDynamicTypeTests` prose follows; the two chip guards stay true (the instrument still scales under `SurfaceHost`).
 - **Open under rule 12:** light mode + contrast (own council); the 11-pt sweep (`font(11)` ×204).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 6, fifth family: the light Grand Master gets ONE owner
+
+- **Decision:** `ArtNetSender.defaultGrandMaster` (`public nonisolated static let`, `1` = FULL) is born as the one owner of the launch value; `ArtNetSender.grandMaster`, `SACNSender.grandMaster` and the non-finite fallback in `masteredDimmer` read it, and the patchbay "Master" row passes it as `standard:`. Written as the type name in the stored initializer (`Self.` there is a build error, #1444).
+- **Why there:** the row drives both senders through one binding, and `ArtNetSender` already owns the shared master law (`masteredDimmer`, called by sACN). `LightFixtureGroup` (unwired render half, pure value type) keeps its own init default `1` — pointing it at a sender would be a new dependency direction for a file with no production caller.
+- **Guard:** `TheValueFieldOffersItsDefaultTests` claim 3, fifth family — row once, both senders initialise from the constant, zero literal launch values. Transcribed WORK GREEN, HEAD RED.
+- **Still without a default:** output port/universe rows (per-sender literals), Field level (bio-derived), FX route rows (per-route factories), mixer/track rows (owner constants to name first).
+- **Review:** 2026-10-30.

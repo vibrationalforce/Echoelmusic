@@ -25,6 +25,9 @@
 // THIRD FAMILY (claim 3, 2026-09-30): the three felt-sub rows name `SubBassVoice.defaultSubGain` and
 // `SubCharacter.defaultPresence` / `defaultHeat` — the constants the voice itself initialises from.
 // FOURTH FAMILY (claim 3, same day): the OSC control input's "Port" row names `OSCReceiver.defaultPort`.
+// FIFTH FAMILY (claim 3, same day): the light "Master" row names `ArtNetSender.defaultGrandMaster` —
+// a constant BORN for it, because the launch value was a literal `1` in two senders and in the
+// non-finite fallback; both senders and the fallback now read the one owner (the row binds both).
 //
 // SECOND FAMILY (claim 5, the same day): every value field in `EchoelStudioView` whose binding
 // is a KEYSTORE-backed `@AppStorage` (`StudioDefaultKeys.x.key` … `= StudioDefaultKeys.x.value`)
@@ -169,6 +172,23 @@ final class TheValueFieldOffersItsDefaultTests: XCTestCase {
             The OSC-in "Port" row no longer passes `OSCReceiver.defaultPort` (or a second row copied it). \
             8001 is the receiver's own constant, the one the docs name — a call-site literal would be #416.
             """)
+
+        // FIFTH FAMILY — the light Grand Master (2026-09-30). The row drives BOTH senders through one
+        // binding, so its default must be the one value both start at: `ArtNetSender.defaultGrandMaster`,
+        // read by `ArtNetSender.grandMaster`, `SACNSender.grandMaster` and the non-finite fallback of
+        // `masteredDimmer`. A second literal `1` in either sender would be a second owner (#416).
+        XCTAssertEqual(ArtNetSender.defaultGrandMaster, 1, "a fresh launch starts at FULL — the operator's predictable state")
+        XCTAssertEqual(occurrences(of: "standard: ArtNetSender.defaultGrandMaster", in: patchbay), 1, """
+            The light "Master" row no longer passes `ArtNetSender.defaultGrandMaster` (or a second row             copied it). The row moves two senders at once; its default must be the one both start at.
+            """)
+        for rel in ["Sources/Echoelmusic/Sync/ArtNetSender.swift", "Sources/Echoelmusic/Sync/SACNSender.swift"] {
+            let sender = try source(rel)
+            XCTAssertEqual(occurrences(of: "var grandMaster: Float = ArtNetSender.defaultGrandMaster", in: sender), 1, """
+                \(rel) initialises `grandMaster` from something other than `ArtNetSender.defaultGrandMaster`. \
+                Two senders, one fader, one launch value — a literal here is a second owner of the default.
+                """)
+            XCTAssertEqual(occurrences(of: "var grandMaster: Float = 1", in: sender), 0, "\(rel): the literal launch value is gone; the owner is the constant")
+        }
     }
 
     // MARK: - claim 5 — the keystore family: a keystore-bound field offers the keystore's default

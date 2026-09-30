@@ -40639,3 +40639,12 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Gate 3067 (36728688119) auf d9ee6f3c3: Compile Check SUCCESS (14:44:55Z)** → Stapel wird gepusht. CI/CD 36728688126: Security + Lint success, Build & Test seit 14:44:55Z `queued`.
 - **Gerät:** Kneifen oder „Larger" auf der Workstation vergrößert auch deren Text; der Kopf bleibt.
 - **Offen unter Regel 12:** Light Mode + Kontrast (eigener Rat), 11-pt-Sweep.
+
+## 2026-09-30 — Regel 6, fünfte Familie: der Licht-Grand-Master bekommt EINEN Besitzer — lokal
+
+- **Was:** `ArtNetSender.defaultGrandMaster` (`public nonisolated static let`, 1 = FULL) ist neu und der eine Besitzer des Startwerts; `ArtNetSender.grandMaster`, `SACNSender.grandMaster` und der Nicht-endlich-Rückfall in `masteredDimmer` lesen ihn; die Patchbay-Zeile „Master“ übergibt ihn als `standard:`. Im gespeicherten Initialisierer steht der TYPNAME, nicht `Self.` (#1444). `LightFixtureGroup` behält sein eigenes `1` (unverdrahtete Render-Hälfte, reiner Werttyp — eine Kopplung an einen Sender wäre eine neue Abhängigkeitsrichtung).
+- **Warum dort:** die Zeile fährt beide Sender über EINE Bindung, und `ArtNetSender` besitzt schon das geteilte Master-Gesetz (`masteredDimmer`, von sACN gerufen). Vorher: drei Besitzer eines Defaults (Literal `1` ×2 + Rückfall).
+- **Wächter:** `TheValueFieldOffersItsDefaultTests` Anspruch 3, FÜNFTE FAMILIE (Zeile genau einmal, beide Sender initialisieren aus der Konstante, kein Literal-Startwert). Transkription (`scratchpad/transcribe_gm.py`): WORK GRÜN, HEAD ROT (alle drei). Checker sauber, Chrome-Scanner 0.
+- **Compile-Risiko, benannt:** die Konstante liegt auf einer `@MainActor`-Klasse und wird aus einem nicht-isolierten Test gelesen — deshalb `nonisolated` (das `defaultHost`-Muster derselben Datei). Beleg erst durch den Compile Check.
+- **Nicht gepusht:** Compile Check 3068 (36731661953) auf bc5983933 steht seit 14:46Z in `queued`; Batch-Regel.
+- **Gerät:** Routing → Light → „Master“ zeigt die gedimmte Default-Taste bei 1,00; ein gezogener Master kehrt mit einem Tipp zurück.

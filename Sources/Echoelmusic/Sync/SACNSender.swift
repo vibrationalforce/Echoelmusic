@@ -85,8 +85,8 @@ public final class SACNSender {
     /// L1 Grand Master + Blackout — same law as Art-Net
     /// (`ArtNetSender.masteredDimmer`): blackout wins, master scales. Live
     /// state, not persisted; the PatchbayView "Licht" section drives both
-    /// senders together.
-    public var grandMaster: Float = 1
+    /// senders together. The default has ONE owner, `ArtNetSender.defaultGrandMaster` (#416).
+    public var grandMaster: Float = ArtNetSender.defaultGrandMaster
     public var blackout = false
 
     /// #1006 — how many identical fixtures this stream addresses, and how far apart they sit.

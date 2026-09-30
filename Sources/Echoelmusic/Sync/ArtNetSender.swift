@@ -111,10 +111,17 @@ public final class ArtNetSender {
     /// node config). Art-Net has no terminate opcode; the node simply stops hearing us.
     public nonisolated static let keepAliveSeconds: TimeInterval = SACNSender.keepAliveSeconds
 
+    /// The Grand Master a fresh launch starts at: FULL. The ONE owner of that default (#416) —
+    /// `SACNSender.grandMaster`, the non-finite fallback in `masteredDimmer` and the patchbay's
+    /// "Master" row (`standard:`) all read it here, so the row's "Default" key returns exactly
+    /// the launch state. Not `Self.` at the stored property: a covariant `Self` in a stored
+    /// initializer is a build error (#1444). `nonisolated`: read from a non-actor test.
+    public nonisolated static let defaultGrandMaster: Float = 1
+
     /// L1 Grand Master (every lighting desk's first fader): scales the dimmer
     /// of everything Echoel sends, 0…1. Live state, not persisted — a fresh
     /// launch always starts at full (predictable for the operator).
-    public var grandMaster: Float = 1
+    public var grandMaster: Float = ArtNetSender.defaultGrandMaster
     /// L1 Blackout: forces the dimmer to 0 NOW (a one-off cut to dark is not a
     /// flash; the RETURN to light rides the normal slew-limiter, so it can
     /// never strobe). Colour channels keep streaming so un-blackout is seamless.
@@ -573,7 +580,7 @@ public final class ArtNetSender {
     /// linearly. Guards non-finite input; everything clamps to [0…1].
     public static func masteredDimmer(_ dimmer: Float, grandMaster: Float, blackout: Bool) -> Float {
         guard !blackout else { return 0 }
-        let gm = clampUnit(grandMaster.isFinite ? grandMaster : 1)
+        let gm = clampUnit(grandMaster.isFinite ? grandMaster : defaultGrandMaster)
         return clampUnit(dimmer) * gm
     }
 
