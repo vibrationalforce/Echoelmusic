@@ -18,13 +18,13 @@ public enum BioMetric: String, CaseIterable, Identifiable, Sendable {
     /// Full title, e.g. "Heart-Rate Variability".
     public var title: String {
         switch self {
-        case .heartRate: return "Heart Rate"
-        case .hrv:       return "Heart-Rate Variability"
+        case .heartRate: return String(localized: "Heart Rate")
+        case .hrv:       return String(localized: "Heart-Rate Variability")
         case .rmssd:     return "RMSSD"
         case .sdnn:      return "SDNN"
         case .pnn50:     return "pNN50"
-        case .coherence: return "Coherence"
-        case .breath:    return "Breathing Rate"
+        case .coherence: return String(localized: "Coherence")
+        case .breath:    return String(localized: "Breathing Rate")
         }
     }
 
@@ -36,20 +36,20 @@ public enum BioMetric: String, CaseIterable, Identifiable, Sendable {
         case .rmssd, .sdnn: return "ms"
         case .pnn50:     return "%"
         case .coherence: return "0–1"
-        case .breath:    return "breaths/min"
+        case .breath:    return String(localized: "breaths/min")
         }
     }
 
     /// One-line summary.
     public var summary: String {
         switch self {
-        case .heartRate: return "How fast your heart is beating right now."
-        case .hrv:       return "The natural beat-to-beat variation in your heartbeat."
-        case .rmssd:     return "A short-term HRV measure of moment-to-moment change."
-        case .sdnn:      return "Overall HRV across the whole reading."
-        case .pnn50:     return "How often consecutive beats differ by more than 50 ms."
-        case .coherence: return "How much of your heartbeat gathers into one slow rhythm."
-        case .breath:    return "Breaths per minute."
+        case .heartRate: return String(localized: "How fast your heart is beating right now.")
+        case .hrv:       return String(localized: "The natural beat-to-beat variation in your heartbeat.")
+        case .rmssd:     return String(localized: "A short-term HRV measure of moment-to-moment change.")
+        case .sdnn:      return String(localized: "Overall HRV across the whole reading.")
+        case .pnn50:     return String(localized: "How often consecutive beats differ by more than 50 ms.")
+        case .coherence: return String(localized: "How much of your heartbeat gathers into one slow rhythm.")
+        case .breath:    return String(localized: "Breaths per minute.")
         }
     }
 
@@ -57,19 +57,19 @@ public enum BioMetric: String, CaseIterable, Identifiable, Sendable {
     public var detail: String {
         switch self {
         case .heartRate:
-            return "Beats per minute. It rises with effort, excitement or stress and falls with rest. In Echoelmusic your heart rate shapes the energy of the music — and, while the tempo follows your pulse, the tempo itself (a locked tempo stays where you set it)."
+            return String(localized: "Beats per minute. It rises with effort, excitement or stress and falls with rest. In Echoelmusic your heart rate shapes the energy of the music — and, while the tempo follows your pulse, the tempo itself (a locked tempo stays where you set it).")
         case .hrv:
-            return "The tiny differences in time between one heartbeat and the next. Higher variability generally reflects a relaxed, adaptable state; lower variability often goes with stress or fatigue. Echoelmusic uses it to open or close the timbre. Reliable beat-to-beat HRV needs a chest strap; the camera shows it only when the reading is physiologically plausible, otherwise “—”."
+            return String(localized: "The tiny differences in time between one heartbeat and the next. Higher variability generally reflects a relaxed, adaptable state; lower variability often goes with stress or fatigue. Echoelmusic uses it to open or close the timbre. Reliable beat-to-beat HRV needs a chest strap; the camera shows it only when the reading is physiologically plausible, otherwise “—”.")
         case .rmssd:
-            return "Root mean square of successive differences between heartbeats — a standard short-term HRV measure that mostly reflects your parasympathetic ‘rest-and-digest’ activity. Higher values often go with a more relaxed moment."
+            return String(localized: "Root mean square of successive differences between heartbeats — a standard short-term HRV measure that mostly reflects your parasympathetic ‘rest-and-digest’ activity. Higher values often go with a more relaxed moment.")
         case .sdnn:
-            return "Standard deviation of the time between normal heartbeats across the whole reading. It captures your total heart-rate variability from many sources at once."
+            return String(localized: "Standard deviation of the time between normal heartbeats across the whole reading. It captures your total heart-rate variability from many sources at once.")
         case .pnn50:
-            return "The percentage of consecutive heartbeats that differ by more than 50 milliseconds — another marker of parasympathetic activity. Higher values usually accompany a more relaxed moment."
+            return String(localized: "The percentage of consecutive heartbeats that differ by more than 50 milliseconds — another marker of parasympathetic activity. Higher values usually accompany a more relaxed moment.")
         case .coherence:
-            return "How much of your heart-rate variability gathers into a single slow rhythm. Echoelmusic measures it as a real frequency spectrum of your heartbeat (most accurate with a chest strap), peaking around 0.1 Hz — roughly six breaths a minute. It tends to be highest during slow, steady breathing; higher coherence makes the music calmer and more spacious."
+            return String(localized: "How much of your heart-rate variability gathers into a single slow rhythm. Echoelmusic measures it as a real frequency spectrum of your heartbeat (most accurate with a chest strap), peaking around 0.1 Hz — roughly six breaths a minute. It tends to be highest during slow, steady breathing; higher coherence makes the music calmer and more spacious.")
         case .breath:
-            return "Your breathing rate. Slow breathing (about five to six breaths a minute) tends to raise coherence. Echoelmusic’s optional breathing guide paces it for you, and your breath phase shapes how the music moves."
+            return String(localized: "Your breathing rate. Slow breathing (about five to six breaths a minute) tends to raise coherence. Echoelmusic’s optional breathing guide paces it for you, and your breath phase shapes how the music moves.")
         }
     }
 
@@ -114,8 +114,8 @@ public enum BioMetric: String, CaseIterable, Identifiable, Sendable {
     /// #644 paid a cycle for exactly the `Bool` that could not (it said "your body" over "no
     /// pulse measured yet"). Same family, one state more.
     public static func originNote(for frame: BioSampleFrame?) -> String? {
-        guard let frame else { return "read your pulse to see it move" }
-        return frame.source.isSynthetic ? "demo values, not your body" : nil
+        guard let frame else { return String(localized: "read your pulse to see it move") }
+        return frame.source.isSynthetic ? String(localized: "demo values, not your body") : nil
     }
 }
 
@@ -126,6 +126,13 @@ import SwiftUI
 struct BioMetricInfoView: View {
     let metric: BioMetric
     @Environment(\.dismiss) private var dismiss
+
+    /// E4-31: the spoken sheet — title, detail, disclaimer — joined by neutral ". " seams, as typed
+    /// steps (one five-operand chain is what the type-checker cannot bound, Compile Check 3106).
+    private var spokenSummary: String {
+        let head: String = metric.title + ". " + metric.detail
+        return head + ". " + BioMetric.disclaimer
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -173,7 +180,7 @@ struct BioMetricInfoView: View {
         .background(EchoelTheme.bg)
         .presentationDetents([.medium])
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(metric.title). \(metric.detail). \(BioMetric.disclaimer)")
+        .accessibilityLabel(spokenSummary)
     }
 }
 
@@ -288,7 +295,7 @@ struct BioMetricsGuideView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         .accessibilityElement(children: .combine)
-                        .accessibilityLabel("\(m.title). \(m.detail)")
+                        .accessibilityLabel(m.title + ". " + m.detail)
                     }
 
                     Divider().overlay(EchoelTheme.border)
@@ -371,8 +378,14 @@ struct BioMetricsGuideView: View {
                         // `Optional.map` closure is the shape that took this blocking bundle red on
                         // "unable to type-check this expression in reasonable time" (#287), and
                         // there is no local compiler here to find that out cheaply.
-                        let origin = synthetic ? "Simulated demo, " : ""
-                        let measured = amount.map { " Currently \(Int(($0 * 100).rounded())) percent." } ?? ""
+                        let origin: String = synthetic ? String(localized: "Simulated demo, ") : ""
+                        // E4-31: the percentage sentence as typed steps — head seam + value + tail seam, the tail
+                        // computed unconditionally so no ternary carries a `+` chain (Compile Check 3106).
+                        let percent: String = amount.map { "\(Int(($0 * 100).rounded()))" } ?? ""
+                        let measuredTail: String = String(localized: " Currently ") + percent + String(localized: " percent.")
+                        let measured: String = percent.isEmpty ? "" : measuredTail
+                        let route: String = m.source + String(localized: " shapes ") + m.target
+                        let tail: String = ". " + m.direction + "." + measured
                         VStack(alignment: .leading, spacing: 4) {
                             HStack(alignment: .firstTextBaseline, spacing: 6) {
                                 Text(m.source)
@@ -411,8 +424,7 @@ struct BioMetricsGuideView: View {
                         // they mark different THINGS — a section, and an element inside it. (No
                         // line distance is quoted here on purpose; this repo has paid twice for
                         // a comment whose line count the next edit invalidated.)
-                        .accessibilityLabel(
-                            origin + "\(m.source) shapes \(m.target). \(m.direction)." + measured)
+                        .accessibilityLabel(origin + route + tail)
                     }
 
                     Divider().overlay(EchoelTheme.border)

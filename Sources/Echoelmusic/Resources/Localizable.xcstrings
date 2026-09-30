@@ -18186,6 +18186,566 @@
           }
         }
       }
+    },
+    "Heart Rate" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart Rate"
+          }
+        }
+      }
+    },
+    "Heart-Rate Variability" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzratenvariabilität"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart-Rate Variability"
+          }
+        }
+      }
+    },
+    "Coherence" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kohärenz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coherence"
+          }
+        }
+      }
+    },
+    "Breathing Rate" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atemfrequenz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breathing Rate"
+          }
+        }
+      }
+    },
+    "breaths/min" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atemzüge/min"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "breaths/min"
+          }
+        }
+      }
+    },
+    "How fast your heart is beating right now." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie schnell dein Herz gerade schlägt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How fast your heart is beating right now."
+          }
+        }
+      }
+    },
+    "The natural beat-to-beat variation in your heartbeat." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die natürliche Schwankung deines Herzschlags von Schlag zu Schlag."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The natural beat-to-beat variation in your heartbeat."
+          }
+        }
+      }
+    },
+    "A short-term HRV measure of moment-to-moment change." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Kurzzeit-HRV-Maß für die Veränderung von Moment zu Moment."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A short-term HRV measure of moment-to-moment change."
+          }
+        }
+      }
+    },
+    "Overall HRV across the whole reading." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesamte HRV über die ganze Messung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Overall HRV across the whole reading."
+          }
+        }
+      }
+    },
+    "How often consecutive beats differ by more than 50 ms." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie oft aufeinanderfolgende Schläge sich um mehr als 50 ms unterscheiden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How often consecutive beats differ by more than 50 ms."
+          }
+        }
+      }
+    },
+    "How much of your heartbeat gathers into one slow rhythm." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie sehr sich dein Herzschlag zu einem langsamen Rhythmus sammelt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How much of your heartbeat gathers into one slow rhythm."
+          }
+        }
+      }
+    },
+    "Breaths per minute." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atemzüge pro Minute."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breaths per minute."
+          }
+        }
+      }
+    },
+    "Beats per minute. It rises with effort, excitement or stress and falls with rest. In Echoelmusic your heart rate shapes the energy of the music — and, while the tempo follows your pulse, the tempo itself (a locked tempo stays where you set it)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schläge pro Minute. Sie steigt bei Anstrengung, Aufregung oder Stress und sinkt in Ruhe. In Echoelmusic formt deine Herzfrequenz die Energie der Musik — und, solange das Tempo deinem Puls folgt, das Tempo selbst (ein gesperrtes Tempo bleibt, wo du es gesetzt hast)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beats per minute. It rises with effort, excitement or stress and falls with rest. In Echoelmusic your heart rate shapes the energy of the music — and, while the tempo follows your pulse, the tempo itself (a locked tempo stays where you set it)."
+          }
+        }
+      }
+    },
+    "The tiny differences in time between one heartbeat and the next. Higher variability generally reflects a relaxed, adaptable state; lower variability often goes with stress or fatigue. Echoelmusic uses it to open or close the timbre. Reliable beat-to-beat HRV needs a chest strap; the camera shows it only when the reading is physiologically plausible, otherwise “—”." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die winzigen Zeitunterschiede zwischen einem Herzschlag und dem nächsten. Höhere Variabilität spiegelt meist einen entspannten, anpassungsfähigen Zustand; niedrigere geht oft mit Stress oder Erschöpfung einher. Echoelmusic öffnet oder schließt damit die Klangfarbe. Verlässliche Schlag-zu-Schlag-HRV braucht einen Brustgurt; die Kamera zeigt sie nur, wenn die Messung physiologisch plausibel ist, sonst „—“."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The tiny differences in time between one heartbeat and the next. Higher variability generally reflects a relaxed, adaptable state; lower variability often goes with stress or fatigue. Echoelmusic uses it to open or close the timbre. Reliable beat-to-beat HRV needs a chest strap; the camera shows it only when the reading is physiologically plausible, otherwise “—”."
+          }
+        }
+      }
+    },
+    "Root mean square of successive differences between heartbeats — a standard short-term HRV measure that mostly reflects your parasympathetic ‘rest-and-digest’ activity. Higher values often go with a more relaxed moment." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quadratisches Mittel der aufeinanderfolgenden Differenzen zwischen Herzschlägen — ein Standard-Kurzzeit-HRV-Maß, das vor allem deine parasympathische ‚Ruhe-und-Verdauung‘-Aktivität widerspiegelt. Höhere Werte gehen oft mit einem entspannteren Moment einher."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Root mean square of successive differences between heartbeats — a standard short-term HRV measure that mostly reflects your parasympathetic ‘rest-and-digest’ activity. Higher values often go with a more relaxed moment."
+          }
+        }
+      }
+    },
+    "Standard deviation of the time between normal heartbeats across the whole reading. It captures your total heart-rate variability from many sources at once." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardabweichung der Zeit zwischen normalen Herzschlägen über die ganze Messung. Sie erfasst deine gesamte Herzratenvariabilität aus vielen Quellen zugleich."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard deviation of the time between normal heartbeats across the whole reading. It captures your total heart-rate variability from many sources at once."
+          }
+        }
+      }
+    },
+    "The percentage of consecutive heartbeats that differ by more than 50 milliseconds — another marker of parasympathetic activity. Higher values usually accompany a more relaxed moment." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Anteil aufeinanderfolgender Herzschläge, die sich um mehr als 50 Millisekunden unterscheiden — ein weiterer Marker parasympathischer Aktivität. Höhere Werte begleiten meist einen entspannteren Moment."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The percentage of consecutive heartbeats that differ by more than 50 milliseconds — another marker of parasympathetic activity. Higher values usually accompany a more relaxed moment."
+          }
+        }
+      }
+    },
+    "How much of your heart-rate variability gathers into a single slow rhythm. Echoelmusic measures it as a real frequency spectrum of your heartbeat (most accurate with a chest strap), peaking around 0.1 Hz — roughly six breaths a minute. It tends to be highest during slow, steady breathing; higher coherence makes the music calmer and more spacious." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie sehr sich deine Herzratenvariabilität zu einem einzigen langsamen Rhythmus sammelt. Echoelmusic misst sie als echtes Frequenzspektrum deines Herzschlags (am genauesten mit Brustgurt), mit Spitze um 0,1 Hz — etwa sechs Atemzüge pro Minute. Sie ist meist bei langsamer, gleichmäßiger Atmung am höchsten; höhere Kohärenz macht die Musik ruhiger und weiter."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How much of your heart-rate variability gathers into a single slow rhythm. Echoelmusic measures it as a real frequency spectrum of your heartbeat (most accurate with a chest strap), peaking around 0.1 Hz — roughly six breaths a minute. It tends to be highest during slow, steady breathing; higher coherence makes the music calmer and more spacious."
+          }
+        }
+      }
+    },
+    "Your breathing rate. Slow breathing (about five to six breaths a minute) tends to raise coherence. Echoelmusic’s optional breathing guide paces it for you, and your breath phase shapes how the music moves." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Atemfrequenz. Langsames Atmen (etwa fünf bis sechs Atemzüge pro Minute) hebt meist die Kohärenz. Der optionale Atem-Guide von Echoelmusic gibt dir den Takt vor, und deine Atemphase formt, wie sich die Musik bewegt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your breathing rate. Slow breathing (about five to six breaths a minute) tends to raise coherence. Echoelmusic’s optional breathing guide paces it for you, and your breath phase shapes how the music moves."
+          }
+        }
+      }
+    },
+    "read your pulse to see it move" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puls messen, um es sich bewegen zu sehen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "read your pulse to see it move"
+          }
+        }
+      }
+    },
+    "demo values, not your body" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demo-Werte, nicht dein Körper"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "demo values, not your body"
+          }
+        }
+      }
+    },
+    "Simulated demo, " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simulierte Demo, "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simulated demo, "
+          }
+        }
+      }
+    },
+    " Currently " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Aktuell "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Currently "
+          }
+        }
+      }
+    },
+    " percent." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Prozent."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " percent."
+          }
+        }
+      }
+    },
+    " shapes " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " formt "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " shapes "
+          }
+        }
+      }
+    },
+    "Vibrato & tone brightness" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vibrato & Klanghelligkeit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vibrato & tone brightness"
+          }
+        }
+      }
+    },
+    "a faster pulse lifts the tone a little, and deepens the vibrato on patches that have one" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ein schnellerer Puls hebt den Ton ein wenig und vertieft das Vibrato bei Patches, die eines haben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "a faster pulse lifts the tone a little, and deepens the vibrato on patches that have one"
+          }
+        }
+      }
+    },
+    "Heart-rate variability" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzratenvariabilität"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart-rate variability"
+          }
+        }
+      }
+    },
+    "Overtone brightness" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obertonhelligkeit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Overtone brightness"
+          }
+        }
+      }
+    },
+    "more beat-to-beat variation lifts the upper harmonics a little, so the tone opens up" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mehr Schlag-zu-Schlag-Variation hebt die oberen Harmonischen ein wenig, sodass sich der Klang öffnet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "more beat-to-beat variation lifts the upper harmonics a little, so the tone opens up"
+          }
+        }
+      }
+    },
+    "Filter brightness & harmonics" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filterhelligkeit & Harmonik"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter brightness & harmonics"
+          }
+        }
+      }
+    },
+    "higher coherence opens the filter and makes the tone brighter, more harmonic and cleaner" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "höhere Kohärenz öffnet das Filter und macht den Klang heller, harmonischer und klarer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "higher coherence opens the filter and makes the tone brighter, more harmonic and cleaner"
+          }
+        }
+      }
+    },
+    "Breath" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atem"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breath"
+          }
+        }
+      }
+    },
+    "Swell" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anschwellen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swell"
+          }
+        }
+      }
+    },
+    "the sound swells and settles once with each breath" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "der Klang schwillt mit jedem Atemzug einmal an und legt sich wieder"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the sound swells and settles once with each breath"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

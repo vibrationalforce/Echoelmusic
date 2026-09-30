@@ -399,14 +399,15 @@ final class TheMetricSheetRowsSayWhoseBodyTests: XCTestCase {
     /// sentence, which is the whole point of the prefix form.
     func testVoiceOverHearsTheOriginBeforeTheSentence() throws {
         let code = try collapsedCode(Self.sheet)
-        XCTAssertEqual(count("? \"Simulated demo, \" : \"\"", in: code), 1, """
+        // E4-31: the prefix is a catalog key now — same spelling, same position (`origin` first).
+        XCTAssertEqual(count("? String(localized: \"Simulated demo, \") : \"\"", in: code), 1, """
             The row's accessibility label no longer carries the origin. Each row is its own \
             element (`.accessibilityElement(children: .combine)`), so a VoiceOver user \
             rotoring through them never reaches the section header — the label is the ONLY \
             place the origin can be heard.
             """)
         XCTAssertEqual(
-            count("origin + \"\\(m.source) shapes \\(m.target). \\(m.direction).\" + measured", in: code), 1, """
+            count(".accessibilityLabel(origin + route + tail)", in: code), 1, """
             The origin is no longer the FIRST thing spoken. A demo marker after "Currently 62 \
             percent" is heard too late to change how the number was read.
             """)

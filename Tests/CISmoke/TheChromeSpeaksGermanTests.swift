@@ -58,7 +58,9 @@
 // labels and hint, missing/no-match/usage words, and the routing surface's network target, connection count and route
 // label/value (parent: all interpolated or verbatim, 23 units missing — ONE finding). E4-30 added the Compose guide — five step titles, details,
 // waiting reasons, the notes-opened note, the spoken states and row, the header's next line (parent: all verbatim,
-// 27 units missing — ONE finding). Claim 12
+// 27 units missing — ONE finding). E4-31 added the bio info sheet (metric titles, unit, summaries, details, origin
+// notes, demo prefix, percentage and modulation sentences) and the sound map's twelve strings (parent: all verbatim,
+// 35 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -950,6 +952,73 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Add a MIDI track first.", "Add a part first.", "Nothing in the piece can play yet — no part with notes is heard.",
                           "Write notes into a part first.", "Add a part with notes first.", "playing", "done", "next step", "available",
                           "not yet available", "Step ", " of ", "Every step is available below.", "Next: ", "Create a piece. "], "Compose guide")
+
+        // E4-31 — the bio info sheet: four metric titles (RMSSD · SDNN · pNN50 stay verbatim — acronyms, not words),
+        // the breaths/min unit, seven summaries, seven details, the two origin notes, the demo PREFIX (one spelling,
+        // one key — #416/#634b), the percentage sentence and the modulation row's spoken sentence as typed seams;
+        // and `BioSoundMapping.all`'s twelve source/target/direction strings. Every runtime guard on these words keeps
+        // passing under en (TheMetricSheetRowsSayWhoseBody, TheGuideTableMatchesTheAuditedWrites, TheTempoModeSpeaks…).
+        let bioSheet = try codeOnly("Sources/Echoelmusic/Studio/BioMetricInfo.swift")
+        for seam in ["case .heartRate: return String(localized: \"Heart Rate\")",
+                     "case .hrv:       return String(localized: \"Heart-Rate Variability\")",
+                     "case .coherence: return String(localized: \"Coherence\")",
+                     "case .breath:    return String(localized: \"Breathing Rate\")",
+                     "case .breath:    return String(localized: \"breaths/min\")",
+                     "return String(localized: \"How fast your heart is beating right now.\")",
+                     "return String(localized: \"Breaths per minute.\")",
+                     "return String(localized: \"Beats per minute. It rises with effort",
+                     "return String(localized: \"Your breathing rate. Slow breathing",
+                     "guard let frame else { return String(localized: \"read your pulse to see it move\") }",
+                     "return frame.source.isSynthetic ? String(localized: \"demo values, not your body\") : nil",
+                     "let head: String = metric.title + \". \" + metric.detail",
+                     "return head + \". \" + BioMetric.disclaimer",
+                     ".accessibilityLabel(spokenSummary)",
+                     ".accessibilityLabel(m.title + \". \" + m.detail)",
+                     "let origin: String = synthetic ? String(localized: \"Simulated demo, \") : \"\"",
+                     "let measuredTail: String = String(localized: \" Currently \") + percent + String(localized: \" percent.\")",
+                     "let measured: String = percent.isEmpty ? \"\" : measuredTail",
+                     "let route: String = m.source + String(localized: \" shapes \") + m.target",
+                     "let tail: String = \". \" + m.direction + \".\" + measured",
+                     ".accessibilityLabel(origin + route + tail)"] {
+            XCTAssertTrue(bioSheet.contains(seam), "BioMetricInfo lost the E4-31 seam `\(seam)`")
+        }
+        for verbatim in ["return \"Heart Rate\"", "return \"Heart-Rate Variability\"", "return \"Coherence\"", "return \"Breathing Rate\"",
+                         "return \"breaths/min\"", "return \"How fast your heart", "return \"Breaths per minute.\"", "return \"Beats per minute.",
+                         "return \"Your breathing rate.", "return \"read your pulse", "? \"demo values, not your body\"",
+                         "accessibilityLabel(\"\\(metric.title). ", "accessibilityLabel(\"\\(m.title). ", "? \"Simulated demo, \" :",
+                         "\" Currently \\(", "\\(m.source) shapes \\(m.target)"] {
+            XCTAssertFalse(bioSheet.contains(verbatim), "BioMetricInfo spells or interpolates a visible word verbatim again: `\(verbatim)`")
+        }
+        XCTAssertEqual(bioSheet.components(separatedBy: "return String(localized: \"").count - 1, 20,
+                       "BioMetric's title/unit/summary/detail/originNote keys: 4 + 1 + 7 + 7 + 1 = 20 `return String(localized:` sites — re-derive if a metric was added")
+        let soundMap = try codeOnly("Sources/Echoelmusic/Bio/BioSoundMapping.swift")
+        for seam in ["source: String(localized: \"Heart rate\")", "target: String(localized: \"Vibrato & tone brightness\")",
+                     "source: String(localized: \"Heart-rate variability\")", "target: String(localized: \"Overtone brightness\")",
+                     "source: String(localized: \"Coherence\")", "target: String(localized: \"Filter brightness & harmonics\")",
+                     "source: String(localized: \"Breath\")", "target: String(localized: \"Swell\")",
+                     "direction: String(localized: \"the sound swells and settles once with each breath\")"] {
+            XCTAssertTrue(soundMap.contains(seam), "BioSoundMapping lost the E4-31 seam `\(seam)`")
+        }
+        XCTAssertEqual(soundMap.components(separatedBy: "direction: String(localized: \"").count - 1, 4, "every guide row's direction phrase is a catalog key")
+        for verbatim in ["source: \"", "target: \"", "direction: \""] {
+            XCTAssertFalse(soundMap.contains(verbatim), "a BioSoundMapping row spells `\(verbatim)…` verbatim again")
+        }
+        // RUNTIME COUNTERWEIGHTS: the bundle's English is unchanged
+        XCTAssertEqual(BioMetric.heartRate.title, "Heart Rate")
+        XCTAssertEqual(BioSoundMapping.all.first?.source, "Heart rate")
+        try assertGerman(["Heart Rate", "Heart-Rate Variability", "Coherence", "Breathing Rate", "breaths/min",
+                          "How fast your heart is beating right now.", "Breaths per minute.", "read your pulse to see it move",
+                          "demo values, not your body", "Simulated demo, ", " Currently ", " percent.", " shapes ",
+                          "Heart rate", "Vibrato & tone brightness", "Heart-rate variability", "Overtone brightness",
+                          "Filter brightness & harmonics", "Breath", "Swell",
+                          "the sound swells and settles once with each breath"], "bio info sheet and sound map")
+        for (metric, prefix) in [(BioMetric.heartRate, "Beats per minute."), (.hrv, "The tiny differences"), (.rmssd, "Root mean square"),
+                                 (.sdnn, "Standard deviation"), (.pnn50, "The percentage of consecutive"), (.coherence, "How much of your heart-rate"),
+                                 (.breath, "Your breathing rate.")] {
+            XCTAssertTrue(metric.detail.hasPrefix(prefix), "`BioMetric.\(metric.rawValue).detail` no longer begins as the catalog key does")
+            XCTAssertNotNil(german(metric.detail, in: strings), "no German unit for the detail of `\(metric.rawValue)`")
+            XCTAssertNotNil(german(metric.summary, in: strings), "no German unit for the summary of `\(metric.rawValue)`")
+        }
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

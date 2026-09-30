@@ -99,9 +99,9 @@ public struct BioSoundMapping: Sendable, Equatable, Identifiable {
             // was MISSING from this row before #638, which is an under-claim sitting inside an
             // over-claim.
             id: "heartRate",
-            source: "Heart rate",
-            target: "Vibrato & tone brightness",
-            direction: "a faster pulse lifts the tone a little, and deepens the vibrato on patches that have one"),
+            source: String(localized: "Heart rate"),
+            target: String(localized: "Vibrato & tone brightness"),
+            direction: String(localized: "a faster pulse lifts the tone a little, and deepens the vibrato on patches that have one")),
         BioSoundMapping(
             // ⚠️ The target that IS live: `hrvDev` is one of three terms summed into
             // `targetBrightness`, and `brightness` is the SPECTRAL-SHAPE exponent —
@@ -119,23 +119,23 @@ public struct BioSoundMapping: Sendable, Equatable, Identifiable {
             // `.harmonicSeries` map profile, and a player cannot see which profile is active —
             // naming a mapping he cannot attribute would mislead more than omitting it.)
             id: "hrv",
-            source: "Heart-rate variability",
-            target: "Overtone brightness",
-            direction: "more beat-to-beat variation lifts the upper harmonics a little, so the tone opens up"),
+            source: String(localized: "Heart-rate variability"),
+            target: String(localized: "Overtone brightness"),
+            direction: String(localized: "more beat-to-beat variation lifts the upper harmonics a little, so the tone opens up")),
         BioSoundMapping(
             // The only row that was already true, and the widest: coherence is the one channel
             // that moves the FILTER (`targetCutoff`), and it also moves brightness, harmonicity
             // and noise. "cleaner" is the noise term, which the old copy left out.
             id: "coherence",
-            source: "Coherence",
-            target: "Filter brightness & harmonics",
-            direction: "higher coherence opens the filter and makes the tone brighter, more harmonic and cleaner"),
+            source: String(localized: "Coherence"),
+            target: String(localized: "Filter brightness & harmonics"),
+            direction: String(localized: "higher coherence opens the filter and makes the tone brighter, more harmonic and cleaner")),
         BioSoundMapping(
             // Amplitude only — one clean swell per breath, from `breathPhase`, on every profile.
             // The filter-motion half of the old copy is struck; see the ⛔ block above.
             id: "breath",
-            source: "Breath",
-            target: "Swell",
-            direction: "the sound swells and settles once with each breath"),
+            source: String(localized: "Breath"),
+            target: String(localized: "Swell"),
+            direction: String(localized: "the sound swells and settles once with each breath")),
     ]
 }
