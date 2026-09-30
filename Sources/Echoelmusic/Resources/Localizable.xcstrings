@@ -12546,6 +12546,276 @@
           }
         }
       }
+    },
+    "Workstation" : {
+      "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workstation"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workstation"
+          }
+        }
+      }
+    },
+    "The arrangement is the Piece stage" : {
+      "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The arrangement is the Piece stage"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Arrangement ist die Stück-Bühne"
+          }
+        }
+      }
+    },
+    "Level per part" : {
+      "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Level per part"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegel je Teil"
+          }
+        }
+      }
+    },
+    "Tempo & variations" : {
+      "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo & variations"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo & Variationen"
+          }
+        }
+      }
+    },
+    "Tap · metronome · haptic beat · ideas" : {
+      "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap · metronome · haptic beat · ideas"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap · Metronom · haptischer Beat · Ideen"
+          }
+        }
+      }
+    },
+    "Master level · EBU R128 loudness" : {
+      "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Master level · EBU R128 loudness"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Master-Pegel · EBU-R128-Lautheit"
+          }
+        }
+      }
+    },
+    "Field" : {
+      "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Field"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feld"
+          }
+        }
+      }
+    },
+    "Mood" : {
+      "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mood"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stimmung"
+          }
+        }
+      }
+    },
+    "Character of the composition" : {
+      "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Character of the composition"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charakter der Komposition"
+          }
+        }
+      }
+    },
+    "Sound & texture" : {
+      "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sound & texture"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klang & Textur"
+          }
+        }
+      }
+    },
+    "Shape the timbre — exact to 0.0001" : {
+      "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shape the timbre — exact to 0.0001"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Klangfarbe formen — exakt bis 0,0001"
+          }
+        }
+      }
+    },
+    "Effects" : {
+      "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effects"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effekte"
+          }
+        }
+      }
+    },
+    "Production character" : {
+      "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Production character"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Produktionscharakter"
+          }
+        }
+      }
+    },
+    "Save & Export" : {
+      "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save & Export"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichern & Export"
+          }
+        }
+      }
+    },
+    "Set the loop length the Record tile uses · choose how much of the strip you see · see what can be kept · put your city in the name · the default sound" : {
+      "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set the loop length the Record tile uses · choose how much of the strip you see · see what can be kept · put your city in the name · the default sound"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loop-Länge für die Aufnahme-Kachel setzen · wählen, wie viel vom Streifen du siehst · sehen, was bleiben kann · deine Stadt in den Namen setzen · der Standardklang"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

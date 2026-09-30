@@ -33,6 +33,10 @@ extension EnvironmentValues {
 
 @MainActor
 struct EchoelPanel<Content: View>: View {
+    // E4-13 (2026-09-30): both are catalog KEYS drawn through `LocalizedStringKey(_:)` below — as
+    // plain `Text(String)` the nine panel titles and eight subtitles were spelled verbatim on a
+    // German phone. They stay `String` because `subtitle.isEmpty` decides whether the line exists
+    // and the `panel(_:_:)` helper's callers pass literals; a key type cannot answer `isEmpty`.
     private let title: String
     private let subtitle: String
     @Binding private var isExpanded: Bool
@@ -69,14 +73,14 @@ struct EchoelPanel<Content: View>: View {
         .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(title)
+        .accessibilityLabel(LocalizedStringKey(title))
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text(title).font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
+            Text(LocalizedStringKey(title)).font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
             if !subtitle.isEmpty {
-                Text(subtitle).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                Text(LocalizedStringKey(subtitle)).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             }
         }
     }
