@@ -40687,3 +40687,6 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Gates:** Compile Check 3068 auf bc5983933 seit 15:10Z `in_progress` (23 min Warteschlange). Push des lokalen Stapels (jetzt bis Familie 11) sobald 3068 eine Conclusion hat.
 - **Rest ohne Default (gemessen):** FX-Routen (Per-Routen-Fabriken), Patch-gebundene Studio-Zeilen, Field-Level (Bio), „Starts at bar“, Automations-„Value“ — je eigener Besitzer-Zensus nötig.
 - **Gerät:** Routing → Network output: OSC-Port verstellen, Default-Taste tippen → 8000; sACN Universe → 1; Art-Net Universe → 0; Default-Taste gedimmt, solange der Wert dem Standard entspricht.
+
+### Push 15:14Z — Stapel bis 5abcbc676 (nach Compile Check 3068)
+- Compile Check 3068 (36731661953) auf bc5983933: **success** 15:13:47Z (27 min Warteschlange, 4 min Bau). Damit fiel die Batch-Sperre; `git push origin 5abcbc676:refs/heads/claude/echoelmusic-review-optimize-u5jjpd` → Remote-Spitze 5abcbc676 (9 Commits: Familien 5–11 + zwei Reihenfolge-Reparaturen). CI/CD 6532 auf bc5983933 weiter `queued` (Runner-Pool). Gate-Lesung 5abcbc676 folgt (Task #302).
