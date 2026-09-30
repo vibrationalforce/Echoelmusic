@@ -2970,6 +2970,2886 @@
           }
         }
       }
+    },
+    "A push notification when a new feature ships or a live event starts. No account, nothing tracked; turn off anytime." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Mitteilung, wenn eine neue Funktion erscheint oder ein Live-Event beginnt. Kein Konto, kein Tracking; jederzeit abschaltbar."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A push notification when a new feature ships or a live event starts. No account, nothing tracked; turn off anytime."
+          }
+        }
+      }
+    },
+    "Add Audio Track" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audiospur hinzufügen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Audio Track"
+          }
+        }
+      }
+    },
+    "Add Audio Track or Add MIDI Track to begin. Each new track brings its own Import button; a file becomes a part you can play, and a new MIDI part plays once it has notes." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit „Audiospur hinzufügen“ oder „MIDI-Spur hinzufügen“ beginnen. Jede neue Spur bringt ihre eigene Import-Taste; eine Datei wird ein Teil, das du abspielen kannst, und ein neues MIDI-Teil spielt, sobald es Noten hat."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Audio Track or Add MIDI Track to begin. Each new track brings its own Import button; a file becomes a part you can play, and a new MIDI part plays once it has notes."
+          }
+        }
+      }
+    },
+    "Add MIDI Track" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI-Spur hinzufügen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add MIDI Track"
+          }
+        }
+      }
+    },
+    "Add MIDI track" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI-Spur hinzufügen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add MIDI track"
+          }
+        }
+      }
+    },
+    "Add audio track" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audiospur hinzufügen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add audio track"
+          }
+        }
+      }
+    },
+    "Adds a MIDI file's notes to the piece's first MIDI track" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fügt die Noten einer MIDI-Datei der ersten MIDI-Spur des Stücks hinzu"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adds a MIDI file's notes to the piece's first MIDI track"
+          }
+        }
+      }
+    },
+    "Adds an audio file to the piece's audio track" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fügt der Audiospur des Stücks eine Audiodatei hinzu"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adds an audio file to the piece's audio track"
+          }
+        }
+      }
+    },
+    "Adds an empty MIDI track to the piece, ready for an import" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fügt dem Stück eine leere MIDI-Spur hinzu, bereit für einen Import"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adds an empty MIDI track to the piece, ready for an import"
+          }
+        }
+      }
+    },
+    "Adds an empty audio track to the piece, ready for an import" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fügt dem Stück eine leere Audiospur hinzu, bereit für einen Import"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adds an empty audio track to the piece, ready for an import"
+          }
+        }
+      }
+    },
+    "Adds it as a part at the end of the audio track" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legt sie als Teil am Ende der Audiospur ab"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adds it as a part at the end of the audio track"
+          }
+        }
+      }
+    },
+    "Adjust with the named actions" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit den benannten Aktionen einstellen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adjust with the named actions"
+          }
+        }
+      }
+    },
+    "Automated parameter" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisierter Parameter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automated parameter"
+          }
+        }
+      }
+    },
+    "Automation" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automation"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automation"
+          }
+        }
+      }
+    },
+    "Back to the piece" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurück zum Stück"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back to the piece"
+          }
+        }
+      }
+    },
+    "Bio details…" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio-Details…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio details…"
+          }
+        }
+      }
+    },
+    "Bio source: simulated demo, not your body" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio-Quelle: simulierte Demo, nicht dein Körper"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio source: simulated demo, not your body"
+          }
+        }
+      }
+    },
+    "Camera access is off" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kamerazugriff ist aus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera access is off"
+          }
+        }
+      }
+    },
+    "Chooses a library file of the same length" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählt eine Bibliotheksdatei gleicher Länge"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chooses a library file of the same length"
+          }
+        }
+      }
+    },
+    "Click" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klick"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Click"
+          }
+        }
+      }
+    },
+    "Closes the meters and returns to the visual." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließt die Messgeräte und kehrt zum Visual zurück."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Closes the meters and returns to the visual."
+          }
+        }
+      }
+    },
+    "Concert pitch A4" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kammerton A4"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concert pitch A4"
+          }
+        }
+      }
+    },
+    "Continue to Echoelmusic" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weiter zu Echoelmusic"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue to Echoelmusic"
+          }
+        }
+      }
+    },
+    "Cover the rear camera and flash to read your pulse" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rückkamera und Blitz abdecken, um deinen Puls zu lesen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cover the rear camera and flash to read your pulse"
+          }
+        }
+      }
+    },
+    "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files and the composer's part — never mixer changes" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Umfasst Verschieben, Kopien, Teilungen, Entfernen, Importe, Noten-Änderungen, Automationspunkte, neu verknüpfte Dateien und das Teil des Komponisten — nie Mixer-Änderungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files and the composer's part — never mixer changes"
+          }
+        }
+      }
+    },
+    "Create a piece" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Stück anlegen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create a piece"
+          }
+        }
+      }
+    },
+    "Default" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default"
+          }
+        }
+      }
+    },
+    "Default is this voice's own sound. The track keeps its effect in the piece" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard ist der eigene Klang dieser Stimme. Die Spur behält ihren Effekt im Stück"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default is this voice's own sound. The track keeps its effect in the piece"
+          }
+        }
+      }
+    },
+    "Delete" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Löschen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        }
+      }
+    },
+    "Device" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerät"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Device"
+          }
+        }
+      }
+    },
+    "Done" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fertig"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        }
+      }
+    },
+    "Done — the ⓘ in the head brings the cards back." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fertig — das ⓘ im Kopf bringt die Karten zurück."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done — the ⓘ in the head brings the cards back."
+          }
+        }
+      }
+    },
+    "Double tap to learn how your body shapes the sound" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doppeltippen, um zu erfahren, wie dein Körper den Klang formt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Double tap to learn how your body shapes the sound"
+          }
+        }
+      }
+    },
+    "Double tap to learn what this means" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doppeltippen, um zu erfahren, was das bedeutet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Double tap to learn what this means"
+          }
+        }
+      }
+    },
+    "Double-tap adds or picks the point in the middle of the piece. Use the actions to pick another point; its value and Remove follow below." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doppeltippen fügt den Punkt in der Mitte des Stücks hinzu oder wählt ihn. Mit den Aktionen einen anderen Punkt wählen; sein Wert und „Entfernen“ folgen darunter."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Double-tap adds or picks the point in the middle of the piece. Use the actions to pick another point; its value and Remove follow below."
+          }
+        }
+      }
+    },
+    "Each pulse interval drawn against the next one. A wide cloud along the diagonal means variable timing." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jedes Pulsintervall gegen das nächste gezeichnet. Eine breite Wolke entlang der Diagonale bedeutet variable Zeitabstände."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each pulse interval drawn against the next one. A wide cloud along the diagonal means variable timing."
+          }
+        }
+      }
+    },
+    "EchoelLux light monitor" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EchoelLux-Lichtmonitor"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EchoelLux light monitor"
+          }
+        }
+      }
+    },
+    "Echoelmusic started in Safe Mode" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echoelmusic ist im abgesicherten Modus gestartet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echoelmusic started in Safe Mode"
+          }
+        }
+      }
+    },
+    "Effect" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effekt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effect"
+          }
+        }
+      }
+    },
+    "Enable camera" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kamera erlauben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enable camera"
+          }
+        }
+      }
+    },
+    "Every note is retuned to this. Sounds off? Return to standard." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Note wird darauf umgestimmt. Klingt schief? Zurück auf Standard."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every note is retuned to this. Sounds off? Return to standard."
+          }
+        }
+      }
+    },
+    "Filter by name" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach Name filtern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter by name"
+          }
+        }
+      }
+    },
+    "Floating visual" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwebendes Visual"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Floating visual"
+          }
+        }
+      }
+    },
+    "From the next bar every launched track plays the piece again" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ab dem nächsten Takt spielt jede gestartete Spur wieder das Stück"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From the next bar every launched track plays the piece again"
+          }
+        }
+      }
+    },
+    "From the next bar the track plays the piece again" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ab dem nächsten Takt spielt die Spur wieder das Stück"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From the next bar the track plays the piece again"
+          }
+        }
+      }
+    },
+    "Hide guide" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hilfe ausblenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide guide"
+          }
+        }
+      }
+    },
+    "Hide visual" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visual ausblenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide visual"
+          }
+        }
+      }
+    },
+    "How your body shapes the sound" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie dein Körper den Klang formt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How your body shapes the sound"
+          }
+        }
+      }
+    },
+    "If this keeps happening, share this with the developer — it pinpoints the cause." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn das wieder passiert, teile dies mit dem Entwickler — es zeigt die Ursache genau."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If this keeps happening, share this with the developer — it pinpoints the cause."
+          }
+        }
+      }
+    },
+    "Immersive visual monitor" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monitor des immersiven Visuals"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Immersive visual monitor"
+          }
+        }
+      }
+    },
+    "Import Audio" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio importieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import Audio"
+          }
+        }
+      }
+    },
+    "Import MIDI" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI importieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import MIDI"
+          }
+        }
+      }
+    },
+    "Import MIDI file" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI-Datei importieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import MIDI file"
+          }
+        }
+      }
+    },
+    "Import audio" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio importieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import audio"
+          }
+        }
+      }
+    },
+    "Its actions — move, trim, split, copy, remove — are under the arrangement above." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seine Aktionen — verschieben, trimmen, teilen, kopieren, entfernen — stehen unter dem Arrangement oben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Its actions — move, trim, split, copy, remove — are under the arrangement above."
+          }
+        }
+      }
+    },
+    "Key" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tonart"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Key"
+          }
+        }
+      }
+    },
+    "Key root" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grundton"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Key root"
+          }
+        }
+      }
+    },
+    "Launch scene" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szene starten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Launch scene"
+          }
+        }
+      }
+    },
+    "Learn what this means" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erfahre, was das bedeutet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learn what this means"
+          }
+        }
+      }
+    },
+    "Leaves fullscreen and shows the instrument controls, with the field kept as a floating picture" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verlässt den Vollbildmodus und zeigt die Instrument-Regler, das Feld bleibt als schwebendes Bild"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leaves fullscreen and shows the instrument controls, with the field kept as a floating picture"
+          }
+        }
+      }
+    },
+    "Leaves the instrument and your pulse reading running." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lässt das Instrument und deine Pulsmessung weiterlaufen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leaves the instrument and your pulse reading running."
+          }
+        }
+      }
+    },
+    "Lets the global parameter curves move the sound while the transport runs" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lässt die globalen Parameterkurven den Klang bewegen, während der Transport läuft"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lets the global parameter curves move the sound while the transport runs"
+          }
+        }
+      }
+    },
+    "Level in decibels" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegel in Dezibel"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Level in decibels"
+          }
+        }
+      }
+    },
+    "Lists the audio files already imported into the app" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listet die bereits in die App importierten Audiodateien"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lists the audio files already imported into the app"
+          }
+        }
+      }
+    },
+    "Loop position" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loop-Position"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loop position"
+          }
+        }
+      }
+    },
+    "Media Library" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medienbibliothek"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Media Library"
+          }
+        }
+      }
+    },
+    "Meter" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messgerät"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meter"
+          }
+        }
+      }
+    },
+    "Missing on this device" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf diesem Gerät fehlend"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Missing on this device"
+          }
+        }
+      }
+    },
+    "Mix level" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mix-Pegel"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mix level"
+          }
+        }
+      }
+    },
+    "Move one bar earlier" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einen Takt früher"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move one bar earlier"
+          }
+        }
+      }
+    },
+    "Move one bar later" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einen Takt später"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move one bar later"
+          }
+        }
+      }
+    },
+    "Name" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
+          }
+        }
+      }
+    },
+    "Name contains" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name enthält"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name contains"
+          }
+        }
+      }
+    },
+    "New MIDI Part" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neues MIDI-Teil"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New MIDI Part"
+          }
+        }
+      }
+    },
+    "New MIDI part" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neues MIDI-Teil"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New MIDI part"
+          }
+        }
+      }
+    },
+    "News & live events" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuigkeiten & Live-Events"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "News & live events"
+          }
+        }
+      }
+    },
+    "No body signal yet" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch kein Körpersignal"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No body signal yet"
+          }
+        }
+      }
+    },
+    "No parts on this track yet. Import a file, or start the instrument on the Echoel track." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Teile auf dieser Spur. Eine Datei importieren, oder das Instrument auf der Echoel-Spur starten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No parts on this track yet. Import a file, or start the instrument on the Echoel track."
+          }
+        }
+      }
+    },
+    "No signal" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Signal"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No signal"
+          }
+        }
+      }
+    },
+    "No tracks yet" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Spuren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No tracks yet"
+          }
+        }
+      }
+    },
+    "No tracks yet. Add Audio Track or Add MIDI Track to begin. Each new track brings its own Import button; a file becomes a part you can play, and a new MIDI part plays once it has notes." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Spuren. Mit „Audiospur hinzufügen“ oder „MIDI-Spur hinzufügen“ beginnen. Jede neue Spur bringt ihre eigene Import-Taste; eine Datei wird ein Teil, das du abspielen kannst, und ein neues MIDI-Teil spielt, sobald es Noten hat."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No tracks yet. Add Audio Track or Add MIDI Track to begin. Each new track brings its own Import button; a file becomes a part you can play, and a new MIDI part plays once it has notes."
+          }
+        }
+      }
+    },
+    "Note name system" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notennamen-System"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note name system"
+          }
+        }
+      }
+    },
+    "Note names" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notennamen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note names"
+          }
+        }
+      }
+    },
+    "OSC input" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OSC-Eingang"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OSC input"
+          }
+        }
+      }
+    },
+    "Open" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open"
+          }
+        }
+      }
+    },
+    "Open the Echoel instrument" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Echoel-Instrument öffnen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open the Echoel instrument"
+          }
+        }
+      }
+    },
+    "Opens Settings so you can allow camera access and read your pulse" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet die Einstellungen, damit du den Kamerazugriff erlauben und deinen Puls lesen kannst"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens Settings so you can allow camera access and read your pulse"
+          }
+        }
+      }
+    },
+    "Opens a plain-language guide to heart rate, HRV, coherence and breathing" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet eine Erklärung in einfacher Sprache zu Herzfrequenz, HRV, Kohärenz und Atmung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens a plain-language guide to heart rate, HRV, coherence and breathing"
+          }
+        }
+      }
+    },
+    "Opens echoelmusic.com — release notes and support" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet echoelmusic.com — Versionshinweise und Support"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens echoelmusic.com — release notes and support"
+          }
+        }
+      }
+    },
+    "Opens echoelmusic.com/privacy in your browser. Heart data stays on this device." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet echoelmusic.com/privacy im Browser. Herzdaten bleiben auf diesem Gerät."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens echoelmusic.com/privacy in your browser. Heart data stays on this device."
+          }
+        }
+      }
+    },
+    "Opens routing" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet das Routing"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens routing"
+          }
+        }
+      }
+    },
+    "Opens the bio panel — pulse, breath and coherence. Touch and hold to choose a bio source." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet das Bio-Panel — Puls, Atem und Kohärenz. Gedrückt halten, um eine Bio-Quelle zu wählen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the bio panel — pulse, breath and coherence. Touch and hold to choose a bio source."
+          }
+        }
+      }
+    },
+    "Oscilloscope" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oszilloskop"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oscilloscope"
+          }
+        }
+      }
+    },
+    "Parameter" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parameter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parameter"
+          }
+        }
+      }
+    },
+    "Parts" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teile"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parts"
+          }
+        }
+      }
+    },
+    "Pause the music" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musik pausieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause the music"
+          }
+        }
+      }
+    },
+    "Picture" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bild"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Picture"
+          }
+        }
+      }
+    },
+    "Place" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablegen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Place"
+          }
+        }
+      }
+    },
+    "Play automation" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automation abspielen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play automation"
+          }
+        }
+      }
+    },
+    "Position" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Position"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Position"
+          }
+        }
+      }
+    },
+    "Position in the piece" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Position im Stück"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Position in the piece"
+          }
+        }
+      }
+    },
+    "Press Play to start; your body then drives the sound." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abspielen drücken, um zu starten; dann steuert dein Körper den Klang."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Press Play to start; your body then drives the sound."
+          }
+        }
+      }
+    },
+    "Privacy policy" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datenschutz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy policy"
+          }
+        }
+      }
+    },
+    "Quantize grid" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quantisierungsraster"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quantize grid"
+          }
+        }
+      }
+    },
+    "Read pulse" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puls lesen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Read pulse"
+          }
+        }
+      }
+    },
+    "Read your pulse" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deinen Puls lesen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Read your pulse"
+          }
+        }
+      }
+    },
+    "Reading your pulse" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Puls wird gelesen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading your pulse"
+          }
+        }
+      }
+    },
+    "Relaunch the full app" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die ganze App neu starten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relaunch the full app"
+          }
+        }
+      }
+    },
+    "Relink" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neu verknüpfen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relink"
+          }
+        }
+      }
+    },
+    "Remove point" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Punkt entfernen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove point"
+          }
+        }
+      }
+    },
+    "Remove track" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spur entfernen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove track"
+          }
+        }
+      }
+    },
+    "Replaces the picture with a sound or pulse meter." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersetzt das Bild durch ein Klang- oder Puls-Messgerät."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replaces the picture with a sound or pulse meter."
+          }
+        }
+      }
+    },
+    "Retry" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erneut versuchen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retry"
+          }
+        }
+      }
+    },
+    "Retry save" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichern wiederholen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retry save"
+          }
+        }
+      }
+    },
+    "Retry starting audio" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio-Start erneut versuchen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retry starting audio"
+          }
+        }
+      }
+    },
+    "Returns to 12-tone equal temperament at A4 = 440 hertz" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurück zur gleichstufigen 12-Ton-Stimmung bei A4 = 440 Hertz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Returns to 12-tone equal temperament at A4 = 440 hertz"
+          }
+        }
+      }
+    },
+    "Save failed" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichern fehlgeschlagen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save failed"
+          }
+        }
+      }
+    },
+    "Scale" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skala"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scale"
+          }
+        }
+      }
+    },
+    "Scenes" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szenen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scenes"
+          }
+        }
+      }
+    },
+    "Selects this part. Its actions are under the arrangement above" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählt dieses Teil. Seine Aktionen stehen unter dem Arrangement oben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selects this part. Its actions are under the arrangement above"
+          }
+        }
+      }
+    },
+    "Share diagnostics" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnose teilen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share diagnostics"
+          }
+        }
+      }
+    },
+    "Share of the meter, measured before the master chain. The Master panel shows the loudness of the output." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anteil am Messgerät, gemessen vor der Master-Kette. Das Master-Panel zeigt die Lautheit des Ausgangs."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share of the meter, measured before the master chain. The Master panel shows the loudness of the output."
+          }
+        }
+      }
+    },
+    "Show meters" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messgeräte zeigen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show meters"
+          }
+        }
+      }
+    },
+    "Show the picture" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Bild zeigen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show the picture"
+          }
+        }
+      }
+    },
+    "Shows its sound controls on the Instrument stage. Piece brings you back" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt seine Klangregler auf der Instrument-Bühne. „Stück“ bringt dich zurück"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows its sound controls on the Instrument stage. Piece brings you back"
+          }
+        }
+      }
+    },
+    "Shows or hides the cards that walk you through playing and understanding the app" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt oder verbirgt die Karten, die dich durchs Spielen und Verstehen der App führen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows or hides the cards that walk you through playing and understanding the app"
+          }
+        }
+      }
+    },
+    "Shows or hides the floating visual window" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt oder verbirgt das schwebende Visual-Fenster"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows or hides the floating visual window"
+          }
+        }
+      }
+    },
+    "Spectrum analyser" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spektrumanalysator"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spectrum analyser"
+          }
+        }
+      }
+    },
+    "Split is off here: it would change which overlapping part plays." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teilen ist hier aus: es würde ändern, welches überlappende Teil spielt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Split is off here: it would change which overlapping part plays."
+          }
+        }
+      }
+    },
+    "Standard" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard"
+          }
+        }
+      }
+    },
+    "Start the music, then a finger on the back camera" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musik starten, dann ein Finger auf die Rückkamera"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start the music, then a finger on the back camera"
+          }
+        }
+      }
+    },
+    "Start the music, then put a finger on the back camera. Touch the image to play notes." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musik starten, dann einen Finger auf die Rückkamera legen. Das Bild berühren, um Noten zu spielen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start the music, then put a finger on the back camera. Touch the image to play notes."
+          }
+        }
+      }
+    },
+    "Starts the camera to read your heartbeat so your body drives the sound" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Startet die Kamera, um deinen Herzschlag zu lesen, damit dein Körper den Klang steuert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starts the camera to read your heartbeat so your body drives the sound"
+          }
+        }
+      }
+    },
+    "Stay in the loop" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf dem Laufenden bleiben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stay in the loop"
+          }
+        }
+      }
+    },
+    "Tap any value in the strip to revisit its explanation." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf einen Wert in der Leiste tippen, um seine Erklärung noch einmal zu lesen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap any value in the strip to revisit its explanation."
+          }
+        }
+      }
+    },
+    "Tempo, locked" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo, fest"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo, locked"
+          }
+        }
+      }
+    },
+    "Tempo: follows your pulse, or locked at one number" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo: folgt deinem Puls, oder fest auf einer Zahl"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo: follows your pulse, or locked at one number"
+          }
+        }
+      }
+    },
+    "The Echoel instrument's effect. The piece keeps it" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Effekt des Echoel-Instruments. Das Stück behält ihn"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Echoel instrument's effect. The piece keeps it"
+          }
+        }
+      }
+    },
+    "The Guide button in the head, the ⓘ, brings it back" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Hilfe-Taste im Kopf, das ⓘ, bringt sie zurück"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Guide button in the head, the ⓘ, brings it back"
+          }
+        }
+      }
+    },
+    "The four numbers are measured at the output of the master chain — after EQ, auto-gain and the limiter, with the −1 dB output trim included. The bars above are the pre-chain mix level." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die vier Zahlen werden am Ausgang der Master-Kette gemessen — nach EQ, Auto-Gain und Limiter, inklusive des −1-dB-Ausgangstrims. Die Balken darüber sind der Mix-Pegel vor der Kette."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The four numbers are measured at the output of the master chain — after EQ, auto-gain and the limiter, with the −1 dB output trim included. The bars above are the pre-chain mix level."
+          }
+        }
+      }
+    },
+    "The frequencies present in the master output, low on the left, high on the right." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Frequenzen im Master-Ausgang, tief links, hoch rechts."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The frequencies present in the master output, low on the left, high on the right."
+          }
+        }
+      }
+    },
+    "The genre the Echoel instrument composes in. The piece keeps it" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Genre, in dem das Echoel-Instrument komponiert. Das Stück behält es"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The genre the Echoel instrument composes in. The piece keeps it"
+          }
+        }
+      }
+    },
+    "The grid Quantize snaps note starts to" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Raster, auf das „Quantisieren“ die Notenanfänge setzt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The grid Quantize snaps note starts to"
+          }
+        }
+      }
+    },
+    "The last launch ran into a problem before the studio finished loading. To keep you out of a black screen, Echoelmusic opened this recovery screen instead. Your pieces and settings are untouched." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der letzte Start ist auf ein Problem gestoßen, bevor das Studio fertig geladen war. Damit du keinen schwarzen Bildschirm siehst, hat Echoelmusic stattdessen diese Wiederherstellungsseite geöffnet. Deine Stücke und Einstellungen sind unberührt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The last launch ran into a problem before the studio finished loading. To keep you out of a black screen, Echoelmusic opened this recovery screen instead. Your pieces and settings are untouched."
+          }
+        }
+      }
+    },
+    "The master output waveform, triggered so a steady tone stands still." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Wellenform des Master-Ausgangs, getriggert, damit ein stehender Ton stillsteht."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The master output waveform, triggered so a steady tone stands still."
+          }
+        }
+      }
+    },
+    "Tone system" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tonsystem"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tone system"
+          }
+        }
+      }
+    },
+    "Touch the image to play notes" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Bild berühren, um Noten zu spielen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touch the image to play notes"
+          }
+        }
+      }
+    },
+    "Track name" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spurname"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Track name"
+          }
+        }
+      }
+    },
+    "Tracks" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spuren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tracks"
+          }
+        }
+      }
+    },
+    "Transpose" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transponieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transpose"
+          }
+        }
+      }
+    },
+    "Types the default; OK confirms it." : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippt den Standard ein; OK bestätigt ihn."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Types the default; OK confirms it."
+          }
+        }
+      }
+    },
+    "Visual is showing on the external screen" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Visual läuft auf dem externen Bildschirm"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visual is showing on the external screen"
+          }
+        }
+      }
+    },
+    "Visual look" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visual-Look"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visual look"
+          }
+        }
+      }
+    },
+    "Waiting for your bio source to deliver a signal" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warte auf ein Signal deiner Bio-Quelle"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting for your bio source to deliver a signal"
+          }
+        }
+      }
+    },
+    "Warp to piece tempo" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ans Stück-Tempo anpassen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warp to piece tempo"
+          }
+        }
+      }
+    },
+    "What happened (diagnostics)" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was passiert ist (Diagnose)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What happened (diagnostics)"
+          }
+        }
+      }
+    },
+    "What these bio numbers mean" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was diese Bio-Zahlen bedeuten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What these bio numbers mean"
+          }
+        }
+      }
+    },
+    "What your body is showing" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was dein Körper zeigt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What your body is showing"
+          }
+        }
+      }
+    },
+    "Writes the pending pieces again" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schreibt die ausstehenden Stücke erneut"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Writes the pending pieces again"
+          }
+        }
+      }
+    },
+    "held" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gehalten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "held"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

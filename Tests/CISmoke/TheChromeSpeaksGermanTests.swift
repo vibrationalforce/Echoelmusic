@@ -330,6 +330,85 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
     }
 
+    // MARK: - claim 10 — the panel texts of the reachable chrome files have German units (E4-6, catalog-only)
+
+    /// SwiftUI looks a `Text("…")` / `Button("…")` / `.accessibilityLabel("…")` literal up by its
+    /// own content, so these sites need no Sources change — only a catalog entry. This claim walks
+    /// the family files with the same regex the slice measured with, and demands a German unit for
+    /// every literal key that carries a letter, no interpolation, no `%` and no escape. Brand marks
+    /// and technical tokens the app spells the same in every language are listed, not translated.
+    /// A literal that is the LEFT half of a `+ "…"` continuation is `Text(String)` — spelled
+    /// verbatim, no key — and is skipped (two such seams exist; they need a sentence design).
+    static let panelFamily: [String] = [
+            "Sources/Echoelmusic/Studio/WorkstationView.swift",
+            "Sources/Echoelmusic/Studio/WorkspaceView.swift",
+            "Sources/Echoelmusic/Studio/TrackInspectorView.swift",
+            "Sources/Echoelmusic/Studio/FloatingVisualWindow.swift",
+            "Sources/Echoelmusic/Studio/BioStripView.swift",
+            "Sources/Echoelmusic/Studio/HeaderMonitors.swift",
+            "Sources/Echoelmusic/Studio/SessionLaunchView.swift",
+            "Sources/Echoelmusic/Studio/SongAutomationEditor.swift",
+            "Sources/Echoelmusic/Studio/TrackPartsView.swift",
+            "Sources/Echoelmusic/Studio/BodyTempoField.swift",
+            "Sources/Echoelmusic/Studio/ProjectSaveStatusView.swift",
+            "Sources/Echoelmusic/Studio/TuningStatusBanner.swift",
+            "Sources/Echoelmusic/Studio/ProjectHeader.swift",
+            "Sources/Echoelmusic/Studio/SongHistoryRow.swift",
+            "Sources/Echoelmusic/Studio/SelectedPartBar.swift",
+            "Sources/Echoelmusic/Studio/SongPositionReadout.swift",
+            "Sources/Echoelmusic/Studio/WorkstationClickToggle.swift",
+            "Sources/Echoelmusic/Studio/ArrangeCanvasView.swift",
+            "Sources/Echoelmusic/Studio/AutomationStatusStrip.swift",
+            "Sources/Echoelmusic/Studio/WorkstationMixMeter.swift",
+            "Sources/Echoelmusic/Studio/GuideOverlay.swift",
+            "Sources/Echoelmusic/Studio/PartNoteEditor.swift",
+            "Sources/Echoelmusic/Studio/MediaBrowserView.swift",
+            "Sources/Echoelmusic/Studio/AudioDegradedRow.swift",
+            "Sources/Echoelmusic/Studio/AlwaysOnBioRow.swift",
+            "Sources/Echoelmusic/Studio/NetworkActivityDot.swift",
+            "Sources/Echoelmusic/Studio/MoodPads.swift",
+            "Sources/Echoelmusic/Studio/MasterLoudnessGrid.swift",
+            "Sources/Echoelmusic/Studio/PerformSessionView.swift",
+            "Sources/Echoelmusic/Studio/EchoelNumberPad.swift",
+            "Sources/Echoelmusic/Studio/BioMetricInfo.swift",
+            "Sources/Echoelmusic/Studio/VisualAnalysisMeter.swift",
+            "Sources/Echoelmusic/Studio/AnalysisPoincareView.swift",
+            "Sources/Echoelmusic/Studio/AnalysisScopeView.swift",
+            "Sources/Echoelmusic/Studio/AnalysisSpectrumView.swift",
+            "Sources/Echoelmusic/Studio/SafeModeView.swift",
+            "Sources/Echoelmusic/Studio/LearnView.swift",
+    ]
+    static let untranslatedPanelWords: Set<String> = ["BPM", "Create from Within", "Demo", "E", "ECHOEL", "Echoelmusic", "Genre", "OK", "Poincaré plot", "Studio", "Tempo", "WAV FAILED", "WAV …"]
+
+    func testEveryPanelTextOfTheReachableChromeFilesHasAGermanUnit() throws {
+        let root = try repoRoot()
+        let strings = try catalogStrings()
+        let literal = try NSRegularExpression(
+            pattern: #"\b(?:Text|Button|Toggle|Label|Picker|Section|TextField|Menu|NavigationLink|Link)\(\s*"((?:[^"\\]|\\.)*)"|\.accessibility(?:Label|Hint|Value)\(\s*"((?:[^"\\]|\\.)*)""#)
+        var sites = 0, missing: [String] = [], seen = Set<String>()
+        for rel in Self.panelFamily {
+            let code = try String(contentsOf: root.appendingPathComponent(rel), encoding: .utf8)
+            for m in literal.matches(in: code, range: NSRange(code.startIndex..., in: code)) {
+                let r = m.range(at: 1).location != NSNotFound ? m.range(at: 1) : m.range(at: 2)
+                guard let range = Range(r, in: code), let whole = Range(m.range, in: code) else { continue }
+                let key = String(code[range])
+                if key.contains("\\") || key.contains("%") || key.rangeOfCharacter(from: .letters) == nil { continue }
+                let after = code[whole.upperBound...].prefix(80).drop(while: { $0.isWhitespace })
+                if after.hasPrefix("+") { continue }                       // left half of a `+` seam, not a key
+                if Self.untranslatedPanelWords.contains(key) { continue }
+                sites += 1
+                if seen.insert(key).inserted, german(key, in: strings) == nil { missing.append(key) }
+            }
+        }
+        XCTAssertGreaterThan(sites, 150, "the walk found \(sites) literal-key sites — it did not read the family")
+        XCTAssertEqual(missing, [], """
+            \(missing.count) panel text(s) without a German unit in the catalog — add the `de` unit for each:
+            \(missing.joined(separator: "\n"))
+            """)
+        // counterweight — a key with an interpolation is not a catalog key and is not demanded
+        XCTAssertNil(german("Playing over \\(outputs)", in: strings))
+    }
+
     // MARK: - claim 5 — the German for "Piece" is the glossary's word, read from the glossary
 
     func testTheGermanPieceIsTheGlossaryWord() throws {
