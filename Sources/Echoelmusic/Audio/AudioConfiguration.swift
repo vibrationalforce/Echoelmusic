@@ -1313,16 +1313,27 @@ enum AudioConfiguration {
 
         /// The one sentence the numbers cannot carry. `nil` when there is nothing to say, so a
         /// caller renders no row at all rather than a reassuring "all good" line nobody asked for.
+        ///
+        /// ⛔ UNTIL 2026-09-30 BOTH SENTENCES ADVISED AN INPUT THAT DOES NOT EXIST — "the iPhone
+        /// mic as input", "check which input is selected". #1302 deleted the audio input on
+        /// 2026-09-12; the advice survived eighteen days because nothing reads this property:
+        /// `LatencyReadout.codec` is constructed in `latencySnapshot()` and read by NO view
+        /// (measured: `git grep -n "\.codec\b" -- Sources` → the declaration and the
+        /// constructor). The sentence is kept because the master panel's audio-route line (the
+        /// interface audit's Zug 3) is where it lands; until then it is GRADED, not shown —
+        /// `TheCodecNoteNamesNoInputTests` drives it end to end. Echoel only plays OUT, so when
+        /// the route is in call mode, another app holds that call.
         var note: String? {
             switch self {
             case .wideband:
                 return nil
             case .telephony:
-                return "Bluetooth is in call mode: mono and band-limited — the music too, not "
-                     + "only the mic. A cable, or the iPhone mic as input, keeps full bandwidth."
+                return "Bluetooth is in call mode: mono and band-limited — the music too. Echoel "
+                     + "only plays out, so another app holds the call; end it, or use a cable, "
+                     + "for full bandwidth."
             case .telephonySuspected:
-                return "This looks like Bluetooth call mode (mono, band-limited). Check which "
-                     + "input is selected; a cable keeps full bandwidth."
+                return "This looks like Bluetooth call mode (mono, band-limited). Echoel only "
+                     + "plays out; a cable keeps full bandwidth."
             }
         }
     }
@@ -1331,8 +1342,11 @@ enum AudioConfiguration {
     ///
     /// ⚠️ A STRING literal on purpose, so `routeCodec` stays a pure function a test can drive
     /// without a live session. The typo that a literal invites is closed at the other end:
-    /// `TheBluetoothCodecReachesTheScreenTests` asserts the AVFoundation constant still equals
+    /// `TheCodecNoteNamesNoInputTests` (claim 4) asserts the AVFoundation constant still equals
     /// this exact text, so a rename in iOS turns the guard red instead of the verdict silent.
+    /// ⛔ That pin lived in TheBluetoothCodecReachesTheScreenTests until #1302 deleted the file
+    /// with the audio input, and this comment cited the deleted guard for eighteen days — a
+    /// guard NAME in prose is a needle too (#474); the literal was unpinned the whole time.
     static let hfpPortType = "BluetoothHFP"
 
     /// THE definition of "a Bluetooth port" in this file: raw port type → the short marker the
