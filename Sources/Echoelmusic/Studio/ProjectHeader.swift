@@ -248,6 +248,18 @@ struct ProjectHeader: View {
         }
         .buttonStyle(.plain)
         .disabled(!available)
+        // THE SPACE BAR IS THIS BUTTON (interface audit 2026-09-30, Zug 2 "Ein Kopf, der spricht
+        // und hört"). A hardware keyboard — iPad, Mac, a stage laptop over a cable — plays and
+        // stops the ONE transport with the key every DAW gives it, and it can only ever reach
+        // THIS button: the guard `TheHeadPlayOwnsTheSpaceKeyTests` allows exactly one
+        // `.keyboardShortcut(.space` in `Sources/` (a second one on the Workstation's Play would
+        // be the two-transports confusion `OneStartControlTests` names). Bare space, no
+        // modifiers — ⌘-space is the system's. `.disabled` above still governs it: an
+        // unavailable Play swallows the key, so nothing starts that the tap could not start.
+        // Text input keeps its own spaces — an unmodified key command is not delivered while a
+        // text field is first responder (UIKit, iOS 15+) — NEEDS-FOUNDER-VERIFY with a keyboard:
+        // space in the piece-name field types a space and does not start playback.
+        .keyboardShortcut(.space, modifiers: [])
         .accessibilityLabel(ProjectTransport.buttonLabel(running: running, play: play))
         .accessibilityHint(ProjectTransport.buttonHint(running: running, play: play))
     }
