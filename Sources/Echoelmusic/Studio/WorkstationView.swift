@@ -142,7 +142,7 @@
 // with the song at a DIFFERENT tempo, turning it on and pressing Play should keep the loop in
 // time with the bar grid and at its own pitch (stretched, not sped up), and the part's bar span
 // should change to the loop's own length. (25) Off returns it to recorded speed. (26) While the
-// song plays the switch is unavailable, and VoiceOver says "Stop the song to change warp". (27)
+// song plays the switch is unavailable, and VoiceOver says "Stop the piece to change warp". (27)
 // A file whose note says "Tempo unclear." shows NO switch. If the switch appears for a file
 // that plainly has no pulse, `TempoDetector.confidenceFloor` is too low.
 //
@@ -168,7 +168,7 @@
 // as before. (38) Is a transposed part audibly LATE against the click or the other tracks?
 // The pitch node adds a delay nothing compensates — say whether it matters. (39) Warp on, song
 // at another tempo, Pitch +5: in time and a fourth higher. (40) While the song plays the field
-// is dimmed and VoiceOver says "Stop the song to change pitch". (41) The first Play after
+// is dimmed and VoiceOver says "Stop the piece to change pitch". (41) The first Play after
 // leaving 0: any dropout or click in the running instrument (the chain attaches then)?
 // (42) Sound at ±5 and ±12 on a voice and a drum loop — acceptable? The value survives a
 // relaunch. (43) Open a project saved before this build: no audio track is unexpectedly shifted
@@ -666,11 +666,11 @@ struct WorkstationView: View {
             }
             .buttonStyle(.plain)
             .disabled(playing)
-            .accessibilityLabel("Warp to song tempo")
+            .accessibilityLabel("Warp to piece tempo")
             .accessibilityValue(on ? "On" : (state == .mixed ? "On for some parts" : "Off"))
             .accessibilityHint(playing
-                ? "Stop the song to change warp"
-                : "Plays this track's parts at the song's tempo instead of their recorded speed")
+                ? "Stop the piece to change warp"
+                : "Plays this track's parts at the piece's tempo instead of their recorded speed")
         }
     }
 
@@ -699,7 +699,7 @@ struct WorkstationView: View {
                 unit: "semitones",
                 decimals: 0,
                 hint: playing
-                    ? "Stop the song to change pitch"
+                    ? "Stop the piece to change pitch"
                     : "Moves every part on this track up or down without changing its tempo")
             .disabled(playing)
             .padding(.leading, 36).padding(.trailing, 10)
@@ -767,14 +767,14 @@ struct WorkstationView: View {
     }
 
     private func orphanLine(_ count: Int) -> some View {
-        Text("\(count) \(count == 1 ? "part belongs" : "parts belong") to a track this song no longer has.")
+        Text("\(count) \(count == 1 ? "part belongs" : "parts belong") to a track this piece no longer has.")
             .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.warning)
             .fixedSize(horizontal: false, vertical: true)
-            .accessibilityLabel("\(count) parts belong to a track this song no longer has")
+            .accessibilityLabel("\(count) parts belong to a track this piece no longer has")
     }
 
     private func automationLine(_ count: Int) -> some View {
-        Text("\(count) automation \(count == 1 ? "lane" : "lanes")")
+        Text("\(count) automated \(count == 1 ? "parameter" : "parameters")")
             .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
     }
 
@@ -931,7 +931,7 @@ struct WorkstationView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Add audio track")
-        .accessibilityHint("Adds an empty audio track to the song, ready for an import")
+        .accessibilityHint("Adds an empty audio track to the piece, ready for an import")
     }
 
     /// Two creation doors side by side while they fit, stacked otherwise — the
@@ -989,7 +989,7 @@ struct WorkstationView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Import audio")
-        .accessibilityHint("Adds an audio file to the song's audio track")
+        .accessibilityHint("Adds an audio file to the piece's audio track")
     }
 
     /// S2 — "Add MIDI Track": `addTrackRow`'s twin. The store is handed to
@@ -1017,7 +1017,7 @@ struct WorkstationView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Add MIDI track")
-        .accessibilityHint("Adds an empty MIDI track to the song, ready for an import")
+        .accessibilityHint("Adds an empty MIDI track to the piece, ready for an import")
     }
 
     /// S2 — "Import MIDI": the same importer as `importRow`, asked for a MIDI file. Never
@@ -1045,7 +1045,7 @@ struct WorkstationView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Import MIDI file")
-        .accessibilityHint("Adds a MIDI file's notes to the song's first MIDI track")
+        .accessibilityHint("Adds a MIDI file's notes to the piece's first MIDI track")
     }
 
     /// Phase 3 / M1b — "New MIDI Part": an empty part on the MIDI track, selected at once so the
@@ -1375,11 +1375,11 @@ private struct WorkstationProjectRow: View {
             || SessionSaveOpen.songHasUserParts(timeline.document, clips: clips.filledClips)
         let canOpen = !projects.projects.isEmpty
         let save = door("Save", systemImage: "tray.and.arrow.down", object: "save", enabled: canSave,
-                        spoken: "Save this session",
-                        hint: "Names the session and saves it, with the song on this plate")
+                        spoken: "Save this piece",
+                        hint: "Names the piece and saves it, with its tracks and parts")
         let open = door("Open", systemImage: "tray.and.arrow.up", object: "open", enabled: canOpen,
-                        spoken: "Open a saved session",
-                        hint: "Shows your saved sessions. Opening one replaces the song on this plate")
+                        spoken: "Open a saved piece",
+                        hint: "Shows your saved pieces. Opening one replaces the piece here")
         // Side by side while they fit; stacked at the largest text sizes. Since the icons grow
         // with the label (modes census UX D), two 92 pt-minimum doors no longer fit one phone
         // row at AX4–AX5 — the words would compress instead (review of 0c2e7b908, MEDIUM).
@@ -1491,8 +1491,8 @@ private struct PartTempoRow: View {
         if measuring { return "The file's tempo is still being measured." }
         if lockedByWarp { return "Turn Warp off to change this file's tempo." }
         return known
-            ? "This file's own tempo. Warp uses it to fit the file to the song tempo."
-            : "Not set. Starts at the song tempo; enter the file's own tempo to enable Warp."
+            ? "This file's own tempo. Warp uses it to fit the file to the piece tempo."
+            : "Not set. Starts at the piece tempo; enter the file's own tempo to enable Warp."
     }
 
     @ViewBuilder

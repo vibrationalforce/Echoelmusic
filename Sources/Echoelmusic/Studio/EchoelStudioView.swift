@@ -2447,7 +2447,7 @@ struct EchoelStudioView: View {
     /// dissolved; its two entries are tiles now, in the same `EchoelIconTile` format as
     /// everything else on this plate.
     ///
-    /// Left to right: Open a saved session · Live Colabo · Learn and news.
+    /// Left to right: Open a saved piece · Live Colabo · Learn and news.
     ///
     /// ⚠️ WHY A SECOND LINE RATHER THAN ONE ROW OF SEVEN, and this is arithmetic, not taste.
     /// Every tile carries a hard 44 pt minimum width (`EchoelTheme.controlTapHeight`, the
@@ -2497,7 +2497,7 @@ struct EchoelStudioView: View {
             }
             .buttonStyle(.plain)
             .disabled(projects.projects.isEmpty)
-            .accessibilityLabel("Open a saved session")
+            .accessibilityLabel("Open a saved piece")
 
             #if canImport(MultipeerConnectivity)
             Button { showLiveColabo = true } label: {
@@ -12798,8 +12798,8 @@ private struct SaveSessionButton: View {
         }
         .buttonStyle(.plain)
         .disabled(!canSave)
-        .accessibilityLabel("Save this session")
-        .accessibilityHint("Names the session and saves it, with the Workstation's song. The place row in Save & Export decides whether your city is in that name")
+        .accessibilityLabel("Save this piece")
+        .accessibilityHint("Names the piece and saves it, with its tracks and parts. The place row in Save & Export decides whether your city is in that name")
     }
 }
 

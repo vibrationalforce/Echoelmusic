@@ -19,6 +19,10 @@
 // 4. SOURCE: the Workstation plate carries the same two doors (`WorkstationProjectRow`), gated on
 //    the same facts, raising the Studio's OWN Save alert and Open sheet through the chrome door —
 //    no presentation modifier of its own (the black-screen budget), and a receiver case per post.
+// ⭐ 2026-09-30 (rule 1, one word per thing): the tile's spoken name is "Save this piece" —
+//    the glossary word — and the Workstation row's `spoken:` says the same; "Save this session"
+//    was a third word for the saved work. The needles below follow (a guard rewritten as the
+//    decision, never weakened); `TheChromeSpeaksOneWordPerThingTests` scans the row's file.
 // 5. SOURCE (review of c69af8995, MEDIUM): a row whose only content is its song cannot be
 //    shared — `sharedDocumentData` strips the Session, so it would arrive empty. The rule is
 //    driven end to end in `TheWorkstationJourneySurvivesSaveAndOpenTests` claim 3.
@@ -57,12 +61,12 @@ final class TheSongAloneCanBeSavedTests: XCTestCase {
                        "let canSave = hasComposed",
                        "|| SessionSaveOpen.songHasUserParts(timeline.document, clips: clips.filledClips)",
                        "enabled: canSave)", ".disabled(!canSave)",
-                       ".accessibilityLabel(\"Save this session\")"] {
+                       ".accessibilityLabel(\"Save this piece\")"] {
             XCTAssertTrue(leaf.contains(needle), "the Save leaf lost `\(needle)`")
         }
         XCTAssertEqual(studio.components(separatedBy: "SaveSessionButton(hasComposed: hasComposed)").count - 1, 1,
                        "the leaf is mounted once — in the quick action row")
-        XCTAssertEqual(studio.components(separatedBy: ".accessibilityLabel(\"Save this session\")").count - 1, 1,
+        XCTAssertEqual(studio.components(separatedBy: ".accessibilityLabel(\"Save this piece\")").count - 1, 1,
                        "one Save tile — a second, `hasComposed`-only copy beside the leaf would disagree with it")
     }
 

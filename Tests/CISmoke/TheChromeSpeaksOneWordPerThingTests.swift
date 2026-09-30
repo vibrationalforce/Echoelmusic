@@ -37,6 +37,15 @@
 // "session"); claim 4 GREEN on both — it exercises the scanner on planted lines and is the
 // counterweight (#343) that keeps claim 2's "no violations" from being the silence of a
 // scanner that reads nothing.
+//
+// ⭐ RATCHET 2 (2026-09-30, same day): `WorkstationView` — the piece stage itself, the HOME since
+// the first audit slice — joins the list. Measured on 457343726 with this scanner: 18 visible
+// hits ("song" ×14, "session" ×4), all renamed to the glossary word, plus ONE "lane" the scanner
+// cannot see (a literal nested inside an interpolation, `\(count == 1 ? "lane" : "lanes")`) —
+// reworded by hand to "automated parameter(s)", which is what an automation row is. The row's two
+// doors now speak the instrument's own tile names ("Save this piece" / "Open a saved piece");
+// `TheSongAloneCanBeSavedTests` pins those. Claim 2 is RED on the parent for WorkstationView
+// by the 18 named hits; the eight earlier files stay green on both.
 // `Tests/CISmoke` is the blocking bundle. SKIPS rather than passes if the tree is absent.
 
 import Foundation
@@ -59,6 +68,7 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/WorkstationSummary.swift",
         "Sources/Echoelmusic/Studio/SongHistoryRow.swift",
         "Sources/Echoelmusic/Studio/ComposeGuide.swift",
+        "Sources/Echoelmusic/Studio/WorkstationView.swift",
     ]
 
     /// A line whose strings reach a log or a test harness, not a person.
