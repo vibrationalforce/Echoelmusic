@@ -3133,3 +3133,17 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Why:** `SkillLevel` had zero readers. Default Pro because #568 thinned the strip without a choice and was rejected on device (#572); a chosen, persisted level whose default changes nothing is a setting, not an imposed thinning. Whether Beginner becomes the default for new users is the founder's device call.
 - **Guard:** `TheChipStripFollowsTheSkillLevelTests`. Transcribed WORK 18/18, parent 15 red (one absence + born needles).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 7, slice 1: the fullscreen hint stays until closed
+
+- **Decision:** `InstrumentHintOverlay` is a state of `guideVisible && !instrumentHintSeen` — no `.task`, no sleep, no counter, no cap; `instrumentHintShows` / `instrumentHintShowCap` removed from the keystore; the head's ⓘ closes and reopens it (rule 8).
+- **Why:** rule 7 / WCAG 2.2.1 — a hint on a clock leaves before the reader is done, a cap is a hint that stops existing. The #604 LEARNED arm survives: learning is a user fact, not time.
+- **Guard:** `TheHintRetiresOnLessonLearnedTests` rewritten as the decision. Transcribed WORK 20/20, parent 11 red (born needles and absences).
+- **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 7, slice 2: the lock cue is a state of the lock
+
+- **Decision:** `BioStripView.lockedCueVisible` is `{ cameraRPPG.isSettled }`; the 6 s sleep, the token and the `isRunning` disarm handler are gone. Reserved slot, `isRunning` gate, inertness triple and stall-remedy gate unchanged by construction.
+- **Why:** "you can let go & play" is a statement about a settled pulse; `isSettled` is that fact and clears on lift, drift and stop. A projection has no pending hide to disarm, so the restart-in-the-window defect cannot exist.
+- **Guard:** `LockCueDoesNotShoveTheControlsTests` claim 3 (projection present, clock vocabulary absent). Transcribed WORK 11/11, parent claim 3 red (one finding, four needles).
+- **Review:** 2026-10-30.
