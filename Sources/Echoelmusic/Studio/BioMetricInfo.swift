@@ -132,7 +132,7 @@ struct BioMetricInfoView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(metric.title)
-                        .font(EchoelTheme.font(20, .semibold))
+                        .font(EchoelTheme.font(22,) .semibold))
                         .foregroundStyle(EchoelTheme.text)
                     Text(metric.unit)
                         .font(EchoelTheme.font(12))
@@ -154,7 +154,7 @@ struct BioMetricInfoView: View {
                 .foregroundStyle(EchoelTheme.text)
 
             Text(metric.detail)
-                .font(EchoelTheme.font(14))
+                .font(EchoelTheme.font(15)))
                 .foregroundStyle(EchoelTheme.text)   // legible prose (was dim = 0.55 opacity, too faint)
                 .fixedSize(horizontal: false, vertical: true)
 

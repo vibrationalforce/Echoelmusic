@@ -151,7 +151,7 @@ struct PulseMonitorMini: View {
                     // rounded border this tile draws. 0.6 floors it at ≈10 pt at the default
                     // size, which is still a legible three-digit readout.
                     Text("\(Int(bpm))")
-                        .font(EchoelTheme.font(17, .semibold)).monospacedDigit()
+                        .font(EchoelTheme.font(18,) .semibold)).monospacedDigit()
                         .foregroundStyle(EchoelTheme.text)
                         .lineLimit(1).minimumScaleFactor(0.6)
                 } else if showCue, let cue {
@@ -174,7 +174,7 @@ struct PulseMonitorMini: View {
                         .lineLimit(1).minimumScaleFactor(0.8)
                 } else {
                     Text("—")
-                        .font(EchoelTheme.font(17, .semibold)).monospacedDigit()
+                        .font(EchoelTheme.font(18,) .semibold)).monospacedDigit()
                         .foregroundStyle(EchoelTheme.dim)
                         .lineLimit(1).minimumScaleFactor(0.6)
                 }

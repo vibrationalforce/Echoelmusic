@@ -70,7 +70,7 @@ struct ProUnlockView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Buy once. Yours forever.")
-                .font(EchoelTheme.font(20, .semibold))
+                .font(EchoelTheme.font(22,) .semibold))
                 .foregroundStyle(EchoelTheme.text)
             // ⛔ THIS SENTENCE ENDED "— including the ones still in development, when they
             // ship." (#765). It is the sharpest form of the row defect below: a PURCHASE
@@ -160,7 +160,7 @@ struct ProUnlockView: View {
     private func featureRow(_ icon: String, _ title: String, _ detail: String) -> some View {
         HStack(spacing: 10) {
             Image(systemName: icon)
-                .font(EchoelTheme.font(14))
+                .font(EchoelTheme.font(15)))
                 .foregroundStyle(EchoelTheme.accent)
                 .frame(width: 22)
             VStack(alignment: .leading, spacing: 1) {

@@ -125,7 +125,7 @@ struct GuideOverlay: View {
                             action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(EchoelTheme.font(14, .semibold))
+                .font(EchoelTheme.font(15,) .semibold))
                 .foregroundStyle(disabled ? EchoelTheme.dim : EchoelTheme.text)
                 .frame(width: 44, height: 44)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))

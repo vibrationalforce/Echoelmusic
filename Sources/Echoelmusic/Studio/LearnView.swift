@@ -82,7 +82,7 @@ struct LearnView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Toggle(isOn: $announcements.enabled) {
                     Text("News & live events")
-                        .font(EchoelTheme.font(14)).foregroundStyle(EchoelTheme.text)
+                        .font(EchoelTheme.font(15))).foregroundStyle(EchoelTheme.text)
                 }
                 .tint(EchoelTheme.accent)
                 .accessibilityHint("A push notification when a new feature ships or a live event starts. No account, nothing tracked; turn off anytime.")
@@ -132,7 +132,7 @@ struct LearnView: View {
         Button { selected = entry } label: {
             HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(entry.title).font(EchoelTheme.font(14)).foregroundStyle(EchoelTheme.text)
+                    Text(entry.title).font(EchoelTheme.font(15))).foregroundStyle(EchoelTheme.text)
                         .lineLimit(1)
                     Text(entry.summary).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                         .lineLimit(1)
@@ -152,12 +152,12 @@ struct LearnView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(entry.title).font(EchoelTheme.font(20, .semibold)).foregroundStyle(EchoelTheme.text)
+                    Text(entry.title).font(EchoelTheme.font(22,) .semibold)).foregroundStyle(EchoelTheme.text)
                     Spacer(minLength: 0)
                     Button("Done") { selected = nil }
                         .font(EchoelTheme.font(15)).foregroundStyle(EchoelTheme.accent)
                 }
-                Text(entry.summary).font(EchoelTheme.font(14)).foregroundStyle(EchoelTheme.dim)
+                Text(entry.summary).font(EchoelTheme.font(15))).foregroundStyle(EchoelTheme.dim)
                 Divider().overlay(EchoelTheme.border)
                 Text(entry.detail).font(EchoelTheme.font(15)).foregroundStyle(EchoelTheme.text)
                     .fixedSize(horizontal: false, vertical: true)

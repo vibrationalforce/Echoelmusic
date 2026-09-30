@@ -60,7 +60,7 @@ struct MeditationView: View {
 
     private var header: some View {
         HStack {
-            Text("Coherence practice").font(EchoelTheme.font(16, .semibold)).foregroundStyle(EchoelTheme.text)
+            Text("Coherence practice").font(EchoelTheme.font(15,) .semibold)).foregroundStyle(EchoelTheme.text)
             Spacer()
             Button { dismiss() } label: {
                 Image(systemName: "xmark.circle.fill").font(.title2).foregroundStyle(EchoelTheme.dim)
@@ -132,7 +132,7 @@ struct MeditationView: View {
             coherenceReadout
             Spacer(minLength: 4)
             Button { endSession() } label: {
-                Text("End").font(EchoelTheme.font(16, .semibold)).foregroundStyle(EchoelTheme.text)
+                Text("End").font(EchoelTheme.font(15,) .semibold)).foregroundStyle(EchoelTheme.text)
                     .frame(maxWidth: .infinity).frame(minHeight: 50)
                     .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
             }
@@ -146,11 +146,11 @@ struct MeditationView: View {
             Spacer(minLength: 8)
             Image(systemName: "checkmark.circle.fill").font(EchoelTheme.font(44))
                 .foregroundStyle(EchoelTheme.accent)
-            Text("Practice complete").font(EchoelTheme.font(20, .semibold)).foregroundStyle(EchoelTheme.text)
+            Text("Practice complete").font(EchoelTheme.font(22,) .semibold)).foregroundStyle(EchoelTheme.text)
             let streak = SessionStats.streakDays(recorder.sessions)
             if streak > 1 {
                 Label("\(streak)-day streak", systemImage: "flame.fill")
-                    .font(EchoelTheme.font(14, .semibold)).foregroundStyle(EchoelTheme.accent)
+                    .font(EchoelTheme.font(15,) .semibold)).foregroundStyle(EchoelTheme.accent)
             }
             if let s = lastSummary, s.sampleCount > 0 {
                 VStack(spacing: 10) {
@@ -267,7 +267,7 @@ struct MeditationView: View {
 
     private func primaryButton(_ title: String, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(title).font(EchoelTheme.font(16, .semibold)).foregroundStyle(EchoelTheme.onPrimary)
+            Text(title).font(EchoelTheme.font(15,) .semibold)).foregroundStyle(EchoelTheme.onPrimary)
                 .frame(maxWidth: .infinity).frame(minHeight: 50)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.text))
         }

@@ -88,7 +88,7 @@ struct OnboardingView: View {
                     .accessibilityAddTraits(.isHeader)
 
                 Text("Your heartbeat makes music.")
-                    .font(EchoelTheme.font(17))
+                    .font(EchoelTheme.font(18)))
                     .foregroundStyle(EchoelTheme.text.opacity(0.6))
                     .multilineTextAlignment(.center)
 
@@ -117,7 +117,7 @@ struct OnboardingView: View {
                     .accessibilityHidden(true)
 
                 Text("The wider vision")
-                    .font(EchoelTheme.font(24, .bold))
+                    .font(EchoelTheme.font(22,) .bold))
                     .foregroundStyle(EchoelTheme.text)
                     .accessibilityAddTraits(.isHeader)
 
@@ -153,7 +153,7 @@ struct OnboardingView: View {
                     .accessibilityHidden(true)
 
                 Text("Ready")
-                    .font(EchoelTheme.font(24, .bold))
+                    .font(EchoelTheme.font(22,) .bold))
                     .foregroundStyle(EchoelTheme.text)
                     .accessibilityAddTraits(.isHeader)
 
@@ -210,7 +210,7 @@ struct OnboardingView: View {
 
                 Toggle(isOn: $acknowledgedSafety) {
                     Text("I understand")
-                        .font(EchoelTheme.font(14))
+                        .font(EchoelTheme.font(15)))
                         .foregroundStyle(EchoelTheme.text.opacity(0.7))
                 }
                 .tint(EchoelTheme.text)
@@ -322,12 +322,12 @@ struct OnboardingView: View {
     private func row(symbol: String, text: LocalizedStringKey) -> some View {
         HStack(spacing: 12) {
             Image(systemName: symbol)
-                .font(EchoelTheme.font(14))
+                .font(EchoelTheme.font(15)))
                 .frame(width: 20)
                 .foregroundStyle(EchoelTheme.text.opacity(0.5))
                 .accessibilityHidden(true)
             Text(text)
-                .font(EchoelTheme.font(14))
+                .font(EchoelTheme.font(15)))
                 .foregroundStyle(EchoelTheme.text.opacity(0.6))
             Spacer()
         }

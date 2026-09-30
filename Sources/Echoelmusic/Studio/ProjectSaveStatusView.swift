@@ -9,7 +9,7 @@ struct ProjectSaveStatusView: View {
         if let error = projects.saveError {
             VStack(alignment: .leading, spacing: 6) {
                 Label("Save failed", systemImage: "exclamationmark.triangle")
-                    .font(EchoelTheme.font(14, .semibold))
+                    .font(EchoelTheme.font(15,) .semibold))
                 Text(error)
                     .font(EchoelTheme.font(13))
                     .fixedSize(horizontal: false, vertical: true)

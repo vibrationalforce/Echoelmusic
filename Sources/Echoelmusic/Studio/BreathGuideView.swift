@@ -73,7 +73,7 @@ struct BreathGuideView: View {
     private var header: some View {
         HStack {
             Text("Breathing Guide")
-                .font(EchoelTheme.font(16, .semibold))
+                .font(EchoelTheme.font(15,) .semibold))
                 .foregroundStyle(EchoelTheme.text)
             Spacer()
             Button { dismiss() } label: {
@@ -101,7 +101,7 @@ struct BreathGuideView: View {
                 .scaleEffect(scale)
             if reduceMotion {
                 Text("\(Int((ballAmplitude * 100).rounded()))%")
-                    .font(EchoelTheme.font(26, .bold))
+                    .font(EchoelTheme.font(28,) .bold))
                     .foregroundStyle(EchoelTheme.text)
             }
         }
@@ -235,7 +235,7 @@ struct BreathGuideView: View {
             }
         } label: {
             Text(pacer.isRunning ? "Stop" : "Start")
-                .font(EchoelTheme.font(16, .semibold))
+                .font(EchoelTheme.font(15,) .semibold))
                 .foregroundStyle(pacer.isRunning ? EchoelTheme.text : EchoelTheme.onPrimary)
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: 50)
@@ -284,7 +284,7 @@ struct BreathGuideView: View {
                     pacer.start()
                 } label: {
                     Text("I understand — start")
-                        .font(EchoelTheme.font(16, .semibold))
+                        .font(EchoelTheme.font(15,) .semibold))
                         .foregroundStyle(EchoelTheme.onPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(minHeight: 50)

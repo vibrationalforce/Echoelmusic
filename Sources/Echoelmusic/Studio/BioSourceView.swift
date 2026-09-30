@@ -83,7 +83,7 @@ struct BioSourceView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Bio Source")
-                .font(EchoelTheme.font(20, .semibold)).foregroundStyle(EchoelTheme.text)
+                .font(EchoelTheme.font(22,) .semibold)).foregroundStyle(EchoelTheme.text)
             Text("Your body as a modulation source — heart, breath and coherence drive the sound, the visual and the entrainment. One source among many.")
                 .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
@@ -219,7 +219,7 @@ struct BioSourceView: View {
     private var breathButton: some View {
         Button { showBreath = true } label: {
             HStack(spacing: 10) {
-                Image(systemName: "wind").font(EchoelTheme.font(14))
+                Image(systemName: "wind").font(EchoelTheme.font(15)))
                 Text("Breath guide").font(EchoelTheme.font(13))
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right").font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)

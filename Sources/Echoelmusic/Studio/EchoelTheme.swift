@@ -300,6 +300,20 @@ enum EchoelTheme {
         return .custom(faceName(weight), size: size, relativeTo: .body)
     }
 
+    /// THE TYPE RAMP — six steps, one decision (Zug 4 „Klarheit", 2026-09-30). Every laid-out
+    /// label picks one of these; a readout of `displayFloor` or more is a DISPLAY numeral (a BPM,
+    /// a coherence figure) outside the ramp and stays free. Sizes between steps had grown by
+    /// accident — 14 · 16 · 17 · 20 · 24 · 26, 64 sites, no two files agreeing on what 14 meant —
+    /// and were folded onto the nearest step: 14/16 → 15, 17 → 18, 20/24 → 22, 26 → 28.
+    /// `TheTextSizesSitOnTheRampTests` reads THIS array and `displayFloor`, never a copy (#416):
+    /// change the ramp here and every call site is measured against the new one. 11 is also the
+    /// chrome floor (`TheChromeTextMeetsTheElevenPointFloorTests`) — the two laws share a number
+    /// on purpose, and the guard pins that the ramp starts there.
+    static let typeRamp: [CGFloat] = [11, 12, 13, 15, 18, 22]
+
+    /// From here up a size is a display numeral, not a label, and need not sit on the ramp.
+    static let displayFloor: CGFloat = 28
+
     // MARK: Size-class-adaptive metrics — so everything is visible on all devices
     /// Pass `horizontalSizeClass`; `.regular` (iPad / large) gets the bigger set.
     struct Metrics {

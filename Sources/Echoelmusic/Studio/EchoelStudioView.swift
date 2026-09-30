@@ -1999,11 +1999,11 @@ struct EchoelStudioView: View {
         Button { present.wrappedValue = true } label: {
             HStack(spacing: 14) {
                 Image(systemName: "circle.circle")
-                    .font(EchoelTheme.font(26))
+                    .font(EchoelTheme.font(28)))
                     .foregroundStyle(EchoelTheme.text)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Breathing guide")
-                        .font(EchoelTheme.font(17, .semibold))
+                        .font(EchoelTheme.font(18,) .semibold))
                         .foregroundStyle(EchoelTheme.text)
                     Text("The light breathes with you toward your resonance pace")
                         .font(EchoelTheme.font(12))
@@ -2586,7 +2586,7 @@ struct EchoelStudioView: View {
             // guard in `OneStartControlTests` bans it from `WorkspaceView.swift`, where the
             // button beside this one only pauses.
             Image(systemName: running ? "stop.fill" : "play.fill")
-                .font(EchoelTheme.font(20, .semibold))
+                .font(EchoelTheme.font(22,) .semibold))
                 .foregroundStyle(running ? EchoelTheme.text : .black)
                 // 64 pt wide is a CHOICE, not a fit: with the label gone there is no width
                 // pressure left in this row at all, so the number is set by what a primary
@@ -4307,7 +4307,7 @@ struct EchoelStudioView: View {
                 if !locationNamer.manualPlace.isEmpty {
                     Button { locationNamer.manualPlace = "" } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(EchoelTheme.font(14)).foregroundStyle(EchoelTheme.dim)
+                            .font(EchoelTheme.font(15))).foregroundStyle(EchoelTheme.dim)
                             // The GLYPH stays 14 pt; only the target grows — 14×14 to 36×36,
                             // which is this row's own height (`.frame(height: 36)` below), so
                             // the hit area fills the row vertically and takes 36 pt of its
@@ -13464,7 +13464,7 @@ private struct ArtistNameRow: View {
                     // floor, above WCAG 2.5.8's 24, and 44 would be taller than the row.
                     Button { session.artistName = SessionContext.storedArtistName(fromTyped: "") } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(EchoelTheme.font(14)).foregroundStyle(EchoelTheme.dim)
+                            .font(EchoelTheme.font(15))).foregroundStyle(EchoelTheme.dim)
                             .frame(width: 36, height: 36)
                             .contentShape(Rectangle())
                     }
@@ -13606,7 +13606,7 @@ private struct SoundPromptRow: View {
                     Group {
                         Button(action: onUndo) {
                             Image(systemName: "arrow.uturn.backward")
-                                .font(EchoelTheme.font(14)).foregroundStyle(EchoelTheme.text)
+                                .font(EchoelTheme.font(15))).foregroundStyle(EchoelTheme.text)
                                 .frame(minWidth: 34, minHeight: 34)
                                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                                     .fill(EchoelTheme.fill))

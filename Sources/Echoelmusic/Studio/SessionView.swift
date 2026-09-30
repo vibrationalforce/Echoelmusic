@@ -66,7 +66,7 @@ struct SessionView: View {
                 // TestFlight feedback ("welcher Build läuft?").
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Echoelmusic")
-                        .font(EchoelTheme.font(16, .semibold))
+                        .font(EchoelTheme.font(15,) .semibold))
                         .foregroundStyle(EchoelTheme.text)
                     Text(Self.versionString)
                         .font(EchoelTheme.font(11))
@@ -75,7 +75,7 @@ struct SessionView: View {
                 }
             } else {
                 Text("Resonance breathing")
-                    .font(EchoelTheme.font(16, .semibold))
+                    .font(EchoelTheme.font(15,) .semibold))
                     .foregroundStyle(EchoelTheme.text)
             }
             Spacer()
@@ -109,7 +109,7 @@ struct SessionView: View {
                     dismiss()
                 } label: {
                     Image(systemName: "xmark")
-                        .font(EchoelTheme.font(14, .semibold))
+                        .font(EchoelTheme.font(15,) .semibold))
                         .foregroundStyle(EchoelTheme.dim)
                         .frame(width: 32, height: 32)
                         .background(EchoelTheme.fill, in: RoundedRectangle(cornerRadius: EchoelTheme.radius))
@@ -176,7 +176,7 @@ struct SessionView: View {
             }
         } label: {
             Text(session.isRunning ? "Stop" : "Start")
-                .font(EchoelTheme.font(16, .semibold))
+                .font(EchoelTheme.font(15,) .semibold))
                 .foregroundStyle(session.isRunning ? EchoelTheme.text : EchoelTheme.onPrimary)
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: 52)
