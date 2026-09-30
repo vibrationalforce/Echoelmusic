@@ -3833,3 +3833,25 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   then the remaining panel families (EchoelStudioView sites, EchoelFXView, FloatingVisualWindow, BioStripView,
   MoodPads, PerformSessionView, GuideOverlay).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — E4-30: the Compose guide speaks German (954fe0a5a)
+
+- **Decision:** `ComposeGuide.title/detail/waitingReason/spokenLabel/headerDetail/headerLabel` and `notesOpenedNote`
+  (now a computed static) go through catalog keys; the spoken row is `Step ` + n + ` of ` + N + `, ` + title + `, ` +
+  state as TYPED steps (`position`/`rest`), the header's next line is `Next: ` + title, its spoken form
+  `Create a piece. ` + that line. `WorkstationView`'s step row joins `"\(step.rawValue). " + title` with no key.
+  Catalog 996 → 1023.
+- **Why:** the guide is the first surface a new reader follows; every line on it was verbatim English. Runtime
+  English is byte-identical — the runtime guards (`ThePlateShowsHowAPieceIsMadeTests`,
+  `WriteNotesOpensTheNoteEditorTests`, `AWrittenMIDIPieceSurvivesSaveAndOpenTests`) pass unchanged under en.
+- **Two lessons carried:** (1) Compile Check 3106 (E4-28) — a `+` chain with a nested ternary or more than ~4
+  operands is what the type-checker cannot bound; split into typed lets BEFORE the gate (c98105e59 repaired
+  EchoelNumberPad + the E4-29 chains; E4-30 is written that way from the start). (2) The E4-27 lesson again: four
+  absence needles aimed at `: "An…` matched `localized: "An…` — the transcription caught it (WORK FAIL, 4 present);
+  re-aimed at the verbatim ternary form (`  : "An…`, `first." : "Add a part with notes`) before the commit.
+- **Guard:** claim 11 E4-30 block (29 seams, 27 absence needles, one runtime counterweight, 30 units); WORK PASS /
+  HEAD FAIL (27 units missing — ONE finding). `moved-needles.py` reports 3 hits, all the block's own absence
+  needles (opened by design); the other checkers green.
+- **Next E4 producers:** the spoken `BioMetricInfo` lines, then the remaining panel families (EchoelStudioView
+  sites, EchoelFXView, FloatingVisualWindow, BioStripView, MoodPads, PerformSessionView, GuideOverlay).
+- **Review:** 2026-10-30.
