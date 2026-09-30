@@ -3495,3 +3495,9 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Rationale:** four switches, no status word; the failed-port case (#837) was indistinguishable from an unrouted one. The publisher lends the input's facts because `MIDIInput` is not injected; the per-note stamp is polled, never observed.
 - **Open:** device probe (Connected → Playing → Connected; On with a network peer; VoiceOver). Guard: `TheMIDIRowSaysWhatTheCableIsDoingTests`.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Zug 3, power path: the Field panel's "Power" row names the governor's tier and its cause (20dddfc59)
+- **Decision:** `QualityPressure` + pure `AdaptiveQuality.pressure(…)` (binding condition, thermal → LPM → battery → frames; `.none` iff tier ≥ balanced); `ResourceGovernor.pressure` written once in `apply(_:cause:)`; `PowerRung` Full / Reduced / Saving in `Studio/PowerStatusWord.swift`; `PowerStatusRow` leaf under the Field panel's buttons. Zug 3 is now built for all six paths (codec, audio route, network, no-light, Apple Health, MIDI, power).
+- **Rationale:** the tier moved silently; a person needs the cause to have a remedy. The cause travels with the settings; the row reads cold state only and names no pin property.
+- **Open:** device probe (LPM on/off, hot phone, VoiceOver). Guard: `ThePowerRowSaysWhyDetailStepsDownTests`.
+- **Review:** 2026-10-30.
