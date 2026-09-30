@@ -97,7 +97,7 @@ struct BioSourceView: View {
         Button { arm(!isRunning) } label: {
             HStack(spacing: 12) {
                 Image(systemName: "heart.fill")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(EchoelTheme.font(18, .semibold))
                     .foregroundStyle(isRunning ? EchoelTheme.onPrimary : EchoelTheme.text)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(isRunning ? "Bio input armed" : "Arm bio input")
@@ -149,7 +149,7 @@ struct BioSourceView: View {
             .opacity(synth.bioModulationEnabled ? 1 : 0.5)
 
             HStack(spacing: 8) {
-                Image(systemName: "sparkles").font(.system(size: 12)).foregroundStyle(EchoelTheme.dim)
+                Image(systemName: "sparkles").font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                 Text("Body → visual reacts automatically in the immersive view")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 Spacer(minLength: 0)
@@ -219,10 +219,10 @@ struct BioSourceView: View {
     private var breathButton: some View {
         Button { showBreath = true } label: {
             HStack(spacing: 10) {
-                Image(systemName: "wind").font(.system(size: 14))
+                Image(systemName: "wind").font(EchoelTheme.font(14))
                 Text("Breath guide").font(EchoelTheme.font(13))
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right").font(.system(size: 11)).foregroundStyle(EchoelTheme.dim)
+                Image(systemName: "chevron.right").font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             }
             .foregroundStyle(EchoelTheme.text)
             .padding(12)

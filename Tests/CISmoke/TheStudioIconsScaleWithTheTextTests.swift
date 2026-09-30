@@ -29,12 +29,15 @@
 // — ONE finding, #486), green on `51c2a34e0`; the stripper is LOAD-BEARING for one file
 // (`BioMetricInfo` quotes the spelling in two comments, so raw text stays red on the corrected
 // tree). Claim 3 red on the parent (63 > 42), green there at exactly 42. Family 2: claim 1 red
-// on `51c2a34e0` for `EchoelStudioView` (19 sites, one finding), green here; claim 3 red there
-// (42 > 23), green here at exactly 23. Claims 2 and 4 green on every tree.
+// on `51c2a34e0` for `EchoelStudioView` (19 sites, one finding), green on `6ee391594`; claim 3
+// red there (42 > 23), green there at exactly 23. Family 3: claim 1 red on `6ee391594` for the
+// four files (23 sites, one finding), green here; claim 3 red there (23 > 0), green here at
+// exactly 0. Claims 2 and 4 green on every tree.
 // SOURCE-TEXT SCAN throughout: it proves the font is written this way, never how it reads.
 // NEEDS-FOUNDER-VERIFY: Settings → Accessibility → Larger Text, largest size → the guide's ✕,
 // the FX star, the Bio Learn chevrons, the space stage's empty-state glyph, the instrument's
-// chip chevrons and preset stars grow with their words and nothing clips.
+// chip chevrons and preset stars, the visual window's toolbar glyphs, the Bio strip's hearts and
+// the Routing view's kind icons grow with their words and nothing clips.
 
 import Foundation
 import XCTest
@@ -45,19 +48,23 @@ final class TheStudioIconsScaleWithTheTextTests: XCTestCase {
     private static let appIcon = "Sources/Echoelmusic/Resources/AppIcon.swift"
 
     /// Family 1 (2026-09-30): the small Studio surfaces, 21 sites. Family 2 (same day):
-    /// `EchoelStudioView`, 19 sites. Family 3 — `FloatingVisualWindow` · `BioStripView` ·
-    /// `PatchbayView` · `BioSourceView` — is added here as it is converted, and `ceiling` drops.
+    /// `EchoelStudioView`, 19 sites. Family 3 (same day): `FloatingVisualWindow` ·
+    /// `BioStripView` · `PatchbayView` · `BioSourceView`, 23 sites. With it the tree outside
+    /// `AppIcon.swift` holds NO absolute icon size, and `ceiling` is 0 — the list below is then
+    /// the set of files a future fixed size would be caught in twice (here and by the ceiling).
     private static let converted = [
         "GuideOverlay", "EchoelIconTile", "ProUnlockView", "ImmersiveStageView", "BioMetricInfo",
         "EchoelFXView", "AudioDegradedRow", "LiveNarrationDisclosure", "BodyTempoField",
         "LearnView", "SessionView", "LiveColaboView", "MeditationView", "HeaderMonitors",
         "EchoelStudioView",
+        "FloatingVisualWindow", "BioStripView", "PatchbayView", "BioSourceView",
     ].map { "Sources/Echoelmusic/Studio/\($0).swift" }
 
     /// Absolute icon sizes still allowed in CODE across the tree (AppIcon excluded). 63 before
-    /// family 1, 42 after it, 23 after family 2. Lower it with every converted family; never
-    /// raise it.
-    private static let ceiling = 23
+    /// family 1, 42 after it, 23 after family 2, 0 after family 3. It went down with every
+    /// converted family and is never raised: a new `.font(.system(size:` anywhere under
+    /// `Sources/Echoelmusic/` except `AppIcon.swift` is the regression this file exists for.
+    private static let ceiling = 0
 
     // MARK: 1 — RATCHET
 

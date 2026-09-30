@@ -610,7 +610,7 @@ struct FloatingVisualWindow: View {
             }
             Button { toggleWavRecording() } label: {
                 Image(systemName: wavRecording ? "stop.circle.fill" : "waveform.circle")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(EchoelTheme.font(13, .semibold))
                     .foregroundStyle(wavRecording ? EchoelTheme.recording : (wavExporting ? EchoelTheme.dim : EchoelTheme.text))
                     .frame(width: 28, height: 44).contentShape(Rectangle().inset(by: -5))
             }
@@ -812,7 +812,7 @@ struct FloatingVisualWindow: View {
                 Color.black
                 VStack(spacing: 6) {
                     Image(systemName: "tv")
-                        .font(.system(size: 22, weight: .regular))
+                        .font(EchoelTheme.font(22))
                     Text("On external screen")
                         .font(EchoelTheme.font(12))
                 }
@@ -1106,7 +1106,7 @@ struct FloatingVisualWindow: View {
                 Button { exitToStudio() } label: {
                     HStack(spacing: 5) {
                         Image(systemName: "rectangle.split.3x1")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(EchoelTheme.font(12, .semibold))
                         Text("Studio")
                             .font(EchoelTheme.font(12, .semibold))
                     }
@@ -1176,7 +1176,7 @@ struct FloatingVisualWindow: View {
             if fit.gridToggle {
                 Button { touchShowGrid.toggle() } label: {
                     Image(systemName: touchShowGrid ? "square.grid.3x3.fill" : "square.grid.3x3")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(EchoelTheme.font(12, .semibold))
                         .foregroundStyle(touchShowGrid ? EchoelTheme.accent : EchoelTheme.text)
                         .frame(width: 28, height: 44).contentShape(Rectangle().inset(by: -5))
                 }
@@ -1188,7 +1188,7 @@ struct FloatingVisualWindow: View {
             if fit.analysisToggle {
                 Button { analysisOn = true } label: {
                     Image(systemName: "chart.bar.xaxis")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(EchoelTheme.font(12, .semibold))
                         .foregroundStyle(EchoelTheme.text)
                         .frame(width: 28, height: 44).contentShape(Rectangle().inset(by: -5))
                 }
@@ -1210,7 +1210,7 @@ struct FloatingVisualWindow: View {
                 Image(systemName: windowSize.isFullscreen
                       ? "arrow.down.right.and.arrow.up.left"
                       : "arrow.up.left.and.arrow.down.right")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(EchoelTheme.font(12, .semibold))
                     .foregroundStyle(EchoelTheme.text)
                     .frame(width: 28, height: 44).contentShape(Rectangle().inset(by: -5))
             }
@@ -1219,7 +1219,7 @@ struct FloatingVisualWindow: View {
             .accessibilityValue(windowSize.label)
             Button { withAnimation(.easeInOut(duration: 0.15)) { isPresented = false } } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(EchoelTheme.font(12, .semibold))
                     .foregroundStyle(EchoelTheme.text)
                     .frame(width: 28, height: 44).contentShape(Rectangle().inset(by: -5))
             }

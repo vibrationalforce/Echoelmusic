@@ -146,7 +146,7 @@ struct PatchbayView: View {
                     .ignoresSafeArea()
             } label: {
                 HStack(spacing: 10) {
-                    Image(systemName: "pianokeys").font(.system(size: 13)).foregroundStyle(EchoelTheme.accent)
+                    Image(systemName: "pianokeys").font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.accent)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Pair a controller")
                             .font(EchoelTheme.font(14, .semibold)).foregroundStyle(EchoelTheme.text)
@@ -155,7 +155,7 @@ struct PatchbayView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer(minLength: 0)
-                    Image(systemName: "chevron.right").font(.system(size: 11)).foregroundStyle(EchoelTheme.dim)
+                    Image(systemName: "chevron.right").font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 }
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -814,7 +814,7 @@ struct PatchbayView: View {
         let sinks = router.graph.sinks.filter { $0.id != src.id }
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
-                Image(systemName: kindIcon(src.kind)).font(.system(size: 13)).foregroundStyle(EchoelTheme.accent)
+                Image(systemName: kindIcon(src.kind)).font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.accent)
                 Text(src.name).font(EchoelTheme.font(14, .semibold)).foregroundStyle(EchoelTheme.text)
                 statusTag(src)
                 Spacer(minLength: 0)
@@ -838,9 +838,9 @@ struct PatchbayView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: connected ? "checkmark.circle.fill" : (compatible ? "circle" : "minus.circle"))
-                    .font(.system(size: 14))
+                    .font(EchoelTheme.font(14))
                     .foregroundStyle(connected ? EchoelTheme.accent : (compatible ? EchoelTheme.dim : EchoelTheme.border))
-                Image(systemName: kindIcon(dst.kind)).font(.system(size: 11)).foregroundStyle(EchoelTheme.dim)
+                Image(systemName: kindIcon(dst.kind)).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 Text(dst.name).font(EchoelTheme.font(13)).foregroundStyle(compatible ? EchoelTheme.text : EchoelTheme.dim)
                 if let conv { Text(conv).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim) }
                 Spacer(minLength: 0)
@@ -938,7 +938,7 @@ private struct ModulationRouteRow: View {
                     ForEach(sourceChoices, id: \.self) { s in Text(s.displayName).tag(s) }
                 }
                 .pickerStyle(.menu).tint(EchoelTheme.text)
-                Image(systemName: "arrow.right").font(.system(size: 11)).foregroundStyle(EchoelTheme.dim)
+                Image(systemName: "arrow.right").font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 Picker("Destination", selection: $route.destination) {
                     ForEach(destinationChoices, id: \.self) { d in
                         Text(ModDestinationKey.displayName(d.key)).tag(d)

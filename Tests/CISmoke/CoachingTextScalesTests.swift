@@ -241,8 +241,9 @@ final class CoachingTextScalesTests: XCTestCase {
     /// `private func ` — which is a guess about what the AUTHOR of the NEXT declaration will
     /// type, not a fact about this one. `fileprivate var`, `static func`, `private let`, or an
     /// attribute pushed onto its own line all miss, and the window then runs on: past `banner`
-    /// it would swallow `infoButton`, whose `.font(.system(size: 12))` is a legitimate icon
-    /// size, and the failure text would accuse the banner of a line that is not the banner's.
+    /// it would swallow `infoButton`, whose 12 pt icon font is a legitimate size of its own (an
+    /// absolute `.system(size:)` until 2026-09-30, `EchoelTheme.font(12)` since — either way not
+    /// the banner's), and the failure text would accuse the banner of a line that is not the banner's.
     /// A guard that can go red for a change in a NEIGHBOUR is worse than one that misses,
     /// because the message points at the wrong file region. The boundary is now STRUCTURAL:
     /// the closing brace sitting at exactly the declaration's own indentation, which does not
