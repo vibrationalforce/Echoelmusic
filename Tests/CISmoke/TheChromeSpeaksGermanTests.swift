@@ -646,6 +646,9 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertTrue(metricInfo.contains("public static let disclaimer = String(localized: \"For music and self-observation only"), "`BioMetric.disclaimer` is a verbatim String again")
         let cards = LearnLibrary.guideEntries + LearnLibrary.safetyEntries
         XCTAssertEqual(cards.count, 8, "the guide + safety card set changed size — re-derive this block")
+        // ⛔ 8cbbda285 read `strings` here without declaring it — claim 11 never loads the catalog itself
+        // (only `assertGerman` does), so Build for Testing 6565 was red on `cannot find 'strings' in scope`.
+        let strings = try catalogStrings()
         for card in cards {
             XCTAssertNotNil(german(card.title, in: strings), "no German unit for the Learn card title `\(card.title)`")
             XCTAssertNotNil(german(card.summary, in: strings), "no German unit for the Learn card summary of `\(card.id)`")
