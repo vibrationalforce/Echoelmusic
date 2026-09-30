@@ -3750,3 +3750,18 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   `TrackParts.title/spanTitle/lengthText`, `SongAutomationEdit.countLabel`, `WorkstationSummary.positionText`), then
   the part bar / parts row / automation editor seams, `SessionLaunchView`, `MediaBrowserView`, `EchoelNumberPad`,
   `AutomationStatusStrip`, `ComposeGuide`.
+
+### 2026-09-30 — E4-25: the bar/beat vocabulary of the model helpers speaks German (5ca909882)
+
+- **Decision:** `SessionGrid.label` (Bar n / Bar n beat b), `TrackParts.title` / `spanTitle` / `lengthText`
+  (n bars · n beats · to bar n · %.2f bars) and `SongAutomationEdit.countLabel` (n points, and 1 after the end of
+  the piece) spell each word through a catalog key beside the number — Takt n Schlag b · 1 Takt / n Takte ·
+  n Schläge · bis Takt n · n Punkte. Catalog 938 → 946. Claim 11 pins nine seams, six absences and three runtime
+  counterweights (the composed English is unchanged).
+- **Why:** every part title, scene label, selected-part heading and automation count is COMPOSED from these three
+  helpers; localising the views around them would have left "Bar 9 · 4 bars" English inside a German sentence. The
+  existing runtime pins ("Bar 5", "1 bar", "0.31 bars", "1 point") keep proving the English byte-identical in the
+  bundle's locale; a Python mirror of the helpers reproduced every pinned string before the commit.
+- **Review:** 2026-10-30. Next E4 producers: `WorkstationSummary.positionText` (Bar n · Beat b), the part bar /
+  parts row / automation editor seams (`Selected part · `, `Part at `, `Point at `, `… automation: `),
+  `SessionLaunchView`, `MediaBrowserView`, `EchoelNumberPad`, `AutomationStatusStrip`, `ComposeGuide`.
