@@ -3671,3 +3671,19 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   `TheWorkstationIconsScaleWithTheTextTests` (`private func door(`, `door("Save"`, `door("Open"`) are untouched and re-measured.
 - **Review:** 2026-10-30. Next producers: `Scale.displayName` / `NoteNaming.spokenName` (own slices), guide card content,
   `EchoelIconTile` + Patchbay `statusLine` (need guard co-edits), the two interpolated network sentences.
+
+### 2026-09-30 — E4-19: Routing MIDI label, guide counter, Scale-family headers speak German (50122b5e9)
+
+- **Decision:** `PatchbayView.statusLine(label:)` takes a key; the guide's card counter is seamed through
+  `String(localized:)`; `Scale.Family.title` returns `String(localized:)` per case (eight shelf headers of the Scale
+  picker). Catalog 782 → 793. The E4-18/E4-19 `+` chains were then hoisted out of the view bodies (cc4e76cf7)
+  because BfT 6561 already reported `GuideOverlay.card` at 479 ms type-check.
+- **Why:** `Section(_:)` over a `StringProtocol` never localises — the producer is the only door for the locale.
+  `MusicStyle.Category.title` deliberately stays English: zero production readers (#364 — localising dead text
+  would only add catalog weight).
+- **Guard:** claim 11 of `TheChromeSpeaksGermanTests`; `ScaleFamilyTests` runtime pins untouched (en unit == key).
+- **Lesson (two BfT reds in one evening, 6559 + 6561):** both were Swift-level defects in the GUARD that no
+  checker and no transcription can see (#1337/#E2 class): operator precedence, then a duplicate `let` in a method
+  that eleven slices had grown. Before pushing a grown test method, scan its `let` names for duplicates — that
+  scan is now a one-liner in the SESSION_LOG entry and caught exactly one.
+- **Review:** 2026-10-30.
