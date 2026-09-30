@@ -36,9 +36,9 @@ enum EchoelIntentInbox {
 }
 
 struct StartEchoelSessionIntent: AppIntent {
-    static let title: LocalizedStringResource = "Start Echoelmusic Session"
+    static let title: LocalizedStringResource = "Start Echoelmusic"
     static let description = IntentDescription(
-        "Start a bio-reactive session — your body begins making music.")
+        "Start the instrument and the pulse reading — your body begins making music.")
     static let openAppWhenRun: Bool = true
 
     func perform() async throws -> some IntentResult {
@@ -48,8 +48,8 @@ struct StartEchoelSessionIntent: AppIntent {
 }
 
 struct StopEchoelSessionIntent: AppIntent {
-    static let title: LocalizedStringResource = "Stop Echoelmusic Session"
-    static let description = IntentDescription("Stop the current bio-reactive session.")
+    static let title: LocalizedStringResource = "Stop Echoelmusic"
+    static let description = IntentDescription("Stop the instrument and the pulse reading.")
     static let openAppWhenRun: Bool = true
 
     func perform() async throws -> some IntentResult {
@@ -78,18 +78,18 @@ struct EchoelAppShortcuts: AppShortcutsProvider {
             intent: StartEchoelSessionIntent(),
             phrases: [
                 "Start \(.applicationName)",
-                "Begin a session in \(.applicationName)",
+                "Start playing in \(.applicationName)",
                 "Make music with my body in \(.applicationName)"
             ],
-            shortTitle: "Start Session",
+            shortTitle: "Start playing",
             systemImageName: "waveform.path.ecg")
         AppShortcut(
             intent: StopEchoelSessionIntent(),
             phrases: [
                 "Stop \(.applicationName)",
-                "End my \(.applicationName) session"
+                "Stop playing in \(.applicationName)"
             ],
-            shortTitle: "Stop Session",
+            shortTitle: "Stop playing",
             systemImageName: "stop.circle.fill")
         AppShortcut(
             intent: KeepLastLoopIntent(),

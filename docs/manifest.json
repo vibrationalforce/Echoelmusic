@@ -49,9 +49,9 @@
   ],
   "shortcuts": [
     {
-      "name": "Quick Session",
-      "short_name": "Session",
-      "description": "Start a bio-reactive session",
+      "name": "Quick start",
+      "short_name": "Start",
+      "description": "Start the instrument and the pulse reading",
       "url": "/?action=session",
       "icons": [{"src": "favicon.svg", "sizes": "any"}]
     }

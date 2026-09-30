@@ -89,6 +89,13 @@
 // iPhone over MIDI", "accepts a MIDI connection", "no incoming connection"), and the toggle is simply
 // "Wireless MIDI". One "take effect" → "apply". The identifier `applyNetworkSessionPreference` keeps
 // its name (code is not what a person reads).
+//
+// ⭐ RATCHET 9 (2026-09-30): `EchoelAppIntents` — 8 "session" in what Siri, Spotlight and the
+// Shortcuts app SHOW and what a person SAYS. The intent starts `startBiofeedback()` and stops
+// `stopEverything` — the instrument and the pulse reading, in the words the Stop button already uses.
+// Titles "Start Echoelmusic" / "Stop Echoelmusic", short titles "Start playing" / "Stop playing",
+// phrases "Start playing in …" / "Stop playing in …". Type names (`StartEchoelSessionIntent`) are
+// code and stay; the web manifest's shortcut (docs/manifest.json) follows in the same commit.
 // `Tests/CISmoke` is the blocking bundle. SKIPS rather than passes if the tree is absent.
 
 import Foundation
@@ -118,6 +125,7 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/MediaBrowserView.swift",
         "Sources/Echoelmusic/Studio/LiveColaboView.swift",
         "Sources/Echoelmusic/Studio/PatchbayView.swift",
+        "Sources/Echoelmusic/Studio/EchoelAppIntents.swift",
     ]
 
     /// A line whose strings reach a log or a test harness, not a person.
