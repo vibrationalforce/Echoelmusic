@@ -26,7 +26,7 @@ public enum BrainwaveBand: String, CaseIterable, Sendable {
         case .theta: return "Meditation"
         case .alpha: return "Relaxed Focus"
         case .beta:  return "Alert"
-        case .gamma: return "Peak Flow"
+        case .gamma: return "Peak Focus"
         }
     }
 }

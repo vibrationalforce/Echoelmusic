@@ -131,10 +131,10 @@ enum EchoelCommandRegistry {
         switch id {
         case .describeState:
             return EchoelCommandSpec(
-                id: id, summary: "Say what is selected and what the song holds",
+                id: id, summary: "Say what is selected and what the piece holds",
                 parameters: [],
                 preconditions: [],
-                effect: "None — it reads the selection and the song.",
+                effect: "None — it reads the selection and the piece.",
                 undo: .nothing, permission: .readOnly)
         case .setTrackLevel:
             return EchoelCommandSpec(
@@ -156,11 +156,11 @@ enum EchoelCommandRegistry {
                                 "its track holds arrangeable parts (MIDI or audio, not bio)",
                                 "no part already starts inside the place right after it"],
                 effect: "Adds one copy that starts where the part ends, on the same track, "
-                    + "playing the same clip — the part bar's Copy.",
+                    + "playing the same notes — the part bar's Copy.",
                 undo: .agentJournal, permission: .reversibleEdit)
         case .undoAgentChange:
             return EchoelCommandSpec(
-                id: id, summary: "Take back the agent's last change",
+                id: id, summary: "Undo the agent's last change",
                 parameters: [],
                 preconditions: ["the agent changed something",
                                 "each value is still what the agent left — a value changed since is kept"],
@@ -171,7 +171,7 @@ enum EchoelCommandRegistry {
                 id: id, summary: "Give the visuals the look of the open photo or video",
                 parameters: ["medium: photo | video"],
                 preconditions: ["that card has read a photo or video and shows it",
-                                "no look from a photo or video is still applied — take it back first"],
+                                "no look from a photo or video is still applied — undo it first"],
                 effect: "Sets the visual look from the colours (and for a video, the motion) the card "
                     + "measured — through the card's own Apply path.",
                 undo: .agentJournal, permission: .reversibleEdit)
@@ -219,7 +219,7 @@ enum EchoelCommandError: Error, Equatable, Sendable {
         case .nothingSelected(let what):
             return "No \(what) is selected. Select one first."
         case .targetGone(let what):
-            return "That \(what) is no longer in the song."
+            return "That \(what) is no longer in the piece."
         case .noLevel(let device):
             return "This track has no level to change (\(device))."
         case .levelIsSilent:
@@ -243,13 +243,13 @@ enum EchoelCommandError: Error, Equatable, Sendable {
             parts.append("\(kept) changed after my edit, so I left it as it is.")
             return parts.joined(separator: " ")
         case .projectChanged:
-            return "The song or the selection changed since I read it. Please ask again."
+            return "The piece or the selection changed since I read it. Please ask again."
         case .consentRequired(let consent):
             return "This needs your permission first (\(consent.rawValue))."
         case .busy:
             return "I am still working on the previous request."
         case .nothingToUndo:
-            return "I have not changed anything to take back."
+            return "I have not changed anything to undo."
         case .changedSince(let what):
             return "\(what) changed after my edit, so I left it as it is."
         case .verificationFailed(let what):
@@ -262,7 +262,7 @@ enum EchoelCommandError: Error, Equatable, Sendable {
             return "No \(medium.rawValue) is open. Pick one on its card first."
         case .lookStillApplied(let medium):
             let from = medium.isEmpty ? "a photo or video" : "a \(medium)"
-            return "The visuals still use the look of \(from). Take that back first."
+            return "The visuals still use the look of \(from). Undo that first."
         }
     }
 }
@@ -279,7 +279,7 @@ enum EchoelUndoSummary {
     static func text(restored: Int, alreadyUndone: Int) -> String {
         switch (restored, alreadyUndone) {
         case (0, 0):
-            return "Nothing was left to take back."
+            return "Nothing was left to undo."
         case (_, 0):
             return restored == 1 ? "Took back my last change." : "Took back my last \(restored) changes."
         case (0, _):

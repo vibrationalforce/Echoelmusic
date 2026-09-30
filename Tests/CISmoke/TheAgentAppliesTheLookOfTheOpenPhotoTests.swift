@@ -123,7 +123,7 @@ final class TheAgentAppliesTheLookOfTheOpenPhotoTests: XCTestCase {
         let refused = await executor.execute(plan([.applyMediaLook(medium: .video)], on: executor))
         XCTAssertEqual(refused.steps.first?.outcome, .failed(.lookStillApplied("photo")))
         XCTAssertEqual(EchoelCommandError.lookStillApplied("photo").message,
-                       "The visuals still use the look of a photo. Take that back first.")
+                       "The visuals still use the look of a photo. Undo that first.")
         XCTAssertEqual(owner.pending, byHand, "the person's look stays the one to take back")
         XCTAssertEqual(VisualLookSnapshot.read(from: defaults), byHand.after)
         XCTAssertFalse(executor.canUndoAgentChange, "the agent has nothing of its own to take back")

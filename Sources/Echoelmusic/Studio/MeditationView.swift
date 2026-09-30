@@ -60,12 +60,12 @@ struct MeditationView: View {
 
     private var header: some View {
         HStack {
-            Text("Coherence Session").font(EchoelTheme.font(16, .semibold)).foregroundStyle(EchoelTheme.text)
+            Text("Coherence practice").font(EchoelTheme.font(16, .semibold)).foregroundStyle(EchoelTheme.text)
             Spacer()
             Button { dismiss() } label: {
                 Image(systemName: "xmark.circle.fill").font(.title2).foregroundStyle(EchoelTheme.dim)
             }
-            .accessibilityLabel("Close coherence session")
+            .accessibilityLabel("Close coherence practice")
         }
     }
 
@@ -95,7 +95,7 @@ struct MeditationView: View {
                 // BELOW `RespirationEstimator.reportableRange`, so Echoel's breath NUMBER (the
                 // one in the bio strip) cannot show this pace. Derived from the arithmetic,
                 // never hand-written (#435).
-                // ⚠️ SCOPE, because this screen is titled "Coherence Session" and the note must
+                // ⚠️ SCOPE, because this screen is titled "Coherence practice" and the note must
                 // not be read as "nothing here measures you": what THIS view records is
                 // coherence, and that is unaffected — `HRVCoherence`'s peak-search band is
                 // 0.04–0.26 Hz, which contains box (0.0625 Hz) and 4-7-8 (0.0526 Hz) comfortably.
@@ -146,7 +146,7 @@ struct MeditationView: View {
             Spacer(minLength: 8)
             Image(systemName: "checkmark.circle.fill").font(.system(size: 44))
                 .foregroundStyle(EchoelTheme.accent)
-            Text("Session complete").font(EchoelTheme.font(20, .semibold)).foregroundStyle(EchoelTheme.text)
+            Text("Practice complete").font(EchoelTheme.font(20, .semibold)).foregroundStyle(EchoelTheme.text)
             let streak = SessionStats.streakDays(recorder.sessions)
             if streak > 1 {
                 Label("\(streak)-day streak", systemImage: "flame.fill")
@@ -211,7 +211,7 @@ struct MeditationView: View {
 
     private var historyList: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Recent sessions").font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
+            Text("Recent practice").font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
             ForEach(recorder.sessions.prefix(5)) { s in
                 HStack {
                     Text(s.date, format: .dateTime.month().day().hour().minute())

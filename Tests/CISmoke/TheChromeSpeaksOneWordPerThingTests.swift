@@ -193,6 +193,15 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Sequencer/ClipNoteEdit.swift",
         "Sources/EchoelmusicWatch/EchoelWatchApp.swift",
         "Sources/EchoelmusicWidgets/EchoelBioWidget.swift",
+        // Ratchet 17 (2026-09-30), the last: the DOORLESS surfaces. The breathing guide
+        // (the Session experiment nothing presents), the coherence practice (MeditationView,
+        // whose flag nothing sets), the entrainment band names, and the agent's replies.
+        // EchoelCommand.swift stays OUTSIDE: its visible text is rewritten too, but its raw
+        // command ids (project.describeState) are protocol keys and would read as hits.
+        "Sources/Echoelmusic/Studio/SessionView.swift",
+        "Sources/Echoelmusic/Studio/MeditationView.swift",
+        "Sources/Echoelmusic/DSP/EchoelEntrainment.swift",
+        "Sources/Echoelmusic/EchoelAI/EchoelCommandExecutor.swift",
     ]
 
     /// A line whose strings reach a log or a test harness, not a person.

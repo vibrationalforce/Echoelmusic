@@ -126,7 +126,7 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         let report = await executor.execute(plan([.describeState], on: executor))
         guard case .done(let text) = report.steps.first?.outcome else { return XCTFail("the state is read") }
         XCTAssertEqual(text, "Selected track: Keys — Echoel instrument, level 0.0 dB. "
-                       + "Selected part: Bar 1 · 1 bar. The song has 4 tracks and 2 parts.")
+                       + "Selected part: Bar 1 · 1 bar. The piece has 4 tracks and 2 parts.")
         XCTAssertEqual(timeline.document, Self.fixture, "reading changes nothing")
         XCTAssertFalse(executor.canUndoAgentChange, "a read leaves nothing to take back")
     }

@@ -74,7 +74,7 @@ struct SessionView: View {
                         .accessibilityLabel("Version \(Self.versionString)")
                 }
             } else {
-                Text("Session")
+                Text("Resonance breathing")
                     .font(EchoelTheme.font(16, .semibold))
                     .foregroundStyle(EchoelTheme.text)
             }
@@ -102,7 +102,7 @@ struct SessionView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Open studio")
-                .accessibilityHint("The generative music instrument. Ends the current session.")
+                .accessibilityHint("The generative music instrument. Stops the breathing guide.")
             } else {
                 Button {
                     stopSession()
@@ -115,7 +115,7 @@ struct SessionView: View {
                         .background(EchoelTheme.fill, in: RoundedRectangle(cornerRadius: EchoelTheme.radius))
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Close session")
+                .accessibilityLabel("Close the breathing guide")
             }
         }
         .padding(.horizontal, 16)
@@ -175,7 +175,7 @@ struct SessionView: View {
                 startSession()
             }
         } label: {
-            Text(session.isRunning ? "End Session" : "Start")
+            Text(session.isRunning ? "Stop" : "Start")
                 .font(EchoelTheme.font(16, .semibold))
                 .foregroundStyle(session.isRunning ? EchoelTheme.text : EchoelTheme.onPrimary)
                 .frame(maxWidth: .infinity)
@@ -191,7 +191,7 @@ struct SessionView: View {
         }
         .buttonStyle(.plain)
         .padding(.horizontal, 24)
-        .accessibilityLabel(session.isRunning ? "End session" : "Start session")
+        .accessibilityLabel(session.isRunning ? "Stop the breathing guide" : "Start the breathing guide")
     }
 
     // MARK: - Actions

@@ -538,13 +538,13 @@ enum EchoelStateText {
                                                             lengthTicks: part.lengthTicks))
             lines.append("Selected part: \(span).")
         }
-        lines.append("The song has \(count(state.trackCount, "track")) and \(count(state.partCount, "part")).")
+        lines.append("The piece has \(count(state.trackCount, "track")) and \(count(state.partCount, "part")).")
         if state.media.photo != nil { lines.append("A photo is open on its card.") }
         if state.media.video != nil { lines.append("A video is open on its card.") }
         if state.media.appliedLook != nil {
             lines.append("The visuals use the look of a \(state.media.appliedFrom).")
         }
-        if state.agentCanUndo { lines.append("I can take back my last change.") }
+        if state.agentCanUndo { lines.append("I can undo my last change.") }
         return lines.joined(separator: " ")
     }
 
