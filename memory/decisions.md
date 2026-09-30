@@ -3658,3 +3658,16 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Open producers (English inside German sentences):** `Scale.displayName` (41+ names, backlog MusicalKey.swift:262) and `NoteNaming.spokenName` (" sharp"/" flat"). Own slice each.
 - **Tool finding, second instance:** `moved-needles.py` listed nothing although `TheQuantizeGridIsChosenByNameTests` pinned the removed `label: "Snap the starts of …"` line. The needle contains `\(` escapes — the tool's needle decoder or the generic filter drops it. Measure before repairing (#941 selftest rule).
 - **Generic keys accepted knowingly:** "the ", " selected", "Move ", "Copy ", "Delete ", "Sets " — short pieces whose German is fixed by these sentences; a future sentence needing a different German for the same English piece must use a distinct English piece, not re-translate these.
+
+### 2026-09-30 — E4-18: guide arrows, instance line and Save/Open doors speak German (cf16b3425)
+
+- **Decision:** the three remaining `String`-typed label helpers with literal-only callers take `LocalizedStringKey`:
+  `GuideOverlay.pageButton(label:)`, `EchoelInstanceLine.fact(_:_:)` (name half), `WorkstationProjectRow.door(_:…spoken:hint:)`
+  (all three words). The instance line's interpolated VoiceOver sentence becomes head + name + middle + name via
+  `String(localized:)`. Catalog 774 → 782 (Genre and FX identical in German, like Demo · Live · Automation).
+- **Why:** pattern (a) of E4-9…E4-17 — where every caller is a literal and nothing reads the String, the parameter type
+  IS the localisation, no call site moves; `Text`, `.accessibilityLabel` and `.accessibilityHint` all accept the key.
+- **Guard:** `TheChromeSpeaksGermanTests` claim 11 (+3 signatures, 2 seams, 1 absence, 15 units); the door anchors of
+  `TheWorkstationIconsScaleWithTheTextTests` (`private func door(`, `door("Save"`, `door("Open"`) are untouched and re-measured.
+- **Review:** 2026-10-30. Next producers: `Scale.displayName` / `NoteNaming.spokenName` (own slices), guide card content,
+  `EchoelIconTile` + Patchbay `statusLine` (need guard co-edits), the two interpolated network sentences.

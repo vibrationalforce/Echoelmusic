@@ -41147,3 +41147,11 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Reparatur:** `String(fx[lower...].prefix(160))` — keine Index-Arithmetik. Tests-only-Commit 4d53fd149, sofort gepusht (mit dem lokalen E4-17-Stapel obenauf; der Compile Check auf 929a14b30 wird dadurch abgebrochen, der neue deckt dieselben Sources).
 - **Lehre für diese Serie:** Fenster über einen String-Index nie mit `..<` und `??` in EINER Zeile — `prefix(n)` auf dem Suffix ist die Form, die nichts zu klammern hat.
 - **Nebenlesung:** de2e3a3d7 komplett: Compile 3093 ✓, CI/CD 6557 (Conclusion failure = #396-Form, BfT ✓), Auto-Merge 3991 ✓.
+
+## 2026-09-30 — E4-18: Guide-Pfeile, Instanz-Zeile, Save/Open-Türen sprechen Deutsch (cf16b3425, LOKAL)
+
+- **Gebaut:** drei Helfer nehmen `LocalizedStringKey` statt `String` — `pageButton(label:)` (GuideOverlay), `fact(_:_:)` (EchoelInstanceLine, Name-Hälfte), `door(_:…spoken:hint:)` (WorkstationView, alle drei Wörter). Aufrufer unverändert (6/6 Literale). Der interpolierte VoiceOver-Satz der Instanz-Zeile wird Kopf + Name + Mitte + Name über `String(localized:)`. Katalog 774 → 782 (Genre/FX deutsch identisch, wie 65 andere Einträge).
+- **Wächter:** Anspruch 11 +3 Signaturen, 2 Nähte, 1 Abwesenheit, 15 Einheiten; Kopf-Kommentar: die doppelte „(parent: all absent — ONE finding)“-Phrase aus E4-17 bereinigt. Door-Anker von `TheWorkstationIconsScaleWithTheTextTests` unverändert, in der Transkription mitgemessen.
+- **Benotung** `scratchpad/transcribe_e4_18.py`: HEAD FAIL (drei Signaturen `String`, Satz verbatim, 8 Einheiten fehlen — EIN Befund), WORK PASS. Stripper PROPHYLAKTISCH (0 von 7). Checker sauber, moved-needles leer, needle-reachability: nur der vorbestehende `pickedNoteLine`-Befund.
+- **Sources-Dateien: 4** (drei Code + Katalog) — gesagt, weil > 3.
+- **Push-Politik:** wartet auf den Compile Check 3097 auf 4d53fd149 (in_progress 21:31Z).
