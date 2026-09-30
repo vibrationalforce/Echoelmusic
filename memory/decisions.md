@@ -3105,3 +3105,17 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Guards:** `TheGuideHasADoorTests` claim 1 rewritten as the decision (5 assertions); `StudioDefaultKeysTests` pins the default. Transcribed WORK 19/19, parent 6 red.
 - **Device asks:** fresh install shows the first card over the piece with ⓘ filled; ⓘ toggles on both stages; no Guide row in Save & Export.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Status ladder in words, pulse half
+
+- **Decision:** `PulseLadder` (searching/nearly/found/lost; `word` ≤ 12 chars, `spoken`), `CameraRPPGBioPublisher.lockSeenThisTake`, `PulseMonitorMini.ladder` rendered LAST in the value-slot precedence (remedy > source status > ladder > dash) and spoken; "Found" beside the number when locked. Camera only.
+- **Why:** the doc's "Status ist Farbe oder Zahl, nie ein Satz" held for the pill: three moments shared one dash, told apart only by colour. `nearlyShare = 0.5` is a share OF the publisher's lock gate (#416), and its feel is a founder call.
+- **Guard:** `ThePulseSpeaksItsStatusInWordsTests`. Transcribed WORK 25/25, parent 16 red (one absence + born needles).
+- **Review:** 2026-10-30.
+
+### 2026-09-30 — Status ladder in words, output half
+
+- **Decision:** `OutputStatusWord.swift` (`VisualMonitorRung`, `LightMonitorRung`, `maxLength` 6); `MonitorWordTile` renders glyph + word on the head tiles' resting faces (Idle · Screen · Off); the live rungs keep the picture with NO word; VoiceOver reads the same rung.
+- **Why:** the tiles were pictures with words for VoiceOver only, typed inline (a second definition). A word over a live colour is the contrast defect the next audit line guards against; the tile widths are founder reference, so the word shrinks before it clips.
+- **Guard:** `TheOutputTilesSpeakTheirStatusInWordsTests`. Transcribed WORK 23/23, parent 16 red (one absence + born needles).
+- **Review:** 2026-10-30.
