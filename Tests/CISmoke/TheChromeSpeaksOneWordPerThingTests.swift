@@ -107,6 +107,11 @@
 // ⭐ RATCHET 11 (2026-09-30): `Sequencer/MediaRelink` — the first non-Studio file: its `userMessage`
 // strings are shown verbatim by the media browser. "clip" ×3 → "part" (a person relinks the part they
 // see; the shared clip is what changes underneath), "Stop the song" → "Stop the piece".
+//
+// ⭐ RATCHET 12 (2026-09-30): `Sequencer/MIDIImport` — refusal and success notes shown by the import
+// door. "This project" → "This piece", "The clip grid is full" → "The part slots are full", "at the
+// song tempo" ×2 → "at the piece's tempo", "Generate won't place its take" → "its music" (the
+// instrument's generated loop, the third instrument-file family's word).
 // `Tests/CISmoke` is the blocking bundle. SKIPS rather than passes if the tree is absent.
 
 import Foundation
@@ -139,6 +144,7 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/EchoelAppIntents.swift",
         "Sources/Echoelmusic/Studio/AlwaysOnBioChannel.swift",
         "Sources/Echoelmusic/Sequencer/MediaRelink.swift",
+        "Sources/Echoelmusic/Sequencer/MIDIImport.swift",
     ]
 
     /// A line whose strings reach a log or a test harness, not a person.

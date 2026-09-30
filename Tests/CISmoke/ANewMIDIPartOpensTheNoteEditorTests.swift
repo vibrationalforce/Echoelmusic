@@ -88,7 +88,7 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
         // and one at the song's start makes Generate yield.
         let atStart = MIDIImport.emptyPartNote(laneName: "Keys", atSongStart: true, notOnSelected: nil)
         XCTAssertTrue(atStart.contains("once it has notes"))
-        XCTAssertTrue(atStart.contains("Generate won't place its take over this part."))
+        XCTAssertTrue(atStart.contains("Generate won't place its music over this part."))
         XCTAssertFalse(MIDIImport.emptyPartNote(laneName: "Keys", atSongStart: false, notOnSelected: nil)
                         .contains("Generate"), "later in the song, nothing yields")
     }

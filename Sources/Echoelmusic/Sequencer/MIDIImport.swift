@@ -94,8 +94,8 @@ public enum MIDIImport {
             case .notAMIDIFile:   return "That file isn't a standard MIDI file this app can read."
             case .noMelodicNotes: return "That MIDI file has no notes to play — drum channel 10 is skipped."
             case .tooLong:        return "That MIDI file is too long — a part holds up to \(MIDIImport.maxBars) bars and \(MIDIImport.maxNotes) notes."
-            case .noMIDILane:     return "This project has no MIDI track — add a MIDI track first."
-            case .clipGridFull:   return "The clip grid is full — all 8 slots are in use."
+            case .noMIDILane:     return "This piece has no MIDI track — add a MIDI track first."
+            case .clipGridFull:   return "The part slots are full — all 8 are in use."
             }
         }
     }
@@ -243,11 +243,11 @@ public enum MIDIImport {
     public static func emptyPartNote(laneName: String, atSongStart: Bool,
                                      notOnSelected: String?) -> String {
         var note = "Added an empty \(emptyPartBars)-bar part on \(laneName). Its notes are open under the arrangement"
-            + " — once it has notes, it plays at the song tempo, with the instrument stopped."
+            + " — once it has notes, it plays at the piece's tempo, with the instrument stopped."
         if let selected = notOnSelected {
             note += " \(selected) cannot play a MIDI part, so it went on \(laneName)."
         }
-        if atSongStart { note += " Generate won't place its take over this part." }
+        if atSongStart { note += " Generate won't place its music over this part." }
         return note
     }
 
@@ -334,7 +334,7 @@ public enum MIDIImport {
         let barWord: String = bars == 1 ? "bar" : "bars"
         let noteWord: String = count == 1 ? "note" : "notes"
         var note = "Imported “\(landing.clip.name)” — \(bars) \(barWord), \(count) \(noteWord) on \(laneName)."
-        note += " Plays at the song tempo on the 16th-note grid, with the instrument stopped."
+        note += " Plays at the piece's tempo on the 16th-note grid, with the instrument stopped."
         if landing.heldForOneBar > 0 { note += " Notes longer than a bar are held for one bar." }
         if landing.skippedDrumNotes > 0 { note += " \(landing.skippedDrumNotes) drum notes skipped." }
         return note

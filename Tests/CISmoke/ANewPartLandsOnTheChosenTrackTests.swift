@@ -223,7 +223,7 @@ final class ANewPartLandsOnTheChosenTrackTests: XCTestCase {
         XCTAssertTrue(action.contains("atSongStart: landing.region.startTick == 0"))
         XCTAssertTrue(action.contains("&& landing.laneID == timeline.document.rollLaneID,"), """
             Generate yields only to user parts on the roll lane — a part elsewhere must not be told \
-            "Generate won't place its take over this part"
+            "Generate won't place its music over this part"
             """)
         // Counterweight (#343): the premise the repair rests on.
         let guideModel = try source(Self.composeGuidePath)
