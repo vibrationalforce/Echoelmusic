@@ -186,4 +186,46 @@ public enum AdaptiveQuality {
         }
         return settings(for: t)
     }
+
+    // MARK: - Zug 3 (2026-09-30): WHY the tier is where it is
+
+    /// The one device condition that is holding the tier below `.balanced` — the cause a status
+    /// row can name and a person can act on. `.none` whenever the tier is `.balanced` or above.
+    ///
+    /// Binding, not blame: when several conditions each cap the tier at or below where it is,
+    /// the order is thermal → Low Power Mode → battery, because that is the order in which a
+    /// person can do LEAST about it (heat has no switch; the other two do). A tier that none of
+    /// the three caps — the frame-rate step-down in `settings(thermal:…measuredFPS:)` — reads as
+    /// `.frameRate`. Pure, like everything in this file; the truth table lives in
+    /// `ThePowerRowSaysWhyDetailStepsDownTests`.
+    public static func pressure(thermal: ThermalLevel, lowPower: Bool,
+                                batteryLevel: Float, charging: Bool,
+                                measuredFPS: Double) -> QualityPressure {
+        let t = settings(thermal: thermal, lowPower: lowPower, batteryLevel: batteryLevel,
+                         charging: charging, measuredFPS: measuredFPS).tier
+        guard t < .balanced else { return .none }
+        let thermalCeiling: QualityTier
+        switch thermal {
+        case .nominal:  thermalCeiling = .high
+        case .fair:     thermalCeiling = .balanced
+        case .serious:  thermalCeiling = .low
+        case .critical: thermalCeiling = .minimal
+        }
+        if thermalCeiling <= t { return .thermal }
+        if lowPower && QualityTier.low <= t { return .lowPowerMode }
+        if batteryLevel >= 0 && !charging {
+            if batteryLevel < 0.10 { return .battery }
+            if batteryLevel < 0.20 && QualityTier.low <= t { return .battery }
+        }
+        return .frameRate
+    }
+}
+
+/// What is holding the quality tier down — see `AdaptiveQuality.pressure(…)`.
+public enum QualityPressure: Equatable, CaseIterable, Sendable {
+    case none
+    case thermal
+    case lowPowerMode
+    case battery
+    case frameRate
 }

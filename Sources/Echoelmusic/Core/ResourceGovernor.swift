@@ -71,6 +71,12 @@ public final class ResourceGovernor {
     public private(set) var settings: QualitySettings =
         AdaptiveQuality.settings(for: .balanced)
 
+    /// Zug 3 (2026-09-30): WHY `settings.tier` sits where it does — the one condition a status
+    /// row can name (`AdaptiveQuality.pressure`). Written in `apply` beside `settings`, so a tier
+    /// that is held during a promote dwell keeps the cause it was applied with; `.none` at or
+    /// above `.balanced` and on the pinned branch. Cold: it moves when the tier moves.
+    public private(set) var pressure: QualityPressure = .none
+
     /// Whether automatic governing is on.
     ///
     /// ⛔ THIS LINE SAID a performer "can pin a tier (e.g. force High for a show)" AND NO
@@ -333,7 +339,7 @@ public final class ResourceGovernor {
 
     private func recompute() {
         guard isAutomatic else {
-            apply(AdaptiveQuality.settings(for: manualTier))   // pinned: immediate, no dwell
+            apply(AdaptiveQuality.settings(for: manualTier), cause: .none)   // pinned: immediate, no dwell
             return
         }
         // `trustedFPS` is 0 until the renderer has proven a rate over a warm-up window
@@ -343,6 +349,9 @@ public final class ResourceGovernor {
         let raw = AdaptiveQuality.settings(thermal: thermal, lowPower: lowPower,
                                            batteryLevel: batteryLevel, charging: charging,
                                            measuredFPS: trustedFPS)
+        let cause = AdaptiveQuality.pressure(thermal: thermal, lowPower: lowPower,
+                                             batteryLevel: batteryLevel, charging: charging,
+                                             measuredFPS: trustedFPS)
         // ASYMMETRIC HYSTERESIS (founder "Visuals Zucken noch"). A DEMOTION (more
         // conservative) applies immediately — if the device is stressed, back off now.
         // A PROMOTION (more expensive: higher targetFPS/detail) must PERSIST for
@@ -364,7 +373,7 @@ public final class ResourceGovernor {
         } else {
             pendingPromoteTier = nil   // demotion / no change → clear any pending promotion
         }
-        apply(raw)
+        apply(raw, cause: cause)
     }
 
     /// Minimum seconds a better (more expensive) tier must persist before it's adopted.
@@ -372,7 +381,8 @@ public final class ResourceGovernor {
     @ObservationIgnored private var pendingPromoteTier: QualityTier?
     @ObservationIgnored private var pendingPromoteSince: CFTimeInterval = 0
 
-    private func apply(_ next: QualitySettings) {
+    private func apply(_ next: QualitySettings, cause: QualityPressure) {
+        if cause != pressure { pressure = cause }
         // Belt-and-braces with the unconditional publish at the end of `init()`: since
         // `settings` is written ONLY here, the ceiling cannot go stale even behind the
         // guard. Placed before it anyway so the invariant survives `apply` ever gaining

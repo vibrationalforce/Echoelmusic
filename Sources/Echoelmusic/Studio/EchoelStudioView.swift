@@ -5510,6 +5510,42 @@ struct EchoelStudioView: View {
         }
     }
 
+    /// Zug 3 (2026-09-30): the Field panel's "Power" row — `PowerRung` (Full / Reduced / Saving)
+    /// from `governor.settings.tier`, the cause from `governor.pressure`, both COLD (`ResourceGovernor`
+    /// writes them only when the tier moves, behind a 4 s / 6 s dwell). A leaf like `AudioRouteRow`
+    /// beside it, so the panel body registers no governor observation; it reads, never drives —
+    /// no `recordFrame`, no `refresh()`, no pin (`TheQualityPinHasNoDoorTests` stays green for a
+    /// true reason: this row names neither of the two pin properties).
+    ///
+    /// NEEDS-FOUNDER-VERIFY: turn Low Power Mode on → "Reduced · Low Power Mode is on" and the
+    /// remedy names Settings › Battery; off again → "Full · detail and bio stream at full rate"
+    /// after the promote dwell; a hot phone → "the phone is hot". VoiceOver reads one sentence.
+    private struct PowerStatusRow: View {
+        @Environment(ResourceGovernor.self) private var governor
+
+        var body: some View {
+            let rung = PowerRung.rung(tier: governor.settings.tier)
+            let pressure = governor.pressure
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Text("Power")
+                        .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
+                    Spacer()
+                    Text(rung.line(pressure: pressure))
+                        .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.text)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Text(rung.caption(pressure: pressure))
+                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Power")
+            .accessibilityValue(rung.spoken(pressure: pressure))
+        }
+    }
+
     private struct AudioTimingRow: View {
         let engine: AudioEngine
 
@@ -5688,6 +5724,9 @@ struct EchoelStudioView: View {
             }
             .accessibilityLabel("Open the visual full screen")
             .accessibilityHint("Fills the display with the bio-reactive field and its performance controls.")
+            // Zug 3 (2026-09-30): the governor's tier and its cause, in words — the last of the
+            // six status ladders. A leaf: this panel's body reads no governor state.
+            PowerStatusRow()
             // ⛔ `signalSection` STOOD HERE AND IS REMOVED (#575, founder 2026-08-13). He
             // circled the whole block on a v10.79.388 screenshot — the wavefront, its
             // paragraph, the spectrum, its paragraph, the `63,0 Hz · B1 +36 ct` readout —
