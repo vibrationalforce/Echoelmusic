@@ -3596,3 +3596,9 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Mechanism:** SwiftUI localises a `Text("…")`/`Button("…")`/`.accessibilityLabel("…")` literal by content (LocalizedStringKey). No Sources edit; 160 catalog units; guard claim 10 = the measuring regex as a walk over a listed family, with a listed untranslated set (brand/technical) and a seam rule (left half of `+ "…"` is `Text(String)`, not a key).
 - **Left out:** doorless surfaces; the three big instrument files (EchoelStudioView 175 · PatchbayView 47 · EchoelFXView 44) — next slices, one file each.
 - **Review 2026-10-30:** device G6; the longest units are the Workstation empty state and the SafeMode paragraph — check for clipping in `fixedSize` rows.
+
+### 2026-09-30 — E4-7: German panel texts of EchoelStudioView, catalog-only (8015db45c)
+
+- **Mechanism:** as E4-6 — 162 catalog units, no Swift edit. Guard claim 10 now walks the family through `codeOnly` (TRAGEND: `Button("literal")` in a comment of this file was the one verdict that flipped), floor 300 sites.
+- **Left out, with reason:** four `+` seams (save caption, nearby-devices hint, accent hint, latency hint) = `Text(String)`, need a sentence design; helper-routed row labels (`labeledRow`/`groupHeader`/`mixStripCard` take `String`) = a Sources slice; PatchbayView (47) and EchoelFXView (44) = next two catalog slices.
+- **Review 2026-10-30:** device G6 — the long panel captions (colour law, self-play, note length) in German are ~15 % longer; check the `fixedSize` rows for clipping.

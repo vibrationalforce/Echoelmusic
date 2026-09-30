@@ -41029,3 +41029,18 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
   (interpolierter Schlüssel wird nicht verlangt). Transkription: HEAD 184/160 fehlend = EIN Befund; WORK 184/0.
 - **Checker:** dead-needles OK, swift-escapes OK, foreign-needles OK, Katalog-Invarianten 0; keine Glossar-Lehnwörter
   im Deutschen. Push nach Compile Check auf 74f0c48e6. Protokoll: csv 1068, memory, FOUNDER_INBOX E4-Zeile.
+
+## 2026-09-30 — E4-7 gebaut: deutsche Panel-Texte von EchoelStudioView, nur Katalog (8015db45c lokal)
+
+- **Gemessen (Mess-Regex von Anspruch 10):** 207 Stellen, 174 Schlüssel, 162 neue Einheiten, Katalog 325 → 487. Übersprungen: 24 Interpolationen
+  (kein Schlüssel), 4 `+`-Nähte (Sichern-Caption · Nearby-Hinweis · Akzent-Hinweis · Latenz-Hinweis — `Text(String)`, wörtlich), `Genre` (gelistet).
+- **Wächter:** Anspruch 10 liest die Familie jetzt durch `codeOnly` — `EchoelStudioView` zitiert `Button("literal")` in einem Kommentar, die rohe
+  Lesung verlangte dafür eine deutsche Einheit. **Stripper TRAGEND: genau dieses eine Urteil kippt** (Python-Spiegel von `SourceText.codeOnly`,
+  roh vs. bereinigt auf WORK). Datei in `panelFamily`, Boden 150 → 300 Stellen. Transkription: HEAD 385/161 fehlend = EIN Befund; WORK 385/0.
+- **Nicht Katalog-Sache, aufgeschrieben statt still gelassen:** Zeilen-Labels über String-nehmende Helfer (`labeledRow("Shape")`,
+  `groupHeader("Tone")`, `mixStripCard("Click")`) erreichen `Text(String)` wörtlich — eine Sources-Scheibe. ⚠️ Beobachtet, nicht angefasst:
+  der Hinweis „Weather needs a coarse location — turn on \"Place in session name\"" nennt den Schalter mit dem gestrichenen Wort „session";
+  der Schalter heißt heute „Place in piece name" (Glossar-Rest im Englischen, Escape-Schlüssel → nicht im Katalog).
+- **Checker:** swift-escapes OK, dead-needles OK, foreign-needles OK, Katalog 487 Schlüssel 0 Verletzungen, keine Glossar-Lehnwörter im Deutschen.
+- **Gates Stapel 74f0c48e6 (E4-3…E4-5):** Compile Check 3091 ✓, CI/CD 6555 Build for Testing ✓ (20:34–20:41Z — Ansprüche 7/8/9 kompilieren),
+  Auto-Merge 3989 ✓ → main = 74f0c48e6; Run Tests läuft. E4-6 gepusht als a344e6472 (Monitor läuft). Push von E4-7 nach dessen Compile Check.
