@@ -3687,3 +3687,13 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   that eleven slices had grown. Before pushing a grown test method, scan its `let` names for duplicates — that
   scan is now a one-liner in the SESSION_LOG entry and caught exactly one.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — E4-20: the Genre picker's 23 shelf headers speak German (4cc18316e)
+
+- **Decision:** `MusicStyle.Subcategory.title` returns `String(localized:)` per case; catalog 793 → 815. `Category.title`
+  stays a literal on purpose (zero production readers — localising dead text is catalog weight, #364).
+- **Why:** the two `Section(shelf.title)` sites never localise a `StringProtocol`; only the producer can. The runtime
+  guards (`GenreSubcategoryTests` claim 5, the batch pins, the vocabulary guard) read the EN value in the simulator's
+  locale, which equals the key, so none moves.
+- **Review:** 2026-10-30. Remaining picker producer: `Scale.displayName` (86 names — Dur/Moll/-isch forms; check the
+  export-naming guard before touching it, the key name is interpolated at `MusicalKey.swift:548`).

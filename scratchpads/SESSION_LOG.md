@@ -41163,3 +41163,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Fix e83badc9f (Tests-only):** `mediaLabel`; `root` entfernt; „Genre“ aus `untranslatedPanelWords`, weil E4-18 ihm eine Einheit gab — Anspruch 10 mit der Ausnahme weg neu gefahren: 484 Sites, 408 distinct, 0 fehlend auf beiden Bäumen. **Duplikat-Scan** über alle zwölf Methoden (`let X =` je Methode): `media` war das einzige Duplikat. ⭐ **Neue Gewohnheit für diese Serie: vor jedem Push einer gewachsenen Testmethode die `let`-Namen auf Doppelungen scannen.**
 - **Hoist cc4e76cf7 (2 Sources):** die `+`-Ketten aus E4-18 (Instanz-Satz) und E4-19 (Kartenzähler) in `spokenInstance` / `cardValue(_:index:of:)` verlegt — `GuideOverlay.card` stand schon VOR der Kette bei 479 ms Type-Check (BfT 6561, #933d). Nadeln lösen weiter auf (Transkription WORK PASS).
 - **Push 21:47:01Z, Spitze cc4e76cf7** (Stapel: 1a3660e9a docs · cf16b3425 E4-18 · f7a2ea6c1 docs · 50122b5e9 E4-19 · e83badc9f fix · cc4e76cf7 hoist). Gate-Lesung #340.
+
+## 2026-09-30 — E4-20: 23 Genre-Regal-Überschriften sprechen Deutsch (4cc18316e, LOKAL)
+
+- **Gebaut:** `Subcategory.title` → 23 × `String(localized:)`; Doc-Kommentar über dem Getter („Katalog existiert noch nicht“) und der MusicalKey-Backlog-Kommentar nachgezogen. Katalog 793 → 815 (22 neu; „European Folk“ teilt den Schlüssel mit der Tonleiter-Familie). `Category.title` bleibt Literal (null Produktionsleser).
+- **Wächter:** Anspruch 11 +23 Returns, 23 Einheiten. Laufzeit-Pins (`GenreSubcategoryTests` Anspruch 5 ASCII/≤22/eindeutig, sechs Batch-Pins, Vokabular-Wächter) unverändert — sie lesen den EN-Wert im Simulator, und der ist der Schlüssel.
+- **Benotung** `scratchpad/transcribe_e4_20.py`: HEAD FAIL (0/23, 23 verbatim, 22 Einheiten fehlen — EIN Befund), WORK PASS, `Category.title` weiter Literal. Duplikat-Scan Anspruch 11: 18 Bindungen, 0 Doppelungen. Stripper PROPHYLAKTISCH 0/23. Checker sauber, moved-needles leer, reachability 3 vorbestehend. Sources-Dateien: 3.
+- **Push-Politik:** lokal, wartet auf Compile Check 3098 auf cc4e76cf7.
