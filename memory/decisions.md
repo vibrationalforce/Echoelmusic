@@ -3428,3 +3428,8 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - Compile Check 3071 + Build for Testing 6535 red: `let title: String` (EchoelIconTile) and `private var exportTitle` (EchoelStudioView) declared twice → memberwise init with two `title:` labels → "missing argument" at four call sites. Fixed in 3c8b07ca5 (two deletions, 15 lines).
 - Root cause: the script's idempotency guard counted the ANCHOR (`if c == 0 and new in t`). That works for a replacement, which removes the anchor, and fails for an insertion, which keeps it — the second run inserted again. The Python transcription greps for PRESENCE, so it stayed green.
 - Rule from here: guard an insertion by the inserted text (`if new in t: continue`), and run a duplicate-adjacent-block scan over touched Sources files with the checkers before every commit.
+
+### 2026-09-30 — Compile red on b23571e31: `minWidth:` beside `height:` is two overloads
+
+- Compile Check 3072: WorkspaceView.swift:901 "extra argument 'height' in call". The rule-2 slice made the Pause chip's width a minimum and left `height:` in place; SwiftUI's fixed and flexible `frame` overloads do not mix. Fixed in fe3080e9f: `.frame(minWidth: 44, minHeight: EchoelTheme.controlHeight)` — the #262 floor form, as on the compact tempo readout — and the height guard's needle moved to the compiling spelling.
+- Lesson: a source-text guard and the Python transcription both pin PRESENCE; neither can see an overload mismatch. The guard had pinned the non-compiling line as law. The Compile Check is the only reader of that class — which is why no Sources push stacks before it concludes.
