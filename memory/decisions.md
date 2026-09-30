@@ -3073,3 +3073,19 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Guards rewritten as the decision, none weakened:** `DetunedInstrumentSaysSoTests` 1/2/3/5/6 (delegation + leaf measurement + piece gate; piece mount, one poster, receiver case; standard-id needle; decimal text in the leaf; studio mounts the leaf + floor), `TheStatefulControlsSpeakTheirStateTests` 3 (re-anchored to the leaf struct), `ResetSoundClearsWhatTheLaunchLineReportsTests` (toneSystemID: „no literal left" in both views + `SoundReset` reads the key). Transcribed: 48 assertions, worktree 0 red; parent 56a1f0971 one absence (the leaf) + 14 decision reds.
 - **Device asks:** A4 ≠ 440 in the header strip → the Piece stage shows the banner above the arrangement; „Standard" returns the pitch without turning the stage; the Sound plate shows the same line.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Head leaf 1: the ONE Play/Stop wears its word
+
+- **Decision:** `ProjectTransport.buttonWord(running:)` — "Stop" / "Play", by law the first word of `buttonLabel`; `ProjectHeader.playStopButton` draws glyph + word (`.fixedSize()`, side padding before the 44 pt floor). The compact Record stays a glyph. The space-bar shortcut is left out (unmeasurable TextField interaction).
+- **Why:** doc order after slice 2c ("Ein Kopf, der spricht"); a lone triangle is a guess for a beginner; the drawn word being the prefix of the spoken label means neither is a copy (#416).
+- **Guard:** `TheProjectHeaderRunsOneTransportTests` claim 10 (new). Transcribed: WORK 14/14, parent 5 red by one absence.
+- **Device asks:** worded button + compact Record on 375 pt in one row; accessibility sizes stack.
+- **Review:** 2026-10-30.
+
+### 2026-09-30 — Head leaf 2: the pulse pill is the head's, mounted above both stages
+
+- **Decision:** `PulseMonitorMiniLive` MOVES from `EchoelStudioView.startControlRow` into `ProjectHeader` (`pulsePill`, one mount). Row = `ViewThatFits(in: .horizontal)`: summary · pill · controls on one line while the ideal widths fit, else the pill on a second line; accessibility sizes stack everything. `AnyLayout` dropped (one identity law per row; VoiceOver focus may leave Play on rotation — recorded). The studio's `transportLine1` keeps `startButton` · `PlaybackToggleButton()` · `tempo`.
+- **Why:** since slice 1 the Piece stage is the home and the body was nowhere on screen there; the pill sat in the hidden instrument since the founder's 2026-07-31 drawing (#289), made when that plate was the home. Doc law: "Die Puls-Pille bleibt im Kopf … 'Körper' bleibt im Kopf sichtbar". Freeze law kept: the pill reads the ~10 Hz publisher in its own body; the header constructs it and reads nothing of it.
+- **Guards rewritten as the decision, none weakened:** `TheTransportBarIsDissolvedTests` 2, `TwoControlsShareALineOnlyWhileTheyFitTests` 5, `TheBioPanelDoorIsThePulsePillTests` 3. Transcribed: WORK 27/27, parent 9 red = one absence + three decision needles; 18 counterweights green on both trees.
+- **Device asks:** header two lines in iPhone portrait; pill tap from the piece opens the Bio plate and turns the Instrument stage; long-press names the source.
+- **Review:** 2026-10-30.
