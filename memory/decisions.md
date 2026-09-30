@@ -3607,3 +3607,10 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 
 - 74 units for PatchbayView + EchoelFXView; both in `panelFamily`, floor 400. Technical names kept as identical German units (MIDI · DMX · Digital · Tape · Ping-Pong · Auto-Pan · Notch · Bipolar). Seventh `+` seam recorded (EchoelFXView neutral-0.50 hint).
 - **Next:** the Sources slice for String-taking label helpers (`labeledRow`/`groupHeader`/`mixStripCard`), a sentence design for the seven seams, then the remaining String-returning copy files.
+
+### 2026-09-30 — E4-9: label helpers take a `LocalizedStringKey` (72fe0cc27)
+
+- **What:** `groupHeader`/`labeledRow`/`mixStripCard`/`weatherMixGroup` — parameter type `String` → `LocalizedStringKey`, zero call-site edits. `collapsibleGroupHeader` keeps `String` (hint interpolates) and wraps `LocalizedStringKey(title)` itself; its hint is two catalog pieces around `String(localized: String.LocalizationValue(title))`, `.lowercased()` dropped (German nouns). Three verbatim Shown/Hidden ternaries localised (EchoelStudioView ×2, MediaBrowserView).
+- **Guards:** claim 10 alternation + claim 11 (signatures, wrap, ternary gone in both files, nine units); `SectionHeadingIsOneTreatmentTests` needle moved with the signature in the same commit.
+- **Open, measured:** `EchoelValueField(label: String)` and the `param`/`knob`/`moodKnob`/`masterDoorButton`/`sizeButton` String helpers — the next family, app-wide, Council first (the label also titles the number pad).
+- **Review 2026-10-30:** device — VoiceOver on a collapsible group reads „Zeigt oder verbirgt die Look-Regler“; check the compound reads naturally for Stimme/Selbstspiel.

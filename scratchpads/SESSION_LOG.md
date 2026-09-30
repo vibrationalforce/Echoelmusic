@@ -41053,3 +41053,19 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** beide Dateien in `panelFamily`, Boden 300 → 400. Transkription HEAD 477/74 fehlend = EIN Befund; WORK 477/0; Stripper weiter
   TRAGEND („literal"). Checker: swift-escapes OK, dead-needles OK, Katalog 561 Schlüssel 0 Verletzungen.
 - **Stand des Stapels:** lokal 8015db45c (E4-7) · f93b92abb · e2152b4ab · Docs; gepusht ist a344e6472 (E4-6), dessen Compile Check der Push-Auslöser ist.
+
+## 2026-09-30 — E4-9 gebaut: die Label-Helfer des Instruments nehmen einen Schlüssel (72fe0cc27 lokal)
+
+- **Befund:** 22 Zeilen-/Gruppen-Labels liefen durch vier String-nehmende Helfer (`groupHeader` 11 Stellen, `labeledRow` 10, `mixStripCard` 5,
+  `weatherMixGroup` 2) → `Text(String)`, wörtlich, neben übersetzten Nachbarn. Kleinste Reparatur: Parametertyp `LocalizedStringKey`, null
+  Aufrufstellen-Edits; gemessen, dass jede Aufrufstelle ein Literal übergibt (einzige Variable: `groupHeader(title)` in `weatherMixGroup`, selbst ein Schlüssel).
+- **Fünfter Helfer:** `collapsibleGroupHeader` behält `String` (der Hinweis interpoliert den Titel) und schlägt den Schlüssel selbst nach; Hinweis =
+  zwei Katalog-Stücke um den lokalisierten Titel, `.lowercased()` gestrichen (deutsche Substantive). ⛔ Der erste Entwurf der Negativ-Prüfung
+  („kein `? \"Shown\" : \"Hidden\"` mehr") war auf WORK ROT — die Transkription fand ZWEI weitere wörtliche Ternäre (Feinabstimmungs-Disclosure,
+  Medienbibliothek); beide lokalisiert, die Prüfung deckt jetzt beide Dateien. Ohne §0 wäre der Wächter rot gepusht worden.
+- **Wächter:** Anspruch 10 (Alternation + 5 Helfer) und neuer Anspruch 11; `SectionHeadingIsOneTreatmentTests` mitgezogen (§4). Transkription
+  HEAD: 18 fehlende Einheiten, 0/8 Signaturen, Ternär da = EIN Befund; WORK: alles grün. moved-needles 0, dead-needles OK, swift-escapes OK,
+  needle-reachability = die drei bekannten Fehlalarme. Katalog 561 → 583. Sources-Dateien: 3.
+- **Gemessen und offen gelassen:** `EchoelValueField(label: String)` + `param`/`knob`/`moodKnob`/`masterDoorButton`/`sizeButton` — app-weite
+  Familie, das Label betitelt auch den Ziffernblock → eigene Scheibe, Council zuerst.
+- **Gates:** a344e6472 (E4-6) Compile Check 3092 ✓; Stapel de2e3a3d7 (E4-7/E4-8) gepusht 20:57Z, Monitor läuft. E4-9 wartet auf dessen Compile Check.
