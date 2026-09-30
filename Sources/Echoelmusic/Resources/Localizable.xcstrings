@@ -5850,6 +5850,2922 @@
           }
         }
       }
+    },
+    "Save changes" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save changes"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Änderungen sichern"
+          }
+        }
+      }
+    },
+    "Save as new" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save as new"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als neu sichern"
+          }
+        }
+      }
+    },
+    "Save" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichern"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abbrechen"
+          }
+        }
+      }
+    },
+    "Saves the 8 mood dimensions as a named mood you can recall." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saves the 8 mood dimensions as a named mood you can recall."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichert die 8 Stimmungs-Dimensionen als benannte Stimmung, die du wieder aufrufen kannst."
+          }
+        }
+      }
+    },
+    "Saves the current timbre as a named sound you can recall." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saves the current timbre as a named sound you can recall."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichert die aktuelle Klangfarbe als benannten Klang, den du wieder aufrufen kannst."
+          }
+        }
+      }
+    },
+    "Breathing guide" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breathing guide"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atemführung"
+          }
+        }
+      }
+    },
+    "The light breathes with you toward your resonance pace" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The light breathes with you toward your resonance pace"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Licht atmet mit dir hin zu deinem Resonanztempo"
+          }
+        }
+      }
+    },
+    "Back to the breathing guide" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back to the breathing guide"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurück zur Atemführung"
+          }
+        }
+      }
+    },
+    "Closes the studio and returns to the breathing guide." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Closes the studio and returns to the breathing guide."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließt das Studio und kehrt zur Atemführung zurück."
+          }
+        }
+      }
+    },
+    "Play starts the music. Once it plays, you can record the loop, save the piece, or export a WAV or MIDI file." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play starts the music. Once it plays, you can record the loop, save the piece, or export a WAV or MIDI file."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abspielen startet die Musik. Sobald sie spielt, kannst du den Loop aufnehmen, das Stück sichern oder eine WAV- oder MIDI-Datei exportieren."
+          }
+        }
+      }
+    },
+    "Export MIDI for your DAW" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export MIDI for your DAW"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI für deine DAW exportieren"
+          }
+        }
+      }
+    },
+    "Exports the instrument's music as a MIDI file to open in a DAW, with tempo and key" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exports the instrument's music as a MIDI file to open in a DAW, with tempo and key"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportiert die Musik des Instruments als MIDI-Datei für eine DAW, mit Tempo und Tonart"
+          }
+        }
+      }
+    },
+    "Open a saved piece" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open a saved piece"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein gesichertes Stück öffnen"
+          }
+        }
+      }
+    },
+    "Live Colabo — play together with a nearby device" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live Colabo — play together with a nearby device"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live Colabo — mit einem Gerät in der Nähe zusammen spielen"
+          }
+        }
+      }
+    },
+    "Learn and news" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learn and news"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lernen und Neuigkeiten"
+          }
+        }
+      }
+    },
+    "Opens the body-science library and release notes" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the body-science library and release notes"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet die Körperwissen-Bibliothek und die Versionshinweise"
+          }
+        }
+      }
+    },
+    "Ends the instrument and the pulse reading. To drop only the music, use pause." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ends the instrument and the pulse reading. To drop only the music, use pause."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beendet das Instrument und die Pulsmessung. Um nur die Musik anzuhalten, Pause verwenden."
+          }
+        }
+      }
+    },
+    "Starts biofeedback; your body then composes and plays the music." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starts biofeedback; your body then composes and plays the music."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Startet das Biofeedback; dein Körper komponiert und spielt dann die Musik."
+          }
+        }
+      }
+    },
+    "Tracks, parts and scenes live on the Piece stage, above the instrument." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tracks, parts and scenes live on the Piece stage, above the instrument."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spuren, Teile und Szenen liegen auf der Stück-Bühne, über dem Instrument."
+          }
+        }
+      }
+    },
+    "Show the piece" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show the piece"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Stück zeigen"
+          }
+        }
+      }
+    },
+    "Bio source" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio source"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio-Quelle"
+          }
+        }
+      }
+    },
+    "Choosing a source starts the music when idle, or switches it while playing" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choosing a source starts the music when idle, or switches it while playing"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Quelle zu wählen startet die Musik im Ruhezustand oder wechselt sie beim Spielen"
+          }
+        }
+      }
+    },
+    "Press Play to start — your body then drives the sound. Choose your bio source below; Apple Watch feeds in through Health." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Press Play to start — your body then drives the sound. Choose your bio source below; Apple Watch feeds in through Health."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abspielen drücken, um zu starten — dann steuert dein Körper den Klang. Wähle unten deine Bio-Quelle; die Apple Watch kommt über Health herein."
+          }
+        }
+      }
+    },
+    "Open Routing" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Routing"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routing öffnen"
+          }
+        }
+      }
+    },
+    "Opens MIDI pairing, the MIDI out switches, the OSC, Art-Net, sACN and spatial-audio targets, and the light master." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens MIDI pairing, the MIDI out switches, the OSC, Art-Net, sACN and spatial-audio targets, and the light master."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet die MIDI-Kopplung, die MIDI-Out-Schalter, die OSC-, Art-Net-, sACN- und Raumklang-Ziele und den Licht-Master."
+          }
+        }
+      }
+    },
+    "A steady click at the current tempo" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A steady click at the current tempo"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein gleichmäßiger Klick im aktuellen Tempo"
+          }
+        }
+      }
+    },
+    "Master level lives in the Master panel — it is the sum of these, not one of them." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Master level lives in the Master panel — it is the sum of these, not one of them."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Master-Pegel liegt im Master-Panel — er ist die Summe dieser Regler, nicht einer davon."
+          }
+        }
+      }
+    },
+    "Generated parts back to genre balance" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generated parts back to genre balance"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generierte Teile zurück auf die Genre-Balance"
+          }
+        }
+      }
+    },
+    "Sets the generated bass and pad back to the genre's own balance. Field and click are not changed." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sets the generated bass and pad back to the genre's own balance. Field and click are not changed."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setzt den generierten Bass und das Pad zurück auf die eigene Balance des Genres. Feld und Klick bleiben unverändert."
+          }
+        }
+      }
+    },
+    "Explore" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explore"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erkunden"
+          }
+        }
+      }
+    },
+    "Play this idea" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play this idea"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Idee spielen"
+          }
+        }
+      }
+    },
+    "Place in piece name" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Place in piece name"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ort im Stücknamen"
+          }
+        }
+      }
+    },
+    "Stamps your city into piece and export names. Used only for the city name and, if you enable weather, an Apple Weather lookup — never stored by Echoel." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stamps your city into piece and export names. Used only for the city name and, if you enable weather, an Apple Weather lookup — never stored by Echoel."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setzt deine Stadt in Stück- und Exportnamen. Nur für den Stadtnamen genutzt und, falls du das Wetter einschaltest, für eine Apple-Weather-Abfrage — nie von Echoel gespeichert."
+          }
+        }
+      }
+    },
+    "Place, entered manually (optional)" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Place, entered manually (optional)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ort, von Hand eingegeben (optional)"
+          }
+        }
+      }
+    },
+    "Manual place name" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manual place name"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ortsname von Hand"
+          }
+        }
+      }
+    },
+    "Clear manual place" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear manual place"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ort von Hand löschen"
+          }
+        }
+      }
+    },
+    "Weather shapes the music and the image" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weather shapes the music and the image"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Wetter formt Musik und Bild"
+          }
+        }
+      }
+    },
+    "One coarse weather lookup at each start flavours sound and image. Each influence has its own intensity — mix it in or out. The body stays the main driver." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One coarse weather lookup at each start flavours sound and image. Each influence has its own intensity — mix it in or out. The body stays the main driver."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine grobe Wetterabfrage bei jedem Start färbt Klang und Bild. Jeder Einfluss hat seine eigene Stärke — misch ihn hinein oder heraus. Der Körper bleibt der Haupttreiber."
+          }
+        }
+      }
+    },
+    "Turns on the place toggle, asks for location permission if it has not been granted yet, and puts your city into piece and export names." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turns on the place toggle, asks for location permission if it has not been granted yet, and puts your city into piece and export names."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schaltet den Ort-Schalter ein, fragt nach der Standortfreigabe, falls sie noch fehlt, und setzt deine Stadt in Stück- und Exportnamen."
+          }
+        }
+      }
+    },
+    "Location is off for Echoel in Settings — weather has nothing to look up." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location is off for Echoel in Settings — weather has nothing to look up."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Standort ist für Echoel in den Einstellungen aus — das Wetter hat nichts nachzuschlagen."
+          }
+        }
+      }
+    },
+    "Weather's image mixers — Hue, Saturation, Glow, Movement — are in Field" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weather's image mixers — Hue, Saturation, Glow, Movement — are in Field"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Bildmischer des Wetters — Farbton, Sättigung, Glühen, Bewegung — liegen im Feld"
+          }
+        }
+      }
+    },
+    "Opens the Field panel, where the weather's four image influences are mixed." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the Field panel, where the weather's four image influences are mixed."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet das Feld-Panel, in dem die vier Bildeinflüsse des Wetters gemischt werden."
+          }
+        }
+      }
+    },
+    " Weather" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Weather"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Wetter"
+          }
+        }
+      }
+    },
+    "Apple Weather data attribution" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Weather data attribution"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple-Weather-Datenhinweis"
+          }
+        }
+      }
+    },
+    "Metronome (click)" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metronome (click)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metronom (Klick)"
+          }
+        }
+      }
+    },
+    "A steady click at the current tempo to play in time" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A steady click at the current tempo to play in time"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein gleichmäßiger Klick im aktuellen Tempo, um im Takt zu spielen"
+          }
+        }
+      }
+    },
+    "Accent downbeat" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accent downbeat"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akzent auf der Eins"
+          }
+        }
+      }
+    },
+    "Haptic beat (feel)" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haptic beat (feel)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haptischer Beat (fühlen)"
+          }
+        }
+      }
+    },
+    "Pulses the phone on each quarter-note so you can keep time eyes-free" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulses the phone on each quarter-note so you can keep time eyes-free"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lässt das Telefon auf jeder Viertelnote pulsieren, damit du den Takt ohne Hinsehen hältst"
+          }
+        }
+      }
+    },
+    "Tap tempo" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap tempo"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo tippen"
+          }
+        }
+      }
+    },
+    "Tap in time to set the tempo. This locks the tempo." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap in time to set the tempo. This locks the tempo."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Takt tippen, um das Tempo zu setzen. Das stellt das Tempo fest."
+          }
+        }
+      }
+    },
+    "Target" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Target"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ziel"
+          }
+        }
+      }
+    },
+    "Loudness delivery target" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loudness delivery target"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lautheits-Lieferziel"
+          }
+        }
+      }
+    },
+    "Tone" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tone"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klang"
+          }
+        }
+      }
+    },
+    "Master tonal character" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Master tonal character"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klangcharakter des Masters"
+          }
+        }
+      }
+    },
+    "Balanced, warm, bright or transparent — the EQ curve on the master bus" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Balanced, warm, bright or transparent — the EQ curve on the master bus"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgewogen, warm, hell oder transparent — die EQ-Kurve auf dem Master-Bus"
+          }
+        }
+      }
+    },
+    "The Target above sets the auto-gain and the export; the numbers are the mix, not the delivered file." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Target above sets the auto-gain and the export; the numbers are the mix, not the delivered file."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Ziel oben setzt die Auto-Verstärkung und den Export; die Zahlen sind der Mix, nicht die gelieferte Datei."
+          }
+        }
+      }
+    },
+    "Clear" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurücksetzen"
+          }
+        }
+      }
+    },
+    "Clear the integrated loudness and peak hold" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear the integrated loudness and peak hold"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die integrierte Lautheit und den Spitzenwert zurücksetzen"
+          }
+        }
+      }
+    },
+    "Release all notes" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Release all notes"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Noten loslassen"
+          }
+        }
+      }
+    },
+    "Immediately release every sounding note on every voice" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Immediately release every sounding note on every voice"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lässt sofort jede klingende Note auf jeder Stimme los"
+          }
+        }
+      }
+    },
+    "Audio latency" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio latency"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audiolatenz"
+          }
+        }
+      }
+    },
+    "Audio latency tier" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio latency tier"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audiolatenz-Stufe"
+          }
+        }
+      }
+    },
+    "Smaller buffers respond sooner and cost more CPU" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smaller buffers respond sooner and cost more CPU"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kleinere Puffer reagieren früher und kosten mehr CPU"
+          }
+        }
+      }
+    },
+    "Audio route" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio route"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audioweg"
+          }
+        }
+      }
+    },
+    "Power" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Power"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leistung"
+          }
+        }
+      }
+    },
+    "Audio timing" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio timing"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio-Timing"
+          }
+        }
+      }
+    },
+    "Full screen" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full screen"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vollbild"
+          }
+        }
+      }
+    },
+    "Open the visual full screen" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open the visual full screen"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Visual im Vollbild öffnen"
+          }
+        }
+      }
+    },
+    "Fills the display with the bio-reactive field and its performance controls." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fills the display with the bio-reactive field and its performance controls."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Füllt den Bildschirm mit dem bio-reaktiven Feld und seinen Performance-Reglern."
+          }
+        }
+      }
+    },
+    "Note grid on the field" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note grid on the field"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notenraster auf dem Feld"
+          }
+        }
+      }
+    },
+    "Draws each note's cell over the field in its own physical colour, so you can see which note you are about to play." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Draws each note's cell over the field in its own physical colour, so you can see which note you are about to play."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeichnet die Zelle jeder Note in ihrer eigenen physikalischen Farbe über das Feld, damit du siehst, welche Note du gleich spielst."
+          }
+        }
+      }
+    },
+    "Spectrum donuts instead of the field" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spectrum donuts instead of the field"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spektrum-Ringe statt des Feldes"
+          }
+        }
+      }
+    },
+    "Draws the sound as spectrum rings instead of the Metal field. Moving the look slider returns to the field." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Draws the sound as spectrum rings instead of the Metal field. Moving the look slider returns to the field."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeichnet den Klang als Spektrum-Ringe statt des Metal-Feldes. Den Look-Regler zu bewegen kehrt zum Feld zurück."
+          }
+        }
+      }
+    },
+    "Show on a screen: mirror via AirPlay" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show on a screen: mirror via AirPlay"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf einem Bildschirm zeigen: per AirPlay spiegeln"
+          }
+        }
+      }
+    },
+    "Use Control Center Screen Mirroring to show this visual on a screen" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use Control Center Screen Mirroring to show this visual on a screen"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Bildschirmsynchronisierung im Kontrollzentrum nutzen, um dieses Visual auf einem Bildschirm zu zeigen"
+          }
+        }
+      }
+    },
+    "Colour defaults to the heard tone octave-transposed into visible light — its frequency doubled until it reaches the visible band, rendered through CIE 1931 and closed over the CIE purple line where deep red meets deep violet, so every tone has a colour. Hue/Saturation rotate the palette for VJ/performance use. Motion is capped so the flash rate always stays under the 3 Hz safety limit." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colour defaults to the heard tone octave-transposed into visible light — its frequency doubled until it reaches the visible band, rendered through CIE 1931 and closed over the CIE purple line where deep red meets deep violet, so every tone has a colour. Hue/Saturation rotate the palette for VJ/performance use. Motion is capped so the flash rate always stays under the 3 Hz safety limit."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Farbe folgt standardmäßig dem gehörten Ton, oktavweise ins sichtbare Licht versetzt — seine Frequenz wird verdoppelt, bis sie das sichtbare Band erreicht, über CIE 1931 gerendert und über der CIE-Purpurlinie geschlossen, wo Tiefrot auf Tiefviolett trifft, sodass jeder Ton eine Farbe hat. Farbton/Sättigung drehen die Palette für VJ- und Performance-Zwecke. Die Bewegung ist begrenzt, damit die Blitzrate immer unter der 3-Hz-Sicherheitsgrenze bleibt."
+          }
+        }
+      }
+    },
+    "What your fingers sound like on the field. Same as music follows the generated music; pick a patch to give the field its own voice." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What your fingers sound like on the field. Same as music follows the generated music; pick a patch to give the field its own voice."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie deine Finger auf dem Feld klingen. „Wie die Musik“ folgt der generierten Musik; wähle ein Patch, um dem Feld eine eigene Stimme zu geben."
+          }
+        }
+      }
+    },
+    "Sliding the finger opens vibrato and ensemble width; Glide makes slides sing between notes instead of re-striking." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sliding the finger opens vibrato and ensemble width; Glide makes slides sing between notes instead of re-striking."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den Finger zu ziehen öffnet Vibrato und Ensemblebreite; Glide lässt Züge zwischen Noten singen, statt neu anzuschlagen."
+          }
+        }
+      }
+    },
+    "The field plays itself while the transport runs: a point travels the surface — or, on Arp, walks your chord — and strikes notes in your key. Press Play to hear it. Put a finger down and it stops instantly — your hand always wins. Its speed follows the Sync grid above, even with Sync itself off." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The field plays itself while the transport runs: a point travels the surface — or, on Arp, walks your chord — and strikes notes in your key. Press Play to hear it. Put a finger down and it stops instantly — your hand always wins. Its speed follows the Sync grid above, even with Sync itself off."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Feld spielt sich selbst, während der Transport läuft: ein Punkt wandert über die Fläche — oder läuft auf Arp deinen Akkord entlang — und schlägt Noten in deiner Tonart an. Abspielen drücken, um es zu hören. Ein Finger auf dem Feld stoppt es sofort — deine Hand gewinnt immer. Sein Tempo folgt dem Sync-Raster oben, auch wenn Sync selbst aus ist."
+          }
+        }
+      }
+    },
+    "Motion" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Motion"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewegung"
+          }
+        }
+      }
+    },
+    "Self-play motion" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Self-play motion"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selbstspiel-Bewegung"
+          }
+        }
+      }
+    },
+    "Arp walks upwards through chord degrees of your scale instead of travelling across the field. Density sets how many cells sound, Rhythm how they sit, Band the register. Traverse is the bar the rhythm counts in — on Sparse and Syncopated it also moves which cells sound, and on all six it sets where the accents fall." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arp walks upwards through chord degrees of your scale instead of travelling across the field. Density sets how many cells sound, Rhythm how they sit, Band the register. Traverse is the bar the rhythm counts in — on Sparse and Syncopated it also moves which cells sound, and on all six it sets where the accents fall."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arp läuft aufwärts durch die Akkordstufen deiner Skala, statt über das Feld zu wandern. Dichte setzt, wie viele Zellen klingen, Rhythmus, wie sie sitzen, Band das Register. Traverse ist der Takt, in dem der Rhythmus zählt — auf Sparse und Syncopated verschiebt er auch, welche Zellen klingen, und auf allen sechs setzt er, wo die Akzente fallen."
+          }
+        }
+      }
+    },
+    "Band drift only changes the arp when it crosses into the next register — under about 0.35 it does nothing." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band drift only changes the arp when it crosses into the next register — under about 0.35 it does nothing."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band-Drift ändert das Arp nur, wenn es ins nächste Register wechselt — unter etwa 0,35 tut es nichts."
+          }
+        }
+      }
+    },
+    "Band drift under about 0.35 moves the light on the field without changing the octave." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band drift under about 0.35 moves the light on the field without changing the octave."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band-Drift unter etwa 0,35 bewegt das Licht auf dem Feld, ohne die Oktave zu ändern."
+          }
+        }
+      }
+    },
+    "Rhythm" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rhythm"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rhythmus"
+          }
+        }
+      }
+    },
+    "Arp rhythm" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arp rhythm"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arp-Rhythmus"
+          }
+        }
+      }
+    },
+    "Note length is a fraction of one cell, scaled by the rhythm — Driving stays short even at 1. Below the instrument's 15 ms minimum nothing gets shorter, and the faster the tempo the sooner that floor is reached; a single note never rings longer than one second. A high Laid back also shortens the longest notes: one that starts late cannot fill its cell as well." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note length is a fraction of one cell, scaled by the rhythm — Driving stays short even at 1. Below the instrument's 15 ms minimum nothing gets shorter, and the faster the tempo the sooner that floor is reached; a single note never rings longer than one second. A high Laid back also shortens the longest notes: one that starts late cannot fill its cell as well."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Notenlänge ist ein Bruchteil einer Zelle, skaliert vom Rhythmus — Driving bleibt auch bei 1 kurz. Unter dem 15-ms-Minimum des Instruments wird nichts kürzer, und je schneller das Tempo, desto früher ist dieser Boden erreicht; eine einzelne Note klingt nie länger als eine Sekunde. Ein hohes Laid back kürzt auch die längsten Noten: eine, die spät beginnt, kann ihre Zelle nicht mehr ganz füllen."
+          }
+        }
+      }
+    },
+    "How far behind its own step a note lands, as a fraction of one step — 0 is dead on the grid. The rhythm adds its own on top (Syncopated leans back on the off-beats, Flowing everywhere), and the total can never push a note into the next step. Earlier-than-the-grid is not offered: the instrument can hold a note back, not see one coming." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How far behind its own step a note lands, as a fraction of one step — 0 is dead on the grid. The rhythm adds its own on top (Syncopated leans back on the off-beats, Flowing everywhere), and the total can never push a note into the next step. Earlier-than-the-grid is not offered: the instrument can hold a note back, not see one coming."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie weit hinter ihrem eigenen Schritt eine Note landet, als Bruchteil eines Schritts — 0 ist genau auf dem Raster. Der Rhythmus legt seinen eigenen Anteil obendrauf (Syncopated lehnt sich auf den Off-Beats zurück, Flowing überall), und die Summe kann eine Note nie in den nächsten Schritt schieben. Früher als das Raster wird nicht angeboten: das Instrument kann eine Note zurückhalten, aber keine kommen sehen."
+          }
+        }
+      }
+    },
+    "Sync pulls your touches onto the beat while the transport runs — early ones wait for the grid, late ones get a quiet echo on it. Life sets how much the corrected notes breathe. On swung genres the grid it aims at is the straight one." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync pulls your touches onto the beat while the transport runs — early ones wait for the grid, late ones get a quiet echo on it. Life sets how much the corrected notes breathe. On swung genres the grid it aims at is the straight one."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync zieht deine Berührungen auf den Beat, während der Transport läuft — frühe warten auf das Raster, späte bekommen ein leises Echo darauf. Leben setzt, wie sehr die korrigierten Noten atmen. Bei geswingten Genres zielt es auf das gerade Raster."
+          }
+        }
+      }
+    },
+    "Grid" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grid"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raster"
+          }
+        }
+      }
+    },
+    "Sync grid" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync grid"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync-Raster"
+          }
+        }
+      }
+    },
+    "Slider looks — tap to add or remove; the slider fades through these in order" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slider looks — tap to add or remove; the slider fades through these in order"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regler-Looks — tippen zum Hinzufügen oder Entfernen; der Regler blendet der Reihe nach durch sie"
+          }
+        }
+      }
+    },
+    "The donuts draw a set number of bands of the spectrum — Detail, under Fine tune, is the one dial that reaches them. The field's dials (Energy, Intensity, Motion, Spread, Hue, Saturation, Texture, Glitter, Structure) do not, so they are hidden here instead of shown doing nothing. Switch back to the field to use them." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The donuts draw a set number of bands of the spectrum — Detail, under Fine tune, is the one dial that reaches them. The field's dials (Energy, Intensity, Motion, Spread, Hue, Saturation, Texture, Glitter, Structure) do not, so they are hidden here instead of shown doing nothing. Switch back to the field to use them."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Ringe zeichnen eine feste Zahl von Bändern des Spektrums — Detail, unter Feinabstimmung, ist der eine Regler, der sie erreicht. Die Regler des Feldes (Energie, Intensität, Bewegung, Streuung, Farbton, Sättigung, Textur, Glitzer, Struktur) tun das nicht, deshalb sind sie hier verborgen, statt wirkungslos gezeigt zu werden. Wechsle zurück zum Feld, um sie zu nutzen."
+          }
+        }
+      }
+    },
+    "Calm ↔ energetic, across the same range the presets span. Fine tune holds the individual parameters." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calm ↔ energetic, across the same range the presets span. Fine tune holds the individual parameters."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruhig ↔ energisch, über denselben Bereich, den die Presets abdecken. Die Feinabstimmung hält die einzelnen Parameter."
+          }
+        }
+      }
+    },
+    "Fine tune" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fine tune"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feinabstimmung"
+          }
+        }
+      }
+    },
+    "Fine tune the visual" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fine tune the visual"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Visual fein abstimmen"
+          }
+        }
+      }
+    },
+    "Shows or hides the individual visual parameters" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows or hides the individual visual parameters"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt oder verbirgt die einzelnen Visual-Parameter"
+          }
+        }
+      }
+    },
+    "Detail shapes the Rings look only. Add Rings under Slider looks above, then drag the look slider onto it." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detail shapes the Rings look only. Add Rings under Slider looks above, then drag the look slider onto it."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detail formt nur den Look „Ringe“. Füge Ringe oben unter Regler-Looks hinzu und ziehe dann den Look-Regler darauf."
+          }
+        }
+      }
+    },
+    "Bass rhythm" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bass rhythm"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bass-Rhythmus"
+          }
+        }
+      }
+    },
+    "Genre keeps the style's own bassline; the other choices override it" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genre keeps the style's own bassline; the other choices override it"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genre behält die eigene Basslinie des Stils; die anderen Optionen überschreiben sie"
+          }
+        }
+      }
+    },
+    "Pad rhythm" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pad rhythm"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pad-Rhythmus"
+          }
+        }
+      }
+    },
+    "Genre keeps the style's own chord articulation; the other choices override it and also shape the sound slightly — short rhythms brighter, long ones darker" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genre keeps the style's own chord articulation; the other choices override it and also shape the sound slightly — short rhythms brighter, long ones darker"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genre behält die eigene Akkord-Artikulation des Stils; die anderen Optionen überschreiben sie und formen auch den Klang leicht — kurze Rhythmen heller, lange dunkler"
+          }
+        }
+      }
+    },
+    "Community" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Community"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Community"
+          }
+        }
+      }
+    },
+    "Mood preset" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mood preset"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stimmungs-Preset"
+          }
+        }
+      }
+    },
+    "Save as new mood…" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save as new mood…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als neue Stimmung sichern…"
+          }
+        }
+      }
+    },
+    "Submit to community" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Submit to community"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An die Community senden"
+          }
+        }
+      }
+    },
+    "Mood actions" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mood actions"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stimmungs-Aktionen"
+          }
+        }
+      }
+    },
+    "Spectral shape" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spectral shape"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spektrale Form"
+          }
+        }
+      }
+    },
+    "Noise colour" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noise colour"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rauschfarbe"
+          }
+        }
+      }
+    },
+    "Each note played as several slightly-detuned copies — the difference between one thin voice and an ensemble. 1 voice = off." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each note played as several slightly-detuned copies — the difference between one thin voice and an ensemble. 1 voice = off."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Note als mehrere leicht verstimmte Kopien gespielt — der Unterschied zwischen einer dünnen Stimme und einem Ensemble. 1 Stimme = aus."
+          }
+        }
+      }
+    },
+    "How each character speaks: 0 = slow swell (bowed strings, glass bowl) · 1 = struck / sharp onset (mallet, plucked, tuba stab). Sets touch response too; click-safe." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How each character speaks: 0 = slow swell (bowed strings, glass bowl) · 1 = struck / sharp onset (mallet, plucked, tuba stab). Sets touch response too; click-safe."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie jeder Charakter anspricht: 0 = langsames Anschwellen (gestrichene Saiten, Glasschale) · 1 = angeschlagen / scharfer Einsatz (Mallet, gezupft, Tuba-Stab). Setzt auch die Touch-Reaktion; klick-sicher."
+          }
+        }
+      }
+    },
+    "This sound's own loudness, so one instrument does not sit far above or below the others. 1.00 = unity. The built-in sounds arrive pre-matched; this trims from there." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This sound's own loudness, so one instrument does not sit far above or below the others. 1.00 = unity. The built-in sounds arrive pre-matched; this trims from there."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die eigene Lautheit dieses Klangs, damit ein Instrument nicht weit über oder unter den anderen sitzt. 1,00 = neutral. Die eingebauten Klänge kommen vorab angeglichen; das hier trimmt von dort aus."
+          }
+        }
+      }
+    },
+    "Reinforces the bass an octave below — feel it on a sub, in headphones, or as haptics. Presence makes it read on small speakers (octaves only, always in key); heat saturates without getting louder." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reinforces the bass an octave below — feel it on a sub, in headphones, or as haptics. Presence makes it read on small speakers (octaves only, always in key); heat saturates without getting louder."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verstärkt den Bass eine Oktave tiefer — spür ihn auf einem Sub, im Kopfhörer oder als Haptik. Präsenz macht ihn auf kleinen Lautsprechern lesbar (nur Oktaven, immer in der Tonart); Hitze sättigt, ohne lauter zu werden."
+          }
+        }
+      }
+    },
+    "Genre default" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genre default"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genre-Standard"
+          }
+        }
+      }
+    },
+    "Sounds" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sounds"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klänge"
+          }
+        }
+      }
+    },
+    "Timbre character / sound preset" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Timbre character / sound preset"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klangfarben-Charakter / Klang-Preset"
+          }
+        }
+      }
+    },
+    "Save as new sound…" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save as new sound…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als neuen Klang sichern…"
+          }
+        }
+      }
+    },
+    "Sound actions" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sound actions"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klang-Aktionen"
+          }
+        }
+      }
+    },
+    "Randomize timbre" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Randomize timbre"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klangfarbe würfeln"
+          }
+        }
+      }
+    },
+    "Picks a new sound character and timbre for variety" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Picks a new sound character and timbre for variety"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählt zur Abwechslung einen neuen Klangcharakter und eine neue Klangfarbe"
+          }
+        }
+      }
+    },
+    "Effect character" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effect character"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effekt-Charakter"
+          }
+        }
+      }
+    },
+    "Delay note" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delay note"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delay-Note"
+          }
+        }
+      }
+    },
+    "Delay note value" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delay note value"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delay-Notenwert"
+          }
+        }
+      }
+    },
+    "All parameters" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All parameters"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Parameter"
+          }
+        }
+      }
+    },
+    "Opens every effect stage with all of its parameters" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens every effect stage with all of its parameters"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet jede Effektstufe mit allen ihren Parametern"
+          }
+        }
+      }
+    },
+    "Included in the name the Save button writes." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Included in the name the Save button writes."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steht im Namen, den die Sichern-Taste schreibt."
+          }
+        }
+      }
+    },
+    "Diagnostics" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnostics"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnose"
+          }
+        }
+      }
+    },
+    "Shows the in-app diagnostic log to share if something crashed" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows the in-app diagnostic log to share if something crashed"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt das Diagnoseprotokoll der App zum Teilen, falls etwas abgestürzt ist"
+          }
+        }
+      }
+    },
+    "Chips on the strip" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chips on the strip"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chips auf der Leiste"
+          }
+        }
+      }
+    },
+    "How much of the strip you see" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How much of the strip you see"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie viel von der Leiste du siehst"
+          }
+        }
+      }
+    },
+    "Key, tuning, genre, preset, the Field voice and the generated part levels go back to their defaults. Your saved patches and pieces are kept." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Key, tuning, genre, preset, the Field voice and the generated part levels go back to their defaults. Your saved patches and pieces are kept."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tonart, Stimmung, Genre, Preset, die Feld-Stimme und die Pegel der generierten Teile gehen auf ihre Standardwerte zurück. Deine gesicherten Patches und Stücke bleiben erhalten."
+          }
+        }
+      }
+    },
+    "Share" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teilen"
+          }
+        }
+      }
+    },
+    "Loop length (Takt)" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loop length (Takt)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loop-Länge (Takte)"
+          }
+        }
+      }
+    },
+    "Loop length" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loop length"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loop-Länge"
+          }
+        }
+      }
+    },
+    "Loop length in bars" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loop length in bars"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loop-Länge in Takten"
+          }
+        }
+      }
+    },
+    "No saved pieces yet." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No saved pieces yet."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine gesicherten Stücke."
+          }
+        }
+      }
+    },
+    "Autosave" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autosave"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch gesichert"
+          }
+        }
+      }
+    },
+    "Kept automatically when you leave the app, before you open another piece and before a New piece. Overwritten each time." : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kept automatically when you leave the app, before you open another piece and before a New piece. Overwritten each time."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird automatisch behalten, wenn du die App verlässt, bevor du ein anderes Stück öffnest und vor einem neuen Stück. Jedes Mal überschrieben."
+          }
+        }
+      }
+    },
+    "Import" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importieren"
+          }
+        }
+      }
+    },
+    "New piece" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New piece"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neues Stück"
+          }
+        }
+      }
+    },
+    "Rename" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rename"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Umbenennen"
+          }
+        }
+      }
+    },
+    "Text size" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text size"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Textgröße"
+          }
+        }
+      }
+    },
+    "Save this piece" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save this piece"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Stück sichern"
+          }
+        }
+      }
+    },
+    "Names the piece and saves it, with its tracks and parts. The place row in Save & Export decides whether your city is in that name" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Names the piece and saves it, with its tracks and parts. The place row in Save & Export decides whether your city is in that name"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benennt das Stück und sichert es, mit seinen Spuren und Teilen. Die Ort-Zeile in Sichern & Export entscheidet, ob deine Stadt in diesem Namen steht"
+          }
+        }
+      }
+    },
+    "Music → colour" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Music → colour"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musik → Farbe"
+          }
+        }
+      }
+    },
+    "Save to Apple Health" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save to Apple Health"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Apple Health sichern"
+          }
+        }
+      }
+    },
+    "Writes measured heart rate and breathing rate to Apple Health" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Writes measured heart rate and breathing rate to Apple Health"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schreibt gemessene Herzfrequenz und Atemfrequenz in Apple Health"
+          }
+        }
+      }
+    },
+    "Apple Health" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health"
+          }
+        }
+      }
+    },
+    "Body voice" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Body voice"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Körperstimme"
+          }
+        }
+      }
+    },
+    "Auto mode" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto mode"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto-Modus"
+          }
+        }
+      }
+    },
+    "Body without sound" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Body without sound"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Körper ohne Klang"
+          }
+        }
+      }
+    },
+    "Your name (optional)" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your name (optional)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Name (optional)"
+          }
+        }
+      }
+    },
+    "Your artist name" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your artist name"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Künstlername"
+          }
+        }
+      }
+    },
+    "Clear your artist name" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear your artist name"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deinen Künstlernamen löschen"
+          }
+        }
+      }
+    },
+    "Describe it" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Describe it"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beschreib ihn"
+          }
+        }
+      }
+    },
+    "warm lush pad" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "warm lush pad"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "warmes weites Pad"
+          }
+        }
+      }
+    },
+    "Shape" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shape"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formen"
+          }
+        }
+      }
+    },
+    "Shape the sound from the description" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shape the sound from the description"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den Klang aus der Beschreibung formen"
+          }
+        }
+      }
+    },
+    "Undo the last sound change" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Undo the last sound change"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die letzte Klangänderung rückgängig machen"
+          }
+        }
+      }
+    },
+    "Shapes the sound now" : {
+      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shapes the sound now"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formt den Klang jetzt"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
