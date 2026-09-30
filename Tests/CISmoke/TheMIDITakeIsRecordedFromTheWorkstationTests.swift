@@ -165,7 +165,7 @@ final class TheMIDITakeIsRecordedFromTheWorkstationTests: XCTestCase {
         XCTAssertEqual(controller.droppedTakes, 1)
         XCTAssertEqual(timeline.document.regions.count, regionsBefore, "no part without a clip")
         XCTAssertEqual(RecordTake.droppedSentence(1, gridSize: clips.slots.count),
-                       "1 take was not added: the part grid is full (\(clips.slots.count) parts).")
+                       "1 recording was not added: the part grid is full (\(clips.slots.count) parts).")
         controller.arm()
         XCTAssertEqual(controller.droppedTakes, 0, "the next take starts with a clean count")
         controller.cancel()

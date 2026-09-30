@@ -53,6 +53,14 @@
 // the glossary word for what its rows are. "Back to song" → "Back to the piece" (the label, its
 // VoiceOver twin and the hint); `backToSongButton` and `songStart` are identifiers and stay.
 // `TheSceneLaunchIsASwitchTests` pins the start hint by its new words.
+//
+// ⭐ RATCHET 4 (2026-09-30): `RecordTakeControls` — the Record door's captions. Measured on
+// 08aa6601f: 10 hits ("song" ×5, "take" ×5). "take" here meant the RECORDING (the thing being
+// written), which the glossary's "what the words are NOT" names "recording" — so the captions
+// say "the recording" / "Recording starts at bar 1", and the block it becomes stays a PART.
+// The type `RecordTake`, `droppedTakes` and the test names keep the word: identifiers.
+// `TheMIDITakeIsRecordedFromTheWorkstationTests` pins the dropped sentence end to end by its
+// new words.
 // `Tests/CISmoke` is the blocking bundle. SKIPS rather than passes if the tree is absent.
 
 import Foundation
@@ -77,6 +85,7 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/ComposeGuide.swift",
         "Sources/Echoelmusic/Studio/WorkstationView.swift",
         "Sources/Echoelmusic/Studio/SessionLaunchView.swift",
+        "Sources/Echoelmusic/Studio/RecordTakeControls.swift",
     ]
 
     /// A line whose strings reach a log or a test harness, not a person.

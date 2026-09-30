@@ -196,33 +196,33 @@ enum RecordTake {
     nonisolated static func caption(_ state: State, gridSize: Int) -> String {
         switch state {
         case .recording:
-            return "Recording from bar 1. Stop, or the song's end, adds the take as a new part over the track."
+            return "Recording from bar 1. Stop, or the piece's end, adds the recording as a new part over the track."
         case .ready:
-            return "Plays the song from bar 1 and records the armed tracks where you play. "
-                + "The take plays instead of the parts under it; Undo brings them back."
+            return "Plays the piece from bar 1 and records the armed tracks where you play. "
+                + "The recording plays instead of the parts under it; Undo brings them back."
         case .stopFirst:
-            return "Stop the music to record. A take starts at bar 1."
+            return "Stop the music to record. Recording starts at bar 1."
         case .armFirst:
             return "Arm a MIDI track to record onto it."
         case .foreignArm(let name):
             return "\"\(name)\" is armed but cannot record here. Open it and switch Arm off first."
         case .gridFull:
-            return "The part grid is full (\(gridSize) parts). Remove a part to make room for the take."
+            return "The part grid is full (\(gridSize) parts). Remove a part to make room for the recording."
         case .songCannotPlay:
-            return "Add a part with notes or audio first. Recording runs against the playing song."
+            return "Add a part with notes or audio first. Recording runs against the playing piece."
         }
     }
 
     nonisolated static func armSubtitle(armable: Bool) -> String {
         armable
-            ? "Record plays the song from bar 1 and records your MIDI keyboard onto this track. "
+            ? "Record plays the piece from bar 1 and records your MIDI keyboard onto this track. "
                 + "Every armed track gets the same notes."
             : "This track cannot record here. Switch Arm off so Record can run."
     }
 
     nonisolated static func droppedSentence(_ count: Int, gridSize: Int) -> String {
-        count == 1 ? "1 take was not added: the part grid is full (\(gridSize) parts)."
-                   : "\(count) takes were not added: the part grid is full (\(gridSize) parts)."
+        count == 1 ? "1 recording was not added: the part grid is full (\(gridSize) parts)."
+                   : "\(count) recordings were not added: the part grid is full (\(gridSize) parts)."
     }
 
     /// A rack MIDI track: its role is a lane synth (not the Echoel track, not bio, not audio, not
