@@ -1233,7 +1233,7 @@ private struct BioModLiveView: View {
             } else {
                 Text(modulator.isRunning
                      ? "No routes yet, so no effect parameter is moving. Add one above."
-                     : "Start a session to watch the body move these parameters.")
+                     : "Start the instrument to watch the body move these parameters.")
                     .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }

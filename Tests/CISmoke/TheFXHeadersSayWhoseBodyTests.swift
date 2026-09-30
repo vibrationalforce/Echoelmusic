@@ -346,7 +346,7 @@ final class TheFXHeadersSayWhoseBodyTests: XCTestCase {
             routes, so it claims nothing about a current reading — it says what the instrument \
             is for. A "sweep the file for the word body" cleanup is how this one gets taken.
             """)
-        XCTAssertTrue(code.contains("Start a session to watch the body move these parameters"), """
+        XCTAssertTrue(code.contains("Start the instrument to watch the body move these parameters"), """
             The not-running line was reworded or marked. Same reasoning: it renders when the \
             modulator is STOPPED, so there is no source to name and nothing to qualify.
             """)

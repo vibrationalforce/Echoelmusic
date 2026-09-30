@@ -147,7 +147,7 @@ struct AutomationStatusStrip: View {
             .accessibilityHint("Lets the global parameter curves move the sound while the transport runs")
             Text(player.enabled
                  ? "Global curves move these parameters while the transport runs."
-                 : "Off by default. Clip and arrangement curves still play; this switch is for the global curves.")
+                 : "Off by default. Part and arrangement curves still play; this switch is for the global curves.")
                 .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)

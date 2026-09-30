@@ -49,7 +49,7 @@ public enum BioMetric: String, CaseIterable, Identifiable, Sendable {
         case .sdnn:      return "Overall HRV across the whole reading."
         case .pnn50:     return "How often consecutive beats differ by more than 50 ms."
         case .coherence: return "How much of your heartbeat gathers into one slow rhythm."
-        case .breath:    return "How many breaths you take per minute."
+        case .breath:    return "Breaths per minute."
         }
     }
 

@@ -443,7 +443,8 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
                       "the strip asks the editor's gate, not a second rule (#416)")
         XCTAssertFalse(strip.contains("this switch is for the song-wide curves"),
                        "the song's arrangement curves play whatever this switch says")
-        XCTAssertTrue(strip.contains("Clip and arrangement curves still play"))
+        XCTAssertTrue(strip.contains("Part and arrangement curves still play"),
+                      "the strip names the block by its glossary word (rule 1, ratchet 14): part, not clip")
     }
 
     // MARK: 9 — A5: the drawn curve is the curve playback follows past a shortened song end
@@ -490,9 +491,9 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
                        "Tap the row to add the first point.")
         XCTAssertFalse(SongAutomationEdit.hint(inSongPoints: 0, continuesPastEnd: true).contains("first point"))
         XCTAssertTrue(SongAutomationEdit.hint(inSongPoints: 2, continuesPastEnd: true)
-            .hasSuffix("The curve runs on to a point after the song end."))
+            .hasSuffix("The curve runs on to a point after the end of the piece."))
         XCTAssertEqual(SongAutomationEdit.countLabel(inSongPoints: 0, continuesPastEnd: true),
-                       "0 points, and 1 after the song end")
+                       "0 points, and 1 after the end of the piece")
         XCTAssertEqual(SongAutomationEdit.countLabel(inSongPoints: 1, continuesPastEnd: false), "1 point")
 
         // The canvas draws through it — and still hits only the song's own points.

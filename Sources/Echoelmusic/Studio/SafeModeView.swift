@@ -55,7 +55,7 @@ struct SafeModeView: View {
                         .font(EchoelTheme.font(20, .semibold))
                         .foregroundStyle(EchoelTheme.text)
 
-                    Text("The last launch ran into a problem before the studio finished loading. To keep you out of a black screen, Echoelmusic opened this recovery screen instead. Your projects and settings are untouched.")
+                    Text("The last launch ran into a problem before the studio finished loading. To keep you out of a black screen, Echoelmusic opened this recovery screen instead. Your pieces and settings are untouched.")
                         .font(EchoelTheme.font(13))
                         .foregroundStyle(EchoelTheme.dim)
                         .fixedSize(horizontal: false, vertical: true)

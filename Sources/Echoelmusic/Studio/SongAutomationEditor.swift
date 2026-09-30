@@ -147,9 +147,9 @@ enum SongAutomationEdit {
     /// The row's hint. A curve can run on to a point after a shortened song end — not drawn, not
     /// hit — so the hint says so rather than "add the first point" over a line it draws (A5 review).
     nonisolated static func hint(inSongPoints count: Int, continuesPastEnd: Bool) -> String {
-        let past = continuesPastEnd ? " The curve runs on to a point after the song end." : ""
+        let past = continuesPastEnd ? " The curve runs on to a point after the end of the piece." : ""
         if count == 0 {
-            return (continuesPastEnd ? "Tap the row to add a point in the song."
+            return (continuesPastEnd ? "Tap the row to add a point in the piece."
                                      : "Tap the row to add the first point.") + past
         }
         return "Tap a point to pick it. Press and hold a point, then slide to move it." + past
@@ -158,7 +158,7 @@ enum SongAutomationEdit {
     /// VoiceOver's count: the song's points, and the one after the end when there is one.
     nonisolated static func countLabel(inSongPoints count: Int, continuesPastEnd: Bool) -> String {
         let base = count == 1 ? "1 point" : "\(count) points"
-        return continuesPastEnd ? base + ", and 1 after the song end" : base
+        return continuesPastEnd ? base + ", and 1 after the end of the piece" : base
     }
 
     /// The points the drawn curve runs through: the song's own, plus the one past its end.
@@ -506,7 +506,7 @@ private struct SongAutomationCanvas: View {
             .gesture(edit(size: size))
             .accessibilityElement()
             .accessibilityLabel("\(title) automation: \(pointCountLabel)")
-            .accessibilityHint("Double-tap adds or picks the point in the middle of the song. Use the actions to pick another point; its value and Remove follow below.")
+            .accessibilityHint("Double-tap adds or picks the point in the middle of the piece. Use the actions to pick another point; its value and Remove follow below.")
             .accessibilityAction(named: "Pick next point") { onStep(1) }
             .accessibilityAction(named: "Pick previous point") { onStep(-1) }
         }

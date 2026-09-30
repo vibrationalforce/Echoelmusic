@@ -79,7 +79,7 @@ public enum LearnLibrary {
                 id: "guide.hear", section: .guide,
                 title: "Hear it",
                 summary: "Press Play; the music is composed, then your body shapes it.",
-                detail: "Play starts a generated take — harmony, melody and bass in one key, "
+                detail: "Play starts generated music — harmony, melody and bass in one key, "
                     + "at one tempo, in the genre you chose. Your heart and breath then bend "
                     + "its brightness, its swell and its calm in real time. For your own "
                     + "voice in the loop, switch on \"Body voice\" in the Bio panel: a held "

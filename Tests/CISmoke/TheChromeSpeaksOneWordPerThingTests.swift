@@ -155,6 +155,18 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/SelectedPartBar.swift",
         "Sources/Echoelmusic/Studio/SongPositionReadout.swift",
         "Sources/Echoelmusic/Studio/ProjectSaveStatusView.swift",
+        // Ratchet 14 (2026-09-30): the last reachable eight — the automation editor's hints
+        // (end of the piece), the safe-mode note, the theory primer, the note editor's shared
+        // hint (these notes, not this clip), the Learn detail (generated music), the FX empty
+        // note (start the instrument), the automation strip (part curves), the metric sheet.
+        "Sources/Echoelmusic/Studio/SongAutomationEditor.swift",
+        "Sources/Echoelmusic/Studio/SafeModeView.swift",
+        "Sources/Echoelmusic/Studio/MusicTheoryPrimer.swift",
+        "Sources/Echoelmusic/Studio/PartNoteEditor.swift",
+        "Sources/Echoelmusic/Studio/LearnLibrary.swift",
+        "Sources/Echoelmusic/Studio/EchoelFXView.swift",
+        "Sources/Echoelmusic/Studio/AutomationStatusStrip.swift",
+        "Sources/Echoelmusic/Studio/BioMetricInfo.swift",
     ]
 
     /// A line whose strings reach a log or a test harness, not a person.

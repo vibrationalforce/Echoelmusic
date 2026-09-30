@@ -60,11 +60,11 @@ public enum MusicTheoryTopic: String, CaseIterable, Identifiable, Sendable {
         case .cadence:
             return "The punctuation of harmony: a strong V→I lands like a full stop, while other cadences leave a phrase hanging. Echoelmusic resolves a loop with a turnaround cadence so it feels finished, not cut off."
         case .key:
-            return "A piece's centre of gravity — its home note plus the scale around it (e.g. C minor). Everything is heard in relation to home. Echoelmusic locks the take to one key (with your concert pitch, default A440) so stems drop into your DAW already in tune."
+            return "A piece's centre of gravity — its home note plus the scale around it (e.g. C minor). Everything is heard in relation to home. Echoelmusic locks the music to one key (with your concert pitch, default A440) so stems drop into your DAW already in tune."
         case .tempo:
             return "Beats per minute. Slow tempos feel calm, fast ones energetic. In Echoelmusic tempo can follow your heart rate or be locked to an exact BPM for export."
         case .swing:
-            return "Straight rhythms place notes evenly; swing pushes every other note slightly late, giving jazz, hip-hop and house their groove. Echoelmusic's swing amount is adjustable per take."
+            return "Straight rhythms place notes evenly; swing pushes every other note slightly late, giving jazz, hip-hop and house their groove. Echoelmusic's swing amount is adjustable per piece."
         case .dynamics:
             return "The loud-and-soft shape of a performance. Accents on strong beats and gentle swells make a line feel human rather than mechanical — Echoelmusic adds these with its phrasing and humanize controls."
         }

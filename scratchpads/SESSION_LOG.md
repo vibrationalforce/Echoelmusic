@@ -40737,3 +40737,9 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - Transkription: Liste 26 Dateien, WORK 0 / HEAD 13. Checker sauber. ⚠️ Werkzeug-Falle: ein Zitat in Anführungszeichen im Listen-Kommentar las mein Scanner als Pfad (`FileNotFoundError: 'song'`) — Kommentar ohne Anführungszeichen geschrieben.
 - **Rest außerhalb der Liste:** SongAutomationEditor 4 (Pin in TheSongAutomationIsDrawnThroughOneWriterTests zieht mit), MusicTheoryPrimer 2, je 1 AutomationStatusStrip/BioMetricInfo/EchoelFXView/PartNoteEditor/LearnLibrary/SafeModeView; türlos SessionView 6 + MeditationView 4 zuletzt.
 - Gate-Lesung fcd313e (Ratsche 4): Build for Testing grün, Run Tests #396-Form (161 pass / 0 fail im Fenster, GAP 1161 s). Compile Check 3069 auf 5abcbc676 weiter `queued` — Stapel wächst lokal (Boden 1–6 + diese).
+
+## 2026-09-30 — Regel 1, Ratsche 14: die letzten acht erreichbaren Dateien — lokal
+
+- `SongAutomationEditor` (4: „after the end of the piece“, „a point in the piece“, „middle of the piece“), `SafeModeView`, `MusicTheoryPrimer` (2), `PartNoteEditor` („These notes play in N parts“ — `Clip` ist der Modellname, der Spieler sieht geteilte Noten), `LearnLibrary` („generated music“), `EchoelFXView` („Start the instrument…“, Sitzungs-Sinn), `AutomationStatusStrip` („Part and arrangement curves“), `BioMetricInfo` („Breaths per minute.“). 12 → 0.
+- Drei Pins im selben Commit nachgezogen (TheSongAutomationIsDrawnThroughOneWriterTests ×3, TheFXHeadersSayWhoseBodyTests ×1). Liste 26 → 34; WORK 0 / HEAD 12; Checker sauber.
+- **Damit ist jede ERREICHBARE Fläche in der Liste.** Außerhalb nur noch türlos: SessionView 6, MeditationView 4 (Wörter des Session-Experiments, das nichts präsentiert).
