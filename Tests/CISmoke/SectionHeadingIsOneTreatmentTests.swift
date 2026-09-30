@@ -112,7 +112,11 @@ final class SectionHeadingIsOneTreatmentTests: XCTestCase {
                 """)
         }
         let body = studio[def..<min(def + 8, studio.count)].joined(separator: "\n")
-        XCTAssertTrue(body.contains("Text(title)"), "the disclosure heading no longer labels itself with its title")
+        // E4-9 (2026-09-30): the label is drawn as a catalog KEY — `Text(LocalizedStringKey(title))` —
+        // because the helper keeps a `String` title for its interpolating hint. The bare `Text(title)`
+        // needle was red from 72fe0cc27 until this re-anchor; `moved-needles.py` did not list it.
+        XCTAssertTrue(body.contains("Text(LocalizedStringKey(title))"),
+                      "the disclosure heading no longer labels itself with its title as a catalog key (E4-9)")
         XCTAssertTrue(body.contains(".font(EchoelTheme.font(11, .semibold))"), """
             `collapsibleGroupHeader`'s label is no longer 11 pt semibold — the Field panel's \
             disclosure headings now read differently from every other section heading (#362).
