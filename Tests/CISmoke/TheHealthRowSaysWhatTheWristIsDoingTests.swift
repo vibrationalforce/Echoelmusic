@@ -174,7 +174,11 @@ final class TheHealthRowSaysWhatTheWristIsDoingTests: XCTestCase {
             The Apple Health row must sit directly under the chooser it describes and before the \
             always-on block — the panel's own reading order.
             """)
-        let before = String(code[code.index(mount.lowerBound, offsetBy: -220, limitedBy: code.startIndex) ?? code.startIndex ..< mount.lowerBound])
+        // ⛔ Build for Testing 6544: the one-line form (`index(…) ?? startIndex ..< bound` inside
+        // the subscript) is "ambiguous without a type annotation" — `??` and `..<` in one
+        // expression give the type-checker two operators to rank. Two statements, one type each.
+        let lookBehind: String.Index = code.index(mount.lowerBound, offsetBy: -220, limitedBy: code.startIndex) ?? code.startIndex
+        let before = String(code[lookBehind..<mount.lowerBound])
         XCTAssertTrue(before.contains("if BioSourceOption(rawValue: bioSourceRaw) == .health {"), """
             The row must be gated on the CHOSEN source (`bioSourceRaw` is @AppStorage, a cold \
             read). Shown for every source it would describe a co-writer the person did not pick.
