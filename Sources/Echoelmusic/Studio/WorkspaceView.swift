@@ -925,7 +925,19 @@ struct PlaybackToggleButton: View {
                         // It also called this "the lowest-contrast control in the app", which was
                         // a ~46-way tie: `border` is ONE opacity. What was true, and is the whole
                         // argument, is that it was the LARGEST control still at 1.16:1.
-                        .strokeBorder(EchoelTheme.accent, lineWidth: 1))
+                        //
+                        // ⛔ RULE 2 (3ab37512f) SWAPPED THIS FOR `EchoelTheme.accent` and made
+                        // TWO blocking guards red on a correct-looking tree, unseen for a
+                        // cycle because the job log is a `tail -200` (Tests/CISmoke/CLAUDE.md
+                        // §5, #807): `ControlBoundaryIsInteractiveTests` asks this struct for
+                        // an INTERACTIVE stroke, and `OneChromeControlHeightTests` anchors its
+                        // paint-before-tap-frame ordering on this very line. The token is the
+                        // decision, not the guard: `accent` is the theme's SIGNAL colour
+                        // ("signal only", its own doc), and a control's outline is not a
+                        // signal — the glyph and the word above already carry it. The two
+                        // real neighbours in `startControlRow` are on `borderStrong`; so is
+                        // this one again. Guard anchors moved in the same commit (§4).
+                        .strokeBorder(EchoelTheme.borderStrong, lineWidth: 1))
                     // AFTER background+overlay, the header-tile spelling: the picture stays
                     // `controlHeight`, only the hit area grows (#113/#481). Before them it
                     // would paint the chip 44 tall instead.

@@ -204,8 +204,14 @@ final class OneChromeControlHeightTests: XCTestCase {
             """)
 
         let ws = try codeLines(Self.workspace)
+        // Rule 2 (3ab37512f) took the resume half out of this chip, so the ternary that used
+        // to anchor here (`isPlaying ? accent : borderStrong`) is gone with it — the chip
+        // exists only while the music plays and wears the interactive token outright. The
+        // anchor names the stroke's new spelling; the claim (paint before tap frame) is the
+        // same. Uniqueness: `PlaybackToggleButton` is the only `strokeBorder(…, lineWidth: 1))`
+        // in this file — the tile row below strokes with a single closing paren.
         guard let wsPaint = ws.firstIndex(where: {
-            $0.contains("transport.isPlaying ? EchoelTheme.accent : EchoelTheme.borderStrong")
+            $0.contains(".strokeBorder(EchoelTheme.borderStrong, lineWidth: 1))")
         }), let wsTap = ws.firstIndex(where: {
             $0.contains(".frame(height: EchoelTheme.controlTapHeight)")
         }) else {
