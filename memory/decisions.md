@@ -3445,3 +3445,8 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - `RouteCodec.note` (Bluetooth HFP = mono, band-limited) ended with "the iPhone mic as input" / "check which input is selected" — advice about a control gone since #1302. Nothing rendered it (`LatencyReadout.codec` has no reader), so no screen and no scan caught it; the `hfpPortType` comment cited a guard #1302 had deleted.
 - Fixed: two honest sentences (Echoel only plays out; another app holds the call; a cable keeps full bandwidth), named ≠ inferred kept (#654). New end-to-end guard `TheCodecNoteNamesNoInputTests` also restores the `hfpPortType == AVAudioSession.Port.bluetoothHFP.rawValue` pin.
 - Rule: unmounted copy is graded where it is written; a deletion sweep greps Sources doc comments for the deleted guard's name, not only the bundle.
+
+### 2026-09-30 — AUv3 view: no eyebrow, 4.5:1 everywhere (d03259749); the host sets the body values (747e77012)
+
+- Eyebrow: `Text(title.uppercased())` 11 pt bold `.kerning(1.5)` white 0.35 (2.8:1) → `Text(title)` 13 pt semibold white 0.7; subtitle and value readout 0.4 → 0.6. `TheAUv3ViewHasNoEyebrowTests` computes contrast by the WCAG formula against the anchored 0.05 background (no pinned grey, #364). The extension's exemption covers `EchoelValueField` only.
+- Claim: subtitle/section/group said "Bio-Reactive" inside a host that has no body (no producer in the extension, values at 0.5 until the host moves them). Now "the host sets the body values" / "Body values (from the host)" / group display "Body values"; identifier `bio` kept — hosts bind by identifier. `TheAUv3ViewSaysTheHostSetsTheBodyTests` also pins the premise (no body producer in `Sources/EchoelmusicAUv3`).
