@@ -207,7 +207,7 @@ public enum WeatherMood {
         /// One clear line: what turning this up actually does.
         public var explanation: String {
             switch self {
-            case .structure:  return "Same sky keeps the same harmonic skeleton across takes."
+            case .structure:  return "Same sky keeps the same harmonic skeleton each time you play."
             case .warmth:     return "Warm weather brightens the tone, cold darkens it."
             case .energy:     return "Wind and storms make the music busier, calm keeps it still."
             case .drama:      return "Storms add tension; a clear sky stays consonant."

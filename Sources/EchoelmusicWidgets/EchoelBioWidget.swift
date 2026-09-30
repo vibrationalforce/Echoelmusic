@@ -129,12 +129,12 @@ struct EchoelBioWidgetView: View {
     /// `RadiusHasOneSpellingTests`' extension list is untouched — nothing was skipped to keep
     /// a guard green, the marker simply is not a box.
     private var staleTag: some View {
-        Text("Last session")
+        Text("Last reading")
             .font(.caption2)
             .foregroundStyle(.secondary)
             .lineLimit(1)
             .minimumScaleFactor(0.8)
-            .accessibilityLabel(Text("Reading from an earlier session, not current"))
+            .accessibilityLabel(Text("An earlier reading, not current"))
     }
 
     /// Deliberately `.secondary` with a hairline outline — NOT an accent or a warning
@@ -181,7 +181,7 @@ struct EchoelBioWidgetView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Echoelmusic").font(.headline).foregroundStyle(.primary)
             Spacer(minLength: 0)
-            Text("No session yet")
+            Text("No reading yet")
                 .font(.subheadline).foregroundStyle(.secondary)
             Text("Open Echoelmusic to start.")
                 .font(.caption).foregroundStyle(.tertiary)
@@ -263,7 +263,7 @@ struct EchoelBioWidget: Widget {
             EchoelBioWidgetView(entry: entry)
         }
         .configurationDisplayName("Echoelmusic Bio")
-        .description("Live heart rate, HRV, and coherence from your session.")
+        .description("Live heart rate, HRV, and coherence while the instrument plays.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }

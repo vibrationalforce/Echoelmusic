@@ -118,7 +118,7 @@ final class TheWatchHasNoTransportTests: XCTestCase {
             `EchoelmusicWatch` is now embedded as a dependency of the app, so a real user can \
             reach the watch face. The severity note in \(Self.watchApp) and in `CLAUDE.md` \
             says "planning cost, not user impact — and it rises the day the embed is turned \
-            on". That day is today: the wrist now shows "Start a session on iPhone." forever, \
+            on". That day is today: the wrist now shows "Start the instrument on iPhone." forever, \
             because nothing on the watch writes that container and nothing transports the \
             phone's. Re-rank it and say so in \(Self.prose)
             """)

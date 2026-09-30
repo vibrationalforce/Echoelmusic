@@ -234,7 +234,7 @@ public final class MultipeerSession: NSObject {
         } catch {
             log.log(.error, category: .system,
                     "Colab: session payload failed to ENCODE — not shared — \(error)")
-            status = "This session can't be encoded — not shared"
+            status = "This piece can't be encoded — not shared"
             return
         }
         let peers = mcSession.connectedPeers
@@ -371,7 +371,7 @@ public final class MultipeerSession: NSObject {
         }
         incoming = payload
         onReceiveSession?(payload)
-        status = "Session received from \(payload.senderName)"
+        status = "Piece received from \(payload.senderName)"
     }
 }
 

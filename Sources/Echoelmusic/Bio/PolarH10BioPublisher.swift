@@ -281,7 +281,7 @@ public final class PolarH10BioPublisher: NSObject {
         case .bluetoothUnavailable:
             return ("BT off", "Bluetooth is off or access is denied — enable it in Settings")
         case .notFound:
-            return ("No strap", "No strap found — moisten the electrodes, re-clip the strap, and pick Bluetooth again")
+            return ("No strap", "No strap found — moisten the electrodes, refasten the strap, and pick Bluetooth again")
         }
     }
 

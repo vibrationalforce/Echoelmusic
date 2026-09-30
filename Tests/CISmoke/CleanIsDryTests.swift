@@ -105,7 +105,7 @@ final class CleanIsDryTests: XCTestCase {
 
         let stillOn = Self.switchable.filter { Self.read($0, on: chain) }
         XCTAssertTrue(stillOn.isEmpty, """
-            "Clean (dry) — No effects, reset to a dry signal" left \(stillOn.count) stage(s) \
+            "Clean (dry) — No effects, a dry signal" left \(stillOn.count) stage(s) \
             running: \(stillOn.joined(separator: ", ")).
 
             `GenreFXPreset` carries seven enables and the chain has fifteen, so the preset alone \

@@ -136,6 +136,6 @@ public struct BioSoundMapping: Sendable, Equatable, Identifiable {
             id: "breath",
             source: "Breath",
             target: "Swell",
-            direction: "the sound swells and settles once with each breath you take"),
+            direction: "the sound swells and settles once with each breath"),
     ]
 }

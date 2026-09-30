@@ -1474,7 +1474,7 @@ public enum FXCharacter: String, CaseIterable, Sendable, Identifiable {
     public var blurb: String {
         switch self {
         case .auto:       return "Use the genre's own effect space"
-        case .clean:      return "No effects — reset to a dry signal"
+        case .clean:      return "No effects — a dry signal"
         case .underwater: return "Submerged: deep low-pass + watery chorus + tape wobble"
         case .telephone:  return "Narrow band-pass — old-phone / lo-fi vocal"
         case .cassette:   return "Warm tape: gentle low-pass + wow & flutter"
@@ -1585,7 +1585,7 @@ public enum FXCharacter: String, CaseIterable, Sendable, Identifiable {
     /// enables. (⛔ #695: this read "the struct carries SEVEN enables", which is the WRITE
     /// count wearing the DECLARATION's name — anyone re-deriving it counts six and concludes
     /// the prose is stale. Two quantities, two sentences.) So a character
-    /// subtitled *"No effects — reset to a dry signal"* left SEVEN stages running — tape,
+    /// subtitled *"No effects — a dry signal"* left SEVEN stages running — tape,
     /// bitcrush, flanger, tremolo, widener, compressor — and the more of them a
     /// player had switched on by hand, the less dry "dry" was.
     ///

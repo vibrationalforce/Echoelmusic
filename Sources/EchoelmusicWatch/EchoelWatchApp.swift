@@ -108,12 +108,12 @@ struct WatchBioView: View {
     /// here and this branch cannot render. It is written now because the two glances are one
     /// decision, and leaving one half behind is how the pair drifts.
     private var staleTag: some View {
-        Text("Last session")
+        Text("Last reading")
             .font(.caption2)
             .foregroundStyle(.secondary)
             .lineLimit(1)
             .minimumScaleFactor(0.8)
-            .accessibilityLabel(Text("Reading from an earlier session, not current"))
+            .accessibilityLabel(Text("An earlier reading, not current"))
     }
 
     /// `.secondary` with a hairline outline, never an accent or a warning colour —
@@ -162,9 +162,9 @@ struct WatchBioView: View {
                 }
             } else {
                 Text("Echoelmusic").font(.headline)
-                Text("No session yet")
+                Text("No reading yet")
                     .font(.caption).foregroundStyle(.secondary)
-                Text("Start a session on iPhone.")
+                Text("Start the instrument on iPhone.")
                     .font(.caption2).foregroundStyle(.secondary)
             }
         }
