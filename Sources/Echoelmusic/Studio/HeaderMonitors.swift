@@ -184,13 +184,13 @@ struct PulseMonitorMini: View {
             // meet (the ladder is camera-only, the tag is off-camera only).
             if let ladder, ladder == .found {
                 Text(ladder.word)
-                    .font(EchoelTheme.font(10, .semibold))
+                    .font(EchoelTheme.font(11, .semibold))
                     .foregroundStyle(EchoelTheme.dim)
                     .lineLimit(1).minimumScaleFactor(0.8)
             }
             if synthetic {
                 Text("Demo")
-                    .font(EchoelTheme.font(10, .semibold))
+                    .font(EchoelTheme.font(11, .semibold))
                     .foregroundStyle(EchoelTheme.dim)
                     .lineLimit(1).minimumScaleFactor(0.8)
             }
@@ -710,7 +710,7 @@ private struct MonitorWordTile: View {
                     .foregroundStyle(tint)
                 if let word {
                     Text(word)
-                        .font(EchoelTheme.font(10, .semibold))
+                        .font(EchoelTheme.font(11, .semibold))
                         .foregroundStyle(tint)
                         .lineLimit(1)
                         .minimumScaleFactor(0.6)

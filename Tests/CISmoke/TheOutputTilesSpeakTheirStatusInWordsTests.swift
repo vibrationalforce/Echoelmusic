@@ -109,8 +109,8 @@ final class TheOutputTilesSpeakTheirStatusInWordsTests: XCTestCase {
         XCTAssertFalse(light.contains("Text("), "the light tile spells no word of its own — none over the sent colour")
         let tile = try body(from: "private struct MonitorWordTile: View {", to: "#endif", in: monitors)
         XCTAssertTrue(tile.contains("Text(word)"), "the shared tile renders the word it is handed")
-        XCTAssertTrue(tile.contains(".font(EchoelTheme.font(10, .semibold))"),
-                      "the word scales with Dynamic Type at the pill's \"Found\" size, never an absolute point size")
+        XCTAssertTrue(tile.contains(".font(EchoelTheme.font(11, .semibold))"),
+                      "the word scales with Dynamic Type at the pill's \"Found\" size — 11 pt, the chrome's floor since rule 12 (TheChromeTextMeetsTheElevenPointFloorTests) — never an absolute point size")
         XCTAssertTrue(tile.contains(".lineLimit(1)") && tile.contains(".minimumScaleFactor(0.6)"),
                       "the word shrinks before it clips — the tiles have founder-reference widths")
         for gone in ["\"On external screen\"", "\"Sending to fixtures\"", "\"No light route\"", "\"Idle\"", "\"Live\""] {

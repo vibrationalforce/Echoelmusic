@@ -1,0 +1,147 @@
+// TheChromeTextMeetsTheElevenPointFloorTests.swift
+// Echoel — interface audit 2026-09-30, Gestaltung rule 12 ("Textgröße"), the FLOOR half.
+// BLOCKING bundle.
+//
+// The audit measured the app's type ladder: 205 sites at 11 pt, 37 at 10 pt, 5 at 9 pt, all
+// through `EchoelTheme.font(_:_:)`, which is `relativeTo: .body` and so scales with Dynamic Type
+// AND the one `StudioZoom` step (rule 12 parts 1 + 2). Scaling multiplies what is there: a 9 pt
+// label at the default step is 9 pt, and the HIG floor for readable text on iPhone is 11 pt
+// (`caption2`). The head — the strip a player reads mid-piece, at arm's length, in a dark room —
+// had twelve labels under it: the version string (9), the loop counter and the file preview
+// (10), the pulse pill's "Found" and "Demo" tags (10), the output tiles' status word (10), the
+// visual card's transport readout (10 + 9) and its WAV status words (10). Every one of them
+// ALSO carried a `minimumScaleFactor`, so what the player actually saw could be smaller still.
+//
+// THE DECISION: 11 pt is the chrome's floor. Hierarchy below the floor is carried by weight and
+// by the `dim` colour, never by going smaller — the visual card's "1/8" beside its "1.2.3" keeps
+// its `opacity(0.6)`, not its 9 pt. Nothing above the floor is touched: the 204 remaining 11 pt
+// sites (below `body`'s 13) are a founder look on the device, not a scan.
+//
+// WHAT THIS GUARDS.
+//   1. RATCHET: no `EchoelTheme.font(N` and no `.system(size: N` with N < 11 in the listed head
+//      files, comment-stripped. The list grows; a file joins it in the same commit that lifts
+//      its last sub-floor label. A file that MOVES turns the scan into a skip, not a pass.
+//   2. PREMISE: `EchoelTheme.font` stays `relativeTo: .body`. A floor on an absolute font would
+//      be a different, weaker claim — this one holds because the floor scales with the step.
+//   3. SELF-TEST: the scanner finds a planted `font(9)` and a planted `.system(size: 10)`, and
+//      ignores the same text inside a comment (#867: a rationale that QUOTES the old size must
+//      not fail the scan, and a scanner that matches nothing is a finding, not a pass).
+//
+// ⚠️ LIMIT — source scan. That the lifted labels still fit their tiles at the default step is a
+// look: the output tiles have founder-reference widths and shrink before they clip
+// (`minimumScaleFactor(0.6)`), the visual card's transport row grows by roughly one digit.
+// NEEDS-FOUNDER-VERIFY: head at the default text step — pulse pill "Found"/"Demo", the two
+// output tiles' word, the small visual card's "1.2.3 · 1/8" row — nothing clipped, nothing
+// wrapped.
+//
+// ⚠️ HONEST GRADING (#433/#464) — transcribed in Python against this tree and the parent
+// 37ab57ac9 (no local toolchain): claim 1 RED on the parent (twelve sites), GREEN here; claims 2
+// and 3 GREEN on both (premise and self-test). `Tests/CISmoke` is the blocking bundle.
+
+import Foundation
+import XCTest
+@testable import Echoelmusic
+
+final class TheChromeTextMeetsTheElevenPointFloorTests: XCTestCase {
+
+    /// The floor. Named once here; the message quotes it from this constant.
+    private static let floor = 11
+
+    /// The head files. RATCHET — append, never remove (#364 forbids nothing: a file may join as
+    /// soon as its last sub-floor label is lifted, and that is the commit that adds it).
+    private static let chrome = [
+        "Sources/Echoelmusic/Studio/WorkspaceView.swift",
+        "Sources/Echoelmusic/Studio/HeaderMonitors.swift",
+        "Sources/Echoelmusic/Studio/FloatingVisualWindow.swift",
+    ]
+
+    private static let theme = "Sources/Echoelmusic/Studio/EchoelTheme.swift"
+
+    // MARK: - claim 1 — the ratchet
+
+    func testNoHeadLabelSitsUnderTheFloor() throws {
+        var offenders: [String] = []
+        for rel in Self.chrome {
+            let lines = try codeLines(rel)
+            for (i, line) in lines.enumerated() {
+                for size in Self.sizes(in: line) where size < Self.floor {
+                    offenders.append("\(rel):\(i + 1): \(size) pt — \(line.trimmingCharacters(in: .whitespaces))")
+                }
+            }
+        }
+        XCTAssertTrue(offenders.isEmpty, """
+            \(offenders.count) head label(s) sit under the \(Self.floor) pt floor (rule 12):
+            \(offenders.joined(separator: "\n"))
+            Lift the size to \(Self.floor) and carry the hierarchy with weight or `dim`, never by \
+            going smaller — the head is read at arm's length and this size multiplies with the \
+            text step. If a label genuinely is not text a player reads (a glyph sized by \
+            `.system(size:)` next to a word, for instance), say so in a comment on the line and \
+            raise it in the Council before exempting it here.
+            """)
+    }
+
+    // MARK: - claim 2 — the premise: the floor scales
+
+    func testTheThemeFontScalesWithTheBodyStyle() throws {
+        let theme = SourceText.codeOnly(try source(Self.theme))
+        XCTAssertTrue(theme.contains("static func font(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {"),
+                      "`EchoelTheme.font(_:_:)` moved — re-anchor this premise rather than letting it pass on nothing (#454)")
+        XCTAssertTrue(theme.contains("relativeTo: .body"), """
+            `EchoelTheme.font` no longer scales `relativeTo: .body`. The 11 pt floor is a floor at \
+            the DEFAULT text step only because the size multiplies with Dynamic Type and the one \
+            `StudioZoom` step; an absolute font would need a different, larger floor.
+            """)
+    }
+
+    // MARK: - claim 3 — the scanner sees a plant and ignores a comment
+
+    func testTheScannerFindsAPlantedSizeAndIgnoresAComment() {
+        XCTAssertEqual(Self.sizes(in: "    .font(EchoelTheme.font(9))"), [9])
+        XCTAssertEqual(Self.sizes(in: ".font(EchoelTheme.font(10, .semibold).monospacedDigit())"), [10])
+        XCTAssertEqual(Self.sizes(in: "Image(systemName: glyph).font(.system(size: 10))"), [10])
+        XCTAssertEqual(Self.sizes(in: ".font(EchoelTheme.font(11, .semibold))"), [11])
+        XCTAssertEqual(Self.sizes(in: "let x = 9"), [], "a bare number is not a font size")
+        let commented = SourceText.codeOnly("// was `EchoelTheme.font(9)` until rule 12\n.font(EchoelTheme.font(11))\n")
+        XCTAssertEqual(commented.components(separatedBy: "\n").flatMap { Self.sizes(in: $0) }, [11],
+                       "a rationale that quotes the old size must not fail the scan (#867)")
+    }
+
+    // MARK: - the scanner
+
+    /// Every point size a line asks a font for: `EchoelTheme.font(N` and `.system(size: N`.
+    static func sizes(in line: String) -> [Int] {
+        var out: [Int] = []
+        for pattern in [#"EchoelTheme\.font\((\d+)"#, #"\.system\(size:\s*(\d+)"#] {
+            guard let regex = try? NSRegularExpression(pattern: pattern) else { continue }
+            let range = NSRange(line.startIndex..<line.endIndex, in: line)
+            for match in regex.matches(in: line, range: range) {
+                if let r = Range(match.range(at: 1), in: line), let n = Int(line[r]) { out.append(n) }
+            }
+        }
+        return out
+    }
+
+    // MARK: - reading the source
+
+    private func repoRoot() throws -> URL {
+        var url = URL(fileURLWithPath: #filePath)
+        for _ in 0..<3 { url.deleteLastPathComponent() }
+        guard FileManager.default.fileExists(atPath: url.appendingPathComponent("Package.swift").path) else {
+            throw XCTSkip("repository root not found from \(#filePath) — source scan skipped, not passed")
+        }
+        return url
+    }
+
+    private func source(_ relativePath: String) throws -> String {
+        let path = try repoRoot().appendingPathComponent(relativePath)
+        guard FileManager.default.fileExists(atPath: path.path) else {
+            throw XCTSkip("\(relativePath) is absent — the list names a file that moved; update it, do not let the scan pass on nothing")
+        }
+        return try String(contentsOf: path, encoding: .utf8)
+    }
+
+    /// Comment-stripped lines (line numbers preserved for the failure text).
+    private func codeLines(_ relativePath: String) throws -> [String] {
+        SourceText.codeOnly(try source(relativePath)).components(separatedBy: "\n")
+    }
+}

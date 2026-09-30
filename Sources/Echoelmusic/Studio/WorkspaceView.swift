@@ -623,7 +623,7 @@ struct WorkspaceView: View {
                         .foregroundStyle(EchoelTheme.text)
                         .lineLimit(1).minimumScaleFactor(0.7)
                     Text(Self.versionString)
-                        .font(EchoelTheme.font(9))
+                        .font(EchoelTheme.font(11))
                         .foregroundStyle(EchoelTheme.dim)
                         .lineLimit(1).minimumScaleFactor(0.7)
                 }
@@ -1118,7 +1118,7 @@ struct TransportPositionView: View {
                 // `TheBarCountHasACarrierTests` pins it together with the Record tile's
                 // spoken label, so the pair cannot drift apart unnoticed.
                 Text("loop \(barInLoop + 1)/\(bars)")
-                    .font(EchoelTheme.font(10).monospacedDigit())
+                    .font(EchoelTheme.font(11).monospacedDigit())
                     .foregroundStyle(EchoelTheme.dim)
                     .lineLimit(1).minimumScaleFactor(0.7)
             }
@@ -1593,7 +1593,7 @@ private struct SessionNamePreviewLeaf: View {
             // says "READABLE is the operative word: this is a preview, not the stamped name",
             // and it rounds the concert pitch the same way. Do not sweep the two together.
             Text("File: \(session.sessionName(bpm: transport.tempo))")
-                .font(EchoelTheme.font(10).monospacedDigit())
+                .font(EchoelTheme.font(11).monospacedDigit())
                 .foregroundStyle(EchoelTheme.dim)
                 .lineLimit(1)
                 .truncationMode(.middle)

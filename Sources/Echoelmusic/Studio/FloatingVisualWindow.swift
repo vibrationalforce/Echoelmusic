@@ -49,10 +49,10 @@ private struct MiniTransportView: View {
                     .frame(width: 34 * max(0.02, loopFraction), height: 3)
             }
             Text(String(format: "%d.%d.%d", barInLoop + 1, pos.beat + 1, sixteenth + 1))
-                .font(EchoelTheme.font(10).monospacedDigit())
+                .font(EchoelTheme.font(11).monospacedDigit())
                 .foregroundStyle(.white)
             Text("\(barInLoop + 1)/\(bars)")
-                .font(EchoelTheme.font(9).monospacedDigit())
+                .font(EchoelTheme.font(11).monospacedDigit())
                 .foregroundStyle(Color.white.opacity(0.6))
         }
         .accessibilityElement(children: .ignore)
@@ -579,7 +579,7 @@ struct FloatingVisualWindow: View {
                 // number would keep climbing while nothing more is being written. Say it
                 // instead, in the one place the performer is already looking.
                 Text("WAV FAILED")
-                    .font(EchoelTheme.font(10, .semibold))
+                    .font(EchoelTheme.font(11, .semibold))
                     // `danger`, NOT `recording`: this is the one red in the bar that means
                     // "something went wrong", and it sits two lines from the red that means
                     // "a take is running". Same colour today, opposite messages — the token
@@ -594,18 +594,18 @@ struct FloatingVisualWindow: View {
                 // lying-control class. `warning`, not `danger` — the take is salvageable and
                 // still growing, which is a different message from "nothing more is written".
                 Text("WAV GAP \(String(format: "%.1f", audioEngine.retroCapture.droppedSeconds))s")
-                    .font(EchoelTheme.font(10, .semibold).monospacedDigit())
+                    .font(EchoelTheme.font(11, .semibold).monospacedDigit())
                     .foregroundStyle(EchoelTheme.warning)
             } else if wavRecording {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     let elapsed = max(0, wavRecordStart.map { context.date.timeIntervalSince($0) } ?? 0)
                     Text("WAV \(recTimeString(elapsed))")
-                        .font(EchoelTheme.font(10, .semibold).monospacedDigit())
+                        .font(EchoelTheme.font(11, .semibold).monospacedDigit())
                         .foregroundStyle(.white)
                 }
             } else if wavExporting {
                 Text("WAV …")
-                    .font(EchoelTheme.font(10, .semibold).monospacedDigit())
+                    .font(EchoelTheme.font(11, .semibold).monospacedDigit())
                     .foregroundStyle(.white)
             }
             Button { toggleWavRecording() } label: {
