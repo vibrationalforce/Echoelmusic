@@ -3162,3 +3162,11 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **First consumers:** concert pitch → `SessionContext.defaultA4Hz`; Bass Level / Melodic Pad → `MixerStore.defaultLevel`. Always the owner's constant, never a literal at the call site (#416). The other 81 rows join one owner-family per commit.
 - **Guard:** `TheValueFieldOffersItsDefaultTests`. GLOSSARY row `default` (struck: reset, initial, factory).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 12, slice 1: the text size has buttons
+
+- **Decision:** `TextSizeRow` in Save & Export — Smaller · Larger · Default (symbol plus word, 44 pt, dimmed where no step is possible) — writes the SAME persisted step as the pinch (`StudioZoom`). The key moves to `StudioDefaultKeys.zoomStep`, string unchanged ("ui.zoomStep"), default -1 = follow the system. Smaller/Larger step from the rung IN EFFECT (`StudioZoom.systemIndex` at -1). The caption states the scope: the instrument's text; head and piece follow the system size.
+- **Why:** WCAG 1.4.4 — an in-app size whose only writer is a two-finger gesture is not an accessible setting. One key, two writers (H15-KEYSTORE); a second key would split the size.
+- **Open, deliberately:** widening the scope to the piece = move `StudioZoom`'s application point (three guards pin today's scope; WorkstationView at .accessibility5 untested); light mode and a contrast switch (new settings, own council); the head's .accessibility1 ceiling (#262 has a measured reason); the 11 pt base-font sweep.
+- **Guard:** `TheTextSizeHasButtonsTests` (f3df634a4).
+- **Review:** 2026-10-30.
