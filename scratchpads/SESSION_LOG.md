@@ -40773,3 +40773,9 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 
 - Rat (kompakt): Regel 3 (WCAG 2.5.3, founder-genehmigt) gegen #481/#482 „immer gleichgroß/kompakt“ → proceed-with-mitigation: Pflicht-`title` ohne Default (#431), 11-pt-Boden, Tint des Chips, alle sieben wachsen gleich; Glyph-Box behält `controlHeight`, Tap-Boden `controlTapHeight` (OneChromeControlHeightTests per Transkription weiter grün). Wörter: Record/Stop/Recording/Writing (`exportTitle`), MIDI, Open, Live Colabo, Learn, Save, Keep last.
 - Neuer Wächter `TheIconTileCarriesAWordTests` (4 Ansprüche; 1, 2, 4 ROT auf Eltern durch Abwesenheit, 3 ROT durch den Boden fünf). ⛔ Entwurfsfehler durch Transkription gefangen: „nächstes Label-LITERAL vor der nächsten Kachel“ las für Keep last (dynamisches Label) ein fremdes Label 300 Zeilen tiefer — jetzt zählt das ERSTE `.accessibilityLabel(` jeder Form. moved-needles: `.frame(height: controlHeight)` nur eingerückt verschoben, Nadel ist `contains` → grün. Gerät: Zeile bei 375 pt (Live Colabo darf umbrechen) = NEEDS-FOUNDER-VERIFY.
+
+## 2026-09-30 — Regel 2 (Ein Transport): Platten-Toggle → Pause mit Wort, Kopf-Play ist die eine Fortsetzung — lokal
+
+- Gemessen: Kopf hat GENAU eine Play/Stop-Taste mit Wort (Prüfung erfüllt). Befund darunter: `PlaybackToggleButton` zeigte pausiert ein zweites Play mit demselben `pattern.play(cause: .transportButton)` wie das Kopf-Play. Jetzt: nur sichtbar, während die Musik spielt; „Pause“ mit Wort; `pause()` statt `toggle()`; ein Produktions-Aufrufer des Resume (`ProjectTransport.resumeInstrument`).
+- Wächter `ThePlateHasOnePauseNotASecondPlayTests` (Ansprüche 1, 2, 4 ROT auf Eltern; 3 End-to-End grün beidseits). Nachgezogen: OneChromeControlHeightTests-Anker (minWidth-Frame), OneStartControlTests-Kommentar. Checker sauber. Gerät = NEEDS-FOUNDER-VERIFY.
+- Gepusht 16:17Z: Spitze e4b44ff45 (Ratsche 17 · Regel 10 · Regel 3); Compile Check 3070 auf de590c2bf grün (16:1xZ).

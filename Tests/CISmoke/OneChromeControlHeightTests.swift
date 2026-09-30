@@ -108,8 +108,10 @@ final class OneChromeControlHeightTests: XCTestCase {
              "the immersive header tile"),
             (Self.studio,    ".frame(height: EchoelTheme.controlHeight)",
              "the start ▶/■ button (was FloatingVisualLayout.startButtonHeight = 56)"),
-            (Self.workspace, ".frame(width: 44, height: EchoelTheme.controlHeight)",
-             "the playback ⏸ button (was 44×48)"),
+            // Rule 2/3 (2026-09-30): the pause carries its word, so its WIDTH is a minimum now;
+            // the HEIGHT stays the shared constant — that is the claim this row makes.
+            (Self.workspace, ".frame(minWidth: 44, height: EchoelTheme.controlHeight)",
+             "the playback ⏸ Pause (was 44×48, then a fixed 44 wide)"),
             // ⛔ THE `"•••"` CASE MOVED FILES WITH #482 AND THEN CEASED TO EXIST WITH #492.
             // It used to be `.frame(width: 30, height: EchoelTheme.controlHeight)` spelled
             // inside `TransportOverflowMenu`; #482 made it read `EchoelIconTile`, and #492

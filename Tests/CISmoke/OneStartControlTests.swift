@@ -282,8 +282,9 @@ final class OneStartControlTests: XCTestCase {
     /// cannot be found by one of the two ways people find controls.
     func testTheOneStartStillPresentsItselfAsATransport() throws {
         // Same anchor discipline the sibling guard above just learned: `play.fill` is NOT
-        // unique repo-wide (`PlaybackToggleButton`'s idle branch and `OnboardingView` both use
-        // it truthfully), so this one genuinely needs its file scope — and therefore needs to
+        // unique repo-wide (`OnboardingView` uses it truthfully; `PlaybackToggleButton`'s idle
+        // branch did too until rule 2 made it Pause-only on 2026-09-30, the head resumes now —
+        // `ThePlateHasOnePauseNotASecondPlayTests`), so this one genuinely needs its file scope — and therefore needs to
         // say out loud where the control lives, or a move makes it pass on the wrong file.
         // ⛔ The example named here was `VideoLibraryPanel`, deleted with video capture (#1304)
         // — and `OnboardingView` was a THIRD truthful site this note had never named, so the

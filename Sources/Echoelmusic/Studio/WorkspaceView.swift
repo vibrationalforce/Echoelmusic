@@ -856,11 +856,27 @@ struct PlaybackToggleButton: View {
         // `toggle()` below does exactly that (`requestPlaybackOnlyStop()`). The glyph now
         // states the behaviour the code already had. Exactly ONE control in that row means
         // stop, and it is the labelled one. `OneStartControlTests` pins both halves.
-        if bus.instrumentRunning {
-            Button { toggle() } label: {
-                Image(systemName: transport.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(transport.isPlaying ? EchoelTheme.accent : EchoelTheme.text)
+        //
+        // ⭐ RULE 2 (interface audit 2026-09-30, "Ein Transport"): PAUSE ONLY, WITH A WORD.
+        // Since the head (`ProjectHeader`, 2026-09-30) carries the one Play/Stop with a word,
+        // the PAUSED state of this toggle showed a SECOND Play doing exactly what the head's
+        // "Play" does (`ProjectTransport.resumeInstrument` → `pattern.play(cause:
+        // .transportButton)`). So the resume half moved out: this control shows only while
+        // the music plays, says "Pause" (rule 3: symbol plus word), and the head's "Play" —
+        // hint "Brings the music back. Your pulse reading keeps running." — is the one
+        // resume. `ThePlateHasOnePauseNotASecondPlayTests` pins it; the device look (a Pause
+        // that leaves when the music stops) is NEEDS-FOUNDER-VERIFY.
+        if bus.instrumentRunning && transport.isPlaying {
+            Button { pause() } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "pause.fill")
+                        .font(EchoelTheme.font(15, .semibold))
+                    Text("Pause")
+                        .font(EchoelTheme.font(13, .semibold))
+                        .fixedSize()
+                }
+                    .foregroundStyle(EchoelTheme.accent)
+                    .padding(.horizontal, 12)
                     // 44×48, was 38×32 until #307's Nachlese. TWO reasons, and the second is
                     // the one that matters. (1) The commit that built this row called it an
                     // "Ableton transport", and Ableton's transport strip is UNIFORM-height —
@@ -882,7 +898,7 @@ struct PlaybackToggleButton: View {
                     // Reason (2) of the old comment survives intact and is why the tap frame
                     // below exists: this clears the HIG floor on its OWN geometry, so the hit
                     // area is never faked by outsetting into a neighbour's gap.
-                    .frame(width: 44, height: EchoelTheme.controlHeight)
+                    .frame(minWidth: 44, height: EchoelTheme.controlHeight)
                     .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
                     .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                         // #367: idle used `border`, the DECORATIVE token whose own doc says
@@ -903,7 +919,7 @@ struct PlaybackToggleButton: View {
                         // It also called this "the lowest-contrast control in the app", which was
                         // a ~46-way tie: `border` is ONE opacity. What was true, and is the whole
                         // argument, is that it was the LARGEST control still at 1.16:1.
-                        .strokeBorder(transport.isPlaying ? EchoelTheme.accent : EchoelTheme.borderStrong, lineWidth: 1))
+                        .strokeBorder(EchoelTheme.accent, lineWidth: 1))
                     // AFTER background+overlay, the header-tile spelling: the picture stays
                     // `controlHeight`, only the hit area grows (#113/#481). Before them it
                     // would paint the chip 44 tall instead.
@@ -932,43 +948,35 @@ struct PlaybackToggleButton: View {
             // with no picture to tell them apart and no way to discover that one of them keeps
             // the pulse lock. The hint carried the real difference all along; now the label
             // does too, so the distinction survives being read out one control at a time.
-            .accessibilityLabel(transport.isPlaying ? Text("Pause the music") : Text("Play the music"))
+            .accessibilityLabel(Text("Pause the music"))
             .accessibilityHint(Text("Leaves the instrument and your pulse reading running."))
         }
     }
 
-    private func toggle() {
-        if transport.isPlaying {
-            // T1 breadcrumb: name the finger BEFORE the stop cascades — the 2361 log's
-            // source-less "transport-stopped" burned a triage cycle proving it was a tap.
-            // PAUSE, not end-of-session. The flag is a one-shot consumed by the studio's
-            // transport observer in the SAME turn as the `isPlaying` flip below, and every
-            // other stop path clears it defensively (`stopEverything`), so it cannot latch
-            // and downgrade a later real Stop — the #161 trap. Raising it BEFORE
-            // `pattern.stop()` is required, not stylistic: the observer reads it as a
-            // consequence of that call.
-            //
-            // It also cannot be raised while no take is live, which is the other half of that
-            // trap: this button does not exist unless `bus.instrumentRunning` is true.
-            //
-            // ⛔ The breadcrumb still says "transport-bar ■" although the button now lives in
-            // the studio's control row (#289). Kept VERBATIM on purpose: it is the string the
-            // founder's device logs are read against, and renaming it would silently break
-            // every existing triage note that greps for it. The location changed; the identity
-            // of the finger did not.
-            EchoelCrashLog.breadcrumb("stop source: transport-bar ■ (playback only)")
-            pianoRoll.requestPlaybackOnlyStop()
-            player.pattern.stop()
-        } else {
-            // ▶ PLAYS THE INSTRUMENT. It does not consult the timeline document at all
-            // (founder 2026-07-27: "Der ganze DAW Quatsch der nicht funktioniert hat soll
-            // erstmal raus aus dem TestFlight"). The arrangement branch, the drum-grid
-            // condition and the UX-2 first-run branch that used to stand here are gone with
-            // #130/#166/#234 respectively; `TimelineRegionPlayer` is permanently inert
-            // (`transportStep` opens with `guard isPlaying`, and `play(document:)` — its only
-            // writer — has no production caller). #132 Slice 5 retires the model.
-            player.pattern.play(cause: .transportButton)
-        }
+    /// PAUSE ONLY (rule 2, 2026-09-30). The resume — `pattern.play(cause: .transportButton)` —
+    /// lives in `ProjectTransport.resumeInstrument`, reached from the head's Play; the
+    /// `else` branch that stood here was a second Play for the same call.
+    private func pause() {
+        // T1 breadcrumb: name the finger BEFORE the stop cascades — the 2361 log's
+        // source-less "transport-stopped" burned a triage cycle proving it was a tap.
+        // PAUSE, not end-of-session. The flag is a one-shot consumed by the studio's
+        // transport observer in the SAME turn as the `isPlaying` flip below, and every
+        // other stop path clears it defensively (`stopEverything`), so it cannot latch
+        // and downgrade a later real Stop — the #161 trap. Raising it BEFORE
+        // `pattern.stop()` is required, not stylistic: the observer reads it as a
+        // consequence of that call.
+        //
+        // It also cannot be raised while no take is live, which is the other half of that
+        // trap: this button does not exist unless `bus.instrumentRunning` is true.
+        //
+        // ⛔ The breadcrumb still says "transport-bar ■" although the button now lives in
+        // the studio's control row (#289). Kept VERBATIM on purpose: it is the string the
+        // founder's device logs are read against, and renaming it would silently break
+        // every existing triage note that greps for it. The location changed; the identity
+        // of the finger did not.
+        EchoelCrashLog.breadcrumb("stop source: transport-bar ■ (playback only)")
+        pianoRoll.requestPlaybackOnlyStop()
+        player.pattern.stop()
     }
 }
 
