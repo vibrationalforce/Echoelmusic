@@ -12942,6 +12942,330 @@
           }
         }
       }
+    },
+    "Earlier" : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Earlier"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Früher"
+          }
+        }
+      }
+    },
+    "Later" : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Later"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Später"
+          }
+        }
+      }
+    },
+    "Trim start" : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trim start"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anfang kürzen"
+          }
+        }
+      }
+    },
+    "Trim end" : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trim end"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ende kürzen"
+          }
+        }
+      }
+    },
+    "Split" : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Split"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teilen"
+          }
+        }
+      }
+    },
+    "Copy" : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopieren"
+          }
+        }
+      }
+    },
+    "Remove" : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entfernen"
+          }
+        }
+      }
+    },
+    "Move the selected part one bar earlier" : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move the selected part one bar earlier"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das gewählte Teil einen Takt früher setzen"
+          }
+        }
+      }
+    },
+    "Move the selected part one bar later" : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move the selected part one bar later"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das gewählte Teil einen Takt später setzen"
+          }
+        }
+      }
+    },
+    "Copy the selected part to right after it" : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy the selected part to right after it"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das gewählte Teil direkt dahinter kopieren"
+          }
+        }
+      }
+    },
+    "Remove the selected part. Undo brings it back" : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove the selected part. Undo brings it back"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das gewählte Teil entfernen. Rückgängig bringt es zurück"
+          }
+        }
+      }
+    },
+    "The start cannot be trimmed: no grid line inside the part, or it would change which overlapping part plays" : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The start cannot be trimmed: no grid line inside the part, or it would change which overlapping part plays"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Anfang lässt sich nicht kürzen: keine Rasterlinie im Teil, oder es würde ändern, welches überlappende Teil spielt"
+          }
+        }
+      }
+    },
+    "Trim the selected part so it starts at " : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trim the selected part so it starts at "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das gewählte Teil kürzen, sodass es beginnt bei "
+          }
+        }
+      }
+    },
+    "The end cannot be trimmed: no grid line inside the part, or it would change which overlapping part plays" : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The end cannot be trimmed: no grid line inside the part, or it would change which overlapping part plays"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Ende lässt sich nicht kürzen: keine Rasterlinie im Teil, oder es würde ändern, welches überlappende Teil spielt"
+          }
+        }
+      }
+    },
+    "Trim the selected part so it ends at " : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trim the selected part so it ends at "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das gewählte Teil kürzen, sodass es endet bei "
+          }
+        }
+      }
+    },
+    "This part is too short to split" : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This part is too short to split"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Teil ist zu kurz zum Teilen"
+          }
+        }
+      }
+    },
+    "Splitting here would change which overlapping part plays" : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Splitting here would change which overlapping part plays"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier zu teilen würde ändern, welches überlappende Teil spielt"
+          }
+        }
+      }
+    },
+    "Split the selected part at " : {
+      "comment" : "Selected-part bar (E4-16, 2026-09-30): button titles as keys; VoiceOver sentences via String(localized:), the bar label appended as a piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Split the selected part at "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das gewählte Teil teilen bei "
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

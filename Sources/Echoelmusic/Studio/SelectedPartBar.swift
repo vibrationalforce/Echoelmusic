@@ -276,11 +276,11 @@ struct SelectedPartBar: View {
         let earlier = TrackParts.earlierStart(part)
         return HStack(spacing: 6) {
             button("Earlier", "chevron.left", enabled: earlier != nil, showsTitle: showsTitles,
-                   label: "Move the selected part one bar earlier") {
+                   label: String(localized: "Move the selected part one bar earlier")) {
                 if let tick = earlier { TrackParts.move(part, toStartTick: tick, timeline: timeline) }
             }
             button("Later", "chevron.right", enabled: true, showsTitle: showsTitles,
-                   label: "Move the selected part one bar later") {
+                   label: String(localized: "Move the selected part one bar later")) {
                 TrackParts.move(part, toStartTick: TrackParts.laterStart(part), timeline: timeline)
             }
         }
@@ -304,11 +304,11 @@ struct SelectedPartBar: View {
                 if splittable, let cut { split(regionID, at: cut) }
             }
             button("Copy", "plus.square.on.square", enabled: true, showsTitle: showsTitles,
-                   label: "Copy the selected part to right after it") {
+                   label: String(localized: "Copy the selected part to right after it")) {
                 TrackParts.duplicate(part, timeline: timeline)
             }
             button("Remove", "trash", enabled: true, showsTitle: showsTitles,
-                   label: "Remove the selected part. Undo brings it back") {
+                   label: String(localized: "Remove the selected part. Undo brings it back")) {
                 TrackParts.remove(part, timeline: timeline)
             }
         }
@@ -316,24 +316,24 @@ struct SelectedPartBar: View {
 
     private func trimStartLabel(_ tick: Int?) -> String {
         guard let tick else {
-            return "The start cannot be trimmed: no grid line inside the part, or it would change which overlapping part plays"
+            return String(localized: "The start cannot be trimmed: no grid line inside the part, or it would change which overlapping part plays")
         }
-        return "Trim the selected part so it starts at \(SessionGrid.label(forTick: tick))"
+        return String(localized: "Trim the selected part so it starts at ") + SessionGrid.label(forTick: tick)
     }
 
     private func trimEndLabel(_ part: TrackParts.Part, _ length: Int?) -> String {
         guard let length else {
-            return "The end cannot be trimmed: no grid line inside the part, or it would change which overlapping part plays"
+            return String(localized: "The end cannot be trimmed: no grid line inside the part, or it would change which overlapping part plays")
         }
-        return "Trim the selected part so it ends at \(SessionGrid.label(forTick: part.startTick + length))"
+        return String(localized: "Trim the selected part so it ends at ") + SessionGrid.label(forTick: part.startTick + length)
     }
 
     private func splitLabel(cut: Int?, splittable: Bool) -> String {
-        guard let cut else { return "This part is too short to split" }
+        guard let cut else { return String(localized: "This part is too short to split") }
         guard splittable else {
-            return "Splitting here would change which overlapping part plays"
+            return String(localized: "Splitting here would change which overlapping part plays")
         }
-        return "Split the selected part at \(SessionGrid.label(forTick: cut))"
+        return String(localized: "Split the selected part at ") + SessionGrid.label(forTick: cut)
     }
 
     private func split(_ regionID: UUID, at tick: Int) {
@@ -358,7 +358,10 @@ struct SelectedPartBar: View {
         timeline.trimRegionStart(id: regionID, toTick: tick, bpm: bpm)
     }
 
-    private func button(_ title: String, _ systemImage: String, enabled: Bool, showsTitle: Bool,
+    // E4-16 (2026-09-30): `title` is a catalog KEY (every caller passes a literal); `label` stays a
+    // `String` because three callers COMPUTE it (the trim/split sentences carry a bar label), so each
+    // caller localises its own sentence with `String(localized:)` — head piece + bar, never a format key.
+    private func button(_ title: LocalizedStringKey, _ systemImage: String, enabled: Bool, showsTitle: Bool,
                         label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 4) {

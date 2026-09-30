@@ -34,7 +34,8 @@
 // `String` and ten units are missing: ONE finding. E4-13 added `EchoelPanel`'s three key-wrapped draw
 // sites and seventeen panel words — on its parent the wraps are absent and fifteen units missing: ONE finding.
 // E4-14 added the loudness readout's signature and four names (parent: `String`, four missing — ONE finding).
-// E4-15 added the media label's key wrap and four titles (parent: verbatim, three missing — ONE finding). Claim 12
+// E4-15 added the media label's key wrap and four titles (parent: verbatim, three missing — ONE finding).
+// E4-16 added the selected-part bar: signature, three sentence heads, four localised labels, eighteen units (parent: all absent — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -498,6 +499,26 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertTrue(media.contains("Text(LocalizedStringKey(title))") && !media.contains("Text(title)"),
                       "MediaActionLabel draws its title verbatim again — Choose Photo / Apply to Visuals / Choose Video would not translate")
         try assertGerman(["Choose Photo", "Apply to Visuals", "Choose Video", "Undo"], "media action titles")
+        // E4-16 — the selected-part bar: titles as keys, every VoiceOver sentence localised at its caller
+        let bar = try codeOnly("Sources/Echoelmusic/Studio/SelectedPartBar.swift")
+        XCTAssertTrue(bar.contains("private func button(_ title: LocalizedStringKey, _ systemImage: String, enabled: Bool, showsTitle: Bool,"),
+                      "the selected-part bar's button takes a String title again — its seven words would spell verbatim")
+        for head in ["Trim the selected part so it starts at ", "Trim the selected part so it ends at ", "Split the selected part at "] {
+            XCTAssertTrue(bar.contains("String(localized: \"\(head)\")"), "the sentence `\(head)…` is spelled verbatim again — its head is a key, the bar label is appended")
+        }
+        for label in ["Move the selected part one bar earlier", "Move the selected part one bar later",
+                      "Copy the selected part to right after it", "Remove the selected part. Undo brings it back"] {
+            XCTAssertTrue(bar.contains("label: String(localized: \"\(label)\")"), "the button label `\(label)` is passed verbatim again")
+        }
+        try assertGerman(["Earlier", "Later", "Trim start", "Trim end", "Split", "Copy", "Remove",
+                          "Move the selected part one bar earlier", "Move the selected part one bar later",
+                          "Copy the selected part to right after it", "Remove the selected part. Undo brings it back",
+                          "The start cannot be trimmed: no grid line inside the part, or it would change which overlapping part plays",
+                          "Trim the selected part so it starts at ",
+                          "The end cannot be trimmed: no grid line inside the part, or it would change which overlapping part plays",
+                          "Trim the selected part so it ends at ", "This part is too short to split",
+                          "Splitting here would change which overlapping part plays", "Split the selected part at "],
+                         "selected-part bar words")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
