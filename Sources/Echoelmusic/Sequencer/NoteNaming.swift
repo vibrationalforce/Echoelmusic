@@ -259,10 +259,12 @@ public enum NoteNaming: String, CaseIterable, Codable, Sendable {
     /// or `E𝄫` passed every assertion silently. The test now also requires the spoken form
     /// to be plain ASCII letters and spaces, which catches ANY unexpanded mark. The claim is
     /// true now; it was a promise before.
+    /// E4-22 (2026-09-30): the two expansions are catalog keys (German: Kreuz / Be), so VoiceOver
+    /// speaks the accidental in the reader's language; the letter comes from the naming column.
     public func spokenName(pitchClass: Int, preferFlats: Bool = false) -> String {
         name(pitchClass: pitchClass, preferFlats: preferFlats)
-            .replacingOccurrences(of: "♯", with: " sharp")
-            .replacingOccurrences(of: "♭", with: " flat")
+            .replacingOccurrences(of: "♯", with: String(localized: " sharp"))
+            .replacingOccurrences(of: "♭", with: String(localized: " flat"))
     }
 
     /// Decode a persisted raw value, falling back to `.english` for anything unrecognised —

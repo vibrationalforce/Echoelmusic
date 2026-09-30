@@ -85,7 +85,9 @@ struct EchoelIconTile: View {
             // Rule 3: the word, on the 11 pt floor (rule 12), in the chip's own tint so the
             // disabled state dims glyph and word together. The chip is taller than the header
             // tiles it was matched to on 2026-08-07 by exactly this caption, for all seven alike.
-            Text(title)
+            // E4-22 (2026-09-30): the word is drawn as a catalog KEY. `title` stays a `String` because
+            // one caller computes it (`exportTitle`) and the a11y guard reads it as text.
+            Text(LocalizedStringKey(title))
                 .font(EchoelTheme.font(11, .semibold))
                 .lineLimit(2)
                 .multilineTextAlignment(.center)

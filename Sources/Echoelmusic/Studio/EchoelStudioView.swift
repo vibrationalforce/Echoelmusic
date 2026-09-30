@@ -9805,9 +9805,9 @@ struct EchoelStudioView: View {
     /// spoken name contains what is shown (WCAG 2.5.3).
     private var exportTitle: String {
         switch exporter.status {
-        case .capturing: return exporter.isCancellable ? "Stop" : "Recording"
-        case .rendering: return "Writing"
-        default:         return "Record"
+        case .capturing: return exporter.isCancellable ? String(localized: "Stop") : String(localized: "Recording")
+        case .rendering: return String(localized: "Writing")
+        default:         return String(localized: "Record")
         }
     }
     private var exportIcon: String {

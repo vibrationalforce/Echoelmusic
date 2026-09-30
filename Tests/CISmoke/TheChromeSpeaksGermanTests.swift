@@ -42,7 +42,9 @@
 // (parent: all absent, eight units missing — ONE finding). E4-19 added the Routing MIDI label's signature, the
 // guide counter's two seams and the eight Scale-family headers (parent: all absent, eleven units missing — ONE finding).
 // E4-20 added the 23 Genre shelf headers (parent: 0/23 localised, 22 units missing — ONE finding). E4-21 added the
-// 57 scale display names plus the shortName counterweight (parent: 0/57, 57 units missing — ONE finding). Claim 12
+// 57 scale display names plus the shortName counterweight (parent: 0/57, 57 units missing — ONE finding). E4-22 added
+// the icon tile's key wrap, the Record tile's four state titles and the two spoken accidentals (parent: all verbatim,
+// six units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -617,6 +619,16 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertTrue(families.contains("return \"maj\"") && families.contains("return \"harm\""),
                       "`Scale.shortName` is no longer a plain literal — it is the key half of every share filename and must read the same on every device")
         try assertGerman(scaleNames, "scale display names")
+        // E4-22 — the icon tile draws its word as a key; the Record tile's state title and the spoken accidentals are keys
+        let tile = try codeOnly("Sources/Echoelmusic/Studio/EchoelIconTile.swift")
+        XCTAssertTrue(tile.contains("Text(LocalizedStringKey(title))") && !tile.contains("Text(title)"),
+                      "EchoelIconTile draws its word verbatim again — Save / Open / Learn would not translate")
+        XCTAssertTrue(code.contains("String(localized: \"Writing\")") && !code.contains("? \"Stop\" : \"Recording\""),
+                      "the Record tile's state title spells Stop / Recording / Writing verbatim again")
+        let notes = try codeOnly("Sources/Echoelmusic/Sequencer/NoteNaming.swift")
+        XCTAssertTrue(notes.contains("with: String(localized: \" sharp\")") && notes.contains("with: String(localized: \" flat\")"),
+                      "`spokenName` expands ♯/♭ to a verbatim English word again")
+        try assertGerman(["MIDI", "Open", "Live Colabo", "Learn", "Save", "Keep last", "Stop", "Recording", "Writing", "Record", " sharp", " flat"], "icon tile, record tile and accidental words")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

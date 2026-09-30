@@ -15696,6 +15696,114 @@
           }
         }
       }
+    },
+    "Live Colabo" : {
+      "comment" : "Icon tile words, the Record tile's state title and the spoken accidentals (E4-22, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live Colabo"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live Colabo"
+          }
+        }
+      }
+    },
+    "Learn" : {
+      "comment" : "Icon tile words, the Record tile's state title and the spoken accidentals (E4-22, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learn"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lernen"
+          }
+        }
+      }
+    },
+    "Keep last" : {
+      "comment" : "Icon tile words, the Record tile's state title and the spoken accidentals (E4-22, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep last"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letztes behalten"
+          }
+        }
+      }
+    },
+    "Writing" : {
+      "comment" : "Icon tile words, the Record tile's state title and the spoken accidentals (E4-22, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Writing"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schreiben"
+          }
+        }
+      }
+    },
+    " sharp" : {
+      "comment" : "Icon tile words, the Record tile's state title and the spoken accidentals (E4-22, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " sharp"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Kreuz"
+          }
+        }
+      }
+    },
+    " flat" : {
+      "comment" : "Icon tile words, the Record tile's state title and the spoken accidentals (E4-22, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " flat"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Be"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -19,7 +19,8 @@
 // it was matched to on 2026-08-07 — that is the trade rule 3 makes, stated, not hidden.
 //
 // WHAT THIS GUARDS.
-//   1. The tile declares `let title: String` with no default and renders `Text(title)`.
+//   1. The tile declares `let title: String` with no default and renders it as a key
+//      (`Text(LocalizedStringKey(title))` since E4-22).
 //   2. Every `EchoelIconTile(` call site in `Sources/` passes `title:` (paren-matched, so a
 //      multi-line call counts once).
 //   3. LABEL IN NAME, for every call site whose title is a literal AND whose Button's FIRST
@@ -51,7 +52,9 @@ final class TheIconTileCarriesAWordTests: XCTestCase {
             property. A default (`= ""`) would let a caller ship a mute tile again without a \
             diff line — the compiler is the guard here (#431).
             """)
-        XCTAssertTrue(code.contains("Text(title)"), "EchoelIconTile no longer renders `Text(title)` — the word is the point of rule 3")
+        // E4-22: the word is drawn as a catalog key — `Text(LocalizedStringKey(title))` — so the German
+        // phone reads Sichern / Öffnen / Lernen; the stored `String` above is unchanged.
+        XCTAssertTrue(code.contains("Text(LocalizedStringKey(title))"), "EchoelIconTile no longer renders its word as a key — the word is the point of rule 3, in the reader's language")
     }
 
     // MARK: 2 — every caller passes a word
