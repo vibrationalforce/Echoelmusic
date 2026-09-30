@@ -3422,3 +3422,9 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - Rule 5: the area row (Compose · Perform · Visuals · Library · Settings, Phase 1 of 2026-09-29) and the 9-chip strip open the SAME panels via `areaHome` — one level too many. Proposal recorded (area row becomes the one strip; each area opens its panel; the rest behind "Mehr"); HELD for the founder because Phase 1 is one day old.
 - Rule 8: ⓘ in `ProjectHeader` toggles `GuideOverlay`, persisted `studio.guideVisible`, default ON — covers both views. Gap: the sheets (Open, Learn, Routing, Live Colabo, save dialog) cover the head and carry no help.
 - Rule 9: chip first lines FX / Field / Master lead with the trade word (→ Effects / Visual / Output?); every chip already has a `fullName`. A bounded rename slice with pins to move (8 test hits in 4 files for the three words — measure before building).
+
+### 2026-09-30 — Compile red on e4b44ff45: an edit script's insertion ran twice
+
+- Compile Check 3071 + Build for Testing 6535 red: `let title: String` (EchoelIconTile) and `private var exportTitle` (EchoelStudioView) declared twice → memberwise init with two `title:` labels → "missing argument" at four call sites. Fixed in 3c8b07ca5 (two deletions, 15 lines).
+- Root cause: the script's idempotency guard counted the ANCHOR (`if c == 0 and new in t`). That works for a replacement, which removes the anchor, and fails for an insertion, which keeps it — the second run inserted again. The Python transcription greps for PRESENCE, so it stayed green.
+- Rule from here: guard an insertion by the inserted text (`if new in t: continue`), and run a duplicate-adjacent-block scan over touched Sources files with the checkers before every commit.
