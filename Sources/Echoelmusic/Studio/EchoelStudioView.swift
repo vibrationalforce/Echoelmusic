@@ -1639,7 +1639,7 @@ struct EchoelStudioView: View {
             if !on {
                 autoAttuneState = AutoAttune.State()
                 log.log(.info, category: .automation,
-                        "Auto attune: off — steering state and session pauses cleared")
+                        "Auto attune: off — steering state and pauses cleared")
             }
         }
         // ONE Stop for the whole app: when the transport stops from ANYWHERE (the global
@@ -1799,7 +1799,7 @@ struct EchoelStudioView: View {
         .fullScreenCover(isPresented: $showMeditation) { MeditationView() }
         #if canImport(MultipeerConnectivity)
         .sheet(isPresented: $showLiveColabo) {
-            AnyView(LiveColaboView(currentSession: { currentProject(named: "Shared session") },
+            AnyView(LiveColaboView(currentSession: { currentProject(named: "Shared piece") },
                            onLoadShared: { open($0) })
                 .echoelSheetPanel())
         }
@@ -2001,7 +2001,7 @@ struct EchoelStudioView: View {
                     .font(.system(size: 26, weight: .regular))
                     .foregroundStyle(EchoelTheme.text)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Breathing Session")
+                    Text("Breathing guide")
                         .font(EchoelTheme.font(17, .semibold))
                         .foregroundStyle(EchoelTheme.text)
                     Text("The light breathes with you toward your resonance pace")
@@ -2021,8 +2021,8 @@ struct EchoelStudioView: View {
                 .strokeBorder(EchoelTheme.border, lineWidth: 1))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Back to the breathing session")
-        .accessibilityHint("Closes the studio and returns to the calm session.")
+        .accessibilityLabel("Back to the breathing guide")
+        .accessibilityHint("Closes the studio and returns to the breathing guide.")
     }
 
     /// UNPRESENTED BY FOUNDER DECISION (2026-07-07, v10.79.87 `de728a5`: "Xy Pads komplett
@@ -2263,7 +2263,7 @@ struct EchoelStudioView: View {
             // `hasComposed` is `@State`, event-rate (freeze law). Wording history (#272,
             // #355b — name the control that actually starts) lives at the panel tombstone.
             if !hasComposed {
-                Text("Press Play first — then you can record the loop, save the session, or export a WAV or MIDI file.")
+                Text("Press Play first — then you can record the loop, save the piece, or export a WAV or MIDI file.")
                     .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
@@ -2529,8 +2529,8 @@ struct EchoelStudioView: View {
             // accessibility string is invisible with VoiceOver off, so no screenshot and no
             // design pass will ever show it). A false claim hides best where it is spoken.
             .accessibilityLabel("Live Colabo — play together with a nearby device")
-            .accessibilityHint("Opens the nearby-session sheet: find a device on the same "
-                               + "Wi-Fi and share your session with it. The two devices are "
+            .accessibilityHint("Opens the nearby-devices sheet: find a device on the same "
+                               + "Wi-Fi and share your piece with it. The two devices are "
                                + "not clock-synced.")
             #endif
 
@@ -2644,7 +2644,7 @@ struct EchoelStudioView: View {
         // see.
         .accessibilityLabel(running ? Text("Stop") : Text("Play"))
         .accessibilityHint(running
-            ? Text("Ends the session and the pulse reading. To drop only the music, use pause.")
+            ? Text("Ends the instrument and the pulse reading. To drop only the music, use pause.")
             : Text("Starts biofeedback; your body then composes and plays the music."))
     }
 
@@ -4272,11 +4272,11 @@ struct EchoelStudioView: View {
         @Bindable var locationNamer = locationNamer
         return VStack(alignment: .leading, spacing: 4) {
             Toggle(isOn: $locationNamer.enabled) {
-                Text("Place in session name")
+                Text("Place in piece name")
                     .font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
             }
             .tint(EchoelTheme.accent)
-            .accessibilityHint("Stamps your city into session and export names. Used only for the city name and, if you enable weather, an Apple Weather lookup — never stored by Echoel.")
+            .accessibilityHint("Stamps your city into piece and export names. Used only for the city name and, if you enable weather, an Apple Weather lookup — never stored by Echoel.")
             // Manual override (founder 2026-07-14: "auch manuell eingeben … oder der
             // Standort nicht funktioniert"): type a place yourself. Works with or
             // without GPS and overrides the resolved city. Text (not a number) → a
@@ -4364,7 +4364,7 @@ struct EchoelStudioView: View {
                     .font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
             }
             .tint(EchoelTheme.accent)
-            .accessibilityHint("One coarse weather lookup per session flavours sound and image. Each influence has its own intensity — mix it in or out. The body stays the main driver.")
+            .accessibilityHint("One coarse weather lookup at each start flavours sound and image. Each influence has its own intensity — mix it in or out. The body stays the main driver.")
             if weatherEnabled {
                 // The prerequisite used to be a DEAD END: it named the other toggle and
                 // left the user to hunt for it — and that toggle is labelled about
@@ -4387,7 +4387,7 @@ struct EchoelStudioView: View {
                     // perception this change exists to remove. 44 pt is the same HIG
                     // target the "•••" chip and `entryRow` already take.
                     .contentShape(Rectangle())
-                    .accessibilityHint("Turns on the place toggle, asks for location permission if it has not been granted yet, and puts your city into session and export names.")
+                    .accessibilityHint("Turns on the place toggle, asks for location permission if it has not been granted yet, and puts your city into piece and export names.")
                 } else if locationNamer.denied {
                     // This state existed and had no words here: with location denied the
                     // lookup can never run, and the row would have promised a sky reading
@@ -5404,7 +5404,7 @@ struct EchoelStudioView: View {
                     .accessibilityHint("Smaller buffers respond sooner and cost more CPU")
                 }
                 Text("Smaller buffers respond sooner and cost more CPU. iOS may refuse a tier — "
-                     + "hardest on Bluetooth — so the row shows what the session granted.")
+                     + "hardest on Bluetooth — so the row shows what iOS granted.")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -7586,7 +7586,7 @@ struct EchoelStudioView: View {
                              if let pause, autoMode, !autoAttuneState[keyPath: pause] {
                                  autoAttuneState[keyPath: pause] = true
                                  log.log(.info, category: .automation,
-                                         "Auto attune: \(label) paused for this session (user edit)")
+                                         "Auto attune: \(label) paused (user edit)")
                              }
                              recomposeIfRunning()
                          })
@@ -13290,7 +13290,7 @@ private struct ArtistNameRow: View {
             // DO, so the caption now says it instead of staying quiet about a string that leaves
             // the device. It still does not promise the credit line appears on your own takes;
             // `Project.attribution` stays quiet there by design.
-            Text("Stamped on takes you save, and used in session and export file names. Shown to nearby devices while Live Colabo is on. Without a name they are stamped \(SessionContext.unnamedArtist).")
+            Text("Stamped on pieces you save, and used in piece and export file names. Shown to nearby devices while Live Colabo is on. Without a name they are stamped \(SessionContext.unnamedArtist).")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)

@@ -192,8 +192,8 @@ for ~15 seconds in the bio strip's pulse view.
 HealthKit: read-only heart rate/HRV as an optional bio source; optional
 opt-in write-back of measured heart/breath rate. Off by default.
 
-Location (optional, off by default): "Place in session name" resolves the
-city once to stamp it into the session's file name (e.g.
+Location (optional, off by default): "Place in piece name" resolves the
+city once to stamp it into the piece's file name (e.g.
 Echoel_2026-07-10_Hamburg_Am_72bpm_A440). Nothing is stored or transmitted
 beyond that name string.
 

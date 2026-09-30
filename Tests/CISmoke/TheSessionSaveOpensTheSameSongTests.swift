@@ -275,7 +275,7 @@ final class TheSessionSaveOpensTheSameSongTests: XCTestCase {
                       "a take counts as live only when it was composed AND holds notes (H1)")
         XCTAssertTrue(code.contains("existingSlot: projects.recoveryProject(id: Project.autosaveSlotID)) else { return }"),
                       "…and hands the rule the slot it would overwrite")
-        XCTAssertTrue(code.contains("currentSession: { currentProject(named: \"Shared session\") }"),
+        XCTAssertTrue(code.contains("currentSession: { currentProject(named: \"Shared piece\") }"),
                       "Live Colabo shares the take WITHOUT the song (no withSession there)")
         XCTAssertTrue(code.contains("SessionSaveOpen.songHasUserParts("),
                       "the recovery slot keeps a song with the user's parts even with no take (H3)")
