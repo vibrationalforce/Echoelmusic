@@ -112,6 +112,12 @@ struct ProjectHeader: View {
 
     /// The ONE Play / Stop. While anything runs it is Stop — for everything. Stopped, it plays
     /// what the project can play: the song, or a held session's music.
+    ///
+    /// It wears its WORD beside the glyph (`ProjectTransport.buttonWord`, interface audit
+    /// 2026-09-30): the header is the first control a fresh install meets, and a lone triangle is
+    /// a guess for a beginner. The word is `fixedSize` so the HStack never truncates a four-letter
+    /// word to "Pl…" while the summary beside it — which owns `lineLimit` + `truncationMode` —
+    /// gives way instead; the button grows with Dynamic Type (no fixed height, #353).
     private func playStopButton(running: Bool, play: ProjectTransport.PlayAction) -> some View {
         let available = running || play != .unavailable
         return Button {
@@ -125,17 +131,23 @@ struct ProjectHeader: View {
                 }
             }
         } label: {
-            Image(systemName: running ? "stop.fill" : "play.fill")
-                .font(EchoelTheme.font(15, .semibold))
-                .foregroundStyle(running ? EchoelTheme.onPrimary
-                                         : (available ? EchoelTheme.text : EchoelTheme.dim))
-                .frame(minWidth: 44, minHeight: 44)
-                .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .fill(running ? EchoelTheme.accent : EchoelTheme.fill))
-                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .strokeBorder(running || !available ? Color.clear : EchoelTheme.borderStrong,
-                                  lineWidth: 1))
-                .contentShape(Rectangle())
+            HStack(spacing: 6) {
+                Image(systemName: running ? "stop.fill" : "play.fill")
+                    .font(EchoelTheme.font(15, .semibold))
+                Text(ProjectTransport.buttonWord(running: running))
+                    .font(EchoelTheme.font(13, .semibold))
+                    .fixedSize()
+            }
+            .foregroundStyle(running ? EchoelTheme.onPrimary
+                                     : (available ? EchoelTheme.text : EchoelTheme.dim))
+            .padding(.horizontal, 12)
+            .frame(minWidth: 44, minHeight: 44)
+            .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                .fill(running ? EchoelTheme.accent : EchoelTheme.fill))
+            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                .strokeBorder(running || !available ? Color.clear : EchoelTheme.borderStrong,
+                              lineWidth: 1))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(!available)

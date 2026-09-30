@@ -12,8 +12,21 @@
 // · 6–9 SOURCE-TEXT SCANS — where the header is mounted, what it may not construct or present,
 //   that its hot read is confined to its own leaf, and that the Workstation's Play/Stop reads
 //   the same running truth. They prove where text sits, not that the app renders it.
+// · 10 (interface audit 2026-09-30, "ein Kopf, der spricht") MIXED, labelled per assertion:
+//   END-TO-END on `ProjectTransport.buttonWord` against `buttonLabel` (the drawn word is the
+//   spoken label's first word, for every state), then SOURCE-TEXT that the header's ONE
+//   Play/Stop mounts that word beside its glyph and that the compact Record beside it stays a
+//   glyph (two "Stop"s with two effects would be the `OneStartControlTests` confusion).
 // · DEVICE PROBE, OPEN (NEEDS-FOUNDER-VERIFY): that the header renders legibly at the largest
-//   text size, that VoiceOver speaks the status change, and that Stop is heard to stop.
+//   text size, that VoiceOver speaks the status change, and that Stop is heard to stop — and,
+//   since claim 10, that the worded button and the compact Record still share one row at the
+//   default size on an iPhone (375 pt) without the summary collapsing to its ellipsis.
+//
+// HONEST GRADING of claim 10 (§3), against its parent (`4fa757884`): `buttonWord` does not exist
+// there, so the file does not compile against the parent and no assertion has a verdict; by
+// transcription, the behaviour half and the mount needle are FORWARD (they name the new symbol),
+// the glyph needle and the compact-Record needle are COUNTERWEIGHTS (green on both trees), and
+// the `.padding(.horizontal, 12)` needle is red on the parent by the same one absence.
 //
 // HONEST GRADING (§3), against the parent tree (`811fdddeb`): the file does NOT compile there —
 // it names `ProjectTransport`, `WorkstationView.startSong`/`songCanStart(player:…)` and
@@ -300,6 +313,47 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
         XCTAssertTrue(header2.contains("AccessibilityNotification.Announcement(ProjectTransport.statusWord(new)).post()"),
                       "a status change is spoken")
         XCTAssertTrue(header2.contains(".accessibilityLabel(ProjectTransport.buttonLabel(running: running, play: play))"))
+    }
+
+    // MARK: 10 — the ONE Play / Stop wears its word (interface audit 2026-09-30)
+
+    func testThePlayStopWearsTheFirstWordOfItsSpokenLabel() throws {
+        // END-TO-END: the drawn word is the spoken label's first word, in every state — so the
+        // two can never disagree, and neither is a second copy of the other (#416).
+        let plays: [ProjectTransport.PlayAction] = [.startSong, .startSongAndInstrument,
+                                                    .resumeInstrument, .unavailable]
+        for running in [true, false] {
+            let word = ProjectTransport.buttonWord(running: running)
+            XCTAssertFalse(word.contains(" "), "one word, not a sentence: \"\(word)\"")
+            XCTAssertEqual(word, running ? "Stop" : "Play")
+            for play in plays {
+                let label = ProjectTransport.buttonLabel(running: running, play: play)
+                XCTAssertTrue(label.hasPrefix(word + " ") || label == word, """
+                running=\(running) play=\(play): the button draws "\(word)" but VoiceOver says \
+                "\(label)" — the drawn word must be the spoken label's first word.
+                """)
+            }
+        }
+        // SOURCE-TEXT: the header's one button mounts the word beside the glyph it always had.
+        let header = try source(Self.header)
+        let button = try body(of: "private func playStopButton(running: Bool, play: ProjectTransport.PlayAction) -> some View",
+                              in: header)
+        XCTAssertTrue(button.contains("Image(systemName: running ? \"stop.fill\" : \"play.fill\")"),
+                      "the glyph stays — the word joins it, it does not replace it")
+        XCTAssertTrue(button.contains("Text(ProjectTransport.buttonWord(running: running))"),
+                      "the ONE Play/Stop wears its word (interface audit 2026-09-30)")
+        XCTAssertTrue(button.contains(".padding(.horizontal, 12)"),
+                      "a worded button is no longer a 44 pt square; it needs side room before the 44 pt floor")
+        // SOURCE-TEXT: the compact Record beside it stays a glyph — "Stop" twice on one row with
+        // two effects is the confusion `OneStartControlTests` names.
+        let record = try source("Sources/Echoelmusic/Studio/RecordTakeControls.swift")
+        guard let gate = record.range(of: "if !compact {"),
+              let recordWord = record.range(of: "Text(recording ? \"Stop recording\" : \"Record\")",
+                                            range: gate.upperBound..<record.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the compact Record's word is no longer behind `if !compact {` (#454)")
+        }
+        XCTAssertLessThan(record.distance(from: gate.upperBound, to: recordWord.lowerBound), 120,
+                          "the Record's word must sit directly under its `!compact` gate, so the header's compact Record stays glyph-only")
     }
 
     func testThereIsOneStartOneStopAndNoSecondProject() throws {

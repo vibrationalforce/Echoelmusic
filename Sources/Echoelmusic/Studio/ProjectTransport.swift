@@ -152,6 +152,18 @@ enum ProjectTransport {
         }
     }
 
+    /// The word the ONE Play / Stop WEARS beside its glyph (interface audit 2026-09-30, "ein
+    /// Kopf, der spricht"). A glyph-only transport is read by a producer and guessed by a
+    /// beginner, and the header is the first control a fresh install meets. It is the FIRST WORD
+    /// of `buttonLabel` — the drawn word and the spoken label may not disagree, and the guard
+    /// holds them to that rather than to a second copy of the sentence. ONE word on purpose: the
+    /// compact Record beside it stays a glyph, because "Stop" there and "Stop" here while a take
+    /// runs would be two identical claims with two different effects — the confusion
+    /// `OneStartControlTests` names on the instrument's own row.
+    static func buttonWord(running: Bool) -> String {
+        running ? "Stop" : "Play"
+    }
+
     static func buttonHint(running: Bool, play: PlayAction) -> String {
         if running { return stopHint }
         switch play {
