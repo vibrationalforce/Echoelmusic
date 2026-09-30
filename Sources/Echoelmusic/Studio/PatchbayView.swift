@@ -478,12 +478,20 @@ struct PatchbayView: View {
     private var networkOutSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Network output").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
-            outputRow("OSC", sender: osc, host: oscHost, port: oscPort)
-            outputRow("ADM-OSC", sender: admOSC, host: admHost, port: admPort)
+            // Rule 6, eleventh family: each sender OWNS its default port (and the two light
+            // senders their universe); the row only carries the owner's number to the key.
+            outputRow("OSC", sender: osc, host: oscHost, port: oscPort,
+                      standardPort: Float(OSCSender.defaultPort))
+            outputRow("ADM-OSC", sender: admOSC, host: admHost, port: admPort,
+                      standardPort: Float(ADMOSCSender.defaultPort))
             outputRow("sACN · Light", sender: sacn, host: sacnHost, port: sacnPort,
-                      universe: sacnUniverse, universeRange: 1...63_999)
+                      standardPort: Float(SACNSender.defaultPort),
+                      universe: sacnUniverse, universeRange: 1...63_999,
+                      standardUniverse: Float(SACNSender.defaultUniverse))
             outputRow("Art-Net · Light", sender: artNet, host: artNetHost, port: artNetPort,
-                      universe: artNetUniverse, universeRange: 0...32_767)
+                      standardPort: Float(ArtNetSender.defaultPort),
+                      universe: artNetUniverse, universeRange: 0...32_767,
+                      standardUniverse: Float(ArtNetSender.defaultUniverse))
             // #1219 — the OS's refusal, if any. `lastError` moves only on a state change or a
             // refused send, never per tick: a cold read for this host body.
             if let artNetError = artNet.lastError {
@@ -524,8 +532,10 @@ struct PatchbayView: View {
 
     private func outputRow(_ name: String, sender: any NetworkSendActivity,
                            host: Binding<String>, port: Binding<Float>,
+                           standardPort: Float,
                            universe: Binding<Float>? = nil,
-                           universeRange: ClosedRange<Float> = 1...63_999) -> some View {
+                           universeRange: ClosedRange<Float> = 1...63_999,
+                           standardUniverse: Float? = nil) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             // ⭐ THE DOT MOVED INTO ITS OWN LEAF (#996, audit item 16), and it now means
             // something. It used to render `isActive`, which every sender sets ONE LINE after
@@ -557,10 +567,10 @@ struct PatchbayView: View {
                 .keyboardType(.URL)
                 #endif
             pairedRow(spacing: 8) {
-                EchoelValueField(label: "Port", value: port, range: 1...65_535, unit: "", decimals: 0)
+                EchoelValueField(label: "Port", value: port, range: 1...65_535, unit: "", decimals: 0, standard: standardPort)
             } second: {
                 if let universe {
-                    EchoelValueField(label: "Universe", value: universe, range: universeRange, unit: "", decimals: 0)
+                    EchoelValueField(label: "Universe", value: universe, range: universeRange, unit: "", decimals: 0, standard: standardUniverse)
                 }
             }
         }

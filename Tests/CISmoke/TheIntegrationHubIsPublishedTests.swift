@@ -129,16 +129,26 @@ final class TheIntegrationHubIsPublishedTests: XCTestCase {
     ///
     /// ⚠️ It reads the DECLARATION, not a prose sentence, so a comment about the old number
     /// (the file deliberately keeps a tombstone naming 9000) cannot satisfy or break it.
+    /// ⭐ Since rule 6's eleventh family (2026-09-30) the declaration is the OWNER constant
+    /// `ADMOSCSender.defaultPort`, and the init reads it instead of carrying its own literal — so
+    /// this pin reads the owner and additionally requires the init to defer to it. Two homes of
+    /// one number are exactly what this claim exists to catch (#456); the anchor moved to the
+    /// only home that is left.
     func testTheAdvertisedADMPortIsTheOneTheSenderDefaultsTo() throws {
         let sender = try text("Sources/Echoelmusic/Sync/ADMOSCSender.swift")
-        guard let range = sender.range(of: #"port: UInt16 = (\d+)"#, options: .regularExpression) else {
+        guard let range = sender.range(of: #"static let defaultPort: UInt16 = (\d+)"#, options: .regularExpression) else {
             return XCTFail("""
-                ANCHOR MISSING: no `port: UInt16 = <n>` declaration in ADMOSCSender.swift.                 Re-anchor rather than letting this stay green (#454).
+                ANCHOR MISSING: no `static let defaultPort: UInt16 = <n>` declaration in ADMOSCSender.swift.                 Re-anchor rather than letting this stay green (#454).
                 """)
         }
         let declared = sender[range].split(separator: "=").last.map {
             $0.trimmingCharacters(in: .whitespaces)
         } ?? ""
+        XCTAssertEqual(declared, String(ADMOSCSender.defaultPort), "the scanned declaration and the compiled constant disagree — the regex is reading something else")
+        XCTAssertTrue(SourceText.codeOnly(sender).contains("port: UInt16 = ADMOSCSender.defaultPort"), """
+            `ADMOSCSender.init` no longer takes its port default from `ADMOSCSender.defaultPort`. \
+            A literal there is a second home for the number this claim pins (#456).
+            """)
         XCTAssertEqual(declared, "4001", """
             The ADM-OSC sender defaults to \(declared), not 4001. 4001 is the port ADM-OSC v1.0             names as the default for the role Echoel plays — a SENDER. (The spec's 4002 is the             receiver's query-reply port and is not ours: Echoel has no ADM listener.) If this             moves on purpose, move the hub page and this pin in the SAME commit (#456).
             """)

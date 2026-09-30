@@ -41,6 +41,11 @@ public final class SACNSender {
     }
 
     /// E1.31 port is fixed at 5568 by the standard, kept configurable.
+    /// ⭐ `defaultPort` / `defaultUniverse` are the ONE owner of the two numbers (rule 6, eleventh
+    /// family, 2026-09-30): `init` and the Routing rows' "Default" keys read them. Universe 1,
+    /// because 0 is invalid in sACN — the Art-Net twin defaults to 0 for the opposite reason.
+    public nonisolated static let defaultPort: UInt16 = 5568
+    public nonisolated static let defaultUniverse: Int = 1
     public var port: UInt16 {
         didSet { Self.persistTarget(host, port, universe); reconnectIfActive() }
     }
@@ -142,7 +147,8 @@ public final class SACNSender {
     /// Sender CID — stable per instance (E1.31 requires a unique component id).
     @ObservationIgnored private let cid: [UInt8]
 
-    public init(host: String = "192.168.1.100", port: UInt16 = 5568, universe: Int = 1) {
+    public init(host: String = "192.168.1.100", port: UInt16 = SACNSender.defaultPort,
+                universe: Int = SACNSender.defaultUniverse) {
         let d = UserDefaults.standard
         self.host = d.string(forKey: Self.hostKey) ?? host
         let p = d.integer(forKey: Self.portKey)

@@ -43,6 +43,10 @@ public final class ArtNetSender {
     }
 
     /// Art-Net port is fixed at 6454 by the standard, but kept configurable.
+    /// ⭐ `defaultPort` / `defaultUniverse` are the ONE owner of the two numbers (rule 6, eleventh
+    /// family, 2026-09-30): `init` and the Routing rows' "Default" keys read them.
+    public nonisolated static let defaultPort: UInt16 = 6454
+    public nonisolated static let defaultUniverse: Int = 0
     public var port: UInt16 {
         didSet { Self.persistTarget(host, port, universe); reconnectIfActive() }
     }
@@ -199,7 +203,8 @@ public final class ArtNetSender {
     /// note); this is the complementary half: what the OS refused, not what it accepted.
     public private(set) var lastError: String?
 
-    public init(host: String = ArtNetSender.defaultHost, port: UInt16 = 6454, universe: Int = 0) {
+    public init(host: String = ArtNetSender.defaultHost, port: UInt16 = ArtNetSender.defaultPort,
+                universe: Int = ArtNetSender.defaultUniverse) {
         let d = UserDefaults.standard
         self.host = d.string(forKey: Self.hostKey) ?? host
         let p = d.integer(forKey: Self.portKey)

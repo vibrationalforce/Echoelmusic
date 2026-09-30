@@ -91,6 +91,11 @@ import Observation
 @Observable
 public final class OSCSender {
 
+    /// ⭐ THE ONE OWNER of the default OSC target port (rule 6, eleventh family, 2026-09-30):
+    /// TouchOSC's receive port. `init` and the Routing row's "Default" key both read it — a second
+    /// literal `8000` anywhere is the split rule 6 exists to prevent (#416).
+    public nonisolated static let defaultPort: UInt16 = 8000
+
     public var host: String {
         didSet { Self.persistTarget(host, port); reconnectIfActive() }
     }
@@ -137,7 +142,7 @@ public final class OSCSender {
     @ObservationIgnored
     private var sendsClinicalDetail = false
 
-    public init(host: String = "localhost", port: UInt16 = 8000) {
+    public init(host: String = "localhost", port: UInt16 = OSCSender.defaultPort) {
         let d = UserDefaults.standard
         self.host = d.string(forKey: Self.hostKey) ?? host
         let p = d.integer(forKey: Self.portKey)

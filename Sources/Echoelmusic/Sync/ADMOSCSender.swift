@@ -95,6 +95,12 @@ public final class ADMOSCSender {
         didSet { Self.persistTarget(host, port); reconnectIfActive() }
     }
 
+    /// ⭐ THE ONE OWNER of that default (rule 6, eleventh family, 2026-09-30). `init` and the
+    /// Routing row's "Default" key read it; `TheIntegrationHubIsPublishedTests` claim 4b pins the
+    /// number against the hub page through THIS declaration, so the page and the code still move
+    /// together (#456) — the pin just reads the owner instead of the init's literal.
+    public nonisolated static let defaultPort: UInt16 = 4001
+
     /// 1-based ADM object index this bio source drives.
     public var objectIndex: Int
 
@@ -154,7 +160,7 @@ public final class ADMOSCSender {
     @ObservationIgnored private let loop = PollingLoop()
     @ObservationIgnored private var lastFrameTimestamp: TimeInterval = -1
 
-    public init(host: String = "127.0.0.1", port: UInt16 = 4001, objectIndex: Int = 1) {
+    public init(host: String = "127.0.0.1", port: UInt16 = ADMOSCSender.defaultPort, objectIndex: Int = 1) {
         let d = UserDefaults.standard
         self.host = d.string(forKey: Self.hostKey) ?? host
         let p = d.integer(forKey: Self.portKey)

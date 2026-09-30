@@ -43,6 +43,11 @@
 // TENTH FAMILY (claim 3, same day): the Workstation's "Pitch" row names
 // `TimelineLane.defaultTransposeSemitones`; the lane's init default, its decode fallback and
 // `AudioTranspose.semitones(laneID:in:)`'s "no such lane" answer read it.
+// ELEVENTH FAMILY (claim 3, same day): the four network targets. Each sender owns its
+// `defaultPort` (the two light senders also a `defaultUniverse`); the inits read them, and the
+// shared `outputRow` carries them as `standardPort` / `standardUniverse` to its two rows. The
+// ADM-OSC number is ALSO pinned against the hub page by `TheIntegrationHubIsPublishedTests`
+// claim 4b, which now reads the owner rather than the init's literal.
 //
 // SECOND FAMILY (claim 5, the same day): every value field in `EchoelStudioView` whose binding
 // is a KEYSTORE-backed `@AppStorage` (`StudioDefaultKeys.x.key` … `= StudioDefaultKeys.x.value`)
@@ -282,6 +287,36 @@ final class TheValueFieldOffersItsDefaultTests: XCTestCase {
         XCTAssertEqual(occurrences(of: "else { return TimelineLane.defaultTransposeSemitones }", in: transpose), 1, "`AudioTranspose.semitones(laneID:in:)` answers \"no such lane\" with the owner's default")
         let workstation = try source("Sources/Echoelmusic/Studio/WorkstationView.swift")
         XCTAssertEqual(occurrences(of: "standard: Double(TimelineLane.defaultTransposeSemitones)", in: workstation), 1, "the \"Pitch\" row passes the lane's default once")
+
+        // ELEVENTH FAMILY — the four network targets (2026-09-30). The numbers are the standards'
+        // own (TouchOSC 8000 · ADM-OSC v1.0 sender 4001 · Art-Net 6454 · E1.31 5568); each sender
+        // owns its own, and `outputRow` only carries them to the key.
+        XCTAssertEqual(OSCSender.defaultPort, 8000, "OSC out defaults to TouchOSC's receive port")
+        XCTAssertEqual(ADMOSCSender.defaultPort, 4001, "ADM-OSC out defaults to the spec's sender port (#1433)")
+        XCTAssertEqual(ArtNetSender.defaultPort, 6454, "Art-Net's port is the standard's")
+        XCTAssertEqual(SACNSender.defaultPort, 5568, "E1.31's port is the standard's")
+        XCTAssertEqual(ArtNetSender.defaultUniverse, 0, "Art-Net counts universes from 0")
+        XCTAssertEqual(SACNSender.defaultUniverse, 1, "sACN counts universes from 1 — 0 is invalid there")
+        XCTAssertTrue((Float(0)...Float(32_767)).contains(Float(ArtNetSender.defaultUniverse)), "the Art-Net default sits inside its Universe row's range")
+        XCTAssertTrue((Float(1)...Float(63_999)).contains(Float(SACNSender.defaultUniverse)), "the sACN default sits inside its Universe row's range")
+        let senders: [(String, String)] = [
+            ("Sources/Echoelmusic/Sync/OSCSender.swift", "OSCSender"),
+            ("Sources/Echoelmusic/Sync/ADMOSCSender.swift", "ADMOSCSender"),
+            ("Sources/Echoelmusic/Sync/ArtNetSender.swift", "ArtNetSender"),
+            ("Sources/Echoelmusic/Sync/SACNSender.swift", "SACNSender"),
+        ]
+        for (rel, type) in senders {
+            let sender = try source(rel)
+            XCTAssertEqual(occurrences(of: "port: UInt16 = \(type).defaultPort", in: sender), 1, "\(rel): `init` takes its port default from the owner, not a literal")
+            XCTAssertEqual(occurrences(of: "standardPort: Float(\(type).defaultPort)", in: patchbay), 1, "the \(type) row hands the owner's port to `outputRow` once")
+        }
+        for (rel, type) in senders.suffix(2) {
+            let sender = try source(rel)
+            XCTAssertEqual(occurrences(of: "universe: Int = \(type).defaultUniverse", in: sender), 1, "\(rel): `init` takes its universe default from the owner")
+            XCTAssertEqual(occurrences(of: "standardUniverse: Float(\(type).defaultUniverse)", in: patchbay), 1, "the \(type) row hands the owner's universe to `outputRow` once")
+        }
+        XCTAssertEqual(occurrences(of: "decimals: 0, standard: standardPort)", in: patchbay), 1, "the shared \"Port\" row offers what its caller handed it")
+        XCTAssertEqual(occurrences(of: "decimals: 0, standard: standardUniverse)", in: patchbay), 1, "the shared \"Universe\" row offers what its caller handed it")
     }
 
     // MARK: - claim 5 — the keystore family: a keystore-bound field offers the keystore's default
