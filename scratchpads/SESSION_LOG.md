@@ -41139,3 +41139,11 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - ⚠️ **moved-needles.py zum ZWEITEN Mal heute blind:** die entfernte Zeile `label: "Snap the starts of \(what) …"` war von einem Wächter gepinnt, das Werkzeug meldete „no removed Sources/ line is a needle“. Vermutung: Nadeln mit `\(`-Escapes werden übersprungen (#937-Dekoder) oder als generisch gefiltert. Vor einer Reparatur messen (Selbsttest-Pflicht).
 - **Transkription:** HEAD 12 verbatim Labels, 10 Interpolationen, 37 fehlend, Pin alt = EIN Befund; WORK grün. Checker sauber.
 - **Push:** lokal, wartet auf den Compile Check von 929a14b30.
+
+## 2026-09-30 — ⛔ Build for Testing ROT auf 9ec521096 (E4-12/E4-13-Stapel): ein `..<` vor `??` — Fix 4d53fd149 gepusht
+
+- **Befund:** CI/CD 6559 endete nach 12 Minuten: `Build for Testing` failure, zwei `❌`-Zeilen, beide `TheChromeSpeaksGermanTests.swift:468` (E4-12, Anspruch 11): `fx[lower..<fx.index(lower, offsetBy: 160, limitedBy: fx.endIndex) ?? fx.endIndex]` — `..<` bindet stärker als `??`, der Bereich bekam einen optionalen Index. EIN Grund, zwei Zeilen (#689). Das blockierende Bündel lief NICHT; Auto-Merge 3993 lehnte ab, main blieb ed6f214ea.
+- **Klasse:** #1337/#E2 — alle Checker und die §0-Transkription lesen Nadeln als DATEN und waren sauber; nur `Build for Testing` benotet das Swift, das sie trägt. Inhalt des Anspruchs war richtig und ist unverändert.
+- **Reparatur:** `String(fx[lower...].prefix(160))` — keine Index-Arithmetik. Tests-only-Commit 4d53fd149, sofort gepusht (mit dem lokalen E4-17-Stapel obenauf; der Compile Check auf 929a14b30 wird dadurch abgebrochen, der neue deckt dieselben Sources).
+- **Lehre für diese Serie:** Fenster über einen String-Index nie mit `..<` und `??` in EINER Zeile — `prefix(n)` auf dem Suffix ist die Form, die nichts zu klammern hat.
+- **Nebenlesung:** de2e3a3d7 komplett: Compile 3093 ✓, CI/CD 6557 (Conclusion failure = #396-Form, BfT ✓), Auto-Merge 3991 ✓.
