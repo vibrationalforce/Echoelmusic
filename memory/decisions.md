@@ -3273,3 +3273,9 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Guard:** `TheValueFieldOffersItsDefaultTests` claim 3 — constant inside the row's range, passed by exactly one row each.
 - **Census after this family (scanner over `EchoelValueField(label:`):** 65 rows, 29 still without a default. Known blockers: the light "Master" row binds `artNet.grandMaster`/`sacn.grandMaster`, whose default is a literal `1` in two senders — a named constant with ONE owner must exist before the row can offer it (a call-site literal would be #416); the Field level rows bind a bio-derived value; the FX route rows (`route.depth`, `lfoRateHz`, `smoothingTau`) have per-route defaults in their factories.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 6, fourth family: the OSC-in port row names `OSCReceiver.defaultPort`
+
+- **Decision:** Routing → OSC control input → "Port" passes `standard: Float(OSCReceiver.defaultPort)` (8001, the value the hub page and the FAQ name). The four OUTPUT port rows and the sACN universe row stay without a default: their defaults are literals inside each sender, one per output — a named constant with one owner would have to exist first (same class as the light master).
+- **Guard:** `TheValueFieldOffersItsDefaultTests` claim 3 (patchbay slice). Rows without a default after this: 28.
+- **Review:** 2026-10-30.

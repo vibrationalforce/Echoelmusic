@@ -439,7 +439,8 @@ struct PatchbayView: View {
                 .textInputAutocapitalization(.never)
                 .keyboardType(.URL)
                 #endif
-            EchoelValueField(label: "Port", value: oscInPort, range: 1...65_535, unit: "", decimals: 0)
+            EchoelValueField(label: "Port", value: oscInPort, range: 1...65_535, unit: "", decimals: 0,
+                             standard: Float(OSCReceiver.defaultPort))
             Text(oscInEnabled
                  ? "Listening for /echoelmusic/ctrl/bpm (only while the BPM is locked) · key 0–11 · scale · genre · visualStyle 0–9 · blackout 0/1. No bio value and no play/stop is accepted from the network. Turn it off on a network you do not control."
                  : "Turn on to let TouchDesigner, Resolume, QLab or a console send cues: /echoelmusic/ctrl/bpm (locked only) · key · scale · genre · visualStyle · blackout. Nothing else is accepted, and no socket is open while this is off.")

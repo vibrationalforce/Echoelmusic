@@ -24,6 +24,7 @@
 //
 // THIRD FAMILY (claim 3, 2026-09-30): the three felt-sub rows name `SubBassVoice.defaultSubGain` and
 // `SubCharacter.defaultPresence` / `defaultHeat` — the constants the voice itself initialises from.
+// FOURTH FAMILY (claim 3, same day): the OSC control input's "Port" row names `OSCReceiver.defaultPort`.
 //
 // SECOND FAMILY (claim 5, the same day): every value field in `EchoelStudioView` whose binding
 // is a KEYSTORE-backed `@AppStorage` (`StudioDefaultKeys.x.key` … `= StudioDefaultKeys.x.value`)
@@ -57,6 +58,7 @@ final class TheValueFieldOffersItsDefaultTests: XCTestCase {
     private static let pad = "Sources/Echoelmusic/Studio/EchoelNumberPad.swift"
     private static let workspace = "Sources/Echoelmusic/Studio/WorkspaceView.swift"
     private static let studio = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
+    private static let patchbay = "Sources/Echoelmusic/Studio/PatchbayView.swift"
 
     // MARK: - claim 1 — the field carries an optional default and hands it to both doors
 
@@ -157,6 +159,16 @@ final class TheValueFieldOffersItsDefaultTests: XCTestCase {
                 row per constant). The voice initialises from that constant; the key must return to it.
                 """)
         }
+
+        // FOURTH FAMILY — the OSC control input's port (2026-09-30): `OSCReceiver.defaultPort` is what
+        // the receiver initialises with and what the hub page and the FAQ name (8001). It is the ONE
+        // port row with an owner constant; the output rows' ports differ per output and stay without.
+        XCTAssertTrue((1...65_535).contains(Int(OSCReceiver.defaultPort)), "the receiver's default port must sit inside the row's range")
+        let patchbay = try source(Self.patchbay)
+        XCTAssertEqual(occurrences(of: "standard: Float(OSCReceiver.defaultPort)", in: patchbay), 1, """
+            The OSC-in "Port" row no longer passes `OSCReceiver.defaultPort` (or a second row copied it). \
+            8001 is the receiver's own constant, the one the docs name — a call-site literal would be #416.
+            """)
     }
 
     // MARK: - claim 5 — the keystore family: a keystore-bound field offers the keystore's default

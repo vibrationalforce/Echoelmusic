@@ -40618,3 +40618,14 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** `TheValueFieldOffersItsDefaultTests` Anspruch 3 erweitert — je Konstante: im 0…1-Bereich UND von genau EINER Zeile übergeben. Transkription: WORK 1/1/1, HEAD 0/0/0. Checker sauber.
 - **Zensus (Replik über `EchoelValueField(label:`):** 65 Zeilen, 29 ohne Default. Bekannte Blocker, damit niemand sie „schnell“ mit einem Literal schließt: Licht-„Master“ bindet `artNet.grandMaster`/`sacn.grandMaster`, deren Default ein LITERAL `1` in ZWEI Sendern ist — erst eine benannte Konstante mit EINEM Besitzer, dann die Zeile; Field-Level-Zeilen binden einen bio-abgeleiteten Wert (kein Fakt-Default); FX-Routen-Zeilen (`route.depth`, `lfoRateHz`, `smoothingTau`) haben Per-Routen-Defaults in ihren Fabriken.
 - **Gerät:** die gedimmte Taste bei 0,35 / 0,50 / 0,50.
+
+### Gate-Nachtrag 8ba446ff8 (Regel-6 Keypad, #288) — gelesen 14:35Z
+- CI/CD 6521 (36720826200): Conclusion `failure` (#396-Form). Job „Build \& Test (iOS)“ 109909082017: **Build for Testing success** (13:53:52–13:59:52Z), Run Tests failure (Exit 65), Print test log success, Upload Test Results success.
+- `gh-test-verdict.py`: build-for-testing Succeeded · TEST BUILD FAILED False · TEST EXECUTE FAILED True · 161 pass / 0 fail / 0 skip IM FENSTER · GAP 1618 s (13:59:53→14:26:51). `TheValueFieldOffersItsDefaultTests` nicht im Fenster → Ausführung unbelegt (#445). Slow-type-check-Warnungen 9, alle älter als die Scheibe.
+- Compile Check 3057 auf 8ba446ff8: überholt (cancelled) — gedeckt durch den ersten zu Ende laufenden Compile Check auf einer späteren Spitze (3067 auf d9ee6f3c3, um 14:35Z weiter `queued`; die CI/CD-Queue hält zehn Läufe hinter dem gerade beendeten 6521).
+
+## 2026-09-30 — Regel 6, vierte Familie: der OSC-Eingangs-Port bietet 8001 — lokal, Stapel
+
+- Routing → OSC-Steuereingang → „Port“ übergibt `standard: Float(OSCReceiver.defaultPort)` — die Konstante, mit der der Empfänger initialisiert und die Hub-Seite und FAQ nennen (der Wächter `TheOSCControlInputIsAWhitelistTests` pinnt sie auf 8001). Anspruch 3 von `TheValueFieldOffersItsDefaultTests` bekommt eine `patchbay`-Scheibe (Konstante im Bereich, genau EINE Übergabe).
+- **Bewusst ohne Default bleiben** die vier AUSGANGS-Port-Zeilen und die sACN-Universe-Zeile: ihre Defaults sind Literale IN den Sendern, je Ausgang anders (OSC 9000 · ADM 4001 · Art-Net 6454 · sACN 5568) — erst eine benannte Konstante mit einem Besitzer, dann die Zeile (dieselbe Klasse wie der Licht-Master). Rest ohne Default: 28.
+- Checker sauber. Lokal, Stapel hinter Compile Check 3067 (um 14:40Z weiter `queued`).
