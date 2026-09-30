@@ -3719,3 +3719,17 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   expectation arithmetic (`seen.replacing(♯→" sharp")`), valid in the `en` simulator locale — judged, not silenced.
 - **Review:** 2026-10-30. Next E4 producers: guide card content (`LearnLibrary` entries), the seven `+` seams, the two
   interpolated network sentences, `PartNoteEditor` keySpoken/keyShown compose.
+
+### 2026-09-30 — E4-23: the Learn cards, the six Learn headings and the bio disclaimer speak German (8cbbda285)
+
+- **Decision:** every `LearnEntry` field of the eight guide/safety cards, the six `LearnSection.title` headings and
+  `BioMetric.disclaimer` go through `String(localized:)` over ONE literal per field — the `+` chains are folded into
+  one line each, the two ⛔ retraction blocks sit above their `detail:`, and the four control names quoted inside a key
+  use typographic quotes (“Studio”). Catalog 878 → 909. Claim 11 pins the 8/8/7 sites, the seam, the absence of a
+  chain, the headings and the disclaimer, and reads the 24 card fields back at runtime as keys.
+- **Why:** a `+` chain cannot be a catalog key; `StringCatalogIsHonestTests` matches each key as a quoted literal in
+  raw source, so an escaped `\"` inside a key can never match; the safety guard's extractor reads one literal between
+  `detail:` and the closing paren. The English is byte-identical apart from the four quote glyphs (transcribed).
+- **Review:** 2026-10-30. Next E4 producers: the seven `+` seams, the two interpolated network sentences,
+  `PartNoteEditor` keySpoken/keyShown compose; the Body/Body Science/Music/Light card sets stay English (their own
+  producers, separate slices).
