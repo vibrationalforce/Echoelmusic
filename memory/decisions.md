@@ -3295,3 +3295,10 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Guard:** `TheValueFieldOffersItsDefaultTests` claim 3, fifth family — row once, both senders initialise from the constant, zero literal launch values. Transcribed WORK GREEN, HEAD RED.
 - **Still without a default:** output port/universe rows (per-sender literals), Field level (bio-derived), FX route rows (per-route factories), mixer/track rows (owner constants to name first).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 6, sixth family: the track's fader and pan get one owner each
+
+- **Decision:** `TimelineLane.defaultLevel` (1, unity) and `TimelineLane.defaultPan` (0, centre) are born on the lane. `TimelineLane.init`'s defaults, the two decode fallbacks (pre-K2a / pre-B2 documents) and the five "lane not found" fallbacks (inspector ×3, `AudioLanePlayer.clampedPan`, `MultiRollFanout.pan(forSlot:)`) read them; the inspector's "Level" / "Pan" rows pass them as `standard:`.
+- **Why the lane, not `MixerStore.defaultLevel`:** the studio mixer and the timeline track are different objects with their own defaults; naming the mixer's constant on a track row would be a second meaning of one name.
+- **Guard:** `TheValueFieldOffersItsDefaultTests` claim 3, sixth family — rows once each, init and decode read the owner, zero `?.level ?? 1` / `?.pan ?? 0` in the three fallback files. Ranges spelled as literals in the test because `TrackMix` is main-actor-isolated. Transcribed WORK GREEN, HEAD RED (5 literals).
+- **Review:** 2026-10-30.

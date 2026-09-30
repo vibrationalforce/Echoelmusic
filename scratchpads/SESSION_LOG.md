@@ -40648,3 +40648,11 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Compile-Risiko, benannt:** die Konstante liegt auf einer `@MainActor`-Klasse und wird aus einem nicht-isolierten Test gelesen — deshalb `nonisolated` (das `defaultHost`-Muster derselben Datei). Beleg erst durch den Compile Check.
 - **Nicht gepusht:** Compile Check 3068 (36731661953) auf bc5983933 steht seit 14:46Z in `queued`; Batch-Regel.
 - **Gerät:** Routing → Light → „Master“ zeigt die gedimmte Default-Taste bei 1,00; ein gezogener Master kehrt mit einem Tipp zurück.
+
+## 2026-09-30 — Regel 6, sechste Familie: Spur-Fader und -Pan bekommen je EINEN Besitzer — lokal
+
+- **Was:** `TimelineLane.defaultLevel` (1) und `TimelineLane.defaultPan` (0) neu auf der Lane; `init`-Defaults, beide Decode-Rückfälle (prä-K2a/prä-B2) und die FÜNF „Lane nicht gefunden“-Rückfälle (Inspector ×3, `AudioLanePlayer.clampedPan`, `MultiRollFanout.pan(forSlot:)`) lesen sie; die Inspector-Zeilen „Level“/„Pan“ übergeben `standard: Double(…)`. Gemessen vorher: SIEBEN Literal-Besitzer.
+- **Nicht `MixerStore.defaultLevel`:** anderes Objekt (Studio-Mixer), eigener Default — ein Name für zwei Bedeutungen wäre die #416-Falle andersherum.
+- **Wächter:** `TheValueFieldOffersItsDefaultTests` Anspruch 3, SECHSTE FAMILIE. ⚠️ Der Test liest KEIN `TrackMix`-Static (das Enum ist `@MainActor`, ein nicht-isolierter Test dürfte `levelRange` unter Xcode nicht lesen — die Bereiche stehen als Literale mit Verweis). Transkription (`scratchpad/transcribe_lane.py`): WORK GRÜN ×4, HEAD ROT ×4 (5 Literale). Checker sauber, Scanner 0.
+- **Nicht gepusht:** Compile Check 3068 auf bc5983933 weiter `queued` (Batch-Regel). Lokaler Stapel: 87ddb7884 (Grand Master) + diese Scheibe.
+- **Gerät:** Spur-Inspector → Level: Default-Taste gedimmt bei 1,00; Pan bei 0,00; ein gepannter Track kehrt mit einem Tipp zur Mitte zurück.

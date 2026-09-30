@@ -25,6 +25,11 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
     public var isBio: Bool
     /// K2a mixer strip (persisted with the document): fader gain 0…2, 1 = unity.
     public var level: Float
+    /// The ONE owner of a fresh track's fader and pan (#416): the init defaults, the pre-K2a /
+    /// pre-B2 decode fallbacks, the "lane not found" fallbacks in the players and the inspector,
+    /// and the inspector rows' "Default" key (`standard:`) all read these two. Unity and centre.
+    public static let defaultLevel: Float = 1
+    public static let defaultPan: Float = 0
     public var isMuted: Bool
     public var isSoloed: Bool
     /// B2 stereo position: −1 (hard left) … +1 (hard right), 0 = center.
@@ -98,8 +103,8 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
     public var deviceChain: DeviceChain?
 
     public init(id: UUID = UUID(), name: String, kind: ClipKind, isBio: Bool = false,
-                level: Float = 1, isMuted: Bool = false, isSoloed: Bool = false,
-                pan: Float = 0,
+                level: Float = TimelineLane.defaultLevel, isMuted: Bool = false, isSoloed: Bool = false,
+                pan: Float = TimelineLane.defaultPan,
                 builtinInstrument: TrackInstrument? = nil, isArmed: Bool = false,
                 patch: SynthPatch? = nil, genreOverride: MusicStyle? = nil,
                 mood: MoodProfile? = nil, variationSeed: UInt64? = nil,
@@ -185,10 +190,10 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
         // does for this same type.
         kind = (try? c.decode(ClipKind.self, forKey: .kind)) ?? .midi
         isBio = try c.decodeIfPresent(Bool.self, forKey: .isBio) ?? false
-        level = try c.decodeIfPresent(Float.self, forKey: .level) ?? 1
+        level = try c.decodeIfPresent(Float.self, forKey: .level) ?? TimelineLane.defaultLevel
         isMuted = try c.decodeIfPresent(Bool.self, forKey: .isMuted) ?? false
         isSoloed = try c.decodeIfPresent(Bool.self, forKey: .isSoloed) ?? false
-        pan = try c.decodeIfPresent(Float.self, forKey: .pan) ?? 0   // pre-B2 docs: center
+        pan = try c.decodeIfPresent(Float.self, forKey: .pan) ?? TimelineLane.defaultPan   // pre-B2 docs: center
         // Pre-2026-07-13 docs carry no built-in-instrument/arm keys — decode to unset/
         // disarmed. A legacy doc's old AUv3 `instrument`/`effects` keys (removed in the
         // pure-instrument cut) are ignored — Swift skips unknown keys (TimelineDecodeTests).

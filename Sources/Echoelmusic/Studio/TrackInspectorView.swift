@@ -423,15 +423,16 @@ struct TrackInspectorView: View {
                 }
 
                 if controls.level {
-                    let level = Double(timeline.document.lanes.first(where: { $0.id == laneID })?.level ?? 1)
+                    let level = Double(timeline.document.lanes.first(where: { $0.id == laneID })?.level ?? TimelineLane.defaultLevel)
                     EchoelValueField(
                         label: "Level",
                         value: Binding(
                             get: { Double(timeline.document.lanes
-                                .first(where: { $0.id == laneID })?.level ?? 1) },
+                                .first(where: { $0.id == laneID })?.level ?? TimelineLane.defaultLevel) },
                             set: { TrackMix.setLevel($0, laneID: laneID, timeline: timeline) }),
                         range: TrackMix.levelRange,
                         decimals: 2,
+                        standard: Double(TimelineLane.defaultLevel),
                         hint: controls.role == .echoelInstrument
                             ? "1.00 unchanged, 0 silent. This is also the level the Studio instrument plays at; its Start lifts 0 back to 1.00"
                             : "1.00 unchanged, 0 silent, 2.00 is +6 dB")
@@ -448,10 +449,11 @@ struct TrackInspectorView: View {
                         label: "Pan",
                         value: Binding(
                             get: { Double(timeline.document.lanes
-                                .first(where: { $0.id == laneID })?.pan ?? 0) },
+                                .first(where: { $0.id == laneID })?.pan ?? TimelineLane.defaultPan) },
                             set: { TrackMix.setPan($0, laneID: laneID, timeline: timeline) }),
                         range: TrackMix.panRange,
                         decimals: 2,
+                        standard: Double(TimelineLane.defaultPan),
                         hint: "−1 left, 0 centre, 1 right")
                 }
                 if controls.genre {

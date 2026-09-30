@@ -28,6 +28,10 @@
 // FIFTH FAMILY (claim 3, same day): the light "Master" row names `ArtNetSender.defaultGrandMaster` —
 // a constant BORN for it, because the launch value was a literal `1` in two senders and in the
 // non-finite fallback; both senders and the fallback now read the one owner (the row binds both).
+// SIXTH FAMILY (claim 3, same day): the track inspector's "Level" and "Pan" rows name
+// `TimelineLane.defaultLevel` / `defaultPan` — born for them: the lane's init defaults, its two
+// decode fallbacks and the four "lane not found" fallbacks (inspector ×3, `AudioLanePlayer`,
+// `MultiRollFanout`) were literals `1` / `0`; every one of them reads the owner now.
 //
 // SECOND FAMILY (claim 5, the same day): every value field in `EchoelStudioView` whose binding
 // is a KEYSTORE-backed `@AppStorage` (`StudioDefaultKeys.x.key` … `= StudioDefaultKeys.x.value`)
@@ -188,6 +192,32 @@ final class TheValueFieldOffersItsDefaultTests: XCTestCase {
                 Two senders, one fader, one launch value — a literal here is a second owner of the default.
                 """)
             XCTAssertEqual(occurrences(of: "var grandMaster: Float = 1", in: sender), 0, "\(rel): the literal launch value is gone; the owner is the constant")
+        }
+
+        // SIXTH FAMILY — the track's fader and pan (2026-09-30). `TimelineLane` owns both defaults;
+        // the inspector rows pass them, and no fallback in the tree types `1` or `0` for them again.
+        XCTAssertEqual(TimelineLane.defaultLevel, 1, "a fresh track sits at unity")
+        XCTAssertEqual(TimelineLane.defaultPan, 0, "a fresh track sits at centre")
+        // The rows' ranges (`TrackMix.levelRange` 0…2, `panRange` −1…1) are spelled as literals here:
+        // `TrackMix` is main-actor-isolated and a non-isolated test must not read its statics.
+        XCTAssertTrue((Float(0)...Float(2)).contains(TimelineLane.defaultLevel) && (Float(-1)...Float(1)).contains(TimelineLane.defaultPan),
+                      "both defaults must sit inside their rows' ranges (`TrackMix.levelRange` / `panRange`)")
+        let inspector = try source("Sources/Echoelmusic/Studio/TrackInspectorView.swift")
+        XCTAssertEqual(occurrences(of: "standard: Double(TimelineLane.defaultLevel)", in: inspector), 1, "the track \"Level\" row passes the lane's default once")
+        XCTAssertEqual(occurrences(of: "standard: Double(TimelineLane.defaultPan)", in: inspector), 1, "the track \"Pan\" row passes the lane's default once")
+        let lane = try source("Sources/Echoelmusic/Sequencer/Timeline.swift")
+        XCTAssertEqual(occurrences(of: "level: Float = TimelineLane.defaultLevel", in: lane), 1, "`TimelineLane.init` takes its level default from the owner")
+        XCTAssertEqual(occurrences(of: "pan: Float = TimelineLane.defaultPan", in: lane), 1, "`TimelineLane.init` takes its pan default from the owner")
+        XCTAssertEqual(occurrences(of: "forKey: .level) ?? TimelineLane.defaultLevel", in: lane), 1, "the pre-K2a decode fallback reads the owner")
+        XCTAssertEqual(occurrences(of: "forKey: .pan) ?? TimelineLane.defaultPan", in: lane), 1, "the pre-B2 decode fallback reads the owner")
+        for rel in ["Sources/Echoelmusic/Studio/TrackInspectorView.swift",
+                    "Sources/Echoelmusic/Sequencer/AudioLanePlayer.swift",
+                    "Sources/Echoelmusic/Sequencer/MultiRollFanout.swift"] {
+            let code = try source(rel)
+            XCTAssertEqual(occurrences(of: "?.level ?? 1", in: code) + occurrences(of: "?.pan ?? 0", in: code), 0, """
+                \(rel) types a literal fallback for a track's level or pan again. The owner is \
+                `TimelineLane.defaultLevel` / `defaultPan` — a literal here is a second owner (#416).
+                """)
         }
     }
 
