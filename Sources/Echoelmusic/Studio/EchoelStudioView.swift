@@ -5820,13 +5820,15 @@ struct EchoelStudioView: View {
         EchoelValueField(label: "Level", value: fieldLevelBinding,
                          range: 0...1.5, unit: "", decimals: 2)
         EchoelValueField(label: "Position morph", value: $touchMorphDepth,
-                         range: 0...1, unit: "", decimals: 2)
+                         range: 0...1, unit: "", decimals: 2,
+                         standard: StudioDefaultKeys.touchMorphDepth.value)
         // LIFE — per-note micro-variation so two identical taps never produce two
         // identical notes (founder 2026-07-27: "leben wie ein echtes Instrument mit
         // micro changes"): brightness and attack, and — while Sync is on — also the
         // note's placement in time. 0 = off and bit-identical.
         EchoelValueField(label: "Life", value: $touchLife,
-                         range: 0...1, unit: "", decimals: 2)
+                         range: 0...1, unit: "", decimals: 2,
+                         standard: StudioDefaultKeys.touchLife.value)
         touchSyncRows
         // SLIDE EXPRESSION (founder 2026-07-08: "Auf dem Gitter hin und her
         // sliden verändert den Sound: Filter, ein bisschen Vibrato, Chorus …
@@ -5838,11 +5840,14 @@ struct EchoelStudioView: View {
             .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             .fixedSize(horizontal: false, vertical: true)
         EchoelValueField(label: "Slide vibrato", value: $touchSlideVibrato,
-                         range: 0...1, unit: "", decimals: 2)
+                         range: 0...1, unit: "", decimals: 2,
+                         standard: StudioDefaultKeys.touchSlideVibrato.value)
         EchoelValueField(label: "Slide ensemble", value: $touchSlideChorus,
-                         range: 0...1, unit: "", decimals: 2)
+                         range: 0...1, unit: "", decimals: 2,
+                         standard: StudioDefaultKeys.touchSlideChorus.value)
         EchoelValueField(label: "Glide", value: $touchGlide,
-                         range: 0...0.4, unit: "s", decimals: 2)
+                         range: 0...0.4, unit: "s", decimals: 2,
+                         standard: StudioDefaultKeys.touchGlide.value)
     }
 
     /// SELF-PLAY (founder 2026-07-29: *"Es soll auch eine Möglichkeit geben wie der Synth
@@ -5899,7 +5904,8 @@ struct EchoelStudioView: View {
     /// its own doc comment, where someone adding a row will actually read it.
     @ViewBuilder private var fieldSelfPlayFields: some View {
         EchoelValueField(label: "Density", value: $fieldDensity,
-                         range: 0...1, unit: "", decimals: 2)
+                         range: 0...1, unit: "", decimals: 2,
+                         standard: StudioDefaultKeys.fieldAutoPlayDensity.value)
         // The arp is not a curve across the surface, so three of these dials do not apply to it
         // (see `FieldAutoPlay.Motion.arp`): its x is a specific scale-degree cell, and Span,
         // Centre or a second Voice would move it OFF that cell — a wrong note, not a wider
@@ -5926,22 +5932,28 @@ struct EchoelStudioView: View {
             fieldArpRhythmFields
         } else {
             EchoelValueField(label: "Voices", value: $fieldVoices,
-                             range: 1...Double(FieldAutoPlay.maxVoices), unit: "", decimals: 0)
+                             range: 1...Double(FieldAutoPlay.maxVoices), unit: "", decimals: 0,
+                             standard: StudioDefaultKeys.fieldAutoPlayVoices.value)
         }
         // "Period" in cells of the Sync grid, so the two settings share one vocabulary rather
         // than the generator inventing a second time unit.
         EchoelValueField(label: "Traverse", value: $fieldPeriod,
-                         range: 1...64, unit: "cells", decimals: 0)
+                         range: 1...64, unit: "cells", decimals: 0,
+                         standard: StudioDefaultKeys.fieldAutoPlayPeriod.value)
         if FieldAutoPlay.Motion(rawValue: fieldMotionRaw) != .arp {
             EchoelValueField(label: "Span", value: $fieldSpan,
-                             range: 0...1, unit: "", decimals: 2)
+                             range: 0...1, unit: "", decimals: 2,
+                             standard: StudioDefaultKeys.fieldAutoPlaySpan.value)
             EchoelValueField(label: "Centre", value: $fieldCentre,
-                             range: 0...1, unit: "", decimals: 2)
+                             range: 0...1, unit: "", decimals: 2,
+                             standard: StudioDefaultKeys.fieldAutoPlayCentre.value)
         }
         EchoelValueField(label: "Band", value: $fieldBand,
-                         range: 0...1, unit: "", decimals: 2)
+                         range: 0...1, unit: "", decimals: 2,
+                         standard: StudioDefaultKeys.fieldAutoPlayBand.value)
         EchoelValueField(label: "Band drift", value: $fieldBandDrift,
-                         range: 0...1, unit: "", decimals: 2)
+                         range: 0...1, unit: "", decimals: 2,
+                         standard: StudioDefaultKeys.fieldAutoPlayBandDrift.value)
         // The threshold is stated because a control whose first third does nothing AUDIBLE
         // reads as broken unless you say what it is doing instead. `y` picks one of three
         // octave bands, so the wander has to span more than a third to cross a boundary.
@@ -6005,7 +6017,8 @@ struct EchoelStudioView: View {
             .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             .fixedSize(horizontal: false, vertical: true)
         EchoelValueField(label: "Note length", value: $fieldArpGate,
-                         range: Double(RoleRhythm.minGate)...1, unit: "", decimals: 2)
+                         range: Double(RoleRhythm.minGate)...1, unit: "", decimals: 2,
+                         standard: StudioDefaultKeys.fieldArpRhythmGate.value)
         // Both halves of this sentence are floors the player would otherwise read as a broken dial:
         // the character scales the gate (Driving ×0.45), and the release itself cannot go under
         // `TouchInstrumentUIView.minSelfReleaseSeconds` = 15 ms. On the default 1/16 grid at 120 BPM
@@ -6023,14 +6036,16 @@ struct EchoelStudioView: View {
             .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             .fixedSize(horizontal: false, vertical: true)
         EchoelValueField(label: "Accent", value: $fieldArpAccent,
-                         range: 0...1, unit: "", decimals: 2)
+                         range: 0...1, unit: "", decimals: 2,
+                         standard: StudioDefaultKeys.fieldArpRhythmAccent.value)
         // #258 (A2c). ⚠️ THE RANGE IS 0…maxPush AND NOT THE MODEL'S BIPOLAR −0.45…0.45 — see
         // `StudioDefaultKeys.fieldArpRhythmPush`. `FieldAutoPlay.pushDelaySeconds` folds every
         // value ≤ 0 to "on the grid" because the consumer delays an onset with a sleep and there
         // is nothing to sleep for a note that should have sounded EARLIER. Offering the negative
         // half would be a dial whose entire left side does nothing.
         EchoelValueField(label: "Laid back", value: $fieldArpPush,
-                         range: 0...Double(RoleRhythm.maxPush), unit: "", decimals: 2)
+                         range: 0...Double(RoleRhythm.maxPush), unit: "", decimals: 2,
+                         standard: StudioDefaultKeys.fieldArpRhythmPush.value)
         Text("How far behind its own step a note lands, as a fraction of one step — 0 is dead on the grid. The rhythm adds its own on top (Syncopated leans back on the off-beats, Flowing everywhere), and the total can never push a note into the next step. Earlier-than-the-grid is not offered: the instrument can hold a note back, not see one coming.")
             .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             .fixedSize(horizontal: false, vertical: true)
@@ -6045,7 +6060,8 @@ struct EchoelStudioView: View {
         // what each one does), so there is nothing left to hide and a row that appeared and
         // vanished as the character Picker moved was itself a small surprise.
         EchoelValueField(label: "Evolve", value: $fieldArpEvolve,
-                         range: 0...1, unit: "", decimals: 2)
+                         range: 0...1, unit: "", decimals: 2,
+                         standard: StudioDefaultKeys.fieldArpRhythmEvolve.value)
     }
 
     /// The one thing about the current setting a player would otherwise read as a broken dial, or
@@ -6187,7 +6203,8 @@ struct EchoelStudioView: View {
             .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             .fixedSize(horizontal: false, vertical: true)
         EchoelValueField(label: "Sync", value: $touchSyncStrength,
-                         range: 0...1, unit: "", decimals: 2)
+                         range: 0...1, unit: "", decimals: 2,
+                         standard: StudioDefaultKeys.touchSyncStrength.value)
         HStack {
             Text("Grid").font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.text)
             Spacer()
@@ -7067,7 +7084,8 @@ struct EchoelStudioView: View {
             AdaptiveCardGrid(spacing: spacing) {
                 if !donutIsThePicture {
                     EchoelValueField(label: "Intensity", value: $visualIntensity, range: 0...1.5,
-                                     decimals: 2, onChange: { visualPresetDiverged() })
+                                     decimals: 2,
+                                     standard: StudioDefaultKeys.visualIntensity.value, onChange: { visualPresetDiverged() })
                 }
                 // The ONE row that survives donut mode — `SpectralDonutView(bandCount:)` reads it.
                 // Declared ONCE and conditionally accompanied, rather than a second copy inside a
@@ -7075,6 +7093,7 @@ struct EchoelStudioView: View {
                 // (`VisualPresetValuesAreReachableTests`, `VisualFineTuneReflowsTests`) count the
                 // rows in this member on purpose.
                 EchoelValueField(label: "Detail", value: $visualDetail, range: 8...90, decimals: 0,
+                                 standard: StudioDefaultKeys.visualDetail.value,
                                  onChange: { visualPresetDiverged() })
             }
             // #269 — Detail only reaches the Metal field through the Rings look, and Rings is
@@ -7134,22 +7153,29 @@ struct EchoelStudioView: View {
             if !donutIsThePicture {
             AdaptiveCardGrid(spacing: spacing) {
                 EchoelValueField(label: "Motion", value: $visualMotion, range: 0...1.5,
-                                 decimals: 2, onChange: { visualPresetDiverged() })
+                                 decimals: 2,
+                                 standard: StudioDefaultKeys.visualMotion.value, onChange: { visualPresetDiverged() })
                 EchoelValueField(label: "Spread", value: $visualSpread, range: 0.5...1.5,
-                                 decimals: 2, onChange: { visualPresetDiverged() })
-                EchoelValueField(label: "Hue", value: $visualHue, range: 0...1, decimals: 2)
-                EchoelValueField(label: "Saturation", value: $visualSaturation, range: 0...2, decimals: 2)
+                                 decimals: 2,
+                                 standard: StudioDefaultKeys.visualSpread.value, onChange: { visualPresetDiverged() })
+                EchoelValueField(label: "Hue", value: $visualHue, range: 0...1, decimals: 2,
+                                 standard: StudioDefaultKeys.visualHue.value)
+                EchoelValueField(label: "Saturation", value: $visualSaturation, range: 0...2, decimals: 2,
+                                 standard: StudioDefaultKeys.visualSaturation.value)
                 // Texture + Glitter (#853, founder "mehr Struktur/Textur Regler"): the two
                 // #578 finishing stages, now dialable. 1 = the shipped look, 0 = off, 2 =
                 // double. Like Hue/Saturation they are palette-class controls and NOT part
                 // of the visual presets — no `visualPresetDiverged()` on purpose.
-                EchoelValueField(label: "Texture", value: $visualTexture, range: 0...2, decimals: 2)
-                EchoelValueField(label: "Glitter", value: $visualGlitter, range: 0...2, decimals: 2)
+                EchoelValueField(label: "Texture", value: $visualTexture, range: 0...2, decimals: 2,
+                                 standard: StudioDefaultKeys.visualTexture.value)
+                EchoelValueField(label: "Glitter", value: $visualGlitter, range: 0...2, decimals: 2,
+                                 standard: StudioDefaultKeys.visualGlitter.value)
                 // Structure (#853B, the "Struktur" half of the same ask): a NEW static
                 // domain warp that bends the 2D field's geometry. Neutral is 0 — the
                 // stage did not exist before, so 0 IS the shipped look. Same
                 // palette-class rule: not part of the presets, no divergence call.
-                EchoelValueField(label: "Structure", value: $visualStructure, range: 0...2, decimals: 2)
+                EchoelValueField(label: "Structure", value: $visualStructure, range: 0...2, decimals: 2,
+                                 standard: StudioDefaultKeys.visualStructure.value)
             }
             }
         }
@@ -7375,11 +7401,14 @@ struct EchoelStudioView: View {
         let off = character == nil
         return VStack(alignment: .leading, spacing: 8) {
             EchoelValueField(label: "Chord length", value: $padGate,
-                             range: 0.05...1, decimals: 2)
+                             range: 0.05...1, decimals: 2,
+                             standard: StudioDefaultKeys.padGate.value)
                 .disabled(off)
-            EchoelValueField(label: "Accent", value: $padAccent, range: 0...1, decimals: 2)
+            EchoelValueField(label: "Accent", value: $padAccent, range: 0...1, decimals: 2,
+                             standard: StudioDefaultKeys.padAccent.value)
                 .disabled(off)
-            EchoelValueField(label: "Variation", value: $padEvolve, range: 0...1, decimals: 2)
+            EchoelValueField(label: "Variation", value: $padEvolve, range: 0...1, decimals: 2,
+                             standard: StudioDefaultKeys.padEvolve.value)
                 .disabled(off)
             Text(padShapeCaption(character))
                 // ⛔ #584 — WAS `.font(.caption2)`, and that made this the ONE line of the phone
@@ -7590,6 +7619,7 @@ struct EchoelStudioView: View {
         return VStack(alignment: .leading, spacing: 6) {
             EchoelValueField(label: "Bar variation", value: $moodVariation, range: 0...1, decimals: 2,
                              hint: "How far each bar of the loop may drift from the genre preset",
+                             standard: StudioDefaultKeys.moodVariation.value,
                              onCommit: { recomposeIfRunning() })
                 .disabled(!scattersSomething)
             Text(moodVariationCaption(scattersSomething))

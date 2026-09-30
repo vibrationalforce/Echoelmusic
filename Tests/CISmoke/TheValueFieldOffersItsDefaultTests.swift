@@ -18,9 +18,18 @@
 // FIRST CONSUMERS, and why these: the concert pitch (`SessionContext.defaultA4Hz`, 440 —
 // the founder's own device note "A4 ≠ 440 banner" is about exactly this row) and the two
 // mixer levels (`MixerStore.defaultLevel`, unity). Each names a constant the engine already
-// owns — no second definition of a default is born here (#416). The other 81 rows join one
+// owns — no second definition of a default is born here (#416). The other rows join one
 // family per commit, each with its owner's constant; a literal typed at a call site would be
 // the #416 defect the parameter exists to avoid.
+//
+// SECOND FAMILY (claim 5, the same day): every value field in `EchoelStudioView` whose binding
+// is a KEYSTORE-backed `@AppStorage` (`StudioDefaultKeys.x.key` … `= StudioDefaultKeys.x.value`)
+// passes `standard: StudioDefaultKeys.x.value` — the SAME `x`. The keystore is the one owner of
+// those defaults by construction (H15-KEYSTORE), so the row's "Default" and the fresh-install
+// value can never disagree. Thirty rows on 2026-09-30 (touch, field auto-play, arp rhythm,
+// visual, pad rhythm, bar variation). The claim is a RATCHET: a keystore-bound field added
+// later without its `standard:` turns it red, and a `standard:` naming a DIFFERENT key than the
+// binding's is the split the keystore exists to prevent.
 //
 // ⚠️ LIMIT — SOURCE-TEXT SCAN plus two constants. Nothing here taps the key on a device; that
 // the dimmed key reads as "you are at the default" and not as "broken" is a founder look.
@@ -131,6 +140,46 @@ final class TheValueFieldOffersItsDefaultTests: XCTestCase {
             as their default — the ENGINE's constant, never a literal `1` typed at the call site \
             (#416). A third mixer row joining is fine: raise this count in the same commit.
             """)
+    }
+
+    // MARK: - claim 5 — the keystore family: a keystore-bound field offers the keystore's default
+
+    func testEveryKeystoreBoundFieldOffersTheKeystoresDefault() throws {
+        let code = try source(Self.studio)
+        // The bindings: `@AppStorage(StudioDefaultKeys.x.key) … var name = StudioDefaultKeys.x.value`.
+        let declPattern = #"@AppStorage\(StudioDefaultKeys\.(\w+)\.key\)\s*(?:private )?var (\w+)\s*(?::\s*\w+)?\s*=\s*StudioDefaultKeys\.\1\.value"#
+        let declRegex = try NSRegularExpression(pattern: declPattern)
+        var keyOf: [String: String] = [:]
+        for m in declRegex.matches(in: code, range: NSRange(code.startIndex..., in: code)) {
+            guard let k = Range(m.range(at: 1), in: code), let v = Range(m.range(at: 2), in: code) else { continue }
+            keyOf[String(code[v])] = String(code[k])
+        }
+        XCTAssertGreaterThanOrEqual(keyOf.count, 30, "the keystore-backed bindings in the instrument file — 58 on 2026-09-30; fewer than 30 means the regex stopped matching the declaration shape, not that the file shrank")
+
+        let callRegex = try NSRegularExpression(pattern: #"EchoelValueField\(label: "([^"]*)",\s*value: \$(\w+)"#)
+        var checked = 0
+        var missing: [String] = []
+        var wrongKey: [String] = []
+        for m in callRegex.matches(in: code, range: NSRange(code.startIndex..., in: code)) {
+            guard let labelR = Range(m.range(at: 1), in: code), let varR = Range(m.range(at: 2), in: code) else { continue }
+            let label = String(code[labelR]); let name = String(code[varR])
+            guard let key = keyOf[name], let start = Range(m.range, in: code) else { continue }
+            checked += 1
+            // The call runs to the next `EchoelValueField(` or 600 characters, whichever is first —
+            // enough for every call in the file (the longest is under 400).
+            let tail = code[start.upperBound...].prefix(600)
+            let call = tail.range(of: "EchoelValueField(").map { tail[..<$0.lowerBound] } ?? tail
+            if !call.contains("standard: StudioDefaultKeys.") {
+                missing.append("\(label) ($\(name))")
+            } else if !call.contains("standard: StudioDefaultKeys.\(key).value") {
+                wrongKey.append("\(label) ($\(name)) should name StudioDefaultKeys.\(key)")
+            }
+        }
+        XCTAssertGreaterThanOrEqual(checked, 30, "thirty keystore-bound value fields on 2026-09-30 — fewer means a binding changed shape, not that rows were removed")
+        XCTAssertEqual(missing, [], """
+            A value field bound to a keystore setting offers no "Default": \(missing). Rule 6 — the             keystore IS the owner of that default; pass `standard: StudioDefaultKeys.<key>.value`             after `decimals:`/`hint:` and before the closures.
+            """)
+        XCTAssertEqual(wrongKey, [], "a row's Default names a different key than its binding — the fresh-install value and the key would disagree: \(wrongKey)")
     }
 
     // MARK: - claim 4 — counterweight: the pad still commits in exactly one place
