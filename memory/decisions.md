@@ -3450,3 +3450,11 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 
 - Eyebrow: `Text(title.uppercased())` 11 pt bold `.kerning(1.5)` white 0.35 (2.8:1) → `Text(title)` 13 pt semibold white 0.7; subtitle and value readout 0.4 → 0.6. `TheAUv3ViewHasNoEyebrowTests` computes contrast by the WCAG formula against the anchored 0.05 background (no pinned grey, #364). The extension's exemption covers `EchoelValueField` only.
 - Claim: subtitle/section/group said "Bio-Reactive" inside a host that has no body (no producer in the extension, values at 0.5 until the host moves them). Now "the host sets the body values" / "Body values (from the host)" / group display "Body values"; identifier `bio` kept — hosts bind by identifier. `TheAUv3ViewSaysTheHostSetsTheBodyTests` also pins the premise (no body producer in `Sources/EchoelmusicAUv3`).
+
+### 2026-09-30 — Zug 3 step 2: the master panel says where the sound goes (09095f449)
+- **Decision:** an "Audio route" row between `AudioLatencyRow()` and `AudioTimingRow` (cost → where → health), fed by the pure ladder `AudioRouteRung` (Off / Playing / Call mode, `Studio/AudioRouteStatusWord.swift`) and `LatencyReadout.outputNames` (plain port names, " + "-joined, no default). Beneath the line: `RouteCodec.note` — the one Bluetooth remedy sentence — or a neutral caption.
+- **Rationale:** the panel showed what sound costs and nothing about where it goes; the call-mode sentence had zero readers (measured). Off wins over every codec: a route nobody hears is not a warning. The log form `route` keeps its `none→…` input side for the log only.
+- **Shape law:** cold leaf — `@State` snapshot refreshed on appear / `isRunning` / `AVAudioSession.routeChangeNotification`; no poll, no meter, pulse or clock read (10.76.41/50). `AudioRouteRung` is internal on purpose: `RouteCodec` is internal and a public function cannot take it.
+- **Guards:** `TheAudioRouteRowSaysWhereTheSoundGoesTests` (4 e2e + 3 scans; does not compile against the parent — transcribed against both trees), `MasterPanelReflowsTests` fragment `AudioRouteRow(`. Stale prose in `TheCodecNoteNamesNoInputTests` header and `RouteCodec.note` doc ("read by no view") retracted where it stood.
+- **Open:** device probe (Speaker → AirPods → call → back); Compile Check 3076 / CI/CD 6540 reading (task #313).
+- **Review:** 2026-10-30.
