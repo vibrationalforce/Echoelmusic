@@ -62,7 +62,9 @@
 // notes, demo prefix, percentage and modulation sentences) and the sound map's twelve strings (parent: all verbatim,
 // 35 units missing — ONE finding). E4-32 added the pulse pill's spoken value and the Live Colabo peer row's spoken
 // line — demo prefix as a key, " beats per minute", ", coherence ", "no pulse yet", "not available", "No pulse lock"
-// (parent: all interpolated or verbatim, 6 units missing — ONE finding). Claim 12
+// (parent: all interpolated or verbatim, 6 units missing — ONE finding). E4-33 added the last two demo-prefix
+// sentences — the always-on channel row's three paths and the FX contribution row's two (parent: all interpolated,
+// 9 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1054,6 +1056,40 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         try assertGerman(["No pulse lock", "Simulated demo, ", " beats per minute, coherence ", " beats per minute",
                           "no pulse yet", "not available", ", coherence "], "pulse pill and peer row")
+
+        // E4-33 — the last two demo-prefix sentences: the always-on channel row (three return paths — unmeasured,
+        // measured, held) and the FX bio-mod contribution row (two — unmeasured, measured). The prefix keeps its one
+        // spelling as a key and still leads on every path (TheAlwaysOnRowsSayWhoseBody counts three `return origin`/
+        // `origin +` lines, TheFXRoutesSayWhoseBody two `return origin` lines — both untouched); "no longer arriving"
+        // stays inside its key for AHeldReadingSaysSo. Subjects (`channel.name`, `carrierName`) are typed steps.
+        let bioRow = try codeOnly("Sources/Echoelmusic/Studio/AlwaysOnBioRow.swift")
+        for seam in ["let origin = reading.isSynthetic ? String(localized: \"Simulated demo, \") : \"\"",
+                     "let unmeasured: String = channel.name + String(localized: \", not measured, shaping \") + channel.shapes",
+                     "return origin + unmeasured + String(localized: \" at the neutral value\")",
+                     "let live: String = channel.name + String(localized: \" at \") + \"\\(percent)\"",
+                     "return origin + live + String(localized: \" percent, shaping \") + channel.shapes",
+                     "let held: String = channel.name + String(localized: \" held at \") + \"\\(percent)\"",
+                     "return origin + held + String(localized: \" percent, no longer arriving, still shaping \") + channel.shapes"] {
+            XCTAssertTrue(bioRow.contains(seam), "AlwaysOnBioRow lost the E4-33 seam `\(seam)`")
+        }
+        for verbatim in ["isSynthetic ? \"Simulated demo, \"", ", not measured, shaping \\(", ") percent, shaping \\(", ") held at \\(", "\"still shaping \\("] {
+            XCTAssertFalse(bioRow.contains(verbatim), "AlwaysOnBioRow interpolates a spoken sentence verbatim again: `\(verbatim)`")
+        }
+        let fxRow = try codeOnly("Sources/Echoelmusic/Studio/EchoelFXView.swift")
+        for seam in ["let origin = contribution.synthetic ? String(localized: \"Simulated demo, \") : \"\"",
+                     "let route: String = contribution.carrierName + String(localized: \" to \") + contribution.targetName",
+                     "return origin + route + String(localized: \", not measured\")",
+                     "let moving: String = contribution.carrierName + String(localized: \" moving \") + contribution.targetName",
+                     "let amount: String = \", \" + \"\\(Int((contribution.signal01 * 100).rounded()))\" + String(localized: \" percent\")",
+                     "return origin + moving + amount"] {
+            XCTAssertTrue(fxRow.contains(seam), "EchoelFXView lost the E4-33 seam `\(seam)`")
+        }
+        for verbatim in ["contribution.synthetic ? \"Simulated demo, \"", ") to \\(contribution.targetName), not measured", ") moving \\(contribution.targetName), ", ".rounded())) percent\""] {
+            XCTAssertFalse(fxRow.contains(verbatim), "EchoelFXView interpolates the contribution sentence verbatim again: `\(verbatim)`")
+        }
+        try assertGerman(["Simulated demo, ", ", not measured, shaping ", " at the neutral value", " at ", " percent, shaping ",
+                          " held at ", " percent, no longer arriving, still shaping ", " to ", " moving ", ", not measured", " percent"],
+                         "always-on row and FX contribution row")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

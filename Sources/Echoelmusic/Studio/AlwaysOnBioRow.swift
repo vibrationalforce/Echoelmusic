@@ -155,17 +155,20 @@ struct AlwaysOnBioRow: View {
         // and not in the ear — and this method's own doc says VoiceOver gets the same facts in
         // the same order. (`BioSimulator` measures all four channels, so that branch is not
         // reachable under Simulation today; it is written for the law, not for a live case.)
-        let origin = reading.isSynthetic ? "Simulated demo, " : ""
+        // E4-33: the prefix keeps its one spelling as a catalog KEY (#416/#634b); each sentence is
+        // origin + subject + seam + object, the subject as its own typed step (Compile Check 3106).
+        let origin = reading.isSynthetic ? String(localized: "Simulated demo, ") : ""
         guard reading.isMeasured else {
-            return origin
-                + "\(channel.name), not measured, shaping \(channel.shapes) at the neutral value"
+            let unmeasured: String = channel.name + String(localized: ", not measured, shaping ") + channel.shapes
+            return origin + unmeasured + String(localized: " at the neutral value")
         }
         let percent = Int((reading.value * 100).rounded())
         guard reading.isHeld else {
-            return origin + "\(channel.name) at \(percent) percent, shaping \(channel.shapes)"
+            let live: String = channel.name + String(localized: " at ") + "\(percent)"
+            return origin + live + String(localized: " percent, shaping ") + channel.shapes
         }
-        return origin + "\(channel.name) held at \(percent) percent, no longer arriving, "
-            + "still shaping \(channel.shapes)"
+        let held: String = channel.name + String(localized: " held at ") + "\(percent)"
+        return origin + held + String(localized: " percent, no longer arriving, still shaping ") + channel.shapes
     }
 
     private func signalBar(_ reading: AlwaysOnBioReading) -> some View {

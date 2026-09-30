@@ -1428,13 +1428,16 @@ private struct BioModContributionRow: View {
     /// applies (#416/#634b). Today `synthetic` is false whenever `measured` is, so the
     /// first branch cannot carry a prefix; it is written for the law, not for a live case.
     private var accessibilityText: String {
-        let origin = contribution.synthetic ? "Simulated demo, " : ""
+        // E4-33: the prefix keeps its one spelling as a catalog KEY (#416/#634b); the route and the
+        // amount are typed steps so no `+` chain outgrows the type-checker (Compile Check 3106).
+        let origin = contribution.synthetic ? String(localized: "Simulated demo, ") : ""
         guard contribution.measured else {
-            return origin
-                + "\(contribution.carrierName) to \(contribution.targetName), not measured"
+            let route: String = contribution.carrierName + String(localized: " to ") + contribution.targetName
+            return origin + route + String(localized: ", not measured")
         }
-        return origin + "\(contribution.carrierName) moving \(contribution.targetName), "
-            + "\(Int((contribution.signal01 * 100).rounded())) percent"
+        let moving: String = contribution.carrierName + String(localized: " moving ") + contribution.targetName
+        let amount: String = ", " + "\(Int((contribution.signal01 * 100).rounded()))" + String(localized: " percent")
+        return origin + moving + amount
     }
 
     /// Adaptive precision so a filter-cutoff offset in Hz (+4200) and a dimensionless

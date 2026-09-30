@@ -207,7 +207,8 @@ final class TheFXRoutesSayWhoseBodyTests: XCTestCase {
 
     func testTheMarkerUsesTheEstablishedSpelling() throws {
         let fx = try source("Sources/Echoelmusic/Studio/EchoelFXView.swift")
-        XCTAssertTrue(fx.contains("contribution.synthetic ? \"Simulated demo, \" : \"\""), """
+        // E4-33: the prefix is a catalog key now — same spelling, same position (`origin` first).
+        XCTAssertTrue(fx.contains("contribution.synthetic ? String(localized: \"Simulated demo, \") : \"\""), """
             The VoiceOver origin is no longer the PREFIX spelling. There are three established \
             spellings and they differ by POSITION, not by taste: `"Bio source: simulated demo, \
             not your body"` labels a whole element, `"Simulated demo, "` prefixes a sentence \
