@@ -3528,3 +3528,26 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Decision:** `EchoelTheme.typeRamp = [11, 12, 13, 15, 18, 22]`, `displayFloor = 28`; 64 in-between sizes in 22 files folded onto the nearest step (14/16→15, 17→18, 20/24→22, 26→28). Guard `TheTextSizesSitOnTheRampTests` reads the ramp from the theme.
 - **Rationale:** nineteen sizes were no hierarchy; one array, one decision (#416), no size pinned in the guard (#364). Council: proceed (founder-delegated design).
 - **Open:** device probe at AX5 (Routing titles, tempo value, Onboarding titles, coherence figure). **Review:** 2026-10-30.
+
+### 2026-09-30 — Zug 7: `docs/dev/FOUNDER_INBOX.md`, jede Frage an den Founder genau einmal (fd0455f14)
+
+**Entscheidung.** Alle Fragen an den Founder stehen in EINER Datei, datiert, nie gelöscht: §1 die
+vierzehn Audit-Entscheidungen (E1–E5 beantwortet 2026-09-30, E6 per Delegation entschieden und in
+56a1f0971 gebaut, E7–E14 offen) plus vier HOLDs, die bisher nur in Sitzungs-Aufgaben lebten; §2 genau
+fünf Geräte-Familien je Build (G1–G5); §3 acht founder-gated Befunde mit Ein-Zeilen-Reparatur; §4 die
+540 fälligen Entscheidungen (`./review.sh | grep -c '^REVIEW DUE'`), heute keine geschlossen.
+Zeiger: `.claude/rules/context.md` §6 („ask it ONCE") und der Kopf von
+`scratchpads/FOUNDER_DEVICE_SESSION.md` (dessen §5-Kästchen zählen als E14, nicht doppelt).
+
+**Warum.** Dieselbe Frage wurde mehrfach gestellt (280 `NEEDS-FOUNDER-VERIFY` in 234 Dateien,
+HOLD-Zeilen in Aufgaben, Kästchen im Scratchpad, Zeilen im Doc), und keine Sitzung wusste, ob sie
+beantwortet war. Regel aus dem Audit (Founder ja zu Frage 5): fünf Bitten je Build, ein Build je Woche,
+WIP 3 an der Geräte-Abnahme, Familien statt Einzelbitten. Eine Antwort ist ein Datum, kein Zustand.
+
+**Gemessen, nicht geschätzt.** Zug 2 stand im Doc als „offen: Statuswort, Rückgängig/Hilfe", während
+alle drei seit 09d35f56e / c5eaf50a8 / 2856bf9ed im Code standen — nachgeführt (Doc rev 80). Zug 5:
+zwei von drei Containern gebaut, `InspectorDock` bewusst nicht (der Echoel bleibt montiert, sonst
+stirbt die Musik beim Wechsel) — nachgeführt (rev 79).
+
+**Review 2026-10-30:** Wird die Datei benutzt (kein HOLD mehr nur in Aufgaben)? Sind die fünf
+Familien G1–G5 beantwortet? Ist §4 kleiner als 540?

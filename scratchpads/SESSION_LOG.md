@@ -40899,3 +40899,25 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Typ-Rampe:** 19 verschiedene `EchoelTheme.font`-Größen gemessen (693 Literal-Stellen); Rampe 11·12·13·15·18·22 als `EchoelTheme.typeRamp` + `displayFloor = 28` ins Theme; 64 Zwischen-Größen in 22 Dateien per Regex NUR in Code-Zeilen gefaltet (14→15 ×36, 16→15 ×9, 17→18 ×6, 20→22 ×9, 24→22 ×2, 26→28 ×2); der `WorkspaceView`-Doc-Kommentar mit `font(14)` als Skalierungs-Beispiel bleibt. Wächter `TheTextSizesSitOnTheRampTests` liest die Rampe aus dem Theme (kein eigenes Literal). Transkription: HEAD ohne Anker (nicht benotbar; gegen HEADs 693 Stellen mit dieser Rampe 64 rot = EIN Befund), WORK 0 von 693 off-ramp. Checker sauber, moved-needles 0 (kein Wächter pinnt 14/16/17/20/24/26). Council im Commit-Text.
 - **Gates gelesen:** 51c2a34e0: Compile 3085 ✓, Auto-Merge 3983 ✓ → main = 51c2a34e0 (BfT 6549 damit grün); Run Tests offen. df7f6a404: Compile 3086 ✓; CI/CD + Auto-Merge laufen. 20dddfc59: Auto-Merge 3982 ✓ (main war 20dddfc59), CI/CD 6548 Run Tests offen.
 - **Zug 4 Stand:** Kontrast-Wächter ✓ · Symbolgrößen 63 → 0 ✓ · Asset-Grün = Token-Grün ✓ · Farb-Zustand ✓ (eine reachable Stelle) · sechs Schriftstufen ✓ — alles geräteunbestätigt (AX5, Increase Contrast).
+
+## 2026-09-30 — Zug 7 gebaut: das Postfach `docs/dev/FOUNDER_INBOX.md` (fd0455f14, docs-only → kein Run)
+
+- **Gebaut:** eine Datei, 15 KB — §1 vierzehn Entscheidungen (E1–E5 beantwortet und datiert; E3 halb:
+  Naht ja, Evolve-Schalter nein; E4 halb: Glossar ja, deutsche Chrome nein; E6 per Delegation
+  „DMMW im Vordergrund" → Arrangieren, gebaut 56a1f0971, widerrufbar; E7–E14 offen) + vier HOLDs
+  (H1 Marken-Zeile, H2 Regel 5, H3 HRV-Store-Zeile, H4 Zwei-Telefon-Probe) · §2 fünf Geräte-Familien
+  G1–G5 mit „was tippen / was sehen" · §3 acht founder-gated Befunde F1–F8 · §4 540 fällige
+  Entscheidungen, keine geschlossen (eigene Scheibe).
+- **Zeiger:** `.claude/rules/context.md` §6 (+5 Zeilen) und Kopf von `FOUNDER_DEVICE_SESSION.md`.
+  `CLAUDE.md` unangetastet (149 647 B von 150 000 — kein Platz für einen Zeiger dort).
+- **Wächter-Reichweite geprüft:** `TheMPEInputHasNoZonesTests` Anspruch 12 liest jede
+  `docs/dev/*.md` (kein „mpe in/input" in der Datei), `TheWireSaysWhoseBodyTests` liest jede Datei
+  unter `docs/` mit Event-Adressen (keine darin). `foreign-needles.py` und `dead-needles.py` grün.
+- **Doc nachgeführt:** Zeile 2 → Zug 2 VOLLSTÄNDIG (Statuswort 09d35f56e, Undo c5eaf50a8, ⓘ
+  2856bf9ed standen im Code, die Zelle sagte „offen"), Zeile 5 → zwei von drei Containern,
+  `InspectorDock` bewusst nicht (Begründung gemessen), Zeile 7 → gebaut. Revs 78–80.
+- **Gates gelesen:** 20dddfc59 CI/CD 6548: Build for Testing ✓ (19:12–19:19Z), Run Tests failure
+  19:19–19:45Z (Log-Lesung folgt). 51c2a34e0 CI/CD 6549: BfT ✓ (19:28–19:34Z), Run Tests läuft.
+  df7f6a404 CI/CD 6550: BfT ✓ (19:37–19:43Z) — TheAssetAccentIsTheTokenTests KOMPILIERT; Run Tests
+  läuft; Auto-Merge 3984 läuft. 79f9c5769: Compile Check 3087 läuft, CI/CD 6551 queued.
+- **Protokoll:** decisions.csv Zeile 1062, memory/decisions.md.
