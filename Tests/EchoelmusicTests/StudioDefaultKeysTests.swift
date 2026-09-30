@@ -19,6 +19,11 @@ final class StudioDefaultKeysTests: XCTestCase {
         // WHOLE strip (#572 — a thinned first impression was rejected on device).
         XCTAssertEqual(StudioDefaultKeys.skillLevel.value, .pro)
         XCTAssertEqual(StudioDefaultKeys.skillLevel.key, "studio.skillLevel")
+        // Interface audit 2026-09-30, rule 12: the text size is one key with two writers (pinch +
+        // buttons); -1 = follow the system size, and the string is the pre-keystore literal so a
+        // pinched size survives the move. BLOCKING pin: Tests/CISmoke/TheTextSizeHasButtonsTests.
+        XCTAssertEqual(StudioDefaultKeys.zoomStep.value, -1)
+        XCTAssertEqual(StudioDefaultKeys.zoomStep.key, "ui.zoomStep")
         // #604: hint retires on lesson-learned — key string deliberately kept from the
         // pre-keystore literal so already-taught users stay retired. ⛔ The showing counter
         // and the cap of five that were pinned beside it are GONE (interface audit
@@ -115,6 +120,7 @@ final class StudioDefaultKeysTests: XCTestCase {
             // and because THIS is the uniqueness check.
             StudioDefaultKeys.midiOutMPE.key, StudioDefaultKeys.midiOutExpression.key,
             StudioDefaultKeys.toneSystemID.key,
+            StudioDefaultKeys.zoomStep.key,
         ]
         XCTAssertEqual(keys.count, Set(keys).count, "keys must be unique")
         // ULTRASYNC ships OFF. This pins that as a decision, not an accident: the value

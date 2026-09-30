@@ -5696,6 +5696,8 @@ laufendes Register nicht. Ein Wächter darüber bleibt bewusst aus (#364).
 
 **2026-09-30 (Regel 6 — „Auf Standard“):** `git ls-files 'Tests/CISmoke/*.swift' | wc -l` → **723 vor, 724 nach** diesem Commit (`TheValueFieldOffersItsDefaultTests.swift`, neu).
 
+**2026-09-30 (Regel 12 — Textgröße als Knöpfe):** `git ls-files 'Tests/CISmoke/*.swift' | wc -l` → **724 vor, 725 nach** diesem Commit (`TheTextSizeHasButtonsTests.swift`, neu).
+
 ## B — `Sources/**/*.swift`
 
 Aktueller Stand: **messen, nie zitieren.**

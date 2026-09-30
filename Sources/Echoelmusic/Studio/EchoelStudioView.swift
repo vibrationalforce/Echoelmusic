@@ -1024,9 +1024,11 @@ struct EchoelStudioView: View {
         }
     }
 
-    /// Persisted in-app zoom level (index into StudioZoom.ladder). `-1` = follow the
-    /// system text size; once the user pinch-zooms it becomes an explicit level.
-    @AppStorage("ui.zoomStep") private var zoomStep: Int = -1
+    /// Persisted in-app text size (index into `StudioZoom.ladder`). `-1` = follow the
+    /// system text size; a pinch OR a tap on the Text size buttons in Save & Export
+    /// (`TextSizeRow`, rule 12) makes it an explicit level. Two writers, one key — the key
+    /// lives in `StudioDefaultKeys` (H15-KEYSTORE), never as a literal here.
+    @AppStorage(StudioDefaultKeys.zoomStep.key) private var zoomStep = StudioDefaultKeys.zoomStep.value
 
     // Transpose deleted (founder net-architecture 2026-07-14): it was already removed
     // from the chip bar and unreachable, so its value was always 0 — deletion is
@@ -1357,8 +1359,9 @@ struct EchoelStudioView: View {
             // splitting objection is answered by the new position; the thumb-reach one is
             // not, and is the accepted cost of the founder's 2026-07-31 instruction.
         }
-        // Pinch anywhere to zoom the whole interface (persists); honours the system
-        // text size until the user explicitly zooms. For users who need larger text.
+        // Pinch anywhere to zoom the whole instrument (persists); honours the system
+        // text size until the user explicitly zooms — by pinch, or by the Text size
+        // buttons in Save & Export (rule 12: not only a gesture). For users who need larger text.
         .modifier(StudioZoom(step: $zoomStep))
         .background(EchoelTheme.bg)
         .onAppear {
@@ -9187,6 +9190,7 @@ struct EchoelStudioView: View {
             }
             loopLengthSelector
             skillLevelRow
+            TextSizeRow()
             // ⛔ THE EXPORT-FAILURE LINE MOVED TO THE FRONT PLATE (#993, audit item 4). It stood
             // here under a #216 comment that said it "sits where the user is already looking" —
             // true when the Record button was IN this panel, and false since #482 lifted that
@@ -12566,7 +12570,10 @@ private struct StudioZoom: ViewModifier {
         .accessibility1, .accessibility2, .accessibility3, .accessibility4, .accessibility5
     ]
 
-    private static func systemIndex(_ s: DynamicTypeSize) -> Int {
+    /// The ladder rung the SYSTEM size sits on — the level in effect while `step` is `-1`.
+    /// Not private: `TextSizeRow` steps from this rung, so the first tap moves one step from
+    /// what the eye sees, never from `.large`.
+    static func systemIndex(_ s: DynamicTypeSize) -> Int {
         ladder.firstIndex(of: s) ?? 0
     }
 
@@ -12589,6 +12596,99 @@ private struct StudioZoom: ViewModifier {
                 }
                 .onEnded { _ in pinchBase = nil }
         )
+    }
+}
+
+/// Rule 12 (interface audit 2026-09-30, WCAG 1.4.4): the text size as BUTTONS, not only a
+/// pinch. The pinch (`StudioZoom`) and these three buttons write the SAME key
+/// (`StudioDefaultKeys.zoomStep`), so there is one text size whichever hand set it. A LEAF with
+/// its own `@AppStorage`, like `WeatherMixRow`: a tap here costs the root nothing beyond the
+/// size change itself.
+///
+/// "Default" is the glossary word (`docs/dev/GLOSSARY.md`) and means `-1`: follow the system
+/// text size. Smaller / Larger step the ladder from the level IN EFFECT — at `-1` that is the
+/// system size's own rung (`StudioZoom.systemIndex`), so the first tap moves one step from what
+/// the eye sees. Each button is dimmed where it cannot move (#164/#227): Smaller on the first
+/// rung, Larger on the last, Default while the size already follows the system.
+///
+/// ⚠️ The environment this leaf reads is the size IN EFFECT: with `step >= 0` `StudioZoom` has
+/// overridden it, with `step < 0` it is the system's. `effective` is right in both cases, and
+/// `isAccessibilitySize` stacks the three buttons so the words never clip at the top rungs.
+///
+/// ⚠️ SCOPE, said on the row itself (rule 9): the size applies to the INSTRUMENT, because
+/// `StudioZoom` is mounted inside `EchoelStudioView`; the head keeps its `.accessibility1`
+/// ceiling (`ChromeDynamicTypeTests`) and the piece follows the system size. Widening the
+/// scope means moving the application point — never a second key.
+@MainActor
+private struct TextSizeRow: View {
+    @AppStorage(StudioDefaultKeys.zoomStep.key) private var step = StudioDefaultKeys.zoomStep.value
+    @Environment(\.dynamicTypeSize) private var sizeInEffect
+
+    private var effective: Int { step >= 0 ? step : StudioZoom.systemIndex(sizeInEffect) }
+    private var last: Int { StudioZoom.ladder.count - 1 }
+
+    /// Three words side by side, or stacked once the size in effect is an accessibility size —
+    /// the `AnyLayout` switch `WorkstationView`'s readout uses (⛔ not `ProjectHeader`'s — that one
+    /// went with the pill, `ViewThatFits` owns its identity), so the words never clip at the top rungs.
+    private var layout: AnyLayout {
+        sizeInEffect.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(spacing: 8))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Text size")
+                .font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
+            layout {
+                sizeButton("Smaller", systemImage: "textformat.size.smaller",
+                           spoken: "Smaller text", hint: "One step smaller.",
+                           enabled: effective > 0) {
+                    step = Swift.max(effective - 1, 0)
+                }
+                sizeButton("Larger", systemImage: "textformat.size.larger",
+                           spoken: "Larger text", hint: "One step larger.",
+                           enabled: effective < last) {
+                    step = Swift.min(effective + 1, last)
+                }
+                sizeButton("Default", systemImage: "arrow.counterclockwise",
+                           spoken: "Default text size", hint: "Follows the system text size.",
+                           enabled: step >= 0) {
+                    step = StudioDefaultKeys.zoomStep.value
+                }
+            }
+            Text(caption)
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var caption: String {
+        let scope = "Sizes the instrument's text; the head and the piece follow the system size."
+        if step < 0 {
+            return "Default — follows the system text size. " + scope
+        }
+        return "Level \(step + 1) of \(StudioZoom.ladder.count). Pinching the instrument with two fingers moves it too. " + scope
+    }
+
+    private func sizeButton(_ word: String, systemImage: String, spoken: String, hint: String,
+                            enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(word, systemImage: systemImage)
+                .font(EchoelTheme.font(13, .semibold))
+                .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)
+                .padding(.horizontal, 10)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
+                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                    .strokeBorder(EchoelTheme.borderStrong, lineWidth: 1))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .accessibilityLabel(spoken)
+        .accessibilityHint(hint)
     }
 }
 

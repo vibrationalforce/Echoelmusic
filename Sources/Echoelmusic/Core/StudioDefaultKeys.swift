@@ -62,6 +62,14 @@ public enum StudioDefaultKeys {
     /// never presumed. An unknown persisted raw value also resolves to this default.
     public static let skillLevel = StudioDefault(key: "studio.skillLevel", value: SkillLevel.pro)
 
+    /// The in-app text size (interface audit 2026-09-30, rule 12: "Textgröße als Knöpfe, nicht
+    /// nur Kneifen"). An index into `StudioZoom.ladder` (`.large` … `.accessibility5`); `-1` =
+    /// follow the system text size. Written by the pinch (`StudioZoom`) AND by the three buttons
+    /// in Save & Export (`TextSizeRow`), read by the instrument root that applies it — two
+    /// writers, one key, hence H15-KEYSTORE. The key STRING is the pre-keystore literal on
+    /// purpose: a size a user pinched before this key moved here must survive the update.
+    public static let zoomStep = StudioDefault(key: "ui.zoomStep", value: -1)
+
     /// #604 (GUI-Board Scheibe 1, UX-Audit #2): the instrument hint's LEARNED flag. The
     /// OLD contract wrote this after ONE ~4.5 s showing — miss it once and the app's only
     /// statement of the core mechanic never returned. The law since #604: the hint retires
