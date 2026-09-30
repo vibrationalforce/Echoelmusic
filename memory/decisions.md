@@ -3793,3 +3793,21 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Review:** 2026-10-30. Next E4 producers: `AutomationStatusStrip` (point count, stop notes, layer label in
   `AutomationStatus`), `MediaBrowserView` (Relink/Place, size · use), `EchoelNumberPad` (Range/Confirm/Default),
   `ComposeGuide` (step titles/details), `BioMetricInfo` spoken lines, then the remaining panel families.
+
+### 2026-09-30 — E4-28: the automation strip, the layer words and the number pad speak German (76f9dca82)
+
+- **Decision:** `AutomationStatusStrip` (`pointCountText` = 1 point / n points — the curve editor's own words; the
+  stop notes no effect · overridden · off; the VoiceOver sentence with ` automation, ` as a middle seam),
+  `AutomationStatusRow.Layer.label` (Global · Part · Arrangement) and `EchoelNumberPad` (`Range ` + bounds,
+  `Confirm ` + title, `Default ` + text visible and spoken) go through catalog keys. Catalog 961 → 973.
+  `TheValueFieldOffersItsDefaultTests` claim 2 is re-anchored in the same commit — same claim (symbol PLUS the word),
+  one needle, XCTAssert count unchanged.
+- **Why:** the strip composes from the layer word (a German strip would still have said "Part"); the keypad is the
+  ONE keypad app-wide, so its sentences are read on every typed value. English byte-identical.
+- **Harness:** three lessons for `transcribe_e4_*.py` — a `for … in [ … ]` list must not span the next list
+  (`[^\]]*?`), an interpolated direct needle (`\(word)`) is expanded explicitly, and a re-anchored guard leaves the
+  needle-preservation set. `checkers.sh | tail` hides the chain's exit code — the three checkers after
+  foreign-needles are re-run individually after such a pipe.
+- **Review:** 2026-10-30. Next E4 producers: `MediaBrowserView` (Relink/Place, size · use, `usageText`),
+  `ComposeGuide` (step titles/details/waiting reasons), `BioMetricInfo` spoken lines, `PatchbayView`
+  connections/targets, then the remaining panel families.
