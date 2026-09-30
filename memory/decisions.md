@@ -3697,3 +3697,13 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   locale, which equals the key, so none moves.
 - **Review:** 2026-10-30. Remaining picker producer: `Scale.displayName` (86 names — Dur/Moll/-isch forms; check the
   export-naming guard before touching it, the key name is interpolated at `MusicalKey.swift:548`).
+
+### 2026-09-30 — E4-21: the 57 scale display names speak German; shortName stays the filename key (ad053edbb)
+
+- **Decision:** `Scale.displayName` returns `String(localized:)` per case (catalog 815 → 872); `shortName` stays a plain
+  literal — it is the key half of every share filename and must be identical on every device. Claim 11 pins both halves.
+- **Why:** the third and last picker producer of #232's translation half; the display/filename split already existed in
+  the file's own comment, this slice only makes the display half honest.
+- **Review:** 2026-10-30. Next E4 producers: guide card content (`LearnLibrary` entries), `EchoelIconTile` `Text(title)`
+  (guard co-edit: `TheIconTileCarriesAWordTests` pins the bare form), `NoteNaming.spokenName` (" sharp"/" flat"), the
+  seven `+` seams and the two interpolated network sentences.

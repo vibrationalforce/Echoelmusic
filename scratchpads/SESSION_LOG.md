@@ -41170,3 +41170,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 +23 Returns, 23 Einheiten. Laufzeit-Pins (`GenreSubcategoryTests` Anspruch 5 ASCII/≤22/eindeutig, sechs Batch-Pins, Vokabular-Wächter) unverändert — sie lesen den EN-Wert im Simulator, und der ist der Schlüssel.
 - **Benotung** `scratchpad/transcribe_e4_20.py`: HEAD FAIL (0/23, 23 verbatim, 22 Einheiten fehlen — EIN Befund), WORK PASS, `Category.title` weiter Literal. Duplikat-Scan Anspruch 11: 18 Bindungen, 0 Doppelungen. Stripper PROPHYLAKTISCH 0/23. Checker sauber, moved-needles leer, reachability 3 vorbestehend. Sources-Dateien: 3.
 - **Push-Politik:** lokal, wartet auf Compile Check 3098 auf cc4e76cf7.
+
+## 2026-09-30 — E4-21: 57 Tonleiter-Anzeigenamen sprechen Deutsch (ad053edbb) — Stapel GEPUSHT 21:54Z
+
+- **Gebaut:** `Scale.displayName` 57 × `String(localized:)` (Dur · Moll · Dorisch · … · Vermindert (G–H) · Übermäßig · Tritonus; Eigennamen identisch); `shortName` bewusst unberührt (Dateinamen-Hälfte, `SessionNaming.stem(key: key.shortName)`) und in Anspruch 11 als Gegengewicht gepinnt (`return "maj"` / `return "harm"`). Katalog 815 → 872. Backlog-Kommentar in MusicalKey.swift: #232-Übersetzungshälfte für die drei Picker geschlossen.
+- **Laufzeit-Pins bleiben:** NoteNamingTests („H Minor“/„B Minor“), AFlatKeyIsSpelledWithFlatsTests, IndianScaleTests + ScaleFamilyTests (displayName-Eindeutigkeit) — en-Einheit == Schlüssel im Simulator.
+- **Benotung** `scratchpad/transcribe_e4_21.py`: HEAD FAIL (0/57, 57 verbatim, 57 Einheiten fehlen — EIN Befund), WORK PASS, shortName beidseitig Literal. Duplikat-Scan Anspruch 11: 19 Bindungen, 0 Doppelungen. Stripper PROPHYLAKTISCH 0/58. Checker sauber, moved-needles leer, reachability 3 vorbestehend. Sources-Dateien: 2.
+- **Push 21:54:29Z, Spitze ad053edbb** (4cc18316e E4-20 · 6c942c6e0 docs · ad053edbb E4-21) — nachdem Compile Check 3098 auf cc4e76cf7 success war (21:49Z); BfT 6562 auf cc4e76cf7 lief noch (kein cancel-in-progress bei ci.yml, beide Lesungen kommen). Gate-Lesung #341.
