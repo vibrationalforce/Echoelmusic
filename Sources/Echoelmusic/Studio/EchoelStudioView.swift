@@ -4387,7 +4387,7 @@ struct EchoelStudioView: View {
                 // on requests location permission, so the button has to say what it does.
                 if !locationNamer.enabled {
                     Button { turnLocationOnForWeather() } label: {
-                        Text("Weather needs a coarse location — turn on \"Place in session name\"")
+                        Text("Weather needs a coarse location — turn on “Place in piece name”")
                             .font(EchoelTheme.font(11))
                             .foregroundStyle(EchoelTheme.accent)
                             .multilineTextAlignment(.leading)

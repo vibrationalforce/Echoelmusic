@@ -12348,6 +12348,24 @@
           }
         }
       }
+    },
+    "Weather needs a coarse location — turn on “Place in piece name”" : {
+      "comment" : "Weather hint (E4-11, 2026-09-30): names the toggle by its visible label; the escaped-quote form hid the struck word from the glossary scanner.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weather needs a coarse location — turn on “Place in piece name”"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wetter braucht einen groben Ort — „Ort im Stücknamen“ einschalten"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -1,6 +1,7 @@
 // LocationNamer.swift
 // Echoel — opt-in, on-device locality for the session name (ecosystem plan E2):
-// "Ort in Session-Namen, privat". When the user enables "Place in session name",
+// "Ort in Session-Namen, privat". When the user enables "Place in piece name" (the
+// toggle's visible label since the 2026-09-30 glossary — the plan item keeps its old name),
 // ONE coarse location fix is resolved to a city token ("Hamburg") and fed into
 // `SessionContext.placeToken`, so saves/exports read
 // `Echoel_2026-07-10_Hamburg_Am_72bpm_A440`.
