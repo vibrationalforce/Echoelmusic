@@ -3707,3 +3707,15 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Review:** 2026-10-30. Next E4 producers: guide card content (`LearnLibrary` entries), `EchoelIconTile` `Text(title)`
   (guard co-edit: `TheIconTileCarriesAWordTests` pins the bare form), `NoteNaming.spokenName` (" sharp"/" flat"), the
   seven `+` seams and the two interpolated network sentences.
+
+### 2026-09-30 — E4-22: icon-tile words, the Record tile's state title and the spoken accidentals speak German (d28c8ad9a)
+
+- **Decision:** `EchoelIconTile` draws `Text(LocalizedStringKey(title))` (the stored `String` stays — one caller computes
+  it); `exportTitle`'s four states go through `String(localized:)`; `NoteNaming.spokenName` expands ♯/♭ via
+  `String(localized: " sharp")` / `" flat"` (Kreuz / Be). Catalog 872 → 878. `TheIconTileCarriesAWordTests` claim 1
+  re-anchored in the same commit.
+- **Why:** the seven header tiles were the last verbatim chrome words; the accidentals were the last English inside a
+  VoiceOver sentence built from localised parts. `moved-needles` listed two hits, both `NoteNamingTests`' own
+  expectation arithmetic (`seen.replacing(♯→" sharp")`), valid in the `en` simulator locale — judged, not silenced.
+- **Review:** 2026-10-30. Next E4 producers: guide card content (`LearnLibrary` entries), the seven `+` seams, the two
+  interpolated network sentences, `PartNoteEditor` keySpoken/keyShown compose.
