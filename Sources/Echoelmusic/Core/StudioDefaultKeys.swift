@@ -91,6 +91,13 @@ public enum StudioDefaultKeys {
 
     public static let autoMode = StudioDefault(key: "studio.autoMode", value: false)
 
+    /// The selected tone system (microtonal); `"edo12"` = standard 12-TET, no retune. Promoted
+    /// here by slice 2c (2026-09-30): until then `EchoelStudioView` and `WorkspaceView` each
+    /// declared the raw literal, and `SoundReset` repeated it as a THIRD site — the very split
+    /// this file exists to prevent (its own header names it). Read by the instrument's tuning
+    /// fan, the header strip's Picker, the reset table and the tuning banner on the Piece stage.
+    public static let toneSystemID = StudioDefault(key: "toneSystemID", value: "edo12")
+
     /// Founder 8-bar produce-able phrase (see EchoelStudioView loop picker).
     public static let loopBars = StudioDefault(key: "studio.loopBars", value: LoopBarLength.eight)
     public static let genre = StudioDefault(key: "studio.genre", value: MusicStyle.selfObservation)

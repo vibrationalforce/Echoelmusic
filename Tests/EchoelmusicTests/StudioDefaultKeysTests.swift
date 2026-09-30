@@ -28,6 +28,12 @@ final class StudioDefaultKeysTests: XCTestCase {
         // Tests/CISmoke/AutoModeStartsOffAndOwnsNoTempoTests (this suite is
         // compiled by no gate, #208).
         XCTAssertEqual(StudioDefaultKeys.autoMode.value, false)
+        // Slice 2c (2026-09-30): the tone system's key + default, promoted from two raw
+        // `@AppStorage("toneSystemID")` sites and a literal in `SoundReset`. The string is the
+        // on-disk contract with every shipped install; "edo12" = 12-TET, no retune. The BLOCKING
+        // half is `ResetSoundClearsWhatTheLaunchLineReportsTests` (no literal left at either view).
+        XCTAssertEqual(StudioDefaultKeys.toneSystemID.value, "edo12")
+        XCTAssertEqual(StudioDefaultKeys.toneSystemID.key, "toneSystemID")
         XCTAssertEqual(StudioDefaultKeys.autoMode.key, "studio.autoMode")
         // Composition: the 8-bar produce-able phrase (H15-LOOPBARS shipped v271).
         XCTAssertEqual(StudioDefaultKeys.loopBars.value, .eight)
@@ -103,6 +109,7 @@ final class StudioDefaultKeysTests: XCTestCase {
             // defaults — listed here too because `StudioDefaultKeys`' own header asks for it,
             // and because THIS is the uniqueness check.
             StudioDefaultKeys.midiOutMPE.key, StudioDefaultKeys.midiOutExpression.key,
+            StudioDefaultKeys.toneSystemID.key,
         ]
         XCTAssertEqual(keys.count, Set(keys).count, "keys must be unique")
         // ULTRASYNC ships OFF. This pins that as a decision, not an accident: the value

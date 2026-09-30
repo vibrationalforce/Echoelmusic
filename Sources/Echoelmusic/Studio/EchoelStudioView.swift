@@ -528,8 +528,9 @@ struct EchoelStudioView: View {
     @AppStorage(StudioDefaultKeys.rootIndex.key) private var rootIndex = StudioDefaultKeys.rootIndex.value
     @AppStorage(StudioDefaultKeys.scale.key) private var scale: Scale = StudioDefaultKeys.scale.value
     /// Selected tone system (microtonal). "edo12" = standard 12-TET (default, no retune).
-    /// Persisted so a chosen world tuning survives relaunch.
-    @AppStorage("toneSystemID") private var tuningID = "edo12"
+    /// Persisted so a chosen world tuning survives relaunch. Key + default from
+    /// `StudioDefaultKeys` since slice 2c — the Piece stage's tuning banner reads the same pair.
+    @AppStorage(StudioDefaultKeys.toneSystemID.key) private var tuningID = StudioDefaultKeys.toneSystemID.value
     @AppStorage("studio.fxCharacter") private var fxCharacter: FXCharacter = .auto
     // Founder 2026-07-13 ("8 Takte vollständig und dann wiederholt es sich — sinnvolle
     // Loops sind am besten zum Musik produzieren"): an 8-bar phrase is the produce-able
@@ -1294,6 +1295,11 @@ struct EchoelStudioView: View {
                     case "open":
                         openNote = nil
                         showOpen = true
+                    // Slice 2c: the Piece stage's tuning banner (`PieceTuningStatus`) posts this.
+                    // The reset stays here because only this view owns the calls that push a
+                    // reference into the voices; the stage does not turn — the player asked for
+                    // standard tuning, not for the instrument.
+                    case "tuningStandard": resetTuningToStandard()
                     default: break
                     }
                 }
@@ -2686,101 +2692,40 @@ struct EchoelStudioView: View {
     /// to `EchoelPanel` as an `@escaping @ViewBuilder`, which is a real observation boundary
     /// (the same one `menuPanelHost` relies on). What it is NOT is free: the Sound panel is
     /// the visible plate while that header drag happens, so its ~24 children re-evaluate for
-    /// the duration. Hoisting this banner into its own leaf `View` is the house cure and is
-    /// filed as #395 rather than done blind here — the honest statement now, the structural
-    /// fix as its own slice.
+    /// the duration. ⭐ Slice 2c (2026-09-30) hoisted the banner's BODY into its own leaf,
+    /// `TuningStatusBanner` (`Studio/TuningStatusBanner.swift`) — the house cure #395 asked
+    /// for — because the Piece stage needed the same banner and must not carry a second copy
+    /// of it. The `if` and the reset stay HERE: this view owns `applyTuning()` /
+    /// `applyConcertPitch(_:)`, the calls that push a reference into the voices, and the
+    /// piece's mount reaches them through the `"tuningStandard"` chrome door.
     ///
     /// Nothing else on `SessionContext` can invalidate this: `@Observable` tracks per
     /// property, and `a4Hz`'s complete writer set in `Sources/` is the header field, project
     /// open, and `resetTuningToStandard` below.
     @ViewBuilder private var nonStandardTuningBanner: some View {
         if toneSystemIsNonStandard || concertPitchIsNonStandard {
-            HStack(spacing: 10) {
-                Image(systemName: "tuningfork")
-                    .foregroundStyle(EchoelTheme.dim)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(nonStandardTuningTitle)
-                        .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text("Every note is retuned to this. Sounds off? Return to standard.")
-                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                // #621 (Ultraaccessible-Audit): `.combine` sits HERE, on the two-Text
-                // stack — NOT on the outer HStack, where it stood until this slice and
-                // swallowed the "Standard" recovery button into one merged element,
-                // dropping its hint and its individual focus. The one control that
-                // rescues a wrong-sounding instrument must be its own element for the
-                // user who cannot see it. (The glyph above is hidden as decoration.)
-                .accessibilityElement(children: .combine)
-                Spacer(minLength: 8)
-                // "Standard", not "12-TET": the button now returns BOTH dimensions, and the
-                // old label named only one of them. It is also the word the sentence above
-                // it uses, so the control and its explanation agree.
-                Button("Standard") { resetTuningToStandard() }
-                .font(EchoelTheme.font(13, .semibold))
-                // `EchoelTheme.onPrimary`, not a raw `.black` — the token exists for exactly
-                // this shape (a label on a `.text`-filled button) and #364 fixed the same
-                // literal on the keypad's OK key. A raw `.black` reads identically today and
-                // silently stops tracking the moment the primary fill is retuned.
-                .foregroundStyle(EchoelTheme.onPrimary)
-                // `minHeight: 44`, not `height: 34`. Two reasons, both of which only became
-                // this control's problem when it got a door: 34 is 60 % of the HIG 44×44
-                // floor by area (`TapTargetFloorTests` pins the same number on the two preset
-                // overflow menus), and a FIXED height clips the label once Dynamic Type grows
-                // it — the #353 class. A minimum floors the target without capping the text.
-                .padding(.horizontal, 12).frame(minHeight: 44)
-                .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.text))
-                .buttonStyle(.plain)
-                .accessibilityHint("Returns to 12-tone equal temperament at A4 = 440 hertz")
-            }
-            .padding(12)
-            .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
-            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                .stroke(EchoelTheme.border, lineWidth: 1))
+            TuningStatusBanner(title: nonStandardTuningTitle) { resetTuningToStandard() }
         }
     }
 
-    /// The two halves of "is this instrument at standard tuning", named once so the banner,
-    /// its headline and its reset cannot drift apart. Three call sites open-coding
+    /// The two halves of "is this instrument at standard tuning", decided ONCE in
+    /// `TuningStatusText` (slice 2c) so the banner on either stage, its headline and this
+    /// view's reset cannot drift apart. Three call sites open-coding
     /// `abs(session.a4Hz - 440) >= 0.05` is how one of them ends up with a different
-    /// tolerance than the other two and the banner starts contradicting its own button.
-    private var toneSystemIsNonStandard: Bool { tuningID != "edo12" }
+    /// tolerance than the other two and the banner starts contradicting its own button. The
+    /// tolerance and its (once-wrong) justification live at the definition.
+    private var toneSystemIsNonStandard: Bool {
+        TuningStatusText.toneSystemIsNonStandard(tuningID)
+    }
 
-    /// Not `!= 440`: `a4Hz` is a `Double`, so an exact comparison would keep the banner up
-    /// for a value that is 440 for every audible purpose. 0.05 Hz at A4 is 0.197 cents —
-    /// roughly a twenty-fifth of the ~5 cents a trained ear resolves on a sustained tone.
-    ///
-    /// ⛔ The first version of this line justified the number as "well below the ±0.005 Hz
-    /// the keypad can even express". That is backwards twice over: 0.05 is TEN TIMES 0.005,
-    /// and the field passes no `decimals:`, so it inherits `EchoelValueField`'s default of
-    /// FOUR — the keypad expresses 0.0001 Hz, which is exactly why the founder's recording
-    /// could read 483,4352. The threshold is right and unchanged; the reason given for it
-    /// was not, and a wrong reason is what lets a later session "correct" a correct number.
-    private var concertPitchIsNonStandard: Bool { abs(session.a4Hz - 440) >= 0.05 }
+    private var concertPitchIsNonStandard: Bool {
+        TuningStatusText.concertPitchIsNonStandard(session.a4Hz)
+    }
 
-    /// The banner's headline — it names only what is actually off standard, so a player
-    /// working in Maqām Bayātī at 440 is not told their concert pitch is unusual.
-    ///
-    /// The Hz goes through `EchoelDecimalText` like every other user-visible decimal in the
-    /// app (#267): a German player reads "443,25", and a hard-coded `%.2f` here would print
-    /// a point in a panel where every neighbouring number prints a comma.
+    /// The banner's headline — the words are `TuningStatusText`'s (slice 2c); this is the
+    /// instrument's reading of them.
     private var nonStandardTuningTitle: String {
-        let systemName = TuningSystem.named(tuningID).name
-        let hz = EchoelDecimalText.string(session.a4Hz, decimals: 2)
-        switch (toneSystemIsNonStandard, concertPitchIsNonStandard) {
-        case (true, true):   return "Non-standard tuning: \(systemName), A4 = \(hz) Hz"
-        case (true, false):  return "Non-standard tuning: \(systemName)"
-        case (false, true):  return "Non-standard concert pitch: A4 = \(hz) Hz"
-        // ⛔ Written out rather than left to `default:`. The first version folded this into
-        // the pitch case, so a headline read for an all-standard instrument would have said
-        // "Non-standard concert pitch: A4 = 440.00 Hz" — a sentence that contradicts its own
-        // number. It cannot render today (the banner's `if` is this same pair), but an
-        // unreachable branch that states a falsehood is exactly what a later refactor
-        // promotes into a reachable one.
-        case (false, false): return ""
-        }
+        TuningStatusText.title(tuningID: tuningID, a4Hz: session.a4Hz)
     }
 
     /// Both dimensions back to standard in one tap, with exactly the side effects the header
@@ -2804,7 +2749,7 @@ struct EchoelStudioView: View {
         let systemWasOff = toneSystemIsNonStandard
         let pitchWasOff = concertPitchIsNonStandard
         if systemWasOff {
-            tuningID = "edo12"
+            tuningID = TuningStatusText.standardToneSystemID
             applyTuning()
         }
         if pitchWasOff {

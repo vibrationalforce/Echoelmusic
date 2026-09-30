@@ -36,6 +36,12 @@
 // are not pinned); what is pinned is PRESENCE of the value/label modifier at each site
 // and the combine's position before the recovery button. Restructuring stays legal —
 // move the needles in the same commit.
+//
+// ⭐ AND THEY MOVED ONCE (slice 2c, 2026-09-30): the tuning banner's body is now the leaf
+// `TuningStatusBanner` in `Studio/TuningStatusBanner.swift`, mounted by BOTH stages. Claim 3
+// scans that struct instead of the studio's span — same five assertions, same order check, one
+// address. Grading: on the parent the leaf file is absent, so claim 3 throws at `bannerLines()`
+// — one absence (#486); claims 1, 2 and 4 are unchanged and green on both trees.
 
 import Foundation
 import XCTest
@@ -43,12 +49,20 @@ import XCTest
 final class TheStatefulControlsSpeakTheirStateTests: XCTestCase {
 
     private func studioLines() throws -> [String] {
+        try lines(of: "Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+    }
+
+    /// The tuning banner's leaf (slice 2c) — the one file both stages mount it from.
+    private func bannerLines() throws -> [String] {
+        try lines(of: "Sources/Echoelmusic/Studio/TuningStatusBanner.swift")
+    }
+
+    private func lines(of relative: String) throws -> [String] {
         let here = URL(fileURLWithPath: #filePath)
         let root = here.deletingLastPathComponent()
             .deletingLastPathComponent()
             .deletingLastPathComponent()
-        let path = root.appendingPathComponent(
-            "Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        let path = root.appendingPathComponent(relative)
         guard FileManager.default.fileExists(atPath: path.path) else {
             throw XCTSkip("source tree not present at \(path.path)")
         }
@@ -63,12 +77,12 @@ final class TheStatefulControlsSpeakTheirStateTests: XCTestCase {
     private func span(_ lines: [String], from start: String, to end: String) throws -> ArraySlice<String> {
         let s = lines.indices.filter { lines[$0].contains(start) }
         XCTAssertEqual(s.count, 1, """
-            `\(start)` is no longer unique in EchoelStudioView — re-anchor this check \
+            `\(start)` is no longer unique in the scanned file — re-anchor this check \
             before trusting it (#408).
             """)
         let e = lines.indices.filter { lines[$0].contains(end) }
         XCTAssertEqual(e.count, 1, """
-            end anchor `\(end)` is no longer unique in EchoelStudioView — re-anchor \
+            end anchor `\(end)` is no longer unique in the scanned file — re-anchor \
             (#408).
             """)
         guard let si = s.first, let ei = e.first, si < ei else {
@@ -100,14 +114,15 @@ final class TheStatefulControlsSpeakTheirStateTests: XCTestCase {
 
     /// 3 — the tuning banner: combine on the TEXT stack (before the recovery button),
     /// glyph hidden, button + hint intact as their own element.
+    ///
+    /// Slice 2c: the banner's body is the leaf `TuningStatusBanner`, so the span runs from
+    /// that struct to the next type in its file (`PieceTuningStatus`, the piece's mount) —
+    /// still two unique anchors, never a fixed window (#621b / #619b).
     func testTheTuningBannersRecoveryButtonIsItsOwnElement() throws {
-        let lines = try studioLines()
-        // #621b (review W2): double-anchored — decl → the reset function that follows
-        // the banner — instead of the fixed 50-line window that had ~9 lines of
-        // comment headroom (the #619b class, again).
+        let lines = try bannerLines()
         let w = Array(try span(lines,
-                               from: "private var nonStandardTuningBanner",
-                               to: "private func resetTuningToStandard"))
+                               from: "struct TuningStatusBanner: View {",
+                               to: "struct PieceTuningStatus: View {"))
         let combines = w.indices.filter { w[$0].contains("accessibilityElement(children: .combine)") }
         XCTAssertEqual(combines.count, 1, """
             the tuning banner must carry exactly ONE `.combine` — on the two-Text stack. \

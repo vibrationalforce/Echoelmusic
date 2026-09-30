@@ -21,10 +21,31 @@
 // the blocking bundle is `Tests/CISmoke`. House pattern. A green here means the banner is WIRED
 // and where — never that a founder saw it.
 //
+// ⭐ SLICE 2c (2026-09-30): THE BANNER REACHES THE STAGE A FRESH INSTALL OPENS. Since slice 2a
+// the app launches on the PIECE stage, whose transport plays the same retuned voices, and the
+// banner was mounted only on the instrument's Sound plate — #325 in a new place. So the body
+// moved into a leaf, `TuningStatusBanner` (`Studio/TuningStatusBanner.swift`), the words that
+// decide whether it shows moved into `TuningStatusText` (ONE tolerance, #416), and the Piece
+// stage mounts `PieceTuningStatus`, which posts the `"tuningStandard"` chrome door; the studio
+// keeps the `if`, the reset and the receiver case, because only it owns the calls that push a
+// reference into the voices. Claims 1, 2, 5 and 6 were rewritten AS THE DECISION: what they
+// used to pin at the studio they now pin at the leaf, plus the piece's mount, the one poster
+// and its receiver case. Nothing was weakened; the scan reaches one file more.
+//
+// GRADING (§3, no toolchain — transcribed in Python against both trees). On the parent
+// (56a1f0971) the leaf file does not exist, so every assertion reading it errors at
+// `codeLines` — ONE absence, reported once (#486). Red for their named reason there: claim 1's
+// delegation lines, claim 2's piece mount / poster / receiver case, claim 3's standard-id needle,
+// claim 5's delegation, claim 6's studio mount of the leaf — all FORWARD. Counterweights green
+// on both trees: the studio `if`, the Sound-plate mount, `displayedMenu`'s default, the recompose
+// structure (claim 4, untouched), the `frame(height: 34)` ban.
+//
 // NEEDS-FOUNDER-VERIFY: set A4 to something other than 440 in the header strip. The Sound panel
 // must show a "Non-standard concert pitch: A4 = … Hz" line with a "Standard" button; the button
 // must return it to 440 AND the take must audibly retune. Then set the tone system to a
-// non-12-TET one at A4 = 440 and confirm the line names the SYSTEM and not the pitch.
+// non-12-TET one at A4 = 440 and confirm the line names the SYSTEM and not the pitch. Since 2c
+// also: with A4 off 440, the PIECE stage shows the same line above the arrangement, and its
+// "Standard" returns the pitch without turning the stage.
 
 import Foundation
 import XCTest
@@ -32,6 +53,10 @@ import XCTest
 final class DetunedInstrumentSaysSoTests: XCTestCase {
 
     private static let studio = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
+    private static let leaf = "Sources/Echoelmusic/Studio/TuningStatusBanner.swift"
+    private static let seam = "Sources/Echoelmusic/Studio/StageShell.swift"
+    private static let sourcesRoot = "Sources/Echoelmusic"
+    private static let poster = "NotificationCenter.default.post(name: .echoelChromeDoor, object: \"tuningStandard\")"
 
     // MARK: - The widening, which is the half that answers the founder's report
 
@@ -55,20 +80,56 @@ final class DetunedInstrumentSaysSoTests: XCTestCase {
             banner: \(body.prefix(6).map { $0.trimmingCharacters(in: .whitespaces) })
             """)
 
-        let code = try codeLines(Self.studio)
-        let pitch = code.filter { $0.contains("private var concertPitchIsNonStandard: Bool") }
-        XCTAssertEqual(pitch.count, 1, """
-            expected exactly one `concertPitchIsNonStandard` declaration, found \(pitch.count). \
-            The banner, its headline and its reset all read this one property so they cannot \
-            disagree about what "standard" means.
+        // Slice 2c: the studio's two predicates DELEGATE to `TuningStatusText`, and the piece's
+        // mount asks the same two functions — one definition of "standard" for both stages
+        // (#416). ⛔ Until 2c this half pinned `abs(session.a4Hz - 440)` on the studio's own
+        // line; the measurement moved with the decision, it did not get weaker.
+        let pitch = try memberBody(startingWith: "private var concertPitchIsNonStandard: Bool",
+                                   in: Self.studio)
+        XCTAssertTrue(pitch.contains(where: {
+            $0.contains("TuningStatusText.concertPitchIsNonStandard(session.a4Hz)")
+        }), """
+            the studio's `concertPitchIsNonStandard` no longer asks `TuningStatusText` about \
+            `session.a4Hz` (slice 2c). A second spelling of the tolerance here is how the \
+            instrument's banner and the piece's banner start disagreeing about what "standard" \
+            means. pitch: \(pitch.map { $0.trimmingCharacters(in: .whitespaces) })
             """)
-        XCTAssertTrue(pitch[0].contains("abs(session.a4Hz - 440)"), """
-            `concertPitchIsNonStandard` no longer measures `session.a4Hz` against 440:
-            \(pitch[0].trimmingCharacters(in: .whitespaces))
+        let system = try memberBody(startingWith: "private var toneSystemIsNonStandard: Bool",
+                                    in: Self.studio)
+        XCTAssertTrue(system.contains(where: {
+            $0.contains("TuningStatusText.toneSystemIsNonStandard(tuningID)")
+        }), "the studio's `toneSystemIsNonStandard` no longer asks `TuningStatusText` (slice 2c)")
 
-            That property is the only thing standing between a persisted wrong reference and a \
-            silent instrument-wide detune.
+        let measure = try memberBody(
+            startingWith: "static func concertPitchIsNonStandard(_ a4Hz: Double) -> Bool", in: Self.leaf)
+        XCTAssertTrue(measure.contains(where: {
+            $0.contains("abs(a4Hz - SessionContext.defaultA4Hz) >= concertPitchToleranceHz")
+        }), """
+            `TuningStatusText.concertPitchIsNonStandard` no longer measures the pitch against \
+            `SessionContext.defaultA4Hz` within `concertPitchToleranceHz`:
+            \(measure.map { $0.trimmingCharacters(in: .whitespaces) })
+
+            That function is the only thing standing between a persisted wrong reference and a \
+            silent detune on BOTH stages.
             """)
+        let tolerance = try codeLines(Self.leaf).filter {
+            $0.contains("static let concertPitchToleranceHz = 0.05")
+        }
+        XCTAssertEqual(tolerance.count, 1, """
+            expected exactly one `concertPitchToleranceHz = 0.05` in the leaf, found \
+            \(tolerance.count). The number is a decision with a once-wrong justification written \
+            beside it; a second copy is a second chance to "correct" it.
+            """)
+
+        let piece = try memberBody(startingWith: "struct PieceTuningStatus: View", in: Self.leaf)
+        for half in ["TuningStatusText.toneSystemIsNonStandard(tuningID)",
+                     "TuningStatusText.concertPitchIsNonStandard(session.a4Hz)"] {
+            XCTAssertTrue(piece.contains(where: { $0.contains(half) }), """
+                the piece's mount no longer gates on `\(half)`. It must fire on EITHER half, \
+                exactly like the instrument's `if` above — a piece banner that checks only the \
+                tone system is the pre-#325 banner, on the stage a fresh install opens.
+                """)
+        }
     }
 
     // MARK: - The door
@@ -110,12 +171,53 @@ final class DetunedInstrumentSaysSoTests: XCTestCase {
             Re-decide where the banner lives in the same commit rather than leaving it on a panel \
             nobody reaches.
             """)
-        // ⚠️ OPEN, and said here rather than hidden: since slice 2a the APP launches on the Piece
-        // stage, whose transport plays the same retuned voices, and no banner is mounted there
-        // yet. That is a slice of its own (2c): the banner needs a leaf that reads the session's
-        // pitch and the tone system and can push the reset into the voices, which today only this
-        // view can. Until then #325 holds for the instrument's launch plate and NOT for the
-        // piece's — a guard that claimed otherwise would be the three doorless weeks in a new place.
+        // ⭐ CLOSED by slice 2c (it stood here as "⚠️ OPEN" for one slice, said rather than
+        // hidden): the APP launches on the Piece stage, so the piece mounts the banner too — a
+        // leaf, above the arrangement, exactly once.
+        let stage = try memberBody(startingWith: "struct ArrangeStage: View", in: Self.seam)
+        XCTAssertEqual(stage.filter { $0.contains("PieceTuningStatus()") }.count, 1, """
+            `ArrangeStage` no longer mounts `PieceTuningStatus()` exactly once (slice 2c). The \
+            piece's transport plays the same retuned voices as the instrument; a warning that \
+            lives only on the Instrument stage is the three doorless weeks of #325 on the stage a \
+            fresh install actually opens.
+            """)
+        // The reset goes through the ONE owner of the voice fan. Producer and receiver move
+        // together (the `"sound"` door's shape, `TheEchoelTrackOpensItsDeviceTests`): exactly
+        // one poster in `Sources/`, in the leaf, and a receiver case in the studio that calls
+        // the same `resetTuningToStandard()` the Sound plate's button calls.
+        let root = try repoRoot().appendingPathComponent(Self.sourcesRoot)
+        guard let walker = FileManager.default.enumerator(atPath: root.path) else {
+            return XCTFail("cannot enumerate Sources/Echoelmusic — a scan that saw nothing is not a pass")
+        }
+        var posters: [String] = []
+        var seen = 0
+        for case let relative as String in walker where relative.hasSuffix(".swift") {
+            seen += 1
+            guard let text = try? String(contentsOf: root.appendingPathComponent(relative),
+                                         encoding: .utf8) else { continue }
+            if SourceText.codeOnly(text).contains(Self.poster) { posters.append(relative) }
+        }
+        XCTAssertGreaterThan(seen, 200, "the walk saw \(seen) files — the wrong directory")
+        XCTAssertEqual(posters, ["Studio/TuningStatusBanner.swift"], """
+            the piece's banner must be the ONE producer of the "tuningStandard" chrome door \
+            (found: \(posters)). A second poster is a second path into the voice fan; zero is a \
+            button that does nothing (#164/#227).
+            """)
+        let studio = try codeLines(Self.studio)
+        guard let receiverStart = studio.firstIndex(where: {
+            $0.contains("publisher(for: .echoelChromeDoor)) { note in")
+        }), let receiverEnd = studio[(receiverStart + 1)...].firstIndex(where: {
+            $0.contains("default: break")
+        }) else {
+            return XCTFail("ANCHOR MISSING: the chrome-door receiver (#454)")
+        }
+        let receiver = studio[receiverStart...receiverEnd].map { $0.trimmingCharacters(in: .whitespaces) }
+        XCTAssertTrue(receiver.contains("case \"tuningStandard\": resetTuningToStandard()"), """
+            the chrome-door receiver lost `case "tuningStandard": resetTuningToStandard()` \
+            (slice 2c). The piece's "Standard" button posts this door; without the case it \
+            reports success and changes nothing audible — the #114 defect, one stage over. And \
+            it must be THIS function, so both stages' buttons do the identical thing.
+            """)
     }
 
     // MARK: - The button has to actually undo it
@@ -134,7 +236,7 @@ final class DetunedInstrumentSaysSoTests: XCTestCase {
         let reset = try memberBody(startingWith: "private func resetTuningToStandard()",
                                    in: Self.studio)
         let trimmed = reset.map { $0.trimmingCharacters(in: .whitespaces) }
-        for needle in ["tuningID = \"edo12\"", "applyTuning()",
+        for needle in ["tuningID = TuningStatusText.standardToneSystemID", "applyTuning()",
                        "session.a4Hz = 440", "applyConcertPitch(440)",
                        "pianoRoll.musicalA4Hz = 440", "recomposeIfRunning()"] {
             XCTAssertTrue(trimmed.contains(needle), """
@@ -187,10 +289,21 @@ final class DetunedInstrumentSaysSoTests: XCTestCase {
     /// number prints "443,25" for a German player — and this line is read precisely when
     /// somebody is trying to decide whether a number is wrong.
     func testTheHertzUsesTheHouseDecimalSeparator() throws {
-        let title = try memberBody(startingWith: "private var nonStandardTuningTitle: String",
-                                   in: Self.studio)
+        // Slice 2c: the words live in `TuningStatusText.title`; the studio's headline is a
+        // reading of them, and it must stay one — a second headline here is a second copy.
+        let studioTitle = try memberBody(startingWith: "private var nonStandardTuningTitle: String",
+                                         in: Self.studio)
+        XCTAssertTrue(studioTitle.contains(where: {
+            $0.contains("TuningStatusText.title(tuningID: tuningID, a4Hz: session.a4Hz)")
+        }), """
+            the studio's `nonStandardTuningTitle` no longer reads `TuningStatusText.title` \
+            (slice 2c) — two headlines for one banner is how the two stages start saying \
+            different things. title: \(studioTitle.map { $0.trimmingCharacters(in: .whitespaces) })
+            """)
+        let title = try memberBody(startingWith: "static func title(tuningID: String, a4Hz: Double) -> String",
+                                   in: Self.leaf)
         XCTAssertTrue(title.contains(where: {
-            $0.contains("EchoelDecimalText.string(session.a4Hz, decimals: 2)")
+            $0.contains("EchoelDecimalText.string(a4Hz, decimals: 2)")
         }), """
             the tuning banner's Hz no longer goes through `EchoelDecimalText` (#267). It is a \
             user-visible decimal on a line whose job is to make a number checkable; printing a \
@@ -206,8 +319,20 @@ final class DetunedInstrumentSaysSoTests: XCTestCase {
     /// the label at large Dynamic Type sizes, which is the #353 class this repo has now paid
     /// for six times.
     func testTheResetButtonClearsTheTapTargetFloorAndStillGrows() throws {
-        let body = try memberBody(startingWith: "private var nonStandardTuningBanner: some View",
-                                  in: Self.studio)
+        // Slice 2c: the control lives in the leaf; the instrument's banner MOUNTS the leaf, which
+        // is what makes the leaf's floor the Sound plate's floor. Both halves, or the leaf could
+        // be right while the plate quietly grew its own 34 pt button back.
+        let mount = try memberBody(startingWith: "private var nonStandardTuningBanner: some View",
+                                   in: Self.studio)
+        XCTAssertTrue(mount.contains(where: {
+            $0.contains("TuningStatusBanner(title: nonStandardTuningTitle) { resetTuningToStandard() }")
+        }), """
+            the instrument's `nonStandardTuningBanner` no longer mounts `TuningStatusBanner` with \
+            its own title and reset (slice 2c). If it grew a body of its own again, that body is a \
+            second copy of the leaf — and this claim's floor no longer covers it.
+            mount: \(mount.map { $0.trimmingCharacters(in: .whitespaces) })
+            """)
+        let body = try memberBody(startingWith: "struct TuningStatusBanner: View", in: Self.leaf)
         XCTAssertTrue(body.contains(where: { $0.contains("frame(minHeight: 44)") }), """
             the tuning banner's "Standard" button lost its `frame(minHeight: 44)` (#325).
 

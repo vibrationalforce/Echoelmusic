@@ -301,16 +301,22 @@ final class ResetSoundClearsWhatTheLaunchLineReportsTests: XCTestCase {
 
     // MARK: - Source scans: the literals, and the door
 
-    /// The four keys `SoundReset` spells out as literals are declared with a raw literal at
+    /// The two keys `SoundReset` still spells out as literals are declared with a raw literal at
     /// their use site too. That duplication is acknowledged in `SoundReset`'s own header and its
     /// real fix is promotion into `StudioDefaultKeys`; until then this scan is what keeps a
     /// rename at the use site from silently turning one line of the reset into a no-op.
+    ///
+    /// ⭐ `toneSystemID` was the THIRD literal and is promoted (slice 2c, 2026-09-30): the reset
+    /// table, both views and the Piece stage's tuning banner now read `StudioDefaultKeys.
+    /// toneSystemID`. So for that key the claim flips from "the literal still matches" to "no
+    /// literal is left" — the #416 shape this file's header names as the real fix. ⛔ Until 2c
+    /// this doc said "four keys" over a loop of three (#433, the flattering direction).
     func testTheLiteralKeysStillMatchTheirDeclarationSite() throws {
-        let lines = try codeLines("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
-        let source = lines.joined(separator: "\n")
+        let studio = try codeLines("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+            .joined(separator: "\n")
 
-        for key in ["toneSystemID", "studio.presetIndex", "studio.articulation"] {
-            XCTAssertTrue(source.contains("\"\(key)\""), """
+        for key in ["studio.presetIndex", "studio.articulation"] {
+            XCTAssertTrue(studio.contains("\"\(key)\""), """
             `SoundReset` clears "\(key)", but no `@AppStorage` in `EchoelStudioView` declares \
             that string any more.
 
@@ -319,6 +325,26 @@ final class ResetSoundClearsWhatTheLaunchLineReportsTests: XCTestCase {
             player taps Reset, the app says nothing, and the value they were trying to escape \
             is still there.
             """)
+        }
+
+        let reset = try codeLines("Sources/Echoelmusic/Core/SoundReset.swift").joined(separator: "\n")
+        XCTAssertTrue(reset.contains("Entry(label: \"tuning\", keys: [StudioDefaultKeys.toneSystemID.key])"), """
+            `SoundReset`'s tuning entry no longer reads `StudioDefaultKeys.toneSystemID.key` \
+            (slice 2c). A literal here is the third spelling of one key — the split this file's \
+            header calls the real defect.
+            """)
+        let workspace = try codeLines("Sources/Echoelmusic/Studio/WorkspaceView.swift")
+            .joined(separator: "\n")
+        for (name, code) in [("EchoelStudioView", studio), ("WorkspaceView", workspace)] {
+            XCTAssertTrue(code.contains("@AppStorage(StudioDefaultKeys.toneSystemID.key)"), """
+                `\(name)` no longer declares the tone system through `StudioDefaultKeys` \
+                (slice 2c) — a raw literal there is a per-declaration default that can disagree \
+                with the reset and with the Piece stage's banner on a fresh install.
+                """)
+            XCTAssertFalse(code.contains("\"toneSystemID\""), """
+                `\(name)` spells "toneSystemID" as a literal again — the #416 split slice 2c \
+                closed. Read the key from `StudioDefaultKeys.toneSystemID`.
+                """)
         }
     }
 

@@ -68,14 +68,14 @@ public enum SoundReset {
 
     /// ⚠️ KEYS COME FROM THEIR OWNER WHERE AN OWNER EXISTS — `StudioDefaultKeys` for the shared
     /// preferences, `SessionContext.keyStorageKeys` / `a4StorageKey` for the two groups that type
-    /// deliberately exposes. The THREE remaining string literals below are keys declared with a
+    /// deliberately exposes. The TWO remaining string literals below are keys declared with a
     /// raw literal at their single use site in `EchoelStudioView`; repeating them here makes this
-    /// the SECOND site (the THIRD, for `toneSystemID`, which `WorkspaceView` also declares raw).
-    /// That duplication is the shape of defect `StudioDefaultKeys` exists to prevent, and the
-    /// honest fix is promoting all three into that file — a separate slice, because it moves
-    /// declarations in two views. Until then the guard scans `EchoelStudioView.swift` for each
-    /// literal, so a rename there fails the blocking bundle instead of silently turning one line
-    /// of this reset into a no-op.
+    /// the SECOND site. That duplication is the shape of defect `StudioDefaultKeys` exists to
+    /// prevent, and the honest fix is promoting both into that file — a separate slice, because
+    /// it moves declarations in a view. Until then the guard scans `EchoelStudioView.swift` for
+    /// each literal, so a rename there fails the blocking bundle instead of silently turning one
+    /// line of this reset into a no-op. ⭐ `toneSystemID` WAS the third and is promoted (slice 2c,
+    /// 2026-09-30): it had three raw sites once the Piece stage's tuning banner needed a fourth.
     ///
     /// ⛔ TWO WRONG NAMES IN THIS PARAGRAPH FOR ONE COMMIT, both found in review. It cited
     /// `SessionContext.storageKeys`, WHICH DOES NOT EXIST — a reader following it finds nothing —
@@ -86,7 +86,7 @@ public enum SoundReset {
         Entry(label: "key", keys: [StudioDefaultKeys.rootIndex.key,
                                    StudioDefaultKeys.scale.key]
                               + SessionContext.keyStorageKeys),
-        Entry(label: "tuning", keys: ["toneSystemID"]),
+        Entry(label: "tuning", keys: [StudioDefaultKeys.toneSystemID.key]),
         Entry(label: "a4", keys: [SessionContext.a4StorageKey]),
         Entry(label: "genre", keys: [StudioDefaultKeys.genre.key]),
         Entry(label: "preset", keys: ["studio.presetIndex"]),

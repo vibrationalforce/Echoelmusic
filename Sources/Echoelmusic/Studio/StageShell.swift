@@ -114,12 +114,19 @@ struct StageShell: View {
 /// The Piece stage: the workstation standing free, in its own scroll. Nothing is computed here —
 /// everything the arrangement knows lives in `WorkstationView`, and its `.fileImporter` stays on
 /// that leaf (#W1). The size contract is the one `SurfaceHost` states: fill, then clip.
+///
+/// Above the arrangement sits `PieceTuningStatus` (slice 2c): the tuning warning the instrument's
+/// Sound plate shows, on the stage a fresh install actually opens — the piece's transport plays
+/// the same retuned voices. A leaf, a sibling of the arrangement, hidden entirely at 12-TET + 440.
 @MainActor
 struct ArrangeStage: View {
     var body: some View {
         ScrollView {
-            WorkstationView()
-                .padding(2)
+            VStack(spacing: 8) {
+                PieceTuningStatus()
+                WorkstationView()
+                    .padding(2)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.horizontal, 8)

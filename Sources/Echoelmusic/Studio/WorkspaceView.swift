@@ -1159,7 +1159,7 @@ struct CompositionHeaderStrip: View {
     @AppStorage(StudioDefaultKeys.genre.key) private var style: MusicStyle = StudioDefaultKeys.genre.value
     @AppStorage(StudioDefaultKeys.rootIndex.key) private var rootIndex = StudioDefaultKeys.rootIndex.value
     @AppStorage(StudioDefaultKeys.scale.key) private var scale: Scale = StudioDefaultKeys.scale.value
-    @AppStorage("toneSystemID") private var tuningID = "edo12"
+    @AppStorage(StudioDefaultKeys.toneSystemID.key) private var tuningID = StudioDefaultKeys.toneSystemID.value
     // M1 Flow/Loop: the mode IS the tempo lock (same shared keys as the transport-bar
     // BodyTempoField lock button, so the two controls never disagree).
     @AppStorage("studio.lockBPM") private var lockBPM = false
