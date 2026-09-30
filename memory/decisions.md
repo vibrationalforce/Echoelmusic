@@ -3266,3 +3266,10 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **ProjectStore (outside the list):** "That file isn't an Echoel piece." / "…a readable Echoel piece — <field>." / "Could not save this piece." — the file cannot join the list: it carries the persisted filename `"projects.json"`, which the scanner reads as the struck word. **Known exclusion class: persisted filenames / keys.** Recorded instead of an allow-list.
 - **List:** 20 files, scanner 0. All local, batched behind Compile Check 3067 (d9ee6f3c3).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 6, third family: the felt-sub rows name their voice's defaults
+
+- **Decision (cb9443f9e):** "Sub level" → `standard: SubBassVoice.defaultSubGain` (0.35); "Sub presence" / "Sub heat" → `SubCharacter.defaultPresence` / `defaultHeat` (0.50). These are the constants the voice initialises from, so the key returns the fresh-install sound exactly.
+- **Guard:** `TheValueFieldOffersItsDefaultTests` claim 3 — constant inside the row's range, passed by exactly one row each.
+- **Census after this family (scanner over `EchoelValueField(label:`):** 65 rows, 29 still without a default. Known blockers: the light "Master" row binds `artNet.grandMaster`/`sacn.grandMaster`, whose default is a literal `1` in two senders — a named constant with ONE owner must exist before the row can offer it (a call-site literal would be #416); the Field level rows bind a bio-derived value; the FX route rows (`route.depth`, `lfoRateHz`, `smoothingTau`) have per-route defaults in their factories.
+- **Review:** 2026-10-30.

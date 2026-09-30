@@ -40611,3 +40611,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **ProjectStore (AUSSERHALB der Liste):** „That file isn't an Echoel piece.“ / „…a readable Echoel piece — <field>.“ / „Could not save this piece.“; `TheImportDoorReportsWhatItCannotReadTests` Zeilen 127/165 folgen. ⚠️ **Bekannte Ausschlussklasse gefunden:** die Datei trägt den persistierten Dateinamen `"projects.json"` — der Scanner läse „project“, der Name kann nicht wechseln. Statt einer Ausnahme im Scanner ist das hier und in memory notiert; wer den Scanner erweitert, weiß, wofür.
 - **Liste 20 Dateien, Scanner WORK 0, Checker sauber. Lokal, nicht gepusht** — Compile Check 3067 (36728688119) auf d9ee6f3c3 stand um 14:23Z in `queued`; Stapel wartet auf seine Conclusion.
 - **Gerät:** Bio-Panel-Satz „…while the instrument plays“; Import-Tür „That file isn't an Echoel piece.“; Part-Slots-Meldung.
+
+## 2026-09-30 — Regel 6, dritte Familie: die Sub-Zeilen bieten die Defaults ihrer Stimme (cb9443f9e) — lokal, Stapel
+
+- **Was:** „Sub level“ → `standard: SubBassVoice.defaultSubGain` (0,35), „Sub presence“ / „Sub heat“ → `SubCharacter.defaultPresence` / `defaultHeat` (0,50) — genau die Konstanten, aus denen `SubBassVoice` seine drei Eigenschaften initialisiert (Zeilen 47/100/111). Kein Literal an der Aufrufstelle (#416).
+- **Wächter:** `TheValueFieldOffersItsDefaultTests` Anspruch 3 erweitert — je Konstante: im 0…1-Bereich UND von genau EINER Zeile übergeben. Transkription: WORK 1/1/1, HEAD 0/0/0. Checker sauber.
+- **Zensus (Replik über `EchoelValueField(label:`):** 65 Zeilen, 29 ohne Default. Bekannte Blocker, damit niemand sie „schnell“ mit einem Literal schließt: Licht-„Master“ bindet `artNet.grandMaster`/`sacn.grandMaster`, deren Default ein LITERAL `1` in ZWEI Sendern ist — erst eine benannte Konstante mit EINEM Besitzer, dann die Zeile; Field-Level-Zeilen binden einen bio-abgeleiteten Wert (kein Fakt-Default); FX-Routen-Zeilen (`route.depth`, `lfoRateHz`, `smoothingTau`) haben Per-Routen-Defaults in ihren Fabriken.
+- **Gerät:** die gedimmte Taste bei 0,35 / 0,50 / 0,50.
