@@ -179,7 +179,7 @@ struct EchoelNumberPad: View {
                     defaultKey(standard)
                 }
             }
-            Text("Range \(fmt(range.lowerBound))–\(fmt(range.upperBound))\(unit.isEmpty ? "" : " " + unit)")
+            Text(String(localized: "Range ") + fmt(range.lowerBound) + "–" + fmt(range.upperBound) + (unit.isEmpty ? "" : " " + unit))
                 .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.dim)
         }
@@ -323,7 +323,7 @@ struct EchoelNumberPad: View {
         keyButton(action: { commit() }, tint: EchoelTheme.text) {
             Text("OK").font(EchoelTheme.font(18, .semibold)).foregroundStyle(EchoelTheme.onPrimary)
         }
-        .accessibilityLabel("Confirm \(title)")
+        .accessibilityLabel(String(localized: "Confirm ") + title)
     }
 
     /// One key cell: tall, solid fill, 8 px radius, no glow. Disabled keys read dimmed.
@@ -353,7 +353,7 @@ struct EchoelNumberPad: View {
         return Button {
             buffer = String(format: "%.\(decimals)f", ScrubPrecision.gridded(standard, decimals: decimals))
         } label: {
-            Label("Default \(text)", systemImage: "arrow.counterclockwise")
+            Label(String(localized: "Default ") + text, systemImage: "arrow.counterclockwise")
                 .font(EchoelTheme.font(13, .semibold))
                 .foregroundStyle(atDefault ? EchoelTheme.dim : EchoelTheme.text)
                 .padding(.horizontal, 10).frame(height: 32)
@@ -363,7 +363,7 @@ struct EchoelNumberPad: View {
         }
         .buttonStyle(.plain)
         .disabled(atDefault)
-        .accessibilityLabel("Default \(text)\(unit.isEmpty ? "" : " " + unit)")
+        .accessibilityLabel(String(localized: "Default ") + text + (unit.isEmpty ? "" : " " + unit))
         .accessibilityHint("Types the default; OK confirms it.")
     }
 

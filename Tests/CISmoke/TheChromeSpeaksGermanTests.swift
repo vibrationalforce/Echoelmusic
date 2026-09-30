@@ -53,7 +53,8 @@
 // ONE finding). E4-26 added the frames around that vocabulary — the part bar's heading, the parts row's spoken label, the
 // curve editor's point line, Remove label and spoken summary (parent: all interpolated, 5 units missing — ONE finding). E4-27
 // added the position readout (Bar n · Beat b), the arrange canvas's landing announcement and the Session launch surface
-// (parent: all verbatim, 10 units missing — ONE finding). Claim 12
+// (parent: all verbatim, 10 units missing — ONE finding). E4-28 added the automation status strip, the layer words and
+// the number pad's Range/Confirm/Default (parent: all verbatim, 12 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -797,6 +798,44 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         try assertGerman(["Bar ", " · Beat ", "Part at ", "Queued", "Playing", "Stopping", " later scenes are not shown.",
                           "Launch scene at ", "Not the current scene", ", part at ", "Not launched", "Stop ",
                           "Stop the launched part on "], "position readout, landing announcement and Session launch")
+
+        // E4-28 — the automation status strip (point count, the three stop notes, the spoken sentence), the layer
+        // words it composes from (`AutomationStatus.Layer.label`: Global · Part · Arrangement) and the number pad's
+        // Range line, Confirm label and Default key. Noun per grammatical number, head/middle seams; never a format key.
+        let strip = try codeOnly("Sources/Echoelmusic/Studio/AutomationStatusStrip.swift")
+        for seam in ["Text(pointCountText)",
+                     "row.pointCount == 1 ? String(localized: \"1 point\") : \"\\(row.pointCount) \" + String(localized: \"points\")",
+                     "if !row.isBound { return String(localized: \"no effect\") }",
+                     "if row.isOverridden { return String(localized: \"overridden\") }",
+                     "if !row.isActive { return String(localized: \"off\") }",
+                     "row.displayName + \", \" + row.layer.label + String(localized: \" automation, \") + spanText",
+                     "parts.append(String(localized: \"no effect, nothing is connected to this parameter\"))",
+                     "parts.append(String(localized: \"overridden by a later layer\"))",
+                     "parts.append(String(localized: \"switched off\"))"] {
+            XCTAssertTrue(strip.contains(seam), "AutomationStatusStrip lost the E4-28 seam `\(seam)`")
+        }
+        for verbatim in ["point\\(row.pointCount == 1", "return \"no effect\"", "return \"overridden\"", "return \"off\"",
+                         "automation, \\(spanText)", "parts.append(\"no effect", "parts.append(\"overridden", "parts.append(\"switched off\")"] {
+            XCTAssertFalse(strip.contains(verbatim), "AutomationStatusStrip speaks a status verbatim again: `\(verbatim)`")
+        }
+        let layers = try codeOnly("Sources/Echoelmusic/Sequencer/AutomationStatus.swift")
+        for word in ["Global", "Part", "Arrangement"] {
+            XCTAssertTrue(layers.contains("return String(localized: \"\(word)\")"), "`AutomationStatus.Layer.label` spells `\(word)` verbatim again")
+        }
+        let pad = try codeOnly("Sources/Echoelmusic/Studio/EchoelNumberPad.swift")
+        for seam in ["Text(String(localized: \"Range \") + fmt(range.lowerBound) + \"–\" + fmt(range.upperBound)",
+                     ".accessibilityLabel(String(localized: \"Confirm \") + title)",
+                     "Label(String(localized: \"Default \") + text, systemImage: \"arrow.counterclockwise\")",
+                     ".accessibilityLabel(String(localized: \"Default \") + text + (unit.isEmpty ? \"\" : \" \" + unit))"] {
+            XCTAssertTrue(pad.contains(seam), "EchoelNumberPad lost the E4-28 seam `\(seam)`")
+        }
+        for verbatim in ["Text(\"Range \\(", "accessibilityLabel(\"Confirm \\(", "Label(\"Default \\(text)\"", "accessibilityLabel(\"Default \\(text)"] {
+            XCTAssertFalse(pad.contains(verbatim), "EchoelNumberPad interpolates a key again: `\(verbatim)`")
+        }
+        XCTAssertEqual(AutomationStatusRow.Layer.clip.label, "Part")   // RUNTIME COUNTERWEIGHT: the bundle's English is unchanged
+        try assertGerman(["no effect", "overridden", "off", "1 point", "points", " automation, ",
+                          "no effect, nothing is connected to this parameter", "overridden by a later layer", "switched off",
+                          "Global", "Part", "Arrangement", "Range ", "Confirm ", "Default "], "automation strip, layer words and number pad")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

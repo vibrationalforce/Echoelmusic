@@ -144,7 +144,8 @@ final class TheValueFieldOffersItsDefaultTests: XCTestCase {
             default. A key that offers a change it cannot make is the lying-control class \
             (#164/#227) — the same rule that dims the sign pair on a non-negative row.
             """)
-        XCTAssertTrue(key.contains("Label(\"Default \\(text)\", systemImage:"), "the key wears symbol PLUS the word \"Default\" (rule 3) — the glossary's word for this thing")
+        // E4-28: the word is a catalog key beside the value; the claim (symbol PLUS the word) is unchanged.
+        XCTAssertTrue(key.contains("Label(String(localized: \"Default \") + text, systemImage:"), "the key wears symbol PLUS the word \"Default\" (rule 3) — the glossary's word for this thing")
     }
 
     // MARK: - claim 3 — the first consumers name their owner's constant, and the constant is inside the row's range

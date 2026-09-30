@@ -215,7 +215,7 @@ struct AutomationStatusRowView: View {
                 Text(spanText)
                     .font(EchoelTheme.font(11).monospacedDigit()).foregroundStyle(EchoelTheme.dim)
             }
-            Text("\(row.pointCount) point\(row.pointCount == 1 ? "" : "s")")
+            Text(pointCountText)
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
         }
         .padding(.vertical, 2)
@@ -228,10 +228,16 @@ struct AutomationStatusRowView: View {
     /// resolved. Reporting the cheapest-to-fix cause first would send a player to fix a
     /// symptom.
     private var stopNote: String? {
-        if !row.isBound { return "no effect" }
-        if row.isOverridden { return "overridden" }
-        if !row.isActive { return "off" }
+        if !row.isBound { return String(localized: "no effect") }
+        if row.isOverridden { return String(localized: "overridden") }
+        if !row.isActive { return String(localized: "off") }
         return nil
+    }
+
+    /// E4-28: the count is a number beside a catalog noun per grammatical number (1 Punkt / n Punkte) — the
+    /// same words the curve editor's `countLabel` uses; never a format key.
+    private var pointCountText: String {
+        row.pointCount == 1 ? String(localized: "1 point") : "\(row.pointCount) " + String(localized: "points")
     }
 
     private var spanText: String {
@@ -243,14 +249,14 @@ struct AutomationStatusRowView: View {
 
     /// VoiceOver gets the same facts in the same order, as a sentence rather than a layout.
     private var accessibilityText: String {
-        var parts = ["\(row.displayName), \(row.layer.label) automation, \(spanText)",
-                     "\(row.pointCount) point\(row.pointCount == 1 ? "" : "s")"]
+        var parts = [row.displayName + ", " + row.layer.label + String(localized: " automation, ") + spanText,
+                     pointCountText]
         if !row.isBound {
-            parts.append("no effect, nothing is connected to this parameter")
+            parts.append(String(localized: "no effect, nothing is connected to this parameter"))
         } else if row.isOverridden {
-            parts.append("overridden by a later layer")
+            parts.append(String(localized: "overridden by a later layer"))
         } else if !row.isActive {
-            parts.append("switched off")
+            parts.append(String(localized: "switched off"))
         }
         return parts.joined(separator: ", ")
     }

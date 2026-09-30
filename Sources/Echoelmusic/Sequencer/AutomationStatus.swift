@@ -107,9 +107,9 @@ public struct AutomationStatusRow: Identifiable, Sendable, Equatable {
 
         public var label: String {
             switch self {
-            case .global:      return "Global"
-            case .clip:        return "Part"
-            case .arrangement: return "Arrangement"
+            case .global:      return String(localized: "Global")
+            case .clip:        return String(localized: "Part")
+            case .arrangement: return String(localized: "Arrangement")
             }
         }
     }
