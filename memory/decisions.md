@@ -3433,3 +3433,9 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 
 - Compile Check 3072: WorkspaceView.swift:901 "extra argument 'height' in call". The rule-2 slice made the Pause chip's width a minimum and left `height:` in place; SwiftUI's fixed and flexible `frame` overloads do not mix. Fixed in fe3080e9f: `.frame(minWidth: 44, minHeight: EchoelTheme.controlHeight)` — the #262 floor form, as on the compact tempo readout — and the height guard's needle moved to the compiling spelling.
 - Lesson: a source-text guard and the Python transcription both pin PRESENCE; neither can see an overload mismatch. The guard had pinned the non-compiling line as law. The Compile Check is the only reader of that class — which is why no Sources push stacks before it concludes.
+
+### 2026-09-30 — Auto-merge refused four green pushes: an empty API page reads as "never-ran" (founder-gated, REPORT)
+
+- Runs 3965 / 3967 / 3971 refused with `never-ran` although the Compile Check and CI/CD runs for those shas existed (created the same second as the merge run) and went green; 3966 hit the 45-min DEADLINE while CI/CD was still queued on the macOS pool. Only 3968 (de590c2bf) merged today; main is 11 commits behind the branch, the compile fix fe3080e9f included.
+- Mechanism (read from the workflow, lines 150–212): `gh api …/runs?head_sha=` falls back to an EMPTY list on any fetch error, and a stale page (#1180) looks the same; after GRACE=300 s a single such read sets `never-ran`, and the CI/CD branch has no `seen` guard at all. Absence-is-refusal is right in principle and wrong on one sample.
+- Proposed repair (workflow is founder-gated): distinguish fetch failure from empty; require consecutive empty reads or a second source (check-runs) before refusing; once a run was seen, absence = pending until DEADLINE; DEADLINE measured from the gate run's start. Until then: a code push re-triggers the merge; no empty commits.

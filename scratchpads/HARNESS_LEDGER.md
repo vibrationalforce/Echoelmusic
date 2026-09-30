@@ -4393,3 +4393,19 @@ of its own scan (at the parent AND the worktree) — the job-log tail will never
 Do this: every slice anchor is CODE — transcribe the slice with `ef2_transcribe.strip` before
 pushing; when splitting a function, `git grep '"private func <name>(' -- Tests/CISmoke` first.
 Both were caught by the mandatory independent review, not by a gate.
+
+## DEAD-END + OBSERVATION (2026-09-30, auto-merge 3965/3966/3967/3971): `never-ran` is not "no run" — it is also "one empty API page"
+
+Dead-end: reading an auto-merge `REFUSING … =never-ran` as "the gate did not fire for this
+sha". Measured today on four of five code pushes: the Compile Check and CI/CD runs for each
+refused sha existed (created in the same second as the merge run) and went green — 3971 on
+5fef98d37 refused at t+371 s with Compile Check 3073 SUCCESS and CI/CD 6537 BfT SUCCESS.
+Cause, read from `auto-merge-claude.yml:161`: `gh api …/runs?head_sha=` `|| echo
+'{"workflow_runs":[]}'` — a failed fetch and a stale page (#1180) are both an EMPTY LIST, and
+after GRACE=300 s one empty read decides. The CI/CD branch (line ~204) has no `seen` guard.
+3966 is the other shape: DEADLINE 45 min expired while CI/CD sat in the macOS queue.
+Do this: read the merge run's STEP LOG, then `runs?head_sha=` yourself; if the gates exist and
+are green, the refusal is the poll's, not the commit's. Repair is founder-gated (report): fetch
+error ≠ empty; consecutive empties or a second source before refusing; absence = pending once a
+run was ever seen. Until then main lags until the next CODE push re-triggers the merge — an
+empty commit to kick it is forbidden. decisions.csv row 1044.
