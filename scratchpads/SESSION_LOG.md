@@ -41116,3 +41116,9 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 10 kennt `panel` (nur der Titel als erstes Argument); Anspruch 11 pinnt die drei Wraps, verbietet `Text(title)`/`Text(subtitle)` verbatim in der Karte und treibt alle 17 Wörter namentlich (die Untertitel erreicht Anspruch 10 nicht).
 - **Transkription:** HEAD 0/3 Wraps, verbatim, 15 fehlend = EIN Befund; WORK grün. Stripper TRAGEND (10 rohe `panel("` gegen 9 im Code). Checker sauber; moved-needles 0.
 - **Push:** lokal, hinter E4-12; wartet auf die Gates von ed6f214ea.
+
+## 2026-09-30 — E4-14 (d3552faa9) + E4-15 (fb8568941): Loudness-Zeilen und Medien-Knöpfe deutsch (lokal)
+
+- **E4-14:** `readout` in MasterLoudnessGrid nimmt einen Schlüssel; Kurzzeit · Integriert · True Peak · Bereich (Katalog 716). Einheiten LUFS/dBTP/LU bleiben absichtlich verbatim (EBU-Token). Anspruch 10 kennt `readout`, Anspruch 11 pinnt die Signatur. Transkription HEAD 4 fehlend = EIN Befund, WORK grün.
+- **E4-15:** `MediaActionLabel` wickelt den Titel in einen Schlüssel; Foto wählen · Auf Visuals anwenden · Video wählen (Katalog 719). `title` bleibt String, weil zwei Wächter die sechs `MediaActionLabel(title:`-Stellen zählen. Anspruch 11 pinnt den Wrap und treibt vier Titel. Transkription HEAD 3 fehlend = EIN Befund, WORK grün.
+- **Push:** beide lokal, warten auf den Compile Check von 9ec521096.

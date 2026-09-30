@@ -3639,3 +3639,9 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **What:** three wraps in `EchoelPanel` (title ×2 incl. VoiceOver, subtitle); 15 units (712). Claim 10 `panel` (title only), claim 11 drives titles + subtitles by name.
 - **German:** Feld / Stimmung / Effekte / Sichern & Export / Klang & Textur / Tempo & Variationen; subtitles translated whole (the long Save & Export one included).
 - **Stripper TRAGEND** here: one `panel("` quoted in a comment would have counted as a tenth call site.
+
+### 2026-09-30 — E4-14 / E4-15: loudness readout label and media action label as keys (d3552faa9, fb8568941)
+
+- **E4-14:** `readout(_ label: LocalizedStringKey, …)`; four names (716). `unit` stays String — LUFS/dBTP/LU are EBU tokens, not copy.
+- **E4-15:** `MediaActionLabel` wraps `Text(LocalizedStringKey(title))`; three actions (719). Property stays String because two guards count `MediaActionLabel(title:` sites.
+- **Pattern settled across E4-9…E4-15:** helper takes a key when every caller passes a literal and nothing reads the String (effectSection, readout, groupHeader…); wrap at the draw site when `isEmpty`/interpolation/counted call shapes need the String (EchoelValueField, EchoelPanel, MediaActionLabel, collapsibleGroupHeader).
