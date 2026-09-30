@@ -181,6 +181,18 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Sequencer/Arrangement.swift",
         "Sources/Echoelmusic/Sequencer/AutomationStatus.swift",
         "Sources/Echoelmusic/Sequencer/LaneVoiceRack.swift",
+        // Ratchet 16 (2026-09-30): the body's copy, the strap remedy, the weather hint, the
+        // Clean blurb, the note editor's refusal, and the two glances outside the app — the
+        // watch face and the widget (reading, not session; the instrument, not a session).
+        // MultipeerSession's two status lines were rewritten too; the file stays outside
+        // (protocol key, multi-line log).
+        "Sources/Echoelmusic/Bio/BioSoundMapping.swift",
+        "Sources/Echoelmusic/Bio/PolarH10BioPublisher.swift",
+        "Sources/Echoelmusic/Core/WeatherMood.swift",
+        "Sources/Echoelmusic/Sequencer/GenreFX.swift",
+        "Sources/Echoelmusic/Sequencer/ClipNoteEdit.swift",
+        "Sources/EchoelmusicWatch/EchoelWatchApp.swift",
+        "Sources/EchoelmusicWidgets/EchoelBioWidget.swift",
     ]
 
     /// A line whose strings reach a log or a test harness, not a person.

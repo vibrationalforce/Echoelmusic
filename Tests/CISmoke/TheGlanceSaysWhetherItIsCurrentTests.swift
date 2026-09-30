@@ -31,7 +31,7 @@
 // in `EngineBus.swift` it is copied from. Move the source window and this goes red naming the
 // derivation, instead of the copy quietly meaning something else.
 //
-// ⚠️ THE MARKER IS DELIBERATELY NOT A CHIP. "Demo" answers *whose body*; "Last session"
+// ⚠️ THE MARKER IS DELIBERATELY NOT A CHIP. "Demo" answers *whose body*; "Last reading"
 // answers *when*. Boxing both would present them as two labels of one class. Claim 5 pins
 // that choice by asserting the corner-radius literal count in each file is still exactly one
 // — so a later "make them consistent" pass cannot quietly turn the time qualifier into a
@@ -44,7 +44,7 @@
 // GRADING (#433 / §3). The file does not exist on the parent (9185b6a), so NO assertion has a
 // verdict there — §3's escape hatch, hand-transcribed per ASSERTION rather than per method,
 // because two methods are mixed:
-//   · **5 REGRESSIONS** — claim 3, claim 4, claim 5's `Text("Last session")` half, and both
+//   · **5 REGRESSIONS** — claim 3, claim 4, claim 5's `Text("Last reading")` half, and both
 //     halves of claims 8 and 9. All come from ONE absence (#486): neither glance carries a
 //     staleness branch, so nothing schedules an expiry entry and nothing dims a metric either.
 //     ⚠️ Claims 8 and 9 exist because the mandatory review found the first draft's own gaps —
@@ -77,7 +77,7 @@ final class TheGlanceSaysWhetherItIsCurrentTests: XCTestCase {
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
     }
 
-    /// Comments BLANKED. This header itself quotes `Text("Last session")` and
+    /// Comments BLANKED. This header itself quotes `Text("Last reading")` and
     /// `BioVitals.glanceFreshnessWindow`; a raw scan of a repo that writes ⛔ blocks quoting
     /// its own needles can be satisfied by the retraction describing the code it retracts.
     private func code(_ relative: String) throws -> String {
@@ -199,8 +199,8 @@ final class TheGlanceSaysWhetherItIsCurrentTests: XCTestCase {
     func testTheMarkerIsOneStringAndNotABadge() throws {
         for path in [widget, watch] {
             let c = try code(path)
-            XCTAssertEqual(c.components(separatedBy: "Text(\"Last session\")").count - 1, 1, """
-                \(path) no longer carries exactly one `Text("Last session")`. One decision, one \
+            XCTAssertEqual(c.components(separatedBy: "Text(\"Last reading\")").count - 1, 1, """
+                \(path) no longer carries exactly one `Text("Last reading")`. One decision, one \
                 string (#416) — two spellings of "this is not now" across two glances is the \
                 drift this repo has already retracted once for the demo marker.
                 """)
@@ -209,7 +209,7 @@ final class TheGlanceSaysWhetherItIsCurrentTests: XCTestCase {
             // pins both extension files' corner-radius literals as an exact two-element list —
             // one decision with two edit sites, and its own failure message pointed the reader
             // at the other guard. The design fact ("Demo" is a badge because it answers whose
-            // body; "Last session" is a caption because it answers when) is recorded at the
+            // body; "Last reading" is a caption because it answers when) is recorded at the
             // `staleTag` declarations; turning the caption into a chip reddens the guard that
             // owns radii, which is the correct owner.
         }
