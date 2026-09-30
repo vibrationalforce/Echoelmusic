@@ -3876,3 +3876,25 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   BioStripView, MoodPads, PerformSessionView, GuideOverlay; then the four other demo-prefix sites
   (HeaderMonitors, EchoelFXView, AlwaysOnBioRow, LiveColaboView) reuse the `"Simulated demo, "` key.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — E4-32: the pulse pill and the peer row speak German (927ff66db)
+
+- **Decision:** `PulseMonitorMini.accessibilityText`: `ladder?.spoken ?? String(localized: "No pulse lock")`; the prefix
+  `synthetic ? String(localized: "Simulated demo, ") : ""` (one spelling, one key — #416/#634b, still FIRST — #627); both
+  exits keep `"\(prefix)\(Int(bpm))"` and append the seam (`" beats per minute, coherence "` + coherence as a typed
+  `tail`, or `" beats per minute"`). `LiveColaboView.bioLine`'s label moves into `spokenBioLine(name:bpm:coherence:
+  synthetic:)` — origin · `EchoelDecimalText.string(bpm, decimals: 0) + " beats per minute"` or `"no pulse yet"` ·
+  `", coherence "` · value or `"not available"` — as typed steps, no ternary carrying a `+` chain. Catalog 1058 → 1064.
+- **Why:** the two spoken bio sentences a German VoiceOver user hears most, and both still interpolated English around
+  the localised prefix. Three guards pinned the exact spelling and were re-anchored 1:1 in the same commit (same claim,
+  same XCTAssert count): ThePulseSpeaksItsStatusInWordsTests (the fallback), ThePeerSeesWhetherItIsABodyTests (the
+  prefix), TheWireCannotTrapTheAppTests (the formatter seam — the `Int(bpm)` absence needle stays absent).
+  TheDemoSourceIsMarkedWhereItRendersTests is untouched: `let prefix = synthetic ?` once, `return "\(prefix)` twice.
+  OneSpellingOfTheDemoSubjectTests' whole-Sources pin on `"Simulated demo, "` still resolves through the key.
+- **Guard:** claim 11 E4-32 block (12 seams, 7 absence needles, 7 units; 146 → 150 XCTAssert). WORK PASS / HEAD FAIL
+  (6 units missing — ONE finding); checkers green, moved-needles no hit, paren-balance 0/0.
+- **Next E4 producers:** the two remaining demo-prefix sites (AlwaysOnBioRow — guard pins `let origin = reading.isSynthetic`
+  and three `return origin`/`origin +` paths; EchoelFXView — TheFXRoutesSayWhoseBodyTests pins the prefix spelling and
+  `let origin = contribution.synthetic`, two `return origin` paths), then `PulseLadder.word`/`spoken` (Bio/, no catalog
+  entry yet, no source-text guard on the literals), then the panel families.
+- **Review:** 2026-10-30.
