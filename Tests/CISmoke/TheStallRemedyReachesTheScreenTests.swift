@@ -233,15 +233,18 @@ final class TheStallRemedyReachesTheScreenTests: XCTestCase {
 
     /// The remedy yields to the lock cue — they share one reserved slot.
     ///
-    /// A lock and a stall are mutually exclusive states, but the congratulation LINGERS six
-    /// seconds after the lock; during those seconds the honest message is the congratulation.
+    /// A lock and a stall are mutually exclusive states. Since interface rule 7 (2026-09-30) the
+    /// congratulation IS the lock — `lockedCueVisible` projects `cameraRPPG.isSettled` — so the
+    /// two cannot overlap by construction today; before that the congratulation LINGERED six
+    /// seconds after the lock, and this gate was what kept the two sentences apart. It stays as
+    /// the pin that keeps them from stacking should either fact ever run on its own clock again.
     func testTheRemedyYieldsToTheLockCue() throws {
         let slot = try window(try codeLines(Self.strip), from: Self.statusBannerDeclaration)
         XCTAssertTrue(slot.contains { $0.contains("!lockedCueVisible") && $0.contains("cueWarrantsFullHintOnScreen") }, """
             The stall remedy is no longer gated on `!lockedCueVisible`. Both banners live in \
             one `ZStack` occupying the slot `LockCueDoesNotShoveTheControlsTests` reserves, so \
-            without that gate they can be visible together for the six seconds the lock cue \
-            lingers — two contradictory sentences stacked on one another.
+            without that gate they can be visible together whenever both facts hold at once \
+            — two contradictory sentences stacked on one another.
             """)
     }
 

@@ -1,19 +1,22 @@
 // LockCueDoesNotShoveTheControlsTests.swift
-// Echoel — a six-second congratulation must not move the buttons under the finger. #382.
+// Echoel — a congratulation must not move the buttons under the finger. #382 — and since
+// interface rule 7 (2026-09-30) the congratulation is a STATE of the lock, not a timer.
 //
 // WHAT THIS GUARDS. `BioStripView.statusBanner` is one `@ViewBuilder` if/else-if chain that
 // renders AT MOST one line above the strip. Two of its three cases are persistent states
-// (camera recovering, camera access denied). The third is a TIMER: when the pulse settles,
-// `lockedCueVisible` flips true, and six seconds later it flips back — both inside
-// `withAnimation`. While it was an ordinary `else if`, those two flips INSERTED and REMOVED a
-// view from the layout, so everything below moved twice.
+// (camera recovering, camera access denied). The third WAS a TIMER when this guard was
+// written: when the pulse settled, `lockedCueVisible` flipped true, and six seconds later it
+// flipped back — both inside `withAnimation`. While it was an ordinary `else if`, those two
+// flips INSERTED and REMOVED a view from the layout, so everything below moved twice. Since
+// rule 7 (2026-09-30) `lockedCueVisible` is a computed projection of `cameraRPPG.isSettled`
+// — no token, no sleep — and the flips are state edges (lock, lift, drift, stop). The slot
+// argument is unchanged: a state edge that inserted a view would shove the same controls.
 //
 // "Everything below" is not the strip alone. In `EchoelStudioView.bioPanel` this view is the
 // FIRST child of a `VStack`, followed by the explanatory sentence, the always-on sentence
 // (#542), the breath-coach strip, the breath-voice row, the "Open Routing" button and — inside
-// `#if canImport(HealthKit)` — `HealthWriteOptInRow()`. The shove lands on them six seconds
-// apart, long enough that the user has stopped expecting it and is plausibly reaching for the
-// button when the second one fires.
+// `#if canImport(HealthKit)` — `HealthWriteOptInRow()`. The shove landed on them twice,
+// unannounced, at moments when the user is plausibly reaching for the button.
 //
 // ⛔ THAT LIST READ "the explanatory sentence, the 'Open Routing' button and … so two controls
 // always and three on the shipping iPhone target" — an enumeration that stopped matching as the
@@ -50,8 +53,8 @@
 //
 // ⛔ WHAT THIS SLICE DOES **NOT** DO, because the first version of this header implied it did
 // and both mandatory reviewers independently caught the same over-claim. It stops the CUE'S OWN
-// TIMER from moving anything. Two height changes remain, and a device pass that only watches
-// the six-second window will miss both:
+// VISIBILITY CHANGE from moving anything. Two height changes remain, and a device pass that
+// only watches the lock moment will miss both:
 //   1. The slot appears when the camera STARTS and goes when it STOPS — still two shoves of the
 //      full banner height. The trade is that both are now user-initiated instead of arriving
 //      unannounced mid-measurement. Better, not free.
@@ -80,6 +83,15 @@
 // `allowsHitTesting` appears anywhere in the file at that revision. Written out per assertion
 // instead of as a tally, because a tally in exactly this position has been wrong twice in this
 // bundle.
+//
+// ⭐ CLAIM 3 (rule 7, 2026-09-30) — HONEST GRADING (#433/#464). Graded by transcription (a
+// Python port of `codeLines`, no local toolchain): on `2f3dd12d8` it is RED for its named
+// reason — the file declares `@State private var lockedCueVisible`, a `lockedCueToken`, and a
+// `Task.sleep(for: .seconds(6))`, and no computed `lockedCueVisible` reads `isSettled`. Those
+// are ONE finding reported four times (#486): the cue was a clock. Claims 1 and 2 are GREEN on
+// both trees and are the counterweights (#343) — the reserved slot, the `isRunning` gate and
+// the three inertness modifiers survive the rewrite untouched, which is the whole point of
+// pinning them: a rule-7 repair that re-inserted the view would have been red here.
 // `Tests/CISmoke` is the blocking bundle. SKIPS rather than passes if the tree is absent.
 
 import Foundation
@@ -101,15 +113,15 @@ final class LockCueDoesNotShoveTheControlsTests: XCTestCase {
         let slot = try window(source, from: Self.statusBannerDeclaration)
 
         XCTAssertFalse(slot.contains { $0.contains("else if lockedCueVisible") }, """
-            `statusBanner` is branching on `lockedCueVisible` again, which puts the six-second \
+            `statusBanner` is branching on `lockedCueVisible` again, which puts the \
             "Pulse detected" cue back INTO and OUT OF the layout. In `bioPanel` this view is \
             the first child of a `VStack`, so both flips move the sentence below it, the \
             "Open Routing" button and (on any build with HealthKit) the Health opt-in row — \
-            twice, six seconds apart, at a moment when the user has every reason to be \
-            reaching for one of them. Since the banner scales with Dynamic Type (#353d) that \
-            shove is 80–110 pt at AX3+, not the 26 pt it used to be. Express the cue as an \
-            opacity change inside a slot that is already reserved, so that the cue's own \
-            timer stops moving anything.
+            twice, at moments when the user has every reason to be reaching for one of them \
+            (the lock, and the lift the cue itself invites). Since the banner scales with \
+            Dynamic Type (#353d) that shove is 80–110 pt at AX3+, not the 26 pt it used to \
+            be. Express the cue as an opacity change inside a slot that is already reserved, \
+            so that the cue's own visibility change moves nothing.
             """)
 
         // ⛔ THE CUE BRANCH, NOT THE WINDOW. The first version asked only whether the tokens
@@ -152,7 +164,7 @@ final class LockCueDoesNotShoveTheControlsTests: XCTestCase {
             The branch that renders the lock cue is no longer gated on \
             `cameraRPPG.isRunning` — its nearest enclosing condition is \(headerText). \
             That gate is what keeps the reservation from becoming a tax: while a measurement \
-            runs a status line exists and the cue's timer moves nothing; when nothing is \
+            runs a status line exists and the cue's visibility change moves nothing; when nothing is \
             measuring there is no line and no blank space. An ungated slot would hold empty \
             height above the strip for every user who never starts the camera — solving the \
             shove by charging everyone for it. (Refining the condition is fine, dropping \
@@ -224,6 +236,37 @@ final class LockCueDoesNotShoveTheControlsTests: XCTestCase {
             together. Restore it rather than narrowing the rule to what happens to be \
             harmless in this one view.
             """)
+    }
+
+    /// The cue is a state of the lock, not a clock (interface rule 7).
+    ///
+    /// Rule 7: nothing disappears with time; a hint is a state of facts the user owns, never an
+    /// event on a clock (WCAG 2.2.1). The cue reads "you can let go & play" — a statement about
+    /// a settled, trusted pulse — so it is on screen exactly while `cameraRPPG.isSettled` holds
+    /// and leaves on a STATE edge: the finger lifts, the pulse drifts, the take stops. A timer
+    /// made it leave while the fact still held, and (per the #382 rationale that used to sit in
+    /// this file's `body`) needed a token and a second handler to stop a stopped take from
+    /// rendering a stale congratulation on restart.
+    func testTheCueIsAStateOfTheLockNotAClock() throws {
+        let source = try codeLines(Self.strip)
+
+        XCTAssertTrue(source.contains { $0.contains("var lockedCueVisible: Bool") && $0.contains("cameraRPPG.isSettled") }, """
+            `lockedCueVisible` is no longer a computed projection of `cameraRPPG.isSettled`. \
+            The cue says "you can let go & play", which is true exactly while the lock holds; \
+            any other owner of that flag has to decide when the sentence stops being true, \
+            and the last one decided it with a six-second sleep (interface rule 7).
+            """)
+
+        for clock in ["Task.sleep", "lockedCueToken", "@State private var lockedCueVisible"] {
+            XCTAssertFalse(source.contains { $0.contains(clock) }, """
+                `\(clock)` is back in BioStripView. The lock cue is a state of \
+                `cameraRPPG.isSettled`, not an event with a lifetime: rule 7 forbids a hint that \
+                disappears with time, and the token/second-handler machinery this restores \
+                existed only to disarm a pending auto-hide that a stop could not cancel. If a \
+                DIFFERENT timed thing is wanted in this file, give it its own name — this needle \
+                is deliberately the cue's own vocabulary.
+                """)
+        }
     }
 
     // MARK: - Reading the source

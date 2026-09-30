@@ -68,68 +68,46 @@ struct BioStripView: View {
     /// "HRV etc. soll erklärt werden"). Makes the tap-to-learn discoverable.
     @State private var showGuide = false
 
-    /// Brief "pulse locked — you can lift and play now" confirmation. Teaches the
-    /// lock-THEN-play flow (device log 2026-07-07: the user played the touch instrument
-    /// immediately, so the finger kept lifting and the read never locked). Shown for a few
-    /// seconds when the pulse settles, then it gets out of the way. Low-frequency @State.
-    @State private var lockedCueVisible = false
-    /// Generation token so a later settle cancels an earlier auto-hide (no flicker).
-    @State private var lockedCueToken = 0
+    /// "Pulse detected — you can let go & play." Teaches the lock-THEN-play flow (device log
+    /// 2026-07-07: the user played the touch instrument immediately, so the finger kept lifting
+    /// and the read never locked; the take tempo is latched on settle, so lifting AFTER the
+    /// lock no longer perturbs it).
+    ///
+    /// ⭐ A STATE OF THE LOCK, NOT A CLOCK (interface rule 7, 2026-09-30). Until this slice the
+    /// cue was `@State lockedCueVisible` plus a generation token: flipped true by an
+    /// `.onChange(of: isSettled)`, flipped back six seconds later by a `Task.sleep`, disarmed
+    /// again by an `.onChange(of: isRunning)` because `stop()` fired the first handler into its
+    /// own `guard` and left the flag true for a restart to render. Rule 7 — nothing disappears
+    /// with time; a hint is a state of facts the user owns, never an event on a clock (WCAG
+    /// 2.2.1) — makes the flag a PROJECTION of `cameraRPPG.isSettled`: the sentence is on
+    /// screen exactly while the fact it states holds (a trusted, flat pulse on a running
+    /// camera) and leaves on a STATE change — the finger lifts (confidence drops and
+    /// `isSettled` clears), the pulse drifts beyond `settleTolerance`, or the take stops
+    /// (`stop()` clears it). No token, no sleep, nothing pending that a stop has to disarm; the
+    /// restart-in-the-window defect above cannot exist because there is no window.
+    /// `isSettled` moves on settle/unsettle EDGES only, so this leaf still never churns.
+    private var lockedCueVisible: Bool { cameraRPPG.isSettled }
 
     var body: some View {
         VStack(spacing: 0) {
             statusBanner
             strip
         }
-        // When the pulse settles, flash a brief "locked — you can lift & play" cue so the
-        // user learns to LOCK first, THEN play (the take tempo is latched, so lifting the
-        // finger to play no longer perturbs it). `isSettled` is low-frequency.
-        //
-        // ⛔ ONE BEHAVIOUR CHANGED WITH #382 AND IT IS NOT A SIDE EFFECT TO DISCOVER LATER:
-        // the cue used to survive the camera being stopped mid-window, because its old branch
-        // read `lockedCueVisible` alone. The slot is now gated on `isRunning`, so stopping the
-        // measurement takes the cue with it. That is the right reading — "you can let go &
-        // play" is a statement about a measurement that is happening.
-        .onChange(of: cameraRPPG.isSettled) { _, settled in
-            guard settled, cameraRPPG.isRunning else { return }
-            lockedCueToken += 1
-            let token = lockedCueToken
-            withAnimation(.easeInOut(duration: 0.2)) { lockedCueVisible = true }
-            Task { @MainActor in
-                try? await Task.sleep(for: .seconds(6))
-                if token == lockedCueToken {
-                    withAnimation(.easeInOut(duration: 0.2)) { lockedCueVisible = false }
-                }
-            }
-        }
-        // ⛔ AND THE COMMENT ABOVE ONCE ENDED "a restart re-arms it through the same token
-        // path", WHICH WAS ONLY THE BENIGN HALF OF THE STORY. `stop()` sets `isSettled = false`,
-        // which fires the handler above and is turned away by its own `guard` — so the token is
-        // NOT bumped and `lockedCueVisible` stays `true` for the rest of the six seconds. Hiding
-        // the slot made that invisible rather than harmless: restart the camera inside that
-        // window and the branch renders again with the flag still true, so "Pulse detected — you
-        // can let go & play" appears IMMEDIATELY, in a take where nothing has been detected, and
-        // `accessibilityHidden(!lockedCueVisible)` is `false`, so VoiceOver says it out loud.
-        // That is the same false sentence the slot's own rationale argues against, reached by a
-        // different door. Stopping is the honest place to disarm: bump the token so the pending
-        // auto-hide cannot fire late, and clear the flag now.
-        .onChange(of: cameraRPPG.isRunning) { _, running in
-            guard !running, lockedCueVisible || lockedCueToken > 0 else { return }
-            lockedCueToken += 1
-            lockedCueVisible = false
-        }
     }
 
     /// The one status line above the strip. Recovery/cooling (urgent) wins; otherwise the
-    /// brief "pulse locked" confirmation. Both read low-frequency state in THIS leaf, so
-    /// they never churn the parent body (freeze rule).
+    /// "pulse locked" confirmation for as long as the lock holds (rule 7 — a state, not a
+    /// timer). Both read low-frequency state in THIS leaf, so they never churn the parent body
+    /// (freeze rule).
     ///
     /// ⭐ THE THIRD BRANCH RESERVES ITS SLOT INSTEAD OF APPEARING IN IT (#382), and the reason
     /// is that this view is the FIRST child of `EchoelStudioView.bioPanel`'s `VStack`. Below it
     /// sit the explanatory sentence, the "Open Routing" button and `HealthWriteOptInRow()`. As
-    /// an ordinary `else if lockedCueVisible`, the six-second cue INSERTED itself and then
-    /// REMOVED itself — two layout changes, six seconds apart, shoving two live controls at a
-    /// moment when the user is plausibly reaching for one of them. The behaviour is old; #353d
+    /// an ordinary `else if lockedCueVisible`, the (then six-second) cue INSERTED itself and
+    /// then REMOVED itself — two layout changes, unannounced, shoving two live controls at a
+    /// moment when the user is plausibly reaching for one of them. Since rule 7 the cue is a
+    /// state of the lock rather than a timer, and the slot argument is unchanged: a state
+    /// change that inserted a view would shove exactly the same controls. The behaviour is old; #353d
     /// made it big, because the banner now scales and wraps, so at AX3+ the shove is on the
     /// order of 80–110 pt rather than the 26 pt it used to be.
     ///
@@ -140,18 +118,19 @@ struct BioStripView: View {
     ///
     /// ⛔ WHAT THIS DOES **NOT** BUY, because the first version of this block implied it did
     /// and both mandatory reviewers caught the same over-claim. The panel does not "hold
-    /// still" full stop; it holds still against the CUE'S OWN TIMER. Two height changes remain,
+    /// still" full stop; it holds still against the CUE'S OWN VISIBILITY CHANGE (a timer then,
+    /// the lock state now). Two height changes remain,
     /// and they are worth knowing about rather than rediscovering on a device:
     ///   1. The slot is inserted when the camera STARTS and removed when it STOPS. That is
     ///      still two shoves of the full banner height — the trade is that both are now
-    ///      user-initiated, instead of arriving unannounced six seconds apart while the user
-    ///      reaches for "Open Routing". Better, not free.
+    ///      user-initiated, instead of arriving unannounced while the user reaches for
+    ///      "Open Routing". Better, not free.
     ///   2. Branch 1 wins over branch 3 whenever `recoveryState.userHint != nil`, and the two
     ///      branches render DIFFERENT strings through the same wrapping `banner` — so a stall,
     ///      a thermal `.cooling` or an iOS `.interrupted` resizes the slot mid-measurement, by
     ///      a wrapped line or two at AX3+. Those transitions are low-frequency and genuinely
     ///      informative, so they are left alone; but they are not nothing, and a device pass
-    ///      that only watches the six-second window will not see them.
+    ///      that only watches the lock moment will not see them.
     ///
     /// ⚠️ AND THE SAME "TAX" ARGUMENT THAT REJECTS AN UNCONDITIONAL `else` APPLIES, HONESTLY,
     /// TO WHAT SHIPPED. Reserving blank height for someone who never starts the camera would
@@ -221,9 +200,12 @@ struct BioStripView: View {
                 // short forms with no verb in them. That gate is `warrantsFullHintOnScreen`, and
                 // it lives on the enum with the strings it is a fact about, not here (#416).
                 //
-                // ⚠️ `!lockedCueVisible` FIRST so the two can never both be visible: a lock and a
-                // stall are mutually exclusive states, but the cue lingers six seconds after the
-                // lock, and during those seconds the honest message is the congratulation.
+                // ⚠️ `!lockedCueVisible` FIRST so the two can never both be visible. A lock and a
+                // stall are mutually exclusive states, and since rule 7 the cue IS the lock
+                // (`isSettled`), so the two cannot overlap by construction today; the gate stays
+                // as the pin that keeps them from stacking should either fact ever be computed
+                // on a different clock again (before rule 7 the cue outlived the lock by six
+                // seconds, and this line was what kept the two sentences apart).
                 //
                 // ⭐ AND THE SECOND CUE THAT HID ITS REMEDY IS COVERED SINCE #569 — the block
                 // that stood here named the `.tooBright` gap and left it, which is why the gate
