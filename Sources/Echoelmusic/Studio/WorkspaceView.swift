@@ -924,7 +924,7 @@ struct PlaybackToggleButton: View {
             // the pulse lock. The hint carried the real difference all along; now the label
             // does too, so the distinction survives being read out one control at a time.
             .accessibilityLabel(transport.isPlaying ? Text("Pause the music") : Text("Play the music"))
-            .accessibilityHint(Text("Leaves the session and your pulse reading running."))
+            .accessibilityHint(Text("Leaves the instrument and your pulse reading running."))
         }
     }
 
@@ -1584,7 +1584,7 @@ private struct SessionNamePreviewLeaf: View {
                 .truncationMode(.middle)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Session: \(readableFields.joined(separator: ", "))")
+        .accessibilityLabel("Piece: \(readableFields.joined(separator: ", "))")
     }
 }
 #endif

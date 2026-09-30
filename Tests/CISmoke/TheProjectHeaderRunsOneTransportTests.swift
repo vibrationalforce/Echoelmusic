@@ -81,17 +81,18 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
     func testPlayMeansTheSongFirstThenAHeldSession() {
         XCTAssertEqual(ProjectTransport.playAction(facts(startable: true)), .startSong,
                        "the canonical project is the arrangement")
-        // Review of 09d35f56e, MED-1: during a held session the song's start also brings the
-        // instrument's music back (the ONE-Stop observer reads a clock start as `.resume`), so
-        // the SAME start gets its own words — never "Play the song" over a tap that plays two.
+        // Review of 09d35f56e, MED-1: while the instrument holds its music, the piece's start also
+        // brings that music back (the ONE-Stop observer reads a clock start as `.resume`), so
+        // the SAME start gets its own words — never "Play the piece" over a tap that plays two.
+        // The words themselves follow rule 1 (`docs/dev/GLOSSARY.md`): piece, never song.
         XCTAssertEqual(ProjectTransport.playAction(facts(session: true, startable: true)), .startSongAndInstrument,
                        "the canonical project is still the arrangement — the session only changes the words")
         XCTAssertEqual(ProjectTransport.buttonLabel(running: false, play: .startSongAndInstrument),
-                       "Play the song and the instrument")
+                       "Play the piece and the instrument")
         XCTAssertTrue(ProjectTransport.buttonHint(running: false, play: .startSongAndInstrument)
                         .contains("music comes back"), "the hint says the held music returns with the song")
-        // MED-2: the one Stop ends the pulse session, and its hint says so on EVERY surface.
-        XCTAssertTrue(ProjectTransport.stopHint.contains("pulse session ends"))
+        // MED-2: the one Stop ends the pulse reading, and its hint says so on EVERY surface.
+        XCTAssertTrue(ProjectTransport.stopHint.contains("pulse reading ends"))
         XCTAssertEqual(ProjectTransport.buttonHint(running: true, play: .startSong), ProjectTransport.stopHint)
         XCTAssertEqual(WorkstationSummary.transportHint(playing: true, startable: true), ProjectTransport.stopHint,
                        "the Workstation's Stop is the same Stop, so it reads the same")
@@ -99,7 +100,7 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
         XCTAssertEqual(ProjectTransport.playAction(facts()), .unavailable)
         XCTAssertEqual(ProjectTransport.buttonLabel(running: true, play: .startSong), "Stop all playback",
                        "while anything runs the one button is Stop — for everything")
-        XCTAssertEqual(ProjectTransport.buttonLabel(running: false, play: .startSong), "Play the song")
+        XCTAssertEqual(ProjectTransport.buttonLabel(running: false, play: .startSong), "Play the piece")
         XCTAssertTrue(ProjectTransport.buttonHint(running: false, play: .unavailable).hasPrefix("Unavailable:"),
                       "a dimmed control says what is missing")
     }

@@ -39,11 +39,11 @@ struct SongHistoryRow: View {
         let canRedo = timeline.canRedo
         HStack(spacing: 6) {
             button("Undo", "arrow.uturn.backward", enabled: canUndo,
-                   label: "Undo the last change to the song's parts, notes, automation or a relinked file") {
+                   label: "Undo the last change to the piece's parts, notes, automation or a relinked file") {
                 timeline.undo()
             }
             button("Redo", "arrow.uturn.forward", enabled: canRedo,
-                   label: "Redo the last undone change to the song's parts, notes, automation or a relinked file") {
+                   label: "Redo the last undone change to the piece's parts, notes, automation or a relinked file") {
                 timeline.redo()
             }
         }

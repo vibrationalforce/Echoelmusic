@@ -149,7 +149,7 @@ enum ComposeGuide {
         case .track: return "Add a MIDI track"
         case .part:  return "Add a part"
         case .notes: return "Write notes"
-        case .play:  return facts.isPlaying ? "Stop all playback" : "Play the song"
+        case .play:  return facts.isPlaying ? "Stop all playback" : "Play the piece"
         case .save:  return "Save the piece"
         }
     }
@@ -164,8 +164,8 @@ enum ComposeGuide {
         case .part:  return state == .done ? "Adds another empty four-bar part after the last one."
                                            : "An empty four-bar part on that track."
         case .notes: return "Opens the part's notes under the arrangement."
-        case .play:  return facts.isPlaying ? "Stops the song, the instrument and the pulse session."
-                                            : "Plays the song from the top."
+        case .play:  return facts.isPlaying ? "Stops the piece, the instrument and the pulse reading."
+                                            : "Plays the piece from the top."
         case .save:  return "Names the piece and saves it. Library opens it again."
         }
     }
@@ -182,7 +182,7 @@ enum ComposeGuide {
         // Review of c672c2adf (LOW): `hasNotes` and the engine's `canPlay` can disagree (a
         // written part covered by a later one, #1440) — then "write notes" would be false.
         case .play:
-            if facts.hasNotes { return "Nothing in the song can play yet — no part with notes is heard." }
+            if facts.hasNotes { return "Nothing in the piece can play yet — no part with notes is heard." }
             return facts.hasPart ? "Write notes into a part first." : "Add a part with notes first."
         case .save:  return "Add a part first."
         }

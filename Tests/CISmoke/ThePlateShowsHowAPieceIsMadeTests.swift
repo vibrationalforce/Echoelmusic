@@ -88,11 +88,12 @@ final class ThePlateShowsHowAPieceIsMadeTests: XCTestCase {
         let withNotes = facts(TimelineDocument(lanes: [keys], regions: [region]), [written],
                               canPlay: true)
         XCTAssertEqual(states(withNotes), [.done, .done, .done, .next, .ready])
-        XCTAssertEqual(ComposeGuide.title(.play, withNotes), "Play the song")
+        XCTAssertEqual(ComposeGuide.title(.play, withNotes), "Play the piece",
+                       "rule 1 (docs/dev/GLOSSARY.md): the saved work is the PIECE — never song, project or session")
         XCTAssertTrue(ComposeGuide.isActionable(.part, withNotes),
                       "a done \"Add a part\" says it adds ANOTHER part, so it stays a door")
         XCTAssertTrue(ComposeGuide.detail(.part, withNotes).contains("another"))
-        XCTAssertEqual(ComposeGuide.headerDetail(withNotes), "Next: Play the song")
+        XCTAssertEqual(ComposeGuide.headerDetail(withNotes), "Next: Play the piece")
 
         // Review of c672c2adf (LOW): notes exist but the engine cannot start (a written part
         // covered by a later one, #1440) — the reason must not ask for notes that are there.
@@ -105,8 +106,8 @@ final class ThePlateShowsHowAPieceIsMadeTests: XCTestCase {
         XCTAssertEqual(ComposeGuide.state(of: .play, playing), .done)
         XCTAssertEqual(ComposeGuide.title(.play, playing), "Stop all playback",
                        "while anything plays, step 4 is the ONE Stop — the one transport, both ways")
-        XCTAssertTrue(ComposeGuide.detail(.play, playing).contains("pulse session"),
-                      "the Stop's line says it ends the pulse session too (review of 09d35f56e, MED-2)")
+        XCTAssertTrue(ComposeGuide.detail(.play, playing).contains("pulse reading"),
+                      "the Stop's line says it ends the pulse reading too (review of 09d35f56e, MED-2; the word is the strip's own, rule 1)")
         XCTAssertEqual(ComposeGuide.state(of: .save, playing), .next)
         XCTAssertEqual(ComposeGuide.doneCount(playing), 4,
                        "Save never reads as done — nothing here can know the song is unchanged since")

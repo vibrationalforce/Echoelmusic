@@ -136,7 +136,7 @@ enum ProjectTransport {
         case .stopped:           return "Stopped"
         case .paused:            return "Paused"
         case .playingInstrument: return "Playing instrument"
-        case .playingSong:       return "Playing song"
+        case .playingSong:       return "Playing piece"
         case .recording:         return "Recording"
         }
     }
@@ -145,8 +145,8 @@ enum ProjectTransport {
     static func buttonLabel(running: Bool, play: PlayAction) -> String {
         if running { return "Stop all playback" }
         switch play {
-        case .startSong:        return "Play the song"
-        case .startSongAndInstrument: return "Play the song and the instrument"
+        case .startSong:        return "Play the piece"
+        case .startSongAndInstrument: return "Play the piece and the instrument"
         case .resumeInstrument: return "Play the instrument"
         case .unavailable:      return "Play"
         }
@@ -167,29 +167,31 @@ enum ProjectTransport {
     static func buttonHint(running: Bool, play: PlayAction) -> String {
         if running { return stopHint }
         switch play {
-        case .startSong:        return "Plays the song from the top on the shared transport."
+        case .startSong:        return "Plays the piece from the top on the shared transport."
         case .startSongAndInstrument:
-            return "Plays the song from the top. Your held session's music comes back with it."
-        case .resumeInstrument: return "Brings the music back. Your session and pulse reading keep running."
+            return "Plays the piece from the top. The instrument's held music comes back with it."
+        case .resumeInstrument: return "Brings the music back. Your pulse reading keeps running."
         case .unavailable:      return "Unavailable: add a part with notes or audio, or start the instrument."
         }
     }
 
     /// The ONE Stop's hint, on every surface that wears it (the header and the Workstation).
-    /// It names the session because the Stop ends it (review of 09d35f56e, MED-2): the clock
+    /// It names the pulse reading because the Stop ends it (review of 09d35f56e, MED-2): the clock
     /// stop reaches the Studio's ONE-Stop observer as `.endSession`, which turns the camera off
     /// and costs a pulse re-lock. The instrument's own pause is the control that keeps it, and
     /// the hint names it by ITS label ("Pause the music", `PlaybackToggleButton`) rather than
     /// letting a listener find out afterwards.
-    static let stopHint = "Stops the song, the instrument and any recording, everywhere in the app. A running pulse session ends too; Pause the music keeps it."
+    static let stopHint = "Stops the piece, the instrument and any recording, everywhere in the app. A running pulse reading ends too; Pause the music keeps it."
 
-    /// The Workstation's caption while the instrument (not the song) plays on the one clock —
-    /// its button then reads Stop, and the song's own caption ("Plays the song's parts from the
+    /// The Workstation's caption while the instrument (not the piece) plays on the one clock —
+    /// its button then reads Stop, and the piece's own caption ("Plays the piece's parts from the
     /// top.") would describe a tap the button no longer makes.
-    static let instrumentRunningCaption = "The instrument is playing. Stop ends all playback and the pulse session."
+    static let instrumentRunningCaption = "The instrument is playing. Stop ends all playback and the pulse reading."
 
-    /// The header never invents a name: a run that has neither saved nor opened a project says so.
-    static let unsavedName = "Unsaved session"
+    /// The header never invents a name: a run that has neither saved nor opened a piece says so.
+    /// ⭐ "piece", not "session" or "project" — `docs/dev/GLOSSARY.md` (rule 1, one word per
+    /// thing); `TheChromeSpeaksOneWordPerThingTests` scans this file for the struck words.
+    static let unsavedName = "Unsaved piece"
 
     static func projectName(_ current: String?) -> String {
         guard let name = current?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty

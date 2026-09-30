@@ -181,7 +181,7 @@ public struct WorkstationSummary: Equatable, Sendable {
         // nothing about the instrument or the session it also ends (review of 09d35f56e, MED-2).
         if playing { return ProjectTransport.stopHint }
         if startable { return "Plays the arrangement from the top on the shared transport." }
-        return "Unavailable: this song has no parts on a track that plays."
+        return "Unavailable: this piece has no parts on a track that plays."
     }
 
     /// The Click switch's hint (design slice 10). Says what the switch does and no more: the
@@ -189,7 +189,7 @@ public struct WorkstationSummary: Equatable, Sendable {
     /// beats (54b2e28cf). It does not promise a count-in or a pre-roll — there is none.
     public static func clickHint(on: Bool) -> String {
         on ? "Turns the click off."
-           : "Plays a steady click at the current tempo, on the song's beats while it plays."
+           : "Plays a steady click at the current tempo, on the piece's beats while it plays."
     }
 
     /// The sentence beside the button: what Play does, and nothing it cannot. ⛔ Until Phase 3 /
@@ -208,14 +208,14 @@ public struct WorkstationSummary: Equatable, Sendable {
             return bar > 1 ? "Playing from bar \(bar) on the shared transport."
                            : "Playing from the top on the shared transport."
         }
-        if startable { return "Plays the song's parts from the top." }
+        if startable { return "Plays the piece's parts from the top." }
         return "Nothing to play yet."
     }
 
     public static func spokenDescription(of row: LaneRow) -> String {
         var parts: [String] = [row.name, row.kind.displayName]
         if let instrument = row.instrument { parts.append(instrument.displayName) }
-        if row.isBio { parts.append("bio automation lane") }
+        if row.isBio { parts.append("bio automation track") }
         switch row.regionCount {
         case 0:  parts.append("no parts")
         case 1:  parts.append("1 part")
