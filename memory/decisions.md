@@ -3186,3 +3186,11 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Guard:** `TheValueFieldOffersItsDefaultTests` claim 5 — a ratchet: it derives the binding→key map from the declarations and demands the matching `standard:` inside every keystore-bound call (≥ 30 checked, zero missing, zero naming a different key). HEAD before the slice: red with exactly 30 missing.
 - **Next families:** `SubBassVoice.defaultSubGain`, `SubCharacter.defaultPresence`/`defaultHeat`, `EchoelDDSP.defaultOctaveMix`, `LightingStore.defaultLookIntensity`, `Transport`/`PatternEngine.defaultTempo`; then the rows whose default has no owner yet (those get NO key until an owner exists — a nil default shows nothing, #164/#227).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 1, ratchet 2: the piece stage speaks the glossary word
+
+- **Decision:** `WorkstationView` joins `TheChromeSpeaksOneWordPerThingTests`' file list (95dd7b9d0). Its 18 visible struck-word literals ("song" ×14, "session" ×4) now say "piece"; the plate's two doors and the instrument's twin tiles share one spoken name each ("Save this piece" / "Open a saved piece"); the automation count line says "automated parameter(s)" instead of "lane(s)" (a literal nested in an interpolation the scanner cannot see — reworded by hand).
+- **Why:** the app's home said "song" while the head said "piece", and one Save action had two names depending on the door. The list is the ratchet: a file is added in the commit that cleans it, never by bulk rename (a second meaning would be renamed into nonsense). Code identifiers keep their names.
+- **Guards:** `TheChromeSpeaksOneWordPerThingTests` claim 2 (red on the parent by the 18 hits); `TheSongAloneCanBeSavedTests` claim 1 follows the tile's name, still exactly once.
+- **Next ratchets (measured):** `SessionLaunchView` 12 hits · `RecordTakeControls` 10 · `EchoelStudioView` 58 (family by family; the Save alert sentence "the Workstation's song — its tracks and parts" is pinned by `TheSongAloneCanBeSavedTests` claim 2 and moves with that file).
+- **Review:** 2026-10-30.
