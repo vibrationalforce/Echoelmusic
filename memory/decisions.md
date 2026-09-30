@@ -3733,3 +3733,20 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Review:** 2026-10-30. Next E4 producers: the seven `+` seams, the two interpolated network sentences,
   `PartNoteEditor` keySpoken/keyShown compose; the Body/Body Science/Music/Light card sets stay English (their own
   producers, separate slices).
+
+### 2026-09-30 — E4-24: the Piece stage's counted sentences and the root readouts speak German (70f57542b)
+
+- **Decision:** the arrangement line (n tracks · n parts · n bars) and its spoken summary, the orphan line, the
+  automated-parameters line, the file-tempo row (caption, hint, the ÷2/×2 spoken labels, the sets-tempo-to hint) in
+  `WorkstationView`, and the position value, the `File:` preview and the spoken `Piece:` label in `WorkspaceView`
+  are catalog NOUNS per grammatical number (Spur/Spuren · Teil/Teile · Takt/Takte) next to the number, or head/tail
+  `String(localized:)` seams around the value; `octaveButton(spoken:)` takes a `LocalizedStringKey` so its two
+  literal callers localise. Catalog 909 → 938. The visible `loop n/N` stays verbatim on purpose — "Loop" is the
+  German word too and `TheBarCountHasACarrierTests` pins that exact carrier (#490).
+- **Why:** `Text("\(n) tracks")` is the runtime key `%lld tracks`, which no catalog carries; a format key could
+  never be matched by `StringCatalogIsHonestTests` as a quoted literal, so the E4 law stays: number + noun key, never
+  a format string. English output is byte-identical to the parent (transcribed against WORK and HEAD).
+- **Review:** 2026-10-30. Next E4 producers: the bar/beat vocabulary in the model helpers (`SessionGrid.label`,
+  `TrackParts.title/spanTitle/lengthText`, `SongAutomationEdit.countLabel`, `WorkstationSummary.positionText`), then
+  the part bar / parts row / automation editor seams, `SessionLaunchView`, `MediaBrowserView`, `EchoelNumberPad`,
+  `AutomationStatusStrip`, `ComposeGuide`.
