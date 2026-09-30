@@ -265,7 +265,7 @@ public struct SynthPatch: Codable, Sendable, Equatable, Identifiable {
     /// one. A large FINITE number is the whole vector, and JSON delivers those happily.
     ///
     /// ⚠️ THE DOOR IS LIVE, which is what separates this from the FX-preset path #1206b
-    /// had to retract a reachability claim about. `EchoelStudioView`'s "Open project"
+    /// had to retract a reachability claim about. `EchoelStudioView`'s "Open piece"
     /// toolbar button sets `projectImportPresented`, its `.fileImporter` hands the URL to
     /// `ProjectStore.importProject(fromDocument:)`, that decodes a `Project`, and a
     /// `Project` carries a whole `SynthPatch`. A user really can pick that file.

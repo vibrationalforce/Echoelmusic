@@ -384,7 +384,7 @@ public struct Project: Codable, Sendable, Identifiable, Equatable {
         // this field adds or indexes with it: `EchoelStudioView` computes `60 + rootIndex` for the
         // key label and the root frequency, and `TuningSystem.pitchClassCents(root:)` indexes with
         // it. A hand-edited (or corrupted) take with `"keyRoot": 9223372036854775807` therefore
-        // TRAPPED on `60 + Int.max` — a crash behind the same "Open project" door as #1207, one
+        // TRAPPED on `60 + Int.max` — a crash behind the same "Open piece" door as #1207, one
         // step worse than #1207's silent NaN. The fold is `MusicalKey.init(root:)`'s own
         // `((r % 12) + 12) % 12`, so a file and the key it names can never disagree (#416: one
         // law); `%` cannot trap for a divisor of 12, so `Int.min` folds as well.

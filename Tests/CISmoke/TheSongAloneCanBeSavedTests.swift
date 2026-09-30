@@ -77,8 +77,8 @@ final class TheSongAloneCanBeSavedTests: XCTestCase {
         XCTAssertTrue(studio.contains("projects.save(withSession(currentProject()))"),
                       "Save must capture the song through `withSession` — an enabled tile that saves only the take is the lie")
         let raw = try text(Self.studioPath)
-        XCTAssertTrue(raw.contains("sound and FX character, and the Workstation's song — its tracks and parts. "),
-                      "the Save message must name the song it now carries (#495: under-claiming is still false)")
+        XCTAssertTrue(raw.contains("sound and FX character, and the piece — its tracks and parts. "),
+                      "the Save message must name the piece it now carries — its tracks and parts (#495: under-claiming is still false; rule 1: the glossary word)")
         // Review of c69af8995 (LOW): a song-only save has no loop, so the message may not open
         // by promising one.
         XCTAssertFalse(raw.contains("Saves the loop with its genre"),

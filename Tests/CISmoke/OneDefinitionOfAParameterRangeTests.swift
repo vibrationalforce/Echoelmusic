@@ -36,7 +36,7 @@
 
 // ⭐ #1207 — A THIRD WRITER JOINED, AND IT WAS THE ONE WITH NO BOUND AT ALL. The rows and
 // the prompt shared `SynthPatch.Bounds` since #441; `SynthPatch.init(from:)` applied NO range
-// check to any field. That decoder is reachable from a LIVE door — "Open project" →
+// check to any field. That decoder is reachable from a LIVE door — "Open piece" →
 // `.fileImporter` → `ProjectStore.importProject(fromDocument:)` → `Project` → its embedded
 // `SynthPatch` → `apply(to:)`. The seventeen clamp lines now live ONCE, on
 // `SynthPatch.clampToBounds()`, and both writers call it (#416).
@@ -463,7 +463,7 @@ final class OneDefinitionOfAParameterRangeTests: XCTestCase {
                 XCTAssertGreaterThanOrEqual(got, f.bound.lowerBound, """
                     A decoded patch carries \(f.name) = \(got), below its row's floor of \
                     \(f.bound.lowerBound). A project file is user-supplied: `EchoelStudioView`'s \
-                    "Open project" `.fileImporter` hands it to `ProjectStore.importProject`, and \
+                    "Open piece" `.fileImporter` hands it to `ProjectStore.importProject`, and \
                     the decoded `SynthPatch` goes straight to `apply(to:)`.
                     """)
                 XCTAssertLessThanOrEqual(got, f.bound.upperBound, """

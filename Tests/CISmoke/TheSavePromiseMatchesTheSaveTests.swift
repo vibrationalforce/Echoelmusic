@@ -230,7 +230,7 @@ final class TheSavePromiseMatchesTheSaveTests: XCTestCase {
     /// assertion above would be measuring a different alert.
     private func saveAlertMessage() throws -> String {
         let text = try source(Self.studio)
-        let anchor = ".alert(\"Save project\", isPresented: $showSaveDialog)"
+        let anchor = ".alert(\"Save piece\", isPresented: $showSaveDialog)"
         let hits = text.components(separatedBy: anchor).count - 1
         guard hits == 1 else {
             throw SaveAnchorMissing(reason: """

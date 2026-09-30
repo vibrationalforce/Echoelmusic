@@ -965,7 +965,7 @@ struct EchoelStudioView: View {
             switch self {
             case .bio:         return "Bio — pulse, HRV, coherence, source"
             case .composition: return "Tempo and variations — tap tempo, metronome, haptic beat, variation ideas"
-            case .sound:       return "Sound and texture, plus the song's scenes and tracks"
+            case .sound:       return "Sound and texture, plus the piece's scenes and tracks"
             case .mix:         return "Mix — level per part"
             case .effects:     return "Effects"
             case .master:      return "Master"
@@ -1005,7 +1005,7 @@ struct EchoelStudioView: View {
             // Says READ-ONLY out loud, because a door that only looks is the one kind a
             // listener cannot discover by feeling around inside it (#482's lesson: the spoken
             // name of a door must list what the panel actually holds).
-            case .workstation: return "Workstation — the arrangement and session: tracks, parts and scenes; it plays, imports, mixes and moves parts, it does not cut them"
+            case .workstation: return "Workstation — the arrangement: tracks, parts and scenes; it plays, imports, mixes and moves parts, it does not cut them"
             }
         }
         /// DMMW Phase 1 — the area this plate belongs to (`StudioArea`, the row above the
@@ -1804,7 +1804,7 @@ struct EchoelStudioView: View {
                 .echoelSheetPanel())
         }
         #endif
-        .alert("Save project", isPresented: $showSaveDialog) {
+        .alert("Save piece", isPresented: $showSaveDialog) {
             TextField("Name", text: $saveName)
             // DMMW Phase 5 · slice 2 — with a project open, Save writes INTO it (one row per
             // piece, renamed if the name was edited) and "Save as new" is the deliberate copy.
@@ -1855,7 +1855,7 @@ struct EchoelStudioView: View {
             // "stay with / the instrument" and did exactly that — caught by measuring, not by
             // the reviewer. Both pinned runs must stay inside one literal each.
             Text("Saves the composed loop, if there is one, with its genre, key, tuning, tempo, tempo mode (following or locked), mood, "
-                 + "sound and FX character, and the Workstation's song — its tracks and parts. "
+                 + "sound and FX character, and the piece — its tracks and parts. "
                  + "Your mixer levels and hand-dialled FX stay with the instrument.")
         }
         .alert("Save mood", isPresented: $showSaveMoodAs) {
@@ -4976,7 +4976,7 @@ struct EchoelStudioView: View {
                     // to ONE accessibility element, so an outer hint either goes unspoken or
                     // eats "Swipe up or down to adjust". The parameter composes both.
                     hint: "How often the click accents. This is the click's own bar only — "
-                        + "it does not change the project's meter")
+                        + "it does not change the piece's meter")
                 // The accent is what makes "Accent every" AUDIBLE — the render block's test is
                 // `(beatIndex == 0) && audioAccent`, so with the accent off every click is
                 // identical and the number above becomes a setting with no consequence.
@@ -5016,7 +5016,7 @@ struct EchoelStudioView: View {
                 // rows was told there is a project bar after all, and the row above then had to
                 // spend its hint un-saying it. The standard applies to both rows or to neither.
                 .accessibilityHint("Sounds the first of every N beats higher and louder — the "
-                                   + "click's own accent, not the project's meter")
+                                   + "click's own accent, not the piece's meter")
                 // ⛔ `Click level` USED TO SIT BETWEEN THE TWO ROWS ABOVE, which is why the
                 // comment up there claimed a neighbour it did not have (#930b). It is a MIX
                 // value and belongs after the pair it does not participate in; the number and
@@ -9770,7 +9770,7 @@ struct EchoelStudioView: View {
                         .accessibilityLabel("Not opened. \(openNote)")
                 }
                 if projects.projects.isEmpty {
-                    Text("No saved projects yet.").foregroundStyle(EchoelTheme.dim)
+                    Text("No saved pieces yet.").foregroundStyle(EchoelTheme.dim)
                 }
                 // Guarded like the autosave section below it: a `Section` around an empty
                 // `ForEach` still draws its own inset block, so on a fresh install — where
@@ -9813,7 +9813,7 @@ struct EchoelStudioView: View {
             }
             // A rename left open when the sheet closes must not greet the next visit.
             .onDisappear { renamingProjectID = nil }
-            .navigationTitle("Open project")
+            .navigationTitle("Open piece")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
@@ -9889,7 +9889,7 @@ struct EchoelStudioView: View {
     /// (`SessionSaveOpen.songHasUserParts` counts parts only), and "below" pointed at nothing on
     /// a fresh install (review of 04551fa36, MED). The sentence now states the rescue's actual
     /// predicate; widening the predicate itself is a slot-semantics change, left as a limit.
-    static let newPieceNote = "Starts an empty song and shows the piece. A song with parts or a composed loop is kept in Autosave first; tracks with no parts yet are not. The instrument keeps its sound."
+    static let newPieceNote = "Starts an empty piece and shows the piece stage. A piece with parts or a composed loop is kept in Autosave first; tracks with no parts yet are not. The instrument keeps its sound."
 
     /// DMMW Phase 5 · slice 1 — rescue, then replace, in `openFromLibrary`'s order and through its
     /// owners: the live take and song go to the ONE recovery slot (`autosaveTake`, the rescue Open
@@ -9915,7 +9915,7 @@ struct EchoelStudioView: View {
         showStage(.piece)
     }
 
-    static let newPieceRefusedNote = "Couldn't start a new piece. Your song is unchanged."
+    static let newPieceRefusedNote = "Couldn't start a new piece. Your piece is unchanged."
 
     /// DMMW Phase 5 · slice 4 — a row is either the project row or, while it is being renamed,
     /// the in-place rename field. ONE switch for both sections, so they cannot drift (#285).
@@ -10006,7 +10006,7 @@ struct EchoelStudioView: View {
             }
             .disabled(!shareable)
             .accessibilityLabel("Share \(p.name)")
-            .accessibilityHint(shareable ? "" : "Sharing sends the take only, and this project holds only its song, which stays on this device")
+            .accessibilityHint(shareable ? "" : "Sharing sends the instrument's held music only, and this piece holds only tracks and parts, which stay on this device")
         }
         // A long press is a deliberate second step (hold, then choose), where the swipe's full
         // travel deletes at once. `.contextMenu` builds its content only while shown and is not a

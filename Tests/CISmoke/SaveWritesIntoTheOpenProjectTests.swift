@@ -135,7 +135,7 @@ final class SaveWritesIntoTheOpenProjectTests: XCTestCase {
 
     func testTheSaveAlertOffersSaveChangesOnlyWhileAPieceIsOpen() throws {
         let code = try source(Self.studio)
-        let actions = try member(".alert(\"Save project\", isPresented: $showSaveDialog) {", in: code)
+        let actions = try member(".alert(\"Save piece\", isPresented: $showSaveDialog) {", in: code)
         guard let branch = actions.range(of: "if projects.currentProjectName != nil {"),
               let changes = actions.range(of: "Button(\"Save changes\") { saveIntoOpenProject() }"),
               let asNew = actions.range(of: "Button(\"Save as new\") { saveProject() }"),
@@ -149,7 +149,7 @@ final class SaveWritesIntoTheOpenProjectTests: XCTestCase {
                       "nothing open: the one Save, which adds a row")
         XCTAssertTrue(actions.contains("Button(\"Cancel\", role: .cancel) {}"))
         // The #495 promise below the buttons is untouched (its own guard owns the words).
-        XCTAssertEqual(code.components(separatedBy: ".alert(\"Save project\"").count - 1, 1,
+        XCTAssertEqual(code.components(separatedBy: ".alert(\"Save piece\"").count - 1, 1,
                        "still ONE Save alert — no new presentation modifier (black-screen law)")
     }
 

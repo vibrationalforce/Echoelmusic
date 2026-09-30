@@ -5,7 +5,7 @@
 // ADDS to it or INDEXES with it: `EchoelStudioView` computes `60 + rootIndex` for the key label
 // and the root frequency, `TuningSystem.pitchClassCents(root:)` indexes with it. A hand-edited or
 // corrupted take carrying `"keyRoot": 9223372036854775807` reached those lines unchanged, and
-// `60 + Int.max` TRAPS — a crash behind the same live "Open project" `.fileImporter` door as
+// `60 + Int.max` TRAPS — a crash behind the same live "Open piece" `.fileImporter` door as
 // #1207, one step worse than #1207's silent NaN. The 2026-09-10 handover (§4) named it the
 // heaviest open item; the reviewer confirmed it by reading, this guard confirms it by decoding.
 //

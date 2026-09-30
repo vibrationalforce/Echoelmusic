@@ -211,7 +211,7 @@ final class PerformIsASecondViewOfTheSameSessionTests: XCTestCase {
         // #482: the Sound chip opens this panel, so its spoken name lists what it now reaches.
         let studio = try source(Self.studioPath)
         XCTAssertTrue(studio.contains(
-            "case .sound:       return \"Sound and texture, plus the song's scenes and tracks\""))
+            "case .sound:       return \"Sound and texture, plus the piece's scenes and tracks\""))
     }
 
     // MARK: 4 — slice 2: Mute and Solo, one lane flag seen from both views
