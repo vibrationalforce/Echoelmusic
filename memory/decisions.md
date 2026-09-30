@@ -3089,3 +3089,19 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Guards rewritten as the decision, none weakened:** `TheTransportBarIsDissolvedTests` 2, `TwoControlsShareALineOnlyWhileTheyFitTests` 5, `TheBioPanelDoorIsThePulsePillTests` 3. Transcribed: WORK 27/27, parent 9 red = one absence + three decision needles; 18 counterweights green on both trees.
 - **Device asks:** header two lines in iPhone portrait; pill tap from the piece opens the Bio plate and turns the Instrument stage; long-press names the source.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Head leaf 3: the ONE Undo/Redo is the head's
+
+- **Decision:** `SongHistoryRow` MOVES from under the Workstation's note grid into `ProjectHeader` (`history`, one construction, spelled into three `ViewThatFits` shapes + the accessibility stack). The Workstation builds none.
+- **Why:** the row's one mount was on the Piece stage only; the Instrument stage writes the composer's part into the same history with no Undo in reach. M6's proximity argument saw one stage; the head is the only place above both.
+- **Guards:** `TheTrackPartsAreArrangedThroughTheStoreTests` 4, `TheSelectedPartsNotesAreEditedThroughOneWriterTests`, `TwoControlsShareALineOnlyWhileTheyFitTests` 5 (`pulsePill` ×4), `TheProjectHeaderRunsOneTransportTests` 11 (new). Transcribed WORK 29/29, parent 8 red = one absence + four decisions.
+- **Device asks:** two-line header in portrait; Undo on the Instrument stage takes back the composer's part.
+- **Review:** 2026-10-30.
+
+### 2026-09-30 — Head leaf 4: the ⓘ guide switch is the head's; the guide is ON for new users
+
+- **Decision:** `ProjectHeader.guideButton` (ⓘ, 44 pt, filled while on, spoken Guide · On/Off · hint) flips `StudioDefaultKeys.guideVisible`; the Save & Export Toggle and the studio's key read are removed; the key's default is `true`.
+- **Why:** the doc's law ("Hilfe an einem festen Ort (ⓘ im Kopf), für neue Nutzer an"); measured, the one switch sat on the hidden stage with the key OFF — a launch teaching nobody could see or find. `OnboardingView` still comes first and alone, so no overlap.
+- **Guards:** `TheGuideHasADoorTests` claim 1 rewritten as the decision (5 assertions); `StudioDefaultKeysTests` pins the default. Transcribed WORK 19/19, parent 6 red.
+- **Device asks:** fresh install shows the first card over the piece with ⓘ filled; ⓘ toggles on both stages; no Guide row in Save & Export.
+- **Review:** 2026-10-30.

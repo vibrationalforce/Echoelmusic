@@ -40365,3 +40365,26 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Gerät:** Kopf im iPhone-Hochformat zweizeilig (Summary + Knöpfe, darunter Pille); Pillen-Tap vom Stück öffnet Bio-Platte + Instrument-Bühne; Long-Press nennt die Quelle; Instrument-Startzeile ist um die Pille kürzer.
 
 **Nächste Blätter:** Rückgängig (`SongHistoryRow` ist das EINE History-Bedienelement, Workstation:317 — ein Umzug, keine Kopie) · ⓘ Hilfe (`GuideOverlay`-Schalter `guideVisible`) · dann Status-Leiter in Wörtern, Kontrast-Wächter, SkillLevel-Verbraucher.
+
+## 2026-09-30 — Kopf-3 gebaut: das EINE Rückgängig/Wiederholen ist des Kopfes (c5eaf50a8)
+
+**Gemessen:** `SongHistoryRow()` hatte EINE Montage — unter dem Notengitter in `WorkstationView`, also nur auf der Piece-Bühne. Die Instrument-Bühne schreibt den Composer-Teil in DIESELBE Historie (`TimelineStore`) und hatte kein erreichbares Undo. Doc-Gesetz: „Der Kopf zeigt immer dasselbe: … Rückgängig …".
+
+- `ProjectHeader.history` baut `SongHistoryRow()` einmal; der Rumpf buchstabiert es in jede Gestalt: drei Gestalten + Accessibility-Stapel (`ViewThatFits`, #1027) — eine Zeile · [Summary · Transport] über [Pille · Historie] · dieselbe erste Zeile über Pille über Historie. Der Kopf liest nichts davon (die Zeile liest `canUndo`/`canRedo`, kalt, im eigenen Rumpf).
+- `WorkstationView` baut keine Historie mehr (Grabstein). `SongHistoryRow`-Kopf: zweimal umgezogen, nie kopiert — und warum M6s Review-Argument („am nächsten am Edit") hier verliert: Nähe gegen eine ganze Bühne ohne Weg zurück.
+- **Wächter als Entscheidung neu, nichts abgeschwächt:** `TheTrackPartsAreArrangedThroughTheStoreTests` 4 (die eine Tür = `ProjectHeader.swift`) · `TheSelectedPartsNotesAreEditedThroughOneWriterTests` (Bar < Editor bleibt; Workstation ohne Zeile, Kopf genau einmal) · `TwoControlsShareALineOnlyWhileTheyFitTests` 5 (`pulsePill` ×4) · `TheProjectHeaderRunsOneTransportTests` 11 NEU (`history` baut die Zeile, einmal; ×4 im Rumpf; Workstation keine). Master-Plan WA4 Pfad 7 nachgeführt.
+- **Benotung:** `scratchpad/transcribe_kopf3.py` — WORK 29/29; HEAD 13ca51923 8 rot = eine Abwesenheit (`history`) + vier Entscheidungs-Nadeln; 15 Gegengewichte beidseitig grün. Checker sauber; moved-needles = die drei umgeschriebenen Wächter + eine `FloatingVisualWindow`-Nadel außerhalb des Diffs.
+- **Gerät:** Kopf im Hochformat zweizeilig (Summary + Play/Record, darunter Pille + Undo/Redo); Undo auf der Instrument-Bühne nimmt den Composer-Teil zurück; unter dem Notengitter keine Zeile mehr.
+
+## 2026-09-30 — Kopf-4 gebaut: der ⓘ-Guide-Schalter ist des Kopfes, der Guide ist für neue Nutzer AN (2856bf9ed)
+
+**Gemessen:** der Guide (`GuideOverlay`, seit #603 in `WorkspaceView` über beiden Bühnen) hatte EINEN Schalter — einen Toggle in der Save-&-Export-Platte des Instruments (die versteckte Bühne) — und sein Schlüssel stand default AUS. „Start-Lehre = GuideOverlay" (Scheibe 1) war damit eine Lehre, die ein Neuling weder sah noch fand. Doc-Gesetz: „Hilfe an einem festen Ort (ⓘ im Kopf), für neue Nutzer an."
+
+- `ProjectHeader.guideButton`: 44-pt-ⓘ (`info.circle`) nach Record in der Transport-Gruppe; flippt `StudioDefaultKeys.guideVisible` (EIN Schlüssel, Core, H15-KEYSTORE); gefüllt, solange die Karten zeigen (M/S-Schalter-Grammatik); gesprochen „Guide" · On/Off · Hint. Glyphe mit Absicht: das Doc nennt „ⓘ im Kopf", der Zustand ist auf dem Schirm sichtbar (die Karte).
+- `StudioDefaultKeys.guideVisible` default `false` → `true` (frische Installation UND jede, die nie geflippt hat). `OnboardingView` kommt weiter ZUERST und ALLEIN (`EchoelmusicApp` zeigt es STATT des Workspace) — keine Karte überlappt. Die alte AUS-Begründung („instrument home") ist Phasengeschichte seit Scheibe 1, am Schlüssel festgehalten.
+- Save-&-Export-Toggle und der Studio-`@AppStorage` ENTFERNT (umgezogen, nicht kopiert); Grabsteine. `GuideOverlay`s zwei Sätze zeigen auf die ⓘ im Kopf. `WorkspaceView`-Montage-Kommentar, Census S11/S39 nachgeführt.
+- **Wächter:** `TheGuideHasADoorTests` Anspruch 1 als Entscheidung neu (`testTheGuideHasAKeyASwitchInTheHeadAndAMount`: Default AN; Kopf liest den Schlüssel, flippt ihn, heißt „Guide", spricht den Zustand; Studio ohne Schalter und ohne Lesen; Montage bleibt). Ansprüche 2–4 unverändert. Nicht-blockierend `StudioDefaultKeysTests` pinnt den Default. `TheClickAccentPairStaysAdjacentTests` zählt `Toggle(isOn:` nur in `metronomeRow` — unberührt (Studio-weit 12 → 11).
+- **Benotung:** `scratchpad/transcribe_kopf4.py` — WORK 19/19 (ein R war ein Skript-Artefakt: `member` verlangt genau einen Treffer, `var body` kommt in der Datei zweimal vor; per Erst-Treffer nachgemessen: `history` ×4 · `pulsePill` ×4 · `guideButton` ×1); HEAD c5eaf50a8 6 rot = fünf Anspruch-1-Entscheidungen + der verschwundene Studio-Lesevorgang. Checker sauber; moved-needles 1 generische Zeile.
+- **Gerät:** frische Installation zeigt die erste Guide-Karte („The app opens on your piece") über dem Stück, ⓘ gefüllt; ⓘ blendet auf beiden Bühnen aus/ein; „Next" auf der letzten Karte blendet aus; Save & Export hat keine Guide-Zeile mehr.
+
+**Damit sind die VIER Kopf-Blätter des Docs gebaut** (Wort · Puls-Pille · Rückgängig · ⓘ Hilfe). Nächste Doc-Zeile: „Status-Leiter in Wörtern (Suche · fast · da · verloren) an Puls und Ausgabe", dann Kontrast-Wächter, SkillLevel-Verbraucher.
