@@ -3972,7 +3972,7 @@ struct EchoelStudioView: View {
     /// this is now simply the mixer's one strip style.
     /// Pure layout over existing bindings; reads only low-frequency stores → render-safe.
     @ViewBuilder
-    private func mixStripCard<Content: View>(_ title: String,
+    private func mixStripCard<Content: View>(_ title: LocalizedStringKey,
                                              @ViewBuilder _ content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
@@ -4507,7 +4507,7 @@ struct EchoelStudioView: View {
     /// "Sound" (in `weatherRow`, Mood) and "Weather" (in `weatherImageRow`, Field) — this line
     /// said "(Sound or Image)" until #359 step 2, and "Image" is no longer a title anywhere.
     @ViewBuilder
-    private func weatherMixGroup(_ title: String, params: [WeatherMood.Param]) -> some View {
+    private func weatherMixGroup(_ title: LocalizedStringKey, params: [WeatherMood.Param]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             groupHeader(title)
             ForEach(params) { param in
@@ -7200,7 +7200,7 @@ struct EchoelStudioView: View {
         .accessibilityLabel("Fine tune the visual")
         // Without a VALUE the two states sound identical to VoiceOver — the chevron carries
         // the state visually only, which is exactly the gap #241 closed elsewhere.
-        .accessibilityValue(showVisualFineTune ? "Shown" : "Hidden")
+        .accessibilityValue(showVisualFineTune ? String(localized: "Shown") : String(localized: "Hidden"))
         .accessibilityHint("Shows or hides the individual visual parameters")
         if showVisualFineTune {
             AdaptiveCardGrid(spacing: spacing) {
@@ -8353,7 +8353,7 @@ struct EchoelStudioView: View {
     /// row. My own first pass at #362 counted them among the "five heading treatments" — they
     /// are a separate question (they read 12 pt against `EchoelValueField`'s 14 pt label two
     /// rows up), and mixing the two would have produced a visibly broken panel.
-    private func groupHeader(_ t: String) -> some View {
+    private func groupHeader(_ t: LocalizedStringKey) -> some View {
         Text(t).font(EchoelTheme.font(11, .semibold)).foregroundStyle(EchoelTheme.dim)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.top, 4)
@@ -8377,12 +8377,16 @@ struct EchoelStudioView: View {
     /// ⚠️ A DISCLOSURE IS NOT A HIDDEN GESTURE. The cover's old top bar cites WCAG 2.2 against
     /// gating controls behind something invisible — a labelled heading with a chevron is the
     /// opposite of that: the map stays on screen and names what is behind it.
+    /// E4-9 (2026-09-30): the four sibling label helpers take a `LocalizedStringKey`, so their
+    /// literal becomes a catalog key at the call site. This one KEEPS a `String` title because its
+    /// hint interpolates it — and looks the key up itself, once for the visible text and once
+    /// for VoiceOver. `Text(title)` on a `String` would spell the English verbatim on every phone.
     private func collapsibleGroupHeader(_ title: String, isOpen: Binding<Bool>) -> some View {
         Button {
             isOpen.wrappedValue.toggle()
         } label: {
             HStack(spacing: 8) {
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(EchoelTheme.font(11, .semibold))
                     .foregroundStyle(EchoelTheme.dim)
                 Spacer(minLength: 8)
@@ -8395,9 +8399,9 @@ struct EchoelStudioView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(title)
-        .accessibilityValue(isOpen.wrappedValue ? "Shown" : "Hidden")
-        .accessibilityHint("Shows or hides the \(title.lowercased()) controls")
+        .accessibilityLabel(LocalizedStringKey(title))
+        .accessibilityValue(isOpen.wrappedValue ? String(localized: "Shown") : String(localized: "Hidden"))
+        .accessibilityHint(String(localized: "Shows or hides the ") + String(localized: String.LocalizationValue(title)) + String(localized: " controls"))
     }
 
     /// The sound library bar — same idiom as the Mood and FX preset bars: one Menu
@@ -9013,7 +9017,7 @@ struct EchoelStudioView: View {
     }
 
     /// A label-above-control row (forms: labels above inputs — per UI rules).
-    private func labeledRow<Content: View>(_ label: String,
+    private func labeledRow<Content: View>(_ label: LocalizedStringKey,
                                            @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label).font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)

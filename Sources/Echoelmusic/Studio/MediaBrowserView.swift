@@ -190,7 +190,7 @@ struct MediaBrowserView: View {
         .buttonStyle(.plain)
         // The label is the visible words (Voice Control's label-in-name); the state is a value.
         .accessibilityLabel("Media Library")
-        .accessibilityValue(isOpen ? "Shown" : "Hidden")
+        .accessibilityValue(isOpen ? String(localized: "Shown") : String(localized: "Hidden"))
         .accessibilityHint("Lists the audio files already imported into the app")
     }
 

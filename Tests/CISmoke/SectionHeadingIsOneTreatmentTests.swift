@@ -71,7 +71,7 @@ final class SectionHeadingIsOneTreatmentTests: XCTestCase {
     func testGroupHeaderStillNamesAWeightTheFontFileHas() throws {
         let studio = try codeLines(Self.studio)
         guard let def = studio.firstIndex(where: {
-            $0.contains("private func groupHeader(_ t: String)")
+            $0.contains("private func groupHeader(_ t: LocalizedStringKey)")
         }) else {
             return XCTFail("""
                 `groupHeader` is gone from EchoelStudioView. It is the single section-heading \

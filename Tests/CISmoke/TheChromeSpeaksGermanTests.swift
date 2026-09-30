@@ -26,6 +26,10 @@
 // still have their cases, the seven literal keys still occur as `Text("…")` in Sources, the
 // catalog's en unit equals the key) are green on both trees. Transcribed in Python against both
 // trees before the push; the Swift here is graded only by `Build for Testing` (§0).
+// Claim 10 (E4-6 → E4-9) walks a listed family for `de` units and was red on each slice's parent for
+// the ONE absence of that slice's units (#486). Claim 11 (E4-9) drives eight signature needles, the
+// absent verbatim ternary in two files and nine units — on its parent all eight needles are absent,
+// the ternary present and the nine units missing: ONE finding, the slice, not eighteen.
 //
 // WHAT IT DOES NOT FORBID (#364): more chrome words, another language, a reworded sentence. A
 // reworded sentence turns the OLD key into an orphan — `StringCatalogIsHonestTests` claim
@@ -340,6 +344,8 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
     /// A literal that is the LEFT half of a `+ "…"` continuation is `Text(String)` — spelled
     /// verbatim, no key — and is skipped (seven such seams exist; they need a sentence design). The
     /// walk reads code only: E4-7 added `EchoelStudioView`, whose comments quote `Button("literal")`.
+    /// E4-9 added the five label helpers of that file to the alternation — legitimate only because
+    /// claim 11 pins that they take a key (or look one up); a `String` helper would spell the literal.
     static let panelFamily: [String] = [
             "Sources/Echoelmusic/Studio/EchoelStudioView.swift",
             "Sources/Echoelmusic/Studio/PatchbayView.swift",
@@ -388,7 +394,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         let root = try repoRoot()
         let strings = try catalogStrings()
         let literal = try NSRegularExpression(
-            pattern: #"\b(?:Text|Button|Toggle|Label|Picker|Section|TextField|Menu|NavigationLink|Link)\(\s*"((?:[^"\\]|\\.)*)"|\.accessibility(?:Label|Hint|Value)\(\s*"((?:[^"\\]|\\.)*)""#)
+            pattern: #"\b(?:Text|Button|Toggle|Label|Picker|Section|TextField|Menu|NavigationLink|Link|labeledRow|groupHeader|collapsibleGroupHeader|mixStripCard|weatherMixGroup)\(\s*"((?:[^"\\]|\\.)*)"|\.accessibility(?:Label|Hint|Value)\(\s*"((?:[^"\\]|\\.)*)""#)
         var sites = 0, missing: [String] = [], seen = Set<String>()
         for rel in Self.panelFamily {
             let code = try codeOnly(rel)                                        // a `Button("literal")` quoted in a comment is not a site
@@ -411,6 +417,41 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             """)
         // counterweight — a key with an interpolation is not a catalog key and is not demanded
         XCTAssertNil(german("Playing over \\(outputs)", in: strings))
+    }
+
+    // MARK: - claim 11 (E4-9) — the instrument's label helpers take a key, not a String
+
+    /// SOURCE-TEXT SCAN. `groupHeader("Filter")`, `labeledRow("Shape")`, `mixStripCard("Bass")` and
+    /// `weatherMixGroup("Sound")` used to take `String`, so the literal reached `Text(String)` and
+    /// was spelled verbatim on a German phone while every `Text("…")` beside it was translated. They
+    /// take `LocalizedStringKey` now, which is what lets claim 10 walk their call sites.
+    /// `collapsibleGroupHeader` keeps a `String` title because its hint interpolates it, and looks
+    /// the key up itself — pinned here so a tidy-up cannot put `Text(title)` back.
+    func testTheLabelHelpersTakeAKey() throws {
+        let code = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for signature in ["private func groupHeader(_ t: LocalizedStringKey)",
+                          "private func labeledRow<Content: View>(_ label: LocalizedStringKey,",
+                          "private func mixStripCard<Content: View>(_ title: LocalizedStringKey,",
+                          "private func weatherMixGroup(_ title: LocalizedStringKey, params:"] {
+            XCTAssertTrue(code.contains(signature), """
+                `\(signature)` is gone. A label helper that takes `String` spells its literal verbatim \
+                on every phone — keep the key type, or move this needle with the rename.
+                """)
+        }
+        XCTAssertTrue(code.contains("Text(LocalizedStringKey(title))"),
+                      "collapsibleGroupHeader spells its String title verbatim again — wrap it in LocalizedStringKey")
+        XCTAssertTrue(code.contains(".accessibilityLabel(LocalizedStringKey(title))"),
+                      "collapsibleGroupHeader's VoiceOver label is the verbatim String again")
+        XCTAssertTrue(code.contains("String(localized: \"Shown\")") && code.contains("String(localized: \"Hidden\")"),
+                      "the collapsible header's Shown/Hidden value is not localised")
+        // counterweight — the verbatim ternary is gone from BOTH files that had it (the fine-tune disclosure and
+        // the collapsible header here, the media library's disclosure), not merely joined by a localised twin
+        XCTAssertFalse(code.contains("? \"Shown\" : \"Hidden\""), "a verbatim Shown/Hidden ternary is back in the instrument")
+        let media = try codeOnly("Sources/Echoelmusic/Studio/MediaBrowserView.swift")
+        XCTAssertFalse(media.contains("? \"Shown\" : \"Hidden\""), "a verbatim Shown/Hidden ternary is back in the media library")
+        XCTAssertTrue(media.contains("String(localized: \"Shown\")"), "the media library's disclosure value is not localised")
+        try assertGerman(["Shows or hides the ", " controls", "Shown", "Hidden",
+                          "Look", "Voice", "Self-play", "Sound", "Weather"], "collapsible/weather header words")
     }
 
     // MARK: - claim 5 — the German for "Piece" is the glossary's word, read from the glossary

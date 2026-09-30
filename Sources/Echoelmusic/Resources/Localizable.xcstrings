@@ -10098,6 +10098,402 @@
           }
         }
       }
+    },
+    "Bass" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bass"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bass"
+          }
+        }
+      }
+    },
+    "Character" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Character"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charakter"
+          }
+        }
+      }
+    },
+    "Delay" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delay"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delay"
+          }
+        }
+      }
+    },
+    "Envelope" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envelope"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hüllkurve"
+          }
+        }
+      }
+    },
+    "Field · your hands" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Field · your hands"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feld · deine Hände"
+          }
+        }
+      }
+    },
+    "Filter" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter"
+          }
+        }
+      }
+    },
+    "Level" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Level"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegel"
+          }
+        }
+      }
+    },
+    "Melodic · Pad" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Melodic · Pad"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Melodie · Pad"
+          }
+        }
+      }
+    },
+    "Preset" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preset"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preset"
+          }
+        }
+      }
+    },
+    "Space & vibrato" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space & vibrato"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raum & Vibrato"
+          }
+        }
+      }
+    },
+    "Sub / Bass (felt)" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sub / Bass (felt)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sub / Bass (fühlbar)"
+          }
+        }
+      }
+    },
+    "Unison" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unison"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unisono"
+          }
+        }
+      }
+    },
+    "Variations" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variations"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variationen"
+          }
+        }
+      }
+    },
+    "Weather" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weather"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wetter"
+          }
+        }
+      }
+    },
+    "Sound" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sound"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klang"
+          }
+        }
+      }
+    },
+    "Look" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Look"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Look"
+          }
+        }
+      }
+    },
+    "Voice" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voice"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stimme"
+          }
+        }
+      }
+    },
+    "Self-play" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Self-play"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selbstspiel"
+          }
+        }
+      }
+    },
+    "Shown" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shown"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingeblendet"
+          }
+        }
+      }
+    },
+    "Hidden" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hidden"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgeblendet"
+          }
+        }
+      }
+    },
+    "Shows or hides the " : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows or hides the "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt oder verbirgt die "
+          }
+        }
+      }
+    },
+    " controls" : {
+      "comment" : "Label helper (E4-9, 2026-09-30): groupHeader · labeledRow · mixStripCard · weatherMixGroup take a LocalizedStringKey; collapsibleGroupHeader looks its String title up — plus its VoiceOver pieces.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " controls"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "-Regler"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
