@@ -338,10 +338,12 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
     /// every literal key that carries a letter, no interpolation, no `%` and no escape. Brand marks
     /// and technical tokens the app spells the same in every language are listed, not translated.
     /// A literal that is the LEFT half of a `+ "…"` continuation is `Text(String)` — spelled
-    /// verbatim, no key — and is skipped (six such seams exist; they need a sentence design). The
+    /// verbatim, no key — and is skipped (seven such seams exist; they need a sentence design). The
     /// walk reads code only: E4-7 added `EchoelStudioView`, whose comments quote `Button("literal")`.
     static let panelFamily: [String] = [
             "Sources/Echoelmusic/Studio/EchoelStudioView.swift",
+            "Sources/Echoelmusic/Studio/PatchbayView.swift",
+            "Sources/Echoelmusic/Studio/EchoelFXView.swift",
             "Sources/Echoelmusic/Studio/WorkstationView.swift",
             "Sources/Echoelmusic/Studio/WorkspaceView.swift",
             "Sources/Echoelmusic/Studio/TrackInspectorView.swift",
@@ -402,7 +404,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                 if seen.insert(key).inserted, german(key, in: strings) == nil { missing.append(key) }
             }
         }
-        XCTAssertGreaterThan(sites, 300, "the walk found \(sites) literal-key sites — it did not read the family")
+        XCTAssertGreaterThan(sites, 400, "the walk found \(sites) literal-key sites — it did not read the family")
         XCTAssertEqual(missing, [], """
             \(missing.count) panel text(s) without a German unit in the catalog — add the `de` unit for each:
             \(missing.joined(separator: "\n"))

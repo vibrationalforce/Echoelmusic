@@ -8766,6 +8766,1338 @@
           }
         }
       }
+    },
+    "Tap a destination to route a source to it. Compatible types connect directly or via a converter (e.g. pitch→colour, bio→MIDI CC). Light and spatial follow the music live today; other edges are authored here as their adapters come online." : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap a destination to route a source to it. Compatible types connect directly or via a converter (e.g. pitch→colour, bio→MIDI CC). Light and spatial follow the music live today; other edges are authored here as their adapters come online."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe ein Ziel an, um eine Quelle darauf zu routen. Kompatible Typen verbinden sich direkt oder über einen Wandler (z. B. Tonhöhe→Farbe, Bio→MIDI-CC). Licht und Raum folgen der Musik heute live; andere Kanten werden hier angelegt, sobald ihre Adapter da sind."
+          }
+        }
+      }
+    },
+    "Bluetooth MIDI" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bluetooth MIDI"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bluetooth-MIDI"
+          }
+        }
+      }
+    },
+    "Pair a controller" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pair a controller"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einen Controller koppeln"
+          }
+        }
+      }
+    },
+    "Pair a wireless MIDI keyboard or controller — it plays the synth directly." : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pair a wireless MIDI keyboard or controller — it plays the synth directly."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopple ein drahtloses MIDI-Keyboard oder einen Controller — es spielt den Synth direkt."
+          }
+        }
+      }
+    },
+    "Pair a Bluetooth MIDI controller" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pair a Bluetooth MIDI controller"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einen Bluetooth-MIDI-Controller koppeln"
+          }
+        }
+      }
+    },
+    "Opens Apple's Bluetooth MIDI pairing. A paired controller plays the synth directly." : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens Apple's Bluetooth MIDI pairing. A paired controller plays the synth directly."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet Apples Bluetooth-MIDI-Kopplung. Ein gekoppelter Controller spielt den Synth direkt."
+          }
+        }
+      }
+    },
+    "Network MIDI" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network MIDI"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Netzwerk-MIDI"
+          }
+        }
+      }
+    },
+    "Wireless MIDI" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wireless MIDI"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drahtloses MIDI"
+          }
+        }
+      }
+    },
+    "MIDI out" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI out"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI-Ausgang"
+          }
+        }
+      }
+    },
+    "MPE note layout" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MPE note layout"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MPE-Notenlayout"
+          }
+        }
+      }
+    },
+    "Per-note expression" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Per-note expression"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausdruck pro Note"
+          }
+        }
+      }
+    },
+    "Both need the MIDI out route switched on below — without it nothing is sent, whatever these say." : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Both need the MIDI out route switched on below — without it nothing is sent, whatever these say."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beide brauchen die unten eingeschaltete MIDI-Ausgangs-Route — ohne sie wird nichts gesendet, egal was hier steht."
+          }
+        }
+      }
+    },
+    "MIDI 2.0 source" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI 2.0 source"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI-2.0-Quelle"
+          }
+        }
+      }
+    },
+    "Body → parameter" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Body → parameter"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Körper → Parameter"
+          }
+        }
+      }
+    },
+    "Add route" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add route"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Route hinzufügen"
+          }
+        }
+      }
+    },
+    "Adds a route from your coherence to the chosen parameter; change the source in the row." : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adds a route from your coherence to the chosen parameter; change the source in the row."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fügt eine Route von deiner Kohärenz zum gewählten Parameter hinzu; die Quelle änderst du in der Zeile."
+          }
+        }
+      }
+    },
+    "OSC input · control" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OSC input · control"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OSC-Eingang · Steuerung"
+          }
+        }
+      }
+    },
+    "Accept OSC control" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accept OSC control"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OSC-Steuerung annehmen"
+          }
+        }
+      }
+    },
+    "Allowed sender IPs, comma-separated (empty = any)" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allowed sender IPs, comma-separated (empty = any)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erlaubte Absender-IPs, kommagetrennt (leer = alle)"
+          }
+        }
+      }
+    },
+    "Network output" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network output"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Netzwerkausgang"
+          }
+        }
+      }
+    },
+    "Send clinical HRV detail" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send clinical HRV detail"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klinische HRV-Details senden"
+          }
+        }
+      }
+    },
+    "Target IP + port per output — changes apply immediately while the output is running. OSC/ADM default to 'localhost' (this device); for Resolume · TouchDesigner · MadMapper enter the target computer's IP. Art-Net and sACN send unicast to the node IP you enter (default 192.168.1.100) — the app holds no broadcast entitlement, so 255.255.255.255 reaches nothing on iOS." : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Target IP + port per output — changes apply immediately while the output is running. OSC/ADM default to 'localhost' (this device); for Resolume · TouchDesigner · MadMapper enter the target computer's IP. Art-Net and sACN send unicast to the node IP you enter (default 192.168.1.100) — the app holds no broadcast entitlement, so 255.255.255.255 reaches nothing on iOS."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ziel-IP + Port je Ausgang — Änderungen gelten sofort, während der Ausgang läuft. OSC/ADM stehen standardmäßig auf 'localhost' (dieses Gerät); für Resolume · TouchDesigner · MadMapper die IP des Zielrechners eintragen. Art-Net und sACN senden Unicast an die eingetragene Node-IP (Standard 192.168.1.100) — die App hat keine Broadcast-Berechtigung, 255.255.255.255 erreicht auf iOS nichts."
+          }
+        }
+      }
+    },
+    "IP / host" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IP / host"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IP / Host"
+          }
+        }
+      }
+    },
+    "Light" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Light"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Licht"
+          }
+        }
+      }
+    },
+    "DMX" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DMX"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DMX"
+          }
+        }
+      }
+    },
+    "DMX resolution" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DMX resolution"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DMX-Auflösung"
+          }
+        }
+      }
+    },
+    "16-bit" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "16-bit"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "16 Bit"
+          }
+        }
+      }
+    },
+    "8-bit" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "8-bit"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "8 Bit"
+          }
+        }
+      }
+    },
+    "DMX resolution — 16-bit for smooth fades, 8-bit for legacy fixtures" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DMX resolution — 16-bit for smooth fades, 8-bit for legacy fixtures"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DMX-Auflösung — 16 Bit für weiche Fades, 8 Bit für ältere Geräte"
+          }
+        }
+      }
+    },
+    "Master scales the brightness of all outgoing light data (Art-Net + sACN). Blackout goes dark instantly; the return fades back in flicker-free. 16-bit sends paired coarse/fine channels for smooth fades; pick 8-bit only for fixtures that cannot read them." : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Master scales the brightness of all outgoing light data (Art-Net + sACN). Blackout goes dark instantly; the return fades back in flicker-free. 16-bit sends paired coarse/fine channels for smooth fades; pick 8-bit only for fixtures that cannot read them."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Master skaliert die Helligkeit aller ausgehenden Lichtdaten (Art-Net + sACN). Blackout wird sofort dunkel; die Rückkehr blendet flimmerfrei wieder ein. 16 Bit sendet Grob/Fein-Kanalpaare für weiche Fades; 8 Bit nur für Geräte wählen, die sie nicht lesen können."
+          }
+        }
+      }
+    },
+    "Fixtures repeats the same colour across that many lamps from address 1 — addressing the rig, not moving light through it: every lamp shows the SAME colour, because this output produces one. Spacing is the gap between their start addresses; 0 means back to back. This matters most on sACN, which by specification fills all 512 slots — so with one fixture addressed, every other lamp on that universe is driven dark." : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fixtures repeats the same colour across that many lamps from address 1 — addressing the rig, not moving light through it: every lamp shows the SAME colour, because this output produces one. Spacing is the gap between their start addresses; 0 means back to back. This matters most on sACN, which by specification fills all 512 slots — so with one fixture addressed, every other lamp on that universe is driven dark."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geräte wiederholt dieselbe Farbe über so viele Lampen ab Adresse 1 — es adressiert das Rig, es bewegt kein Licht hindurch: jede Lampe zeigt DIESELBE Farbe, weil dieser Ausgang eine erzeugt. Abstand ist die Lücke zwischen ihren Startadressen; 0 heißt direkt hintereinander. Das zählt vor allem bei sACN, das laut Spezifikation alle 512 Slots füllt — mit einem adressierten Gerät wird jede andere Lampe in diesem Universum dunkel gefahren."
+          }
+        }
+      }
+    },
+    "Smart patch" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smart patch"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smart Patch"
+          }
+        }
+      }
+    },
+    "soon" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "soon"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "bald"
+          }
+        }
+      }
+    },
+    "Route enabled" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Route enabled"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Route aktiv"
+          }
+        }
+      }
+    },
+    "Source" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Source"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quelle"
+          }
+        }
+      }
+    },
+    "Destination" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Destination"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ziel"
+          }
+        }
+      }
+    },
+    "The body value that maps to none of this route's depth. Raise it to ignore the bottom of the channel's range." : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The body value that maps to none of this route's depth. Raise it to ignore the bottom of the channel's range."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Körperwert, der auf nichts von der Tiefe dieser Route abgebildet wird. Erhöhe ihn, um den unteren Teil des Kanalbereichs zu ignorieren."
+          }
+        }
+      }
+    },
+    "The body value that maps to all of this route's depth. Lower it to reach full depth without reaching the top of the channel's range." : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The body value that maps to all of this route's depth. Lower it to reach full depth without reaching the top of the channel's range."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Körperwert, der auf die ganze Tiefe dieser Route abgebildet wird. Senke ihn, um volle Tiefe zu erreichen, ohne das obere Ende des Kanalbereichs zu erreichen."
+          }
+        }
+      }
+    },
+    "Invert" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invert"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Umkehren"
+          }
+        }
+      }
+    },
+    "Curve" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Curve"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurve"
+          }
+        }
+      }
+    },
+    "Response curve" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Response curve"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ansprechkurve"
+          }
+        }
+      }
+    },
+    "MIDI" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI"
+          }
+        }
+      }
+    },
+    "Insert FX" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insert FX"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insert-FX"
+          }
+        }
+      }
+    },
+    "Stamp a character…" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stamp a character…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einen Charakter aufprägen…"
+          }
+        }
+      }
+    },
+    "Apply a production sound like Underwater or Telephone, then tweak below" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apply a production sound like Underwater or Telephone, then tweak below"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einen Produktionsklang wie Unterwasser oder Telefon anwenden, dann unten feinjustieren"
+          }
+        }
+      }
+    },
+    "Applies the EchoelFX chain — every stage in signal order, filter first, limiter last. Stamp a character (Underwater, Telephone, Cassette…) for an instant sound, then tweak. Off by default." : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Applies the EchoelFX chain — every stage in signal order, filter first, limiter last. Stamp a character (Underwater, Telephone, Cassette…) for an instant sound, then tweak. Off by default."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wendet die EchoelFX-Kette an — jede Stufe in Signalreihenfolge, Filter zuerst, Limiter zuletzt. Präge einen Charakter auf (Unterwasser, Telefon, Kassette…) für einen sofortigen Klang, dann feinjustieren. Standardmäßig aus."
+          }
+        }
+      }
+    },
+    "Saves the full effects chain — every parameter — as your own preset." : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saves the full effects chain — every parameter — as your own preset."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichert die ganze Effektkette — jeden Parameter — als dein eigenes Preset."
+          }
+        }
+      }
+    },
+    "Type" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Typ"
+          }
+        }
+      }
+    },
+    "Low-pass" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Low-pass"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiefpass"
+          }
+        }
+      }
+    },
+    "High-pass" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "High-pass"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hochpass"
+          }
+        }
+      }
+    },
+    "Band-pass" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band-pass"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bandpass"
+          }
+        }
+      }
+    },
+    "Notch" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notch"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notch"
+          }
+        }
+      }
+    },
+    "Mode" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modus"
+          }
+        }
+      }
+    },
+    "Digital" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digital"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digital"
+          }
+        }
+      }
+    },
+    "Tape" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tape"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tape"
+          }
+        }
+      }
+    },
+    "Ping-Pong" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ping-Pong"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ping-Pong"
+          }
+        }
+      }
+    },
+    "Auto-Pan" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto-Pan"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto-Pan"
+          }
+        }
+      }
+    },
+    "Pick a preset to morph the current sound toward" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick a preset to morph the current sound toward"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Preset wählen, zu dem der aktuelle Klang hin morpht"
+          }
+        }
+      }
+    },
+    "Macro morph" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Macro morph"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Makro-Morph"
+          }
+        }
+      }
+    },
+    "Save current sound…" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save current sound…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktuellen Klang sichern…"
+          }
+        }
+      }
+    },
+    "No saved presets yet. Dial in a sound below, then save it." : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No saved presets yet. Dial in a sound below, then save it."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine gesicherten Presets. Stell unten einen Klang ein und sichere ihn."
+          }
+        }
+      }
+    },
+    "Apply this preset to the effects chain" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apply this preset to the effects chain"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Preset auf die Effektkette anwenden"
+          }
+        }
+      }
+    },
+    "Duplicate" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicate"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplizieren"
+          }
+        }
+      }
+    },
+    "Submit" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Submit"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einreichen"
+          }
+        }
+      }
+    },
+    "My presets" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My presets"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meine Presets"
+          }
+        }
+      }
+    },
+    "Saved on this device — favorites and recently-used rise to the top. Swipe right to ★, left to Submit or Delete." : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved on this device — favorites and recently-used rise to the top. Swipe right to ★, left to Submit or Delete."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf diesem Gerät gesichert — Favoriten und zuletzt benutzte steigen nach oben. Nach rechts wischen für ★, nach links für Einreichen oder Löschen."
+          }
+        }
+      }
+    },
+    "Apply this community preset to the effects chain" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apply this community preset to the effects chain"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Community-Preset auf die Effektkette anwenden"
+          }
+        }
+      }
+    },
+    "Community presets" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Community presets"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Community-Presets"
+          }
+        }
+      }
+    },
+    "Curated by Echoel. Submitting your own to the community comes next." : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Curated by Echoel. Submitting your own to the community comes next."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von Echoel kuratiert. Eigene an die Community einzureichen kommt als Nächstes."
+          }
+        }
+      }
+    },
+    "Set this rate from a musical note division at the current tempo" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set this rate from a musical note division at the current tempo"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Rate aus einem Notenwert im aktuellen Tempo setzen"
+          }
+        }
+      }
+    },
+    "Add bio modulation…" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add bio modulation…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio-Modulation hinzufügen…"
+          }
+        }
+      }
+    },
+    "Map the body or an LFO onto an effect parameter" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Map the body or an LFO onto an effect parameter"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den Körper oder einen LFO auf einen Effektparameter legen"
+          }
+        }
+      }
+    },
+    "Bio-reactive" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio-reactive"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio-reaktiv"
+          }
+        }
+      }
+    },
+    "Bipolar" : {
+      "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bipolar"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bipolar"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
