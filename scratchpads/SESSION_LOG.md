@@ -40798,3 +40798,8 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - Fehler: `invalid redeclaration of 'title'` (EchoelIconTile.swift:72) und `'exportTitle'` (EchoelStudioView.swift:9690) → memberwise init mit zwei `title:` → „missing argument“ an vier Aufrufstellen. 12 `error:`-Zeilen, EINE Ursache (#689).
 - Ursache: das Skript zählte den ANKER für die Idempotenz; eine reine Einfügung hinter einem überlebenden Anker ändert die Zählung nicht, der zweite Lauf fügte erneut ein. Transkription grept auf Vorhandensein → grün. Lehre in decisions.csv/memory: Einfügungen am eingefügten Text guarden + Doppelblock-Scan vor dem Commit.
 - Push der Spitze 3c8b07ca5 (3ab37512f Regel 2 · 53725f4e0 · 2cf63d9ad · Fix); Gates lesen: Compile Check + CI/CD BfT/Run Tests — TheIconTileCarriesAWordTests, ThePlateHasOnePauseNotASecondPlayTests, TheEmptyStateOffersTheNextStepNotARecipeTests, TheChromeTextMeetsTheElevenPointFloorTests müssen kompilieren.
+
+## 2026-09-30 — Regel 12 (heller Modus · Kontrast): Rat, HOLD; Scratchpad-Checker `dupblocks.py`
+
+- Rat (kompakt): `EchoelTheme` = statische Konstanten an Hunderten Lesestellen, Kontrast-Wächter rechnet seine Böden daraus; heller Modus/Kontrast-Schalter = Theme-Umbau (Token umgebungsabhängig), kein Schnitt; Schwarz ist Marke. Gate: HOLD-FOR-FOUNDER (heller Modus), Kontrast = Umbau nach Phase A. Systemseitig wirken „Kontrast erhöhen“/„Fetter Text“/„Intelligent umkehren“ heute schon. Doc rev 68. Kein Code.
+- Neuer Scratchpad-Checker `dupblocks.py` (identische benachbarte Zeilenblöcke in den vom Diff berührten Swift-Dateien; bekanntes Positiv = e4b44ff45-Baum, gefunden bei Zeile 61; 0 Treffer auf de590c2bf..HEAD) läuft jetzt in `checkers.sh` mit.
