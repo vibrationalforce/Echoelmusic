@@ -41,7 +41,8 @@
 // instance line and the Save/Open doors: three signatures, two sentence seams, no verbatim sentence, fifteen units
 // (parent: all absent, eight units missing — ONE finding). E4-19 added the Routing MIDI label's signature, the
 // guide counter's two seams and the eight Scale-family headers (parent: all absent, eleven units missing — ONE finding).
-// E4-20 added the 23 Genre shelf headers (parent: 0/23 localised, 22 units missing — ONE finding). Claim 12
+// E4-20 added the 23 Genre shelf headers (parent: 0/23 localised, 22 units missing — ONE finding). E4-21 added the
+// 57 scale display names plus the shortName counterweight (parent: 0/57, 57 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -597,6 +598,25 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertTrue(shelves.contains("return String(localized: \"\(title)\")"), "`Subcategory.title` spells `\(title)` verbatim again")
         }
         try assertGerman(shelfTitles, "genre shelf headers")
+        // E4-21 — the 57 scale display names go through String(localized:); the SHORT name (share filenames) does not
+        let scaleNames = ["Major", "Minor", "Dorian", "Phrygian", "Lydian",
+                          "Mixolydian", "Pentatonic Major", "Pentatonic Minor", "Harmonic Minor", "Chromatic",
+                          "Locrian", "Melodic Minor", "Lydian Dominant", "Altered", "Bebop Dominant",
+                          "Blues Minor", "Blues Major", "Whole Tone", "Diminished (W–H)", "Diminished (H–W)",
+                          "Phrygian Dominant", "Harmonic Major", "Hungarian Minor", "Double Harmonic", "Neapolitan Minor",
+                          "Neapolitan Major", "Romanian Minor", "Persian", "Hirajoshi", "Iwato",
+                          "Insen", "Yo", "In (Sakura)", "Egyptian", "Pelog",
+                          "Enigmatic", "Prometheus", "Augmented", "Tritone", "Hungarian Major",
+                          "Bebop Major", "Major Locrian", "Lydian Augmented", "Spanish 8-Tone", "Kumoi",
+                          "Messiaen 3", "Messiaen 4", "Messiaen 5", "Messiaen 6", "Messiaen 7",
+                          "Marwa", "Purvi", "Todi (Hindustani)", "Malkauns", "Charukeshi",
+                          "Hamsadhwani", "Shanmukhapriya"]
+        for name in scaleNames {
+            XCTAssertTrue(families.contains("return String(localized: \"\(name)\")"), "`Scale.displayName` spells `\(name)` verbatim again")
+        }
+        XCTAssertTrue(families.contains("return \"maj\"") && families.contains("return \"harm\""),
+                      "`Scale.shortName` is no longer a plain literal — it is the key half of every share filename and must read the same on every device")
+        try assertGerman(scaleNames, "scale display names")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

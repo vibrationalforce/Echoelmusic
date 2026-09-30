@@ -14670,6 +14670,1032 @@
           }
         }
       }
+    },
+    "Major" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Major"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dur"
+          }
+        }
+      }
+    },
+    "Minor" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minor"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moll"
+          }
+        }
+      }
+    },
+    "Dorian" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dorian"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dorisch"
+          }
+        }
+      }
+    },
+    "Phrygian" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phrygian"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phrygisch"
+          }
+        }
+      }
+    },
+    "Lydian" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lydian"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lydisch"
+          }
+        }
+      }
+    },
+    "Mixolydian" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mixolydian"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mixolydisch"
+          }
+        }
+      }
+    },
+    "Pentatonic Major" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pentatonic Major"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pentatonik Dur"
+          }
+        }
+      }
+    },
+    "Pentatonic Minor" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pentatonic Minor"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pentatonik Moll"
+          }
+        }
+      }
+    },
+    "Harmonic Minor" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harmonic Minor"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harmonisch Moll"
+          }
+        }
+      }
+    },
+    "Chromatic" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chromatic"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chromatisch"
+          }
+        }
+      }
+    },
+    "Locrian" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Locrian"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lokrisch"
+          }
+        }
+      }
+    },
+    "Melodic Minor" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Melodic Minor"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Melodisch Moll"
+          }
+        }
+      }
+    },
+    "Lydian Dominant" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lydian Dominant"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lydisch dominant"
+          }
+        }
+      }
+    },
+    "Altered" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altered"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alteriert"
+          }
+        }
+      }
+    },
+    "Bebop Dominant" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bebop Dominant"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bebop dominant"
+          }
+        }
+      }
+    },
+    "Blues Minor" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blues Minor"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blues Moll"
+          }
+        }
+      }
+    },
+    "Blues Major" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blues Major"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blues Dur"
+          }
+        }
+      }
+    },
+    "Whole Tone" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Whole Tone"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ganzton"
+          }
+        }
+      }
+    },
+    "Diminished (W–H)" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diminished (W–H)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vermindert (G–H)"
+          }
+        }
+      }
+    },
+    "Diminished (H–W)" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diminished (H–W)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vermindert (H–G)"
+          }
+        }
+      }
+    },
+    "Phrygian Dominant" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phrygian Dominant"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phrygisch dominant"
+          }
+        }
+      }
+    },
+    "Harmonic Major" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harmonic Major"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harmonisch Dur"
+          }
+        }
+      }
+    },
+    "Hungarian Minor" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hungarian Minor"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ungarisch Moll"
+          }
+        }
+      }
+    },
+    "Double Harmonic" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Double Harmonic"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doppelt harmonisch"
+          }
+        }
+      }
+    },
+    "Neapolitan Minor" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neapolitan Minor"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neapolitanisch Moll"
+          }
+        }
+      }
+    },
+    "Neapolitan Major" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neapolitan Major"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neapolitanisch Dur"
+          }
+        }
+      }
+    },
+    "Romanian Minor" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Romanian Minor"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rumänisch Moll"
+          }
+        }
+      }
+    },
+    "Persian" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Persian"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Persisch"
+          }
+        }
+      }
+    },
+    "Hirajoshi" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hirajoshi"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hirajoshi"
+          }
+        }
+      }
+    },
+    "Iwato" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iwato"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iwato"
+          }
+        }
+      }
+    },
+    "Insen" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insen"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insen"
+          }
+        }
+      }
+    },
+    "Yo" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yo"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yo"
+          }
+        }
+      }
+    },
+    "In (Sakura)" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In (Sakura)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In (Sakura)"
+          }
+        }
+      }
+    },
+    "Egyptian" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Egyptian"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ägyptisch"
+          }
+        }
+      }
+    },
+    "Pelog" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pelog"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pelog"
+          }
+        }
+      }
+    },
+    "Enigmatic" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enigmatic"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enigmatisch"
+          }
+        }
+      }
+    },
+    "Prometheus" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prometheus"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prometheus"
+          }
+        }
+      }
+    },
+    "Augmented" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Augmented"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übermäßig"
+          }
+        }
+      }
+    },
+    "Tritone" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tritone"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tritonus"
+          }
+        }
+      }
+    },
+    "Hungarian Major" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hungarian Major"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ungarisch Dur"
+          }
+        }
+      }
+    },
+    "Bebop Major" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bebop Major"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bebop Dur"
+          }
+        }
+      }
+    },
+    "Major Locrian" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Major Locrian"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dur-Lokrisch"
+          }
+        }
+      }
+    },
+    "Lydian Augmented" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lydian Augmented"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lydisch übermäßig"
+          }
+        }
+      }
+    },
+    "Spanish 8-Tone" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spanish 8-Tone"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spanisch 8-tönig"
+          }
+        }
+      }
+    },
+    "Kumoi" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumoi"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumoi"
+          }
+        }
+      }
+    },
+    "Messiaen 3" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messiaen 3"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messiaen 3"
+          }
+        }
+      }
+    },
+    "Messiaen 4" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messiaen 4"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messiaen 4"
+          }
+        }
+      }
+    },
+    "Messiaen 5" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messiaen 5"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messiaen 5"
+          }
+        }
+      }
+    },
+    "Messiaen 6" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messiaen 6"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messiaen 6"
+          }
+        }
+      }
+    },
+    "Messiaen 7" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messiaen 7"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messiaen 7"
+          }
+        }
+      }
+    },
+    "Marwa" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marwa"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marwa"
+          }
+        }
+      }
+    },
+    "Purvi" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Purvi"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Purvi"
+          }
+        }
+      }
+    },
+    "Todi (Hindustani)" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todi (Hindustani)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todi (Hindustani)"
+          }
+        }
+      }
+    },
+    "Malkauns" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Malkauns"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Malkauns"
+          }
+        }
+      }
+    },
+    "Charukeshi" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charukeshi"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charukeshi"
+          }
+        }
+      }
+    },
+    "Hamsadhwani" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hamsadhwani"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hamsadhwani"
+          }
+        }
+      }
+    },
+    "Shanmukhapriya" : {
+      "comment" : "Scale display name — Scale.displayName (E4-21, 2026-09-30). Proper names stay; Major/Minor and the Greek modes take their German forms.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shanmukhapriya"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shanmukhapriya"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -261,8 +261,9 @@ public enum Scale: String, Codable, CaseIterable, Sendable {
         ///
         /// ⭐ E4-19 (2026-09-30): each title now goes through `String(localized:)`, so the value that
         /// reaches `Section` is already the locale's — the catalog carries the eight keys with `de`.
-        /// ⚠️ STILL OPEN of #232's translation half: `Scale.displayName` (86 names, own slice).
-        /// `MusicStyle.Subcategory.title` (the Genre picker's shelf headers) followed with E4-20.
+        /// `Scale.displayName` (57 names) followed with E4-21 and `MusicStyle.Subcategory.title`
+        /// (the Genre picker's shelf headers) with E4-20 — #232's translation half is closed for
+        /// the three pickers; `shortName` stays English by design (share filenames).
         /// `MusicStyle.Category.title` stays English on purpose: it has zero production readers.
         ///
         /// ⚠️ NO "(12-TET)" IN THE HEADERS, and that is a reversal. They read
@@ -361,65 +362,69 @@ public enum Scale: String, Codable, CaseIterable, Sendable {
         }
     }
 
-    /// Human label.
+    /// Human label. ⭐ E4-21 (2026-09-30): every case returns `String(localized:)`, so the
+    /// picker rows, `name(naming:)` and the note editor's key line read the locale's word
+    /// (Dur · Moll · Dorisch …; proper names — Hirajoshi, Marwa, Messiaen — stay as they are).
+    /// ⚠️ `shortName` below is NOT localised and must not be: it is the key half of every
+    /// share filename (`SessionContext` → `SessionNaming.stem`), the same on every device.
     public var displayName: String {
         switch self {
-        case .major:           return "Major"
-        case .minor:           return "Minor"
-        case .dorian:          return "Dorian"
-        case .phrygian:        return "Phrygian"
-        case .lydian:          return "Lydian"
-        case .mixolydian:      return "Mixolydian"
-        case .pentatonicMajor: return "Pentatonic Major"
-        case .pentatonicMinor: return "Pentatonic Minor"
-        case .harmonicMinor:   return "Harmonic Minor"
-        case .chromatic:       return "Chromatic"
-        case .locrian:             return "Locrian"
-        case .melodicMinor:        return "Melodic Minor"
-        case .lydianDominant:      return "Lydian Dominant"
-        case .altered:             return "Altered"
-        case .bebopDominant:       return "Bebop Dominant"
-        case .bluesMinor:          return "Blues Minor"
-        case .bluesMajor:          return "Blues Major"
-        case .wholeTone:           return "Whole Tone"
-        case .diminishedWholeHalf: return "Diminished (W–H)"
-        case .diminishedHalfWhole: return "Diminished (H–W)"
-        case .phrygianDominant:    return "Phrygian Dominant"
-        case .harmonicMajor:       return "Harmonic Major"
-        case .hungarianMinor:      return "Hungarian Minor"
-        case .doubleHarmonic:      return "Double Harmonic"
-        case .neapolitanMinor:     return "Neapolitan Minor"
-        case .neapolitanMajor:     return "Neapolitan Major"
-        case .romanianMinor:       return "Romanian Minor"
-        case .persian:             return "Persian"
-        case .hirajoshi:           return "Hirajoshi"
-        case .iwato:               return "Iwato"
-        case .insen:               return "Insen"
-        case .yo:                  return "Yo"
-        case .inSakura:            return "In (Sakura)"
-        case .egyptian:            return "Egyptian"
-        case .pelog:               return "Pelog"
-        case .enigmatic:           return "Enigmatic"
-        case .prometheus:          return "Prometheus"
-        case .augmented:           return "Augmented"
-        case .tritone:             return "Tritone"
-        case .hungarianMajor:      return "Hungarian Major"
-        case .bebopMajor:          return "Bebop Major"
-        case .majorLocrian:        return "Major Locrian"
-        case .lydianAugmented:     return "Lydian Augmented"
-        case .spanishEightTone:    return "Spanish 8-Tone"
-        case .kumoi:               return "Kumoi"
-        case .messiaen3:           return "Messiaen 3"
-        case .messiaen4:           return "Messiaen 4"
-        case .messiaen5:           return "Messiaen 5"
-        case .messiaen6:           return "Messiaen 6"
-        case .messiaen7:           return "Messiaen 7"
+        case .major:           return String(localized: "Major")
+        case .minor:           return String(localized: "Minor")
+        case .dorian:          return String(localized: "Dorian")
+        case .phrygian:        return String(localized: "Phrygian")
+        case .lydian:          return String(localized: "Lydian")
+        case .mixolydian:      return String(localized: "Mixolydian")
+        case .pentatonicMajor: return String(localized: "Pentatonic Major")
+        case .pentatonicMinor: return String(localized: "Pentatonic Minor")
+        case .harmonicMinor:   return String(localized: "Harmonic Minor")
+        case .chromatic:       return String(localized: "Chromatic")
+        case .locrian:             return String(localized: "Locrian")
+        case .melodicMinor:        return String(localized: "Melodic Minor")
+        case .lydianDominant:      return String(localized: "Lydian Dominant")
+        case .altered:             return String(localized: "Altered")
+        case .bebopDominant:       return String(localized: "Bebop Dominant")
+        case .bluesMinor:          return String(localized: "Blues Minor")
+        case .bluesMajor:          return String(localized: "Blues Major")
+        case .wholeTone:           return String(localized: "Whole Tone")
+        case .diminishedWholeHalf: return String(localized: "Diminished (W–H)")
+        case .diminishedHalfWhole: return String(localized: "Diminished (H–W)")
+        case .phrygianDominant:    return String(localized: "Phrygian Dominant")
+        case .harmonicMajor:       return String(localized: "Harmonic Major")
+        case .hungarianMinor:      return String(localized: "Hungarian Minor")
+        case .doubleHarmonic:      return String(localized: "Double Harmonic")
+        case .neapolitanMinor:     return String(localized: "Neapolitan Minor")
+        case .neapolitanMajor:     return String(localized: "Neapolitan Major")
+        case .romanianMinor:       return String(localized: "Romanian Minor")
+        case .persian:             return String(localized: "Persian")
+        case .hirajoshi:           return String(localized: "Hirajoshi")
+        case .iwato:               return String(localized: "Iwato")
+        case .insen:               return String(localized: "Insen")
+        case .yo:                  return String(localized: "Yo")
+        case .inSakura:            return String(localized: "In (Sakura)")
+        case .egyptian:            return String(localized: "Egyptian")
+        case .pelog:               return String(localized: "Pelog")
+        case .enigmatic:           return String(localized: "Enigmatic")
+        case .prometheus:          return String(localized: "Prometheus")
+        case .augmented:           return String(localized: "Augmented")
+        case .tritone:             return String(localized: "Tritone")
+        case .hungarianMajor:      return String(localized: "Hungarian Major")
+        case .bebopMajor:          return String(localized: "Bebop Major")
+        case .majorLocrian:        return String(localized: "Major Locrian")
+        case .lydianAugmented:     return String(localized: "Lydian Augmented")
+        case .spanishEightTone:    return String(localized: "Spanish 8-Tone")
+        case .kumoi:               return String(localized: "Kumoi")
+        case .messiaen3:           return String(localized: "Messiaen 3")
+        case .messiaen4:           return String(localized: "Messiaen 4")
+        case .messiaen5:           return String(localized: "Messiaen 5")
+        case .messiaen6:           return String(localized: "Messiaen 6")
+        case .messiaen7:           return String(localized: "Messiaen 7")
         // Bare names, no "Rāga …" prefix and no parenthetical: that is exactly how
         // Hirajoshi, Iwato, Insen, Yo, Kumoi and Pelog already stand in this list.
         // Decorating only the Indian entries would single them out in the one place
         // this slice exists to stop doing that.
-        case .marwa:               return "Marwa"
-        case .purvi:               return "Purvi"
+        case .marwa:               return String(localized: "Marwa")
+        case .purvi:               return String(localized: "Purvi")
         // ⚠️ THE ONE QUALIFIED NAME, and it breaks the rule directly above ON PURPOSE.
         // "Todi" is a cross-tradition COLLISION: in Carnatic practice it means
         // Hanumatōḍī (mēḷa 8) = [0,1,3,5,7,8,10] — which is already in this picker, as
@@ -429,11 +434,11 @@ public enum Scale: String, Codable, CaseIterable, Sendable {
         // German reader shown the wrong note), on the slice meant to fix exactly that.
         // Hirajoshi, Kumoi and Pelog have no competing referent, so the bare-name rule
         // fits them; it does not fit this one. Do not "harmonise" this back.
-        case .todi:                return "Todi (Hindustani)"
-        case .malkauns:            return "Malkauns"
-        case .charukeshi:          return "Charukeshi"
-        case .hamsadhwani:         return "Hamsadhwani"
-        case .shanmukhapriya:      return "Shanmukhapriya"
+        case .todi:                return String(localized: "Todi (Hindustani)")
+        case .malkauns:            return String(localized: "Malkauns")
+        case .charukeshi:          return String(localized: "Charukeshi")
+        case .hamsadhwani:         return String(localized: "Hamsadhwani")
+        case .shanmukhapriya:      return String(localized: "Shanmukhapriya")
         }
     }
 
