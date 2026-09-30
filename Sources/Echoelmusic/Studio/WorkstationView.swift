@@ -561,8 +561,12 @@ struct WorkstationView: View {
         .padding(.vertical, 6).padding(.horizontal, 10)
         .frame(minHeight: 44)
         .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
+        // Selection is never colour alone (Zug 4, 2026-09-30): the stroke also THICKENS, the
+        // way a selected part does in `TrackPartsView` and on the arrange canvas — a reader
+        // who cannot tell the green from the border still sees which row is open.
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-            .strokeBorder(selected ? EchoelTheme.accent : EchoelTheme.border, lineWidth: 1))
+            .strokeBorder(selected ? EchoelTheme.accent : EchoelTheme.border,
+                          lineWidth: selected ? 2 : 1))
     }
 
     /// One track-header switch (Mute or Solo). A letter on screen, the full word to VoiceOver;
