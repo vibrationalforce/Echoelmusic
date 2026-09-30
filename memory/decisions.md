@@ -3811,3 +3811,25 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Review:** 2026-10-30. Next E4 producers: `MediaBrowserView` (Relink/Place, size · use, `usageText`),
   `ComposeGuide` (step titles/details/waiting reasons), `BioMetricInfo` spoken lines, `PatchbayView`
   connections/targets, then the remaining panel families.
+
+### 2026-09-30 — E4-29: the media library and the routing surface speak German (d771b9398)
+
+- **Decision:** `MediaBrowserView` (relink note `Relinked ` + “name” + ` to ` + file; `"n" + " of " + "N" + " files"`;
+  `Relink `/`Place `/`Preview ` + name; `Plays its first ` + n + ` seconds`; `missingText` = name + ` — expects ` +
+  file + ` · ` + (no part / 1 part / n + parts); `noMatchText` = `No file name contains ` + “query”.; `usageText` =
+  not in the piece / imported, not placed yet / in 1 part / `in ` + n + ` parts`) and `PatchbayView` (name +
+  ` — network target`; n + `connections`; src + ` to ` + dst; connected / not connected / incompatible) go through
+  catalog keys. Catalog 973 → 996. The two neutral joins (size · use; name, size, use) carry NO key.
+- **Why:** both surfaces are the ones a reader meets when a file goes missing or a route is inspected; every count
+  and spoken label there was an interpolated literal the catalog could not reach. English byte-identical — the
+  runtime guards on `usageText`/`noMatchText`/`missingText` pass unchanged under the bundle's en locale. ` parts`
+  (with the leading space, dative „Teilen“) is a distinct key from `parts` („Teile“) on purpose: German declines
+  what English does not, so one noun needs two seams. The count line keeps "1 connections" (grammar is not this
+  slice's job).
+- **Guard:** `TheChromeSpeaksGermanTests` claim 11, E4-29 block (20 seams, 21 absence needles, two runtime
+  counterweights, 23 units). Transcribed WORK PASS / HEAD FAIL (23 units missing — ONE finding); checkers green,
+  moved-needles none, needle-reachability the three pre-existing findings.
+- **Next E4 producers:** `ComposeGuide` (step titles/details/waiting reasons), the spoken `BioMetricInfo` lines,
+  then the remaining panel families (EchoelStudioView sites, EchoelFXView, FloatingVisualWindow, BioStripView,
+  MoodPads, PerformSessionView, GuideOverlay).
+- **Review:** 2026-10-30.
