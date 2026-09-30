@@ -3202,3 +3202,10 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Guards:** `TheChromeSpeaksOneWordPerThingTests` claim 2 (red on the parent by the 12 hits); `TheSceneLaunchIsASwitchTests` start-hint needle follows the new words.
 - **Next ratchets:** `RecordTakeControls` (10 hits — "take" has a second meaning there, the recording; each read one by one) · `EchoelStudioView` (54, family by family).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 1, ratchet 4: the Record door speaks the glossary word
+
+- **Decision:** `RecordTakeControls` joins the chrome word guard's list (fcd313e4e). 10 visible hits: "the song" → "the piece"; "take" → "recording" — the glossary's own word for the thing being written ("recording is a take being written — but the block it produces is a part"), so "adds the recording as a new part" keeps both words where they belong. `RecordTake`, `droppedTakes` and the test names are identifiers and keep the word.
+- **Guards:** `TheChromeSpeaksOneWordPerThingTests` claim 2 (red on the parent by the 10 hits); `TheMIDITakeIsRecordedFromTheWorkstationTests` asserts the dropped sentence end to end by its new words.
+- **Next ratchets (measured with the guard's scanner):** `EchoelStudioView` 54 (family by family — the Save-alert sentence pinned by `TheSongAloneCanBeSavedTests` claim 2 moves with it) · `EchoelAppIntents` 8 · `LiveColaboView` / `MediaBrowserView` / `PatchbayView` / `SessionView` 6 each.
+- **Review:** 2026-10-30.
