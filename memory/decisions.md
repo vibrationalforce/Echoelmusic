@@ -3216,3 +3216,11 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Why family by family:** the file's remaining 40 hits carry second meanings — most "session"s are the sitting (place in the name, weather per session, `AVAudioSession`), "Take sound" is the touch voice, "reset"/"factory" is the rule-6 word decision. The file joins the chrome guard's list only when all are read.
 - **Guards:** five needles follow (PerformIsASecondViewOfTheSameSessionTests, TheWorkstationHasADoorTests, SaveWritesIntoTheOpenProjectTests ×2, TheSavePromiseMatchesTheSaveTests, TheSongAloneCanBeSavedTests claim 2); `ANewPieceStartsAnEmptySongTests`' fragments hold unchanged.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 1, instrument file family 2: "session" leaves the visible text
+
+- **Decision (f9ae421b3):** the 16 "session" literals in `EchoelStudioView`, read one by one: the saved work → "piece" (Shared piece · save the piece · share your piece · Place in piece name · piece and export names · pieces you save); the sitting → the sentence names what happens, no container noun ("Ends the instrument and the pulse reading", "weather lookup at each start", "paused (user edit)", "pauses cleared", "what iOS granted" — that one was `AVAudioSession`); the calm view → "Breathing guide"; the Live Colabo door → "nearby-devices sheet". Identifiers keep their names.
+- **Why no word for the sitting:** the glossary deliberately names none — "pulse reading", "the instrument" and "the piece" are the three things a Stop ends, and every sentence here could say its own thing directly.
+- **Guards / copy:** `TheSessionSaveOpensTheSameSongTests` needle follows the shared name; `docs/privacy.html` and `docs/dev/APP_STORE_LISTING_v1.md` quote the switch's new label.
+- **Remaining in the file (scanner):** take 10 · reset 6 + factory 1 (rule-6 word decision) · project 3 (verb + projector, stay) · lane 2 (a two-line `log.log` call whose string sits on the line after the marker — a scanner limit, join the call to clear it) · clip 1.
+- **Review:** 2026-10-30.
