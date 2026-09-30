@@ -3178,3 +3178,11 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Not renamed:** `ComposerMode.flowFree` / `.studioLocked` — persisted rawValues (`modeRaw`, #493/#494).
 - **Guard:** `TheTempoModeSpeaksTheLocksWordsTests` (0ec128ef6); `TheSavePromiseMatchesTheSaveTests` rewritten as the decision.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 6, family 2: every keystore-bound value row offers the keystore's default
+
+- **Decision:** the 30 `EchoelValueField` rows in `EchoelStudioView` whose binding is a keystore-backed `@AppStorage` (`StudioDefaultKeys.x.key` … `= StudioDefaultKeys.x.value`) pass `standard: StudioDefaultKeys.x.value` — the SAME `x`. Families: touch (5), field auto-play (7), arp rhythm (4), touch sync (1), visual (9), pad rhythm (3), bar variation (1).
+- **Why:** H15-KEYSTORE already makes the keystore the one owner of these defaults, so the row's "Default" and the fresh-install value cannot disagree by construction. A literal at the call site would be the #416 second definition the parameter exists to avoid.
+- **Guard:** `TheValueFieldOffersItsDefaultTests` claim 5 — a ratchet: it derives the binding→key map from the declarations and demands the matching `standard:` inside every keystore-bound call (≥ 30 checked, zero missing, zero naming a different key). HEAD before the slice: red with exactly 30 missing.
+- **Next families:** `SubBassVoice.defaultSubGain`, `SubCharacter.defaultPresence`/`defaultHeat`, `EchoelDDSP.defaultOctaveMix`, `LightingStore.defaultLookIntensity`, `Transport`/`PatternEngine.defaultTempo`; then the rows whose default has no owner yet (those get NO key until an owner exists — a nil default shows nothing, #164/#227).
+- **Review:** 2026-10-30.
