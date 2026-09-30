@@ -3315,3 +3315,10 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Decision:** `MetronomeVoice.defaultBeatsPerBar` (4) and `defaultLevel` (0.6), `nonisolated static let`. `beatsPerBar` / `level` AND their `nonisolated(unsafe)` audio mirrors initialise from them (the mirrors had their own literals — a second copy the render thread read). Rows: "Accent every" and both click level rows pass them as `standard:`.
 - **Guard:** claim 3, eighth family — four initialiser needles, accent row once, level rows twice. Transcribed WORK GREEN, HEAD RED.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 6, ninth + tenth families: the rig's shape and the track's pitch shift get one owner each
+
+- **Ninth:** `ArtNetSender.defaultFixtureCount` (1) / `defaultFixtureSpacing` (0); both senders' stored properties and `decodedFixtureCount`'s fallback read them; the "Fixtures" / "Spacing" rows pass them as `standard:`.
+- **Tenth:** `TimelineLane.defaultTransposeSemitones` (0); init default, decode fallback and `AudioTranspose.semitones(laneID:in:)`'s "no such lane" answer read it; the Workstation's "Pitch" row passes it.
+- **Guard:** claim 3, families 9 and 10 — every initialiser/fallback needle once, each row once. Transcribed WORK GREEN, HEAD RED.
+- **Rule-6 rows still without a default after this (measured over `EchoelValueField(label:`):** output port/universe rows (a per-sender standard port each — a possible eleventh family), the FX route rows (per-route factory defaults), the studio's patch-bound rows (the loaded patch owns them), the Field level rows (bio-derived), "Starts at bar" and the automation "Value" (no fact default). Review: 2026-10-30.

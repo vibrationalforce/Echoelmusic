@@ -30,6 +30,10 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
     /// and the inspector rows' "Default" key (`standard:`) all read these two. Unity and centre.
     public static let defaultLevel: Float = 1
     public static let defaultPan: Float = 0
+    /// The ONE owner of a fresh track's pitch shift: none. The init default, the decode fallback,
+    /// `AudioTranspose.semitones(laneID:in:)`'s "no such lane" answer and the Workstation's
+    /// "Pitch" row (`standard:`) read it.
+    public static let defaultTransposeSemitones: Int = 0
     public var isMuted: Bool
     public var isSoloed: Bool
     /// B2 stereo position: −1 (hard left) … +1 (hard right), 0 = center.
@@ -108,7 +112,7 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
                 builtinInstrument: TrackInstrument? = nil, isArmed: Bool = false,
                 patch: SynthPatch? = nil, genreOverride: MusicStyle? = nil,
                 mood: MoodProfile? = nil, variationSeed: UInt64? = nil,
-                transposeSemitones: Int = 0, detuneCents: Float = 0,
+                transposeSemitones: Int = TimelineLane.defaultTransposeSemitones, detuneCents: Float = 0,
                 octaveDouble: Int = 0, samplePath: String? = nil,
                 deviceChain: DeviceChain? = nil) {
         self.id = id
@@ -244,7 +248,7 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
         mood = try? c.decode(MoodProfile.self, forKey: .mood)
         variationSeed = try c.decodeIfPresent(UInt64.self, forKey: .variationSeed)
         // Pre-2026-07-14 docs carry no per-track transpose ⇒ 0 (no shift, bit-identical).
-        transposeSemitones = try c.decodeIfPresent(Int.self, forKey: .transposeSemitones) ?? 0
+        transposeSemitones = try c.decodeIfPresent(Int.self, forKey: .transposeSemitones) ?? TimelineLane.defaultTransposeSemitones
         // Pre-2026-07-14 docs carry no per-track detune ⇒ 0 (no offset, bit-identical).
         detuneCents = try c.decodeIfPresent(Float.self, forKey: .detuneCents) ?? 0
         // Pre-Oktaver docs carry no per-track octave ⇒ 0 (off, bit-identical).

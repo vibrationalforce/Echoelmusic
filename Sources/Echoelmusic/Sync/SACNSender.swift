@@ -102,10 +102,10 @@ public final class SACNSender {
     /// two arms address different rigs in general (they already keep separate host/port/
     /// universe), so one shared key would make a two-protocol install unusable. The decode
     /// RULE is shared, the STORAGE is not. `grandMaster`/`blackout` above stay live-only.
-    public var fixtureCount: Int = 1 {
+    public var fixtureCount: Int = ArtNetSender.defaultFixtureCount {
         didSet { UserDefaults.standard.set(fixtureCount, forKey: Self.fixtureCountKey) }
     }
-    public var fixtureSpacing: Int = 0 {
+    public var fixtureSpacing: Int = ArtNetSender.defaultFixtureSpacing {
         didSet { UserDefaults.standard.set(fixtureSpacing, forKey: Self.fixtureSpacingKey) }
     }
 

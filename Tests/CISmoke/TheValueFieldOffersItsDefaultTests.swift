@@ -37,6 +37,12 @@
 // EIGHTH FAMILY (claim 3, same day): the click — "Accent every" names `MetronomeVoice.defaultBeatsPerBar`,
 // the two level rows (mixer "Level", tempo-tools "Click level") name `MetronomeVoice.defaultLevel`;
 // the stored properties AND their audio-thread mirrors initialise from the same two constants.
+// NINTH FAMILY (claim 3, same day): the light "Fixtures" / "Spacing" rows name
+// `ArtNetSender.defaultFixtureCount` / `defaultFixtureSpacing`; both senders' stored properties
+// and `decodedFixtureCount`'s fallback read them (they were literals `1` / `0` in five places).
+// TENTH FAMILY (claim 3, same day): the Workstation's "Pitch" row names
+// `TimelineLane.defaultTransposeSemitones`; the lane's init default, its decode fallback and
+// `AudioTranspose.semitones(laneID:in:)`'s "no such lane" answer read it.
 //
 // SECOND FAMILY (claim 5, the same day): every value field in `EchoelStudioView` whose binding
 // is a KEYSTORE-backed `@AppStorage` (`StudioDefaultKeys.x.key` … `= StudioDefaultKeys.x.value`)
@@ -252,6 +258,30 @@ final class TheValueFieldOffersItsDefaultTests: XCTestCase {
             both pass `MetronomeVoice.defaultLevel` — same property, same owner. A third row joining \
             is fine: raise this count in the same commit.
             """)
+
+        // NINTH FAMILY — the rig's shape (2026-09-30). One fixture, no gap; both senders and the
+        // decode fallback read `ArtNetSender`'s two constants, the two rows offer them.
+        XCTAssertEqual(ArtNetSender.defaultFixtureCount, 1, "a fresh install describes ONE fixture")
+        XCTAssertEqual(ArtNetSender.defaultFixtureSpacing, 0, "and no gap between fixtures")
+        XCTAssertEqual(occurrences(of: "standard: Double(ArtNetSender.defaultFixtureCount)", in: patchbay), 1, "the \"Fixtures\" row passes the owner's default once")
+        XCTAssertEqual(occurrences(of: "standard: Double(ArtNetSender.defaultFixtureSpacing)", in: patchbay), 1, "the \"Spacing\" row passes the owner's default once")
+        for rel in ["Sources/Echoelmusic/Sync/ArtNetSender.swift", "Sources/Echoelmusic/Sync/SACNSender.swift"] {
+            let sender = try source(rel)
+            XCTAssertEqual(occurrences(of: "var fixtureCount: Int = ArtNetSender.defaultFixtureCount", in: sender), 1, "\(rel): `fixtureCount` initialises from the owner")
+            XCTAssertEqual(occurrences(of: "var fixtureSpacing: Int = ArtNetSender.defaultFixtureSpacing", in: sender), 1, "\(rel): `fixtureSpacing` initialises from the owner")
+        }
+        let artNet = try source("Sources/Echoelmusic/Sync/ArtNetSender.swift")
+        XCTAssertEqual(occurrences(of: "Swift.min(stored, DMXFixtureFan.maxFixtures) : defaultFixtureCount", in: artNet), 1, "`decodedFixtureCount`'s fallback reads the owner, not a literal `1`")
+
+        // TENTH FAMILY — the track's pitch shift (2026-09-30). None, by default; the lane owns it.
+        XCTAssertEqual(TimelineLane.defaultTransposeSemitones, 0, "a fresh track is not transposed")
+        XCTAssertTrue(AudioTranspose.fieldRange.contains(Double(TimelineLane.defaultTransposeSemitones)), "the default sits inside the Pitch row's range")
+        XCTAssertEqual(occurrences(of: "transposeSemitones: Int = TimelineLane.defaultTransposeSemitones", in: lane), 1, "`TimelineLane.init` takes its pitch default from the owner")
+        XCTAssertEqual(occurrences(of: "forKey: .transposeSemitones) ?? TimelineLane.defaultTransposeSemitones", in: lane), 1, "the decode fallback reads the owner")
+        let transpose = try source("Sources/Echoelmusic/Sequencer/AudioTranspose.swift")
+        XCTAssertEqual(occurrences(of: "else { return TimelineLane.defaultTransposeSemitones }", in: transpose), 1, "`AudioTranspose.semitones(laneID:in:)` answers \"no such lane\" with the owner's default")
+        let workstation = try source("Sources/Echoelmusic/Studio/WorkstationView.swift")
+        XCTAssertEqual(occurrences(of: "standard: Double(TimelineLane.defaultTransposeSemitones)", in: workstation), 1, "the \"Pitch\" row passes the lane's default once")
     }
 
     // MARK: - claim 5 — the keystore family: a keystore-bound field offers the keystore's default

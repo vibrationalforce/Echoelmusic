@@ -662,10 +662,12 @@ struct PatchbayView: View {
             }
             pairedRow(spacing: 10) {
                 EchoelValueField(label: "Fixtures", value: fixtureCountBinding,
-                                 range: 1...Double(DMXFixtureFan.maxFixtures), unit: "", decimals: 0)
+                                 range: 1...Double(DMXFixtureFan.maxFixtures), unit: "", decimals: 0,
+                                 standard: Double(ArtNetSender.defaultFixtureCount))
             } second: {
                 EchoelValueField(label: "Spacing", value: fixtureSpacingBinding,
-                                 range: 0...64, unit: "", decimals: 0)
+                                 range: 0...64, unit: "", decimals: 0,
+                                 standard: Double(ArtNetSender.defaultFixtureSpacing))
             }
             Text("Master scales the brightness of all outgoing light data (Art-Net + sACN). Blackout goes dark instantly; the return fades back in flicker-free. 16-bit sends paired coarse/fine channels for smooth fades; pick 8-bit only for fixtures that cannot read them.")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)

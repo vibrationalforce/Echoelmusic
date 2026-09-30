@@ -700,7 +700,8 @@ struct WorkstationView: View {
                 decimals: 0,
                 hint: playing
                     ? "Stop the piece to change pitch"
-                    : "Moves every part on this track up or down without changing its tempo")
+                    : "Moves every part on this track up or down without changing its tempo",
+                standard: Double(TimelineLane.defaultTransposeSemitones))
             .disabled(playing)
             .padding(.leading, 36).padding(.trailing, 10)
         }

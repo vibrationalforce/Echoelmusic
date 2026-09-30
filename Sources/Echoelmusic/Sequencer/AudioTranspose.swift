@@ -64,7 +64,7 @@ public enum AudioTranspose {
     /// The pitch the ENGINE plays for this lane: audio, non-bio lanes only, clamped.
     public static func semitones(laneID: UUID, in document: TimelineDocument) -> Int {
         guard let lane = document.lanes.first(where: { $0.id == laneID }),
-              lane.kind == .audio, !lane.isBio else { return 0 }
+              lane.kind == .audio, !lane.isBio else { return TimelineLane.defaultTransposeSemitones }
         return clamped(lane.transposeSemitones)
     }
 

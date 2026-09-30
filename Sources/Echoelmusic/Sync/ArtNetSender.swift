@@ -141,10 +141,17 @@ public final class ArtNetSender {
     /// already do; the master fader and the blackout belong to the SESSION, so a stored 5 %
     /// master would read as broken hardware on the next launch. See `decodedFixtureCount` for
     /// why no `+1` offset is needed here although `universe` needs one.
-    public var fixtureCount: Int = 1 {
+    /// The rig a fresh install describes: ONE fixture, no gap — the ONE owner of both defaults
+    /// (#416). `SACNSender`'s stored properties, `decodedFixtureCount`'s fallback and the
+    /// "Fixtures" / "Spacing" rows (`standard:`) read them here. Type name in the stored
+    /// initializers, never `Self.` (#1444).
+    public nonisolated static let defaultFixtureCount: Int = 1
+    public nonisolated static let defaultFixtureSpacing: Int = 0
+
+    public var fixtureCount: Int = ArtNetSender.defaultFixtureCount {
         didSet { UserDefaults.standard.set(fixtureCount, forKey: Self.fixtureCountKey) }
     }
-    public var fixtureSpacing: Int = 0 {
+    public var fixtureSpacing: Int = ArtNetSender.defaultFixtureSpacing {
         didSet { UserDefaults.standard.set(fixtureSpacing, forKey: Self.fixtureSpacingKey) }
     }
 
@@ -299,7 +306,7 @@ public final class ArtNetSender {
     /// in depth — but the PROPERTY is what the patchbay shows the operator, and showing 9999
     /// while sending 32 is a lie about the rig.
     public static func decodedFixtureCount(_ stored: Int) -> Int {
-        stored > 0 ? Swift.min(stored, DMXFixtureFan.maxFixtures) : 1
+        stored > 0 ? Swift.min(stored, DMXFixtureFan.maxFixtures) : defaultFixtureCount
     }
     public static func decodedFixtureSpacing(_ stored: Int) -> Int {
         Swift.max(stored, 0)
