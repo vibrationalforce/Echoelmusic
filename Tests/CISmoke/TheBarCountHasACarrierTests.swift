@@ -255,7 +255,7 @@ final class TheBarCountHasACarrierTests: XCTestCase {
         that VoiceOver lost nothing.
         """)
         let label = try body(of: "private var exportLabel: String", in: studio)
-        for state in ["Stop and discard this take", "Recording loop…", "Writing .wav…"] {
+        for state in ["Stop and discard this recording", "Recording loop…", "Writing .wav…"] {
             XCTAssertTrue(label.contains(state), """
             `exportLabel` no longer produces "\(state)".
 

@@ -2413,7 +2413,7 @@ struct EchoelStudioView: View {
             .disabled(isRecordButtonInert)
             .accessibilityLabel(exportLabel)
             .accessibilityHint(exporter.isCancellable
-                ? "Stops this take and discards it. Nothing is saved."
+                ? "Stops this recording and discards it. Nothing is saved."
                 : "Records one loop and exports a WAV to share")
 
             KeepLastLoopButton(pattern: beatPlayer.pattern, bars: loopBars,
@@ -2429,7 +2429,7 @@ struct EchoelStudioView: View {
             // a MIDI export mid-record would silently replace the WAV the user is waiting for.
             .disabled(isExporting || !hasComposed)
             .accessibilityLabel("Export MIDI for your DAW")
-            .accessibilityHint("Exports the take as a MIDI file to open in a DAW, with tempo and key")
+            .accessibilityHint("Exports the instrument's music as a MIDI file to open in a DAW, with tempo and key")
 
             // WA4 Acceptance Test A — a song the USER built (an imported part) is worth saving
             // with no composed take. The leaf reads the song itself: the root body must not
@@ -5793,12 +5793,12 @@ struct EchoelStudioView: View {
     /// four — the type-checker cost the panel's own `Group` comment names, paid down rather
     /// than worked around. Nothing here changed; the lines are the same lines.
     @ViewBuilder private var fieldVoiceControls: some View {
-        Text("What your fingers sound like on the field. Take sound follows the generated music; pick a patch to give the field its own voice.")
+        Text("What your fingers sound like on the field. Same as music follows the generated music; pick a patch to give the field its own voice.")
             .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             .fixedSize(horizontal: false, vertical: true)
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                touchPatchChip(name: "Take sound", selected: touchPatchID.isEmpty) {
+                touchPatchChip(name: "Same as music", selected: touchPatchID.isEmpty) {
                     touchPatchID = ""
                     syncTouchSound()
                 }
@@ -9213,7 +9213,7 @@ struct EchoelStudioView: View {
                 // the clip grid UI and the timeline were deleted with #121 Slice 4, so it
                 // named a surface that does not exist and an action nobody can take. State
                 // the consequence instead: nothing is lost, only the internal slot.
-                Text("Internal clip slots are full (\(ClipStore.slotCount)) — the generated take still plays and still exports.")
+                Text("Internal part slots are full (\(ClipStore.slotCount)) — the instrument's music still plays and still exports.")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.warning)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
@@ -9666,7 +9666,7 @@ struct EchoelStudioView: View {
         // While the take runs, the button IS the abort — so it must say so. "Recording
         // loop…" read as a progress notice, which is exactly why nobody would think to
         // tap it after a fumbled bar.
-        case .capturing: return exporter.isCancellable ? "Stop and discard this take"
+        case .capturing: return exporter.isCancellable ? "Stop and discard this recording"
                                                        : "Recording loop…"
         case .rendering: return "Writing .wav…"
         default:         return "Record \(loopBars.label) → send"
@@ -9806,7 +9806,7 @@ struct EchoelStudioView: View {
                         // One line, not a `+` concatenation: the guard matches this sentence
                         // as a single string, and this bundle has been red once on the cost of
                         // concatenated literals (#287).
-                        Text("Kept automatically when you leave the app, before you open another take and before a New piece. Overwritten each time.")
+                        Text("Kept automatically when you leave the app, before you open another piece and before a New piece. Overwritten each time.")
                             .foregroundStyle(EchoelTheme.dim)
                     }
                 }
@@ -11543,8 +11543,7 @@ struct EchoelStudioView: View {
                 }
             }
             if wrote {
-                log.log(.info, category: .audio,
-                        "Lane override take: \(glued.count) notes → lane \(laneID.uuidString.prefix(8)) (\(take.genre.rawValue))")
+                log.log(.info, category: .audio, "Lane override take: \(glued.count) notes → lane \(laneID.uuidString.prefix(8)) (\(take.genre.rawValue))")
             }
         }
     }

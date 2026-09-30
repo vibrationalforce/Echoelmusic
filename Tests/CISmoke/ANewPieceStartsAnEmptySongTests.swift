@@ -234,7 +234,7 @@ final class ANewPieceStartsAnEmptySongTests: XCTestCase {
     func testTheAutosaveCaptionNamesTheNewPieceTrigger() throws {
         let code = try source(Self.studioPath)
         XCTAssertTrue(code.contains(
-            "Text(\"Kept automatically when you leave the app, before you open another take and before a New piece. Overwritten each time.\")"))
+            "Text(\"Kept automatically when you leave the app, before you open another piece and before a New piece. Overwritten each time.\")"))
     }
 
     func testTheReplacementKeepsOpensOrderAndOneEmptySong() throws {
