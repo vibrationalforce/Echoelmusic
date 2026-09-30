@@ -119,6 +119,12 @@ struct WorkspaceView: View {
     /// beneath it. Turn the flag OFF (`FeatureFlags.set(.instrumentHome, false)`)
     /// and the persisted visible/size prefs are honored untouched (no seed at all).
     @AppStorage("visual.floating.visible") private var floatingVisualVisible = true
+    /// Rule 12 part 2 (2026-09-30): the in-app text size, applied HERE on `SurfaceHost` so the
+    /// piece and the instrument share one size (it lived inside `EchoelStudioView` and sized the
+    /// instrument alone). Two writers, one key — the pinch in `StudioZoom` and the Text size
+    /// buttons (`TextSizeRow`); the key lives in `StudioDefaultKeys` (H15-KEYSTORE). COLD state:
+    /// it changes on a pinch or a tap only, so this root rebuilds per step, never per frame.
+    @AppStorage(StudioDefaultKeys.zoomStep.key) private var zoomStep = StudioDefaultKeys.zoomStep.value
 
     #if canImport(MetalKit) && canImport(UIKit)
     /// The floating visual's snap size (SHARED key + default with FloatingVisualWindow;
@@ -167,11 +173,11 @@ struct WorkspaceView: View {
                 //
                 // ⛔ AN EARLIER VERSION OF THIS COMMENT ALSO BLAMED THE CLAMP FOR CAPPING
                 // THE APP'S OWN PINCH ZOOM. That was FALSE and worth correcting rather than
-                // deleting: `StudioZoom` is applied INSIDE `EchoelStudioView`
-                // (`EchoelStudioView.swift`), which mounts under `SurfaceHost` — a SIBLING
-                // of this Group, not a descendant. `.dynamicTypeSize` only writes downward,
-                // so the two never met. The pinch zoom has never reached the chrome and
-                // still does not; this change did not alter that either way.
+                // deleting: `StudioZoom` is applied on `SurfaceHost` (rule 12 part 2,
+                // 2026-09-30; before that INSIDE `EchoelStudioView`, which mounts under it)
+                // — a SIBLING of this Group, not a descendant. `.dynamicTypeSize` only
+                // writes downward, so the two never met. The pinch zoom has never reached
+                // the chrome and still does not; neither change altered that either way.
                 //
                 // The heights below are now MINIMUMS, not fixed sizes, so the bars grow
                 // with the text instead of overflowing — which removes the reason the clamp
@@ -251,6 +257,9 @@ struct WorkspaceView: View {
                 // standing free) by default, the instrument (EchoelStudioView, "create
                 // from within") always mounted beneath it.
                 SurfaceHost()
+                    // Rule 12 part 2: the ONE application point of the text size — both stages,
+                    // not the head (its `.accessibility1` ceiling sits on the Group above).
+                    .modifier(StudioZoom(step: $zoomStep))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             // ⛔ #1027 — A WIDTH CEILING STOOD HERE (#1025) AND IS REMOVED ON FOUNDER

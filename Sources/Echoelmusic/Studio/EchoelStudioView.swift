@@ -1024,11 +1024,9 @@ struct EchoelStudioView: View {
         }
     }
 
-    /// Persisted in-app text size (index into `StudioZoom.ladder`). `-1` = follow the
-    /// system text size; a pinch OR a tap on the Text size buttons in Save & Export
-    /// (`TextSizeRow`, rule 12) makes it an explicit level. Two writers, one key — the key
-    /// lives in `StudioDefaultKeys` (H15-KEYSTORE), never as a literal here.
-    @AppStorage(StudioDefaultKeys.zoomStep.key) private var zoomStep = StudioDefaultKeys.zoomStep.value
+    // ⭐ The text-size step (`StudioDefaultKeys.zoomStep`) is applied ONE level up since rule 12
+    // part 2 (2026-09-30): `WorkspaceView` mounts `StudioZoom` on `SurfaceHost`, so the piece
+    // and the instrument share one size. This file's only reader of the key is `TextSizeRow`.
 
     // Transpose deleted (founder net-architecture 2026-07-14): it was already removed
     // from the chip bar and unreachable, so its value was always 0 — deletion is
@@ -1359,10 +1357,10 @@ struct EchoelStudioView: View {
             // splitting objection is answered by the new position; the thumb-reach one is
             // not, and is the accepted cost of the founder's 2026-07-31 instruction.
         }
-        // Pinch anywhere to zoom the whole instrument (persists); honours the system
-        // text size until the user explicitly zooms — by pinch, or by the Text size
-        // buttons in Save & Export (rule 12: not only a gesture). For users who need larger text.
-        .modifier(StudioZoom(step: $zoomStep))
+        // ⛔ The `StudioZoom` modifier stood here until rule 12 part 2 (2026-09-30) and made
+        // the text size the INSTRUMENT's alone — the piece stage beside it followed the system
+        // size. The one application point is now `WorkspaceView`, on `SurfaceHost`, which hosts
+        // both stages; a second application here would attach a second pinch to the same key.
         .background(EchoelTheme.bg)
         .onAppear {
             // #596 — arm the app-wide plug-in watcher from the ROOT, which always
@@ -12587,12 +12585,14 @@ private struct DiagReport: Identifiable {
     let text: String
 }
 
-/// App-wide pinch-to-zoom for legibility. Scales the entire interface by driving
+/// Pinch-to-zoom for legibility over BOTH stages. Scales the interface by driving
 /// Dynamic Type (so the bundled Atkinson font, laid out `relativeTo: .body`, and the
 /// `@ScaledMetric` widths all grow together). `step < 0` means "follow the system
 /// text size"; the first pinch seeds an explicit level from the current system size,
 /// then it persists. Pinch is a 2-finger gesture, so it never blocks 1-finger scroll.
-private struct StudioZoom: ViewModifier {
+/// Not private since rule 12 part 2: the ONE application point is `WorkspaceView`, on
+/// `SurfaceHost` (the piece and the instrument), while the head keeps its own ceiling.
+struct StudioZoom: ViewModifier {
     @Binding var step: Int
     @Environment(\.dynamicTypeSize) private var systemSize
     @State private var pinchBase: Int?
@@ -12647,10 +12647,11 @@ private struct StudioZoom: ViewModifier {
 /// overridden it, with `step < 0` it is the system's. `effective` is right in both cases, and
 /// `isAccessibilitySize` stacks the three buttons so the words never clip at the top rungs.
 ///
-/// ⚠️ SCOPE, said on the row itself (rule 9): the size applies to the INSTRUMENT, because
-/// `StudioZoom` is mounted inside `EchoelStudioView`; the head keeps its `.accessibility1`
-/// ceiling (`ChromeDynamicTypeTests`) and the piece follows the system size. Widening the
-/// scope means moving the application point — never a second key.
+/// ⚠️ SCOPE, said on the row itself (rule 9): the size applies to the piece AND the instrument,
+/// because `StudioZoom` is mounted on `SurfaceHost` in `WorkspaceView` (rule 12 part 2); the head
+/// keeps its `.accessibility1` ceiling (`ChromeDynamicTypeTests`). ⛔ Until part 2 it was mounted
+/// inside `EchoelStudioView` and the piece followed the system size — the scope was widened by
+/// moving the ONE application point, never by a second key.
 @MainActor
 private struct TextSizeRow: View {
     @AppStorage(StudioDefaultKeys.zoomStep.key) private var step = StudioDefaultKeys.zoomStep.value
@@ -12697,11 +12698,11 @@ private struct TextSizeRow: View {
     }
 
     private var caption: String {
-        let scope = "Sizes the instrument's text; the head and the piece follow the system size."
+        let scope = "Sizes the piece and the instrument; the head follows the system size."
         if step < 0 {
             return "Default — follows the system text size. " + scope
         }
-        return "Level \(step + 1) of \(StudioZoom.ladder.count). Pinching the instrument with two fingers moves it too. " + scope
+        return "Level \(step + 1) of \(StudioZoom.ladder.count). Pinching with two fingers moves it too. " + scope
     }
 
     private func sizeButton(_ word: String, systemImage: String, spoken: String, hint: String,

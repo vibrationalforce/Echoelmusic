@@ -3279,3 +3279,11 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Decision:** Routing → OSC control input → "Port" passes `standard: Float(OSCReceiver.defaultPort)` (8001, the value the hub page and the FAQ name). The four OUTPUT port rows and the sACN universe row stay without a default: their defaults are literals inside each sender, one per output — a named constant with one owner would have to exist first (same class as the light master).
 - **Guard:** `TheValueFieldOffersItsDefaultTests` claim 3 (patchbay slice). Rows without a default after this: 28.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 12, part 2: the text size scales the piece too (one application point, moved)
+
+- **Decision:** `StudioZoom` (pinch + nine-rung Dynamic Type ladder) is applied ONCE, in `WorkspaceView` on `SurfaceHost` — the host of both stages — instead of inside `EchoelStudioView.body`. `StudioZoom` is internal now; the instrument's `zoomStep` reader is gone; the root holds the one `@AppStorage(StudioDefaultKeys.zoomStep.key)` (cold state — changes per pinch or tap, never per frame). Caption: "Sizes the piece and the instrument; the head follows the system size." The head keeps its `.accessibility1` ceiling (#262).
+- **Why:** Phase A makes the piece the home; a text size that sized only the instrument left the front stage at the system size. Widening by MOVING the point keeps one key and one pinch (#416) — a second application would attach a second pinch to the same step.
+- **Guards:** `TheTextSizeHasButtonsTests` claims 1/3/4 rewritten as the decision (studio 1 reader + root 1 reader; `\nstruct StudioZoom` slice; modifier once in the root, zero in the instrument, not `private`). Transcribed: WORK 1–4 GREEN, HEAD 1/3/4 RED. `ChromeDynamicTypeTests` prose follows; the two chip guards stay true (the instrument still scales under `SurfaceHost`).
+- **Open under rule 12:** light mode + contrast (own council); the 11-pt sweep (`font(11)` ×204).
+- **Review:** 2026-10-30.

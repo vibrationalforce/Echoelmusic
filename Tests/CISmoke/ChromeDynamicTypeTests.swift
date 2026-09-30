@@ -14,9 +14,10 @@
 // on `TransportPositionView` in `WorkspaceView.swift`, which records what that costs.
 //
 // ⛔ THE FIRST VERSION OF THIS HEADER ALSO SAID the clamp capped the app's own pinch zoom.
-// FALSE: `StudioZoom` is applied inside `EchoelStudioView`, which mounts under `SurfaceHost`
-// — a SIBLING of the clamped Group, not a descendant — and `.dynamicTypeSize` only writes
-// downward. The pinch zoom never reached the chrome and still does not.
+// FALSE: `StudioZoom` is applied on `SurfaceHost` in `WorkspaceView` (rule 12 part 2; before
+// that inside `EchoelStudioView`, which mounts under it) — a SIBLING of the clamped Group, not a
+// descendant — and `.dynamicTypeSize` only writes downward. The pinch zoom never reached the
+// chrome and still does not.
 //
 // The clamp existed for a real reason: the three bars were `.frame(height:)`, so bigger text
 // overflowed a box that could not grow. The fix removed the reason (heights are minimums now)

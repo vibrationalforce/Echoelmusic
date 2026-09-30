@@ -13,13 +13,15 @@
 //   · `TextSizeRow` in Save & Export, beside the level picker: Smaller · Larger · Default, each
 //     symbol PLUS word (rule 3), 44 pt tall, dimmed where it cannot move (#164/#227). Smaller and
 //     Larger step from the rung IN EFFECT (`StudioZoom.systemIndex` while at `-1`), Default
-//     returns to `-1`. The caption says the level and the SCOPE: the instrument's text — the
-//     head keeps its `.accessibility1` ceiling (`ChromeDynamicTypeTests`) and the piece follows
-//     the system size, because `StudioZoom` is mounted inside `EchoelStudioView`.
+//     returns to `-1`. The caption says the level and the SCOPE: the piece and the instrument —
+//     the head keeps its `.accessibility1` ceiling (`ChromeDynamicTypeTests`). ⛔ Until part 2
+//     (same day) the scope was the instrument alone, because `StudioZoom` was mounted inside
+//     `EchoelStudioView`; part 2 moved the ONE application point to `SurfaceHost` in
+//     `WorkspaceView`, the host of both stages — never a second key, never a second pinch.
 //
-// ⚠️ LIMIT — SOURCE-TEXT SCAN plus one keystore constant. `StudioZoom` and `TextSizeRow` are
-// file-private, so nothing here taps a button; that three 44 pt buttons fit a portrait phone at
-// the top rung is a founder look. The chrome ceiling and the pinch scope are pinned by
+// ⚠️ LIMIT — SOURCE-TEXT SCAN plus one keystore constant. `TextSizeRow` is file-private and
+// `StudioZoom` is internal only so the root can mount it, so nothing here taps a button; that
+// three 44 pt buttons fit a portrait phone at the top rung is a founder look. The chrome ceiling and the pinch scope are pinned by
 // `ChromeDynamicTypeTests`, not repeated here (#416) — claim 4 only checks the pinch survives.
 //
 // ⚠️ HONEST GRADING (#433/#464) — transcribed in Python against this tree and the parent
@@ -28,6 +30,10 @@
 // `"ui.zoomStep"` literal sat in the root); claim 4 GREEN on both — the counterweight (#343):
 // the pinch gesture and the nine-rung ladder are unchanged, so a slice that replaced the pinch
 // with the buttons instead of adding to it would turn it red.
+// PART 2 (same day, parent 8b9bd76b1): claims 1, 3 and 4 RED on the parent — the studio file
+// held TWO readers of the key and the root none, `StudioZoom` was `private` so the
+// `\nstruct StudioZoom` slice was empty, and `SurfaceHost` carried no modifier; claim 2 GREEN on
+// both (the row and its caption shape are unchanged; only the scope sentence moved).
 // `Tests/CISmoke` is the blocking bundle. SKIPS rather than passes if the tree is absent.
 
 import Foundation
@@ -38,6 +44,7 @@ final class TheTextSizeHasButtonsTests: XCTestCase {
 
     private static let studio = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
     private static let keystore = "Sources/Echoelmusic/Core/StudioDefaultKeys.swift"
+    private static let workspace = "Sources/Echoelmusic/Studio/WorkspaceView.swift"
 
     // MARK: - claim 1 — one key, in the keystore, with the shipped string and the follow-system default
 
@@ -62,8 +69,11 @@ final class TheTextSizeHasButtonsTests: XCTestCase {
             a view that re-types the string is the fresh-install split the keystore exists for.
             """)
         let studio = try source(Self.studio)
-        XCTAssertEqual(occurrences(of: "@AppStorage(StudioDefaultKeys.zoomStep.key)", in: studio), 2,
-                       "exactly two readers of the key in the instrument file: the root that applies it and `TextSizeRow` that writes it")
+        XCTAssertEqual(occurrences(of: "@AppStorage(StudioDefaultKeys.zoomStep.key)", in: studio), 1,
+                       "exactly one reader of the key in the instrument file: `TextSizeRow`, which writes it (part 2 moved the applying reader to the root)")
+        let workspace = try source(Self.workspace)
+        XCTAssertEqual(occurrences(of: "@AppStorage(StudioDefaultKeys.zoomStep.key)", in: workspace), 1,
+                       "exactly one reader of the key in the root: the property `StudioZoom` is bound to on `SurfaceHost`")
     }
 
     // MARK: - claim 2 — the row: three buttons, symbol plus word, dimmed at the ends, one writer each
@@ -94,7 +104,7 @@ final class TheTextSizeHasButtonsTests: XCTestCase {
         XCTAssertTrue(row.contains(".frame(maxWidth: .infinity, minHeight: 44)"), "each button is at least 44 pt tall (HIG floor; WCAG 2.5.8)")
         XCTAssertTrue(row.contains(".disabled(!enabled)"), "the dimming is a real `.disabled`, not a colour alone")
         XCTAssertTrue(row.contains("isAccessibilitySize") && row.contains("AnyLayout(VStackLayout"), "at accessibility sizes the three words stack instead of clipping")
-        XCTAssertTrue(row.contains("follow the system size") || row.contains("follows the system size"), "the caption states the SCOPE — the instrument's text; head and piece follow the system size (rule 9)")
+        XCTAssertTrue(row.contains("follow the system size") || row.contains("follows the system size"), "the caption states the SCOPE — the piece and the instrument; the head follows the system size (rule 9)")
         XCTAssertTrue(row.contains("\\(StudioZoom.ladder.count)"), "the caption's denominator is the ladder's count, never a typed 9 (#818)")
     }
 
@@ -109,7 +119,7 @@ final class TheTextSizeHasButtonsTests: XCTestCase {
             skill level because `.export` is unconditional in the strip filter.
             """)
         XCTAssertEqual(occurrences(of: "TextSizeRow()", in: code), 1, "and nowhere else — one door")
-        let zoom = slice(code, from: "private struct StudioZoom: ViewModifier {", to: "\n}\n")
+        let zoom = slice(code, from: "\nstruct StudioZoom: ViewModifier {", to: "\n}\n")
         XCTAssertTrue(zoom.contains("    static func systemIndex(_ s: DynamicTypeSize) -> Int {"), """
             `StudioZoom.systemIndex` went private again. The row steps from the rung in effect, \
             and at -1 that rung is the system size's — only this function knows it.
@@ -121,13 +131,26 @@ final class TheTextSizeHasButtonsTests: XCTestCase {
 
     func testThePinchAndTheLadderAreUnchanged() throws {
         let code = try source(Self.studio)
-        let zoom = slice(code, from: "private struct StudioZoom: ViewModifier {", to: "\n}\n")
+        let zoom = slice(code, from: "\nstruct StudioZoom: ViewModifier {", to: "\n}\n")
         XCTAssertTrue(zoom.contains("MagnifyGesture(minimumScaleDelta: 0.05)"), "the pinch stays — the buttons are added beside it, never in place of it")
         let ladder = slice(zoom, from: "static let ladder: [DynamicTypeSize] = [", to: "]")
         let rungs = ladder.components(separatedBy: ".").count - 1
         XCTAssertEqual(rungs, 9, "nine rungs, `.large` … `.accessibility5` — the caption reads its count from here")
         XCTAssertTrue(ladder.contains(".large,") && ladder.contains(".accessibility5"), "first `.large`, last `.accessibility5`")
-        XCTAssertTrue(code.contains(".modifier(StudioZoom(step: $zoomStep))"), "the root still applies the size — one application point, inside the instrument")
+        // Part 2 (2026-09-30): the ONE application point is the root, on `SurfaceHost` — both stages.
+        let workspace = try source(Self.workspace)
+        let host = slice(workspace, from: "                SurfaceHost()", to: ".frame(maxWidth: .infinity, maxHeight: .infinity)")
+        XCTAssertTrue(host.contains(".modifier(StudioZoom(step: $zoomStep))"), """
+            `WorkspaceView` no longer mounts `StudioZoom` on `SurfaceHost`. That is the one application \
+            point since part 2: the piece and the instrument share the size, the head keeps its ceiling.
+            """)
+        XCTAssertEqual(occurrences(of: ".modifier(StudioZoom(step:", in: workspace), 1, "one application point in the root")
+        XCTAssertEqual(occurrences(of: ".modifier(StudioZoom(step:", in: code), 0, """
+            The instrument applies `StudioZoom` again. Two application points on one key attach two \
+            pinches to the same step and size the instrument twice — the scope is widened by MOVING \
+            the point, never by adding one.
+            """)
+        XCTAssertFalse(code.contains("private struct StudioZoom"), "`StudioZoom` must stay internal so the root can mount it")
     }
 
     // MARK: - Reading the source
