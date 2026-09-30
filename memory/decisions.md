@@ -3439,3 +3439,9 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - Runs 3965 / 3967 / 3971 refused with `never-ran` although the Compile Check and CI/CD runs for those shas existed (created the same second as the merge run) and went green; 3966 hit the 45-min DEADLINE while CI/CD was still queued on the macOS pool. Only 3968 (de590c2bf) merged today; main is 11 commits behind the branch, the compile fix fe3080e9f included.
 - Mechanism (read from the workflow, lines 150–212): `gh api …/runs?head_sha=` falls back to an EMPTY list on any fetch error, and a stale page (#1180) looks the same; after GRACE=300 s a single such read sets `never-ran`, and the CI/CD branch has no `seen` guard at all. Absence-is-refusal is right in principle and wrong on one sample.
 - Proposed repair (workflow is founder-gated): distinguish fetch failure from empty; require consecutive empty reads or a second source (check-runs) before refusing; once a run was seen, absence = pending until DEADLINE; DEADLINE measured from the gate run's start. Until then: a code push re-triggers the merge; no empty commits.
+
+### 2026-09-30 — Zug 3, step 1: the call-mode note stops advising an input (4c36bf478)
+
+- `RouteCodec.note` (Bluetooth HFP = mono, band-limited) ended with "the iPhone mic as input" / "check which input is selected" — advice about a control gone since #1302. Nothing rendered it (`LatencyReadout.codec` has no reader), so no screen and no scan caught it; the `hfpPortType` comment cited a guard #1302 had deleted.
+- Fixed: two honest sentences (Echoel only plays out; another app holds the call; a cable keeps full bandwidth), named ≠ inferred kept (#654). New end-to-end guard `TheCodecNoteNamesNoInputTests` also restores the `hfpPortType == AVAudioSession.Port.bluetoothHFP.rawValue` pin.
+- Rule: unmounted copy is graded where it is written; a deletion sweep greps Sources doc comments for the deleted guard's name, not only the bundle.
