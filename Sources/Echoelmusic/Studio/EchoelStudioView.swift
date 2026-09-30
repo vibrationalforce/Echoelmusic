@@ -996,7 +996,7 @@ struct EchoelStudioView: View {
             // fallback. Found by the #482 reviewer. The name now lists what the panel
             // actually holds; `SaveDoorNamingTests` moved with it in the same commit,
             // because until then that guard REQUIRED the false words.
-            case .export:      return "Save and export settings — loop length, place in the name, reset sound, diagnostics"
+            case .export:      return "Save and export settings — loop length, place in the name, default sound, diagnostics"
             // Was "EchoelSynth — immersive visual window", which named the wrong half and
             // collided with the patch editor behind "Sound". This panel governs ONE thing
             // from two sides: the field's look, and the field's voice under your fingers.
@@ -2347,7 +2347,7 @@ struct EchoelStudioView: View {
     /// doors to one action is the shape this repo keeps paying for (#416), and a row that only
     /// duplicates a panel is not a consolidation. What the panel KEEPS is everything a glyph
     /// cannot say: the loop length these buttons act on, the keep-last availability sentence,
-    /// the failure line, the place toggle, Reset sound and Diagnostics.
+    /// the failure line, the place toggle, Default sound and Diagnostics.
     ///
     /// ⚠️ THE COST IS THE LABELS, AND IT IS PAID RATHER THAN HIDDEN. "Record 64 bars → send"
     /// and "Keep last: 8 bars or fewer at this tempo" were full-width sentences; they are now
@@ -3913,7 +3913,7 @@ struct EchoelStudioView: View {
                 // different take.
                 scheduleRebalance()
             } label: {
-                Text("Reset generated parts to genre balance")
+                Text("Generated parts back to genre balance")
                     .font(EchoelTheme.font(12))
                     .foregroundStyle(EchoelTheme.accent)
             }
@@ -4755,7 +4755,7 @@ struct EchoelStudioView: View {
         let a4Text = String(format: "%.1f", session.a4Hz)
         let articulationText = String(format: "%.2f", articulation)
         let glideText = String(format: "%.2f", touchGlide)
-        let touchText = touchPatchID.isEmpty ? "take" : "custom"
+        let touchText = touchPatchID.isEmpty ? "same" : "custom"
         // `""` is the stored value for "the genre's own rhythm"; printing it as `-` keeps the
         // label readable in a log line where every other field is populated. Both keys override
         // their role's rhythm for EVERY genre, which is why they belong here at all —
@@ -5252,7 +5252,7 @@ struct EchoelStudioView: View {
                 Button {
                     audioEngine.resetMastering()
                 } label: {
-                    Text("Reset")
+                    Text("Clear")
                         .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.text)
                         .frame(minHeight: 44)
                         .contentShape(Rectangle())
@@ -5694,11 +5694,11 @@ struct EchoelStudioView: View {
                     // go? It is a HINT, not a control — Echoel cannot start mirroring, only iOS
                     // can — so it stays 10 pt and dim, and it carries an `accessibilityHint`
                     // rather than pretending to be tappable.
-                    Label("Project: mirror to a screen via AirPlay", systemImage: "airplayvideo")
+                    Label("Show on a screen: mirror via AirPlay", systemImage: "airplayvideo")
                         .font(EchoelTheme.font(10))
                         .foregroundStyle(EchoelTheme.dim)
                         .padding(.top, 2)
-                        .accessibilityHint("Use Control Center Screen Mirroring to project this visual")
+                        .accessibilityHint("Use Control Center Screen Mirroring to show this visual on a screen")
                 }
             }
             // The A/B "Blend with" strip left this surface 2026-07-07 (founder: minimize —
@@ -9188,7 +9188,7 @@ struct EchoelStudioView: View {
         // the topic and `SaveDoorNamingTests` pins the chip, the VoiceOver name and the panel
         // heading as one decision.
         panel("Save & Export",
-              "Set the loop length the Record tile uses · choose how much of the strip you see · see what can be kept · put your city in the name · reset the sound",
+              "Set the loop length the Record tile uses · choose how much of the strip you see · see what can be kept · put your city in the name · the default sound",
               isExpanded: $showExport) {
         VStack(spacing: 10) {
             // ⛔ THE FIRST-RUN SENTENCE THAT STOOD HERE MOVED TO THE PLATE (GUI-Board
@@ -9347,7 +9347,7 @@ struct EchoelStudioView: View {
                     soundResetArmed = true
                 }
             } label: {
-                Text(soundResetArmed ? "Tap again to reset the sound" : "Reset sound")
+                Text(soundResetArmed ? "Tap again for the default sound" : "Default sound")
                     .font(EchoelTheme.font(11))
                     .foregroundStyle(soundResetArmed ? EchoelTheme.text : EchoelTheme.dim)
                     // ⚠️ `minHeight`, not `height`, and `contentShape` because `.buttonStyle(.plain)`
@@ -9364,11 +9364,11 @@ struct EchoelStudioView: View {
             // still stood in front of them. A hint that lies about a destructive action is worse
             // than none.
             .accessibilityHint(soundResetArmed ? """
-            Tap to reset the sound now. Saved patches, takes and projects are kept.
+            Tap for the default sound now. Saved patches and pieces are kept.
             """ : """
             Puts key, tuning, concert pitch, genre, preset, articulation, the bass and pad \
-            rhythm characters, the Field voice and the generated part levels back to factory. \
-            Saved patches, takes and projects are kept. Needs a second tap to confirm.
+            rhythm characters, the Field voice and the generated part levels back to their defaults. \
+            Saved patches and pieces are kept. Needs a second tap to confirm.
             """)
             // …and the ARMING itself must be audible. VoiceOver does not re-announce a label
             // change on a control that already holds focus, so without this the experience is
@@ -9381,7 +9381,7 @@ struct EchoelStudioView: View {
                 // generated ones. The panel's own reset button was corrected for exactly this
                 // ("promises four and delivers two"); saying "mix faders" here on a destructive
                 // control would re-open the same overclaim one screen away from its correction.
-                Text("Key, tuning, genre, preset, the Field voice and the generated part levels go back to factory. Your saved patches, takes and projects are kept.")
+                Text("Key, tuning, genre, preset, the Field voice and the generated part levels go back to their defaults. Your saved patches and pieces are kept.")
                     .font(EchoelTheme.font(10))
                     .foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
@@ -9458,7 +9458,7 @@ struct EchoelStudioView: View {
         //    Mix panel's own reset each push the two lines below IN ADDITION to their re-bake, and
         //    the latter carries the instruction "a new mutator must push both lines below".
         // This is that new mutator, and the first version of it pushed neither: a player with
-        // `mixer.bass` persisted at 0.00 (the #399 signature) would have tapped "Reset sound",
+        // `mixer.bass` persisted at 0.00 (the #399 signature) would have tapped "Default sound",
         // watched every compose-time role return to unity, and still had a silent sub until the
         // next relaunch — a factory reset leaving behind exactly the class of state it exists to
         // clear. Caught in review, not by the guard, which only saw the `resetToUnity()` call.

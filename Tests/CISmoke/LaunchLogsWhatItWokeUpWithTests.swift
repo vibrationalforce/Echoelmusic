@@ -244,7 +244,7 @@ final class LaunchLogsWhatItWokeUpWithTests: XCTestCase {
     /// "improvement" to this line is to print WHICH custom patch is loaded — i.e. put
     /// `touchPatchID`, a UUID, into a log the founder pastes into a chat. The diagnostic question
     /// is only whether a user-authored patch is selected at all, so the identifier buys nothing
-    /// and the presence flag ("take"/"custom") answers it completely.
+    /// and the presence flag ("same"/"custom") answers it completely.
     ///
     /// ⛔ THE GUARD IS NARROWER THAN THE RULE. It rejects the name `touchPatchID` appearing in the
     /// emitted line at all — which covers `\(touchPatchID)` and `\(touchPatchID.prefix(8))` alike
@@ -258,7 +258,7 @@ final class LaunchLogsWhatItWokeUpWithTests: XCTestCase {
         \(line)
 
         That risks writing a raw UUID into a diagnostic log the founder pastes into chat threads. \
-        Log the PRESENCE instead (`touchPatchID.isEmpty ? "take" : "custom"`, hoisted above the \
+        Log the PRESENCE instead (`touchPatchID.isEmpty ? "same" : "custom"`, hoisted above the \
         breadcrumb), which answers the only question the line is asked.
         """)
     }

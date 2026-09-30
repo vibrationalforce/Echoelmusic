@@ -136,7 +136,7 @@ final class SaveDoorNamingTests: XCTestCase {
         keep-last"; #482 moved those four into `quickActionRow`, so dropping the chip no \
         longer strands them. What it DOES strand is everything they need and cannot say \
         themselves: the loop length Record uses, the keep-last availability sentence, the \
-        place toggle that shapes the save name, Reset sound and Diagnostics. Still #272, \
+        place toggle that shapes the save name, Default sound and Diagnostics. Still #272, \
         smaller blast radius — and the tiles would keep working while their settings became \
         unreachable, which is the harder version to notice.
         """)
@@ -216,7 +216,7 @@ final class SaveDoorNamingTests: XCTestCase {
         let end = lines[(start + 1)...].firstIndex { $0 == "        }" } ?? lines.endIndex
         guard let hit = lines[start..<end].first(where: { $0.contains("case .export:") }) else {
             XCTFail("`StudioMenu.\(property)` has no `.export` case any more. Since #482 that "
-                    + "panel holds the loop length, the place-in-the-name toggle, Reset sound "
+                    + "panel holds the loop length, the place-in-the-name toggle, Default sound "
                     + "and Diagnostics; an unnamed door to them is #272.")
             return ""
         }

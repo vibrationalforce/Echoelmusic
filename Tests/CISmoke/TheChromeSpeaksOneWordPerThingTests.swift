@@ -61,6 +61,19 @@
 // The type `RecordTake`, `droppedTakes` and the test names keep the word: identifiers.
 // `TheMIDITakeIsRecordedFromTheWorkstationTests` pins the dropped sentence end to end by its
 // new words.
+//
+// ⭐ RATCHET 5 (2026-09-30): `EchoelStudioView` — the instrument itself, 54 hits on 457343726, read
+// in FOUR families over five commits because the same struck word meant different things in one
+// file: song/project (the saved work) → piece; "session" (the piece · the sitting · AVAudioSession
+// · the breathing view) → piece / a sentence that says what happens / "what iOS granted" /
+// "Breathing guide"; "take" (the export recording · the generated loop · the touch voice) →
+// "this recording" / "the instrument's music" / "Same as music"; and the rule-6 words: "Reset
+// sound" → "Default sound" (the value's word IS the action's word — the confirm step stays),
+// "back to factory" → "back to their defaults", the mastering meters' "Reset" → "Clear" (a meter
+// is cleared, it has no default). Two false positives were reworded rather than allowed for:
+// "Project: mirror to a screen" (the projector, not the noun) → "Show on a screen", and the launch
+// breadcrumb's presence flag `"take"` → `"same"` (a diagnostic on the line before its `breadcrumb`
+// marker). The scanner cannot tell a verb from a noun; keeping it that way keeps claim 4 honest.
 // `Tests/CISmoke` is the blocking bundle. SKIPS rather than passes if the tree is absent.
 
 import Foundation
@@ -86,6 +99,7 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/WorkstationView.swift",
         "Sources/Echoelmusic/Studio/SessionLaunchView.swift",
         "Sources/Echoelmusic/Studio/RecordTakeControls.swift",
+        "Sources/Echoelmusic/Studio/EchoelStudioView.swift",
     ]
 
     /// A line whose strings reach a log or a test harness, not a person.

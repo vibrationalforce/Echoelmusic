@@ -234,7 +234,7 @@ final class ThePadShapeDialsReachTheChordTests: XCTestCase {
     // MARK: - #584 — the follow-through #581 owed and did not pay
 
     /// END-TO-END on the shipped pure type. The three dials are persisted settings that decide
-    /// what a take SOUNDS like, so "Reset sound" has to clear them — the same test every other
+    /// what a take SOUNDS like, so "Default sound" has to clear them — the same test every other
     /// entry in that list passes.
     ///
     /// ⛔ #581 SHIPPED WITHOUT THIS, and it is the FIFTH time a persisted sound setting arrived
@@ -250,7 +250,7 @@ final class ThePadShapeDialsReachTheChordTests: XCTestCase {
                     StudioDefaultKeys.padAccent.key,
                     StudioDefaultKeys.padEvolve.key] {
             XCTAssertTrue(cleared.contains(key), """
-            "Reset sound" does not clear \(key).
+            "Default sound" does not clear \(key).
 
             A persisted value that shapes the sound and cannot be reset is the state that whole \
             feature exists to stop needing a reinstall for — and this one hides, because with no \
