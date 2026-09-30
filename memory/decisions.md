@@ -3232,3 +3232,12 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Guards:** `TheBarCountHasACarrierTests` state list, `ANewPieceStartsAnEmptySongTests` Autosave needle.
 - **Remaining in the file (scanner):** reset 6 + factory 1 · take 2 · project 3 (verb + projector — stay; the scanner cannot tell a verb, so the file's entry into the guard's list needs either a reword of those three or an allowance — decide at the reset family).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 1 + rule 6, instrument file last family: the reset words become "Default sound"
+
+- **Decision (9983a9c9c):** "Reset sound" → "Default sound" (armed: "Tap again for the default sound"; the two-tap confirm stays, the flipping VoiceOver hints read "Tap for the default sound now" / "…back to their defaults. Saved patches and pieces are kept. Needs a second tap to confirm."); the sentence under it: "go back to factory. Your saved patches, takes and projects are kept." → "go back to their defaults. Your saved patches and pieces are kept."; the two panel subtitles that named the button follow ("default sound"); part levels: "Reset generated parts to genre balance" → "Generated parts back to genre balance" (a balance, not a default); the mastering meters' "Reset" → "Clear" (a meter has no default — the hint already said "Clear the integrated loudness and peak hold"); AirPlay: "Project: mirror to a screen via AirPlay" → "Show on a screen: mirror via AirPlay", hint "…to show this visual on a screen"; the launch breadcrumb's presence flag `"take"` → `"same"` (the voice is called "Same as music" since family 3).
+- **Why rewording instead of an allowance:** the projector verb and the breadcrumb flag were scanner false positives. An allow-list per literal would have been the first hole in claim 4; two rewordings cost nothing and keep the scanner honest (it cannot tell a verb from a noun, on purpose).
+- **Guard:** `TheChromeSpeaksOneWordPerThingTests` — `EchoelStudioView.swift` is the 13th file in the list (RATCHET 5 header names the four families). `SaveDoorNamingTests`, `ThePadShapeDialsReachTheChordTests`, `LaunchLogsWhatItWokeUpWithTests` follow in messages and prose only. `docs/privacy.html` ×2.
+- **Measured:** scanner 12 → 0 on the file, 0 over all 13 files on the work tree; checkers clean.
+- **Next rule-1 files (by hit count on the last census):** `EchoelAppIntents` 8, `LiveColaboView` / `MediaBrowserView` / `PatchbayView` / `SessionView` 6 each — each read sentence by sentence, one file per commit.
+- **Review:** 2026-10-30.
