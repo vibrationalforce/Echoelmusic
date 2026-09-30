@@ -3590,3 +3590,9 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Built:** `PowerStatusWord` (word · fragment · caption · spoken; `QualityPressure.cause/remedy`), `OutputStatusWord` (word + spoken), `NetworkSendState.label` — 29 sites; catalog 138 → 165. Guard claim 9 splits composed strings into pieces, demands a German unit each, and holds the German tile words to `OutputStatusWord.maxLength` (Extern · Ruht · Aus).
 - **Left out on purpose:** the OSC receiver line (`open on \(port) · last: …`) and the ADM sentence — interpolation-heavy; a `%@` key cannot pass the catalog guard, and fragmenting them would leave a German sentence in English word order. They need a sentence design (one key per shape) — a later slice.
 - **Review 2026-10-30:** device G6 — Power row under Low Power Mode, the three tiles, the network dot word.
+
+### 2026-09-30 — E4-6: German panel texts for 37 reachable chrome files, catalog-only (94236372b)
+
+- **Mechanism:** SwiftUI localises a `Text("…")`/`Button("…")`/`.accessibilityLabel("…")` literal by content (LocalizedStringKey). No Sources edit; 160 catalog units; guard claim 10 = the measuring regex as a walk over a listed family, with a listed untranslated set (brand/technical) and a seam rule (left half of `+ "…"` is `Text(String)`, not a key).
+- **Left out:** doorless surfaces; the three big instrument files (EchoelStudioView 175 · PatchbayView 47 · EchoelFXView 44) — next slices, one file each.
+- **Review 2026-10-30:** device G6; the longest units are the Workstation empty state and the SafeMode paragraph — check for clipping in `fixedSize` rows.

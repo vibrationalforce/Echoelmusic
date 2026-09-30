@@ -41012,3 +41012,20 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
   Kommentare). Checker grün, needle-reachability nur die 3 vorbestehenden.
 - **Push:** Compile Check 3090 ✓ auf 86a9d4eeb → Stapel 27b37253d · d6f19a43f · 7fd4215e8 · 798cbf37f · 25bafc201 (+ Docs)
   gepusht. Protokoll: decisions.csv 1067, memory/decisions.md, FOUNDER_INBOX E4-Zeile.
+
+## 2026-09-30 — E4-6 gebaut: deutsche Panel-Texte für 37 erreichbare Chrome-Dateien, nur Katalog (94236372b lokal)
+
+- **Gemessen:** 648 SwiftUI-Literal-Schlüssel-Stellen in Sources, 536 verschieden, 510 ohne Katalog-Eintrag; 103 mit
+  Interpolation (kein Schlüssel). Nach Datei: EchoelStudioView 175 · PatchbayView 47 · EchoelFXView 44 · Rest klein.
+  Türlose Dateien ausgelassen (BioSourceView, PulseMeasurementView, BreathGuideView, SessionView, ImmersiveStageView,
+  BroadcastView, ProUnlockView). Diese Scheibe: die 37 kleinen erreichbaren Dateien — 184 Stellen, 168 Schlüssel,
+  160 neue Einheiten (8 schon da), Katalog 165 → 325. Kein Sources-Swift geändert.
+- **Regeln:** Marken-/Technik-Wörter bleiben (Echoelmusic · OK · BPM · Tempo · Genre · Demo · Studio · WAV …); zwei
+  `+`-Nähte übersprungen (WorkspaceView Notennamen-Hinweis, LiveNarrationDisclosure) — `Text(String)`, wörtlich.
+  ⛔ Erste Naht-Erkennung sah nur 4 Zeichen und nicht über den Zeilenumbruch — Transkription fand es (ein „MISSING“).
+  ⛔ Erste Fassung des Wächters schrieb `\u00e9`/`\u2026` (Python-Escapes) in das Swift-Set-Literal — kein Swift-Escape,
+  `swift-escapes.py` hätte es gemeldet; vor dem Commit repariert.
+- **Wächter Anspruch 10:** Familie als Liste, Mess-Regex, Untranslated-Set, Naht-Regel, Boden 150 Stellen, Gegengewicht
+  (interpolierter Schlüssel wird nicht verlangt). Transkription: HEAD 184/160 fehlend = EIN Befund; WORK 184/0.
+- **Checker:** dead-needles OK, swift-escapes OK, foreign-needles OK, Katalog-Invarianten 0; keine Glossar-Lehnwörter
+  im Deutschen. Push nach Compile Check auf 74f0c48e6. Protokoll: csv 1068, memory, FOUNDER_INBOX E4-Zeile.
