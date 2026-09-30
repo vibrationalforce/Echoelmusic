@@ -3987,3 +3987,29 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   TheBioPanelRowsSayWhoseBody, OneSpellingOfTheDemoSubject first); then the panel families (EchoelStudioView sites,
   EchoelFXView, FloatingVisualWindow, BioStripView, MoodPads, PerformSessionView, GuideOverlay).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — E4-37: the always-on and Bio-panel sentences speak German (27b41088d)
+
+- **Decision:** `BioProvenanceCopy.demoSubject` is a computed `static var` over `String(localized: "the simulated demo
+  source, not your body")` (sentence-initial form still DERIVED); `alwaysOnSentence`, `bioPanelSentence`,
+  `soundPanelSentence` (two empty states, `" and "` join, `head` + tail), `subject(synthetic:)`, `breathVoiceHint`,
+  `breathVoiceCaption`, `autoModeHint`, `autoModeCaption` — every seam a key, every conditional opening a typed step
+  (`demoOpening`, `demoHead`, `head`). Catalog 1104 → 1136.
+- **Why:** the app's own explanation of what the body does on each panel. Guards scan SPELLING and PROVENANCE
+  (OneSpellingOfTheDemoSubject: one subject spelling, no literal split at `simulated demo "`; TheBioPanelRowsSayWhoseBody:
+  demo first, `"Slowly steers … body state"` present, `"… follows your body"` absent; TheAlwaysOnBioPathIsNamed:
+  `these routes` / `four body channels` / `breath phase`; TheChromeSpeaksOneWordPerThing: `while the instrument plays`,
+  `carry the note`, `until you stop`) — all substrings that survive because the English text is unchanged inside
+  `String(localized:)`. Pinned at runtime in claim 11: `alwaysOnSentence(synthetic: false)` whole, `bioPanelSentence`
+  prefix, `soundPanelSentence` prefix + suffix, the two Auto nil texts, the demo subject.
+- **German choice:** the shared subject is nominative; a seam that would need dative ("aus der …") opens a bracket or
+  a colon instead — „vier Kanäle (Quelle: …) formen …“, „seine Farbe folgt: …“, „zum gemessenen Zustand von: …“. One
+  subject spelling in German too (#416/#634b).
+- **Guard:** claim 11 E4-37 block (15 seams, 13 absence needles — two re-aimed at the verbatim indented form after the
+  first draft matched `String(localized: "Your body")` —, 8 runtime counterweights, 26 units via `assertGerman`;
+  172 → 182 XCTAssert). WORK PASS / HEAD FAIL (32 units missing — ONE finding). Checkers green; the paren-balance
+  helper reported +1 on the CATALOG diff (two „(Quelle: “ values share one „) formen “ value — data, not code); the
+  Swift file's own diff balances line by line.
+- **Next E4 producers:** the panel families (EchoelStudioView sites, EchoelFXView, FloatingVisualWindow, BioStripView,
+  MoodPads, PerformSessionView, GuideOverlay, WorkspaceView).
+- **Review:** 2026-10-30.
