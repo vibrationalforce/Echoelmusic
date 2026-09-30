@@ -12816,6 +12816,78 @@
           }
         }
       }
+    },
+    "Short-term" : {
+      "comment" : "Loudness readout name (E4-14, 2026-09-30): `readout(\"…\")` in MasterLoudnessGrid takes a key; the units LUFS/dBTP/LU stay verbatim.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Short-term"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurzzeit"
+          }
+        }
+      }
+    },
+    "Integrated" : {
+      "comment" : "Loudness readout name (E4-14, 2026-09-30): `readout(\"…\")` in MasterLoudnessGrid takes a key; the units LUFS/dBTP/LU stay verbatim.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integrated"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integriert"
+          }
+        }
+      }
+    },
+    "True peak" : {
+      "comment" : "Loudness readout name (E4-14, 2026-09-30): `readout(\"…\")` in MasterLoudnessGrid takes a key; the units LUFS/dBTP/LU stay verbatim.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "True peak"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "True Peak"
+          }
+        }
+      }
+    },
+    "Range" : {
+      "comment" : "Loudness readout name (E4-14, 2026-09-30): `readout(\"…\")` in MasterLoudnessGrid takes a key; the units LUFS/dBTP/LU stay verbatim.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Range"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bereich"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

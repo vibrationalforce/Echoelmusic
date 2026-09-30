@@ -272,7 +272,10 @@ struct MasterLoudnessGrid: View {
     // and folding it away would make restoring them a signature change instead of an
     // argument change. Uncoloured is a deliberate state here, not an absent feature.
 
-    private func readout(_ label: String, _ value: String, _ unit: String, _ color: Color) -> some View {
+    // E4-14 (2026-09-30): `label` is a catalog KEY — as a `String` it reached `Text(String)` and the four
+    // readout names were spelled verbatim on a German phone. `unit` stays a `String` on purpose: LUFS,
+    // dBTP and LU are the EBU R128 tokens, the same in every language, and are not translated.
+    private func readout(_ label: LocalizedStringKey, _ value: String, _ unit: String, _ color: Color) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             HStack(alignment: .firstTextBaseline, spacing: 4) {

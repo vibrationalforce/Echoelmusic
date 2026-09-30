@@ -32,7 +32,8 @@
 // the ternary present and the nine units missing: ONE finding, the slice, not eighteen. E4-12 added
 // the FX header's signature and its thirteen titles to claim 11 — on its parent the signature is
 // `String` and ten units are missing: ONE finding. E4-13 added `EchoelPanel`'s three key-wrapped draw
-// sites and seventeen panel words — on its parent the wraps are absent and fifteen units missing: ONE finding. Claim 12
+// sites and seventeen panel words — on its parent the wraps are absent and fifteen units missing: ONE finding.
+// E4-14 added the loudness readout's signature and four names (parent: `String`, four missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -354,6 +355,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
     /// E4-12 added `effectSection`, the FX panel's stage header, on the same terms (claim 11 pins it).
     /// E4-13 added `panel`, the instrument's card builder — its TITLE only; the subtitle is the second
     /// argument and is driven by name in claim 11 (`EchoelPanel` wraps both in a key).
+    /// E4-14 added `readout`, the loudness grid's cell — its LABEL; the unit argument is an EBU token.
     static let panelFamily: [String] = [
             "Sources/Echoelmusic/Studio/EchoelStudioView.swift",
             "Sources/Echoelmusic/Studio/PatchbayView.swift",
@@ -402,7 +404,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         let root = try repoRoot()
         let strings = try catalogStrings()
         let literal = try NSRegularExpression(
-            pattern: #"\b(?:Text|Button|Toggle|Label|Picker|Section|TextField|Menu|NavigationLink|Link|labeledRow|groupHeader|collapsibleGroupHeader|mixStripCard|weatherMixGroup|effectSection|panel)\(\s*"((?:[^"\\]|\\.)*)"|\.accessibility(?:Label|Hint|Value)\(\s*"((?:[^"\\]|\\.)*)""#)
+            pattern: #"\b(?:Text|Button|Toggle|Label|Picker|Section|TextField|Menu|NavigationLink|Link|labeledRow|groupHeader|collapsibleGroupHeader|mixStripCard|weatherMixGroup|effectSection|panel|readout)\(\s*"((?:[^"\\]|\\.)*)"|\.accessibility(?:Label|Hint|Value)\(\s*"((?:[^"\\]|\\.)*)""#)
         var sites = 0, missing: [String] = [], seen = Set<String>()
         for rel in Self.panelFamily {
             let code = try codeOnly(rel)                                        // a `Button("literal")` quoted in a comment is not a site
@@ -485,6 +487,11 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Shape the timbre — exact to 0.0001", "Production character",
                           "Set the loop length the Record tile uses · choose how much of the strip you see · see what can be kept · put your city in the name · the default sound"],
                          "panel titles and subtitles")
+        // E4-14 — the loudness grid's readout label is a key; its four names reach the catalog (units stay EBU tokens)
+        let grid = try codeOnly("Sources/Echoelmusic/Studio/MasterLoudnessGrid.swift")
+        XCTAssertTrue(grid.contains("private func readout(_ label: LocalizedStringKey, _ value: String, _ unit: String, _ color: Color)"),
+                      "readout takes a String label again — Short-term / Integrated / True peak / Range would spell verbatim")
+        try assertGerman(["Short-term", "Integrated", "True peak", "Range"], "loudness readout names")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
