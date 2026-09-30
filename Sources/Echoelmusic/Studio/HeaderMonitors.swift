@@ -95,6 +95,11 @@ struct PulseMonitorMini: View {
     /// accident and had to be made honest on purpose. nil-equivalent default `false` keeps
     /// every real-sensor call site unchanged.
     var synthetic: Bool = false
+    /// The status ladder's rung (interface audit 2026-09-30, `PulseLadder`): the WORD the value
+    /// slot shows while no coaching cue and no strap/recovery status claims it — "Searching",
+    /// "Almost", "Lost" — and, locked, the small "Found" beside the number (the doc: "die Zahl
+    /// bleibt daneben"). Camera only; nil keeps the plain monitor for every other source.
+    var ladder: PulseLadderStep? = nil
 
     /// Show the amber coaching cue: a correctable placement issue while not locked.
     private var showCue: Bool { !locked && (cue?.isActionable ?? false) }
@@ -159,6 +164,14 @@ struct PulseMonitorMini: View {
                         .font(EchoelTheme.font(11, .semibold))
                         .foregroundStyle(EchoelTheme.dim)
                         .lineLimit(1).minimumScaleFactor(0.8)
+                } else if let ladder {
+                    // The ladder word, LAST in the precedence: a remedy (`showCue`) or a
+                    // source status beats a rung, because they say what to do and this only
+                    // says where things stand. "Lost" is the one rung that warns.
+                    Text(ladder.word)
+                        .font(EchoelTheme.font(11, .semibold))
+                        .foregroundStyle(ladder == .lost ? EchoelTheme.warning : EchoelTheme.dim)
+                        .lineLimit(1).minimumScaleFactor(0.8)
                 } else {
                     Text("—")
                         .font(EchoelTheme.font(17, .semibold)).monospacedDigit()
@@ -167,6 +180,14 @@ struct PulseMonitorMini: View {
                 }
             }
             .frame(minWidth: 28, alignment: .leading)
+            // Locked: the word sits BESIDE the number, the "Demo" tag's shape — the two never
+            // meet (the ladder is camera-only, the tag is off-camera only).
+            if let ladder, ladder == .found {
+                Text(ladder.word)
+                    .font(EchoelTheme.font(10, .semibold))
+                    .foregroundStyle(EchoelTheme.dim)
+                    .lineLimit(1).minimumScaleFactor(0.8)
+            }
             if synthetic {
                 Text("Demo")
                     .font(EchoelTheme.font(10, .semibold))
@@ -222,7 +243,9 @@ struct PulseMonitorMini: View {
     private var accessibilityText: String {
         if showCue, let cue { return cue.fullHint }
         if showStatus, let status { return status.full }
-        guard locked && bpm > 0 else { return "No pulse lock" }
+        // The ladder's sentence for the three rungs without a number; the old "No pulse lock"
+        // stays for a source that has no ladder (strap/HealthKit/simulator without a frame).
+        guard locked && bpm > 0 else { return ladder?.spoken ?? "No pulse lock" }
         // #627: the marker goes FIRST. VoiceOver reads this value straight through, so
         // "142 beats per minute, simulated" can be heard as a measurement with a footnote;
         // "Simulated demo, 142 beats per minute" cannot be mistaken for one.
@@ -357,7 +380,16 @@ struct PulseMonitorMiniLive: View {
                          // a stale `.fallback` frame still sitting in the snapshot must not
                          // brand a real reading as a demo. Off-camera the pill reads the bus,
                          // and then the frame's own source is the only truth there is.
-                         synthetic: !cameraLive && fresh?.source.isSynthetic == true)
+                         synthetic: !cameraLive && fresh?.source.isSynthetic == true,
+                         // The status ladder (interface audit 2026-09-30): camera only — the one
+                         // source with a confidence. `lockSeenThisTake` and `confidence` are
+                         // already this leaf's reads (10 Hz leaf; nothing above reads them).
+                         ladder: cameraLive
+                             ? PulseLadder.step(locked: cameraRPPG.isLocked,
+                                                confidence: cameraRPPG.confidence,
+                                                lockSeen: cameraRPPG.lockSeenThisTake,
+                                                lockThreshold: CameraRPPGBioPublisher.lockThreshold)
+                             : nil)
             // E-Bio-Header — bio's HOME is this header pill (founder 2026-07-14 +
             // 2026-07-15 video: "Lange drücken = drop down: camera light · Search for
             // Bluetooth Device · Simulation").

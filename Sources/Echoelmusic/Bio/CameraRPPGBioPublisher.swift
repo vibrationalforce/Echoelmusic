@@ -397,6 +397,13 @@ public final class CameraRPPGBioPublisher {
     /// while the pulse was still descending 125→…→69 — "in dem Moment wo bpm locked springt
     /// die bpm nach oben"). Settled = the descent has actually finished.
     public private(set) var isSettled = false
+    /// A trustworthy reading was published at least once in THIS take (the status ladder's
+    /// "lost" rung, interface audit 2026-09-30: `PulseLadder`). Set once per take in the publish
+    /// branch — written only on the flip, so the 10 Hz loop does not re-notify observers every
+    /// tick — and cleared by `stop()` like every other per-take fact (#454: a latch `stop()`
+    /// forgets is a previous take's washout). Read by the pulse pill, which is already the 10 Hz
+    /// leaf; nothing above it reads this (10.76.50).
+    public private(set) var lockSeenThisTake = false
     /// Reference value + start time of the current flat window (tracked in the 10 Hz tick).
     private var settleRef: Double = -1
     private var settleSince: CFAbsoluteTime = 0
@@ -1300,6 +1307,7 @@ public final class CameraRPPGBioPublisher {
                 // corroborated by real periodicity), else hold — so a poorly-placed finger
                 // shows "acquiring" instead of a fantasy number.
                 if self.detectedBPM > 0 && Self.pulseTrustworthy(confidence: self.confidence, autoStrength: autoStrength) {
+                    if !self.lockSeenThisTake { self.lockSeenThisTake = true }
                     let bpm = self.detectedBPM
                     // ⛔ A SECOND octave-fold used to sit here, folding against `displayBPM`.
                     // Deleted 2026-07-28 (#185) because it could not release once it engaged.
@@ -2275,6 +2283,7 @@ public final class CameraRPPGBioPublisher {
         detectedBPM = 0
         displayBPM = 0
         isSettled = false          // next take must re-prove a flat pulse before tempo latches
+        lockSeenThisTake = false   // the ladder's "lost" is about THIS take, never the last one
         settleRef = -1
         waveform = []
         exposureLocked = false
