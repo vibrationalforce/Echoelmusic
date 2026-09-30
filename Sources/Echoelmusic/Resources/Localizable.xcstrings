@@ -1278,6 +1278,330 @@
           }
         }
       }
+    },
+    "Camera access is off — enable it in Settings to read your pulse" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kamerazugriff ist aus — in den Einstellungen erlauben, um deinen Puls zu lesen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera access is off — enable it in Settings to read your pulse"
+          }
+        }
+      }
+    },
+    "Camera off" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kamera aus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera off"
+          }
+        }
+      }
+    },
+    "Cover lens" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Linse abdecken"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cover lens"
+          }
+        }
+      }
+    },
+    "Cover the rear camera + flash" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rückkamera + Blitz abdecken"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cover the rear camera + flash"
+          }
+        }
+      }
+    },
+    "Finding…" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suche…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finding…"
+          }
+        }
+      }
+    },
+    "Hold still" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Still halten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hold still"
+          }
+        }
+      }
+    },
+    "Hold still — finding your pulse…" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Still halten — dein Puls wird gesucht…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hold still — finding your pulse…"
+          }
+        }
+      }
+    },
+    "Hold still — keep your finger steady" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Still halten — den Finger ruhig lassen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hold still — keep your finger steady"
+          }
+        }
+      }
+    },
+    "No light" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Licht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No light"
+          }
+        }
+      }
+    },
+    "No light from the flash right now — the phone may be hot. Let it cool, or press your finger against a bright lamp instead" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Licht vom Blitz gerade — das Telefon ist vielleicht heiß. Lass es abkühlen, oder drück den Finger stattdessen gegen eine helle Lampe"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No light from the flash right now — the phone may be hot. Let it cool, or press your finger against a bright lamp instead"
+          }
+        }
+      }
+    },
+    "Nothing yet" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nichts"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing yet"
+          }
+        }
+      }
+    },
+    "Press a little lighter" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etwas leichter drücken"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Press a little lighter"
+          }
+        }
+      }
+    },
+    "Press gently" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sanft drücken"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Press gently"
+          }
+        }
+      }
+    },
+    "Press gently and hold still" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sanft drücken und still halten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Press gently and hold still"
+          }
+        }
+      }
+    },
+    "Still nothing to read — try another finger, or warm your hand first" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nichts zu lesen — versuch einen anderen Finger, oder wärm erst deine Hand"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Still nothing to read — try another finger, or warm your hand first"
+          }
+        }
+      }
+    },
+    "The signal isn't steady enough to read — lift your finger and place it again" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Signal ist nicht ruhig genug zum Lesen — Finger abheben und neu auflegen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The signal isn't steady enough to read — lift your finger and place it again"
+          }
+        }
+      }
+    },
+    "Too bright" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zu hell"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Too bright"
+          }
+        }
+      }
+    },
+    "Unsteady" : {
+      "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unruhig"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unsteady"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

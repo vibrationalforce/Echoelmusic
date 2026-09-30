@@ -210,6 +210,30 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          "head history / record word")
     }
 
+    // MARK: - claim 7 — the pulse pill's word and the measurement screen's hint speak German (E4-3)
+
+    func testEveryPulseCueWordHasAGermanUnit() throws {
+        let cues: [PulseCue] = [.cameraDenied, .locked, .coverLens, .tooBright, .holdStill, .pressGently,
+                                .finding, .noLight, .stalled(hasRhythmlessSignal: true), .stalled(hasRhythmlessSignal: false)]
+        // counterweight — the English words the pill guards pin are unchanged in the English host
+        XCTAssertEqual(PulseCue.noLight.shortLabel, "No light")
+        XCTAssertEqual(PulseCue.stalled(hasRhythmlessSignal: true).shortLabel, "Unsteady")
+        try assertGerman(Array(Set(cues.flatMap { [$0.shortLabel, $0.fullHint] })).sorted(), "pulse cue word")
+        // SOURCE-TEXT — the two switches return no plain literal (a `? "…" : "…"` ternary included)
+        let code = try codeOnly("Sources/Echoelmusic/Bio/PulseCue.swift")
+        guard let start = code.range(of: "public var fullHint: String {"),
+              let end = code.range(of: "public var isActionable: Bool {", range: start.upperBound..<code.endIndex) else {
+            throw XCTSkip("PulseCue.fullHint / isActionable anchors moved — re-anchor (#454)")
+        }
+        let switches = String(code[start.lowerBound..<end.lowerBound])
+        // `: "` also opens every `String(localized: "…")`, so that one label is excluded by lookbehind
+        let bare = try NSRegularExpression(pattern: #"(return|\?|(?<!localized):) "[A-Za-z]"#)
+        XCTAssertEqual(bare.numberOfMatches(in: switches, range: NSRange(switches.startIndex..., in: switches)), 0,
+                       "a pulse-cue word returned as a plain literal is spelled verbatim by `Text(cue.shortLabel)` — wrap it")
+        XCTAssertGreaterThanOrEqual(switches.components(separatedBy: "String(localized:").count - 1, 19,
+                                    "counterweight: the two switches still carry their ~20 localised words")
+    }
+
     // MARK: - claim 5 — the German for "Piece" is the glossary's word, read from the glossary
 
     func testTheGermanPieceIsTheGlossaryWord() throws {

@@ -123,33 +123,32 @@ public enum PulseCue: Equatable, Sendable {
     /// The full guidance shown on the measurement screen (unchanged wording).
     public var fullHint: String {
         switch self {
-        case .cameraDenied: return "Camera access is off — enable it in Settings to read your pulse"
-        case .locked:      return "Locked"
-        case .coverLens:   return "Cover the rear camera + flash"
-        case .tooBright:   return "Press a little lighter"
-        case .holdStill:   return "Hold still — keep your finger steady"
-        case .pressGently: return "Press gently and hold still"
-        case .finding:     return "Hold still — finding your pulse…"
-        case .noLight:     return "No light from the flash right now — the phone may be hot. "
-                                + "Let it cool, or press your finger against a bright lamp instead"
+        case .cameraDenied: return String(localized: "Camera access is off — enable it in Settings to read your pulse")
+        case .locked:      return String(localized: "Locked")
+        case .coverLens:   return String(localized: "Cover the rear camera + flash")
+        case .tooBright:   return String(localized: "Press a little lighter")
+        case .holdStill:   return String(localized: "Hold still — keep your finger steady")
+        case .pressGently: return String(localized: "Press gently and hold still")
+        case .finding:     return String(localized: "Hold still — finding your pulse…")
+        case .noLight:     return String(localized: "No light from the flash right now — the phone may be hot. Let it cool, or press your finger against a bright lamp instead")
         case .stalled(let rhythmless):
             return rhythmless
-                ? "The signal isn't steady enough to read — lift your finger and place it again"
-                : "Still nothing to read — try another finger, or warm your hand first"
+                ? String(localized: "The signal isn't steady enough to read — lift your finger and place it again")
+                : String(localized: "Still nothing to read — try another finger, or warm your hand first")
         }
     }
 
     /// A 1–2 word form for the compact header monitor (no room for the full line).
     public var shortLabel: String {
         switch self {
-        case .cameraDenied: return "Camera off"
-        case .locked:      return "Locked"
-        case .coverLens:   return "Cover lens"
-        case .tooBright:   return "Too bright"
-        case .holdStill:   return "Hold still"
-        case .pressGently: return "Press gently"
-        case .finding:     return "Finding…"
-        case .noLight:     return "No light"
+        case .cameraDenied: return String(localized: "Camera off")
+        case .locked:      return String(localized: "Locked")
+        case .coverLens:   return String(localized: "Cover lens")
+        case .tooBright:   return String(localized: "Too bright")
+        case .holdStill:   return String(localized: "Hold still")
+        case .pressGently: return String(localized: "Press gently")
+        case .finding:     return String(localized: "Finding…")
+        case .noLight:     return String(localized: "No light")
         // Two labels, not one, because the header is where a user decides whether to keep
         // waiting: "Unsteady" says the lens has something and it is the wrong shape,
         // "Nothing yet" says it has nothing. Deliberately NOT "Weak signal" — that would
@@ -157,7 +156,7 @@ public enum PulseCue: Equatable, Sendable {
         // has already cleared. And deliberately NOT "No rhythm"/"No pulse yet": this tile's
         // accessibility label is *Heart rate*, so either would compose into a sentence about
         // the user's heartbeat (see the ⚠️ SUBJECT block on the case).
-        case .stalled(let rhythmless): return rhythmless ? "Unsteady" : "Nothing yet"
+        case .stalled(let rhythmless): return rhythmless ? String(localized: "Unsteady") : String(localized: "Nothing yet")
         }
     }
 
