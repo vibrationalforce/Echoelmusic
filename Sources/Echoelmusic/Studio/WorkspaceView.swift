@@ -1151,7 +1151,8 @@ struct TransportPositionView: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Position")
-        .accessibilityValue("Bar \(barInLoop + 1) of \(bars), beat \(pos.beat + 1)")
+        .accessibilityValue(String(localized: "Bar ") + "\(barInLoop + 1)" + String(localized: " of ") + "\(bars)"
+                            + String(localized: ", beat ") + "\(pos.beat + 1)")
     }
 }
 
@@ -1618,14 +1619,14 @@ private struct SessionNamePreviewLeaf: View {
             // ⚠️ `readableFields` above KEEPS its `Int(...rounded())` and must — its own doc
             // says "READABLE is the operative word: this is a preview, not the stamped name",
             // and it rounds the concert pitch the same way. Do not sweep the two together.
-            Text("File: \(session.sessionName(bpm: transport.tempo))")
+            Text(String(localized: "File: ") + session.sessionName(bpm: transport.tempo))
                 .font(EchoelTheme.font(11).monospacedDigit())
                 .foregroundStyle(EchoelTheme.dim)
                 .lineLimit(1)
                 .truncationMode(.middle)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Piece: \(readableFields.joined(separator: ", "))")
+        .accessibilityLabel(String(localized: "Piece: ") + readableFields.joined(separator: ", "))
     }
 }
 #endif

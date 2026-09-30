@@ -45,7 +45,9 @@
 // 57 scale display names plus the shortName counterweight (parent: 0/57, 57 units missing — ONE finding). E4-22 added
 // the icon tile's key wrap, the Record tile's four state titles and the two spoken accidentals (parent: all verbatim,
 // six units missing — ONE finding). E4-23 added the eight Learn cards (guide + safety), the six Learn headings and the
-// bio disclaimer as one-literal keys (parent: 0/8 titles, `+` chains present, 31 units missing — ONE finding). Claim 12
+// bio disclaimer as one-literal keys (parent: 0/8 titles, `+` chains present, 31 units missing — ONE finding). E4-24 added
+// the Piece stage's counted sentences (tracks/parts/bars, orphans, automated parameters), the file-tempo row and the
+// root chrome's position/file/piece readouts as noun keys and seams (parent: all verbatim, 29 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -657,6 +659,51 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             }
         }
         try assertGerman(["Start Here", "Your Body", "Body Science", "Music Theory", "Light & Colour", "Safety & Scope", "For music and self-observation only — not a medical device and not for diagnosis. Readings are approximate; don’t use them for health decisions.", " Bio readings are most accurate from a chest strap; wrist and camera are estimates. Breathing guides are optional and never forced."], "Learn headings, disclaimer and scope tail")
+
+        // E4-24 — the Piece stage's counted sentences and the root chrome's position/file/piece readouts.
+        // A count is a NUMBER next to a catalog NOUN per grammatical number (Spur/Spuren · Teil/Teile ·
+        // Takt/Takte); a sentence with a moving middle is a head seam + the value + a tail seam. Never a
+        // format key: `"\(n) tracks"` would be the runtime key `%lld tracks`, which no catalog carries.
+        let piece = try codeOnly("Sources/Echoelmusic/Studio/WorkstationView.swift")
+        for seam in ["(tracks == 1 ? String(localized: \"track\") : String(localized: \"tracks\"))",
+                     "(parts == 1 ? String(localized: \"part\") : String(localized: \"parts\"))",
+                     "(bars == 1 ? String(localized: \"bar\") : String(localized: \"bars\"))",
+                     "String(localized: \"Arrangement: \") + \"\\(tracks) \"",
+                     "(count == 1 ? String(localized: \"part belongs\") : String(localized: \"parts belong\"))",
+                     "+ String(localized: \" to a track this piece no longer has.\")",
+                     "(count == 1 ? String(localized: \"automated parameter\") : String(localized: \"automated parameters\"))",
+                     "clip.name + String(localized: \" · measuring tempo…\")",
+                     "return String(localized: \"The file's tempo is still being measured.\")",
+                     "spoken: LocalizedStringKey) -> some View",
+                     "String(localized: \"Sets this file's tempo to \") + String(format: \"%.1f\", target) + String(localized: \" BPM\")"] {
+            XCTAssertTrue(piece.contains(seam), "WorkstationView lost the E4-24 seam `\(seam)`")
+        }
+        for verbatim in ["Text(\"\\(tracks) \\(tracks == 1", "Text(\"\\(count) automated", "parts belong\") to a track",
+                         "return \"\\(clip.name) · measuring", "return \"The file's tempo", "spoken: String) -> some View",
+                         "accessibilityHint(\"Sets this file's tempo"] {
+            XCTAssertFalse(piece.contains(verbatim), "WorkstationView speaks a counted or file-tempo sentence verbatim again: `\(verbatim)`")
+        }
+        let rootChrome = try codeOnly("Sources/Echoelmusic/Studio/WorkspaceView.swift")
+        for seam in ["String(localized: \"Bar \") + \"\\(barInLoop + 1)\" + String(localized: \" of \")",
+                     "Text(String(localized: \"File: \") + session.sessionName(bpm: transport.tempo))",
+                     ".accessibilityLabel(String(localized: \"Piece: \") + readableFields.joined(separator: \", \"))"] {
+            XCTAssertTrue(rootChrome.contains(seam), "WorkspaceView lost the E4-24 seam `\(seam)`")
+        }
+        for verbatim in ["accessibilityValue(\"Bar \\(barInLoop", "Text(\"File: \\(", "accessibilityLabel(\"Piece: \\("] {
+            XCTAssertFalse(rootChrome.contains(verbatim), "WorkspaceView speaks a readout verbatim again: `\(verbatim)`")
+        }
+        // COUNTERWEIGHT: `Text("loop \(barInLoop + 1)/\(bars)")` stays verbatim on purpose — "Loop" is the
+        // German word too, and `TheBarCountHasACarrierTests` pins that exact carrier (#490).
+        XCTAssertTrue(rootChrome.contains("Text(\"loop \\(barInLoop + 1)/\\(bars)\")"), "the loop carrier moved — re-anchor TheBarCountHasACarrierTests first")
+        try assertGerman(["track", "tracks", "part", "parts", "bar", "bars", "Arrangement: ", "bars long",
+                          "part belongs", "parts belong", " to a track this piece no longer has.",
+                          "parts belong to a track this piece no longer has", "automated parameter", "automated parameters",
+                          " · measuring tempo…", " · turn Warp off to change its tempo", " · tempo not set — enter it to use Warp",
+                          "The file's tempo is still being measured.", "Turn Warp off to change this file's tempo.",
+                          "This file's own tempo. Warp uses it to fit the file to the piece tempo.",
+                          "Not set. Starts at the piece tempo; enter the file's own tempo to enable Warp.",
+                          "Halve tempo", "Double tempo", "Sets this file's tempo to ", " BPM",
+                          "Bar ", " of ", ", beat ", "File: ", "Piece: "], "Piece-stage counts and root readouts")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

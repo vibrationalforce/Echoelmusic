@@ -510,16 +510,20 @@ struct WorkstationView: View {
         let parts = summary.regionCount
         let bars = summary.lengthBars
         return HStack(spacing: 10) {
-            Text("\(tracks) \(tracks == 1 ? "track" : "tracks")")
+            // E4-24: the count is a number, the noun is a catalog key per grammatical number
+            // (German: Spur/Spuren · Teil/Teile · Takt/Takte). Never a format key (#E4 law).
+            Text("\(tracks) " + (tracks == 1 ? String(localized: "track") : String(localized: "tracks")))
             Text("·").foregroundStyle(EchoelTheme.dim)
-            Text("\(parts) \(parts == 1 ? "part" : "parts")")
+            Text("\(parts) " + (parts == 1 ? String(localized: "part") : String(localized: "parts")))
             Text("·").foregroundStyle(EchoelTheme.dim)
-            Text("\(bars) \(bars == 1 ? "bar" : "bars")")
+            Text("\(bars) " + (bars == 1 ? String(localized: "bar") : String(localized: "bars")))
             Spacer(minLength: 0)
         }
         .font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Arrangement: \(tracks) tracks, \(parts) parts, \(bars) bars long")
+        .accessibilityLabel(String(localized: "Arrangement: ") + "\(tracks) " + String(localized: "tracks") + ", "
+                            + "\(parts) " + String(localized: "parts") + ", "
+                            + "\(bars) " + String(localized: "bars long"))
     }
 
     private func laneRow(_ row: WorkstationSummary.LaneRow) -> some View {
@@ -772,14 +776,15 @@ struct WorkstationView: View {
     }
 
     private func orphanLine(_ count: Int) -> some View {
-        Text("\(count) \(count == 1 ? "part belongs" : "parts belong") to a track this piece no longer has.")
+        Text("\(count) " + (count == 1 ? String(localized: "part belongs") : String(localized: "parts belong"))
+             + String(localized: " to a track this piece no longer has."))
             .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.warning)
             .fixedSize(horizontal: false, vertical: true)
-            .accessibilityLabel("\(count) parts belong to a track this piece no longer has")
+            .accessibilityLabel("\(count) " + String(localized: "parts belong to a track this piece no longer has"))
     }
 
     private func automationLine(_ count: Int) -> some View {
-        Text("\(count) automated \(count == 1 ? "parameter" : "parameters")")
+        Text("\(count) " + (count == 1 ? String(localized: "automated parameter") : String(localized: "automated parameters")))
             .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
     }
 
@@ -1489,21 +1494,21 @@ private struct PartTempoRow: View {
     }
 
     private func caption(known: Bool) -> String {
-        if measuring { return "\(clip.name) · measuring tempo…" }
-        if lockedByWarp { return "\(clip.name) · turn Warp off to change its tempo" }
-        return known ? clip.name : "\(clip.name) · tempo not set — enter it to use Warp"
+        if measuring { return clip.name + String(localized: " · measuring tempo…") }
+        if lockedByWarp { return clip.name + String(localized: " · turn Warp off to change its tempo") }
+        return known ? clip.name : clip.name + String(localized: " · tempo not set — enter it to use Warp")
     }
 
     private func hint(known: Bool) -> String {
-        if measuring { return "The file's tempo is still being measured." }
-        if lockedByWarp { return "Turn Warp off to change this file's tempo." }
+        if measuring { return String(localized: "The file's tempo is still being measured.") }
+        if lockedByWarp { return String(localized: "Turn Warp off to change this file's tempo.") }
         return known
-            ? "This file's own tempo. Warp uses it to fit the file to the piece tempo."
-            : "Not set. Starts at the piece tempo; enter the file's own tempo to enable Warp."
+            ? String(localized: "This file's own tempo. Warp uses it to fit the file to the piece tempo.")
+            : String(localized: "Not set. Starts at the piece tempo; enter the file's own tempo to enable Warp.")
     }
 
     @ViewBuilder
-    private func octaveButton(_ glyph: String, target: Double?, spoken: String) -> some View {
+    private func octaveButton(_ glyph: String, target: Double?, spoken: LocalizedStringKey) -> some View {
         if let target {
             Button {
                 draft = nil
@@ -1522,7 +1527,7 @@ private struct PartTempoRow: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(spoken)
-            .accessibilityHint("Sets this file's tempo to \(String(format: "%.1f", target)) BPM")
+            .accessibilityHint(String(localized: "Sets this file's tempo to ") + String(format: "%.1f", target) + String(localized: " BPM"))
         }
     }
 }
