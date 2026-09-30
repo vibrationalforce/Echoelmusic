@@ -506,19 +506,25 @@ struct ImmersiveMonitorMini: View {
         #endif
     }
 
+    /// The status ladder in words (interface audit 2026-09-30, the output half): ONE rung decides
+    /// the tile's word and VoiceOver's sentence (`OutputStatusWord.swift`, #416). The live rung
+    /// has no word — its picture is the visual's own colour, and a word over a colour that
+    /// changes every beat is the contrast defect the next audit line exists to catch.
+    private var rung: VisualMonitorRung {
+        VisualMonitorRung.rung(onExternalScreen: onExternalScreen, active: active)
+    }
+
     var body: some View {
         Group {
-            if onExternalScreen {
+            switch rung {
+            case .externalScreen:
                 // The picture is on the beamer; this phone's renderer has yielded (GPU
                 // law). Show WHERE it went — a performer whose projector is behind them
                 // otherwise cannot tell a live external output from a dead visual. Static
                 // and solid: no animation, because the point of yielding is to spend
-                // nothing here.
-                ZStack {
-                    EchoelTheme.fill
-                    Image(systemName: "tv").font(.system(size: 12)).foregroundStyle(EchoelTheme.text)
-                }
-            } else if active {
+                // nothing here. Bright, not dim: this is an output that is ON, elsewhere.
+                MonitorWordTile(glyph: "tv", word: rung.word, tint: EchoelTheme.text)
+            case .live:
                 TimelineView(.animation(minimumInterval: 1.0 / 20.0)) { tl in
                     // Colour work lives in the pure helper below — inlining the
                     // Double/Float mix here sent the type-checker into "unable to
@@ -530,11 +536,8 @@ struct ImmersiveMonitorMini: View {
                                             .black],
                                    center: .center, startRadius: 1, endRadius: 28)
                 }
-            } else {
-                ZStack {
-                    EchoelTheme.fill
-                    Image(systemName: "sparkles").font(.system(size: 12)).foregroundStyle(EchoelTheme.dim)
-                }
+            case .idle:
+                MonitorWordTile(glyph: "sparkles", word: rung.word, tint: EchoelTheme.dim)
             }
         }
         .frame(width: 54, height: EchoelTheme.controlHeight)
@@ -547,7 +550,7 @@ struct ImmersiveMonitorMini: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Immersive visual monitor")
-        .accessibilityValue(onExternalScreen ? "On external screen" : (active ? "Live" : "Idle"))
+        .accessibilityValue(rung.spoken)
         .accessibilityHint("Shows or hides the floating visual window")
         .accessibilityAddTraits(.isButton)
     }
@@ -617,6 +620,12 @@ struct EchoelLuxMonitorMini: View {
         #endif
     }
 
+    /// The status ladder in words, light half — see the sibling's `rung` and
+    /// `OutputStatusWord.swift`. Sending has no word: the colour IS what the fixtures receive.
+    private var rung: LightMonitorRung {
+        LightMonitorRung.rung(routeEnabled: luxActive)
+    }
+
     var body: some View {
         Button {
             NotificationCenter.default.post(name: .echoelChromeDoor, object: "routing")
@@ -643,11 +652,7 @@ struct EchoelLuxMonitorMini: View {
                         }
                     }
                 } else {
-                    ZStack {
-                        EchoelTheme.fill
-                        Image(systemName: "lightbulb")
-                            .font(.system(size: 11)).foregroundStyle(EchoelTheme.dim)
-                    }
+                    MonitorWordTile(glyph: "lightbulb", word: rung.word, tint: EchoelTheme.dim)
                 }
             }
             .frame(width: 38, height: EchoelTheme.controlHeight)
@@ -661,7 +666,7 @@ struct EchoelLuxMonitorMini: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("EchoelLux light monitor")
-        .accessibilityValue(luxActive ? "Sending to fixtures" : "No light route")
+        .accessibilityValue(rung.spoken)
         .accessibilityHint("Opens routing")
     }
 
@@ -675,6 +680,44 @@ struct EchoelLuxMonitorMini: View {
         let dim: Double = 0.3 + 0.7 * (mf?.masterLevel ?? 0)
         func enc(_ v: Double) -> Double { pow(min(max(v * dim, 0.0), 1.0), 1.0 / 2.2) }
         return Color(red: enc(rgb.r), green: enc(rgb.g), blue: enc(rgb.b))
+    }
+}
+
+// MARK: - The resting output tile (glyph + word)
+
+/// A monitor's RESTING face: its glyph and its status word on the shared fill — the output half
+/// of the audit's "Status-Leiter in Wörtern" (`OutputStatusWord.swift`). Declared ONCE for both
+/// tiles so the word reads the same in the head as it does in the pulse pill (10 pt semibold, the
+/// size of the pill's "Found"). It shrinks before it clips: the tiles are 54 and 38 pt wide by
+/// founder reference (`OneChromeControlHeightTests`), and Dynamic Type scales `EchoelTheme.font`
+/// — at an accessibility size the word gives up size rather than its last letters, and VoiceOver
+/// has the full sentence (`spoken`) either way.
+///
+/// `word` is optional so a call site can pass `rung.word` unchanged; a rung whose picture IS the
+/// status never builds this view, so today the optional is always non-nil here — the type says
+/// so at the definition, not with a force-unwrap at three call sites.
+private struct MonitorWordTile: View {
+    let glyph: String
+    let word: String?
+    let tint: Color
+
+    var body: some View {
+        ZStack {
+            EchoelTheme.fill
+            HStack(spacing: 3) {
+                Image(systemName: glyph)
+                    .font(.system(size: 11))
+                    .foregroundStyle(tint)
+                if let word {
+                    Text(word)
+                        .font(EchoelTheme.font(10, .semibold))
+                        .foregroundStyle(tint)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                }
+            }
+            .padding(.horizontal, 3)
+        }
     }
 }
 
