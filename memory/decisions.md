@@ -3147,3 +3147,10 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Why:** "you can let go & play" is a statement about a settled pulse; `isSettled` is that fact and clears on lift, drift and stop. A projection has no pending hide to disarm, so the restart-in-the-window defect cannot exist.
 - **Guard:** `LockCueDoesNotShoveTheControlsTests` claim 3 (projection present, clock vocabulary absent). Transcribed WORK 11/11, parent claim 3 red (one finding, four needles).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 1, chrome first: one word per thing, glossary file + guard
+
+- **Decision:** `docs/dev/GLOSSARY.md` is the one definition (piece · track · part · scene · loop, each with its struck synonyms); the nine chrome files say piece / track / part, "pulse reading" for the measurement and "the instrument" for the generative voice; `TheChromeSpeaksOneWordPerThingTests` reads the table and requires zero struck words in the chrome's visible literals.
+- **Why:** the head said song, session and project for one thing. The guard reads the file (#416). The scope is a file list, not the whole app, because take / session / section have second meanings in the panels; a file joins the list in the commit that cleans it.
+- **Open:** the panels (~170 literal hits); the tempo-mode words Flow / Loop → "Tempo follows pulse" / "Tempo fixed" (BodyTempoField + guards).
+- **Review:** 2026-10-30.
