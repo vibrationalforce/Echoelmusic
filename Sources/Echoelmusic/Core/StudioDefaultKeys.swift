@@ -62,25 +62,23 @@ public enum StudioDefaultKeys {
     /// never presumed. An unknown persisted raw value also resolves to this default.
     public static let skillLevel = StudioDefault(key: "studio.skillLevel", value: SkillLevel.pro)
 
-    /// #604 (GUI-Board Scheibe 1, UX-Audit #2): the instrument hint's retire flag. The
+    /// #604 (GUI-Board Scheibe 1, UX-Audit #2): the instrument hint's LEARNED flag. The
     /// OLD contract wrote this after ONE ~4.5 s showing — miss it once and the app's only
-    /// statement of the core mechanic never returned. NEW law: the hint retires when the
-    /// lesson is LEARNED — `startBioSource()` writes it (the user found Start, step 1 of
-    /// the hint's own sentence) — or after the showing cap below. Two writers in two
-    /// views, hence H15-KEYSTORE. The key STRING is unchanged on purpose: users who
-    /// already saw it once stay retired; only fresh installs get the patient behaviour.
+    /// statement of the core mechanic never returned. The law since #604: the hint retires
+    /// when the lesson is LEARNED — `startBioSource()` writes it (the user found Start,
+    /// step 1 of the hint's own sentence). Written by the studio, read by the overlay,
+    /// hence H15-KEYSTORE. The key STRING is unchanged on purpose: users who already
+    /// learned it stay retired.
+    ///
+    /// ⛔ TWO SIBLINGS STOOD HERE UNTIL 2026-09-30 AND ARE GONE: a showing COUNTER
+    /// (`onboard.instrumentHintShows`) and a CAP of five, after which the overlay retired
+    /// itself unlearned. The interface audit's rule 7 — nothing disappears with time; a
+    /// hint stays until it is closed and can be reopened (WCAG 2.2.1) — forbids a display
+    /// ceiling as much as a timer. The nag the cap guarded against is answered by the
+    /// head's ⓘ guide switch (`guideVisible`): the overlay shows only while that is on, so
+    /// the user closes it and reopens it with the ONE help switch the app has (rule 8).
+    /// The old counter key may linger on disk in shipped installs; nothing reads it.
     public static let instrumentHintSeen = StudioDefault(key: "onboard.instrumentHintSeen", value: false)
-
-    /// #604 — how many times the hint has been shown. At `instrumentHintShowCap` the
-    /// overlay retires itself even unlearned: the old once-ever contract existed to stop
-    /// the hint nagging on every fullscreen toggle, and that concern survives as this cap
-    /// instead of dying with the contract.
-    public static let instrumentHintShows = StudioDefault(key: "onboard.instrumentHintShows", value: 0)
-
-    /// #604 — the cap, ONE definition (#416): read by the overlay's retire check and by
-    /// the guard test. 5 showings ≈ five fullscreen entries — enough chances to read two
-    /// lines, bounded enough never to feel like a nag.
-    public static let instrumentHintShowCap = 5
 
     /// #608 (Founder 2026-08-15, „optionaler Automodus … vibe catcht und harmonisiert") —
     /// the Auto-mode master switch. OFF on fresh installs, deliberately: steering the

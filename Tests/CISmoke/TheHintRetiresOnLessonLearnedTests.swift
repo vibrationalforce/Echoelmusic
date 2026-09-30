@@ -1,41 +1,39 @@
 // TheHintRetiresOnLessonLearnedTests.swift
-// Echoel — #604 (GUI-Board Scheibe 1, from the #603 UX audit's debt #2).
+// Echoel — #604 (GUI-Board Scheibe 1) → interface audit 2026-09-30, rule 7.
 //
 // WHAT THIS GUARDS. `InstrumentHintOverlay` — the app's ONLY statement of the core
 // mechanic ("Start the music, then a finger on the back camera / Touch the image to
-// play notes") — used to write `seen = true` after ONE ~4.5 s showing. Miss it once and
-// no surface ever taught the gestures again; the #603 UX audit ranked that the
-// second-worst debt in the app. The NEW retire law has two arms, both pinned here:
-//   · LEARNED: `startBioSource()` writes `instrumentHintSeen` — the user found Start,
-//     which is step 1 of the hint's own first sentence;
-//   · CAPPED: after `instrumentHintShowCap` showings the overlay retires itself — the
-//     old once-ever contract's REAL point (no endless nagging) kept without its cost.
+// play notes") — has had THREE contracts:
+//   · #351: shown once for ~4.5 s, then never again (the UX audit's second-worst debt);
+//   · #604: re-armed on every visible fullscreen entry, still faded after ~4.5 s, and
+//     retired itself after five showings — a COUNTER and a CAP in the keystore;
+//   · 2026-09-30, rule 7 of the interface audit ("Nichts verschwindet mit der Zeit —
+//     Hinweise bleiben, bis man sie schließt, und lassen sich wieder öffnen"; measurable
+//     as "kein Timer an Hinweisen, keine Anzeige-Obergrenze", WCAG 2.2.1): the hint is a
+//     STATE. It is on while the head's ⓘ guide switch (`guideVisible`) is on AND the
+//     lesson is not LEARNED. No `.task`, no sleep, no counter, no cap.
+// What survives from #604 and is still pinned here: the LEARNED arm — `startBioSource()`
+// writes `instrumentHintSeen`, because the user found Start, step 1 of the hint's own
+// first sentence. What is NEW and pinned here: the overlay reads the guide switch, so the
+// ONE help control the app has (rule 8, Kopf-4's ⓘ) both closes and reopens it.
 //
-// ⚠️ LIMIT — SOURCE-TEXT SCAN. Nothing here runs the task, counts real showings, or
-// proves the timing/fade on device. Copy truth stays owned by
-// `FirstInstructionIsTrueTests` (#416 — one guard per decision; this file deliberately
-// does not re-scan the hint's strings), the fullscreen gate by
-// `TheFrontDoorIsDecidedBeforeItIsAskedTests`.
+// ⚠️ LIMIT — SOURCE-TEXT SCAN. Nothing here renders the overlay or flips the switch on a
+// device. Copy truth stays owned by `FirstInstructionIsTrueTests` (#416 — this file does
+// not re-scan the hint's strings), the fullscreen mount gate by
+// `TheFrontDoorIsDecidedBeforeItIsAskedTests`. `SourceText.codeOnly` is LOAD-BEARING:
+// the overlay's own comments still narrate the retired timer and cap by name.
 //
-// ⚠️ HONEST GRADING — transcribed in Python against the parent (e4f9953) and this tree
-// (#433/#464). 11 assertions in 4 tests, hand-counted: claims 1 (3) + 2 (5) + 3 (1) +
-// 4 (2). On THIS tree all 11 pass. Against the #604 PARENT (e4f9953): SIX were red as
-// ONE finding (#486) — keystore entries (3), counter + cap-retire (2), start-path
-// write (1), all born with #604, FORWARD. The TWO #604b additions (fade-sleep needle +
-// its ordering) are FORWARD against 4ae39e4 — the 700 ms sleep was born with #604b
-// (the original #604 shipped one sleep and its cap-retire hard-cut the cap-th showing;
-// found in review). Claim 2's exactly-one count is GREEN on the parent TOO, but for
-// the WRONG reason (#367, named rather than hidden): the parent's one `seen = true` is
-// the retired display-contract write this law replaces. The count only means what its
-// message says TOGETHER with the needles above it — alone it cannot tell the old law
-// from the new. Claim 4's two are COUNTERWEIGHTS, green on both trees. ZERO
-// regressions claimed, because zero exist. `SourceText.codeOnly` is LOAD-BEARING,
-// MEASURED (#453): 1 of the claim-2 verdicts flips raw-vs-stripped on this tree — the
-// retired contract's phrase `seen = true` survives in the overlay's #604 comment
-// ("collapses this very `if !seen` branch — written up front it would…"); claim 2's
-// exactly-one count is true only of CODE. The #491 collision in its standard form.
-// The two #604b needles do not flip: the 700 ms literal appears only in code (the
-// neighbouring comments spell it "700 ms").
+// ⚠️ HONEST GRADING — transcribed in Python against this tree and the parent (the
+// bookkeeping commit after dc81248ed). Claim 1: the LEARNED key GREEN on both, the guide
+// key GREEN on both, the two ABSENCES (counter, cap) RED on the parent — born here.
+// Claim 2: the guide read, the `if guideVisible, !seen {` gate and the four absences
+// (`.task`, `Task.sleep`, `shows`, `withAnimation`) RED on the parent, born here;
+// `allowsHitTesting(false)` GREEN on both. Claim 3 GREEN on both (unchanged since
+// #604). Claim 4 — the closer in the head and the sibling guide card on the same switch —
+// COUNTERWEIGHTS, GREEN on both. Retired from this file, not weakened: the needles for
+// the counter, the cap-retire line, the 4.5 s hold and the 700 ms fade sleep — each
+// pinned a mechanism that rule 7 removes, and a guard that keeps demanding a removed
+// mechanism is a guard against the decision.
 
 import Foundation
 import XCTest
@@ -45,75 +43,77 @@ final class TheHintRetiresOnLessonLearnedTests: XCTestCase {
     private static let window = "Sources/Echoelmusic/Studio/FloatingVisualWindow.swift"
     private static let studio = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
     private static let keys = "Sources/Echoelmusic/Core/StudioDefaultKeys.swift"
+    private static let header = "Sources/Echoelmusic/Studio/ProjectHeader.swift"
+    private static let guide = "Sources/Echoelmusic/Studio/GuideOverlay.swift"
 
-    // MARK: - claim 1 — the keys and the cap live in the keystore (H15 + #416)
+    // MARK: - claim 1 — the two facts that decide the hint live in the keystore; the clock does not
 
-    func testTheRetireStateLivesInTheKeystore() throws {
+    func testTheHintStateLivesInTheKeystoreWithoutACounterOrACap() throws {
         let keys = try source(Self.keys)
         XCTAssertTrue(keys.contains("StudioDefault(key: \"onboard.instrumentHintSeen\", value: false)"), """
-            The hint's retire flag left the keystore (or its default moved). Two views \
-            write/read it (overlay + startBioSource) — H15: one declaration, in Core. \
-            The key STRING must stay "onboard.instrumentHintSeen": renaming it would \
-            re-show the hint to every user who already retired it.
+            The hint's LEARNED flag left the keystore (or its default moved). The studio \
+            writes it and the overlay reads it — H15: one declaration, in Core. The key \
+            STRING must stay "onboard.instrumentHintSeen": renaming it would re-show the \
+            hint to every user who already learned it.
             """)
-        XCTAssertTrue(keys.contains("StudioDefault(key: \"onboard.instrumentHintShows\", value: 0)"), """
-            The showing counter left the keystore. Without it the cap arm of the retire \
-            law has no state and the hint either nags forever or regresses to once-ever.
+        XCTAssertTrue(keys.contains("StudioDefault(key: \"studio.guideVisible\", value: true)"), """
+            The head's guide switch left the keystore (or is no longer ON for new users). \
+            The overlay follows this switch — it is the hint's close AND reopen control \
+            (rule 7), and a fresh install must get the hint (rule 8: help on for new users).
             """)
-        XCTAssertTrue(keys.contains("instrumentHintShowCap = 5"), """
-            The showing cap moved or changed. If this is a deliberate retune, update \
-            this needle AND `StudioDefaultKeysTests` in the same commit — the cap is the \
-            surviving half of the old once-ever contract (its anti-nagging point).
-            """)
-    }
-
-    // MARK: - claim 2 — the overlay counts, and only the CAP arm retires there
-
-    func testTheOverlayCountsAndCapsButDoesNotRetireOnDisplay() throws {
-        let code = try source(Self.window)
-        XCTAssertTrue(code.contains("shows += 1"), """
-            The overlay no longer counts its showings. The cap arm of the retire law \
-            reads this counter; without the increment the hint shows forever for a user \
-            who never presses Start — the nagging the cap exists to bound.
-            """)
-        XCTAssertTrue(code.contains("if shows >= StudioDefaultKeys.instrumentHintShowCap { seen = true }"), """
-            The cap-retire is gone from the overlay (or stopped asking the keystore's \
-            ONE cap definition, #416). This line must also stay AFTER the fade sleeps — \
-            `seen = true` collapses the `if !seen` branch, so written before the sleeps \
-            it vanishes the cap-th showing the instant it appears (caught in review of \
-            this very slice).
-            """)
-        // #604b — the ORIGINAL #604 shipped with ONE sleep: the cap-retire ran in the
-        // same MainActor turn the ease-out STARTED, so the cap-th showing ended in a
-        // hard cut (the small sibling of the very defect the placement comment names).
-        let fadeSleep = "try? await Task.sleep(nanoseconds: 700_000_000)"
-        XCTAssertTrue(code.contains(fadeSleep), """
-            The fade sleep is gone from the overlay. Without it the cap-retire write \
-            collapses `if !seen` before the 0.6 s ease-out renders a frame — the cap-th \
-            showing becomes a hard cut (#604b). If the ease-out duration ever grows past \
-            0.7 s, grow this sleep with it.
-            """)
-        // Ordering via first-range comparison — sound because BOTH needles are unique in
-        // this file (the 700 ms literal exists nowhere else in Sources/; `seen = true`
-        // is counted ==1 below). The `if let` fail-open is covered by the two contains
-        // assertions above going red first (#367, named).
-        if let fade = code.range(of: fadeSleep),
-           let cap = code.range(of: "if shows >= StudioDefaultKeys.instrumentHintShowCap { seen = true }") {
-            XCTAssertTrue(fade.lowerBound < cap.lowerBound, """
-                The fade sleep moved BELOW the cap-retire — in that order it delays \
-                nothing: `seen = true` has already collapsed the branch before the sleep \
-                runs, and the cap-th showing hard-cuts again (#604b).
+        for retired in ["instrumentHintShows", "instrumentHintShowCap"] {
+            XCTAssertFalse(keys.contains(retired), """
+                `\(retired)` is back in the keystore. A showing counter or a cap is a \
+                display ceiling on a hint — rule 7 of the 2026-09-30 interface audit \
+                ("keine Anzeige-Obergrenze", WCAG 2.2.1) removed both. The nag they \
+                guarded against is answered by the ⓘ guide switch, not by a count.
                 """)
         }
-        XCTAssertEqual(occurrences(of: "seen = true", in: code), 1, """
-            `seen = true` appears more than once in FloatingVisualWindow — a second \
-            writer is either the old once-ever display contract returning (the #604 \
-            regression) or a new retire arm nobody documented. One cap-arm write; the \
-            LEARNED arm lives in `startBioSource()`, not here.
+    }
+
+    // MARK: - claim 2 — the overlay is a state of two switches, not an event on a clock
+
+    func testTheOverlayFollowsTheGuideSwitchAndTheLearnedFlagWithNoClock() throws {
+        let code = try source(Self.window)
+        let overlay = slice(code, from: "private struct InstrumentHintOverlay: View {", to: "\n#endif")
+        XCTAssertFalse(overlay.isEmpty, "`InstrumentHintOverlay` moved — re-anchor this scan")
+        XCTAssertTrue(overlay.contains("@AppStorage(StudioDefaultKeys.guideVisible.key)"), """
+            The overlay no longer reads the head's guide switch. Without it the hint has \
+            no close control — `allowsHitTesting(false)` means it cannot be tapped away — \
+            and rule 7 ("bleibt, bis man sie schließt, und lässt sich wieder öffnen") \
+            needs exactly one: the ⓘ in the head.
+            """)
+        XCTAssertTrue(overlay.contains("@AppStorage(StudioDefaultKeys.instrumentHintSeen.key)"), """
+            The overlay no longer reads the LEARNED flag — the #604 arm is gone and a user \
+            who has started the music keeps reading how to start it.
+            """)
+        XCTAssertTrue(overlay.contains("if guideVisible, !seen {"), """
+            The overlay's gate changed. It must be exactly the two user-owned facts — the \
+            guide switch on AND the lesson not learned — and nothing else; a third term \
+            here is where a clock or a count comes back in.
+            """)
+        for clock in [".task", "Task.sleep", "shows", "withAnimation", "Timer", "DispatchQueue"] {
+            XCTAssertFalse(overlay.contains(clock), """
+                `\(clock)` is back in `InstrumentHintOverlay`. The overlay had a 4.5 s hold, \
+                a 700 ms fade sleep, a showing counter and a cap until 2026-09-30; rule 7 \
+                removed every one of them. A hint that disappears by itself is the defect, \
+                however gently it fades.
+                """)
+        }
+        XCTAssertEqual(occurrences(of: "seen = true", in: code), 0, """
+            `seen = true` is written inside FloatingVisualWindow. The overlay READS the \
+            learned flag; the ONE writer is `startBioSource()` in the studio (claim 3). A \
+            write here is either the cap-retire returning or a display contract nobody \
+            documented.
+            """)
+        XCTAssertTrue(overlay.contains(".allowsHitTesting(false)"), """
+            The hint overlay lost `allowsHitTesting(false)`. It sits on the touch \
+            instrument; an overlay that swallowed the first play-touch would be worse now \
+            that the hint STAYS instead of fading.
             """)
     }
 
-    // MARK: - claim 3 — the LEARNED arm sits on the start path
+    // MARK: - claim 3 — the LEARNED arm sits on the start path (unchanged since #604)
 
     func testStartingBioRetiresTheHint() throws {
         let code = try source(Self.studio)
@@ -121,26 +121,25 @@ final class TheHintRetiresOnLessonLearnedTests: XCTestCase {
         XCTAssertTrue(body.contains("instrumentHintSeen = true"), """
             `startBioSource()` no longer retires the instrument hint. That write IS the \
             lesson-learned arm: the user found Start (step 1 of the hint's sentence), so \
-            the whisper's job is done. Without it the hint keeps showing until the cap \
-            for exactly the users who no longer need it.
+            the whisper's job is done. Without it the hint stays for exactly the users \
+            who no longer need it, until they switch the guide off.
             """)
     }
 
-    // MARK: - claim 4 (COUNTERWEIGHTS, #343) — the premises that survive the rewrite
+    // MARK: - claim 4 (COUNTERWEIGHTS, #343) — the switch the hint follows is a real, reopenable control
 
-    func testTheOldContractsLoadBearingPartsSurvive() throws {
-        let code = try source(Self.window)
-        XCTAssertTrue(code.contains("try? await Task.sleep(nanoseconds: 4_500_000_000)"), """
-            The hold sleep lost its `try?` (or its duration anchor moved). The swallow \
-            is load-bearing exactly as in the old contract: a mid-hold fullscreen exit \
-            cancels the task, and only the swallowed CancellationError lets the final \
-            cap-retire write run.
+    func testTheGuideSwitchIsTheOneCloserAndTheGuideCardSharesIt() throws {
+        let header = try source(Self.header)
+        XCTAssertTrue(header.contains("Button { guideVisible.toggle() }"), """
+            The head's ⓘ no longer toggles `guideVisible`. That toggle is the hint's close \
+            and reopen control (rule 7) — without it the overlay follows a switch nobody \
+            can flip.
             """)
-        XCTAssertTrue(code.contains(".allowsHitTesting(false)"), """
-            The hint overlay lost `allowsHitTesting(false)`. With the hint now showing \
-            on up to \(5) fullscreen entries instead of once, an overlay that swallowed \
-            the first play-touch would be five times the defect it was under the old \
-            contract.
+        let guide = try source(Self.guide)
+        XCTAssertTrue(guide.contains("if guideVisible, !entries.isEmpty {"), """
+            `GuideOverlay` no longer follows the same switch. The hint and the guide card \
+            must be ONE help surface behind ONE control (rule 8); if they diverge, the ⓘ \
+            starts meaning two things.
             """)
     }
 

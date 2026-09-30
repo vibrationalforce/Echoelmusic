@@ -19,13 +19,14 @@ final class StudioDefaultKeysTests: XCTestCase {
         // WHOLE strip (#572 — a thinned first impression was rejected on device).
         XCTAssertEqual(StudioDefaultKeys.skillLevel.value, .pro)
         XCTAssertEqual(StudioDefaultKeys.skillLevel.key, "studio.skillLevel")
-        // #604: hint retires on lesson-learned or the cap — key string deliberately kept
-        // from the pre-keystore literal so already-taught users stay retired.
+        // #604: hint retires on lesson-learned — key string deliberately kept from the
+        // pre-keystore literal so already-taught users stay retired. ⛔ The showing counter
+        // and the cap of five that were pinned beside it are GONE (interface audit
+        // 2026-09-30, rule 7: no timer and no display ceiling on a hint); the overlay now
+        // follows `guideVisible` instead. The BLOCKING pin is
+        // Tests/CISmoke/TheHintRetiresOnLessonLearnedTests.
         XCTAssertEqual(StudioDefaultKeys.instrumentHintSeen.value, false)
         XCTAssertEqual(StudioDefaultKeys.instrumentHintSeen.key, "onboard.instrumentHintSeen")
-        XCTAssertEqual(StudioDefaultKeys.instrumentHintShows.value, 0)
-        XCTAssertEqual(StudioDefaultKeys.instrumentHintShows.key, "onboard.instrumentHintShows")
-        XCTAssertEqual(StudioDefaultKeys.instrumentHintShowCap, 5)
         // #608: Auto mode ships OFF — steering the mood dials unasked is the one
         // thing the feature must never do first. Key read by AutoModeRow (door) +
         // makeComposerInput (fold), hence keystore. The BLOCKING pin lives in

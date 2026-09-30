@@ -339,7 +339,7 @@ writers of something (§F14).
 | S15 | `transport.position` (gated on visible) | — | — | playhead (leaf) | — | — |
 | S16 | output samples (20–30 Hz), `truePeak`, `cameraRPPG.rrWindowMs`, SessionContext, `noteNaming` | `visual.analysisMeter`; `claimDetailedMetering(.scope)` | `visual.analysisMeter` | **20–30 Hz** TimelineViews (leaves) | turns on R128 detail DSP on the engine | — |
 | S17 | output samples, master levels, `bus.usableBio` | — | — | Canvas/TimelineView (leaf) | — | — |
-| S18 | hint flags | `onboard.instrumentHintShows`, `instrumentHintSeen` | `onboard.instrumentHintShows` | — | — | overlay |
+| S18 | hint flags | `instrumentHintSeen`, `studio.guideVisible` (the head's ⓘ; rule 7 — no counter since 2026-09-30) | — | — | — | overlay |
 | S19 | `ExternalStageBridge` (bus, governor, synth, sky), 13 visual keys + weather mix | — | — | renderer | renderer | — (non-interactive window) |
 | S20 | everything in the environment | `activeMenu`; hosts every panel | navigation state (`activeMenu`, not persisted) | none in body (guard `TheMenuHostReadsNoHotStateTests`) | through its methods: see S21, S25–S39 | 11 on the chain + 1 nested (§E) |
 | S21 | `running`, `hasComposed` | `running` → `bus.setInstrumentRunning`; `synth.bioModulationEnabled`; `generate`; `startEvolving`; `startBioSource` (camera/Polar/demo); weather fetch; `stopEverything` | **session run state** (`running` is view `@State`) | — | **generator, transport play/stop, bio publishers, voices panic** | — |

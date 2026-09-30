@@ -933,13 +933,14 @@ struct FloatingVisualWindow: View {
                 // FIRST-RUN INVITATION (vision Step 2b, founder law #1: "app open, finger
                 // on camera, in 3 seconds it lives"). The one gesture a new user can't
                 // discover by feel — the camera is on the BACK, nothing on screen implies
-                // it. A self-fading whisper on the HOME (fullscreen) that teaches the two
-                // core gestures; since #604 it returns on each VISIBLE fullscreen entry
-                // until the lesson is learned (`startBioSource()` retires it) or the show
-                // cap is reached — the old "once-ever, then never returns" contract stood
-                // here for a week after #604 replaced it. Non-blocking (allowsHitTesting
-                // false — never steals the first play-touch), flash-safe (one opacity ramp,
-                // far under 3 Hz), reduce-motion aware. Own leaf → reads only @AppStorage
+                // it. A whisper on the fullscreen picture that teaches the two core
+                // gestures. Since the 2026-09-30 audit (rule 7: nothing disappears with
+                // time) it STAYS while the head's ⓘ guide is on and the lesson is not
+                // learned (`startBioSource()` retires it) — no timer, no show cap; #604's
+                // return-until-learned law survives, its cap and its 4.5 s fade do not.
+                // Non-blocking (allowsHitTesting false — never steals the first
+                // play-touch), no animation of its own (a hard cut on a user action, far
+                // under 3 Hz). Own leaf → reads only @AppStorage
                 // (freeze rule), no bio; no sheet added.
                 .overlay(alignment: .bottom) {
                     // ⛔ #604b: `isPresented &&` is load-bearing twice over. This window is
@@ -947,18 +948,19 @@ struct FloatingVisualWindow: View {
                     // — so a gate on size alone (the #604 first cut) mounted the overlay
                     // UNDER a hidden window: with the front-door seed forcing visible on
                     // every cold launch (fullscreen until 2026-09-30, a `.small` card since),
-                    // a dev override that hides the window would bank INVISIBLE showings
-                    // until the cap retired a hint nobody ever saw. Since the card became
+                    // a dev override that hides the window would have banked INVISIBLE
+                    // showings against the cap that stood until 2026-09-30; the gate stays,
+                    // because a hint under a hidden window is a hint nobody sees. Since the card became
                     // the front door this overlay first appears on the first fullscreen
                     // ENTRY, by decision — the launch teaching is `GuideOverlay`.
                     // The same condition fixes the inverse gap: re-showing
                     // via the header monitor is an opacity flip, not a remount — `isPresented`
-                    // here makes this branch structural in visibility, so the `.task` re-runs
-                    // and the hint genuinely returns on a visible fullscreen entry.
+                    // here makes this branch structural in visibility, so the hint genuinely
+                    // returns on a visible fullscreen entry.
                     // S4c: `!analysisShown` — the hint teaches the play surface, which a meter
-                    // covers; showing it there would spend one of its capped showings unseen.
+                    // covers; a hint under a meter teaches nothing.
                     if isPresented && windowSize.isFullscreen && !analysisShown {
-                        InstrumentHintOverlay(reduceMotion: reduceMotion)
+                        InstrumentHintOverlay()
                             .padding(.bottom, 44)
                     }
                 }
@@ -1445,108 +1447,86 @@ struct FloatingVisualWindow: View {
     }
 }
 
-/// First-run invitation on the fullscreen picture (vision Step 2b). Teaches the two
-/// core gestures — finger on the (back) camera to bring it to life, touch the image
-/// to play — then fades. ⛔ "on the instrument home" until 2026-09-30: the home is
-/// the piece now (audit decision 2), and this hint meets the user on their first
-/// fullscreen entry instead of at launch.
+/// The two-gesture invitation on the fullscreen picture (vision Step 2b): finger on
+/// the (back) camera to bring it to life, touch the image to play. ⛔ "on the instrument
+/// home" until 2026-09-30: the home is the piece now (audit decision 2), and this hint
+/// meets the user on their first fullscreen entry instead of at launch.
 ///
-/// ⛔ #604 (GUI-Board Scheibe 1): "then NEVER returns" stood here, and the UX audit
-/// ranked it the second-worst debt in the app — the ONLY statement of the core
-/// mechanic was a once-ever 4.5 s whisper; miss it once (look away, notification,
-/// anything) and no surface ever taught the gestures again. NEW RETIRE LAW: the hint
-/// returns on each VISIBLE fullscreen entry (the mount gate reads `isPresented` too,
-/// #604b — a hidden window must neither show nor COUNT) until the lesson is LEARNED —
-/// `startBioSource()`
-/// writes `instrumentHintSeen` the moment the user starts a bio source (step 1 of
-/// this hint's own first sentence) — or until `instrumentHintShowCap` showings, which
-/// keeps the old contract's real point (no endless nagging) without its cost.
-/// A self-contained leaf: reads only @AppStorage (freeze rule), never a bio value;
-/// `allowsHitTesting(false)` so it can never swallow the first play-touch; one opacity
-/// ramp (far under the 3 Hz flash rule), reduce-motion aware. Whisper styling per
-/// Uncodixfy — a subtle dark chip, no glow, accent green stays reserved for live bio.
+/// ⛔ TWO CONTRACTS STOOD HERE AND BOTH DISAPPEARED WITH TIME. The first (#351) showed
+/// once for ~4.5 s and never returned — the UX audit's second-worst debt. The second
+/// (#604) re-armed on every visible fullscreen entry, still faded after ~4.5 s, and
+/// retired itself after five showings (a counter and a cap in the keystore). The
+/// interface audit of 2026-09-30, rule 7 — "nothing disappears with time: a hint stays
+/// until it is closed, and can be reopened" (WCAG 2.2.1) — retires both halves: NO
+/// timer, NO counter, NO cap, no `.task` at all.
+///
+/// THE LAW NOW: the hint is on while the head's ⓘ guide switch (`guideVisible`, ON for
+/// new users, Kopf-4) is on AND the lesson is not yet LEARNED (`startBioSource()` writes
+/// `instrumentHintSeen` the moment the user starts a bio source — step 1 of this hint's
+/// own first sentence, the #604 arm that survives). Closing = the ⓘ in the head;
+/// reopening = the same ⓘ. Learning closes it for good, and the same two gestures stay
+/// readable in `GuideOverlay` behind the same switch — one help switch app-wide (rule
+/// 8), no new control, no touch stolen from the picture.
+///
+/// A self-contained leaf: reads two `@AppStorage` values (freeze rule), never a bio
+/// value; `allowsHitTesting(false)` so it can never swallow the first play-touch; no
+/// animation of its own — it appears and disappears on a user action as a hard cut,
+/// which is what the Reduce Motion path always did and is far under the 3 Hz flash
+/// rule. Whisper styling per Uncodixfy — a subtle dark chip, no glow, accent green
+/// stays reserved for live bio.
 @MainActor
 private struct InstrumentHintOverlay: View {
-    let reduceMotion: Bool
     @AppStorage(StudioDefaultKeys.instrumentHintSeen.key)
     private var seen = StudioDefaultKeys.instrumentHintSeen.value
-    @AppStorage(StudioDefaultKeys.instrumentHintShows.key)
-    private var shows = StudioDefaultKeys.instrumentHintShows.value
-    @State private var visible = false
+    @AppStorage(StudioDefaultKeys.guideVisible.key)
+    private var guideVisible = StudioDefaultKeys.guideVisible.value
 
     var body: some View {
-        Group {
-            if !seen {
-                VStack(spacing: 7) {
-                    // ⛔ These two were GERMAN until 2026-07-29 — on the immersive visual, the
-                    // most-seen surface in the app, and the FIRST thing a new user reads.
-                    // English is the bundle's declared development region; German returns
-                    // through a String Catalog as a translation, not as a stray literal.
-                    //
-                    // ⛔ AND THE FIRST LINE WAS UNTRUE UNTIL #351. It read "A finger on the
-                    // camera brings it to life" — a promise the app cannot keep at the moment
-                    // it is shown. The camera has exactly ONE owner, `startBioSource()`, and
-                    // its only caller is the start path in `EchoelStudioView`; before the user
-                    // starts the music there is no capture session, so a finger on the lens
-                    // does nothing at all. The very first instruction the instrument gives is
-                    // the worst possible place for an instruction that does not work: a new
-                    // user who follows it and sees nothing concludes the app is broken, not
-                    // that they missed a step. Naming the precondition costs four words.
-                    //
-                    // The founder's law #1 quoted below ("app open, finger on camera, in 3
-                    // seconds it lives") is the INTENT, and it is not what ships — bio is
-                    // user-armed by design (silent until started). Making the promise true
-                    // would mean auto-starting capture at launch, which is a permission
-                    // dialog on first render and a behaviour change nobody asked for. So the
-                    // copy follows the code, not the other way round.
-                    Label("Start the music, then a finger on the back camera",
-                          systemImage: "camera")
-                    Label("Touch the image to play notes", systemImage: "hand.point.up.left")
-                }
-                .font(EchoelTheme.font(13))
-                .foregroundStyle(.white.opacity(0.92))
-                .padding(.horizontal, 16)
-                .padding(.vertical, 11)
-                .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusLarge).fill(Color.black.opacity(0.5)))
-                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusLarge).strokeBorder(.white.opacity(0.12), lineWidth: 1))
-                .opacity(visible ? 1 : 0)
-                .allowsHitTesting(false)
-                .accessibilityElement(children: .combine)
-                // One-line literal on purpose: the sibling comment in `WorkspaceView` records
-                // that a bare literal here resolves to the `LocalizedStringKey` overload, and
-                // a String Catalog key is what carries this to the German build. A multi-line
-                // literal would still localise, but it makes the key harder to match by eye
-                // against the catalog — and this string has now been wrong once (#351).
-                .accessibilityLabel("Start the music, then put a finger on the back camera. Touch the image to play notes.")
-                .task {
-                    // Show, hold ~4.5 s, fade out. No animation under Reduce Motion (a
-                    // hard cut, still flash-safe).
-                    //
-                    // #604 RETIRE LAW (replaces the once-ever contract): each showing
-                    // COUNTS but does not retire — retirement comes from the lesson being
-                    // learned (`startBioSource()` writes `seen`) or from the cap. The
-                    // COUNT is written first (a mid-hold fullscreen exit still counts as
-                    // the showing it was); the cap-RETIRE is written LAST, because
-                    // `seen = true` collapses this very `if !seen` branch — written up
-                    // front it would vanish the cap-th showing the instant it appeared.
-                    // The `try?` (not `try`) on the sleeps is load-bearing exactly as in
-                    // the old contract: it swallows CancellationError, so the final
-                    // write runs even when the user flicks out of fullscreen mid-hold.
-                    shows += 1
-                    if reduceMotion { visible = true }
-                    else { withAnimation(.easeIn(duration: 0.45)) { visible = true } }
-                    try? await Task.sleep(nanoseconds: 4_500_000_000)
-                    if reduceMotion { visible = false }
-                    else { withAnimation(.easeOut(duration: 0.6)) { visible = false } }
-                    // #604b: the fade-out must RENDER before the cap can collapse the
-                    // branch — without this second sleep the cap-th showing ended in a
-                    // hard cut (review of #604): the retire write ran in the same
-                    // MainActor turn the ease-out started. 700 ms > the 0.6 s ease-out;
-                    // `try?` for the same cancellation reason as the hold sleep above.
-                    try? await Task.sleep(nanoseconds: 700_000_000)
-                    if shows >= StudioDefaultKeys.instrumentHintShowCap { seen = true }
-                }
+        // Rule 7 (interface audit 2026-09-30): a hint is a STATE, not an event. Two
+        // user-owned facts decide it — the head's ⓘ guide switch and the learned flag —
+        // and nothing else: no clock, no counter, no cap. Both are cold `@AppStorage`
+        // (written on a tap and on Start), so this leaf never rebuilds at rate.
+        if guideVisible, !seen {
+            VStack(spacing: 7) {
+                // ⛔ These two were GERMAN until 2026-07-29 — on the immersive visual, the
+                // most-seen surface in the app, and the FIRST thing a new user reads.
+                // English is the bundle's declared development region; German returns
+                // through a String Catalog as a translation, not as a stray literal.
+                //
+                // ⛔ AND THE FIRST LINE WAS UNTRUE UNTIL #351. It read "A finger on the
+                // camera brings it to life" — a promise the app cannot keep at the moment
+                // it is shown. The camera has exactly ONE owner, `startBioSource()`, and
+                // its only caller is the start path in `EchoelStudioView`; before the user
+                // starts the music there is no capture session, so a finger on the lens
+                // does nothing at all. The very first instruction the instrument gives is
+                // the worst possible place for an instruction that does not work: a new
+                // user who follows it and sees nothing concludes the app is broken, not
+                // that they missed a step. Naming the precondition costs four words.
+                //
+                // The founder's law #1 quoted below ("app open, finger on camera, in 3
+                // seconds it lives") is the INTENT, and it is not what ships — bio is
+                // user-armed by design (silent until started). Making the promise true
+                // would mean auto-starting capture at launch, which is a permission
+                // dialog on first render and a behaviour change nobody asked for. So the
+                // copy follows the code, not the other way round.
+                Label("Start the music, then a finger on the back camera",
+                      systemImage: "camera")
+                Label("Touch the image to play notes", systemImage: "hand.point.up.left")
             }
+            .font(EchoelTheme.font(13))
+            .foregroundStyle(.white.opacity(0.92))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 11)
+            .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusLarge).fill(Color.black.opacity(0.5)))
+            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusLarge).strokeBorder(.white.opacity(0.12), lineWidth: 1))
+            .allowsHitTesting(false)
+            .accessibilityElement(children: .combine)
+            // One-line literal on purpose: the sibling comment in `WorkspaceView` records
+            // that a bare literal here resolves to the `LocalizedStringKey` overload, and
+            // a String Catalog key is what carries this to the German build. A multi-line
+            // literal would still localise, but it makes the key harder to match by eye
+            // against the catalog — and this string has now been wrong once (#351).
+            .accessibilityLabel("Start the music, then put a finger on the back camera. Touch the image to play notes.")
         }
     }
 }
