@@ -3241,3 +3241,12 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Measured:** scanner 12 → 0 on the file, 0 over all 13 files on the work tree; checkers clean.
 - **Next rule-1 files (by hit count on the last census):** `EchoelAppIntents` 8, `LiveColaboView` / `MediaBrowserView` / `PatchbayView` / `SessionView` 6 each — each read sentence by sentence, one file per commit.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 1, ratchets 6 + 7: the media library and the nearby-devices sheet speak the glossary
+
+- **Decision (86fbea790, MediaBrowserView):** "song" ×4 → "piece"; "Relink points a clip at a library file" → "points its parts at"; usage row "in a clip, no part yet" → "imported, not placed yet" (the row names the file's STATE, not the type that holds it). `TheMediaLibraryIsBrowsedAndPlacedTests` four literals follow.
+- **Decision (6fdc157ff, LiveColaboView):** six "session" → the piece `colab.share(project:)` sends: "share your piece both ways", "Share this piece", "share pieces with you" ×2, "Piece from <peer>"; invite VoiceOver label "wants to join you" = its visible line.
+- **Both files are in `TheChromeSpeaksOneWordPerThingTests`' list now (15 files).** Scanner 0 over the list on the work tree.
+- **Push policy revised by measurement:** the CI/CD workflow queues without cancelling (nine runs queued behind one in progress, ~30 min each), the Compile Check re-queues at the BACK on every push — so the honest unit is a BATCH: push the local stack once, then no Sources push until that Compile Check has a conclusion.
+- **Next rule-1 files:** `EchoelAppIntents` (Siri: "Session" = the instrument playing → "Start Echoelmusic" / "Stop Echoelmusic" phrasing, App Shortcuts titles are user-visible), `PatchbayView` (5 "session" = Apple's Network MIDI *session* — a protocol term; the person-facing word is "connection", the toggle stays "Wireless MIDI"; 1 "take effect" → "apply"), then `SessionView`/`MeditationView` (doorless — lower priority), then the non-Studio files by hit count.
+- **Review:** 2026-10-30.
