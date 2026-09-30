@@ -432,10 +432,12 @@ struct TrackInspectorView: View {
                             set: { TrackMix.setLevel($0, laneID: laneID, timeline: timeline) }),
                         range: TrackMix.levelRange,
                         decimals: 2,
-                        standard: Double(TimelineLane.defaultLevel),
                         hint: controls.role == .echoelInstrument
                             ? "1.00 unchanged, 0 silent. This is also the level the Studio instrument plays at; its Start lifts 0 back to 1.00"
-                            : "1.00 unchanged, 0 silent, 2.00 is +6 dB")
+                            : "1.00 unchanged, 0 silent, 2.00 is +6 dB",
+                        // `standard:` AFTER `hint:` — the memberwise initialiser demands declaration
+                        // order (`EchoelValueField.hint` is declared above `standard`).
+                        standard: Double(TimelineLane.defaultLevel))
                     // Design slice 8: the same stored gain, read in decibels. Cold — the level
                     // moves on an edit, never on a clock.
                     Text(TrackMix.decibelText(level))
@@ -453,8 +455,8 @@ struct TrackInspectorView: View {
                             set: { TrackMix.setPan($0, laneID: laneID, timeline: timeline) }),
                         range: TrackMix.panRange,
                         decimals: 2,
-                        standard: Double(TimelineLane.defaultPan),
-                        hint: "−1 left, 0 centre, 1 right")
+                        hint: "−1 left, 0 centre, 1 right",
+                        standard: Double(TimelineLane.defaultPan))
                 }
                 if controls.genre {
                     echoelGenreRow
