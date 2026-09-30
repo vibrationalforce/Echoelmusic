@@ -160,9 +160,9 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
                        MediaAsset.Usage(clipIDs: [other.id], partCount: 0))
         XCTAssertNil(usage[MediaAsset.Key(kind: .audio, fileName: "Unused.wav")])
 
-        XCTAssertEqual(MediaBrowserView.usageText(.unused), "not in the song")
+        XCTAssertEqual(MediaBrowserView.usageText(.unused), "not in the piece")
         XCTAssertEqual(MediaBrowserView.usageText(MediaAsset.Usage(clipIDs: [other.id], partCount: 0)),
-                       "in a clip, no part yet")
+                       "imported, not placed yet")
         XCTAssertEqual(MediaBrowserView.usageText(MediaAsset.Usage(clipIDs: [first.id], partCount: 1)),
                        "in 1 part")
         XCTAssertEqual(MediaBrowserView.usageText(MediaAsset.Usage(clipIDs: [first.id], partCount: 3)),
@@ -664,11 +664,11 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         XCTAssertNil(MediaBrowserView.previewRefusal(songPlaying: false, loopPlaying: false, engineRunning: true),
                      "counterweight: with everything stopped a preview may play")
         XCTAssertEqual(MediaBrowserView.previewRefusal(songPlaying: true, loopPlaying: false, engineRunning: true),
-                       "Stop the song to preview a file.")
+                       "Stop the piece to preview a file.")
         XCTAssertEqual(MediaBrowserView.previewRefusal(songPlaying: false, loopPlaying: true, engineRunning: true),
                        "Stop the instrument's loop to preview a file.")
         XCTAssertEqual(MediaBrowserView.previewRefusal(songPlaying: true, loopPlaying: true, engineRunning: true),
-                       "Stop the song to preview a file.", "the song is named first")
+                       "Stop the piece to preview a file.", "the piece is named first")
         XCTAssertNotNil(MediaBrowserView.previewRefusal(songPlaying: false, loopPlaying: false, engineRunning: false),
                         "a stopped engine would light the button and play nothing")
         XCTAssertTrue(MediaBrowserView.previewSeconds.isFinite && MediaBrowserView.previewSeconds > 0,

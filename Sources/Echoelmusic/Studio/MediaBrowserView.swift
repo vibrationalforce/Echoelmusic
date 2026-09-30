@@ -267,8 +267,8 @@ struct MediaBrowserView: View {
                 }
             }
             line(candidates.isEmpty
-                 ? "Their parts stay in the song. Relink offers the library's files once one is there."
-                 : "Their parts stay in the song. Relink points a clip at a library file of the same length.")
+                 ? "Their parts stay in the piece. Relink offers the library's files once one is there."
+                 : "Their parts stay in the piece. Relink points its parts at a library file of the same length.")
         }
     }
 
@@ -404,7 +404,7 @@ struct MediaBrowserView: View {
     /// light the button and play nothing.
     static func previewRefusal(songPlaying: Bool, loopPlaying: Bool,
                                engineRunning: Bool) -> String? {
-        if songPlaying { return "Stop the song to preview a file." }
+        if songPlaying { return "Stop the piece to preview a file." }
         if loopPlaying { return "Stop the instrument's loop to preview a file." }
         if !engineRunning { return "Sound is off right now, so a preview can't play." }
         return nil
@@ -430,7 +430,7 @@ struct MediaBrowserView: View {
     /// Where a file is used, in the words the row shows.
     static func usageText(_ usage: MediaAsset.Usage) -> String {
         switch usage.partCount {
-        case 0:  return usage.clipIDs.isEmpty ? "not in the song" : "in a clip, no part yet"
+        case 0:  return usage.clipIDs.isEmpty ? "not in the piece" : "imported, not placed yet"
         case 1:  return "in 1 part"
         default: return "in \(usage.partCount) parts"
         }

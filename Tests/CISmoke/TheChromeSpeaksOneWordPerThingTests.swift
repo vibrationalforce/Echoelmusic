@@ -74,6 +74,10 @@
 // "Project: mirror to a screen" (the projector, not the noun) → "Show on a screen", and the launch
 // breadcrumb's presence flag `"take"` → `"same"` (a diagnostic on the line before its `breadcrumb`
 // marker). The scanner cannot tell a verb from a noun; keeping it that way keeps claim 4 honest.
+//
+// ⭐ RATCHET 6 (2026-09-30): `MediaBrowserView` — 6 hits: "song" ×4 → piece; "clip" ×2 were the
+// library's own object shown to a person ("Relink points a clip at…" → "its parts"; "in a clip,
+// no part yet" → "imported, not placed yet" — the state the row describes, not the type that holds it).
 // `Tests/CISmoke` is the blocking bundle. SKIPS rather than passes if the tree is absent.
 
 import Foundation
@@ -100,6 +104,7 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/SessionLaunchView.swift",
         "Sources/Echoelmusic/Studio/RecordTakeControls.swift",
         "Sources/Echoelmusic/Studio/EchoelStudioView.swift",
+        "Sources/Echoelmusic/Studio/MediaBrowserView.swift",
     ]
 
     /// A line whose strings reach a log or a test harness, not a person.
