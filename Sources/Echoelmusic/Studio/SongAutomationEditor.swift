@@ -379,7 +379,7 @@ private struct SongAutomationLane: View {
     private func pickedControls(_ point: AutomationPoint,
                                 descriptor: ParameterDescriptor) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Point at \(SessionGrid.label(forTick: point.tick))")
+            Text(String(localized: "Point at ") + SessionGrid.label(forTick: point.tick))
                 .font(EchoelTheme.font(11, .semibold))
                 .foregroundStyle(EchoelTheme.text)
             SongAutomationValueRow(shown: point.value, pointID: point.id,
@@ -404,7 +404,7 @@ private struct SongAutomationLane: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Remove the point at \(SessionGrid.label(forTick: point.tick))")
+            .accessibilityLabel(String(localized: "Remove the point at ") + SessionGrid.label(forTick: point.tick))
         }
     }
 
@@ -505,7 +505,7 @@ private struct SongAutomationCanvas: View {
             .onTapGesture(coordinateSpace: .local) { location in onTap(location, size) }
             .gesture(edit(size: size))
             .accessibilityElement()
-            .accessibilityLabel("\(title) automation: \(pointCountLabel)")
+            .accessibilityLabel(title + String(localized: " automation: ") + pointCountLabel)
             .accessibilityHint("Double-tap adds or picks the point in the middle of the piece. Use the actions to pick another point; its value and Remove follow below.")
             .accessibilityAction(named: "Pick next point") { onStep(1) }
             .accessibilityAction(named: "Pick previous point") { onStep(-1) }

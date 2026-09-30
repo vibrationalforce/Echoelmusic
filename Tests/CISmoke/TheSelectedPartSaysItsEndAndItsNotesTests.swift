@@ -81,7 +81,8 @@ final class TheSelectedPartSaysItsEndAndItsNotesTests: XCTestCase {
     func testTheBarAndTheSwitchShowThem() throws {
         let bar = try source(Self.partBar)
         XCTAssertTrue(bar.contains("let title = TrackParts.spanTitle(part)"), "the part bar's heading names the end bar")
-        XCTAssertTrue(bar.contains("Text(\"Selected part · \\(title)\")"))
+        // E4-26: the heading's head is a catalog key; the claim (the bar SHOWS `spanTitle`) is unchanged.
+        XCTAssertTrue(bar.contains("Text(String(localized: \"Selected part · \") + title)"))
 
         let editor = try source(Self.editor)
         guard let start = editor.range(of: "struct PartNoteEditor: View {"),

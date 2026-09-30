@@ -235,7 +235,7 @@ struct TrackPartsView: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Part at \(title)")
+        .accessibilityLabel(String(localized: "Part at ") + title)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityHint("Selects this part. Its actions are under the arrangement above")
     }

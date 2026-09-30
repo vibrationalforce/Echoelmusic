@@ -226,7 +226,7 @@ struct SelectedPartBar: View {
                               endLength: PartTrim.endTrim(part, in: document))
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
-                    Text("Selected part · \(title)")
+                    Text(String(localized: "Selected part · ") + title)
                         .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
                     Spacer(minLength: 8)
                     PartPlayButton(startTick: part.startTick, playFrom: playFrom,

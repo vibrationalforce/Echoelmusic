@@ -50,7 +50,8 @@
 // root chrome's position/file/piece readouts as noun keys and seams (parent: all verbatim, 29 units missing — ONE finding).
 // E4-25 added the bar/beat vocabulary of the three model helpers (SessionGrid.label · TrackParts.title/spanTitle/lengthText ·
 // SongAutomationEdit.countLabel) as keys beside the numbers, English byte-identical (parent: all verbatim, 8 units missing —
-// ONE finding). Claim 12
+// ONE finding). E4-26 added the frames around that vocabulary — the part bar's heading, the parts row's spoken label, the
+// curve editor's point line, Remove label and spoken summary (parent: all interpolated, 5 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -740,6 +741,26 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertEqual(SongAutomationEdit.countLabel(inSongPoints: 3, continuesPastEnd: true), "3 points, and 1 after the end of the piece")
         try assertGerman(["Bar ", " beat ", " · to bar ", "1 bar", "bars", "1 beat", "beats", "1 point", "points",
                           ", and 1 after the end of the piece"], "bar/beat vocabulary of the model helpers")
+
+        // E4-26 — the views that FRAME the composed bar words: the part bar's heading, the parts row's spoken
+        // label, the automation editor's picked-point line, its Remove label and the curve's spoken summary. Each
+        // is a head seam (or a middle seam) around the E4-25 vocabulary, never a format key.
+        let partBar = try codeOnly("Sources/Echoelmusic/Studio/SelectedPartBar.swift")
+        XCTAssertTrue(partBar.contains("Text(String(localized: \"Selected part · \") + title)"), "the part bar's heading is verbatim again")
+        XCTAssertFalse(partBar.contains("Text(\"Selected part · \\(title)\")"), "the part bar interpolates its heading again")
+        let partsRow = try codeOnly("Sources/Echoelmusic/Studio/TrackPartsView.swift")
+        XCTAssertTrue(partsRow.contains(".accessibilityLabel(String(localized: \"Part at \") + title)"), "the parts row's spoken label is verbatim again")
+        XCTAssertFalse(partsRow.contains("accessibilityLabel(\"Part at \\(title)\")"), "the parts row interpolates its spoken label again")
+        let curveEditor = try codeOnly("Sources/Echoelmusic/Studio/SongAutomationEditor.swift")
+        for seam in ["Text(String(localized: \"Point at \") + SessionGrid.label(forTick: point.tick))",
+                     ".accessibilityLabel(String(localized: \"Remove the point at \") + SessionGrid.label(forTick: point.tick))",
+                     ".accessibilityLabel(title + String(localized: \" automation: \") + pointCountLabel)"] {
+            XCTAssertTrue(curveEditor.contains(seam), "SongAutomationEditor lost the E4-26 seam `\(seam)`")
+        }
+        for verbatim in ["Text(\"Point at \\(", "accessibilityLabel(\"Remove the point at \\(", "accessibilityLabel(\"\\(title) automation: \\("] {
+            XCTAssertFalse(curveEditor.contains(verbatim), "SongAutomationEditor interpolates a sentence again: `\(verbatim)`")
+        }
+        try assertGerman(["Selected part · ", "Part at ", "Point at ", "Remove the point at ", " automation: "], "part bar, parts row and curve editor frames")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
