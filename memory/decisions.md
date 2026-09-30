@@ -3508,3 +3508,13 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Guard:** `TheStudioIconsScaleWithTheTextTests` — named ratchet list (#364) + whole-tree ceiling 42 that only comes down, AppIcon excluded for a PINNED reason. Stripper LOAD-BEARING 1/28.
 - **Open:** families 2 (EchoelStudioView, 19) and 3 (FloatingVisualWindow · BioStripView · PatchbayView · BioSourceView, 24); device probe at AX5.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Zug 4, icon families 2+3: every SF Symbol under Sources/ scales with the text (6ee391594, 254a7c282)
+- **Decision:** the remaining 42 `Image(systemName:)` sites (EchoelStudioView 19; FloatingVisualWindow 7, BioStripView 6, PatchbayView 6, BioSourceView 4) take `EchoelTheme.font(N[, .semibold])`. `TheStudioIconsScaleWithTheTextTests` ceiling 63 → 0; `Resources/AppIcon.swift` stays excluded (proportional canvas `E`, pinned). CoachingTextScalesTests' prose citation moved with its line.
+- **Rationale:** label scales, glyph did not; ceiling 0 catches any new absolute icon size twice.
+- **Open:** device probe at AX5. **Review:** 2026-10-30.
+
+### 2026-09-30 — Zug 4, asset accent = token accent (df7f6a404)
+- **Decision:** `AccentColor.colorset` carries `EchoelTheme.accent`'s components in both appearances (was #22C55E / #34D381 against the token's #4CD98C). project.yml untouched. Guard `TheAssetAccentIsTheTokenTests` compares the two spellings, pins no number.
+- **Rationale:** the asset is the GLOBAL accent — untinted Toggles, alert buttons, text cursors drew a third green beside the tinted controls and the pulse dot. One definition per decision (#416).
+- **Open:** device probe (untinted Network-MIDI toggle = pulse-dot green). **Review:** 2026-10-30.
