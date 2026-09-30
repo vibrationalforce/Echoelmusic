@@ -25,6 +25,7 @@ changes.
 | track | Spur | lane | one row of the piece |
 | part | Teil | clip, region, take | one block on a track |
 | scene | Szene | section | one row of the Perform grid |
+| default | Standard | reset, initial, factory | the value a fresh install has — every value field that knows its default offers it as "Default" (keypad key + VoiceOver action, rule 6) |
 | loop | Schleife | — | the repeat range (a length). ⚠️ OPEN: the tempo MODE is still called Flow / Loop in `ComposerMode`; the audit renames it "Tempo follows pulse" / "Tempo fixed" — a separate slice, because the mode's words sit in `BodyTempoField` and its guards |
 
 ## What the words are NOT

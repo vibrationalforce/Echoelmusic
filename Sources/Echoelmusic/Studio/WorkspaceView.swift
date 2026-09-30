@@ -1335,6 +1335,7 @@ struct CompositionHeaderStrip: View {
                     // second border around a box that has one.
                     EchoelValueField(label: "", value: $session.a4Hz, range: 380...500,
                                      unit: "Hz", decimals: 2,
+                                     standard: SessionContext.defaultA4Hz,
                                      onCommit: {
                                          NotificationCenter.default.post(
                                              name: .echoelCompositionEdited, object: "a4")

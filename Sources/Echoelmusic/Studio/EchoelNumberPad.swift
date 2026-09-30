@@ -114,6 +114,10 @@ struct EchoelNumberPad: View {
     let decimals: Int
     let unit: String
     let range: ClosedRange<Double>
+    /// The row's default (rule 6, "Auf Standard"); `nil` = no key. The key TYPES the default
+    /// into the buffer — OK confirms, like every other key on this pad — so a reset is one
+    /// tap more than a mistake can be, and the header shows what OK will keep.
+    var standard: Double? = nil
     /// Called with the committed, range-clamped value when the user taps OK.
     let onCommit: (Double) -> Void
 
@@ -171,6 +175,9 @@ struct EchoelNumberPad: View {
                         .foregroundStyle(EchoelTheme.dim)
                 }
                 Spacer(minLength: 0)
+                if let standard {
+                    defaultKey(standard)
+                }
             }
             Text("Range \(fmt(range.lowerBound))–\(fmt(range.upperBound))\(unit.isEmpty ? "" : " " + unit)")
                 .font(EchoelTheme.font(11))
@@ -334,6 +341,30 @@ struct EchoelNumberPad: View {
         }
         .buttonStyle(.plain)
         .disabled(!enabled)
+    }
+
+    /// Rule 6 — "Default 440": symbol plus word (rule 3), solid fill, 8 px radius. Dimmed
+    /// while the pending value already IS the default, so the key never offers a change it
+    /// cannot make (#164/#227). It writes the ASCII buffer the digits write (`%.Nf`, POSIX
+    /// separator — `displayString` localises for the eye), never the value directly.
+    private func defaultKey(_ standard: Double) -> some View {
+        let text = fmt(standard)
+        let atDefault = snapped(pendingValue) == snapped(standard)
+        return Button {
+            buffer = String(format: "%.\(decimals)f", ScrubPrecision.gridded(standard, decimals: decimals))
+        } label: {
+            Label("Default \(text)", systemImage: "arrow.counterclockwise")
+                .font(EchoelTheme.font(13, .semibold))
+                .foregroundStyle(atDefault ? EchoelTheme.dim : EchoelTheme.text)
+                .padding(.horizontal, 10).frame(height: 32)
+                .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
+                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                    .strokeBorder(EchoelTheme.borderStrong, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .disabled(atDefault)
+        .accessibilityLabel("Default \(text)\(unit.isEmpty ? "" : " " + unit)")
+        .accessibilityHint("Types the default; OK confirms it.")
     }
 
     // MARK: - Editing

@@ -5694,6 +5694,8 @@ laufendes Register nicht. Ein Wächter darüber bleibt bewusst aus (#364).
 
 **2026-09-30 (Regel 1 — Glossar-Wächter):** `git ls-files 'Tests/CISmoke/*.swift' | wc -l` → **722 vor, 723 nach** diesem Commit (`TheChromeSpeaksOneWordPerThingTests.swift`, neu). ⛔ Nachtrag für die Scheibe davor, die diese Zeile schuldig blieb: dc81248ed legte `TheChipStripFollowsTheSkillLevelTests.swift` an — **721 → 722**, ohne Ledger-Zeile; hier nachgetragen, gemessen an `git show dc81248ed --stat`.
 
+**2026-09-30 (Regel 6 — „Auf Standard“):** `git ls-files 'Tests/CISmoke/*.swift' | wc -l` → **723 vor, 724 nach** diesem Commit (`TheValueFieldOffersItsDefaultTests.swift`, neu).
+
 ## B — `Sources/**/*.swift`
 
 Aktueller Stand: **messen, nie zitieren.**

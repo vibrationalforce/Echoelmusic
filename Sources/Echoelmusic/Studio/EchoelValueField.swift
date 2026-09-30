@@ -375,6 +375,17 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
     /// first push hit — the one red gate of this chain. `hint` is prose and belongs last
     /// at the call site, so it belongs last here.
     var hint: String = ""
+    /// The value's DEFAULT — interface audit 2026-09-30, rule 6: "Jeder Wert hat „Auf
+    /// Standard"" (WCAG 3.3.4 / 3.3.7). `nil` = this row has no meaningful default and offers
+    /// no key (a NaN-safe absence, not a lying control — #164/#227). When set, two doors
+    /// appear, both through `apply(_:)` so `onChange` and `onCommit` fire exactly as for a
+    /// typed number: the keypad's "Default" key (fills the buffer; OK confirms, so nothing
+    /// changes without the same tap every other key needs) and a VoiceOver custom action on
+    /// this row. The word a person reads is "Default" (`docs/dev/GLOSSARY.md`).
+    ///
+    /// ⚠️ Declared AFTER `hint` and BEFORE the closures, for the same memberwise-order reason
+    /// `hint` documents above: call sites write `…, decimals: 2, standard: 440, onCommit: …`.
+    var standard: V? = nil
     var onChange: () -> Void = {}
     var onCommit: () -> Void = {}
 
@@ -687,6 +698,16 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
         // that can say WHY, and that sentence is worth more when the row is off than when it
         // is on. Nothing is invented here — this view does not know the reason.
         .accessibilityHint(accessibleHint)
+        // Rule 6 — the row's default as a VoiceOver custom action (the sighted door is the
+        // keypad's "Default" key). Same `apply` + both closures as every other path; a value
+        // already at its default moves nothing and posts nothing (#375).
+        .accessibilityActions {
+            if let standard {
+                Button("Default \(EchoelDecimalText.string(Double(standard), decimals: decimals))") {
+                    if apply(Double(standard)) { onChange(); onCommit() }
+                }
+            }
+        }
         // ⛔ BOTH CALLBACKS, and `onChange` is the one that was missing (found 2026-07-29).
         // `apply(_:)` writes the binding and reports whether it moved — the WORK lives in the
         // caller's closures, and the two are not interchangeable: `onChange` is live-apply
@@ -910,7 +931,8 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
         .animation(.easeOut(duration: 0.12), value: scrubbing)
         .sheet(isPresented: $showPad) {
             EchoelNumberPad(title: label, initial: Double(value), decimals: decimals,
-                            unit: unit, range: Double(range.lowerBound)...Double(range.upperBound)) { newVal in
+                            unit: unit, range: Double(range.lowerBound)...Double(range.upperBound),
+                            standard: standard.map { Double($0) }) { newVal in
                 // Same rule as the other two paths (#375): confirming the number that was already
                 // there is not an edit. Typing 440 into a concert pitch that reads 440 used to
                 // post `.echoelCompositionEdited`, which re-tunes every voice and recomposes.

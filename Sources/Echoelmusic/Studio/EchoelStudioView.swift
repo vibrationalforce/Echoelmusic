@@ -3768,7 +3768,8 @@ struct EchoelStudioView: View {
                     // this still loads and still means unity — no migration needed.
                     // Widen this again only together with #196 (per-role output gain).
                     EchoelValueField(label: "Level", value: mixBinding(\.bass),
-                                     range: 0...1, unit: "", decimals: 2)
+                                     range: 0...1, unit: "", decimals: 2,
+                                     standard: MixerStore.defaultLevel)
                     EchoelValueField(label: "Filter", value: bassCutoffBinding,
                                      range: TrackFXStore.cutoffRange, unit: "Hz", decimals: 0)
                     EchoelValueField(label: "Drive", value: bassDriveBinding,
@@ -3796,7 +3797,8 @@ struct EchoelStudioView: View {
                 // be a second, unrelated decision.
                 mixStripCard("Melodic · Pad") {
                     EchoelValueField(label: "Pad", value: mixBinding(\.pad),
-                                     range: 0...1, unit: "", decimals: 2)   // see Bass Level
+                                     range: 0...1, unit: "", decimals: 2,
+                                     standard: MixerStore.defaultLevel)   // see Bass Level
                     EchoelValueField(label: "Filter", value: melodicCutoffBinding,
                                      range: TrackFXStore.cutoffRange, unit: "Hz", decimals: 0)
                     EchoelValueField(label: "Drive", value: melodicDriveBinding,
