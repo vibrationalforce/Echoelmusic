@@ -40939,3 +40939,21 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Gates gelesen:** df7f6a404 Auto-Merge 3984 ✓ → **main = df7f6a404** (Asset-Akzent + Icon-Familien 2+3
   in main); CI/CD 6550 Run Tests läuft seit 19:43Z. 51c2a34e0 Run Tests failure 19:34–19:56Z (Log-Lesung
   folgt). a2662b836: Monitor läuft.
+
+## 2026-09-30 — E4-1 gebaut: die Chrome spricht Deutsch (e3a71486d, Push nach Compile Check 3088 grün auf a2662b836)
+
+- **Gemessen zuerst:** Katalog 24 Schlüssel (en+de), `String(localized:)` null Produktions-Aufrufer (eine
+  Kommentar-Erwähnung); `Text(candidate.label)` in StageShell und `Text(area.label)` in EchoelStudioView
+  sprechen Strings wörtlich → kein Katalog-Eintrag konnte Naht, Bereiche oder Kopf je erreichen.
+- **Gebaut:** StudioStage (4) · StudioArea (10) · ProjectTransport (20 Stellen) → `String(localized:)`;
+  Katalog 24 → 64 (40 neu: 33 gewrappte Wörter + 7 Literal-Schlüssel). Serialisierung im Datei-Stil
+  (`sort_keys=False`, `" : "`), Round-Trip byteweise geprüft, sonst hätte der Diff die 24 Alt-Einträge
+  umsortiert. Wächter `TheChromeSpeaksGermanTests`, 5 Ansprüche (2 END-TO-END, 3 SOURCE-TEXT).
+- **Transkription:** HEAD: c1+2 33 fehlende de = EINE Abwesenheit (#486), c3 32 nackte Literale (benannter
+  Grund), c4 7 fehlend, c5 4 fehlend — alle vorwärts; WORK: 0/0/34 gewrappt/0/0. Stripper prophylaktisch.
+- **Checker:** moved-needles 1 Treffer (`TheProjectHeaderRunsOneTransportTests` Anspruch 10 — RUNTIME-
+  Gleichheit auf `buttonWord`, im englischen Host grün, kein Edit). needle-reachability: 3 Befunde, alle
+  vorbestehend und interpolierte Ausgaben (describe/caption/pickedNoteLine) — nicht diese Scheibe.
+  StringCatalogIsHonestTests-Invarianten 1–4 in Python auf der neuen Datei: OK.
+- **Protokoll:** decisions.csv 1063, memory/decisions.md, FOUNDER_INBOX E4-Zeile.
+- **Gates:** a2662b836 Compile Check 3088 ✓ (die Klammer-Reparatur baut). e3a71486d: Monitor läuft.

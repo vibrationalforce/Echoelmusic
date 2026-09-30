@@ -3551,3 +3551,23 @@ stirbt die Musik beim Wechsel) — nachgeführt (rev 79).
 
 **Review 2026-10-30:** Wird die Datei benutzt (kein HOLD mehr nur in Aufgaben)? Sind die fünf
 Familien G1–G5 beantwortet? Ist §4 kleiner als 540?
+
+### 2026-09-30 — E4 „die App spricht Deutsch", Chrome zuerst (e3a71486d)
+
+**Entscheidung.** Bühnen-Naht (`StudioStage`), Bereichs-Zeile (`StudioArea`) und Kopf-Transport
+(`ProjectTransport`) geben ihre Wörter über `String(localized:)` zurück (34 Stellen, 33 Wörter);
+`Localizable.xcstrings` wächst von 24 auf 64 Schlüssel, jeder mit übersetztem `de`-Unit und en == Key;
+sieben davon sind reine Literal-Schlüssel (Pause · Guide · Stage · Follows pulse · Locked · Demo ·
+Heart rate), die SwiftUI über den Inhalt findet. Wächter `TheChromeSpeaksGermanTests`.
+
+**Warum.** Founder-Ja zu Frage 4 (Glossar Stück · Spur · Teil · Szene, Chrome zuerst). Gemessen:
+`String(localized:)` hatte null Produktions-Aufrufer; ein Wort, das ein Enum als nacktes Literal
+zurückgibt, spricht `Text(candidate.label)` wörtlich — SwiftUI lokalisiert `Text("literal")`, nie
+`Text(someString)`. Der Katalog bleibt das EINE Zuhause des Deutschen (#416); der Wächter nennt keine
+Übersetzung außer dem Glossar-Wort, das er aus dem Glossar liest. Katalog im eigenen Stil (Einfüge-
+Reihenfolge) angehängt, Round-Trip byteweise geprüft — die 24 Alt-Einträge sind unberührt.
+
+**Grenze.** Ob iOS das Deutsche zeigt, ist ein Geräte-Befund (deutsches Telefon); im englischen Test-Host
+liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverändert.
+
+**Review 2026-10-30:** Zeigt das Gerät Deutsch? Sind die Panels (~850 Texte) familienweise nachgezogen?
