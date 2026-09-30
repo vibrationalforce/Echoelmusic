@@ -344,7 +344,7 @@ struct BodyTempoField: View {
                 // Following, compact: just the running number (no word labels) — a tap
                 // opens nothing (it follows the body); the lock beside it freezes it.
                 Text(followingText)
-                    .font(EchoelTheme.font(15,) .semibold).monospacedDigit())
+                    .font(EchoelTheme.font(15, .semibold).monospacedDigit())
                     .foregroundStyle(liveBodyBPM > 0 ? EchoelTheme.accent : EchoelTheme.text)
                     .lineLimit(1).minimumScaleFactor(0.7)
                     // ⛔ #1023c — THE ONE SITE #1023b GOT WRONG, and the compiler is the only

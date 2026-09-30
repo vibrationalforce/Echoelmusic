@@ -619,7 +619,7 @@ struct WorkspaceView: View {
                 // `HStack(spacing: 8)` in this bar and now counts two, updated in the same commit.
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Echoelmusic")
-                        .font(EchoelTheme.font(15,) .semibold))
+                        .font(EchoelTheme.font(15, .semibold))
                         .foregroundStyle(EchoelTheme.text)
                         .lineLimit(1).minimumScaleFactor(0.7)
                     Text(Self.versionString)
@@ -1131,7 +1131,7 @@ struct TransportPositionView: View {
             // carries exactly this pair for exactly this reason; the asymmetry was the defect.
             VStack(alignment: .trailing, spacing: 1) {
                 Text(String(format: "%d.%d.%d", barInLoop + 1, pos.beat + 1, sixteenth + 1))
-                    .font(EchoelTheme.font(15)).monospacedDigit())
+                    .font(EchoelTheme.font(15).monospacedDigit())
                     .foregroundStyle(transport.isPlaying ? EchoelTheme.accent : EchoelTheme.dim)
                     .lineLimit(1).minimumScaleFactor(0.7)
                 // ⭐ THIS LABEL IS LOAD-BEARING FOR A SECOND THING SINCE #502, and nothing

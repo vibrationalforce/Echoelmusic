@@ -149,7 +149,7 @@ struct LiveColaboView: View {
     private var shareButton: some View {
         Button { colab.share(project: currentSession()) } label: {
             Label("Share this piece", systemImage: "square.and.arrow.up.on.square")
-                .font(EchoelTheme.font(15,) .semibold)).foregroundStyle(EchoelTheme.onPrimary)
+                .font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.onPrimary)
                 .frame(maxWidth: .infinity).frame(minHeight: 44)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.text))
         }
@@ -232,7 +232,7 @@ struct LiveColaboView: View {
     private func invitationCard(_ invite: PendingInvitation) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("\(invite.peerName) wants to join")
-                .font(EchoelTheme.font(15,) .semibold)).foregroundStyle(EchoelTheme.text)
+                .font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
             Text(shareBio
                  ? "Joining lets them share pieces with you — and see your live pulse while sharing is on."
                  : "Joining lets them share pieces with you.")
@@ -263,7 +263,7 @@ struct LiveColaboView: View {
     private func incomingCard(_ from: String, _ project: Project) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Piece from \(from)")
-                .font(EchoelTheme.font(15,) .semibold)).foregroundStyle(EchoelTheme.text)
+                .font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
             Text("\(project.name) · \(project.style.displayName) · \(project.key.shortName) · \(EchoelDecimalText.string(project.bpm, decimals: 0)) BPM")
                 .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)

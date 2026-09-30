@@ -669,7 +669,7 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
                 // it a tight parent proposal still truncates to one.
                 VStack(alignment: .leading, spacing: 6) {
                     Text(label)
-                        .font(EchoelTheme.font(15)))
+                        .font(EchoelTheme.font(15))
                         .foregroundStyle(labelTint)
                         .fixedSize(horizontal: false, vertical: true)
                     valueBox
@@ -677,7 +677,7 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
             } else {
                 HStack(spacing: 12) {
                     Text(label)
-                        .font(EchoelTheme.font(15)))
+                        .font(EchoelTheme.font(15))
                         .foregroundStyle(labelTint)
                         .lineLimit(1).minimumScaleFactor(0.7)
                     Spacer(minLength: 8)
@@ -776,7 +776,7 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
         return ZStack {
             HStack(spacing: 5) {
                 Text(numberString)
-                    .font(EchoelTheme.font(18)).monospacedDigit())
+                    .font(EchoelTheme.font(18).monospacedDigit())
                     .foregroundStyle(active ? EchoelTheme.accent : labelTint)
                     .lineLimit(1).minimumScaleFactor(0.5)
                     .frame(maxWidth: .infinity, alignment: .trailing)

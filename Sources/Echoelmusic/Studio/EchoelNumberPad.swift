@@ -264,7 +264,7 @@ struct EchoelNumberPad: View {
         let enabled = allowsNegative
         return keyButton(action: { setSign(negative: negative) }, enabled: enabled) {
             Image(systemName: negative ? "minus" : "plus")
-                .font(EchoelTheme.font(22,) .semibold))
+                .font(EchoelTheme.font(22, .semibold))
                 .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim.opacity(0.4))
         }
         // Bare literals, like `decimalKey` below: the non-generic `LocalizedStringKey`
@@ -297,7 +297,7 @@ struct EchoelNumberPad: View {
 
     private var deleteKey: some View {
         keyButton(action: { deleteLast() }) {
-            Image(systemName: "delete.left").font(EchoelTheme.font(22)))
+            Image(systemName: "delete.left").font(EchoelTheme.font(22))
                 .foregroundStyle(EchoelTheme.text)
         }
         .accessibilityLabel("Delete")

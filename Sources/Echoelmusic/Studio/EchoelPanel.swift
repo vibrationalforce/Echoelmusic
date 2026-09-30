@@ -74,7 +74,7 @@ struct EchoelPanel<Content: View>: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text(title).font(EchoelTheme.font(15,) .semibold)).foregroundStyle(EchoelTheme.text)
+            Text(title).font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
             if !subtitle.isEmpty {
                 Text(subtitle).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             }

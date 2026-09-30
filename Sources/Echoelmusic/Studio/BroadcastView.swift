@@ -107,7 +107,7 @@ struct BroadcastView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             TextField(placeholder, text: text)
-                .font(EchoelTheme.font(15))).foregroundStyle(EchoelTheme.text)
+                .font(EchoelTheme.font(15)).foregroundStyle(EchoelTheme.text)
                 .textInputAutocapitalization(.never).autocorrectionDisabled()
                 .padding(10)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
@@ -119,7 +119,7 @@ struct BroadcastView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             SecureField("•••••••••••", text: text)
-                .font(EchoelTheme.font(15))).foregroundStyle(EchoelTheme.text)
+                .font(EchoelTheme.font(15)).foregroundStyle(EchoelTheme.text)
                 .padding(10)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))

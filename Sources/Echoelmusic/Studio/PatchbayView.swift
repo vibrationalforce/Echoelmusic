@@ -149,7 +149,7 @@ struct PatchbayView: View {
                     Image(systemName: "pianokeys").font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.accent)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Pair a controller")
-                            .font(EchoelTheme.font(15,) .semibold)).foregroundStyle(EchoelTheme.text)
+                            .font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
                         Text("Pair a wireless MIDI keyboard or controller — it plays the synth directly.")
                             .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                             .fixedSize(horizontal: false, vertical: true)
@@ -195,7 +195,7 @@ struct PatchbayView: View {
                 // in MIDIInput being framed as inbound-only is what led the copy astray.
                 Toggle(isOn: $networkMIDI) {
                     Text("Wireless MIDI")
-                        .font(EchoelTheme.font(15,) .semibold)).foregroundStyle(EchoelTheme.text)
+                        .font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
                 }
                 .tint(EchoelTheme.accent)
                 .accessibilityHint(networkMIDI
@@ -246,7 +246,7 @@ struct PatchbayView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Toggle(isOn: $midiOutMPE) {
                     Text("MPE note layout")
-                        .font(EchoelTheme.font(15,) .semibold)).foregroundStyle(EchoelTheme.text)
+                        .font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
                 }
                 .tint(EchoelTheme.accent)
                 .accessibilityHint(midiOutMPE
@@ -255,7 +255,7 @@ struct PatchbayView: View {
 
                 Toggle(isOn: $midiOutExpression) {
                     Text("Per-note expression")
-                        .font(EchoelTheme.font(15,) .semibold)).foregroundStyle(EchoelTheme.text)
+                        .font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
                 }
                 .tint(EchoelTheme.accent)
                 .disabled(!midiOutMPE)
@@ -291,7 +291,7 @@ struct PatchbayView: View {
                 // it mirrors whatever the 1.0 source carries, member channels included.
                 Toggle(isOn: $midiOutUMP2) {
                     Text("MIDI 2.0 source")
-                        .font(EchoelTheme.font(15,) .semibold)).foregroundStyle(EchoelTheme.text)
+                        .font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
                 }
                 .tint(EchoelTheme.accent)
                 .accessibilityHint(midiOutUMP2
@@ -425,7 +425,7 @@ struct PatchbayView: View {
             Text("OSC input · control").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
             Toggle(isOn: $oscInEnabled) {
                 Text("Accept OSC control")
-                    .font(EchoelTheme.font(15,) .semibold)).foregroundStyle(EchoelTheme.text)
+                    .font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
             }
             .tint(EchoelTheme.accent)
             .accessibilityHint(oscInEnabled
@@ -513,7 +513,7 @@ struct PatchbayView: View {
             // every value-carrying tick (#639) — and the pNN50 unit, per #1329.
             Toggle(isOn: $oscClinicalDetail) {
                 Text("Send clinical HRV detail")
-                    .font(EchoelTheme.font(15,) .semibold)).foregroundStyle(EchoelTheme.text)
+                    .font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
             }
             .tint(EchoelTheme.accent)
             .accessibilityHint(oscClinicalDetail
@@ -815,7 +815,7 @@ struct PatchbayView: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 Image(systemName: kindIcon(src.kind)).font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.accent)
-                Text(src.name).font(EchoelTheme.font(15,) .semibold)).foregroundStyle(EchoelTheme.text)
+                Text(src.name).font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
                 statusTag(src)
                 Spacer(minLength: 0)
             }
@@ -838,7 +838,7 @@ struct PatchbayView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: connected ? "checkmark.circle.fill" : (compatible ? "circle" : "minus.circle"))
-                    .font(EchoelTheme.font(15)))
+                    .font(EchoelTheme.font(15))
                     .foregroundStyle(connected ? EchoelTheme.accent : (compatible ? EchoelTheme.dim : EchoelTheme.border))
                 Image(systemName: kindIcon(dst.kind)).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 Text(dst.name).font(EchoelTheme.font(13)).foregroundStyle(compatible ? EchoelTheme.text : EchoelTheme.dim)

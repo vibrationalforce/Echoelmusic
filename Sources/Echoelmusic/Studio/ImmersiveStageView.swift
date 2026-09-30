@@ -77,7 +77,7 @@ struct ImmersiveStageView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Immersive Stage")
-                    .font(EchoelTheme.font(18,) .semibold))
+                    .font(EchoelTheme.font(18, .semibold))
                     .foregroundStyle(EchoelTheme.text)
                 Text("Drag a track to place its sound in the room")
                     .font(EchoelTheme.font(12))

@@ -52,7 +52,7 @@ struct SafeModeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Echoelmusic started in Safe Mode")
-                        .font(EchoelTheme.font(22,) .semibold))
+                        .font(EchoelTheme.font(22, .semibold))
                         .foregroundStyle(EchoelTheme.text)
 
                     Text("The last launch ran into a problem before the studio finished loading. To keep you out of a black screen, Echoelmusic opened this recovery screen instead. Your pieces and settings are untouched.")
