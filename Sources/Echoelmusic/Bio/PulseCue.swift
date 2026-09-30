@@ -32,6 +32,15 @@ public enum PulseCue: Equatable, Sendable {
     case pressGently
     /// Finger placed, dark enough, just still accruing beats (normal warmup).
     case finding
+    /// NO LIGHT ON THE FINGER (interface audit 2026-09-30, Zug 3 "„kein Licht“ am Puls").
+    /// The torch is absent (a device with no LED), refused by the OS under thermal pressure, or
+    /// its control failed — `CameraCapture.applyTorch` latches all three into one flag, and
+    /// finger-on-lens PPG has no red-channel pulse without light. Until this case, a dark torch
+    /// and a badly placed finger were indistinguishable to the player: every cue below the lock
+    /// assumes a LIT lens, so "Cover lens" / "Hold still" coached a finger that could not be
+    /// read however it sat (device logs #1380). The remedy is not the finger: let the phone
+    /// cool, or lend the lens another light.
+    case noLight
     /// Contact looks FINE by every correctable test above — placed, dark enough, steady,
     /// firm enough — and still nothing has locked for far longer than an acquisition takes.
     /// `.finding` says "wait"; after long enough that stops being true, and repeating it is
@@ -121,6 +130,8 @@ public enum PulseCue: Equatable, Sendable {
         case .holdStill:   return "Hold still — keep your finger steady"
         case .pressGently: return "Press gently and hold still"
         case .finding:     return "Hold still — finding your pulse…"
+        case .noLight:     return "No light from the flash right now — the phone may be hot. "
+                                + "Let it cool, or press your finger against a bright lamp instead"
         case .stalled(let rhythmless):
             return rhythmless
                 ? "The signal isn't steady enough to read — lift your finger and place it again"
@@ -138,6 +149,7 @@ public enum PulseCue: Equatable, Sendable {
         case .holdStill:   return "Hold still"
         case .pressGently: return "Press gently"
         case .finding:     return "Finding…"
+        case .noLight:     return "No light"
         // Two labels, not one, because the header is where a user decides whether to keep
         // waiting: "Unsteady" says the lens has something and it is the wrong shape,
         // "Nothing yet" says it has nothing. Deliberately NOT "Weak signal" — that would
@@ -155,6 +167,9 @@ public enum PulseCue: Equatable, Sendable {
     public var isActionable: Bool {
         switch self {
         case .cameraDenied, .coverLens, .tooBright, .holdStill, .pressGently: return true
+        // Actionable: a lamp is a thing the player can reach for, and cooling is a thing they
+        // can wait for knowingly — the amber header is what makes the dark torch visible at all.
+        case .noLight: return true
         case .locked, .finding: return false
         // ⭐ THE ONLY VISIBLE CONSEQUENCE OUTSIDE THE MEASUREMENT CARD. `.finding` and
         // `.stalled` differ in nothing the header renders EXCEPT this bool: it is what
@@ -228,6 +243,12 @@ public enum PulseCue: Equatable, Sendable {
     /// useful, which is the moment the movement is least surprising and most earned.
     public var warrantsFullHintOnScreen: Bool {
         if case .stalled = self { return true }
+        // `.noLight` (2026-09-30) passes the same three-part test `.stalled` passed: (a) "No
+        // light" is a diagnosis, the remedy (lamp / cool down) lives only in `fullHint`; (b) its
+        // source is a LATCH in `CameraCapture.applyTorch`, flipped on torch apply and thermal
+        // change, never per frame, so the wrapping slot cannot resize at the analyzer's rate;
+        // (c) nothing else on screen renders it. Unlike `.tooBright` it needs no publisher latch.
+        if case .noLight = self { return true }
         return false
     }
 

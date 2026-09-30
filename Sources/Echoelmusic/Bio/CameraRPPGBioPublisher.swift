@@ -643,6 +643,16 @@ public final class CameraRPPGBioPublisher {
         // and "Cover camera" for a permission dead end misleads (UX-1).
         if permissionDenied { return .cameraDenied }
         if isLocked { return .locked }
+        // NO LIGHT (2026-09-30, Zug 3): the torch is absent, thermally refused or failed —
+        // `CameraCapture.applyTorch` latches all three into `isTorchUnavailable`. Every cue
+        // below assumes a LIT lens; without light "Cover lens" and "Hold still" coach a finger
+        // that cannot be read however it sits. AFTER the lock test on purpose: a finger lit by a
+        // lamp can lock with the torch dark, and a real lock outranks any coaching. Gated on
+        // `isRunning` because the latch is cleared only by a later successful `applyTorch`,
+        // never by `stop()` — an idle publisher must not carry last take's dark torch into the
+        // next take's first frames. `isTorchUnavailable` is a plain Bool mirror written on the
+        // session queue; a stale read costs one 10 Hz tick, never a wrong lock.
+        if isRunning, capture.isTorchUnavailable { return .noLight }
         if !fingerDetected { return .coverLens }
         // Finger is on the lit lens but no lock yet — say WHY, from the live signal.
         //

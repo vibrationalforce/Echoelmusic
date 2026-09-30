@@ -110,11 +110,15 @@ final class TheStallRemedyReachesTheScreenTests: XCTestCase {
 
     // MARK: - The fact the gate names
 
-    /// Only `.stalled` earns the wrapping slot — driven over every case.
-    func testOnlyTheStalledCueWarrantsTheSentence() {
+    /// Only the LATCHED remedy cues earn the wrapping slot — driven over every case. `.stalled`
+    /// since #569; `.noLight` since 2026-09-30 (its source is the torch latch in
+    /// `CameraCapture.applyTorch`, never a per-frame value — the (b) test in
+    /// `warrantsFullHintOnScreen`'s doc). Every per-frame cue stays out, `.tooBright` included.
+    func testOnlyTheLatchedRemedyCuesWarrantTheSentence() {
         let warranting: [PulseCue] = [
             .stalled(hasRhythmlessSignal: true),
             .stalled(hasRhythmlessSignal: false),
+            .noLight,
         ]
         let withoutWarrant: [PulseCue] = [
             .cameraDenied, .locked, .coverLens, .tooBright, .holdStill, .pressGently, .finding,

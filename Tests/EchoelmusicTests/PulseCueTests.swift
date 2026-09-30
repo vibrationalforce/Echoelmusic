@@ -22,7 +22,7 @@ final class PulseCueTests: XCTestCase {
 
     func testShortLabel_isCompactForTheHeader() {
         // Header room is tight — every short label must stay brief.
-        for cue in [PulseCue.cameraDenied, .locked, .coverLens, .tooBright, .holdStill, .pressGently, .finding] {
+        for cue in [PulseCue.cameraDenied, .locked, .coverLens, .tooBright, .holdStill, .pressGently, .finding, .noLight] {
             XCTAssertLessThanOrEqual(cue.shortLabel.count, 12, "\(cue) short label too long")
             XCTAssertFalse(cue.shortLabel.isEmpty)
         }
@@ -37,6 +37,7 @@ final class PulseCueTests: XCTestCase {
         XCTAssertTrue(PulseCue.tooBright.isActionable)
         XCTAssertTrue(PulseCue.holdStill.isActionable)
         XCTAssertTrue(PulseCue.pressGently.isActionable)
+        XCTAssertTrue(PulseCue.noLight.isActionable)
         // Not actionable: locked is fine, finding is normal warmup (just wait).
         XCTAssertFalse(PulseCue.locked.isActionable)
         XCTAssertFalse(PulseCue.finding.isActionable)

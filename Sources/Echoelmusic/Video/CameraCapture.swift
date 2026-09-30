@@ -88,10 +88,12 @@ final class CameraCapture: NSObject, @unchecked Sendable {
     /// session. Finger-on-lens PPG has no red-channel pulse without light; a dark torch and a
     /// badly-placed finger look identical to every cue the player is shown.
     ///
-    /// Deliberately NOT a new `PulseCue`: that is user-facing copy on the flagship surface, so
-    /// it is a founder/Council call (CLAUDE.md). This makes the condition MEASURABLE — the
-    /// breadcrumb ladder now records it, so the next device log can answer "was there light?"
-    /// instead of leaving silence to be read as "the finger was wrong".
+    /// ⭐ SINCE 2026-09-30 IT IS A `PulseCue` — `.noLight` (interface audit Zug 3, "„kein Licht“
+    /// am Puls", founder-delegated): `CameraRPPGBioPublisher.placementCue` reads
+    /// `isTorchUnavailable` right after the lock test and coaches the lamp instead of the
+    /// finger. ⛔ Until then this doc said "deliberately NOT a new `PulseCue` … a founder/Council
+    /// call", and the flag had NO reader. The breadcrumb ladder stays — it answers "was there
+    /// light?" in a log the cue cannot reach.
     nonisolated(unsafe) private var torchUnavailable = false
     /// Whether the app is currently foreground-`.active` (updated from the
     /// didBecomeActive/willResignActive notifications, sessionQueue-only). The
@@ -108,8 +110,8 @@ final class CameraCapture: NSObject, @unchecked Sendable {
     /// 1783749556: 8 cold restarts, 0 frames — reason 1 re-fired on every start).
     var isInterrupted: Bool { interrupted }
 
-    /// Owner-visible mirror of the above. The publisher does not act on it yet; it exists so a
-    /// consumer CAN, without re-deriving it from a log line.
+    /// Owner-visible mirror of the above. Read by `CameraRPPGBioPublisher.placementCue` (the
+    /// `.noLight` cue, 2026-09-30) — the ONE consumer; a second one asks this, not the log.
     var isTorchUnavailable: Bool { torchUnavailable }
 
     /// Whether the session is running
