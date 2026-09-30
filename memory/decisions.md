@@ -3898,3 +3898,25 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   `let origin = contribution.synthetic`, two `return origin` paths), then `PulseLadder.word`/`spoken` (Bio/, no catalog
   entry yet, no source-text guard on the literals), then the panel families.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — E4-33: the last two demo-prefix sentences speak German (2b934635f)
+
+- **Decision:** `AlwaysOnBioRow.accessibilityText` — `origin` = `reading.isSynthetic ? String(localized: "Simulated demo, ") : ""`;
+  unmeasured: `channel.name + ", not measured, shaping " + channel.shapes` (typed `unmeasured`) + `" at the neutral value"`;
+  measured: `channel.name + " at " + percent` (typed `live`) + `" percent, shaping " + channel.shapes`; held:
+  `channel.name + " held at " + percent` (typed `held`) + `" percent, no longer arriving, still shaping " + channel.shapes`.
+  `BioModContributionRow.accessibilityText` — unmeasured: `carrierName + " to " + targetName` (typed `route`) +
+  `", not measured"`; measured: `carrierName + " moving " + targetName` (typed `moving`) + `", " + percent + " percent"`
+  (typed `amount`). Catalog 1064 → 1073.
+- **Why:** the last two of the five spoken sentences carrying the demo prefix (E4-31 the info sheet, E4-32 pill + peer
+  row, E4-33 these). Their guards count RETURN PATHS — three `return origin`/`origin +` lines on the row, two `return
+  origin` on the FX row — so every path keeps `return origin + …` on one line; `AHeldReadingSaysSo` needs "no longer
+  arriving" inside the row struct, so that phrase stays inside its key. TheFXRoutesSayWhoseBodyTests claim 7 pinned the
+  exact prefix spelling → re-anchored 1:1; TheAlwaysOnRowsSayWhoseBody and AHeldReadingSaysSo untouched.
+- **Guard:** claim 11 E4-33 block (13 seams, 9 absence needles, 11 units; 150 → 154 XCTAssert). WORK PASS / HEAD FAIL
+  (9 units missing — ONE finding); checkers green (moved-needles: `return origin` still in Sources ×3 — a survivor, not a
+  loss), paren-balance 0/0.
+- **Next E4 producers:** the SUBJECTS of these sentences — `AlwaysOnBioChannel.name` (Coherence · HRV · Heart rate ·
+  Breath phase) and `.shapes` (joined `channelWord`s), the FX `carrierName`/`targetName` (`route.carrier.displayName`,
+  `FXModulation.swift:395`); `PulseLadder.word`/`spoken`; then the panel families.
+- **Review:** 2026-10-30.
