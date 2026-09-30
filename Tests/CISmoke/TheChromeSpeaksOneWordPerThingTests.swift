@@ -78,6 +78,11 @@
 // ⭐ RATCHET 6 (2026-09-30): `MediaBrowserView` — 6 hits: "song" ×4 → piece; "clip" ×2 were the
 // library's own object shown to a person ("Relink points a clip at…" → "its parts"; "in a clip,
 // no part yet" → "imported, not placed yet" — the state the row describes, not the type that holds it).
+//
+// ⭐ RATCHET 7 (2026-09-30): `LiveColaboView` — 6 hits, all "session", all meaning the PIECE that
+// `colab.share(project:)` sends: "share your piece both ways", "Share this piece", "share pieces with
+// you" ×2, "Piece from <peer>"; the invite's VoiceOver label now matches its visible text ("wants to
+// join you"). The nearby sheet's name in the guard files ("NearbySession") is a code identifier.
 // `Tests/CISmoke` is the blocking bundle. SKIPS rather than passes if the tree is absent.
 
 import Foundation
@@ -105,6 +110,7 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/RecordTakeControls.swift",
         "Sources/Echoelmusic/Studio/EchoelStudioView.swift",
         "Sources/Echoelmusic/Studio/MediaBrowserView.swift",
+        "Sources/Echoelmusic/Studio/LiveColaboView.swift",
     ]
 
     /// A line whose strings reach a log or a test harness, not a person.

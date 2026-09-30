@@ -53,7 +53,7 @@ struct LiveColaboView: View {
                         }
                         discoveredSection
                     } else {
-                        Text("Two Echoelmusic devices on the same Wi-Fi find each other here. Go live, connect, and share your session both ways — a starting point to jam from together.")
+                        Text("Two Echoelmusic devices on the same Wi-Fi find each other here. Go live, connect, and share your piece both ways — a starting point to jam from together.")
                             .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -148,7 +148,7 @@ struct LiveColaboView: View {
 
     private var shareButton: some View {
         Button { colab.share(project: currentSession()) } label: {
-            Label("Share current session", systemImage: "square.and.arrow.up.on.square")
+            Label("Share this piece", systemImage: "square.and.arrow.up.on.square")
                 .font(EchoelTheme.font(14, .semibold)).foregroundStyle(EchoelTheme.onPrimary)
                 .frame(maxWidth: .infinity).frame(minHeight: 44)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.text))
@@ -234,8 +234,8 @@ struct LiveColaboView: View {
             Text("\(invite.peerName) wants to join")
                 .font(EchoelTheme.font(14, .semibold)).foregroundStyle(EchoelTheme.text)
             Text(shareBio
-                 ? "Joining lets them share sessions with you — and see your live pulse while sharing is on."
-                 : "Joining lets them share sessions with you.")
+                 ? "Joining lets them share pieces with you — and see your live pulse while sharing is on."
+                 : "Joining lets them share pieces with you.")
                 .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 8) {
@@ -257,12 +257,12 @@ struct LiveColaboView: View {
         .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.accent.opacity(0.12)))
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.accent.opacity(0.5), lineWidth: 1))
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(invite.peerName) wants to join your session")
+        .accessibilityLabel("\(invite.peerName) wants to join you")
     }
 
     private func incomingCard(_ from: String, _ project: Project) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Session from \(from)")
+            Text("Piece from \(from)")
                 .font(EchoelTheme.font(14, .semibold)).foregroundStyle(EchoelTheme.text)
             Text("\(project.name) · \(project.style.displayName) · \(project.key.shortName) · \(EchoelDecimalText.string(project.bpm, decimals: 0)) BPM")
                 .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)

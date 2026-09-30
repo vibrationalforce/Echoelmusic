@@ -8,7 +8,7 @@
 //    an opt-in toggle, each peer's own bio for a side-by-side readout. There is no shared
 //    transport and no clock sync — its own header says so, `Package.swift` carries an EMPTY
 //    `dependencies` array, and nothing under `Sources/` names Ableton Link or LinkKit. The
-//    SHEET's visible paragraph was honest the whole time ("share your session both ways — a
+//    SHEET's visible paragraph was honest the whole time ("share your piece both ways — a
 //    starting point to jam from together"); only the door over-promised, and the door is the
 //    half no sighted user can read (#480).
 //
