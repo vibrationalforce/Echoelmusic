@@ -103,7 +103,7 @@ struct AlwaysOnBioRow: View {
                 // and not `warning` (running the demo is a choice, not a fault).
                 if reading.isSynthetic {
                     Text("Demo")
-                        .font(EchoelTheme.font(10, .semibold))
+                        .font(EchoelTheme.font(11, .semibold))
                         .lineLimit(1).minimumScaleFactor(0.8)
                         .padding(.horizontal, 5).padding(.vertical, 1)
                         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
@@ -114,7 +114,7 @@ struct AlwaysOnBioRow: View {
                     // The word, not a countdown: a ticking age would be a second live-looking
                     // number on a row whose whole point is that nothing here is live.
                     Text("held")
-                        .font(EchoelTheme.font(10, .semibold)).foregroundStyle(EchoelTheme.dim)
+                        .font(EchoelTheme.font(11, .semibold)).foregroundStyle(EchoelTheme.dim)
                 }
                 Text(reading.isMeasured
                      ? EchoelDecimalText.string(Double(reading.value), decimals: 2)

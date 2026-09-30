@@ -37,6 +37,9 @@
 // ⚠️ HONEST GRADING (#433/#464) — transcribed in Python against this tree and the parent
 // 37ab57ac9 (no local toolchain): claim 1 RED on the parent (twelve sites), GREEN here; claims 2
 // and 3 GREEN on both (premise and self-test). `Tests/CISmoke` is the blocking bundle.
+// SECOND FAMILY (same day, parent e29787d68): three strip files joined the list with their nine
+// sites lifted (AutomationStatusStrip 4 · AlwaysOnBioRow 2 · PatchbayView 2 + one glyph) — claim 1
+// RED on that parent for exactly those nine, GREEN here.
 
 import Foundation
 import XCTest
@@ -53,6 +56,12 @@ final class TheChromeTextMeetsTheElevenPointFloorTests: XCTestCase {
         "Sources/Echoelmusic/Studio/WorkspaceView.swift",
         "Sources/Echoelmusic/Studio/HeaderMonitors.swift",
         "Sources/Echoelmusic/Studio/FloatingVisualWindow.swift",
+        // Second family (same day): the instrument's status strips — the automation strip's
+        // captions, the always-on bio row's "Demo"/"held" tags, the routing surface's
+        // conversion note, its "soon" tag (9 pt in a 16 pt pill) and one arrow glyph.
+        "Sources/Echoelmusic/Studio/AutomationStatusStrip.swift",
+        "Sources/Echoelmusic/Studio/AlwaysOnBioRow.swift",
+        "Sources/Echoelmusic/Studio/PatchbayView.swift",
     ]
 
     private static let theme = "Sources/Echoelmusic/Studio/EchoelTheme.swift"

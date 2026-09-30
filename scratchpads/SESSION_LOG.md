@@ -40699,3 +40699,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** `TheChromeTextMeetsTheElevenPointFloorTests` (3 Ansprüche): Ratsche über drei Kopf-Dateien (Liste wächst, nie schrumpft; verschobene Datei = Skip, nicht Pass), Prämisse `relativeTo: .body`, Scanner-Selbsttest (Pflanze 9, Pflanze `.system(size: 10)`, nackte Zahl, Zitat im Kommentar). Transkription (`scratchpad/transcribe_floor11.py`): WORK 0 Verstöße GRÜN + Tile-Pin GRÜN; HEAD 12 Verstöße ROT + Tile-Pin ROT. Checker sauber, Scanner 0, doctor B 0.
 - **Gerät (NEEDS-FOUNDER-VERIFY im Wächter-Kopf):** Kopf am Standard-Schritt — Puls-Pille „Found"/„Demo", die zwei Ausgabe-Kacheln, das kleine Visual-Kärtchen „1.2.3 · 1/8": nichts abgeschnitten, nichts umgebrochen.
 - **Offen:** 30 weitere Sub-11-Stellen in Instrument/Workstation — je Datei-Familie eine Scheibe, jede kommt in die Ratschen-Liste; `SectionHeadingIsOneTreatmentTests` ankert `font(10, .medium)` in `EchoelStudioView` und zieht dann mit.
+
+## 2026-09-30 — Regel 12, Boden-Hälfte, zweite Familie: die Status-Streifen des Instruments — lokal
+
+- `AutomationStatusStrip` (4 Captions 10→11), `AlwaysOnBioRow` („Demo“/„held“ 10→11), `PatchbayView` (Konversions-Notiz 10→11, „soon“-Pille 9→11 in `minHeight: 16`, ein `arrow.right`-Glyph `.system(size: 10)`→11 — gehoben statt ausgenommen, weil die Ausnahme im Wächter einen Rats-Grund verlangt). Kein Wächter ankerte eine dieser Größen (gemessen: `git grep 'font\((10|9)' Tests/CISmoke` → nur SectionHeading/OutputTiles/Coaching-Kommentar).
+- Wächter-Liste 3 → 6 Dateien; Kopf trägt die zweite Familie (Eltern e29787d68). Transkription: WORK 0 / HEAD 9 Verstöße. Checker sauber, Scanner 0.
+- **Rest:** EchoelStudioView 8 (SectionHeading-Pin `font(10, .medium)` zieht mit), ImmersiveStageView 2, BioMetricInfo 2, ArrangeCanvasView 2, Workstation/Session/PartNoteEditor/MoodPads/LiveColabo je 1; dazu 17 `.system(size:<11)`-Glyphen außerhalb der Liste.
+- **Nicht gepusht:** Compile Check 3069 (36735271426) auf 5abcbc676 `queued` seit 15:15Z — Batch-Regel; lokaler Stapel: 37ab57ac9 (Log) · e29787d68 (Boden 1) · diese Scheibe.

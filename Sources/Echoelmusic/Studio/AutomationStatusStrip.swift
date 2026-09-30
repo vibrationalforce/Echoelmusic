@@ -148,7 +148,7 @@ struct AutomationStatusStrip: View {
             Text(player.enabled
                  ? "Global curves move these parameters while the transport runs."
                  : "Off by default. Clip and arrangement curves still play; this switch is for the global curves.")
-                .font(EchoelTheme.font(10))
+                .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -206,17 +206,17 @@ struct AutomationStatusRowView: View {
                     .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
                     .lineLimit(1)
                 Text(row.layer.label)
-                    .font(EchoelTheme.font(10)).foregroundStyle(EchoelTheme.dim)
+                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 Spacer(minLength: 0)
                 if let note = stopNote {
                     Text(note)
-                        .font(EchoelTheme.font(10, .semibold)).foregroundStyle(EchoelTheme.dim)
+                        .font(EchoelTheme.font(11, .semibold)).foregroundStyle(EchoelTheme.dim)
                 }
                 Text(spanText)
                     .font(EchoelTheme.font(11).monospacedDigit()).foregroundStyle(EchoelTheme.dim)
             }
             Text("\(row.pointCount) point\(row.pointCount == 1 ? "" : "s")")
-                .font(EchoelTheme.font(10)).foregroundStyle(EchoelTheme.dim)
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
         }
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)

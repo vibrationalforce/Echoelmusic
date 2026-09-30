@@ -838,7 +838,7 @@ struct PatchbayView: View {
                     .foregroundStyle(connected ? EchoelTheme.accent : (compatible ? EchoelTheme.dim : EchoelTheme.border))
                 Image(systemName: kindIcon(dst.kind)).font(.system(size: 11)).foregroundStyle(EchoelTheme.dim)
                 Text(dst.name).font(EchoelTheme.font(13)).foregroundStyle(compatible ? EchoelTheme.text : EchoelTheme.dim)
-                if let conv { Text(conv).font(EchoelTheme.font(10)).foregroundStyle(EchoelTheme.dim) }
+                if let conv { Text(conv).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim) }
                 Spacer(minLength: 0)
                 statusTag(dst)
             }
@@ -864,7 +864,7 @@ struct PatchbayView: View {
     private func statusTag(_ port: SignalPort) -> some View {
         if port.transport.status == .roadmap {
             Text("soon")
-                .font(EchoelTheme.font(9, .semibold)).foregroundStyle(EchoelTheme.dim)
+                .font(EchoelTheme.font(11, .semibold)).foregroundStyle(EchoelTheme.dim)
                 .padding(.horizontal, 5).frame(minHeight: 16)
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall).strokeBorder(EchoelTheme.border, lineWidth: 1))
         }
@@ -934,7 +934,7 @@ private struct ModulationRouteRow: View {
                     ForEach(sourceChoices, id: \.self) { s in Text(s.displayName).tag(s) }
                 }
                 .pickerStyle(.menu).tint(EchoelTheme.text)
-                Image(systemName: "arrow.right").font(.system(size: 10)).foregroundStyle(EchoelTheme.dim)
+                Image(systemName: "arrow.right").font(.system(size: 11)).foregroundStyle(EchoelTheme.dim)
                 Picker("Destination", selection: $route.destination) {
                     ForEach(destinationChoices, id: \.self) { d in
                         Text(ModDestinationKey.displayName(d.key)).tag(d)
