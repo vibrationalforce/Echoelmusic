@@ -6674,6 +6674,10 @@ struct EchoelStudioView: View {
         // standalone term would hold the screen awake for every user from cold launch — worse
         // than the "for that user, after one tap" the wrong retraction described. The
         // conjunction is not prudence, it is the thing that makes the port safe at all.
+        // ⭐ 2026-09-30: THE PREMISE FLIPPED BACK BY DECISION (the seed writes `.small`, the
+        // piece is the home) AND THE CONJUNCTION STAYS. A fullscreen picture the user CHOSE
+        // with no body running is a screensaver; the phone may sleep on it. Awake is earned
+        // by a running measurement, not by a window size — the same rule under either door.
         //
         // The conjunction is strictly LESS awake than what shipped: today the cover alone
         // disables the idle timer with nothing running at all. An idle fullscreen window now

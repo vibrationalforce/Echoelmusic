@@ -20,6 +20,10 @@
 // user chose. Since #580 fullscreen IS the launch state, so a cold launch in landscape — or a
 // rotation while fullscreen — is the default path into it. Landscape is shipped: the iPhone
 // orientation list carries LandscapeLeft and LandscapeRight.
+// ⛔ 2026-09-30: THE LAUNCH STATE FLIPPED BACK BY FOUNDER DECISION (interface audit, decision
+// 2 — the seed writes `.small`, the piece is the home). The fix below is unchanged and still
+// correct; what changed is its URGENCY, exactly as the counterweight's own message predicted.
+// The counterweight is rewritten as the new decision, not dropped (see its doc).
 //
 // ⭐ WHY A STATIC EDGE SET AND NOT A PADDING ON THE BAR. Padding the toolbar back out of the safe
 // area keeps the picture edge-to-edge in landscape too, and it is the fix I could not verify.
@@ -53,7 +57,8 @@
 //   · The remaining 6 needles, and 13 of the 17 assertions, are COUNTERWEIGHTS — green on both
 //     trees, and they are the point (#343): portrait is UNCHANGED, floating sizes still bleed
 //     nothing, the two exits are still the last two items of the bar and still absent from the
-//     shed budget, landscape is still shipped, fullscreen is still the launch state. A "fix" that
+//     shed budget, landscape is still shipped, fullscreen is a chosen state (since 2026-09-30;
+//     the launch state until then). A "fix" that
 //     quietly letterboxed portrait, or let the budget start shedding an exit, would sail past a
 //     guard that only asserted the new line.
 //   · Stripper: **PROPHYLAKTISCH (0 of 12 needles flip)**, measured raw vs. stripped on both
@@ -192,13 +197,24 @@ final class TheWayOutSurvivesRotationTests: XCTestCase {
         XCTAssertTrue(plist.contains("UIInterfaceOrientationLandscapeRight"))
     }
 
-    /// COUNTERWEIGHT on the reason it became urgent: the launch seed still forces fullscreen, so
-    /// the landscape path into the picture is the DEFAULT one and not a corner.
-    func testFullscreenIsStillTheLaunchState() throws {
+    /// COUNTERWEIGHT on the reason it became urgent — REWRITTEN AS THE 2026-09-30 DECISION.
+    /// Until then the seed forced fullscreen, so the landscape path into the picture was the
+    /// default one; the assertion here read "#580 seeds fullscreen at launch. If that ever
+    /// changes, this slice stops being urgent — but it does not stop being correct." It
+    /// changed: the founder made the piece the home (audit decision 2), the seed writes
+    /// `.small`, and fullscreen is entered by a tap. The fix stays; the path into it is one
+    /// tap instead of zero. `TheAppOpensOnThePieceTests` owns the seed; this needle only keeps
+    /// THIS file from describing a door that no longer ships.
+    func testFullscreenIsAChosenStateSinceThePieceBecameHome() throws {
         let src = try source("Sources/Echoelmusic/Studio/WorkspaceView.swift")
-        XCTAssertTrue(src.contains("floatingSizeRaw = FloatingVisualWindow.WindowSize.fullscreen.rawValue"),
-                      "#580 seeds fullscreen at launch. If that ever changes, this slice stops "
-                      + "being urgent — but it does not stop being correct.")
+        // #408: the bare text also occurs in the `@AppStorage` DECLARATION (`private var
+        // floatingSizeRaw = FloatingVisualWindow.WindowSize.small.rawValue`), so a loose
+        // needle would stay green with the seed deleted. The leading newline + 16 spaces is
+        // the seed's statement indentation and matches exactly once (measured).
+        XCTAssertTrue(src.contains("\n                floatingSizeRaw = FloatingVisualWindow.WindowSize.small.rawValue"),
+                      "The launch seed no longer writes `.small` (2026-09-30, the piece is the "
+                      + "home). If the front door changed again, rewrite this counterweight's "
+                      + "doc with it — the landscape fix does not depend on the answer.")
     }
 
     /// COUNTERWEIGHT. The bar keeps its own horizontal padding; the fix is about the SAFE AREA,

@@ -945,10 +945,13 @@ struct FloatingVisualWindow: View {
                     // ⛔ #604b: `isPresented &&` is load-bearing twice over. This window is
                     // never structurally unmounted — WorkspaceView hides it via `.opacity(0)`
                     // — so a gate on size alone (the #604 first cut) mounted the overlay
-                    // UNDER a hidden window: with the instrument-home seed forcing
-                    // fullscreen+visible on every cold launch, a dev override that hides the
-                    // window would bank INVISIBLE showings until the cap retired a hint
-                    // nobody ever saw. The same condition fixes the inverse gap: re-showing
+                    // UNDER a hidden window: with the front-door seed forcing visible on
+                    // every cold launch (fullscreen until 2026-09-30, a `.small` card since),
+                    // a dev override that hides the window would bank INVISIBLE showings
+                    // until the cap retired a hint nobody ever saw. Since the card became
+                    // the front door this overlay first appears on the first fullscreen
+                    // ENTRY, by decision — the launch teaching is `GuideOverlay`.
+                    // The same condition fixes the inverse gap: re-showing
                     // via the header monitor is an opacity flip, not a remount — `isPresented`
                     // here makes this branch structural in visibility, so the `.task` re-runs
                     // and the hint genuinely returns on a visible fullscreen entry.
@@ -1442,9 +1445,11 @@ struct FloatingVisualWindow: View {
     }
 }
 
-/// First-run invitation on the instrument home (vision Step 2b). Teaches the two
+/// First-run invitation on the fullscreen picture (vision Step 2b). Teaches the two
 /// core gestures — finger on the (back) camera to bring it to life, touch the image
-/// to play — then fades.
+/// to play — then fades. ⛔ "on the instrument home" until 2026-09-30: the home is
+/// the piece now (audit decision 2), and this hint meets the user on their first
+/// fullscreen entry instead of at launch.
 ///
 /// ⛔ #604 (GUI-Board Scheibe 1): "then NEVER returns" stood here, and the UX audit
 /// ranked it the second-worst debt in the app — the ONLY statement of the core

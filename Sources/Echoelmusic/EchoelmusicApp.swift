@@ -350,6 +350,10 @@ struct EchoelmusicApp: App {
         // fullscreen at launch. A new user has therefore never been taught the two core
         // gestures unless they found fullscreen by hand. The founder's "Guide fehlt noch"
         // was measuring something real.
+        // ⛔ SINCE 2026-09-30 THE SEED WRITES `.small` (interface-audit decision 2: the
+        // piece is the home), so that hint again waits for the first fullscreen entry —
+        // by decision this time, and the launch teaching is `GuideOverlay`. The ordering
+        // law this block is about is unchanged: the seed still reads the flag first.
         //
         // ⚠️ THE OTHER TWO MOVE FOR CONSISTENCY AND CHANGE NOTHING — measured, not assumed.
         // Every production reader of `multiRoll` (`EchoelmusicApp` rack attach + bio feed)
@@ -764,9 +768,10 @@ struct EchoelmusicApp: App {
                 //   gate was a deadlock: the founder cannot verify a path he has no way to
                 //   switch on. Risk activates only through the explicit act of assigning a
                 //   drums/sub instrument to a track. NEVER delete the OFF branches.
-                // · **instrumentHome** — founder 2026-07-22 vision Step 1: the app opens
-                //   directly into the living instrument (the `FloatingVisualWindow`
-                //   fullscreen), the DAW chrome stays mounted beneath.
+                // · **instrumentHome** — the front-door seed. Since 2026-09-30 (audit
+                //   decision 2) it opens on the PIECE with the visual as a `.small` card;
+                //   2026-07-22 → 09-30 it opened the `FloatingVisualWindow` fullscreen.
+                //   The key keeps its old name because it is persisted.
                 //
                 // Each keeps its one-line rollback lever: `FeatureFlags.set(<key>, false)`.
                 // ⚠️ And that deadlock argument is now proven twice over: a flag that is

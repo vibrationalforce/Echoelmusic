@@ -303,7 +303,9 @@ public enum FloatingVisualLayout {
     ///
     /// So in one of the two landscape orientations the app opened edge-to-edge into the picture
     /// with the exit under the cutout. #580 made that reachable by default, because since that
-    /// slice fullscreen IS the launch state rather than something the user chose.
+    /// slice fullscreen WAS the launch state rather than something the user chose. ⛔ Since
+    /// 2026-09-30 it is chosen again (the seed writes `.small`); the fix stays correct, the
+    /// path into it is one tap instead of zero.
     ///
     /// ⭐ WHY THE ANSWER IS "PORTRAIT ONLY" AND NOT A PADDING. Padding the bar back out of the
     /// safe area is the prettier fix and it is the one I could not verify: `.ignoresSafeArea` is
@@ -422,8 +424,10 @@ public enum FloatingVisualLayout {
         // video axis is gone with #1304, so the sweep is six states; the number is deleted
         // rather than re-derived here, because `ChromeBudgetFitsTests` is what measures it
         // and a figure in prose beside a guard is a date, not a fact (#818). What SURVIVES
-        // as law: the chip is the only LABELLED way out of a surface the app cold-launches
-        // into, WCAG 2.2 argues against gating a control behind a wordless glyph, and a
+        // as law: the chip is the only LABELLED way back to the piece from the fullscreen
+        // picture (⛔ "a surface the app cold-launches into" until 2026-09-30 — the seed now
+        // writes `.small`, so fullscreen is entered by a tap; the way back must still be a
+        // WORD), WCAG 2.2 argues against gating a control behind a wordless glyph, and a
         // running take's only stop button still outranks even the exit.
         var shed: [(inout ChromeFit) -> Void] = [
             { $0.lookSlider = false },

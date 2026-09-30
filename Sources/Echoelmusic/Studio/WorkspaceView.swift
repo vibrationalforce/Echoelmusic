@@ -107,26 +107,30 @@ struct WorkspaceView: View {
     /// the living visual greets the user immediately ("wow von Sekunde 1"); it's
     /// flash-safe + reduce-motion-aware and one tap to hide.
     ///
-    /// INSTRUMENT-HOME (founder 2026-07-22 vision Step 1, flag `instrumentHome`
-    /// DEFAULT-ON): while the flag is on, the visual is not a rider — it is the app
-    /// HOME, so each COLD LAUNCH re-shows it FULLSCREEN (see the `.onAppear` seed on
-    /// the body). This deliberately supersedes the old "remember a user who hides it"
-    /// contract: home is the instrument, the DAW is the secondary behind the visual's
-    /// contract button. Turn the flag OFF (`FeatureFlags.set(.instrumentHome, false)`)
-    /// and the persisted visible/size prefs are honored untouched again (old home).
+    /// THE PIECE IS THE HOME (founder 2026-09-30, decision 2 of the interface audit;
+    /// flag `instrumentHome` DEFAULT-ON — the KEY keeps its 2026-07-22 name because it
+    /// is a persisted UserDefaults key, the THING it seeds changed). While the flag is
+    /// on, each COLD LAUNCH opens on the piece — header, tracks, instrument — with the
+    /// living visual VISIBLE as a `.small` card over it (see the `.onAppear` seed on
+    /// the body). Fullscreen is one tap away (`cycleSize`, the studio's "Full screen"
+    /// door), never the front door. ⛔ 2026-07-22 → 2026-09-30 the same seed wrote
+    /// `.fullscreen` and the picture WAS the home; the founder reversed that after the
+    /// audit measured a fresh install landing on a wall with the piece invisible
+    /// beneath it. Turn the flag OFF (`FeatureFlags.set(.instrumentHome, false)`)
+    /// and the persisted visible/size prefs are honored untouched (no seed at all).
     @AppStorage("visual.floating.visible") private var floatingVisualVisible = true
 
     #if canImport(MetalKit) && canImport(UIKit)
     /// The floating visual's snap size (SHARED key + default with FloatingVisualWindow;
     /// @AppStorage defaults are per-declaration, so the named `.small` constant keeps
     /// this coupled to the enum instead of a bare literal that would drift on reorder).
-    /// Written ONLY by the instrument-home seed to open the visual fullscreen at launch;
+    /// Written ONLY by the piece-home seed to put the visual back to its card at launch;
     /// a low-frequency (user-set) value, safe in this body per the freeze rule.
     @AppStorage(StudioDefaultKeys.floatingVisualSizeKey) private var floatingSizeRaw = FloatingVisualWindow.WindowSize.small.rawValue
-    /// One-shot guard so the instrument-home seed runs ONCE per launch. Persists for
-    /// the WorkspaceView instance lifetime (survives background/foreground), so a user
-    /// who contracts to the DAW mid-session is not re-fullscreened until the next cold
-    /// launch (founder vision Step 1).
+    /// One-shot guard so the piece-home seed runs ONCE per launch. Persists for the
+    /// WorkspaceView instance lifetime (survives background/foreground), so a user who
+    /// opens fullscreen mid-session keeps it until the next cold launch — the seed
+    /// never undoes a choice made after launch.
     @State private var didSeedInstrumentHome = false
     #endif
 
@@ -296,8 +300,8 @@ struct WorkspaceView: View {
                 .accessibilityHidden(!floatingVisualVisible)
             #endif
             // #603 B1 — the founder's on/off guide, as the ZStack's TOP layer (above the
-            // fullscreen visual, so the tour's first card — "the app opens as a picture" —
-            // is readable on the very screen it describes). Costs ZERO presentation
+            // visual card, so the tour's first card — "the app opens on your piece" — is
+            // readable on the very screen it describes). Costs ZERO presentation
             // modifiers (the whole point; the chain below is at its pinned 14). The view
             // reads one low-frequency `@AppStorage` bool in ITS OWN body — constructing
             // it here registers nothing (freeze rule 10.76.50). Toggle: Save & Export
@@ -305,18 +309,24 @@ struct WorkspaceView: View {
             GuideOverlay()
         }
         .background(EchoelTheme.bg.ignoresSafeArea())
-        // INSTRUMENT-HOME seed (founder 2026-07-22 vision Step 1: "app open → it
-        // lives", no menu/setup). When the flag is on, open directly into the living
-        // instrument — the existing FloatingVisualWindow FULLSCREEN (the single Metal
-        // path + the playable TouchInstrumentView). The DAW chrome (the VStack above)
-        // stays MOUNTED beneath this overlay — never torn down — so EchoelStudioView's
-        // onDisappear/stopEverything never fires and the live session (bio + transport)
-        // survives; it is one tap (the visual's contract button) away. Runs ONCE per
-        // launch (didSeedInstrumentHome), so contracting to the DAW mid-session sticks
-        // until the next cold launch. Reversible: FeatureFlags.set(.instrumentHome,
-        // false) → the persisted "remember last floating size" home returns untouched.
+        // PIECE-HOME seed (founder 2026-09-30, interface-audit decision 2: "Start im
+        // Stück statt im Vollbild-Visual"). When the flag is on, open on the PIECE —
+        // the VStack above: header, tracks, instrument — with the living visual visible
+        // as a `.small` card over it (the single Metal path + the playable
+        // TouchInstrumentView, unchanged). Fullscreen is one tap away, never the door.
+        // ⛔ From 2026-07-22 (vision Step 1, "app open → it lives") to 2026-09-30 this
+        // seed wrote `.fullscreen`: a fresh install opened onto a wall with the piece
+        // invisible beneath it, which the audit measured as the first thing to fix.
+        // Runs ONCE per launch (didSeedInstrumentHome), so a fullscreen opened
+        // mid-session sticks until the next cold launch. Reversible:
+        // FeatureFlags.set(.instrumentHome, false) → no seed, the persisted
+        // "remember last floating size/visibility" prefs return untouched.
         // No bio/playhead value is read here (freeze rule); this adds no sheet to
-        // EchoelStudioView's chain (the fullscreen visual is this overlay, not a modal).
+        // EchoelStudioView's chain (the visual is this overlay, not a modal).
+        // ⚠️ KNOWN COST, stated rather than hidden: `InstrumentHintOverlay` is gated
+        // on a VISIBLE FULLSCREEN window, so the two-gesture hint no longer appears at
+        // launch — it returns on the first fullscreen entry. The launch teaching is
+        // `GuideOverlay` (top layer of this ZStack, founder's on/off guide).
         .onAppear {
             #if canImport(MetalKit) && canImport(UIKit)
             guard !didSeedInstrumentHome else { return }
@@ -333,8 +343,8 @@ struct WorkspaceView: View {
             // freeze rule is untouched (the comment above already says so for the seed).
             if FeatureFlags.instrumentHome {
                 floatingVisualVisible = true
-                floatingSizeRaw = FloatingVisualWindow.WindowSize.fullscreen.rawValue
-                EchoelCrashLog.breadcrumb("front door: instrument (fullscreen visual, chrome mounted beneath)")
+                floatingSizeRaw = FloatingVisualWindow.WindowSize.small.rawValue
+                EchoelCrashLog.breadcrumb("front door: piece (visual as a small card over the chrome)")
             } else {
                 EchoelCrashLog.breadcrumb(
                     "front door: chrome first (instrumentHome OFF — an explicit dev override, "

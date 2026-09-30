@@ -122,11 +122,12 @@ public enum FeatureFlags {
         /// gates the CAPTURE wiring itself — the honest Record-button gate is a
         /// separate, still-device-gated follow-up flip, S3 in the plan).
         case audioLaneRecording = "feature.audioLaneRecording"
-        /// Vision Step 1 (founder 2026-07-22): the app HOME is the living
-        /// instrument — WorkspaceView opens directly into the existing
-        /// `FloatingVisualWindow` FULLSCREEN (MetalBioView + TouchInstrumentView),
-        /// and the DAW chrome stays mounted beneath, reachable via the visual's
-        /// contract button ("app open → it lives", no menu/setup). DEFAULT-ON via
+        /// The front-door seed in `WorkspaceView.onAppear`. ⚠️ THE NAME IS HISTORY,
+        /// THE KEY IS PERSISTED (2026-09-30): since interface-audit decision 2 the
+        /// seed opens on the PIECE with the visual as a `.small` card; from
+        /// 2026-07-22 (vision Step 1, "app open → it lives") it opened the
+        /// `FloatingVisualWindow` FULLSCREEN. Renaming the key would orphan every
+        /// installed default, so the name stays and says so here. DEFAULT-ON via
         /// registration (same rationale as multiRoll/voiceKindRouting: a
         /// default-OFF flag with no UI to flip it is an un-verifiable deadlock).
         /// The OFF path is bit-identical to the old chrome-first home;

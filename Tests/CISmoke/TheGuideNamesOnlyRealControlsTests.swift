@@ -14,8 +14,9 @@
 // re-verify here rather than trusting this header if any goes away:
 //   · hörbar — the Play path (`startBiofeedback`), and "Body voice" (`BreathVoiceRow`, the one
 //     production caller of `BioReactiveSynthVoice.arm()`; #586 made it survive backgrounding).
-//   · sichtbar — the fullscreen visual is the LAUNCH state since #580; `TouchInstrumentView`
-//     mounts at every window size; Reduce Motion freezes `uniforms.time`.
+//   · sichtbar — the visual is on screen at launch (fullscreen since #580; a `.small` card over
+//     the piece since 2026-09-30, `TheAppOpensOnThePieceTests`); `TouchInstrumentView` mounts
+//     at every window size; Reduce Motion freezes `uniforms.time`.
 //   · spürbar — "Haptic beat (feel)" (`hapticsRow`, `HapticController.beat()` per quarter-note,
 //     LIVE since #552) inside the "Tempo & variations" panel; the sub-bass "feel it" line.
 //

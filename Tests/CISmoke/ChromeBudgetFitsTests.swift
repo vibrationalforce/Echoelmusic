@@ -39,6 +39,14 @@
 // is on — and that key is one of the exactly three registered ON in `EchoelmusicApp.init()`.
 // So fullscreen IS the cold-launch state for every user who has not flipped the dev override.
 //
+// ⛔ AND A THIRD TIME, BY DECISION RATHER THAN BY ERROR (2026-09-30): the founder made the
+// PIECE the home (interface audit, decision 2), the seed now writes `.small`, and fullscreen is
+// once more a state the user enters by a tap. The paragraph above is kept as the history it is.
+// What this changes HERE: the fullscreen shed table below describes the picture a user OPENS,
+// not the first screen — still shipped, still on every width, no longer the front door. The
+// seed is pinned by `TheAppOpensOnThePieceTests`; this file pins the door that leads there
+// (`openFullscreenVisual()` writes `.fullscreen`, claim below) and the bar that must fit.
+//
 // ⭐ WHY THAT MATTERS HERE AND NOT ONLY AS A TIDY-UP. A reader deciding how much the
 // fullscreen case deserves reads this block first. Told it is a state the user must cycle
 // into, the fullscreen shed table below looks like an edge case; told the truth — it is the

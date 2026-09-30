@@ -1,6 +1,16 @@
 // TheFrontDoorIsDecidedBeforeItIsAskedTests.swift
 // Echoel — #580. A flag registered after the first view appears is a flag that is off.
 //
+// ⛔ READ THIS FIRST (2026-09-30): THE DOOR THE SEED OPENS CHANGED, THE LAW HERE DID NOT. The
+// founder made the PIECE the home (interface audit, decision 2): the seed still runs first,
+// still behind the flag registered in `init()`, still latched once per launch — and now writes
+// `.small` (the picture as a card over the piece) instead of `.fullscreen`. Every "fullscreen"
+// below describes the 2026-07-22 → 2026-09-30 door and is kept as the history of the defect.
+// Two consequences for THIS file: claim 2's breadcrumb needle names the new door ("front door:
+// piece"), and claim 5's hint gate is unchanged but the hint now first appears on the first
+// fullscreen ENTRY — the launch teaching is `GuideOverlay`. `TheAppOpensOnThePieceTests` owns
+// what the seed writes; this file owns WHEN it runs and that it says so.
+//
 // THE DEFECT, three weeks old and invisible on every build. `FeatureFlags.isOn` is plain
 // `defaults.bool(forKey:)`, which returns **false** for a key that has not been registered
 // yet. `register(defaults:)` writes a PROCESS-VOLATILE domain — never persisted, re-run every
@@ -110,11 +120,12 @@ final class TheFrontDoorIsDecidedBeforeItIsAskedTests: XCTestCase {
 
     func testTheFrontDoorNamesItselfInTheLog() throws {
         let src = try source(Self.workspace)
-        XCTAssertTrue(src.contains("front door: instrument"), """
-            The instrument-home branch no longer reports itself. This branch decides which app \
-            the user opens, and for three weeks a pasted device log could not tell which side \
-            it took — the only evidence was the ABSENCE of `visual:` lines, which is the kind \
-            of reasoning #445 forbids relying on.
+        XCTAssertTrue(src.contains("front door: piece"), """
+            The piece-home branch no longer reports itself. This branch decides which app the \
+            user opens, and for three weeks a pasted device log could not tell which side it \
+            took — the only evidence was the ABSENCE of `visual:` lines, which is the kind of \
+            reasoning #445 forbids relying on. (⛔ "front door: instrument" until 2026-09-30, \
+            when the seed started opening on the piece — the needle moved with the decision.)
             """)
         XCTAssertTrue(src.contains("front door: chrome first"), """
             The chrome-first branch is silent. Reporting only the new door is worse than \
@@ -169,6 +180,9 @@ final class TheFrontDoorIsDecidedBeforeItIsAskedTests: XCTestCase {
     /// The premise that makes the "Guide fehlt noch" half of this slice true. If someone
     /// "fixed" the unreachable hint by deleting its fullscreen gate, the overlay would appear
     /// in a 180-pt floating card — unreadable, and every other assertion here still green.
+    /// ⛔ 2026-09-30: with the seed writing `.small`, this gate means the hint first appears on
+    /// the first fullscreen ENTRY, not at launch — by decision. The gate stays for the same
+    /// reason as before: the hint teaches the play surface and is unreadable on a card.
     func testTheFirstRunHintStillDependsOnFullscreen() throws {
         let src = try source(Self.window)
         // ⛔ #604b re-anchored this needle, and the OLD one was latently two-site (#408):
