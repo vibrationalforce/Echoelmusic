@@ -3920,3 +3920,29 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   Breath phase) and `.shapes` (joined `channelWord`s), the FX `carrierName`/`targetName` (`route.carrier.displayName`,
   `FXModulation.swift:395`); `PulseLadder.word`/`spoken`; then the panel families.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — E4-34: the always-on channel names speak German (a96f2c592)
+
+- **Decision:** `AlwaysOnBioChannel.name` ×4, `BioShapedParameter.channelWord` ×6 and `soundPanelRows` ×6 are
+  `String(localized:)` — sixteen sites, eight new keys (HRV · Breath phase · brightness · harmonicity · noise · filter ·
+  vibrato · level), eight reused (the four capitalised Sound-panel labels already were value-field keys, plus Coherence
+  and Heart rate). `shapes` stays the derivation `shapedParameters.map(\.channelWord).joined(" · ")`. Catalog 1073 → 1081.
+- **Why:** E4-33 localised the seams around these words; the subjects and objects were still English. `soundPanelRows`
+  deliberately reuses the value-field keys, so the panel sentence names the fields exactly as drawn. Runtime English is
+  byte-identical, which is what keeps TheBodyShapedRowsAreNamedOnce (expected `shapes`), TheAlwaysOnChannelsAreShown,
+  TheGuideTableMatchesTheAuditedWrites (channelWord scan) and TheSoundPanelNamesItsActualDriver (row loop) green;
+  DisabledReverbIsNotClaimedLive anchors on the three member declarations, which are unchanged.
+- **Guard:** claim 11 E4-34 block (12 seams, 15 absence needles, 3 runtime counterweights, 16 units; 154 → 159 XCTAssert).
+  WORK PASS / parent FAIL (8 units missing — ONE finding); checkers green; no guard re-anchored.
+- ⛔ **Two harness lessons, both paid in this slice.** (1) The needle lifter's list regex was bracket-free
+  (`\[([^\]]*?)\]`), and E4-34's lists carry `]` INSIDE their strings (`[String(localized: "Brightness")]`,
+  `return ["Noise"]`) — it lifted ZERO needles, and the harness's own assert caught it. (2) The commit chain graded the
+  transcription through `python3 … | tail -1 && git commit`: a PIPE's status is `tail`'s, so the failing harness did not
+  stop the commit — a96f2c592 landed BEFORE its grade. Graded afterwards against its parent (WORK PASS / 40f0630ee FAIL,
+  12/15/8) and found sound, so no follow-up commit was needed — but the chain was never a gate. From E4-35 on the
+  transcription writes a log file and the chain reads its EXIT status (`python3 … > log && tail -1 log`).
+- **Next E4 producers:** the FX route names (`FXModTarget.displayName` ×13, `FXModCarrier.displayName` ×7 in
+  `Core/FXModulation.swift`; `ModSource.displayName` ×6 in `Core/ModulationMatrix.swift` — no source-text guard pins
+  them); `PulseLadder.word`/`spoken`; the long sentences of `AlwaysOnBioChannel` (guarded by spelling and provenance
+  scans — read TheBioPanelRowsSayWhoseBody and OneSpellingOfTheDemoSubject first); then the panel families.
+- **Review:** 2026-10-30.
