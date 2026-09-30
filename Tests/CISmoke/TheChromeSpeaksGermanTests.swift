@@ -471,7 +471,9 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         let fx = try codeOnly("Sources/Echoelmusic/Studio/EchoelFXView.swift")
         let fxDecl = try XCTUnwrap(fx.range(of: "private func effectSection<Content: View>("),
                                    "effectSection is gone from EchoelFXView — re-anchor this needle with the rename")
-        let fxHead = fx[fxDecl.lowerBound..<fx.index(fxDecl.lowerBound, offsetBy: 160, limitedBy: fx.endIndex) ?? fx.endIndex]
+        // `..<` binds tighter than `??`, so the first spelling of this line handed an optional index to
+        // the range and did not compile (BfT 6559 red on 9ec521096) — a prefix needs no arithmetic.
+        let fxHead = String(fx[fxDecl.lowerBound...].prefix(160))
         XCTAssertTrue(fxHead.contains("_ title: LocalizedStringKey,"),
                       "effectSection takes a String title again — its thirteen stage names would spell verbatim")
         try assertGerman(["Filter", "Saturation", "Tape / VHS", "Bitcrush", "Reverb", "Stereo Width", "Delay",
