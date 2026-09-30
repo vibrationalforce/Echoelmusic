@@ -144,7 +144,7 @@ struct MeditationView: View {
     private var summaryBody: some View {
         VStack(spacing: 16) {
             Spacer(minLength: 8)
-            Image(systemName: "checkmark.circle.fill").font(.system(size: 44))
+            Image(systemName: "checkmark.circle.fill").font(EchoelTheme.font(44))
                 .foregroundStyle(EchoelTheme.accent)
             Text("Practice complete").font(EchoelTheme.font(20, .semibold)).foregroundStyle(EchoelTheme.text)
             let streak = SessionStats.streakDays(recorder.sessions)

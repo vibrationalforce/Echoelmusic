@@ -160,7 +160,7 @@ struct ProUnlockView: View {
     private func featureRow(_ icon: String, _ title: String, _ detail: String) -> some View {
         HStack(spacing: 10) {
             Image(systemName: icon)
-                .font(.system(size: 14))
+                .font(EchoelTheme.font(14))
                 .foregroundStyle(EchoelTheme.accent)
                 .frame(width: 22)
             VStack(alignment: .leading, spacing: 1) {

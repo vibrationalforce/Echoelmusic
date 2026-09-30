@@ -706,7 +706,7 @@ private struct MonitorWordTile: View {
             EchoelTheme.fill
             HStack(spacing: 3) {
                 Image(systemName: glyph)
-                    .font(.system(size: 11))
+                    .font(EchoelTheme.font(11))
                     .foregroundStyle(tint)
                 if let word {
                     Text(word)

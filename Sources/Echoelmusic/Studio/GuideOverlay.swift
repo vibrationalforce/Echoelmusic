@@ -70,7 +70,7 @@ struct GuideOverlay: View {
                     .accessibilityHidden(true)   // the group's value announces the page
                 Button { guideVisible = false } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(EchoelTheme.font(12, .semibold))
                         .foregroundStyle(EchoelTheme.text)
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
@@ -125,7 +125,7 @@ struct GuideOverlay: View {
                             action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 14, weight: .semibold))
+                .font(EchoelTheme.font(14, .semibold))
                 .foregroundStyle(disabled ? EchoelTheme.dim : EchoelTheme.text)
                 .frame(width: 44, height: 44)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))

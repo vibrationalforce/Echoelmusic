@@ -388,7 +388,7 @@ struct BodyTempoField: View {
 
             Button { toggleLock() } label: {
                 Image(systemName: lockBPM ? "lock.fill" : "lock.open")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(EchoelTheme.font(13, .semibold))
                     .foregroundStyle(lockBPM ? EchoelTheme.accent : EchoelTheme.dim)
                     .frame(width: compact ? 30 : 34, height: EchoelTheme.controlHeight)
                     .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))

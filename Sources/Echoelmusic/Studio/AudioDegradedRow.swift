@@ -58,7 +58,7 @@ struct AudioDegradedRow: View {
         if audioEngine.degraded {
             HStack(spacing: 8) {
                 Image(systemName: "speaker.slash.fill")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(EchoelTheme.font(12, .semibold))
                     .foregroundStyle(EchoelTheme.warning)
                     .accessibilityHidden(true)
                 // The engine's own sentence, not a rewritten one. It names the CAUSE

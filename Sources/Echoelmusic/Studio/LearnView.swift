@@ -138,7 +138,7 @@ struct LearnView: View {
                         .lineLimit(1)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right").font(.system(size: 12)).foregroundStyle(EchoelTheme.dim)
+                Image(systemName: "chevron.right").font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
             }
             .padding(12)
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))

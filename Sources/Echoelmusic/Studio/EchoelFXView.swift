@@ -864,7 +864,7 @@ struct EchoelFXView: View {
                         HStack {
                             if presetStore.isFavorite(id: preset.id) {
                                 Image(systemName: "star.fill")
-                                    .font(.system(size: 11)).foregroundStyle(EchoelTheme.accent)
+                                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.accent)
                             }
                             Text(preset.name).foregroundStyle(EchoelTheme.text)
                             Spacer()
@@ -1380,7 +1380,7 @@ private struct BioModContributionRow: View {
             HStack(spacing: 6) {
                 Text(contribution.carrierName)
                     .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
-                Image(systemName: "arrow.right").font(.system(size: 11)).foregroundStyle(EchoelTheme.dim)
+                Image(systemName: "arrow.right").font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 Text(contribution.targetName)
                     .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.text).lineLimit(1)
                 Spacer(minLength: 0)
@@ -1488,7 +1488,7 @@ private struct FXModRouteRow: View {
                     }
                 }
                 .pickerStyle(.menu).tint(EchoelTheme.text)
-                Image(systemName: "arrow.right").font(.system(size: 11)).foregroundStyle(EchoelTheme.dim)
+                Image(systemName: "arrow.right").font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 Picker("Target", selection: $route.target) {
                     ForEach(FXModTarget.allCases) { t in Text(t.displayName).tag(t) }
                 }

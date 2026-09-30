@@ -281,7 +281,7 @@ struct LiveColaboView: View {
                 }
                 .buttonStyle(.plain)
                 Button { colab.clearIncoming() } label: {
-                    Image(systemName: "xmark").font(.system(size: 13)).foregroundStyle(EchoelTheme.dim)
+                    Image(systemName: "xmark").font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.dim)
                         .frame(width: 40, height: 40)
                 }
                 .buttonStyle(.plain).accessibilityLabel("Dismiss")
@@ -415,7 +415,7 @@ private func bioLine(name: String, bpm: Float, coherence: Float, highlight: Bool
                      synthetic: Bool? = nil) -> some View {
     HStack(spacing: 8) {
         Image(systemName: highlight ? "heart.fill" : "heart")
-            .font(.system(size: 12))
+            .font(EchoelTheme.font(12))
             // #629: the accent is the "a real pulse is here" colour, so a demo row keeps
             // the dim heart even when it is YOUR row — the marker is not only a word
             // someone has to read.

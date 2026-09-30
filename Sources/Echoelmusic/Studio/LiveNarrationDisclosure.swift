@@ -69,14 +69,14 @@ struct LiveNarrationDisclosure: View {
             Button { isOpen.toggle() } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "text.bubble")
-                        .font(.system(size: 12))
+                        .font(EchoelTheme.font(12))
                         .foregroundStyle(EchoelTheme.dim)
                     Text(caption.driver.heading)
                         .font(EchoelTheme.font(12, .semibold))
                         .foregroundStyle(EchoelTheme.dim)
                     Spacer(minLength: 8)
                     Image(systemName: isOpen ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(EchoelTheme.font(11, .semibold))
                         .foregroundStyle(EchoelTheme.dim)
                 }
                 .frame(minHeight: 34)

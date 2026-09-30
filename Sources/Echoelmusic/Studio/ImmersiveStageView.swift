@@ -188,7 +188,7 @@ struct ImmersiveStageView: View {
                                   lineWidth: highlighted ? 2 : 1)
                     .frame(width: size, height: size)
                 Image(systemName: lane.builtinInstrument?.systemImage ?? "pianokeys")
-                    .font(.system(size: 15, weight: .medium))
+                    .font(EchoelTheme.font(15))
                     .foregroundStyle(highlighted ? EchoelTheme.onPrimary : EchoelTheme.text)
             }
             Text(lane.name)
@@ -205,7 +205,7 @@ struct ImmersiveStageView: View {
     private var emptyState: some View {
         VStack(spacing: 8) {
             Image(systemName: "circle.dashed")
-                .font(.system(size: 32, weight: .light))
+                .font(EchoelTheme.font(32))
                 .foregroundStyle(EchoelTheme.dim)
             Text("Add a track to place it in space")
                 .font(EchoelTheme.font(13))

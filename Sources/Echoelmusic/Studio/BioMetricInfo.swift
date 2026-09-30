@@ -379,7 +379,7 @@ struct BioMetricsGuideView: View {
                                     .font(EchoelTheme.font(13, .semibold))
                                     .foregroundStyle(EchoelTheme.text)
                                 Image(systemName: "arrow.right")
-                                    .font(.system(size: 11))
+                                    .font(EchoelTheme.font(11))
                                     .foregroundStyle(EchoelTheme.dim)
                                 Text(m.target)
                                     .font(EchoelTheme.font(13, .semibold))

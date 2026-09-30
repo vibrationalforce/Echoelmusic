@@ -89,7 +89,7 @@ struct SessionView: View {
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "slider.horizontal.3")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(EchoelTheme.font(12, .semibold))
                         Text("Studio")
                             .font(EchoelTheme.font(13))
                     }
@@ -109,7 +109,7 @@ struct SessionView: View {
                     dismiss()
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(EchoelTheme.font(14, .semibold))
                         .foregroundStyle(EchoelTheme.dim)
                         .frame(width: 32, height: 32)
                         .background(EchoelTheme.fill, in: RoundedRectangle(cornerRadius: EchoelTheme.radius))

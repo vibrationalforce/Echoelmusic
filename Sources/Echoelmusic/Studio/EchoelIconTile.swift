@@ -80,7 +80,7 @@ struct EchoelIconTile: View {
     var body: some View {
         VStack(spacing: 0) {
             Image(systemName: systemImage)
-                .font(.system(size: 13, weight: .semibold))
+                .font(EchoelTheme.font(13, .semibold))
                 .frame(height: EchoelTheme.controlHeight)
             // Rule 3: the word, on the 11 pt floor (rule 12), in the chip's own tint so the
             // disabled state dims glyph and word together. The chip is taller than the header
