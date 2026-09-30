@@ -3946,3 +3946,27 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   them); `PulseLadder.word`/`spoken`; the long sentences of `AlwaysOnBioChannel` (guarded by spelling and provenance
   scans — read TheBioPanelRowsSayWhoseBody and OneSpellingOfTheDemoSubject first); then the panel families.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — E4-35: the FX route names speak German (0f4374194)
+
+- **Decision:** `FXModTarget.displayName` ×13, `FXModCarrier.displayName` ×7 and `ModSource.displayName` ×6 are
+  `String(localized:)`. Fifteen new keys, six reused (Stereo Width · Heart rate · HRV · Breath · Coherence · Motion).
+  German follows the catalog's FX vocabulary: Reverb → Hall, Mix → Anteil, Saturation → Sättigung, Width → Breite,
+  Size → Größe, Depth → Tiefe; "Heartbeat" → Herzschlag, "Breath rate" → Atemfrequenz. Catalog 1081 → 1096.
+- **Why:** the Effects routing pickers, the add-route buttons, the contribution row's carrier/target and the matrix
+  card all drew these through `Text(String)`; E4-33 had localised the seams around them. `rawValue`s (the persisted
+  route identity) are untouched. Neither file is in the AUv3 target (`project.yml` lists three Foundation-only Core
+  files, none of these). No source-text guard pins the literals; runtime English is byte-identical
+  (`BioModContributionTests` `targetName == "Reverb Mix"`). "Heartbeat" (matrix) vs "Heart rate" (FX carrier) are
+  two English words for one source — kept as two keys; unifying them is a glossary decision, logged as a lead.
+- **Guard:** claim 11 E4-35 block (9 seams, 6 absence needles, a count pin of 20 `return String(localized:` sites in
+  FXModulation, 3 runtime counterweights, 21 units; 159 → 167 XCTAssert). WORK PASS / HEAD FAIL (15 units missing —
+  ONE finding); checkers green; commit chain now gates on the transcription's EXIT status via a log file.
+- ⛔ **Harness lesson three:** the list lifter's single regex let `.*?` run ACROSS lists under `re.S`, so the first
+  file's seams were attributed to the second file's variable (WORK FAIL with 13 "missing" seams that were all present).
+  It now walks list by list — each `for … in [` to its own `] {\n`, then the assert line — and the counts print.
+- **Next E4 producers:** `PulseLadder.word`/`spoken` (Bio/, no catalog entry, no source-text guard); the long sentences
+  of `AlwaysOnBioChannel` (spelling and provenance scans — TheBioPanelRowsSayWhoseBody, OneSpellingOfTheDemoSubject
+  first); then the panel families (EchoelStudioView sites, EchoelFXView, FloatingVisualWindow, BioStripView, MoodPads,
+  PerformSessionView, GuideOverlay).
+- **Review:** 2026-10-30.
