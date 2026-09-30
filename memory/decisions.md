@@ -3478,3 +3478,9 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Rationale:** the flag had no reader; a dark torch was coached as a finger problem. Remedy names another light and the cause a hot phone can wait out — never the finger.
 - **Open:** device probe (thermal torch loss → "No light" → recovery). Guards: `TheDarkLensSaysNoLightTests`; `TheStallRemedyReachesTheScreenTests` extended (method renamed, not weakened); `PulseCueTests` extended.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Zug 3, Apple Health path: the bio panel says what the wrist is doing (a0acd9375)
+- **Decision:** `HealthSourceStatus` (read-only, written by the app-owned publisher, injected by the app) + `HealthSourceRung` Off / Waiting / Receiving / Unavailable; `HealthSourceStatusRow` under the chooser while Health is chosen. Publisher flags FORWARD to the status (one definition). The publisher itself is never injected.
+- **Rationale:** Apple hides read denial, so a declined sheet looks like silence — the remedy sits on Waiting; Unavailable means HealthKit absent / type missing / thrown request, never "Denied". A status object keeps the Studio layer unable to start/stop the publisher (BLE-3, #1319) while letting it read.
+- **Open:** device probe (Waiting → Receiving → Waiting; VoiceOver sentence). Guard: `TheHealthRowSaysWhatTheWristIsDoingTests`.
+- **Review:** 2026-10-30.
