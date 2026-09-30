@@ -3779,3 +3779,17 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   `ArrangeCanvasView` announcement (`Part at ` + label, pinned by TheArrangePartMovesWithoutDragTests:84 → re-anchor
   in the same commit), `SessionLaunchView`, `MediaBrowserView`, `EchoelNumberPad`, `AutomationStatusStrip`,
   `ComposeGuide`.
+
+### 2026-09-30 — E4-27: the position readout, the landing announcement and the Session launch speak German (8700becbb)
+
+- **Decision:** `WorkstationSummary.positionText` (`Bar ` + n + ` · Beat ` + b), the arrange canvas's VoiceOver
+  landing announcement (`Part at ` + grid label) and `SessionLaunchView` (scene label `Launch scene at `, part label
+  `, part at `, the fallbacks `Not the current scene` / `Not launched`, the launched-part `Stop ` + name and its spoken
+  label, the overflow line, and `SessionGrid.word` = Queued / Playing / Stopping) go through catalog keys beside the
+  values. Catalog 951 → 961. `TheArrangePartMovesWithoutDragTests` is re-anchored to the new spelling in the same
+  commit — same claim (announce AFTER the landing), one needle, `range(of:)` and XCTAssert counts unchanged.
+- **Why:** the last bar-word producers outside the E4-25 helpers; the position readout is read constantly beside
+  Play/Stop. English byte-identical (runtime pins + two counterweights in claim 11).
+- **Review:** 2026-10-30. Next E4 producers: `AutomationStatusStrip` (point count, stop notes, layer label in
+  `AutomationStatus`), `MediaBrowserView` (Relink/Place, size · use), `EchoelNumberPad` (Range/Confirm/Default),
+  `ComposeGuide` (step titles/details), `BioMetricInfo` spoken lines, then the remaining panel families.
