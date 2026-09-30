@@ -40921,3 +40921,21 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
   df7f6a404 CI/CD 6550: BfT ✓ (19:37–19:43Z) — TheAssetAccentIsTheTokenTests KOMPILIERT; Run Tests
   läuft; Auto-Merge 3984 läuft. 79f9c5769: Compile Check 3087 läuft, CI/CD 6551 queued.
 - **Protokoll:** decisions.csv Zeile 1062, memory/decisions.md.
+
+## 2026-09-30 — ⛔ ROT und repariert: die Typ-Rampe (79f9c5769) hinterließ 64 überzählige Klammern → a2662b836
+
+- **Befund:** Compile Check 3087 FAILURE, CI/CD 6551 Build for Testing FAILURE, Auto-Merge 3985 failure,
+  main blieb df7f6a404. Ursache: die Ersetzung `EchoelTheme.font(N<c>)` → `font(M<c>)` trug im
+  Ersatz-String ein zweites `)`; jede gefaltete Stelle las `font(15,) .semibold)` bzw. `font(15)))`.
+  Der Wächter `TheTextSizesSitOnTheRampTests` liest die ZAHL und war auf dem kaputten Baum grün —
+  §0: die Transkription benotet die Behauptung, nur ein Compiler das Swift (#E2, jetzt zum zweiten Mal).
+- **Reparatur a2662b836:** jede von 79f9c5769 geänderte Zeile aus dem ELTERN-Stand mit der richtigen
+  Faltung neu gebaut; Skript prüft je Zeile: kaputte Zeile == neu gebaute Zeile + genau eine
+  überzählige `)` je Stelle, und die Klammerbilanz der neuen Zeile == Elternzeile. 22 Dateien, 64
+  Zeilen, 64 Stellen; Diff entfernt 64 `)` und fügt keine hinzu. Größen-Zensus unverändert
+  (11×276 12×133 13×166 15×76 18×14 22×17 28×3). Checker grün, Transkription grün auf beiden Bäumen.
+- **Werkzeug:** `checkers.sh` (Scratchpad) hat jetzt eine Klammerbilanz-Prüfung über den Sources-Diff.
+  Dead-End-Zeile im HARNESS_LEDGER.
+- **Gates gelesen:** df7f6a404 Auto-Merge 3984 ✓ → **main = df7f6a404** (Asset-Akzent + Icon-Familien 2+3
+  in main); CI/CD 6550 Run Tests läuft seit 19:43Z. 51c2a34e0 Run Tests failure 19:34–19:56Z (Log-Lesung
+  folgt). a2662b836: Monitor läuft.
