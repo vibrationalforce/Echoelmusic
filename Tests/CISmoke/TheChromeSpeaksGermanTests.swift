@@ -405,10 +405,9 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             "Sources/Echoelmusic/Studio/SafeModeView.swift",
             "Sources/Echoelmusic/Studio/LearnView.swift",
     ]
-    static let untranslatedPanelWords: Set<String> = ["BPM", "Create from Within", "Demo", "E", "ECHOEL", "Echoelmusic", "Genre", "OK", "Poincaré plot", "Studio", "Tempo", "WAV FAILED", "WAV …"]
+    static let untranslatedPanelWords: Set<String> = ["BPM", "Create from Within", "Demo", "E", "ECHOEL", "Echoelmusic", "OK", "Poincaré plot", "Studio", "Tempo", "WAV FAILED", "WAV …"]
 
     func testEveryPanelTextOfTheReachableChromeFilesHasAGermanUnit() throws {
-        let root = try repoRoot()
         let strings = try catalogStrings()
         let literal = try NSRegularExpression(
             pattern: #"\b(?:Text|Button|Toggle|Label|Picker|Section|TextField|Menu|NavigationLink|Link|labeledRow|groupHeader|collapsibleGroupHeader|mixStripCard|weatherMixGroup|effectSection|panel|readout)\(\s*"((?:[^"\\]|\\.)*)"|\.accessibility(?:Label|Hint|Value)\(\s*"((?:[^"\\]|\\.)*)""#)
@@ -502,8 +501,10 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                       "readout takes a String label again — Short-term / Integrated / True peak / Range would spell verbatim")
         try assertGerman(["Short-term", "Integrated", "True peak", "Range"], "loudness readout names")
         // E4-15 — the media cards' action label draws its title as a key; the three actions (+ Undo) reach the catalog
-        let media = try codeOnly("Sources/Echoelmusic/Studio/MediaActionLabel.swift")
-        XCTAssertTrue(media.contains("Text(LocalizedStringKey(title))") && !media.contains("Text(title)"),
+        // `mediaLabel`, not `media` — that name is already bound to the media library eleven lines up, and the
+        // redeclaration did not compile (BfT 6561 red on 4d53fd149)
+        let mediaLabel = try codeOnly("Sources/Echoelmusic/Studio/MediaActionLabel.swift")
+        XCTAssertTrue(mediaLabel.contains("Text(LocalizedStringKey(title))") && !mediaLabel.contains("Text(title)"),
                       "MediaActionLabel draws its title verbatim again — Choose Photo / Apply to Visuals / Choose Video would not translate")
         try assertGerman(["Choose Photo", "Apply to Visuals", "Choose Video", "Undo"], "media action titles")
         // E4-16 — the selected-part bar: titles as keys, every VoiceOver sentence localised at its caller
