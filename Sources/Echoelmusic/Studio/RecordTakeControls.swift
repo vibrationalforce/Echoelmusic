@@ -82,7 +82,7 @@ struct RecordTakeButton: View {
                     Image(systemName: recording ? "stop.circle.fill" : "record.circle")
                         .font(EchoelTheme.font(13, .semibold))
                     if !compact {
-                        Text(recording ? "Stop recording" : "Record")
+                        Text(recording ? String(localized: "Stop recording") : String(localized: "Record"))
                             .font(EchoelTheme.font(13, .semibold))
                     }
                 }
@@ -98,7 +98,7 @@ struct RecordTakeButton: View {
             }
             .buttonStyle(.plain)
             .disabled(state != .ready && state != .recording)
-            .accessibilityLabel(recording ? "Stop recording" : "Record")
+            .accessibilityLabel(recording ? String(localized: "Stop recording") : String(localized: "Record"))
             .accessibilityHint(caption)
 
             if !compact {

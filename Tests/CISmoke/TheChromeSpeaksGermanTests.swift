@@ -152,7 +152,8 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for relative in Self.chromeFiles {
             let code = try codeOnly(relative)
             let range = NSRange(code.startIndex..., in: code)
-            let offenders = plain.matches(in: code, range: range).map { String(code[Range($0.range, in: code)!]) }
+            let offenders = plain.matches(in: code, range: range)
+                .compactMap { Range($0.range, in: code) }.map { String(code[$0]) }
             XCTAssertEqual(offenders, [], """
                 \(relative) returns a user-visible literal without `String(localized:)`. SwiftUI \
                 localises `Text("literal")` by content but spells `Text(someString)` verbatim, so a \
@@ -188,6 +189,25 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                 a String variable, which SwiftUI spells verbatim (wrap it in String(localized:)).
                 """)
         }
+    }
+
+    // MARK: - claim 6 — the head's Undo / Redo and the Record word travel as String PARAMETERS,
+    // so their literals must be wrapped at the call site (E4-2); their German units exist
+
+    func testTheUndoRedoAndRecordWordsReachTheCatalog() throws {
+        let history = try codeOnly("Sources/Echoelmusic/Studio/SongHistoryRow.swift")
+        XCTAssertTrue(history.contains("button(String(localized: \"Undo\")"), "the Undo title is a String parameter — only a wrapped literal reaches the catalog")
+        XCTAssertTrue(history.contains("button(String(localized: \"Redo\")"), "the Redo title, same reason")
+        XCTAssertFalse(history.contains("button(\"Undo\"") || history.contains("button(\"Redo\""), "a bare title literal is spelled verbatim by `Text(title)`")
+        XCTAssertEqual(history.components(separatedBy: "label: String(localized: \"").count - 1, 2, "both spoken labels are wrapped")
+        let record = try codeOnly("Sources/Echoelmusic/Studio/RecordTakeControls.swift")
+        let ternary = "recording ? String(localized: \"Stop recording\") : String(localized: \"Record\")"
+        XCTAssertEqual(record.components(separatedBy: ternary).count - 1, 2, "the drawn word and the spoken label of the Record button both go through the catalog")
+        XCTAssertFalse(record.contains("recording ? \"Stop recording\" : \"Record\""), "the bare ternary yields a String, which Text() spells verbatim")
+        try assertGerman(["Undo", "Redo", "Record", "Stop recording", "Arm for recording",
+                          "Undo the last change to the piece's parts, notes, automation or a relinked file",
+                          "Redo the last undone change to the piece's parts, notes, automation or a relinked file"],
+                         "head history / record word")
     }
 
     // MARK: - claim 5 — the German for "Piece" is the glossary's word, read from the glossary

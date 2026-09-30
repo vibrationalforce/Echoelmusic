@@ -1152,6 +1152,132 @@
           }
         }
       }
+    },
+    "Arm for recording" : {
+      "comment" : "Chrome word (E4-2, 2026-09-30): head history and the Record button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufnahmebereit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arm for recording"
+          }
+        }
+      }
+    },
+    "Record" : {
+      "comment" : "Chrome word (E4-2, 2026-09-30): head history and the Record button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufnehmen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Record"
+          }
+        }
+      }
+    },
+    "Redo" : {
+      "comment" : "Chrome word (E4-2, 2026-09-30): head history and the Record button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wiederholen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redo"
+          }
+        }
+      }
+    },
+    "Redo the last undone change to the piece's parts, notes, automation or a relinked file" : {
+      "comment" : "Chrome word (E4-2, 2026-09-30): head history and the Record button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die letzte rückgängig gemachte Änderung an Teilen, Noten, Automation oder einer neu verknüpften Datei des Stücks wiederholen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redo the last undone change to the piece's parts, notes, automation or a relinked file"
+          }
+        }
+      }
+    },
+    "Stop recording" : {
+      "comment" : "Chrome word (E4-2, 2026-09-30): head history and the Record button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufnahme stoppen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop recording"
+          }
+        }
+      }
+    },
+    "Undo" : {
+      "comment" : "Chrome word (E4-2, 2026-09-30): head history and the Record button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rückgängig"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Undo"
+          }
+        }
+      }
+    },
+    "Undo the last change to the piece's parts, notes, automation or a relinked file" : {
+      "comment" : "Chrome word (E4-2, 2026-09-30): head history and the Record button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die letzte Änderung an Teilen, Noten, Automation oder einer neu verknüpften Datei des Stücks rückgängig machen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Undo the last change to the piece's parts, notes, automation or a relinked file"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
