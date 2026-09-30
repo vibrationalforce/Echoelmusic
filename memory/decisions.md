@@ -3458,3 +3458,13 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Guards:** `TheAudioRouteRowSaysWhereTheSoundGoesTests` (4 e2e + 3 scans; does not compile against the parent — transcribed against both trees), `MasterPanelReflowsTests` fragment `AudioRouteRow(`. Stale prose in `TheCodecNoteNamesNoInputTests` header and `RouteCodec.note` doc ("read by no view") retracted where it stood.
 - **Open:** device probe (Speaker → AirPods → call → back); Compile Check 3076 / CI/CD 6540 reading (task #313).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Zug 2 slice: the space bar is the head's one Play/Stop (fd7a9ec57)
+- **Decision:** `.keyboardShortcut(.space, modifiers: [])` on `ProjectHeader.playStopButton`, and nowhere else — `TheHeadPlayOwnsTheSpaceKeyTests` allows exactly one bare-space shortcut in `Sources/`.
+- **Rationale:** the plan's Zug 2 names it with the guard "genau eine Leertaste"; a second one would make the key ambiguous (two-transports confusion). `.disabled(!available)` on the same button governs the key. Bare space; ⌘-space is the system's.
+- **Open:** device probe with a keyboard (space in the piece-name field must type, not play).
+
+### 2026-09-30 — Compile Check 3076 red: memberwise label order (fixed 2b3e8e8a2)
+- **Finding:** `argument 'complete' must precede argument 'outputNames'` — the one construction site of `LatencyReadout` listed the new field before `complete`, its declaration lists it after.
+- **Lesson (second instance today, see fe3080e9f):** a source-text transcription checks PRESENCE, not memberwise ORDER; the transcription for the fix compares the call's label sequence with the declaration for every construction site. A structural check that only the compiler could otherwise do — do it in Python when a slice adds a stored property.
+- **Review:** 2026-10-30.
