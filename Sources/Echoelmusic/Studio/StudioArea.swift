@@ -25,11 +25,11 @@ enum StudioArea: String, CaseIterable, Identifiable, Sendable {
     /// The visible label — the founder's own words for the five areas.
     var label: String {
         switch self {
-        case .compose:  return "Compose"
-        case .perform:  return "Perform"
-        case .visuals:  return "Visuals"
-        case .library:  return "Library"
-        case .settings: return "Settings"
+        case .compose:  return String(localized: "Compose")
+        case .perform:  return String(localized: "Perform")
+        case .visuals:  return String(localized: "Visuals")
+        case .library:  return String(localized: "Library")
+        case .settings: return String(localized: "Settings")
         }
     }
 
@@ -38,11 +38,11 @@ enum StudioArea: String, CaseIterable, Identifiable, Sendable {
     /// the spoken name of a door lists what it actually reaches).
     var spokenHint: String {
         switch self {
-        case .compose:  return "Tempo, variations and mood. Opens the Tempo panel. The arrangement is the Piece stage."
-        case .perform:  return "The piece's scenes, sound, effects, mix, master and body input. Opens the Sound panel."
-        case .visuals:  return "The visual field you play with your fingers. Opens the Field panel."
-        case .library:  return "Your saved pieces. Opens the piece list."
-        case .settings: return "Loop length, place in the name, default sound and diagnostics. Opens the Save and Export panel."
+        case .compose:  return String(localized: "Tempo, variations and mood. Opens the Tempo panel. The arrangement is the Piece stage.")
+        case .perform:  return String(localized: "The piece's scenes, sound, effects, mix, master and body input. Opens the Sound panel.")
+        case .visuals:  return String(localized: "The visual field you play with your fingers. Opens the Field panel.")
+        case .library:  return String(localized: "Your saved pieces. Opens the piece list.")
+        case .settings: return String(localized: "Loop length, place in the name, default sound and diagnostics. Opens the Save and Export panel.")
         }
     }
 

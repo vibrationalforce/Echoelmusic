@@ -133,22 +133,22 @@ enum ProjectTransport {
 
     static func statusWord(_ status: Status) -> String {
         switch status {
-        case .stopped:           return "Stopped"
-        case .paused:            return "Paused"
-        case .playingInstrument: return "Playing instrument"
-        case .playingSong:       return "Playing piece"
-        case .recording:         return "Recording"
+        case .stopped:           return String(localized: "Stopped")
+        case .paused:            return String(localized: "Paused")
+        case .playingInstrument: return String(localized: "Playing instrument")
+        case .playingSong:       return String(localized: "Playing piece")
+        case .recording:         return String(localized: "Recording")
         }
     }
 
     /// The button's VoiceOver label: it names what the tap DOES, and a Stop stops everything.
     static func buttonLabel(running: Bool, play: PlayAction) -> String {
-        if running { return "Stop all playback" }
+        if running { return String(localized: "Stop all playback") }
         switch play {
-        case .startSong:        return "Play the piece"
-        case .startSongAndInstrument: return "Play the piece and the instrument"
-        case .resumeInstrument: return "Play the instrument"
-        case .unavailable:      return "Play"
+        case .startSong:        return String(localized: "Play the piece")
+        case .startSongAndInstrument: return String(localized: "Play the piece and the instrument")
+        case .resumeInstrument: return String(localized: "Play the instrument")
+        case .unavailable:      return String(localized: "Play")
         }
     }
 
@@ -161,17 +161,17 @@ enum ProjectTransport {
     /// runs would be two identical claims with two different effects — the confusion
     /// `OneStartControlTests` names on the instrument's own row.
     static func buttonWord(running: Bool) -> String {
-        running ? "Stop" : "Play"
+        running ? String(localized: "Stop") : String(localized: "Play")
     }
 
     static func buttonHint(running: Bool, play: PlayAction) -> String {
         if running { return stopHint }
         switch play {
-        case .startSong:        return "Plays the piece from the top on the shared transport."
+        case .startSong:        return String(localized: "Plays the piece from the top on the shared transport.")
         case .startSongAndInstrument:
-            return "Plays the piece from the top. The instrument's held music comes back with it."
-        case .resumeInstrument: return "Brings the music back. Your pulse reading keeps running."
-        case .unavailable:      return "Unavailable: add a part with notes or audio, or start the instrument."
+            return String(localized: "Plays the piece from the top. The instrument's held music comes back with it.")
+        case .resumeInstrument: return String(localized: "Brings the music back. Your pulse reading keeps running.")
+        case .unavailable:      return String(localized: "Unavailable: add a part with notes or audio, or start the instrument.")
         }
     }
 
@@ -181,17 +181,17 @@ enum ProjectTransport {
     /// and costs a pulse re-lock. The instrument's own pause is the control that keeps it, and
     /// the hint names it by ITS label ("Pause the music", `PlaybackToggleButton`) rather than
     /// letting a listener find out afterwards.
-    static let stopHint = "Stops the piece, the instrument and any recording, everywhere in the app. A running pulse reading ends too; Pause the music keeps it."
+    static let stopHint = String(localized: "Stops the piece, the instrument and any recording, everywhere in the app. A running pulse reading ends too; Pause the music keeps it.")
 
     /// The Workstation's caption while the instrument (not the piece) plays on the one clock —
     /// its button then reads Stop, and the piece's own caption ("Plays the piece's parts from the
     /// top.") would describe a tap the button no longer makes.
-    static let instrumentRunningCaption = "The instrument is playing. Stop ends all playback and the pulse reading."
+    static let instrumentRunningCaption = String(localized: "The instrument is playing. Stop ends all playback and the pulse reading.")
 
     /// The header never invents a name: a run that has neither saved nor opened a piece says so.
     /// ⭐ "piece", not "session" or "project" — `docs/dev/GLOSSARY.md` (rule 1, one word per
     /// thing); `TheChromeSpeaksOneWordPerThingTests` scans this file for the struck words.
-    static let unsavedName = "Unsaved piece"
+    static let unsavedName = String(localized: "Unsaved piece")
 
     static func projectName(_ current: String?) -> String {
         guard let name = current?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty
@@ -205,7 +205,7 @@ enum ProjectTransport {
     static func place(document: TimelineDocument, trackID: UUID?, regionID: UUID?) -> String {
         guard let track = WorkstationSelection.resolvedTrack(trackID, in: document),
               let lane = document.lanes.first(where: { $0.id == track }) else {
-            return "No track selected"
+            return String(localized: "No track selected")
         }
         guard let region = WorkstationSelection.resolvedRegion(regionID, track: track, in: document),
               let part = document.regions.first(where: { $0.id == region }) else {

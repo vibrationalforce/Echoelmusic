@@ -25,8 +25,8 @@ public enum StudioStage: String, CaseIterable, Identifiable, Sendable {
     /// meet two "Play"s on one screen.
     public var label: String {
         switch self {
-        case .piece:      return "Piece"
-        case .instrument: return "Instrument"
+        case .piece:      return String(localized: "Piece")
+        case .instrument: return String(localized: "Instrument")
         }
     }
 
@@ -34,9 +34,9 @@ public enum StudioStage: String, CaseIterable, Identifiable, Sendable {
     public var spokenHint: String {
         switch self {
         case .piece:
-            return "Your piece: its tracks, parts and scenes, import and the media library."
+            return String(localized: "Your piece: its tracks, parts and scenes, import and the media library.")
         case .instrument:
-            return "The instrument you play with your body: sound, effects, mix, mood and the visual field."
+            return String(localized: "The instrument you play with your body: sound, effects, mix, mood and the visual field.")
         }
     }
 }

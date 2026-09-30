@@ -432,6 +432,726 @@
           }
         }
       }
+    },
+    "Brings the music back. Your pulse reading keeps running." : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Holt die Musik zurück. Deine Pulsmessung läuft weiter."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brings the music back. Your pulse reading keeps running."
+          }
+        }
+      }
+    },
+    "Compose" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Komponieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compose"
+          }
+        }
+      }
+    },
+    "Demo" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demo"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demo"
+          }
+        }
+      }
+    },
+    "Follows pulse" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folgt dem Puls"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Follows pulse"
+          }
+        }
+      }
+    },
+    "Guide" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hilfe"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guide"
+          }
+        }
+      }
+    },
+    "Heart rate" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart rate"
+          }
+        }
+      }
+    },
+    "Instrument" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instrument"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instrument"
+          }
+        }
+      }
+    },
+    "Library" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bibliothek"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Library"
+          }
+        }
+      }
+    },
+    "Locked" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fest"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Locked"
+          }
+        }
+      }
+    },
+    "Loop length, place in the name, default sound and diagnostics. Opens the Save and Export panel." : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schleifenlänge, Ort im Namen, Standard-Klang und Diagnose. Öffnet das Panel „Sichern und Export“."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loop length, place in the name, default sound and diagnostics. Opens the Save and Export panel."
+          }
+        }
+      }
+    },
+    "No track selected" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Spur gewählt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No track selected"
+          }
+        }
+      }
+    },
+    "Pause" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause"
+          }
+        }
+      }
+    },
+    "Paused" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausiert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paused"
+          }
+        }
+      }
+    },
+    "Perform" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perform"
+          }
+        }
+      }
+    },
+    "Piece" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stück"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Piece"
+          }
+        }
+      }
+    },
+    "Play" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abspielen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play"
+          }
+        }
+      }
+    },
+    "Play the instrument" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instrument spielen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play the instrument"
+          }
+        }
+      }
+    },
+    "Play the piece" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stück abspielen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play the piece"
+          }
+        }
+      }
+    },
+    "Play the piece and the instrument" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stück und Instrument abspielen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play the piece and the instrument"
+          }
+        }
+      }
+    },
+    "Playing instrument" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instrument spielt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Playing instrument"
+          }
+        }
+      }
+    },
+    "Playing piece" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stück spielt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Playing piece"
+          }
+        }
+      }
+    },
+    "Plays the piece from the top on the shared transport." : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielt das Stück von vorn auf dem gemeinsamen Transport."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plays the piece from the top on the shared transport."
+          }
+        }
+      }
+    },
+    "Plays the piece from the top. The instrument's held music comes back with it." : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielt das Stück von vorn. Die gehaltene Musik des Instruments kommt mit zurück."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plays the piece from the top. The instrument's held music comes back with it."
+          }
+        }
+      }
+    },
+    "Recording" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufnahme"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recording"
+          }
+        }
+      }
+    },
+    "Settings" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        }
+      }
+    },
+    "Stage" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bühne"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stage"
+          }
+        }
+      }
+    },
+    "Stop" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopp"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop"
+          }
+        }
+      }
+    },
+    "Stop all playback" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles stoppen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop all playback"
+          }
+        }
+      }
+    },
+    "Stopped" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestoppt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopped"
+          }
+        }
+      }
+    },
+    "Stops the piece, the instrument and any recording, everywhere in the app. A running pulse reading ends too; Pause the music keeps it." : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stoppt das Stück, das Instrument und jede Aufnahme, überall in der App. Eine laufende Pulsmessung endet auch; „Pause“ behält sie."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stops the piece, the instrument and any recording, everywhere in the app. A running pulse reading ends too; Pause the music keeps it."
+          }
+        }
+      }
+    },
+    "Tempo, variations and mood. Opens the Tempo panel. The arrangement is the Piece stage." : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo, Variationen und Stimmung. Öffnet das Tempo-Panel. Das Arrangement ist die Bühne „Stück“."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo, variations and mood. Opens the Tempo panel. The arrangement is the Piece stage."
+          }
+        }
+      }
+    },
+    "The instrument is playing. Stop ends all playback and the pulse reading." : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Instrument spielt. Stopp beendet alle Wiedergabe und die Pulsmessung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The instrument is playing. Stop ends all playback and the pulse reading."
+          }
+        }
+      }
+    },
+    "The instrument you play with your body: sound, effects, mix, mood and the visual field." : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Instrument, das du mit deinem Körper spielst: Klang, Effekte, Mix, Stimmung und das visuelle Feld."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The instrument you play with your body: sound, effects, mix, mood and the visual field."
+          }
+        }
+      }
+    },
+    "The piece's scenes, sound, effects, mix, master and body input. Opens the Sound panel." : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Szenen des Stücks, Klang, Effekte, Mix, Master und Körper-Eingang. Öffnet das Sound-Panel."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The piece's scenes, sound, effects, mix, master and body input. Opens the Sound panel."
+          }
+        }
+      }
+    },
+    "The visual field you play with your fingers. Opens the Field panel." : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das visuelle Feld, das du mit den Fingern spielst. Öffnet das Field-Panel."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The visual field you play with your fingers. Opens the Field panel."
+          }
+        }
+      }
+    },
+    "Unavailable: add a part with notes or audio, or start the instrument." : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht verfügbar: füge einen Teil mit Noten oder Audio hinzu, oder starte das Instrument."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unavailable: add a part with notes or audio, or start the instrument."
+          }
+        }
+      }
+    },
+    "Unsaved piece" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ungesichertes Stück"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unsaved piece"
+          }
+        }
+      }
+    },
+    "Visuals" : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visuals"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visuals"
+          }
+        }
+      }
+    },
+    "Your piece: its tracks, parts and scenes, import and the media library." : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Stück: seine Spuren, Teile und Szenen, Import und die Medienbibliothek."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your piece: its tracks, parts and scenes, import and the media library."
+          }
+        }
+      }
+    },
+    "Your saved pieces. Opens the piece list." : {
+      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine gesicherten Stücke. Öffnet die Stück-Liste."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your saved pieces. Opens the piece list."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
