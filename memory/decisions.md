@@ -3855,3 +3855,24 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Next E4 producers:** the spoken `BioMetricInfo` lines, then the remaining panel families (EchoelStudioView
   sites, EchoelFXView, FloatingVisualWindow, BioStripView, MoodPads, PerformSessionView, GuideOverlay).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — E4-31: the bio info sheet and the sound map speak German (b818da1c0)
+
+- **Decision:** `BioMetric.title` (Heart Rate · Heart-Rate Variability · Coherence · Breathing Rate), `unit` (breaths/min),
+  `summary` ×7, `detail` ×7 and `originNote` ×2 are `String(localized:)`; the sheet's spoken summary and the guide
+  row's label join by neutral `". "` seams (typed `head`); the modulation row keeps the ONE prefix spelling
+  `"Simulated demo, "` as ONE key, `" Currently " + percent + " percent."` and `source + " shapes " + target` are
+  typed seams (`measuredTail`/`measured`/`route`/`tail`), the label is `origin + route + tail` — origin first.
+  `BioSoundMapping.all`: twelve strings localised, ids untouched. Catalog 1023 → 1058.
+- **Why:** the sheet is the app's explanation of what the body does to the sound (founder: „HRV etc. soll erklärt
+  werden“); all of it was verbatim English. RMSSD/SDNN/pNN50 deliberately NOT localised — an acronym key whose German
+  equals its English is a unit that says nothing. English byte-identical: the runtime guards on titles/details, the
+  audited-writes join (`row.target`/`row.direction` lowercased) and the HRV-row source scan (`bright`/`tone` inside
+  the localized literal) keep passing; `TheMetricSheetRowsSayWhoseBodyTests` 6a/6b re-anchored 1:1.
+- **Guard:** claim 11 E4-31 block (30 seams, 19 absence needles, count pins 20 `return String(localized:` sites in
+  BioMetric and 4 `direction:` keys, two runtime counterweights, per-metric loop over detail/summary units).
+  WORK PASS / HEAD FAIL (35 units missing — ONE finding); checkers green; moved-needles one generic hit.
+- **Next E4 producers:** the remaining panel families — EchoelStudioView sites, EchoelFXView, FloatingVisualWindow,
+  BioStripView, MoodPads, PerformSessionView, GuideOverlay; then the four other demo-prefix sites
+  (HeaderMonitors, EchoelFXView, AlwaysOnBioRow, LiveColaboView) reuse the `"Simulated demo, "` key.
+- **Review:** 2026-10-30.
