@@ -1534,8 +1534,8 @@ enum AudioConfiguration {
                               inputMilliseconds: input,
                               outputMilliseconds: out,
                               route: sanitisedRoute(v.route),
-                              outputNames: sanitisedRoute(v.outputNames),
                               complete: buf != nil && out != nil && input != nil,
+                              outputNames: sanitisedRoute(v.outputNames),
                               codec: routeCodec(outputPortTypes: v.outputPortTypes,
                                                 sampleRate: v.sampleRate))
     }
