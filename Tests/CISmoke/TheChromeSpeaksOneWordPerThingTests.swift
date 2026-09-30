@@ -103,6 +103,10 @@
 // "until you stop"; "take over the note" was a verb (scanner false positive) → "carry the note".
 // TheAlwaysOnRowsSayWhoseBodyTests' shared tail and TheSoundPanelNamesItsActualDriverTests' prefix
 // follow the sentence, as their own messages instruct.
+//
+// ⭐ RATCHET 11 (2026-09-30): `Sequencer/MediaRelink` — the first non-Studio file: its `userMessage`
+// strings are shown verbatim by the media browser. "clip" ×3 → "part" (a person relinks the part they
+// see; the shared clip is what changes underneath), "Stop the song" → "Stop the piece".
 // `Tests/CISmoke` is the blocking bundle. SKIPS rather than passes if the tree is absent.
 
 import Foundation
@@ -134,6 +138,7 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/PatchbayView.swift",
         "Sources/Echoelmusic/Studio/EchoelAppIntents.swift",
         "Sources/Echoelmusic/Studio/AlwaysOnBioChannel.swift",
+        "Sources/Echoelmusic/Sequencer/MediaRelink.swift",
     ]
 
     /// A line whose strings reach a log or a test harness, not a person.

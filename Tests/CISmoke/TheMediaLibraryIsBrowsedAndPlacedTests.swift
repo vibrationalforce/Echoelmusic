@@ -617,8 +617,8 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         XCTAssertLessThan(exists.lowerBound, write.lowerBound, "the file is checked before anything is written")
         let measure = try XCTUnwrap(relinkBody.range(of: "measure(asset.url)"))
         XCTAssertLessThan(exists.lowerBound, measure.lowerBound, "…and before it is measured")
-        XCTAssertEqual(MediaBrowserView.relinkRefusal(songPlaying: true), "Stop the song to relink a file.",
-                       "no relink under a playing song — its lane's first attach would pause the engine")
+        XCTAssertEqual(MediaBrowserView.relinkRefusal(songPlaying: true), "Stop the piece to relink a file.",
+                       "no relink under a playing piece — its lane's first attach would pause the engine")
         XCTAssertNil(MediaBrowserView.relinkRefusal(songPlaying: false), "counterweight: a stopped song relinks")
         let relinkTap = try body(of: "private func relink(_ item: MediaAsset.Missing", in: try source(Self.browserPath))
         let refused = try XCTUnwrap(relinkTap.range(of: "Self.relinkRefusal(songPlaying: player.isPlaying)"))
