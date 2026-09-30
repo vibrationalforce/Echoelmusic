@@ -3194,3 +3194,11 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Guards:** `TheChromeSpeaksOneWordPerThingTests` claim 2 (red on the parent by the 18 hits); `TheSongAloneCanBeSavedTests` claim 1 follows the tile's name, still exactly once.
 - **Next ratchets (measured):** `SessionLaunchView` 12 hits · `RecordTakeControls` 10 · `EchoelStudioView` 58 (family by family; the Save alert sentence "the Workstation's song — its tracks and parts" is pinned by `TheSongAloneCanBeSavedTests` claim 2 and moves with that file).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 1, ratchet 3: the scene grid speaks the glossary word
+
+- **Decision:** `SessionLaunchView` joins the chrome word guard's list (c3a273db7). 12 visible hits ("song" ×11, "session" ×1) now say "piece"; the grid's heading "Session" — the struck word as a title — says "Scenes" (the glossary word for its rows); "Back to song" says "Back to the piece" (label, VoiceOver twin, hint). `backToSongButton` / `songStart` are identifiers and stay.
+- **Why:** the same reason as ratchets 1–2: the head says piece, the grid said song, and a beginner cannot tell whether those are two things. The list is the ratchet, one file per commit.
+- **Guards:** `TheChromeSpeaksOneWordPerThingTests` claim 2 (red on the parent by the 12 hits); `TheSceneLaunchIsASwitchTests` start-hint needle follows the new words.
+- **Next ratchets:** `RecordTakeControls` (10 hits — "take" has a second meaning there, the recording; each read one by one) · `EchoelStudioView` (54, family by family).
+- **Review:** 2026-10-30.
