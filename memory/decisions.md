@@ -3154,3 +3154,11 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Why:** the head said song, session and project for one thing. The guard reads the file (#416). The scope is a file list, not the whole app, because take / session / section have second meanings in the panels; a file joins the list in the commit that cleans it.
 - **Open:** the panels (~170 literal hits); the tempo-mode words Flow / Loop → "Tempo follows pulse" / "Tempo fixed" (BodyTempoField + guards).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 6, slice 1: every value field offers its default
+
+- **Decision:** `EchoelValueField.standard: V? = nil` (after `hint`, before the closures). The keypad shows a "Default 440" key that TYPES the default into the buffer — OK confirms, so the pad keeps its one committer and a reset costs the same tap as a mistake; dimmed while the pending value already is the default. The row gets a VoiceOver custom action through `apply` + `onChange` + `onCommit`. `nil` shows nothing.
+- **Why:** WCAG 3.3.4/3.3.7 — 84 rows and none could say "back to a fresh install". A key that commits by itself would be the one accidental one-touch reset rule 6 forbids; a nil default that still showed a key would be a lying control (#164/#227).
+- **First consumers:** concert pitch → `SessionContext.defaultA4Hz`; Bass Level / Melodic Pad → `MixerStore.defaultLevel`. Always the owner's constant, never a literal at the call site (#416). The other 81 rows join one owner-family per commit.
+- **Guard:** `TheValueFieldOffersItsDefaultTests`. GLOSSARY row `default` (struck: reset, initial, factory).
+- **Review:** 2026-10-30.
