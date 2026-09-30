@@ -561,7 +561,7 @@ struct TrackInspectorView: View {
                 }
             }
             .pickerStyle(.menu).tint(EchoelTheme.text)
-            .accessibilityHint("Default is this voice's own sound. The track keeps its effect in the song")
+            .accessibilityHint("Default is this voice's own sound. The track keeps its effect in the piece")
             Spacer(minLength: 0)
         }
     }
@@ -586,7 +586,7 @@ struct TrackInspectorView: View {
                 }
             }
             .pickerStyle(.menu).tint(EchoelTheme.text)
-            .accessibilityHint("The genre the Echoel instrument composes in. The song keeps it")
+            .accessibilityHint("The genre the Echoel instrument composes in. The piece keeps it")
             Spacer(minLength: 0)
         }
     }
@@ -605,7 +605,7 @@ struct TrackInspectorView: View {
                 }
             }
             .pickerStyle(.menu).tint(EchoelTheme.text)
-            .accessibilityHint("The Echoel instrument's effect. The song keeps it")
+            .accessibilityHint("The Echoel instrument's effect. The piece keeps it")
             Spacer(minLength: 0)
         }
     }

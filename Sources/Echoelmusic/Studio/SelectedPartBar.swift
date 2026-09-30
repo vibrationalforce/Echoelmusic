@@ -435,7 +435,7 @@ private struct PartPlayButton: View {
         }
         .buttonStyle(.plain)
         .disabled(!startable)
-        .accessibilityLabel(playing ? "Stop all playback" : "Play the song from the selected part")
+        .accessibilityLabel(playing ? "Stop all playback" : "Play the piece from the selected part")
         .accessibilityHint(startable && !playing
             ? "Plays the arrangement from this part's bar on the shared transport."
             : WorkstationSummary.transportHint(playing: playing, startable: startable))

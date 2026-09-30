@@ -9,7 +9,7 @@
 //    rule, the beat always named (a readout that drops it on the downbeat changes width every
 //    bar), a negative tick folds to the top.
 // 2. SOURCE: the readout is its own self-driving leaf — a 15 Hz `TimelineView` paused while
-//    stopped, the ONLY reader of `currentTick` in its file, speaking as "Song position" with a
+//    stopped, the ONLY reader of `currentTick` in its file, speaking as "Position in the piece" (rule 1: piece, not song) with a
 //    frequently-updating value — and does nothing but show.
 // 4. BEHAVIOUR + SOURCE (D1b): the playing caption said "from the top" whatever the start; it now
 //    names the start bar — red on the parent, where `transportCaption` took no tick. Since the
@@ -79,7 +79,8 @@ final class TheSongPositionIsReadAsANumberTests: XCTestCase {
         if let clock = body.range(of: "TimelineView("), let read = body.range(of: "player.currentTick") {
             XCTAssertLessThan(clock.lowerBound, read.lowerBound, "the position is read inside the `TimelineView`, per frame")
         }
-        XCTAssertTrue(body.contains(".accessibilityLabel(\"Song position\")"))
+        XCTAssertTrue(body.contains(".accessibilityLabel(\"Position in the piece\")"),
+                      "the readout speaks the glossary word (rule 1, ratchet 13): piece, not song")
         XCTAssertTrue(body.contains(".accessibilityValue(text)"))
         XCTAssertTrue(body.contains(".accessibilityAddTraits(.updatesFrequently)"),
                       "VoiceOver is told the value moves, so it paces rather than floods")

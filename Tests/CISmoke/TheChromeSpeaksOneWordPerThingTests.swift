@@ -145,6 +145,16 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/AlwaysOnBioChannel.swift",
         "Sources/Echoelmusic/Sequencer/MediaRelink.swift",
         "Sources/Echoelmusic/Sequencer/MIDIImport.swift",
+        // Ratchet 13 (2026-09-30): the Workstation's own surfaces — the area bar's spoken hints,
+        // the Perform grid's three notes, the track inspector's three hints, the part bar's Play,
+        // the position readout's label and the save-status hint. Thirteen struck words in twelve
+        // visible literals (song / project / take / reset) say piece, music and default now.
+        "Sources/Echoelmusic/Studio/StudioArea.swift",
+        "Sources/Echoelmusic/Studio/PerformSessionView.swift",
+        "Sources/Echoelmusic/Studio/TrackInspectorView.swift",
+        "Sources/Echoelmusic/Studio/SelectedPartBar.swift",
+        "Sources/Echoelmusic/Studio/SongPositionReadout.swift",
+        "Sources/Echoelmusic/Studio/ProjectSaveStatusView.swift",
     ]
 
     /// A line whose strings reach a log or a test harness, not a person.

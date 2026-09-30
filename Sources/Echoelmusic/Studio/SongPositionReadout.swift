@@ -34,7 +34,7 @@ struct SongPositionReadout: View {
                     .foregroundStyle(EchoelTheme.accent)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
-                    .accessibilityLabel("Song position")
+                    .accessibilityLabel("Position in the piece")
                     .accessibilityValue(text)
                     .accessibilityAddTraits(.updatesFrequently)
             }

@@ -16,7 +16,7 @@ struct ProjectSaveStatusView: View {
                 Button("Retry save") { projects.retrySave() }
                     .buttonStyle(.bordered)
                     .frame(minHeight: 44)
-                    .accessibilityHint("Writes the pending projects again")
+                    .accessibilityHint("Writes the pending pieces again")
             }
             .foregroundStyle(EchoelTheme.text)
             .padding(10)
