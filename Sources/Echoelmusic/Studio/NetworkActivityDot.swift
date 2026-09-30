@@ -83,7 +83,17 @@ public enum NetworkSendState: Equatable, Sendable {
     }
 }
 
-/// The row header for one network output: the state dot, the name, and the spoken state.
+/// The row header for one network output: the state dot, the name, the state WORD, and the
+/// spoken state — word and spoken value are the same `state.label` (#416).
+///
+/// ⭐ THE WORD IS VISIBLE SINCE 2026-09-30 (interface audit, Zug 3 "Status-Leiter in Worten",
+/// second path: the network). Until then the three shapes carried the state for the eye and
+/// `state.label` went to VoiceOver only — a sighted operator saw a 7 pt ring and had to know the
+/// grammar; the audit's finding "Status ist Farbe oder Zahl, nie ein Satz" held here as much as
+/// at the pulse pill. The word is dim and 11 pt (the floor), trailing, and it is the SAME
+/// string the accessibility value reads, so the two cannot drift apart. Lower-case on purpose:
+/// this surface's status lines already speak lower-case ("off", "open on 8001 · nothing
+/// received" in `OSCInputStatusLine` below), and a capitalised word would be a second style.
 ///
 /// ⚠️ IT IS A LEAF, AND THAT IS THE WHOLE REASON THE FILE EXISTS. `lastSentTimestamp` is a
 /// TRACKED property on an `@Observable` sender that is stamped at up to ~30 Hz. Reading it in
@@ -128,6 +138,10 @@ struct NetworkOutputHeader: View {
                 .accessibilityHidden(true)
                 Text(name).font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
                 Spacer(minLength: 0)
+                // The word for the shape — the SAME `label` VoiceOver reads two lines down.
+                Text(state.label)
+                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                    .fixedSize()
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(name)
