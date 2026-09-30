@@ -3584,3 +3584,9 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Built:** `MIDIStatusWord` (in + out rungs), `AudioRouteStatusWord`, `HealthSourceStatus` — word, caption, spoken → `String(localized:)`, 48 sites. Lines stay `word + fragment`; the fragment keeps its leading " · " inside the key. Argument-carrying spoken sentences are `head + arg + tail`, each piece a key. Catalog 89 → 138. Guard claim 8 splits composed strings back into pieces and demands a German unit per letter-carrying piece; source half: no bare letter-literal outside the wrapper in the three files.
 - **Why pieces, not `%@`:** `StringCatalogIsHonestTests.testEveryKeyStillExistsAsALiteralInSources` matches the QUOTED key in Sources; an interpolated key never occurs there. German word order suffers a little in the `head + arg + tail` sentences (VoiceOver only) — accepted; the visible line is `word · fragment`, which is order-neutral.
 - **Review 2026-10-30:** device G6 — the MIDI card, audio-route row and Apple Health row on a German phone; longest visible line is the Health `waiting` caption.
+
+### 2026-09-30 — E4-5: Power row, output tiles and network word speak German (25bafc201)
+
+- **Built:** `PowerStatusWord` (word · fragment · caption · spoken; `QualityPressure.cause/remedy`), `OutputStatusWord` (word + spoken), `NetworkSendState.label` — 29 sites; catalog 138 → 165. Guard claim 9 splits composed strings into pieces, demands a German unit each, and holds the German tile words to `OutputStatusWord.maxLength` (Extern · Ruht · Aus).
+- **Left out on purpose:** the OSC receiver line (`open on \(port) · last: …`) and the ADM sentence — interpolation-heavy; a `%@` key cannot pass the catalog guard, and fragmenting them would leave a German sentence in English word order. They need a sentence design (one key per shape) — a later slice.
+- **Review 2026-10-30:** device G6 — Power row under Low Power Mode, the three tiles, the network dot word.

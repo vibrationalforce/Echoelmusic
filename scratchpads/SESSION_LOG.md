@@ -40996,3 +40996,19 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
   Zeilen-Wächter ankern auf `hasPrefix(word + " · ")` und Laufzeit-Gleichheiten, nicht auf `return "…"`), swift-escapes
   OK, Klammerbilanz 0/0, Katalog-Invarianten 0 Verstöße.
 - **Protokoll:** decisions.csv 1066, memory/decisions.md, FOUNDER_INBOX E4-Zeile.
+
+## 2026-09-30 — E4-5 gebaut: Leistungs-Zeile, Ausgabe-Kacheln, Netz-Wort sprechen Deutsch (25bafc201); Stapel gepusht
+
+- **Gebaut:** `PowerStatusWord` (Wort · Fragment · Erklärung · VoiceOver; `QualityPressure.cause/remedy`),
+  `OutputStatusWord` (Wort + VoiceOver), `NetworkSendState.label` — 29 Stellen, 3 Swift-Dateien; Katalog 138 → 165.
+  Ausgelassen (Sätze mit Interpolation, brauchen Satz-Design statt Wrapper): OSC-Empfänger-Zeile, ADM-Satz.
+- **Wächter Anspruch 9:** Stücke aller Enums haben `de`; die deutschen Kachel-Wörter halten `OutputStatusWord.maxLength`
+  (Extern 6 · Ruht 4 · Aus 3); kein nacktes Buchstaben-Literal in den zwei Wort-Dateien. ⛔ Drei Compile-Defekte in
+  meiner ersten Fassung, VOR dem Commit gefunden: `NetworkSendState` ist nicht CaseIterable; `german(_:in:)` gibt ein
+  Tupel (`.value`); und das Zeilen-Fragment von reduced/saving ist `pressure.cause`, kein Schlüssel — nur `.full`
+  trägt ein eigenes Fragment. Die Transkription grade das Fragment-Set, nicht das Swift; die zwei API-Fehler fand
+  das Gegenlesen des Wächters gegen die Deklarationen (§0/#1337-Klasse: kein Checker sieht sie).
+- **Transkription:** HEAD 27 fehlend / 26 nackt = EIN Befund (#486); WORK 0 / 0. Stripper TRAGEND (13 rohe, alle
+  Kommentare). Checker grün, needle-reachability nur die 3 vorbestehenden.
+- **Push:** Compile Check 3090 ✓ auf 86a9d4eeb → Stapel 27b37253d · d6f19a43f · 7fd4215e8 · 798cbf37f · 25bafc201 (+ Docs)
+  gepusht. Protokoll: decisions.csv 1067, memory/decisions.md, FOUNDER_INBOX E4-Zeile.
