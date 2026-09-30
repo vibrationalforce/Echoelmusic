@@ -175,11 +175,17 @@ struct AUv3PluginView: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.white)
                     .padding(.top, 12)
-                Text("Bio-Reactive Instrument")
+                // ⛔ Until 2026-09-30 this line said "Bio-Reactive Instrument" and nothing more —
+                // true of the engine, false of the situation: inside a host there is no body.
+                // The four values below are HOST parameters that start at 0.5 and move only
+                // when the host (automation, a MIDI/OSC bridge) moves them. The interface
+                // audit's gap check named it ("Das AUv3-Plugin hat keinen Körper"); the
+                // sentence now says who sets the body. `TheAUv3ViewSaysTheHostSetsTheBodyTests`.
+                Text("Bio-reactive instrument · the host sets the body values")
                     .font(.system(size: 11))
                     .foregroundColor(Color(white: 0.6))
 
-                parameterSection("Bio-Reactive") {
+                parameterSection("Body values (from the host)") {
                     paramSlider("Coherence", value: $viewModel.coherence,
                                 address: .coherence, format: "%.0f%%") { $0 * 100 }
                     paramSlider("HRV", value: $viewModel.hrv,

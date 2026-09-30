@@ -274,8 +274,12 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         reverbMixParam = reverbMix
         masterGainParam = masterGain
 
+        // The DISPLAY name a host shows in its automation menus. "Body values", not
+        // "Bio-Reactive": in a host these four are set by the host, not by a body (2026-09-30,
+        // with the view's subtitle). The IDENTIFIER stays `bio` — hosts and saved automation
+        // bind by identifier and address, never by the display name.
         let bioGroup = AUParameterTree.createGroup(
-            withIdentifier: "bio", name: "Bio-Reactive", children: bioChildren
+            withIdentifier: "bio", name: "Body values", children: bioChildren
         )
         let soundGroup = AUParameterTree.createGroup(
             withIdentifier: "sound", name: "Sound", children: soundChildren
