@@ -3484,3 +3484,8 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Rationale:** Apple hides read denial, so a declined sheet looks like silence — the remedy sits on Waiting; Unavailable means HealthKit absent / type missing / thrown request, never "Denied". A status object keeps the Studio layer unable to start/stop the publisher (BLE-3, #1319) while letting it read.
 - **Open:** device probe (Waiting → Receiving → Waiting; VoiceOver sentence). Guard: `TheHealthRowSaysWhatTheWristIsDoingTests`.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Pause-chip outline: interactive token, two red guards repaired (9b76f9545)
+- **Decision:** `PlaybackToggleButton` strokes `EchoelTheme.borderStrong` again; `OneChromeControlHeightTests` anchors its paint-before-tap-frame claim on the stroke's new spelling. Not restored: the dead `isPlaying ? accent : borderStrong` ternary (the chip exists only while playing).
+- **Rationale:** `accent` is "signal only"; a control's outline is not a signal, and the row's neighbours use `borderStrong`. 3ab37512f had made `ControlBoundaryIsInteractiveTests` and `OneChromeControlHeightTests` red — the second unseen because the job log is a `tail -200` (#807).
+- **Open:** device look. **Review:** 2026-10-30.
