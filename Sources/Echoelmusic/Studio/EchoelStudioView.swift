@@ -1999,7 +1999,7 @@ struct EchoelStudioView: View {
         Button { present.wrappedValue = true } label: {
             HStack(spacing: 14) {
                 Image(systemName: "circle.circle")
-                    .font(.system(size: 26, weight: .regular))
+                    .font(EchoelTheme.font(26))
                     .foregroundStyle(EchoelTheme.text)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Breathing guide")
@@ -2012,7 +2012,7 @@ struct EchoelStudioView: View {
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(EchoelTheme.font(13, .semibold))
                     .foregroundStyle(EchoelTheme.dim)
             }
             .padding(14)
@@ -2586,7 +2586,7 @@ struct EchoelStudioView: View {
             // guard in `OneStartControlTests` bans it from `WorkspaceView.swift`, where the
             // button beside this one only pauses.
             Image(systemName: running ? "stop.fill" : "play.fill")
-                .font(.system(size: 20, weight: .semibold))
+                .font(EchoelTheme.font(20, .semibold))
                 .foregroundStyle(running ? EchoelTheme.text : .black)
                 // 64 pt wide is a CHOICE, not a fit: with the label gone there is no width
                 // pressure left in this row at all, so the number is set by what a primary
@@ -3479,7 +3479,7 @@ struct EchoelStudioView: View {
             } label: {
                 HStack(spacing: 6) {
                     Text(current.shortName).font(EchoelTheme.font(13, .semibold))
-                    Image(systemName: "chevron.down").font(.system(size: 11))
+                    Image(systemName: "chevron.down").font(EchoelTheme.font(11))
                 }
                 .foregroundStyle(EchoelTheme.text)
                 .padding(.horizontal, 12).frame(minHeight: 34)
@@ -4211,7 +4211,7 @@ struct EchoelStudioView: View {
                     .foregroundStyle(EchoelTheme.text)
                     .frame(minWidth: 40, alignment: .trailing)
                 Image(systemName: isOn ? "checkmark.circle.fill" : "play.circle")
-                    .font(.system(size: 15)).foregroundStyle(EchoelTheme.dim)
+                    .font(EchoelTheme.font(15)).foregroundStyle(EchoelTheme.dim)
             }
             .padding(.vertical, 6).padding(.horizontal, 8)
             .contentShape(Rectangle())
@@ -4297,7 +4297,7 @@ struct EchoelStudioView: View {
             // plain TextField is correct; EchoelValueField is for numeric params only.
             HStack(spacing: 8) {
                 Image(systemName: "mappin.and.ellipse")
-                    .font(.system(size: 12)).foregroundStyle(EchoelTheme.dim)
+                    .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                 TextField("Place, entered manually (optional)", text: $locationNamer.manualPlace)
                     .font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
                     .textInputAutocapitalization(.words)
@@ -4307,7 +4307,7 @@ struct EchoelStudioView: View {
                 if !locationNamer.manualPlace.isEmpty {
                     Button { locationNamer.manualPlace = "" } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 14)).foregroundStyle(EchoelTheme.dim)
+                            .font(EchoelTheme.font(14)).foregroundStyle(EchoelTheme.dim)
                             // The GLYPH stays 14 pt; only the target grows — 14×14 to 36×36,
                             // which is this row's own height (`.frame(height: 36)` below), so
                             // the hit area fills the row vertically and takes 36 pt of its
@@ -7188,7 +7188,7 @@ struct EchoelStudioView: View {
                     .foregroundStyle(EchoelTheme.dim)
                 Spacer(minLength: 8)
                 Image(systemName: showVisualFineTune ? "chevron.down" : "chevron.right")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(EchoelTheme.font(11, .semibold))
                     .foregroundStyle(EchoelTheme.dim)
             }
             // ≥44 pt tap target (#113, a11y) BEFORE `contentShape`, or the hit area would be
@@ -7797,11 +7797,11 @@ struct EchoelStudioView: View {
             } label: {
                 HStack(spacing: 6) {
                     if let id = moodPresetID, moodStore.isFavorite(id: id) {
-                        Image(systemName: "star.fill").font(.system(size: 11))
+                        Image(systemName: "star.fill").font(EchoelTheme.font(11))
                             .foregroundStyle(EchoelTheme.accent)
                     }
                     Text(moodPresetName).font(EchoelTheme.font(13, .semibold))
-                    Image(systemName: "chevron.down").font(.system(size: 11))
+                    Image(systemName: "chevron.down").font(EchoelTheme.font(11))
                 }
                 .foregroundStyle(EchoelTheme.text)
                 .padding(.horizontal, 12).frame(minHeight: 34)
@@ -7863,7 +7863,7 @@ struct EchoelStudioView: View {
                 } label: { Label("Submit to community", systemImage: "paperplane") }
             } label: {
                 Image(systemName: "ellipsis.circle")
-                    .font(.system(size: 18))
+                    .font(EchoelTheme.font(18))
                     .foregroundStyle(EchoelTheme.text)
                     .frame(width: 34, height: 34)
                     .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
@@ -8387,7 +8387,7 @@ struct EchoelStudioView: View {
                     .foregroundStyle(EchoelTheme.dim)
                 Spacer(minLength: 8)
                 Image(systemName: isOpen.wrappedValue ? "chevron.down" : "chevron.right")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(EchoelTheme.font(11, .semibold))
                     .foregroundStyle(EchoelTheme.dim)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -8433,12 +8433,12 @@ struct EchoelStudioView: View {
                 } label: {
                     HStack(spacing: 6) {
                         if patchStore.isFavorite(id: currentPatch.id) {
-                            Image(systemName: "star.fill").font(.system(size: 11))
+                            Image(systemName: "star.fill").font(EchoelTheme.font(11))
                                 .foregroundStyle(EchoelTheme.accent)
                         }
                         Text(currentPatch.name).font(EchoelTheme.font(13, .semibold))
                             .lineLimit(1)
-                        Image(systemName: "chevron.down").font(.system(size: 11))
+                        Image(systemName: "chevron.down").font(EchoelTheme.font(11))
                     }
                     .foregroundStyle(EchoelTheme.text)
                     .padding(.horizontal, 12).frame(minHeight: 34)
@@ -8509,7 +8509,7 @@ struct EchoelStudioView: View {
                     } label: { Label("Submit to community", systemImage: "paperplane") }
                 } label: {
                     Image(systemName: "ellipsis.circle")
-                        .font(.system(size: 18))
+                        .font(EchoelTheme.font(18))
                         .foregroundStyle(EchoelTheme.text)
                         .frame(width: 34, height: 34)
                         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
@@ -10133,7 +10133,7 @@ struct EchoelStudioView: View {
             ShareLink(item: SharedEchoelProject(project: p),
                       preview: SharePreview(p.name)) {
                 Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: 15)).foregroundStyle(EchoelTheme.dim)
+                    .font(EchoelTheme.font(15)).foregroundStyle(EchoelTheme.dim)
                     .opacity(shareable ? 1 : 0.35)
                     .frame(width: 44, height: 44)   // ≥44pt tap target (a11y)
                     .contentShape(Rectangle())
@@ -13444,7 +13444,7 @@ private struct ArtistNameRow: View {
         return VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 Image(systemName: "person.crop.circle")
-                    .font(.system(size: 12)).foregroundStyle(EchoelTheme.dim)
+                    .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                 // Text, not a number → a plain `TextField` is correct; `EchoelValueField` is the
                 // law for NUMERIC parameters only. `placeRow` two screens up is the precedent,
                 // and this row deliberately wears its chrome: they are the two halves of the
@@ -13464,7 +13464,7 @@ private struct ArtistNameRow: View {
                     // floor, above WCAG 2.5.8's 24, and 44 would be taller than the row.
                     Button { session.artistName = SessionContext.storedArtistName(fromTyped: "") } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 14)).foregroundStyle(EchoelTheme.dim)
+                            .font(EchoelTheme.font(14)).foregroundStyle(EchoelTheme.dim)
                             .frame(width: 36, height: 36)
                             .contentShape(Rectangle())
                     }
@@ -13606,7 +13606,7 @@ private struct SoundPromptRow: View {
                     Group {
                         Button(action: onUndo) {
                             Image(systemName: "arrow.uturn.backward")
-                                .font(.system(size: 14)).foregroundStyle(EchoelTheme.text)
+                                .font(EchoelTheme.font(14)).foregroundStyle(EchoelTheme.text)
                                 .frame(minWidth: 34, minHeight: 34)
                                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                                     .fill(EchoelTheme.fill))

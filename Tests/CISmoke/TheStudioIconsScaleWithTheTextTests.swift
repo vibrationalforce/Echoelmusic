@@ -25,14 +25,16 @@
 // 4. REACH: the walk behind 3 saw the tree (an empty walk would make 3 a vacuous green).
 //
 // Grading (§0, no Swift toolchain; transcribed in Python against both trees, raw and
-// comment-stripped): claim 1 red on the parent `22fac500a` for all 14 files (21 sites — ONE
-// finding, #486), green here; the stripper is LOAD-BEARING for one file (`BioMetricInfo` quotes
-// the spelling in two comments, so raw text stays red on the corrected tree). Claim 2 green on
-// both. Claim 3 red on the parent (63 > 42), green here at exactly 42. Claim 4 green on both.
+// comment-stripped). Family 1: claim 1 red on the parent `22fac500a` for all 14 files (21 sites
+// — ONE finding, #486), green on `51c2a34e0`; the stripper is LOAD-BEARING for one file
+// (`BioMetricInfo` quotes the spelling in two comments, so raw text stays red on the corrected
+// tree). Claim 3 red on the parent (63 > 42), green there at exactly 42. Family 2: claim 1 red
+// on `51c2a34e0` for `EchoelStudioView` (19 sites, one finding), green here; claim 3 red there
+// (42 > 23), green here at exactly 23. Claims 2 and 4 green on every tree.
 // SOURCE-TEXT SCAN throughout: it proves the font is written this way, never how it reads.
 // NEEDS-FOUNDER-VERIFY: Settings → Accessibility → Larger Text, largest size → the guide's ✕,
-// the FX star, the Bio Learn chevrons, the space stage's empty-state glyph grow with their words
-// and nothing clips.
+// the FX star, the Bio Learn chevrons, the space stage's empty-state glyph, the instrument's
+// chip chevrons and preset stars grow with their words and nothing clips.
 
 import Foundation
 import XCTest
@@ -42,18 +44,20 @@ final class TheStudioIconsScaleWithTheTextTests: XCTestCase {
     private static let theme = "Sources/Echoelmusic/Studio/EchoelTheme.swift"
     private static let appIcon = "Sources/Echoelmusic/Resources/AppIcon.swift"
 
-    /// Family 1 (2026-09-30): the small Studio surfaces, 21 sites. Families 2 and 3 —
-    /// `EchoelStudioView`, then `FloatingVisualWindow` · `BioStripView` · `PatchbayView` ·
-    /// `BioSourceView` — are added here as they are converted, and `ceiling` drops with them.
+    /// Family 1 (2026-09-30): the small Studio surfaces, 21 sites. Family 2 (same day):
+    /// `EchoelStudioView`, 19 sites. Family 3 — `FloatingVisualWindow` · `BioStripView` ·
+    /// `PatchbayView` · `BioSourceView` — is added here as it is converted, and `ceiling` drops.
     private static let converted = [
         "GuideOverlay", "EchoelIconTile", "ProUnlockView", "ImmersiveStageView", "BioMetricInfo",
         "EchoelFXView", "AudioDegradedRow", "LiveNarrationDisclosure", "BodyTempoField",
         "LearnView", "SessionView", "LiveColaboView", "MeditationView", "HeaderMonitors",
+        "EchoelStudioView",
     ].map { "Sources/Echoelmusic/Studio/\($0).swift" }
 
     /// Absolute icon sizes still allowed in CODE across the tree (AppIcon excluded). 63 before
-    /// this family, 42 after it. Lower it with every converted family; never raise it.
-    private static let ceiling = 42
+    /// family 1, 42 after it, 23 after family 2. Lower it with every converted family; never
+    /// raise it.
+    private static let ceiling = 23
 
     // MARK: 1 — RATCHET
 
