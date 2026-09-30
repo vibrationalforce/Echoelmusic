@@ -3119,3 +3119,17 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Why:** the tiles were pictures with words for VoiceOver only, typed inline (a second definition). A word over a live colour is the contrast defect the next audit line guards against; the tile widths are founder reference, so the word shrinks before it clips.
 - **Guard:** `TheOutputTilesSpeakTheirStatusInWordsTests`. Transcribed WORK 23/23, parent 16 red (one absence + born needles).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Contrast guard into the blocking bundle, with one tooth
+
+- **Decision:** `git mv` the only contrast test into `Tests/CISmoke` as `TheThemeTokensClearTheirContrastFloorsTests`; floors and maths unchanged; claim 6 added — `EchoelTheme`'s colour literals must be built from the named constants the floors are computed from.
+- **Why:** the test lived in the suite no gate compiles (#208), so a token under its floor went green; and the constants were a parallel copy of the literals, so the floors could stay green while the rendered contrast moved.
+- **Limit:** `accent` / `warning` / `danger` / `recording` are RGB literals without named components — a separate slice.
+- **Review:** 2026-10-30.
+
+### 2026-09-30 — SkillLevel gets its first consumer, default Pro
+
+- **Decision:** `StudioDefaultKeys.skillLevel` (default `.pro`), `EchoelStudioView.chips(for:)` filters the standing strip (Beginner = Sound · Mood · Save/Export; Producer adds five; Pro adds Master), a segmented picker in Save & Export; the displayed plate's chip is always appended.
+- **Why:** `SkillLevel` had zero readers. Default Pro because #568 thinned the strip without a choice and was rejected on device (#572); a chosen, persisted level whose default changes nothing is a setting, not an imposed thinning. Whether Beginner becomes the default for new users is the founder's device call.
+- **Guard:** `TheChipStripFollowsTheSkillLevelTests`. Transcribed WORK 18/18, parent 15 red (one absence + born needles).
+- **Review:** 2026-10-30.
