@@ -177,7 +177,7 @@ struct AUv3PluginView: View {
                     .padding(.top, 12)
                 Text("Bio-Reactive Instrument")
                     .font(.system(size: 11))
-                    .foregroundColor(Color(white: 0.4))
+                    .foregroundColor(Color(white: 0.6))
 
                 parameterSection("Bio-Reactive") {
                     paramSlider("Coherence", value: $viewModel.coherence,
@@ -211,10 +211,15 @@ struct AUv3PluginView: View {
     @ViewBuilder
     private func parameterSection<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title.uppercased())
-                .font(.system(size: 11, weight: .bold))
-                .foregroundColor(Color(white: 0.35))
-                .kerning(1.5)
+            // A plain section title. ⛔ Until 2026-09-30 this was an EYEBROW — `uppercased()`,
+            // 11 pt bold, `.kerning(1.5)`, white 0.35 on the 0.05 background (2.8:1) — the
+            // exact pattern the design rules ban (tiny uppercase with letter-spacing above a
+            // heading) and a colour under the 4.5:1 text floor. The plug-in UI is exempt from
+            // `EchoelValueField` only (it compiles without the app's theme), never from the bans
+            // or the contrast floor. `TheAUv3ViewHasNoEyebrowTests` pins both.
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(Color(white: 0.7))
                 .padding(.leading, 4)
             VStack(spacing: 6) { content() }
                 .padding(12)
@@ -238,7 +243,7 @@ struct AUv3PluginView: View {
             .tint(Color(white: 0.4))
             Text(String(format: format, display?(value.wrappedValue) ?? value.wrappedValue))
                 .font(.system(size: 11, design: .monospaced))
-                .foregroundColor(Color(white: 0.4))
+                .foregroundColor(Color(white: 0.6))
                 .frame(width: 56, alignment: .trailing) // ADAPTIVE-EXEMPT: fixed-point .system(size:) font in the host-sized plug-in UI; it does not scale with Dynamic Type
         }
     }
