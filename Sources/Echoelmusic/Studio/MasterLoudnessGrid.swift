@@ -161,7 +161,8 @@ struct MasterVolumeField: View {
         EchoelValueField(label: "Master volume", value: Binding(
             get: { Double(audioEngine.masterVolume) },
             set: { audioEngine.masterVolume = Float($0) }),
-            range: 0...1, unit: "", decimals: 2)
+            range: 0...1, unit: "", decimals: 2,
+            standard: Double(AudioEngine.defaultMasterVolume))
     }
 }
 

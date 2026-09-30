@@ -415,7 +415,12 @@ public final class AudioEngine {
     @ObservationIgnored private let masterMixer = AVAudioMixerNode()
     @ObservationIgnored private let masterPlayerNode = AVAudioPlayerNode()
 
-    var masterVolume: Float = 0.85 {
+    /// The master fader a fresh launch starts at — the ONE owner of that default (#416): the
+    /// stored property below initialises from it and the "Master volume" row (`MasterVolumeField`)
+    /// offers it as its "Default" key. Type name, not `Self.`, in the stored initializer (#1444).
+    nonisolated static let defaultMasterVolume: Float = 0.85
+
+    var masterVolume: Float = AudioEngine.defaultMasterVolume {
         didSet { masterMixer.outputVolume = masterVolume }
     }
 

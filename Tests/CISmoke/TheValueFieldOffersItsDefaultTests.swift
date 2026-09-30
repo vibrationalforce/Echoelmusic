@@ -32,6 +32,8 @@
 // `TimelineLane.defaultLevel` / `defaultPan` — born for them: the lane's init defaults, its two
 // decode fallbacks and the four "lane not found" fallbacks (inspector ×3, `AudioLanePlayer`,
 // `MultiRollFanout`) were literals `1` / `0`; every one of them reads the owner now.
+// SEVENTH FAMILY (claim 3, same day): the "Master volume" row (`MasterVolumeField`) names
+// `AudioEngine.defaultMasterVolume`, the constant the engine's fader now initialises from.
 //
 // SECOND FAMILY (claim 5, the same day): every value field in `EchoelStudioView` whose binding
 // is a KEYSTORE-backed `@AppStorage` (`StudioDefaultKeys.x.key` … `= StudioDefaultKeys.x.value`)
@@ -219,6 +221,15 @@ final class TheValueFieldOffersItsDefaultTests: XCTestCase {
                 `TimelineLane.defaultLevel` / `defaultPan` — a literal here is a second owner (#416).
                 """)
         }
+
+        // SEVENTH FAMILY — the master fader (2026-09-30). `AudioEngine.defaultMasterVolume` is what the
+        // engine's `masterVolume` initialises from; the row in `MasterLoudnessGrid` offers it. Pinned
+        // to the row's range, not to a value: the launch level is a tuning choice, not a fact.
+        XCTAssertTrue((Float(0)...Float(1)).contains(AudioEngine.defaultMasterVolume), "the launch master level must sit inside the row's 0…1 range")
+        let engine = try source("Sources/Echoelmusic/Audio/AudioEngine.swift")
+        XCTAssertEqual(occurrences(of: "var masterVolume: Float = AudioEngine.defaultMasterVolume", in: engine), 1, "`AudioEngine.masterVolume` initialises from the owner constant, never from a literal")
+        let grid = try source("Sources/Echoelmusic/Studio/MasterLoudnessGrid.swift")
+        XCTAssertEqual(occurrences(of: "standard: Double(AudioEngine.defaultMasterVolume)", in: grid), 1, "the \"Master volume\" row passes the engine's default once")
     }
 
     // MARK: - claim 5 — the keystore family: a keystore-bound field offers the keystore's default

@@ -40659,3 +40659,7 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 
 ### Korrektur zur sechsten Familie (gleiche Minute)
 - ⛔ `enum TrackMix {` trägt KEIN `@MainActor` — ich hatte aus den `nonisolated static func`-Mitgliedern auf Isolation geschlossen, ohne die Deklarationszeile zu lesen. Der Wächter liest jetzt `TrackMix.levelRange`/`panRange` direkt (stärkerer Pin: der echte Bereich der Zeile); die Literal-Kopien und der falsche Satz sind raus. Lehre: die DEKLARATION messen, nicht die Modifier ihrer Mitglieder. Eigener Commit, weil nie amendiert wird.
+
+## 2026-09-30 — Regel 6, siebte Familie: Master-Fader-Startwert bekommt EINEN Besitzer — lokal
+
+- `AudioEngine.defaultMasterVolume` (`nonisolated static let`, 0,85); `masterVolume` initialisiert daraus, `MasterVolumeField` übergibt `standard: Double(…)`. Wächter (Anspruch 3, SIEBTE FAMILIE) pinnt Bereich, Initialisierer und Zeile — nicht den Wert (Abstimmungsentscheidung, #818). Transkription WORK GRÜN / HEAD ROT; Checker sauber. Lokal, Batch.

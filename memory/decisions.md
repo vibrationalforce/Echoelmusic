@@ -3304,3 +3304,8 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Review:** 2026-10-30.
 
 - ⛔ **Correction (same day):** `TrackMix` is a plain `enum`, not `@MainActor` — its `nonisolated` funcs are redundant, not evidence of isolation. The guard now reads `TrackMix.levelRange` / `panRange` directly (the rows' real ranges); the literal copies and the false sentence are removed. Lesson: measure the declaration line, not the modifiers on its members.
+
+### 2026-09-30 — Rule 6, seventh family: the master fader's launch level gets one owner
+
+- **Decision:** `AudioEngine.defaultMasterVolume` (`nonisolated static let`, 0.85) — `masterVolume` initialises from it, `MasterVolumeField` offers it as `standard:`. Guard pins range membership, the initialiser and the row, not the value (a tuning choice).
+- **Review:** 2026-10-30.
