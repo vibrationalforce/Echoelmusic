@@ -3,7 +3,7 @@
 //
 // WHAT THIS GUARDS. One panel carries two sentences about why its numbers move by themselves,
 // and until this slice both named the wrong subject under the demo source:
-//   · top:    "Your body also shapes this sound while a session runs: Brightness … move around
+//   · top:    "Your body also shapes this sound while the instrument plays: Brightness … move around
 //             the values you set here."                      (`BioShapedParameter`)
 //   · bottom: "No automation recorded — nothing is replaying a curve. Anything moving on its
 //             own RIGHT NOW is your body, not automation."   (`AutomationStatus`)
@@ -194,7 +194,7 @@ final class TheSoundPanelNamesItsActualDriverTests: XCTestCase {
     /// would have cost the instrument its identity line to be correct about a demo mode.
     func testTheRealBodyWordingIsUnchanged() {
         XCTAssertTrue(BioShapedParameter.soundPanelSentence(synthetic: false)
-            .hasPrefix("Your body also shapes this sound while a session runs:"), """
+            .hasPrefix("Your body also shapes this sound while the instrument plays:"), """
             The real-body variant's opening changed. This slice's whole shape — an argument \
             rather than a rewording — exists so the ordinary path is byte-identical. If the \
             copy genuinely needed to change, two other guards read this sentence character for \

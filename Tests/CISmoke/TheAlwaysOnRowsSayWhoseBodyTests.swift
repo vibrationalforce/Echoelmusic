@@ -24,7 +24,7 @@
 //
 // ⚠️ THE SHARP PART IS THE PLACEMENT, not the row in isolation. `bioPanel` mounts
 // `BioStripView` — which HAS marked the demo since #627 — and then, further down, the static
-// sentence "Four BODY channels shape the instrument's own timbre while a session runs",
+// sentence "Four BODY channels shape the instrument's own timbre while the instrument plays",
 // and then these four rows. A player read "Demo" at the top of the panel and, immediately
 // under a sentence that says *body*, four unmarked measurements of a body that is not there.
 //
@@ -418,7 +418,7 @@ final class TheAlwaysOnRowsSayWhoseBodyTests: XCTestCase {
 
     /// 6a/6b — REGRESSION, and the strong kind (§1): both sentences are pure `static func`s on a
     /// public enum, so this drives them and reads what a player would see. Until #643 both said
-    /// "Four body channels shape the instrument's own timbre while a session runs" over rows
+    /// "Four body channels shape the instrument's own timbre while the instrument plays" over rows
     /// that had marked themselves "Demo" since #635b — a present-tense claim about a current
     /// reading, false whenever the demo generator drives, on the two surfaces that make the
     /// promise most plainly.
@@ -453,7 +453,7 @@ final class TheAlwaysOnRowsSayWhoseBodyTests: XCTestCase {
                 half a scanning reader takes.
                 """)
             // Only the subject differs — everything from the shared tail on must match.
-            let tail = "the instrument's own timbre while a session runs: coherence, HRV, "
+            let tail = "the instrument's own timbre while the instrument plays: coherence, HRV, "
             XCTAssertTrue(real.contains(tail) && demo.contains(tail), """
                 \(label): the two branches diverge before the channel list. Only the SUBJECT may \
                 differ — a player must not read a different sentence depending on which source \

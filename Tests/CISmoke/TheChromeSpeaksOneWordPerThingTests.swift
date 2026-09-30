@@ -96,6 +96,13 @@
 // Titles "Start Echoelmusic" / "Stop Echoelmusic", short titles "Start playing" / "Stop playing",
 // phrases "Start playing in …" / "Stop playing in …". Type names (`StartEchoelSessionIntent`) are
 // code and stay; the web manifest's shortcut (docs/manifest.json) follows in the same commit.
+//
+// ⭐ RATCHET 10 (2026-09-30): `AlwaysOnBioChannel` — 5 hits in the bio-panel and sound-panel copy.
+// "while a session runs" ×3 meant the SITTING → "while the instrument plays" (the sentence says what
+// happens, the pattern of the second instrument-file family); "for the rest of this session" →
+// "until you stop"; "take over the note" was a verb (scanner false positive) → "carry the note".
+// TheAlwaysOnRowsSayWhoseBodyTests' shared tail and TheSoundPanelNamesItsActualDriverTests' prefix
+// follow the sentence, as their own messages instruct.
 // `Tests/CISmoke` is the blocking bundle. SKIPS rather than passes if the tree is absent.
 
 import Foundation
@@ -126,6 +133,7 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/LiveColaboView.swift",
         "Sources/Echoelmusic/Studio/PatchbayView.swift",
         "Sources/Echoelmusic/Studio/EchoelAppIntents.swift",
+        "Sources/Echoelmusic/Studio/AlwaysOnBioChannel.swift",
     ]
 
     /// A line whose strings reach a log or a test harness, not a person.

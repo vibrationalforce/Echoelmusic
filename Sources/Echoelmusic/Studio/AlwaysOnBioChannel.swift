@@ -199,7 +199,7 @@ public enum AlwaysOnBioChannel: String, CaseIterable, Identifiable, Sendable {
             : "four body channels shape "
         return "Separately from these routes, "
             + opening
-            + "the instrument's own timbre while a session runs: coherence, HRV, heart rate and "
+            + "the instrument's own timbre while the instrument plays: coherence, HRV, heart rate and "
             + "breath phase. Routes here add effect parameters on top."
     }
 
@@ -220,7 +220,7 @@ public enum AlwaysOnBioChannel: String, CaseIterable, Identifiable, Sendable {
             ? "Four channels from " + BioProvenanceCopy.demoSubject + ", shape "
             : "Four body channels shape "
         return opening
-            + "the instrument's own timbre while a session runs: coherence, HRV, heart rate and "
+            + "the instrument's own timbre while the instrument plays: coherence, HRV, heart rate and "
             + "breath phase — the four rows below. To add your own routes onto effect parameters, "
             + "open Effects › All parameters."
     }
@@ -533,7 +533,7 @@ public enum BioShapedParameter: String, CaseIterable, Identifiable, Sendable {
         case 1:  list = rows[0]
         default: list = rows.dropLast().joined(separator: ", ") + " and " + (rows.last ?? "")
         }
-        return "\(subject) also shapes this sound while a session runs: \(list) move around the "
+        return "\(subject) also shapes this sound while the instrument plays: \(list) move around the "
             + "values you set here. Open Bio to watch the four channels doing it."
     }
 }
@@ -650,7 +650,7 @@ public enum BioPanelRowCopy {
         // is the MOVEMENT the note follows, so it now says so.
         guard frame?.hasMeasuredBreathWaveform == true else {
             return head + " No breath movement measured yet — once it is traced, the inhale "
-                + "and exhale take over the note."
+                + "and exhale carry the note."
         }
         guard frame?.source.isSynthetic == true else {
             return head + " Your inhale opens it, your exhale closes it."
@@ -702,7 +702,7 @@ public enum BioPanelRowCopy {
             : "Gently steers mood toward your measured coherence, HRV and heart rate when your "
                 + "body is clearly settled or clearly driving"
         return head + " — over bars, not beats. Your own edits keep priority — edit a steered "
-            + "dial and Auto lets that dial go for the rest of this session (switch Auto off "
+            + "dial and Auto lets that dial go until you stop (switch Auto off "
             + "and on to hand it back)."
     }
 }
