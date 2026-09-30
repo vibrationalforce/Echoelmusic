@@ -41122,3 +41122,11 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **E4-14:** `readout` in MasterLoudnessGrid nimmt einen Schlüssel; Kurzzeit · Integriert · True Peak · Bereich (Katalog 716). Einheiten LUFS/dBTP/LU bleiben absichtlich verbatim (EBU-Token). Anspruch 10 kennt `readout`, Anspruch 11 pinnt die Signatur. Transkription HEAD 4 fehlend = EIN Befund, WORK grün.
 - **E4-15:** `MediaActionLabel` wickelt den Titel in einen Schlüssel; Foto wählen · Auf Visuals anwenden · Video wählen (Katalog 719). `title` bleibt String, weil zwei Wächter die sechs `MediaActionLabel(title:`-Stellen zählen. Anspruch 11 pinnt den Wrap und treibt vier Titel. Transkription HEAD 3 fehlend = EIN Befund, WORK grün.
 - **Push:** beide lokal, warten auf den Compile Check von 9ec521096.
+
+## 2026-09-30 — E4-16: Teil-Leiste deutsch, inkl. VoiceOver (419170120 lokal)
+
+- **Bau:** `button(_ title: LocalizedStringKey, …, label: String, …)`; 7 Titel (Früher · Später · Anfang kürzen · Ende kürzen · Teilen · Kopieren · Entfernen); 4 Literal-Labels via `String(localized:)`; 3 berechnete Sätze als lokalisierter Kopf + `SessionGrid.label(forTick:)` (kein Format-Schlüssel — der Katalog-Ehrlichkeits-Wächter verlangt jeden Schlüssel als Literal). Katalog 719 → 737.
+- **Wächter:** Anspruch 11 pinnt Signatur, drei Satzköpfe, vier `label: String(localized:)`-Stellen; treibt 18 Wörter. `button` bleibt absichtlich aus Anspruch 10: der gleichnamige Helfer in PartNoteEditor nimmt noch String.
+- ⛔ **Erster Wächter-Entwurf war ROT auf WORK:** Negativ „kein `label: "` in der Datei“ traf `EchoelValueField(label: "Starts at bar"` (E4-10, längst lokalisiert). Eng gemacht: vier positive Pins. Die §0-Transkription hat es gefangen, nicht CI.
+- **Transkription:** HEAD 18 fehlend, 3 Interpolationen, 3 Schlüssel nicht literal = EIN Befund; WORK grün. Checker sauber.
+- **Gates:** ed6f214ea: Compile 3094 ✓, Auto-Merge 3992 ✓ → main = ed6f214ea (BfT grün impliziert). 9ec521096 läuft.

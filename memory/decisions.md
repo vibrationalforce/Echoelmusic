@@ -3645,3 +3645,9 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **E4-14:** `readout(_ label: LocalizedStringKey, …)`; four names (716). `unit` stays String — LUFS/dBTP/LU are EBU tokens, not copy.
 - **E4-15:** `MediaActionLabel` wraps `Text(LocalizedStringKey(title))`; three actions (719). Property stays String because two guards count `MediaActionLabel(title:` sites.
 - **Pattern settled across E4-9…E4-15:** helper takes a key when every caller passes a literal and nothing reads the String (effectSection, readout, groupHeader…); wrap at the draw site when `isEmpty`/interpolation/counted call shapes need the String (EchoelValueField, EchoelPanel, MediaActionLabel, collapsibleGroupHeader).
+
+### 2026-09-30 — E4-16: the selected-part bar speaks German incl. VoiceOver (419170120)
+
+- **What:** `title: LocalizedStringKey`; `label: String` kept (three computed sentences); four literal labels `String(localized:)`; three sentence builders = localised head + bar label. 18 units (737).
+- **Guard shape lesson:** the first negative (`no "label: \"" in file`) was red on WORK because of an unrelated, already-localised `EchoelValueField(label: "Starts at bar")` — a file-wide negative over a common token is #364-prone; pin the positive call-site forms instead.
+- **German grammar decision:** „Teil“ is neuter in this catalog („welches überlappende Teil spielt“) — follow it, do not introduce „der Teil“.
