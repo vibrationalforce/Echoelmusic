@@ -40714,3 +40714,8 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - Wächter-Liste 6 → 7 Dateien; Kopf trägt die dritte Familie (Eltern a6648876d). Transkription: WORK 0 / HEAD 15 Verstöße. Checker sauber, Scanner 0.
 - **Rest (kommentar-gestrippt):** BioStripView 6, EchoelFXView 3, BioMetricInfo 3, ImmersiveStageView 2, ArrangeCanvasView 2, je 1 in Workstation/Session/PartNoteEditor/MoodPads/LiveColabo/LiveNarrationDisclosure/BioSourceView, AUv3-ViewController 1.
 - **Nicht gepusht:** Compile Check 3069 (36735271426) auf 5abcbc676 weiter `queued` (15:15Z →); CI/CD 6527 (fcd313e) Run Tests seit 15:13Z. Lokaler Stapel: 37ab57ac9 · e29787d68 · a6648876d · diese Scheibe.
+
+## 2026-09-30 — Regel 12, Boden-Hälfte, vierte Familie: die Bio-Flächen — lokal
+
+- `BioStripView` (Banner-Glyph 10→11, fünf Tag-/Knopf-Glyphen `.system(size: 9)`→11 — sie standen im SELBEN HStack neben 11–13-pt-Wörtern), `BioMetricInfo` (zwei Herkunfts-Notizen 10→11, Pfeil 9→11), `BioSourceView` („Band“ 10→11).
+- Vorher gemessen: `CoachingTextScalesTests` zählt die zwei `EchoelTheme.font(`-Aufrufe des Banners, `InfoSheetTextScalesTests` fragt den BESITZER jedes `.system(size:` — keiner liest die Zahl. Wächter-Liste 7 → 10; Transkription WORK 0 / HEAD 10.

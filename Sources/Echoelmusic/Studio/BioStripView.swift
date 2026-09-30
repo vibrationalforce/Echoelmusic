@@ -317,7 +317,7 @@ struct BioStripView: View {
     private func banner(_ text: String, color: Color, systemImage: String) -> some View {
         HStack(spacing: 5) {
             Image(systemName: systemImage)
-                .font(EchoelTheme.font(10))
+                .font(EchoelTheme.font(11))
             Text(text)
                 .font(EchoelTheme.font(11))
                 // ⛔ #353d-NACHLESE: WITHOUT THIS THE SCALING FIX ABOVE COULD SILENTLY BECOME A
@@ -675,7 +675,7 @@ struct BioStripView: View {
     private var openSettingsButton: some View {
         Button { openAppSettings() } label: {
             HStack(spacing: 4) {
-                Image(systemName: "video.slash").font(.system(size: 9))
+                Image(systemName: "video.slash").font(.system(size: 11))
                 Text("Enable camera")
             }
             .lineLimit(1)
@@ -696,7 +696,7 @@ struct BioStripView: View {
     /// glance and to VoiceOver in words.
     private var demoTag: some View {
         HStack(spacing: 4) {
-            Image(systemName: "waveform.path").font(.system(size: 9))
+            Image(systemName: "waveform.path").font(.system(size: 11))
             Text("Demo")
         }
         .lineLimit(1)
@@ -709,7 +709,7 @@ struct BioStripView: View {
 
     private var liveTag: some View {
         HStack(spacing: 4) {
-            Image(systemName: "heart.fill").font(.system(size: 9))
+            Image(systemName: "heart.fill").font(.system(size: 11))
             Text(sourceText)
         }
         .lineLimit(1)
@@ -736,7 +736,7 @@ struct BioStripView: View {
             ? (finger ? "Reading…" : "Cover camera")
             : "Connecting…"
         return HStack(spacing: 4) {
-            Image(systemName: "heart.fill").font(.system(size: 9))
+            Image(systemName: "heart.fill").font(.system(size: 11))
                 .symbolEffect(.pulse, isActive: !reduceMotion)
             Text(caption)
         }
@@ -758,7 +758,7 @@ struct BioStripView: View {
     private var startPulseButton: some View {
         Button { onStartPulse?() } label: {
             HStack(spacing: 4) {
-                Image(systemName: "heart.fill").font(.system(size: 9))
+                Image(systemName: "heart.fill").font(.system(size: 11))
                 Text("Read pulse")
             }
             .lineLimit(1)

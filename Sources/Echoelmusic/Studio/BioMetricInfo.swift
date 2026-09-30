@@ -245,7 +245,7 @@ struct BioMetricsGuideView: View {
                 Spacer(minLength: 8)
                 if let note = BioMetric.originNote(for: liveBio) {
                     Text(note)
-                        .font(EchoelTheme.font(10))
+                        .font(EchoelTheme.font(11))
                         .foregroundStyle(EchoelTheme.dim)
                 }
                 // Same change, same reason as the sibling sheet above (#353f). Kept spelled out
@@ -318,7 +318,7 @@ struct BioMetricsGuideView: View {
                         // instead of re-writing `== .fallback` a second time in this file.
                         if let note = BioMetric.originNote(for: liveBio) {
                             Text(note)
-                                .font(EchoelTheme.font(10))
+                                .font(EchoelTheme.font(11))
                                 .foregroundStyle(EchoelTheme.dim)
                         }
                     }
@@ -379,7 +379,7 @@ struct BioMetricsGuideView: View {
                                     .font(EchoelTheme.font(13, .semibold))
                                     .foregroundStyle(EchoelTheme.text)
                                 Image(systemName: "arrow.right")
-                                    .font(.system(size: 9))
+                                    .font(.system(size: 11))
                                     .foregroundStyle(EchoelTheme.dim)
                                 Text(m.target)
                                     .font(EchoelTheme.font(13, .semibold))

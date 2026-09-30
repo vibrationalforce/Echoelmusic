@@ -175,7 +175,7 @@ struct BioSourceView: View {
             }
             .tint(EchoelTheme.accent)
 
-            Text("Band").font(EchoelTheme.font(10)).foregroundStyle(EchoelTheme.dim)
+            Text("Band").font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     bandChip("Auto", nil)

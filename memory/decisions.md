@@ -3347,3 +3347,9 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - `EchoelStudioView`: eight 10 pt captions (bio panel ×4, reset note, AirPlay hint, Weather attribution, look position `font(10, .bold)`) and seven 10 pt chevron/star glyphs (`.system(size: 10)`) → 11. Glyphs lifted, not exempted (the guard's exemption needs a Council reason; a chevron beside a 13 pt title has none).
 - `SectionHeadingIsOneTreatmentTests` anchors `font(10, .medium)` only as an ABSENCE (claim `testNoInlineHeadingSurvivesInTheStudio`, and line 182 `XCTAssertFalse(… font(EchoelTheme.font(10`) — the lift cannot turn it red; measured 0 offenders on that filter in both trees. Its prose about "5 sites at 10 pt" is history and stays.
 - Ratchet list now seven files; guard header carries the third family's grading (WORK 0, HEAD 15). Remaining sub-11 (comment-stripped `git grep`): `BioStripView` 6, `EchoelFXView` 3, `BioMetricInfo` 3, `ImmersiveStageView` 2, `ArrangeCanvasView` 2, one each in `WorkstationView` · `SessionView` · `PartNoteEditor` · `MoodPads` · `LiveColaboView` · `LiveNarrationDisclosure` · `BioSourceView` · `AudioUnitViewController` (AUv3 — the `EchoelValueField` exemption does not cover type size, but the extension has no `EchoelTheme`; measure before touching).
+
+### 2026-09-30 — Rule 12 floor, fourth family: the bio surfaces join the 11 pt ratchet
+
+- `BioStripView` (banner glyph 10, five tag/button glyphs `.system(size: 9)` beside 11–13 pt words), `BioMetricInfo` (two origin notes 10, `arrow.right` 9), `BioSourceView` ("Band" 10 — doorless, still code) → 11.
+- `CoachingTextScalesTests` (banner: two `EchoelTheme.font(` calls, no `.system`) and `InfoSheetTextScalesTests` (every `.system(size:` owned by an `Image`) read structure, not the number — measured before the lift, unaffected.
+- Ratchet list now ten files; guard header carries the fourth family's grading (WORK 0, HEAD 10).

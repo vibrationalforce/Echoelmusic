@@ -44,6 +44,11 @@
 // (eight captions, seven glyphs) — claim 1 RED on that parent for exactly those, GREEN here.
 // `SectionHeadingIsOneTreatmentTests` anchors `font(10, .medium)` only as an ABSENCE (no inline
 // heading may be spelled that way), so lifting the captions leaves it green for its own reason.
+// FOURTH FAMILY (same day, parent 983b15ba4): the bio surfaces joined with ten sites lifted
+// (BioStripView 1 + 5 glyphs · BioMetricInfo 2 + 1 glyph · BioSourceView 1) — claim 1 RED on that
+// parent for exactly those ten, GREEN here. `CoachingTextScalesTests` counts the banner's two
+// `EchoelTheme.font(` calls and `InfoSheetTextScalesTests` asks who OWNS each `.system(size:`,
+// neither reads the number — both stay green for their own reason.
 
 import Foundation
 import XCTest
@@ -70,6 +75,12 @@ final class TheChromeTextMeetsTheElevenPointFloorTests: XCTestCase {
         // panel's four, the reset note, the AirPlay hint, the Weather attribution, the look
         // position) and seven 10 pt chevron/star glyphs beside 13 pt titles.
         "Sources/Echoelmusic/Studio/EchoelStudioView.swift",
+        // Fourth family (same day): the bio surfaces — the strip's banner glyph and five 9 pt
+        // tag/button glyphs, the metric sheet's two origin notes and its arrow, the doorless
+        // source view's "Band" label.
+        "Sources/Echoelmusic/Studio/BioStripView.swift",
+        "Sources/Echoelmusic/Studio/BioMetricInfo.swift",
+        "Sources/Echoelmusic/Studio/BioSourceView.swift",
     ]
 
     private static let theme = "Sources/Echoelmusic/Studio/EchoelTheme.swift"
