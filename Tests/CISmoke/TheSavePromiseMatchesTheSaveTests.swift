@@ -58,9 +58,10 @@ final class TheSavePromiseMatchesTheSaveTests: XCTestCase {
     func testTheSaveMessageNamesWhatTravels() throws {
         let message = try saveAlertMessage()
         XCTAssertFalse(message.isEmpty, "empty message closure — the anchor matched nothing (#367)")
-        XCTAssertTrue(message.contains("genre, key, tuning, tempo, Flow/Loop mode"),
+        XCTAssertTrue(message.contains("genre, key, tuning, tempo, tempo mode"),
                       "the Save door is the one place that says what a save is; it must name the "
-                      + "tuning and the Flow/Loop mode, both of which travel since #493/#494")
+                      + "tuning and the tempo mode (following or locked — the words are the lock's since "
+                      + "the 2026-09-30 glossary slice; \"Flow/Loop\" is struck), both of which travel since #493/#494")
         // #275 slice 2. Asserted SEPARATELY rather than lengthened into the phrase above, and
         // that is deliberate: the contiguous run is pinned so a later edit cannot quietly drop
         // one of its axes, but wording is allowed to place `mood` wherever it reads best. A
@@ -104,7 +105,7 @@ final class TheSavePromiseMatchesTheSaveTests: XCTestCase {
         for (field, needle) in [
             ("tuning (tone system)", "toneSystemID: tuningID"),
             ("tuning (concert pitch)", "a4Hz: session.a4Hz"),
-            ("Flow/Loop mode", "modeRaw: ComposerMode(locked: lockBPM).rawValue"),
+            ("tempo mode", "modeRaw: ComposerMode(locked: lockBPM).rawValue"),
             ("mood", "moodFields: MoodStorage.fields(from: mood)"),
             // #600: the sound travels THROUGH the one voice-half definition — the raw
             // `patch: currentPatch` spelling is the door that silently dropped a
@@ -155,7 +156,7 @@ final class TheSavePromiseMatchesTheSaveTests: XCTestCase {
         for (word, key) in [
             ("genre", "styleRaw"), ("key", "keyRoot"), ("key", "scaleRaw"),
             ("tuning", "a4Hz"), ("tuning", "toneSystemID"), ("tempo", "bpm"),
-            ("Flow/Loop mode", "modeRaw"), ("sound", "patch"),
+            ("tempo mode", "modeRaw"), ("sound", "patch"),
             ("FX character", "fxCharacterRaw"), ("the loop", "notes")
         ] {
             XCTAssertTrue(keys.contains(key),

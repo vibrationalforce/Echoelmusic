@@ -5698,6 +5698,8 @@ laufendes Register nicht. Ein Wächter darüber bleibt bewusst aus (#364).
 
 **2026-09-30 (Regel 12 — Textgröße als Knöpfe):** `git ls-files 'Tests/CISmoke/*.swift' | wc -l` → **724 vor, 725 nach** diesem Commit (`TheTextSizeHasButtonsTests.swift`, neu).
 
+**2026-09-30 (Regel 1 — Tempo-Modus-Wörter):** `git ls-files 'Tests/CISmoke/*.swift' | wc -l` → **725 vor, 726 nach** diesem Commit (`TheTempoModeSpeaksTheLocksWordsTests.swift`, neu).
+
 ## B — `Sources/**/*.swift`
 
 Aktueller Stand: **messen, nie zitieren.**

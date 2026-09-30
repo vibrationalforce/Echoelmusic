@@ -1,6 +1,6 @@
 // TheMoodTravelsWithTheTakeTests.swift
 // Echoel — #275 slice 2. Slice 1 gave the eight mood dials persistence at all; it was GLOBAL.
-// So opening a saved take restored its genre, key, scale, tempo, tuning, Flow/Loop mode, sound
+// So opening a saved take restored its genre, key, scale, tempo, tuning, tempo mode, sound
 // and raw bars — and left whatever mood happened to be dialled in on the instrument. A take
 // saved at tension 0.9 came back at whatever the last session ended on, which on the composer's
 // own terms is a different piece: `mood` reaches `BioComposer.Input` beside `style` and `key`.

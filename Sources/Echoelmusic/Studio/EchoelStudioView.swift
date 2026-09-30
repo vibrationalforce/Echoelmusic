@@ -1854,7 +1854,7 @@ struct EchoelStudioView: View {
             // turns that guard red on correct code. The first draft of this edit split
             // "stay with / the instrument" and did exactly that — caught by measuring, not by
             // the reviewer. Both pinned runs must stay inside one literal each.
-            Text("Saves the composed loop, if there is one, with its genre, key, tuning, tempo, Flow/Loop mode, mood, "
+            Text("Saves the composed loop, if there is one, with its genre, key, tuning, tempo, tempo mode (following or locked), mood, "
                  + "sound and FX character, and the Workstation's song — its tracks and parts. "
                  + "Your mixer levels and hand-dialled FX stay with the instrument.")
         }
@@ -5135,7 +5135,7 @@ struct EchoelStudioView: View {
             // over all 62 single-line literal `accessibilityHint`s under `Sources/`, this one
             // included; the longest in the app is 154). #355 paid for a 221-character one,
             // which VoiceOver reads in full with no way to skim.
-            .accessibilityHint("Tap in time to set the tempo. This locks the tempo and sets the mode to Loop.")
+            .accessibilityHint("Tap in time to set the tempo. This locks the tempo.")
 
             if let tapped = lastTappedBPM {
                 Text("\(Int(tapped.rounded())) BPM")

@@ -26,7 +26,8 @@ changes.
 | part | Teil | clip, region, take | one block on a track |
 | scene | Szene | section | one row of the Perform grid |
 | default | Standard | reset, initial, factory | the value a fresh install has — every value field that knows its default offers it as "Default" (keypad key + VoiceOver action, rule 6) |
-| loop | Schleife | — | the repeat range (a length). ⚠️ OPEN: the tempo MODE is still called Flow / Loop in `ComposerMode`; the audit renames it "Tempo follows pulse" / "Tempo fixed" — a separate slice, because the mode's words sit in `BodyTempoField` and its guards |
+| loop | Schleife | — | the repeat range (a length) — never the tempo mode (that is "Locked", below) |
+| tempo mode | Tempo-Modus | flow | the ONE tempo truth, the BPM lock, in the lock's own words: **"Follows pulse"** / **"Locked"** (the head-strip picker; `BodyTempoField` says "Tempo, following" / "Tempo locked"). ⛔ "Flow" / "Loop" stood here until 2026-09-30: "Flow" told a beginner nothing, and "Loop" is the word for the repeat range. `ComposerMode`'s cases `flowFree` / `studioLocked` are persisted rawValues and keep their names. "loop" is deliberately NOT struck for this row — it is the word above |
 
 ## What the words are NOT
 

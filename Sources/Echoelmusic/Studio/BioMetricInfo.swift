@@ -57,7 +57,7 @@ public enum BioMetric: String, CaseIterable, Identifiable, Sendable {
     public var detail: String {
         switch self {
         case .heartRate:
-            return "Beats per minute. It rises with effort, excitement or stress and falls with rest. In Echoelmusic your heart rate shapes the energy of the music — and, in Flow mode, its tempo (in Loop mode the tempo stays locked)."
+            return "Beats per minute. It rises with effort, excitement or stress and falls with rest. In Echoelmusic your heart rate shapes the energy of the music — and, while the tempo follows your pulse, the tempo itself (a locked tempo stays where you set it)."
         case .hrv:
             return "The tiny differences in time between one heartbeat and the next. Higher variability generally reflects a relaxed, adaptable state; lower variability often goes with stress or fatigue. Echoelmusic uses it to open or close the timbre. Reliable beat-to-beat HRV needs a chest strap; the camera shows it only when the reading is physiologically plausible, otherwise “—”."
         case .rmssd:

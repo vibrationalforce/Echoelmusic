@@ -157,7 +157,7 @@ final class TempoLockAlwaysAsksForARecomposeTests: XCTestCase {
 
                 \(hints.first ?? "—")
 
-            The tap is the only control in the app that changes the Flow|Loop mode without \
+            The tap is the only control in the app that changes the tempo mode without \
             being labelled as a mode control. VoiceOver reads hints in full and this one is \
             one sentence past the action — keep it that length. (⛔ This sentence quoted "an \
             app median near 57" while the source comment beside the hint quoted the measured \

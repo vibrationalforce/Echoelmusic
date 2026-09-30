@@ -1344,16 +1344,21 @@ struct CompositionHeaderStrip: View {
                                      horizontalScrub: false)
                         .accessibilityLabel("Concert pitch A4")
                 }
-                labeled("Mode") {
-                    // M1 Flow/Loop (founder: "flow mode for just meditation. But also
-                    // loop mode with proper timing for production"). The two modes are
-                    // ONE truth — the tempo lock — surfaced as a named choice.
-                    Picker("Mode", selection: modeBinding) {
-                        Text("Flow").tag(false)   // tempo follows the body — meditation
-                        Text("Loop").tag(true)    // fixed BPM — production / DAW handoff
+                labeled("Tempo") {
+                    // M1 (founder: "flow mode for just meditation. But also loop mode with
+                    // proper timing for production"). The two modes are ONE truth — the tempo
+                    // lock — surfaced as a named choice. Rule 1 (interface audit 2026-09-30):
+                    // the choice wears the LOCK's own words — `BodyTempoField` already says
+                    // "Tempo, following" / "Tempo locked" — not a second pair: "Flow" told a
+                    // beginner nothing, and "Loop" is the word for the repeat range
+                    // (`docs/dev/GLOSSARY.md`). `ComposerMode`'s cases keep their names; they
+                    // are persisted rawValues, and a rename would orphan every saved piece.
+                    Picker("Tempo", selection: modeBinding) {
+                        Text("Follows pulse").tag(false)   // tempo follows the body
+                        Text("Locked").tag(true)           // fixed BPM — production / DAW handoff
                     }
                     .pickerStyle(.menu).tint(EchoelTheme.text)
-                    .accessibilityLabel("Composition mode: Flow follows your body, Loop locks a fixed tempo")
+                    .accessibilityLabel("Tempo: follows your pulse, or locked at one number")
                 }
                 // Step 2c (bottom-bar dissolve): the live stamped session name —
                 // the head of the old Session card — rides at the end of the
