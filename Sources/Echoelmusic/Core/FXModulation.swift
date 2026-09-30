@@ -36,19 +36,19 @@ public enum FXModTarget: String, Codable, Sendable, CaseIterable, Identifiable {
 
     public var displayName: String {
         switch self {
-        case .filterCutoff:    return "Filter Cutoff"
-        case .filterResonance: return "Filter Resonance"
-        case .saturationDrive: return "Saturation Drive"
-        case .chorusMix:       return "Chorus Mix"
-        case .flangerMix:      return "Flanger Mix"
-        case .phaserMix:       return "Phaser Mix"
-        case .tremoloDepth:    return "Tremolo Depth"
-        case .delayMix:        return "Delay Mix"
-        case .delayFeedback:   return "Delay Feedback"
-        case .reverbMix:       return "Reverb Mix"
-        case .reverbSize:      return "Reverb Size"
-        case .bitcrushMix:     return "Bitcrush Mix"
-        case .stereoWidth:     return "Stereo Width"
+        case .filterCutoff:    return String(localized: "Filter Cutoff")
+        case .filterResonance: return String(localized: "Filter Resonance")
+        case .saturationDrive: return String(localized: "Saturation Drive")
+        case .chorusMix:       return String(localized: "Chorus Mix")
+        case .flangerMix:      return String(localized: "Flanger Mix")
+        case .phaserMix:       return String(localized: "Phaser Mix")
+        case .tremoloDepth:    return String(localized: "Tremolo Depth")
+        case .delayMix:        return String(localized: "Delay Mix")
+        case .delayFeedback:   return String(localized: "Delay Feedback")
+        case .reverbMix:       return String(localized: "Reverb Mix")
+        case .reverbSize:      return String(localized: "Reverb Size")
+        case .bitcrushMix:     return String(localized: "Bitcrush Mix")
+        case .stereoWidth:     return String(localized: "Stereo Width")
         }
     }
 
@@ -72,15 +72,15 @@ public enum FXModCarrier: Codable, Sendable, Equatable, Hashable {
     /// Short label for the UI / VoiceOver.
     public var displayName: String {
         switch self {
-        case .lfo: return "LFO"
+        case .lfo: return String(localized: "LFO")
         case .bio(let s):
             switch s {
-            case .heartRate:   return "Heart rate"
-            case .hrv:         return "HRV"
-            case .breathRate:  return "Breath rate"
-            case .breathPhase: return "Breath"
-            case .coherence:   return "Coherence"
-            case .motion:      return "Motion"
+            case .heartRate:   return String(localized: "Heart rate")
+            case .hrv:         return String(localized: "HRV")
+            case .breathRate:  return String(localized: "Breath rate")
+            case .breathPhase: return String(localized: "Breath")
+            case .coherence:   return String(localized: "Coherence")
+            case .motion:      return String(localized: "Motion")
             }
         }
     }

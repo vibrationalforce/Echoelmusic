@@ -65,7 +65,8 @@
 // (parent: all interpolated or verbatim, 6 units missing — ONE finding). E4-33 added the last two demo-prefix
 // sentences — the always-on channel row's three paths and the FX contribution row's two (parent: all interpolated,
 // 9 units missing — ONE finding). E4-34 added the always-on channel names, channel words and Sound-panel row names
-// (parent: all verbatim, 8 units missing — ONE finding). Claim 12
+// (parent: all verbatim, 8 units missing — ONE finding). E4-35 added the FX route names — thirteen targets, seven
+// carriers, six matrix sources (parent: all verbatim, 15 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1125,6 +1126,38 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertEqual(BioShapedParameter.vibrato.soundPanelRows, ["Vibrato depth", "Vibrato rate"])
         try assertGerman(["Coherence", "HRV", "Heart rate", "Breath phase", "brightness", "harmonicity", "noise", "filter", "vibrato", "level",
                           "Brightness", "Harmonics", "Noise", "Cutoff", "Vibrato depth", "Vibrato rate"], "always-on channel names")
+
+        // E4-35 — the FX route names: `FXModTarget.displayName` (thirteen targets, the Effects routing pickers and the
+        // contribution row's `targetName`), `FXModCarrier.displayName` (LFO + six body channels, the carrier picker and
+        // `carrierName`) and `ModSource.displayName` (the body→parameter matrix card). Neither file is in the AUv3 target.
+        // The `rawValue`s that persist routes are untouched; runtime English byte-identical (BioModContributionTests'
+        // "Reverb Mix" keeps passing).
+        let fxMod = try codeOnly("Sources/Echoelmusic/Core/FXModulation.swift")
+        for seam in ["case .filterCutoff:    return String(localized: \"Filter Cutoff\")",
+                     "case .reverbMix:       return String(localized: \"Reverb Mix\")",
+                     "case .stereoWidth:     return String(localized: \"Stereo Width\")",
+                     "case .lfo: return String(localized: \"LFO\")",
+                     "case .breathRate:  return String(localized: \"Breath rate\")",
+                     "case .motion:      return String(localized: \"Motion\")"] {
+            XCTAssertTrue(fxMod.contains(seam), "FXModulation lost the E4-35 seam `\(seam)`")
+        }
+        XCTAssertEqual(fxMod.components(separatedBy: "return String(localized: \"").count - 1, 20,
+                       "FXModTarget (13) + FXModCarrier (7) display names — 20 `return String(localized:` sites; re-derive if a target or carrier was added")
+        for verbatim in ["return \"Filter Cutoff\"", "return \"Reverb Mix\"", "return \"LFO\"", "return \"Heart rate\"", "return \"Motion\""] {
+            XCTAssertFalse(fxMod.contains(verbatim), "FXModulation spells a route name verbatim again: `\(verbatim)`")
+        }
+        let modSource = try codeOnly("Sources/Echoelmusic/Core/ModulationMatrix.swift")
+        for seam in ["case .heartRate:   return String(localized: \"Heartbeat\")", "case .breathPhase: return String(localized: \"Breath\")",
+                     "case .coherence:   return String(localized: \"Coherence\")"] {
+            XCTAssertTrue(modSource.contains(seam), "ModulationMatrix lost the E4-35 seam `\(seam)`")
+        }
+        XCTAssertFalse(modSource.contains("return \"Heartbeat\""), "ModSource.displayName spells Heartbeat verbatim again")
+        XCTAssertEqual(FXModTarget.reverbMix.displayName, "Reverb Mix")
+        XCTAssertEqual(FXModCarrier.bio(.heartRate).displayName, "Heart rate")
+        XCTAssertEqual(ModSource.heartRate.displayName, "Heartbeat")
+        try assertGerman(["Filter Cutoff", "Filter Resonance", "Saturation Drive", "Chorus Mix", "Flanger Mix", "Phaser Mix", "Tremolo Depth",
+                          "Delay Mix", "Delay Feedback", "Reverb Mix", "Reverb Size", "Bitcrush Mix", "Stereo Width",
+                          "LFO", "Heart rate", "HRV", "Breath rate", "Breath", "Coherence", "Motion", "Heartbeat"], "FX route names")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

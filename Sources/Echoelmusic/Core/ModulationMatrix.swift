@@ -57,12 +57,12 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
     /// source vocabulary — see BoundParameter / the modulation matrix).
     public var displayName: String {
         switch self {
-        case .heartRate:   return "Heartbeat"
-        case .hrv:         return "HRV"
-        case .breathRate:  return "Breath rate"
-        case .breathPhase: return "Breath"
-        case .coherence:   return "Coherence"
-        case .motion:      return "Motion"
+        case .heartRate:   return String(localized: "Heartbeat")
+        case .hrv:         return String(localized: "HRV")
+        case .breathRate:  return String(localized: "Breath rate")
+        case .breathPhase: return String(localized: "Breath")
+        case .coherence:   return String(localized: "Coherence")
+        case .motion:      return String(localized: "Motion")
         }
     }
 
