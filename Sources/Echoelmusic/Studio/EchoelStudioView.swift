@@ -2404,7 +2404,7 @@ struct EchoelStudioView: View {
             Button {
                 if exporter.isCancellable { exporter.cancel() } else { Task { await exportWav() } }
             } label: {
-                EchoelIconTile(systemImage: exportIcon, prominent: true, expands: true,
+                EchoelIconTile(systemImage: exportIcon, title: exportTitle, prominent: true, expands: true,
                                enabled: !isRecordButtonInert)
             }
             .buttonStyle(.plain)
@@ -2419,7 +2419,7 @@ struct EchoelStudioView: View {
                                busyLabel: busyStatusLabel) { Task { await keepLastLoop() } }
 
             Button { exportMIDI() } label: {
-                EchoelIconTile(systemImage: "pianokeys", expands: true,
+                EchoelIconTile(systemImage: "pianokeys", title: "MIDI", expands: true,
                                enabled: !isExporting && hasComposed)
             }
             .buttonStyle(.plain)
@@ -2490,7 +2490,7 @@ struct EchoelStudioView: View {
     private var quickDoorRow: some View {
         HStack(spacing: 8) {
             Button { openNote = nil; showOpen = true } label: {
-                EchoelIconTile(systemImage: "tray.and.arrow.up", expands: true,
+                EchoelIconTile(systemImage: "tray.and.arrow.up", title: "Open", expands: true,
                                enabled: !projects.projects.isEmpty)
             }
             .buttonStyle(.plain)
@@ -2499,7 +2499,7 @@ struct EchoelStudioView: View {
 
             #if canImport(MultipeerConnectivity)
             Button { showLiveColabo = true } label: {
-                EchoelIconTile(systemImage: "dot.radiowaves.left.and.right", expands: true)
+                EchoelIconTile(systemImage: "dot.radiowaves.left.and.right", title: "Live Colabo", expands: true)
             }
             .buttonStyle(.plain)
             // An icon-only control must say what it is (#489), and "Live Colabo" alone would
@@ -2533,7 +2533,7 @@ struct EchoelStudioView: View {
             #endif
 
             Button { showLearn = true } label: {
-                EchoelIconTile(systemImage: "book", expands: true)
+                EchoelIconTile(systemImage: "book", title: "Learn", expands: true)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Learn and news")
@@ -9676,6 +9676,24 @@ struct EchoelStudioView: View {
         default:         return "Record \(loopBars.label) → send"
         }
     }
+    /// The tile's visible word (rule 3) — one word of the matching `exportLabel` state, so the
+    /// spoken name contains what is shown (WCAG 2.5.3).
+    private var exportTitle: String {
+        switch exporter.status {
+        case .capturing: return exporter.isCancellable ? "Stop" : "Recording"
+        case .rendering: return "Writing"
+        default:         return "Record"
+        }
+    }
+    /// The tile's visible word (rule 3) — one word of the matching `exportLabel` state, so the
+    /// spoken name contains what is shown (WCAG 2.5.3).
+    private var exportTitle: String {
+        switch exporter.status {
+        case .capturing: return exporter.isCancellable ? "Stop" : "Recording"
+        case .rendering: return "Writing"
+        default:         return "Record"
+        }
+    }
     private var exportIcon: String {
         if exporter.isCancellable { return "stop.circle" }
         return isExporting ? "hourglass" : "square.and.arrow.up"
@@ -12800,7 +12818,7 @@ private struct SaveSessionButton: View {
         let canSave = hasComposed
             || SessionSaveOpen.songHasUserParts(timeline.document, clips: clips.filledClips)
         Button(action: action) {
-            EchoelIconTile(systemImage: "tray.and.arrow.down", expands: true, enabled: canSave)
+            EchoelIconTile(systemImage: "tray.and.arrow.down", title: "Save", expands: true, enabled: canSave)
         }
         .buttonStyle(.plain)
         .disabled(!canSave)
@@ -12860,7 +12878,7 @@ private struct KeepLastLoopButton: View {
         let inert = isExporting || !hasComposed || !fits
         let live = !inert
         Button(action: action) {
-            EchoelIconTile(systemImage: "clock.arrow.circlepath", expands: true, enabled: live)
+            EchoelIconTile(systemImage: "clock.arrow.circlepath", title: "Keep last", expands: true, enabled: live)
         }
         .buttonStyle(.plain)
         .disabled(inert)

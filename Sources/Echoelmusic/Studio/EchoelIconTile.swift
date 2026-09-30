@@ -58,6 +58,18 @@ import SwiftUI
 @MainActor
 struct EchoelIconTile: View {
     let systemImage: String
+    /// The visible word under the glyph — rule 3 (2026-09-30, WCAG 2.5.3): symbol plus word,
+    /// always. REQUIRED, no default (#431): a default would let a caller ship a mute tile
+    /// without a diff line. Callers keep the word inside their `accessibilityLabel` (Label in
+    /// Name); `TheIconTileCarriesAWordTests` reads both. One or two short words — the tiles
+    /// share a row at ~62 pt each on the narrowest phone, and the caption may wrap once.
+    let title: String
+    /// The visible word under the glyph — rule 3 (2026-09-30, WCAG 2.5.3): symbol plus word,
+    /// always. REQUIRED, no default (#431): a default would let a caller ship a mute tile
+    /// without a diff line. Callers keep the word inside their `accessibilityLabel` (Label in
+    /// Name); `TheIconTileCarriesAWordTests` reads both. One or two short words — the tiles
+    /// share a row at ~62 pt each on the narrowest phone, and the caption may wrap once.
+    let title: String
     /// `true` = the off-white primary fill the website CI reserves for the main action; the
     /// default is the bordered chip the three header tiles wear.
     var prominent: Bool = false
@@ -72,11 +84,22 @@ struct EchoelIconTile: View {
     var enabled: Bool = true
 
     var body: some View {
-        Image(systemName: systemImage)
-            .font(.system(size: 13, weight: .semibold))
+        VStack(spacing: 0) {
+            Image(systemName: systemImage)
+                .font(.system(size: 13, weight: .semibold))
+                .frame(height: EchoelTheme.controlHeight)
+            // Rule 3: the word, on the 11 pt floor (rule 12), in the chip's own tint so the
+            // disabled state dims glyph and word together. The chip is taller than the header
+            // tiles it was matched to on 2026-08-07 by exactly this caption, for all seven alike.
+            Text(title)
+                .font(EchoelTheme.font(11, .semibold))
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 4)
+                .padding(.bottom, 5)
+        }
             .foregroundStyle(tint)
             .frame(minWidth: 38, maxWidth: expands ? CGFloat.infinity : nil)
-            .frame(height: EchoelTheme.controlHeight)
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                 .fill(prominent && enabled ? EchoelTheme.text : EchoelTheme.fill))
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
