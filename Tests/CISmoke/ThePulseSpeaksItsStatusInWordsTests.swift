@@ -108,7 +108,8 @@ final class ThePulseSpeaksItsStatusInWordsTests: XCTestCase {
                       "Lost is the one rung that warns; Searching and Almost stay dim")
         XCTAssertTrue(pill.contains("if let ladder, ladder == .found {"),
                       "locked, the word sits beside the number — the doc's \"die Zahl bleibt daneben\"")
-        XCTAssertTrue(pill.contains("return ladder?.spoken ?? \"No pulse lock\""),
+        // E4-32: the old sentence is a catalog key now — same fallback, same position.
+        XCTAssertTrue(pill.contains("return ladder?.spoken ?? String(localized: \"No pulse lock\")"),
                       "VoiceOver hears the rung; a source without a ladder keeps the old sentence")
         let live = try body(from: "PulseMonitorMini(waveform: cameraRPPG.waveform,",
                             to: ".contentShape(Rectangle())", in: pill)

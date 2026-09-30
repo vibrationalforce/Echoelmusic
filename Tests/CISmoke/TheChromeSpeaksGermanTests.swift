@@ -60,7 +60,9 @@
 // waiting reasons, the notes-opened note, the spoken states and row, the header's next line (parent: all verbatim,
 // 27 units missing — ONE finding). E4-31 added the bio info sheet (metric titles, unit, summaries, details, origin
 // notes, demo prefix, percentage and modulation sentences) and the sound map's twelve strings (parent: all verbatim,
-// 35 units missing — ONE finding). Claim 12
+// 35 units missing — ONE finding). E4-32 added the pulse pill's spoken value and the Live Colabo peer row's spoken
+// line — demo prefix as a key, " beats per minute", ", coherence ", "no pulse yet", "not available", "No pulse lock"
+// (parent: all interpolated or verbatim, 6 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1019,6 +1021,39 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertNotNil(german(metric.detail, in: strings), "no German unit for the detail of `\(metric.rawValue)`")
             XCTAssertNotNil(german(metric.summary, in: strings), "no German unit for the summary of `\(metric.rawValue)`")
         }
+
+        // E4-32 — the pulse pill's spoken value (HeaderMonitors.accessibilityText) and the Live Colabo peer row's
+        // spoken line: the demo PREFIX keeps its one spelling as a key (#416/#634b) and still leads (#627/#629), the
+        // number still goes through `EchoelDecimalText` (#1321), and the English seams — " beats per minute",
+        // ", coherence ", "no pulse yet", "not available", "No pulse lock" — are catalog keys. Both re-anchored guards
+        // (ThePulseSpeaksItsStatusInWords, ThePeerSeesWhetherItIsABody, TheWireCannotTrapTheApp) pin the new spelling;
+        // TheDemoSourceIsMarkedWhereItRenders keeps its `let prefix = synthetic ?` and both `return "\(prefix)` pins.
+        let pill = try codeOnly("Sources/Echoelmusic/Studio/HeaderMonitors.swift")
+        for seam in ["return ladder?.spoken ?? String(localized: \"No pulse lock\")",
+                     "let prefix = synthetic ? String(localized: \"Simulated demo, \") : \"\"",
+                     "let tail: String = String(localized: \" beats per minute, coherence \") + EchoelDecimalText.string(coh, decimals: 2)",
+                     "return \"\\(prefix)\\(Int(bpm))\" + tail",
+                     "return \"\\(prefix)\\(Int(bpm))\" + String(localized: \" beats per minute\")"] {
+            XCTAssertTrue(pill.contains(seam), "HeaderMonitors lost the E4-32 seam `\(seam)`")
+        }
+        for verbatim in ["?? \"No pulse lock\"", "synthetic ? \"Simulated demo, \"", ") beats per minute, coherence \\(", "\\(Int(bpm)) beats per minute\""] {
+            XCTAssertFalse(pill.contains(verbatim), "HeaderMonitors spells or interpolates a spoken word verbatim again: `\(verbatim)`")
+        }
+        let peer = try codeOnly("Sources/Echoelmusic/Studio/LiveColaboView.swift")
+        for seam in [".accessibilityLabel(spokenBioLine(name: name, bpm: bpm, coherence: coherence, synthetic: synthetic))",
+                     "let origin: String = synthetic == true ? String(localized: \"Simulated demo, \") : \"\"",
+                     "let beats: String = EchoelDecimalText.string(bpm, decimals: 0) + String(localized: \" beats per minute\")",
+                     "let pulse: String = bpm > 0 ? beats : String(localized: \"no pulse yet\")",
+                     "EchoelDecimalText.string(coherence, decimals: 2) : String(localized: \"not available\")",
+                     "let head: String = origin + name + \": \" + pulse",
+                     "return head + String(localized: \", coherence \") + coherenceText"] {
+            XCTAssertTrue(peer.contains(seam), "LiveColaboView lost the E4-32 seam `\(seam)`")
+        }
+        for verbatim in ["\"Simulated demo, \" : \"\")", ") beats per minute\" : \"no pulse yet\"", ", coherence \\(coherence > 0"] {
+            XCTAssertFalse(peer.contains(verbatim), "LiveColaboView interpolates the peer sentence verbatim again: `\(verbatim)`")
+        }
+        try assertGerman(["No pulse lock", "Simulated demo, ", " beats per minute, coherence ", " beats per minute",
+                          "no pulse yet", "not available", ", coherence "], "pulse pill and peer row")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

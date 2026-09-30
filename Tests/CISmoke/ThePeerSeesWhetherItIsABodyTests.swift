@@ -188,7 +188,8 @@ final class ThePeerSeesWhetherItIsABodyTests: XCTestCase {
             and is dropped one line before it would have been shown (#629).
             """)
         XCTAssertEqual(lines.filter {
-            $0.contains("synthetic == true ? \"Simulated demo, \" : \"\"")
+            // E4-32: the prefix is a catalog key now — same spelling, still FIRST (`origin` leads the sentence).
+            $0.contains("synthetic == true ? String(localized: \"Simulated demo, \") : \"\"")
         }.count, 1, """
             VoiceOver no longer LEADS with the marker. A trailing "simulated" is heard as a \
             measurement with an addendum — the same ordering law the header pill's \

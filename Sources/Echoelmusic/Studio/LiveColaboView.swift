@@ -479,6 +479,18 @@ private func bioLine(name: String, bpm: Float, coherence: Float, highlight: Bool
     // `Int(_:)` here, during BODY EVALUATION, so it fired for every user and not only with
     // VoiceOver on, while the cell beside it drew the same value fine. Spoken and drawn now
     // come from one formatter, which is also this file's "legible numbers first" law.
-    .accessibilityLabel("\(synthetic == true ? "Simulated demo, " : "")\(name): \(bpm > 0 ? "\(EchoelDecimalText.string(bpm, decimals: 0)) beats per minute" : "no pulse yet"), coherence \(coherence > 0 ? EchoelDecimalText.string(coherence, decimals: 2) : "not available")")
+    .accessibilityLabel(spokenBioLine(name: name, bpm: bpm, coherence: coherence, synthetic: synthetic))
+}
+
+/// E4-32: the peer row's spoken sentence as typed steps — the marker FIRST (#629), the number through
+/// the same formatter the visible cell draws it with (#1321), every English seam a catalog key, and
+/// no ternary carrying a `+` chain (Compile Check 3106).
+private func spokenBioLine(name: String, bpm: Float, coherence: Float, synthetic: Bool?) -> String {
+    let origin: String = synthetic == true ? String(localized: "Simulated demo, ") : ""
+    let beats: String = EchoelDecimalText.string(bpm, decimals: 0) + String(localized: " beats per minute")
+    let pulse: String = bpm > 0 ? beats : String(localized: "no pulse yet")
+    let coherenceText: String = coherence > 0 ? EchoelDecimalText.string(coherence, decimals: 2) : String(localized: "not available")
+    let head: String = origin + name + ": " + pulse
+    return head + String(localized: ", coherence ") + coherenceText
 }
 #endif

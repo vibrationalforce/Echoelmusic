@@ -135,7 +135,8 @@ final class TheWireCannotTrapTheAppTests: XCTestCase {
             unchecked. This label is built during body evaluation, so it fires for every user, \
             not only with VoiceOver on.
             """)
-        XCTAssertTrue(view.contains("EchoelDecimalText.string(bpm, decimals: 0)) beats per minute"),
+        // E4-32: the unit is a catalog key now; the number still goes through the cell's formatter.
+        XCTAssertTrue(view.contains("EchoelDecimalText.string(bpm, decimals: 0) + String(localized: \" beats per minute\")"),
                       """
                       The accessibility label no longer speaks the number through the same \
                       formatter the visible cell draws it with. Spoken and drawn must agree — \

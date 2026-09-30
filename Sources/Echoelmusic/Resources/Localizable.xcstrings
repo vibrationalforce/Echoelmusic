@@ -18746,6 +18746,102 @@
           }
         }
       }
+    },
+    "No pulse lock" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Puls-Lock"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pulse lock"
+          }
+        }
+      }
+    },
+    " beats per minute, coherence " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Schläge pro Minute, Kohärenz "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " beats per minute, coherence "
+          }
+        }
+      }
+    },
+    " beats per minute" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Schläge pro Minute"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " beats per minute"
+          }
+        }
+      }
+    },
+    "no pulse yet" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "noch kein Puls"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no pulse yet"
+          }
+        }
+      }
+    },
+    "not available" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nicht verfügbar"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "not available"
+          }
+        }
+      }
+    },
+    ", coherence " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", Kohärenz "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", coherence "
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

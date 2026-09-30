@@ -245,15 +245,18 @@ struct PulseMonitorMini: View {
         if showStatus, let status { return status.full }
         // The ladder's sentence for the three rungs without a number; the old "No pulse lock"
         // stays for a source that has no ladder (strap/HealthKit/simulator without a frame).
-        guard locked && bpm > 0 else { return ladder?.spoken ?? "No pulse lock" }
+        guard locked && bpm > 0 else { return ladder?.spoken ?? String(localized: "No pulse lock") }
         // #627: the marker goes FIRST. VoiceOver reads this value straight through, so
         // "142 beats per minute, simulated" can be heard as a measurement with a footnote;
         // "Simulated demo, 142 beats per minute" cannot be mistaken for one.
-        let prefix = synthetic ? "Simulated demo, " : ""
+        // E4-32: the prefix keeps its one spelling as a catalog KEY (#416/#634b); the sentence is
+        // marker + number + seam, with the coherence tail as its own typed step (Compile Check 3106).
+        let prefix = synthetic ? String(localized: "Simulated demo, ") : ""
         if let coh = coherence {
-            return "\(prefix)\(Int(bpm)) beats per minute, coherence \(EchoelDecimalText.string(coh, decimals: 2))"
+            let tail: String = String(localized: " beats per minute, coherence ") + EchoelDecimalText.string(coh, decimals: 2)
+            return "\(prefix)\(Int(bpm))" + tail
         }
-        return "\(prefix)\(Int(bpm)) beats per minute"
+        return "\(prefix)\(Int(bpm))" + String(localized: " beats per minute")
     }
 }
 
