@@ -41086,3 +41086,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
   ⚠️ Nebenbefund: sieben weitere Views tragen ein eigenes `.accessibilityLabel(label)` auf einem String — nächste Messung.
 - **Gates:** main = a344e6472 (E4-6 gemerged → Anspruch 10 kompiliert). de2e3a3d7 (E4-7/E4-8): Compile Check 3093 queued seit 20:51Z.
   E4-9 (72fe0cc27) und E4-10 (82fe64d38) lokal, Push nach dessen Compile Check.
+
+## 2026-09-30 — E4-11: Wetter-Hinweis nennt den Schalter beim sichtbaren Namen (ae96ff16c lokal)
+
+- **Befund beim Messen der nächsten Scheibe:** `Text("Weather needs a coarse location — turn on \"Place in session name\"")` — der Schalter heißt seit der Glossar-Ratsche „Place in piece name“. Der Glossar-Scanner (`TheChromeSpeaksOneWordPerThingTests`) sah es nicht: er splittet Literale an `"`, ein ESCAPTES Anführungszeichen zerlegt das Literal, das gestrichene Wort fiel zwischen die Bruchstücke — die im Kopf genannte, akzeptierte Grenze.
+- **Reparatur:** typografische Anführungszeichen (die Form von `MIDIStatusWord`), damit das Literal ganz ist und kein Escape braucht; Katalog-Einheit (686 → 687, deutsch nennt „Ort im Stücknamen“, das deutsche Label des Schalters); LocationNamer-Kommentar nachgezogen. Kein neuer Wächter — die Ratsche liest die Zeile jetzt selbst.
+- **Transkription:** HEAD fragmentiert + keine Einheit → FAIL; WORK ganz + Einheit nennt das Schalter-Label → PASS. Checker: dead-needles OK, swift-escapes OK, moved-needles 0, needle-reachability = drei bekannte Fehlalarme. 3 Sources-Dateien.
+- **Nebenbefund für die Ratsche:** `git grep -n '\\"' -- Sources/Echoelmusic/Studio | grep -v ': *//'` zählt die Literale, die der Scanner in Stücken liest.

@@ -3621,3 +3621,9 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Why not change the type:** `label.isEmpty` drives the compact layout and three callers pass computed Strings; a key type would have cost call-site edits for nothing.
 - **Next measured:** seven views with a String `.accessibilityLabel(label)` of their own (list in decisions.csv row); the seven `+` seams; the two interpolated network sentences.
 - **Review 2026-10-30:** device G6 — German captions vs the pinned box width (`pinnedBoxWidth`), especially Anschlagstärke (Ø), Master-Lautstärke, Beginnt bei Takt.
+
+### 2026-09-30 — E4-11: the weather hint names the toggle by its visible label (ae96ff16c)
+
+- **What:** `turn on \"Place in session name\"` → `turn on “Place in piece name”`; catalog entry (687); LocationNamer comment corrected.
+- **Why it survived the ratchet:** the glossary scanner splits literals on `"`, so an ESCAPED quote fragments the literal and the struck word fell between fragments — the header calls this an accepted limit. Typographic quotes remove the escape, so the scanner now reads the sentence whole.
+- **Measurement for siblings:** `git grep -n '\\"' -- Sources/Echoelmusic/Studio | grep -v ': *//'` — every escaped quote in a ratcheted file is a literal the scanner reads in pieces.
