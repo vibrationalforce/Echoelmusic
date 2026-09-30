@@ -44,11 +44,15 @@ public enum StudioDefaultKeys {
 
     /// #603 B1 — the founder's on/off guide ("an- und ausschaltbarer Guide der hilft die
     /// App zu bedienen und zu verstehen"). Read by TWO views — `WorkspaceView` mounts the
-    /// `GuideOverlay`, `EchoelStudioView`'s Save & Export panel hosts the toggle — hence
-    /// H15-KEYSTORE. OFF on fresh installs, deliberately: first contact belongs to
-    /// `OnboardingView` + the instrument home ("app open → it lives"); the guide is
-    /// invited, never imposed. Founder may flip this default — it is one value, here.
-    public static let guideVisible = StudioDefault(key: "studio.guideVisible", value: false)
+    /// `GuideOverlay`, `ProjectHeader` hosts the ⓘ switch (head leaf 4, 2026-09-30; before:
+    /// the instrument's Save & Export panel) — hence H15-KEYSTORE.
+    /// ⭐ ON for a fresh install — and for any install that never flipped it — since head leaf
+    /// 4 (the audit doc: "Hilfe an einem festen Ort (ⓘ im Kopf), für neue Nutzer an"): the
+    /// home is the piece, the first card describes that very screen, and the ⓘ that hides the
+    /// cards is always in view. ⛔ OFF stood here, argued from "the instrument home ('app open
+    /// → it lives')" — phase history since slice 1. `OnboardingView` still comes FIRST and
+    /// ALONE (`EchoelmusicApp` shows it INSTEAD of the workspace), so no card overlaps it.
+    public static let guideVisible = StudioDefault(key: "studio.guideVisible", value: true)
 
     /// #604 (GUI-Board Scheibe 1, UX-Audit #2): the instrument hint's retire flag. The
     /// OLD contract wrote this after ONE ~4.5 s showing — miss it once and the app's only

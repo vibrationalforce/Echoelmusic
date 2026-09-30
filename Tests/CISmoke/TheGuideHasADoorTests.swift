@@ -5,9 +5,12 @@
 //
 // WHAT THIS GUARDS. The guide is a NON-MODAL card overlay (`GuideOverlay`) mounted as
 // the top layer of `WorkspaceView`'s ZStack, toggled by the shared
-// `StudioDefaultKeys.guideVisible` key from a Toggle in the Save & Export panel, and
-// rendering `LearnLibrary.guideEntries` — the guard-pinned "Start Here" content — as its
-// ONE source (#416). Four laws hold this shape, and each has an assertion here:
+// `StudioDefaultKeys.guideVisible` key from the ⓘ in `ProjectHeader` (head leaf 4 of the
+// interface audit, 2026-09-30 — ⛔ before: a Toggle in the instrument's Save & Export
+// panel, i.e. on the stage a fresh install does NOT open on, with the key defaulting to
+// OFF: a launch teaching nobody could see or find), and rendering
+// `LearnLibrary.guideEntries` — the guard-pinned "Start Here" content — as its ONE source
+// (#416). Four laws hold this shape, and each has an assertion here:
 //   · SHEET CEILING: the overlay must never become a sheet (10.76.34 black screen);
 //   · FREEZE LAW: the overlay must never read a high-frequency observable (10.76.50);
 //   · H15-KEYSTORE: the key is declared once, in Core, never re-typed as a literal;
@@ -21,8 +24,11 @@
 // obeys the four laws above.
 //
 // ⚠️ HONEST GRADING — transcribed in Python against the parent (2766428) and this tree
-// (#433/#464). 10 assertions in 4 tests, hand-counted: claims 1 (3) + 2 (3) + 3 (2) +
-// 4 (2). On THIS tree all 10 pass. Against the PARENT: ONE finding (#486) — neither
+// (#433/#464). Originally 10 assertions in 4 tests: claims 1 (3) + 2 (3) + 3 (2) + 4 (2);
+// head leaf 4 rewrote claim 1 as the DECISION (5 assertions: default ON, the head reads the
+// key, the ⓘ flips it and is named, it speaks its state, the studio holds no switch) — on
+// its parent c5eaf50a8 four of those are red by design and one by ONE absence. On the
+// original tree all 10 passed. Against the PARENT: ONE finding (#486) — neither
 // `GuideOverlay.swift`, the keystore entry, nor the toggle exists there; claim 2's file
 // read THROWS (anchor-missing, no verdicts) and claims 1/3/4's needles are absent
 // together. All 10 are FORWARD, born with this commit; ZERO regressions claimed, because
@@ -41,24 +47,40 @@ final class TheGuideHasADoorTests: XCTestCase {
     private static let overlay = "Sources/Echoelmusic/Studio/GuideOverlay.swift"
     private static let workspace = "Sources/Echoelmusic/Studio/WorkspaceView.swift"
     private static let studio = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
+    private static let header = "Sources/Echoelmusic/Studio/ProjectHeader.swift"
     private static let keys = "Sources/Echoelmusic/Core/StudioDefaultKeys.swift"
 
-    // MARK: - claim 1 — the door: key in the keystore, toggle in the panel, mount in the root
+    // MARK: - claim 1 — the door: key in the keystore (ON), the ⓘ in the head, mount in the root
 
-    func testTheGuideHasAKeyAToggleAndAMount() throws {
+    func testTheGuideHasAKeyASwitchInTheHeadAndAMount() throws {
         let keys = try source(Self.keys)
-        XCTAssertTrue(keys.contains("StudioDefault(key: \"studio.guideVisible\", value: false)"), """
-            The guide's shared key left the keystore (or its fresh-install default moved \
-            off `false`). H15-KEYSTORE: two views read this key — re-typing it at a use \
-            site is the fresh-install divergence class that shipped H15-LOOPBARS. If the \
-            founder flipped the default to `true`, update this needle AND \
-            `StudioDefaultKeysTests` in the same commit.
+        XCTAssertTrue(keys.contains("StudioDefault(key: \"studio.guideVisible\", value: true)"), """
+            The guide's shared key left the keystore, or its default moved off `true`. \
+            H15-KEYSTORE: two views read this key — re-typing it at a use site is the \
+            fresh-install divergence class that shipped H15-LOOPBARS. ON is the audit's law \
+            ("für neue Nutzer an", head leaf 4): the first card describes the very screen a \
+            fresh install opens on and the ⓘ that hides it is always in view. If the founder \
+            flips it back, update this needle AND `StudioDefaultKeysTests` in the same commit.
             """)
+        let header = try source(Self.header)
+        XCTAssertTrue(header.contains("@AppStorage(StudioDefaultKeys.guideVisible.key)"), """
+            `ProjectHeader` no longer reads the shared guide key — either it re-types the \
+            string (H15 divergence) or the ⓘ lost its switch.
+            """)
+        XCTAssertTrue(header.contains("guideVisible.toggle()") && header.contains(".accessibilityLabel(\"Guide\")"), """
+            The ⓘ guide switch is gone from the head. The founder's ask is AN- UND \
+            AUSSCHALTBAR, and the audit put the switch at ONE fixed place above both stages: \
+            an overlay nobody can switch on is a deleted feature, one nobody can switch OFF \
+            is an imposition; both need this button, named "Guide" for VoiceOver.
+            """)
+        XCTAssertTrue(header.contains(".accessibilityValue(guideVisible ? \"On\" : \"Off\")"),
+                      "a stateful glyph speaks its state (the stateful-controls law)")
         let studio = try source(Self.studio)
-        XCTAssertTrue(studio.contains("Toggle(isOn: $guideVisible)"), """
-            The guide switch is gone from EchoelStudioView. The founder's ask is \
-            AN- UND AUSSCHALTBAR — an overlay nobody can switch on is a deleted feature, \
-            one nobody can switch OFF is an imposition; both need this Toggle.
+        XCTAssertFalse(studio.contains("Toggle(isOn: $guideVisible)") || studio.contains("StudioDefaultKeys.guideVisible"), """
+            EchoelStudioView reads or flips the guide key again. Head leaf 4 MOVED the switch \
+            to the head — a second switch on the hidden stage is a second address for one \
+            setting, and the exact shape (a switch a fresh install cannot find) this leaf \
+            removed.
             """)
         let workspace = try source(Self.workspace)
         XCTAssertTrue(workspace.contains("GuideOverlay()"), """

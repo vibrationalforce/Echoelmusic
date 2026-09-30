@@ -41,6 +41,14 @@
 // stage writes the composer's part into the SAME history with no Undo in reach. Proximity lost to
 // presence: a fixed place the player can always find, on a stage that otherwise had none. It
 // reads two cold flags (`canUndo` / `canRedo`, flipped on an edit) in its own body.
+//
+// ⭐ AND THE ⓘ — THE GUIDE SWITCH (head leaf 4; the doc: "Hilfe an einem festen Ort (ⓘ im Kopf),
+// für neue Nutzer an"). It flips the shared `StudioDefaultKeys.guideVisible` key that
+// `GuideOverlay` (the top layer of `WorkspaceView`, above both stages) reads. Measured before
+// building: the guide's ONE switch was a Toggle in the instrument's Save & Export plate — the
+// hidden stage — and the key defaulted to OFF, so a fresh install had a launch teaching it could
+// neither see nor find. The switch MOVED here (one address) and the default is ON (the key, in
+// Core). The key is a SETTING, written on a tap — not hot state.
 
 import SwiftUI
 
@@ -60,6 +68,10 @@ struct ProjectHeader: View {
     @Environment(PianoRollModel.self) private var pianoRoll
     /// A SETTING, not a signal — it changes when the user changes the text size.
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    /// The guide's on/off (head leaf 4) — the ONE shared key, declared in Core (H15-KEYSTORE),
+    /// read by `GuideOverlay` and flipped by the ⓘ below. Written on a tap, never on a tick.
+    @AppStorage(StudioDefaultKeys.guideVisible.key)
+    private var guideVisible = StudioDefaultKeys.guideVisible.value
 
     var body: some View {
         let document = timeline.document
@@ -76,8 +88,8 @@ struct ProjectHeader: View {
         let name = ProjectTransport.projectName(projects.currentProjectName)
         let place = ProjectTransport.place(document: document, trackID: selection.trackID,
                                            regionID: selection.regionID)
-        // The facts flex, the pill flexes, the four buttons (Play · Record · Undo · Redo) have
-        // floors. One row while the ideal widths fit (a phone in landscape, an iPad); else two
+        // The facts flex, the pill flexes, the five buttons (Play · Record · ⓘ · Undo · Redo)
+        // have floors. One row while the ideal widths fit (a phone in landscape, an iPad); else two
         // lines — the summary with the transport over the pill with the history; else three,
         // the pill and the history each on their own — the #1027 idiom, `ViewThatFits`; at
         // accessibility sizes everything stacks so nothing is squeezed out and the transport
@@ -95,6 +107,7 @@ struct ProjectHeader: View {
                              startSong: { startSong(); return player.isPlaying },
                              stopSong: { stopAll() },
                              compact: true)
+            guideButton
         }
         return Group {
             if dynamicTypeSize.isAccessibilitySize {
@@ -161,6 +174,30 @@ struct ProjectHeader: View {
         #if canImport(AVFoundation)
         PulseMonitorMiniLive()
         #endif
+    }
+
+    /// ⓘ — the guide switch (head leaf 4). Flips the shared key `GuideOverlay` reads; filled
+    /// while the cards are showing (the `M`/`S` switch grammar of the track rows). A glyph on
+    /// purpose: the audit doc names it "ⓘ im Kopf", and it is the one control here whose state
+    /// is visible elsewhere on the screen — the card itself. Spoken as label · value · hint.
+    private var guideButton: some View {
+        Button { guideVisible.toggle() } label: {
+            Image(systemName: "info.circle")
+                .font(EchoelTheme.font(15, .semibold))
+                .foregroundStyle(guideVisible ? EchoelTheme.onPrimary : EchoelTheme.text)
+                .frame(minWidth: 44, minHeight: 44)
+                .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                    .fill(guideVisible ? EchoelTheme.text : EchoelTheme.fill))
+                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                    .strokeBorder(guideVisible ? Color.clear : EchoelTheme.borderStrong,
+                                  lineWidth: 1))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Guide")
+        .accessibilityValue(guideVisible ? "On" : "Off")
+        .accessibilityAddTraits(guideVisible ? .isSelected : [])
+        .accessibilityHint("Shows or hides the cards that walk you through playing and understanding the app")
     }
 
     /// The head's Undo / Redo — the song's ONE history control (`SongHistoryRow`, head leaf 3),

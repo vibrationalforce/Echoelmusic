@@ -77,7 +77,7 @@ struct GuideOverlay: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Hide guide")
-                .accessibilityHint("The guide switch in Save & Export brings it back")
+                .accessibilityHint("The Guide button in the head, the ⓘ, brings it back")
             }
             Text(entry.summary)
                 .font(EchoelTheme.font(12))
@@ -105,7 +105,7 @@ struct GuideOverlay: View {
                 }
                 Spacer(minLength: 0)
                 if index >= count - 1 {
-                    Text("Done — this switch lives in Save & Export.")
+                    Text("Done — the ⓘ in the head brings the cards back.")
                         .font(EchoelTheme.font(11))
                         .foregroundStyle(EchoelTheme.dim)
                         .fixedSize(horizontal: false, vertical: true)

@@ -304,8 +304,9 @@ struct WorkspaceView: View {
             // readable on the very screen it describes). Costs ZERO presentation
             // modifiers (the whole point; the chain below is at its pinned 14). The view
             // reads one low-frequency `@AppStorage` bool in ITS OWN body — constructing
-            // it here registers nothing (freeze rule 10.76.50). Toggle: Save & Export
-            // panel; content: `LearnLibrary.guideEntries`, the guard-pinned one source.
+            // it here registers nothing (freeze rule 10.76.50). Switch: the ⓘ in
+            // `ProjectHeader` (head leaf 4; before: the Save & Export panel); content:
+            // `LearnLibrary.guideEntries`, the guard-pinned one source.
             GuideOverlay()
         }
         .background(EchoelTheme.bg.ignoresSafeArea())

@@ -13,7 +13,7 @@ final class StudioDefaultKeysTests: XCTestCase {
         // #603 B1: guide OFF on fresh installs — invited, never imposed (first contact
         // belongs to Onboarding + instrument home). Key read by WorkspaceView + the
         // Save & Export toggle, hence keystore.
-        XCTAssertEqual(StudioDefaultKeys.guideVisible.value, false)
+        XCTAssertEqual(StudioDefaultKeys.guideVisible.value, true)   // head leaf 4: on for new users
         XCTAssertEqual(StudioDefaultKeys.guideVisible.key, "studio.guideVisible")
         // #604: hint retires on lesson-learned or the cap — key string deliberately kept
         // from the pre-keystore literal so already-taught users stay retired.

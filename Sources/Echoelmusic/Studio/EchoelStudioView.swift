@@ -279,8 +279,9 @@ struct EchoelStudioView: View {
     // Optional locked tempo for tight, DAW-ready loops. When off, the tempo follows
     // the body (flowFree); when on, the loop runs at exactly `lockedBPM`.
     @AppStorage(StudioDefaultKeys.lockBPM.key) private var lockBPM = StudioDefaultKeys.lockBPM.value
-    /// #603 B1 — the guide switch state (overlay mounts in WorkspaceView; H15-KEYSTORE).
-    @AppStorage(StudioDefaultKeys.guideVisible.key) private var guideVisible = StudioDefaultKeys.guideVisible.value
+    // ⛔ `guideVisible` (#603 B1) was read here for the Save & Export plate's guide Toggle. Head
+    // leaf 4 of the interface audit (2026-09-30) moved the switch into `ProjectHeader` (the ⓘ,
+    // above both stages) — this plate is on the hidden stage; the studio reads the key no more.
     /// #604 — the instrument hint's retire flag; `startBioSource()` writes it (lesson
     /// learned). The overlay in FloatingVisualWindow is the reader (H15-KEYSTORE).
     @AppStorage(StudioDefaultKeys.instrumentHintSeen.key) private var instrumentHintSeen = StudioDefaultKeys.instrumentHintSeen.value
@@ -9185,21 +9186,11 @@ struct EchoelStudioView: View {
                 .fixedSize(horizontal: false, vertical: true)
             #endif
 
-            // #603 B1 — the guide switch ("an- und ausschaltbarer Guide"). It sits ABOVE
-            // the recovery corner (reset/diagnostics): learning aid, not recovery. The
-            // overlay itself mounts in `WorkspaceView`'s ZStack — this row only flips the
-            // shared `StudioDefaultKeys.guideVisible` key (H15-KEYSTORE: two views read
-            // it, so the key + default live in Core, never re-typed here).
-            Toggle(isOn: $guideVisible) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Guide").font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
-                    Text("Cards that walk you through playing and understanding the app.")
-                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            .tint(EchoelTheme.accent)
-            .accessibilityHint("Shows a card overlay explaining the instrument, one surface at a time")
+            // ⛔ The guide Toggle (#603 B1, "an- und ausschaltbarer Guide") stood HERE, above the
+            // recovery corner. Head leaf 4 of the interface audit (2026-09-30) moved the switch
+            // into `ProjectHeader` as the ⓘ — this plate lives on the Instrument stage, hidden
+            // beneath the piece a fresh install opens on, so the launch teaching had a switch
+            // nobody could find. One switch, one address, above both stages.
 
             soundResetRow
 
