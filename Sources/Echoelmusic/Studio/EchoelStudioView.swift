@@ -94,6 +94,16 @@ struct EchoelStudioView: View {
     @AppStorage(StudioDefaultKeys.touchSlideVibrato.key) private var touchSlideVibrato = StudioDefaultKeys.touchSlideVibrato.value
     @AppStorage(StudioDefaultKeys.touchSlideChorus.key) private var touchSlideChorus = StudioDefaultKeys.touchSlideChorus.value
     @AppStorage(StudioDefaultKeys.touchGlide.key) private var touchGlide = StudioDefaultKeys.touchGlide.value
+    /// The user's chosen level for the chip strip (`SkillLevel`, interface audit 2026-09-30).
+    /// Written by `skillLevelRow`'s picker, read by `visibleChips`. COLD: it changes on a tap,
+    /// never on a tick (the freeze law is about ~10 Hz reads).
+    @AppStorage(StudioDefaultKeys.skillLevel.key)
+    private var skillLevelRaw = StudioDefaultKeys.skillLevel.value.rawValue
+    private var skillLevel: SkillLevel {
+        // An unknown raw value (a future case, a hand-edited plist) shows the WHOLE strip —
+        // never a thinner one by accident (#572).
+        SkillLevel(rawValue: skillLevelRaw) ?? StudioDefaultKeys.skillLevel.value
+    }
     @AppStorage(StudioDefaultKeys.touchLevel.key) private var touchLevel = StudioDefaultKeys.touchLevel.value
     @AppStorage(StudioDefaultKeys.touchLife.key) private var touchLife = StudioDefaultKeys.touchLife.value
     @AppStorage(StudioDefaultKeys.touchSyncStrength.key)
@@ -2847,6 +2857,39 @@ struct EchoelStudioView: View {
     private static let studioChips: [StudioMenu] =
         [.sound, .effects, .mix, .master, .mood, .composition, .field, .workstation, .export]
 
+    /// The strip at a `SkillLevel` — `SkillLevel`'s FIRST consumer (interface audit
+    /// 2026-09-30, "Einsteiger = drei Chips"). A FILTER over `studioChips`, never a second
+    /// list: the order stays the signal chain, and a case added to the standing strip has to
+    /// be placed in the switch below too (the compiler says so).
+    ///
+    /// Beginner = Sound · Mood · Save/Export — the voice, what drives it, what you take away.
+    /// The doc's triad was "Sound · Puls · Bild"; the pulse pill and the visual tile sit in
+    /// the HEAD at every level, so the three chips are the three the head does not carry.
+    /// Producer adds the shaping and song-building chips; Pro adds Master. Each level is a
+    /// superset of the one below (`SkillLevel`'s two gates are monotone, unit-tested).
+    ///
+    /// ⛔ THIS IS NOT THE FILTER #572 REJECTED. That one thinned the strip by LAUNCH COUNT,
+    /// for everyone, with no switch; this one takes the level the user picked (default `.pro`
+    /// = the whole strip) — a fresh install sees exactly what it saw before. The law two
+    /// paragraphs below ("do NOT re-introduce a maturity-gated strip without a founder ask")
+    /// is about absence imposed, and stands.
+    private static func chips(for level: SkillLevel) -> [StudioMenu] {
+        studioChips.filter { menu in
+            switch menu {
+            case .sound, .mood, .export:
+                return true
+            case .effects, .mix, .composition, .field, .workstation:
+                return level.showsSongs
+            case .master:
+                return level.showsProTabs
+            case .bio:
+                // Never in `studioChips` (#290: the pulse pill is its door) — listed so the
+                // switch is exhaustive and a future re-door has to decide its level.
+                return false
+            }
+        }
+    }
+
     /// The tab strip: the eight chips above, PLUS whatever the plate currently shows if a
     /// chrome door selected the one menu the strip does NOT carry — `.bio` (pulse pill).
     /// (`.video` was the second until #1304 removed video capture, its header tile and its
@@ -2870,9 +2913,12 @@ struct EchoelStudioView: View {
     /// scrim; a lying control now that the strip is permanent. Appended rather than always
     /// present, so the strip stays short.
     private var visibleChips: [StudioMenu] {
-        Self.studioChips.contains(displayedMenu)
-            ? Self.studioChips
-            : Self.studioChips + [displayedMenu]
+        // The strip at the user's level (interface audit 2026-09-30) — and the append below
+        // now also covers a chip the LEVEL hides: a chrome door or a lower level chosen while
+        // that panel is open still shows the selected chip, so the strip never lies about
+        // what the plate shows. Filtering removes a chip from the BAR, never from the app.
+        let strip = Self.chips(for: skillLevel)
+        return strip.contains(displayedMenu) ? strip : strip + [displayedMenu]
     }
 
     // ⛔ A FIRST-RUN FILTER STOOD HERE FOR ONE BUILD AND THE FOUNDER REJECTED IT ON DEVICE
@@ -2886,6 +2932,12 @@ struct EchoelStudioView: View {
     //
     // Do NOT re-introduce a maturity-gated strip without a founder ask. If a calmer first run
     // is wanted again, the lever to try first is ORDER or EMPHASIS, not absence.
+    //
+    // ⭐ 2026-09-30: the strip DOES follow a level now — `chips(for:)` above — and it is not
+    // the thing this paragraph forbids. The level is the user's pick (`skillLevelRow` in Save &
+    // Export), persisted, default `.pro` = the whole strip; nothing is thinned by a clock or a
+    // launch count, and a fresh install sees exactly what it saw before. Absence imposed is
+    // what was rejected; absence chosen is a setting.
 
 
     /// ⭐ WHY THIS SCROLLS ITSELF (#291). #290 took the strip from five chips to nine, and
@@ -9101,7 +9153,7 @@ struct EchoelStudioView: View {
         // the topic and `SaveDoorNamingTests` pins the chip, the VoiceOver name and the panel
         // heading as one decision.
         panel("Save & Export",
-              "Set the loop length the Record tile uses · see what can be kept · put your city in the name · reset the sound",
+              "Set the loop length the Record tile uses · choose how much of the strip you see · see what can be kept · put your city in the name · reset the sound",
               isExpanded: $showExport) {
         VStack(spacing: 10) {
             // ⛔ THE FIRST-RUN SENTENCE THAT STOOD HERE MOVED TO THE PLATE (GUI-Board
@@ -9132,6 +9184,7 @@ struct EchoelStudioView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             loopLengthSelector
+            skillLevelRow
             // ⛔ THE EXPORT-FAILURE LINE MOVED TO THE FRONT PLATE (#993, audit item 4). It stood
             // here under a #216 comment that said it "sits where the user is already looking" —
             // true when the Record button was IN this panel, and false since #482 lifted that
@@ -9226,6 +9279,28 @@ struct EchoelStudioView: View {
     /// presentation modifiers and the 10.76.34 black screen was that chain growing by three.
     /// A destructive action still needs its confirmation; this one just does not spend metadata
     /// depth on it.
+    /// The level picker — `SkillLevel`'s one door (interface audit 2026-09-30). A NAMED choice,
+    /// so a segmented `Picker`, not an `EchoelValueField` (the parameter law is about numbers).
+    /// It lives here, in the plate that holds the app's other settings, and `.export` is in
+    /// the strip at EVERY level — so the switch that hides chips can never hide itself.
+    private var skillLevelRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Chips on the strip")
+                .font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
+            Picker("Chips on the strip", selection: $skillLevelRaw) {
+                ForEach(SkillLevel.allCases) { level in
+                    Text(level.displayName).tag(level.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+            .accessibilityLabel("How much of the strip you see")
+            Text(skillLevel.blurb)
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     private var soundResetRow: some View {
         VStack(alignment: .leading, spacing: 4) {
             Button {

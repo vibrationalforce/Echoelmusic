@@ -15,6 +15,10 @@ final class StudioDefaultKeysTests: XCTestCase {
         // Save & Export toggle, hence keystore.
         XCTAssertEqual(StudioDefaultKeys.guideVisible.value, true)   // head leaf 4: on for new users
         XCTAssertEqual(StudioDefaultKeys.guideVisible.key, "studio.guideVisible")
+        // Interface audit 2026-09-30: the chip strip follows the user's level; default = the
+        // WHOLE strip (#572 — a thinned first impression was rejected on device).
+        XCTAssertEqual(StudioDefaultKeys.skillLevel.value, .pro)
+        XCTAssertEqual(StudioDefaultKeys.skillLevel.key, "studio.skillLevel")
         // #604: hint retires on lesson-learned or the cap — key string deliberately kept
         // from the pre-keystore literal so already-taught users stay retired.
         XCTAssertEqual(StudioDefaultKeys.instrumentHintSeen.value, false)

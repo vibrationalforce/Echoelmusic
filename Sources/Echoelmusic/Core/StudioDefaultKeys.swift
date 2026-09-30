@@ -54,6 +54,14 @@ public enum StudioDefaultKeys {
     /// ALONE (`EchoelmusicApp` shows it INSTEAD of the workspace), so no card overlaps it.
     public static let guideVisible = StudioDefault(key: "studio.guideVisible", value: true)
 
+    /// How much of the Instrument's chip strip is on screen (`SkillLevel`, interface audit
+    /// 2026-09-30). Read by `EchoelStudioView` — the strip's filter and the picker in Save &
+    /// Export. ⛔ DEFAULT `.pro` = the whole strip, on purpose: the founder rejected a strip
+    /// thinned without a choice on device (#568 → #572, "Du hast mega viel gelöscht"), so a
+    /// fresh install must see exactly what it saw before this key existed. Beginner is picked,
+    /// never presumed. An unknown persisted raw value also resolves to this default.
+    public static let skillLevel = StudioDefault(key: "studio.skillLevel", value: SkillLevel.pro)
+
     /// #604 (GUI-Board Scheibe 1, UX-Audit #2): the instrument hint's retire flag. The
     /// OLD contract wrote this after ONE ~4.5 s showing — miss it once and the app's only
     /// statement of the core mechanic never returned. NEW law: the hint retires when the

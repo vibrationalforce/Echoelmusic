@@ -44,6 +44,7 @@ final class SkillLevelTests: XCTestCase {
             XCTAssertFalse(level.displayName.isEmpty)
             XCTAssertFalse(level.blurb.isEmpty)
         }
-        XCTAssertNil(SkillLevel(rawValue: "expert"), "unknown raw → nil (caller falls back to beginner)")
+        XCTAssertNil(SkillLevel(rawValue: "expert"),
+                     "unknown raw → nil (the caller falls back to the key's default, pro — the whole strip, #572)")
     }
 }
