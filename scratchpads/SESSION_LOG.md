@@ -41109,3 +41109,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Bau:** Signatur `_ title: LocalizedStringKey`, 13 Aufrufer unverändert (alle Literale); Katalog 687 → 697. Wächter: Anspruch 10 kennt `effectSection`, Anspruch 11 pinnt die Signatur (160-Zeichen-Fenster ab der Deklaration) und treibt die 13 Titel.
 - **Transkription:** HEAD String-Signatur, 10 ohne Einheit = EIN Befund; WORK grün. Stripper PROPHYLAKTISCH. moved-needles: `_ title: String,` → SectionHeading-Wächter, scannt `collapsibleGroupHeader` (unverändert).
 - **Push:** lokal, wartet auf die Gates von ed6f214ea.
+
+## 2026-09-30 — E4-13: Panel-Karte zeichnet Titel + Untertitel als Schlüssel (4cac7254f lokal)
+
+- **Bau:** `EchoelPanel` wickelt `title`/`subtitle`/VoiceOver-Label in `LocalizedStringKey(_:)`; Typen bleiben `String` (`subtitle.isEmpty` entscheidet über die Zeile). 9 Titel + 8 Untertitel = 15 neue Einheiten (Mix, Master hatten schon), Katalog 697 → 712. `panel(_:_:)` und seine 9 Aufrufer unverändert.
+- **Wächter:** Anspruch 10 kennt `panel` (nur der Titel als erstes Argument); Anspruch 11 pinnt die drei Wraps, verbietet `Text(title)`/`Text(subtitle)` verbatim in der Karte und treibt alle 17 Wörter namentlich (die Untertitel erreicht Anspruch 10 nicht).
+- **Transkription:** HEAD 0/3 Wraps, verbatim, 15 fehlend = EIN Befund; WORK grün. Stripper TRAGEND (10 rohe `panel("` gegen 9 im Code). Checker sauber; moved-needles 0.
+- **Push:** lokal, hinter E4-12; wartet auf die Gates von ed6f214ea.

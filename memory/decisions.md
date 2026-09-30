@@ -3633,3 +3633,9 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **What:** `effectSection(_ title: LocalizedStringKey, …)`; ten new units (697). Claim 10 alternation + claim 11 signature pin + thirteen titles driven.
 - **German choices:** Reverb → Hall (consistent with „Hall-Ausklang“/„Hall-Anteil“), Stereo Width → Stereobreite, Compressor → Kompressor; Chorus/Flanger/Phaser/Tremolo/Limiter/Bitcrush/Tape unchanged (the German producer vocabulary).
 - **Survey that ranked it** (read-only subagent, 2026-09-30): ~40 verbatim `Text(param)` sites; ranked list in decisions.csv row. Pinned constraints: EchoelIconTile (`let title: String` + `Text(title)` pinned by TheIconTileCarriesAWordTests), Patchbay `statusLine` (`.accessibilityLabel(label)` pinned), MoodXYPad/touchPatchChip (interpolated).
+
+### 2026-09-30 — E4-13: the shared panel card draws its words as keys (4cac7254f)
+
+- **What:** three wraps in `EchoelPanel` (title ×2 incl. VoiceOver, subtitle); 15 units (712). Claim 10 `panel` (title only), claim 11 drives titles + subtitles by name.
+- **German:** Feld / Stimmung / Effekte / Sichern & Export / Klang & Textur / Tempo & Variationen; subtitles translated whole (the long Save & Export one included).
+- **Stripper TRAGEND** here: one `panel("` quoted in a comment would have counted as a tenth call site.
