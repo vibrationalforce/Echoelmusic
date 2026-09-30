@@ -41130,3 +41130,12 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - ⛔ **Erster Wächter-Entwurf war ROT auf WORK:** Negativ „kein `label: "` in der Datei“ traf `EchoelValueField(label: "Starts at bar"` (E4-10, längst lokalisiert). Eng gemacht: vier positive Pins. Die §0-Transkription hat es gefangen, nicht CI.
 - **Transkription:** HEAD 18 fehlend, 3 Interpolationen, 3 Schlüssel nicht literal = EIN Befund; WORK grün. Checker sauber.
 - **Gates:** ed6f214ea: Compile 3094 ✓, Auto-Merge 3992 ✓ → main = ed6f214ea (BfT grün impliziert). 9ec521096 läuft.
+
+## 2026-09-30 — E4-17: Noten-Editor deutsch, inkl. VoiceOver (05d3e2705 lokal)
+
+- **Bau (3 Sources-Dateien):** PartNoteEditor `button(_ title: LocalizedStringKey, …, label: String, …)`; 13 Titel (Einpassen · −1/+1 Stufe · Quantisieren · Tiefer · Höher · Abwählen …); 14 VoiceOver-Sätze als Kopf + gesprochener Umfang + Schwanz („Bewege “ + „die gewählte Note“ + „ eine Oktave nach unten“); Umfang-Erzeuger `scope()` lokalisiert (Zahl zwischen zwei Stücken); Delete-Label nutzt die Umfang-Stücke; Velocity-Hinweis; `ClipNoteEdit.QuantizeGrid.spoken` → Sechzehntel/Achtel/Viertel. Katalog 737 → 774.
+- **Offen im Satz:** Tonart-Name (`Scale.displayName`, „C major“) und Notenname („C sharp“) bleiben englisch — eigene Erzeuger, Backlog `MusicalKey.swift:262`.
+- **Wächter:** `TheQuantizeGridIsChosenByNameTests` im selben Commit re-verankert (alter Literal-Pin wäre rot). Anspruch 11: Signatur, 7 Köpfe, kein verbatim `label: "Move`, 3 Raster-Wörter, 39 Einheiten.
+- ⚠️ **moved-needles.py zum ZWEITEN Mal heute blind:** die entfernte Zeile `label: "Snap the starts of \(what) …"` war von einem Wächter gepinnt, das Werkzeug meldete „no removed Sources/ line is a needle“. Vermutung: Nadeln mit `\(`-Escapes werden übersprungen (#937-Dekoder) oder als generisch gefiltert. Vor einer Reparatur messen (Selbsttest-Pflicht).
+- **Transkription:** HEAD 12 verbatim Labels, 10 Interpolationen, 37 fehlend, Pin alt = EIN Befund; WORK grün. Checker sauber.
+- **Push:** lokal, wartet auf den Compile Check von 929a14b30.

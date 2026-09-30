@@ -3651,3 +3651,10 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **What:** `title: LocalizedStringKey`; `label: String` kept (three computed sentences); four literal labels `String(localized:)`; three sentence builders = localised head + bar label. 18 units (737).
 - **Guard shape lesson:** the first negative (`no "label: \"" in file`) was red on WORK because of an unrelated, already-localised `EchoelValueField(label: "Starts at bar")` — a file-wide negative over a common token is #364-prone; pin the positive call-site forms instead.
 - **German grammar decision:** „Teil“ is neuter in this catalog („welches überlappende Teil spielt“) — follow it, do not introduce „der Teil“.
+
+### 2026-09-30 — E4-17: the note editor speaks German incl. VoiceOver (05d3e2705)
+
+- **What:** title key; 14 labels as head + `what` + tail; scope producer localised (count glued between pieces); QuantizeGrid.spoken localised in Sequencer (Foundation `String(localized:)`, MusicalKey precedent). 37 units (774).
+- **Open producers (English inside German sentences):** `Scale.displayName` (41+ names, backlog MusicalKey.swift:262) and `NoteNaming.spokenName` (" sharp"/" flat"). Own slice each.
+- **Tool finding, second instance:** `moved-needles.py` listed nothing although `TheQuantizeGridIsChosenByNameTests` pinned the removed `label: "Snap the starts of …"` line. The needle contains `\(` escapes — the tool's needle decoder or the generic filter drops it. Measure before repairing (#941 selftest rule).
+- **Generic keys accepted knowingly:** "the ", " selected", "Move ", "Copy ", "Delete ", "Sets " — short pieces whose German is fixed by these sentences; a future sentence needing a different German for the same English piece must use a distinct English piece, not re-translate these.
