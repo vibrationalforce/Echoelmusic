@@ -3257,3 +3257,12 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Decision (f5915681f, EchoelAppIntents + docs/manifest.json):** the intent starts `startBiofeedback()` and stops `stopEverything` — say so: titles "Start Echoelmusic" / "Stop Echoelmusic", descriptions "Start the instrument and the pulse reading — your body begins making music." / "Stop the instrument and the pulse reading.", short titles "Start playing" / "Stop playing", phrases "Start playing in <app>" / "Stop playing in <app>". Web manifest shortcut "Quick start" / "Start" / same description; its URL `/?action=session` is a code path.
 - **List:** 17 files in `TheChromeSpeaksOneWordPerThingTests`; scanner 0 on the work tree. Local commits, batched behind the Compile Check on d9ee6f3c3.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 1, ratchets 10–12 + ProjectStore: bio-panel copy, relink refusals, MIDI-import notes, import/save notes
+
+- **10 (5053a4b90, AlwaysOnBioChannel):** "while a session runs" ×3 → "while the instrument plays"; "for the rest of this session" → "until you stop"; "take over the note" → "carry the note". Guards' pinned tail/prefix moved with the copy, as their messages instruct.
+- **11 (934344a17, Sequencer/MediaRelink):** first non-Studio file in the list — `userMessage` is shown verbatim: "clip" ×3 → "part", "Stop the song" → "Stop the piece".
+- **12 (136dfb37a, Sequencer/MIDIImport):** "This piece has no MIDI track", "The part slots are full — all 8 are in use.", "at the piece's tempo" ×2, "Generate won't place its music over this part."
+- **ProjectStore (outside the list):** "That file isn't an Echoel piece." / "…a readable Echoel piece — <field>." / "Could not save this piece." — the file cannot join the list: it carries the persisted filename `"projects.json"`, which the scanner reads as the struck word. **Known exclusion class: persisted filenames / keys.** Recorded instead of an allow-list.
+- **List:** 20 files, scanner 0. All local, batched behind Compile Check 3067 (d9ee6f3c3).
+- **Review:** 2026-10-30.
