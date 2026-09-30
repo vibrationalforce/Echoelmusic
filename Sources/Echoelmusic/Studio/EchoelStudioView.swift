@@ -1,6 +1,9 @@
 #if canImport(SwiftUI)
 import SwiftUI
 import Combine   // NotificationCenter.publisher for the chrome pulse-button toggle
+#if canImport(AVFoundation)
+import AVFoundation   // AVAudioSession.routeChangeNotification — the "Audio route" row re-reads on it
+#endif
 #if canImport(UIKit)
 import UIKit   // UIApplication.isIdleTimerDisabled (keep screen awake while projecting)
 #endif
@@ -5277,6 +5280,11 @@ struct EchoelStudioView: View {
             // control, so the loop closes without anyone having to believe a label").
             AudioLatencyRow()
 
+            // Zug 3 (2026-09-30): WHERE the sound goes, in a word, plus the one Bluetooth
+            // remedy sentence that `RouteCodec.note` carried for a screen that did not exist.
+            // Its own cold leaf (doc on the struct).
+            AudioRouteRow(engine: audioEngine)
+
             // #408: the render-timing meter (#193) has existed for a week and speaks only into
             // `echoel_diag.log`, a file the founder has to export and send. The v10.79.369
             // "teilweise extremes Knacken" report arrived without one, leaving six candidate
@@ -5425,6 +5433,68 @@ struct EchoelStudioView: View {
                     selected = AudioConfiguration.currentLatencyMode
                 }
             }
+        }
+    }
+
+    /// Zug 3 of the interface audit (2026-09-30, "Status-Leiter in Worten für jeden
+    /// Hardware-Pfad"), first path: the AUDIO ROUTE. Until this row, the panel carried the
+    /// buffer tier and the timing tally and said nothing about WHERE the sound goes — and the
+    /// one sentence that matters on Bluetooth (call mode: mono, band-limited, the music too)
+    /// was written in `RouteCodec.note` and read by nothing. The rung words live in
+    /// `AudioRouteRung` (`Studio/AudioRouteStatusWord.swift`), one definition (#416).
+    ///
+    /// COLD, on purpose (the 10.76.41/50 freeze law): the readout is a `@State` VALUE taken
+    /// from `AudioConfiguration.latencySnapshot()` on appear, on every route change and on
+    /// start/stop. `engine.isRunning` changes on start/stop only — the timing row below reads
+    /// it for the same reason. Nothing here reads a meter, the pulse or the clock, and the
+    /// snapshot touches `AVAudioSession` on the main thread, never in a render block.
+    ///
+    /// NEEDS-FOUNDER-VERIFY: Master → Audio route while playing over the speaker, then
+    /// AirPods, then a phone call in the background on Bluetooth: the row must read
+    /// "Playing · Speaker · …", "Playing · AirPods …", and "Call mode · …" with the remedy
+    /// sentence beneath — and go back without relaunching.
+    private struct AudioRouteRow: View {
+        let engine: AudioEngine
+        @State private var readout: AudioConfiguration.LatencyReadout?
+
+        private var rung: AudioRouteRung {
+            AudioRouteRung.rung(isRunning: engine.isRunning, codec: readout?.codec ?? .wideband)
+        }
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Text("Audio route")
+                        .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
+                    Spacer()
+                    Text(rung.line(outputs: readout?.outputNames ?? "none",
+                                   floorText: readout?.floorText ?? "—"))
+                        .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.text)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Text(readout?.codec.note ?? AudioRouteRung.caption)
+                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Audio route")
+            .accessibilityValue(rung.spoken(outputs: readout?.outputNames ?? "none"))
+            .onAppear { readout = AudioConfiguration.latencySnapshot() }
+            .onChange(of: engine.isRunning) { _, _ in readout = AudioConfiguration.latencySnapshot() }
+            .onReceive(routeChanges.receive(on: DispatchQueue.main)) { _ in
+                readout = AudioConfiguration.latencySnapshot()
+            }
+        }
+
+        /// iOS posts this on every headphone/Bluetooth/speaker change; the row re-reads then,
+        /// so the words follow the hardware without a poll.
+        private var routeChanges: NotificationCenter.Publisher {
+            #if canImport(AVFoundation) && !os(macOS)
+            return NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification)
+            #else
+            return NotificationCenter.default.publisher(for: Notification.Name("echoel.audioRoute.noChanges"))
+            #endif
         }
     }
 

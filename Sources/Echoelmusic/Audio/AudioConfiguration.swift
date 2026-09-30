@@ -1312,17 +1312,19 @@ enum AudioConfiguration {
         case telephonySuspected
 
         /// The one sentence the numbers cannot carry. `nil` when there is nothing to say, so a
-        /// caller renders no row at all rather than a reassuring "all good" line nobody asked for.
+        /// caller renders its neutral caption rather than a reassuring "all good" line nobody
+        /// asked for.
         ///
         /// ⛔ UNTIL 2026-09-30 BOTH SENTENCES ADVISED AN INPUT THAT DOES NOT EXIST — "the iPhone
         /// mic as input", "check which input is selected". #1302 deleted the audio input on
-        /// 2026-09-12; the advice survived eighteen days because nothing reads this property:
-        /// `LatencyReadout.codec` is constructed in `latencySnapshot()` and read by NO view
-        /// (measured: `git grep -n "\.codec\b" -- Sources` → the declaration and the
-        /// constructor). The sentence is kept because the master panel's audio-route line (the
-        /// interface audit's Zug 3) is where it lands; until then it is GRADED, not shown —
-        /// `TheCodecNoteNamesNoInputTests` drives it end to end. Echoel only plays OUT, so when
-        /// the route is in call mode, another app holds that call.
+        /// 2026-09-12; the advice survived eighteen days because nothing read this property:
+        /// `LatencyReadout.codec` was constructed in `latencySnapshot()` and read by NO view.
+        /// ⭐ SINCE THE SAME DAY IT HAS ITS SCREEN: the master panel's "Audio route" row
+        /// (`EchoelStudioView.AudioRouteRow`, interface audit Zug 3) renders this sentence
+        /// beneath its status line whenever the route is in call mode — measure, do not quote:
+        /// `git grep -n "\.codec\.note" -- Sources`. `TheCodecNoteNamesNoInputTests` still
+        /// drives the wording end to end. Echoel only plays OUT, so when the route is in call
+        /// mode, another app holds that call.
         var note: String? {
             switch self {
             case .wideband:
@@ -1471,6 +1473,12 @@ enum AudioConfiguration {
         /// A caller that shows the floor without showing this is publishing a number that
         /// silently shrank.
         let complete: Bool
+        /// The OUTPUT ports by their plain names ("Speaker", "AirPods Pro"), joined with " + ",
+        /// or "none". For the SCREEN (the master panel's "Audio route" row, 2026-09-30): `route`
+        /// above is the LOG form — input→output with the Bluetooth markers — and since #1302
+        /// its input side reads "none" on every route, which is a fact for a log and noise for
+        /// a player. No default (#431): the one constructor states it.
+        let outputNames: String
         /// What the route can CARRY, alongside what it costs (#670). No default, deliberately:
         /// a defaulted field appears in no diff and no call site has to think about it
         /// (#431/#440/#443) — and this one is the difference between a session and a phone call.
@@ -1526,6 +1534,7 @@ enum AudioConfiguration {
                               inputMilliseconds: input,
                               outputMilliseconds: out,
                               route: sanitisedRoute(v.route),
+                              outputNames: sanitisedRoute(v.outputNames),
                               complete: buf != nil && out != nil && input != nil,
                               codec: routeCodec(outputPortTypes: v.outputPortTypes,
                                                 sampleRate: v.sampleRate))
@@ -1699,6 +1708,8 @@ enum AudioConfiguration {
         let outputSeconds: Double
         let inputAvailable: Bool
         let route: String
+        /// Plain output port names for the screen (see `LatencyReadout.outputNames`).
+        let outputNames: String
         /// Raw `portType` values of the OUTPUT ports, for `routeCodec`. Raw values rather than
         /// `AVAudioSession.Port` so everything below this gathering stays platform-free — the
         /// same split that lets the log line and the screen share one source (#663).
@@ -1717,6 +1728,7 @@ enum AudioConfiguration {
                                     outputSeconds: .nan,
                                     inputAvailable: false,
                                     route: "macOS HAL",
+                                    outputNames: "macOS HAL",
                                     // Not "no Bluetooth" — this file cannot classify a HAL
                                     // route, and an empty list resolves to `.wideband`, which
                                     // renders NO claim at all. Silence, not a reassurance.
@@ -1749,6 +1761,9 @@ enum AudioConfiguration {
                                     outputSeconds: session.outputLatency,
                                     inputAvailable: !current.inputs.isEmpty,
                                     route: inName + "→" + outName,
+                                    outputNames: current.outputs.isEmpty
+                                        ? "none"
+                                        : current.outputs.map(\.portName).joined(separator: " + "),
                                     outputPortTypes: current.outputs.map(\.portType.rawValue))
         #endif
     }

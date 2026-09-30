@@ -6,16 +6,14 @@
 // cannot carry: Bluetooth in call mode (HFP) is mono and band-limited, and the music is too.
 // Until 2026-09-30 both sentences ended with advice about an INPUT — "the iPhone mic as input",
 // "check which input is selected". #1302 deleted the audio input on 2026-09-12; the advice
-// outlived it by eighteen days because the property has no reader: `LatencyReadout.codec` is
-// constructed in `latencySnapshot()` and read by no view (measured on this tree:
-// `git grep -n "\.codec\b" -- Sources` → the declaration and the constructor, nothing else).
-// A sentence nobody renders can still ship — Zug 3 mounts it in the master panel — so the
-// decision is pinned where it is written, not where it will be shown.
+// outlived it by eighteen days because the property HAD no reader: `LatencyReadout.codec` was
+// constructed in `latencySnapshot()` and read by no view. Since the same day the master panel's
+// "Audio route" row renders it (`TheAudioRouteRowSaysWhereTheSoundGoesTests`); the WORDING stays
+// pinned here, where it is written, not where it is shown.
 //
 // §1 LIMIT: claims 1–4 are END-TO-END BEHAVIOUR on a pure value type (an enum with no state,
 // `@testable`-reachable); claim 5 is a SOURCE-TEXT SCAN and says so. Nothing here proves the
-// sentence reaches a screen — today it provably does not, and the header above says so rather
-// than letting a green read as "shown".
+// sentence reaches a screen — that is the sibling guard's scan, and a DEVICE PROBE beyond it.
 //
 // §3 HONEST GRADING, transcribed in Python against the parent (2b3d08405) and this tree:
 // claim 1 is the DECISION — on the parent both notes carry "mic"/"input", so its 2 word
