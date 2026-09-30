@@ -161,9 +161,9 @@ final class TwoControlsShareALineOnlyWhileTheyFitTests: XCTestCase {
     /// `transportLine1`: four children, no `Spacer`, a floor under every one, and the pill's
     /// conditional `Text("Demo")` tag as the one extra element that pushed it past the edge
     /// (#1027). Head leaf 2 of the interface audit moved the pill to `ProjectHeader`, so the
-    /// row with the least slack is the header's (summary · pill · ▶ Play · ●) and this claim
-    /// follows the pill. `transportLine1` is three children on one line and must not build
-    /// the pill (`TheTransportBarIsDissolvedTests` claim 2 owns that half).
+    /// row with the least slack is the header's (summary · pill · Undo Redo · ▶ Play · ● since
+    /// leaf 3) and this claim follows the pill. `transportLine1` is three children on one line
+    /// and must not build the pill (`TheTransportBarIsDissolvedTests` claim 2 owns that half).
     func testTheRowWithThePulsePillWrapsWhenItCannotFit() throws {
         let studio = try code(Self.studio)
         XCTAssertEqual(occurrences(of: "private var transportLine1: some View", in: studio), 1, """
@@ -185,10 +185,12 @@ final class TwoControlsShareALineOnlyWhileTheyFitTests: XCTestCase {
             what overflowed on the instrument's row; a fixed `VStack` would waste a line whenever \
             it fits. If a different adaptive mechanism replaced it, re-point this claim at that one.
             """)
-        XCTAssertEqual(occurrences(of: "pulsePill", in: body), 3, """
-            `pulsePill` is not spelled exactly three times in `ProjectHeader.body` — the fitting \
-            row, the wrapped form and the accessibility stack. Fewer means a shape lost the pill; \
-            more means a shape carries it twice.
+        // Leaf 3 added a shape: the pill shares its second line with the history, or takes its
+        // own when even that does not fit — so four spellings, not three.
+        XCTAssertEqual(occurrences(of: "pulsePill", in: body), 4, """
+            `pulsePill` is not spelled exactly four times in `ProjectHeader.body` — the fitting \
+            row, the two-line form, the three-line form and the accessibility stack. Fewer means \
+            a shape lost the pill; more means a shape carries it twice.
             """)
         XCTAssertEqual(occurrences(of: "PulseMonitorMiniLive()", in: header), 1, """
             `PulseMonitorMiniLive()` is constructed \(occurrences(of: "PulseMonitorMiniLive()", in: header)) \

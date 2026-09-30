@@ -4,7 +4,7 @@
 // canonical project: its name, where the player is working, the tempo, what is running — and
 // one Play / Stop / Record over the one transport.
 //
-// ⭐ IT OWNS NOTHING AND CONSTRUCTS NOTHING. Every value is read from the owner the app already
+// ⭐ IT OWNS NOTHING AND CONSTRUCTS NO OWNER. Every value is read from the owner the app already
 // injects (`ProjectStore`, `TimelineStore`, `WorkstationSelection`, `Transport`, the one
 // `TimelineRegionPlayer`, `RecordController`, `EngineBus`). Play starts the song through the
 // Workstation's ONE start (`WorkstationView.startSong`), Stop is `ProjectTransport.stop`, Record
@@ -28,10 +28,19 @@
 // tap still posts the "bio" chrome door (which turns the Instrument stage, slice 2b-i) and its
 // long-press still names the source. FREEZE: the pill reads the ~10 Hz publisher in ITS OWN
 // body, exactly as it did in the studio row — this header constructs it and reads nothing of it.
-// LAYOUT: the summary, the pill and the two buttons share one row while their ideal widths fit
-// (`ViewThatFits`, the #1027 idiom), else the pill takes a second line; at accessibility sizes
-// everything stacks. The pill is greedy (its trace flexes), so on its own line it fills the
-// width, and on one line it yields to nothing that has a floor.
+// LAYOUT: the summary, the pill, the history and the buttons share one row while their ideal
+// widths fit (`ViewThatFits`, the #1027 idiom), else the pill and the history take a second line;
+// at accessibility sizes everything stacks. The pill is greedy (its trace flexes), so on its own
+// line it fills the width, and on one line it yields to nothing that has a floor.
+//
+// ⭐ THE ONE UNDO / REDO IS THE HEAD'S TOO (head leaf 3, same audit — its law for the head: "Name ·
+// Abspielen / Stopp (mit Wort) · Aufnehmen · Tempo · Rückgängig · ⓘ Hilfe"). `SongHistoryRow`, the
+// song's ONE history control (WA4 path 7), is mounted HERE, once, above both stages. It sat under
+// the note grid in `WorkstationView` — M6's review put it there as "the closest place to the
+// edit" — and measured 2026-09-30 that place exists on the PIECE stage only, while the Instrument
+// stage writes the composer's part into the SAME history with no Undo in reach. Proximity lost to
+// presence: a fixed place the player can always find, on a stage that otherwise had none. It
+// reads two cold flags (`canUndo` / `canRedo`, flipped on an edit) in its own body.
 
 import SwiftUI
 
@@ -67,14 +76,16 @@ struct ProjectHeader: View {
         let name = ProjectTransport.projectName(projects.currentProjectName)
         let place = ProjectTransport.place(document: document, trackID: selection.trackID,
                                            regionID: selection.regionID)
-        // The facts flex, the pill flexes, the two buttons have floors. One row while the ideal
-        // widths fit (a phone in landscape, an iPad), else the pill takes a second line — the
-        // #1027 idiom, `ViewThatFits`; at accessibility sizes everything stacks so nothing is
-        // squeezed out and the transport stays one tap away. (⛔ `AnyLayout` stood here for the
-        // accessibility switch; it went with the pill's arrival, because `ViewThatFits` already
-        // re-creates its candidate on a fit change — a rotation — and one identity law for the
-        // whole row beats two. What that costs: VoiceOver focus may leave the Play button on a
-        // rotation. What it buys: the same Play, the same pill, in every shape.)
+        // The facts flex, the pill flexes, the four buttons (Play · Record · Undo · Redo) have
+        // floors. One row while the ideal widths fit (a phone in landscape, an iPad); else two
+        // lines — the summary with the transport over the pill with the history; else three,
+        // the pill and the history each on their own — the #1027 idiom, `ViewThatFits`; at
+        // accessibility sizes everything stacks so nothing is squeezed out and the transport
+        // stays one tap away. (⛔ `AnyLayout` stood here for the accessibility switch; it went
+        // with the pill's arrival, because `ViewThatFits` already re-creates its candidate on a
+        // fit change — a rotation — and one identity law for the whole row beats two. What that
+        // costs: VoiceOver focus may leave the Play button on a rotation. What it buys: the
+        // same Play, the same pill, the same Undo, in every shape.)
         let summaryView = summary(name: name, place: place, status: status)
             .frame(maxWidth: .infinity, alignment: .leading)
         let controls = HStack(spacing: 8) {
@@ -87,13 +98,18 @@ struct ProjectHeader: View {
         }
         return Group {
             if dynamicTypeSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: 6) { summaryView; pulsePill; controls }
+                VStack(alignment: .leading, spacing: 6) { summaryView; pulsePill; history; controls }
             } else {
                 ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 10) { summaryView; pulsePill; controls }
+                    HStack(spacing: 10) { summaryView; pulsePill; history; controls }
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 10) { summaryView; controls }
+                        HStack(spacing: 10) { pulsePill; history }
+                    }
                     VStack(alignment: .leading, spacing: 6) {
                         HStack(spacing: 10) { summaryView; controls }
                         pulsePill
+                        history
                     }
                 }
             }
@@ -145,6 +161,13 @@ struct ProjectHeader: View {
         #if canImport(AVFoundation)
         PulseMonitorMiniLive()
         #endif
+    }
+
+    /// The head's Undo / Redo — the song's ONE history control (`SongHistoryRow`, head leaf 3),
+    /// constructed once and spelled into every shape. Its own leaf: it reads `canUndo` /
+    /// `canRedo` (cold, flipped on an edit) in ITS body; this header reads nothing of it.
+    private var history: some View {
+        SongHistoryRow()
     }
 
     /// The ONE Play / Stop. While anything runs it is Stop — for everything. Stopped, it plays

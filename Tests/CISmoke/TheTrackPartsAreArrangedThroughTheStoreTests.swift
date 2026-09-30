@@ -20,7 +20,8 @@
 //    and each store edit still snapshots before it mutates.
 // 4. SOURCE: the view writes through `TrackParts` → the store API and nothing else, and the
 //    inspector is its one door. Undo/Redo MOVED (WA4 path 7) to `Studio/SongHistoryRow.swift`,
-//    mounted once under the Arrange canvas — a FORWARD sub-claim on this tree (the file is new).
+//    mounted once — since head leaf 3 (2026-09-30) in `ProjectHeader`, above both stages;
+//    before that under the Arrange canvas — a FORWARD sub-claim on this tree (the file is new).
 //    And the per-part buttons MOVED (WA4 path 8): the list rows only select, the edits are
 //    `SelectedPartBar`'s — one part editor over the one selection. FORWARD on its parent.
 //
@@ -202,8 +203,9 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
                      "timeline.removeRegion(id: part.id)"] {
             XCTAssertEqual(code.components(separatedBy: call).count - 1, 1, "`\(call)` exactly once")
         }
-        // WA4 path 7 — Undo/Redo MOVED to the one song-level control under the Arrange canvas;
-        // a second copy here would be two histories' worth of buttons over one history.
+        // WA4 path 7 — Undo/Redo MOVED to the one song-level control (head leaf 3: in the
+        // head, above both stages); a second copy here would be two histories' worth of
+        // buttons over one history.
         XCTAssertFalse(code.contains("timeline.undo()"), "Undo lives in SongHistoryRow now")
         XCTAssertFalse(code.contains("timeline.redo()"), "Redo lives in SongHistoryRow now")
         let history = try source(Self.historyPath)
@@ -211,8 +213,10 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
             XCTAssertEqual(history.components(separatedBy: call).count - 1, 1, "`\(call)` exactly once")
         }
         let historyDoors = try filesMatching { code, _ in code.contains("SongHistoryRow()") }
-        XCTAssertEqual(historyDoors, ["Sources/Echoelmusic/Studio/WorkstationView.swift"],
-                       "one Undo/Redo for the whole song, mounted once")
+        // ⛔ Until head leaf 3 (2026-09-30) the one door was `WorkstationView` — the Piece stage
+        // only, while the Instrument stage writes the composer's part into the same history.
+        XCTAssertEqual(historyDoors, ["Sources/Echoelmusic/Studio/ProjectHeader.swift"],
+                       "one Undo/Redo for the whole song, mounted once — in the head, above both stages")
         for banned in ["UserDefaults", "@AppStorage", "JSONEncoder", "TimelineStore(",
                        "TimelineRegion(", "TimelineDocument(", "resolveOverlaps", "bpm:",
                        "Slider(", "Stepper(", "currentTick", "player."] {

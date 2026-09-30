@@ -433,9 +433,11 @@ done. WA4 is the first front.
     cut of a warped part. Guard `TheSelectedPartIsCutWhereItIsHeardTests`. (Held at the time:
     drag-move and trim — both since built, see path D and TRIM below.)
   - **WA4 path 7 — Undo/Redo for the song: IMPLEMENTED.** `Studio/SongHistoryRow.swift`
-    (`048b4c69c`), one history control under the canvas, moved (not copied) out of
-    `TrackPartsView`, so Remove on the part bar keeps a visible way back. Region-only, as the
-    store's history is. Guard `TheTrackPartsAreArrangedThroughTheStoreTests` claim 4.
+    (`048b4c69c`), one history control, moved (not copied) out of `TrackPartsView` to under the
+    canvas, so Remove on the part bar keeps a visible way back — and since head leaf 3 of the
+    interface audit (2026-09-30) mounted in `ProjectHeader`, above both stages (under the canvas
+    it existed on the Piece stage only). Region-only, as the store's history is. Guard
+    `TheTrackPartsAreArrangedThroughTheStoreTests` claim 4.
   - **WA4 path 6 — track headers: Mute/Solo IMPLEMENTED.** M/S switches in the track row
     (`33d5c0537`), gated on `TrackMix.controls(…).muteSolo`, writing through `TrackMix`; the
     inspector no longer draws them (one door per fact), hints worded once in

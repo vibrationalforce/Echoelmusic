@@ -50,6 +50,7 @@ final class TheSelectedPartsNotesAreEditedThroughOneWriterTests: XCTestCase {
 
     private static let editorPath = "Sources/Echoelmusic/Studio/PartNoteEditor.swift"
     private static let workstationPath = "Sources/Echoelmusic/Studio/WorkstationView.swift"
+    private static let headerPath = "Sources/Echoelmusic/Studio/ProjectHeader.swift"
     private static let storePath = "Sources/Echoelmusic/Core/TimelineStore.swift"
     private static let playerPath = "Sources/Echoelmusic/Sequencer/TimelineRegionPlayer.swift"
     private static let clipStorePath = "Sources/Echoelmusic/Core/ClipStore.swift"
@@ -336,15 +337,20 @@ final class TheSelectedPartsNotesAreEditedThroughOneWriterTests: XCTestCase {
         XCTAssertEqual(mounts, [Self.workstationPath], "one door, on the Workstation")
         let workstation = try source(Self.workstationPath)
         guard let bar = workstation.range(of: "SelectedPartBar(playFrom:"),
-              let editorMount = workstation.range(of: "PartNoteEditor(voiceCapacity: player.laneVoiceCapacity)"),
-              let history = workstation.range(of: "SongHistoryRow()") else {
-            return XCTFail("ANCHOR MISSING: the part bar, the editor or the history row (#454)")
+              let editorMount = workstation.range(of: "PartNoteEditor(voiceCapacity: player.laneVoiceCapacity)") else {
+            return XCTFail("ANCHOR MISSING: the part bar or the editor (#454)")
         }
         XCTAssertLessThan(bar.lowerBound, editorMount.lowerBound, "the editor sits under the part bar")
-        // ⛔ M6 flipped this to "history above the canvas" and was reverted by its own review:
-        // with the automation editor closed, under the editor is the CLOSEST spot to the edit.
-        XCTAssertLessThan(editorMount.lowerBound, history.lowerBound,
-                          "…and above the one Undo/Redo it shares")
+        // ⛔ Until head leaf 3 (2026-09-30) this claim held the ONE Undo/Redo directly under the
+        // editor (M6 had moved it above the canvas and was reverted: "the closest spot to the
+        // edit"). The head holds it now, above BOTH stages — the Instrument stage writes the
+        // composer's part into the same history and had no Undo in reach. The Workstation must
+        // not build a second one; the head builds exactly one.
+        XCTAssertFalse(workstation.contains("SongHistoryRow()"),
+                       "the Workstation builds a second Undo/Redo — the ONE history control is the head's (leaf 3)")
+        let header = try source(Self.headerPath)
+        XCTAssertEqual(header.components(separatedBy: "SongHistoryRow()").count - 1, 1,
+                       "…and `ProjectHeader` builds it exactly once")
         XCTAssertTrue(editor.contains("self.picked = .none"),
                       "M6: a selection can be dropped — Deselect clears the whole selection")
     }

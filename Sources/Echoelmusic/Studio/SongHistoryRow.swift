@@ -6,8 +6,13 @@
 //  whichever track was open. Since the Arrange canvas and its part bar edit the song from
 //  above the track list, that was the wrong place twice over: Undo was hidden unless a track
 //  was open, and REMOVING the selected part hid the part bar — so the action you most want to
-//  take back had no visible Undo at all. This is the ONE history control, mounted once under
-//  the canvas for the whole song. It MOVED here; it was not copied (one history, one control).
+//  take back had no visible Undo at all. This is the ONE history control for the whole song.
+//  It MOVED (never copied) twice: WA4 path 7 out of the inspector to under the canvas, and head
+//  leaf 3 of the interface audit (2026-09-30) into `ProjectHeader`, the head above BOTH stages —
+//  under the canvas it existed on the Piece stage only, while the Instrument stage writes the
+//  composer's part into this same history and had no Undo in reach. (⛔ M6 once moved it above
+//  the canvas and was reverted by its own review as "farther from the edit"; proximity lost to
+//  presence when the alternative was a whole stage without a way back.)
 //
 //  ⚠️ WHAT IT COVERS, stated rather than implied (the store's contract): the history holds the
 //  song's PARTS — moves, copies, splits, removals, imports and the composer's part — and, since
@@ -23,7 +28,7 @@
 
 import SwiftUI
 
-/// Undo / Redo for the song's parts and notes — one control for the whole Workstation.
+/// Undo / Redo for the song's parts and notes — one control for the whole song, in the head.
 @MainActor
 struct SongHistoryRow: View {
 

@@ -309,13 +309,12 @@ struct WorkstationView: View {
                     SongAutomationEditor(songTicks: ArrangementStrip.songTicks(summary))
                         .padding(.horizontal, 10)
                 }
-                // WA4 path 7 — the ONE Undo/Redo for the song's parts. Outside the canvas's
-                // `if`, so removing the last part still leaves the way back on screen. ⛔ M6
-                // moved it above the canvas and was reverted by its own review: with the
-                // automation editor closed (its default), this spot is directly under the note
-                // grid's own controls — the closest place to the edit it takes back.
-                SongHistoryRow()
-                    .padding(.horizontal, 10)
+                // ⛔ The ONE Undo/Redo (`SongHistoryRow`, WA4 path 7) stood HERE, under the note
+                // grid — M6's review put it at "the closest place to the edit it takes back".
+                // Head leaf 3 of the interface audit (2026-09-30) moved it into `ProjectHeader`:
+                // this spot exists on the Piece stage only, and the Instrument stage writes the
+                // composer's part into the same history with no Undo in reach. One control, one
+                // address — the head, above both stages, always on screen.
                 ForEach(summary.lanes) { row in
                     laneRow(row)
                     if WorkstationSelection.resolvedTrack(selection.trackID,

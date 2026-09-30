@@ -356,6 +356,31 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
                           "the Record's word must sit directly under its `!compact` gate, so the header's compact Record stays glyph-only")
     }
 
+    // MARK: 11 — the ONE Undo/Redo is the head's (interface audit 2026-09-30, head leaf 3)
+
+    /// The audit's law for the head: "Name · Abspielen / Stopp (mit Wort) · Aufnehmen · Tempo ·
+    /// Rückgängig · ⓘ Hilfe". `SongHistoryRow` is the song's ONE history control; under the
+    /// canvas it existed on the Piece stage only, while the Instrument stage writes the
+    /// composer's part into the same history. SOURCE-TEXT: the head builds it once, spells it
+    /// into every shape, and the Workstation builds none.
+    func testTheHeadWearsTheOneUndoRedo() throws {
+        let header = try source(Self.header)
+        let history = try body(of: "private var history: some View", in: header)
+        XCTAssertTrue(history.contains("SongHistoryRow()"),
+                      "the head's `history` no longer builds the ONE history control")
+        XCTAssertEqual(header.components(separatedBy: "SongHistoryRow()").count - 1, 1,
+                       "`SongHistoryRow()` is constructed once in the head — one history, one control")
+        let shapes = try body(of: "var body: some View", in: header)
+        XCTAssertEqual(shapes.components(separatedBy: "history").count - 1, 4, """
+            `history` is not spelled exactly four times in `ProjectHeader.body` — the one-line \
+            row, the two-line form, the three-line form and the accessibility stack. Fewer: a \
+            shape lost Undo; more: a shape carries it twice.
+            """)
+        let workstation = try source(Self.workstation)
+        XCTAssertFalse(workstation.contains("SongHistoryRow()"),
+                       "the Workstation builds a second Undo/Redo — one control, one address (the head)")
+    }
+
     func testThereIsOneStartOneStopAndNoSecondProject() throws {
         let header = try source(Self.header)
         let model = try source(Self.model)
