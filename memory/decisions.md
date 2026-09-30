@@ -3765,3 +3765,17 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Review:** 2026-10-30. Next E4 producers: `WorkstationSummary.positionText` (Bar n · Beat b), the part bar /
   parts row / automation editor seams (`Selected part · `, `Part at `, `Point at `, `… automation: `),
   `SessionLaunchView`, `MediaBrowserView`, `EchoelNumberPad`, `AutomationStatusStrip`, `ComposeGuide`.
+
+### 2026-09-30 — E4-26: the part bar, the parts row and the curve editor frame the bar words in German (a9b2d2b60)
+
+- **Decision:** `SelectedPartBar` (`Selected part · ` + spanTitle), `TrackPartsView` (spoken `Part at ` + title) and
+  `SongAutomationEditor` (`Point at ` / `Remove the point at ` + grid label, spoken title + ` automation: ` + count)
+  frame the E4-25 vocabulary through head/middle `String(localized:)` seams. Catalog 946 → 951. The one guard that
+  pinned the verbatim heading (`TheSelectedPartSaysItsEndAndItsNotesTests` claim 3) is re-anchored to the new
+  spelling in the same commit — same claim, one needle, XCTAssert count unchanged (transcribed).
+- **Why:** after E4-25 the VALUE was German and its FRAME still English. A frame around a composed value is a
+  seam, never a format key.
+- **Review:** 2026-10-30. Next E4 producers: `WorkstationSummary.positionText` (Bar n · Beat b) and the
+  `ArrangeCanvasView` announcement (`Part at ` + label, pinned by TheArrangePartMovesWithoutDragTests:84 → re-anchor
+  in the same commit), `SessionLaunchView`, `MediaBrowserView`, `EchoelNumberPad`, `AutomationStatusStrip`,
+  `ComposeGuide`.
