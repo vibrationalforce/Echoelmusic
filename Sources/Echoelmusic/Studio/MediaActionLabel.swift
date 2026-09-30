@@ -18,13 +18,16 @@
 import SwiftUI
 
 struct MediaActionLabel: View {
+    // E4-15 (2026-09-30): drawn as a catalog KEY below — `Text(String)` spelled the three media actions
+    // verbatim on a German phone. Stays `String` so the six `MediaActionLabel(title: "…")` sites and
+    // the guards that count them do not move.
     let title: String
     let systemImage: String
 
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: systemImage).font(EchoelTheme.font(13, .semibold))
-            Text(title).font(EchoelTheme.font(13, .semibold))
+            Text(LocalizedStringKey(title)).font(EchoelTheme.font(13, .semibold))
         }
         .foregroundStyle(EchoelTheme.text)
         .padding(.horizontal, 14)

@@ -12888,6 +12888,60 @@
           }
         }
       }
+    },
+    "Choose Photo" : {
+      "comment" : "Media action (E4-15, 2026-09-30): MediaActionLabel draws its title as a key; the literals sit in PhotoSeedCard / VideoSeedCard.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose Photo"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foto wählen"
+          }
+        }
+      }
+    },
+    "Apply to Visuals" : {
+      "comment" : "Media action (E4-15, 2026-09-30): MediaActionLabel draws its title as a key; the literals sit in PhotoSeedCard / VideoSeedCard.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apply to Visuals"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf Visuals anwenden"
+          }
+        }
+      }
+    },
+    "Choose Video" : {
+      "comment" : "Media action (E4-15, 2026-09-30): MediaActionLabel draws its title as a key; the literals sit in PhotoSeedCard / VideoSeedCard.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose Video"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Video wählen"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

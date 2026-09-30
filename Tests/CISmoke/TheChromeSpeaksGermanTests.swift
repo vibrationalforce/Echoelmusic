@@ -33,7 +33,8 @@
 // the FX header's signature and its thirteen titles to claim 11 — on its parent the signature is
 // `String` and ten units are missing: ONE finding. E4-13 added `EchoelPanel`'s three key-wrapped draw
 // sites and seventeen panel words — on its parent the wraps are absent and fifteen units missing: ONE finding.
-// E4-14 added the loudness readout's signature and four names (parent: `String`, four missing — ONE finding). Claim 12
+// E4-14 added the loudness readout's signature and four names (parent: `String`, four missing — ONE finding).
+// E4-15 added the media label's key wrap and four titles (parent: verbatim, three missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -492,6 +493,11 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertTrue(grid.contains("private func readout(_ label: LocalizedStringKey, _ value: String, _ unit: String, _ color: Color)"),
                       "readout takes a String label again — Short-term / Integrated / True peak / Range would spell verbatim")
         try assertGerman(["Short-term", "Integrated", "True peak", "Range"], "loudness readout names")
+        // E4-15 — the media cards' action label draws its title as a key; the three actions (+ Undo) reach the catalog
+        let media = try codeOnly("Sources/Echoelmusic/Studio/MediaActionLabel.swift")
+        XCTAssertTrue(media.contains("Text(LocalizedStringKey(title))") && !media.contains("Text(title)"),
+                      "MediaActionLabel draws its title verbatim again — Choose Photo / Apply to Visuals / Choose Video would not translate")
+        try assertGerman(["Choose Photo", "Apply to Visuals", "Choose Video", "Undo"], "media action titles")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
