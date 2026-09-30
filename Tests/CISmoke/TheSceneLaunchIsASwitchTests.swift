@@ -4,12 +4,12 @@
 // `launchRegion` once per cell: the scene's parts launched, and every OTHER launched track kept
 // looping whatever it had — so two scenes in a row played as their union, and nothing brought the
 // whole song back in one tap. A scene is now a SWITCH: its parts launch and every other launched
-// track returns to the song, all on the same bar, and "Back to song" returns every track at once.
+// track returns to the song, all on the same bar, and "Back to the piece" returns every track at once.
 //
 // WHAT IT PINS.
 // 1. END-TO-END BEHAVIOUR (`ClipLaunchEngine`, a pure public value type): a scene switches a
 //    playing lane, starts an idle one and stops the lane it leaves out — all three at ONE
-//    boundary; a lane already looping its scene part is untouched; "Back to song" stops every
+//    boundary; a lane already looping its scene part is untouched; "Back to the piece" stops every
 //    lane on one boundary and simply cancels a launch that never started; an empty scene on an
 //    idle engine leaves it idle.
 // 2. END-TO-END BEHAVIOUR (`SessionGrid.sceneState`): a scene reads "Playing" only when every
@@ -76,7 +76,7 @@
 // NOT HERE — DEVICE PROBE, open. That the switch is HEARD on one bar, and reads well on iPhone.
 // NEEDS-FOUNDER-VERIFY: Workstation → Play → Session → "Launch scene" at Bar 1, then at a later
 // bar → on the next bar only the second scene's parts loop and the other tracks play the song;
-// the scene header reads "Queued" then "Playing". "Back to song" → every track plays the song.
+// the scene header reads "Queued" then "Playing". "Back to the piece" → every track plays the song.
 // NEEDS-FOUNDER-VERIFY: S2 — song stopped → Session → "Launch scene" at a later bar → the song
 // starts at that bar and the scene loops; Stop, then Play → the song from the top.
 
@@ -159,7 +159,7 @@ final class TheSceneLaunchIsASwitchTests: XCTestCase {
         var idle = ClipLaunchEngine()
         idle.requestScene([:], atTick: 0, quantize: .bar)
         idle.requestStopAll(atTick: 0, quantize: .bar)
-        XCTAssertTrue(idle.isIdle, "an empty scene and Back to song on an idle engine change nothing")
+        XCTAssertTrue(idle.isIdle, "an empty scene and Back to the piece on an idle engine change nothing")
     }
 
     // MARK: 2 — what a scene reads
@@ -231,7 +231,7 @@ final class TheSceneLaunchIsASwitchTests: XCTestCase {
         let launchedBlock = try body(of: "if playing && !launched.isEmpty", in: view)
         XCTAssertTrue(launchedBlock.contains("if launched.count > 1 {"))
         XCTAssertTrue(launchedBlock.contains("backToSongButton"),
-                      "Back to song is on screen while two or more tracks are launched")
+                      "Back to the piece is on screen while two or more tracks are launched")
     }
 
     // MARK: 4 — S2: a scene starts a stopped song at its bar
@@ -426,7 +426,7 @@ final class TheSceneLaunchIsASwitchTests: XCTestCase {
         XCTAssertEqual(SessionGrid.label(forTick: 4 * Self.bar + 2 * TimelineTime.ticksPerBeat), "Bar 5 beat 3",
                        "counterweight: the scene itself keeps its beat")
         let view = try source(Self.viewPath)
-        XCTAssertTrue(view.contains("Starts the song at the start of \\(songStart)"))
+        XCTAssertTrue(view.contains("Starts the piece at the start of \\(songStart)"))
     }
 
     // MARK: helpers

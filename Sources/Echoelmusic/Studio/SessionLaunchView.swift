@@ -266,11 +266,11 @@ struct SessionLaunchView: View {
         let playing = player.isPlaying
         if !tracks.isEmpty && !scenes.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Session")
+                Text("Scenes")
                     .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
                 Text(playing
-                     ? "Tap a part to loop it on its track from the next bar. A launched part starts from its top — on the Echoel track it continues where the song is. Launch scene switches: its parts start and every other launched track returns to the song on the same bar."
-                     : "Launch a scene to start the song at its bar and loop it, or press Play for the song from the top.")
+                     ? "Tap a part to loop it on its track from the next bar. A launched part starts from its top — on the Echoel track it continues where the piece is. Launch scene switches: its parts start and every other launched track returns to the piece on the same bar."
+                     : "Launch a scene to start the piece at its bar and loop it, or press Play for the piece from the top.")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -336,8 +336,8 @@ struct SessionLaunchView: View {
                 .accessibilityLabel("Launch scene at \(title)")
                 .accessibilityValue(state.flatMap(SessionGrid.word) ?? "Not the current scene")
                 .accessibilityHint(playing
-                                   ? "From the next bar, loops every part listed at \(title) and returns every other launched track to the song"
-                                   : "Starts the song at the start of \(songStart) and loops every part listed at \(title)")
+                                   ? "From the next bar, loops every part listed at \(title) and returns every other launched track to the piece"
+                                   : "Starts the piece at the start of \(songStart) and loops every part listed at \(title)")
             }
             ForEach(tracks.filter { scene.cells[$0.id] != nil }) { track in
                 if let regionID = scene.cells[track.id] {
@@ -384,7 +384,7 @@ struct SessionLaunchView: View {
         .accessibilityLabel("\(track.name), part at \(title)")
         .accessibilityValue(SessionGrid.word(state) ?? "Not launched")
         .accessibilityHint(state == .playing
-                           ? "Already looping. Stop the track to hand it back to the song"
+                           ? "Already looping. Stop the track to hand it back to the piece"
                            : "Loops this part on its track from the next bar")
     }
 
@@ -407,7 +407,7 @@ struct SessionLaunchView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Stop the launched part on \(track.name)")
-        .accessibilityHint("From the next bar the track plays the song again")
+        .accessibilityHint("From the next bar the track plays the piece again")
     }
 
     /// A scene is a SWITCH (Phase 3 / S1): one player call, so its parts and the other tracks'
@@ -431,7 +431,7 @@ struct SessionLaunchView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "arrow.uturn.backward").font(EchoelTheme.font(11, .semibold))
-                Text("Back to song").font(EchoelTheme.font(12, .semibold)).lineLimit(1)
+                Text("Back to the piece").font(EchoelTheme.font(12, .semibold)).lineLimit(1)
             }
             .foregroundStyle(EchoelTheme.text)
             .padding(.horizontal, 12)
@@ -443,7 +443,7 @@ struct SessionLaunchView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Back to song")
-        .accessibilityHint("From the next bar every launched track plays the song again")
+        .accessibilityLabel("Back to the piece")
+        .accessibilityHint("From the next bar every launched track plays the piece again")
     }
 }

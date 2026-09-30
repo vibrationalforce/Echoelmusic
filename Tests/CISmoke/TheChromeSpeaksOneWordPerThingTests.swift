@@ -46,6 +46,13 @@
 // doors now speak the instrument's own tile names ("Save this piece" / "Open a saved piece");
 // `TheSongAloneCanBeSavedTests` pins those. Claim 2 is RED on the parent for WorkstationView
 // by the 18 named hits; the eight earlier files stay green on both.
+//
+// ⭐ RATCHET 3 (2026-09-30): `SessionLaunchView` — the scene grid both stages mount (the piece
+// stage and Perform). Measured with this scanner on 0b9d055ba: 12 hits ("song" ×11, "session" ×1).
+// The grid's heading said "Session" — the struck word itself, as a title; it now says "Scenes",
+// the glossary word for what its rows are. "Back to song" → "Back to the piece" (the label, its
+// VoiceOver twin and the hint); `backToSongButton` and `songStart` are identifiers and stay.
+// `TheSceneLaunchIsASwitchTests` pins the start hint by its new words.
 // `Tests/CISmoke` is the blocking bundle. SKIPS rather than passes if the tree is absent.
 
 import Foundation
@@ -69,6 +76,7 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/SongHistoryRow.swift",
         "Sources/Echoelmusic/Studio/ComposeGuide.swift",
         "Sources/Echoelmusic/Studio/WorkstationView.swift",
+        "Sources/Echoelmusic/Studio/SessionLaunchView.swift",
     ]
 
     /// A line whose strings reach a log or a test harness, not a person.
