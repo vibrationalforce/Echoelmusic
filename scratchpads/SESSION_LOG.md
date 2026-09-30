@@ -40980,3 +40980,19 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
   (Log-Lesung folgt, #321). a2662b836 CI/CD 6552 läuft. e3a71486d: Compile 3089 ✓, CI/CD 6553 + Auto-Merge 3987
   laufen.
 - **Protokoll:** decisions.csv 1064/1065, memory/decisions.md, FOUNDER_INBOX E4-Zeile.
+
+## 2026-09-30 — E4-4 gebaut: die Status-Leitern sprechen Deutsch (7fd4215e8 lokal, Stapel wartet auf Compile Check 3090)
+
+- **Gemessen zuerst:** `Text(rung.word)` / `Text(line)` / `Text(caption)` in der MIDI-Karte (PatchbayView `statusLine`),
+  der Audio-Route-Zeile und der Apple-Health-Zeile sprechen Strings wörtlich. Katalog-Wächter verlangt jeden
+  Schlüssel als ZITIERTES Literal in Sources → interpolierte `%@`-Schlüssel scheiden aus → Stücke: `word + fragment`
+  (Fragment behält sein führendes „ · “ im Schlüssel), `head + arg + tail`.
+- **Gebaut:** 3 Swift-Dateien, 48 Stellen (24 · 8 · 16); vier zweizeilige Captions und `AudioRouteRung.caption` zu je
+  EINEM Literal gefaltet; `" · "` und `"\(destinations)"` bleiben absichtlich nackt. Katalog 89 → 138 (49 neu).
+  Wächter Anspruch 8: Laufzeit (Stücke aller vier Enums haben `de`, englische Pins der Zeilen-Wächter unverändert)
+  + Quelltext (kein Buchstaben-Literal außerhalb des Wrappers in den drei Dateien, ≥ 8 gewrappt je Datei).
+- **Transkription:** HEAD 57 nackt / 0 gewrappt / 0 Schlüssel = EIN Befund (#486); WORK 0 / 54 / 49. Stripper TRAGEND
+  (11 rohe Treffer auf WORK, alle in Kommentaren). Checker: dead-needles OK, count-pins 0 rot, moved-needles 0 (die
+  Zeilen-Wächter ankern auf `hasPrefix(word + " · ")` und Laufzeit-Gleichheiten, nicht auf `return "…"`), swift-escapes
+  OK, Klammerbilanz 0/0, Katalog-Invarianten 0 Verstöße.
+- **Protokoll:** decisions.csv 1066, memory/decisions.md, FOUNDER_INBOX E4-Zeile.

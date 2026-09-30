@@ -3578,3 +3578,9 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **E4-3 (27b37253d):** `PulseCue.shortLabel` + `fullHint`, 20 sites; the `.noLight` `"…" + "…"` seam joined into one literal (a localized key is one literal). Catalog 71 → 89. Guard claim 7 — the first regex matched its own `String(localized: "` wrapper via `: "`; a lookbehind excludes that label. Stripper TRAGEND (1 of 1).
 - **Rationale:** after E4-1 the head still spelled Undo / Redo / Record / the pulse word verbatim; each is a `Text(someString)`, which SwiftUI never localises. Same mechanism, family by file.
 - **Review 2026-10-30:** device G6 (German phone) — no truncated word (German is longer; the pill's `Kamerazugriff …` hint is the longest).
+
+### 2026-09-30 — E4-4: the status ladders speak German (7fd4215e8)
+
+- **Built:** `MIDIStatusWord` (in + out rungs), `AudioRouteStatusWord`, `HealthSourceStatus` — word, caption, spoken → `String(localized:)`, 48 sites. Lines stay `word + fragment`; the fragment keeps its leading " · " inside the key. Argument-carrying spoken sentences are `head + arg + tail`, each piece a key. Catalog 89 → 138. Guard claim 8 splits composed strings back into pieces and demands a German unit per letter-carrying piece; source half: no bare letter-literal outside the wrapper in the three files.
+- **Why pieces, not `%@`:** `StringCatalogIsHonestTests.testEveryKeyStillExistsAsALiteralInSources` matches the QUOTED key in Sources; an interpolated key never occurs there. German word order suffers a little in the `head + arg + tail` sentences (VoiceOver only) — accepted; the visible line is `word · fragment`, which is order-neutral.
+- **Review 2026-10-30:** device G6 — the MIDI card, audio-route row and Apple Health row on a German phone; longest visible line is the Health `waiting` caption.
