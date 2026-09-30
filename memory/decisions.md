@@ -3970,3 +3970,20 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   first); then the panel families (EchoelStudioView sites, EchoelFXView, FloatingVisualWindow, BioStripView, MoodPads,
   PerformSessionView, GuideOverlay).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — E4-36: the pulse ladder speaks German (3377343a2)
+
+- **Decision:** `PulseLadderStep.word` ×4 and `.spoken` ×4 are `String(localized:)`; German Suche · Fast da · Gefunden ·
+  Verloren (the audit's own four words), spoken „Suche deinen Puls“ · „Fast da — Finger still halten“ · „Puls
+  gefunden“ · „Puls verloren — Finger still halten“. Catalog 1096 → 1104.
+- **Why:** the last English the pulse pill could show. Claim 8 (E4-4) walked MIDI/audio-route/Health rungs and never
+  this type; E4-32 took the pill's sentence and fallback. The slot law (≤ 12 characters, `AStalledAcquisitionSaysSo`)
+  is checked for the GERMAN units at runtime in claim 11 — a translation that overflowed the slot would be a
+  regression no English test can see.
+- **Guard:** claim 11 E4-36 block (8 seams, 6 absence needles, 2 runtime counterweights, the slot loop, 8 units;
+  167 → 172 XCTAssert). WORK PASS / HEAD FAIL (8 units missing — ONE finding); checkers green; no guard re-anchored.
+  ⚠️ First draft wrote `german(...)?.count` — the helper returns a `(state, value)` tuple; `.value.count` is the form.
+- **Next E4 producers:** the long sentences of `AlwaysOnBioChannel` (spelling and provenance scans —
+  TheBioPanelRowsSayWhoseBody, OneSpellingOfTheDemoSubject first); then the panel families (EchoelStudioView sites,
+  EchoelFXView, FloatingVisualWindow, BioStripView, MoodPads, PerformSessionView, GuideOverlay).
+- **Review:** 2026-10-30.
