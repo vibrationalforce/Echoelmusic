@@ -198,10 +198,10 @@ final class TheValueFieldOffersItsDefaultTests: XCTestCase {
         // the inspector rows pass them, and no fallback in the tree types `1` or `0` for them again.
         XCTAssertEqual(TimelineLane.defaultLevel, 1, "a fresh track sits at unity")
         XCTAssertEqual(TimelineLane.defaultPan, 0, "a fresh track sits at centre")
-        // The rows' ranges (`TrackMix.levelRange` 0…2, `panRange` −1…1) are spelled as literals here:
-        // `TrackMix` is main-actor-isolated and a non-isolated test must not read its statics.
-        XCTAssertTrue((Float(0)...Float(2)).contains(TimelineLane.defaultLevel) && (Float(-1)...Float(1)).contains(TimelineLane.defaultPan),
-                      "both defaults must sit inside their rows' ranges (`TrackMix.levelRange` / `panRange`)")
+        // The rows' OWN ranges, read from `TrackMix` (a plain enum, not actor-isolated — measured,
+        // after a first draft claimed the opposite and spelled the ranges as literals).
+        XCTAssertTrue(TrackMix.levelRange.contains(Double(TimelineLane.defaultLevel)), "unity must sit inside the track level row's range")
+        XCTAssertTrue(TrackMix.panRange.contains(Double(TimelineLane.defaultPan)), "centre must sit inside the pan row's range")
         let inspector = try source("Sources/Echoelmusic/Studio/TrackInspectorView.swift")
         XCTAssertEqual(occurrences(of: "standard: Double(TimelineLane.defaultLevel)", in: inspector), 1, "the track \"Level\" row passes the lane's default once")
         XCTAssertEqual(occurrences(of: "standard: Double(TimelineLane.defaultPan)", in: inspector), 1, "the track \"Pan\" row passes the lane's default once")

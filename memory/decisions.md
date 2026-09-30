@@ -3302,3 +3302,5 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Why the lane, not `MixerStore.defaultLevel`:** the studio mixer and the timeline track are different objects with their own defaults; naming the mixer's constant on a track row would be a second meaning of one name.
 - **Guard:** `TheValueFieldOffersItsDefaultTests` claim 3, sixth family — rows once each, init and decode read the owner, zero `?.level ?? 1` / `?.pan ?? 0` in the three fallback files. Ranges spelled as literals in the test because `TrackMix` is main-actor-isolated. Transcribed WORK GREEN, HEAD RED (5 literals).
 - **Review:** 2026-10-30.
+
+- ⛔ **Correction (same day):** `TrackMix` is a plain `enum`, not `@MainActor` — its `nonisolated` funcs are redundant, not evidence of isolation. The guard now reads `TrackMix.levelRange` / `panRange` directly (the rows' real ranges); the literal copies and the false sentence are removed. Lesson: measure the declaration line, not the modifiers on its members.

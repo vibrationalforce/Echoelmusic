@@ -40656,3 +40656,6 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** `TheValueFieldOffersItsDefaultTests` Anspruch 3, SECHSTE FAMILIE. ⚠️ Der Test liest KEIN `TrackMix`-Static (das Enum ist `@MainActor`, ein nicht-isolierter Test dürfte `levelRange` unter Xcode nicht lesen — die Bereiche stehen als Literale mit Verweis). Transkription (`scratchpad/transcribe_lane.py`): WORK GRÜN ×4, HEAD ROT ×4 (5 Literale). Checker sauber, Scanner 0.
 - **Nicht gepusht:** Compile Check 3068 auf bc5983933 weiter `queued` (Batch-Regel). Lokaler Stapel: 87ddb7884 (Grand Master) + diese Scheibe.
 - **Gerät:** Spur-Inspector → Level: Default-Taste gedimmt bei 1,00; Pan bei 0,00; ein gepannter Track kehrt mit einem Tipp zur Mitte zurück.
+
+### Korrektur zur sechsten Familie (gleiche Minute)
+- ⛔ `enum TrackMix {` trägt KEIN `@MainActor` — ich hatte aus den `nonisolated static func`-Mitgliedern auf Isolation geschlossen, ohne die Deklarationszeile zu lesen. Der Wächter liest jetzt `TrackMix.levelRange`/`panRange` direkt (stärkerer Pin: der echte Bereich der Zeile); die Literal-Kopien und der falsche Satz sind raus. Lehre: die DEKLARATION messen, nicht die Modifier ihrer Mitglieder. Eigener Commit, weil nie amendiert wird.
