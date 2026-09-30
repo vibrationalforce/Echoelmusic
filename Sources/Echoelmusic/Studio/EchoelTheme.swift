@@ -25,7 +25,7 @@ enum EchoelTheme {
     static let dim     = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(dimOpacity)
 
     /// The grey every neutral token is a translucent slice of (#e0e0e0), and the opacities
-    /// of the two boundary tokens + the control fill — named so `ThemeContrastTests` can do
+    /// of the two boundary tokens + the control fill — named so `TheThemeTokensClearTheirContrastFloorsTests` can do
     /// the WCAG maths on THE SAME numbers the colours below are built from. Not a
     /// convenience: this repo already has a safety ceiling (2.5 Hz flash) whose test
     /// validates a hand-COPIED literal, so the renderer can drift while the suite stays
@@ -65,7 +65,7 @@ enum EchoelTheme {
     /// AS RENDERED (`.background(fill)` then `.overlay(strokeBorder)`, so the stroke lies
     /// OVER the control's own fill): **3.70:1** against that fill, 4.01:1 against the page,
     /// and it holds through every real nesting — 3.67:1 inside an `EchoelPanel`, 3.50:1 at
-    /// the deepest fill-on-surface stack. `ThemeContrastTests` also asserts a deliberately
+    /// the deepest fill-on-surface stack. `TheThemeTokensClearTheirContrastFloorsTests` also asserts a deliberately
     /// PESSIMISTIC variant that models the stroke over black (3.31:1 vs fill, 3.59:1 vs
     /// page) as a lower bound; blending in linear space instead would give 7.70:1, so sRGB
     /// compositing is the conservative choice, not a flattering one.

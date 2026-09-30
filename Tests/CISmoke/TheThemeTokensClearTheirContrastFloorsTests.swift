@@ -1,5 +1,14 @@
-// ThemeContrastTests.swift
-// Echoel — WCAG contrast floors for the design tokens.
+// TheThemeTokensClearTheirContrastFloorsTests.swift
+// Echoel — WCAG contrast floors for the design tokens, in the BLOCKING bundle.
+//
+// MOVED HERE from `Tests/EchoelmusicTests/ThemeContrastTests.swift` (interface audit
+// 2026-09-30, "Kontrast-Wächter mit Zähnen ins blockierende Bündel"). The maths and the
+// five floors are the ones that file carried since the 1.16:1 outline was found; nothing
+// is weakened. What changed is WHO RUNS IT: `Tests/EchoelmusicTests` is compiled by NO gate
+// (#208), so a token that slid under its floor went green through CI — the doc's finding
+// "ein Token-Fehler geht grün durch CI". Here `Build for Testing` compiles it and
+// `Run Tests` runs it on every push. Renamed to the bundle's sentence form (§2, #374);
+// the method names say the claim, not the procedure.
 //
 // The repo had 296 test files and NOT ONE contrast test, which is how the interactive
 // outline sat at 1.16:1 (needs 3:1) through several accessibility passes that each fixed
@@ -12,12 +21,34 @@
 // That is load-bearing: `FlashGuardTests` validates the 2.5 Hz flash ceiling against a
 // hand-copied literal, so raising the ceiling in the renderer leaves the suite green —
 // exactly the trap this file must not repeat.
+//
+// THE TOOTH ADDED WITH THE MOVE (claim 6). The named constants were a PARALLEL copy: `text`
+// is spelled `Color(red: 0.878, …)` and `textComponent` is `0.878`, two literals that agree
+// today. A designer lifting the grey in the colour line alone would leave every floor here
+// green while the rendered contrast moved — the same hole the header condemns, one level
+// down. Claim 6 reads `EchoelTheme.swift` and requires each neutral token to be built from
+// the constant it is named after (`.opacity(dimOpacity)` …) and the five grey lines to spell
+// the same component `textComponent` holds. Change the grey in both places and it stays
+// green; change it in one and it says which.
+//
+// ⚠️ LIMIT. The semantic colours (`accent`, `warning`, `danger`, `recording`) are RGB
+// literals with no named components, so their ratios (11.6:1, 9.3:1, 5.5:1 on black by the
+// same maths) are NOT asserted here — asserting them would mean re-typing the literals,
+// the trap above. Naming their components is a separate slice.
+//
+// ⚠️ GRADING (§3): claims 1–5 are the moved assertions — green on both trees, they are
+// COUNTERWEIGHTS to the move itself (the move changes the runner, not the numbers).
+// Claim 6 is a SOURCE claim; transcribed in Python against this tree and its parent, it
+// is green on both (the constants and the colour lines agree today) — its value is the
+// drift it forbids, not a red it shows. Transcription: WORK 6/6, parent 6/6; the WCAG
+// figures re-derived in Python match the Swift to two decimals (3.70 · 3.67 · 3.67 · 3.50
+// outline-vs-fill; 3.59 / 3.31 pessimistic; 1.16 border; 14.61 / 6.56 text).
 
 import XCTest
 #if canImport(SwiftUI)
 @testable import Echoelmusic
 
-final class ThemeContrastTests: XCTestCase {
+final class TheThemeTokensClearTheirContrastFloorsTests: XCTestCase {
 
     // MARK: - WCAG maths (sRGB; neutral greys composited over an opaque ground)
 
@@ -55,7 +86,7 @@ final class ThemeContrastTests: XCTestCase {
 
     // MARK: - The floor that was missing
 
-    func testInteractiveOutline_clears3to1_asRendered_throughEveryRealNesting() {
+    func testTheInteractiveOutlineClearsThreeToOneAsRenderedThroughEveryRealNesting() {
         // WCAG 2.1 SC 1.4.11 Non-text Contrast: 3:1 for the visual boundary of a control.
         //
         // AS RENDERED: `.background(fill)` then `.overlay(strokeBorder)`, so the stroke lies
@@ -79,7 +110,7 @@ final class ThemeContrastTests: XCTestCase {
         }
     }
 
-    func testInteractiveOutline_clearsTheFloorEvenOnTheMostPessimisticModel() {
+    func testTheInteractiveOutlineClearsTheFloorEvenOnTheMostPessimisticModel() {
         // A deliberately WORSE model than the one above: the stroke composited over black
         // while the fill is judged separately, i.e. as if the outline got no help from the
         // fill beneath it. Kept as a lower bound so the token has margin under whichever
@@ -95,7 +126,7 @@ final class ThemeContrastTests: XCTestCase {
                                     "pessimistic outline vs fill is \(ratio(vsFill))")
     }
 
-    func testDecorativeBorder_isDeliberatelyBelowTheFloor_notAnOversight() {
+    func testTheDecorativeBorderIsDeliberatelyBelowTheFloorNotAnOversight() {
         // `border` (0.10) stays for hairlines and dividers, which SC 1.4.11 does not cover.
         // This asserts the SPLIT is real in both directions: point a control back at
         // `border` and it regresses; raise `border` itself to clear 3:1 and the two tokens
@@ -110,7 +141,7 @@ final class ThemeContrastTests: XCTestCase {
                              "the interactive token must be the more visible of the two")
     }
 
-    func testBodyAndSecondaryText_stayAboveAA() {
+    func testBodyAndSecondaryTextStayAboveAA() {
         // Regression guard on the two text tokens: `dim` was lifted 0.55 → 0.65 for AA and
         // nothing has stopped it drifting back. Judged over `surface` (the panel fill it
         // actually sits on), the stricter ground for light-on-dark text.
@@ -130,7 +161,7 @@ final class ThemeContrastTests: XCTestCase {
                                     "secondary text on a panel: \(ratio(secondaryRatio))")
     }
 
-    func testWCAGMaths_matchesKnownReferenceValues() {
+    func testTheWCAGMathsMatchesKnownReferenceValues() {
         // Anchor the formula itself, so a wrong transfer function cannot make the floors
         // above pass vacuously. White-on-black is exactly 21:1 by definition.
         // NOTE: these first two are weak on their own — 21:1 holds for ANY monotonic f with
@@ -144,6 +175,39 @@ final class ThemeContrastTests: XCTestCase {
         let known = luminance(grey: 0.878, opacity: 0.10, over: 0)
         XCTAssertEqual(contrast(known, luminance(grey: 0)), 1.16, accuracy: 0.02,
                        "the 1.16:1 figure the audit reported — if this moves, the maths changed")
+    }
+
+    // MARK: - The tooth: the constants above ARE the colours' components
+
+    func testTheColoursAreBuiltFromTheConstantsTheFloorsAreComputedFrom() throws {
+        var root = URL(fileURLWithPath: #filePath)
+        for _ in 0..<3 { root.deleteLastPathComponent() }
+        let path = root.appendingPathComponent("Sources/Echoelmusic/Studio/EchoelTheme.swift")
+        guard let raw = try? String(contentsOf: path, encoding: .utf8) else {
+            return XCTFail("ANCHOR MISSING: cannot read EchoelTheme.swift (#454)")
+        }
+        let code = SourceText.codeOnly(raw)
+        // Each translucent neutral token takes its opacity from the constant it is named after.
+        for (token, constant) in [("dim", "dimOpacity"), ("border", "borderOpacity"),
+                                  ("fill", "fillOpacity")] {
+            XCTAssertTrue(code.contains("static let \(token)") && code.contains(".opacity(\(constant))"),
+                          "`\(token)` no longer takes `.opacity(\(constant))` — the floors above then measure a number the renderer does not use")
+        }
+        XCTAssertTrue(code.contains(".opacity(borderStrongOpacity)"),
+                      "`borderStrong` no longer takes `.opacity(borderStrongOpacity)`")
+        XCTAssertTrue(code.contains("Color(red: surfaceComponent, green: surfaceComponent, blue: 0.070)"),
+                      "`surface` no longer spells its R/G channels as `surfaceComponent` — the panel ground the text floors are judged over")
+        // The grey itself: every neutral token line spells the SAME component the constant
+        // holds. Formatting the Double gives the literal the source must carry ("0.878").
+        let grey = "\(EchoelTheme.textComponent)"
+        let spelled = "Color(red: \(grey), green: \(grey), blue: \(grey))"
+        let lines = code.components(separatedBy: spelled).count - 1
+        XCTAssertGreaterThanOrEqual(lines, 5, """
+            Only \(lines) neutral token line(s) spell `\(spelled)`; text · dim · border · \
+            borderStrong · fill make five. Either a token's grey drifted away from \
+            `textComponent` (then every floor above measures a colour that is not rendered — \
+            move the constant WITH the colour), or a token was rewritten without this file.
+            """)
     }
 }
 #endif

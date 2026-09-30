@@ -5689,6 +5689,9 @@ laufendes Register nicht. Ein Wächter darüber bleibt bewusst aus (#364).
 
 ---
 
+**2026-09-30 (Kontrast-Wächter ins blockierende Bündel):** `git ls-files 'Tests/CISmoke/*.swift' | wc -l` → **720 vor, 721 nach** diesem Commit (`TheThemeTokensClearTheirContrastFloorsTests.swift`, per `git mv` aus `Tests/EchoelmusicTests/ThemeContrastTests.swift` — eine Datei WANDERT, §C sinkt um eins). ⛔ **Befund über die Kette darüber, nicht repariert:** ihr Kopf sagt „der aktuelle Wert 234“, gemessen sind es heute 720 — die Kette ist um Hunderte Stände veraltet; „Teil jedes Commits, der eine Datei in dieses Verzeichnis legt“ ist seit Wochen nicht befolgt worden. Nachgezählt wird sie hier NICHT (die Zwischenstände sind aus einem flachen Klon nicht ehrlich rekonstruierbar); es steht der Befehl, und diese Zeile trägt die zwei gemessenen Stände mit Datum. Wer die Kette fortschreibt, fängt bei 720 an, nicht bei 234.
+
+
 ## B — `Sources/**/*.swift`
 
 Aktueller Stand: **messen, nie zitieren.**
@@ -5864,6 +5867,9 @@ der Schnitt jetzt **−21 B** (149 632 → 149 611).
 
 
 ---
+
+**2026-09-30 (Kontrast-Wächter ins blockierende Bündel):** `git ls-files 'Tests/EchoelmusicTests/*.swift' | wc -l` → **302 vor, 301 nach** diesem Commit: `ThemeContrastTests.swift` ist per `git mv` nach `Tests/CISmoke/TheThemeTokensClearTheirContrastFloorsTests.swift` gewandert (kein Test gelöscht, keiner abgeschwächt — der Läufer wechselt von „kein Gate“ zu `Build for Testing` + `Run Tests`). Die Suite hier verliert damit ihren einzigen Kontrast-Test AN das Bündel, das einen Merge rot färben kann.
+
 
 ## D — `EchoelStudioView` Präsentations-Modifier (Modifier-Kette, nicht Zähl-Kette)
 
