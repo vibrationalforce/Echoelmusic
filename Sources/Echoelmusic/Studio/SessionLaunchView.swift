@@ -209,8 +209,9 @@ enum SessionGrid {
         let t = Swift.max(0, tick)
         let bar = t / TimelineTime.ticksPerBar + 1
         let inBar = t % TimelineTime.ticksPerBar
-        guard inBar != 0 else { return "Bar \(bar)" }
-        return "Bar \(bar) beat \(inBar / TimelineTime.ticksPerBeat + 1)"
+        // E4-25: the bar/beat words are catalog keys around the numbers (Takt n Schlag b); never a format key.
+        guard inBar != 0 else { return String(localized: "Bar ") + "\(bar)" }
+        return String(localized: "Bar ") + "\(bar)" + String(localized: " beat ") + "\(inBar / TimelineTime.ticksPerBeat + 1)"
     }
 
     /// Where a scene STARTS a stopped song (S2 review, MED-2): the transport starts on a bar,

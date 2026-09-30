@@ -157,8 +157,8 @@ enum SongAutomationEdit {
 
     /// VoiceOver's count: the song's points, and the one after the end when there is one.
     nonisolated static func countLabel(inSongPoints count: Int, continuesPastEnd: Bool) -> String {
-        let base = count == 1 ? "1 point" : "\(count) points"
-        return continuesPastEnd ? base + ", and 1 after the end of the piece" : base
+        let base = count == 1 ? String(localized: "1 point") : "\(count) " + String(localized: "points")
+        return continuesPastEnd ? base + String(localized: ", and 1 after the end of the piece") : base
     }
 
     /// The points the drawn curve runs through: the song's own, plus the one past its end.

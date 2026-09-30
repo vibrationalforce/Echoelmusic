@@ -131,7 +131,7 @@ enum TrackParts {
     /// "Bar 5 · 4 bars" — the start as `SessionGrid.label` names it (one label rule, #416)
     /// and the length in the largest whole unit that fits.
     nonisolated static func title(_ part: Part) -> String {
-        "\(SessionGrid.label(forTick: part.startTick)) · \(lengthText(part.lengthTicks))"
+        SessionGrid.label(forTick: part.startTick) + " · " + lengthText(part.lengthTicks)
     }
 
     /// The selected part's heading: `title`, plus the last bar it reaches when it spans more
@@ -142,7 +142,7 @@ enum TrackParts {
     nonisolated static func spanTitle(_ part: Part) -> String {
         let from = WorkstationSummary.barNumber(forTick: part.startTick)
         let to = WorkstationSummary.endBarNumber(forTick: part.startTick + part.lengthTicks)
-        return to > from ? "\(title(part)) · to bar \(to)" : title(part)
+        return to > from ? title(part) + String(localized: " · to bar ") + "\(to)" : title(part)
     }
 
     nonisolated static func lengthText(_ ticks: Int) -> String {
@@ -150,13 +150,13 @@ enum TrackParts {
         let beat = TimelineTime.ticksPerBeat
         if ticks > 0, ticks % bar == 0 {
             let n = ticks / bar
-            return n == 1 ? "1 bar" : "\(n) bars"
+            return n == 1 ? String(localized: "1 bar") : "\(n) " + String(localized: "bars")
         }
         if ticks > 0, ticks % beat == 0 {
             let n = ticks / beat
-            return n == 1 ? "1 beat" : "\(n) beats"
+            return n == 1 ? String(localized: "1 beat") : "\(n) " + String(localized: "beats")
         }
-        return String(format: "%.2f bars", Double(ticks) / Double(bar))
+        return String(format: "%.2f", Double(ticks) / Double(bar)) + " " + String(localized: "bars")
     }
 
     // MARK: Writes — through the store's existing API, one call = one undo step

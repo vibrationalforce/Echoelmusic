@@ -47,7 +47,10 @@
 // six units missing — ONE finding). E4-23 added the eight Learn cards (guide + safety), the six Learn headings and the
 // bio disclaimer as one-literal keys (parent: 0/8 titles, `+` chains present, 31 units missing — ONE finding). E4-24 added
 // the Piece stage's counted sentences (tracks/parts/bars, orphans, automated parameters), the file-tempo row and the
-// root chrome's position/file/piece readouts as noun keys and seams (parent: all verbatim, 29 units missing — ONE finding). Claim 12
+// root chrome's position/file/piece readouts as noun keys and seams (parent: all verbatim, 29 units missing — ONE finding).
+// E4-25 added the bar/beat vocabulary of the three model helpers (SessionGrid.label · TrackParts.title/spanTitle/lengthText ·
+// SongAutomationEdit.countLabel) as keys beside the numbers, English byte-identical (parent: all verbatim, 8 units missing —
+// ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -704,6 +707,39 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Not set. Starts at the piece tempo; enter the file's own tempo to enable Warp.",
                           "Halve tempo", "Double tempo", "Sets this file's tempo to ", " BPM",
                           "Bar ", " of ", ", beat ", "File: ", "Piece: "], "Piece-stage counts and root readouts")
+
+        // E4-25 — the bar/beat VOCABULARY lives in three model helpers, and every part title, scene label and
+        // automation count is composed from them: `SessionGrid.label` (Bar n / Bar n beat b), `TrackParts.title`,
+        // `spanTitle` and `lengthText` (n bars / n beats / to bar n), `SongAutomationEdit.countLabel` (n points,
+        // and 1 after the end). Each word is a catalog key beside the number; the English is byte-identical, which
+        // the RUNTIME pins in TheSessionLaunchesWhatTheSongPlaysTests / TheTrackPartsAreArrangedThroughTheStoreTests /
+        // TheSongAutomationIsDrawnThroughOneWriterTests keep proving ("Bar 5", "1 bar", "0.31 bars", "1 point").
+        let sessionGrid = try codeOnly("Sources/Echoelmusic/Studio/SessionLaunchView.swift")
+        XCTAssertTrue(sessionGrid.contains("guard inBar != 0 else { return String(localized: \"Bar \") + \"\\(bar)\" }"), "`SessionGrid.label` spells Bar verbatim again")
+        XCTAssertTrue(sessionGrid.contains("String(localized: \"Bar \") + \"\\(bar)\" + String(localized: \" beat \")"), "`SessionGrid.label` lost the beat seam")
+        XCTAssertFalse(sessionGrid.contains("return \"Bar \\(bar)"), "`SessionGrid.label` returns a verbatim `Bar n` again")
+        let partsFile = try codeOnly("Sources/Echoelmusic/Studio/TrackPartsView.swift")
+        for seam in ["SessionGrid.label(forTick: part.startTick) + \" · \" + lengthText(part.lengthTicks)",
+                     "title(part) + String(localized: \" · to bar \") + \"\\(to)\"",
+                     "n == 1 ? String(localized: \"1 bar\") : \"\\(n) \" + String(localized: \"bars\")",
+                     "n == 1 ? String(localized: \"1 beat\") : \"\\(n) \" + String(localized: \"beats\")",
+                     "String(format: \"%.2f\", Double(ticks) / Double(bar)) + \" \" + String(localized: \"bars\")"] {
+            XCTAssertTrue(partsFile.contains(seam), "TrackParts lost the E4-25 seam `\(seam)`")
+        }
+        for verbatim in ["\"1 bar\" : \"\\(n) bars\"", "\"1 beat\" : \"\\(n) beats\"", "· to bar \\(to)\"", "\"%.2f bars\""] {
+            XCTAssertFalse(partsFile.contains(verbatim), "TrackParts spells a length verbatim again: `\(verbatim)`")
+        }
+        let automation = try codeOnly("Sources/Echoelmusic/Studio/SongAutomationEditor.swift")
+        XCTAssertTrue(automation.contains("count == 1 ? String(localized: \"1 point\") : \"\\(count) \" + String(localized: \"points\")"), "`countLabel` spells points verbatim again")
+        XCTAssertTrue(automation.contains("base + String(localized: \", and 1 after the end of the piece\")"), "`countLabel` lost its past-the-end seam")
+        XCTAssertFalse(automation.contains("\"1 point\" : \"\\(count) points\""), "`countLabel` is a verbatim String again")
+        // RUNTIME COUNTERWEIGHT: in the test bundle's English the composed words are unchanged — a catalog key that
+        // altered the English would be a copy change hiding in a localisation slice.
+        XCTAssertEqual(SessionGrid.label(forTick: TimelineTime.ticksPerBar + 2 * TimelineTime.ticksPerBeat), "Bar 2 beat 3")
+        XCTAssertEqual(TrackParts.lengthText(2 * TimelineTime.ticksPerBeat), "2 beats")
+        XCTAssertEqual(SongAutomationEdit.countLabel(inSongPoints: 3, continuesPastEnd: true), "3 points, and 1 after the end of the piece")
+        try assertGerman(["Bar ", " beat ", " · to bar ", "1 bar", "bars", "1 beat", "beats", "1 point", "points",
+                          ", and 1 after the end of the piece"], "bar/beat vocabulary of the model helpers")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
