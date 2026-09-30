@@ -9685,15 +9685,6 @@ struct EchoelStudioView: View {
         default:         return "Record"
         }
     }
-    /// The tile's visible word (rule 3) — one word of the matching `exportLabel` state, so the
-    /// spoken name contains what is shown (WCAG 2.5.3).
-    private var exportTitle: String {
-        switch exporter.status {
-        case .capturing: return exporter.isCancellable ? "Stop" : "Recording"
-        case .rendering: return "Writing"
-        default:         return "Record"
-        }
-    }
     private var exportIcon: String {
         if exporter.isCancellable { return "stop.circle" }
         return isExporting ? "hourglass" : "square.and.arrow.up"

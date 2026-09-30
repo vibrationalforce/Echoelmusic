@@ -64,12 +64,6 @@ struct EchoelIconTile: View {
     /// Name); `TheIconTileCarriesAWordTests` reads both. One or two short words — the tiles
     /// share a row at ~62 pt each on the narrowest phone, and the caption may wrap once.
     let title: String
-    /// The visible word under the glyph — rule 3 (2026-09-30, WCAG 2.5.3): symbol plus word,
-    /// always. REQUIRED, no default (#431): a default would let a caller ship a mute tile
-    /// without a diff line. Callers keep the word inside their `accessibilityLabel` (Label in
-    /// Name); `TheIconTileCarriesAWordTests` reads both. One or two short words — the tiles
-    /// share a row at ~62 pt each on the narrowest phone, and the caption may wrap once.
-    let title: String
     /// `true` = the off-white primary fill the website CI reserves for the main action; the
     /// default is the bordered chip the three header tiles wear.
     var prominent: Bool = false
