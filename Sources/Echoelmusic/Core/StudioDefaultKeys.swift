@@ -78,6 +78,15 @@ public enum StudioDefaultKeys {
     /// `AutoAttune`) — hence H15-KEYSTORE. Tempo is NOT steered by this switch in any
     /// state: the only bio→clock path stays the Flow-Servo (T1/T2,
     /// `AutoModeStartsOffAndOwnsNoTempoTests`).
+    /// Slice 2a of the interface audit (2026-09-30) — the STAGE the workspace shows, Piece or
+    /// Instrument (`StudioStage`). PIECE on a fresh install, by decision: the piece is the home
+    /// and the instrument a device on one of its tracks. Two writers, both deliberate: the seam
+    /// in `StageShell` (the player's tap) and the Safe-Mode recovery in `EchoelmusicApp`, which
+    /// points it at the instrument after a crash for the same reason it points
+    /// `reopensWorkstation` at Sound — a stage that crashed at render must not be the stage
+    /// every relaunch returns to. Guard: `TheArrangeStageIsTheFrontStageTests`.
+    public static let stage = StudioDefault(key: "studio.stage", value: StudioStage.piece)
+
     public static let autoMode = StudioDefault(key: "studio.autoMode", value: false)
 
     /// Founder 8-bar produce-able phrase (see EchoelStudioView loop picker).

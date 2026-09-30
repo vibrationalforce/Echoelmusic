@@ -40290,3 +40290,21 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Prosa-Sweep (#456):** `FeatureFlags`, `EchoelmusicApp` (2), `EchoelStudioView` (Keep-Awake-Konjunktion bleibt, Grund neu), `FloatingVisualLayout` (2), `FloatingVisualWindow` (2). `CLAUDE.md` Zeile 55 neu, netto −55 B → 149 646 B.
 - **Nicht meins, gesehen:** `needle-reachability.py` meldet drei vorbestehende Befunde (AgentAppliesTheLook, MIDITakeIsRecorded, NoteGridSpeaks) — unverändert, nicht Teil dieser Scheibe.
 - **Gates:** offen (Xcode Compile Check + Build for Testing + Run Tests getrennt lesen). **Gerät:** frische Installation öffnen — erste der fünf Bitten für den nächsten Build.
+
+## 2026-09-30 — Scheibe 2a gebaut: die Naht „Piece | Instrument" (`StageShell`) — die Werkstatt ist die Vorderbühne
+
+**Founder:** „Du entscheidest alles und weißt, dass das Design insgesamt vor allem im Vordergrund eine DMMW ist. Wie die erste Skizze … von ChatGPT." → Delegation aller offenen Audit-Entscheidungen; Maßstab = DMMW im Vordergrund.
+
+**Gebaut (ein Commit):**
+- `Studio/StudioStage.swift` (pure enum, `piece | instrument`, Labels + spoken hints) · `StudioDefaultKeys.stage` (`studio.stage`, Default **piece**).
+- `Studio/StageShell.swift`: `StageShell` (Naht, zwei 44-pt-Segmente) + `ArrangeStage` (`WorkstationView` frei stehend im eigenen Scroll). `SurfaceHost.body` montiert `StageShell()`.
+- **`EchoelStudioView` bleibt IMMER montiert** und ist unter Piece dreifach versteckt (`opacity 0` · `allowsHitTesting(false)` · `accessibilityHidden`). Gemessen: `.onDisappear { stopEverything(reason: "unmount") }` — der im Doc geplante „Geschwister-Wechsel" hätte bei jedem Wechsel Puls-Sitzung und Take gestoppt und die Save/Open-Sheets mitgenommen.
+- Studio-Panel: unter Piece KEINE zweite `WorkstationView` (Zeiger-Zeile), sonst wie gehabt. Safe Mode schreibt zusätzlich `stage = instrument`.
+- Guide-Karte 1 nennt beide Bühnenwörter.
+- Wächter: neu `TheArrangeStageIsTheFrontStageTests` (47 Ansprüche, transkribiert: Worktree 0 rot, roh = gestrippt; Parent: kompiliert nicht — Text-Lesung: Anspruch 2 = die Entscheidung, Rest EINE Anker-Abwesenheit) · `TheMenuHostReadsNoHotStateTests` (Naht als Vorfahre, beide Typen; Prämissen-Test umbenannt, #374) · `TheWorkstationImportsAudioTests` (`StageShell.swift` im Vorfahren-Pfad).
+- Checker: dead-needles OK · count-pins 0 rot · swift-escapes OK · foreign-needles OK · moved-needles 1 Treffer (`WorkstationView()` → HasADoor-Panel enthält es weiter) · needle-reachability 3 vorbestehende Befunde (fremd).
+- CLAUDE.md Root-Zeile 1566 → 1560 B (Datei 149 640 B).
+
+**Entschieden (delegiert):** Labels Piece | Instrument statt Play | Arrange (Transport sagt schon „Play"); Bereichs-Zeile bleibt INNERHALB der Instrument-Bühne (keine dritte Reihe gleicher Art); `InspectorDock` vertagt (Inspector sitzt schon inline je gewählter Spur).
+
+**Offen → 2b:** Workstation-Chip fällt, `reopensWorkstation` → Bühnen-Schlüssel, `nonStandardTuningBanner` in die Piece-Bühne; Play-Stage-Default-Plate = Sound. Gerät: Wechsel mitten im Take, Musik läuft weiter.

@@ -5,8 +5,10 @@ import SwiftUI
 // Echoel — SurfaceHost is THE one main view. It hosted the Ableton-style Arrange
 // timeline over the instrument zone until the pure-instrument verdict (#121,
 // founder 2026-07-24: "keine Timeline etc nur das alte Interface mit create from
-// within") removed the timeline — SurfaceHost now mounts only EchoelStudioView.
-// The former 4-chip surface switching and its enum are gone — see the note below.
+// within") removed the timeline — SurfaceHost mounted only EchoelStudioView until
+// 2026-09-30, and since slice 2a mounts `StageShell` (Piece | Instrument), which keeps
+// EchoelStudioView mounted beneath the piece. The former 4-chip surface switching and
+// its enum are gone — see the note below.
 //
 // Render safety: SurfaceHost reads NO @Observable models and no @AppStorage — it
 // is a static wrapper, so it never rebuilds (freeze-rule trivially safe).
@@ -69,8 +71,14 @@ struct SurfaceHost: View {
     /// it (black-screen law). H7 invariant holds trivially — `EchoelStudioView` is
     /// now the SOLE child at ONE structural position, so its identity (and any live
     /// bio / camera / transport session) is stable across every rebuild.
+    ///
+    /// ⭐ SLICE 2a OF THE INTERFACE AUDIT (2026-09-30): the sole child is now `StageShell` — the
+    /// seam „Piece | Instrument" — and `EchoelStudioView` lives INSIDE it, always mounted,
+    /// hidden while the piece shows (its `.onDisappear` stops the session, so a sibling switch
+    /// here would kill the music — `StageShell.swift` header). The H7 identity argument above
+    /// therefore still holds one level down; this wrapper stays static and reads nothing.
     var body: some View {
-        EchoelStudioView()
+        StageShell()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipped()
     }

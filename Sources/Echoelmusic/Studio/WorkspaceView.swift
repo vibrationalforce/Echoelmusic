@@ -246,10 +246,10 @@ struct WorkspaceView: View {
                 // (The standalone Tempo row is gone — the tempo control moved UP into
                 //  the transport bar next to Play, founder 2026-07-15 "Das soll da oben
                 //  hin". Its vertical band is reclaimed for the timeline.)
-                // THE one main view: since the pure-instrument verdict (#121,
-                // founder 2026-07-24 "keine Timeline etc nur das alte Interface
-                // mit create from within") SurfaceHost mounts only EchoelStudioView
-                // ("create from within") — no timeline, no surface chips.
+                // THE one main view. Since slice 2a (2026-09-30) SurfaceHost mounts
+                // `StageShell`: the seam „Piece | Instrument", the piece (WorkstationView
+                // standing free) by default, the instrument (EchoelStudioView, "create
+                // from within") always mounted beneath it.
                 SurfaceHost()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }

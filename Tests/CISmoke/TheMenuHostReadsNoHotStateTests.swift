@@ -121,10 +121,11 @@
 // times, and a copy would inherit all seven.
 //
 // ⚠️ THE THREE SCANS COVER DIFFERENT NUMBERS OF ANCESTORS — say it exactly. The chain is
-// `EchoelmusicApp` → `WorkspaceView` → `SurfaceHost` → `EchoelStudioView`. The BIO scan runs on
-// all four. The ENGINE scan runs on two: `EchoelStudioView`, which declares an
+// `EchoelmusicApp` → `WorkspaceView` → `SurfaceHost` → `StageShell` → `EchoelStudioView` (since
+// slice 2a, 2026-09-30; `ArrangeStage` in the seam's file is the Piece stage's branch). The BIO
+// scan runs on all of them. The ENGINE scan runs on two: `EchoelStudioView`, which declares an
 // `@Environment(AudioEngine.self)` binding, and `EchoelmusicApp`, which owns the engine as
-// `@State`. `WorkspaceView` and `SurfaceHost` hold no engine reference at all, so pointing the
+// `@State`. `WorkspaceView`, `SurfaceHost` and `StageShell` hold no engine reference at all, so pointing the
 // engine scan at them would be a claim that cannot fail (#367). Nine files under `Sources/`
 // declare an `@Environment(AudioEngine.self)` binding, so "only `EchoelStudioView` has one"
 // would be false — that was the over-broad first draft of this very line. The day one of the
@@ -138,7 +139,7 @@
 // ⭐ #929 GENERALISED IT: the same claim now covers `AudioEngine`, because measured, the engine
 // scan had the identical hole and had had it longer. `CameraRPPGBioPublisher` is deliberately
 // absent from that table — `WorkspaceView` must hold it (`isRunning`), and listing it would
-// forbid required work (#364). The bio scan needs no premise: it already covers all four.
+// forbid required work (#364). The bio scan needs no premise: it already covers every ancestor.
 //
 // ⛔ AND THE FOURTH ANCESTOR WAS FOUND THE SAME WAY THE THIRD WAS — by asking whether the LIST
 // was complete rather than whether each entry was right. `EchoelmusicApp` sits above
@@ -270,6 +271,11 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
     /// made the guard green partly by luck — and "a hot read one level above the level the
     /// last fix reached" is the 10.76.50 finding word for word.
     private static let wrapper = "Sources/Echoelmusic/Studio/SurfaceSwitcher.swift"
+    /// Slice 2a (2026-09-30): the seam „Piece | Instrument" sits between `SurfaceHost` and the
+    /// Picker host, and `ArrangeStage` in the same file sits between it and `WorkstationView`
+    /// (a Picker host of its own). Two types, one file, both scanned — found by asking whether
+    /// the LIST was complete, the way the third and fourth ancestors were (#918).
+    private static let seam = "Sources/Echoelmusic/Studio/StageShell.swift"
     /// The spelling the bio scan anchors on. It is a NEEDLE, not a fact about the code: an
     /// alias or a renamed binding makes it miss, which is why
     /// `testTheRootStillReadsTheStartStopFlag` exists to prove it still matches something.
@@ -389,12 +395,29 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
             """)
     }
 
-    // MARK: - 2. The three ancestors
+    // MARK: - 2. The four ancestors below the app (four tests; the seam's test scans two types)
     // ⛔ THIS HEADING SAID "the two ancestors" until #919, with three tests under it. It was
     // left over from before `SurfaceHost` was added — the #918 review found the missing
     // ancestor and nobody moved the label with it. A heading that miscounts what follows is
     // small, but it is the same defect as a name describing a procedure the code stopped
-    // taking (#374): a reader trusts it instead of counting.
+    // taking (#374): a reader trusts it instead of counting. It said "three" until slice 2a
+    // added `StageShell` (2026-09-30) — and was moved in the same commit this time.
+
+    func testTheSeamBuildsNoViewFromAHotReadout() throws {
+        for type in ["StageShell", "ArrangeStage"] {
+            let members = try assertNoHotRead(in: Self.seam, of: type,
+                                              receiver: Self.bioReceiver, hot: try hotProperties(), why: """
+                `\(type)` (slice 2a) sits between `SurfaceHost` and a Picker host — the studio \
+                on the Instrument stage, `WorkstationView` on the Piece stage. It reads ONE \
+                `@AppStorage` written on a tap and nothing else; a ~10 Hz read here rebuilds \
+                everything beneath it, the 10.76.50 shape one level further up than last time.
+                """)
+            XCTAssertTrue(members.contains { $0.contains("var body") }, """
+                ANCHOR ASSERTION: `\(type).body` must still be among the members the scan \
+                walked. Scanned: \(members).
+                """)
+        }
+    }
 
     func testTheWrapperBuildsNoViewFromAHotReadout() throws {
         let members = try assertNoHotRead(in: Self.wrapper, of: "SurfaceHost",
@@ -715,9 +738,11 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
             """)
     }
 
-    func testTheTwoMiddleAncestorsHoldNeitherNarrowProducer() throws {
+    func testTheMiddleAncestorsHoldNeitherNarrowProducer() throws {
+        // (Named "TheTwoMiddleAncestors" until slice 2a added `StageShell` as a third — #374,
+        // a name must not count what the code stopped counting.)
         // ⛔ THE COVERAGE GAP THIS CLOSES, and it took a reviewer to see it for the click:
-        // the BIO scan runs on all FOUR ancestors, the ENGINE and METRONOME scans on TWO.
+        // the BIO scan runs on EVERY ancestor (five since slice 2a), the ENGINE and METRONOME scans on TWO.
         // Two lines in `WorkspaceView` — an `@Environment` binding plus a readout in `topBar`
         // — leave every claim above GREEN while reproducing the 10.76.50 shipped bug in the
         // exact member that caused it. `EchoelmusicApp` injects both objects with
@@ -737,13 +762,13 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
         // the load-bearing part: `WorkspaceView` legitimately holds the publisher — it reads
         // `isRunning` for start/stop, which `testTheRootStillReadsTheStartStopFlag` requires.
         // Listing it here would forbid correct, REQUIRED work (#364) and contradict a claim
-        // twenty lines up. The bio scan needs no premise because it already covers all four.
+        // twenty lines up. The bio scan needs no premise because it already covers every ancestor.
         let narrowlyScanned = [
             ("MetronomeVoice", "the ~20 Hz `bpm` write", "TheClicksTempo"),
             ("AudioEngine", "the 60 Hz meter poll and the per-step `masterVolume` write",
              "AHotEngineReadout"),
         ]
-        for path in [Self.root, Self.wrapper] {
+        for path in [Self.root, Self.wrapper, Self.seam] {
             let text = SourceText.codeOnly(try read(path))
             for (type, producer, scanSuffix) in narrowlyScanned {
                 XCTAssertFalse(text.contains(type), """

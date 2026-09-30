@@ -884,6 +884,10 @@ struct EchoelStudioView: View {
     /// Workstation — so Safe Mode writes the instrument instead of forgetting.
     static let reopensWorkstationKey = "studio.reopensWorkstation"
     @AppStorage(EchoelStudioView.reopensWorkstationKey) private var reopensWorkstation = true
+    /// Slice 2a (2026-09-30) — READ ONLY here: which stage `StageShell` shows. Written by the
+    /// seam's tap and by Safe Mode, never by this view (`TheArrangeStageIsTheFrontStageTests`).
+    /// Selection-rate, like `reopensWorkstation` beside it — no clock writes it (freeze law).
+    @AppStorage(StudioDefaultKeys.stage.key) private var stageRaw = StudioDefaultKeys.stage.value.rawValue
 
 
 
@@ -3427,7 +3431,17 @@ struct EchoelStudioView: View {
             // instrument is announced here as well. Same builder, renders nothing at 12-TET +
             // 440 — a child of an existing panel, not a presentation modifier.
             nonStandardTuningBanner
-            WorkstationView()
+            // Slice 2a (2026-09-30): the arrangement's home is the PIECE stage (`StageShell` →
+            // `ArrangeStage`). While that stage shows, this studio is mounted but hidden
+            // beneath it, and a second `WorkstationView` here would run the same directory
+            // listing, playhead leaf and analyses twice, for nobody. One arrangement in the
+            // tree. (Slice 2b retires this chip; the line below is its epitaph in advance.)
+            if stageRaw == StudioStage.piece.rawValue {
+                Text("The arrangement is open on the Piece stage.")
+                    .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
+            } else {
+                WorkstationView()
+            }
         }
     }
 

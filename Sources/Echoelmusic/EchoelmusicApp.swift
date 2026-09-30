@@ -486,6 +486,10 @@ struct EchoelmusicApp: App {
                     // Workstation), so clearing it would now mean "Workstation" — the recovery
                     // writes the instrument instead of forgetting.
                     UserDefaults.standard.set(false, forKey: EchoelStudioView.reopensWorkstationKey)
+                    // Slice 2a (2026-09-30) — the same reasoning one level up: the STAGE is
+                    // persisted too and defaults to the Piece. A piece stage that crashed at
+                    // render must not be where "Continue" lands; point it at the instrument.
+                    UserDefaults.standard.set(StudioStage.instrument.rawValue, forKey: StudioDefaultKeys.stage.key)
                 }
             } else if hasCompletedOnboarding {
                 mainContent

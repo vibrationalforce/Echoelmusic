@@ -65,14 +65,15 @@ public enum LearnLibrary {
                 id: "guide.firstSession", section: .guide,
                 title: "Your first three minutes",
                 summary: "The app opens on your piece. Here is the way in.",
-                detail: "Echoel opens on your piece — the header, your tracks and the "
-                    + "instrument — with its living picture as a small card above them. "
-                    + "Tap the card's resize arrows to make the picture fill the screen; "
-                    + "there, the \"Studio\" chip brings the controls back and the X hides "
-                    + "the picture. Press the Play button and the instrument starts: it "
-                    + "composes in your key and genre, and once it can read your body, your "
-                    + "body plays it. Nothing sounds until you start it — silence at launch "
-                    + "is by design, not a fault."
+                detail: "Echoel opens on your piece — the header, then two words: Piece and "
+                    + "Instrument — with its living picture as a small card above them. "
+                    + "Piece shows your tracks and parts and walks you through making one. "
+                    + "Instrument is where your body plays: press its Play button and it "
+                    + "composes in your key and genre; once it can read your body, your body "
+                    + "plays it. Tap the card's resize arrows to make the picture fill the "
+                    + "screen; there, the \"Studio\" chip brings the controls back and the X "
+                    + "hides the picture. Nothing sounds until you start it — silence at "
+                    + "launch is by design, not a fault."
             ),
             LearnEntry(
                 id: "guide.hear", section: .guide,
