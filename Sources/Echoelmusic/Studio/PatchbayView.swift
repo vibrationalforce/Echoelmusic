@@ -190,16 +190,16 @@ struct PatchbayView: View {
                 // of what it does is the repo's own "lying control" class; the rationale
                 // in MIDIInput being framed as inbound-only is what led the copy astray.
                 Toggle(isOn: $networkMIDI) {
-                    Text("Wireless MIDI session")
+                    Text("Wireless MIDI")
                         .font(EchoelTheme.font(14, .semibold)).foregroundStyle(EchoelTheme.text)
                 }
                 .tint(EchoelTheme.accent)
                 .accessibilityHint(networkMIDI
-                    ? "On. Any device on your local network can open a MIDI session with this iPhone, and this iPhone can send MIDI out over the network."
-                    : "Off. No wireless MIDI session in either direction.")
+                    ? "On. Any device on your local network can connect to this iPhone over MIDI, and this iPhone can send MIDI out over the network."
+                    : "Off. No wireless MIDI in either direction.")
                 Text(networkMIDI
-                     ? "This iPhone accepts a MIDI session from any device on your local network — a Mac's Network MIDI, rtpMIDI, or a compatible app — and appears to them as a wireless MIDI destination. Turn it off when you are on a network you do not control."
-                     : "Off. This iPhone does not announce itself for wireless MIDI: no incoming session is accepted, and it no longer appears as a wireless MIDI destination, so MIDI out over the network stops too. Turn it on to play the instrument from a Mac, or to play a Mac from here, over the network.")
+                     ? "This iPhone accepts a MIDI connection from any device on your local network — a Mac's Network MIDI, rtpMIDI, or a compatible app — and appears to them as a wireless MIDI destination. Turn it off when you are on a network you do not control."
+                     : "Off. This iPhone does not announce itself for wireless MIDI: no incoming connection is accepted, and it no longer appears as a wireless MIDI destination, so MIDI out over the network stops too. Turn it on to play the instrument from a Mac, or to play a Mac from here, over the network.")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -511,7 +511,7 @@ struct PatchbayView: View {
                  : "Off: the stream carries what the instrument plays — /heart/bpm, /heart/hrv (0–1), /coherence, /breath/*, /synthetic. The three time-domain HRV statistics in medical units stay on this device until you ask for them.")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("Target IP + port per output — changes take effect immediately while the output is running. OSC/ADM default to 'localhost' (this device); for Resolume · TouchDesigner · MadMapper enter the target computer's IP. Art-Net and sACN send unicast to the node IP you enter (default 192.168.1.100) — the app holds no broadcast entitlement, so 255.255.255.255 reaches nothing on iOS.")
+            Text("Target IP + port per output — changes apply immediately while the output is running. OSC/ADM default to 'localhost' (this device); for Resolume · TouchDesigner · MadMapper enter the target computer's IP. Art-Net and sACN send unicast to the node IP you enter (default 192.168.1.100) — the app holds no broadcast entitlement, so 255.255.255.255 reaches nothing on iOS.")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }

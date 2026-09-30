@@ -83,6 +83,12 @@
 // `colab.share(project:)` sends: "share your piece both ways", "Share this piece", "share pieces with
 // you" ×2, "Piece from <peer>"; the invite's VoiceOver label now matches its visible text ("wants to
 // join you"). The nearby sheet's name in the guard files ("NearbySession") is a code identifier.
+//
+// ⭐ RATCHET 8 (2026-09-30): `PatchbayView` — 6 hits. Five "session" were Apple's Network-MIDI *session*,
+// a protocol word that collides with the struck one; to a person it is a CONNECTION ("connect to this
+// iPhone over MIDI", "accepts a MIDI connection", "no incoming connection"), and the toggle is simply
+// "Wireless MIDI". One "take effect" → "apply". The identifier `applyNetworkSessionPreference` keeps
+// its name (code is not what a person reads).
 // `Tests/CISmoke` is the blocking bundle. SKIPS rather than passes if the tree is absent.
 
 import Foundation
@@ -111,6 +117,7 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/EchoelStudioView.swift",
         "Sources/Echoelmusic/Studio/MediaBrowserView.swift",
         "Sources/Echoelmusic/Studio/LiveColaboView.swift",
+        "Sources/Echoelmusic/Studio/PatchbayView.swift",
     ]
 
     /// A line whose strings reach a log or a test harness, not a person.
