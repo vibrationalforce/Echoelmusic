@@ -3571,3 +3571,10 @@ Reihenfolge) angehängt, Round-Trip byteweise geprüft — die 24 Alt-Einträge 
 liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverändert.
 
 **Review 2026-10-30:** Zeigt das Gerät Deutsch? Sind die Panels (~850 Texte) familienweise nachgezogen?
+
+### 2026-09-30 — E4-2 and E4-3: history, Record and the pulse pill speak German (86a9d4eeb, 27b37253d)
+
+- **E4-2 (86a9d4eeb):** `SongHistoryRow` Undo/Redo (label + spoken hint) and `RecordTakeControls`' `recording ? "Stop recording" : "Record"` (both sites) go through `String(localized:)`; catalog 64 → 71. Guard claim 6; `TheProjectHeaderRunsOneTransportTests` claim 10 re-anchored in the same commit (§4 — a Sources edit removed its needle).
+- **E4-3 (27b37253d):** `PulseCue.shortLabel` + `fullHint`, 20 sites; the `.noLight` `"…" + "…"` seam joined into one literal (a localized key is one literal). Catalog 71 → 89. Guard claim 7 — the first regex matched its own `String(localized: "` wrapper via `: "`; a lookbehind excludes that label. Stripper TRAGEND (1 of 1).
+- **Rationale:** after E4-1 the head still spelled Undo / Redo / Record / the pulse word verbatim; each is a `Text(someString)`, which SwiftUI never localises. Same mechanism, family by file.
+- **Review 2026-10-30:** device G6 (German phone) — no truncated word (German is longer; the pill's `Kamerazugriff …` hint is the longest).

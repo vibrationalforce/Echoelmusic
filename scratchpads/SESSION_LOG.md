@@ -40957,3 +40957,26 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
   StringCatalogIsHonestTests-Invarianten 1–4 in Python auf der neuen Datei: OK.
 - **Protokoll:** decisions.csv 1063, memory/decisions.md, FOUNDER_INBOX E4-Zeile.
 - **Gates:** a2662b836 Compile Check 3088 ✓ (die Klammer-Reparatur baut). e3a71486d: Monitor läuft.
+
+## 2026-09-30 — E4-2 + E4-3: Historie, Record und Puls-Pille sprechen Deutsch (86a9d4eeb gepusht, 27b37253d lokal)
+
+- **E4-2 (86a9d4eeb, Push nach Compile Check 3089 ✓ auf e3a71486d):** `SongHistoryRow` Undo/Redo (Label + gesprochener
+  Hinweis) und `RecordTakeControls` (`recording ? "Stop recording" : "Record"`, zwei Stellen) → `String(localized:)`;
+  Katalog 64 → 71. Wächter Anspruch 6; `TheProjectHeaderRunsOneTransportTests` Anspruch 10 im selben Commit
+  umverankert (moved-needles hatte die Zeile gemeldet — §4). Gates: Monitor läuft.
+- **E4-3 (27b37253d, lokal — Push nach Compile Check auf 86a9d4eeb):** `PulseCue.shortLabel` + `fullHint`, 20 Stellen;
+  die `.noLight`-Zweizeilen-Verkettung zu EINEM Literal gefaltet. Katalog 71 → 89 (18 neu, „Locked“ war da).
+  Wächter Anspruch 7: alle Fälle inkl. `.stalled(true/false)` haben ein `de`; die beiden Switches tragen kein
+  nacktes Literal (⛔ meine erste Regex traf `: "` in `String(localized: "` — also den eigenen Wrapper — und war
+  auf dem KORREKTEN Baum rot; Lookbehind `(?<!localized)` repariert, Transkription hat es gefangen, nicht CI);
+  Gegengewicht ≥ 19 gewrappt, englische Pins der Pillen-Wächter unverändert (englischer Host).
+- **Transkription:** HEAD 3 rot = EIN Befund (#486, die Switches sind ungewrappt); WORK alles grün. Stripper
+  TRAGEND (1 von 1: ein Kommentar über dem Switch trägt `return "…"`). Checker: dead-needles OK, count-pins
+  0 rot, moved-needles 0, swift-escapes OK, Klammerbilanz 0/0; needle-reachability nur die 3 vorbestehenden.
+  Die zwei Wächter, die PulseCue.swift als QUELLE lesen (`AStalledAcquisitionSaysSoTests`,
+  `TheStallRemedyReachesTheScreenTests`), ankern auf `if self.placementCue != .finding` bzw. „lighter“ — alle
+  Nadeln weiterhin vorhanden (4 und 6).
+- **Gates gelesen:** df7f6a404 CI/CD 6550 Build for Testing ✓ (19:37–19:43Z), Run Tests failure 19:43–20:09Z
+  (Log-Lesung folgt, #321). a2662b836 CI/CD 6552 läuft. e3a71486d: Compile 3089 ✓, CI/CD 6553 + Auto-Merge 3987
+  laufen.
+- **Protokoll:** decisions.csv 1064/1065, memory/decisions.md, FOUNDER_INBOX E4-Zeile.
