@@ -4971,12 +4971,12 @@ struct EchoelStudioView: View {
                     get: { Double(metronome.beatsPerBar) },
                     set: { metronome.beatsPerBar = Int($0.rounded()) }),
                     range: 1...12, unit: "beats", decimals: 0,
-                    standard: Double(MetronomeVoice.defaultBeatsPerBar),
                     // ⛔ `hint:`, NOT a chained `.accessibilityHint` (#930b). The field collapses
                     // to ONE accessibility element, so an outer hint either goes unspoken or
                     // eats "Swipe up or down to adjust". The parameter composes both.
                     hint: "How often the click accents. This is the click's own bar only — "
-                        + "it does not change the piece's meter")
+                        + "it does not change the piece's meter",
+                    standard: Double(MetronomeVoice.defaultBeatsPerBar))
                 // The accent is what makes "Accent every" AUDIBLE — the render block's test is
                 // `(beatIndex == 0) && audioAccent`, so with the accent off every click is
                 // identical and the number above becomes a setting with no consequence.
