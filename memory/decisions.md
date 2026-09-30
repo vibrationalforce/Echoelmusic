@@ -3209,3 +3209,10 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Guards:** `TheChromeSpeaksOneWordPerThingTests` claim 2 (red on the parent by the 10 hits); `TheMIDITakeIsRecordedFromTheWorkstationTests` asserts the dropped sentence end to end by its new words.
 - **Next ratchets (measured with the guard's scanner):** `EchoelStudioView` 54 (family by family — the Save-alert sentence pinned by `TheSongAloneCanBeSavedTests` claim 2 moves with it) · `EchoelAppIntents` 8 · `LiveColaboView` / `MediaBrowserView` / `PatchbayView` / `SessionView` 6 each.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 1, instrument file family 1: "piece" for the saved work
+
+- **Decision:** in `EchoelStudioView`, every visible "song" / "project" that meant the saved work says "piece" (68ae78269): Save alert "Save piece" + "and the piece — its tracks and parts"; Library "Open piece" / "No saved pieces yet."; Workstation door "the arrangement: tracks, parts and scenes"; Sound chip "the piece's scenes and tracks"; click hints "the piece's meter"; New-piece note "Starts an empty piece and shows the piece stage…" and refusal "Your piece is unchanged."; share hint "Sharing sends the instrument's held music only, and this piece holds only tracks and parts". "project" the verb and "Project:" the projector are other things and stay.
+- **Why family by family:** the file's remaining 40 hits carry second meanings — most "session"s are the sitting (place in the name, weather per session, `AVAudioSession`), "Take sound" is the touch voice, "reset"/"factory" is the rule-6 word decision. The file joins the chrome guard's list only when all are read.
+- **Guards:** five needles follow (PerformIsASecondViewOfTheSameSessionTests, TheWorkstationHasADoorTests, SaveWritesIntoTheOpenProjectTests ×2, TheSavePromiseMatchesTheSaveTests, TheSongAloneCanBeSavedTests claim 2); `ANewPieceStartsAnEmptySongTests`' fragments hold unchanged.
+- **Review:** 2026-10-30.
