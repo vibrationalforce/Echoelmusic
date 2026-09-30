@@ -41102,3 +41102,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Run Tests 6554 (86a9d4eeb, E4-2):** #396-Form, 161 pass / 0 fail im Fenster, GAP 1505 s, beide Clones sichtbar — `TheChromeSpeaksGermanTests` 6/6 BEOBACHTET.
 - **Run Tests 6555 (74f0c48e6, E4-3…E4-5):** #396-Form, 160 pass / 0 fail im Fenster, GAP 1459 s — `TheChromeSpeaksGermanTests` 9/9 BEOBACHTET (Ansprüche 7–9: Puls-Pille, Status-Leitern, Leistung/Ausgabe/Netz), dazu PulseSpeaks 4, NetworkDot 4, OneWord 4, ElevenPoint 3, Icons 4, Ramp 2, Contrast 6.
 - **Gates zu lesen:** ed6f214ea (Monitor bsd5ojqvz). Dieser Docs-Commit bleibt LOKAL bis dahin — ein docs-only Push obendrauf liefe gate-frei durch den Auto-Merge und nähme ungeprüfte Sources als Passagier mit.
+
+## 2026-09-30 — E4-12: FX-Stufenkopf nimmt einen Schlüssel (f11bfe664 lokal)
+
+- **Survey (Read-only-Subagent) als Grundlage:** ~40 verbatim gezeichnete `Text(param)`-Stellen, geordnet nach Ausbeute je Datei. Rang 1 `effectSection` (13 Titel, keine Einschränkung) → diese Scheibe. Weitere Ränge in decisions.csv 1074.
+- **Bau:** Signatur `_ title: LocalizedStringKey`, 13 Aufrufer unverändert (alle Literale); Katalog 687 → 697. Wächter: Anspruch 10 kennt `effectSection`, Anspruch 11 pinnt die Signatur (160-Zeichen-Fenster ab der Deklaration) und treibt die 13 Titel.
+- **Transkription:** HEAD String-Signatur, 10 ohne Einheit = EIN Befund; WORK grün. Stripper PROPHYLAKTISCH. moved-needles: `_ title: String,` → SectionHeading-Wächter, scannt `collapsibleGroupHeader` (unverändert).
+- **Push:** lokal, wartet auf die Gates von ed6f214ea.

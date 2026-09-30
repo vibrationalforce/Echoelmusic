@@ -3627,3 +3627,9 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **What:** `turn on \"Place in session name\"` → `turn on “Place in piece name”`; catalog entry (687); LocationNamer comment corrected.
 - **Why it survived the ratchet:** the glossary scanner splits literals on `"`, so an ESCAPED quote fragments the literal and the struck word fell between fragments — the header calls this an accepted limit. Typographic quotes remove the escape, so the scanner now reads the sentence whole.
 - **Measurement for siblings:** `git grep -n '\\"' -- Sources/Echoelmusic/Studio | grep -v ': *//'` — every escaped quote in a ratcheted file is a literal the scanner reads in pieces.
+
+### 2026-09-30 — E4-12: the FX stage header takes a key (f11bfe664)
+
+- **What:** `effectSection(_ title: LocalizedStringKey, …)`; ten new units (697). Claim 10 alternation + claim 11 signature pin + thirteen titles driven.
+- **German choices:** Reverb → Hall (consistent with „Hall-Ausklang“/„Hall-Anteil“), Stereo Width → Stereobreite, Compressor → Kompressor; Chorus/Flanger/Phaser/Tremolo/Limiter/Bitcrush/Tape unchanged (the German producer vocabulary).
+- **Survey that ranked it** (read-only subagent, 2026-09-30): ~40 verbatim `Text(param)` sites; ranked list in decisions.csv row. Pinned constraints: EchoelIconTile (`let title: String` + `Text(title)` pinned by TheIconTileCarriesAWordTests), Patchbay `statusLine` (`.accessibilityLabel(label)` pinned), MoodXYPad/touchPatchChip (interpolated).
