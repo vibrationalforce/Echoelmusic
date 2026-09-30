@@ -12366,6 +12366,186 @@
           }
         }
       }
+    },
+    "Tape / VHS" : {
+      "comment" : "FX stage title (E4-12, 2026-09-30): `effectSection(\"…\")` in EchoelFXView takes a key.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tape / VHS"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tape / VHS"
+          }
+        }
+      }
+    },
+    "Bitcrush" : {
+      "comment" : "FX stage title (E4-12, 2026-09-30): `effectSection(\"…\")` in EchoelFXView takes a key.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitcrush"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitcrush"
+          }
+        }
+      }
+    },
+    "Reverb" : {
+      "comment" : "FX stage title (E4-12, 2026-09-30): `effectSection(\"…\")` in EchoelFXView takes a key.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reverb"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hall"
+          }
+        }
+      }
+    },
+    "Stereo Width" : {
+      "comment" : "FX stage title (E4-12, 2026-09-30): `effectSection(\"…\")` in EchoelFXView takes a key.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stereo Width"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stereobreite"
+          }
+        }
+      }
+    },
+    "Chorus" : {
+      "comment" : "FX stage title (E4-12, 2026-09-30): `effectSection(\"…\")` in EchoelFXView takes a key.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chorus"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chorus"
+          }
+        }
+      }
+    },
+    "Flanger" : {
+      "comment" : "FX stage title (E4-12, 2026-09-30): `effectSection(\"…\")` in EchoelFXView takes a key.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flanger"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flanger"
+          }
+        }
+      }
+    },
+    "Phaser" : {
+      "comment" : "FX stage title (E4-12, 2026-09-30): `effectSection(\"…\")` in EchoelFXView takes a key.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phaser"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phaser"
+          }
+        }
+      }
+    },
+    "Tremolo" : {
+      "comment" : "FX stage title (E4-12, 2026-09-30): `effectSection(\"…\")` in EchoelFXView takes a key.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tremolo"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tremolo"
+          }
+        }
+      }
+    },
+    "Compressor" : {
+      "comment" : "FX stage title (E4-12, 2026-09-30): `effectSection(\"…\")` in EchoelFXView takes a key.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compressor"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kompressor"
+          }
+        }
+      }
+    },
+    "Limiter" : {
+      "comment" : "FX stage title (E4-12, 2026-09-30): `effectSection(\"…\")` in EchoelFXView takes a key.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limiter"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limiter"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

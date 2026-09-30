@@ -29,7 +29,9 @@
 // Claim 10 (E4-6 → E4-9) walks a listed family for `de` units and was red on each slice's parent for
 // the ONE absence of that slice's units (#486). Claim 11 (E4-9) drives eight signature needles, the
 // absent verbatim ternary in two files and nine units — on its parent all eight needles are absent,
-// the ternary present and the nine units missing: ONE finding, the slice, not eighteen. Claim 12
+// the ternary present and the nine units missing: ONE finding, the slice, not eighteen. E4-12 added
+// the FX header's signature and its thirteen titles to claim 11 — on its parent the signature is
+// `String` and ten units are missing: ONE finding. Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -348,6 +350,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
     /// walk reads code only: E4-7 added `EchoelStudioView`, whose comments quote `Button("literal")`.
     /// E4-9 added the five label helpers of that file to the alternation — legitimate only because
     /// claim 11 pins that they take a key (or look one up); a `String` helper would spell the literal.
+    /// E4-12 added `effectSection`, the FX panel's stage header, on the same terms (claim 11 pins it).
     static let panelFamily: [String] = [
             "Sources/Echoelmusic/Studio/EchoelStudioView.swift",
             "Sources/Echoelmusic/Studio/PatchbayView.swift",
@@ -396,7 +399,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         let root = try repoRoot()
         let strings = try catalogStrings()
         let literal = try NSRegularExpression(
-            pattern: #"\b(?:Text|Button|Toggle|Label|Picker|Section|TextField|Menu|NavigationLink|Link|labeledRow|groupHeader|collapsibleGroupHeader|mixStripCard|weatherMixGroup)\(\s*"((?:[^"\\]|\\.)*)"|\.accessibility(?:Label|Hint|Value)\(\s*"((?:[^"\\]|\\.)*)""#)
+            pattern: #"\b(?:Text|Button|Toggle|Label|Picker|Section|TextField|Menu|NavigationLink|Link|labeledRow|groupHeader|collapsibleGroupHeader|mixStripCard|weatherMixGroup|effectSection)\(\s*"((?:[^"\\]|\\.)*)"|\.accessibility(?:Label|Hint|Value)\(\s*"((?:[^"\\]|\\.)*)""#)
         var sites = 0, missing: [String] = [], seen = Set<String>()
         for rel in Self.panelFamily {
             let code = try codeOnly(rel)                                        // a `Button("literal")` quoted in a comment is not a site
@@ -426,7 +429,8 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
     /// SOURCE-TEXT SCAN. `groupHeader("Filter")`, `labeledRow("Shape")`, `mixStripCard("Bass")` and
     /// `weatherMixGroup("Sound")` used to take `String`, so the literal reached `Text(String)` and
     /// was spelled verbatim on a German phone while every `Text("…")` beside it was translated. They
-    /// take `LocalizedStringKey` now, which is what lets claim 10 walk their call sites.
+    /// take `LocalizedStringKey` now, which is what lets claim 10 walk their call sites. Since E4-12 the
+    /// FX panel's `effectSection("…")` header is on the same footing (thirteen stage titles).
     /// `collapsibleGroupHeader` keeps a `String` title because its hint interpolates it, and looks
     /// the key up itself — pinned here so a tidy-up cannot put `Text(title)` back.
     func testTheLabelHelpersTakeAKey() throws {
@@ -454,6 +458,15 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertTrue(media.contains("String(localized: \"Shown\")"), "the media library's disclosure value is not localised")
         try assertGerman(["Shows or hides the ", " controls", "Shown", "Hidden",
                           "Look", "Voice", "Self-play", "Sound", "Weather"], "collapsible/weather header words")
+        // E4-12 — the FX panel's stage header takes a key too; its thirteen titles reach the catalog
+        let fx = try codeOnly("Sources/Echoelmusic/Studio/EchoelFXView.swift")
+        let fxDecl = try XCTUnwrap(fx.range(of: "private func effectSection<Content: View>("),
+                                   "effectSection is gone from EchoelFXView — re-anchor this needle with the rename")
+        let fxHead = fx[fxDecl.lowerBound..<fx.index(fxDecl.lowerBound, offsetBy: 160, limitedBy: fx.endIndex) ?? fx.endIndex]
+        XCTAssertTrue(fxHead.contains("_ title: LocalizedStringKey,"),
+                      "effectSection takes a String title again — its thirteen stage names would spell verbatim")
+        try assertGerman(["Filter", "Saturation", "Tape / VHS", "Bitcrush", "Reverb", "Stereo Width", "Delay",
+                          "Chorus", "Flanger", "Phaser", "Tremolo", "Compressor", "Limiter"], "FX stage titles")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

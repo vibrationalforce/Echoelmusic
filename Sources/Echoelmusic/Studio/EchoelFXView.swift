@@ -937,8 +937,11 @@ struct EchoelFXView: View {
     // MARK: - Building blocks
 
     @ViewBuilder
+    // E4-12 (2026-09-30): `title` is a catalog KEY, not a `String` — a `String` reached `Text(String)`
+    // and the thirteen stage names were spelled verbatim on a German phone while every `Text("…")`
+    // beside them translated. Every call site passes a literal, so nothing else changes.
     private func effectSection<Content: View>(
-        _ title: String,
+        _ title: LocalizedStringKey,
         isOn: Binding<Bool>,
         @ViewBuilder _ content: () -> Content
     ) -> some View {
