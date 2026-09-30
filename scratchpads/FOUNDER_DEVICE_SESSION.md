@@ -1,5 +1,10 @@
 # Founder Device Session — was NUR am Gerät entschieden werden kann
 
+> ⭐ **Seit 2026-09-30 (Zug 7) ist `docs/dev/FOUNDER_INBOX.md` das EINE Postfach:** jede Frage an den
+> Founder steht dort genau einmal, die fünf Geräte-Bitten je Build stehen in dessen §2. Diese Datei
+> bleibt als Geräte-Prüfreise (§2b AUM, §2c WA4-Pfad 10) und als Archiv der datierten Antworten (§6);
+> ihre drei Kästchen in §5 zählen im Postfach als E14 — nicht doppelt.
+
 **Stand 2026-08-25 (#816).** Diese Datei ist die **Urteils-Hälfte** der Geräte-Sitzung.
 Die code-verankerten Bitten stehen NICHT hier, sondern im Werkzeug:
 

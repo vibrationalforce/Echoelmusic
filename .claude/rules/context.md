@@ -151,3 +151,8 @@ Kosten entstehen"* — was spent on a non-question.
 
 A question to the founder is more expensive than any measurement. Escalate only for genuine
 ambiguity (`AskUserQuestion`), and only after the cheap check that would settle it.
+
+**And ask it ONCE, in `docs/dev/FOUNDER_INBOX.md`** (Zug 7, 2026-09-30): grep that file for the
+topic first — an answered question is a dated row there, and a pending one is not asked again.
+A new question is entered there (question · recommendation · why it is the founder's) before it
+is named in chat. Device asks go through its §2 — five families per build, never scattered.
