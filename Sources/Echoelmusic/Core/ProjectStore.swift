@@ -261,8 +261,8 @@ public final class ProjectStore {
         // "Index 3", which reads correctly in this sentence.
         let field = path.map(\.stringValue).joined(separator: " › ")
         return field.isEmpty
-            ? "That file isn't an Echoel session."
-            : "That file isn't a readable Echoel session — \(field)."
+            ? "That file isn't an Echoel piece."
+            : "That file isn't a readable Echoel piece — \(field)."
     }
 
     /// Retry the exact pending library, including projects queued by later saves.
@@ -282,7 +282,7 @@ public final class ProjectStore {
     private func persist(_ next: [Project]) -> Bool {
         guard writeProjects(next) else {
             pendingProjects = next
-            saveError = "Could not save this project. Your changes are still here. Free device storage or retry."
+            saveError = "Could not save this piece. Your changes are still here. Free device storage or retry."
             return false
         }
         projects = next

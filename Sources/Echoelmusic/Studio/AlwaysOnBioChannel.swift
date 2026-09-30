@@ -184,7 +184,7 @@ public enum AlwaysOnBioChannel: String, CaseIterable, Identifiable, Sendable {
     /// — the two still handed neutral literals today) goes red HERE instead of quietly
     /// leaving the sentence one channel short.
     /// ⭐ AND SINCE #643 IT NAMES WHOSE CHANNELS THEY ARE. "Four body channels shape the
-    /// instrument's own timbre while a session runs" is a PRESENT-TENSE claim about a current
+    /// instrument's own timbre while the instrument plays" is a PRESENT-TENSE claim about a current
     /// reading, and while the demo generator drives it is false — no body is involved. Same
     /// defect the FX headers carried until #641/#642, on the surface that makes the promise
     /// most plainly. The channel list, the tail and the deictic half are byte-identical across
@@ -499,7 +499,7 @@ public enum BioShapedParameter: String, CaseIterable, Identifiable, Sendable {
         return allCases.filter { live.contains($0) }
     }
 
-    /// The Sound panel's line: which rows ON THAT PANEL the body moves while a session runs.
+    /// The Sound panel's line: which rows ON THAT PANEL the body moves while the instrument plays.
     ///
     /// ⭐ IT SAYS "around the values you set" ON PURPOSE, and that is the #556 law in the
     /// player's language: these rows are ANCHORS. `applyBioReactive` recomputes each of them

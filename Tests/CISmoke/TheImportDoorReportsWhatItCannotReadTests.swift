@@ -124,8 +124,8 @@ final class TheImportDoorReportsWhatItCannotReadTests: XCTestCase {
         }
         let note = ProjectStore.importFailureNote(try XCTUnwrap(thrown))
 
-        XCTAssertEqual(note, "That file isn't an Echoel session.", """
-            Non-JSON bytes must read as "not a session" — got "\(note)". `.dataCorrupted` at \
+        XCTAssertEqual(note, "That file isn't an Echoel piece.", """
+            Non-JSON bytes must read as "not a piece" — got "\(note)". `.dataCorrupted` at \
             the root carries an EMPTY codingPath; there is no field to name because the bytes \
             were never a document.
             """)
@@ -162,8 +162,8 @@ final class TheImportDoorReportsWhatItCannotReadTests: XCTestCase {
             first is ours; claim 4 drives the join on a path this file controls and would stay \
             green in the second case, which is the discriminator.
             """)
-        XCTAssertNotEqual(note, "That file isn't an Echoel session.", """
-            A file that IS an Echoel session with one bad field must not read the same as a \
+        XCTAssertNotEqual(note, "That file isn't an Echoel piece.", """
+            A file that IS an Echoel piece with one bad field must not read the same as a \
             photo. If these two collapse into one sentence, the note stops being actionable \
             and claim 1 becomes green about nothing.
             """)
