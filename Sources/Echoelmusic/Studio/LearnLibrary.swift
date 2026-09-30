@@ -19,12 +19,12 @@ public enum LearnSection: String, CaseIterable, Identifiable, Sendable {
 
     public var title: String {
         switch self {
-        case .guide:       return "Start Here"
-        case .body:        return "Your Body"
-        case .bodyScience: return "Body Science"
-        case .music:       return "Music Theory"
-        case .light:       return "Light & Colour"
-        case .safety:      return "Safety & Scope"
+        case .guide:       return String(localized: "Start Here")
+        case .body:        return String(localized: "Your Body")
+        case .bodyScience: return String(localized: "Body Science")
+        case .music:       return String(localized: "Music Theory")
+        case .light:       return String(localized: "Light & Colour")
+        case .safety:      return String(localized: "Safety & Scope")
         }
     }
 }
@@ -59,111 +59,81 @@ public enum LearnLibrary {
     /// ⚠️ NO HEALING LANGUAGE, deliberately, including in the "feel" entry — vocal/tonal work
     /// and haptics are described as practice and self-observation (the Body Science precedent).
     /// The healing theme is a hard product red line, not a style preference.
+    ///
+    /// ⭐ E4-23 (2026-09-30): every field is ONE catalog key — `String(localized:)` over ONE literal per
+    /// field, never a `+` chain (a seam would split the key and the German would never be found).
+    /// Control names quoted inside a key use typographic quotes (“Studio”), because the catalog
+    /// guard matches each key as a QUOTED literal in raw source and an escaped `\"` can never match.
+    /// The retraction comments sit ABOVE `detail:` so the safety guard's per-entry extractor keeps
+    /// reading one literal.
     public static var guideEntries: [LearnEntry] {
         [
             LearnEntry(
                 id: "guide.firstSession", section: .guide,
-                title: "Your first three minutes",
-                summary: "The app opens on your piece. Here is the way in.",
-                detail: "Echoel opens on your piece — the header, then two words: Piece and "
-                    + "Instrument — with its living picture as a small card above them. "
-                    + "Piece shows your tracks and parts and walks you through making one. "
-                    + "Instrument is where your body plays: press its Play button and it "
-                    + "composes in your key and genre; once it can read your body, your body "
-                    + "plays it. Tap the card's resize arrows to make the picture fill the "
-                    + "screen; there, the \"Studio\" chip brings the controls back and the X "
-                    + "hides the picture. Nothing sounds until you start it — silence at "
-                    + "launch is by design, not a fault."
+                title: String(localized: "Your first three minutes"),
+                summary: String(localized: "The app opens on your piece. Here is the way in."),
+                detail: String(localized: "Echoel opens on your piece — the header, then two words: Piece and Instrument — with its living picture as a small card above them. Piece shows your tracks and parts and walks you through making one. Instrument is where your body plays: press its Play button and it composes in your key and genre; once it can read your body, your body plays it. Tap the card's resize arrows to make the picture fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you start it — silence at launch is by design, not a fault.")
             ),
             LearnEntry(
                 id: "guide.hear", section: .guide,
-                title: "Hear it",
-                summary: "Press Play; the music is composed, then your body shapes it.",
-                detail: "Play starts generated music — harmony, melody and bass in one key, "
-                    + "at one tempo, in the genre you chose. Your heart and breath then bend "
-                    + "its brightness, its swell and its calm in real time. For your own "
-                    + "voice in the loop, switch on \"Body voice\" in the Bio panel: a held "
-                    + "tone that your breath opens and closes — exhale, and it fades; inhale, "
-                    + "and it returns. Toning with it, vowels and hums, is a practice of "
-                    + "self-observation: you hear your own breathing pattern as sound."
+                title: String(localized: "Hear it"),
+                summary: String(localized: "Press Play; the music is composed, then your body shapes it."),
+                detail: String(localized: "Play starts generated music — harmony, melody and bass in one key, at one tempo, in the genre you chose. Your heart and breath then bend its brightness, its swell and its calm in real time. For your own voice in the loop, switch on “Body voice” in the Bio panel: a held tone that your breath opens and closes — exhale, and it fades; inhale, and it returns. Toning with it, vowels and hums, is a practice of self-observation: you hear your own breathing pattern as sound.")
             ),
             LearnEntry(
                 id: "guide.see", section: .guide,
-                title: "See it",
-                summary: "The picture moves with your body — and it is playable.",
-                detail: "The picture breathes with you: pulse, breath and coherence drive its "
-                    + "colour and motion, capped below 3 flashes per second. Touch it to play "
-                    + "notes — every touch lands in key, so there is no wrong place. It stays "
-                    // ⛔ SAID "the picture holds still entirely" UNTIL #1018 — the SAME false
-                    // promise #994 removed from the safety card, in the same file, in different
-                    // words. See the ⛔ block on `safety.contraindications` below for the
-                    // measurement. The guard's claim 1 forbids ONE literal spelling, which
-                    // these two siblings never used — so it passed while they lied. ⚠️ That
-                    // phrase is deliberately NOT written out here: claim 1 scans the whole
-                    // file, so quoting the wording it bans would turn this retraction into the
-                    // offence (#491) — which is exactly what the first draft of this comment
-                    // did, and the transcription caught it.
-                    + "playable at every window size. With Reduce Motion on, the picture "
-                    + "stops its motion; the small header monitors keep following the music."
-                    // ⛔ SAID "You can record it as a share-ready video." UNTIL #1318 — a
-                    // capability #1304 DELETED (founder 2026-09-12, "Kein Video Capture").
-                    // Nothing under `Sources/` can write one: the only `AVAssetWriter` is in
-                    // `Audio/SingleExport.swift` with `mediaType: .audio`, and there is no
-                    // ReplayKit and no `AVCaptureMovieFileOutput` anywhere. This entry renders
-                    // unconditionally behind a LIVE door (`LearnView` `Text(entry.detail)`;
-                    // `.guide` is the first section; the Learn sheet hangs off `quickDoorRow`),
-                    // so it was the retracted claim's most reachable home in the whole product.
-                    // ⚠️ AND NO GUARD COULD MATCH IT. `TheStoreTextClaimsOnlyWhatShipsTests`
-                    // reads `fastlane/metadata/**` and never `Sources/`; its #1304 needles
-                    // ("video capture", "video recording", "record the visual", "share-ready
-                    // mp4") are none of them substrings of the sentence above; and this file
-                    // sat in NO retracted-capability scan at all: the guide guard only
-                    // asserts that the controls it NAMES exist. The repair is one
-                    // list over all four copy surfaces (#416):
-                    // `TheShareReadyClipIsNotSoldAnywhereTests`. It scans this file through
-                    // `SourceText.codeOnly`, which is why this retraction may quote the
-                    // sentence it retracts without becoming the offence (#491).
+                title: String(localized: "See it"),
+                summary: String(localized: "The picture moves with your body — and it is playable."),
+                // ⛔ SAID "the picture holds still entirely" UNTIL #1018 — the SAME false
+                // promise #994 removed from the safety card, in the same file, in different
+                // words. See the ⛔ block on `safety.contraindications` below for the
+                // measurement. The guard's claim 1 forbids ONE literal spelling, which
+                // these two siblings never used — so it passed while they lied. ⚠️ That
+                // phrase is deliberately NOT written out here: claim 1 scans the whole
+                // file, so quoting the wording it bans would turn this retraction into the
+                // offence (#491) — which is exactly what the first draft of this comment
+                // did, and the transcription caught it.
+                // ⛔ SAID "You can record it as a share-ready video." UNTIL #1318 — a
+                // capability #1304 DELETED (founder 2026-09-12, "Kein Video Capture").
+                // Nothing under `Sources/` can write one: the only `AVAssetWriter` is in
+                // `Audio/SingleExport.swift` with `mediaType: .audio`, and there is no
+                // ReplayKit and no `AVCaptureMovieFileOutput` anywhere. This entry renders
+                // unconditionally behind a LIVE door (`LearnView` `Text(entry.detail)`;
+                // `.guide` is the first section; the Learn sheet hangs off `quickDoorRow`),
+                // so it was the retracted claim's most reachable home in the whole product.
+                // ⚠️ AND NO GUARD COULD MATCH IT. `TheStoreTextClaimsOnlyWhatShipsTests`
+                // reads `fastlane/metadata/**` and never `Sources/`; its #1304 needles
+                // ("video capture", "video recording", "record the visual", "share-ready
+                // mp4") are none of them substrings of the sentence above; and this file
+                // sat in NO retracted-capability scan at all: the guide guard only
+                // asserts that the controls it NAMES exist. The repair is one
+                // list over all four copy surfaces (#416):
+                // `TheShareReadyClipIsNotSoldAnywhereTests`. It scans this file through
+                // `SourceText.codeOnly`, which is why this retraction may quote the
+                // sentence it retracts without becoming the offence (#491).
+                detail: String(localized: "The picture breathes with you: pulse, breath and coherence drive its colour and motion, capped below 3 flashes per second. Touch it to play notes — every touch lands in key, so there is no wrong place. It stays playable at every window size. With Reduce Motion on, the picture stops its motion; the small header monitors keep following the music.")
             ),
             LearnEntry(
                 id: "guide.feel", section: .guide,
-                title: "Feel it",
-                summary: "The beat in your hand, the bass in your body.",
-                detail: "Switch on \"Haptic beat (feel)\" under \"Tempo & variations\" and the "
-                    + "phone pulses on each quarter-note, the downbeat strongest — you can "
-                    + "hold time without watching the screen. The sub-bass is tuned to be "
-                    + "felt as much as heard: on a sub, in headphones, or through the "
-                    + "haptics. Eyes-free by intention: the instrument is playable without "
-                    + "looking at it."
+                title: String(localized: "Feel it"),
+                summary: String(localized: "The beat in your hand, the bass in your body."),
+                detail: String(localized: "Switch on “Haptic beat (feel)” under “Tempo & variations” and the phone pulses on each quarter-note, the downbeat strongest — you can hold time without watching the screen. The sub-bass is tuned to be felt as much as heard: on a sub, in headphones, or through the haptics. Eyes-free by intention: the instrument is playable without looking at it.")
             ),
             LearnEntry(
                 id: "guide.pulse", section: .guide,
-                title: "Give it your pulse",
-                summary: "Start the music first — then a finger on the back camera.",
-                detail: "After you press Play, lay a fingertip flat over the back camera and "
-                    + "flash; the torch lights your skin and Echoel reads your heartbeat "
-                    + "from it. Hold still and soft — it locks within seconds and tells you "
-                    + "when you can let go. A Bluetooth chest strap (Polar and similar) is "
-                    + "the most accurate source and frees your hands: choose it from the "
-                    + "pulse pill's source menu. An Apple Watch works via Health, a few "
-                    + "seconds behind. The order matters: the camera only starts with the "
-                    + "music, so a finger before Play reads nothing."
+                title: String(localized: "Give it your pulse"),
+                summary: String(localized: "Start the music first — then a finger on the back camera."),
+                detail: String(localized: "After you press Play, lay a fingertip flat over the back camera and flash; the torch lights your skin and Echoel reads your heartbeat from it. Hold still and soft — it locks within seconds and tells you when you can let go. A Bluetooth chest strap (Polar and similar) is the most accurate source and frees your hands: choose it from the pulse pill's source menu. An Apple Watch works via Health, a few seconds behind. The order matters: the camera only starts with the music, so a finger before Play reads nothing.")
             ),
             LearnEntry(
                 id: "guide.access", section: .guide,
-                title: "For every body",
-                summary: "Hearing, seeing or feeling — any one of them is a way in.",
-                detail: "The three channels above are deliberately redundant: the beat can be "
-                    + "felt without being seen, the picture read without being heard, the "
-                    + "music followed without the screen. VoiceOver speaks the primary "
-                    + "controls, text follows your system size, numbers are typed on a large "
-                    // ⛔ SAID "Reduce Motion freezes the visual without stopping the music"
-                    // until #1018. This is the ACCESSIBILITY entry — the one read by exactly
-                    // the person the sentence misleads — so it also names the control that
-                    // actually cuts a rig, the way the safety card does.
-                    + "keypad instead of turned on tiny knobs, and Reduce Motion stops the "
-                    + "immersive picture's motion without stopping the music. If flashing "
-                    + "light affects you, turn Reduce Motion on before you start, and use "
-                    + "Blackout in Routing to cut connected fixtures."
+                title: String(localized: "For every body"),
+                summary: String(localized: "Hearing, seeing or feeling — any one of them is a way in."),
+                // ⛔ SAID "Reduce Motion freezes the visual without stopping the music"
+                // until #1018. This is the ACCESSIBILITY entry — the one read by exactly
+                // the person the sentence misleads — so it also names the control that
+                // actually cuts a rig, the way the safety card does.
+                detail: String(localized: "The three channels above are deliberately redundant: the beat can be felt without being seen, the picture read without being heard, the music followed without the screen. VoiceOver speaks the primary controls, text follows your system size, numbers are typed on a large keypad instead of turned on tiny knobs, and Reduce Motion stops the immersive picture's motion without stopping the music. If flashing light affects you, turn Reduce Motion on before you start, and use Blackout in Routing to cut connected fixtures.")
             ),
         ]
     }
@@ -236,28 +206,15 @@ public enum LearnLibrary {
             // a copy fix ships today and stops the promise; the chrome change is its own slice.
             LearnEntry(
                 id: "safety.contraindications", section: .safety,
-                title: "When not to use Echoelmusic",
-                summary: "Four limits — read them once, they matter.",
-                detail: "Do not use rhythmic audio-visual pacing while driving or "
-                    + "operating machinery. Do not use it under the influence of "
-                    + "alcohol or drugs. If you are using Echoelmusic alongside any "
-                    + "therapeutic programme, coordinate it — and any medication "
-                    + "timing — with your own provider; Echoelmusic is not part of a "
-                    + "treatment and replaces nothing. Visuals are capped at 3 flashes "
-                    + "per second (W3C WCAG). Reduce Motion stops the immersive picture's "
-                    + "motion; the small header monitors and any connected lamps keep "
-                    + "following the music, rate-limited rather than frozen. If you are "
-                    + "photosensitive, turn Reduce Motion on before you start, and use "
-                    + "Blackout in Routing to cut connected fixtures. Stop if you feel "
-                    + "unwell."
+                title: String(localized: "When not to use Echoelmusic"),
+                summary: String(localized: "Four limits — read them once, they matter."),
+                detail: String(localized: "Do not use rhythmic audio-visual pacing while driving or operating machinery. Do not use it under the influence of alcohol or drugs. If you are using Echoelmusic alongside any therapeutic programme, coordinate it — and any medication timing — with your own provider; Echoelmusic is not part of a treatment and replaces nothing. Visuals are capped at 3 flashes per second (W3C WCAG). Reduce Motion stops the immersive picture's motion; the small header monitors and any connected lamps keep following the music, rate-limited rather than frozen. If you are photosensitive, turn Reduce Motion on before you start, and use Blackout in Routing to cut connected fixtures. Stop if you feel unwell.")
             ),
             LearnEntry(
                 id: "safety.scope", section: .safety,
-                title: "Self-observation, not diagnosis",
-                summary: "What Echoelmusic’s biofeedback is — and is not.",
-                detail: BioMetric.disclaimer
-                    + " Bio readings are most accurate from a chest strap; wrist and "
-                    + "camera are estimates. Breathing guides are optional and never forced."
+                title: String(localized: "Self-observation, not diagnosis"),
+                summary: String(localized: "What Echoelmusic’s biofeedback is — and is not."),
+                detail: BioMetric.disclaimer + String(localized: " Bio readings are most accurate from a chest strap; wrist and camera are estimates. Breathing guides are optional and never forced.")
             )
         ]
     }

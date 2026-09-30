@@ -74,8 +74,8 @@ public enum BioMetric: String, CaseIterable, Identifiable, Sendable {
     }
 
     /// Shown under every explanation — the safety/scope disclaimer.
-    public static let disclaimer =
-        "For music and self-observation only — not a medical device and not for diagnosis. Readings are approximate; don’t use them for health decisions."
+    /// E4-23 (2026-09-30): a catalog key — the German phone reads the disclaimer in German.
+    public static let disclaimer = String(localized: "For music and self-observation only — not a medical device and not for diagnosis. Readings are approximate; don’t use them for health decisions.")
 
     /// The origin note that belongs beside a heading claiming the body is showing something,
     /// or `nil` when a real body genuinely is (#646).

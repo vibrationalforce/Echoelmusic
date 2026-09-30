@@ -44,7 +44,8 @@
 // E4-20 added the 23 Genre shelf headers (parent: 0/23 localised, 22 units missing — ONE finding). E4-21 added the
 // 57 scale display names plus the shortName counterweight (parent: 0/57, 57 units missing — ONE finding). E4-22 added
 // the icon tile's key wrap, the Record tile's four state titles and the two spoken accidentals (parent: all verbatim,
-// six units missing — ONE finding). Claim 12
+// six units missing — ONE finding). E4-23 added the eight Learn cards (guide + safety), the six Learn headings and the
+// bio disclaimer as one-literal keys (parent: 0/8 titles, `+` chains present, 31 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -629,6 +630,30 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertTrue(notes.contains("with: String(localized: \" sharp\")") && notes.contains("with: String(localized: \" flat\")"),
                       "`spokenName` expands ♯/♭ to a verbatim English word again")
         try assertGerman(["MIDI", "Open", "Live Colabo", "Learn", "Save", "Keep last", "Stop", "Recording", "Writing", "Record", " sharp", " flat"], "icon tile, record tile and accidental words")
+        // E4-23 — the Learn/guide cards (six guide + two safety entries), the six Learn headings and the bio
+        // disclaimer are catalog keys: ONE `String(localized:)` literal per field, no `+` chain. The detail keys
+        // are read back at RUNTIME (en unit == key in the simulator) so no 900-character literal lives here.
+        let learn = try codeOnly("Sources/Echoelmusic/Studio/LearnLibrary.swift")
+        XCTAssertEqual(learn.components(separatedBy: "title: String(localized: \"").count - 1, 8, "a Learn card title is a verbatim String again")
+        XCTAssertEqual(learn.components(separatedBy: "summary: String(localized: \"").count - 1, 8, "a Learn card summary is a verbatim String again")
+        XCTAssertEqual(learn.components(separatedBy: "detail: String(localized: \"").count - 1, 7, "a Learn card detail is a verbatim String or a `+` chain again")
+        XCTAssertTrue(learn.contains("detail: BioMetric.disclaimer + String(localized: \" Bio readings are most accurate"), "the scope card lost its localised tail seam")
+        XCTAssertFalse(learn.contains("\"\n                    + \""), "a Learn card detail is a `+` chain again — a seam splits the catalog key")
+        for heading in ["Start Here", "Your Body", "Body Science", "Music Theory", "Light & Colour", "Safety & Scope"] {
+            XCTAssertTrue(learn.contains("return String(localized: \"\(heading)\")"), "`LearnSection.title` spells `\(heading)` verbatim again")
+        }
+        let metricInfo = try codeOnly("Sources/Echoelmusic/Studio/BioMetricInfo.swift")
+        XCTAssertTrue(metricInfo.contains("public static let disclaimer = String(localized: \"For music and self-observation only"), "`BioMetric.disclaimer` is a verbatim String again")
+        let cards = LearnLibrary.guideEntries + LearnLibrary.safetyEntries
+        XCTAssertEqual(cards.count, 8, "the guide + safety card set changed size — re-derive this block")
+        for card in cards {
+            XCTAssertNotNil(german(card.title, in: strings), "no German unit for the Learn card title `\(card.title)`")
+            XCTAssertNotNil(german(card.summary, in: strings), "no German unit for the Learn card summary of `\(card.id)`")
+            if card.id != "safety.scope" {   // its detail is the disclaimer + a tail seam, pinned separately below
+                XCTAssertNotNil(german(card.detail, in: strings), "no German unit for the Learn card detail of `\(card.id)`")
+            }
+        }
+        try assertGerman(["Start Here", "Your Body", "Body Science", "Music Theory", "Light & Colour", "Safety & Scope", "For music and self-observation only — not a medical device and not for diagnosis. Readings are approximate; don’t use them for health decisions.", " Bio readings are most accurate from a chest strap; wrist and camera are estimates. Breathing guides are optional and never forced."], "Learn headings, disclaimer and scope tail")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

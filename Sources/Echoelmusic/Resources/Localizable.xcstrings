@@ -15804,6 +15804,564 @@
           }
         }
       }
+    },
+    "Start Here" : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Here"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier anfangen"
+          }
+        }
+      }
+    },
+    "Your Body" : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your Body"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Körper"
+          }
+        }
+      }
+    },
+    "Body Science" : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Body Science"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Körperforschung"
+          }
+        }
+      }
+    },
+    "Music Theory" : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Music Theory"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musiktheorie"
+          }
+        }
+      }
+    },
+    "Light & Colour" : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Light & Colour"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Licht & Farbe"
+          }
+        }
+      }
+    },
+    "Safety & Scope" : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safety & Scope"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sicherheit & Grenzen"
+          }
+        }
+      }
+    },
+    "For music and self-observation only — not a medical device and not for diagnosis. Readings are approximate; don’t use them for health decisions." : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "For music and self-observation only — not a medical device and not for diagnosis. Readings are approximate; don’t use them for health decisions."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur für Musik und Selbstbeobachtung — kein Medizinprodukt und nicht zur Diagnose. Messwerte sind ungefähr; triff damit keine Gesundheitsentscheidungen."
+          }
+        }
+      }
+    },
+    "Your first three minutes" : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your first three minutes"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine ersten drei Minuten"
+          }
+        }
+      }
+    },
+    "The app opens on your piece. Here is the way in." : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The app opens on your piece. Here is the way in."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die App öffnet sich auf deinem Stück. So kommst du hinein."
+          }
+        }
+      }
+    },
+    "Echoel opens on your piece — the header, then two words: Piece and Instrument — with its living picture as a small card above them. Piece shows your tracks and parts and walks you through making one. Instrument is where your body plays: press its Play button and it composes in your key and genre; once it can read your body, your body plays it. Tap the card's resize arrows to make the picture fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you start it — silence at launch is by design, not a fault." : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echoel opens on your piece — the header, then two words: Piece and Instrument — with its living picture as a small card above them. Piece shows your tracks and parts and walks you through making one. Instrument is where your body plays: press its Play button and it composes in your key and genre; once it can read your body, your body plays it. Tap the card's resize arrows to make the picture fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you start it — silence at launch is by design, not a fault."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echoel öffnet sich auf deinem Stück — der Kopf, darunter zwei Wörter: Stück und Instrument — mit seinem lebenden Bild als kleiner Karte darüber. Stück zeigt deine Spuren und Teile und führt dich durch das Anlegen eines Stücks. Instrument ist der Ort, an dem dein Körper spielt: Tippe dort auf Abspielen, und es komponiert in deiner Tonart und deinem Genre; sobald es deinen Körper lesen kann, spielt dein Körper es. Tippe auf die Größenpfeile der Karte, damit das Bild den Bildschirm füllt; dort holt der Chip „Studio“ die Bedienelemente zurück, und das X blendet das Bild aus. Nichts klingt, bevor du es startest — Stille beim Start ist Absicht, kein Fehler."
+          }
+        }
+      }
+    },
+    "Hear it" : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hear it"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hör es"
+          }
+        }
+      }
+    },
+    "Press Play; the music is composed, then your body shapes it." : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Press Play; the music is composed, then your body shapes it."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe auf Abspielen; die Musik wird komponiert, dann formt dein Körper sie."
+          }
+        }
+      }
+    },
+    "Play starts generated music — harmony, melody and bass in one key, at one tempo, in the genre you chose. Your heart and breath then bend its brightness, its swell and its calm in real time. For your own voice in the loop, switch on “Body voice” in the Bio panel: a held tone that your breath opens and closes — exhale, and it fades; inhale, and it returns. Toning with it, vowels and hums, is a practice of self-observation: you hear your own breathing pattern as sound." : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play starts generated music — harmony, melody and bass in one key, at one tempo, in the genre you chose. Your heart and breath then bend its brightness, its swell and its calm in real time. For your own voice in the loop, switch on “Body voice” in the Bio panel: a held tone that your breath opens and closes — exhale, and it fades; inhale, and it returns. Toning with it, vowels and hums, is a practice of self-observation: you hear your own breathing pattern as sound."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abspielen startet erzeugte Musik — Harmonie, Melodie und Bass in einer Tonart, in einem Tempo, im Genre, das du gewählt hast. Dein Herz und dein Atem verbiegen dann in Echtzeit ihre Helligkeit, ihr Schwellen und ihre Ruhe. Für deine eigene Stimme in der Schleife schaltest du im Bio-Panel „Körperstimme“ ein: ein gehaltener Ton, den dein Atem öffnet und schließt — atme aus, und er verklingt; atme ein, und er kehrt zurück. Damit zu tönen, Vokale und Summen, ist eine Übung der Selbstbeobachtung: Du hörst dein eigenes Atemmuster als Klang."
+          }
+        }
+      }
+    },
+    "See it" : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See it"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sieh es"
+          }
+        }
+      }
+    },
+    "The picture moves with your body — and it is playable." : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The picture moves with your body — and it is playable."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Bild bewegt sich mit deinem Körper — und es ist spielbar."
+          }
+        }
+      }
+    },
+    "The picture breathes with you: pulse, breath and coherence drive its colour and motion, capped below 3 flashes per second. Touch it to play notes — every touch lands in key, so there is no wrong place. It stays playable at every window size. With Reduce Motion on, the picture stops its motion; the small header monitors keep following the music." : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The picture breathes with you: pulse, breath and coherence drive its colour and motion, capped below 3 flashes per second. Touch it to play notes — every touch lands in key, so there is no wrong place. It stays playable at every window size. With Reduce Motion on, the picture stops its motion; the small header monitors keep following the music."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Bild atmet mit dir: Puls, Atem und Kohärenz treiben seine Farbe und Bewegung, begrenzt auf unter 3 Blitze pro Sekunde. Berühre es, um Noten zu spielen — jede Berührung landet in der Tonart, es gibt also keine falsche Stelle. Es bleibt in jeder Fenstergröße spielbar. Mit „Bewegung reduzieren“ hält das Bild seine Bewegung an; die kleinen Kopf-Monitore folgen der Musik weiter."
+          }
+        }
+      }
+    },
+    "Feel it" : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feel it"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fühl es"
+          }
+        }
+      }
+    },
+    "The beat in your hand, the bass in your body." : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The beat in your hand, the bass in your body."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Beat in deiner Hand, der Bass in deinem Körper."
+          }
+        }
+      }
+    },
+    "Switch on “Haptic beat (feel)” under “Tempo & variations” and the phone pulses on each quarter-note, the downbeat strongest — you can hold time without watching the screen. The sub-bass is tuned to be felt as much as heard: on a sub, in headphones, or through the haptics. Eyes-free by intention: the instrument is playable without looking at it." : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch on “Haptic beat (feel)” under “Tempo & variations” and the phone pulses on each quarter-note, the downbeat strongest — you can hold time without watching the screen. The sub-bass is tuned to be felt as much as heard: on a sub, in headphones, or through the haptics. Eyes-free by intention: the instrument is playable without looking at it."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schalte „Haptischer Beat (fühlen)“ unter „Tempo & Variationen“ ein, und das Telefon pulsiert auf jeder Viertelnote, am stärksten auf der Eins — du kannst die Zeit halten, ohne auf den Bildschirm zu sehen. Der Sub-Bass ist so gestimmt, dass er ebenso gefühlt wie gehört wird: auf einem Sub, im Kopfhörer oder über die Haptik. Absichtlich ohne Blick: Das Instrument ist spielbar, ohne es anzusehen."
+          }
+        }
+      }
+    },
+    "Give it your pulse" : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Give it your pulse"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib ihm deinen Puls"
+          }
+        }
+      }
+    },
+    "Start the music first — then a finger on the back camera." : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start the music first — then a finger on the back camera."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starte zuerst die Musik — dann ein Finger auf die Rückkamera."
+          }
+        }
+      }
+    },
+    "After you press Play, lay a fingertip flat over the back camera and flash; the torch lights your skin and Echoel reads your heartbeat from it. Hold still and soft — it locks within seconds and tells you when you can let go. A Bluetooth chest strap (Polar and similar) is the most accurate source and frees your hands: choose it from the pulse pill's source menu. An Apple Watch works via Health, a few seconds behind. The order matters: the camera only starts with the music, so a finger before Play reads nothing." : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "After you press Play, lay a fingertip flat over the back camera and flash; the torch lights your skin and Echoel reads your heartbeat from it. Hold still and soft — it locks within seconds and tells you when you can let go. A Bluetooth chest strap (Polar and similar) is the most accurate source and frees your hands: choose it from the pulse pill's source menu. An Apple Watch works via Health, a few seconds behind. The order matters: the camera only starts with the music, so a finger before Play reads nothing."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nachdem du auf Abspielen getippt hast, lege eine Fingerkuppe flach über Rückkamera und Blitz; die Lampe leuchtet deine Haut an, und Echoel liest daraus deinen Herzschlag. Halte still und locker — es rastet innerhalb von Sekunden ein und sagt dir, wann du loslassen kannst. Ein Bluetooth-Brustgurt (Polar und ähnliche) ist die genaueste Quelle und macht die Hände frei: Wähle ihn im Quellen-Menü der Puls-Pille. Eine Apple Watch funktioniert über Health, ein paar Sekunden verzögert. Die Reihenfolge zählt: Die Kamera startet nur mit der Musik, ein Finger vor Abspielen liest also nichts."
+          }
+        }
+      }
+    },
+    "For every body" : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "For every body"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für jeden Körper"
+          }
+        }
+      }
+    },
+    "Hearing, seeing or feeling — any one of them is a way in." : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hearing, seeing or feeling — any one of them is a way in."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hören, Sehen oder Fühlen — jedes davon ist ein Weg hinein."
+          }
+        }
+      }
+    },
+    "The three channels above are deliberately redundant: the beat can be felt without being seen, the picture read without being heard, the music followed without the screen. VoiceOver speaks the primary controls, text follows your system size, numbers are typed on a large keypad instead of turned on tiny knobs, and Reduce Motion stops the immersive picture's motion without stopping the music. If flashing light affects you, turn Reduce Motion on before you start, and use Blackout in Routing to cut connected fixtures." : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The three channels above are deliberately redundant: the beat can be felt without being seen, the picture read without being heard, the music followed without the screen. VoiceOver speaks the primary controls, text follows your system size, numbers are typed on a large keypad instead of turned on tiny knobs, and Reduce Motion stops the immersive picture's motion without stopping the music. If flashing light affects you, turn Reduce Motion on before you start, and use Blackout in Routing to cut connected fixtures."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die drei Kanäle oben sind absichtlich redundant: Der Beat lässt sich fühlen, ohne gesehen zu werden, das Bild lesen, ohne gehört zu werden, die Musik verfolgen ohne den Bildschirm. VoiceOver spricht die wichtigsten Bedienelemente, Text folgt deiner Systemgröße, Zahlen werden auf einem großen Tastenfeld getippt statt an winzigen Reglern gedreht, und „Bewegung reduzieren“ hält die Bewegung des immersiven Bildes an, ohne die Musik zu stoppen. Wenn blinkendes Licht dir zusetzt, schalte „Bewegung reduzieren“ ein, bevor du startest, und nutze Blackout in Routing, um angeschlossene Leuchten abzuschalten."
+          }
+        }
+      }
+    },
+    "When not to use Echoelmusic" : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When not to use Echoelmusic"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wann du Echoelmusic nicht nutzen solltest"
+          }
+        }
+      }
+    },
+    "Four limits — read them once, they matter." : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Four limits — read them once, they matter."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vier Grenzen — einmal lesen, sie zählen."
+          }
+        }
+      }
+    },
+    "Do not use rhythmic audio-visual pacing while driving or operating machinery. Do not use it under the influence of alcohol or drugs. If you are using Echoelmusic alongside any therapeutic programme, coordinate it — and any medication timing — with your own provider; Echoelmusic is not part of a treatment and replaces nothing. Visuals are capped at 3 flashes per second (W3C WCAG). Reduce Motion stops the immersive picture's motion; the small header monitors and any connected lamps keep following the music, rate-limited rather than frozen. If you are photosensitive, turn Reduce Motion on before you start, and use Blackout in Routing to cut connected fixtures. Stop if you feel unwell." : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do not use rhythmic audio-visual pacing while driving or operating machinery. Do not use it under the influence of alcohol or drugs. If you are using Echoelmusic alongside any therapeutic programme, coordinate it — and any medication timing — with your own provider; Echoelmusic is not part of a treatment and replaces nothing. Visuals are capped at 3 flashes per second (W3C WCAG). Reduce Motion stops the immersive picture's motion; the small header monitors and any connected lamps keep following the music, rate-limited rather than frozen. If you are photosensitive, turn Reduce Motion on before you start, and use Blackout in Routing to cut connected fixtures. Stop if you feel unwell."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutze rhythmische audiovisuelle Taktgebung nicht beim Fahren oder beim Bedienen von Maschinen. Nutze sie nicht unter dem Einfluss von Alkohol oder Drogen. Wenn du Echoelmusic neben einem therapeutischen Programm nutzt, stimme das — und jede Medikamenten-Einnahmezeit — mit deiner eigenen Behandlerin oder deinem eigenen Behandler ab; Echoelmusic ist kein Teil einer Behandlung und ersetzt nichts. Visuals sind auf 3 Blitze pro Sekunde begrenzt (W3C WCAG). „Bewegung reduzieren“ hält die Bewegung des immersiven Bildes an; die kleinen Kopf-Monitore und angeschlossene Lampen folgen der Musik weiter, gedrosselt statt eingefroren. Wenn du lichtempfindlich bist, schalte „Bewegung reduzieren“ ein, bevor du startest, und nutze Blackout in Routing, um angeschlossene Leuchten abzuschalten. Hör auf, wenn du dich unwohl fühlst."
+          }
+        }
+      }
+    },
+    "Self-observation, not diagnosis" : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Self-observation, not diagnosis"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selbstbeobachtung, keine Diagnose"
+          }
+        }
+      }
+    },
+    "What Echoelmusic’s biofeedback is — and is not." : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What Echoelmusic’s biofeedback is — and is not."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was das Biofeedback von Echoelmusic ist — und was nicht."
+          }
+        }
+      }
+    },
+    " Bio readings are most accurate from a chest strap; wrist and camera are estimates. Breathing guides are optional and never forced." : {
+      "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Bio readings are most accurate from a chest strap; wrist and camera are estimates. Breathing guides are optional and never forced."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Bio-Messwerte sind vom Brustgurt am genauesten; Handgelenk und Kamera sind Schätzungen. Atemführungen sind optional und werden nie erzwungen."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
