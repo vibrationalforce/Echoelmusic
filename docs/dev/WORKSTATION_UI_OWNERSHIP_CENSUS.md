@@ -104,7 +104,7 @@ EchoelmusicApp (@main, EchoelmusicApp.swift)                 ← 58 engines/stor
  │       │          · ImmersiveMonitorMini (toggles floating visual)
  │       ├─ CompositionHeaderStrip (genre/key/scale/tuning/A4/lock) ──post .echoelCompositionEdited
  │       ├─ SurfaceHost → EchoelStudioView  ◄── receives .echoelChromeDoor / .echoelSelectBioSource
- │       │    ├─ startControlRow (Start · BodyTempoField · PlaybackToggle · PulseMonitorMiniLive
+ │       │    ├─ startControlRow (Start · BodyTempoField · PlaybackToggle — PulseMonitorMiniLive moved to ProjectHeader 2026-09-30
  │       │    │                   · quickActionRow · quickDoorRow · AudioDegradedRow)
  │       │    ├─ menuBar: studioChips = sound·effects·mix·master·mood·composition·field·workstation·export
  │       │    │           (+ .bio appended when the pulse pill opened it)
@@ -229,7 +229,7 @@ constructed-but-unreferenced sections rather than view types: `moodPadsSection` 
 | S05 | CompositionHeaderStrip | `S/WorkspaceView.swift` | header, always | WS | DEV (genre = composer input) | partly | yes (key/scale/A4) | music | no | **W2** |
 | S06 | TransportPositionView | `S/WorkspaceView.swift` | header | WS | — | no | yes | — | no | KEEP |
 | S07 | PlaybackToggleButton | `S/WorkspaceView.swift` (built in ESV `transportLine1`) | top line | WS | PERF | no | yes | — | no | **W2** |
-| S08 | PulseMonitorMiniLive (pulse pill) | `S/HeaderMonitors.swift` | top line | DOM (bio) | door into S35 | no | no | bio | no | KEEP |
+| S08 | PulseMonitorMiniLive (pulse pill) | `S/HeaderMonitors.swift` | head (`ProjectHeader`, both stages, since 2026-09-30; before: instrument top line) | DOM (bio) | door into S35 | no | no | bio | no | KEEP |
 | S09 | ImmersiveMonitorMini | `S/HeaderMonitors.swift` | header | DOM (visual) | toggle for S12 | no | no | visual | no | KEEP |
 | S10 | EchoelLuxMonitorMini | `S/HeaderMonitors.swift` | header | DOM (light) | door into S45 | no | no | light | no | KEEP |
 | S11 | GuideOverlay | `S/GuideOverlay.swift` | root overlay | WS | help | no | yes | — | no | KEEP |

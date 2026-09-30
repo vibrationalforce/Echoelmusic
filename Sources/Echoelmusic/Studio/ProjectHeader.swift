@@ -19,6 +19,19 @@
 // ⚠️ NO MODAL. Nothing here presents a sheet, alert or popover (the black-screen law); the
 // header is one more child of the chrome `Group`, and inherits that group's ONE Dynamic Type
 // clamp (`.accessibility1`) instead of setting its own.
+//
+// ⭐ THE PULSE PILL IS THE HEAD'S (interface audit 2026-09-30, "ein Kopf, der spricht", leaf 2;
+// the audit doc's law: "Die Puls-Pille bleibt im Kopf … ‚Körper' bleibt im Kopf sichtbar"). It
+// sat in the instrument's transport row since the founder's 2026-07-31 drawing — made when that
+// plate was the app's home. Since slice 1 the Piece stage is the home, and there the body was
+// nowhere on screen. `PulseMonitorMiniLive` is mounted HERE now, once, above both stages; its
+// tap still posts the "bio" chrome door (which turns the Instrument stage, slice 2b-i) and its
+// long-press still names the source. FREEZE: the pill reads the ~10 Hz publisher in ITS OWN
+// body, exactly as it did in the studio row — this header constructs it and reads nothing of it.
+// LAYOUT: the summary, the pill and the two buttons share one row while their ideal widths fit
+// (`ViewThatFits`, the #1027 idiom), else the pill takes a second line; at accessibility sizes
+// everything stacks. The pill is greedy (its trace flexes), so on its own line it fills the
+// width, and on one line it yields to nothing that has a floor.
 
 import SwiftUI
 
@@ -54,22 +67,35 @@ struct ProjectHeader: View {
         let name = ProjectTransport.projectName(projects.currentProjectName)
         let place = ProjectTransport.place(document: document, trackID: selection.trackID,
                                            regionID: selection.regionID)
-        // At accessibility sizes the facts and the controls stack, so neither is squeezed out
-        // and the transport stays one tap away. `AnyLayout` keeps each child's identity across
-        // the switch — ONE Play button, in either arrangement (the Workstation's own idiom).
-        let layout = dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
-            : AnyLayout(HStackLayout(spacing: 10))
-        return layout {
-            summary(name: name, place: place, status: status)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: 8) {
-                playStopButton(running: running, play: play)
-                RecordTakeButton(playing: player.isPlaying, startable: songStartable,
-                                 voiceCapacity: player.laneVoiceCapacity,
-                                 startSong: { startSong(); return player.isPlaying },
-                                 stopSong: { stopAll() },
-                                 compact: true)
+        // The facts flex, the pill flexes, the two buttons have floors. One row while the ideal
+        // widths fit (a phone in landscape, an iPad), else the pill takes a second line — the
+        // #1027 idiom, `ViewThatFits`; at accessibility sizes everything stacks so nothing is
+        // squeezed out and the transport stays one tap away. (⛔ `AnyLayout` stood here for the
+        // accessibility switch; it went with the pill's arrival, because `ViewThatFits` already
+        // re-creates its candidate on a fit change — a rotation — and one identity law for the
+        // whole row beats two. What that costs: VoiceOver focus may leave the Play button on a
+        // rotation. What it buys: the same Play, the same pill, in every shape.)
+        let summaryView = summary(name: name, place: place, status: status)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        let controls = HStack(spacing: 8) {
+            playStopButton(running: running, play: play)
+            RecordTakeButton(playing: player.isPlaying, startable: songStartable,
+                             voiceCapacity: player.laneVoiceCapacity,
+                             startSong: { startSong(); return player.isPlaying },
+                             stopSong: { stopAll() },
+                             compact: true)
+        }
+        return Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 6) { summaryView; pulsePill; controls }
+            } else {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 10) { summaryView; pulsePill; controls }
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 10) { summaryView; controls }
+                        pulsePill
+                    }
+                }
             }
         }
         .padding(.horizontal, 12)
@@ -108,6 +134,17 @@ struct ProjectHeader: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.updatesFrequently)
+    }
+
+    /// The head's pulse pill — the ONE mount in the app (`HeaderMonitors`, head leaf 2). Its own
+    /// leaf: it reads the ~10 Hz camera publisher in ITS body; this header only constructs it
+    /// (freeze law). Under `#if canImport(AVFoundation)` because the pill is — a platform without
+    /// it gets no pill, and the row simply loses one child.
+    @ViewBuilder
+    private var pulsePill: some View {
+        #if canImport(AVFoundation)
+        PulseMonitorMiniLive()
+        #endif
     }
 
     /// The ONE Play / Stop. While anything runs it is Stop — for everything. Stopped, it plays

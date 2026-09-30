@@ -28,6 +28,15 @@
 // prose moves in EVERY home at once — was applied to two Sources homes and missed the guard
 // that quotes them. Repaired in #1092.
 //
+// ⛔ AND ON 2026-09-30 THE FOUR BECAME THREE (interface audit, "ein Kopf, der spricht", head
+// leaf 2): the pulse pill moved UP to `ProjectHeader`, the head above both stages, because the
+// Piece stage — the home since that day's slice 1 — showed no body at all. Claim 2 is rewritten
+// as that decision, not weakened: line 1 holds ▶ ⏸ tempo+lock and MUST NOT build
+// `PulseMonitorMiniLive` any more (one address, #416), and the header builds it exactly once,
+// choosing one line or two with the `ViewThatFits` the studio row no longer needs. The migrants
+// law is unchanged. The founder's 2026-07-31 drawing put the pill in this row when this plate
+// was the app's home; that is recorded here so the next reader does not "restore" it from #289.
+//
 // ⚠️ WHAT THIS FILE CANNOT DO, said first. Every assertion is a SOURCE SCAN. SwiftUI layout
 // is not reachable from a unit test here, so "the row reads well on a 393 pt phone" and "the
 // chrome is shorter now" are device looks. What is proven is that the bar is gone, that both
@@ -82,7 +91,7 @@ final class TheTransportBarIsDissolvedTests: XCTestCase {
     /// and `TransportPositionView()` up into line 1 left every assertion green while "line 1 is
     /// bit-for-bit unchanged" — the single fact the slice rests on — was false and the pill was
     /// squeezed exactly as feared. Membership is now asserted PER LINE, in both directions.
-    func testTheFirstLineStillHoldsExactlyTheFourOriginals() throws {
+    func testTheFirstLineHoldsTheThreeTransportChildrenAndNotThePill() throws {
         let path = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
         let row = try declarationBody(of: "private var startControlRow: some View {", in: path)
         // ⛔ UNTIL #1092 THIS SCANNED `startControlRow` ITSELF for an inner `HStack(spacing: 8)`
@@ -131,25 +140,46 @@ final class TheTransportBarIsDissolvedTests: XCTestCase {
         // readers in the tree where one belongs. So line 1 is checked for the four NAMES it
         // spells, and the declaration for the two constructions those names resolve to.
         let lineOne = try firstInnerRow(of: line)
-        for child in ["startButton", "PlaybackToggleButton()", "tempo", "pulse"] {
+        for child in ["startButton", "PlaybackToggleButton()", "tempo"] {
             XCTAssertTrue(lineOne.contains(child), """
                 Line 1 of `transportLine1` no longer builds `\(child)`.
 
-                Line 1 is the four-child row as it stood before #456, wrapped by #1027 but not \
-                changed. Its four staying four is what makes "nothing that exists today can be \
-                squeezed" a fact rather than a hope — the whole argument for two lines instead \
-                of one.
+                Line 1 is the transport row as it stood before #456 (wrapped by #1027, three \
+                children since the pill moved to the head on 2026-09-30). Its children staying \
+                on ONE row is what makes "nothing that exists today can be squeezed" a fact \
+                rather than a hope.
 
                 Line 1 scanned: \(lineOne)
                 """)
         }
+        // ⛔ The pill is the FOURTH child no more (2026-09-30, head leaf 2). One address, #416:
+        // a second mount here is a second ~10 Hz camera reader (10.76.50) and the same pulse
+        // on screen twice. If the founder wants it back on this row, MOVE it and move this.
+        XCTAssertFalse(line.contains("PulseMonitorMiniLive"), """
+            `transportLine1` builds the pulse pill again. Since 2026-09-30 its ONE address is \
+            `ProjectHeader`, the head above both stages. Move it, do not add it — and rewrite \
+            this claim in the same commit.
+            """)
+        let pill = try declarationBody(of: "private var pulsePill: some View {",
+                                       in: "Sources/Echoelmusic/Studio/ProjectHeader.swift")
+        XCTAssertTrue(pill.contains("PulseMonitorMiniLive()"), """
+            `ProjectHeader.pulsePill` no longer builds `PulseMonitorMiniLive()`. Then the pill has \
+            NO mount at all — the door `TheBioPanelDoorIsThePulsePillTests` names would be gone.
+            """)
+        let headerBody = try declarationBody(of: "var body: some View {",
+                                             in: "Sources/Echoelmusic/Studio/ProjectHeader.swift")
+        XCTAssertTrue(headerBody.contains("ViewThatFits(in: .horizontal)"), """
+            `ProjectHeader.body` no longer chooses one line or two with `ViewThatFits`. The pill's \
+            greedy trace beside a flexing summary and two floored buttons is the #1027 shape; a \
+            fixed `HStack` overflows in portrait, a fixed `VStack` wastes a line where it fits.
+            """)
         // ⛔ The first draft counted the BINDING (`let pulse = PulseMonitorMiniLive()`) and said
         // "more than one means the leaf is built per candidate" — a bare second
         // `PulseMonitorMiniLive()` in the wrapped candidate left that count at one and the
         // message promising a catch it could not make (#367; caught by the mutant, not by
         // the reviewer). The CONSTRUCTOR is counted; the binding is asserted separately.
-        for (binding, constructor) in [("let tempo = ", "BodyTempoField("),
-                                       ("let pulse = ", "PulseMonitorMiniLive()")] {
+        // ⛔ `("let pulse = ", "PulseMonitorMiniLive()")` was the second pair until 2026-09-30.
+        for (binding, constructor) in [("let tempo = ", "BodyTempoField(")] {
             XCTAssertTrue(line.contains(binding + constructor), """
                 `transportLine1` no longer binds `\(binding + constructor)`.
 

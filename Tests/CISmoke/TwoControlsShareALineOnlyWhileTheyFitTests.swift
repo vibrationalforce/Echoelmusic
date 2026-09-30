@@ -38,6 +38,10 @@ import XCTest
 /// too many when a second pinned field sits beside the first; the transport row gets one too
 /// many when `PulseMonitorMini` adds its `Text("Demo")` tag, which it does ONLY while the
 /// source is synthetic. That is why he saw it "nur bei Play with Simulation".
+/// ⛔ 2026-09-30 (interface audit, "ein Kopf, der spricht", head leaf 2): the pill MOVED to
+/// `ProjectHeader`, the head above both stages — so the all-floors row that carries the one
+/// conditional extra is the HEADER's now, and claim 5 moved with the pill (#456) rather than
+/// staying green on a row that no longer holds the element that overflowed it.
 ///
 /// ⚠️ WHAT THIS PROVES. Source text only: that the three rows go through `ViewThatFits` and that
 /// no pair of labelled fields is pinned onto one `HStack` anywhere in `Sources/`. It cannot show
@@ -48,6 +52,7 @@ final class TwoControlsShareALineOnlyWhileTheyFitTests: XCTestCase {
     private static let patchbay = "Sources/Echoelmusic/Studio/PatchbayView.swift"
     private static let field = "Sources/Echoelmusic/Studio/EchoelValueField.swift"
     private static let studio = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
+    private static let header = "Sources/Echoelmusic/Studio/ProjectHeader.swift"
 
     // MARK: - 1. the helper offers BOTH shapes
 
@@ -150,31 +155,46 @@ final class TwoControlsShareALineOnlyWhileTheyFitTests: XCTestCase {
             """)
     }
 
-    // MARK: - 5. the transport row wraps instead of overflowing
+    // MARK: - 5. the row that carries the pulse pill wraps instead of overflowing
 
-    /// The second surface the founder named. `startControlRow`'s LINE 1 has four children, no
-    /// `Spacer`, and a floor under every one of them — it is the row with the least slack in
-    /// the app. `PulseMonitorMini` adds a `Text("Demo")` tag while the source is synthetic, and
-    /// that one extra element is what pushed it past the edge.
-    func testTheTransportLineWrapsWhenItCannotFit() throws {
+    /// The second surface the founder named. Until 2026-09-30 that row was the instrument's
+    /// `transportLine1`: four children, no `Spacer`, a floor under every one, and the pill's
+    /// conditional `Text("Demo")` tag as the one extra element that pushed it past the edge
+    /// (#1027). Head leaf 2 of the interface audit moved the pill to `ProjectHeader`, so the
+    /// row with the least slack is the header's (summary · pill · ▶ Play · ●) and this claim
+    /// follows the pill. `transportLine1` is three children on one line and must not build
+    /// the pill (`TheTransportBarIsDissolvedTests` claim 2 owns that half).
+    func testTheRowWithThePulsePillWrapsWhenItCannotFit() throws {
         let studio = try code(Self.studio)
         XCTAssertEqual(occurrences(of: "private var transportLine1: some View", in: studio), 1, """
-            `transportLine1` is not declared exactly once. It is the transport row's adaptive \
-            form; if it was inlined back into `startControlRow` the simulation's "Demo" tag \
-            pushes the row off the right edge again (#1027).
+            `transportLine1` is not declared exactly once. It is the instrument's transport row; \
+            if it was inlined back into `startControlRow`, re-anchor the sibling guard too (#456).
             """)
-        guard let start = studio.range(of: "private var transportLine1: some View") else { return }
-        let body = String(studio[start.upperBound...].prefix(700))
+        XCTAssertFalse(studio.contains("PulseMonitorMiniLive"), """
+            `EchoelStudioView` builds the pulse pill again. Since 2026-09-30 its ONE address is \
+            `ProjectHeader`; a second mount is a second ~10 Hz camera reader (10.76.50).
+            """)
+        let header = try code(Self.header)
+        guard let start = header.range(of: "var body: some View {"),
+              let end = header.range(of: "private func summary(", range: start.upperBound..<header.endIndex) else {
+            return XCTFail("ANCHOR MISSING: `ProjectHeader.body` before `summary(` — re-anchor this scan (#454)")
+        }
+        let body = String(header[start.upperBound..<end.lowerBound])
         XCTAssertTrue(body.contains("ViewThatFits(in: .horizontal)"), """
-            The transport row no longer chooses its shape with `ViewThatFits`. A fixed `HStack` \
-            is what overflowed; a fixed `VStack` would waste a line whenever it fits. If a \
-            different adaptive mechanism replaced it, re-point this claim at that one.
+            The header's row no longer chooses its shape with `ViewThatFits`. A fixed `HStack` is \
+            what overflowed on the instrument's row; a fixed `VStack` would waste a line whenever \
+            it fits. If a different adaptive mechanism replaced it, re-point this claim at that one.
             """)
-        XCTAssertTrue(body.contains("let pulse = PulseMonitorMiniLive()"), """
-            The pulse tile is no longer built once and reused across both candidates. \
-            `PulseMonitorMiniLive` is the LEAF that reads the ~10 Hz camera publisher \
-            (10.76.50 freeze law); constructing it separately in each branch puts two live \
-            readers in the tree where one belongs.
+        XCTAssertEqual(occurrences(of: "pulsePill", in: body), 3, """
+            `pulsePill` is not spelled exactly three times in `ProjectHeader.body` — the fitting \
+            row, the wrapped form and the accessibility stack. Fewer means a shape lost the pill; \
+            more means a shape carries it twice.
+            """)
+        XCTAssertEqual(occurrences(of: "PulseMonitorMiniLive()", in: header), 1, """
+            `PulseMonitorMiniLive()` is constructed \(occurrences(of: "PulseMonitorMiniLive()", in: header)) \
+            times in ProjectHeader.swift, expected exactly once (in `pulsePill`). It is the LEAF \
+            that reads the ~10 Hz camera publisher (10.76.50 freeze law); one construction, \
+            spelled into each candidate, keeps one live reader in the tree.
             """)
     }
 

@@ -2063,26 +2063,22 @@ struct EchoelStudioView: View {
         }
     }
 
-    /// LINE 1 of the transport, as a row while it fits and as two lines when it does not.
-    /// See the ⭐ #1027 note at the call site for why it is the row with the least slack in
-    /// the app and why the simulation's "Demo" tag is what tips it over.
-    @ViewBuilder
+    /// LINE 1 of the transport: ▶/■ · ⏸ · tempo+lock — ONE row, three children.
+    ///
+    /// ⛔ UNTIL 2026-09-30 (interface audit, "ein Kopf, der spricht", head leaf 2) THE PULSE PILL
+    /// WAS ITS FOURTH CHILD, and the row chose between one line and two with `ViewThatFits`
+    /// (#1027), because the pill's conditional "Demo" tag was the one element that pushed it
+    /// past the portrait edge. The pill now lives in `ProjectHeader` — the head above BOTH
+    /// stages, so the body is on screen on the Piece stage a fresh install opens on — and the
+    /// `ViewThatFits` went with it: what remains has floors but no conditional extra. The
+    /// founder's 2026-07-31 drawing that put the pill here ("Führe intelligent zusammen") was
+    /// drawn when this plate was the app's home. The name `transportLine1` is kept — guards
+    /// anchor on it — and its count is three.
     private var transportLine1: some View {
         let tempo = BodyTempoField(onLockChanged: {
             NotificationCenter.default.post(name: .echoelCompositionEdited, object: "tempoLock")
         }, compact: true)
-        #if canImport(AVFoundation)
-        let pulse = PulseMonitorMiniLive()
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 8) { startButton; PlaybackToggleButton(); tempo; pulse }
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) { startButton; PlaybackToggleButton(); tempo }
-                pulse
-            }
-        }
-        #else
-        HStack(spacing: 8) { startButton; PlaybackToggleButton(); tempo }
-        #endif
+        return HStack(spacing: 8) { startButton; PlaybackToggleButton(); tempo }
     }
 
     /// #289 → #307 — ONE control block, now a transport: ▶/■ · ⏸ · the analysis display.
@@ -2175,6 +2171,9 @@ struct EchoelStudioView: View {
     /// choose between one line and two (`transportLine1`) instead of always taking one, so the
     /// simulation's "Demo" tag can no longer push the row past the right edge. The squeeze
     /// argument the rest of this block makes is unaffected — a second line is not a squeeze.
+    /// ⛔ And since 2026-09-30 the four are THREE: the pulse pill moved up to `ProjectHeader`
+    /// (interface audit, head leaf 2 — the body must be visible on the Piece stage, the home
+    /// since slice 1), and line 1 is one line again with nothing conditional on it.
     ///
     /// ⚠️ THE HEIGHT ARITHMETIC GOES THE RIGHT WAY, BUT BARELY, and the first version of this
     /// paragraph overstated it by roughly 3×. Removed: the deleted bar's `minHeight: 44` — and
@@ -2198,8 +2197,8 @@ struct EchoelStudioView: View {
     /// an ancestor of every surface in the app, so inlining its two labels there would be the
     /// 10.76.50 freeze at full strength. It stopped being `private` for the #456 move and stays
     /// non-`private` for this one. What survives HERE is the same law for the row's own
-    /// children: `PulseMonitorMiniLive` and `PlaybackToggleButton` read live state in their own
-    /// bodies, and this body must keep reading none of it.
+    /// children: `PlaybackToggleButton` reads live state in its own body (the pulse pill did too,
+    /// until it moved to `ProjectHeader` on 2026-09-30), and this body must keep reading none of it.
     private var startControlRow: some View {
         VStack(alignment: .leading, spacing: 8) {
             // LINE 1. ⛔ This comment said "unchanged since #411. Do not add to it" — and
@@ -2211,28 +2210,15 @@ struct EchoelStudioView: View {
             // same commit (#456) — the doc block above carries the other one.
             // ⭐ #1027 — THE SECOND SURFACE THE FOUNDER NAMED: *"War nur bei Play with
             // Simulation und routing hochkant über den Bildschirm Rand hinaus."* Routing is
-            // repaired in `PatchbayView` (#1026); THIS is the other one, and the link is the
-            // word "Simulation".
-            //
-            // MEASURED, not inferred (the two mistakes before this one were both inferences
-            // from a screen recording). `PulseMonitorMini` renders an extra `Text("Demo")` tag
-            // ONLY when the source is synthetic — `if synthetic` in `HeaderMonitors`. So this
-            // row carries one more element while the simulation plays than at any other time,
-            // and it is the row with the least slack in the app: four children, no `Spacer`,
-            // and every one of them has a floor (the trace pins `minWidth: 60`, the BPM box
-            // `minWidth: 76`, the two buttons their tap targets). Add the tag and the sum
-            // crosses the portrait width; the extra goes past the right edge. That is exactly
-            // "nur bei Play with Simulation".
-            //
-            // THE FIX IS THE ONE #1026 ALREADY INTRODUCED, so the app now has one idiom for
-            // this and not two: `ViewThatFits` takes the single line while it fits and moves
-            // the pulse tile to its own line when it does not. Nothing is hidden, nothing is
-            // capped — the row uses the WHOLE width, which is what he asked for.
-            //
-            // ⚠️ The tile is built ONCE and reused in both candidates. `PulseMonitorMiniLive`
-            // is the leaf that reads the ~10 Hz camera publisher (the 10.76.50 freeze law);
-            // constructing it twice would put two live readers in the view tree where one
-            // belongs.
+            // repaired in `PatchbayView` (#1026); THIS row was the other one. MEASURED, not
+            // inferred: the pulse pill's conditional `Text("Demo")` tag was the one element that
+            // pushed a four-child, no-`Spacer`, all-floors row past the portrait edge, and
+            // `ViewThatFits` let the pill wrap to a second line.
+            // ⛔ 2026-09-30 (interface audit, head leaf 2): the pill MOVED to `ProjectHeader`,
+            // the head above both stages, and took the overflow and the `ViewThatFits` with it —
+            // this row is three children on one line. The measurement is kept because the same
+            // shape recurs on any all-floors row: `TwoControlsShareALineOnlyWhileTheyFitTests`
+            // now watches the HEADER's row for it.
             transportLine1
 
             // #585 — the one visible consequence of `AudioEngine.degraded`, which had no reader

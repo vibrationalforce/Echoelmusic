@@ -89,6 +89,7 @@ final class TheBioPanelDoorIsThePulsePillTests: XCTestCase {
     /// from `#filePath` so a rename moves the carve-out with the file instead of widening it.
     private static let thisFileName = URL(fileURLWithPath: #filePath).lastPathComponent
     private static let header = "Sources/Echoelmusic/Studio/HeaderMonitors.swift"
+    private static let projectHeader = "Sources/Echoelmusic/Studio/ProjectHeader.swift"
 
     // MARK: - 1: the anchor — the chip strip exists and is the thing being measured
 
@@ -142,9 +143,17 @@ final class TheBioPanelDoorIsThePulsePillTests: XCTestCase {
             The studio no longer maps the "bio" chrome door to a menu. The pill would post \
             into nothing; see the message above.
             """)
-        XCTAssertTrue(studio.contains("PulseMonitorMiniLive("), """
-            The pulse pill is no longer mounted in `EchoelStudioView`. It is the door this \
-            whole file names; if it moved, every "pulse pill" prose site moves with it (#456).
+        // ⛔ UNTIL 2026-09-30 THIS PINNED THE MOUNT IN `EchoelStudioView`. Head leaf 2 of the
+        // interface audit moved the pill to `ProjectHeader` — the head above BOTH stages, so the
+        // door exists on the Piece stage too — and the studio must not build a second one.
+        let projectHeader = try source(Self.projectHeader)
+        XCTAssertTrue(projectHeader.contains("PulseMonitorMiniLive("), """
+            The pulse pill is no longer mounted in `ProjectHeader`. It is the door this whole \
+            file names; if it moved, every "pulse pill" prose site moves with it (#456).
+            """)
+        XCTAssertFalse(studio.contains("PulseMonitorMiniLive("), """
+            `EchoelStudioView` builds the pulse pill again. Since 2026-09-30 its ONE address is \
+            `ProjectHeader`; a second mount is a second ~10 Hz camera reader (10.76.50).
             """)
     }
 

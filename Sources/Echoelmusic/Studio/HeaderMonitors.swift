@@ -50,7 +50,10 @@ struct PulseTrace: View {
 
 /// Compact header pulse monitor: live EKG trace + BPM. Accessible as one element.
 ///
-/// MOUNTED in `EchoelStudioView.startControlRow` (founder 2026-07-31, #289: red circle around
+/// MOUNTED in `ProjectHeader` since 2026-09-30 (interface audit, "ein Kopf, der spricht", head
+/// leaf 2): the head above BOTH stages, because the Piece stage — the home since that day's
+/// slice 1 — showed no body at all; the audit doc's law is "Die Puls-Pille bleibt im Kopf".
+/// ⛔ Before that in `EchoelStudioView.startControlRow` (founder 2026-07-31, #289: red circle around
 /// this pill and the transport ■, "könnte ja alles in dem Create From within Button drin sein …
 /// Führe intelligent zusammen"). ⛔ This line said "immediately LEFT of 'Create from Within'"
 /// until #307, which both moved the tile to the RIGHT of the two transport glyphs and deleted
