@@ -3525,6 +3525,18 @@ struct EchoelStudioView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             bioSourceRow
+            // Zug 3 (2026-09-30) — the Apple Health path's status ladder, in words, directly
+            // under the chooser and only while Health is the chosen source. The other three
+            // sources have their words already (the pulse pill's `PulseLadder`, the strap's
+            // scan state, the demo tag); the wrist had none, and "no signal" from a Watch that
+            // writes minutes apart at rest is indistinguishable from a declined permission
+            // unless a sentence says so. `bioSourceRaw` is @AppStorage (selection-rate), so
+            // this branch is a cold read in the panel body — the live reads sit in the leaf.
+            #if canImport(HealthKit)
+            if BioSourceOption(rawValue: bioSourceRaw) == .health {
+                HealthSourceStatusRow()
+            }
+            #endif
 
             // #486 — the ACTIVE half of the loop, directly under the measured half.
             // `BioStripView` above says what the body is doing; this paces the breathing
@@ -13094,6 +13106,61 @@ private struct HealthWriteOptInRow: View {
                 .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+#endif
+
+/// Zug 3 (2026-09-30) — the bio panel's "Apple Health" row: the wrist path's status ladder in
+/// words (`HealthSourceRung`), mounted under the source chooser while Health is chosen.
+///
+/// A LEAF `View`, for two reasons that are both law here. (1) It reads `bus.usableBio()` — a
+/// ~1 Hz `@Observable` slot while any live source runs — and the panel that mounts it is
+/// evaluated in the root body (the 10.76.41/50 freeze). (2) It reads `HealthSourceStatus`, the
+/// READ-ONLY face of the app-owned publisher: the Studio layer holds no handle to
+/// `HealthKitBioPublisher` itself (`ThePickerDoesNotOwnEverySourceTests`), so this row can
+/// never become a second lifecycle owner — it cannot reach a `start` or `stop`.
+///
+/// The `TimelineView` is the clock that lets "Receiving" EXPIRE: the wrist window is 90 s
+/// (`BioSource.freshnessWindow`), a Watch that stops writing turns the frame unusable with no
+/// event to observe, and `usableBio()` re-asks the clock on every tick. One tick per 10 s is a
+/// ninth of the window — coarse enough to cost nothing, fine enough that the word is never
+/// more than ten seconds stale. Nothing here runs a `Timer` or hops actors.
+///
+/// NEEDS-FOUNDER-VERIFY: choose "Play with Apple Health" without a Watch reading in the last
+/// ten minutes — the row must say "Waiting · no reading yet"; press Play, wait for the wrist
+/// to write — "Receiving · your Watch"; leave the Watch off for two minutes — back to
+/// "Waiting". VoiceOver reads the row as one element, the sentence from `spoken`.
+#if canImport(HealthKit)
+private struct HealthSourceStatusRow: View {
+    @Environment(HealthSourceStatus.self) private var status
+    @Environment(EngineBus.self) private var bus
+
+    /// A ninth of the 90 s wrist window (`BioSource.freshnessWindow` for `.healthKit`).
+    private static let tick: TimeInterval = 10
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: Self.tick)) { _ in
+            let rung = HealthSourceRung.rung(isPublishing: status.isPublishing,
+                                             couldNotStart: status.couldNotStart,
+                                             wristFrameFresh: bus.usableBio()?.source == .healthKit)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Text("Apple Health")
+                        .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
+                    Spacer()
+                    Text(rung.line)
+                        .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.text)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Text(rung.caption)
+                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Apple Health")
+            .accessibilityValue(rung.spoken)
         }
     }
 }

@@ -23,9 +23,15 @@ import Observation
 @Observable
 public final class HealthKitBioPublisher {
 
-    public private(set) var isAuthorized = false
+    /// Zug 3 (2026-09-30) — the publisher's flags LIVE in `status`, the read-only object the
+    /// app injects for the Studio layer (`HealthSourceStatus.swift` says why a status object and
+    /// not a handle to this class). `isAuthorized` and `isPublishing` FORWARD to it, so there is
+    /// one definition of each (#416) and nothing here to keep in step.
+    public let status = HealthSourceStatus()
 
-    public private(set) var isPublishing = false
+    public var isAuthorized: Bool { status.isAuthorized }
+
+    public var isPublishing: Bool { status.isPublishing }
 
     @ObservationIgnored
     private let engine: EchoelBioEngine
@@ -58,13 +64,19 @@ public final class HealthKitBioPublisher {
     /// for fresh frames to publish onto the bus. Idempotent.
     public func start(publishing bus: EngineBus) async {
         guard !isPublishing else { return }
-        isAuthorized = await engine.requestAuthorization()
+        status.isAuthorized = await engine.requestAuthorization()
         guard isAuthorized else {
+            // The `unavailable` rung of the bio panel's Apple Health row. As measured in
+            // `EchoelBioEngine.requestAuthorization`, this branch is HealthKit absent, a type
+            // missing or a thrown request — a DECLINED read sheet does not come here (Apple
+            // hides read denial), so the row's word for this is "Unavailable", not "Denied".
+            status.couldNotStart = true
             log.log(.warning, category: .audio, "HealthKitBioPublisher: not authorized")
             return
         }
         engine.startStreaming()
-        isPublishing = true
+        status.couldNotStart = false
+        status.isPublishing = true
         // Two callers can pass the guard above concurrently (isPublishing flips
         // only after the requestAuthorization await — e.g. the launch
         // startIfAlreadyAuthorized racing the first-bio-use start). Cancel any
@@ -98,7 +110,7 @@ public final class HealthKitBioPublisher {
         task?.cancel()
         task = nil
         engine.stopStreaming()
-        isPublishing = false
+        status.isPublishing = false
     }
 
     // MARK: - Private

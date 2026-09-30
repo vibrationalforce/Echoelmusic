@@ -628,6 +628,10 @@ struct EchoelmusicApp: App {
             #endif
             #if canImport(HealthKit)
             .environment(healthWriter)
+            // Zug 3 (2026-09-30): the READ-ONLY status of the app-owned HealthKit publisher, for
+            // the bio panel's "Apple Health" row. The publisher itself is deliberately NOT
+            // injected — the Studio layer must be unable to start or stop it (#1319, BLE-3).
+            .environment(healthBio.status)
             #endif
             #if canImport(CoreMIDI)
             .environment(midiPub)
