@@ -22,6 +22,9 @@
 // family per commit, each with its owner's constant; a literal typed at a call site would be
 // the #416 defect the parameter exists to avoid.
 //
+// THIRD FAMILY (claim 3, 2026-09-30): the three felt-sub rows name `SubBassVoice.defaultSubGain` and
+// `SubCharacter.defaultPresence` / `defaultHeat` — the constants the voice itself initialises from.
+//
 // SECOND FAMILY (claim 5, the same day): every value field in `EchoelStudioView` whose binding
 // is a KEYSTORE-backed `@AppStorage` (`StudioDefaultKeys.x.key` … `= StudioDefaultKeys.x.value`)
 // passes `standard: StudioDefaultKeys.x.value` — the SAME `x`. The keystore is the one owner of
@@ -140,6 +143,20 @@ final class TheValueFieldOffersItsDefaultTests: XCTestCase {
             as their default — the ENGINE's constant, never a literal `1` typed at the call site \
             (#416). A third mixer row joining is fine: raise this count in the same commit.
             """)
+
+        // THIRD FAMILY — the felt sub (2026-09-30): the three rows under "Sub / Bass (felt)" name the
+        // voice's own constants. `SubBassVoice.defaultSubGain` is what the voice initialises `subGain`
+        // to; presence and heat initialise from `SubCharacter` — so the key returns EXACTLY the
+        // fresh-install sound, never a rounded neighbour of it.
+        for (constant, needle) in [(SubBassVoice.defaultSubGain, "standard: SubBassVoice.defaultSubGain"),
+                                   (SubCharacter.defaultPresence, "standard: SubCharacter.defaultPresence"),
+                                   (SubCharacter.defaultHeat, "standard: SubCharacter.defaultHeat")] {
+            XCTAssertTrue((Float(0)...Float(1)).contains(constant), "\(needle): the default must sit inside the row's 0…1 range")
+            XCTAssertEqual(occurrences(of: needle, in: studio), 1, """
+                The sub row that owns `\(needle)` no longer passes it (or a second row copied it — one \
+                row per constant). The voice initialises from that constant; the key must return to it.
+                """)
+        }
     }
 
     // MARK: - claim 5 — the keystore family: a keystore-bound field offers the keystore's default
