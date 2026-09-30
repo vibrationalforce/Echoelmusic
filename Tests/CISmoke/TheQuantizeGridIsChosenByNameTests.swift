@@ -121,7 +121,8 @@ final class TheQuantizeGridIsChosenByNameTests: XCTestCase {
                        "two quantize calls: the button's enablement and the commit")
         XCTAssertEqual(code.components(separatedBy: "gridSteps: quantizeGrid.steps").count - 1, 2,
                        "BOTH calls use the chosen grid — the button must not grey on one grid and snap on another")
-        XCTAssertTrue(code.contains("label: \"Snap the starts of \\(what) to the nearest \\(quantizeGrid.spoken)\")"),
+        // E4-17: the sentence is localised as head + spoken scope + tail (a format key cannot be a catalog literal)
+        XCTAssertTrue(code.contains("label: String(localized: \"Snap the starts of \") + what + String(localized: \" to the nearest \") + quantizeGrid.spoken)"),
                       "VoiceOver hears which grid the button snaps to")
     }
 

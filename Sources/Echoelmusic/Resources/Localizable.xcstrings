@@ -13266,6 +13266,672 @@
           }
         }
       }
+    },
+    "Fit" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fit"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einpassen"
+          }
+        }
+      }
+    },
+    "−1 step" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "−1 step"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "−1 Stufe"
+          }
+        }
+      }
+    },
+    "+1 step" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+1 step"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+1 Stufe"
+          }
+        }
+      }
+    },
+    "Quantize" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quantize"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quantisieren"
+          }
+        }
+      }
+    },
+    "Lower" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lower"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiefer"
+          }
+        }
+      }
+    },
+    "Higher" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Higher"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Höher"
+          }
+        }
+      }
+    },
+    "Deselect" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deselect"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abwählen"
+          }
+        }
+      }
+    },
+    "Show the octave below" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show the octave below"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Oktave darunter zeigen"
+          }
+        }
+      }
+    },
+    "Show the octave above" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show the octave above"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Oktave darüber zeigen"
+          }
+        }
+      }
+    },
+    "Clear the note selection" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear the note selection"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Notenauswahl aufheben"
+          }
+        }
+      }
+    },
+    "Move " : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewege "
+          }
+        }
+      }
+    },
+    " down an octave" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " down an octave"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " eine Oktave nach unten"
+          }
+        }
+      }
+    },
+    " down a semitone" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " down a semitone"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " einen Halbton nach unten"
+          }
+        }
+      }
+    },
+    " up a semitone" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " up a semitone"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " einen Halbton nach oben"
+          }
+        }
+      }
+    },
+    " up an octave" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " up an octave"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " eine Oktave nach oben"
+          }
+        }
+      }
+    },
+    " to the nearest notes of " : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " to the nearest notes of "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " auf die nächsten Töne von "
+          }
+        }
+      }
+    },
+    " down one step of " : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " down one step of "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " eine Stufe abwärts in "
+          }
+        }
+      }
+    },
+    " up one step of " : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " up one step of "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " eine Stufe aufwärts in "
+          }
+        }
+      }
+    },
+    "Snap the starts of " : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Snap the starts of "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rücke "
+          }
+        }
+      }
+    },
+    " to the nearest " : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " to the nearest "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " auf das nächste "
+          }
+        }
+      }
+    },
+    "Copy " : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiere "
+          }
+        }
+      }
+    },
+    " to right after themselves, and select the copies" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " to right after themselves, and select the copies"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " direkt dahinter und wähle die Kopien"
+          }
+        }
+      }
+    },
+    "Delete " : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lösche "
+          }
+        }
+      }
+    },
+    "Sets " : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sets "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setzt "
+          }
+        }
+      }
+    },
+    " to one velocity" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " to one velocity"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " auf eine Anschlagstärke"
+          }
+        }
+      }
+    },
+    "All notes in this part" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All notes in this part"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Noten in diesem Teil"
+          }
+        }
+      }
+    },
+    "every note in this part" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "every note in this part"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "jede Note in diesem Teil"
+          }
+        }
+      }
+    },
+    "Selection not on screen — Lower / Higher to see it" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selection not on screen — Lower / Higher to see it"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auswahl nicht im Bild — Tiefer / Höher zum Anzeigen"
+          }
+        }
+      }
+    },
+    "no note — the selection is not on screen" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no note — the selection is not on screen"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keine Note — die Auswahl ist nicht im Bild"
+          }
+        }
+      }
+    },
+    "1 selected" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 selected"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 gewählt"
+          }
+        }
+      }
+    },
+    " selected" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " selected"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " gewählt"
+          }
+        }
+      }
+    },
+    "the selected note" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the selected note"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "die gewählte Note"
+          }
+        }
+      }
+    },
+    "the " : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "die "
+          }
+        }
+      }
+    },
+    " selected notes" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " selected notes"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " gewählten Noten"
+          }
+        }
+      }
+    },
+    "sixteenth" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sixteenth"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sechzehntel"
+          }
+        }
+      }
+    },
+    "eighth" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "eighth"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Achtel"
+          }
+        }
+      }
+    },
+    "quarter note" : {
+      "comment" : "Note editor (E4-17, 2026-09-30): button titles as keys; VoiceOver sentences as head + spoken scope + tail via String(localized:); QuantizeGrid.spoken localised in ClipNoteEdit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "quarter note"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Viertel"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

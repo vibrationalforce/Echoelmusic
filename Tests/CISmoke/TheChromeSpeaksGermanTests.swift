@@ -35,7 +35,9 @@
 // sites and seventeen panel words — on its parent the wraps are absent and fifteen units missing: ONE finding.
 // E4-14 added the loudness readout's signature and four names (parent: `String`, four missing — ONE finding).
 // E4-15 added the media label's key wrap and four titles (parent: verbatim, three missing — ONE finding).
-// E4-16 added the selected-part bar: signature, three sentence heads, four localised labels, eighteen units (parent: all absent — ONE finding). Claim 12
+// E4-16 added the selected-part bar: signature, three sentence heads, four localised labels, eighteen units
+// (parent: all absent — ONE finding). E4-17 added the note editor: signature, seven heads, no verbatim label,
+// three grid words, thirty-eight units (parent: all absent — ONE finding) (parent: all absent — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -519,6 +521,29 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Trim the selected part so it ends at ", "This part is too short to split",
                           "Splitting here would change which overlapping part plays", "Split the selected part at "],
                          "selected-part bar words")
+        // E4-17 — the note editor: titles as keys; every VoiceOver sentence head + spoken scope + tail; the grid words
+        let editor = try codeOnly("Sources/Echoelmusic/Studio/PartNoteEditor.swift")
+        XCTAssertTrue(editor.contains("private func button(_ title: LocalizedStringKey, _ systemImage: String, enabled: Bool, label: String,"),
+                      "the note editor's button takes a String title again — Fit / Quantize / Lower / Higher … would spell verbatim")
+        for head in ["Move ", "Snap the starts of ", "Copy ", "Delete ", "Sets ", "the selected note", "every note in this part"] {
+            XCTAssertTrue(editor.contains("String(localized: \"\(head)\")"), "the editor spells `\(head)…` verbatim again")
+        }
+        XCTAssertFalse(editor.contains("label: \"Move"), "a verbatim interpolated `Move …` label is back in the note editor")
+        let gridWords = try codeOnly("Sources/Echoelmusic/Sequencer/ClipNoteEdit.swift")
+        for word in ["sixteenth", "eighth", "quarter note"] {
+            XCTAssertTrue(gridWords.contains("String(localized: \"\(word)\")"), "QuantizeGrid speaks `\(word)` verbatim again")
+        }
+        try assertGerman(["Fit", "−1 step", "+1 step", "Quantize",
+                          "Lower", "Higher", "Deselect", "Show the octave below",
+                          "Show the octave above", "Clear the note selection", "Move ", " down an octave",
+                          " down a semitone", " up a semitone", " up an octave", " to the nearest notes of ",
+                          " down one step of ", " up one step of ", "Snap the starts of ", " to the nearest ",
+                          "Copy ", " to right after themselves, and select the copies", "Delete ", "Sets ",
+                          " to one velocity", "All notes in this part", "every note in this part", "Selection not on screen — Lower / Higher to see it",
+                          "no note — the selection is not on screen", "1 selected", " selected", "the selected note",
+                          "the ", " selected notes", "sixteenth", "eighth",
+                          "quarter note", "Duplicate", "Delete"],
+                         "note editor words")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

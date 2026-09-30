@@ -409,12 +409,16 @@ private struct PartNoteGrid: View {
 
     /// What the M3/M4 buttons act on, said on screen (M3 review: it reached only VoiceOver).
     private static func scope(selected: Int, onScreen: Int) -> (visible: String, spoken: String) {
-        if selected == 0 { return ("All notes in this part", "every note in this part") }
-        if onScreen == 0 {
-            return ("Selection not on screen — Lower / Higher to see it", "no note — the selection is not on screen")
+        if selected == 0 {
+            return (String(localized: "All notes in this part"), String(localized: "every note in this part"))
         }
-        return onScreen == 1 ? ("1 selected", "the selected note")
-            : ("\(onScreen) selected", "the \(onScreen) selected notes")
+        if onScreen == 0 {
+            return (String(localized: "Selection not on screen — Lower / Higher to see it"),
+                    String(localized: "no note — the selection is not on screen"))
+        }
+        return onScreen == 1 ? (String(localized: "1 selected"), String(localized: "the selected note"))
+            : ("\(onScreen)" + String(localized: " selected"),
+               String(localized: "the ") + "\(onScreen)" + String(localized: " selected notes"))
     }
 
     private func selectionControls(targets: Set<UUID>, scope: (visible: String, spoken: String),
@@ -435,19 +439,19 @@ private struct PartNoteGrid: View {
             HStack(spacing: 6) {
                 Text("Transpose").font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 button("−12", "", enabled: can(ClipNoteEdit.transposing(targets, by: -12, in: notes)),
-                       label: "Move \(what) down an octave") {
+                       label: String(localized: "Move ") + what + String(localized: " down an octave")) {
                     transpose(targets, by: -12, region: region, range: range, heldCentre: heldCentre)
                 }
                 button("−1", "", enabled: can(ClipNoteEdit.transposing(targets, by: -1, in: notes)),
-                       label: "Move \(what) down a semitone") {
+                       label: String(localized: "Move ") + what + String(localized: " down a semitone")) {
                     transpose(targets, by: -1, region: region, range: range, heldCentre: heldCentre)
                 }
                 button("+1", "", enabled: can(ClipNoteEdit.transposing(targets, by: 1, in: notes)),
-                       label: "Move \(what) up a semitone") {
+                       label: String(localized: "Move ") + what + String(localized: " up a semitone")) {
                     transpose(targets, by: 1, region: region, range: range, heldCentre: heldCentre)
                 }
                 button("+12", "", enabled: can(ClipNoteEdit.transposing(targets, by: 12, in: notes)),
-                       label: "Move \(what) up an octave") {
+                       label: String(localized: "Move ") + what + String(localized: " up an octave")) {
                     transpose(targets, by: 12, region: region, range: range, heldCentre: heldCentre)
                 }
             }
@@ -457,17 +461,17 @@ private struct PartNoteGrid: View {
                 Text(keyShown).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .lineLimit(1)
                 button("Fit", "", enabled: can(ClipNoteEdit.fittingToKey(targets, key: key, in: notes)),
-                       label: "Move \(what) to the nearest notes of \(keySpoken)") {
+                       label: String(localized: "Move ") + what + String(localized: " to the nearest notes of ") + keySpoken) {
                     fitToKey(targets, key: key, region: region)
                 }
                 button("−1 step", "",
                        enabled: can(ClipNoteEdit.transposingInKey(targets, by: -1, key: key, in: notes)),
-                       label: "Move \(what) down one step of \(keySpoken)") {
+                       label: String(localized: "Move ") + what + String(localized: " down one step of ") + keySpoken) {
                     stepInKey(targets, by: -1, key: key, region: region)
                 }
                 button("+1 step", "",
                        enabled: can(ClipNoteEdit.transposingInKey(targets, by: 1, key: key, in: notes)),
-                       label: "Move \(what) up one step of \(keySpoken)") {
+                       label: String(localized: "Move ") + what + String(localized: " up one step of ") + keySpoken) {
                     stepInKey(targets, by: 1, key: key, region: region)
                 }
             }
@@ -484,13 +488,13 @@ private struct PartNoteGrid: View {
                 button("Quantize", "square.grid.3x3",
                        enabled: can(ClipNoteEdit.quantizing(targets, in: notes, offsetTicks: offset,
                                                             lengthTicks: length, gridSteps: quantizeGrid.steps)),
-                       label: "Snap the starts of \(what) to the nearest \(quantizeGrid.spoken)") {
+                       label: String(localized: "Snap the starts of ") + what + String(localized: " to the nearest ") + quantizeGrid.spoken) {
                     quantize(targets, region: region, offset: offset)
                 }
                 button("Duplicate", "plus.square.on.square",
                        enabled: ClipNoteEdit.duplicating(targets, in: notes, offsetTicks: offset,
                                                          lengthTicks: length) != nil,
-                       label: "Copy \(what) to right after themselves, and select the copies") {
+                       label: String(localized: "Copy ") + what + String(localized: " to right after themselves, and select the copies")) {
                     duplicate(targets, region: region, offset: offset)
                 }
             }
@@ -510,25 +514,29 @@ private struct PartNoteGrid: View {
         let pickedCount = picked.count
         return HStack(spacing: 6) {
             button("Lower", "chevron.down", enabled: range.lowerBound > 0,
-                   label: "Show the octave below") { octaveShift -= 1 }
+                   label: String(localized: "Show the octave below")) { octaveShift -= 1 }
             button("Higher", "chevron.up", enabled: range.upperBound < 127,
-                   label: "Show the octave above") { octaveShift += 1 }
+                   label: String(localized: "Show the octave above")) { octaveShift += 1 }
             if editable {
                 button("Delete", "trash", enabled: pickedCount > 0,
-                       label: pickedCount == 1 ? "Delete the selected note"
-                                               : "Delete the \(pickedCount) selected notes") {
+                       label: String(localized: "Delete ") + (pickedCount == 1 ? String(localized: "the selected note")
+                                               : String(localized: "the ") + "\(pickedCount)" + String(localized: " selected notes"))) {
                     deletePicked(picked, region: region)
                 }
                 // M6 — the way out of a selection. The whole selection, not only the rows on
                 // screen: a note picked two octaves away still counts, and would otherwise stay
                 // picked with no visible way to drop it.
                 button("Deselect", "xmark", enabled: !self.picked.ids.isEmpty,
-                       label: "Clear the note selection") { self.picked = .none }
+                       label: String(localized: "Clear the note selection")) { self.picked = .none }
             }
         }
     }
 
-    private func button(_ title: String, _ systemImage: String, enabled: Bool, label: String,
+    // E4-17 (2026-09-30): `title` is a catalog KEY (every caller passes a literal; the four signed
+    // numbers ±1/±12 have no letters and fall back to themselves). `label` stays a `String` because
+    // ten callers COMPOSE it around `what` (the spoken scope) — each caller localises its own
+    // sentence as head + `what` + tail through `String(localized:)`, never as a format key.
+    private func button(_ title: LocalizedStringKey, _ systemImage: String, enabled: Bool, label: String,
                         action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 4) {
@@ -723,7 +731,7 @@ private struct NoteVelocityRow: View {
                          value: Binding(get: { draft ?? Double(shown) },
                                         set: { draft = $0 }),
                          range: 0...1, decimals: 2,
-                         hint: "Sets \(what) to one velocity",
+                         hint: String(localized: "Sets ") + what + String(localized: " to one velocity"),
                          onCommit: {
                              if let draft { commit(Float(draft)) }
                              draft = nil

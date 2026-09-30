@@ -215,9 +215,9 @@ enum ClipNoteEdit {
         /// What VoiceOver says for it — "1/16" would be read as a date or a fraction.
         var spoken: String {
             switch self {
-            case .sixteenth: return "sixteenth"
-            case .eighth:    return "eighth"
-            case .quarter:   return "quarter note"
+            case .sixteenth: return String(localized: "sixteenth")
+            case .eighth:    return String(localized: "eighth")
+            case .quarter:   return String(localized: "quarter note")
             }
         }
     }
