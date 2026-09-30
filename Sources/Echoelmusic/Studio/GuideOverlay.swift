@@ -118,9 +118,14 @@ struct GuideOverlay: View {
             .strokeBorder(EchoelTheme.border, lineWidth: 1))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Guide")
-        // E4-19: title + localised seams + numbers — a format key cannot be a catalog literal.
-        .accessibilityValue(entry.title + String(localized: ", card ") + "\(index + 1)"
-                            + String(localized: " of ") + "\(count)")
+        .accessibilityValue(cardValue(entry, index: index, of: count))
+    }
+
+    /// E4-19: title + localised seams + numbers — a format key cannot be a catalog literal. Built here,
+    /// not inline in the modifier chain: `card(_:index:of:)` already type-checks slowly (479 ms in BfT
+    /// 6561) and a five-term `+` chain inside it is the classic way to make that worse.
+    private func cardValue(_ entry: LearnEntry, index: Int, of count: Int) -> String {
+        entry.title + String(localized: ", card ") + "\(index + 1)" + String(localized: " of ") + "\(count)"
     }
 
     // E4-18 (2026-09-30): `label` is a catalog KEY — both callers pass a literal and nothing reads

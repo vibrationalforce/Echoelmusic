@@ -40,10 +40,14 @@ struct EchoelInstanceLine: View {
             VStack(alignment: .leading, spacing: 2) { genreFact; characterFact }
         }
         .accessibilityElement(children: .ignore)
-        // E4-18: head + name + middle + name through `String(localized:)` — a format key could not be a
-        // catalog literal; the two names come from their types and are not this line's to translate.
-        .accessibilityLabel(String(localized: "Echoel plays ") + genre.displayName
-                            + String(localized: ", FX character ") + character.displayName)
+        .accessibilityLabel(spokenInstance)
+    }
+
+    /// E4-18: head + name + middle + name through `String(localized:)` — a format key could not be a
+    /// catalog literal; the two names come from their types and are not this line's to translate.
+    /// Built outside `body` so the `+` chain does not sit in the view's type-check budget.
+    private var spokenInstance: String {
+        String(localized: "Echoel plays ") + genre.displayName + String(localized: ", FX character ") + character.displayName
     }
 
     private var genreFact: some View { fact("Genre", genre.displayName) }
