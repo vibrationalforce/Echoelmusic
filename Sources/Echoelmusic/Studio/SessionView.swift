@@ -69,7 +69,7 @@ struct SessionView: View {
                         .font(EchoelTheme.font(16, .semibold))
                         .foregroundStyle(EchoelTheme.text)
                     Text(Self.versionString)
-                        .font(EchoelTheme.font(9))
+                        .font(EchoelTheme.font(11))
                         .foregroundStyle(EchoelTheme.dim)
                         .accessibilityLabel("Version \(Self.versionString)")
                 }

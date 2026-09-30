@@ -618,7 +618,7 @@ private struct PartNoteCanvas: View {
             for pitch in range where pitch % 12 == 0 {
                 let y = CGFloat(high - pitch) * rowH + rowH / 2
                 context.draw(Text(ClipNoteEdit.rowName(pitch: pitch, naming: naming, preferFlats: false))
-                                .font(EchoelTheme.font(9))
+                                .font(EchoelTheme.font(11))
                                 .foregroundStyle(EchoelTheme.dim),
                              at: CGPoint(x: 3, y: y), anchor: .leading)
             }

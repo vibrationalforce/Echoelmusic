@@ -76,7 +76,7 @@ struct LiveNarrationDisclosure: View {
                         .foregroundStyle(EchoelTheme.dim)
                     Spacer(minLength: 8)
                     Image(systemName: isOpen ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(EchoelTheme.dim)
                 }
                 .frame(minHeight: 34)

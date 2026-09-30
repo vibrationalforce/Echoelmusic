@@ -212,7 +212,7 @@ struct AUv3PluginView: View {
     private func parameterSection<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title.uppercased())
-                .font(.system(size: 10, weight: .bold))
+                .font(.system(size: 11, weight: .bold))
                 .foregroundColor(Color(white: 0.35))
                 .kerning(1.5)
                 .padding(.leading, 4)

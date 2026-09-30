@@ -54,6 +54,14 @@
 // marks) joined with seven sites lifted — claim 1 RED on that parent for exactly those, GREEN
 // here. The FX "Demo" chip now matches the 11 pt chip `AlwaysOnBioRow` got in the second family —
 // the source comment beside it promises "same spelling, same treatment", and it was one point off.
+// SIXTH FAMILY (same day, parent 146d67fe3): the last seven single sites (WorkstationView state
+// tags · SessionView version · PartNoteEditor octave labels · MoodPads axis caption ·
+// LiveColaboView "Demo" chip · LiveNarrationDisclosure chevron · the AUv3 view controller's
+// section titles) — claim 1 RED on that parent for exactly those, GREEN here. With this the
+// comment-stripped scan `git grep -nE 'EchoelTheme\.font\((10|9)|\.system\(size: *(10|9)\b' -- Sources`
+// returns nothing: the floor is app-wide, and the list is the whole set of files that ever had a
+// site below it. A NEW file under the floor is not caught by claim 1 — that is the ratchet's
+// stated limit, and the next family adds the file, not a directory scan (#364).
 
 import Foundation
 import XCTest
@@ -91,6 +99,18 @@ final class TheChromeTextMeetsTheElevenPointFloorTests: XCTestCase {
         "Sources/Echoelmusic/Studio/EchoelFXView.swift",
         "Sources/Echoelmusic/Studio/ImmersiveStageView.swift",
         "Sources/Echoelmusic/Studio/ArrangeCanvasView.swift",
+        // Sixth family (same day): the last seven single sites — the Workstation's state tags,
+        // the Session view's version, the note editor's octave labels (Canvas-drawn), the mood
+        // pads' axis caption, the peer row's "Demo" chip, the narration disclosure's chevron,
+        // and the AUv3 host view's section titles (no `EchoelTheme` in the extension — the
+        // absolute `.system(size:)` stays, only its number rises).
+        "Sources/Echoelmusic/Studio/WorkstationView.swift",
+        "Sources/Echoelmusic/Studio/SessionView.swift",
+        "Sources/Echoelmusic/Studio/PartNoteEditor.swift",
+        "Sources/Echoelmusic/Studio/MoodPads.swift",
+        "Sources/Echoelmusic/Studio/LiveColaboView.swift",
+        "Sources/Echoelmusic/Studio/LiveNarrationDisclosure.swift",
+        "Sources/EchoelmusicAUv3/AudioUnitViewController.swift",
     ]
 
     private static let theme = "Sources/Echoelmusic/Studio/EchoelTheme.swift"

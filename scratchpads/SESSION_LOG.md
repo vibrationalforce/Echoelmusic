@@ -40723,3 +40723,9 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 ## 2026-09-30 — Regel 12, Boden-Hälfte, fünfte Familie: FX-Routen, Bühne, Arrange-Canvas — lokal
 
 - `EchoelFXView` (zwei Pfeile 9/10→11, „Demo“-Chip 10→11 — sein Kommentar verspricht dieselbe Behandlung wie `AlwaysOnBioRow`, das seit Familie 2 bei 11 steht: ein Punkt Abstand, jetzt keiner), `ImmersiveStageView` (Orientierungs-Labels, Spurnamen), `ArrangeCanvasView` (Hör-Glyph, Takt-Lineal). Wächter-Liste 10 → 13; Transkription WORK 0 / HEAD 7.
+
+## 2026-09-30 — Regel 12, Boden-Hälfte, sechste Familie: die letzten sieben Einzelstellen — Boden app-weit — lokal
+
+- `WorkstationView` Status-Tags 10→11, `SessionView` Version 9→11, `PartNoteEditor` Oktav-Labels im Canvas 9→11 (`rowHeight` 14, passt), `MoodPads` Achsen-Caption 10→11, `LiveColaboView` „Demo“-Chip 10→11, `LiveNarrationDisclosure` Chevron `.system` 10→11, AUv3 `AudioUnitViewController` Abschnittstitel `.system` 10→11 (die Extension hat absichtlich kein `EchoelTheme`, #1385 — nur die Zahl steigt).
+- **Befund, nicht diese Scheibe:** der AUv3-Titel ist ein Großbuchstaben-Eyebrow mit `kerning(1.5)` — Uncodixfy-Bann.
+- Danach: `git grep -nE 'EchoelTheme\.font\((10|9)|\.system\(size: *(10|9)\b' -- Sources | grep -v ': *//'` → 0. Wächter-Liste 13 → 20; Transkription WORK 0 / HEAD 7. Grenze bleibt: eine NEUE Datei unter dem Boden fängt Anspruch 1 erst, wenn sie in die Liste kommt (#364, bewusst kein Verzeichnis-Scan).

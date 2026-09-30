@@ -3358,3 +3358,9 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 
 - `EchoelFXView` (two `arrow.right` glyphs 9/10, "Demo" chip 10 — its comment promises the same treatment as `AlwaysOnBioRow`'s chip, lifted to 11 in family 2), `ImmersiveStageView` (orientation labels, lane names), `ArrangeCanvasView` (hearing glyph, bar-mark ruler `monospacedDigit`) → 11.
 - Ratchet list now thirteen files; header carries the fifth family (WORK 0, HEAD 7).
+
+### 2026-09-30 — Rule 12 floor, sixth family: the last seven single sites — the floor is app-wide
+
+- `WorkstationView` state tags (10), `SessionView` version (9), `PartNoteEditor` Canvas octave labels (9, `rowHeight` 14 — an 11 pt glyph still fits a row), `MoodPads` axis caption (10), `LiveColaboView` "Demo" chip (10), `LiveNarrationDisclosure` chevron (`.system` 10), AUv3 `AudioUnitViewController` section titles (`.system` 10) → 11.
+- The AUv3 title keeps `.system(size:)`: the extension compiles without `EchoelTheme` on purpose (#1385). It is ALSO an uppercase + `kerning(1.5)` eyebrow label — a banned pattern (Uncodixfy) — recorded as a finding, not folded into this slice.
+- After this commit `git grep -nE 'EchoelTheme\.font\((10|9)|\.system\(size: *(10|9)\b' -- Sources | grep -v ': *//'` → 0. Ratchet list twenty files (WORK 0, HEAD 7). Limit stays stated: a NEW file below the floor is not caught until it joins the list.

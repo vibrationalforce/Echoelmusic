@@ -87,7 +87,7 @@ struct MoodXYPad: View {
             }
             .aspectRatio(1, contentMode: .fit)
             Text("↔ \(xCaption)   ↕ \(yCaption)")
-                .font(EchoelTheme.font(10))
+                .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.dim)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)

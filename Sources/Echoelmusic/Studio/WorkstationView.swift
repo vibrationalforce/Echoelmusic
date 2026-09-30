@@ -610,7 +610,7 @@ struct WorkstationView: View {
             Spacer(minLength: 0)
             ForEach(stateTags(row, headerSwitches: headerSwitches), id: \.self) { tag in
                 Text(tag)
-                    .font(EchoelTheme.font(10, .semibold))
+                    .font(EchoelTheme.font(11, .semibold))
                     .foregroundStyle(EchoelTheme.dim)
                     .padding(.horizontal, 6).frame(minHeight: 20)
                     .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)

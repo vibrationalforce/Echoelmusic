@@ -448,7 +448,7 @@ private func bioLine(name: String, bpm: Float, coherence: Float, highlight: Bool
             .lineLimit(1).minimumScaleFactor(0.7)
         if synthetic == true {
             Text("Demo")
-                .font(EchoelTheme.font(10, .semibold))
+                .font(EchoelTheme.font(11, .semibold))
                 .foregroundStyle(EchoelTheme.dim)
                 // #629b: `minimumScaleFactor` matches the identical chip in
                 // `PulseMonitorMini` (#627). Without it this chip is the one element in the
