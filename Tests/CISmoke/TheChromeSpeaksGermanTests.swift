@@ -54,7 +54,9 @@
 // curve editor's point line, Remove label and spoken summary (parent: all interpolated, 5 units missing — ONE finding). E4-27
 // added the position readout (Bar n · Beat b), the arrange canvas's landing announcement and the Session launch surface
 // (parent: all verbatim, 10 units missing — ONE finding). E4-28 added the automation status strip, the layer words and
-// the number pad's Range/Confirm/Default (parent: all verbatim, 12 units missing — ONE finding). Claim 12
+// the number pad's Range/Confirm/Default (parent: all verbatim, 12 units missing — ONE finding). E4-29 added the media library's relink note, files line, Relink/Place/Preview
+// labels and hint, missing/no-match/usage words, and the routing surface's network target, connection count and route
+// label/value (parent: all interpolated or verbatim, 23 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -836,6 +838,56 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         try assertGerman(["no effect", "overridden", "off", "1 point", "points", " automation, ",
                           "no effect, nothing is connected to this parameter", "overridden by a later layer", "switched off",
                           "Global", "Part", "Arrangement", "Range ", "Confirm ", "Default "], "automation strip, layer words and number pad")
+
+        // E4-29 — the media library (relink note, "n of N files" line, Relink/Place/Preview labels, the preview hint,
+        // the missing-file and no-match sentences, the usage words per grammatical number) and the routing surface
+        // (network-target label, connection count, route label and its three spoken states). Head/middle seams beside
+        // the moving value, a catalog noun per grammatical number; never a format key. The neutral joins (size · use,
+        // "name, size, use") carry no key at all — a seam is added only where a WORD moves.
+        let library = try codeOnly("Sources/Echoelmusic/Studio/MediaBrowserView.swift")
+        for seam in ["note = String(localized: \"Relinked \") + \"\\u{201C}\" + request.clipName + \"\\u{201D}\" + String(localized: \" to \") + request.asset.displayName + \".\"",
+                     "line(\"\\(shown.count)\" + String(localized: \" of \") + \"\\(assets.count)\" + String(localized: \" files\"))",
+                     ".accessibilityLabel(String(localized: \"Relink \") + item.clipName)",
+                     "case 0:  parts = String(localized: \"no part\")",
+                     "case 1:  parts = String(localized: \"1 part\")",
+                     "default: parts = \"\\(item.partCount) \" + String(localized: \"parts\")",
+                     "return item.clipName + String(localized: \" — expects \") + item.fileName + \" · \" + parts",
+                     "String(localized: \"No file name contains \") + \"\\u{201C}\" + query.trimmingCharacters(in: .whitespacesAndNewlines) + \"\\u{201D}.\"",
+                     "Text(size + \" · \" + use)",
+                     ".accessibilityLabel(asset.displayName + \", \" + size + \", \" + use)",
+                     ".accessibilityLabel(String(localized: \"Place \") + asset.displayName)",
+                     "playing ? String(localized: \"Stop preview\") : String(localized: \"Preview \") + asset.displayName",
+                     "String(localized: \"Plays its first \") + \"\\(Int(Self.previewSeconds))\" + String(localized: \" seconds\")",
+                     "usage.clipIDs.isEmpty ? String(localized: \"not in the piece\") : String(localized: \"imported, not placed yet\")",
+                     "case 1:  return String(localized: \"in 1 part\")",
+                     "default: return String(localized: \"in \") + \"\\(usage.partCount)\" + String(localized: \" parts\")"] {
+            XCTAssertTrue(library.contains(seam), "MediaBrowserView lost the E4-29 seam `\(seam)`")
+        }
+        for verbatim in ["note = \"Relinked ", "line(\"\\(shown.count) of ", "accessibilityLabel(\"Relink \\(", "parts = \"no part\"", "parts = \"1 part\"",
+                         "parts = \"\\(item.partCount) parts\"", "— expects \\(item.fileName)", "\"No file name contains \\u{201C}\\(",
+                         "Text(\"\\(size) · \\(use)\")", "accessibilityLabel(\"\\(asset.displayName), ", "accessibilityLabel(\"Place \\(",
+                         "? \"Stop preview\" :", "\"Preview \\(asset.displayName)\"", "\"Plays its first \\(", "? \"not in the piece\" :",
+                         "return \"in 1 part\"", "return \"in \\(usage.partCount) parts\""] {
+            XCTAssertFalse(library.contains(verbatim), "MediaBrowserView interpolates or spells a visible word verbatim again: `\(verbatim)`")
+        }
+        let patchbay = try codeOnly("Sources/Echoelmusic/Studio/PatchbayView.swift")
+        for seam in [".accessibilityLabel(name + String(localized: \" — network target\"))",
+                     "Text(\"\\(router.graph.routes.count) \" + String(localized: \"connections\"))",
+                     ".accessibilityLabel(src.name + String(localized: \" to \") + dst.name)",
+                     ".accessibilityValue(connected ? String(localized: \"connected\") : (compatible ? String(localized: \"not connected\") : String(localized: \"incompatible\")))"] {
+            XCTAssertTrue(patchbay.contains(seam), "PatchbayView lost the E4-29 seam `\(seam)`")
+        }
+        for verbatim in ["accessibilityLabel(\"\\(name) — network target\")", "Text(\"\\(router.graph.routes.count) connections\")",
+                         "accessibilityLabel(\"\\(src.name) to \\(dst.name)\")", "connected ? \"connected\" :"] {
+            XCTAssertFalse(patchbay.contains(verbatim), "PatchbayView interpolates a key again: `\(verbatim)`")
+        }
+        // RUNTIME COUNTERWEIGHTS: the bundle's English is unchanged — the words the other guards pin still come out
+        XCTAssertEqual(MediaBrowserView.usageText(.unused), "not in the piece")
+        XCTAssertEqual(MediaBrowserView.noMatchText("snare"), "No file name contains \u{201C}snare\u{201D}.")
+        try assertGerman(["Relinked ", " to ", " files", "Relink ", " — expects ", "no part", "1 part", "No file name contains ",
+                          "Place ", "Stop preview", "Preview ", "Plays its first ", " seconds", "not in the piece",
+                          "imported, not placed yet", "in 1 part", "in ", " parts", " — network target", "connections",
+                          "connected", "not connected", "incompatible"], "media library and routing surface")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

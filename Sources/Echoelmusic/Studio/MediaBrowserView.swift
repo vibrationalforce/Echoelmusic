@@ -135,7 +135,7 @@ struct MediaBrowserView: View {
             switch result {
             case .success:
                 missingIDs.remove(request.clipID)
-                note = "Relinked \u{201C}\(request.clipName)\u{201D} to \(request.asset.displayName)."
+                note = String(localized: "Relinked ") + "\u{201C}" + request.clipName + "\u{201D}" + String(localized: " to ") + request.asset.displayName + "."
             case .failure(let refusal):
                 note = refusal.userMessage
             }
@@ -219,7 +219,7 @@ struct MediaBrowserView: View {
                 // Only beside a non-empty result: under "No file name contains …" a
                 // "0 of N files" line says the same thing twice (review of B1).
                 if !shown.isEmpty, shown.count != assets.count {
-                    line("\(shown.count) of \(assets.count) files")
+                    line("\(shown.count)" + String(localized: " of ") + "\(assets.count)" + String(localized: " files"))
                 }
             }
         }
@@ -289,7 +289,7 @@ struct MediaBrowserView: View {
                     .strokeBorder(EchoelTheme.border, lineWidth: 1))
                 .contentShape(Rectangle())
         }
-        .accessibilityLabel("Relink \(item.clipName)")
+        .accessibilityLabel(String(localized: "Relink ") + item.clipName)
         .accessibilityHint("Chooses a library file of the same length")
     }
 
@@ -317,16 +317,16 @@ struct MediaBrowserView: View {
     static func missingText(_ item: MediaAsset.Missing) -> String {
         let parts: String
         switch item.partCount {
-        case 0:  parts = "no part"
-        case 1:  parts = "1 part"
-        default: parts = "\(item.partCount) parts"
+        case 0:  parts = String(localized: "no part")
+        case 1:  parts = String(localized: "1 part")
+        default: parts = "\(item.partCount) " + String(localized: "parts")
         }
-        return "\(item.clipName) — expects \(item.fileName) · \(parts)"
+        return item.clipName + String(localized: " — expects ") + item.fileName + " · " + parts
     }
 
     /// What the list says when the filter leaves nothing.
     static func noMatchText(_ query: String) -> String {
-        "No file name contains \u{201C}\(query.trimmingCharacters(in: .whitespacesAndNewlines))\u{201D}."
+        String(localized: "No file name contains ") + "\u{201C}" + query.trimmingCharacters(in: .whitespacesAndNewlines) + "\u{201D}."
     }
 
     private func line(_ text: String) -> some View {
@@ -343,12 +343,12 @@ struct MediaBrowserView: View {
                 Text(asset.displayName)
                     .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
                     .lineLimit(1)
-                Text("\(size) · \(use)")
+                Text(size + " · " + use)
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             }
             // One spoken element for the facts; the button stays its own element.
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(asset.displayName), \(size), \(use)")
+            .accessibilityLabel(asset.displayName + ", " + size + ", " + use)
             Spacer(minLength: 8)
             previewButton(asset)
             Button {
@@ -365,7 +365,7 @@ struct MediaBrowserView: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Place \(asset.displayName)")
+            .accessibilityLabel(String(localized: "Place ") + asset.displayName)
             .accessibilityHint("Adds it as a part at the end of the audio track")
         }
     }
@@ -373,8 +373,8 @@ struct MediaBrowserView: View {
     /// B3: Preview plays the file's first seconds; while it plays the same button is Stop.
     private func previewButton(_ asset: MediaAsset) -> some View {
         let playing = previewing == asset.key
-        let label: String = playing ? "Stop preview" : "Preview \(asset.displayName)"
-        let hint: String = playing ? "" : "Plays its first \(Int(Self.previewSeconds)) seconds"
+        let label: String = playing ? String(localized: "Stop preview") : String(localized: "Preview ") + asset.displayName
+        let hint: String = playing ? "" : String(localized: "Plays its first ") + "\(Int(Self.previewSeconds))" + String(localized: " seconds")
         return Button {
             if playing { stopPreview() } else { preview(asset) }
         } label: {
@@ -430,9 +430,9 @@ struct MediaBrowserView: View {
     /// Where a file is used, in the words the row shows.
     static func usageText(_ usage: MediaAsset.Usage) -> String {
         switch usage.partCount {
-        case 0:  return usage.clipIDs.isEmpty ? "not in the piece" : "imported, not placed yet"
-        case 1:  return "in 1 part"
-        default: return "in \(usage.partCount) parts"
+        case 0:  return usage.clipIDs.isEmpty ? String(localized: "not in the piece") : String(localized: "imported, not placed yet")
+        case 1:  return String(localized: "in 1 part")
+        default: return String(localized: "in ") + "\(usage.partCount)" + String(localized: " parts")
         }
     }
 

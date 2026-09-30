@@ -579,7 +579,7 @@ struct PatchbayView: View {
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(name) — network target")
+        .accessibilityLabel(name + String(localized: " — network target"))
     }
 
     /// ⭐ #1026 — TWO CONTROLS ON ONE LINE, BUT ONLY WHILE THEY FIT.
@@ -780,7 +780,7 @@ struct PatchbayView: View {
 
     private var headerBar: some View {
         HStack(spacing: 10) {
-            Text("\(router.graph.routes.count) connections")
+            Text("\(router.graph.routes.count) " + String(localized: "connections"))
                 .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
             Spacer(minLength: 0)
             Button { router.applyAllSuggestions() } label: {
@@ -850,8 +850,8 @@ struct PatchbayView: View {
         }
         .buttonStyle(.plain)
         .disabled(!compatible)
-        .accessibilityLabel("\(src.name) to \(dst.name)")
-        .accessibilityValue(connected ? "connected" : (compatible ? "not connected" : "incompatible"))
+        .accessibilityLabel(src.name + String(localized: " to ") + dst.name)
+        .accessibilityValue(connected ? String(localized: "connected") : (compatible ? String(localized: "not connected") : String(localized: "incompatible")))
     }
 
     // MARK: - Helpers
