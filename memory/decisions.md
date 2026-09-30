@@ -3309,3 +3309,9 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 
 - **Decision:** `AudioEngine.defaultMasterVolume` (`nonisolated static let`, 0.85) — `masterVolume` initialises from it, `MasterVolumeField` offers it as `standard:`. Guard pins range membership, the initialiser and the row, not the value (a tuning choice).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 6, eighth family: the click's two launch values get one owner
+
+- **Decision:** `MetronomeVoice.defaultBeatsPerBar` (4) and `defaultLevel` (0.6), `nonisolated static let`. `beatsPerBar` / `level` AND their `nonisolated(unsafe)` audio mirrors initialise from them (the mirrors had their own literals — a second copy the render thread read). Rows: "Accent every" and both click level rows pass them as `standard:`.
+- **Guard:** claim 3, eighth family — four initialiser needles, accent row once, level rows twice. Transcribed WORK GREEN, HEAD RED.
+- **Review:** 2026-10-30.

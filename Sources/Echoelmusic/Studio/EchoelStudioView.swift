@@ -3870,7 +3870,8 @@ struct EchoelStudioView: View {
                     EchoelValueField(label: "Level", value: Binding(
                         get: { Double(metronome.level) },
                         set: { metronome.level = Float($0) }),
-                        range: 0...1, unit: "", decimals: 2)
+                        range: 0...1, unit: "", decimals: 2,
+                        standard: Double(MetronomeVoice.defaultLevel))
                 }
             }
 
@@ -4970,6 +4971,7 @@ struct EchoelStudioView: View {
                     get: { Double(metronome.beatsPerBar) },
                     set: { metronome.beatsPerBar = Int($0.rounded()) }),
                     range: 1...12, unit: "beats", decimals: 0,
+                    standard: Double(MetronomeVoice.defaultBeatsPerBar),
                     // ⛔ `hint:`, NOT a chained `.accessibilityHint` (#930b). The field collapses
                     // to ONE accessibility element, so an outer hint either goes unspoken or
                     // eats "Swipe up or down to adjust". The parameter composes both.
@@ -5027,7 +5029,8 @@ struct EchoelStudioView: View {
                 EchoelValueField(label: "Click level", value: Binding(
                     get: { Double(metronome.level) },
                     set: { metronome.level = Float($0) }),
-                    range: 0...1, unit: "", decimals: 2)
+                    range: 0...1, unit: "", decimals: 2,
+                    standard: Double(MetronomeVoice.defaultLevel))
             }
         }
     }

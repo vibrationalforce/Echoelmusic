@@ -34,6 +34,9 @@
 // `MultiRollFanout`) were literals `1` / `0`; every one of them reads the owner now.
 // SEVENTH FAMILY (claim 3, same day): the "Master volume" row (`MasterVolumeField`) names
 // `AudioEngine.defaultMasterVolume`, the constant the engine's fader now initialises from.
+// EIGHTH FAMILY (claim 3, same day): the click — "Accent every" names `MetronomeVoice.defaultBeatsPerBar`,
+// the two level rows (mixer "Level", tempo-tools "Click level") name `MetronomeVoice.defaultLevel`;
+// the stored properties AND their audio-thread mirrors initialise from the same two constants.
 //
 // SECOND FAMILY (claim 5, the same day): every value field in `EchoelStudioView` whose binding
 // is a KEYSTORE-backed `@AppStorage` (`StudioDefaultKeys.x.key` … `= StudioDefaultKeys.x.value`)
@@ -230,6 +233,25 @@ final class TheValueFieldOffersItsDefaultTests: XCTestCase {
         XCTAssertEqual(occurrences(of: "var masterVolume: Float = AudioEngine.defaultMasterVolume", in: engine), 1, "`AudioEngine.masterVolume` initialises from the owner constant, never from a literal")
         let grid = try source("Sources/Echoelmusic/Studio/MasterLoudnessGrid.swift")
         XCTAssertEqual(occurrences(of: "standard: Double(AudioEngine.defaultMasterVolume)", in: grid), 1, "the \"Master volume\" row passes the engine's default once")
+
+        // EIGHTH FAMILY — the click (2026-09-30). Two constants on `MetronomeVoice`; the stored
+        // properties and their `nonisolated(unsafe)` audio mirrors initialise from them (a mirror
+        // that started from its own literal would be a second owner the render thread reads).
+        XCTAssertTrue((1...12).contains(MetronomeVoice.defaultBeatsPerBar), "the accent interval default must sit inside the row's 1…12 range")
+        XCTAssertTrue((Float(0)...Float(1)).contains(MetronomeVoice.defaultLevel), "the click level default must sit inside the row's 0…1 range")
+        let click = try source("Sources/Echoelmusic/Audio/MetronomeVoice.swift")
+        for needle in ["var beatsPerBar: Int = MetronomeVoice.defaultBeatsPerBar",
+                       "var level: Float = MetronomeVoice.defaultLevel",
+                       "private var audioBeatsPerBar = MetronomeVoice.defaultBeatsPerBar",
+                       "private var audioLevel: Float = MetronomeVoice.defaultLevel"] {
+            XCTAssertEqual(occurrences(of: needle, in: click), 1, "`\(needle)` — the property (or its audio mirror) no longer initialises from the owner")
+        }
+        XCTAssertEqual(occurrences(of: "standard: Double(MetronomeVoice.defaultBeatsPerBar)", in: studio), 1, "the \"Accent every\" row passes the click's default once")
+        XCTAssertEqual(occurrences(of: "standard: Double(MetronomeVoice.defaultLevel)", in: studio), 2, """
+            The two click level rows (mixer "Level" beside the click switch, tempo-tools "Click level") \
+            both pass `MetronomeVoice.defaultLevel` — same property, same owner. A third row joining \
+            is fine: raise this count in the same commit.
+            """)
     }
 
     // MARK: - claim 5 — the keystore family: a keystore-bound field offers the keystore's default

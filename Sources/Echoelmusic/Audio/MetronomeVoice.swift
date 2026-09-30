@@ -61,12 +61,19 @@ public final class MetronomeVoice {
     /// clip grid stay in 4 — the two bars coincide once at start, then diverge. The UI row is
     /// named "Accent every" for that reason. It also has NO effect while `accentDownbeat` is
     /// off: the render test is `(beatIndex == 0) && audioAccent`.
-    public var beatsPerBar: Int = 4 {
+    public var beatsPerBar: Int = MetronomeVoice.defaultBeatsPerBar {
         didSet { audioBeatsPerBar = max(1, min(beatsPerBar, 16)) }
     }
 
+    /// The ONE owner of the click's two launch values (#416): the accent interval (4, the click's
+    /// own bar) and the level (0.6). The stored properties and their audio-thread mirrors
+    /// initialise from these, and the "Accent every" / "Click level" rows offer them as their
+    /// "Default" key. Type name, not `Self.`, in the stored initializers (#1444).
+    public nonisolated static let defaultBeatsPerBar: Int = 4
+    public nonisolated static let defaultLevel: Float = 0.6
+
     /// Click level [0...1]. The accent beat is rendered a little louder/brighter.
-    public var level: Float = 0.6 {
+    public var level: Float = MetronomeVoice.defaultLevel {
         // NaN-safe `clamped(to:)` — `min(max(level, 0), 1)` passes NaN straight
         // through (every comparison against NaN is false). A NaN here would make
         // every click sample non-finite; the output guard would then zero them, so
@@ -83,8 +90,8 @@ public final class MetronomeVoice {
 
     @ObservationIgnored nonisolated(unsafe) private var audioEnabled = false
     @ObservationIgnored nonisolated(unsafe) private var audioSamplesPerBeat: Double = 48_000 * 60 / 120
-    @ObservationIgnored nonisolated(unsafe) private var audioBeatsPerBar = 4
-    @ObservationIgnored nonisolated(unsafe) private var audioLevel: Float = 0.6
+    @ObservationIgnored nonisolated(unsafe) private var audioBeatsPerBar = MetronomeVoice.defaultBeatsPerBar
+    @ObservationIgnored nonisolated(unsafe) private var audioLevel: Float = MetronomeVoice.defaultLevel
     @ObservationIgnored nonisolated(unsafe) private var audioAccent = true
     /// Set on MainActor (the arm, `enabled`'s didSet), consumed on the audio thread. Bool is
     /// atomic-width → no torn read; a one-frame race only shifts the first click by

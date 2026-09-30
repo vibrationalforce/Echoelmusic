@@ -40663,3 +40663,7 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 ## 2026-09-30 — Regel 6, siebte Familie: Master-Fader-Startwert bekommt EINEN Besitzer — lokal
 
 - `AudioEngine.defaultMasterVolume` (`nonisolated static let`, 0,85); `masterVolume` initialisiert daraus, `MasterVolumeField` übergibt `standard: Double(…)`. Wächter (Anspruch 3, SIEBTE FAMILIE) pinnt Bereich, Initialisierer und Zeile — nicht den Wert (Abstimmungsentscheidung, #818). Transkription WORK GRÜN / HEAD ROT; Checker sauber. Lokal, Batch.
+
+## 2026-09-30 — Regel 6, achte Familie: der Click bekommt EINEN Besitzer je Startwert — lokal
+
+- `MetronomeVoice.defaultBeatsPerBar` (4) + `defaultLevel` (0,6). `beatsPerBar`/`level` UND die `nonisolated(unsafe)`-Audio-Spiegel initialisieren daraus (die Spiegel hatten eigene Literale — eine zweite Kopie, die der Render-Thread las). Zeilen: „Accent every“ + beide Click-Level-Zeilen (Mixer „Level“, Tempo-Tools „Click level“) übergeben `standard:`. Wächter Anspruch 3, ACHTE FAMILIE (vier Initialisierer-Nadeln, Accent 1, Level 2). Transkription WORK GRÜN / HEAD ROT. Checker sauber, Scanner 0. Lokal, Batch.
