@@ -10494,6 +10494,1860 @@
           }
         }
       }
+    },
+    "Accent" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accent"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akzent"
+          }
+        }
+      }
+    },
+    "Accent every" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accent every"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akzent alle"
+          }
+        }
+      }
+    },
+    "Attack" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attack"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attack"
+          }
+        }
+      }
+    },
+    "Band" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band"
+          }
+        }
+      }
+    },
+    "Band drift" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band drift"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band-Drift"
+          }
+        }
+      }
+    },
+    "Bar variation" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bar variation"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Takt-Variation"
+          }
+        }
+      }
+    },
+    "Bio max" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio max"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio max"
+          }
+        }
+      }
+    },
+    "Bio min" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio min"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio min"
+          }
+        }
+      }
+    },
+    "Bits" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bits"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bits"
+          }
+        }
+      }
+    },
+    "Brightness" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brightness"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Helligkeit"
+          }
+        }
+      }
+    },
+    "Ceiling" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ceiling"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decke"
+          }
+        }
+      }
+    },
+    "Centre" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centre"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mitte"
+          }
+        }
+      }
+    },
+    "Chord length" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chord length"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akkordlänge"
+          }
+        }
+      }
+    },
+    "Click level" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Click level"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klick-Pegel"
+          }
+        }
+      }
+    },
+    "Cutoff" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cutoff"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cutoff"
+          }
+        }
+      }
+    },
+    "Damping" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Damping"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dämpfung"
+          }
+        }
+      }
+    },
+    "Darkness" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Darkness"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dunkelheit"
+          }
+        }
+      }
+    },
+    "Decay" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decay"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decay"
+          }
+        }
+      }
+    },
+    "Density" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Density"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dichte"
+          }
+        }
+      }
+    },
+    "Depth" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Depth"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiefe"
+          }
+        }
+      }
+    },
+    "Detail" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detail"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detail"
+          }
+        }
+      }
+    },
+    "Detune" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detune"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verstimmung"
+          }
+        }
+      }
+    },
+    "Downsample" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Downsample"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Downsample"
+          }
+        }
+      }
+    },
+    "Drama" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drama"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drama"
+          }
+        }
+      }
+    },
+    "Drive" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drive"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drive"
+          }
+        }
+      }
+    },
+    "Energy" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Energy"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Energie"
+          }
+        }
+      }
+    },
+    "Evolve" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Evolve"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entwicklung"
+          }
+        }
+      }
+    },
+    "Feedback" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feedback"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feedback"
+          }
+        }
+      }
+    },
+    "Fixtures" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fixtures"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geräte"
+          }
+        }
+      }
+    },
+    "Glide" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glide"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glide"
+          }
+        }
+      }
+    },
+    "Glitter" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glitter"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glitzer"
+          }
+        }
+      }
+    },
+    "Glow" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glow"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glühen"
+          }
+        }
+      }
+    },
+    "Harm. level" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harm. level"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harm.-Pegel"
+          }
+        }
+      }
+    },
+    "Harmonics" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harmonics"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obertöne"
+          }
+        }
+      }
+    },
+    "Hue" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hue"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbton"
+          }
+        }
+      }
+    },
+    "Humanize" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Humanize"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Humanize"
+          }
+        }
+      }
+    },
+    "Intensity" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intensity"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intensität"
+          }
+        }
+      }
+    },
+    "Knee" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Knee"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Knie"
+          }
+        }
+      }
+    },
+    "LFO depth" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LFO depth"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LFO-Tiefe"
+          }
+        }
+      }
+    },
+    "LFO rate" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LFO rate"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LFO-Rate"
+          }
+        }
+      }
+    },
+    "LFO→filter" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LFO→filter"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LFO→Filter"
+          }
+        }
+      }
+    },
+    "Laid back" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laid back"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laid back"
+          }
+        }
+      }
+    },
+    "Life" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Life"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leben"
+          }
+        }
+      }
+    },
+    "Liveliness" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liveliness"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lebendigkeit"
+          }
+        }
+      }
+    },
+    "Make-up" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Make-up"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Make-up"
+          }
+        }
+      }
+    },
+    "Master" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Master"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Master"
+          }
+        }
+      }
+    },
+    "Master volume" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Master volume"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Master-Lautstärke"
+          }
+        }
+      }
+    },
+    "Mix" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mix"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mix"
+          }
+        }
+      }
+    },
+    "Morph" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morph"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morph"
+          }
+        }
+      }
+    },
+    "Movement" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Movement"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewegung"
+          }
+        }
+      }
+    },
+    "Noise" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noise"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rauschen"
+          }
+        }
+      }
+    },
+    "Note length" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note length"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notenlänge"
+          }
+        }
+      }
+    },
+    "Output" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Output"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgang"
+          }
+        }
+      }
+    },
+    "Pad" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pad"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pad"
+          }
+        }
+      }
+    },
+    "Pan" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pan"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pan"
+          }
+        }
+      }
+    },
+    "Pitch" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pitch"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tonhöhe"
+          }
+        }
+      }
+    },
+    "Port" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Port"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Port"
+          }
+        }
+      }
+    },
+    "Position morph" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Position morph"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Positions-Morph"
+          }
+        }
+      }
+    },
+    "Rate" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rate"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rate"
+          }
+        }
+      }
+    },
+    "Ratio" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ratio"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ratio"
+          }
+        }
+      }
+    },
+    "Release" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Release"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Release"
+          }
+        }
+      }
+    },
+    "Resonance" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resonance"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resonanz"
+          }
+        }
+      }
+    },
+    "Reverb decay" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reverb decay"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hall-Ausklang"
+          }
+        }
+      }
+    },
+    "Reverb mix" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reverb mix"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hall-Anteil"
+          }
+        }
+      }
+    },
+    "Romance" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Romance"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Romantik"
+          }
+        }
+      }
+    },
+    "Saturation" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saturation"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sättigung"
+          }
+        }
+      }
+    },
+    "Set tempo" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set tempo"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo setzen"
+          }
+        }
+      }
+    },
+    "Size" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Size"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Größe"
+          }
+        }
+      }
+    },
+    "Slide ensemble" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slide ensemble"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slide-Ensemble"
+          }
+        }
+      }
+    },
+    "Slide vibrato" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slide vibrato"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slide-Vibrato"
+          }
+        }
+      }
+    },
+    "Smooth" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smooth"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glättung"
+          }
+        }
+      }
+    },
+    "Spacing" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spacing"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abstand"
+          }
+        }
+      }
+    },
+    "Span" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Span"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spanne"
+          }
+        }
+      }
+    },
+    "Spread" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spread"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Streuung"
+          }
+        }
+      }
+    },
+    "Starts at bar" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starts at bar"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beginnt bei Takt"
+          }
+        }
+      }
+    },
+    "Structure" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Structure"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Struktur"
+          }
+        }
+      }
+    },
+    "Sub heat" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sub heat"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sub-Hitze"
+          }
+        }
+      }
+    },
+    "Sub level" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sub level"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sub-Pegel"
+          }
+        }
+      }
+    },
+    "Sub presence" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sub presence"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sub-Präsenz"
+          }
+        }
+      }
+    },
+    "Sustain" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sustain"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sustain"
+          }
+        }
+      }
+    },
+    "Swell ↔ Strike" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swell ↔ Strike"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwellen ↔ Anschlag"
+          }
+        }
+      }
+    },
+    "Sync" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync"
+          }
+        }
+      }
+    },
+    "Syncopation" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syncopation"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synkopierung"
+          }
+        }
+      }
+    },
+    "Tempo" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo"
+          }
+        }
+      }
+    },
+    "Tension" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tension"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spannung"
+          }
+        }
+      }
+    },
+    "Texture" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texture"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Textur"
+          }
+        }
+      }
+    },
+    "Threshold" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Threshold"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwelle"
+          }
+        }
+      }
+    },
+    "Time" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeit"
+          }
+        }
+      }
+    },
+    "Traverse" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traverse"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traverse"
+          }
+        }
+      }
+    },
+    "Universe" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Universe"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Universum"
+          }
+        }
+      }
+    },
+    "Value" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Value"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wert"
+          }
+        }
+      }
+    },
+    "Variation" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variation"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variation"
+          }
+        }
+      }
+    },
+    "Velocity" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velocity"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anschlagstärke"
+          }
+        }
+      }
+    },
+    "Velocity (avg)" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velocity (avg)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anschlagstärke (Ø)"
+          }
+        }
+      }
+    },
+    "Vibrato depth" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vibrato depth"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vibrato-Tiefe"
+          }
+        }
+      }
+    },
+    "Vibrato rate" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vibrato rate"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vibrato-Rate"
+          }
+        }
+      }
+    },
+    "Virtuosity" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Virtuosity"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Virtuosität"
+          }
+        }
+      }
+    },
+    "Voices" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voices"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stimmen"
+          }
+        }
+      }
+    },
+    "Warmth" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warmth"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wärme"
+          }
+        }
+      }
+    },
+    "Weird" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weird"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schräg"
+          }
+        }
+      }
+    },
+    "Width" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Width"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breite"
+          }
+        }
+      }
+    },
+    "Wow & Flutter" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wow & Flutter"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wow & Flutter"
+          }
+        }
+      }
+    },
+    "Wow/Flutter" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wow/Flutter"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wow/Flutter"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

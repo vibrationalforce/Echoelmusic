@@ -352,6 +352,11 @@ import SwiftUI
 import Foundation
 
 struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloatingPoint {
+    /// The row's caption — and since E4-10 (2026-09-30) a catalog KEY, looked up where it is drawn.
+    /// It stays a `String` on purpose: callers pass computed labels (`param.label`, a `compact ? "" :`
+    /// ternary, the instrument's `param`/`knob` pass-throughs) and the layout reads `label.isEmpty`.
+    /// `Text(label)` on a `String` spelled every parameter row verbatim on a German phone while the
+    /// `Text("…")` beside it was translated; the three draw sites below wrap the key instead.
     let label: String
     @Binding var value: V
     let range: ClosedRange<V>
@@ -668,7 +673,7 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
                 // text. `fixedSize(vertical:)` is what lets it claim the second line; without
                 // it a tight parent proposal still truncates to one.
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(label)
+                    Text(LocalizedStringKey(label))
                         .font(EchoelTheme.font(15))
                         .foregroundStyle(labelTint)
                         .fixedSize(horizontal: false, vertical: true)
@@ -676,7 +681,7 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
                 }
             } else {
                 HStack(spacing: 12) {
-                    Text(label)
+                    Text(LocalizedStringKey(label))
                         .font(EchoelTheme.font(15))
                         .foregroundStyle(labelTint)
                         .lineLimit(1).minimumScaleFactor(0.7)
@@ -688,7 +693,7 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
         .padding(.vertical, 2)
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(label)
+        .accessibilityLabel(LocalizedStringKey(label))
         .accessibilityValue(accessibleValue)
         // ⛔ #1401 — THE GESTURE PROMISE MUST NOT SURVIVE `.disabled(…)`. VoiceOver already
         // speaks "dimmed" for a disabled element, and appending "Swipe up or down to adjust"
@@ -930,7 +935,7 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
         // (The position indicator is layered above, as a `.background` — see `faderTrack`.)
         .animation(.easeOut(duration: 0.12), value: scrubbing)
         .sheet(isPresented: $showPad) {
-            EchoelNumberPad(title: label, initial: Double(value), decimals: decimals,
+            EchoelNumberPad(title: String(localized: String.LocalizationValue(label)), initial: Double(value), decimals: decimals,
                             unit: unit, range: Double(range.lowerBound)...Double(range.upperBound),
                             standard: standard.map { Double($0) }) { newVal in
                 // Same rule as the other two paths (#375): confirming the number that was already

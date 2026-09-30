@@ -29,7 +29,9 @@
 // Claim 10 (E4-6 → E4-9) walks a listed family for `de` units and was red on each slice's parent for
 // the ONE absence of that slice's units (#486). Claim 11 (E4-9) drives eight signature needles, the
 // absent verbatim ternary in two files and nine units — on its parent all eight needles are absent,
-// the ternary present and the nine units missing: ONE finding, the slice, not eighteen.
+// the ternary present and the nine units missing: ONE finding, the slice, not eighteen. Claim 12
+// (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
+// parent the needles are absent and the labels' units missing — again ONE finding.
 //
 // WHAT IT DOES NOT FORBID (#364): more chrome words, another language, a reworded sentence. A
 // reworded sentence turns the OLD key into an orphan — `StringCatalogIsHonestTests` claim
@@ -452,6 +454,63 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertTrue(media.contains("String(localized: \"Shown\")"), "the media library's disclosure value is not localised")
         try assertGerman(["Shows or hides the ", " controls", "Shown", "Hidden",
                           "Look", "Voice", "Self-play", "Sound", "Weather"], "collapsible/weather header words")
+    }
+
+    // MARK: - claim 12 (E4-10) — every value-field label has a German unit
+
+    /// SOURCE-TEXT SCAN + END-TO-END on `WeatherMood.Param`. `EchoelValueField` draws `label` as a
+    /// catalog KEY since E4-10 (three sites: the two `Text` branches and the VoiceOver label; the
+    /// number pad's title is the localised String). That is what makes walking its literal labels
+    /// meaningful: the direct `EchoelValueField(label: "…")` sites app-wide (a `cond ? "a" : "b"`
+    /// label counts both arms), the instrument's `param`/`knob`/`moodKnob` pass-throughs and the FX
+    /// panel's `field("…")` helper. The weather mixers reach the field through `param.label`, so
+    /// those eight are driven on the enum itself.
+    func testEveryValueFieldLabelHasAGermanUnit() throws {
+        let root = try repoRoot()
+        let strings = try catalogStrings()
+        let field = try codeOnly("Sources/Echoelmusic/Studio/EchoelValueField.swift")
+        XCTAssertTrue(field.contains("Text(LocalizedStringKey(label))"),
+                      "EchoelValueField draws its label as a verbatim String again — the walk below would then prove nothing")
+        XCTAssertTrue(field.contains(".accessibilityLabel(LocalizedStringKey(label))"),
+                      "EchoelValueField's VoiceOver label is the verbatim String again")
+        XCTAssertTrue(field.contains("EchoelNumberPad(title: String(localized: String.LocalizationValue(label))"),
+                      "the number pad's title no longer follows the localised row label")
+        XCTAssertFalse(field.contains("Text(label)"), "a verbatim `Text(label)` is back in EchoelValueField")
+
+        let lit = #""((?:[^"\\]|\\.)*)""#
+        let direct = try NSRegularExpression(pattern: #"\bEchoelValueField\(\s*label:\s*(?:[A-Za-z.]+\s*\?\s*)?"# + lit + #"(?:\s*:\s*"# + lit + #")?"#)
+        let studioHelpers = try NSRegularExpression(pattern: #"\b(?:param|knob|moodKnob)\(\s*"# + lit)
+        let fxHelper = try NSRegularExpression(pattern: #"\bfield\(\s*"# + lit)
+        var sites = 0, missing: [String] = [], seen = Set<String>()
+        func collect(_ regex: NSRegularExpression, in code: String) {
+            for m in regex.matches(in: code, range: NSRange(code.startIndex..., in: code)) {
+                for g in 1..<m.numberOfRanges {
+                    guard m.range(at: g).location != NSNotFound, let r = Range(m.range(at: g), in: code) else { continue }
+                    let key = String(code[r])
+                    if key.isEmpty || key.contains("\\") || key.contains("%") { continue }
+                    sites += 1
+                    if seen.insert(key).inserted, german(key, in: strings) == nil { missing.append(key) }
+                }
+            }
+        }
+        let sources = root.appendingPathComponent("Sources/Echoelmusic")
+        guard let walker = FileManager.default.enumerator(at: sources, includingPropertiesForKeys: nil) else {
+            return XCTFail("cannot enumerate Sources/Echoelmusic")
+        }
+        for case let url as URL in walker where url.pathExtension == "swift" {
+            let code = SourceText.codeOnly(try String(contentsOf: url, encoding: .utf8))
+            collect(direct, in: code)
+            if url.lastPathComponent == "EchoelStudioView.swift" { collect(studioHelpers, in: code) }
+            if url.lastPathComponent == "EchoelFXView.swift" { collect(fxHelper, in: code) }
+        }
+        XCTAssertGreaterThan(sites, 120, "the walk found \(sites) value-field label sites — it did not read the tree")
+        XCTAssertEqual(missing, [], """
+            \(missing.count) value-field label(s) without a German unit — add the `de` unit for each:
+            \(missing.joined(separator: "\n"))
+            """)
+        for p in WeatherMood.Param.allCases {
+            XCTAssertNotNil(german(p.label, in: strings), "weather mixer label \"\(p.label)\" has no German unit")
+        }
     }
 
     // MARK: - claim 5 — the German for "Piece" is the glossary's word, read from the glossary
