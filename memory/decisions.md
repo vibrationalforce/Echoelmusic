@@ -3224,3 +3224,11 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Guards / copy:** `TheSessionSaveOpensTheSameSongTests` needle follows the shared name; `docs/privacy.html` and `docs/dev/APP_STORE_LISTING_v1.md` quote the switch's new label.
 - **Remaining in the file (scanner):** take 10 · reset 6 + factory 1 (rule-6 word decision) · project 3 (verb + projector, stay) · lane 2 (a two-line `log.log` call whose string sits on the line after the marker — a scanner limit, join the call to clear it) · clip 1.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 1, instrument file family 3: "take" and "clip" leave the visible text
+
+- **Decision (8db51af11):** the export loop → "this recording" (Stop/discard hints); the generated loop → "the instrument's music" (MIDI-export hint, slot-full notice); the touch voice that follows it → "Same as music" (chip + sentence, was "Take sound"); "Internal clip slots" → "Internal part slots"; Autosave note "before you open another piece". A two-line `log.log` call is joined so the chrome scanner (per-line markers) no longer reads its diagnostic string as visible; the call is unchanged.
+- **Deliberately left for the rule-6 family:** the launch breadcrumb's presence flag `"take"`/`"custom"` (a diagnostic; `LaunchLogsWhatItWokeUpWithTests` quotes it in prose) and the reset sentence's "takes and projects".
+- **Guards:** `TheBarCountHasACarrierTests` state list, `ANewPieceStartsAnEmptySongTests` Autosave needle.
+- **Remaining in the file (scanner):** reset 6 + factory 1 · take 2 · project 3 (verb + projector — stay; the scanner cannot tell a verb, so the file's entry into the guard's list needs either a reword of those three or an allowance — decide at the reset family).
+- **Review:** 2026-10-30.
