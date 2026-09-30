@@ -3501,3 +3501,10 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Rationale:** the tier moved silently; a person needs the cause to have a remedy. The cause travels with the settings; the row reads cold state only and names no pin property.
 - **Open:** device probe (LPM on/off, hot phone, VoiceOver). Guard: `ThePowerRowSaysWhyDetailStepsDownTests`.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Zug 4, icon family 1: the small Studio surfaces' SF Symbols scale with the text (51c2a34e0)
+- **Decision:** 21 `Image(systemName:)` sites in 14 Studio files take `EchoelTheme.font(N[, .semibold])` instead of `.font(.system(size: N))` — the Workstation's UX-D pattern (2026-09-26), no new helper. `.medium`/`.light` are dropped (no such face ships; `TypeWeightsThatExistTests`). `Resources/AppIcon.swift` stays out: its `E` is proportional to a GeometryReader box (the `faceName` canvas case), `LaunchScreenView` has no caller.
+- **Rationale:** a symbol is sized by its font; the brand font is `.custom(_:size:relativeTo: .body)` and scales, the absolute size does not — a 44 pt label beside an 11 pt chevron at AX5.
+- **Guard:** `TheStudioIconsScaleWithTheTextTests` — named ratchet list (#364) + whole-tree ceiling 42 that only comes down, AppIcon excluded for a PINNED reason. Stripper LOAD-BEARING 1/28.
+- **Open:** families 2 (EchoelStudioView, 19) and 3 (FloatingVisualWindow · BioStripView · PatchbayView · BioSourceView, 24); device probe at AX5.
+- **Review:** 2026-10-30.
