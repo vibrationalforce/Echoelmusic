@@ -3518,3 +3518,13 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Decision:** `AccentColor.colorset` carries `EchoelTheme.accent`'s components in both appearances (was #22C55E / #34D381 against the token's #4CD98C). project.yml untouched. Guard `TheAssetAccentIsTheTokenTests` compares the two spellings, pins no number.
 - **Rationale:** the asset is the GLOBAL accent — untinted Toggles, alert buttons, text cursors drew a third green beside the tinted controls and the pulse dot. One definition per decision (#416).
 - **Open:** device probe (untinted Network-MIDI toggle = pulse-dot green). **Review:** 2026-10-30.
+
+### 2026-09-30 — Zug 4, colour states: the selected track row thickens its stroke (ef452110f)
+- **Decision:** `laneRow` in WorkstationView: `lineWidth: selected ? 2 : 1` beside the accent stroke — the part-selection pattern (TrackPartsView, ArrangeCanvasView). Guard `TheSelectedTrackIsNotColourAloneTests`.
+- **Rationale:** measured 32 accent ternaries in 12 files; this row was the ONE reachable hue-only state. Doorless sites left alone.
+- **Open:** device probe (Increase Contrast). **Review:** 2026-10-30.
+
+### 2026-09-30 — Zug 4, type ramp: six steps in the theme (79f9c5769)
+- **Decision:** `EchoelTheme.typeRamp = [11, 12, 13, 15, 18, 22]`, `displayFloor = 28`; 64 in-between sizes in 22 files folded onto the nearest step (14/16→15, 17→18, 20/24→22, 26→28). Guard `TheTextSizesSitOnTheRampTests` reads the ramp from the theme.
+- **Rationale:** nineteen sizes were no hierarchy; one array, one decision (#416), no size pinned in the guard (#364). Council: proceed (founder-delegated design).
+- **Open:** device probe at AX5 (Routing titles, tempo value, Onboarding titles, coherence figure). **Review:** 2026-10-30.
