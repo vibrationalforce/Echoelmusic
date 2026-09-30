@@ -64,7 +64,8 @@
 // line — demo prefix as a key, " beats per minute", ", coherence ", "no pulse yet", "not available", "No pulse lock"
 // (parent: all interpolated or verbatim, 6 units missing — ONE finding). E4-33 added the last two demo-prefix
 // sentences — the always-on channel row's three paths and the FX contribution row's two (parent: all interpolated,
-// 9 units missing — ONE finding). Claim 12
+// 9 units missing — ONE finding). E4-34 added the always-on channel names, channel words and Sound-panel row names
+// (parent: all verbatim, 8 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1090,6 +1091,40 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         try assertGerman(["Simulated demo, ", ", not measured, shaping ", " at the neutral value", " at ", " percent, shaping ",
                           " held at ", " percent, no longer arriving, still shaping ", " to ", " moving ", ", not measured", " percent"],
                          "always-on row and FX contribution row")
+
+        // E4-34 — the SUBJECTS of the always-on sentences: `AlwaysOnBioChannel.name` (four; drawn by `Text(channel.name)`
+        // and spoken by the row), `BioShapedParameter.channelWord` (six; joined into `shapes`, the row's object) and
+        // `soundPanelRows` (the Sound panel's field labels — the same keys the value fields draw, so the sentence and
+        // the fields agree in every language). Runtime English byte-identical: TheBodyShapedRowsAreNamedOnce's expected
+        // `shapes`, TheAlwaysOnChannelsAreShown's `contains`, TheGuideTableMatchesTheAuditedWrites' channelWord scan and
+        // TheSoundPanelNamesItsActualDriver's row loop all keep passing under en; DisabledReverbIsNotClaimedLive still
+        // finds all three member declarations.
+        let bioChannel = try codeOnly("Sources/Echoelmusic/Studio/AlwaysOnBioChannel.swift")
+        for seam in ["case .coherence:   return String(localized: \"Coherence\")",
+                     "case .hrv:         return String(localized: \"HRV\")",
+                     "case .heartRate:   return String(localized: \"Heart rate\")",
+                     "case .breathPhase: return String(localized: \"Breath phase\")",
+                     "case .brightness:   return String(localized: \"brightness\")",
+                     "case .harmonicity:  return String(localized: \"harmonicity\")",
+                     "case .noiseLevel:   return String(localized: \"noise\")",
+                     "case .filterCutoff: return String(localized: \"filter\")",
+                     "case .vibrato:      return String(localized: \"vibrato\")",
+                     "case .amplitude:    return String(localized: \"level\")",
+                     "case .brightness:   return [String(localized: \"Brightness\")]",
+                     "case .vibrato:      return [String(localized: \"Vibrato depth\"), String(localized: \"Vibrato rate\")]"] {
+            XCTAssertTrue(bioChannel.contains(seam), "AlwaysOnBioChannel lost the E4-34 seam `\(seam)`")
+        }
+        for verbatim in ["return \"Coherence\"", "return \"HRV\"", "return \"Heart rate\"", "return \"Breath phase\"",
+                         "return \"brightness\"", "return \"harmonicity\"", "return \"noise\"", "return \"filter\"", "return \"vibrato\"", "return \"level\"",
+                         "return [\"Brightness\"]", "return [\"Harmonics\"]", "return [\"Noise\"]", "return [\"Cutoff\"]", "return [\"Vibrato depth\", "] {
+            XCTAssertFalse(bioChannel.contains(verbatim), "AlwaysOnBioChannel spells a channel name verbatim again: `\(verbatim)`")
+        }
+        // RUNTIME COUNTERWEIGHTS: the bundle's English is unchanged, and the joined object still reads as before
+        XCTAssertEqual(AlwaysOnBioChannel.heartRate.name, "Heart rate")
+        XCTAssertEqual(AlwaysOnBioChannel.coherence.shapes, "filter · brightness · harmonicity · noise")
+        XCTAssertEqual(BioShapedParameter.vibrato.soundPanelRows, ["Vibrato depth", "Vibrato rate"])
+        try assertGerman(["Coherence", "HRV", "Heart rate", "Breath phase", "brightness", "harmonicity", "noise", "filter", "vibrato", "level",
+                          "Brightness", "Harmonics", "Noise", "Cutoff", "Vibrato depth", "Vibrato rate"], "always-on channel names")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

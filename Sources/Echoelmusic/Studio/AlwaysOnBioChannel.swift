@@ -160,10 +160,10 @@ public enum AlwaysOnBioChannel: String, CaseIterable, Identifiable, Sendable {
     /// the sentence and the rows cannot drift into calling one channel two things (#416).
     public var name: String {
         switch self {
-        case .coherence:   return "Coherence"
-        case .hrv:         return "HRV"
-        case .heartRate:   return "Heart rate"
-        case .breathPhase: return "Breath phase"
+        case .coherence:   return String(localized: "Coherence")
+        case .hrv:         return String(localized: "HRV")
+        case .heartRate:   return String(localized: "Heart rate")
+        case .breathPhase: return String(localized: "Breath phase")
         }
     }
 
@@ -455,12 +455,12 @@ public enum BioShapedParameter: String, CaseIterable, Identifiable, Sendable {
     /// to a user by `EchoelFXView.AlwaysOnBioView` and by the Bio panel strip.
     public var channelWord: String {
         switch self {
-        case .brightness:   return "brightness"
-        case .harmonicity:  return "harmonicity"
-        case .noiseLevel:   return "noise"
-        case .filterCutoff: return "filter"
-        case .vibrato:      return "vibrato"
-        case .amplitude:    return "level"
+        case .brightness:   return String(localized: "brightness")
+        case .harmonicity:  return String(localized: "harmonicity")
+        case .noiseLevel:   return String(localized: "noise")
+        case .filterCutoff: return String(localized: "filter")
+        case .vibrato:      return String(localized: "vibrato")
+        case .amplitude:    return String(localized: "level")
         }
     }
 
@@ -480,11 +480,11 @@ public enum BioShapedParameter: String, CaseIterable, Identifiable, Sendable {
     /// suggest a player could see them move independently — they cannot.
     public var soundPanelRows: [String] {
         switch self {
-        case .brightness:   return ["Brightness"]
-        case .harmonicity:  return ["Harmonics"]
-        case .noiseLevel:   return ["Noise"]
-        case .filterCutoff: return ["Cutoff"]
-        case .vibrato:      return ["Vibrato depth", "Vibrato rate"]
+        case .brightness:   return [String(localized: "Brightness")]
+        case .harmonicity:  return [String(localized: "Harmonics")]
+        case .noiseLevel:   return [String(localized: "Noise")]
+        case .filterCutoff: return [String(localized: "Cutoff")]
+        case .vibrato:      return [String(localized: "Vibrato depth"), String(localized: "Vibrato rate")]
         case .amplitude:    return []
         }
     }
