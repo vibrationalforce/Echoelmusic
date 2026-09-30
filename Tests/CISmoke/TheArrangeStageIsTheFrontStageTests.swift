@@ -28,10 +28,22 @@ import XCTest
 /// scan of `StageShell.swift` is red there by ONE anchor absence — the file (#486) — reported
 /// once, not eleven times; claim 1 has no verdict. **COUNTERWEIGHTS, green on both trees
 /// (#343):** the studio still stops everything in `.onDisappear` (the reason the seam hides
-/// instead of unmounting), Safe Mode still points `reopensWorkstation` at Sound, and the
-/// studio's Workstation panel still constructs `WorkstationView()` (`TheWorkstationHasADoorTests`
-/// stays true in letter and, on the Instrument stage, in fact). Stripper: PROPHYLAKTISCH
-/// (0 of 47 verdicts flip) — measured raw vs. `codeOnly` on this tree.
+/// instead of unmounting) and Safe Mode still writes a recovery default. Stripper:
+/// PROPHYLAKTISCH (0 of 47 verdicts flip) — measured raw vs. `codeOnly` on this tree.
+///
+/// ⭐ SLICE 2b (2026-09-30) — claims 6, 7 and 8 rewritten as the decision, none weakened.
+/// 2a left the studio's Workstation PLATE constructing a second `WorkstationView` on the
+/// Instrument stage and a persisted plate memory (`reopensWorkstation`) beside the stage key —
+/// two truths about where a launch lands. 2b: the plate is a DOOR to the Piece stage and
+/// constructs nothing (claim 6, the counterweight inverted); the plate memory is folded into the
+/// stage key, so Safe Mode's write of it is gone (claim 7, the sibling pin inverted into an
+/// absence); and the studio gains ONE hand on the stage, `showStage(_:)`, called on three user
+/// actions — the two plate doors posted from the piece ("sound", "bio") turn the Instrument
+/// stage, because a plate selected in a hidden studio is a button that does nothing (the first
+/// defect measured on 2a), and "New piece" turns the Piece stage (claims 6 + 8, "the studio only
+/// reads" inverted into "one function, three named calls"). ⚠️ The Workstation CHIP itself is
+/// transitional: `.deploy/release` sends the founder along "Workstation-Chip" and is
+/// founder-gated; slice 2b-ii retires it with that note.
 final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
 
     private static let seam = "Sources/Echoelmusic/Studio/StageShell.swift"
@@ -198,32 +210,55 @@ final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
             """)
     }
 
-    // 6 — one arrangement in the tree: the hidden studio mounts no second one while the piece
-    // shows, and the studio only READS the stage.
-    func testTheStudioMountsNoSecondArrangementWhileThePieceShows() throws {
+    // 6 — one arrangement in the tree, and one hand on the stage: the studio constructs NO
+    // `WorkstationView` (its Workstation plate is a door to the Piece stage), and every move of
+    // the stage from the studio goes through `showStage(_:)`, on a user action that names the
+    // other stage's content.
+    func testTheStudioMountsNoSecondArrangementAndHasOneHandOnTheStage() throws {
         let studio = try source(Self.studio)
+        XCTAssertEqual(count("WorkstationView()", in: studio), 0, """
+            The studio constructs `WorkstationView()` \(count("WorkstationView()", in: studio)) \
+            times — a second arrangement in the tree, hidden beneath the piece, running the \
+            directory listing, the playhead leaf and the analyses for nobody. The arrangement is \
+            `ArrangeStage`'s (claim 5); the studio's plate is a door (slice 2b).
+            """)
         let panel = braceBody(of: "private var workstationPanel: some View {", in: studio)
         guard !panel.isEmpty else {
-            XCTFail("`workstationPanel` is gone — slice 2b retires the chip; move this claim with it")
+            XCTFail("`workstationPanel` is gone — slice 2b-ii retires the chip with `.deploy/release`; move this claim with it")
             return
         }
-        XCTAssertTrue(panel.contains("if stageRaw == StudioStage.piece.rawValue {"), """
-            The studio's Workstation panel no longer branches on the stage. While the piece \
-            shows, the studio is mounted but hidden, and a `WorkstationView` there runs the \
-            directory listing, the playhead leaf and the analyses a second time for nobody.
-            """)
-        XCTAssertTrue(panel.contains("WorkstationView()"), """
-            COUNTERWEIGHT: on the Instrument stage the chip must still reach the real surface \
-            (`TheWorkstationHasADoorTests`) until slice 2b retires it.
+        XCTAssertTrue(panel.contains("showStage(.piece)"), """
+            The Workstation plate no longer leads to the Piece stage — a chip whose plate only \
+            says where the arrangement went is a lying tab with a caption.
             """)
         XCTAssertTrue(studio.contains("@AppStorage(StudioDefaultKeys.stage.key) private var stageRaw"),
                       "the studio reads the stage through the ONE key (#416)")
-        XCTAssertEqual(count("stageRaw = ", in: studio), 1, """
+        XCTAssertTrue(studio.contains("private func showStage(_ stage: StudioStage) { stageRaw = stage.rawValue }"),
+                      "the studio's hand on the stage is ONE function taking a named stage, never a raw string")
+        XCTAssertEqual(count("stageRaw = ", in: studio), 2, """
             `stageRaw = ` occurs \(count("stageRaw = ", in: studio)) times in the studio; exactly \
-            one — the declaration's default — is legal (the needle carries its trailing space \
-            because `stageRaw ==` would otherwise count, measured). The studio never CHOOSES \
-            the stage: a surface opening itself is the #1298/#1300 shape.
+            two — the declaration's default and the body of `showStage(_:)` (the needle carries \
+            its trailing space because `stageRaw ==` would otherwise count, measured). A third is \
+            a second hand on the stage.
             """)
+        // The calls — each a user action naming the other stage's content. A further call is a
+        // code path choosing the stage FOR the player (the #1298/#1300 shape): name it here.
+        let receiver = braceBody(of: "publisher(for: .echoelChromeDoor)) { note in", in: studio)
+        XCTAssertFalse(receiver.isEmpty, "ANCHOR: the chrome-door receiver moved — re-anchor (#454)")
+        XCTAssertEqual(count("showStage(.instrument)", in: receiver), 2, """
+            The chrome-door receiver turns the Instrument stage \
+            \(count("showStage(.instrument)", in: receiver)) times; exactly two — the "sound" \
+            door (the track inspector, on the Piece stage) and the "bio" door (the pulse pill, \
+            visible on both stages). A plate selected in a hidden studio is a button that does \
+            nothing (#164/#227) — the first defect measured on slice 2a.
+            """)
+        XCTAssertEqual(count("showStage(.instrument)", in: studio), 2,
+                       "no call outside the receiver turns the Instrument stage")
+        let newPiece = braceBody(of: "private func startNewPiece() {", in: studio)
+        XCTAssertTrue(newPiece.contains("showStage(.piece)"),
+                      "New piece turns the Piece stage — the empty song and its compose guide are there")
+        XCTAssertEqual(count("showStage(.piece)", in: studio), 2,
+                       "exactly two calls turn the Piece stage: the Workstation plate's door and New piece")
     }
 
     // 7 — Safe Mode: a piece stage that crashed at render is not where "Continue" lands.
@@ -233,19 +268,20 @@ final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
         XCTAssertEqual(count(write, in: app), 1, """
             The Safe-Mode recovery must point the stage at the instrument exactly once. With a \
             PIECE default, clearing the key would mean "piece" — the recovery writes the \
-            instrument instead of forgetting, the same reasoning as `reopensWorkstation` (WA4-P2 M1).
+            instrument instead of forgetting (WA4-P2 M1's reasoning, carried to the stage).
             """)
         XCTAssertFalse(app.contains("StudioStage.piece.rawValue"), "the app may point the stage at the instrument, never at the piece")
-        // COUNTERWEIGHT: the sibling write it reasons from is still there, before it.
-        let sibling = "UserDefaults.standard.set(false, forKey: EchoelStudioView.reopensWorkstationKey)"
-        XCTAssertTrue(app.contains(sibling), "Safe Mode still points the plate memory at Sound")
-        if let a = app.range(of: sibling)?.lowerBound, let b = app.range(of: write)?.lowerBound {
-            XCTAssertLessThan(a, b, "both writes sit in the one recovery `.onAppear`, plate first, stage second")
-        }
+        // ⛔ 2a pinned the SIBLING write here — Safe Mode pointing `reopensWorkstation` at Sound,
+        // before the stage write. Slice 2b folded that plate memory into the stage key, so the
+        // sibling is inverted into an absence: the stage write is the whole recovery.
+        XCTAssertFalse(app.contains("reopensWorkstationKey"), """
+            Safe Mode writes the plate memory again. It went with slice 2b — the instrument's \
+            launch plate is Sound by itself, and the stage key is the only relaunch memory.
+            """)
     }
 
-    // 8 — one definition of the key, two writers, both deliberate.
-    func testOnlyTheSeamAndSafeModeWriteTheStage() throws {
+    // 8 — one definition of the key, three hands on it, each deliberate.
+    func testTheStageKeyHasOneSpellingAndThreeHands() throws {
         let root = repoRoot().appendingPathComponent("Sources/Echoelmusic")
         guard let walker = FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil) else {
             XCTFail("could not enumerate Sources/Echoelmusic"); return
@@ -264,8 +300,9 @@ final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
             """)
         XCTAssertEqual(Set(readers), ["StageShell.swift", "EchoelStudioView.swift", "EchoelmusicApp.swift"], """
             The stage key is referenced by \(readers.sorted()). Three files are the design: the \
-            seam (reads and writes on a tap), the studio (reads only) and Safe Mode (writes the \
-            instrument once). A fourth is a new writer or a new reader — name it here with its reason.
+            seam (reads and writes on a tap), the studio (reads, and writes through `showStage` \
+            on the user actions claim 6 lists) and Safe Mode (writes the instrument once). A \
+            fourth is a new writer or a new reader — name it here with its reason.
             """)
         let seam = try source(Self.seam)
         XCTAssertEqual(count("stageRaw = ", in: seam), 2, """

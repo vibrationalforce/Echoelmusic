@@ -30,11 +30,17 @@ import SwiftUI
 // The Workstation's own `.fileImporter` stays on ITS leaf; this file is on that leaf's ancestor
 // path (`TheWorkstationImportsAudioTests`, #W1) and must never carry one.
 //
-// ⚠️ TRANSITIONAL, on purpose (slice 2a): the Instrument stage still carries the old
-// "Workstation" chip and panel, so the arrangement is reachable there too. Slice 2b retires that
-// chip and folds `reopensWorkstation` into this stage key; until then
-// `EchoelStudioView.workstationPanel` mounts NO second `WorkstationView` while the Piece stage
-// is showing — one arrangement on screen, one in the tree.
+// ⭐ WHO ELSE WRITES THE STAGE (slice 2b): the studio, in `showStage(_:)`, on two user actions —
+// a plate door posted from the piece ("sound", "bio") turns the Instrument stage, because a plate
+// opened in a hidden studio is a button that does nothing; "New piece" turns the Piece stage. And
+// Safe Mode, at the instrument, after a crash. `reopensWorkstation` is gone: this key IS the
+// relaunch memory, and the instrument's untouched plate is Sound.
+//
+// ⚠️ TRANSITIONAL, on purpose (slice 2b-i): the Instrument stage still carries a "Workstation"
+// CHIP, whose plate is now only a door to this stage — never a second `WorkstationView`. The chip
+// stays because `.deploy/release` sends the founder along "Workstation-Chip" and is founder-gated
+// (`TheDeployNoteNamesRealDoorsTests` claim 2 reads the whole note); slice 2b-ii retires it
+// together with that note.
 
 /// The seam. Mounted by `SurfaceHost` as the whole surface.
 @MainActor

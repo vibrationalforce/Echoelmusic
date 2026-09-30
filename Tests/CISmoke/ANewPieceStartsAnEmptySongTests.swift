@@ -15,15 +15,17 @@
 //    (`clearCurrent`), and nothing in the library is deleted.
 // 4. SOURCE: the action rescues FIRST (`autosaveTake()`, the rescue Open runs), then replaces,
 //    and only a replacement that happened clears the name; it re-states the song's Echoel
-//    instance exactly as Open does; it reaches Compose through the AREA door (never a direct
-//    plate assignment — `TheWorkstationHasADoorTests`); the row is mounted inside `openSheet`
-//    (no presentation modifier), 44 pt, and its hint IS its footer (#416).
+//    instance exactly as Open does; it turns the Piece STAGE through the studio's one hand on
+//    the stage key, `showStage` (never a direct plate assignment — `TheWorkstationHasADoorTests`;
+//    slice 2b, 2026-09-30 — it walked the Compose AREA door before, when the arrangement was a
+//    plate of the instrument); the row is mounted inside `openSheet` (no presentation
+//    modifier), 44 pt, and its hint IS its footer (#416).
 //
 // GRADING (§3). Against the parent this file does NOT COMPILE — `emptySong`, `startEmptySong`
 // and `clearCurrent` are new — so no assertion has a verdict there: ONE absence (#486), every
-// claim a FORWARD guard. Counterweights (#343), green in intent on both trees: the Compose
-// area's home is the Workstation (so "opens Compose" is a true sentence), the refused note has a
-// place to render, and no direct `activeMenu =` is written by the action. Transcribed in Python
+// claim a FORWARD guard. Counterweights (#343), green in intent on both trees: the Piece stage
+// is labelled "Piece" (so "shows the piece" is a true sentence), the refused note has a place to
+// render, and no direct `activeMenu =` is written by the action. Transcribed in Python
 // against THIS tree (no toolchain here): the lane shape of `migrate(sections: [])`, the guide's
 // part step, and every scan needle.
 //
@@ -32,11 +34,11 @@
 // ⛔ The first header said "a song with nothing in it is not saved because there is nothing to
 // lose" — but tracks, names and instrument picks with no part yet ARE the player's work, and
 // they are NOT rescued (review of 04551fa36, MED). The sentence now says so; widening the
-// rescue is a slot-semantics change left open. From another Compose plate (Mood, Composition)
-// `selectArea(.compose)` keeps that plate — Compose, not necessarily the Workstation. The refusal branch (`replaceSlots` false) cannot be driven:
+// rescue is a slot-semantics change left open. The stage turns to Piece whichever plate the
+// instrument was on; the plate itself is untouched. The refusal branch (`replaceSlots` false) cannot be driven:
 // `emptySong` always carries `slotCount` slots; it is defensive. The instrument's take, genre and
 // sound are untouched on purpose. Whether the row reads well and VoiceOver speaks it is a device
-// probe. NEEDS-FOUNDER-VERIFY: Library → New piece → Compose opens on an empty song with
+// probe. NEEDS-FOUNDER-VERIFY: Library → New piece → the Piece stage shows an empty song with
 // "MIDI 1" and "Audio 1"; Library again → the old song is under Autosave and opens back.
 
 import Foundation
@@ -143,7 +145,7 @@ final class ANewPieceStartsAnEmptySongTests: XCTestCase {
 
     // MARK: 4 — source: rescue, then replace, through the owners
 
-    func testTheActionRescuesFirstAndOpensComposeThroughTheAreaDoor() throws {
+    func testTheActionRescuesFirstAndTurnsThePieceStage() throws {
         let code = try source(Self.studioPath)
         let action = try member("private func startNewPiece() {", in: code)
         guard let rescue = action.range(of: "autosaveTake()"),
@@ -152,7 +154,7 @@ final class ANewPieceStartsAnEmptySongTests: XCTestCase {
               let clear = action.range(of: "projects.clearCurrent()"),
               let genre = action.range(of: "timelineStore.setEchoelGenre(style)"),
               let fx = action.range(of: "adoptEchoelFXFromSong()"),
-              let area = action.range(of: "selectArea(.compose)") else {
+              let stage = action.range(of: "showStage(.piece)") else {
             return XCTFail("ANCHOR MISSING: startNewPiece lost a step (#454): \(action)")
         }
         XCTAssertLessThan(rescue.lowerBound, replace.lowerBound, """
@@ -163,16 +165,22 @@ final class ANewPieceStartsAnEmptySongTests: XCTestCase {
                           "a refused replacement keeps the header's name — the song is unchanged")
         XCTAssertLessThan(clear.lowerBound, genre.lowerBound)
         XCTAssertLessThan(genre.lowerBound, fx.lowerBound, "the same two lines Open ends with, in its order")
-        XCTAssertLessThan(fx.lowerBound, area.lowerBound)
-        XCTAssertTrue(action.contains("showOpen = false"), "the Library closes onto Compose")
+        XCTAssertLessThan(fx.lowerBound, stage.lowerBound)
+        XCTAssertTrue(action.contains("showOpen = false"), "the Library closes onto the piece")
         XCTAssertFalse(action.contains("activeMenu ="), """
-            nothing may force the plate (`TheWorkstationHasADoorTests`) — the action goes through \
-            the Compose area door the area row taps
+            nothing may force the plate (`TheWorkstationHasADoorTests`) — the action turns the \
+            STAGE (slice 2b), through the studio's one hand on it, `showStage`
             """)
-        // Counterweights (#343): the area door leads where the sentence says.
-        let homes = try member("private static func areaHome(_ area: StudioArea) -> StudioMenu? {", in: code)
-        XCTAssertTrue(homes.contains("case .compose:  return .workstation"), "Compose's home is the Workstation")
-        XCTAssertEqual(StudioArea.compose.label, "Compose")
+        XCTAssertFalse(action.contains("selectArea("), """
+            the action walks an area door of the instrument again. The empty song and its compose \
+            guide are the Piece stage since slice 2b; an area door selects a plate of the OTHER \
+            stage, which a player on the piece never sees.
+            """)
+        XCTAssertFalse(action.contains("stageRaw ="), "the stage moves through `showStage` only (#416)")
+        // Counterweights (#343): the stage door leads where the sentence says.
+        XCTAssertEqual(StudioStage.piece.label, "Piece")
+        XCTAssertTrue(code.contains("private func showStage(_ stage: StudioStage) { stageRaw = stage.rawValue }"),
+                      "the one hand on the stage key exists, and it is a function, not a raw write")
         XCTAssertTrue(SessionSaveOpen.emptySong.slots.count == ClipStore.slotCount,
                       "the refusal branch is defensive: the empty song always fits the grid")
     }
@@ -191,7 +199,10 @@ final class ANewPieceStartsAnEmptySongTests: XCTestCase {
         for modal in [".sheet(", ".fullScreenCover(", ".alert(", ".confirmationDialog("] {
             XCTAssertFalse(row.contains(modal), "black-screen law: the row adds no presentation (`\(modal)`)")
         }
-        XCTAssertTrue(EchoelStudioView.newPieceNote.contains("opens Compose"))
+        XCTAssertTrue(EchoelStudioView.newPieceNote.contains("shows the piece"), """
+            the footer sentence no longer says where New piece lands (slice 2b: the Piece stage). \
+            ⛔ It said "opens Compose" while the arrangement was a plate of the instrument.
+            """)
         XCTAssertTrue(EchoelStudioView.newPieceNote.contains("kept in Autosave"))
         XCTAssertTrue(EchoelStudioView.newPieceRefusedNote.contains("unchanged"))
     }

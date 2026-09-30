@@ -80,11 +80,13 @@ public enum StudioDefaultKeys {
     /// `AutoModeStartsOffAndOwnsNoTempoTests`).
     /// Slice 2a of the interface audit (2026-09-30) — the STAGE the workspace shows, Piece or
     /// Instrument (`StudioStage`). PIECE on a fresh install, by decision: the piece is the home
-    /// and the instrument a device on one of its tracks. Two writers, both deliberate: the seam
-    /// in `StageShell` (the player's tap) and the Safe-Mode recovery in `EchoelmusicApp`, which
-    /// points it at the instrument after a crash for the same reason it points
-    /// `reopensWorkstation` at Sound — a stage that crashed at render must not be the stage
-    /// every relaunch returns to. Guard: `TheArrangeStageIsTheFrontStageTests`.
+    /// and the instrument a device on one of its tracks. Three writers, all deliberate: the seam
+    /// in `StageShell` (the player's tap); the studio's `showStage` (slice 2b — a plate door
+    /// posted from the piece turns the Instrument stage, "New piece" turns the Piece stage);
+    /// and the Safe-Mode recovery in `EchoelmusicApp`, which points it at the instrument after a
+    /// crash — a stage that crashed at render must not be the stage every relaunch returns to
+    /// (WA4-P2 M1's reasoning; the plate memory it once applied to is gone with slice 2b).
+    /// Guard: `TheArrangeStageIsTheFrontStageTests`.
     public static let stage = StudioDefault(key: "studio.stage", value: StudioStage.piece)
 
     public static let autoMode = StudioDefault(key: "studio.autoMode", value: false)

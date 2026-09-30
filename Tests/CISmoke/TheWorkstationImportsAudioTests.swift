@@ -787,10 +787,10 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
     /// ⚠️ WHAT THIS PROVES AND WHAT IT CANNOT. It proves where the text sits: the files on the
     /// plate's ancestor path carry no `.fileImporter(` except the ONE nested inside
     /// `openSheet`, which is a sheet's CONTENT and so not an ancestor of the plate. Since slice
-    /// 2a (2026-09-30) the plate has TWO paths, both scanned: on the Piece stage
-    /// app → `WorkspaceView` → `SurfaceHost` → `StageShell` → `ArrangeStage`; on the Instrument
-    /// stage the same through `StageShell` → `EchoelStudioView`. `StageShell.swift` holds both
-    /// containers, so it is one entry. That the
+    /// 2b (2026-09-30) the plate has ONE path: app → `WorkspaceView` → `SurfaceHost` →
+    /// `StageShell` → `ArrangeStage` (the studio's Workstation plate is a DOOR to that stage,
+    /// not a second mount — `TheArrangeStageIsTheFrontStageTests`). `EchoelStudioView` stays
+    /// scanned below because it is where the #W1 importer sat. That the
     /// picker now OPENS is a DEVICE PROBE and stays open (item (7) of the founder checks in
     /// `WorkstationView`'s header); the shadowing mechanism is SwiftUI behaviour no test here can run.
     ///

@@ -103,8 +103,11 @@ final class EveryPlateBelongsToOneAreaTests: XCTestCase {
         let membership = try member("var area: StudioArea {", in: lines)
         let homes = try member("private static func areaHome(_ area: StudioArea) -> StudioMenu? {",
                                in: lines)
+        // Slice 2b (2026-09-30): the arrangement is the Piece STAGE (`StageShell`), not a plate
+        // of the instrument, so Compose's home here is the tempo-and-variations plate. ⛔ It read
+        // `("compose", "workstation")` from Phase 1 to slice 2b — rewritten as the decision.
         let expected: [(area: String, home: String)] = [
-            ("compose", "workstation"), ("perform", "sound"),
+            ("compose", "composition"), ("perform", "sound"),
             ("visuals", "field"), ("settings", "export"),
         ]
         for pair in expected {

@@ -11,15 +11,18 @@
 //    audio player has no such editor) and AFTER the combined device element, not inside it
 //    (#621 — a control inside a merged element loses its own focus).
 // 2. SOURCE: producer and receiver move together — exactly one poster of `"sound"` in
-//    `Sources/`, and the Studio's receiver turns it into `activeMenu = .sound`.
+//    `Sources/`, and the Studio's receiver turns it into `activeMenu = .sound` AND, since slice
+//    2b (2026-09-30), `showStage(.instrument)`: the inspector lives on the Piece stage, where the
+//    studio is mounted but hidden, so a plate selected there without turning the stage is a
+//    button that does nothing (#164/#227) — measured as the first defect of slice 2a.
 // 3. COUNTERWEIGHT: the inspector adds no presentation modifier (the black-screen budget).
 //
 // Grading (§0, no Swift toolchain in a web session): all claims driven in Python against this
 // tree. On the parent (e0ba07564) claims 1–2 are red by ABSENCE of the button and the case —
 // ONE absence (#486); they are FORWARD guards. Claim 3 is a COUNTERWEIGHT, green on both.
 // NOT covered: that tapping Open lands on the Sound plate on a device — a device probe.
-// NEEDS-FOUNDER-VERIFY: Workstation → tap the Echoel track → Open → the Sound plate shows;
-// the Workstation chip returns to the song.
+// NEEDS-FOUNDER-VERIFY: Piece stage → tap the Echoel track → Open → the Instrument stage shows
+// with the Sound plate; the seam's "Piece" returns to the song.
 
 import Foundation
 import XCTest
@@ -77,6 +80,11 @@ final class TheEchoelTrackOpensItsDeviceTests: XCTestCase {
         let receiver = studio[receiverStart.upperBound..<receiverEnd.lowerBound]
         XCTAssertTrue(receiver.contains("case \"sound\":") && receiver.contains("activeMenu = .sound"),
                       "a posted door with no receiver case is a button that does nothing (#164/#227)")
+        XCTAssertTrue(receiver.contains("showStage(.instrument)"), """
+            the "sound" door no longer turns the Instrument stage (slice 2b). Its poster sits on \
+            the Piece stage, where the studio is hidden: selecting the plate without turning the \
+            stage is the same nothing-button, one level up.
+            """)
     }
 
     // MARK: 3 — counterweight: no new modal

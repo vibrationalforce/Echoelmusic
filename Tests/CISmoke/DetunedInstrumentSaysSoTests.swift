@@ -95,27 +95,27 @@ final class DetunedInstrumentSaysSoTests: XCTestCase {
 
         // The default matters as much as the mount: put it on a panel nobody lands on and the
         // guard above still passes while the warning is effectively hidden again.
-        // WA4-P2 + DMMW Phase 1: an untouched launch shows the Workstation (first launch, or a
-        // player who left from there) OR Sound (a player who left from an instrument panel) — so
-        // the banner must be on BOTH plates, and on no third default.
+        // Slice 2b (2026-09-30): an untouched launch of the INSTRUMENT shows Sound, and only
+        // Sound — the WA4-P2 plate memory that could make it the Workstation is folded into the
+        // stage key. So the banner needs ONE plate here, and it is this one. ⛔ From WA4-P2 to
+        // slice 2b this claim pinned TWO plates (`reopensWorkstation ? .workstation : .sound`)
+        // and the banner in `workstationPanel`; that plate is a door now, so the second mount
+        // went with the second default — rewritten as the decision, not dropped.
         let code = try codeLines(Self.studio)
         XCTAssertTrue(code.contains(where: {
-            $0.contains("private var displayedMenu: StudioMenu { activeMenu ?? (reopensWorkstation ? .workstation : .sound) }")
+            $0.contains("private var displayedMenu: StudioMenu { activeMenu ?? .sound }")
         }), """
-            the front plate's launch default is no longer "Sound, or the Workstation the player \
-            left from", so the two plates carrying the tuning banner may no longer be the ones a \
-            player who just opened the app sees. Re-decide where the banner lives in the same \
-            commit rather than leaving it on a panel nobody reaches.
+            the front plate's launch default is no longer Sound, so the plate carrying the tuning \
+            banner may no longer be the one a player who just opened the instrument sees. \
+            Re-decide where the banner lives in the same commit rather than leaving it on a panel \
+            nobody reaches.
             """)
-        let workstation = try memberBody(startingWith: "private var workstationPanel: some View",
-                                         in: Self.studio)
-        XCTAssertTrue(workstation.contains(where: {
-            $0.trimmingCharacters(in: .whitespaces) == "nonStandardTuningBanner"
-        }), """
-            `nonStandardTuningBanner` is not mounted in `workstationPanel`, but a relaunch can \
-            land on the Workstation (WA4-P2, `reopensWorkstation`). A detuned instrument would \
-            then be announced on no plate the launch shows — #325's three doorless weeks again.
-            """)
+        // ⚠️ OPEN, and said here rather than hidden: since slice 2a the APP launches on the Piece
+        // stage, whose transport plays the same retuned voices, and no banner is mounted there
+        // yet. That is a slice of its own (2c): the banner needs a leaf that reads the session's
+        // pitch and the tone system and can push the reset into the voices, which today only this
+        // view can. Until then #325 holds for the instrument's launch plate and NOT for the
+        // piece's — a guard that claimed otherwise would be the three doorless weeks in a new place.
     }
 
     // MARK: - The button has to actually undo it

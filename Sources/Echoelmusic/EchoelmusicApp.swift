@@ -479,16 +479,13 @@ struct EchoelmusicApp: App {
                     EchoelCrashLog.breadcrumb(
                         EchoelCrashLog.recoveryScreenClearedMarker + " (one-shot)")
                     LaunchGuard.reset()
-                    // WA4-P2 review M1 — the last launch crashed, and the relaunch memory would
-                    // send "Continue" and every later launch straight back to the Workstation
-                    // plate if that is what crashed. Point it at Sound: FALSE, never true.
-                    // ⚠️ DMMW Phase 1 made the key's DEFAULT true (a first launch opens the
-                    // Workstation), so clearing it would now mean "Workstation" — the recovery
-                    // writes the instrument instead of forgetting.
-                    UserDefaults.standard.set(false, forKey: EchoelStudioView.reopensWorkstationKey)
-                    // Slice 2a (2026-09-30) — the same reasoning one level up: the STAGE is
-                    // persisted too and defaults to the Piece. A piece stage that crashed at
-                    // render must not be where "Continue" lands; point it at the instrument.
+                    // WA4-P2 review M1, carried to the stage by slices 2a/2b (2026-09-30) — the
+                    // last launch crashed. The STAGE is persisted and defaults to the Piece; a
+                    // piece stage that crashed at render must not be where "Continue" and every
+                    // later launch land, and with a PIECE default clearing the key would MEAN
+                    // piece — so the recovery writes the instrument instead of forgetting.
+                    // (The plate memory this used to point at Sound, `reopensWorkstation`, went
+                    // with slice 2b: the instrument's launch plate is Sound by itself now.)
                     UserDefaults.standard.set(StudioStage.instrument.rawValue, forKey: StudioDefaultKeys.stage.key)
                 }
             } else if hasCompletedOnboarding {

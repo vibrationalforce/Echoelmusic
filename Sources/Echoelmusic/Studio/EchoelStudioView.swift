@@ -864,29 +864,17 @@ struct EchoelStudioView: View {
     /// Low-frequency @State (user taps only), so the root body never churns.
     @State private var activeMenu: StudioMenu?
 
-    /// WA4-P2 — the Workstation is a place a player WORKS in, so a relaunch returns to it
-    /// when the player left from there (founder WA4 directive: "LAUNCH → WORKSTATION").
-    /// ⚠️ It stores ONE fact, not the tab: whether the last plate the player chose was the
-    /// Workstation. Every other plate falls back to Sound exactly as before, so every launch
-    /// after leaving from an instrument panel still lands on the instrument (#325: the tuning
-    /// banner is mounted on both plates). The only writer in this view is the `displayedMenu`
-    /// `onChange` in the chip strip — i.e. the player's own selection, by chip or by door.
-    /// ⭐ DMMW Phase 1 (founder 2026-09-29: "Die Oberfläche muss nach dem Start sofort zeigen,
-    /// wie man ein Stück erstellt"): the default is TRUE, so a FIRST launch opens the
-    /// Workstation, where "Create a piece" walks the five steps. ⛔ It was `false` ("a first
-    /// launch is Sound") under the pure-instrument phase; the product law of 2026-09-24 retired
-    /// that scope, and the founder's order names the first screen. Nothing else changed: the
-    /// player's last choice still wins on every later launch.
-    /// ⚠️ The ONE other hand on the key is Safe Mode, and it may only write FALSE
-    /// (`EchoelmusicApp`, the recovery screen's `onAppear`): a plate that crashed at render
-    /// must not be the plate every relaunch returns to (review of b4c2179bf, M1). With a TRUE
-    /// default, merely clearing the key would send the next launch straight back to the
-    /// Workstation — so Safe Mode writes the instrument instead of forgetting.
-    static let reopensWorkstationKey = "studio.reopensWorkstation"
-    @AppStorage(EchoelStudioView.reopensWorkstationKey) private var reopensWorkstation = true
-    /// Slice 2a (2026-09-30) — READ ONLY here: which stage `StageShell` shows. Written by the
-    /// seam's tap and by Safe Mode, never by this view (`TheArrangeStageIsTheFrontStageTests`).
-    /// Selection-rate, like `reopensWorkstation` beside it — no clock writes it (freeze law).
+    /// Slice 2b (2026-09-30) — which stage `StageShell` shows, Piece or Instrument. The seam's tap
+    /// and Safe Mode write it (`StudioDefaultKeys.stage`); this view writes it in exactly ONE
+    /// place, `showStage(_:)`, and only on a user action that names the OTHER stage's content:
+    /// a plate door posted from the piece ("sound" from the track inspector, "bio" from the pulse
+    /// pill) turns the Instrument stage, because a plate opened in a hidden studio is a button
+    /// that does nothing (#164/#227); "New piece" turns the Piece stage, because that is where
+    /// the empty song and its compose guide are. Selection-rate — no clock writes it (freeze law).
+    /// ⛔ `reopensWorkstation` (WA4-P2) stood here: a persisted "the last plate was the
+    /// Workstation" that decided the launch plate. The stage key IS that memory now — the
+    /// arrangement is a stage, not a plate — so the instrument's untouched launch plate is Sound
+    /// again, and only Sound (`displayedMenu`). Safe Mode's write of that key went with it.
     @AppStorage(StudioDefaultKeys.stage.key) private var stageRaw = StudioDefaultKeys.stage.value.rawValue
 
 
@@ -1281,12 +1269,21 @@ struct EchoelStudioView: View {
                     case "routing": showRouting = true
                     // The pulse monitor opens the Bio dropdown (B3). Since #289 that monitor
                     // sits beside "Create from Within" rather than in the header.
-                    case "bio":     activeMenu = .bio
+                    // Slice 2b: the pill is visible on BOTH stages, so the door also turns the
+                    // Instrument stage — a plate selected in a hidden studio is a button that
+                    // does nothing (#164/#227). `showStage`, never a raw write.
+                    case "bio":
+                        activeMenu = .bio
+                        showStage(.instrument)
                     // WA4 path 9 — the Echoel track's device door in the Workstation's track
                     // inspector (`TrackInspectorView.openDeviceButton`): the Sound plate IS the
                     // instrument's editor. Its producer is a leaf that owns no Studio state,
                     // which is exactly what this notification is for.
-                    case "sound":   activeMenu = .sound
+                    // Slice 2b: posted from the Piece stage, where this studio is hidden — the
+                    // door turns the stage as well, or the tap shows nothing.
+                    case "sound":
+                        activeMenu = .sound
+                        showStage(.instrument)
                     // WA4 Acceptance Test A — the Workstation's Save/Open row
                     // (`WorkstationProjectRow`) raises the Studio's OWN Save alert and Open sheet:
                     // the same slots `quickActionRow`/`quickDoorRow` set, no new modal, and the
@@ -3079,17 +3076,16 @@ struct EchoelStudioView: View {
         // for the same reason the freeze law is not in play: this fires on a TAP, not on a
         // clock. Never do this per frame from a 30 fps source — that is the other law.
         .onChange(of: displayedMenu) { _, menu in
-            // WA4-P2 — the ONE writer of the relaunch memory: whatever plate the player has
-            // just chosen, by chip or by chrome door. Tap rate, never a clock.
-            reopensWorkstation = menu == .workstation
             Task { @MainActor in
                 withAnimation(.easeOut(duration: 0.18)) { proxy.scrollTo(menu.id, anchor: .center) }
             }
         }
         // WA4-P2 — the `.onAppear` companion the note below asked for "if `activeMenu` ever
-        // becomes persisted": a relaunch into the Workstation shows a chip that sits far right
-        // in the strip, off-screen on a phone. Deferred one turn for the same reason as the
-        // `onChange` above; no animation — this is where the strip starts, not a move.
+        // becomes persisted": a relaunch into a far-right chip would otherwise start the strip
+        // off-screen on a phone. Since slice 2b no plate is persisted (`stageRaw`'s doc), so
+        // this is a guaranteed no-op again; it stays because it costs one `guard` and the next
+        // persisted plate would have to rediscover it. Deferred one turn for the same reason
+        // as the `onChange` above; no animation — this is where the strip starts, not a move.
         .onAppear {
             let menu = displayedMenu
             guard menu != .sound else { return }
@@ -3122,7 +3118,8 @@ struct EchoelStudioView: View {
         // (History: this strip had NO `.onAppear` companion until WA4-P2, correctly — at
         // first appearance `displayedMenu` was always `.sound`, chip one, so the call was a
         // guaranteed no-op. The note here said to add it back together with a persisted
-        // plate; `reopensWorkstation` is that persistence, and the companion is above.)
+        // plate; `reopensWorkstation` was that persistence from WA4-P2 to slice 2b, and the
+        // companion above outlived it.)
         }
     }
 
@@ -3159,13 +3156,19 @@ struct EchoelStudioView: View {
     /// Pairs with `StudioMenu.area`: every home must belong to its own area.
     private static func areaHome(_ area: StudioArea) -> StudioMenu? {
         switch area {
-        case .compose:  return .workstation
+        // Slice 2b: the arrangement is the Piece STAGE, not a plate of this instrument, so
+        // Compose's home here is the tempo-and-variations plate (Mood is the other member).
+        case .compose:  return .composition
         case .perform:  return .sound
         case .visuals:  return .field
         case .settings: return .export
         case .library:  return nil
         }
     }
+
+    /// Slice 2b — the studio's ONE hand on the stage key (`stageRaw`'s doc says when it may
+    /// move). A named stage, never a raw string, so the call sites cannot disagree with the seam.
+    private func showStage(_ stage: StudioStage) { stageRaw = stage.rawValue }
 
     /// Tapping the area you are already in keeps your plate — Perform while on Mix stays on
     /// Mix. Only a CHANGE of area moves to that area's home.
@@ -3411,37 +3414,42 @@ struct EchoelStudioView: View {
     /// closing it achieved nothing, while the tab reset was a real side effect. It made
     /// "Master → Routing → dismiss" land the user on Sound with Master gone.
     ///
-    /// WA4-P2 + DMMW Phase 1: an untouched launch shows the Workstation on a FIRST launch and
-    /// for a player who LEFT from there (`reopensWorkstation`), and Sound for a player who left
-    /// from an instrument panel. The tuning banner is mounted on both plates, so #325 still
-    /// holds for whichever plate a launch shows.
-    private var displayedMenu: StudioMenu { activeMenu ?? (reopensWorkstation ? .workstation : .sound) }
+    /// Slice 2b (2026-09-30): an untouched launch of the INSTRUMENT shows Sound, and only Sound.
+    /// The arrangement is the Piece stage, not a plate, so the WA4-P2 memory that could make the
+    /// launch plate the Workstation went with it (`stageRaw`'s doc). The tuning banner is mounted
+    /// on Sound, so #325 holds for the plate a launch of this stage shows.
+    private var displayedMenu: StudioMenu { activeMenu ?? .sound }
 
-    /// #1436 — the read-only Workstation plate (founder Phase 3).
-    ///
-    /// ⚠️ IT IS A WRAPPER AND NOTHING ELSE, deliberately. Everything the surface knows lives
-    /// in `WorkstationView` (a leaf `View` in its own file) and `WorkstationSummary` (a pure
-    /// value type the blocking bundle DRIVES). Nothing about the arrangement is computed in
-    /// this file, so this 12 000-line view gains one panel and no new state: `dropdownContent`
-    /// is evaluated in the ROOT body permanently since #479, and anything expensive or
-    /// churn-prone written here would be paid on every Studio rebuild.
+    /// #1436 — the Workstation plate; since slice 2b (2026-09-30) a DOOR, not a window. The
+    /// arrangement lives on the Piece stage (`StageShell` → `ArrangeStage`), and a second
+    /// `WorkstationView` here would run the directory listing, the playhead leaf and the analyses
+    /// twice, hidden beneath the piece — one arrangement in the tree
+    /// (`TheArrangeStageIsTheFrontStageTests`). So the plate says where the piece is and takes
+    /// the player there. Still a wrapper that computes nothing: `dropdownContent` is evaluated
+    /// in the ROOT body permanently since #479.
+    /// ⚠️ TRANSITIONAL, on purpose: the CHIP stays until `.deploy/release` — which sends the
+    /// founder along "Workstation-Chip" and is founder-gated — can be rewritten in the same
+    /// commit (`TheDeployNoteNamesRealDoorsTests` claim 2 reads the whole note). Slice 2b-ii
+    /// retires the case, the label and this builder together.
     private var workstationPanel: some View {
-        panel("Workstation", "Arrange, launch and mix the song", isExpanded: $showWorkstation) {
-            // #325 on the Workstation plate (WA4-P2): a relaunch can land HERE, so a detuned
-            // instrument is announced here as well. Same builder, renders nothing at 12-TET +
-            // 440 — a child of an existing panel, not a presentation modifier.
-            nonStandardTuningBanner
-            // Slice 2a (2026-09-30): the arrangement's home is the PIECE stage (`StageShell` →
-            // `ArrangeStage`). While that stage shows, this studio is mounted but hidden
-            // beneath it, and a second `WorkstationView` here would run the same directory
-            // listing, playhead leaf and analyses twice, for nobody. One arrangement in the
-            // tree. (Slice 2b retires this chip; the line below is its epitaph in advance.)
-            if stageRaw == StudioStage.piece.rawValue {
-                Text("The arrangement is open on the Piece stage.")
-                    .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
-            } else {
-                WorkstationView()
+        panel("Workstation", "The arrangement is the Piece stage", isExpanded: $showWorkstation) {
+            Text("Tracks, parts and scenes live on the Piece stage, above the instrument.")
+                .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
+            Button {
+                showStage(.piece)
+            } label: {
+                Text("Show the piece")
+                    .font(EchoelTheme.font(13, .semibold))
+                    .foregroundStyle(EchoelTheme.onPrimary)
+                    .padding(.horizontal, 14)
+                    .frame(minHeight: EchoelTheme.controlTapHeight)
+                    .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                        .fill(EchoelTheme.text))
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityHint(StudioStage.piece.spokenHint)
         }
     }
 
@@ -9848,13 +9856,13 @@ struct EchoelStudioView: View {
     /// (`SessionSaveOpen.songHasUserParts` counts parts only), and "below" pointed at nothing on
     /// a fresh install (review of 04551fa36, MED). The sentence now states the rescue's actual
     /// predicate; widening the predicate itself is a slot-semantics change, left as a limit.
-    static let newPieceNote = "Starts an empty song and opens Compose. A song with parts or a composed loop is kept in Autosave first; tracks with no parts yet are not. The instrument keeps its sound."
+    static let newPieceNote = "Starts an empty song and shows the piece. A song with parts or a composed loop is kept in Autosave first; tracks with no parts yet are not. The instrument keeps its sound."
 
     /// DMMW Phase 5 · slice 1 — rescue, then replace, in `openFromLibrary`'s order and through its
     /// owners: the live take and song go to the ONE recovery slot (`autosaveTake`, the rescue Open
     /// runs), the song becomes `SessionSaveOpen.emptySong`, the header names nothing, the song's
     /// Echoel instance is re-stated from the instrument (the same two lines Open ends with), and
-    /// the Compose area opens — the player asked for it by tapping the row that says so. The
+    /// the Piece stage shows — the player asked for it by tapping the row that says so. The
     /// instrument's own take, genre and sound stay.
     private func startNewPiece() {
         autosaveTake()
@@ -9869,9 +9877,9 @@ struct EchoelStudioView: View {
         adoptEchoelFXFromSong()
         EchoelCrashLog.breadcrumb("New piece: empty song")
         showOpen = false
-        // Through the Compose AREA door the area row taps — never a direct plate assignment:
-        // nothing may force the plate to the Workstation (`TheWorkstationHasADoorTests`).
-        selectArea(.compose)
+        // Slice 2b: the empty song and its compose guide ARE the Piece stage — take the player
+        // there. Never a plate assignment (`TheWorkstationHasADoorTests`): the stage, once.
+        showStage(.piece)
     }
 
     static let newPieceRefusedNote = "Couldn't start a new piece. Your song is unchanged."

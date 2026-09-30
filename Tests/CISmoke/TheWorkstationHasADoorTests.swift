@@ -2,9 +2,22 @@
 // Echoel — #1436 founder Phase 3, amended by #1437 (Phase 4). The Workstation surface is
 // REACHABLE, it projects the song faithfully, and it still cannot EDIT it.
 //
-// WHAT THIS FILE PROVES: a production path `launch → Instrument → Workstation → back to
-// Instrument` exists, it shows the arrangement `TimelineStore` already owns, and it changes
-// nothing about that document.
+// WHAT THIS FILE PROVES: a production path to the arrangement exists, it shows the arrangement
+// `TimelineStore` already owns, and it changes nothing about that document.
+//
+// ⭐ SLICE 2b (2026-09-30) MOVED THE DOOR AND THIS FILE MOVED WITH IT. The arrangement is the
+// PIECE STAGE now (`StageShell` → `ArrangeStage`, the app's default stage, decisions 2 + 3 of the
+// interface audit), not a plate of the instrument. The path this file used to state —
+// `launch → Instrument → Workstation → back` — is `launch → Piece | Instrument`, one word each
+// way. Consequences, each rewritten as the decision and none dropped: the Workstation PLATE is a
+// door to the Piece stage and constructs no second `WorkstationView` (claim B, inverted); the
+// instrument's untouched launch plate is Sound, and only Sound — the WA4-P2 memory
+// `reopensWorkstation`, whose default DMMW Phase 1 turned TRUE so a first launch opened the
+// arrangement, is folded into the stage key, which is the app's default AND its own relaunch
+// memory (claim G, the three memory pins inverted into absences). ⚠️ TRANSITIONAL: the CHIP and
+// its label stay (claim A unchanged) because `.deploy/release` sends the founder along
+// "Workstation-Chip" and is founder-gated (`TheDeployNoteNamesRealDoorsTests` claim 2 reads the
+// whole note); slice 2b-ii retires the case with that note.
 //
 // ⛔ CLAIM H USED TO LIVE HERE AND ASSERTED THE OPPOSITE OF TODAY'S TRUTH — "the timeline
 // player still has no production caller". #1437 is the commit its own failure message named,
@@ -53,8 +66,10 @@
 //     plate). On the parent tree the new `displayedMenu` needle and those three are RED for
 //     one reason — no `reopensWorkstation` (#486: one absence); the ban on
 //     `activeMenu = .workstation` stays GREEN on both, and is still the point.
-//     NEEDS-FOUNDER-VERIFY: leave the app on the Workstation plate, quit, relaunch → it opens
-//     on the Workstation with its chip scrolled into view; tap Sound, quit, relaunch → Sound.
+//     ⛔ Slice 2b inverted those three into absences (see the top of this header); the ask
+//     below is the stage-key form of the one that stood here.
+//     NEEDS-FOUNDER-VERIFY: leave the app on the Piece stage, quit, relaunch → Piece; tap
+//     Instrument, quit, relaunch → Instrument, on the Sound plate.
 //
 // ⚠️ `SourceText.codeOnly` stays in use, but its load-bearing CASE moved with claim H. It
 // used to be: `WorkstationView`'s header named `TimelineRegionPlayer.play(…)` while claim F's
@@ -77,6 +92,7 @@ final class TheWorkstationHasADoorTests: XCTestCase {
     private static let summary = "Sources/Echoelmusic/Studio/WorkstationSummary.swift"
     private static let player = "Sources/Echoelmusic/Sequencer/TimelineRegionPlayer.swift"
     private static let app = "Sources/Echoelmusic/EchoelmusicApp.swift"
+    private static let seam = "Sources/Echoelmusic/Studio/StageShell.swift"
 
     // MARK: - 1. BEHAVIOUR — an untouched install shows an empty state, not a fake song
 
@@ -292,7 +308,12 @@ final class TheWorkstationHasADoorTests: XCTestCase {
 
     // MARK: - B. SCAN — the door reaches the surface
 
-    func testTheChipReachesTheWorkstationView() throws {
+    /// Slice 2b (2026-09-30): the plate is a DOOR to the Piece stage, and the surface is
+    /// constructed ONCE, in `ArrangeStage`. ⛔ Until 2b this claim REQUIRED `WorkstationView()`
+    /// in the panel; with the arrangement on its own stage that construction is the defect — a
+    /// second arrangement hidden beneath the piece, running its listing and analyses for nobody
+    /// (`TheArrangeStageIsTheFrontStageTests`). Inverted, not dropped.
+    func testTheChipLeadsToThePieceStage() throws {
         let src = try code(at: Self.studio)
         XCTAssertTrue(src.contains("case .workstation: return AnyView(workstationPanel)"), """
             `dropdownContent` must route the case to a panel. Without the routing the chip \
@@ -300,10 +321,19 @@ final class TheWorkstationHasADoorTests: XCTestCase {
             """)
         let panel = try declarationBody(of: "private var workstationPanel: some View {",
                                         in: Self.studio)
-        XCTAssertTrue(panel.contains("WorkstationView()"), """
-            The panel must construct the real surface. A panel that inlined the arrangement \
-            here would put the whole thing in the 12 000-line view whose ROOT body evaluates \
-            `dropdownContent` permanently (#479).
+        XCTAssertTrue(panel.contains("showStage(.piece)"), """
+            The plate must TAKE the player to the Piece stage. A plate that only says where the \
+            arrangement went is the lying tab with a caption.
+            """)
+        XCTAssertFalse(panel.contains("WorkstationView()"), """
+            The plate constructs a second `WorkstationView` — one arrangement in the tree; the \
+            surface is `ArrangeStage`'s.
+            """)
+        let seam = try code(at: Self.seam)
+        XCTAssertEqual(seam.components(separatedBy: "WorkstationView()").count - 1, 1, """
+            `StageShell.swift` constructs `WorkstationView()` \
+            \(seam.components(separatedBy: "WorkstationView()").count - 1) times; exactly one, \
+            on the Piece stage, is the design.
             """)
     }
 
@@ -416,50 +446,33 @@ final class TheWorkstationHasADoorTests: XCTestCase {
 
     func testTheInstrumentIsStillWhereItWas() throws {
         let src = try code(at: Self.studio)
-        XCTAssertTrue(src.contains("private var displayedMenu: StudioMenu { activeMenu ?? (reopensWorkstation ? .workstation : .sound) }"), """
-            An untouched launch must land on the Workstation or on Sound — the timbre panel, \
-            i.e. the instrument itself — and on nothing else (WA4-P2, DMMW Phase 1). The \
-            instrument stays one tap away on every launch.
+        XCTAssertTrue(src.contains("private var displayedMenu: StudioMenu { activeMenu ?? .sound }"), """
+            An untouched launch of the instrument must land on Sound — the timbre panel, i.e. the \
+            instrument itself — and on nothing else. ⛔ From WA4-P2 (b4c2179bf) to slice 2b this \
+            read `activeMenu ?? (reopensWorkstation ? .workstation : .sound)`: a persisted "the \
+            last plate was the Workstation" decided the launch plate, and DMMW Phase 1 made its \
+            default TRUE so a first launch opened the arrangement. Slice 2b (2026-09-30) put the \
+            arrangement on the Piece STAGE — the app's default stage and its own relaunch memory \
+            (`StudioDefaultKeys.stage`) — so the plate memory went, and this pin is rewritten as \
+            the decision, not dropped.
             """)
-        // ⭐ DMMW Phase 1 (founder 2026-09-29: "Die Oberfläche muss nach dem Start sofort zeigen,
-        // wie man ein Stück erstellt") — the relaunch memory DEFAULTS TO TRUE, so a first launch
-        // opens the Workstation, where "Create a piece" walks the five steps. ⛔ This claim pinned
-        // `= false` ("a first launch is Sound") under the pure-instrument phase; the product law
-        // of 2026-09-24 retired that scope and the founder's order names the first screen, so the
-        // pin is INVERTED here, not dropped — a silent flip back to Sound must still go red.
-        // The other premises (#343) stand unchanged: exactly ONE writer in the view, and that
-        // writer is the plate the player has just selected — so after a first launch, the
-        // player's own last choice wins every later launch.
-        XCTAssertTrue(src.contains("@AppStorage(EchoelStudioView.reopensWorkstationKey) private var reopensWorkstation = true"), """
-            The relaunch memory no longer defaults to true — a FIRST launch would then open on \
-            Sound, and the founder's order is that the first screen shows how a piece is made.
+        // ⛔ THREE MEMORY PINS STOOD HERE (the `= true` default, the `studio.reopensWorkstation`
+        // key, Safe Mode's `set(false…)` and the ONE-writer count) and are INVERTED into
+        // absences: the memory must be gone from every hand that held it — the view, the key's
+        // spelling and Safe Mode. A second memory beside the stage key is a second truth about
+        // where a launch lands, which is exactly what let the launch plate and the launch stage
+        // disagree for one slice (2a).
+        XCTAssertFalse(src.contains("reopensWorkstation"), """
+            The relaunch memory is back in the view. Since slice 2b the stage key IS that memory \
+            (`TheArrangeStageIsTheFrontStageTests`); a plate memory beside it would decide the \
+            launch plate of a stage the launch does not show.
             """)
-        XCTAssertTrue(src.contains("static let reopensWorkstationKey = \"studio.reopensWorkstation\""))
-        // Review of b4c2179bf, M1: after a crash, Safe Mode points the memory at SOUND, so a
-        // plate that crashed at render is not the plate every relaunch returns to. With a TRUE
-        // default, clearing the key would now MEAN "Workstation" — so the recovery must write
-        // false, once, and nothing in the app may ever write true.
+        XCTAssertFalse(src.contains("\"studio.reopensWorkstation\""),
+                       "the persisted key is spelled nowhere — a reader of it would read a value no writer sets")
         let app = try code(at: Self.app)
-        XCTAssertEqual(app.components(separatedBy: "UserDefaults.standard.set(false, forKey: EchoelStudioView.reopensWorkstationKey)").count - 1, 1, """
-            The Safe-Mode recovery screen must point the relaunch memory at Sound once — \
-            otherwise a Workstation plate that crashes at render is reopened by "Continue" and \
-            by every later launch.
-            """)
-        XCTAssertFalse(app.contains("removeObject(forKey: EchoelStudioView.reopensWorkstationKey)"), """
-            Safe Mode CLEARS the memory again — with a true default that sends the next launch \
-            straight back to the Workstation that may have crashed.
-            """)
-        XCTAssertFalse(app.contains("set(true, forKey: EchoelStudioView.reopensWorkstationKey)"),
-                       "the app may point the memory at Sound, never at the Workstation")
-        XCTAssertFalse(app.contains("reopensWorkstation ="), "the app may write false through UserDefaults only, never bind the memory")
-        XCTAssertEqual(src.components(separatedBy: "reopensWorkstation =").count - 1, 2, """
-            `reopensWorkstation =` must occur exactly twice: its declaration's default and the \
-            ONE writer in the chip strip's `onChange(of: displayedMenu)`. A second writer is a \
-            code path choosing the Workstation for the player.
-            """)
-        XCTAssertTrue(src.contains("reopensWorkstation = menu == .workstation"), """
-            The one writer must record the plate the player just chose (`menu == .workstation`), \
-            so leaving the Workstation by ANY chip or door clears it.
+        XCTAssertFalse(app.contains("reopensWorkstationKey"), """
+            Safe Mode writes the plate memory again. Its write went with the key; the recovery \
+            points the STAGE at the instrument instead, once (`TheArrangeStageIsTheFrontStageTests`).
             """)
         let list = Self.chipList(in: src)
         XCTAssertTrue(list.contains(".sound") && list.contains(".export"), """
@@ -488,9 +501,8 @@ final class TheWorkstationHasADoorTests: XCTestCase {
         XCTAssertTrue(action.contains("activeMenu = menu"), """
             The chip's tap action no longer assigns `activeMenu = menu` (it reads: \
             \(action.trimmingCharacters(in: .whitespacesAndNewlines))). Selecting a chip is \
-            how every panel in the instrument is reached, the Workstation included, and the \
-            way BACK from the Workstation is the Sound chip. If the routing moved, re-anchor \
-            this on wherever it moved to — do not delete it.
+            how every panel in the instrument is reached, the Workstation door included. If the \
+            routing moved, re-anchor this on wherever it moved to — do not delete it.
             """)
         for branch in ["if ", "guard ", "switch ", " ? "] {
             XCTAssertFalse(action.contains(branch), """
