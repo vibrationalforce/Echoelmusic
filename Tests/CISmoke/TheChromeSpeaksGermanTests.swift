@@ -234,6 +234,56 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                                     "counterweight: the two switches still carry their ~20 localised words")
     }
 
+    // MARK: - claim 8 — the status ladders speak German: MIDI in/out, audio route, Apple Health (E4-4)
+
+    func testEveryLadderWordCaptionAndSpokenSentenceHasAGermanUnit() throws {
+        var texts: [String] = []
+        for r in MIDIInRung.allCases { texts += [r.word, r.caption, r.line(source: ""), r.spoken(source: "")] }
+        for r in MIDIOutRung.allCases { texts += [r.word, r.caption, r.line(destinations: 0), r.line(destinations: 1), r.spoken(destinations: 0)] }
+        for r in AudioRouteRung.allCases { texts += [r.word, r.spoken(outputs: "")] }
+        texts.append(AudioRouteRung.caption)
+        for r in HealthSourceRung.allCases { texts += [r.word, r.line, r.caption, r.spoken] }
+        // A line is `word + fragment`; a spoken sentence with an argument is `head + arg + tail`.
+        // Each PIECE is the catalog key, so split the composed strings back into their pieces
+        // and demand a German unit for every piece that carries a letter.
+        var pieces = Set<String>()
+        for t in texts {
+            if let dot = t.range(of: " · ") {                       // word + " · rest"
+                pieces.insert(String(t[..<dot.lowerBound])); pieces.insert(String(t[dot.lowerBound...]))
+            } else { pieces.insert(t) }
+        }
+        // the argument-carrying sentences were built with an EMPTY argument: head + "" + tail
+        pieces.remove("Connected to , no notes yet"); pieces.insert("Connected to "); pieces.insert(", no notes yet")
+        pieces.remove("Playing from "); pieces.insert("Playing from ")
+        pieces.remove("Playing over "); pieces.insert("Playing over ")
+        pieces.remove("Call mode over , mono and band-limited"); pieces.insert("Call mode over "); pieces.insert(", mono and band-limited")
+        pieces.remove("Off · nothing plays yet")
+        // counterweights — the English host still reads the words the row guards pin
+        XCTAssertEqual(AudioRouteRung.callMode.word, "Call mode")
+        XCTAssertEqual(MIDIOutRung.on.line(destinations: 1), "On · source + 1 destination")
+        XCTAssertTrue(HealthSourceRung.receiving.line.hasPrefix("Receiving · "))
+        try assertGerman(pieces.filter { $0.rangeOfCharacter(from: .letters) != nil }.sorted(), "ladder text")
+        // SOURCE-TEXT — no plain literal with a letter outside `String(localized: "…")` in the three
+        // ladder files; `" · "` (a separator) and `"\(destinations)"` (a number) are the only bare ones
+        for rel in ["Sources/Echoelmusic/Studio/MIDIStatusWord.swift",
+                    "Sources/Echoelmusic/Studio/AudioRouteStatusWord.swift",
+                    "Sources/Echoelmusic/Bio/HealthSourceStatus.swift"] {
+            let code = try codeOnly(rel)
+            let literal = try NSRegularExpression(pattern: #""((?:[^"\\]|\\.)*)""#)
+            var bare: [String] = []
+            for m in literal.matches(in: code, range: NSRange(code.startIndex..., in: code)) {
+                guard let whole = Range(m.range, in: code), let inner = Range(m.range(at: 1), in: code) else { continue }
+                let body = String(code[inner]).replacingOccurrences(of: #"\\\(.*?\)"#, with: "", options: .regularExpression)
+                guard body.rangeOfCharacter(from: .letters) != nil else { continue }
+                let before = code[code.startIndex..<whole.lowerBound]
+                if !before.hasSuffix("String(localized: ") { bare.append(String(code[whole])) }
+            }
+            XCTAssertEqual(bare, [], "\(rel): a ladder word returned as a plain literal is spelled verbatim by `Text(rung.word)` — wrap it")
+            XCTAssertGreaterThanOrEqual(code.components(separatedBy: "String(localized:").count - 1, 8,
+                                        "\(rel): counterweight — the ladder still carries its localised words")
+        }
+    }
+
     // MARK: - claim 5 — the German for "Piece" is the glossary's word, read from the glossary
 
     func testTheGermanPieceIsTheGlossaryWord() throws {

@@ -1602,6 +1602,888 @@
           }
         }
       }
+    },
+    " destination" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Ziel"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " destination"
+          }
+        }
+      }
+    },
+    " destinations" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Ziele"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " destinations"
+          }
+        }
+      }
+    },
+    " · Health can't be opened" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · Health lässt sich nicht öffnen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · Health can't be opened"
+          }
+        }
+      }
+    },
+    " · no reading yet" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · noch kein Messwert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · no reading yet"
+          }
+        }
+      }
+    },
+    " · nothing plays yet" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · noch spielt nichts"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · nothing plays yet"
+          }
+        }
+      }
+    },
+    " · offered as a source" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · als Quelle angeboten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · offered as a source"
+          }
+        }
+      }
+    },
+    " · plug in or pair one" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · einen anschließen oder koppeln"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · plug in or pair one"
+          }
+        }
+      }
+    },
+    " · route MIDI out to send" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · MIDI-Ausgang routen, um zu senden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · route MIDI out to send"
+          }
+        }
+      }
+    },
+    " · source + " : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · Quelle + "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · source + "
+          }
+        }
+      }
+    },
+    " · source + 1 destination" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · Quelle + 1 Ziel"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · source + 1 destination"
+          }
+        }
+      }
+    },
+    " · starts with Play" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · startet mit Abspielen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · starts with Play"
+          }
+        }
+      }
+    },
+    " · the MIDI port did not open" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · der MIDI-Port ging nicht auf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · the MIDI port did not open"
+          }
+        }
+      }
+    },
+    " · your Watch" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · deine Watch"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · your Watch"
+          }
+        }
+      }
+    },
+    ", mono and band-limited" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", mono und bandbegrenzt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", mono and band-limited"
+          }
+        }
+      }
+    },
+    ", no notes yet" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", noch keine Noten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", no notes yet"
+          }
+        }
+      }
+    },
+    "A USB or Bluetooth MIDI keyboard plays the synth directly." : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein USB- oder Bluetooth-MIDI-Keyboard spielt den Synth direkt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A USB or Bluetooth MIDI keyboard plays the synth directly."
+          }
+        }
+      }
+    },
+    "Apple Health could not be opened on this device. Choose another bio source — the camera light or a Bluetooth strap." : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health ließ sich auf diesem Gerät nicht öffnen. Wähle eine andere Bio-Quelle — das Kameralicht oder einen Bluetooth-Gurt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health could not be opened on this device. Choose another bio source — the camera light or a Bluetooth strap."
+          }
+        }
+      }
+    },
+    "Apple Health is off. It starts with Play" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health ist aus. Es startet mit Abspielen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health is off. It starts with Play"
+          }
+        }
+      }
+    },
+    "Apple Health is unavailable on this device" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health ist auf diesem Gerät nicht verfügbar"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health is unavailable on this device"
+          }
+        }
+      }
+    },
+    "Apple Health starts with the music. Your Watch feeds heart rate in through Health, a few seconds behind the wrist." : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health startet mit der Musik. Deine Watch liefert die Herzfrequenz über Health, ein paar Sekunden hinter dem Handgelenk."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health starts with the music. Your Watch feeds heart rate in through Health, a few seconds behind the wrist."
+          }
+        }
+      }
+    },
+    "At rest the Watch writes minutes apart. If you declined Health access, allow it in the Health app under Privacy › Apps & Services." : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Ruhe schreibt die Watch im Minutenabstand. Wenn du den Health-Zugriff abgelehnt hast, erlaube ihn in der Health-App unter Datenschutz › Apps & Dienste."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At rest the Watch writes minutes apart. If you declined Health access, allow it in the Health app under Privacy › Apps & Services."
+          }
+        }
+      }
+    },
+    "Call mode" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anrufmodus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call mode"
+          }
+        }
+      }
+    },
+    "Call mode over " : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anrufmodus über "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call mode over "
+          }
+        }
+      }
+    },
+    "Connected" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbunden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connected"
+          }
+        }
+      }
+    },
+    "Connected to " : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbunden mit "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connected to "
+          }
+        }
+      }
+    },
+    "CoreMIDI refused the port on this device. It is retried when the app returns to the front." : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CoreMIDI hat den Port auf diesem Gerät verweigert. Es wird erneut versucht, wenn die App in den Vordergrund kommt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CoreMIDI refused the port on this device. It is retried when the app returns to the front."
+          }
+        }
+      }
+    },
+    "Heart rate from Apple Health, a few seconds behind the wrist. Coherence is not available from this source." : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenz aus Apple Health, ein paar Sekunden hinter dem Handgelenk. Kohärenz gibt es aus dieser Quelle nicht."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart rate from Apple Health, a few seconds behind the wrist. Coherence is not available from this source."
+          }
+        }
+      }
+    },
+    "Hosts record the “Echoelmusic” source. Hardware and other apps receive as destinations." : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hosts nehmen die Quelle „Echoelmusic“ auf. Hardware und andere Apps empfangen als Ziele."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hosts record the “Echoelmusic” source. Hardware and other apps receive as destinations."
+          }
+        }
+      }
+    },
+    "MIDI out is off" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI-Ausgang ist aus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI out is off"
+          }
+        }
+      }
+    },
+    "MIDI out is on, offered as a source" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI-Ausgang ist an, als Quelle angeboten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI out is on, offered as a source"
+          }
+        }
+      }
+    },
+    "MIDI out is on, source and " : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI-Ausgang ist an, Quelle und "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI out is on, source and "
+          }
+        }
+      }
+    },
+    "MIDI out is unavailable, the port did not open" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI-Ausgang nicht verfügbar, der Port ging nicht auf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI out is unavailable, the port did not open"
+          }
+        }
+      }
+    },
+    "No MIDI controller connected" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein MIDI-Controller verbunden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No MIDI controller connected"
+          }
+        }
+      }
+    },
+    "No controller" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Controller"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No controller"
+          }
+        }
+      }
+    },
+    "Notes from the controller play the synth. None received yet." : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noten vom Controller spielen den Synth. Noch keine empfangen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes from the controller play the synth. None received yet."
+          }
+        }
+      }
+    },
+    "Off" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off"
+          }
+        }
+      }
+    },
+    "Off, nothing plays yet" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus, noch spielt nichts"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off, nothing plays yet"
+          }
+        }
+      }
+    },
+    "On" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On"
+          }
+        }
+      }
+    },
+    "Playing" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Playing"
+          }
+        }
+      }
+    },
+    "Playing from " : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielt von "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Playing from "
+          }
+        }
+      }
+    },
+    "Playing over " : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielt über "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Playing over "
+          }
+        }
+      }
+    },
+    "Receiving" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empfängt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Receiving"
+          }
+        }
+      }
+    },
+    "Receiving heart rate from Apple Health, your Watch" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empfange Herzfrequenz von Apple Health, deiner Watch"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Receiving heart rate from Apple Health, your Watch"
+          }
+        }
+      }
+    },
+    "Receiving notes from the controller." : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noten vom Controller kommen an."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Receiving notes from the controller."
+          }
+        }
+      }
+    },
+    "Switch the MIDI out route on in this Routing view. Nothing is sent while it is off." : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den MIDI-Ausgang in dieser Routing-Ansicht einschalten. Solange er aus ist, wird nichts gesendet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch the MIDI out route on in this Routing view. Nothing is sent while it is off."
+          }
+        }
+      }
+    },
+    "Unavailable" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht verfügbar"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unavailable"
+          }
+        }
+      }
+    },
+    "Waiting" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wartet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting"
+          }
+        }
+      }
+    },
+    "Waiting for a reading from Apple Health" : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warte auf einen Messwert von Apple Health"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting for a reading from Apple Health"
+          }
+        }
+      }
+    },
+    "Where the sound goes and the delay this route adds. Changes with headphones, Bluetooth and the speaker." : {
+      "comment" : "Status ladder (E4-4, 2026-09-30): MIDI in/out, audio route, Apple Health — word · line fragment · caption · spoken. Fragments keep their leading ' · ' so the line reads as word · rest in every language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wohin der Klang geht und welche Verzögerung dieser Weg hinzufügt. Ändert sich mit Kopfhörern, Bluetooth und dem Lautsprecher."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Where the sound goes and the delay this route adds. Changes with headphones, Bluetooth and the speaker."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

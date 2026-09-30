@@ -42,9 +42,9 @@ enum AudioRouteRung: Equatable, CaseIterable, Sendable {
     /// The visible word at the head of the line.
     var word: String {
         switch self {
-        case .off: return "Off"
-        case .playing: return "Playing"
-        case .callMode: return "Call mode"
+        case .off: return String(localized: "Off")
+        case .playing: return String(localized: "Playing")
+        case .callMode: return String(localized: "Call mode")
         }
     }
 
@@ -52,7 +52,7 @@ enum AudioRouteRung: Equatable, CaseIterable, Sendable {
     /// nothing plays — the floor of a route nobody hears is a number without a use.
     func line(outputs: String, floorText: String) -> String {
         switch self {
-        case .off: return word + " · nothing plays yet"
+        case .off: return word + String(localized: " · nothing plays yet")
         case .playing, .callMode: return word + " · " + outputs + " · " + floorText
         }
     }
@@ -60,13 +60,12 @@ enum AudioRouteRung: Equatable, CaseIterable, Sendable {
     /// What VoiceOver reads as the row's value.
     func spoken(outputs: String) -> String {
         switch self {
-        case .off: return "Off, nothing plays yet"
-        case .playing: return "Playing over " + outputs
-        case .callMode: return "Call mode over " + outputs + ", mono and band-limited"
+        case .off: return String(localized: "Off, nothing plays yet")
+        case .playing: return String(localized: "Playing over ") + outputs
+        case .callMode: return String(localized: "Call mode over ") + outputs + String(localized: ", mono and band-limited")
         }
     }
 
     /// The dim sentence under the line when the route has nothing to warn about.
-    static let caption = "Where the sound goes and the delay this route adds. "
-        + "Changes with headphones, Bluetooth and the speaker."
+    static let caption = String(localized: "Where the sound goes and the delay this route adds. Changes with headphones, Bluetooth and the speaker.")
 }

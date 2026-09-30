@@ -45,33 +45,33 @@ enum MIDIInRung: Equatable, CaseIterable, Sendable {
 
     var word: String {
         switch self {
-        case .off: return "No controller"
-        case .connected: return "Connected"
-        case .playing: return "Playing"
+        case .off: return String(localized: "No controller")
+        case .connected: return String(localized: "Connected")
+        case .playing: return String(localized: "Playing")
         }
     }
 
     /// The row's text. `source` is the controller's name; only the connected rungs show it.
     func line(source: String) -> String {
         switch self {
-        case .off: return word + " · plug in or pair one"
+        case .off: return word + String(localized: " · plug in or pair one")
         case .connected, .playing: return word + " · " + source
         }
     }
 
     var caption: String {
         switch self {
-        case .off: return "A USB or Bluetooth MIDI keyboard plays the synth directly."
-        case .connected: return "Notes from the controller play the synth. None received yet."
-        case .playing: return "Receiving notes from the controller."
+        case .off: return String(localized: "A USB or Bluetooth MIDI keyboard plays the synth directly.")
+        case .connected: return String(localized: "Notes from the controller play the synth. None received yet.")
+        case .playing: return String(localized: "Receiving notes from the controller.")
         }
     }
 
     func spoken(source: String) -> String {
         switch self {
-        case .off: return "No MIDI controller connected"
-        case .connected: return "Connected to " + source + ", no notes yet"
-        case .playing: return "Playing from " + source
+        case .off: return String(localized: "No MIDI controller connected")
+        case .connected: return String(localized: "Connected to ") + source + String(localized: ", no notes yet")
+        case .playing: return String(localized: "Playing from ") + source
         }
     }
 }
@@ -89,9 +89,9 @@ enum MIDIOutRung: Equatable, CaseIterable, Sendable {
 
     var word: String {
         switch self {
-        case .off: return "Off"
-        case .on: return "On"
-        case .unavailable: return "Unavailable"
+        case .off: return String(localized: "Off")
+        case .on: return String(localized: "On")
+        case .unavailable: return String(localized: "Unavailable")
         }
     }
 
@@ -100,32 +100,33 @@ enum MIDIOutRung: Equatable, CaseIterable, Sendable {
     /// destinations is not silence — a host recording the source still hears every note.
     func line(destinations: Int) -> String {
         switch self {
-        case .off: return word + " · route MIDI out to send"
+        case .off: return word + String(localized: " · route MIDI out to send")
         case .on:
             switch destinations {
-            case ..<1: return word + " · offered as a source"
-            case 1: return word + " · source + 1 destination"
-            default: return word + " · source + \(destinations) destinations"
+            case ..<1: return word + String(localized: " · offered as a source")
+            case 1: return word + String(localized: " · source + 1 destination")
+            default: return word + String(localized: " · source + ") + "\(destinations)" + String(localized: " destinations")
             }
-        case .unavailable: return word + " · the MIDI port did not open"
+        case .unavailable: return word + String(localized: " · the MIDI port did not open")
         }
     }
 
     var caption: String {
         switch self {
-        case .off: return "Switch the MIDI out route on in this Routing view. Nothing is sent while it is off."
-        case .on: return "Hosts record the “Echoelmusic” source. Hardware and other apps receive as destinations."
-        case .unavailable: return "CoreMIDI refused the port on this device. It is retried when the app returns to the front."
+        case .off: return String(localized: "Switch the MIDI out route on in this Routing view. Nothing is sent while it is off.")
+        case .on: return String(localized: "Hosts record the “Echoelmusic” source. Hardware and other apps receive as destinations.")
+        case .unavailable: return String(localized: "CoreMIDI refused the port on this device. It is retried when the app returns to the front.")
         }
     }
 
     func spoken(destinations: Int) -> String {
         switch self {
-        case .off: return "MIDI out is off"
+        case .off: return String(localized: "MIDI out is off")
         case .on: return destinations < 1
-            ? "MIDI out is on, offered as a source"
-            : "MIDI out is on, source and \(destinations) destination" + (destinations == 1 ? "" : "s")
-        case .unavailable: return "MIDI out is unavailable, the port did not open"
+            ? String(localized: "MIDI out is on, offered as a source")
+            : String(localized: "MIDI out is on, source and ") + "\(destinations)"
+              + (destinations == 1 ? String(localized: " destination") : String(localized: " destinations"))
+        case .unavailable: return String(localized: "MIDI out is unavailable, the port did not open")
         }
     }
 }

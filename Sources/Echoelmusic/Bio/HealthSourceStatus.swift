@@ -77,20 +77,20 @@ public enum HealthSourceRung: Equatable, CaseIterable, Sendable {
     /// One word, for the eye.
     public var word: String {
         switch self {
-        case .off:         return "Off"
-        case .waiting:     return "Waiting"
-        case .receiving:   return "Receiving"
-        case .unavailable: return "Unavailable"
+        case .off:         return String(localized: "Off")
+        case .waiting:     return String(localized: "Waiting")
+        case .receiving:   return String(localized: "Receiving")
+        case .unavailable: return String(localized: "Unavailable")
         }
     }
 
     /// The value cell: the word, a middle dot, a few words of what that means right now.
     public var line: String {
         switch self {
-        case .off:         return word + " · starts with Play"
-        case .waiting:     return word + " · no reading yet"
-        case .receiving:   return word + " · your Watch"
-        case .unavailable: return word + " · Health can't be opened"
+        case .off:         return word + String(localized: " · starts with Play")
+        case .waiting:     return word + String(localized: " · no reading yet")
+        case .receiving:   return word + String(localized: " · your Watch")
+        case .unavailable: return word + String(localized: " · Health can't be opened")
         }
     }
 
@@ -99,27 +99,23 @@ public enum HealthSourceRung: Equatable, CaseIterable, Sendable {
     public var caption: String {
         switch self {
         case .off:
-            return "Apple Health starts with the music. Your Watch feeds heart rate in through "
-                 + "Health, a few seconds behind the wrist."
+            return String(localized: "Apple Health starts with the music. Your Watch feeds heart rate in through Health, a few seconds behind the wrist.")
         case .waiting:
-            return "At rest the Watch writes minutes apart. If you declined Health access, allow "
-                 + "it in the Health app under Privacy › Apps & Services."
+            return String(localized: "At rest the Watch writes minutes apart. If you declined Health access, allow it in the Health app under Privacy › Apps & Services.")
         case .receiving:
-            return "Heart rate from Apple Health, a few seconds behind the wrist. Coherence is "
-                 + "not available from this source."
+            return String(localized: "Heart rate from Apple Health, a few seconds behind the wrist. Coherence is not available from this source.")
         case .unavailable:
-            return "Apple Health could not be opened on this device. Choose another bio source — "
-                 + "the camera light or a Bluetooth strap."
+            return String(localized: "Apple Health could not be opened on this device. Choose another bio source — the camera light or a Bluetooth strap.")
         }
     }
 
     /// What VoiceOver reads for the whole row.
     public var spoken: String {
         switch self {
-        case .off:         return "Apple Health is off. It starts with Play"
-        case .waiting:     return "Waiting for a reading from Apple Health"
-        case .receiving:   return "Receiving heart rate from Apple Health, your Watch"
-        case .unavailable: return "Apple Health is unavailable on this device"
+        case .off:         return String(localized: "Apple Health is off. It starts with Play")
+        case .waiting:     return String(localized: "Waiting for a reading from Apple Health")
+        case .receiving:   return String(localized: "Receiving heart rate from Apple Health, your Watch")
+        case .unavailable: return String(localized: "Apple Health is unavailable on this device")
         }
     }
 }
