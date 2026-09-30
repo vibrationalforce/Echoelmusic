@@ -90,6 +90,15 @@ public final class MIDIBusPublisher {
     /// Set from the patchbay (midi.in → midi.out route). Off by default.
     public var thruEnabled = false
 
+    /// Zug 3 (2026-09-30): the two COLD facts about the inbound cable, forwarded for the Routing
+    /// surface's "MIDI" card (`PatchbayView.MIDIStatusRow`). `MIDIInput` is internal and is not
+    /// injected anywhere; this publisher is, so it lends the two reads. Both are written only in
+    /// `MIDIInput.connectAllSources()` — at launch and on `.msgSetupChanged` — never per event, so
+    /// a leaf observing them rebuilds when a cable moves, not when a key does. The per-event stamp
+    /// stays `lastEventTimestamp` above, `@ObservationIgnored`, read by that same leaf on a clock.
+    public var sourceConnected: Bool { midi.isConnected }
+    public var sourceName: String { midi.deviceName }
+
     /// Record-system tee (B): when a take is running the RecordController installs
     /// these so every external MIDI note is captured into the armed lane. nil ⇒ not
     /// recording (zero overhead). Invoked on @MainActor alongside the existing publish.

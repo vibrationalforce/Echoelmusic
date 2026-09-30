@@ -107,6 +107,10 @@ struct PatchbayView: View {
                 // is correct on the embedded path too. Defensive rather than a live fix —
                 // `PatchbayView(embedded:)` has no caller today — but a control that only
                 // works on one of two hosts is exactly how a door goes missing again.
+                // Zug 3 (2026-09-30): the cable's two status lines come BEFORE its switches — what
+                // is happening, and beneath it what can be changed. A leaf on its own clock (see
+                // the struct at the end of this file).
+                MIDIStatusRow()
                 networkMIDISection
                 midiOutSection
                 #endif
@@ -984,3 +988,74 @@ private struct ModulationRouteRow: View {
         }
     }
 }
+
+// MARK: - Zug 3 (2026-09-30) MIDI status card
+
+#if os(iOS) && canImport(CoreMIDI)
+/// The "MIDI" card: two status lines, in and out, in words (`MIDIInRung` / `MIDIOutRung`).
+///
+/// A LEAF ON ITS OWN CLOCK, like `NetworkOutputHeader` and the bio panel's Apple Health row: the
+/// Routing body reads no MIDI engine state (it touches `midiOut` only in `.onChange`, on purpose),
+/// and this struct keeps it that way. What it reads: `midiPub.sourceConnected`/`sourceName` (cold,
+/// written on cable moves), `midiPub.lastEventTimestamp` (`@ObservationIgnored` — the per-note stamp,
+/// POLLED here every `tick`, never observed), `midiOut.enabled`/`isReady` (cold: the route switch
+/// and the port's open state) and `midiOut.destinationCount` (a CoreMIDI query). No `Timer`, no
+/// start/stop, no `MIDIInput` — the card describes, it does not own (BLE-3, #1319).
+///
+/// NEEDS-FOUNDER-VERIFY: plug in a controller → "Connected · <name>"; play → "Playing · <name>"
+/// for ~3 s after the last key; route MIDI out on with a Mac's Network MIDI connected →
+/// "On · source + 1 destination"; VoiceOver reads each line as one sentence.
+private struct MIDIStatusRow: View {
+    @Environment(MIDIBusPublisher.self) private var midiPub
+    @Environment(MIDIOutput.self) private var midiOut
+
+    /// Re-evaluation cadence. `MIDIInRung.playingWindow` is 3 s, so at 2 s the word "Playing"
+    /// outlives the last key by at most one tick — visible, not flickering.
+    private static let tick: TimeInterval = 2
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: Self.tick)) { _ in
+            let inRung = MIDIInRung.rung(sourceConnected: midiPub.sourceConnected,
+                                         lastEvent: midiPub.lastEventTimestamp,
+                                         now: CFAbsoluteTimeGetCurrent())
+            let outRung = MIDIOutRung.rung(enabled: midiOut.enabled, isReady: midiOut.isReady)
+            let destinations = midiOut.destinationCount
+            VStack(alignment: .leading, spacing: 8) {
+                Text("MIDI").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
+                VStack(alignment: .leading, spacing: 8) {
+                    statusLine(label: "MIDI in",
+                               line: inRung.line(source: midiPub.sourceName),
+                               caption: inRung.caption,
+                               spoken: inRung.spoken(source: midiPub.sourceName))
+                    statusLine(label: "MIDI out",
+                               line: outRung.line(destinations: destinations),
+                               caption: outRung.caption,
+                               spoken: outRung.spoken(destinations: destinations))
+                }
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
+            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
+        }
+    }
+
+    /// One direction: name · state line, remedy beneath, one VoiceOver sentence.
+    private func statusLine(label: String, line: String, caption: String, spoken: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack {
+                Text(label).font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
+                Spacer()
+                Text(line).font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.text)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Text(caption).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label)
+        .accessibilityValue(spoken)
+    }
+}
+#endif

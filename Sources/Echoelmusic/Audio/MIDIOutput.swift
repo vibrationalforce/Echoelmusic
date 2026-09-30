@@ -142,6 +142,18 @@ public final class MIDIOutput {
 
     public private(set) var isReady = false
 
+    /// Zug 3 (2026-09-30): the count `send` fans out to — every CoreMIDI destination (hardware,
+    /// other apps' inputs, a network peer). The "Echoelmusic" virtual SOURCE is not in it; a host
+    /// recording that source hears every note at zero. Read by the Routing surface's "MIDI" card
+    /// on its own clock; a plain CoreMIDI query, no state, so it cannot go stale between cable moves.
+    public var destinationCount: Int {
+        #if canImport(CoreMIDI)
+        return Int(MIDIGetNumberOfDestinations())
+        #else
+        return 0
+        #endif
+    }
+
     /// #837 (founder log v10.79.424, build 2542, the relaunch 5 s after a SIGABRT):
     /// the launch enable hit `client create failed (-2)` — a transient midiserver
     /// refusal while the daemon recovered from the abrupt kill — and the whole
