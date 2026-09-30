@@ -927,3 +927,14 @@ Founder-Upload, 51,6 s, 14 Einzelbilder gelesen; Ton ohne Transkript, eingebrann
 - **Schon da (keine Übernahme):** CLAUDE.md als Team-Regeln · Skills als Regel-Schicht · Datei-Spur je Stufe (PLAN_*.md, EXECUTION_CHECKPOINT, decisions.csv, SESSION_LOG) · Check-Fix-Schleife (Ralph + sieben Prüfskripte) · Reviewer-Agenten.
 - **ADOPT-PIPELINE-Kandidat, Founder entscheidet:** Schicht 2 „Hooks, die blockieren". Gemessen: `.claude/settings.json` trägt nur einen SessionStart-Hook. Die founder-gesperrten Pfade sind reine Prosa — genau der Fall „one slips past" aus dem Reel. Ein PreToolUse-Hook auf Edit/Write für `.github/workflows/**`, `project.yml`, `Resources/iOS/Info.plist`, `.deploy/release` wäre die kleinste Übernahme.
 - **WATCH:** „Autor gibt nicht frei" — Agenten-Code erreicht main per Auto-Merge nach zwei Gates; menschliche Freigabe sitzt bei TestFlight/Gerät (#1405, bewusst). **WATCH:** Geräte-Monitoring — MetricKit kommt in `Sources/` nicht vor; wäre Produktcode, nicht in einer Reparaturrunde.
+
+## 2026-09-30 — Organuhr-Tabelle + Deep Research „Frequenzen und Stimulationsmuster" (Adey, Weltraummedizin, auditiv)
+
+Founder-Upload einer TCM-Organuhr-Tabelle (Tageszeit → Organ → Frequenz/Stimmung) mit dem Auftrag, die effektivsten Frequenzen und Stimulationsmuster zu recherchieren. Drei Recherche-Agenten; Ergebnis als Tab „Evidenz" im Audit-Doc. ⚠️ Methodische Grenze: der Proxy blockierte JEDE Fachdomäne — Noten aus Abstract-Zitaten, kein Volltext; vor jeder Store-/Web-/Panel-Zeile am Founder-Mac gegenlesen.
+
+- **REJECT — Organ → Frequenz (Hz):** keine kontrollierte Studie zu irgendeiner Zuordnung, die Tabellen widersprechen sich (Grad D); im Produkt die Heilungs-Rote-Linie.
+- **WATCH — Tageszeit als Default-Kurve** (Tempo, Blauanteil, Presets): Zirkadianik real (B), Organ-Stunden nicht (D). Reine Gestaltungsentscheidung ohne Gesundheitswort, T1-Log als Nutzer-Geste. Review 2026-12-29, erst nach den fünf offenen Audit-Entscheidungen.
+- **REJECT — Adey-Fenster:** in vitro nur in Original-Laboren repliziert (C), Übertragung auf Schall/Licht/Haptik nirgends gezeigt (D). Name nirgends in Copy.
+- **ADOPT-TEILWEISE — Weltraummedizin:** Abendmodus des Visuals (HERA/ISS-Lichtschema, B) · Atem-Pacer-Default 6/min (HRVB A auf der Erde) · ruhige Presets 60–80 BPM, Stille, 10-s-Phrasen (Bernardi, B) · Haptik nur als Cue. REJECT: Vibrationstherapie am Gerät (Taptic ~230 Hz, 0,003–0,15 g gegen LIV 30 Hz/0,3 g stehend), 40-Hz-Lichtflimmern (3-Hz-Decke, Soula 2023 ohne Replikation). WATCH: Vibroakustik nur als externer Ausgang.
+- **REJECT — auditive Wirk-Claims:** binaural (C/D), isochron (D), 432/528 Hz (D, Brand-Verbot). 40-Hz-AM auf Audio ist messbar (ASSR, B) und blitzfrei — allenfalls Klangfarbe, nie Kognitions-Claim.
+- **Die eine Zeile:** genau EIN Reiz hat Grad A und ist auf dem iPhone lieferbar — Resonanzatmung ~6/min. Gebaut. Alles andere heißt „Klanggestaltung", nie „Wirkung". Fünf Zeilen in `inspiration.csv`.
