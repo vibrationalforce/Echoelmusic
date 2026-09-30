@@ -116,11 +116,11 @@ final class TheCreationDoorsPairUpWhileTheyFitTests: XCTestCase {
                            "`\(door)` shrinks its label — the pair's fit test should see every label at its real width")
         }
         let view = try rawSource(Self.viewPath)
-        guard let plate = view.range(of: ".accessibilityLabel(\"No tracks yet. Tap Add Audio Track, then Import Audio"),
+        guard let plate = view.range(of: ".accessibilityLabel(\"No tracks yet. Add Audio Track or Add MIDI Track"),
               let plateEnd = view.range(of: "\")", range: plate.upperBound..<view.endIndex) else {
             return XCTFail("the empty plate no longer walks the doors by their labels")
         }
-        guard let shown = view.range(of: "Text(\"Tap Add Audio Track, then Import Audio"),
+        guard let shown = view.range(of: "Text(\"Add Audio Track or Add MIDI Track"),
               let shownEnd = view.range(of: "\")", range: shown.upperBound..<view.endIndex) else {
             return XCTFail("the empty plate's visible sentence no longer walks the doors by their labels")
         }

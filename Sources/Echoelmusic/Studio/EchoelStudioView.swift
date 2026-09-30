@@ -2261,7 +2261,7 @@ struct EchoelStudioView: View {
             // `hasComposed` is `@State`, event-rate (freeze law). Wording history (#272,
             // #355b — name the control that actually starts) lives at the panel tombstone.
             if !hasComposed {
-                Text("Press Play first — then you can record the loop, save the piece, or export a WAV or MIDI file.")
+                Text("Play starts the music. Once it plays, you can record the loop, save the piece, or export a WAV or MIDI file.")
                     .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)

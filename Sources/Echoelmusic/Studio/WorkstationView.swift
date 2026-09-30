@@ -493,7 +493,7 @@ struct WorkstationView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("No tracks yet")
                 .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
-            Text("Tap Add Audio Track, then Import Audio — or Add MIDI Track, then Import MIDI or New MIDI Part. A file becomes a part you can play; a new part plays once it has notes.")
+            Text("Add Audio Track or Add MIDI Track to begin. Each new track brings its own Import button; a file becomes a part you can play, and a new MIDI part plays once it has notes.")
                 .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -502,7 +502,7 @@ struct WorkstationView: View {
         // One spoken sentence rather than two fragments — VoiceOver would otherwise read the
         // heading and the explanation as unrelated items.
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("No tracks yet. Tap Add Audio Track, then Import Audio — or Add MIDI Track, then Import MIDI or New MIDI Part. A file becomes a part you can play; a new part plays once it has notes.")
+        .accessibilityLabel("No tracks yet. Add Audio Track or Add MIDI Track to begin. Each new track brings its own Import button; a file becomes a part you can play, and a new MIDI part plays once it has notes.")
     }
 
     private func songLine(_ summary: WorkstationSummary) -> some View {

@@ -84,9 +84,9 @@ final class CopyNamesTheLiveControlTests: XCTestCase {
     /// `quickActionRow` — a test named for a location the code no longer uses is the #374
     /// class. Same guard, same needles, plus the placement half the move creates.
     func testTheFirstRunLineNamesTheOneStartAndSitsOnThePlate() throws {
-        let hint = try sourceLines().filter { $0.text.contains("then you can record the loop") }
+        let hint = try sourceLines().filter { $0.text.contains("you can record the loop") }
         XCTAssertEqual(hint.count, 1, """
-        expected exactly one first-run hint (anchored on "then you can record the loop"), \
+        expected exactly one first-run hint (anchored on "you can record the loop"), \
         found \(hint.count).
 
         If it was reworded, re-anchor this guard in the same commit. If it was deleted, read \
@@ -95,8 +95,8 @@ final class CopyNamesTheLiveControlTests: XCTestCase {
         that explains the grey first-run tiles.
         """)
         for line in hint {
-            XCTAssertTrue(line.text.contains("Press Play"), """
-            \(line.file):\(line.line) no longer tells the user to press Play: \
+            XCTAssertTrue(line.text.contains("Play starts"), """
+            \(line.file):\(line.line) no longer names Play as the control that starts (rule 10 reworded the recipe, #355b keeps the name): \
             \(line.text.trimmingCharacters(in: .whitespaces))
 
             The greyed Save/Record/Export tiles in the row under the transport are the first \
@@ -114,7 +114,7 @@ final class CopyNamesTheLiveControlTests: XCTestCase {
         let studio = try studioCode()
         let mount = "\n            quickActionRow\n"
         let door = "\n            quickDoorRow\n"
-        let needle = "then you can record the loop"
+        let needle = "you can record the loop"
         for (token, name) in [(mount, "quickActionRow mount"), (door, "quickDoorRow mount"), (needle, "first-run sentence")] {
             XCTAssertEqual(occurrences(of: token, in: studio), 1, """
             \(name) is no longer unique in EchoelStudioView's stripped source — the \
