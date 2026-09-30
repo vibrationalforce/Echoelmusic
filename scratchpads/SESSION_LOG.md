@@ -41044,3 +41044,12 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Checker:** swift-escapes OK, dead-needles OK, foreign-needles OK, Katalog 487 Schlüssel 0 Verletzungen, keine Glossar-Lehnwörter im Deutschen.
 - **Gates Stapel 74f0c48e6 (E4-3…E4-5):** Compile Check 3091 ✓, CI/CD 6555 Build for Testing ✓ (20:34–20:41Z — Ansprüche 7/8/9 kompilieren),
   Auto-Merge 3989 ✓ → main = 74f0c48e6; Run Tests läuft. E4-6 gepusht als a344e6472 (Monitor läuft). Push von E4-7 nach dessen Compile Check.
+
+## 2026-09-30 — E4-8 gebaut: deutsche Routing- und FX-Panel-Texte, nur Katalog (e2152b4ab lokal)
+
+- **Gemessen (Mess-Regex, kommentarbereinigt):** PatchbayView 45 Stellen/45 Schlüssel/42 fehlend, EchoelFXView 48/44/36; vier Schlüssel geteilt
+  (Route enabled · Source · Curve · Response curve) → 74 neue Einheiten, Katalog 487 → 561. Übersprungen: 8 Interpolationen, 1 weitere
+  `+`-Naht (EchoelFXView, die Neutral-0,50-Erklärung) → sieben Nähte insgesamt, im Wächter-Doc nachgeführt.
+- **Wächter:** beide Dateien in `panelFamily`, Boden 300 → 400. Transkription HEAD 477/74 fehlend = EIN Befund; WORK 477/0; Stripper weiter
+  TRAGEND („literal"). Checker: swift-escapes OK, dead-needles OK, Katalog 561 Schlüssel 0 Verletzungen.
+- **Stand des Stapels:** lokal 8015db45c (E4-7) · f93b92abb · e2152b4ab · Docs; gepusht ist a344e6472 (E4-6), dessen Compile Check der Push-Auslöser ist.

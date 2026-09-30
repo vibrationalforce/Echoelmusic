@@ -3602,3 +3602,8 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Mechanism:** as E4-6 — 162 catalog units, no Swift edit. Guard claim 10 now walks the family through `codeOnly` (TRAGEND: `Button("literal")` in a comment of this file was the one verdict that flipped), floor 300 sites.
 - **Left out, with reason:** four `+` seams (save caption, nearby-devices hint, accent hint, latency hint) = `Text(String)`, need a sentence design; helper-routed row labels (`labeledRow`/`groupHeader`/`mixStripCard` take `String`) = a Sources slice; PatchbayView (47) and EchoelFXView (44) = next two catalog slices.
 - **Review 2026-10-30:** device G6 — the long panel captions (colour law, self-play, note length) in German are ~15 % longer; check the `fixedSize` rows for clipping.
+
+### 2026-09-30 — E4-8: German Routing + FX panel texts, catalog-only (e2152b4ab)
+
+- 74 units for PatchbayView + EchoelFXView; both in `panelFamily`, floor 400. Technical names kept as identical German units (MIDI · DMX · Digital · Tape · Ping-Pong · Auto-Pan · Notch · Bipolar). Seventh `+` seam recorded (EchoelFXView neutral-0.50 hint).
+- **Next:** the Sources slice for String-taking label helpers (`labeledRow`/`groupHeader`/`mixStripCard`), a sentence design for the seven seams, then the remaining String-returning copy files.
