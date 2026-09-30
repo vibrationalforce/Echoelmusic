@@ -1402,8 +1402,10 @@ private struct WorkstationProjectRow: View {
         .padding(.horizontal, 10)
     }
 
-    private func door(_ title: String, systemImage: String, object: String, enabled: Bool,
-                      spoken: String, hint: String) -> some View {
+    // E4-18 (2026-09-30): title, spoken name and hint are catalog KEYS — both doors pass literals,
+    // `Text`, `.accessibilityLabel` and `.accessibilityHint` all take the key directly.
+    private func door(_ title: LocalizedStringKey, systemImage: String, object: String, enabled: Bool,
+                      spoken: LocalizedStringKey, hint: LocalizedStringKey) -> some View {
         Button {
             NotificationCenter.default.post(name: .echoelChromeDoor, object: object)
         } label: {

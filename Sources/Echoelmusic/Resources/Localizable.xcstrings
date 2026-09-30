@@ -13932,6 +13932,150 @@
           }
         }
       }
+    },
+    "Previous guide card" : {
+      "comment" : "Guide arrows, Echoel instance line and the Workstation's Save/Open doors (E4-18, 2026-09-30): helper parameters as keys; the instance's VoiceOver sentence as head + name + middle + name via String(localized:).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous guide card"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorherige Hilfe-Karte"
+          }
+        }
+      }
+    },
+    "Next guide card" : {
+      "comment" : "Guide arrows, Echoel instance line and the Workstation's Save/Open doors (E4-18, 2026-09-30): helper parameters as keys; the instance's VoiceOver sentence as head + name + middle + name via String(localized:).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next guide card"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächste Hilfe-Karte"
+          }
+        }
+      }
+    },
+    "Genre" : {
+      "comment" : "Guide arrows, Echoel instance line and the Workstation's Save/Open doors (E4-18, 2026-09-30): helper parameters as keys; the instance's VoiceOver sentence as head + name + middle + name via String(localized:).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genre"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genre"
+          }
+        }
+      }
+    },
+    "FX" : {
+      "comment" : "Guide arrows, Echoel instance line and the Workstation's Save/Open doors (E4-18, 2026-09-30): helper parameters as keys; the instance's VoiceOver sentence as head + name + middle + name via String(localized:).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FX"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FX"
+          }
+        }
+      }
+    },
+    "Echoel plays " : {
+      "comment" : "Guide arrows, Echoel instance line and the Workstation's Save/Open doors (E4-18, 2026-09-30): helper parameters as keys; the instance's VoiceOver sentence as head + name + middle + name via String(localized:).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echoel plays "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echoel spielt "
+          }
+        }
+      }
+    },
+    ", FX character " : {
+      "comment" : "Guide arrows, Echoel instance line and the Workstation's Save/Open doors (E4-18, 2026-09-30): helper parameters as keys; the instance's VoiceOver sentence as head + name + middle + name via String(localized:).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", FX character "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", FX-Charakter "
+          }
+        }
+      }
+    },
+    "Names the piece and saves it, with its tracks and parts" : {
+      "comment" : "Guide arrows, Echoel instance line and the Workstation's Save/Open doors (E4-18, 2026-09-30): helper parameters as keys; the instance's VoiceOver sentence as head + name + middle + name via String(localized:).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Names the piece and saves it, with its tracks and parts"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benennt das Stück und sichert es, mit seinen Spuren und Teilen"
+          }
+        }
+      }
+    },
+    "Shows your saved pieces. Opening one replaces the piece here" : {
+      "comment" : "Guide arrows, Echoel instance line and the Workstation's Save/Open doors (E4-18, 2026-09-30): helper parameters as keys; the instance's VoiceOver sentence as head + name + middle + name via String(localized:).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows your saved pieces. Opening one replaces the piece here"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt deine gesicherten Stücke. Eines zu öffnen ersetzt das Stück hier"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

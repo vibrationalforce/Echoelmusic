@@ -121,7 +121,9 @@ struct GuideOverlay: View {
         .accessibilityValue("\(entry.title), card \(index + 1) of \(count)")
     }
 
-    private func pageButton(_ symbol: String, label: String, disabled: Bool,
+    // E4-18 (2026-09-30): `label` is a catalog KEY — both callers pass a literal and nothing reads
+    // it as text; `.accessibilityLabel` takes the key directly.
+    private func pageButton(_ symbol: String, label: LocalizedStringKey, disabled: Bool,
                             action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)

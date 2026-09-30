@@ -37,7 +37,9 @@
 // E4-15 added the media label's key wrap and four titles (parent: verbatim, three missing — ONE finding).
 // E4-16 added the selected-part bar: signature, three sentence heads, four localised labels, eighteen units
 // (parent: all absent — ONE finding). E4-17 added the note editor: signature, seven heads, no verbatim label,
-// three grid words, thirty-eight units (parent: all absent — ONE finding) (parent: all absent — ONE finding). Claim 12
+// three grid words, thirty-eight units (parent: all absent — ONE finding). E4-18 added the guide arrows, the
+// instance line and the Save/Open doors: three signatures, two sentence seams, no verbatim sentence, fifteen units
+// (parent: all absent, eight units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -546,6 +548,25 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "the ", " selected notes", "sixteenth", "eighth",
                           "quarter note", "Duplicate", "Delete"],
                          "note editor words")
+        // E4-18 — the guide's arrows, the Echoel instance line and the Workstation's Save/Open doors
+        let guide = try codeOnly("Sources/Echoelmusic/Studio/GuideOverlay.swift")
+        XCTAssertTrue(guide.contains("private func pageButton(_ symbol: String, label: LocalizedStringKey, disabled: Bool,"),
+                      "the guide's page arrows take a String label again — VoiceOver would hear English on every phone")
+        let instance = try codeOnly("Sources/Echoelmusic/Studio/EchoelInstanceLine.swift")
+        XCTAssertTrue(instance.contains("private func fact(_ name: LocalizedStringKey, _ value: String)"),
+                      "the instance line's fact name is a String again — Genre / FX would spell verbatim")
+        XCTAssertTrue(instance.contains("String(localized: \"Echoel plays \")") && instance.contains("String(localized: \", FX character \")"),
+                      "the instance line's VoiceOver sentence lost its localised head or middle")
+        XCTAssertFalse(instance.contains("accessibilityLabel(\"Echoel plays"), "the verbatim interpolated instance sentence is back")
+        let doors = try codeOnly("Sources/Echoelmusic/Studio/WorkstationView.swift")
+        XCTAssertTrue(doors.contains("private func door(_ title: LocalizedStringKey, systemImage: String, object: String, enabled: Bool,")
+                      && doors.contains("spoken: LocalizedStringKey, hint: LocalizedStringKey) -> some View {"),
+                      "the Workstation's Save/Open door takes String words again — title, spoken name or hint would spell verbatim")
+        try assertGerman(["Previous guide card", "Next guide card", "Genre", "FX",
+                          "Echoel plays ", ", FX character ", "Names the piece and saves it, with its tracks and parts", "Shows your saved pieces. Opening one replaces the piece here",
+                          "Hide guide", "The Guide button in the head, the ⓘ, brings it back", "Guide", "Save",
+                          "Open", "Save this piece", "Open a saved piece"],
+                         "guide arrow, instance line and door words")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

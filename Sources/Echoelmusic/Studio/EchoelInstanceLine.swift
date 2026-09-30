@@ -40,13 +40,17 @@ struct EchoelInstanceLine: View {
             VStack(alignment: .leading, spacing: 2) { genreFact; characterFact }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Echoel plays \(genre.displayName), FX character \(character.displayName)")
+        // E4-18: head + name + middle + name through `String(localized:)` — a format key could not be a
+        // catalog literal; the two names come from their types and are not this line's to translate.
+        .accessibilityLabel(String(localized: "Echoel plays ") + genre.displayName
+                            + String(localized: ", FX character ") + character.displayName)
     }
 
     private var genreFact: some View { fact("Genre", genre.displayName) }
     private var characterFact: some View { fact("FX", character.displayName) }
 
-    private func fact(_ name: String, _ value: String) -> some View {
+    // E4-18: `name` is a catalog KEY (two literal callers); `value` is a type's display name.
+    private func fact(_ name: LocalizedStringKey, _ value: String) -> some View {
         HStack(spacing: 4) {
             Text(name).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             Text(value).font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.text)
