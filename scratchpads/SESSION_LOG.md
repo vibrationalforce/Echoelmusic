@@ -40719,3 +40719,7 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 
 - `BioStripView` (Banner-Glyph 10→11, fünf Tag-/Knopf-Glyphen `.system(size: 9)`→11 — sie standen im SELBEN HStack neben 11–13-pt-Wörtern), `BioMetricInfo` (zwei Herkunfts-Notizen 10→11, Pfeil 9→11), `BioSourceView` („Band“ 10→11).
 - Vorher gemessen: `CoachingTextScalesTests` zählt die zwei `EchoelTheme.font(`-Aufrufe des Banners, `InfoSheetTextScalesTests` fragt den BESITZER jedes `.system(size:` — keiner liest die Zahl. Wächter-Liste 7 → 10; Transkription WORK 0 / HEAD 10.
+
+## 2026-09-30 — Regel 12, Boden-Hälfte, fünfte Familie: FX-Routen, Bühne, Arrange-Canvas — lokal
+
+- `EchoelFXView` (zwei Pfeile 9/10→11, „Demo“-Chip 10→11 — sein Kommentar verspricht dieselbe Behandlung wie `AlwaysOnBioRow`, das seit Familie 2 bei 11 steht: ein Punkt Abstand, jetzt keiner), `ImmersiveStageView` (Orientierungs-Labels, Spurnamen), `ArrangeCanvasView` (Hör-Glyph, Takt-Lineal). Wächter-Liste 10 → 13; Transkription WORK 0 / HEAD 7.

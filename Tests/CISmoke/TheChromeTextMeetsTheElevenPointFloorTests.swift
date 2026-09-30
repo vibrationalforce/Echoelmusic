@@ -49,6 +49,11 @@
 // parent for exactly those ten, GREEN here. `CoachingTextScalesTests` counts the banner's two
 // `EchoelTheme.font(` calls and `InfoSheetTextScalesTests` asks who OWNS each `.system(size:`,
 // neither reads the number — both stay green for their own reason.
+// FIFTH FAMILY (same day, parent 21a11e2e6): EchoelFXView (two arrows 9/10 + the "Demo" chip 10),
+// ImmersiveStageView (orientation labels, lane names), ArrangeCanvasView (hearing glyph, bar
+// marks) joined with seven sites lifted — claim 1 RED on that parent for exactly those, GREEN
+// here. The FX "Demo" chip now matches the 11 pt chip `AlwaysOnBioRow` got in the second family —
+// the source comment beside it promises "same spelling, same treatment", and it was one point off.
 
 import Foundation
 import XCTest
@@ -81,6 +86,11 @@ final class TheChromeTextMeetsTheElevenPointFloorTests: XCTestCase {
         "Sources/Echoelmusic/Studio/BioStripView.swift",
         "Sources/Echoelmusic/Studio/BioMetricInfo.swift",
         "Sources/Echoelmusic/Studio/BioSourceView.swift",
+        // Fifth family (same day): the FX routes' two arrows and their "Demo" chip, the stage's
+        // orientation labels and lane names, the arrange canvas's hearing glyph and bar marks.
+        "Sources/Echoelmusic/Studio/EchoelFXView.swift",
+        "Sources/Echoelmusic/Studio/ImmersiveStageView.swift",
+        "Sources/Echoelmusic/Studio/ArrangeCanvasView.swift",
     ]
 
     private static let theme = "Sources/Echoelmusic/Studio/EchoelTheme.swift"

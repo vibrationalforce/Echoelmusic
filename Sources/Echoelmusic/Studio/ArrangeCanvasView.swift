@@ -314,7 +314,7 @@ struct ArrangeCanvasView: View {
         return HStack(spacing: 3) {
             if let symbol = ArrangeCanvas.symbol(hearing) {
                 Image(systemName: symbol)
-                    .font(EchoelTheme.font(10))
+                    .font(EchoelTheme.font(11))
                     .foregroundStyle(EchoelTheme.dim)
             }
             Text(row.name)
@@ -408,7 +408,7 @@ struct ArrangeBarRuler: View {
                             .fill(EchoelTheme.border)
                             .frame(width: 1)
                         Text("\(mark.bar)")
-                            .font(EchoelTheme.font(10).monospacedDigit())
+                            .font(EchoelTheme.font(11).monospacedDigit())
                             .foregroundStyle(EchoelTheme.dim)
                             .lineLimit(1)
                             .fixedSize()

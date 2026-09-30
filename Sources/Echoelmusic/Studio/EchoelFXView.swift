@@ -1380,7 +1380,7 @@ private struct BioModContributionRow: View {
             HStack(spacing: 6) {
                 Text(contribution.carrierName)
                     .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
-                Image(systemName: "arrow.right").font(.system(size: 9)).foregroundStyle(EchoelTheme.dim)
+                Image(systemName: "arrow.right").font(.system(size: 11)).foregroundStyle(EchoelTheme.dim)
                 Text(contribution.targetName)
                     .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.text).lineLimit(1)
                 Spacer(minLength: 0)
@@ -1391,7 +1391,7 @@ private struct BioModContributionRow: View {
                 // running the demo is a choice, not a fault, so not `warning` either.
                 if contribution.synthetic {
                     Text("Demo")
-                        .font(EchoelTheme.font(10, .semibold))
+                        .font(EchoelTheme.font(11, .semibold))
                         .lineLimit(1).minimumScaleFactor(0.8)
                         .padding(.horizontal, 5).padding(.vertical, 1)
                         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
@@ -1488,7 +1488,7 @@ private struct FXModRouteRow: View {
                     }
                 }
                 .pickerStyle(.menu).tint(EchoelTheme.text)
-                Image(systemName: "arrow.right").font(.system(size: 10)).foregroundStyle(EchoelTheme.dim)
+                Image(systemName: "arrow.right").font(.system(size: 11)).foregroundStyle(EchoelTheme.dim)
                 Picker("Target", selection: $route.target) {
                     ForEach(FXModTarget.allCases) { t in Text(t.displayName).tag(t) }
                 }

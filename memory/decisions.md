@@ -3353,3 +3353,8 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - `BioStripView` (banner glyph 10, five tag/button glyphs `.system(size: 9)` beside 11–13 pt words), `BioMetricInfo` (two origin notes 10, `arrow.right` 9), `BioSourceView` ("Band" 10 — doorless, still code) → 11.
 - `CoachingTextScalesTests` (banner: two `EchoelTheme.font(` calls, no `.system`) and `InfoSheetTextScalesTests` (every `.system(size:` owned by an `Image`) read structure, not the number — measured before the lift, unaffected.
 - Ratchet list now ten files; guard header carries the fourth family's grading (WORK 0, HEAD 10).
+
+### 2026-09-30 — Rule 12 floor, fifth family: FX routes, stage, arrange canvas
+
+- `EchoelFXView` (two `arrow.right` glyphs 9/10, "Demo" chip 10 — its comment promises the same treatment as `AlwaysOnBioRow`'s chip, lifted to 11 in family 2), `ImmersiveStageView` (orientation labels, lane names), `ArrangeCanvasView` (hearing glyph, bar-mark ruler `monospacedDigit`) → 11.
+- Ratchet list now thirteen files; header carries the fifth family (WORK 0, HEAD 7).

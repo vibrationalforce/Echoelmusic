@@ -140,7 +140,7 @@ struct ImmersiveStageView: View {
 
     private func orientationLabel(_ text: String, x: CGFloat, y: CGFloat) -> some View {
         Text(text)
-            .font(EchoelTheme.font(10))
+            .font(EchoelTheme.font(11))
             .foregroundStyle(EchoelTheme.dim)
             .position(x: x, y: y)
     }
@@ -192,7 +192,7 @@ struct ImmersiveStageView: View {
                     .foregroundStyle(highlighted ? EchoelTheme.onPrimary : EchoelTheme.text)
             }
             Text(lane.name)
-                .font(EchoelTheme.font(10))
+                .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.text)
                 .lineLimit(1)
                 .fixedSize()
