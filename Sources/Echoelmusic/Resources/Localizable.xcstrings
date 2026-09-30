@@ -14274,6 +14274,402 @@
           }
         }
       }
+    },
+    "Still Pads" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Still Pads"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stille Flächen"
+          }
+        }
+      }
+    },
+    "Moving Ambient" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moving Ambient"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewegtes Ambient"
+          }
+        }
+      }
+    },
+    "Cinematic Atmospheres" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cinematic Atmospheres"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filmische Atmosphären"
+          }
+        }
+      }
+    },
+    "Techno" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Techno"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Techno"
+          }
+        }
+      }
+    },
+    "House" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "House"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "House"
+          }
+        }
+      }
+    },
+    "Trance" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trance"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trance"
+          }
+        }
+      }
+    },
+    "Synth & Electro" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synth & Electro"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synth & Electro"
+          }
+        }
+      }
+    },
+    "Rock" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rock"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rock"
+          }
+        }
+      }
+    },
+    "Punk" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Punk"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Punk"
+          }
+        }
+      }
+    },
+    "Metal" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metal"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metal"
+          }
+        }
+      }
+    },
+    "Jazz" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jazz"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jazz"
+          }
+        }
+      }
+    },
+    "Soul" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soul"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soul"
+          }
+        }
+      }
+    },
+    "Hip-Hop" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hip-Hop"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hip-Hop"
+          }
+        }
+      }
+    },
+    "R&B & Pop" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "R&B & Pop"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "R&B & Pop"
+          }
+        }
+      }
+    },
+    "Caribbean" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caribbean"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Karibik"
+          }
+        }
+      }
+    },
+    "Classical & Romantic" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classical & Romantic"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klassik & Romantik"
+          }
+        }
+      }
+    },
+    "Gospel & Spiritual" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gospel & Spiritual"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gospel & Spiritual"
+          }
+        }
+      }
+    },
+    "Near East & C. Asia" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Near East & C. Asia"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahost & Zentralasien"
+          }
+        }
+      }
+    },
+    "Latin America" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Latin America"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lateinamerika"
+          }
+        }
+      }
+    },
+    "Lo-Fi & Hazy" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo-Fi & Hazy"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo-Fi & Dunstig"
+          }
+        }
+      }
+    },
+    "Dub & Echo" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dub & Echo"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dub & Echo"
+          }
+        }
+      }
+    },
+    "Dark Synth Scenes" : {
+      "comment" : "Genre picker shelf header — MusicStyle.Subcategory.title (E4-20, 2026-09-30). Kept short: a menu section header truncates.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dark Synth Scenes"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dunkle Synth-Szenen"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

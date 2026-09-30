@@ -261,8 +261,8 @@ public enum Scale: String, Codable, CaseIterable, Sendable {
         ///
         /// ⭐ E4-19 (2026-09-30): each title now goes through `String(localized:)`, so the value that
         /// reaches `Section` is already the locale's — the catalog carries the eight keys with `de`.
-        /// ⚠️ STILL OPEN of #232's translation half: `Scale.displayName` (86 names, own slice) and
-        /// `MusicStyle.Subcategory.title` (the shelf headers the Genre picker renders).
+        /// ⚠️ STILL OPEN of #232's translation half: `Scale.displayName` (86 names, own slice).
+        /// `MusicStyle.Subcategory.title` (the Genre picker's shelf headers) followed with E4-20.
         /// `MusicStyle.Category.title` stays English on purpose: it has zero production readers.
         ///
         /// ⚠️ NO "(12-TET)" IN THE HEADERS, and that is a reversal. They read

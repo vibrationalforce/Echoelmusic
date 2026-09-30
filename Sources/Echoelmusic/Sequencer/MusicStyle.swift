@@ -485,34 +485,38 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         }
 
         /// The picker's section header. Kept SHORT (a menu section header truncates long before
-        /// a row does) and ASCII — the String Catalog does not exist yet, and whatever stands
-        /// here on the day it is generated becomes the key every other language translates from
-        /// (the same argument that moved `Category.title` to English in 2026-07-29).
+        /// a row does) and ASCII — the literal IS the catalog key every other language translates
+        /// from (the same argument that moved `Category.title` to English in 2026-07-29).
+        /// ⭐ E4-20 (2026-09-30): each case returns `String(localized:)`, so `Section(shelf.title)` —
+        /// which takes a `StringProtocol` through the NON-localising `Text` initialiser — already
+        /// receives the locale's word; `Localizable.xcstrings` carries the 23 keys with `de`.
+        /// `GenreSubcategoryTests` claim 5 keeps pinning ASCII/≤22 on the EN value (the simulator's
+        /// locale), which is exactly the key.
         public var title: String {
             switch self {
-            case .stillPads:            return "Still Pads"
-            case .movingAmbient:        return "Moving Ambient"
-            case .cinematicAtmospheres: return "Cinematic Atmospheres"
-            case .techno:               return "Techno"
-            case .house:                return "House"
-            case .trance:               return "Trance"
-            case .synthElectro:         return "Synth & Electro"
-            case .rockCore:             return "Rock"
-            case .punkCore:             return "Punk"
-            case .metal:                return "Metal"
-            case .jazzCore:             return "Jazz"
-            case .soul:                 return "Soul"
-            case .hipHop:               return "Hip-Hop"
-            case .rnbPop:               return "R&B & Pop"
-            case .caribbean:            return "Caribbean"
-            case .classicalRomantic:    return "Classical & Romantic"
-            case .gospelSpiritual:      return "Gospel & Spiritual"
-            case .europeanFolk:         return "European Folk"
-            case .nearEastCentralAsia:  return "Near East & C. Asia"
-            case .latinAmerica:         return "Latin America"
-            case .loFiHazy:             return "Lo-Fi & Hazy"
-            case .dubEchoes:            return "Dub & Echo"
-            case .darkSynthScenes:      return "Dark Synth Scenes"
+            case .stillPads:            return String(localized: "Still Pads")
+            case .movingAmbient:        return String(localized: "Moving Ambient")
+            case .cinematicAtmospheres: return String(localized: "Cinematic Atmospheres")
+            case .techno:               return String(localized: "Techno")
+            case .house:                return String(localized: "House")
+            case .trance:               return String(localized: "Trance")
+            case .synthElectro:         return String(localized: "Synth & Electro")
+            case .rockCore:             return String(localized: "Rock")
+            case .punkCore:             return String(localized: "Punk")
+            case .metal:                return String(localized: "Metal")
+            case .jazzCore:             return String(localized: "Jazz")
+            case .soul:                 return String(localized: "Soul")
+            case .hipHop:               return String(localized: "Hip-Hop")
+            case .rnbPop:               return String(localized: "R&B & Pop")
+            case .caribbean:            return String(localized: "Caribbean")
+            case .classicalRomantic:    return String(localized: "Classical & Romantic")
+            case .gospelSpiritual:      return String(localized: "Gospel & Spiritual")
+            case .europeanFolk:         return String(localized: "European Folk")
+            case .nearEastCentralAsia:  return String(localized: "Near East & C. Asia")
+            case .latinAmerica:         return String(localized: "Latin America")
+            case .loFiHazy:             return String(localized: "Lo-Fi & Hazy")
+            case .dubEchoes:            return String(localized: "Dub & Echo")
+            case .darkSynthScenes:      return String(localized: "Dark Synth Scenes")
             }
         }
 

@@ -40,7 +40,8 @@
 // three grid words, thirty-eight units (parent: all absent — ONE finding). E4-18 added the guide arrows, the
 // instance line and the Save/Open doors: three signatures, two sentence seams, no verbatim sentence, fifteen units
 // (parent: all absent, eight units missing — ONE finding). E4-19 added the Routing MIDI label's signature, the
-// guide counter's two seams and the eight Scale-family headers (parent: all absent, eleven units missing — ONE finding). Claim 12
+// guide counter's two seams and the eight Scale-family headers (parent: all absent, eleven units missing — ONE finding).
+// E4-20 added the 23 Genre shelf headers (parent: 0/23 localised, 22 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -584,6 +585,18 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Minor & Altered", "Pentatonic & Blues", "Symmetric", "European Folk",
                           "Maqām & Near East", "East & Southeast Asia", "Hindustani & Carnatic", "MIDI out"],
                          "routing label, guide counter and scale family words")
+        // E4-20 — the Genre picker's 23 shelf headers (`Subcategory.title`) go through String(localized:)
+        let shelves = try codeOnly("Sources/Echoelmusic/Sequencer/MusicStyle.swift")
+        let shelfTitles = ["Still Pads", "Moving Ambient", "Cinematic Atmospheres", "Techno",
+                          "House", "Trance", "Synth & Electro", "Rock",
+                          "Punk", "Metal", "Jazz", "Soul",
+                          "Hip-Hop", "R&B & Pop", "Caribbean", "Classical & Romantic",
+                          "Gospel & Spiritual", "Near East & C. Asia", "Latin America", "Lo-Fi & Hazy",
+                          "Dub & Echo", "Dark Synth Scenes", "European Folk"]
+        for title in shelfTitles {
+            XCTAssertTrue(shelves.contains("return String(localized: \"\(title)\")"), "`Subcategory.title` spells `\(title)` verbatim again")
+        }
+        try assertGerman(shelfTitles, "genre shelf headers")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
