@@ -3489,3 +3489,9 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Decision:** `PlaybackToggleButton` strokes `EchoelTheme.borderStrong` again; `OneChromeControlHeightTests` anchors its paint-before-tap-frame claim on the stroke's new spelling. Not restored: the dead `isPlaying ? accent : borderStrong` ternary (the chip exists only while playing).
 - **Rationale:** `accent` is "signal only"; a control's outline is not a signal, and the row's neighbours use `borderStrong`. 3ab37512f had made `ControlBoundaryIsInteractiveTests` and `OneChromeControlHeightTests` red — the second unseen because the job log is a `tail -200` (#807).
 - **Open:** device look. **Review:** 2026-10-30.
+
+### 2026-09-30 — Zug 3, MIDI path: the Routing "MIDI" card says what the cable is doing (fff034b4a)
+- **Decision:** `MIDIInRung` (No controller / Connected / Playing, 3 s window) + `MIDIOutRung` (Off / On / Unavailable) in `Studio/MIDIStatusWord.swift`; `MIDIBusPublisher` forwards `sourceConnected`/`sourceName`; `MIDIOutput.destinationCount` is a live CoreMIDI query; `PatchbayView.MIDIStatusRow` is a leaf on a 2 s clock above the wireless-MIDI switch.
+- **Rationale:** four switches, no status word; the failed-port case (#837) was indistinguishable from an unrouted one. The publisher lends the input's facts because `MIDIInput` is not injected; the per-note stamp is polled, never observed.
+- **Open:** device probe (Connected → Playing → Connected; On with a network peer; VoiceOver). Guard: `TheMIDIRowSaysWhatTheCableIsDoingTests`.
+- **Review:** 2026-10-30.
