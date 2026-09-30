@@ -186,7 +186,7 @@ final class ArrangementTests: XCTestCase {
         let json = #"{"future":123,"lengthBars":0}"#.data(using: .utf8)!
         let s = try JSONDecoder().decode(ArrangementSection.self, from: json)
         XCTAssertEqual(s.lengthBars, 1, "lengthBars 0 clamps to 1 even on decode")
-        XCTAssertEqual(s.name, "Section")
+        XCTAssertEqual(s.name, "Scene", "a section decoded without a name takes the glossary word (rule 1): scene")
     }
 
     /// An arrangement document missing `sections` loads as an empty song, not a throw.

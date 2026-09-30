@@ -47,7 +47,7 @@ public struct ArrangementSection: Codable, Sendable, Equatable, Identifiable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = (try? c.decode(UUID.self, forKey: .id)) ?? UUID()
         clipID = try? c.decode(UUID.self, forKey: .clipID)   // nil = silent gap
-        name = (try? c.decode(String.self, forKey: .name)) ?? "Section"
+        name = (try? c.decode(String.self, forKey: .name)) ?? "Scene"
         colorIndex = (try? c.decode(Int.self, forKey: .colorIndex)) ?? 0
         lengthBars = max(1, (try? c.decode(Int.self, forKey: .lengthBars)) ?? 1)
     }

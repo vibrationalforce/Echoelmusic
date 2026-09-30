@@ -167,6 +167,20 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/EchoelFXView.swift",
         "Sources/Echoelmusic/Studio/AutomationStatusStrip.swift",
         "Sources/Echoelmusic/Studio/BioMetricInfo.swift",
+        // Ratchet 15 (2026-09-30): beyond Studio — the sentences the model layer hands the
+        // screen: the import refusals, the open-refusals, the placement status, the names a
+        // recording and a nameless part or scene get, the automation layer label, the rack's
+        // default-effect name. (Project, ArrangementStore and MultipeerSession were cleaned too
+        // but stay OUTSIDE the list: their remaining hits are persisted file names, a protocol
+        // key and multi-line log calls the harness filter cannot see.)
+        "Sources/Echoelmusic/Sequencer/AudioImport.swift",
+        "Sources/Echoelmusic/Core/SessionSaveOpen.swift",
+        "Sources/Echoelmusic/Sequencer/MediaPlacement.swift",
+        "Sources/Echoelmusic/Sequencer/TakeRecorder.swift",
+        "Sources/Echoelmusic/Sequencer/Clip.swift",
+        "Sources/Echoelmusic/Sequencer/Arrangement.swift",
+        "Sources/Echoelmusic/Sequencer/AutomationStatus.swift",
+        "Sources/Echoelmusic/Sequencer/LaneVoiceRack.swift",
     ]
 
     /// A line whose strings reach a log or a test harness, not a person.

@@ -27,7 +27,7 @@ public final class ArrangementStore {
     // MARK: - Structural edits
 
     /// Append a new section (defaults to a 1-bar silent gap until a clip is set).
-    public func addSection(clipID: UUID? = nil, name: String = "Section", colorIndex: Int = 0, lengthBars: Int = 1) {
+    public func addSection(clipID: UUID? = nil, name: String = "Scene", colorIndex: Int = 0, lengthBars: Int = 1) {
         let section = ArrangementSection(
             clipID: clipID, name: name, colorIndex: colorIndex, lengthBars: lengthBars
         )

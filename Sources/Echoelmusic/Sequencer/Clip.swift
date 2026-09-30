@@ -302,7 +302,7 @@ public struct Clip: Codable, Sendable, Equatable, Identifiable {
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = (try? c.decode(UUID.self, forKey: .id)) ?? UUID()
-        name = (try? c.decode(String.self, forKey: .name)) ?? "Clip"
+        name = (try? c.decode(String.self, forKey: .name)) ?? "Part"
         colorIndex = (try? c.decode(Int.self, forKey: .colorIndex)) ?? 0
         kind = (try? c.decode(ClipKind.self, forKey: .kind)) ?? .midi
         drums = try? c.decode(DrumPattern.self, forKey: .drums)

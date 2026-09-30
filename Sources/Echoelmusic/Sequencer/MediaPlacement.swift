@@ -137,8 +137,8 @@ public enum MediaPlacement {
         let bars = max(1, placed.region.lengthTicks / TimelineTime.ticksPerBar)
         let span = "\(bars) \(bars == 1 ? "bar" : "bars")"
         return placed.reusedClip
-            ? "Placed “\(placed.clipName)” — \(span) on \(laneName), playing the clip it already has."
-            : "Placed “\(placed.clipName)” — \(span) on \(laneName), as a new clip."
+            ? "Placed “\(placed.clipName)” — \(span) on \(laneName), playing the part it already has."
+            : "Placed “\(placed.clipName)” — \(span) on \(laneName), as a new part."
     }
 
     // MARK: - The one writer

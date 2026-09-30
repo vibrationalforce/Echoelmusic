@@ -377,7 +377,7 @@ public struct Project: Codable, Sendable, Identifiable, Equatable {
         // able to tell the two apart.
         schemaVersion  = try c.decodeIfPresent(Int.self,      forKey: .schemaVersion)  ?? 0
         id             = try c.decodeIfPresent(UUID.self,     forKey: .id)             ?? UUID()
-        name           = try c.decodeIfPresent(String.self,   forKey: .name)           ?? "Take"
+        name           = try c.decodeIfPresent(String.self,   forKey: .name)           ?? "Piece"
         savedAt        = try c.decodeIfPresent(Date.self,     forKey: .savedAt)        ?? Date()
         styleRaw       = try c.decodeIfPresent(String.self,   forKey: .styleRaw)       ?? ""
         // #56 (BD, 2026-09-10) — FOLDED INTO A PITCH CLASS, never a raw `Int`. Every reader of

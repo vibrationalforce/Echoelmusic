@@ -120,14 +120,14 @@ public struct TakeRecorder: Sendable {
             guard !melody.notes.isEmpty else { continue }
             takes.append(RecordedTake(
                 laneID: id,
-                clip: Clip(name: "Take", kind: .midi, melody: melody),
+                clip: Clip(name: "Recording", kind: .midi, melody: melody),
                 startTick: anchorTick))
         }
         for id in bioOrder {
             guard let rec = bio[id], rec.hasContent else { continue }
             takes.append(RecordedTake(
                 laneID: id,
-                clip: Clip(name: "Bio Take", kind: .midi, automation: [rec.lane()]),
+                clip: Clip(name: "Bio recording", kind: .midi, automation: [rec.lane()]),
                 startTick: anchorTick))
         }
         for id in audioOrder {
@@ -136,7 +136,7 @@ public struct TakeRecorder: Sendable {
             guard let cap = audio[id], !cap.mediaRef.isEmpty else { continue }
             takes.append(RecordedTake(
                 laneID: id,
-                clip: AudioClipFactory.clip(name: "Audio Take", mediaRef: cap.mediaRef,
+                clip: AudioClipFactory.clip(name: "Audio recording", mediaRef: cap.mediaRef,
                                             nativeDurationSeconds: cap.durationSeconds),
                 startTick: anchorTick))
         }

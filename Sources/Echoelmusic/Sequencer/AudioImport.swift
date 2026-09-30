@@ -145,8 +145,8 @@ public enum AudioImport {
             case .unreadableAudio: return "That file isn't audio this app can read."
             case .invalidFormat:   return "That audio has no usable sample rate or channels."
             case .invalidDuration: return "That audio has no playable length."
-            case .noAudioLane:     return "This project has no audio track — add an audio track first."
-            case .clipGridFull:    return "The clip grid is full — all 8 slots are in use."
+            case .noAudioLane:     return "This piece has no audio track — add an audio track first."
+            case .clipGridFull:    return "The part grid is full — all 8 slots are in use."
             }
         }
     }

@@ -156,7 +156,7 @@ public final class LaneVoiceRack {
         voices = (0..<capacity).map { _ in PolySynthVoice(maxVoices: maxVoicesPerSlot) }
         for v in voices { v.attach(to: audioEngine) }
         defaultEffectBySlot = voices.map {
-            FXPreset.capture(from: $0.fxChain, fxEnabled: true, name: "Lane default")
+            FXPreset.capture(from: $0.fxChain, fxEnabled: true, name: "Track default")
         }
         // S2-W2-3: the heterogeneous units, still strictly before
         // audioEngine.start() (attach-before-start law). Flag OFF ⇒ none exist
@@ -621,7 +621,7 @@ public final class LaneVoiceRack {
         // DC1: the same attach-time effect snapshot `attachAll` takes, or `setEffect` would
         // silently no-op for every test that goes through this seam.
         defaultEffectBySlot = testVoices.map {
-            FXPreset.capture(from: $0.fxChain, fxEnabled: true, name: "Lane default")
+            FXPreset.capture(from: $0.fxChain, fxEnabled: true, name: "Track default")
         }
         appliedEffectBySlot = [:]
         attached = true

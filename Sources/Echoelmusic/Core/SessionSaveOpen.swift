@@ -70,16 +70,16 @@ public enum SessionSaveOpen {
             return nil
         case .restorable(let session):
             guard session.content.clipSlots.count == ClipStore.slotCount else {
-                return "“\(project.name)” was saved with a clip grid of "
+                return "“\(project.name)” was saved with a part grid of "
                     + "\(session.content.clipSlots.count) cells; this version has "
                     + "\(ClipStore.slotCount). Nothing was changed."
             }
             return nil
         case .newer(let version):
-            return "“\(project.name)” was saved by a newer version of Echoel (song format "
+            return "“\(project.name)” was saved by a newer version of Echoel (piece format "
                 + "\(version)). Update Echoel to open it. Nothing was changed."
         case .unreadable:
-            return "“\(project.name)”'s song could not be read by this version of Echoel. "
+            return "“\(project.name)”'s piece could not be read by this version of Echoel. "
                 + "Nothing was changed."
         }
     }
