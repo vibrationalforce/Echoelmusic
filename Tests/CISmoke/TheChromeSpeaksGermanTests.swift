@@ -66,7 +66,8 @@
 // sentences — the always-on channel row's three paths and the FX contribution row's two (parent: all interpolated,
 // 9 units missing — ONE finding). E4-34 added the always-on channel names, channel words and Sound-panel row names
 // (parent: all verbatim, 8 units missing — ONE finding). E4-35 added the FX route names — thirteen targets, seven
-// carriers, six matrix sources (parent: all verbatim, 15 units missing — ONE finding). Claim 12
+// carriers, six matrix sources (parent: all verbatim, 15 units missing — ONE finding). E4-36 added the pulse ladder's
+// four rung words and four spoken sentences (parent: all verbatim, 8 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1158,6 +1159,30 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         try assertGerman(["Filter Cutoff", "Filter Resonance", "Saturation Drive", "Chorus Mix", "Flanger Mix", "Phaser Mix", "Tremolo Depth",
                           "Delay Mix", "Delay Feedback", "Reverb Mix", "Reverb Size", "Bitcrush Mix", "Stereo Width",
                           "LFO", "Heart rate", "HRV", "Breath rate", "Breath", "Coherence", "Motion", "Heartbeat"], "FX route names")
+
+        // E4-36 — the pulse ladder (Bio/PulseLadder.swift): the four rung words the pill draws with `Text(ladder.word)`
+        // and the four spoken sentences `accessibilityText` falls back to. Claim 8 covers the MIDI/audio-route/Health
+        // ladders and never reached this one. The German words respect the pill's ≤ 12-character slot law
+        // (AStalledAcquisitionSaysSo): Suche · Fast da · Gefunden · Verloren.
+        let ladderFile = try codeOnly("Sources/Echoelmusic/Bio/PulseLadder.swift")
+        for seam in ["case .searching: return String(localized: \"Searching\")", "case .nearly:    return String(localized: \"Almost\")",
+                     "case .found:     return String(localized: \"Found\")", "case .lost:      return String(localized: \"Lost\")",
+                     "case .searching: return String(localized: \"Searching for your pulse\")",
+                     "case .nearly:    return String(localized: \"Almost there — keep your finger still\")",
+                     "case .found:     return String(localized: \"Pulse found\")",
+                     "case .lost:      return String(localized: \"Pulse lost — keep your finger still\")"] {
+            XCTAssertTrue(ladderFile.contains(seam), "PulseLadder lost the E4-36 seam `\(seam)`")
+        }
+        for verbatim in ["return \"Searching\"", "return \"Almost\"", "return \"Found\"", "return \"Lost\"", "return \"Pulse found\"", "return \"Searching for your pulse\""] {
+            XCTAssertFalse(ladderFile.contains(verbatim), "PulseLadder spells a rung verbatim again: `\(verbatim)`")
+        }
+        XCTAssertEqual(PulseLadderStep.searching.word, "Searching")
+        XCTAssertEqual(PulseLadderStep.lost.spoken, "Pulse lost — keep your finger still")
+        for step in PulseLadderStep.allCases {
+            XCTAssertLessThanOrEqual(german(step.word, in: strings)?.value.count ?? 99, 12, "the German rung word for `\(step)` overflows the pill's value slot")
+        }
+        try assertGerman(["Searching", "Almost", "Found", "Lost", "Searching for your pulse", "Almost there — keep your finger still",
+                          "Pulse found", "Pulse lost — keep your finger still"], "pulse ladder")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

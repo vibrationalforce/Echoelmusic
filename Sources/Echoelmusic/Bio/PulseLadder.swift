@@ -40,10 +40,10 @@ public enum PulseLadderStep: String, CaseIterable, Equatable, Sendable {
     /// `AStalledAcquisitionSaysSoTests` states for every short label that shares it.
     public var word: String {
         switch self {
-        case .searching: return "Searching"
-        case .nearly:    return "Almost"
-        case .found:     return "Found"
-        case .lost:      return "Lost"
+        case .searching: return String(localized: "Searching")
+        case .nearly:    return String(localized: "Almost")
+        case .found:     return String(localized: "Found")
+        case .lost:      return String(localized: "Lost")
         }
     }
 
@@ -53,10 +53,10 @@ public enum PulseLadderStep: String, CaseIterable, Equatable, Sendable {
     /// forbids — stated rather than trapped.
     public var spoken: String {
         switch self {
-        case .searching: return "Searching for your pulse"
-        case .nearly:    return "Almost there — keep your finger still"
-        case .found:     return "Pulse found"
-        case .lost:      return "Pulse lost — keep your finger still"
+        case .searching: return String(localized: "Searching for your pulse")
+        case .nearly:    return String(localized: "Almost there — keep your finger still")
+        case .found:     return String(localized: "Pulse found")
+        case .lost:      return String(localized: "Pulse lost — keep your finger still")
         }
     }
 }
