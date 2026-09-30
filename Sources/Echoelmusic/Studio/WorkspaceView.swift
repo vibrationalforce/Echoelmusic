@@ -898,7 +898,13 @@ struct PlaybackToggleButton: View {
                     // Reason (2) of the old comment survives intact and is why the tap frame
                     // below exists: this clears the HIG floor on its OWN geometry, so the hit
                     // area is never faked by outsetting into a neighbour's gap.
-                    .frame(minWidth: 44, height: EchoelTheme.controlHeight)
+                    // ⛔ `.frame(minWidth: 44, height: …)` DOES NOT COMPILE (Compile Check 3072,
+                    // 2026-09-30): SwiftUI has two `frame` overloads and `minWidth` belongs to
+                    // the flexible one, `height` to the fixed one. The #262 form is the right
+                    // one here anyway — this chip carries a WORD now (rule 3), so the shared
+                    // constant is its FLOOR, as on the compact tempo readout (#1023c): the
+                    // picture stays 32 tall until Dynamic Type grows the word past it.
+                    .frame(minWidth: 44, minHeight: EchoelTheme.controlHeight)
                     .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
                     .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                         // #367: idle used `border`, the DECORATIVE token whose own doc says
