@@ -40779,3 +40779,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - Gemessen: Kopf hat GENAU eine Play/Stop-Taste mit Wort (Prüfung erfüllt). Befund darunter: `PlaybackToggleButton` zeigte pausiert ein zweites Play mit demselben `pattern.play(cause: .transportButton)` wie das Kopf-Play. Jetzt: nur sichtbar, während die Musik spielt; „Pause“ mit Wort; `pause()` statt `toggle()`; ein Produktions-Aufrufer des Resume (`ProjectTransport.resumeInstrument`).
 - Wächter `ThePlateHasOnePauseNotASecondPlayTests` (Ansprüche 1, 2, 4 ROT auf Eltern; 3 End-to-End grün beidseits). Nachgezogen: OneChromeControlHeightTests-Anker (minWidth-Frame), OneStartControlTests-Kommentar. Checker sauber. Gerät = NEEDS-FOUNDER-VERIFY.
 - Gepusht 16:17Z: Spitze e4b44ff45 (Ratsche 17 · Regel 10 · Regel 3); Compile Check 3070 auf de590c2bf grün (16:1xZ).
+
+## 2026-09-30 — Regeln 4 · 5 · 8 · 9 gemessen und im Doc protokolliert (revs 62–65), nichts gebaut
+
+- Zählung erste Sicht: Stück ≈ 31, Instrument ≈ 26 (Profi = heutiger Standard) / 20 (Einsteiger) — beide über zwölf. Die Faltung auf zwölf ist der Phase-A-Umbau („Mehr“, Inspector), keine Scheibe.
+- Regel 5: Bereichs-Zeile + Chip-Leiste öffnen dieselben Panels (`areaHome`) → zweite Ebene. Vorschlag im Doc, HOLD-FOR-FOUNDER (Phase 1 ist einen Tag alt). Founder-Fragen: Standard-Könnensstufe auf Einfach? Chip-Leiste hinter die Bereiche falten?
+- Regel 8: ⓘ im Kopf (Standard an) deckt beide Ansichten; Sheets ohne Hilfe. Regel 9: FX / Field / Master führen mit dem Fachwort — Umbenennung ist eine begrenzte Scheibe (Pins: 8 Treffer in 4 Wächter-Dateien).
+- Gates: Compile Check 3071 auf e4b44ff45 queued (16:17Z); 3ab37512f (Regel 2) bleibt lokal bis dahin. Auto-Merge de590c2bf → main (16:2xZ).
