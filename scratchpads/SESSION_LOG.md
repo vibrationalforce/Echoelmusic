@@ -41069,3 +41069,20 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Gemessen und offen gelassen:** `EchoelValueField(label: String)` + `param`/`knob`/`moodKnob`/`masterDoorButton`/`sizeButton` — app-weite
   Familie, das Label betitelt auch den Ziffernblock → eigene Scheibe, Council zuerst.
 - **Gates:** a344e6472 (E4-6) Compile Check 3092 ✓; Stapel de2e3a3d7 (E4-7/E4-8) gepusht 20:57Z, Monitor läuft. E4-9 wartet auf dessen Compile Check.
+
+## 2026-09-30 — E4-10 gebaut: das Wertfeld zeichnet sein Label als Katalog-Schlüssel (82fe64d38 lokal)
+
+- **Council (kurz):** Architect — am Zeichenort lokalisieren, nicht den Parametertyp ändern (`label.isEmpty` trägt das Kompakt-Layout,
+  drei Aufrufer übergeben berechnete Strings: `param.label`, `compact ? "" : "Tempo"`, die Pass-through-Helfer). Skeptic — ein Label ohne
+  Einheit fällt auf sich selbst zurück, kein Verlust; kein Label trägt `%`. User-Advocate — der Ziffernblock-Titel muss der Zeile folgen →
+  derselbe Schlüssel. → proceed.
+- **Gemessen:** 140 Literal-Label-Stellen (direkt 100 · Instrument-Helfer · FX `field(…)` 44), 103 verschieden, 99 ohne Einheit + 8 Wetter-Labels
+  (`WeatherMood.Param.label`, erreichen das Feld als berechneter String). 103 neue Einheiten, Katalog 583 → 686.
+- **Wächter Anspruch 12:** vier Nadeln am Zeichenort (inkl. Negativ „kein `Text(label)` im Code“ — ⛔ die erste Fassung der Skript-Prüfung las
+  die Datei ROH und stolperte über das Zitat im Doc-Kommentar bei :400; code-only ist die richtige Lesung), Lauf über alle Sources-Dateien
+  mit den drei Mess-Mustern (Ternär zählt beide Arme), Boden 120, Wetter-Labels end-to-end.
+- **Transkription:** HEAD 140/99 fehlend, 0/3 Nadeln, Ternär da, 8 Wetter fehlend = EIN Befund; WORK alles grün. moved-needles: ein Treffer
+  (`.accessibilityLabel(label)` in TheMIDIRowSaysWhatTheCableIsDoingTests) — geöffnet: scannt `MIDIStatusRow` in PatchbayView, Text steht dort weiter.
+  ⚠️ Nebenbefund: sieben weitere Views tragen ein eigenes `.accessibilityLabel(label)` auf einem String — nächste Messung.
+- **Gates:** main = a344e6472 (E4-6 gemerged → Anspruch 10 kompiliert). de2e3a3d7 (E4-7/E4-8): Compile Check 3093 queued seit 20:51Z.
+  E4-9 (72fe0cc27) und E4-10 (82fe64d38) lokal, Push nach dessen Compile Check.

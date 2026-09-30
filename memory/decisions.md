@@ -3614,3 +3614,10 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guards:** claim 10 alternation + claim 11 (signatures, wrap, ternary gone in both files, nine units); `SectionHeadingIsOneTreatmentTests` needle moved with the signature in the same commit.
 - **Open, measured:** `EchoelValueField(label: String)` and the `param`/`knob`/`moodKnob`/`masterDoorButton`/`sizeButton` String helpers — the next family, app-wide, Council first (the label also titles the number pad).
 - **Review 2026-10-30:** device — VoiceOver on a collapsible group reads „Zeigt oder verbirgt die Look-Regler“; check the compound reads naturally for Stimme/Selbstspiel.
+
+### 2026-09-30 — E4-10: the value field draws its label as a catalog key (82fe64d38)
+
+- **What:** three draw sites in `EchoelValueField` wrap `LocalizedStringKey(label)`; the number pad title is the localised String. `label: String` kept (computed callers, `isEmpty`). 103 units. Claim 12 = four needles + app-wide literal-label walk (three patterns, floor 120) + `WeatherMood.Param` end-to-end.
+- **Why not change the type:** `label.isEmpty` drives the compact layout and three callers pass computed Strings; a key type would have cost call-site edits for nothing.
+- **Next measured:** seven views with a String `.accessibilityLabel(label)` of their own (list in decisions.csv row); the seven `+` seams; the two interpolated network sentences.
+- **Review 2026-10-30:** device G6 — German captions vs the pinned box width (`pinnedBoxWidth`), especially Anschlagstärke (Ø), Master-Lautstärke, Beginnt bei Takt.
