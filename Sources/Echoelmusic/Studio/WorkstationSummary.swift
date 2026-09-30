@@ -156,7 +156,8 @@ public struct WorkstationSummary: Equatable, Sendable {
         let perBar = TimelineTime.ticksPerBar
         let perBeat = TimelineTime.ticksPerBeat
         let beat = perBar > 0 && perBeat > 0 ? (t % perBar) / perBeat + 1 : 1
-        return "Bar \(barNumber(forTick: t)) · Beat \(beat)"
+        // E4-27: catalog words beside the numbers (Takt n · Schlag b); never a format key.
+        return String(localized: "Bar ") + "\(barNumber(forTick: t))" + String(localized: " · Beat ") + "\(beat)"
     }
 
     /// "bar 3" or "bars 3 to 7" — the span a lane's content occupies, said once so the printed

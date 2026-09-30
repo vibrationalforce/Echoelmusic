@@ -227,9 +227,9 @@ enum SessionGrid {
     nonisolated static func word(_ state: CellState) -> String? {
         switch state {
         case .idle:     return nil
-        case .queued:   return "Queued"
-        case .playing:  return "Playing"
-        case .stopping: return "Stopping"
+        case .queued:   return String(localized: "Queued")
+        case .playing:  return String(localized: "Playing")
+        case .stopping: return String(localized: "Stopping")
         }
     }
 }
@@ -294,7 +294,7 @@ struct SessionLaunchView: View {
                                state: SessionGrid.sceneState(scene, tracks: tracks, states: states))
                 }
                 if scenes.count > SessionGrid.sceneLimit {
-                    Text("\(scenes.count - SessionGrid.sceneLimit) later scenes are not shown.")
+                    Text("\(scenes.count - SessionGrid.sceneLimit)" + String(localized: " later scenes are not shown."))
                         .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 }
             }
@@ -334,8 +334,8 @@ struct SessionLaunchView: View {
                 // S2: enabled while stopped too — a scene starts the song at its bar. A single
                 // PART stays disabled then: which part starts the whole song is not a question
                 // one cell can answer.
-                .accessibilityLabel("Launch scene at \(title)")
-                .accessibilityValue(state.flatMap(SessionGrid.word) ?? "Not the current scene")
+                .accessibilityLabel(String(localized: "Launch scene at ") + title)
+                .accessibilityValue(state.flatMap(SessionGrid.word) ?? String(localized: "Not the current scene"))
                 .accessibilityHint(playing
                                    ? "From the next bar, loops every part listed at \(title) and returns every other launched track to the piece"
                                    : "Starts the piece at the start of \(songStart) and loops every part listed at \(title)")
@@ -382,8 +382,8 @@ struct SessionLaunchView: View {
         }
         .buttonStyle(.plain)
         .disabled(!playing)
-        .accessibilityLabel("\(track.name), part at \(title)")
-        .accessibilityValue(SessionGrid.word(state) ?? "Not launched")
+        .accessibilityLabel(track.name + String(localized: ", part at ") + title)
+        .accessibilityValue(SessionGrid.word(state) ?? String(localized: "Not launched"))
         .accessibilityHint(state == .playing
                            ? "Already looping. Stop the track to hand it back to the piece"
                            : "Loops this part on its track from the next bar")
@@ -395,7 +395,7 @@ struct SessionLaunchView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "stop.fill").font(EchoelTheme.font(11, .semibold))
-                Text("Stop \(track.name)").font(EchoelTheme.font(12, .semibold)).lineLimit(1)
+                Text(String(localized: "Stop ") + track.name).font(EchoelTheme.font(12, .semibold)).lineLimit(1)
             }
             .foregroundStyle(EchoelTheme.text)
             .padding(.horizontal, 12)
@@ -407,7 +407,7 @@ struct SessionLaunchView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Stop the launched part on \(track.name)")
+        .accessibilityLabel(String(localized: "Stop the launched part on ") + track.name)
         .accessibilityHint("From the next bar the track plays the piece again")
     }
 

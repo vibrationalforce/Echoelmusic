@@ -81,7 +81,8 @@ final class TheArrangePartMovesWithoutDragTests: XCTestCase {
         XCTAssertTrue(step.contains("drop(regionID, onLane: laneID, from: part.startTick, to: target)"),
                       "a step lands through `drop` — select, refuse a no-move, ONE `TrackParts.move`")
         guard let landed = step.range(of: "drop(regionID, onLane: laneID, from: part.startTick, to: target)"),
-              let said = step.range(of: "AccessibilityNotification.Announcement(\"Part at \" + SessionGrid.label(forTick: target)).post()") else {
+              // E4-27: the announcement's head is a catalog key; the claim (announce AFTER the landing) is unchanged.
+              let said = step.range(of: "AccessibilityNotification.Announcement(String(localized: \"Part at \") + SessionGrid.label(forTick: target)).post()") else {
             return XCTFail("the step no longer announces where the part landed — VoiceOver does not re-read a changed label")
         }
         XCTAssertLessThan(landed.lowerBound, said.lowerBound, "announce the landing after it happened")

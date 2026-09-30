@@ -383,7 +383,7 @@ struct ArrangeCanvasView: View {
         let target: Int? = later ? TrackParts.laterStart(part) : TrackParts.earlierStart(part)
         guard let target else { return }
         drop(regionID, onLane: laneID, from: part.startTick, to: target)
-        AccessibilityNotification.Announcement("Part at " + SessionGrid.label(forTick: target)).post()
+        AccessibilityNotification.Announcement(String(localized: "Part at ") + SessionGrid.label(forTick: target)).post()
     }
 }
 

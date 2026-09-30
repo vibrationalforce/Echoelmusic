@@ -51,7 +51,9 @@
 // E4-25 added the bar/beat vocabulary of the three model helpers (SessionGrid.label · TrackParts.title/spanTitle/lengthText ·
 // SongAutomationEdit.countLabel) as keys beside the numbers, English byte-identical (parent: all verbatim, 8 units missing —
 // ONE finding). E4-26 added the frames around that vocabulary — the part bar's heading, the parts row's spoken label, the
-// curve editor's point line, Remove label and spoken summary (parent: all interpolated, 5 units missing — ONE finding). Claim 12
+// curve editor's point line, Remove label and spoken summary (parent: all interpolated, 5 units missing — ONE finding). E4-27
+// added the position readout (Bar n · Beat b), the arrange canvas's landing announcement and the Session launch surface
+// (parent: all verbatim, 10 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -761,6 +763,40 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertFalse(curveEditor.contains(verbatim), "SongAutomationEditor interpolates a sentence again: `\(verbatim)`")
         }
         try assertGerman(["Selected part · ", "Part at ", "Point at ", "Remove the point at ", " automation: "], "part bar, parts row and curve editor frames")
+
+        // E4-27 — the last bar-word producers: the transport's position readout (`WorkstationSummary.positionText`,
+        // Bar n · Beat b), the arrange canvas's landing announcement, and the Session launch surface (scene/part
+        // labels, the launched-part Stop, the overflow line, the three cell words and the two spoken fallbacks).
+        let summary = try codeOnly("Sources/Echoelmusic/Studio/WorkstationSummary.swift")
+        XCTAssertTrue(summary.contains("String(localized: \"Bar \") + \"\\(barNumber(forTick: t))\" + String(localized: \" · Beat \") + \"\\(beat)\""), "`positionText` spells Bar/Beat verbatim again")
+        XCTAssertFalse(summary.contains("\"Bar \\(barNumber(forTick: t)) · Beat"), "`positionText` is a verbatim String again")
+        let canvas = try codeOnly("Sources/Echoelmusic/Studio/ArrangeCanvasView.swift")
+        XCTAssertTrue(canvas.contains("Announcement(String(localized: \"Part at \") + SessionGrid.label(forTick: target))"), "the landing announcement spells Part at verbatim again")
+        XCTAssertFalse(canvas.contains("Announcement(\"Part at \" +"), "the landing announcement is verbatim again")
+        let launch = try codeOnly("Sources/Echoelmusic/Studio/SessionLaunchView.swift")
+        for seam in ["case .queued:   return String(localized: \"Queued\")",
+                     "case .playing:  return String(localized: \"Playing\")",
+                     "case .stopping: return String(localized: \"Stopping\")",
+                     "+ String(localized: \" later scenes are not shown.\")",
+                     ".accessibilityLabel(String(localized: \"Launch scene at \") + title)",
+                     "?? String(localized: \"Not the current scene\")",
+                     ".accessibilityLabel(track.name + String(localized: \", part at \") + title)",
+                     "?? String(localized: \"Not launched\")",
+                     "Text(String(localized: \"Stop \") + track.name)",
+                     ".accessibilityLabel(String(localized: \"Stop the launched part on \") + track.name)"] {
+            XCTAssertTrue(launch.contains(seam), "SessionLaunchView lost the E4-27 seam `\(seam)`")
+        }
+        for verbatim in ["return \"Queued\"", "Text(\"\\(scenes.count - SessionGrid.sceneLimit) later scenes", "accessibilityLabel(\"Launch scene at \\(",
+                         "?? \"Not the current scene\"", "accessibilityLabel(\"\\(track.name), part at", "?? \"Not launched\"",
+                         "Text(\"Stop \\(track.name)\")", "accessibilityLabel(\"Stop the launched part on \\("] {
+            XCTAssertFalse(launch.contains(verbatim), "SessionLaunchView speaks a launch sentence verbatim again: `\(verbatim)`")
+        }
+        // RUNTIME COUNTERWEIGHT: the bundle's English is unchanged (the position pins keep proving `Bar 1 · Beat 1`).
+        XCTAssertEqual(WorkstationSummary.positionText(forTick: TimelineTime.ticksPerBar + TimelineTime.ticksPerBeat), "Bar 2 · Beat 2")
+        XCTAssertEqual(SessionGrid.word(.playing), "Playing")
+        try assertGerman(["Bar ", " · Beat ", "Part at ", "Queued", "Playing", "Stopping", " later scenes are not shown.",
+                          "Launch scene at ", "Not the current scene", ", part at ", "Not launched", "Stop ",
+                          "Stop the launched part on "], "position readout, landing announcement and Session launch")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
