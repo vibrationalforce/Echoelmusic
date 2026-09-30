@@ -2484,6 +2484,492 @@
           }
         }
       }
+    },
+    " · detail and bio stream at full rate" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · Detail und Bio-Strom in voller Rate"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · detail and bio stream at full rate"
+          }
+        }
+      }
+    },
+    "Charge the phone. Full detail returns as the battery fills." : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lade das Telefon. Volles Detail kommt zurück, während der Akku sich füllt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charge the phone. Full detail returns as the battery fills."
+          }
+        }
+      }
+    },
+    "Full" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voll"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full"
+          }
+        }
+      }
+    },
+    "Idle" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Idle"
+          }
+        }
+      }
+    },
+    "Live" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live"
+          }
+        }
+      }
+    },
+    "Low Power Mode is on" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "der Stromsparmodus ist an"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Low Power Mode is on"
+          }
+        }
+      }
+    },
+    "No light route" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Licht-Weg"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No light route"
+          }
+        }
+      }
+    },
+    "Nothing is held back." : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nichts wird zurückgehalten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing is held back."
+          }
+        }
+      }
+    },
+    "On external screen" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf externem Bildschirm"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On external screen"
+          }
+        }
+      }
+    },
+    "Power full, detail and bio stream at full rate" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leistung voll, Detail und Bio-Strom in voller Rate"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Power full, detail and bio stream at full rate"
+          }
+        }
+      }
+    },
+    "Power reduced, " : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leistung reduziert, "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Power reduced, "
+          }
+        }
+      }
+    },
+    "Power saving, " : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leistung sparen, "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Power saving, "
+          }
+        }
+      }
+    },
+    "Reduced" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reduziert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reduced"
+          }
+        }
+      }
+    },
+    "Saving" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sparen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saving"
+          }
+        }
+      }
+    },
+    "Screen" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screen"
+          }
+        }
+      }
+    },
+    "Sending to fixtures" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sendet an die Lampen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sending to fixtures"
+          }
+        }
+      }
+    },
+    "The visual dropped frames, so detail stepped down for a while. It comes back when frames hold." : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Visual hat Bilder ausgelassen, deshalb ist das Detail eine Weile zurückgenommen. Es kommt zurück, wenn die Bilder halten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The visual dropped frames, so detail stepped down for a while. It comes back when frames hold."
+          }
+        }
+      }
+    },
+    "Turn Low Power Mode off in Settings › Battery for full detail." : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schalte den Stromsparmodus unter Einstellungen › Batterie aus, um volles Detail zu bekommen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn Low Power Mode off in Settings › Battery for full detail."
+          }
+        }
+      }
+    },
+    "Visual detail is stepped down so the phone can cool. It comes back when the phone has cooled." : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Visual-Detail ist zurückgenommen, damit das Telefon abkühlen kann. Es kommt zurück, wenn das Telefon abgekühlt ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visual detail is stepped down so the phone can cool. It comes back when the phone has cooled."
+          }
+        }
+      }
+    },
+    "Visual detail steps down on its own when the phone gets hot or the battery runs low, and comes back when it can. The frame rate stays at 60." : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Visual nimmt sein Detail von selbst zurück, wenn das Telefon heiß wird oder der Akku knapp ist, und kommt zurück, sobald es kann. Die Bildrate bleibt bei 60."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visual detail steps down on its own when the phone gets hot or the battery runs low, and comes back when it can. The frame rate stays at 60."
+          }
+        }
+      }
+    },
+    "frames were dropping" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bilder fielen aus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "frames were dropping"
+          }
+        }
+      }
+    },
+    "nothing is holding it back" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nichts hält sie zurück"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nothing is holding it back"
+          }
+        }
+      }
+    },
+    "off" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "off"
+          }
+        }
+      }
+    },
+    "open, nothing sent" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "offen, nichts gesendet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "open, nothing sent"
+          }
+        }
+      }
+    },
+    "sending" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sendet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sending"
+          }
+        }
+      }
+    },
+    "the battery is low" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "der Akku ist knapp"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the battery is low"
+          }
+        }
+      }
+    },
+    "the phone is hot" : {
+      "comment" : "Status ladder (E4-5, 2026-09-30): Power row, output tiles (word ≤ 6 letters, tile is 38/54 pt), network send-state word.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "das Telefon ist heiß"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the phone is hot"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

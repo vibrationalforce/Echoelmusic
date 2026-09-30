@@ -61,9 +61,9 @@ public enum NetworkSendState: Equatable, Sendable {
 
     public var label: String {
         switch self {
-        case .off:      return "off"
-        case .sending:  return "sending"
-        case .openIdle: return "open, nothing sent"
+        case .off:      return String(localized: "off")
+        case .sending:  return String(localized: "sending")
+        case .openIdle: return String(localized: "open, nothing sent")
         }
     }
 

@@ -284,6 +284,52 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
     }
 
+    // MARK: - claim 9 — the Power row, the output tiles and the network word speak German (E4-5)
+
+    func testThePowerRowOutputTilesAndNetworkWordHaveGermanUnits() throws {
+        var pieces = Set<String>()
+        for r in PowerRung.allCases {
+            pieces.insert(r.word)
+            for p in QualityPressure.allCases {
+                // `.full` carries its own fragment; reduced/saving append `pressure.cause`, covered below
+                let line = r.line(pressure: p)
+                if r == .full, let dot = line.range(of: " · ") { pieces.insert(String(line[dot.lowerBound...])) }
+                pieces.insert(r.caption(pressure: p))
+                let spoken = r.spoken(pressure: p)
+                if let comma = spoken.range(of: ", ") { pieces.insert(String(spoken[...comma.lowerBound]) + " ") } else { pieces.insert(spoken) }
+                pieces.insert(p.cause); pieces.insert(p.remedy)
+            }
+        }
+        // `.full.line` carries its own fragment, its spoken sentence has no argument
+        pieces.remove("Power full, "); pieces.insert("Power full, detail and bio stream at full rate")
+        for r in VisualMonitorRung.allCases { if let w = r.word { pieces.insert(w) }; pieces.insert(r.spoken) }
+        for r in LightMonitorRung.allCases { if let w = r.word { pieces.insert(w) }; pieces.insert(r.spoken) }
+        for s in [NetworkSendState.off, .sending, .openIdle] { pieces.insert(s.label) }  // not CaseIterable
+        // counterweights — the English readings the row and tile guards pin
+        XCTAssertEqual(PowerRung.reduced.spoken(pressure: .thermal), "Power reduced, the phone is hot")
+        XCTAssertEqual(VisualMonitorRung.externalScreen.word, "Screen")
+        XCTAssertEqual(NetworkSendState.openIdle.label, "open, nothing sent")
+        try assertGerman(pieces.sorted(), "power / output / network text")
+        // the German tile words fit the tile as the English ones must (`OutputStatusWord.maxLength`)
+        let strings = try catalogStrings()
+        for word in ["Screen", "Idle", "Off"] {
+            let de = try XCTUnwrap(german(word, in: strings)).value
+            XCTAssertLessThanOrEqual(de.count, OutputStatusWord.maxLength, "`\(de)` does not fit the 38/54 pt tile")
+        }
+        // SOURCE-TEXT — no bare letter-literal outside `String(localized: "…")` in the two word files
+        for rel in ["Sources/Echoelmusic/Studio/PowerStatusWord.swift", "Sources/Echoelmusic/Studio/OutputStatusWord.swift"] {
+            let code = try codeOnly(rel)
+            let literal = try NSRegularExpression(pattern: #""((?:[^"\\]|\\.)*)""#)
+            var bare: [String] = []
+            for m in literal.matches(in: code, range: NSRange(code.startIndex..., in: code)) {
+                guard let whole = Range(m.range, in: code), let inner = Range(m.range(at: 1), in: code) else { continue }
+                guard String(code[inner]).rangeOfCharacter(from: .letters) != nil else { continue }
+                if !code[code.startIndex..<whole.lowerBound].hasSuffix("String(localized: ") { bare.append(String(code[whole])) }
+            }
+            XCTAssertEqual(bare, [], "\(rel): a word returned as a plain literal is spelled verbatim on the tile — wrap it")
+        }
+    }
+
     // MARK: - claim 5 — the German for "Piece" is the glossary's word, read from the glossary
 
     func testTheGermanPieceIsTheGlossaryWord() throws {

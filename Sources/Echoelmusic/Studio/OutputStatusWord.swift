@@ -51,18 +51,18 @@ public enum VisualMonitorRung: Equatable, CaseIterable, Sendable {
     /// The visible word beside the glyph — nil where the tile shows the picture itself.
     public var word: String? {
         switch self {
-        case .externalScreen: return "Screen"
+        case .externalScreen: return String(localized: "Screen")
         case .live: return nil
-        case .idle: return "Idle"
+        case .idle: return String(localized: "Idle")
         }
     }
 
     /// What VoiceOver reads as the tile's value.
     public var spoken: String {
         switch self {
-        case .externalScreen: return "On external screen"
-        case .live: return "Live"
-        case .idle: return "Idle"
+        case .externalScreen: return String(localized: "On external screen")
+        case .live: return String(localized: "Live")
+        case .idle: return String(localized: "Idle")
         }
     }
 }
@@ -83,15 +83,15 @@ public enum LightMonitorRung: Equatable, CaseIterable, Sendable {
     public var word: String? {
         switch self {
         case .sending: return nil
-        case .noRoute: return "Off"
+        case .noRoute: return String(localized: "Off")
         }
     }
 
     /// What VoiceOver reads as the tile's value.
     public var spoken: String {
         switch self {
-        case .sending: return "Sending to fixtures"
-        case .noRoute: return "No light route"
+        case .sending: return String(localized: "Sending to fixtures")
+        case .noRoute: return String(localized: "No light route")
         }
     }
 }

@@ -37,16 +37,16 @@ enum PowerRung: Equatable, CaseIterable, Sendable {
 
     var word: String {
         switch self {
-        case .full: return "Full"
-        case .reduced: return "Reduced"
-        case .saving: return "Saving"
+        case .full: return String(localized: "Full")
+        case .reduced: return String(localized: "Reduced")
+        case .saving: return String(localized: "Saving")
         }
     }
 
     /// The row's text: the word, then the cause while anything is held back.
     func line(pressure: QualityPressure) -> String {
         switch self {
-        case .full: return word + " · detail and bio stream at full rate"
+        case .full: return word + String(localized: " · detail and bio stream at full rate")
         case .reduced, .saving: return word + " · " + pressure.cause
         }
     }
@@ -55,7 +55,7 @@ enum PowerRung: Equatable, CaseIterable, Sendable {
     func caption(pressure: QualityPressure) -> String {
         switch self {
         case .full:
-            return "Visual detail steps down on its own when the phone gets hot or the battery runs low, and comes back when it can. The frame rate stays at 60."
+            return String(localized: "Visual detail steps down on its own when the phone gets hot or the battery runs low, and comes back when it can. The frame rate stays at 60.")
         case .reduced, .saving:
             return pressure.remedy
         }
@@ -63,9 +63,9 @@ enum PowerRung: Equatable, CaseIterable, Sendable {
 
     func spoken(pressure: QualityPressure) -> String {
         switch self {
-        case .full: return "Power full, detail and bio stream at full rate"
-        case .reduced: return "Power reduced, " + pressure.cause
-        case .saving: return "Power saving, " + pressure.cause
+        case .full: return String(localized: "Power full, detail and bio stream at full rate")
+        case .reduced: return String(localized: "Power reduced, ") + pressure.cause
+        case .saving: return String(localized: "Power saving, ") + pressure.cause
         }
     }
 }
@@ -74,22 +74,22 @@ extension QualityPressure {
     /// What is holding the tier down, as the tail of a sentence.
     var cause: String {
         switch self {
-        case .none: return "nothing is holding it back"
-        case .thermal: return "the phone is hot"
-        case .lowPowerMode: return "Low Power Mode is on"
-        case .battery: return "the battery is low"
-        case .frameRate: return "frames were dropping"
+        case .none: return String(localized: "nothing is holding it back")
+        case .thermal: return String(localized: "the phone is hot")
+        case .lowPowerMode: return String(localized: "Low Power Mode is on")
+        case .battery: return String(localized: "the battery is low")
+        case .frameRate: return String(localized: "frames were dropping")
         }
     }
 
     /// What a person can do — or, where they cannot, what the governor will do.
     var remedy: String {
         switch self {
-        case .none: return "Nothing is held back."
-        case .thermal: return "Visual detail is stepped down so the phone can cool. It comes back when the phone has cooled."
-        case .lowPowerMode: return "Turn Low Power Mode off in Settings › Battery for full detail."
-        case .battery: return "Charge the phone. Full detail returns as the battery fills."
-        case .frameRate: return "The visual dropped frames, so detail stepped down for a while. It comes back when frames hold."
+        case .none: return String(localized: "Nothing is held back.")
+        case .thermal: return String(localized: "Visual detail is stepped down so the phone can cool. It comes back when the phone has cooled.")
+        case .lowPowerMode: return String(localized: "Turn Low Power Mode off in Settings › Battery for full detail.")
+        case .battery: return String(localized: "Charge the phone. Full detail returns as the battery fills.")
+        case .frameRate: return String(localized: "The visual dropped frames, so detail stepped down for a while. It comes back when frames hold.")
         }
     }
 }
