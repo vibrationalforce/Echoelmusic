@@ -40,6 +40,10 @@
 // SECOND FAMILY (same day, parent e29787d68): three strip files joined the list with their nine
 // sites lifted (AutomationStatusStrip 4 · AlwaysOnBioRow 2 · PatchbayView 2 + one glyph) — claim 1
 // RED on that parent for exactly those nine, GREEN here.
+// THIRD FAMILY (same day, parent a6648876d): `EchoelStudioView` joined with fifteen sites lifted
+// (eight captions, seven glyphs) — claim 1 RED on that parent for exactly those, GREEN here.
+// `SectionHeadingIsOneTreatmentTests` anchors `font(10, .medium)` only as an ABSENCE (no inline
+// heading may be spelled that way), so lifting the captions leaves it green for its own reason.
 
 import Foundation
 import XCTest
@@ -62,6 +66,10 @@ final class TheChromeTextMeetsTheElevenPointFloorTests: XCTestCase {
         "Sources/Echoelmusic/Studio/AutomationStatusStrip.swift",
         "Sources/Echoelmusic/Studio/AlwaysOnBioRow.swift",
         "Sources/Echoelmusic/Studio/PatchbayView.swift",
+        // Third family (same day): the instrument itself — eight 10 pt captions (the bio
+        // panel's four, the reset note, the AirPlay hint, the Weather attribution, the look
+        // position) and seven 10 pt chevron/star glyphs beside 13 pt titles.
+        "Sources/Echoelmusic/Studio/EchoelStudioView.swift",
     ]
 
     private static let theme = "Sources/Echoelmusic/Studio/EchoelTheme.swift"

@@ -3476,7 +3476,7 @@ struct EchoelStudioView: View {
             } label: {
                 HStack(spacing: 6) {
                     Text(current.shortName).font(EchoelTheme.font(13, .semibold))
-                    Image(systemName: "chevron.down").font(.system(size: 10))
+                    Image(systemName: "chevron.down").font(.system(size: 11))
                 }
                 .foregroundStyle(EchoelTheme.text)
                 .padding(.horizontal, 12).frame(minHeight: 34)
@@ -4441,7 +4441,7 @@ struct EchoelStudioView: View {
                 // Apple WeatherKit attribution requirement.
                 if let attributionURL = URL(string: "https://developer.apple.com/weatherkit/data-source-attribution/") {
                     Link(" Weather", destination: attributionURL)
-                        .font(EchoelTheme.font(10))
+                        .font(EchoelTheme.font(11))
                         .foregroundStyle(EchoelTheme.dim)
                         .accessibilityLabel("Apple Weather data attribution")
                 }
@@ -5696,7 +5696,7 @@ struct EchoelStudioView: View {
                     // can — so it stays 10 pt and dim, and it carries an `accessibilityHint`
                     // rather than pretending to be tappable.
                     Label("Show on a screen: mirror via AirPlay", systemImage: "airplayvideo")
-                        .font(EchoelTheme.font(10))
+                        .font(EchoelTheme.font(11))
                         .foregroundStyle(EchoelTheme.dim)
                         .padding(.top, 2)
                         .accessibilityHint("Use Control Center Screen Mirroring to show this visual on a screen")
@@ -6465,7 +6465,7 @@ struct EchoelStudioView: View {
                             }
                         } label: {
                             HStack(spacing: 5) {
-                                if let pos { Text("\(pos + 1)").font(EchoelTheme.font(10, .bold).monospacedDigit()) }
+                                if let pos { Text("\(pos + 1)").font(EchoelTheme.font(11, .bold).monospacedDigit()) }
                                 Text(look.name).font(EchoelTheme.font(12))
                             }
                             .foregroundStyle(on ? EchoelTheme.onPrimary : EchoelTheme.text)
@@ -7067,7 +7067,7 @@ struct EchoelStudioView: View {
                     .foregroundStyle(EchoelTheme.dim)
                 Spacer(minLength: 8)
                 Image(systemName: showVisualFineTune ? "chevron.down" : "chevron.right")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(EchoelTheme.dim)
             }
             // ≥44 pt tap target (#113, a11y) BEFORE `contentShape`, or the hit area would be
@@ -7676,11 +7676,11 @@ struct EchoelStudioView: View {
             } label: {
                 HStack(spacing: 6) {
                     if let id = moodPresetID, moodStore.isFavorite(id: id) {
-                        Image(systemName: "star.fill").font(.system(size: 10))
+                        Image(systemName: "star.fill").font(.system(size: 11))
                             .foregroundStyle(EchoelTheme.accent)
                     }
                     Text(moodPresetName).font(EchoelTheme.font(13, .semibold))
-                    Image(systemName: "chevron.down").font(.system(size: 10))
+                    Image(systemName: "chevron.down").font(.system(size: 11))
                 }
                 .foregroundStyle(EchoelTheme.text)
                 .padding(.horizontal, 12).frame(minHeight: 34)
@@ -8266,7 +8266,7 @@ struct EchoelStudioView: View {
                     .foregroundStyle(EchoelTheme.dim)
                 Spacer(minLength: 8)
                 Image(systemName: isOpen.wrappedValue ? "chevron.down" : "chevron.right")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(EchoelTheme.dim)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -8312,12 +8312,12 @@ struct EchoelStudioView: View {
                 } label: {
                     HStack(spacing: 6) {
                         if patchStore.isFavorite(id: currentPatch.id) {
-                            Image(systemName: "star.fill").font(.system(size: 10))
+                            Image(systemName: "star.fill").font(.system(size: 11))
                                 .foregroundStyle(EchoelTheme.accent)
                         }
                         Text(currentPatch.name).font(EchoelTheme.font(13, .semibold))
                             .lineLimit(1)
-                        Image(systemName: "chevron.down").font(.system(size: 10))
+                        Image(systemName: "chevron.down").font(.system(size: 11))
                     }
                     .foregroundStyle(EchoelTheme.text)
                     .padding(.horizontal, 12).frame(minHeight: 34)
@@ -9386,7 +9386,7 @@ struct EchoelStudioView: View {
                 // ("promises four and delivers two"); saying "mix faders" here on a destructive
                 // control would re-open the same overclaim one screen away from its correction.
                 Text("Key, tuning, genre, preset, the Field voice and the generated part levels go back to their defaults. Your saved patches and pieces are kept.")
-                    .font(EchoelTheme.font(10))
+                    .font(EchoelTheme.font(11))
                     .foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -13012,7 +13012,7 @@ private struct HealthWriteOptInRow: View {
             Text(healthWriter.enabled && !healthWriter.isAuthorized
                  ? "Waiting for permission in Health."
                  : "Off by default. Heart and breathing measurements only.")
-                .font(EchoelTheme.font(10))
+                .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -13089,7 +13089,7 @@ private struct BreathVoiceRow: View {
             .frame(minHeight: 44)
             .accessibilityHint(BioPanelRowCopy.breathVoiceHint(for: frame))
             Text(BioPanelRowCopy.breathVoiceCaption(for: frame))
-                .font(EchoelTheme.font(10))
+                .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -13155,7 +13155,7 @@ private struct AutoModeRow: View {
             // Auto mode deliberately steers nothing, and a caption promising
             // unconditional steering would be the Weather-"nicht bemerkbar" class.
             Text(BioPanelRowCopy.autoModeCaption(for: frame))
-                .font(EchoelTheme.font(10))
+                .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -13189,7 +13189,7 @@ private struct BodyOnlyRow: View {
             Text(instrumentRunning
                  ? "Running — the picture already follows your body."
                  : "Pulse and breath drive the picture without any sound. Open the visual window to watch; Play adds the music on top.")
-                .font(EchoelTheme.font(10))
+                .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }

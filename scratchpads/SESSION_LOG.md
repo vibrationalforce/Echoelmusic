@@ -40706,3 +40706,11 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - Wächter-Liste 3 → 6 Dateien; Kopf trägt die zweite Familie (Eltern e29787d68). Transkription: WORK 0 / HEAD 9 Verstöße. Checker sauber, Scanner 0.
 - **Rest:** EchoelStudioView 8 (SectionHeading-Pin `font(10, .medium)` zieht mit), ImmersiveStageView 2, BioMetricInfo 2, ArrangeCanvasView 2, Workstation/Session/PartNoteEditor/MoodPads/LiveColabo je 1; dazu 17 `.system(size:<11)`-Glyphen außerhalb der Liste.
 - **Nicht gepusht:** Compile Check 3069 (36735271426) auf 5abcbc676 `queued` seit 15:15Z — Batch-Regel; lokaler Stapel: 37ab57ac9 (Log) · e29787d68 (Boden 1) · diese Scheibe.
+
+## 2026-09-30 — Regel 12, Boden-Hälfte, dritte Familie: das Instrument selbst — lokal
+
+- `EchoelStudioView`: 8 Captions 10→11 (Bio-Panel ×4, Reset-Notiz, AirPlay-Hinweis, Wetter-Attribution, Look-Position `font(10, .bold)`) und 7 Chevron/Stern-Glyphen `.system(size: 10)`→11 — gehoben statt ausgenommen. Erste Fassung des Skripts erwartete 8 Glyphen und brach an der Zählung ab (gemessen 7); nichts geschrieben, korrigiert, erneut gelaufen.
+- `SectionHeadingIsOneTreatmentTests` pinnt `font(10, .medium)` nur als ABWESENHEIT (Zeile 182, Filter Zeile 213) — 0 Treffer in BEIDEN Bäumen, der Wächter bleibt aus eigenem Grund grün; seine Prosa „5 sites" ist Geschichte.
+- Wächter-Liste 6 → 7 Dateien; Kopf trägt die dritte Familie (Eltern a6648876d). Transkription: WORK 0 / HEAD 15 Verstöße. Checker sauber, Scanner 0.
+- **Rest (kommentar-gestrippt):** BioStripView 6, EchoelFXView 3, BioMetricInfo 3, ImmersiveStageView 2, ArrangeCanvasView 2, je 1 in Workstation/Session/PartNoteEditor/MoodPads/LiveColabo/LiveNarrationDisclosure/BioSourceView, AUv3-ViewController 1.
+- **Nicht gepusht:** Compile Check 3069 (36735271426) auf 5abcbc676 weiter `queued` (15:15Z →); CI/CD 6527 (fcd313e) Run Tests seit 15:13Z. Lokaler Stapel: 37ab57ac9 · e29787d68 · a6648876d · diese Scheibe.
