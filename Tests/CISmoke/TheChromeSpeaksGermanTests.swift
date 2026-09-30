@@ -39,7 +39,8 @@
 // (parent: all absent — ONE finding). E4-17 added the note editor: signature, seven heads, no verbatim label,
 // three grid words, thirty-eight units (parent: all absent — ONE finding). E4-18 added the guide arrows, the
 // instance line and the Save/Open doors: three signatures, two sentence seams, no verbatim sentence, fifteen units
-// (parent: all absent, eight units missing — ONE finding). Claim 12
+// (parent: all absent, eight units missing — ONE finding). E4-19 added the Routing MIDI label's signature, the
+// guide counter's two seams and the eight Scale-family headers (parent: all absent, eleven units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -567,6 +568,21 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Hide guide", "The Guide button in the head, the ⓘ, brings it back", "Guide", "Save",
                           "Open", "Save this piece", "Open a saved piece"],
                          "guide arrow, instance line and door words")
+        // E4-19 — the Routing MIDI status label, the guide's card counter, the Scale picker's family headers
+        let routing = try codeOnly("Sources/Echoelmusic/Studio/PatchbayView.swift")
+        XCTAssertTrue(routing.contains("private func statusLine(label: LocalizedStringKey, line: String, caption: String, spoken: String)"),
+                      "the Routing status line takes a String label again — MIDI in / MIDI out would spell verbatim")
+        XCTAssertTrue(guide.contains("String(localized: \", card \")") && guide.contains("String(localized: \" of \")"),
+                      "the guide's card counter lost a localised seam")
+        XCTAssertFalse(guide.contains("card \\(index"), "the verbatim interpolated card counter is back in the guide")
+        let families = try codeOnly("Sources/Echoelmusic/Sequencer/MusicalKey.swift")
+        for title in ["Modes", "Minor & Altered", "Pentatonic & Blues", "Symmetric", "European Folk", "Maqām & Near East", "East & Southeast Asia", "Hindustani & Carnatic"] {
+            XCTAssertTrue(families.contains("return String(localized: \"\(title)\")"), "`Scale.Family.title` spells `\(title)` verbatim again")
+        }
+        try assertGerman(["MIDI in", ", card ", " of ", "Modes",
+                          "Minor & Altered", "Pentatonic & Blues", "Symmetric", "European Folk",
+                          "Maqām & Near East", "East & Southeast Asia", "Hindustani & Carnatic", "MIDI out"],
+                         "routing label, guide counter and scale family words")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

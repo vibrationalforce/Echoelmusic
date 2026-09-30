@@ -1041,7 +1041,9 @@ private struct MIDIStatusRow: View {
     }
 
     /// One direction: name · state line, remedy beneath, one VoiceOver sentence.
-    private func statusLine(label: String, line: String, caption: String, spoken: String) -> some View {
+    /// E4-19 (2026-09-30): `label` is a catalog KEY (both callers pass a literal); the three sentences
+    /// arrive already localised from the rungs.
+    private func statusLine(label: LocalizedStringKey, line: String, caption: String, spoken: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack {
                 Text(label).font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)

@@ -259,10 +259,11 @@ public enum Scale: String, Codable, CaseIterable, Sendable {
         /// The real reason is simpler and worse: **as written these are not localizable,
         /// so a German literal would ship untranslated German to every locale, forever.**
         ///
-        /// ⚠️ BACKLOG for #232's translation half: `Family.title`, `Scale.displayName` and
-        /// `MusicStyle.Category.title` all need `String(localized:)` before any catalog can
-        /// reach them. Three whole pickers in the permanent chrome are currently outside
-        /// the localisation system, and nothing says so anywhere else.
+        /// ⭐ E4-19 (2026-09-30): each title now goes through `String(localized:)`, so the value that
+        /// reaches `Section` is already the locale's — the catalog carries the eight keys with `de`.
+        /// ⚠️ STILL OPEN of #232's translation half: `Scale.displayName` (86 names, own slice) and
+        /// `MusicStyle.Subcategory.title` (the shelf headers the Genre picker renders).
+        /// `MusicStyle.Category.title` stays English on purpose: it has zero production readers.
         ///
         /// ⚠️ NO "(12-TET)" IN THE HEADERS, and that is a reversal. They read
         /// "Middle Eastern (maqām, 12-TET)" etc. for one commit — 30 characters against a
@@ -274,18 +275,18 @@ public enum Scale: String, Codable, CaseIterable, Sendable {
         /// it, on the Tone-system control one row away.
         public var title: String {
             switch self {
-            case .modes:              return "Modes"
-            case .minorAndAltered:    return "Minor & Altered"
-            case .pentatonicAndBlues: return "Pentatonic & Blues"
-            case .symmetric:          return "Symmetric"
-            case .europeanFolk:       return "European Folk"
-            case .middleEast:         return "Maqām & Near East"
-            case .eastAsia:           return "East & Southeast Asia"
+            case .modes:              return String(localized: "Modes")
+            case .minorAndAltered:    return String(localized: "Minor & Altered")
+            case .pentatonicAndBlues: return String(localized: "Pentatonic & Blues")
+            case .symmetric:          return String(localized: "Symmetric")
+            case .europeanFolk:       return String(localized: "European Folk")
+            case .middleEast:         return String(localized: "Maqām & Near East")
+            case .eastAsia:           return String(localized: "East & Southeast Asia")
             // NOT "thāt & rāga": `charukeshi` and `shanmukhapriya` are Carnatic
             // mēḷakartā, and thāt is the Hindustani system — the header would have
             // mis-filed two of its own seven rows. Naming both traditions is exact and
             // no longer.
-            case .india:              return "Hindustani & Carnatic"
+            case .india:              return String(localized: "Hindustani & Carnatic")
             }
         }
 

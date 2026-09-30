@@ -14076,6 +14076,204 @@
           }
         }
       }
+    },
+    "MIDI in" : {
+      "comment" : "Routing MIDI status label, guide card counter seams and the Scale picker's family headers (E4-19, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI in"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIDI-Eingang"
+          }
+        }
+      }
+    },
+    ", card " : {
+      "comment" : "Routing MIDI status label, guide card counter seams and the Scale picker's family headers (E4-19, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", card "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", Karte "
+          }
+        }
+      }
+    },
+    " of " : {
+      "comment" : "Routing MIDI status label, guide card counter seams and the Scale picker's family headers (E4-19, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " of "
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " von "
+          }
+        }
+      }
+    },
+    "Modes" : {
+      "comment" : "Routing MIDI status label, guide card counter seams and the Scale picker's family headers (E4-19, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modes"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modi"
+          }
+        }
+      }
+    },
+    "Minor & Altered" : {
+      "comment" : "Routing MIDI status label, guide card counter seams and the Scale picker's family headers (E4-19, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minor & Altered"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moll & Alteriert"
+          }
+        }
+      }
+    },
+    "Pentatonic & Blues" : {
+      "comment" : "Routing MIDI status label, guide card counter seams and the Scale picker's family headers (E4-19, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pentatonic & Blues"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pentatonik & Blues"
+          }
+        }
+      }
+    },
+    "Symmetric" : {
+      "comment" : "Routing MIDI status label, guide card counter seams and the Scale picker's family headers (E4-19, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Symmetric"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Symmetrisch"
+          }
+        }
+      }
+    },
+    "European Folk" : {
+      "comment" : "Routing MIDI status label, guide card counter seams and the Scale picker's family headers (E4-19, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "European Folk"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Europäische Folklore"
+          }
+        }
+      }
+    },
+    "Maqām & Near East" : {
+      "comment" : "Routing MIDI status label, guide card counter seams and the Scale picker's family headers (E4-19, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maqām & Near East"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maqām & Naher Osten"
+          }
+        }
+      }
+    },
+    "East & Southeast Asia" : {
+      "comment" : "Routing MIDI status label, guide card counter seams and the Scale picker's family headers (E4-19, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "East & Southeast Asia"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ost- & Südostasien"
+          }
+        }
+      }
+    },
+    "Hindustani & Carnatic" : {
+      "comment" : "Routing MIDI status label, guide card counter seams and the Scale picker's family headers (E4-19, 2026-09-30).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hindustani & Carnatic"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hindustani & Karnatisch"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

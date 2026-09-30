@@ -118,7 +118,9 @@ struct GuideOverlay: View {
             .strokeBorder(EchoelTheme.border, lineWidth: 1))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Guide")
-        .accessibilityValue("\(entry.title), card \(index + 1) of \(count)")
+        // E4-19: title + localised seams + numbers — a format key cannot be a catalog literal.
+        .accessibilityValue(entry.title + String(localized: ", card ") + "\(index + 1)"
+                            + String(localized: " of ") + "\(count)")
     }
 
     // E4-18 (2026-09-30): `label` is a catalog KEY — both callers pass a literal and nothing reads
