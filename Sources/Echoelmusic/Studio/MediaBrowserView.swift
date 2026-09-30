@@ -135,7 +135,9 @@ struct MediaBrowserView: View {
             switch result {
             case .success:
                 missingIDs.remove(request.clipID)
-                note = String(localized: "Relinked ") + "\u{201C}" + request.clipName + "\u{201D}" + String(localized: " to ") + request.asset.displayName + "."
+                let quoted: String = "\u{201C}" + request.clipName + "\u{201D}"
+                let target: String = request.asset.displayName + "."
+                note = String(localized: "Relinked ") + quoted + String(localized: " to ") + target
             case .failure(let refusal):
                 note = refusal.userMessage
             }
@@ -219,7 +221,9 @@ struct MediaBrowserView: View {
                 // Only beside a non-empty result: under "No file name contains …" a
                 // "0 of N files" line says the same thing twice (review of B1).
                 if !shown.isEmpty, shown.count != assets.count {
-                    line("\(shown.count)" + String(localized: " of ") + "\(assets.count)" + String(localized: " files"))
+                    let shownCount: String = "\(shown.count)"
+                    let total: String = "\(assets.count)"
+                    line(shownCount + String(localized: " of ") + total + String(localized: " files"))
                 }
             }
         }
@@ -326,7 +330,8 @@ struct MediaBrowserView: View {
 
     /// What the list says when the filter leaves nothing.
     static func noMatchText(_ query: String) -> String {
-        String(localized: "No file name contains ") + "\u{201C}" + query.trimmingCharacters(in: .whitespacesAndNewlines) + "\u{201D}."
+        let quoted: String = "\u{201C}" + query.trimmingCharacters(in: .whitespacesAndNewlines) + "\u{201D}."
+        return String(localized: "No file name contains ") + quoted
     }
 
     private func line(_ text: String) -> some View {
@@ -338,6 +343,7 @@ struct MediaBrowserView: View {
     private func row(_ asset: MediaAsset, usage: MediaAsset.Usage) -> some View {
         let size = ByteCountFormatter.string(fromByteCount: asset.byteSize, countStyle: .file)
         let use = Self.usageText(usage)
+        let spoken: String = asset.displayName + ", " + size + ", " + use
         return HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(asset.displayName)
@@ -348,7 +354,7 @@ struct MediaBrowserView: View {
             }
             // One spoken element for the facts; the button stays its own element.
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(asset.displayName + ", " + size + ", " + use)
+            .accessibilityLabel(spoken)
             Spacer(minLength: 8)
             previewButton(asset)
             Button {
@@ -374,7 +380,8 @@ struct MediaBrowserView: View {
     private func previewButton(_ asset: MediaAsset) -> some View {
         let playing = previewing == asset.key
         let label: String = playing ? String(localized: "Stop preview") : String(localized: "Preview ") + asset.displayName
-        let hint: String = playing ? "" : String(localized: "Plays its first ") + "\(Int(Self.previewSeconds))" + String(localized: " seconds")
+        let seconds: String = "\(Int(Self.previewSeconds))"
+        let hint: String = playing ? "" : String(localized: "Plays its first ") + seconds + String(localized: " seconds")
         return Button {
             if playing { stopPreview() } else { preview(asset) }
         } label: {

@@ -159,6 +159,14 @@ struct EchoelNumberPad: View {
 
     // MARK: - Header (label + live value + range)
 
+    /// E4-28 → Compile Check 3106: ONE `+` chain of five operands with a nested ternary sent the type-checker past
+    /// its limit ("unable to type-check this expression in reasonable time"). Typed steps, one seam per line.
+    private var rangeText: String {
+        let bounds: String = fmt(range.lowerBound) + "–" + fmt(range.upperBound)
+        let suffix: String = unit.isEmpty ? "" : " " + unit
+        return String(localized: "Range ") + bounds + suffix
+    }
+
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
@@ -179,7 +187,7 @@ struct EchoelNumberPad: View {
                     defaultKey(standard)
                 }
             }
-            Text(String(localized: "Range ") + fmt(range.lowerBound) + "–" + fmt(range.upperBound) + (unit.isEmpty ? "" : " " + unit))
+            Text(rangeText)
                 .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.dim)
         }
@@ -349,6 +357,8 @@ struct EchoelNumberPad: View {
     /// separator — `displayString` localises for the eye), never the value directly.
     private func defaultKey(_ standard: Double) -> some View {
         let text = fmt(standard)
+        let spokenUnit: String = unit.isEmpty ? "" : " " + unit
+        let spoken: String = String(localized: "Default ") + text + spokenUnit
         let atDefault = snapped(pendingValue) == snapped(standard)
         return Button {
             buffer = String(format: "%.\(decimals)f", ScrubPrecision.gridded(standard, decimals: decimals))
@@ -363,7 +373,7 @@ struct EchoelNumberPad: View {
         }
         .buttonStyle(.plain)
         .disabled(atDefault)
-        .accessibilityLabel(String(localized: "Default ") + text + (unit.isEmpty ? "" : " " + unit))
+        .accessibilityLabel(spoken)
         .accessibilityHint("Types the default; OK confirms it.")
     }
 

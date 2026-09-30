@@ -825,10 +825,11 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertTrue(layers.contains("return String(localized: \"\(word)\")"), "`AutomationStatus.Layer.label` spells `\(word)` verbatim again")
         }
         let pad = try codeOnly("Sources/Echoelmusic/Studio/EchoelNumberPad.swift")
-        for seam in ["Text(String(localized: \"Range \") + fmt(range.lowerBound) + \"–\" + fmt(range.upperBound)",
+        // (Compile Check 3106: the Range line and the Default label are typed steps now — same seams, one per line)
+        for seam in ["Text(rangeText)", "return String(localized: \"Range \") + bounds + suffix",
                      ".accessibilityLabel(String(localized: \"Confirm \") + title)",
                      "Label(String(localized: \"Default \") + text, systemImage: \"arrow.counterclockwise\")",
-                     ".accessibilityLabel(String(localized: \"Default \") + text + (unit.isEmpty ? \"\" : \" \" + unit))"] {
+                     "let spoken: String = String(localized: \"Default \") + text + spokenUnit", ".accessibilityLabel(spoken)"] {
             XCTAssertTrue(pad.contains(seam), "EchoelNumberPad lost the E4-28 seam `\(seam)`")
         }
         for verbatim in ["Text(\"Range \\(", "accessibilityLabel(\"Confirm \\(", "Label(\"Default \\(text)\"", "accessibilityLabel(\"Default \\(text)"] {
@@ -845,19 +846,19 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         // the moving value, a catalog noun per grammatical number; never a format key. The neutral joins (size · use,
         // "name, size, use") carry no key at all — a seam is added only where a WORD moves.
         let library = try codeOnly("Sources/Echoelmusic/Studio/MediaBrowserView.swift")
-        for seam in ["note = String(localized: \"Relinked \") + \"\\u{201C}\" + request.clipName + \"\\u{201D}\" + String(localized: \" to \") + request.asset.displayName + \".\"",
-                     "line(\"\\(shown.count)\" + String(localized: \" of \") + \"\\(assets.count)\" + String(localized: \" files\"))",
+        for seam in ["note = String(localized: \"Relinked \") + quoted + String(localized: \" to \") + target",
+                     "line(shownCount + String(localized: \" of \") + total + String(localized: \" files\"))",
                      ".accessibilityLabel(String(localized: \"Relink \") + item.clipName)",
                      "case 0:  parts = String(localized: \"no part\")",
                      "case 1:  parts = String(localized: \"1 part\")",
                      "default: parts = \"\\(item.partCount) \" + String(localized: \"parts\")",
                      "return item.clipName + String(localized: \" — expects \") + item.fileName + \" · \" + parts",
-                     "String(localized: \"No file name contains \") + \"\\u{201C}\" + query.trimmingCharacters(in: .whitespacesAndNewlines) + \"\\u{201D}.\"",
+                     "return String(localized: \"No file name contains \") + quoted",
                      "Text(size + \" · \" + use)",
-                     ".accessibilityLabel(asset.displayName + \", \" + size + \", \" + use)",
+                     "let spoken: String = asset.displayName + \", \" + size + \", \" + use",
                      ".accessibilityLabel(String(localized: \"Place \") + asset.displayName)",
                      "playing ? String(localized: \"Stop preview\") : String(localized: \"Preview \") + asset.displayName",
-                     "String(localized: \"Plays its first \") + \"\\(Int(Self.previewSeconds))\" + String(localized: \" seconds\")",
+                     "String(localized: \"Plays its first \") + seconds + String(localized: \" seconds\")",
                      "usage.clipIDs.isEmpty ? String(localized: \"not in the piece\") : String(localized: \"imported, not placed yet\")",
                      "case 1:  return String(localized: \"in 1 part\")",
                      "default: return String(localized: \"in \") + \"\\(usage.partCount)\" + String(localized: \" parts\")"] {
