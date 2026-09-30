@@ -56,7 +56,9 @@
 // (parent: all verbatim, 10 units missing — ONE finding). E4-28 added the automation status strip, the layer words and
 // the number pad's Range/Confirm/Default (parent: all verbatim, 12 units missing — ONE finding). E4-29 added the media library's relink note, files line, Relink/Place/Preview
 // labels and hint, missing/no-match/usage words, and the routing surface's network target, connection count and route
-// label/value (parent: all interpolated or verbatim, 23 units missing — ONE finding). Claim 12
+// label/value (parent: all interpolated or verbatim, 23 units missing — ONE finding). E4-30 added the Compose guide — five step titles, details,
+// waiting reasons, the notes-opened note, the spoken states and row, the header's next line (parent: all verbatim,
+// 27 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -889,6 +891,65 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Place ", "Stop preview", "Preview ", "Plays its first ", " seconds", "not in the piece",
                           "imported, not placed yet", "in 1 part", "in ", " parts", " — network target", "connections",
                           "connected", "not connected", "incompatible"], "media library and routing surface")
+
+        // E4-30 — the Compose guide: five step titles, their detail lines, the waiting reasons, the note after
+        // "Write notes", the five spoken states, the spoken row ("Step n of N, title, state" as typed seams), the
+        // header's next line and its spoken form. Every runtime guard on these words (ThePlateShowsHowAPieceIsMade,
+        // WriteNotesOpensTheNoteEditor) keeps passing under the bundle's en locale — English is byte-identical.
+        let composeGuide = try codeOnly("Sources/Echoelmusic/Studio/ComposeGuide.swift")
+        for seam in ["case .track: return String(localized: \"Add a MIDI track\")",
+                     "case .part:  return String(localized: \"Add a part\")",
+                     "case .notes: return String(localized: \"Write notes\")",
+                     "facts.isPlaying ? String(localized: \"Stop all playback\") : String(localized: \"Play the piece\")",
+                     "case .save:  return String(localized: \"Save the piece\")",
+                     "String(localized: \"Your piece has its MIDI track.\")",
+                     "String(localized: \"An instrument track for the notes of your piece.\")",
+                     "String(localized: \"Adds another empty four-bar part after the last one.\")",
+                     "String(localized: \"An empty four-bar part on that track.\")",
+                     "String(localized: \"Opens the part's notes under the arrangement.\")",
+                     "String(localized: \"Stops the piece, the instrument and the pulse reading.\")",
+                     "String(localized: \"Plays the piece from the top.\")",
+                     "String(localized: \"Names the piece and saves it. Library opens it again.\")",
+                     "String(localized: \"The part's notes are open under the arrangement. Tap a cell to write a note.\")",
+                     "String(localized: \"Add a MIDI track first.\")", "String(localized: \"Add a part first.\")",
+                     "String(localized: \"Nothing in the piece can play yet — no part with notes is heard.\")",
+                     "String(localized: \"Write notes into a part first.\")", "String(localized: \"Add a part with notes first.\")",
+                     "step == .play ? String(localized: \"playing\") : String(localized: \"done\")",
+                     "status = String(localized: \"next step\")", "status = String(localized: \"available\")",
+                     "status = String(localized: \"not yet available\")",
+                     "let position: String = String(localized: \"Step \") + number + String(localized: \" of \") + total",
+                     "let rest: String = title(step, facts) + \", \" + status",
+                     "return position + \", \" + rest",
+                     "return String(localized: \"Every step is available below.\")",
+                     "return String(localized: \"Next: \") + title(next, facts)",
+                     "String(localized: \"Create a piece. \") + headerDetail(facts)"] {
+            XCTAssertTrue(composeGuide.contains(seam), "ComposeGuide lost the E4-30 seam `\(seam)`")
+        }
+        for verbatim in ["return \"Add a MIDI track\"", "return \"Add a part\"", "return \"Write notes\"", "? \"Stop all playback\" :",
+                         "return \"Save the piece\"", "? \"Your piece has", "  : \"An instrument track", "? \"Adds another empty",
+                         "  : \"An empty four-bar", "return \"Opens the part", "? \"Stops the piece", "  : \"Plays the piece",
+                         "return \"Names the piece", "notesOpenedNote = \"", "return \"Add a MIDI track first.\"", "return \"Add a part first.\"",
+                         "return \"Nothing in the piece", "? \"Write notes into", "first.\" : \"Add a part with notes", "? \"playing\" : \"done\"",
+                         "status = \"next step\"", "status = \"available\"", "status = \"not yet available\"",
+                         "return \"Step \\(step.rawValue) of", "return \"Every step is available below.\"", "return \"Next: \\(", "\"Create a piece. \\("] {
+            XCTAssertFalse(composeGuide.contains(verbatim), "ComposeGuide spells a step word verbatim again: `\(verbatim)`")
+        }
+        let composeCard = try codeOnly("Sources/Echoelmusic/Studio/WorkstationView.swift")
+        XCTAssertTrue(composeCard.contains("Text(\"\\(step.rawValue). \" + ComposeGuide.title(step, facts))"),
+                      "the step row's number+title join is not the neutral concatenation any more")
+        XCTAssertFalse(composeCard.contains("Text(\"\\(step.rawValue). \\(ComposeGuide.title(step, facts))\")"),
+                       "the step row interpolates the title into one literal again")
+        // RUNTIME COUNTERWEIGHT: the bundle's English is unchanged
+        XCTAssertTrue(ComposeGuide.notesOpenedNote.hasPrefix("The part's notes are open under the arrangement."))
+        try assertGerman(["Add a MIDI track", "Add a part", "Write notes", "Stop all playback", "Play the piece", "Save the piece",
+                          "Your piece has its MIDI track.", "An instrument track for the notes of your piece.",
+                          "Adds another empty four-bar part after the last one.", "An empty four-bar part on that track.",
+                          "Opens the part's notes under the arrangement.", "Stops the piece, the instrument and the pulse reading.",
+                          "Plays the piece from the top.", "Names the piece and saves it. Library opens it again.",
+                          "The part's notes are open under the arrangement. Tap a cell to write a note.",
+                          "Add a MIDI track first.", "Add a part first.", "Nothing in the piece can play yet — no part with notes is heard.",
+                          "Write notes into a part first.", "Add a part with notes first.", "playing", "done", "next step", "available",
+                          "not yet available", "Step ", " of ", "Every step is available below.", "Next: ", "Create a piece. "], "Compose guide")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

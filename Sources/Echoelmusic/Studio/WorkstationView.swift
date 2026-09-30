@@ -1622,7 +1622,7 @@ private struct ComposeGuideCard: View {
                     .foregroundStyle(state == .next ? EchoelTheme.accent
                                                     : (state == .done ? EchoelTheme.text : EchoelTheme.dim))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(step.rawValue). \(ComposeGuide.title(step, facts))")
+                    Text("\(step.rawValue). " + ComposeGuide.title(step, facts))
                         .font(EchoelTheme.font(13, .semibold))
                         .foregroundStyle(state == .waiting ? EchoelTheme.dim : EchoelTheme.text)
                         .fixedSize(horizontal: false, vertical: true)

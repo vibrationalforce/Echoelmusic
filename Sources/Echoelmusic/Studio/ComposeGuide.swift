@@ -146,11 +146,11 @@ enum ComposeGuide {
 
     static func title(_ step: Step, _ facts: Facts) -> String {
         switch step {
-        case .track: return "Add a MIDI track"
-        case .part:  return "Add a part"
-        case .notes: return "Write notes"
-        case .play:  return facts.isPlaying ? "Stop all playback" : "Play the piece"
-        case .save:  return "Save the piece"
+        case .track: return String(localized: "Add a MIDI track")
+        case .part:  return String(localized: "Add a part")
+        case .notes: return String(localized: "Write notes")
+        case .play:  return facts.isPlaying ? String(localized: "Stop all playback") : String(localized: "Play the piece")
+        case .save:  return String(localized: "Save the piece")
         }
     }
 
@@ -159,32 +159,34 @@ enum ComposeGuide {
         let state = state(of: step, facts)
         if state == .waiting { return waitingReason(step, facts) }
         switch step {
-        case .track: return state == .done ? "Your piece has its MIDI track."
-                                           : "An instrument track for the notes of your piece."
-        case .part:  return state == .done ? "Adds another empty four-bar part after the last one."
-                                           : "An empty four-bar part on that track."
-        case .notes: return "Opens the part's notes under the arrangement."
-        case .play:  return facts.isPlaying ? "Stops the piece, the instrument and the pulse reading."
-                                            : "Plays the piece from the top."
-        case .save:  return "Names the piece and saves it. Library opens it again."
+        case .track: return state == .done ? String(localized: "Your piece has its MIDI track.")
+                                           : String(localized: "An instrument track for the notes of your piece.")
+        case .part:  return state == .done ? String(localized: "Adds another empty four-bar part after the last one.")
+                                           : String(localized: "An empty four-bar part on that track.")
+        case .notes: return String(localized: "Opens the part's notes under the arrangement.")
+        case .play:  return facts.isPlaying ? String(localized: "Stops the piece, the instrument and the pulse reading.")
+                                            : String(localized: "Plays the piece from the top.")
+        case .save:  return String(localized: "Names the piece and saves it. Library opens it again.")
         }
     }
 
     /// What the card says after "Write notes": where the grid it just opened sits, because on a
     /// phone it is below the canvas and may be off screen.
-    static let notesOpenedNote = "The part's notes are open under the arrangement. Tap a cell to write a note."
+    static var notesOpenedNote: String {
+        String(localized: "The part's notes are open under the arrangement. Tap a cell to write a note.")
+    }
 
     private static func waitingReason(_ step: Step, _ facts: Facts) -> String {
         switch step {
         case .track: return ""
-        case .part:  return "Add a MIDI track first."
-        case .notes: return "Add a part first."
+        case .part:  return String(localized: "Add a MIDI track first.")
+        case .notes: return String(localized: "Add a part first.")
         // Review of c672c2adf (LOW): `hasNotes` and the engine's `canPlay` can disagree (a
         // written part covered by a later one, #1440) — then "write notes" would be false.
         case .play:
-            if facts.hasNotes { return "Nothing in the piece can play yet — no part with notes is heard." }
-            return facts.hasPart ? "Write notes into a part first." : "Add a part with notes first."
-        case .save:  return "Add a part first."
+            if facts.hasNotes { return String(localized: "Nothing in the piece can play yet — no part with notes is heard.") }
+            return facts.hasPart ? String(localized: "Write notes into a part first.") : String(localized: "Add a part with notes first.")
+        case .save:  return String(localized: "Add a part first.")
         }
     }
 
@@ -194,12 +196,17 @@ enum ComposeGuide {
         let count = Step.allCases.count
         let status: String
         switch state(of: step, facts) {
-        case .done:    status = step == .play ? "playing" : "done"
-        case .next:    status = "next step"
-        case .ready:   status = "available"
-        case .waiting: status = "not yet available"
+        case .done:    status = step == .play ? String(localized: "playing") : String(localized: "done")
+        case .next:    status = String(localized: "next step")
+        case .ready:   status = String(localized: "available")
+        case .waiting: status = String(localized: "not yet available")
         }
-        return "Step \(step.rawValue) of \(count), \(title(step, facts)), \(status)"
+        // E4-30: typed steps — one `+` chain of eight operands is what the type-checker cannot bound (Compile Check 3106).
+        let number: String = "\(step.rawValue)"
+        let total: String = "\(count)"
+        let position: String = String(localized: "Step ") + number + String(localized: " of ") + total
+        let rest: String = title(step, facts) + ", " + status
+        return position + ", " + rest
     }
 
     /// The header's line under "Create a piece": the step to do now, never a done-count.
@@ -207,12 +214,12 @@ enum ComposeGuide {
     /// done only while playing, so the count peaked at 4 and fell back on Stop — a progress
     /// figure that goes backwards reads as lost work.
     static func headerDetail(_ facts: Facts) -> String {
-        guard let next = nextStep(facts) else { return "Every step is available below." }
-        return "Next: \(title(next, facts))"
+        guard let next = nextStep(facts) else { return String(localized: "Every step is available below.") }
+        return String(localized: "Next: ") + title(next, facts)
     }
 
     /// The header, spoken.
     static func headerLabel(_ facts: Facts) -> String {
-        "Create a piece. \(headerDetail(facts))"
+        String(localized: "Create a piece. ") + headerDetail(facts)
     }
 }
