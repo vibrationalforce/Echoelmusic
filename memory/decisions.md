@@ -3170,3 +3170,11 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Open, deliberately:** widening the scope to the piece = move `StudioZoom`'s application point (three guards pin today's scope; WorkstationView at .accessibility5 untested); light mode and a contrast switch (new settings, own council); the head's .accessibility1 ceiling (#262 has a measured reason); the 11 pt base-font sweep.
 - **Guard:** `TheTextSizeHasButtonsTests` (f3df634a4).
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Rule 1, tempo mode: "Follows pulse" / "Locked" replace Flow / Loop
+
+- **Decision:** the head-strip picker wears the lock's own words — caption "Tempo", options "Follows pulse" / "Locked" — the vocabulary `BodyTempoField` already speaks ("Tempo, following" / "Tempo locked"). Save door: "tempo mode (following or locked)". Tap hint: "This locks the tempo." (the lock IS the mode). GLOSSARY row `tempo mode` strikes `flow`; `loop` stays the word for the repeat range.
+- **Why:** one truth in three vocabularies, and "Loop" collided with the repeat range. The doc proposed "Tempo fixed"; "Locked" wins because the field, the lock icon and the T1 source already say lock — a fourth word would be rule 1 against rule 1.
+- **Not renamed:** `ComposerMode.flowFree` / `.studioLocked` — persisted rawValues (`modeRaw`, #493/#494).
+- **Guard:** `TheTempoModeSpeaksTheLocksWordsTests` (0ec128ef6); `TheSavePromiseMatchesTheSaveTests` rewritten as the decision.
+- **Review:** 2026-10-30.
