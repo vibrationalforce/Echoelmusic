@@ -67,7 +67,9 @@
 // 9 units missing — ONE finding). E4-34 added the always-on channel names, channel words and Sound-panel row names
 // (parent: all verbatim, 8 units missing — ONE finding). E4-35 added the FX route names — thirteen targets, seven
 // carriers, six matrix sources (parent: all verbatim, 15 units missing — ONE finding). E4-36 added the pulse ladder's
-// four rung words and four spoken sentences (parent: all verbatim, 8 units missing — ONE finding). Claim 12
+// four rung words and four spoken sentences (parent: all verbatim, 8 units missing — ONE finding). E4-37 added the long
+// always-on / Bio-panel sentences of AlwaysOnBioChannel — demo subject, FX footer, Bio-panel claim, Sound-panel line and
+// empty states, breath-voice and Auto hints and captions (parent: all verbatim or interpolated, 32 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1183,6 +1185,60 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         try assertGerman(["Searching", "Almost", "Found", "Lost", "Searching for your pulse", "Almost there — keep your finger still",
                           "Pulse found", "Pulse lost — keep your finger still"], "pulse ladder")
+
+        // E4-37 — the long sentences of AlwaysOnBioChannel: the demo subject (ONE spelling, now a computed key —
+        // OneSpellingOfTheDemoSubject's runtime and source claims keep passing), the FX footer and Bio-panel
+        // always-on sentences, the Sound panel's "also shapes this sound" line and its two empty states, and the
+        // breath-voice / Auto hints and captions (BioPanelRowCopy). Every seam a key, every conditional opening a
+        // typed step; the English concatenations are byte-identical (the runtime counterweights below), so
+        // TheBioPanelRowsSayWhoseBody, TheSoundPanelNamesItsActualDriver, TheBodyShapedRowsAreNamedOnce,
+        // TheAlwaysOnBioPathIsNamed and TheChromeSpeaksOneWordPerThing keep every needle.
+        let bioCopy = try codeOnly("Sources/Echoelmusic/Studio/AlwaysOnBioChannel.swift")
+        for seam in ["public static var demoSubject: String { String(localized: \"the simulated demo source, not your body\") }",
+                     "let demoOpening: String = String(localized: \"four channels from \") + BioProvenanceCopy.demoSubject + String(localized: \", shape \")",
+                     "let opening: String = synthetic ? demoOpening : String(localized: \"four body channels shape \")",
+                     "return String(localized: \"Separately from these routes, \") + opening + claim",
+                     "let opening: String = synthetic ? demoOpening : String(localized: \"Four body channels shape \")",
+                     ": String(localized: \"Your body\")",
+                     "? String(localized: \"The simulated demo source is not shaping any control on this panel right now.\")",
+                     "let head: String = subject + String(localized: \" also shapes this sound while the instrument plays: \") + list",
+                     "synthetic ? BioProvenanceCopy.demoSubject : String(localized: \"your body\")",
+                     "return String(localized: \"Sounds a held tone whose colour follows \") + subject(synthetic: frame.source.isSynthetic)",
+                     "case false: head = String(localized: \"A held tone whose colour follows your heart and coherence.\")",
+                     "return head + String(localized: \" Your inhale opens it, your exhale closes it.\")",
+                     "return String(localized: \"Slowly steers the mood dials toward your measured body state\")",
+                     "let head: String = frame.source.isSynthetic",
+                     "return head + String(localized: \" — over bars, not beats. Your own edits keep priority"] {
+            XCTAssertTrue(bioCopy.contains(seam), "AlwaysOnBioChannel lost the E4-37 seam `\(seam)`")
+        }
+        for verbatim in ["static let demoSubject", "? \"four channels from \"", "return \"Separately from these routes, \"", "? \"Four channels from \"",
+                         "            : \"Your body\"", "BioProvenanceCopy.demoSubject : \"your body\"", "+ \" and \" +", "\\(subject) also shapes", "head = \"A held tone",
+                         "return \"Needs a running bio source", "return \"Slowly steers", "? \"Gently steers", "return head + \" — over bars"] {
+            XCTAssertFalse(bioCopy.contains(verbatim), "AlwaysOnBioChannel spells or interpolates a sentence verbatim again: `\(verbatim)`")
+        }
+        // RUNTIME COUNTERWEIGHTS: the bundle's English concatenations are unchanged
+        XCTAssertEqual(BioProvenanceCopy.demoSubject, "the simulated demo source, not your body")
+        XCTAssertTrue(BioProvenanceCopy.demoSubjectSentenceInitial.hasPrefix("The simulated demo source"))
+        XCTAssertEqual(AlwaysOnBioChannel.alwaysOnSentence(synthetic: false),
+                       "Separately from these routes, four body channels shape the instrument's own timbre while the instrument plays: coherence, HRV, heart rate and breath phase. Routes here add effect parameters on top.")
+        XCTAssertTrue(AlwaysOnBioChannel.bioPanelSentence(synthetic: true).hasPrefix("Four channels from the simulated demo source, not your body, shape the instrument's own timbre"))
+        XCTAssertTrue(BioShapedParameter.soundPanelSentence(synthetic: false).hasPrefix("Your body also shapes this sound while the instrument plays: "))
+        XCTAssertTrue(BioShapedParameter.soundPanelSentence(synthetic: false).hasSuffix(" move around the values you set here. Open Bio to watch the four channels doing it."))
+        XCTAssertEqual(BioPanelRowCopy.autoModeHint(for: nil), "Needs a running bio source before it can steer anything")
+        XCTAssertTrue(BioPanelRowCopy.autoModeCaption(for: nil).hasPrefix("Needs a running bio source — choose one"))
+        try assertGerman(Array(Set(["the simulated demo source, not your body", "four channels from ", ", shape ", "four body channels shape ",
+                                    "Separately from these routes, ", "Four channels from ", "Four body channels shape ", "Your body", "your body", " and ",
+                                    "The simulated demo source is not shaping any control on this panel right now.",
+                                    "Your body is not shaping any control on this panel right now.",
+                                    " also shapes this sound while the instrument plays: ",
+                                    " move around the values you set here. Open Bio to watch the four channels doing it.",
+                                    "Sounds a held tone. Nothing is measured yet, so its colour will not move", "Sounds a held tone whose colour follows ",
+                                    "A held tone whose colour follows your heart and coherence.", "A held tone whose colour follows the heart and coherence of ",
+                                    " Your inhale opens it, your exhale closes it.", " Its simulated inhale opens it, its exhale closes it.",
+                                    "Needs a running bio source before it can steer anything", "Slowly steers the mood dials toward your measured body state",
+                                    "Slowly steers the mood dials toward the measured state of ",
+                                    "Needs a running bio source — choose one with the Bio source control above.",
+                                    ", when that reading is clearly settled or clearly driving"])).sorted(), "always-on and Bio-panel sentences")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

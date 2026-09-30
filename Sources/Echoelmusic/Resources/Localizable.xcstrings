@@ -19482,6 +19482,518 @@
           }
         }
       }
+    },
+    "the simulated demo source, not your body" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "die simulierte Demo-Quelle, nicht dein Körper"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the simulated demo source, not your body"
+          }
+        }
+      }
+    },
+    "four channels from " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vier Kanäle (Quelle: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "four channels from "
+          }
+        }
+      }
+    },
+    ", shape " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ") formen "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", shape "
+          }
+        }
+      }
+    },
+    "four body channels shape " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vier Körperkanäle formen "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "four body channels shape "
+          }
+        }
+      }
+    },
+    "the instrument's own timbre while the instrument plays: coherence, HRV, heart rate and breath phase. Routes here add effect parameters on top." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "die eigene Klangfarbe des Instruments, solange es spielt: Kohärenz, HRV, Herzfrequenz und Atemphase. Routen hier legen Effektparameter obendrauf."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the instrument's own timbre while the instrument plays: coherence, HRV, heart rate and breath phase. Routes here add effect parameters on top."
+          }
+        }
+      }
+    },
+    "Separately from these routes, " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Getrennt von diesen Routen: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Separately from these routes, "
+          }
+        }
+      }
+    },
+    "Four channels from " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vier Kanäle (Quelle: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Four channels from "
+          }
+        }
+      }
+    },
+    "Four body channels shape " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vier Körperkanäle formen "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Four body channels shape "
+          }
+        }
+      }
+    },
+    "the instrument's own timbre while the instrument plays: coherence, HRV, heart rate and breath phase — the four rows below. To add your own routes onto effect parameters, open Effects › All parameters." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "die eigene Klangfarbe des Instruments, solange es spielt: Kohärenz, HRV, Herzfrequenz und Atemphase — die vier Zeilen unten. Eigene Routen auf Effektparameter legst du unter Effekte › Alle Parameter an."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the instrument's own timbre while the instrument plays: coherence, HRV, heart rate and breath phase — the four rows below. To add your own routes onto effect parameters, open Effects › All parameters."
+          }
+        }
+      }
+    },
+    "Your body" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Körper"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your body"
+          }
+        }
+      }
+    },
+    "your body" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dein Körper"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "your body"
+          }
+        }
+      }
+    },
+    " and " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " und "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " and "
+          }
+        }
+      }
+    },
+    "The simulated demo source is not shaping any control on this panel right now." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die simulierte Demo-Quelle formt gerade keinen Regler auf diesem Panel."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The simulated demo source is not shaping any control on this panel right now."
+          }
+        }
+      }
+    },
+    "Your body is not shaping any control on this panel right now." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Körper formt gerade keinen Regler auf diesem Panel."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your body is not shaping any control on this panel right now."
+          }
+        }
+      }
+    },
+    " also shapes this sound while the instrument plays: " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " formt diesen Klang auch, solange das Instrument spielt: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " also shapes this sound while the instrument plays: "
+          }
+        }
+      }
+    },
+    " move around the values you set here. Open Bio to watch the four channels doing it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " bewegen sich um die Werte, die du hier setzt. Öffne Bio, um den vier Kanälen dabei zuzusehen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " move around the values you set here. Open Bio to watch the four channels doing it."
+          }
+        }
+      }
+    },
+    "Sounds a held tone. Nothing is measured yet, so its colour will not move" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klingt als gehaltener Ton. Noch ist nichts gemessen, also bewegt sich seine Farbe nicht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sounds a held tone. Nothing is measured yet, so its colour will not move"
+          }
+        }
+      }
+    },
+    "Sounds a held tone whose colour follows " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klingt als gehaltener Ton, seine Farbe folgt: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sounds a held tone whose colour follows "
+          }
+        }
+      }
+    },
+    "A held tone whose colour follows your heart and coherence." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein gehaltener Ton, dessen Farbe deinem Herzen und deiner Kohärenz folgt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A held tone whose colour follows your heart and coherence."
+          }
+        }
+      }
+    },
+    "A held tone whose colour follows the heart and coherence of " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein gehaltener Ton, dessen Farbe Herz und Kohärenz folgt — Quelle: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A held tone whose colour follows the heart and coherence of "
+          }
+        }
+      }
+    },
+    "A held tone whose colour will follow a heart and coherence once something is measured." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein gehaltener Ton, dessen Farbe Herz und Kohärenz folgen wird, sobald etwas gemessen ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A held tone whose colour will follow a heart and coherence once something is measured."
+          }
+        }
+      }
+    },
+    " No breath movement measured yet — once it is traced, the inhale and exhale carry the note." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Noch keine Atembewegung gemessen — sobald sie erfasst ist, tragen Ein- und Ausatmen den Ton."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " No breath movement measured yet — once it is traced, the inhale and exhale carry the note."
+          }
+        }
+      }
+    },
+    " Your inhale opens it, your exhale closes it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Dein Einatmen öffnet ihn, dein Ausatmen schließt ihn."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Your inhale opens it, your exhale closes it."
+          }
+        }
+      }
+    },
+    " Its simulated inhale opens it, its exhale closes it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Ihr simuliertes Einatmen öffnet ihn, ihr Ausatmen schließt ihn."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Its simulated inhale opens it, its exhale closes it."
+          }
+        }
+      }
+    },
+    "Needs a running bio source before it can steer anything" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Braucht eine laufende Bio-Quelle, bevor es etwas steuern kann"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Needs a running bio source before it can steer anything"
+          }
+        }
+      }
+    },
+    "Slowly steers the mood dials toward your measured body state" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steuert die Stimmungsregler langsam zu deinem gemessenen Körperzustand"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slowly steers the mood dials toward your measured body state"
+          }
+        }
+      }
+    },
+    "Slowly steers the mood dials toward the measured state of " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steuert die Stimmungsregler langsam zum gemessenen Zustand von: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slowly steers the mood dials toward the measured state of "
+          }
+        }
+      }
+    },
+    "Needs a running bio source — choose one with the Bio source control above." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Braucht eine laufende Bio-Quelle — wähle eine mit dem Bio-Quelle-Regler oben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Needs a running bio source — choose one with the Bio source control above."
+          }
+        }
+      }
+    },
+    "Gently steers mood toward the measured coherence, HRV and heart rate of " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steuert die Stimmung sanft zu gemessener Kohärenz, HRV und Herzfrequenz von: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gently steers mood toward the measured coherence, HRV and heart rate of "
+          }
+        }
+      }
+    },
+    ", when that reading is clearly settled or clearly driving" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", sobald diese Messung klar ruhig oder klar treibend ist"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", when that reading is clearly settled or clearly driving"
+          }
+        }
+      }
+    },
+    "Gently steers mood toward your measured coherence, HRV and heart rate when your body is clearly settled or clearly driving" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steuert die Stimmung sanft zu deiner gemessenen Kohärenz, HRV und Herzfrequenz, sobald dein Körper klar ruhig oder klar treibend ist"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gently steers mood toward your measured coherence, HRV and heart rate when your body is clearly settled or clearly driving"
+          }
+        }
+      }
+    },
+    " — over bars, not beats. Your own edits keep priority — edit a steered dial and Auto lets that dial go until you stop (switch Auto off and on to hand it back)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " — über Takte, nicht Schläge. Deine eigenen Eingriffe behalten Vorrang — drehst du einen gesteuerten Regler, lässt Auto ihn los, bis du aufhörst (Auto aus- und einschalten gibt ihn zurück)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " — over bars, not beats. Your own edits keep priority — edit a steered dial and Auto lets that dial go until you stop (switch Auto off and on to hand it back)."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

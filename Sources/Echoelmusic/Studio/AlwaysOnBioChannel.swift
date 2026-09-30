@@ -132,13 +132,15 @@ import Foundation
 public enum BioProvenanceCopy {
 
     /// Mid-sentence: "… follows **the simulated demo source, not your body**".
-    public static let demoSubject = "the simulated demo source, not your body"
+    // E4-37: computed, not stored — a `static let` would freeze the bundle's first locale (E4 law).
+    public static var demoSubject: String { String(localized: "the simulated demo source, not your body") }
 
     /// Sentence-initial, for a claim that OPENS with the subject. **Derived, never re-spelled**
     /// — a second literal here would be exactly the drift the enum exists to prevent, and the
     /// capitalisation is the only difference. Callers add their own trailing punctuation.
-    public static let demoSubjectSentenceInitial: String =
+    public static var demoSubjectSentenceInitial: String {
         demoSubject.prefix(1).uppercased() + demoSubject.dropFirst()
+    }
 }
 
 /// One of the four body channels wired into `EchoelDDSP.applyBioReactive` from a live frame.
@@ -194,13 +196,12 @@ public enum AlwaysOnBioChannel: String, CaseIterable, Identifiable, Sendable {
     /// ⚠️ REQUIRED ARGUMENT, NO DEFAULT (#431/#440/#443): a defaulted `synthetic:` would let a
     /// new call site render the body claim over a demo session without appearing in any diff.
     public static func alwaysOnSentence(synthetic: Bool) -> String {
-        let opening = synthetic
-            ? "four channels from " + BioProvenanceCopy.demoSubject + ", shape "
-            : "four body channels shape "
-        return "Separately from these routes, "
-            + opening
-            + "the instrument's own timbre while the instrument plays: coherence, HRV, heart rate and "
-            + "breath phase. Routes here add effect parameters on top."
+        // E4-37: every English seam a catalog key, the demo opening its own typed step so no ternary
+        // carries a `+` chain (Compile Check 3106); the concatenation is byte-identical under en.
+        let demoOpening: String = String(localized: "four channels from ") + BioProvenanceCopy.demoSubject + String(localized: ", shape ")
+        let opening: String = synthetic ? demoOpening : String(localized: "four body channels shape ")
+        let claim: String = String(localized: "the instrument's own timbre while the instrument plays: coherence, HRV, heart rate and breath phase. Routes here add effect parameters on top.")
+        return String(localized: "Separately from these routes, ") + opening + claim
     }
 
     /// The same claim for a surface that is NOT the FX sheet — same four channels, no "these
@@ -216,13 +217,9 @@ public enum AlwaysOnBioChannel: String, CaseIterable, Identifiable, Sendable {
     /// ⭐ #643 gave it the same conditional subject as its sibling, for the same reason and
     /// from the same flag. See `alwaysOnSentence` — the argument is there, once.
     public static func bioPanelSentence(synthetic: Bool) -> String {
-        let opening = synthetic
-            ? "Four channels from " + BioProvenanceCopy.demoSubject + ", shape "
-            : "Four body channels shape "
-        return opening
-            + "the instrument's own timbre while the instrument plays: coherence, HRV, heart rate and "
-            + "breath phase — the four rows below. To add your own routes onto effect parameters, "
-            + "open Effects › All parameters."
+        let demoOpening: String = String(localized: "Four channels from ") + BioProvenanceCopy.demoSubject + String(localized: ", shape ")
+        let opening: String = synthetic ? demoOpening : String(localized: "Four body channels shape ")
+        return opening + String(localized: "the instrument's own timbre while the instrument plays: coherence, HRV, heart rate and breath phase — the four rows below. To add your own routes onto effect parameters, open Effects › All parameters.")
     }
 
     /// What this channel moves in the engine, in the channel row's own reading order.
@@ -522,19 +519,20 @@ public enum BioShapedParameter: String, CaseIterable, Identifiable, Sendable {
     /// for character, and the ordinary path must not pay for the demo path's honesty.
     public static func soundPanelSentence(synthetic: Bool) -> String {
         let rows = shapedByTheBody.flatMap(\.soundPanelRows)
-        let subject = synthetic
+        let subject: String = synthetic
             ? BioProvenanceCopy.demoSubjectSentenceInitial + ","
-            : "Your body"
+            : String(localized: "Your body")
         let list: String
         switch rows.count {
         case 0:  return synthetic
-            ? "The simulated demo source is not shaping any control on this panel right now."
-            : "Your body is not shaping any control on this panel right now."
+            ? String(localized: "The simulated demo source is not shaping any control on this panel right now.")
+            : String(localized: "Your body is not shaping any control on this panel right now.")
         case 1:  list = rows[0]
-        default: list = rows.dropLast().joined(separator: ", ") + " and " + (rows.last ?? "")
+        default: list = rows.dropLast().joined(separator: ", ") + String(localized: " and ") + (rows.last ?? "")
         }
-        return "\(subject) also shapes this sound while the instrument plays: \(list) move around the "
-            + "values you set here. Open Bio to watch the four channels doing it."
+        // E4-37: subject + seam + list as one typed step, the tail as the second (Compile Check 3106).
+        let head: String = subject + String(localized: " also shapes this sound while the instrument plays: ") + list
+        return head + String(localized: " move around the values you set here. Open Bio to watch the four channels doing it.")
     }
 }
 
@@ -612,7 +610,7 @@ public enum BioPanelRowCopy {
 
     /// The mid-sentence subject of a claim about whose reading drives something.
     static func subject(synthetic: Bool) -> String {
-        synthetic ? BioProvenanceCopy.demoSubject : "your body"
+        synthetic ? BioProvenanceCopy.demoSubject : String(localized: "your body")
     }
 
     /// `BreathVoiceRow`'s spoken hint. Describes what ARMING will do, so it is answerable even
@@ -623,24 +621,23 @@ public enum BioPanelRowCopy {
     /// a review pass — three spoken strings on one control under two conventions.
     public static func breathVoiceHint(for frame: BioSampleFrame?) -> String {
         guard let frame else {
-            return "Sounds a held tone. Nothing is measured yet, so its colour will not move"
+            return String(localized: "Sounds a held tone. Nothing is measured yet, so its colour will not move")
         }
         // ⭐ ONE EXPRESSION, TWO STATES. Both branches said "Sounds a held tone whose colour
         // follows " and differed only in the subject, so the shared half is written once. This
         // is also what finally gives `subject(synthetic:)` a production caller — #648 created
         // it and wired it nowhere, which is dead code the repo's own rules forbid shipping.
-        return "Sounds a held tone whose colour follows " + subject(synthetic: frame.source.isSynthetic)
+        return String(localized: "Sounds a held tone whose colour follows ") + subject(synthetic: frame.source.isSynthetic)
     }
 
     /// `BreathVoiceRow`'s caption. Two axes: whose reading, and whether breath is arriving.
     public static func breathVoiceCaption(for frame: BioSampleFrame?) -> String {
         let head: String
         switch frame?.source.isSynthetic {
-        case false: head = "A held tone whose colour follows your heart and coherence."
-        case true:  head = "A held tone whose colour follows the heart and coherence of "
+        case false: head = String(localized: "A held tone whose colour follows your heart and coherence.")
+        case true:  head = String(localized: "A held tone whose colour follows the heart and coherence of ")
                          + BioProvenanceCopy.demoSubject + "."
-        default:    head = "A held tone whose colour will follow a heart and coherence once "
-                         + "something is measured."
+        default:    head = String(localized: "A held tone whose colour will follow a heart and coherence once something is measured.")
         }
         // ⛔ #1323 — GATE AND WORDING BOTH MOVED, AND THEY HAD TO MOVE TOGETHER. The gate read
         // `hasMeasuredBreath` (the RATE), so a Watch frame promised "your inhale opens it" for
@@ -649,23 +646,22 @@ public enum BioPanelRowCopy {
         // measured yet" — trading one false sentence for another. What this caption is about
         // is the MOVEMENT the note follows, so it now says so.
         guard frame?.hasMeasuredBreathWaveform == true else {
-            return head + " No breath movement measured yet — once it is traced, the inhale "
-                + "and exhale carry the note."
+            return head + String(localized: " No breath movement measured yet — once it is traced, the inhale and exhale carry the note.")
         }
         guard frame?.source.isSynthetic == true else {
-            return head + " Your inhale opens it, your exhale closes it."
+            return head + String(localized: " Your inhale opens it, your exhale closes it.")
         }
-        return head + " Its simulated inhale opens it, its exhale closes it."
+        return head + String(localized: " Its simulated inhale opens it, its exhale closes it.")
     }
 
     /// `AutoModeRow`'s spoken hint. The control is disabled without a source, but VoiceOver
     /// still reads a hint on a disabled control, so the nil state gets its own sentence.
     public static func autoModeHint(for frame: BioSampleFrame?) -> String {
-        guard let frame else { return "Needs a running bio source before it can steer anything" }
+        guard let frame else { return String(localized: "Needs a running bio source before it can steer anything") }
         guard frame.source.isSynthetic else {
-            return "Slowly steers the mood dials toward your measured body state"
+            return String(localized: "Slowly steers the mood dials toward your measured body state")
         }
-        return "Slowly steers the mood dials toward the measured state of "
+        return String(localized: "Slowly steers the mood dials toward the measured state of ")
             + BioProvenanceCopy.demoSubject
     }
 
@@ -693,16 +689,13 @@ public enum BioPanelRowCopy {
     /// different question with a structural answer — see `EchoelFXView`'s always-on note.
     public static func autoModeCaption(for frame: BioSampleFrame?) -> String {
         guard let frame else {
-            return "Needs a running bio source — choose one with the Bio source control above."
+            return String(localized: "Needs a running bio source — choose one with the Bio source control above.")
         }
-        let head = frame.source.isSynthetic
-            ? "Gently steers mood toward the measured coherence, HRV and heart rate of "
-                + BioProvenanceCopy.demoSubject + ", when that reading is clearly settled "
-                + "or clearly driving"
-            : "Gently steers mood toward your measured coherence, HRV and heart rate when your "
-                + "body is clearly settled or clearly driving"
-        return head + " — over bars, not beats. Your own edits keep priority — edit a steered "
-            + "dial and Auto lets that dial go until you stop (switch Auto off "
-            + "and on to hand it back)."
+        let demoHead: String = String(localized: "Gently steers mood toward the measured coherence, HRV and heart rate of ")
+            + BioProvenanceCopy.demoSubject + String(localized: ", when that reading is clearly settled or clearly driving")
+        let head: String = frame.source.isSynthetic
+            ? demoHead
+            : String(localized: "Gently steers mood toward your measured coherence, HRV and heart rate when your body is clearly settled or clearly driving")
+        return head + String(localized: " — over bars, not beats. Your own edits keep priority — edit a steered dial and Auto lets that dial go until you stop (switch Auto off and on to hand it back).")
     }
 }
