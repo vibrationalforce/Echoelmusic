@@ -3468,3 +3468,13 @@ council skill, two memory headings) were bannered as pure-instrument phase histo
 - **Finding:** `argument 'complete' must precede argument 'outputNames'` — the one construction site of `LatencyReadout` listed the new field before `complete`, its declaration lists it after.
 - **Lesson (second instance today, see fe3080e9f):** a source-text transcription checks PRESENCE, not memberwise ORDER; the transcription for the fix compares the call's label sequence with the declaration for every construction site. A structural check that only the compiler could otherwise do — do it in Python when a slice adds a stored property.
 - **Review:** 2026-10-30.
+
+### 2026-09-30 — Zug 3, network path: the dot wears its word (71265d0fc)
+- **Decision:** `NetworkOutputHeader` renders `Text(state.label)` (dim, 11 pt, trailing, lower-case) beside the state shape; VoiceOver keeps reading the same `state.label`. Shapes stay. Guard `TheNetworkDotWearsItsWordTests`.
+- **Rationale:** the word existed for VoiceOver only; a sighted or colour-blind operator saw a 7 pt ring. One definition of the word (#416); lower-case is the surface's established style (`OSCInputStatusLine`).
+
+### 2026-09-30 — Zug 3, pulse hardware rung: `PulseCue.noLight` (7b14bcf29)
+- **Decision:** a ninth cue for "no light on the finger" (torch absent / thermal / control failed, latched in `CameraCapture.applyTorch`), read by `placementCue` after the lock test and before every finger cue, gated on `isRunning`. Actionable; warrants the wrapping slot (its source is a latch, never per-frame). The capture doc's "founder/Council call" sentence is retired under the founder's delegation and the plan's Zug 3.
+- **Rationale:** the flag had no reader; a dark torch was coached as a finger problem. Remedy names another light and the cause a hot phone can wait out — never the finger.
+- **Open:** device probe (thermal torch loss → "No light" → recovery). Guards: `TheDarkLensSaysNoLightTests`; `TheStallRemedyReachesTheScreenTests` extended (method renamed, not weakened); `PulseCueTests` extended.
+- **Review:** 2026-10-30.
