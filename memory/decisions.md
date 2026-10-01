@@ -4542,3 +4542,18 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-72 block (6 seam needles over three files, 3 absence needles, 15 units; 339 → 345 XCTAssert).
   WORK PASS / HEAD FAIL (6/2/15 — ONE finding). Whole-claim-11 needle check: 124 files, 965 needles, 0 broken.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-73: studio spoken names, place line, rhythm blurbs, variation caption (2075944bd)
+
+- **Decision:** `StudioMenu.fullName` (10; replaced region-scoped because `label` returns "Master" too), `placeStatusLine`
+  (two interpolations become key + place + key), the Field arp row's six rhythm blurbs plus the two Laid-back push notes,
+  and `moodVariationCaption` (one key for the chain; the interpolated sentence split around its two numbers into typed
+  `let`s, `let moved = MoodProfile.variationSpread.count` kept early) are catalog keys. The terms hint with escaped inner
+  quotes stays verbatim — a key cannot carry the backslashes honestly. Catalog 1645 → 1670.
+- **Why:** these were the last bare producers in the studio file: the VoiceOver names of every chip, the place row's
+  status, the rhythm explanations and the variation caption were still English on a German phone.
+- **Guard:** claim 11 E4-73 block (6 seam needles, 3 absence needles, 28 units; 345 → 347 XCTAssert). Two guards
+  re-anchored 1:1 (PerformIsASecondViewOfTheSameSessionTests `.sound`, TheWorkstationHasADoorTests `.workstation`).
+  SaveDoorNamingTests and TheGenrePresetIsACentreNotAPointTests mirrored in Python: both still pass on WORK.
+  WORK PASS / HEAD FAIL (6/3/25 — ONE finding). Whole-claim-11 needle check: 125 files, 974 needles, 0 broken.
+- **Review:** 2026-10-31.
