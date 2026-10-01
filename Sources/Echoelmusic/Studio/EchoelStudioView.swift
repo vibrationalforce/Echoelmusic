@@ -4169,7 +4169,7 @@ struct EchoelStudioView: View {
                 // `height` (#353), 34 = the house in-panel floor (#610b); no outset
                 // because tappable variation rows sit directly below.
                 Button { exploreVariations() } label: {
-                    Text(mazeBoard == nil ? "Explore" : "New")
+                    Text(mazeBoard == nil ? String(localized: "Explore") : String(localized: "New"))
                         .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
                         .padding(.horizontal, 12).frame(minHeight: 34)
                         .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.bg))
@@ -4178,7 +4178,7 @@ struct EchoelStudioView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(mazeBoard == nil ? "Explore variations" : "Explore new variations")
+                .accessibilityLabel(mazeBoard == nil ? String(localized: "Explore variations") : String(localized: "Explore new variations"))
             }
             if let board = mazeBoard {
                 ForEach(Array(board.candidates.enumerated()), id: \.offset) { idx, cand in
@@ -4193,6 +4193,11 @@ struct EchoelStudioView: View {
     private func variationRow(_ cand: BioVariationMaze.Candidate, rank: Int) -> some View {
         let isOn = cand.seed == mazeAppliedSeed
         let pct = Int((cand.score * 100).rounded())
+        // E4-46: the spoken label was one interpolated literal — a String, read verbatim. Seams around
+        // the two numbers in typed steps (≤ 4 operands each, no `+` inside a ternary).
+        let variationHead: String = String(localized: "Variation ") + "\(rank + 1)" + ", "
+        let playingSuffix: String = isOn ? String(localized: ", playing") : ""
+        let variationLabel: String = variationHead + "\(pct)" + String(localized: " percent match") + playingSuffix
         return Button { applyVariation(cand) } label: {
             HStack(spacing: 10) {
                 Text("\(rank + 1)")
@@ -4219,7 +4224,7 @@ struct EchoelStudioView: View {
                 .fill(isOn ? EchoelTheme.text.opacity(0.08) : Color.clear))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Variation \(rank + 1), \(pct) percent match\(isOn ? ", playing" : "")")
+        .accessibilityLabel(variationLabel)
         .accessibilityHint("Play this idea")
         .accessibilityAddTraits(isOn ? [.isSelected] : [])
     }
@@ -5642,7 +5647,7 @@ struct EchoelStudioView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: floatingVisualVisible ? "eye.slash" : "eye")
-                    Text(floatingVisualVisible ? "Hide visual window" : "Show visual window")
+                    Text(floatingVisualVisible ? String(localized: "Hide visual window") : String(localized: "Show visual window"))
                         .font(EchoelTheme.font(13))
                     Spacer(minLength: 0)
                 }
@@ -5653,7 +5658,7 @@ struct EchoelStudioView: View {
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                     .strokeBorder(EchoelTheme.border, lineWidth: 1))
             }
-            .accessibilityLabel(floatingVisualVisible ? "Hide the floating visual window" : "Show the floating visual window")
+            .accessibilityLabel(floatingVisualVisible ? String(localized: "Hide the floating visual window") : String(localized: "Show the floating visual window"))
             // #747 — THE DOOR TO THE FULLSCREEN FIELD (open task #270, closed here). Everything
             // behind `.fullScreenCover(isPresented: $showVisual)` was already built and polished
             // — the fullscreen `MetalBioView`, the VJ overlay, `SpectralDonutView`, record, close
@@ -6439,7 +6444,7 @@ struct EchoelStudioView: View {
                         }
                         .accessibilityLabel("\(preset.name) visual preset — \(preset.blurb)")
                         .accessibilityAddTraits(selected ? [.isSelected] : [])
-                        .accessibilityHint(selected ? "Double tap to clear" : "Double tap to apply")
+                        .accessibilityHint(selected ? String(localized: "Double tap to clear") : String(localized: "Double tap to apply"))
                     }
                 }
             }
@@ -6573,6 +6578,9 @@ struct EchoelStudioView: View {
                     ForEach(LookBlendMap.library, id: \.index) { look in
                         let pos = sliderLooks.firstIndex(of: look.index)
                         let on = pos != nil
+                        // E4-46: the spoken value interpolated a position into a literal — typed steps, keys.
+                        let positionText: String = String(localized: "in the slider, position ") + "\((pos ?? 0) + 1)"
+                        let sliderValue: String = on ? positionText : String(localized: "not in the slider")
                         Button {
                             let next = LookBlendMap.toggling(look.index, in: sliderLooks)
                             sliderLooksRaw = LookBlendMap.string(from: next)
@@ -6600,9 +6608,9 @@ struct EchoelStudioView: View {
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("\(look.name) look")
-                        .accessibilityValue(on ? "in the slider, position \((pos ?? 0) + 1)" : "not in the slider")
+                        .accessibilityValue(sliderValue)
                         .accessibilityAddTraits(on ? [.isSelected] : [])
-                        .accessibilityHint(on ? "Double tap to remove from the slider" : "Double tap to add to the slider")
+                        .accessibilityHint(on ? String(localized: "Double tap to remove from the slider") : String(localized: "Double tap to add to the slider"))
                     }
                 }
                 .padding(.vertical, 1)
@@ -7826,7 +7834,7 @@ struct EchoelStudioView: View {
                 if let id = moodPresetID {
                     let isFav = moodStore.isFavorite(id: id)
                     Button { moodStore.toggleFavorite(id: id) } label: {
-                        Label(isFav ? "Unfavorite" : "Favorite", systemImage: isFav ? "star.slash" : "star")
+                        Label(isFav ? String(localized: "Unfavorite") : String(localized: "Favorite"), systemImage: isFav ? "star.slash" : "star")
                     }
                     if !moodStore.isFactory(moodSnapshot(id: id, name: moodPresetName)) {
                         Button { moodStore.save(moodSnapshot(id: id, name: moodPresetName)) } label: {
@@ -8464,7 +8472,7 @@ struct EchoelStudioView: View {
                     }
                     let isFav = patchStore.isFavorite(id: currentPatch.id)
                     Button { patchStore.toggleFavorite(id: currentPatch.id) } label: {
-                        Label(isFav ? "Unfavorite" : "Favorite", systemImage: isFav ? "star.slash" : "star")
+                        Label(isFav ? String(localized: "Unfavorite") : String(localized: "Favorite"), systemImage: isFav ? "star.slash" : "star")
                     }
                     if !patchStore.isFactory(currentPatch) {
                         Button {
@@ -9476,7 +9484,7 @@ struct EchoelStudioView: View {
                     soundResetArmed = true
                 }
             } label: {
-                Text(soundResetArmed ? "Tap again for the default sound" : "Default sound")
+                Text(soundResetArmed ? String(localized: "Tap again for the default sound") : String(localized: "Default sound"))
                     .font(EchoelTheme.font(11))
                     .foregroundStyle(soundResetArmed ? EchoelTheme.text : EchoelTheme.dim)
                     // ⚠️ `minHeight`, not `height`, and `contentShape` because `.buttonStyle(.plain)`

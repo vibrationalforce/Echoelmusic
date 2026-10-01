@@ -85,7 +85,10 @@
 // E4-44 added the three On/Off siblings — Perform mix switch, header Guide button, Workstation click toggle (parent: a bare
 // `? "On" : "Off"` ternary in each, no units missing — ONE finding).
 // E4-45 added the blocked-Apply sentence — `MediaLookUndo.applyBlockedReason` as seams around `spokenMedium`, which moved
-// into the owner (parent: an interpolated identifier in the spoken sentence, 2 units missing — ONE finding). Claim 12
+// into the owner (parent: an interpolated identifier in the spoken sentence, 2 units missing — ONE finding).
+// E4-46 added EchoelStudioView's remaining sites — Explore/New, the variation row's spoken label, the visual-window button,
+// the preset hint, the look chip's value/hint, the favourite labels, „Default sound“ (parent: ternaries and interpolated
+// labels of bare literals, 20 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1555,6 +1558,41 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertFalse(photoCardTail.contains(verbatim), "the spoken medium has a second home in the photo card again: `\(verbatim)`")
         }
         try assertGerman(["A ", " look is applied. Undo it first to apply this one.", "photo", "video"], "blocked-Apply sentence")
+
+        // E4-46 — EchoelStudioView's remaining ternaries and two interpolated spoken labels: the Explore/New button
+        // (text + label), the variation row's spoken label (rank, match, playing — typed steps), the visual-window
+        // button (text + label), the visual-preset hint, the look chip's spoken value (position) and hint, the two
+        // favourite menu labels, and the „Default sound“ pair. Each arm or seam is a catalog key.
+        let studioSites = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for seam in ["Text(mazeBoard == nil ? String(localized: \"Explore\") : String(localized: \"New\"))",
+                     ".accessibilityLabel(mazeBoard == nil ? String(localized: \"Explore variations\") : String(localized: \"Explore new variations\"))",
+                     "let variationHead: String = String(localized: \"Variation \") + \"\\(rank + 1)\" + \", \"",
+                     "let playingSuffix: String = isOn ? String(localized: \", playing\") : \"\"",
+                     "let variationLabel: String = variationHead + \"\\(pct)\" + String(localized: \" percent match\") + playingSuffix",
+                     ".accessibilityLabel(variationLabel)",
+                     "Text(floatingVisualVisible ? String(localized: \"Hide visual window\") : String(localized: \"Show visual window\"))",
+                     ".accessibilityLabel(floatingVisualVisible ? String(localized: \"Hide the floating visual window\") : String(localized: \"Show the floating visual window\"))",
+                     ".accessibilityHint(selected ? String(localized: \"Double tap to clear\") : String(localized: \"Double tap to apply\"))",
+                     "let positionText: String = String(localized: \"in the slider, position \") + \"\\((pos ?? 0) + 1)\"",
+                     "let sliderValue: String = on ? positionText : String(localized: \"not in the slider\")",
+                     ".accessibilityValue(sliderValue)",
+                     ".accessibilityHint(on ? String(localized: \"Double tap to remove from the slider\") : String(localized: \"Double tap to add to the slider\"))",
+                     "Label(isFav ? String(localized: \"Unfavorite\") : String(localized: \"Favorite\"), systemImage: isFav ? \"star.slash\" : \"star\")",
+                     "Text(soundResetArmed ? String(localized: \"Tap again for the default sound\") : String(localized: \"Default sound\"))"] {
+            XCTAssertTrue(studioSites.contains(seam), "EchoelStudioView lost the E4-46 seam `\(seam)`")
+        }
+        for verbatim in ["Text(mazeBoard == nil ? \"Explore\" : \"New\")", "? \"Explore variations\" :", "percent match\\(isOn ?",
+                         "? \"Hide visual window\" :", "? \"Hide the floating visual window\" :", "? \"Double tap to clear\" :",
+                         "? \"in the slider, position \\(", "? \"Double tap to remove from the slider\" :", "Label(isFav ? \"Unfavorite\" : \"Favorite\"",
+                         "? \"Tap again for the default sound\" :"] {
+            XCTAssertFalse(studioSites.contains(verbatim), "EchoelStudioView spells a ternary or interpolated label of bare literals again: `\(verbatim)`")
+        }
+        try assertGerman(["Explore", "New", "Explore variations", "Explore new variations", "Variation ", ", playing", " percent match",
+                          "Hide visual window", "Show visual window", "Hide the floating visual window", "Show the floating visual window",
+                          "Double tap to clear", "Double tap to apply", "in the slider, position ", "not in the slider",
+                          "Double tap to remove from the slider", "Double tap to add to the slider", "Unfavorite", "Favorite",
+                          "Tap again for the default sound", "Default sound"],
+                         "Studio sites")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
