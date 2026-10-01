@@ -56,6 +56,14 @@ import XCTest
 /// the Piece stage: the Field panel, re-added TOGETHER with its producer. The count is five.
 /// Against the parent: both count needles red for their named reason (4, not 5); the loop's new
 /// `case "field":` entry red by ABSENCE — one absence (#486).
+/// ⭐ SLICE B (founder order 2026-10-01, one door per area) — the piece's FX and Master tabs and its
+/// Visual domain tab were SECOND doors to plates the Instrument strip already opens; they went, and
+/// their three cases with them (#290/#492). The count is TWO again — the two plate doors posted
+/// from the piece, "sound" (the track inspector, now its ONLY producer) and "bio" (the pulse pill) —
+/// exactly 2b's original pair, and each is still pinned to its OWN case. Against the parent: both
+/// count needles red for their named reason (5, not 2); the per-case loop green on both (its two
+/// remaining entries exist on both trees) — the three dropped entries are now `ThePieceHasTabsTests`
+/// claim 2 and `ThePieceHasOneTabRowTests` claim 3, which pin their ABSENCE.
 final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
 
     private static let seam = "Sources/Echoelmusic/Studio/StageShell.swift"
@@ -257,22 +265,21 @@ final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
         // code path choosing the stage FOR the player (the #1298/#1300 shape): name it here.
         let receiver = braceBody(of: "publisher(for: .echoelChromeDoor)) { note in", in: studio)
         XCTAssertFalse(receiver.isEmpty, "ANCHOR: the chrome-door receiver moved — re-anchor (#454)")
-        // A7 (2026-10-01) named two more here, as this comment asks: the piece's tabs post
-        // "effects" and "master" from the Piece stage (and "sound", which is the inspector's
-        // case again). Each is a user action naming a panel of the other stage.
-        XCTAssertEqual(count("showStage(.instrument)", in: receiver), 5, """
+        // A7 and C5 (2026-10-01) named three more here ("effects", "master", "field"); slice B
+        // removed them the same day as second doors (founder: one door per area). Each remaining
+        // call is a user action naming a panel of the other stage.
+        XCTAssertEqual(count("showStage(.instrument)", in: receiver), 2, """
             The chrome-door receiver turns the Instrument stage \
-            \(count("showStage(.instrument)", in: receiver)) times; exactly five — the "sound" \
-            door (the track inspector AND the piece's Sound tab, both on the Piece stage), the \
-            "bio" door (the pulse pill, visible on both stages), the "effects" and "master" \
-            doors (the piece's FX and Master tabs, A7), and the "field" door (the piece's Visual \
-            domain, C5). A plate selected in a hidden studio is a button that does nothing \
-            (#164/#227) — the first defect measured on slice 2a.
+            \(count("showStage(.instrument)", in: receiver)) times; exactly two — the "sound" \
+            door (the Echoel track's device door in the track inspector, on the Piece stage) and \
+            the "bio" door (the pulse pill, visible on both stages). A plate selected in a hidden \
+            studio is a button that does nothing (#164/#227) — the first defect measured on slice \
+            2a. A third turn is a new door from the piece: name it here, and check it is not a \
+            twin of a chip one seam tap away (slice B).
             """)
-        for door in ["case \"sound\":", "case \"bio\":", "case \"effects\":", "case \"master\":",
-                     "case \"field\":"] {
+        for door in ["case \"sound\":", "case \"bio\":"] {
             guard let start = receiver.range(of: door) else {
-                XCTFail("the receiver lost `\(door)` — the five turns above are named by their cases")
+                XCTFail("the receiver lost `\(door)` — the two turns above are named by their cases")
                 continue
             }
             let tail = receiver[start.upperBound...]
@@ -280,7 +287,7 @@ final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
             XCTAssertTrue(tail[..<next].contains("showStage(.instrument)"),
                           "`\(door)` must turn the Instrument stage itself — the count alone could pair a turn with the wrong door")
         }
-        XCTAssertEqual(count("showStage(.instrument)", in: studio), 5,
+        XCTAssertEqual(count("showStage(.instrument)", in: studio), 2,
                        "no call outside the receiver turns the Instrument stage")
         let newPiece = braceBody(of: "private func startNewPiece() {", in: studio)
         XCTAssertTrue(newPiece.contains("showStage(.piece)"),

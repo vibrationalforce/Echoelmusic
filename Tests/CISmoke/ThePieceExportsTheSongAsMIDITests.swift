@@ -268,16 +268,18 @@ final class ThePieceExportsTheSongAsMIDITests: XCTestCase {
         XCTAssertEqual(workstation.components(separatedBy: "SongExportTab()").count - 1, 1,
                        "exactly one export door on the piece")
         let tabs = try member("private var pieceTabs: some View {", in: workstation)
+        // Slice B (2026-10-01) removed the Master tile this claim anchored on; Mix is now the tab
+        // before Export, so the order and the own-gate needles anchor on Mix — same law.
         guard let door = tabs.range(of: "SongExportTab()"),
-              let master = tabs.range(of: "object: \"master\""),
+              let mix = tabs.range(of: "plate = .mix"),
               let gate = tabs.range(of: "if level.showsSongs {", options: .backwards,
                                     range: tabs.startIndex..<door.lowerBound) else {
-            return XCTFail("ANCHOR MISSING: the export door, the Master post or a showsSongs gate (#454)")
+            return XCTFail("ANCHOR MISSING: the export door, the Mix tab or a showsSongs gate (#454)")
         }
-        XCTAssertLessThan(master.lowerBound, door.lowerBound, "Export is the last tab, after Master")
-        XCTAssertLessThan(master.lowerBound, gate.lowerBound, """
-            the gate nearest the door is its OWN `showsSongs` gate — not the one Mix or FX sits \
-            behind, which would put Export inside another tab's block
+        XCTAssertLessThan(mix.lowerBound, door.lowerBound, "Export is the last tab, after Mix")
+        XCTAssertLessThan(mix.lowerBound, gate.lowerBound, """
+            the gate nearest the door is its OWN `showsSongs` gate — not the one Mix sits behind, \
+            which would put Export inside another tab's block
             """)
         XCTAssertFalse(tabs[gate.upperBound..<door.lowerBound].contains("}"),
                        "the door sits directly inside its gate")

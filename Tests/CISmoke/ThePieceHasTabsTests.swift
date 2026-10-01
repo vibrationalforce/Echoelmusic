@@ -1,48 +1,71 @@
 // ThePieceHasTabsTests.swift
-// Echoel — the Piece stage carries a row of tabs above the arrangement: Arrange · Sound · FX ·
-// Master (Workstation redesign A7, founder 2026-10-01).
+// Echoel — the Piece stage carries a row of tabs above the arrangement: Arrange · Mix · Export
+// (Workstation redesign A7, founder 2026-10-01; slice B the same day).
 //
 // WHY: the tablet mockup the founder pointed at („Das angehängte Bild gefällt mir auch") puts
-// the workstation's areas in one tab row above the arrangement. On the Piece stage the panels
-// that shape the sound lived one stage away behind a seam a new player does not read as a door.
-// A7 adds the row WITHOUT a second copy of any panel and WITHOUT a modal: Sound, FX and Master
-// post the existing chrome door, whose receiver opens the panel AND turns the Instrument stage
-// (the slice-2b nothing-button law). Export was deliberately NOT a tab while no song export existed
+// the workstation's areas in one tab row above the arrangement. A7 built it WITHOUT a second copy
+// of any panel and WITHOUT a modal. Export was deliberately NOT a tab while no song export existed
 // — a tab with no destination is a button that does nothing (#164/#227). ⭐ B4 (2026-10-01) gave it
 // one: the LAST tab is `SongExportTab`, a `ShareLink` in its own leaf, behind its own `showsSongs`
 // gate (its behaviour and its door: `ThePieceExportsTheSongAsMIDITests`). It posts nothing, so the
 // ban on an `"export"` POSTER below still holds — the share sheet is the destination.
 // ⭐ B3 (2026-10-01) made the plate TWO views — Arrange and Mix — so Arrange stopped being a
-// passive tile: it is the button that brings the arrangement back from the mixer. A7's law
-// survives in its sharper form: each plate tab sets ITS plate, the current one says selected,
-// and neither posts a door (the mixer is `PieceMixerView` on this plate, not a panel elsewhere).
+// passive tile: it is the button that brings the arrangement back from the mixer. Each plate tab
+// sets ITS plate, the current one says selected, and neither posts a door.
+// ⭐ SLICE B (founder order 2026-10-01: „Vermeide das es mehrfache Wege zu einem Bereich gibt …
+// Vermeide slop"). A7 also put Sound, FX and Master in this row as tiles that posted the chrome
+// door and JUMPED to the Instrument stage. Each was a SECOND door: FX and Master are chips of the
+// Instrument strip (`studioChips`, same `showsSongs`/`showsProTabs` gates), Sound is a chip AND the
+// Echoel track's device door (`TrackInspectorView.openDeviceButton`). Slice B removed the three
+// tiles and their two receiver cases; the row's law is now the sharper one — EVERY TAB ACTS IN
+// PLACE: no tab here posts the chrome door, none turns the stage. FX and Master are one seam tap
+// („Instrument") plus their chip away, at the same levels as before — a measured cost, accepted.
 //
-// THE THREE CLAIMS:
+// THE THREE CLAIMS (per-claim history of the slice-B rewrite at the end of this header):
 // 1. `WorkstationView` pins `pieceTabs` above the plate's scroll (`.safeAreaInset(edge: .top)`);
-//    Arrange and Mix come FIRST, each sets its own plate and carries `.isSelected` only while it
-//    is the current one; the three posts are literal; Mix and FX follow the Instrument strip's
-//    `showsSongs` gate, Master its `showsProTabs` gate.
-// 2. The receiver handles `"effects"` and `"master"` — each opens its panel and turns the stage.
+//    Arrange, Mix and Export stand in that order; each plate tab sets its own plate and carries
+//    `.isSelected` only while it is the current one; Mix follows the Instrument strip's
+//    `showsSongs` gate; and the row posts NOTHING (no `NotificationCenter`, no `.echoelChromeDoor`).
+// 2. The stage-jumping cases left with their tiles: the receiver has no `case "effects":` and no
+//    `case "master":`, no file in `Sources/` posts either string, and both panels keep their door
+//    on the Instrument stage (`.effects` and `.master` stay in `studioChips`, behind their gates).
 // 3. Counterweights — no Mix or Export POSTER on the piece (Export is a `ShareLink`, B4), no
-//    presentation modifier added to `WorkstationView` (the black-screen law), the row is solid
-//    with a 1-px border (Uncodixfy),
-//    and every tab's visible word is in its spoken label (TheIconTileCarriesAWordTests' rule).
+//    presentation modifier added to the row (the black-screen law), the row is solid with a 1-px
+//    border (Uncodixfy), every plate tab's visible word is in its spoken label, the row reads no
+//    hot state (it is pinned in `WorkstationView.body`, an ancestor of the plate's pickers — the
+//    10.76.41/50 freeze), and it names no Space, Stream or XR tab (H5: Stream and XR stay out;
+//    Space arrives with C4a-2 and a landing of its own).
+//
+// SLICE-B REWRITE, per claim (nothing weakened; two claims inverted from "the door exists" to
+// "the twin is gone", one counterweight narrowed to the words that still exist):
+// · claim 1 — KEPT: the inset, the plate default, Arrange-before-Mix, both conditional traits, the
+//   ban on an unconditional `.isSelected`, the Mix gate, the one level key. CHANGED: "the plate
+//   tabs come before the door tabs" became "Mix comes before Export" (there are no door tabs);
+//   "the three posts are literal, exactly once" became "the row posts nothing"; the FX and Master
+//   gate needles are gone with their tiles (their gates now live only in `chips(for:)`, which
+//   `TheChipStripFollowsTheSkillLevelTests` pins).
+// · claim 2 — INVERTED: it pinned that the receiver opens `"effects"`/`"master"` and turns the
+//   stage; with no poster left those cases would be the #290/#492 hook-without-a-producer, so it
+//   now pins their ABSENCE plus the panels' surviving Instrument doors (the honest half of
+//   "nothing was lost").
+// · claim 3 — KEPT except the word list: Sound, FX and Master are no longer words of this row.
+//   Export's word lives in `SongExportTab` and is pinned by `ThePieceExportsTheSongAsMIDITests`.
+//   GAINED two laws the deleted domain-row guard carried for the row ABOVE this one, restated
+//   here for the one top row that is left instead of dropped with their row: the hot-read ban
+//   (minus the level key, which this row reads legitimately and COLD) and the Space/Stream/XR ban.
 //
 // GRADING (§0/§3, no Swift toolchain in a web session — transcribed in Python against both
-// trees): all claims are SOURCE-TEXT scans. Parent tree: claims 1–2 red by ABSENCE of
-// `pieceTabs` and the two cases — one absence (#486); claim 3 is COUNTERWEIGHTS, green on both
-// except its two bar needles, which read `pieceTabs` and belong to claim 1's absence. B3 re-grade
-// against A7's tree (7303c048a): claim 1's plate-tab needles (`plate = .arrange`, `plate = .mix`,
-// the two conditional traits, the Mix word) are red there by ABSENCE of the plate state — one
-// absence (#486); the ban on an UNCONDITIONAL `.isSelected` is a REGRESSION there, red for its
-// named reason (A7's tile carried it, correctly while the plate had one view); the three posts,
-// the gates and claims 2–3 stay green on both. B4 re-grade against B3's tree (6f3eb2450): the
-// FX gate is now the gate NEAREST BEFORE the FX post — the old bare backwards search would land on
-// Export's own gate after Master and be red on B4's correct tree, for a reason it does not name
-// (#367); the new no-`}` assertion is green on both; `SongExportTab()` is red there by ABSENCE
-// (one absence, #486). DEVICE PROBE,
-// open: the row reads as tabs, Mix shows the strips and Arrange brings the canvas back, FX/Master
-// land on their panel, and „Piece" brings the player back — readings, not scans.
+// trees): all claims are SOURCE-TEXT scans. Against the parent (A7+B3+B4+C5 tree): claim 1's two
+// no-post needles (`NotificationCenter`, `.echoelChromeDoor`) are REGRESSIONS, red there for their
+// named reason (three literal posts sit in the row); every other claim-1 needle, including
+// Mix-before-Export, is green on both. Claim 2's three absence assertions (two cases, the poster
+// walk) are REGRESSIONS, red there for their named reason; its `"sound"` anchor and two chip
+// counterweights are green on both. Claim 3 is green on both (the two laws it gained are
+// COUNTERWEIGHTS — `pieceTabs` read no hot state and named no Space tab on the parent either).
+// Against this tree: all green
+// (Python transcription, 66 checks over the five touched guards). DEVICE PROBE, open: the row
+// reads Arrange · Mix · Export at Pro level, Mix shows the strips and Arrange brings the canvas
+// back, and „Instrument" then the FX/Master chip reaches what the removed tiles reached.
 
 import XCTest
 
@@ -50,10 +73,11 @@ final class ThePieceHasTabsTests: XCTestCase {
 
     private static let workstation = "Sources/Echoelmusic/Studio/WorkstationView.swift"
     private static let studio = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
+    private static let sourcesRoot = "Sources/Echoelmusic"
 
-    // MARK: 1 — the row is pinned above the plate, Arrange is where you are
+    // MARK: 1 — the row is pinned above the plate, and every tab acts in place
 
-    func testThePieceTabsArePinnedAboveThePlate() throws {
+    func testThePieceTabsArePinnedAboveThePlateAndActInPlace() throws {
         let code = SourceText.codeOnly(try text(Self.workstation))
         let body = try member("var body: some View {", in: code)
         XCTAssertTrue(body.contains(".safeAreaInset(edge: .top, spacing: 0) { pieceTabs }"),
@@ -64,13 +88,13 @@ final class ThePieceHasTabsTests: XCTestCase {
                       "the plate opens on the arrangement — the mixer is one tap away, never the default")
         guard let arrange = tabs.range(of: "plate = .arrange"),
               let mix = tabs.range(of: "plate = .mix"),
-              let firstPost = tabs.range(of: "NotificationCenter.default.post(") else {
-            return XCTFail("ANCHOR MISSING: the two plate tabs or the first door post (#454)")
+              let export = tabs.range(of: "SongExportTab()") else {
+            return XCTFail("ANCHOR MISSING: the two plate tabs or the export tab (#454)")
         }
         XCTAssertLessThan(arrange.lowerBound, mix.lowerBound, "Arrange is the first tab, Mix the second")
-        XCTAssertLessThan(mix.lowerBound, firstPost.lowerBound, """
-            the plate tabs come before the door tabs — the two that change THIS surface sit together, \
-            ahead of the three that turn the stage
+        XCTAssertLessThan(mix.lowerBound, export.lowerBound, """
+            Export comes after Mix — the two that switch THIS plate sit together, ahead of the one \
+            that hands the piece away
             """)
         for (view, word) in [(".arrange", "Arrange"), (".mix", "Mix")] {
             XCTAssertTrue(tabs.contains("prominent: plate == \(view)"),
@@ -83,59 +107,65 @@ final class ThePieceHasTabsTests: XCTestCase {
         XCTAssertFalse(tabs.contains(".accessibilityAddTraits(.isSelected)"),
                        "an UNCONDITIONAL selected trait would call a tab current while the other plate shows")
 
-        for door in ["sound", "effects", "master"] {
-            XCTAssertEqual(tabs.components(separatedBy:
-                "NotificationCenter.default.post(name: .echoelChromeDoor, object: \"\(door)\")").count - 1, 1,
-                "the \(door) tab posts the chrome door exactly once, literally (the producer census reads it)")
+        for door in ["NotificationCenter", ".echoelChromeDoor", "showStage("] {
+            XCTAssertFalse(tabs.contains(door), """
+                the piece's tab row contains `\(door)`. Every tab here acts IN PLACE (slice B, \
+                founder 2026-10-01: one door per area): a tile that jumps to the Instrument stage \
+                is a second door to a panel whose chip is already one seam tap away. If a new tab \
+                genuinely needs another surface, remove its twin in the same commit and rewrite \
+                this claim to name both (#364).
+                """)
         }
         guard let mixGate = tabs.range(of: "if level.showsSongs {"),
-              let mixTab = tabs.range(of: "plate = .mix"),
-              let fx = tabs.range(of: "object: \"effects\""),
-              // The gate NEAREST BEFORE the FX post — since B4 the last `showsSongs` gate in the
-              // row is Export's own, after Master, so a bare backwards search would find that one.
-              let fxGate = tabs.range(of: "if level.showsSongs {", options: .backwards,
-                                      range: tabs.startIndex..<fx.lowerBound),
-              let masterGate = tabs.range(of: "if level.showsProTabs {"),
-              let master = tabs.range(of: "object: \"master\"") else {
-            return XCTFail("ANCHOR MISSING: a SkillLevel gate or the FX/Master post (#454)")
+              let mixTab = tabs.range(of: "plate = .mix") else {
+            return XCTFail("ANCHOR MISSING: the Mix tab's SkillLevel gate (#454)")
         }
         XCTAssertLessThan(mixGate.lowerBound, mixTab.lowerBound, """
             Mix follows the strip's `showsSongs` gate — the same level that first shows a song's \
             parts shows its mixer
             """)
-        XCTAssertLessThan(fxGate.lowerBound, fx.lowerBound,
-                          "FX follows the strip's `showsSongs` gate — a beginner sees the same panels here as there")
-        XCTAssertFalse(tabs[fxGate.upperBound..<fx.lowerBound].contains("}"), """
-            the FX post sits INSIDE that gate — a closed block between them would mean FX follows \
-            some other tab's gate and is shown to every level
-            """)
-        XCTAssertLessThan(masterGate.lowerBound, master.lowerBound,
-                          "Master follows the strip's `showsProTabs` gate")
         XCTAssertTrue(code.contains("@AppStorage(StudioDefaultKeys.skillLevel.key)"),
                       "the level is read through the ONE key (#416)")
     }
 
-    // MARK: 2 — the receiver opens each panel and turns the stage
+    // MARK: 2 — the stage-jumping cases left with their tiles; the panels keep their own doors
 
-    func testTheReceiverOpensEachTabsPanel() throws {
+    func testTheStageJumpingTabsLeftAndTheirPanelsKeepTheirChips() throws {
         let studio = SourceText.codeOnly(try text(Self.studio))
         guard let start = studio.range(of: "publisher(for: .echoelChromeDoor)) { note in"),
               let end = studio.range(of: "default: break", range: start.upperBound..<studio.endIndex) else {
             return XCTFail("ANCHOR MISSING: the chrome-door receiver (#454)")
         }
         let receiver = String(studio[start.upperBound..<end.lowerBound])
-        for (door, menu) in [("effects", ".effects"), ("master", ".master")] {
-            guard let caseStart = receiver.range(of: "case \"\(door)\":") else {
-                XCTFail("the receiver has no `case \"\(door)\":` — the tab would be a button that does nothing")
-                continue
-            }
-            let tail = receiver[caseStart.upperBound...]
-            let next = tail.range(of: "case \"")?.lowerBound ?? tail.endIndex
-            let arm = tail[..<next]
-            XCTAssertTrue(arm.contains("activeMenu = \(menu)"), "`\(door)` opens its own panel")
-            XCTAssertTrue(arm.contains("showStage(.instrument)"), """
-                `\(door)` must turn the Instrument stage — its poster sits on the Piece stage, \
-                where the studio is hidden (slice 2b's first measured defect).
+        XCTAssertTrue(receiver.contains("case \"sound\":"), """
+            ANCHOR: the receiver's surviving `"sound"` case is gone — an absence scan over a \
+            receiver that lost everything is the #343 trap, so this anchors on a case that MUST stay
+            """)
+        for door in ["effects", "master"] {
+            XCTAssertFalse(receiver.contains("case \"\(door)\":"), """
+                `case "\(door)":` is back in the chrome-door receiver. Its only poster was the \
+                piece's \(door == "effects" ? "FX" : "Master") tile, removed by slice B as a second \
+                door. A case with no poster compiles silently and reads like a live hook (#290/#492) \
+                — re-add it only TOGETHER with a poster that is not a twin of the chip.
+                """)
+        }
+
+        let posters = try postersInSources(of: ["effects", "master"])
+        XCTAssertTrue(posters.isEmpty, """
+            `.echoelChromeDoor` posts \(posters) — a door with no receiver case is a button that \
+            does nothing (#164/#227), and a door WITH one is the second door slice B removed.
+            """)
+
+        guard let declaration = studio.range(of: "private static let studioChips: [StudioMenu] ="),
+              let opening = studio.range(of: "[", range: declaration.upperBound..<studio.endIndex),
+              let closing = studio.range(of: "]", range: opening.upperBound..<studio.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the Instrument strip `studioChips` (#454)")
+        }
+        let strip = studio[opening.upperBound..<closing.lowerBound]
+        for chip in [".effects", ".master"] {
+            XCTAssertTrue(strip.contains(chip), """
+                `\(chip)` left the Instrument strip — with the piece's tile gone too, that panel \
+                would have NO door at all. The tile was removed BECAUSE this chip exists.
                 """)
         }
     }
@@ -157,20 +187,60 @@ final class ThePieceHasTabsTests: XCTestCase {
                       "the Export tab has its destination — the share sheet of its own `ShareLink` (B4)")
         let tabs = try member("private var pieceTabs: some View {", in: code)
         for modal in [".sheet(", ".fullScreenCover(", ".popover(", ".alert("] {
-            XCTAssertFalse(tabs.contains(modal), "the tabs open panels through the door, never a modal (black-screen law)")
+            XCTAssertFalse(tabs.contains(modal), "the tabs act in place, never through a modal (black-screen law)")
         }
         XCTAssertTrue(tabs.contains(".background(EchoelTheme.bg)"), "a solid row — no blur, no glass")
         XCTAssertTrue(tabs.contains("Rectangle().fill(EchoelTheme.border).frame(height: 1)"),
                       "a 1-px border separates it from the plate")
         XCTAssertFalse(tabs.contains(".shadow("), "no shadow layer (Uncodixfy)")
-        for word in ["Arrange", "Mix", "Sound", "FX", "Master"] {
+        for word in ["Arrange", "Mix"] {
             XCTAssertTrue(tabs.contains("title: \"\(word)\""), "the \(word) tab shows its word")
             XCTAssertTrue(tabs.contains(".accessibilityLabel(\"\(word)\")"),
                           "and says the same word to VoiceOver (Label in Name)")
         }
+        for read in ["player.", "transport.", "metronome.", "cameraRPPG", "bus."] {
+            XCTAssertFalse(tabs.contains(read), """
+                the piece's tab row reads `\(read)`. It is pinned in `WorkstationView.body`, an \
+                ancestor of the plate's pickers; a hot read here is the 10.76.41/50 freeze. Read it \
+                in a leaf, the way `SongExportTab` reads the tempo mirror in its own body.
+                """)
+        }
+        for word in ["Space", "Stream", "XR"] {
+            XCTAssertFalse(tabs.contains("\"\(word)\""), """
+                the row shows `\(word)`. Stream and XR stay out (H5: no HaishinKit, no visionOS \
+                target). Space arrives with C4a-2 and a landing of its own — never as a twin of the \
+                header light tile's Routing door (slice B). Add it AND its landing in one commit.
+                """)
+        }
     }
 
     // MARK: helpers
+
+    /// Every file under `Sources/Echoelmusic` whose CODE posts the chrome door with one of `doors`.
+    /// A walk that saw too few files is a finding, never a pass.
+    private func postersInSources(of doors: [String]) throws -> [String] {
+        var root = URL(fileURLWithPath: #filePath)
+        for _ in 0..<3 { root.deleteLastPathComponent() }
+        let base = root.appendingPathComponent(Self.sourcesRoot)
+        guard let walker = FileManager.default.enumerator(atPath: base.path) else {
+            XCTFail("cannot enumerate \(Self.sourcesRoot) — a scan that saw nothing is not a pass")
+            return []
+        }
+        var found: [String] = []
+        var seen = 0
+        for case let relative as String in walker where relative.hasSuffix(".swift") {
+            seen += 1
+            guard let raw = try? String(contentsOf: base.appendingPathComponent(relative), encoding: .utf8)
+            else { continue }
+            let code = SourceText.codeOnly(raw)
+            for door in doors
+            where code.contains("NotificationCenter.default.post(name: .echoelChromeDoor, object: \"\(door)\")") {
+                found.append("\(relative) → \"\(door)\"")
+            }
+        }
+        XCTAssertGreaterThan(seen, 200, "the walk saw \(seen) files — the wrong directory")
+        return found
+    }
 
     /// The brace-matched body after `anchor` (#408); string-literal aware.
     private func member(_ anchor: String, in code: String) throws -> String {

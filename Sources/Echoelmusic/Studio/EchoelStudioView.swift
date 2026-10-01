@@ -1226,7 +1226,8 @@ struct EchoelStudioView: View {
                 // the whole reason this notification still exists. WA4 path 9 added a third
                 // producer of the same kind — a leaf outside this view's state: the Echoel
                 // track's device door in the Workstation's track inspector, posting "sound".
-                // A7 added the fourth: the piece's tabs, posting "sound", "effects", "master".)
+                // A7's piece tabs were a fourth, posting "sound", "effects", "master" — slice B,
+                // 2026-10-01, removed them as second doors, and their two cases with them.)
                 //
                 // ⛔ FOUR CASES WERE DELETED HERE, NOT LEFT "just in case" (#290): "master",
                 // "export", "tempo" and "session". Those four panels are chips now, and a chip
@@ -1264,10 +1265,11 @@ struct EchoelStudioView: View {
                     // clips tile and the recorded-clips library are both deleted. Removing the
                     // case here in the SAME commit is the #492 rule — a `case` with no poster
                     // compiles silently and reads like a live hook.
-                    // C5: the piece's Light tab (`WorkstationView.domainTabs`) posts this from a
-                    // stage where a medium-detent sheet (FX, Live Colabo) can still be up — the
-                    // door refuses rather than drive a second modal true (the two-modals hang).
-                    // The header light monitor inherits it.
+                    // The header light monitor (`EchoelLuxMonitorMini`) posts this on BOTH stages,
+                    // where a medium-detent sheet (FX, Live Colabo) can still be up — the door
+                    // refuses rather than drive a second modal true (the two-modals hang). C5's
+                    // Light tab added the refusal; slice B removed that tab as the monitor's twin,
+                    // and the refusal stays for the monitor.
                     case "routing":
                         if !showAllFX, !showLiveColabo { showRouting = true }
                     // The pulse monitor opens the Bio dropdown (B3). Since #289 that monitor
@@ -1287,23 +1289,12 @@ struct EchoelStudioView: View {
                     case "sound":
                         activeMenu = .sound
                         showStage(.instrument)
-                    // Workstation redesign A7 (founder 2026-10-01) — the piece's tabs
-                    // (`WorkstationView.pieceTabs`) post these two from the Piece stage. They
-                    // re-add the #290 "master" case TOGETHER with its producer, as the note above
-                    // requires, and turn the stage for the same reason the "sound" door does.
-                    case "effects":
-                        activeMenu = .effects
-                        showStage(.instrument)
-                    case "master":
-                        activeMenu = .master
-                        showStage(.instrument)
-                    // Workstation redesign C5 (founder 2026-10-01, H5) — the piece's Visual domain
-                    // tab (`WorkstationView.domainTabs`) posts this from the Piece stage: the Field
-                    // panel, the plate the Instrument's Field chip selects. Re-added TOGETHER
-                    // with its producer (#290/#492), and it turns the stage for the "sound" reason.
-                    case "field":
-                        activeMenu = .field
-                        showStage(.instrument)
+                    // ⛔ "effects", "master" AND "field" WERE DELETED HERE (slice B, founder order
+                    // 2026-10-01: one door per area). Their only posters were the piece's FX and
+                    // Master tabs and its Visual domain tab — second doors to plates the chip
+                    // strip already opens. #290/#492: a `case` with no poster
+                    // compiles silently and reads like a live hook. Re-add one only TOGETHER with
+                    // a control that is not a twin of an existing door.
                     // WA4 Acceptance Test A — the Workstation's Save/Open row
                     // (`WorkstationProjectRow`) raises the Studio's OWN Save alert and Open sheet:
                     // the same slots `quickActionRow`/`quickDoorRow` set, no new modal, and the

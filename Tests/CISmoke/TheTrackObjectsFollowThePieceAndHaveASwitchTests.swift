@@ -20,7 +20,8 @@
 // has no production caller), so ON with no track silences ADM-OSC. Claim 5 pins that sentence.
 //
 // WHAT IS DELIBERATELY NOT HERE, and why it is not a gap:
-// · NO Space tab (`TheDomainTabsOpenOnlyWhatExistsTests` claim 4; C4a-2 adds it with a landing).
+// · NO Space tab — the C5 domain row it would have joined is gone (slice B,
+//   `ThePieceHasOneTabRowTests`); C4a-2 brings Space with a landing of its own, not as a tab twin.
 // · NO dialect picker (`TheSceneDialectHasNoWriterTests`).
 // · NO movement and NO render. The copy says "Nothing moves them yet" and "no audio"; each
 //   object also carries the instrument profile's FIXED gain, so the copy says "Position and a

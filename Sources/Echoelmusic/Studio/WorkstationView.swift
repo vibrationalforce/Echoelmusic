@@ -225,9 +225,9 @@ struct WorkstationView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     /// A9: `.compact` on an iPhone in landscape — the plate's two-column switch.
     @Environment(\.verticalSizeClass) private var verticalSizeClass
-    /// The user's chosen level for the chip strip — read here so the piece's tabs (A7) offer
-    /// exactly the panels the Instrument strip offers at that level (`SkillLevel`). COLD: a tap
-    /// changes it, never a tick.
+    /// The user's chosen level for the chip strip — read here so the piece's Mix and Export tabs
+    /// appear at exactly the level the Instrument strip shows its song chips (`showsSongs`).
+    /// COLD: a tap changes it, never a tick.
     @AppStorage(StudioDefaultKeys.skillLevel.key)
     private var skillLevelRaw = StudioDefaultKeys.skillLevel.value.rawValue
 
@@ -483,8 +483,6 @@ struct WorkstationView: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) { transportBar }
         .safeAreaInset(edge: .top, spacing: 0) { pieceTabs }
-        // C5: the domains sit above the tabs — a later inset is placed outside the earlier one.
-        .safeAreaInset(edge: .top, spacing: 0) { domainTabs }
         #if canImport(UniformTypeIdentifiers)
         // ⚠️ ON THE LEAF, NEVER ON THE ROOT — see the header. `allowedContentTypes: [.audio]`
         // is the system's own conformance test, so a picker that offers a file at all has
@@ -878,17 +876,23 @@ struct WorkstationView: View {
     }
 
     /// A7 (founder 2026-10-01, the tablet mockup's tab row) — the piece's tabs, pinned above the
-    /// plate's scroll. Arrange and Mix (B3) switch THIS plate; Sound, FX and Master
-    /// open their panel on the Instrument stage through the chrome door, the same receiver the
-    /// track inspector's device door uses — no new modal, no second copy of a panel. Each poster
-    /// is written out literally so the guards can count the producers of each door. Mix and FX
-    /// follow the Instrument strip's `showsSongs` gate, Master its `showsProTabs` gate
-    /// (`chips(for:)`), so a beginner sees the same panels here as there. Export (B4) shares the
-    /// whole song as a MIDI file through its own leaf, `SongExportTab` — a `ShareLink`, so no
-    /// presentation modifier joins this view; it follows the `showsSongs` gate like Mix. (Until
-    /// B4 Export was deliberately NOT a tab: with no song export, a tab with no destination is a
-    /// button that does nothing, #164/#227. Until B3, Arrange was a plain tile — with nothing to
-    /// switch to, a button would have opened what was already open.)
+    /// plate's scroll. EVERY TAB ACTS IN PLACE: Arrange and Mix (B3) switch THIS plate, Export
+    /// (B4) shares the whole song as a MIDI file through its own leaf, `SongExportTab` — a
+    /// `ShareLink`, so no presentation modifier joins this view. None posts the chrome door and
+    /// none turns the stage. Mix and Export follow the Instrument strip's `showsSongs` gate
+    /// (`chips(for:)`), so a beginner sees the same song tools here as there.
+    /// ⛔ SOUND, FX AND MASTER STOOD HERE as tiles that posted the chrome door and JUMPED to the
+    /// Instrument stage. Slice B (founder 2026-10-01: „Vermeide das es mehrfache Wege zu einem
+    /// Bereich gibt") removed them: each was a second door to a panel whose chip sits one seam tap
+    /// away, and a tile that leaves the plate does not belong in a row whose other tabs switch it.
+    /// Sound keeps its in-context door on the Echoel track (`TrackInspectorView.openDeviceButton`).
+    /// ⛔ So did the C5 domain row above this one (Music · Visual · Light, 44 pt): Music named
+    /// where you already are, Light was the header light monitor's door a second time (same post,
+    /// both on screen), Visual a second door to the Instrument's Visuals area. Re-add none of them
+    /// without removing its twin in the same commit.
+    /// (Until B4 Export was deliberately NOT a tab: with no song export, a tab with no destination
+    /// is a button that does nothing, #164/#227. Until B3, Arrange was a plain tile — with nothing
+    /// to switch to, a button would have opened what was already open.)
     private var pieceTabs: some View {
         let level = SkillLevel(rawValue: skillLevelRaw) ?? StudioDefaultKeys.skillLevel.value
         return HStack(spacing: 6) {
@@ -917,34 +921,6 @@ struct WorkstationView: View {
                 .accessibilityHint("Shows every sounding track's level, pan, mute and solo in one list")
                 .accessibilityAddTraits(plate == .mix ? .isSelected : [])
             }
-            Button {
-                NotificationCenter.default.post(name: .echoelChromeDoor, object: "sound")
-            } label: {
-                EchoelIconTile(systemImage: "pianokeys", title: "Sound", expands: true)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Sound")
-            .accessibilityHint("Opens the sound panel on the Instrument stage. Piece brings you back")
-            if level.showsSongs {
-                Button {
-                    NotificationCenter.default.post(name: .echoelChromeDoor, object: "effects")
-                } label: {
-                    EchoelIconTile(systemImage: "slider.horizontal.3", title: "FX", expands: true)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("FX")
-                .accessibilityHint("Opens the effects on the Instrument stage. Piece brings you back")
-            }
-            if level.showsProTabs {
-                Button {
-                    NotificationCenter.default.post(name: .echoelChromeDoor, object: "master")
-                } label: {
-                    EchoelIconTile(systemImage: "speaker.wave.2", title: "Master", expands: true)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Master")
-                .accessibilityHint("Opens the master output on the Instrument stage. Piece brings you back")
-            }
             if level.showsSongs {
                 SongExportTab()
             }
@@ -961,72 +937,6 @@ struct WorkstationView: View {
         .onChange(of: level.showsSongs) { _, shows in
             if !shows { plate = .arrange }
         }
-    }
-
-    /// Workstation redesign C5 (founder 2026-10-01, H5: "Music · Visual · Light · Space …
-    /// Stream und XR bleiben weg") — the piece's DOMAINS, one level above `pieceTabs`. Only a
-    /// domain with a real destination is a button (#164/#227 — a tab with no target is a dead
-    /// button):
-    /// · **Music** is where you are — the arrangement and the tabs below it. It is a marker, not
-    ///   a button, for the A7 Arrange-tile reason: with nothing to switch to, a button would
-    ///   open what is already open. Saying "selected" is honest because this row exists only on
-    ///   the Piece stage (`StageShell` constructs this view once, in `ArrangeStage`).
-    /// · **Visual** opens the Field panel on the Instrument stage through the chrome door — the
-    ///   plate the Instrument's Field chip selects. UNGATED: the level filter thins the
-    ///   Instrument's STRIP, not the app (`visibleChips` appends whatever plate a door selected),
-    ///   and below Producer, where the Field chip is hidden, this tab is the Field plate's one
-    ///   door — a level gate here would close it. (The header's visual tile shows the PICTURE,
-    ///   the floating window; it does not open this plate.)
-    /// · **Light** opens Routing, the door the header's light monitor already posts: its Light
-    ///   card holds master, blackout, DMX resolution and fixtures. Ungated, like that monitor.
-    /// ⛔ **No Space tab yet.** Both spatial controls on a reachable surface — the ADM-OSC row
-    /// and, since C4a, its "Every track as its own object" switch — sit inside Routing, so a
-    /// Space tab today would still be a second word for Light's door; `ImmersiveStageView` is
-    /// doorless by ship gate 4. Space arrives when Routing can LAND on its network card (C4a-2).
-    /// FREEZE LAW: reads NO state at all — never a bio, meter or playhead value here.
-    private var domainTabs: some View {
-        HStack(spacing: 4) {
-            Text("Music")
-                .font(EchoelTheme.font(13, .semibold))
-                .foregroundStyle(EchoelTheme.text)
-                .padding(.horizontal, 8)
-                .frame(minWidth: 44, maxWidth: .infinity, minHeight: 44)
-                .overlay(alignment: .bottom) {
-                    Rectangle().fill(EchoelTheme.text).frame(height: 2) // ADAPTIVE-EXEMPT: the underline marker, not text
-                }
-                .accessibilityLabel("Music")
-                .accessibilityHint("Where you are: the arrangement and the tabs below it")
-                .accessibilityAddTraits(.isSelected)
-            Button {
-                NotificationCenter.default.post(name: .echoelChromeDoor, object: "field")
-            } label: {
-                Text("Visual")
-                    .font(EchoelTheme.font(13, .semibold))
-                    .foregroundStyle(EchoelTheme.dim)
-                    .padding(.horizontal, 8)
-                    .frame(minWidth: 44, maxWidth: .infinity, minHeight: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Visual")
-            .accessibilityHint("Opens the Field panel on the Instrument stage: the visual window, full screen, colour and motion. Piece brings you back")
-            Button {
-                NotificationCenter.default.post(name: .echoelChromeDoor, object: "routing")
-            } label: {
-                Text("Light")
-                    .font(EchoelTheme.font(13, .semibold))
-                    .foregroundStyle(EchoelTheme.dim)
-                    .padding(.horizontal, 8)
-                    .frame(minWidth: 44, maxWidth: .infinity, minHeight: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Light")
-            .accessibilityHint("Opens Routing: the light outputs, master, blackout and fixtures")
-        }
-        .padding(.horizontal, 10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(EchoelTheme.bg)
     }
 
     /// A3 — `transportRow` pinned under the plate's scroll: a solid bar with a 1 px top border
