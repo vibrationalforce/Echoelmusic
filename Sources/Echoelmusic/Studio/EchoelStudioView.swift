@@ -8031,7 +8031,8 @@ struct EchoelStudioView: View {
                 labeledRow("Shape") {
                     Picker("Spectral shape", selection: spectralShapeBinding) {
                         ForEach(EchoelDDSP.SpectralShape.allCases, id: \.self) { shape in
-                            Text(shape.rawValue).tag(shape.rawValue)
+                            // E4-112: the name is looked up here; the raw value stays the patch token.
+                            Text(LocalizedStringKey(shape.rawValue)).tag(shape.rawValue)
                         }
                     }
                     .pickerStyle(.menu).tint(EchoelTheme.text)
@@ -8041,7 +8042,7 @@ struct EchoelStudioView: View {
                 labeledRow("Noise colour") {
                     Picker("Noise colour", selection: noiseColorBinding) {
                         ForEach(EchoelDDSP.NoiseColor.allCases, id: \.self) { colour in
-                            Text(colour.rawValue).tag(colour.rawValue)
+                            Text(LocalizedStringKey(colour.rawValue)).tag(colour.rawValue)
                         }
                     }
                     .pickerStyle(.menu).tint(EchoelTheme.text)

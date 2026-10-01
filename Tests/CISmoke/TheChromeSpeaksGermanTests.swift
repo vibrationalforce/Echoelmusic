@@ -215,7 +215,8 @@
 // visual window's two recording-fault badges and took „Poincaré plot“ and „WAV FAILED“ off `untranslatedPanelWords`,
 // where E4-6 had filed them as spelled alike in every language — neither is (parent: seam absent, 2 units missing —
 // ONE finding). E4-111 keyed the mood menu's „Custom“ label and looked up the master Tone picker's four names (parent:
-// seams absent, 5 units missing — ONE finding). Claim 12
+// seams absent, 5 units missing — ONE finding). E4-112 looked up the Sound panel's spectral-shape and noise-colour
+// names (parent: seams absent, 12 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3507,6 +3508,19 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertFalse(masterTone.contains(verbatim), "a mood or Tone name is drawn verbatim again: \(verbatim)")
         }
         try assertGerman(["Custom"] + AutoMixChain.Preset.allCases.map(\.displayName), "mood default and Tone names")
+
+        // E4-112 — the Sound panel's two named timbre pickers drew `EchoelDDSP.SpectralShape` and `NoiseColor` raw
+        // values verbatim. They look the names up at the render site now; the raw values stay the patch tokens.
+        let timbreNames = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for seam in ["Text(LocalizedStringKey(shape.rawValue)).tag(shape.rawValue)",
+                     "Text(LocalizedStringKey(colour.rawValue)).tag(colour.rawValue)"] {
+            XCTAssertTrue(timbreNames.contains(seam), "a timbre picker lost its E4-112 seam: \(seam)")
+        }
+        for verbatim in ["Text(shape.rawValue)", "Text(colour.rawValue)"] {
+            XCTAssertFalse(timbreNames.contains(verbatim), "a timbre name is drawn verbatim again: \(verbatim)")
+        }
+        try assertGerman(EchoelDDSP.SpectralShape.allCases.map(\.rawValue)
+                         + EchoelDDSP.NoiseColor.allCases.map(\.rawValue), "spectral shape and noise colour names")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
