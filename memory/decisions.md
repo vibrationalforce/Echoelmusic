@@ -4499,3 +4499,15 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-69 block (6 seam needles over three files, 3 absence needles, 34 units; 323 → 329 XCTAssert). WORK PASS /
   HEAD FAIL (6/3/34 — ONE finding). Whole-claim-11 needle check: 116 files, 940 needles, 0 broken.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-70: peer status, open refusal, call-mode notes (b934e2060)
+
+- **Decision:** `MultipeerSession.status` (11 assignments; the four interpolations become key + name, the plural
+  splits into `" peer"` / `" peers"`), `ProjectStore.importFailureNote` + `saveError`, and the two `RouteCodec.note`
+  call-mode sentences (each a three-literal `+` chain, now one key) are catalog keys. Catalog 1601 → 1617.
+- **Why:** Live Colabo, the Open door and the audio route row were the last reachable surfaces returning bare
+  English from a model type. TheShareDoorReportsWhatItCannotSendTests keeps both needles inside the keys;
+  TheImportDoorReportsWhatItCannotReadTests and TheCodecNoteNamesNoInputTests compare at runtime — no re-anchor.
+- **Guard:** claim 11 E4-70 block (6 seam needles over three files, 3 absence needles, 19 units; 329 → 335 XCTAssert).
+  WORK PASS / HEAD FAIL (6/3/16 — ONE finding). Whole-claim-11 needle check: 119 files, 949 needles, 0 broken.
+- **Review:** 2026-10-31.
