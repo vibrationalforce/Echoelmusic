@@ -88,9 +88,10 @@ final class TheTrackHeaderMutesAndSolosTests: XCTestCase {
             return XCTFail("ANCHOR MISSING: headerSwitch / laneFacts (#454)")
         }
         let control = String(view[switchStart.upperBound..<switchEnd.lowerBound])
+        // E4-43: both arms of the spoken value are catalog keys — the needle follows the spelling, same claim.
         for needle in [".accessibilityLabel(name)", ".accessibilityInputLabels([name, letter])",
                        ".accessibilityAddTraits(.isToggle)",
-                       ".accessibilityValue(on ? \"On\" : \"Off\")", ".accessibilityHint(hint)",
+                       ".accessibilityValue(on ? String(localized: \"On\") : String(localized: \"Off\"))", ".accessibilityHint(hint)",
                        ".frame(minWidth: 44, minHeight: 44)"] {
             XCTAssertTrue(control.contains(needle), "the header switch lost `\(needle)`")
         }

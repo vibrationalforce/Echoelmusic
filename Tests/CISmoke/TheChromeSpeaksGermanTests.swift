@@ -79,7 +79,9 @@
 // photo card — PhotoSeedText's sentences, colour, change and field names, the percent lines, the spoken disclosure value and
 // Undo label/hint via `MediaLookUndo.spokenMedium` (parent: stored, interpolated or ternary literals, 23 units missing — ONE finding).
 // E4-42 added the video card — VideoSeedText's unreadable/reading/length/cuts/bars/sound and field names, the card's lines,
-// heading, Apply fallback and spoken disclosure value / Undo label (parent: the same four shapes, 22 units missing — ONE finding). Claim 12
+// heading, Apply fallback and spoken disclosure value / Undo label (parent: the same four shapes, 22 units missing — ONE finding).
+// E4-43 added the Workstation's remaining ternaries — Mute/Solo value, Warp text/value/hint, Pitch hint, Play/Stop word and label,
+// tempo-field label, Compose-guide disclosure value/hint (parent: ternaries of bare literals, 10 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1469,6 +1471,39 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Sets the visuals' intensity, movement, hue and saturation from the video",
                           "Puts the visuals back the way they were before. A value you changed since stays."],
                          "video card")
+
+        // E4-43 — the Workstation's remaining ternaries. Mute/Solo value, the Warp switch (text, spoken value as
+        // two typed steps, hint), the Pitch field's hint, the plate's Play/Stop word and label, the imported-tempo
+        // field's label, and the Compose guide's disclosure value/hint were ternaries of bare literals — Strings,
+        // read verbatim. Each arm is a catalog key; the one guard that pinned the Play/Stop label as source text
+        // (TheWorkstationPlaysTheTimelineTests) follows the spelling, same claim.
+        let workstation = try codeOnly("Sources/Echoelmusic/Studio/WorkstationView.swift")
+        for seam in [".accessibilityValue(on ? String(localized: \"On\") : String(localized: \"Off\"))",
+                     "let mixedValue: String = state == .mixed ? String(localized: \"On for some parts\") : String(localized: \"Off\")",
+                     "let warpValue: String = on ? String(localized: \"On\") : mixedValue",
+                     "Text(state == .mixed ? String(localized: \"Warp · some\") : String(localized: \"Warp\"))",
+                     ".accessibilityValue(warpValue)",
+                     "? String(localized: \"Stop the piece to change warp\")",
+                     "? String(localized: \"Stop the piece to change pitch\")",
+                     "Text(running ? String(localized: \"Stop\") : String(localized: \"Play\"))",
+                     ".accessibilityLabel(running ? String(localized: \"Stop all playback\") : String(localized: \"Play timeline\"))",
+                     "EchoelValueField(label: known ? String(localized: \"Tempo\") : String(localized: \"Set tempo\"),",
+                     ".accessibilityValue(expanded ? String(localized: \"Expanded\") : String(localized: \"Collapsed\"))",
+                     ".accessibilityHint(expanded ? String(localized: \"Hides the steps\") : String(localized: \"Shows the steps\"))"] {
+            XCTAssertTrue(workstation.contains(seam), "WorkstationView lost the E4-43 seam `\(seam)`")
+        }
+        for verbatim in [".accessibilityValue(on ? \"On\" : \"Off\")", "Text(state == .mixed ? \"Warp · some\" : \"Warp\")",
+                         "\"On for some parts\" : \"Off\"", "                ? \"Stop the piece to change warp\"",
+                         "                    ? \"Stop the piece to change pitch\"", "Text(running ? \"Stop\" : \"Play\")",
+                         ".accessibilityLabel(running ? \"Stop all playback\" : \"Play timeline\")", "label: known ? \"Tempo\" : \"Set tempo\",",
+                         ".accessibilityValue(expanded ? \"Expanded\" : \"Collapsed\")", ".accessibilityHint(expanded ? \"Hides the steps\" : \"Shows the steps\")"] {
+            XCTAssertFalse(workstation.contains(verbatim), "WorkstationView spells a ternary of bare literals again: `\(verbatim)`")
+        }
+        try assertGerman(["On", "Off", "Warp", "Warp · some", "On for some parts", "Stop the piece to change warp",
+                          "Plays this track's parts at the piece's tempo instead of their recorded speed", "Stop the piece to change pitch",
+                          "Moves every part on this track up or down without changing its tempo", "Stop", "Play", "Stop all playback",
+                          "Play timeline", "Tempo", "Set tempo", "Expanded", "Collapsed", "Hides the steps", "Shows the steps"],
+                         "Workstation ternaries")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

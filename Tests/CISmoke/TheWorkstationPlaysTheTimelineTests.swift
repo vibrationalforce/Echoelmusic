@@ -1056,7 +1056,8 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
             The transport is a primary control and must carry the 44 pt HIG tap target the \
             chip strip already does (#113/#353b).
             """)
-        XCTAssertTrue(src.contains("accessibilityLabel(running ? \"Stop all playback\" : \"Play timeline\")"), """
+        // E4-43: both arms are catalog keys now — the needle follows the spelling, the claim is unchanged.
+        XCTAssertTrue(src.contains("accessibilityLabel(running ? String(localized: \"Stop all playback\") : String(localized: \"Play timeline\"))"), """
             The button is icon-plus-word on screen and a LABEL to VoiceOver. It must name the \
             thing it acts on — "Play" alone, on a plate that also holds the instrument's own \
             transport, does not say WHICH. Since slice 3 its Stop is the ONE Stop \

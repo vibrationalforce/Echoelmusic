@@ -21626,6 +21626,166 @@
           }
         }
       }
+    },
+    "Warp" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warp"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warp"
+          }
+        }
+      }
+    },
+    "Warp · some" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warp · teils"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warp · some"
+          }
+        }
+      }
+    },
+    "On for some parts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An für einige Teile"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On for some parts"
+          }
+        }
+      }
+    },
+    "Stop the piece to change warp" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stück stoppen, um Warp zu ändern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop the piece to change warp"
+          }
+        }
+      }
+    },
+    "Plays this track's parts at the piece's tempo instead of their recorded speed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielt die Teile dieser Spur im Tempo des Stücks statt in ihrer aufgenommenen Geschwindigkeit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plays this track's parts at the piece's tempo instead of their recorded speed"
+          }
+        }
+      }
+    },
+    "Stop the piece to change pitch" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stück stoppen, um die Tonhöhe zu ändern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop the piece to change pitch"
+          }
+        }
+      }
+    },
+    "Moves every part on this track up or down without changing its tempo" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verschiebt jeden Teil dieser Spur nach oben oder unten, ohne sein Tempo zu ändern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moves every part on this track up or down without changing its tempo"
+          }
+        }
+      }
+    },
+    "Play timeline" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeitleiste abspielen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play timeline"
+          }
+        }
+      }
+    },
+    "Hides the steps" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blendet die Schritte aus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hides the steps"
+          }
+        }
+      }
+    },
+    "Shows the steps" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt die Schritte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows the steps"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

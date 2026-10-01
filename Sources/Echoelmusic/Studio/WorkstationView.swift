@@ -594,7 +594,7 @@ struct WorkstationView: View {
         // Voice Control user who says what they see ("tap M") must reach it too.
         .accessibilityInputLabels([name, letter])
         .accessibilityAddTraits(.isToggle)
-        .accessibilityValue(on ? "On" : "Off")
+        .accessibilityValue(on ? String(localized: "On") : String(localized: "Off"))
         .accessibilityHint(hint)
     }
 
@@ -655,12 +655,16 @@ struct WorkstationView: View {
         if state != .unavailable {
             let on = state == .on
             let playing = player.isPlaying
+            // E4-43: the spoken value was a nested ternary of bare literals — a String, read verbatim on
+            // a German phone. Two typed steps, each arm a catalog key; no `+` and no nesting in a ternary.
+            let mixedValue: String = state == .mixed ? String(localized: "On for some parts") : String(localized: "Off")
+            let warpValue: String = on ? String(localized: "On") : mixedValue
             Button {
                 // Mixed → all on: the tap resolves the ambiguity toward the switch's name.
                 AudioWarp.setWarp(!on, laneID: laneID, timeline: timeline,
                                   clipStore: clipStore, bpm: player.preflightTempo)
             } label: {
-                Text(state == .mixed ? "Warp · some" : "Warp")
+                Text(state == .mixed ? String(localized: "Warp · some") : String(localized: "Warp"))
                     .font(EchoelTheme.font(11, .semibold))
                     .foregroundStyle(on ? EchoelTheme.onPrimary
                                         : (playing ? EchoelTheme.dim : EchoelTheme.text))
@@ -675,10 +679,10 @@ struct WorkstationView: View {
             .buttonStyle(.plain)
             .disabled(playing)
             .accessibilityLabel("Warp to piece tempo")
-            .accessibilityValue(on ? "On" : (state == .mixed ? "On for some parts" : "Off"))
+            .accessibilityValue(warpValue)
             .accessibilityHint(playing
-                ? "Stop the piece to change warp"
-                : "Plays this track's parts at the piece's tempo instead of their recorded speed")
+                ? String(localized: "Stop the piece to change warp")
+                : String(localized: "Plays this track's parts at the piece's tempo instead of their recorded speed"))
         }
     }
 
@@ -707,8 +711,8 @@ struct WorkstationView: View {
                 unit: "semitones",
                 decimals: 0,
                 hint: playing
-                    ? "Stop the piece to change pitch"
-                    : "Moves every part on this track up or down without changing its tempo",
+                    ? String(localized: "Stop the piece to change pitch")
+                    : String(localized: "Moves every part on this track up or down without changing its tempo"),
                 standard: Double(TimelineLane.defaultTransposeSemitones))
             .disabled(playing)
             .padding(.leading, 36).padding(.trailing, 10)
@@ -845,7 +849,7 @@ struct WorkstationView: View {
                 HStack(spacing: 6) {
                     Image(systemName: running ? "stop.fill" : "play.fill")
                         .font(EchoelTheme.font(13, .semibold))
-                    Text(running ? "Stop" : "Play")
+                    Text(running ? String(localized: "Stop") : String(localized: "Play"))
                         .font(EchoelTheme.font(13, .semibold))
                 }
                 // The armCard idiom, unchanged: accent + onPrimary while it is RUNNING,
@@ -864,7 +868,7 @@ struct WorkstationView: View {
             }
             .buttonStyle(.plain)
             .disabled(!running && !startable)
-            .accessibilityLabel(running ? "Stop all playback" : "Play timeline")
+            .accessibilityLabel(running ? String(localized: "Stop all playback") : String(localized: "Play timeline"))
             .accessibilityHint(WorkstationSummary.transportHint(playing: running, startable: startable))
 
             // Design slice 10 — the click, armed where the song is played. Its own leaf: this
@@ -1460,7 +1464,7 @@ private struct PartTempoRow: View {
             Text(caption(known: known))
                 .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.dim)
-            EchoelValueField(label: known ? "Tempo" : "Set tempo",
+            EchoelValueField(label: known ? String(localized: "Tempo") : String(localized: "Set tempo"),
                              value: Binding(get: { shownValue }, set: { draft = $0 }),
                              range: AudioTempoCorrection.bounds,
                              unit: "BPM",
@@ -1590,8 +1594,8 @@ private struct ComposeGuideCard: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(ComposeGuide.headerLabel(facts))
-            .accessibilityValue(expanded ? "Expanded" : "Collapsed")
-            .accessibilityHint(expanded ? "Hides the steps" : "Shows the steps")
+            .accessibilityValue(expanded ? String(localized: "Expanded") : String(localized: "Collapsed"))
+            .accessibilityHint(expanded ? String(localized: "Hides the steps") : String(localized: "Shows the steps"))
 
             if expanded {
                 ForEach(ComposeGuide.Step.allCases) { step in
