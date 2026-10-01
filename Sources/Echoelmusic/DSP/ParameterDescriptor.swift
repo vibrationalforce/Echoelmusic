@@ -43,11 +43,14 @@ import Foundation
 /// needs them today and this repo does not declare what it has not measured. Adding a case
 /// later is additive and free; removing one is not.
 ///
-/// ⚠️ A CASE IS A VOCABULARY ENTRY, NOT A CAPABILITY CLAIM. As of this slice EVERY
-/// registered descriptor is `.audio` (`DDSPParameterCatalog`); nothing carries `.visual`,
-/// `.lighting` or `.spatial` yet, and `TheParameterDescriptorNamesItsDomainTests` pins
-/// that the catalog is audio-only rather than pinning that the REGISTRY is — the second
-/// form would forbid the very next slice (#364).
+/// ⚠️ A CASE IS A VOCABULARY ENTRY, NOT A CAPABILITY CLAIM. The `DDSPParameterCatalog`
+/// is audio-only; the REGISTRY is not — `EchoelParameterRegistry` adds one `.lighting`
+/// descriptor (`lighting.look.intensity`, P2 Proof #1) and one `.visual` descriptor
+/// (`visual.creative.intensity`, C1), and nothing carries `.spatial` yet.
+/// `TheParameterDescriptorNamesItsDomainTests` pins that the CATALOG is audio-only rather
+/// than pinning the registry — the second form would have forbidden those slices (#364).
+/// ⛔ This paragraph said "EVERY registered descriptor is `.audio`" until 2026-10-01 and
+/// stayed true of the catalog while the registry it named outgrew it.
 public enum ParameterDomain: String, Codable, Sendable, CaseIterable {
     case audio
     case visual
