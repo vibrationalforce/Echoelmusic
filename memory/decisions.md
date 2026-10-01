@@ -4809,3 +4809,20 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Law for the next walk:** a scan that only knows the constructors it was written for reports green over every
   other position a string can reach the screen through — enumerate the POSITIONS, not just the views.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-90 · E4-91 · E4-92: the VoiceOver half of the chrome (7ad87b510 · 9ea54803a · 3c7c3cb96)
+
+- **What:** spoken strings that never reached the catalog because they were built as interpolated Strings —
+  the arrange canvas's hearing states and part label, the header's place line (E4-90); the note editor's count
+  and step-pick announcement, the record row's unnamed-track fallback (E4-91); the value field's spoken Hz/s/BPM
+  units, the tempo field's spoken following value, the touch surface's UIKit label and hint (E4-92).
+  Catalog 1898 → 1907.
+- **Rule kept:** names and numbers stay operands; every key is a fragment without interpolation; existing units
+  are reused (note/notes, , part at , the three spoken units) instead of a second spelling.
+- **Runtime laws mirrored first:** German hearing states keep the `, ` prefix (TheCanvasShowsWhatIsSilentTests);
+  `followingValue` is still formatted on exactly two lines (TempoReadsAsAMeasurementTests); the step-pick
+  announcement stays inside `stepPick` (ThePartNoteGridSpeaksTests).
+- **Harness finding:** the transcription harness dropped every needle containing a backslash-paren, so a needle
+  that pins a source `"\(bar)"` was silently never graded. Its filter now skips only a real interpolation.
+- **Guards:** claim 11 blocks E4-90/91/92; XCTAssert 408 → 423; each transcription WORK PASS / HEAD FAIL.
+- **Review:** 2026-10-31.

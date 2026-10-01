@@ -41686,3 +41686,12 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-88 (3 Nähte, 1 Abwesenheit, 2 Einheiten) und E4-89 (5 Nähte, 6 Einheiten); XCTAssert 404 → 408. Beide Transkriptionen WORK PASS / HEAD FAIL. Gesamt-Anspruch-11 654/0 (155 Dateien).
 - **Gates:** e004aa6f2 Compile Check 3136 ✓, Quick Test 3864 ✓, Auto-Merge Docs 597 ✓. Stapel E4-88 · E4-89 danach gepusht (Spitze b3f3e1788).
 - **Nebenbefund Monitor:** die Gate-Schleife suchte `Echoel_CI/CD_Pipeline`, der gekürzte Name ist `Echoelmusic_CI/CD_Pipe` — ALL_DONE konnte nie feuern. Neue Schleife sucht `CI/CD`.
+
+## 2026-10-01 — E4-90 · E4-91 · E4-92: die VoiceOver-Hälfte (7ad87b510 · 9ea54803a · 3c7c3cb96)
+
+- **E4-90:** Arrange-Feld (Hörzustände „, stumm“ / „, solo“ / „, still, weil eine andere Spur solo ist“, Teil-Label) und die Ortszeile im Kopf („ · Teil bei Takt “). Katalog 1898 → 1902.
+- **E4-91:** Noten-Editor (Anzahl über die vorhandenen „Note“/„Noten“, Schritt-Ansage „ bei Schritt “ / „, gewählt“) und der Ersatzname „Eine Spur“ in der Aufnahme-Zeile. Katalog 1905.
+- **E4-92:** gesprochene Einheiten des Wertfelds (Hertz/Sekunden/Schläge pro Minute, Einheiten schon vorhanden), das gesprochene Folge-Tempo und Label/Hinweis der Feld-Spielfläche (UIKit). Katalog 1907.
+- **Wächter:** Anspruch 11 E4-90/91/92, XCTAssert 408 → 423; jede Transkription WORK PASS / HEAD FAIL; Gesamt-Anspruch-11 668/0 (162 Dateien); Anspruch-10-Lauf 554/0.
+- **Harness-Befund:** der Transkriptions-Filter verwarf jede Nadel mit Backslash-Klammer — auch die maskierte; zwei Kopfzeilen-Nadeln wären nie benotet worden. Filter verengt auf echte Interpolation.
+- **Gates:** b3f3e1788 Compile Check 3137 ✓, Quick Test 3865 ✓; Stapel bis 3c7c3cb96 gepusht, Monitor läuft.
