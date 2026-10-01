@@ -129,38 +129,38 @@ public extension TuningSystem {
     /// xenharmonic system. 12-TET is first so it is the safe default.
     static let library: [TuningSystem] = [
         // — Equal temperaments —
-        .equal(12, id: "edo12", name: "12-TET (standard)"),
-        .equal(24, id: "edo24", name: "24-TET (quarter tones)"),
-        .equal(19, id: "edo19", name: "19-TET"),
-        .equal(31, id: "edo31", name: "31-TET"),
+        .equal(12, id: "edo12", name: String(localized: "12-TET (standard)")),
+        .equal(24, id: "edo24", name: String(localized: "24-TET (quarter tones)")),
+        .equal(19, id: "edo19", name: String(localized: "19-TET")),
+        .equal(31, id: "edo31", name: String(localized: "31-TET")),
 
         // — Just intonation —
-        TuningSystem(id: "just-major", name: "Just Intonation — Major",
+        TuningSystem(id: "just-major", name: String(localized: "Just Intonation — Major"),
                      family: .justIntonation, degreesCents: justMajorCents),
-        TuningSystem(id: "just-minor", name: "Just Intonation — Minor",
+        TuningSystem(id: "just-minor", name: String(localized: "Just Intonation — Minor"),
                      family: .justIntonation, degreesCents: justMinorCents),
-        TuningSystem(id: "pythagorean", name: "Pythagorean (diatonic)",
+        TuningSystem(id: "pythagorean", name: String(localized: "Pythagorean (diatonic)"),
                      family: .justIntonation, degreesCents: pythagoreanCents),
-        TuningSystem(id: "meantone-quarter", name: "1/4-comma Meantone (chromatic)",
+        TuningSystem(id: "meantone-quarter", name: String(localized: "1/4-comma Meantone (chromatic)"),
                      family: .justIntonation, degreesCents: meantoneCents),
 
         // — World (representative; regional/ensemble variation is real) —
-        TuningSystem(id: "maqam-rast", name: "Maqām Rāst (24-TET theoretic)",
+        TuningSystem(id: "maqam-rast", name: String(localized: "Maqām Rāst (24-TET theoretic)"),
                      family: .world, degreesCents: [0, 200, 350, 500, 700, 900, 1050]),
-        TuningSystem(id: "maqam-bayati", name: "Maqām Bayātī (24-TET theoretic)",
+        TuningSystem(id: "maqam-bayati", name: String(localized: "Maqām Bayātī (24-TET theoretic)"),
                      family: .world, degreesCents: [0, 150, 300, 500, 700, 800, 1000]),
-        TuningSystem(id: "maqam-hijaz", name: "Maqām Ḥijāz",
+        TuningSystem(id: "maqam-hijaz", name: String(localized: "Maqām Ḥijāz"),
                      family: .world, degreesCents: [0, 100, 400, 500, 700, 800, 1000]),
-        TuningSystem(id: "gamelan-slendro", name: "Gamelan Sléndro (≈5-EDO)",
+        TuningSystem(id: "gamelan-slendro", name: String(localized: "Gamelan Sléndro (≈5-EDO)"),
                      family: .world, degreesCents: [0, 240, 480, 720, 960]),
-        TuningSystem(id: "gamelan-pelog", name: "Gamelan Pélog (representative)",
+        TuningSystem(id: "gamelan-pelog", name: String(localized: "Gamelan Pélog (representative)"),
                      family: .world, degreesCents: [0, 120, 270, 540, 670, 785, 950]),
-        TuningSystem(id: "hirajoshi", name: "Hirajōshi (Japanese pentatonic)",
+        TuningSystem(id: "hirajoshi", name: String(localized: "Hirajōshi (Japanese pentatonic)"),
                      family: .world, degreesCents: [0, 200, 300, 700, 800]),
 
         // — Xenharmonic / non-octave —
         // Bohlen–Pierce: 13 equal divisions of the tritave (3:1 = 1901.955 cents).
-        TuningSystem(id: "bohlen-pierce", name: "Bohlen–Pierce (non-octave)",
+        TuningSystem(id: "bohlen-pierce", name: String(localized: "Bohlen–Pierce (non-octave)"),
                      family: .xenharmonic,
                      degreesCents: (0..<13).map { Double($0) * (1901.955 / 13.0) },
                      periodCents: 1901.955)

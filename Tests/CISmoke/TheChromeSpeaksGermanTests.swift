@@ -177,7 +177,8 @@
 // the Colabo invite's joining pair and the Studio caption's idle sentence (parent: 6 units missing — ONE finding).
 // E4-84 keyed the three Live-heading literals of `LiveModOrigin.heading` (read by the FX sheet and the narration
 // leaf), the degraded row's fallback sentence and the four note-name scheme labels of the Picker (parent: 8 units
-// missing — ONE finding). Claim 12
+// missing — ONE finding). E4-85 keyed the fifteen `TuningSystem.library` names the tone-system Picker renders through
+// `Text(t.name)` (parent: 15 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2966,6 +2967,27 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Audio stopped and could not restart.",
                           "A B C (International)", "A H C (Deutsch)", "Do Re Mi (Solfège)", "Sa Re Ga (Sargam)"],
                          "FX Live headings, degraded fallback and note-name schemes")
+
+        // E4-85 — `TuningSystem.library` (Sequencer/MicrotonalTuning): fifteen `name:` literals in a `static let`,
+        // rendered by `Text(t.name)` in the WorkspaceView tone-system Picker and spoken through the tuning banner's
+        // title. The `id`s persist (`toneSystemID`), the names never do — `TuningSystem.named(_:)` resolves by id, and
+        // MicrotonalTuningTests pins ids and cents, never a name. Proper names (Ḥijāz, Sléndro) stay identical in de.
+        let toneSystems = try codeOnly("Sources/Echoelmusic/Sequencer/MicrotonalTuning.swift")
+        for seam in [".equal(12, id: \"edo12\", name: String(localized: \"12-TET (standard)\"))",
+                     "TuningSystem(id: \"just-major\", name: String(localized: \"Just Intonation — Major\"),",
+                     "TuningSystem(id: \"maqam-rast\", name: String(localized: \"Maqām Rāst (24-TET theoretic)\"),",
+                     "TuningSystem(id: \"bohlen-pierce\", name: String(localized: \"Bohlen–Pierce (non-octave)\"),"] {
+            XCTAssertTrue(toneSystems.contains(seam), "MicrotonalTuning lost the E4-85 seam `\(seam)`")
+        }
+        XCTAssertEqual(toneSystems.components(separatedBy: "name: String(localized: \"").count - 1, 15,
+                       "TuningSystem.library carries 15 keyed names (4 equal temperaments + 4 just + 6 world + Bohlen–Pierce); re-derive if a system was added")
+        XCTAssertFalse(toneSystems.contains("        .equal(12, id: \"edo12\", name: \"12-TET (standard)\"),"), "MicrotonalTuning spells a tone-system name verbatim again")
+        try assertGerman(["12-TET (standard)", "24-TET (quarter tones)", "19-TET", "31-TET",
+                          "Just Intonation — Major", "Just Intonation — Minor", "Pythagorean (diatonic)",
+                          "1/4-comma Meantone (chromatic)", "Maqām Rāst (24-TET theoretic)", "Maqām Bayātī (24-TET theoretic)",
+                          "Maqām Ḥijāz", "Gamelan Sléndro (≈5-EDO)", "Gamelan Pélog (representative)",
+                          "Hirajōshi (Japanese pentatonic)", "Bohlen–Pierce (non-octave)"],
+                         "tone-system names")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

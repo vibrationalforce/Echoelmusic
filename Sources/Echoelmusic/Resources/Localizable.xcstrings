@@ -31322,6 +31322,246 @@
           }
         }
       }
+    },
+    "12-TET (standard)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12-TET (Standard)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12-TET (standard)"
+          }
+        }
+      }
+    },
+    "24-TET (quarter tones)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "24-TET (Vierteltöne)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "24-TET (quarter tones)"
+          }
+        }
+      }
+    },
+    "19-TET" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "19-TET"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "19-TET"
+          }
+        }
+      }
+    },
+    "31-TET" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "31-TET"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "31-TET"
+          }
+        }
+      }
+    },
+    "Just Intonation — Major" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reine Stimmung — Dur"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Just Intonation — Major"
+          }
+        }
+      }
+    },
+    "Just Intonation — Minor" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reine Stimmung — Moll"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Just Intonation — Minor"
+          }
+        }
+      }
+    },
+    "Pythagorean (diatonic)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pythagoreisch (diatonisch)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pythagorean (diatonic)"
+          }
+        }
+      }
+    },
+    "1/4-comma Meantone (chromatic)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1/4-Komma-Mitteltönig (chromatisch)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1/4-comma Meantone (chromatic)"
+          }
+        }
+      }
+    },
+    "Maqām Rāst (24-TET theoretic)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maqām Rāst (24-TET, theoretisch)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maqām Rāst (24-TET theoretic)"
+          }
+        }
+      }
+    },
+    "Maqām Bayātī (24-TET theoretic)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maqām Bayātī (24-TET, theoretisch)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maqām Bayātī (24-TET theoretic)"
+          }
+        }
+      }
+    },
+    "Maqām Ḥijāz" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maqām Ḥijāz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maqām Ḥijāz"
+          }
+        }
+      }
+    },
+    "Gamelan Sléndro (≈5-EDO)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gamelan Sléndro (≈5-EDO)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gamelan Sléndro (≈5-EDO)"
+          }
+        }
+      }
+    },
+    "Gamelan Pélog (representative)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gamelan Pélog (repräsentativ)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gamelan Pélog (representative)"
+          }
+        }
+      }
+    },
+    "Hirajōshi (Japanese pentatonic)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hirajōshi (japanische Pentatonik)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hirajōshi (Japanese pentatonic)"
+          }
+        }
+      }
+    },
+    "Bohlen–Pierce (non-octave)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bohlen–Pierce (nicht oktavierend)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bohlen–Pierce (non-octave)"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
