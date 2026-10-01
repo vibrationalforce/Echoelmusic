@@ -4600,3 +4600,19 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   then needs the operands on ONE line. Three operands stay one expression; the `let` split is for a ternary or a
   fifth operand, not for every seam.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-77: automation hint, value-field gesture — and the E4 sweep closes (20ce55bab)
+
+- **Decision:** `SongAutomationEdit.hint` (four units; past-end suffix as a typed ternary of key and empty string,
+  the empty-row pair as a typed ternary of two keys, function stays `nonisolated static`) and the gesture in
+  `EchoelValueField.accessibleHint` are catalog keys. Catalog 1726 → 1731.
+- **Measured and left bare, by name:** `CameraCaptureError.errorDescription` (no reader beyond a log line),
+  LearnView's announcement status line (behind `cloudKitConfigured == false`, v1.1), `MusicTheoryTopic.footer` (no
+  reader), the WAV HUD lines (deliberately English), the terms hint with escaped inner quotes, doorless views,
+  persisted lane names, reader-less genre lineage lines.
+- **Guard:** claim 11 E4-77 block (3 seam needles, 2 absence needles, 5 units; 353 → 357 XCTAssert). The two runtime
+  guards mirrored in Python under the en locale. WORK PASS / HEAD FAIL (3/2/5 — ONE finding). Whole-claim-11 needle
+  check: 130 files, 995 needles, 0 broken.
+- **State of E4:** the uncapped scan of bare `return "…"` / `Text("…")` producers in reachable Sources is now empty
+  except for the named leftovers above. The next German work is the DEVICE check in the founder inbox (G6), not code.
+- **Review:** 2026-10-31.
