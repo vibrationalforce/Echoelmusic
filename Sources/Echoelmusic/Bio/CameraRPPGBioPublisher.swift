@@ -83,9 +83,9 @@ public enum RPPGRecoveryState: Equatable, Sendable {
     public var userHint: String? {
         switch self {
         case .healthy:     return nil
-        case .recovering:  return "Camera recovering…"
-        case .cooling:     return "Device cooling down — pulse holds for a moment"
-        case .interrupted: return "Camera paused by iOS — waiting to resume"
+        case .recovering:  return String(localized: "Camera recovering…")
+        case .cooling:     return String(localized: "Device cooling down — pulse holds for a moment")
+        case .interrupted: return String(localized: "Camera paused by iOS — waiting to resume")
         }
     }
 
@@ -102,9 +102,9 @@ public enum RPPGRecoveryState: Equatable, Sendable {
     public var shortLabel: String? {
         switch self {
         case .healthy:     return nil
-        case .recovering:  return "Recovering"
-        case .cooling:     return "Cooling"
-        case .interrupted: return "Camera paused"
+        case .recovering:  return String(localized: "Recovering")
+        case .cooling:     return String(localized: "Cooling")
+        case .interrupted: return String(localized: "Camera paused")
         }
     }
 }

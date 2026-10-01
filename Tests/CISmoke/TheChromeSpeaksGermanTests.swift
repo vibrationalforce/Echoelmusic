@@ -128,7 +128,9 @@
 // (LookBlendMap.name) and the value field's VoiceOver "Default" action (parent: 5 units missing — ONE finding). E4-67 added
 // the media browser's state lines, relink note, preview refusals and the audio-track fallback (parent: 10 units missing —
 // ONE finding). E4-68 added the two import doors' failure sentences (AudioImport.Failure / MIDIImport.Failure.userMessage)
-// and the note editor's four refusals (ClipNoteEdit) (parent: 19 units missing — ONE finding). Claim 12
+// and the note editor's four refusals (ClipNoteEdit) (parent: 19 units missing — ONE finding). E4-69 added the FX
+// character names and blurbs (GenreFX), the skill-level names and blurbs (SkillLevel) and the camera recovery words
+// (CameraRPPGBioPublisher: `userHint` for the strip, `shortLabel` for the pill) (parent: 34 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2430,6 +2432,40 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "The composer rewrites this part as it evolves, so its notes are shown, not edited.",
                           "This part was saved by an older build; its notes cannot be shown or edited here."],
                          "import failures and note-editor refusals")
+
+        // E4-69 — three enum producers whose `displayName`/`blurb`/`userHint`/`shortLabel` reach a Picker row, the
+        // FX-character caption, the skill picker and the pulse pill. TheStalledPillSaysWhySilentTests compares
+        // `shortLabel` at runtime under the test locale; the camera pill keeps its short German ("Pausiert").
+        let fxCharacters = try codeOnly("Sources/Echoelmusic/Sequencer/GenreFX.swift")
+        let skillLevels = try codeOnly("Sources/Echoelmusic/Core/SkillLevel.swift")
+        let cameraStates = try codeOnly("Sources/Echoelmusic/Bio/CameraRPPGBioPublisher.swift")
+        for seam in ["case .auto:       return String(localized: \"Auto (genre)\")",
+                     "case .hall:       return String(localized: \"Large, lush concert hall — long, bright reverb tail\")"] {
+            XCTAssertTrue(fxCharacters.contains(seam), "GenreFX lost the E4-69 seam `\(seam)`")
+        }
+        for seam in ["case .beginner: return String(localized: \"Beginner\")",
+                     "case .pro:      return String(localized: \"Adds Master — the whole strip.\")"] {
+            XCTAssertTrue(skillLevels.contains(seam), "SkillLevel lost the E4-69 seam `\(seam)`")
+        }
+        for seam in ["case .cooling:     return String(localized: \"Device cooling down — pulse holds for a moment\")",
+                     "case .interrupted: return String(localized: \"Camera paused\")"] {
+            XCTAssertTrue(cameraStates.contains(seam), "CameraRPPGBioPublisher lost the E4-69 seam `\(seam)`")
+        }
+        XCTAssertFalse(fxCharacters.contains("return \"Auto (genre)\""), "GenreFX spells a character name verbatim again")
+        XCTAssertFalse(skillLevels.contains("case .beginner: return \"Beginner\""), "SkillLevel spells a level verbatim again")
+        XCTAssertFalse(cameraStates.contains("return \"Camera recovering…\""), "the camera spells a recovery word verbatim again")
+        try assertGerman(["Auto (genre)", "Clean (dry)", "Underwater", "Telephone", "Cassette", "Vinyl", "Dream", "Megaphone",
+                          "Blurry", "Room", "Hall", "Use the genre's own effect space", "No effects — a dry signal",
+                          "Submerged: deep low-pass + watery chorus + tape wobble", "Narrow band-pass — old-phone / lo-fi vocal",
+                          "Warm tape: gentle low-pass + wow & flutter", "Dusty record: softened highs, subtle width",
+                          "Wide and bright: lush chorus + long ping-pong", "Barking band-pass + saturated slap",
+                          "Soft-focus wash: low-pass + deep chorus + smeared echo",
+                          "Tight, natural room — adds depth without washing out",
+                          "Large, lush concert hall — long, bright reverb tail", "Beginner", "Producer", "Pro",
+                          "Just the essentials — Sound, Mood, Save & Export.", "Adds FX, Mix, Tempo, Field and the Workstation.",
+                          "Adds Master — the whole strip.", "Camera recovering…", "Device cooling down — pulse holds for a moment",
+                          "Camera paused by iOS — waiting to resume", "Recovering", "Cooling", "Camera paused"],
+                         "FX characters, skill levels and camera recovery words")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

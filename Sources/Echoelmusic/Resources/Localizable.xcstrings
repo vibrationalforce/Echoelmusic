@@ -26890,6 +26890,550 @@
           }
         }
       }
+    },
+    "Auto (genre)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto (Genre)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto (genre)"
+          }
+        }
+      }
+    },
+    "Clean (dry)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clean (trocken)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clean (dry)"
+          }
+        }
+      }
+    },
+    "Underwater" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unterwasser"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Underwater"
+          }
+        }
+      }
+    },
+    "Telephone" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Telefon"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Telephone"
+          }
+        }
+      }
+    },
+    "Cassette" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kassette"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cassette"
+          }
+        }
+      }
+    },
+    "Vinyl" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vinyl"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vinyl"
+          }
+        }
+      }
+    },
+    "Dream" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traum"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dream"
+          }
+        }
+      }
+    },
+    "Megaphone" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Megafon"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Megaphone"
+          }
+        }
+      }
+    },
+    "Blurry" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verschwommen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blurry"
+          }
+        }
+      }
+    },
+    "Room" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raum"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Room"
+          }
+        }
+      }
+    },
+    "Hall" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Halle"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hall"
+          }
+        }
+      }
+    },
+    "Use the genre's own effect space" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutzt den Effektraum des Genres"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use the genre's own effect space"
+          }
+        }
+      }
+    },
+    "No effects — a dry signal" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Effekte — ein trockenes Signal"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No effects — a dry signal"
+          }
+        }
+      }
+    },
+    "Submerged: deep low-pass + watery chorus + tape wobble" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Untergetaucht: tiefer Tiefpass + wässriger Chorus + Band-Eiern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Submerged: deep low-pass + watery chorus + tape wobble"
+          }
+        }
+      }
+    },
+    "Narrow band-pass — old-phone / lo-fi vocal" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schmaler Bandpass — altes Telefon / Lo-Fi-Stimme"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Narrow band-pass — old-phone / lo-fi vocal"
+          }
+        }
+      }
+    },
+    "Warm tape: gentle low-pass + wow & flutter" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warmes Band: sanfter Tiefpass + Gleichlaufschwankungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm tape: gentle low-pass + wow & flutter"
+          }
+        }
+      }
+    },
+    "Dusty record: softened highs, subtle width" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Staubige Platte: weiche Höhen, dezente Breite"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dusty record: softened highs, subtle width"
+          }
+        }
+      }
+    },
+    "Wide and bright: lush chorus + long ping-pong" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breit und hell: üppiger Chorus + langes Ping-Pong"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wide and bright: lush chorus + long ping-pong"
+          }
+        }
+      }
+    },
+    "Barking band-pass + saturated slap" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bellender Bandpass + gesättigter Slap"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barking band-pass + saturated slap"
+          }
+        }
+      }
+    },
+    "Soft-focus wash: low-pass + deep chorus + smeared echo" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weichzeichner-Wolke: Tiefpass + tiefer Chorus + verschmiertes Echo"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soft-focus wash: low-pass + deep chorus + smeared echo"
+          }
+        }
+      }
+    },
+    "Tight, natural room — adds depth without washing out" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enger, natürlicher Raum — gibt Tiefe, ohne zu verwaschen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tight, natural room — adds depth without washing out"
+          }
+        }
+      }
+    },
+    "Large, lush concert hall — long, bright reverb tail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Große, üppige Konzerthalle — lange, helle Hallfahne"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Large, lush concert hall — long, bright reverb tail"
+          }
+        }
+      }
+    },
+    "Beginner" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einsteiger"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beginner"
+          }
+        }
+      }
+    },
+    "Producer" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Produzent"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Producer"
+          }
+        }
+      }
+    },
+    "Pro" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profi"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro"
+          }
+        }
+      }
+    },
+    "Just the essentials — Sound, Mood, Save & Export." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur das Wesentliche — Klang, Stimmung, Sichern & Export."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Just the essentials — Sound, Mood, Save & Export."
+          }
+        }
+      }
+    },
+    "Adds FX, Mix, Tempo, Field and the Workstation." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ergänzt FX, Mix, Tempo, Feld und die Workstation."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adds FX, Mix, Tempo, Field and the Workstation."
+          }
+        }
+      }
+    },
+    "Adds Master — the whole strip." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ergänzt Master — die ganze Leiste."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adds Master — the whole strip."
+          }
+        }
+      }
+    },
+    "Camera recovering…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kamera erholt sich…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera recovering…"
+          }
+        }
+      }
+    },
+    "Device cooling down — pulse holds for a moment" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerät kühlt ab — der Puls hält kurz inne"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Device cooling down — pulse holds for a moment"
+          }
+        }
+      }
+    },
+    "Camera paused by iOS — waiting to resume" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kamera von iOS pausiert — wartet auf Fortsetzung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera paused by iOS — waiting to resume"
+          }
+        }
+      }
+    },
+    "Recovering" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erholt sich"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recovering"
+          }
+        }
+      }
+    },
+    "Cooling" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kühlt ab"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cooling"
+          }
+        }
+      }
+    },
+    "Camera paused" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausiert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera paused"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

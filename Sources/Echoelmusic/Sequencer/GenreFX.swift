@@ -1456,34 +1456,34 @@ public enum FXCharacter: String, CaseIterable, Sendable, Identifiable {
 
     public var displayName: String {
         switch self {
-        case .auto:       return "Auto (genre)"
-        case .clean:      return "Clean (dry)"
-        case .underwater: return "Underwater"
-        case .telephone:  return "Telephone"
-        case .cassette:   return "Cassette"
-        case .vinyl:      return "Vinyl"
-        case .dream:      return "Dream"
-        case .megaphone:  return "Megaphone"
-        case .blurry:     return "Blurry"
-        case .room:       return "Room"
-        case .hall:       return "Hall"
+        case .auto:       return String(localized: "Auto (genre)")
+        case .clean:      return String(localized: "Clean (dry)")
+        case .underwater: return String(localized: "Underwater")
+        case .telephone:  return String(localized: "Telephone")
+        case .cassette:   return String(localized: "Cassette")
+        case .vinyl:      return String(localized: "Vinyl")
+        case .dream:      return String(localized: "Dream")
+        case .megaphone:  return String(localized: "Megaphone")
+        case .blurry:     return String(localized: "Blurry")
+        case .room:       return String(localized: "Room")
+        case .hall:       return String(localized: "Hall")
         }
     }
 
     /// One-line description for the picker.
     public var blurb: String {
         switch self {
-        case .auto:       return "Use the genre's own effect space"
-        case .clean:      return "No effects — a dry signal"
-        case .underwater: return "Submerged: deep low-pass + watery chorus + tape wobble"
-        case .telephone:  return "Narrow band-pass — old-phone / lo-fi vocal"
-        case .cassette:   return "Warm tape: gentle low-pass + wow & flutter"
-        case .vinyl:      return "Dusty record: softened highs, subtle width"
-        case .dream:      return "Wide and bright: lush chorus + long ping-pong"
-        case .megaphone:  return "Barking band-pass + saturated slap"
-        case .blurry:     return "Soft-focus wash: low-pass + deep chorus + smeared echo"
-        case .room:       return "Tight, natural room — adds depth without washing out"
-        case .hall:       return "Large, lush concert hall — long, bright reverb tail"
+        case .auto:       return String(localized: "Use the genre's own effect space")
+        case .clean:      return String(localized: "No effects — a dry signal")
+        case .underwater: return String(localized: "Submerged: deep low-pass + watery chorus + tape wobble")
+        case .telephone:  return String(localized: "Narrow band-pass — old-phone / lo-fi vocal")
+        case .cassette:   return String(localized: "Warm tape: gentle low-pass + wow & flutter")
+        case .vinyl:      return String(localized: "Dusty record: softened highs, subtle width")
+        case .dream:      return String(localized: "Wide and bright: lush chorus + long ping-pong")
+        case .megaphone:  return String(localized: "Barking band-pass + saturated slap")
+        case .blurry:     return String(localized: "Soft-focus wash: low-pass + deep chorus + smeared echo")
+        case .room:       return String(localized: "Tight, natural room — adds depth without washing out")
+        case .hall:       return String(localized: "Large, lush concert hall — long, bright reverb tail")
         }
     }
 

@@ -43,18 +43,18 @@ public enum SkillLevel: String, CaseIterable, Sendable, Identifiable, Comparable
 
     public var displayName: String {
         switch self {
-        case .beginner: return "Beginner"
-        case .producer: return "Producer"
-        case .pro:      return "Pro"
+        case .beginner: return String(localized: "Beginner")
+        case .producer: return String(localized: "Producer")
+        case .pro:      return String(localized: "Pro")
         }
     }
 
     /// One-line description for the picker.
     public var blurb: String {
         switch self {
-        case .beginner: return "Just the essentials — Sound, Mood, Save & Export."
-        case .producer: return "Adds FX, Mix, Tempo, Field and the Workstation."
-        case .pro:      return "Adds Master — the whole strip."
+        case .beginner: return String(localized: "Just the essentials — Sound, Mood, Save & Export.")
+        case .producer: return String(localized: "Adds FX, Mix, Tempo, Field and the Workstation.")
+        case .pro:      return String(localized: "Adds Master — the whole strip.")
         }
     }
 
