@@ -34,6 +34,11 @@ public final class WorkstationSelection {
     /// View state like the ids: cold (a tap), never persisted, kept across a change of part
     /// (the editor's old behaviour — it stayed mounted, and so did its switch).
     public private(set) var notesOpen = false
+    /// A8 — which page the open track's inspector shows (Track · Part · Device). View state like
+    /// the ids: cold (a tap), never persisted, and kept across a change of track — the inspector
+    /// is rebuilt per track (`.id(row.id)`), so `@State` there would forget it on every tap of
+    /// another header. A track without the chosen page shows Track (`TrackInspectorPage.shown`).
+    public private(set) var inspectorPage: TrackInspectorPage = .track
 
     public init() {}
 
@@ -69,6 +74,11 @@ public final class WorkstationSelection {
         notesOpen = open
     }
 
+    /// A8 — the inspector's page control, the one writer of `inspectorPage`.
+    public func showInspectorPage(_ page: TrackInspectorPage) {
+        inspectorPage = page
+    }
+
     public func clear() {
         trackID = nil
         regionID = nil
@@ -87,5 +97,17 @@ public final class WorkstationSelection {
         guard let id, let region = document.regions.first(where: { $0.id == id }),
               region.laneID == track else { return nil }
         return id
+    }
+}
+
+/// A8 — the three pages of the open track's inspector. A plain value: the inspector asks
+/// `shown(_:offered:)` from its body, and a guard drives it without an actor.
+public enum TrackInspectorPage: Hashable, Sendable {
+    case track, part, device
+
+    /// The page actually drawn: the chosen one when this track has it, else Track — every
+    /// track has a Track page (its name).
+    public static func shown(_ chosen: TrackInspectorPage, offered: [TrackInspectorPage]) -> TrackInspectorPage {
+        offered.contains(chosen) ? chosen : .track
     }
 }

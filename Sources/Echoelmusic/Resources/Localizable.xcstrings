@@ -34106,6 +34106,42 @@
           }
         }
       }
+    },
+    "Inspector" : {
+      "comment" : "Workstation redesign A8 (2026-10-01): VoiceOver label of the open track's page control (Track · Part · Device).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inspektor"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inspector"
+          }
+        }
+      }
+    },
+    "Shows this track, its parts or the device that plays it" : {
+      "comment" : "Workstation redesign A8 (2026-10-01): VoiceOver hint of the open track's page control.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt diese Spur, ihre Teile oder das Gerät, das sie spielt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows this track, its parts or the device that plays it"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

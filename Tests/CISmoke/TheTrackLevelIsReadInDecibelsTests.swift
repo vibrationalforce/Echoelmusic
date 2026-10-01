@@ -57,7 +57,7 @@ final class TheTrackLevelIsReadInDecibelsTests: XCTestCase {
         XCTAssertLessThan(field.lowerBound, caption.lowerBound, "the reading sits under the field")
         XCTAssertLessThan(caption.lowerBound, pan.lowerBound, "inside the Level gate, before Pan")
         XCTAssertTrue(code[gate.upperBound..<field.lowerBound].contains(
-            "let level = Double(timeline.document.lanes.first(where: { $0.id == laneID })?.level ?? 1)"),
+            "let level = Double(timeline.document.lanes.first(where: { $0.id == laneID })?.level ?? TimelineLane.defaultLevel)"),
                       "the reading comes from the same stored lane level the field shows")
         XCTAssertEqual(code.components(separatedBy: "TrackMix.decibelText(").count - 1, 2,
                        "one printed reading and its VoiceOver value — nothing else formats the level")

@@ -38,8 +38,15 @@
 //  `WorkstationView.laneRow`, gated on the same `controls.muteSolo` and speaking the same
 //  `muteHint`/`soloHint`. The writes stay in `TrackMix` in this file — one door per fact.
 //
-//  ⚠️ A typed name is committed on Return, when the field loses focus, and when the inspector
-//  closes — a field that shows a name the song never stored is a second truth on screen.
+//  ⚠️ A typed name is committed on Return, when the field loses focus, when the inspector
+//  closes, and when its page changes — a field that shows a name the song never stored is a
+//  second truth on screen.
+//
+//  ⭐ A8 — ONE page at a time: a segmented control at the top picks Track (name · level ·
+//  pan · remove), Part (the track's parts, only where `TrackParts.arrangeable`) or Device
+//  (what plays the track · instrument · instance · style · effect). The choice lives on
+//  `WorkstationSelection` — view state, cold (a tap), kept across a change of track, never
+//  persisted. A track without the chosen page shows Track.
 //
 //  Cold reads only: `timeline.document` changes on an edit. No playhead, no meter, no bio.
 //
@@ -127,6 +134,14 @@ enum TrackMix {
         case .bio, .unplayed, .noVoice:
             return Controls(role: role, level: false, pan: false, muteSolo: false, effect: false, genre: false)
         }
+    }
+
+    /// A8 — the inspector's pages for a track. Track and Device on every track (each has a name
+    /// and something — or nothing — that plays it); Part only where there are parts to arrange:
+    /// `TrackParts.arrangeable`, the rule `TrackPartsView` hides itself by (#416), so the page
+    /// is never an empty box.
+    nonisolated static func inspectorPages(of laneID: UUID, in document: TimelineDocument) -> [TrackInspectorPage] {
+        TrackParts.arrangeable(laneID, in: document) ? [.track, .part, .device] : [.track, .device]
     }
 
     nonisolated static func deviceName(_ role: Role) -> String {
@@ -377,6 +392,8 @@ struct TrackInspectorView: View {
     @Environment(TimelineStore.self) private var timeline
     /// Read for `laneVoiceCapacity` only — a cold, unobserved number set once at start.
     @Environment(TimelineRegionPlayer.self) private var player
+    /// A8 — read for `inspectorPage` only: cold, it changes on a tap of the page control.
+    @Environment(WorkstationSelection.self) private var selection
     let laneID: UUID
     /// The name being typed. Local and cold; committed on Return, on focus loss and on close.
     @State private var nameDraft = ""
@@ -387,101 +404,133 @@ struct TrackInspectorView: View {
         if let lane = document.lanes.first(where: { $0.id == laneID }),
            let controls = TrackMix.controls(of: laneID, in: document,
                                             voiceCapacity: player.laneVoiceCapacity) {
+            // A8 — the page this track's inspector draws: the one chosen on the selection owner,
+            // or Track when this track has no such page (Part on a bio track).
+            let pages = TrackMix.inspectorPages(of: laneID, in: document)
+            let page = TrackInspectorPage.shown(selection.inspectorPage, offered: pages)
             VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
-                    HStack(spacing: 6) {
-                        Text("Device")
-                            .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-                        Text(TrackMix.deviceName(controls.role))
-                            .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
+                // Segmented, not a `.menu`: no popover for a re-render to tear down. Three short
+                // words, meant to fit the 260-pt landscape column (A9) — a device check, not a fact.
+                Picker("Inspector", selection: Binding<TrackInspectorPage>(
+                    get: { page },
+                    set: { picked in
+                        // The Name field may be about to leave the screen with a typed draft.
+                        commitName()
+                        selection.showInspectorPage(picked)
+                    })) {
+                    Text("Track").tag(TrackInspectorPage.track)
+                    if pages.contains(.part) {
+                        Text("Part").tag(TrackInspectorPage.part)
                     }
-                    .accessibilityElement(children: .combine)
-                    // WA4 path 9 — the Echoel track's device opens the instrument's own editor.
-                    // OUTSIDE the combined element (#621), and only on the track the
-                    // instrument plays: a rack voice or an audio player has no such editor.
-                    if controls.role == .echoelInstrument {
-                        Spacer(minLength: 0)
-                        openDeviceButton
-                    }
+                    Text("Device").tag(TrackInspectorPage.device)
                 }
-                // Phase 4 · slice 2 — which instrument this rack track plays (empty elsewhere).
-                let instruments = TrackMix.instrumentMenu(
-                    controls.role, current: TrackMix.currentInstrument(of: laneID, in: document))
-                if !instruments.isEmpty {
-                    instrumentRow(instruments)
-                }
-                // What this Echoel is set to — genre and FX character, read-only, from the
-                // instrument's own keys (`EchoelInstanceLine`; the inspector owns no persistence).
-                if controls.role == .echoelInstrument {
-                    EchoelInstanceLine()
-                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(minHeight: 44)
+                .accessibilityHint("Shows this track, its parts or the device that plays it")
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Name")
-                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-                    TextField("Track name", text: $nameDraft)
-                        .font(EchoelTheme.font(13))
-                        .textFieldStyle(.roundedBorder)
-                        .submitLabel(.done)
-                        .focused($nameFocused)
-                        .onSubmit { commitName() }
-                        .onChange(of: nameFocused) { _, focused in
-                            if !focused { commitName() }
+                if page == .device {
+                    HStack(spacing: 8) {
+                        HStack(spacing: 6) {
+                            Text("Device")
+                                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                            Text(TrackMix.deviceName(controls.role))
+                                .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
                         }
-                        .accessibilityLabel("Track name")
-                }
-
-                if controls.level {
-                    let level = Double(timeline.document.lanes.first(where: { $0.id == laneID })?.level ?? TimelineLane.defaultLevel)
-                    EchoelValueField(
-                        label: "Level",
-                        value: Binding(
-                            get: { Double(timeline.document.lanes
-                                .first(where: { $0.id == laneID })?.level ?? TimelineLane.defaultLevel) },
-                            set: { TrackMix.setLevel($0, laneID: laneID, timeline: timeline) }),
-                        range: TrackMix.levelRange,
-                        decimals: 2,
-                        hint: TrackMix.levelHint(controls.role),
-                        // `standard:` AFTER `hint:` — the memberwise initialiser demands declaration
-                        // order (`EchoelValueField.hint` is declared above `standard`).
-                        standard: Double(TimelineLane.defaultLevel))
-                    // Design slice 8: the same stored gain, read in decibels. Cold — the level
-                    // moves on an edit, never on a clock.
-                    Text(TrackMix.decibelText(level))
-                        .font(EchoelTheme.font(11).monospacedDigit())
-                        .foregroundStyle(EchoelTheme.dim)
-                        .accessibilityLabel("Level in decibels")
-                        .accessibilityValue(TrackMix.decibelText(level))
-                }
-                if controls.pan {
-                    EchoelValueField(
-                        label: "Pan",
-                        value: Binding(
-                            get: { Double(timeline.document.lanes
-                                .first(where: { $0.id == laneID })?.pan ?? TimelineLane.defaultPan) },
-                            set: { TrackMix.setPan($0, laneID: laneID, timeline: timeline) }),
-                        range: TrackMix.panRange,
-                        decimals: 2,
-                        hint: String(localized: "−1 left, 0 centre, 1 right"),
-                        standard: Double(TimelineLane.defaultPan))
-                }
-                if controls.genre {
-                    echoelGenreRow
-                }
-                if controls.effect {
+                        .accessibilityElement(children: .combine)
+                        // WA4 path 9 — the Echoel track's device opens the instrument's own editor.
+                        // OUTSIDE the combined element (#621), and only on the track the
+                        // instrument plays: a rack voice or an audio player has no such editor.
+                        if controls.role == .echoelInstrument {
+                            Spacer(minLength: 0)
+                            openDeviceButton
+                        }
+                    }
+                    // Phase 4 · slice 2 — which instrument this rack track plays (empty elsewhere).
+                    let instruments = TrackMix.instrumentMenu(
+                        controls.role, current: TrackMix.currentInstrument(of: laneID, in: document))
+                    if !instruments.isEmpty {
+                        instrumentRow(instruments)
+                    }
+                    // What this Echoel is set to — genre and FX character, read-only, from the
+                    // instrument's own keys (`EchoelInstanceLine`; the inspector owns no persistence).
                     if controls.role == .echoelInstrument {
-                        echoelEffectRow
-                    } else {
-                        effectRow
+                        EchoelInstanceLine()
+                    }
+                    // A8: Style and Effect are facts of the DEVICE, so they moved up from under Pan.
+                    if controls.genre {
+                        echoelGenreRow
+                    }
+                    if controls.effect {
+                        if controls.role == .echoelInstrument {
+                            echoelEffectRow
+                        } else {
+                            effectRow
+                        }
                     }
                 }
-                // WA4 path 6 — Mute and Solo moved to the track HEADER (`WorkstationView.laneRow`):
-                // one control per fact on screen, reachable without opening this inspector.
-                // WA4.3 — the track's parts: move, copy, remove, and the part-edit Undo/Redo.
-                // Its own leaf; it hides itself on a track with nothing to arrange.
-                TrackPartsView(laneID: laneID)
-                if let removal = TrackMix.removal(of: laneID, in: document) {
-                    removeRow(removal)
+
+                if page == .track {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Name")
+                            .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                        TextField("Track name", text: $nameDraft)
+                            .font(EchoelTheme.font(13))
+                            .textFieldStyle(.roundedBorder)
+                            .submitLabel(.done)
+                            .focused($nameFocused)
+                            .onSubmit { commitName() }
+                            .onChange(of: nameFocused) { _, focused in
+                                if !focused { commitName() }
+                            }
+                            .accessibilityLabel("Track name")
+                    }
+
+                    if controls.level {
+                        let level = Double(timeline.document.lanes.first(where: { $0.id == laneID })?.level ?? TimelineLane.defaultLevel)
+                        EchoelValueField(
+                            label: "Level",
+                            value: Binding(
+                                get: { Double(timeline.document.lanes
+                                    .first(where: { $0.id == laneID })?.level ?? TimelineLane.defaultLevel) },
+                                set: { TrackMix.setLevel($0, laneID: laneID, timeline: timeline) }),
+                            range: TrackMix.levelRange,
+                            decimals: 2,
+                            hint: TrackMix.levelHint(controls.role),
+                            // `standard:` AFTER `hint:` — the memberwise initialiser demands declaration
+                            // order (`EchoelValueField.hint` is declared above `standard`).
+                            standard: Double(TimelineLane.defaultLevel))
+                        // Design slice 8: the same stored gain, read in decibels. Cold — the level
+                        // moves on an edit, never on a clock.
+                        Text(TrackMix.decibelText(level))
+                            .font(EchoelTheme.font(11).monospacedDigit())
+                            .foregroundStyle(EchoelTheme.dim)
+                            .accessibilityLabel("Level in decibels")
+                            .accessibilityValue(TrackMix.decibelText(level))
+                    }
+                    if controls.pan {
+                        EchoelValueField(
+                            label: "Pan",
+                            value: Binding(
+                                get: { Double(timeline.document.lanes
+                                    .first(where: { $0.id == laneID })?.pan ?? TimelineLane.defaultPan) },
+                                set: { TrackMix.setPan($0, laneID: laneID, timeline: timeline) }),
+                            range: TrackMix.panRange,
+                            decimals: 2,
+                            hint: String(localized: "−1 left, 0 centre, 1 right"),
+                            standard: Double(TimelineLane.defaultPan))
+                    }
+                    // WA4 path 6 — Mute and Solo moved to the track HEADER (`WorkstationView.laneRow`):
+                    // one control per fact on screen, reachable without opening this inspector.
+                    if let removal = TrackMix.removal(of: laneID, in: document) {
+                        removeRow(removal)
+                    }
+                }
+
+                if page == .part {
+                    // WA4.3 — the track's parts: a row selects its part; the part bar under the
+                    // arrangement acts on it. Its own leaf; the page exists only where it has rows.
+                    TrackPartsView(laneID: laneID)
                 }
             }
             .padding(.vertical, 8).padding(.horizontal, 10)
