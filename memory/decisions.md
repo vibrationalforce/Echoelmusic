@@ -4569,3 +4569,18 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-74 block (4 seam needles, 2 absence needles, 27 units; 347 → 349 XCTAssert).
   WORK PASS / HEAD FAIL (4/2/25 — ONE finding). Whole-claim-11 needle check: 126 files, 980 needles, 0 broken.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-75: body-science sheet (b5d917970)
+
+- **Decision:** `BioScienceTopic.title`, `.summary` and `.detail` (five topics each) are catalog keys. The one
+  `\u{201C}` escape became the literal glyph: same runtime string, and only a literal can be a key. Catalog 1695 → 1710.
+- **Why:** LearnLibrary.bodyScienceEntries projects the three properties into the Learn sheet; the strongest-evidence
+  copy of the product was English on a German phone. The German keeps the brand line word for word (measures and
+  shows, prescribes nothing, no medical device, both citations).
+- **Guard:** claim 11 E4-75 block (3 seam needles, 2 absence needles, 15 units; 349 → 351 XCTAssert).
+  TheScienceCardClaimsNoSweepTests claims 2 and 3 mirrored in Python: both still hold on WORK. WORK PASS / HEAD FAIL
+  (3/2/15 — ONE finding). Whole-claim-11 needle check: 127 files, 985 needles, 0 broken.
+- **Lesson:** a Swift `\u{…}` escape in a guard needle is unreadable to the Python harness (`unicode_escape` knows
+  `\uXXXX`, not `\u{XXXX}`) — write the glyph in the needle; keep the escaped-backslash form only for an ABSENCE
+  needle that targets the escape text itself.
+- **Review:** 2026-10-31.
