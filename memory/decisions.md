@@ -4522,3 +4522,11 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-71 block (5 seam needles over two files, 2 absence needles, 13 units; 335 → 339 XCTAssert).
   WORK PASS / HEAD FAIL (4/2/13 — ONE finding). Whole-claim-11 needle check: 121 files, 956 needles, 0 broken.
 - **Review:** 2026-10-31.
+- ⛔ **RETRACTED in the same hour (9b308f15f → this commit):** the E4-71 entry and the SESSION_LOG/inbox lines said the
+  rest-scan was FINISHED. It was not. The scan that said so was `| head -40`-capped and read as complete — the exact
+  defect `.claude/rules/context.md` §2 names (a measurement that can silently return less is not a measurement).
+  An uncapped scan (`git grep -n -E '^\s*(case [^:]+:\s*)?return "[A-Z][a-z]+ [a-z]+ [^"]*"' -- 'Sources/**/*.swift'`,
+  minus log/diagnostic/doorless files) still finds bare producers in 13 files: EchoelStudioView 18 · MusicTheoryPrimer 12
+  · BioScienceInfo 11 · LightScienceInfo 8 · VisualAnalysisMeter 4 · BioSourceOption 4 · CameraCapture 3 ·
+  TrackInspectorView 3 · ImmersiveStageView 3 (doorless) · TrackInstrument 3 · StretchMode 2 · SongAutomationEditor 1 ·
+  LearnView 1 — plus `EchoelValueField`'s VoiceOver gesture sentence. E4 continues with E4-72.
