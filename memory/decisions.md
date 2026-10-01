@@ -4235,3 +4235,16 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   „Armed“ value + Music-colour row (text + interpolated label), PartNoteEditor „Velocity (avg)“/„Velocity“ label arms,
   LiveColaboView „Go Live (nearby)“/„Stop“; doorless BioSourceView/BroadcastView/BreathGuideView/SessionView/MeditationView last.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-49: the Blackout button, the Armed value and the Music-colour row speak German (6d6d45878)
+
+- **Decision:** five sites take `String(localized:)` arms; the Music-colour spoken label becomes two whole-sentence
+  keys („Music colour, live“/„Music colour, idle“) instead of a seam around one interpolated word. Catalog 1297 → 1306.
+  „Preview“ → „Vorschau“ (E4-48 correction, same family as „Vorschau: “/„Vorschau stoppen“).
+- **Why:** the E4 class; per-arm sentences survive German word order and casing. No new hot read in the Studio body.
+- **Guard:** claim 11 E4-49 block (5 seams, 5 absence needles, 9 units; 236 → 240 XCTAssert). WORK PASS / HEAD FAIL
+  (5/5/9 — ONE finding).
+- **Remaining reachable producers:** PartNoteEditor `label: mixed ? "Velocity (avg)" : "Velocity"` (both already keys),
+  LiveColaboView „Go Live (nearby)“/„Stop“ (door: EchoelStudioView:1803). Doorless BioSourceView/BroadcastView/
+  BreathGuideView/SessionView/MeditationView last.
+- **Review:** 2026-10-31.

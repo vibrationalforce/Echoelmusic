@@ -41398,3 +41398,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-48-Block (5 Nähte, 5 Abwesenheits-Nadeln, 8 Einheiten; XCTAssert 230 → 236). Benotung `scratchpad/transcribe_e4_48.py`: HEAD FAIL (5/5/5 — EIN Befund), WORK PASS. Checker alle OK.
 - **Gates:** 675b78ae6 Compile 3117 ✓ + Auto-Merge 4015 ✓ → main = 675b78ae6. 5fdac5293 (E4-45/46) gepusht, Compile Check läuft (Monitor b1qz45alh). E4-47 (382b8cf22) + E4-48 (b37cd9fd2) lokal — Push nach dem Compile Check auf 5fdac5293.
 - **Offen (E4, erreichbar):** PatchbayView Blackout, EchoelStudioView „Armed“ + Musikfarbe-Zeile, PartNoteEditor Velocity-Arme, LiveColaboView Go Live; türlose Flächen zuletzt.
+
+## 2026-10-01 — E4-49: Blackout-Knopf, „Armed“-Wert, Musikfarbe-Zeile sprechen Deutsch (6d6d45878)
+
+- **Gebaut:** PatchbayView Blackout (Text + Label), EchoelStudioView „Armed“-Wert + Musikfarbe-Zeile (Text-Ternär; das gesprochene Label war ein interpoliertes `live`/`idle` und ist jetzt zwei ganze Sätze). Katalog 1297 → 1306 (+9); „Preview“ → „Vorschau“ nachgezogen (Familie „Vorschau: “/„Vorschau stoppen“). Drei Sources-Dateien; kein neuer heißer Read im Studio-Rumpf (Diff-Grep 0).
+- **Wächter:** Anspruch 11 E4-49-Block (5 Nähte, 5 Abwesenheits-Nadeln, 9 Einheiten; XCTAssert 236 → 240). Benotung `scratchpad/transcribe_e4_49.py`: HEAD FAIL (5/5/9 — EIN Befund), WORK PASS. Checker alle OK.
+- **Gates:** 5fdac5293 Compile Check offen (Monitor b1qz45alh). E4-47 (382b8cf22), E4-48 (b37cd9fd2), E4-49 (6d6d45878) lokal — Push nach dem Compile Check.
+- **Offen (E4, erreichbar):** PartNoteEditor Velocity-Arme (beide schon Schlüssel), LiveColaboView Go Live; danach türlose Flächen.
