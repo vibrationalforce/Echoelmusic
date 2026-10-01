@@ -552,6 +552,7 @@ struct EchoelStudioView: View {
     // in the arrangement; this only sets the STARTING length for a fresh install.
     @AppStorage(StudioDefaultKeys.loopBars.key) private var loopBars: LoopBarLength = StudioDefaultKeys.loopBars.value
     @AppStorage(StudioDefaultKeys.moodVariation.key) private var moodVariation: Double = StudioDefaultKeys.moodVariation.value
+    @AppStorage(StudioDefaultKeys.evolveTake.key) private var evolveTake: Bool = StudioDefaultKeys.evolveTake.value
     // ⛔ `@AppStorage("studio.beatMode")` STOOD HERE AND IS DELETED (#323). Its only readers
     // were `beatModeRow`'s Picker and hint text, and that row has been unmounted since the
     // founder's 2026-07-07 "Schmeiß den Beat komplett raus"; the drums it selected between
@@ -7774,6 +7775,19 @@ struct EchoelStudioView: View {
                 .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
+            // E3 — the take-level twin of the bar-level dial above: bar variation scatters WITHIN
+            // one loop, this decides whether the whole loop is recomposed on a timer. A Toggle,
+            // not an `EchoelValueField`: on/off is a named choice, not a number.
+            Toggle(isOn: $evolveTake) {
+                Text("Keep evolving").font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
+            }
+            .tint(EchoelTheme.accent)
+            Text(evolveTake
+                 ? String(localized: "About every eight bars the loop is recomposed from your body — same piece, new phrase.")
+                 : String(localized: "The loop holds its phrase until you change something."))
+                .font(EchoelTheme.font(11))
+                .foregroundStyle(EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -10732,7 +10746,7 @@ struct EchoelStudioView: View {
                 if evolveShouldReseed() {
                     scheduleGenerate(auto: true, reason: "evolve")   // rate-limited — coalesces with any lock-snap/onChange recompose
                 } else {
-                    EchoelCrashLog.breadcrumb("evolve: HOLD (settled + stable body)")
+                    EchoelCrashLog.breadcrumb("evolve: HOLD (switch off)")
                 }
             }
         }
@@ -10750,7 +10764,10 @@ struct EchoelStudioView: View {
         // it the same piece, the advancing detail seed moves the clouds. (The old
         // HOLD-when-settled law only ever guarded a groove; with no groove there is
         // nothing to protect. StudioCalculator.shouldReseedOnEvolve stays for reuse.)
-        return true
+        // E3 (founder inbox 2026-09-30): the timed re-seed is now the player's choice — the
+        // "Keep evolving" switch under "Bar variation", OFF on a fresh install. ⛔ This returned a hard
+        // `true` for three months, so the only way to keep a phrase was to stop the take.
+        return evolveTake
     }
 
     // MARK: - The individual algorithm: bio → music

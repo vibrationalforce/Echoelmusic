@@ -33786,6 +33786,54 @@
           }
         }
       }
+    },
+    "Keep evolving" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weiterentwickeln"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep evolving"
+          }
+        }
+      }
+    },
+    "About every eight bars the loop is recomposed from your body — same piece, new phrase." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etwa alle acht Takte wird der Loop aus deinem Körper neu komponiert — dasselbe Stück, eine neue Phrase."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About every eight bars the loop is recomposed from your body — same piece, new phrase."
+          }
+        }
+      }
+    },
+    "The loop holds its phrase until you change something." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Loop hält seine Phrase, bis du etwas änderst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The loop holds its phrase until you change something."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

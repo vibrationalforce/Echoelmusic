@@ -226,6 +226,17 @@ public enum StudioDefaultKeys {
     /// die Zahl hier hoch. Wenn zu zappelig: runter. Nur diese eine Zeile ändern.
     public static let moodVariation = StudioDefault(key: "studio.moodVariation", value: 0.25)
 
+    /// E3 (founder inbox 2026-09-30: "Evolve bekommt einen Schalter, Standard aus") — whether the
+    /// running take recomposes itself from the body about every eight bars. Read by ONE view, the
+    /// instrument (`evolveShouldReseed()` and the switch under "Bar variation"); it lives here so
+    /// the default is stated once beside its sibling dial.
+    ///
+    /// Default **false**: a fresh take holds its phrase until the player changes something. The
+    /// timed re-seed was the only behaviour from 2026-07-07 to this switch, so an install that
+    /// liked it turns it on once; nothing else about a take changes. User edits and the first
+    /// pulse lock still recompose with the switch off — it governs the TIMER only.
+    public static let evolveTake = StudioDefault(key: "studio.evolveTake", value: false)
+
     /// #275 slice 1 — the eight mood dials as `MoodStorage`'s JSON, or `""` meaning "nothing
     /// stored, use the factory profile".
     ///
