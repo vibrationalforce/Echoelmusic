@@ -377,10 +377,14 @@ public enum ModDestinationKey {
     /// Human name for a picker row. A synth key resolves through its registry descriptor —
     /// one home for the label too (`DDSPParameterCatalog`), so a renamed parameter renames
     /// itself in the matrix. Unknown keys (an older or newer build's) show as-is.
+    ///
+    /// E4-104: the descriptor name is a catalog KEY, looked up here and nowhere earlier. The
+    /// registry keeps the English literal on purpose — it is persisted and searched — and both
+    /// routing-card call sites draw this result as a plain String, which is shown verbatim.
     public static func displayName(_ key: String) -> String {
         if key == tempo { return "Tempo" }
         if let d = DDSPParameterCatalog.descriptors.first(where: { $0.keyPath == key }) {
-            return d.displayName
+            return String(localized: String.LocalizationValue(d.displayName))
         }
         return key
     }

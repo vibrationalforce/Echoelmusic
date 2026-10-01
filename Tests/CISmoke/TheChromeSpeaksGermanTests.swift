@@ -203,7 +203,9 @@
 // ONE finding). E4-101 looked up the field's six self-play motion names, which the Motion picker drew verbatim through
 // `Text(String)` (parent: seams absent, 6 units missing — ONE finding). E4-102 looked up the Visual window's four meter names where the
 // segmented picker draws them (parent: seam absent, 4 units missing — ONE finding). E4-103 keyed the one exporter reason
-// E4-55 missed, the too-long message built in `tooLongMessage` (parent: seams absent, 4 units missing — ONE finding). Claim 12
+// E4-55 missed, the too-long message built in `tooLongMessage` (parent: seams absent, 4 units missing — ONE finding). E4-104 looked up the
+// synth parameter names the routing card offers, in `ModDestinationKey.displayName` (parent: seam absent, 8 units
+// missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3381,6 +3383,20 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         try assertGerman(["bars is longer than the 30 s capture buffer", " — use Record instead", " at this tempo — keep ",
                           " or fewer, or use Record instead"], "exporter too-long reason")
+
+        // E4-104 — the "Body → parameter" card draws `ModDestinationKey.displayName` as a plain String (its Add-route
+        // Button and the destination Picker row), so every synth parameter read English. The registry descriptor keeps
+        // its English literal — persisted and searched — and the lookup happens at the one function both sites call.
+        let routeTargets = try codeOnly("Sources/Echoelmusic/Core/ModulationEngine.swift")
+        for seam in ["return String(localized: String.LocalizationValue(d.displayName))"] {
+            XCTAssertTrue(routeTargets.contains(seam), "ModDestinationKey lost the E4-104 seam: \(seam)")
+        }
+        for verbatim in ["            return d.displayName\n"] {
+            XCTAssertFalse(routeTargets.contains(verbatim), "ModDestinationKey returns the English descriptor name verbatim again")
+        }
+        try assertGerman(["Warmth drive", "Envelope attack", "Envelope decay", "Envelope sustain", "Envelope release",
+                          "Amplitude", "Harmonicity", "Noise level", "Vibrato depth", "Vibrato rate", "Brightness"],
+                         "routing card parameter names")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
