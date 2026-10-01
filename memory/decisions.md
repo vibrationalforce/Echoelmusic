@@ -4477,3 +4477,14 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-67 block (5 seam needles, 4 absence needles, 10 units; 315 → 317 XCTAssert). WORK PASS /
   HEAD FAIL (5/4/10 — ONE finding). Whole-claim needle check over the file: 46 needles, 0 broken.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-68: import failures and note refusals (f76e4ffc0)
+
+- **Decision:** the import doors' failure sentences (AudioImport 7, MIDIImport 8) and the note editor's four
+  refusals (ClipNoteEdit) are catalog keys. Catalog 1548 → 1567 (19 new, one reused).
+- **Why:** the last bare producers behind the Workstation import note, the media browser and the part note editor;
+  `.tooLong` keeps `MIDIImport.maxBars` / `maxNotes` between three keys in a typed `let` (no `+` chain over four
+  operands). Four import guards compare `userMessage` at runtime under the test locale — no re-anchor.
+- **Guard:** claim 11 E4-68 block (7 seam needles over three files, 3 absence needles, 20 units; 317 → 323 XCTAssert). WORK PASS /
+  HEAD FAIL (7/2/19 — ONE finding). Whole-claim-11 needle check: 113 files, 931 needles, 0 broken.
+- **Review:** 2026-10-31.
