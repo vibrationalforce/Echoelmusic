@@ -171,7 +171,7 @@ enum RecordTake {
             if canArm(target.laneID, in: document, voiceCapacity: voiceCapacity) {
                 plan.armable.append(target.laneID)
             } else {
-                let name = document.lanes.first { $0.id == target.laneID }?.name ?? "A track"
+                let name = document.lanes.first { $0.id == target.laneID }?.name ?? String(localized: "A track")
                 plan.foreign.append(name)
             }
         }

@@ -186,7 +186,9 @@
 // finding). E4-89 gave the three save alerts, the "Open piece" and "Recovery" navigation titles and the
 // brand title "EchoelFX" their units and widened claim 10's walk to `.alert` / `.navigationTitle` /
 // `.confirmationDialog` (parent: 6 units missing — ONE finding). E4-90 keyed the arrange canvas's spoken
-// hearing states and part label and the header's place line (parent: 4 units missing — ONE finding). Claim 12
+// hearing states and part label and the header's place line (parent: 4 units missing — ONE finding). E4-91 keyed
+// the note editor's spoken count and step announcement and the record row's unnamed-track fallback (parent: 3
+// units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3112,6 +3114,28 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertEqual(ArrangeCanvas.spokenState(.muted), ", muted")
         try assertGerman([", muted", ", soloed", ", silent while another track is soloed", " · part at bar ", ", part at "],
                          "canvas hearing and place fragments")
+
+        // E4-91 — the note editor's switch speaks its count as `.accessibilityValue(spokenCount)` and a stepped pick
+        // is announced as "<note> at step <n>, selected"; the record row names a track without a name "A track" in the
+        // foreign-arm sentence. All three were String positions. The words are keys now (the count reuses the grid
+        // label's "note"/"notes"); the note name and the numbers are operands.
+        let noteCountEditor = try codeOnly("Sources/Echoelmusic/Studio/PartNoteEditor.swift")
+        for seam in ["let word: String = n == 1 ? String(localized: \"note\") : String(localized: \"notes\")",
+                     "let named: String = TuningReference.noteName(forMIDINote: note.pitch) + String(localized: \" at step \") + \"\\(step)\"",
+                     "AccessibilityNotification.Announcement(named + String(localized: \", selected\")).post()"] {
+            XCTAssertTrue(noteCountEditor.contains(seam), "PartNoteEditor lost the E4-91 seam `\(seam)`")
+        }
+        for verbatim in ["$0 == 1 ? \"1 note\" :", "at step \\(step), selected\""] {
+            XCTAssertFalse(noteCountEditor.contains(verbatim), "PartNoteEditor speaks a count or a pick verbatim again: `\(verbatim)`")
+        }
+        let foreignTrack = try codeOnly("Sources/Echoelmusic/Studio/RecordTakeControls.swift")
+        for seam in ["?.name ?? String(localized: \"A track\")"] {
+            XCTAssertTrue(foreignTrack.contains(seam), "RecordTakeControls lost the E4-91 seam `\(seam)`")
+        }
+        for verbatim in ["?.name ?? \"A track\""] {
+            XCTAssertFalse(foreignTrack.contains(verbatim), "RecordTakeControls names an unnamed track verbatim again")
+        }
+        try assertGerman([" at step ", ", selected", "A track", "note", "notes"], "note count, step pick and unnamed track")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

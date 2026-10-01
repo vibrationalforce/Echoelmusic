@@ -83,7 +83,11 @@ struct PartNoteEditor: View {
            let lane = document.lanes.first(where: { $0.id == region.laneID }),
            lane.kind == .midi, !lane.isBio {
             let count = ClipNoteEdit.noteCount(clip: clipStore.clip(id: region.clipID), region: region)
-            let spokenCount: String = count.map { $0 == 1 ? "1 note" : "\($0) notes" } ?? ""
+            // E4-91: the count is an operand, the word a key (reuses "note"/"notes" from the grid label).
+            let spokenCount: String = count.map { n in
+                let word: String = n == 1 ? String(localized: "note") : String(localized: "notes")
+                return "\(n) " + word
+            } ?? ""
             VStack(alignment: .leading, spacing: 6) {
                 Button { selection.setNotesOpen(!isOpen) } label: {
                     HStack(spacing: 4) {
@@ -278,8 +282,8 @@ private struct PartNoteGrid: View {
               let note = onScreen.first(where: { $0.id == id }) else { return }
         picked = .single(id)
         let step = note.startStep + 1
-        AccessibilityNotification.Announcement(
-            "\(TuningReference.noteName(forMIDINote: note.pitch)) at step \(step), selected").post()
+        let named: String = TuningReference.noteName(forMIDINote: note.pitch) + String(localized: " at step ") + "\(step)"
+        AccessibilityNotification.Announcement(named + String(localized: ", selected")).post()
     }
 
     private func tap(_ location: CGPoint, visible: [Note], region: TimelineRegion, offset: Int,
