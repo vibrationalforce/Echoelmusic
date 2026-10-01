@@ -4248,3 +4248,17 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   LiveColaboView „Go Live (nearby)“/„Stop“ (door: EchoelStudioView:1803). Doorless BioSourceView/BroadcastView/
   BreathGuideView/SessionView/MeditationView last.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-50: Live Colabo's Go Live label and invite sentence, and the bio-source tag speak German (d916d0586)
+
+- **Decision:** the Go Live/Stop ternary takes key arms; the invite sentence and the bio-source spoken label become a
+  key seamed beside the value. Catalog 1306 → 1309.
+- **Why:** the E4 class. PartNoteEditor's Velocity arms are NOT touched: `EchoelValueField` reads `label` as a
+  `LocalizedStringKey` (E4-10) and „Velocity (avg)“/„Velocity“ are catalog keys — a key arm, like BodyTempoField.
+- **Guard:** claim 11 E4-50 block (3 seams, 3 absence needles, 4 units; 240 → 244 XCTAssert). WORK PASS / HEAD FAIL
+  (3/3/3 — ONE finding).
+- **Remaining reachable producers (measured `accessibility*("…\(` scan):** EchoelStudioView — „Export failed. …“,
+  „… play-surface sound“, „… visual preset — …“, „… look“, „Import failed. …“, „Not opened. …“, „Share …“, „New name
+  for …“ (eight interpolated spoken labels, one file). Units/brand/pure-value labels (`"\(bpm) BPM"`, „Echoelmusic …“,
+  `"\(name) \(track)"`) stay. Doorless views last.
+- **Review:** 2026-10-31.

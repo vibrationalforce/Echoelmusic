@@ -41405,3 +41405,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-49-Block (5 Nähte, 5 Abwesenheits-Nadeln, 9 Einheiten; XCTAssert 236 → 240). Benotung `scratchpad/transcribe_e4_49.py`: HEAD FAIL (5/5/9 — EIN Befund), WORK PASS. Checker alle OK.
 - **Gates:** 5fdac5293 Compile Check offen (Monitor b1qz45alh). E4-47 (382b8cf22), E4-48 (b37cd9fd2), E4-49 (6d6d45878) lokal — Push nach dem Compile Check.
 - **Offen (E4, erreichbar):** PartNoteEditor Velocity-Arme (beide schon Schlüssel), LiveColaboView Go Live; danach türlose Flächen.
+
+## 2026-10-01 — E4-50: Live Colabo Go Live + Einladung, Bio-Quelle-Tag sprechen Deutsch (d916d0586)
+
+- **Gebaut:** LiveColaboView Go Live/Stop (Schlüssel-Arme) + Einladungssatz (Naht), BioStripView „Bio source: “-Naht. Katalog 1306 → 1309 (+3). PartNoteEditor-Velocity-Arme bewusst nicht angefasst (EchoelValueField liest `label` als Schlüssel, E4-10; beide Arme sind Schlüssel).
+- **Wächter:** Anspruch 11 E4-50-Block (3 Nähte, 3 Abwesenheits-Nadeln, 4 Einheiten; XCTAssert 240 → 244). Benotung `scratchpad/transcribe_e4_50.py`: HEAD FAIL (3/3/3 — EIN Befund), WORK PASS. Checker alle OK.
+- **Gates:** 5fdac5293 Compile Check 3118 + CI/CD 6582 + Auto-Merge 4016 laufen (Monitor b1qz45alh). E4-47…E4-50 lokal — Push nach dem Compile Check.
+- **Offen (E4, erreichbar):** acht interpolierte Sprach-Labels in EchoelStudioView (Export/Import/Not opened/Share/New name/play-surface/visual preset/look); danach türlose Flächen.
