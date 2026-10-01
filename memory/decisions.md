@@ -4455,3 +4455,14 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   the guard pins the ONE sentence through the delegate. MediaBrowserView's own English producer is the note
   "A relink is still checking its file." (E4-66).
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-66: scene hints, look fallback, Default action (820be6f62)
+
+- **Decision:** `SessionLaunchView.sceneBlock`'s two spoken hints are typed lets of catalog keys around the scene
+  title and the start bar; `LookBlendMap.name(for:)` seams "Look " before the index; the value field's VoiceOver
+  Default action seams the keypad's "Default " key before its number. Catalog 1533 → 1538.
+- **Why:** the rest-scan's last single-site producers. TheSceneLaunchIsASwitchTests re-anchored 1:1 (one needle, one
+  comment line, XCTAssert unchanged); TheValueFieldOffersItsDefaultTests keeps both needles inside the action block.
+- **Guard:** claim 11 E4-66 block (5 seam needles, 4 absence needles, 6 units; 309 → 315 XCTAssert). WORK PASS /
+  HEAD FAIL (4/4/5 — ONE finding). Whole-claim needle check over the three files: 34 needles, 0 broken.
+- **Review:** 2026-10-31.
