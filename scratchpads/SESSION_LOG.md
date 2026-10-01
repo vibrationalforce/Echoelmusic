@@ -41475,3 +41475,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-59-Block (18 Naht-Nadeln, 8 Abwesenheits-Nadeln, 21 Einheiten; XCTAssert 272 → 279). TimingVerdictReachesTheScreenTests pinnt „Nothing late in the last 60 s“ exakt — Python-Spiegel reproduziert alle Formen. Benotung `scratchpad/transcribe_e4_59.py`: HEAD FAIL (18/7/21 — EIN Befund), WORK PASS. Checker alle OK, Klammerbilanz 0.
 - **Gates:** 1b8577f85 (E4-56): Compile Check 3122 ✓ (Auto-Merge läuft, Monitor bxgo56ern). b92e0c975 (E4-57/58) gepusht, Monitor bx1lvm9t5. E4-59 (ab1f1a0ba) lokal — Push nach dem Compile Check auf b92e0c975.
 - **Offen (E4):** AudioTempoAnalysis.summarise (Tempo-Satz der Workstation) als nächste Scheibe; danach Rest-Scan; WAV-HUD bewusst englisch; türlose Flächen erst nach einer Tür.
+
+## 2026-10-01 — E4-60: Tempo-Satz (399b2f413)
+
+- **Gebaut:** `AudioTempoAnalysis.summarise` aus Katalog-Schlüsseln um die zwei `%.1f`-Zahlen; „Tempo ≈ “ und „ BPM“ bleiben wörtlich. Katalog 1444 → 1448 (+4). Sources: 1 Datei + Katalog.
+- **Wächter:** Anspruch 11 E4-60-Block (5 Naht-Nadeln, 3 Abwesenheits-Nadeln, 4 Einheiten; XCTAssert 279 → 281). Benotung `scratchpad/transcribe_e4_60.py`: HEAD FAIL (5/3/4 — EIN Befund), WORK PASS. Checker alle OK.
+- **Gates:** 1b8577f85 (E4-56): Auto-Merge 4020 ✓ → main = 1b8577f85. b92e0c975 (E4-57/58): Compile Check 3123 ✓ (Auto-Merge läuft). E4-59 (ab1f1a0ba) + E4-60 (399b2f413) werden danach gepusht.
+- **Offen (E4):** Rest-Scan nach Scheibe 60 (verbleibende Treffer sind Log-Zeilen, SF-Symbole, interne Zustandswörter und türlose Flächen); WAV-HUD bewusst englisch; türlose Flächen erst nach einer Tür.

@@ -4383,3 +4383,12 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-59 block (18 seam needles, 8 absence needles, 21 units; 272 → 279 XCTAssert).
   WORK PASS / HEAD FAIL (18/7/21 — ONE finding). Runtime guards unchanged (Python mirror per form).
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-60: detected-tempo sentence (399b2f413)
+
+- **Decision:** `AudioTempoAnalysis.summarise` builds from catalog keys seamed around its two formatted numbers;
+  "Tempo ≈ " and " BPM" stay verbatim. Catalog 1444 → 1448.
+- **Why:** the sibling of the E4-59 key sentence, same plate, same law (split at the number, no `%` in a key).
+- **Guard:** claim 11 E4-60 block (5 seam needles, 3 absence needles, 4 units; 279 → 281 XCTAssert).
+  WORK PASS / HEAD FAIL (5/3/4 — ONE finding). TheDetectedTempoIsHonestTests unchanged (English under the test locale).
+- **Review:** 2026-10-31.
