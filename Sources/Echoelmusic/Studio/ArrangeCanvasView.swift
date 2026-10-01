@@ -59,8 +59,10 @@
 //  `ArrangeCanvas.hearing` names the state; a silenced lane's parts dim, the name gutter
 //  carries a SHAPE (a speaker with a slash; headphones for the soloed track), never colour
 //  alone, and VoiceOver hears the state on the row and on every part. The rule is the mixer's
-//  (`TimelineDocument.effectiveGain`): mute wins over its own solo. Nothing here is tappable —
-//  Mute and Solo stay the track header's switches, the ONE control for each.
+//  (`TimelineDocument.effectiveGain`): mute wins over its own solo. Nothing here MUTES or
+//  SOLOS — Mute and Solo stay the track header's switches, the ONE control for each. Since A5
+//  (founder 2026-10-01) a tap on the name gutter SELECTS the track and opens that header under
+//  the canvas; on a phone two 44 pt switches do not fit a 96 pt gutter beside a name.
 //
 //  ⭐ A PART SHOWS ITS NOTES (modes census 2026-09-26, design slice 11). Every block was the same
 //  grey bar, so two parts of one track looked alike and a composer evolve changed nothing on
@@ -81,6 +83,15 @@ enum ArrangeCanvas {
     /// A bio curve is not an arrangement and draws no row.
     nonisolated static func rows(_ summary: WorkstationSummary) -> [WorkstationSummary.LaneRow] {
         summary.lanes.filter { !$0.isBio && $0.regionCount > 0 }
+    }
+
+    /// Whether a track also gets a card in the list under the canvas (A5, founder 2026-10-01).
+    /// The canvas gutter IS the head of every track it draws, so only the OPEN track (its card
+    /// is the inspector's head, holding the one Mute/Solo) and the tracks the canvas cannot draw
+    /// (a bio curve, a track with no parts yet) keep a card. Every track has exactly one head.
+    nonisolated static func listsCard(_ laneID: UUID, open: UUID?,
+                                      canvasRows: [WorkstationSummary.LaneRow]) -> Bool {
+        laneID == open || !canvasRows.contains { $0.id == laneID }
     }
 
     /// What a track's MUTE and SOLO do to it, as the canvas shows it.
@@ -281,8 +292,9 @@ struct ArrangeCanvasView: View {
     let songTicks: Int
 
     /// Tall enough to hit with a finger and to read a part's sketch at a glance (A1, founder
-    /// 2026-10-01: the workstation mockups' lanes; 28 pt read as a strip of grey bars).
-    private static let rowHeight: CGFloat = 40
+    /// 2026-10-01: the workstation mockups' lanes; 28 pt read as a strip of grey bars). 44 since
+    /// A5: the gutter became a tap target, and a tap target is 44 pt.
+    private static let rowHeight: CGFloat = 44
     /// Room for the track's hue band, its instrument symbol and a short name.
     static let nameWidth: CGFloat = 96
     static let gutter: CGFloat = 8
@@ -316,10 +328,14 @@ struct ArrangeCanvasView: View {
         }
     }
 
-    /// The track's name, led by its mute/solo symbol when it has one. Hidden from VoiceOver:
-    /// the row and every part speak the name AND the state themselves.
+    /// The track's head on the canvas (A5): hue, symbol, its mute/solo symbol when it has one,
+    /// and the name. A tap selects the track and opens its header (with Mute and Solo) under
+    /// the canvas; a second tap closes it — `selection.toggleTrack`, the card's own gesture.
+    /// ONE VoiceOver element that says name and state; selection is a trait AND a ring, never
+    /// colour alone. Not a `Button`: it selects, it never mutes or solos.
     private func nameGutter(_ row: WorkstationSummary.LaneRow) -> some View {
         let hearing = ArrangeCanvas.hearing(of: row.id, in: document)
+        let open = WorkstationSelection.resolvedTrack(selection.trackID, in: document) == row.id
         let hue = EchoelTheme.TrackHue.of(kind: row.kind, instrument: row.instrument, isBio: row.isBio)
         return HStack(spacing: 4) {
             // The track's identity (A1): a hue band and the instrument's symbol in that hue —
@@ -342,7 +358,17 @@ struct ArrangeCanvasView: View {
                 .lineLimit(1)
         }
         .frame(width: Self.nameWidth, alignment: .leading)
-        .accessibilityHidden(true)
+        .frame(maxHeight: .infinity)
+        .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+            .strokeBorder(open ? EchoelTheme.accent : Color.clear, lineWidth: 2))
+        .contentShape(Rectangle())
+        .onTapGesture { selection.toggleTrack(row.id) }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(row.name + ArrangeCanvas.spokenState(hearing))
+        .accessibilityAddTraits(open ? [.isButton, .isSelected] : [.isButton])
+        .accessibilityAction { selection.toggleTrack(row.id) }
+        .accessibilityHint(open ? String(localized: "Closes this track's details")
+                                : String(localized: "Opens this track's details: its device, and its mixer and parts where it has them"))
     }
 
     private func laneRow(_ row: WorkstationSummary.LaneRow, selected: UUID?) -> some View {

@@ -323,10 +323,14 @@ struct WorkstationView: View {
                 // this spot exists on the Piece stage only, and the Instrument stage writes the
                 // composer's part into the same history with no Undo in reach. One control, one
                 // address — the head, above both stages, always on screen.
+                // A5 (founder 2026-10-01): the canvas gutter is the head of every track it draws,
+                // so the list below keeps a card only for the OPEN track (its head: the facts and
+                // the one Mute/Solo) and for tracks the canvas cannot draw (`listsCard`). Every
+                // track still has exactly one head; nothing appears twice on the plate.
+                let open = WorkstationSelection.resolvedTrack(selection.trackID, in: timeline.document)
                 ForEach(summary.lanes) { row in
-                    laneRow(row)
-                    if WorkstationSelection.resolvedTrack(selection.trackID,
-                                                          in: timeline.document) == row.id {
+                    if ArrangeCanvas.listsCard(row.id, open: open, canvasRows: arrangeRows) { laneRow(row) }
+                    if open == row.id {
                         // The mixer and device facts of the ONE open track. Its own leaf, with
                         // its own store reads — this view still sends `timeline` nothing but
                         // `document`.
@@ -334,10 +338,12 @@ struct WorkstationView: View {
                             .id(row.id)
                         // Phase 3 / Recording R1 — record-arm, on a rack MIDI track only.
                         TrackArmToggle(laneID: row.id)
-                    }
-                    if row.kind == .audio {
-                        pitchField(row)
-                        partTempoRows(laneID: row.id)
+                        // An audio track's pitch and per-part tempo belong to its open head (A5) —
+                        // under a card that is gone they would dangle.
+                        if row.kind == .audio {
+                            pitchField(row)
+                            partTempoRows(laneID: row.id)
+                        }
                     }
                 }
                 if summary.orphanRegionCount > 0 { orphanLine(summary.orphanRegionCount) }
