@@ -204,9 +204,9 @@ public enum LiveModOrigin: Sendable, Equatable {   // #642
     /// spelling — three literals, because `.noRoutes` and `.body` share one on purpose.
     public var heading: String {
         switch self {
-        case .noRoutes, .body: return "Live — body → sound"
-        case .lfoOnly:         return "Live — LFO → sound"
-        case .simulatedDemo:   return "Live — simulated demo → sound"
+        case .noRoutes, .body: return String(localized: "Live — body → sound")
+        case .lfoOnly:         return String(localized: "Live — LFO → sound")
+        case .simulatedDemo:   return String(localized: "Live — simulated demo → sound")
         }
     }
 }

@@ -31194,6 +31194,134 @@
           }
         }
       }
+    },
+    "Live — body → sound" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live — Körper → Klang"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live — body → sound"
+          }
+        }
+      }
+    },
+    "Live — LFO → sound" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live — LFO → Klang"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live — LFO → sound"
+          }
+        }
+      }
+    },
+    "Live — simulated demo → sound" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live — simulierte Demo → Klang"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live — simulated demo → sound"
+          }
+        }
+      }
+    },
+    "Audio stopped and could not restart." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio gestoppt und konnte nicht neu starten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio stopped and could not restart."
+          }
+        }
+      }
+    },
+    "A B C (International)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A B C (international)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A B C (International)"
+          }
+        }
+      }
+    },
+    "A H C (Deutsch)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A H C (deutsch)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A H C (Deutsch)"
+          }
+        }
+      }
+    },
+    "Do Re Mi (Solfège)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do Re Mi (Solfège)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do Re Mi (Solfège)"
+          }
+        }
+      }
+    },
+    "Sa Re Ga (Sargam)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sa Re Ga (Sargam)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sa Re Ga (Sargam)"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

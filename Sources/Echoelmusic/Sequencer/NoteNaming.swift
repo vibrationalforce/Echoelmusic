@@ -99,10 +99,10 @@ public enum NoteNaming: String, CaseIterable, Codable, Sendable {
     /// the choice is legible without knowing the word "solfège" or "Anglophone".
     public var displayName: String {
         switch self {
-        case .english: return "A B C (International)"
-        case .german:  return "A H C (Deutsch)"
-        case .solfege: return "Do Re Mi (Solfège)"
-        case .sargam:  return "Sa Re Ga (Sargam)"
+        case .english: return String(localized: "A B C (International)")
+        case .german:  return String(localized: "A H C (Deutsch)")
+        case .solfege: return String(localized: "Do Re Mi (Solfège)")
+        case .sargam:  return String(localized: "Sa Re Ga (Sargam)")
         }
     }
 

@@ -175,7 +175,9 @@
 // keys and got their units (parent: 9 units missing — ONE finding). E4-83 keyed the Workstation's track-details
 // hint pair and its three import fallbacks for a nameless track (`?? "the MIDI track"` ×2, `?? "the audio track"`),
 // the Colabo invite's joining pair and the Studio caption's idle sentence (parent: 6 units missing — ONE finding).
-// Claim 12
+// E4-84 keyed the three Live-heading literals of `LiveModOrigin.heading` (read by the FX sheet and the narration
+// leaf), the degraded row's fallback sentence and the four note-name scheme labels of the Picker (parent: 8 units
+// missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1253,8 +1255,8 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                      "case .motion:      return String(localized: \"Motion\")"] {
             XCTAssertTrue(fxMod.contains(seam), "FXModulation lost the E4-35 seam `\(seam)`")
         }
-        XCTAssertEqual(fxMod.components(separatedBy: "return String(localized: \"").count - 1, 20,
-                       "FXModTarget (13) + FXModCarrier (7) display names — 20 `return String(localized:` sites; re-derive if a target or carrier was added")
+        XCTAssertEqual(fxMod.components(separatedBy: "return String(localized: \"").count - 1, 23,
+                       "FXModTarget (13) + FXModCarrier (7) display names + LiveModOrigin.heading (3, E4-84) — 23 `return String(localized:` sites; re-derive if a target, carrier or origin was added")
         for verbatim in ["return \"Filter Cutoff\"", "return \"Reverb Mix\"", "return \"LFO\"", "return \"Heart rate\"", "return \"Motion\""] {
             XCTAssertFalse(fxMod.contains(verbatim), "FXModulation spells a route name verbatim again: `\(verbatim)`")
         }
@@ -2934,6 +2936,36 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Joining lets them share pieces with you — and see your live pulse while sharing is on.",
                           "Joining lets them share pieces with you.", "Every control shapes the music as it plays."],
                          "workstation fragments, Colabo invite and caption idle line")
+
+        // E4-84 — `LiveModOrigin.heading` (Core/FXModulation): three literals behind one `switch`, rendered by
+        // `Text(modulator.liveOrigin.heading)` in the FX sheet and `Text(caption.driver.heading)` in the narration
+        // leaf — a computed String, so a bare literal never reached the catalog. TheFXHeadersSayWhoseBodyTests pins
+        // the English by VALUE (`XCTAssertEqual(…heading, "Live — …")`), which still holds: the test bundle runs
+        // under en, where the unit's value is the key. Plus the degraded row's `?? "…"` fallback (the engine's own
+        // sentence stays English — it is a cause string, not copy) and the four `NoteNaming.displayName` labels the
+        // Picker renders through `Text(n.displayName)`.
+        let fxOrigin = try codeOnly("Sources/Echoelmusic/Core/FXModulation.swift")
+        for seam in ["case .noRoutes, .body: return String(localized: \"Live — body → sound\")",
+                     "case .lfoOnly:         return String(localized: \"Live — LFO → sound\")",
+                     "case .simulatedDemo:   return String(localized: \"Live — simulated demo → sound\")"] {
+            XCTAssertTrue(fxOrigin.contains(seam), "FXModulation lost the E4-84 seam `\(seam)`")
+        }
+        XCTAssertFalse(fxOrigin.contains("        case .lfoOnly:         return \"Live — LFO → sound\""), "FXModulation spells a Live heading verbatim again")
+        let degradedRow = try codeOnly("Sources/Echoelmusic/Studio/AudioDegradedRow.swift")
+        XCTAssertTrue(degradedRow.contains("?? String(localized: \"Audio stopped and could not restart.\")"), "AudioDegradedRow lost the E4-84 seam")
+        XCTAssertFalse(degradedRow.contains("?? \"Audio stopped and could not restart.\""), "AudioDegradedRow spells its fallback verbatim again")
+        let noteSchemes = try codeOnly("Sources/Echoelmusic/Sequencer/NoteNaming.swift")
+        for seam in ["case .english: return String(localized: \"A B C (International)\")",
+                     "case .german:  return String(localized: \"A H C (Deutsch)\")",
+                     "case .solfege: return String(localized: \"Do Re Mi (Solfège)\")",
+                     "case .sargam:  return String(localized: \"Sa Re Ga (Sargam)\")"] {
+            XCTAssertTrue(noteSchemes.contains(seam), "NoteNaming lost the E4-84 seam `\(seam)`")
+        }
+        XCTAssertFalse(noteSchemes.contains("        case .german:  return \"A H C (Deutsch)\""), "NoteNaming spells a scheme label verbatim again")
+        try assertGerman(["Live — body → sound", "Live — LFO → sound", "Live — simulated demo → sound",
+                          "Audio stopped and could not restart.",
+                          "A B C (International)", "A H C (Deutsch)", "Do Re Mi (Solfège)", "Sa Re Ga (Sargam)"],
+                         "FX Live headings, degraded fallback and note-name schemes")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

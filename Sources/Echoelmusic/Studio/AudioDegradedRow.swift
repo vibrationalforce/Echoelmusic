@@ -64,7 +64,7 @@ struct AudioDegradedRow: View {
                 // The engine's own sentence, not a rewritten one. It names the CAUSE
                 // ("Audio stopped (route change) and auto-recovery gave up."), which is what
                 // makes the difference between a user who reseats a plug and one who reinstalls.
-                Text(audioEngine.lastAudioError ?? "Audio stopped and could not restart.")
+                Text(audioEngine.lastAudioError ?? String(localized: "Audio stopped and could not restart."))
                     .font(EchoelTheme.font(11))
                     .foregroundStyle(EchoelTheme.text)
                     .fixedSize(horizontal: false, vertical: true)
