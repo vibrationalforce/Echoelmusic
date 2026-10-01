@@ -211,6 +211,7 @@ enum ProjectTransport {
               let part = document.regions.first(where: { $0.id == region }) else {
             return lane.name
         }
-        return "\(lane.name) · part at bar \(WorkstationSummary.barNumber(forTick: part.startTick))"
+        let bar = WorkstationSummary.barNumber(forTick: part.startTick)
+        return lane.name + String(localized: " · part at bar ") + "\(bar)"
     }
 }

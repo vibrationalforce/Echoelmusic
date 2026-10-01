@@ -185,7 +185,8 @@
 // split the tuning banner's headline into two keyed heads plus bare operands (parent: 2 units missing — ONE
 // finding). E4-89 gave the three save alerts, the "Open piece" and "Recovery" navigation titles and the
 // brand title "EchoelFX" their units and widened claim 10's walk to `.alert` / `.navigationTitle` /
-// `.confirmationDialog` (parent: 6 units missing — ONE finding). Claim 12
+// `.confirmationDialog` (parent: 6 units missing — ONE finding). E4-90 keyed the arrange canvas's spoken
+// hearing states and part label and the header's place line (parent: 4 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3091,6 +3092,26 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertTrue(recoveryTitle.contains(".navigationTitle(\"Recovery\")"), "SafeModeView lost the E4-89 site")
         try assertGerman(["Save piece", "Save mood", "Save sound", "Open piece", "Recovery", "EchoelFX"],
                          "modifier titles")
+
+        // E4-90 — the arrange canvas speaks a track as name + hearing state (`ArrangeCanvas.spokenState`) and each
+        // part as that + ", part at " + the bar; the header's place line reads "<track> · part at bar <n>". All three
+        // were String positions (an accessibility label, a `label:` argument, a returned String), so the English
+        // shipped verbatim. The fragments are keys now; the names and the bar number are operands.
+        let hearingCanvas = try codeOnly("Sources/Echoelmusic/Studio/ArrangeCanvasView.swift")
+        for seam in ["case .muted:          return String(localized: \", muted\")",
+                     "case .soloed:         return String(localized: \", soloed\")",
+                     "case .silencedBySolo: return String(localized: \", silent while another track is soloed\")",
+                     "label: spokenName + String(localized: \", part at \") + SessionGrid.label(forTick: start),"] {
+            XCTAssertTrue(hearingCanvas.contains(seam), "ArrangeCanvasView lost the E4-90 seam `\(seam)`")
+        }
+        XCTAssertFalse(hearingCanvas.contains("label: \"\\(spokenName), part at \""), "the canvas part label is one verbatim literal again")
+        let headerPlace = try codeOnly("Sources/Echoelmusic/Studio/ProjectTransport.swift")
+        XCTAssertTrue(headerPlace.contains("return lane.name + String(localized: \" · part at bar \") + \"\\(bar)\""), "the header's place line lost its E4-90 key")
+        XCTAssertFalse(headerPlace.contains("return \"\\(lane.name) · part at bar"), "the header's place line is one verbatim literal again")
+        // RUNTIME COUNTERWEIGHT: the bundle's English is unchanged.
+        XCTAssertEqual(ArrangeCanvas.spokenState(.muted), ", muted")
+        try assertGerman([", muted", ", soloed", ", silent while another track is soloed", " · part at bar ", ", part at "],
+                         "canvas hearing and place fragments")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

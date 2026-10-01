@@ -132,9 +132,9 @@ enum ArrangeCanvas {
     nonisolated static func spokenState(_ hearing: Hearing) -> String {
         switch hearing {
         case .plays:          return ""
-        case .muted:          return ", muted"
-        case .soloed:         return ", soloed"
-        case .silencedBySolo: return ", silent while another track is soloed"
+        case .muted:          return String(localized: ", muted")
+        case .soloed:         return String(localized: ", soloed")
+        case .silencedBySolo: return String(localized: ", silent while another track is soloed")
         }
     }
 
@@ -345,7 +345,7 @@ struct ArrangeCanvasView: View {
                     ArrangePartBlock(block: block, startTick: start,
                                      isSelected: block.id == selected,
                                      laneWidth: width, songTicks: songTicks,
-                                     label: "\(spokenName), part at " + SessionGrid.label(forTick: start),
+                                     label: spokenName + String(localized: ", part at ") + SessionGrid.label(forTick: start),
                                      noteMarks: sketches[block.id] ?? [],
                                      onSelect: { selection.selectRegion(block.id, in: document) },
                                      onDrop: { tick in drop(block.id, onLane: row.id, from: start, to: tick) },

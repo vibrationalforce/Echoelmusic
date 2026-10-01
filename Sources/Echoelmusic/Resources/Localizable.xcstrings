@@ -32186,6 +32186,70 @@
           }
         }
       }
+    },
+    ", muted" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", stumm"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", muted"
+          }
+        }
+      }
+    },
+    ", soloed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", solo"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", soloed"
+          }
+        }
+      }
+    },
+    ", silent while another track is soloed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", still, weil eine andere Spur solo ist"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", silent while another track is soloed"
+          }
+        }
+      }
+    },
+    " · part at bar " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · Teil bei Takt "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · part at bar "
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
