@@ -41370,3 +41370,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-44-Block (je Datei eine Naht + eine Abwesenheits-Nadel; XCTAssert 211 → 217). Benotung `scratchpad/transcribe_e4_44.py`: HEAD FAIL (3 Nähte fehlen, 3 Verbatim-Stellen vorhanden), WORK PASS. Checker alle OK, Klammerbilanz 0/0.
 - **Gates:** d48571327 Auto-Merge 4013 ✓ → main = d48571327 (E4-39…E4-41 drin). dbf84a8ae (E4-42) läuft, Monitor bumht72oy. E4-43 (1287d9892) + E4-44 (e08b9e791) lokal — Push nach dem Compile Check auf dbf84a8ae.
 - **Offen (E4):** `MediaLookUndo.applyBlockedReason` + `spokenMedium`-Umzug in den Owner, EchoelStudioView-Stellen.
+
+## 2026-10-01 — E4-45: der Blocked-Apply-Satz spricht Deutsch, `spokenMedium` zieht in den Owner (03921c594)
+
+- **Gebaut:** `applyBlockedReason` als zwei Nähte um `spokenMedium`; `spokenMedium` von der PhotosUI-geschützten PhotoSeedCard-Extension in `MediaLookUndo` (Foundation-only). Katalog 1248 → 1250. Englisch byte-identisch (TheMediaLookHasOneWriterTests end-to-end).
+- **Wächter:** Anspruch 11 E4-45-Block (3 Owner-Nähte, 2 Abwesenheiten, 4 Einheiten; XCTAssert 217 → 220); die E4-41-Naht auf den Körper von `spokenMedium` ist aus der Foto-Karten-Liste in den E4-45-Block gewandert (moved-needles hatte sie als „still in Sources“ gezeigt). Benotung `scratchpad/transcribe_e4_45.py`: HEAD FAIL, WORK PASS. Harness-Lehren: Abwesenheits-only-Datei erlaubt; `videoMedium`-Fehlalarm (One-Writer-Tupel der VIDEO-Karte) gelesen und ausgenommen.
+- **Gates:** dbf84a8ae Compile Check 3116 ✓ → E4-43/E4-44-Stapel (1287d9892 · a80062fb1 · e08b9e791 · 675b78ae6) gepusht, Monitor bscmk8rwc. E4-45 lokal — Push nach dem Compile Check auf 675b78ae6.
+- **Offen (E4):** EchoelStudioView-Stellen (Explore/New, Visual-Fenster-Paar, Favoriten-Menü, „Default sound“), EchoelNumberPad „Make negative/positive“, türlose Flächen zuletzt.

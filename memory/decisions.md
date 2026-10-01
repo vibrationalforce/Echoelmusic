@@ -4170,3 +4170,23 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   PhotosUI-guarded PhotoSeedCard extension), EchoelStudioView sites (Explore/New, visual-window label, favourites,
   Default sound), BreathGuideView/BioSourceView (doorless — lower priority).
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-45: the blocked-Apply sentence speaks German, `spokenMedium` moves home (03921c594)
+
+- **Decision:** `applyBlockedReason` = `String(localized: "A ") + spokenMedium + String(localized: " look is applied. Undo
+  it first to apply this one.")` (guard-let on `pending`); `spokenMedium` now lives in `MediaLookUndo` (Foundation +
+  Observation only), the photo card's extension is gone. Catalog 1248 → 1250 („Ein “, „-Look ist angewendet. Mach ihn
+  zuerst rückgängig, um diesen anzuwenden.“).
+- **Why:** the sentence spoke the compared identifier; the owner could not use the card-side `spokenMedium` behind
+  `#if canImport(PhotosUI) && canImport(ImageIO)`. One home, in the owner. English byte-identical (one-writer guard,
+  end-to-end). ⚠️ Two harness lessons: (1) a file that only LOSES text has absence needles only — the
+  "both lists per file" assertion was relaxed for it; (2) `videoMedium` was flagged as a lost literal on the photo
+  card — it enters the literal set from the one-writer guard's VIDEO tuple; the photo card is asked for `photoMedium`.
+  Verified by reading, excluded with the reason in the harness. ⚠️ The E4-41 block pinned the moved body on
+  `photoCard` (`medium == Self.videoMedium ? …`); moved-needles saw it („still in Sources“) — the seam moved into the
+  E4-45 block in the same commit, XCTAssert count unchanged.
+- **Guard:** claim 11 E4-45 block (3 owner seams, 1 owner absence, 1 photo-card absence, 4 units; 217 → 220 XCTAssert).
+  WORK PASS / HEAD FAIL (3 seams missing, 2 verbatim present, 2 units missing — ONE finding).
+- **Next E4:** EchoelStudioView sites (Explore/New + hint, visual-window label pair, favourite menu labels, „Default
+  sound“ pair), BreathGuideView/BioSourceView/BroadcastView (doorless — last), EchoelNumberPad „Make negative/positive“.
+- **Review:** 2026-10-31.
