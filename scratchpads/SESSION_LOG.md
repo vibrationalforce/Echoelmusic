@@ -41853,3 +41853,20 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
   Produktions-Schreiber. Wächter mit AnchorMissing statt XCTSkip (12 Ansprüche).
 - Inbox H8/H9/H10 (1783542be). Runde 3 (B3c · B2 · C5 · B6a) im Workflow.
 - Gerät offen: alles. Benotet per Transkription, nicht kompiliert.
+
+## 2026-10-01 — Workstation-Neugestaltung, Runde 3 (B3c · B2a · C5 · B6a)
+- **B3c ✓ e0e28f83a**: Mix-Undo auch für Inspektor, Spurkopf und Perform — eine Geste = ein
+  Schritt über `editLaneMix`/`commitLaneMix`. Begleitend bc907d1eb: TheWorkstationHasADoorTests
+  Anspruch E war seit A7 rot (zwei Wächter widersprachen sich); eng ausgenommen ist genau EIN
+  `@AppStorage(StudioDefaultKeys.skillLevel.key)`-Read — als Wächter-Änderung dem Founder gemeldet.
+- **B2a ✓ 8d48d0461**: eine POLY-Rack-Spur wählt ihren Klang (Standard / „In diesem Stück" /
+  Sounds) über `TimelineStore.setLanePatch` — erster Aufrufer. Das Stück hält eine KOPIE des
+  Klangs. Nicht im Undo (B2b offen). Wächter `TheTrackChoosesItsSoundTests`.
+- **C5 ✓ 9c4bb62b8**: Bereichs-Reiter Music · Visual · Light über der Workstation; Visual öffnet
+  das Field-Panel auf der Instrument-Bühne, Light das Routing (verweigert, solange FX oder Colabo
+  offen ist — Zwei-Modal-Gesetz). Space HOLD bis C4. Wächter `TheDomainTabsOpenOnlyWhatExistsTests`.
+- **B6a ✓ 7e12f1976**: Anschlag-Spur unter dem Notenraster, Live-Vorschau per `@GestureState`,
+  EIN Schreiber beim Loslassen. Wächter `TheVelocityIsDrawnUnderTheNotesInOneStepTests`.
+- Lehre: `patch -F2` meldete Erfolg und wendete nur Hunks 1–3 an — nach jedem Patch `git diff`
+  gegen den Plan lesen.
+- Gerät offen: alles (Inbox §2, vier neue Zeilen). Benotet per Transkription, nicht kompiliert.

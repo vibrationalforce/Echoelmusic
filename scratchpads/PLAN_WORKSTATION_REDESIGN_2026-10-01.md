@@ -48,7 +48,7 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
   `transportRow` mitten im Scroll entfällt. EIN Transport (`ProjectTransport`). **✓ dbbe191cf**
   (Scroll in `WorkstationView`, `transportBar` per `safeAreaInset`). A3b offen: Kopf-Play und
   Leisten-Play doppeln sich auf der Stück-Bühne — Kopf-Play bleibt für die Instrument-Bühne.
-  **A3b ✓ 3f44da17a** — die Stück-Bühne hat EIN Play (die Leiste); Kopf-Play nur auf der Instrument-Bühne. Offen: VoiceOver-Hinweis über `ProjectTransport.buttonHint`.
+  **A3b ✓ 3f44da17a** — die Stück-Bühne hat EIN Play (die Leiste); Kopf-Play nur auf der Instrument-Bühne. VoiceOver-Hinweis (`ProjectTransport.buttonHint`) GEPRÜFT, keine Änderung: `canPlay` ignoriert Stumm, der Hinweis ist also wahr (Runde 3).
 - **A4** Kopf-Anzeige: Song-Position TAKT.SCHLAG.16tel · BPM · 4/4 · Tonart. **✓ b519c6c44** — `WorkstationSummary.counterText`/`meterText`, Blatt `ProjectPositionReadout` (eigene `TimelineView`, 15 fps, pausiert im Stopp, Breiten-Schablone „888.4.4“, kein heißer Read im Kopf); Reihenfolge Position · Tempo · Taktart · Ort. Die Tonart wird NICHT wiederholt — sie steht im Streifen eine Zeile darüber. Wächter `TheHeadCountsThePieceInBarsBeatsAndSixteenthsTests`. Offen: Inbox H7 (zwei Zähler im selben Format).
 - **A5** Spur-Köpfe IM Canvas (M/S verschoben, nicht verdoppelt); Kartenliste → nur Inspektor.
   **✓ a63319b72 (Telefon):** Kopf im Canvas WÄHLT; M/S bleibt im Inspektor-Kopf (zwei 44-pt-
@@ -68,13 +68,13 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
 ### Phase B — Engine-Glaubwürdigkeit
 - **B1** 8-Clip-Decke heben + „Eigenständig machen" beim Duplizieren (Format-Migration).
   **B1a ✓ a137976f7** — `ClipStore.slotCount` 64, ein altes 8er-Gitter öffnet sich im größeren (`migratedGrid`), gespeichert wird das Präfix bis zum letzten belegten Platz (`storedGrid`, min. 8 — ein Rückfall auf einen alten Build behält bis zu 8). Wächter `TheOldPartGridOpensInTheLargerOneTests`. Rückfall-Kosten: Inbox H8. **B1b HOLD** — Undo-Schritt für den geprägten Teil, nur MIDI, Tür-Ort, plus Founder-Frage H9.
-- **B2** Presets je Spur + Sampler wählbar.
+- **B2** Presets je Spur + Sampler wählbar. **B2a ✓ 8d48d0461** — Klang-Menü (`TrackMix.setSound` → `setLanePatch`, dessen erster Produktions-Aufrufer) nur auf POLY-Rack-Spuren; Standard = kein Spur-Patch, Wahl = Kopie, fremde Kopie heißt „In diesem Stück“. Wächter `TheTrackChoosesItsSoundTests`. Offen: **B2b** Klangwahl in die Undo-Historie; Sampler-Wahl.
 - **B3** Mixer-Ansicht (alle Spuren als Kanalzüge) + Mixer-Undo. **✓ ec276058b (Ansicht)** —
   `PieceMixerView` hinter dem Reiter „Mix“ (Tor `showsSongs`), steht STATT des Arrangements (ein
   Bedienelement pro Tatsache auf dem Schirm). Kanalzug = `TrackMix.controls` (keine zweite Regel),
   Schreiben nur über `TrackMix.*`; stumme Spuren ohne Zug, aber gezählt. Pegel-Hinweis als
   `TrackMix.levelHint` gehoben (#416). Arrange ist jetzt ein Knopf (zwei Ansichten der Platte).
-  **B3b ✓ 5de7b12f4** — `.laneMix` als fünfte Schritt-Art über einen GETRENNTEN Nutzer-Pfad (`editLaneMix`/`commitLaneMix`), eine Geste = ein Schritt; Undo setzt nur Felder zurück, die die Geste geändert hat UND die noch ihr Ergebnis tragen (Review D1); der Agent-Pfad `TrackMix.setLevel` bleibt draußen. Inspektor, Spurkopf und Perform-Gitter schreiben weiter ohne Undo (B3c). Wächter `TheMixerGestureIsOneUndoStepTests`. Meter = B5.
+  **B3b ✓ 5de7b12f4** — `.laneMix` als fünfte Schritt-Art über einen GETRENNTEN Nutzer-Pfad (`editLaneMix`/`commitLaneMix`), eine Geste = ein Schritt; Undo setzt nur Felder zurück, die die Geste geändert hat UND die noch ihr Ergebnis tragen (Review D1); der Agent-Pfad `TrackMix.setLevel` bleibt draußen. **B3c ✓ e0e28f83a** — Inspektor (Pegel/Pan mit `onCommit`), Spurkopf M/S und Perform-Gitter laufen jetzt durch `editLaneMix`/`commitLaneMix`; Wächter `EveryHandMadeMixChangeIsOneUndoStepTests` (Zensus: jeder Nicht-Agent-Schreiber umhüllt). Dazu **bc907d1eb**: `TheWorkstationHasADoorTests` Anspruch E war seit A7 rot (zwei Wächter widersprachen sich) — eng auf die EINE `@AppStorage`-Lesung von A7 ausgenommen. Wächter `TheMixerGestureIsOneUndoStepTests`. Meter = B5.
   ⚠️ B3b gemessen und VERTAGT: `TheAgentActsThroughTheButtonsPathsTests` verlangt, dass der
   Agent-Pfad über `TrackMix.setLevel` KEINEN Song-Undo-Schritt schreibt — ein Undo im geteilten
   Schreiber bräche das; es braucht einen getrennten Nutzer-Schreiber. Eigene Scheibe.
@@ -86,7 +86,7 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
   werden geschrieben; Pegel/Pan/Klang nicht (der Hinweis sagt es). Wächter
   `ThePieceExportsTheSongAsMIDITests`; `ThePieceHasTabsTests` FX-Tor neu verankert.
 - **B5** Per-Spur-Meter-Quelle (Audio-Thread-Review, Gerät).
-- **B6** Velocity-Spur + CC-Spuren im Noteneditor; Import behält CC/Bend/Pressure.
+- **B6** Velocity-Spur + CC-Spuren im Noteneditor; Import behält CC/Bend/Pressure. **B6a ✓ 7e12f1976** — `PartVelocityLane` unter dem Gitter (Tipp = eine Spalte, Halten+Ziehen = Gerade, EIN `setClipNotes` beim Loslassen = ein Undo-Schritt). Wächter `TheVelocityIsDrawnUnderTheNotesInOneStepTests`. Offen: B6b (CC/Bend/Pressure-Spuren, Import).
 
 ### Phase C — Multimedia-Spuren (die Lücke, die niemand besetzt)
 - **C1** `visual.*`-Parameter (Intensität, Bewegung, Farbton, Detail, Blend) registriert,
@@ -98,7 +98,7 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
 - **C2** Visual-Spur (Kurven) + domänen-bewusster Automations-Editor + Play-Gate für Kurven-Songs.
 - **C3** Licht-Spur: Look-Intensität automationsfähig (nur dämpfend, FlashGuard bleibt; KEIN Strobe).
 - **C4** Raum: Szene app-weit aus der Zeitleiste, Stream-Schalter mit Tür; Bewegungs-Spur.
-- **C5** Bereichs-Tabs Music · Visual · Light · Space.
+- **C5** Bereichs-Tabs Music · Visual · Light · Space. **✓ 9c4bb62b8 (Music · Visual · Light)** — Visual → Feld-Panel (ungegatet wie die Bereichszeile), Light → Routing (Empfänger verweigert, solange FX/Live Colabo offen sind). **Space bleibt auf HOLD bis C4** (heute nur die ADM-OSC-Zeile im Routing = zweites Wort für Light). ⚠️ Gebaut VOR C2–C4: kommt mit C2 ein Visual-Kurven-Track, muss die Visual-Tür eventuell umzeigen. Wächter `TheDomainTabsOpenOnlyWhatExistsTests`.
 
 ## Gesetze, die jede Scheibe einhält
 Kein neues `.sheet` (Budget 12/14; Inspektoren inline) · keine heißen Reads in Vorfahren
