@@ -32554,6 +32554,134 @@
           }
         }
       }
+    },
+    "Starts an empty piece and shows the piece stage. A piece with parts or a composed loop is kept in Autosave first; tracks with no parts yet are not. The instrument keeps its sound." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beginnt ein leeres Stück und zeigt die Stück-Bühne. Ein Stück mit Teilen oder einem komponierten Loop wird vorher unter „Automatisch gesichert“ abgelegt; Spuren ohne Teile nicht. Das Instrument behält seinen Klang."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starts an empty piece and shows the piece stage. A piece with parts or a composed loop is kept in Autosave first; tracks with no parts yet are not. The instrument keeps its sound."
+          }
+        }
+      }
+    },
+    "Couldn't start a new piece. Your piece is unchanged." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein neues Stück konnte nicht begonnen werden. Dein Stück ist unverändert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't start a new piece. Your piece is unchanged."
+          }
+        }
+      }
+    },
+    "Opens this piece in place of the one you have now." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet dieses Stück anstelle des jetzigen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens this piece in place of the one you have now."
+          }
+        }
+      }
+    },
+    "Renames this piece. Its place in the list and its saved time stay." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benennt dieses Stück um. Sein Platz in der Liste und seine Sicherungszeit bleiben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renames this piece. Its place in the list and its saved time stay."
+          }
+        }
+      }
+    },
+    "Words like warm · bright · plucky · pad · evolving · huge shape the timbre from where it is now. " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wörter wie warm · bright · plucky · pad · evolving · huge formen die Klangfarbe von ihrem jetzigen Stand aus. "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Words like warm · bright · plucky · pad · evolving · huge shape the timbre from where it is now. "
+          }
+        }
+      }
+    },
+    "scale the next word." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "verstärken oder dämpfen das nächste Wort."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "scale the next word."
+          }
+        }
+      }
+    },
+    "Shapes: " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formt: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shapes: "
+          }
+        }
+      }
+    },
+    ", favorite" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", Favorit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", favorite"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

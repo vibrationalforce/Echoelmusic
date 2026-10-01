@@ -7827,8 +7827,8 @@ struct EchoelStudioView: View {
             // #621 (Ultraaccessible-Audit, bar point 3): mirror of the sound-preset value
             // one panel over — the label replaces `Text(moodPresetName)`, so without this
             // the active mood is visible but unhearable.
-            .accessibilityValue((moodPresetID.map { moodStore.isFavorite(id: $0) } ?? false)
-                ? "\(moodPresetName), favorite" : moodPresetName)
+            .accessibilityValue(spokenPresetName(moodPresetName,
+                                                 favorite: moodPresetID.map { moodStore.isFavorite(id: $0) } ?? false))
 
             Spacer(minLength: 0)
 
@@ -8470,8 +8470,8 @@ struct EchoelStudioView: View {
                 // visible `Text(currentPatch.name)` for VoiceOver, so the active sound's
                 // name was unhearable on the ship-gate-2 surface. Label + value is the
                 // house pattern (the bio-source Menu and the look row do exactly this).
-                .accessibilityValue(patchStore.isFavorite(id: currentPatch.id)
-                    ? "\(currentPatch.name), favorite" : currentPatch.name)
+                .accessibilityValue(spokenPresetName(currentPatch.name,
+                                                     favorite: patchStore.isFavorite(id: currentPatch.id)))
 
                 Menu {
                     Button { patchSaveName = currentPatch.name + " copy"; showSavePatchAs = true } label: {
@@ -10042,7 +10042,7 @@ struct EchoelStudioView: View {
     /// (`SessionSaveOpen.songHasUserParts` counts parts only), and "below" pointed at nothing on
     /// a fresh install (review of 04551fa36, MED). The sentence now states the rescue's actual
     /// predicate; widening the predicate itself is a slot-semantics change, left as a limit.
-    static let newPieceNote = "Starts an empty piece and shows the piece stage. A piece with parts or a composed loop is kept in Autosave first; tracks with no parts yet are not. The instrument keeps its sound."
+    static let newPieceNote = String(localized: "Starts an empty piece and shows the piece stage. A piece with parts or a composed loop is kept in Autosave first; tracks with no parts yet are not. The instrument keeps its sound.")
 
     /// DMMW Phase 5 · slice 1 — rescue, then replace, in `openFromLibrary`'s order and through its
     /// owners: the live take and song go to the ONE recovery slot (`autosaveTake`, the rescue Open
@@ -10068,7 +10068,7 @@ struct EchoelStudioView: View {
         showStage(.piece)
     }
 
-    static let newPieceRefusedNote = "Couldn't start a new piece. Your piece is unchanged."
+    static let newPieceRefusedNote = String(localized: "Couldn't start a new piece. Your piece is unchanged.")
 
     /// DMMW Phase 5 · slice 4 — a row is either the project row or, while it is being renamed,
     /// the in-place rename field. ONE switch for both sections, so they cannot drift (#285).
@@ -10211,7 +10211,7 @@ struct EchoelStudioView: View {
     /// autosave row included; an open replaces the song AND the instrument's take, so it says
     /// "piece", not "song" — and promises no rescue: `autosaveTake()` writes only when there is
     /// something to keep (`newPieceNote` states that predicate; this hint does not repeat it).
-    static let libraryRowHint = "Opens this piece in place of the one you have now."
+    static let libraryRowHint = String(localized: "Opens this piece in place of the one you have now.")
 
     // MARK: - Biofeedback lifecycle
 
@@ -12938,7 +12938,7 @@ private struct LibraryRenameRow: View {
     }
 
     /// True for what `ProjectStore.rename` does: the row keeps its place and its saved time.
-    static let saveHint = "Renames this piece. Its place in the list and its saved time stay."
+    static let saveHint = String(localized: "Renames this piece. Its place in the list and its saved time stay.")
 }
 
 private struct SaveSessionButton: View {
@@ -13563,9 +13563,12 @@ private struct SoundPromptRow: View {
     /// result, and this file's type-checker budget is not somewhere to be casual.
     private var hint: String {
         if terms.isEmpty {
-            return "Words like warm · bright · plucky · pad · evolving · huge shape the timbre from where it is now. \"very\" / \"slightly\" scale the next word."
+            // E4-95: "very" / "slightly" stay verbatim — they are the words `SoundPrompt` parses, in every locale.
+            let lead: String = String(localized: "Words like warm · bright · plucky · pad · evolving · huge shape the timbre from where it is now. ")
+            let tail: String = String(localized: "scale the next word.")
+            return lead + "\"very\" / \"slightly\" " + tail
         }
-        return "Shapes: " + terms.joined(separator: " · ")
+        return String(localized: "Shapes: ") + terms.joined(separator: " · ")
     }
 
     var body: some View {
@@ -13687,6 +13690,13 @@ private struct SoundPromptRow: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
+}
+
+/// E4-95 — the spoken value of a preset row: its name, plus the catalog's ", favorite" when it is one. ONE spelling
+/// for the mood row and the sound row (#416); a free function so neither row's body grows a ternary of `+` chains.
+private func spokenPresetName(_ name: String, favorite: Bool) -> String {
+    guard favorite else { return name }
+    return name + String(localized: ", favorite")
 }
 
 #endif

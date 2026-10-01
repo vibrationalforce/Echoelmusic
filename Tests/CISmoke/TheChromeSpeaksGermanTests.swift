@@ -193,7 +193,8 @@
 // value-field hints that were literal Strings (`EchoelValueField.hint` is a String, so a literal ships verbatim): the
 // track inspector's instrument, level and pan hints and the Bar variation hint (parent: 5 units missing — ONE
 // finding). E4-94 keyed the Mute/Solo switch names in the Workstation header and on the Perform plate, the
-// Workstation row's detail fragments and its state tags (parent: 9 units missing — ONE finding). Claim 12
+// Workstation row's detail fragments and its state tags (parent: 9 units missing — ONE finding). E4-95 keyed the instrument's piece notes (new piece, refused, library row, rename), the timbre-words
+// hint and the spoken ", favorite" of the mood and sound rows (parent: 8 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3232,6 +3233,37 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         try assertGerman(["Mute", "Solo", " · bio curve", " · no parts", " · 1 part", "parts", " · no engine yet",
                           "MUTE", "SOLO", "ARM"], "track switches, row details and state tags")
+
+        // E4-95 — four `static let` sentences of the instrument (`newPieceNote`, `newPieceRefusedNote`, `libraryRowHint`,
+        // `saveHint`) were String literals read by `Text(_:)` / `.accessibilityHint(_:)`, i.e. verbatim. The timbre-words
+        // hint keeps "very" / "slightly" verbatim (they are what `SoundPrompt` parses) and keys the sentence around them —
+        // a key may not carry a `"` because StringCatalogIsHonestTests finds every key as a quoted literal. The mood and
+        // sound rows spoke "<name>, favorite" by interpolation; one free helper speaks it now.
+        let pieceNotes = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for seam in ["static let newPieceNote = String(localized: \"Starts an empty piece",
+                     "static let newPieceRefusedNote = String(localized: \"Couldn't start a new piece.",
+                     "static let libraryRowHint = String(localized: \"Opens this piece in place of the one you have now.\")",
+                     "static let saveHint = String(localized: \"Renames this piece.",
+                     "let lead: String = String(localized: \"Words like warm",
+                     "let tail: String = String(localized: \"scale the next word.\")",
+                     "return String(localized: \"Shapes: \") + terms.joined(",
+                     "return name + String(localized: \", favorite\")",
+                     "accessibilityValue(spokenPresetName(moodPresetName,",
+                     "accessibilityValue(spokenPresetName(currentPatch.name,"] {
+            XCTAssertTrue(pieceNotes.contains(seam), "EchoelStudioView lost the E4-95 seam `\(seam)`")
+        }
+        for verbatim in ["static let newPieceNote = \"", "static let newPieceRefusedNote = \"", "static let libraryRowHint = \"",
+                         "static let saveHint = \"", "return \"Words like warm", "return \"Shapes: \"", "), favorite\""] {
+            XCTAssertFalse(pieceNotes.contains(verbatim), "EchoelStudioView writes a piece note verbatim again: `\(verbatim)`")
+        }
+        XCTAssertTrue(EchoelStudioView.newPieceRefusedNote.contains("unchanged"),
+                      "counterweight: the refused note still reads its English source under the test locale")
+        try assertGerman(["Starts an empty piece and shows the piece stage. A piece with parts or a composed loop is kept in Autosave first; tracks with no parts yet are not. The instrument keeps its sound.",
+                          "Couldn't start a new piece. Your piece is unchanged.",
+                          "Opens this piece in place of the one you have now.",
+                          "Renames this piece. Its place in the list and its saved time stay.",
+                          "Words like warm · bright · plucky · pad · evolving · huge shape the timbre from where it is now. ",
+                          "scale the next word.", "Shapes: ", ", favorite"], "piece notes, timbre words and favourites")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
