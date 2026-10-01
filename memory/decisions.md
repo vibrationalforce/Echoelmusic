@@ -4466,3 +4466,14 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-66 block (5 seam needles, 4 absence needles, 6 units; 309 → 315 XCTAssert). WORK PASS /
   HEAD FAIL (4/4/5 — ONE finding). Whole-claim needle check over the three files: 34 needles, 0 broken.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-67: media browser lines (674840cef)
+
+- **Decision:** MediaBrowserView's three state lines, the relink caption pair, the still-checking note, the three
+  preview refusals and the "the audio track" fallback are catalog keys. Catalog 1538 → 1548.
+- **Why:** `line(_ text: String)` renders a String, so a literal there never reached the catalog; the rest were
+  bare returns. German captions quote the German "Import Audio" / "Relink" labels (read from the catalog at edit
+  time, not retyped).
+- **Guard:** claim 11 E4-67 block (5 seam needles, 4 absence needles, 10 units; 315 → 317 XCTAssert). WORK PASS /
+  HEAD FAIL (5/4/10 — ONE finding). Whole-claim needle check over the file: 46 needles, 0 broken.
+- **Review:** 2026-10-31.

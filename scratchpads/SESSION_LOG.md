@@ -41525,3 +41525,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-66-Block (5 Naht-Nadeln, 4 Abwesenheits-Nadeln, 6 Einheiten; XCTAssert 309 → 315). Benotung `scratchpad/transcribe_e4_66.py`: HEAD FAIL (4/4/5 — EIN Befund), WORK PASS; Re-Anker +1 Zeile, XCTAssert gleich. Gesamt-Anspruch-Nadeln 34/0; Nachbar-Wächter-Nadeln (ValueField-Aktion, Szenen-Hinweis) im Arbeitsbaum grün. Checker alle OK.
 - **Gates:** 3cef15d08 (E4-61…63): Compile Check 3125 ✓, Quick Test 3853 ✓, Auto-Merge Docs 586 ✓ (CI/CD + Auto-Merge laufen, Monitor bklgzyq4i). Stapel E4-64 (7675317bc) · E4-65 (bc4e1949d) · Rücknahme a21802487 · E4-66 (820be6f62) wird jetzt gepusht.
 - **Offen (E4):** MediaBrowserView (Lese-Zeilen, Vorschau-Absagen, Relink-Prüfnotiz, Nutzungs-Ternary, drei accessibilityHint-Literale) als nächste Scheibe; danach Abschluss-Rest-Scan.
+
+## 2026-10-01 — E4-67: Medienansicht — Zustandszeilen, Relink-Notiz, Vorschau-Absagen (674840cef)
+
+- **Gebaut:** zehn nackte Literale in `MediaBrowserView` (drei `line(…)`-Zeilen, Relink-Caption-Paar, „still checking“-Notiz, drei Vorschau-Absagen, „the audio track“-Rückfall) als Katalog-Schlüssel; Deutsch zitiert die deutschen Labels „Audio importieren“ / „Neu verknüpfen“ (aus dem Katalog gelesen). Katalog 1538 → 1548 (+10). Sources: 1 Datei + Katalog.
+- **Wächter:** Anspruch 11 E4-67-Block (5 Naht-Nadeln, 4 Abwesenheits-Nadeln, 10 Einheiten; XCTAssert 315 → 317). Benotung `scratchpad/transcribe_e4_67.py`: HEAD FAIL (5/4/10 — EIN Befund), WORK PASS. Gesamt-Anspruch-Nadeln 46/0. Checker alle OK.
+- **Gates:** 823785a48 (E4-64…66): Quick Test 3854 ✓, Auto-Merge Docs 587 ✓; Compile Check / CI/CD / Auto-Merge laufen (Monitor btkl4tryp). 3cef15d08: CI/CD + Auto-Merge laufen (Monitor bklgzyq4i). E4-67 (674840cef) lokal.
+- **Offen (E4):** Abschluss-Rest-Scan über Sources (Ternaries, `return "…"`-Sätze, Konkatenationen) — danach ist E4 bis auf WAV-HUD (bewusst englisch) und die türlosen Flächen durch.
