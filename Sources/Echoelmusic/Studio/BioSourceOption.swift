@@ -84,13 +84,15 @@ enum BioSourceOption: String, CaseIterable, Identifiable {
         }
     }
 
-    /// Short noun for the row's current-value label (and VoiceOver value).
+    /// Short noun for the row's current-value label (and VoiceOver value). Keyed since E4-97: the
+    /// row renders it through `Text(_:)`'s `StringProtocol` overload, so a bare literal shipped English
+    /// in every locale while the menu entries beside it (`menuLabel`, E4-72) already spoke German.
     var shortName: String {
         switch self {
-        case .camera: return "Camera light"
-        case .ble:    return "Bluetooth strap"
-        case .sim:    return "Simulation"
-        case .health: return "Apple Health"
+        case .camera: return String(localized: "Camera light")
+        case .ble:    return String(localized: "Bluetooth strap")
+        case .sim:    return String(localized: "Simulation")
+        case .health: return String(localized: "Apple Health")
         }
     }
 }

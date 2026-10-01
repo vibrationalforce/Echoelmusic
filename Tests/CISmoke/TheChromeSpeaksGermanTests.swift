@@ -195,7 +195,8 @@
 // finding). E4-94 keyed the Mute/Solo switch names in the Workstation header and on the Perform plate, the
 // Workstation row's detail fragments and its state tags (parent: 9 units missing — ONE finding). E4-95 keyed the instrument's piece notes (new piece, refused, library row, rename), the timbre-words
 // hint and the spoken ", favorite" of the mood and sound rows (parent: 8 units missing — ONE finding). E4-96 keyed the onboarding consent toggle's VoiceOver hint, the last safety sentence that shipped
-// verbatim (parent: 2 units missing — ONE finding). Claim 12
+// verbatim (parent: 2 units missing — ONE finding). E4-97 keyed the bio-source short names (BioSourceOption.shortName),
+// which the pill row renders and speaks beside the E4-72 menu labels (parent: 3 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3283,6 +3284,22 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         try assertGerman(["Confirms you have read the safety and privacy notice above: ",
                           "for self-observation, not medical diagnosis; not while driving or under the influence; visuals capped at 3 hertz."],
                          "onboarding consent hint")
+
+        // E4-97 — `BioSourceOption.shortName` is the source row's current value: `Text(current.shortName)` and
+        // `.accessibilityValue(current.shortName)`, both `StringProtocol` overloads. E4-72 keyed `menuLabel` in the same
+        // file and left this switch bare, so the row read "Camera light" under a German menu.
+        let sourceShortNames = try codeOnly("Sources/Echoelmusic/Studio/BioSourceOption.swift")
+        for seam in ["case .camera: return String(localized: \"Camera light\")",
+                     "case .ble:    return String(localized: \"Bluetooth strap\")",
+                     "case .sim:    return String(localized: \"Simulation\")",
+                     "case .health: return String(localized: \"Apple Health\")"] {
+            XCTAssertTrue(sourceShortNames.contains(seam), "BioSourceOption lost the E4-97 seam `\(seam)`")
+        }
+        for verbatim in ["case .camera: return \"Camera light\"", "case .ble:    return \"Bluetooth strap\"",
+                         "case .sim:    return \"Simulation\""] {
+            XCTAssertFalse(sourceShortNames.contains(verbatim), "BioSourceOption spells a short name verbatim again: `\(verbatim)`")
+        }
+        try assertGerman(["Camera light", "Bluetooth strap", "Simulation", "Apple Health"], "bio-source short names")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
