@@ -23,7 +23,7 @@
 // COUNTERWEIGHT, green on both. NOT covered: that the line renders legibly at large type and
 // changes when the genre picker does — a device probe.
 // NEEDS-FOUNDER-VERIFY: Workstation → tap the Echoel track → the inspector shows
-// "Genre <the genre> FX <the character>" → change the genre on the instrument → back on the
+// "Style <the genre> FX <the character>" → change the genre on the instrument → back on the
 // Workstation the line shows the new genre; with the largest text size the two facts stack
 // instead of truncating.
 

@@ -11,6 +11,7 @@
 // THE THREE CLAIMS:
 // 1. The header strip builds no genre control and binds no genre key — one door, not two.
 // 2. The door is the Echoel track's inspector row, it says "Style", and the catalog gives it German.
+//    The read-only instance line under that row names the same fact with the same word (A2 follow-up).
 // 3. Counterweights — the funnel is intact: the row writes the song through ONE store call and posts
 //    `"echoelGenre"`; the instrument adopts it; the OSC cue still posts `"genre"`; the row still
 //    offers the curated shelves; the default document still has the MIDI lane the row lives on.
@@ -19,7 +20,9 @@
 // all scans are SOURCE-TEXT. Parent tree: claim 1 is a REGRESSION guard (red there for its named
 // reason — the strip built `labeled("Genre")` and bound `StudioDefaultKeys.genre.key`); claim 2 is
 // red there by ABSENCE of the new spelling (`Text("Style")`, the catalog key) — one absence (#486);
-// claim 3 is all COUNTERWEIGHTS, green on both. DEVICE PROBE, open: the Style row is found by a
+// claim 3 is all COUNTERWEIGHTS, green on both. The two instance-line needles were added one commit
+// later (A2 follow-up): against THAT parent they are a REGRESSION pair, red for their named reason
+// (`fact("Genre", …)`), and green after. DEVICE PROBE, open: the Style row is found by a
 // player who used to see the genre in the header — that is a reading, not a scan.
 
 import XCTest
@@ -32,6 +35,7 @@ final class TheGenreIsAStyleOnTheEchoelDeviceTests: XCTestCase {
     private static let app = "Sources/Echoelmusic/EchoelmusicApp.swift"
     private static let store = "Sources/Echoelmusic/Core/TimelineStore.swift"
     private static let catalog = "Sources/Echoelmusic/Resources/Localizable.xcstrings"
+    private static let instanceLine = "Sources/Echoelmusic/Studio/EchoelInstanceLine.swift"
 
     // MARK: 1 — the header builds no genre control
 
@@ -69,6 +73,12 @@ final class TheGenreIsAStyleOnTheEchoelDeviceTests: XCTestCase {
         XCTAssertTrue(row.contains("Text(\"Style\")"), "the row's caption names the device's style")
         XCTAssertTrue(row.contains("Picker(\"Style\""), "VoiceOver hears the same word the caption shows")
         XCTAssertFalse(row.contains("Text(\"Genre\")"), "two words for one thing on one row (rule 1)")
+
+        // The read-only instance line under the row names the same fact, so it says the same word.
+        let instance = SourceText.codeOnly(try text(Self.instanceLine))
+        XCTAssertTrue(instance.contains("fact(\"Style\", genre.displayName)"),
+                      "the instance line under the Style row names the genre with the row's word")
+        XCTAssertFalse(instance.contains("fact(\"Genre\""), "two words for one thing on one surface (rule 1)")
 
         let strings = try catalogStrings()
         XCTAssertEqual(german(of: "Style", in: strings), "Stil", "the row reads „Stil“ in German")

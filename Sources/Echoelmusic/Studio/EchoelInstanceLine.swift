@@ -50,7 +50,9 @@ struct EchoelInstanceLine: View {
         String(localized: "Echoel plays ") + genre.displayName + String(localized: ", FX character ") + character.displayName
     }
 
-    private var genreFact: some View { fact("Genre", genre.displayName) }
+    // A2 (founder 2026-10-01): the genre is the Echoel device's STYLE, and the row right above
+    // this line says "Style" — one word for one thing on one surface (rule 1).
+    private var genreFact: some View { fact("Style", genre.displayName) }
     private var characterFact: some View { fact("FX", character.displayName) }
 
     // E4-18: `name` is a catalog KEY (two literal callers); `value` is a type's display name.
