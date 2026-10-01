@@ -4686,3 +4686,18 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   click hint. It now pairs on `codeOnly` text with `"""` blocks blanked. Neither artefact was a needle; neither
   guard is weaker.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-81: inspector, scene launcher and note editor hints (a7ddc784b)
+
+- **Decision:** `TrackMix.muteHint/soloHint` (four sentences), the scene launcher's guide line and part hint pair,
+  the note editor's toggle label pair and grid hint pair are catalog keys, one `String(localized:)` per ternary
+  branch. Four LocalizedStringKey positions — the two `.accessibilityAction(named:)` note actions, the Colabo
+  stream hint, the FX search prompt — only lacked a unit and got one with NO Sources change. Catalog 1806 → 1822.
+- **Why no Sources change there:** `ThePartNoteGridSpeaksTests` pins `.accessibilityAction(named: "Select next
+  note") {` verbatim, and `named:` with a literal already resolves to the LocalizedStringKey overload — a unit is the
+  whole repair. The same holds for `.accessibilityHint("…")` and `.searchable(prompt:)` with a literal.
+- **Guard:** claim 11 E4-81 block (9 seams across three files, 3 verbatim-indented absences, 14 units; 367 → 373
+  XCTAssert). Runtime mirror: `TheTrackHeaderMutesAndSolosTests` ("Studio instrument" in the Echoel mute hint and in
+  every non-Echoel solo hint, absent from the others) holds under en. WORK PASS / HEAD FAIL (8/3/16 — ONE finding).
+  Whole-claim-11 needle check: 138 files, 1041 needles, 0 broken.
+- **Review:** 2026-10-31.
