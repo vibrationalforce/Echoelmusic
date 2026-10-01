@@ -210,7 +210,8 @@
 // missing — ONE finding). E4-106 looked up the master panel's buffer-tier segments (parent: seam absent, 3 units
 // missing — ONE finding). E4-107 keyed the three engine-failure sentences `AudioDegradedRow` shows (parent: seams
 // absent, 4 units missing — ONE finding). E4-108 looked up the one Live Colabo status line `MultipeerSession` still
-// built verbatim, the join request (parent: seam absent — ONE finding). Claim 12
+// built verbatim, the join request (parent: seam absent — ONE finding). E4-109 gave the two VoiceOver labels the
+// scanner's own word-boundary bug had hidden their units (parent: 2 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3462,6 +3463,20 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertFalse(colabStatus.contains(verbatim), "the join status is built verbatim again")
         }
         try assertGerman([" wants to join"], "Live Colabo join status")
+
+        // E4-109 — two `.accessibilityLabel("…")` literals were already keys, but their units were never written:
+        // the scan that looked for them anchored `\b` before `.accessibilityLabel`, which cannot match after a
+        // space, so every modifier literal went unseen. VoiceOver read the Poincaré plot and the dismiss cross
+        // in English.
+        let poincareLabel = try codeOnly("Sources/Echoelmusic/Studio/AnalysisPoincareView.swift")
+        for seam in [".accessibilityLabel(\"Poincaré plot\")"] {
+            XCTAssertTrue(poincareLabel.contains(seam), "the Poincaré plot lost its E4-109 label key: \(seam)")
+        }
+        let incomingCard = try codeOnly("Sources/Echoelmusic/Studio/LiveColaboView.swift")
+        for seam in [".accessibilityLabel(\"Dismiss\")"] {
+            XCTAssertTrue(incomingCard.contains(seam), "the incoming-piece card lost its E4-109 label key: \(seam)")
+        }
+        try assertGerman(["Poincaré plot", "Dismiss"], "VoiceOver labels on modifier literals")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
