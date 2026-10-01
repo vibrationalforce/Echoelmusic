@@ -139,7 +139,10 @@
 // TheBioSourceChooserHasOneDefinitionTests counts each literal ONCE across definition + consumers, and a wrapped literal is
 // still one), the track inspector's device names (TrackInspectorView.deviceName, the no-voice pair split around its
 // capacity) and the four meter names VoiceOver speaks (VisualAnalysisMeter.spokenName) (parent: 15 units missing — ONE
-// finding). Claim 12
+// finding). E4-73 added the studio chips' VoiceOver full names (StudioMenu.fullName — SaveDoorNamingTests reads the
+// `.export` LINE and asks for "save"/"loop", both still on it), the place row's status line, the Field arp rhythm blurbs
+// and push notes, and the mood variation caption (its count stays `MoodProfile.variationSpread.count`, projected between
+// keys) (parent: 25 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2564,6 +2567,46 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Wavefront field of the master output", "Spectrum of the master output",
                           "Oscilloscope of the master output", "Pulse interval plot from the camera"],
                          "source chooser, device names and meter names")
+
+        // E4-73 — the studio file's remaining bare producers: the chip full names (`.accessibilityLabel(menu.fullName)`),
+        // `placeStatusLine` (two interpolations become key + place + key), the eight rhythm sentences under the Field arp
+        // row, and `moodVariationCaption` (TheGenrePresetIsACentreNotAPointTests reads its first 900 characters for the
+        // projected count — `let moved` and both keys sit inside that window).
+        let studioNames = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for seam in ["case .bio:         return String(localized: \"Bio — pulse, HRV, coherence, source\")",
+                     "case .effects:     return String(localized: \"Effects\")",
+                     "return String(localized: \"In the name: \") + manual + String(localized: \" (manual)\")",
+                     "return String(localized: \"Looking up your city…\")",
+                     "return String(localized: \"Fewer notes than Density asks for, only on the beats, held long. Wide.\")",
+                     "let others: String = String(localized: \"Bar 1 plays the genre preset; the other \") + \"\\(loopBars.rawValue - 1)\""] {
+            XCTAssertTrue(studioNames.contains(seam), "EchoelStudioView lost the E4-73 seam `\(seam)`")
+        }
+        for verbatim in ["return \"In the name: \\(manual) (manual)\"",
+                         "case .bio:         return \"Bio — pulse, HRV, coherence, source\"",
+                         "return \"Fewer notes than Density asks for, only on the beats, held long. Wide.\""] {
+            XCTAssertFalse(studioNames.contains(verbatim), "EchoelStudioView spells a studio sentence verbatim again: `\(verbatim)`")
+        }
+        try assertGerman(["Bio — pulse, HRV, coherence, source",
+                          "Tempo and variations — tap tempo, metronome, haptic beat, variation ideas",
+                          "Sound and texture, plus the piece's scenes and tracks", "Mix — level per part", "Effects", "Master",
+                          "Mood — character, and the weather that colours it",
+                          "Save and export settings — loop length, place in the name, default sound, diagnostics",
+                          "Field — the visual surface you play with your fingers",
+                          "Workstation — the arrangement: tracks, parts and scenes; it plays, imports, mixes and moves parts, it does not cut them",
+                          "In the name: ", " (manual)", "Adds your city to the name — never stored by Echoel. Or type one above.",
+                          "Location is off for Echoel in Settings — type a place above instead.", "Looking up your city…",
+                          "Flowing already sits a hair behind on every note, and Laid back adds to it — the two together stop at the row's own ceiling, so above about 0.40 the timing no longer changes.",
+                          "Syncopated already leans back on its off-beats, and Laid back adds to it — on those notes the two together stop at the row's ceiling, so above about 0.33 they no longer move.",
+                          "Straight and short, hard on the beat — machine time, with air between the notes for the pulse to be felt.",
+                          "Even and long with almost no accent, and the figure rotates a little every bar so it repeats without being repetitive.",
+                          "The same notes as Driving but longer, and the level contour moves — the bar breathes. This is where Evolve does the most.",
+                          "Fewer notes than Density asks for, only on the beats, held long. Wide.",
+                          "Prefers the cells between the beats and accents them, inverting the weight — the off-beats are the loud ones, and they land a touch late.",
+                          "Long and level, filling the cell and sitting a hair behind the beat — it stays under everything else instead of competing with it.",
+                          "Variation needs more than one bar — bar 1 is always the genre preset, and there is no rest of the loop to vary. Raise Loop length to use it.",
+                          "Bar 1 plays the genre preset; the other ", " bars read it slightly differently. ",
+                          " performance dials drift — register, dissonance and chord colour hold, so the genre still sounds like itself at 1.00."],
+                         "studio full names, place line, rhythm blurbs and variation caption")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

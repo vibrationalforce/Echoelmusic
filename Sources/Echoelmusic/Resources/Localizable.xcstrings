@@ -28138,6 +28138,406 @@
           }
         }
       }
+    },
+    "Bio — pulse, HRV, coherence, source" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio — Puls, HRV, Kohärenz, Quelle"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio — pulse, HRV, coherence, source"
+          }
+        }
+      }
+    },
+    "Tempo and variations — tap tempo, metronome, haptic beat, variation ideas" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo und Variationen — Tap-Tempo, Metronom, haptischer Beat, Variationsideen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo and variations — tap tempo, metronome, haptic beat, variation ideas"
+          }
+        }
+      }
+    },
+    "Sound and texture, plus the piece's scenes and tracks" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klang und Textur, dazu Szenen und Spuren des Stücks"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sound and texture, plus the piece's scenes and tracks"
+          }
+        }
+      }
+    },
+    "Mix — level per part" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mix — Pegel je Teil"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mix — level per part"
+          }
+        }
+      }
+    },
+    "Mood — character, and the weather that colours it" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stimmung — Charakter und das Wetter, das sie färbt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mood — character, and the weather that colours it"
+          }
+        }
+      }
+    },
+    "Save and export settings — loop length, place in the name, default sound, diagnostics" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichern- und Export-Einstellungen — Loop-Länge, Ort im Namen, Standardklang, Diagnose"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save and export settings — loop length, place in the name, default sound, diagnostics"
+          }
+        }
+      }
+    },
+    "Field — the visual surface you play with your fingers" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feld — die visuelle Fläche, die du mit den Fingern spielst"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Field — the visual surface you play with your fingers"
+          }
+        }
+      }
+    },
+    "Workstation — the arrangement: tracks, parts and scenes; it plays, imports, mixes and moves parts, it does not cut them" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workstation — das Arrangement: Spuren, Teile und Szenen; sie spielt, importiert, mischt und verschiebt Teile, sie schneidet sie nicht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workstation — the arrangement: tracks, parts and scenes; it plays, imports, mixes and moves parts, it does not cut them"
+          }
+        }
+      }
+    },
+    "In the name: " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Namen: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In the name: "
+          }
+        }
+      }
+    },
+    " (manual)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " (manuell)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " (manual)"
+          }
+        }
+      }
+    },
+    "Adds your city to the name — never stored by Echoel. Or type one above." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fügt deine Stadt dem Namen hinzu — nie von Echoel gespeichert. Oder tippe oben eine ein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adds your city to the name — never stored by Echoel. Or type one above."
+          }
+        }
+      }
+    },
+    "Location is off for Echoel in Settings — type a place above instead." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standort ist für Echoel in den Einstellungen aus — tippe stattdessen oben einen Ort ein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location is off for Echoel in Settings — type a place above instead."
+          }
+        }
+      }
+    },
+    "Looking up your city…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sucht deine Stadt…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looking up your city…"
+          }
+        }
+      }
+    },
+    "Flowing already sits a hair behind on every note, and Laid back adds to it — the two together stop at the row's own ceiling, so above about 0.40 the timing no longer changes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flowing sitzt schon bei jeder Note eine Spur hinter dem Beat, und Laid back legt nach — zusammen enden beide an der Decke der Zeile, über etwa 0.40 ändert sich das Timing also nicht mehr."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flowing already sits a hair behind on every note, and Laid back adds to it — the two together stop at the row's own ceiling, so above about 0.40 the timing no longer changes."
+          }
+        }
+      }
+    },
+    "Syncopated already leans back on its off-beats, and Laid back adds to it — on those notes the two together stop at the row's ceiling, so above about 0.33 they no longer move." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syncopated lehnt sich auf seinen Off-Beats schon zurück, und Laid back legt nach — auf diesen Noten enden beide an der Decke der Zeile, über etwa 0.33 bewegen sie sich also nicht mehr."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syncopated already leans back on its off-beats, and Laid back adds to it — on those notes the two together stop at the row's ceiling, so above about 0.33 they no longer move."
+          }
+        }
+      }
+    },
+    "Straight and short, hard on the beat — machine time, with air between the notes for the pulse to be felt." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerade und kurz, hart auf dem Beat — Maschinenzeit, mit Luft zwischen den Noten, damit der Puls spürbar bleibt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Straight and short, hard on the beat — machine time, with air between the notes for the pulse to be felt."
+          }
+        }
+      }
+    },
+    "Even and long with almost no accent, and the figure rotates a little every bar so it repeats without being repetitive." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gleichmäßig und lang, fast ohne Akzent, und die Figur dreht sich jeden Takt ein wenig, sodass sie sich wiederholt, ohne repetitiv zu sein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Even and long with almost no accent, and the figure rotates a little every bar so it repeats without being repetitive."
+          }
+        }
+      }
+    },
+    "The same notes as Driving but longer, and the level contour moves — the bar breathes. This is where Evolve does the most." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieselben Noten wie Driving, aber länger, und die Pegelkontur bewegt sich — der Takt atmet. Hier bewirkt Entwicklung am meisten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The same notes as Driving but longer, and the level contour moves — the bar breathes. This is where Evolve does the most."
+          }
+        }
+      }
+    },
+    "Fewer notes than Density asks for, only on the beats, held long. Wide." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weniger Noten, als Dichte verlangt, nur auf den Schlägen, lang gehalten. Breit."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fewer notes than Density asks for, only on the beats, held long. Wide."
+          }
+        }
+      }
+    },
+    "Prefers the cells between the beats and accents them, inverting the weight — the off-beats are the loud ones, and they land a touch late." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bevorzugt die Zellen zwischen den Schlägen und akzentuiert sie, kehrt das Gewicht um — die Off-Beats sind die lauten, und sie landen eine Spur spät."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prefers the cells between the beats and accents them, inverting the weight — the off-beats are the loud ones, and they land a touch late."
+          }
+        }
+      }
+    },
+    "Long and level, filling the cell and sitting a hair behind the beat — it stays under everything else instead of competing with it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lang und gleichmäßig, füllt die Zelle und sitzt eine Spur hinter dem Beat — bleibt unter allem anderen, statt damit zu konkurrieren."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Long and level, filling the cell and sitting a hair behind the beat — it stays under everything else instead of competing with it."
+          }
+        }
+      }
+    },
+    "Variation needs more than one bar — bar 1 is always the genre preset, and there is no rest of the loop to vary. Raise Loop length to use it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variation braucht mehr als einen Takt — Takt 1 ist immer das Genre-Preset, und es gibt keinen Rest des Loops zum Variieren. Erhöhe die Loop-Länge, um sie zu nutzen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variation needs more than one bar — bar 1 is always the genre preset, and there is no rest of the loop to vary. Raise Loop length to use it."
+          }
+        }
+      }
+    },
+    "Bar 1 plays the genre preset; the other " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Takt 1 spielt das Genre-Preset; die anderen "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bar 1 plays the genre preset; the other "
+          }
+        }
+      }
+    },
+    " bars read it slightly differently. " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Takte lesen es leicht anders. "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " bars read it slightly differently. "
+          }
+        }
+      }
+    },
+    " performance dials drift — register, dissonance and chord colour hold, so the genre still sounds like itself at 1.00." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Spielregler driften — Lage, Dissonanz und Akkordfarbe halten, das Genre klingt bei 1.00 also weiter nach sich selbst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " performance dials drift — register, dissonance and chord colour hold, so the genre still sounds like itself at 1.00."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

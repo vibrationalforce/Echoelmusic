@@ -210,9 +210,10 @@ final class PerformIsASecondViewOfTheSameSessionTests: XCTestCase {
         XCTAssertTrue(toggle.contains(".accessibilityHint(Self.sectionHint)"),
                       "the toggle speaks the one hint that is true in both states")
         // #482: the Sound chip opens this panel, so its spoken name lists what it now reaches.
+        // E4-73: the spoken name is a catalog key now — same sentence, read through String(localized:).
         let studio = try source(Self.studioPath)
         XCTAssertTrue(studio.contains(
-            "case .sound:       return \"Sound and texture, plus the piece's scenes and tracks\""))
+            "case .sound:       return String(localized: \"Sound and texture, plus the piece's scenes and tracks\")"))
     }
 
     // MARK: 4 — slice 2: Mute and Solo, one lane flag seen from both views

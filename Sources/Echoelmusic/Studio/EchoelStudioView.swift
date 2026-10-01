@@ -966,12 +966,12 @@ struct EchoelStudioView: View {
         /// Full name for VoiceOver (the chip text is abbreviated).
         var fullName: String {
             switch self {
-            case .bio:         return "Bio — pulse, HRV, coherence, source"
-            case .composition: return "Tempo and variations — tap tempo, metronome, haptic beat, variation ideas"
-            case .sound:       return "Sound and texture, plus the piece's scenes and tracks"
-            case .mix:         return "Mix — level per part"
-            case .effects:     return "Effects"
-            case .master:      return "Master"
+            case .bio:         return String(localized: "Bio — pulse, HRV, coherence, source")
+            case .composition: return String(localized: "Tempo and variations — tap tempo, metronome, haptic beat, variation ideas")
+            case .sound:       return String(localized: "Sound and texture, plus the piece's scenes and tracks")
+            case .mix:         return String(localized: "Mix — level per part")
+            case .effects:     return String(localized: "Effects")
+            case .master:      return String(localized: "Master")
             // #202/#59, INHERITED FROM THE DELETED `.session` CASE and not dropped with it.
             // The founder listed "weather, Standort" among the things he was MISSING while
             // both were built, wired and reachable — because every string that advertised
@@ -980,7 +980,7 @@ struct EchoelStudioView: View {
             // mood. Since #359 step 1 that is literally what this panel holds, so the
             // sentence finally sits on the door it describes. (The picture half — hue,
             // saturation, glow, movement — went to Field in step 2 and is named there.)
-            case .mood:        return "Mood — character, and the weather that colours it"
+            case .mood:        return String(localized: "Mood — character, and the weather that colours it")
             // #272: named only the export half for months, and the founder reported
             // "Session speichern und Loops aufnehmen fehlt" about controls that are IN
             // this panel. Save and Open go first because those are the two words he used.
@@ -999,16 +999,16 @@ struct EchoelStudioView: View {
             // fallback. Found by the #482 reviewer. The name now lists what the panel
             // actually holds; `SaveDoorNamingTests` moved with it in the same commit,
             // because until then that guard REQUIRED the false words.
-            case .export:      return "Save and export settings — loop length, place in the name, default sound, diagnostics"
+            case .export:      return String(localized: "Save and export settings — loop length, place in the name, default sound, diagnostics")
             // Was "EchoelSynth — immersive visual window", which named the wrong half and
             // collided with the patch editor behind "Sound". This panel governs ONE thing
             // from two sides: the field's look, and the field's voice under your fingers.
             // Nobody could guess from the old string that the picture is playable.
-            case .field:       return "Field — the visual surface you play with your fingers"
+            case .field:       return String(localized: "Field — the visual surface you play with your fingers")
             // Says READ-ONLY out loud, because a door that only looks is the one kind a
             // listener cannot discover by feeling around inside it (#482's lesson: the spoken
             // name of a door must list what the panel actually holds).
-            case .workstation: return "Workstation — the arrangement: tracks, parts and scenes; it plays, imports, mixes and moves parts, it does not cut them"
+            case .workstation: return String(localized: "Workstation — the arrangement: tracks, parts and scenes; it plays, imports, mixes and moves parts, it does not cut them")
             }
         }
         /// DMMW Phase 1 — the area this plate belongs to (`StudioArea`, the row above the
@@ -4355,18 +4355,18 @@ struct EchoelStudioView: View {
         // A manual entry wins in every state (works even with location off/denied).
         let manual = locationNamer.manualPlace.trimmingCharacters(in: .whitespacesAndNewlines)
         if !manual.isEmpty {
-            return "In the name: \(manual) (manual)"
+            return String(localized: "In the name: ") + manual + String(localized: " (manual)")
         }
         guard locationNamer.enabled else {
-            return "Adds your city to the name — never stored by Echoel. Or type one above."
+            return String(localized: "Adds your city to the name — never stored by Echoel. Or type one above.")
         }
         if locationNamer.denied {
-            return "Location is off for Echoel in Settings — type a place above instead."
+            return String(localized: "Location is off for Echoel in Settings — type a place above instead.")
         }
         if locationNamer.placeToken.isEmpty {
-            return "Looking up your city…"
+            return String(localized: "Looking up your city…")
         }
-        return "In the name: \(locationNamer.placeToken)"
+        return String(localized: "In the name: ") + locationNamer.placeToken
     }
     #endif
 
@@ -6228,9 +6228,9 @@ struct EchoelStudioView: View {
         if fieldArpPush > 0 {
             switch fieldArpCharacter {
             case .flowing:
-                return "Flowing already sits a hair behind on every note, and Laid back adds to it — the two together stop at the row's own ceiling, so above about 0.40 the timing no longer changes."
+                return String(localized: "Flowing already sits a hair behind on every note, and Laid back adds to it — the two together stop at the row's own ceiling, so above about 0.40 the timing no longer changes.")
             case .syncopated:
-                return "Syncopated already leans back on its off-beats, and Laid back adds to it — on those notes the two together stop at the row's ceiling, so above about 0.33 they no longer move."
+                return String(localized: "Syncopated already leans back on its off-beats, and Laid back adds to it — on those notes the two together stop at the row's ceiling, so above about 0.33 they no longer move.")
             case .driving, .hypnotic, .dynamic, .sparse:
                 break
             }
@@ -6279,20 +6279,20 @@ struct EchoelStudioView: View {
     private func fieldArpRhythmBlurb(_ c: RoleRhythm.Character) -> String {
         switch c {
         case .driving:
-            return "Straight and short, hard on the beat — machine time, with air between the notes for the pulse to be felt."
+            return String(localized: "Straight and short, hard on the beat — machine time, with air between the notes for the pulse to be felt.")
         case .hypnotic:
-            return "Even and long with almost no accent, and the figure rotates a little every bar so it repeats without being repetitive."
+            return String(localized: "Even and long with almost no accent, and the figure rotates a little every bar so it repeats without being repetitive.")
         case .dynamic:
             // Two differences, not one: the level contour AND the length (gate ×0.7 vs Driving's
             // ×0.45, so ~55% longer at the same Note length). The length is the more audible of the
             // two, and naming only the contour invited the ear to miss it.
-            return "The same notes as Driving but longer, and the level contour moves — the bar breathes. This is where Evolve does the most."
+            return String(localized: "The same notes as Driving but longer, and the level contour moves — the bar breathes. This is where Evolve does the most.")
         case .sparse:
-            return "Fewer notes than Density asks for, only on the beats, held long. Wide."
+            return String(localized: "Fewer notes than Density asks for, only on the beats, held long. Wide.")
         case .syncopated:
-            return "Prefers the cells between the beats and accents them, inverting the weight — the off-beats are the loud ones, and they land a touch late."
+            return String(localized: "Prefers the cells between the beats and accents them, inverting the weight — the off-beats are the loud ones, and they land a touch late.")
         case .flowing:
-            return "Long and level, filling the cell and sitting a hair behind the beat — it stays under everything else instead of competing with it."
+            return String(localized: "Long and level, filling the cell and sitting a hair behind the beat — it stays under everything else instead of competing with it.")
         }
     }
 
@@ -7770,13 +7770,13 @@ struct EchoelStudioView: View {
     /// engine and was WRONG about which member was missing).
     private func moodVariationCaption(_ scattersSomething: Bool) -> String {
         guard scattersSomething else {
-            return "Variation needs more than one bar — bar 1 is always the genre preset, and "
-                + "there is no rest of the loop to vary. Raise Loop length to use it."
+            return String(localized: "Variation needs more than one bar — bar 1 is always the genre preset, and there is no rest of the loop to vary. Raise Loop length to use it.")
         }
         let moved = MoodProfile.variationSpread.count
-        return "Bar 1 plays the genre preset; the other \(loopBars.rawValue - 1) bars read it "
-            + "slightly differently. \(moved) performance dials drift — register, dissonance "
-            + "and chord colour hold, so the genre still sounds like itself at 1.00."
+        let others: String = String(localized: "Bar 1 plays the genre preset; the other ") + "\(loopBars.rawValue - 1)"
+            + String(localized: " bars read it slightly differently. ")
+        let dials: String = "\(moved)" + String(localized: " performance dials drift — register, dissonance and chord colour hold, so the genre still sounds like itself at 1.00.")
+        return others + dials
     }
 
     // MARK: Mood presets (same library pattern as FX / sound)
