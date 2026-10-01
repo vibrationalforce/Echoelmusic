@@ -87,7 +87,7 @@ verfallen sie mit der Sitzung):
 Alle Scheiben der Züge 1–4 sind **Gates-grün und Gerät-unbestätigt**. Statt 20 Einzelbitten
 fünf Familien; jede Zeile sagt, was zu tun und was zu sehen ist. Ja/Nein je Zeile reicht.
 
-**Gilt für 10.79.484** (Deploy 2026-10-01, Stand c0674a718). Die Build-Notiz in
+**Gilt für 10.79.484** (Deploy 2026-10-01, Stand c0674a718); **10.79.485** (Stand 093ec4849, Lauf 2610) trägt die Workstation-Scheiben bis B5 — ihre Bitten stehen in `.deploy/release` als T1–T8. Die Build-Notiz in
 `.deploy/release` führt dieselben Familien als T1–T10 mit Pfaden; zwei kommen dort neu dazu:
 Deutsch als Gerätesprache (T3) und der Schalter „Keep evolving" (T6).
 
@@ -120,6 +120,8 @@ den Läufen, Gerät unbestätigt) — wird beim nächsten Deploy zu Familien geb
 - **B6b-0** Eine MIDI-Datei MIT Haltepedal und Pitch-Bend importieren, dann eine ohne: steht der Hinweis „Haltepedal wird nicht gelesen …“ nur bei der ersten? Ist er verständlich?
 - **C3a** Licht (Art-Net/sACN) mit einer Look-Stärke unter 1: Licht verhält sich genau wie vorher (heute byte-gleich — die Gleitbremse greift erst, wenn eine Kurve die Stärke bewegt).
 - **B5** Mix-Reiter während das Stück spielt: bewegt sich der Pegelbalken jeder MIDI-Spur mit ihrem eigenen Klang? Stehen bei einem frischen Stück viele Spuren auf „Ohne Pegelanzeige“ — und stört das?
+- **B6b-1** Eine Klavier-MIDI-Datei MIT Haltepedal importieren: klingen die gehaltenen Akkorde lang statt staccato? Und bei einem Akkordwechsel, während das Pedal neu getreten wird — lässt der alte Akkord los? Sagt die Landezeile „… Noten sind durch das Sustain-Pedal verlängert“?
+- **C4a-1** Routing → „Every track as its own object (ADM-OSC)“ an, ADM-OSC-Route an, ein Renderer (z. B. SPAT Revolution) im Netz: erscheint je Spur ein Objekt? Frische Installation ohne Spur: wird es still (erwartet)? Eine Spur entfernen: behält der Renderer das letzte Objekt (nichts sendet ein Löschen)? App neu starten: ist der Schalter wieder aus?
 
 ---
 

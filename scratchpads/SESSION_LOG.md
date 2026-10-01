@@ -41890,3 +41890,11 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
   eine Founder-Entscheidung mit Geräteblick. Empfehlung: bremsen.
 - **B5** (eigener Pegel je Spur im Mix-Reiter) gebaut, Audio-Thread-Review vor dem Commit.
 - Gerät offen: alles (Inbox §2, vier neue Zeilen). Benotet per Transkription, nicht kompiliert.
+
+## 2026-10-01 — Workstation-Neugestaltung Runde 5 (B6b-1 · C4a-1) + TestFlight 10.79.485
+
+- **Deploy 10.79.485** (093ec4849, testflight Lauf 2610): Upload ✓; Landung in App Store Connect beim Schreiben noch offen.
+- **B6b-1 72c3b04e2** — Haltepedal verlängert gehaltene Noten beim MIDI-Import (Faltung pro Kanal nach dem Lauf, in Datei-Ticks); Landezeile zählt verlängerte Noten. Neuer Wächter `TheSustainPedalLengthensTheNotesItHoldsTests`, `TheMIDIImportSaysWhatItLeavesOutTests` nachgezogen. Kritik-Baum übernommen (Pedalwechsel am Loslass-Tick lässt den alten Akkord los).
+- **C4a-1 358afe0a1** — Szene app-weit aus den Spuren, an `onDocumentChanged` gekettet; Routing-Schalter als erste Tür zu `streamsScene`. Kritik-Fixes übernommen: Leeres-Stück-Stille in An- und Aus-Text, „Position und feste Lautstärke“ statt „nur Positionen“, nur Entfernen nummeriert um, Neustart setzt zurück. Drei Wächter nachgezogen, ein neuer.
+- Prüfer je Scheibe: dead-needles · swift-escapes · foreign-needles · count-pins · moved-needles sauber; Katalog-JSON gültig, jeder neue Text mit Deutsch. Nichts kompiliert lokal, nichts gerätegeprüft.
+- Offen: C4b Bewegungs-Spur → Space-Reiter; C3b (nach H11), C2a (nach H12), B1b (nach H9).
