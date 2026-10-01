@@ -18,11 +18,13 @@
 //  song's PARTS — moves, copies, splits, removals, imports and the composer's part — and, since
 //  Phase 3 / M1, the NOTES of a MIDI part edited in `PartNoteEditor`, and since Automation A1
 //  the song's AUTOMATION drawn in `SongAutomationEditor`, and since Media B2b a RELINK of a
-//  missing file in the Media Library (one audio clip's file binding), and since B3b ONE gesture in
-//  the piece mixer (Mix: a track's level, pan, Mute or Solo — `.laneMix`, only the fields it moved)
-//  — each as its own step kind. Never a rename or a track, and NOT a level, pan, Mute or Solo set
-//  anywhere else (inspector, track header, Perform grid, the agent): those writers record nothing,
-//  and the hint says so. A part whose track was removed after the step does
+//  missing file in the Media Library (one audio clip's file binding), and since B3b ONE gesture on
+//  a track's level, pan, Mute or Solo (`.laneMix`, only the fields it moved) — since B3c from every
+//  surface a hand reaches: Mix, the inspector, the track header, the Perform grid — each as its
+//  own step kind. Never a rename or a track. Two writers stay OUT, and the hint names the one a
+//  person can see: the Studio instrument's Start healing its own track (its own intent, not an
+//  edit), and the agent's level writes (it keeps its own way back; no door today). A part whose
+//  track was removed after the step does
 //  not come back (`TimelineStore.restoreRegions` drops it rather than resurrect an invisible
 //  orphan).
 //
@@ -31,7 +33,7 @@
 
 import SwiftUI
 
-/// Undo / Redo for the piece's parts, notes, automation, relinks and Mix gestures — one control, in the head.
+/// Undo / Redo for the piece's parts, notes, automation, relinks and mixer gestures — one control, in the head.
 @MainActor
 struct SongHistoryRow: View {
 
@@ -51,7 +53,7 @@ struct SongHistoryRow: View {
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityHint("Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and changes made in Mix — not level, pan, mute or solo changed anywhere else")
+        .accessibilityHint("Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and a track's level, pan, mute or solo — not what the Studio instrument's Start changes")
     }
 
     private func button(_ title: String, _ systemImage: String, enabled: Bool, label: String,

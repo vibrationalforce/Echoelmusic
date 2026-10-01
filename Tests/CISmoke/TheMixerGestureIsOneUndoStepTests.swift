@@ -26,9 +26,11 @@
 //    step whose fields already read what it would restore (the Studio's Start healed the mute) is
 //    dropped, so Undo never reads as available while it would do nothing.
 // 4. SOURCE + CATALOG: the strip wraps Level/Pan per sample and closes each on `onCommit`, Mute and
-//    Solo through one tap helper; the writes inside are still `TrackMix.*`; the piece mixer is the one
-//    file that records; the agent never does; `SongHistoryRow` no longer says "never mixer changes"
-//    and names Mix; the three reworded sentences have German lines.
+//    Solo through one tap helper; the writes inside are still `TrackMix.*`; the files that record are
+//    the four surfaces a hand reaches (B3c widened it from the piece mixer alone — the per-surface
+//    wrap rule lives in `EveryHandMadeMixChangeIsOneUndoStepTests`); the agent never does;
+//    `SongHistoryRow` no longer says "never mixer changes" nor "changed anywhere else"; the two
+//    reworded labels have German lines (the hint's own line is checked by the B3c guard).
 //
 // GRADING (§0/§3, no Swift toolchain in a web session): against the parent this file does NOT
 // COMPILE — `editLaneMix`/`commitLaneMix` do not exist — so no assertion has a verdict there: ONE
@@ -41,6 +43,12 @@
 // is overwritten with 0.25); no write count on a level
 // Undo (claim 3); a step inside `TrackMix.setLevel` (claim 2, "the agent's path records nothing").
 // Claim 4 transcribed against both trees: red on the parent by the same one absence.
+// B3c RE-GRADE (2026-10-01, claim 4 only — claims 1–3 untouched): this file now COMPILES against its
+// parent. REGRESSIONS there: two — the recorder list (the parent records from the piece mixer alone)
+// and the hint (the parent still says "changed anywhere else"). COUNTERWEIGHTS, green on both: the
+// strip's wrap/commit counts, the funnel needles, the bare `TrackMix.setLevel`, the agent's absence,
+// "never mixer changes", and the two German labels. Stripper PROPHYLAKTISCH (0 of the scan verdicts
+// flip raw vs. stripped on either tree).
 // NOT covered: that a strip FEELS like one gesture under a finger, and that a mixer Undo while the
 // piece plays is heard at once — device readings.
 // NEEDS-FOUNDER-VERIFY: Workstation → Mix → drag a track's Level, tap Mute, then the head's Undo
@@ -54,6 +62,8 @@ import XCTest
 final class TheMixerGestureIsOneUndoStepTests: XCTestCase {
 
     private static let mixer = "Sources/Echoelmusic/Studio/PieceMixerView.swift"
+    private static let perform = "Sources/Echoelmusic/Studio/PerformSessionView.swift"
+    private static let workstation = "Sources/Echoelmusic/Studio/WorkstationView.swift"
     private static let inspector = "Sources/Echoelmusic/Studio/TrackInspectorView.swift"
     private static let history = "Sources/Echoelmusic/Studio/SongHistoryRow.swift"
     private static let executor = "Sources/Echoelmusic/EchoelAI/EchoelCommandExecutor.swift"
@@ -199,7 +209,7 @@ final class TheMixerGestureIsOneUndoStepTests: XCTestCase {
 
     // MARK: 4 — source and catalog
 
-    func testThePieceMixerIsTheOneSurfaceThatRecords() throws {
+    func testTheStripRecordsAndTheAgentsFunnelStaysBare() throws {
         let mixer = SourceText.codeOnly(try text(Self.mixer))
         let strip = try member("private func strip(_ lane: TimelineLane, _ controls: TrackMix.Controls) -> some View {", in: mixer)
         XCTAssertEqual(strip.components(separatedBy: "timeline.editLaneMix(id: lane.id) {").count - 1, 2,
@@ -218,10 +228,10 @@ final class TheMixerGestureIsOneUndoStepTests: XCTestCase {
         }
 
         let recorders = try filesMatching { $0.contains(".editLaneMix(") }
-        XCTAssertEqual(recorders, [Self.mixer], """
-            the piece mixer is the one surface whose edits enter the piece's Undo. A new recorder (the \
-            inspector, the track header or the Perform grid — B3c) is welcome: add it here and change \
-            `SongHistoryRow`'s hint in the same commit, because it names which mixer changes Undo covers.
+        XCTAssertEqual(recorders, [Self.perform, Self.mixer, Self.inspector, Self.workstation], """
+            the surfaces whose edits enter the piece's Undo are the four a hand reaches (B3c). A new \
+            recorder is welcome: add it here and check `SongHistoryRow`'s hint in the same commit, \
+            because it says which mixer changes Undo covers.
             """)
         let executor = SourceText.codeOnly(try text(Self.executor))
         XCTAssertFalse(executor.contains("editLaneMix") || executor.contains("commitLaneMix"),
@@ -235,14 +245,14 @@ final class TheMixerGestureIsOneUndoStepTests: XCTestCase {
 
         let history = SourceText.codeOnly(try text(Self.history))
         XCTAssertFalse(history.contains("never mixer changes"), "the hint no longer denies what Undo now does")
-        XCTAssertTrue(history.contains("changes made in Mix"), "the hint names the one surface whose mixer changes it covers")
+        XCTAssertFalse(history.contains("changed anywhere else"),
+                       "since B3c the inspector, the track header and Perform record too — the hint no longer excludes them")
 
         let data = Data(try text(Self.catalog).utf8)
         let root = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         let strings = root?["strings"] as? [String: Any] ?? [:]
         for key in ["Undo the last change to the piece's parts, notes, automation, mix or a relinked file",
-                    "Redo the last undone change to the piece's parts, notes, automation, mix or a relinked file",
-                    "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and changes made in Mix — not level, pan, mute or solo changed anywhere else"] {
+                    "Redo the last undone change to the piece's parts, notes, automation, mix or a relinked file"] {
             let entry = strings[key] as? [String: Any]
             let de = ((entry?["localizations"] as? [String: Any])?["de"] as? [String: Any])?["stringUnit"] as? [String: Any]
             XCTAssertNotNil(de?["value"] as? String, "`\(key)` has its German line")

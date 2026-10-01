@@ -3403,20 +3403,20 @@
         }
       }
     },
-    "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and changes made in Mix — not level, pan, mute or solo changed anywhere else" : {
-      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+    "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and a track's level, pan, mute or solo — not what the Studio instrument's Start changes" : {
+      "comment" : "Head history hint (Workstation redesign B3c, 2026-10-01): what the piece's Undo covers — every hand-made level, pan, Mute or Solo is one step; the Studio instrument's Start is not.",
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Umfasst Verschieben, Kopien, Teilungen, Entfernen, Importe, Noten-Änderungen, Automationspunkte, neu verknüpfte Dateien, das Teil des Komponisten und Änderungen im Mix — nicht Pegel, Pan, Stumm oder Solo, die anderswo geändert wurden"
+            "value" : "Umfasst Verschieben, Kopien, Teilungen, Entfernen, Importe, Noten-Änderungen, Automationspunkte, neu verknüpfte Dateien, das Teil des Komponisten und Pegel, Pan, Stumm oder Solo einer Spur — nicht, was der Start des Studio-Instruments ändert"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and changes made in Mix — not level, pan, mute or solo changed anywhere else"
+            "value" : "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and a track's level, pan, mute or solo — not what the Studio instrument's Start changes"
           }
         }
       }

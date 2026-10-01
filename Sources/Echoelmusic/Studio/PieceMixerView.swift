@@ -24,8 +24,9 @@
 // ⭐ B3b — EVERY EDIT HERE IS ONE STEP IN THE PIECE'S UNDO, one per gesture: each finger sample runs
 // inside `TimelineStore.editLaneMix(id:_:)` (the write is still the `TrackMix` call), and the field's
 // `onCommit` — or the tap itself for Mute/Solo — closes it with `commitLaneMix(id:)` (`.laneMix`, the
-// gesture's fields only). The agent's `TrackMix.setLevel` stays outside that history, and so do the
-// inspector, the track header and the Perform grid until they wrap their writes the same way.
+// gesture's fields only). The agent's `TrackMix.setLevel` stays outside that history; since B3c the
+// inspector, the track header and the Perform grid wrap their writes the same way
+// (`EveryHandMadeMixChangeIsOneUndoStepTests`).
 
 import SwiftUI
 

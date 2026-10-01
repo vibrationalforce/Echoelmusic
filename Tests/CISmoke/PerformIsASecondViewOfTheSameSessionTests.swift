@@ -39,8 +39,8 @@
 //    GRADING: `mixRows` is new, so again no verdict on the parent — FORWARD guards.
 //
 // ⛔ HONEST LIMITS. Part SWITCHING by tapping a single cell while stopped is not here: the grid's
-// per-part launch is disabled while the song is stopped (a scene starts it). Mute and Solo are
-// not undoable in either view — the store's toggles never were; the same truth in both places.
+// per-part launch is disabled while the song is stopped (a scene starts it). Since B3c each Mute
+// or Solo tap is one Undo step in both views (`EveryHandMadeMixChangeIsOneUndoStepTests`).
 // That the grid reads well on the Sound panel, on an iPhone, with VoiceOver, is a DEVICE PROBE.
 // NEEDS-FOUNDER-VERIFY: Compose → write a part → Perform → the part's bar appears as a scene →
 // "Launch scene" starts the song there → the header's Stop ends it; VoiceOver reads the scene.

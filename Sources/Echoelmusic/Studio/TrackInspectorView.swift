@@ -493,13 +493,18 @@ struct TrackInspectorView: View {
                             value: Binding(
                                 get: { Double(timeline.document.lanes
                                     .first(where: { $0.id == laneID })?.level ?? TimelineLane.defaultLevel) },
-                                set: { TrackMix.setLevel($0, laneID: laneID, timeline: timeline) }),
+                                // B3c: every finger sample runs inside the person's gesture; the
+                                // field's commit closes it — ONE Undo step per drag (B3b's path).
+                                set: { newLevel in
+                                    timeline.editLaneMix(id: laneID) { TrackMix.setLevel(newLevel, laneID: laneID, timeline: timeline) }
+                                }),
                             range: TrackMix.levelRange,
                             decimals: 2,
                             hint: TrackMix.levelHint(controls.role),
                             // `standard:` AFTER `hint:` — the memberwise initialiser demands declaration
                             // order (`EchoelValueField.hint` is declared above `standard`).
-                            standard: Double(TimelineLane.defaultLevel))
+                            standard: Double(TimelineLane.defaultLevel),
+                            onCommit: { timeline.commitLaneMix(id: laneID) })
                         // Design slice 8: the same stored gain, read in decibels. Cold — the level
                         // moves on an edit, never on a clock.
                         Text(TrackMix.decibelText(level))
@@ -514,11 +519,14 @@ struct TrackInspectorView: View {
                             value: Binding(
                                 get: { Double(timeline.document.lanes
                                     .first(where: { $0.id == laneID })?.pan ?? TimelineLane.defaultPan) },
-                                set: { TrackMix.setPan($0, laneID: laneID, timeline: timeline) }),
+                                set: { newPan in
+                                    timeline.editLaneMix(id: laneID) { TrackMix.setPan(newPan, laneID: laneID, timeline: timeline) }
+                                }),
                             range: TrackMix.panRange,
                             decimals: 2,
                             hint: String(localized: "−1 left, 0 centre, 1 right"),
-                            standard: Double(TimelineLane.defaultPan))
+                            standard: Double(TimelineLane.defaultPan),
+                            onCommit: { timeline.commitLaneMix(id: laneID) })
                     }
                     // WA4 path 6 — Mute and Solo moved to the track HEADER (`WorkstationView.laneRow`):
                     // one control per fact on screen, reachable without opening this inspector.

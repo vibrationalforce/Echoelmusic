@@ -26,8 +26,9 @@
 // closed). The ONE truth asked is `ProjectTransport.isRunning`; the section says why instead.
 //
 // Slice 2: Mute and Solo per heard track, through the same `TrackMix` doors Compose's track
-// header uses — one lane flag, two views of it. (Not undoable in either view: the store's
-// toggles never were; that is the same truth in both places, not a Perform gap.)
+// header uses — one lane flag, two views of it. Since B3c each tap is ONE step in the piece's Undo
+// in both views: the flip runs inside `editLaneMix(id:_:)` and `commitLaneMix(id:)` closes it at once
+// (`EveryHandMadeMixChangeIsOneUndoStepTests`).
 //
 // ⚠️ NO MODAL, NO NEW PRESENTATION SLOT: one more child of an existing panel builder (the
 // black-screen law counts the root chain; this is not on it).
@@ -162,11 +163,14 @@ struct PerformSessionView: View {
                 .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.text)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
+            // B3c: a tap is a whole gesture — one write inside it, closed at once: ONE Undo step.
             mixSwitch(String(localized: "Mute"), track: row.name, on: row.isMuted, hint: TrackMix.muteHint(row.role)) {
-                TrackMix.flipMute(laneID: row.id, timeline: timeline)
+                timeline.editLaneMix(id: row.id) { TrackMix.flipMute(laneID: row.id, timeline: timeline) }
+                timeline.commitLaneMix(id: row.id)
             }
             mixSwitch(String(localized: "Solo"), track: row.name, on: row.isSoloed, hint: TrackMix.soloHint(row.role)) {
-                TrackMix.flipSolo(laneID: row.id, timeline: timeline)
+                timeline.editLaneMix(id: row.id) { TrackMix.flipSolo(laneID: row.id, timeline: timeline) }
+                timeline.commitLaneMix(id: row.id)
             }
         }
     }
