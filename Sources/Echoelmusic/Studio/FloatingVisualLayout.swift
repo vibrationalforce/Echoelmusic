@@ -151,6 +151,9 @@ public enum FloatingVisualLayout {
     // the guard (`TheFloatingWindowMovesWithoutADragTests`) pins the set's count, so
     // growing it means saying so where the set is proven. (#619b: the first version of
     // this sentence claimed both were one edit, contradicting the guard seven files away.)
+    // Since E4-98 each rawValue is ALSO a String-catalog key (the view looks it up), so a
+    // rename moves the key in `Localizable.xcstrings` in the same commit, or German falls
+    // back to the English name.
     public enum SnapCorner: String, CaseIterable, Sendable {
         case topLeft = "Move to top left"
         case topRight = "Move to top right"

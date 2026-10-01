@@ -196,7 +196,8 @@
 // Workstation row's detail fragments and its state tags (parent: 9 units missing — ONE finding). E4-95 keyed the instrument's piece notes (new piece, refused, library row, rename), the timbre-words
 // hint and the spoken ", favorite" of the mood and sound rows (parent: 8 units missing — ONE finding). E4-96 keyed the onboarding consent toggle's VoiceOver hint, the last safety sentence that shipped
 // verbatim (parent: 2 units missing — ONE finding). E4-97 keyed the bio-source short names (BioSourceOption.shortName),
-// which the pill row renders and speaks beside the E4-72 menu labels (parent: 3 units missing — ONE finding). Claim 12
+// which the pill row renders and speaks beside the E4-72 menu labels (parent: 3 units missing — ONE finding). E4-98 looked the floating window's four corner actions up by their
+// rawValue (one definition stays in SnapCorner; the key is the rawValue) (parent: 4 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3300,6 +3301,16 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertFalse(sourceShortNames.contains(verbatim), "BioSourceOption spells a short name verbatim again: `\(verbatim)`")
         }
         try assertGerman(["Camera light", "Bluetooth strap", "Simulation", "Apple Health"], "bio-source short names")
+
+        // E4-98 — the floating window's VoiceOver rotor actions were `Button(corner.rawValue)`, a bare String, so the
+        // StringProtocol overload shipped "Move to top left" etc. in every locale. The names keep their ONE definition as
+        // `SnapCorner` rawValues (TheFloatingWindowMovesWithoutADragTests); the view looks each one up as a catalog key.
+        let cornerActions = try codeOnly("Sources/Echoelmusic/Studio/FloatingVisualWindow.swift")
+        XCTAssertTrue(cornerActions.contains("Button(String(localized: String.LocalizationValue(corner.rawValue))) {"),
+                      "FloatingVisualWindow lost the E4-98 seam: the corner actions no longer look their name up")
+        XCTAssertFalse(cornerActions.contains("Button(corner.rawValue) {"),
+                       "FloatingVisualWindow speaks the corner actions verbatim again")
+        try assertGerman(FloatingVisualLayout.SnapCorner.allCases.map(\.rawValue), "floating-window corner actions")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

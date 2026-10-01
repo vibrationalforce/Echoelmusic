@@ -32762,6 +32762,70 @@
           }
         }
       }
+    },
+    "Move to top left" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach links oben verschieben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move to top left"
+          }
+        }
+      }
+    },
+    "Move to top right" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach rechts oben verschieben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move to top right"
+          }
+        }
+      }
+    },
+    "Move to bottom left" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach links unten verschieben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move to bottom left"
+          }
+        }
+      }
+    },
+    "Move to bottom right" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach rechts unten verschieben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move to bottom right"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

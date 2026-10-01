@@ -1083,7 +1083,10 @@ struct FloatingVisualWindow: View {
                 .accessibilityActions {
                     if !windowSize.isFullscreen {
                         ForEach(FloatingVisualLayout.SnapCorner.allCases, id: \.rawValue) { corner in
-                            Button(corner.rawValue) {
+                            // E4-98: the rawValue is the catalog KEY, looked up here. `Button(_:)`
+                            // with a bare String takes the StringProtocol overload and shipped
+                            // the four rotor actions English in every locale.
+                            Button(String(localized: String.LocalizationValue(corner.rawValue))) {
                                 center = FloatingVisualLayout.snapCenter(
                                     corner, in: bounds, card: card, margin: margin)
                             }
