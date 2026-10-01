@@ -406,8 +406,10 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
                       "both song cases take the ONE song start — the second case only changes the words")
 
         let workstation = try source(Self.workstation)
-        XCTAssertTrue(workstation.contains("ProjectTransport.stop(song: player, pattern: beatPlayer.pattern, source: \"workstation\")"),
-                      "the Workstation's Stop is the same one Stop")
+        XCTAssertTrue(workstation.contains("ProjectPlayStopButton(source: \"workstation\")"),
+                      "the Workstation's Play/Stop is the head's own button (A3b) — the same one Stop")
+        XCTAssertTrue(header.contains("ProjectTransport.stop(song: player, pattern: beatPlayer.pattern, source: source)"),
+                      "the one button's Stop is the ONE Stop and logs which mount was tapped")
         XCTAssertTrue(workstation.contains("let running = ProjectTransport.isRunning(clockRunning: transport.isPlaying, songPlaying: playing)"),
                       "and its Play/Stop shows the same running truth as the header")
         XCTAssertEqual(workstation.components(separatedBy: "player.play(").count - 1, 1,

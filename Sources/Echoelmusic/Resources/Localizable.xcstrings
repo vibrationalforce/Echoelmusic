@@ -21757,22 +21757,6 @@
         }
       }
     },
-    "Play timeline" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zeitleiste abspielen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Play timeline"
-          }
-        }
-      }
-    },
     "Hides the steps" : {
       "localizations" : {
         "de" : {

@@ -10,6 +10,17 @@
 // Workstation's ONE start (`WorkstationView.startSong`), Stop is `ProjectTransport.stop`, Record
 // is the existing take door (`RecordTakeButton`) — so there is no second clock and no copy.
 //
+// ⭐ A3b (workstation redesign, founder 2026-10-01): THE HEAD CARRIES THE TRANSPORT ON THE
+// INSTRUMENT STAGE ONLY. On the Piece stage the bar pinned under the arrangement
+// (`WorkstationView.transportBar`) is the transport, and a second Play on the same screen is the
+// founder's "zu viele Play Knöpfe" a fifth time. So the ONE Play / Stop is its own leaf,
+// `ProjectPlayStopButton` (below): mounted HERE while the Instrument stage shows, and by the bar
+// while the Piece stage shows — never both, because `StageShell` mounts the bar's stage only on
+// the Piece stage and this header reads the same stage key. One definition, so one word, one
+// spoken label, one resume of a held instrument, one Stop for everything and ONE space-bar key
+// follow it to whichever stage is in front. The compact Record leaves with it (the bar carries
+// the full one); the facts, the pill, Undo / Redo and ⓘ stay on both stages.
+//
 // ⚠️ IT SITS IN THE ROOT (`WorkspaceView`), ABOVE EVERY MENU HOST, SO IT READS NOTHING HOT.
 // Every flag below changes on a start, a stop, an edit or a tap. The two hot values are each read
 // ONLY inside their own leaf: the tempo, which glides at up to ~20 Hz (`ProjectTempoReadout`), and
@@ -73,6 +84,11 @@ struct ProjectHeader: View {
     /// read by `GuideOverlay` and flipped by the ⓘ below. Written on a tap, never on a tick.
     @AppStorage(StudioDefaultKeys.guideVisible.key)
     private var guideVisible = StudioDefaultKeys.guideVisible.value
+    /// A3b — which stage is in front, through the ONE key (#416). A SETTING written on a tap (the
+    /// seam, a plate door, New piece, Safe Mode), never a tick, so reading it in `body` is cold.
+    /// Read only: this header never turns the stage.
+    @AppStorage(StudioDefaultKeys.stage.key)
+    private var stageRaw = StudioDefaultKeys.stage.value.rawValue
 
     var body: some View {
         let document = timeline.document
@@ -84,13 +100,12 @@ struct ProjectHeader: View {
                                            sessionRunning: bus.instrumentRunning,
                                            songStartable: songStartable)
         let status = ProjectTransport.status(facts)
-        let running = ProjectTransport.isRunning(facts)
-        let play = ProjectTransport.playAction(facts)
         let name = ProjectTransport.projectName(projects.currentProjectName)
         let place = ProjectTransport.place(document: document, trackID: selection.trackID,
                                            regionID: selection.regionID)
-        // The facts flex, the pill flexes, the five buttons (Play · Record · ⓘ · Undo · Redo)
-        // have floors. One row while the ideal widths fit (a phone in landscape, an iPad); else two
+        // The facts flex, the pill flexes, the buttons have floors (Play · Record · ⓘ · Undo ·
+        // Redo on the Instrument stage; ⓘ · Undo · Redo on the Piece stage, A3b). One row while
+        // the ideal widths fit (a phone in landscape, an iPad); else two
         // lines — the summary with the transport over the pill with the history; else three,
         // the pill and the history each on their own — the #1027 idiom, `ViewThatFits`; at
         // accessibility sizes everything stacks so nothing is squeezed out and the transport
@@ -101,13 +116,17 @@ struct ProjectHeader: View {
         // same Play, the same pill, the same Undo, in every shape.)
         let summaryView = summary(name: name, place: place, status: status)
             .frame(maxWidth: .infinity, alignment: .leading)
+        // A3b: the transport pair only while the Instrument stage is in front (file header).
+        let carriesTransport = (StudioStage(rawValue: stageRaw) ?? StudioDefaultKeys.stage.value).headCarriesTransport
         let controls = HStack(spacing: 8) {
-            playStopButton(running: running, play: play)
-            RecordTakeButton(playing: player.isPlaying, startable: songStartable,
-                             voiceCapacity: player.laneVoiceCapacity,
-                             startSong: { startSong(); return player.isPlaying },
-                             stopSong: { stopAll() },
-                             compact: true)
+            if carriesTransport {
+                ProjectPlayStopButton(source: "project header")
+                RecordTakeButton(playing: player.isPlaying, startable: songStartable,
+                                 voiceCapacity: player.laneVoiceCapacity,
+                                 startSong: { startSong(); return player.isPlaying },
+                                 stopSong: { stopAll() },
+                                 compact: true)
+            }
             guideButton
         }
         return Group {
@@ -223,8 +242,62 @@ struct ProjectHeader: View {
         SongHistoryRow()
     }
 
+    private func startSong() {
+        WorkstationView.startSong(player: player, timeline: timeline, clipStore: clipStore,
+                                  pattern: beatPlayer.pattern, pianoRoll: pianoRoll,
+                                  fromTick: 0, launching: [])
+    }
+
+    private func stopAll() {
+        ProjectTransport.stop(song: player, pattern: beatPlayer.pattern, source: "project header")
+    }
+}
+
+/// A3b (workstation redesign, founder 2026-10-01) — THE ONE Play / Stop, as a leaf of its own so it
+/// can stand where the stage needs it: in the head while the Instrument stage is in front, in the
+/// transport bar pinned under the arrangement while the Piece stage is (`WorkstationView`'s
+/// `transportRow`). Never both: the head drops it on the Piece stage, and the bar's stage is not
+/// mounted on the Instrument stage (`StageShell`). One definition, so the word, the spoken label,
+/// the resume of a held instrument, the Stop for everything and the ONE space-bar shortcut
+/// (`TheHeadPlayOwnsTheSpaceKeyTests`) are the same object on either stage — not two buttons kept
+/// alike by hand.
+///
+/// ⚠️ IT READS ONLY COLD FLAGS, the ones the head read for it before (`ProjectTransport.Facts`):
+/// each flips on a start, a stop, an edit or a tap, never per step. `beatPlayer` and `pianoRoll`
+/// are touched ONLY in the tap handlers — `beatPlayer.pattern` leads to the gliding tempo. So
+/// mounting it in the Workstation's bar adds no hot read to that root (10.76.41/50).
+///
+/// ⚠️ NO MODAL, and it constructs no owner — every value comes from the environment the app
+/// already injects into both mounts.
+@MainActor
+struct ProjectPlayStopButton: View {
+    /// Written to the crash log BEFORE the stop (the lifecycle-ladder law), so a log names WHICH
+    /// mount was tapped — "project header" or "workstation" — not only that one was.
+    let source: String
+
+    @Environment(TimelineStore.self) private var timeline
+    @Environment(Transport.self) private var transport
+    @Environment(TimelineRegionPlayer.self) private var player
+    @Environment(ClipStore.self) private var clipStore
+    @Environment(RecordController.self) private var recorder
+    @Environment(EngineBus.self) private var bus
+    /// ⚠️ READ ONLY INSIDE TAP HANDLERS, never in `body` (see above).
+    @Environment(BeatPlayer.self) private var beatPlayer
+    @Environment(PianoRollModel.self) private var pianoRoll
+
+    var body: some View {
+        let facts = ProjectTransport.Facts(clockRunning: transport.isPlaying,
+                                           songPlaying: player.isPlaying,
+                                           recording: recorder.isRecording,
+                                           sessionRunning: bus.instrumentRunning,
+                                           songStartable: WorkstationView.songCanStart(
+                                               player: player, timeline: timeline, clipStore: clipStore))
+        playStopButton(running: ProjectTransport.isRunning(facts), play: ProjectTransport.playAction(facts))
+    }
+
     /// The ONE Play / Stop. While anything runs it is Stop — for everything. Stopped, it plays
-    /// what the project can play: the song, or a held session's music.
+    /// what the project can play: the song, or a held session's music. (Moved here from
+    /// `ProjectHeader` by A3b, unchanged — the type above says why.)
     ///
     /// It wears its WORD beside the glyph (`ProjectTransport.buttonWord`, interface audit
     /// 2026-09-30): the header is the first control a fresh install meets, and a lone triangle is
@@ -269,7 +342,9 @@ struct ProjectHeader: View {
         // stops the ONE transport with the key every DAW gives it, and it can only ever reach
         // THIS button: the guard `TheHeadPlayOwnsTheSpaceKeyTests` allows exactly one
         // `.keyboardShortcut(.space` in `Sources/` (a second one on the Workstation's Play would
-        // be the two-transports confusion `OneStartControlTests` names). Bare space, no
+        // be the two-transports confusion `OneStartControlTests` names). Since A3b this one
+        // button is ALSO what the Piece stage's transport bar shows, so the key follows it there —
+        // still one shortcut, on one object, mounted once per stage. Bare space, no
         // modifiers — ⌘-space is the system's. `.disabled` above still governs it: an
         // unavailable Play swallows the key, so nothing starts that the tap could not start.
         // Text input keeps its own spaces — an unmodified key command is not delivered while a
@@ -287,7 +362,7 @@ struct ProjectHeader: View {
     }
 
     private func stopAll() {
-        ProjectTransport.stop(song: player, pattern: beatPlayer.pattern, source: "project header")
+        ProjectTransport.stop(song: player, pattern: beatPlayer.pattern, source: source)
     }
 }
 

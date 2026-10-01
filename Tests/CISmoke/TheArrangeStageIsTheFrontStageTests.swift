@@ -302,8 +302,8 @@ final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
             """)
     }
 
-    // 8 — one definition of the key, three hands on it, each deliberate.
-    func testTheStageKeyHasOneSpellingAndThreeHands() throws {
+    // 8 — one definition of the key, four hands on it, each deliberate.
+    func testTheStageKeyHasOneSpellingAndFourHands() throws {
         let root = repoRoot().appendingPathComponent("Sources/Echoelmusic")
         guard let walker = FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil) else {
             XCTFail("could not enumerate Sources/Echoelmusic"); return
@@ -320,11 +320,12 @@ final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
             The literal "studio.stage" is spelled in \(literal). One definition (#416): every \
             reader and writer goes through `StudioDefaultKeys.stage.key`.
             """)
-        XCTAssertEqual(Set(readers), ["StageShell.swift", "EchoelStudioView.swift", "EchoelmusicApp.swift"], """
-            The stage key is referenced by \(readers.sorted()). Three files are the design: the \
+        XCTAssertEqual(Set(readers), ["StageShell.swift", "EchoelStudioView.swift", "EchoelmusicApp.swift", "ProjectHeader.swift"], """
+            The stage key is referenced by \(readers.sorted()). Four files are the design: the \
             seam (reads and writes on a tap), the studio (reads, and writes through `showStage` \
-            on the user actions claim 6 lists) and Safe Mode (writes the instrument once). A \
-            fourth is a new writer or a new reader — name it here with its reason.
+            on the user actions claim 6 lists), Safe Mode (writes the instrument once) and the \
+            head (reads only, A3b — it drops its Play/Record on the Piece stage). A fifth is a \
+            new writer or a new reader — name it here with its reason.
             """)
         let seam = try source(Self.seam)
         XCTAssertEqual(count("stageRaw = ", in: seam), 2, """

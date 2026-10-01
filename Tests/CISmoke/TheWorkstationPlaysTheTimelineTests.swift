@@ -1040,29 +1040,36 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
     // MARK: - G. SCAN — the control is unavailable when the engine would refuse
 
     func testThePlayControlDisablesItselfRatherThanLying() throws {
+        // A3b: the plate's Play/Stop IS the head's button, mounted in the bar. The disable, the tap
+        // floor and the spoken label live in that one button — scanned INSIDE it, because the header
+        // file holds two other `minHeight: 44` sites (the row, ⓘ) that would make a file-wide needle
+        // green for the wrong reason (#367).
         let src = try code(at: Self.view)
-        XCTAssertTrue(src.contains(".disabled(!running && !startable)"), """
-            A control that can be tapped and does nothing is a lying control, and this repo \
-            has paid for that shape before. The disable must be exactly "not running AND not \
-            startable": disabling it while PLAYING would strand the user with a running \
-            transport and no way to stop it from the surface that started it.
-            DMMW Phase 1 · slice 3: `running` is the ONE running truth \
-            (`ProjectTransport.isRunning` over the clock and the song), so the plate says Stop \
-            while the instrument plays — the same answer the project header gives.
+        XCTAssertTrue(src.contains("ProjectPlayStopButton(source: \"workstation\")"),
+                      "the plate's Play/Stop is the one button — no second definition of 'available'")
+        let header = try code(at: "Sources/Echoelmusic/Studio/ProjectHeader.swift")
+        guard let start = header.range(of: "struct ProjectPlayStopButton: View {"),
+              let end = header.range(of: "private struct ProjectTempoReadout: View {",
+                                     range: start.upperBound..<header.endIndex) else {
+            return XCTFail("ANCHOR MISSING: `ProjectPlayStopButton` before `ProjectTempoReadout` in ProjectHeader.swift (#454)")
+        }
+        let button = header[start.upperBound..<end.lowerBound]
+        XCTAssertTrue(button.contains("let available = running || play != .unavailable"), """
+            A control that can be tapped and does nothing is a lying control. Available means \
+            "running (so Stop works) OR something can start" — disabling it while PLAYING would \
+            strand the user with a running transport and no way to stop it.
             """)
-        XCTAssertTrue(src.contains("let running = ProjectTransport.isRunning(clockRunning: transport.isPlaying, songPlaying: playing)"),
-                      "the plate's Play/Stop reads the shared running truth, not the song alone")
-        XCTAssertTrue(src.contains("minHeight: 44"), """
+        XCTAssertTrue(button.contains(".disabled(!available)"), "an unavailable Play swallows tap and key alike")
+        XCTAssertTrue(button.contains("minHeight: 44"), """
             The transport is a primary control and must carry the 44 pt HIG tap target the \
             chip strip already does (#113/#353b).
             """)
-        // E4-43: both arms are catalog keys now — the needle follows the spelling, the claim is unchanged.
-        XCTAssertTrue(src.contains("accessibilityLabel(running ? String(localized: \"Stop all playback\") : String(localized: \"Play timeline\"))"), """
-            The button is icon-plus-word on screen and a LABEL to VoiceOver. It must name the \
-            thing it acts on — "Play" alone, on a plate that also holds the instrument's own \
-            transport, does not say WHICH. Since slice 3 its Stop is the ONE Stop \
-            (`ProjectTransport.stop`), so the label says what that does: everything stops.
+        XCTAssertTrue(button.contains(".accessibilityLabel(ProjectTransport.buttonLabel(running: running, play: play))"), """
+            Icon-plus-word on screen and a LABEL to VoiceOver that names what it acts on; its \
+            Stop is the ONE Stop (`ProjectTransport.stop`), so the label says what that does.
             """)
+        XCTAssertTrue(src.contains("let running = ProjectTransport.isRunning(clockRunning: transport.isPlaying, songPlaying: playing)"),
+                      "the bar's caption and Record door read the shared running truth, not the song alone")
     }
 
     // MARK: - H. COUNTERWEIGHT — the global Stop still reaches the timeline

@@ -30,6 +30,14 @@ public enum StudioStage: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// A3b (workstation redesign, founder 2026-10-01) — whether the HEAD (`ProjectHeader`) carries
+    /// the transport, Play / Stop and Record, on this stage. Not on the Piece stage: there the bar
+    /// pinned under the arrangement carries the same Play / Stop (`ProjectPlayStopButton`), and
+    /// `StageShell` mounts the arrangement on the Piece stage ONLY — so on every stage exactly one
+    /// of the two is on screen. Pure, so the blocking bundle drives it
+    /// (`ThePieceStageHasOnePlayTests`).
+    public var headCarriesTransport: Bool { self != .piece }
+
     /// Spoken (#482: a door names what it reaches).
     public var spokenHint: String {
         switch self {

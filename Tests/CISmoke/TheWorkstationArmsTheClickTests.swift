@@ -101,7 +101,7 @@ final class TheWorkstationArmsTheClickTests: XCTestCase {
         XCTAssertEqual(code.components(separatedBy: "WorkstationClickToggle()").count - 1, 1,
                        "one Click switch on the plate")
         guard let group = transport.range(of: "controls {"),
-              let hint = transport.range(of: "WorkstationSummary.transportHint(", range: group.upperBound..<transport.endIndex),
+              let hint = transport.range(of: "ProjectPlayStopButton(source: \"workstation\")", range: group.upperBound..<transport.endIndex),
               let mount = transport.range(of: "WorkstationClickToggle()", range: hint.upperBound..<transport.endIndex),
               transport.range(of: "SongPositionReadout()", range: mount.upperBound..<transport.endIndex) != nil else {
             return XCTFail("the Click switch is not mounted after Play and before the position readout, inside `controls { … }`")

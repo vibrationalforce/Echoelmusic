@@ -975,7 +975,8 @@ struct WorkstationView: View {
     /// Play / Stop for the arrangement. ONE button, because there is one thing to say:
     /// the song is running or it is not. A separate greyed Stop beside a Play would be two
     /// claims where the state has one — the #305 lesson from the instrument's own row, where
-    /// two controls carrying the same glyph meant different things.
+    /// two controls carrying the same glyph meant different things. Since A3b that one button
+    /// is the head's own (`ProjectPlayStopButton`), standing here while the piece is in front.
     private var transportRow: some View {
         // `canPlay` is the engine's own guard, asked here so the control matches it exactly.
         // `isPlaying` is the player's only hot-ish observable on this path and it changes
@@ -1018,38 +1019,12 @@ struct WorkstationView: View {
             : AnyLayout(HStackLayout(spacing: 8))
         return VStack(alignment: .leading, spacing: 8) {
           controls {
-            Button {
-                // The ONE Stop (slice 3): song and clock alike, the same function the header runs.
-                if running {
-                    ProjectTransport.stop(song: player, pattern: beatPlayer.pattern, source: "workstation")
-                } else {
-                    startTimeline(fromTick: 0, launching: [])
-                }
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: running ? "stop.fill" : "play.fill")
-                        .font(EchoelTheme.font(13, .semibold))
-                    Text(running ? String(localized: "Stop") : String(localized: "Play"))
-                        .font(EchoelTheme.font(13, .semibold))
-                }
-                // The armCard idiom, unchanged: accent + onPrimary while it is RUNNING,
-                // fill + border while it is not. Dim only where the control is unavailable,
-                // so "off" and "cannot" do not wear the same colour.
-                .foregroundStyle(running ? EchoelTheme.onPrimary
-                                         : (startable ? EchoelTheme.text : EchoelTheme.dim))
-                .padding(.horizontal, 14)
-                .frame(minWidth: 92, minHeight: 44)
-                .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .fill(running ? EchoelTheme.accent : EchoelTheme.fill))
-                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .strokeBorder(running || !startable ? Color.clear : EchoelTheme.border,
-                                  lineWidth: 1))
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .disabled(!running && !startable)
-            .accessibilityLabel(running ? String(localized: "Stop all playback") : String(localized: "Play timeline"))
-            .accessibilityHint(WorkstationSummary.transportHint(playing: running, startable: startable))
+            // A3b (workstation redesign): the ONE Play / Stop — the head's own button, which the
+            // head drops while this stage is in front (`ProjectPlayStopButton`, ProjectHeader.swift).
+            // Same word, same spoken label, same resume of a held instrument, the same Stop for
+            // everything, and the space bar with it. `running` and `startable` above still drive
+            // the caption and the Record door below; this view decides nothing about Play.
+            ProjectPlayStopButton(source: "workstation")
 
             // Design slice 10 — the click, armed where the song is played. Its own leaf: this
             // view names no voice, and the leaf reads only the cold on/off.
