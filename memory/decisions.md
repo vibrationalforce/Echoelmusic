@@ -4190,3 +4190,20 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Next E4:** EchoelStudioView sites (Explore/New + hint, visual-window label pair, favourite menu labels, „Default
   sound“ pair), BreathGuideView/BioSourceView/BroadcastView (doorless — last), EchoelNumberPad „Make negative/positive“.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-46: EchoelStudioView's remaining ternaries and spoken labels speak German (02d98a5b1)
+
+- **Decision:** twelve sites take `String(localized:)` arms; the variation row's and the look chip's spoken labels
+  become typed `let` steps (`variationHead` + number + `, `, then `+ "\(pct)" + " percent match" + playingSuffix`;
+  `positionText` then `sliderValue`). Catalog 1250 → 1270.
+- **Why:** the E4 class; ≤ 4 operands per `+` chain and no `+` inside a ternary (Compile Check 3106); the lets read
+  only locals already in scope — no new hot read in `EchoelStudioView.body` (10.76.41/50 law, checked by grep on the
+  diff: 0 reads of cameraRPPG/metronome./masterLevel/audioEngine.).
+- **Guard:** claim 11 E4-46 block (15 seams, 10 absence needles, 21 units; 220 → 222 XCTAssert). WORK PASS / HEAD
+  FAIL (15 seams missing, 10 verbatim present, 20 units missing — ONE finding). No other guard pinned these strings
+  (ThePadShapeDialsReachTheChordTests names „Default sound“ only in a failure message).
+- **Remaining E4 producers (measured by the `? "…" : "…"` scan):** EchoelNumberPad „Make negative/positive“
+  (`.accessibilityLabel`), BodyTempoField `label: compact ? "" : "Tempo"` (the non-empty arm is a key already —
+  `""` is not a key), AnalysisSpectrumView `sharp`/`flat` + `±` (an analysis readout — words inside a format),
+  doorless BreathGuideView/BioSourceView/BroadcastView (last; BroadcastView is a dead backend's door).
+- **Review:** 2026-10-31.

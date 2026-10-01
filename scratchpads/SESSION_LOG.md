@@ -41377,3 +41377,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-45-Block (3 Owner-Nähte, 2 Abwesenheiten, 4 Einheiten; XCTAssert 217 → 220); die E4-41-Naht auf den Körper von `spokenMedium` ist aus der Foto-Karten-Liste in den E4-45-Block gewandert (moved-needles hatte sie als „still in Sources“ gezeigt). Benotung `scratchpad/transcribe_e4_45.py`: HEAD FAIL, WORK PASS. Harness-Lehren: Abwesenheits-only-Datei erlaubt; `videoMedium`-Fehlalarm (One-Writer-Tupel der VIDEO-Karte) gelesen und ausgenommen.
 - **Gates:** dbf84a8ae Compile Check 3116 ✓ → E4-43/E4-44-Stapel (1287d9892 · a80062fb1 · e08b9e791 · 675b78ae6) gepusht, Monitor bscmk8rwc. E4-45 lokal — Push nach dem Compile Check auf 675b78ae6.
 - **Offen (E4):** EchoelStudioView-Stellen (Explore/New, Visual-Fenster-Paar, Favoriten-Menü, „Default sound“), EchoelNumberPad „Make negative/positive“, türlose Flächen zuletzt.
+
+## 2026-10-01 — E4-46: EchoelStudioView-Ternäre und gesprochene Labels sprechen Deutsch (02d98a5b1)
+
+- **Gebaut:** zwölf Stellen — Explore/New, Variations-Zeile (typisierte Schritte), Visual-Fenster-Knopf, Preset-Hinweis, Look-Chip-Wert/-Hinweis, zwei Favoriten-Labels, „Default sound“. Katalog 1250 → 1270 (+20). Keine neuen heißen Reads im Rumpf (Diff-Grep 0).
+- **Wächter:** Anspruch 11 E4-46-Block (15 Nähte, 10 Abwesenheits-Nadeln, 21 Einheiten; XCTAssert 220 → 222). Benotung `scratchpad/transcribe_e4_46.py`: HEAD FAIL (15/10/20 — EIN Befund), WORK PASS. Checker alle OK, Klammerbilanz 0/0.
+- **Gates:** 675b78ae6 (E4-43/E4-44) läuft, Monitor bscmk8rwc. E4-45 (03921c594) + E4-46 (02d98a5b1) lokal — Push nach dem Compile Check auf 675b78ae6.
+- **Offen (E4):** EchoelNumberPad „Make negative/positive“, AnalysisSpectrumView sharp/flat, türlose Flächen (BreathGuide/BioSource/Broadcast) zuletzt; BodyTempoField `compact ? "" : "Tempo"` ist schon ein Schlüssel-Arm.
