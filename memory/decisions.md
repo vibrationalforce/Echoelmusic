@@ -4584,3 +4584,19 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   `\uXXXX`, not `\u{XXXX}`) — write the glyph in the needle; keep the escaped-backslash form only for an ABSENCE
   needle that targets the escape text itself.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-76: light-science sheet (8ce815ff7)
+
+- **Decision:** `LightScienceTopic.title`, `.summary` and `.detail` (five topics each) are catalog keys. The `.scope`
+  paragraph keeps its seam share "39 %" as a bare operand between two keys — `%` cannot enter the catalog
+  (String(localized:) reads a key as a format string; `% o` would parse as a specifier). Catalog 1710 → 1726.
+- **Why:** LearnLibrary.lightEntries projects the three properties into the Learn sheet; the light explainer that
+  grounds Art-Net/sACN colour in real wavelengths was English on a German phone. The brand line is kept word for word.
+- **Guard:** claim 11 E4-76 block (3 seam needles, 2 absence needles, 16 units; 351 → 353 XCTAssert).
+  TheColourCopyNamesThePurpleLineTests claim 1 re-anchored 1:1 on the three-operand seam (one needle, one comment
+  line, XCTAssert count unchanged); all four of its counts plus the assembled runtime string mirrored in Python.
+  WORK PASS / HEAD FAIL (3/2/16 — ONE finding). Whole-claim-11 needle check: 128 files, 990 needles, 0 broken.
+- **Lesson:** a split into typed `let`s moves a pinned sentence across a line break — a cross-operand source needle
+  then needs the operands on ONE line. Three operands stay one expression; the `let` split is for a ternary or a
+  fifth operand, not for every seam.
+- **Review:** 2026-10-31.
