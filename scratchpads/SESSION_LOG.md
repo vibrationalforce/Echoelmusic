@@ -41662,3 +41662,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Gemessen, bewusst nackt:** `MusicStyle.Category.title` (neun Familien-Titel) hat KEINEN Sources-Leser (die Regale lesen seit E4-20 `Subcategory.title`). Der Banner-Satz „Non-standard tuning: \(systemName)…“ bleibt offen — Interpolation, braucht den E4-28-Split.
 - **Wächter:** Anspruch 11 E4-85-Block (4 Nähte, Zähl-Pin 15, 1 verbatim Abwesenheit, 15 Einheiten; XCTAssert 390 → 393). Benotung `scratchpad/transcribe_e4_85.py`: HEAD FAIL (4/1/15 — EIN Befund), WORK PASS. Gesamt-Anspruch-11 632/0 (148 Dateien). Checker OK, Sources-Klammerbilanz 0 (Tests-Diff +4 = String-Inhalt).
 - **Gates:** 823e502fa gepusht (E4-83 · E4-84 + Docs; Monitor bb2kh0l0v, #380). 5fa4ed469: Compile 3133 ✓, Quick Test ✓, Auto-Merge Docs ✓ (#379, Rest läuft). E4-85 (b2c859493) lokal — Push nach Compile Check auf 823e502fa.
+
+## 2026-10-01 — E4-86: Visual-Preset-Blurbs und Medien-Seed-Presets (2746a8672)
+
+- **Gebaut:** die fünf Werks-Blurbs von `VisualPreset.factory` („weiche, spärliche, langsame Aura“ … „maximal — dicht, schnell, zentrifugal“) und die zwei Seed-Presets aus MediaSeedLook („Aus Foto“ / „Aus Video“ + Blurbs) als Katalog-Schlüssel. Leser: `Text(preset.name)` und das gesprochene Label `preset.name + " visual preset — " + preset.blurb` (E4-41-Naht). Katalog 1859 → 1868 (+9). Sources: 2 Dateien + Katalog.
+- **Bewusst nackt:** die fünf Werks-NAMEN (Aura · Vapor · Bloom · Pulse · Zentrifuge) — Eigennamen, VisualPresetTests pinnt „Aura“ zur Laufzeit.
+- **Wächter:** Anspruch 11 E4-86-Block (7 Nähte, Zähl-Pin 5, 2 verbatim Abwesenheiten, 9 Einheiten; XCTAssert 393 → 398). Benotung `scratchpad/transcribe_e4_86.py`: HEAD FAIL (7/2/9 — EIN Befund), WORK PASS. Gesamt-Anspruch-11 639/0 (150 Dateien). Checker OK, Sources-Klammerbilanz 0.
+- **Gates:** 5fa4ed469 komplett grün inkl. Auto-Merge 4031 → main (#379 zu). 823e502fa: Compile 3134 ✓, Quick Test ✓, Auto-Merge Docs ✓ (#380, Rest läuft). E4-85-Stapel 5c906c85b gepusht (Monitor bo299v9d7). E4-86 (2746a8672) lokal — Push nach Compile Check auf 5c906c85b.

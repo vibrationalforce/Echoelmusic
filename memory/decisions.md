@@ -4755,3 +4755,15 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-85 block (4 seams, count pin 15, 1 verbatim absence, 15 units; 390 → 393 XCTAssert).
   WORK PASS / HEAD FAIL (4/1/15 — ONE finding). Whole-claim-11: 148 files, 632 needles, 0 broken.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-86: visual-preset blurbs and media-seed presets (2746a8672)
+
+- **Decision:** the five `VisualPreset.factory` blurbs and the two media-seed presets' names (`From photo` / `From video`)
+  and blurbs are catalog keys. The strip renders `Text(preset.name)` and speaks `preset.name + " visual preset — " +
+  preset.blurb` (the E4-41 seam), so a blurb is copy even though nothing draws it. Catalog 1859 → 1868.
+- **Left bare on purpose:** the five factory NAMES — Aura, Vapor, Bloom, Pulse, Zentrifuge are proper names, and
+  VisualPresetTests pins `first?.name == "Aura"` at runtime.
+- **Safety:** `VisualPreset` is not Codable; no blurb persists. No guard outside claim 11 pins a blurb.
+- **Guard:** claim 11 E4-86 block (7 seams, count pin 5, 2 verbatim absences, 9 units; 393 → 398 XCTAssert).
+  WORK PASS / HEAD FAIL (7/2/9 — ONE finding). Whole-claim-11: 150 files, 639 needles, 0 broken.
+- **Review:** 2026-10-31.
