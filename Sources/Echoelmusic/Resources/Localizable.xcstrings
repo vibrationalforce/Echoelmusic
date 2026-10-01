@@ -30970,6 +30970,134 @@
           }
         }
       }
+    },
+    "Hide the selected track's automation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automation der gewählten Spur ausblenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide the selected track's automation"
+          }
+        }
+      }
+    },
+    "Show the selected track's automation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automation der gewählten Spur einblenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show the selected track's automation"
+          }
+        }
+      }
+    },
+    "Sets the picked point's value" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setzt den Wert des gewählten Punkts"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sets the picked point's value"
+          }
+        }
+      }
+    },
+    "Global curves move these parameters while the transport runs." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Globale Kurven bewegen diese Parameter, während der Transport läuft."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Global curves move these parameters while the transport runs."
+          }
+        }
+      }
+    },
+    "Off by default. Part and arrangement curves still play; this switch is for the global curves." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardmäßig aus. Teil- und Arrangement-Kurven spielen weiter; dieser Schalter gilt den globalen Kurven."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off by default. Part and arrangement curves still play; this switch is for the global curves."
+          }
+        }
+      }
+    },
+    "Moves the part to start on this bar; its place within the bar is kept." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verschiebt den Teil so, dass er in diesem Takt beginnt; seine Lage im Takt bleibt erhalten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moves the part to start on this bar; its place within the bar is kept."
+          }
+        }
+      }
+    },
+    "Pick next point" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächsten Punkt wählen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick next point"
+          }
+        }
+      }
+    },
+    "Pick previous point" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorigen Punkt wählen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick previous point"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

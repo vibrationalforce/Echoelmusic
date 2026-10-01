@@ -478,7 +478,7 @@ private struct PartStartField: View {
                          value: Binding(get: { shownBar }, set: { draft = $0 }),
                          range: TrackParts.startBarRange(for: part, songBars: songBars),
                          decimals: 0,
-                         hint: "Moves the part to start on this bar; its place within the bar is kept.",
+                         hint: String(localized: "Moves the part to start on this bar; its place within the bar is kept."),
                          onCommit: { commitDraft() })
             .onChange(of: part.startTick) { _, _ in draft = nil }
     }

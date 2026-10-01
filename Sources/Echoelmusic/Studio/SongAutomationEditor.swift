@@ -295,8 +295,8 @@ struct SongAutomationEditor: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(isOpen ? "Hide the selected track's automation"
-                                           : "Show the selected track's automation")
+                .accessibilityLabel(isOpen ? String(localized: "Hide the selected track's automation")
+                                           : String(localized: "Show the selected track's automation"))
                 if isOpen {
                     // Keyed by the track: another track starts with nothing picked and opens on
                     // its own parameter.
@@ -613,7 +613,7 @@ private struct SongAutomationValueRow: View {
                          range: Double(descriptor.min)...Double(descriptor.max),
                          unit: descriptor.unit,
                          decimals: SongAutomationEdit.decimals(for: descriptor),
-                         hint: "Sets the picked point's value",
+                         hint: String(localized: "Sets the picked point's value"),
                          onCommit: {
                              if let draft { commit(SongAutomationEdit.storedValue(draft, of: descriptor)) }
                              draft = nil

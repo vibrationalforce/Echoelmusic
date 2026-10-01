@@ -170,7 +170,9 @@
 // the scene launcher's guide line and part hint pair, the note editor's toggle label pair and grid hint pair, and
 // gave four LocalizedStringKey positions their missing units (the two note actions, the Colabo stream hint, the FX
 // search prompt) — the runtime guards on mute/solo compare under the test locale (parent: 16 units missing — ONE
-// finding). Claim 12
+// finding). E4-82 keyed the automation editor's toggle label pair and value-field hint, the automation strip's
+// status pair and the part bar's start-bar hint; the curve canvas's hint and its two point actions were already
+// keys and got their units (parent: 9 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2879,6 +2881,33 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Select next note", "Select previous note", "Search presets & tags",
                           "Streams your heart rate and coherence to connected peers while this screen is open. Everyone sees their own numbers side by side."],
                          "inspector, launcher and note-editor hints")
+
+        // E4-82 — the automation editor (toggle label pair as two keys; the value field's `hint:` is a String), the
+        // automation strip's status pair and the part bar's start-bar hint. The curve canvas's `.accessibilityHint("…")`
+        // and its two `.accessibilityAction(named:)` literals are LocalizedStringKey positions — units only.
+        let automationHints = try codeOnly("Sources/Echoelmusic/Studio/SongAutomationEditor.swift")
+        for seam in [".accessibilityLabel(isOpen ? String(localized: \"Hide the selected track's automation\")",
+                     "hint: String(localized: \"Sets the picked point's value\"),",
+                     ".accessibilityAction(named: \"Pick next point\") { onStep(1) }"] {
+            XCTAssertTrue(automationHints.contains(seam), "SongAutomationEditor lost the E4-82 seam `\(seam)`")
+        }
+        XCTAssertFalse(automationHints.contains("                                           : \"Show the selected track's automation\")"),
+                       "SongAutomationEditor spells the toggle label verbatim again")
+        let stripStatus = try codeOnly("Sources/Echoelmusic/Studio/AutomationStatusStrip.swift")
+        XCTAssertTrue(stripStatus.contains("? String(localized: \"Global curves move these parameters while the transport runs.\")"),
+                      "AutomationStatusStrip lost the E4-82 seam")
+        XCTAssertFalse(stripStatus.contains("                 ? \"Global curves move these parameters while the transport runs.\""),
+                       "AutomationStatusStrip spells the status line verbatim again")
+        let partBarHint = try codeOnly("Sources/Echoelmusic/Studio/SelectedPartBar.swift")
+        XCTAssertTrue(partBarHint.contains("hint: String(localized: \"Moves the part to start on this bar; its place within the bar is kept.\"),"),
+                      "SelectedPartBar lost the E4-82 seam")
+        try assertGerman(["Hide the selected track's automation", "Show the selected track's automation", "Sets the picked point's value",
+                          "Pick next point", "Pick previous point",
+                          "Double-tap adds or picks the point in the middle of the piece. Use the actions to pick another point; its value and Remove follow below.",
+                          "Global curves move these parameters while the transport runs.",
+                          "Off by default. Part and arrangement curves still play; this switch is for the global curves.",
+                          "Moves the part to start on this bar; its place within the bar is kept."],
+                         "automation editor, strip and part bar hints")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
