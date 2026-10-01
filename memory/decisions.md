@@ -4036,3 +4036,24 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Next E4 producers:** EchoelStudioView sites, EchoelFXView, FloatingVisualWindow, PerformSessionView, WorkspaceView
   (tone-system / note-name hints).
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-39: the visual window bar and the header monitor speak German (f0ca8c4c4)
+
+- **Decision:** FloatingVisualWindow — the bar's `.accessibilityLabel(flag ? "A" : "B")` sites (WAV button, note-grid
+  toggle, resize/exit) hold two `String(localized:)` arms; `WindowSize.label` returns keys; the WAV spoken gap is
+  `String(localized: "Recording, ") + EchoelDecimalText.string(…, decimals: 1) + String(localized: " seconds lost")`
+  instead of a `String(format:)` key; "Writing to disk failed" is a key; the handle's drag label keeps its one line and
+  "Echoelmusic" stays the brand word. WorkspaceView — the monitor button's Hide/Show label takes two keys; the
+  note-name hint is ONE literal (a key) instead of a `+` chain of three. Catalog 1156 → 1173.
+- **Why:** a ternary of two bare literals, a `String(format:)` and a `+` chain of literals are three spellings of one
+  defect — a `String` where SwiftUI would have taken a key — and all three sat on the bar a German VoiceOver user
+  touches most. English output is byte-identical, pinned at runtime (`wavAccessibilityValue(…, 1.5)`,
+  `WindowSize.fullscreen.label`).
+- **Guard:** claim 11 E4-39 block (7 + 2 seams, 7 + 2 absence needles, 2 runtime counterweights, 17 units via
+  `assertGerman`; 187 → 195 XCTAssert). WORK PASS / HEAD FAIL (9 seams missing, 9 verbatim present, 17 units missing
+  — ONE finding). ⚠️ First draft: the absence needle `: "Echoelmusic — drag to move the visual")` matched
+  `localized: "Echoelmusic — …"))` (WORK FAIL, verbatim present 1) — re-aimed at the indented verbatim form, the E4-37
+  lesson a third time; the harness caught it before the commit. No guard re-anchored.
+- **Next E4 producers:** PerformSessionView statics + Open/Closed value, EchoelFXView preset/morph strings,
+  EchoelStudioView sites.
+- **Review:** 2026-10-31.
