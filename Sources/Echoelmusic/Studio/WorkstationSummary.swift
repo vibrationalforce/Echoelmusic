@@ -206,11 +206,12 @@ public struct WorkstationSummary: Equatable, Sendable {
     public static func transportCaption(playing: Bool, startable: Bool, fromTick: Int) -> String {
         if playing {
             let bar = barNumber(forTick: fromTick)
-            return bar > 1 ? "Playing from bar \(bar) on the shared transport."
-                           : "Playing from the top on the shared transport."
+            // E4-61: the bar number is seamed between two catalog keys (≤ 4 operands per step).
+            let fromBar: String = String(localized: "Playing from bar ") + "\(bar)" + String(localized: " on the shared transport.")
+            return bar > 1 ? fromBar : String(localized: "Playing from the top on the shared transport.")
         }
-        if startable { return "Plays the piece's parts from the top." }
-        return "Nothing to play yet."
+        if startable { return String(localized: "Plays the piece's parts from the top.") }
+        return String(localized: "Nothing to play yet.")
     }
 
     public static func spokenDescription(of row: LaneRow) -> String {

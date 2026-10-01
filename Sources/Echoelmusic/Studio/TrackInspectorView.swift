@@ -182,12 +182,14 @@ enum TrackMix {
 
     nonisolated static func removalNote(_ removal: Removal) -> String {
         switch removal {
-        case .allowed:           return "Removes this empty track. Undo cannot bring the track, or parts it held earlier, back."
-        case .hasParts(let n):   return n == 1 ? "Remove its part first to remove this track."
-                                               : "Remove its \(n) parts first to remove this track."
-        case .uneditableParts:   return "This track holds parts this version cannot edit, so it stays."
-        case .echoelTrack:       return "The Echoel instrument plays this track, so it stays."
-        case .bio:               return "This track holds a recorded bio curve, so it stays."
+        case .allowed:           return String(localized: "Removes this empty track. Undo cannot bring the track, or parts it held earlier, back.")
+        case .hasParts(let n):
+            // E4-61: the count is seamed between two catalog keys; the singular is its own key.
+            let several: String = String(localized: "Remove its ") + "\(n)" + String(localized: " parts first to remove this track.")
+            return n == 1 ? String(localized: "Remove its part first to remove this track.") : several
+        case .uneditableParts:   return String(localized: "This track holds parts this version cannot edit, so it stays.")
+        case .echoelTrack:       return String(localized: "The Echoel instrument plays this track, so it stays.")
+        case .bio:               return String(localized: "This track holds a recorded bio curve, so it stays.")
         }
     }
 

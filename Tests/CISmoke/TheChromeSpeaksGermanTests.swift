@@ -116,7 +116,8 @@
 // engine tail), shown by LiveNarrationDisclosure (parent: 24 units missing — ONE finding). E4-59 added the audio-timing
 // row's verdicts (RenderGapDetector screenLine / evidenceSuffix / screenCaption / screenText) and the detected-key
 // sentence (AudioKeyAnalysis.summarise with TuningDetector.keyName) (parent: 21 units missing — ONE finding). E4-60 added
-// the detected-tempo sentence (AudioTempoAnalysis.summarise) (parent: 4 units missing — ONE finding). Claim 12
+// the detected-tempo sentence (AudioTempoAnalysis.summarise) (parent: 4 units missing — ONE finding). E4-61 added the
+// Workstation's transport caption, track-removal note and mix-meter spoken text (parent: 14 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2107,6 +2108,47 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertFalse(tempoSentence.contains(verbatim), "AudioTempoAnalysis interpolates the tempo sentence again: `\(verbatim)`")
         }
         try assertGerman(["Tempo unclear.", ", a ", "-bar loop (or ", " (or "], "detected tempo")
+
+        // E4-61 — the Workstation's three remaining caption/spoken producers: the transport caption
+        // (WorkstationSummary.transportCaption), the track-removal note (TrackMix.removalNote) and the mix-meter spoken
+        // text (MixLevelMeter.spokenText). Numbers are seamed between keys; the four runtime guards that compare the
+        // ASSEMBLED English (TheProjectHeaderRunsOneTransportTests, TheSongPositionIsReadAsANumberTests,
+        // OnlyAnEmptyTrackCanBeRemovedTests, TheWorkstationShowsTheMixLevelTests) read it unchanged under the test locale.
+        let transportCaption = try codeOnly("Sources/Echoelmusic/Studio/WorkstationSummary.swift")
+        for seam in ["let fromBar: String = String(localized: \"Playing from bar \") + \"\\(bar)\" + String(localized: \" on the shared transport.\")",
+                     "return bar > 1 ? fromBar : String(localized: \"Playing from the top on the shared transport.\")",
+                     "if startable { return String(localized: \"Plays the piece's parts from the top.\") }",
+                     "return String(localized: \"Nothing to play yet.\")"] {
+            XCTAssertTrue(transportCaption.contains(seam), "WorkstationSummary lost the E4-61 seam `\(seam)`")
+        }
+        for verbatim in ["return bar > 1 ? \"Playing from bar \\(bar) on the shared transport.\"", "return \"Nothing to play yet.\""] {
+            XCTAssertFalse(transportCaption.contains(verbatim), "WorkstationSummary interpolates the transport caption again: `\(verbatim)`")
+        }
+        let removalNote = try codeOnly("Sources/Echoelmusic/Studio/TrackInspectorView.swift")
+        for seam in ["let several: String = String(localized: \"Remove its \") + \"\\(n)\" + String(localized: \" parts first to remove this track.\")",
+                     "return n == 1 ? String(localized: \"Remove its part first to remove this track.\") : several",
+                     "case .bio:               return String(localized: \"This track holds a recorded bio curve, so it stays.\")"] {
+            XCTAssertTrue(removalNote.contains(seam), "TrackInspectorView lost the E4-61 seam `\(seam)`")
+        }
+        for verbatim in [": \"Remove its \\(n) parts first to remove this track.\"", "return \"This track holds a recorded bio curve, so it stays.\""] {
+            XCTAssertFalse(removalNote.contains(verbatim), "TrackInspectorView interpolates the removal note again: `\(verbatim)`")
+        }
+        let mixSpoken = try codeOnly("Sources/Echoelmusic/Studio/WorkstationMixMeter.swift")
+        for seam in ["let leftHalf: String = String(localized: \"Left \") + \"\\(percent(left))\" + String(localized: \" percent, right \")",
+                     "return leftHalf + \"\\(percent(right))\" + String(localized: \" percent\")"] {
+            XCTAssertTrue(mixSpoken.contains(seam), "WorkstationMixMeter lost the E4-61 seam `\(seam)`")
+        }
+        for verbatim in ["\"Left \\(percent(left)) percent, right \\(percent(right)) percent\""] {
+            XCTAssertFalse(mixSpoken.contains(verbatim), "WorkstationMixMeter interpolates the spoken text again: `\(verbatim)`")
+        }
+        try assertGerman(["Playing from bar ", " on the shared transport.", "Playing from the top on the shared transport.",
+                          "Plays the piece's parts from the top.", "Nothing to play yet.",
+                          "Removes this empty track. Undo cannot bring the track, or parts it held earlier, back.",
+                          "Remove its part first to remove this track.", "Remove its ", " parts first to remove this track.",
+                          "This track holds parts this version cannot edit, so it stays.",
+                          "The Echoel instrument plays this track, so it stays.",
+                          "This track holds a recorded bio curve, so it stays.",
+                          "Left ", " percent, right ", " percent"], "transport caption, removal note and mix-meter spoken text")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

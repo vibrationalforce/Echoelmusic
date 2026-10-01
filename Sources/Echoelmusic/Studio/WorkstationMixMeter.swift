@@ -56,7 +56,9 @@ enum MixLevelMeter {
     /// is not a dB level; see the file header). Whole numbers, so no decimal separator to get
     /// wrong (#267).
     nonisolated static func spokenText(left: Float, right: Float) -> String {
-        "Left \(percent(left)) percent, right \(percent(right)) percent"
+        // E4-61: the two whole numbers are seamed between catalog keys; " percent" reuses the existing unit.
+        let leftHalf: String = String(localized: "Left ") + "\(percent(left))" + String(localized: " percent, right ")
+        return leftHalf + "\(percent(right))" + String(localized: " percent")
     }
 }
 

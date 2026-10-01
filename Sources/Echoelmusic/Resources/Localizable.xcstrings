@@ -24986,6 +24986,230 @@
           }
         }
       }
+    },
+    "Playing from bar " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielt ab Takt "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Playing from bar "
+          }
+        }
+      }
+    },
+    " on the shared transport." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " auf dem gemeinsamen Transport."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " on the shared transport."
+          }
+        }
+      }
+    },
+    "Playing from the top on the shared transport." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielt von Anfang an auf dem gemeinsamen Transport."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Playing from the top on the shared transport."
+          }
+        }
+      }
+    },
+    "Plays the piece's parts from the top." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielt die Teile des Stücks von Anfang an."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plays the piece's parts from the top."
+          }
+        }
+      }
+    },
+    "Nothing to play yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nichts zum Abspielen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing to play yet."
+          }
+        }
+      }
+    },
+    "Removes this empty track. Undo cannot bring the track, or parts it held earlier, back." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entfernt diese leere Spur. Widerrufen bringt die Spur, oder Teile, die sie früher hielt, nicht zurück."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Removes this empty track. Undo cannot bring the track, or parts it held earlier, back."
+          }
+        }
+      }
+    },
+    "Remove its part first to remove this track." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entferne zuerst ihren Teil, um diese Spur zu entfernen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove its part first to remove this track."
+          }
+        }
+      }
+    },
+    "Remove its " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entferne zuerst ihre "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove its "
+          }
+        }
+      }
+    },
+    " parts first to remove this track." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Teile, um diese Spur zu entfernen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " parts first to remove this track."
+          }
+        }
+      }
+    },
+    "This track holds parts this version cannot edit, so it stays." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Spur hält Teile, die diese Version nicht bearbeiten kann, deshalb bleibt sie."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This track holds parts this version cannot edit, so it stays."
+          }
+        }
+      }
+    },
+    "The Echoel instrument plays this track, so it stays." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Echoel-Instrument spielt diese Spur, deshalb bleibt sie."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Echoel instrument plays this track, so it stays."
+          }
+        }
+      }
+    },
+    "This track holds a recorded bio curve, so it stays." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Spur hält eine aufgenommene Bio-Kurve, deshalb bleibt sie."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This track holds a recorded bio curve, so it stays."
+          }
+        }
+      }
+    },
+    "Left " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Links "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Left "
+          }
+        }
+      }
+    },
+    " percent, right " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Prozent, rechts "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " percent, right "
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
