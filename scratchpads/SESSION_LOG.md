@@ -41705,3 +41705,14 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-93…E4-96, XCTAssert 423 → 437; jede Transkription WORK PASS / HEAD FAIL; Gesamt-Anspruch-11 699 Nadeln / 0 gebrochen (168 Dateien).
 - **Gates:** 273484e32 gepusht, Monitor läuft; E4-96 wartet auf den Compile Check.
 - **Offen:** weite Abschluss-Messung, bevor „Durchgang geschlossen“ stehen darf.
+
+## 2026-10-01 — E4-97 … E4-112: Abschluss-Durchgang der deutschen Oberfläche (537411808 … 3c5ab2820)
+
+- **Sechzehn Scheiben**, Katalog 1931 → 1998: Bio-Quellen-Zeile, Ecken-Aktionen, Licht-Ausgänge, Chip-Wörter, Bewegungs- und Messgeräte-Namen, Exporter-Grund, Routing- und Automations-Parameter, Latenz-Stufen, Engine-Fehlersätze, Beitritts-Status, zwei VoiceOver-Einheiten, WAV-Plaketten, Mood-Standard und Tone-Namen, Klangfarben-Namen.
+- **Abschluss-Messung über vier Familien, Rest null:** `Text(x.rawValue)` (zwei Treffer → E4-112), StringProtocol-Initialisierer mit Variablen-Titel, Accessibility-Modifier mit Variable, String-Label-Eigenschaften mit nackten Literalen.
+- **Scanner-Lehren:** `\b` vor `.modifier` trifft nach Leerraum nie (E4-109); ein Lookbehind gegen Buchstaben vor dem Leerzeichen überspringt jedes `return "…"` — ein Scan ohne Treffer ist ein Befund.
+- **Zurückgenommen:** die Inbox nannte Engine-Fehlersätze und WAV-HUD „leserlos, bewusst englisch“; beide haben Leser und sind seit E4-107/E4-110 deutsch.
+- **Bewusst nicht geschlüsselt (neu):** eingebaute und Community-Preset-Titel (Inhaltsnamen wie Genres); `OutputFormat`, `BeatMode`, `FilterType`, `QualityTier` (kein UI-Leser).
+- **Wächter:** Anspruch 11 E4-97…E4-112, XCTAssert 437 → 469; Gesamt-Transkription 738 Nadeln / 0 gebrochen (185 Dateien).
+- **Gates:** 333f9efa7 grün (Compile 3142, Auto-Merge 4040); 3c5ab2820 gepusht, Monitor läuft.
+- **Gerät offen:** deutsches Telefon ohne abgeschnittenes Wort.

@@ -4842,3 +4842,29 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guards:** claim 11 blocks E4-93…E4-96; XCTAssert 423 → 437; each transcription WORK PASS / HEAD FAIL.
 - **Not yet claimed:** "pass closed". That sentence needs a wide closure scan first; it stood once and was wrong.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-97 … E4-112: the closure pass of the German chrome (537411808 … 3c5ab2820)
+
+- **What:** sixteen slices that closed every visible English gap a wide measurement could find — source row,
+  corner actions, light outputs, chip words, motion and meter names, exporter reason, routing and automation
+  parameter names, latency tiers, engine-failure sentences, join status, two VoiceOver units, recording badges,
+  mood default and Tone names, timbre names. Catalog 1931 → 1998.
+- **The closure measurement (four families, rest zero):** (1) every `Text(x.rawValue)` render site — two, fixed in
+  E4-112; (2) every StringProtocol initialiser with a non-literal title (`Label`/`Button`/`Toggle`/`Section`/
+  `Picker`/`Menu`) in Studio and Views — all already keyed or content names; (3) every `.accessibilityLabel/Hint/
+  Value`, `.navigationTitle` and `.help` with a variable — all trace to `String(localized:)`; (4) every String
+  `label`/`spoken`/`displayName` property that returns bare literals — each either looked up at its render site or
+  without a UI reader. Plus the earlier literal keyscan (after its `\b` repair) and the `Text(property)` prop-scan.
+- **Scanner lessons:** a `\b` before `.modifier` never matches after whitespace (E4-109); a lookbehind that
+  excludes a letter before the space skips every `return "…"` — a scan that matches nothing is a finding.
+- **Retraction:** the founder inbox listed the engine-failure sentences (`lastAudioError`) and the WAV badges as
+  readerless and deliberately English. Both have readers (`AudioDegradedRow`, the visual window), and E4-107 and
+  E4-110 keyed them. The inbox line is corrected in place.
+- **Deliberately not keyed (added):** built-in and community preset titles (FX signatures like „Cathedral“, mood and
+  sound community presets) — content names like genre names; `OutputFormat`, `BeatMode`, `ChannelInsertFX.FilterType`
+  and `QualityTier` labels — no UI reader (log or nothing).
+- **Guards:** claim 11 blocks E4-97…E4-112; XCTAssert in the file 437 → 469; claim-11 transcription over the whole
+  bundle 738 needles / 0 broken (185 files); each slice WORK PASS / HEAD FAIL.
+- **Gates:** 333f9efa7 green (Compile Check 3142, Auto-Merge 4040); 3c5ab2820 pushed, gates running.
+- **Device:** unverified — a German phone must show no clipped word.
+- **Review:** 2026-10-31.
