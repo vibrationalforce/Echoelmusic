@@ -49,13 +49,14 @@ struct PickedImageFile: Transferable {
 /// The words the card shows, pure so the blocking bundle can drive them.
 enum PhotoSeedText {
 
-    static let unreadable = "This photo could not be read. Try another photo."
-    static let reading = "Reading the photo…"
+    // E4-41: computed, not stored — a `static let` would freeze the bundle's first locale (E4 law).
+    static var unreadable: String { String(localized: "This photo could not be read. Try another photo.") }
+    static var reading: String { String(localized: "Reading the photo…") }
 
     /// "Main colour: hue 212°" or "No main colour".
     static func colour(_ seed: MediaSeed) -> String {
-        guard seed.hasDominantColour, seed.hue.isFinite else { return "No main colour" }
-        return "Main colour: hue \(Int((seed.hue * 360).rounded()) % 360)°"
+        guard seed.hasDominantColour, seed.hue.isFinite else { return String(localized: "No main colour") }
+        return String(localized: "Main colour: hue ") + "\(Int((seed.hue * 360).rounded()) % 360)" + "°"
     }
 
     /// A 0…1 statistic as a whole percent.
@@ -69,16 +70,17 @@ enum PhotoSeedText {
     static func change(_ name: String, _ before: Double, _ after: Double, digits: Int = 2) -> String {
         let style = FloatingPointFormatStyle<Double>.number.precision(.fractionLength(digits))
         let from = before.formatted(style), to = after.formatted(style)
-        if from == to { return "\(name) \(from), unchanged" }
-        return "\(name) \(from) → \(to)"
+        let head: String = name + " " + from
+        if from == to { return head + String(localized: ", unchanged") }
+        return head + " → " + to
     }
 
     /// The four lines of "now → with this photo", named as the Visual panel names its fields.
     static func changes(from before: VisualLookSnapshot, to after: VisualLookSnapshot) -> [String] {
-        [change("Intensity", before.intensity, after.intensity),
-         change("Detail", before.detail, after.detail, digits: 0),
-         change("Hue", before.hue, after.hue),
-         change("Saturation", before.saturation, after.saturation)]
+        [change(String(localized: "Intensity"), before.intensity, after.intensity),
+         change(String(localized: "Detail"), before.detail, after.detail, digits: 0),
+         change(String(localized: "Hue"), before.hue, after.hue),
+         change(String(localized: "Saturation"), before.saturation, after.saturation)]
     }
 }
 
@@ -146,9 +148,25 @@ struct PhotoSeedCard: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Photo to Visuals")
-        .accessibilityValue((isOpen ? "Expanded" : "Collapsed")
-                            + (undo.pending != nil && undo.medium == MediaLookUndo.photoMedium ? ", look applied" : ""))
+        .accessibilityValue(disclosureValue(undo))
         .accessibilityHint("Choose a photo; its colour, brightness and contrast can shape the visuals")
+    }
+
+    // E4-41: the spoken state and the spoken Undo texts were interpolated or concatenated literals —
+    // Strings, read verbatim on a German phone. Each English seam is a key; `undo.medium` is an
+    // identifier, so the spoken word comes from `spokenMedium`. Typed steps, no `+` chain in a ternary.
+    private func disclosureValue(_ undo: MediaLookUndo) -> String {
+        let state: String = isOpen ? String(localized: "Expanded") : String(localized: "Collapsed")
+        let applied: Bool = undo.pending != nil && undo.medium == MediaLookUndo.photoMedium
+        return applied ? state + String(localized: ", look applied") : state
+    }
+    private func undoLabel(_ undo: MediaLookUndo) -> String {
+        guard undo.pending != nil else { return String(localized: "Undo") }
+        return String(localized: "Undo ") + undo.spokenMedium + String(localized: " look")
+    }
+    private func undoHint(_ undo: MediaLookUndo) -> String {
+        let medium: String = undo.medium.isEmpty ? String(localized: "photo") : undo.spokenMedium
+        return String(localized: "Puts the visuals back the way they were before the ") + medium + String(localized: ". A value you changed since stays.")
     }
 
     @ViewBuilder
@@ -208,9 +226,9 @@ struct PhotoSeedCard: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(PhotoSeedText.colour(seed))
-                Text("Brightness \(PhotoSeedText.percent(seed.brightness))")
-                Text("Saturation \(PhotoSeedText.percent(seed.saturation))")
-                Text("Contrast \(PhotoSeedText.percent(seed.contrast))")
+                Text(String(localized: "Brightness") + " " + PhotoSeedText.percent(seed.brightness))
+                Text(String(localized: "Saturation") + " " + PhotoSeedText.percent(seed.saturation))
+                Text(String(localized: "Contrast") + " " + PhotoSeedText.percent(seed.contrast))
             }
             .font(EchoelTheme.font(13))
             .foregroundStyle(EchoelTheme.text)
@@ -222,7 +240,7 @@ struct PhotoSeedCard: View {
         // Applied here, or by EchoelAI through the same owner with this photo (review LOW-3).
         let isLive = appliedHere || undo.pending == MediaSeedApplication(before: before, after: after)
         VStack(alignment: .leading, spacing: 2) {
-            Text(isLive ? "Applied:" : "With this photo:")
+            Text(isLive ? String(localized: "Applied:") : String(localized: "With this photo:"))
                 .font(EchoelTheme.font(13, .semibold))
             ForEach(PhotoSeedText.changes(from: before, to: after), id: \.self) { line in
                 Text(line)
@@ -262,7 +280,7 @@ struct PhotoSeedCard: View {
         .buttonStyle(.plain)
         .disabled(undo.pending != nil)
         .accessibilityLabel("Apply to visuals")
-        .accessibilityHint(undo.applyBlockedReason ?? "Sets the visuals' intensity, detail, hue and saturation from the photo")
+        .accessibilityHint(undo.applyBlockedReason ?? String(localized: "Sets the visuals' intensity, detail, hue and saturation from the photo"))
     }
 
     private func undoButton(_ undo: MediaLookUndo) -> some View {
@@ -274,8 +292,8 @@ struct PhotoSeedCard: View {
         }
         .buttonStyle(.plain)
         .disabled(undo.pending == nil)
-        .accessibilityLabel(undo.pending == nil ? "Undo" : "Undo \(undo.medium) look")
-        .accessibilityHint("Puts the visuals back the way they were before the \(undo.medium.isEmpty ? "photo" : undo.medium). A value you changed since stays.")
+        .accessibilityLabel(undoLabel(undo))
+        .accessibilityHint(undoHint(undo))
     }
 
     /// Reads a newly picked photo. A newer pick cancels the older one's result; the decode runs
@@ -310,6 +328,14 @@ struct PhotoSeedCard: View {
                 item = nil
             }
         }
+    }
+}
+
+extension MediaLookUndo {
+    /// E4-41: the medium as a SPOKEN word. `medium` is an identifier (`photoMedium` / `videoMedium`),
+    /// compared by both cards and never shown — the word a VoiceOver user hears is a catalog key.
+    var spokenMedium: String {
+        medium == Self.videoMedium ? String(localized: "video") : String(localized: "photo")
     }
 }
 #endif

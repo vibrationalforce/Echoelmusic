@@ -75,7 +75,9 @@
 // E4-39 added the visual window bar's spoken labels, the window-size words, the WAV gap and the header's monitor button
 // and note-name hint (parent: ternaries and a `+` chain of literals, 17 units missing — ONE finding). E4-40 added the Perform
 // plate's four sentences and disclosure value, and the FX panel's Morph label, four conditional footers/headers, dropout note
-// and neutral-0.50 footer (parent: stored statics, ternaries and `+` chains, 20 units missing — ONE finding). Claim 12
+// and neutral-0.50 footer (parent: stored statics, ternaries and `+` chains, 20 units missing — ONE finding). E4-41 added the
+// photo card — PhotoSeedText's sentences, colour, change and field names, the percent lines, the spoken disclosure value and
+// Undo label/hint via `MediaLookUndo.spokenMedium` (parent: stored, interpolated or ternary literals, 23 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1376,6 +1378,47 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "When a channel stops arriving, its routes here release: the row shows a dash and the parameter returns to the value you set. The timbre channels below do the opposite — they stay on the last reading and say held. Both are deliberate, so a dropout changes the effects and not the instrument's own voice.",
                           "A channel with no reading hands the engine a neutral 0.50 on purpose, so the instrument keeps playing its patch instead of jumping to the bottom of the scale. A channel marked held is the last measurement: the engine still has it, the signal has stopped arriving."],
                          "Perform plate and FX prose")
+
+        // E4-41 — the photo card. `PhotoSeedText`: the two stored sentences are computed keys, `colour`, `change`
+        // and the four field names go through seams (APhotoIsReadSmallAndOffTheStage pins the English at runtime:
+        // "Main colour: hue 180°", "46 %", "→"); the card: the three percent lines (`Text("Brightness \(…)")` was a
+        // format key), the Applied/With-this-photo heading, the Apply hint's fallback, and the spoken disclosure
+        // value / Undo label / Undo hint (interpolated `undo.medium`, an identifier — now `spokenMedium`, a key).
+        // TheMediaLookHasOneWriter keeps `undo.medium == MediaLookUndo.photoMedium` and `.accessibilityHint(undo.
+        // applyBlockedReason ??`; "My Preset"-class identifiers (`photoMedium`) stay what they are.
+        let photoCard = try codeOnly("Sources/Echoelmusic/Studio/PhotoSeedCard.swift")
+        for seam in ["static var unreadable: String { String(localized: \"This photo could not be read. Try another photo.\") }",
+                     "static var reading: String { String(localized: \"Reading the photo…\") }",
+                     "return String(localized: \"Main colour: hue \") + \"\\(Int((seed.hue * 360).rounded()) % 360)\" + \"°\"",
+                     "if from == to { return head + String(localized: \", unchanged\") }",
+                     "change(String(localized: \"Intensity\"), before.intensity, after.intensity)",
+                     ".accessibilityValue(disclosureValue(undo))",
+                     "let state: String = isOpen ? String(localized: \"Expanded\") : String(localized: \"Collapsed\")",
+                     "return applied ? state + String(localized: \", look applied\") : state",
+                     "return String(localized: \"Undo \") + undo.spokenMedium + String(localized: \" look\")",
+                     "let medium: String = undo.medium.isEmpty ? String(localized: \"photo\") : undo.spokenMedium",
+                     "Text(String(localized: \"Brightness\") + \" \" + PhotoSeedText.percent(seed.brightness))",
+                     "Text(isLive ? String(localized: \"Applied:\") : String(localized: \"With this photo:\"))",
+                     "?? String(localized: \"Sets the visuals' intensity, detail, hue and saturation from the photo\")",
+                     "medium == Self.videoMedium ? String(localized: \"video\") : String(localized: \"photo\")"] {
+            XCTAssertTrue(photoCard.contains(seam), "PhotoSeedCard lost the E4-41 seam `\(seam)`")
+        }
+        for verbatim in ["static let unreadable", "static let reading", "return \"Main colour: hue", "\\(name) \\(from), unchanged", "change(\"Intensity\"",
+                         "? \"Expanded\" : \"Collapsed\"", "\"Undo \\(undo.medium) look\"", "Text(\"Brightness \\(", "? \"Applied:\"",
+                         "before the \\(undo.medium"] {
+            XCTAssertFalse(photoCard.contains(verbatim), "PhotoSeedCard interpolates, stores or spells a sentence verbatim again: `\(verbatim)`")
+        }
+        // RUNTIME COUNTERWEIGHTS: the bundle's English is unchanged (the photo guard pins the rest)
+        XCTAssertEqual(PhotoSeedText.change("Hue", 0.5, 0.5), "Hue 0.50, unchanged")
+        XCTAssertTrue(PhotoSeedText.unreadable.hasPrefix("This photo could not be read."))
+        try assertGerman(["This photo could not be read. Try another photo.", "Reading the photo…", "No main colour", "Main colour: hue ", ", unchanged",
+                          "Intensity", "Detail", "Hue", "Saturation", "Brightness", "Contrast", ", look applied", "· look applied", "Photo to Visuals",
+                          "Choose a photo; its colour, brightness and contrast can shape the visuals", "Choose photo",
+                          "Opens your photos. Nothing is changed until you apply it.", "Applied:", "With this photo:",
+                          "Hue rotates the visual's own colours; it does not paint them the photo's colour.", "Apply to visuals",
+                          "Sets the visuals' intensity, detail, hue and saturation from the photo", "Undo ", " look", "photo", "video",
+                          "Puts the visuals back the way they were before the ", ". A value you changed since stays."],
+                         "photo card")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
