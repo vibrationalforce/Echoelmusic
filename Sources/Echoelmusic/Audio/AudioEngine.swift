@@ -821,7 +821,10 @@ public final class AudioEngine {
         guard !isRecovering else { return }
         guard recoveryAttempts < Self.maxRecoveryAttempts else {
             degraded = true
-            lastAudioError = "Audio stopped (\(reason)) and auto-recovery gave up."
+            // E4-107: `AudioDegradedRow` draws this sentence verbatim, so its fixed parts are
+            // catalog lookups. `reason` stays as-is — it is the diag vocabulary, not prose.
+            lastAudioError = String(localized: "Audio stopped (") + reason
+                + String(localized: ") and auto-recovery gave up.")
             logEngineLifecycle("self-heal gave up after \(recoveryAttempts) attempts (\(reason))",
                                level: .error)
             return
@@ -1305,8 +1308,8 @@ public final class AudioEngine {
                               + "\(failure.error)", level: .error)
                     // Surface to the UI rather than silently showing "stopped".
                     degraded = true
-                    lastAudioError = "Audio engine could not start: "
-                        + "\(failure.error.localizedDescription)"
+                    lastAudioError = String(localized: "Audio engine could not start: ")
+                        + failure.error.localizedDescription
                     isRunning = false
                     return
                 }
@@ -1983,7 +1986,8 @@ public final class AudioEngine {
             log.audio("Engine restart after \(context) failed (\(error)) — handing over to AudioDegradedRow", level: .error)
             isRunning = false
             degraded = true
-            lastAudioError = "Audio stopped (\(context)) and could not restart: \(error.localizedDescription)"
+            lastAudioError = String(localized: "Audio stopped (") + context
+                + String(localized: ") and could not restart: ") + error.localizedDescription
         }
     }
 

@@ -208,7 +208,8 @@
 // missing — ONE finding). E4-105 looked up the automation names — the curve editor's title and picker and the
 // status strip's rows — where `AutomationScale` and `SongAutomationEdit` build them (parent: seams absent, 6 units
 // missing — ONE finding). E4-106 looked up the master panel's buffer-tier segments (parent: seam absent, 3 units
-// missing — ONE finding). Claim 12
+// missing — ONE finding). E4-107 keyed the three engine-failure sentences `AudioDegradedRow` shows (parent: seams
+// absent, 4 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3432,6 +3433,23 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertFalse(latencyTiers.contains(verbatim), "the buffer-tier picker draws its names verbatim again")
         }
         try assertGerman(["Ultra", "Low", "Normal"], "buffer tier names")
+
+        // E4-107 — `AudioDegradedRow` renders `lastAudioError` verbatim, and the engine built all three failure
+        // sentences as interpolated English. The fixed parts are catalog lookups now; the diag `reason`/`context`
+        // token and the system's own `localizedDescription` stay operands.
+        let engineFailure = try codeOnly("Sources/Echoelmusic/Audio/AudioEngine.swift")
+        for seam in ["lastAudioError = String(localized: \"Audio stopped (\") + reason",
+                     "+ String(localized: \") and auto-recovery gave up.\")",
+                     "lastAudioError = String(localized: \"Audio engine could not start: \")",
+                     "lastAudioError = String(localized: \"Audio stopped (\") + context",
+                     "+ String(localized: \") and could not restart: \") + error.localizedDescription"] {
+            XCTAssertTrue(engineFailure.contains(seam), "the engine failure sentences lost the E4-107 seam: \(seam)")
+        }
+        for verbatim in ["lastAudioError = \"Audio stopped (", "lastAudioError = \"Audio engine could not start"] {
+            XCTAssertFalse(engineFailure.contains(verbatim), "an engine failure sentence is built verbatim again: \(verbatim)")
+        }
+        try assertGerman(["Audio stopped (", ") and auto-recovery gave up.", "Audio engine could not start: ",
+                          ") and could not restart: "], "engine failure sentences")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

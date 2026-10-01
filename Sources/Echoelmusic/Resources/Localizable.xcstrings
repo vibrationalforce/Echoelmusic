@@ -33386,6 +33386,70 @@
           }
         }
       }
+    },
+    "Audio stopped (" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio gestoppt ("
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio stopped ("
+          }
+        }
+      }
+    },
+    ") and auto-recovery gave up." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ") und die automatische Wiederherstellung hat aufgegeben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ") and auto-recovery gave up."
+          }
+        }
+      }
+    },
+    "Audio engine could not start: " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio-Engine konnte nicht starten: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio engine could not start: "
+          }
+        }
+      }
+    },
+    ") and could not restart: " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ") und konnte nicht neu starten: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ") and could not restart: "
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
