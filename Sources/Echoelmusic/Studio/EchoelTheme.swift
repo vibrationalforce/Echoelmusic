@@ -168,6 +168,69 @@ enum EchoelTheme {
     /// been the more satisfying sentence and the less true one.)
     static let recording = Color(red: 0.90, green: 0.30, blue: 0.30)
 
+    // MARK: - Track identity (Workstation redesign A1, founder 2026-10-01)
+    //
+    // ⭐ FOUNDER 2026-10-01, beside the tablet workstation mockup: *„Gestalte alles so um, dass ich
+    // Echoelmusic als Workstation ernsthaft vertreten kann."* Every reference (Logic, Cubasis, the
+    // two mockups) carries ONE colour per track through its header and its parts; the canvas drew
+    // every part in the same grey, so four tracks read as one. A hue is the track's IDENTITY,
+    // nothing else: it is never page chrome (the monochrome rule above still governs buttons and
+    // panels) and never the only cue — the gutter pairs it with the instrument's symbol and the
+    // track's name (`TheSelectedTrackIsNotColourAloneTests`).
+    //
+    // WHY THESE HUES: muted, distinct from the three meaning colours — no hue sits near `danger` /
+    // `recording` red or `warning` amber, and only the body track wears `accent`, because that
+    // track IS the body's signal (the one place the bio-green is meant). Components are named so
+    // `TheTracksWearTheirOwnHueTests` does the contrast maths on the SAME numbers (#416).
+    enum TrackHue: CaseIterable, Sendable {
+        case synth, bass, sampler, breakbeat, echoel, audio, visual, body
+
+        /// sRGB components, 0…1 — the colour below is built from exactly these.
+        var components: (red: Double, green: Double, blue: Double) {
+            switch self {
+            case .synth:     return (0.37, 0.77, 0.79)   // teal
+            case .bass:      return (0.43, 0.61, 0.94)   // blue
+            case .sampler:   return (0.78, 0.66, 0.42)   // sand
+            case .breakbeat: return (0.85, 0.54, 0.43)   // terracotta
+            case .echoel:    return (0.66, 0.55, 0.90)   // violet — the generative instrument
+            case .audio:     return (0.60, 0.65, 0.72)   // slate — recorded / imported sound
+            case .visual:    return (0.84, 0.55, 0.82)   // orchid
+            case .body:      return (0.30, 0.85, 0.55)   // = `accent`: this track IS the body
+            }
+        }
+
+        var color: Color {
+            let c = components
+            return Color(red: c.red, green: c.green, blue: c.blue)
+        }
+
+        /// One switch decides a track's hue, the way `TrackInstrument.systemImage` decides its
+        /// symbol. A MIDI track without a built-in instrument is the generative Echoel track.
+        static func of(kind: ClipKind, instrument: TrackInstrument?, isBio: Bool) -> TrackHue {
+            if isBio { return .body }
+            switch instrument {
+            case .polySynth?:         return .synth
+            case .subBass?:           return .bass
+            case .sampler?:           return .sampler
+            case .breakLoop?, .drums?: return .breakbeat
+            case .bioVoice?:          return .body
+            case nil:
+                switch kind {
+                case .midi:           return .echoel
+                case .audio, .video:  return .audio
+                case .visual:         return .visual
+                }
+            }
+        }
+
+        /// The symbol that travels with the hue, so colour is never the only cue.
+        static func symbol(kind: ClipKind, instrument: TrackInstrument?, isBio: Bool) -> String {
+            if isBio { return "waveform.path.ecg" }
+            if let instrument { return instrument.systemImage }
+            return kind == .midi ? "sparkles" : kind.systemImage
+        }
+    }
+
     // MARK: Radii (≤ 12 per CLAUDE.md UI constraints)
     static let radiusSmall: CGFloat = 4
     static let radius:      CGFloat = 8

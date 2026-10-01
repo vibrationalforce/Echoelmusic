@@ -107,7 +107,10 @@ final class TheCanvasShowsWhatIsSilentTests: XCTestCase {
         XCTAssertTrue(laneBody.contains("let spokenName = row.name + ArrangeCanvas.spokenState(hearing)"))
         XCTAssertTrue(laneBody.contains(".opacity(ArrangeCanvas.isSilenced(hearing) ? 0.45 : 1)"),
                       "a silenced lane's parts dim")
-        XCTAssertTrue(laneBody.contains("label: \"\\(spokenName), part at \" + SessionGrid.label(forTick: start),"),
+        // E4-90 (7ad87b510) moved the connective into the string catalog so it speaks German;
+        // this pin stayed on the interpolated English form and could no longer match. The claim
+        // is unchanged: the part's label LEADS with the track's spoken name and state.
+        XCTAssertTrue(laneBody.contains("label: spokenName + String(localized: \", part at \") + SessionGrid.label(forTick: start),"),
                       "every part says its track's state, not only the row")
         XCTAssertTrue(laneBody.contains(".accessibilityLabel(\"\\(spokenName): \" + ArrangementStrip.spoken(onLane: row.id, in: document))"),
                       "the row says the state after the name")

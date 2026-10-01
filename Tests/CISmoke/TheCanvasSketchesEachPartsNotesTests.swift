@@ -178,7 +178,7 @@ final class TheCanvasSketchesEachPartsNotesTests: XCTestCase {
         XCTAssertTrue(canvas.contains("noteMarks: sketches[block.id] ?? [],"), "and hands each block its own")
 
         XCTAssertTrue(block.contains("let noteMarks: [ArrangeCanvas.NoteMark]"))
-        guard let fill = block.range(of: ".fill(EchoelTheme.dim)"),
+        guard let fill = block.range(of: ".fill(tint.opacity(Self.tintOpacity))"),
               let sketch = block.range(of: ".overlay { noteSketch }"),
               let border = block.range(of: ".overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)") else {
             return XCTFail("ANCHOR MISSING: the block's fill, its sketch overlay or its border (#454)")
@@ -196,7 +196,8 @@ final class TheCanvasSketchesEachPartsNotesTests: XCTestCase {
         // LOW-9: the dash is FILLED, at the mark's own place and height.
         XCTAssertTrue(drawing.contains("let rect = CGRect(x: CGFloat(mark.start) * size.width,"))
         XCTAssertTrue(drawing.contains("y: CGFloat(mark.height) * (size.height - dash),"))
-        XCTAssertTrue(drawing.contains("context.fill(Path(rect), with: .color(EchoelTheme.surface))"))
+        XCTAssertTrue(drawing.contains("context.fill(Path(rect), with: .color(tint))"),
+                      "the dashes are drawn in the track's own hue, full strength, on its muted body (A1)")
         // Review of 3bab7f277, LOW-11 (tightened in review 11, LOW-3): the fill sits INSIDE the
         // per-mark loop — one dash per mark. The loop body is brace-matched, so a fill before the
         // loop or after its closing brace (one rect for no mark at all) is outside it.

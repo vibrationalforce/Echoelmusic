@@ -273,9 +273,11 @@ struct ArrangeCanvasView: View {
     let document: TimelineDocument
     let songTicks: Int
 
-    /// Tall enough to hit with a finger; the rows carry no text inside the lane itself.
-    private static let rowHeight: CGFloat = 28
-    static let nameWidth: CGFloat = 76
+    /// Tall enough to hit with a finger and to read a part's sketch at a glance (A1, founder
+    /// 2026-10-01: the workstation mockups' lanes; 28 pt read as a strip of grey bars).
+    private static let rowHeight: CGFloat = 40
+    /// Room for the track's hue band, its instrument symbol and a short name.
+    static let nameWidth: CGFloat = 96
     static let gutter: CGFloat = 8
 
     var body: some View {
@@ -291,7 +293,7 @@ struct ArrangeCanvasView: View {
                 HStack(spacing: Self.gutter) {
                     // A name gutter: one line, truncating, so every lane starts at the same x
                     // and the rows line up bar for bar. The name AND its mute/solo symbol grow
-                    // with the type size inside a FIXED gutter width and 28 pt lane height
+                    // with the type size inside a FIXED gutter width and lane height (`nameWidth`, `rowHeight`)
                     // (review LOW-3), so at the largest sizes a silenced track's name shrinks to
                     // a few letters — the row and every part still SAY name and state, and the
                     // parts list in the track inspector is the large-type way in.
@@ -311,7 +313,17 @@ struct ArrangeCanvasView: View {
     /// the row and every part speak the name AND the state themselves.
     private func nameGutter(_ row: WorkstationSummary.LaneRow) -> some View {
         let hearing = ArrangeCanvas.hearing(of: row.id, in: document)
-        return HStack(spacing: 3) {
+        let hue = EchoelTheme.TrackHue.of(kind: row.kind, instrument: row.instrument, isBio: row.isBio)
+        return HStack(spacing: 4) {
+            // The track's identity (A1): a hue band and the instrument's symbol in that hue —
+            // the colour never travels without the symbol and the name.
+            RoundedRectangle(cornerRadius: 1.5)
+                .fill(hue.color)
+                .frame(width: 3)
+            Image(systemName: EchoelTheme.TrackHue.symbol(kind: row.kind, instrument: row.instrument,
+                                                          isBio: row.isBio))
+                .font(EchoelTheme.font(11))
+                .foregroundStyle(hue.color)
             if let symbol = ArrangeCanvas.symbol(hearing) {
                 Image(systemName: symbol)
                     .font(EchoelTheme.font(11))
@@ -319,7 +331,7 @@ struct ArrangeCanvasView: View {
             }
             Text(row.name)
                 .font(EchoelTheme.font(12))
-                .foregroundStyle(EchoelTheme.dim)
+                .foregroundStyle(EchoelTheme.text)
                 .lineLimit(1)
         }
         .frame(width: Self.nameWidth, alignment: .leading)
@@ -332,6 +344,7 @@ struct ArrangeCanvasView: View {
         let blocks = ArrangementStrip.blocks(onLane: row.id, in: document, songTicks: songTicks)
         let starts = Dictionary(TrackParts.parts(onLane: row.id, in: document)
             .map { ($0.id, $0.startTick) }, uniquingKeysWith: { first, _ in first })
+        let tint = EchoelTheme.TrackHue.of(kind: row.kind, instrument: row.instrument, isBio: row.isBio).color
         let sketches = Dictionary(document.regions.filter { $0.laneID == row.id }
             .map { ($0.id, ArrangeCanvas.noteMarks(for: $0, clip: clipStore.clip(id: $0.clipID))) },
                                   uniquingKeysWith: { first, _ in first })
@@ -347,6 +360,7 @@ struct ArrangeCanvasView: View {
                                      laneWidth: width, songTicks: songTicks,
                                      label: spokenName + String(localized: ", part at ") + SessionGrid.label(forTick: start),
                                      noteMarks: sketches[block.id] ?? [],
+                                     tint: tint,
                                      onSelect: { selection.selectRegion(block.id, in: document) },
                                      onDrop: { tick in drop(block.id, onLane: row.id, from: start, to: tick) },
                                      onStep: { later in step(block.id, onLane: row.id, later: later) })
@@ -468,6 +482,8 @@ struct ArrangePartBlock: View {
     let label: String
     /// The part's notes, sketched small (design slice 11) — empty for an audio part.
     let noteMarks: [ArrangeCanvas.NoteMark]
+    /// Its track's hue (A1): the part wears the colour of the track it sits on.
+    let tint: Color
     let onSelect: () -> Void
     let onDrop: (Int) -> Void
     /// The drag's non-drag twin (true = one bar later) — see the file header.
@@ -482,10 +498,10 @@ struct ArrangePartBlock: View {
                                                laneWidth: laneWidth, songTicks: songTicks)
         let moving = dragPoints != 0
         RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-            .fill(EchoelTheme.dim)
+            .fill(tint.opacity(Self.tintOpacity))
             .overlay { noteSketch }
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                .strokeBorder(isSelected || moving ? EchoelTheme.accent : EchoelTheme.border,
+                .strokeBorder(isSelected || moving ? EchoelTheme.accent : tint.opacity(Self.edgeOpacity),
                               lineWidth: isSelected || moving ? 2 : 1))
             .opacity(moving ? 0.8 : 1)
             // A part being moved draws over its neighbours, not under a later-starting one
@@ -520,7 +536,7 @@ struct ArrangePartBlock: View {
                                   y: CGFloat(mark.height) * (size.height - dash),
                                   width: Swift.max(1, CGFloat(mark.length) * size.width),
                                   height: dash)
-                context.fill(Path(rect), with: .color(EchoelTheme.surface))
+                context.fill(Path(rect), with: .color(tint))
             }
         }
         .padding(.horizontal, 2)
@@ -531,6 +547,10 @@ struct ArrangePartBlock: View {
 
     /// How thick one note is drawn — thin enough that a busy part still reads as a shape.
     private static let dashHeight: CGFloat = 2
+    /// The part's body is its track's hue, muted, so the full-strength dashes read on it and
+    /// the selection ring (`accent`, 2 pt) stays the loudest edge on the lane.
+    private static let tintOpacity: Double = 0.30
+    private static let edgeOpacity: Double = 0.70
 
     /// Hold first, then slide — so a swipe that starts on a part still scrolls the Workstation.
     private var move: some Gesture {
