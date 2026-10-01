@@ -4488,3 +4488,14 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-68 block (7 seam needles over three files, 3 absence needles, 20 units; 317 → 323 XCTAssert). WORK PASS /
   HEAD FAIL (7/2/19 — ONE finding). Whole-claim-11 needle check: 113 files, 931 needles, 0 broken.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-69: FX characters, skill levels, camera words (ceafa3b5a)
+
+- **Decision:** `FXCharacter.displayName`/`.blurb` (22), `SkillLevel.displayName`/`.blurb` (6) and `RPPGRecoveryState
+  .userHint`/`.shortLabel` (6) are catalog keys. Catalog 1567 → 1601 (+34).
+- **Why:** the FX picker row + caption, the skill picker and the pulse pill still read bare English; the German skill blurbs
+  quote the German chip words ("Klang", "Stimmung", "Feld", "Sichern & Export") read from the catalog, and the pill keeps a
+  short German ("Pausiert", "Kühlt ab"). TheStalledPillSaysWhySilentTests compares `shortLabel` at runtime — no re-anchor.
+- **Guard:** claim 11 E4-69 block (6 seam needles over three files, 3 absence needles, 34 units; 323 → 329 XCTAssert). WORK PASS /
+  HEAD FAIL (6/3/34 — ONE finding). Whole-claim-11 needle check: 116 files, 940 needles, 0 broken.
+- **Review:** 2026-10-31.
