@@ -140,13 +140,13 @@ public enum AudioImport {
         /// drift from the failure it is describing, and so a guard can drive it.
         public var userMessage: String {
             switch self {
-            case .pickerFailed:    return "Couldn't open that file."
-            case .copyFailed:      return "Couldn't copy that file into the app."
-            case .unreadableAudio: return "That file isn't audio this app can read."
-            case .invalidFormat:   return "That audio has no usable sample rate or channels."
-            case .invalidDuration: return "That audio has no playable length."
-            case .noAudioLane:     return "This piece has no audio track — add an audio track first."
-            case .clipGridFull:    return "The part grid is full — all 8 slots are in use."
+            case .pickerFailed:    return String(localized: "Couldn't open that file.")
+            case .copyFailed:      return String(localized: "Couldn't copy that file into the app.")
+            case .unreadableAudio: return String(localized: "That file isn't audio this app can read.")
+            case .invalidFormat:   return String(localized: "That audio has no usable sample rate or channels.")
+            case .invalidDuration: return String(localized: "That audio has no playable length.")
+            case .noAudioLane:     return String(localized: "This piece has no audio track — add an audio track first.")
+            case .clipGridFull:    return String(localized: "The part grid is full — all 8 slots are in use.")
             }
         }
     }

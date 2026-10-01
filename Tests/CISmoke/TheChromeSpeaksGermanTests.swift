@@ -127,7 +127,8 @@
 // missing — ONE finding). E4-66 added the scene-launch hints (SessionLaunchView.sceneBlock), the look-name fallback
 // (LookBlendMap.name) and the value field's VoiceOver "Default" action (parent: 5 units missing — ONE finding). E4-67 added
 // the media browser's state lines, relink note, preview refusals and the audio-track fallback (parent: 10 units missing —
-// ONE finding). Claim 12
+// ONE finding). E4-68 added the two import doors' failure sentences (AudioImport.Failure / MIDIImport.Failure.userMessage)
+// and the note editor's four refusals (ClipNoteEdit) (parent: 19 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2390,6 +2391,45 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "A relink is still checking its file.", "Stop the piece to preview a file.",
                           "Stop the instrument's loop to preview a file.", "Sound is off right now, so a preview can't play.",
                           "the audio track"], "media browser lines")
+
+        // E4-68 — the two import doors' failure sentences and the note editor's refusals. `userMessage` is read by
+        // WorkstationView's `importNote` and the media browser; the four import guards compare it at runtime under the
+        // test locale (equality on the key, `contains` on a fragment, a Set for uniqueness), so none needed a re-anchor.
+        // `.tooLong` keeps its two constants between three keys (`MIDIImport.maxBars` / `maxNotes`).
+        let importFailures = try codeOnly("Sources/Echoelmusic/Sequencer/AudioImport.swift")
+        let midiFailures = try codeOnly("Sources/Echoelmusic/Sequencer/MIDIImport.swift")
+        let noteRefusals = try codeOnly("Sources/Echoelmusic/Sequencer/ClipNoteEdit.swift")
+        for seam in ["case .pickerFailed:    return String(localized: \"Couldn't open that file.\")",
+                     "case .noAudioLane:     return String(localized: \"This piece has no audio track — add an audio track first.\")"] {
+            XCTAssertTrue(importFailures.contains(seam), "AudioImport lost the E4-68 seam `\(seam)`")
+        }
+        for seam in ["case .notAMIDIFile:   return String(localized: \"That file isn't a standard MIDI file this app can read.\")",
+                     "String(localized: \"That MIDI file is too long — a part holds up to \") + \"\\(MIDIImport.maxBars)\"",
+                     "String(localized: \" bars and \") + \"\\(MIDIImport.maxNotes)\" + String(localized: \" notes.\")"] {
+            XCTAssertTrue(midiFailures.contains(seam), "MIDIImport lost the E4-68 seam `\(seam)`")
+        }
+        for seam in ["case .missing: return String(localized: \"This part's notes are missing from the part grid.\")",
+                     "return String(localized: \"The composer rewrites this part as it evolves, so its notes are shown, not edited.\")"] {
+            XCTAssertTrue(noteRefusals.contains(seam), "ClipNoteEdit lost the E4-68 seam `\(seam)`")
+        }
+        XCTAssertFalse(importFailures.contains("return \"Couldn't open that file.\""), "AudioImport spells a failure verbatim again")
+        XCTAssertFalse(midiFailures.contains("return \"That MIDI file is too long — a part holds up to \\(MIDIImport.maxBars) bars"),
+                       "MIDIImport spells the too-long failure verbatim again")
+        XCTAssertFalse(noteRefusals.contains("case .missing: return \"This part's notes are missing"),
+                       "ClipNoteEdit spells a refusal verbatim again")
+        try assertGerman(["Couldn't open that file.", "Couldn't copy that file into the app.",
+                          "That file isn't audio this app can read.", "That audio has no usable sample rate or channels.",
+                          "That audio has no playable length.", "This piece has no audio track — add an audio track first.",
+                          "The part grid is full — all 8 slots are in use.", "Couldn't read that file.",
+                          "That file is too large — a MIDI file can be up to 2 MB.",
+                          "That file isn't a standard MIDI file this app can read.",
+                          "That MIDI file has no notes to play — drum channel 10 is skipped.",
+                          "That MIDI file is too long — a part holds up to ", " bars and ", " notes.",
+                          "This piece has no MIDI track — add a MIDI track first.", "The part slots are full — all 8 are in use.",
+                          "This part's notes are missing from the part grid.", "This is an audio part — it has no notes to edit.",
+                          "The composer rewrites this part as it evolves, so its notes are shown, not edited.",
+                          "This part was saved by an older build; its notes cannot be shown or edited here."],
+                         "import failures and note-editor refusals")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

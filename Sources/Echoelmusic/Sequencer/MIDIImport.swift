@@ -88,14 +88,16 @@ public enum MIDIImport {
         /// `ClipStore.slotCount` is main-actor-isolated and this property is not.
         public var userMessage: String {
             switch self {
-            case .pickerFailed:   return "Couldn't open that file."
-            case .unreadableFile: return "Couldn't read that file."
-            case .fileTooLarge:   return "That file is too large — a MIDI file can be up to 2 MB."
-            case .notAMIDIFile:   return "That file isn't a standard MIDI file this app can read."
-            case .noMelodicNotes: return "That MIDI file has no notes to play — drum channel 10 is skipped."
-            case .tooLong:        return "That MIDI file is too long — a part holds up to \(MIDIImport.maxBars) bars and \(MIDIImport.maxNotes) notes."
-            case .noMIDILane:     return "This piece has no MIDI track — add a MIDI track first."
-            case .clipGridFull:   return "The part slots are full — all 8 are in use."
+            case .pickerFailed:   return String(localized: "Couldn't open that file.")
+            case .unreadableFile: return String(localized: "Couldn't read that file.")
+            case .fileTooLarge:   return String(localized: "That file is too large — a MIDI file can be up to 2 MB.")
+            case .notAMIDIFile:   return String(localized: "That file isn't a standard MIDI file this app can read.")
+            case .noMelodicNotes: return String(localized: "That MIDI file has no notes to play — drum channel 10 is skipped.")
+            case .tooLong:
+                let limits: String = String(localized: "That MIDI file is too long — a part holds up to ") + "\(MIDIImport.maxBars)"
+                return limits + String(localized: " bars and ") + "\(MIDIImport.maxNotes)" + String(localized: " notes.")
+            case .noMIDILane:     return String(localized: "This piece has no MIDI track — add a MIDI track first.")
+            case .clipGridFull:   return String(localized: "The part slots are full — all 8 are in use.")
             }
         }
     }

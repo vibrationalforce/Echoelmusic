@@ -26586,6 +26586,310 @@
           }
         }
       }
+    },
+    "Couldn't open that file." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Datei konnte nicht geöffnet werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't open that file."
+          }
+        }
+      }
+    },
+    "Couldn't copy that file into the app." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Datei konnte nicht in die App kopiert werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't copy that file into the app."
+          }
+        }
+      }
+    },
+    "That audio has no usable sample rate or channels." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Audio hat keine brauchbare Abtastrate oder Kanäle."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That audio has no usable sample rate or channels."
+          }
+        }
+      }
+    },
+    "That audio has no playable length." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Audio hat keine abspielbare Länge."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That audio has no playable length."
+          }
+        }
+      }
+    },
+    "This piece has no audio track — add an audio track first." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Stück hat keine Audiospur — füge zuerst eine Audiospur hinzu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This piece has no audio track — add an audio track first."
+          }
+        }
+      }
+    },
+    "The part grid is full — all 8 slots are in use." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Teile-Raster ist voll — alle 8 Plätze sind belegt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The part grid is full — all 8 slots are in use."
+          }
+        }
+      }
+    },
+    "Couldn't read that file." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Datei konnte nicht gelesen werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't read that file."
+          }
+        }
+      }
+    },
+    "That file is too large — a MIDI file can be up to 2 MB." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Datei ist zu groß — eine MIDI-Datei darf bis zu 2 MB haben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That file is too large — a MIDI file can be up to 2 MB."
+          }
+        }
+      }
+    },
+    "That file isn't a standard MIDI file this app can read." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Datei ist keine Standard-MIDI-Datei, die diese App lesen kann."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That file isn't a standard MIDI file this app can read."
+          }
+        }
+      }
+    },
+    "That MIDI file has no notes to play — drum channel 10 is skipped." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese MIDI-Datei hat keine Noten zum Spielen — Drum-Kanal 10 wird übersprungen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That MIDI file has no notes to play — drum channel 10 is skipped."
+          }
+        }
+      }
+    },
+    "That MIDI file is too long — a part holds up to " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese MIDI-Datei ist zu lang — ein Teil fasst bis zu "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That MIDI file is too long — a part holds up to "
+          }
+        }
+      }
+    },
+    " bars and " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Takte und "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " bars and "
+          }
+        }
+      }
+    },
+    " notes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Noten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " notes."
+          }
+        }
+      }
+    },
+    "This piece has no MIDI track — add a MIDI track first." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Stück hat keine MIDI-Spur — füge zuerst eine MIDI-Spur hinzu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This piece has no MIDI track — add a MIDI track first."
+          }
+        }
+      }
+    },
+    "The part slots are full — all 8 are in use." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Teile-Plätze sind voll — alle 8 sind belegt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The part slots are full — all 8 are in use."
+          }
+        }
+      }
+    },
+    "This part's notes are missing from the part grid." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Noten dieses Teils fehlen im Teile-Raster."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This part's notes are missing from the part grid."
+          }
+        }
+      }
+    },
+    "This is an audio part — it has no notes to edit." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dies ist ein Audio-Teil — es hat keine Noten zum Bearbeiten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This is an audio part — it has no notes to edit."
+          }
+        }
+      }
+    },
+    "The composer rewrites this part as it evolves, so its notes are shown, not edited." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Komponist schreibt diesen Teil beim Weiterentwickeln neu, deshalb werden seine Noten gezeigt, nicht bearbeitet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The composer rewrites this part as it evolves, so its notes are shown, not edited."
+          }
+        }
+      }
+    },
+    "This part was saved by an older build; its notes cannot be shown or edited here." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Teil wurde von einem älteren Build gespeichert; seine Noten können hier nicht gezeigt oder bearbeitet werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This part was saved by an older build; its notes cannot be shown or edited here."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -33,12 +33,12 @@ enum ClipNoteEdit {
 
         var sentence: String {
             switch self {
-            case .missing: return "This part's notes are missing from the part grid."
-            case .notMIDI: return "This is an audio part — it has no notes to edit."
+            case .missing: return String(localized: "This part's notes are missing from the part grid.")
+            case .notMIDI: return String(localized: "This is an audio part — it has no notes to edit.")
             case .composerOwned:
-                return "The composer rewrites this part as it evolves, so its notes are shown, not edited."
+                return String(localized: "The composer rewrites this part as it evolves, so its notes are shown, not edited.")
             case .legacyOffset:
-                return "This part was saved by an older build; its notes cannot be shown or edited here."
+                return String(localized: "This part was saved by an older build; its notes cannot be shown or edited here.")
             }
         }
     }
