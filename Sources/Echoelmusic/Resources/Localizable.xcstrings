@@ -32298,6 +32298,38 @@
           }
         }
       }
+    },
+    "Field play surface" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feld-Spielfläche"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Field play surface"
+          }
+        }
+      }
+    },
+    "Touch and slide to play notes in the current key" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Berühren und gleiten, um Noten in der aktuellen Tonart zu spielen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touch and slide to play notes in the current key"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

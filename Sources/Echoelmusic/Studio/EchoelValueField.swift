@@ -1428,9 +1428,9 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
     private var accessibleValue: String {
         let n = numberString
         switch unit {
-        case "Hz":  return "\(n) hertz"
-        case "s":   return "\(n) seconds"
-        case "BPM": return "\(n) beats per minute"
+        case "Hz":  return n + String(localized: " hertz")
+        case "s":   return n + String(localized: " seconds")
+        case "BPM": return n + String(localized: " beats per minute")
         case "":    return n
         default:    return "\(n) \(unit)"
         }

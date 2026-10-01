@@ -188,7 +188,8 @@
 // `.confirmationDialog` (parent: 6 units missing — ONE finding). E4-90 keyed the arrange canvas's spoken
 // hearing states and part label and the header's place line (parent: 4 units missing — ONE finding). E4-91 keyed
 // the note editor's spoken count and step announcement and the record row's unnamed-track fallback (parent: 3
-// units missing — ONE finding). Claim 12
+// units missing — ONE finding). E4-92 keyed the value field's spoken units, the tempo field's spoken following
+// value and the touch surface's VoiceOver label and hint (parent: 2 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3136,6 +3137,38 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertFalse(foreignTrack.contains(verbatim), "RecordTakeControls names an unnamed track verbatim again")
         }
         try assertGerman([" at step ", ", selected", "A track", "note", "notes"], "note count, step pick and unnamed track")
+
+        // E4-92 — `EchoelValueField.accessibleValue` spoke "<n> hertz / seconds / beats per minute" as interpolated
+        // Strings, `BodyTempoField.followingSpoken` the same for the following tempo, and the touch surface (a UIKit
+        // view) set its `accessibilityLabel` / `accessibilityHint` to plain Strings. The words are keys now; the
+        // number stays the operand, formatted once (TempoReadsAsAMeasurementTests counts exactly two
+        // `followingValue` formattings — the spoken line still holds one). The unit keys already had German units.
+        let spokenUnits = try codeOnly("Sources/Echoelmusic/Studio/EchoelValueField.swift")
+        for seam in ["case \"Hz\":  return n + String(localized: \" hertz\")",
+                     "case \"s\":   return n + String(localized: \" seconds\")",
+                     "case \"BPM\": return n + String(localized: \" beats per minute\")"] {
+            XCTAssertTrue(spokenUnits.contains(seam), "EchoelValueField lost the E4-92 seam `\(seam)`")
+        }
+        for verbatim in ["return \"\\(n) hertz\"", "return \"\\(n) seconds\"", "return \"\\(n) beats per minute\""] {
+            XCTAssertFalse(spokenUnits.contains(verbatim), "EchoelValueField speaks a unit verbatim again: `\(verbatim)`")
+        }
+        let followingTempo = try codeOnly("Sources/Echoelmusic/Studio/BodyTempoField.swift")
+        for seam in ["EchoelDecimalText.string(followingValue, decimals: 1) + String(localized: \" beats per minute\")"] {
+            XCTAssertTrue(followingTempo.contains(seam), "BodyTempoField lost the E4-92 seam `\(seam)`")
+        }
+        for verbatim in [", decimals: 1)) beats per minute\""] {
+            XCTAssertFalse(followingTempo.contains(verbatim), "BodyTempoField speaks the following tempo verbatim again")
+        }
+        let fieldSurface = try codeOnly("Sources/Echoelmusic/Studio/TouchInstrumentView.swift")
+        for seam in ["accessibilityLabel = String(localized: \"Field play surface\")",
+                     "accessibilityHint = String(localized: \"Touch and slide to play notes in the current key\")"] {
+            XCTAssertTrue(fieldSurface.contains(seam), "TouchInstrumentView lost the E4-92 seam `\(seam)`")
+        }
+        for verbatim in ["accessibilityLabel = \"Field play surface\"", "accessibilityHint = \"Touch and slide"] {
+            XCTAssertFalse(fieldSurface.contains(verbatim), "TouchInstrumentView sets a VoiceOver string verbatim again: `\(verbatim)`")
+        }
+        try assertGerman(["Field play surface", "Touch and slide to play notes in the current key",
+                          " hertz", " seconds", " beats per minute"], "spoken units and the touch surface")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

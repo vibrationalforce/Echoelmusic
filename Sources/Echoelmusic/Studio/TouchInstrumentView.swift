@@ -894,8 +894,8 @@ final class TouchInstrumentUIView: UIView {
         // panel heading exactly — a surface with two names is a surface nobody can be told
         // how to find. ⚠️ The `touch.*` AppStorage keys behind it are deliberately NOT
         // renamed: those persist, and renaming them would discard settings already dialled in.
-        accessibilityLabel = "Field play surface"
-        accessibilityHint = "Touch and slide to play notes in the current key"
+        accessibilityLabel = String(localized: "Field play surface")
+        accessibilityHint = String(localized: "Touch and slide to play notes in the current key")
         // DIRECT INTERACTION — the accessibility standard for musical instruments
         // (GarageBand model): a VoiceOver user double-taps the surface once, then
         // touches play IMMEDIATELY (no element-by-element navigation between the

@@ -310,7 +310,7 @@ struct BodyTempoField: View {
     /// drift: `EchoelValueField.accessibleValue` already speaks the seen string, and the
     /// following state has to match that or VoiceOver flips format on the same lock tap.
     private var followingSpoken: String {
-        "\(EchoelDecimalText.string(followingValue, decimals: 1)) beats per minute"
+        EchoelDecimalText.string(followingValue, decimals: 1) + String(localized: " beats per minute")
     }
 
     var body: some View {
