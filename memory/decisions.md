@@ -4530,3 +4530,15 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   · BioScienceInfo 11 · LightScienceInfo 8 · VisualAnalysisMeter 4 · BioSourceOption 4 · CameraCapture 3 ·
   TrackInspectorView 3 · ImmersiveStageView 3 (doorless) · TrackInstrument 3 · StretchMode 2 · SongAutomationEditor 1 ·
   LearnView 1 — plus `EchoelValueField`'s VoiceOver gesture sentence. E4 continues with E4-72.
+
+### 2026-10-01 — E4-72: source chooser, device names, meter names (e07a078c4)
+
+- **Decision:** `BioSourceOption.menuLabel` (4), `TrackInspectorView.deviceName` (6; the no-voice pair split around its
+  capacity into a typed `let`) and `VisualAnalysisMeter.spokenName` (4) are catalog keys. `TrackInstrument.subtitle` stays
+  bare: no reader. Catalog 1630 → 1645.
+- **Why:** the pulse pill's menu, the bio panel row, the track inspector's Device line and the meter segment's VoiceOver
+  name were still English. TheBioSourceChooserHasOneDefinitionTests counts each label literal ONCE across the definition
+  and its two consumers — a wrapped literal is still one — so the one-definition law and the German coexist.
+- **Guard:** claim 11 E4-72 block (6 seam needles over three files, 3 absence needles, 15 units; 339 → 345 XCTAssert).
+  WORK PASS / HEAD FAIL (6/2/15 — ONE finding). Whole-claim-11 needle check: 124 files, 965 needles, 0 broken.
+- **Review:** 2026-10-31.
