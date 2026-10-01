@@ -189,7 +189,7 @@ final class TheHeaderStripWearsTheOneFormatTests: XCTestCase {
         XCTAssertFalse(text.contains(".frame(height: EchoelTheme.controlHeight"), """
             `WorkspaceView` pins `.frame(height: EchoelTheme.controlHeight…)`.
 
-            This bar carries TEXT — Genre, Key, Scale, Tone system, Note names, Mode and the \
+            This bar carries TEXT — Key, Scale, Tone system, Note names, Mode and the \
             A4 value. As a fixed height the token is also a CEILING, and at accessibility text \
             sizes the content overflows it (#262). Icon-only chrome may pin it; this may not.
             """)
@@ -201,7 +201,7 @@ final class TheHeaderStripWearsTheOneFormatTests: XCTestCase {
     }
 
     /// 2b. THE FREEZE LAW, and this bar is the reason it matters here rather than in general:
-    /// it hosts six `.menu` Pickers. A high-frequency `@Observable` read anywhere in its
+    /// it hosts five `.menu` Pickers (six until the genre left it, A2). A high-frequency `@Observable` read anywhere in its
     /// `body` registers the whole host as an observer and tears down an open popover on every
     /// rebuild (10.76.41/50). `transport` IS in this struct — deliberately, read only in
     /// `modeBinding`'s `set` closure, so the ~10 Hz tempo churn never subscribes the host. The
@@ -211,7 +211,7 @@ final class TheHeaderStripWearsTheOneFormatTests: XCTestCase {
         XCTAssertFalse(body.contains("transport."), """
             `CompositionHeaderStrip.body` reads `transport.` directly.
 
-            This body hosts six `.menu` Pickers. `transport.tempo` runs along with the body \
+            This body hosts five `.menu` Pickers. `transport.tempo` runs along with the body \
             while the tempo is unlocked, so reading it here rebuilds the host ~10×/s and tears \
             down any open Picker popover — the freeze the founder reported twice \
             (10.76.41/50). The seed for `lockedBPM` belongs in `modeBinding`'s `set` closure, \
@@ -223,14 +223,32 @@ final class TheHeaderStripWearsTheOneFormatTests: XCTestCase {
     }
 
     /// 2c. THE #343 COUNTERWEIGHT, and the one that makes the rest mean anything. Every
-    /// assertion above is satisfied by a strip that lost all seven of its controls — the
-    /// format would be "consistent" across nothing. This pins that the bar still BUILDS the
-    /// musical identity the 2026-07-14 decision put in the chrome ("lebt HIER in der Chrome,
-    /// immer sichtbar, eine dünne Zeile"), and that every control reaches the screen through
-    /// the shared helper rather than beside it.
-    func testTheBarStillBuildsAllSevenControlsThroughTheHelper() throws {
+    /// assertion above is satisfied by a strip that lost all of its controls — the format
+    /// would be "consistent" across nothing. This pins that the bar still BUILDS the musical
+    /// identity the 2026-07-14 decision put in the chrome ("lebt HIER in der Chrome, immer
+    /// sichtbar, eine dünne Zeile"), and that every control reaches the screen through the
+    /// shared helper rather than beside it.
+    ///
+    /// ⭐ RE-ANCHORED 2026-10-01 (Workstation redesign A2), and NOT weakened: this claim's own
+    /// message said removing a control "is a founder call", and the founder made it — *„das Ding
+    /// mit den Genres … nicht so schön"*, answered as "Genre becomes the Echoel device's style".
+    /// So "Genre" left the list and its ABSENCE is now pinned instead: a genre picker drifting
+    /// back into the always-visible bar would be a second door to one setting. Its one door is
+    /// the Echoel track's inspector row, pinned by `TheGenreIsAStyleOnTheEchoelDeviceTests`.
+    func testTheBarStillBuildsItsControlsThroughTheHelper() throws {
         let strip = try stripStruct()
-        for caption in ["Genre", "Key", "Scale", "Tone system", "Note names", "Mode"] {
+        XCTAssertFalse(strip.contains("labeled(\"Genre\")"), """
+            `CompositionHeaderStrip` builds `labeled("Genre")` again.
+
+            The founder moved the genre out of this bar on 2026-10-01 — it is the Echoel \
+            instrument's STYLE now, chosen on the Echoel track's inspector row. Two doors to one \
+            setting is the drift this bar's format exists to prevent.
+            """)
+        // ⛔ "Mode" stood in this list until 2026-10-01 and the claim was RED on a correct tree since
+        // `0ec128ef6`, which renamed the caption to "Tempo" — and `TheTempoModeSpeaksTheLocksWordsTests`
+        // forbids `labeled("Mode")` outright, so the two guards could never both pass (§3: a red on
+        // both trees produces no delta, so no delta grading saw it). Found while moving the genre out.
+        for caption in ["Key", "Scale", "Tone system", "Note names", "Tempo"] {
             XCTAssertTrue(strip.contains("labeled(\"\(caption)\")"), """
                 `CompositionHeaderStrip` no longer builds `labeled("\(caption)")`.
 
@@ -243,7 +261,7 @@ final class TheHeaderStripWearsTheOneFormatTests: XCTestCase {
         XCTAssertTrue(strip.contains("labeled(\"A4\", chromed: false)"), """
             The A4 concert-pitch row is no longer built as `labeled("A4", chromed: false)`.
 
-            It is the seventh control and the one exception; if it left the helper entirely it \
+            It is the last control and the one exception; if it left the helper entirely it \
             also left the 44 pt tap floor, on the row where a stray gesture retunes every \
             voice and persists (#391).
             """)

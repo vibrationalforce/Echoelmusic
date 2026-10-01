@@ -567,15 +567,16 @@ struct TrackInspectorView: View {
         }
     }
 
-    /// EF2 — the Echoel instance's genre, the header's curated list grouped by shelf (the same
-    /// `MusicStyle.Subcategory` root, so a genre the header offers is offered here and no other).
+    /// EF2 — the Echoel instance's genre, the curated list grouped by shelf (the
+    /// `MusicStyle.Subcategory` root). Since A2 (founder 2026-10-01) this is the ONE on-screen door
+    /// and it reads "Style": the genre left the header and became a property of the device.
     /// Cold read of the song; the `?? StudioDefaultKeys.genre.value` is unreachable — the row is
     /// shown only when the instance holds a genre.
     private var echoelGenreRow: some View {
         HStack(spacing: 8) {
-            Text("Genre")
+            Text("Style")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-            Picker("Genre", selection: Binding<MusicStyle>(
+            Picker("Style", selection: Binding<MusicStyle>(
                 get: { timeline.document.echoelGenre ?? StudioDefaultKeys.genre.value },
                 set: { TrackMix.pickEchoelGenre($0, timeline: timeline) })) {
                 ForEach(MusicStyle.Subcategory.allCases) { shelf in
@@ -587,7 +588,7 @@ struct TrackInspectorView: View {
                 }
             }
             .pickerStyle(.menu).tint(EchoelTheme.text)
-            .accessibilityHint("The genre the Echoel instrument composes in. The piece keeps it")
+            .accessibilityHint("The style the Echoel instrument composes in. The piece keeps it")
             Spacer(minLength: 0)
         }
     }

@@ -7,7 +7,8 @@ import XCTest
 /// at the only level a player reads, the founder's "logisch sortiert" had stopped being true.
 ///
 /// WHAT THIS FILE IS ACTUALLY FOR, and it is not tidiness: **the doorless-genre trap moved with
-/// the iteration root.** `WorkspaceView`'s Genre picker used to loop `Category.allCases`; it now
+/// the iteration root.** The Genre picker (in `WorkspaceView` until A2, 2026-10-01; the Echoel
+/// track's Style row in `TrackInspectorView` since) used to loop `Category.allCases`; it now
 /// loops `Subcategory.allCases`. A genre in `offered` whose shelf that loop never reaches is
 /// invisible in exactly the way a genre outside `offered` is — built, filed, unreachable. Claim 3
 /// pins the set equality against the NEW root, so the trap cannot reopen without a red.
@@ -98,7 +99,7 @@ final class GenreSubcategoryTests: XCTestCase {
     func testEveryOfferedGenreIsReachableFromAShelf() {
         let reachable = MusicStyle.Subcategory.allCases.flatMap(\.offeredGenres)
         XCTAssertEqual(Set(reachable), Set(MusicStyle.offered), """
-            the picker's iteration root and the roster disagree. `WorkspaceView` loops \
+            the picker's iteration root and the roster disagree. `TrackInspectorView` loops \
             `Subcategory.allCases` and renders `offeredGenres`, so a genre in `offered` that no \
             shelf lists is built, curated IN, and invisible — and one listed that is not offered \
             would be a phantom row (#1275)

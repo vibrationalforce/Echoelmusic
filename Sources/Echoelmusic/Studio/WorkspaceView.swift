@@ -1158,8 +1158,9 @@ struct TransportPositionView: View {
 
 // MARK: - Composition header strip (bottom-bar dissolve, steps 2b/2c)
 
-/// The musical identity in the chrome: Genre · Key · Scale · Tone system · Concert
-/// pitch A4 — plus, since step 2c, the live session-name preview (the stamped
+/// The musical identity in the chrome: Key · Scale · Tone system · Concert
+/// pitch A4 (the genre left it with A2, 2026-10-01 — it is the Echoel device's style now)
+/// — plus, since step 2c, the live session-name preview (the stamped
 /// identity those settings produce) — one thin always-visible row
 /// (PLAN_DISSOLVE_BOTTOM_BAR_2026-07-14 steps 2b/2c — these rows lived in the
 /// bottom menu bar's Composition/Session dropdowns; founder 2026-07-14: "Unten die
@@ -1193,7 +1194,6 @@ struct CompositionHeaderStrip: View {
 
     // Shared with EchoelStudioView — same keys + defaults (@AppStorage defaults are
     // PER-DECLARATION: a diverging copy here would lie until the key is written).
-    @AppStorage(StudioDefaultKeys.genre.key) private var style: MusicStyle = StudioDefaultKeys.genre.value
     @AppStorage(StudioDefaultKeys.rootIndex.key) private var rootIndex = StudioDefaultKeys.rootIndex.value
     @AppStorage(StudioDefaultKeys.scale.key) private var scale: Scale = StudioDefaultKeys.scale.value
     @AppStorage(StudioDefaultKeys.toneSystemID.key) private var tuningID = StudioDefaultKeys.toneSystemID.value
@@ -1223,40 +1223,10 @@ struct CompositionHeaderStrip: View {
             // down already space at (`quickActionRow`, `quickDoorRow`). Five gaps × 4 pt back
             // is the only width this slice GIVES; the chip padding takes more (see `labeled`).
             HStack(spacing: 8) {
-                labeled("Genre") {
-                    Picker("Genre", selection: edited($style, posts: "genre")) {
-                        // Curated palette (founder 2026-07-24 "Genre is better you
-                        // decide and curate something that really fits the brand …
-                        // Die 6 ruhigen Genres"): the picker offers only
-                        // `MusicStyle.offered`, still grouped by sound-world. The full
-                        // taxonomy stays intact — only what's OFFERED is curated, and a
-                        // shelf with no offered genre is skipped so no empty section
-                        // header shows.
-                        //
-                        // ⭐ #1275: the iteration root is the SHELF, not the rubric. Four
-                        // rubrics for thirty-six genres meant one section header covered
-                        // seventeen of them and another covered six unrelated traditions —
-                        // at the only level the player reads, the sorting had stopped
-                        // sorting. Seventeen shelves name what is on them ("Techno",
-                        // "House") instead of the drawer they share.
-                        //
-                        // ⚠️ The DOORLESS TRAP MOVED WITH THE ROOT and that is the whole
-                        // risk of this change: a genre in `offered` whose shelf this loop
-                        // never reaches is invisible, exactly as a genre outside `offered`
-                        // is. `GenreSubcategoryTests` pins the set equality
-                        // (`Set(offered) == Set(allCases.flatMap(\.offeredGenres))`)
-                        // against THIS root, so the trap cannot reopen silently.
-                        ForEach(MusicStyle.Subcategory.allCases) { shelf in
-                            if !shelf.offeredGenres.isEmpty {
-                                Section(shelf.title) {
-                                    ForEach(shelf.offeredGenres) { s in Text(s.displayName).tag(s) }
-                                }
-                            }
-                        }
-                    }
-                    .pickerStyle(.menu).tint(EchoelTheme.text)
-                    .accessibilityLabel("Genre")
-                }
+                // A2 (founder 2026-10-01): the genre left this bar. It is the Echoel instrument's
+                // STYLE now and lives on that device — the Echoel track's inspector row
+                // (`TrackInspectorView.echoelGenreRow`) — instead of leading the always-visible
+                // chrome. The OSC cue `/echoelmusic/ctrl/genre` still reaches the same funnel.
                 labeled("Key") {
                     Picker("Key", selection: edited($rootIndex, posts: "key")) {
                         ForEach(0..<12, id: \.self) { i in

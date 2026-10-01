@@ -5509,24 +5509,6 @@
         }
       }
     },
-    "The genre the Echoel instrument composes in. The piece keeps it" : {
-      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Das Genre, in dem das Echoel-Instrument komponiert. Das Stück behält es"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The genre the Echoel instrument composes in. The piece keeps it"
-          }
-        }
-      }
-    },
     "The grid Quantize snaps note starts to" : {
       "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
       "extractionState" : "manual",
@@ -13983,6 +13965,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Genre"
+          }
+        }
+      }
+    },
+    "Style" : {
+      "comment" : "Workstation redesign A2 (2026-10-01): the genre left the header strip and became the Echoel device's style, chosen in the Echoel track's inspector.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Style"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stil"
+          }
+        }
+      }
+    },
+    "The style the Echoel instrument composes in. The piece keeps it" : {
+      "comment" : "Workstation redesign A2 (2026-10-01): the genre left the header strip and became the Echoel device's style, chosen in the Echoel track's inspector.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The style the Echoel instrument composes in. The piece keeps it"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Stil, in dem das Echoel-Instrument komponiert. Das Stück behält ihn"
           }
         }
       }
