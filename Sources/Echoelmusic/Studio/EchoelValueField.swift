@@ -645,7 +645,7 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
     /// nannte „Hypnotic", und dort ist die Zeile seit #1404 LEBENDIG — eine Geräteprobe an einer
     /// Stelle, die nichts mehr entscheiden kann, kostet den Founder eine Sitzung umsonst.
     private var accessibleHint: String {
-        let gesture = "Swipe up or down to adjust, or double-tap to type"
+        let gesture: String = String(localized: "Swipe up or down to adjust, or double-tap to type")
         if !isEnabled { return hint }
         return hint.isEmpty ? gesture : hint + ". " + gesture
     }

@@ -150,7 +150,11 @@
 // missing — ONE finding). E4-76 added the light-science sheet (LightScienceTopic title · summary · detail, reachable
 // through LearnLibrary.lightEntries; the `.scope` paragraph keeps its 39 % as a bare operand between two keys because
 // `%` cannot sit in a key — TheColourCopyNamesThePurpleLineTests claim 1 is re-anchored 1:1 on that seam) (parent: 16
-// units missing — ONE finding). Claim 12
+// units missing — ONE finding). E4-77 added the automation row's hint (SongAutomationEdit.hint — its runtime guard
+// compares under the test locale) and the value field's spoken gesture (EchoelValueField.accessibleHint;
+// ADisabledParameterRowLooksDisabledTests counts the sentence once, and a wrapped one is still one) (parent: 5 units
+// missing — ONE finding). Camera errors, the Learn announcement line and the theory footer stay bare: no reader, a
+// door behind `cloudKitConfigured == false`, no reader. Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2697,6 +2701,27 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Echoelmusic maps and explains light by real wavelength so your music and body can drive colour, visuals and DMX/Art-Net fixtures honestly. Tone colours use octave transposition — doubling a tone's frequency until it reaches the visible band; Echoelmusic computes it continuously from your actual tuning and renders the colour through the CIE 1931 colour-matching functions, closed over the CIE purple line where deep red meets deep violet. About ",
                           " of each octave lands on that seam, and there the colour is an honest red-to-violet mix rather than one single wavelength — that is how the mapping gives every tone a colour instead of leaving a gap. The transposition is exact mathematics and an artistic convention: sound and light are different physical phenomena, so no health or cosmic effect is implied. This is for creative expression and self-observation. It is NOT light therapy, makes no medical or wellness claim, diagnoses nothing, and treats no condition. If you are exploring light for health reasons, talk to a qualified clinician."],
                          "light-science sheet")
+
+        // E4-77 — the last two reachable sentences: the automation row's hint (four units; the past-end suffix is a
+        // typed ternary of key and empty string, the empty-row pair a typed ternary of two keys) and the value field's
+        // spoken gesture. SongAutomationEdit.hint stays `nonisolated static`.
+        let automationHint = try codeOnly("Sources/Echoelmusic/Studio/SongAutomationEditor.swift")
+        for seam in ["let past: String = continuesPastEnd ? String(localized: \" The curve runs on to a point after the end of the piece.\") : \"\"",
+                     "return String(localized: \"Tap a point to pick it. Press and hold a point, then slide to move it.\") + past"] {
+            XCTAssertTrue(automationHint.contains(seam), "SongAutomationEditor lost the E4-77 seam `\(seam)`")
+        }
+        XCTAssertFalse(automationHint.contains("return \"Tap a point to pick it. Press and hold a point, then slide to move it.\" + past"),
+                       "SongAutomationEditor spells the row hint verbatim again")
+        let fieldGesture = try codeOnly("Sources/Echoelmusic/Studio/EchoelValueField.swift")
+        XCTAssertTrue(fieldGesture.contains("let gesture: String = String(localized: \"Swipe up or down to adjust, or double-tap to type\")"),
+                      "EchoelValueField lost the E4-77 gesture seam")
+        XCTAssertFalse(fieldGesture.contains("let gesture = \"Swipe up or down to adjust, or double-tap to type\""),
+                       "EchoelValueField spells the gesture verbatim again")
+        try assertGerman([" The curve runs on to a point after the end of the piece.", "Tap the row to add a point in the piece.",
+                          "Tap the row to add the first point.",
+                          "Tap a point to pick it. Press and hold a point, then slide to move it.",
+                          "Swipe up or down to adjust, or double-tap to type"],
+                         "automation hint and value-field gesture")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

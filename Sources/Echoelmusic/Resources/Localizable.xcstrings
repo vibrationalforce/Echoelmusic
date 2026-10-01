@@ -29434,6 +29434,86 @@
           }
         }
       }
+    },
+    " The curve runs on to a point after the end of the piece." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Die Kurve läuft weiter bis zu einem Punkt nach dem Ende des Stücks."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " The curve runs on to a point after the end of the piece."
+          }
+        }
+      }
+    },
+    "Tap the row to add a point in the piece." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe auf die Zeile, um einen Punkt im Stück zu setzen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap the row to add a point in the piece."
+          }
+        }
+      }
+    },
+    "Tap the row to add the first point." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe auf die Zeile, um den ersten Punkt zu setzen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap the row to add the first point."
+          }
+        }
+      }
+    },
+    "Tap a point to pick it. Press and hold a point, then slide to move it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe auf einen Punkt, um ihn zu wählen. Halte einen Punkt gedrückt und schiebe ihn, um ihn zu verschieben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap a point to pick it. Press and hold a point, then slide to move it."
+          }
+        }
+      }
+    },
+    "Swipe up or down to adjust, or double-tap to type" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach oben oder unten wischen zum Einstellen, oder doppelt tippen zum Eingeben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swipe up or down to adjust, or double-tap to type"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

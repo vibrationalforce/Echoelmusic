@@ -147,12 +147,13 @@ enum SongAutomationEdit {
     /// The row's hint. A curve can run on to a point after a shortened song end — not drawn, not
     /// hit — so the hint says so rather than "add the first point" over a line it draws (A5 review).
     nonisolated static func hint(inSongPoints count: Int, continuesPastEnd: Bool) -> String {
-        let past = continuesPastEnd ? " The curve runs on to a point after the end of the piece." : ""
+        let past: String = continuesPastEnd ? String(localized: " The curve runs on to a point after the end of the piece.") : ""
         if count == 0 {
-            return (continuesPastEnd ? "Tap the row to add a point in the piece."
-                                     : "Tap the row to add the first point.") + past
+            let empty: String = continuesPastEnd ? String(localized: "Tap the row to add a point in the piece.")
+                                                 : String(localized: "Tap the row to add the first point.")
+            return empty + past
         }
-        return "Tap a point to pick it. Press and hold a point, then slide to move it." + past
+        return String(localized: "Tap a point to pick it. Press and hold a point, then slide to move it.") + past
     }
 
     /// VoiceOver's count: the song's points, and the one after the end when there is one.
