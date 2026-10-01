@@ -9510,7 +9510,7 @@ struct EchoelStudioView: View {
             // …and the ARMING itself must be audible. VoiceOver does not re-announce a label
             // change on a control that already holds focus, so without this the experience is
             // "tap · silence · tap · destroyed". A VALUE change it does announce.
-            .accessibilityValue(soundResetArmed ? "Armed" : "")
+            .accessibilityValue(soundResetArmed ? String(localized: "Armed") : "")
 
             if soundResetArmed {
                 // ⚠️ "generated part levels", NOT "the mix faders" — the Mix board carries four
@@ -13099,13 +13099,13 @@ private struct MusicColourRowView: View {
                 .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(EchoelTheme.border, lineWidth: 1))
             VStack(alignment: .leading, spacing: 1) {
                 Text("Music → colour").font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.text)
-                Text(sounding ? "Live chord, mapped by pitch" : "Plays when the music is sounding")
+                Text(sounding ? String(localized: "Live chord, mapped by pitch") : String(localized: "Plays when the music is sounding"))
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             }
             Spacer(minLength: 0)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Music colour, \(sounding ? "live" : "idle")")
+        .accessibilityLabel(sounding ? String(localized: "Music colour, live") : String(localized: "Music colour, idle"))
     }
 
     /// Bridge the bus's latest MusicalFrame to a SwiftUI colour via SpectralColor.

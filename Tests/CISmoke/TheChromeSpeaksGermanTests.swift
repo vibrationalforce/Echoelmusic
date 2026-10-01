@@ -92,7 +92,9 @@
 // form, the scope's Silent/Peak pair, the wavefront's three sentences, the Poincaré lines (parent: interpolated literals
 // and bare `sharp`/`flat` arms, 22 units missing — ONE finding). E4-48 added the part bar's Play/Stop (text, label,
 // hint arm), the media browser's Preview/Stop and the FX preset list's two Unstar/Favorite labels (parent: ternaries of
-// bare literals, 5 units missing — ONE finding). Claim 12
+// bare literals, 5 units missing — ONE finding). E4-49 added the Routing surface's Blackout button (text + label), the
+// sound-reset „Armed“ value and the Music-colour row (text + spoken label, which interpolated `live`/`idle`) (parent:
+// ternaries of bare literals and one interpolated label, 9 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1685,6 +1687,30 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         try assertGerman(["Stop", "Play from here", "Stop all playback", "Play the piece from the selected part",
                           "Plays the arrangement from this part's bar on the shared transport.", "Preview", "Unstar", "Favorite"],
                          "Part bar, preview and favourite sites")
+
+        // E4-49 — the Routing surface's Blackout button (text + spoken label), the sound-reset „Armed“ value (a VALUE
+        // change is what VoiceOver re-announces on a focused control), and the Music-colour row: its text ternary and
+        // its spoken label, which interpolated `live`/`idle` into a literal — now two whole-sentence arms.
+        let lightBlackout = try codeOnly("Sources/Echoelmusic/Studio/PatchbayView.swift")
+        for seam in ["Text(artNet.blackout ? String(localized: \"Blackout ON\") : String(localized: \"Blackout\"))",
+                     ".accessibilityLabel(artNet.blackout ? String(localized: \"Blackout active — turn the light back on\") : String(localized: \"Blackout — black out the light immediately\"))"] {
+            XCTAssertTrue(lightBlackout.contains(seam), "PatchbayView lost the E4-49 seam `\(seam)`")
+        }
+        for verbatim in ["Text(artNet.blackout ? \"Blackout ON\" : \"Blackout\")", "? \"Blackout active — turn the light back on\" :"] {
+            XCTAssertFalse(lightBlackout.contains(verbatim), "PatchbayView spells the Blackout ternary with bare literals again: `\(verbatim)`")
+        }
+        let studioArmed = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for seam in [".accessibilityValue(soundResetArmed ? String(localized: \"Armed\") : \"\")",
+                     "Text(sounding ? String(localized: \"Live chord, mapped by pitch\") : String(localized: \"Plays when the music is sounding\"))",
+                     ".accessibilityLabel(sounding ? String(localized: \"Music colour, live\") : String(localized: \"Music colour, idle\"))"] {
+            XCTAssertTrue(studioArmed.contains(seam), "EchoelStudioView lost the E4-49 seam `\(seam)`")
+        }
+        for verbatim in [".accessibilityValue(soundResetArmed ? \"Armed\" : \"\")", "? \"Live chord, mapped by pitch\" :", "Music colour, \\(sounding ?"] {
+            XCTAssertFalse(studioArmed.contains(verbatim), "EchoelStudioView spells a bare arm or an interpolated label again: `\(verbatim)`")
+        }
+        try assertGerman(["Blackout ON", "Blackout", "Blackout active — turn the light back on", "Blackout — black out the light immediately",
+                          "Armed", "Live chord, mapped by pitch", "Plays when the music is sounding", "Music colour, live", "Music colour, idle"],
+                         "Blackout, Armed and Music-colour sites")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

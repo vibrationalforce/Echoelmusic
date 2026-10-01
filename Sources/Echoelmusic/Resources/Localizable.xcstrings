@@ -22544,7 +22544,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vorhören"
+            "value" : "Vorschau"
           }
         },
         "en" : {
@@ -22567,6 +22567,150 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unstar"
+          }
+        }
+      }
+    },
+    "Blackout ON" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blackout AN"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blackout ON"
+          }
+        }
+      }
+    },
+    "Blackout" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blackout"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blackout"
+          }
+        }
+      }
+    },
+    "Blackout active — turn the light back on" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blackout aktiv — Licht wieder einschalten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blackout active — turn the light back on"
+          }
+        }
+      }
+    },
+    "Blackout — black out the light immediately" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blackout — Licht sofort abdunkeln"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blackout — black out the light immediately"
+          }
+        }
+      }
+    },
+    "Armed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scharfgeschaltet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Armed"
+          }
+        }
+      }
+    },
+    "Live chord, mapped by pitch" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live-Akkord, nach Tonhöhe abgebildet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live chord, mapped by pitch"
+          }
+        }
+      }
+    },
+    "Plays when the music is sounding" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielt, sobald die Musik klingt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plays when the music is sounding"
+          }
+        }
+      }
+    },
+    "Music colour, live" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musikfarbe, live"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Music colour, live"
+          }
+        }
+      }
+    },
+    "Music colour, idle" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musikfarbe, ruhend"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Music colour, idle"
           }
         }
       }

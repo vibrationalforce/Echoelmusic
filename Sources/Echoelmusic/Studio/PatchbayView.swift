@@ -653,7 +653,7 @@ struct PatchbayView: View {
                     artNet.blackout = newState
                     sacn.blackout = newState
                 } label: {
-                    Text(artNet.blackout ? "Blackout ON" : "Blackout")
+                    Text(artNet.blackout ? String(localized: "Blackout ON") : String(localized: "Blackout"))
                         .font(EchoelTheme.font(13, .semibold))
                         .foregroundStyle(artNet.blackout ? EchoelTheme.onPrimary : EchoelTheme.text)
                         .padding(.horizontal, 14).frame(minHeight: 40)
@@ -663,7 +663,7 @@ struct PatchbayView: View {
                             .strokeBorder(artNet.blackout ? EchoelTheme.danger : EchoelTheme.border, lineWidth: 1))
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(artNet.blackout ? "Blackout active — turn the light back on" : "Blackout — black out the light immediately")
+                .accessibilityLabel(artNet.blackout ? String(localized: "Blackout active — turn the light back on") : String(localized: "Blackout — black out the light immediately"))
             }
             HStack(spacing: 10) {
                 Text("DMX").font(EchoelTheme.font(11, .semibold)).foregroundStyle(EchoelTheme.dim)
