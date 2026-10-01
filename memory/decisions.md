@@ -4392,3 +4392,16 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-60 block (5 seam needles, 3 absence needles, 4 units; 279 → 281 XCTAssert).
   WORK PASS / HEAD FAIL (5/3/4 — ONE finding). TheDetectedTempoIsHonestTests unchanged (English under the test locale).
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-61: Workstation caption, removal note, mix text (d9ad98849)
+
+- **Decision:** `WorkstationSummary.transportCaption`, `TrackMix.removalNote` and `MixLevelMeter.spokenText` build from
+  catalog keys seamed around their numbers; the singular note and the five fixed sentences are keys of their own.
+  Catalog 1448 → 1462 (14 new, ` percent` reused).
+- **Why:** the post-E4-60 rest-scan's three remaining interpolating producers in the Workstation; same law as E4-59/60.
+  The four runtime guards (TheProjectHeaderRunsOneTransportTests, TheSongPositionIsReadAsANumberTests,
+  OnlyAnEmptyTrackCanBeRemovedTests, TheWorkstationShowsTheMixLevelTests) compare the ASSEMBLED English and pass
+  under the test locale — mirrored in Python before the commit.
+- **Guard:** claim 11 E4-61 block (9 seam needles, 5 absence needles, 15 units; 281 → 287 XCTAssert).
+  WORK PASS / HEAD FAIL (9/5/14 — ONE finding). Whole-claim needle check over the three files: 0 broken.
+- **Review:** 2026-10-31.
