@@ -41503,3 +41503,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-63-Block (8 Naht-Nadeln, 6 Abwesenheits-Nadeln, 11 Einheiten; XCTAssert 291 → 297). Benotung `scratchpad/transcribe_e4_63.py`: HEAD FAIL (8/6/11 — EIN Befund), WORK PASS. Laufzeit-Wächter (ANewPartLands…, TheVariationCardSaysWhoseTarget…, OneSpellingOfTheDemoSubject…) als Python-Spiegel grün; Gesamt-Anspruch-Nadeln 141/0. Checker alle OK.
 - **Gates:** 04fd18b95: Compile Check 3124 läuft (02:25Z), CI/CD 6588 queued, Auto-Merge 4022 läuft. Lokal ungepusht: E4-61 d9ad98849 · E4-62 b6da6e7ad · E4-63 137dfe875 (+ Docs).
 - **Offen (E4):** PolarH10 statusLabel · PartNoteEditor.hint · TouchInstrumentView accessibilityValue · LookBlendMap.name · SessionLaunchView-Hint · EchoelValueField „Default“-Button · SessionSaveOpen/MediaRelink/RecordTakeControls-Konkatenationen.
+
+## 2026-10-01 — E4-64: Gurt-Status, Teil-Editor-Hinweis, Touch-Fläche (7675317bc)
+
+- **Gebaut:** `PolarH10BioPublisher.statusLabel` (sechs Sprossen), `PartNoteEditor.hint(sharedBy:)`, `TouchInstrumentView` accessibilityValue aus Katalog-Schlüsseln um Gerätename / Teilzahl / Grundton+Stufenzahl. Katalog 1488 → 1502 (+14, „Connecting…“ wiederverwendet). Sources: 3 Dateien + Katalog.
+- **Wächter:** Anspruch 11 E4-64-Block (8 Naht-Nadeln, 5 Abwesenheits-Nadeln, 15 Einheiten; XCTAssert 297 → 303). Benotung `scratchpad/transcribe_e4_64.py`: HEAD FAIL (8/5/14 — EIN Befund), WORK PASS. Python-Spiegel der Laufzeit-Erwartungen (PolarH10BioPublisherTests, TheGridLabelFitsItsCellTests) grün. Checker alle OK.
+- **Gates:** b92e0c975 (E4-57/58): Auto-Merge 4021 ✓ → main = b92e0c975. 04fd18b95 (E4-59/60): Compile Check 3124 ✓, CI/CD 6588 + Auto-Merge 4022 laufen. Stapel E4-61…63 als 3cef15d08 gepusht (Monitor bklgzyq4i). E4-64 (7675317bc) lokal.
+- **Offen (E4):** LookBlendMap.name · SessionLaunchView-Szenen-Hinweis · EchoelValueField „Default“-Button · SessionSaveOpen/MediaRelink/RecordTakeControls-Konkatenationen.

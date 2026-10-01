@@ -4428,3 +4428,14 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-63 block (8 seam needles, 6 absence needles, 11 units; 291 → 297 XCTAssert). WORK PASS /
   HEAD FAIL (8/6/11 — ONE finding). Whole-claim needle check over the three files: 141 needles, 0 broken.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-64: strap status, part-editor hint, touch terrain (7675317bc)
+
+- **Decision:** `PolarH10BioPublisher.statusLabel`, `PartNoteEditor.hint(sharedBy:)` and the touch surface's spoken
+  terrain build from catalog keys seamed around the device name, the part count and the root/degree count.
+  Catalog 1488 → 1502 (14 new, "Connecting…" reused).
+- **Why:** the rest-scan's remaining status and spoken-terrain producers. PolarH10BioPublisherTests reads the short
+  labels under the test locale; TheGridLabelFitsItsCellTests keeps its fragment inside the new key.
+- **Guard:** claim 11 E4-64 block (8 seam needles, 5 absence needles, 15 units; 297 → 303 XCTAssert). WORK PASS /
+  HEAD FAIL (8/5/14 — ONE finding).
+- **Review:** 2026-10-31.
