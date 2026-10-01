@@ -41809,3 +41809,15 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Gerät offen:** Teilen-Menü öffnet; die `.mid` öffnet in einer DAW mit einer Spur je
   MIDI-Spur, richtigem Tempo und Tonart.
 
+
+### 2026-10-01 — B4 Review-Reparatur ff5a7c907
+- Unabhängiges Review von a6729b78e: keine Compile-/Wächter-Probleme, drei semantische Befunde.
+  MED: Spur-Transposition fehlte → `SongMIDIExport.sounding(_:transposeSemitones:)` (Noten außerhalb
+  0…127 entfallen, ±48-Klammer nicht wiederholt, #416). MED: Kopf behauptete Gleichheit mit dem
+  Spieler → „das Arrangement wie platziert“, drei Abweichungen benannt (16tel-Abtastung, taktgebundene
+  Haupt-Roll-Spur, Roll-Sustain über eine Übernahme), nicht getragen: Operatoren, Tempo-Automation,
+  Klang (Oktavierer/Detune gehören zum Klang). LOW: `.buttonStyle(.plain)` am ShareLink.
+- Wächter: Bass −12 → Erwartung 26 statt 38 (Ansprüche 1+2), `sounding`-Direktprüfungen, Quell-Nadel
+  auf `transposeSemitones: lane.transposeSemitones`. Transkribiert gegen beide Bäume; Checker sauber
+  (needle-reachability: ein vorbestehender Befund in fremder Datei).
+- Gerät offen: transponierte Spur öffnet in der DAW in der klingenden Lage.

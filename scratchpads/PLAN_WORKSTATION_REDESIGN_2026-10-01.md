@@ -76,7 +76,7 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
   ⚠️ B3b gemessen und VERTAGT: `TheAgentActsThroughTheButtonsPathsTests` verlangt, dass der
   Agent-Pfad über `TrackMix.setLevel` KEINEN Song-Undo-Schritt schreibt — ein Undo im geteilten
   Schreiber bräche das; es braucht einen getrennten Nutzer-Schreiber. Eigene Scheibe.
-- **B4** Song-MIDI-Export (alle Spuren). **✓ a6729b78e** — letzter Reiter „Export“ = `ShareLink`
+- **B4** Song-MIDI-Export (alle Spuren). **✓ a6729b78e + Review-Reparatur ff5a7c907** (Transposition je Spur angewendet, `sounding`; Kopf sagt „wie platziert“ und nennt die drei Abweichungen zum Transport; `.buttonStyle(.plain)`) — letzter Reiter „Export“ = `ShareLink`
   im eigenen Blatt (`SongExportTab`, kein Modal, Tor `showsSongs`, gedimmt+inert ohne Note).
   `SongMIDIExport` fragt die drei Regeln des Spielers (`midiLaneIDs` · `executableNotes` ·
   `activeRegion`), schreibt Format 1 (Dirigent + eine Spur je MIDI-Spur, Kanal 10 übersprungen,
