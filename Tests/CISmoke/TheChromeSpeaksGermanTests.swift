@@ -77,7 +77,9 @@
 // plate's four sentences and disclosure value, and the FX panel's Morph label, four conditional footers/headers, dropout note
 // and neutral-0.50 footer (parent: stored statics, ternaries and `+` chains, 20 units missing — ONE finding). E4-41 added the
 // photo card — PhotoSeedText's sentences, colour, change and field names, the percent lines, the spoken disclosure value and
-// Undo label/hint via `MediaLookUndo.spokenMedium` (parent: stored, interpolated or ternary literals, 23 units missing — ONE finding). Claim 12
+// Undo label/hint via `MediaLookUndo.spokenMedium` (parent: stored, interpolated or ternary literals, 23 units missing — ONE finding).
+// E4-42 added the video card — VideoSeedText's unreadable/reading/length/cuts/bars/sound and field names, the card's lines,
+// heading, Apply fallback and spoken disclosure value / Undo label (parent: the same four shapes, 22 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1422,6 +1424,51 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Sets the visuals' intensity, detail, hue and saturation from the photo", "Undo ", " look", "photo", "video",
                           "Puts the visuals back the way they were before the ", ". A value you changed since stays."],
                          "photo card")
+
+        // E4-42 — the video card, the photo card's twin. `VideoSeedText`: the unreadable sentence is seams around
+        // the minute number ("… up to 10 minutes …" byte-identical, AVideoCardSaysWhatWasMeasured pins it), `reading`
+        // a computed key, `length`/`cuts`/`bars` count-beside-noun with typed steps (the same guard pins "1 cut or
+        // flash: 2.0 s", "About 1 bar of 4/4 at 120 BPM"), `sound` two keys, the field names keys; the card: the
+        // Movement/Brightness lines (format keys before), the hue line as a typed step before its ternary, the
+        // heading, the Apply fallback, and the spoken disclosure value / Undo label over `spokenMedium`.
+        let videoCard = try codeOnly("Sources/Echoelmusic/Studio/VideoSeedCard.swift")
+        for seam in ["return String(localized: \"This video could not be read. Videos up to \") + \"\\(minutes)\" + String(localized: \" minutes can be used; try another one.\")",
+                     "static var reading: String { String(localized: \"Reading the video…\") }",
+                     "let head: String = String(localized: \"Length \") + seconds(seed.durationSeconds)",
+                     "guard !times.isEmpty else { return String(localized: \"No cuts or flashes\") }",
+                     "let overflow: String = String(localized: \" and \") + \"\\(times.count - 5)\" + String(localized: \" more\")",
+                     "let noun: String = times.count == 1 ? String(localized: \"cut or flash\") : String(localized: \"cuts or flashes\")",
+                     "let noun: String = bars == 1 ? String(localized: \"bar\") : String(localized: \"bars\")",
+                     "return head + String(localized: \" of 4/4 at \") + \"\\(Int(bpm.rounded()))\" + \" BPM\"",
+                     "hasAudio ? String(localized: \"It has sound. The sound is not used yet.\") : String(localized: \"No sound.\")",
+                     "PhotoSeedText.change(String(localized: \"Motion\"), before.motion, after.motion)",
+                     ".accessibilityValue(disclosureValue(undo))",
+                     "let applied: Bool = undo.pending != nil && undo.medium == MediaLookUndo.videoMedium",
+                     "return String(localized: \"Undo \") + undo.spokenMedium + String(localized: \" look\")",
+                     "Text(String(localized: \"Movement\") + \" \" + PhotoSeedText.percent(seed.motionEnergy))",
+                     "let hueLine: String = String(localized: \"Main colour: hue \") + \"\\(Int((seed.hue * 360).rounded()) % 360)\" + \"°\"",
+                     "Text(seed.hasDominantColour ? hueLine : String(localized: \"No main colour\"))",
+                     "Text(isLive ? String(localized: \"Applied:\") : String(localized: \"With this video:\"))",
+                     "?? String(localized: \"Sets the visuals' intensity, movement, hue and saturation from the video\")"] {
+            XCTAssertTrue(videoCard.contains(seam), "VideoSeedCard lost the E4-42 seam `\(seam)`")
+        }
+        for verbatim in ["static let reading", "return \"This video could not be read", "return \"Length \\(", "return \"No cuts or flashes\"", "? \" and \\(",
+                         "? \"cut or flash\"", "? \"bar\" : \"bars\"", "return \"About \\(", "? \"It has sound.", "change(\"Intensity\"", "? \"Expanded\" : \"Collapsed\"",
+                         "Text(\"Movement \\(", "                 ? \"Main colour: hue \\(", "? \"Applied:\"", "\"Undo \\(undo.medium) look\""] {
+            XCTAssertFalse(videoCard.contains(verbatim), "VideoSeedCard interpolates, stores or spells a sentence verbatim again: `\(verbatim)`")
+        }
+        // RUNTIME COUNTERWEIGHTS beside the video guard's own: the bundle's English is unchanged
+        XCTAssertEqual(VideoSeedText.cuts([1, 2, 3, 4, 5, 6, 7]), "7 cuts or flashes: 1.0 s, 2.0 s, 3.0 s, 4.0 s, 5.0 s and 2 more")
+        XCTAssertTrue(VideoSeedText.unreadable.hasPrefix("This video could not be read. Videos up to "))
+        try assertGerman(["This video could not be read. Videos up to ", " minutes can be used; try another one.", "Reading the video…", "Length ", " fps",
+                          "No cuts or flashes", " more", "cut or flash", "cuts or flashes", "Length in bars: unknown", "About ", " of 4/4 at ",
+                          "It has sound. The sound is not used yet.", "No sound.", "Motion", "Movement", "Video to Visuals",
+                          "Choose a short video; its brightness, colour and movement can shape the visuals", "Choose video",
+                          "Opens your videos. Nothing is changed until you apply it.", "With this video:",
+                          "Movement is how much the picture changes; it sets how fast the visual moves.",
+                          "Sets the visuals' intensity, movement, hue and saturation from the video",
+                          "Puts the visuals back the way they were before. A value you changed since stays."],
+                         "video card")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

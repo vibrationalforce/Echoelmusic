@@ -54,9 +54,10 @@ enum VideoSeedText {
 
     static var unreadable: String {
         let minutes = Int(VideoSeedAnalysis.maxDurationSeconds / 60)
-        return "This video could not be read. Videos up to \(minutes) minutes can be used; try another one."
+        // E4-42: seams around the number; the bundle's English is byte-identical ("… up to 10 minutes …").
+        return String(localized: "This video could not be read. Videos up to ") + "\(minutes)" + String(localized: " minutes can be used; try another one.")
     }
-    static let reading = "Reading the video…"
+    static var reading: String { String(localized: "Reading the video…") }
 
     private static func seconds(_ value: Double) -> String {
         guard value.isFinite else { return "–" }
@@ -66,38 +67,43 @@ enum VideoSeedText {
     /// "Length 12.4 s, 30 fps".
     static func length(_ seed: VideoSeed) -> String {
         let fps = seed.frameRate.isFinite ? Int(seed.frameRate.rounded()) : 0
-        return "Length \(seconds(seed.durationSeconds)), \(fps) fps"
+        let head: String = String(localized: "Length ") + seconds(seed.durationSeconds)
+        return head + ", " + "\(fps)" + String(localized: " fps")
     }
 
     /// "No cuts or flashes" / "1 cut or flash: 2.0 s" / "7 cuts or flashes: 1.0 s, 2.5 s, … and 2 more".
     static func cuts(_ times: [Double]) -> String {
-        guard !times.isEmpty else { return "No cuts or flashes" }
+        guard !times.isEmpty else { return String(localized: "No cuts or flashes") }
         let shown = times.prefix(5).map(seconds).joined(separator: ", ")
-        let more = times.count > 5 ? " and \(times.count - 5) more" : ""
-        let noun = times.count == 1 ? "cut or flash" : "cuts or flashes"
-        return "\(times.count) \(noun): \(shown)\(more)"
+        // E4-42: count beside a catalog noun per grammatical number; the overflow a seam + number + seam.
+        let overflow: String = String(localized: " and ") + "\(times.count - 5)" + String(localized: " more")
+        let more: String = times.count > 5 ? overflow : ""
+        let noun: String = times.count == 1 ? String(localized: "cut or flash") : String(localized: "cuts or flashes")
+        let head: String = "\(times.count) " + noun + ": "
+        return head + shown + more
     }
 
     /// "About 6 bars of 4/4 at 120 BPM" — the musical length, measured at the tempo when read.
     static func bars(_ seed: VideoSeed, bpm: Double) -> String {
         guard let bars = VideoSeedAnalysis.bars(forSeconds: seed.durationSeconds, bpm: bpm) else {
-            return "Length in bars: unknown"
+            return String(localized: "Length in bars: unknown")
         }
-        let noun = bars == 1 ? "bar" : "bars"
-        return "About \(bars) \(noun) of 4/4 at \(Int(bpm.rounded())) BPM"
+        let noun: String = bars == 1 ? String(localized: "bar") : String(localized: "bars")
+        let head: String = String(localized: "About ") + "\(bars) " + noun
+        return head + String(localized: " of 4/4 at ") + "\(Int(bpm.rounded()))" + " BPM"
     }
 
     /// Whether the file carries sound — and that it is not used yet.
     static func sound(_ hasAudio: Bool) -> String {
-        hasAudio ? "It has sound. The sound is not used yet." : "No sound."
+        hasAudio ? String(localized: "It has sound. The sound is not used yet.") : String(localized: "No sound.")
     }
 
     /// The four lines of "now → with this video", named as the Visual panel names its fields.
     static func changes(from before: VisualLookSnapshot, to after: VisualLookSnapshot) -> [String] {
-        [PhotoSeedText.change("Intensity", before.intensity, after.intensity),
-         PhotoSeedText.change("Motion", before.motion, after.motion),
-         PhotoSeedText.change("Hue", before.hue, after.hue),
-         PhotoSeedText.change("Saturation", before.saturation, after.saturation)]
+        [PhotoSeedText.change(String(localized: "Intensity"), before.intensity, after.intensity),
+         PhotoSeedText.change(String(localized: "Motion"), before.motion, after.motion),
+         PhotoSeedText.change(String(localized: "Hue"), before.hue, after.hue),
+         PhotoSeedText.change(String(localized: "Saturation"), before.saturation, after.saturation)]
     }
 }
 
@@ -167,9 +173,21 @@ struct VideoSeedCard: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Video to Visuals")
-        .accessibilityValue((isOpen ? "Expanded" : "Collapsed")
-                            + (undo.pending != nil && undo.medium == MediaLookUndo.videoMedium ? ", look applied" : ""))
+        .accessibilityValue(disclosureValue(undo))
         .accessibilityHint("Choose a short video; its brightness, colour and movement can shape the visuals")
+    }
+
+    // E4-42: the spoken state and the spoken Undo label were interpolated or concatenated literals —
+    // Strings, read verbatim on a German phone. Each English seam is a key; the spoken medium word is
+    // `MediaLookUndo.spokenMedium` (E4-41), never the compared identifier. Typed steps, no `+` in a ternary.
+    private func disclosureValue(_ undo: MediaLookUndo) -> String {
+        let state: String = isOpen ? String(localized: "Expanded") : String(localized: "Collapsed")
+        let applied: Bool = undo.pending != nil && undo.medium == MediaLookUndo.videoMedium
+        return applied ? state + String(localized: ", look applied") : state
+    }
+    private func undoLabel(_ undo: MediaLookUndo) -> String {
+        guard undo.pending != nil else { return String(localized: "Undo") }
+        return String(localized: "Undo ") + undo.spokenMedium + String(localized: " look")
     }
 
     private var isShowingVideo: Bool {
@@ -221,12 +239,11 @@ struct VideoSeedCard: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(VideoSeedText.length(seed))
             Text(VideoSeedText.bars(seed, bpm: bpm))
-            Text("Movement \(PhotoSeedText.percent(seed.motionEnergy))")
+            Text(String(localized: "Movement") + " " + PhotoSeedText.percent(seed.motionEnergy))
             Text(VideoSeedText.cuts(seed.transientTimes))
-            Text("Brightness \(PhotoSeedText.percent(seed.brightness))")
-            Text(seed.hasDominantColour
-                 ? "Main colour: hue \(Int((seed.hue * 360).rounded()) % 360)°"
-                 : "No main colour")
+            Text(String(localized: "Brightness") + " " + PhotoSeedText.percent(seed.brightness))
+            let hueLine: String = String(localized: "Main colour: hue ") + "\(Int((seed.hue * 360).rounded()) % 360)" + "°"
+            Text(seed.hasDominantColour ? hueLine : String(localized: "No main colour"))
             Text(VideoSeedText.sound(read.hasAudioTrack))
         }
         .font(EchoelTheme.font(13))
@@ -238,7 +255,7 @@ struct VideoSeedCard: View {
         // Applied here, or by EchoelAI through the same owner with this video (review LOW-3).
         let isLive = appliedHere || undo.pending == MediaSeedApplication(before: before, after: after)
         VStack(alignment: .leading, spacing: 2) {
-            Text(isLive ? "Applied:" : "With this video:")
+            Text(isLive ? String(localized: "Applied:") : String(localized: "With this video:"))
                 .font(EchoelTheme.font(13, .semibold))
             ForEach(VideoSeedText.changes(from: before, to: after), id: \.self) { line in
                 Text(line)
@@ -277,7 +294,7 @@ struct VideoSeedCard: View {
         .buttonStyle(.plain)
         .disabled(undo.pending != nil)
         .accessibilityLabel("Apply to visuals")
-        .accessibilityHint(undo.applyBlockedReason ?? "Sets the visuals' intensity, movement, hue and saturation from the video")
+        .accessibilityHint(undo.applyBlockedReason ?? String(localized: "Sets the visuals' intensity, movement, hue and saturation from the video"))
     }
 
     private func undoButton(_ undo: MediaLookUndo) -> some View {
@@ -289,7 +306,7 @@ struct VideoSeedCard: View {
         }
         .buttonStyle(.plain)
         .disabled(undo.pending == nil)
-        .accessibilityLabel(undo.pending == nil ? "Undo" : "Undo \(undo.medium) look")
+        .accessibilityLabel(undoLabel(undo))
         .accessibilityHint("Puts the visuals back the way they were before. A value you changed since stays.")
     }
 

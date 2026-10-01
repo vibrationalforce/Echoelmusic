@@ -21274,6 +21274,358 @@
           }
         }
       }
+    },
+    "This video could not be read. Videos up to " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Video konnte nicht gelesen werden. Videos bis "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This video could not be read. Videos up to "
+          }
+        }
+      }
+    },
+    " minutes can be used; try another one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Minuten lassen sich verwenden; versuch ein anderes."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " minutes can be used; try another one."
+          }
+        }
+      }
+    },
+    "Reading the video…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Video wird gelesen…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading the video…"
+          }
+        }
+      }
+    },
+    "Length " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Länge "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Length "
+          }
+        }
+      }
+    },
+    " fps" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " fps"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " fps"
+          }
+        }
+      }
+    },
+    "No cuts or flashes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Schnitte oder Blitze"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No cuts or flashes"
+          }
+        }
+      }
+    },
+    " more" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " weitere"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " more"
+          }
+        }
+      }
+    },
+    "cut or flash" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schnitt oder Blitz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cut or flash"
+          }
+        }
+      }
+    },
+    "cuts or flashes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schnitte oder Blitze"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cuts or flashes"
+          }
+        }
+      }
+    },
+    "Length in bars: unknown" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Länge in Takten: unbekannt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Length in bars: unknown"
+          }
+        }
+      }
+    },
+    "About " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etwa "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About "
+          }
+        }
+      }
+    },
+    " of 4/4 at " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " im 4/4 bei "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " of 4/4 at "
+          }
+        }
+      }
+    },
+    "It has sound. The sound is not used yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es hat Ton. Der Ton wird noch nicht verwendet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It has sound. The sound is not used yet."
+          }
+        }
+      }
+    },
+    "No sound." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Ton."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No sound."
+          }
+        }
+      }
+    },
+    "Video to Visuals" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Video zu Visuals"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Video to Visuals"
+          }
+        }
+      }
+    },
+    "Choose a short video; its brightness, colour and movement can shape the visuals" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle ein kurzes Video; seine Helligkeit, Farbe und Bewegung können die Visuals formen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a short video; its brightness, colour and movement can shape the visuals"
+          }
+        }
+      }
+    },
+    "Choose video" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Video wählen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose video"
+          }
+        }
+      }
+    },
+    "Opens your videos. Nothing is changed until you apply it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet deine Videos. Nichts ändert sich, bis du es anwendest."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens your videos. Nothing is changed until you apply it."
+          }
+        }
+      }
+    },
+    "With this video:" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit diesem Video:"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With this video:"
+          }
+        }
+      }
+    },
+    "Movement is how much the picture changes; it sets how fast the visual moves." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewegung ist, wie stark sich das Bild ändert; sie bestimmt, wie schnell sich das Visual bewegt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Movement is how much the picture changes; it sets how fast the visual moves."
+          }
+        }
+      }
+    },
+    "Sets the visuals' intensity, movement, hue and saturation from the video" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setzt Intensität, Bewegung, Farbton und Sättigung der Visuals aus dem Video"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sets the visuals' intensity, movement, hue and saturation from the video"
+          }
+        }
+      }
+    },
+    "Puts the visuals back the way they were before. A value you changed since stays." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setzt die Visuals zurück auf den Stand davor. Ein Wert, den du seither geändert hast, bleibt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puts the visuals back the way they were before. A value you changed since stays."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
