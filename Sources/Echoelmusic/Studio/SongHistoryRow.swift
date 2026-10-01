@@ -18,8 +18,11 @@
 //  song's PARTS — moves, copies, splits, removals, imports and the composer's part — and, since
 //  Phase 3 / M1, the NOTES of a MIDI part edited in `PartNoteEditor`, and since Automation A1
 //  the song's AUTOMATION drawn in `SongAutomationEditor`, and since Media B2b a RELINK of a
-//  missing file in the Media Library (one audio clip's file binding) — each as its own step kind.
-//  Never a mixer change, a rename or a track. A part whose track was removed after the step does
+//  missing file in the Media Library (one audio clip's file binding), and since B3b ONE gesture in
+//  the piece mixer (Mix: a track's level, pan, Mute or Solo — `.laneMix`, only the fields it moved)
+//  — each as its own step kind. Never a rename or a track, and NOT a level, pan, Mute or Solo set
+//  anywhere else (inspector, track header, Perform grid, the agent): those writers record nothing,
+//  and the hint says so. A part whose track was removed after the step does
 //  not come back (`TimelineStore.restoreRegions` drops it rather than resurrect an invisible
 //  orphan).
 //
@@ -28,7 +31,7 @@
 
 import SwiftUI
 
-/// Undo / Redo for the song's parts and notes — one control for the whole song, in the head.
+/// Undo / Redo for the piece's parts, notes, automation, relinks and Mix gestures — one control, in the head.
 @MainActor
 struct SongHistoryRow: View {
 
@@ -39,16 +42,16 @@ struct SongHistoryRow: View {
         let canRedo = timeline.canRedo
         HStack(spacing: 6) {
             button(String(localized: "Undo"), "arrow.uturn.backward", enabled: canUndo,
-                   label: String(localized: "Undo the last change to the piece's parts, notes, automation or a relinked file")) {
+                   label: String(localized: "Undo the last change to the piece's parts, notes, automation, mix or a relinked file")) {
                 timeline.undo()
             }
             button(String(localized: "Redo"), "arrow.uturn.forward", enabled: canRedo,
-                   label: String(localized: "Redo the last undone change to the piece's parts, notes, automation or a relinked file")) {
+                   label: String(localized: "Redo the last undone change to the piece's parts, notes, automation, mix or a relinked file")) {
                 timeline.redo()
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityHint("Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files and the composer's part — never mixer changes")
+        .accessibilityHint("Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and changes made in Mix — not level, pan, mute or solo changed anywhere else")
     }
 
     private func button(_ title: String, _ systemImage: String, enabled: Bool, label: String,

@@ -59,8 +59,8 @@ final class ThePieceHasAMixerTests: XCTestCase {
         let muteSolo = try member("if controls.muteSolo {", in: strip)
         XCTAssertTrue(muteSolo.contains("TrackMix.flipMute(laneID: lane.id, timeline: timeline)"), "Mute sits inside `controls.muteSolo`")
         XCTAssertTrue(muteSolo.contains("TrackMix.flipSolo(laneID: lane.id, timeline: timeline)"), "Solo sits inside `controls.muteSolo`")
-        for writer in ["TrackMix.setLevel($0, laneID: lane.id, timeline: timeline)",
-                       "TrackMix.setPan($0, laneID: lane.id, timeline: timeline)",
+        for writer in ["TrackMix.setLevel(newLevel, laneID: lane.id, timeline: timeline)",
+                       "TrackMix.setPan(newPan, laneID: lane.id, timeline: timeline)",
                        "hint: TrackMix.levelHint(controls.role)",
                        "hint: TrackMix.muteHint(controls.role)",
                        "hint: TrackMix.soloHint(controls.role)"] {

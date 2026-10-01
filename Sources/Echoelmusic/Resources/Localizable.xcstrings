@@ -1207,20 +1207,20 @@
         }
       }
     },
-    "Redo the last undone change to the piece's parts, notes, automation or a relinked file" : {
+    "Redo the last undone change to the piece's parts, notes, automation, mix or a relinked file" : {
       "comment" : "Chrome word (E4-2, 2026-09-30): head history and the Record button.",
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die letzte rückgängig gemachte Änderung an Teilen, Noten, Automation oder einer neu verknüpften Datei des Stücks wiederholen"
+            "value" : "Die letzte rückgängig gemachte Änderung an Teilen, Noten, Automation, Mix oder einer neu verknüpften Datei des Stücks wiederholen"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Redo the last undone change to the piece's parts, notes, automation or a relinked file"
+            "value" : "Redo the last undone change to the piece's parts, notes, automation, mix or a relinked file"
           }
         }
       }
@@ -1261,20 +1261,20 @@
         }
       }
     },
-    "Undo the last change to the piece's parts, notes, automation or a relinked file" : {
+    "Undo the last change to the piece's parts, notes, automation, mix or a relinked file" : {
       "comment" : "Chrome word (E4-2, 2026-09-30): head history and the Record button.",
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die letzte Änderung an Teilen, Noten, Automation oder einer neu verknüpften Datei des Stücks rückgängig machen"
+            "value" : "Die letzte Änderung an Teilen, Noten, Automation, Mix oder einer neu verknüpften Datei des Stücks rückgängig machen"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Undo the last change to the piece's parts, notes, automation or a relinked file"
+            "value" : "Undo the last change to the piece's parts, notes, automation, mix or a relinked file"
           }
         }
       }
@@ -3403,20 +3403,20 @@
         }
       }
     },
-    "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files and the composer's part — never mixer changes" : {
+    "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and changes made in Mix — not level, pan, mute or solo changed anywhere else" : {
       "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Umfasst Verschieben, Kopien, Teilungen, Entfernen, Importe, Noten-Änderungen, Automationspunkte, neu verknüpfte Dateien und das Teil des Komponisten — nie Mixer-Änderungen"
+            "value" : "Umfasst Verschieben, Kopien, Teilungen, Entfernen, Importe, Noten-Änderungen, Automationspunkte, neu verknüpfte Dateien, das Teil des Komponisten und Änderungen im Mix — nicht Pegel, Pan, Stumm oder Solo, die anderswo geändert wurden"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files and the composer's part — never mixer changes"
+            "value" : "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and changes made in Mix — not level, pan, mute or solo changed anywhere else"
           }
         }
       }

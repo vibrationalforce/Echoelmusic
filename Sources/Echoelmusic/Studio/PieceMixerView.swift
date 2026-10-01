@@ -21,8 +21,11 @@
 // and its track column (the "Mix" tab), never beside them, so a Mute here and the track header's
 // Mute are never on screen together. No meters: a level meter needs a per-track tap on the render
 // path (B5, audio-thread review, device) — a strip that pretends to meter would be decoration.
-// The mixer edits are not in the song's Undo yet (the history deliberately excludes the mixer so a
-// part Undo cannot revert a later fader move); a mixer step of its own is B3b.
+// ⭐ B3b — EVERY EDIT HERE IS ONE STEP IN THE PIECE'S UNDO, one per gesture: each finger sample runs
+// inside `TimelineStore.editLaneMix(id:_:)` (the write is still the `TrackMix` call), and the field's
+// `onCommit` — or the tap itself for Mute/Solo — closes it with `commitLaneMix(id:)` (`.laneMix`, the
+// gesture's fields only). The agent's `TrackMix.setLevel` stays outside that history, and so do the
+// inspector, the track header and the Perform grid until they wrap their writes the same way.
 
 import SwiftUI
 
@@ -103,11 +106,11 @@ struct PieceMixerView: View {
                 if controls.muteSolo {
                     stripSwitch("M", name: String(localized: "Mute"), on: lane.isMuted,
                                 hint: TrackMix.muteHint(controls.role)) {
-                        TrackMix.flipMute(laneID: lane.id, timeline: timeline)
+                        tapped(lane.id) { TrackMix.flipMute(laneID: lane.id, timeline: timeline) }
                     }
                     stripSwitch("S", name: String(localized: "Solo"), on: lane.isSoloed,
                                 hint: TrackMix.soloHint(controls.role)) {
-                        TrackMix.flipSolo(laneID: lane.id, timeline: timeline)
+                        tapped(lane.id) { TrackMix.flipSolo(laneID: lane.id, timeline: timeline) }
                     }
                 }
             }
@@ -116,22 +119,28 @@ struct PieceMixerView: View {
                 value: Binding(
                     get: { Double(timeline.document.lanes
                         .first(where: { $0.id == lane.id })?.level ?? TimelineLane.defaultLevel) },
-                    set: { TrackMix.setLevel($0, laneID: lane.id, timeline: timeline) }),
+                    set: { newLevel in
+                        timeline.editLaneMix(id: lane.id) { TrackMix.setLevel(newLevel, laneID: lane.id, timeline: timeline) }
+                    }),
                 range: TrackMix.levelRange,
                 decimals: 2,
                 hint: TrackMix.levelHint(controls.role),
-                standard: Double(TimelineLane.defaultLevel))
+                standard: Double(TimelineLane.defaultLevel),
+                onCommit: { timeline.commitLaneMix(id: lane.id) })
             if controls.pan {
                 EchoelValueField(
                     label: "Pan",
                     value: Binding(
                         get: { Double(timeline.document.lanes
                             .first(where: { $0.id == lane.id })?.pan ?? TimelineLane.defaultPan) },
-                        set: { TrackMix.setPan($0, laneID: lane.id, timeline: timeline) }),
+                        set: { newPan in
+                            timeline.editLaneMix(id: lane.id) { TrackMix.setPan(newPan, laneID: lane.id, timeline: timeline) }
+                        }),
                     range: TrackMix.panRange,
                     decimals: 2,
                     hint: String(localized: "−1 left, 0 centre, 1 right"),
-                    standard: Double(TimelineLane.defaultPan))
+                    standard: Double(TimelineLane.defaultPan),
+                    onCommit: { timeline.commitLaneMix(id: lane.id) })
             }
         }
         .padding(8)
@@ -141,6 +150,13 @@ struct PieceMixerView: View {
         // track's own name, so the field it lands on belongs to a named track.
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text(verbatim: lane.name))
+    }
+
+    /// A Mute or Solo tap is a whole gesture: one write through the `TrackMix` funnel, one undo step
+    /// (B3b). The two number fields close their gesture on `onCommit` instead, once per drag.
+    private func tapped(_ laneID: UUID, _ write: () -> Void) {
+        timeline.editLaneMix(id: laneID, write)
+        timeline.commitLaneMix(id: laneID)
     }
 
     /// Mute or Solo on a strip: a letter on screen, the full word to VoiceOver, monochrome fill

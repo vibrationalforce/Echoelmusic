@@ -398,8 +398,8 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertEqual(record.components(separatedBy: ternary).count - 1, 2, "the drawn word and the spoken label of the Record button both go through the catalog")
         XCTAssertFalse(record.contains("recording ? \"Stop recording\" : \"Record\""), "the bare ternary yields a String, which Text() spells verbatim")
         try assertGerman(["Undo", "Redo", "Record", "Stop recording", "Arm for recording",
-                          "Undo the last change to the piece's parts, notes, automation or a relinked file",
-                          "Redo the last undone change to the piece's parts, notes, automation or a relinked file"],
+                          "Undo the last change to the piece's parts, notes, automation, mix or a relinked file",
+                          "Redo the last undone change to the piece's parts, notes, automation, mix or a relinked file"],
                          "head history / record word")
     }
 

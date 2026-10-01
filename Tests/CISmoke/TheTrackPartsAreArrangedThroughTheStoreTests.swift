@@ -15,9 +15,9 @@
 //    and redo; copy lands right after the part; remove, then undo brings it back. Assertions
 //    are on the fixture's OWN lane and part ids, never on absolute counts: `TimelineStore()`
 //    loads whatever an earlier run persisted (`TheWorkstationImportsAudioTests` claim 19).
-// 3. COUNTERWEIGHTS (#343): the undo history holds parts and (since Phase 3 / M1) one clip's
-//    notes as typed steps — never the mixer (so the "never mixer changes" hint stays true) —
-//    and each store edit still snapshots before it mutates.
+// 3. COUNTERWEIGHTS (#343): the undo history holds typed steps only — parts, one clip's notes,
+//    automation, one clip's source and (since B3b) one Mix gesture — each a kind `SongHistoryRow`'s
+//    hint names, and each store edit still snapshots before it mutates.
 // 4. SOURCE: the view writes through `TrackParts` → the store API and nothing else, and the
 //    inspector is its one door. Undo/Redo MOVED (WA4 path 7) to `Studio/SongHistoryRow.swift`,
 //    mounted once — since head leaf 3 (2026-09-30) in `ProjectHeader`, above both stages;
@@ -149,9 +149,11 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
     // MARK: 3 — counterweights: what the Undo hint promises
 
     /// Phase 3 / M1 widened the history by ONE step kind (a MIDI clip's notes) and this claim
-    /// moved with it. What it protects never changed: Undo reverts parts or notes, NEVER a mixer
-    /// change, a rename or a track — `SongHistoryRow`'s hint says exactly that.
-    func testTheUndoHistoryNeverHoldsTheMixer() throws {
+    /// moved with it; B3b widened it by `.laneMix` — one track's mixer fields from ONE gesture in the
+    /// piece mixer. What it protects never changed: Undo never reverts a rename, a track or a whole
+    /// document, and every kind it holds is one `SongHistoryRow`'s hint names. (Renamed in B3b: the
+    /// old name said the history never holds the mixer, false from that commit — #374.)
+    func testTheUndoHistoryHoldsOnlyTheKindsItsHintNames() throws {
         let store = try source(Self.storePath)
         XCTAssertTrue(store.contains("private var undoStack: [HistoryStep]"),
                       "ANCHOR MISSING: the history is no longer a stack of typed steps")
@@ -173,12 +175,13 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
         XCTAssertEqual(cases, ["case regions([TimelineRegion])",
                                "case clipNotes(clipID: UUID, notes: [Note], clips: ClipStore)",
                                "case automation([AutomationLane])",
-                               "case clipSource(clipID: UUID, mediaRef: String, nativeDurationSeconds: Double?, mediaAssetID: UUID?, record: MediaAssetStore.Rebinding?, clips: ClipStore)"],
+                               "case clipSource(clipID: UUID, mediaRef: String, nativeDurationSeconds: Double?, mediaAssetID: UUID?, record: MediaAssetStore.Rebinding?, clips: ClipStore)",
+                               "case laneMix(laneID: UUID, before: LaneMix, after: LaneMix)"],
                        """
-                       The history holds a step kind beyond parts and one clip's notes. The \
-                       Workstation promises Undo never reverts a mixer change; if a step now \
-                       carries lanes or whole documents, that hint is false — change it in \
-                       `Studio/SongHistoryRow.swift` in the same commit.
+                       The history holds a step kind this list does not name. `SongHistoryRow`'s \
+                       hint names every kind Undo reverts (since B3b: Mix gestures, and only those \
+                       of the mixer); if a step now carries lanes, names or whole documents, that \
+                       hint is false — change it in `Studio/SongHistoryRow.swift` in the same commit.
                        """)
         for method in ["public func moveRegion(id: UUID, toStartTick tick: Int, bpm:",
                        "public func duplicateRegion(id: UUID)",
