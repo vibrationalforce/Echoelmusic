@@ -29,6 +29,7 @@
 //    order; Undo walks them back one by one; an agent level written in between records nothing and
 //    survives the Undo of a gesture on the same track (B3b's cross-contamination rule).
 // 5. SOURCE + CATALOG: `SongHistoryRow`'s hint says a track's level, pan, mute or solo is covered
+//    (since B2b also a track's picked sound — `TheSoundChoiceIsOneUndoStepTests`; the key moved, this claim did not)
 //    and names the one writer a person can see that is not (the Studio instrument's Start); its
 //    German line exists, `extractionState` manual, with a comment.
 //
@@ -68,7 +69,7 @@ final class EveryHandMadeMixChangeIsOneUndoStepTests: XCTestCase {
     private static let catalog = "Sources/Echoelmusic/Resources/Localizable.xcstrings"
 
     /// The hint `SongHistoryRow` speaks — the one catalog key this slice rewords.
-    private static let hint = "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and a track's level, pan, mute or solo — not what the Studio instrument's Start changes"
+    private static let hint = "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes"
 
     private static let bar = TimelineTime.ticksPerBar
     private static let clip = UUID()

@@ -3439,20 +3439,20 @@
         }
       }
     },
-    "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and a track's level, pan, mute or solo — not what the Studio instrument's Start changes" : {
-      "comment" : "Head history hint (Workstation redesign B3c, 2026-10-01): what the piece's Undo covers — every hand-made level, pan, Mute or Solo is one step; the Studio instrument's Start is not.",
+    "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes" : {
+      "comment" : "Head history hint (Workstation redesign B3c, B2b, 2026-10-01): what the piece's Undo covers — every hand-made level, pan, Mute or Solo and every pick in a rack track's Sound row is one step; the Studio instrument's own sound (its Sound panel) and its Start are not. Glossary: Stück · Spur · Teil · Klang.",
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Umfasst Verschieben, Kopien, Teilungen, Entfernen, Importe, Noten-Änderungen, Automationspunkte, neu verknüpfte Dateien, das Teil des Komponisten und Pegel, Pan, Stumm oder Solo einer Spur — nicht, was der Start des Studio-Instruments ändert"
+            "value" : "Umfasst Verschieben, Kopien, Teilungen, Entfernen, Importe, Noten-Änderungen, Automationspunkte, neu verknüpfte Dateien, das Teil des Komponisten und Pegel, Pan, Stumm, Solo oder gewählten Klang einer Spur — nicht den eigenen Klang des Studio-Instruments oder was sein Start ändert"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and a track's level, pan, mute or solo — not what the Studio instrument's Start changes"
+            "value" : "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes"
           }
         }
       }

@@ -30,8 +30,9 @@
 // there is a real finding against the kept-copy rule, not against this file. §0 transcription
 // of the whole file against the worktree is OWED by the implementing session.
 //
-// ⛔ HONEST LIMITS. Not undoable (only a mixer gesture is, `.laneMix` — the sound is B2b); a pick that replaces
-// a kept copy loses it. Default is the first stored sound, captured at launch, not the Echoel's
+// ⛔ HONEST LIMITS. Since B2b a pick is ONE Undo step (`.lanePatch`, `TheSoundChoiceIsOneUndoStepTests`), so a
+// pick that replaces a kept copy loses it only past the history's reach (an Open, a relaunch, 50
+// later steps). Default is the first stored sound, captured at launch, not the Echoel's
 // live sound. The Echoel track keeps its sound on the Sound panel. Sound names are user data and
 // are not translated. A pick while playing releases EVERY rack lane's held notes once
 // (`refreshStructure` → `flushPumps`). Whether the chosen sound SOUNDS right is a device probe.
@@ -230,7 +231,8 @@ final class TheTrackChoosesItsSoundTests: XCTestCase {
                        "\"library\" names the piece Library in this app's chrome — one word per thing")
         let row = try member("private var soundRow: some View {", in: code)
         XCTAssertTrue(row.contains(
-            "set: { TrackMix.setSound($0, laneID: laneID, library: patchStore.patches, timeline: timeline) }"))
+            "TrackMix.setSound(choice, laneID: laneID, library: patchStore.patches, timeline: timeline)"),
+                      "the pick still writes through the one funnel (since B2b inside `editLanePatch`)")
         XCTAssertTrue(row.contains("Text(\"Default\").tag(TrackMix.SoundChoice.standard)"))
         XCTAssertTrue(row.contains("Section(\"In this piece\")"), "the kept copy is shown, never hidden")
         XCTAssertTrue(row.contains("ForEach(patchStore.patches)"),

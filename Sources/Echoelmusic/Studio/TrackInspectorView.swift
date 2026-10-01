@@ -31,7 +31,8 @@
 //  · the Sound row (Workstation redesign B2a) only on a POLY rack track — the one voice a lane
 //    patch reaches (`LaneVoiceRack.applyPatch` → `voice(slot:)?.apply`, a documented no-op for
 //    the other kinds). Not on the Echoel track: its patch sink swaps the instrument's own voice
-//    (`rollPatchSink`); its sound is the Sound panel behind its device.
+//    (`rollPatchSink`); its sound is the Sound panel behind its device. A pick is ONE Undo step
+//    (B2b): the row wraps it in `TimelineStore.editLanePatch(id:_:)`.
 //  ⚠️ And the COUPLINGS with the Studio instrument are stated rather than hidden (review of
 //  b2913f96b): the Echoel track's level is the level the instrument plays at (`rollSlotGain` →
 //  `mixGain`, the one writer in `EchoelmusicApp`), so muting it or pulling it to 0 silences
@@ -351,7 +352,8 @@ enum TrackMix {
     /// The pick's lane patch: nil for Default, a COPY of the stored sound for a pick (the piece
     /// carries its sound, as it carries its effect), and no write at all for the kept copy, an
     /// unknown id or what already plays — the field is structural, so a write re-primes every
-    /// rack lane mid-playback for nothing audible.
+    /// rack lane mid-playback for nothing audible. Records no undo step: the Sound row wraps this
+    /// call in `editLanePatch(id:_:)` (B2b), so the funnel stays the bare path, as in B3b.
     @MainActor
     static func setSound(_ choice: SoundChoice, laneID: UUID, library: [SynthPatch], timeline: TimelineStore) {
         guard let lane = timeline.document.lanes.first(where: { $0.id == laneID }) else { return }
@@ -680,7 +682,8 @@ struct TrackInspectorView: View {
     /// B2a — the track's sound, a NAMED choice (menu Picker, not a number): Default, the piece's
     /// own copy when no stored sound equals it, then every stored sound in `PatchStore` order
     /// (factory first, so "the first of the Sounds" is the slot sink's fallback). Cold reads of
-    /// the song and the store; one store write per real change (`TrackMix.setSound`).
+    /// the song and the store; one store write per real change (`TrackMix.setSound`), and each real
+    /// change is ONE Undo step (`editLanePatch`, B2b).
     private var soundRow: some View {
         HStack(spacing: 8) {
             Text("Sound")
@@ -688,7 +691,11 @@ struct TrackInspectorView: View {
                 .accessibilityHidden(true)   // the Picker speaks the label once
             Picker("Sound", selection: Binding<TrackMix.SoundChoice>(
                 get: { TrackMix.soundChoice(of: laneID, in: timeline.document, library: patchStore.patches) },
-                set: { TrackMix.setSound($0, laneID: laneID, library: patchStore.patches, timeline: timeline) })) {
+                set: { choice in
+                    timeline.editLanePatch(id: laneID) {
+                        TrackMix.setSound(choice, laneID: laneID, library: patchStore.patches, timeline: timeline)
+                    }
+                })) {
                 Text("Default").tag(TrackMix.SoundChoice.standard)
                 if let kept = TrackMix.keptSound(of: laneID, in: timeline.document, library: patchStore.patches) {
                     Section("In this piece") {

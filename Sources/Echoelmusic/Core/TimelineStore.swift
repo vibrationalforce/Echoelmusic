@@ -221,17 +221,26 @@ public final class TimelineStore {
     ///     left — a field written since (a later gesture on any surface, the agent, the instrument's
     ///     Start) keeps the later value, and a field the gesture did not touch is never moved.
     ///     Recorded by `commitLaneMix(id:)` once per gesture, never per drag sample.
-    /// Deliberately NOT whole-document snapshots: lanes are not part of this history and the
-    /// mixer enters only as `.laneMix`, so an undo can never silently revert a rename, an
-    /// instrument assignment or a fader move made after the edit (reviewer-caught
-    /// cross-contamination). A notes step cannot touch a part, a parts step cannot touch a note
-    /// or a fader, a mixer step cannot touch a part — the kinds do not overlap.
+    ///   · `.lanePatch` — ONE track's sound from ONE person's pick in the inspector's Sound row
+    ///     (Workstation redesign B2b — not Media B2b, the relink above): the sound the pick found
+    ///     and the sound it left, both as VALUES (`nil` = Default). Values, not ids: the piece's
+    ///     kept copy may equal no stored sound, and a stored sound may be edited or deleted after
+    ///     the pick, so an id could bring neither back. Undo puts the found sound back only while
+    ///     the track still plays what the pick left; a sound written since keeps the later one.
+    ///     Recorded by `editLanePatch(id:_:)`, once per pick.
+    /// Deliberately NOT whole-document snapshots: lanes are not part of this history — the mixer
+    /// enters only as `.laneMix`, a track's sound only as `.lanePatch` — so an undo can never
+    /// silently revert a rename, an instrument assignment or a fader move made after the edit
+    /// (reviewer-caught cross-contamination). A notes step cannot touch a part, a parts step
+    /// cannot touch a note or a fader, a mixer step cannot touch a part or a sound, a sound step
+    /// touches nothing but its track's sound — the kinds do not overlap.
     /// ⚠️ `setLaneLevel` / `setLanePan` / `toggleMute` / `toggleSolo` alone record NOTHING: the
     /// agent writes levels through them (via `TrackMix.setLevel`) and keeps its own way back
     /// (`TheAgentActsThroughTheButtonsPathsTests` claim 2). Only a write wrapped in
     /// `editLaneMix(id:_:)` is a step — and since B3c every surface a hand reaches wraps it: the
     /// piece mixer, the inspector's Level/Pan, the track header's and the Perform grid's Mute/Solo
-    /// (`EveryHandMadeMixChangeIsOneUndoStepTests`).
+    /// (`EveryHandMadeMixChangeIsOneUndoStepTests`). Likewise `setLanePatch` alone records nothing:
+    /// only a pick wrapped in `editLanePatch(id:_:)` is a step (`TheSoundChoiceIsOneUndoStepTests`).
     /// EchoelAI's "mach das rückgängig" will call exactly `undo()` (store-first, plan C6).
     private enum HistoryStep {
         case regions([TimelineRegion])
@@ -239,6 +248,7 @@ public final class TimelineStore {
         case automation([AutomationLane])
         case clipSource(clipID: UUID, mediaRef: String, nativeDurationSeconds: Double?, mediaAssetID: UUID?, record: MediaAssetStore.Rebinding?, clips: ClipStore)
         case laneMix(laneID: UUID, before: LaneMix, after: LaneMix)
+        case lanePatch(laneID: UUID, before: SynthPatch?, after: SynthPatch?)
     }
 
     /// B3b — the four mixer fields of ONE track, the only ones a `.laneMix` step can move.
@@ -370,15 +380,25 @@ public final class TimelineStore {
             if restored.level != current.level { laneLevelWrites[laneID, default: 0] += 1 }
             persist()
             return HistoryStep.laneMix(laneID: laneID, before: current, after: restored)
+        case .lanePatch(let laneID, let before, let after):
+            // Workstation redesign B2b. A track removed since takes nothing back; a track whose
+            // sound was written since (by anything but this step) keeps the later sound and the
+            // step is skipped, as a mixer step whose fields were all written since is. The write
+            // goes through the field's one writer, so Undo re-primes the voice exactly as a pick does.
+            guard let lane = document.lanes.first(where: { $0.id == laneID }),
+                  lane.patch == after else { return nil }
+            setLanePatch(laneID, patch: before)
+            return HistoryStep.lanePatch(laneID: laneID, before: after, after: before)
         }
     }
 
     /// Revert the last edit — of the song's parts, of one part's notes, of the song's automation,
-    /// of a relinked file, or of one person's mixer gesture. A step that can no longer change
-    /// anything (a notes step whose clip has gone, an automation step that only touched a removed
-    /// track's lane, a mixer step whose fields were written since or already read what it would
-    /// restore) is dropped and the one before it is taken, so Undo never does nothing while it
-    /// reads as available. No-op with an empty history.
+    /// of a relinked file, of one person's mixer gesture, or of one track's sound pick. A step that
+    /// can no longer change anything (a notes step whose clip has gone, an automation step that
+    /// only touched a removed track's lane, a mixer step whose fields were written since or
+    /// already read what it would restore, a sound step whose track is gone or plays another
+    /// sound since) is dropped and the one before it is taken, so Undo never does nothing while
+    /// it reads as available. No-op with an empty history.
     public func undo() {
         while let step = undoStack.popLast() {
             if let inverse = apply(step) {
@@ -948,6 +968,28 @@ public final class TimelineStore {
         pushUndo(.laneMix(laneID: id, before: edit.before, after: after))
     }
 
+    // MARK: - Sound history (Workstation redesign B2b) — the person's path, never a bare writer's
+
+    /// Workstation redesign B2b — run ONE person's sound pick on one track and record it as ONE
+    /// `.lanePatch` step when the track's sound changed. `write` is the `TrackMix.setSound` call the
+    /// inspector's Sound row makes, so `setLanePatch` stays the one writer of the field and
+    /// `TrackMix` the one funnel. A menu pick is a whole gesture — no drag, nothing to commit later
+    /// — so there is no open/commit pair as in `editLaneMix`/`commitLaneMix`. A pick that writes
+    /// nothing (the kept copy, an unknown sound, what already plays) records nothing; an unknown
+    /// track runs no write at all.
+    /// ⚠️ ONLY the person's path calls this. `setLanePatch` and `TrackMix.setSound` alone record
+    /// nothing — the path any non-person writer keeps (no agent writes a sound today), as
+    /// `TrackMix.setLevel` is for the mixer (B3b).
+    public func editLanePatch(id: UUID, _ write: () -> Void) {
+        guard let i = document.lanes.firstIndex(where: { $0.id == id }) else { return }
+        let before = document.lanes[i].patch
+        write()
+        guard let j = document.lanes.firstIndex(where: { $0.id == id }) else { return }
+        let after = document.lanes[j].patch
+        guard after != before else { return }
+        pushUndo(.lanePatch(laneID: id, before: before, after: after))
+    }
+
     /// Per-instrument TRANSPOSE in whole semitones (founder 2026-07-14: "Wenn einzelne
     /// Instrumenten Elemente im synth nen transpose Button haben ist das kool"), clamped
     /// ±48 (±4 octaves) to match the voice. State only — the region player pitches each
@@ -1006,7 +1048,8 @@ public final class TimelineStore {
     ///   KEPT and not rewritten: nothing is written, and the song keeps it byte for byte.
     /// · No roll lane (a song without a MIDI track) → nothing to hold the instance; no write.
     /// · No-op when nothing changes, so an adoption that re-states the same value writes nothing.
-    /// Not part of the undo history (only a person's mixer gesture is — `.laneMix`, B3b/B3c).
+    /// Not part of the undo history (only a person's mixer gesture and sound pick are — `.laneMix`,
+    /// `.lanePatch`).
     public func setEchoelFXCharacter(_ character: FXCharacter) {
         writeEchoelField(DeviceInsert.echoelFXKey, character.rawValue)
     }
@@ -1062,8 +1105,9 @@ public final class TimelineStore {
     /// setLaneSample; a change is STRUCTURAL (what sounds changes — timbre identity),
     /// so the region player pulls it in via prime → slotPatchSink on the next region
     /// load, or at once while playing (refreshStructure). Caller since B2a:
-    /// `TrackMix.setSound`, the inspector's Sound row (rack tracks only). Not part of the
-    /// undo history (only a person's mixer gesture is — `.laneMix`, B3b/B3c).
+    /// `TrackMix.setSound`, the inspector's Sound row (rack tracks only). Records no undo step
+    /// itself: since B2b the row wraps the pick in `editLanePatch(id:_:)` (`.lanePatch`), and
+    /// Undo/Redo write back through here.
     public func setLanePatch(_ laneID: UUID, patch: SynthPatch?) {
         guard let i = document.lanes.firstIndex(where: { $0.id == laneID }) else { return }
         document.lanes[i].patch = patch

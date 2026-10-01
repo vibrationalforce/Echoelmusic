@@ -171,12 +171,14 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
         // clip's file binding, never a lane or the mixer; the hint moved with it again. The MA4.2 review
         // added the clip's `mediaAssetID` to that binding, MA4.5 the clip's OWN durable record's
         // binding (the record moves with the relink and back with its Undo) — still one clip and
-        // its source, still no lane and no mixer.
+        // its source, still no lane and no mixer. Workstation redesign B2b added `.lanePatch` — ONE
+        // track's sound from one pick, both sounds as values; the hint names the sound in the same commit.
         XCTAssertEqual(cases, ["case regions([TimelineRegion])",
                                "case clipNotes(clipID: UUID, notes: [Note], clips: ClipStore)",
                                "case automation([AutomationLane])",
                                "case clipSource(clipID: UUID, mediaRef: String, nativeDurationSeconds: Double?, mediaAssetID: UUID?, record: MediaAssetStore.Rebinding?, clips: ClipStore)",
-                               "case laneMix(laneID: UUID, before: LaneMix, after: LaneMix)"],
+                               "case laneMix(laneID: UUID, before: LaneMix, after: LaneMix)",
+                               "case lanePatch(laneID: UUID, before: SynthPatch?, after: SynthPatch?)"],
                        """
                        The history holds a step kind this list does not name. `SongHistoryRow`'s \
                        hint names every kind Undo reverts (since B3b: Mix gestures, and only those \
