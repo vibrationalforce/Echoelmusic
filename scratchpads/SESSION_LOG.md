@@ -41419,3 +41419,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-51-Block (9 Nähte, 9 Abwesenheits-Nadeln, 9 Einheiten; XCTAssert 244 → 246). Benotung `scratchpad/transcribe_e4_51.py`: HEAD FAIL (9/9/8 — EIN Befund), WORK PASS. Checker alle OK.
 - **Gates:** d004dfbba (E4-47…E4-50) gepusht, Monitor bnrm4l13h. E4-51 (f3c32250e) lokal — Push nach dem Compile Check.
 - **Offen (E4):** sichtbare `Text("…\\(Wert)…")`-Interpolationen mit Wörtern (nächste Messung), LoopExporter-Gründe, türlose Flächen zuletzt.
+
+## 2026-10-01 — E4-52: sichtbare interpolierte Zeilen sprechen Deutsch (dee4d6994)
+
+- **Gebaut:** zwei „Undo delete of“-Labels, Teil-Plätze-Hinweis, „by“-Credit, Künstlername-Caption, Live-Colabo-Einladungszeile, „Piece from“ als Schlüssel-Nähte. Katalog 1317 → 1324 (+7). Loop-Anzeige bleibt wörtlich (E4-24-Gegengewicht). Drei Sources-Dateien; heiße Reads 0.
+- **Wächter:** Anspruch 11 E4-52-Block (7 Nähte, 6 Abwesenheits-Nadeln, 7 Einheiten; XCTAssert 246 → 250). Benotung `scratchpad/transcribe_e4_52.py`: HEAD FAIL (7/6/7 — EIN Befund), WORK PASS. Checker alle OK.
+- **Gates:** d004dfbba (E4-47…E4-50) Compile Check läuft (Monitor bnrm4l13h). E4-51 (f3c32250e) + E4-52 (dee4d6994) lokal — Push nach dem Compile Check.
+- **Offen (E4):** Mood-Caption mit `romanceSeventhClause`, WAV-HUD, LoopExporter-Gründe; türlose Flächen bewusst NICHT verschlüsselt (Tür zuerst, dann Wörter).

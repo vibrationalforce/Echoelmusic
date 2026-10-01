@@ -4275,3 +4275,18 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Remaining:** visible `Text("…\\(value)…")` interpolations with words around them (next measurement), the
   exporter reasons, doorless views last.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-52: the visible interpolated lines speak German (dee4d6994)
+
+- **Decision:** seven `Text`/`Label` literals with an interpolated value become a catalog key seamed beside the value.
+  Catalog 1317 → 1324. The loop carrier stays verbatim (E4-24 counterweight).
+- **Why:** an interpolated literal is a format key (`%@`) the honesty rule cannot carry; seams keep the value verbatim
+  and the words translatable. Three Sources files.
+- **Guard:** claim 11 E4-52 block (7 seams, 6 absence needles, 7 units; 246 → 250 XCTAssert). WORK PASS / HEAD FAIL
+  (7/6/7 — ONE finding).
+- **Remaining (measured):** the mood caption ending in `romanceSeventhClause` (EchoelStudioView:7423), the recording
+  HUD's „WAV GAP …s“/„WAV …“ (FloatingVisualWindow), `Label("Sync · … BPM")` (word identical in German — skipped),
+  the exporter's six reason sentences (LoopExporter). Doorless views (BioSource/Broadcast/BreathGuide/Session/
+  Meditation/PulseMeasurement/ImmersiveStage/ProUnlock) are deliberately NOT keyed: a key for a line no door shows
+  would make the catalog claim words the app never says — door first, then words.
+- **Review:** 2026-10-31.
