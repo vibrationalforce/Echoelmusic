@@ -31562,6 +31562,150 @@
           }
         }
       }
+    },
+    "soft, sparse, slow aura" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "weiche, spärliche, langsame Aura"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "soft, sparse, slow aura"
+          }
+        }
+      }
+    },
+    "dreamy nostalgic vaporwave glow" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "verträumtes, nostalgisches Vaporwave-Leuchten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dreamy nostalgic vaporwave glow"
+          }
+        }
+      }
+    },
+    "blossoming mid-density" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aufblühende mittlere Dichte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "blossoming mid-density"
+          }
+        }
+      }
+    },
+    "heartbeat-forward" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzschlag im Vordergrund"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "heartbeat-forward"
+          }
+        }
+      }
+    },
+    "maximal — dense, fast, centrifugal" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "maximal — dicht, schnell, zentrifugal"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "maximal — dense, fast, centrifugal"
+          }
+        }
+      }
+    },
+    "From photo" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus Foto"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From photo"
+          }
+        }
+      }
+    },
+    "From video" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus Video"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From video"
+          }
+        }
+      }
+    },
+    "colour, brightness and contrast of a photo" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbe, Helligkeit und Kontrast eines Fotos"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "colour, brightness and contrast of a photo"
+          }
+        }
+      }
+    },
+    "brightness, colour and picture change of a video" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Helligkeit, Farbe und Bildwechsel eines Videos"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "brightness, colour and picture change of a video"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

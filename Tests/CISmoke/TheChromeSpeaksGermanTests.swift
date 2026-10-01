@@ -178,7 +178,9 @@
 // E4-84 keyed the three Live-heading literals of `LiveModOrigin.heading` (read by the FX sheet and the narration
 // leaf), the degraded row's fallback sentence and the four note-name scheme labels of the Picker (parent: 8 units
 // missing — ONE finding). E4-85 keyed the fifteen `TuningSystem.library` names the tone-system Picker renders through
-// `Text(t.name)` (parent: 15 units missing — ONE finding). Claim 12
+// `Text(t.name)` (parent: 15 units missing — ONE finding). E4-86 keyed the five factory visual-preset blurbs and the
+// two media-seed presets' names and blurbs — the strip speaks `preset.name + " visual preset — " + preset.blurb`
+// (parent: 9 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2988,6 +2990,35 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Maqām Ḥijāz", "Gamelan Sléndro (≈5-EDO)", "Gamelan Pélog (representative)",
                           "Hirajōshi (Japanese pentatonic)", "Bohlen–Pierce (non-octave)"],
                          "tone-system names")
+
+        // E4-86 — `VisualPreset.factory` blurbs (Studio/VisualPreset) and the two media-seed presets (Studio/
+        // MediaSeedLook, `name: "From photo"` / `"From video"` plus their blurbs). The strip renders `Text(preset.name)`
+        // and speaks `.accessibilityLabel(preset.name + String(localized: " visual preset — ") + preset.blurb)` (pinned
+        // above, E4-41), so every blurb reaches VoiceOver. The five factory NAMES (Aura · Vapor · Bloom · Pulse ·
+        // Zentrifuge) are proper names and stay bare — VisualPresetTests pins `first?.name == "Aura"`. `VisualPreset`
+        // is not Codable; nothing persists a blurb.
+        let visualBlurbs = try codeOnly("Sources/Echoelmusic/Studio/VisualPreset.swift")
+        for seam in ["blurb: String(localized: \"soft, sparse, slow aura\")",
+                     "blurb: String(localized: \"dreamy nostalgic vaporwave glow\")",
+                     "blurb: String(localized: \"maximal — dense, fast, centrifugal\")"] {
+            XCTAssertTrue(visualBlurbs.contains(seam), "VisualPreset lost the E4-86 seam `\(seam)`")
+        }
+        XCTAssertEqual(visualBlurbs.components(separatedBy: "blurb: String(localized: \"").count - 1, 5,
+                       "VisualPreset.factory carries 5 keyed blurbs; re-derive if a preset was added")
+        XCTAssertFalse(visualBlurbs.contains("                     spread: 1.35, blurb: \"soft, sparse, slow aura\"),"), "VisualPreset spells a blurb verbatim again")
+        let seedLooks = try codeOnly("Sources/Echoelmusic/Studio/MediaSeedLook.swift")
+        for seam in ["return VisualPreset(id: \"\", name: String(localized: \"From photo\"),",
+                     "return VisualPreset(id: \"\", name: String(localized: \"From video\"),",
+                     "blurb: String(localized: \"colour, brightness and contrast of a photo\")",
+                     "blurb: String(localized: \"brightness, colour and picture change of a video\")"] {
+            XCTAssertTrue(seedLooks.contains(seam), "MediaSeedLook lost the E4-86 seam `\(seam)`")
+        }
+        XCTAssertFalse(seedLooks.contains("        return VisualPreset(id: \"\", name: \"From photo\","), "MediaSeedLook spells a seed preset name verbatim again")
+        try assertGerman(["soft, sparse, slow aura", "dreamy nostalgic vaporwave glow", "blossoming mid-density",
+                          "heartbeat-forward", "maximal — dense, fast, centrifugal",
+                          "From photo", "From video",
+                          "colour, brightness and contrast of a photo", "brightness, colour and picture change of a video"],
+                         "visual-preset blurbs and media-seed presets")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

@@ -52,12 +52,12 @@ enum MediaSeedLook {
     static func preset(for seed: MediaSeed, keepingMotion motion: Double, spread: Double) -> VisualPreset {
         func unit(_ v: Double) -> Double { v.isFinite ? Swift.min(1, Swift.max(0, v)) : 0 }
         let hue: Float? = seed.hasDominantColour && seed.hue.isFinite ? Float(seed.hue) : nil
-        return VisualPreset(id: "", name: "From photo",
+        return VisualPreset(id: "", name: String(localized: "From photo"),
                             intensity: Float(intensityFloor + intensitySpan * unit(seed.brightness)),
                             detail: Float(detailFloor + detailSpan * unit(seed.contrast)),
                             motion: Float(motion.isFinite ? motion : 1),
                             spread: Float(spread.isFinite ? spread : 1),
-                            blurb: "colour, brightness and contrast of a photo",
+                            blurb: String(localized: "colour, brightness and contrast of a photo"),
                             hue: hue,
                             saturation: Float(saturationFloor + saturationSpan * unit(seed.saturation)))
     }
@@ -75,12 +75,12 @@ enum VideoSeedLook {
     static func preset(for seed: VideoSeed, keepingDetail detail: Double, spread: Double) -> VisualPreset {
         func unit(_ v: Double) -> Double { v.isFinite ? Swift.min(1, Swift.max(0, v)) : 0 }
         let hue: Float? = seed.hasDominantColour && seed.hue.isFinite ? Float(seed.hue) : nil
-        return VisualPreset(id: "", name: "From video",
+        return VisualPreset(id: "", name: String(localized: "From video"),
                             intensity: Float(MediaSeedLook.intensityFloor + MediaSeedLook.intensitySpan * unit(seed.brightness)),
                             detail: Float(detail.isFinite ? detail : 40),
                             motion: Float(motionFloor + motionSpan * unit(seed.motionEnergy)),
                             spread: Float(spread.isFinite ? spread : 1),
-                            blurb: "brightness, colour and picture change of a video",
+                            blurb: String(localized: "brightness, colour and picture change of a video"),
                             hue: hue,
                             saturation: Float(MediaSeedLook.saturationFloor + MediaSeedLook.saturationSpan * unit(seed.saturation)))
     }

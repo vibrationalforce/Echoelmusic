@@ -62,7 +62,7 @@ public struct VisualPreset: Identifiable, Sendable, Equatable {
     /// Nebula, Vortex — mid-range near-duplicates that made the strip a search task.
     public static let factory: [VisualPreset] = [
         VisualPreset(id: "aura", name: "Aura", intensity: 0.8, detail: 14, motion: 0.45,
-                     spread: 1.35, blurb: "soft, sparse, slow aura"),
+                     spread: 1.35, blurb: String(localized: "soft, sparse, slow aura")),
         // Vapor — the coherent dreamy vaporwave world (founder 2026-07-07: "mehr
         // kitschige Vaporwave-Ästhetik … Brand fit"). Soft, slow and wide like Aura,
         // but it ALSO sets a dreamy palette: a hue rotation toward magenta/purple +
@@ -71,13 +71,13 @@ public struct VisualPreset: Identifiable, Sendable, Equatable {
         // nostalgic world. Flash-safe (low motion). Sits in the calm cluster by
         // energy, so the "softest→most energetic" order still holds.
         VisualPreset(id: "vapor", name: "Vapor", intensity: 0.95, detail: 24, motion: 0.42,
-                     spread: 1.35, blurb: "dreamy nostalgic vaporwave glow",
+                     spread: 1.35, blurb: String(localized: "dreamy nostalgic vaporwave glow"),
                      hue: 0.82, saturation: 1.12),
         VisualPreset(id: "bloom", name: "Bloom", intensity: 1.1, detail: 28, motion: 0.7,
-                     spread: 1.2, blurb: "blossoming mid-density"),
+                     spread: 1.2, blurb: String(localized: "blossoming mid-density")),
         VisualPreset(id: "pulse", name: "Pulse", intensity: 1.2, detail: 32, motion: 1.1,
-                     spread: 1.0, blurb: "heartbeat-forward"),
+                     spread: 1.0, blurb: String(localized: "heartbeat-forward")),
         VisualPreset(id: "zentrifuge", name: "Zentrifuge", intensity: 1.4, detail: 86, motion: 1.4,
-                     spread: 1.2, blurb: "maximal — dense, fast, centrifugal")
+                     spread: 1.2, blurb: String(localized: "maximal — dense, fast, centrifugal"))
     ]
 }
