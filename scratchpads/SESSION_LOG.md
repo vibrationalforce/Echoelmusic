@@ -41669,3 +41669,11 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Bewusst nackt:** die fünf Werks-NAMEN (Aura · Vapor · Bloom · Pulse · Zentrifuge) — Eigennamen, VisualPresetTests pinnt „Aura“ zur Laufzeit.
 - **Wächter:** Anspruch 11 E4-86-Block (7 Nähte, Zähl-Pin 5, 2 verbatim Abwesenheiten, 9 Einheiten; XCTAssert 393 → 398). Benotung `scratchpad/transcribe_e4_86.py`: HEAD FAIL (7/2/9 — EIN Befund), WORK PASS. Gesamt-Anspruch-11 639/0 (150 Dateien). Checker OK, Sources-Klammerbilanz 0.
 - **Gates:** 5fa4ed469 komplett grün inkl. Auto-Merge 4031 → main (#379 zu). 823e502fa: Compile 3134 ✓, Quick Test ✓, Auto-Merge Docs ✓ (#380, Rest läuft). E4-85-Stapel 5c906c85b gepusht (Monitor bo299v9d7). E4-86 (2746a8672) lokal — Push nach Compile Check auf 5c906c85b.
+
+## 2026-10-01 — E4-87: Routing-Port- und Konverter-Namen (95fc41e35)
+
+- **Gebaut:** die zwölf Port-Namen des Standard-Graphen („Körper (Bio)“, „Musik“, „Brustgurt (BLE)“, „ADM-OSC (räumlich)“, „Art-Net (Licht)“, „sACN (Licht)“, „Audio-Master“; MIDI In/MPE Out, OSC Out, Broadcast identisch) und die zehn Konverter-Namen („Bio → Licht“, „Bio → Raumobjekt“, „Tonhöhe/Akkord → Farbe“, „Makro → Raum“ …) als Katalog-Schlüssel. Katalog 1868 → 1890 (+22). Sources: 2 Dateien + Katalog.
+- **Sicher, weil:** nur `graph.routes` persistiert; Ports und Konverter entstehen bei jedem Start aus Code. Die `midi.in`-Zeile nennt weiter kein „MPE“ (Python-Spiegel des MPE-Wächters).
+- **Wächter:** Anspruch 11 E4-87-Block (7 Nähte, Zähl-Pins 12/10, 2 verbatim Abwesenheiten, 22 Einheiten; XCTAssert 398 → 404). Benotung `scratchpad/transcribe_e4_87.py`: HEAD FAIL (7/2/22 — EIN Befund), WORK PASS. Gesamt-Anspruch-11 646/0 (152 Dateien). Checker OK, Sources-Klammerbilanz 0.
+- **Gates:** 823e502fa (#380) und 5c906c85b komplett grün inkl. Auto-Merge 4032/4033 → main (CI/CD-Conclusion failure = #396-Form). Stapel E4-86 · E4-87 nach Compile Check 3135 gepusht.
+- **Sitzung:** Founder hat das Modell gewechselt; get_session bestätigt den Wechsel. Kontext vollständig weitergeführt, keine Lücke im E4-Strang.

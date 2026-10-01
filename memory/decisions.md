@@ -4767,3 +4767,18 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-86 block (7 seams, count pin 5, 2 verbatim absences, 9 units; 393 → 398 XCTAssert).
   WORK PASS / HEAD FAIL (7/2/9 — ONE finding). Whole-claim-11: 150 files, 639 needles, 0 broken.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-87: routing port and converter names (95fc41e35)
+
+- **Decision:** the twelve default `SignalPort` names (Core/SignalRouter) and the ten `ConverterCatalog.default` names
+  (Core/SignalRouting) are catalog keys — PatchbayView renders them via `Text(src.name)` / `Text(dst.name)` and the
+  converter chip. Catalog 1868 → 1890.
+- **Why it is safe:** only `graph.routes` persists (`SignalRouter.save()`); ports and converters are rebuilt from code
+  on every launch, so a keyed name reaches every install and no saved route changes meaning.
+- **Law kept:** the `id: "midi.in"` source line still carries no "MPE" — TheMPEInputHasNoZonesTests reads that LINE;
+  mirrored in Python before the commit.
+- **Guard:** claim 11 E4-87 block (7 seams, count pins 12/10, 2 verbatim absences, 22 units; 398 → 404 XCTAssert).
+  WORK PASS / HEAD FAIL (7/2/22 — ONE finding). Whole-claim-11: 152 files, 646 needles, 0 broken.
+- **Model note:** from this commit on the session runs on a different model (founder switched); commit trailers follow
+  the harness attribution. No artifact names a model.
+- **Review:** 2026-10-31.
