@@ -32058,6 +32058,38 @@
           }
         }
       }
+    },
+    "Non-standard tuning: " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abweichende Stimmung: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non-standard tuning: "
+          }
+        }
+      }
+    },
+    "Non-standard concert pitch: A4 = " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abweichender Kammerton: A4 = "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non-standard concert pitch: A4 = "
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

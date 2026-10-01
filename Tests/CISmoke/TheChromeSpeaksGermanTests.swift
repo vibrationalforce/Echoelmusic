@@ -181,7 +181,9 @@
 // `Text(t.name)` (parent: 15 units missing — ONE finding). E4-86 keyed the five factory visual-preset blurbs and the
 // two media-seed presets' names and blurbs — the strip speaks `preset.name + " visual preset — " + preset.blurb`
 // (parent: 9 units missing — ONE finding). E4-87 keyed the twelve default `SignalPort` names and the ten
-// `ConverterCatalog.default` names the Routing surface renders (parent: 22 units missing — ONE finding). Claim 12
+// `ConverterCatalog.default` names the Routing surface renders (parent: 22 units missing — ONE finding). E4-88
+// split the tuning banner's headline into two keyed heads plus bare operands (parent: 2 units missing — ONE
+// finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3054,6 +3056,19 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Pitch/Chord → Colour", "Pitch → Position", "Music → MIDI CC",
                           "Macro → MIDI CC", "Macro → Light", "Macro → Spatial"],
                          "routing port and converter names")
+
+        // E4-88 — `TuningStatusText.title` (Studio/TuningStatusBanner): the banner renders `Text(title)`, a String, so
+        // the three interpolated headlines never reached the catalog. The heads are keys now; the system name (keyed in
+        // E4-85), the `EchoelDecimalText` Hz (DetunedInstrumentSaysSoTests pins that call) and the bare ", A4 = " /
+        // " Hz" are operands, so no key carries a `%@`. The English is byte-identical — nothing compares it at runtime.
+        let tuningBanner = try codeOnly("Sources/Echoelmusic/Studio/TuningStatusBanner.swift")
+        for seam in ["let lead: String = String(localized: \"Non-standard tuning: \") + systemName",
+                     "case (true, false):  return String(localized: \"Non-standard tuning: \") + systemName",
+                     "let pitch: String = String(localized: \"Non-standard concert pitch: A4 = \") + hz"] {
+            XCTAssertTrue(tuningBanner.contains(seam), "TuningStatusBanner lost the E4-88 seam `\(seam)`")
+        }
+        XCTAssertFalse(tuningBanner.contains("        case (false, true):  return \"Non-standard concert pitch: A4 = "), "TuningStatusBanner interpolates its headline into one literal again")
+        try assertGerman(["Non-standard tuning: ", "Non-standard concert pitch: A4 = "], "tuning banner headline")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

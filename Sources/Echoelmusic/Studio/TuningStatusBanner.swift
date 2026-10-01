@@ -63,9 +63,16 @@ enum TuningStatusText {
         let systemName = TuningSystem.named(tuningID).name
         let hz = EchoelDecimalText.string(a4Hz, decimals: 2)
         switch (toneSystemIsNonStandard(tuningID), concertPitchIsNonStandard(a4Hz)) {
-        case (true, true):   return "Non-standard tuning: \(systemName), A4 = \(hz) Hz"
-        case (true, false):  return "Non-standard tuning: \(systemName)"
-        case (false, true):  return "Non-standard concert pitch: A4 = \(hz) Hz"
+        // E4-88: the two sentence heads are catalog keys; the system name, the decimal and the
+        // unit are operands, so no key carries an interpolation. ", A4 = " and " Hz" read the
+        // same in every language this bundle speaks and stay bare.
+        case (true, true):
+            let lead: String = String(localized: "Non-standard tuning: ") + systemName
+            return lead + ", A4 = " + hz + " Hz"
+        case (true, false):  return String(localized: "Non-standard tuning: ") + systemName
+        case (false, true):
+            let pitch: String = String(localized: "Non-standard concert pitch: A4 = ") + hz
+            return pitch + " Hz"
         // ⛔ Written out rather than left to `default:`. The first version folded this into the
         // pitch case, so a headline read for an all-standard instrument would have said
         // "Non-standard concert pitch: A4 = 440.00 Hz" — a sentence that contradicts its own
