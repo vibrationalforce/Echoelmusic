@@ -143,6 +143,9 @@ notes: |
   Tests #396-Form (TEST EXECUTE FAILED, 0 Fehlschläge im sichtbaren Fenster), Auto-Merge
   4042 grün. Info.plist, Entitlements und Workflows unverändert; project.yml nur das
   AUv3-Datenschutz-Manifest (7e6aea965).
+  Erster Anlauf (Lauf 2608) scheiterte NACH dem Archiv am Upload: Apple meldete eine fehlende
+  Konto-Vereinbarung (403 REQUIRED_AGREEMENTS). Founder hat sie am 2026-10-01 bestätigt; dieser
+  Lauf ist die Wiederholung mit demselben Code. Build 2608 ist nie angekommen.
 
   Der Vorgänger ist 10.79.483 (Build 2603), davor 10.79.482.
 
