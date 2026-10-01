@@ -41770,3 +41770,18 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **A9 ceb9ede82:** Querformat (`verticalSizeClass == .compact`, nur mit gezeichnetem Canvas) = zwei Spalten per EINEM `AnyLayout`: Arrangement links, Spurköpfe + Inspektor rechts (260–360 pt); Hochformat unverändert. Leere Spalte sagt „Tippe auf einen Spurnamen …“. Wächter `TheArrangementSitsBesideItsTrackInLandscapeTests` (WORK 24/24, Eltern rot nur durch Abwesenheit); A3/A5/A6/A7-Transkriptionen weiter grün.
 - **Gerät offen:** Kopffarbe ordnet sich der beringten Zeile zu; Spalten lesbar bei 667–932 pt; Drehung lässt Noten/Automation offen.
 - **Nächste:** Phase B (B3 Mixer über alle Spuren, B4 Song-Export → dann Mix/Export-Reiter).
+
+## 2026-10-01 — Workstation-Neugestaltung: B3 Mischpult
+
+- **B3 ec276058b** — `PieceMixerView`: jede klingende Spur als Kanalzug (Farbe, Symbol, Name, dB,
+  Pegel, Pan wo verdrahtet, M/S), hinter dem neuen Reiter „Mix“ (Tor `showsSongs`, Rückfall auf
+  Arrange, wenn das Tor schließt). Steht STATT des Arrangements, damit ein Stumm-Schalter nie
+  doppelt auf dem Schirm steht. Regel = `TrackMix.controls`, Schreiber = `TrackMix.*`; jeder Zug
+  ist ein VoiceOver-Container mit dem Spurnamen. `TrackMix.levelHint` hält den Pegel-Hinweis
+  EINMAL (#416). Wächter `ThePieceHasAMixerTests` neu; `ThePieceHasTabsTests` Anspruch 1 für zwei
+  Platten-Ansichten neu gefasst — schärfer (bedingtes `.isSelected` Pflicht, Mix hinter dem Tor).
+  Transkription 85/85 Arbeitsbaum; Prüfer sauber (dead-needles, count-pins 0 ROT, swift-escapes,
+  foreign-needles; moved-needles 1 Treffer = andere Flächen, geprüft).
+- Gates: A7 7303c048a Compile ✓; A8/A9/Doku als a724b604f gepusht (Compile läuft). B3 wird nach
+  dessen Ende gepusht. Offen: B3b Mixer-Undo, B4 Song-MIDI-Export. Gerät: Kanalzüge lesbar,
+  Fader hörbar, Mix → Arrange behält die Auswahl.

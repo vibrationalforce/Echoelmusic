@@ -67,7 +67,12 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
 ### Phase B — Engine-Glaubwürdigkeit
 - **B1** 8-Clip-Decke heben + „Eigenständig machen" beim Duplizieren (Format-Migration).
 - **B2** Presets je Spur + Sampler wählbar.
-- **B3** Mixer-Ansicht (alle Spuren als Kanalzüge) + Mixer-Undo.
+- **B3** Mixer-Ansicht (alle Spuren als Kanalzüge) + Mixer-Undo. **✓ ec276058b (Ansicht)** —
+  `PieceMixerView` hinter dem Reiter „Mix“ (Tor `showsSongs`), steht STATT des Arrangements (ein
+  Bedienelement pro Tatsache auf dem Schirm). Kanalzug = `TrackMix.controls` (keine zweite Regel),
+  Schreiben nur über `TrackMix.*`; stumme Spuren ohne Zug, aber gezählt. Pegel-Hinweis als
+  `TrackMix.levelHint` gehoben (#416). Arrange ist jetzt ein Knopf (zwei Ansichten der Platte).
+  **Offen: B3b Mixer-Undo** (eigener `HistoryStep`, nicht in der Teil-Historie) und Meter (= B5).
 - **B4** Song-MIDI-Export (alle Spuren).
 - **B5** Per-Spur-Meter-Quelle (Audio-Thread-Review, Gerät).
 - **B6** Velocity-Spur + CC-Spuren im Noteneditor; Import behält CC/Bend/Pressure.
