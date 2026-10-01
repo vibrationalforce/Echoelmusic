@@ -223,6 +223,11 @@ struct WorkstationView: View {
     /// song plays, so reading it in `body` subscribes to nothing hot. `transportRow` stacks
     /// Play and the position readout on it (review of e1036b874, MED).
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    /// The user's chosen level for the chip strip — read here so the piece's tabs (A7) offer
+    /// exactly the panels the Instrument strip offers at that level (`SkillLevel`). COLD: a tap
+    /// changes it, never a tick.
+    @AppStorage(StudioDefaultKeys.skillLevel.key)
+    private var skillLevelRaw = StudioDefaultKeys.skillLevel.value.rawValue
 
     /// Audio Import V1 — picker + result, both LOCAL to this leaf on the founder's
     /// instruction. Neither is persisted, neither is read by any other surface, and neither
@@ -442,6 +447,7 @@ struct WorkstationView: View {
         .padding(2)
         }
         .safeAreaInset(edge: .bottom, spacing: 0) { transportBar }
+        .safeAreaInset(edge: .top, spacing: 0) { pieceTabs }
         #if canImport(UniformTypeIdentifiers)
         // ⚠️ ON THE LEAF, NEVER ON THE ROOT — see the header. `allowedContentTypes: [.audio]`
         // is the system's own conformance test, so a picker that offers a file at all has
@@ -810,6 +816,60 @@ struct WorkstationView: View {
     private func automationLine(_ count: Int) -> some View {
         Text("\(count) " + (count == 1 ? String(localized: "automated parameter") : String(localized: "automated parameters")))
             .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+    }
+
+    /// A7 (founder 2026-10-01, the tablet mockup's tab row) — the piece's tabs, pinned above the
+    /// plate's scroll: Arrange is THIS plate and is not a button (it says where you are); Sound,
+    /// FX and Master open their panel on the Instrument stage through the chrome door, the same
+    /// receiver the track inspector's device door uses — no new modal, no second copy of a panel.
+    /// Each poster is written out literally so the guards can count the producers of each door.
+    /// FX and Master follow the Instrument strip's `SkillLevel` gates (`chips(for:)`), so a
+    /// beginner sees the same panels here as there. Mix and Export are NOT tabs yet: a whole-
+    /// piece mixer (B3) and a song export (B4) do not exist, and a tab with no destination is a
+    /// button that does nothing (#164/#227).
+    private var pieceTabs: some View {
+        let level = SkillLevel(rawValue: skillLevelRaw) ?? StudioDefaultKeys.skillLevel.value
+        return HStack(spacing: 6) {
+            EchoelIconTile(systemImage: "rectangle.split.3x1", title: "Arrange", prominent: true, expands: true)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Arrange")
+                .accessibilityAddTraits(.isSelected)
+            Button {
+                NotificationCenter.default.post(name: .echoelChromeDoor, object: "sound")
+            } label: {
+                EchoelIconTile(systemImage: "pianokeys", title: "Sound", expands: true)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Sound")
+            .accessibilityHint("Opens the sound panel on the Instrument stage. Piece brings you back")
+            if level.showsSongs {
+                Button {
+                    NotificationCenter.default.post(name: .echoelChromeDoor, object: "effects")
+                } label: {
+                    EchoelIconTile(systemImage: "slider.horizontal.3", title: "FX", expands: true)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("FX")
+                .accessibilityHint("Opens the effects on the Instrument stage. Piece brings you back")
+            }
+            if level.showsProTabs {
+                Button {
+                    NotificationCenter.default.post(name: .echoelChromeDoor, object: "master")
+                } label: {
+                    EchoelIconTile(systemImage: "speaker.wave.2", title: "Master", expands: true)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Master")
+                .accessibilityHint("Opens the master output on the Instrument stage. Piece brings you back")
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(EchoelTheme.bg)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(EchoelTheme.border).frame(height: 1)
+        }
     }
 
     /// A3 — `transportRow` pinned under the plate's scroll: a solid bar with a 1 px top border

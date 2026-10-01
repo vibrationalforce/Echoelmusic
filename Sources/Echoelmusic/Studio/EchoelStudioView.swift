@@ -1244,7 +1244,8 @@ struct EchoelStudioView: View {
                 // again as written, with the header monitors as the ONLY producers, which is
                 // the whole reason this notification still exists. WA4 path 9 added a third
                 // producer of the same kind — a leaf outside this view's state: the Echoel
-                // track's device door in the Workstation's track inspector, posting "sound".)
+                // track's device door in the Workstation's track inspector, posting "sound".
+                // A7 added the fourth: the piece's tabs, posting "sound", "effects", "master".)
                 //
                 // ⛔ FOUR CASES WERE DELETED HERE, NOT LEFT "just in case" (#290): "master",
                 // "export", "tempo" and "session". Those four panels are chips now, and a chip
@@ -1299,6 +1300,16 @@ struct EchoelStudioView: View {
                     // door turns the stage as well, or the tap shows nothing.
                     case "sound":
                         activeMenu = .sound
+                        showStage(.instrument)
+                    // Workstation redesign A7 (founder 2026-10-01) — the piece's tabs
+                    // (`WorkstationView.pieceTabs`) post these two from the Piece stage. They
+                    // re-add the #290 "master" case TOGETHER with its producer, as the note above
+                    // requires, and turn the stage for the same reason the "sound" door does.
+                    case "effects":
+                        activeMenu = .effects
+                        showStage(.instrument)
+                    case "master":
+                        activeMenu = .master
                         showStage(.instrument)
                     // WA4 Acceptance Test A — the Workstation's Save/Open row
                     // (`WorkstationProjectRow`) raises the Studio's OWN Save alert and Open sheet:

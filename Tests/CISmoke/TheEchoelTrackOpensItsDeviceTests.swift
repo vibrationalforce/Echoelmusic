@@ -10,8 +10,8 @@
 // 1. SOURCE: the button sits inside `if controls.role == .echoelInstrument` (a rack voice or an
 //    audio player has no such editor) and AFTER the combined device element, not inside it
 //    (#621 — a control inside a merged element loses its own focus).
-// 2. SOURCE: producer and receiver move together — exactly one poster of `"sound"` in
-//    `Sources/`, and the Studio's receiver turns it into `activeMenu = .sound` AND, since slice
+// 2. SOURCE: producer and receiver move together — exactly two posters of `"sound"` in
+//    `Sources/` (the device door, and since A7, 2026-10-01, the piece's Sound tab), and the Studio's receiver turns it into `activeMenu = .sound` AND, since slice
 //    2b (2026-09-30), `showStage(.instrument)`: the inspector lives on the Piece stage, where the
 //    studio is mounted but hidden, so a plate selected there without turning the stage is a
 //    button that does nothing (#164/#227) — measured as the first defect of slice 2a.
@@ -68,8 +68,12 @@ final class TheEchoelTrackOpensItsDeviceTests: XCTestCase {
             if SourceText.codeOnly(text).contains(poster) { posters.append(relative) }
         }
         XCTAssertGreaterThan(seen, 200, "the walk saw \(seen) files — the wrong directory")
-        XCTAssertEqual(posters, ["Studio/TrackInspectorView.swift"],
-                       "the device door is the one producer of the \"sound\" chrome door")
+        // A7 (2026-10-01): the piece's Sound tab is the second producer, by decision — both sit
+        // on the Piece stage and open the same plate. The SET stays exact: a third poster is a
+        // door nobody named here.
+        XCTAssertEqual(Set(posters), ["Studio/TrackInspectorView.swift", "Studio/WorkstationView.swift"],
+                       "the device door and the piece's Sound tab are the two producers of the \"sound\" chrome door")
+        XCTAssertEqual(posters.count, 2, "one poster per file — \(posters)")
 
         let studio = try code(Self.studioPath)
         guard let receiverStart = studio.range(of: "publisher(for: .echoelChromeDoor)) { note in"),
