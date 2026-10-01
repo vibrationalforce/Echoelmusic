@@ -24922,6 +24922,70 @@
           }
         }
       }
+    },
+    "Tempo unclear." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo unklar."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo unclear."
+          }
+        }
+      }
+    },
+    ", a " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", ein "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", a "
+          }
+        }
+      }
+    },
+    "-bar loop (or " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "-Takt-Loop (oder "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "-bar loop (or "
+          }
+        }
+      }
+    },
+    " (or " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " (oder "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " (or "
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

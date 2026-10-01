@@ -115,7 +115,8 @@
 // added the EchoelAI narration (BioMusicDirector: three headings, two VoiceOver labels, the paragraph's clauses, prefix and
 // engine tail), shown by LiveNarrationDisclosure (parent: 24 units missing — ONE finding). E4-59 added the audio-timing
 // row's verdicts (RenderGapDetector screenLine / evidenceSuffix / screenCaption / screenText) and the detected-key
-// sentence (AudioKeyAnalysis.summarise with TuningDetector.keyName) (parent: 21 units missing — ONE finding). Claim 12
+// sentence (AudioKeyAnalysis.summarise with TuningDetector.keyName) (parent: 21 units missing — ONE finding). E4-60 added
+// the detected-tempo sentence (AudioTempoAnalysis.summarise) (parent: 4 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2090,6 +2091,22 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           " · measured before the stop", "Key unclear — little tonal centre", "Key ambiguous — two keys fit equally well",
                           "Sounds like ", "concert pitch unclear", "minor", "major"],
                          "audio-timing row and detected key")
+
+        // E4-60 — the Workstation's detected-tempo sentence, the sibling of the key sentence above: the words become keys
+        // seamed around the two `String(format: "%.1f")` numbers; "Tempo ≈ " and " BPM" stay verbatim (no language).
+        let tempoSentence = try codeOnly("Sources/Echoelmusic/Sequencer/AudioTempoAnalysis.swift")
+        for seam in ["guard tempo.isKnown else { return String(localized: \"Tempo unclear.\") }",
+                     "let head: String = \"Tempo ≈ \" + bpm + \" BPM\"",
+                     "let loop: String = String(localized: \", a \") + \"\\(bars)\" + String(localized: \"-bar loop (or \")",
+                     "return head + loop + alternative + \").\"",
+                     "return head + String(localized: \" (or \") + alternative + \").\""] {
+            XCTAssertTrue(tempoSentence.contains(seam), "AudioTempoAnalysis lost the E4-60 seam `\(seam)`")
+        }
+        for verbatim in ["return \"Tempo unclear.\"", "return \"Tempo ≈ \\(bpm) BPM, a \\(bars)-bar loop (or \\(alternative)).\"",
+                         "return \"Tempo ≈ \\(bpm) BPM (or \\(alternative)).\""] {
+            XCTAssertFalse(tempoSentence.contains(verbatim), "AudioTempoAnalysis interpolates the tempo sentence again: `\(verbatim)`")
+        }
+        try assertGerman(["Tempo unclear.", ", a ", "-bar loop (or ", " (or "], "detected tempo")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

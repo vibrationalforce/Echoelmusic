@@ -32,13 +32,17 @@ public enum AudioTempoAnalysis {
     /// warning: a person who sees a BPM will use it, whatever the caveat beside it.
     public static func summarise(_ tempo: DetectedTempo?) -> String? {
         guard let tempo else { return nil }
-        guard tempo.isKnown else { return "Tempo unclear." }
+        guard tempo.isKnown else { return String(localized: "Tempo unclear.") }
         let bpm = String(format: "%.1f", tempo.bpm)
         let alternative = String(format: "%.1f", tempo.octaveAlternativeBPM)
+        // E4-60: the words are catalog keys seamed around the numbers (≤ 4 operands per step);
+        // "Tempo ≈ " and " BPM" carry no language and stay verbatim.
+        let head: String = "Tempo ≈ " + bpm + " BPM"
         if let bars = tempo.loopBars {
-            return "Tempo ≈ \(bpm) BPM, a \(bars)-bar loop (or \(alternative))."
+            let loop: String = String(localized: ", a ") + "\(bars)" + String(localized: "-bar loop (or ")
+            return head + loop + alternative + ")."
         }
-        return "Tempo ≈ \(bpm) BPM (or \(alternative))."
+        return head + String(localized: " (or ") + alternative + ")."
     }
 
     /// The native tempo a clip may ADOPT from a detection, or nil to leave the clip alone.
