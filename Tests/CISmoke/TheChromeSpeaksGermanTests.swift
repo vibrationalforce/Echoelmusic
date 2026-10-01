@@ -94,7 +94,9 @@
 // hint arm), the media browser's Preview/Stop and the FX preset list's two Unstar/Favorite labels (parent: ternaries of
 // bare literals, 5 units missing — ONE finding). E4-49 added the Routing surface's Blackout button (text + label), the
 // sound-reset „Armed“ value and the Music-colour row (text + spoken label, which interpolated `live`/`idle`) (parent:
-// ternaries of bare literals and one interpolated label, 9 units missing — ONE finding). Claim 12
+// ternaries of bare literals and one interpolated label, 9 units missing — ONE finding). E4-50 added Live Colabo's Go
+// Live/Stop label and invite sentence, and the bio strip's „Bio source:“ spoken label (parent: a bare ternary and two
+// interpolated labels, 3 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1711,6 +1713,27 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         try assertGerman(["Blackout ON", "Blackout", "Blackout active — turn the light back on", "Blackout — black out the light immediately",
                           "Armed", "Live chord, mapped by pitch", "Plays when the music is sounding", "Music colour, live", "Music colour, idle"],
                          "Blackout, Armed and Music-colour sites")
+
+        // E4-50 — Live Colabo's Go Live/Stop label (a bare ternary) and its invite sentence, and the bio strip's live
+        // tag spoken label — both interpolated a name or a value into one literal; now a seam of a catalog key beside
+        // the value. PartNoteEditor's `mixed ? "Velocity (avg)" : "Velocity"` is NOT here on purpose: `EchoelValueField`
+        // reads its `label` as a key (`Text(LocalizedStringKey(label))`, E4-10), and both arms are catalog keys already.
+        let colabLive = try codeOnly("Sources/Echoelmusic/Studio/LiveColaboView.swift")
+        for seam in ["Label(colab.isLive ? String(localized: \"Stop\") : String(localized: \"Go Live (nearby)\"),",
+                     ".accessibilityLabel(invite.peerName + String(localized: \" wants to join you\"))"] {
+            XCTAssertTrue(colabLive.contains(seam), "LiveColaboView lost the E4-50 seam `\(seam)`")
+        }
+        for verbatim in ["Label(colab.isLive ? \"Stop\" : \"Go Live (nearby)\",", "peerName) wants to join you"] {
+            XCTAssertFalse(colabLive.contains(verbatim), "LiveColaboView speaks a bare arm or an interpolated label again: `\(verbatim)`")
+        }
+        let bioTag = try codeOnly("Sources/Echoelmusic/Studio/BioStripView.swift")
+        for seam in [".accessibilityLabel(String(localized: \"Bio source: \") + sourceText)"] {
+            XCTAssertTrue(bioTag.contains(seam), "BioStripView lost the E4-50 seam `\(seam)`")
+        }
+        for verbatim in [".accessibilityLabel(\"Bio source: \\(sourceText)\")"] {
+            XCTAssertFalse(bioTag.contains(verbatim), "BioStripView interpolates the source into a literal again: `\(verbatim)`")
+        }
+        try assertGerman(["Stop", "Go Live (nearby)", " wants to join you", "Bio source: "], "Live Colabo and bio-tag sites")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

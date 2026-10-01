@@ -133,7 +133,7 @@ struct LiveColaboView: View {
 
     private var goLiveRow: some View {
         Button { colab.isLive ? colab.stop() : colab.start() } label: {
-            Label(colab.isLive ? "Stop" : "Go Live (nearby)",
+            Label(colab.isLive ? String(localized: "Stop") : String(localized: "Go Live (nearby)"),
                   systemImage: colab.isLive ? "stop.fill" : "dot.radiowaves.left.and.right")
                 .font(EchoelTheme.font(15, .semibold))
                 .foregroundStyle(colab.isLive ? EchoelTheme.onPrimary : EchoelTheme.text)
@@ -257,7 +257,7 @@ struct LiveColaboView: View {
         .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.accent.opacity(0.12)))
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.accent.opacity(0.5), lineWidth: 1))
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(invite.peerName) wants to join you")
+        .accessibilityLabel(invite.peerName + String(localized: " wants to join you"))
     }
 
     private func incomingCard(_ from: String, _ project: Project) -> some View {

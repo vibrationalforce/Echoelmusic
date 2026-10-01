@@ -723,7 +723,7 @@ struct BioStripView: View {
         .background(EchoelTheme.success.opacity(0.22))
         .clipShape(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall))
         .foregroundStyle(EchoelTheme.success)
-        .accessibilityLabel("Bio source: \(sourceText)")
+        .accessibilityLabel(String(localized: "Bio source: ") + sourceText)
     }
 
     private var measuringTag: some View {
