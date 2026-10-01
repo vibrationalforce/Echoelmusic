@@ -81,7 +81,9 @@
 // E4-42 added the video card — VideoSeedText's unreadable/reading/length/cuts/bars/sound and field names, the card's lines,
 // heading, Apply fallback and spoken disclosure value / Undo label (parent: the same four shapes, 22 units missing — ONE finding).
 // E4-43 added the Workstation's remaining ternaries — Mute/Solo value, Warp text/value/hint, Pitch hint, Play/Stop word and label,
-// tempo-field label, Compose-guide disclosure value/hint (parent: ternaries of bare literals, 10 units missing — ONE finding). Claim 12
+// tempo-field label, Compose-guide disclosure value/hint (parent: ternaries of bare literals, 10 units missing — ONE finding).
+// E4-44 added the three On/Off siblings — Perform mix switch, header Guide button, Workstation click toggle (parent: a bare
+// `? "On" : "Off"` ternary in each, no units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1504,6 +1506,33 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Moves every part on this track up or down without changing its tempo", "Stop", "Play", "Stop all playback",
                           "Play timeline", "Tempo", "Set tempo", "Expanded", "Collapsed", "Hides the steps", "Shows the steps"],
                          "Workstation ternaries")
+
+        // E4-44 — the three On/Off siblings of the E4-43 header switch: the Perform mix switch, the project header's
+        // Guide button and the Workstation click toggle each spoke `on ? "On" : "Off"` — a String, read verbatim.
+        // Both arms are the catalog's On/Off keys (no new units); the three guards that pinned the old spelling as
+        // source text (PerformIsASecondViewOfTheSameSession, TheGuideHasADoor, TheWorkstationArmsTheClick) follow it.
+        let mixSwitch = try codeOnly("Sources/Echoelmusic/Studio/PerformSessionView.swift")
+        for seam in [".accessibilityValue(on ? String(localized: \"On\") : String(localized: \"Off\"))"] {
+            XCTAssertTrue(mixSwitch.contains(seam), "PerformSessionView lost the E4-44 seam `\(seam)`")
+        }
+        for verbatim in [".accessibilityValue(on ? \"On\" : \"Off\")"] {
+            XCTAssertFalse(mixSwitch.contains(verbatim), "PerformSessionView speaks a bare On/Off again: `\(verbatim)`")
+        }
+        let headerGuide = try codeOnly("Sources/Echoelmusic/Studio/ProjectHeader.swift")
+        for seam in [".accessibilityValue(guideVisible ? String(localized: \"On\") : String(localized: \"Off\"))"] {
+            XCTAssertTrue(headerGuide.contains(seam), "ProjectHeader lost the E4-44 seam `\(seam)`")
+        }
+        for verbatim in [".accessibilityValue(guideVisible ? \"On\" : \"Off\")"] {
+            XCTAssertFalse(headerGuide.contains(verbatim), "ProjectHeader speaks a bare On/Off again: `\(verbatim)`")
+        }
+        let clickLeaf = try codeOnly("Sources/Echoelmusic/Studio/WorkstationClickToggle.swift")
+        for seam in [".accessibilityValue(on ? String(localized: \"On\") : String(localized: \"Off\"))"] {
+            XCTAssertTrue(clickLeaf.contains(seam), "WorkstationClickToggle lost the E4-44 seam `\(seam)`")
+        }
+        for verbatim in [".accessibilityValue(on ? \"On\" : \"Off\")"] {
+            XCTAssertFalse(clickLeaf.contains(verbatim), "WorkstationClickToggle speaks a bare On/Off again: `\(verbatim)`")
+        }
+        try assertGerman(["On", "Off"], "On/Off siblings")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

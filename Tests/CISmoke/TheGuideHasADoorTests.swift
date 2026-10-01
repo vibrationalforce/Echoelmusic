@@ -73,7 +73,8 @@ final class TheGuideHasADoorTests: XCTestCase {
             an overlay nobody can switch on is a deleted feature, one nobody can switch OFF \
             is an imposition; both need this button, named "Guide" for VoiceOver.
             """)
-        XCTAssertTrue(header.contains(".accessibilityValue(guideVisible ? \"On\" : \"Off\")"),
+        // E4-44: both arms are catalog keys — the needle follows the spelling, the claim is unchanged.
+        XCTAssertTrue(header.contains(".accessibilityValue(guideVisible ? String(localized: \"On\") : String(localized: \"Off\"))"),
                       "a stateful glyph speaks its state (the stateful-controls law)")
         let studio = try source(Self.studio)
         XCTAssertFalse(studio.contains("Toggle(isOn: $guideVisible)") || studio.contains("StudioDefaultKeys.guideVisible"), """

@@ -261,7 +261,8 @@ final class PerformIsASecondViewOfTheSameSessionTests: XCTestCase {
         let control = try member("private func mixSwitch(", in: leaf)
         XCTAssertTrue(control.contains(".frame(minWidth: 44, minHeight: 44)"), "a 44-pt target")
         XCTAssertTrue(control.contains(".accessibilityAddTraits(.isToggle)"))
-        XCTAssertTrue(control.contains(".accessibilityValue(on ? \"On\" : \"Off\")"))
+        // E4-44: both arms are catalog keys — the needle follows the spelling, the claim is unchanged.
+        XCTAssertTrue(control.contains(".accessibilityValue(on ? String(localized: \"On\") : String(localized: \"Off\"))"))
     }
 
     // MARK: 3 — the words

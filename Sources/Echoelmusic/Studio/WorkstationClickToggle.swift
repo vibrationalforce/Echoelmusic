@@ -53,7 +53,7 @@ struct WorkstationClickToggle: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Click")
-        .accessibilityValue(on ? "On" : "Off")
+        .accessibilityValue(on ? String(localized: "On") : String(localized: "Off"))
         .accessibilityAddTraits(.isToggle)
         .accessibilityHint(WorkstationSummary.clickHint(on: on))
     }

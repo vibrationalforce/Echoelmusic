@@ -191,7 +191,7 @@ struct PerformSessionView: View {
         .accessibilityLabel("\(name) \(track)")
         .accessibilityInputLabels(["\(name) \(track)", name])
         .accessibilityAddTraits(.isToggle)
-        .accessibilityValue(on ? "On" : "Off")
+        .accessibilityValue(on ? String(localized: "On") : String(localized: "Off"))
         .accessibilityHint(hint)
     }
 

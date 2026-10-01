@@ -83,7 +83,8 @@ final class TheWorkstationArmsTheClickTests: XCTestCase {
         XCTAssertTrue(body.contains(".frame(minHeight: 44)"), "a 44 pt target, as Play has")
         XCTAssertTrue(body.contains("cornerRadius: EchoelTheme.radius"), "the theme's radius, as Play has")
         XCTAssertTrue(body.contains(".accessibilityAddTraits(.isToggle)"), "VoiceOver hears a switch")
-        XCTAssertTrue(body.contains(".accessibilityValue(on ? \"On\" : \"Off\")"), "and its state")
+        // E4-44: both arms are catalog keys — the needle follows the spelling, the claim is unchanged.
+        XCTAssertTrue(body.contains(".accessibilityValue(on ? String(localized: \"On\") : String(localized: \"Off\"))"), "and its state")
         XCTAssertTrue(body.contains(".accessibilityHint(WorkstationSummary.clickHint(on: on))"),
                       "the hint comes from the one pure sentence (claim 1)")
     }

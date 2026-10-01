@@ -195,7 +195,7 @@ struct ProjectHeader: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Guide")
-        .accessibilityValue(guideVisible ? "On" : "Off")
+        .accessibilityValue(guideVisible ? String(localized: "On") : String(localized: "Off"))
         .accessibilityAddTraits(guideVisible ? .isSelected : [])
         .accessibilityHint("Shows or hides the cards that walk you through playing and understanding the app")
     }
