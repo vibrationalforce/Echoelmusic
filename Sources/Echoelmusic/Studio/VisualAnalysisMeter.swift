@@ -57,10 +57,10 @@ enum VisualAnalysisMeter: String, CaseIterable, Identifiable, Sendable {
     /// What VoiceOver says for the segment — the label alone would not say what is measured.
     var spokenName: String {
         switch self {
-        case .wavefront: return "Wavefront field of the master output"
-        case .spectrum:  return "Spectrum of the master output"
-        case .scope:     return "Oscilloscope of the master output"
-        case .pulse:     return "Pulse interval plot from the camera"
+        case .wavefront: return String(localized: "Wavefront field of the master output")
+        case .spectrum:  return String(localized: "Spectrum of the master output")
+        case .scope:     return String(localized: "Oscilloscope of the master output")
+        case .pulse:     return String(localized: "Pulse interval plot from the camera")
         }
     }
 

@@ -135,7 +135,11 @@
 // and the two Bluetooth call-mode notes (AudioConfiguration RouteCodec.note) (parent: 16 units missing — ONE finding).
 // E4-71 added the loudness-target names (LoudnessTarget.displayName, the Master picker) and the weather mixer's
 // explanation lines (WeatherMood.Param.explanation; its `label` stays a bare KEY for `EchoelValueField`, claim 12)
-// (parent: 13 units missing — ONE finding). Claim 12
+// (parent: 13 units missing — ONE finding). E4-72 added the bio-source chooser labels (BioSourceOption.menuLabel —
+// TheBioSourceChooserHasOneDefinitionTests counts each literal ONCE across definition + consumers, and a wrapped literal is
+// still one), the track inspector's device names (TrackInspectorView.deviceName, the no-voice pair split around its
+// capacity) and the four meter names VoiceOver speaks (VisualAnalysisMeter.spokenName) (parent: 15 units missing — ONE
+// finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2529,6 +2533,37 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Dull weather drains colour; clear skies deepen it.",
                           "Sun and storms make the image glow; fog dims it.", "Wind sets the image in motion."],
                          "loudness targets and weather explanations")
+
+        // E4-72 — the chooser labels (Label(option.menuLabel, …) in the pill menu and the bio panel), the inspector's
+        // device names (`deviceName(_:)`; the agent guards compare the bio one at runtime under the test locale) and the
+        // meter names VoiceOver speaks. `TrackInstrument.subtitle` is NOT wrapped: it has no reader (measured E4-72).
+        let sourceLabels = try codeOnly("Sources/Echoelmusic/Studio/BioSourceOption.swift")
+        let deviceNames = try codeOnly("Sources/Echoelmusic/Studio/TrackInspectorView.swift")
+        let meterNames = try codeOnly("Sources/Echoelmusic/Studio/VisualAnalysisMeter.swift")
+        for seam in ["case .camera: return String(localized: \"Play with camera light\")",
+                     "case .health: return String(localized: \"Play with Apple Health — your Watch, at its own pace\")"] {
+            XCTAssertTrue(sourceLabels.contains(seam), "BioSourceOption lost the E4-72 seam `\(seam)`")
+        }
+        for seam in ["case .echoelInstrument:   return String(localized: \"Echoel instrument\")",
+                     "return capacity > 0 ? limited : String(localized: \"No voice — extra MIDI tracks are off in this build\")"] {
+            XCTAssertTrue(deviceNames.contains(seam), "TrackInspectorView lost the E4-72 seam `\(seam)`")
+        }
+        for seam in ["case .wavefront: return String(localized: \"Wavefront field of the master output\")",
+                     "case .pulse:     return String(localized: \"Pulse interval plot from the camera\")"] {
+            XCTAssertTrue(meterNames.contains(seam), "VisualAnalysisMeter lost the E4-72 seam `\(seam)`")
+        }
+        XCTAssertFalse(sourceLabels.contains("case .camera: return \"Play with camera light\""), "BioSourceOption spells a label verbatim again")
+        XCTAssertFalse(deviceNames.contains("? \"No voice — only the first \\(capacity) extra MIDI tracks play\""),
+                       "TrackInspectorView spells the no-voice line verbatim again")
+        XCTAssertFalse(meterNames.contains("case .wavefront: return \"Wavefront field of the master output\""),
+                       "VisualAnalysisMeter spells a meter name verbatim again")
+        try assertGerman(["Play with camera light", "Play with a Bluetooth strap — scans for one", "Play with the simulation",
+                          "Play with Apple Health — your Watch, at its own pace", "Echoel instrument", "Audio file player",
+                          "Bio curve — no sound", "No engine plays this track yet", "No voice — only the first ",
+                          " extra MIDI tracks play", "No voice — extra MIDI tracks are off in this build",
+                          "Wavefront field of the master output", "Spectrum of the master output",
+                          "Oscilloscope of the master output", "Pulse interval plot from the camera"],
+                         "source chooser, device names and meter names")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

@@ -68,10 +68,10 @@ enum BioSourceOption: String, CaseIterable, Identifiable {
     /// bio-panel row so the two surfaces can never drift apart.
     var menuLabel: String {
         switch self {
-        case .camera: return "Play with camera light"
-        case .ble:    return "Play with a Bluetooth strap — scans for one"
-        case .sim:    return "Play with the simulation"
-        case .health: return "Play with Apple Health — your Watch, at its own pace"
+        case .camera: return String(localized: "Play with camera light")
+        case .ble:    return String(localized: "Play with a Bluetooth strap — scans for one")
+        case .sim:    return String(localized: "Play with the simulation")
+        case .health: return String(localized: "Play with Apple Health — your Watch, at its own pace")
         }
     }
 

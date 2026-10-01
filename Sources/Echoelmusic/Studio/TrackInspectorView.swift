@@ -131,15 +131,14 @@ enum TrackMix {
 
     nonisolated static func deviceName(_ role: Role) -> String {
         switch role {
-        case .echoelInstrument:   return "Echoel instrument"
+        case .echoelInstrument:   return String(localized: "Echoel instrument")
         case .laneSynth(let kind): return voiceName(kind)
-        case .audio:              return "Audio file player"
-        case .bio:                return "Bio curve — no sound"
-        case .unplayed:           return "No engine plays this track yet"
+        case .audio:              return String(localized: "Audio file player")
+        case .bio:                return String(localized: "Bio curve — no sound")
+        case .unplayed:           return String(localized: "No engine plays this track yet")
         case .noVoice(let capacity):
-            return capacity > 0
-                ? "No voice — only the first \(capacity) extra MIDI tracks play"
-                : "No voice — extra MIDI tracks are off in this build"
+            let limited: String = String(localized: "No voice — only the first ") + "\(capacity)" + String(localized: " extra MIDI tracks play")
+            return capacity > 0 ? limited : String(localized: "No voice — extra MIDI tracks are off in this build")
         }
     }
 

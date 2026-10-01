@@ -27898,6 +27898,246 @@
           }
         }
       }
+    },
+    "Play with camera light" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielen mit Kameralicht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play with camera light"
+          }
+        }
+      }
+    },
+    "Play with a Bluetooth strap — scans for one" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielen mit einem Bluetooth-Gurt — sucht einen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play with a Bluetooth strap — scans for one"
+          }
+        }
+      }
+    },
+    "Play with the simulation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielen mit der Simulation"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play with the simulation"
+          }
+        }
+      }
+    },
+    "Play with Apple Health — your Watch, at its own pace" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielen mit Apple Health — deine Watch, in ihrem eigenen Tempo"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play with Apple Health — your Watch, at its own pace"
+          }
+        }
+      }
+    },
+    "Echoel instrument" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echoel-Instrument"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echoel instrument"
+          }
+        }
+      }
+    },
+    "Audio file player" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audiodatei-Player"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio file player"
+          }
+        }
+      }
+    },
+    "Bio curve — no sound" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio-Kurve — kein Klang"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio curve — no sound"
+          }
+        }
+      }
+    },
+    "No engine plays this track yet" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Engine spielt diese Spur"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No engine plays this track yet"
+          }
+        }
+      }
+    },
+    "No voice — only the first " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Stimme — nur die ersten "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No voice — only the first "
+          }
+        }
+      }
+    },
+    " extra MIDI tracks play" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " zusätzlichen MIDI-Spuren spielen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " extra MIDI tracks play"
+          }
+        }
+      }
+    },
+    "No voice — extra MIDI tracks are off in this build" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Stimme — zusätzliche MIDI-Spuren sind in diesem Build aus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No voice — extra MIDI tracks are off in this build"
+          }
+        }
+      }
+    },
+    "Wavefront field of the master output" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wellenfrontfeld des Master-Ausgangs"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wavefront field of the master output"
+          }
+        }
+      }
+    },
+    "Spectrum of the master output" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spektrum des Master-Ausgangs"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spectrum of the master output"
+          }
+        }
+      }
+    },
+    "Oscilloscope of the master output" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oszilloskop des Master-Ausgangs"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oscilloscope of the master output"
+          }
+        }
+      }
+    },
+    "Pulse interval plot from the camera" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulsintervall-Diagramm der Kamera"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulse interval plot from the camera"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
