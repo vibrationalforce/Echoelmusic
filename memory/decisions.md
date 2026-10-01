@@ -4346,3 +4346,15 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-56 block (20 seam needles, 8 absence needles, 23 units; 260 → 266 XCTAssert).
   WORK PASS / HEAD FAIL (20/8/21 — ONE finding). No re-anchor needed.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-57: note grid, picked note, Notes switch, arrangement row (a9286667f)
+
+- **Decision:** `ClipNoteEdit.gridLabel` / `pickedNoteLine` / `notesSwitchTitle` and `ArrangementStrip.spoken` build
+  from catalog keys seamed around the counts (≤ 4 operands per step), plurals as a ternary of two keys. Reused keys:
+  " of ", " selected", " more", ", beat ", "note"/"notes". Catalog 1389 → 1399.
+- **Why:** pure helpers interpolating one literal are invisible to key scans; four runtime guards pin the exact
+  English, which the seams reproduce under the test locale (Python mirror per assembly before the commit).
+  Separators "· " and ", " stay verbatim — no language in them.
+- **Guard:** claim 11 E4-57 block (13 seam needles, 6 absence needles, 16 units; 266 → 270 XCTAssert).
+  WORK PASS / HEAD FAIL (13/6/10 — ONE finding). No re-anchor needed.
+- **Review:** 2026-10-31.

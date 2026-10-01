@@ -41454,3 +41454,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-56-Block (20 Naht-Nadeln, 8 Abwesenheits-Nadeln, 23 Einheiten; XCTAssert 260 → 266). Laufzeit-Wächter (fünf Dateien) lesen die englische Zusammensetzung unverändert — Python-Spiegel hat jede Nadel reproduziert. Benotung `scratchpad/transcribe_e4_56.py`: HEAD FAIL (20/8/21 — EIN Befund), WORK PASS. Checker alle OK, Klammerbilanz 0.
 - **Gates:** 7247cb093 (E4-55) gepusht, Monitor bsakg0dn1 läuft. E4-56 (6b34101a7) lokal — Push nach dem Compile Check.
 - **Offen (E4):** ClipNoteEdit.gridLabel (ThePartNoteGridSpeaksTests pinnt vier Laufzeit-Sätze exakt), WorkstationView Compose-Guide-Nummer, ArrangeCanvasView gesprochene Zeile; WAV-HUD bewusst englisch; türlose Flächen erst nach einer Tür.
+
+## 2026-10-01 — E4-57: Notenraster · gewählte Note · Notes-Schalter · Arrangement-Zeile (a9286667f)
+
+- **Gebaut:** `ClipNoteEdit.gridLabel` / `pickedNoteLine` / `notesSwitchTitle` und `ArrangementStrip.spoken` als `String(localized:)`-Nähte um die Zahlen (≤ 4 Operanden je Schritt), Plurale als Ternär zweier Schlüssel; „ of “, „ selected“, „ more“, „, beat “, „note“/„notes“ wiederverwendet. Katalog 1389 → 1399 (+10). Sources: 2 Dateien + Katalog.
+- **Wächter:** Anspruch 11 E4-57-Block (13 Naht-Nadeln, 6 Abwesenheits-Nadeln, 16 Einheiten; XCTAssert 266 → 270). Vier Laufzeit-Wächter pinnen das exakte Englisch — Python-Spiegel je Zusammensetzung reproduziert es. Benotung `scratchpad/transcribe_e4_57.py`: HEAD FAIL (13/6/10 — EIN Befund), WORK PASS. Checker alle OK, Klammerbilanz 0.
+- **Gates:** 7247cb093 (E4-55): Compile Check 3121 ✓, Quick Test 3849 ✓ (CI/CD + Auto-Merge laufen, Monitor bsakg0dn1). 1b8577f85 (E4-56) danach gepusht. E4-57 (a9286667f) lokal — Push nach dem Compile Check auf 1b8577f85.
+- **Offen (E4):** BioMusicDirector-Narration (`text(for:tempo:)`, Laufzeit-Wächter mit Präfix-/Phrasen-Nadeln — eigene Vermessung); WAV-HUD bewusst englisch; türlose Flächen erst nach einer Tür.
