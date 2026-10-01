@@ -705,7 +705,7 @@ struct WorkspaceView: View {
                     ImmersiveMonitorMini(active: cameraRPPG.isRunning)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(floatingVisualVisible ? "Hide floating visual" : "Show floating visual")
+                .accessibilityLabel(floatingVisualVisible ? String(localized: "Hide floating visual") : String(localized: "Show floating visual"))
                 #endif
             }
             // ⬆ THE MONITOR CLUSTER STAYS TRAILING-MOST — it was NOT part of the 2026-08-08 swap
@@ -1319,9 +1319,9 @@ struct CompositionHeaderStrip: View {
                     // accessible, which is the worst possible place to undercount. Adding a
                     // case to `NoteNaming` means editing this string too; there is no
                     // compiler link between them.
-                    .accessibilityHint("Chooses how the twelve notes are spelled — "
-                                       + "international A B C, German A H C, solfège Do Re Mi, "
-                                       + "or Indian sargam Sa Re Ga")
+                    // E4-39: ONE literal, not a `+` chain — a chain of literals is a `String` and
+                    // reached VoiceOver verbatim on a German phone; a single literal is a key.
+                    .accessibilityHint("Chooses how the twelve notes are spelled — international A B C, German A H C, solfège Do Re Mi, or Indian sargam Sa Re Ga")
                 }
                 labeled("A4", chromed: false) {
                     // Concert pitch — number-pad entry, exact to 0.01 Hz (380–500),

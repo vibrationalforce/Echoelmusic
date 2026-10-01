@@ -368,10 +368,10 @@ struct FloatingVisualWindow: View {
         }
         var label: String {
             switch self {
-            case .small:      return "Small"
-            case .medium:     return "Medium"
-            case .large:      return "Large"
-            case .fullscreen: return "Fullscreen"
+            case .small:      return String(localized: "Small")
+            case .medium:     return String(localized: "Medium")
+            case .large:      return String(localized: "Large")
+            case .fullscreen: return String(localized: "Fullscreen")
             }
         }
         var isFullscreen: Bool { self == .fullscreen }
@@ -616,7 +616,7 @@ struct FloatingVisualWindow: View {
             }
             .buttonStyle(.plain)
             .disabled(wavExporting)
-            .accessibilityLabel(wavRecording ? "Stop WAV audio recording" : "Record lossless WAV audio")
+            .accessibilityLabel(wavRecording ? String(localized: "Stop WAV audio recording") : String(localized: "Record lossless WAV audio"))
             .accessibilityValue(Self.wavAccessibilityValue(
                 recording: wavRecording,
                 failed: audioEngine.retroCapture.writeFailed,
@@ -630,9 +630,10 @@ struct FloatingVisualWindow: View {
     /// homes for one fact, only one kept current).
     static func wavAccessibilityValue(recording: Bool, failed: Bool, droppedSeconds: Double) -> String {
         guard recording else { return "" }
-        if failed { return "Writing to disk failed" }
+        if failed { return String(localized: "Writing to disk failed") }
         guard droppedSeconds.isFinite, droppedSeconds > 0 else { return "" }
-        return String(format: "Recording, %.1f seconds lost", droppedSeconds)
+        // E4-39: seams around a locale-aware number instead of a format key — no catalog unit can carry one.
+        return String(localized: "Recording, ") + EchoelDecimalText.string(droppedSeconds, decimals: 1) + String(localized: " seconds lost")
     }
 
     /// ⚠️ THE GUARD IS NOT DECORATION AND IT WAS MISSING HERE (#1378). `Int(_:)` from a
@@ -1078,7 +1079,7 @@ struct FloatingVisualWindow: View {
                 // "drag to move" is only true where a drag can move it.
                 .accessibilityLabel(windowSize.isFullscreen
                     ? "Echoelmusic"
-                    : "Echoelmusic — drag to move the visual")
+                    : String(localized: "Echoelmusic — drag to move the visual"))
                 .accessibilityActions {
                     if !windowSize.isFullscreen {
                         ForEach(FloatingVisualLayout.SnapCorner.allCases, id: \.rawValue) { corner in
@@ -1181,7 +1182,7 @@ struct FloatingVisualWindow: View {
                         .frame(width: 28, height: 44).contentShape(Rectangle().inset(by: -5))
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(touchShowGrid ? "Hide note grid" : "Show note grid")
+                .accessibilityLabel(touchShowGrid ? String(localized: "Hide note grid") : String(localized: "Show note grid"))
             }
             // S4c — the meters' door. Only while OFFERED: once a meter is on screen the way
             // back is the "Picture" button in the meter surface itself, outside this budget.
@@ -1215,7 +1216,7 @@ struct FloatingVisualWindow: View {
                     .frame(width: 28, height: 44).contentShape(Rectangle().inset(by: -5))
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(windowSize.isFullscreen ? "Exit fullscreen" : "Resize visual")
+            .accessibilityLabel(windowSize.isFullscreen ? String(localized: "Exit fullscreen") : String(localized: "Resize visual"))
             .accessibilityValue(windowSize.label)
             Button { withAnimation(.easeInOut(duration: 0.15)) { isPresented = false } } label: {
                 Image(systemName: "xmark")

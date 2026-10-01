@@ -71,7 +71,9 @@
 // always-on / Bio-panel sentences of AlwaysOnBioChannel — demo subject, FX footer, Bio-panel claim, Sound-panel line and
 // empty states, breath-voice and Auto hints and captions (parent: all verbatim or interpolated, 32 units missing — ONE finding).
 // E4-38 added the bio strip's banner, driving-dot states, source tag and camera captions, and the two mood pads' titles,
-// axis captions and spoken label/value/actions (parent: verbatim, interpolated or unit-less, 20 units missing — ONE finding). Claim 12
+// axis captions and spoken label/value/actions (parent: verbatim, interpolated or unit-less, 20 units missing — ONE finding).
+// E4-39 added the visual window bar's spoken labels, the window-size words, the WAV gap and the header's monitor button
+// and note-name hint (parent: ternaries and a `+` chain of literals, 17 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1281,6 +1283,43 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "No signal", "Reading…", "Cover camera", "Connecting…", "Sound", "Visual", "dark · bright", "still · moving",
                           "natural · spectrum", "calm · energy", " mood pad", " percent across (", " percent up (", "More ", "right", "left", "up", "down"],
                          "bio strip and mood pads")
+
+        // E4-39 — the floating visual window's bar and the header's monitor button: every ternary of two bare
+        // literals in an `.accessibilityLabel` is a `String` (VoiceOver read it verbatim on a German phone) and
+        // now holds two keys; `WindowSize.label` (the resize button's spoken value) returns keys; the WAV
+        // button's spoken gap is seams around a locale-aware number instead of a `String(format:)` key; the
+        // note-name hint was a `+` chain of three literals and is ONE literal, i.e. a key. TheWayOutSurvives
+        // Rotation (`"Exit fullscreen"` before `"Hide visual"`), TheFloatingWindowMovesWithoutADrag (the drag label
+        // on exactly one line) and TheCaptureTapDoesNotTouchTheDisk (`seconds lost`) keep their needles.
+        let floating = try codeOnly("Sources/Echoelmusic/Studio/FloatingVisualWindow.swift")
+        for seam in ["case .fullscreen: return String(localized: \"Fullscreen\")",
+                     ".accessibilityLabel(wavRecording ? String(localized: \"Stop WAV audio recording\") : String(localized: \"Record lossless WAV audio\"))",
+                     "if failed { return String(localized: \"Writing to disk failed\") }",
+                     "return String(localized: \"Recording, \") + EchoelDecimalText.string(droppedSeconds, decimals: 1) + String(localized: \" seconds lost\")",
+                     ": String(localized: \"Echoelmusic — drag to move the visual\"))",
+                     ".accessibilityLabel(touchShowGrid ? String(localized: \"Hide note grid\") : String(localized: \"Show note grid\"))",
+                     ".accessibilityLabel(windowSize.isFullscreen ? String(localized: \"Exit fullscreen\") : String(localized: \"Resize visual\"))"] {
+            XCTAssertTrue(floating.contains(seam), "FloatingVisualWindow lost the E4-39 seam `\(seam)`")
+        }
+        for verbatim in ["return \"Fullscreen\"", "? \"Stop WAV audio recording\"", "return \"Writing to disk failed\"", "String(format: \"Recording, %.1f seconds lost\"",
+                         "                    : \"Echoelmusic — drag to move the visual\")", "? \"Hide note grid\"", "? \"Exit fullscreen\""] {
+            XCTAssertFalse(floating.contains(verbatim), "FloatingVisualWindow spells a spoken label verbatim again: `\(verbatim)`")
+        }
+        let workspace = try codeOnly("Sources/Echoelmusic/Studio/WorkspaceView.swift")
+        XCTAssertTrue(workspace.contains(".accessibilityLabel(floatingVisualVisible ? String(localized: \"Hide floating visual\") : String(localized: \"Show floating visual\"))"),
+                      "WorkspaceView lost the E4-39 monitor-button seam")
+        XCTAssertTrue(workspace.contains(".accessibilityHint(\"Chooses how the twelve notes are spelled — international A B C, German A H C, solfège Do Re Mi, or Indian sargam Sa Re Ga\")"),
+                      "WorkspaceView's note-name hint is no longer ONE literal key")
+        XCTAssertFalse(workspace.contains("? \"Hide floating visual\""), "WorkspaceView spells the monitor label verbatim again")
+        XCTAssertFalse(workspace.contains("+ \"international A B C"), "WorkspaceView's note-name hint is a `+` chain of literals again (a String, not a key)")
+        // RUNTIME COUNTERWEIGHTS: the bundle's English output is unchanged
+        XCTAssertEqual(FloatingVisualWindow.wavAccessibilityValue(recording: true, failed: false, droppedSeconds: 1.5), "Recording, 1.5 seconds lost")
+        XCTAssertEqual(FloatingVisualWindow.WindowSize.fullscreen.label, "Fullscreen")
+        try assertGerman(["Small", "Medium", "Large", "Fullscreen", "Stop WAV audio recording", "Record lossless WAV audio", "Writing to disk failed",
+                          "Recording, ", " seconds lost", "Echoelmusic — drag to move the visual", "Hide note grid", "Show note grid", "Exit fullscreen",
+                          "Resize visual", "Hide floating visual", "Show floating visual",
+                          "Chooses how the twelve notes are spelled — international A B C, German A H C, solfège Do Re Mi, or Indian sargam Sa Re Ga"],
+                         "visual window bar and header monitor")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
