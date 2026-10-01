@@ -593,7 +593,9 @@ struct FloatingVisualWindow: View {
                 // follows for `writeFailed`: a recorder that quietly loses audio is the
                 // lying-control class. `warning`, not `danger` — the take is salvageable and
                 // still growing, which is a different message from "nothing more is written".
-                Text("WAV GAP \(String(format: "%.1f", audioEngine.retroCapture.droppedSeconds))s")
+                // E4-110: the word is a catalog lookup; the number stays an operand (a `%` in a key is banned).
+                Text(String(localized: "WAV GAP ")
+                     + String(format: "%.1f", audioEngine.retroCapture.droppedSeconds) + "s")
                     .font(EchoelTheme.font(11, .semibold).monospacedDigit())
                     .foregroundStyle(EchoelTheme.warning)
             } else if wavRecording {

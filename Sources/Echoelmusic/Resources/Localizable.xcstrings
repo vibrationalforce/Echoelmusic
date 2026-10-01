@@ -33482,6 +33482,38 @@
           }
         }
       }
+    },
+    "WAV FAILED" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WAV-FEHLER"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WAV FAILED"
+          }
+        }
+      }
+    },
+    "WAV GAP " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WAV-LÜCKE "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WAV GAP "
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -211,7 +211,10 @@
 // missing — ONE finding). E4-107 keyed the three engine-failure sentences `AudioDegradedRow` shows (parent: seams
 // absent, 4 units missing — ONE finding). E4-108 looked up the one Live Colabo status line `MultipeerSession` still
 // built verbatim, the join request (parent: seam absent — ONE finding). E4-109 gave the two VoiceOver labels the
-// scanner's own word-boundary bug had hidden their units (parent: 2 units missing — ONE finding). Claim 12
+// scanner's own word-boundary bug had hidden their units (parent: 2 units missing — ONE finding). E4-110 keyed the
+// visual window's two recording-fault badges and took „Poincaré plot“ and „WAV FAILED“ off `untranslatedPanelWords`,
+// where E4-6 had filed them as spelled alike in every language — neither is (parent: seam absent, 2 units missing —
+// ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -576,7 +579,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             "Sources/Echoelmusic/Studio/SafeModeView.swift",
             "Sources/Echoelmusic/Studio/LearnView.swift",
     ]
-    static let untranslatedPanelWords: Set<String> = ["BPM", "Create from Within", "Demo", "E", "ECHOEL", "Echoelmusic", "OK", "Poincaré plot", "Studio", "Tempo", "WAV FAILED", "WAV …"]
+    static let untranslatedPanelWords: Set<String> = ["BPM", "Create from Within", "Demo", "E", "ECHOEL", "Echoelmusic", "OK", "Studio", "Tempo", "WAV …"]
 
     func testEveryPanelTextOfTheReachableChromeFilesHasAGermanUnit() throws {
         let strings = try catalogStrings()
@@ -3477,6 +3480,18 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertTrue(incomingCard.contains(seam), "the incoming-piece card lost its E4-109 label key: \(seam)")
         }
         try assertGerman(["Poincaré plot", "Dismiss"], "VoiceOver labels on modifier literals")
+
+        // E4-110 — the visual window's recording badge tells the performer the take broke ("WAV FAILED") or has a
+        // hole ("WAV GAP 1.2s"). Both are words, not tokens: the first is a key and lacked its unit, the second was
+        // interpolated. Claim 10 now walks "WAV FAILED" too, since it left the untranslated set.
+        let wavBadge = try codeOnly("Sources/Echoelmusic/Studio/FloatingVisualWindow.swift")
+        for seam in ["Text(\"WAV FAILED\")", "Text(String(localized: \"WAV GAP \")"] {
+            XCTAssertTrue(wavBadge.contains(seam), "the recording badge lost its E4-110 seam: \(seam)")
+        }
+        for verbatim in ["Text(\"WAV GAP \\("] {
+            XCTAssertFalse(wavBadge.contains(verbatim), "the gap badge is interpolated again")
+        }
+        try assertGerman(["WAV FAILED", "WAV GAP "], "recording fault badges")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
