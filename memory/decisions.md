@@ -4304,3 +4304,17 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-53 block (2 text needles, 2 escape-absence needles, 13 units; 250 → 252 XCTAssert).
   WORK PASS / HEAD FAIL (2/2/13 — ONE finding).
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-54: the three Studio captions built as Strings (51745c062)
+
+- **Decision:** Save hint, buffer hint and mood caption in EchoelStudioView become `String(localized:)` seams
+  joined by `+` (≤ 4 operands per step, the Compile Check 3106 law); `romanceSeventhClause` keeps its `static let`
+  and seams " of the " / " offered)" around its two derived counts. Catalog 1337 → 1345.
+- **Why:** `Text("a" + "b")` is a String, not a key — the E4-53 scanner sees the call, not the type, so these three
+  were invisible to every unit count. The clause's declaration is pinned by MoodKnobsSayWhatTheyDoTests; its two
+  caption needles are re-anchored 1:1 (`… one ") + Self.romanceSeventhClause`, +1 comment), the regex
+  `of the [0-9]+ offered` stays absent, TheSongAloneCanBeSavedTests' `raw.contains` on the Save hint and
+  WeatherIsAMoodRubricTests' `Friendly ↔ scary (tension)` match unchanged text.
+- **Guard:** claim 11 E4-54 block (8 seam needles, 6 absence needles on the old String forms, 8 units; 252 → 254
+  XCTAssert). WORK PASS / HEAD FAIL (8/6/8 — ONE finding).
+- **Review:** 2026-10-31.

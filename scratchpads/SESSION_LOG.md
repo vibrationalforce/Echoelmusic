@@ -41433,3 +41433,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-53-Block (2 Text-Nadeln, 2 Escape-Abwesenheits-Nadeln, 13 Einheiten; XCTAssert 250 → 252). Benotung `scratchpad/transcribe_e4_53.py`: HEAD FAIL (2/2/13 — EIN Befund), WORK PASS. Checker alle OK.
 - **Gates:** d004dfbba Compile Check läuft (Monitor bnrm4l13h). E4-51 (f3c32250e), E4-52 (dee4d6994), E4-53 (fd8e4ee39) lokal — Push nach dem Compile Check.
 - **Offen (E4):** zwei `Text("a" + "b")`-Captions im Studio (Save-Hinweis, Puffer-Hinweis), Mood-Caption mit `romanceSeventhClause` (MoodKnobsSayWhatTheyDoTests pinnt zweimal), WAV-GAP-HUD, LoopExporter-Gründe; türlose Flächen erst nach einer Tür.
+
+## 2026-10-01 — E4-54: die drei als String gebauten Studio-Captions (51745c062)
+
+- **Gebaut:** Save-Hinweis und Puffer-Hinweis (`Text("a" + "b")`) sowie die Mood-Caption mit `romanceSeventhClause` werden `String(localized:)`-Nähte mit `+` (≤ 4 Operanden je Schritt); die Klausel behält `static let` und näht „ von “ / „ angebotenen)“ um ihre zwei Zählwerte. Katalog 1337 → 1345 (+8). Sources: 1 Datei + Katalog.
+- **Wächter:** MoodKnobsSayWhatTheyDoTests 1:1 re-verankert (zwei Nadeln auf die Naht-Form, +1 Kommentar; Regex `of the [0-9]+ offered` weiter abwesend). Anspruch 11 E4-54-Block (8 Naht-Nadeln, 6 Abwesenheits-Nadeln, 8 Einheiten; XCTAssert 252 → 254). Benotung `scratchpad/transcribe_e4_54.py`: HEAD FAIL (8/6/8 — EIN Befund), WORK PASS. Checker alle OK, Klammerbilanz 0.
+- **Gates:** d004dfbba Compile Check 3119 ✓ (Quick Test, Full Suite, Auto-Merge Docs ✓; CI/CD + Auto-Merge Claude laufen). Stapel E4-51…E4-54 wird nach diesem Commit gepusht.
+- **Offen (E4):** WAV-GAP-HUD (bewusst englisch), LoopExporter-Gründe, Mute/Solo `name:`; türlose Flächen erst nach einer Tür.
