@@ -41695,3 +41695,13 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-90/91/92, XCTAssert 408 → 423; jede Transkription WORK PASS / HEAD FAIL; Gesamt-Anspruch-11 668/0 (162 Dateien); Anspruch-10-Lauf 554/0.
 - **Harness-Befund:** der Transkriptions-Filter verwarf jede Nadel mit Backslash-Klammer — auch die maskierte; zwei Kopfzeilen-Nadeln wären nie benotet worden. Filter verengt auf echte Interpolation.
 - **Gates:** b3f3e1788 Compile Check 3137 ✓, Quick Test 3865 ✓; Stapel bis 3c7c3cb96 gepusht, Monitor läuft.
+
+## 2026-10-01 — E4-93 … E4-96: die vier offenen Reste (2069d7184 · 25fefec04 · 273484e32 · b55d78e15)
+
+- **E4-93:** Spur-Inspektor-Hinweise (Instrument, Pegel, Panorama) und der Hinweis „Bar variation“. Deutsch schreibt 1,00 / 2,00 (EchoelDecimalText ist locale-fähig). Katalog 1912.
+- **E4-94:** Workstation-Zeile (gesprochene Namen „Stumm“/„Solo“, Detailzeile, Zustands-Etiketten STUMM/SOLO/SCHARF) und die Perform-Schalter. Buchstaben M/S bleiben. Katalog 1921.
+- **E4-95:** Instrument-Notizen zum neuen Stück, Bibliotheks-/Speicher-Hinweis, Klangwort-Hinweis (an den zitierten Wörtern geteilt, weil ein Schlüssel kein `"` tragen darf) und das gesprochene „, Favorit“ über einen Helfer. Katalog 1929.
+- **E4-96:** der VoiceOver-Hinweis des Einverständnis-Schalters im Onboarding, zwei Fragmente; der „NOT localised“-Kommentar ist zurückgenommen. Katalog 1931.
+- **Wächter:** Anspruch 11 E4-93…E4-96, XCTAssert 423 → 437; jede Transkription WORK PASS / HEAD FAIL; Gesamt-Anspruch-11 699 Nadeln / 0 gebrochen (168 Dateien).
+- **Gates:** 273484e32 gepusht, Monitor läuft; E4-96 wartet auf den Compile Check.
+- **Offen:** weite Abschluss-Messung, bevor „Durchgang geschlossen“ stehen darf.

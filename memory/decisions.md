@@ -4826,3 +4826,19 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   that pins a source `"\(bar)"` was silently never graded. Its filter now skips only a real interpolation.
 - **Guards:** claim 11 blocks E4-90/91/92; XCTAssert 408 → 423; each transcription WORK PASS / HEAD FAIL.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-93 · E4-94 · E4-95 · E4-96: the four open rests of the chrome (2069d7184 · 25fefec04 · 273484e32 · b55d78e15)
+
+- **What:** the four gaps the founder inbox named after E4-92 — the track inspector hints and the bar-variation
+  hint (E4-93); the workstation row's switch names, detail line and state tags plus the Perform plate switches
+  (E4-94); the instrument's piece notes, library/save hints, timbre-word hint and spoken favourite suffix (E4-95);
+  the onboarding consent hint (E4-96). Catalog 1907 → 1931.
+- **Rule kept:** a String position needs `String(localized:)`, a helper that forwards a String does not localise it;
+  names and numbers stay operands; no `"` and no `%` in a key, so the timbre hint is split at the quoted vocabulary.
+- **Deliberately not keyed:** the M/S letters, `ClipKind.displayName`, `LaneVoiceKind.displayName`, the SoundPrompt
+  words very/slightly.
+- **Retraction:** the consent hint's comment said "NOT localised … KNOWN AND DELIBERATE"; its precondition (an
+  app-wide key style) was met by the E4 pass itself, so the comment is replaced by an ⛔ note in place.
+- **Guards:** claim 11 blocks E4-93…E4-96; XCTAssert 423 → 437; each transcription WORK PASS / HEAD FAIL.
+- **Not yet claimed:** "pass closed". That sentence needs a wide closure scan first; it stood once and was wrong.
+- **Review:** 2026-10-31.
