@@ -4613,6 +4613,13 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-77 block (3 seam needles, 2 absence needles, 5 units; 353 → 357 XCTAssert). The two runtime
   guards mirrored in Python under the en locale. WORK PASS / HEAD FAIL (3/2/5 — ONE finding). Whole-claim-11 needle
   check: 130 files, 995 needles, 0 broken.
-- **State of E4:** the uncapped scan of bare `return "…"` / `Text("…")` producers in reachable Sources is now empty
-  except for the named leftovers above. The next German work is the DEVICE check in the founder inbox (G6), not code.
+- ⛔ **RETRACTED in the same hour (bf8b14b08): "the sweep is complete" stood here and was FALSE.** The scan behind it matched
+  `return "<Capitalised> word word` only — no ternaries, no lowercase starts, no `Unavailable:` — so it was uncapped
+  but NARROW, and a narrow needle returns less than the truth as silently as a head cap (context.md §2; the first
+  retraction this session was the cap, this one is the needle). A wider scan found reachable bare producers in
+  WorkstationSummary (transport/click hints), EchoelStudioView (:6242 Dynamic push note, Text/hint ternaries),
+  BodyTempoField, HRVCoherence, FXModulation, AutomationStatus, NoteNaming, SignalRouter/SignalRouting,
+  MicrotonalTuning, PartNoteEditor, LiveColaboView, AutomationStatusStrip and more. The E4 list is REOPENED; the
+  wide scan is saved in the scratchpad and worked slice by slice, each hit classified String-position vs
+  LocalizedStringKey-position first.
 - **Review:** 2026-10-31.
