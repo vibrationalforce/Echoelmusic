@@ -4417,3 +4417,14 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   HEAD FAIL (8/5/15 — ONE finding). TheBarCountHasACarrierTests / TheTextSizeHasButtonsTests needles re-checked on the
   working tree; whole-claim needle check over both files: 114 needles, 0 broken.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-63: new-part hint, Explore board, density words (137dfe875)
+
+- **Decision:** `MIDIImport.newPartHint` (declaration kept), `BioVariationMaze.boardSentence` and `densityWord` build from
+  catalog keys seamed around the number, the shared demo subject and the density word. Catalog 1477 → 1488.
+- **Why:** the rest-scan's remaining hint/sentence producers. The runtime guards compare the ASSEMBLED English and pass
+  under the test locale; the variation-card guard pins the density words as quoted literals, which survive the wrapping.
+  German renders the demo subject after "Ideen — Quelle: " so the nominative constant needs no case change.
+- **Guard:** claim 11 E4-63 block (8 seam needles, 6 absence needles, 11 units; 291 → 297 XCTAssert). WORK PASS /
+  HEAD FAIL (8/6/11 — ONE finding). Whole-claim needle check over the three files: 141 needles, 0 broken.
+- **Review:** 2026-10-31.
