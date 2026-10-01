@@ -201,7 +201,8 @@
 // `NetworkOutputHeader` renders and speaks as a String (parent: 2 units missing — ONE finding). E4-100 drew the instrument's chip strip as catalog keys — the German
 // help sentences named "Klang"/"Stimmung"/"Feld" while the chips still read English (parent: seam absent, 2 units missing —
 // ONE finding). E4-101 looked up the field's six self-play motion names, which the Motion picker drew verbatim through
-// `Text(String)` (parent: seams absent, 6 units missing — ONE finding). Claim 12
+// `Text(String)` (parent: seams absent, 6 units missing — ONE finding). E4-102 looked up the Visual window's four meter names where the
+// segmented picker draws them (parent: seam absent, 4 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3354,6 +3355,15 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertFalse(motionNames.contains(verbatim), "EchoelStudioView returns a motion name verbatim again: \(verbatim)")
         }
         try assertGerman(["Rise", "Fall", "Pendulum", "Drift", "Hold", "Arp"], "field self-play motion names")
+
+        // E4-102 — the meter picker drew `m.label` as a String, so the four segments read English beside the German
+        // "Bild" button in the same header. `label` keeps its English values: TheMetersLiveInTheVisualWindowTests
+        // asserts `pulse.label == "Pulse"` at runtime. The key is looked up at the one place that draws it.
+        let meterPicker = try codeOnly("Sources/Echoelmusic/Studio/VisualAnalysisMeter.swift")
+        XCTAssertTrue(meterPicker.contains("Text(LocalizedStringKey(m.label))"),
+                      "VisualAnalysisMeter lost the E4-102 seam: the meter picker draws its label as a String again")
+        XCTAssertFalse(meterPicker.contains("Text(m.label)"), "VisualAnalysisMeter draws a meter label verbatim again")
+        try assertGerman(["Waves", "Spectrum", "Scope", "Pulse"], "visual window meter names")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

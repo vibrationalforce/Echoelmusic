@@ -45,6 +45,8 @@ enum VisualAnalysisMeter: String, CaseIterable, Identifiable, Sendable {
     var id: String { rawValue }
 
     /// The segment label. Short, because four of them share one row on a 330 pt card.
+    /// E4-102: each literal is also a catalog KEY. The picker looks it up where it draws it;
+    /// the value stays English here because TheMetersLiveInTheVisualWindowTests reads it.
     var label: String {
         switch self {
         case .wavefront: return "Waves"
@@ -108,7 +110,7 @@ struct VisualAnalysisLayer: View {
             HStack(spacing: 8) {
                 Picker("Meter", selection: $meterRaw) {
                     ForEach(VisualAnalysisMeter.allCases) { m in
-                        Text(m.label)
+                        Text(LocalizedStringKey(m.label))
                             .tag(m.rawValue)
                             .accessibilityLabel(m.spokenName)
                     }
