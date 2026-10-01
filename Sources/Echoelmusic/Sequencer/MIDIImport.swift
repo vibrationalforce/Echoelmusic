@@ -80,12 +80,12 @@ public enum MIDIImport {
         /// The song has no MIDI track. Never created behind the user's back — `addMIDITrack`
         /// is a separate, deliberate tap on the door paired with Import MIDI.
         case noMIDILane
-        /// All eight `ClipStore` slots are taken. Fail, never overwrite.
+        /// Every `ClipStore` slot is taken. Fail, never overwrite.
         case clipGridFull
 
         /// The sentence the Workstation shows. Numbers are written through this type's own
-        /// constants; the slot count is the literal "8", as in `AudioImport`, because
-        /// `ClipStore.slotCount` is main-actor-isolated and this property is not.
+        /// constants; the full-grid sentence is `AudioImport.gridFullSentence`, ONE definition for
+        /// both doors (B1: `ClipStore.slotCount` is `nonisolated`, so the number is the store's).
         public var userMessage: String {
             switch self {
             case .pickerFailed:   return String(localized: "Couldn't open that file.")
@@ -97,7 +97,7 @@ public enum MIDIImport {
                 let limits: String = String(localized: "That MIDI file is too long — a part holds up to ") + "\(MIDIImport.maxBars)"
                 return limits + String(localized: " bars and ") + "\(MIDIImport.maxNotes)" + String(localized: " notes.")
             case .noMIDILane:     return String(localized: "This piece has no MIDI track — add a MIDI track first.")
-            case .clipGridFull:   return String(localized: "The part slots are full — all 8 are in use.")
+            case .clipGridFull:   return AudioImport.gridFullSentence
             }
         }
     }
@@ -164,7 +164,7 @@ public enum MIDIImport {
     ///
     /// ⭐ AN ORPHANED EMPTY USER CLIP IS REUSED, for the reason `ensureComposerRegion` reuses its
     /// own: nothing clears a slot, and an Undo removes the region but leaves the clip, so every
-    /// New → Undo would otherwise spend one of the eight slots for good. Only a user-owned MIDI
+    /// New → Undo would otherwise spend a slot for good. Only a user-owned MIDI
     /// clip that NO region plays and that carries NOTHING qualifies — `Clip.isEmpty` (no notes,
     /// no drum steps) and no automation: an older build's drum pattern or bio-take automation
     /// would otherwise ride along into a part the editor shows as empty (M1b review). A reused

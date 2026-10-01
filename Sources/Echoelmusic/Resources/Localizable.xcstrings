@@ -26669,18 +26669,38 @@
         }
       }
     },
-    "The part grid is full — all 8 slots are in use." : {
+    "The part grid is full — all " : {
+      "comment" : "B1: head of the import doors' full-grid sentence (AudioImport.gridFullSentence); ClipStore.slotCount follows, then ' slots are in use.'",
+      "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Das Teile-Raster ist voll — alle 8 Plätze sind belegt."
+            "value" : "Das Teile-Raster ist voll — alle "
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The part grid is full — all 8 slots are in use."
+            "value" : "The part grid is full — all "
+          }
+        }
+      }
+    },
+    " slots are in use." : {
+      "comment" : "B1: tail of the import doors' full-grid sentence, after the number ClipStore.slotCount",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Plätze sind belegt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " slots are in use."
           }
         }
       }
@@ -26809,22 +26829,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "This piece has no MIDI track — add a MIDI track first."
-          }
-        }
-      }
-    },
-    "The part slots are full — all 8 are in use." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die Teile-Plätze sind voll — alle 8 sind belegt."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The part slots are full — all 8 are in use."
           }
         }
       }

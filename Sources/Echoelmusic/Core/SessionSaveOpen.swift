@@ -26,7 +26,7 @@
 //    fresh song like any pre-Session row — and the song it replaces is kept by the recovery
 //    slot (`recoveryRow`). (⛔ The first wording said a shared document never replaces the
 //    song; the review of `2eb3cb84d` measured the import door and it does.)
-//  · A Session this build cannot open — newer, damaged, or with a clip grid of another size —
+//  · A Session this build cannot open — newer, damaged, or with a clip grid LARGER than this build's —
 //    REFUSES the whole Open before anything changes, and says why. Never half an open.
 //  · Song form is CAPTURED and not yet restored (its store has no replace API; it is the legacy
 //    root the timeline superseded). The player's automation lanes are NOT captured by the
@@ -69,7 +69,7 @@ public enum SessionSaveOpen {
         case .absent:
             return nil
         case .restorable(let session):
-            guard session.content.clipSlots.count == ClipStore.slotCount else {
+            guard ClipStore.migratedGrid(session.content.clipSlots) != nil else {
                 // E4-65: the quoted name and the two counts are seamed between catalog keys (≤ 4 operands per step).
                 let head: String = "“\(project.name)”" + String(localized: " was saved with a part grid of ") + "\(session.content.clipSlots.count)"
                 let tail: String = String(localized: " cells; this version has ") + "\(ClipStore.slotCount)" + String(localized: ". Nothing was changed.")
@@ -101,8 +101,8 @@ public enum SessionSaveOpen {
         case .absent:
             song = emptySong
         case .restorable(let session):
-            guard session.content.clipSlots.count == ClipStore.slotCount else { return false }
-            song = (session.content.timeline, session.content.clipSlots)
+            guard let slots = ClipStore.migratedGrid(session.content.clipSlots) else { return false }
+            song = (session.content.timeline, slots)
         case .newer, .unreadable:
             return false
         }
@@ -114,8 +114,9 @@ public enum SessionSaveOpen {
 
     /// The song a project saved before Sessions opens into, and the song "New piece" starts —
     /// ONE definition (#416): the default MIDI and audio track, no parts, an empty clip grid.
-    /// `@MainActor` because `TimelineStore.migrate` and `ClipStore.slotCount` are main-actor
-    /// isolated (review of 04551fa36, HIGH: without it this does not compile under Swift 6);
+    /// `@MainActor` because `TimelineStore.migrate` is main-actor isolated (review of
+    /// 04551fa36, HIGH: without it this does not compile under Swift 6; `ClipStore.slotCount`
+    /// is `nonisolated` since B1);
     /// every caller — `restoreSong`, `startEmptySong`, the guard — already runs there.
     @MainActor
     public static var emptySong: (document: TimelineDocument, slots: [Clip?]) {

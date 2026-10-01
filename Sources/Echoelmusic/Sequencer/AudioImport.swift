@@ -133,7 +133,7 @@ public enum AudioImport {
         /// whether any lane creator has a production caller — it goes red both ways, so
         /// deleting the door without demoting this sentence is caught, as is the reverse.
         case noAudioLane
-        /// All eight `ClipStore` slots are taken. Founder decision 8: fail, never overwrite.
+        /// Every `ClipStore` slot is taken. Founder decision 8: fail, never overwrite.
         case clipGridFull
 
         /// The sentence the Workstation shows. One home for the wording so the surface cannot
@@ -146,9 +146,18 @@ public enum AudioImport {
             case .invalidFormat:   return String(localized: "That audio has no usable sample rate or channels.")
             case .invalidDuration: return String(localized: "That audio has no playable length.")
             case .noAudioLane:     return String(localized: "This piece has no audio track — add an audio track first.")
-            case .clipGridFull:    return String(localized: "The part grid is full — all 8 slots are in use.")
+            case .clipGridFull:    return AudioImport.gridFullSentence
             }
         }
+    }
+
+    /// The sentence both import doors show when every cell of the part grid is taken — ONE
+    /// definition (#416) for `AudioImport.Failure` and `MIDIImport.Failure`, so the number on
+    /// screen is the store's (`ClipStore.slotCount`, `nonisolated` since B1). It lives HERE, not in
+    /// `ClipStore`: this file is in the glossary scan (`TheChromeSpeaksOneWordPerThingTests`), the
+    /// store is pure data and its persisted `"clips"` name keeps it out of that scan.
+    public static var gridFullSentence: String {
+        String(localized: "The part grid is full — all ") + "\(ClipStore.slotCount)" + String(localized: " slots are in use.")
     }
 
     /// What a successful import produced. Returned rather than only persisted so the caller can

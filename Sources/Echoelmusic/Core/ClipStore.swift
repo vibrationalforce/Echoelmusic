@@ -14,7 +14,36 @@ import Observation
 @Observable
 public final class ClipStore {
 
-    public static let slotCount = 8
+    /// How many cells the grid holds. B1 (2026-10-01) raised it from `legacySlotCount`; a shorter
+    /// file or Session is PADDED at the end on read (`migratedGrid`), never re-seated — a region
+    /// names its clip by id, the index only says where the clip sits. It is a BOUND, not the voice
+    /// budget (that is per track, `LaneVoiceRack`): the grid rides whole in the Session envelope,
+    /// is rewritten on every clip edit, and no production path clears a cell (`clear(at:)` has no
+    /// caller) — so the ceiling moved, it did not go away. `nonisolated` so the import failures
+    /// (nonisolated enums) can say the number (#416).
+    public nonisolated static let slotCount = 64
+
+    /// The size every build before B1 wrote and reads — those builds throw away any other count.
+    public nonisolated static let legacySlotCount = 8
+
+    /// The one migration from a stored grid to this build's grid. A grid of `slotCount` cells
+    /// comes back unchanged; a SHORTER one is padded with empty cells at the END, so every clip
+    /// keeps its cell; a LONGER one (a newer build's) is `nil` — truncating would drop clips a
+    /// part still names. Pure; read by `init` and by `SessionSaveOpen`.
+    public nonisolated static func migratedGrid(_ saved: [Clip?]) -> [Clip?]? {
+        guard saved.count <= slotCount else { return nil }
+        return saved + [Clip?](repeating: nil, count: slotCount - saved.count)
+    }
+
+    /// The grid as `persist` WRITES it: trailing empty cells past `legacySlotCount` are left off,
+    /// never a filled one. Cells fill lowest-first and nothing clears one, so while at most eight
+    /// clips exist the file is exactly the eight-cell file every earlier build reads — a rollback
+    /// keeps them. Past eight, an earlier build still discards the file and its next clip write
+    /// replaces it; that cost is real and is the founder's (FOUNDER_INBOX), not hidden here.
+    nonisolated static func storedGrid(_ slots: [Clip?]) -> [Clip?] {
+        let lastFilled = slots.lastIndex(where: { $0 != nil }) ?? -1
+        return Array(slots.prefix(Swift.max(legacySlotCount, lastFilled + 1)))
+    }
 
     /// Fixed grid of slots; `nil` = empty cell.
     public private(set) var slots: [Clip?]
@@ -33,15 +62,19 @@ public final class ClipStore {
     public init() {
         // Element-tolerant, POSITIONALLY (see AppGroupStore.loadLossyArray). This grid is the
         // one store where a hole must be KEPT, not compacted: the index IS the slot, so
-        // dropping a corrupt clip would shift every later one into the wrong cell AND fail the
-        // count check below — turning one bad clip into all eight lost. `[Clip?]` already means
+        // dropping a corrupt clip would shift every later one into the wrong cell — and since B1
+        // the migration below would then PAD the shortened grid and keep it, re-seating every
+        // later clip silently instead of refusing. `[Clip?]` already means
         // "nil = empty cell", so an unreadable clip degrades to exactly that: its own cell
-        // empties, the other seven survive. Honest scope: `Clip.init(from:)` is `try?`-guarded
+        // empties, every other cell survives. Honest scope: `Clip.init(from:)` is `try?`-guarded
         // on every field, so a clip can only fail to decode if it is not a JSON object at all.
         // This is insurance against a non-object element, not a live everyday hazard.
+        // B1: a file an older build wrote — or this build wrote through `storedGrid` — holds
+        // FEWER cells; `migratedGrid` pads it at the end in memory. A file with MORE cells than
+        // `slotCount` is a newer build's: it starts empty, and the next clip write replaces it.
         let saved = store.loadLossyArray(Clip?.self, name: Self.fileName)?.map { $0 ?? nil }
-        if let saved, saved.count == Self.slotCount {
-            self.slots = saved
+        if let saved, let grid = Self.migratedGrid(saved) {
+            self.slots = grid
         } else {
             self.slots = Array(repeating: nil, count: Self.slotCount)
         }
@@ -57,7 +90,7 @@ public final class ClipStore {
     /// from.
     public var filledClips: [Clip] { slots.compactMap { $0 } }
 
-    /// The first empty slot, or `nil` when the 8-slot grid is full. The audio /
+    /// The first empty slot, or `nil` when the grid is full. The audio /
     /// video import path lands a fresh clip here; a full grid surfaces to the
     /// user as "clip grid full" rather than silently overwriting. Pure lookup.
     public var firstEmptySlotIndex: Int? { slots.firstIndex(where: { $0 == nil }) }
@@ -216,7 +249,8 @@ public final class ClipStore {
     /// Replace the whole grid with a restored one — the Session OPEN path (WA4-S1). Returns
     /// false and changes NOTHING unless the grid has exactly `slotCount` cells: the index IS
     /// the slot a region's clip lives in, so padding or truncating would silently re-seat
-    /// clips (the same reason `init` refuses a mis-sized file).
+    /// clips. An OLDER, shorter grid is padded BEFORE it gets here, by the one migration
+    /// (`migratedGrid`, read by `init` and `SessionSaveOpen`) — never inside this function.
     @discardableResult
     public func replaceSlots(_ replacement: [Clip?]) -> Bool {
         guard replacement.count == Self.slotCount else { return false }
@@ -232,6 +266,6 @@ public final class ClipStore {
     }
 
     private func persist() {
-        store.save(slots, name: Self.fileName)
+        store.save(Self.storedGrid(slots), name: Self.fileName)
     }
 }
