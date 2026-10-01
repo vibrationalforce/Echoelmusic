@@ -93,13 +93,26 @@ struct MoodXYPad: View {
                 .minimumScaleFactor(0.8)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(title) mood pad")
-        .accessibilityValue("\(Int(x * 100)) percent across (\(xCaption)), \(Int(y * 100)) percent up (\(yCaption))")
+        .accessibilityLabel(title + String(localized: " mood pad"))
+        .accessibilityValue(spokenValue)
         .accessibilityHint("Adjust with the named actions")
-        .accessibilityAction(named: "More \(xCaption.components(separatedBy: " · ").last ?? "right")") { nudge(dx: 0.1, dy: 0) }
-        .accessibilityAction(named: "More \(xCaption.components(separatedBy: " · ").first ?? "left")") { nudge(dx: -0.1, dy: 0) }
-        .accessibilityAction(named: "More \(yCaption.components(separatedBy: " · ").last ?? "up")") { nudge(dx: 0, dy: 0.1) }
-        .accessibilityAction(named: "More \(yCaption.components(separatedBy: " · ").first ?? "down")") { nudge(dx: 0, dy: -0.1) }
+        .accessibilityAction(named: more(xWords.last, fallback: String(localized: "right"))) { nudge(dx: 0.1, dy: 0) }
+        .accessibilityAction(named: more(xWords.first, fallback: String(localized: "left"))) { nudge(dx: -0.1, dy: 0) }
+        .accessibilityAction(named: more(yWords.last, fallback: String(localized: "up"))) { nudge(dx: 0, dy: 0.1) }
+        .accessibilityAction(named: more(yWords.first, fallback: String(localized: "down"))) { nudge(dx: 0, dy: -0.1) }
+    }
+
+    // E4-38: the spoken label, value and action names used to be interpolated literals, i.e. format
+    // keys ("%@ mood pad") that no catalog unit can carry (StringCatalogIsHonest). Each English seam
+    // is a key now; the caption halves are the catalog values the pads were built with, split on the
+    // same " · " the German values keep. Typed steps, no `+` chain inside a ternary (Compile Check 3106).
+    private var xWords: [String] { xCaption.components(separatedBy: " · ") }
+    private var yWords: [String] { yCaption.components(separatedBy: " · ") }
+    private func more(_ word: String?, fallback: String) -> String { String(localized: "More ") + (word ?? fallback) }
+    private var spokenValue: String {
+        let across: String = "\(Int(x * 100))" + String(localized: " percent across (") + xCaption + ")"
+        let up: String = "\(Int(y * 100))" + String(localized: " percent up (") + yCaption + ")"
+        return across + ", " + up
     }
 
     private func nudge(dx: Double, dy: Double) {
@@ -158,9 +171,9 @@ struct SoundMoodPadLeaf: View {
     let onCommit: (Double, Double) -> Void
 
     var body: some View {
-        MoodXYPad(title: "Sound",
-                  xCaption: "dark · bright",
-                  yCaption: "still · moving",
+        MoodXYPad(title: String(localized: "Sound"),
+                  xCaption: String(localized: "dark · bright"),
+                  yCaption: String(localized: "still · moving"),
                   live: false,
                   x: $x, y: $y,
                   // LINKED (founder 2026-07-07: "Xy Sound und visuals verknüpfen"):
@@ -187,9 +200,9 @@ struct VisualMoodPadLeaf: View {
     @AppStorage("visual.intensity") private var visualIntensity = 1.0
 
     var body: some View {
-        MoodXYPad(title: "Visual",
-                  xCaption: "natural · spectrum",
-                  yCaption: "calm · energy",
+        MoodXYPad(title: String(localized: "Visual"),
+                  xCaption: String(localized: "natural · spectrum"),
+                  yCaption: String(localized: "calm · energy"),
                   live: true,
                   x: $vx, y: $vy,
                   onChanged: { apply($0, $1) },

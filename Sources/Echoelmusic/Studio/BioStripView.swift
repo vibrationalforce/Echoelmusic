@@ -186,7 +186,7 @@ struct BioStripView: View {
             // `cameraRPPG.isRunning` — is unchanged by construction. Nothing here weakens that
             // slice; this only fills the blank its own header calls "the deliberate trade".
             ZStack {
-                banner("Pulse detected — you can let go & play",
+                banner(String(localized: "Pulse detected — you can let go & play"),
                        color: EchoelTheme.success, systemImage: "checkmark.circle.fill")
                     .opacity(lockedCueVisible ? 1 : 0)
                     .allowsHitTesting(lockedCueVisible)
@@ -536,6 +536,14 @@ struct BioStripView: View {
     /// live/playing bio state, which is exactly what this is.
     private var driving: Bool { transport.isPlaying && hasLiveSignal }
 
+    /// E4-38: the three spoken states of the dot as catalog keys. A ternary of bare literals is a
+    /// `String` and reached VoiceOver verbatim on a German phone; the nested arm is its own typed
+    /// step so no ternary nests another (Compile Check 3106).
+    private var drivingLabel: String {
+        let live: String = hasLiveSignal ? String(localized: "Body signal live, not driving yet") : String(localized: "No live body signal")
+        return driving ? String(localized: "Your body is driving the sound") : live
+    }
+
     private var drivingIndicator: some View {
         // Tap opens the same plain-language guide as the ⓘ (survey law #1: the light shows
         // ONE thing at a glance; the meaning is one tap away, not always on screen).
@@ -554,9 +562,7 @@ struct BioStripView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(driving
-            ? "Your body is driving the sound"
-            : (hasLiveSignal ? "Body signal live, not driving yet" : "No live body signal"))
+        .accessibilityLabel(drivingLabel)
         .accessibilityHint("Double tap to learn how your body shapes the sound")
     }
 
@@ -839,7 +845,7 @@ struct BioStripView: View {
         if let bio = reading, !bio.source.isSynthetic {
             return sourceLabel(bio.source)
         }
-        return "No signal"
+        return String(localized: "No signal")
     }
 
     // MARK: - Formatting

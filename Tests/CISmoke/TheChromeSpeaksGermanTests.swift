@@ -69,7 +69,9 @@
 // carriers, six matrix sources (parent: all verbatim, 15 units missing — ONE finding). E4-36 added the pulse ladder's
 // four rung words and four spoken sentences (parent: all verbatim, 8 units missing — ONE finding). E4-37 added the long
 // always-on / Bio-panel sentences of AlwaysOnBioChannel — demo subject, FX footer, Bio-panel claim, Sound-panel line and
-// empty states, breath-voice and Auto hints and captions (parent: all verbatim or interpolated, 32 units missing — ONE finding). Claim 12
+// empty states, breath-voice and Auto hints and captions (parent: all verbatim or interpolated, 32 units missing — ONE finding).
+// E4-38 added the bio strip's banner, driving-dot states, source tag and camera captions, and the two mood pads' titles,
+// axis captions and spoken label/value/actions (parent: verbatim, interpolated or unit-less, 20 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1239,6 +1241,46 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                                     "Slowly steers the mood dials toward the measured state of ",
                                     "Needs a running bio source — choose one with the Bio source control above.",
                                     ", when that reading is clearly settled or clearly driving"])).sorted(), "always-on and Bio-panel sentences")
+
+        // E4-38 — the bio strip and the two mood pads. BioStripView: the lock banner (`banner(_ text: String …)`,
+        // whose signature CoachingTextScales pins), the driving dot's three spoken states (a ternary of bare
+        // literals is a `String`), the source tag's "No signal", and the camera caption's three
+        // `LocalizedStringKey` values that had no unit. MoodPads: title and axis captions were `String`
+        // arguments (`Text(title)` is verbatim), and the pad's spoken label/value/action names were
+        // interpolated literals — format keys no catalog unit can carry — now seams around the caption
+        // halves, split on the same " · " the German values keep (pinned below).
+        let bioStrip = try codeOnly("Sources/Echoelmusic/Studio/BioStripView.swift")
+        for seam in ["banner(String(localized: \"Pulse detected — you can let go & play\"),",
+                     ".accessibilityLabel(drivingLabel)",
+                     "let live: String = hasLiveSignal ? String(localized: \"Body signal live, not driving yet\") : String(localized: \"No live body signal\")",
+                     "return driving ? String(localized: \"Your body is driving the sound\") : live",
+                     "return String(localized: \"No signal\")",
+                     "let caption: LocalizedStringKey = camera"] {
+            XCTAssertTrue(bioStrip.contains(seam), "BioStripView lost the E4-38 seam `\(seam)`")
+        }
+        for verbatim in ["banner(\"Pulse detected", "? \"Your body is driving the sound\"", "return \"No signal\""] {
+            XCTAssertFalse(bioStrip.contains(verbatim), "BioStripView spells a strip word verbatim again: `\(verbatim)`")
+        }
+        let pads = try codeOnly("Sources/Echoelmusic/Studio/MoodPads.swift")
+        for seam in ["MoodXYPad(title: String(localized: \"Sound\"),", "xCaption: String(localized: \"dark · bright\"),", "yCaption: String(localized: \"still · moving\"),",
+                     "MoodXYPad(title: String(localized: \"Visual\"),", "xCaption: String(localized: \"natural · spectrum\"),", "yCaption: String(localized: \"calm · energy\"),",
+                     ".accessibilityLabel(title + String(localized: \" mood pad\"))", ".accessibilityValue(spokenValue)",
+                     "private func more(_ word: String?, fallback: String) -> String { String(localized: \"More \") + (word ?? fallback) }",
+                     "let across: String = \"\\(Int(x * 100))\" + String(localized: \" percent across (\") + xCaption + \")\"",
+                     "named: more(xWords.last, fallback: String(localized: \"right\"))"] {
+            XCTAssertTrue(pads.contains(seam), "MoodPads lost the E4-38 seam `\(seam)`")
+        }
+        for verbatim in ["title: \"Sound\"", "xCaption: \"dark · bright\"", "title: \"Visual\"", "\\(title) mood pad", "percent across (\\(xCaption))", "named: \"More \\("] {
+            XCTAssertFalse(pads.contains(verbatim), "MoodPads interpolates or spells a pad word verbatim again: `\(verbatim)`")
+        }
+        // the actions split the caption on " · " — every German caption must keep exactly one
+        for caption in ["dark · bright", "still · moving", "natural · spectrum", "calm · energy"] {
+            XCTAssertEqual(german(caption, in: strings)?.value.components(separatedBy: " · ").count, 2, "the German `\(caption)` must split into two words on ` · `")
+        }
+        try assertGerman(["Pulse detected — you can let go & play", "Your body is driving the sound", "Body signal live, not driving yet", "No live body signal",
+                          "No signal", "Reading…", "Cover camera", "Connecting…", "Sound", "Visual", "dark · bright", "still · moving",
+                          "natural · spectrum", "calm · energy", " mood pad", " percent across (", " percent up (", "More ", "right", "left", "up", "down"],
+                         "bio strip and mood pads")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
