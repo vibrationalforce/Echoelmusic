@@ -86,20 +86,21 @@ public enum MediaRelink {
         public var userMessage: String {
             switch self {
             case .noAudioClip:
-                return "That part can't be relinked."
+                return String(localized: "That part can't be relinked.")
             case .fileGone:
-                return "That file is no longer in the library."
+                return String(localized: "That file is no longer in the library.")
             case .unreadable:
-                return "That file isn't audio this app can read."
+                return String(localized: "That file isn't audio this app can read.")
             case .differentLength(let expected, let found):
-                return String(format: "That file is %.1f s long and the part's file was %.1f s. "
-                              + "Relink only to the same length — Place a different sound as a new part.",
-                              found, expected)
+                // E4-65: the two durations keep their own `String(format: "%.1f")` and sit between catalog keys.
+                let lengths: String = String(localized: "That file is ") + String(format: "%.1f", found)
+                    + String(localized: " s long and the part's file was ") + String(format: "%.1f", expected)
+                return lengths + String(localized: " s. Relink only to the same length — Place a different sound as a new part.")
             case .differentSource:
-                return "That file's content differs from the part's source. "
-                    + "Place a different sound as a new part."
+                return String(localized: "That file's content differs from the part's source. ")
+                    + String(localized: "Place a different sound as a new part.")
             case .songPlaying:
-                return "Stop the piece to relink a file."
+                return String(localized: "Stop the piece to relink a file.")
             }
         }
     }

@@ -70,17 +70,18 @@ public enum SessionSaveOpen {
             return nil
         case .restorable(let session):
             guard session.content.clipSlots.count == ClipStore.slotCount else {
-                return "“\(project.name)” was saved with a part grid of "
-                    + "\(session.content.clipSlots.count) cells; this version has "
-                    + "\(ClipStore.slotCount). Nothing was changed."
+                // E4-65: the quoted name and the two counts are seamed between catalog keys (≤ 4 operands per step).
+                let head: String = "“\(project.name)”" + String(localized: " was saved with a part grid of ") + "\(session.content.clipSlots.count)"
+                let tail: String = String(localized: " cells; this version has ") + "\(ClipStore.slotCount)" + String(localized: ". Nothing was changed.")
+                return head + tail
             }
             return nil
         case .newer(let version):
-            return "“\(project.name)” was saved by a newer version of Echoel (piece format "
-                + "\(version)). Update Echoel to open it. Nothing was changed."
+            let head: String = "“\(project.name)”" + String(localized: " was saved by a newer version of Echoel (piece format ") + "\(version)"
+            return head + String(localized: "). Update Echoel to open it. Nothing was changed.")
         case .unreadable:
-            return "“\(project.name)”'s piece could not be read by this version of Echoel. "
-                + "Nothing was changed."
+            return "“\(project.name)”" + String(localized: "'s piece could not be read by this version of Echoel. ")
+                + String(localized: "Nothing was changed.")
         }
     }
 

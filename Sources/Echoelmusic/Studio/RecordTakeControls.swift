@@ -196,33 +196,35 @@ enum RecordTake {
     nonisolated static func caption(_ state: State, gridSize: Int) -> String {
         switch state {
         case .recording:
-            return "Recording from bar 1. Stop, or the piece's end, adds the recording as a new part over the track."
+            return String(localized: "Recording from bar 1. Stop, or the piece's end, adds the recording as a new part over the track.")
         case .ready:
-            return "Plays the piece from bar 1 and records the armed tracks where you play. "
-                + "The recording plays instead of the parts under it; Undo brings them back."
+            return String(localized: "Plays the piece from bar 1 and records the armed tracks where you play. ")
+                + String(localized: "The recording plays instead of the parts under it; Undo brings them back.")
         case .stopFirst:
-            return "Stop the music to record. Recording starts at bar 1."
+            return String(localized: "Stop the music to record. Recording starts at bar 1.")
         case .armFirst:
-            return "Arm a MIDI track to record onto it."
+            return String(localized: "Arm a MIDI track to record onto it.")
         case .foreignArm(let name):
-            return "\"\(name)\" is armed but cannot record here. Open it and switch Arm off first."
+            // E4-65: the quoted track name stays verbatim; the sentence after it is a catalog key.
+            return "\"\(name)\"" + String(localized: " is armed but cannot record here. Open it and switch Arm off first.")
         case .gridFull:
-            return "The part grid is full (\(gridSize) parts). Remove a part to make room for the recording."
+            return String(localized: "The part grid is full (") + "\(gridSize)" + String(localized: " parts). Remove a part to make room for the recording.")
         case .songCannotPlay:
-            return "Add a part with notes or audio first. Recording runs against the playing piece."
+            return String(localized: "Add a part with notes or audio first. Recording runs against the playing piece.")
         }
     }
 
     nonisolated static func armSubtitle(armable: Bool) -> String {
-        armable
-            ? "Record plays the piece from bar 1 and records your MIDI keyboard onto this track. "
-                + "Every armed track gets the same notes."
-            : "This track cannot record here. Switch Arm off so Record can run."
+        let armed: String = String(localized: "Record plays the piece from bar 1 and records your MIDI keyboard onto this track. ")
+            + String(localized: "Every armed track gets the same notes.")
+        return armable ? armed : String(localized: "This track cannot record here. Switch Arm off so Record can run.")
     }
 
     nonisolated static func droppedSentence(_ count: Int, gridSize: Int) -> String {
-        count == 1 ? "1 recording was not added: the part grid is full (\(gridSize) parts)."
-                   : "\(count) recordings were not added: the part grid is full (\(gridSize) parts)."
+        // E4-65: the counts are seamed between catalog keys (≤ 4 operands per step).
+        let one: String = String(localized: "1 recording was not added: the part grid is full (") + "\(gridSize)" + String(localized: " parts).")
+        let many: String = "\(count)" + String(localized: " recordings were not added: the part grid is full (") + "\(gridSize)" + String(localized: " parts).")
+        return count == 1 ? one : many
     }
 
     /// A rack MIDI track: its role is a lane synth (not the Echoel track, not bio, not audio, not

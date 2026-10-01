@@ -25850,6 +25850,502 @@
           }
         }
       }
+    },
+    "Recording from bar 1. Stop, or the piece's end, adds the recording as a new part over the track." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufnahme ab Takt 1. Stopp oder das Ende des Stücks legt die Aufnahme als neuen Teil über die Spur."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recording from bar 1. Stop, or the piece's end, adds the recording as a new part over the track."
+          }
+        }
+      }
+    },
+    "Plays the piece from bar 1 and records the armed tracks where you play. " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielt das Stück ab Takt 1 und nimmt die scharfgeschalteten Spuren dort auf, wo du spielst. "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plays the piece from bar 1 and records the armed tracks where you play. "
+          }
+        }
+      }
+    },
+    "The recording plays instead of the parts under it; Undo brings them back." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Aufnahme spielt anstelle der Teile darunter; Widerrufen bringt sie zurück."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The recording plays instead of the parts under it; Undo brings them back."
+          }
+        }
+      }
+    },
+    "Stop the music to record. Recording starts at bar 1." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stoppe die Musik, um aufzunehmen. Die Aufnahme beginnt bei Takt 1."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop the music to record. Recording starts at bar 1."
+          }
+        }
+      }
+    },
+    "Arm a MIDI track to record onto it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schalte eine MIDI-Spur scharf, um auf sie aufzunehmen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arm a MIDI track to record onto it."
+          }
+        }
+      }
+    },
+    " is armed but cannot record here. Open it and switch Arm off first." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " ist scharfgeschaltet, kann hier aber nicht aufnehmen. Öffne sie und schalte Arm zuerst aus."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " is armed but cannot record here. Open it and switch Arm off first."
+          }
+        }
+      }
+    },
+    "The part grid is full (" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Teile-Raster ist voll ("
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The part grid is full ("
+          }
+        }
+      }
+    },
+    " parts). Remove a part to make room for the recording." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Teile). Entferne einen Teil, um Platz für die Aufnahme zu machen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " parts). Remove a part to make room for the recording."
+          }
+        }
+      }
+    },
+    "Add a part with notes or audio first. Recording runs against the playing piece." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Füge zuerst einen Teil mit Noten oder Audio hinzu. Die Aufnahme läuft gegen das spielende Stück."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a part with notes or audio first. Recording runs against the playing piece."
+          }
+        }
+      }
+    },
+    "Record plays the piece from bar 1 and records your MIDI keyboard onto this track. " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufnehmen spielt das Stück ab Takt 1 und nimmt dein MIDI-Keyboard auf diese Spur auf. "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Record plays the piece from bar 1 and records your MIDI keyboard onto this track. "
+          }
+        }
+      }
+    },
+    "Every armed track gets the same notes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede scharfgeschaltete Spur bekommt dieselben Noten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every armed track gets the same notes."
+          }
+        }
+      }
+    },
+    "This track cannot record here. Switch Arm off so Record can run." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Spur kann hier nicht aufnehmen. Schalte Arm aus, damit Aufnehmen laufen kann."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This track cannot record here. Switch Arm off so Record can run."
+          }
+        }
+      }
+    },
+    "1 recording was not added: the part grid is full (" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 Aufnahme wurde nicht hinzugefügt: Das Teile-Raster ist voll ("
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 recording was not added: the part grid is full ("
+          }
+        }
+      }
+    },
+    " recordings were not added: the part grid is full (" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Aufnahmen wurden nicht hinzugefügt: Das Teile-Raster ist voll ("
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " recordings were not added: the part grid is full ("
+          }
+        }
+      }
+    },
+    " parts)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Teile)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " parts)."
+          }
+        }
+      }
+    },
+    " was saved with a part grid of " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " wurde mit einem Teile-Raster von "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " was saved with a part grid of "
+          }
+        }
+      }
+    },
+    " cells; this version has " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Zellen gespeichert; diese Version hat "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " cells; this version has "
+          }
+        }
+      }
+    },
+    ". Nothing was changed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ". Nichts wurde geändert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ". Nothing was changed."
+          }
+        }
+      }
+    },
+    " was saved by a newer version of Echoel (piece format " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " wurde von einer neueren Echoel-Version gespeichert (Stück-Format "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " was saved by a newer version of Echoel (piece format "
+          }
+        }
+      }
+    },
+    "). Update Echoel to open it. Nothing was changed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "). Aktualisiere Echoel, um es zu öffnen. Nichts wurde geändert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "). Update Echoel to open it. Nothing was changed."
+          }
+        }
+      }
+    },
+    "'s piece could not be read by this version of Echoel. " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ": Das Stück konnte von dieser Version von Echoel nicht gelesen werden. "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "'s piece could not be read by this version of Echoel. "
+          }
+        }
+      }
+    },
+    "Nothing was changed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nichts wurde geändert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing was changed."
+          }
+        }
+      }
+    },
+    "That part can't be relinked." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Teil kann nicht neu verknüpft werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That part can't be relinked."
+          }
+        }
+      }
+    },
+    "That file is no longer in the library." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Datei ist nicht mehr in der Bibliothek."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That file is no longer in the library."
+          }
+        }
+      }
+    },
+    "That file isn't audio this app can read." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Datei ist kein Audio, das diese App lesen kann."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That file isn't audio this app can read."
+          }
+        }
+      }
+    },
+    "That file is " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Datei ist "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That file is "
+          }
+        }
+      }
+    },
+    " s long and the part's file was " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " s lang, die Datei des Teils war "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " s long and the part's file was "
+          }
+        }
+      }
+    },
+    " s. Relink only to the same length — Place a different sound as a new part." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " s. Neu verknüpfen nur bei gleicher Länge — einen anderen Klang als neuen Teil platzieren."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " s. Relink only to the same length — Place a different sound as a new part."
+          }
+        }
+      }
+    },
+    "That file's content differs from the part's source. " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Inhalt dieser Datei weicht von der Quelle des Teils ab. "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That file's content differs from the part's source. "
+          }
+        }
+      }
+    },
+    "Place a different sound as a new part." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einen anderen Klang als neuen Teil platzieren."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Place a different sound as a new part."
+          }
+        }
+      }
+    },
+    "Stop the piece to relink a file." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stoppe das Stück, um eine Datei neu zu verknüpfen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop the piece to relink a file."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

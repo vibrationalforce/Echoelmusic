@@ -122,7 +122,9 @@
 // label they all carry (`LoopBarLength.label`) (parent: 15 units missing — ONE finding). E4-63 added the new-MIDI-part
 // hint, the Explore board sentence and its density words (parent: 11 units missing — ONE finding). E4-64 added the
 // strap status ladder (PolarH10BioPublisher.statusLabel), the part editor's shared-notes hint and the touch surface's
-// spoken terrain (parent: 14 units missing — ONE finding). Claim 12
+// spoken terrain (parent: 14 units missing — ONE finding). E4-65 added the record-take captions (RecordTakeControls),
+// the open refusal (SessionSaveOpen.refusal) and the relink reasons (MediaRelink.userMessage) (parent: 31 units
+// missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2266,6 +2268,74 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "A change plays the next time the playhead reaches it.", "These notes play in ",
                           " parts — a change edits all of them. ", "Root ",
                           " notes per octave, three octave rows, low at the bottom"], "strap status, part-editor hint and touch terrain")
+
+        // E4-65 — three sentence families the rest-scan found: the record-take captions, arm subtitle and dropped
+        // sentence (RecordTakeControls), the Open refusal (SessionSaveOpen.refusal) and the relink reasons
+        // (MediaRelink.userMessage, whose two durations keep `String(format: "%.1f")` between keys). The quoted
+        // names stay verbatim; the fragments other guards pin ("Recording starts at bar 1", "instead of the parts
+        // under it", "Stop the piece to relink a file.") sit whole inside their keys.
+        let takeCaption = try codeOnly("Sources/Echoelmusic/Studio/RecordTakeControls.swift")
+        for seam in ["return String(localized: \"Stop the music to record. Recording starts at bar 1.\")",
+                     "return \"\\\"\\(name)\\\"\" + String(localized: \" is armed but cannot record here. Open it and switch Arm off first.\")",
+                     "return String(localized: \"The part grid is full (\") + \"\\(gridSize)\" + String(localized: \" parts). Remove a part to make room for the recording.\")",
+                     "let many: String = \"\\(count)\" + String(localized: \" recordings were not added: the part grid is full (\") + \"\\(gridSize)\" + String(localized: \" parts).\")"] {
+            XCTAssertTrue(takeCaption.contains(seam), "RecordTakeControls lost the E4-65 seam `\(seam)`")
+        }
+        for verbatim in ["return \"Stop the music to record. Recording starts at bar 1.\"",
+                         "return \"The part grid is full (\\(gridSize) parts).",
+                         ": \"\\(count) recordings were not added:"] {
+            XCTAssertFalse(takeCaption.contains(verbatim), "RecordTakeControls spells a caption verbatim again: `\(verbatim)`")
+        }
+        let openRefusal = try codeOnly("Sources/Echoelmusic/Core/SessionSaveOpen.swift")
+        for seam in ["let head: String = \"“\\(project.name)”\" + String(localized: \" was saved with a part grid of \") + \"\\(session.content.clipSlots.count)\"",
+                     "return head + String(localized: \"). Update Echoel to open it. Nothing was changed.\")",
+                     "return \"“\\(project.name)”\" + String(localized: \"'s piece could not be read by this version of Echoel. \")"] {
+            XCTAssertTrue(openRefusal.contains(seam), "SessionSaveOpen lost the E4-65 seam `\(seam)`")
+        }
+        for verbatim in ["return \"“\\(project.name)” was saved with a part grid of \"", "+ \"Nothing was changed.\""] {
+            XCTAssertFalse(openRefusal.contains(verbatim), "SessionSaveOpen spells the refusal verbatim again: `\(verbatim)`")
+        }
+        let relinkReason = try codeOnly("Sources/Echoelmusic/Sequencer/MediaRelink.swift")
+        for seam in ["return String(localized: \"That part can't be relinked.\")",
+                     "let lengths: String = String(localized: \"That file is \") + String(format: \"%.1f\", found)",
+                     "return lengths + String(localized: \" s. Relink only to the same length — Place a different sound as a new part.\")",
+                     "return String(localized: \"Stop the piece to relink a file.\")"] {
+            XCTAssertTrue(relinkReason.contains(seam), "MediaRelink lost the E4-65 seam `\(seam)`")
+        }
+        for verbatim in ["return String(format: \"That file is %.1f s long", "return \"Stop the piece to relink a file.\""] {
+            XCTAssertFalse(relinkReason.contains(verbatim), "MediaRelink spells a reason verbatim again: `\(verbatim)`")
+        }
+        try assertGerman(["Recording from bar 1. Stop, or the piece's end, adds the recording as a new part over the track.",
+                          "Plays the piece from bar 1 and records the armed tracks where you play. ",
+                          "The recording plays instead of the parts under it; Undo brings them back.",
+                          "Stop the music to record. Recording starts at bar 1.",
+                          "Arm a MIDI track to record onto it.",
+                          " is armed but cannot record here. Open it and switch Arm off first.",
+                          "The part grid is full (",
+                          " parts). Remove a part to make room for the recording.",
+                          "Add a part with notes or audio first. Recording runs against the playing piece.",
+                          "Record plays the piece from bar 1 and records your MIDI keyboard onto this track. ",
+                          "Every armed track gets the same notes.",
+                          "This track cannot record here. Switch Arm off so Record can run.",
+                          "1 recording was not added: the part grid is full (",
+                          " recordings were not added: the part grid is full (",
+                          " parts).",
+                          " was saved with a part grid of ",
+                          " cells; this version has ",
+                          ". Nothing was changed.",
+                          " was saved by a newer version of Echoel (piece format ",
+                          "). Update Echoel to open it. Nothing was changed.",
+                          "'s piece could not be read by this version of Echoel. ",
+                          "Nothing was changed.",
+                          "That part can't be relinked.",
+                          "That file is no longer in the library.",
+                          "That file isn't audio this app can read.",
+                          "That file is ",
+                          " s long and the part's file was ",
+                          " s. Relink only to the same length — Place a different sound as a new part.",
+                          "That file's content differs from the part's source. ",
+                          "Place a different sound as a new part.",
+                          "Stop the piece to relink a file."], "record-take captions, open refusal and relink reasons")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
