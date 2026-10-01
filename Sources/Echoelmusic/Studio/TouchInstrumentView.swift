@@ -953,7 +953,9 @@ final class TouchInstrumentUIView: UIView {
         // for the same pitch — on the surface whose accessibility work is the best in the repo.
         let rootName = noteNaming.spokenName(pitchClass: key.root,
                                              preferFlats: key.prefersFlatSpelling)
-        accessibilityValue = "Root \(rootName), \(key.degreesPerOctave) notes per octave, three octave rows, low at the bottom"
+        // E4-64: the root name and the degree count are seamed between catalog keys (≤ 4 operands per step).
+        let spokenRoot: String = String(localized: "Root ") + rootName + ", " + "\(key.degreesPerOctave)"
+        accessibilityValue = spokenRoot + String(localized: " notes per octave, three octave rows, low at the bottom")
         guard showGrid, bounds.width > 60, bounds.height > 60 else { return }
 
         let rect = playRect                      // adaptive: never under notch/corners

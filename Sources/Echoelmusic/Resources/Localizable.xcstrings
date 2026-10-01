@@ -25626,6 +25626,230 @@
           }
         }
       }
+    },
+    "Strap" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gurt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strap"
+          }
+        }
+      }
+    },
+    "Scanning…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suche…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scanning…"
+          }
+        }
+      }
+    },
+    "Searching for a Bluetooth heart-rate strap" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sucht einen Bluetooth-Herzfrequenzgurt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Searching for a Bluetooth heart-rate strap"
+          }
+        }
+      }
+    },
+    "Connecting to " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbindet mit "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecting to "
+          }
+        }
+      }
+    },
+    " connected — waiting for heart rate" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " verbunden — wartet auf Herzfrequenz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " connected — waiting for heart rate"
+          }
+        }
+      }
+    },
+    "BT off" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BT aus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BT off"
+          }
+        }
+      }
+    },
+    "Bluetooth is off or access is denied — enable it in Settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bluetooth ist aus oder der Zugriff verweigert — in den Einstellungen einschalten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bluetooth is off or access is denied — enable it in Settings"
+          }
+        }
+      }
+    },
+    "No strap" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Gurt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No strap"
+          }
+        }
+      }
+    },
+    "No strap found — moisten the electrodes, refasten the strap, and pick Bluetooth again" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Gurt gefunden — Elektroden befeuchten, Gurt neu anlegen und Bluetooth erneut wählen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No strap found — moisten the electrodes, refasten the strap, and pick Bluetooth again"
+          }
+        }
+      }
+    },
+    "A change plays the next time the playhead reaches it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Änderung klingt, sobald der Abspielkopf sie das nächste Mal erreicht."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A change plays the next time the playhead reaches it."
+          }
+        }
+      }
+    },
+    "These notes play in " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Noten spielen in "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "These notes play in "
+          }
+        }
+      }
+    },
+    " parts — a change edits all of them. " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Teilen — eine Änderung bearbeitet alle. "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " parts — a change edits all of them. "
+          }
+        }
+      }
+    },
+    "Root " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grundton "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Root "
+          }
+        }
+      }
+    },
+    " notes per octave, three octave rows, low at the bottom" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Töne pro Oktave, drei Oktavreihen, tief unten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " notes per octave, three octave rows, low at the bottom"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

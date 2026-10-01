@@ -120,7 +120,9 @@
 // Workstation's transport caption, track-removal note and mix-meter spoken text (parent: 14 units missing — ONE finding). E4-62
 // added the Record tile's action label, the busy status, the text-size caption, the keep-last copy and the bar-length
 // label they all carry (`LoopBarLength.label`) (parent: 15 units missing — ONE finding). E4-63 added the new-MIDI-part
-// hint, the Explore board sentence and its density words (parent: 11 units missing — ONE finding). Claim 12
+// hint, the Explore board sentence and its density words (parent: 11 units missing — ONE finding). E4-64 added the
+// strap status ladder (PolarH10BioPublisher.statusLabel), the part editor's shared-notes hint and the touch surface's
+// spoken terrain (parent: 14 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2225,6 +2227,45 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Ideas from your pulse — tap to keep. Your body wants ", "Ideas from ", " — tap to keep. ", "The demo asks for ",
                           "No pulse was measured, so these are ranked against the engine's own target — tap to keep. They aim for ",
                           "something sparse", "a calm groove", "a full groove", "something dense"], "new-part hint and Explore board")
+
+        // E4-64 — the strap status ladder (`PolarH10BioPublisher.statusLabel`, read by the header's pulse pill;
+        // PolarH10BioPublisherTests compares the short labels at runtime under the test locale), the part editor's
+        // shared-notes hint and the touch surface's spoken terrain (TheGridLabelFitsItsCellTests keeps its fragment).
+        let strapStatus = try codeOnly("Sources/Echoelmusic/Bio/PolarH10BioPublisher.swift")
+        for seam in ["let name = deviceName.isEmpty ? String(localized: \"Strap\") : deviceName",
+                     "return (String(localized: \"Connecting…\"), String(localized: \"Connecting to \") + name)",
+                     "let waiting: String = name + String(localized: \" connected — waiting for heart rate\")",
+                     "return (String(localized: \"No strap\"), String(localized: \"No strap found — moisten the electrodes, refasten the strap, and pick Bluetooth again\"))"] {
+            XCTAssertTrue(strapStatus.contains(seam), "PolarH10BioPublisher lost the E4-64 seam `\(seam)`")
+        }
+        for verbatim in ["return (\"Scanning…\", \"Searching for a Bluetooth heart-rate strap\")",
+                         "return (\"Connecting…\", \"Connecting to \\(name)\")",
+                         "(\"\\(name)…\", \"\\(name) connected — waiting for heart rate\")"] {
+            XCTAssertFalse(strapStatus.contains(verbatim), "PolarH10BioPublisher interpolates the strap status again: `\(verbatim)`")
+        }
+        let partEditorHint = try codeOnly("Sources/Echoelmusic/Studio/PartNoteEditor.swift")
+        for seam in ["let heard = String(localized: \"A change plays the next time the playhead reaches it.\")",
+                     "return String(localized: \"These notes play in \") + \"\\(parts)\" + String(localized: \" parts — a change edits all of them. \") + heard"] {
+            XCTAssertTrue(partEditorHint.contains(seam), "PartNoteEditor lost the E4-64 seam `\(seam)`")
+        }
+        for verbatim in ["return \"These notes play in \\(parts) parts — a change edits all of them. \" + heard"] {
+            XCTAssertFalse(partEditorHint.contains(verbatim), "PartNoteEditor interpolates the shared-notes hint again: `\(verbatim)`")
+        }
+        let touchSpoken = try codeOnly("Sources/Echoelmusic/Studio/TouchInstrumentView.swift")
+        for seam in ["let spokenRoot: String = String(localized: \"Root \") + rootName + \", \" + \"\\(key.degreesPerOctave)\"",
+                     "accessibilityValue = spokenRoot + String(localized: \" notes per octave, three octave rows, low at the bottom\")"] {
+            XCTAssertTrue(touchSpoken.contains(seam), "TouchInstrumentView lost the E4-64 seam `\(seam)`")
+        }
+        for verbatim in ["accessibilityValue = \"Root \\(rootName), \\(key.degreesPerOctave) notes per octave, three octave rows, low at the bottom\""] {
+            XCTAssertFalse(touchSpoken.contains(verbatim), "TouchInstrumentView interpolates the spoken terrain again: `\(verbatim)`")
+        }
+        try assertGerman(["Strap", "Scanning…", "Searching for a Bluetooth heart-rate strap", "Connecting…", "Connecting to ",
+                          " connected — waiting for heart rate", "BT off",
+                          "Bluetooth is off or access is denied — enable it in Settings", "No strap",
+                          "No strap found — moisten the electrodes, refasten the strap, and pick Bluetooth again",
+                          "A change plays the next time the playhead reaches it.", "These notes play in ",
+                          " parts — a change edits all of them. ", "Root ",
+                          " notes per octave, three octave rows, low at the bottom"], "strap status, part-editor hint and touch terrain")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

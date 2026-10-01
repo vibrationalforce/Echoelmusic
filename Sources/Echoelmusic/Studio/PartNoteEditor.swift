@@ -263,9 +263,9 @@ private struct PartNoteGrid: View {
     }
 
     private func hint(sharedBy parts: Int) -> String {
-        let heard = "A change plays the next time the playhead reaches it."
+        let heard = String(localized: "A change plays the next time the playhead reaches it.")
         guard parts > 1 else { return heard }
-        return "These notes play in \(parts) parts — a change edits all of them. " + heard
+        return String(localized: "These notes play in ") + "\(parts)" + String(localized: " parts — a change edits all of them. ") + heard
     }
 
     // MARK: - Actions (one commit each)

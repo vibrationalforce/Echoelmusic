@@ -266,22 +266,23 @@ public final class PolarH10BioPublisher: NSObject {
     /// the scan looked dead.
     nonisolated static func statusLabel(for state: ConnectionState, deviceName: String,
                                         hasLiveFrames: Bool) -> (short: String, full: String)? {
-        let name = deviceName.isEmpty ? "Strap" : deviceName
+        let name = deviceName.isEmpty ? String(localized: "Strap") : deviceName
         switch state {
         case .idle, .disconnected:
             return nil
         case .scanning:
-            return ("Scanning…", "Searching for a Bluetooth heart-rate strap")
+            return (String(localized: "Scanning…"), String(localized: "Searching for a Bluetooth heart-rate strap"))
         case .connecting:
-            return ("Connecting…", "Connecting to \(name)")
+            return (String(localized: "Connecting…"), String(localized: "Connecting to ") + name)
         case .connected:
             // Waiting for the first heart-rate notification; once frames flow the
-            // BPM number takes over the slot.
-            return hasLiveFrames ? nil : ("\(name)…", "\(name) connected — waiting for heart rate")
+            // BPM number takes over the slot. E4-64: the device name is seamed before the key.
+            let waiting: String = name + String(localized: " connected — waiting for heart rate")
+            return hasLiveFrames ? nil : (name + "…", waiting)
         case .bluetoothUnavailable:
-            return ("BT off", "Bluetooth is off or access is denied — enable it in Settings")
+            return (String(localized: "BT off"), String(localized: "Bluetooth is off or access is denied — enable it in Settings"))
         case .notFound:
-            return ("No strap", "No strap found — moisten the electrodes, refasten the strap, and pick Bluetooth again")
+            return (String(localized: "No strap"), String(localized: "No strap found — moisten the electrodes, refasten the strap, and pick Bluetooth again"))
         }
     }
 
