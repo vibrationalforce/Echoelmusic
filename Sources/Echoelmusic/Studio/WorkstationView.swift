@@ -553,10 +553,10 @@ struct WorkstationView: View {
             // tuning banner's recovery button once (#621) — a control inside a merged element
             // loses its own focus and hint. The facts are ONE sentence; the switch is a switch.
             if let role = muteSoloRole {
-                headerSwitch("M", name: "Mute", on: row.isMuted, hint: TrackMix.muteHint(role)) {
+                headerSwitch("M", name: String(localized: "Mute"), on: row.isMuted, hint: TrackMix.muteHint(role)) {
                     TrackMix.flipMute(laneID: row.id, timeline: timeline)
                 }
-                headerSwitch("S", name: "Solo", on: row.isSoloed, hint: TrackMix.soloHint(role)) {
+                headerSwitch("S", name: String(localized: "Solo"), on: row.isSoloed, hint: TrackMix.soloHint(role)) {
                     TrackMix.flipSolo(laneID: row.id, timeline: timeline)
                 }
             }
@@ -750,11 +750,11 @@ struct WorkstationView: View {
     /// is 11 pt and the listener already has the long form.
     private func detailLine(_ row: WorkstationSummary.LaneRow) -> String {
         var text = row.kind.displayName
-        if row.isBio { text += " · bio curve" }
+        if row.isBio { text += String(localized: " · bio curve") }
         switch row.regionCount {
-        case 0:  text += " · no parts"
-        case 1:  text += " · 1 part"
-        default: text += " · \(row.regionCount) parts"
+        case 0:  text += String(localized: " · no parts")
+        case 1:  text += String(localized: " · 1 part")
+        default: text += " · \(row.regionCount) " + String(localized: "parts")
         }
         if let first = row.firstTick, let last = row.lastTick, row.regionCount > 0 {
             // One spelling of the span, shared with the spoken form — an en dash here and the
@@ -762,7 +762,7 @@ struct WorkstationView: View {
             text += " · " + WorkstationSummary.barSpan(firstTick: first, lastTick: last,
                                                        joiner: "–")
         }
-        if !row.playsOnTheTimeline && row.regionCount > 0 { text += " · no engine yet" }
+        if !row.playsOnTheTimeline && row.regionCount > 0 { text += String(localized: " · no engine yet") }
         return text
     }
 
@@ -773,9 +773,9 @@ struct WorkstationView: View {
     /// mute on a bio lane is still a fact worth showing.
     private func stateTags(_ row: WorkstationSummary.LaneRow, headerSwitches: Bool) -> [String] {
         var tags: [String] = []
-        if row.isMuted && !headerSwitches { tags.append("MUTE") }
-        if row.isSoloed && !headerSwitches { tags.append("SOLO") }
-        if row.isArmed { tags.append("ARM") }
+        if row.isMuted && !headerSwitches { tags.append(String(localized: "MUTE")) }
+        if row.isSoloed && !headerSwitches { tags.append(String(localized: "SOLO")) }
+        if row.isArmed { tags.append(String(localized: "ARM")) }
         return tags
     }
 

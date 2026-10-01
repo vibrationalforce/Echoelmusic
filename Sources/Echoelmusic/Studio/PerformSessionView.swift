@@ -162,10 +162,10 @@ struct PerformSessionView: View {
                 .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.text)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            mixSwitch("Mute", track: row.name, on: row.isMuted, hint: TrackMix.muteHint(row.role)) {
+            mixSwitch(String(localized: "Mute"), track: row.name, on: row.isMuted, hint: TrackMix.muteHint(row.role)) {
                 TrackMix.flipMute(laneID: row.id, timeline: timeline)
             }
-            mixSwitch("Solo", track: row.name, on: row.isSoloed, hint: TrackMix.soloHint(row.role)) {
+            mixSwitch(String(localized: "Solo"), track: row.name, on: row.isSoloed, hint: TrackMix.soloHint(row.role)) {
                 TrackMix.flipSolo(laneID: row.id, timeline: timeline)
             }
         }

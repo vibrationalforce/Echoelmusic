@@ -192,7 +192,8 @@
 // value and the touch surface's VoiceOver label and hint (parent: 2 units missing — ONE finding). E4-93 keyed the
 // value-field hints that were literal Strings (`EchoelValueField.hint` is a String, so a literal ships verbatim): the
 // track inspector's instrument, level and pan hints and the Bar variation hint (parent: 5 units missing — ONE
-// finding). Claim 12
+// finding). E4-94 keyed the Mute/Solo switch names in the Workstation header and on the Perform plate, the
+// Workstation row's detail fragments and its state tags (parent: 9 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3201,6 +3202,36 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "1.00 unchanged, 0 silent. This is also the level the Studio instrument plays at; its Start lifts 0 back to 1.00",
                           "1.00 unchanged, 0 silent, 2.00 is +6 dB", "−1 left, 0 centre, 1 right",
                           "How far each bar of the loop may drift from the genre preset"], "value-field hints")
+
+        // E4-94 — `headerSwitch(_:name:…)` and `mixSwitch(_:track:…)` take the switch name as a `String` (it feeds
+        // `accessibilityLabel`, the Voice Control input labels and, on the Perform plate, the visible word), so the
+        // literal "Mute" / "Solo" shipped English. The Workstation row's printed detail line and its MUTE / SOLO / ARM
+        // tags were String appends of the same kind. The letters M and S stay — they are the DAW convention, not words.
+        let rowWords = try codeOnly("Sources/Echoelmusic/Studio/WorkstationView.swift")
+        for seam in ["headerSwitch(\"M\", name: String(localized: \"Mute\"), on:",
+                     "headerSwitch(\"S\", name: String(localized: \"Solo\"), on:",
+                     "text += String(localized: \" · bio curve\")", "text += String(localized: \" · no parts\")",
+                     "text += String(localized: \" · 1 part\")", "regionCount) \" + String(localized: \"parts\")",
+                     "text += String(localized: \" · no engine yet\")",
+                     "tags.append(String(localized: \"MUTE\"))", "tags.append(String(localized: \"SOLO\"))",
+                     "tags.append(String(localized: \"ARM\"))"] {
+            XCTAssertTrue(rowWords.contains(seam), "WorkstationView lost the E4-94 seam `\(seam)`")
+        }
+        for verbatim in ["name: \"Mute\"", "name: \"Solo\"", "text += \" · bio curve\"", "text += \" · no parts\"",
+                         "text += \" · 1 part\"", "regionCount) parts\"", "text += \" · no engine yet\"",
+                         "tags.append(\"MUTE\")", "tags.append(\"SOLO\")", "tags.append(\"ARM\")"] {
+            XCTAssertFalse(rowWords.contains(verbatim), "WorkstationView writes a row word verbatim again: `\(verbatim)`")
+        }
+        let plateSwitches = try codeOnly("Sources/Echoelmusic/Studio/PerformSessionView.swift")
+        for seam in ["mixSwitch(String(localized: \"Mute\"), track: row.name,",
+                     "mixSwitch(String(localized: \"Solo\"), track: row.name,"] {
+            XCTAssertTrue(plateSwitches.contains(seam), "PerformSessionView lost the E4-94 seam `\(seam)`")
+        }
+        for verbatim in ["mixSwitch(\"Mute\"", "mixSwitch(\"Solo\""] {
+            XCTAssertFalse(plateSwitches.contains(verbatim), "PerformSessionView names a switch verbatim again: `\(verbatim)`")
+        }
+        try assertGerman(["Mute", "Solo", " · bio curve", " · no parts", " · 1 part", "parts", " · no engine yet",
+                          "MUTE", "SOLO", "ARM"], "track switches, row details and state tags")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
