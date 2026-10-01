@@ -4892,3 +4892,10 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Bewusst nicht drin:** Scheibe 2b-ii (Workstation-Chip stilllegen); der Patch passt nicht mehr auf die Spitze und wird neu gebaut.
 - **Erster Deploy nach der Freigabe „Nur Deploy frei"** (357b74bde): der Release-Commit lief ohne Founder-Commit durch.
 - Review: 2026-10-31.
+
+### 2026-10-01 — Workstation-Neugestaltung (beide ChatGPT-Entwürfe)
+- **Entscheidung:** Genre raus aus dem Kopfstreifen → „Stil“ am Echoel-Gerät; Bereichs-Tabs Music · Visual · Light · Space (kein Stream/XR); jede Spur trägt EINE Farbe + Symbol (`EchoelTheme.TrackHue`), Farbe nie allein.
+- **Warum:** Founder-Auftrag 2026-10-01 („als Workstation ernsthaft vertreten“); fünf Audits: Funktion zu ~70 % da, Hierarchie und Spur-Identität fehlen.
+- **Reihenfolge:** A1–A9 (Aussehen) → B1–B6 (Engine) → C1–C5 (Multimedia-Kurvenspuren). Plan: `scratchpads/PLAN_WORKSTATION_REDESIGN_2026-10-01.md`.
+- **Review:** 2026-10-31.
+

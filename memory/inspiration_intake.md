@@ -939,3 +939,13 @@ Founder-Upload einer TCM-Organuhr-Tabelle (Tageszeit → Organ → Frequenz/Stim
 - **REJECT — auditive Wirk-Claims:** binaural (C/D), isochron (D), 432/528 Hz (D, Brand-Verbot). 40-Hz-AM auf Audio ist messbar (ASSR, B) und blitzfrei — allenfalls Klangfarbe, nie Kognitions-Claim.
 - **Die eine Zeile:** genau EIN Reiz hat Grad A und ist auf dem iPhone lieferbar — Resonanzatmung ~6/min. Gebaut. Alles andere heißt „Klanggestaltung", nie „Wirkung". Fünf Zeilen in `inspiration.csv`.
 - **Nachtrag (KI-Text „belegte Wirkfrequenzen" + Deep-Dub/Lo-Fi-Blueprint, Founder-Einfügung):** Gegenlesung im Evidenz-Tab. Physiologie meist echt, Evidenznote ein bis zwei Stufen zu hoch (40 Hz klinisch C, 10-Hz-Cortisol C, Theta-Entrainment D, Vibroakustik C und nicht am Telefon, 100–200 Hz echte Gate-Control-Physiologie, aber Kontakt am Schmerzort + Rote Linie). Drei Physikfehler: 40-Hz-Sinus ≠ 40-Hz-AM; Binaural nur per Kopfhörer; ein Filter-LFO synchronisiert keine Atmung — der Pacer schon, also **Atem → Filter, nicht umgekehrt**. Heute schon möglich: `ModSource.breathPhase` → Cutoff per Matrix, Genres `dubTechno`/`dubEcho`/`loFiHipHop`/`trap`, `SubBassVoice`. **WATCH:** Hybrid-Genre 110–116 BPM + voreingestellter Atem-Filter-Weg als reine Klanggestaltung, Genre-Runde (Founder-Ohr). Keine Behauptung erreicht Store/Web/Panel. Zeile in `inspiration.csv`.
+
+## 2026-10-01 — Tablet-Workstation-Entwurf (ChatGPT, erneut angehängt) + Auftrag „Workstation ernsthaft vertreten“
+
+**Verdikt: ADOPT→PRODUCT, scheibenweise.** Founder wörtlich: „Gestalte alles so um, dass ich Echoelmusic
+als Workstation ernsthaft vertreten kann.“ Damit sind zwei PAUSIERTE Punkte vom 2026-09-26 entschieden:
+Genre ist nicht mehr die Kopf-Bedienung (→ „Stil“ am Echoel-Gerät) und die Bereichs-Tabs sind gewollt —
+**Music · Visual · Light · Space**; Stream und XR bleiben REJECT (unverlinkt / kein Target).
+Plan mit fünf Audits und Reihenfolge A1–A9 · B1–B6 · C1–C5: `scratchpads/PLAN_WORKSTATION_REDESIGN_2026-10-01.md`.
+iPad als Instrumenten-Fläche bleibt founder-gated (`project.yml`, Sensor-Grund).
+

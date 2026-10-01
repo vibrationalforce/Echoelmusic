@@ -41734,3 +41734,13 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Ergebnis TestFlight-Lauf 2608 (36838026009):** Preflight ✓, Compile Check ✓, Archive ✓; „Export & Upload“ ✗ — `403 FORBIDDEN.REQUIRED_AGREEMENTS_MISSING_OR_EXPIRED`. Apple-Vereinbarung muss der Account Holder akzeptieren; danach Re-run desselben Laufs. Eingetragen: FOUNDER_INBOX §3 F1, HARNESS_LEDGER Observation.
 - **Ursachen-Eingrenzung (Founder: „geht erst nicht mehr seit ChatGPT dabei war“):** TestFlight 2604–2607 (workflow_dispatch auf main, 29.–30.09.) luden alle hoch, inkl. der drei vibrationalforce-Commits (7e6aea965 AUv3-Manifest, 2c33f00c3). `git diff 5d6ac6080 6b2cab77b` über Workflows/Fastlane/project.yml/Info.plist/Entitlements = leer. Der 403 entstand zwischen 30.09. 07:06Z und 01.10. 08:43Z auf Apples Seite.
 - **Deploy 10.79.484 GELANDET:** Founder bestätigte die Apple-Vereinbarung; Re-run per API verweigert (403 integration), daher Retry-Absatz in `.deploy/release` (2be6db496) → TestFlight-Lauf 2609 (36844963225): Archive ✓, Upload ✓, Verify landed ✓. Build 2608 nie angekommen, kein Duplikat. Xcode Cloud bewertet: derzeit nicht relevant (GitHub Actions läuft, gleiche Konto-Sperre, schlechtere Sicht für die Sitzung).
+
+## 2026-10-01 — Workstation-Neugestaltung: Deep Audit + Scheibe A1
+
+- **Auftrag (Founder, Tablet-Entwurf angehängt):** Genres und rudimentäre Bedienung weg aus dem Vordergrund, „als Workstation ernsthaft vertreten“, beste Visuals.
+- **Fünf Audits** (Oberfläche · Engine · Visual/Licht/Raum · Design-System · Recherche) → Plan `scratchpads/PLAN_WORKSTATION_REDESIGN_2026-10-01.md`.
+- **Founder-Antworten protokolliert:** FOUNDER_INBOX H5, decisions.csv, memory/decisions.md, inspiration_intake.
+- **A1 gebaut (d27e13258):** `EchoelTheme.TrackHue` (eine Weiche Instrument/Art → gedämpfte Farbe; Körper-Spur = `accent`), Canvas-Rinne mit Farbband + Symbol + Name, getönte Teile, Spuren 40 pt. Neuer Wächter `TheTracksWearTheirOwnHueTests`; zwei Re-Anker (Noten-Skizze, E4-90-Label — letzterer war vorbestehend rot).
+- **Prüfwerkzeuge sauber:** dead-needles, swift-escapes, count-pins, foreign-needles; moved-needles 1 Treffer (andere Dateien, geprüft). Gates offen.
+- **Nächste Scheiben:** A1b Teil-Namen · A2 Genre → „Stil“ · A3 Transportleiste unten.
+

@@ -1,0 +1,77 @@
+# PLAN — Workstation-Neugestaltung (Founder 2026-10-01)
+
+**Auftrag, wörtlich:** „Generell finde ich diese Entwürfe wirken etwas zugänglicher. Grundsätzlich
+finde ich das Ding mit den Genres und die rudimentären Bedienungen nicht so schön. Das angehängte
+Bild gefällt mir auch. Mache nochmal Deep Research und Deep Audith zu allen Bereichen und leg dann
+los. Gestallte alles so um, dass ich Echoelmusic als Workstation ernsthaft vertreten kann. Vorbild
+Software übertreffen wir mit Leichtigkeit und wir haben die besten Visuals."
+
+**Referenzen:** der iPhone-Entwurf „Lake Reflection" (26.09., `inspiration.csv:230`) und der
+Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
+
+**Founder-Antworten, die dieser Auftrag gibt** (vorher offen in `memory/inspiration_intake.md:907`):
+- (a) Genre ist NICHT mehr die Kopf-Bedienung → wird „Stil" am Generator-Gerät (Echoel-Spur).
+  Hebt die 2026-07-14-Platzierung im Kopfstreifen auf.
+- (b) Die Bereichs-Tabs des Tablet-Entwurfs sind gewollt → Music · Visual · Light · Space
+  (Space = ADM-OSC-Steuerung). **Stream und XR bleiben weg**: kein HaishinKit, kein visionOS-Target —
+  ein Tab dorthin wäre eine tote Tür.
+- (c) Loop-Schalter bleibt BLOCKED_FOUNDER (nicht Teil dieses Auftrags).
+
+## Messung (fünf Audits, 2026-10-01, read-only)
+
+1. **Oberfläche:** die Funktion des iPhone-Entwurfs ist zu ~70 % da (13 Design-Scheiben vom 26.09.),
+   aber die HIERARCHIE nicht: Genre ist das erste Bedienelement des immer sichtbaren Kopfs; der
+   Transport sitzt mitten im Scroll; Teile sind graue Blöcke ohne Namen/Farbe; Spuren erscheinen
+   zweimal (Canvas-Rinne + Karten darunter); Chips nur auf der Instrument-Bühne, nur Text.
+2. **Engine:** Rückgrat echt (Arrange, Undo, Notenedit, Automation, Import). Lücken: 8-Clip-Decke
+   (`ClipStore.slotCount`), keine Presets je Spur, keine Mixer-Ansicht, keine Per-Spur-Meter-Quelle,
+   kein Song-Export (MIDI/Bounce), keine CC-Spuren. Genre SCHREIBT Tonart/Stimmung/Patch beim Wechsel
+   (`EchoelStudioView ~4862`) — widerspricht der WA2-Bindung (Session-Kontext liest, Gerät folgt).
+3. **Visual/Licht/Raum:** kein `visual.*`-Parameter registriert; Licht-Look nicht automationsfähig
+   (bewusst); Spatial-Szene praktisch leer (Rebuild nur in türloser `ImmersiveStageView`).
+   Ehrlicher erster Schritt: KURVEN-Spuren über die vorhandene Song-Automation, nicht Clip-Engines.
+4. **Design-System:** Regeln stark und bewacht; es fehlt Identität je Spur (Farbe+Symbol) und
+   dicke Bausteine (Track-Kopf, Inspektor-Kopf, Transportleiste, Icon-Tabs).
+5. **Recherche:** Logic iPad (Kontrollleiste oben, Ansichtsleiste unten), Cubasis iPhone nur
+   quer, Koala (3 Tabs nach Arbeitsfluss) als UX-Maßstab. Keine Mobil-App vereint Musik, Visual,
+   Licht und Raum auf EINER Zeitleiste mit dem Körper als Quelle — das ist die Lücke.
+
+## Reihenfolge (eine Scheibe je Zyklus, ≤3 Dateien + Wächter)
+
+### Phase A — Aussehen und Hierarchie (Telefon zuerst)
+- **A1** Spur-Identität: `EchoelTheme.TrackHue` (gedämpfte Farbe je Instrument/Art), Symbol +
+  Farbe in der Canvas-Rinne, getönte Teile, höhere Spuren. Farbe nie allein (Symbol + Name).
+- **A1b** Teile tragen ihren Namen (Clip-Name im Block, 11 pt).
+- **A2** Genre raus aus dem Kopfstreifen → „Stil" am Echoel-Gerät (eine Tür). A2b: Stil-Wahl
+  schreibt Tonart/Stimmung nicht mehr (WA2-Bindung).
+- **A3** Feste Transportleiste unten auf der Stück-Bühne (⏮ ■ ▶ ● Klick · Position · Pegel);
+  `transportRow` mitten im Scroll entfällt. EIN Transport (`ProjectTransport`).
+- **A4** Kopf-Anzeige: Song-Position TAKT.SCHLAG.16tel · BPM · 4/4 · Tonart.
+- **A5** Spur-Köpfe IM Canvas (M/S verschoben, nicht verdoppelt); Kartenliste → nur Inspektor.
+- **A6** Kompositions-Anleitung zugeklappt, sobald das Stück einen Teil hat.
+- **A7** Icon+Wort-Tabs auf der Stück-Bühne: Arrange · Mix · Sound · FX · Master · Export.
+- **A8** Inspektor: Kopf (Symbol, Name, Art · Spur n), Segmente Spur/Teil/Gerät, Teil-Felder
+  Start/Ende/Länge als `EchoelValueField`.
+- **A9** Querformat: drei Spalten (Spuren+Browser | Arrange+Editor | Inspektor+Visual).
+
+### Phase B — Engine-Glaubwürdigkeit
+- **B1** 8-Clip-Decke heben + „Eigenständig machen" beim Duplizieren (Format-Migration).
+- **B2** Presets je Spur + Sampler wählbar.
+- **B3** Mixer-Ansicht (alle Spuren als Kanalzüge) + Mixer-Undo.
+- **B4** Song-MIDI-Export (alle Spuren).
+- **B5** Per-Spur-Meter-Quelle (Audio-Thread-Review, Gerät).
+- **B6** Velocity-Spur + CC-Spuren im Noteneditor; Import behält CC/Bend/Pressure.
+
+### Phase C — Multimedia-Spuren (die Lücke, die niemand besetzt)
+- **C1** `visual.*`-Parameter (Intensität, Bewegung, Farbton, Detail, Blend) registriert,
+  Automations-Zustand AUSSERHALB von `@AppStorage`/SwiftUI, gelesen in `draw(in:)`.
+- **C2** Visual-Spur (Kurven) + domänen-bewusster Automations-Editor + Play-Gate für Kurven-Songs.
+- **C3** Licht-Spur: Look-Intensität automationsfähig (nur dämpfend, FlashGuard bleibt; KEIN Strobe).
+- **C4** Raum: Szene app-weit aus der Zeitleiste, Stream-Schalter mit Tür; Bewegungs-Spur.
+- **C5** Bereichs-Tabs Music · Visual · Light · Space.
+
+## Gesetze, die jede Scheibe einhält
+Kein neues `.sheet` (Budget 12/14; Inspektoren inline) · keine heißen Reads in Vorfahren
+(`TheMenuHostReadsNoHotStateTests`) · `EchoelStudioView` bleibt montiert · Uncodixfy (kein Glow,
+Radius ≤ 12, Primär monochrom) · Zahlen = `EchoelValueField` · deutsche Chrome über den Katalog ·
+nichts behaupten, was nicht klingt/leuchtet (CLAIMS.md) · iPad bleibt founder-gated (`project.yml`).
