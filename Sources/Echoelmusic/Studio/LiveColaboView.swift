@@ -231,7 +231,7 @@ struct LiveColaboView: View {
     /// the user decides WHO connects, because bio sharing may be on.
     private func invitationCard(_ invite: PendingInvitation) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("\(invite.peerName) wants to join")
+            Text(invite.peerName + String(localized: " wants to join"))
                 .font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
             Text(shareBio
                  ? "Joining lets them share pieces with you — and see your live pulse while sharing is on."
@@ -262,7 +262,7 @@ struct LiveColaboView: View {
 
     private func incomingCard(_ from: String, _ project: Project) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Piece from \(from)")
+            Text(String(localized: "Piece from ") + from)
                 .font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
             Text("\(project.name) · \(project.style.displayName) · \(project.key.shortName) · \(EchoelDecimalText.string(project.bpm, decimals: 0)) BPM")
                 .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)

@@ -7862,7 +7862,7 @@ struct EchoelStudioView: View {
                         moodPresetName = d.mood.name
                         deletedMood = nil
                     } label: {
-                        Label("Undo delete of \(d.mood.name)", systemImage: "arrow.uturn.backward")
+                        Label(String(localized: "Undo delete of ") + d.mood.name, systemImage: "arrow.uturn.backward")
                     }
                 }
                 Divider()
@@ -8512,7 +8512,7 @@ struct EchoelStudioView: View {
                             applyArticulation()
                             deletedPatch = nil
                         } label: {
-                            Label("Undo delete of \(d.patch.name)", systemImage: "arrow.uturn.backward")
+                            Label(String(localized: "Undo delete of ") + d.patch.name, systemImage: "arrow.uturn.backward")
                         }
                     }
                     Divider()
@@ -9350,7 +9350,7 @@ struct EchoelStudioView: View {
                 // the clip grid UI and the timeline were deleted with #121 Slice 4, so it
                 // named a surface that does not exist and an action nobody can take. State
                 // the consequence instead: nothing is lost, only the internal slot.
-                Text("Internal part slots are full (\(ClipStore.slotCount)) — the instrument's music still plays and still exports.")
+                Text(String(localized: "Internal part slots are full (") + "\(ClipStore.slotCount)" + String(localized: ") — the instrument's music still plays and still exports."))
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.warning)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
@@ -10118,7 +10118,7 @@ struct EchoelStudioView: View {
                     // `.menu` popover can be torn down. A reason that outlives its premise is
                     // worse than none: the next session would read it as still measured.
                     if let credit = p.attribution(besideOwnName: session.artistName) {
-                        Text("by \(credit)").font(.caption).foregroundStyle(EchoelTheme.dim)
+                        Text(String(localized: "by ") + credit).font(.caption).foregroundStyle(EchoelTheme.dim)
                     }
                 }
                 .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
@@ -13493,7 +13493,7 @@ private struct ArtistNameRow: View {
             // DO, so the caption now says it instead of staying quiet about a string that leaves
             // the device. It still does not promise the credit line appears on your own takes;
             // `Project.attribution` stays quiet there by design.
-            Text("Stamped on pieces you save, and used in piece and export file names. Shown to nearby devices while Live Colabo is on. Without a name they are stamped \(SessionContext.unnamedArtist).")
+            Text(String(localized: "Stamped on pieces you save, and used in piece and export file names. Shown to nearby devices while Live Colabo is on. Without a name they are stamped ") + SessionContext.unnamedArtist + ".")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)

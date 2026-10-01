@@ -98,7 +98,9 @@
 // Live/Stop label and invite sentence, and the bio strip's „Bio source:“ spoken label (parent: a bare ternary and two
 // interpolated labels, 3 units missing — ONE finding). E4-51 added EchoelStudioView's eight interpolated spoken labels
 // and the rendered export-failure sentence — Export/Import/Not-opened notes, play-surface sound, visual preset, look,
-// Share, New name (parent: interpolated literals, 8 units missing — ONE finding). Claim 12
+// Share, New name (parent: interpolated literals, 8 units missing — ONE finding). E4-52 added the visible interpolated
+// lines — the two „Undo delete of“ labels, the part-slots-full note, the „by“ credit, the artist-name caption, Live
+// Colabo's invite line and „Piece from“ (parent: interpolated literals, 7 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1759,6 +1761,31 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         try assertGerman(["Export failed. ", ". Nothing was saved.", " play-surface sound", " visual preset — ", " look",
                           "Import failed. ", "Not opened. ", "Share ", "New name for "], "Studio spoken labels")
+
+        // E4-52 — the VISIBLE interpolated lines (`Text("… \\(value) …")`, read as a format key the catalog cannot carry
+        // under the honesty rule): the two „Undo delete of“ labels, the part-slots-full note, the „by“ credit, the
+        // artist-name caption, Live Colabo's invite line and „Piece from“ — each a catalog key seamed beside the value.
+        let studioLines = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for seam in ["Label(String(localized: \"Undo delete of \") + d.mood.name, systemImage: \"arrow.uturn.backward\")",
+                     "Label(String(localized: \"Undo delete of \") + d.patch.name, systemImage: \"arrow.uturn.backward\")",
+                     "Text(String(localized: \"Internal part slots are full (\") + \"\\(ClipStore.slotCount)\" + String(localized: \") — the instrument's music still plays and still exports.\"))",
+                     "Text(String(localized: \"by \") + credit)",
+                     "Without a name they are stamped \") + SessionContext.unnamedArtist + \".\")"] {
+            XCTAssertTrue(studioLines.contains(seam), "EchoelStudioView lost the E4-52 seam `\(seam)`")
+        }
+        for verbatim in ["Label(\"Undo delete of \\(", "Text(\"Internal part slots are full (\\(", "Text(\"by \\(credit)\")", "stamped \\(SessionContext.unnamedArtist).\")"] {
+            XCTAssertFalse(studioLines.contains(verbatim), "EchoelStudioView interpolates a value into a visible literal again: `\(verbatim)`")
+        }
+        let colabLines = try codeOnly("Sources/Echoelmusic/Studio/LiveColaboView.swift")
+        for seam in ["Text(invite.peerName + String(localized: \" wants to join\"))", "Text(String(localized: \"Piece from \") + from)"] {
+            XCTAssertTrue(colabLines.contains(seam), "LiveColaboView lost the E4-52 seam `\(seam)`")
+        }
+        for verbatim in ["Text(\"\\(invite.peerName) wants to join\")", "Text(\"Piece from \\(from)\")"] {
+            XCTAssertFalse(colabLines.contains(verbatim), "LiveColaboView interpolates a value into a visible literal again: `\(verbatim)`")
+        }
+        try assertGerman(["Undo delete of ", "Internal part slots are full (", ") — the instrument's music still plays and still exports.", "by ",
+                          "Stamped on pieces you save, and used in piece and export file names. Shown to nearby devices while Live Colabo is on. Without a name they are stamped ",
+                          " wants to join", "Piece from "], "visible interpolated lines")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

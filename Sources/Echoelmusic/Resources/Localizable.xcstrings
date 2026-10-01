@@ -22890,6 +22890,118 @@
           }
         }
       }
+    },
+    "Undo delete of " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Löschen rückgängig: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Undo delete of "
+          }
+        }
+      }
+    },
+    "Internal part slots are full (" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interne Teil-Plätze sind voll ("
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Internal part slots are full ("
+          }
+        }
+      }
+    },
+    ") — the instrument's music still plays and still exports." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ") — die Musik des Instruments spielt und exportiert weiterhin."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ") — the instrument's music still plays and still exports."
+          }
+        }
+      }
+    },
+    "by " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "von "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "by "
+          }
+        }
+      }
+    },
+    "Stamped on pieces you save, and used in piece and export file names. Shown to nearby devices while Live Colabo is on. Without a name they are stamped " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird auf gespeicherte Stücke gestempelt und in Stück- und Export-Dateinamen verwendet. Wird Geräten in der Nähe gezeigt, solange Live Colabo an ist. Ohne Namen lautet der Stempel "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stamped on pieces you save, and used in piece and export file names. Shown to nearby devices while Live Colabo is on. Without a name they are stamped "
+          }
+        }
+      }
+    },
+    " wants to join" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " möchte mitmachen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " wants to join"
+          }
+        }
+      }
+    },
+    "Piece from " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stück von "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Piece from "
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
