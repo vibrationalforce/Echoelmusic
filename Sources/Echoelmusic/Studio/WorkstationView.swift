@@ -1586,17 +1586,29 @@ private struct AnalysisRequest: Equatable {
 /// plain disclosure line; there is no panel around them. The next step wears the accent border,
 /// and its state is ALSO in words — the icon and colour are never the only carrier.
 ///
-/// The fold is view state, never persisted: open by default, and the player's own tap on the
-/// header folds or opens it.
+/// The fold is view state, never persisted. It is decided ONCE, when the card arrives
+/// (`ComposeGuide.opensExpanded`), and after that only the player's own tap on the header folds
+/// or opens it.
 private struct ComposeGuideCard: View {
     let facts: ComposeGuide.Facts
     /// The outcome of the last step run from here (a refusal must be seen where it was tapped).
     let note: String?
     let perform: (ComposeGuide.Step) -> Void
-    /// Open by default; a tap on the header records the player's choice. ⛔ It folded itself
-    /// once a part held notes (review of c672c2adf) — exactly when Play and Save become the
-    /// next steps, so the two steps a finished part needs were hidden by default.
-    @State private var expanded = true
+    /// Set from the facts the card ARRIVES with, never re-derived (`State(initialValue:)` is read
+    /// once per identity). ⛔ It folded itself once a part held notes (review of c672c2adf) —
+    /// exactly when Play and Save become the next steps, so the two steps a finished part needs
+    /// were hidden in the middle of the work. A3/A6 (founder 2026-10-01) answer that differently:
+    /// a song that ALREADY has notes when the piece opens is not a beginner's empty plate, so the
+    /// five steps arrive folded — the header line still names the next one, Play sits in the
+    /// pinned transport bar, Save in the project row. Nothing folds while the player works.
+    @State private var expanded: Bool
+
+    init(facts: ComposeGuide.Facts, note: String?, perform: @escaping (ComposeGuide.Step) -> Void) {
+        self.facts = facts
+        self.note = note
+        self.perform = perform
+        _expanded = State(initialValue: ComposeGuide.opensExpanded(facts))
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {

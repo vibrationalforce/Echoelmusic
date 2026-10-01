@@ -209,6 +209,15 @@ enum ComposeGuide {
         return position + ", " + rest
     }
 
+    /// Whether the five steps arrive OPEN (Workstation redesign A6, founder 2026-10-01). An empty
+    /// or note-less song opens them — that is the beginner's plate the guide exists for. A song
+    /// that already has notes when the piece opens arrives folded: the steps are still one tap
+    /// away under a header that names the next one. Read ONCE, when the card is created — the
+    /// card never folds itself while the player works (review of c672c2adf).
+    static func opensExpanded(_ facts: Facts) -> Bool {
+        !facts.hasNotes
+    }
+
     /// The header's line under "Create a piece": the step to do now, never a done-count.
     /// ⛔ It was "N of 5 steps done" (review of c672c2adf): Save can never be done and Play is
     /// done only while playing, so the count peaked at 4 and fell back on Stop — a progress
