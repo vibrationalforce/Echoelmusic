@@ -199,11 +199,11 @@ struct PatchbayView: View {
                 }
                 .tint(EchoelTheme.accent)
                 .accessibilityHint(networkMIDI
-                    ? "On. Any device on your local network can connect to this iPhone over MIDI, and this iPhone can send MIDI out over the network."
-                    : "Off. No wireless MIDI in either direction.")
+                    ? String(localized: "On. Any device on your local network can connect to this iPhone over MIDI, and this iPhone can send MIDI out over the network.")
+                    : String(localized: "Off. No wireless MIDI in either direction."))
                 Text(networkMIDI
-                     ? "This iPhone accepts a MIDI connection from any device on your local network — a Mac's Network MIDI, rtpMIDI, or a compatible app — and appears to them as a wireless MIDI destination. Turn it off when you are on a network you do not control."
-                     : "Off. This iPhone does not announce itself for wireless MIDI: no incoming connection is accepted, and it no longer appears as a wireless MIDI destination, so MIDI out over the network stops too. Turn it on to play the instrument from a Mac, or to play a Mac from here, over the network.")
+                     ? String(localized: "This iPhone accepts a MIDI connection from any device on your local network — a Mac's Network MIDI, rtpMIDI, or a compatible app — and appears to them as a wireless MIDI destination. Turn it off when you are on a network you do not control.")
+                     : String(localized: "Off. This iPhone does not announce itself for wireless MIDI: no incoming connection is accepted, and it no longer appears as a wireless MIDI destination, so MIDI out over the network stops too. Turn it on to play the instrument from a Mac, or to play a Mac from here, over the network."))
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -250,8 +250,8 @@ struct PatchbayView: View {
                 }
                 .tint(EchoelTheme.accent)
                 .accessibilityHint(midiOutMPE
-                    ? "On. Notes are spread across the MPE member channels, so a rig can bend and press each note on its own."
-                    : "Off. Every note is sent on channel 1.")
+                    ? String(localized: "On. Notes are spread across the MPE member channels, so a rig can bend and press each note on its own.")
+                    : String(localized: "Off. Every note is sent on channel 1."))
 
                 Toggle(isOn: $midiOutExpression) {
                     Text("Per-note expression")
@@ -261,15 +261,15 @@ struct PatchbayView: View {
                 .disabled(!midiOutMPE)
                 .accessibilityHint(midiOutMPE
                     ? (midiOutExpression
-                       ? "On. Each note carries the body's live Glide, Slide and Press."
-                       : "Off. Notes are sent without per-note expression.")
-                    : "Unavailable while MPE note layout is off, because per-note expression needs one channel per note.")
+                       ? String(localized: "On. Each note carries the body's live Glide, Slide and Press.")
+                       : String(localized: "Off. Notes are sent without per-note expression."))
+                    : String(localized: "Unavailable while MPE note layout is off, because per-note expression needs one channel per note."))
 
                 Text(midiOutMPE
                      ? (midiOutExpression
-                        ? "Notes go out across the MPE member channels, each carrying the body's live Glide, Slide and Press. Point it at an MPE synth or a DAW track."
-                        : "Notes go out across the MPE member channels. Turn on per-note expression to send the body's Glide, Slide and Press with each note.")
-                     : "Every note goes out on channel 1 — what any MIDI device understands. Turn on the MPE note layout to give each note its own channel; per-note expression needs that and stays unavailable until then.")
+                        ? String(localized: "Notes go out across the MPE member channels, each carrying the body's live Glide, Slide and Press. Point it at an MPE synth or a DAW track.")
+                        : String(localized: "Notes go out across the MPE member channels. Turn on per-note expression to send the body's Glide, Slide and Press with each note."))
+                     : String(localized: "Every note goes out on channel 1 — what any MIDI device understands. Turn on the MPE note layout to give each note its own channel; per-note expression needs that and stays unavailable until then."))
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -295,11 +295,11 @@ struct PatchbayView: View {
                 }
                 .tint(EchoelTheme.accent)
                 .accessibilityHint(midiOutUMP2
-                    ? "On. A second source, Echoelmusic (MIDI 2.0), carries the same notes with 16-bit velocity and 32-bit bend and controllers."
-                    : "Off. Only the MIDI 1.0 source is offered to hosts.")
+                    ? String(localized: "On. A second source, Echoelmusic (MIDI 2.0), carries the same notes with 16-bit velocity and 32-bit bend and controllers.")
+                    : String(localized: "Off. Only the MIDI 1.0 source is offered to hosts."))
                 Text(midiOutUMP2
-                     ? "Hosts now also see “Echoelmusic (MIDI 2.0)” — the same notes, widened to MIDI 2.0. Record from ONE of the two sources, or you get every note twice."
-                     : "Turn on to offer hosts a second, MIDI 2.0 source (16-bit velocity, 32-bit bend and controllers) beside the MIDI 1.0 one. Hardware keeps receiving MIDI 1.0.")
+                     ? String(localized: "Hosts now also see “Echoelmusic (MIDI 2.0)” — the same notes, widened to MIDI 2.0. Record from ONE of the two sources, or you get every note twice.")
+                     : String(localized: "Turn on to offer hosts a second, MIDI 2.0 source (16-bit velocity, 32-bit bend and controllers) beside the MIDI 1.0 one. Hardware keeps receiving MIDI 1.0."))
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -429,8 +429,8 @@ struct PatchbayView: View {
             }
             .tint(EchoelTheme.accent)
             .accessibilityHint(oscInEnabled
-                ? "On. One UDP port is open for the control cues listed below, from the senders you allow."
-                : "Off. No socket is open; Echoel sends only.")
+                ? String(localized: "On. One UDP port is open for the control cues listed below, from the senders you allow.")
+                : String(localized: "Off. No socket is open; Echoel sends only."))
             OSCInputStatusLine(receiver: oscIn)
             TextField("Allowed sender IPs, comma-separated (empty = any)", text: oscInAllowedHosts)
                 .textFieldStyle(.plain)
@@ -446,8 +446,8 @@ struct PatchbayView: View {
             EchoelValueField(label: "Port", value: oscInPort, range: 1...65_535, unit: "", decimals: 0,
                              standard: Float(OSCReceiver.defaultPort))
             Text(oscInEnabled
-                 ? "Listening for /echoelmusic/ctrl/bpm (only while the BPM is locked) · key 0–11 · scale · genre · visualStyle 0–9 · blackout 0/1. No bio value and no play/stop is accepted from the network. Turn it off on a network you do not control."
-                 : "Turn on to let TouchDesigner, Resolume, QLab or a console send cues: /echoelmusic/ctrl/bpm (locked only) · key · scale · genre · visualStyle · blackout. Nothing else is accepted, and no socket is open while this is off.")
+                 ? String(localized: "Listening for /echoelmusic/ctrl/bpm (only while the BPM is locked) · key 0–11 · scale · genre · visualStyle 0–9 · blackout 0/1. No bio value and no play/stop is accepted from the network. Turn it off on a network you do not control.")
+                 : String(localized: "Turn on to let TouchDesigner, Resolume, QLab or a console send cues: /echoelmusic/ctrl/bpm (locked only) · key · scale · genre · visualStyle · blackout. Nothing else is accepted, and no socket is open while this is off."))
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -479,6 +479,14 @@ struct PatchbayView: View {
     /// reads `lastSentTimestamp`, which DOES mean a datagram left the device — and is stamped at
     /// up to ~30 Hz, so it is freeze-safe only because `NetworkOutputHeader` is a leaf. The
     /// safety moved from the value to the placement, which is why the sentence had to move too.
+    /// The clinical-detail ON note. Kept out of the `Text` ternary because the sentence carries a percent sign:
+    /// `String(localized:)` reads its key as a format string, so the `%` stays a bare operand right after its key.
+    private var clinicalDetailOnNote: String {
+        let scale: String = String(localized: "On: /echoelmusic/bio/heart/rmssd and /sdnn (milliseconds) and /pnn50 (0–100 ") + "%"
+        let tail: String = String(localized: ") are sent as well. Use this for analysis in TouchDesigner, Max or a research patch — turn it off on a network you do not control.")
+        return scale + tail
+    }
+
     private var networkOutSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Network output").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
@@ -517,11 +525,11 @@ struct PatchbayView: View {
             }
             .tint(EchoelTheme.accent)
             .accessibilityHint(oscClinicalDetail
-                ? "On. rMSSD and SDNN in milliseconds and pNN50 as a percentage ride the OSC stream alongside the musical controls."
-                : "Off. The OSC stream carries the musical controls only — heart rate, normalized HRV, coherence and breath, each tagged with whether the body is real or the demo.")
+                ? String(localized: "On. rMSSD and SDNN in milliseconds and pNN50 as a percentage ride the OSC stream alongside the musical controls.")
+                : String(localized: "Off. The OSC stream carries the musical controls only — heart rate, normalized HRV, coherence and breath, each tagged with whether the body is real or the demo."))
             Text(oscClinicalDetail
-                 ? "On: /echoelmusic/bio/heart/rmssd and /sdnn (milliseconds) and /pnn50 (0–100 %) are sent as well. Use this for analysis in TouchDesigner, Max or a research patch — turn it off on a network you do not control."
-                 : "Off: the stream carries what the instrument plays — /heart/bpm, /heart/hrv (0–1), /coherence, /breath/*, /synthetic. The three time-domain HRV statistics in medical units stay on this device until you ask for them.")
+                 ? clinicalDetailOnNote
+                 : String(localized: "Off: the stream carries what the instrument plays — /heart/bpm, /heart/hrv (0–1), /coherence, /breath/*, /synthetic. The three time-domain HRV statistics in medical units stay on this device until you ask for them."))
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
             Text("Target IP + port per output — changes apply immediately while the output is running. OSC/ADM default to 'localhost' (this device); for Resolume · TouchDesigner · MadMapper enter the target computer's IP. Art-Net and sACN send unicast to the node IP you enter (default 192.168.1.100) — the app holds no broadcast entitlement, so 255.255.255.255 reaches nothing on iOS.")
@@ -792,8 +800,8 @@ struct PatchbayView: View {
             .buttonStyle(.plain)
             // Disabled-with-no-reason, the same one-channel defect as the status dot above.
             .accessibilityLabel(router.suggestions().isEmpty
-                                ? "Smart patch — no suggestions available"
-                                : "Smart patch")
+                                ? String(localized: "Smart patch — no suggestions available")
+                                : String(localized: "Smart patch"))
             .disabled(router.suggestions().isEmpty)
             Button { router.clearAll() } label: {
                 Text("Clear").font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
@@ -802,8 +810,8 @@ struct PatchbayView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(router.graph.routes.isEmpty
-                                ? "Clear — no routes to clear"
-                                : "Clear all routes")
+                                ? String(localized: "Clear — no routes to clear")
+                                : String(localized: "Clear all routes"))
             .disabled(router.graph.routes.isEmpty)
         }
     }

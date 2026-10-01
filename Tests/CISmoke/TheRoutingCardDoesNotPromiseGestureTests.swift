@@ -61,7 +61,8 @@ final class TheRoutingCardDoesNotPromiseGestureTests: XCTestCase {
     /// that DO ship. Without the third assertion, claim 1 would be satisfied by empty copy.
     func testTheClinicalLinesCarryTheUnitAndTheRealAddresses() throws {
         let code = SourceText.codeOnly(try Self.text(Self.patchbay))
-        XCTAssertTrue(code.contains("/pnn50 (0–100 %) are sent as well"),
+        // E4-79: the sentence is two catalog keys around a bare `%` (a key is read as a format string) — pin the line.
+        XCTAssertTrue(code.contains("let scale: String = String(localized: \"On: /echoelmusic/bio/heart/rmssd and /sdnn (milliseconds) and /pnn50 (0–100 \") + \"%\""),
                       "the routing card no longer states pNN50's percentage scale. The wire "
                       + "carries a percentage (#1329); an integrator normalising by 1 saturates.")
         XCTAssertTrue(code.contains("pNN50 as a percentage ride the OSC stream"),

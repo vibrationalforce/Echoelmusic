@@ -29834,6 +29834,454 @@
           }
         }
       }
+    },
+    "On. Any device on your local network can connect to this iPhone over MIDI, and this iPhone can send MIDI out over the network." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An. Jedes Gerät in deinem lokalen Netzwerk kann sich über MIDI mit diesem iPhone verbinden, und dieses iPhone kann MIDI über das Netzwerk hinaussenden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On. Any device on your local network can connect to this iPhone over MIDI, and this iPhone can send MIDI out over the network."
+          }
+        }
+      }
+    },
+    "Off. No wireless MIDI in either direction." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus. Kein drahtloses MIDI in beide Richtungen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off. No wireless MIDI in either direction."
+          }
+        }
+      }
+    },
+    "This iPhone accepts a MIDI connection from any device on your local network — a Mac's Network MIDI, rtpMIDI, or a compatible app — and appears to them as a wireless MIDI destination. Turn it off when you are on a network you do not control." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses iPhone nimmt eine MIDI-Verbindung von jedem Gerät in deinem lokalen Netzwerk an — Netzwerk-MIDI eines Mac, rtpMIDI oder eine kompatible App — und erscheint dort als drahtloses MIDI-Ziel. Schalte es aus, wenn du in einem Netzwerk bist, das du nicht kontrollierst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This iPhone accepts a MIDI connection from any device on your local network — a Mac's Network MIDI, rtpMIDI, or a compatible app — and appears to them as a wireless MIDI destination. Turn it off when you are on a network you do not control."
+          }
+        }
+      }
+    },
+    "Off. This iPhone does not announce itself for wireless MIDI: no incoming connection is accepted, and it no longer appears as a wireless MIDI destination, so MIDI out over the network stops too. Turn it on to play the instrument from a Mac, or to play a Mac from here, over the network." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus. Dieses iPhone meldet sich nicht für drahtloses MIDI an: keine eingehende Verbindung wird angenommen, und es erscheint nicht mehr als drahtloses MIDI-Ziel, also endet auch die MIDI-Ausgabe über das Netzwerk. Schalte es ein, um das Instrument von einem Mac aus zu spielen oder von hier aus einen Mac zu spielen, über das Netzwerk."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off. This iPhone does not announce itself for wireless MIDI: no incoming connection is accepted, and it no longer appears as a wireless MIDI destination, so MIDI out over the network stops too. Turn it on to play the instrument from a Mac, or to play a Mac from here, over the network."
+          }
+        }
+      }
+    },
+    "On. Notes are spread across the MPE member channels, so a rig can bend and press each note on its own." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An. Noten werden über die MPE-Member-Kanäle verteilt, sodass ein Rig jede Note einzeln biegen und drücken kann."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On. Notes are spread across the MPE member channels, so a rig can bend and press each note on its own."
+          }
+        }
+      }
+    },
+    "Off. Every note is sent on channel 1." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus. Jede Note wird auf Kanal 1 gesendet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off. Every note is sent on channel 1."
+          }
+        }
+      }
+    },
+    "On. Each note carries the body's live Glide, Slide and Press." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An. Jede Note trägt Glide, Slide und Press des Körpers live."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On. Each note carries the body's live Glide, Slide and Press."
+          }
+        }
+      }
+    },
+    "Off. Notes are sent without per-note expression." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus. Noten werden ohne Ausdruck pro Note gesendet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off. Notes are sent without per-note expression."
+          }
+        }
+      }
+    },
+    "Unavailable while MPE note layout is off, because per-note expression needs one channel per note." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht verfügbar, solange das MPE-Notenlayout aus ist, weil Ausdruck pro Note einen Kanal pro Note braucht."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unavailable while MPE note layout is off, because per-note expression needs one channel per note."
+          }
+        }
+      }
+    },
+    "Notes go out across the MPE member channels, each carrying the body's live Glide, Slide and Press. Point it at an MPE synth or a DAW track." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noten gehen über die MPE-Member-Kanäle hinaus, jede trägt Glide, Slide und Press des Körpers live. Richte es auf einen MPE-Synth oder eine DAW-Spur."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes go out across the MPE member channels, each carrying the body's live Glide, Slide and Press. Point it at an MPE synth or a DAW track."
+          }
+        }
+      }
+    },
+    "Notes go out across the MPE member channels. Turn on per-note expression to send the body's Glide, Slide and Press with each note." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noten gehen über die MPE-Member-Kanäle hinaus. Schalte Ausdruck pro Note ein, um Glide, Slide und Press des Körpers mit jeder Note zu senden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes go out across the MPE member channels. Turn on per-note expression to send the body's Glide, Slide and Press with each note."
+          }
+        }
+      }
+    },
+    "Every note goes out on channel 1 — what any MIDI device understands. Turn on the MPE note layout to give each note its own channel; per-note expression needs that and stays unavailable until then." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Note geht auf Kanal 1 hinaus — was jedes MIDI-Gerät versteht. Schalte das MPE-Notenlayout ein, um jeder Note ihren eigenen Kanal zu geben; Ausdruck pro Note braucht das und bleibt bis dahin nicht verfügbar."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every note goes out on channel 1 — what any MIDI device understands. Turn on the MPE note layout to give each note its own channel; per-note expression needs that and stays unavailable until then."
+          }
+        }
+      }
+    },
+    "On. A second source, Echoelmusic (MIDI 2.0), carries the same notes with 16-bit velocity and 32-bit bend and controllers." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An. Eine zweite Quelle, Echoelmusic (MIDI 2.0), trägt dieselben Noten mit 16-Bit-Velocity und 32-Bit-Bend und -Controllern."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On. A second source, Echoelmusic (MIDI 2.0), carries the same notes with 16-bit velocity and 32-bit bend and controllers."
+          }
+        }
+      }
+    },
+    "Off. Only the MIDI 1.0 source is offered to hosts." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus. Nur die MIDI-1.0-Quelle wird Hosts angeboten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off. Only the MIDI 1.0 source is offered to hosts."
+          }
+        }
+      }
+    },
+    "Hosts now also see “Echoelmusic (MIDI 2.0)” — the same notes, widened to MIDI 2.0. Record from ONE of the two sources, or you get every note twice." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hosts sehen jetzt zusätzlich “Echoelmusic (MIDI 2.0)” — dieselben Noten, auf MIDI 2.0 geweitet. Nimm von EINER der zwei Quellen auf, sonst bekommst du jede Note doppelt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hosts now also see “Echoelmusic (MIDI 2.0)” — the same notes, widened to MIDI 2.0. Record from ONE of the two sources, or you get every note twice."
+          }
+        }
+      }
+    },
+    "Turn on to offer hosts a second, MIDI 2.0 source (16-bit velocity, 32-bit bend and controllers) beside the MIDI 1.0 one. Hardware keeps receiving MIDI 1.0." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einschalten, um Hosts neben der MIDI-1.0-Quelle eine zweite, MIDI-2.0-Quelle anzubieten (16-Bit-Velocity, 32-Bit-Bend und -Controller). Hardware empfängt weiter MIDI 1.0."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn on to offer hosts a second, MIDI 2.0 source (16-bit velocity, 32-bit bend and controllers) beside the MIDI 1.0 one. Hardware keeps receiving MIDI 1.0."
+          }
+        }
+      }
+    },
+    "On. One UDP port is open for the control cues listed below, from the senders you allow." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An. Ein UDP-Port ist für die unten aufgeführten Steuer-Cues offen, von den Sendern, die du erlaubst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On. One UDP port is open for the control cues listed below, from the senders you allow."
+          }
+        }
+      }
+    },
+    "Off. No socket is open; Echoel sends only." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus. Kein Socket ist offen; Echoel sendet nur."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off. No socket is open; Echoel sends only."
+          }
+        }
+      }
+    },
+    "Listening for /echoelmusic/ctrl/bpm (only while the BPM is locked) · key 0–11 · scale · genre · visualStyle 0–9 · blackout 0/1. No bio value and no play/stop is accepted from the network. Turn it off on a network you do not control." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hört auf /echoelmusic/ctrl/bpm (nur solange die BPM festgestellt sind) · key 0–11 · scale · genre · visualStyle 0–9 · blackout 0/1. Kein Bio-Wert und kein Play/Stop wird aus dem Netzwerk angenommen. Schalte es in einem Netzwerk aus, das du nicht kontrollierst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listening for /echoelmusic/ctrl/bpm (only while the BPM is locked) · key 0–11 · scale · genre · visualStyle 0–9 · blackout 0/1. No bio value and no play/stop is accepted from the network. Turn it off on a network you do not control."
+          }
+        }
+      }
+    },
+    "Turn on to let TouchDesigner, Resolume, QLab or a console send cues: /echoelmusic/ctrl/bpm (locked only) · key · scale · genre · visualStyle · blackout. Nothing else is accepted, and no socket is open while this is off." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einschalten, damit TouchDesigner, Resolume, QLab oder ein Pult Cues senden können: /echoelmusic/ctrl/bpm (nur festgestellt) · key · scale · genre · visualStyle · blackout. Nichts anderes wird angenommen, und kein Socket ist offen, solange das aus ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn on to let TouchDesigner, Resolume, QLab or a console send cues: /echoelmusic/ctrl/bpm (locked only) · key · scale · genre · visualStyle · blackout. Nothing else is accepted, and no socket is open while this is off."
+          }
+        }
+      }
+    },
+    "On. rMSSD and SDNN in milliseconds and pNN50 as a percentage ride the OSC stream alongside the musical controls." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An. rMSSD und SDNN in Millisekunden und pNN50 als Prozentwert laufen im OSC-Strom neben den musikalischen Steuerwerten mit."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On. rMSSD and SDNN in milliseconds and pNN50 as a percentage ride the OSC stream alongside the musical controls."
+          }
+        }
+      }
+    },
+    "Off. The OSC stream carries the musical controls only — heart rate, normalized HRV, coherence and breath, each tagged with whether the body is real or the demo." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus. Der OSC-Strom trägt nur die musikalischen Steuerwerte — Herzfrequenz, normalisierte HRV, Kohärenz und Atem, jeweils markiert, ob der Körper echt ist oder die Demo."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off. The OSC stream carries the musical controls only — heart rate, normalized HRV, coherence and breath, each tagged with whether the body is real or the demo."
+          }
+        }
+      }
+    },
+    "Off: the stream carries what the instrument plays — /heart/bpm, /heart/hrv (0–1), /coherence, /breath/*, /synthetic. The three time-domain HRV statistics in medical units stay on this device until you ask for them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus: der Strom trägt, was das Instrument spielt — /heart/bpm, /heart/hrv (0–1), /coherence, /breath/*, /synthetic. Die drei Zeitbereichs-HRV-Statistiken in medizinischen Einheiten bleiben auf diesem Gerät, bis du sie anforderst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off: the stream carries what the instrument plays — /heart/bpm, /heart/hrv (0–1), /coherence, /breath/*, /synthetic. The three time-domain HRV statistics in medical units stay on this device until you ask for them."
+          }
+        }
+      }
+    },
+    "Smart patch — no suggestions available" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smart Patch — keine Vorschläge verfügbar"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smart patch — no suggestions available"
+          }
+        }
+      }
+    },
+    "Clear — no routes to clear" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurücksetzen — keine Routen zum Zurücksetzen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear — no routes to clear"
+          }
+        }
+      }
+    },
+    "Clear all routes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Routen zurücksetzen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear all routes"
+          }
+        }
+      }
+    },
+    "On: /echoelmusic/bio/heart/rmssd and /sdnn (milliseconds) and /pnn50 (0–100 " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An: /echoelmusic/bio/heart/rmssd und /sdnn (Millisekunden) und /pnn50 (0–100 "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On: /echoelmusic/bio/heart/rmssd and /sdnn (milliseconds) and /pnn50 (0–100 "
+          }
+        }
+      }
+    },
+    ") are sent as well. Use this for analysis in TouchDesigner, Max or a research patch — turn it off on a network you do not control." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ") werden ebenfalls gesendet. Nutze das für Analyse in TouchDesigner, Max oder einem Forschungs-Patch — schalte es in einem Netzwerk aus, das du nicht kontrollierst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ") are sent as well. Use this for analysis in TouchDesigner, Max or a research patch — turn it off on a network you do not control."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

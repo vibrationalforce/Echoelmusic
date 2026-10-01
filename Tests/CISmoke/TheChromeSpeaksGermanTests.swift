@@ -157,7 +157,11 @@
 // door behind `cloudKitConfigured == false`, no reader. E4-78 added WorkstationSummary's spoken sentences (transport
 // and click hints, the row description's fragments, the bar span's two words), TempoFollowLabel's four sentences plus
 // the lock button's label, and the Field arp row's two accent notes — every guard on them compares at runtime under
-// the test locale (parent: 24 units missing — ONE finding). Claim 12
+// the test locale (parent: 24 units missing — ONE finding). E4-79 keyed the Routing surface's 28 toggle hints and
+// notes (wireless MIDI, MPE layout and per-note expression, the MIDI 2.0 source, OSC control input, clinical HRV
+// detail, the two disabled-button labels); the one sentence with a percent sign became a computed property with
+// the `%` as a bare operand right after its key — TheRoutingCardDoesNotPromiseGestureTests re-anchored 1:1 on that
+// line (parent: 29 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2765,6 +2769,38 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           " is nearly level by design — Accent barely cuts here. Dynamic or Driving give a strong one.",
                           "On Dynamic, Evolve moves the accent — with Accent at 0 the contour stays flat and only the note length still breathes."],
                          "workstation spoken sentences, tempo label and accent notes")
+
+        // E4-79 — the Routing surface (PatchbayView): every `cond ? "…" : "…"` inside Text / accessibilityHint /
+        // accessibilityLabel was a String, not a key. Each branch is now its own `String(localized:)`; the clinical
+        // ON note carries a `%`, so it lives in `clinicalDetailOnNote` with the sign as a bare operand (a key is read as
+        // a format string). TheRoutingCardDoesNotPromiseGestureTests pins "pNN50 as a percentage ride the OSC stream"
+        // as a substring (survives the wrap) and the percent line 1:1 (re-anchored in this slice).
+        let patchbayToggles = try codeOnly("Sources/Echoelmusic/Studio/PatchbayView.swift")
+        for seam in [": String(localized: \"Off. No wireless MIDI in either direction.\")",
+                     ": String(localized: \"Off. Every note is sent on channel 1.\")",
+                     ": String(localized: \"Unavailable while MPE note layout is off, because per-note expression needs one channel per note.\")",
+                     ": String(localized: \"Off. Only the MIDI 1.0 source is offered to hosts.\")",
+                     ": String(localized: \"Off. No socket is open; Echoel sends only.\")",
+                     "? clinicalDetailOnNote",
+                     "let scale: String = String(localized: \"On: /echoelmusic/bio/heart/rmssd and /sdnn (milliseconds) and /pnn50 (0–100 \") + \"%\"",
+                     ": String(localized: \"Clear all routes\")"] {
+            XCTAssertTrue(patchbayToggles.contains(seam), "PatchbayView lost the E4-79 seam `\(seam)`")
+        }
+        for verbatim in ["                    ? \"On. Notes are spread across the MPE member channels, so a rig can bend and press each note on its own.\"",
+                         "? \"Smart patch — no suggestions available\"",
+                         "(0–100 %) are sent as well"] {
+            XCTAssertFalse(patchbayToggles.contains(verbatim), "PatchbayView spells a routing hint verbatim again: `\(verbatim)`")
+        }
+        try assertGerman(["On. Any device on your local network can connect to this iPhone over MIDI, and this iPhone can send MIDI out over the network.",
+                          "Off. No wireless MIDI in either direction.",
+                          "Off. Every note is sent on channel 1.", "Off. Notes are sent without per-note expression.",
+                          "Unavailable while MPE note layout is off, because per-note expression needs one channel per note.",
+                          "Off. Only the MIDI 1.0 source is offered to hosts.", "Off. No socket is open; Echoel sends only.",
+                          "On. rMSSD and SDNN in milliseconds and pNN50 as a percentage ride the OSC stream alongside the musical controls.",
+                          "On: /echoelmusic/bio/heart/rmssd and /sdnn (milliseconds) and /pnn50 (0–100 ",
+                          ") are sent as well. Use this for analysis in TouchDesigner, Max or a research patch — turn it off on a network you do not control.",
+                          "Smart patch — no suggestions available", "Smart patch", "Clear — no routes to clear", "Clear all routes"],
+                         "routing toggle hints and notes")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
