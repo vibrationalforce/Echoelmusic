@@ -4154,3 +4154,19 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   far — BPM is untranslated); Mute/Solo `name:` (DAW terms, undecided); `MediaLookUndo.applyBlockedReason`;
   EchoelStudioView sites.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-44: the three On/Off siblings speak German (e08b9e791)
+
+- **Decision:** `on ? "On" : "Off"` → `on ? String(localized: "On") : String(localized: "Off")` in
+  PerformSessionView (mix switch), ProjectHeader (Guide button, `guideVisible`) and WorkstationClickToggle. No new
+  catalog units. Three guards follow the spelling 1:1 (+1 comment line each): PerformIsASecondViewOfTheSameSessionTests,
+  TheGuideHasADoorTests, TheWorkstationArmsTheClickTests.
+- **Why:** last three bare On/Off ternaries under Sources/ after E4-43; kept as its own slice so the Ralph bound (3
+  Sources files) holds and each pinning guard moves in the same commit.
+- **Guard:** claim 11 E4-44 block (one seam + one absence needle per file, `assertGerman(["On","Off"])`; 211 → 217
+  XCTAssert). WORK PASS / HEAD FAIL. ⛔ First draft asserted a repo-wide absence through a `codeOnlyFiles` helper that
+  does not exist in the guard — removed before running; the absence is measured by `git grep` in the commit body.
+- **Next E4:** `MediaLookUndo.applyBlockedReason` (+ move `spokenMedium` into the Foundation-only owner, out of the
+  PhotosUI-guarded PhotoSeedCard extension), EchoelStudioView sites (Explore/New, visual-window label, favourites,
+  Default sound), BreathGuideView/BioSourceView (doorless — lower priority).
+- **Review:** 2026-10-31.

@@ -41363,3 +41363,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Benotung** `scratchpad/transcribe_e4_43.py` (Log-Datei): HEAD FAIL (12 Nähte fehlen, 10 Verbatim-Stellen vorhanden, 10 Einheiten fehlen — EIN Befund), WORK PASS. Checker: dead-needles OK, count-pins 0 RED, swift-escapes OK, foreign-needles keine kaputte Nadel, dupblocks 0, Klammerbilanz 0/0.
 - **Gates:** d48571327 Compile Check 3115 ✓ → E4-42-Stapel (0713afa5f + dbf84a8ae) gepusht, Monitor bumht72oy. E4-43 lokal — Push nach dem Compile Check auf dbf84a8ae.
 - **Offen (E4):** die drei Geschwister-On/Off-Ternäre (PerformSessionView:194, ProjectHeader:198, WorkstationClickToggle:56 — je ein Wächter pinnt sie), `MediaLookUndo.applyBlockedReason`, EchoelStudioView-Stellen; Einheiten (`semitones`) und Mute/Solo-Namen unentschieden.
+
+## 2026-10-01 — E4-44: die drei On/Off-Geschwister sprechen Deutsch (e08b9e791)
+
+- **Gebaut:** PerformSessionView (Mix-Schalter), ProjectHeader (Guide-Knopf), WorkstationClickToggle — `String(localized:)`-Arme, keine neuen Einheiten (Katalog 1248). Drei Wächter 1:1 nachgezogen. `git grep '? "On" : "Off"' -- Sources` → 0.
+- **Wächter:** Anspruch 11 E4-44-Block (je Datei eine Naht + eine Abwesenheits-Nadel; XCTAssert 211 → 217). Benotung `scratchpad/transcribe_e4_44.py`: HEAD FAIL (3 Nähte fehlen, 3 Verbatim-Stellen vorhanden), WORK PASS. Checker alle OK, Klammerbilanz 0/0.
+- **Gates:** d48571327 Auto-Merge 4013 ✓ → main = d48571327 (E4-39…E4-41 drin). dbf84a8ae (E4-42) läuft, Monitor bumht72oy. E4-43 (1287d9892) + E4-44 (e08b9e791) lokal — Push nach dem Compile Check auf dbf84a8ae.
+- **Offen (E4):** `MediaLookUndo.applyBlockedReason` + `spokenMedium`-Umzug in den Owner, EchoelStudioView-Stellen.
