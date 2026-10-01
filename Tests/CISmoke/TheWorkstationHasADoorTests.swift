@@ -372,7 +372,18 @@ final class TheWorkstationHasADoorTests: XCTestCase {
 
     func testTheSurfaceIntroducesNoPersistenceRoot() throws {
         for path in [Self.view, Self.summary] {
-            let src = try code(at: path)
+            var src = try code(at: path)
+            if path == Self.view {
+                // A7 (7303c048a) reads the skill level through the ONE key the Instrument strip
+                // already reads — a reader of an existing root, not a new one. Exactly that one
+                // line is excused; a second `@AppStorage` of any key is still red below.
+                let level = "@AppStorage(StudioDefaultKeys.skillLevel.key)"
+                XCTAssertEqual(src.components(separatedBy: level).count - 1, 1, """
+                    \(path) reads the skill level through `\(level)` exactly once — the tabs' \
+                    gate. Zero means the exemption below is stale; two means a second reader.
+                    """)
+                src = src.replacingOccurrences(of: level, with: "")
+            }
             for forbidden in ["AppGroupStore", "UserDefaults", "@AppStorage", "@SceneStorage",
                               "JSONEncoder", "JSONDecoder", "FileManager"] {
                 XCTAssertFalse(src.contains(forbidden), """
