@@ -595,8 +595,12 @@ public final class TimelineRegionPlayer {
     /// `contentOffsetTicks` decodes as 0 for exactly those. That is the #527 shape — a
     /// capability with no producer left, whose persisted DATA still arrives — and it is
     /// why a branch nothing writes is still a branch that runs.
-    static func executableNotes(of clip: Clip, in region: TimelineRegion,
-                                bpm: Double) -> [Note] {
+    ///
+    /// `nonisolated` since B4: the song MIDI export (`SongMIDIExport`) asks this same window
+    /// rather than restating it, and it builds the file where the share sheet asks for it, off
+    /// the main actor. The body reads only its arguments and two pure `RegionNoteWindow` calls.
+    nonisolated static func executableNotes(of clip: Clip, in region: TimelineRegion,
+                                            bpm: Double) -> [Note] {
         RegionNoteWindow.windowed(
             notes: clip.melody?.notes ?? [],
             offsetTicks: RegionNoteWindow.effectiveOffsetTicks(of: region, bpm: bpm),

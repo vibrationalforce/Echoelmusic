@@ -223,6 +223,44 @@ public enum MIDIFileExporter {
                               velocity: velocity, program: program, humanize: humanize, seed: seed)
     }
 
+    /// Build a Type-1 SMF for a whole SONG (Workstation B4): a conductor track (tempo + 4/4 +
+    /// key-signature + name) and one track per `SongMIDIExport.Track`, each on its own channel,
+    /// notes at their song ticks. Every track's End-of-Track sits at `endTick`, so the file spans
+    /// the song's whole bars in the DAW. No humanize: a song export writes the notes exactly as
+    /// they play, velocity included. Which notes those are is `SongMIDIExport`'s decision.
+    public static func exportSong(tracks: [SongMIDIExport.Track], tempo: Double, endTick: Int,
+                                  keyRootPitchClass: Int, keyIsMinor: Bool) -> Data {
+        var conductorMeta = tempoMeta(tempo)
+        conductorMeta += timeSignatureMeta()
+        conductorMeta += keySignatureMeta(rootPitchClass: keyRootPitchClass, minor: keyIsMinor)
+        conductorMeta += trackNameMeta("Echoelmusic")
+        var chunks = [serializeTrack([], leadingMeta: conductorMeta, endTick: endTick)]
+        for track in tracks {
+            let channel = track.channel & 0x0F
+            var events: [MIDIEvent] = []
+            for n in track.notes {
+                let onTick = Swift.max(0, n.startTick)
+                let note = UInt8(Swift.min(127, Swift.max(0, n.pitch)))
+                // NaN-safe (`clamped(to:)` maps NaN to the floor): `Int(.nan)` traps.
+                let vel = UInt8(Swift.max(1, Int(n.velocity.clamped(to: 0...1) * 127)))
+                events.append(MIDIEvent(tick: onTick, on: true, status: 0x90 | channel,
+                                        note: note, vel: vel))
+                events.append(MIDIEvent(tick: onTick + Swift.max(1, n.lengthTicks), on: false,
+                                        status: 0x80 | channel, note: note, vel: 0))
+            }
+            chunks.append(serializeTrack(events, leadingMeta: trackNameMeta(track.name),
+                                         endTick: endTick))
+        }
+        var data = Data()
+        data.append(contentsOf: Array("MThd".utf8))
+        data.append(contentsOf: be32(6))
+        data.append(contentsOf: be16(1))                                   // format 1
+        data.append(contentsOf: be16(UInt16(Swift.min(chunks.count, Int(UInt16.max)))))
+        data.append(contentsOf: be16(ticksPerQuarter))
+        for chunk in chunks { data.append(chunk) }
+        return data
+    }
+
     // MARK: - Meta-event builders (each begins with a 0x00 delta-time)
 
     static func tempoMeta(_ tempo: Double) -> [UInt8] {

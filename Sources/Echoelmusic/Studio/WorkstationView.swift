@@ -878,10 +878,12 @@ struct WorkstationView: View {
     /// track inspector's device door uses — no new modal, no second copy of a panel. Each poster
     /// is written out literally so the guards can count the producers of each door. Mix and FX
     /// follow the Instrument strip's `showsSongs` gate, Master its `showsProTabs` gate
-    /// (`chips(for:)`), so a beginner sees the same panels here as there. Export is NOT a tab
-    /// yet: a song export (B4) does not exist, and a tab with no destination is a button that
-    /// does nothing (#164/#227). (Until B3, Arrange was a plain tile — with nothing to switch to,
-    /// a button would have opened what was already open.)
+    /// (`chips(for:)`), so a beginner sees the same panels here as there. Export (B4) shares the
+    /// whole song as a MIDI file through its own leaf, `SongExportTab` — a `ShareLink`, so no
+    /// presentation modifier joins this view; it follows the `showsSongs` gate like Mix. (Until
+    /// B4 Export was deliberately NOT a tab: with no song export, a tab with no destination is a
+    /// button that does nothing, #164/#227. Until B3, Arrange was a plain tile — with nothing to
+    /// switch to, a button would have opened what was already open.)
     private var pieceTabs: some View {
         let level = SkillLevel(rawValue: skillLevelRaw) ?? StudioDefaultKeys.skillLevel.value
         return HStack(spacing: 6) {
@@ -937,6 +939,9 @@ struct WorkstationView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Master")
                 .accessibilityHint("Opens the master output on the Instrument stage. Piece brings you back")
+            }
+            if level.showsSongs {
+                SongExportTab()
             }
         }
         .padding(.horizontal, 10)

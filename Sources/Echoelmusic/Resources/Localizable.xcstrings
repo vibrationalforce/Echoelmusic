@@ -34032,6 +34032,78 @@
           }
         }
       }
+    },
+    "Export" : {
+      "comment" : "Piece tab (B4): the tile that shares the whole piece as a MIDI file",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export"
+          }
+        }
+      }
+    },
+    "Echoelmusic Piece" : {
+      "comment" : "Song MIDI export (B4): file name when the open piece has no name",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echoelmusic-Stück"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echoelmusic Piece"
+          }
+        }
+      }
+    },
+    "Shares the piece as a MIDI file: every MIDI track with its notes, muted ones included. Level, pan and sound stay here" : {
+      "comment" : "Song MIDI export (B4): VoiceOver hint of the Export tab",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teilt das Stück als MIDI-Datei: jede MIDI-Spur mit ihren Noten, stummgeschaltete eingeschlossen. Pegel, Panorama und Klang bleiben hier"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shares the piece as a MIDI file: every MIDI track with its notes, muted ones included. Level, pan and sound stay here"
+          }
+        }
+      }
+    },
+    "Nothing to export yet. Write a part on a MIDI track, and the piece can be shared as a MIDI file" : {
+      "comment" : "Song MIDI export (B4): VoiceOver hint while the piece holds no note",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nichts zu exportieren. Schreib einen Teil auf eine MIDI-Spur, dann lässt sich das Stück als MIDI-Datei teilen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing to export yet. Write a part on a MIDI track, and the piece can be shared as a MIDI file"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

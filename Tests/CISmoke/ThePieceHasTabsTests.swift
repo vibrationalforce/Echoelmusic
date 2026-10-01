@@ -7,8 +7,11 @@
 // that shape the sound lived one stage away behind a seam a new player does not read as a door.
 // A7 adds the row WITHOUT a second copy of any panel and WITHOUT a modal: Sound, FX and Master
 // post the existing chrome door, whose receiver opens the panel AND turns the Instrument stage
-// (the slice-2b nothing-button law). Export is deliberately NOT a tab: a song export (B4) does not
-// exist yet, and a tab with no destination is a button that does nothing (#164/#227).
+// (the slice-2b nothing-button law). Export was deliberately NOT a tab while no song export existed
+// — a tab with no destination is a button that does nothing (#164/#227). ⭐ B4 (2026-10-01) gave it
+// one: the LAST tab is `SongExportTab`, a `ShareLink` in its own leaf, behind its own `showsSongs`
+// gate (its behaviour and its door: `ThePieceExportsTheSongAsMIDITests`). It posts nothing, so the
+// ban on an `"export"` POSTER below still holds — the share sheet is the destination.
 // ⭐ B3 (2026-10-01) made the plate TWO views — Arrange and Mix — so Arrange stopped being a
 // passive tile: it is the button that brings the arrangement back from the mixer. A7's law
 // survives in its sharper form: each plate tab sets ITS plate, the current one says selected,
@@ -20,8 +23,9 @@
 //    is the current one; the three posts are literal; Mix and FX follow the Instrument strip's
 //    `showsSongs` gate, Master its `showsProTabs` gate.
 // 2. The receiver handles `"effects"` and `"master"` — each opens its panel and turns the stage.
-// 3. Counterweights — no Mix or Export POSTER on the piece, no presentation modifier added to
-//    `WorkstationView` (the black-screen law), the row is solid with a 1-px border (Uncodixfy),
+// 3. Counterweights — no Mix or Export POSTER on the piece (Export is a `ShareLink`, B4), no
+//    presentation modifier added to `WorkstationView` (the black-screen law), the row is solid
+//    with a 1-px border (Uncodixfy),
 //    and every tab's visible word is in its spoken label (TheIconTileCarriesAWordTests' rule).
 //
 // GRADING (§0/§3, no Swift toolchain in a web session — transcribed in Python against both
@@ -32,7 +36,11 @@
 // the two conditional traits, the Mix word) are red there by ABSENCE of the plate state — one
 // absence (#486); the ban on an UNCONDITIONAL `.isSelected` is a REGRESSION there, red for its
 // named reason (A7's tile carried it, correctly while the plate had one view); the three posts,
-// the gates and claims 2–3 stay green on both. DEVICE PROBE,
+// the gates and claims 2–3 stay green on both. B4 re-grade against B3's tree (6f3eb2450): the
+// FX gate is now the gate NEAREST BEFORE the FX post — the old bare backwards search would land on
+// Export's own gate after Master and be red on B4's correct tree, for a reason it does not name
+// (#367); the new no-`}` assertion is green on both; `SongExportTab()` is red there by ABSENCE
+// (one absence, #486). DEVICE PROBE,
 // open: the row reads as tabs, Mix shows the strips and Arrange brings the canvas back, FX/Master
 // land on their panel, and „Piece" brings the player back — readings, not scans.
 
@@ -82,8 +90,11 @@ final class ThePieceHasTabsTests: XCTestCase {
         }
         guard let mixGate = tabs.range(of: "if level.showsSongs {"),
               let mixTab = tabs.range(of: "plate = .mix"),
-              let fxGate = tabs.range(of: "if level.showsSongs {", options: .backwards),
               let fx = tabs.range(of: "object: \"effects\""),
+              // The gate NEAREST BEFORE the FX post — since B4 the last `showsSongs` gate in the
+              // row is Export's own, after Master, so a bare backwards search would find that one.
+              let fxGate = tabs.range(of: "if level.showsSongs {", options: .backwards,
+                                      range: tabs.startIndex..<fx.lowerBound),
               let masterGate = tabs.range(of: "if level.showsProTabs {"),
               let master = tabs.range(of: "object: \"master\"") else {
             return XCTFail("ANCHOR MISSING: a SkillLevel gate or the FX/Master post (#454)")
@@ -94,6 +105,10 @@ final class ThePieceHasTabsTests: XCTestCase {
             """)
         XCTAssertLessThan(fxGate.lowerBound, fx.lowerBound,
                           "FX follows the strip's `showsSongs` gate — a beginner sees the same panels here as there")
+        XCTAssertFalse(tabs[fxGate.upperBound..<fx.lowerBound].contains("}"), """
+            the FX post sits INSIDE that gate — a closed block between them would mean FX follows \
+            some other tab's gate and is shown to every level
+            """)
         XCTAssertLessThan(masterGate.lowerBound, master.lowerBound,
                           "Master follows the strip's `showsProTabs` gate")
         XCTAssertTrue(code.contains("@AppStorage(StudioDefaultKeys.skillLevel.key)"),
@@ -132,12 +147,14 @@ final class ThePieceHasTabsTests: XCTestCase {
         for dead in ["object: \"mix\"", "object: \"mixer\"", "object: \"export\""] {
             XCTAssertFalse(code.contains(dead), """
                 `\(dead)` is posted from the piece — the mixer (B3) is a view of THIS plate, not a \
-                door to another surface, and a song export (B4) does not exist yet. A tab with no \
-                destination is a button that does nothing.
+                door to another surface, and the song export (B4) is a `ShareLink` whose share \
+                sheet is its destination. A posted door with no receiver is a button that does nothing.
                 """)
         }
         XCTAssertTrue(code.contains("PieceMixerView(voiceCapacity: player.laneVoiceCapacity)"),
                       "the Mix tab has its destination on this plate — the tab is not a dead button")
+        XCTAssertTrue(code.contains("SongExportTab()"),
+                      "the Export tab has its destination — the share sheet of its own `ShareLink` (B4)")
         let tabs = try member("private var pieceTabs: some View {", in: code)
         for modal in [".sheet(", ".fullScreenCover(", ".popover(", ".alert("] {
             XCTAssertFalse(tabs.contains(modal), "the tabs open panels through the door, never a modal (black-screen law)")
