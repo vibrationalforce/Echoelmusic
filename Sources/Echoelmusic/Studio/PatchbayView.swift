@@ -492,15 +492,17 @@ struct PatchbayView: View {
             Text("Network output").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
             // Rule 6, eleventh family: each sender OWNS its default port (and the two light
             // senders their universe); the row only carries the owner's number to the key.
+            // E4-99: `name` is a String the header renders and speaks, so the two light rows
+            // pass a catalog lookup; OSC and ADM-OSC are protocol names, the same in German.
             outputRow("OSC", sender: osc, host: oscHost, port: oscPort,
                       standardPort: Float(OSCSender.defaultPort))
             outputRow("ADM-OSC", sender: admOSC, host: admHost, port: admPort,
                       standardPort: Float(ADMOSCSender.defaultPort))
-            outputRow("sACN · Light", sender: sacn, host: sacnHost, port: sacnPort,
+            outputRow(String(localized: "sACN · Light"), sender: sacn, host: sacnHost, port: sacnPort,
                       standardPort: Float(SACNSender.defaultPort),
                       universe: sacnUniverse, universeRange: 1...63_999,
                       standardUniverse: Float(SACNSender.defaultUniverse))
-            outputRow("Art-Net · Light", sender: artNet, host: artNetHost, port: artNetPort,
+            outputRow(String(localized: "Art-Net · Light"), sender: artNet, host: artNetHost, port: artNetPort,
                       standardPort: Float(ArtNetSender.defaultPort),
                       universe: artNetUniverse, universeRange: 0...32_767,
                       standardUniverse: Float(ArtNetSender.defaultUniverse))

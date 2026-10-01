@@ -32826,6 +32826,38 @@
           }
         }
       }
+    },
+    "sACN · Light" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sACN · Licht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sACN · Light"
+          }
+        }
+      }
+    },
+    "Art-Net · Light" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Art-Net · Licht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Art-Net · Light"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

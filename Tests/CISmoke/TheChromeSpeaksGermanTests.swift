@@ -197,7 +197,8 @@
 // hint and the spoken ", favorite" of the mood and sound rows (parent: 8 units missing — ONE finding). E4-96 keyed the onboarding consent toggle's VoiceOver hint, the last safety sentence that shipped
 // verbatim (parent: 2 units missing — ONE finding). E4-97 keyed the bio-source short names (BioSourceOption.shortName),
 // which the pill row renders and speaks beside the E4-72 menu labels (parent: 3 units missing — ONE finding). E4-98 looked the floating window's four corner actions up by their
-// rawValue (one definition stays in SnapCorner; the key is the rawValue) (parent: 4 units missing — ONE finding). Claim 12
+// rawValue (one definition stays in SnapCorner; the key is the rawValue) (parent: 4 units missing — ONE finding). E4-99 keyed the routing surface's two light output names, which
+// `NetworkOutputHeader` renders and speaks as a String (parent: 2 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3311,6 +3312,19 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertFalse(cornerActions.contains("Button(corner.rawValue) {"),
                        "FloatingVisualWindow speaks the corner actions verbatim again")
         try assertGerman(FloatingVisualLayout.SnapCorner.allCases.map(\.rawValue), "floating-window corner actions")
+
+        // E4-99 — `PatchbayView.outputRow(_ name: String, …)` hands `name` to `NetworkOutputHeader`, which renders it with
+        // `Text(name)` and speaks it with `.accessibilityLabel(name)` — both StringProtocol overloads. The two light rows now
+        // pass a lookup. "OSC" and "ADM-OSC" stay bare on purpose: protocol names, identical in German.
+        let outputNames = try codeOnly("Sources/Echoelmusic/Studio/PatchbayView.swift")
+        for seam in ["outputRow(String(localized: \"sACN · Light\"), sender: sacn,",
+                     "outputRow(String(localized: \"Art-Net · Light\"), sender: artNet,"] {
+            XCTAssertTrue(outputNames.contains(seam), "PatchbayView lost the E4-99 seam `\(seam)`")
+        }
+        for verbatim in ["outputRow(\"sACN · Light\"", "outputRow(\"Art-Net · Light\""] {
+            XCTAssertFalse(outputNames.contains(verbatim), "PatchbayView names a light output verbatim again: `\(verbatim)`")
+        }
+        try assertGerman(["sACN · Light", "Art-Net · Light"], "routing light output names")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
