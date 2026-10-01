@@ -96,7 +96,9 @@
 // sound-reset „Armed“ value and the Music-colour row (text + spoken label, which interpolated `live`/`idle`) (parent:
 // ternaries of bare literals and one interpolated label, 9 units missing — ONE finding). E4-50 added Live Colabo's Go
 // Live/Stop label and invite sentence, and the bio strip's „Bio source:“ spoken label (parent: a bare ternary and two
-// interpolated labels, 3 units missing — ONE finding). Claim 12
+// interpolated labels, 3 units missing — ONE finding). E4-51 added EchoelStudioView's eight interpolated spoken labels
+// and the rendered export-failure sentence — Export/Import/Not-opened notes, play-surface sound, visual preset, look,
+// Share, New name (parent: interpolated literals, 8 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1734,6 +1736,29 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertFalse(bioTag.contains(verbatim), "BioStripView interpolates the source into a literal again: `\(verbatim)`")
         }
         try assertGerman(["Stop", "Go Live (nearby)", " wants to join you", "Bio source: "], "Live Colabo and bio-tag sites")
+
+        // E4-51 — EchoelStudioView's eight interpolated spoken labels and the rendered export-failure sentence: each was
+        // one literal with a name or a note inside; now a catalog key seamed beside the value, the value verbatim.
+        // TheExportFailureSpeaksAtTheButtonTests pins the export block and was re-anchored 1:1 in the same commit.
+        let studioSpoken = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for seam in ["Text(reason + String(localized: \". Nothing was saved.\"))",
+                     ".accessibilityLabel(String(localized: \"Export failed. \") + reason + String(localized: \". Nothing was saved.\"))",
+                     ".accessibilityLabel(name + String(localized: \" play-surface sound\"))",
+                     ".accessibilityLabel(preset.name + String(localized: \" visual preset — \") + preset.blurb)",
+                     ".accessibilityLabel(look.name + String(localized: \" look\"))",
+                     ".accessibilityLabel(String(localized: \"Import failed. \") + importNote)",
+                     ".accessibilityLabel(String(localized: \"Not opened. \") + openNote)",
+                     ".accessibilityLabel(String(localized: \"Share \") + p.name)",
+                     ".accessibilityLabel(String(localized: \"New name for \") + currentName)"] {
+            XCTAssertTrue(studioSpoken.contains(seam), "EchoelStudioView lost the E4-51 seam `\(seam)`")
+        }
+        for verbatim in ["Text(\"\\(reason). Nothing was saved.\")", ".accessibilityLabel(\"Export failed. \\(reason)", "\\(name) play-surface sound\"",
+                         "\\(preset.name) visual preset — ", "\\(look.name) look\"", ".accessibilityLabel(\"Import failed. \\(importNote)\")",
+                         ".accessibilityLabel(\"Not opened. \\(openNote)\")", ".accessibilityLabel(\"Share \\(p.name)\")", ".accessibilityLabel(\"New name for \\(currentName)\")"] {
+            XCTAssertFalse(studioSpoken.contains(verbatim), "EchoelStudioView interpolates a value into a spoken literal again: `\(verbatim)`")
+        }
+        try assertGerman(["Export failed. ", ". Nothing was saved.", " play-surface sound", " visual preset — ", " look",
+                          "Import failed. ", "Not opened. ", "Share ", "New name for "], "Studio spoken labels")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

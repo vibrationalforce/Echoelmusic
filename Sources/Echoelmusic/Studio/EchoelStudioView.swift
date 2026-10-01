@@ -2298,11 +2298,11 @@ struct EchoelStudioView: View {
                 // Joined with a full stop, NOT an em-dash: two of the reasons already carry
                 // an em-dash, and " — nothing was saved" made those a run-on with three
                 // dashes in one line. Review caught it by reading all six rendered strings.
-                Text("\(reason). Nothing was saved.")
+                Text(reason + String(localized: ". Nothing was saved."))
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.warning)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityLabel("Export failed. \(reason). Nothing was saved.")
+                    .accessibilityLabel(String(localized: "Export failed. ") + reason + String(localized: ". Nothing was saved."))
             }
             // LINE 3 — the doors (#492). See `quickDoorRow`. A THIRD line is back, four
             // slices after #456 deleted one, and the honest accounting is that it costs the
@@ -6359,7 +6359,7 @@ struct EchoelStudioView: View {
                     .strokeBorder(EchoelTheme.border, lineWidth: 1))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(name) play-surface sound")
+        .accessibilityLabel(name + String(localized: " play-surface sound"))
         .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 
@@ -6442,7 +6442,7 @@ struct EchoelStudioView: View {
                                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                                     .strokeBorder(EchoelTheme.border, lineWidth: 1))
                         }
-                        .accessibilityLabel("\(preset.name) visual preset — \(preset.blurb)")
+                        .accessibilityLabel(preset.name + String(localized: " visual preset — ") + preset.blurb)
                         .accessibilityAddTraits(selected ? [.isSelected] : [])
                         .accessibilityHint(selected ? String(localized: "Double tap to clear") : String(localized: "Double tap to apply"))
                     }
@@ -6607,7 +6607,7 @@ struct EchoelStudioView: View {
                                 .strokeBorder(EchoelTheme.border, lineWidth: 1))
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("\(look.name) look")
+                        .accessibilityLabel(look.name + String(localized: " look"))
                         .accessibilityValue(sliderValue)
                         .accessibilityAddTraits(on ? [.isSelected] : [])
                         .accessibilityHint(on ? String(localized: "Double tap to remove from the slider") : String(localized: "Double tap to add to the slider"))
@@ -9906,14 +9906,14 @@ struct EchoelStudioView: View {
                         .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.warning)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityLabel("Import failed. \(importNote)")
+                        .accessibilityLabel(String(localized: "Import failed. ") + importNote)
                 }
                 if let openNote {
                     Text(openNote)
                         .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.warning)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityLabel("Not opened. \(openNote)")
+                        .accessibilityLabel(String(localized: "Not opened. ") + openNote)
                 }
                 if projects.projects.isEmpty {
                     Text("No saved pieces yet.").foregroundStyle(EchoelTheme.dim)
@@ -10151,7 +10151,7 @@ struct EchoelStudioView: View {
                     .contentShape(Rectangle())
             }
             .disabled(!shareable)
-            .accessibilityLabel("Share \(p.name)")
+            .accessibilityLabel(String(localized: "Share ") + p.name)
             .accessibilityHint(shareable ? "" : "Sharing sends the instrument's held music only, and this piece holds only tracks and parts, which stay on this device")
         }
         // A long press is a deliberate second step (hold, then choose), where the swipe's full
@@ -12905,7 +12905,7 @@ private struct LibraryRenameRow: View {
                 .focused($focused)
                 .onSubmit { if canSave { commit(text) } }
                 .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                .accessibilityLabel("New name for \(currentName)")
+                .accessibilityLabel(String(localized: "New name for ") + currentName)
             Button { cancel() } label: {
                 Text("Cancel").font(.callout).foregroundStyle(EchoelTheme.dim)
                     .frame(minWidth: 44, minHeight: 44)

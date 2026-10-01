@@ -102,7 +102,8 @@ final class TheExportFailureSpeaksAtTheButtonTests: XCTestCase {
         // a capped prefix stopped reaching the label the moment that note was written — the
         // guard then failed on a CORRECT tree, which is the #988 defect in miniature.
         let after = String(text[range.lowerBound...])
-        guard let end = after.range(of: ".accessibilityLabel(\"Export failed.") else {
+        // E4-51: the label is seams of catalog keys around `reason` — same block, same order, three needles re-anchored 1:1.
+        guard let end = after.range(of: ".accessibilityLabel(String(localized: \"Export failed. \")") else {
             return XCTFail("ANCHOR MISSING: the block's accessibility label — re-derive this guard.")
         }
         let body = String(after[..<end.upperBound])
@@ -119,12 +120,12 @@ final class TheExportFailureSpeaksAtTheButtonTests: XCTestCase {
     // noticing, and the suffix is the one thing true of all six exporter failure reasons.
     func testTheMoveDidNotThinTheSentence() throws {
         let text = try source(Self.studio)
-        XCTAssertTrue(text.contains("Text(\"\\(reason). Nothing was saved.\")"), """
+        XCTAssertTrue(text.contains("Text(reason + String(localized: \". Nothing was saved.\"))"), """
             The rendered failure sentence lost its "Nothing was saved." suffix. That clause is \
             the one fact true of all six of `LoopExporter`'s failure reasons, and it is what \
             tells the user there is no half-written file to hunt for.
             """)
-        XCTAssertTrue(text.contains(".accessibilityLabel(\"Export failed. \\(reason). Nothing was saved.\")"), """
+        XCTAssertTrue(text.contains(".accessibilityLabel(String(localized: \"Export failed. \") + reason + String(localized: \". Nothing was saved.\"))"), """
             The failure line lost its accessibility label. VoiceOver would then read the \
             reason with no indication that it IS a failure — on the surface a blind user \
             reaches after pressing a button that appeared to do nothing.
