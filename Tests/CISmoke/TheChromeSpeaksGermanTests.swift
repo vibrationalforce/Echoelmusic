@@ -183,7 +183,9 @@
 // (parent: 9 units missing — ONE finding). E4-87 keyed the twelve default `SignalPort` names and the ten
 // `ConverterCatalog.default` names the Routing surface renders (parent: 22 units missing — ONE finding). E4-88
 // split the tuning banner's headline into two keyed heads plus bare operands (parent: 2 units missing — ONE
-// finding). Claim 12
+// finding). E4-89 gave the three save alerts, the "Open piece" and "Recovery" navigation titles and the
+// brand title "EchoelFX" their units and widened claim 10's walk to `.alert` / `.navigationTitle` /
+// `.confirmationDialog` (parent: 6 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -552,8 +554,11 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
 
     func testEveryPanelTextOfTheReachableChromeFilesHasAGermanUnit() throws {
         let strings = try catalogStrings()
+        // E4-89: `.alert("…")`, `.navigationTitle("…")` and `.confirmationDialog("…")` titles are key sites too. The
+        // walk did not list them, so five titles (three save alerts, "Open piece", "Recovery") shipped English while
+        // every `Text` beside them was German — a blind spot of this regex, not of the catalog.
         let literal = try NSRegularExpression(
-            pattern: #"\b(?:Text|Button|Toggle|Label|Picker|Section|TextField|Menu|NavigationLink|Link|labeledRow|groupHeader|collapsibleGroupHeader|mixStripCard|weatherMixGroup|effectSection|panel|readout)\(\s*"((?:[^"\\]|\\.)*)"|\.accessibility(?:Label|Hint|Value)\(\s*"((?:[^"\\]|\\.)*)""#)
+            pattern: #"\b(?:Text|Button|Toggle|Label|Picker|Section|TextField|Menu|NavigationLink|Link|labeledRow|groupHeader|collapsibleGroupHeader|mixStripCard|weatherMixGroup|effectSection|panel|readout|alert|navigationTitle|confirmationDialog)\(\s*"((?:[^"\\]|\\.)*)"|\.accessibility(?:Label|Hint|Value)\(\s*"((?:[^"\\]|\\.)*)""#)
         var sites = 0, missing: [String] = [], seen = Set<String>()
         for rel in Self.panelFamily {
             let code = try codeOnly(rel)                                        // a `Button("literal")` quoted in a comment is not a site
@@ -3069,6 +3074,23 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         XCTAssertFalse(tuningBanner.contains("        case (false, true):  return \"Non-standard concert pitch: A4 = "), "TuningStatusBanner interpolates its headline into one literal again")
         try assertGerman(["Non-standard tuning: ", "Non-standard concert pitch: A4 = "], "tuning banner headline")
+
+        // E4-89 — modifier titles. `.alert("Save piece")`, `.alert("Save mood")`, `.alert("Save sound")`,
+        // `.navigationTitle("Open piece")` (EchoelStudioView), `.navigationTitle("Recovery")` (SafeModeView) and
+        // `.navigationTitle("EchoelFX")` (EchoelFXView, a brand name with an identical unit) were already keys; they had
+        // no `de` unit because claim 10's walk only listed view constructors. The sources are unchanged — the seams
+        // below pin the sites the units serve; claim 10 now walks these modifiers for the whole panel family.
+        let modifierTitles = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for seam in [".alert(\"Save piece\", isPresented: $showSaveDialog)",
+                     ".alert(\"Save mood\", isPresented: $showSaveMoodAs)",
+                     ".alert(\"Save sound\", isPresented: $showSavePatchAs)",
+                     ".navigationTitle(\"Open piece\")"] {
+            XCTAssertTrue(modifierTitles.contains(seam), "EchoelStudioView lost the E4-89 site `\(seam)`")
+        }
+        let recoveryTitle = try codeOnly("Sources/Echoelmusic/Studio/SafeModeView.swift")
+        XCTAssertTrue(recoveryTitle.contains(".navigationTitle(\"Recovery\")"), "SafeModeView lost the E4-89 site")
+        try assertGerman(["Save piece", "Save mood", "Save sound", "Open piece", "Recovery", "EchoelFX"],
+                         "modifier titles")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
