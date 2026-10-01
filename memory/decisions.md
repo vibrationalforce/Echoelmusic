@@ -4319,9 +4319,18 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   XCTAssert). WORK PASS / HEAD FAIL (8/6/8 — ONE finding).
 - **Review:** 2026-10-31.
 
-### 2026-10-01 — E4-55: Exporter-Gründe · Studio-Hints · Pad-Shape-Caption · Narrations-Hint (5dad34609)
+### 2026-10-01 — E4-55: exporter reasons, Studio hints, pad-shape caption, narration hint (5dad34609)
 
-- **Gebaut:** die fünf Fehlergründe des LoopExporters (sechs `.failed(_:)`-Stellen), Live-Colabo-Tür-Hint und Klick-Akzent-Hint in EchoelStudioView, die elf Segmente von `padShapeCaption`, der Hint der Narrations-Aufklappung — alle als `String(localized:)`-Nähte (≤ 4 Operanden je Schritt). Katalog 1345 → 1368 (+23). Sources: 3 Dateien + Katalog.
-- **Wächter:** Anspruch 11 E4-55-Block (23 Naht-Nadeln, 14 Abwesenheits-Nadeln, 23 Einheiten; XCTAssert 254 → 260). Kein Re-Anker nötig (gemessen: kein Wächter pinnt die Fragmente; NoClock-Versprechen im Diff 0, „Dynamic and Flowing“ nur im Kommentar wie zuvor). Benotung `scratchpad/transcribe_e4_55.py`: HEAD FAIL (23/14/23 — EIN Befund), WORK PASS. Checker alle OK, Klammerbilanz 0.
-- **Gates:** ca5b84258 (E4-51…E4-54) gepusht, Monitor bcc564hux: Quick Test 3848 ✓, Auto-Merge Docs 581 ✓; Compile Check/CI/CD/Auto-Merge laufen. E4-55 (5dad34609) lokal — Push nach dem Compile Check.
-- **Offen (E4):** Import-Erfolgssätze (MIDIImport/MediaPlacement/AudioImport `successNote`, ClipNoteEdit `gridLabel`) — Laufzeit-Wächter prüfen; WAV-HUD bewusst englisch; türlose Flächen erst nach einer Tür.
+- **Decision:** `LoopExporter`'s five failure reasons (six `.failed(_:)` sites), the Live Colabo door hint and the
+  click-accent hint in EchoelStudioView, the eleven segments of `padShapeCaption` and LiveNarrationDisclosure's
+  disclosure hint become `String(localized:)` seams joined by `+` (≤ 4 operands per step). Catalog 1345 → 1368.
+- **Why:** none of the four was a key — a reason handed to `.failed`, `+` chains, a `[String]` of literals — so no
+  scan of key-taking calls could see them; E4-51 had seamed the suffix around an English reason. "not clock-synced."
+  stays its own segment (TheNearbySessionPromisesNoClockTests exempts exactly that refutation; its nine promise
+  needles scanned lowercase over the diff: 0). Rhythm names stay as on the Picker.
+- **Guard:** claim 11 E4-55 block (23 seam needles, 14 absence needles, 23 units; 254 → 260 XCTAssert).
+  WORK PASS / HEAD FAIL (23/14/23 — ONE finding). No re-anchor needed (measured: no guard pins the fragments).
+- **Review:** 2026-10-31.
+- ⛔ The first record of this slice (aaa77ea01) wrote the German SESSION_LOG entry here and nothing into the log: a
+  docs script derived by substring replacement matched `## 2026-10-01` INSIDE `### 2026-10-01`. Repaired in the next
+  commit; lesson — anchor a heading replacement at the line start, never on a substring.

@@ -41440,3 +41440,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** MoodKnobsSayWhatTheyDoTests 1:1 re-verankert (zwei Nadeln auf die Naht-Form, +1 Kommentar; Regex `of the [0-9]+ offered` weiter abwesend). Anspruch 11 E4-54-Block (8 Naht-Nadeln, 6 Abwesenheits-Nadeln, 8 Einheiten; XCTAssert 252 → 254). Benotung `scratchpad/transcribe_e4_54.py`: HEAD FAIL (8/6/8 — EIN Befund), WORK PASS. Checker alle OK, Klammerbilanz 0.
 - **Gates:** d004dfbba Compile Check 3119 ✓ (Quick Test, Full Suite, Auto-Merge Docs ✓; CI/CD + Auto-Merge Claude laufen). Stapel E4-51…E4-54 wird nach diesem Commit gepusht.
 - **Offen (E4):** WAV-GAP-HUD (bewusst englisch), LoopExporter-Gründe, Mute/Solo `name:`; türlose Flächen erst nach einer Tür.
+
+## 2026-10-01 — E4-55: Exporter-Gründe · Studio-Hints · Pad-Shape-Caption · Narrations-Hint (5dad34609)
+
+- **Gebaut:** die fünf Fehlergründe des LoopExporters (sechs `.failed(_:)`-Stellen), Live-Colabo-Tür-Hint und Klick-Akzent-Hint in EchoelStudioView, die elf Segmente von `padShapeCaption`, der Hint der Narrations-Aufklappung — alle als `String(localized:)`-Nähte (≤ 4 Operanden je Schritt). Katalog 1345 → 1368 (+23). Sources: 3 Dateien + Katalog.
+- **Wächter:** Anspruch 11 E4-55-Block (23 Naht-Nadeln, 14 Abwesenheits-Nadeln, 23 Einheiten; XCTAssert 254 → 260). Kein Re-Anker nötig (gemessen: kein Wächter pinnt die Fragmente; NoClock-Versprechen im Diff 0, „Dynamic and Flowing“ nur im Kommentar wie zuvor). Benotung `scratchpad/transcribe_e4_55.py`: HEAD FAIL (23/14/23 — EIN Befund), WORK PASS. Checker alle OK, Klammerbilanz 0.
+- **Gates:** ca5b84258 (E4-51…E4-54) gepusht, Monitor bcc564hux: Quick Test 3848 ✓, Auto-Merge Docs 581 ✓; Compile Check/CI/CD/Auto-Merge laufen. E4-55 (5dad34609) lokal — Push nach dem Compile Check.
+- **Offen (E4):** Import-Erfolgssätze (MIDIImport/MediaPlacement/AudioImport `successNote`, ClipNoteEdit `gridLabel`) — Laufzeit-Wächter prüfen; WAV-HUD bewusst englisch; türlose Flächen erst nach einer Tür.
