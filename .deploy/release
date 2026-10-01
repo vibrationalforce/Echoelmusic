@@ -1,4 +1,4 @@
-build: v10.79.484 — Das Stück ist das Zuhause: DMMW-Fluss, sprechender Kopf, Status in Worten, deutsche Oberfläche, Evolve-Schalter
+build: v10.79.485 — Die Workstation: Spurfarben, Reiter, Mischpult mit Pegel je Spur, Inspektor, Querformat, Song-Export, Undo für jede Geste
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,56 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.485) ───────────────────────────────
+
+  Die Workstation-Neugestaltung nach deinem Tablet-Entwurf (Plan:
+  scratchpads/PLAN_WORKSTATION_REDESIGN_2026-10-01.md). Alles seit 10.79.484 (Build 2609) —
+  44 Commits. Gates: Compile Check + Build for Testing grün bis ba61413b1 (main); die letzte
+  Reparatur 25fe5593c ist Compile-grün. Auf dem Gerät ist NICHTS davon geprüft — dieser
+  Build ist genau dafür da.
+
+  ── POSTEN 1: DAS STÜCK SIEHT AUS WIE EINE WORKSTATION (A1–A9) ──
+  Jede Spur trägt Farbe und Symbol, Teile tragen ihren Namen; Spurkopf direkt im Canvas;
+  Transportleiste fest unten; der Kopf zählt Takt.Schlag.16tel · BPM · 4/4; Reiter
+  Arrange · Sound · FX · Master · Mix · Export; Inspektor mit drei Seiten Spur · Teil · Gerät;
+  im Querformat stehen Arrangement und offene Spur nebeneinander. Genre heißt „Stil" und
+  sitzt am Echoel-Gerät, nicht mehr im Kopf.
+
+  ── POSTEN 2: MISCHPULT, EXPORT, UNDO (B1–B6) ──
+  Reiter „Mix": jede klingende Spur als Kanalzug, MIDI-Spuren mit EIGENEM Pegelbalken
+  (Spuren ohne eigene Stimme: „Ohne Pegelanzeige"). Reiter „Export": das ganze Stück als
+  MIDI-Datei. Jede Hand-Geste an Pegel/Pan/Stumm/Solo und jede Klangwahl ist EIN Undo-Schritt.
+  Eine MIDI-Spur wählt ihren Klang im Inspektor („Gerät"). Bis 64 Teile je Spur.
+  Anschlag-Spur unter dem Notenraster. Der MIDI-Import sagt, was er weglässt (Pedal, Bend).
+
+  ── POSTEN 3: BEREICHE MUSIC · VISUAL · LIGHT (C1, C3a, C5) ──
+  Reiter über der Workstation; Visual öffnet das Field-Panel, Light das Routing. Space folgt
+  erst mit einer echten Raum-Fläche. Licht: die Look-Stärke gleitet höchstens im Tempo der
+  Blitzgrenze (heute unverändert sichtbar).
+
+  ── PRÜFLISTE ──
+  T1  Kaltstart: kein Black Screen, öffnet auf dem Stück; sieht es wie dein Entwurf aus?
+  T2  Workstation-Chip → „Add MIDI Track" → Inspektor „Gerät" → Klang „Bright Lead" →
+      „New MIDI Part", Noten setzen, Play: klingt die Spur im gewählten Klang?
+  T3  Reiter „Mix" während Play: bewegt sich der Balken der MIDI-Spur mit ihrem Klang?
+      Pegel ziehen, „M" tippen, dann zweimal Undo — kommt beides einzeln zurück?
+  T4  Telefon quer: stehen Arrangement und offene Spur nebeneinander, bleibt alles bedienbar?
+  T5  Reiter „Export" → MIDI-Datei teilen, in einer DAW öffnen: alle Spuren, richtige Lage?
+  T6  Notenraster: unter einer Note in die Anschlag-Spur tippen und ziehen — ein Undo-Schritt?
+  T7  Bereichs-Reiter Visual und Light: öffnen sie das Richtige, bleibt nichts hängen?
+  T8  Hängt oder stockt etwas: Save/Export-Chip → „Diagnostics" (Diagnose) → Teilen.
+
+  Neu prüfbare Bitten (12):
+  Gedruckt: python3 scripts/founder-verify.py --since 2be6db496
+  AUDIO 5 · OTHER 4 · VISUAL 2 · SYNC 1 — dieselben Zeilen stehen in
+  docs/dev/FOUNDER_INBOX.md §2 („Für den nächsten Build vorgemerkt").
+
+  Offene Entscheidungen für dich in der Inbox: H11 (Licht-Dimmer im Musik-Modus schneller
+  als die Blitzgrenze — Empfehlung: bremsen), H12 (Bild-Kurve erst nach Gerätprobe),
+  H6/H7/H9/H10.
+
+  Der Vorgänger ist 10.79.484 (Build 2609), davor 10.79.483.
 
   ── WAS IN DIESEM BUILD NEU IST (v10.79.484) ──────────────────────────────
 
