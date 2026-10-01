@@ -21786,6 +21786,38 @@
           }
         }
       }
+    },
+    "A " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A "
+          }
+        }
+      }
+    },
+    " look is applied. Undo it first to apply this one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "-Look ist angewendet. Mach ihn zuerst rückgängig, um diesen anzuwenden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " look is applied. Undo it first to apply this one."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

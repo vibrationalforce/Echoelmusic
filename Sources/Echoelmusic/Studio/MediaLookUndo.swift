@@ -50,12 +50,23 @@ final class MediaLookUndo {
     /// The two words a medium is named by — one spelling, read by the cards' headers.
     static let photoMedium = "photo"
     static let videoMedium = "video"
+    /// The medium as a SPOKEN word (E4-41, moved home in E4-45). `medium` is an identifier, compared
+    /// by both cards and never shown — the word a VoiceOver user hears, and the word inside
+    /// `applyBlockedReason`, is a catalog key. Lives here, Foundation-only, so the owner can speak it
+    /// without the cards' PhotosUI/ImageIO guards.
+    var spokenMedium: String {
+        medium == Self.videoMedium ? String(localized: "video") : String(localized: "photo")
+    }
 
     /// Why a card's Apply is grey, in ONE sentence (nil while nothing is pending). The cards show
     /// it under the buttons AND speak it as the button's hint (review MED-8: the reason used to be
     /// VoiceOver-only, so a sighted person saw a grey button and no reason).
     var applyBlockedReason: String? {
-        pending == nil ? nil : "A \(medium) look is applied. Undo it first to apply this one."
+        guard pending != nil else { return nil }
+        // E4-45: seams around the spoken medium; the bundle's English is byte-identical
+        // ("A photo look is applied. Undo it first to apply this one.", pinned end-to-end by
+        // TheMediaLookHasOneWriterTests). German reads „Ein Foto-Look ist angewendet. …“.
+        return String(localized: "A ") + spokenMedium + String(localized: " look is applied. Undo it first to apply this one.")
     }
     /// Counts every recorded application. Two applications of the same seed to the same look are
     /// EQUAL values, so "is the pending look still the one I applied?" is asked with this, not

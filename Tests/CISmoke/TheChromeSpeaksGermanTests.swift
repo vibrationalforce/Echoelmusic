@@ -83,7 +83,9 @@
 // E4-43 added the Workstation's remaining ternaries — Mute/Solo value, Warp text/value/hint, Pitch hint, Play/Stop word and label,
 // tempo-field label, Compose-guide disclosure value/hint (parent: ternaries of bare literals, 10 units missing — ONE finding).
 // E4-44 added the three On/Off siblings — Perform mix switch, header Guide button, Workstation click toggle (parent: a bare
-// `? "On" : "Off"` ternary in each, no units missing — ONE finding). Claim 12
+// `? "On" : "Off"` ternary in each, no units missing — ONE finding).
+// E4-45 added the blocked-Apply sentence — `MediaLookUndo.applyBlockedReason` as seams around `spokenMedium`, which moved
+// into the owner (parent: an interpolated identifier in the spoken sentence, 2 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1408,8 +1410,8 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                      "let medium: String = undo.medium.isEmpty ? String(localized: \"photo\") : undo.spokenMedium",
                      "Text(String(localized: \"Brightness\") + \" \" + PhotoSeedText.percent(seed.brightness))",
                      "Text(isLive ? String(localized: \"Applied:\") : String(localized: \"With this photo:\"))",
-                     "?? String(localized: \"Sets the visuals' intensity, detail, hue and saturation from the photo\")",
-                     "medium == Self.videoMedium ? String(localized: \"video\") : String(localized: \"photo\")"] {
+                     "?? String(localized: \"Sets the visuals' intensity, detail, hue and saturation from the photo\")"] {
+            // (E4-45 moved the `spokenMedium` body — `medium == Self.videoMedium ? …` — into MediaLookUndo; the E4-45 block pins it there.)
             XCTAssertTrue(photoCard.contains(seam), "PhotoSeedCard lost the E4-41 seam `\(seam)`")
         }
         for verbatim in ["static let unreadable", "static let reading", "return \"Main colour: hue", "\\(name) \\(from), unchanged", "change(\"Intensity\"",
@@ -1533,6 +1535,26 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertFalse(clickLeaf.contains(verbatim), "WorkstationClickToggle speaks a bare On/Off again: `\(verbatim)`")
         }
         try assertGerman(["On", "Off"], "On/Off siblings")
+
+        // E4-45 — the blocked-Apply sentence. `MediaLookUndo.applyBlockedReason` interpolated the compared identifier
+        // (`"A \(medium) look is applied. …"`) — a String, read verbatim and naming "photo"/"video" in English. It is
+        // now seams around `spokenMedium`, which moved from the photo card's PhotosUI-guarded extension into the
+        // Foundation-only owner (one home for the spoken word, E4-41's rule). TheMediaLookHasOneWriterTests pins the
+        // English end-to-end, so the bundle's sentence is byte-identical; this block pins the SHAPE.
+        let lookOwner = try codeOnly("Sources/Echoelmusic/Studio/MediaLookUndo.swift")
+        for seam in ["var spokenMedium: String {",
+                     "medium == Self.videoMedium ? String(localized: \"video\") : String(localized: \"photo\")",
+                     "return String(localized: \"A \") + spokenMedium + String(localized: \" look is applied. Undo it first to apply this one.\")"] {
+            XCTAssertTrue(lookOwner.contains(seam), "MediaLookUndo lost the E4-45 seam `\(seam)`")
+        }
+        for verbatim in ["medium) look is applied"] {
+            XCTAssertFalse(lookOwner.contains(verbatim), "MediaLookUndo interpolates the compared identifier into the spoken sentence again: `\(verbatim)`")
+        }
+        let photoCardTail = try codeOnly("Sources/Echoelmusic/Studio/PhotoSeedCard.swift")
+        for verbatim in ["extension MediaLookUndo {"] {
+            XCTAssertFalse(photoCardTail.contains(verbatim), "the spoken medium has a second home in the photo card again: `\(verbatim)`")
+        }
+        try assertGerman(["A ", " look is applied. Undo it first to apply this one.", "photo", "video"], "blocked-Apply sentence")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

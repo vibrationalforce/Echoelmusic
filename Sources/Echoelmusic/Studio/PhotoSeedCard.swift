@@ -330,12 +330,4 @@ struct PhotoSeedCard: View {
         }
     }
 }
-
-extension MediaLookUndo {
-    /// E4-41: the medium as a SPOKEN word. `medium` is an identifier (`photoMedium` / `videoMedium`),
-    /// compared by both cards and never shown — the word a VoiceOver user hears is a catalog key.
-    var spokenMedium: String {
-        medium == Self.videoMedium ? String(localized: "video") : String(localized: "photo")
-    }
-}
 #endif
