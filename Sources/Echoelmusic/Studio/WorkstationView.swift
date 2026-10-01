@@ -223,6 +223,8 @@ struct WorkstationView: View {
     /// song plays, so reading it in `body` subscribes to nothing hot. `transportRow` stacks
     /// Play and the position readout on it (review of e1036b874, MED).
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    /// A9: `.compact` on an iPhone in landscape — the plate's two-column switch.
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     /// The user's chosen level for the chip strip — read here so the piece's tabs (A7) offer
     /// exactly the panels the Instrument strip offers at that level (`SkillLevel`). COLD: a tap
     /// changes it, never a tick.
@@ -300,7 +302,23 @@ struct WorkstationView: View {
                 // slice 11 — both cold), and the playhead is its own leaf.
                 // (Replaces the WA4.5 per-row strips — one picture of the song, not two.)
                 let arrangeRows = ArrangeCanvas.rows(summary)
+                let open = WorkstationSelection.resolvedTrack(selection.trackID, in: timeline.document)
+                // A9 (founder 2026-10-01, the tablet mockup): in landscape the arrangement and the
+                // open track's head stand SIDE BY SIDE — canvas, part bar and editors on the left,
+                // the track column on the right — instead of the head scrolling a screen below the
+                // lane it names. Portrait stacks them exactly as before. `AnyLayout` keeps every
+                // child's identity across a rotation, so a switch that was on (Notes, Automation,
+                // the inspector's own state) stays on — the measured reason this file already gives
+                // for the transport readout. Only with a drawn canvas: a song with no parts has
+                // nothing to sit beside. ⚠️ Size class is an environment value, not hot state.
+                // (The plan's third column — the visual — is the floating card over the plate.)
+                let sideBySide = verticalSizeClass == .compact && !arrangeRows.isEmpty
+                let columns = sideBySide
+                    ? AnyLayout(HStackLayout(alignment: .top, spacing: 10))
+                    : AnyLayout(VStackLayout(alignment: .leading, spacing: 10))
+                columns {
                 if !arrangeRows.isEmpty {
+                  VStack(alignment: .leading, spacing: 10) {
                     ArrangeCanvasView(rows: arrangeRows, document: timeline.document,
                                       songTicks: ArrangementStrip.songTicks(summary))
                         .padding(.horizontal, 10)
@@ -321,6 +339,8 @@ struct WorkstationView: View {
                     // write; this view still sends `timeline` nothing but `document`.
                     SongAutomationEditor(songTicks: ArrangementStrip.songTicks(summary))
                         .padding(.horizontal, 10)
+                  }
+                  .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 // ⛔ The ONE Undo/Redo (`SongHistoryRow`, WA4 path 7) stood HERE, under the note
                 // grid — M6's review put it at "the closest place to the edit it takes back".
@@ -332,7 +352,8 @@ struct WorkstationView: View {
                 // so the list below keeps a card only for the OPEN track (its head: the facts and
                 // the one Mute/Solo) and for tracks the canvas cannot draw (`listsCard`). Every
                 // track still has exactly one head; nothing appears twice on the plate.
-                let open = WorkstationSelection.resolvedTrack(selection.trackID, in: timeline.document)
+                VStack(alignment: .leading, spacing: 10) {
+                if sideBySide && open == nil { trackColumnHint }
                 ForEach(summary.lanes) { row in
                     if ArrangeCanvas.listsCard(row.id, open: open, canvasRows: arrangeRows) { laneRow(row) }
                     if open == row.id {
@@ -350,6 +371,10 @@ struct WorkstationView: View {
                             partTempoRows(laneID: row.id)
                         }
                     }
+                }
+                }
+                .frame(minWidth: sideBySide ? 260 : 0, maxWidth: sideBySide ? 360 : CGFloat.infinity,
+                       alignment: .leading)
                 }
                 if summary.orphanRegionCount > 0 { orphanLine(summary.orphanRegionCount) }
                 if summary.automationLaneCount > 0 { automationLine(summary.automationLaneCount) }
@@ -821,6 +846,15 @@ struct WorkstationView: View {
             .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.warning)
             .fixedSize(horizontal: false, vertical: true)
             .accessibilityLabel("\(count) " + String(localized: "parts belong to a track this piece no longer has"))
+    }
+
+    /// A9: the landscape track column with no track open says how to fill it (rule 10 —
+    /// an empty state offers the next step, not a recipe).
+    private var trackColumnHint: some View {
+        Text("Tap a track name to open it here")
+            .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 10)
     }
 
     private func automationLine(_ count: Int) -> some View {

@@ -33924,6 +33924,24 @@
           }
         }
       }
+    },
+    "Tap a track name to open it here" : {
+      "comment" : "Workstation redesign A9 (2026-10-01): landscape — the track column beside the arrangement, while no track is open.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe auf einen Spurnamen, um die Spur hier zu öffnen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap a track name to open it here"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
