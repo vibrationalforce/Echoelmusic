@@ -4013,3 +4013,26 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Next E4 producers:** the panel families (EchoelStudioView sites, EchoelFXView, FloatingVisualWindow, BioStripView,
   MoodPads, PerformSessionView, GuideOverlay, WorkspaceView).
 - **Review:** 2026-10-30.
+
+### 2026-10-01 — E4-38: the bio strip and the mood pads speak German (219212e2d)
+
+- **Decision:** BioStripView — the lock banner passes `String(localized:)` to `banner(_ text: String …)` (signature
+  unchanged), the driving dot's three spoken states are a computed `drivingLabel` (nested arm as its own typed step),
+  the source tag returns `String(localized: "No signal")`, and the camera caption's three `LocalizedStringKey` values
+  (Reading… / Cover camera / Connecting…) get their units with no Sources change. MoodPads — the two pads pass
+  `String(localized:)` for title and axis captions; the pad's spoken label/value/action names are seams
+  (`" mood pad"`, `" percent across ("`, `" percent up ("`, `"More "`, four fallback directions) around the caption
+  halves. Catalog 1136 → 1156.
+- **Why:** the strip is the first German body text under the pulse pill; `Text(title)` of a `String` is verbatim; the
+  pad's VoiceOver strings were interpolated literals, i.e. format keys that StringCatalogIsHonest cannot carry. The
+  actions split the caption on `" · "`, so claim 11 pins that each German caption splits into exactly two words.
+  English output is byte-identical ("Sound mood pad", "50 percent across (dark · bright), …", "More bright").
+- **German choice:** „still · bewegt“ for the sound pad, „ruhig · Energie“ for the visual pad (two different words
+  for two different axes, not one „ruhig“ twice); „Visual“ stays „Visual“ (the catalog already says „Visuals“).
+- **Guard:** claim 11 E4-38 block (6 + 11 seams, 3 + 6 absence needles, 4 separator pins, 22 units via
+  `assertGerman`; 182 → 187 XCTAssert). WORK PASS / HEAD FAIL (16 seams missing, 9 verbatim present, 20 units missing
+  — ONE finding). No guard re-anchored (LockCueDoesNotShoveTheControls reads lines by `lockedCueVisible`, CoachingText
+  Scales the `banner` signature — both untouched). Checkers green; moved-needles' three hits are the block's own needles.
+- **Next E4 producers:** EchoelStudioView sites, EchoelFXView, FloatingVisualWindow, PerformSessionView, WorkspaceView
+  (tone-system / note-name hints).
+- **Review:** 2026-10-31.
