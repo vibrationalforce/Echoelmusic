@@ -4701,3 +4701,15 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   every non-Echoel solo hint, absent from the others) holds under en. WORK PASS / HEAD FAIL (8/3/16 — ONE finding).
   Whole-claim-11 needle check: 138 files, 1041 needles, 0 broken.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-82: automation editor, automation strip and part bar hints (43ede9f50)
+
+- **Decision:** the automation editor's toggle label pair and value-field `hint:`, the automation strip's status pair
+  and the part bar's start-bar hint are catalog keys. The curve canvas's `.accessibilityHint("…")` and its two
+  `.accessibilityAction(named:)` literals are LocalizedStringKey positions: the hint's unit already existed (E4-26
+  era) and is reused UNCHANGED — the edit script asserts an existing unit's German rather than overwriting it, which
+  is why it stopped and was re-run — and the two point actions got their units. Catalog 1822 → 1830.
+- **Guard:** claim 11 E4-82 block (5 seams across three files, 2 verbatim-indented absences, 9 units; 373 → 378
+  XCTAssert). No other guard pinned any of these lines. WORK PASS / HEAD FAIL (5/2/8 — ONE finding). Whole-claim-11
+  needle check: 141 files, 1048 needles, 0 broken.
+- **Review:** 2026-10-31.
