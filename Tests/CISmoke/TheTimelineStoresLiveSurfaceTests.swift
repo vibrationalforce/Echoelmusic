@@ -100,6 +100,8 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         // DMMW Phase 4 · slice 2: the track's instrument, reached through
         // `TrackMix.setInstrument` (`Studio/TrackInspectorView.swift`).
         "setBuiltinInstrument",
+        // Workstation redesign B2a: the track's sound, reached through `TrackMix.setSound`.
+        "setLanePatch",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than

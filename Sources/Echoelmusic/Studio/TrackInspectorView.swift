@@ -28,6 +28,10 @@
 //    the one voice with its own FX chain. On the Echoel track (EF1) it sets the song's Echoel
 //    INSTANCE (`DeviceChain.instrument`), shown only once the song holds a readable one — a row
 //    that guessed the value would be a second truth on screen.
+//  · the Sound row (Workstation redesign B2a) only on a POLY rack track — the one voice a lane
+//    patch reaches (`LaneVoiceRack.applyPatch` → `voice(slot:)?.apply`, a documented no-op for
+//    the other kinds). Not on the Echoel track: its patch sink swaps the instrument's own voice
+//    (`rollPatchSink`); its sound is the Sound panel behind its device.
 //  ⚠️ And the COUPLINGS with the Studio instrument are stated rather than hidden (review of
 //  b2913f96b): the Echoel track's level is the level the instrument plays at (`rollSlotGain` →
 //  `mixGain`, the one writer in `EchoelmusicApp`), so muting it or pulling it to 0 silences
@@ -85,6 +89,11 @@ enum TrackMix {
         /// Phase 3 / EF2: the Echoel track's Genre row — only while the song holds the instance's
         /// genre (`TimelineDocument.echoelGenre`), for the same reason as the Echoel Effect row.
         let genre: Bool
+        /// B2a: the Sound row — a sound for the track's voice, on a POLY rack track only:
+        /// `LaneVoiceRack.applyPatch` reaches `voice(slot:)?.apply`, the poly engine; the sub-bass,
+        /// the body voice and the sampler take no patch. The same set as `effect` today, with its
+        /// own reason, so a per-track chain on another kind does not drag this row along.
+        let sound: Bool
     }
 
     /// Level is the lane fader, linear: 1 = unchanged, 0 = silent, 2 = +6 dB — the clamp
@@ -123,16 +132,19 @@ enum TrackMix {
         case .echoelInstrument:
             return Controls(role: role, level: true, pan: false, muteSolo: true,
                             effect: document.echoelFXCharacter != nil,
-                            genre: document.echoelGenre != nil)
+                            genre: document.echoelGenre != nil, sound: false)
         case .laneSynth(let kind):
             // Review of 895cf025a (MED): `LaneVoiceRack.setPan` is a documented no-op for the
             // sub-bass and the sampler unit — a pan field there would move a number, not the sound.
             return Controls(role: role, level: true, pan: kind != .subBass && kind != .sampler,
-                            muteSolo: true, effect: kind == .poly, genre: false)
+                            muteSolo: true, effect: kind == .poly, genre: false,
+                            sound: kind == .poly)
         case .audio:
-            return Controls(role: role, level: true, pan: true, muteSolo: true, effect: false, genre: false)
+            return Controls(role: role, level: true, pan: true, muteSolo: true, effect: false, genre: false,
+                            sound: false)
         case .bio, .unplayed, .noVoice:
-            return Controls(role: role, level: false, pan: false, muteSolo: false, effect: false, genre: false)
+            return Controls(role: role, level: false, pan: false, muteSolo: false, effect: false, genre: false,
+                            sound: false)
         }
     }
 
@@ -309,6 +321,57 @@ enum TrackMix {
         timeline.setLaneEffect(laneID, character: character)
     }
 
+    /// B2a — what the track's Sound row can hold: the voice's default (no lane patch), a sound
+    /// from `PatchStore` by id, or the copy the piece keeps when no stored sound equals it (a
+    /// sound saved by another install, or one edited in the Sound panel since it was chosen).
+    enum SoundChoice: Hashable, Sendable {
+        case standard
+        case kept
+        case library(UUID)
+    }
+
+    /// The lane's own patch when no stored sound equals it — the piece's copy, shown as the
+    /// current value so a pick of something else is a choice, never a silent loss.
+    nonisolated static func keptSound(of laneID: UUID, in document: TimelineDocument,
+                                      library: [SynthPatch]) -> SynthPatch? {
+        guard let patch = document.lanes.first(where: { $0.id == laneID })?.patch,
+              !library.contains(patch) else { return nil }
+        return patch
+    }
+
+    /// What the row shows as chosen. No lane patch is Default: the app's slot sink then plays the
+    /// first stored sound (`patch ?? fallbackPatch` in `EchoelmusicApp`).
+    nonisolated static func soundChoice(of laneID: UUID, in document: TimelineDocument,
+                                        library: [SynthPatch]) -> SoundChoice {
+        guard let patch = document.lanes.first(where: { $0.id == laneID })?.patch else { return .standard }
+        if keptSound(of: laneID, in: document, library: library) != nil { return .kept }
+        return .library(patch.id)
+    }
+
+    /// The pick's lane patch: nil for Default, a COPY of the stored sound for a pick (the piece
+    /// carries its sound, as it carries its effect), and no write at all for the kept copy, an
+    /// unknown id or what already plays — the field is structural, so a write re-primes every
+    /// rack lane mid-playback for nothing audible.
+    @MainActor
+    static func setSound(_ choice: SoundChoice, laneID: UUID, library: [SynthPatch], timeline: TimelineStore) {
+        guard let lane = timeline.document.lanes.first(where: { $0.id == laneID }) else { return }
+        let next: SynthPatch?
+        switch choice {
+        case .kept:
+            return
+        case .standard:
+            next = nil
+        case .library(let id):
+            guard let patch = library.first(where: { $0.id == id }) else { return }
+            next = patch
+        }
+        guard lane.patch != next else { return }
+        timeline.setLanePatch(laneID, patch: next)
+    }
+
+    nonisolated static let soundHint =
+        String(localized: "The sound EchoelSynth plays this track's parts with. Default plays the first of the Sounds. The piece keeps its own copy of the chosen sound")
+
     /// EF1 — the Echoel track's effect: every character, `.auto` ("the genre's effect") first,
     /// because the Echoel instrument DOES own a genre.
     nonisolated static var echoelEffectChoices: [FXCharacter] { FXCharacter.allCases }
@@ -394,6 +457,8 @@ struct TrackInspectorView: View {
     @Environment(TimelineRegionPlayer.self) private var player
     /// A8 — read for `inspectorPage` only: cold, it changes on a tap of the page control.
     @Environment(WorkstationSelection.self) private var selection
+    /// B2a — read for the Sound row's menu only: cold, the stored sounds change on a save.
+    @Environment(PatchStore.self) private var patchStore
     let laneID: UUID
     /// The name being typed. Local and cold; committed on Return, on focus loss and on close.
     @State private var nameDraft = ""
@@ -451,6 +516,10 @@ struct TrackInspectorView: View {
                         controls.role, current: TrackMix.currentInstrument(of: laneID, in: document))
                     if !instruments.isEmpty {
                         instrumentRow(instruments)
+                    }
+                    // B2a — which stored sound this POLY rack track's voice plays (no row elsewhere).
+                    if controls.sound {
+                        soundRow
                     }
                     // What this Echoel is set to — genre and FX character, read-only, from the
                     // instrument's own keys (`EchoelInstanceLine`; the inspector owns no persistence).
@@ -604,6 +673,37 @@ struct TrackInspectorView: View {
             .pickerStyle(.menu).tint(EchoelTheme.text)
             .frame(minHeight: 44)
             .accessibilityHint(TrackMix.instrumentHint)
+            Spacer(minLength: 0)
+        }
+    }
+
+    /// B2a — the track's sound, a NAMED choice (menu Picker, not a number): Default, the piece's
+    /// own copy when no stored sound equals it, then every stored sound in `PatchStore` order
+    /// (factory first, so "the first of the Sounds" is the slot sink's fallback). Cold reads of
+    /// the song and the store; one store write per real change (`TrackMix.setSound`).
+    private var soundRow: some View {
+        HStack(spacing: 8) {
+            Text("Sound")
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                .accessibilityHidden(true)   // the Picker speaks the label once
+            Picker("Sound", selection: Binding<TrackMix.SoundChoice>(
+                get: { TrackMix.soundChoice(of: laneID, in: timeline.document, library: patchStore.patches) },
+                set: { TrackMix.setSound($0, laneID: laneID, library: patchStore.patches, timeline: timeline) })) {
+                Text("Default").tag(TrackMix.SoundChoice.standard)
+                if let kept = TrackMix.keptSound(of: laneID, in: timeline.document, library: patchStore.patches) {
+                    Section("In this piece") {
+                        Text(kept.name).tag(TrackMix.SoundChoice.kept)
+                    }
+                }
+                Section("Sounds") {
+                    ForEach(patchStore.patches) { patch in
+                        Text(patch.name).tag(TrackMix.SoundChoice.library(patch.id))
+                    }
+                }
+            }
+            .pickerStyle(.menu).tint(EchoelTheme.text)
+            .frame(minHeight: 44)
+            .accessibilityHint(TrackMix.soundHint)
             Spacer(minLength: 0)
         }
     }

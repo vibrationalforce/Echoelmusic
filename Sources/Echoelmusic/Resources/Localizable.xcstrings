@@ -541,6 +541,42 @@
         }
       }
     },
+    "In this piece" : {
+      "comment" : "Workstation redesign B2a (2026-10-01): the Sound row's section for the copy of a sound the piece keeps when no stored sound equals it. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In diesem Stück"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In this piece"
+          }
+        }
+      }
+    },
+    "The sound EchoelSynth plays this track's parts with. Default plays the first of the Sounds. The piece keeps its own copy of the chosen sound" : {
+      "comment" : "Workstation redesign B2a (2026-10-01): VoiceOver hint of the Sound row in a rack track's inspector (TrackMix.soundHint). \"Sounds\" names the menu section of the same row.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Klang, mit dem EchoelSynth die Teile dieser Spur spielt. Standard spielt den ersten der Klänge. Das Stück behält eine eigene Kopie des gewählten Klangs"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The sound EchoelSynth plays this track's parts with. Default plays the first of the Sounds. The piece keeps its own copy of the chosen sound"
+          }
+        }
+      }
+    },
     "Instrument" : {
       "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
       "extractionState" : "manual",

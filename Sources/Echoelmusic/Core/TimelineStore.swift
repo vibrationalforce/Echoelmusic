@@ -36,7 +36,7 @@
 //        from `TrackMix` in `Studio/TrackInspectorView.swift` (the Workstation's track
 //        inspector). They leave both sets below: the caller-less 46, and — for `renameLane`,
 //        `toggleMute`, `toggleSolo` — the untested nine. Level and pan are now real
-//        per-lane dials; the rest of that dial list (octave, detune, patch, mood, genre,
+//        per-lane dials; the rest of that dial list (octave, detune, mood, genre,
 //        sample, seed) is still caller-less. ⭐ WA4.3 added THREE plus two —
 //        `moveRegion` · `duplicateRegion` · `removeRegion`, and `undo` · `redo`, called from
 //        `TrackParts` / `TrackPartsView` in `Studio/TrackPartsView.swift` (the selected
@@ -55,6 +55,9 @@
 //        `setBuiltinInstrument` its caller (`TrackMix.setInstrument`, the inspector's
 //        Instrument row) plus a test. Of the untested nine, FOUR remain with neither:
 //        bootstrapIfNeeded · setAudioRegionWindow · setLaneOctave · setLaneSample.
+//        ⭐ Workstation redesign B2a gave `setLanePatch` its caller (`TrackMix.setSound`, the
+//        inspector's Sound row; it was tested and caller-less) — it leaves the caller-less set.
+//        Re-derive the count, do not patch digits.
 //   ·  8 used only inside this file — the previous six (automationLaneIndex,
 //        canCombineRegions, migrate, resolveOverlaps, restoreRegions, syncUndoFlags) PLUS
 //        `persist` (46 internal call sites, one per mutating path) and `snapshotForUndo`
@@ -1052,13 +1055,15 @@ public final class TimelineStore {
     }
 
     /// Per-instrument SYNTH PATCH (#23, founder: "each MIDI track carries its own
-    /// optional SynthPatch"). Assign this lane's own timbre, or clear with nil =
-    /// follow the shared/global melodic voice. State only, persisted like
-    /// setLaneSample; a change is STRUCTURAL (what sounds changes — timbre
-    /// identity), so the region player pulls it in via prime → slotPatchSink on
-    /// the next region load (secondary lanes today; the primary-lane sink lands in
-    /// S2b). NOT part of the region undo history (lane fields never are — undo
-    /// touches only regions).
+    /// optional SynthPatch"). Assign this lane's own timbre, or clear with nil. What
+    /// nil PLAYS depends on the sink: a rack slot plays the app's fallback, the first
+    /// stored sound (`fallbackPatch` in `EchoelmusicApp`); the roll lane keeps the
+    /// instrument's live sound (the player guards nil). State only, persisted like
+    /// setLaneSample; a change is STRUCTURAL (what sounds changes — timbre identity),
+    /// so the region player pulls it in via prime → slotPatchSink on the next region
+    /// load, or at once while playing (refreshStructure). Caller since B2a:
+    /// `TrackMix.setSound`, the inspector's Sound row (rack tracks only). Not part of the
+    /// undo history (only a person's mixer gesture is — `.laneMix`, B3b/B3c).
     public func setLanePatch(_ laneID: UUID, patch: SynthPatch?) {
         guard let i = document.lanes.firstIndex(where: { $0.id == laneID }) else { return }
         document.lanes[i].patch = patch
