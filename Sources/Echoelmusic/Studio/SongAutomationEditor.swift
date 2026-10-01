@@ -65,6 +65,12 @@ enum SongAutomationEdit {
         }
     }
 
+    /// E4-105: the parameter's name for the screen. The descriptor keeps its English literal
+    /// (persisted, searched); every place this editor draws a name goes through here.
+    nonisolated static func name(_ d: ParameterDescriptor) -> String {
+        String(localized: String.LocalizationValue(d.displayName))
+    }
+
     /// The track's own key for one parameter — `PerTrackParameterKeyPath`, the namespace the
     /// router dispatches.
     nonisolated static func key(for laneID: UUID, base: String) -> String {
@@ -101,8 +107,8 @@ enum SongAutomationEdit {
         guard let (laneID, base) = PerTrackParameterKeyPath.parse(parameter),
               let d = offered.first(where: { $0.keyPath == base }),
               sounds(on: laneID, in: document, voiceCapacity: voiceCapacity) else { return nil }
-        let track = document.lanes.first { $0.id == laneID }?.name ?? "Track"
-        return AutomationScale(displayName: "\(track) · \(d.displayName)", unit: d.unit,
+        let track = document.lanes.first { $0.id == laneID }?.name ?? String(localized: "Track")
+        return AutomationScale(displayName: track + " · " + name(d), unit: d.unit,
                                decimals: decimals(for: d)) { SongAutomationEdit.realValue($0, of: d) }
     }
 
@@ -330,7 +336,7 @@ private struct SongAutomationLane: View {
         let base = chosenBase ?? SongAutomationEdit.openingBase(for: laneID, in: lanes)
             ?? SongAutomationEdit.defaultBase
         let descriptor = offered.first { $0.keyPath == base }
-        let title = descriptor?.displayName ?? base
+        let title = descriptor.map(SongAutomationEdit.name) ?? base
         let key = SongAutomationEdit.key(for: laneID, base: base)
         let points = SongAutomationEdit.points(key, in: lanes, songTicks: songTicks)
         let pastEnd = SongAutomationEdit.pointPastEnd(key, in: lanes, songTicks: songTicks)
@@ -440,7 +446,7 @@ private struct SongAutomationLane: View {
                 set: { chosenBase = $0; picked = nil })) {
                 ForEach(offered, id: \.keyPath) { d in
                     Text(SongAutomationEdit.hasCurve(laneID, base: d.keyPath, in: lanes)
-                         ? "\(d.displayName) · curve" : d.displayName)
+                         ? SongAutomationEdit.name(d) + String(localized: " · curve") : SongAutomationEdit.name(d))
                         .tag(d.keyPath)
                 }
             }

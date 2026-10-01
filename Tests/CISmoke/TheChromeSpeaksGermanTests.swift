@@ -205,6 +205,8 @@
 // segmented picker draws them (parent: seam absent, 4 units missing — ONE finding). E4-103 keyed the one exporter reason
 // E4-55 missed, the too-long message built in `tooLongMessage` (parent: seams absent, 4 units missing — ONE finding). E4-104 looked up the
 // synth parameter names the routing card offers, in `ModDestinationKey.displayName` (parent: seam absent, 8 units
+// missing — ONE finding). E4-105 looked up the automation names — the curve editor's title and picker and the
+// status strip's rows — where `AutomationScale` and `SongAutomationEdit` build them (parent: seams absent, 6 units
 // missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
@@ -3397,6 +3399,26 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         try assertGerman(["Warmth drive", "Envelope attack", "Envelope decay", "Envelope sustain", "Envelope release",
                           "Amplitude", "Harmonicity", "Noise level", "Vibrato depth", "Vibrato rate", "Brightness"],
                          "routing card parameter names")
+
+        // E4-105 — the automation names were drawn as plain Strings: the curve editor's title (`Text(title)`), its parameter
+        // picker rows, and the status strip's `Text(row.displayName)`, all fed by `AutomationScale` or the descriptor. The
+        // lookup now happens where the name is built; the enum and the registry keep their English literals.
+        let automationNames = try codeOnly("Sources/Echoelmusic/Sequencer/AutomationStatus.swift")
+            + codeOnly("Sources/Echoelmusic/Studio/SongAutomationEditor.swift")
+        for seam in ["displayName: String(localized: String.LocalizationValue(target.displayName))",
+                     "displayName: String(localized: String.LocalizationValue(descriptor.displayName))",
+                     "String(localized: String.LocalizationValue(d.displayName))",
+                     "?? String(localized: \"Track\")",
+                     "let title = descriptor.map(SongAutomationEdit.name) ?? base",
+                     "SongAutomationEdit.name(d) + String(localized: \" · curve\")"] {
+            XCTAssertTrue(automationNames.contains(seam), "the automation names lost the E4-105 seam: \(seam)")
+        }
+        for verbatim in ["self.init(displayName: target.displayName,", "self.init(displayName: descriptor.displayName,",
+                         "let title = descriptor?.displayName ?? base", "· \\(d.displayName)\"", "\\(d.displayName) · curve"] {
+            XCTAssertFalse(automationNames.contains(verbatim), "an automation name is drawn verbatim again: \(verbatim)")
+        }
+        try assertGerman(["Master Level", "Oscillator frequency", "Filter cutoff", "Look intensity", "Track", " · curve"],
+                         "automation names")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

@@ -66,8 +66,12 @@ public struct AutomationScale: Sendable {
     }
 
     /// A legacy enum target — keeps its own curve, linear or not.
+    ///
+    /// E4-105: both names below are catalog KEYS, looked up here. The strip draws
+    /// `displayName` as a plain String, which SwiftUI shows verbatim; the enum and the
+    /// registry keep their English literals because they are persisted and searched.
     public init(target: AutomationTarget) {
-        self.init(displayName: target.displayName, unit: target.unit,
+        self.init(displayName: String(localized: String.LocalizationValue(target.displayName)), unit: target.unit,
                   decimals: target.decimals) { target.value(forNormalized: $0) }
     }
 
@@ -81,7 +85,7 @@ public struct AutomationScale: Sendable {
     public init(descriptor: ParameterDescriptor) {
         let span = Double(descriptor.max - descriptor.min)
         let decimals = span >= 100 ? 0 : (span >= 10 ? 1 : 2)
-        self.init(displayName: descriptor.displayName, unit: descriptor.unit,
+        self.init(displayName: String(localized: String.LocalizationValue(descriptor.displayName)), unit: descriptor.unit,
                   decimals: decimals) { Double(descriptor.denormalized(Float($0))) }
     }
 
