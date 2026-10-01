@@ -207,6 +207,7 @@
 // synth parameter names the routing card offers, in `ModDestinationKey.displayName` (parent: seam absent, 8 units
 // missing — ONE finding). E4-105 looked up the automation names — the curve editor's title and picker and the
 // status strip's rows — where `AutomationScale` and `SongAutomationEdit` build them (parent: seams absent, 6 units
+// missing — ONE finding). E4-106 looked up the master panel's buffer-tier segments (parent: seam absent, 3 units
 // missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
@@ -3419,6 +3420,18 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         try assertGerman(["Master Level", "Oscillator frequency", "Filter cutoff", "Look intensity", "Track", " · curve"],
                          "automation names")
+
+        // E4-106 — the "Audio latency" segmented picker drew `mode.shortName` as a plain String, so the three tiers read
+        // "Ultra / Low / Normal" on a German phone. `shortName` keeps its bare literals: the refusal breadcrumb writes
+        // them into the exported diag log, which stays English.
+        let latencyTiers = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for seam in ["Text(LocalizedStringKey(mode.shortName)).tag(Optional(mode))"] {
+            XCTAssertTrue(latencyTiers.contains(seam), "the buffer-tier picker lost the E4-106 seam: \(seam)")
+        }
+        for verbatim in ["Text(mode.shortName).tag(Optional(mode))"] {
+            XCTAssertFalse(latencyTiers.contains(verbatim), "the buffer-tier picker draws its names verbatim again")
+        }
+        try assertGerman(["Ultra", "Low", "Normal"], "buffer tier names")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

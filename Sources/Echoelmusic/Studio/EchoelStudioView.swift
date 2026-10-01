@@ -5431,7 +5431,10 @@ struct EchoelStudioView: View {
                     Spacer()
                     Picker("Audio latency", selection: $selected) {
                         ForEach(AudioConfiguration.LatencyMode.allCases) { mode in
-                            Text(mode.shortName).tag(Optional(mode))
+                            // E4-106: `shortName` is a catalog KEY. As a plain String the segment
+                            // showed it verbatim; the bare literal stays because the refusal
+                            // breadcrumb below writes it into the exported log in English.
+                            Text(LocalizedStringKey(mode.shortName)).tag(Optional(mode))
                         }
                     }
                     .pickerStyle(.segmented)
