@@ -4645,3 +4645,23 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   named file (a guard's literals count only against the F files it names); the check is not weaker for any guard
   that does read the file.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-79: the Routing surface's toggle hints and notes (0eb66e9e4)
+
+- **Decision:** PatchbayView's 28 ternary sentences — `Text(cond ? "…" : "…")`, `.accessibilityHint(cond ? …)`,
+  `.accessibilityLabel(cond ? …)` — were Strings where SwiftUI would have taken a key (the E4-39 reading, applied to
+  the Routing surface). Each branch is its own `String(localized:)`. Wireless MIDI, MPE note layout + per-note
+  expression ("Ausdruck pro Note", the catalog's existing word), the MIDI 2.0 source, OSC control input, clinical HRV
+  detail and the two disabled-button labels ("Zurücksetzen", the catalog's word for Clear). Catalog 1751 → 1779.
+- **The percent sign:** the clinical ON note carries `(0–100 %)`; a catalog key is read as a format string, so the
+  sentence lives in `clinicalDetailOnNote` as `scale` (key + `"%"`) and `tail` (key) — typed lets outside the ternary,
+  never a `+` chain inside it (E4-28).
+- **Guards:** `TheRoutingCardDoesNotPromiseGestureTests` claim 2 re-anchored 1:1 on the `scale` line (its two other
+  needles are substrings and survive the wrap). Claim 11 E4-79 block: 8 seams, 3 verbatim-indented absences, 14
+  units (363 → 365 XCTAssert). ⚠️ The first absence needle `: "Off. Every note is sent on channel 1.")` was a
+  SUBSTRING of its own new seam `: String(localized: "Off. …")` — the transcription caught it (WORK FAIL, verbatim
+  present 1). Absence needles aim at the verbatim indented line, as the law says; this is why.
+- **Transcription:** WORK PASS / HEAD FAIL (8/3/28 — ONE finding). Whole-claim-11 needle check: 134 files, 1017
+  needles, 0 broken. All checkers clean; Sources paren/brace 0 (the two guard files read +1 because the pinned line
+  itself opens `(0–100 ` and closes it in the next key — string content, not syntax).
+- **Review:** 2026-10-31.
