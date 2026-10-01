@@ -262,7 +262,7 @@ enum TrackMix {
     /// record source is the body (`TrackInstrument.recordSource`), and `RecordTake.canArm` arms
     /// MIDI input only — so its track cannot be armed (review of 895cf025a, MED).
     nonisolated static let instrumentHint =
-        "The voice this track plays its parts with. EchoelBass and EchoelBodyVibe each play one track at a time, the higher one in the list; another track that picks one plays EchoelSynth. A track on EchoelBodyVibe cannot be armed to record MIDI"
+        String(localized: "The voice this track plays its parts with. EchoelBass and EchoelBodyVibe each play one track at a time, the higher one in the list; another track that picks one plays EchoelSynth. A track on EchoelBodyVibe cannot be armed to record MIDI")
 
     /// One store write through the lane's existing writer (`setBuiltinInstrument`) — the field
     /// the player already reads when a part loads (`MultiRollFanout.voiceKind`).
@@ -434,8 +434,8 @@ struct TrackInspectorView: View {
                         range: TrackMix.levelRange,
                         decimals: 2,
                         hint: controls.role == .echoelInstrument
-                            ? "1.00 unchanged, 0 silent. This is also the level the Studio instrument plays at; its Start lifts 0 back to 1.00"
-                            : "1.00 unchanged, 0 silent, 2.00 is +6 dB",
+                            ? String(localized: "1.00 unchanged, 0 silent. This is also the level the Studio instrument plays at; its Start lifts 0 back to 1.00")
+                            : String(localized: "1.00 unchanged, 0 silent, 2.00 is +6 dB"),
                         // `standard:` AFTER `hint:` — the memberwise initialiser demands declaration
                         // order (`EchoelValueField.hint` is declared above `standard`).
                         standard: Double(TimelineLane.defaultLevel))
@@ -456,7 +456,7 @@ struct TrackInspectorView: View {
                             set: { TrackMix.setPan($0, laneID: laneID, timeline: timeline) }),
                         range: TrackMix.panRange,
                         decimals: 2,
-                        hint: "−1 left, 0 centre, 1 right",
+                        hint: String(localized: "−1 left, 0 centre, 1 right"),
                         standard: Double(TimelineLane.defaultPan))
                 }
                 if controls.genre {

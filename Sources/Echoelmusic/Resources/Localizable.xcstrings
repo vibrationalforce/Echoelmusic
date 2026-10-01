@@ -32330,6 +32330,86 @@
           }
         }
       }
+    },
+    "The voice this track plays its parts with. EchoelBass and EchoelBodyVibe each play one track at a time, the higher one in the list; another track that picks one plays EchoelSynth. A track on EchoelBodyVibe cannot be armed to record MIDI" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Stimme, mit der diese Spur ihre Teile spielt. EchoelBass und EchoelBodyVibe spielen je nur eine Spur zugleich, die höhere in der Liste; eine weitere Spur, die eines davon wählt, spielt EchoelSynth. Eine Spur auf EchoelBodyVibe kann nicht für eine MIDI-Aufnahme scharfgeschaltet werden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The voice this track plays its parts with. EchoelBass and EchoelBodyVibe each play one track at a time, the higher one in the list; another track that picks one plays EchoelSynth. A track on EchoelBodyVibe cannot be armed to record MIDI"
+          }
+        }
+      }
+    },
+    "1.00 unchanged, 0 silent. This is also the level the Studio instrument plays at; its Start lifts 0 back to 1.00" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1,00 unverändert, 0 stumm. Das ist auch der Pegel, mit dem das Studio-Instrument spielt; sein Start hebt 0 wieder auf 1,00"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.00 unchanged, 0 silent. This is also the level the Studio instrument plays at; its Start lifts 0 back to 1.00"
+          }
+        }
+      }
+    },
+    "1.00 unchanged, 0 silent, 2.00 is +6 dB" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1,00 unverändert, 0 stumm, 2,00 sind +6 dB"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.00 unchanged, 0 silent, 2.00 is +6 dB"
+          }
+        }
+      }
+    },
+    "−1 left, 0 centre, 1 right" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "−1 links, 0 Mitte, 1 rechts"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "−1 left, 0 centre, 1 right"
+          }
+        }
+      }
+    },
+    "How far each bar of the loop may drift from the genre preset" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie weit jeder Takt des Loops vom Genre-Preset abweichen darf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How far each bar of the loop may drift from the genre preset"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

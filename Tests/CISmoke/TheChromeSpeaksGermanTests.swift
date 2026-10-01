@@ -189,7 +189,10 @@
 // hearing states and part label and the header's place line (parent: 4 units missing — ONE finding). E4-91 keyed
 // the note editor's spoken count and step announcement and the record row's unnamed-track fallback (parent: 3
 // units missing — ONE finding). E4-92 keyed the value field's spoken units, the tempo field's spoken following
-// value and the touch surface's VoiceOver label and hint (parent: 2 units missing — ONE finding). Claim 12
+// value and the touch surface's VoiceOver label and hint (parent: 2 units missing — ONE finding). E4-93 keyed the
+// value-field hints that were literal Strings (`EchoelValueField.hint` is a String, so a literal ships verbatim): the
+// track inspector's instrument, level and pan hints and the Bar variation hint (parent: 5 units missing — ONE
+// finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3169,6 +3172,35 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         try assertGerman(["Field play surface", "Touch and slide to play notes in the current key",
                           " hertz", " seconds", " beats per minute"], "spoken units and the touch surface")
+
+        // E4-93 — `EchoelValueField.hint` is a `String`, so a literal passed to it is NOT a catalog key and shipped
+        // English in every locale. The track inspector's instrument hint (a `static let` the menu reads), both arms of
+        // the level hint and the pan hint, and the Bar variation hint go through `String(localized:)` now. The runtime
+        // English is unchanged (TheTrackChoosesItsInstrumentTests reads `TrackMix.instrumentHint`).
+        let inspectorFieldHints = try codeOnly("Sources/Echoelmusic/Studio/TrackInspectorView.swift")
+        for seam in ["String(localized: \"The voice this track plays its parts with. ",
+                     "? String(localized: \"1.00 unchanged, 0 silent. This is also the level",
+                     ": String(localized: \"1.00 unchanged, 0 silent, 2.00 is +6 dB\")",
+                     "hint: String(localized: \"−1 left, 0 centre, 1 right\")"] {
+            XCTAssertTrue(inspectorFieldHints.contains(seam), "TrackInspectorView lost the E4-93 seam `\(seam)`")
+        }
+        for verbatim in ["instrumentHint =\n        \"The voice", "? \"1.00 unchanged", "\"1.00 unchanged, 0 silent, 2.00 is +6 dB\",",
+                         "hint: \"−1 left"] {
+            XCTAssertFalse(inspectorFieldHints.contains(verbatim), "TrackInspectorView passes a hint verbatim again: `\(verbatim)`")
+        }
+        let variationHint = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for seam in ["hint: String(localized: \"How far each bar of the loop may drift from the genre preset\")"] {
+            XCTAssertTrue(variationHint.contains(seam), "EchoelStudioView lost the E4-93 seam `\(seam)`")
+        }
+        for verbatim in ["hint: \"How far each bar"] {
+            XCTAssertFalse(variationHint.contains(verbatim), "EchoelStudioView passes the Bar variation hint verbatim again")
+        }
+        XCTAssertTrue(TrackMix.instrumentHint.hasPrefix("The voice this track plays its parts with."),
+                      "the instrument hint must still read its English source under the test locale")
+        try assertGerman(["The voice this track plays its parts with. EchoelBass and EchoelBodyVibe each play one track at a time, the higher one in the list; another track that picks one plays EchoelSynth. A track on EchoelBodyVibe cannot be armed to record MIDI",
+                          "1.00 unchanged, 0 silent. This is also the level the Studio instrument plays at; its Start lifts 0 back to 1.00",
+                          "1.00 unchanged, 0 silent, 2.00 is +6 dB", "−1 left, 0 centre, 1 right",
+                          "How far each bar of the loop may drift from the genre preset"], "value-field hints")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

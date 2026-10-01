@@ -7755,7 +7755,7 @@ struct EchoelStudioView: View {
         let scattersSomething = loopBars.rawValue > 1
         return VStack(alignment: .leading, spacing: 6) {
             EchoelValueField(label: "Bar variation", value: $moodVariation, range: 0...1, decimals: 2,
-                             hint: "How far each bar of the loop may drift from the genre preset",
+                             hint: String(localized: "How far each bar of the loop may drift from the genre preset"),
                              standard: StudioDefaultKeys.moodVariation.value,
                              onCommit: { recomposeIfRunning() })
                 .disabled(!scattersSomething)
