@@ -61,8 +61,8 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
   Export sind KEINE Tabs**: es gibt kein Ganzstück-Mischpult (B3) und keinen Song-Export (B4) —
   ein Tab ohne Ziel ist ein Knopf, der nichts tut. FX/Master folgen den `SkillLevel`-Toren.)
 - **A8** Inspektor: Kopf (Symbol, Name, Art · Spur n), Segmente Spur/Teil/Gerät, Teil-Felder
-  Start/Ende/Länge als `EchoelValueField`.
-- **A9** Querformat: drei Spalten (Spuren+Browser | Arrange+Editor | Inspektor+Visual).
+  Start/Ende/Länge als `EchoelValueField`. **✓ a5748ed13** — Kopf der offenen Spur trägt Farbband + Symbol der Rinne (`TrackHue`); die Teil-Felder standen schon in `SelectedPartBar`. Segmente Spur/Teil/Gerät offen.
+- **A9** Querformat: drei Spalten (Spuren+Browser | Arrange+Editor | Inspektor+Visual). **✓ ceb9ede82** — als ZWEI Spalten am Telefon (Arrange+Editoren | Spurköpfe+Inspektor, 260–360 pt), per `AnyLayout`, damit eine Drehung keinen Schalter zurücksetzt; die dritte Spalte (Visual) ist die schwebende Karte. M/S in der Rinne bleibt Founder-Frage (H5).
 
 ### Phase B — Engine-Glaubwürdigkeit
 - **B1** 8-Clip-Decke heben + „Eigenständig machen" beim Duplizieren (Format-Migration).

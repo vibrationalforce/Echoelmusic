@@ -41763,3 +41763,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Gates:** Compile Check auf a63319b72 ✓ (A5/A6); Stapel 127307070…7303c048a gepusht, Gates laufen.
 - **Gerät offen:** Reihe liest sich als Reiter; FX/Master landen auf ihrem Panel; „Stück“ bringt zurück.
 - **Nächste:** A8 Inspektor · A9 Querformat.
+
+## 2026-10-01 — Workstation-Neugestaltung: A8 · A9
+
+- **A8 a5748ed13:** `laneFacts` (Kopf der offenen Spur) trägt dasselbe Farbband + Symbol wie die Canvas-Rinne (`EchoelTheme.TrackHue.of/symbol`) statt des grauen Art-Symbols; Band folgt der Zeilenhöhe (`minHeight`). Wächter `TheTracksWearTheirOwnHueTests` Anspruch 5. Teil-Felder Start/Länge gab es schon in `SelectedPartBar`.
+- **A9 ceb9ede82:** Querformat (`verticalSizeClass == .compact`, nur mit gezeichnetem Canvas) = zwei Spalten per EINEM `AnyLayout`: Arrangement links, Spurköpfe + Inspektor rechts (260–360 pt); Hochformat unverändert. Leere Spalte sagt „Tippe auf einen Spurnamen …“. Wächter `TheArrangementSitsBesideItsTrackInLandscapeTests` (WORK 24/24, Eltern rot nur durch Abwesenheit); A3/A5/A6/A7-Transkriptionen weiter grün.
+- **Gerät offen:** Kopffarbe ordnet sich der beringten Zeile zu; Spalten lesbar bei 667–932 pt; Drehung lässt Noten/Automation offen.
+- **Nächste:** Phase B (B3 Mixer über alle Spuren, B4 Song-Export → dann Mix/Export-Reiter).
