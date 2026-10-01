@@ -41840,3 +41840,16 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
   frage** als H7 (zwei Zähler im selben Format). A1b-✓ im Plan nachgetragen.
 - Runde 2 läuft: A3b · A8-Segmente · B1 · C1 (Entwurf + Kritik).
 - Gerät offen: alles. Nichts davon ist am Telefon gesehen.
+
+## 2026-10-01 — Workstation-Neugestaltung, Runde 2 (A3b · A8-Segmente · B1a · C1)
+- **A3b ✓ 3f44da17a** (auf main): die Stück-Bühne hat EIN Play.
+- **A8 ✓ 4c3d5be63**: Inspektor zeigt eine Seite von dreien (Spur · Teil · Gerät).
+- **B1a ✓ a137976f7**: Teil-Gitter 8 → 64 (`ClipStore.slotCount`), altes Gitter wird aufgefüllt
+  (`migratedGrid`, ein größeres wird abgelehnt), gespeichert wird das Präfix bis zum letzten belegten
+  Platz, mindestens 8 (`storedGrid`) — ein Rückfall-Build behält bis zu 8 Teile. Wächter
+  `TheOldPartGridOpensInTheLargerOneTests` (6 Ansprüche). B1b (Eigenständig machen) HOLD: H9.
+- **C1 ✓ 357067db2**: `visual.creative.intensity` als erster Visual-Parameter auf dem kanonischen
+  Pfad (Registry → Router → `VisualCreativeState`), pro Bild mit Slew 0,30/s gelesen; kein
+  Produktions-Schreiber. Wächter mit AnchorMissing statt XCTSkip (12 Ansprüche).
+- Inbox H8/H9/H10 (1783542be). Runde 3 (B3c · B2 · C5 · B6a) im Workflow.
+- Gerät offen: alles. Benotet per Transkription, nicht kompiliert.

@@ -48,6 +48,7 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
   `transportRow` mitten im Scroll entfällt. EIN Transport (`ProjectTransport`). **✓ dbbe191cf**
   (Scroll in `WorkstationView`, `transportBar` per `safeAreaInset`). A3b offen: Kopf-Play und
   Leisten-Play doppeln sich auf der Stück-Bühne — Kopf-Play bleibt für die Instrument-Bühne.
+  **A3b ✓ 3f44da17a** — die Stück-Bühne hat EIN Play (die Leiste); Kopf-Play nur auf der Instrument-Bühne. Offen: VoiceOver-Hinweis über `ProjectTransport.buttonHint`.
 - **A4** Kopf-Anzeige: Song-Position TAKT.SCHLAG.16tel · BPM · 4/4 · Tonart. **✓ b519c6c44** — `WorkstationSummary.counterText`/`meterText`, Blatt `ProjectPositionReadout` (eigene `TimelineView`, 15 fps, pausiert im Stopp, Breiten-Schablone „888.4.4“, kein heißer Read im Kopf); Reihenfolge Position · Tempo · Taktart · Ort. Die Tonart wird NICHT wiederholt — sie steht im Streifen eine Zeile darüber. Wächter `TheHeadCountsThePieceInBarsBeatsAndSixteenthsTests`. Offen: Inbox H7 (zwei Zähler im selben Format).
 - **A5** Spur-Köpfe IM Canvas (M/S verschoben, nicht verdoppelt); Kartenliste → nur Inspektor.
   **✓ a63319b72 (Telefon):** Kopf im Canvas WÄHLT; M/S bleibt im Inspektor-Kopf (zwei 44-pt-
@@ -61,11 +62,12 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
   Export sind KEINE Tabs**: es gibt kein Ganzstück-Mischpult (B3) und keinen Song-Export (B4) —
   ein Tab ohne Ziel ist ein Knopf, der nichts tut. FX/Master folgen den `SkillLevel`-Toren.)
 - **A8** Inspektor: Kopf (Symbol, Name, Art · Spur n), Segmente Spur/Teil/Gerät, Teil-Felder
-  Start/Ende/Länge als `EchoelValueField`. **✓ a5748ed13** — Kopf der offenen Spur trägt Farbband + Symbol der Rinne (`TrackHue`); die Teil-Felder standen schon in `SelectedPartBar`. Segmente Spur/Teil/Gerät offen.
+  Start/Ende/Länge als `EchoelValueField`. **✓ a5748ed13** — Kopf der offenen Spur trägt Farbband + Symbol der Rinne (`TrackHue`); die Teil-Felder standen schon in `SelectedPartBar`. **Segmente ✓ 4c3d5be63** — der Inspektor zeigt EINE Seite von dreien (Spur · Teil · Gerät).
 - **A9** Querformat: drei Spalten (Spuren+Browser | Arrange+Editor | Inspektor+Visual). **✓ ceb9ede82** — als ZWEI Spalten am Telefon (Arrange+Editoren | Spurköpfe+Inspektor, 260–360 pt), per `AnyLayout`, damit eine Drehung keinen Schalter zurücksetzt; die dritte Spalte (Visual) ist die schwebende Karte. M/S in der Rinne bleibt Founder-Frage (H5).
 
 ### Phase B — Engine-Glaubwürdigkeit
 - **B1** 8-Clip-Decke heben + „Eigenständig machen" beim Duplizieren (Format-Migration).
+  **B1a ✓ a137976f7** — `ClipStore.slotCount` 64, ein altes 8er-Gitter öffnet sich im größeren (`migratedGrid`), gespeichert wird das Präfix bis zum letzten belegten Platz (`storedGrid`, min. 8 — ein Rückfall auf einen alten Build behält bis zu 8). Wächter `TheOldPartGridOpensInTheLargerOneTests`. Rückfall-Kosten: Inbox H8. **B1b HOLD** — Undo-Schritt für den geprägten Teil, nur MIDI, Tür-Ort, plus Founder-Frage H9.
 - **B2** Presets je Spur + Sampler wählbar.
 - **B3** Mixer-Ansicht (alle Spuren als Kanalzüge) + Mixer-Undo. **✓ ec276058b (Ansicht)** —
   `PieceMixerView` hinter dem Reiter „Mix“ (Tor `showsSongs`), steht STATT des Arrangements (ein
@@ -92,6 +94,7 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
   ⚠️ **Verengt auf EINEN Parameter (2026-10-01):** nur `visual.creative.intensity` (Owner
   `VisualCreativeState`, Slew = FlashGuard 0,30/s, beide Eignungen verweigert). Bewegung, Farbton,
   Detail und Blend brauchen je eine eigene Flash-/Sprung-Analyse und kommen einzeln nach C2.
+  **✓ 357067db2** — Registry → Deskriptor → Router → `VisualCreativeState`, pro Bild in `MetalBioView.draw(in:)` mit Slew gelesen; kein Produktions-Schreiber (beide Eignungen verweigert). Wächter `TheVisualIntensityIsACanonicalParameterTests`. Gerät: H10.
 - **C2** Visual-Spur (Kurven) + domänen-bewusster Automations-Editor + Play-Gate für Kurven-Songs.
 - **C3** Licht-Spur: Look-Intensität automationsfähig (nur dämpfend, FlashGuard bleibt; KEIN Strobe).
 - **C4** Raum: Szene app-weit aus der Zeitleiste, Stream-Schalter mit Tür; Bewegungs-Spur.
