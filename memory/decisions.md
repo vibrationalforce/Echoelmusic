@@ -4665,3 +4665,24 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   needles, 0 broken. All checkers clean; Sources paren/brace 0 (the two guard files read +1 because the pinned line
   itself opens `(0–100 ` and closes it in the next key — string content, not syntax).
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-80: the Studio's remaining ternaries and helper Strings (348d95ad7)
+
+- **Decision:** EchoelStudioView's last bare producers from the wide scan are keys: the export button's hint pair, the
+  variation board's idle line, the weather line, the click-accent hint, the Routing door, the text-size buttons, the
+  touch chip's "Same as music", the diagnostics empty line, the share refusal, the keep-last hint pair, the Health
+  status pair and the picture-only start's two pairs. Catalog 1779 → 1806.
+- **Two forms, both already law:** (1) a helper that only forwards a String into `Label` / `accessibilityLabel` /
+  `accessibilityHint` takes `LocalizedStringKey` instead — `masterDoorButton` and `sizeButton` — so the literals at
+  the call sites become keys with ZERO call-site edits (E4-9), and `TheTextSizeHasButtonsTests`' needles
+  (`sizeButton("Smaller", systemImage: …`) stay byte-identical (mirrored in Python). (2) the weather `+` chain
+  (`"Now: \(weatherDescriptor)"`) leaves the ternary for a computed `weatherLine` with two typed returns (E4-28);
+  the click hint's two-literal `+` chain is ONE key.
+- **Guard:** claim 11 E4-80 block (9 seams incl. both new signatures and `Text(weatherLine)`, 3 verbatim-indented
+  absences, 23 units; 365 → 367 XCTAssert). WORK PASS / HEAD FAIL (9/3/27 — ONE finding). Whole-claim-11 needle
+  check: 135 files, 1029 needles, 0 broken.
+- **Harness lesson (second today):** the transcription's "guard literals lost" check paired quotes over the raw
+  guard text, so a `"` inside a comment shifted the pairing and a BETWEEN-literal gap (`\n + `) matched the folded
+  click hint. It now pairs on `codeOnly` text with `"""` blocks blanked. Neither artefact was a needle; neither
+  guard is weaker.
+- **Review:** 2026-10-31.
