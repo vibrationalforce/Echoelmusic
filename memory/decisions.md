@@ -4868,3 +4868,12 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Gates:** 333f9efa7 green (Compile Check 3142, Auto-Merge 4040); 3c5ab2820 pushed, gates running.
 - **Device:** unverified — a German phone must show no clipped word.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E3: the Evolve switch, default off (935c33879)
+
+- **Decision:** the founder's E3 answer ("Ja; Evolve bekommt einen Schalter, Standard aus") is built. `StudioDefaultKeys.evolveTake` (`studio.evolveTake`, default `false`) is the one key; the mood panel shows a "Keep evolving" switch under "Bar variation" with a caption for each position; `evolveShouldReseed()` returns the switch.
+- **Why:** the function returned a hard `true` for three months, so the ~30 s timer recomposed every boundary and a phrase could only be kept by stopping the take.
+- **Kept on purpose:** the timer still runs when the switch is off and writes `evolve: HOLD (switch off)`, so the diag log keeps every boundary.
+- **Guard:** `TheEvolveSwitchStartsOffTests` (4 claims), transcribed WORK PASS / HEAD FAIL.
+- **Open:** device. Whether "off" sounds like a held phrase, and whether "on" is the old behaviour, is the founder's ear.
+- **Review:** 2026-10-31.

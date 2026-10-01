@@ -41716,3 +41716,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-97…E4-112, XCTAssert 437 → 469; Gesamt-Transkription 738 Nadeln / 0 gebrochen (185 Dateien).
 - **Gates:** 333f9efa7 grün (Compile 3142, Auto-Merge 4040); 3c5ab2820 gepusht, Monitor läuft.
 - **Gerät offen:** deutsches Telefon ohne abgeschnittenes Wort.
+
+## 2026-10-01 — E3: Evolve-Schalter gebaut (935c33879)
+
+- Founder-Antwort E3 („Ja; Evolve bekommt einen Schalter, Standard aus“) umgesetzt: „Keep evolving“ unter „Bar variation“, Standard AUS, `StudioDefaultKeys.evolveTake`.
+- `evolveShouldReseed()` gab drei Monate hart `true` zurück; jetzt gibt es den Schalter zurück. Der Timer läuft weiter und loggt `evolve: HOLD (switch off)`.
+- Drei Katalog-Einheiten deutsch („Weiterentwickeln“ + zwei Erklärsätze).
+- Wächter `TheEvolveSwitchStartsOffTests`, Transkription WORK PASS / HEAD FAIL. Gates zum Commit-Zeitpunkt offen; Gerät offen.
