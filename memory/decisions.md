@@ -4557,3 +4557,15 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   SaveDoorNamingTests and TheGenrePresetIsACentreNotAPointTests mirrored in Python: both still pass on WORK.
   WORK PASS / HEAD FAIL (6/3/25 — ONE finding). Whole-claim-11 needle check: 125 files, 974 needles, 0 broken.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-74: music-theory primer (2acebca2f)
+
+- **Decision:** `MusicTheoryTopic.title`, `.summary` and `.detail` (nine topics each) are catalog keys; the German
+  paragraphs keep the musical examples and product nouns. `MusicTheoryTopic.footer` stays bare — no reader.
+  Catalog 1670 → 1695.
+- **Why:** LearnLibrary.musicEntries projects the three properties into the Learn sheet, so a German phone read nine
+  English primers. No source-needle guard pins the lines; MusicTheoryPrimerTests and LearnLibraryTests compare at
+  runtime under the test locale.
+- **Guard:** claim 11 E4-74 block (4 seam needles, 2 absence needles, 27 units; 347 → 349 XCTAssert).
+  WORK PASS / HEAD FAIL (4/2/25 — ONE finding). Whole-claim-11 needle check: 126 files, 980 needles, 0 broken.
+- **Review:** 2026-10-31.
