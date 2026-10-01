@@ -4358,3 +4358,16 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-57 block (13 seam needles, 6 absence needles, 16 units; 266 → 270 XCTAssert).
   WORK PASS / HEAD FAIL (13/6/10 — ONE finding). No re-anchor needed.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-58: the EchoelAI narration (88331de51)
+
+- **Decision:** `BioExplanation.text(for:tempo:)` and `BioNarrationDriver.heading` / `voiceOverLabel` build from catalog
+  keys — one key per clause; the pace ("calm/driving/flowing") and breath ("slow/relaxed/fast") adjectives ride inside
+  their clause keys, one per state value, so German inflects them. Prefix, signal credit and engine tail are seams
+  (≤ 4 operands per step); the "; " joiner stays verbatim. Catalog 1399 → 1423.
+- **Why:** LiveNarrationDisclosure (mounted, EchoelStudioView) shows the paragraph; it was one English assembly no key
+  scan could see. `BioStateSummary.prompt` is the on-device model's input and stays English on purpose.
+- **Guard:** claim 11 E4-58 block (22 seam needles, 9 absence needles, 24 units; 270 → 272 XCTAssert).
+  WORK PASS / HEAD FAIL (22/9/24 — ONE finding). Runtime guards unchanged (English under the test locale,
+  Python mirror per needle). No re-anchor needed.
+- **Review:** 2026-10-31.
