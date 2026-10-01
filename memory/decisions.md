@@ -4623,3 +4623,25 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   wide scan is saved in the scratchpad and worked slice by slice, each hit classified String-position vs
   LocalizedStringKey-position first.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-78: workstation spoken sentences, tempo-follow label, accent notes (209e0754f)
+
+- **Decision:** the first slice of the reopened wide-scan list. `WorkstationSummary` keys its transport and click
+  hints, the row description's fragments (bio automation track · no parts · 1 part · N parts · muted · soloed · armed
+  to record · the no-engine note) and the bar span's two words (`bar ` / `bars `, number as bare operand);
+  `TempoFollowLabel` keys its four sentences (the following prefix as `String(localized: "Tempo, following ") +
+  subject`, de "Tempo, folgt: " so the nominative subject fits) plus the lock button's label; the Field arp row's two
+  accent notes are keyed with the rhythm name as a bare operand. Catalog 1731 → 1751 (+20; "1 part", "parts", " to "
+  reused).
+- **Named compromise:** the bar span's joiner is the shared key `" to "`, whose German unit is `" zu "` (route and
+  relink lines) — a German row says "Takte 1 zu 5" until the founder picks a span word. Written into the guard
+  comment rather than hidden; English is unchanged.
+- **Guard:** claim 11 E4-78 block (8 seam needles, 3 absence needles, 23 units; 357 → 363 XCTAssert). Every runtime
+  guard on these sentences compares under the en test locale and was mirrored in Python (barSpan equality, hint
+  contains, the once-quoted lock literal). No source needle re-anchored. WORK PASS / HEAD FAIL (8/3/20 — ONE
+  finding). Whole-claim-11 needle check: 133 files, 1006 needles, 0 broken.
+- **Harness lesson:** the transcription's "guard literals lost" check matched a quote-pairing artefact of
+  `LaunchLogsWhatItWokeUpWithTests` prose against `WorkstationSummary`, a file that guard never reads. Scoped per
+  named file (a guard's literals count only against the F files it names); the check is not weaker for any guard
+  that does read the file.
+- **Review:** 2026-10-31.
