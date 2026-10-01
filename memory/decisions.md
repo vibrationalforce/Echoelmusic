@@ -4741,3 +4741,17 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   runtime equalities in TheFXHeadersSayWhoseBodyTests hold under en (unit value == key). WORK PASS / HEAD FAIL
   (8/3/8 — ONE finding). Whole-claim-11 needle check: 147 files, 628 needles, 0 broken.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-85: tone-system names (b2c859493)
+
+- **Decision:** the fifteen `name:` literals of `TuningSystem.library` are catalog keys — rendered by `Text(t.name)` in
+  the WorkspaceView tone-system Picker and spoken through the tuning banner's title. Catalog 1844 → 1859.
+- **Why it is safe:** only the `id` persists (`Project.toneSystemID`, `@AppStorage("toneSystemID")`); `TuningSystem.named(_:)`
+  resolves by id; MicrotonalTuningTests pins ids and cents, never a name. Proper names keep identical de units.
+- **Measured and left bare:** `MusicStyle.Category.title` (nine family titles) has NO Sources reader — the shelves
+  moved to `Subcategory.title` in E4-20; keying a dead string would be a false claim of reach.
+- **Still open in this file's neighbourhood:** the banner's `"Non-standard tuning: \(systemName)…"` assembles with
+  interpolation — keying it would put `%@` into a key; it needs the E4-28 split first.
+- **Guard:** claim 11 E4-85 block (4 seams, count pin 15, 1 verbatim absence, 15 units; 390 → 393 XCTAssert).
+  WORK PASS / HEAD FAIL (4/1/15 — ONE finding). Whole-claim-11: 148 files, 632 needles, 0 broken.
+- **Review:** 2026-10-31.
