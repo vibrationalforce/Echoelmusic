@@ -4057,3 +4057,27 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Next E4 producers:** PerformSessionView statics + Open/Closed value, EchoelFXView preset/morph strings,
   EchoelStudioView sites.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-40: the Perform plate and the FX panel's prose speak German (013ed295c)
+
+- **Decision:** PerformSessionView — `sectionTitle`, `sectionHint`, `emptyNote`, `instrumentRunningNote` are computed
+  `static var … { String(localized: …) }`; the disclosure value is `isOpen ? String(localized: "Expanded") :
+  String(localized: "Collapsed")` (was Open/Closed — "Open" is the catalog's door verb „Öffnen“, and the three sibling
+  disclosures already say Expanded/Collapsed). EchoelFXView — Morph label `String(localized: "Morph → ") + $0.name`,
+  the four `Text(flag ? "A" : "B")` footers/headers hold two keys each, `stopsArrivingNote` is ONE literal on ONE line
+  (ADropoutSaysWhichHalfLetGo's extractor reads the quotes on the anchor line; its anchor moved 1:1 to
+  `static var stopsArrivingNote: String {`), the neutral-0.50 footer is one literal; "My Preset" stays verbatim (a
+  persisted preset name). Catalog 1173 → 1193; the German „gehalten“ in both notes is the catalog's own `held` unit
+  (asserted by the edit script).
+- **Why:** four spellings of one defect (`Text(String)`, `Label(String)`, ternary of literals, `+` chain) on the two
+  surfaces whose only job is to explain. Runtime English pinned (`sectionTitle`, `emptyNote` prefix).
+- **Guard:** claim 11 E4-40 block (5 + 11 seams, 5 + 8 absence needles — indented verbatim forms, the E4-37 lesson
+  applied up front —, 2 runtime counterweights, 20 units via `assertGerman`; 195 → 201 XCTAssert). WORK PASS / HEAD
+  FAIL (16 seams missing, 13 verbatim present, 20 units missing — ONE finding). Two guards re-anchored 1:1:
+  ADropoutSaysWhichHalfLetGo (anchor spelling, 3 claims, +2 comment lines) and PerformIsASecondViewOfTheSameSession
+  (the disclosure-value needle, +1 comment line) — the harness's lost-literal set caught the second one
+  (`Open" : "Closed")` was escaped in the guard, so the plain grep had missed it); harness now takes per-file
+  re-anchor deltas.
+- **Next E4 producers:** the Expanded/Collapsed ternaries in PhotoSeedCard, VideoSeedCard, WorkstationView:1593 (the
+  keys now exist); EchoelStudioView sites.
+- **Review:** 2026-10-31.
