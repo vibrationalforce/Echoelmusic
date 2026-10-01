@@ -28538,6 +28538,406 @@
           }
         }
       }
+    },
+    "Interval" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intervall"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interval"
+          }
+        }
+      }
+    },
+    "Scale & Mode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skala & Modus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scale & Mode"
+          }
+        }
+      }
+    },
+    "Chord" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akkord"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chord"
+          }
+        }
+      }
+    },
+    "Chord Progression" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akkordfolge"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chord Progression"
+          }
+        }
+      }
+    },
+    "Cadence" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kadenz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cadence"
+          }
+        }
+      }
+    },
+    "Swing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swing"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swing"
+          }
+        }
+      }
+    },
+    "Dynamics" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dynamik"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dynamics"
+          }
+        }
+      }
+    },
+    "The distance in pitch between two notes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Tonhöhenabstand zwischen zwei Noten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The distance in pitch between two notes."
+          }
+        }
+      }
+    },
+    "The set of pitches a piece draws from." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Tonvorrat, aus dem ein Stück schöpft."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The set of pitches a piece draws from."
+          }
+        }
+      }
+    },
+    "Several notes sounding together." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehrere Noten, die zusammen klingen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Several notes sounding together."
+          }
+        }
+      }
+    },
+    "The order chords move through over time." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Reihenfolge, in der Akkorde über die Zeit wechseln."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The order chords move through over time."
+          }
+        }
+      }
+    },
+    "A chord move that ends or pauses a phrase." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Akkordwechsel, der eine Phrase beendet oder anhält."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A chord move that ends or pauses a phrase."
+          }
+        }
+      }
+    },
+    "The home note and scale a piece centres on." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Grundton und die Skala, um die ein Stück kreist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The home note and scale a piece centres on."
+          }
+        }
+      }
+    },
+    "How fast the music goes, in beats per minute." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie schnell die Musik geht, in Schlägen pro Minute."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How fast the music goes, in beats per minute."
+          }
+        }
+      }
+    },
+    "Shifting off-beats later for a rolling feel." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off-Beats nach hinten schieben, für ein rollendes Gefühl."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shifting off-beats later for a rolling feel."
+          }
+        }
+      }
+    },
+    "How loud or soft the music is, moment to moment." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie laut oder leise die Musik ist, von Moment zu Moment."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How loud or soft the music is, moment to moment."
+          }
+        }
+      }
+    },
+    "Measured in semitones (the smallest step on a keyboard). Small intervals feel close and smooth; wider ones feel like leaps. Echoelmusic builds melodies by choosing intervals that stay inside your key." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gemessen in Halbtönen (dem kleinsten Schritt auf einer Klaviatur). Kleine Intervalle wirken nah und weich; weitere wirken wie Sprünge. Echoelmusic baut Melodien aus Intervallen, die in deiner Tonart bleiben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Measured in semitones (the smallest step on a keyboard). Small intervals feel close and smooth; wider ones feel like leaps. Echoelmusic builds melodies by choosing intervals that stay inside your key."
+          }
+        }
+      }
+    },
+    "A ladder of pitches — major sounds bright, minor sounds darker, the modes (Dorian, Phrygian…) each have their own colour. Echoelmusic keeps every generated note on the chosen scale so nothing sounds wrong." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Leiter aus Tönen — Dur klingt hell, Moll dunkler, die Modi (Dorisch, Phrygisch…) haben je ihre eigene Farbe. Echoelmusic hält jede erzeugte Note auf der gewählten Skala, damit nichts falsch klingt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A ladder of pitches — major sounds bright, minor sounds darker, the modes (Dorian, Phrygian…) each have their own colour. Echoelmusic keeps every generated note on the chosen scale so nothing sounds wrong."
+          }
+        }
+      }
+    },
+    "Usually three or more notes stacked in thirds (a triad). Major and minor triads are the basic colours; sevenths add tension. The body's coherence opens Echoelmusic toward more consonant, settled chords." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meist drei oder mehr Noten, in Terzen geschichtet (ein Dreiklang). Dur- und Moll-Dreiklänge sind die Grundfarben; Septimen bringen Spannung. Die Kohärenz des Körpers öffnet Echoelmusic hin zu konsonanteren, ruhigeren Akkorden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usually three or more notes stacked in thirds (a triad). Major and minor triads are the basic colours; sevenths add tension. The body's coherence opens Echoelmusic toward more consonant, settled chords."
+          }
+        }
+      }
+    },
+    "Chords don't sit still — they move, creating pull and release. Common moves (like I–V–vi–IV) feel satisfying because each chord sets up the next. Echoelmusic rotates progressions so a loop doesn't repeat the same change." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akkorde stehen nicht still — sie bewegen sich und erzeugen Zug und Lösung. Gängige Wechsel (wie I–V–vi–IV) befriedigen, weil jeder Akkord den nächsten vorbereitet. Echoelmusic dreht Akkordfolgen weiter, damit ein Loop nicht denselben Wechsel wiederholt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chords don't sit still — they move, creating pull and release. Common moves (like I–V–vi–IV) feel satisfying because each chord sets up the next. Echoelmusic rotates progressions so a loop doesn't repeat the same change."
+          }
+        }
+      }
+    },
+    "The punctuation of harmony: a strong V→I lands like a full stop, while other cadences leave a phrase hanging. Echoelmusic resolves a loop with a turnaround cadence so it feels finished, not cut off." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Zeichensetzung der Harmonik: ein starkes V→I landet wie ein Punkt, andere Kadenzen lassen eine Phrase offen. Echoelmusic löst einen Loop mit einer Turnaround-Kadenz auf, damit er fertig wirkt, nicht abgeschnitten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The punctuation of harmony: a strong V→I lands like a full stop, while other cadences leave a phrase hanging. Echoelmusic resolves a loop with a turnaround cadence so it feels finished, not cut off."
+          }
+        }
+      }
+    },
+    "A piece's centre of gravity — its home note plus the scale around it (e.g. C minor). Everything is heard in relation to home. Echoelmusic locks the music to one key (with your concert pitch, default A440) so stems drop into your DAW already in tune." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Schwerpunkt eines Stücks — sein Grundton plus die Skala darum (z. B. c-Moll). Alles wird im Verhältnis zum Grundton gehört. Echoelmusic bindet die Musik an eine Tonart (mit deinem Kammerton, Standard A440), sodass Stems schon gestimmt in deiner DAW landen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A piece's centre of gravity — its home note plus the scale around it (e.g. C minor). Everything is heard in relation to home. Echoelmusic locks the music to one key (with your concert pitch, default A440) so stems drop into your DAW already in tune."
+          }
+        }
+      }
+    },
+    "Beats per minute. Slow tempos feel calm, fast ones energetic. In Echoelmusic tempo can follow your heart rate or be locked to an exact BPM for export." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schläge pro Minute. Langsame Tempi wirken ruhig, schnelle energisch. In Echoelmusic kann das Tempo deiner Herzfrequenz folgen oder für den Export auf einen exakten BPM-Wert festgestellt werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beats per minute. Slow tempos feel calm, fast ones energetic. In Echoelmusic tempo can follow your heart rate or be locked to an exact BPM for export."
+          }
+        }
+      }
+    },
+    "Straight rhythms place notes evenly; swing pushes every other note slightly late, giving jazz, hip-hop and house their groove. Echoelmusic's swing amount is adjustable per piece." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerade Rhythmen setzen Noten gleichmäßig; Swing schiebt jede zweite Note leicht nach hinten und gibt Jazz, Hip-Hop und House ihren Groove. Der Swing-Anteil ist in Echoelmusic je Stück einstellbar."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Straight rhythms place notes evenly; swing pushes every other note slightly late, giving jazz, hip-hop and house their groove. Echoelmusic's swing amount is adjustable per piece."
+          }
+        }
+      }
+    },
+    "The loud-and-soft shape of a performance. Accents on strong beats and gentle swells make a line feel human rather than mechanical — Echoelmusic adds these with its phrasing and humanize controls." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Laut-und-leise-Form einer Darbietung. Akzente auf schweren Schlägen und sanfte Schwellungen lassen eine Linie menschlich statt mechanisch wirken — Echoelmusic fügt sie über seine Phrasierungs- und Humanize-Regler hinzu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The loud-and-soft shape of a performance. Accents on strong beats and gentle swells make a line feel human rather than mechanical — Echoelmusic adds these with its phrasing and humanize controls."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

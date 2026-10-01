@@ -142,7 +142,9 @@
 // finding). E4-73 added the studio chips' VoiceOver full names (StudioMenu.fullName — SaveDoorNamingTests reads the
 // `.export` LINE and asks for "save"/"loop", both still on it), the place row's status line, the Field arp rhythm blurbs
 // and push notes, and the mood variation caption (its count stays `MoodProfile.variationSpread.count`, projected between
-// keys) (parent: 25 units missing — ONE finding). Claim 12
+// keys) (parent: 25 units missing — ONE finding). E4-74 added the music-theory primer (MusicTheoryTopic title ·
+// summary · detail, reachable through LearnLibrary.musicEntries; the footer stays bare — it has no reader) (parent:
+// 27 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2607,6 +2609,37 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Bar 1 plays the genre preset; the other ", " bars read it slightly differently. ",
                           " performance dials drift — register, dissonance and chord colour hold, so the genre still sounds like itself at 1.00."],
                          "studio full names, place line, rhythm blurbs and variation caption")
+
+        // E4-74 — the music-theory primer: nine titles, nine one-line summaries, nine paragraphs. LearnLibrary projects
+        // them into LearnEntry rows, so they are the Learn sheet's music section. `MusicTheoryTopic.footer` has no
+        // reader in Sources/ and stays as it is.
+        let theoryPrimer = try codeOnly("Sources/Echoelmusic/Studio/MusicTheoryPrimer.swift")
+        for seam in ["case .interval:    return String(localized: \"Interval\")",
+                     "case .scale:       return String(localized: \"Scale & Mode\")",
+                     "case .cadence:     return String(localized: \"A chord move that ends or pauses a phrase.\")",
+                     "return String(localized: \"Beats per minute. Slow tempos feel calm, fast ones energetic. In Echoelmusic tempo can follow your heart rate or be locked to an exact BPM for export.\")"] {
+            XCTAssertTrue(theoryPrimer.contains(seam), "MusicTheoryPrimer lost the E4-74 seam `\(seam)`")
+        }
+        for verbatim in ["case .interval:    return \"Interval\"",
+                         "case .cadence:     return \"A chord move that ends or pauses a phrase.\""] {
+            XCTAssertFalse(theoryPrimer.contains(verbatim), "MusicTheoryPrimer spells a primer line verbatim again: `\(verbatim)`")
+        }
+        try assertGerman(["Interval", "Scale & Mode", "Chord", "Chord Progression", "Cadence", "Key", "Tempo", "Swing", "Dynamics",
+                          "The distance in pitch between two notes.", "The set of pitches a piece draws from.",
+                          "Several notes sounding together.", "The order chords move through over time.",
+                          "A chord move that ends or pauses a phrase.", "The home note and scale a piece centres on.",
+                          "How fast the music goes, in beats per minute.", "Shifting off-beats later for a rolling feel.",
+                          "How loud or soft the music is, moment to moment.",
+                          "Measured in semitones (the smallest step on a keyboard). Small intervals feel close and smooth; wider ones feel like leaps. Echoelmusic builds melodies by choosing intervals that stay inside your key.",
+                          "A ladder of pitches — major sounds bright, minor sounds darker, the modes (Dorian, Phrygian…) each have their own colour. Echoelmusic keeps every generated note on the chosen scale so nothing sounds wrong.",
+                          "Usually three or more notes stacked in thirds (a triad). Major and minor triads are the basic colours; sevenths add tension. The body's coherence opens Echoelmusic toward more consonant, settled chords.",
+                          "Chords don't sit still — they move, creating pull and release. Common moves (like I–V–vi–IV) feel satisfying because each chord sets up the next. Echoelmusic rotates progressions so a loop doesn't repeat the same change.",
+                          "The punctuation of harmony: a strong V→I lands like a full stop, while other cadences leave a phrase hanging. Echoelmusic resolves a loop with a turnaround cadence so it feels finished, not cut off.",
+                          "A piece's centre of gravity — its home note plus the scale around it (e.g. C minor). Everything is heard in relation to home. Echoelmusic locks the music to one key (with your concert pitch, default A440) so stems drop into your DAW already in tune.",
+                          "Beats per minute. Slow tempos feel calm, fast ones energetic. In Echoelmusic tempo can follow your heart rate or be locked to an exact BPM for export.",
+                          "Straight rhythms place notes evenly; swing pushes every other note slightly late, giving jazz, hip-hop and house their groove. Echoelmusic's swing amount is adjustable per piece.",
+                          "The loud-and-soft shape of a performance. Accents on strong beats and gentle swells make a line feel human rather than mechanical — Echoelmusic adds these with its phrasing and humanize controls."],
+                         "music-theory primer")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
