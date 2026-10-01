@@ -111,9 +111,13 @@ struct StageShell: View {
     }
 }
 
-/// The Piece stage: the workstation standing free, in its own scroll. Nothing is computed here —
-/// everything the arrangement knows lives in `WorkstationView`, and its `.fileImporter` stays on
-/// that leaf (#W1). The size contract is the one `SurfaceHost` states: fill, then clip.
+/// The Piece stage: the workstation standing free. Nothing is computed here — everything the
+/// arrangement knows lives in `WorkstationView`, and its `.fileImporter` stays on that leaf (#W1).
+/// The size contract is the one `SurfaceHost` states: fill, then clip.
+///
+/// A3 (Workstation redesign, founder 2026-10-01): the SCROLL lives inside `WorkstationView` now,
+/// so its transport can stay pinned under the plate while the song scrolls. This stage only
+/// stacks the tuning status above it.
 ///
 /// Above the arrangement sits `PieceTuningStatus` (slice 2c): the tuning warning the instrument's
 /// Sound plate shows, on the stage a fresh install actually opens — the piece's transport plays
@@ -121,12 +125,9 @@ struct StageShell: View {
 @MainActor
 struct ArrangeStage: View {
     var body: some View {
-        ScrollView {
-            VStack(spacing: 8) {
-                PieceTuningStatus()
-                WorkstationView()
-                    .padding(2)
-            }
+        VStack(spacing: 8) {
+            PieceTuningStatus()
+            WorkstationView()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.horizontal, 8)

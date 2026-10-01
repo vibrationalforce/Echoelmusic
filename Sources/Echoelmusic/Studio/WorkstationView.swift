@@ -271,6 +271,14 @@ struct WorkstationView: View {
 
     var body: some View {
         let summary = WorkstationSummary(document: timeline.document)
+        // Workstation redesign A3 (founder 2026-10-01, the tablet mockup): the plate scrolls, the
+        // transport does NOT. It used to sit in the middle of this stack, so a song longer than
+        // the screen scrolled its own Play out of reach. The scroll moved IN here from
+        // `ArrangeStage` so the transport can be pinned beneath it with `.safeAreaInset` — no
+        // overlay, no modal, and the stack below keeps every row it had except that one.
+        // The stack is deliberately NOT re-indented under `ScrollView {`: a whitespace-only move of
+        // ~150 lines would bury the one real change and shift every guard's context for nothing.
+        ScrollView {
         VStack(alignment: .leading, spacing: 10) {
             // DMMW Phase 1 (founder 2026-09-29) — "show at once how to make a piece": the five
             // steps, each one a door that already exists below, read off the song (`ComposeGuide`).
@@ -348,7 +356,9 @@ struct WorkstationView: View {
             // engine's OWN guard (#416), not a second opinion, so the button can never offer
             // a start that silently does nothing — the "disabled decorative transport" this
             // surface was told not to grow.
-            transportRow
+            //
+            // ⭐ A3: `transportRow` is no longer a row of this stack — it is the pinned bar under
+            // the scroll (`transportBar`, at the end of `body`). Same row, same one start.
 
             // MARK: - The Session projection (WA4.2)
             //
@@ -398,7 +408,8 @@ struct WorkstationView: View {
             // Its own leaf: it lists the directory detached and writes through
             // `MediaPlacement`; this view reads none of its state.
             // ⚠️ GROUPED WITH THE PROJECT ROW so this `VStack` stays under ten direct children
-            // (nine since DMMW Phase 1 mounted `composeGuide` first — ONE slot of headroom left):
+            // (nine since DMMW Phase 1 mounted `composeGuide` first, eight since A3 pinned
+            // `transportRow` under the scroll — TWO slots of headroom left):
             // past ten, `ViewBuilder`
             // resolves through the variadic pack (#936). `Group` is
             // layout-transparent — both rows still sit in this stack at its spacing.
@@ -422,6 +433,9 @@ struct WorkstationView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(2)
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) { transportBar }
         #if canImport(UniformTypeIdentifiers)
         // ⚠️ ON THE LEAF, NEVER ON THE ROOT — see the header. `allowedContentTypes: [.audio]`
         // is the system's own conformance test, so a picker that offers a file at all has
@@ -790,6 +804,20 @@ struct WorkstationView: View {
     private func automationLine(_ count: Int) -> some View {
         Text("\(count) " + (count == 1 ? String(localized: "automated parameter") : String(localized: "automated parameters")))
             .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+    }
+
+    /// A3 — `transportRow` pinned under the plate's scroll: a solid bar with a 1 px top border
+    /// (Uncodixfy: no blur, no shadow), the plate's own side inset. Built once, in `body`'s
+    /// `.safeAreaInset`, so the scroll's content ends above it instead of under it.
+    private var transportBar: some View {
+        transportRow
+            .padding(.horizontal, 10)
+            .padding(.bottom, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(EchoelTheme.bg)
+            .overlay(alignment: .top) {
+                Rectangle().fill(EchoelTheme.border).frame(height: 1)
+            }
     }
 
     /// Play / Stop for the arrangement. ONE button, because there is one thing to say:
