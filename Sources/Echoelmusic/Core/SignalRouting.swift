@@ -187,16 +187,16 @@ public struct ConverterCatalog: Codable, Sendable, Equatable {
     /// the output-stage promise ("shape visuals/light/spatial by musical parameters")
     /// real (the multimedia workstation this serves: FOUNDER_PRODUCT_LAW.md).
     public static let `default` = ConverterCatalog(converters: [
-        SignalConverter(id: "bio→cc",       name: "Bio → MIDI CC",        from: .controlBio,     to: .controlChange),
-        SignalConverter(id: "bio→light",    name: "Bio → Light",          from: .controlBio,     to: .light),
-        SignalConverter(id: "bio→spatial",  name: "Bio → Spatial object", from: .controlBio,     to: .spatial),
-        SignalConverter(id: "bio→macro",    name: "Bio → Macro",          from: .controlBio,     to: .controlMacro),
-        SignalConverter(id: "music→light",  name: "Pitch/Chord → Colour", from: .controlMusical, to: .light),
-        SignalConverter(id: "music→spatial",name: "Pitch → Position",     from: .controlMusical, to: .spatial),
-        SignalConverter(id: "music→cc",     name: "Music → MIDI CC",      from: .controlMusical, to: .controlChange),
-        SignalConverter(id: "macro→cc",     name: "Macro → MIDI CC",      from: .controlMacro,   to: .controlChange),
-        SignalConverter(id: "macro→light",  name: "Macro → Light",        from: .controlMacro,   to: .light),
-        SignalConverter(id: "macro→spatial",name: "Macro → Spatial",      from: .controlMacro,   to: .spatial)
+        SignalConverter(id: "bio→cc",       name: String(localized: "Bio → MIDI CC"),        from: .controlBio,     to: .controlChange),
+        SignalConverter(id: "bio→light",    name: String(localized: "Bio → Light"),          from: .controlBio,     to: .light),
+        SignalConverter(id: "bio→spatial",  name: String(localized: "Bio → Spatial object"), from: .controlBio,     to: .spatial),
+        SignalConverter(id: "bio→macro",    name: String(localized: "Bio → Macro"),          from: .controlBio,     to: .controlMacro),
+        SignalConverter(id: "music→light",  name: String(localized: "Pitch/Chord → Colour"), from: .controlMusical, to: .light),
+        SignalConverter(id: "music→spatial",name: String(localized: "Pitch → Position"),     from: .controlMusical, to: .spatial),
+        SignalConverter(id: "music→cc",     name: String(localized: "Music → MIDI CC"),      from: .controlMusical, to: .controlChange),
+        SignalConverter(id: "macro→cc",     name: String(localized: "Macro → MIDI CC"),      from: .controlMacro,   to: .controlChange),
+        SignalConverter(id: "macro→light",  name: String(localized: "Macro → Light"),        from: .controlMacro,   to: .light),
+        SignalConverter(id: "macro→spatial",name: String(localized: "Macro → Spatial"),      from: .controlMacro,   to: .spatial)
     ])
 }
 

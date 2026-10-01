@@ -136,8 +136,8 @@ public final class SignalRouter {
     nonisolated static func allPortsIncludingRoadmap() -> [SignalPort] {
         [
             // Internal sources (the bus)
-            SignalPort(id: "bus.bio",     name: "Body (bio)",   kind: .controlBio,     direction: .source, transport: .internalBus),
-            SignalPort(id: "bus.musical", name: "Music",        kind: .controlMusical, direction: .source, transport: .internalBus),
+            SignalPort(id: "bus.bio",     name: String(localized: "Body (bio)"),   kind: .controlBio,     direction: .source, transport: .internalBus),
+            SignalPort(id: "bus.musical", name: String(localized: "Music"),        kind: .controlMusical, direction: .source, transport: .internalBus),
             // External input
             // ⛔ THIS PORT WAS NAMED "MIDI / MPE In" AND THE APP CANNOT RECEIVE MPE (#766).
             // #548 measured it and corrected five surfaces — CLAUDE.md's pipeline line, the
@@ -155,7 +155,7 @@ public final class SignalRouter {
             // and RPN 6,6 has no producer on the way in. MPE **out** is real and switchable
             // (#713), which is why the sink below keeps its name. Guard:
             // `Tests/CISmoke/TheMPEInputHasNoZonesTests`.
-            SignalPort(id: "midi.in",     name: "MIDI In", kind: .note,                 direction: .source, transport: .coreMIDI),
+            SignalPort(id: "midi.in",     name: String(localized: "MIDI In"), kind: .note,                 direction: .source, transport: .coreMIDI),
             // Universal BLE heart-rate strap (0x180D — Polar/Garmin/Wahoo/…).
             // DATA-FLOW PORT ONLY — it does NOT drive the strap's lifecycle. B4
             // (2026-07-12) briefly made `applyRouting` start/stop the scan from
@@ -165,17 +165,17 @@ public final class SignalRouter {
             // source dropdown (`startBioSource`). See EchoelmusicApp.applyRouting.
             // `hasEnabledRoute(fromSource:)` consequently has NO production
             // caller today — do not re-derive a start hook from its existence.
-            SignalPort(id: "blehrs.in",   name: "Heart strap (BLE)", kind: .controlBio,   direction: .source, transport: .bleHRS),
+            SignalPort(id: "blehrs.in",   name: String(localized: "Heart strap (BLE)"), kind: .controlBio,   direction: .source, transport: .bleHRS),
             // External outputs
-            SignalPort(id: "midi.out",    name: "MIDI / MPE Out", kind: .note,         direction: .sink,   transport: .coreMIDI),
-            SignalPort(id: "osc.out",     name: "OSC Out",       kind: .controlChange,  direction: .sink,   transport: .osc),
-            SignalPort(id: "adm.out",     name: "ADM-OSC (spatial)", kind: .spatial,    direction: .sink,   transport: .admOSC),
-            SignalPort(id: "artnet.out",  name: "Art-Net (light)",   kind: .light,      direction: .sink,   transport: .artNet),
-            SignalPort(id: "sacn.out",    name: "sACN (light)",      kind: .light,      direction: .sink,   transport: .sacn),
-            SignalPort(id: "audio.master", name: "Audio master",     kind: .audio,      direction: .sink,   transport: .audioIO),
+            SignalPort(id: "midi.out",    name: String(localized: "MIDI / MPE Out"), kind: .note,         direction: .sink,   transport: .coreMIDI),
+            SignalPort(id: "osc.out",     name: String(localized: "OSC Out"),       kind: .controlChange,  direction: .sink,   transport: .osc),
+            SignalPort(id: "adm.out",     name: String(localized: "ADM-OSC (spatial)"), kind: .spatial,    direction: .sink,   transport: .admOSC),
+            SignalPort(id: "artnet.out",  name: String(localized: "Art-Net (light)"),   kind: .light,      direction: .sink,   transport: .artNet),
+            SignalPort(id: "sacn.out",    name: String(localized: "sACN (light)"),      kind: .light,      direction: .sink,   transport: .sacn),
+            SignalPort(id: "audio.master", name: String(localized: "Audio master"),     kind: .audio,      direction: .sink,   transport: .audioIO),
             // Broadcast — sink ports only; the engine is not linked (HaishinKit not linked — linking it is a founder decision, since the 2026-09-24 product law made streaming scope again), routes here carry nothing today.
-            SignalPort(id: "rtmp.out",    name: "Broadcast (RTMP)",  kind: .audio,      direction: .sink,   transport: .rtmp),
-            SignalPort(id: "srt.out",     name: "Broadcast (SRT)",   kind: .audio,      direction: .sink,   transport: .srt)
+            SignalPort(id: "rtmp.out",    name: String(localized: "Broadcast (RTMP)"),  kind: .audio,      direction: .sink,   transport: .rtmp),
+            SignalPort(id: "srt.out",     name: String(localized: "Broadcast (SRT)"),   kind: .audio,      direction: .sink,   transport: .srt)
         ]
     }
 }

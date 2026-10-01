@@ -180,7 +180,8 @@
 // missing — ONE finding). E4-85 keyed the fifteen `TuningSystem.library` names the tone-system Picker renders through
 // `Text(t.name)` (parent: 15 units missing — ONE finding). E4-86 keyed the five factory visual-preset blurbs and the
 // two media-seed presets' names and blurbs — the strip speaks `preset.name + " visual preset — " + preset.blurb`
-// (parent: 9 units missing — ONE finding). Claim 12
+// (parent: 9 units missing — ONE finding). E4-87 keyed the twelve default `SignalPort` names and the ten
+// `ConverterCatalog.default` names the Routing surface renders (parent: 22 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3019,6 +3020,40 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "From photo", "From video",
                           "colour, brightness and contrast of a photo", "brightness, colour and picture change of a video"],
                          "visual-preset blurbs and media-seed presets")
+
+        // E4-87 — the Routing surface's port and converter names: `SignalRouter.defaultGraph` (Core/SignalRouter,
+        // twelve `SignalPort(… name:)` literals) and `ConverterCatalog.default` (Core/SignalRouting, ten
+        // `SignalConverter(… name:)` literals), rendered by `Text(src.name)` / `Text(dst.name)` and the converter chip
+        // in PatchbayView. Only `graph.routes` persists (`SignalRouter.save()`); ports and converters are rebuilt from
+        // code, so a keyed name reaches every install. The `id: "midi.in"` line keeps saying no "MPE"
+        // (TheMPEInputHasNoZonesTests reads that LINE). Technical labels (MIDI In · OSC Out · Bio → MIDI CC) keep
+        // identical German units on purpose.
+        let routingPorts = try codeOnly("Sources/Echoelmusic/Core/SignalRouter.swift")
+        for seam in ["SignalPort(id: \"bus.bio\",     name: String(localized: \"Body (bio)\"),",
+                     "SignalPort(id: \"midi.in\",     name: String(localized: \"MIDI In\"),",
+                     "SignalPort(id: \"blehrs.in\",   name: String(localized: \"Heart strap (BLE)\"),",
+                     "SignalPort(id: \"adm.out\",     name: String(localized: \"ADM-OSC (spatial)\"),"] {
+            XCTAssertTrue(routingPorts.contains(seam), "SignalRouter lost the E4-87 seam `\(seam)`")
+        }
+        XCTAssertEqual(routingPorts.components(separatedBy: "name: String(localized: \"").count - 1, 12,
+                       "SignalRouter.defaultGraph carries 12 keyed port names; re-derive if a port was added")
+        XCTAssertFalse(routingPorts.contains("            SignalPort(id: \"bus.bio\",     name: \"Body (bio)\","), "SignalRouter spells a port name verbatim again")
+        let routingConverters = try codeOnly("Sources/Echoelmusic/Core/SignalRouting.swift")
+        for seam in ["SignalConverter(id: \"bio→cc\",       name: String(localized: \"Bio → MIDI CC\"),",
+                     "SignalConverter(id: \"music→light\",  name: String(localized: \"Pitch/Chord → Colour\"),",
+                     "SignalConverter(id: \"macro→spatial\",name: String(localized: \"Macro → Spatial\"),"] {
+            XCTAssertTrue(routingConverters.contains(seam), "SignalRouting lost the E4-87 seam `\(seam)`")
+        }
+        XCTAssertEqual(routingConverters.components(separatedBy: "name: String(localized: \"").count - 1, 10,
+                       "ConverterCatalog.default carries 10 keyed converter names; re-derive if a converter was added")
+        XCTAssertFalse(routingConverters.contains("        SignalConverter(id: \"bio→cc\",       name: \"Bio → MIDI CC\","), "SignalRouting spells a converter name verbatim again")
+        try assertGerman(["Body (bio)", "Music", "MIDI In", "Heart strap (BLE)", "MIDI / MPE Out", "OSC Out",
+                          "ADM-OSC (spatial)", "Art-Net (light)", "sACN (light)", "Audio master",
+                          "Broadcast (RTMP)", "Broadcast (SRT)",
+                          "Bio → MIDI CC", "Bio → Light", "Bio → Spatial object", "Bio → Macro",
+                          "Pitch/Chord → Colour", "Pitch → Position", "Music → MIDI CC",
+                          "Macro → MIDI CC", "Macro → Light", "Macro → Spatial"],
+                         "routing port and converter names")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
