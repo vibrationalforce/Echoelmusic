@@ -41447,3 +41447,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-55-Block (23 Naht-Nadeln, 14 Abwesenheits-Nadeln, 23 Einheiten; XCTAssert 254 → 260). Kein Re-Anker nötig (gemessen: kein Wächter pinnt die Fragmente; NoClock-Versprechen im Diff 0, „Dynamic and Flowing“ nur im Kommentar wie zuvor). Benotung `scratchpad/transcribe_e4_55.py`: HEAD FAIL (23/14/23 — EIN Befund), WORK PASS. Checker alle OK, Klammerbilanz 0.
 - **Gates:** ca5b84258 (E4-51…E4-54) gepusht, Monitor bcc564hux: Quick Test 3848 ✓, Auto-Merge Docs 581 ✓; Compile Check/CI/CD/Auto-Merge laufen. E4-55 (5dad34609) lokal — Push nach dem Compile Check.
 - **Offen (E4):** Import-Erfolgssätze (MIDIImport/MediaPlacement/AudioImport `successNote`, ClipNoteEdit `gridLabel`) — Laufzeit-Wächter prüfen; WAV-HUD bewusst englisch; türlose Flächen erst nach einer Tür.
+
+## 2026-10-01 — E4-56: die fünf Import-Sätze (6b34101a7)
+
+- **Gebaut:** MIDIImport (addedTrackNote · emptyPartNote · successNote), MediaPlacement.successNote, AudioImport.successNote als `String(localized:)`-Nähte um Namen und Zahlen (≤ 4 Operanden je Schritt); Plurale als Ternär zweier Schlüssel, `bar`/`bars` wiederverwendet. Katalog 1368 → 1389 (+21, 2 wiederverwendet). Sources: 3 Dateien + Katalog.
+- **Wächter:** Anspruch 11 E4-56-Block (20 Naht-Nadeln, 8 Abwesenheits-Nadeln, 23 Einheiten; XCTAssert 260 → 266). Laufzeit-Wächter (fünf Dateien) lesen die englische Zusammensetzung unverändert — Python-Spiegel hat jede Nadel reproduziert. Benotung `scratchpad/transcribe_e4_56.py`: HEAD FAIL (20/8/21 — EIN Befund), WORK PASS. Checker alle OK, Klammerbilanz 0.
+- **Gates:** 7247cb093 (E4-55) gepusht, Monitor bsakg0dn1 läuft. E4-56 (6b34101a7) lokal — Push nach dem Compile Check.
+- **Offen (E4):** ClipNoteEdit.gridLabel (ThePartNoteGridSpeaksTests pinnt vier Laufzeit-Sätze exakt), WorkstationView Compose-Guide-Nummer, ArrangeCanvasView gesprochene Zeile; WAV-HUD bewusst englisch; türlose Flächen erst nach einer Tür.

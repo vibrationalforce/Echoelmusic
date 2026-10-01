@@ -4334,3 +4334,15 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - ⛔ The first record of this slice (aaa77ea01) wrote the German SESSION_LOG entry here and nothing into the log: a
   docs script derived by substring replacement matched `## 2026-10-01` INSIDE `### 2026-10-01`. Repaired in the next
   commit; lesson — anchor a heading replacement at the line start, never on a substring.
+
+### 2026-10-01 — E4-56: the five import sentences (6b34101a7)
+
+- **Decision:** MIDIImport (addedTrackNote, emptyPartNote, successNote), MediaPlacement.successNote and
+  AudioImport.successNote build their sentences from catalog keys seamed around names and counts (≤ 4 operands per
+  step); plural words are a ternary of two keys, `bar`/`bars` reused from TrackPartsView. Catalog 1368 → 1389.
+- **Why:** pure helpers interpolating into one literal are invisible to every key scan, and they are the feedback the
+  Workstation plate shows after import / placement / Add MIDI Track / New MIDI Part. Runtime guards (five files) read
+  the English assembly unchanged under the test locale — a Python mirror reproduced each needle before the commit.
+- **Guard:** claim 11 E4-56 block (20 seam needles, 8 absence needles, 23 units; 260 → 266 XCTAssert).
+  WORK PASS / HEAD FAIL (20/8/21 — ONE finding). No re-anchor needed.
+- **Review:** 2026-10-31.
