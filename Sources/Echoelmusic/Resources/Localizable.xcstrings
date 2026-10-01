@@ -26346,6 +26346,86 @@
           }
         }
       }
+    },
+    "From the next bar, loops every part listed at " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loopt ab dem nächsten Takt jeden Teil aus "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From the next bar, loops every part listed at "
+          }
+        }
+      }
+    },
+    " and returns every other launched track to the piece" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " und führt jede andere gestartete Spur zum Stück zurück"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " and returns every other launched track to the piece"
+          }
+        }
+      }
+    },
+    "Starts the piece at the start of " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Startet das Stück am Anfang von "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starts the piece at the start of "
+          }
+        }
+      }
+    },
+    " and loops every part listed at " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " und loopt jeden Teil aus "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " and loops every part listed at "
+          }
+        }
+      }
+    },
+    "Look " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Look "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Look "
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

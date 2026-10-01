@@ -306,6 +306,11 @@ struct SessionLaunchView: View {
                             playing: Bool, state: SessionGrid.CellState?) -> some View {
         let title = SessionGrid.label(forTick: scene.startTick)
         let songStart = SessionGrid.songStartLabel(forTick: scene.startTick)
+        // E4-66: the two spoken hints are catalog keys around the scene title and the start bar (≤ 4 operands per step).
+        let loopHint: String = String(localized: "From the next bar, loops every part listed at ") + title
+            + String(localized: " and returns every other launched track to the piece")
+        let startHint: String = String(localized: "Starts the piece at the start of ") + songStart
+            + String(localized: " and loops every part listed at ") + title
         return VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
                 Text(title)
@@ -336,9 +341,7 @@ struct SessionLaunchView: View {
                 // one cell can answer.
                 .accessibilityLabel(String(localized: "Launch scene at ") + title)
                 .accessibilityValue(state.flatMap(SessionGrid.word) ?? String(localized: "Not the current scene"))
-                .accessibilityHint(playing
-                                   ? "From the next bar, loops every part listed at \(title) and returns every other launched track to the piece"
-                                   : "Starts the piece at the start of \(songStart) and loops every part listed at \(title)")
+                .accessibilityHint(playing ? loopHint : startHint)
             }
             ForEach(tracks.filter { scene.cells[$0.id] != nil }) { track in
                 if let regionID = scene.cells[track.id] {

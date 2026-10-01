@@ -129,7 +129,7 @@ enum LookBlendMap {
 
     /// Display name for a style index (falls back gracefully for an unknown index).
     static func name(for index: Int) -> String {
-        library.first { $0.index == index }?.name ?? "Look \(index)"
+        library.first { $0.index == index }?.name ?? (String(localized: "Look ") + "\(index)")
     }
 
     /// Parse the persisted "3,5,7,2" string into a valid, de-duplicated sequence of

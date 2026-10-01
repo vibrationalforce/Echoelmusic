@@ -124,7 +124,8 @@
 // strap status ladder (PolarH10BioPublisher.statusLabel), the part editor's shared-notes hint and the touch surface's
 // spoken terrain (parent: 14 units missing — ONE finding). E4-65 added the record-take captions (RecordTakeControls),
 // the open refusal (SessionSaveOpen.refusal) and the relink reasons (MediaRelink.userMessage) (parent: 31 units
-// missing — ONE finding). Claim 12
+// missing — ONE finding). E4-66 added the scene-launch hints (SessionLaunchView.sceneBlock), the look-name fallback
+// (LookBlendMap.name) and the value field's VoiceOver "Default" action (parent: 5 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2336,6 +2337,33 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "That file's content differs from the part's source. ",
                           "Place a different sound as a new part.",
                           "Stop the piece to relink a file."], "record-take captions, open refusal and relink reasons")
+
+        // E4-66 — the scene block's two spoken hints (TheSceneLaunchIsASwitchTests re-anchored 1:1 on the start hint's
+        // seam), the look-name fallback every look readout can show, and the value field's VoiceOver "Default" action
+        // (TheValueFieldOffersItsDefaultTests keeps both of its needles inside the action block).
+        let sceneHints = try codeOnly("Sources/Echoelmusic/Studio/SessionLaunchView.swift")
+        for seam in ["let loopHint: String = String(localized: \"From the next bar, loops every part listed at \") + title",
+                     "let startHint: String = String(localized: \"Starts the piece at the start of \") + songStart",
+                     ".accessibilityHint(playing ? loopHint : startHint)"] {
+            XCTAssertTrue(sceneHints.contains(seam), "SessionLaunchView lost the E4-66 seam `\(seam)`")
+        }
+        for verbatim in ["? \"From the next bar, loops every part listed at \\(title)", ": \"Starts the piece at the start of \\(songStart)"] {
+            XCTAssertFalse(sceneHints.contains(verbatim), "SessionLaunchView interpolates a scene hint again: `\(verbatim)`")
+        }
+        let lookName = try codeOnly("Sources/Echoelmusic/Studio/LookBlendMap.swift")
+        XCTAssertTrue(lookName.contains("?? (String(localized: \"Look \") + \"\\(index)\")"), "LookBlendMap lost the E4-66 seam on the look-name fallback")
+        for verbatim in ["?? \"Look \\(index)\""] {
+            XCTAssertFalse(lookName.contains(verbatim), "LookBlendMap interpolates the look-name fallback again: `\(verbatim)`")
+        }
+        let fieldDefault = try codeOnly("Sources/Echoelmusic/Studio/EchoelValueField.swift")
+        XCTAssertTrue(fieldDefault.contains("Button(String(localized: \"Default \") + EchoelDecimalText.string(Double(standard), decimals: decimals)) {"),
+                      "EchoelValueField lost the E4-66 seam on the VoiceOver Default action")
+        for verbatim in ["Button(\"Default \\(EchoelDecimalText"] {
+            XCTAssertFalse(fieldDefault.contains(verbatim), "EchoelValueField interpolates the Default action again: `\(verbatim)`")
+        }
+        try assertGerman(["From the next bar, loops every part listed at ", " and returns every other launched track to the piece",
+                          "Starts the piece at the start of ", " and loops every part listed at ", "Look ", "Default "],
+                         "scene hints, look name and the Default action")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

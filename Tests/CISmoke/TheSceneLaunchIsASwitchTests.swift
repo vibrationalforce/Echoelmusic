@@ -426,7 +426,8 @@ final class TheSceneLaunchIsASwitchTests: XCTestCase {
         XCTAssertEqual(SessionGrid.label(forTick: 4 * Self.bar + 2 * TimelineTime.ticksPerBeat), "Bar 5 beat 3",
                        "counterweight: the scene itself keeps its beat")
         let view = try source(Self.viewPath)
-        XCTAssertTrue(view.contains("Starts the piece at the start of \\(songStart)"))
+        // E4-66 re-anchor: the hint is a catalog key seamed before `songStart` (same sentence, same bar label).
+        XCTAssertTrue(view.contains("String(localized: \"Starts the piece at the start of \") + songStart"))
     }
 
     // MARK: helpers

@@ -708,7 +708,7 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
         // already at its default moves nothing and posts nothing (#375).
         .accessibilityActions {
             if let standard {
-                Button("Default \(EchoelDecimalText.string(Double(standard), decimals: decimals))") {
+                Button(String(localized: "Default ") + EchoelDecimalText.string(Double(standard), decimals: decimals)) {
                     if apply(Double(standard)) { onChange(); onCommit() }
                 }
             }
