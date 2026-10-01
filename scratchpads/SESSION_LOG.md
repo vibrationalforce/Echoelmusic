@@ -41426,3 +41426,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-52-Block (7 Nähte, 6 Abwesenheits-Nadeln, 7 Einheiten; XCTAssert 246 → 250). Benotung `scratchpad/transcribe_e4_52.py`: HEAD FAIL (7/6/7 — EIN Befund), WORK PASS. Checker alle OK.
 - **Gates:** d004dfbba (E4-47…E4-50) Compile Check läuft (Monitor bnrm4l13h). E4-51 (f3c32250e) + E4-52 (dee4d6994) lokal — Push nach dem Compile Check.
 - **Offen (E4):** Mood-Caption mit `romanceSeventhClause`, WAV-HUD, LoopExporter-Gründe; türlose Flächen bewusst NICHT verschlüsselt (Tür zuerst, dann Wörter).
+
+## 2026-10-01 — E4-53: die noch fehlenden Schlüssel-Einheiten (fd8e4ee39)
+
+- **Gebaut:** Scan aller LocalizedStringKey-nehmenden Aufrufe gegen den Katalog → 23 Schlüssel ohne `de`; 13 bekommen eine Einheit (Routing-Karte, Live Colabo, Onboarding-Start), 10 bleiben bewusst englisch (Marke, BPM, `untranslatedPanelWords`). PatchbayView: `\\u{2014}` → „—“, damit der Schlüssel trifft. Katalog 1324 → 1337 (+13).
+- **Wächter:** Anspruch 11 E4-53-Block (2 Text-Nadeln, 2 Escape-Abwesenheits-Nadeln, 13 Einheiten; XCTAssert 250 → 252). Benotung `scratchpad/transcribe_e4_53.py`: HEAD FAIL (2/2/13 — EIN Befund), WORK PASS. Checker alle OK.
+- **Gates:** d004dfbba Compile Check läuft (Monitor bnrm4l13h). E4-51 (f3c32250e), E4-52 (dee4d6994), E4-53 (fd8e4ee39) lokal — Push nach dem Compile Check.
+- **Offen (E4):** zwei `Text("a" + "b")`-Captions im Studio (Save-Hinweis, Puffer-Hinweis), Mood-Caption mit `romanceSeventhClause` (MoodKnobsSayWhatTheyDoTests pinnt zweimal), WAV-GAP-HUD, LoopExporter-Gründe; türlose Flächen erst nach einer Tür.

@@ -4290,3 +4290,17 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   Meditation/PulseMeasurement/ImmersiveStage/ProUnlock) are deliberately NOT keyed: a key for a line no door shows
   would make the catalog claim words the app never says — door first, then words.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-53: the literal keys the catalog still lacked (fd8e4ee39)
+
+- **Decision:** 13 literal keys get a `de` unit (Routing card captions, Live Colabo words, onboarding Start); the
+  Routing captions' `\\u{2014}` escapes become the character. Catalog 1324 → 1337.
+- **Why:** a key without a unit falls back to English silently; the scan below is the only way to see it. Excluded on
+  purpose: brand words, the BPM unit, and the four words on `untranslatedPanelWords` (OK · Studio · WAV FAILED · WAV …).
+- **Measurement (re-run before the next sweep):** regex over reachable Sources for
+  `(Text|Label|Button|Toggle|Picker|Section|TextField|navigationTitle|alert|accessibility*)("…")`, keys without `\\(`/`%`,
+  minus catalog keys — 23 hits before this slice, 10 deliberate after it. ⚠️ `Text("a" + "b")` is a verbatim String,
+  not a key: the two Studio captions built that way (Save hint, buffer hint) need seams, not units.
+- **Guard:** claim 11 E4-53 block (2 text needles, 2 escape-absence needles, 13 units; 250 → 252 XCTAssert).
+  WORK PASS / HEAD FAIL (2/2/13 — ONE finding).
+- **Review:** 2026-10-31.
