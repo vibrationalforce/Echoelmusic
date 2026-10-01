@@ -135,10 +135,13 @@ public enum MediaPlacement {
     /// The sentence the browser shows after a placement.
     public static func successNote(_ placed: Placed, laneName: String) -> String {
         let bars = max(1, placed.region.lengthTicks / TimelineTime.ticksPerBar)
-        let span = "\(bars) \(bars == 1 ? "bar" : "bars")"
-        return placed.reusedClip
-            ? "Placed “\(placed.clipName)” — \(span) on \(laneName), playing the part it already has."
-            : "Placed “\(placed.clipName)” — \(span) on \(laneName), as a new part."
+        let barWord: String = bars == 1 ? String(localized: "bar") : String(localized: "bars")
+        let head: String = String(localized: "Placed “") + placed.clipName + String(localized: "” — ")
+        let landed: String = "\(bars) " + barWord + String(localized: " on ") + laneName
+        let tail: String = placed.reusedClip
+            ? String(localized: ", playing the part it already has.")
+            : String(localized: ", as a new part.")
+        return head + landed + tail
     }
 
     // MARK: - The one writer

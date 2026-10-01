@@ -258,10 +258,14 @@ public enum AudioImport {
     /// the plate and recognises what they just did.
     public static func successNote(_ landing: Landing, laneName: String) -> String {
         let bars = max(1, landing.region.lengthTicks / TimelineTime.ticksPerBar)
-        let span = "\(bars) \(bars == 1 ? "bar" : "bars")"
-        return landing.reusedLibraryFile
-            ? "“\(landing.clip.name)” is already in the library — placed \(span) on \(laneName), no second copy."
-            : "Imported “\(landing.clip.name)” — \(span) on \(laneName)."
+        let barWord: String = bars == 1 ? String(localized: "bar") : String(localized: "bars")
+        let landed: String = "\(bars) " + barWord + String(localized: " on ") + laneName
+        if landing.reusedLibraryFile {
+            let head: String = "“" + landing.clip.name + String(localized: "” is already in the library — placed ")
+            return head + landed + String(localized: ", no second copy.")
+        }
+        let head: String = String(localized: "Imported “") + landing.clip.name + String(localized: "” — ")
+        return head + landed + "."
     }
 
     // MARK: - The pure plan

@@ -23706,6 +23706,342 @@
           }
         }
       }
+    },
+    "Added " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hinzugefügt: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Added "
+          }
+        }
+      }
+    },
+    ". It is selected in the track list." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ". Sie ist in der Spurliste ausgewählt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ". It is selected in the track list."
+          }
+        }
+      }
+    },
+    "Added an empty " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leerer "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Added an empty "
+          }
+        }
+      }
+    },
+    "-bar part on " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "-Takt-Teil auf "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "-bar part on "
+          }
+        }
+      }
+    },
+    ". Its notes are open under the arrangement" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " hinzugefügt. Seine Noten sind unter dem Arrangement offen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ". Its notes are open under the arrangement"
+          }
+        }
+      }
+    },
+    " — once it has notes, it plays at the piece's tempo, with the instrument stopped." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " — sobald er Noten hat, spielt er im Tempo des Stücks, bei gestopptem Instrument."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " — once it has notes, it plays at the piece's tempo, with the instrument stopped."
+          }
+        }
+      }
+    },
+    " cannot play a MIDI part, so it went on " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " kann keinen MIDI-Teil spielen, deshalb liegt er auf "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " cannot play a MIDI part, so it went on "
+          }
+        }
+      }
+    },
+    " Generate won't place its music over this part." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Generieren legt seine Musik nicht über diesen Teil."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Generate won't place its music over this part."
+          }
+        }
+      }
+    },
+    "note" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "note"
+          }
+        }
+      }
+    },
+    "notes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "notes"
+          }
+        }
+      }
+    },
+    "Imported “" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importiert „"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imported “"
+          }
+        }
+      }
+    },
+    "” — " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“ — "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "” — "
+          }
+        }
+      }
+    },
+    " on " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " auf "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " on "
+          }
+        }
+      }
+    },
+    " Plays at the piece's tempo on the 16th-note grid, with the instrument stopped." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Spielt im Tempo des Stücks auf dem 16tel-Raster, bei gestopptem Instrument."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Plays at the piece's tempo on the 16th-note grid, with the instrument stopped."
+          }
+        }
+      }
+    },
+    " Notes longer than a bar are held for one bar." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Noten, die länger als ein Takt sind, werden einen Takt lang gehalten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Notes longer than a bar are held for one bar."
+          }
+        }
+      }
+    },
+    " drum notes skipped." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Drum-Noten übersprungen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " drum notes skipped."
+          }
+        }
+      }
+    },
+    "Placed “" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Platziert „"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Placed “"
+          }
+        }
+      }
+    },
+    ", playing the part it already has." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", spielt den Teil, den es schon hat."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", playing the part it already has."
+          }
+        }
+      }
+    },
+    ", as a new part." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", als neuer Teil."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", as a new part."
+          }
+        }
+      }
+    },
+    "” is already in the library — placed " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“ ist schon in der Bibliothek — platziert "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "” is already in the library — placed "
+          }
+        }
+      }
+    },
+    ", no second copy." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", keine zweite Kopie."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", no second copy."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

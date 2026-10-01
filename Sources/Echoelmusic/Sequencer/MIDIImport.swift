@@ -144,7 +144,7 @@ public enum MIDIImport {
     /// ⚠️ It promises NOTHING about where the next part goes: "New MIDI Part" lands on this track
     /// only when a voice plays it here (`emptyPartLane`), otherwise on the roll lane.
     public static func addedTrackNote(laneName: String) -> String {
-        "Added \(laneName). It is selected in the track list."
+        String(localized: "Added ") + laneName + String(localized: ". It is selected in the track list.")
     }
 
     // MARK: - The empty part (Phase 3 / M1b — "New MIDI Part")
@@ -242,12 +242,15 @@ public enum MIDIImport {
     /// (`userPartWouldBeShadowed` counts it, empty or not) — both said, neither left for the ear.
     public static func emptyPartNote(laneName: String, atSongStart: Bool,
                                      notOnSelected: String?) -> String {
-        var note = "Added an empty \(emptyPartBars)-bar part on \(laneName). Its notes are open under the arrangement"
-            + " — once it has notes, it plays at the piece's tempo, with the instrument stopped."
+        // E4-56: seams of catalog keys (≤ 4 operands per step); the counts and names are never literals.
+        let landed: String = String(localized: "Added an empty ") + "\(emptyPartBars)" + String(localized: "-bar part on ") + laneName
+        var note: String = landed + String(localized: ". Its notes are open under the arrangement")
+            + String(localized: " — once it has notes, it plays at the piece's tempo, with the instrument stopped.")
         if let selected = notOnSelected {
-            note += " \(selected) cannot play a MIDI part, so it went on \(laneName)."
+            let moved: String = " " + selected + String(localized: " cannot play a MIDI part, so it went on ")
+            note += moved + laneName + "."
         }
-        if atSongStart { note += " Generate won't place its music over this part." }
+        if atSongStart { note += String(localized: " Generate won't place its music over this part.") }
         return note
     }
 
@@ -331,12 +334,15 @@ public enum MIDIImport {
     public static func successNote(_ landing: Landing, laneName: String) -> String {
         let bars = Swift.max(1, landing.region.lengthTicks / TimelineTime.ticksPerBar)
         let count = landing.clip.melody?.notes.count ?? 0
-        let barWord: String = bars == 1 ? "bar" : "bars"
-        let noteWord: String = count == 1 ? "note" : "notes"
-        var note = "Imported “\(landing.clip.name)” — \(bars) \(barWord), \(count) \(noteWord) on \(laneName)."
-        note += " Plays at the piece's tempo on the 16th-note grid, with the instrument stopped."
-        if landing.heldForOneBar > 0 { note += " Notes longer than a bar are held for one bar." }
-        if landing.skippedDrumNotes > 0 { note += " \(landing.skippedDrumNotes) drum notes skipped." }
+        let barWord: String = bars == 1 ? String(localized: "bar") : String(localized: "bars")
+        let noteWord: String = count == 1 ? String(localized: "note") : String(localized: "notes")
+        let head: String = String(localized: "Imported “") + landing.clip.name + String(localized: "” — ")
+        let span: String = "\(bars) " + barWord + ", " + "\(count) "
+        let landed: String = noteWord + String(localized: " on ") + laneName + "."
+        var note: String = head + span + landed
+        note += String(localized: " Plays at the piece's tempo on the 16th-note grid, with the instrument stopped.")
+        if landing.heldForOneBar > 0 { note += String(localized: " Notes longer than a bar are held for one bar.") }
+        if landing.skippedDrumNotes > 0 { note += " " + "\(landing.skippedDrumNotes)" + String(localized: " drum notes skipped.") }
         return note
     }
 

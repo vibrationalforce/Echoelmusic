@@ -107,7 +107,9 @@
 // captions built as `+` chains or around a derived clause — the Save hint, the buffer hint, the mood caption with
 // `romanceSeventhClause` (parent: verbatim Strings, 8 units missing — ONE finding). E4-55 added the exporter's five
 // failure reasons, the two concatenated Studio hints (Live Colabo door, click accent), the pad-shape caption's eleven
-// segments and the narration-disclosure hint (parent: 23 units missing — ONE finding). Claim 12
+// segments and the narration-disclosure hint (parent: 23 units missing — ONE finding). E4-56 added the five import
+// sentences of the Sequencer helpers (MIDIImport added-track / empty-part / success, MediaPlacement, AudioImport):
+// interpolated Strings, now seams around the names and counts (parent: 20 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1898,6 +1900,61 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Variation changes which cells sound from bar to bar, and breathes the ", "note length.",
                           "Shows or hides the plain-language description of what is ", "shaping the music"],
                          "exporter reasons, Studio hints, pad-shape caption, narration hint")
+
+        // E4-56 — the import sentences are built by pure Sequencer helpers and shown on the Workstation plate and in the
+        // media browser; they interpolated names and counts into one English literal. Each fragment is a key now,
+        // seamed around the name and the count (≤ 4 operands per step); "bar"/"bars" are reused keys. The runtime
+        // guards (ANewPartLandsOnTheChosenTrackTests, TheWorkstationImportsMIDITests, TheImportReusesAnIdenticalLibraryFileTests,
+        // AddingAMIDITrackSelectsItTests) read the English assembly unchanged under the test locale.
+        let midiNotes = try codeOnly("Sources/Echoelmusic/Sequencer/MIDIImport.swift")
+        for seam in ["String(localized: \"Added \") + laneName + String(localized: \". It is selected in the track list.\")",
+                     "let landed: String = String(localized: \"Added an empty \") + \"\\(emptyPartBars)\" + String(localized: \"-bar part on \") + laneName",
+                     "+ String(localized: \" — once it has notes, it plays at the piece's tempo, with the instrument stopped.\")",
+                     "let moved: String = \" \" + selected + String(localized: \" cannot play a MIDI part, so it went on \")",
+                     "note += String(localized: \" Generate won't place its music over this part.\")",
+                     "let barWord: String = bars == 1 ? String(localized: \"bar\") : String(localized: \"bars\")",
+                     "let noteWord: String = count == 1 ? String(localized: \"note\") : String(localized: \"notes\")",
+                     "let head: String = String(localized: \"Imported “\") + landing.clip.name + String(localized: \"” — \")",
+                     "let landed: String = noteWord + String(localized: \" on \") + laneName + \".\"",
+                     "note += String(localized: \" Plays at the piece's tempo on the 16th-note grid, with the instrument stopped.\")",
+                     "note += String(localized: \" Notes longer than a bar are held for one bar.\")",
+                     "+ String(localized: \" drum notes skipped.\")"] {
+            XCTAssertTrue(midiNotes.contains(seam), "MIDIImport lost the E4-56 seam `\(seam)`")
+        }
+        for verbatim in ["\"Added \\(laneName). It is selected in the track list.\"", "var note = \"Added an empty \\(emptyPartBars)-bar part on",
+                         "let barWord: String = bars == 1 ? \"bar\" : \"bars\"", "var note = \"Imported “\\(landing.clip.name)”"] {
+            XCTAssertFalse(midiNotes.contains(verbatim), "MIDIImport interpolates an English sentence again: `\(verbatim)`")
+        }
+        let mediaNote = try codeOnly("Sources/Echoelmusic/Sequencer/MediaPlacement.swift")
+        for seam in ["let head: String = String(localized: \"Placed “\") + placed.clipName + String(localized: \"” — \")",
+                     "let landed: String = \"\\(bars) \" + barWord + String(localized: \" on \") + laneName",
+                     "? String(localized: \", playing the part it already has.\")",
+                     ": String(localized: \", as a new part.\")"] {
+            XCTAssertTrue(mediaNote.contains(seam), "MediaPlacement lost the E4-56 seam `\(seam)`")
+        }
+        for verbatim in ["let span = \"\\(bars) \\(bars == 1 ? \"bar\" : \"bars\")\"", "? \"Placed “\\(placed.clipName)”"] {
+            XCTAssertFalse(mediaNote.contains(verbatim), "MediaPlacement interpolates an English sentence again: `\(verbatim)`")
+        }
+        let audioNote = try codeOnly("Sources/Echoelmusic/Sequencer/AudioImport.swift")
+        for seam in ["let landed: String = \"\\(bars) \" + barWord + String(localized: \" on \") + laneName",
+                     "let head: String = \"“\" + landing.clip.name + String(localized: \"” is already in the library — placed \")",
+                     "return head + landed + String(localized: \", no second copy.\")",
+                     "let head: String = String(localized: \"Imported “\") + landing.clip.name + String(localized: \"” — \")"] {
+            XCTAssertTrue(audioNote.contains(seam), "AudioImport lost the E4-56 seam `\(seam)`")
+        }
+        for verbatim in ["let span = \"\\(bars) \\(bars == 1 ? \"bar\" : \"bars\")\"", ": \"Imported “\\(landing.clip.name)”"] {
+            XCTAssertFalse(audioNote.contains(verbatim), "AudioImport interpolates an English sentence again: `\(verbatim)`")
+        }
+        try assertGerman(["Added ", ". It is selected in the track list.", "Added an empty ", "-bar part on ",
+                          ". Its notes are open under the arrangement",
+                          " — once it has notes, it plays at the piece's tempo, with the instrument stopped.",
+                          " cannot play a MIDI part, so it went on ", " Generate won't place its music over this part.",
+                          "bar", "bars", "note", "notes", "Imported “", "” — ", " on ",
+                          " Plays at the piece's tempo on the 16th-note grid, with the instrument stopped.",
+                          " Notes longer than a bar are held for one bar.", " drum notes skipped.",
+                          "Placed “", ", playing the part it already has.", ", as a new part.",
+                          "” is already in the library — placed ", ", no second copy."],
+                         "import sentences")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
