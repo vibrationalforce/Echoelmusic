@@ -107,9 +107,9 @@ public enum BioNarrationDriver: Sendable, Equatable {
     /// The disclosure heading above the paragraph.
     public var heading: String {
         switch self {
-        case .body:            return "What your body is doing to the sound"
-        case .simulatedDemo:   return "What the simulated demo source is doing to the sound"
-        case .nothingMeasured: return "What is shaping the sound"
+        case .body:            return String(localized: "What your body is doing to the sound")
+        case .simulatedDemo:   return String(localized: "What the simulated demo source is doing to the sound")
+        case .nothingMeasured: return String(localized: "What is shaping the sound")
         }
     }
 
@@ -123,8 +123,8 @@ public enum BioNarrationDriver: Sendable, Equatable {
     /// `EchoelFXView`, `BioMetricInfo`, `LiveColaboView` all spell it "Simulated demo, ").
     public var voiceOverLabel: String {
         switch self {
-        case .body, .nothingMeasured: return "Live narration"
-        case .simulatedDemo:          return "Simulated demo, live narration"
+        case .body, .nothingMeasured: return String(localized: "Live narration")
+        case .simulatedDemo:          return String(localized: "Simulated demo, live narration")
         }
     }
 }
@@ -199,23 +199,31 @@ public enum BioExplanation {
         var clauses: [String] = []
 
         if let arousal = s.arousal, let hr = measuredHR {
-            let pace = arousal == "low" ? "calm" : (arousal == "high" ? "driving" : "flowing")
-            clauses.append("heart rate \(hr) BPM sets a \(pace) \(bpm) BPM tempo")
+            // E4-58: the pace word rides inside its clause key so German can inflect it; the three
+            // branches are the three values `BioStateSummary` writes ("low" | "medium" | "high").
+            let setsA: String
+            switch arousal {
+            case "low":  setsA = String(localized: " BPM sets a calm ")
+            case "high": setsA = String(localized: " BPM sets a driving ")
+            default:     setsA = String(localized: " BPM sets a flowing ")
+            }
+            let head: String = String(localized: "heart rate ") + "\(hr)" + setsA
+            clauses.append(head + "\(bpm)" + String(localized: " BPM tempo"))
         } else {
             // DESCRIPTIVE, not predictive. "…until a pulse is measured" would be a promise
             // the tempo lock falsifies: with `lockBPM` on, the tempo resolves from
             // `lockedBPM` unconditionally and will never move to the pulse, so the user
             // would be waiting for something that cannot happen.
-            clauses.append("tempo holds at \(bpm) BPM; no pulse measured yet")
+            clauses.append(String(localized: "tempo holds at ") + "\(bpm)" + String(localized: " BPM; no pulse measured yet"))
         }
 
         switch s.steadiness {
         case "steady and coherent":
-            clauses.append("high coherence opens the filter for a brighter, fuller tone")
+            clauses.append(String(localized: "high coherence opens the filter for a brighter, fuller tone"))
         case "moderately steady":
-            clauses.append("moderate coherence holds a balanced tone")
+            clauses.append(String(localized: "moderate coherence holds a balanced tone"))
         case "restless":
-            clauses.append("an unsteady signal keeps the filter lower for a darker, softer tone")
+            clauses.append(String(localized: "an unsteady signal keeps the filter lower for a darker, softer tone"))
         default:
             break   // no coherence measured — say nothing about steadiness
         }
@@ -229,7 +237,13 @@ public enum BioExplanation {
         // `BioDirectionFallback`, which nothing in the app consumes. A clause naming a
         // causal chain that does not exist is the same defect as a fabricated number.
         if let breath = s.breath {
-            clauses.append("\(breath) breathing shapes the swell")
+            // E4-58: one key per clause so the adjective can inflect; the three cases are the three
+            // values `BioStateSummary` writes ("slow" | "relaxed" | "fast") — `default` is "relaxed".
+            switch breath {
+            case "slow": clauses.append(String(localized: "slow breathing shapes the swell"))
+            case "fast": clauses.append(String(localized: "fast breathing shapes the swell"))
+            default:     clauses.append(String(localized: "relaxed breathing shapes the swell"))
+            }
         }
 
         // The tail describes the ENGINE, so it is safe to always append — except for the
@@ -264,14 +278,14 @@ public enum BioExplanation {
         // this asks which SOURCE is selected (the demo is the demo whether or not it produced
         // a clause). Unifying them looked like #416 and was a behaviour change.
         let synthetic = f?.source.isSynthetic == true
-        let signal = synthetic ? " from the demo signal," : " from your live signal,"
+        let signal: String = synthetic ? String(localized: " from the demo signal,") : String(localized: " from your live signal,")
         // The connector rides INSIDE the conditional — leaving a bare " and" behind made
         // the no-body tail read "…opening pitch and dynamics and morphs in at the bar line".
         let source = measuredAnything ? signal : ""
-        return (synthetic ? "EchoelAI (demo signal) — " : "EchoelAI — ")
-            + clauses.joined(separator: "; ")
-            + ". Each phrase re-seeds the chords, opening pitch and dynamics\(source)"
-            + " then morphs in at the bar line, so it never repeats and never cuts."
+        let lead: String = synthetic ? String(localized: "EchoelAI (demo signal) — ") : String(localized: "EchoelAI — ")
+        let engine: String = String(localized: ". Each phrase re-seeds the chords, opening pitch and dynamics") + source
+            + String(localized: " then morphs in at the bar line, so it never repeats and never cuts.")
+        return lead + clauses.joined(separator: "; ") + engine
     }
 }
 

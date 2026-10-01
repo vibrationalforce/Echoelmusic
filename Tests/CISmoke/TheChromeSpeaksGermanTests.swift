@@ -111,7 +111,9 @@
 // sentences of the Sequencer helpers (MIDIImport added-track / empty-part / success, MediaPlacement, AudioImport):
 // interpolated Strings, now seams around the names and counts (parent: 20 units missing — ONE finding). E4-57 added the
 // note-grid VoiceOver label (ClipNoteEdit.gridLabel) and the arrangement row's spoken line (ArrangementStrip.spoken)
-// plus the picked-note line and the Notes switch title in the same helper file (parent: 10 units missing — ONE finding). Claim 12
+// plus the picked-note line and the Notes switch title in the same helper file (parent: 10 units missing — ONE finding). E4-58
+// added the EchoelAI narration (BioMusicDirector: three headings, two VoiceOver labels, the paragraph's clauses, prefix and
+// engine tail), shown by LiveNarrationDisclosure (parent: 24 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1992,6 +1994,56 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         try assertGerman(["note", "notes", " of ", " shown", " selected", "Note grid: ", "No parts", "Parts at ", ", and ", " more",
                           "1 sixteenth", "sixteenths", " · bar ", ", beat ", "Notes", "Notes · "],
                          "note grid, picked note, Notes switch and arrangement row")
+
+        // E4-58 — the narration paragraph `BioExplanation.text(for:tempo:)` and the heading / VoiceOver label of its driver
+        // were one English assembly; LiveNarrationDisclosure shows them. Every clause is a key now; the pace and breath
+        // adjectives ride inside their clause keys (one key per state value) so German can inflect them. The runtime
+        // guards (TheNarrationCannotClaimABodyItDidNotReadTests, TheNarrationHeadingNamesItsDriverTests,
+        // BioMusicDirectorTests) read the English assembly unchanged under the test locale — prefix, "no pulse measured
+        // yet", "from your live signal", "morphs in at the bar line" and the fabricated-word absences all hold.
+        let narration = try codeOnly("Sources/Echoelmusic/Sequencer/BioMusicDirector.swift")
+        for seam in ["case .body:            return String(localized: \"What your body is doing to the sound\")",
+                     "case .simulatedDemo:   return String(localized: \"What the simulated demo source is doing to the sound\")",
+                     "case .nothingMeasured: return String(localized: \"What is shaping the sound\")",
+                     "case .body, .nothingMeasured: return String(localized: \"Live narration\")",
+                     "case .simulatedDemo:          return String(localized: \"Simulated demo, live narration\")",
+                     "case \"low\":  setsA = String(localized: \" BPM sets a calm \")",
+                     "case \"high\": setsA = String(localized: \" BPM sets a driving \")",
+                     "default:     setsA = String(localized: \" BPM sets a flowing \")",
+                     "let head: String = String(localized: \"heart rate \") + \"\\(hr)\" + setsA",
+                     "clauses.append(head + \"\\(bpm)\" + String(localized: \" BPM tempo\"))",
+                     "clauses.append(String(localized: \"tempo holds at \") + \"\\(bpm)\" + String(localized: \" BPM; no pulse measured yet\"))",
+                     "clauses.append(String(localized: \"high coherence opens the filter for a brighter, fuller tone\"))",
+                     "clauses.append(String(localized: \"moderate coherence holds a balanced tone\"))",
+                     "clauses.append(String(localized: \"an unsteady signal keeps the filter lower for a darker, softer tone\"))",
+                     "case \"slow\": clauses.append(String(localized: \"slow breathing shapes the swell\"))",
+                     "case \"fast\": clauses.append(String(localized: \"fast breathing shapes the swell\"))",
+                     "default:     clauses.append(String(localized: \"relaxed breathing shapes the swell\"))",
+                     "let signal: String = synthetic ? String(localized: \" from the demo signal,\") : String(localized: \" from your live signal,\")",
+                     "let lead: String = synthetic ? String(localized: \"EchoelAI (demo signal) — \") : String(localized: \"EchoelAI — \")",
+                     "let engine: String = String(localized: \". Each phrase re-seeds the chords, opening pitch and dynamics\") + source",
+                     "+ String(localized: \" then morphs in at the bar line, so it never repeats and never cuts.\")",
+                     "return lead + clauses.joined(separator: \"; \") + engine"] {
+            XCTAssertTrue(narration.contains(seam), "BioMusicDirector lost the E4-58 seam `\(seam)`")
+        }
+        for verbatim in ["return \"What your body is doing to the sound\"", "return \"Live narration\"",
+                         "let pace = arousal == \"low\" ? \"calm\"", "clauses.append(\"heart rate \\(hr) BPM sets a",
+                         "clauses.append(\"tempo holds at \\(bpm) BPM; no pulse measured yet\")",
+                         "clauses.append(\"high coherence opens the filter", "clauses.append(\"\\(breath) breathing shapes the swell\")",
+                         "let signal = synthetic ? \" from the demo signal,\"", "return (synthetic ? \"EchoelAI (demo signal) — \" : \"EchoelAI — \")"] {
+            XCTAssertFalse(narration.contains(verbatim), "BioMusicDirector narrates in a verbatim English literal again: `\(verbatim)`")
+        }
+        try assertGerman(["What your body is doing to the sound", "What the simulated demo source is doing to the sound", "What is shaping the sound",
+                          "Live narration", "Simulated demo, live narration",
+                          " BPM sets a calm ", " BPM sets a driving ", " BPM sets a flowing ", "heart rate ", " BPM tempo",
+                          "tempo holds at ", " BPM; no pulse measured yet",
+                          "high coherence opens the filter for a brighter, fuller tone", "moderate coherence holds a balanced tone",
+                          "an unsteady signal keeps the filter lower for a darker, softer tone",
+                          "slow breathing shapes the swell", "fast breathing shapes the swell", "relaxed breathing shapes the swell",
+                          " from the demo signal,", " from your live signal,", "EchoelAI (demo signal) — ", "EchoelAI — ",
+                          ". Each phrase re-seeds the chords, opening pitch and dynamics",
+                          " then morphs in at the bar line, so it never repeats and never cuts."],
+                         "EchoelAI narration")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

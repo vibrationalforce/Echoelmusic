@@ -24202,6 +24202,390 @@
           }
         }
       }
+    },
+    "What your body is doing to the sound" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was dein Körper mit dem Klang macht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What your body is doing to the sound"
+          }
+        }
+      }
+    },
+    "What the simulated demo source is doing to the sound" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was die simulierte Demo-Quelle mit dem Klang macht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What the simulated demo source is doing to the sound"
+          }
+        }
+      }
+    },
+    "What is shaping the sound" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was den Klang formt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What is shaping the sound"
+          }
+        }
+      }
+    },
+    "Live narration" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live-Erzählung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live narration"
+          }
+        }
+      }
+    },
+    "Simulated demo, live narration" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simulierte Demo, Live-Erzählung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simulated demo, live narration"
+          }
+        }
+      }
+    },
+    " BPM sets a calm " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " BPM setzt ein ruhiges "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " BPM sets a calm "
+          }
+        }
+      }
+    },
+    " BPM sets a driving " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " BPM setzt ein treibendes "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " BPM sets a driving "
+          }
+        }
+      }
+    },
+    " BPM sets a flowing " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " BPM setzt ein fließendes "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " BPM sets a flowing "
+          }
+        }
+      }
+    },
+    "heart rate " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenz "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "heart rate "
+          }
+        }
+      }
+    },
+    " BPM tempo" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "-BPM-Tempo"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " BPM tempo"
+          }
+        }
+      }
+    },
+    "tempo holds at " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo bleibt bei "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tempo holds at "
+          }
+        }
+      }
+    },
+    " BPM; no pulse measured yet" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " BPM; noch kein Puls gemessen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " BPM; no pulse measured yet"
+          }
+        }
+      }
+    },
+    "high coherence opens the filter for a brighter, fuller tone" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hohe Kohärenz öffnet das Filter für einen helleren, volleren Klang"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "high coherence opens the filter for a brighter, fuller tone"
+          }
+        }
+      }
+    },
+    "moderate coherence holds a balanced tone" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mittlere Kohärenz hält einen ausgewogenen Klang"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "moderate coherence holds a balanced tone"
+          }
+        }
+      }
+    },
+    "an unsteady signal keeps the filter lower for a darker, softer tone" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ein unruhiges Signal hält das Filter tiefer für einen dunkleren, weicheren Klang"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "an unsteady signal keeps the filter lower for a darker, softer tone"
+          }
+        }
+      }
+    },
+    "slow breathing shapes the swell" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "langsames Atmen formt das Anschwellen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "slow breathing shapes the swell"
+          }
+        }
+      }
+    },
+    "fast breathing shapes the swell" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "schnelles Atmen formt das Anschwellen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "fast breathing shapes the swell"
+          }
+        }
+      }
+    },
+    "relaxed breathing shapes the swell" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "entspanntes Atmen formt das Anschwellen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "relaxed breathing shapes the swell"
+          }
+        }
+      }
+    },
+    " from the demo signal," : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " aus dem Demo-Signal,"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " from the demo signal,"
+          }
+        }
+      }
+    },
+    " from your live signal," : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " aus deinem Live-Signal,"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " from your live signal,"
+          }
+        }
+      }
+    },
+    "EchoelAI (demo signal) — " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EchoelAI (Demo-Signal) — "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EchoelAI (demo signal) — "
+          }
+        }
+      }
+    },
+    "EchoelAI — " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EchoelAI — "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EchoelAI — "
+          }
+        }
+      }
+    },
+    ". Each phrase re-seeds the chords, opening pitch and dynamics" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ". Jede Phrase würfelt Akkorde, Anfangston und Dynamik neu"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ". Each phrase re-seeds the chords, opening pitch and dynamics"
+          }
+        }
+      }
+    },
+    " then morphs in at the bar line, so it never repeats and never cuts." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " und blendet dann am Taktstrich über, sodass sie sich nie wiederholt und nie abreißt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " then morphs in at the bar line, so it never repeats and never cuts."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
