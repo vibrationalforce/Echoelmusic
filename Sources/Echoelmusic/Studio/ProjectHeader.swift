@@ -40,10 +40,12 @@
 // tap still posts the "bio" chrome door (which turns the Instrument stage, slice 2b-i) and its
 // long-press still names the source. FREEZE: the pill reads the ~10 Hz publisher in ITS OWN
 // body, exactly as it did in the studio row — this header constructs it and reads nothing of it.
-// LAYOUT: the summary, the pill, the history and the buttons share one row while their ideal
-// widths fit (`ViewThatFits`, the #1027 idiom), else the pill and the history take a second line;
-// at accessibility sizes everything stacks. The pill is greedy (its trace flexes), so on its own
-// line it fills the width, and on one line it yields to nothing that has a floor.
+// LAYOUT (founder 2026-10-01, "Viele Bereiche sind zu groß"): AT MOST TWO ROWS. One line while
+// every ideal width fits (`ViewThatFits`, the #1027 idiom), else two rows with fixed places — the
+// summary with the transport (Instrument stage) at its right, then the pill with Undo · Redo · ⓘ
+// at its right; at accessibility sizes everything stacks. The pill is greedy (its trace flexes),
+// so on its row it takes what the tools leave, and on one line it yields to nothing that has a
+// floor.
 //
 // ⭐ THE ONE UNDO / REDO IS THE HEAD'S TOO (head leaf 3, same audit — its law for the head: "Name ·
 // Abspielen / Stopp (mit Wort) · Aufnehmen · Tempo · Rückgängig · ⓘ Hilfe"). `SongHistoryRow`, the
@@ -105,20 +107,32 @@ struct ProjectHeader: View {
                                            regionID: selection.regionID)
         // The facts flex, the pill flexes, the buttons have floors (Play · Record · ⓘ · Undo ·
         // Redo on the Instrument stage; ⓘ · Undo · Redo on the Piece stage, A3b). One row while
-        // the ideal widths fit (a phone in landscape, an iPad); else two
-        // lines — the summary with the transport over the pill with the history; else three,
-        // the pill and the history each on their own — the #1027 idiom, `ViewThatFits`; at
+        // the ideal widths fit (an iPad); else TWO rows, and that is the LAST candidate, so a
+        // phone can never get a third: row 1 the summary with Play · Record, row 2 the pill with
+        // Undo · Redo · ⓘ. Every control keeps ONE place on both stages — on the Piece stage
+        // row 1 is the summary alone and has the whole width. At
         // accessibility sizes everything stacks so nothing is squeezed out and the transport
-        // stays one tap away. (⛔ `AnyLayout` stood here for the accessibility switch; it went
+        // stays one tap away.
+        // ⛔ Until 2026-10-01 a third candidate put the pill and the history on rows of their
+        // own, and a 375 pt phone ALWAYS took it on the Instrument stage: the summary's ideal
+        // width beside Play · Record · ⓘ never fit, so `ViewThatFits` fell to the last shape —
+        // ≈152 pt of head over a ≈25 pt instrument panel (measured, founder 2026-10-01). What
+        // made two rows possible is the history's glyph form (`SongHistoryRow`) and ⓘ leaving the
+        // transport for the history's side, so neither row carries more than two neighbours.
+        // (⛔ `AnyLayout` stood here for the accessibility switch; it went
         // with the pill's arrival, because `ViewThatFits` already re-creates its candidate on a
         // fit change — a rotation — and one identity law for the whole row beats two. What that
         // costs: VoiceOver focus may leave the Play button on a rotation. What it buys: the
         // same Play, the same pill, the same Undo, in every shape.)
         let summaryView = summary(name: name, place: place, status: status)
             .frame(maxWidth: .infinity, alignment: .leading)
-        // A3b: the transport pair only while the Instrument stage is in front (file header).
+        // A3b: the transport pair only while the Instrument stage is in front (file header). A
+        // `Group`, not a stack: on the Piece stage it is empty and adds no spacing beside the summary.
+        // ⚠️ NOT named `transport`: the environment's `Transport` is `transport`, read above for the
+        // facts, and a later local of the same name in this scope makes that read "use of local
+        // variable before its declaration" — a compile error.
         let carriesTransport = (StudioStage(rawValue: stageRaw) ?? StudioDefaultKeys.stage.value).headCarriesTransport
-        let controls = HStack(spacing: 8) {
+        let transportPair = Group {
             if carriesTransport {
                 ProjectPlayStopButton(source: "project header")
                 RecordTakeButton(playing: player.isPlaying, startable: songStartable,
@@ -127,22 +141,21 @@ struct ProjectHeader: View {
                                  stopSong: { stopAll() },
                                  compact: true)
             }
-            guideButton
         }
+        // Undo · Redo · ⓘ — on both stages, at the right of the pill in every phone shape.
+        let tools = HStack(spacing: 8) { history; guideButton }
         return Group {
             if dynamicTypeSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: 6) { summaryView; pulsePill; history; controls }
+                VStack(alignment: .leading, spacing: 6) {
+                    summaryView; pulsePill; history
+                    HStack(spacing: 8) { transportPair; guideButton }
+                }
             } else {
                 ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 10) { summaryView; pulsePill; history; controls }
+                    HStack(spacing: 10) { summaryView; transportPair; pulsePill; tools }
                     VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 10) { summaryView; controls }
-                        HStack(spacing: 10) { pulsePill; history }
-                    }
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 10) { summaryView; controls }
-                        pulsePill
-                        history
+                        HStack(spacing: 8) { summaryView; transportPair }
+                        HStack(spacing: 8) { pulsePill; tools }
                     }
                 }
             }
@@ -177,9 +190,12 @@ struct ProjectHeader: View {
                 .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
                 .truncationMode(.tail)
             HStack(spacing: 6) {
+                // The status word is offered width before the place (it may wrap at its space,
+                // "Playing / piece"); the place is the one child that yields to an ellipsis.
                 Text(ProjectTransport.statusWord(status))
                     .font(EchoelTheme.font(11, .semibold))
                     .foregroundStyle(status == .stopped ? EchoelTheme.dim : EchoelTheme.text)
+                    .layoutPriority(1)
                 ProjectPositionReadout()
                 ProjectTempoReadout()
                 Text(verbatim: WorkstationSummary.meterText)
@@ -236,8 +252,9 @@ struct ProjectHeader: View {
     }
 
     /// The head's Undo / Redo — the song's ONE history control (`SongHistoryRow`, head leaf 3),
-    /// constructed once and spelled into every shape. Its own leaf: it reads `canUndo` /
-    /// `canRedo` (cold, flipped on an edit) in ITS body; this header reads nothing of it.
+    /// constructed once: in `tools` with ⓘ, beside the pill, for every phone and wide shape; on
+    /// its own line in the accessibility stack. Its own leaf: it reads `canUndo` / `canRedo`
+    /// (cold, flipped on an edit) in ITS body; this header reads nothing of it.
     private var history: some View {
         SongHistoryRow()
     }
@@ -379,6 +396,8 @@ private struct ProjectTempoReadout: View {
         Text("\(bpm) BPM")
             .font(EchoelTheme.font(11).monospacedDigit())
             .foregroundStyle(EchoelTheme.text)
+            // A number never wraps or yields (the summary's law, beside the counter and the metre).
+            .fixedSize()
             .accessibilityLabel("\(bpm) BPM")
     }
 }

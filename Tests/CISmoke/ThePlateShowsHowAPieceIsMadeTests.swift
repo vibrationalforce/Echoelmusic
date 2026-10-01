@@ -25,7 +25,8 @@
 //
 // ⛔ HONEST LIMIT: nothing here proves how the card LOOKS, that it fits a phone at AX5, or that
 // VoiceOver reads it well — DEVICE PROBE, open. NEEDS-FOUNDER-VERIFY: fresh install → Workstation
-// → tap the five steps in order; confirm each one ticks and that "Write notes" leads to Notes.
+// → walk the steps in order; confirm the open card shows the step to do now („Schritt n von 5"),
+// that each finished step hands over to the next, and that "Write notes" leads to Notes.
 
 import Foundation
 import XCTest

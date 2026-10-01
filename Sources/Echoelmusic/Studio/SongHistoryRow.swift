@@ -33,6 +33,13 @@
 //
 //  Cold reads only: `canUndo`/`canRedo` flip on an edit.
 //
+//  ⭐ GLYPHS, WITH THE WORD AT ACCESSIBILITY SIZES (founder 2026-10-01, "Viele Bereiche sind zu
+//  groß"). The worded pair (estimated ≈125 pt English, ≈200 pt German) beside ⓘ and the pulse
+//  pill did not fit a 375 pt phone row, and the head fell to a third row. So the head shows the
+//  two arrows — the compact Record's idiom, one row up — and every button still SPEAKS its full
+//  label. At accessibility sizes the head stacks and the history has a line of its own, so the
+//  word comes back there: the switch is the SAME one `ProjectHeader` stacks on.
+//
 
 import SwiftUI
 
@@ -41,16 +48,19 @@ import SwiftUI
 struct SongHistoryRow: View {
 
     @Environment(TimelineStore.self) private var timeline
+    /// A SETTING, not a signal — it changes when the user changes the text size.
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         let canUndo = timeline.canUndo
         let canRedo = timeline.canRedo
+        let words = dynamicTypeSize.isAccessibilitySize
         HStack(spacing: 6) {
-            button(String(localized: "Undo"), "arrow.uturn.backward", enabled: canUndo,
+            button(String(localized: "Undo"), "arrow.uturn.backward", enabled: canUndo, words: words,
                    label: String(localized: "Undo the last change to the piece's parts, notes, automation, mix or a relinked file")) {
                 timeline.undo()
             }
-            button(String(localized: "Redo"), "arrow.uturn.forward", enabled: canRedo,
+            button(String(localized: "Redo"), "arrow.uturn.forward", enabled: canRedo, words: words,
                    label: String(localized: "Redo the last undone change to the piece's parts, notes, automation, mix or a relinked file")) {
                 timeline.redo()
             }
@@ -59,16 +69,18 @@ struct SongHistoryRow: View {
         .accessibilityHint("Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes")
     }
 
-    private func button(_ title: String, _ systemImage: String, enabled: Bool, label: String,
+    private func button(_ title: String, _ systemImage: String, enabled: Bool, words: Bool, label: String,
                         action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 4) {
-                Image(systemName: systemImage).font(EchoelTheme.font(11, .semibold))
-                Text(title).font(EchoelTheme.font(11, .semibold)).lineLimit(1)
+                Image(systemName: systemImage).font(EchoelTheme.font(13, .semibold))
+                if words {
+                    Text(title).font(EchoelTheme.font(11, .semibold)).lineLimit(1)
+                }
             }
             .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)
-            .padding(.horizontal, 8)
-            .frame(minHeight: 44)
+            .padding(.horizontal, words ? 8 : 0)
+            .frame(minWidth: 44, minHeight: 44)
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
                 .fill(EchoelTheme.fill))
             .contentShape(Rectangle())

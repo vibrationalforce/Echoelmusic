@@ -292,7 +292,9 @@ struct WorkstationView: View {
         ScrollView {
         VStack(alignment: .leading, spacing: 10) {
             // DMMW Phase 1 (founder 2026-09-29) — "show at once how to make a piece": the five
-            // steps, each one a door that already exists below, read off the song (`ComposeGuide`).
+            // steps, read off the song (`ComposeGuide`); open, the card draws the step to do now
+            // (founder 2026-10-01, "zu groß" — `ComposeGuide.shownSteps`); each is a door that
+            // already exists below.
             // Its own leaf with no store reads; everything it shows is handed in from the cold
             // reads this body already makes (document, clip grid, `isPlaying`).
             composeGuide
@@ -1706,6 +1708,17 @@ private struct AnalysisRequest: Equatable {
 /// DMMW Phase 1 (founder 2026-09-29) — the compose guide: "Create a piece" and its five steps,
 /// at the top of the Workstation, so the first thing the plate says is how a piece is made.
 ///
+/// ⭐ OPEN, IT SHOWS THE STEP TO DO NOW (`ComposeGuide.shownSteps`) — and the line "Step n of 5"
+/// beside its title (founder 2026-10-01: "Viele Bereiche sind zu groß … Vermeide slop"). ⛔ It
+/// showed all five as bordered rows: ≈318 pt (estimate) on an empty piece on a 375×667 phone,
+/// taller than the arrangement viewport below it, while four of the five were either done,
+/// waiting, or a second address of a door the plate already has (Add MIDI Track, New MIDI Part,
+/// Notes, the pinned bar's Play, Save in the project row). Every step stays reachable: each one
+/// completing makes the next the shown one, and nothing the guide did is lost — it was never the
+/// only door. A step before the next one that is WAITING keeps its row (its reason is the only
+/// place that says why), and with no next step all five show, so "Every step is available
+/// below." stays true.
+///
 /// ⭐ A LEAF WITH NO STORE READS. The facts arrive as a value (`ComposeGuide.Facts`) and every tap
 /// is handed back to the Workstation, which runs the existing path — so this view cannot start,
 /// write or select anything the Workstation's own doors could not.
@@ -1730,7 +1743,7 @@ private struct ComposeGuideCard: View {
     /// exactly when Play and Save become the next steps, so the two steps a finished part needs
     /// were hidden in the middle of the work. A3/A6 (founder 2026-10-01) answer that differently:
     /// a song that ALREADY has notes when the piece opens is not a beginner's empty plate, so the
-    /// five steps arrive folded — the header line still names the next one, Play sits in the
+    /// card arrives folded — the header line still names the next step, Play sits in the
     /// pinned transport bar, Save in the project row. Nothing folds while the player works.
     @State private var expanded: Bool
 
@@ -1742,7 +1755,9 @@ private struct ComposeGuideCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        let next = ComposeGuide.nextStep(facts)
+        let shown = ComposeGuide.shownSteps(facts)
+        return VStack(alignment: .leading, spacing: 6) {
             Button {
                 expanded.toggle()
             } label: {
@@ -1750,12 +1765,22 @@ private struct ComposeGuideCard: View {
                     Image(systemName: expanded ? "chevron.down" : "chevron.right")
                         .font(EchoelTheme.font(11, .semibold))
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Create a piece")
-                            .font(EchoelTheme.font(13, .semibold))
-                            .foregroundStyle(EchoelTheme.text)
-                        Text(ComposeGuide.headerDetail(facts))
-                            .font(EchoelTheme.font(12))
-                            .foregroundStyle(EchoelTheme.dim)
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Text("Create a piece")
+                                .font(EchoelTheme.font(13, .semibold))
+                                .foregroundStyle(EchoelTheme.text)
+                            if let next {
+                                Text(ComposeGuide.stepPosition(next))
+                                    .font(EchoelTheme.font(11))
+                                    .foregroundStyle(EchoelTheme.dim)
+                            }
+                        }
+                        // Open, the shown step's own row names it — the header does not say it twice.
+                        if !expanded {
+                            Text(ComposeGuide.headerDetail(facts))
+                                .font(EchoelTheme.font(12))
+                                .foregroundStyle(EchoelTheme.dim)
+                        }
                     }
                     Spacer(minLength: 0)
                 }
@@ -1769,7 +1794,7 @@ private struct ComposeGuideCard: View {
             .accessibilityHint(expanded ? String(localized: "Hides the steps") : String(localized: "Shows the steps"))
 
             if expanded {
-                ForEach(ComposeGuide.Step.allCases) { step in
+                ForEach(shown) { step in
                     stepRow(step)
                 }
                 if let note {

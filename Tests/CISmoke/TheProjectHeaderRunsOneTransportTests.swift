@@ -364,6 +364,11 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
     /// canvas it existed on the Piece stage only, while the Instrument stage writes the
     /// composer's part into the same history. SOURCE-TEXT: the head builds it once, spells it
     /// into every shape, and the Workstation builds none.
+    /// ⛔ 2026-10-01 (founder, „zu groß"): the head lost its third shape and the history moved
+    /// into `tools` with ⓘ, which BOTH non-accessibility candidates spell — so `history` is
+    /// written twice in `body` (in `tools`, and in the accessibility stack), not four times.
+    /// What the count proves is unchanged: every shape reaches the one control exactly once.
+    /// The two-row structure itself is `TheHeadTakesAtMostTwoRowsTests`.
     func testTheHeadWearsTheOneUndoRedo() throws {
         let header = try source(Self.header)
         let history = try body(of: "private var history: some View", in: header)
@@ -372,10 +377,14 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
         XCTAssertEqual(header.components(separatedBy: "SongHistoryRow()").count - 1, 1,
                        "`SongHistoryRow()` is constructed once in the head — one history, one control")
         let shapes = try body(of: "var body: some View", in: header)
-        XCTAssertEqual(shapes.components(separatedBy: "history").count - 1, 4, """
-            `history` is not spelled exactly four times in `ProjectHeader.body` — the one-line \
-            row, the two-line form, the three-line form and the accessibility stack. Fewer: a \
-            shape lost Undo; more: a shape carries it twice.
+        XCTAssertEqual(shapes.components(separatedBy: "history").count - 1, 2, """
+            `history` is not spelled exactly twice in `ProjectHeader.body` — once in `tools` \
+            (beside ⓘ, which the one-line row and the two-row form both spell) and once in the \
+            accessibility stack. Fewer: a shape lost Undo; more: a shape carries it twice.
+            """)
+        XCTAssertEqual(shapes.components(separatedBy: "tools").count - 1, 3, """
+            `tools` is not spelled exactly three times in `ProjectHeader.body` — its definition, \
+            the one-line row and the two-row form. Without it a phone shape has no Undo.
             """)
         let workstation = try source(Self.workstation)
         XCTAssertFalse(workstation.contains("SongHistoryRow()"),

@@ -131,6 +131,18 @@ enum ComposeGuide {
         Step.allCases.first { state(of: $0, facts) == .next }
     }
 
+    /// The rows the OPEN card draws (founder 2026-10-01, "Viele Bereiche sind zu groß"): every
+    /// step up to the next one that is not done — normally ONE row, the step to do now. A step
+    /// BEFORE it that is waiting stays in view, so its reason is still said: a written part the
+    /// engine cannot play (#1440) makes Play wait while Save is next, and without the Play row
+    /// "Nothing in the piece can play yet" would be said nowhere (review of c672c2adf, LOW). No
+    /// done step and no later step is drawn. With no next step, all five — so the header's
+    /// "Every step is available below." stays true.
+    static func shownSteps(_ facts: Facts) -> [Step] {
+        guard let next = nextStep(facts) else { return Step.allCases }
+        return Step.allCases.filter { $0.rawValue <= next.rawValue && state(of: $0, facts) != .done }
+    }
+
     /// Whether tapping the row does something the row's own words promise.
     /// ⚠️ A DONE "Add a MIDI track" is NOT actionable (review of c672c2adf, MED): tapping it
     /// would add a SECOND MIDI track, and step 2 always lands on the FIRST one — a checked row
@@ -190,10 +202,21 @@ enum ComposeGuide {
         }
     }
 
+    /// "Step 3 of 5" — a step's place among the five, in ONE spelling (#416): the row's spoken
+    /// label reads it, and so does the card's position line (founder 2026-10-01: the open card
+    /// shows ONE step, so the line says which one). It names a step, never a done-count — see
+    /// `headerDetail` for why a count is the wrong figure here.
+    static func stepPosition(_ step: Step) -> String {
+        // E4-30: typed steps — one `+` chain of eight operands is what the type-checker cannot bound (Compile Check 3106).
+        let number: String = "\(step.rawValue)"
+        let total: String = "\(Step.allCases.count)"
+        let position: String = String(localized: "Step ") + number + String(localized: " of ") + total
+        return position
+    }
+
     /// The whole row, spoken: position, title, state. The state is words, never only a colour
     /// or an icon.
     static func spokenLabel(_ step: Step, _ facts: Facts) -> String {
-        let count = Step.allCases.count
         let status: String
         switch state(of: step, facts) {
         case .done:    status = step == .play ? String(localized: "playing") : String(localized: "done")
@@ -201,18 +224,15 @@ enum ComposeGuide {
         case .ready:   status = String(localized: "available")
         case .waiting: status = String(localized: "not yet available")
         }
-        // E4-30: typed steps — one `+` chain of eight operands is what the type-checker cannot bound (Compile Check 3106).
-        let number: String = "\(step.rawValue)"
-        let total: String = "\(count)"
-        let position: String = String(localized: "Step ") + number + String(localized: " of ") + total
+        let position: String = stepPosition(step)
         let rest: String = title(step, facts) + ", " + status
         return position + ", " + rest
     }
 
-    /// Whether the five steps arrive OPEN (Workstation redesign A6, founder 2026-10-01). An empty
-    /// or note-less song opens them — that is the beginner's plate the guide exists for. A song
-    /// that already has notes when the piece opens arrives folded: the steps are still one tap
-    /// away under a header that names the next one. Read ONCE, when the card is created — the
+    /// Whether the card arrives OPEN (Workstation redesign A6, founder 2026-10-01). An empty or
+    /// note-less song opens it — that is the beginner's plate the guide exists for. A song that
+    /// already has notes when the piece opens arrives folded: the step to do now is still one tap
+    /// away under a header that names it. Read ONCE, when the card is created — the
     /// card never folds itself while the player works (review of c672c2adf).
     static func opensExpanded(_ facts: Facts) -> Bool {
         !facts.hasNotes

@@ -185,12 +185,14 @@ final class TwoControlsShareALineOnlyWhileTheyFitTests: XCTestCase {
             what overflowed on the instrument's row; a fixed `VStack` would waste a line whenever \
             it fits. If a different adaptive mechanism replaced it, re-point this claim at that one.
             """)
-        // Leaf 3 added a shape: the pill shares its second line with the history, or takes its
-        // own when even that does not fit — so four spellings, not three.
-        XCTAssertEqual(occurrences(of: "pulsePill", in: body), 4, """
-            `pulsePill` is not spelled exactly four times in `ProjectHeader.body` — the fitting \
-            row, the two-line form, the three-line form and the accessibility stack. Fewer means \
-            a shape lost the pill; more means a shape carries it twice.
+        // Leaf 3 added a third shape (the pill on a line of its own); 2026-10-01 took it away
+        // again (founder, „zu groß" — a phone took it on every Instrument-stage launch), so the
+        // pill is spelled three times: the fitting row, the two-row form, the accessibility stack.
+        XCTAssertEqual(occurrences(of: "pulsePill", in: body), 3, """
+            `pulsePill` is not spelled exactly three times in `ProjectHeader.body` — the fitting \
+            row, the two-row form and the accessibility stack. Fewer means a shape lost the pill; \
+            more means a shape carries it twice (or a third row is back — \
+            `TheHeadTakesAtMostTwoRowsTests`).
             """)
         XCTAssertEqual(occurrences(of: "PulseMonitorMiniLive()", in: header), 1, """
             `PulseMonitorMiniLive()` is constructed \(occurrences(of: "PulseMonitorMiniLive()", in: header)) \
