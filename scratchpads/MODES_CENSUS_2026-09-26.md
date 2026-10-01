@@ -465,5 +465,5 @@ modal, and adds no hot read in a parent body.
 
 REJECTED from the mockups (vision gate): glow/neon accents and pill radii (Uncodixfy), decorative
 KPI tiles, a second M/S control on the canvas, a live per-lane meter (no per-lane meter source
-exists — it would be a hot read with no producer), and every Visual/XR/Broadcast/Output panel
+exists — it would be a hot read with no producer) [superseded 2026-10-01: B5 `TrackLevelMeter` reads the poly-slot voice in its own leaf], and every Visual/XR/Broadcast/Output panel
 (paused without a founder decision).

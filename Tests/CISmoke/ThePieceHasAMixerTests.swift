@@ -102,7 +102,7 @@ final class ThePieceHasAMixerTests: XCTestCase {
         for hot in ["masterLevel", "latestBio", "currentTick", "cameraRPPG", "TimelineRegionPlayer", "EngineBus"] {
             XCTAssertFalse(code.contains(hot), """
                 the mixer reads `\(hot)` — a hot or engine-side read in a list the user scrolls while \
-                the song plays (10.76.41/50); a meter is B5, behind an audio-thread review
+                the song plays (10.76.41/50); the live meter is the leaf `TrackLevelMeter` (B5), never this body
                 """)
         }
     }

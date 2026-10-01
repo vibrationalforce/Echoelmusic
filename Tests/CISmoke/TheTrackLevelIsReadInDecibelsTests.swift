@@ -4,8 +4,8 @@
 // WHAT THIS PINS. The inspector's Level is a linear 0…2 field ("1.00 unchanged, 2.00 is +6 dB"),
 // and dB appeared only inside that hint. A mixing engineer reads a fader in dB, so the stored
 // gain is now also printed as "−6.0 dB" / "+6.0 dB" under the field. It is a static READING of
-// the stored value, never a meter — there is no per-lane meter source, and a live one would be a
-// hot read.
+// the stored value, never a meter. The live per-track meter is `TrackLevelMeter` (B5), which reads
+// the poly-slot voice in its own leaf — a live read here would be a hot read.
 //
 // 1. END-TO-END BEHAVIOUR (`TrackMix.decibelText`, pure): 20·log10, one decimal, a real minus
 //    sign, "0.0 dB" at unity, and "−∞ dB" for silence or any non-finite level.

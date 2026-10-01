@@ -53,7 +53,7 @@ struct TrackLevelMeter: View {
         let document = timeline.document
         let slot = MultiRollFanout.slot(forLaneID: laneID, in: document,
                                         rollLane: document.rollLaneID, capacity: voiceCapacity)
-        TimelineView(.animation(minimumInterval: 1.0 / 20.0, paused: !playing)) { _ in
+        TimelineView(.animation(minimumInterval: 1.0 / 20.0, paused: !playing || slot == nil)) { _ in
             if let slot, let level = rack.meterLevel(slot: slot) {
                 // Stopped reads zero: the cell would otherwise show a stopped engine's last block.
                 let shown: Float = playing ? level : 0
