@@ -41744,3 +41744,13 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Prüfwerkzeuge sauber:** dead-needles, swift-escapes, count-pins, foreign-needles; moved-needles 1 Treffer (andere Dateien, geprüft). Gates offen.
 - **Nächste Scheiben:** A1b Teil-Namen · A2 Genre → „Stil“ · A3 Transportleiste unten.
 
+
+## 2026-10-01 — Workstation-Neugestaltung: A1b · A2 · A3 · A6 · A5
+
+- **A1b (Teil-Namen im Block)**, **A2 b006cdbd1** (Genre raus aus dem Kopfstreifen → „Stil“ am Echoel-Gerät; der vorbestehende Rot `labeled("Mode")` → „Tempo“ mitrepariert), **A3 dbbe191cf** (Scroll wandert in `WorkstationView`, `transportBar` per `safeAreaInset(edge: .bottom)` angeheftet; `ArrangeStage` ohne eigenen Scroll). Compile Check auf dbbe191cf ✓; Auto-Merge dort failure, BEVOR Build & Test lief = #310-Form, kein Code-Befund.
+- **A6 12430034e:** Kompositions-Anleitung kommt auf einem Stück mit Noten ZUGEKLAPPT an — `ComposeGuide.opensExpanded` EINMAL über `State(initialValue:)`, nie selbst zuklappend (c672c2adf-Lehre). Wächter `TheGuideArrivesFoldedOnAWrittenPieceTests`.
+- **A5 a63319b72:** Spurkopf im Canvas WÄHLT (Tipp + VoiceOver-Aktion = `selection.toggleTrack`, Ring + `.isSelected`, 44-pt-Zeilen); Kartenliste nur noch offene Spur + nicht gezeichnete (`ArrangeCanvas.listsCard`); Tonhöhe/Teil-Tempo einer Audiospur unter ihrem offenen Kopf. M/S bleibt EINMAL im Inspektor-Kopf (passt am Telefon nicht in die 96-pt-Rinne) → M/S-in-Rinne ist eine A9-/Founder-Frage. Wächter `TheTrackHeadSitsOnTheCanvasTests`, WORK 16/16, Eltern rot nur durch Abwesenheit + 40→44.
+- **Prüfwerkzeuge** nach jeder Scheibe: dead/swift-escapes/foreign/count-pins sauber; moved-needles nur generische Treffer.
+- **Zurückgestellt:** A3b (Kopf-Play doppelt Leisten-Play auf der Stück-Bühne; Kopf-Play bleibt für die Instrument-Bühne, viele Wächter pinnen es) · A4 im Wesentlichen schon da (Status/BPM im Kopf, Tonart im Streifen, Position in der Leiste) — offen nur „4/4“.
+- **Gerät offen:** Leiste bleibt beim Scrollen stehen und verdeckt die letzte Zeile nicht; Ring auf jeder Spurfarbe lesbar; offener Kopf unter dem Canvas wird der beringten Zeile zugeordnet; zugeklappte Anleitung wird gefunden.
+- **Nächste:** A7 Icon+Wort-Tabs · A8 Inspektor · A9 Querformat.

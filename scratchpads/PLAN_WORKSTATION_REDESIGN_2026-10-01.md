@@ -43,12 +43,18 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
   Farbe in der Canvas-Rinne, getönte Teile, höhere Spuren. Farbe nie allein (Symbol + Name).
 - **A1b** Teile tragen ihren Namen (Clip-Name im Block, 11 pt).
 - **A2** Genre raus aus dem Kopfstreifen → „Stil" am Echoel-Gerät (eine Tür). A2b: Stil-Wahl
-  schreibt Tonart/Stimmung nicht mehr (WA2-Bindung).
+  schreibt Tonart/Stimmung nicht mehr (WA2-Bindung). **✓ A2 b006cdbd1** (A2b offen).
 - **A3** Feste Transportleiste unten auf der Stück-Bühne (⏮ ■ ▶ ● Klick · Position · Pegel);
-  `transportRow` mitten im Scroll entfällt. EIN Transport (`ProjectTransport`).
+  `transportRow` mitten im Scroll entfällt. EIN Transport (`ProjectTransport`). **✓ dbbe191cf**
+  (Scroll in `WorkstationView`, `transportBar` per `safeAreaInset`). A3b offen: Kopf-Play und
+  Leisten-Play doppeln sich auf der Stück-Bühne — Kopf-Play bleibt für die Instrument-Bühne.
 - **A4** Kopf-Anzeige: Song-Position TAKT.SCHLAG.16tel · BPM · 4/4 · Tonart.
 - **A5** Spur-Köpfe IM Canvas (M/S verschoben, nicht verdoppelt); Kartenliste → nur Inspektor.
-- **A6** Kompositions-Anleitung zugeklappt, sobald das Stück einen Teil hat.
+  **✓ a63319b72 (Telefon):** Kopf im Canvas WÄHLT; M/S bleibt im Inspektor-Kopf (zwei 44-pt-
+  Schalter passen nicht in eine 96-pt-Rinne neben einen Namen). M/S-in-Rinne → A9 Querformat,
+  Founder-Entscheid nötig. Karten nur noch: offene Spur + nicht gezeichnete (`listsCard`).
+- **A6** Kompositions-Anleitung zugeklappt, sobald das Stück einen Teil hat. **✓ 12430034e**
+  (EINMAL beim Ankommen aus `opensExpanded`, nie selbst zuklappend — c672c2adf-Lehre).
 - **A7** Icon+Wort-Tabs auf der Stück-Bühne: Arrange · Mix · Sound · FX · Master · Export.
 - **A8** Inspektor: Kopf (Symbol, Name, Art · Spur n), Segmente Spur/Teil/Gerät, Teil-Felder
   Start/Ende/Länge als `EchoelValueField`.
