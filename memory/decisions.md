@@ -4223,3 +4223,15 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   in-file rule + TheSignKeysSayWhatTheyDoTests — skipped), doorless BreathGuideView/BioSourceView/BroadcastView (last;
   BroadcastView is a dead backend's door). Units (`semitones`, `BPM`, `dBTP`) and Mute/Solo `name:` undecided.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-48: the part bar's Play/Stop, the preview button and the FX favourite labels speak German (b37cd9fd2)
+
+- **Decision:** three ternaries of bare literals take `String(localized:)` arms (SelectedPartBar text/label/hint arm,
+  MediaBrowserView Preview/Stop, EchoelFXView Unstar/Favorite ×2). Catalog 1292 → 1297.
+- **Why:** the E4 class. Four Sources files (three views + catalog), stated plainly in the commit.
+- **Guard:** claim 11 E4-48 block (5 seams, 5 absence needles, 8 units; 230 → 236 XCTAssert). WORK PASS / HEAD FAIL
+  (5/5/5 — ONE finding).
+- **Remaining reachable producers (measured `? "…" : "…"` scan):** PatchbayView Blackout text/label, EchoelStudioView
+  „Armed“ value + Music-colour row (text + interpolated label), PartNoteEditor „Velocity (avg)“/„Velocity“ label arms,
+  LiveColaboView „Go Live (nearby)“/„Stop“; doorless BioSourceView/BroadcastView/BreathGuideView/SessionView/MeditationView last.
+- **Review:** 2026-10-31.

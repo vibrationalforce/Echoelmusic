@@ -41391,3 +41391,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-47-Block (22 Nähte, 12 Abwesenheits-Nadeln, 22 Einheiten; XCTAssert 222 → 230). AnalysisViewsSpeakTheirNumbersTests 1:1 re-verankert (`spoken = "` → `spoken = `, breiter, +1 Kommentarzeile). Benotung `scratchpad/transcribe_e4_47.py`: HEAD FAIL (22/12/22 — EIN Befund), WORK PASS. Checker alle OK, Klammerbilanz 0/0.
 - **Gates:** 675b78ae6 Compile Check 3117 ✓, BfT 6581/Auto-Merge 4015 laufen (Monitor bscmk8rwc); 5fdac5293 (E4-45/E4-46) gepusht, Monitor b1qz45alh. E4-47 (382b8cf22) lokal — Push nach dem Compile Check auf 5fdac5293.
 - **Offen (E4):** türlose Flächen (BreathGuide/BioSource/Broadcast) zuletzt; EchoelNumberPad-Vorzeichen übersprungen (schon LocalizedStringKey, Wächter TheSignKeysSayWhatTheyDoTests); Einheiten und Mute/Solo-Namen unentschieden.
+
+## 2026-10-01 — E4-48: Teil-Leiste Play/Stop, Vorhören-Knopf, FX-Favoriten sprechen Deutsch (b37cd9fd2)
+
+- **Gebaut:** SelectedPartBar (Text + Label + Hinweis-Arm), MediaBrowserView Preview/Stop, EchoelFXView Unstar/Favorite ×2 als Schlüssel-Arme. Katalog 1292 → 1297 (+5). Vier Sources-Dateien (drei Ansichten + Katalog) — ausdrücklich genannt.
+- **Wächter:** Anspruch 11 E4-48-Block (5 Nähte, 5 Abwesenheits-Nadeln, 8 Einheiten; XCTAssert 230 → 236). Benotung `scratchpad/transcribe_e4_48.py`: HEAD FAIL (5/5/5 — EIN Befund), WORK PASS. Checker alle OK.
+- **Gates:** 675b78ae6 Compile 3117 ✓ + Auto-Merge 4015 ✓ → main = 675b78ae6. 5fdac5293 (E4-45/46) gepusht, Compile Check läuft (Monitor b1qz45alh). E4-47 (382b8cf22) + E4-48 (b37cd9fd2) lokal — Push nach dem Compile Check auf 5fdac5293.
+- **Offen (E4, erreichbar):** PatchbayView Blackout, EchoelStudioView „Armed“ + Musikfarbe-Zeile, PartNoteEditor Velocity-Arme, LiveColaboView Go Live; türlose Flächen zuletzt.
