@@ -165,7 +165,9 @@ public struct WorkstationSummary: Equatable, Sendable {
     public static func barSpan(firstTick: Int, lastTick: Int, joiner: String) -> String {
         let from = barNumber(forTick: firstTick)
         let to = endBarNumber(forTick: lastTick)
-        return from >= to ? "bar \(from)" : "bars \(from)\(joiner)\(to)"
+        let one: String = String(localized: "bar ") + "\(from)"
+        let many: String = String(localized: "bars ") + "\(from)" + joiner + "\(to)"
+        return from >= to ? one : many
     }
 
     /// The lane row as one sentence, for VoiceOver — the visual row is several small pieces of
@@ -181,16 +183,16 @@ public struct WorkstationSummary: Equatable, Sendable {
         // header — so its hint is the one Stop's hint, not a narrower sentence that said
         // nothing about the instrument or the session it also ends (review of 09d35f56e, MED-2).
         if playing { return ProjectTransport.stopHint }
-        if startable { return "Plays the arrangement from the top on the shared transport." }
-        return "Unavailable: this piece has no parts on a track that plays."
+        if startable { return String(localized: "Plays the arrangement from the top on the shared transport.") }
+        return String(localized: "Unavailable: this piece has no parts on a track that plays.")
     }
 
     /// The Click switch's hint (design slice 10). Says what the switch does and no more: the
     /// click plays at the current tempo, and while the song plays it lands on the transport's
     /// beats (54b2e28cf). It does not promise a count-in or a pre-roll — there is none.
     public static func clickHint(on: Bool) -> String {
-        on ? "Turns the click off."
-           : "Plays a steady click at the current tempo, on the piece's beats while it plays."
+        on ? String(localized: "Turns the click off.")
+           : String(localized: "Plays a steady click at the current tempo, on the piece's beats while it plays.")
     }
 
     /// The sentence beside the button: what Play does, and nothing it cannot. ⛔ Until Phase 3 /
@@ -217,22 +219,22 @@ public struct WorkstationSummary: Equatable, Sendable {
     public static func spokenDescription(of row: LaneRow) -> String {
         var parts: [String] = [row.name, row.kind.displayName]
         if let instrument = row.instrument { parts.append(instrument.displayName) }
-        if row.isBio { parts.append("bio automation track") }
+        if row.isBio { parts.append(String(localized: "bio automation track")) }
         switch row.regionCount {
-        case 0:  parts.append("no parts")
-        case 1:  parts.append("1 part")
-        default: parts.append("\(row.regionCount) parts")
+        case 0:  parts.append(String(localized: "no parts"))
+        case 1:  parts.append(String(localized: "1 part"))
+        default: parts.append("\(row.regionCount) " + String(localized: "parts"))
         }
         if let first = row.firstTick, let last = row.lastTick, row.regionCount > 0 {
-            parts.append(barSpan(firstTick: first, lastTick: last, joiner: " to "))
+            parts.append(barSpan(firstTick: first, lastTick: last, joiner: String(localized: " to ")))
         }
-        if row.isMuted { parts.append("muted") }
-        if row.isSoloed { parts.append("soloed") }
-        if row.isArmed { parts.append("armed to record") }
+        if row.isMuted { parts.append(String(localized: "muted")) }
+        if row.isSoloed { parts.append(String(localized: "soloed")) }
+        if row.isArmed { parts.append(String(localized: "armed to record")) }
         // Said LAST and only when it is the bad news, so the common case is not padded with a
         // reassurance nobody asked for.
         if !row.playsOnTheTimeline && row.regionCount > 0 {
-            parts.append("no timeline engine plays this kind yet")
+            parts.append(String(localized: "no timeline engine plays this kind yet"))
         }
         return parts.joined(separator: ", ")
     }

@@ -154,7 +154,10 @@
 // compares under the test locale) and the value field's spoken gesture (EchoelValueField.accessibleHint;
 // ADisabledParameterRowLooksDisabledTests counts the sentence once, and a wrapped one is still one) (parent: 5 units
 // missing — ONE finding). Camera errors, the Learn announcement line and the theory footer stay bare: no reader, a
-// door behind `cloudKitConfigured == false`, no reader. Claim 12
+// door behind `cloudKitConfigured == false`, no reader. E4-78 added WorkstationSummary's spoken sentences (transport
+// and click hints, the row description's fragments, the bar span's two words), TempoFollowLabel's four sentences plus
+// the lock button's label, and the Field arp row's two accent notes — every guard on them compares at runtime under
+// the test locale (parent: 24 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2722,6 +2725,46 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Tap a point to pick it. Press and hold a point, then slide to move it.",
                           "Swipe up or down to adjust, or double-tap to type"],
                          "automation hint and value-field gesture")
+
+        // E4-78 — the wide scan's first slice: WorkstationSummary (transport/click hints, the row description's
+        // fragments and the bar span — the span's joiner is the shared key " to ", so a German row says "Takte 1 zu 5"
+        // until the founder picks a span word), TempoFollowLabel + the lock button, and the two accent notes under the
+        // Field arp row. TheWorkstationHasADoorTests, TheWorkstationPlaysTheTimelineTests, TheWorkstationArmsTheClickTests
+        // and TheSpokenTempoSaysWhoseBodyTests drive these at runtime under the test locale.
+        let summarySpoken = try codeOnly("Sources/Echoelmusic/Studio/WorkstationSummary.swift")
+        for seam in ["let one: String = String(localized: \"bar \") + \"\\(from)\"",
+                     "if startable { return String(localized: \"Plays the arrangement from the top on the shared transport.\") }",
+                     "on ? String(localized: \"Turns the click off.\")",
+                     "if row.isArmed { parts.append(String(localized: \"armed to record\")) }"] {
+            XCTAssertTrue(summarySpoken.contains(seam), "WorkstationSummary lost the E4-78 seam `\(seam)`")
+        }
+        XCTAssertFalse(summarySpoken.contains("if row.isArmed { parts.append(\"armed to record\") }"),
+                       "WorkstationSummary spells a spoken fragment verbatim again")
+        let tempoSpoken = try codeOnly("Sources/Echoelmusic/Studio/BodyTempoField.swift")
+        for seam in ["return String(localized: \"Tempo, following \") + BioPanelRowCopy.subject(synthetic: frame.source.isSynthetic)",
+                     ": String(localized: \"Tempo locked — tap to let your body drive it again\")",
+                     ": String(localized: \"Lock tempo at this value\"))"] {
+            XCTAssertTrue(tempoSpoken.contains(seam), "BodyTempoField lost the E4-78 seam `\(seam)`")
+        }
+        XCTAssertFalse(tempoSpoken.contains("return \"Tempo, following \" + BioPanelRowCopy"),
+                       "BodyTempoField spells the following label verbatim again")
+        let accentNotes = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        XCTAssertTrue(accentNotes.contains("return fieldArpRhythmLabel(fieldArpCharacter) + String(localized: \" is nearly level by design"),
+                      "EchoelStudioView lost the E4-78 accent seam")
+        XCTAssertFalse(accentNotes.contains("return \"On Dynamic, Evolve moves the accent"),
+                       "EchoelStudioView spells the Dynamic note verbatim again")
+        try assertGerman(["Plays the arrangement from the top on the shared transport.",
+                          "Unavailable: this piece has no parts on a track that plays.", "Turns the click off.",
+                          "Plays a steady click at the current tempo, on the piece's beats while it plays.",
+                          "bar ", "bars ", "bio automation track", "no parts", "1 part", "parts", " to ", "muted", "soloed",
+                          "armed to record", "no timeline engine plays this kind yet",
+                          "Tempo, following — no reading is arriving", "Tempo, following ",
+                          "Tempo locked — tap to let it follow again",
+                          "Tempo locked — tap to let the simulated demo source drive it again",
+                          "Tempo locked — tap to let your body drive it again", "Lock tempo at this value",
+                          " is nearly level by design — Accent barely cuts here. Dynamic or Driving give a strong one.",
+                          "On Dynamic, Evolve moves the accent — with Accent at 0 the contour stays flat and only the note length still breathes."],
+                         "workstation spoken sentences, tempo label and accent notes")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

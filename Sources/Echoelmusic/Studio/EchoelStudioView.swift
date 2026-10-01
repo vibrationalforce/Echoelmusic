@@ -6236,10 +6236,10 @@ struct EchoelStudioView: View {
             }
         }
         if fieldArpCharacter.accentIsSubtle {
-            return "\(fieldArpRhythmLabel(fieldArpCharacter)) is nearly level by design — Accent barely cuts here. Dynamic or Driving give a strong one."
+            return fieldArpRhythmLabel(fieldArpCharacter) + String(localized: " is nearly level by design — Accent barely cuts here. Dynamic or Driving give a strong one.")
         }
         if fieldArpCharacter == .dynamic && fieldArpAccent <= 0 {
-            return "On Dynamic, Evolve moves the accent — with Accent at 0 the contour stays flat and only the note length still breathes."
+            return String(localized: "On Dynamic, Evolve moves the accent — with Accent at 0 the contour stays flat and only the note length still breathes.")
         }
         return nil
     }

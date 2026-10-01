@@ -29514,6 +29514,326 @@
           }
         }
       }
+    },
+    "Plays the arrangement from the top on the shared transport." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielt das Arrangement von vorn auf dem gemeinsamen Transport."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plays the arrangement from the top on the shared transport."
+          }
+        }
+      }
+    },
+    "Unavailable: this piece has no parts on a track that plays." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht verfügbar: dieses Stück hat keine Teile auf einer Spur, die spielt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unavailable: this piece has no parts on a track that plays."
+          }
+        }
+      }
+    },
+    "Turns the click off." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schaltet den Click aus."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turns the click off."
+          }
+        }
+      }
+    },
+    "Plays a steady click at the current tempo, on the piece's beats while it plays." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielt einen gleichmäßigen Click im aktuellen Tempo, auf den Schlägen des Stücks, während es spielt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plays a steady click at the current tempo, on the piece's beats while it plays."
+          }
+        }
+      }
+    },
+    "bar " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Takt "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "bar "
+          }
+        }
+      }
+    },
+    "bars " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Takte "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "bars "
+          }
+        }
+      }
+    },
+    "bio automation track" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio-Automationsspur"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "bio automation track"
+          }
+        }
+      }
+    },
+    "no parts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keine Teile"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no parts"
+          }
+        }
+      }
+    },
+    "muted" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "stumm"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "muted"
+          }
+        }
+      }
+    },
+    "soloed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "solo"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "soloed"
+          }
+        }
+      }
+    },
+    "armed to record" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "scharf für Aufnahme"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "armed to record"
+          }
+        }
+      }
+    },
+    "no timeline engine plays this kind yet" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "noch keine Timeline-Engine spielt diese Art"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no timeline engine plays this kind yet"
+          }
+        }
+      }
+    },
+    "Tempo, following — no reading is arriving" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo, folgt — es kommt keine Messung an"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo, following — no reading is arriving"
+          }
+        }
+      }
+    },
+    "Tempo, following " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo, folgt: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo, following "
+          }
+        }
+      }
+    },
+    "Tempo locked — tap to let it follow again" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo festgestellt — tippen, damit es wieder folgt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo locked — tap to let it follow again"
+          }
+        }
+      }
+    },
+    "Tempo locked — tap to let the simulated demo source drive it again" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo festgestellt — tippen, damit die simulierte Demo-Quelle es wieder treibt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo locked — tap to let the simulated demo source drive it again"
+          }
+        }
+      }
+    },
+    "Tempo locked — tap to let your body drive it again" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo festgestellt — tippen, damit dein Körper es wieder treibt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo locked — tap to let your body drive it again"
+          }
+        }
+      }
+    },
+    "Lock tempo at this value" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo auf diesen Wert feststellen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lock tempo at this value"
+          }
+        }
+      }
+    },
+    " is nearly level by design — Accent barely cuts here. Dynamic or Driving give a strong one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " ist von Haus aus fast eben — Akzent greift hier kaum. Dynamic oder Driving geben einen starken."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " is nearly level by design — Accent barely cuts here. Dynamic or Driving give a strong one."
+          }
+        }
+      }
+    },
+    "On Dynamic, Evolve moves the accent — with Accent at 0 the contour stays flat and only the note length still breathes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei Dynamic verschiebt Entwicklung den Akzent — mit Akzent auf 0 bleibt die Kontur flach, und nur die Notenlänge atmet noch."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On Dynamic, Evolve moves the accent — with Accent at 0 the contour stays flat and only the note length still breathes."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

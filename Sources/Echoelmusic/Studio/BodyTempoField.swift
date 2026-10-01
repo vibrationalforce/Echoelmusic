@@ -137,14 +137,14 @@ public enum TempoFollowLabel {
 
     /// The VoiceOver label for the unlocked readout, given the frame currently driving the clock.
     public static func spoken(for frame: BioSampleFrame?) -> String {
-        guard let frame else { return "Tempo, following — no reading is arriving" }
+        guard let frame else { return String(localized: "Tempo, following — no reading is arriving") }
         // The second of exactly TWO sites whose real-body branch is the bare subject, so the
         // shared half is written once (the other is `breathVoiceHint`). Of the ten sites, one
         // IS the definition and seven cannot do this — their body branch says "your pulse",
         // "four body channels", "your measured body state"; see `BioProvenanceCopy`.
         // ⛔ This read "Nine of the eleven other sites", which implies thirteen. The census is
         // ten: 2 substitutable + 1 definition + 7 not. Written from the feel of the list.
-        return "Tempo, following " + BioPanelRowCopy.subject(synthetic: frame.source.isSynthetic)
+        return String(localized: "Tempo, following ") + BioPanelRowCopy.subject(synthetic: frame.source.isSynthetic)
     }
 
     /// What tapping the lock OPEN hands the clock back to (#647 review).
@@ -154,10 +154,10 @@ public enum TempoFollowLabel {
     /// string for both would read wrong in one of the two places, which is the collapse #634b
     /// had to retract. Same three states, same source of truth.
     public static func unlockHint(for frame: BioSampleFrame?) -> String {
-        guard let frame else { return "Tempo locked — tap to let it follow again" }
+        guard let frame else { return String(localized: "Tempo locked — tap to let it follow again") }
         return frame.source.isSynthetic
-            ? "Tempo locked — tap to let the simulated demo source drive it again"
-            : "Tempo locked — tap to let your body drive it again"
+            ? String(localized: "Tempo locked — tap to let the simulated demo source drive it again")
+            : String(localized: "Tempo locked — tap to let your body drive it again")
     }
 }
 
@@ -442,7 +442,7 @@ struct BodyTempoField: View {
             // so "let your body drive it again" named the wrong actor in exactly the state the
             // slice above exists to mark. It asks the same one definition.
             .accessibilityLabel(lockBPM ? TempoFollowLabel.unlockHint(for: bus.usableBio())
-                                        : "Lock tempo at this value")
+                                        : String(localized: "Lock tempo at this value"))
         }
         // ⛔ THIS CONTROL CARRIES ITS OWN NON-GREEDINESS NOW, and #455 is why (founder
         // 2026-08-07, v10.79.371 screenshot with the tempo box scribbled out): in LOOP mode
