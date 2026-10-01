@@ -172,7 +172,10 @@
 // search prompt) — the runtime guards on mute/solo compare under the test locale (parent: 16 units missing — ONE
 // finding). E4-82 keyed the automation editor's toggle label pair and value-field hint, the automation strip's
 // status pair and the part bar's start-bar hint; the curve canvas's hint and its two point actions were already
-// keys and got their units (parent: 9 units missing — ONE finding). Claim 12
+// keys and got their units (parent: 9 units missing — ONE finding). E4-83 keyed the Workstation's track-details
+// hint pair and its three import fallbacks for a nameless track (`?? "the MIDI track"` ×2, `?? "the audio track"`),
+// the Colabo invite's joining pair and the Studio caption's idle sentence (parent: 6 units missing — ONE finding).
+// Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2908,6 +2911,29 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Off by default. Part and arrangement curves still play; this switch is for the global curves.",
                           "Moves the part to start on this bar; its place within the bar is kept."],
                          "automation editor, strip and part bar hints")
+
+        // E4-83 — the Workstation's track-details hint pair and the three `?? "…"` fallbacks the import notes read
+        // when a track has no name (the note itself is already assembled from keys), the Colabo invite's joining
+        // pair, and the Studio caption's idle sentence (a `Text(cond ? "…" : caption.text)`, so the literal was a
+        // String). No other guard pins these lines.
+        let workstationFragments = try codeOnly("Sources/Echoelmusic/Studio/WorkstationView.swift")
+        for seam in [".accessibilityHint(selected ? String(localized: \"Closes this track's details\")",
+                     "?? String(localized: \"the MIDI track\")",
+                     "?? String(localized: \"the audio track\")"] {
+            XCTAssertTrue(workstationFragments.contains(seam), "WorkstationView lost the E4-83 seam `\(seam)`")
+        }
+        XCTAssertFalse(workstationFragments.contains("?? \"the MIDI track\""), "WorkstationView spells a nameless-track fallback verbatim again")
+        let colaboInvite = try codeOnly("Sources/Echoelmusic/Studio/LiveColaboView.swift")
+        XCTAssertTrue(colaboInvite.contains(": String(localized: \"Joining lets them share pieces with you.\")"), "LiveColaboView lost the E4-83 seam")
+        XCTAssertFalse(colaboInvite.contains("                 : \"Joining lets them share pieces with you.\")"), "LiveColaboView spells the joining line verbatim again")
+        let captionIdle = try codeOnly("Sources/Echoelmusic/Studio/StudioCaptionView.swift")
+        XCTAssertTrue(captionIdle.contains("? String(localized: \"Every control shapes the music as it plays.\")"), "StudioCaptionView lost the E4-83 seam")
+        try assertGerman(["Closes this track's details",
+                          "Opens this track's details: its device, and its mixer and parts where it has them",
+                          "the MIDI track", "the audio track",
+                          "Joining lets them share pieces with you — and see your live pulse while sharing is on.",
+                          "Joining lets them share pieces with you.", "Every control shapes the music as it plays."],
+                         "workstation fragments, Colabo invite and caption idle line")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

@@ -234,8 +234,8 @@ struct LiveColaboView: View {
             Text(invite.peerName + String(localized: " wants to join"))
                 .font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
             Text(shareBio
-                 ? "Joining lets them share pieces with you — and see your live pulse while sharing is on."
-                 : "Joining lets them share pieces with you.")
+                 ? String(localized: "Joining lets them share pieces with you — and see your live pulse while sharing is on.")
+                 : String(localized: "Joining lets them share pieces with you."))
                 .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 8) {

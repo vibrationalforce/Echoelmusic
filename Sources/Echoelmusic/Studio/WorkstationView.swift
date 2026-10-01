@@ -547,8 +547,8 @@ struct WorkstationView: View {
                 .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
                 // Only what every track has is promised; the mixer and the parts list appear
                 // where the track has them (`TrackMix.controls`, `TrackParts.arrangeable`).
-                .accessibilityHint(selected ? "Closes this track's details"
-                                            : "Opens this track's details: its device, and its mixer and parts where it has them")
+                .accessibilityHint(selected ? String(localized: "Closes this track's details")
+                                            : String(localized: "Opens this track's details: its device, and its mixer and parts where it has them"))
             // ⚠️ OUTSIDE the combined element, on purpose: `.combine` on the row swallowed the
             // tuning banner's recovery button once (#621) — a control inside a merged element
             // loses its own focus and hint. The facts are ONE sentence; the switch is a switch.
@@ -1103,7 +1103,7 @@ struct WorkstationView: View {
             switch MIDIImport.perform(pickedURL: url, clipStore: clipStore, timeline: timeline) {
             case .success(let landing):
                 let laneName = timeline.document.lanes
-                    .first { $0.id == landing.laneID }?.name ?? "the MIDI track"
+                    .first { $0.id == landing.laneID }?.name ?? String(localized: "the MIDI track")
                 importNote = MIDIImport.successNote(landing, laneName: laneName)
             case .failure(let failure):
                 importNote = failure.userMessage
@@ -1157,7 +1157,7 @@ struct WorkstationView: View {
                                        bpm: player.preflightTempo) {
             case .success(let landing):
                 let laneName = timeline.document.lanes
-                    .first { $0.id == landing.laneID }?.name ?? "the audio track"
+                    .first { $0.id == landing.laneID }?.name ?? String(localized: "the audio track")
                 importNote = AudioImport.successNote(landing, laneName: laneName)
                 learnContentDigest(of: landing)
                 // ⚠️ THE URL COMES FROM THE TRANSACTION, NOT FROM A SECOND LOOKUP. A first
@@ -1258,7 +1258,7 @@ struct WorkstationView: View {
             // DMMW Phase 2: an empty part is made to be written into — its notes open at once.
             selection.setNotesOpen(true)
             let lanes = timeline.document.lanes
-            let laneName = lanes.first { $0.id == landing.laneID }?.name ?? "the MIDI track"
+            let laneName = lanes.first { $0.id == landing.laneID }?.name ?? String(localized: "the MIDI track")
             // Said, never discovered: the selected track could not take the part.
             let missed = selected.flatMap { id in
                 id == landing.laneID ? nil : lanes.first { $0.id == id }?.name

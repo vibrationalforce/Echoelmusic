@@ -66,7 +66,7 @@ struct StudioCaptionView: View {
         // half costs nothing and removes the claim entirely. The real sentence, once there
         // is one, names its own source — `BioExplanation.text(for:tempo:)`.
         Text(caption.text.isEmpty
-             ? "Every control shapes the music as it plays."
+             ? String(localized: "Every control shapes the music as it plays.")
              : caption.text)
             .font(EchoelTheme.font(11))
             .foregroundStyle(EchoelTheme.dim)

@@ -31098,6 +31098,102 @@
           }
         }
       }
+    },
+    "Closes this track's details" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließt die Details dieser Spur"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Closes this track's details"
+          }
+        }
+      }
+    },
+    "Opens this track's details: its device, and its mixer and parts where it has them" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet die Details dieser Spur: ihr Gerät sowie Mixer und Teile, wo sie welche hat"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens this track's details: its device, and its mixer and parts where it has them"
+          }
+        }
+      }
+    },
+    "the MIDI track" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "die MIDI-Spur"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the MIDI track"
+          }
+        }
+      }
+    },
+    "Joining lets them share pieces with you — and see your live pulse while sharing is on." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beitreten lässt sie Stücke mit dir teilen — und deinen Live-Puls sehen, solange das Teilen an ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joining lets them share pieces with you — and see your live pulse while sharing is on."
+          }
+        }
+      }
+    },
+    "Joining lets them share pieces with you." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beitreten lässt sie Stücke mit dir teilen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joining lets them share pieces with you."
+          }
+        }
+      }
+    },
+    "Every control shapes the music as it plays." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jedes Bedienelement formt die Musik, während sie spielt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every control shapes the music as it plays."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
