@@ -14,7 +14,8 @@
 //    track and an audio track: only the two MIDI tracks, in order, on channels 1 and 2; a part
 //    laid over another wins from its start and CUTS the older part's sustain there; the older
 //    part plays again where the newer one ends; a trimmed part writes only its window; the bio
-//    and audio tracks write nothing. Channel 10 is never given to a melodic track.
+//    and audio tracks write nothing. Channel 10 is never given to a melodic track. Each track is
+//    written at the pitch it SOUNDS (its transpose applied); a note shifted out of 0…127 is left out.
 // 2. END-TO-END BEHAVIOUR — `SongMIDIExport.file`: format 1, one conductor track plus one track
 //    per MIDI track, division `Note.ticksPerQuarter`, the tempo the song plays at, each track
 //    named, every note on its own channel at its song tick, and every track ending at the song's
@@ -32,7 +33,10 @@
 // the parent and no assertion has a verdict there (hand-transcribed instead). Claims 3–4 are red
 // on the parent by ABSENCE of `SongExportTab` and the four keys — one absence (#486); their
 // counterweights (no modal on the door, no hot tempo read, no own overlap rule) are the content
-// (#343). DEVICE PROBE, open: the share sheet opens from the tile, and the `.mid` opens in a DAW
+// (#343). The review repair (transpose applied, `sounding`) is FORWARD as well: its claim-1 and
+// claim-2 expectations move from 38 to 26 on a track transposed −12, and claim 3's transpose
+// needle is red on the B4 commit for the reason its message gives — the export wrote the part's
+// pitch, not the sounding one. DEVICE PROBE, open: the share sheet opens from the tile, and the `.mid` opens in a DAW
 // with one track per MIDI track, the right tempo and key — readings, not scans.
 
 import XCTest
@@ -64,7 +68,7 @@ final class ThePieceExportsTheSongAsMIDITests: XCTestCase {
     private func fixture() -> Fixture {
         let bar = Self.bar, q = Self.quarter
         let keys = TimelineLane(name: "Keys", kind: .midi)
-        let bass = TimelineLane(name: "Bass", kind: .midi)
+        let bass = TimelineLane(name: "Bass", kind: .midi, transposeSemitones: -12)
         let bio = TimelineLane(name: "Body", kind: .midi, isBio: true)
         let audio = TimelineLane(name: "Vocal", kind: .audio)
 
@@ -124,14 +128,32 @@ final class ThePieceExportsTheSongAsMIDITests: XCTestCase {
             """)
 
         let bass: [[Int]] = tracks[1].notes.map { note in [note.startTick, note.pitch, note.lengthTicks] }
-        let expectedBass: [[Int]] = [[2 * bar, 38, bar]]
+        let expectedBass: [[Int]] = [[2 * bar, 26, bar]]
         XCTAssertEqual(bass, expectedBass, """
-            a trimmed part writes only its window: the note before the trim is gone, the D2 starts \
-            at the part's start and stops at the part's end (`executableNotes`)
+            a trimmed part writes only its window: the note before the trim is gone, the note starts \
+            at the part's start and stops at the part's end (`executableNotes`) — and it is written \
+            at the pitch the track SOUNDS: the part's D2 (38) on a track transposed −12 is a D1 (26)
             """)
 
         XCTAssertTrue(SongMIDIExport.hasNotes(f.document, clip: { f.clips[$0] }, bpm: 120),
                       "the door is lit when the song holds a note")
+
+        let probe = [Note(pitch: 60, startTick: 0, lengthTicks: q),
+                     Note(pitch: 120, startTick: q, lengthTicks: q),
+                     Note(pitch: 5, startTick: 2 * q, lengthTicks: q)]
+        let up: [Int] = SongMIDIExport.sounding(probe, transposeSemitones: 7).map(\.pitch)
+        let expectedUp: [Int] = [67, 127, 12]
+        XCTAssertEqual(up, expectedUp, "a fifth up: 60 → 67, 120 → 127, 5 → 12 — all inside MIDI's range")
+        let octaveUp: [Int] = SongMIDIExport.sounding(probe, transposeSemitones: 12).map(\.pitch)
+        let expectedOctaveUp: [Int] = [72, 17]
+        XCTAssertEqual(octaveUp, expectedOctaveUp, """
+            a note the shift pushes past 127 is left out, never folded onto another pitch
+            """)
+        let octaveDown: [Int] = SongMIDIExport.sounding(probe, transposeSemitones: -12).map(\.pitch)
+        let expectedOctaveDown: [Int] = [48, 108]
+        XCTAssertEqual(octaveDown, expectedOctaveDown, "and one pushed below 0 is left out the same way")
+        XCTAssertEqual(SongMIDIExport.sounding(probe, transposeSemitones: 0).map(\.pitch), [60, 120, 5],
+                       "no transpose, no change")
     }
 
     func testAnEmptySongLeavesTheDoorDark() {
@@ -208,8 +230,8 @@ final class ThePieceExportsTheSongAsMIDITests: XCTestCase {
         let bass = try events(chunks[2])
         XCTAssertTrue(bass.metas.contains { $0.type == 0x03 && $0.data == Array("Bass".utf8) })
         let bassEvents: [[Int]] = bass.notes.map { event in [Int(event.status), event.tick, Int(event.note)] }
-        let expectedBassEvents: [[Int]] = [[0x91, 2 * bar, 38], [0x81, 3 * bar, 38]]
-        XCTAssertEqual(bassEvents, expectedBassEvents, "the second track speaks on channel 2")
+        let expectedBassEvents: [[Int]] = [[0x91, 2 * bar, 26], [0x81, 3 * bar, 26]]
+        XCTAssertEqual(bassEvents, expectedBassEvents, "the second track speaks on channel 2, at its transposed pitch")
         XCTAssertEqual(bass.endOfTrack, songEnd)
     }
 
@@ -275,6 +297,11 @@ final class ThePieceExportsTheSongAsMIDITests: XCTestCase {
                 """)
         }
         XCTAssertFalse(export.contains("import SwiftUI"), "the export is Foundation-only — the door is the only view")
+        let tracks = try member("bpm: Double) -> [Track] {", in: export)
+        XCTAssertTrue(tracks.contains("transposeSemitones: lane.transposeSemitones"), """
+            each track is written at the pitch it SOUNDS — the track's transpose changes which note \
+            is heard, so a DAW that opens the file without it hears a different piece (review of B4)
+            """)
     }
 
     // MARK: 4 — the door speaks German

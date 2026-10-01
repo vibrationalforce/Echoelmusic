@@ -77,6 +77,7 @@ struct SongExportTab: View {
             EchoelIconTile(systemImage: "square.and.arrow.up", title: "Export",
                            expands: true, enabled: enabled)
         }
+        .buttonStyle(.plain)
         .disabled(!enabled)
         .accessibilityLabel("Export")
         .accessibilityHint(enabled

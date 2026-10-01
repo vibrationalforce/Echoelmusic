@@ -15,14 +15,26 @@
 //   · which part wins where parts overlap — `TimelineScheduling.activeRegion`, the ONE definition
 //     of overlap precedence (#1440). A note is written only where its own part is the winner at
 //     the note's start, and it is cut where another part takes the track over.
-// ⚠️ THE ONE PLACE THIS IS FINER THAN THE PLAYER, said so it is not mistaken for a disagreement:
-// the transport asks `activeRegion` on its 16th-step grid, this file at the note's own tick. For
-// parts that start and end on the grid (everything the editor places) the two answers are the
-// same; for an off-grid boundary the file is exact where the transport rounds to the step.
+// ⚠️ WHAT THE FILE IS, STATED AT ITS NARROWEST: the arrangement AS PLACED — every note at the
+// tick its part puts it, which is what a DAW should receive. It is not a recording of the
+// transport, and the three places the transport differs are named here so they are not
+// mistaken for a bug in either (review of B4, 2026-10-01):
+//   · the transport asks `activeRegion` on its 16th-step grid, this file at the note's own
+//     tick — identical for boundaries on the 16th grid, exact here where a triplet or free
+//     snap puts a boundary between two steps;
+//   · the primary roll lane is BAR-LOCKED (`TimelineRegionPlayer.loadClip`'s known
+//     constraint): a part that starts mid-bar plays its content pinned to the global bar
+//     lines there, while this file writes it where the part starts;
+//   · at a takeover the roll lets a sustain ring out to its own end, the secondary lanes cut
+//     it; this file cuts it, like the secondary lanes, so two parts never overlap on a track.
 //
 // What the file does NOT carry, and the door's hint says so: a track's level, pan, Mute and Solo
 // (mix decisions the DAW makes again), the sound of each voice (a General MIDI player chooses its
-// own), audio and bio tracks. Muted tracks ARE written — the DAW is where they are unmuted.
+// own — the octaver and detune are part of that sound), audio and bio tracks, a note's chance /
+// repeat operators (every note is written), and tempo automation (the file carries the tempo the
+// song plays at when it is shared). Muted tracks ARE written — the DAW is where they are unmuted.
+// A track's TRANSPOSE is applied: it changes which note the track sounds, so a bass written an
+// octave up and transposed −12 opens in the DAW where it is heard.
 //
 // Foundation-only and deterministic: the byte layout lives in `MIDIFileExporter.exportSong`.
 
@@ -57,8 +69,9 @@ public enum SongMIDIExport {
         var result: [Track] = []
         for (index, laneID) in document.midiLaneIDs.enumerated() {
             guard let lane = document.lanes.first(where: { $0.id == laneID }) else { continue }
+            let notes = songNotes(of: laneID, in: document, clip: clip, bpm: bpm)
             result.append(Track(name: lane.name, channel: channels[index % channels.count],
-                                notes: songNotes(of: laneID, in: document, clip: clip, bpm: bpm)))
+                                notes: sounding(notes, transposeSemitones: lane.transposeSemitones)))
         }
         return result
     }
@@ -88,6 +101,21 @@ public enum SongMIDIExport {
             }
         }
         return notes.sorted { ($0.startTick, $0.pitch) < ($1.startTick, $1.pitch) }
+    }
+
+    /// `notes` at the pitch the track SOUNDS — shifted by the track's transpose, read as the data
+    /// the store wrote (its setter already clamps; the bound is not restated here, #416). A note
+    /// the shift pushes outside MIDI's 0…127 cannot be written and is left out rather than folded
+    /// onto another pitch.
+    public static func sounding(_ notes: [Note], transposeSemitones: Int) -> [Note] {
+        guard transposeSemitones != 0 else { return notes }
+        return notes.compactMap { note in
+            let pitch = note.pitch + transposeSemitones
+            guard (0...127).contains(pitch) else { return nil }
+            var shifted = note
+            shifted.pitch = pitch
+            return shifted
+        }
     }
 
     /// Whether the song holds at least one note to write — the door's enabled state. Asks the
