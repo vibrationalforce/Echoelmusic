@@ -149,7 +149,8 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         // the Perform grid's three notes, the track inspector's three hints, the part bar's Play,
         // the position readout's label and the save-status hint. Thirteen struck words in twelve
         // visible literals (song / project / take / reset) say piece, music and default now.
-        "Sources/Echoelmusic/Studio/StudioArea.swift",
+        // (`StudioArea.swift` left this list on 2026-10-01: the area row and its type are deleted,
+        // and a listed file that is not on disk makes `codeLines` skip the whole claim.)
         "Sources/Echoelmusic/Studio/PerformSessionView.swift",
         "Sources/Echoelmusic/Studio/TrackInspectorView.swift",
         "Sources/Echoelmusic/Studio/SelectedPartBar.swift",

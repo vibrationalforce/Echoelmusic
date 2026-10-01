@@ -166,7 +166,7 @@ enum ComposeGuide {
         case .notes: return String(localized: "Opens the part's notes under the arrangement.")
         case .play:  return facts.isPlaying ? String(localized: "Stops the piece, the instrument and the pulse reading.")
                                             : String(localized: "Plays the piece from the top.")
-        case .save:  return String(localized: "Names the piece and saves it. Library opens it again.")
+        case .save:  return String(localized: "Names the piece and saves it. Open brings it back.")
         }
     }
 

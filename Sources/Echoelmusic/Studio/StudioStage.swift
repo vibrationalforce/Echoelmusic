@@ -1,16 +1,17 @@
 import Foundation
 
-/// The two STAGES of the workspace — the layer ABOVE the instrument's area row (founder
+/// The two STAGES of the workspace — the layer ABOVE the instrument's chip strip (founder
 /// 2026-09-30, interface-audit decisions 2 + 3, then „Du entscheidest alles … im Vordergrund
 /// eine DMMW"): the **Piece** (the workstation — tracks, parts, scenes, import, the media
-/// library) and the **Instrument** (the bio-generative front panel with its areas and chips).
+/// library) and the **Instrument** (the bio-generative front panel with its chips).
 ///
-/// WHY A LAYER ABOVE THE AREA ROW AND NOT A SIXTH AREA. `StudioArea` names the jobs INSIDE the
-/// instrument and selects a plate of the chip strip; every area lives in `EchoelStudioView`'s
-/// scroll, under its start row, as a dropdown panel. The piece is not a panel of the
-/// instrument — the instrument is a device on one of the piece's tracks (decision 3). So the
-/// piece stands BESIDE the instrument, not inside it, and it stands FIRST: a fresh install
-/// opens on the piece (`StudioDefaultKeys.stage`).
+/// WHY A STAGE AND NOT A PLATE OF THE INSTRUMENT. A chip selects a plate inside the
+/// instrument; every plate lives in `EchoelStudioView`'s scroll, under its start row, as a
+/// dropdown panel. The piece is not a panel of the instrument — the instrument is a device on
+/// one of the piece's tracks (decision 3). So the piece stands BESIDE the instrument, not
+/// inside it, and it stands FIRST: a fresh install opens on the piece
+/// (`StudioDefaultKeys.stage`). (An area row sat between the two from 2026-09-29 to
+/// 2026-10-01; it is gone — four of its five buttons were second doors to chips.)
 ///
 /// Pure and Foundation-only so the blocking bundle can drive it
 /// (`TheArrangeStageIsTheFrontStageTests`). The raw values are PERSISTED — rename a label,

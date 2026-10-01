@@ -271,8 +271,8 @@ public struct SynthPatch: Codable, Sendable, Equatable, Identifiable {
     /// `Project` carries a whole `SynthPatch`. A user really can pick that file.
     /// ⚠️ TWO HOPS THE FIRST VERSION SKIPPED, because "live" is not the same as
     /// "one tap": importing only SAVES to the library — the user must then tap the row to
-    /// `open(p)` — and the sheet's own button is `.disabled(projects.projects.isEmpty)`,
-    /// so on a fresh install the door is shut until a take has been saved. The decode
+    /// `open(p)`. Since 2026-10-01 the Open tile that raises the sheet is never disabled, so
+    /// the door is open on a fresh install too (it was shut until a first save). The decode
     /// itself happens on import, which is why the clamp belongs there and not at `open`.
     ///
     /// ⚠️ IT CANNOT CUT A SHIPPED OR USER-SET VALUE — the #430 `decay` invariant, and the

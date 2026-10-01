@@ -21,7 +21,7 @@ changes.
 
 | word | Wort | struck (never in visible text) | meaning |
 |---|---|---|---|
-| piece | Stück | project, session, song | the saved work — what Library opens, what Save writes, what the head names |
+| piece | Stück | project, session, song | the saved work — what Open brings back, what Save writes, what the head names |
 | track | Spur | lane | one row of the piece |
 | part | Teil | clip, region, take | one block on a track |
 | scene | Szene | section | one row of the Perform grid |

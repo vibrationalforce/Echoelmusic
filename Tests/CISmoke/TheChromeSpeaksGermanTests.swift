@@ -1,7 +1,9 @@
 // TheChromeSpeaksGermanTests.swift
 // Echoel — decision E4 of the interface audit (founder 2026-09-30, "Ja": the app speaks German,
-// chrome first, ~40 words): every word of the stage seam, the area row and the head transport
-// has a German unit in `Localizable.xcstrings`, and the code reaches the catalog for it.
+// chrome first, ~40 words): every word of the stage seam and the head transport has a German
+// unit in `Localizable.xcstrings`, and the code reaches the catalog for it. (The area row's ten
+// words were the third family until the row was deleted, 2026-10-01 — they left the catalog
+// with it.)
 //
 // KIND — two kinds, labelled per claim (Tests/CISmoke/CLAUDE.md §1):
 //   · END-TO-END for the WORDS: the shipped enums and `ProjectTransport` are driven (they are
@@ -11,7 +13,7 @@
 //     PROBE (a German-language device), registered in `docs/dev/FOUNDER_INBOX.md` §2, not proven here.
 //   · SOURCE-TEXT for the REACH: a word that an enum returns as a plain `"literal"` is spelled
 //     VERBATIM by `Text(candidate.label)` — SwiftUI localises `Text("literal")`, never
-//     `Text(someString)`. So the three chrome files must return every user-visible literal
+//     `Text(someString)`. So the chrome files must return every user-visible literal
 //     through `String(localized:)`. That is the half no runtime check in an English host can see.
 //
 // WHY THE CATALOG IS THE TRUTH AND NOT THIS FILE (#416). The German words live ONLY in
@@ -233,7 +235,6 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
 
     private static let chromeFiles = [
         "Sources/Echoelmusic/Studio/StudioStage.swift",
-        "Sources/Echoelmusic/Studio/StudioArea.swift",
         "Sources/Echoelmusic/Studio/ProjectTransport.swift",
     ]
 
@@ -301,15 +302,12 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         return SourceText.codeOnly(text)
     }
 
-    // MARK: - claim 1 — END-TO-END: every stage and area word is a catalog key with a German unit
+    // MARK: - claim 1 — END-TO-END: every stage word is a catalog key with a German unit
 
-    func testEveryStageAndAreaWordHasAGermanUnit() throws {
+    func testEveryStageWordHasAGermanUnit() throws {
         let stage = StudioStage.allCases.flatMap { [$0.label, $0.spokenHint] }
-        let area = StudioArea.allCases.flatMap { [$0.label, $0.spokenHint] }
         XCTAssertEqual(StudioStage.allCases.count, 2, "counterweight: the seam still has its two stages")
-        XCTAssertEqual(StudioArea.allCases.count, 5, "counterweight: the area row still has its five areas")
         try assertGerman(stage, "stage word")
-        try assertGerman(area, "area word")
     }
 
     // MARK: - claim 2 — END-TO-END: every head-transport word and hint is a catalog key with a German unit
@@ -333,9 +331,9 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         try assertGerman(Array(Set(words)).sorted(), "transport word")
     }
 
-    // MARK: - claim 3 — SOURCE-TEXT: the three chrome files return no plain literal
+    // MARK: - claim 3 — SOURCE-TEXT: the chrome files return no plain literal
 
-    func testTheThreeChromeFilesReturnOnlyLocalizedLiterals() throws {
+    func testTheChromeFilesReturnOnlyLocalizedLiterals() throws {
         // A `return "Piece"` is spelled verbatim by `Text(candidate.label)`; only
         // `return String(localized: "Piece")` reaches the catalog. Interpolated strings
         // (`return "\(lane.name) · …"`) are composed, not looked up, and are not this claim's.
@@ -350,13 +348,13 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertEqual(offenders, [], """
                 \(relative) returns a user-visible literal without `String(localized:)`. SwiftUI \
                 localises `Text("literal")` by content but spells `Text(someString)` verbatim, so a \
-                word this enum returns as a plain literal can never be German on the stage seam, the \
-                area row or the head. Wrap it — and add its `de` unit to Localizable.xcstrings.
+                word this enum returns as a plain literal can never be German on the stage seam or \
+                the head. Wrap it — and add its `de` unit to Localizable.xcstrings.
                 """)
             XCTAssertEqual(bareLet.numberOfMatches(in: code, range: range), 0, "\(relative): a bare `static let … = \"` hint")
             wrapped += code.components(separatedBy: "String(localized:").count - 1
         }
-        XCTAssertGreaterThanOrEqual(wrapped, 30, "counterweight: the three files still carry their ~33 localised words (measured 34 sites on 2026-09-30)")
+        XCTAssertGreaterThanOrEqual(wrapped, 22, "counterweight: the two files still carry their localised words (measured 25 sites on 2026-10-01: StudioStage 4 + ProjectTransport 21; the area row's 10 left with it)")
     }
 
     // MARK: - claim 4 — the seven literal keys are translated AND still spelled as literals on screen
@@ -1073,7 +1071,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                      "String(localized: \"Opens the part's notes under the arrangement.\")",
                      "String(localized: \"Stops the piece, the instrument and the pulse reading.\")",
                      "String(localized: \"Plays the piece from the top.\")",
-                     "String(localized: \"Names the piece and saves it. Library opens it again.\")",
+                     "String(localized: \"Names the piece and saves it. Open brings it back.\")",
                      "String(localized: \"The part's notes are open under the arrangement. Tap a cell to write a note.\")",
                      "String(localized: \"Add a MIDI track first.\")", "String(localized: \"Add a part first.\")",
                      "String(localized: \"Nothing in the piece can play yet — no part with notes is heard.\")",
@@ -1109,7 +1107,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Your piece has its MIDI track.", "An instrument track for the notes of your piece.",
                           "Adds another empty four-bar part after the last one.", "An empty four-bar part on that track.",
                           "Opens the part's notes under the arrangement.", "Stops the piece, the instrument and the pulse reading.",
-                          "Plays the piece from the top.", "Names the piece and saves it. Library opens it again.",
+                          "Plays the piece from the top.", "Names the piece and saves it. Open brings it back.",
                           "The part's notes are open under the arrangement. Tap a cell to write a note.",
                           "Add a MIDI track first.", "Add a part first.", "Nothing in the piece can play yet — no part with notes is heard.",
                           "Write notes into a part first.", "Add a part with notes first.", "playing", "done", "next step", "available",
@@ -1509,11 +1507,11 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         // RUNTIME COUNTERWEIGHTS: the bundle's English statics are unchanged
         XCTAssertEqual(PerformSessionView.sectionTitle, "Scenes and tracks")
-        XCTAssertTrue(PerformSessionView.emptyNote.hasPrefix("Nothing to launch yet. Parts you write in Compose,"))
+        XCTAssertTrue(PerformSessionView.emptyNote.hasPrefix("Nothing to launch yet. Parts you write on the Piece stage,"))
         try assertGerman(["Scenes and tracks", "Expanded", "Collapsed", "Save preset", "Rename preset", "Morph → ", "Morph toward a preset…",
                           "Always on — simulated demo → timbre", "Always on — body → timbre",
                           "Shows the piece's scenes to launch on the bar, and Mute and Solo for its tracks. While the Echoel plays on its own, stop it in the header to launch a scene.",
-                          "Nothing to launch yet. Parts you write in Compose, and the Echoel's generated music, appear here as scenes to launch on the bar.",
+                          "Nothing to launch yet. Parts you write on the Piece stage, and the Echoel's generated music, appear here as scenes to launch on the bar.",
                           "The Echoel is playing. Stop it in the header to launch a scene — the piece then starts on the scene's bar.",
                           "Blend the current sound continuously toward any preset with the Morph control — for live transitions.",
                           "0 = current sound · 1 = the target preset. Every parameter glides between them.",

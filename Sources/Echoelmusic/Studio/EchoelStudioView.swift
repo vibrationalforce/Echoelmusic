@@ -1012,20 +1012,6 @@ struct EchoelStudioView: View {
             case .workstation: return String(localized: "Workstation — the arrangement: tracks, parts and scenes; it plays, imports, mixes and moves parts, it does not cut them")
             }
         }
-        /// DMMW Phase 1 — the area this plate belongs to (`StudioArea`, the row above the
-        /// strip). EXHAUSTIVE on purpose: a new plate does not compile until it picks one, so
-        /// the area row can never silently lose a plate. `.library` owns no plate — it opens
-        /// the project list sheet.
-        var area: StudioArea {
-            switch self {
-            case .workstation, .composition, .mood:          return .compose
-            // Bio first ON PURPOSE: `SaveDoorNamingTests` finds the chip strip as the FIRST
-            // line spelling the strip's opening pair, so no other line may start that way.
-            case .bio, .sound, .mix, .effects, .master:      return .perform
-            case .field:                                     return .visuals
-            case .export:                                    return .settings
-            }
-        }
     }
 
     // ⭐ The text-size step (`StudioDefaultKeys.zoomStep`) is applied ONE level up since rule 12
@@ -1221,12 +1207,7 @@ struct EchoelStudioView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, FloatingVisualLayout.startButtonTopPadding)
                 .padding(.bottom, FloatingVisualLayout.startButtonBottomPadding))
-            // DMMW Phase 1 — the area row sits INSIDE this AnyView with the strip it
-            // summarises, so the root VStack keeps its child count (see the note above).
-            AnyView(VStack(spacing: 0) {
-                areaBar
-                menuBar
-            }
+            AnyView(menuBar
                 // (The `.echoelToggleBio` receiver that stood here is gone with #234 — the
                 // header pill and the transport ▶ no longer start the session, so nothing
                 // posted it. `toggleBiofeedback()` is now reached only from the front
@@ -1285,8 +1266,8 @@ struct EchoelStudioView: View {
                     // compiles silently and reads like a live hook.
                     // C5: the piece's Light tab (`WorkstationView.domainTabs`) posts this from a
                     // stage where a medium-detent sheet (FX, Live Colabo) can still be up — the
-                    // door refuses rather than drive a second modal true (the two-modals hang;
-                    // `selectArea` keeps the same guard). The header light monitor inherits it.
+                    // door refuses rather than drive a second modal true (the two-modals hang).
+                    // The header light monitor inherits it.
                     case "routing":
                         if !showAllFX, !showLiveColabo { showRouting = true }
                     // The pulse monitor opens the Bio dropdown (B3). Since #289 that monitor
@@ -1318,7 +1299,7 @@ struct EchoelStudioView: View {
                         showStage(.instrument)
                     // Workstation redesign C5 (founder 2026-10-01, H5) — the piece's Visual domain
                     // tab (`WorkstationView.domainTabs`) posts this from the Piece stage: the Field
-                    // panel, the plate the Instrument's "Visuals" area selects. Re-added TOGETHER
+                    // panel, the plate the Instrument's Field chip selects. Re-added TOGETHER
                     // with its producer (#290/#492), and it turns the stage for the "sound" reason.
                     case "field":
                         activeMenu = .field
@@ -2516,12 +2497,13 @@ struct EchoelStudioView: View {
     /// no observation at all.
     private var quickDoorRow: some View {
         HStack(spacing: 8) {
+            // Never disabled (2026-10-01): the sheet also holds "New piece" and Import, which an
+            // empty library needs most. The deleted area row's Library button was their only
+            // always-lit door; the sheet says "No saved pieces yet." in words when it is empty.
             Button { openNote = nil; showOpen = true } label: {
-                EchoelIconTile(systemImage: "tray.and.arrow.up", title: "Open", expands: true,
-                               enabled: !projects.projects.isEmpty)
+                EchoelIconTile(systemImage: "tray.and.arrow.up", title: "Open", expands: true)
             }
             .buttonStyle(.plain)
-            .disabled(projects.projects.isEmpty)
             .accessibilityLabel("Open a saved piece")
 
             #if canImport(MultipeerConnectivity)
@@ -3135,92 +3117,16 @@ struct EchoelStudioView: View {
         }
     }
 
-    /// DMMW Phase 1 (founder 2026-09-29) — the main navigation: Compose · Perform · Visuals ·
-    /// Library · Settings, one row ABOVE the chip strip (`StudioArea` says why a layer and not a
-    /// replacement). An area button selects its area's home plate; the chip of that plate
-    /// lights up underneath, so the two rows teach each other.
-    ///
-    /// ⚠️ FREEZE LAW: the only state read here is `displayedMenu` (`activeMenu` + the relaunch
-    /// memory) — both change on a TAP, never on a clock. No bio, meter or playhead read.
-    /// ⚠️ BLACK-SCREEN LAW: no presentation modifier. Library reuses `showOpen`.
-    ///
-    /// Width: the five labels fit a phone side by side at default text size and share the row
-    /// equally. At large Dynamic Type they no longer fit, and `ViewThatFits` falls back to a
-    /// horizontal scroll at their natural width — text the user asked to be larger is never
-    /// shrunk to make the row fit (the #606 rule the chip strip follows too).
-    private var areaBar: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 4) {
-                ForEach(StudioArea.allCases) { areaButton($0, sharesRow: true) }
-            }
-            .padding(.horizontal, 10)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 4) {
-                    ForEach(StudioArea.allCases) { areaButton($0, sharesRow: false) }
-                }
-                .padding(.horizontal, 10)
-            }
-        }
-        .background(EchoelTheme.bg)
-    }
-
-    /// The home plate of each area; `nil` for the area that opens the project list instead.
-    /// Pairs with `StudioMenu.area`: every home must belong to its own area.
-    private static func areaHome(_ area: StudioArea) -> StudioMenu? {
-        switch area {
-        // Slice 2b: the arrangement is the Piece STAGE, not a plate of this instrument, so
-        // Compose's home here is the tempo-and-variations plate (Mood is the other member).
-        case .compose:  return .composition
-        case .perform:  return .sound
-        case .visuals:  return .field
-        case .settings: return .export
-        case .library:  return nil
-        }
-    }
+    // ⛔ THE AREA ROW STOOD HERE (`areaBar` · `areaHome` · `selectArea` · `areaButton`,
+    // 2026-09-29 → 2026-10-01) and is deleted with its type `StudioArea`: four of its five
+    // buttons selected a plate that has its own chip in this strip, and Library raised the sheet
+    // the Open tile raises — a second way to every place it reached, for one 44 pt row of the
+    // instrument (founder 2026-10-01: „Vermeide das es mehrfache Wege zu einem Bereich gibt“).
+    // The strip is the ONE row of plate doors; `TheInstrumentHasOneRowOfPlateDoorsTests` holds it.
 
     /// Slice 2b — the studio's ONE hand on the stage key (`stageRaw`'s doc says when it may
     /// move). A named stage, never a raw string, so the call sites cannot disagree with the seam.
     private func showStage(_ stage: StudioStage) { stageRaw = stage.rawValue }
-
-    /// Tapping the area you are already in keeps your plate — Perform while on Mix stays on
-    /// Mix. Only a CHANGE of area moves to that area's home.
-    private func selectArea(_ area: StudioArea) {
-        guard let home = Self.areaHome(area) else {
-            // Library → the existing project-library sheet, exactly as the "open" door does.
-            // The three medium-detent sheets leave this row tappable underneath; opening a
-            // second modal over one of them is the two-modals hang. Close yours first.
-            guard !showRouting, !showAllFX, !showLiveColabo else { return }
-            openNote = nil
-            showOpen = true
-            return
-        }
-        if displayedMenu.area != area { activeMenu = home }
-    }
-
-    /// One area button: 44 pt target, a 2 pt underline marks the active area (a TAB marker,
-    /// deliberately different from the chips' solid fill so the two rows read as two levels).
-    private func areaButton(_ area: StudioArea, sharesRow: Bool) -> some View {
-        let isActive = area.selectsPlate && displayedMenu.area == area
-        return Button {
-            selectArea(area)
-        } label: {
-            Text(area.label)
-                .font(EchoelTheme.font(13, .semibold))
-                .foregroundStyle(isActive ? EchoelTheme.text : EchoelTheme.dim)
-                .padding(.horizontal, 8)
-                .frame(minWidth: 44, maxWidth: sharesRow ? CGFloat.infinity : nil, minHeight: 44)
-                .overlay(alignment: .bottom) {
-                    Rectangle()
-                        .fill(isActive ? EchoelTheme.text : Color.clear)
-                        .frame(height: 2)  // ADAPTIVE-EXEMPT: the underline marker, not text
-                }
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(area.label)
-        .accessibilityHint(area.spokenHint)
-        .accessibilityAddTraits(isActive ? .isSelected : [])
-    }
 
     /// Accessibility (founder axis "accessible", 2026-07-25): give a small chip the
     /// 44 × 44 pt tap target Apple's HIG requires, WITHOUT changing how it looks.

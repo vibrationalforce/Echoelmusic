@@ -16,8 +16,9 @@
 // 3. COUNTERWEIGHT: `songHasUserParts` still ignores the composer's own part (the #622 law —
 //    never an empty take under a real name — holds for a plain launch). Its behaviour is driven
 //    end to end in `TheSessionSaveOpensTheSameSongTests`; here the source keeps the gate on it.
-// 4. SOURCE: the Workstation plate carries the same two doors (`WorkstationProjectRow`), gated on
-//    the same facts, raising the Studio's OWN Save alert and Open sheet through the chrome door —
+// 4. SOURCE: the Workstation plate carries the same two doors (`WorkstationProjectRow`), Save
+//    gated on the same facts and Open never (2026-10-01: its sheet holds New piece and Import,
+//    which an empty library needs — the `canOpen` needle left with the gate), raising the Studio's OWN Save alert and Open sheet through the chrome door —
 //    no presentation modifier of its own (the black-screen budget), and a receiver case per post.
 // ⭐ 2026-09-30 (rule 1, one word per thing): the tile's spoken name is "Save this piece" —
 //    the glossary word — and the Workstation row's `spoken:` says the same; "Save this session"
@@ -109,8 +110,7 @@ final class TheSongAloneCanBeSavedTests: XCTestCase {
         let row = String(view[start.upperBound..<end.lowerBound])
         for needle in ["let canSave = !pianoRoll.notes.isEmpty",
                        "|| SessionSaveOpen.songHasUserParts(timeline.document, clips: clips.filledClips)",
-                       "let canOpen = !projects.projects.isEmpty",
-                       "object: \"save\", enabled: canSave", "object: \"open\", enabled: canOpen",
+                       "object: \"save\", enabled: canSave", "object: \"open\", enabled: true",
                        "NotificationCenter.default.post(name: .echoelChromeDoor, object: object)",
                        ".disabled(!enabled)", ".frame(minWidth: 92, minHeight: 44)"] {
             XCTAssertTrue(row.contains(needle), "the Workstation's Save/Open row lost `\(needle)`")

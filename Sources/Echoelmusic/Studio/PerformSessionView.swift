@@ -199,10 +199,11 @@ struct PerformSessionView: View {
         .accessibilityHint(hint)
     }
 
-    /// What the Perform plate says while the song has nothing to launch. It names the area that
-    /// makes parts (Compose) rather than a control on another plate, so it cannot go stale when
-    /// that plate's rows move.
-    static var emptyNote: String { String(localized: "Nothing to launch yet. Parts you write in Compose, and the Echoel's generated music, appear here as scenes to launch on the bar.") }
+    /// What the Perform plate says while the song has nothing to launch. It names the STAGE that
+    /// makes parts by its seam label (`StudioStage.piece.label`) rather than a control on another
+    /// plate, so it cannot go stale when that plate's rows move. It named the Compose AREA until
+    /// the area row went (2026-10-01) — a word for a door that no longer exists.
+    static var emptyNote: String { String(localized: "Nothing to launch yet. Parts you write on the Piece stage, and the Echoel's generated music, appear here as scenes to launch on the bar.") }
 
     /// Why no scene is offered while the instrument plays alone: a launch would start the piece
     /// under the running pattern. Names the control that resolves it — the header's Stop.

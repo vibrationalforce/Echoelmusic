@@ -972,10 +972,11 @@ struct WorkstationView: View {
     ///   open what is already open. Saying "selected" is honest because this row exists only on
     ///   the Piece stage (`StageShell` constructs this view once, in `ArrangeStage`).
     /// · **Visual** opens the Field panel on the Instrument stage through the chrome door — the
-    ///   plate the Instrument's "Visuals" AREA selects. UNGATED, like that area button and like
-    ///   the header's visual tile: both reach the visual at every level, so a level gate here
-    ///   would hide from the piece what the instrument already offers (the Field CHIP's
-    ///   `showsSongs` gate thins the strip, not the app — `visibleChips` appends it when shown).
+    ///   plate the Instrument's Field chip selects. UNGATED: the level filter thins the
+    ///   Instrument's STRIP, not the app (`visibleChips` appends whatever plate a door selected),
+    ///   and below Producer, where the Field chip is hidden, this tab is the Field plate's one
+    ///   door — a level gate here would close it. (The header's visual tile shows the PICTURE,
+    ///   the floating window; it does not open this plate.)
     /// · **Light** opens Routing, the door the header's light monitor already posts: its Light
     ///   card holds master, blackout, DMX resolution and fixtures. Ungated, like that monitor.
     /// ⛔ **No Space tab yet.** Both spatial controls on a reachable surface — the ADM-OSC row
@@ -1596,7 +1597,9 @@ struct WorkstationView: View {
 ///
 /// ⚠️ Enabled by the same FACTS as the Studio's tiles, not by the same VALUE: Save by a composed
 /// take or a song holding the user's parts (`SessionSaveOpen.songHasUserParts`, asked — the one
-/// predicate); Open by a non-empty library. The take half reads `pianoRoll.notes` because the
+/// predicate); Open ALWAYS — its sheet holds "New piece" and Import, which an empty library
+/// needs (2026-10-01: the Instrument's Library area button, their only always-lit door, is
+/// gone). The take half reads `pianoRoll.notes` because the
 /// Studio's `hasComposed` is view-private `@State`. The two can disagree for up to one bar right
 /// after a first Generate (the Studio arms `hasComposed` before the roll's next bar writes the
 /// notes) — the Workstation's Save lights one bar later, never earlier (review of dc55c2d6e).
@@ -1607,16 +1610,14 @@ private struct WorkstationProjectRow: View {
     @Environment(TimelineStore.self) private var timeline
     @Environment(ClipStore.self) private var clips
     @Environment(PianoRollModel.self) private var pianoRoll
-    @Environment(ProjectStore.self) private var projects
 
     var body: some View {
         let canSave = !pianoRoll.notes.isEmpty
             || SessionSaveOpen.songHasUserParts(timeline.document, clips: clips.filledClips)
-        let canOpen = !projects.projects.isEmpty
         let save = door("Save", systemImage: "tray.and.arrow.down", object: "save", enabled: canSave,
                         spoken: "Save this piece",
                         hint: "Names the piece and saves it, with its tracks and parts")
-        let open = door("Open", systemImage: "tray.and.arrow.up", object: "open", enabled: canOpen,
+        let open = door("Open", systemImage: "tray.and.arrow.up", object: "open", enabled: true,
                         spoken: "Open a saved piece",
                         hint: "Shows your saved pieces. Opening one replaces the piece here")
         // Side by side while they fit; stacked at the largest text sizes. Since the icons grow

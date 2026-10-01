@@ -72,10 +72,7 @@ struct StageShell: View {
     }
 
     /// Two words sharing one row, 44 pt tall, the chosen one filled — the `M`/`S` switch grammar
-    /// of the track rows. A named choice, not a number, so no `EchoelValueField`. Deliberately
-    /// NOT the underline grammar of the area row inside the instrument: the two rows answer
-    /// different questions ("which stage?" / "which job in the instrument?") and would read as
-    /// one navigation if they looked alike.
+    /// of the track rows. A named choice, not a number, so no `EchoelValueField`.
     private var stageSeam: some View {
         HStack(spacing: 6) {
             ForEach(StudioStage.allCases) { candidate in

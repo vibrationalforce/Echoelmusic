@@ -8,10 +8,10 @@
 // · Music  — where you are (the arrangement and `pieceTabs` below). A MARKER, not a button, for
 //            A7's Arrange-tile reason: with nothing to switch to, a button opens what is open.
 // · Visual — the chrome door "field" → the Field panel (`visualPanel`) on the Instrument stage.
-//            UNGATED: the Instrument's area row reaches the same plate at every level
-//            (`areaBar` iterates `StudioArea.allCases` unfiltered, `.visuals` → `.field`), and so
-//            does the header's visual tile; a level gate here would hide from the piece what the
-//            instrument already offers.
+//            UNGATED: the level filter thins the Instrument's chip STRIP, not the app —
+//            `visibleChips` appends whatever plate a door selected — and below Producer, where
+//            the Field chip is hidden, this tab is the Field plate's one door (the header's
+//            visual tile toggles the PICTURE, not this plate). A level gate here would close it.
 // · Light  — the chrome door "routing" → Routing (`PatchbayView`, whose `lichtSection` holds
 //            master, blackout, DMX resolution and fixtures), the door the header's light monitor
 //            already posts. The receiver now refuses while a medium-detent sheet is up (FX, Live
@@ -26,9 +26,10 @@
 // 1. `domainTabs` is pinned by its own top inset AFTER `pieceTabs`' (a later inset sits outside,
 //    i.e. above); Music comes first, posts nothing, is the ONE element that says selected, and
 //    the row reads no state (freeze law).
-// 2. Exactly two literal posts, neither behind a level gate — and the Instrument's area row,
-//    which reaches the same Field plate, is itself ungated (the counterweight that makes
-//    "ungated" the consistent choice).
+// 2. Exactly two literal posts, neither behind a level gate — and `visibleChips` still appends
+//    the plate a door selected to the level-filtered strip (the counterweight that makes
+//    "ungated" the consistent choice: a door may land on a plate the level hides). Re-anchored
+//    2026-10-01 from the Instrument's area row, which is deleted; green on 430b20307 and after.
 // 3. The receiver handles both: "field" opens `.field` and turns the Instrument stage; "routing"
 //    raises the existing routing slot only while neither medium-detent sheet is up. The two
 //    destinations are real: `.field` builds `visualPanel`, the routing slot builds
@@ -39,7 +40,7 @@
 // GRADING (§0/§3 — no Swift toolchain in a web session; transcribed in Python against the
 // parent tree d05aa750f and the C5 tree): all claims are SOURCE-TEXT scans. Parent tree:
 // claims 1, 2 and 4 are red by ABSENCE of `domainTabs` — one absence (#486); claim 2's two
-// area-row needles are COUNTERWEIGHTS, green on both. Claim 3: the "field" arm is red by ABSENCE
+// strip needles are COUNTERWEIGHTS, green on both. Claim 3: the "field" arm is red by ABSENCE
 // of the case (the receiver half of the same absence); the "routing" arm's two refusal needles
 // (`!showAllFX`, `!showLiveColabo`) are REGRESSIONS, red there for their named reason — the door
 // raised the sheet unconditionally; `showRouting = true` and the destination needles are
@@ -101,7 +102,7 @@ final class TheDomainTabsOpenOnlyWhatExistsTests: XCTestCase {
         }
     }
 
-    // MARK: 2 — two doors, each literal, neither gated — like the area row that reaches the same plate
+    // MARK: 2 — two doors, each literal, neither gated — the level filter thins the strip, not the app
 
     func testTheDomainRowPostsExactlyTwoUngatedDoors() throws {
         let code = SourceText.codeOnly(try text(Self.workstation))
@@ -115,22 +116,20 @@ final class TheDomainTabsOpenOnlyWhatExistsTests: XCTestCase {
             TOGETHER with a reachable destination — Space waits for C4 (#164/#227).
             """)
         XCTAssertFalse(row.contains("if "), """
-            a domain sits behind a condition. The Instrument's area row reaches the Field plate at \
-            every level and the header's light monitor reaches Routing at every level; a gate here \
-            would hide from the piece what the instrument already offers.
+            a domain sits behind a condition. The level filter hides the Field CHIP below Producer, \
+            so this tab is then the Field plate's one door, and the header's light monitor reaches \
+            Routing at every level; a gate here would close what the app offers.
             """)
 
         let studio = SourceText.codeOnly(try text(Self.studio))
-        let bar = try member("private var areaBar: some View {", in: studio)
-        XCTAssertTrue(bar.contains("ForEach(StudioArea.allCases) { areaButton($0, sharesRow: true) }"),
-                      "the area row still offers every area — the reason Visual is ungated here")
-        XCTAssertFalse(bar.contains("level"), """
-            the area row now filters by level. Then the Visual domain's reason for being ungated is \
-            gone — re-decide the gate here in the same commit.
+        let chips = try member("private var visibleChips: [StudioMenu] {", in: studio)
+        XCTAssertTrue(chips.contains("let strip = Self.chips(for: skillLevel)"),
+                      "the strip is filtered by the level — the reason a door, not a chip, reaches Field below Producer")
+        XCTAssertTrue(chips.contains("return strip.contains(displayedMenu) ? strip : strip + [displayedMenu]"), """
+            the strip no longer appends the plate a door selected. Then the Visual tab lands on a \
+            plate whose chip the level hides and nothing in the strip says where the player is — \
+            re-decide the gate here in the same commit.
             """)
-        let home = try member("private static func areaHome(_ area: StudioArea) -> StudioMenu? {", in: studio)
-        XCTAssertTrue(home.contains("case .visuals:  return .field"),
-                      "the Visuals area still opens the Field plate — the same destination as the Visual domain")
     }
 
     // MARK: 3 — both doors land, and their destinations are real
@@ -163,8 +162,7 @@ final class TheDomainTabsOpenOnlyWhatExistsTests: XCTestCase {
                 XCTAssertTrue(routing.contains(refusal), """
                     `routing` raises its sheet without `\(refusal)`. The Light tab posts from the \
                     Piece stage, where a medium-detent sheet can still be up; driving a second \
-                    modal true is the invisible tap-blocking layer (the two-modals hang). \
-                    `selectArea` keeps the same guard.
+                    modal true is the invisible tap-blocking layer (the two-modals hang).
                     """)
             }
         } else {

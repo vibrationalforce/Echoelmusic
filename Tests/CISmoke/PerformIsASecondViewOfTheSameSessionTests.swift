@@ -3,7 +3,7 @@
 // derselben Session — gleiche IDs, keine Kopien. Perform kann starten, stoppen, muten und
 // Clips/Parts wechseln").
 //
-// WHAT IT PINS. The Perform plate (the Sound panel behind the area row's "Perform") showed the
+// WHAT IT PINS. The Perform plate (the Sound panel behind the Sound chip) showed the
 // instrument's sound controls and nothing of the song: the parts a player wrote in Compose could
 // be launched only from inside the Workstation. `PerformSessionView` mounts the EXISTING Session
 // projection (`SessionLaunchView`) on that plate — no copy of the grid, no second scene list, no
@@ -21,9 +21,15 @@
 //    `WorkstationView.startSong` with the scene's bar and parts; it constructs no store, calls no
 //    `player.play(`, asks no second `canPlay`, opens no modal, runs no timer; `beatPlayer` is read
 //    only inside the start closure (the freeze law — `pattern` leads to the gliding tempo).
-// 3. The words: the empty note names the area where parts are made BY ITS LABEL, and the
-//    Perform area's spoken hint says the plate now holds the song's scenes (#482: a door's
-//    spoken name lists what it reaches).
+// 3. The words: the empty note names the STAGE where parts are made BY ITS LABEL
+//    (`StudioStage.piece.label` — it named the Compose AREA until the area row went,
+//    2026-10-01, and the note must not name it again). The plate's spoken name lists the
+//    song's scenes through the Sound chip (claim 2's last needle; #482).
+//    GRADING of the 2026-10-01 rewrite: the stage needle and the "Compose" ban are
+//    REGRESSIONS, red on the parent 430b20307 for their named reason (the note said
+//    "in Compose"); the "scene" needle is a COUNTERWEIGHT, green on both. The two
+//    `StudioArea.perform.spokenHint` needles left with the type — the Sound chip's pin carries
+//    the "scenes" half.
 //
 // GRADING (§3). Against the parent (`fec4463dc`) this file does NOT COMPILE —
 // `PerformSessionView` is new — so no assertion has a verdict there: ONE absence (#486), every
@@ -268,16 +274,15 @@ final class PerformIsASecondViewOfTheSameSessionTests: XCTestCase {
 
     // MARK: 3 — the words
 
-    func testTheWordsNameTheAreaAndTheScenes() {
-        XCTAssertEqual(StudioArea.compose.label, "Compose", "ANCHOR: the note names this label")
-        XCTAssertTrue(PerformSessionView.emptyNote.contains(StudioArea.compose.label),
-                      "the empty Perform grid names the area where parts are made")
+    func testTheWordsNameThePieceStageAndTheScenes() {
+        XCTAssertEqual(StudioStage.piece.label, "Piece", "ANCHOR: the note names this label")
+        XCTAssertTrue(PerformSessionView.emptyNote.contains(StudioStage.piece.label + " stage"),
+                      "the empty Perform grid names the stage where parts are made, by the seam's own word")
         XCTAssertTrue(PerformSessionView.emptyNote.contains("scene"))
-        XCTAssertTrue(StudioArea.perform.spokenHint.contains("scenes"), """
-            the Perform door's spoken hint must list the song's scenes, which it now reaches (#482)
+        XCTAssertFalse(PerformSessionView.emptyNote.contains("Compose"), """
+            the empty note names "Compose" — the area row that word labelled is gone (2026-10-01); \
+            a word for a door that no longer exists sends the player looking for it
             """)
-        XCTAssertTrue(StudioArea.perform.spokenHint.contains("Opens the Sound panel."),
-                      "counterweight: it still names the plate it opens")
     }
 
     // MARK: - helpers

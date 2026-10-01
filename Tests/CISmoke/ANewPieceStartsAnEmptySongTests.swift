@@ -38,8 +38,9 @@
 // instrument was on; the plate itself is untouched. The refusal branch (`replaceSlots` false) cannot be driven:
 // `emptySong` always carries `slotCount` slots; it is defensive. The instrument's take, genre and
 // sound are untouched on purpose. Whether the row reads well and VoiceOver speaks it is a device
-// probe. NEEDS-FOUNDER-VERIFY: Library → New piece → the Piece stage shows an empty song with
-// "MIDI 1" and "Audio 1"; Library again → the old song is under Autosave and opens back.
+// probe. NEEDS-FOUNDER-VERIFY: Open → New piece → the Piece stage shows an empty song with
+// "MIDI 1" and "Audio 1"; Open again → the old song is under Autosave and opens back. (The probe
+// said "Library" until the area row was deleted, 2026-10-01; Open is never disabled since.)
 
 import Foundation
 import XCTest
@@ -171,10 +172,10 @@ final class ANewPieceStartsAnEmptySongTests: XCTestCase {
             nothing may force the plate (`TheWorkstationHasADoorTests`) — the action turns the \
             STAGE (slice 2b), through the studio's one hand on it, `showStage`
             """)
-        XCTAssertFalse(action.contains("selectArea("), """
-            the action walks an area door of the instrument again. The empty song and its compose \
-            guide are the Piece stage since slice 2b; an area door selects a plate of the OTHER \
-            stage, which a player on the piece never sees.
+        XCTAssertFalse(action.contains("showStage(.instrument)"), """
+            the action turns the Instrument stage. The empty song and its compose guide are the \
+            Piece stage since slice 2b; a plate of the OTHER stage is one a player on the piece \
+            never sees. (This needle was `selectArea(` until the area row was deleted, 2026-10-01.)
             """)
         XCTAssertFalse(action.contains("stageRaw ="), "the stage moves through `showStage` only (#416)")
         // Counterweights (#343): the stage door leads where the sentence says.

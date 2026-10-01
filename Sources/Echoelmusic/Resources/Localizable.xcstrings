@@ -451,24 +451,6 @@
         }
       }
     },
-    "Compose" : {
-      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Komponieren"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Compose"
-          }
-        }
-      }
-    },
     "Demo" : {
       "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
       "extractionState" : "manual",
@@ -595,24 +577,6 @@
         }
       }
     },
-    "Library" : {
-      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bibliothek"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Library"
-          }
-        }
-      }
-    },
     "Locked" : {
       "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
       "extractionState" : "manual",
@@ -627,24 +591,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Locked"
-          }
-        }
-      }
-    },
-    "Loop length, place in the name, default sound and diagnostics. Opens the Save and Export panel." : {
-      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schleifenlänge, Ort im Namen, Standard-Klang und Diagnose. Öffnet das Panel „Sichern und Export“."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Loop length, place in the name, default sound and diagnostics. Opens the Save and Export panel."
           }
         }
       }
@@ -699,24 +645,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Paused"
-          }
-        }
-      }
-    },
-    "Perform" : {
-      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Spielen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Perform"
           }
         }
       }
@@ -901,24 +829,6 @@
         }
       }
     },
-    "Settings" : {
-      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Einstellungen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Settings"
-          }
-        }
-      }
-    },
     "Stage" : {
       "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
       "extractionState" : "manual",
@@ -1009,24 +919,6 @@
         }
       }
     },
-    "Tempo, variations and mood. Opens the Tempo panel. The arrangement is the Piece stage." : {
-      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tempo, Variationen und Stimmung. Öffnet das Tempo-Panel. Das Arrangement ist die Bühne „Stück“."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tempo, variations and mood. Opens the Tempo panel. The arrangement is the Piece stage."
-          }
-        }
-      }
-    },
     "The instrument is playing. Stop ends all playback and the pulse reading." : {
       "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
       "extractionState" : "manual",
@@ -1059,42 +951,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The instrument you play with your body: sound, effects, mix, mood and the visual field."
-          }
-        }
-      }
-    },
-    "The piece's scenes, sound, effects, mix, master and body input. Opens the Sound panel." : {
-      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die Szenen des Stücks, Klang, Effekte, Mix, Master und Körper-Eingang. Öffnet das Sound-Panel."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The piece's scenes, sound, effects, mix, master and body input. Opens the Sound panel."
-          }
-        }
-      }
-    },
-    "The visual field you play with your fingers. Opens the Field panel." : {
-      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Das visuelle Feld, das du mit den Fingern spielst. Öffnet das Field-Panel."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The visual field you play with your fingers. Opens the Field panel."
           }
         }
       }
@@ -1135,24 +991,6 @@
         }
       }
     },
-    "Visuals" : {
-      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Visuals"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Visuals"
-          }
-        }
-      }
-    },
     "Your piece: its tracks, parts and scenes, import and the media library." : {
       "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
       "extractionState" : "manual",
@@ -1167,24 +1005,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your piece: its tracks, parts and scenes, import and the media library."
-          }
-        }
-      }
-    },
-    "Your saved pieces. Opens the piece list." : {
-      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deine gesicherten Stücke. Öffnet die Stück-Liste."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your saved pieces. Opens the piece list."
           }
         }
       }
@@ -17985,18 +17805,20 @@
         }
       }
     },
-    "Names the piece and saves it. Library opens it again." : {
+    "Names the piece and saves it. Open brings it back." : {
+      "comment" : "Compose guide, Save step (2026-10-01): names the Open door; the Library area it named is gone. „Öffnen“ is the catalog's word for the Open door.",
+      "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Benennt das Stück und sichert es. Die Bibliothek öffnet es wieder."
+            "value" : "Benennt das Stück und sichert es. „Öffnen“ holt es zurück."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Names the piece and saves it. Library opens it again."
+            "value" : "Names the piece and saves it. Open brings it back."
           }
         }
       }
@@ -20673,18 +20495,20 @@
         }
       }
     },
-    "Nothing to launch yet. Parts you write in Compose, and the Echoel's generated music, appear here as scenes to launch on the bar." : {
+    "Nothing to launch yet. Parts you write on the Piece stage, and the Echoel's generated music, appear here as scenes to launch on the bar." : {
+      "comment" : "Perform plate empty state (2026-10-01): names the Piece stage where parts are made; the Compose area it named is gone. Glossary: Stück · Spur · Teil · Szene.",
+      "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Noch nichts zu starten. Teile, die du in Komponieren schreibst, und die generierte Musik des Echoel erscheinen hier als Szenen zum Starten am Takt."
+            "value" : "Noch nichts zu starten. Teile, die du auf der Bühne „Stück“ schreibst, und die generierte Musik des Echoel erscheinen hier als Szenen zum Starten am Takt."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nothing to launch yet. Parts you write in Compose, and the Echoel's generated music, appear here as scenes to launch on the bar."
+            "value" : "Nothing to launch yet. Parts you write on the Piece stage, and the Echoel's generated music, appear here as scenes to launch on the bar."
           }
         }
       }
