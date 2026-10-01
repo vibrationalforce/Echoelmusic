@@ -33050,6 +33050,70 @@
           }
         }
       }
+    },
+    "bars is longer than the 30 s capture buffer" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Takte sind länger als der 30-s-Aufnahmepuffer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "bars is longer than the 30 s capture buffer"
+          }
+        }
+      }
+    },
+    " — use Record instead" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " — nutze stattdessen „Aufnehmen“"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " — use Record instead"
+          }
+        }
+      }
+    },
+    " at this tempo — keep " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " bei diesem Tempo — behalte "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " at this tempo — keep "
+          }
+        }
+      }
+    },
+    " or fewer, or use Record instead" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " oder weniger, oder nutze stattdessen „Aufnehmen“"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " or fewer, or use Record instead"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

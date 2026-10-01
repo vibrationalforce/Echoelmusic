@@ -202,7 +202,8 @@
 // help sentences named "Klang"/"Stimmung"/"Feld" while the chips still read English (parent: seam absent, 2 units missing —
 // ONE finding). E4-101 looked up the field's six self-play motion names, which the Motion picker drew verbatim through
 // `Text(String)` (parent: seams absent, 6 units missing — ONE finding). E4-102 looked up the Visual window's four meter names where the
-// segmented picker draws them (parent: seam absent, 4 units missing — ONE finding). Claim 12
+// segmented picker draws them (parent: seam absent, 4 units missing — ONE finding). E4-103 keyed the one exporter reason
+// E4-55 missed, the too-long message built in `tooLongMessage` (parent: seams absent, 4 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3364,6 +3365,22 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                       "VisualAnalysisMeter lost the E4-102 seam: the meter picker draws its label as a String again")
         XCTAssertFalse(meterPicker.contains("Text(m.label)"), "VisualAnalysisMeter draws a meter label verbatim again")
         try assertGerman(["Waves", "Spectrum", "Scope", "Pulse"], "visual window meter names")
+
+        // E4-103 — `LoopExporter.tooLongMessage` built the "too long for the capture buffer" reason as one interpolated
+        // String, so E4-55's `.failed(String(localized:))` sweep never saw it and the export row read English. The bar
+        // count and `LoopBarLength.label` (already keyed, E4-62) stay operands; the English wording is unchanged.
+        let tooLongReason = try codeOnly("Sources/Echoelmusic/Audio/LoopExporter.swift")
+        for seam in ["String(localized: \"bars is longer than the 30 s capture buffer\")",
+                     "String(localized: \" — use Record instead\")",
+                     "String(localized: \" at this tempo — keep \")",
+                     "String(localized: \" or fewer, or use Record instead\")"] {
+            XCTAssertTrue(tooLongReason.contains(seam), "LoopExporter lost the E4-103 seam: \(seam)")
+        }
+        for verbatim in ["capture buffer — use Record instead", "capture buffer at this tempo"] {
+            XCTAssertFalse(tooLongReason.contains(verbatim), "LoopExporter builds the too-long reason verbatim again: \(verbatim)")
+        }
+        try assertGerman(["bars is longer than the 30 s capture buffer", " — use Record instead", " at this tempo — keep ",
+                          " or fewer, or use Record instead"], "exporter too-long reason")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

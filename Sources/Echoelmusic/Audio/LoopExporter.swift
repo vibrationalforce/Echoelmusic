@@ -141,10 +141,15 @@ public final class LoopExporter {
     }
 
     nonisolated static func tooLongMessage(bars: Int, bpm: Double) -> String {
+        // E4-103: E4-55 keyed every other `.failed` reason and missed this one, because it is
+        // built here instead of inline. The count and `fits.label` stay operands; the English
+        // reads exactly as before.
+        let head: String = "\(bars) " + String(localized: "bars is longer than the 30 s capture buffer")
         guard let fits = longestKeepable(bpm: bpm) else {
-            return "\(bars) bars is longer than the 30 s capture buffer — use Record instead"
+            return head + String(localized: " — use Record instead")
         }
-        return "\(bars) bars is longer than the 30 s capture buffer at this tempo — keep \(fits.label) or fewer, or use Record instead"
+        return head + String(localized: " at this tempo — keep ") + fits.label
+            + String(localized: " or fewer, or use Record instead")
     }
 
     public init() {}
