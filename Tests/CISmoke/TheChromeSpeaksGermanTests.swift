@@ -125,7 +125,9 @@
 // spoken terrain (parent: 14 units missing — ONE finding). E4-65 added the record-take captions (RecordTakeControls),
 // the open refusal (SessionSaveOpen.refusal) and the relink reasons (MediaRelink.userMessage) (parent: 31 units
 // missing — ONE finding). E4-66 added the scene-launch hints (SessionLaunchView.sceneBlock), the look-name fallback
-// (LookBlendMap.name) and the value field's VoiceOver "Default" action (parent: 5 units missing — ONE finding). Claim 12
+// (LookBlendMap.name) and the value field's VoiceOver "Default" action (parent: 5 units missing — ONE finding). E4-67 added
+// the media browser's state lines, relink note, preview refusals and the audio-track fallback (parent: 10 units missing —
+// ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2364,6 +2366,30 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         try assertGerman(["From the next bar, loops every part listed at ", " and returns every other launched track to the piece",
                           "Starts the piece at the start of ", " and loops every part listed at ", "Look ", "Default "],
                          "scene hints, look name and the Default action")
+
+        // E4-67 — the media browser's remaining bare producers: the three state lines `line(…)` renders (a String
+        // parameter, so a literal there never reached the catalog), the relink caption pair, the "still checking" note,
+        // the three preview refusals (TheMediaLibraryIsBrowsedAndPlacedTests compares them at runtime under the test
+        // locale) and the audio-track fallback in the placed sentence.
+        let libraryLines = try codeOnly("Sources/Echoelmusic/Studio/MediaBrowserView.swift")
+        for seam in ["line(String(localized: \"Reading the library…\"))",
+                     "? String(localized: \"Their parts stay in the piece. Relink offers the library's files once one is there.\")",
+                     "note = String(localized: \"A relink is still checking its file.\")",
+                     "if songPlaying { return String(localized: \"Stop the piece to preview a file.\") }",
+                     "?.name ?? String(localized: \"the audio track\")"] {
+            XCTAssertTrue(libraryLines.contains(seam), "MediaBrowserView lost the E4-67 seam `\(seam)`")
+        }
+        for verbatim in ["line(\"Reading the library…\")", "note = \"A relink is still checking its file.\"",
+                         "return \"Stop the piece to preview a file.\"", "?? \"the audio track\""] {
+            XCTAssertFalse(libraryLines.contains(verbatim), "MediaBrowserView spells a line verbatim again: `\(verbatim)`")
+        }
+        try assertGerman(["Reading the library…", "Couldn't read the media library.",
+                          "No imported audio yet — Import Audio copies a file here.",
+                          "Their parts stay in the piece. Relink offers the library's files once one is there.",
+                          "Their parts stay in the piece. Relink points its parts at a library file of the same length.",
+                          "A relink is still checking its file.", "Stop the piece to preview a file.",
+                          "Stop the instrument's loop to preview a file.", "Sound is off right now, so a preview can't play.",
+                          "the audio track"], "media browser lines")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

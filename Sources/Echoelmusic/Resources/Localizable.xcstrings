@@ -26426,6 +26426,166 @@
           }
         }
       }
+    },
+    "Reading the library…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bibliothek wird gelesen…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading the library…"
+          }
+        }
+      }
+    },
+    "Couldn't read the media library." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Medienbibliothek konnte nicht gelesen werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't read the media library."
+          }
+        }
+      }
+    },
+    "No imported audio yet — Import Audio copies a file here." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch kein importiertes Audio — „Audio importieren“ kopiert eine Datei hierher."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No imported audio yet — Import Audio copies a file here."
+          }
+        }
+      }
+    },
+    "Their parts stay in the piece. Relink offers the library's files once one is there." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihre Teile bleiben im Stück. „Neu verknüpfen“ bietet die Dateien der Bibliothek an, sobald eine da ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Their parts stay in the piece. Relink offers the library's files once one is there."
+          }
+        }
+      }
+    },
+    "Their parts stay in the piece. Relink points its parts at a library file of the same length." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihre Teile bleiben im Stück. „Neu verknüpfen“ zeigt ihre Teile auf eine Bibliotheksdatei gleicher Länge."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Their parts stay in the piece. Relink points its parts at a library file of the same length."
+          }
+        }
+      }
+    },
+    "A relink is still checking its file." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Neuverknüpfung prüft noch ihre Datei."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A relink is still checking its file."
+          }
+        }
+      }
+    },
+    "Stop the piece to preview a file." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stoppe das Stück, um eine Datei vorzuhören."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop the piece to preview a file."
+          }
+        }
+      }
+    },
+    "Stop the instrument's loop to preview a file." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stoppe den Loop des Instruments, um eine Datei vorzuhören."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop the instrument's loop to preview a file."
+          }
+        }
+      }
+    },
+    "Sound is off right now, so a preview can't play." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Ton ist gerade aus, deshalb kann keine Vorschau spielen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sound is off right now, so a preview can't play."
+          }
+        }
+      }
+    },
+    "the audio track" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "die Audiospur"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the audio track"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

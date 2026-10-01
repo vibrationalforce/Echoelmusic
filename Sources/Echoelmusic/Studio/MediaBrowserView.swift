@@ -200,11 +200,11 @@ struct MediaBrowserView: View {
     private func content(usage: [MediaAsset.Key: MediaAsset.Usage]) -> some View {
         switch listing {
         case nil:
-            line("Reading the library…")
+            line(String(localized: "Reading the library…"))
         case .unreadable:
-            line("Couldn't read the media library.")
+            line(String(localized: "Couldn't read the media library."))
         case .assets(let assets) where assets.isEmpty:
-            line("No imported audio yet — Import Audio copies a file here.")
+            line(String(localized: "No imported audio yet — Import Audio copies a file here."))
         case .assets(let assets):
             let shown = MediaAsset.matching(assets, query: query)
             VStack(alignment: .leading, spacing: 6) {
@@ -271,8 +271,8 @@ struct MediaBrowserView: View {
                 }
             }
             line(candidates.isEmpty
-                 ? "Their parts stay in the piece. Relink offers the library's files once one is there."
-                 : "Their parts stay in the piece. Relink points its parts at a library file of the same length.")
+                 ? String(localized: "Their parts stay in the piece. Relink offers the library's files once one is there.")
+                 : String(localized: "Their parts stay in the piece. Relink points its parts at a library file of the same length."))
         }
     }
 
@@ -310,7 +310,7 @@ struct MediaBrowserView: View {
             return
         }
         guard relinking == nil else {
-            note = "A relink is still checking its file."
+            note = String(localized: "A relink is still checking its file.")
             return
         }
         note = nil
@@ -411,9 +411,9 @@ struct MediaBrowserView: View {
     /// light the button and play nothing.
     static func previewRefusal(songPlaying: Bool, loopPlaying: Bool,
                                engineRunning: Bool) -> String? {
-        if songPlaying { return "Stop the piece to preview a file." }
-        if loopPlaying { return "Stop the instrument's loop to preview a file." }
-        if !engineRunning { return "Sound is off right now, so a preview can't play." }
+        if songPlaying { return String(localized: "Stop the piece to preview a file.") }
+        if loopPlaying { return String(localized: "Stop the instrument's loop to preview a file.") }
+        if !engineRunning { return String(localized: "Sound is off right now, so a preview can't play.") }
         return nil
     }
 
@@ -457,7 +457,7 @@ struct MediaBrowserView: View {
             #endif
             selection.selectRegion(placed.region.id, in: timeline.document)
             let laneName = timeline.document.lanes
-                .first { $0.id == placed.region.laneID }?.name ?? "the audio track"
+                .first { $0.id == placed.region.laneID }?.name ?? String(localized: "the audio track")
             note = MediaPlacement.successNote(placed, laneName: laneName)
         case .failure(let failure):
             note = failure.userMessage
