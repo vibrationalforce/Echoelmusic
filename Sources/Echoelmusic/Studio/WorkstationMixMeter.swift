@@ -20,8 +20,9 @@
 // `TheMenuHostReadsNoHotStateTests`). Read HERE, only this leaf re-renders. `WorkstationView`
 // mounts it and names no engine.
 //
-// ⛔ NOT A PER-TRACK METER. There is no per-lane meter source; the mockup's per-track bars were
-// rejected by the vision gate for exactly that reason (MODES_CENSUS § Design). This is the mix.
+// ⛔ NOT A PER-TRACK METER — this is the mix. The per-track meter is `TrackLevelMeter` (B5), and it
+// exists only for a track with its own poly voice; the mockup's bars stay rejected (MODES_CENSUS
+// § Design) for every track without a source of its own.
 
 #if canImport(SwiftUI)
 import SwiftUI
@@ -33,6 +34,8 @@ enum MixLevelMeter {
     /// The meter is `3 · RMS`, so this is ≈ −10.5 dBFS RMS — a LOUD mix, not clipping (the limiter
     /// follows the meter). That is why the colour is `warning`, never `danger`: red would read as
     /// "I am clipping". One threshold for every mix-level bar (Master panel and Workstation, #416).
+    /// ⚠️ B5: the Piece mixer's `TrackLevelMeter` draws a SAMPLE PEAK through the same bar, so there
+    /// the same 0.9 means ≈ −0.9 dBFS peak for that one track — still `warning`, never `danger`.
     nonisolated static let warnLevel: Float = 0.9
 
     /// The share of the bar to fill, 0…1. A non-finite reading draws nothing rather than a

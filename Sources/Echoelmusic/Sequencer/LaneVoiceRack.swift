@@ -210,6 +210,16 @@ public final class LaneVoiceRack {
         return voices[slot]
     }
 
+    /// B5: the post-fader level of the voice a slot SOUNDS through — nil unless that is the slot's
+    /// own poly voice. A slot bound to the sub / sampler / body unit has no meter cell, and the sub
+    /// unit can also be the Echoel track's voice, so a reading there would be another track's
+    /// sound. Nil also for an unattached rack or a slot out of range. Asks `binding(forSlot:)`, the
+    /// one place a slot resolves to a physical voice — no second routing rule (#416).
+    public func meterLevel(slot: Int) -> Float? {
+        guard case .poly = binding(forSlot: slot), let slotVoice = voice(slot: slot) else { return nil }
+        return slotVoice.outputPeak
+    }
+
     /// S2-W1 (dissolution): push the melodic-bus insert (filter/drive) to EVERY
     /// rack slot voice, so the "Melodic" strip and "Sound & FX (this track)"
     /// honestly reach ALL poly lanes — before this, only the primary

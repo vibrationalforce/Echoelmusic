@@ -34165,6 +34165,60 @@
         }
       }
     },
+    "Track level" : {
+      "comment" : "Piece mixer (B5): spoken name of a track's level bar",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spurpegel"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Track level"
+          }
+        }
+      }
+    },
+    "Peak of this track's sound after its fader, as a share of full scale. Moves while the piece plays." : {
+      "comment" : "Piece mixer (B5): VoiceOver hint on a track's level bar",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spitzenpegel des Klangs dieser Spur nach ihrem Regler, als Anteil der Vollaussteuerung. Bewegt sich, während das Stück spielt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peak of this track's sound after its fader, as a share of full scale. Moves while the piece plays."
+          }
+        }
+      }
+    },
+    "Not metered" : {
+      "comment" : "Piece mixer (B5): shown instead of a level bar on a track without its own voice",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne Pegelanzeige"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not metered"
+          }
+        }
+      }
+    },
     "Export" : {
       "comment" : "Piece tab (B4): the tile that shares the whole piece as a MIDI file",
       "extractionState" : "manual",

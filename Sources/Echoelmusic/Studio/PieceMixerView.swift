@@ -19,8 +19,10 @@
 //
 // ⚠️ ONE CONTROL PER FACT ON SCREEN: the Workstation shows this view INSTEAD of the arrangement
 // and its track column (the "Mix" tab), never beside them, so a Mute here and the track header's
-// Mute are never on screen together. No meters: a level meter needs a per-track tap on the render
-// path (B5, audio-thread review, device) — a strip that pretends to meter would be decoration.
+// Mute are never on screen together. ⭐ B5 — THE METER IS `TrackLevelMeter`, a leaf in its own
+// file that reads an audio-thread cell inside its own `TimelineView`; this list names no engine and
+// never re-renders at meter rate. A track without its own voice says "Not metered" — never a bar
+// that pretends (#164/#227).
 // ⭐ B3b — EVERY EDIT HERE IS ONE STEP IN THE PIECE'S UNDO, one per gesture: each finger sample runs
 // inside `TimelineStore.editLaneMix(id:_:)` (the write is still the `TrackMix` call), and the field's
 // `onCommit` — or the tap itself for Mute/Solo — closes it with `commitLaneMix(id:)` (`.laneMix`, the
@@ -115,6 +117,8 @@ struct PieceMixerView: View {
                     }
                 }
             }
+            // B5: the level this track sends, post-fader — or "Not metered" (TrackLevelMeter.swift).
+            TrackLevelMeter(laneID: lane.id, voiceCapacity: voiceCapacity)
             EchoelValueField(
                 label: "Level",
                 value: Binding(

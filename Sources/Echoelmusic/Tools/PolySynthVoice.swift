@@ -247,6 +247,17 @@ public final class PolySynthVoice {
     /// feedback (≤ 0.95) × damping — strictly quieter — so sleeping is
     /// genuinely safe and no echo train is ever cut or frozen mid-ring.
     nonisolated private static let idleFrameThreshold = Int(2.5 * sampleRate)
+    /// B5 — this voice's own held output peak (0…), the per-track meter's ONE cell. Written once
+    /// per render block (`heldPeak`), read only through `outputPeak` by a leaf `TimelineView`
+    /// (`TrackLevelMeter`). Deliberately NOT observed: a write on every render block must not notify
+    /// anything (the 10.76.41/50 law). One aligned Float — the house atomic-width standard.
+    @ObservationIgnored
+    nonisolated(unsafe) private var renderPeakHold: Float = 0
+    /// The master meter's release, per FRAME: ×0.92 per 60 Hz tick (`AudioEngine`), i.e. ln(0.92)
+    /// over 800 frames at 48 kHz. A literal, read on the audio thread like `idlePeakFloor` above.
+    nonisolated private static let meterDecayPerFrame: Float = -1.0423e-4
+    /// Below this the held peak reads exactly 0 (≈ −120 dBFS) — no denormal tail on the audio thread.
+    nonisolated private static let meterFloor: Float = 1e-6
 
     /// One-time guard so the control-thread note breadcrumb fires only once.
     nonisolated(unsafe) fileprivate static var noteTraced = false
@@ -962,6 +973,25 @@ public final class PolySynthVoice {
         sourceNode.volume = max(0, min(2, gain.isFinite ? gain : 0))   // non-finite ⇒ silent
     }
 
+    /// B5: the track meter's reading — the held render peak times the applied fader
+    /// (`sourceNode.volume`, where Mute and Solo land as 0), so it is POST-fader with no second
+    /// mute rule. Pre-pan, pre-master. A main-actor read of an audio-thread cell that notifies nobody.
+    var outputPeak: Float {
+        let level = renderPeakHold * sourceNode.volume
+        return level.isFinite ? Swift.max(level, 0) : 0
+    }
+
+    /// B5: one block's step of the held peak — instant rise, the master meter's exponential
+    /// release over `frames`, exact 0 under `meterFloor`. Pure arithmetic (one `expf`): safe on
+    /// the audio thread. Non-finite in, finite out — a NaN must not freeze the bar (#416).
+    nonisolated static func heldPeak(previous: Float, blockPeak: Float, frames: Int) -> Float {
+        let decay = expf(meterDecayPerFrame * Float(Swift.max(frames, 0)))
+        let decayed = previous.isFinite ? previous * decay : 0
+        let rise = blockPeak.isFinite ? blockPeak : 0
+        let held = Swift.max(rise, decayed)
+        return held < meterFloor ? 0 : held
+    }
+
     // MARK: - Bus subscription (bio modulation only — reads latestBio snapshot)
 
     /// Begin polling `bus.latestBio` at 10 Hz and fanning bio modulation across
@@ -1159,6 +1189,7 @@ public final class PolySynthVoice {
                 renderIdle = false; idleQuietFrames = 0   // stimulus armed → wake
             } else {
                 fxChain.noteRenderSkipped()
+                renderPeakHold = 0   // B5: a sleeping voice meters silence
                 Self.silence(audioBufferList: audioBufferList, frameCount: frameCount)
                 return
             }
@@ -1204,13 +1235,17 @@ public final class PolySynthVoice {
         // P1 idle-skip bookkeeping: track the block peak (plain loop, pure
         // arithmetic — audio-thread safe). 2.5 s of consecutive digital
         // silence with no stimulus armed → sleep until the next note command.
+        // B5: the block peak is ALSO the track meter's input, so it is measured on every
+        // rendered block, entrainment or not — one store into `renderPeakHold`, no allocation.
+        // The sleep decision below still runs only without a stimulus, exactly as before.
+        var peak: Float = 0
+        for i in 0..<count {
+            let l = abs(scratchL[i]), r = abs(scratchR[i])
+            if l > peak { peak = l }
+            if r > peak { peak = r }
+        }
+        renderPeakHold = Self.heldPeak(previous: renderPeakHold, blockPeak: peak, frames: count)
         if !audioEntrainmentActive {
-            var peak: Float = 0
-            for i in 0..<count {
-                let l = abs(scratchL[i]), r = abs(scratchR[i])
-                if l > peak { peak = l }
-                if r > peak { peak = r }
-            }
             if peak < Self.idlePeakFloor {
                 idleQuietFrames += count
                 if idleQuietFrames >= Self.idleFrameThreshold {
