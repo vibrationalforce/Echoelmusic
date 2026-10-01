@@ -198,7 +198,9 @@
 // verbatim (parent: 2 units missing — ONE finding). E4-97 keyed the bio-source short names (BioSourceOption.shortName),
 // which the pill row renders and speaks beside the E4-72 menu labels (parent: 3 units missing — ONE finding). E4-98 looked the floating window's four corner actions up by their
 // rawValue (one definition stays in SnapCorner; the key is the rawValue) (parent: 4 units missing — ONE finding). E4-99 keyed the routing surface's two light output names, which
-// `NetworkOutputHeader` renders and speaks as a String (parent: 2 units missing — ONE finding). Claim 12
+// `NetworkOutputHeader` renders and speaks as a String (parent: 2 units missing — ONE finding). E4-100 drew the instrument's chip strip as catalog keys — the German
+// help sentences named "Klang"/"Stimmung"/"Feld" while the chips still read English (parent: seam absent, 2 units missing —
+// ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3325,6 +3327,16 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertFalse(outputNames.contains(verbatim), "PatchbayView names a light output verbatim again: `\(verbatim)`")
         }
         try assertGerman(["sACN · Light", "Art-Net · Light"], "routing light output names")
+
+        // E4-100 — `menuChip` drew `Text(menu.label)`, a String, so the ten chips read English under German help text that
+        // already names them in German (E4-69). The `label` switch keeps its bare literals on purpose:
+        // TheDeployNoteNamesRealDoorsTests parses them as the shipped English names. The KEY is looked up where it is drawn.
+        let chipStrip = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        XCTAssertTrue(chipStrip.contains("Text(LocalizedStringKey(menu.label))"),
+                      "EchoelStudioView lost the E4-100 seam: the chip strip draws its label as a String again")
+        XCTAssertFalse(chipStrip.contains("Text(menu.label)"), "EchoelStudioView draws a chip label verbatim again")
+        try assertGerman(["Bio", "Tempo", "Sound", "Mix", "FX", "Master", "Mood", "Save/Export", "Field", "Workstation"],
+                         "instrument chip labels")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

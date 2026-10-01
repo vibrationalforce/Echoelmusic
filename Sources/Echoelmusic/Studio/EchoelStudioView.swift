@@ -3229,7 +3229,12 @@ struct EchoelStudioView: View {
             activeMenu = menu
         } label: {
             chipTapTarget {
-                Text(menu.label)
+                // E4-100: the label is a catalog KEY. Drawn as a plain String it took the
+                // StringProtocol overload, so the chips read "Sound"/"Mood"/"Field" while the
+                // German help sentences already named them "Klang"/"Stimmung"/"Feld". The
+                // `label` switch keeps its bare literals: TheDeployNoteNamesRealDoorsTests
+                // reads them as the shipped English chip names.
+                Text(LocalizedStringKey(menu.label))
                     .font(EchoelTheme.font(12, .semibold))
                     .foregroundStyle(isActive ? EchoelTheme.onPrimary : EchoelTheme.text)
                     .padding(.horizontal, 10)
