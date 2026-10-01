@@ -85,7 +85,11 @@ struct GuideOverlay: View {
                 .fixedSize(horizontal: false, vertical: true)
             // The detail SCROLLS instead of truncating or shrinking — the a11y audit's
             // rule (#353c: "shrinking text the user asked to be larger is the anti-fix").
-            // maxHeight keeps the card from swallowing the instrument beneath it.
+            // maxHeight keeps the card from swallowing the instrument beneath it. 96 pt is
+            // about five lines of 13 pt: on a 375 × 667 phone the old 220 cap let the card,
+            // which opens by default, cover roughly 400 pt — more than half the screen and
+            // the whole arrange area (founder 2026-10-01: "Bereiche zu groß"). Longer text
+            // still scrolls; nothing is cut.
             ScrollView {
                 Text(entry.detail)
                     .font(EchoelTheme.font(13))
@@ -93,7 +97,7 @@ struct GuideOverlay: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxHeight: 220)
+            .frame(maxHeight: 96)
             HStack(spacing: 8) {
                 pageButton("chevron.left", label: "Previous guide card", disabled: index == 0) {
                     page = index - 1
