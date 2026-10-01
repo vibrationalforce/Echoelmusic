@@ -34104,6 +34104,24 @@
           }
         }
       }
+    },
+    "Time signature" : {
+      "comment" : "Workstation redesign A4: VoiceOver label of the head's metre readout (4/4) beside the tempo",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taktart"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time signature"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

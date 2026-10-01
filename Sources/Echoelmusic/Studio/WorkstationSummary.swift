@@ -160,6 +160,30 @@ public struct WorkstationSummary: Equatable, Sendable {
         return String(localized: "Bar ") + "\(barNumber(forTick: t))" + String(localized: " · Beat ") + "\(beat)"
     }
 
+    /// "12.3.2" — the same spot as `positionText(forTick:)` in the counter form a DAW's transport
+    /// display uses: bar · beat · sixteenth, each one-based (workstation redesign A4, the head's
+    /// `ProjectPositionReadout`). The bar is `barNumber(forTick:)` and the beat is derived exactly
+    /// as `positionText` derives it, so the head and the plate's readout cannot disagree (#416).
+    /// The sixteenth is one transport step: `TimelineRegionPlayer.currentTick` moves a step at a
+    /// time, so a finer unit would print a precision the position does not have. Digits only —
+    /// a counter needs no catalog word. A negative tick folds to the top, like the bar rule.
+    public static func counterText(forTick tick: Int) -> String {
+        let t = Swift.max(0, tick)
+        let perBar = TimelineTime.ticksPerBar
+        let perBeat = TimelineTime.ticksPerBeat
+        let perStep = TimelineTime.ticksPerTransportStep
+        let inBar = perBar > 0 ? t % perBar : 0
+        let beat = perBeat > 0 ? inBar / perBeat + 1 : 1
+        let sixteenth = perBeat > 0 && perStep > 0 ? (inBar % perBeat) / perStep + 1 : 1
+        return "\(barNumber(forTick: t)).\(beat).\(sixteenth)"
+    }
+
+    /// "4/4" — the metre the counter counts in (A4). Read from `TimelineTime.beatsPerBar`, the
+    /// constant `barNumber(forTick:)` divides by, so the head cannot print a metre the bars are not
+    /// counted in. The denominator is the quarter because `TimelineTime.ticksPerBeat` IS
+    /// `ticksPerQuarter` — the timeline has no other beat unit; a metre map would change both.
+    public static var meterText: String { "\(TimelineTime.beatsPerBar)/4" }
+
     /// "bar 3" or "bars 3 to 7" — the span a lane's content occupies, said once so the printed
     /// and spoken forms cannot disagree (#416).
     public static func barSpan(firstTick: Int, lastTick: Int, joiner: String) -> String {

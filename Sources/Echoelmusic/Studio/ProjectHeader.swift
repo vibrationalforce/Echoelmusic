@@ -11,10 +11,11 @@
 // is the existing take door (`RecordTakeButton`) — so there is no second clock and no copy.
 //
 // ⚠️ IT SITS IN THE ROOT (`WorkspaceView`), ABOVE EVERY MENU HOST, SO IT READS NOTHING HOT.
-// Every flag below changes on a start, a stop, an edit or a tap. The one hot value — the tempo,
-// which glides at up to ~20 Hz — is read ONLY inside `ProjectTempoReadout`, its own leaf, so the
-// glide rebuilds that one `Text` and never this header or anything below it (the 10.76.41/50
-// freeze law, and its ROOT rule).
+// Every flag below changes on a start, a stop, an edit or a tap. The two hot values are each read
+// ONLY inside their own leaf: the tempo, which glides at up to ~20 Hz (`ProjectTempoReadout`), and
+// the piece's position, which moves every transport step while it plays (`ProjectPositionReadout`,
+// workstation redesign A4). Each rebuilds its one `Text` and never this header or anything below
+// it (the 10.76.41/50 freeze law, and its ROOT rule).
 //
 // ⚠️ NO MODAL. Nothing here presents a sheet, alert or popover (the black-screen law); the
 // header is one more child of the chrome `Group`, and inherits that group's ONE Dynamic Type
@@ -139,8 +140,16 @@ struct ProjectHeader: View {
         }
     }
 
-    /// Name, status, tempo and place as ONE VoiceOver element: "My song, Playing song, 120 BPM,
-    /// Keys · part at bar 3". Legible numbers first (the science-first display rule).
+    /// Name, status, position, tempo, metre and place as ONE VoiceOver element: "My piece, Playing
+    /// piece, Position in the piece Bar 3 · Beat 1, 120 BPM, Time signature 4/4, Keys · part at bar
+    /// 3". Legible numbers first (the science-first display rule).
+    ///
+    /// A4 (workstation redesign, founder 2026-10-01, the tablet mockup's display): position · tempo ·
+    /// metre read as ONE counter line, in the order every DAW's transport display uses. The KEY of
+    /// that display is not repeated here: `CompositionHeaderStrip` shows it one row above, in the
+    /// same chrome group over both stages, as the control that sets it — a second copy here would
+    /// be a second statement of one fact (#416). The metre and the position are `fixedSize`, so it
+    /// is the PLACE that yields when the row runs out of width, never a number.
     private func summary(name: String, place: String, status: ProjectTransport.Status) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(name)
@@ -152,7 +161,14 @@ struct ProjectHeader: View {
                 Text(ProjectTransport.statusWord(status))
                     .font(EchoelTheme.font(11, .semibold))
                     .foregroundStyle(status == .stopped ? EchoelTheme.dim : EchoelTheme.text)
+                ProjectPositionReadout()
                 ProjectTempoReadout()
+                Text(verbatim: WorkstationSummary.meterText)
+                    .font(EchoelTheme.font(11).monospacedDigit())
+                    .foregroundStyle(EchoelTheme.text)
+                    .fixedSize()
+                    .accessibilityLabel("Time signature")
+                    .accessibilityValue(WorkstationSummary.meterText)
                 Text(place)
                     .font(EchoelTheme.font(11))
                     .foregroundStyle(EchoelTheme.dim)
@@ -289,5 +305,55 @@ private struct ProjectTempoReadout: View {
             .font(EchoelTheme.font(11).monospacedDigit())
             .foregroundStyle(EchoelTheme.text)
             .accessibilityLabel("\(bpm) BPM")
+    }
+}
+
+/// A4 (workstation redesign, founder 2026-10-01) — the piece's position as the counter a DAW's
+/// transport display shows: "12.3.2", bar · beat · sixteenth, one-based. Its OWN leaf, for the
+/// reason the tempo above has one: the position moves every transport step while the piece plays.
+/// `TimelineRegionPlayer.currentTick` is `@ObservationIgnored`, so a body read would neither
+/// subscribe nor update — a frozen number — and making it observable would rebuild this whole
+/// header at the step rate (the 10.76.41/50 freeze law, ROOT rule). So the leaf redraws ITSELF
+/// with a `TimelineView` at 15 Hz, the idiom of `SongPositionReadout` and the arrange playhead,
+/// paused while the piece is stopped. It is a REDRAW, not a clock: it reads the one player's
+/// position and schedules nothing.
+///
+/// ⚠️ STOPPED IT READS "1.1.1", AND THAT IS A FACT, NOT A PLACEHOLDER: both Plays that start the
+/// whole piece — this header's and the plate's — start from the top (`fromTick: 0`). The part
+/// bar's Play starts at a part and the plate's caption names that bar; the head does not guess it.
+/// ⚠️ IT KEEPS ONE WIDTH. It never disappears (a counter that came only while playing would
+/// re-flow the head on every Play), and a hidden three-digit template reserves the width of bar
+/// 100, so reaching bar 10 or bar 100 mid-play cannot widen the summary and make the row's
+/// `ViewThatFits` jump to another shape. Past bar 999 it grows — over half an hour at 120 BPM.
+///
+/// The digits come from `WorkstationSummary.counterText(forTick:)`, the one bar-number rule
+/// (#416); VoiceOver hears `positionText` ("Bar 12 · Beat 3"), the sentence the plate's readout
+/// already speaks, never three bare numbers.
+///
+/// ⚠️ THE TOP BAR'S `TransportPositionView` IS ALSO "b.b.s" — the instrument LOOP's position,
+/// folded to the loop length. While the piece plays both move and name different bars. Which of
+/// the two keeps that form is a founder question (docs/dev/FOUNDER_INBOX.md), not this leaf's call.
+@MainActor
+private struct ProjectPositionReadout: View {
+    @Environment(TimelineRegionPlayer.self) private var player
+
+    var body: some View {
+        let playing = player.isPlaying
+        TimelineView(.animation(minimumInterval: 1.0 / 15.0, paused: !playing)) { _ in
+            let tick = playing ? player.currentTick : 0
+            ZStack(alignment: .leading) {
+                Text(verbatim: "888.4.4")
+                    .hidden()
+                    .accessibilityHidden(true)
+                Text(verbatim: WorkstationSummary.counterText(forTick: tick))
+                    .foregroundStyle(playing ? EchoelTheme.accent : EchoelTheme.dim)
+            }
+            .font(EchoelTheme.font(11, .semibold).monospacedDigit())
+            .lineLimit(1)
+            .fixedSize()
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Position in the piece")
+            .accessibilityValue(WorkstationSummary.positionText(forTick: tick))
+        }
     }
 }
