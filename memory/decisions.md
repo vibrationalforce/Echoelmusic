@@ -4782,3 +4782,30 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Model note:** from this commit on the session runs on a different model (founder switched); commit trailers follow
   the harness attribution. No artifact names a model.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-88: the tuning banner headline (fe60d3bde)
+
+- **Decision:** `TuningStatusText.title` (Studio/TuningStatusBanner) returns keyed sentence heads („Abweichende
+  Stimmung: “ / „Abweichender Kammerton: A4 = “) plus operands — the system name (keyed since E4-85), the Hz figure
+  and the bare `, A4 = ` / ` Hz`. Catalog 1890 → 1892.
+- **Why:** the old interpolated literals went into `Text(title)`, a String position, so they never reached the catalog.
+- **Kept:** the English is byte-identical (mirrored in Python); the `EchoelDecimalText.string(a4Hz, decimals: 2)` call
+  DetunedInstrumentSaysSoTests pins stays in the title body; `(false, false): return ""` untouched.
+- **Guard:** claim 11 E4-88 block (3 seams, 1 verbatim absence, 2 units; 404 → 406 XCTAssert). WORK PASS / HEAD FAIL.
+- **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-89: modifier titles were a blind spot of the chrome walk (b3f3e1788)
+
+- **Finding:** claim 10 (`testEveryPanelTextOfTheReachableChromeFilesHasAGermanUnit`) matched only view constructors,
+  so a title handed to `.alert(…)` or `.navigationTitle(…)` was never a site. Five titles shipped English with no
+  guard noticing: „Save piece“, „Save mood“, „Save sound“, „Open piece“, „Recovery“.
+- **Decision:** the walk's alternation also matches `alert|navigationTitle|confirmationDialog`. The literal there is
+  already a LocalizedStringKey, so the fix is catalog-only (+6 incl. the identical unit for the proper name EchoelFX).
+  Catalog 1892 → 1898. No Sources Swift line changed.
+- **Measured:** widened walk on the HEAD catalog = 554 sites, 6 missing; on WORK = 554 sites, 0 missing. The old walk
+  read [] at HEAD — that was the blindness, not a pass.
+- **Guard:** claim 11 E4-89 block (5 seams over EchoelStudioView + SafeModeView, 6 units; 406 → 408 XCTAssert).
+  WORK PASS / HEAD FAIL. Whole-claim-11: 155 files, 654 needles, 0 broken.
+- **Law for the next walk:** a scan that only knows the constructors it was written for reports green over every
+  other position a string can reach the screen through — enumerate the POSITIONS, not just the views.
+- **Review:** 2026-10-31.

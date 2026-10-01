@@ -41677,3 +41677,12 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-87-Block (7 Nähte, Zähl-Pins 12/10, 2 verbatim Abwesenheiten, 22 Einheiten; XCTAssert 398 → 404). Benotung `scratchpad/transcribe_e4_87.py`: HEAD FAIL (7/2/22 — EIN Befund), WORK PASS. Gesamt-Anspruch-11 646/0 (152 Dateien). Checker OK, Sources-Klammerbilanz 0.
 - **Gates:** 823e502fa (#380) und 5c906c85b komplett grün inkl. Auto-Merge 4032/4033 → main (CI/CD-Conclusion failure = #396-Form). Stapel E4-86 · E4-87 nach Compile Check 3135 gepusht.
 - **Sitzung:** Founder hat das Modell gewechselt; get_session bestätigt den Wechsel. Kontext vollständig weitergeführt, keine Lücke im E4-Strang.
+
+## 2026-10-01 — E4-88 · E4-89: Stimmungs-Banner und Modifier-Titel (fe60d3bde · b3f3e1788)
+
+- **E4-88:** die Überschrift des Stimmungs-Banners besteht aus Schlüssel-Satzköpfen plus Operanden (Systemname, Hz-Zahl, „, A4 = “, „ Hz“). Katalog 1890 → 1892. Englisch byte-identisch, DetunedInstrumentSaysSoTests-Nadel bleibt im Rumpf.
+- **E4-89 (Wächter-Blindheit):** Anspruch 10 kannte nur View-Konstruktoren; `.alert`/`.navigationTitle`-Titel waren nie ein Fundort. Fünf englisch ausgelieferte Titel („Save piece“, „Save mood“, „Save sound“, „Open piece“, „Recovery“) plus die identische EchoelFX-Einheit. Katalog 1892 → 1898, null Swift-Zeilen in Sources.
+- **Gemessen:** erweiterter Lauf auf HEAD-Katalog 554 Fundorte / 6 fehlend, auf WORK 554 / 0. Der alte Lauf meldete auf HEAD [] — Blindheit, kein Bestehen.
+- **Wächter:** Anspruch 11 E4-88 (3 Nähte, 1 Abwesenheit, 2 Einheiten) und E4-89 (5 Nähte, 6 Einheiten); XCTAssert 404 → 408. Beide Transkriptionen WORK PASS / HEAD FAIL. Gesamt-Anspruch-11 654/0 (155 Dateien).
+- **Gates:** e004aa6f2 Compile Check 3136 ✓, Quick Test 3864 ✓, Auto-Merge Docs 597 ✓. Stapel E4-88 · E4-89 danach gepusht (Spitze b3f3e1788).
+- **Nebenbefund Monitor:** die Gate-Schleife suchte `Echoel_CI/CD_Pipeline`, der gekürzte Name ist `Echoelmusic_CI/CD_Pipe` — ALL_DONE konnte nie feuern. Neue Schleife sucht `CI/CD`.
