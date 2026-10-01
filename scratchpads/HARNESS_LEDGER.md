@@ -113,6 +113,16 @@ won, and what is a known dead-end**, so the loop climbs instead of circling.
 | v10.79.195 | Immersive Stage — Touch room-map, each track a draggable spatial object (SpatialSceneStore + ImmersiveStageMath + ImmersiveStageView) | green |
 | v10.79.194 | Multi-Roll (tracks play simultaneously) + per-track Record (arm→play→capture MIDI/bio→Clip+region) | green |
 
+## OBSERVATION + PLAYBOOK (2026-10-01, Deploy 10.79.484): ein Upload-Rot kann ein KONTO-Rot sein
+
+TestFlight-Lauf 2608: Archive grün, „Export & Upload“ rot mit `403 FORBIDDEN.REQUIRED_AGREEMENTS_MISSING_OR_EXPIRED`
+(„A required agreement is missing or has expired“). Der Workflow nennt das korrekt „non-transient“ und versucht
+nicht erneut. **Kein Code, keine Signatur, kein Flake** — das Account-Holder-Konto muss eine Vereinbarung
+akzeptieren. Die Fehlerzeile steht ~100 Zeilen VOR dem Log-Ende; die letzten 120 Zeilen zeigen nur den
+Signatur-Diagnose-Auszug und führen auf eine falsche Spur. **Playbook:** `grep -n 'error: exportArchive'` im
+Job-Log (tail ≥ 1500); bei REQUIRED_AGREEMENTS → FOUNDER_INBOX §3, danach „Re-run failed jobs“ desselben Laufs —
+NIE `.deploy/release` neu anfassen (das wäre ein zweiter Build mit neuer Nummer für denselben Code).
+
 ## DEAD-END + PLAYBOOK (2026-09-25 overnight P8, c06ac2167 → e24010296): narrowing a type's DOMAIN reddens a guard that no text checker can see
 
 **What happened.** `c06ac2167` clamped `EchoelReverb.roomSize`/`damping` to 0…1 at the type (a finite 1.5 from a decoded preset diverged the tank). All six checkers exited 0. The independent review found `TheAUv3TailCoversTheReverbTests` claim 3 RED on the correct tree: it drove a runaway edge with `reverb.roomSize = 1.2`, a value the type now refuses. The dependency was a BEHAVIOUR (an out-of-domain write that used to diverge), not a needle, so `dead-needles`/`moved-needles`/`count-pins` are blind to it by construction.

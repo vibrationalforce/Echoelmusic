@@ -102,13 +102,14 @@ Familien. Wer eine Bitte am Gerät erledigt, markiert sie an der Quelle
 
 ## §3 · Founder-gated Befunde — berichten, nicht editieren
 
-Vier Pfade darf keine Sitzung ändern (`.claude/rules/context.md` §3, Hook seit 2026-09-28):
-`.github/workflows/**`, `project.yml`, `Resources/iOS/Info.plist`, `.deploy/release`. Was dort
+Drei Pfade darf keine Sitzung ändern (`.claude/rules/context.md` §3, Hook seit 2026-09-28):
+`.github/workflows/**`, `project.yml`, `Resources/iOS/Info.plist` (`.deploy/release` ist seit
+2026-10-01 frei, „Nur Deploy frei“). Dazu Dinge, die nur das Apple-Konto des Founders kann. Was dort
 offen liegt, steht hier EINMAL. Jede Zeile hat einen fertigen Patch oder eine Ein-Zeilen-Reparatur.
 
 | # | Befund | Wo | Reparatur | Stand |
 |---|---|---|---|---|
-| F1 | **Deploy v10.79.484** — Release-Notiz + Versions-Bump liegen als Patch bereit; der Hook verweigert den Commit im Auto-Modus | `.deploy/release` | `git apply` des Patches aus dem Sitzungs-Scratchpad (`FOUNDER_APPLY_2b-ii.md` / `slice-2b-ii-and-deploy-10.79.484.patch`) durch den Founder | [ ] offen seit 2026-09-30 |
+| F1 | **Deploy v10.79.484 — Apple-Vereinbarung fehlt oder ist abgelaufen.** Commit 6b2cab77b, TestFlight-Lauf 2608 (36838026009): Archiv gebaut und signiert, der Upload antwortet `403 FORBIDDEN.REQUIRED_AGREEMENTS_MISSING_OR_EXPIRED`. Kein Code-Fehler, kein Retry hilft | Apple-Konto (Account Holder) | In App Store Connect → „Business“ (Vereinbarungen) bzw. developer.apple.com/account die offene/erneuerte Vereinbarung akzeptieren; danach im Lauf 36838026009 „Re-run failed jobs“ (oder der Sitzung „läuft wieder“ sagen) — `.deploy/release` NICHT erneut anfassen, Build 2608 ist nie angekommen | [ ] offen seit 2026-10-01 |
 | F2 | **auto-merge liest eine leere oder abgestandene API-Seite als „never-ran"** und weist Merges ab; 4 von 5 Code-Pushes an einem Tag abgewiesen (#310) | `.github/workflows/auto-merge-claude.yml` | `total_count`/`head_sha` gegen den eigenen Push prüfen, bei Abweichung erneut abfragen statt abweisen (`Tests/CISmoke/CLAUDE.md` §5, #1180) | [ ] offen |
 | F3 | **`ci.yml` läuft nicht auf einem `CLAUDE.md`-only-Commit** — der Deckel-Wächter (150 000 B) kann seine Datei nicht sehen (#1176) | `.github/workflows/ci.yml` `paths:` | eine Zeile `- 'CLAUDE.md'` | [ ] offen |
 | F4 | **DerivedData-Cache-Schlüssel hasht keine Xcode-/SDK-Version** — sporadisches `TEST BUILD FAILED` ohne Repo-Datei im Fehler (#478) | `ci.yml:127`, `:349` | Xcode-Version in den Schlüssel | [ ] offen |

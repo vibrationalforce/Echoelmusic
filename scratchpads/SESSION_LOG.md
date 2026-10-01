@@ -41731,3 +41731,4 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Gates des Swift-Stands c0674a718:** Compile Check 3144 ✓, CI/CD 6608 Build for Testing ✓, Run Tests #396-Form (0 Fehlschläge im Fenster, TheEvolveSwitchStartsOffTests 4/4 beobachtet), Auto-Merge 4042 ✓.
 - **Nicht drin:** 2b-ii. Postfach §2 zeigt jetzt auf 10.79.484.
 - **Offen:** TestFlight-Lauf lesen (Archiv, Upload, „Verify build landed in App Store Connect").
+- **Ergebnis TestFlight-Lauf 2608 (36838026009):** Preflight ✓, Compile Check ✓, Archive ✓; „Export & Upload“ ✗ — `403 FORBIDDEN.REQUIRED_AGREEMENTS_MISSING_OR_EXPIRED`. Apple-Vereinbarung muss der Account Holder akzeptieren; danach Re-run desselben Laufs. Eingetragen: FOUNDER_INBOX §3 F1, HARNESS_LEDGER Observation.
