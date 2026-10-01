@@ -138,6 +138,13 @@ enum ArrangeCanvas {
         }
     }
 
+    /// The name a part wears on the canvas (A1b): its clip's name, trimmed — empty when the
+    /// clip is gone or unnamed, and then the block simply shows no tag. The name is content the
+    /// user or the composer wrote, so it is shown as written, never translated.
+    nonisolated static func partName(_ clip: Clip?) -> String {
+        clip?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
+
     /// Where the playhead sits on the song's scale, 0…1, or nil when there is no scale. A
     /// position past the end (a loop running on) pins to the end instead of leaving the canvas.
     nonisolated static func playheadFraction(tick: Int, songTicks: Int) -> Double? {
@@ -345,9 +352,12 @@ struct ArrangeCanvasView: View {
         let starts = Dictionary(TrackParts.parts(onLane: row.id, in: document)
             .map { ($0.id, $0.startTick) }, uniquingKeysWith: { first, _ in first })
         let tint = EchoelTheme.TrackHue.of(kind: row.kind, instrument: row.instrument, isBio: row.isBio).color
-        let sketches = Dictionary(document.regions.filter { $0.laneID == row.id }
-            .map { ($0.id, ArrangeCanvas.noteMarks(for: $0, clip: clipStore.clip(id: $0.clipID))) },
-                                  uniquingKeysWith: { first, _ in first })
+        // The clip grid is read ONCE per lane: each part's own clip gives its sketch and its name.
+        let clips: [UUID: (TimelineRegion, Clip?)] = Dictionary(document.regions.filter { $0.laneID == row.id }
+            .map { ($0.id, ($0, clipStore.clip(id: $0.clipID))) },
+                                                                uniquingKeysWith: { first, _ in first })
+        let sketches = clips.mapValues { ArrangeCanvas.noteMarks(for: $0.0, clip: $0.1) }
+        let names = clips.mapValues { ArrangeCanvas.partName($0.1) }
         return GeometryReader { geometry in
             let width = geometry.size.width
             ZStack(alignment: .leading) {
@@ -360,6 +370,7 @@ struct ArrangeCanvasView: View {
                                      laneWidth: width, songTicks: songTicks,
                                      label: spokenName + String(localized: ", part at ") + SessionGrid.label(forTick: start),
                                      noteMarks: sketches[block.id] ?? [],
+                                     name: names[block.id] ?? "",
                                      tint: tint,
                                      onSelect: { selection.selectRegion(block.id, in: document) },
                                      onDrop: { tick in drop(block.id, onLane: row.id, from: start, to: tick) },
@@ -482,6 +493,8 @@ struct ArrangePartBlock: View {
     let label: String
     /// The part's notes, sketched small (design slice 11) — empty for an audio part.
     let noteMarks: [ArrangeCanvas.NoteMark]
+    /// Its clip's name (A1b), shown top-left inside the block; empty = no tag.
+    let name: String
     /// Its track's hue (A1): the part wears the colour of the track it sits on.
     let tint: Color
     let onSelect: () -> Void
@@ -500,6 +513,7 @@ struct ArrangePartBlock: View {
         RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
             .fill(tint.opacity(Self.tintOpacity))
             .overlay { noteSketch }
+            .overlay(alignment: .topLeading) { nameTag }
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
                 .strokeBorder(isSelected || moving ? EchoelTheme.accent : tint.opacity(Self.edgeOpacity),
                               lineWidth: isSelected || moving ? 2 : 1))
@@ -514,6 +528,7 @@ struct ArrangePartBlock: View {
             .gesture(move)
             .accessibilityElement()
             .accessibilityLabel(label)
+            .accessibilityValue(name)
             .accessibilityAddTraits(.isButton)
             .accessibilityAddTraits(isSelected ? .isSelected : [])
             .accessibilityAction { onSelect() }
@@ -523,6 +538,25 @@ struct ArrangePartBlock: View {
                 }
                 Button("Move one bar later") { onStep(true) }
             }
+    }
+
+    /// The part's name, top-left (A1b) — read first, so a song reads as named sections rather
+    /// than coloured bars. One line, truncated at the block's edge, clipped to it at large text
+    /// sizes; it takes no touches, and VoiceOver hears it as the block's value.
+    @ViewBuilder private var nameTag: some View {
+        if !name.isEmpty {
+            Text(name)
+                .font(EchoelTheme.font(11, .medium))
+                .foregroundStyle(EchoelTheme.text)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .padding(.horizontal, 4)
+                .padding(.top, 2)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .clipped()
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
     }
 
     /// The notes, one short dash each, drawn inside the block (design slice 11): the part shows
@@ -541,12 +575,16 @@ struct ArrangePartBlock: View {
         }
         .padding(.horizontal, 2)
         .padding(.vertical, 4)
+        // Below the name tag, so the dashes never run through the letters.
+        .padding(.top, name.isEmpty ? 0 : Self.nameRoom)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
 
     /// How thick one note is drawn — thin enough that a busy part still reads as a shape.
     private static let dashHeight: CGFloat = 2
+    /// The height the name tag claims at the top of the block (11 pt text plus its inset).
+    private static let nameRoom: CGFloat = 13
     /// The part's body is its track's hue, muted, so the full-strength dashes read on it and
     /// the selection ring (`accent`, 2 pt) stays the loudest edge on the lane.
     private static let tintOpacity: Double = 0.30

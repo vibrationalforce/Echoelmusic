@@ -171,7 +171,11 @@ final class TheCanvasSketchesEachPartsNotesTests: XCTestCase {
                       "the sketch windows the notes by the note editor's own rule (#416)")
 
         XCTAssertTrue(canvas.contains("@Environment(ClipStore.self) private var clipStore"))
-        XCTAssertTrue(canvas.contains(".map { ($0.id, ArrangeCanvas.noteMarks(for: $0, clip: clipStore.clip(id: $0.clipID))) },"),
+        // A1b re-anchor: the lane reads each part's clip once into `clips` (the name tag reads the
+        // same pass); the claim is unchanged — each part's marks come from ITS clip, via the pure function.
+        XCTAssertTrue(canvas.contains(".map { ($0.id, ($0, clipStore.clip(id: $0.clipID))) },"),
+                      "each part is paired with its own clip")
+        XCTAssertTrue(canvas.contains("let sketches = clips.mapValues { ArrangeCanvas.noteMarks(for: $0.0, clip: $0.1) }"),
                       "each part's marks come from its own clip, through the one pure function")
         XCTAssertEqual(canvas.components(separatedBy: "clipStore.").count - 1, 1,
                        "the canvas reads the clip grid once, to build the sketches")
