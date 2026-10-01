@@ -41384,3 +41384,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-46-Block (15 Nähte, 10 Abwesenheits-Nadeln, 21 Einheiten; XCTAssert 220 → 222). Benotung `scratchpad/transcribe_e4_46.py`: HEAD FAIL (15/10/20 — EIN Befund), WORK PASS. Checker alle OK, Klammerbilanz 0/0.
 - **Gates:** 675b78ae6 (E4-43/E4-44) läuft, Monitor bscmk8rwc. E4-45 (03921c594) + E4-46 (02d98a5b1) lokal — Push nach dem Compile Check auf 675b78ae6.
 - **Offen (E4):** EchoelNumberPad „Make negative/positive“, AnalysisSpectrumView sharp/flat, türlose Flächen (BreathGuide/BioSource/Broadcast) zuletzt; BodyTempoField `compact ? "" : "Tempo"` ist schon ein Schlüssel-Arm.
+
+## 2026-10-01 — E4-47: die vier Analyse-Anzeigen sprechen Deutsch (382b8cf22)
+
+- **Gebaut:** Spektrum (gesprochene Form, zwei frühe Returns), Oszilloskop (Stille/Spitze, gedruckt + gesprochen), Wellenfeld (drei Sätze), Poincaré (Kamera aus / Warten / Absage / SD1-SD2) als typisierte Schritte um die Zahlen. Katalog 1270 → 1292 (+22). Kein `%` in einem Schlüssel. Fünf Sources-Dateien (vier Ansichten + Katalog) — ausdrücklich genannt.
+- **Wächter:** Anspruch 11 E4-47-Block (22 Nähte, 12 Abwesenheits-Nadeln, 22 Einheiten; XCTAssert 222 → 230). AnalysisViewsSpeakTheirNumbersTests 1:1 re-verankert (`spoken = "` → `spoken = `, breiter, +1 Kommentarzeile). Benotung `scratchpad/transcribe_e4_47.py`: HEAD FAIL (22/12/22 — EIN Befund), WORK PASS. Checker alle OK, Klammerbilanz 0/0.
+- **Gates:** 675b78ae6 Compile Check 3117 ✓, BfT 6581/Auto-Merge 4015 laufen (Monitor bscmk8rwc); 5fdac5293 (E4-45/E4-46) gepusht, Monitor b1qz45alh. E4-47 (382b8cf22) lokal — Push nach dem Compile Check auf 5fdac5293.
+- **Offen (E4):** türlose Flächen (BreathGuide/BioSource/Broadcast) zuletzt; EchoelNumberPad-Vorzeichen übersprungen (schon LocalizedStringKey, Wächter TheSignKeysSayWhatTheyDoTests); Einheiten und Mute/Solo-Namen unentschieden.

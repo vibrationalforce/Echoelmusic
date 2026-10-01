@@ -4207,3 +4207,19 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   `""` is not a key), AnalysisSpectrumView `sharp`/`flat` + `±` (an analysis readout — words inside a format),
   doorless BreathGuideView/BioSourceView/BroadcastView (last; BroadcastView is a dead backend's door).
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-47: the four analysis readouts speak German (382b8cf22)
+
+- **Decision:** Spectrum, Scope, Wavefront and Poincaré readouts become typed steps of catalog keys around their
+  numbers (`tone`, `peakShown`/`peakSpoken`, `several`/`subject`/`field`, the Poincaré `+` seams). Catalog 1270 → 1292.
+- **Why:** the E4 class; ≤ 4 operands per chain, no `+` in a ternary; no `%` in any key (a key is a format string);
+  units and the printed `·` stay verbatim. The spectrum's zero-cent case (`if cents == 0`) is untouched.
+- **Guard:** claim 11 E4-47 block (22 seams, 12 absence needles, 22 units; 222 → 230 XCTAssert).
+  AnalysisViewsSpeakTheirNumbersTests re-anchored 1:1 — filter `spoken = "` → `spoken = ` (+1 comment line, XCTAssert
+  count unchanged); ThePoincarePlotForgetsAStoppedCameraTests finds "Camera pulse is off." inside the key. WORK PASS /
+  HEAD FAIL (22 seams missing, 12 verbatim present, 22 units missing — ONE finding). Five Sources files (four views +
+  catalog), stated plainly in the commit.
+- **Remaining E4 producers:** EchoelNumberPad „Make negative/positive“ (already the LocalizedStringKey overload per its
+  in-file rule + TheSignKeysSayWhatTheyDoTests — skipped), doorless BreathGuideView/BioSourceView/BroadcastView (last;
+  BroadcastView is a dead backend's door). Units (`semitones`, `BPM`, `dBTP`) and Mute/Solo `name:` undecided.
+- **Review:** 2026-10-31.
