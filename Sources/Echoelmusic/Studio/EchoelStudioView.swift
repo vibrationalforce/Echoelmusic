@@ -2414,8 +2414,8 @@ struct EchoelStudioView: View {
             .disabled(isRecordButtonInert)
             .accessibilityLabel(exportLabel)
             .accessibilityHint(exporter.isCancellable
-                ? "Stops this recording and discards it. Nothing is saved."
-                : "Records one loop and exports a WAV to share")
+                ? String(localized: "Stops this recording and discards it. Nothing is saved.")
+                : String(localized: "Records one loop and exports a WAV to share"))
 
             KeepLastLoopButton(pattern: beatPlayer.pattern, bars: loopBars,
                                isExporting: isExporting, hasComposed: hasComposed,
@@ -4153,7 +4153,7 @@ struct EchoelStudioView: View {
                 // ~10 Hz publisher. That is the 10.76.50 menu-freeze verbatim. Marking it is not
                 // merely over-correction; it is unimplementable without reopening a ship-blocker.
                 Text(mazeBoard == nil
-                     ? "Variations of the same groove — your body curates, you pick."
+                     ? String(localized: "Variations of the same groove — your body curates, you pick.")
                      : BioVariationMaze.boardSentence(
                         driver: mazeDriver,
                         density: densityWord(mazeBoard?.targetDensity ?? 0)))
@@ -4374,6 +4374,13 @@ struct EchoelStudioView: View {
     /// E3b: opt-in weather flavour (default OFF). One coarse fetch at Start
     /// salts the structural skeleton — the body stays the primary driver.
     /// Carries the Apple-required Weather attribution.
+    /// The weather row's one sentence — a key, or a key plus the reading. Kept out of the `Text` ternary because a
+    /// `+` chain inside a ternary is the E4-28 type-check trap; two typed returns are not.
+    private var weatherLine: String {
+        if weatherDescriptor.isEmpty { return String(localized: "Sky reading arrives at Start.") }
+        return String(localized: "Now: ") + weatherDescriptor
+    }
+
     private var weatherRow: some View {
         VStack(alignment: .leading, spacing: 8) {
             Toggle(isOn: $weatherEnabled) {
@@ -4415,8 +4422,7 @@ struct EchoelStudioView: View {
                         .font(EchoelTheme.font(11))
                         .foregroundStyle(EchoelTheme.dim)
                 } else {
-                    Text(weatherDescriptor.isEmpty ? "Sky reading arrives at Start."
-                                                   : "Now: \(weatherDescriptor)")
+                    Text(weatherLine)
                         .font(EchoelTheme.font(11))
                         .foregroundStyle(EchoelTheme.dim)
                 }
@@ -4994,8 +5000,7 @@ struct EchoelStudioView: View {
                     // ⛔ `hint:`, NOT a chained `.accessibilityHint` (#930b). The field collapses
                     // to ONE accessibility element, so an outer hint either goes unspoken or
                     // eats "Swipe up or down to adjust". The parameter composes both.
-                    hint: "How often the click accents. This is the click's own bar only — "
-                        + "it does not change the piece's meter",
+                    hint: String(localized: "How often the click accents. This is the click's own bar only — it does not change the piece's meter"),
                     standard: Double(MetronomeVoice.defaultBeatsPerBar))
                 // The accent is what makes "Accent every" AUDIBLE — the render block's test is
                 // `(beatIndex == 0) && audioAccent`, so with the accent off every click is
@@ -5341,7 +5346,7 @@ struct EchoelStudioView: View {
 
     /// Compact secondary door row used by the Master panel (Uncodixfy: solid
     /// fill, 1 px border, ≤12 px radius, no decoration).
-    private func masterDoorButton(_ title: String, icon: String, hint: String,
+    private func masterDoorButton(_ title: LocalizedStringKey, icon: String, hint: LocalizedStringKey,
                                   action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Label(title, systemImage: icon)
@@ -5925,7 +5930,7 @@ struct EchoelStudioView: View {
             .fixedSize(horizontal: false, vertical: true)
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                touchPatchChip(name: "Same as music", selected: touchPatchID.isEmpty) {
+                touchPatchChip(name: String(localized: "Same as music"), selected: touchPatchID.isEmpty) {
                     touchPatchID = ""
                     syncTouchSound()
                 }
@@ -9748,7 +9753,7 @@ struct EchoelStudioView: View {
                 // style `.caption2` is 11 pt at the default setting, so nobody who has changed
                 // nothing sees a difference. Do NOT "finish the job" by moving this to
                 // `EchoelTheme.font` — the brand face is proportional and a log needs its columns.
-                Text(text.isEmpty ? "No diagnostics recorded." : text)
+                Text(text.isEmpty ? String(localized: "No diagnostics recorded.") : text)
                     .font(.system(.caption2, design: .monospaced))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .textSelection(.enabled)
@@ -10154,7 +10159,7 @@ struct EchoelStudioView: View {
             }
             .disabled(!shareable)
             .accessibilityLabel(String(localized: "Share ") + p.name)
-            .accessibilityHint(shareable ? "" : "Sharing sends the instrument's held music only, and this piece holds only tracks and parts, which stay on this device")
+            .accessibilityHint(shareable ? "" : String(localized: "Sharing sends the instrument's held music only, and this piece holds only tracks and parts, which stay on this device"))
         }
         // A long press is a deliberate second step (hold, then choose), where the swipe's full
         // travel deletes at once. `.contextMenu` builds its content only while shown and is not a
@@ -12854,7 +12859,7 @@ private struct TextSizeRow: View {
         return level + String(localized: ". Pinching with two fingers moves it too. ") + scope
     }
 
-    private func sizeButton(_ word: String, systemImage: String, spoken: String, hint: String,
+    private func sizeButton(_ word: LocalizedStringKey, systemImage: String, spoken: LocalizedStringKey, hint: LocalizedStringKey,
                             enabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Label(word, systemImage: systemImage)
@@ -13013,8 +13018,8 @@ private struct KeepLastLoopButton: View {
         .accessibilityLabel(KeepLastCopy.title(bars: bars, bpm: bpm, isExporting: isExporting,
                                                hasComposed: hasComposed, busyLabel: busyLabel))
         .accessibilityHint(fits
-            ? "Keeps the last bars you just heard as a WAV loop, without replaying them"
-            : "This length is longer than the 30 second capture buffer at the current tempo")
+            ? String(localized: "Keeps the last bars you just heard as a WAV loop, without replaying them")
+            : String(localized: "This length is longer than the 30 second capture buffer at the current tempo"))
     }
 }
 
@@ -13158,8 +13163,8 @@ private struct HealthWriteOptInRow: View {
             .frame(minHeight: 44)
             .accessibilityHint("Writes measured heart rate and breathing rate to Apple Health")
             Text(healthWriter.enabled && !healthWriter.isAuthorized
-                 ? "Waiting for permission in Health."
-                 : "Off by default. Heart and breathing measurements only.")
+                 ? String(localized: "Waiting for permission in Health.")
+                 : String(localized: "Off by default. Heart and breathing measurements only."))
                 .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
@@ -13387,11 +13392,11 @@ private struct BodyOnlyRow: View {
             .frame(minHeight: 44)
             .disabled(instrumentRunning)
             .accessibilityHint(instrumentRunning
-                ? "The instrument is running — your body already drives the picture."
-                : "Start your chosen bio source alone: the picture follows your pulse and breath, nothing sounds.")
+                ? String(localized: "The instrument is running — your body already drives the picture.")
+                : String(localized: "Start your chosen bio source alone: the picture follows your pulse and breath, nothing sounds."))
             Text(instrumentRunning
-                 ? "Running — the picture already follows your body."
-                 : "Pulse and breath drive the picture without any sound. Open the visual window to watch; Play adds the music on top.")
+                 ? String(localized: "Running — the picture already follows your body.")
+                 : String(localized: "Pulse and breath drive the picture without any sound. Open the visual window to watch; Play adds the music on top."))
                 .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)

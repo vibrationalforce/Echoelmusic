@@ -161,7 +161,12 @@
 // notes (wireless MIDI, MPE layout and per-note expression, the MIDI 2.0 source, OSC control input, clinical HRV
 // detail, the two disabled-button labels); the one sentence with a percent sign became a computed property with
 // the `%` as a bare operand right after its key — TheRoutingCardDoesNotPromiseGestureTests re-anchored 1:1 on that
-// line (parent: 29 units missing — ONE finding). Claim 12
+// line (parent: 29 units missing — ONE finding). E4-80 keyed EchoelStudioView's remaining ternaries and helper
+// Strings: the export hint pair, the variation-board idle line, the weather line (a computed `weatherLine`, key or
+// key + reading), the click-accent hint (one key instead of a `+` chain), the Routing door and the text-size buttons
+// (both helpers now take `LocalizedStringKey`, zero call-site edits), the touch chip's "Same as music", the
+// diagnostics empty line, the share refusal, the keep-last hint pair, the Health status pair and the picture-only
+// start's two pairs (parent: 29 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2801,6 +2806,38 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           ") are sent as well. Use this for analysis in TouchDesigner, Max or a research patch — turn it off on a network you do not control.",
                           "Smart patch — no suggestions available", "Smart patch", "Clear — no routes to clear", "Clear all routes"],
                          "routing toggle hints and notes")
+
+        // E4-80 — EchoelStudioView's remaining ternaries and helper Strings. Where a helper only forwarded a String
+        // into `Label` / `accessibilityLabel` / `accessibilityHint`, its parameter became a `LocalizedStringKey` and
+        // the call sites stayed byte-identical (the E4-9 move); where a `+` chain sat inside a ternary (weather) the
+        // sentence moved into a computed property with two typed returns (E4-28).
+        let studioToggles = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for seam in ["? String(localized: \"Stops this recording and discards it. Nothing is saved.\")",
+                     "private var weatherLine: String {",
+                     "Text(weatherLine)",
+                     "private func masterDoorButton(_ title: LocalizedStringKey, icon: String, hint: LocalizedStringKey,",
+                     "touchPatchChip(name: String(localized: \"Same as music\"), selected: touchPatchID.isEmpty)",
+                     "Text(text.isEmpty ? String(localized: \"No diagnostics recorded.\") : text)",
+                     "private func sizeButton(_ word: LocalizedStringKey, systemImage: String, spoken: LocalizedStringKey, hint: LocalizedStringKey,",
+                     ": String(localized: \"Off by default. Heart and breathing measurements only.\")",
+                     "? String(localized: \"Running — the picture already follows your body.\")"] {
+            XCTAssertTrue(studioToggles.contains(seam), "EchoelStudioView lost the E4-80 seam `\(seam)`")
+        }
+        for verbatim in ["                ? \"Stops this recording and discards it. Nothing is saved.\"",
+                         "    private func sizeButton(_ word: String, systemImage: String, spoken: String, hint: String,",
+                         "                 ? \"Running — the picture already follows your body.\""] {
+            XCTAssertFalse(studioToggles.contains(verbatim), "EchoelStudioView spells a studio sentence verbatim again: `\(verbatim)`")
+        }
+        try assertGerman(["Stops this recording and discards it. Nothing is saved.", "Records one loop and exports a WAV to share",
+                          "Variations of the same groove — your body curates, you pick.", "Sky reading arrives at Start.", "Now: ",
+                          "How often the click accents. This is the click's own bar only — it does not change the piece's meter",
+                          "Routing", "OSC, immersive object, and lighting outputs", "Same as music", "No diagnostics recorded.",
+                          "Smaller", "Larger", "Default", "Smaller text", "One step smaller.", "Larger text", "One step larger.",
+                          "Default text size", "Follows the system text size.",
+                          "Keeps the last bars you just heard as a WAV loop, without replaying them",
+                          "Waiting for permission in Health.", "Off by default. Heart and breathing measurements only.",
+                          "Running — the picture already follows your body."],
+                         "studio toggles, doors and text-size buttons")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

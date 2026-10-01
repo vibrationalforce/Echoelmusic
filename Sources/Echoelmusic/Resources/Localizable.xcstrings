@@ -30282,6 +30282,438 @@
           }
         }
       }
+    },
+    "Stops this recording and discards it. Nothing is saved." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stoppt diese Aufnahme und verwirft sie. Nichts wird gesichert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stops this recording and discards it. Nothing is saved."
+          }
+        }
+      }
+    },
+    "Records one loop and exports a WAV to share" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nimmt einen Loop auf und exportiert eine WAV zum Teilen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Records one loop and exports a WAV to share"
+          }
+        }
+      }
+    },
+    "Variations of the same groove — your body curates, you pick." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variationen desselben Grooves — dein Körper kuratiert, du wählst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variations of the same groove — your body curates, you pick."
+          }
+        }
+      }
+    },
+    "Sky reading arrives at Start." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Himmelsmessung kommt beim Start."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sky reading arrives at Start."
+          }
+        }
+      }
+    },
+    "Now: " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jetzt: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Now: "
+          }
+        }
+      }
+    },
+    "How often the click accents. This is the click's own bar only — it does not change the piece's meter" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie oft der Click akzentuiert. Das ist nur der eigene Takt des Clicks — er ändert die Taktart des Stücks nicht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How often the click accents. This is the click's own bar only — it does not change the piece's meter"
+          }
+        }
+      }
+    },
+    "Routing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routing"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routing"
+          }
+        }
+      }
+    },
+    "OSC, immersive object, and lighting outputs" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OSC-, Immersiv-Objekt- und Licht-Ausgänge"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OSC, immersive object, and lighting outputs"
+          }
+        }
+      }
+    },
+    "Same as music" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie die Musik"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Same as music"
+          }
+        }
+      }
+    },
+    "No diagnostics recorded." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Diagnose aufgezeichnet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No diagnostics recorded."
+          }
+        }
+      }
+    },
+    "Sharing sends the instrument's held music only, and this piece holds only tracks and parts, which stay on this device" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teilen sendet nur die gehaltene Musik des Instruments, und dieses Stück hält nur Spuren und Teile, die auf diesem Gerät bleiben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sharing sends the instrument's held music only, and this piece holds only tracks and parts, which stay on this device"
+          }
+        }
+      }
+    },
+    "Smaller" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kleiner"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smaller"
+          }
+        }
+      }
+    },
+    "Larger" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Größer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Larger"
+          }
+        }
+      }
+    },
+    "Smaller text" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kleinerer Text"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smaller text"
+          }
+        }
+      }
+    },
+    "One step smaller." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Stufe kleiner."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One step smaller."
+          }
+        }
+      }
+    },
+    "Larger text" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Größerer Text"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Larger text"
+          }
+        }
+      }
+    },
+    "One step larger." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Stufe größer."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One step larger."
+          }
+        }
+      }
+    },
+    "Default text size" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard-Textgröße"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default text size"
+          }
+        }
+      }
+    },
+    "Follows the system text size." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folgt der System-Textgröße."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Follows the system text size."
+          }
+        }
+      }
+    },
+    "Keeps the last bars you just heard as a WAV loop, without replaying them" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Behält die letzten Takte, die du gerade gehört hast, als WAV-Loop, ohne sie erneut abzuspielen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keeps the last bars you just heard as a WAV loop, without replaying them"
+          }
+        }
+      }
+    },
+    "This length is longer than the 30 second capture buffer at the current tempo" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Länge ist beim aktuellen Tempo länger als der 30-Sekunden-Aufnahmepuffer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This length is longer than the 30 second capture buffer at the current tempo"
+          }
+        }
+      }
+    },
+    "Waiting for permission in Health." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wartet auf die Erlaubnis in Health."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting for permission in Health."
+          }
+        }
+      }
+    },
+    "Off by default. Heart and breathing measurements only." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardmäßig aus. Nur Herz- und Atemmessungen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off by default. Heart and breathing measurements only."
+          }
+        }
+      }
+    },
+    "The instrument is running — your body already drives the picture." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Instrument läuft — dein Körper treibt das Bild bereits."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The instrument is running — your body already drives the picture."
+          }
+        }
+      }
+    },
+    "Start your chosen bio source alone: the picture follows your pulse and breath, nothing sounds." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starte deine gewählte Bio-Quelle allein: das Bild folgt deinem Puls und Atem, nichts klingt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start your chosen bio source alone: the picture follows your pulse and breath, nothing sounds."
+          }
+        }
+      }
+    },
+    "Running — the picture already follows your body." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Läuft — das Bild folgt deinem Körper bereits."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Running — the picture already follows your body."
+          }
+        }
+      }
+    },
+    "Pulse and breath drive the picture without any sound. Open the visual window to watch; Play adds the music on top." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puls und Atem treiben das Bild ohne jeden Klang. Öffne das Visual-Fenster zum Zuschauen; Play legt die Musik darüber."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulse and breath drive the picture without any sound. Open the visual window to watch; Play adds the music on top."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
