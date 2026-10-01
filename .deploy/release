@@ -1,4 +1,4 @@
-build: v10.79.485 — Die Workstation: Spurfarben, Reiter, Mischpult mit Pegel je Spur, Inspektor, Querformat, Song-Export, Undo für jede Geste
+build: v10.79.486 — Eine Tür je Bereich: keine Bereichs-Zeile, eine Reiter-Zeile, Transport in einer Zeile, Werkzeug-Blätter halb hoch
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,57 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.486) ───────────────────────────────
+
+  ⭐ AUFRÄUMEN NACH DEINER ANSAGE (2026-10-01: „Vermeide das es mehrfache Wege zu einem
+  Bereich gibt … Viele Bereiche sind zu groß und füllen den Bildschirm aus"). Alles seit
+  10.79.485 — sechs Code-Scheiben, jede mit eigenem Wächter. Auf dem Gerät ist NICHTS davon
+  geprüft; dieser Build ist genau dafür da.
+  Gates: Xcode Compile Check + Build for Testing grün auf 02658e892 (= main).
+
+  ── POSTEN 1: JEDER BEREICH HAT GENAU EINE TÜR ──
+  · Instrument: die Bereichs-Zeile Compose · Perform · Visuals · Library · Settings ist
+    WEG. Es bleibt EINE Zeile Chips (Bio, Tempo, Sound, Mix, FX, Master, Mood, Save/Export,
+    Field, Workstation) — jede öffnet ihre Platte, keine zweite Tür daneben.
+  · Stück: EINE Reiter-Zeile Arrange · Mix · Export. Die Reiter Sound · FX · Master und die
+    Bereichs-Reiter Music · Visual · Light sind weg — sie waren zweite Türen zu Platten, die
+    die Chip-Leiste schon öffnet.
+  ⚠️ Folge, bewusst: unterhalb der Stufe „Producer" hat die Field-Platte keine Tür (die
+  Könnensstufe blendet den Field-Chip aus). Standard ist „Pro", dort ist alles da.
+
+  ── POSTEN 2: KOMPAKTER ──
+  · Transportleiste unten: EINE Zeile statt zwei.
+  · Kopf des Stücks: höchstens zwei Zeilen; Undo/Redo als Symbol.
+  · Hilfe-Karte: niedriger (höchstens 96 pt) und zeigt nur den Schritt, der JETZT dran ist.
+  · Werkzeug-Blätter (FX „All parameters", Routing, Live Colabo) öffnen auf HALBER Höhe —
+    das Instrument bleibt darüber sichtbar und spielbar; ganz hochziehen geht weiter.
+    Solange so ein Blatt offen ist, sind die anderen Blatt-Türen (Open, Save, Learn, Live
+    Colabo, Routing, „Save as new mood/sound…") ausgegraut — zwei Blätter übereinander
+    sind der bekannte „nichts mehr klickbar"-Hänger.
+
+  ── PRÜFLISTE ──
+  T1  Kaltstart: kein Black Screen, öffnet auf dem Stück.
+  T2  Instrument: nur noch EINE Chip-Zeile, keine Bereichs-Zeile darüber? Jeder Chip öffnet
+      seine Platte?
+  T3  Stück: Reiter Arrange · Mix · Export — sonst keine Reiter-Zeile?
+  T4  iPhone hochkant, deutsche Sprache: Transportleiste in EINER Zeile, nichts abgeschnitten?
+      Kopf höchstens zwei Zeilen?
+  T5  Hilfe ⓘ an: zeigt die Karte nur den aktuellen Schritt und lässt das Stück sichtbar?
+  T6  FX-Chip → „All parameters": Blatt auf halber Höhe, oben weiterspielen; Open/Learn/Save
+      ausgegraut; Blatt ganz hoch und wieder runter ziehen; nichts friert ein.
+  T7  Master-Chip → Routing: dasselbe wie T6.
+  T8  Hängt oder stockt etwas: Save/Export-Chip → „Diagnostics" (Diagnose) → Teilen.
+
+  Neu prüfbare Bitten (6):
+  Gedruckt: python3 scripts/founder-verify.py --since 093ec4849
+  OTHER 3 · AUDIO 2 · SYNC 1 — Stück-Leeranfang, Takt-Anzeige im Querformat, Sustain-Pedal
+  beim MIDI-Import, Transportleiste auf 375 pt, Pegelbalken, Bend-Hinweis beim MIDI-Import.
+
+  Offene Look-Fragen für dich in der Inbox: „Stopp" und „Aufnahme stoppen" nebeneinander;
+  Undo/Redo nur als Symbol (Regel 3 sagt Symbol plus Wort); Reiter-Zeile auf Stufe Einfach.
+
+  Der Vorgänger ist 10.79.485, davor 10.79.484 (Build 2609).
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.485) ───────────────────────────────
 
