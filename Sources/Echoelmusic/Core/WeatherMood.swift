@@ -207,14 +207,14 @@ public enum WeatherMood {
         /// One clear line: what turning this up actually does.
         public var explanation: String {
             switch self {
-            case .structure:  return "Same sky keeps the same harmonic skeleton each time you play."
-            case .warmth:     return "Warm weather brightens the tone, cold darkens it."
-            case .energy:     return "Wind and storms make the music busier, calm keeps it still."
-            case .drama:      return "Storms add tension; a clear sky stays consonant."
-            case .hue:        return "Shifts the colour toward the sky (rain → blue, sun → gold)."
-            case .saturation: return "Dull weather drains colour; clear skies deepen it."
-            case .glow:       return "Sun and storms make the image glow; fog dims it."
-            case .movement:   return "Wind sets the image in motion."
+            case .structure:  return String(localized: "Same sky keeps the same harmonic skeleton each time you play.")
+            case .warmth:     return String(localized: "Warm weather brightens the tone, cold darkens it.")
+            case .energy:     return String(localized: "Wind and storms make the music busier, calm keeps it still.")
+            case .drama:      return String(localized: "Storms add tension; a clear sky stays consonant.")
+            case .hue:        return String(localized: "Shifts the colour toward the sky (rain → blue, sun → gold).")
+            case .saturation: return String(localized: "Dull weather drains colour; clear skies deepen it.")
+            case .glow:       return String(localized: "Sun and storms make the image glow; fog dims it.")
+            case .movement:   return String(localized: "Wind sets the image in motion.")
             }
         }
 

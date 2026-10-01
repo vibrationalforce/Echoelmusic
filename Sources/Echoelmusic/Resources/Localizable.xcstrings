@@ -27690,6 +27690,214 @@
           }
         }
       }
+    },
+    "No target" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Ziel"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No target"
+          }
+        }
+      }
+    },
+    "Streaming (−14)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Streaming (−14)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Streaming (−14)"
+          }
+        }
+      }
+    },
+    "Podcast (−16)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podcast (−16)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podcast (−16)"
+          }
+        }
+      }
+    },
+    "Broadcast (−23)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rundfunk (−23)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Broadcast (−23)"
+          }
+        }
+      }
+    },
+    "Cinema (−24)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kino (−24)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cinema (−24)"
+          }
+        }
+      }
+    },
+    "Same sky keeps the same harmonic skeleton each time you play." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gleicher Himmel behält bei jedem Spielen dasselbe harmonische Gerüst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Same sky keeps the same harmonic skeleton each time you play."
+          }
+        }
+      }
+    },
+    "Warm weather brightens the tone, cold darkens it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warmes Wetter hellt den Klang auf, kaltes dunkelt ihn ab."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm weather brightens the tone, cold darkens it."
+          }
+        }
+      }
+    },
+    "Wind and storms make the music busier, calm keeps it still." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wind und Sturm machen die Musik dichter, Ruhe hält sie still."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wind and storms make the music busier, calm keeps it still."
+          }
+        }
+      }
+    },
+    "Storms add tension; a clear sky stays consonant." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sturm bringt Spannung; klarer Himmel bleibt konsonant."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Storms add tension; a clear sky stays consonant."
+          }
+        }
+      }
+    },
+    "Shifts the colour toward the sky (rain → blue, sun → gold)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verschiebt die Farbe zum Himmel (Regen → Blau, Sonne → Gold)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shifts the colour toward the sky (rain → blue, sun → gold)."
+          }
+        }
+      }
+    },
+    "Dull weather drains colour; clear skies deepen it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trübes Wetter entzieht Farbe; klarer Himmel vertieft sie."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dull weather drains colour; clear skies deepen it."
+          }
+        }
+      }
+    },
+    "Sun and storms make the image glow; fog dims it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonne und Sturm lassen das Bild leuchten; Nebel dämpft es."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sun and storms make the image glow; fog dims it."
+          }
+        }
+      }
+    },
+    "Wind sets the image in motion." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wind setzt das Bild in Bewegung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wind sets the image in motion."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

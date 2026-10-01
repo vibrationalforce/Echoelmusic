@@ -132,7 +132,10 @@
 // character names and blurbs (GenreFX), the skill-level names and blurbs (SkillLevel) and the camera recovery words
 // (CameraRPPGBioPublisher: `userHint` for the strip, `shortLabel` for the pill) (parent: 34 units missing — ONE finding).
 // E4-70 added the Live Colabo status line (MultipeerSession.status), the open-piece refusal and save error (ProjectStore)
-// and the two Bluetooth call-mode notes (AudioConfiguration RouteCodec.note) (parent: 16 units missing — ONE finding). Claim 12
+// and the two Bluetooth call-mode notes (AudioConfiguration RouteCodec.note) (parent: 16 units missing — ONE finding).
+// E4-71 added the loudness-target names (LoudnessTarget.displayName, the Master picker) and the weather mixer's
+// explanation lines (WeatherMood.Param.explanation; its `label` stays a bare KEY for `EchoelValueField`, claim 12)
+// (parent: 13 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2500,6 +2503,32 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Bluetooth is in call mode: mono and band-limited — the music too. Echoel only plays out, so another app holds the call; end it, or use a cable, for full bandwidth.",
                           "This looks like Bluetooth call mode (mono, band-limited). Echoel only plays out; a cable keeps full bandwidth."],
                          "peer status, open refusal and call-mode notes")
+
+        // E4-71 — the loudness-target picker names and the weather mixer's explanation line under each value field.
+        // `WeatherMood.Param.label` is deliberately NOT wrapped: `EchoelValueField(label:)` draws it as a catalog KEY
+        // (claim 12 walks those); `explanation` is rendered by `Text(param.explanation)`, a String, so it is wrapped.
+        let loudnessTargets = try codeOnly("Sources/Echoelmusic/Core/LoudnessTarget.swift")
+        let weatherLines = try codeOnly("Sources/Echoelmusic/Core/WeatherMood.swift")
+        for seam in ["case .off:          return String(localized: \"No target\")",
+                     "case .cinema:       return String(localized: \"Cinema (−24)\")"] {
+            XCTAssertTrue(loudnessTargets.contains(seam), "LoudnessTarget lost the E4-71 seam `\(seam)`")
+        }
+        for seam in ["case .structure:  return String(localized: \"Same sky keeps the same harmonic skeleton each time you play.\")",
+                     "case .movement:   return String(localized: \"Wind sets the image in motion.\")",
+                     "case .structure:  return \"Structure\""] {
+            XCTAssertTrue(weatherLines.contains(seam), "WeatherMood lost the E4-71 seam `\(seam)` (the label stays a bare key)")
+        }
+        XCTAssertFalse(loudnessTargets.contains("return \"No target\""), "LoudnessTarget spells a target verbatim again")
+        XCTAssertFalse(weatherLines.contains("return \"Wind sets the image in motion.\""), "WeatherMood spells an explanation verbatim again")
+        try assertGerman(["No target", "Streaming (−14)", "Podcast (−16)", "Broadcast (−23)", "Cinema (−24)",
+                          "Same sky keeps the same harmonic skeleton each time you play.",
+                          "Warm weather brightens the tone, cold darkens it.",
+                          "Wind and storms make the music busier, calm keeps it still.",
+                          "Storms add tension; a clear sky stays consonant.",
+                          "Shifts the colour toward the sky (rain → blue, sun → gold).",
+                          "Dull weather drains colour; clear skies deepen it.",
+                          "Sun and storms make the image glow; fog dims it.", "Wind sets the image in motion."],
+                         "loudness targets and weather explanations")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

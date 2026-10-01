@@ -20,11 +20,11 @@ public enum LoudnessTarget: String, CaseIterable, Identifiable, Sendable {
 
     public var displayName: String {
         switch self {
-        case .off:          return "No target"
-        case .streaming:    return "Streaming (−14)"
-        case .podcast:      return "Podcast (−16)"
-        case .broadcastEBU: return "Broadcast (−23)"
-        case .cinema:       return "Cinema (−24)"
+        case .off:          return String(localized: "No target")
+        case .streaming:    return String(localized: "Streaming (−14)")
+        case .podcast:      return String(localized: "Podcast (−16)")
+        case .broadcastEBU: return String(localized: "Broadcast (−23)")
+        case .cinema:       return String(localized: "Cinema (−24)")
         }
     }
 
