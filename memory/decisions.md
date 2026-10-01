@@ -4511,3 +4511,14 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-70 block (6 seam needles over three files, 3 absence needles, 19 units; 329 → 335 XCTAssert).
   WORK PASS / HEAD FAIL (6/3/16 — ONE finding). Whole-claim-11 needle check: 119 files, 949 needles, 0 broken.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-71: loudness targets and weather explanations (7bc63b0da)
+
+- **Decision:** `LoudnessTarget.displayName` (5) and `WeatherMood.Param.explanation` (8) are catalog keys; `Param.label`
+  stays a bare literal because `EchoelValueField(label:)` draws it as a catalog KEY (claim 12 walks it). Catalog 1617 → 1630.
+- **Why:** the Master target picker and the weather mixer's explanation line were `Text(String)` producers still in
+  English. Wrapping the label would make the field look up a German string as a key — the guard pins the bare label
+  next to the wrapped explanation so the next session cannot "complete" it.
+- **Guard:** claim 11 E4-71 block (5 seam needles over two files, 2 absence needles, 13 units; 335 → 339 XCTAssert).
+  WORK PASS / HEAD FAIL (4/2/13 — ONE finding). Whole-claim-11 needle check: 121 files, 956 needles, 0 broken.
+- **Review:** 2026-10-31.
