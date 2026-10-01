@@ -99,8 +99,8 @@ struct PartNoteEditor: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(isOpen ? "Hide the selected part's notes"
-                                           : "Show the selected part's notes")
+                .accessibilityLabel(isOpen ? String(localized: "Hide the selected part's notes")
+                                           : String(localized: "Show the selected part's notes"))
                 .accessibilityValue(spokenCount)
                 if let line = Self.noVoiceLine(TrackMix.role(of: lane.id, in: document,
                                                              voiceCapacity: voiceCapacity)) {
@@ -205,8 +205,8 @@ private struct PartNoteGrid: View {
                             .accessibilityLabel(ClipNoteEdit.gridLabel(shown: onScreen.count, total: visible.count,
                                                                        picked: pickedCount))
                             .accessibilityHint(editable
-                                ? "Use the actions to select the next or previous note; the controls below act on the selection. By touch: tap an empty cell to add a note, tap notes to select them; press and hold, then slide, to move, stretch or box-select"
-                                : "Shown, not edited")
+                                ? String(localized: "Use the actions to select the next or previous note; the controls below act on the selection. By touch: tap an empty cell to add a note, tap notes to select them; press and hold, then slide, to move, stretch or box-select")
+                                : String(localized: "Shown, not edited"))
                             // Modes census UX A: the grid was touch only — a VoiceOver user could
                             // hear the count and never pick a note. Stepping picks ONE note on
                             // screen (the rows shown), through the one selection owner, and says

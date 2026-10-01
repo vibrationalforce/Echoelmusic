@@ -30714,6 +30714,262 @@
           }
         }
       }
+    },
+    "Silences this track and the Studio instrument. Start un-mutes it" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schaltet diese Spur und das Studio-Instrument stumm. Start hebt die Stummschaltung auf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Silences this track and the Studio instrument. Start un-mutes it"
+          }
+        }
+      }
+    },
+    "Silences this track" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schaltet diese Spur stumm"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Silences this track"
+          }
+        }
+      }
+    },
+    "Plays only the soloed tracks" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielt nur die Solo-Spuren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plays only the soloed tracks"
+          }
+        }
+      }
+    },
+    "Plays only the soloed tracks. This also silences the Studio instrument, whose Start clears the solo" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spielt nur die Solo-Spuren. Das schaltet auch das Studio-Instrument stumm, dessen Start das Solo aufhebt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plays only the soloed tracks. This also silences the Studio instrument, whose Start clears the solo"
+          }
+        }
+      }
+    },
+    "Tap a part to loop it on its track from the next bar. A launched part starts from its top — on the Echoel track it continues where the piece is. Launch scene switches: its parts start and every other launched track returns to the piece on the same bar." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe auf einen Teil, um ihn ab dem nächsten Takt auf seiner Spur zu loopen. Ein gestarteter Teil beginnt von vorn — auf der Echoel-Spur macht er weiter, wo das Stück ist. Szene starten schaltet um: ihre Teile starten, und jede andere gestartete Spur kehrt im selben Takt zum Stück zurück."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap a part to loop it on its track from the next bar. A launched part starts from its top — on the Echoel track it continues where the piece is. Launch scene switches: its parts start and every other launched track returns to the piece on the same bar."
+          }
+        }
+      }
+    },
+    "Launch a scene to start the piece at its bar and loop it, or press Play for the piece from the top." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starte eine Szene, um das Stück an ihrem Takt zu starten und zu loopen, oder drücke Play für das Stück von vorn."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Launch a scene to start the piece at its bar and loop it, or press Play for the piece from the top."
+          }
+        }
+      }
+    },
+    "Already looping. Stop the track to hand it back to the piece" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loopt bereits. Stoppe die Spur, um sie dem Stück zurückzugeben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Already looping. Stop the track to hand it back to the piece"
+          }
+        }
+      }
+    },
+    "Loops this part on its track from the next bar" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loopt diesen Teil ab dem nächsten Takt auf seiner Spur"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loops this part on its track from the next bar"
+          }
+        }
+      }
+    },
+    "Hide the selected part's notes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noten des gewählten Teils ausblenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide the selected part's notes"
+          }
+        }
+      }
+    },
+    "Show the selected part's notes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noten des gewählten Teils einblenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show the selected part's notes"
+          }
+        }
+      }
+    },
+    "Use the actions to select the next or previous note; the controls below act on the selection. By touch: tap an empty cell to add a note, tap notes to select them; press and hold, then slide, to move, stretch or box-select" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutze die Aktionen, um die nächste oder vorige Note zu wählen; die Bedienelemente darunter wirken auf die Auswahl. Per Berührung: tippe auf eine leere Zelle, um eine Note hinzuzufügen, tippe Noten an, um sie zu wählen; halte gedrückt und schiebe, um zu verschieben, zu dehnen oder einen Rahmen zu ziehen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use the actions to select the next or previous note; the controls below act on the selection. By touch: tap an empty cell to add a note, tap notes to select them; press and hold, then slide, to move, stretch or box-select"
+          }
+        }
+      }
+    },
+    "Shown, not edited" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Angezeigt, nicht bearbeitet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shown, not edited"
+          }
+        }
+      }
+    },
+    "Select next note" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächste Note wählen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select next note"
+          }
+        }
+      }
+    },
+    "Select previous note" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorige Note wählen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select previous note"
+          }
+        }
+      }
+    },
+    "Streams your heart rate and coherence to connected peers while this screen is open. Everyone sees their own numbers side by side." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Streamt deine Herzfrequenz und Kohärenz an verbundene Peers, solange dieser Bildschirm offen ist. Alle sehen ihre eigenen Zahlen nebeneinander."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Streams your heart rate and coherence to connected peers while this screen is open. Everyone sees their own numbers side by side."
+          }
+        }
+      }
+    },
+    "Search presets & tags" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presets & Tags suchen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search presets & tags"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

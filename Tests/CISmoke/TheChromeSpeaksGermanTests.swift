@@ -166,7 +166,11 @@
 // key + reading), the click-accent hint (one key instead of a `+` chain), the Routing door and the text-size buttons
 // (both helpers now take `LocalizedStringKey`, zero call-site edits), the touch chip's "Same as music", the
 // diagnostics empty line, the share refusal, the keep-last hint pair, the Health status pair and the picture-only
-// start's two pairs (parent: 29 units missing — ONE finding). Claim 12
+// start's two pairs (parent: 29 units missing — ONE finding). E4-81 keyed the track inspector's mute/solo hints,
+// the scene launcher's guide line and part hint pair, the note editor's toggle label pair and grid hint pair, and
+// gave four LocalizedStringKey positions their missing units (the two note actions, the Colabo stream hint, the FX
+// search prompt) — the runtime guards on mute/solo compare under the test locale (parent: 16 units missing — ONE
+// finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2838,6 +2842,43 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Waiting for permission in Health.", "Off by default. Heart and breathing measurements only.",
                           "Running — the picture already follows your body."],
                          "studio toggles, doors and text-size buttons")
+
+        // E4-81 — three surfaces whose ternaries were Strings: the track inspector (`TrackMix.muteHint/soloHint`,
+        // driven at runtime by TheTrackHeaderMutesAndSolosTests under the test locale), the scene launcher's guide
+        // line and part hint, the note editor's toggle label and grid hint. The two `.accessibilityAction(named:)`
+        // literals, the Colabo stream hint and the FX search prompt were already keys (LocalizedStringKey position)
+        // and only lacked a unit — ThePartNoteGridSpeaksTests pins the action lines verbatim, so they stay verbatim.
+        let inspectorHints = try codeOnly("Sources/Echoelmusic/Studio/TrackInspectorView.swift")
+        for seam in ["? String(localized: \"Silences this track and the Studio instrument. Start un-mutes it\")",
+                     ": String(localized: \"Silences this track\")",
+                     "? String(localized: \"Plays only the soloed tracks\")"] {
+            XCTAssertTrue(inspectorHints.contains(seam), "TrackInspectorView lost the E4-81 seam `\(seam)`")
+        }
+        XCTAssertFalse(inspectorHints.contains("            : \"Silences this track\""), "TrackInspectorView spells the mute hint verbatim again")
+        let launchHints = try codeOnly("Sources/Echoelmusic/Studio/SessionLaunchView.swift")
+        for seam in [": String(localized: \"Launch a scene to start the piece at its bar and loop it, or press Play for the piece from the top.\")",
+                     "? String(localized: \"Already looping. Stop the track to hand it back to the piece\")",
+                     ": String(localized: \"Loops this part on its track from the next bar\")"] {
+            XCTAssertTrue(launchHints.contains(seam), "SessionLaunchView lost the E4-81 seam `\(seam)`")
+        }
+        XCTAssertFalse(launchHints.contains("                           : \"Loops this part on its track from the next bar\")"),
+                       "SessionLaunchView spells the part hint verbatim again")
+        let noteGridHints = try codeOnly("Sources/Echoelmusic/Studio/PartNoteEditor.swift")
+        for seam in [".accessibilityLabel(isOpen ? String(localized: \"Hide the selected part's notes\")",
+                     ": String(localized: \"Shown, not edited\")",
+                     ".accessibilityAction(named: \"Select next note\") {"] {
+            XCTAssertTrue(noteGridHints.contains(seam), "PartNoteEditor lost the E4-81 seam `\(seam)`")
+        }
+        XCTAssertFalse(noteGridHints.contains("                                : \"Shown, not edited\")"), "PartNoteEditor spells the grid hint verbatim again")
+        try assertGerman(["Silences this track and the Studio instrument. Start un-mutes it", "Silences this track",
+                          "Plays only the soloed tracks",
+                          "Plays only the soloed tracks. This also silences the Studio instrument, whose Start clears the solo",
+                          "Launch a scene to start the piece at its bar and loop it, or press Play for the piece from the top.",
+                          "Already looping. Stop the track to hand it back to the piece", "Loops this part on its track from the next bar",
+                          "Hide the selected part's notes", "Show the selected part's notes", "Shown, not edited",
+                          "Select next note", "Select previous note", "Search presets & tags",
+                          "Streams your heart rate and coherence to connected peers while this screen is open. Everyone sees their own numbers side by side."],
+                         "inspector, launcher and note-editor hints")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

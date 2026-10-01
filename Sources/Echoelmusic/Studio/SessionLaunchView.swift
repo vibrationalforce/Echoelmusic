@@ -270,8 +270,8 @@ struct SessionLaunchView: View {
                 Text("Scenes")
                     .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
                 Text(playing
-                     ? "Tap a part to loop it on its track from the next bar. A launched part starts from its top — on the Echoel track it continues where the piece is. Launch scene switches: its parts start and every other launched track returns to the piece on the same bar."
-                     : "Launch a scene to start the piece at its bar and loop it, or press Play for the piece from the top.")
+                     ? String(localized: "Tap a part to loop it on its track from the next bar. A launched part starts from its top — on the Echoel track it continues where the piece is. Launch scene switches: its parts start and every other launched track returns to the piece on the same bar.")
+                     : String(localized: "Launch a scene to start the piece at its bar and loop it, or press Play for the piece from the top."))
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -388,8 +388,8 @@ struct SessionLaunchView: View {
         .accessibilityLabel(track.name + String(localized: ", part at ") + title)
         .accessibilityValue(SessionGrid.word(state) ?? String(localized: "Not launched"))
         .accessibilityHint(state == .playing
-                           ? "Already looping. Stop the track to hand it back to the piece"
-                           : "Loops this part on its track from the next bar")
+                           ? String(localized: "Already looping. Stop the track to hand it back to the piece")
+                           : String(localized: "Loops this part on its track from the next bar"))
     }
 
     private func stopButton(_ track: SessionGrid.Track) -> some View {

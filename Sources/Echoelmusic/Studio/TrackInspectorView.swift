@@ -219,16 +219,16 @@ enum TrackMix {
     /// named where it exists. ONE wording, read by the track header (WA4 path 6).
     nonisolated static func muteHint(_ role: Role) -> String {
         role == .echoelInstrument
-            ? "Silences this track and the Studio instrument. Start un-mutes it"
-            : "Silences this track"
+            ? String(localized: "Silences this track and the Studio instrument. Start un-mutes it")
+            : String(localized: "Silences this track")
     }
 
     /// What Solo says it does: soloing any track but the Echoel one silences the instrument too
     /// (`effectiveGain` zeroes every unsoloed lane), and the instrument's Start clears it.
     nonisolated static func soloHint(_ role: Role) -> String {
         role == .echoelInstrument
-            ? "Plays only the soloed tracks"
-            : "Plays only the soloed tracks. This also silences the Studio instrument, whose Start clears the solo"
+            ? String(localized: "Plays only the soloed tracks")
+            : String(localized: "Plays only the soloed tracks. This also silences the Studio instrument, whose Start clears the solo")
     }
 
     /// DMMW Phase 4 · slice 2 — the instruments a track can be switched to: exactly the kinds
