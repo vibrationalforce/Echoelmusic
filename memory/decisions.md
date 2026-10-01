@@ -4371,3 +4371,15 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   WORK PASS / HEAD FAIL (22/9/24 — ONE finding). Runtime guards unchanged (English under the test locale,
   Python mirror per needle). No re-anchor needed.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-59: audio-timing row and detected key (ab1f1a0ba)
+
+- **Decision:** `RenderGapDetector.Tally` (screenLine, evidenceSuffix, screenCaption, screenText) and
+  `AudioKeyAnalysis.summarise` / `TuningDetector.keyName` build from catalog keys seamed around numbers that keep
+  their own `String(format:)` — a key never carries `%`, and the digits stay byte-identical. Catalog 1423 → 1444.
+- **Why:** formatted English is invisible to key scans; the timing guard pins "Nothing late in the last 60 s" by
+  exact equality, so the number formatting had to survive untouched. "A4 ≈ n Hz" stays verbatim (no language).
+  ⭐ LAW for formatted lines: split at the number, never put a `%` into a key.
+- **Guard:** claim 11 E4-59 block (18 seam needles, 8 absence needles, 21 units; 272 → 279 XCTAssert).
+  WORK PASS / HEAD FAIL (18/7/21 — ONE finding). Runtime guards unchanged (Python mirror per form).
+- **Review:** 2026-10-31.
