@@ -343,9 +343,10 @@ public enum RenderGapDetector {
         public func screenLine(overSeconds: Double, quantumMilliseconds: Double) -> String {
             let seconds = overSeconds.isFinite && overSeconds > 0 ? overSeconds : 0
             guard measuredIntervals > 0 else {
-                return seconds > 0
-                    ? String(format: "Not measured in the last %.0f s", seconds)
-                    : "Not measured yet"
+                // E4-59: catalog keys seamed around the number (a key never carries a `%`); the
+                // number keeps its `String(format:)` so every digit is byte-identical.
+                let blind: String = String(localized: "Not measured in the last ") + String(format: "%.0f", seconds) + String(localized: " s")
+                return seconds > 0 ? blind : String(localized: "Not measured yet")
             }
             let evidence = evidenceSuffix(seconds: seconds,
                                           quantumMilliseconds: quantumMilliseconds)
@@ -355,9 +356,8 @@ public enum RenderGapDetector {
                 // while the blind branch four lines up had already special-cased exactly that.
                 // Unreachable from `pollAudioTiming` (it formats only after a 60 s guard), but
                 // the asymmetry is what lets a future caller find it.
-                return seconds > 0
-                    ? String(format: "Nothing late in the last %.0f s", seconds) + evidence
-                    : "Nothing late so far" + evidence
+                let windowed: String = String(localized: "Nothing late in the last ") + String(format: "%.0f", seconds) + String(localized: " s")
+                return seconds > 0 ? windowed + evidence : String(localized: "Nothing late so far") + evidence
             }
             let ms = quantumMilliseconds.isFinite && quantumMilliseconds > 0
                 ? worstLateInQuanta * quantumMilliseconds : 0
@@ -367,11 +367,12 @@ public enum RenderGapDetector {
             // fabricated zero the unknown-quantum branch exists to avoid. Neither is reachable
             // today (`classify` bounds lateness at 32 quanta and a glitch needs > 0.75), which
             // is exactly why they would have survived until the day something else changed.
+            let lateHead: String = "\(glitchCount)" + String(localized: " late in ") + String(format: "%.0f", seconds)
             guard ms.isFinite, ms >= 0.05 else {
-                return String(format: "%ld late in %.0f s", glitchCount, seconds) + evidence
+                return lateHead + String(localized: " s") + evidence
             }
-            return String(format: "%ld late in %.0f s · worst %.1f ms behind",
-                          glitchCount, seconds, ms) + evidence
+            let worst: String = String(localized: " s · worst ") + String(format: "%.1f", ms) + String(localized: " ms behind")
+            return lateHead + worst + evidence
         }
 
         /// The honest denominator, appended only when it contradicts the window length.
@@ -388,9 +389,8 @@ public enum RenderGapDetector {
             // is lost to the poll boundary), so a strict comparison would append the caveat to
             // every healthy window and train the reader to skip it.
             guard measuredSeconds.isFinite, measuredSeconds < seconds * 0.8 else { return "" }
-            return measuredSeconds < 1
-                ? " · under 1 s of it measured"
-                : String(format: " · only %.0f s of it measured", measuredSeconds)
+            let only: String = String(localized: " · only ") + String(format: "%.0f", measuredSeconds) + String(localized: " s of it measured")
+            return measuredSeconds < 1 ? String(localized: " · under 1 s of it measured") : only
         }
 
         /// The caveat that sits under `screenLine` PERMANENTLY, never only when the window is
@@ -400,7 +400,7 @@ public enum RenderGapDetector {
         /// so at length). A caption that appeared only on dirty windows would let the clean
         /// case read as "the crackling is gone", which is the one sentence this must never say.
         public static let screenCaption =
-            "Timing only. A click while the audio is on time is not counted here."
+            String(localized: "Timing only. A click while the audio is on time is not counted here.")
 
         /// What the row actually shows, resolved from the two facts it has: the last window's
         /// verdict (nil until one closes) and whether the engine is still measuring.
@@ -426,9 +426,10 @@ public enum RenderGapDetector {
         /// over-claiming, so it is written down rather than left for someone to discover.
         public static func screenText(line: String?, isRunning: Bool) -> String {
             guard let line, !line.isEmpty else {
-                return isRunning ? "Measuring…" : "Not measured"
+                return isRunning ? String(localized: "Measuring…") : String(localized: "Not measured")
             }
-            return isRunning ? line : "\(line) · measured before the stop"
+            let stale: String = line + String(localized: " · measured before the stop")
+            return isRunning ? line : stale
         }
     }
 }

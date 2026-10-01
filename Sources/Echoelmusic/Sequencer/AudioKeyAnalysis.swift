@@ -235,22 +235,22 @@ public enum AudioKeyAnalysis {
         guard let tuning else { return nil }
         let keyPhrase: String
         if tuning.confidence < keyConfidenceFloor {
-            keyPhrase = "Key unclear — little tonal centre"
+            keyPhrase = String(localized: "Key unclear — little tonal centre")
         } else if tuning.keyMargin < keyMarginFloor {
-            keyPhrase = "Key ambiguous — two keys fit equally well"
+            keyPhrase = String(localized: "Key ambiguous — two keys fit equally well")
         } else {
-            keyPhrase = "Sounds like \(tuning.keyName)"
+            keyPhrase = String(localized: "Sounds like ") + tuning.keyName
         }
         let a4Phrase: String
         if tuning.a4Confidence < a4ConfidenceFloor {
             // NOT "A4 ≈ ? Hz" and not a silent omission: the reading exists, it is simply
             // not evidenced, and saying so is the whole point of the slice.
-            a4Phrase = "concert pitch unclear"
+            a4Phrase = String(localized: "concert pitch unclear")
         } else {
             let a4 = Int(tuning.snappedA4().rounded())
             a4Phrase = "A4 ≈ \(a4) Hz"
         }
-        return "\(keyPhrase), \(a4Phrase)."
+        return keyPhrase + ", " + a4Phrase + "."
     }
 
     // MARK: - The one impure step

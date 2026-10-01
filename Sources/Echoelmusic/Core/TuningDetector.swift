@@ -121,7 +121,8 @@ public struct DetectedTuning: Sendable, Equatable {
     public var keyName: String {
         let names = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"]
         let r = ((keyRoot % 12) + 12) % 12
-        return "\(names[r]) \(isMinor ? "minor" : "major")"
+        let mode: String = isMinor ? String(localized: "minor") : String(localized: "major")
+        return names[r] + " " + mode
     }
 
     /// Snap a4 to the nearest standard Kammerton preset when within `tolHz`, else keep.

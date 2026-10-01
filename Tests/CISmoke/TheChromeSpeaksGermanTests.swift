@@ -113,7 +113,9 @@
 // note-grid VoiceOver label (ClipNoteEdit.gridLabel) and the arrangement row's spoken line (ArrangementStrip.spoken)
 // plus the picked-note line and the Notes switch title in the same helper file (parent: 10 units missing — ONE finding). E4-58
 // added the EchoelAI narration (BioMusicDirector: three headings, two VoiceOver labels, the paragraph's clauses, prefix and
-// engine tail), shown by LiveNarrationDisclosure (parent: 24 units missing — ONE finding). Claim 12
+// engine tail), shown by LiveNarrationDisclosure (parent: 24 units missing — ONE finding). E4-59 added the audio-timing
+// row's verdicts (RenderGapDetector screenLine / evidenceSuffix / screenCaption / screenText) and the detected-key
+// sentence (AudioKeyAnalysis.summarise with TuningDetector.keyName) (parent: 21 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2044,6 +2046,50 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           ". Each phrase re-seeds the chords, opening pitch and dynamics",
                           " then morphs in at the bar line, so it never repeats and never cuts."],
                          "EchoelAI narration")
+
+        // E4-59 — the audio-timing row (Studio master panel) and the Workstation's detected-key sentence were formatted
+        // English: `String(format:)` with words around `%.0f`, and interpolated phrases. A catalog key never carries a
+        // `%`, so each number keeps its own `String(format:)` and the words become keys seamed around it — every digit
+        // is byte-identical, which is what TimingVerdictReachesTheScreenTests' exact `XCTAssertEqual` needs.
+        let timingRow = try codeOnly("Sources/Echoelmusic/Audio/RenderGapDetector.swift")
+        for seam in ["let blind: String = String(localized: \"Not measured in the last \") + String(format: \"%.0f\", seconds) + String(localized: \" s\")",
+                     "return seconds > 0 ? blind : String(localized: \"Not measured yet\")",
+                     "let windowed: String = String(localized: \"Nothing late in the last \") + String(format: \"%.0f\", seconds) + String(localized: \" s\")",
+                     "return seconds > 0 ? windowed + evidence : String(localized: \"Nothing late so far\") + evidence",
+                     "let lateHead: String = \"\\(glitchCount)\" + String(localized: \" late in \") + String(format: \"%.0f\", seconds)",
+                     "return lateHead + String(localized: \" s\") + evidence",
+                     "let worst: String = String(localized: \" s · worst \") + String(format: \"%.1f\", ms) + String(localized: \" ms behind\")",
+                     "let only: String = String(localized: \" · only \") + String(format: \"%.0f\", measuredSeconds) + String(localized: \" s of it measured\")",
+                     "return measuredSeconds < 1 ? String(localized: \" · under 1 s of it measured\") : only",
+                     "String(localized: \"Timing only. A click while the audio is on time is not counted here.\")",
+                     "return isRunning ? String(localized: \"Measuring…\") : String(localized: \"Not measured\")",
+                     "let stale: String = line + String(localized: \" · measured before the stop\")"] {
+            XCTAssertTrue(timingRow.contains(seam), "RenderGapDetector lost the E4-59 seam `\(seam)`")
+        }
+        for verbatim in ["String(format: \"Not measured in the last %.0f s\"", "String(format: \"Nothing late in the last %.0f s\"",
+                         "String(format: \"%ld late in %.0f s\"", "String(format: \" · only %.0f s of it measured\"",
+                         "return isRunning ? \"Measuring…\" : \"Not measured\"", "\"\\(line) · measured before the stop\""] {
+            XCTAssertFalse(timingRow.contains(verbatim), "RenderGapDetector formats words into a verbatim English line again: `\(verbatim)`")
+        }
+        let keySentence = try codeOnly("Sources/Echoelmusic/Sequencer/AudioKeyAnalysis.swift")
+        for seam in ["keyPhrase = String(localized: \"Key unclear — little tonal centre\")",
+                     "keyPhrase = String(localized: \"Key ambiguous — two keys fit equally well\")",
+                     "keyPhrase = String(localized: \"Sounds like \") + tuning.keyName",
+                     "a4Phrase = String(localized: \"concert pitch unclear\")",
+                     "return keyPhrase + \", \" + a4Phrase + \".\""] {
+            XCTAssertTrue(keySentence.contains(seam), "AudioKeyAnalysis lost the E4-59 seam `\(seam)`")
+        }
+        XCTAssertFalse(keySentence.contains("keyPhrase = \"Sounds like \\(tuning.keyName)\""), "AudioKeyAnalysis interpolates the key sentence again")
+        let keyMode = try codeOnly("Sources/Echoelmusic/Core/TuningDetector.swift")
+        XCTAssertTrue(keyMode.contains("let mode: String = isMinor ? String(localized: \"minor\") : String(localized: \"major\")"),
+                      "TuningDetector lost the E4-59 seam on minor/major")
+        XCTAssertFalse(keyMode.contains("isMinor ? \"minor\" : \"major\""), "TuningDetector spells minor/major verbatim again")
+        try assertGerman(["Not measured in the last ", " s", "Not measured yet", "Nothing late in the last ", "Nothing late so far",
+                          " late in ", " s · worst ", " ms behind", " · only ", " s of it measured", " · under 1 s of it measured",
+                          "Timing only. A click while the audio is on time is not counted here.", "Measuring…", "Not measured",
+                          " · measured before the stop", "Key unclear — little tonal centre", "Key ambiguous — two keys fit equally well",
+                          "Sounds like ", "concert pitch unclear", "minor", "major"],
+                         "audio-timing row and detected key")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
