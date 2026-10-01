@@ -625,9 +625,19 @@ struct WorkstationView: View {
     }
 
     private func laneFacts(_ row: WorkstationSummary.LaneRow, headerSwitches: Bool) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: row.kind.systemImage)
-                .foregroundStyle(EchoelTheme.dim)
+        // A8 (founder 2026-10-01) — the header wears the SAME identity as the track's canvas
+        // gutter (A1): one hue band and the instrument's symbol in that hue, from the one switch
+        // `EchoelTheme.TrackHue`. The open card then reads as belonging to the ringed canvas row;
+        // the hue never travels without the symbol and the name (never colour alone).
+        let hue = EchoelTheme.TrackHue.of(kind: row.kind, instrument: row.instrument, isBio: row.isBio)
+        return HStack(spacing: 8) {
+            RoundedRectangle(cornerRadius: 1.5)
+                .fill(hue.color)
+                .frame(width: 3)
+                .frame(minHeight: 28)
+            Image(systemName: EchoelTheme.TrackHue.symbol(kind: row.kind, instrument: row.instrument,
+                                                          isBio: row.isBio))
+                .foregroundStyle(hue.color)
                 .frame(width: 18)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {

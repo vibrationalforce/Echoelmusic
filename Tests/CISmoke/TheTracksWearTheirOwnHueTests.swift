@@ -23,6 +23,9 @@
 // re-derived in Python on the work tree (contrast 6.95…11.59:1, closest pair sampler/breakbeat
 // 0.139, nearest meaning colour 0.249). Claim 4 is a SOURCE claim: transcribed against the work
 // tree (green) and the parent (red — the gutter had no hue and the block filled with `dim`).
+// Claim 5 (A8, added one slice later) is a SOURCE claim on the open track's header: against its
+// parent it is a REGRESSION pair (the kind's grey `row.kind.systemImage`, no hue) plus three
+// absences of the new spelling — one absence (#486) — and one COUNTERWEIGHT (the one sentence).
 
 import XCTest
 #if canImport(SwiftUI)
@@ -32,6 +35,7 @@ final class TheTracksWearTheirOwnHueTests: XCTestCase {
 
     private static let theme = "Sources/Echoelmusic/Studio/EchoelTheme.swift"
     private static let canvas = "Sources/Echoelmusic/Studio/ArrangeCanvasView.swift"
+    private static let workstation = "Sources/Echoelmusic/Studio/WorkstationView.swift"
 
     private typealias RGB = (red: Double, green: Double, blue: Double)
 
@@ -127,6 +131,33 @@ final class TheTracksWearTheirOwnHueTests: XCTestCase {
                       "the selection ring stays `accent`, so a selected part is louder than its hue")
         XCTAssertFalse(blockBody.contains(".fill(EchoelTheme.dim)"),
                        "a part filled with `dim` is the grey strip the founder rejected")
+    }
+
+    // MARK: 5 — the open track's header wears the same identity (A8)
+
+    /// A8 (2026-10-01): the card under the canvas is the OPEN track's header, and the canvas row
+    /// it belongs to is ringed. Before A8 the card showed the kind's grey symbol, so nothing tied
+    /// it to the coloured row above it. It now asks the SAME switch for hue and symbol — one
+    /// identity in two places, never a second mapping (#416).
+    func testTheOpenHeaderWearsTheGuttersIdentity() throws {
+        let file = SourceText.codeOnly(try text(Self.workstation))
+        guard let facts = file.range(of: "private func laneFacts(_ row: WorkstationSummary.LaneRow, headerSwitches: Bool) -> some View {"),
+              let factsEnd = file.range(of: "private func ", range: facts.upperBound..<file.endIndex) else {
+            return XCTFail("ANCHOR MISSING: `laneFacts` and the member after it (#454)")
+        }
+        let header = String(file[facts.upperBound..<factsEnd.lowerBound])
+        XCTAssertTrue(header.contains("EchoelTheme.TrackHue.of(kind: row.kind, instrument: row.instrument, isBio: row.isBio)"),
+                      "the header asks the one switch for the track's hue")
+        XCTAssertTrue(header.contains("EchoelTheme.TrackHue.symbol(kind: row.kind, instrument: row.instrument,"),
+                      "and shows the instrument's symbol in it, like the gutter")
+        XCTAssertTrue(header.contains(".fill(hue.color)"), "the header carries the hue band")
+        XCTAssertTrue(header.contains("Text(row.name)"), "the hue never travels without the name")
+        XCTAssertFalse(header.contains("Image(systemName: row.kind.systemImage)"), """
+            the header shows the KIND's grey symbol again — the open card no longer reads as the \
+            ringed canvas row's own head (A8).
+            """)
+        XCTAssertTrue(header.contains(".accessibilityLabel(WorkstationSummary.spokenDescription(of: row))"),
+                      "the header is still ONE spoken sentence (#1436) — the band and symbol add no element")
     }
 
     // MARK: helpers
