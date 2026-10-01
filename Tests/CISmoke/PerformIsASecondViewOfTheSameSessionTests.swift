@@ -205,7 +205,8 @@ final class PerformIsASecondViewOfTheSameSessionTests: XCTestCase {
                        "a closed section runs no preflight and builds no grid")
         let toggle = try member("private var sectionToggle: some View {", in: leaf)
         XCTAssertTrue(toggle.contains(".frame(minHeight: 44)"), "a 44-pt target")
-        XCTAssertTrue(toggle.contains(".accessibilityValue(isOpen ? \"Open\" : \"Closed\")"))
+        // E4-40: the value says Expanded/Collapsed like its three sibling disclosures, as two catalog keys.
+        XCTAssertTrue(toggle.contains(".accessibilityValue(isOpen ? String(localized: \"Expanded\") : String(localized: \"Collapsed\"))"))
         XCTAssertTrue(toggle.contains(".accessibilityHint(Self.sectionHint)"),
                       "the toggle speaks the one hint that is true in both states")
         // #482: the Sound chip opens this panel, so its spoken name lists what it now reaches.

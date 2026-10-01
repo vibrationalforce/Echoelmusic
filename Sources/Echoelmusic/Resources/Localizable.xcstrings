@@ -20586,6 +20586,326 @@
           }
         }
       }
+    },
+    "Scenes and tracks" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szenen und Spuren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scenes and tracks"
+          }
+        }
+      }
+    },
+    "Shows the piece's scenes to launch on the bar, and Mute and Solo for its tracks. While the Echoel plays on its own, stop it in the header to launch a scene." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt die Szenen des Stücks zum Starten am Takt sowie Mute und Solo für seine Spuren. Spielt das Echoel allein, stoppe es im Kopf, um eine Szene zu starten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows the piece's scenes to launch on the bar, and Mute and Solo for its tracks. While the Echoel plays on its own, stop it in the header to launch a scene."
+          }
+        }
+      }
+    },
+    "Nothing to launch yet. Parts you write in Compose, and the Echoel's generated music, appear here as scenes to launch on the bar." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nichts zu starten. Teile, die du in Komponieren schreibst, und die generierte Musik des Echoel erscheinen hier als Szenen zum Starten am Takt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing to launch yet. Parts you write in Compose, and the Echoel's generated music, appear here as scenes to launch on the bar."
+          }
+        }
+      }
+    },
+    "The Echoel is playing. Stop it in the header to launch a scene — the piece then starts on the scene's bar." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Echoel spielt. Stoppe es im Kopf, um eine Szene zu starten — das Stück beginnt dann am Takt der Szene."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Echoel is playing. Stop it in the header to launch a scene — the piece then starts on the scene's bar."
+          }
+        }
+      }
+    },
+    "Expanded" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgeklappt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expanded"
+          }
+        }
+      }
+    },
+    "Collapsed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingeklappt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Collapsed"
+          }
+        }
+      }
+    },
+    "Save preset" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preset sichern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save preset"
+          }
+        }
+      }
+    },
+    "Rename preset" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preset umbenennen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rename preset"
+          }
+        }
+      }
+    },
+    "Morph → " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morph → "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morph → "
+          }
+        }
+      }
+    },
+    "Morph toward a preset…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zu einem Preset morphen…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morph toward a preset…"
+          }
+        }
+      }
+    },
+    "Blend the current sound continuously toward any preset with the Morph control — for live transitions." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blendet den aktuellen Klang stufenlos zu jedem Preset über — mit dem Morph-Regler, für Live-Übergänge."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blend the current sound continuously toward any preset with the Morph control — for live transitions."
+          }
+        }
+      }
+    },
+    "0 = current sound · 1 = the target preset. Every parameter glides between them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0 = aktueller Klang · 1 = das Ziel-Preset. Jeder Parameter gleitet dazwischen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0 = current sound · 1 = the target preset. Every parameter glides between them."
+          }
+        }
+      }
+    },
+    "Let the body shape the effects: e.g. coherence → reverb, breath → filter, heart rate → tremolo. Add a route to begin." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lass den Körper die Effekte formen: z. B. Kohärenz → Hall, Atem → Filter, Herzfrequenz → Tremolo. Füge eine Route hinzu, um zu beginnen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Let the body shape the effects: e.g. coherence → reverb, breath → filter, heart rate → tremolo. Add a route to begin."
+          }
+        }
+      }
+    },
+    "Each route moves its parameter around your set value at ~30 Hz. The targeted stage turns on automatically." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Route bewegt ihren Parameter mit ~30 Hz um deinen eingestellten Wert. Die Zielstufe schaltet sich automatisch ein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each route moves its parameter around your set value at ~30 Hz. The targeted stage turns on automatically."
+          }
+        }
+      }
+    },
+    "No routes yet, so no effect parameter is moving. Add one above." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Routen, also bewegt sich kein Effektparameter. Füge oben eine hinzu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No routes yet, so no effect parameter is moving. Add one above."
+          }
+        }
+      }
+    },
+    "Start the instrument to watch the body move these parameters." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starte das Instrument, um zu sehen, wie der Körper diese Parameter bewegt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start the instrument to watch the body move these parameters."
+          }
+        }
+      }
+    },
+    "Always on — simulated demo → timbre" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Immer an — simulierte Demo → Klangfarbe"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Always on — simulated demo → timbre"
+          }
+        }
+      }
+    },
+    "Always on — body → timbre" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Immer an — Körper → Klangfarbe"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Always on — body → timbre"
+          }
+        }
+      }
+    },
+    "When a channel stops arriving, its routes here release: the row shows a dash and the parameter returns to the value you set. The timbre channels below do the opposite — they stay on the last reading and say held. Both are deliberate, so a dropout changes the effects and not the instrument's own voice." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kommt ein Kanal nicht mehr an, lassen seine Routen hier los: die Zeile zeigt einen Strich und der Parameter kehrt zu deinem eingestellten Wert zurück. Die Klangfarben-Kanäle unten tun das Gegenteil — sie bleiben auf der letzten Messung und sagen „gehalten“. Beides ist Absicht, damit ein Aussetzer die Effekte verändert und nicht die eigene Stimme des Instruments."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When a channel stops arriving, its routes here release: the row shows a dash and the parameter returns to the value you set. The timbre channels below do the opposite — they stay on the last reading and say held. Both are deliberate, so a dropout changes the effects and not the instrument's own voice."
+          }
+        }
+      }
+    },
+    "A channel with no reading hands the engine a neutral 0.50 on purpose, so the instrument keeps playing its patch instead of jumping to the bottom of the scale. A channel marked held is the last measurement: the engine still has it, the signal has stopped arriving." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Kanal ohne Messung gibt der Engine absichtlich ein neutrales 0,50, damit das Instrument sein Patch weiterspielt, statt ans untere Ende der Skala zu springen. Ein als „gehalten“ markierter Kanal ist die letzte Messung: die Engine hat sie noch, das Signal kommt nur nicht mehr an."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A channel with no reading hands the engine a neutral 0.50 on purpose, so the instrument keeps playing its patch instead of jumping to the bottom of the scale. A channel marked held is the last measurement: the engine still has it, the signal has stopped arriving."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

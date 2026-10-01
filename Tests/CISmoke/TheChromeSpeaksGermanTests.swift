@@ -73,7 +73,9 @@
 // E4-38 added the bio strip's banner, driving-dot states, source tag and camera captions, and the two mood pads' titles,
 // axis captions and spoken label/value/actions (parent: verbatim, interpolated or unit-less, 20 units missing — ONE finding).
 // E4-39 added the visual window bar's spoken labels, the window-size words, the WAV gap and the header's monitor button
-// and note-name hint (parent: ternaries and a `+` chain of literals, 17 units missing — ONE finding). Claim 12
+// and note-name hint (parent: ternaries and a `+` chain of literals, 17 units missing — ONE finding). E4-40 added the Perform
+// plate's four sentences and disclosure value, and the FX panel's Morph label, four conditional footers/headers, dropout note
+// and neutral-0.50 footer (parent: stored statics, ternaries and `+` chains, 20 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1320,6 +1322,60 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Resize visual", "Hide floating visual", "Show floating visual",
                           "Chooses how the twelve notes are spelled — international A B C, German A H C, solfège Do Re Mi, or Indian sargam Sa Re Ga"],
                          "visual window bar and header monitor")
+
+        // E4-40 — the Perform plate and the FX panel's prose. PerformSessionView: the four `static let` sentences
+        // (`Text(Self.x)` is verbatim) are computed keys, and the disclosure value says Expanded/Collapsed like its
+        // three sibling controls (one word per thing; "Open" is already the catalog's door verb). EchoelFXView: the
+        // Morph label (`Label(String)`), the four `Text(flag ? "A" : "B")` footers and headers (a ternary of literals
+        // is a String), the dropout note (a `+` chain, now ONE literal on one line so ADropoutSaysWhichHalfLetGo's
+        // extractor still reads it — its anchor moved 1:1) and the neutral-0.50 footer. TheFXHeadersSayWhoseBody,
+        // AHeldReadingSaysSo and PerformIsASecondViewOfTheSameSession keep every needle (runtime English unchanged).
+        let perform = try codeOnly("Sources/Echoelmusic/Studio/PerformSessionView.swift")
+        for seam in ["static var sectionTitle: String { String(localized: \"Scenes and tracks\") }",
+                     "static var sectionHint: String { String(localized: \"Shows the piece's scenes to launch on the bar,",
+                     "static var emptyNote: String { String(localized: \"Nothing to launch yet.",
+                     "static var instrumentRunningNote: String { String(localized: \"The Echoel is playing.",
+                     ".accessibilityValue(isOpen ? String(localized: \"Expanded\") : String(localized: \"Collapsed\"))"] {
+            XCTAssertTrue(perform.contains(seam), "PerformSessionView lost the E4-40 seam `\(seam)`")
+        }
+        for verbatim in ["static let sectionTitle", "static let sectionHint", "static let emptyNote", "static let instrumentRunningNote", "? \"Open\" : \"Closed\""] {
+            XCTAssertFalse(perform.contains(verbatim), "PerformSessionView stores or spells a sentence verbatim again: `\(verbatim)`")
+        }
+        let fxPanel = try codeOnly("Sources/Echoelmusic/Studio/EchoelFXView.swift")
+        for seam in ["Label(morphTarget.map { String(localized: \"Morph → \") + $0.name } ?? String(localized: \"Morph toward a preset…\"),",
+                     "? String(localized: \"Blend the current sound continuously toward any preset with the Morph control — for live transitions.\")",
+                     ": String(localized: \"0 = current sound · 1 = the target preset. Every parameter glides between them.\"))",
+                     "? String(localized: \"Let the body shape the effects: e.g. coherence → reverb, breath → filter, heart rate → tremolo. Add a route to begin.\")",
+                     ": String(localized: \"Each route moves its parameter around your set value at ~30 Hz. The targeted stage turns on automatically.\"))",
+                     "? String(localized: \"No routes yet, so no effect parameter is moving. Add one above.\")",
+                     ": String(localized: \"Start the instrument to watch the body move these parameters.\"))",
+                     "? String(localized: \"Always on — simulated demo → timbre\")",
+                     ": String(localized: \"Always on — body → timbre\"))",
+                     "static var stopsArrivingNote: String { String(localized: \"When a channel stops arriving, its routes here release:",
+                     "Text(\"A channel with no reading hands the engine a neutral 0.50 on purpose, so the instrument keeps playing its patch"] {
+            XCTAssertTrue(fxPanel.contains(seam), "EchoelFXView lost the E4-40 seam `\(seam)`")
+        }
+        for verbatim in ["\"Morph → \\(", "                 ? \"Blend the current sound", "                 : \"0 = current sound", "                 ? \"Let the body shape",
+                         "                     : \"Start the instrument", "                 : \"Always on — body → timbre\"", "static let stopsArrivingNote",
+                         "+ \"instrument keeps playing its patch"] {
+            XCTAssertFalse(fxPanel.contains(verbatim), "EchoelFXView interpolates, chains or spells a sentence verbatim again: `\(verbatim)`")
+        }
+        // RUNTIME COUNTERWEIGHTS: the bundle's English statics are unchanged
+        XCTAssertEqual(PerformSessionView.sectionTitle, "Scenes and tracks")
+        XCTAssertTrue(PerformSessionView.emptyNote.hasPrefix("Nothing to launch yet. Parts you write in Compose,"))
+        try assertGerman(["Scenes and tracks", "Expanded", "Collapsed", "Save preset", "Rename preset", "Morph → ", "Morph toward a preset…",
+                          "Always on — simulated demo → timbre", "Always on — body → timbre",
+                          "Shows the piece's scenes to launch on the bar, and Mute and Solo for its tracks. While the Echoel plays on its own, stop it in the header to launch a scene.",
+                          "Nothing to launch yet. Parts you write in Compose, and the Echoel's generated music, appear here as scenes to launch on the bar.",
+                          "The Echoel is playing. Stop it in the header to launch a scene — the piece then starts on the scene's bar.",
+                          "Blend the current sound continuously toward any preset with the Morph control — for live transitions.",
+                          "0 = current sound · 1 = the target preset. Every parameter glides between them.",
+                          "Let the body shape the effects: e.g. coherence → reverb, breath → filter, heart rate → tremolo. Add a route to begin.",
+                          "Each route moves its parameter around your set value at ~30 Hz. The targeted stage turns on automatically.",
+                          "No routes yet, so no effect parameter is moving. Add one above.", "Start the instrument to watch the body move these parameters.",
+                          "When a channel stops arriving, its routes here release: the row shows a dash and the parameter returns to the value you set. The timbre channels below do the opposite — they stay on the last reading and say held. Both are deliberate, so a dropout changes the effects and not the instrument's own voice.",
+                          "A channel with no reading hands the engine a neutral 0.50 on purpose, so the instrument keeps playing its patch instead of jumping to the bottom of the scale. A channel marked held is the last measurement: the engine still has it, the signal has stopped arriving."],
+                         "Perform plate and FX prose")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

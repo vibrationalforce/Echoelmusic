@@ -814,7 +814,7 @@ struct EchoelFXView: View {
                     }
                 }
             } label: {
-                Label(morphTarget.map { "Morph → \($0.name)" } ?? "Morph toward a preset…",
+                Label(morphTarget.map { String(localized: "Morph → ") + $0.name } ?? String(localized: "Morph toward a preset…"),
                       systemImage: "slider.horizontal.3")
                     .font(EchoelTheme.font(13, .semibold))
                     .foregroundStyle(EchoelTheme.accent)
@@ -836,8 +836,8 @@ struct EchoelFXView: View {
             // panel, and no raw `Slider` either. Named by its LABEL now, so the sentence cannot
             // drift from the control again.
             Text(morphTarget == nil
-                 ? "Blend the current sound continuously toward any preset with the Morph control — for live transitions."
-                 : "0 = current sound · 1 = the target preset. Every parameter glides between them.")
+                 ? String(localized: "Blend the current sound continuously toward any preset with the Morph control — for live transitions.")
+                 : String(localized: "0 = current sound · 1 = the target preset. Every parameter glides between them."))
         }
         .listRowBackground(EchoelTheme.fill)
     }
@@ -1105,8 +1105,8 @@ private struct FXBioModSection: View {
             Text("Bio-reactive").font(EchoelTheme.font(13, .bold)).textCase(nil)
         } footer: {
             Text(modulator.routes.isEmpty
-                 ? "Let the body shape the effects: e.g. coherence → reverb, breath → filter, heart rate → tremolo. Add a route to begin."
-                 : "Each route moves its parameter around your set value at ~30 Hz. The targeted stage turns on automatically.")
+                 ? String(localized: "Let the body shape the effects: e.g. coherence → reverb, breath → filter, heart rate → tremolo. Add a route to begin.")
+                 : String(localized: "Each route moves its parameter around your set value at ~30 Hz. The targeted stage turns on automatically."))
         }
         .listRowBackground(EchoelTheme.fill)
     }
@@ -1221,11 +1221,9 @@ private struct BioModLiveView: View {
     /// directly after `BioModLiveView(modulator:)` in `EchoelFXView.body`. Swapping those two
     /// lines makes this sentence false with no other symptom, which is why the guard asserts the
     /// order rather than only the words.
-    static let stopsArrivingNote =
-        "When a channel stops arriving, its routes here release: the row shows a dash and the "
-        + "parameter returns to the value you set. The timbre channels below do the opposite — "
-        + "they stay on the last reading and say held. Both are deliberate, so a dropout changes "
-        + "the effects and not the instrument's own voice."
+    // E4-40: ONE literal on ONE line — a `+` chain is a `String` (verbatim on a German phone), and
+    // ADropoutSaysWhichHalfLetGo's literal extractor reads the quotes on the anchor line.
+    static var stopsArrivingNote: String { String(localized: "When a channel stops arriving, its routes here release: the row shows a dash and the parameter returns to the value you set. The timbre channels below do the opposite — they stay on the last reading and say held. Both are deliberate, so a dropout changes the effects and not the instrument's own voice.") }
 
     var body: some View {
         Section {
@@ -1235,8 +1233,8 @@ private struct BioModLiveView: View {
                 }
             } else {
                 Text(modulator.isRunning
-                     ? "No routes yet, so no effect parameter is moving. Add one above."
-                     : "Start the instrument to watch the body move these parameters.")
+                     ? String(localized: "No routes yet, so no effect parameter is moving. Add one above.")
+                     : String(localized: "Start the instrument to watch the body move these parameters."))
                     .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1333,8 +1331,8 @@ private struct AlwaysOnBioView: View {
             // migrated to the property in the same follow-up, so the two now share one
             // definition rather than two spellings that happen to agree.
             Text(frame?.source.isSynthetic == true
-                 ? "Always on — simulated demo → timbre"
-                 : "Always on — body → timbre")
+                 ? String(localized: "Always on — simulated demo → timbre")
+                 : String(localized: "Always on — body → timbre"))
                 .font(EchoelTheme.font(13, .bold)).textCase(nil)
         } footer: {
             // Says what a NEUTRAL reading is, because #497 made "0.50" ambiguous on purpose:
@@ -1362,10 +1360,7 @@ private struct AlwaysOnBioView: View {
             // invented, which is the worse half of that pair because a quote invites trust.
             // The two states it distinguishes are unchanged, which is what
             // `AHeldReadingSaysSoTests` is actually about; its needle moves in this commit (§4).
-            Text("A channel with no reading hands the engine a neutral 0.50 on purpose, so the "
-                 + "instrument keeps playing its patch instead of jumping to the bottom of the "
-                 + "scale. A channel marked held is the last measurement: the engine still has "
-                 + "it, the signal has stopped arriving.")
+            Text("A channel with no reading hands the engine a neutral 0.50 on purpose, so the instrument keeps playing its patch instead of jumping to the bottom of the scale. A channel marked held is the last measurement: the engine still has it, the signal has stopped arriving.")
         }
         .listRowBackground(EchoelTheme.fill)
     }

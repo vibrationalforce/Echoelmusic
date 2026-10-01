@@ -123,15 +123,17 @@ struct PerformSessionView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Self.sectionTitle)
-        .accessibilityValue(isOpen ? "Open" : "Closed")
+        // E4-40: the three sibling disclosure controls say Expanded/Collapsed — one word per thing — and two keys.
+        .accessibilityValue(isOpen ? String(localized: "Expanded") : String(localized: "Collapsed"))
         .accessibilityHint(Self.sectionHint)
     }
 
-    static let sectionTitle = "Scenes and tracks"
+    // E4-40: computed, not stored — a `static let` would freeze the bundle's first locale (E4 law).
+    static var sectionTitle: String { String(localized: "Scenes and tracks") }
 
     /// Honest in both states: while the Echoel plays alone the section shows the Stop note in
     /// place of the scenes, so the hint names that condition instead of promising a launch.
-    static let sectionHint = "Shows the piece's scenes to launch on the bar, and Mute and Solo for its tracks. While the Echoel plays on its own, stop it in the header to launch a scene."
+    static var sectionHint: String { String(localized: "Shows the piece's scenes to launch on the bar, and Mute and Solo for its tracks. While the Echoel plays on its own, stop it in the header to launch a scene.") }
 
     /// One heard track's Mute/Solo state, read from the document — the ONE truth both views show.
     struct MixRow: Identifiable, Equatable, Sendable {
@@ -196,9 +198,9 @@ struct PerformSessionView: View {
     /// What the Perform plate says while the song has nothing to launch. It names the area that
     /// makes parts (Compose) rather than a control on another plate, so it cannot go stale when
     /// that plate's rows move.
-    static let emptyNote = "Nothing to launch yet. Parts you write in Compose, and the Echoel's generated music, appear here as scenes to launch on the bar."
+    static var emptyNote: String { String(localized: "Nothing to launch yet. Parts you write in Compose, and the Echoel's generated music, appear here as scenes to launch on the bar.") }
 
     /// Why no scene is offered while the instrument plays alone: a launch would start the piece
     /// under the running pattern. Names the control that resolves it — the header's Stop.
-    static let instrumentRunningNote = "The Echoel is playing. Stop it in the header to launch a scene — the piece then starts on the scene's bar."
+    static var instrumentRunningNote: String { String(localized: "The Echoel is playing. Stop it in the header to launch a scene — the piece then starts on the scene's bar.") }
 }

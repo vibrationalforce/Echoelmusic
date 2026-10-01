@@ -110,8 +110,10 @@ final class ADropoutSaysWhichHalfLetGoTests: XCTestCase {
 
     // MARK: - the copy (ONE absence on the parent, reported four times — see the header)
 
+    // E4-40: the note is a computed key on ONE line (`static var … { String(localized: "…") }`), so the
+    // extractor reads the sentence from the anchor line itself; the anchor moved with the spelling.
     func testTheDropoutNoteExists() throws {
-        let note = try literalValue(of: "static let stopsArrivingNote =", in: Self.fxView)
+        let note = try literalValue(of: "static var stopsArrivingNote: String {", in: Self.fxView)
         XCTAssertFalse(note.isEmpty, """
             `BioModLiveView.stopsArrivingNote` is missing or empty. It is the only place a \
             player is told that a dropout releases the FX routes and parks the timbre — \
@@ -123,7 +125,7 @@ final class ADropoutSaysWhichHalfLetGoTests: XCTestCase {
     /// TOGETHER. A sentence naming only the release would leave "held" unexplained, which is
     /// the state this slice exists to end.
     func testTheNoteNamesBothHalves() throws {
-        let note = try literalValue(of: "static let stopsArrivingNote =", in: Self.fxView)
+        let note = try literalValue(of: "static var stopsArrivingNote: String {", in: Self.fxView)
         XCTAssertTrue(note.contains("release"), """
             the dropout note does not say the routes RELEASE. That is the half a player sees as \
             a dash in the rows directly above it.
@@ -243,7 +245,7 @@ final class ADropoutSaysWhichHalfLetGoTests: XCTestCase {
     /// comment that justifies a ban is how the ban outlives its reason. The count is gone rather
     /// than refreshed: it is a date, not a fact (#818), and the two lists below say what matters.
     func testTheNewNoteDoesNotClaimThePinnedChannels() throws {
-        let note = try literalValue(of: "static let stopsArrivingNote =", in: Self.fxView)
+        let note = try literalValue(of: "static var stopsArrivingNote: String {", in: Self.fxView)
         for channel in Self.producerlessChannels {
             XCTAssertFalse(note.contains(channel), """
                 the dropout note names \(channel), which no producer drives — both \
