@@ -68,7 +68,7 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
 ### Phase B — Engine-Glaubwürdigkeit
 - **B1** 8-Clip-Decke heben + „Eigenständig machen" beim Duplizieren (Format-Migration).
   **B1a ✓ a137976f7** — `ClipStore.slotCount` 64, ein altes 8er-Gitter öffnet sich im größeren (`migratedGrid`), gespeichert wird das Präfix bis zum letzten belegten Platz (`storedGrid`, min. 8 — ein Rückfall auf einen alten Build behält bis zu 8). Wächter `TheOldPartGridOpensInTheLargerOneTests`. Rückfall-Kosten: Inbox H8. **B1b HOLD** — Undo-Schritt für den geprägten Teil, nur MIDI, Tür-Ort, plus Founder-Frage H9.
-- **B2** Presets je Spur + Sampler wählbar. **B2a ✓ 8d48d0461** — Klang-Menü (`TrackMix.setSound` → `setLanePatch`, dessen erster Produktions-Aufrufer) nur auf POLY-Rack-Spuren; Standard = kein Spur-Patch, Wahl = Kopie, fremde Kopie heißt „In diesem Stück“. Wächter `TheTrackChoosesItsSoundTests`. Offen: **B2b** Klangwahl in die Undo-Historie; Sampler-Wahl.
+- **B2** Presets je Spur + Sampler wählbar. **B2a ✓ 8d48d0461** — Klang-Menü (`TrackMix.setSound` → `setLanePatch`, dessen erster Produktions-Aufrufer) nur auf POLY-Rack-Spuren; Standard = kein Spur-Patch, Wahl = Kopie, fremde Kopie heißt „In diesem Stück“. Wächter `TheTrackChoosesItsSoundTests`. **B2b ✓ 1df12b6db** — eine Klangwahl ist EIN Undo-Schritt (`.lanePatch`, beide Klänge als Werte, über `editLanePatch`; `setLanePatch`/`setSound` bleiben roh). Wächter `TheSoundChoiceIsOneUndoStepTests`. Offen: Sampler-Wahl.
 - **B3** Mixer-Ansicht (alle Spuren als Kanalzüge) + Mixer-Undo. **✓ ec276058b (Ansicht)** —
   `PieceMixerView` hinter dem Reiter „Mix“ (Tor `showsSongs`), steht STATT des Arrangements (ein
   Bedienelement pro Tatsache auf dem Schirm). Kanalzug = `TrackMix.controls` (keine zweite Regel),
@@ -86,7 +86,7 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
   werden geschrieben; Pegel/Pan/Klang nicht (der Hinweis sagt es). Wächter
   `ThePieceExportsTheSongAsMIDITests`; `ThePieceHasTabsTests` FX-Tor neu verankert.
 - **B5** Per-Spur-Meter-Quelle (Audio-Thread-Review, Gerät).
-- **B6** Velocity-Spur + CC-Spuren im Noteneditor; Import behält CC/Bend/Pressure. **B6a ✓ 7e12f1976** — `PartVelocityLane` unter dem Gitter (Tipp = eine Spalte, Halten+Ziehen = Gerade, EIN `setClipNotes` beim Loslassen = ein Undo-Schritt). Wächter `TheVelocityIsDrawnUnderTheNotesInOneStepTests`. Offen: B6b (CC/Bend/Pressure-Spuren, Import).
+- **B6** Velocity-Spur + CC-Spuren im Noteneditor; Import behält CC/Bend/Pressure. **B6a ✓ 7e12f1976** — `PartVelocityLane` unter dem Gitter (Tipp = eine Spalte, Halten+Ziehen = Gerade, EIN `setClipNotes` beim Loslassen = ein Undo-Schritt). Wächter `TheVelocityIsDrawnUnderTheNotesInOneStepTests`. **B6b-0 ✓ 02a68bcaf** — der MIDI-Import sagt, was er weglässt (Pedal; Bend/Aftertouch/Controller-ÄNDERUNGEN, nur auf Kanälen mit Noten im Teil). Wächter `TheMIDIImportSaysWhatItLeavesOutTests`. **B6b HOLD** (nichts spielt ein gespeichertes Controller-Ereignis); nächste baubare Scheibe B6b-1: Pedal in Notenlängen falten.
 
 ### Phase C — Multimedia-Spuren (die Lücke, die niemand besetzt)
 - **C1** `visual.*`-Parameter (Intensität, Bewegung, Farbton, Detail, Blend) registriert,
@@ -95,8 +95,8 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
   `VisualCreativeState`, Slew = FlashGuard 0,30/s, beide Eignungen verweigert). Bewegung, Farbton,
   Detail und Blend brauchen je eine eigene Flash-/Sprung-Analyse und kommen einzeln nach C2.
   **✓ 357067db2** — Registry → Deskriptor → Router → `VisualCreativeState`, pro Bild in `MetalBioView.draw(in:)` mit Slew gelesen; kein Produktions-Schreiber (beide Eignungen verweigert). Wächter `TheVisualIntensityIsACanonicalParameterTests`. Gerät: H10.
-- **C2** Visual-Spur (Kurven) + domänen-bewusster Automations-Editor + Play-Gate für Kurven-Songs.
-- **C3** Licht-Spur: Look-Intensität automationsfähig (nur dämpfend, FlashGuard bleibt; KEIN Strobe).
+- **C2** Visual-Spur (Kurven) + domänen-bewusster Automations-Editor + Play-Gate für Kurven-Songs. **C2a HOLD — Inbox H12** (Entwurf fertig, Runde 4): hebt die C1-Sperre auf; die Blitzgrenze des Bildes mit Verstärkung bis ~2,8× ist nur am Gerät belegbar.
+- **C3** Licht-Spur: Look-Intensität automationsfähig (nur dämpfend, FlashGuard bleibt; KEIN Strobe). **C3a ✓ fd782725b** — die Look-Stärke gleitet mit höchstens 0,3/s (0,10 × 3 Hz) in beiden Sendern, heute byte-gleich. Wächter `TheLightLookMovesNoFasterThanTheFlashLawTests`. C3b (Kurve + Eignung) offen. Befund dabei: Musik-Dimmer → Inbox H11.
 - **C4** Raum: Szene app-weit aus der Zeitleiste, Stream-Schalter mit Tür; Bewegungs-Spur.
 - **C5** Bereichs-Tabs Music · Visual · Light · Space. **✓ 9c4bb62b8 (Music · Visual · Light)** — Visual → Feld-Panel (ungegatet wie die Bereichszeile), Light → Routing (Empfänger verweigert, solange FX/Live Colabo offen sind). **Space bleibt auf HOLD bis C4** (heute nur die ADM-OSC-Zeile im Routing = zweites Wort für Light). ⚠️ Gebaut VOR C2–C4: kommt mit C2 ein Visual-Kurven-Track, muss die Visual-Tür eventuell umzeigen. Wächter `TheDomainTabsOpenOnlyWhatExistsTests`.
 

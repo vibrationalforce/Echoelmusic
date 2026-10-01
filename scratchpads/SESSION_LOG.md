@@ -41870,3 +41870,23 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - Lehre: `patch -F2` meldete Erfolg und wendete nur Hunks 1–3 an — nach jedem Patch `git diff`
   gegen den Plan lesen.
 - Gerät offen: alles (Inbox §2, vier neue Zeilen). Benotet per Transkription, nicht kompiliert.
+
+## 2026-10-01 — Workstation-Neugestaltung, Runde 4 (B2b · C3a · B6b-0 · B5; C2a HOLD)
+- Workflow: fünf Entwürfe + fünf adversariale Kritiken (B2b · B5 · B6b · C3 · C2), je am Code geprüft.
+- **B2b ✓ 1df12b6db**: eine Klangwahl im Inspektor ist EIN Undo-Schritt — `HistoryStep.lanePatch`
+  trägt beide Klänge als WERTE (keine Bibliotheks-ID, weil die Bibliothek sich ändern darf), Schreiber
+  `editLanePatch`; die rohen `setLanePatch`/`TrackMix.setSound` bleiben undo-frei für den Agenten.
+  Wächter `TheSoundChoiceIsOneUndoStepTests`; Historien-Hinweis nennt jetzt „picked sound".
+- **C3a ✓ fd782725b**: die Look-Stärke des Lichts gleitet in Art-Net UND sACN mit höchstens 0,3/s
+  (`FlashGuard.luminanceDeltaThreshold × maxFlashHz`, keine neue Zahl); Anker = zuletzt AKZEPTIERTE
+  Ausgabe. Heute byte-gleich (nichts bewegt die Stärke). Wächter `TheLightLookMovesNoFasterThanTheFlashLawTests`.
+- **B6b-0 ✓ 02a68bcaf**: der MIDI-Import sagt, was er weglässt (Pedal; Bend/Aftertouch/CC-ÄNDERUNGEN,
+  nur Kanäle mit Noten im Teil; Einrichtungs-CCs zählen nicht). B6b selbst HOLD: nichts spielt ein
+  gespeichertes Controller-Ereignis. Wächter `TheMIDIImportSaysWhatItLeavesOutTests`.
+- **C2a HOLD → Inbox H12**: hebt die C1-Sperre der Bild-Intensität auf; Blitzgrenze mit Verstärkung
+  bis ~2,8× nur am Gerät belegbar.
+- **Befund → Inbox H11 (Sicherheit)**: der Musik-Dimmer darf heute mit 2,42 Helligkeit/s schwanken
+  (`FlashGuard.senderLuminancePerSecond`), BioPhaser mit 0,5/s — Vereinheitlichung ist laut Code-Kommentar
+  eine Founder-Entscheidung mit Geräteblick. Empfehlung: bremsen.
+- **B5** (eigener Pegel je Spur im Mix-Reiter) gebaut, Audio-Thread-Review vor dem Commit.
+- Gerät offen: alles (Inbox §2, vier neue Zeilen). Benotet per Transkription, nicht kompiliert.
