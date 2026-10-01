@@ -4405,3 +4405,15 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-61 block (9 seam needles, 5 absence needles, 15 units; 281 → 287 XCTAssert).
   WORK PASS / HEAD FAIL (9/5/14 — ONE finding). Whole-claim needle check over the three files: 0 broken.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-62: plate labels and the bar-length label (b6da6e7ad)
+
+- **Decision:** `exportLabel`, `busyStatusLabel`, the text-size caption and `KeepLastCopy.title` in EchoelStudioView,
+  plus `LoopBarLength.label` in LoopCutter, build from catalog keys seamed around their numbers. Catalog 1462 → 1477.
+- **Why:** the plate's remaining interpolating producers all carried `LoopBarLength.label`, whose "8 bars" was a
+  literal — the one producer reaches every reader. German keeps the tile words inside the spoken names (rule 3:
+  "Aufnehmen: 8 Takte → senden", "Letztes behalten: 8 Takte (gerade gespielt)").
+- **Guard:** claim 11 E4-62 block (8 seam needles, 5 absence needles, 18 units; 287 → 291 XCTAssert). WORK PASS /
+  HEAD FAIL (8/5/15 — ONE finding). TheBarCountHasACarrierTests / TheTextSizeHasButtonsTests needles re-checked on the
+  working tree; whole-claim needle check over both files: 114 needles, 0 broken.
+- **Review:** 2026-10-31.
