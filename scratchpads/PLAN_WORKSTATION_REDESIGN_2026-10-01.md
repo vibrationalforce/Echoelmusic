@@ -73,7 +73,16 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
   Schreiben nur über `TrackMix.*`; stumme Spuren ohne Zug, aber gezählt. Pegel-Hinweis als
   `TrackMix.levelHint` gehoben (#416). Arrange ist jetzt ein Knopf (zwei Ansichten der Platte).
   **Offen: B3b Mixer-Undo** (eigener `HistoryStep`, nicht in der Teil-Historie) und Meter (= B5).
-- **B4** Song-MIDI-Export (alle Spuren).
+  ⚠️ B3b gemessen und VERTAGT: `TheAgentActsThroughTheButtonsPathsTests` verlangt, dass der
+  Agent-Pfad über `TrackMix.setLevel` KEINEN Song-Undo-Schritt schreibt — ein Undo im geteilten
+  Schreiber bräche das; es braucht einen getrennten Nutzer-Schreiber. Eigene Scheibe.
+- **B4** Song-MIDI-Export (alle Spuren). **✓ a6729b78e** — letzter Reiter „Export“ = `ShareLink`
+  im eigenen Blatt (`SongExportTab`, kein Modal, Tor `showsSongs`, gedimmt+inert ohne Note).
+  `SongMIDIExport` fragt die drei Regeln des Spielers (`midiLaneIDs` · `executableNotes` ·
+  `activeRegion`), schreibt Format 1 (Dirigent + eine Spur je MIDI-Spur, Kanal 10 übersprungen,
+  Ende = letzter ganzer Takt). Tempo über `preflightTempo` beim Teilen. Stummgeschaltete Spuren
+  werden geschrieben; Pegel/Pan/Klang nicht (der Hinweis sagt es). Wächter
+  `ThePieceExportsTheSongAsMIDITests`; `ThePieceHasTabsTests` FX-Tor neu verankert.
 - **B5** Per-Spur-Meter-Quelle (Audio-Thread-Review, Gerät).
 - **B6** Velocity-Spur + CC-Spuren im Noteneditor; Import behält CC/Bend/Pressure.
 

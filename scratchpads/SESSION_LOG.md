@@ -41785,3 +41785,27 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - Gates: A7 7303c048a Compile ✓; A8/A9/Doku als a724b604f gepusht (Compile läuft). B3 wird nach
   dessen Ende gepusht. Offen: B3b Mixer-Undo, B4 Song-MIDI-Export. Gerät: Kanalzüge lesbar,
   Fader hörbar, Mix → Arrange behält die Auswahl.
+
+## 2026-10-01 — Workstation-Neugestaltung: B4 Song-MIDI-Export
+
+- **B4 a6729b78e** — letzter Reiter „Export“ (Tor `showsSongs`, nach Master): `ShareLink` im
+  eigenen Blatt `SongExportTab` → Teilen-Menü mit einer `.mid` des ganzen Stücks. Kein Modal
+  (Schwarzbild-Gesetz), gedimmt UND inert ohne Note, Tempo über `preflightTempo` (kein heißer
+  Lesezugriff). `SongMIDIExport` fragt die drei Regeln des Spielers (`midiLaneIDs` ·
+  `executableNotes`, jetzt `nonisolated` · `activeRegion`); Bytes in
+  `MIDIFileExporter.exportSong` (Format 1, Kanal 10 frei, Ende = `loopTicks`). Vier
+  Katalog-Schlüssel mit Deutsch.
+- **Wächter:** neu `ThePieceExportsTheSongAsMIDITests` (Ende-zu-Ende: Spuren + Bytes auf einer
+  Vorlage mit Überlappung, Schnitt bei Übernahme, Trim-Fenster, Bio-/Audio-Spur; Tür- und
+  Katalog-Scans). `ThePieceHasTabsTests`: FX-Tor auf „nächstes Tor VOR dem FX-Post“ neu
+  verankert — die alte Rückwärtssuche hätte Exports eigenes Tor gefunden und wäre auf dem
+  korrekten Baum rot geworden (#367); dazu „FX steht IM Tor“. Python-Transkription: alle
+  Erwartungen nachgerechnet, Arbeitsbaum grün, Eltern rot nur durch Abwesenheit. Prüfer sauber
+  (needle-reachability: 1 vorbestehender Fehlalarm, Interpolation in `pickedNoteLine`).
+- **Grenzen:** Export prüft den Gewinner am Noten-Tick, der Transport im 16tel-Raster — für
+  Raster-Inhalte identisch, steht im Dateikopf. Stumme Spuren werden geschrieben; Pegel/Pan/Klang
+  nicht. B3b (Mixer-Undo) vertagt: der Agent-Pfad über `TrackMix.setLevel` darf keinen
+  Undo-Schritt schreiben, es braucht einen eigenen Nutzer-Schreiber.
+- **Gerät offen:** Teilen-Menü öffnet; die `.mid` öffnet in einer DAW mit einer Spur je
+  MIDI-Spur, richtigem Tempo und Tonart.
+
