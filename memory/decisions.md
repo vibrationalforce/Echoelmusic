@@ -4101,3 +4101,36 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Next E4 producers:** VideoSeedCard (VideoSeedText length/cuts/bars/sound, the card body, `spokenMedium`),
   WorkstationView ternaries (On/Off, Warp, Play/Stop, Expanded/Collapsed, hints), MediaLookUndo.applyBlockedReason.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — claim 11 runs on the main actor (d48571327)
+
+- **Decision:** `testTheLabelHelpersTakeAKey` carries `@MainActor`. Build for Testing 6577 on 9d46d79f5 was red:
+  the E4-39 counterweight `FloatingVisualWindow.wavAccessibilityValue(recording:failed:droppedSeconds:)` is a static
+  on a `@MainActor struct … : View`, called from a synchronous nonisolated test method. E4-40's
+  `PerformSessionView.sectionTitle`/`emptyNote` had the same shape and would have been red on 5c0468035.
+- **Why this shape:** the blocking bundle's own convention (117 `@MainActor` test methods); no assertion changed or
+  weakened. Only line 1316 was red because nested enums (`WindowSize`) and plain enums (`PhotoSeedText`,
+  `VideoSeedText`) are not isolated — a counterweight on a View static must run on the main actor, one on an enum
+  need not. Pushed ALONE (Tests-only) so the next Compile Check measures exactly 5c0468035's Sources.
+- **Lesson for the next counterweight:** a runtime pin of a `static` on a SwiftUI View type is a main-actor call;
+  the transcription harness grades text, never isolation — only the gate sees this.
+- **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-42: the video card speaks German (0713afa5f)
+
+- **Decision:** `VideoSeedText` — the unreadable note is `String(localized: "This video could not be read. Videos
+  up to ") + "\(minutes)" + String(localized: " minutes can be used; try another one.")`, `reading` a computed key,
+  `length`/`cuts`/`bars` count-beside-noun with typed `let head/overflow/noun` steps (no `+` chain inside a ternary),
+  `sound` two keys, `changes` passes `String(localized:)` field names. `VideoSeedCard` — Movement/Brightness as
+  key + " " + percent, `let hueLine` before the hue ternary, the Applied/With-this-video heading, the Apply fallback
+  as a key, `disclosureValue(_:)`/`undoLabel(_:)` over `MediaLookUndo.spokenMedium` with `videoMedium` compared.
+  Catalog 1216 → 1238 (+22; 20 keys already present, German verified equal).
+- **Why:** the card spoke the compared identifier (`"Undo \(undo.medium) look"`); the spoken word already has one
+  home since E4-41. The bundle's English is byte-identical — AVideoCardSaysWhatWasMeasured pins "1 cut or flash:
+  2.0 s", "About 1 bar of 4/4 at 120 BPM" and the 10-minute note; no guard re-anchored.
+- **Guard:** claim 11 E4-42 block (18 seams, 15 absence needles, 2 runtime counterweights, 24 units via
+  `assertGerman`; 205 → 209 XCTAssert). WORK PASS / HEAD FAIL (18 seams missing, 15 verbatim present, 22 units
+  missing — ONE finding).
+- **Next E4 producers:** WorkstationView ternaries (On/Off, Warp, Play/Stop, Expanded/Collapsed, hints),
+  `MediaLookUndo.applyBlockedReason`, EchoelStudioView sites.
+- **Review:** 2026-10-31.
