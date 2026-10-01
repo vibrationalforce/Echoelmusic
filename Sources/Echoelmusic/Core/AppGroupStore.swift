@@ -122,9 +122,9 @@ public struct AppGroupStore: Sendable {
     ///
     /// CALLERS MUST DECIDE WHAT A HOLE MEANS, and the two answers are not interchangeable:
     /// for an unordered LIBRARY (patches, projects, presets) drop it with `.compactMap { $0 }`;
-    /// for a POSITIONAL grid (`ClipStore`'s 8 slots, where index IS the slot) keep the `nil`
+    /// for a POSITIONAL grid (`ClipStore`'s slots, where index IS the slot) keep the `nil`
     /// in place — compacting there would shift every later clip into the wrong slot and break
-    /// the count check, turning one corrupt clip into all eight lost.
+    /// the grid, turning one corrupt clip into every later one lost.
     public func loadLossyArray<T: Decodable>(_ type: T.Type, name: String) -> [T?]? {
         guard let url = fileURL(name) else { return nil }
         guard let data = try? Data(contentsOf: url) else { return nil } // absent = normal

@@ -154,7 +154,7 @@ struct MediaBrowserView: View {
             // landed can finish AFTER the newer one and overwrite it with the older set.
             guard !Task.isCancelled else { return }
             if let assets = result { listing = .assets(assets) } else { listing = .unreadable }
-            // B2: the player's own resolver, a handful of existence checks (eight slots at most).
+            // B2: the player's own resolver, one existence check per filled slot (`ClipStore.slotCount` at most).
             // No player wired means no answer — nothing is called missing on a guess.
             if let lanes = player.audioLanes {
                 missingIDs = Set(MediaAsset.missing(clips: clipStore.filledClips, document: timeline.document,

@@ -584,7 +584,7 @@ struct EchoelStudioView: View {
     @State private var hasComposed = false
     /// Founder v287/v288 "Es wird kein midi Clip erzeugt": true when the last user
     /// Generate could NOT give the generated take its visible MIDI clip because the
-    /// 8-slot clip grid is full. Honest, VISIBLE feedback (never a silent no-op) —
+    /// clip grid is full. Honest, VISIBLE feedback (never a silent no-op) —
     /// the live sound is unaffected either way; only the clip TILE is withheld until
     /// a slot frees. A plain low-frequency Bool (flips on a user Generate), read only
     /// in a small leaf Text, never near a `.menu` (freeze rule).
@@ -9388,7 +9388,7 @@ struct EchoelStudioView: View {
             // placement — reword or move it only with that guard in the same commit.
             if composerClipGridFull {
                 // Founder v287/v288: the generated take could not get its own MIDI clip
-                // because the 8-slot clip grid is full. Honest + visible (the sound still
+                // because the clip grid is full. Honest + visible (the sound still
                 // plays) — mirror of the Arrange track panel's gridFullWarning.
                 // The old wording told the user to "clear a slot … on the timeline". Both
                 // the clip grid UI and the timeline were deleted with #121 Slice 4, so it
@@ -11756,7 +11756,7 @@ struct EchoelStudioView: View {
     ///
     /// - `createIfNeeded` (the user's OWN Generate, `startTransport == true`) lazily
     ///   creates the clip+region ONCE via `ensureComposerRegion` (idempotent — repeat
-    ///   Generates add nothing, no undo spam). A full 8-slot grid ⇒ honest VISIBLE
+    ///   Generates add nothing, no undo spam). A full clip grid ⇒ honest VISIBLE
     ///   flag; the live sound is unaffected.
     /// - Background evolve re-seeds (`false`) only FEED the existing clip, so the
     ///   visible tile always carries the latest take.

@@ -28,9 +28,9 @@ public struct LossyDecoded<T: Decodable>: Decodable {
 ///
 /// CALLERS MUST DECIDE WHAT A HOLE MEANS, and the two answers are not interchangeable:
 /// - unordered LIBRARY (patches, presets, routes) → drop it with `.compactMap { $0 }`;
-/// - POSITIONAL grid (`ClipStore`'s 8 slots, where the index IS the slot) → KEEP the
+/// - POSITIONAL grid (`ClipStore`'s slots, where the index IS the slot) → KEEP the
 ///   `nil` in place. Compacting there would shift every later element into the wrong
-///   cell and fail the count check, turning one corrupt entry into all eight lost.
+///   cell, turning one corrupt entry into every later one lost.
 ///
 /// `label` names the source in the telemetry line (e.g. `"AppGroupStore: clips.json"`).
 /// It is `@autoclosure` so building the string costs nothing on the overwhelmingly

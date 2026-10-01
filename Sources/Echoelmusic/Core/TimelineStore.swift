@@ -1115,7 +1115,7 @@ public final class TimelineStore {
     ///   its part was removed, undone, or moved past the window) is REUSED rather
     ///   than a new one minted. Nothing clears a slot (`ClipStore.clear(at:)` has
     ///   no caller), so without this every remove→Start cycle spent one of the
-    ///   eight slots for good until the grid refused every import. Reused by id,
+    ///   grid's slots for good until the grid refused every import. Reused by id,
     ///   not replaced: an Undo that brings the old part back still finds its clip.
     @discardableResult
     public func ensureComposerRegion(for laneID: UUID, clipStore: ClipStore,

@@ -253,7 +253,7 @@ public final class RecordController {
         guard let clips, let timeline else { return }
         for take in takes {
             // Captured clips live in a free ClipStore slot (the region resolves its
-            // clipID there). If the 8-slot grid is full the take cannot be placed — counted
+            // clipID there). If the grid (`ClipStore.slotCount`) is full the take cannot be placed — counted
             // for the door to say so (R1), never dropped silently. A dedicated take container
             // is a later cycle.
             guard let slot = clips.slots.firstIndex(where: { $0 == nil }) else {
