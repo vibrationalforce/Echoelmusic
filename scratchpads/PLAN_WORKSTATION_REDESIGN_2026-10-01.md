@@ -89,6 +89,9 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
 ### Phase C — Multimedia-Spuren (die Lücke, die niemand besetzt)
 - **C1** `visual.*`-Parameter (Intensität, Bewegung, Farbton, Detail, Blend) registriert,
   Automations-Zustand AUSSERHALB von `@AppStorage`/SwiftUI, gelesen in `draw(in:)`.
+  ⚠️ **Verengt auf EINEN Parameter (2026-10-01):** nur `visual.creative.intensity` (Owner
+  `VisualCreativeState`, Slew = FlashGuard 0,30/s, beide Eignungen verweigert). Bewegung, Farbton,
+  Detail und Blend brauchen je eine eigene Flash-/Sprung-Analyse und kommen einzeln nach C2.
 - **C2** Visual-Spur (Kurven) + domänen-bewusster Automations-Editor + Play-Gate für Kurven-Songs.
 - **C3** Licht-Spur: Look-Intensität automationsfähig (nur dämpfend, FlashGuard bleibt; KEIN Strobe).
 - **C4** Raum: Szene app-weit aus der Zeitleiste, Stream-Schalter mit Tür; Bewegungs-Spur.

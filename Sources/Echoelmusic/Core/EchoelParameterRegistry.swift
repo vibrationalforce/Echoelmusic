@@ -156,7 +156,8 @@ public enum DDSPParameterCatalog {
 
 // MARK: - Second inventory: the creative LIGHTING state (P2 Proof #1)
 
-/// The one non-audio parameter this build describes, and the point of the whole P2 exercise:
+/// The FIRST non-audio parameter this build describes (`VisualParameterCatalog` below is the
+/// second, Workstation redesign C1), and the point of the whole P2 exercise:
 /// the canonical parameter infrastructure — registry, descriptor, router — was built for the
 /// synth and had never addressed another medium. `lighting.look.intensity` proves it can,
 /// without a second registry, a second descriptor type or a lighting-specific framework.
@@ -186,6 +187,38 @@ public enum LightingParameterCatalog {
                             min: 0, max: 1,
                             defaultValue: LightingStore.defaultLookIntensity,
                             domain: .lighting,
+                            automationEligible: false,
+                            modulationEligible: false),
+    ]
+}
+
+// MARK: - Third inventory: the creative VISUAL state (Workstation redesign C1)
+
+/// The first VISUAL parameter, by the lighting recipe above: one descriptor, the default read
+/// from the owner, an empty unit, no `valueLabels`, and BOTH eligibilities denied. Registered
+/// and bound in `EchoelmusicApp`, read once per frame by `MetalBioView`. Nothing can move it
+/// yet — the automation editor and the eligibility flip are C2, together.
+///
+/// ⚠️ ONE DESCRIPTOR, DELIBERATELY. Motion, hue, detail and blend are NOT here: hue and blend
+/// change the picture by retargeting a palette or a style pair, motion multiplies the pulse,
+/// and each needs its own flash and snap analysis before a curve may drive it. Intensity is a
+/// level, so the slew in `VisualCreativeState` answers it alone.
+///
+/// ⚠️ NOT `visual.intensity`. That key is the `@AppStorage` look setting
+/// (`StudioDefaultKeys.visualIntensity`, four writers); this parameter never writes it.
+public enum VisualParameterCatalog {
+
+    /// The canonical keyPath, one home for the string: the registration below and the router
+    /// binding in `EchoelmusicApp` both read THIS.
+    public static let creativeIntensity = "visual.creative.intensity"
+
+    /// `displayName` is a catalog key (de + en), looked up wherever a descriptor name is drawn
+    /// (E4-105); no surface offers this parameter in C1.
+    public static let descriptors: [ParameterDescriptor] = [
+        ParameterDescriptor(keyPath: creativeIntensity, displayName: "Visual intensity",
+                            min: 0, max: 1,
+                            defaultValue: VisualCreativeState.defaultIntensity,
+                            domain: .visual,
                             automationEligible: false,
                             modulationEligible: false),
     ]

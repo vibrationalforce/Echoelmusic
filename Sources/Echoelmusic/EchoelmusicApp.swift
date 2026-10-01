@@ -398,6 +398,9 @@ struct EchoelmusicApp: App {
         // modulation eligibility, both denied here, so registering it cannot grant a
         // capability no matter what is bound afterwards or in what order.
         paramRegistry.register(LightingParameterCatalog.descriptors)
+        // Workstation redesign C1 — the first VISUAL descriptor, denied both ways like the
+        // lighting one above; `VisualCreativeState` is its owner, `MetalBioView` its reader.
+        paramRegistry.register(VisualParameterCatalog.descriptors)
         _parameterRouter = State(wrappedValue: ParameterApplyRouter(registry: paramRegistry))
         EchoelCrashLog.breadcrumb("init c: bio publishers")
         #if canImport(HealthKit)
@@ -1415,6 +1418,14 @@ struct EchoelmusicApp: App {
                 // consequence of line order.
                 parameterRouter.bind(LightingParameterCatalog.lookIntensity) { [weak lighting] value in
                     lighting?.setLookIntensity(value)
+                }
+                // Workstation redesign C1 — the first VISUAL parameter reaches its owner.
+                // `visual.creative.intensity` → `VisualCreativeState.setIntensity`, which clamps
+                // 0…1 and maps non-finite to the identity. The router never writes the user's
+                // `visual.intensity` field; the renderer multiplies the two. Denied automation
+                // and modulation on the descriptor, so this bind grants neither.
+                parameterRouter.bind(VisualParameterCatalog.creativeIntensity) { value in
+                    VisualCreativeState.shared.setIntensity(value)
                 }
                 // L2/L4 S2b: per-track automation DISPATCH. A namespaced
                 // "track.<laneID>.<param>" lane resolves to the specific SECONDARY

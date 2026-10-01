@@ -33313,6 +33313,24 @@
         }
       }
     },
+    "Visual intensity" : {
+      "comment" : "Parameter name (Workstation redesign C1, 2026-10-01): the VisualParameterCatalog descriptor displayName, looked up through String.LocalizationValue wherever a descriptor name is drawn (AutomationStatus, SongAutomationEditor — E4-105). No surface offers the parameter in C1.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visual-Intensität"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visual intensity"
+          }
+        }
+      }
+    },
     "Track" : {
       "localizations" : {
         "de" : {

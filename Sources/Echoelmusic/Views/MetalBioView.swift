@@ -769,6 +769,12 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     /// on-screen pulse follows the armed brainwave band's flash-safe sub-harmonic. Always
     /// already ≤3 Hz from `BioEntrainmentDirector.visualHz`; the draw loop re-caps anyway.
     private var lookEntrainmentPulseHz: Double = 0
+    /// Workstation redesign C1 — the creative visual level as the picture SHOWS it: the value of
+    /// `VisualCreativeState.shared`, slewed per second so a curve can never step the whole
+    /// picture faster than the flash law allows. Starts at the identity (1).
+    private var creativeIntensity: Float = VisualCreativeState.defaultIntensity
+    /// When `creativeIntensity` last moved — the dt of the next slew step.
+    private var creativeIntensityAt: CFAbsoluteTime = 0
 
     /// Slew-limited pulse target — the visual pulse is the most bio-jitter-sensitive value
     /// (a weak-signal rPPG reading can bounce HR, and thus the raw pulse target, hard). We
@@ -1248,6 +1254,16 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             // back out over ~a second when they rest. Rides the eased targets below,
             // so it glides. Flash rate stays capped inside update() regardless.
             let touchE = TouchVisualEnergy.shared.value(now: nowGov)
+            // Workstation redesign C1 — the creative visual level (a canonical parameter,
+            // `visual.creative.intensity`). One plain read per frame, off the SwiftUI graph like
+            // the touch read above; the FIRST frame takes the value as it is (nothing to slew
+            // from), every later frame slews at `VisualCreativeState.maxIntensityChangePerSecond`.
+            let creativeGoal = VisualCreativeState.shared.intensity
+            creativeIntensity = hasTarget
+                ? VisualCreativeState.slewedIntensity(from: creativeIntensity, toward: creativeGoal,
+                                                      dt: nowGov - creativeIntensityAt)
+                : VisualCreativeState.sanitizedIntensity(creativeGoal)
+            creativeIntensityAt = nowGov
             // #1248 — THE INPUT, physically associated (founder 2026-09-11: concerts, clubs,
             // festivals, "andere Audio Inputs"). One lock-read per frame, off the SwiftUI
             // graph, like the three touch channels above it.
@@ -1387,7 +1403,8 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
                    // comment below documents, which the first #609 hit). A settled
                    // body (autoTerm +0.15) fills the picture ×1.075 and calms the
                    // figure ×0.925; an unmeasured body multiplies by exactly 1.
-                   intensity: lookIntensity * (1 + 0.45 * liveE + 0.30 * musicLevel)
+                   // C1: `creativeIntensity` is exactly 1 until something drives the parameter.
+                   intensity: lookIntensity * creativeIntensity * (1 + 0.45 * liveE + 0.30 * musicLevel)
                               * (1 + 0.5 * autoTerm),
                    ringDensity: lookRingDensity * detailScale * (1 - 0.5 * autoTerm),
                    motion: lookMotion * (1 + 0.30 * liveE),
