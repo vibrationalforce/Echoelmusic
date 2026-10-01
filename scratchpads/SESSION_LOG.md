@@ -41754,3 +41754,12 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Zurückgestellt:** A3b (Kopf-Play doppelt Leisten-Play auf der Stück-Bühne; Kopf-Play bleibt für die Instrument-Bühne, viele Wächter pinnen es) · A4 im Wesentlichen schon da (Status/BPM im Kopf, Tonart im Streifen, Position in der Leiste) — offen nur „4/4“.
 - **Gerät offen:** Leiste bleibt beim Scrollen stehen und verdeckt die letzte Zeile nicht; Ring auf jeder Spurfarbe lesbar; offener Kopf unter dem Canvas wird der beringten Zeile zugeordnet; zugeklappte Anleitung wird gefunden.
 - **Nächste:** A7 Icon+Wort-Tabs · A8 Inspektor · A9 Querformat.
+
+## 2026-10-01 — Workstation-Neugestaltung: A2-Nachtrag · A7 Reiter
+
+- **A2-Nachtrag fb34a470d:** die Instanz-Zeile unter der Stil-Zeile sagt auch „Style“ (zwei Wörter für eine Sache auf einer Fläche = Regel 1).
+- **A7 7303c048a:** `WorkstationView.pieceTabs` per `safeAreaInset(edge: .top)` über dem Stück — Arrange (Kachel, KEIN Knopf, `.isSelected`) · Sound · FX · Master (Chrome-Tür; FX/Master hinter `showsSongs`/`showsProTabs`). Empfänger: `"effects"`/`"master"` öffnen ihr Panel UND drehen die Bühne (`"master"` ist einer der vier #290-Fälle, mit seinem Erzeuger zurück). Mix/Export bewusst keine Reiter (B3/B4 fehlen).
+- **Wächter:** neu `ThePieceHasTabsTests`; `TheArrangeStageIsTheFrontStageTests` Anspruch 6 2→4 Bühnen-Drehungen, jetzt je FALL gepinnt statt nur gezählt; `TheEchoelTrackOpensItsDeviceTests` Anspruch 2 = exakte MENGE zweier „sound“-Erzeuger. Transkription WORK 46/46, Eltern rot durch Abwesenheit + Zähl-Regression 2≠4. Prüfwerkzeuge sauber.
+- **Gates:** Compile Check auf a63319b72 ✓ (A5/A6); Stapel 127307070…7303c048a gepusht, Gates laufen.
+- **Gerät offen:** Reihe liest sich als Reiter; FX/Master landen auf ihrem Panel; „Stück“ bringt zurück.
+- **Nächste:** A8 Inspektor · A9 Querformat.

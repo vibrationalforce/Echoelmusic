@@ -55,7 +55,11 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
   Founder-Entscheid nötig. Karten nur noch: offene Spur + nicht gezeichnete (`listsCard`).
 - **A6** Kompositions-Anleitung zugeklappt, sobald das Stück einen Teil hat. **✓ 12430034e**
   (EINMAL beim Ankommen aus `opensExpanded`, nie selbst zuklappend — c672c2adf-Lehre).
-- **A7** Icon+Wort-Tabs auf der Stück-Bühne: Arrange · Mix · Sound · FX · Master · Export.
+- **A7** Icon+Wort-Tabs auf der Stück-Bühne: Arrange · Mix · Sound · FX · Master · Export. **✓ 7303c048a**
+  (Arrange · Sound · FX · Master — gemessen: nur Arrange hat ein Ziel AUF der Stück-Bühne, die
+  drei anderen sind Instrument-Panels über die Chrome-Tür + `showStage(.instrument)`. **Mix und
+  Export sind KEINE Tabs**: es gibt kein Ganzstück-Mischpult (B3) und keinen Song-Export (B4) —
+  ein Tab ohne Ziel ist ein Knopf, der nichts tut. FX/Master folgen den `SkillLevel`-Toren.)
 - **A8** Inspektor: Kopf (Symbol, Name, Art · Spur n), Segmente Spur/Teil/Gerät, Teil-Felder
   Start/Ende/Länge als `EchoelValueField`.
 - **A9** Querformat: drei Spalten (Spuren+Browser | Arrange+Editor | Inspektor+Visual).
