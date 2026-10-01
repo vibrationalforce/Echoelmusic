@@ -41906,3 +41906,4 @@ Founder-Order: eine Tür je Bereich, kompakte Flächen, kein Slop, TestFlight.
 - Gates: A grün (Compile + BfT, main = 6f6e2f499). D-Stapel: siehe Deploy-Commit.
 - Lehre: zwei parallel entworfene Scheiben (A, B) — B's neuer Wächter ankerte auf einem Symbol, das A löscht. Bei gestapelten Scheiben jeden NEUEN Wächter gegen den KOMBINIERTEN Baum transkribieren, nicht gegen den eigenen Eltern.
 - Inbox H13–H15 (Undo-Symbol, Stopp/Aufnahme stoppen, Field unter Producer). Nichts gerätegeprüft.
+- **Deploy 10.79.486 GELANDET** — TestFlight-Lauf 2611 (36935214681) auf 4218e00da: Preflight · Compile Check · iOS · „Verify build landed in App Store Connect" success. Gates davor: Compile Check + Build for Testing grün auf 02658e892 (main); Transkription aller 21 betroffenen Wächter gegen den kombinierten Baum: grün, keine Kompilier-Risiken. Gerät: offen (T1–T8).
