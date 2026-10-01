@@ -14,6 +14,20 @@
 //  status, meta and SysEx events are handled/skipped. Percussion channel 10 is
 //  excluded by default (those are drum hits, not melody).
 //
+//  ⚠️ WHAT IT READS PAST (B6b-0, 2026-10-01). Pitch bend, pressure (channel and polyphonic) and
+//  controller changes are SKIPPED, not kept: no field of `Note` or `Clip` holds a controller
+//  value over time, and no player would send one. `NoteMPE` is NOT that field — it is one
+//  value per note, read only by the piano roll's MIDI-out merge, on an MPE bend range of ±48
+//  semitones; a file's bend (usually ±2) written there would replay 24× too wide. So
+//  `parse(from:)` COUNTS what it skips, per channel, and the import SAYS it. Sustain-pedal
+//  presses (CC 64 at 64 or above) are counted apart, because the pedal is the one loss a
+//  listener hears as a wrong note LENGTH. Only MOVEMENT is counted, never set-up, because
+//  almost every exported file opens with set-up messages and a sentence that fires on every
+//  file is a blanket disclaimer: a bend at centre, a pressure of 0, a controller's FIRST value
+//  (volume, pan, effect sends), bank select, data entry and RPN/NRPN (CC 0, 6, 32, 38,
+//  96…101), and channel mode (CC 120…127) are not counted. Program changes are skipped, not
+//  counted. A starting volume or pan is therefore read past AND unsaid — recorded here.
+//
 //  ⚠️ HARDENED FOR ARBITRARY FILES (S2, 2026-09-23), because the Workstation's "Import MIDI"
 //  hands this parser whatever a user picks. Three shapes of a malformed file used to hang the
 //  main actor or trap: a variable-length quantity with more than four bytes wrapped `<<` into a
@@ -52,6 +66,43 @@ public enum MIDIFileImporter {
     /// the melodic `notes(...)` and the drum-grid extraction. Channel is the 0-based
     /// MIDI channel (9 == GM percussion / "channel 10").
     public static func channelNotes(from data: [UInt8]) throws -> [(channel: Int, note: Note)] {
+        try parse(from: data).notes
+    }
+
+    /// The channel messages one parse read past without keeping (B6b-0), counted so the import
+    /// can SAY what it left out. Nothing here is stored in a part, and nothing plays it.
+    public struct DroppedExpression: Sendable, Equatable {
+        /// Pitch-bend messages (0xEn) away from centre (0x2000).
+        public var pitchBends = 0
+        /// Pressure messages above 0: channel (0xDn) and polyphonic (0xAn) aftertouch.
+        public var pressures = 0
+        /// Sustain-pedal presses: CC 64 at 64 or above. A release changes nothing a press did
+        /// not, so it is not counted.
+        public var sustainPresses = 0
+        /// Controller CHANGES: a value that differs from the same controller's earlier value on
+        /// the same channel. CC 1…119 except 6, 32, 38, 64 and 96…101 (set-up, not movement).
+        public var controllers = 0
+
+        public init() {}
+
+        /// True when the file moved pitch bend, pressure, or a controller other than the pedal.
+        public var hasBendPressureOrControllers: Bool {
+            pitchBends > 0 || pressures > 0 || controllers > 0
+        }
+
+        /// Add `other`'s counts to these — how the import sums the channels with notes in the part.
+        public mutating func add(_ other: DroppedExpression) {
+            pitchBends += other.pitchBends
+            pressures += other.pressures
+            sustainPresses += other.sustainPresses
+            controllers += other.controllers
+        }
+    }
+
+    /// The ONE walk over a file: its (channel, note) pairs, and what it read past, indexed by
+    /// the 0-based channel (always 16 entries). `channelNotes(from:)` is this without the counts.
+    public static func parse(from data: [UInt8]) throws
+        -> (notes: [(channel: Int, note: Note)], dropped: [DroppedExpression]) {
         var p = 0
         func need(_ n: Int) throws { if p + n > data.count { throw ImportError.truncated } }
         func u16(_ i: Int) -> Int { (Int(data[i]) << 8) | Int(data[i + 1]) }
@@ -72,6 +123,8 @@ public enum MIDIFileImporter {
         struct Open { var startTick: Int; var velocity: Float }
         var open: [Int: Open] = [:]        // key = channel*128 + pitch
         var out: [(channel: Int, note: Note)] = []
+        var dropped = [DroppedExpression](repeating: DroppedExpression(), count: 16)
+        var lastController = [Int](repeating: -1, count: 16 * 128)   // channel*128 + number
 
         @inline(__always) func mapTicks(_ fileTick: Int) -> Int {
             // Scale the file's PPQ to Note.ticksPerQuarter (round to nearest).
@@ -128,9 +181,37 @@ public enum MIDIFileImporter {
                                     note: Note(pitch: pitch, startTick: startT,
                                                lengthTicks: lenT, velocity: o.velocity)))
                     }
-                case 0xA0, 0xB0, 0xE0:                 // 2-data-byte channel msgs — skip
+                case 0xA0:                             // polyphonic pressure — counted, not kept
+                    if i + 1 < bodyEnd, data[i + 1] & 0x7F > 0 { dropped[chan].pressures += 1 }
                     i += 2
-                case 0xC0, 0xD0:                       // 1-data-byte channel msgs — skip
+                case 0xB0:                             // controller — counted, not kept
+                    if i + 1 < bodyEnd {
+                        // Masked: a malformed data byte must not index past the table.
+                        let number = Int(data[i] & 0x7F), value = Int(data[i + 1] & 0x7F)
+                        switch number {
+                        case 64:
+                            if value >= 64 { dropped[chan].sustainPresses += 1 }
+                        case 0, 6, 32, 38, 96...101, 120...127:
+                            break                      // set-up and channel mode, not movement
+                        default:
+                            let slot = chan * 128 + number
+                            if lastController[slot] >= 0, lastController[slot] != value {
+                                dropped[chan].controllers += 1
+                            }
+                            lastController[slot] = value
+                        }
+                    }
+                    i += 2
+                case 0xE0:                             // pitch bend — counted, not kept
+                    if i + 1 < bodyEnd {
+                        let lsb = Int(data[i] & 0x7F), msb = Int(data[i + 1] & 0x7F)
+                        if (msb << 7) + lsb != 0x2000 { dropped[chan].pitchBends += 1 }   // centre is set-up
+                    }
+                    i += 2
+                case 0xC0:                             // program change — skipped, not counted
+                    i += 1
+                case 0xD0:                             // channel pressure — counted, not kept
+                    if i < bodyEnd, data[i] & 0x7F > 0 { dropped[chan].pressures += 1 }
                     i += 1
                 case 0xF0:                             // meta / sysex
                     if status == 0xFF {                // meta: type + VLQ len + bytes
@@ -148,7 +229,7 @@ public enum MIDIFileImporter {
             }
         }
 
-        return out
+        return (notes: out, dropped: dropped)
     }
 
     public static func notes(from data: Data, includeChannel10: Bool = false) throws -> [Note] {

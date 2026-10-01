@@ -3,7 +3,7 @@
 // MIDI part on the Workstation's MIDI track, and plays through the region player that already
 // runs. The `AudioImport` shape, one level simpler — there is no file copy:
 //
-//     picked file → bytes (≤ 2 MB) → MIDIFileImporter.channelNotes → Clip(kind: .midi,
+//     picked file → bytes (≤ 2 MB) → MIDIFileImporter.parse → Clip(kind: .midi,
 //                 melody:) → ClipStore → TimelineRegion → TimelineStore
 //
 // ⭐ THE NOTES LIVE IN THE CLIP. A MIDI part has no `mediaRef` and no `MediaLibrary` copy —
@@ -30,6 +30,12 @@
 // ⚠️ WHAT THE USER HEARS, AND ITS LIMITS — stated here and in the success note, never implied:
 // · the part plays on the 16th-note grid at the SONG's tempo; the file's own tempo, time
 //   signature, sustain pedal and program changes are not read;
+// · pitch bend, pressure and controller changes are not read either. ⛔ Until B6b-0 the header
+//   line above said the success note STATED these limits, and it stated only the tempo. Now the
+//   parse COUNTS pedal presses and bend/pressure/controller MOVEMENT, and the import sums only
+//   the channels whose notes landed in the part (`Landing.droppedExpression`); the note names
+//   each kind present. Time signature, program changes and a controller's starting value
+//   (volume, pan) are still unread AND unsaid — open, recorded here;
 // · a note longer than one bar is held for exactly one bar — the roll releases on
 //   `endStep % 16`, so a longer note would otherwise be cut to its remainder;
 // · channel 10 (General MIDI drums) is skipped — there is no drum voice any more (#166/#167);
@@ -113,15 +119,22 @@ public enum MIDIImport {
         public var skippedDrumNotes: Int
         /// Notes longer than a bar that now last exactly one bar.
         public var heldForOneBar: Int
+        /// What the file moved besides its notes, on the channels whose notes are in the part —
+        /// pitch bend, pressure, controllers, the sustain pedal. Read past and never stored
+        /// (B6b-0); the success note names each kind present. Required, not defaulted (#431):
+        /// every landing says it.
+        public var droppedExpression: MIDIFileImporter.DroppedExpression
 
         public init(clip: Clip, region: TimelineRegion, slotIndex: Int, laneID: UUID,
-                    skippedDrumNotes: Int, heldForOneBar: Int) {
+                    skippedDrumNotes: Int, heldForOneBar: Int,
+                    droppedExpression: MIDIFileImporter.DroppedExpression) {
             self.clip = clip
             self.region = region
             self.slotIndex = slotIndex
             self.laneID = laneID
             self.skippedDrumNotes = skippedDrumNotes
             self.heldForOneBar = heldForOneBar
+            self.droppedExpression = droppedExpression
         }
     }
 
@@ -212,7 +225,8 @@ public enum MIDIImport {
         let region = TimelineRegion(laneID: lane.id, clipID: clip.id,
                                     startTick: start, lengthTicks: emptyPartBars * bar)
         return .success(Landing(clip: clip, region: region, slotIndex: slot, laneID: lane.id,
-                                skippedDrumNotes: 0, heldForOneBar: 0))
+                                skippedDrumNotes: 0, heldForOneBar: 0,
+                                droppedExpression: MIDIFileImporter.DroppedExpression()))
     }
 
     /// The "New MIDI Part" row's spoken hint — the SAME rule `emptyPartLane` implements, in
@@ -296,8 +310,11 @@ public enum MIDIImport {
         guard let bytes else { return .failure(.unreadableFile) }
         guard bytes.count <= maxFileBytes else { return .failure(.fileTooLarge) }
         let parsed: [(channel: Int, note: Note)]
+        let droppedPerChannel: [MIDIFileImporter.DroppedExpression]
         do {
-            parsed = try MIDIFileImporter.channelNotes(from: bytes)
+            let file = try MIDIFileImporter.parse(from: bytes)
+            parsed = file.notes
+            droppedPerChannel = file.dropped
         } catch {
             return .failure(.notAMIDIFile)
         }
@@ -305,9 +322,11 @@ public enum MIDIImport {
         var drums = 0
         var held = 0
         var notes: [Note] = []
+        var landedChannels = Set<Int>()
         notes.reserveCapacity(parsed.count)
         for pair in parsed {
             if pair.channel == drumChannel { drums += 1; continue }
+            landedChannels.insert(pair.channel)
             var note = pair.note
             if note.lengthTicks > TimelineTime.ticksPerBar {
                 note.lengthTicks = TimelineTime.ticksPerBar
@@ -317,6 +336,12 @@ public enum MIDIImport {
         }
         notes.sort { ($0.startTick, $0.pitch) < ($1.startTick, $1.pitch) }
         guard let lastEnd = notes.map(\.endTick).max() else { return .failure(.noMelodicNotes) }
+        // Only what a channel WITH NOTES IN THE PART moved: channel 10's notes are skipped, and a
+        // channel with no notes (a GM file's set-up on all sixteen) has nothing in the part to lose.
+        var dropped = MIDIFileImporter.DroppedExpression()
+        for (channel, counts) in droppedPerChannel.enumerated() where landedChannels.contains(channel) {
+            dropped.add(counts)
+        }
 
         let bars = Swift.max(1, (lastEnd + TimelineTime.ticksPerBar - 1) / TimelineTime.ticksPerBar)
         guard notes.count <= maxNotes, bars <= maxBars else { return .failure(.tooLong) }
@@ -329,7 +354,8 @@ public enum MIDIImport {
                                     startTick: document.nextStartTick(inLane: lane.id),
                                     lengthTicks: bars * TimelineTime.ticksPerBar)
         return .success(Landing(clip: clip, region: region, slotIndex: slot, laneID: lane.id,
-                                skippedDrumNotes: drums, heldForOneBar: held))
+                                skippedDrumNotes: drums, heldForOneBar: held,
+                                droppedExpression: dropped))
     }
 
     /// The sentence shown after a successful import: what landed, where, and the limits the
@@ -346,6 +372,14 @@ public enum MIDIImport {
         note += String(localized: " Plays at the piece's tempo on the 16th-note grid, with the instrument stopped.")
         if landing.heldForOneBar > 0 { note += String(localized: " Notes longer than a bar are held for one bar.") }
         if landing.skippedDrumNotes > 0 { note += " " + "\(landing.skippedDrumNotes)" + String(localized: " drum notes skipped.") }
+        // B6b-0: what the file moved besides its notes, one sentence per kind it has — never a
+        // blanket disclaimer on a file that has none (that would teach the reader to skip it).
+        if landing.droppedExpression.sustainPresses > 0 {
+            note += String(localized: " The sustain pedal is not read.")
+        }
+        if landing.droppedExpression.hasBendPressureOrControllers {
+            note += String(localized: " Pitch bend, pressure and controller changes are not imported.")
+        }
         return note
     }
 

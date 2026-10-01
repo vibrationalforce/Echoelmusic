@@ -24001,6 +24001,42 @@
         }
       }
     },
+    " The sustain pedal is not read." : {
+      "comment" : "Workstation redesign B6b-0 (2026-10-01): appended to the MIDI-file import note when a channel with notes in the part moved something the import reads past — the sustain pedal, or pitch bend / pressure (aftertouch) / controller changes. Leading space: it follows the previous sentence.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Das Sustain-Pedal wird nicht gelesen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " The sustain pedal is not read."
+          }
+        }
+      }
+    },
+    " Pitch bend, pressure and controller changes are not imported." : {
+      "comment" : "Workstation redesign B6b-0 (2026-10-01): appended to the MIDI-file import note when a channel with notes in the part moved something the import reads past — the sustain pedal, or pitch bend / pressure (aftertouch) / controller changes. Leading space: it follows the previous sentence.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Pitch-Bend-, Aftertouch- und Controller-Änderungen werden nicht importiert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Pitch bend, pressure and controller changes are not imported."
+          }
+        }
+      }
+    },
     "Placed “" : {
       "localizations" : {
         "de" : {
