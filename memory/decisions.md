@@ -4713,3 +4713,16 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   XCTAssert). No other guard pinned any of these lines. WORK PASS / HEAD FAIL (5/2/8 — ONE finding). Whole-claim-11
   needle check: 141 files, 1048 needles, 0 broken.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-83: workstation fragments, Colabo invite and caption idle line (7417ea544)
+
+- **Decision:** WorkstationView's track-details hint pair and the three `?? "…"` fallbacks the import notes read for
+  a nameless track (two "the MIDI track", one "the audio track" — the E4-67 unit reused), LiveColaboView's invite
+  joining pair and StudioCaptionView's idle sentence are catalog keys. Catalog 1830 → 1836.
+- **Two shapes worth naming:** a `?? "…"` fallback that feeds a key-assembled sentence is itself a bare String —
+  the note reads German around an English track name; and `Text(cond ? "…" : variable)` types the literal as a
+  String because the other branch is one.
+- **Guard:** claim 11 E4-83 block (5 seams across three files, 2 verbatim-indented absences, 7 units; 378 → 383
+  XCTAssert). No other guard pinned these lines. WORK PASS / HEAD FAIL (5/2/6 — ONE finding). Whole-claim-11
+  needle check: 144 files, 1055 needles, 0 broken.
+- **Review:** 2026-10-31.
