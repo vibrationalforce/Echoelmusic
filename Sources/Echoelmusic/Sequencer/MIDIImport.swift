@@ -215,7 +215,8 @@ public enum MIDIImport {
 
     /// The "New MIDI Part" row's spoken hint — the SAME rule `emptyPartLane` implements, in
     /// one place beside it (#416), so the words cannot name a lane rule the code does not follow.
-    public static let newPartHint = "Adds an empty \(emptyPartBars)-bar part to the selected MIDI track when it has a voice, otherwise to the first MIDI track, and selects it"
+    public static let newPartHint: String = String(localized: "Adds an empty ") + "\(emptyPartBars)"
+        + String(localized: "-bar part to the selected MIDI track when it has a voice, otherwise to the first MIDI track, and selects it")
 
     /// The lane a NEW empty part lands on: the selected track when a part there is certainly
     /// played — the roll lane, or a non-bio MIDI lane holding a rack voice (`MultiRollFanout

@@ -104,13 +104,13 @@ public enum BioVariationMaze {
     public static func boardSentence(driver: BioNarrationDriver, density: String) -> String {
         switch driver {
         case .body:
-            return "Ideas from your pulse — tap to keep. Your body wants \(density)."
+            return String(localized: "Ideas from your pulse — tap to keep. Your body wants ") + density + "."
         case .simulatedDemo:
-            return "Ideas from " + BioProvenanceCopy.demoSubject + " — tap to keep. "
-                + "The demo asks for \(density)."
+            // E4-63: the demo subject is the shared constant; the words around it are catalog keys (≤ 4 operands per step).
+            let head: String = String(localized: "Ideas from ") + BioProvenanceCopy.demoSubject + String(localized: " — tap to keep. ")
+            return head + String(localized: "The demo asks for ") + density + "."
         case .nothingMeasured:
-            return "No pulse was measured, so these are ranked against the engine's own "
-                + "target — tap to keep. They aim for \(density)."
+            return String(localized: "No pulse was measured, so these are ranked against the engine's own target — tap to keep. They aim for ") + density + "."
         }
     }
 

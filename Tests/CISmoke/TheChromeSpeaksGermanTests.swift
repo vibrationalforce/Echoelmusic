@@ -119,7 +119,8 @@
 // the detected-tempo sentence (AudioTempoAnalysis.summarise) (parent: 4 units missing — ONE finding). E4-61 added the
 // Workstation's transport caption, track-removal note and mix-meter spoken text (parent: 14 units missing — ONE finding). E4-62
 // added the Record tile's action label, the busy status, the text-size caption, the keep-last copy and the bar-length
-// label they all carry (`LoopBarLength.label`) (parent: 15 units missing — ONE finding). Claim 12
+// label they all carry (`LoopBarLength.label`) (parent: 15 units missing — ONE finding). E4-63 added the new-MIDI-part
+// hint, the Explore board sentence and its density words (parent: 11 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2186,6 +2187,44 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Keep last ", " (just played)", " — once something has played",
                           "Keep last: unavailable — use the Record tile instead", "Keep last: ", " or fewer at this tempo",
                           "1 bar", "bars"], "plate labels and the bar-length label")
+
+        // E4-63 — the new-MIDI-part hint (`MIDIImport.newPartHint`, a `static let` that keeps its declaration; the
+        // ANewPartLandsOnTheChosenTrackTests needles read it at runtime), the Explore board sentence
+        // (`BioVariationMaze.boardSentence`; TheVariationCardSaysWhoseTargetTests and OneSpellingOfTheDemoSubjectTests
+        // compare the ASSEMBLED English, which the test locale keeps) and the density words it is handed (`densityWord`).
+        let partHint = try codeOnly("Sources/Echoelmusic/Sequencer/MIDIImport.swift")
+        for seam in ["public static let newPartHint: String = String(localized: \"Adds an empty \") + \"\\(emptyPartBars)\"",
+                     "+ String(localized: \"-bar part to the selected MIDI track when it has a voice, otherwise to the first MIDI track, and selects it\")"] {
+            XCTAssertTrue(partHint.contains(seam), "MIDIImport lost the E4-63 seam `\(seam)`")
+        }
+        for verbatim in ["public static let newPartHint = \"Adds an empty \\(emptyPartBars)-bar part"] {
+            XCTAssertFalse(partHint.contains(verbatim), "MIDIImport interpolates the new-part hint again: `\(verbatim)`")
+        }
+        let boardSentence = try codeOnly("Sources/Echoelmusic/Sequencer/BioVariationMaze.swift")
+        for seam in ["return String(localized: \"Ideas from your pulse — tap to keep. Your body wants \") + density + \".\"",
+                     "let head: String = String(localized: \"Ideas from \") + BioProvenanceCopy.demoSubject + String(localized: \" — tap to keep. \")",
+                     "return head + String(localized: \"The demo asks for \") + density + \".\"",
+                     "return String(localized: \"No pulse was measured, so these are ranked against the engine's own target — tap to keep. They aim for \") + density + \".\""] {
+            XCTAssertTrue(boardSentence.contains(seam), "BioVariationMaze lost the E4-63 seam `\(seam)`")
+        }
+        for verbatim in ["return \"Ideas from your pulse — tap to keep. Your body wants \\(density).\"",
+                         "+ \"The demo asks for \\(density).\"",
+                         "+ \"target — tap to keep. They aim for \\(density).\""] {
+            XCTAssertFalse(boardSentence.contains(verbatim), "BioVariationMaze interpolates the board sentence again: `\(verbatim)`")
+        }
+        let mazeDensity = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for seam in ["case ..<0.5:  return String(localized: \"a calm groove\")",
+                     "default:      return String(localized: \"something dense\")"] {
+            XCTAssertTrue(mazeDensity.contains(seam), "densityWord lost the E4-63 seam `\(seam)`")
+        }
+        for verbatim in ["return \"a calm groove\"", "return \"something sparse\""] {
+            XCTAssertFalse(mazeDensity.contains(verbatim), "densityWord returns a literal again: `\(verbatim)`")
+        }
+        try assertGerman(["Adds an empty ",
+                          "-bar part to the selected MIDI track when it has a voice, otherwise to the first MIDI track, and selects it",
+                          "Ideas from your pulse — tap to keep. Your body wants ", "Ideas from ", " — tap to keep. ", "The demo asks for ",
+                          "No pulse was measured, so these are ranked against the engine's own target — tap to keep. They aim for ",
+                          "something sparse", "a calm groove", "a full groove", "something dense"], "new-part hint and Explore board")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

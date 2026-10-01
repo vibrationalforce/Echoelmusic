@@ -4233,10 +4233,10 @@ struct EchoelStudioView: View {
     /// meaning, not a bare number.
     private func densityWord(_ d: Double) -> String {
         switch d {
-        case ..<0.25: return "something sparse"
-        case ..<0.5:  return "a calm groove"
-        case ..<0.75: return "a full groove"
-        default:      return "something dense"
+        case ..<0.25: return String(localized: "something sparse")
+        case ..<0.5:  return String(localized: "a calm groove")
+        case ..<0.75: return String(localized: "a full groove")
+        default:      return String(localized: "something dense")
         }
     }
 

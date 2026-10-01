@@ -25450,6 +25450,182 @@
           }
         }
       }
+    },
+    "Adds an empty " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legt einen leeren "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adds an empty "
+          }
+        }
+      }
+    },
+    "-bar part to the selected MIDI track when it has a voice, otherwise to the first MIDI track, and selects it" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "-Takt-Teil auf der gewählten MIDI-Spur an, wenn sie eine Stimme hat, sonst auf der ersten MIDI-Spur, und wählt ihn aus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "-bar part to the selected MIDI track when it has a voice, otherwise to the first MIDI track, and selects it"
+          }
+        }
+      }
+    },
+    "Ideas from your pulse — tap to keep. Your body wants " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ideen aus deinem Puls — antippen zum Behalten. Dein Körper will "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ideas from your pulse — tap to keep. Your body wants "
+          }
+        }
+      }
+    },
+    "Ideas from " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ideen — Quelle: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ideas from "
+          }
+        }
+      }
+    },
+    " — tap to keep. " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " — antippen zum Behalten. "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " — tap to keep. "
+          }
+        }
+      }
+    },
+    "The demo asks for " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Demo verlangt "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The demo asks for "
+          }
+        }
+      }
+    },
+    "No pulse was measured, so these are ranked against the engine's own target — tap to keep. They aim for " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Puls gemessen, also sind diese gegen das eigene Ziel der Engine gereiht — antippen zum Behalten. Sie zielen auf "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pulse was measured, so these are ranked against the engine's own target — tap to keep. They aim for "
+          }
+        }
+      }
+    },
+    "something sparse" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "etwas Sparsames"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "something sparse"
+          }
+        }
+      }
+    },
+    "a calm groove" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "einen ruhigen Groove"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "a calm groove"
+          }
+        }
+      }
+    },
+    "a full groove" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "einen vollen Groove"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "a full groove"
+          }
+        }
+      }
+    },
+    "something dense" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "etwas Dichtes"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "something dense"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
