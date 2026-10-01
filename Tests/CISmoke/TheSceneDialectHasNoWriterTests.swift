@@ -10,14 +10,16 @@
 //  `ADMOSCSender.swift` (the declaration and the read). Two of the three
 //  dialects can never reach a wire.
 //
-//  WHY IT IS *NOT* DOORED IN THE SAME COMMIT, which is the whole point of this
-//  guard existing instead of a picker. `AutoMixChain.preset` (#736) was the same
-//  shape on a REACHABLE surface and earned a door. This one is SECOND-ORDER
-//  doorless: the branch that reads it sits behind `streamsScene`, whose only
-//  writer is a `Toggle` in `ImmersiveStageView`, a view with zero construction
-//  sites — parked on purpose by ship-gate 4 ("light/space demonstrable, not
-//  required for v1"). Building a picker there would build a control nobody can
-//  open. Register it; door it in the commit that re-mounts the stage.
+//  WHY IT WAS *NOT* DOORED IN THE SAME COMMIT (#745): the branch that reads it
+//  sat behind `streamsScene`, whose only writer was a `Toggle` in the doorless
+//  `ImmersiveStageView` — SECOND-ORDER doorless, so a picker would have been a
+//  control nobody can open.
+//  ⛔ SINCE C4a THAT PREMISE IS GONE: Routing's "Every track as its own object
+//  (ADM-OSC)" switch (`PatchbayView.admSceneStreamRow`) is a second, REACHABLE
+//  writer of `streamsScene`. The dialect is now the `AutoMixChain.preset` (#736)
+//  shape — a live choice with no control — and stays a constant on purpose for
+//  one slice: both labels that arm the branch name ADM-OSC, the one dialect that
+//  can happen. The picker is the next slice; claims 1 and 8 are its notification.
 //
 //  ⚠️ THIS GUARD FORBIDS NOTHING (#364). Claims 1, 4 and 5 go red the day a door
 //  IS built — that red is the notification, not the verdict, and each message
@@ -31,7 +33,8 @@
 //                     `EchoelStudioView.swift`'s code region.
 //    2 REGRESSION   — red on the parent if the read is removed from `sendIfFresh`.
 //    3 REGRESSION   — red if the `if streamsScene` gate goes.
-//    4 FORWARD      — red when a third file names `streamsScene`.
+//    4 FORWARD      — red when a FOURTH file names `streamsScene` (C4a admitted
+//                     the third, Routing; it was red on that tree until it did).
 //    5 FORWARD      — red when `ImmersiveStageView(` gains a construction site.
 //    6 COUNTERWEIGHT — red if the two unreachable dialect cases are "cleaned up".
 //                     This is the content, not decoration (#343): without it the
@@ -86,6 +89,7 @@ final class TheSceneDialectHasNoWriterTests: XCTestCase {
     private static let senderRelative = "Echoelmusic/Sync/ADMOSCSender.swift"
     private static let stageRelative = "Echoelmusic/Studio/ImmersiveStageView.swift"
     private static let formatterRelative = "Echoelmusic/Sync/SpatialSceneOSC.swift"
+    private static let routingRelative = "Echoelmusic/Studio/PatchbayView.swift"
     private static let sender = "Sources/" + senderRelative
     private static let stage = "Sources/" + stageRelative
     private static let formatter = "Sources/" + formatterRelative
@@ -138,20 +142,24 @@ final class TheSceneDialectHasNoWriterTests: XCTestCase {
             """)
     }
 
-    // MARK: - 4: the flag's only writer is the parked view
+    // MARK: - 4: the flag's writers are the parked stage and the Routing switch (C4a)
 
-    func testOnlyTheParkedStageNamesTheStreamFlag() throws {
+    func testOnlyTheStageAndTheRoutingSwitchNameTheStreamFlag() throws {
         let others: [String] = try filesNaming(
-            "streamsScene", excluding: [Self.senderRelative, Self.stageRelative])
+            "streamsScene",
+            excluding: [Self.senderRelative, Self.stageRelative, Self.routingRelative])
         XCTAssertTrue(others.isEmpty, """
-            `streamsScene` is now named outside `ADMOSCSender.swift` and \
-            `ImmersiveStageView.swift`, in: \(others.joined(separator: ", ")).
+            `streamsScene` is now named outside `ADMOSCSender.swift`, \
+            `ImmersiveStageView.swift` and `PatchbayView.swift`, in: \
+            \(others.joined(separator: ", ")).
 
-            A second writer means the scene stream can be armed from somewhere that may well \
-            BE reachable — and then `sceneDialect` is a live choice with no control, i.e. the \
-            `AutoMixChain.preset` (#736) shape, and a picker is the work. Check the new site's \
-            own reachability first (#472: a setter proves nothing until you trace it to a \
-            rendering parent).
+            Since C4a the scene stream is armed from Routing, so `sceneDialect` is already a \
+            live choice with no control (the `AutoMixChain.preset` #736 shape). A THIRD writer \
+            is a second door to the same flag — and two switches for one value is how a \
+            relaunch and a live edit come to disagree. Check whether the new site should be a \
+            door to the EXISTING switch instead (#472: trace it to a rendering parent first), \
+            and move this claim's excludes together with claim 3 of \
+            `TheTrackObjectsFollowThePieceAndHaveASwitchTests` in the same commit (#456).
             """)
     }
 
@@ -164,10 +172,11 @@ final class TheSceneDialectHasNoWriterTests: XCTestCase {
 
             This guard does NOT forbid that (#364) — ship-gate 4 calls light/space \
             "demonstrable", and mounting the stage is exactly how it becomes demonstrable. \
-            But the moment it is reachable, `sceneDialect` becomes a reachable capability \
-            with no control: build the picker next to the existing `streamsScene` toggle, \
-            widen the label claim 8 pins, and rewrite the ⛔ blocks in `ADMOSCSender.swift` \
-            and `SpatialSceneOSC.swift` in the SAME commit (#456).
+            Since C4a `sceneDialect` is already reachable without a control (Routing arms \
+            the branch); a mounted stage is a SECOND door to it. Build the picker once, widen \
+            BOTH labels that name ADM-OSC (claim 8's and the Routing switch's), and rewrite \
+            the ⛔ blocks in `ADMOSCSender.swift` and `SpatialSceneOSC.swift` in the SAME \
+            commit (#456).
             """)
     }
 

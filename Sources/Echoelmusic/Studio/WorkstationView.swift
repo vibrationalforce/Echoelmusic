@@ -978,9 +978,10 @@ struct WorkstationView: View {
     ///   `showsSongs` gate thins the strip, not the app — `visibleChips` appends it when shown).
     /// · **Light** opens Routing, the door the header's light monitor already posts: its Light
     ///   card holds master, blackout, DMX resolution and fixtures. Ungated, like that monitor.
-    /// ⛔ **No Space tab yet.** The only spatial control on a reachable surface is the ADM-OSC
-    /// row inside Routing, so a Space tab today would be a second word for Light's door;
-    /// `ImmersiveStageView` is doorless by ship gate 4. Space arrives with C4, with its target.
+    /// ⛔ **No Space tab yet.** Both spatial controls on a reachable surface — the ADM-OSC row
+    /// and, since C4a, its "Every track as its own object" switch — sit inside Routing, so a
+    /// Space tab today would still be a second word for Light's door; `ImmersiveStageView` is
+    /// doorless by ship gate 4. Space arrives when Routing can LAND on its network card (C4a-2).
     /// FREEZE LAW: reads NO state at all — never a bio, meter or playhead value here.
     private var domainTabs: some View {
         HStack(spacing: 4) {

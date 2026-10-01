@@ -42,9 +42,11 @@
 // `ADMOSCSender.send(scene:dialect:)` has its OWN send loop that does not pass through this
 // fold. Its Cartesian dialect is unpacked too, where the spec has `/xyz`.
 //
-// That path is DOUBLY doorless — `streamsScene` defaults false with its only writer in the
-// parked `ImmersiveStageView`, and `sceneDialect` has no writer at all — so nothing a user
-// can reach is affected.
+// That path WAS doubly doorless — `streamsScene` defaulted false with its only writer in the
+// parked `ImmersiveStageView`, and `sceneDialect` has no writer at all. ⛔ Since C4a the FIRST
+// half is gone: Routing's "Every track as its own object (ADM-OSC)" switch arms the branch, so
+// the POLAR dialect is on a user path (claims 9–13 are why it reaches the wire packed). Only the
+// Cartesian and IEM halves stay unreachable, for lack of a dialect writer.
 //
 // ⭐ THE POLAR HALF OF THAT FINDING IS CLOSED BY #1430 (claims 9–13), AND THE DESIGN QUOTED
 // ABOVE WAS WRONG, which is the part worth keeping. It said: *"the fold has to move to a
@@ -403,8 +405,9 @@ final class ThePackedPositionIsAtomicOrAbsentTests: XCTestCase {
         XCTAssertTrue(code.contains("Self.packedSceneMessages(flat, dialect: dialect)"), """
             `send(scene:dialect:)` no longer sends through the fold. This is the #1210 lesson
             for the third arm: the pure function passing claims 9–12 proves nothing about the
-            wire if the send loop walks the unpacked list, and this arm is doorless, so no
-            device session would ever reveal it.
+            wire if the send loop walks the unpacked list. Since C4a the polar arm is
+            reachable from Routing, but a renderer that accepts unpacked leaves would hide the
+            regression on a device — only this scan sees it.
             """)
         XCTAssertFalse(code.contains("send(address: message.address, floats: [message.value])"), """
             The old unpacked scene loop is back. It sent every leaf as its own datagram, which

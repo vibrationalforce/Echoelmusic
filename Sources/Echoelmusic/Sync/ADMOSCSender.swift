@@ -118,24 +118,20 @@ public final class ADMOSCSender {
     ///
     /// ⛔ NOTHING IN `Sources/` WRITES THIS (#745). Measured with comments
     /// stripped: the name occurs TWICE in code, both in this file — this
-    /// declaration and the read in `sendIfFresh`. `ImmersiveStageView`, the one
-    /// surface that touches this sender's stream controls, names it ZERO times;
-    /// its `Toggle` binds `streamsScene` and nothing else. So all three cases of
-    /// `SpatialOSCDialect` are built and golden-file tested, and exactly one of
-    /// them can ever reach the wire.
+    /// declaration and the read in `sendIfFresh`. Neither `ImmersiveStageView`
+    /// nor the Routing switch (C4a) names it; both bind `streamsScene` and
+    /// nothing else. So all three cases of `SpatialOSCDialect` are built and
+    /// golden-file tested, and exactly one of them can ever reach the wire.
     ///
-    /// ⚠️ THIS IS SECOND-ORDER DOORLESS, and that distinction decides what to do
-    /// about it. `AutoMixChain.preset` (#736) was a live multi-way choice on a
-    /// REACHABLE surface, so it earned a door. Here the branch that reads this
-    /// property sits behind `streamsScene`, whose only writer lives in a view with
-    /// zero construction sites — deliberately parked, like `BroadcastView`. Adding
-    /// a picker here would build a control nobody can open. **Register it, do not
-    /// door it**; the door belongs in the same commit that re-mounts the stage.
-    ///
-    /// ⭐ The user-facing copy is already honest about this by accident: the stage
-    /// toggle reads "Stream to renderer (ADM-OSC)" — it names the one dialect that
-    /// can actually happen. Whoever adds the picker must widen that label in the
-    /// same commit, or the label starts lying the moment the choice becomes real.
+    /// ⛔ "THIS IS SECOND-ORDER DOORLESS" stood here, and since C4a it is FIRST-
+    /// order: the branch that reads this property is reachable from Routing's
+    /// "Every track as its own object (ADM-OSC)" switch, so this is now the
+    /// `AutoMixChain.preset` (#736) shape — a live choice with no control. It was
+    /// left a constant ON PURPOSE in C4a (one slice, one door): both labels that
+    /// arm the branch name ADM-OSC, the one dialect that can happen, so neither
+    /// lies. The picker is the NEXT slice, and it must widen BOTH labels — the
+    /// Routing switch and the stage toggle "Stream to renderer (ADM-OSC)" — in
+    /// the same commit, or a label starts lying the moment the choice is real.
     ///
     /// NOT A DEFECT TO DELETE. `admCartesianMessages` and `iemMessages` are the
     /// difference between "speaks the open standard" and "speaks our corner of it"
@@ -188,9 +184,10 @@ public final class ADMOSCSender {
         lastSceneObjectCount = 0
     }
 
-    /// Attach the live Immersive-Stage scene (weak — the store lives at app level).
-    /// Streaming only actually happens while `streamsScene` is true AND a route has
-    /// opened the socket.
+    /// Attach the live track-object scene (weak — the store lives at app level and,
+    /// since C4a, is rebuilt from the piece on every document change in
+    /// `EchoelmusicApp`). Streaming only actually happens while `streamsScene` is
+    /// true AND a route has opened the socket.
     public func attachScene(_ store: SpatialSceneStore?) {
         sceneStore = store
     }

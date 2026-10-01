@@ -557,7 +557,7 @@ struct EchoelmusicApp: App {
         let g = signalRouter.graph
         #if canImport(Network)
         if g.hasEnabledRoute(toSink: "osc.out") { osc.start(subscribing: bus) } else { osc.stop() }
-        admOSC.attachScene(spatialScene)   // idempotent weak-ref; enables Immersive-Stage scene streaming
+        admOSC.attachScene(spatialScene)   // idempotent weak-ref; the track objects the Routing switch streams (C4a)
         if g.hasEnabledRoute(toSink: "adm.out") { admOSC.start(subscribing: bus) } else { admOSC.stop() }
         // Both light adapters READ the one creative lighting state; neither owns it. Attached
         // before start/stop so a sender that begins streaming on this very call already has it.
@@ -1154,6 +1154,24 @@ struct EchoelmusicApp: App {
                     timelineStore.onDocumentChanged = {
                         syncRollMix()
                     }
+                }
+                // C4a: the track objects follow the PIECE, app-wide — not a view. Until
+                // here the only `rebuild(from:)` caller was `ImmersiveStageView`, which has
+                // zero construction sites, so the scene ADMOSCSender streams stayed empty
+                // and its branch sent nothing. Outside the multiRoll gate on purpose: the
+                // objects are positions on the wire, not voices. CHAINED, not assigned —
+                // `onDocumentChanged` is ONE slot and the roll-mix sync above owns it when
+                // the flag is on; a plain assignment here would silence that sync. Cheap
+                // and idempotent (O(tracks); `rebuild` replaces only on a real change).
+                let rebuildScene = { [weak timelineStore, weak spatialScene] in
+                    guard let lanes = timelineStore?.document.lanes else { return }
+                    spatialScene?.rebuild(from: lanes)
+                }
+                rebuildScene()   // launch: the loaded piece has no persist() yet
+                let previousDocumentHook = timelineStore.onDocumentChanged
+                timelineStore.onDocumentChanged = {
+                    previousDocumentHook?()
+                    rebuildScene()
                 }
                 // H4: let the region player pull LIVE mixer values (mute/solo/level/
                 // pan) from the store each transport step — its play() snapshot alone

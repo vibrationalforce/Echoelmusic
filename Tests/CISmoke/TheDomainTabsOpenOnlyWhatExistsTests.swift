@@ -16,10 +16,11 @@
 //            master, blackout, DMX resolution and fixtures), the door the header's light monitor
 //            already posts. The receiver now refuses while a medium-detent sheet is up (FX, Live
 //            Colabo) — never two modals true at once.
-// ⛔ Space is NOT built: the only spatial control on a reachable surface is the ADM-OSC row
-// inside Routing (a second word for Light's door), and `ImmersiveStageView` is doorless by ship
-// gate 4. Claim 4 forbids the word in the row; it is a ratchet with an instruction, not a ban
-// on C4 (#364) — C4 adds Space TOGETHER with its target and edits that one needle.
+// ⛔ Space is NOT built: both spatial controls on a reachable surface — the ADM-OSC row and,
+// since C4a, its "Every track as its own object" switch — sit inside Routing (a second word for
+// Light's door), and `ImmersiveStageView` is doorless by ship gate 4. Claim 4 forbids the word in
+// the row; it is a ratchet with an instruction, not a ban (#364) — C4a-2 adds Space TOGETHER with
+// a landing of its own (Routing opened ON the network card) and edits that one needle.
 //
 // THE FOUR CLAIMS:
 // 1. `domainTabs` is pinned by its own top inset AFTER `pieceTabs`' (a later inset sits outside,
@@ -189,10 +190,10 @@ final class TheDomainTabsOpenOnlyWhatExistsTests: XCTestCase {
         let row = try member("private var domainTabs: some View {", in: code)
         for word in ["Space", "Stream", "XR"] {
             XCTAssertFalse(row.contains("\"\(word)\""), """
-                the row shows `\(word)`. Stream and XR stay out (H5). Space arrives with C4 and its \
-                target — the only spatial control reachable today is the ADM-OSC row inside \
-                Routing, which Light already opens. When C4 lands, add Space AND its door in one \
-                commit and drop it from this list.
+                the row shows `\(word)`. Stream and XR stay out (H5). Space arrives with C4a-2 and \
+                its own landing — both spatial controls reachable today (the ADM-OSC row and its \
+                per-track object switch) sit inside Routing, which Light already opens. When C4a-2 \
+                lands, add Space AND its landing in one commit and drop it from this list.
                 """)
         }
         XCTAssertFalse(row.contains("ImmersiveStageView"),

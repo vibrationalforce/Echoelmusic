@@ -34075,6 +34075,96 @@
         }
       }
     },
+    "Every track as its own object (ADM-OSC)" : {
+      "comment" : "Workstation redesign C4a (2026-10-01): Routing's ADM-OSC card — the switch that sends every track as its own spatial object instead of the one object that follows the music. Position and a fixed level only; nothing moves them yet; an empty piece sends nothing.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Spur als eigenes Objekt (ADM-OSC)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every track as its own object (ADM-OSC)"
+          }
+        }
+      }
+    },
+    "On. Each track of the piece is sent as its own ADM-OSC object at its starting place. Nothing moves them yet. With no track, nothing is sent." : {
+      "comment" : "Workstation redesign C4a (2026-10-01): Routing's ADM-OSC card — the switch that sends every track as its own spatial object instead of the one object that follows the music. Position and a fixed level only; nothing moves them yet; an empty piece sends nothing.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An. Jede Spur des Stücks geht als eigenes ADM-OSC-Objekt an ihrem Startplatz hinaus. Noch bewegt sie nichts. Ohne Spur wird nichts gesendet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On. Each track of the piece is sent as its own ADM-OSC object at its starting place. Nothing moves them yet. With no track, nothing is sent."
+          }
+        }
+      }
+    },
+    "Off. ADM-OSC sends one object that follows the music." : {
+      "comment" : "Workstation redesign C4a (2026-10-01): Routing's ADM-OSC card — the switch that sends every track as its own spatial object instead of the one object that follows the music. Position and a fixed level only; nothing moves them yet; an empty piece sends nothing.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus. ADM-OSC sendet ein Objekt, das der Musik folgt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off. ADM-OSC sends one object that follows the music."
+          }
+        }
+      }
+    },
+    "On: each track is one object at its starting place around the listener, numbered in track order — removing a track renumbers the ones after it. Position and a fixed level only, no audio. Nothing moves them yet. With no track, nothing is sent. Turns off when the app restarts." : {
+      "comment" : "Workstation redesign C4a (2026-10-01): Routing's ADM-OSC card — the switch that sends every track as its own spatial object instead of the one object that follows the music. Position and a fixed level only; nothing moves them yet; an empty piece sends nothing.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An: jede Spur ist ein Objekt an ihrem Startplatz rund um die Hörposition, nummeriert in Spur-Reihenfolge — eine Spur entfernen nummeriert die folgenden neu. Nur Position und ein fester Pegel, kein Ton. Noch bewegt sie nichts. Ohne Spur wird nichts gesendet. Schaltet sich beim Neustart der App aus."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On: each track is one object at its starting place around the listener, numbered in track order — removing a track renumbers the ones after it. Position and a fixed level only, no audio. Nothing moves them yet. With no track, nothing is sent. Turns off when the app restarts."
+          }
+        }
+      }
+    },
+    "Off: one object follows the music. On sends every track instead, and nothing while the piece has no track. Either way it leaves the phone only once a route to ADM-OSC (spatial) is on." : {
+      "comment" : "Workstation redesign C4a (2026-10-01): Routing's ADM-OSC card — the switch that sends every track as its own spatial object instead of the one object that follows the music. Position and a fixed level only; nothing moves them yet; an empty piece sends nothing.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus: ein Objekt folgt der Musik. An sendet stattdessen jede Spur – und nichts, solange das Stück keine Spur hat. In beiden Fällen verlässt es das Telefon erst, wenn eine Route zu „ADM-OSC (räumlich)“ an ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off: one object follows the music. On sends every track instead, and nothing while the piece has no track. Either way it leaves the phone only once a route to ADM-OSC (spatial) is on."
+          }
+        }
+      }
+    },
     "Tap a track name to open it here" : {
       "comment" : "Workstation redesign A9 (2026-10-01): landscape — the track column beside the arrangement, while no track is open.",
       "extractionState" : "manual",

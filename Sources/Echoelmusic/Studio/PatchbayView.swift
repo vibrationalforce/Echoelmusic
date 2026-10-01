@@ -498,6 +498,7 @@ struct PatchbayView: View {
                       standardPort: Float(OSCSender.defaultPort))
             outputRow("ADM-OSC", sender: admOSC, host: admHost, port: admPort,
                       standardPort: Float(ADMOSCSender.defaultPort))
+            admSceneStreamRow
             outputRow(String(localized: "sACN · Light"), sender: sacn, host: sacnHost, port: sacnPort,
                       standardPort: Float(SACNSender.defaultPort),
                       universe: sacnUniverse, universeRange: 1...63_999,
@@ -542,6 +543,38 @@ struct PatchbayView: View {
         .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
         .onChange(of: oscClinicalDetail) { _, _ in osc.applyEgressPreferences() }
+    }
+
+    /// C4a — the door to `ADMOSCSender.streamsScene`, the per-track object stream that until
+    /// now had its only writer in the doorless `ImmersiveStageView`. ON: every track of the
+    /// piece goes out as its own ADM-OSC object (`/adm/obj/1…N`) INSTEAD of the one object
+    /// that follows the music — the sender's mutual exclusion, so object 1 never collides.
+    /// ⚠️ An EMPTY piece (a fresh install seeds no track) therefore sends NOTHING while ON —
+    /// the sender never falls back to the single object — and the copy says so.
+    /// The label names ADM-OSC because it is the ONE dialect that can reach the wire:
+    /// `sceneDialect` still has no writer, and a Cartesian/IEM picker must widen this label
+    /// in the same commit. HONEST SCOPE: each object carries its position plus the
+    /// instrument profile's FIXED gain (not the mixer level), at its default place — nothing
+    /// moves an object yet (no automation writer, no render; the render half is not built).
+    /// Not persisted, like the flag itself: a relaunch starts with one object again.
+    /// FREEZE LAW: reads `streamsScene` only — a cold flag. Never `lastSentTimestamp` or
+    /// `lastSceneObjectCount` here; the activity dot in the ADM-OSC row above is the leaf.
+    private var admSceneStreamRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Toggle(isOn: admSceneStream) {
+                Text("Every track as its own object (ADM-OSC)")
+                    .font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
+            }
+            .tint(EchoelTheme.accent)
+            .accessibilityHint(admOSC.streamsScene
+                ? String(localized: "On. Each track of the piece is sent as its own ADM-OSC object at its starting place. Nothing moves them yet. With no track, nothing is sent.")
+                : String(localized: "Off. ADM-OSC sends one object that follows the music."))
+            Text(admOSC.streamsScene
+                 ? String(localized: "On: each track is one object at its starting place around the listener, numbered in track order — removing a track renumbers the ones after it. Position and a fixed level only, no audio. Nothing moves them yet. With no track, nothing is sent. Turns off when the app restarts.")
+                 : String(localized: "Off: one object follows the music. On sends every track instead, and nothing while the piece has no track. Either way it leaves the phone only once a route to ADM-OSC (spatial) is on."))
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     private func outputRow(_ name: String, sender: any NetworkSendActivity,
@@ -636,6 +669,7 @@ struct PatchbayView: View {
     private var oscPort: Binding<Float> { Binding(get: { Float(osc.port) }, set: { osc.port = Self.clampPort($0) }) }
     private var admHost: Binding<String> { Binding(get: { admOSC.host }, set: { admOSC.host = $0 }) }
     private var admPort: Binding<Float> { Binding(get: { Float(admOSC.port) }, set: { admOSC.port = Self.clampPort($0) }) }
+    private var admSceneStream: Binding<Bool> { Binding(get: { admOSC.streamsScene }, set: { admOSC.streamsScene = $0 }) }
     private var sacnHost: Binding<String> { Binding(get: { sacn.host }, set: { sacn.host = $0 }) }
     private var sacnPort: Binding<Float> { Binding(get: { Float(sacn.port) }, set: { sacn.port = Self.clampPort($0) }) }
     private var sacnUniverse: Binding<Float> {

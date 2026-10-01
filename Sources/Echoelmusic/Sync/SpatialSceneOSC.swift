@@ -41,18 +41,21 @@
 //  ⛔ THIS HEADER SAID THE SCENE-DRIVEN SEND HAS "NO CALLERS YET" AND THAT IS
 //  STALE (#745). Measured with comments stripped: `ADMOSCSender.send(scene:)`
 //  occurs twice in code — its declaration AND one call, in `sendIfFresh`,
-//  inside the `if streamsScene` branch. The CONCLUSION survives, the
-//  REASON does not, and that is the worse half to leave standing (#402): a
+//  inside the `if streamsScene` branch. At #745 the CONCLUSION survived and
+//  the REASON did not, and that is the worse half to leave standing (#402): a
 //  session that greps for the caller finds one and reads the whole paragraph
 //  as obsolete, including the guardrail it exists to state.
 //
-//  ⭐ The honest reason Release stays bit-identical: `streamsScene` defaults
-//  to `false` and its ONLY writer in `Sources/` is a `Toggle` in
-//  `ImmersiveStageView` — a view with ZERO construction sites, doorless on
-//  purpose (ship-gate 4: light/space "demonstrable, not required for v1").
-//  So the branch compiles, is wired, and cannot be entered by a user today.
-//  The property that picks WHICH dialect the branch speaks has no writer at
-//  all — see `ADMOSCSender.sceneDialect`.
+//  ⛔ "the branch … cannot be entered by a user today" stood here, reasoned
+//  from `streamsScene`'s only writer being a `Toggle` in the doorless
+//  `ImmersiveStageView`. Since C4a there is a second writer on a REACHABLE
+//  surface: Routing's "Every track as its own object (ADM-OSC)" switch
+//  (`PatchbayView.admSceneStreamRow`), and `EchoelmusicApp` rebuilds the
+//  scene from the piece app-wide. What still holds: the flag defaults to
+//  `false` and is not persisted, so a fresh launch sends one object as
+//  before; and the property that picks WHICH dialect the branch speaks has
+//  no writer at all — see `ADMOSCSender.sceneDialect`. This formatter is now
+//  on a user path in its polar dialect only.
 //
 
 import Foundation
