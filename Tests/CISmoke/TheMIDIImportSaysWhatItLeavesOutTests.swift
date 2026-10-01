@@ -1,15 +1,18 @@
 // TheMIDIImportSaysWhatItLeavesOutTests.swift
 // Echoel — workstation redesign B6b-0 (2026-10-01): the MIDI-file import reads past pitch bend,
-// pressure, controllers and the sustain pedal — and now SAYS so, per kind, instead of leaving
-// the loss for the ear. B6b proper (CC / bend / pressure lanes in the note editor, an import that
-// KEEPS them) is HOLD: no type in `Note`/`Clip` holds a controller value over time, and no player
+// pressure and controllers — and now SAYS so instead of leaving the loss for the ear. ⭐ B6b-1
+// (2026-10-01) took the sustain pedal OUT of this file: it is applied to note lengths now, and
+// its claims live in `TheSustainPedalLengthensTheNotesItHoldsTests`. B6b proper (CC / bend /
+// pressure lanes in the note editor, an import that KEEPS them) is HOLD: no type in
+// `Note`/`Clip` holds a controller value over time, and no player
 // path would send one (the header of `MIDIFileImporter.swift` says why `NoteMPE` is not that
 // type). A lane that edited such data would edit something nothing plays.
 //
 // 1. PURE (`MIDIFileImporter.parse`, END-TO-END on literal SMF bytes): MOVEMENT is counted on its
-//    channel — a bend away from centre, channel AND polyphonic pressure above 0, a pedal PRESS
-//    (never a release), a controller CHANGE (never its first value) — and reading past them moves
-//    no note: the pairs equal the same file without them, and `channelNotes` IS `parse(…).notes`.
+//    channel — a bend away from centre, channel AND polyphonic pressure above 0, a controller
+//    CHANGE (never its first value, never CC 64) — and reading past them moves no note: the pairs
+//    equal the same file without them, and `channelNotes` IS `parse(…).notes`. Since B6b-1 the
+//    pedal DOES move a note, so "without them" means without the pedal too (`readPast`).
 //    Running status across two bends keeps the byte widths right.
 // 2. PURE (set-up is not movement): bank select, RPN/NRPN and data entry, a starting volume / pan
 //    / send, a repeated value, a centred bend, a pressure of 0, a program change and channel mode
@@ -21,7 +24,8 @@
 //    smuggled into data that something might play (`mpe` stays nil, no automation).
 // 4. SOURCE-TEXT SCAN: ONE walk — the import asks `parse(from:` once and `channelNotes(` never;
 //    `channelNotes` is the one-line projection. Proves where text sits, not what runs.
-// 5. CATALOG: both sentences have a translated German unit, `extractionState: manual`, a comment.
+// 5. CATALOG: the bend sentence has a translated German unit, `extractionState: manual`, a
+//    comment. (The pedal sentence it shared this claim with is gone — B6b-1.)
 //
 // Grading (§0/§3 — no Swift toolchain). Claims 1–3 transcribed into a Python port of the
 // proposed `parse` + the `plan` summation, driven over the exact fixture bytes below, against
@@ -36,12 +40,17 @@
 // and `parse(from:` is not (0) — red there for its named reason, recorded, not graded (the file
 // does not compile there). STRIPPER (#453): PROPHYLAKTISCH — the import's header names the walk
 // WITHOUT a paren on purpose, so no claim-4 needle flips raw vs `codeOnly`.
+// B6b-1 EDIT (2026-10-01), transcribed against 02a68bcaf and the slice: claim 1 loses its
+// `sustainPresses` assertion (the member is gone — a compile edit, not a finding) and gains the
+// count the pedal now has (`parse(…).sustained`); claim 1's no-move test reads `readPast`, and a
+// counterweight pins the EXPRESSIVE file's note at the pedal-up (600) instead; claim 3's pedal
+// assertions flip from "not read" to the count sentence and to silence on a never-lifted pedal.
 // NOT covered: the sentence on the device plate, its wrap at the largest type size, German line
 // length, and what real DAW exports contain — device probes, owned below.
-// NEEDS-FOUNDER-VERIFY: Workstation → Import MIDI → (a) a piano file with sustain pedal and pitch
-// bend → the plate's import line ends with both new sentences; (b) a plain melody exported from a
-// DAW (starting volume/pan, no automation) → neither sentence; (c) a GM file whose only pedal is
-// on channel 10 → no pedal sentence, "N drum notes skipped." still there; German shows both.
+// NEEDS-FOUNDER-VERIFY: Workstation → Import MIDI → (a) a file with pitch bend → the plate's
+// import line ends with the bend sentence; (b) a plain melody exported from a DAW (starting
+// volume/pan, no automation) → no bend sentence; (c) a GM file whose only pedal is on channel 10
+// → no pedal sentence, "N drum notes skipped." still there; German shows the bend sentence.
 
 import Foundation
 import XCTest
@@ -53,7 +62,6 @@ final class TheMIDIImportSaysWhatItLeavesOutTests: XCTestCase {
     private static let parserPath = "Sources/Echoelmusic/Sequencer/MIDIFileImporter.swift"
     private static let importPath = "Sources/Echoelmusic/Sequencer/MIDIImport.swift"
     private static let catalogPath = "Sources/Echoelmusic/Resources/Localizable.xcstrings"
-    private static let pedalSentence = " The sustain pedal is not read."
     private static let bendSentence = " Pitch bend, pressure and controller changes are not imported."
 
     // MARK: fixtures
@@ -102,7 +110,7 @@ final class TheMIDIImportSaysWhatItLeavesOutTests: XCTestCase {
         (240, [0xA0, 0x3C, 0x30]),   // polyphonic pressure    → pressures
         (300, [0xB0, 0x4A, 0x50]),   // CC 74 first value      → not counted
         (330, [0xB0, 0x4A, 0x60]),   // CC 74 changes          → controllers
-        (360, [0xB0, 0x40, 0x7F]),   // pedal down             → sustainPresses
+        (360, [0xB0, 0x40, 0x7F]),   // pedal down             → applied since B6b-1, not counted
         (480, [0x80, 0x3C, 0x00]),   // note off
         (600, [0xB0, 0x40, 0x00]),   // pedal up               → not counted
     ]
@@ -113,6 +121,11 @@ final class TheMIDIImportSaysWhatItLeavesOutTests: XCTestCase {
             let kind = event.bytes[0] & 0xF0
             return kind == 0x80 || kind == 0x90
         }
+    }
+
+    /// The expressive file without its pedal — what the parse still READS PAST since B6b-1.
+    private static var readPast: [(tick: Int, bytes: [UInt8])] {
+        expressive.filter { !($0.bytes[0] & 0xF0 == 0xB0 && $0.bytes[1] == 0x40) }
     }
 
     /// The plain file under the set-up a DAW or GM export typically opens with.
@@ -150,7 +163,8 @@ final class TheMIDIImportSaysWhatItLeavesOutTests: XCTestCase {
         let first = parsed.dropped[0]
         XCTAssertEqual(first.pitchBends, 1, "the centred bend is set-up; the moved one counts")
         XCTAssertEqual(first.pressures, 2, "channel AND polyphonic pressure are both pressure")
-        XCTAssertEqual(first.sustainPresses, 1, "the press counts, the release does not")
+        XCTAssertEqual(parsed.sustained[0], 1,
+                       "B6b-1: the pedal is not read past any more — it held the note, and that is counted")
         XCTAssertEqual(first.controllers, 1, "CC 74's change counts — CC 7 and CC 74's first values and CC 121 do not")
         XCTAssertTrue(first.hasBendPressureOrControllers)
         for channel in 1..<16 {
@@ -160,7 +174,7 @@ final class TheMIDIImportSaysWhatItLeavesOutTests: XCTestCase {
     }
 
     func testReadingPastExpressionMovesNoNote() throws {
-        let rich = try MIDIFileImporter.parse(from: Self.smf(Self.expressive))
+        let rich = try MIDIFileImporter.parse(from: Self.smf(Self.readPast))
         let bare = try MIDIFileImporter.parse(from: Self.smf(Self.plain))
         XCTAssertEqual(rich.notes.count, 1)
         XCTAssertEqual(rich.notes.map { $0.channel }, bare.notes.map { $0.channel })
@@ -168,8 +182,11 @@ final class TheMIDIImportSaysWhatItLeavesOutTests: XCTestCase {
         XCTAssertEqual(rich.notes.map { $0.note.startTick }, bare.notes.map { $0.note.startTick })
         XCTAssertEqual(rich.notes.map { $0.note.lengthTicks }, bare.notes.map { $0.note.lengthTicks })
         XCTAssertEqual(rich.notes.map { $0.note.lengthTicks }, [480])
-        XCTAssertTrue(bare.dropped.allSatisfy { !$0.hasBendPressureOrControllers && $0.sustainPresses == 0 },
+        XCTAssertTrue(bare.dropped.allSatisfy { !$0.hasBendPressureOrControllers },
                       "a file of notes alone reads past nothing")
+        let pedalled = try MIDIFileImporter.parse(from: Self.smf(Self.expressive))
+        XCTAssertEqual(pedalled.notes.map { $0.note.lengthTicks }, [600],
+                       "counterweight (B6b-1): WITH its pedal the note is held to the pedal-up at 600")
         let projected = try MIDIFileImporter.channelNotes(from: Self.smf(Self.expressive))
         XCTAssertEqual(projected.map { $0.note.pitch }, rich.notes.map { $0.note.pitch },
                        "`channelNotes` is the same walk without the counts")
@@ -227,7 +244,9 @@ final class TheMIDIImportSaysWhatItLeavesOutTests: XCTestCase {
     func testTheNoteNamesEachKindTheFileHasAndNoneItLacks() throws {
         let rich = try Self.landing(Self.smf(Self.expressive))
         let richNote = MIDIImport.successNote(rich, laneName: "MIDI 1")
-        XCTAssertTrue(richNote.contains("sustain pedal is not read"))
+        XCTAssertTrue(richNote.contains("1 note is lengthened by the sustain pedal"),
+                      "B6b-1: the pedal is applied and the note says so")
+        XCTAssertFalse(richNote.contains("sustain pedal is not read"))
         XCTAssertTrue(richNote.contains("Pitch bend, pressure and controller changes are not imported"))
 
         let files: [(name: String, events: [(tick: Int, bytes: [UInt8])])] = [("plain", Self.plain),
@@ -243,7 +262,8 @@ final class TheMIDIImportSaysWhatItLeavesOutTests: XCTestCase {
         let pedalOnly: [(tick: Int, bytes: [UInt8])] = Self.plain + [(tick: 100, bytes: [0xB0, 0x40, 0x7F])]
         let pedalLanding = try Self.landing(Self.smf(pedalOnly))
         let pedalNote = MIDIImport.successNote(pedalLanding, laneName: "MIDI 1")
-        XCTAssertTrue(pedalNote.contains("sustain pedal is not read"))
+        XCTAssertFalse(pedalNote.contains("sustain pedal"),
+                       "B6b-1: a press never lifted past the channel's last release lengthens nothing, so nothing is said")
         XCTAssertFalse(pedalNote.contains("Pitch bend"), "the pedal alone is not a controller change")
     }
 
@@ -274,7 +294,7 @@ final class TheMIDIImportSaysWhatItLeavesOutTests: XCTestCase {
 
     // MARK: 5 — catalog
 
-    func testBothSentencesSpeakGerman() throws {
+    func testTheBendSentenceSpeaksGerman() throws {
         var root = URL(fileURLWithPath: #filePath)
         for _ in 0..<3 { root.deleteLastPathComponent() }
         let url = root.appendingPathComponent(Self.catalogPath)
@@ -283,7 +303,7 @@ final class TheMIDIImportSaysWhatItLeavesOutTests: XCTestCase {
               let strings = json["strings"] as? [String: Any] else {
             return XCTFail("ANCHOR MISSING: cannot read \(Self.catalogPath) (#454)")
         }
-        for key in [Self.pedalSentence, Self.bendSentence] {
+        for key in [Self.bendSentence] {
             guard let entry = strings[key] as? [String: Any] else {
                 XCTFail("`\(key)` has no catalog entry — it shows in English on a German phone")
                 continue
