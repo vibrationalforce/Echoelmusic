@@ -481,7 +481,10 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
     /// FX panel's `effectSection("…")` header is on the same footing (thirteen stage titles).
     /// `collapsibleGroupHeader` keeps a `String` title because its hint interpolates it, and looks
     /// the key up itself — pinned here so a tidy-up cannot put `Text(title)` back.
-    func testTheLabelHelpersTakeAKey() throws {
+    // @MainActor because the runtime counterweights call statics on @MainActor Views
+    // (`FloatingVisualWindow.wavAccessibilityValue`, `PerformSessionView.sectionTitle`) — the bundle's
+    // convention for that call shape; Build for Testing 6577 on 9d46d79f5 was red without it.
+    @MainActor func testTheLabelHelpersTakeAKey() throws {
         let code = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
         for signature in ["private func groupHeader(_ t: LocalizedStringKey)",
                           "private func labeledRow<Content: View>(_ label: LocalizedStringKey,",
