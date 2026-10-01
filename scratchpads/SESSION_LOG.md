@@ -41723,3 +41723,11 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - `evolveShouldReseed()` gab drei Monate hart `true` zurück; jetzt gibt es den Schalter zurück. Der Timer läuft weiter und loggt `evolve: HOLD (switch off)`.
 - Drei Katalog-Einheiten deutsch („Weiterentwickeln“ + zwei Erklärsätze).
 - Wächter `TheEvolveSwitchStartsOffTests`, Transkription WORK PASS / HEAD FAIL. Gates zum Commit-Zeitpunkt offen; Gerät offen.
+
+## 2026-10-01 — Deploy v10.79.484 (der Stück-Build)
+
+- **Notiz** in `.deploy/release`: acht Posten, Prüfliste T1–T10, `founder-verify.py --since 5683fb72d` → 45 neu/umformuliert von 280 (ui 15 · other 14 · audio 7 · visual 5 · sync 3 · bio 1), im SELBEN Commit wie der Bump.
+- **Wächter transkribiert:** TheDeployNoteNamesRealDoorsTests 1–5 und TheShippedVersionComesFromTheReleaseFileTests auf WORK grün (Version v10.79.484, Zeile 1; Pfad-Wörter Bio · Field · Master · Mood · Save/Export · Sound · Tempo · Workstation, alle Chips).
+- **Gates des Swift-Stands c0674a718:** Compile Check 3144 ✓, CI/CD 6608 Build for Testing ✓, Run Tests #396-Form (0 Fehlschläge im Fenster, TheEvolveSwitchStartsOffTests 4/4 beobachtet), Auto-Merge 4042 ✓.
+- **Nicht drin:** 2b-ii. Postfach §2 zeigt jetzt auf 10.79.484.
+- **Offen:** TestFlight-Lauf lesen (Archiv, Upload, „Verify build landed in App Store Connect").

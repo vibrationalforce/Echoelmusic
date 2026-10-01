@@ -4884,3 +4884,11 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Why:** every deploy commit was denied in auto mode, so ready releases waited on the founder.
 - **Proof:** hook selftest 58/58; a live auto-mode probe returns pass for the release file and deny for Info.plist and project.yml.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — Deploy v10.79.484 (der Stück-Build)
+
+- **Stand:** Swift = c0674a718 = main (Compile Check 3144 ✓, CI/CD 6608 Build for Testing ✓, Run Tests #396-Form mit 0 Fehlschlägen im Fenster, Auto-Merge 4042 ✓).
+- **Inhalt:** alles seit 10.79.483 (Build 2603), 494 Commits — das Stück als Zuhause, sprechender Kopf, DMMW-Fluss, Status in Worten, Lesbarkeit, deutsche Oberfläche, „Keep evolving".
+- **Bewusst nicht drin:** Scheibe 2b-ii (Workstation-Chip stilllegen); der Patch passt nicht mehr auf die Spitze und wird neu gebaut.
+- **Erster Deploy nach der Freigabe „Nur Deploy frei"** (357b74bde): der Release-Commit lief ohne Founder-Commit durch.
+- Review: 2026-10-31.

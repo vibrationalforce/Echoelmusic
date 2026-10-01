@@ -1,4 +1,4 @@
-build: v10.79.483 — Workstation wird Studio: Noten-Editor, MIDI-Aufnahme, Automation, Medienbibliothek, Szenen, Click (WA4, M1–M10, R1, A1–A5, MA, S1–S2, Design 1–12)
+build: v10.79.484 — Das Stück ist das Zuhause: DMMW-Fluss, sprechender Kopf, Status in Worten, deutsche Oberfläche, Evolve-Schalter
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,101 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (v10.79.484) ──────────────────────────────
+
+  ⭐ DER STÜCK-BUILD (Founder 2026-10-01: „alles sammeln und sichern … TestFlight deploy
+  starten"). Alles seit 10.79.483 (Build 2603) — 494 Commits. Die App öffnet jetzt auf dem
+  STÜCK (der Workstation), nicht mehr auf dem Instrument; das Bild schwebt als kleine Karte
+  darüber. Oben die Naht „Piece | Instrument" (Stück | Instrument) wechselt zwischen beiden.
+
+  ⚠️ EHRLICH ZUM STAND: der Swift-Stand ist c0674a718 = main. Xcode Compile Check 3144 grün,
+  CI/CD 6608 „Build for Testing" grün, Run Tests in der bekannten #396-Form (im sichtbaren
+  Fenster 0 Fehlschläge, der neue Evolve-Wächter 4/4 bestanden). Danach kamen nur noch
+  Commits an .claude/, Doku und dieser Datei — kein Byte unter Sources/. Der TestFlight-Lauf
+  kompiliert selbst; scheitert er, kommt KEIN Build an und nichts Kaputtes auf dein Telefon.
+  NICHT enthalten: das Stilllegen des Workstation-Chips (Scheibe 2b-ii) — der
+  Workstation-Chip ist in diesem Build noch da und öffnet weiterhin dasselbe Stück.
+
+  ── POSTEN 1: DAS STÜCK IST DAS ZUHAUSE ──
+  Frische Installation öffnet auf dem Stück. Naht „Piece | Instrument" oben; das Instrument
+  bleibt darunter geladen, die Musik bricht beim Wechsel nicht ab. Das Bild ist eine kleine
+  schwebende Karte, Vollbild ist einen Tipp entfernt.
+
+  ── POSTEN 2: EIN KOPF, DER SPRICHT ──
+  Projektkopf mit EINEM Play/Stop (als Wort: „Play" / „Stop" — Abspielen / Stopp), Name des
+  Stücks, Puls-Pille, Undo/Redo. Die Leertaste spielt und stoppt (Hardware-Tastatur). Der
+  Hilfe-Knopf ⓘ („Guide" — Hilfe) ist für neue Nutzer an. Läuft Musik, erscheint „Pause".
+
+  ── POSTEN 3: DER DMMW-FLUSS ──
+  Bereichs-Zeile im Instrument: Compose · Perform · Visuals · Library · Settings
+  (Komponieren · Spielen · Visuals · Bibliothek · Einstellungen). Auf dem Stück führt
+  „Create a piece" (Ein Stück anlegen) in fünf Schritten: „Add MIDI Track" (MIDI-Spur
+  hinzufügen) wählt und benennt die Spur, „New MIDI Part" (Neues MIDI-Teil) landet auf der
+  gewählten Spur, „Write notes" (Noten schreiben) öffnet den Noten-Editor. Perform: Szenen
+  mit Mute/Solo. Bibliothek: „New piece" (Neues Stück), Sichern in das OFFENE Stück statt
+  einer Kopie, Datum je Zeile, „Rename" (Umbenennen), Löschen auch ohne Wischen. Die Farbe
+  des Noten-Rasters folgt der Stimmung (Kammerton/Tonsystem).
+
+  ── POSTEN 4: STATUS IN WORTEN ──
+  Puls-Leiter: Searching · Almost · Found · Lost; ohne Licht an der Linse „No light".
+  Ausgabe-Kacheln: Idle · Screen · Off. Puls-Pille → Bio-Panel: Zeile „Apple Health" sagt,
+  was die Uhr gerade liefert. Routing-Fläche: MIDI-Karte sagt, was am Kabel passiert.
+  Field-Panel: Zeile „Power" sagt, warum das Bild-Detail herunterschaltet (Stromsparmodus,
+  Hitze). Master-Chip: Zeile „Audio route" (Audioweg) sagt, wohin der Klang geht — und
+  ob ein Anruf/Bluetooth-Codec ihn verengt.
+
+  ── POSTEN 5: LESBARKEIT UND ZUGÄNGLICHKEIT ──
+  Könnensstufe (SkillLevel), ein Wort je Ding (Stück · Spur · Teil), jedes Wertfeld bietet
+  „Default" (Standard). Save/Export-Chip: „Text size" (Textgröße) mit Smaller · Larger ·
+  Default (Kleiner · Größer · Standard). 11-pt-Boden für jede Schrift, sechs Schriftstufen,
+  Symbole wachsen mit dem Text, Symbol-Kacheln tragen ein Wort, Kontraste nach WCAG, die
+  gewählte Spur hat einen dickeren Rahmen (nicht nur Farbe).
+
+  ── POSTEN 6: DEUTSCHE OBERFLÄCHE ──
+  Ist die Gerätesprache Deutsch, spricht die Oberfläche Deutsch (Katalog jetzt 2001
+  Einträge). ⚠️ Im Code und im Katalog geprüft, NICHT auf dem Gerät: ob die App die deutsche
+  Sprache tatsächlich anbietet, sieht man nur dort (→ T3).
+
+  ── POSTEN 7: „KEEP EVOLVING" (E3) ──
+  Mood-Chip (Stimmung) → „Bar variation" (Takt-Variation) → Schalter „Keep evolving"
+  (Weiterentwickeln), Standard AUS: der Take behält seine Phrase. AN = alle 25–45 s neue
+  Noten auf demselben Gerüst, wie bisher.
+
+  ── POSTEN 8: MEDIEN ZU VISUALS, AUV3, REPARATUREN ──
+  Auf dem Stück: „Photo to Visuals" / „Video to Visuals" (Foto/Video zu Visuals) färbt das
+  Bild aus einer Datei. AUv3: das Datenschutz-Manifest liegt jetzt im Plugin (einzige
+  project.yml-Änderung, Founder-Freigabe 2026-09-28); Eyebrow und Kontrast der Plugin-Ansicht
+  korrigiert. Ein fehlgeschlagenes Sichern bleibt erhalten und bietet Wiederholen; Release
+  des Cumbia-Basses; LFO-Tiefe rastet sauber.
+
+  ── PRÜFLISTE ──
+  T1  Kaltstart nach Installation: kein Black Screen, öffnet auf dem Stück mit kleiner
+      Bildkarte; Menüs frieren nicht (Ship-Gate 5).
+  T2  Naht „Piece | Instrument" hin und her, während Musik läuft — spielt sie weiter?
+  T3  Gerätesprache Deutsch: steht dort „Komponieren", „Ein Stück anlegen", „Abspielen"?
+  T4  „Create a piece": MIDI-Spur hinzufügen → Neues MIDI-Teil → Noten schreiben → Play.
+  T5  Bibliothek: Stück sichern, umbenennen, erneut öffnen, Änderung sichern — EINE Zeile?
+  T6  Mood-Chip → Takt-Variation → Weiterentwickeln aus: Phrase bleibt; an: wechselt.
+  T7  Master-Chip → „Audio route" über Lautsprecher, dann AirPods: stimmt das Wort?
+  T8  Save/Export-Chip → „Text size" Größer: wächst alles, nichts wird abgeschnitten?
+  T9  Puls an der Linse ohne Licht: „No light"; mit Licht: Searching → Found.
+  T10 Hängt oder stockt etwas: Save/Export-Chip → „Diagnostics" (Diagnose) → Teilen, und
+      mir das Diagnose-Log schicken.
+
+  ── PRÜF-BITTEN, DIE DIESER BUILD NEU BEANTWORTBAR MACHT ──
+  Gedruckt: python3 scripts/founder-verify.py --since 5683fb72d
+  → 45 NEU oder UMFORMULIERT, von 280 offenen. Nach Bereich: ui 15 · other 14 · audio 7 ·
+  visual 5 · sync 3 · bio 1. Die ganze Liste druckt der Befehl oben; T1–T10 decken die
+  Kerne davon ab (Zuhause, Kopf, Fluss, Status-Zeilen, Sprache, Evolve).
+
+  ── STAND DER GATES ──
+  main = c0674a718: Xcode Compile Check 3144 grün, CI/CD 6608 Build for Testing grün, Run
+  Tests #396-Form (TEST EXECUTE FAILED, 0 Fehlschläge im sichtbaren Fenster), Auto-Merge
+  4042 grün. Info.plist, Entitlements und Workflows unverändert; project.yml nur das
+  AUv3-Datenschutz-Manifest (7e6aea965).
+
+  Der Vorgänger ist 10.79.483 (Build 2603), davor 10.79.482.
 
   ── WAS IN DIESEM BUILD NEU IST (v10.79.483) ──────────────────────────────
 

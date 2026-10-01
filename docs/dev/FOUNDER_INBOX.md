@@ -79,6 +79,10 @@ verfallen sie mit der Sitzung):
 Alle Scheiben der Züge 1–4 sind **Gates-grün und Gerät-unbestätigt**. Statt 20 Einzelbitten
 fünf Familien; jede Zeile sagt, was zu tun und was zu sehen ist. Ja/Nein je Zeile reicht.
 
+**Gilt für 10.79.484** (Deploy 2026-10-01, Stand c0674a718). Die Build-Notiz in
+`.deploy/release` führt dieselben Familien als T1–T10 mit Pfaden; zwei kommen dort neu dazu:
+Deutsch als Gerätesprache (T3) und der Schalter „Keep evolving" (T6).
+
 | # | Familie | Was tippen | Was sehen oder hören | Ja/Nein |
 |---|---|---|---|---|
 | G1 | **Das Stück ist das Zuhause** (Zug 1 + Bühnen-Naht) | App frisch installieren oder Daten löschen, starten. Dann „Instrument" → „Piece" → „Instrument" wechseln, während der Puls läuft | Öffnet auf dem Stück, Bild als kleine Karte; der Bühnenwechsel beendet weder Puls noch Musik | [ ] |
