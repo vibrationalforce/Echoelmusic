@@ -4081,3 +4081,23 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Next E4 producers:** the Expanded/Collapsed ternaries in PhotoSeedCard, VideoSeedCard, WorkstationView:1593 (the
   keys now exist); EchoelStudioView sites.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-41: the photo card speaks German (b79c89411)
+
+- **Decision:** `PhotoSeedText.unreadable`/`reading` are computed keys; `colour` returns `String(localized: "Main colour:
+  hue ") + number + "°"`, `change` returns `name + " " + from` plus either `", unchanged"` or `" → " + to`, `changes` passes
+  `String(localized:)` field names. The card's percent lines are `String(localized: "Brightness") + " " + percent`
+  (the Visual panel's units reused), the heading holds two keys, the Apply hint's `??` fallback is a key, and the
+  disclosure value / Undo label / Undo hint are private typed-step helpers over `MediaLookUndo.spokenMedium` (new
+  extension, beside the card inside its `#if canImport(SwiftUI) && canImport(PhotosUI) && canImport(ImageIO)`).
+  "Undo photo look" → „Rückgängig: Foto-Look“ via the seams `"Undo "` → „Rückgängig: “ and `" look"` → „-Look“.
+  Catalog 1193 → 1216.
+- **Why:** `undo.medium` is compared (`undo.medium == MediaLookUndo.photoMedium`, pinned by TheMediaLookHasOneWriter)
+  AND was spoken; the spoken half needed its own home before it could be German. The video card reuses it (E4-42).
+- **Guard:** claim 11 E4-41 block (14 seams, 10 absence needles, 2 runtime counterweights, 31 units via
+  `assertGerman`; 201 → 205 XCTAssert). WORK PASS / HEAD FAIL (14 seams missing, 10 verbatim present, 23 units
+  missing — ONE finding). No guard re-anchored. ⚠️ Script lesson: the file ends in `#endif`, not a brace — the
+  end-of-file assertion stopped the atomic script before any write; the extension now goes before the `#endif`.
+- **Next E4 producers:** VideoSeedCard (VideoSeedText length/cuts/bars/sound, the card body, `spokenMedium`),
+  WorkstationView ternaries (On/Off, Warp, Play/Stop, Expanded/Collapsed, hints), MediaLookUndo.applyBlockedReason.
+- **Review:** 2026-10-31.
