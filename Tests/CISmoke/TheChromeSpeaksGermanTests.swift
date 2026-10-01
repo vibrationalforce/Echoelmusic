@@ -147,7 +147,10 @@
 // 27 units missing — ONE finding). E4-75 added the body-science sheet (BioScienceTopic title · summary · detail,
 // reachable through LearnLibrary.bodyScienceEntries; the one \u{201C} escape became the literal glyph so the key can be
 // a literal — TheScienceCardClaimsNoSweepTests pins sentences INSIDE the literals and survives) (parent: 15 units
-// missing — ONE finding). Claim 12
+// missing — ONE finding). E4-76 added the light-science sheet (LightScienceTopic title · summary · detail, reachable
+// through LearnLibrary.lightEntries; the `.scope` paragraph keeps its 39 % as a bare operand between two keys because
+// `%` cannot sit in a key — TheColourCopyNamesThePurpleLineTests claim 1 is re-anchored 1:1 on that seam) (parent: 16
+// units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2668,6 +2671,32 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "In a 2017 meta-analysis (Goessl, Curtiss & Hofmann, Psychological Medicine), HRV biofeedback was associated with reduced self-reported stress and anxiety across the controlled studies reviewed. That is what those studies measured — self-reported states — and Echoelmusic simply shows you the same live signal to observe. Echoelmusic makes no claim that using it produces these outcomes; nothing here is prescribed, and it is not a substitute for professional care. (Source: Goessl, Curtiss & Hofmann, 2017, Psychological Medicine 47:2578–2586.)",
                           "Echoelmusic measures and explains your heart rhythm and breath honestly so you can observe how they couple, and so your body can drive the music and visuals. It is for self-observation and creative expression. It is NOT a medical device, diagnoses nothing, treats no condition, makes no wellness or health claim, and is not a substitute for professional care. Chest-strap readings are most accurate; wrist and camera are estimates. If you are exploring breathing or heart rhythm for a health reason, talk to a qualified clinician."],
                          "body-science sheet")
+
+        // E4-76 — the light-science sheet: five titles, five gists, five paragraphs. The `.scope` paragraph carries the
+        // seam share "39 %" as a bare operand between two keys (String(localized:) reads a key as a format string, so
+        // `%` may not enter the catalog); TheColourCopyNamesThePurpleLineTests pins that seam.
+        let lightScience = try codeOnly("Sources/Echoelmusic/Studio/LightScienceInfo.swift")
+        for seam in ["case .circadianBlue:    return String(localized: \"Blue light & the body clock (~480 nm)\")",
+                     "case .scope:            return String(localized: \"Science for self-observation, not therapy.\")",
+                     "deep red meets deep violet. About \") + \"39 %\" + String(localized: \" of each octave lands on that seam, and there the colour is an honest red-to-violet mix"] {
+            XCTAssertTrue(lightScience.contains(seam), "LightScienceInfo lost the E4-76 seam `\(seam)`")
+        }
+        for verbatim in ["case .circadianBlue:    return \"Blue light & the body clock (~480 nm)\"",
+                         "deep violet. About 39 % of each octave"] {
+            XCTAssertFalse(lightScience.contains(verbatim), "LightScienceInfo spells a light-science line verbatim again: `\(verbatim)`")
+        }
+        try assertGerman(["Blue light & the body clock (~480 nm)", "Green light (~525 nm)", "Red & near-infrared (~620–850 nm)",
+                          "Colour & emotion", "What Echoelmusic’s light is — and is not",
+                          "The wavelength your inner clock reads most.", "Where daytime vision is most sensitive.",
+                          "The long-wave red end — and the band just past sight.", "Shared, learned colour associations.",
+                          "Science for self-observation, not therapy.",
+                          "Short-wavelength blue light, peaking around 480 nm, is the main signal that sets the human body clock. It is sensed by melanopsin in a special class of retinal cells (ipRGCs) wired straight to the brain’s master clock (the suprachiasmatic nucleus). Morning blue light tends to raise alertness; blue light late at night tends to delay the clock. Echoelmusic can map and explain this wavelength — it does not prescribe it. (Source: peer-reviewed circadian/blue-light reviews, PMC/NIH.)",
+                          "Green light around 525 nm sits near the peak of daytime (cone) vision, so it reads as very bright while only weakly driving the melanopsin clock signal compared with blue. That distinct response is why green is studied separately from blue in light science. Echoelmusic represents it accurately as a wavelength; it makes no health claim. (Source: peer-reviewed light-physiology reviews.)",
+                          "Red light (~620–700 nm) is the longest wavelength the human eye still sees; near-infrared (~700–850 nm) lies just beyond it — invisible to us, though many camera sensors still register it. As the low-frequency end of the visible spectrum, these long waves scatter less in air than short blue waves, which is part of why low sun and distant lamps read as red. Echoelmusic renders this warm end from your actual tuning through the CIE 1931 colour-matching functions and can drive it to Art-Net / sACN fixtures. A tone whose transposed wavelength runs past the deep-red edge does not go dark: the colour mapping closes over the CIE purple line and continues into violet, so every tone keeps a colour. The wavelength readout still shows the honest number. Honest colour for creative expression and self-observation — not a medical device, and it makes no health claim. (Source: standard optics and CIE 1931 colour science.)",
+                          "Across 130+ studies from 60+ countries, people share systematic colour–emotion associations: red with high arousal and energy, blue and green with calm and low arousal, bright colours with positive feeling. These are learned, perceptual associations after the brain processes the image — not direct effects on cells. Echoelmusic uses them as an honest aesthetic mapping for its visuals and light. (Source: global colour–emotion meta-analysis, 1895–2022.)",
+                          "Echoelmusic maps and explains light by real wavelength so your music and body can drive colour, visuals and DMX/Art-Net fixtures honestly. Tone colours use octave transposition — doubling a tone's frequency until it reaches the visible band; Echoelmusic computes it continuously from your actual tuning and renders the colour through the CIE 1931 colour-matching functions, closed over the CIE purple line where deep red meets deep violet. About ",
+                          " of each octave lands on that seam, and there the colour is an honest red-to-violet mix rather than one single wavelength — that is how the mapping gives every tone a colour instead of leaving a gap. The transposition is exact mathematics and an artistic convention: sound and light are different physical phenomena, so no health or cosmic effect is implied. This is for creative expression and self-observation. It is NOT light therapy, makes no medical or wellness claim, diagnoses nothing, and treats no condition. If you are exploring light for health reasons, talk to a qualified clinician."],
+                         "light-science sheet")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

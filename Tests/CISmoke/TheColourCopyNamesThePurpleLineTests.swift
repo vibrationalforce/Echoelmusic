@@ -74,7 +74,8 @@ final class TheColourCopyNamesThePurpleLineTests: XCTestCase {
             does, or change the mapping — do not shorten the caption back to the overstatement.
             """)
 
-        XCTAssertEqual(count("closed over the CIE purple line where deep red meets deep violet. About 39 % of each octave lands on that seam",
+        // E4-76: the share is a bare operand between two catalog keys (`%` cannot sit in a key); the sentence is the same.
+        XCTAssertEqual(count("closed over the CIE purple line where deep red meets deep violet. About \") + \"39 %\" + String(localized: \" of each octave lands on that seam",
                              in: science), 1, """
             LightScienceInfo `.scope` lost its purple-line sentence. This is the Learn entry \
             that explains the whole tone->light mapping; it is the home where the 39 % belongs, \

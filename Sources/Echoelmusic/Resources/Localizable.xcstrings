@@ -29178,6 +29178,262 @@
           }
         }
       }
+    },
+    "Blue light & the body clock (~480 nm)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blaues Licht & die innere Uhr (~480 nm)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blue light & the body clock (~480 nm)"
+          }
+        }
+      }
+    },
+    "Green light (~525 nm)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grünes Licht (~525 nm)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Green light (~525 nm)"
+          }
+        }
+      }
+    },
+    "Red & near-infrared (~620–850 nm)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rot & Nahinfrarot (~620–850 nm)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Red & near-infrared (~620–850 nm)"
+          }
+        }
+      }
+    },
+    "Colour & emotion" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbe & Emotion"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colour & emotion"
+          }
+        }
+      }
+    },
+    "What Echoelmusic’s light is — and is not" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was das Licht von Echoelmusic ist — und was nicht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What Echoelmusic’s light is — and is not"
+          }
+        }
+      }
+    },
+    "The wavelength your inner clock reads most." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Wellenlänge, die deine innere Uhr am stärksten liest."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The wavelength your inner clock reads most."
+          }
+        }
+      }
+    },
+    "Where daytime vision is most sensitive." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wo das Tagsehen am empfindlichsten ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Where daytime vision is most sensitive."
+          }
+        }
+      }
+    },
+    "The long-wave red end — and the band just past sight." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das langwellige rote Ende — und das Band knapp jenseits des Sehens."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The long-wave red end — and the band just past sight."
+          }
+        }
+      }
+    },
+    "Shared, learned colour associations." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geteilte, erlernte Farbassoziationen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shared, learned colour associations."
+          }
+        }
+      }
+    },
+    "Science for self-observation, not therapy." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wissenschaft zur Selbstbeobachtung, keine Therapie."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Science for self-observation, not therapy."
+          }
+        }
+      }
+    },
+    "Short-wavelength blue light, peaking around 480 nm, is the main signal that sets the human body clock. It is sensed by melanopsin in a special class of retinal cells (ipRGCs) wired straight to the brain’s master clock (the suprachiasmatic nucleus). Morning blue light tends to raise alertness; blue light late at night tends to delay the clock. Echoelmusic can map and explain this wavelength — it does not prescribe it. (Source: peer-reviewed circadian/blue-light reviews, PMC/NIH.)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurzwelliges blaues Licht mit Maximum um 480 nm ist das Hauptsignal, das die innere Uhr des Menschen stellt. Es wird von Melanopsin in einer besonderen Klasse von Netzhautzellen (ipRGCs) erfasst, die direkt mit der Hauptuhr des Gehirns (dem Nucleus suprachiasmaticus) verdrahtet sind. Blaues Licht am Morgen erhöht tendenziell die Wachheit; blaues Licht spät in der Nacht verzögert tendenziell die Uhr. Echoelmusic kann diese Wellenlänge abbilden und erklären — es verschreibt sie nicht. (Quelle: begutachtete Übersichtsarbeiten zu zirkadianem/blauem Licht, PMC/NIH.)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Short-wavelength blue light, peaking around 480 nm, is the main signal that sets the human body clock. It is sensed by melanopsin in a special class of retinal cells (ipRGCs) wired straight to the brain’s master clock (the suprachiasmatic nucleus). Morning blue light tends to raise alertness; blue light late at night tends to delay the clock. Echoelmusic can map and explain this wavelength — it does not prescribe it. (Source: peer-reviewed circadian/blue-light reviews, PMC/NIH.)"
+          }
+        }
+      }
+    },
+    "Green light around 525 nm sits near the peak of daytime (cone) vision, so it reads as very bright while only weakly driving the melanopsin clock signal compared with blue. That distinct response is why green is studied separately from blue in light science. Echoelmusic represents it accurately as a wavelength; it makes no health claim. (Source: peer-reviewed light-physiology reviews.)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grünes Licht um 525 nm liegt nahe dem Maximum des Tagsehens (Zapfen), wirkt daher sehr hell und treibt das Melanopsin-Uhrsignal im Vergleich zu Blau nur schwach an. Diese eigene Antwort ist der Grund, warum Grün in der Lichtforschung getrennt von Blau untersucht wird. Echoelmusic stellt es als Wellenlänge korrekt dar; es erhebt keinen Gesundheitsanspruch. (Quelle: begutachtete Übersichtsarbeiten zur Lichtphysiologie.)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Green light around 525 nm sits near the peak of daytime (cone) vision, so it reads as very bright while only weakly driving the melanopsin clock signal compared with blue. That distinct response is why green is studied separately from blue in light science. Echoelmusic represents it accurately as a wavelength; it makes no health claim. (Source: peer-reviewed light-physiology reviews.)"
+          }
+        }
+      }
+    },
+    "Red light (~620–700 nm) is the longest wavelength the human eye still sees; near-infrared (~700–850 nm) lies just beyond it — invisible to us, though many camera sensors still register it. As the low-frequency end of the visible spectrum, these long waves scatter less in air than short blue waves, which is part of why low sun and distant lamps read as red. Echoelmusic renders this warm end from your actual tuning through the CIE 1931 colour-matching functions and can drive it to Art-Net / sACN fixtures. A tone whose transposed wavelength runs past the deep-red edge does not go dark: the colour mapping closes over the CIE purple line and continues into violet, so every tone keeps a colour. The wavelength readout still shows the honest number. Honest colour for creative expression and self-observation — not a medical device, and it makes no health claim. (Source: standard optics and CIE 1931 colour science.)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rotes Licht (~620–700 nm) ist die längste Wellenlänge, die das menschliche Auge noch sieht; Nahinfrarot (~700–850 nm) liegt knapp dahinter — für uns unsichtbar, doch viele Kamerasensoren registrieren es noch. Als niederfrequentes Ende des sichtbaren Spektrums streuen diese langen Wellen in der Luft weniger als kurze blaue, was mit ein Grund ist, warum tiefe Sonne und ferne Lampen rot wirken. Echoelmusic rendert dieses warme Ende aus deiner tatsächlichen Stimmung über die CIE-1931-Farbabgleichfunktionen und kann es an Art-Net-/sACN-Geräte ausgeben. Ein Ton, dessen transponierte Wellenlänge über die Tiefrot-Kante hinausläuft, wird nicht dunkel: die Farbabbildung schließt sich über die CIE-Purpurlinie und läuft in Violett weiter, sodass jeder Ton eine Farbe behält. Die Wellenlängen-Anzeige zeigt weiterhin die ehrliche Zahl. Ehrliche Farbe für kreativen Ausdruck und Selbstbeobachtung — kein Medizinprodukt, und es erhebt keinen Gesundheitsanspruch. (Quelle: Standard-Optik und CIE-1931-Farbwissenschaft.)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Red light (~620–700 nm) is the longest wavelength the human eye still sees; near-infrared (~700–850 nm) lies just beyond it — invisible to us, though many camera sensors still register it. As the low-frequency end of the visible spectrum, these long waves scatter less in air than short blue waves, which is part of why low sun and distant lamps read as red. Echoelmusic renders this warm end from your actual tuning through the CIE 1931 colour-matching functions and can drive it to Art-Net / sACN fixtures. A tone whose transposed wavelength runs past the deep-red edge does not go dark: the colour mapping closes over the CIE purple line and continues into violet, so every tone keeps a colour. The wavelength readout still shows the honest number. Honest colour for creative expression and self-observation — not a medical device, and it makes no health claim. (Source: standard optics and CIE 1931 colour science.)"
+          }
+        }
+      }
+    },
+    "Across 130+ studies from 60+ countries, people share systematic colour–emotion associations: red with high arousal and energy, blue and green with calm and low arousal, bright colours with positive feeling. These are learned, perceptual associations after the brain processes the image — not direct effects on cells. Echoelmusic uses them as an honest aesthetic mapping for its visuals and light. (Source: global colour–emotion meta-analysis, 1895–2022.)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Über 130+ Studien aus 60+ Ländern teilen Menschen systematische Farbe–Emotion-Assoziationen: Rot mit hoher Erregung und Energie, Blau und Grün mit Ruhe und niedriger Erregung, helle Farben mit positivem Gefühl. Das sind erlernte, wahrnehmungsbezogene Assoziationen, nachdem das Gehirn das Bild verarbeitet hat — keine direkten Wirkungen auf Zellen. Echoelmusic nutzt sie als ehrliche ästhetische Abbildung für seine Visuals und sein Licht. (Quelle: globale Farbe–Emotion-Meta-Analyse, 1895–2022.)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Across 130+ studies from 60+ countries, people share systematic colour–emotion associations: red with high arousal and energy, blue and green with calm and low arousal, bright colours with positive feeling. These are learned, perceptual associations after the brain processes the image — not direct effects on cells. Echoelmusic uses them as an honest aesthetic mapping for its visuals and light. (Source: global colour–emotion meta-analysis, 1895–2022.)"
+          }
+        }
+      }
+    },
+    "Echoelmusic maps and explains light by real wavelength so your music and body can drive colour, visuals and DMX/Art-Net fixtures honestly. Tone colours use octave transposition — doubling a tone's frequency until it reaches the visible band; Echoelmusic computes it continuously from your actual tuning and renders the colour through the CIE 1931 colour-matching functions, closed over the CIE purple line where deep red meets deep violet. About " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echoelmusic bildet Licht nach echter Wellenlänge ab und erklärt es, damit deine Musik und dein Körper Farbe, Visuals und DMX-/Art-Net-Geräte ehrlich steuern können. Tonfarben nutzen Oktavtransposition — die Frequenz eines Tons wird verdoppelt, bis sie das sichtbare Band erreicht; Echoelmusic berechnet sie laufend aus deiner tatsächlichen Stimmung und rendert die Farbe über die CIE-1931-Farbabgleichfunktionen, geschlossen über die CIE-Purpurlinie, wo Tiefrot auf Tiefviolett trifft. Etwa "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echoelmusic maps and explains light by real wavelength so your music and body can drive colour, visuals and DMX/Art-Net fixtures honestly. Tone colours use octave transposition — doubling a tone's frequency until it reaches the visible band; Echoelmusic computes it continuously from your actual tuning and renders the colour through the CIE 1931 colour-matching functions, closed over the CIE purple line where deep red meets deep violet. About "
+          }
+        }
+      }
+    },
+    " of each octave lands on that seam, and there the colour is an honest red-to-violet mix rather than one single wavelength — that is how the mapping gives every tone a colour instead of leaving a gap. The transposition is exact mathematics and an artistic convention: sound and light are different physical phenomena, so no health or cosmic effect is implied. This is for creative expression and self-observation. It is NOT light therapy, makes no medical or wellness claim, diagnoses nothing, and treats no condition. If you are exploring light for health reasons, talk to a qualified clinician." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " jeder Oktave landet auf dieser Naht, und dort ist die Farbe eine ehrliche Rot-zu-Violett-Mischung statt einer einzelnen Wellenlänge — so gibt die Abbildung jedem Ton eine Farbe, statt eine Lücke zu lassen. Die Transposition ist exakte Mathematik und eine künstlerische Konvention: Klang und Licht sind verschiedene physikalische Phänomene, also wird keine gesundheitliche oder kosmische Wirkung unterstellt. Das ist für kreativen Ausdruck und Selbstbeobachtung. Es ist KEINE Lichttherapie, erhebt keinen medizinischen oder Wellness-Anspruch, diagnostiziert nichts und behandelt keine Erkrankung. Wenn du Licht aus gesundheitlichen Gründen erkundest, sprich mit einer qualifizierten Fachperson."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " of each octave lands on that seam, and there the colour is an honest red-to-violet mix rather than one single wavelength — that is how the mapping gives every tone a colour instead of leaving a gap. The transposition is exact mathematics and an artistic convention: sound and light are different physical phenomena, so no health or cosmic effect is implied. This is for creative expression and self-observation. It is NOT light therapy, makes no medical or wellness claim, diagnoses nothing, and treats no condition. If you are exploring light for health reasons, talk to a qualified clinician."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
