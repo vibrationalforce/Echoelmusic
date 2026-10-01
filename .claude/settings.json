@@ -135,8 +135,7 @@
     "ask": [
       "Edit(/project.yml)",
       "Edit(/Resources/iOS/Info.plist)",
-      "Edit(/.github/workflows/**)",
-      "Edit(/.deploy/release)"
+      "Edit(/.github/workflows/**)"
     ]
   },
   "hooks": {

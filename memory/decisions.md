@@ -4877,3 +4877,10 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** `TheEvolveSwitchStartsOffTests` (4 claims), transcribed WORK PASS / HEAD FAIL.
 - **Open:** device. Whether "off" sounds like a held phrase, and whether "on" is the old behaviour, is the founder's ear.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — .deploy/release is no longer founder-gated
+
+- **Decision:** founder, asked how to give the agent full control, chose "Nur Deploy frei". `.deploy/release` left `permissions.ask` and the hook's protected list. `.github/workflows/**`, `project.yml` and `Resources/iOS/Info.plist` stay gated (deny in auto mode).
+- **Why:** every deploy commit was denied in auto mode, so ready releases waited on the founder.
+- **Proof:** hook selftest 58/58; a live auto-mode probe returns pass for the release file and deny for Info.plist and project.yml.
+- **Review:** 2026-10-31.

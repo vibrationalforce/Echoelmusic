@@ -1,7 +1,9 @@
 # Schutz der founder-gesperrten Pfade
 
-Geschützt sind genau vier Pfade, keine weiteren:
-`.github/workflows/**` · `project.yml` · `Resources/iOS/Info.plist` · `.deploy/release`.
+Geschützt sind genau drei Pfade, keine weiteren:
+`.github/workflows/**` · `project.yml` · `Resources/iOS/Info.plist`.
+
+⭐ **`.deploy/release` ist seit 2026-10-01 FREI** (Founder, wörtlich: „Nur Deploy frei“). Der Agent hebt die Version und löst den TestFlight-Deploy selbst aus. Die drei übrigen Pfade bleiben gesperrt, weil ein Fehler dort den Build oder die App-Store-Prüfung bricht. Alles unten über „vier Pfade“ und die Tabellenzeilen mit `.deploy/release` beschreibt den Stand vom 2026-09-28 und bleibt als Messprotokoll stehen.
 
 > **Geltungsbereich aller Aussagen hier: Claude Code 2.1.283** (`claude --version`, gemessen
 > 2026-09-28), Modi `default` und `auto`, ausgelöst über `claude -p` im Wegwerf-Repo. Für eine

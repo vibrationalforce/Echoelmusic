@@ -32,7 +32,9 @@ run (README "Deny-Beleg"). There is deliberately no token, file or variable the 
 set to release itself. A headless `claude -p` has no one to answer, so "ask" blocks there.
 
 PROTECTED (founder-gated, CLAUDE.md "DO NOT" + .claude/rules/context.md §3):
-  .github/workflows/**   project.yml   Resources/iOS/Info.plist   .deploy/release
+  .github/workflows/**   project.yml   Resources/iOS/Info.plist
+  (.deploy/release was the fourth until the founder released it on 2026-10-01 — "Nur Deploy
+  frei": the agent bumps the version and ships TestFlight itself.)
 
 LIMITS: `--limits`. Self-test (run after any edit): `--selftest`.
 """
@@ -42,7 +44,7 @@ import re
 import subprocess
 import sys
 
-PROTECTED_FILES = ("project.yml", "Resources/iOS/Info.plist", ".deploy/release")
+PROTECTED_FILES = ("project.yml", "Resources/iOS/Info.plist")
 PROTECTED_DIRS = (".github/workflows/",)
 
 LIMITS = """\
@@ -54,7 +56,7 @@ LIMITS = """\
   `open('project.yml','w')` inside a string (editing this hook's own selftest).
 - Rule 2 fires at `git commit` only. `git merge`, `cherry-pick`, `revert` and `am` create
   commits without it, and `git push` is not inspected.
-- The hook and `.claude/settings.json` are NOT protected themselves (scope = the four
+- The hook and `.claude/settings.json` are NOT protected themselves (scope = the three
   paths). An agent could edit them; that shows up in the diff and in the commit.
 - Only Claude's own tool calls pass through here. CI, the founder's editor and the
   founder's own terminal are untouched.
@@ -377,60 +379,63 @@ def selftest():
         ("grep -n x project.yml 2>/dev/null | head", [], [], False, "stderr redirect is not a write"),
         ("python3 -c \"print(open('project.yml').read())\"", [], [], False, "python read"),
         ("python3 -c \"open('project.yml','w').write('x')\"", [], [], True, "python -c write (the measured gap)"),
-        ("python3 -c \"p='.deploy/release'; open(p,'w').write('x')\"", [], [], True, "python -c with ; inside quotes"),
+        ("python3 -c \"p='Resources/iOS/Info.plist'; open(p,'w').write('x')\"", [], [], True, "python -c with ; inside quotes"),
         ("python3 - <<'EOF'\nimport pathlib\np = pathlib.Path('.github/workflows/ci.yml')\np.write_text('x')\nEOF",
          [], [], True, "python heredoc body write"),
         ("python3 - <<'EOF'\np='CLAUDE.md'; s=open(p).read()\ns=s.replace('project.yml + Info.plist','x')\nopen(p,'w').write(s)\nEOF",
          [], [], False, "python edits ANOTHER file whose prose names project.yml"),
-        ("printf 'v2' > .deploy/release", [], [], True, "redirect"),
+        ("printf 'v2' > Resources/iOS/Info.plist", [], [], True, "redirect"),
         ("echo x >> ./.github/workflows/ci.yml", [], [], True, "append, ./ prefix, nested dir"),
         ("sed -i 's/a/b/' Resources/iOS/Info.plist", [], [], True, "sed -i"),
         ("cp notes.md Resources/iOS/Info.plist", [], [], True, "cp onto"),
-        ("cp .deploy/release /tmp/release.prev", [], [], False, "cp FROM a protected file is a read"),
+        ("cp Resources/iOS/Info.plist /tmp/release.prev", [], [], False, "cp FROM a protected file is a read"),
         # regression 2026-09-28: shutil.copy FROM a protected source is a read
-        ("python3 -c \"import shutil; shutil.copy('.deploy/release', '/tmp/r')\"", [], [], False, "shutil.copy from a protected source"),
-        ("python3 -c \"import shutil; p='.deploy/release'; shutil.copy2(p, 'out.txt')\"", [], [], False, "shutil.copy2 from a protected variable"),
-        ("python3 -c \"import shutil; shutil.copy('project.yml', '.deploy/release')\"", [], [], True, "shutil.copy protected -> protected: the target counts"),
-        ("python3 -c \"import shutil; p='project.yml'; q='.deploy/release'; shutil.copy(p, q)\"", [], [], True, "shutil.copy protected var -> protected var"),
-        ("python3 -c \"import shutil; shutil.copyfile(dst='.deploy/release', src='/tmp/r')\"", [], [], True, "shutil.copyfile dst= keyword FIRST (no comma before it)"),
-        ("python3 -c \"import shutil; shutil.copy('/tmp/r', '.deploy/release')\"", [], [], True, "shutil.copy onto a protected target"),
-        ("python3 -c \"import shutil; shutil.move('.deploy/release', '/tmp/r')\"", [], [], True, "shutil.move removes the protected source"),
-        ("python3 - <<'EOF'\nnote = open('.deploy/release').read().replace('*','')\nopen('out.txt','w').write(note)\nEOF",
+        ("python3 -c \"import shutil; shutil.copy('Resources/iOS/Info.plist', '/tmp/r')\"", [], [], False, "shutil.copy from a protected source"),
+        ("python3 -c \"import shutil; p='Resources/iOS/Info.plist'; shutil.copy2(p, 'out.txt')\"", [], [], False, "shutil.copy2 from a protected variable"),
+        ("python3 -c \"import shutil; shutil.copy('project.yml', 'Resources/iOS/Info.plist')\"", [], [], True, "shutil.copy protected -> protected: the target counts"),
+        ("python3 -c \"import shutil; p='project.yml'; q='Resources/iOS/Info.plist'; shutil.copy(p, q)\"", [], [], True, "shutil.copy protected var -> protected var"),
+        ("python3 -c \"import shutil; shutil.copyfile(dst='Resources/iOS/Info.plist', src='/tmp/r')\"", [], [], True, "shutil.copyfile dst= keyword FIRST (no comma before it)"),
+        ("python3 -c \"import shutil; shutil.copy('/tmp/r', 'Resources/iOS/Info.plist')\"", [], [], True, "shutil.copy onto a protected target"),
+        ("python3 -c \"import shutil; shutil.move('Resources/iOS/Info.plist', '/tmp/r')\"", [], [], True, "shutil.move removes the protected source"),
+        ("python3 - <<'EOF'\nnote = open('Resources/iOS/Info.plist').read().replace('*','')\nopen('out.txt','w').write(note)\nEOF",
          [], [], False, "python reads the protected file, writes another"),
-        ("python3 - <<'EOF'\np = '.deploy/release'\ns = open(p, encoding='utf-8').read()\nopen(p, 'w', encoding='utf-8').write(s)\nEOF",
+        ("python3 - <<'EOF'\np = 'Resources/iOS/Info.plist'\ns = open(p, encoding='utf-8').read()\nopen(p, 'w', encoding='utf-8').write(s)\nEOF",
          [], [], True, "python writes through a variable"),
         ("git checkout main -- project.yml", [], [], True, "git checkout path"),
         ("git restore --staged .github/workflows/ci.yml", [], [], False, "unstaging touches the index only"),
-        ("git reset -q -- .deploy/release", [], [], False, "reset of a path unstages"),
+        ("git reset -q -- Resources/iOS/Info.plist", [], [], False, "reset of a path unstages"),
         ("git restore --staged --worktree project.yml", [], [], True, "--worktree writes the file"),
         ("git restore project.yml", [], [], True, "restore without --staged writes the file"),
-        ("printf 'One touch of .deploy/release per deploy' > $SP/msg.txt", [], [], False, "prose in quotes names path and a verb"),
+        ("printf 'One touch of Resources/iOS/Info.plist per deploy' > $SP/msg.txt", [], [], False, "prose in quotes names path and a verb"),
         ("claude -p \"run python3 -c to write project.yml\" < /dev/null", [], [], False, "interpreter named only inside a prompt"),
         ("sed -i 's/a b/c d/' 'project.yml'", [], [], True, "quoted sed script, quoted path"),
         ("echo x > /REPO/project.yml", [], [], True, "absolute project path"),
-        ("cat > .deploy/release <<'EOF'\nbuild: v2\nEOF", [], [], True, "heredoc DATA into a protected file"),
+        ("cat > Resources/iOS/Info.plist <<'EOF'\nbuild: v2\nEOF", [], [], True, "heredoc DATA into a protected file"),
         ("bash <<'EOF'\nsed -i 's/a/b/' project.yml\nEOF", [], [], True, "shell heredoc body is code"),
         ("echo ok > notes.md", [], [], False, "unprotected write"),
         ("sed -i 's/a/b/' Sources/Echoelmusic/project.yml.swift", [], [], False, "look-alike name"),
         ("echo x > docs/project.yml", [], [], False, "same name in another dir"),
-        ("cat > Tests/CISmoke/XTests.swift <<'EOF'\n// reads project.yml and .deploy/release\nEOF",
+        ("cat > Tests/CISmoke/XTests.swift <<'EOF'\n// reads project.yml and Resources/iOS/Info.plist\nEOF",
          [], [], False, "a .swift FILE NAME is not the swift interpreter"),
-        ("cat > scratchpads/NOTE.md <<'EOF'\nwe rm .deploy/release and cp project.yml\nEOF",
+        ("cat > scratchpads/NOTE.md <<'EOF'\nwe rm Resources/iOS/Info.plist and cp project.yml\nEOF",
          [], [], False, "heredoc DATA into another file"),
         ("git commit -m msg", ["Sources/A.swift"], [], False, "commit without protected"),
-        ("git -c user.name=C commit -q -F - <<'EOF'\nfix: rm .deploy/release > project.yml\nEOF",
+        ("git -c user.name=C commit -q -F - <<'EOF'\nfix: rm Resources/iOS/Info.plist > project.yml\nEOF",
          ["Sources/A.swift"], [], False, "commit message prose is data"),
         ("git -c user.name=C commit -q -F - <<'EOF'\nmsg\nEOF", ["project.yml"], [], True, "commit carries project.yml"),
-        ("git commit -am x", [], [".deploy/release"], True, "commit -a picks up worktree"),
-        ("git commit -m x", [], [".deploy/release"], False, "unstaged, no -a: not carried"),
+        ("git commit -am x", [], ["Resources/iOS/Info.plist"], True, "commit -a picks up worktree"),
+        ("git commit -m x", [], ["Resources/iOS/Info.plist"], False, "unstaged, no -a: not carried"),
         # regression 2026-09-28: staging and commit in ONE command (index read before it runs)
         ("git add project.yml && git commit -m x", [], ["project.yml"], True, "add + commit in one command"),
-        ("git add -A && git commit -q -m 'touch project.yml'", [], [".deploy/release"], True, "add -A + commit"),
+        ("git add -A && git commit -q -m 'touch project.yml'", [], ["Resources/iOS/Info.plist"], True, "add -A + commit"),
         ("git add .github && git commit -m x", [], [".github/workflows/ci.yml"], True, "add a covering dir + commit"),
         ("git commit -m x -- project.yml", [], ["project.yml"], True, "pathspec commit stages the path"),
         ("git add notes.md && git commit -m 'edit project.yml later'", [], ["notes.md", "project.yml"], False,
          "add + commit of an unprotected file; message prose is no pathspec"),
         ("f=$(echo cHJvamVjdC55bWw= | base64 -d); echo x > $f", [], [], False, "encoded path: rule 1 blind (limit)"),
+        # founder 2026-10-01 "Nur Deploy frei": the release file is no longer protected
+        ("printf 'v2' > .deploy/release", [], [], False, "released 2026-10-01: redirect into the release file"),
+        ("git commit -am x", [], [".deploy/release"], False, "released 2026-10-01: commit carries the release file"),
     ]
     os.environ["CLAUDE_PROJECT_DIR"] = "/REPO"
     bad = 0
