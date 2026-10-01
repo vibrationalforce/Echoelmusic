@@ -4449,7 +4449,9 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   runtime guards compare the assembled English under the test locale.
 - **Guard:** claim 11 E4-65 block (11 seam needles, 7 absence needles, 31 units; 303 → 309 XCTAssert). WORK PASS /
   HEAD FAIL (11/7/31 — ONE finding).
-- **Finding (not fixed here):** `MediaBrowserView.relinkRefusal(songPlaying:)` spells "Stop the piece to relink a file."
-  a second time (TheMediaLibraryIsBrowsedAndPlacedTests:620 pins it at runtime) — a #416 twin of
-  `MediaRelink.userMessage(.songPlaying)`; key it in the MediaBrowserView slice.
+- ⛔ **Finding RETRACTED (same hour, measured):** `MediaBrowserView.relinkRefusal(songPlaying:)` is NOT a second
+  spelling — it returns `MediaRelink.Refusal.songPlaying.userMessage` (one definition, #416 honoured). The first
+  version of this entry inferred a twin from a guard's runtime expectation without reading the three-line function;
+  the guard pins the ONE sentence through the delegate. MediaBrowserView's own English producer is the note
+  "A relink is still checking its file." (E4-66).
 - **Review:** 2026-10-31.
