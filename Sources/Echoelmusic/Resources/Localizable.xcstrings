@@ -28938,6 +28938,246 @@
           }
         }
       }
+    },
+    "Resonance breathing (~6 breaths/min)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resonanzatmung (~6 Atemzüge/min)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resonance breathing (~6 breaths/min)"
+          }
+        }
+      }
+    },
+    "Heart-rate variability & coherence" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzratenvariabilität & Kohärenz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart-rate variability & coherence"
+          }
+        }
+      }
+    },
+    "The baroreflex loop" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Baroreflex-Schleife"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The baroreflex loop"
+          }
+        }
+      }
+    },
+    "What the research measures" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was die Forschung misst"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What the research measures"
+          }
+        }
+      }
+    },
+    "What this is — and is not" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was das ist — und was nicht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What this is — and is not"
+          }
+        }
+      }
+    },
+    "The pace where breath and heartbeat couple most." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Tempo, bei dem Atem und Herzschlag am stärksten koppeln."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The pace where breath and heartbeat couple most."
+          }
+        }
+      }
+    },
+    "A smooth, single-peak heart rhythm you can watch." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein glatter Herzrhythmus mit einem Gipfel, dem du zusehen kannst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A smooth, single-peak heart rhythm you can watch."
+          }
+        }
+      }
+    },
+    "The blood-pressure loop that links the two." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Blutdruck-Schleife, die beide verbindet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The blood-pressure loop that links the two."
+          }
+        }
+      }
+    },
+    "What controlled studies actually reported." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was kontrollierte Studien tatsächlich berichtet haben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What controlled studies actually reported."
+          }
+        }
+      }
+    },
+    "Science for self-observation, not diagnosis." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wissenschaft zur Selbstbeobachtung, keine Diagnose."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Science for self-observation, not diagnosis."
+          }
+        }
+      }
+    },
+    "Breathing at roughly six breaths per minute (about 0.1 Hz) is the pace at which breathing-driven and blood-pressure-driven influences on heart rate line up, so heart-rate swings grow largest. The exact best pace is individual — usually between 4.5 and 7 breaths per minute — Echoelmusic paces one steady rate near the middle of that range and shows your HRV and coherence live while you follow it, so you can watch how your own body responds. It does not run the clinical sweep that finds your personal resonance frequency for you (that is the Lehrer & Vaschillo protocol). It paces and measures; it prescribes nothing. (Source: peer-reviewed HRV-biofeedback literature, Lehrer & Vaschillo.)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atmen mit etwa sechs Atemzügen pro Minute (ungefähr 0,1 Hz) ist das Tempo, bei dem atem- und blutdruckgetriebene Einflüsse auf die Herzfrequenz in eine Linie fallen, sodass die Herzfrequenz-Schwingungen am größten werden. Das genaue beste Tempo ist individuell — meist zwischen 4,5 und 7 Atemzügen pro Minute — Echoelmusic gibt eine gleichmäßige Rate nahe der Mitte dieses Bereichs vor und zeigt deine HRV und Kohärenz live, während du ihr folgst, damit du beobachten kannst, wie dein eigener Körper reagiert. Es führt nicht den klinischen Durchlauf aus, der deine persönliche Resonanzfrequenz für dich findet (das ist das Lehrer-&-Vaschillo-Protokoll). Es gibt vor und misst; es verschreibt nichts. (Quelle: begutachtete HRV-Biofeedback-Literatur, Lehrer & Vaschillo.)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breathing at roughly six breaths per minute (about 0.1 Hz) is the pace at which breathing-driven and blood-pressure-driven influences on heart rate line up, so heart-rate swings grow largest. The exact best pace is individual — usually between 4.5 and 7 breaths per minute — Echoelmusic paces one steady rate near the middle of that range and shows your HRV and coherence live while you follow it, so you can watch how your own body responds. It does not run the clinical sweep that finds your personal resonance frequency for you (that is the Lehrer & Vaschillo protocol). It paces and measures; it prescribes nothing. (Source: peer-reviewed HRV-biofeedback literature, Lehrer & Vaschillo.)"
+          }
+        }
+      }
+    },
+    "Heart-rate variability (HRV) is the beat-to-beat change in your heart rate; more variation at rest generally reflects an adaptable system. “Coherence” here is a specific, measurable thing: a smooth, single-peak rhythm in the heart rate near 0.1 Hz. Echoelmusic computes it in the frequency domain (a Lomb-Scargle periodogram for the unevenly-timed heartbeats, with Welch averaging) — a standard signal-processing approach, not a score of worth. It is a number to observe, nothing more. (Source: peer-reviewed HRV signal-processing methods.)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzratenvariabilität (HRV) ist die Schlag-zu-Schlag-Änderung deiner Herzfrequenz; mehr Variation in Ruhe spiegelt in der Regel ein anpassungsfähiges System. „Kohärenz“ meint hier etwas Bestimmtes, Messbares: einen glatten Herzfrequenz-Rhythmus mit einem Gipfel nahe 0,1 Hz. Echoelmusic berechnet sie im Frequenzbereich (ein Lomb-Scargle-Periodogramm für die ungleich getakteten Herzschläge, mit Welch-Mittelung) — ein übliches Verfahren der Signalverarbeitung, keine Wertnote. Sie ist eine Zahl zum Beobachten, mehr nicht. (Quelle: begutachtete Methoden der HRV-Signalverarbeitung.)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart-rate variability (HRV) is the beat-to-beat change in your heart rate; more variation at rest generally reflects an adaptable system. “Coherence” here is a specific, measurable thing: a smooth, single-peak rhythm in the heart rate near 0.1 Hz. Echoelmusic computes it in the frequency domain (a Lomb-Scargle periodogram for the unevenly-timed heartbeats, with Welch averaging) — a standard signal-processing approach, not a score of worth. It is a number to observe, nothing more. (Source: peer-reviewed HRV signal-processing methods.)"
+          }
+        }
+      }
+    },
+    "The baroreflex is the body's fast blood-pressure feedback loop: sensors in the arteries adjust heart rate to keep pressure steady. Breathing near your resonance pace pushes this loop into a large, regular heart-rate swing in step with each breath — that is the physiology the whole biofeedback loop rests on. Echoelmusic lets you watch it happen. (Source: cardiovascular-physiology reviews.)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Baroreflex ist die schnelle Blutdruck-Regelschleife des Körpers: Sensoren in den Arterien passen die Herzfrequenz an, um den Druck stabil zu halten. Atmen nahe deinem Resonanztempo treibt diese Schleife in eine große, regelmäßige Herzfrequenz-Schwingung im Takt jedes Atemzugs — das ist die Physiologie, auf der die ganze Biofeedback-Schleife ruht. Echoelmusic lässt dich dabei zusehen. (Quelle: Übersichtsarbeiten zur Herz-Kreislauf-Physiologie.)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The baroreflex is the body's fast blood-pressure feedback loop: sensors in the arteries adjust heart rate to keep pressure steady. Breathing near your resonance pace pushes this loop into a large, regular heart-rate swing in step with each breath — that is the physiology the whole biofeedback loop rests on. Echoelmusic lets you watch it happen. (Source: cardiovascular-physiology reviews.)"
+          }
+        }
+      }
+    },
+    "In a 2017 meta-analysis (Goessl, Curtiss & Hofmann, Psychological Medicine), HRV biofeedback was associated with reduced self-reported stress and anxiety across the controlled studies reviewed. That is what those studies measured — self-reported states — and Echoelmusic simply shows you the same live signal to observe. Echoelmusic makes no claim that using it produces these outcomes; nothing here is prescribed, and it is not a substitute for professional care. (Source: Goessl, Curtiss & Hofmann, 2017, Psychological Medicine 47:2578–2586.)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In einer Meta-Analyse von 2017 (Goessl, Curtiss & Hofmann, Psychological Medicine) war HRV-Biofeedback über die ausgewerteten kontrollierten Studien hinweg mit geringerem selbstberichtetem Stress und geringerer Ängstlichkeit verbunden. Das ist, was diese Studien gemessen haben — selbstberichtete Zustände — und Echoelmusic zeigt dir schlicht dasselbe Live-Signal zum Beobachten. Echoelmusic behauptet nicht, dass seine Nutzung diese Ergebnisse bewirkt; nichts hier wird verschrieben, und es ersetzt keine professionelle Versorgung. (Quelle: Goessl, Curtiss & Hofmann, 2017, Psychological Medicine 47:2578–2586.)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In a 2017 meta-analysis (Goessl, Curtiss & Hofmann, Psychological Medicine), HRV biofeedback was associated with reduced self-reported stress and anxiety across the controlled studies reviewed. That is what those studies measured — self-reported states — and Echoelmusic simply shows you the same live signal to observe. Echoelmusic makes no claim that using it produces these outcomes; nothing here is prescribed, and it is not a substitute for professional care. (Source: Goessl, Curtiss & Hofmann, 2017, Psychological Medicine 47:2578–2586.)"
+          }
+        }
+      }
+    },
+    "Echoelmusic measures and explains your heart rhythm and breath honestly so you can observe how they couple, and so your body can drive the music and visuals. It is for self-observation and creative expression. It is NOT a medical device, diagnoses nothing, treats no condition, makes no wellness or health claim, and is not a substitute for professional care. Chest-strap readings are most accurate; wrist and camera are estimates. If you are exploring breathing or heart rhythm for a health reason, talk to a qualified clinician." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echoelmusic misst und erklärt deinen Herzrhythmus und Atem ehrlich, damit du beobachten kannst, wie sie koppeln, und damit dein Körper Musik und Bild steuern kann. Es dient der Selbstbeobachtung und dem kreativen Ausdruck. Es ist KEIN Medizinprodukt, diagnostiziert nichts, behandelt keine Erkrankung, erhebt keinen Wellness- oder Gesundheitsanspruch und ersetzt keine professionelle Versorgung. Brustgurt-Werte sind am genauesten; Handgelenk und Kamera sind Schätzungen. Wenn du Atmung oder Herzrhythmus aus einem gesundheitlichen Grund erkundest, sprich mit einer qualifizierten Fachperson."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echoelmusic measures and explains your heart rhythm and breath honestly so you can observe how they couple, and so your body can drive the music and visuals. It is for self-observation and creative expression. It is NOT a medical device, diagnoses nothing, treats no condition, makes no wellness or health claim, and is not a substitute for professional care. Chest-strap readings are most accurate; wrist and camera are estimates. If you are exploring breathing or heart rhythm for a health reason, talk to a qualified clinician."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

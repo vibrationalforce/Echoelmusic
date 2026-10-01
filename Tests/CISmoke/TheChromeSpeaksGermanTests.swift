@@ -144,7 +144,10 @@
 // and push notes, and the mood variation caption (its count stays `MoodProfile.variationSpread.count`, projected between
 // keys) (parent: 25 units missing — ONE finding). E4-74 added the music-theory primer (MusicTheoryTopic title ·
 // summary · detail, reachable through LearnLibrary.musicEntries; the footer stays bare — it has no reader) (parent:
-// 27 units missing — ONE finding). Claim 12
+// 27 units missing — ONE finding). E4-75 added the body-science sheet (BioScienceTopic title · summary · detail,
+// reachable through LearnLibrary.bodyScienceEntries; the one \u{201C} escape became the literal glyph so the key can be
+// a literal — TheScienceCardClaimsNoSweepTests pins sentences INSIDE the literals and survives) (parent: 15 units
+// missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2640,6 +2643,31 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Straight rhythms place notes evenly; swing pushes every other note slightly late, giving jazz, hip-hop and house their groove. Echoelmusic's swing amount is adjustable per piece.",
                           "The loud-and-soft shape of a performance. Accents on strong beats and gentle swells make a line feel human rather than mechanical — Echoelmusic adds these with its phrasing and humanize controls."],
                          "music-theory primer")
+
+        // E4-75 — the body-science sheet: five titles, five gists, five paragraphs. LearnLibrary projects them into
+        // the Learn sheet's body-science section. The citation sentences TheScienceCardClaimsNoSweepTests pins live
+        // INSIDE the literals and are untouched; only the escape `\u{201C}` became its glyph, so the key is a literal.
+        let bodyScience = try codeOnly("Sources/Echoelmusic/Studio/BioScienceInfo.swift")
+        for seam in ["case .resonanceFrequency: return String(localized: \"Resonance breathing (~6 breaths/min)\")",
+                     "case .scope:              return String(localized: \"Science for self-observation, not diagnosis.\")",
+                     "return String(localized: \"Heart-rate variability (HRV) is the beat-to-beat change in your heart rate; more variation at rest generally reflects an adaptable system. “Coherence” here is a specific, measurable thing: a smooth, single-peak rhythm in the heart rate near 0.1 Hz. Echoelmusic computes it in the frequency domain (a Lomb-Scargle periodogram for the unevenly-timed heartbeats, with Welch averaging) — a standard signal-processing approach, not a score of worth. It is a number to observe, nothing more. (Source: peer-reviewed HRV signal-processing methods.)\")"] {
+            XCTAssertTrue(bodyScience.contains(seam), "BioScienceInfo lost the E4-75 seam `\(seam)`")
+        }
+        for verbatim in ["case .resonanceFrequency: return \"Resonance breathing (~6 breaths/min)\"",
+                         "\\u{201C}Coherence\\u{201D} here"] {
+            XCTAssertFalse(bodyScience.contains(verbatim), "BioScienceInfo spells a body-science line verbatim again: `\(verbatim)`")
+        }
+        try assertGerman(["Resonance breathing (~6 breaths/min)", "Heart-rate variability & coherence", "The baroreflex loop",
+                          "What the research measures", "What this is — and is not",
+                          "The pace where breath and heartbeat couple most.", "A smooth, single-peak heart rhythm you can watch.",
+                          "The blood-pressure loop that links the two.", "What controlled studies actually reported.",
+                          "Science for self-observation, not diagnosis.",
+                          "Breathing at roughly six breaths per minute (about 0.1 Hz) is the pace at which breathing-driven and blood-pressure-driven influences on heart rate line up, so heart-rate swings grow largest. The exact best pace is individual — usually between 4.5 and 7 breaths per minute — Echoelmusic paces one steady rate near the middle of that range and shows your HRV and coherence live while you follow it, so you can watch how your own body responds. It does not run the clinical sweep that finds your personal resonance frequency for you (that is the Lehrer & Vaschillo protocol). It paces and measures; it prescribes nothing. (Source: peer-reviewed HRV-biofeedback literature, Lehrer & Vaschillo.)",
+                          "Heart-rate variability (HRV) is the beat-to-beat change in your heart rate; more variation at rest generally reflects an adaptable system. “Coherence” here is a specific, measurable thing: a smooth, single-peak rhythm in the heart rate near 0.1 Hz. Echoelmusic computes it in the frequency domain (a Lomb-Scargle periodogram for the unevenly-timed heartbeats, with Welch averaging) — a standard signal-processing approach, not a score of worth. It is a number to observe, nothing more. (Source: peer-reviewed HRV signal-processing methods.)",
+                          "The baroreflex is the body's fast blood-pressure feedback loop: sensors in the arteries adjust heart rate to keep pressure steady. Breathing near your resonance pace pushes this loop into a large, regular heart-rate swing in step with each breath — that is the physiology the whole biofeedback loop rests on. Echoelmusic lets you watch it happen. (Source: cardiovascular-physiology reviews.)",
+                          "In a 2017 meta-analysis (Goessl, Curtiss & Hofmann, Psychological Medicine), HRV biofeedback was associated with reduced self-reported stress and anxiety across the controlled studies reviewed. That is what those studies measured — self-reported states — and Echoelmusic simply shows you the same live signal to observe. Echoelmusic makes no claim that using it produces these outcomes; nothing here is prescribed, and it is not a substitute for professional care. (Source: Goessl, Curtiss & Hofmann, 2017, Psychological Medicine 47:2578–2586.)",
+                          "Echoelmusic measures and explains your heart rhythm and breath honestly so you can observe how they couple, and so your body can drive the music and visuals. It is for self-observation and creative expression. It is NOT a medical device, diagnoses nothing, treats no condition, makes no wellness or health claim, and is not a substitute for professional care. Chest-strap readings are most accurate; wrist and camera are estimates. If you are exploring breathing or heart rhythm for a health reason, talk to a qualified clinician."],
+                         "body-science sheet")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
