@@ -117,7 +117,9 @@
 // row's verdicts (RenderGapDetector screenLine / evidenceSuffix / screenCaption / screenText) and the detected-key
 // sentence (AudioKeyAnalysis.summarise with TuningDetector.keyName) (parent: 21 units missing — ONE finding). E4-60 added
 // the detected-tempo sentence (AudioTempoAnalysis.summarise) (parent: 4 units missing — ONE finding). E4-61 added the
-// Workstation's transport caption, track-removal note and mix-meter spoken text (parent: 14 units missing — ONE finding). Claim 12
+// Workstation's transport caption, track-removal note and mix-meter spoken text (parent: 14 units missing — ONE finding). E4-62
+// added the Record tile's action label, the busy status, the text-size caption, the keep-last copy and the bar-length
+// label they all carry (`LoopBarLength.label`) (parent: 15 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2149,6 +2151,41 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "The Echoel instrument plays this track, so it stays.",
                           "This track holds a recorded bio curve, so it stays.",
                           "Left ", " percent, right ", " percent"], "transport caption, removal note and mix-meter spoken text")
+
+        // E4-62 — the instrument plate's remaining producers: `exportLabel` (the Record tile's action text, read by
+        // TheBarCountHasACarrierTests as source needles that survive the wrapping), `busyStatusLabel`, the text-size
+        // caption (TheTextSizeHasButtonsTests keeps its two needles) and `KeepLastCopy.title` — plus `LoopBarLength
+        // .label`, the "8 bars" every one of them carried in English. Numbers and labels are seamed between keys.
+        let studioExport = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for seam in ["return String(localized: \"Record \") + loopBars.label + String(localized: \" → send\")",
+                     "case .rendering: return String(localized: \"Writing .wav…\")",
+                     "let level: String = String(localized: \"Level \") + \"\\(step + 1)\" + String(localized: \" of \") + \"\\(StudioZoom.ladder.count)\"",
+                     "return level + String(localized: \". Pinching with two fingers moves it too. \") + scope",
+                     "let played: String = String(localized: \"Keep last \") + bars.label + String(localized: \" (just played)\")",
+                     "return String(localized: \"Keep last: \") + keepable.label + String(localized: \" or fewer at this tempo\")"] {
+            XCTAssertTrue(studioExport.contains(seam), "EchoelStudioView lost the E4-62 seam `\(seam)`")
+        }
+        for verbatim in ["return \"Record \\(loopBars.label) → send\"",
+                         "return \"Level \\(step + 1) of \\(StudioZoom.ladder.count). Pinching with two fingers moves it too. \" + scope",
+                         "return hasComposed ? \"Keep last \\(bars.label) (just played)\"",
+                         "return \"Keep last: \\(keepable.label) or fewer at this tempo\""] {
+            XCTAssertFalse(studioExport.contains(verbatim), "EchoelStudioView interpolates a plate label again: `\(verbatim)`")
+        }
+        let loopBarWord = try codeOnly("Sources/Echoelmusic/Sequencer/LoopCutter.swift")
+        for seam in ["let several: String = \"\\(rawValue) \" + String(localized: \"bars\")",
+                     "return rawValue == 1 ? String(localized: \"1 bar\") : several"] {
+            XCTAssertTrue(loopBarWord.contains(seam), "LoopBarLength.label lost the E4-62 seam `\(seam)`")
+        }
+        for verbatim in ["rawValue == 1 ? \"1 bar\" : \"\\(rawValue) bars\""] {
+            XCTAssertFalse(loopBarWord.contains(verbatim), "LoopBarLength.label interpolates the bar word again: `\(verbatim)`")
+        }
+        try assertGerman(["Stop and discard this recording", "Recording loop…", "Writing .wav…", "Record ", " → send",
+                          "Sizes the piece and the instrument; the head follows the system size.",
+                          "Default — follows the system text size. ", "Level ", " of ",
+                          ". Pinching with two fingers moves it too. ",
+                          "Keep last ", " (just played)", " — once something has played",
+                          "Keep last: unavailable — use the Record tile instead", "Keep last: ", " or fewer at this tempo",
+                          "1 bar", "bars"], "plate labels and the bar-length label")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

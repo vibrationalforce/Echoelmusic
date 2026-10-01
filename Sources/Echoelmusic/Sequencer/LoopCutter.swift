@@ -31,7 +31,11 @@ import Foundation
 public enum LoopBarLength: Int, CaseIterable, Identifiable, Sendable {
     case one = 1, two = 2, four = 4, eight = 8, sixteen = 16, thirtyTwo = 32, sixtyFour = 64
     public var id: Int { rawValue }
-    public var label: String { rawValue == 1 ? "1 bar" : "\(rawValue) bars" }
+    public var label: String {
+        // E4-62: the bar word is the catalog's ("1 bar" / "bars"); the count stays a digit.
+        let several: String = "\(rawValue) " + String(localized: "bars")
+        return rawValue == 1 ? String(localized: "1 bar") : several
+    }
     /// Compact label for a segmented control (Takt count).
     public var shortLabel: String { "\(rawValue)" }
 }

@@ -9805,10 +9805,10 @@ struct EchoelStudioView: View {
         // While the take runs, the button IS the abort — so it must say so. "Recording
         // loop…" read as a progress notice, which is exactly why nobody would think to
         // tap it after a fumbled bar.
-        case .capturing: return exporter.isCancellable ? "Stop and discard this recording"
-                                                       : "Recording loop…"
-        case .rendering: return "Writing .wav…"
-        default:         return "Record \(loopBars.label) → send"
+        case .capturing: return exporter.isCancellable ? String(localized: "Stop and discard this recording")
+                                                       : String(localized: "Recording loop…")
+        case .rendering: return String(localized: "Writing .wav…")
+        default:         return String(localized: "Record ") + loopBars.label + String(localized: " → send")
         }
     }
     /// The tile's visible word (rule 3) — one word of the matching `exportLabel` state, so the
@@ -9830,8 +9830,8 @@ struct EchoelStudioView: View {
     /// perform ("Stop and discard this take" on the keep-last button).
     private var busyStatusLabel: String {
         switch exporter.status {
-        case .capturing: return "Recording loop…"
-        case .rendering: return "Writing .wav…"
+        case .capturing: return String(localized: "Recording loop…")
+        case .rendering: return String(localized: "Writing .wav…")
         default:         return ""
         }
     }
@@ -12845,11 +12845,13 @@ private struct TextSizeRow: View {
     }
 
     private var caption: String {
-        let scope = "Sizes the piece and the instrument; the head follows the system size."
+        let scope = String(localized: "Sizes the piece and the instrument; the head follows the system size.")
         if step < 0 {
-            return "Default — follows the system text size. " + scope
+            return String(localized: "Default — follows the system text size. ") + scope
         }
-        return "Level \(step + 1) of \(StudioZoom.ladder.count). Pinching with two fingers moves it too. " + scope
+        // E4-62: the rung and the ladder count are seamed between catalog keys (≤ 4 operands per step).
+        let level: String = String(localized: "Level ") + "\(step + 1)" + String(localized: " of ") + "\(StudioZoom.ladder.count)"
+        return level + String(localized: ". Pinching with two fingers moves it too. ") + scope
     }
 
     private func sizeButton(_ word: String, systemImage: String, spoken: String, hint: String,
@@ -13058,8 +13060,10 @@ private enum KeepLastCopy {
             // as a claim); #482 rendered the same sentence as free-floating prose and uncovered
             // it. The tempo refusal below is checked FIRST on purpose: it is true whether or
             // not anything has played, and it is the more useful half.
-            return hasComposed ? "Keep last \(bars.label) (just played)"
-                               : "Keep last \(bars.label) — once something has played"
+            // E4-62: the bar label sits between two catalog keys; "Keep last" stays the tile's word (rule 3).
+            let played: String = String(localized: "Keep last ") + bars.label + String(localized: " (just played)")
+            let waiting: String = String(localized: "Keep last ") + bars.label + String(localized: " — once something has played")
+            return hasComposed ? played : waiting
         }
         // Name a length the PICKER ACTUALLY OFFERS. The raw ring capacity (14 bars at
         // 120 BPM) is not a `LoopBarLength` case, so naming it would send the user hunting
@@ -13071,9 +13075,9 @@ private enum KeepLastCopy {
         // that redirects to a control by its old POSITION is the class this file keeps
         // retracting, so it names the control instead of pointing at a place.
         guard let keepable = LoopExporter.longestKeepable(bpm: bpm) else {
-            return "Keep last: unavailable — use the Record tile instead"
+            return String(localized: "Keep last: unavailable — use the Record tile instead")
         }
-        return "Keep last: \(keepable.label) or fewer at this tempo"
+        return String(localized: "Keep last: ") + keepable.label + String(localized: " or fewer at this tempo")
     }
 }
 

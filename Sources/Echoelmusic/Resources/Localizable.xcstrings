@@ -25210,6 +25210,246 @@
           }
         }
       }
+    },
+    "Stop and discard this recording" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufnahme stoppen und verwerfen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop and discard this recording"
+          }
+        }
+      }
+    },
+    "Recording loop…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loop wird aufgenommen…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recording loop…"
+          }
+        }
+      }
+    },
+    "Writing .wav…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ".wav wird geschrieben…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Writing .wav…"
+          }
+        }
+      }
+    },
+    "Record " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufnehmen: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Record "
+          }
+        }
+      }
+    },
+    " → send" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " → senden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " → send"
+          }
+        }
+      }
+    },
+    "Sizes the piece and the instrument; the head follows the system size." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bemisst das Stück und das Instrument; der Kopf folgt der Systemgröße."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sizes the piece and the instrument; the head follows the system size."
+          }
+        }
+      }
+    },
+    "Default — follows the system text size. " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard — folgt der System-Textgröße. "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default — follows the system text size. "
+          }
+        }
+      }
+    },
+    "Level " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stufe "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Level "
+          }
+        }
+      }
+    },
+    ". Pinching with two fingers moves it too. " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ". Zwei-Finger-Zoom bewegt sie ebenfalls. "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ". Pinching with two fingers moves it too. "
+          }
+        }
+      }
+    },
+    "Keep last " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letztes behalten: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep last "
+          }
+        }
+      }
+    },
+    " (just played)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " (gerade gespielt)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " (just played)"
+          }
+        }
+      }
+    },
+    " — once something has played" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " — sobald etwas gespielt hat"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " — once something has played"
+          }
+        }
+      }
+    },
+    "Keep last: unavailable — use the Record tile instead" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letztes behalten: nicht verfügbar — nimm stattdessen die Kachel „Aufnehmen“"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep last: unavailable — use the Record tile instead"
+          }
+        }
+      }
+    },
+    "Keep last: " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letztes behalten: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep last: "
+          }
+        }
+      }
+    },
+    " or fewer at this tempo" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " oder weniger bei diesem Tempo"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " or fewer at this tempo"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
