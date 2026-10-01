@@ -194,7 +194,8 @@
 // track inspector's instrument, level and pan hints and the Bar variation hint (parent: 5 units missing — ONE
 // finding). E4-94 keyed the Mute/Solo switch names in the Workstation header and on the Perform plate, the
 // Workstation row's detail fragments and its state tags (parent: 9 units missing — ONE finding). E4-95 keyed the instrument's piece notes (new piece, refused, library row, rename), the timbre-words
-// hint and the spoken ", favorite" of the mood and sound rows (parent: 8 units missing — ONE finding). Claim 12
+// hint and the spoken ", favorite" of the mood and sound rows (parent: 8 units missing — ONE finding). E4-96 keyed the onboarding consent toggle's VoiceOver hint, the last safety sentence that shipped
+// verbatim (parent: 2 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3264,6 +3265,24 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Renames this piece. Its place in the list and its saved time stay.",
                           "Words like warm · bright · plucky · pad · evolving · huge shape the timbre from where it is now. ",
                           "scale the next word.", "Shapes: ", ", favorite"], "piece notes, timbre words and favourites")
+
+        // E4-96 — `OnboardingView.consentHint` was a `+` chain of three String literals passed to
+        // `.accessibilityHint(_:)`'s `StringProtocol` overload, i.e. English in every locale — on the screen that carries
+        // the mandated safety notice. It is two catalog fragments now, still bound to a `String` property.
+        let consent = try codeOnly("Sources/Echoelmusic/Views/OnboardingView.swift")
+        for seam in ["private static let consentHint: String =",
+                     "String(localized: \"Confirms you have read the safety and privacy notice above: \")",
+                     "+ String(localized: \"for self-observation, not medical diagnosis; not while driving or under the influence; visuals capped at 3 hertz.\")",
+                     ".accessibilityHint(Self.consentHint)"] {
+            XCTAssertTrue(consent.contains(seam), "OnboardingView lost the E4-96 seam `\(seam)`")
+        }
+        for verbatim in ["\"Confirms you have read the safety and privacy notice above: for self-observation, \"",
+                         "+ \"not medical diagnosis; not while driving", "+ \"at 3 hertz.\""] {
+            XCTAssertFalse(consent.contains(verbatim), "OnboardingView speaks the consent hint verbatim again: `\(verbatim)`")
+        }
+        try assertGerman(["Confirms you have read the safety and privacy notice above: ",
+                          "for self-observation, not medical diagnosis; not while driving or under the influence; visuals capped at 3 hertz."],
+                         "onboarding consent hint")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

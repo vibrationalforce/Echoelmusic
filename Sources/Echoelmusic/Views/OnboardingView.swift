@@ -29,22 +29,13 @@ struct OnboardingView: View {
     /// compiler here. Binding it to a property pins the type to `String` before the modifier
     /// ever sees it. Cheap insurance against a red gate for zero behavioural difference.
     ///
-    /// ⚠️ KNOWN AND DELIBERATE: this string is NOT localised. (An earlier version of this note
-    /// said it was "the only string on this screen that isn't" — wrong by two: `"Echoelmusic"`
-    /// and `"Start"` are also absent from the catalog, both legitimately, being identical in
-    /// German. Corrected because a confidently-stale claim in a comment is this repo's most
-    /// expensive recurring defect.) Being a `String` (built by `+`) it hits `accessibilityHint`'s
-    /// `StringProtocol` overload, which does not look anything up; and it cannot become a
-    /// `LocalizedStringKey` without collapsing to one ~200-character source line. Acceptable
-    /// precisely because of the rule two properties below: the CONSENT lives in the LABEL,
-    /// which IS localised. This hint only enumerates what the label already commits to, for
-    /// users who have hints switched on. Fixing it properly means giving it a short symbolic
-    /// key — a different key style from the rest of the catalog, so it waits for the slice
-    /// that decides that question for the whole app rather than being smuggled in here.
-    private static let consentHint =
-        "Confirms you have read the safety and privacy notice above: for self-observation, "
-        + "not medical diagnosis; not while driving or under the influence; visuals capped "
-        + "at 3 hertz."
+    /// ⛔ E4-96 (2026-10-01): "KNOWN AND DELIBERATE: this string is NOT localised" stood here and waited for "the
+    /// slice that decides [the key style] for the whole app". The E4 pass decided it: a sentence is keyed by its
+    /// English source, a long one in fragments. The hint is two keys now, still a `String`, so the type pin above holds.
+    /// The CONSENT still lives in the toggle's LABEL; this hint enumerates what the label commits to.
+    private static let consentHint: String =
+        String(localized: "Confirms you have read the safety and privacy notice above: ")
+        + String(localized: "for self-observation, not medical diagnosis; not while driving or under the influence; visuals capped at 3 hertz.")
 
     var body: some View {
         ZStack {

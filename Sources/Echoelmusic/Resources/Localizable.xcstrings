@@ -32682,6 +32682,38 @@
           }
         }
       }
+    },
+    "Confirms you have read the safety and privacy notice above: " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestätigt, dass du den Hinweis zu Sicherheit und Privatsphäre oben gelesen hast: "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirms you have read the safety and privacy notice above: "
+          }
+        }
+      }
+    },
+    "for self-observation, not medical diagnosis; not while driving or under the influence; visuals capped at 3 hertz." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "zur Selbstbeobachtung, nicht zur medizinischen Diagnose; nicht beim Fahren oder unter Einfluss von Alkohol oder Drogen; Visuals auf 3 Hertz begrenzt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "for self-observation, not medical diagnosis; not while driving or under the influence; visuals capped at 3 hertz."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
