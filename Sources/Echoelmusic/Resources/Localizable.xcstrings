@@ -33967,6 +33967,60 @@
         }
       }
     },
+    "Where you are: the arrangement and the tabs below it" : {
+      "comment" : "Workstation redesign C5 (2026-10-01): the piece's domain row above its tabs — Music is where you are, Visual opens the Field panel, Light opens Routing.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier bist du: das Arrangement und die Reiter darunter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Where you are: the arrangement and the tabs below it"
+          }
+        }
+      }
+    },
+    "Opens the Field panel on the Instrument stage: the visual window, full screen, colour and motion. Piece brings you back" : {
+      "comment" : "Workstation redesign C5 (2026-10-01): the piece's domain row above its tabs — Music is where you are, Visual opens the Field panel, Light opens Routing.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet das Feld-Panel auf der Instrument-Bühne: Visual-Fenster, Vollbild, Farbe und Bewegung. „Stück“ bringt dich zurück"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the Field panel on the Instrument stage: the visual window, full screen, colour and motion. Piece brings you back"
+          }
+        }
+      }
+    },
+    "Opens Routing: the light outputs, master, blackout and fixtures" : {
+      "comment" : "Workstation redesign C5 (2026-10-01): the piece's domain row above its tabs — Music is where you are, Visual opens the Field panel, Light opens Routing.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet das Routing: die Licht-Ausgänge, Master, Blackout und Geräte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens Routing: the light outputs, master, blackout and fixtures"
+          }
+        }
+      }
+    },
     "Tap a track name to open it here" : {
       "comment" : "Workstation redesign A9 (2026-10-01): landscape — the track column beside the arrangement, while no track is open.",
       "extractionState" : "manual",

@@ -483,6 +483,8 @@ struct WorkstationView: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) { transportBar }
         .safeAreaInset(edge: .top, spacing: 0) { pieceTabs }
+        // C5: the domains sit above the tabs — a later inset is placed outside the earlier one.
+        .safeAreaInset(edge: .top, spacing: 0) { domainTabs }
         #if canImport(UniformTypeIdentifiers)
         // ⚠️ ON THE LEAF, NEVER ON THE ROOT — see the header. `allowedContentTypes: [.audio]`
         // is the system's own conformance test, so a picker that offers a file at all has
@@ -959,6 +961,70 @@ struct WorkstationView: View {
         .onChange(of: level.showsSongs) { _, shows in
             if !shows { plate = .arrange }
         }
+    }
+
+    /// Workstation redesign C5 (founder 2026-10-01, H5: "Music · Visual · Light · Space …
+    /// Stream und XR bleiben weg") — the piece's DOMAINS, one level above `pieceTabs`. Only a
+    /// domain with a real destination is a button (#164/#227 — a tab with no target is a dead
+    /// button):
+    /// · **Music** is where you are — the arrangement and the tabs below it. It is a marker, not
+    ///   a button, for the A7 Arrange-tile reason: with nothing to switch to, a button would
+    ///   open what is already open. Saying "selected" is honest because this row exists only on
+    ///   the Piece stage (`StageShell` constructs this view once, in `ArrangeStage`).
+    /// · **Visual** opens the Field panel on the Instrument stage through the chrome door — the
+    ///   plate the Instrument's "Visuals" AREA selects. UNGATED, like that area button and like
+    ///   the header's visual tile: both reach the visual at every level, so a level gate here
+    ///   would hide from the piece what the instrument already offers (the Field CHIP's
+    ///   `showsSongs` gate thins the strip, not the app — `visibleChips` appends it when shown).
+    /// · **Light** opens Routing, the door the header's light monitor already posts: its Light
+    ///   card holds master, blackout, DMX resolution and fixtures. Ungated, like that monitor.
+    /// ⛔ **No Space tab yet.** The only spatial control on a reachable surface is the ADM-OSC
+    /// row inside Routing, so a Space tab today would be a second word for Light's door;
+    /// `ImmersiveStageView` is doorless by ship gate 4. Space arrives with C4, with its target.
+    /// FREEZE LAW: reads NO state at all — never a bio, meter or playhead value here.
+    private var domainTabs: some View {
+        HStack(spacing: 4) {
+            Text("Music")
+                .font(EchoelTheme.font(13, .semibold))
+                .foregroundStyle(EchoelTheme.text)
+                .padding(.horizontal, 8)
+                .frame(minWidth: 44, maxWidth: .infinity, minHeight: 44)
+                .overlay(alignment: .bottom) {
+                    Rectangle().fill(EchoelTheme.text).frame(height: 2) // ADAPTIVE-EXEMPT: the underline marker, not text
+                }
+                .accessibilityLabel("Music")
+                .accessibilityHint("Where you are: the arrangement and the tabs below it")
+                .accessibilityAddTraits(.isSelected)
+            Button {
+                NotificationCenter.default.post(name: .echoelChromeDoor, object: "field")
+            } label: {
+                Text("Visual")
+                    .font(EchoelTheme.font(13, .semibold))
+                    .foregroundStyle(EchoelTheme.dim)
+                    .padding(.horizontal, 8)
+                    .frame(minWidth: 44, maxWidth: .infinity, minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Visual")
+            .accessibilityHint("Opens the Field panel on the Instrument stage: the visual window, full screen, colour and motion. Piece brings you back")
+            Button {
+                NotificationCenter.default.post(name: .echoelChromeDoor, object: "routing")
+            } label: {
+                Text("Light")
+                    .font(EchoelTheme.font(13, .semibold))
+                    .foregroundStyle(EchoelTheme.dim)
+                    .padding(.horizontal, 8)
+                    .frame(minWidth: 44, maxWidth: .infinity, minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Light")
+            .accessibilityHint("Opens Routing: the light outputs, master, blackout and fixtures")
+        }
+        .padding(.horizontal, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(EchoelTheme.bg)
     }
 
     /// A3 — `transportRow` pinned under the plate's scroll: a solid bar with a 1 px top border

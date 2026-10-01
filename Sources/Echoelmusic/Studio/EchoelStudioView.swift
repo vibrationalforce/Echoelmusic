@@ -1283,7 +1283,12 @@ struct EchoelStudioView: View {
                     // clips tile and the recorded-clips library are both deleted. Removing the
                     // case here in the SAME commit is the #492 rule — a `case` with no poster
                     // compiles silently and reads like a live hook.
-                    case "routing": showRouting = true
+                    // C5: the piece's Light tab (`WorkstationView.domainTabs`) posts this from a
+                    // stage where a medium-detent sheet (FX, Live Colabo) can still be up — the
+                    // door refuses rather than drive a second modal true (the two-modals hang;
+                    // `selectArea` keeps the same guard). The header light monitor inherits it.
+                    case "routing":
+                        if !showAllFX, !showLiveColabo { showRouting = true }
                     // The pulse monitor opens the Bio dropdown (B3). Since #289 that monitor
                     // sits beside "Create from Within" rather than in the header.
                     // Slice 2b: the pill is visible on BOTH stages, so the door also turns the
@@ -1310,6 +1315,13 @@ struct EchoelStudioView: View {
                         showStage(.instrument)
                     case "master":
                         activeMenu = .master
+                        showStage(.instrument)
+                    // Workstation redesign C5 (founder 2026-10-01, H5) — the piece's Visual domain
+                    // tab (`WorkstationView.domainTabs`) posts this from the Piece stage: the Field
+                    // panel, the plate the Instrument's "Visuals" area selects. Re-added TOGETHER
+                    // with its producer (#290/#492), and it turns the stage for the "sound" reason.
+                    case "field":
+                        activeMenu = .field
                         showStage(.instrument)
                     // WA4 Acceptance Test A — the Workstation's Save/Open row
                     // (`WorkstationProjectRow`) raises the Studio's OWN Save alert and Open sheet:

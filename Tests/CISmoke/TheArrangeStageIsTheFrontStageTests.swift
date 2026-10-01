@@ -52,6 +52,10 @@ import XCTest
 /// case rather than only counted — a count could pair a turn with the wrong door. Regression
 /// against the parent: the count needles are red there for their named reason (2, not 4), and
 /// the per-case loop is red by ABSENCE of the two new cases — one absence (#486).
+/// ⭐ C5 (2026-10-01) — the piece's domain row (`WorkstationView.domainTabs`) posts "field" from
+/// the Piece stage: the Field panel, re-added TOGETHER with its producer. The count is five.
+/// Against the parent: both count needles red for their named reason (4, not 5); the loop's new
+/// `case "field":` entry red by ABSENCE — one absence (#486).
 final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
 
     private static let seam = "Sources/Echoelmusic/Studio/StageShell.swift"
@@ -256,17 +260,19 @@ final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
         // A7 (2026-10-01) named two more here, as this comment asks: the piece's tabs post
         // "effects" and "master" from the Piece stage (and "sound", which is the inspector's
         // case again). Each is a user action naming a panel of the other stage.
-        XCTAssertEqual(count("showStage(.instrument)", in: receiver), 4, """
+        XCTAssertEqual(count("showStage(.instrument)", in: receiver), 5, """
             The chrome-door receiver turns the Instrument stage \
-            \(count("showStage(.instrument)", in: receiver)) times; exactly four — the "sound" \
+            \(count("showStage(.instrument)", in: receiver)) times; exactly five — the "sound" \
             door (the track inspector AND the piece's Sound tab, both on the Piece stage), the \
-            "bio" door (the pulse pill, visible on both stages), and the "effects" and "master" \
-            doors (the piece's FX and Master tabs, A7). A plate selected in a hidden studio is a \
-            button that does nothing (#164/#227) — the first defect measured on slice 2a.
+            "bio" door (the pulse pill, visible on both stages), the "effects" and "master" \
+            doors (the piece's FX and Master tabs, A7), and the "field" door (the piece's Visual \
+            domain, C5). A plate selected in a hidden studio is a button that does nothing \
+            (#164/#227) — the first defect measured on slice 2a.
             """)
-        for door in ["case \"sound\":", "case \"bio\":", "case \"effects\":", "case \"master\":"] {
+        for door in ["case \"sound\":", "case \"bio\":", "case \"effects\":", "case \"master\":",
+                     "case \"field\":"] {
             guard let start = receiver.range(of: door) else {
-                XCTFail("the receiver lost `\(door)` — the four turns above are named by their cases")
+                XCTFail("the receiver lost `\(door)` — the five turns above are named by their cases")
                 continue
             }
             let tail = receiver[start.upperBound...]
@@ -274,7 +280,7 @@ final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
             XCTAssertTrue(tail[..<next].contains("showStage(.instrument)"),
                           "`\(door)` must turn the Instrument stage itself — the count alone could pair a turn with the wrong door")
         }
-        XCTAssertEqual(count("showStage(.instrument)", in: studio), 4,
+        XCTAssertEqual(count("showStage(.instrument)", in: studio), 5,
                        "no call outside the receiver turns the Instrument stage")
         let newPiece = braceBody(of: "private func startNewPiece() {", in: studio)
         XCTAssertTrue(newPiece.contains("showStage(.piece)"),
