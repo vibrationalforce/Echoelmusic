@@ -14,7 +14,7 @@
 //            sends, and that monitor sits in `WorkspaceView.topBar`, on screen on BOTH stages. Two
 //            buttons on one screen, one destination.
 // · Visual — posted `"field"` and turned the stage: a second door to the Field panel, which the
-//            Instrument's "Visuals" area and the Field chip already open (one seam tap away). The
+//            Instrument's Field chip already opens (one seam tap away). The
 //            picture itself stays on the Piece stage as the floating card (header visual tile).
 // Removing the row gives its 44 pt (`.frame(minHeight: 44)`, no vertical padding) back to the
 // arrangement on every phone. Folding Visual and Light into `pieceTabs` was considered and
@@ -39,11 +39,15 @@
 //    needles MOVED here unchanged; the poster count is NEW.
 // 3. The Field panel keeps its Instrument doors and gains no piece twin: nothing posts `"field"`,
 //    the receiver has no `case "field":`
-//    (#290/#492 — a case without a poster is a hook nobody pulls), and the Field plate stays
-//    reachable on the Instrument stage at every level (`areaBar` iterates every area unfiltered,
-//    `.visuals` → `.field`, `.field` builds `visualPanel`). — OLD claim 2's two area-row
-//    counterweights and old claim 3's `visualPanel` needle MOVED here; old claim 3's "the field arm
-//    turns the stage" INVERTED to the case's absence.
+//    (#290/#492 — a case without a poster is a hook nobody pulls), and the Field plate keeps its
+//    one door: the Field chip, in the strip at Producer and up (`chips(for:)`), and `.field` still
+//    builds `visualPanel`. ⚠️ Slice A (same day) deleted the Instrument's area row, which was the
+//    Field plate's door at EVERY level; below Producer the plate now has no door. That is the
+//    user's chosen level thinning the strip ("absence chosen is a setting", `visibleChips`), and
+//    raising the level brings the chip back — recorded in `docs/dev/FOUNDER_INBOX.md`, not
+//    decided here. — OLD claim 2's two area-row counterweights are RE-ANCHORED on the chip (the
+//    area row no longer exists); old claim 3's `visualPanel` needle MOVED here; old claim 3's
+//    "the field arm turns the stage" INVERTED to the case's absence.
 //
 // GRADING (§0/§3 — no Swift toolchain in a web session; transcribed in Python against the parent
 // tree and the slice-B tree): all claims are SOURCE-TEXT scans. Parent tree: claim 1's inset count
@@ -53,7 +57,7 @@
 // (one poster, one case); every remaining needle is a COUNTERWEIGHT, green on both. Slice-B tree:
 // all green. Nothing here is a forward guard over a new type.
 // DEVICE PROBE, open: on a 375×667 phone the arrangement gains one row of height; the header light
-// tile opens Routing from the piece; „Instrument" → Visuals reaches the Field panel; with FX open at
+// tile opens Routing from the piece; „Instrument" → the Field chip reaches the Field panel; with FX open at
 // medium detent a light-tile tap does nothing and nothing freezes — readings, not scans.
 
 import XCTest
@@ -84,7 +88,7 @@ final class ThePieceHasOneTabRowTests: XCTestCase {
             XCTAssertFalse(code.contains(gone), """
                 `\(gone)` is back in WorkstationView. The domain row's Music marker said "you are \
                 here" a third time (seam + Arrange already do), and its Light and Visual cells were \
-                twins of the header light tile and the Instrument's Visuals area.
+                twins of the header light tile and the Instrument's Field chip.
                 """)
         }
         XCTAssertFalse(code.contains("ImmersiveStageView"),
@@ -118,7 +122,7 @@ final class ThePieceHasOneTabRowTests: XCTestCase {
             XCTAssertTrue(routing.contains(refusal), """
                 `routing` raises its sheet without `\(refusal)`. The light tile is on screen while a \
                 medium-detent sheet can still be up; driving a second modal true is the invisible \
-                tap-blocking layer (the two-modals hang). `selectArea` keeps the same guard.
+                tap-blocking layer (the two-modals hang).
                 """)
         }
         XCTAssertTrue(studio.contains(".sheet(isPresented: $showRouting) { AnyView(PatchbayView("),
@@ -136,8 +140,8 @@ final class ThePieceHasOneTabRowTests: XCTestCase {
     func testTheFieldPanelKeepsItsInstrumentDoors() throws {
         let posters = try chromeDoorPosters(of: "field")
         XCTAssertTrue(posters.isEmpty, """
-            `"field"` is posted from \(posters). The Field panel's door is the Instrument's Visuals \
-            area (and its chip); the piece's Visual tab was its twin and went with slice B.
+            `"field"` is posted from \(posters). The Field panel's door is the Instrument's Field \
+            chip; the piece's Visual tab was its twin and went with slice B.
             """)
         let studio = SourceText.codeOnly(try text(Self.studio))
         XCTAssertNotNil(receiverArm("sound", in: studio), """
@@ -147,19 +151,14 @@ final class ThePieceHasOneTabRowTests: XCTestCase {
         XCTAssertNil(receiverArm("field", in: studio), """
             `case "field":` is back in the chrome-door receiver with no poster — a hook nobody \
             pulls reads like a live door (#290/#492). Re-add it only TOGETHER with a poster that \
-            is not a twin of the Visuals area.
+            is not a twin of the Field chip.
             """)
 
-        let bar = try member("private var areaBar: some View {", in: studio)
-        XCTAssertTrue(bar.contains("ForEach(StudioArea.allCases) { areaButton($0, sharesRow: true) }"),
-                      "the area row still offers every area — the Field panel's door at every level")
-        XCTAssertFalse(bar.contains("level"), """
-            the area row now filters by level. Then a level could lose the Field panel's ONLY door \
-            — decide that in the same commit, with the floating card's header tile in view.
-            """)
-        let home = try member("private static func areaHome(_ area: StudioArea) -> StudioMenu? {", in: studio)
-        XCTAssertTrue(home.contains("case .visuals:  return .field"),
-                      "the Visuals area still opens the Field plate")
+        let chips = try member("private static func chips(for level: SkillLevel) -> [StudioMenu] {", in: studio)
+        XCTAssertTrue(chips.contains("case .effects, .mix, .composition, .field, .workstation:"),
+                      "the Field chip is still in the strip — the Field panel's one door")
+        XCTAssertTrue(chips.contains("return level.showsSongs"),
+                      "the Field chip shows from Producer up — if its level gate moved, say so in FOUNDER_INBOX")
         XCTAssertTrue(studio.contains("case .field:       return AnyView(visualPanel)"),
                       "the Field plate still builds `visualPanel` — the destination is real")
     }
