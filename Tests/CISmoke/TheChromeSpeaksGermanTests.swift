@@ -200,7 +200,8 @@
 // rawValue (one definition stays in SnapCorner; the key is the rawValue) (parent: 4 units missing — ONE finding). E4-99 keyed the routing surface's two light output names, which
 // `NetworkOutputHeader` renders and speaks as a String (parent: 2 units missing — ONE finding). E4-100 drew the instrument's chip strip as catalog keys — the German
 // help sentences named "Klang"/"Stimmung"/"Feld" while the chips still read English (parent: seam absent, 2 units missing —
-// ONE finding). Claim 12
+// ONE finding). E4-101 looked up the field's six self-play motion names, which the Motion picker drew verbatim through
+// `Text(String)` (parent: seams absent, 6 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3337,6 +3338,22 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertFalse(chipStrip.contains("Text(menu.label)"), "EchoelStudioView draws a chip label verbatim again")
         try assertGerman(["Bio", "Tempo", "Sound", "Mix", "FX", "Master", "Mood", "Save/Export", "Field", "Workstation"],
                          "instrument chip labels")
+
+        // E4-101 — `fieldMotionLabel` returned bare literals and the Motion picker drew them through `Text(String)`, so a
+        // German field read "Rise"/"Pendulum"/"Hold" under a German "Bewegung" heading. The lookup sits in the helper;
+        // `FieldAutoPlay.Motion` rawValues are persisted and untouched. "Drift" and "Arp" keep their word in German.
+        let motionNames = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for seam in ["case .rise:     return String(localized: \"Rise\")",
+                     "case .pendulum: return String(localized: \"Pendulum\")",
+                     "case .hold:     return String(localized: \"Hold\")"] {
+            XCTAssertTrue(motionNames.contains(seam), "EchoelStudioView lost the E4-101 seam: \(seam)")
+        }
+        for verbatim in ["case .rise:     return \"Rise\"",
+                         "case .pendulum: return \"Pendulum\"",
+                         "case .hold:     return \"Hold\""] {
+            XCTAssertFalse(motionNames.contains(verbatim), "EchoelStudioView returns a motion name verbatim again: \(verbatim)")
+        }
+        try assertGerman(["Rise", "Fall", "Pendulum", "Drift", "Hold", "Arp"], "field self-play motion names")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

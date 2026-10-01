@@ -6309,14 +6309,16 @@ struct EchoelStudioView: View {
     /// Player-facing names for the motions. Kept out of `FieldAutoPlay` on purpose: that type
     /// is pure and Foundation-only, and a display string is a UI decision that will want to be
     /// localised long before the generator wants to know about language.
+    /// E4-101: that day came. The picker draws these through `Text(String)`, which shows a String
+    /// verbatim, so the lookup happens here — the rawValues in `FieldAutoPlay` stay untouched.
     private func fieldMotionLabel(_ m: FieldAutoPlay.Motion) -> String {
         switch m {
-        case .rise:     return "Rise"
-        case .fall:     return "Fall"
-        case .pendulum: return "Pendulum"
-        case .drift:    return "Drift"
-        case .hold:     return "Hold"
-        case .arp:      return "Arp"
+        case .rise:     return String(localized: "Rise")
+        case .fall:     return String(localized: "Fall")
+        case .pendulum: return String(localized: "Pendulum")
+        case .drift:    return String(localized: "Drift")
+        case .hold:     return String(localized: "Hold")
+        case .arp:      return String(localized: "Arp")
         }
     }
 
