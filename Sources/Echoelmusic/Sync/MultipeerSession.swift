@@ -74,7 +74,7 @@ public final class MultipeerSession: NSObject {
     /// card; nothing connects until the user answers (never auto-accepted).
     public private(set) var pendingInvitation: PendingInvitation?
     /// Last status line for the UI (e.g. "Shared with 2 peers").
-    public private(set) var status: String = "Off"
+    public private(set) var status: String = String(localized: "Off")
     /// Live bio per connected peer (E5): `PeerIdentity.stableID` → last reading AND when it
     /// arrived here. Shown SIDE BY SIDE with our own — never combined into a
     /// cross-person score (decision 2026-06-20). Cleared on disconnect/stop.
@@ -148,7 +148,7 @@ public final class MultipeerSession: NSObject {
         adv.startAdvertisingPeer()
         br.startBrowsingForPeers()
         isLive = true
-        status = "Looking for nearby Echoelmusic…"
+        status = String(localized: "Looking for nearby Echoelmusic…")
     }
 
     public func stop() {
@@ -166,7 +166,7 @@ public final class MultipeerSession: NSObject {
         peerIDs.removeAll()
         connectedPeers.removeAll()
         peerReadings.removeAll()
-        status = "Off"
+        status = String(localized: "Off")
     }
 
     /// Invite a discovered peer into the session, BY IDENTITY.
@@ -177,7 +177,7 @@ public final class MultipeerSession: NSObject {
         guard let peer = peerIDs[stableID], let browser else { return }
         let label = discovered.first { $0.id == stableID }?.name ?? stableID
         browser.invitePeer(peer, to: mcSession, withContext: nil, timeout: 20)
-        status = "Inviting \(label)…"
+        status = String(localized: "Inviting ") + label + "…"
     }
 
     /// The label for a peer key — the one place a `stableID` is turned back into something a
@@ -234,16 +234,17 @@ public final class MultipeerSession: NSObject {
         } catch {
             log.log(.error, category: .system,
                     "Colab: session payload failed to ENCODE — not shared — \(error)")
-            status = "This piece can't be encoded — not shared"
+            status = String(localized: "This piece can't be encoded — not shared")
             return
         }
         let peers = mcSession.connectedPeers
-        guard !peers.isEmpty else { status = "No peers connected"; return }
+        guard !peers.isEmpty else { status = String(localized: "No peers connected"); return }
         do {
             try mcSession.send(data, toPeers: peers, with: .reliable)
-            status = "Shared with \(peers.count) peer\(peers.count == 1 ? "" : "s")"
+            let noun: String = peers.count == 1 ? String(localized: " peer") : String(localized: " peers")
+            status = String(localized: "Shared with ") + "\(peers.count)" + noun
         } catch {
-            status = "Share failed"
+            status = String(localized: "Share failed")
         }
     }
 
@@ -257,9 +258,9 @@ public final class MultipeerSession: NSObject {
         pendingInvitation = nil
         pending.respond(accept)
         if accept {
-            status = "Joining \(pending.peerName)…"
+            status = String(localized: "Joining ") + pending.peerName + "…"
         } else if isLive {
-            status = connectedPeerNames.isEmpty ? "Looking for nearby Echoelmusic…" : status
+            status = connectedPeerNames.isEmpty ? String(localized: "Looking for nearby Echoelmusic…") : status
         }
     }
 
@@ -326,11 +327,11 @@ public final class MultipeerSession: NSObject {
                 connectedPeers.append(peer)
             }
             discovered.removeAll { $0.id == peer.stableID }
-            status = "Connected to \(peer.displayName)"
+            status = String(localized: "Connected to ") + peer.displayName
         } else {
             connectedPeers.removeAll { $0.stableID == peer.stableID }
             peerReadings[peer.stableID] = nil
-            if connectedPeers.isEmpty && isLive { status = "Looking for nearby Echoelmusic…" }
+            if connectedPeers.isEmpty && isLive { status = String(localized: "Looking for nearby Echoelmusic…") }
         }
     }
 
@@ -371,7 +372,7 @@ public final class MultipeerSession: NSObject {
         }
         incoming = payload
         onReceiveSession?(payload)
-        status = "Piece received from \(payload.senderName)"
+        status = String(localized: "Piece received from ") + payload.senderName
     }
 }
 

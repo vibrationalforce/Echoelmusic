@@ -1330,12 +1330,9 @@ enum AudioConfiguration {
             case .wideband:
                 return nil
             case .telephony:
-                return "Bluetooth is in call mode: mono and band-limited — the music too. Echoel "
-                     + "only plays out, so another app holds the call; end it, or use a cable, "
-                     + "for full bandwidth."
+                return String(localized: "Bluetooth is in call mode: mono and band-limited — the music too. Echoel only plays out, so another app holds the call; end it, or use a cable, for full bandwidth.")
             case .telephonySuspected:
-                return "This looks like Bluetooth call mode (mono, band-limited). Echoel only "
-                     + "plays out; a cable keeps full bandwidth."
+                return String(localized: "This looks like Bluetooth call mode (mono, band-limited). Echoel only plays out; a cable keeps full bandwidth.")
             }
         }
     }

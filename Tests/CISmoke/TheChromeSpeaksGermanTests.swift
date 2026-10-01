@@ -130,7 +130,9 @@
 // ONE finding). E4-68 added the two import doors' failure sentences (AudioImport.Failure / MIDIImport.Failure.userMessage)
 // and the note editor's four refusals (ClipNoteEdit) (parent: 19 units missing — ONE finding). E4-69 added the FX
 // character names and blurbs (GenreFX), the skill-level names and blurbs (SkillLevel) and the camera recovery words
-// (CameraRPPGBioPublisher: `userHint` for the strip, `shortLabel` for the pill) (parent: 34 units missing — ONE finding). Claim 12
+// (CameraRPPGBioPublisher: `userHint` for the strip, `shortLabel` for the pill) (parent: 34 units missing — ONE finding).
+// E4-70 added the Live Colabo status line (MultipeerSession.status), the open-piece refusal and save error (ProjectStore)
+// and the two Bluetooth call-mode notes (AudioConfiguration RouteCodec.note) (parent: 16 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -2466,6 +2468,38 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Adds Master — the whole strip.", "Camera recovering…", "Device cooling down — pulse holds for a moment",
                           "Camera paused by iOS — waiting to resume", "Recovering", "Cooling", "Camera paused"],
                          "FX characters, skill levels and camera recovery words")
+
+        // E4-70 — the Live Colabo status line (LiveColaboView renders `colab.status`; the three interpolations become
+        // key + name), the open-piece refusal that EchoelStudioView's Open door shows (TheImportDoorReportsWhatItCannotRead-
+        // Tests compares it at runtime under the test locale), the save-error banner, and the two call-mode notes under
+        // the audio route row (TheCodecNoteNamesNoInputTests reads the words at runtime; TheShareDoorReportsWhatItCannot-
+        // SendTests keeps its two needles, both inside the new keys).
+        let peerStatus = try codeOnly("Sources/Echoelmusic/Sync/MultipeerSession.swift")
+        let storeNotes = try codeOnly("Sources/Echoelmusic/Core/ProjectStore.swift")
+        let routeNotes = try codeOnly("Sources/Echoelmusic/Audio/AudioConfiguration.swift")
+        for seam in ["status = String(localized: \"Looking for nearby Echoelmusic…\")",
+                     "status = String(localized: \"Shared with \") + \"\\(peers.count)\" + noun",
+                     "status = String(localized: \"Piece received from \") + payload.senderName"] {
+            XCTAssertTrue(peerStatus.contains(seam), "MultipeerSession lost the E4-70 seam `\(seam)`")
+        }
+        for seam in ["return String(localized: \"The file was read, but could not be saved. Retry the pending save.\")",
+                     "return field.isEmpty ? String(localized: \"That file isn't an Echoel piece.\") : unreadable"] {
+            XCTAssertTrue(storeNotes.contains(seam), "ProjectStore lost the E4-70 seam `\(seam)`")
+        }
+        XCTAssertTrue(routeNotes.contains("return String(localized: \"This looks like Bluetooth call mode (mono, band-limited). Echoel only plays out; a cable keeps full bandwidth.\")"),
+                      "AudioConfiguration lost the E4-70 seam on the inferred call-mode note")
+        XCTAssertFalse(peerStatus.contains("status = \"Share failed\""), "MultipeerSession spells a status verbatim again")
+        XCTAssertFalse(storeNotes.contains("? \"That file isn't an Echoel piece.\""), "ProjectStore spells the refusal verbatim again")
+        XCTAssertFalse(routeNotes.contains("return \"Bluetooth is in call mode: mono and band-limited — the music too. Echoel \""),
+                       "AudioConfiguration spells the call-mode note verbatim again")
+        try assertGerman(["Looking for nearby Echoelmusic…", "Off", "Inviting ", "This piece can't be encoded — not shared",
+                          "No peers connected", " peer", " peers", "Shared with ", "Share failed", "Joining ", "Connected to ",
+                          "Piece received from ", "The file was read, but could not be saved. Retry the pending save.",
+                          "Couldn't read that file.", "That file isn't a readable Echoel piece — ", "That file isn't an Echoel piece.",
+                          "Could not save this piece. Your changes are still here. Free device storage or retry.",
+                          "Bluetooth is in call mode: mono and band-limited — the music too. Echoel only plays out, so another app holds the call; end it, or use a cable, for full bandwidth.",
+                          "This looks like Bluetooth call mode (mono, band-limited). Echoel only plays out; a cable keeps full bandwidth."],
+                         "peer status, open refusal and call-mode notes")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

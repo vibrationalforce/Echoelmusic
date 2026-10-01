@@ -237,13 +237,13 @@ public final class ProjectStore {
     /// fabricated-detail defect this repo has paid for repeatedly (#424/#426/#433/#461).
     nonisolated public static func importFailureNote(_ error: Error) -> String {
         if error is PersistenceFailure {
-            return "The file was read, but could not be saved. Retry the pending save."
+            return String(localized: "The file was read, but could not be saved. Retry the pending save.")
         }
         guard let decoding = error as? DecodingError else {
             // Everything that is not a decode problem: unreadable file, revoked permission,
             // a deleted iCloud placeholder. Deliberately NOT called "invalid session" — the
             // document may be perfect and simply unreachable.
-            return "Couldn't read that file."
+            return String(localized: "Couldn't read that file.")
         }
         // ⚠️ AN `if case` CHAIN RATHER THAN A `switch`, AND THAT IS A BUILD DECISION, not a
         // style one. A `switch` over `DecodingError` needs either `default` or
@@ -260,9 +260,8 @@ public final class ProjectStore {
         // `stringValue` covers both keyed and unkeyed containers; an array index arrives as
         // "Index 3", which reads correctly in this sentence.
         let field = path.map(\.stringValue).joined(separator: " › ")
-        return field.isEmpty
-            ? "That file isn't an Echoel piece."
-            : "That file isn't a readable Echoel piece — \(field)."
+        let unreadable: String = String(localized: "That file isn't a readable Echoel piece — ") + field + "."
+        return field.isEmpty ? String(localized: "That file isn't an Echoel piece.") : unreadable
     }
 
     /// Retry the exact pending library, including projects queued by later saves.
@@ -282,7 +281,7 @@ public final class ProjectStore {
     private func persist(_ next: [Project]) -> Bool {
         guard writeProjects(next) else {
             pendingProjects = next
-            saveError = "Could not save this piece. Your changes are still here. Free device storage or retry."
+            saveError = String(localized: "Could not save this piece. Your changes are still here. Free device storage or retry.")
             return false
         }
         projects = next

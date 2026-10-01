@@ -27434,6 +27434,262 @@
           }
         }
       }
+    },
+    "Looking for nearby Echoelmusic…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sucht Echoelmusic in der Nähe…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looking for nearby Echoelmusic…"
+          }
+        }
+      }
+    },
+    "Inviting " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einladung an "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inviting "
+          }
+        }
+      }
+    },
+    "This piece can't be encoded — not shared" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Stück lässt sich nicht kodieren — nicht geteilt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This piece can't be encoded — not shared"
+          }
+        }
+      }
+    },
+    "No peers connected" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Peers verbunden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No peers connected"
+          }
+        }
+      }
+    },
+    " peer" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Peer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " peer"
+          }
+        }
+      }
+    },
+    " peers" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Peers"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " peers"
+          }
+        }
+      }
+    },
+    "Shared with " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geteilt mit "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shared with "
+          }
+        }
+      }
+    },
+    "Share failed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teilen fehlgeschlagen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share failed"
+          }
+        }
+      }
+    },
+    "Joining " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beitritt zu "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joining "
+          }
+        }
+      }
+    },
+    "Piece received from " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stück empfangen von "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Piece received from "
+          }
+        }
+      }
+    },
+    "The file was read, but could not be saved. Retry the pending save." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Datei wurde gelesen, konnte aber nicht gesichert werden. Wiederhole das ausstehende Sichern."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The file was read, but could not be saved. Retry the pending save."
+          }
+        }
+      }
+    },
+    "That file isn't a readable Echoel piece — " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Datei ist kein lesbares Echoel-Stück — "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That file isn't a readable Echoel piece — "
+          }
+        }
+      }
+    },
+    "That file isn't an Echoel piece." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Datei ist kein Echoel-Stück."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That file isn't an Echoel piece."
+          }
+        }
+      }
+    },
+    "Could not save this piece. Your changes are still here. Free device storage or retry." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Stück konnte nicht gesichert werden. Deine Änderungen sind noch da. Gib Gerätespeicher frei oder versuche es erneut."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not save this piece. Your changes are still here. Free device storage or retry."
+          }
+        }
+      }
+    },
+    "Bluetooth is in call mode: mono and band-limited — the music too. Echoel only plays out, so another app holds the call; end it, or use a cable, for full bandwidth." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bluetooth ist im Telefonie-Modus: mono und bandbegrenzt — die Musik auch. Echoel spielt nur aus, also hält eine andere App das Gespräch; beende es oder nimm ein Kabel für volle Bandbreite."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bluetooth is in call mode: mono and band-limited — the music too. Echoel only plays out, so another app holds the call; end it, or use a cable, for full bandwidth."
+          }
+        }
+      }
+    },
+    "This looks like Bluetooth call mode (mono, band-limited). Echoel only plays out; a cable keeps full bandwidth." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das sieht nach Bluetooth-Telefonie-Modus aus (mono, bandbegrenzt). Echoel spielt nur aus; ein Kabel behält die volle Bandbreite."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This looks like Bluetooth call mode (mono, band-limited). Echoel only plays out; a cable keeps full bandwidth."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
