@@ -4899,3 +4899,12 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Reihenfolge:** A1–A9 (Aussehen) → B1–B6 (Engine) → C1–C5 (Multimedia-Kurvenspuren). Plan: `scratchpads/PLAN_WORKSTATION_REDESIGN_2026-10-01.md`.
 - **Review:** 2026-10-31.
 
+
+### 2026-10-01 (spät) — Eine Tür je Bereich, kompakte Flächen
+
+Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Bereiche sind zu groß und füllen den Bildschirm aus.“
+- **Bereichs-Zeile des Instruments entfernt** (Scheibe A, 6f6e2f499) — hebt die 09-29-Entscheidung zur Bereichs-Zeile auf. Die Chip-Leiste ist die EINE Reihe Platten-Türen. Folge: unter „Producer“ hat Field keine Tür (H15).
+- **Stück: eine Reiter-Zeile Arrange · Mix · Export** (Scheibe B, e5f853101) — C5 (Music · Visual · Light) und die Reiter Sound · FX · Master zurückgenommen; jeder war ein Zwilling einer vorhandenen Tür.
+- **Werkzeug-Blätter halbe Höhe + Sperre der anderen Blatt-Türen** (Scheibe D, 02658e892) — der lebende Hintergrund macht den Zwei-Modal-Hänger erreichbar, also kommen Standard und Sperre zusammen.
+- Transport eine Zeile (C), Kopf ≤ 2 Zeilen + Guide zeigt den aktuellen Schritt (E), Guide-Karte ≤ 96 pt.
+- Review: 2026-10-31. Offene Look-Fragen H13–H15 in `docs/dev/FOUNDER_INBOX.md`.

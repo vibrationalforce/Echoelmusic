@@ -98,7 +98,18 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
 - **C2** Visual-Spur (Kurven) + domänen-bewusster Automations-Editor + Play-Gate für Kurven-Songs. **C2a HOLD — Inbox H12** (Entwurf fertig, Runde 4): hebt die C1-Sperre auf; die Blitzgrenze des Bildes mit Verstärkung bis ~2,8× ist nur am Gerät belegbar.
 - **C3** Licht-Spur: Look-Intensität automationsfähig (nur dämpfend, FlashGuard bleibt; KEIN Strobe). **C3a ✓ fd782725b** — die Look-Stärke gleitet mit höchstens 0,3/s (0,10 × 3 Hz) in beiden Sendern, heute byte-gleich. Wächter `TheLightLookMovesNoFasterThanTheFlashLawTests`. C3b (Kurve + Eignung) offen. Befund dabei: Musik-Dimmer → Inbox H11.
 - **C4** Raum: Szene app-weit aus der Zeitleiste, Stream-Schalter mit Tür; Bewegungs-Spur. **C4a-1 ✓ 358afe0a1** — `EchoelmusicApp` baut die Szene aus den Spuren (Start + jede Dokument-Änderung, an `onDocumentChanged` GEKETTET), Routing-Schalter „Every track as its own object (ADM-OSC)“ = erste Tür zu `streamsScene` (nicht persistiert; leeres Stück sendet im An-Zustand nichts — der Text sagt es). Wächter `TheTrackObjectsFollowThePieceAndHaveASwitchTests`. Offen: C4b Bewegungs-Spur (Automations-Schreiber für Objekt-Positionen), danach der Space-Reiter.
-- **C5** Bereichs-Tabs Music · Visual · Light · Space. **✓ 9c4bb62b8 (Music · Visual · Light)** — Visual → Feld-Panel (ungegatet wie die Bereichszeile), Light → Routing (Empfänger verweigert, solange FX/Live Colabo offen sind). **Space bleibt auf HOLD bis C4** (heute nur die ADM-OSC-Zeile im Routing = zweites Wort für Light). ⚠️ Gebaut VOR C2–C4: kommt mit C2 ein Visual-Kurven-Track, muss die Visual-Tür eventuell umzeigen. Wächter `TheDomainTabsOpenOnlyWhatExistsTests`.
+- **C5** Bereichs-Tabs Music · Visual · Light · Space. **✓ 9c4bb62b8 (Music · Visual · Light)** — Visual → Feld-Panel (ungegatet wie die Bereichszeile), Light → Routing (Empfänger verweigert, solange FX/Live Colabo offen sind). **Space bleibt auf HOLD bis C4** (heute nur die ADM-OSC-Zeile im Routing = zweites Wort für Light). ⚠️ Gebaut VOR C2–C4: kommt mit C2 ein Visual-Kurven-Track, muss die Visual-Tür eventuell umzeigen. Wächter TheDomainTabsOpenOnlyWhatExistsTests (mit Scheibe B gelöscht). ⛔ **C5 ist mit Scheibe B e5f853101 WIEDER ENTFERNT** (Founder 2026-10-01 spät: „Vermeide das es mehrfache Wege zu einem Bereich gibt“) — jeder der drei Reiter war ein Zwilling einer vorhandenen Tür; Space bleibt damit ohne Platz bis zu einer echten Raum-Fläche.
+
+## Runde „Eine Tür, kompakt" (Founder 2026-10-01 spät)
+
+Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Bereiche sind zu groß und füllen den Bildschirm aus.“
+- **Guide-Karte** 430b20307 — Höhe auf 96 pt gekappt.
+- **A** 6f6e2f499 — Bereichs-Zeile des Instruments entfernt (`StudioArea.swift` gelöscht); EINE Zeile Platten-Türen. Wächter `TheInstrumentHasOneRowOfPlateDoorsTests`.
+- **B** e5f853101 + f61915c41 — EINE Reiter-Zeile auf dem Stück: Arrange · Mix · Export (Sound · FX · Master und Music · Visual · Light weg). Wächter `ThePieceHasOneTabRowTests`.
+- **C** a6c9b696f — Transportleiste eine Zeile. Wächter `TheTransportBarIsOneRowTests`.
+- **E** ae397d05a — Kopf höchstens zwei Zeilen, offener Guide zeigt nur den aktuellen Schritt. Wächter `TheHeadTakesAtMostTwoRowsTests`, `TheOpenGuideShowsTheStepToDoNowTests`.
+- **D** 02658e892 — Werkzeug-Blätter auf halber Höhe; andere Blatt-Türen gesperrt, solange eines offen ist. Wächter `AHalfHighSheetLocksTheOtherSheetDoorsTests`.
+- Offen für den Founder: H13 (Undo/Redo als Symbol), H14 (Stopp neben Aufnahme stoppen), H15 (Field ohne Tür unter „Producer“).
 
 ## Gesetze, die jede Scheibe einhält
 Kein neues `.sheet` (Budget 12/14; Inspektoren inline) · keine heißen Reads in Vorfahren

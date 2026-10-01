@@ -41898,3 +41898,11 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **C4a-1 358afe0a1** — Szene app-weit aus den Spuren, an `onDocumentChanged` gekettet; Routing-Schalter als erste Tür zu `streamsScene`. Kritik-Fixes übernommen: Leeres-Stück-Stille in An- und Aus-Text, „Position und feste Lautstärke“ statt „nur Positionen“, nur Entfernen nummeriert um, Neustart setzt zurück. Drei Wächter nachgezogen, ein neuer.
 - Prüfer je Scheibe: dead-needles · swift-escapes · foreign-needles · count-pins · moved-needles sauber; Katalog-JSON gültig, jeder neue Text mit Deutsch. Nichts kompiliert lokal, nichts gerätegeprüft.
 - Offen: C4b Bewegungs-Spur → Space-Reiter; C3b (nach H11), C2a (nach H12), B1b (nach H9).
+
+## 2026-10-01 (spät) — Runde „Eine Tür, kompakt" + Deploy 10.79.486
+
+Founder-Order: eine Tür je Bereich, kompakte Flächen, kein Slop, TestFlight.
+- 430b20307 Guide-Karte ≤ 96 pt · 6f6e2f499 A Bereichs-Zeile weg · e5f853101 B eine Stück-Reiterzeile · a6c9b696f C Transport eine Zeile · ae397d05a E Kopf ≤ 2 Zeilen, Guide = aktueller Schritt · f61915c41 B-Reparatur (Anspruch 3 ankerte auf A's gelöschter `areaBar`) · 02658e892 D Blätter halbe Höhe + Sperre.
+- Gates: A grün (Compile + BfT, main = 6f6e2f499). D-Stapel: siehe Deploy-Commit.
+- Lehre: zwei parallel entworfene Scheiben (A, B) — B's neuer Wächter ankerte auf einem Symbol, das A löscht. Bei gestapelten Scheiben jeden NEUEN Wächter gegen den KOMBINIERTEN Baum transkribieren, nicht gegen den eigenen Eltern.
+- Inbox H13–H15 (Undo-Symbol, Stopp/Aufnahme stoppen, Field unter Producer). Nichts gerätegeprüft.
