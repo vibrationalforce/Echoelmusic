@@ -1855,9 +1855,9 @@ struct EchoelStudioView: View {
             // turns that guard red on correct code. The first draft of this edit split
             // "stay with / the instrument" and did exactly that — caught by measuring, not by
             // the reviewer. Both pinned runs must stay inside one literal each.
-            Text("Saves the composed loop, if there is one, with its genre, key, tuning, tempo, tempo mode (following or locked), mood, "
-                 + "sound and FX character, and the piece — its tracks and parts. "
-                 + "Your mixer levels and hand-dialled FX stay with the instrument.")
+            Text(String(localized: "Saves the composed loop, if there is one, with its genre, key, tuning, tempo, tempo mode (following or locked), mood, ")
+                 + String(localized: "sound and FX character, and the piece — its tracks and parts. ")
+                 + String(localized: "Your mixer levels and hand-dialled FX stay with the instrument."))
         }
         .alert("Save mood", isPresented: $showSaveMoodAs) {
             TextField("Name", text: $moodAsName)
@@ -5429,8 +5429,8 @@ struct EchoelStudioView: View {
                     .accessibilityLabel("Audio latency tier")
                     .accessibilityHint("Smaller buffers respond sooner and cost more CPU")
                 }
-                Text("Smaller buffers respond sooner and cost more CPU. iOS may refuse a tier — "
-                     + "hardest on Bluetooth — so the row shows what iOS granted.")
+                Text(String(localized: "Smaller buffers respond sooner and cost more CPU. iOS may refuse a tier — ")
+                     + String(localized: "hardest on Bluetooth — so the row shows what iOS granted."))
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -7346,7 +7346,9 @@ struct EchoelStudioView: View {
     nonisolated private static let romanceSeventhClause: String = {
         let offered = MusicStyle.offered
         let plain = offered.filter { !$0.harmonicProfile.chordTones.contains(6) }.count
-        return "(\(plain) of the \(offered.count) offered)"
+        // E4-54: seams of catalog keys around the two counts (≤ 4 operands per step); no digit is ever a literal here.
+        let head: String = "(" + "\(plain)" + String(localized: " of the ")
+        return head + "\(offered.count)" + String(localized: " offered)")
     }()
 
     // MARK: Panel — Mood (character of the composition)
@@ -7420,7 +7422,7 @@ struct EchoelStudioView: View {
             // it costs one clause; the alternative was leaving a control that reads continuous
             // and is not. `MoodKnobsSayWhatTheyDoTests` measures both cliffs and fails if either
             // moves, so this sentence cannot go stale silently.
-            Text("Friendly ↔ scary (tension) · sparse ↔ busy (liveliness) · odd leaps (weird). Blends with your live signal. Darkness and Romance switch rather than fade: above 0.60 Darkness drops the voicing an octave, and above 0.50 Romance adds the 7th to genres whose chord does not already have one \(Self.romanceSeventhClause).")
+            Text(String(localized: "Friendly ↔ scary (tension) · sparse ↔ busy (liveliness) · odd leaps (weird). Blends with your live signal. Darkness and Romance switch rather than fade: above 0.60 Darkness drops the voicing an octave, and above 0.50 Romance adds the 7th to genres whose chord does not already have one ") + Self.romanceSeventhClause + ".")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }

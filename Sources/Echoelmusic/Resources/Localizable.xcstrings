@@ -23210,6 +23210,134 @@
           }
         }
       }
+    },
+    "Friendly ↔ scary (tension) · sparse ↔ busy (liveliness) · odd leaps (weird). Blends with your live signal. Darkness and Romance switch rather than fade: above 0.60 Darkness drops the voicing an octave, and above 0.50 Romance adds the 7th to genres whose chord does not already have one " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Freundlich ↔ unheimlich (Spannung) · spärlich ↔ dicht (Lebendigkeit) · ungewöhnliche Sprünge (schräg). Mischt sich mit deinem Live-Signal. Dunkelheit und Romantik schalten statt zu überblenden: über 0,60 setzt Dunkelheit die Stimmführung eine Oktave tiefer, und über 0,50 fügt Romantik Genres, deren Akkord sie noch nicht hat, die Septime hinzu "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friendly ↔ scary (tension) · sparse ↔ busy (liveliness) · odd leaps (weird). Blends with your live signal. Darkness and Romance switch rather than fade: above 0.60 Darkness drops the voicing an octave, and above 0.50 Romance adds the 7th to genres whose chord does not already have one "
+          }
+        }
+      }
+    },
+    " of the " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " von "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " of the "
+          }
+        }
+      }
+    },
+    " offered)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " angebotenen)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " offered)"
+          }
+        }
+      }
+    },
+    "Saves the composed loop, if there is one, with its genre, key, tuning, tempo, tempo mode (following or locked), mood, " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speichert den komponierten Loop, falls es einen gibt, mit Genre, Tonart, Stimmung, Tempo, Tempo-Modus (folgend oder gesperrt), Mood, "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saves the composed loop, if there is one, with its genre, key, tuning, tempo, tempo mode (following or locked), mood, "
+          }
+        }
+      }
+    },
+    "sound and FX character, and the piece — its tracks and parts. " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klang- und FX-Charakter sowie das Stück — seine Spuren und Teile. "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sound and FX character, and the piece — its tracks and parts. "
+          }
+        }
+      }
+    },
+    "Your mixer levels and hand-dialled FX stay with the instrument." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Mixer-Pegel und von Hand eingestellten FX bleiben beim Instrument."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your mixer levels and hand-dialled FX stay with the instrument."
+          }
+        }
+      }
+    },
+    "Smaller buffers respond sooner and cost more CPU. iOS may refuse a tier — " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kleinere Puffer reagieren schneller und kosten mehr CPU. iOS kann eine Stufe verweigern — "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smaller buffers respond sooner and cost more CPU. iOS may refuse a tier — "
+          }
+        }
+      }
+    },
+    "hardest on Bluetooth — so the row shows what iOS granted." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "am ehesten bei Bluetooth — deshalb zeigt die Zeile, was iOS gewährt hat."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hardest on Bluetooth — so the row shows what iOS granted."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

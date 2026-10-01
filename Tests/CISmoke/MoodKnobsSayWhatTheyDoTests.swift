@@ -168,6 +168,7 @@ final class MoodKnobsSayWhatTheyDoTests: XCTestCase {
     /// keeps hitting. What survives from the old test is its PURPOSE, split in two: this method
     /// pins that the sentence computes, and `testTheSeventhSplitIsAProperSubset` pins the one
     /// thing a self-counting number cannot tell you — that the qualifier still means something.
+    // E4-54: the caption is a catalog key seamed beside the derived clause, so both needles read `… one ") + Self.romanceSeventhClause` — re-anchored 1:1.
     func testTheCaptionCountsItselfRatherThanStatingANumber() throws {
         let code = try Self.studioSource()
         XCTAssertTrue(code.contains("nonisolated private static let romanceSeventhClause"), """
@@ -180,7 +181,7 @@ final class MoodKnobsSayWhatTheyDoTests: XCTestCase {
             literal test `BioComposer` applies before adding the 7th. If the composer's rule \
             moved, move both, and say so in the caption.
             """)
-        XCTAssertTrue(code.contains("does not already have one \\(Self.romanceSeventhClause)"), """
+        XCTAssertTrue(code.contains("does not already have one \") + Self.romanceSeventhClause"), """
             The caption stopped interpolating the derived clause. Either the qualifier is gone \
             (then the sentence promises the 7th on every genre, the #354 overclaim) or a literal \
             count came back.
@@ -242,7 +243,7 @@ final class MoodKnobsSayWhatTheyDoTests: XCTestCase {
         XCTAssertTrue(code.contains("above 0.50 Romance adds the 7th"), """
             The caption no longer names romance's threshold — same two cases as darkness.
             """)
-        XCTAssertTrue(code.contains("does not already have one \\(Self.romanceSeventhClause)"), """
+        XCTAssertTrue(code.contains("does not already have one \") + Self.romanceSeventhClause"), """
             The caption dropped romance's QUALIFIER. Without it the sentence promises the 7th \
             on every genre, which is false for most of the offered roster — including \
             `.selfObservation`, the shipped default. That is the exact overclaim this slice's \

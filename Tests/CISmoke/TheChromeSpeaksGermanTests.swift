@@ -103,7 +103,9 @@
 // Colabo's invite line and „Piece from“ (parent: interpolated literals, 7 units missing — ONE finding). E4-53 added the
 // literal keys the catalog still lacked — the Routing card's two captions (their `\u{2014}` escapes spelled as the
 // character, so the key can match), Live Colabo's words and the onboarding Start (parent: 13 units missing — ONE
-// finding; OK · Studio · WAV FAILED · WAV … stay on `untranslatedPanelWords` on purpose). Claim 12
+// finding; OK · Studio · WAV FAILED · WAV … stay on `untranslatedPanelWords` on purpose). E4-54 added the three Studio
+// captions built as `+` chains or around a derived clause — the Save hint, the buffer hint, the mood caption with
+// `romanceSeventhClause` (parent: verbatim Strings, 8 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1808,6 +1810,32 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Share this piece", "Nearby", "Searching…", "Invite", "Share my pulse (live)",
                           "Each person's own numbers, side by side — nothing is combined into a shared score.", "Accept", "Decline", "Load"],
                          "literal keys the catalog lacked")
+
+        // E4-54 — three Studio captions that were verbatim Strings: the Save hint and the buffer hint were `Text("a" + "b")`
+        // chains (a String, never a key), the mood caption interpolated the derived `romanceSeventhClause`. Each literal is
+        // now its own key; the clause seams keys around its two counts and never writes a digit (MoodKnobsSayWhatTheyDoTests,
+        // re-anchored 1:1 in the same commit, still forbids a literal roster size).
+        let studioCaptions = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for seam in ["does not already have one \") + Self.romanceSeventhClause + \".\")",
+                     "let head: String = \"(\" + \"\\(plain)\" + String(localized: \" of the \")",
+                     "return head + \"\\(offered.count)\" + String(localized: \" offered)\")",
+                     "Text(String(localized: \"Saves the composed loop, if there is one, with its genre, key, tuning, tempo, tempo mode (following or locked), mood, \")",
+                     "+ String(localized: \"sound and FX character, and the piece — its tracks and parts. \")",
+                     "+ String(localized: \"Your mixer levels and hand-dialled FX stay with the instrument.\"))",
+                     "Text(String(localized: \"Smaller buffers respond sooner and cost more CPU. iOS may refuse a tier — \")",
+                     "+ String(localized: \"hardest on Bluetooth — so the row shows what iOS granted.\"))"] {
+            XCTAssertTrue(studioCaptions.contains(seam), "EchoelStudioView lost the E4-54 seam `\(seam)`")
+        }
+        for verbatim in ["does not already have one \\(Self.romanceSeventhClause).\")", "return \"(\\(plain) of the \\(offered.count) offered)\"",
+                         "Text(\"Saves the composed loop", "+ \"sound and FX character", "Text(\"Smaller buffers respond sooner and cost more CPU. iOS may refuse", "+ \"hardest on Bluetooth"] {
+            XCTAssertFalse(studioCaptions.contains(verbatim), "EchoelStudioView builds a caption as a verbatim String again: `\(verbatim)`")
+        }
+        try assertGerman(["Friendly ↔ scary (tension) · sparse ↔ busy (liveliness) · odd leaps (weird). Blends with your live signal. Darkness and Romance switch rather than fade: above 0.60 Darkness drops the voicing an octave, and above 0.50 Romance adds the 7th to genres whose chord does not already have one ",
+                          " of the ", " offered)",
+                          "Saves the composed loop, if there is one, with its genre, key, tuning, tempo, tempo mode (following or locked), mood, ",
+                          "sound and FX character, and the piece — its tracks and parts. ", "Your mixer levels and hand-dialled FX stay with the instrument.",
+                          "Smaller buffers respond sooner and cost more CPU. iOS may refuse a tier — ", "hardest on Bluetooth — so the row shows what iOS granted."],
+                         "Studio captions")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
