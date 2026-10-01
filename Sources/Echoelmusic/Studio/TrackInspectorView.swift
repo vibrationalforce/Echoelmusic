@@ -215,6 +215,14 @@ enum TrackMix {
         timeline.setLanePan(id: laneID, Float(pan))
     }
 
+    /// What the Level field says on a track with `role` — the Echoel track's level is also the
+    /// Studio instrument's. ONE wording, read by the inspector and the piece mixer (B3).
+    nonisolated static func levelHint(_ role: Role) -> String {
+        role == .echoelInstrument
+            ? String(localized: "1.00 unchanged, 0 silent. This is also the level the Studio instrument plays at; its Start lifts 0 back to 1.00")
+            : String(localized: "1.00 unchanged, 0 silent, 2.00 is +6 dB")
+    }
+
     /// What Mute says it does on a track with `role` — the coupling with the Studio instrument
     /// named where it exists. ONE wording, read by the track header (WA4 path 6).
     nonisolated static func muteHint(_ role: Role) -> String {
@@ -433,9 +441,7 @@ struct TrackInspectorView: View {
                             set: { TrackMix.setLevel($0, laneID: laneID, timeline: timeline) }),
                         range: TrackMix.levelRange,
                         decimals: 2,
-                        hint: controls.role == .echoelInstrument
-                            ? String(localized: "1.00 unchanged, 0 silent. This is also the level the Studio instrument plays at; its Start lifts 0 back to 1.00")
-                            : String(localized: "1.00 unchanged, 0 silent, 2.00 is +6 dB"),
+                        hint: TrackMix.levelHint(controls.role),
                         // `standard:` AFTER `hint:` — the memberwise initialiser demands declaration
                         // order (`EchoelValueField.hint` is declared above `standard`).
                         standard: Double(TimelineLane.defaultLevel))

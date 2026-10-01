@@ -249,6 +249,10 @@ struct WorkstationView: View {
     /// Local and cold, like the two above — it changes on a tap.
     private enum ImportKind { case audio, midi }
     @State private var importKind: ImportKind = .audio
+    /// B3 (founder 2026-10-01): what the plate shows — the arrangement, or the whole-piece mixer
+    /// (`PieceMixerView`) in its place. View state only: a tab choice, not part of the song.
+    @State private var plate: PlateView = .arrange
+    enum PlateView { case arrange, mix }
 
     /// The managed copy a tuning analysis is owed for, or nil. It is the `.task(id:)` key,
     /// which is why it holds the URL rather than a flag: a SECOND import must supersede the
@@ -294,6 +298,12 @@ struct WorkstationView: View {
             composeGuide
             if summary.isEmpty {
                 emptyState
+            } else if plate == .mix {
+                // B3 — the mixer stands INSTEAD of the arrangement and its track column, never
+                // beside them: a strip's Mute and the track header's Mute are one fact, so they
+                // are never on screen together (one control per fact on screen).
+                songLine(summary)
+                PieceMixerView(voiceCapacity: player.laneVoiceCapacity)
             } else {
                 songLine(summary)
                 // WA4 path 4 — the arrangement: every track's parts on the one shared scale,
@@ -863,21 +873,43 @@ struct WorkstationView: View {
     }
 
     /// A7 (founder 2026-10-01, the tablet mockup's tab row) — the piece's tabs, pinned above the
-    /// plate's scroll: Arrange is THIS plate and is not a button (it says where you are); Sound,
-    /// FX and Master open their panel on the Instrument stage through the chrome door, the same
-    /// receiver the track inspector's device door uses — no new modal, no second copy of a panel.
-    /// Each poster is written out literally so the guards can count the producers of each door.
-    /// FX and Master follow the Instrument strip's `SkillLevel` gates (`chips(for:)`), so a
-    /// beginner sees the same panels here as there. Mix and Export are NOT tabs yet: a whole-
-    /// piece mixer (B3) and a song export (B4) do not exist, and a tab with no destination is a
-    /// button that does nothing (#164/#227).
+    /// plate's scroll. Arrange and Mix (B3) switch THIS plate; Sound, FX and Master
+    /// open their panel on the Instrument stage through the chrome door, the same receiver the
+    /// track inspector's device door uses — no new modal, no second copy of a panel. Each poster
+    /// is written out literally so the guards can count the producers of each door. Mix and FX
+    /// follow the Instrument strip's `showsSongs` gate, Master its `showsProTabs` gate
+    /// (`chips(for:)`), so a beginner sees the same panels here as there. Export is NOT a tab
+    /// yet: a song export (B4) does not exist, and a tab with no destination is a button that
+    /// does nothing (#164/#227). (Until B3, Arrange was a plain tile — with nothing to switch to,
+    /// a button would have opened what was already open.)
     private var pieceTabs: some View {
         let level = SkillLevel(rawValue: skillLevelRaw) ?? StudioDefaultKeys.skillLevel.value
         return HStack(spacing: 6) {
-            EchoelIconTile(systemImage: "rectangle.split.3x1", title: "Arrange", prominent: true, expands: true)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Arrange")
-                .accessibilityAddTraits(.isSelected)
+            // B3: Arrange and Mix switch THIS plate. The current one is the filled tile AND says
+            // selected to VoiceOver — never colour alone; tapping it again changes nothing, and
+            // that is honest: it is where you are.
+            Button {
+                plate = .arrange
+            } label: {
+                EchoelIconTile(systemImage: "rectangle.split.3x1", title: "Arrange",
+                               prominent: plate == .arrange, expands: true)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Arrange")
+            .accessibilityHint("Shows the arrangement: the tracks and their parts")
+            .accessibilityAddTraits(plate == .arrange ? .isSelected : [])
+            if level.showsSongs {
+                Button {
+                    plate = .mix
+                } label: {
+                    EchoelIconTile(systemImage: "slider.vertical.3", title: "Mix",
+                                   prominent: plate == .mix, expands: true)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Mix")
+                .accessibilityHint("Shows every sounding track's level, pan, mute and solo in one list")
+                .accessibilityAddTraits(plate == .mix ? .isSelected : [])
+            }
             Button {
                 NotificationCenter.default.post(name: .echoelChromeDoor, object: "sound")
             } label: {
@@ -913,6 +945,11 @@ struct WorkstationView: View {
         .background(EchoelTheme.bg)
         .overlay(alignment: .bottom) {
             Rectangle().fill(EchoelTheme.border).frame(height: 1)
+        }
+        // B3: a level that hides the Mix tab must not leave the plate on a mixer it can no
+        // longer leave by the same tab — the plate falls back to the arrangement.
+        .onChange(of: level.showsSongs) { _, shows in
+            if !shows { plate = .arrange }
         }
     }
 

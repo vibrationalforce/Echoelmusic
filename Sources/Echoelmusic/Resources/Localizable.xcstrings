@@ -33942,6 +33942,96 @@
           }
         }
       }
+    },
+    "Shows the arrangement: the tracks and their parts" : {
+      "comment" : "Piece tab Arrange (B3): VoiceOver hint",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt das Arrangement: die Spuren und ihre Teile"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows the arrangement: the tracks and their parts"
+          }
+        }
+      }
+    },
+    "Shows every sounding track's level, pan, mute and solo in one list" : {
+      "comment" : "Piece tab Mix (B3): VoiceOver hint",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt Pegel, Panorama, Stumm und Solo jeder klingenden Spur in einer Liste"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows every sounding track's level, pan, mute and solo in one list"
+          }
+        }
+      }
+    },
+    "No track makes a sound yet. Add a track or write a part, and its strip appears here" : {
+      "comment" : "Piece mixer (B3): empty state",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch klingt keine Spur. Füge eine Spur hinzu oder schreibe einen Teil, dann erscheint hier ihr Kanalzug"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No track makes a sound yet. Add a track or write a part, and its strip appears here"
+          }
+        }
+      }
+    },
+    "1 track makes no sound and has no strip" : {
+      "comment" : "Piece mixer (B3): count of tracks without a strip, singular",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 Spur klingt nicht und hat keinen Kanalzug"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 track makes no sound and has no strip"
+          }
+        }
+      }
+    },
+    "tracks make no sound and have no strip" : {
+      "comment" : "Piece mixer (B3): count of tracks without a strip, after the number",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spuren klingen nicht und haben keinen Kanalzug"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tracks make no sound and have no strip"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
