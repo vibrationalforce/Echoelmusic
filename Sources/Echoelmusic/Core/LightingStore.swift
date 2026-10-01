@@ -55,6 +55,26 @@
 //  tidy-up away from silently untrue. `TheLightingLookIsACanonicalParameterTests` pins the
 //  path and the two denials; nothing pins line order any more, because nothing depends on it.
 //
+//  ⭐ SINCE WORKSTATION C3a THE LOOK CANNOT MOVE FASTER THAN THE FLASH LAW — the safety half
+//  of an automatable look, landed BEFORE anything may write it. A song curve would step this
+//  value once per transport step (a sixteenth: 125 ms at 120 BPM), and `FlashGuard.slewedDimmer`
+//  downstream lets the dimmer move ~2.4 per second: a curve alternating 0 and 1 on successive
+//  sixteenths would still swing a rig by ~0.3 four times a second — a WCAG general flash above
+//  3 Hz. So neither sender reads this value raw any more. Each SLEWS it per tick from the look
+//  its network last ACCEPTED (`slewedLookIntensity` at `maxLookChangePerSecond`, 0.10 × 3 =
+//  0.30 per second — the #1446 anchor discipline, so an outage freezes this ramp exactly as it
+//  freezes the dimmer's). A 3 Hz half-cycle (1/6 s) then moves the factor by at most 0.05.
+//  With nothing accepted yet there is nothing on the wire to ramp from, and the look lands
+//  with the dimmer's own first edge — the "no history" rule `slewedDimmer` already applies.
+//  ⚠️ WHAT THIS BOUNDS IS THE LOOK'S CONTRIBUTION, NOT THE OUTPUT. The generated target has
+//  its own rate: while music sounds it is `0.3 + 0.7·masterLevel`, and `masterLevel` is the
+//  unsmoothed sum of the sounding velocities, so it can step per sequencer tick. That path is
+//  bounded by the dimmer slew alone and is NOT covered here. ⚠️ Per NOMINAL tick, too: the
+//  late-timer residual `FlashGuard.senderLuminancePerSecond` documents applies unchanged.
+//  Nothing writes the look in this build, so every slew runs from 1 to 1 and every packet is
+//  byte-identical. Pinned by `TheLightLookMovesNoFasterThanTheFlashLawTests`; the curve, its
+//  door and the eligibility flip are the NEXT slice (C3b), together.
+//
 
 import Foundation
 import Observation
@@ -90,7 +110,7 @@ public final class LightingStore {
     /// ⚠️ `nonisolated` although the class is `@MainActor`: Xcode's toolchain isolates a
     /// `static let` on a `@MainActor` type even when it is immutable, and SwiftPM's does not
     /// (the two disagree on SE-0434 inference, recorded in CLAUDE.md's build-error table).
-    /// The three pure members here carry no state, so isolating them buys nothing and costs a
+    /// The pure members here carry no state, so isolating them buys nothing and costs a
     /// compile error in exactly one of the two gates. `PolySynthVoice.automatableBases` is
     /// marked the same way for the same reason.
     public nonisolated static let defaultLookIntensity: Float = 1
@@ -114,9 +134,11 @@ public final class LightingStore {
     /// - Returns: `generated × lookIntensity`, clamped to 0…1.
     ///
     /// ⚠️ **IT CAN ONLY ATTENUATE.** Both factors are clamped into 0…1, so the result is
-    /// never greater than `generated`. That is not a stylistic limit — it is what keeps the
-    /// flash guarantee intact without re-deriving it: a stage that can only reduce luminance
-    /// cannot raise the luminance velocity `FlashGuard.slewedDimmer` bounds downstream.
+    /// never greater than `generated`. That bounds the LEVEL, not the RATE: a factor that
+    /// itself steps 1 → 0 → 1 moves the output as fast as it steps. ⛔ This doc used to say
+    /// attenuation "keeps the flash guarantee intact without re-deriving it" — true only while
+    /// the factor is still, which is why the senders hand this kernel a SLEWED look
+    /// (`slewedLookIntensity`, Workstation C3a) and never the store's raw value.
     ///
     /// ⚠️ **NaN FALLS BACK TO THE IDENTITY (1), NOT TO 0**, and the direction is a decision,
     /// not an oversight. `FloatingPointClamp.clamped(to:)` maps NaN to the range's LOWER bound,
@@ -135,5 +157,38 @@ public final class LightingStore {
     public nonisolated static func sanitizedLookIntensity(_ value: Float) -> Float {
         guard value.isFinite else { return defaultLookIntensity }
         return Swift.min(Swift.max(value, 0), 1)
+    }
+
+    // MARK: - The flash ceiling on the creative factor (Workstation C3a)
+
+    /// How fast the creative level may move on the wire, derived from the flash law rather than
+    /// chosen: one flash threshold per cycle at the ceiling, `0.10 × 3 = 0.30` per second, so a
+    /// 3 Hz half-cycle moves it by at most half the threshold. The same derivation as
+    /// `VisualCreativeState.maxIntensityChangePerSecond`, written out here rather than read
+    /// from there — light must not depend on the picture's owner.
+    ///
+    /// ⚠️ `nonisolated` for the reason `defaultLookIntensity` gives above.
+    public nonisolated static let maxLookChangePerSecond: Double =
+        FlashGuard.luminanceDeltaThreshold * FlashGuard.maxFlashHz
+
+    /// One sender tick of the creative factor: `current` (the look the network last ACCEPTED)
+    /// moves toward `target` (this store's value) by at most `maxLookChangePerSecond × dt`.
+    /// The dt rule — capped at 1 s, 0.1 s when not finite or not positive — is
+    /// `FlashGuard.maxDelta`'s, not a second one. `target` is sanitised the owner's way, so a
+    /// non-finite target moves toward the identity.
+    ///
+    /// `current == nil` is NO HISTORY — nothing accepted on the wire yet — and the look lands
+    /// on the goal: the rule `FlashGuard.slewedDimmer` applies to the dimmer in the same tick
+    /// (a negative anchor returns the target). A non-finite `current` is read the same way.
+    ///
+    /// ⭐ EXACT AT THE IDENTITY: `slewedLookIntensity(from: 1, toward: 1, dt:)` is exactly 1,
+    /// which is what keeps a build in which nothing writes the look byte-identical on the wire.
+    public nonisolated static func slewedLookIntensity(from current: Float?, toward target: Float,
+                                                       dt: Double) -> Float {
+        let goal = sanitizedLookIntensity(target)
+        guard let current, current.isFinite else { return goal }
+        let step = FlashGuard.maxDelta(perSecond: maxLookChangePerSecond, dt: dt)
+        return Float(FlashGuard.limitedLuminance(from: Double(sanitizedLookIntensity(current)),
+                                                 to: Double(goal), maxDelta: step))
     }
 }

@@ -135,9 +135,11 @@ final class TheLightingLookIntensityIsOwnedAboveTheSendersTests: XCTestCase {
 
     // MARK: - Claims 5–7 — the ORDER, which is the founder's decision itself
 
-    /// END-TO-END. The creative stage can only ATTENUATE. This is not a style limit: a stage
-    /// that can never raise luminance cannot raise the luminance velocity `FlashGuard` bounds
-    /// downstream, so the flash guarantee survives the insertion without being re-derived.
+    /// END-TO-END. The creative stage can only ATTENUATE — it bounds the LEVEL. ⛔ This doc used
+    /// to add "so the flash guarantee survives the insertion without being re-derived"; that
+    /// holds only while the factor is still. A factor that steps fast moves the output as fast,
+    /// so the RATE is bounded where the senders read it (`LightingStore.slewedLookIntensity`,
+    /// pinned by `TheLightLookMovesNoFasterThanTheFlashLawTests`).
     func testTheCreativeStageCanOnlyAttenuate() {
         for g in Self.generated {
             for look in [Float](stride(from: 0, through: 1, by: 0.125)) {

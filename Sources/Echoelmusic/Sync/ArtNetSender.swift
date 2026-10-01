@@ -405,8 +405,16 @@ public final class ArtNetSender {
         // ⚠️ `lastTarget` above deliberately holds the GENERATED value, never this one: the
         // hold arm re-enters here every tick, so caching the scaled value would multiply the
         // look in again on each pass and fade the rig to nothing on a stale source.
-        let look = LightingStore.sanitizedLookIntensity(lighting?.lookIntensity
-                                                        ?? LightingStore.defaultLookIntensity)
+        // ⭐ C3a — the look is SLEWED from the level the network last accepted, never read raw:
+        // a curve steps the store once per transport step, and the dimmer slew below is too
+        // loose to stop a 0.10 swing at 4 Hz. With nothing accepted yet (the "no history"
+        // `FlashGuard.slewedDimmer` snaps on) there is nothing on the wire to ramp from, so the
+        // look lands with the dimmer's first edge. The derivation is stated once, at `LightingStore`.
+        let lookAnchor: Float? = pump.acceptedDimmer < 0 ? nil : pump.acceptedLookIntensity
+        let look = LightingStore.slewedLookIntensity(from: lookAnchor,
+                                                     toward: lighting?.lookIntensity
+                                                         ?? LightingStore.defaultLookIntensity,
+                                                     dt: FlashGuard.senderTickSeconds)
         let creative = LightingStore.creativeTarget(target, lookIntensity: look)
         // Grand Master scales the CREATIVE target; Blackout cuts to 0 instantly (and
         // resets the slew anchor, so the return to light ramps up from dark).

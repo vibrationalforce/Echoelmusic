@@ -321,8 +321,14 @@ public final class SACNSender {
         // ⚠️ `lastTarget` above deliberately holds the GENERATED value, never this one: the
         // hold arm re-enters here every tick, so caching the scaled value would multiply the
         // look in again on each pass and fade the rig to nothing on a stale source.
-        let look = LightingStore.sanitizedLookIntensity(lighting?.lookIntensity
-                                                        ?? LightingStore.defaultLookIntensity)
+        // ⭐ C3a — SLEWED from the level the network last accepted, never read raw; with nothing
+        // accepted yet it lands with the dimmer's first edge (mirrors ArtNetSender; the
+        // derivation is stated once, at `LightingStore`).
+        let lookAnchor: Float? = pump.acceptedDimmer < 0 ? nil : pump.acceptedLookIntensity
+        let look = LightingStore.slewedLookIntensity(from: lookAnchor,
+                                                     toward: lighting?.lookIntensity
+                                                         ?? LightingStore.defaultLookIntensity,
+                                                     dt: FlashGuard.senderTickSeconds)
         let creative = LightingStore.creativeTarget(dimmer, lookIntensity: look)
         let mastered = ArtNetSender.masteredDimmer(creative, grandMaster: grandMaster, blackout: blackout)
         // Send when the source is fresh, the master state moved, the creative level moved, OR
