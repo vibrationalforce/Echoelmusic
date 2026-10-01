@@ -371,7 +371,7 @@ struct PatchbayView: View {
             Text("Body → parameter").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
             VStack(alignment: .leading, spacing: 10) {
                 if engine.matrix.routes.isEmpty {
-                    Text("No routes yet. A route lets one measured channel of your body move one parameter of the instrument \u{2014} the tempo, or any sound parameter automation can reach.")
+                    Text("No routes yet. A route lets one measured channel of your body move one parameter of the instrument — the tempo, or any sound parameter automation can reach.")
                         .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -397,7 +397,7 @@ struct PatchbayView: View {
                             .strokeBorder(EchoelTheme.border, lineWidth: 1))
                 }
                 .accessibilityHint("Adds a route from your coherence to the chosen parameter; change the source in the row.")
-                Text("Routes apply about once a second from the measured body and are kept across launches. A route OWNS its parameter while it is enabled \u{2014} the body sets the value, so a route on the level sets the level. Bio min and Bio max are the part of the channel's range the route spans: coherence usually sits between about 0.30 and 0.60, so setting those two makes the parameter travel its whole way instead of a third of it. A tempo route glides, and does nothing while the BPM lock is on. Every applied value also leaves as /echoelmusic/mod/<key> when OSC out is routed.")
+                Text("Routes apply about once a second from the measured body and are kept across launches. A route OWNS its parameter while it is enabled — the body sets the value, so a route on the level sets the level. Bio min and Bio max are the part of the channel's range the route spans: coherence usually sits between about 0.30 and 0.60, so setting those two makes the parameter travel its whole way instead of a third of it. A tempo route glides, and does nothing while the BPM lock is on. Every applied value also leaves as /echoelmusic/mod/<key> when OSC out is routed.")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }

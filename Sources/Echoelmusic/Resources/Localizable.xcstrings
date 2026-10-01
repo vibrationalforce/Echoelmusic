@@ -23002,6 +23002,214 @@
           }
         }
       }
+    },
+    "No routes yet. A route lets one measured channel of your body move one parameter of the instrument — the tempo, or any sound parameter automation can reach." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Routen. Eine Route lässt einen gemessenen Kanal deines Körpers einen Parameter des Instruments bewegen — das Tempo oder jeden Klangparameter, den die Automation erreicht."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No routes yet. A route lets one measured channel of your body move one parameter of the instrument — the tempo, or any sound parameter automation can reach."
+          }
+        }
+      }
+    },
+    "Routes apply about once a second from the measured body and are kept across launches. A route OWNS its parameter while it is enabled — the body sets the value, so a route on the level sets the level. Bio min and Bio max are the part of the channel's range the route spans: coherence usually sits between about 0.30 and 0.60, so setting those two makes the parameter travel its whole way instead of a third of it. A tempo route glides, and does nothing while the BPM lock is on. Every applied value also leaves as /echoelmusic/mod/<key> when OSC out is routed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routen greifen etwa einmal pro Sekunde aus dem gemessenen Körper und bleiben über Neustarts erhalten. Eine Route BESITZT ihren Parameter, solange sie aktiv ist — der Körper setzt den Wert, eine Route auf den Pegel setzt also den Pegel. Bio min und Bio max sind der Teil des Kanalbereichs, den die Route überspannt: Kohärenz liegt meist etwa zwischen 0,30 und 0,60, mit diesen beiden Werten durchläuft der Parameter also seinen ganzen Weg statt eines Drittels. Eine Tempo-Route gleitet und tut nichts, solange die BPM-Sperre an ist. Jeder angewendete Wert geht außerdem als /echoelmusic/mod/<key> hinaus, wenn OSC-Ausgang geroutet ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routes apply about once a second from the measured body and are kept across launches. A route OWNS its parameter while it is enabled — the body sets the value, so a route on the level sets the level. Bio min and Bio max are the part of the channel's range the route spans: coherence usually sits between about 0.30 and 0.60, so setting those two makes the parameter travel its whole way instead of a third of it. A tempo route glides, and does nothing while the BPM lock is on. Every applied value also leaves as /echoelmusic/mod/<key> when OSC out is routed."
+          }
+        }
+      }
+    },
+    "Start" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        }
+      }
+    },
+    "Two Echoelmusic devices on the same Wi-Fi find each other here. Go live, connect, and share your piece both ways — a starting point to jam from together." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwei Echoelmusic-Geräte im selben WLAN finden sich hier. Geh live, verbinde dich und teile dein Stück in beide Richtungen — ein Ausgangspunkt, um gemeinsam zu jammen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Two Echoelmusic devices on the same Wi-Fi find each other here. Go live, connect, and share your piece both ways — a starting point to jam from together."
+          }
+        }
+      }
+    },
+    "Share this piece" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Stück teilen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share this piece"
+          }
+        }
+      }
+    },
+    "Nearby" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In der Nähe"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nearby"
+          }
+        }
+      }
+    },
+    "Searching…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suche…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Searching…"
+          }
+        }
+      }
+    },
+    "Invite" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einladen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invite"
+          }
+        }
+      }
+    },
+    "Share my pulse (live)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meinen Puls teilen (live)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share my pulse (live)"
+          }
+        }
+      }
+    },
+    "Each person's own numbers, side by side — nothing is combined into a shared score." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die eigenen Werte jeder Person, nebeneinander — nichts wird zu einem gemeinsamen Wert verrechnet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each person's own numbers, side by side — nothing is combined into a shared score."
+          }
+        }
+      }
+    },
+    "Accept" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annehmen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accept"
+          }
+        }
+      }
+    },
+    "Decline" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ablehnen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decline"
+          }
+        }
+      }
+    },
+    "Load" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Load"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

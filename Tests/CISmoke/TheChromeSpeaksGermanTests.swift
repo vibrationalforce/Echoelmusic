@@ -100,7 +100,10 @@
 // and the rendered export-failure sentence — Export/Import/Not-opened notes, play-surface sound, visual preset, look,
 // Share, New name (parent: interpolated literals, 8 units missing — ONE finding). E4-52 added the visible interpolated
 // lines — the two „Undo delete of“ labels, the part-slots-full note, the „by“ credit, the artist-name caption, Live
-// Colabo's invite line and „Piece from“ (parent: interpolated literals, 7 units missing — ONE finding). Claim 12
+// Colabo's invite line and „Piece from“ (parent: interpolated literals, 7 units missing — ONE finding). E4-53 added the
+// literal keys the catalog still lacked — the Routing card's two captions (their `\u{2014}` escapes spelled as the
+// character, so the key can match), Live Colabo's words and the onboarding Start (parent: 13 units missing — ONE
+// finding; OK · Studio · WAV FAILED · WAV … stay on `untranslatedPanelWords` on purpose). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1786,6 +1789,25 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         try assertGerman(["Undo delete of ", "Internal part slots are full (", ") — the instrument's music still plays and still exports.", "by ",
                           "Stamped on pieces you save, and used in piece and export file names. Shown to nearby devices while Live Colabo is on. Without a name they are stamped ",
                           " wants to join", "Piece from "], "visible interpolated lines")
+
+        // E4-53 — the literal keys the catalog still lacked, measured by a scan of every LocalizedStringKey-taking
+        // call under reachable Sources: these looked up a key that had no `de` unit, so they fell back to English
+        // one line at a time. No code changed except the Routing card's two captions, whose `\\u{2014}` escapes are now
+        // the character itself — a catalog key is the RESOLVED text, and the honesty rule matches the raw literal.
+        let routingCaptions = try codeOnly("Sources/Echoelmusic/Studio/PatchbayView.swift")
+        for seam in ["of the instrument — the tempo, or any sound parameter automation can reach.",
+                     "while it is enabled — the body sets the value"] {
+            XCTAssertTrue(routingCaptions.contains(seam), "PatchbayView lost the E4-53 caption text `\(seam)`")
+        }
+        for verbatim in ["instrument \\u{2014} the tempo", "enabled \\u{2014} the body"] {
+            XCTAssertFalse(routingCaptions.contains(verbatim), "PatchbayView spells the caption's dash as an escape again, so its key cannot match: `\(verbatim)`")
+        }
+        try assertGerman(["No routes yet. A route lets one measured channel of your body move one parameter of the instrument — the tempo, or any sound parameter automation can reach.",
+                          "Start",
+                          "Two Echoelmusic devices on the same Wi-Fi find each other here. Go live, connect, and share your piece both ways — a starting point to jam from together.",
+                          "Share this piece", "Nearby", "Searching…", "Invite", "Share my pulse (live)",
+                          "Each person's own numbers, side by side — nothing is combined into a shared score.", "Accept", "Decline", "Load"],
+                         "literal keys the catalog lacked")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
