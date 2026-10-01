@@ -274,10 +274,11 @@ final class TheSelectedPartsNotesAreEditedThroughOneWriterTests: XCTestCase {
         // since M2 a finished move and a finished stretch — still one commit per action. M3
         // (`TheSelectionIsTransposedQuantizedAndDuplicatedInOneStepTests`) moved it to 8:
         // transpose, quantize, duplicate, velocity. M4 (`TheNotesMoveThroughTheSessionKeyTests`)
-        // moved it to 10: fit to key, step in key.
-        XCTAssertEqual(editor.components(separatedBy: "timeline.setClipNotes(").count - 1, 10, """
+        // moved it to 10: fit to key, step in key. B6a (`TheVelocityIsDrawnUnderTheNotesInOneStepTests`)
+        // moved it to 11: the velocity lane's stroke.
+        XCTAssertEqual(editor.components(separatedBy: "timeline.setClipNotes(").count - 1, 11, """
             create, delete, move, stretch, transpose, quantize, duplicate, velocity, fit to key, \
-            step in key — each one commit through the one writer
+            step in key, velocity stroke — each one commit through the one writer
             """)
         for banned in ["updateMelody", "PianoRollModel", "pianoRoll", "currentTick", "player.",
                        "preflightTempo", "pattern.", "UserDefaults", "@AppStorage", ".sheet(",

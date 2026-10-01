@@ -41,6 +41,13 @@
 //  Since M8: a part on a MIDI track past the rack's capacity says, under "Notes", that the track
 //  has no voice — its notes can be edited and are never heard. The inspector's line and rule.
 //
+//  Since B6a (workstation redesign 2026-10-01): a VELOCITY LANE under the grid, in the same
+//  horizontal scroll so each stem stays under its note's column (`PartVelocityLane`). It draws
+//  the notes on the rows shown and edits only the M3 targets; a tap sets the stems in one column,
+//  a hold-and-slide draws a straight line across the columns it crosses. The stroke previews in
+//  the lane's own leaf and is committed ONCE at release through `setClipNotes` — one Undo.
+//  VoiceOver keeps the Velocity row below; the lane is hidden from it.
+//
 //  ⚠️ WHAT IT DOES NOT DO, stated so the surface does not read as more: no scale LOCK — a tap
 //  or a drag may still place a note outside the key (the shading shows it; Fit repairs it), no
 //  auto-scroll while dragging (a move stays
@@ -183,50 +190,65 @@ private struct PartNoteGrid: View {
                     // first (review of cf7414c72, LOW: the label counted every note while the
                     // actions walked only these, so a listener wrapped early, unwarned).
                     let onScreen = visible.filter { range.contains($0.pitch) }
+                    // B6a: what the velocity lane and the M3/M4 buttons act on — the ONE rule
+                    // (`ClipNoteEdit.targets`), asked once here for both (#416).
+                    let selected = picked.ids.intersection(Set(visible.map(\.id)))
+                    let targets = ClipNoteEdit.targets(selected: selected, onScreen: pickedOnScreen,
+                                                       visible: visible)
                     let grid = NoteGridGesture.Grid(
                         stepWidth: Double(Self.stepWidth), rowHeight: Double(Self.rowHeight),
                         rows: range, partSteps: ClipNoteEdit.stepCount(lengthTicks: region.lengthTicks))
                     ScrollView(.horizontal, showsIndicators: true) {
-                        PartNoteCanvas(visible: visible, steps: steps, grid: grid, naming: naming,
-                                       picked: picked.ids, editable: editable,
-                                       keyClasses: Set(session.key.pitchClasses),
-                                       onTap: { location in
-                                           tap(location, visible: visible, region: region,
-                                               offset: offset, steps: steps, range: range,
-                                               editable: editable)
-                                       },
-                                       onRelease: { gesture in
-                                           finish(gesture, region: region, offset: offset)
-                                       })
-                            // Design slice 9: where the song is, inside this part. The position
-                            // is read in that leaf's own file — this one hands it cold numbers.
-                            .overlay(alignment: .leading) {
-                                PartNotePlayheadView(partStartTick: region.startTick,
-                                                     lengthTicks: region.lengthTicks,
-                                                     stepWidth: Self.stepWidth)
+                        // B6a: the velocity lane rides in the SAME scroll view, under the grid, so a
+                        // stem stays under its note's column while the part scrolls.
+                        VStack(alignment: .leading, spacing: 4) {
+                            PartNoteCanvas(visible: visible, steps: steps, grid: grid, naming: naming,
+                                           picked: picked.ids, editable: editable,
+                                           keyClasses: Set(session.key.pitchClasses),
+                                           onTap: { location in
+                                               tap(location, visible: visible, region: region,
+                                                   offset: offset, steps: steps, range: range,
+                                                   editable: editable)
+                                           },
+                                           onRelease: { gesture in
+                                               finish(gesture, region: region, offset: offset)
+                                           })
+                                // Design slice 9: where the song is, inside this part. The position
+                                // is read in that leaf's own file — this one hands it cold numbers.
+                                .overlay(alignment: .leading) {
+                                    PartNotePlayheadView(partStartTick: region.startTick,
+                                                         lengthTicks: region.lengthTicks,
+                                                         stepWidth: Self.stepWidth)
+                                }
+                                .accessibilityElement()
+                                .accessibilityLabel(ClipNoteEdit.gridLabel(shown: onScreen.count, total: visible.count,
+                                                                           picked: pickedCount))
+                                .accessibilityHint(editable
+                                    ? String(localized: "Use the actions to select the next or previous note; the controls below act on the selection. By touch: tap an empty cell to add a note, tap notes to select them; press and hold, then slide, to move, stretch or box-select")
+                                    : String(localized: "Shown, not edited"))
+                                // Modes census UX A: the grid was touch only — a VoiceOver user could
+                                // hear the count and never pick a note. Stepping picks ONE note on
+                                // screen (the rows shown), through the one selection owner, and says
+                                // which; the controls below then act on it as on a tapped pick.
+                                .accessibilityAction(named: "Select next note") {
+                                    stepPick(1, among: onScreen)
+                                }
+                                .accessibilityAction(named: "Select previous note") {
+                                    stepPick(-1, among: onScreen)
+                                }
+                            if !onScreen.isEmpty {
+                                PartVelocityLane(notes: onScreen, targets: targets, steps: steps,
+                                                 stepWidth: Self.stepWidth, editable: editable,
+                                                 onRelease: { drawn in
+                                                     drawVelocities(drawn, region: region)
+                                                 })
                             }
-                            .accessibilityElement()
-                            .accessibilityLabel(ClipNoteEdit.gridLabel(shown: onScreen.count, total: visible.count,
-                                                                       picked: pickedCount))
-                            .accessibilityHint(editable
-                                ? String(localized: "Use the actions to select the next or previous note; the controls below act on the selection. By touch: tap an empty cell to add a note, tap notes to select them; press and hold, then slide, to move, stretch or box-select")
-                                : String(localized: "Shown, not edited"))
-                            // Modes census UX A: the grid was touch only — a VoiceOver user could
-                            // hear the count and never pick a note. Stepping picks ONE note on
-                            // screen (the rows shown), through the one selection owner, and says
-                            // which; the controls below then act on it as on a tapped pick.
-                            .accessibilityAction(named: "Select next note") {
-                                stepPick(1, among: onScreen)
-                            }
-                            .accessibilityAction(named: "Select previous note") {
-                                stepPick(-1, among: onScreen)
-                            }
+                        }
                     }
                     controls(range: range, picked: pickedOnScreen, editable: editable,
                              region: region)
                         .onAppear { if centre == nil { centre = heldCentre } }
                     if editable, !visible.isEmpty {
-                        let selected = picked.ids.intersection(Set(visible.map(\.id)))
                         // Design slice 3: ONE picked note is said in words — the grid shows
                         // it as a block, and the name, bar and length are what a musician asks.
                         // Only a pick ON SCREEN (review of 292a932af, LOW-4): a pick scrolled
@@ -244,9 +266,7 @@ private struct PartNoteGrid: View {
                                                                                 naming: naming, preferFlats: flats,
                                                                                 spoken: true))
                         }
-                        selectionControls(targets: ClipNoteEdit.targets(selected: selected,
-                                                                         onScreen: pickedOnScreen,
-                                                                         visible: visible),
+                        selectionControls(targets: targets,
                                           scope: Self.scope(selected: selected.count,
                                                             onScreen: pickedCount),
                                           clip: clip, region: region, offset: offset,
@@ -408,6 +428,15 @@ private struct PartNoteGrid: View {
         guard let clip = clipStore.clip(id: region.clipID),
               let updated = ClipNoteEdit.settingVelocity(ids, to: velocity,
                                                          in: clip.melody?.notes ?? []) else { return }
+        _ = timeline.setClipNotes(clipID: region.clipID, updated, clips: clipStore)
+    }
+
+    /// B6a — one stroke on the velocity lane, handed over when the finger lifts: ONE
+    /// `setClipNotes`, ONE undo step (`.clipNotes`), and nothing at all when the stroke redrew
+    /// what was there or crossed no target.
+    private func drawVelocities(_ drawn: [UUID: Float], region: TimelineRegion) {
+        guard let clip = clipStore.clip(id: region.clipID),
+              let updated = ClipNoteEdit.settingVelocities(drawn, in: clip.melody?.notes ?? []) else { return }
         _ = timeline.setClipNotes(clipID: region.clipID, updated, clips: clipStore)
     }
 

@@ -293,6 +293,70 @@ enum ClipNoteEdit {
         return values.reduce(0, +) / Float(values.count)
     }
 
+    // MARK: - B6a: the velocity lane under the grid
+    //
+    // One stem per note the grid DRAWS (the rows shown), under its column; a stroke redraws the
+    // stems it crosses. Only `targets` change — the M3 rule (the selection on screen, or the whole
+    // part when nothing is selected), so a selection scrolled off the rows is never redrawn
+    // unseen. The lane's preview and its commit are the SAME arithmetic (#416, the M2 drag law).
+
+    /// The velocity a point `y` points below the top of a lane `height` points tall stands for:
+    /// the top edge is 1, the bottom edge 0, rounded to hundredths — the two decimals the
+    /// velocity row prints, so the number under the grid after a stroke is the number the stroke
+    /// drew. nil for a non-finite point or a lane with no height.
+    nonisolated static func laneVelocity(atY y: Double, height: Double) -> Float? {
+        guard y.isFinite, height.isFinite, height > 0 else { return nil }
+        let level = (1 - y / height).clamped(to: 0...1)
+        return Float((level * 100).rounded() / 100)
+    }
+
+    /// One stroke on the velocity lane, from where the finger went down (`x0`, `y0`) to where it
+    /// is now (`x1`, `y1`), in the lane's own points. Every TARGET note in `notes` whose drawn
+    /// column (`startStep` — the column the grid draws its block in) lies between the two
+    /// columns takes the height of a straight line at that column: the start column gets `y0`,
+    /// the end column `y1`, the ones between their linear mix — a slanted stroke draws a ramp. A
+    /// stroke that stays in ONE column takes the finger's CURRENT height, so a hold-and-slide
+    /// straight up or down drags that stem (and every target note in its column — a chord moves
+    /// together). Returns the drawn velocity per note id, empty when no target is crossed;
+    /// whether anything CHANGES is `settingVelocities`' question, not this one's.
+    nonisolated static func laneStroke(fromX x0: Double, y0: Double, toX x1: Double, y1: Double,
+                                       stepWidth: Double, height: Double,
+                                       notes: [Note], targets: Set<UUID>) -> [UUID: Float] {
+        guard stepWidth.isFinite, stepWidth > 0, x0.isFinite, x1.isFinite else { return [:] }
+        let c0 = laneColumn(x: x0, stepWidth: stepWidth)
+        let c1 = laneColumn(x: x1, stepWidth: stepWidth)
+        let span = Swift.min(c0, c1)...Swift.max(c0, c1)
+        var drawn: [UUID: Float] = [:]
+        for note in notes where targets.contains(note.id) && span.contains(note.startStep) {
+            let y = c0 == c1 ? y1 : y0 + (y1 - y0) * Double(note.startStep - c0) / Double(c1 - c0)
+            if let velocity = laneVelocity(atY: y, height: height) { drawn[note.id] = velocity }
+        }
+        return drawn
+    }
+
+    /// The step column under `x`, bounded so a wild coordinate cannot trap `Int(_:)`.
+    private nonisolated static func laneColumn(x: Double, stepWidth: Double) -> Int {
+        Int((x / stepWidth).rounded(.down).clamped(to: -1_000_000...1_000_000))
+    }
+
+    /// The clip's notes with each id in `drawn` set to ITS OWN velocity (NaN-safe, 0…1); an id the
+    /// clip does not hold is ignored. nil when nothing changes — a stroke that redraws what is
+    /// there commits no step, like every M3 operation.
+    nonisolated static func settingVelocities(_ drawn: [UUID: Float], in clipNotes: [Note]) -> [Note]? {
+        guard !drawn.isEmpty else { return nil }
+        var changed = false
+        let updated = clipNotes.map { note -> Note in
+            guard let target = drawn[note.id] else { return note }
+            let value = target.clamped(to: 0...1)
+            guard note.velocity != value else { return note }
+            var redrawn = note
+            redrawn.velocity = value
+            changed = true
+            return redrawn
+        }
+        return changed ? updated : nil
+    }
+
     /// `ids` copied once, right after themselves: the copies start one selection-span later
     /// (the span from the first start to the last end, rounded up to whole steps). nil when a
     /// copy would start outside the part — nothing the player would skip is created. The copies
