@@ -208,7 +208,7 @@ public final class LoopExporter {
         // assigns in the same block that sets `isRecording`, so the guard above is what
         // makes the continuation certain to resume.
         if engine.retroCapture.writeFailed {
-            status = .failed("Recording could not be written to disk")
+            status = .failed(String(localized: "Recording could not be written to disk"))
             try? FileManager.default.removeItem(at: url)
             return nil
         }
@@ -245,7 +245,7 @@ public final class LoopExporter {
         let bpm = beatPlayer.pattern.tempo
         let calc = StudioCalculator(bpm: bpm)
         let seconds = calc.loopSeconds(bars: max(1, bars))
-        guard seconds > 0 else { status = .failed("Invalid loop length"); return nil }
+        guard seconds > 0 else { status = .failed(String(localized: "Invalid loop length")); return nil }
 
         // 1. Record live-only (NO 30 s pre-roll — C6) and play the loop from the top.
         cancelRequested = false
@@ -280,7 +280,7 @@ public final class LoopExporter {
             // reaching disk). Do not paper that over with the generic line — "Capture
             // failed" tells the user nothing they can act on, "could not be written to
             // disk" tells them to free space.
-            if case .failed = status {} else { status = .failed("Capture failed") }
+            if case .failed = status {} else { status = .failed(String(localized: "Capture failed")) }
             return nil
         }
 
@@ -300,7 +300,7 @@ public final class LoopExporter {
         let bpm = beatPlayer.pattern.tempo
         let calc = StudioCalculator(bpm: bpm)
         let seconds = calc.loopSeconds(bars: max(1, bars))
-        guard seconds > 0 else { status = .failed("Invalid loop length"); return nil }
+        guard seconds > 0 else { status = .failed(String(localized: "Invalid loop length")); return nil }
         guard Self.canKeepLast(bars: bars, bpm: bpm) else {
             // The ring only holds ~30 s of history — an honest limit beats a
             // silently truncated, unloopable file. Since #200 the UI asks the SAME
@@ -322,7 +322,7 @@ public final class LoopExporter {
         guard let cafURL = engine.retroCapture.captureRecent(seconds: window) else {
             // Wording deliberately not "Nothing to capture yet": it is rendered as
             // "<reason>. Nothing was saved." and read "Nothing … nothing".
-            status = .failed("The capture buffer is empty")
+            status = .failed(String(localized: "The capture buffer is empty"))
             return nil
         }
 
@@ -348,7 +348,7 @@ public final class LoopExporter {
             status = .done(url)
             return url
         } else {
-            status = .failed("Export failed")
+            status = .failed(String(localized: "Export failed"))
             return nil
         }
     }

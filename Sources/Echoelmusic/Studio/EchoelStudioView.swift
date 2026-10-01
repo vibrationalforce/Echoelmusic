@@ -2530,9 +2530,9 @@ struct EchoelStudioView: View {
             // accessibility string is invisible with VoiceOver off, so no screenshot and no
             // design pass will ever show it). A false claim hides best where it is spoken.
             .accessibilityLabel("Live Colabo — play together with a nearby device")
-            .accessibilityHint("Opens the nearby-devices sheet: find a device on the same "
-                               + "Wi-Fi and share your piece with it. The two devices are "
-                               + "not clock-synced.")
+            .accessibilityHint(String(localized: "Opens the nearby-devices sheet: find a device on the same ")
+                               + String(localized: "Wi-Fi and share your piece with it. The two devices are ")
+                               + String(localized: "not clock-synced."))
             #endif
 
             Button { showLearn = true } label: {
@@ -5035,8 +5035,8 @@ struct EchoelStudioView: View {
                 // musician is the whole reason "Beats per bar" had to go. A player reading both
                 // rows was told there is a project bar after all, and the row above then had to
                 // spend its hint un-saying it. The standard applies to both rows or to neither.
-                .accessibilityHint("Sounds the first of every N beats higher and louder — the "
-                                   + "click's own accent, not the piece's meter")
+                .accessibilityHint(String(localized: "Sounds the first of every N beats higher and louder — the ")
+                                   + String(localized: "click's own accent, not the piece's meter"))
                 // ⛔ `Click level` USED TO SIT BETWEEN THE TWO ROWS ABOVE, which is why the
                 // comment up there claimed a neighbour it did not have (#930b). It is a MIX
                 // value and belongs after the pair it does not participate in; the number and
@@ -7562,13 +7562,13 @@ struct EchoelStudioView: View {
     /// is only marginally better than an enabled one that does nothing.
     private func padShapeCaption(_ character: RoleRhythm.Character?) -> String {
         guard let character else {
-            return "Pick a pad rhythm above to shape the chord. On Genre the style writes its own "
-                + "articulation and these three do not run."
+            return String(localized: "Pick a pad rhythm above to shape the chord. On Genre the style writes its own ")
+                + String(localized: "articulation and these three do not run.")
         }
-        var parts = ["Chord length is scaled by the rhythm — short shapes stay short at 1.00."]
+        var parts = [String(localized: "Chord length is scaled by the rhythm — short shapes stay short at 1.00.")]
         if character.accentIsSubtle {
-            parts.append("This rhythm accents gently by design, so Accent moves less than on "
-                         + "Driving or Dynamic.")
+            parts.append(String(localized: "This rhythm accents gently by design, so Accent moves less than on ")
+                         + String(localized: "Driving or Dynamic."))
         }
         // ⭐ #1404 — THE SIGNPOST IS GONE BECAUSE THE DEAD END IS. #1401 ended this branch with
         // "Variation is off for this rhythm … It shapes Dynamic and Flowing", projected off
@@ -7588,16 +7588,16 @@ struct EchoelStudioView: View {
         switch character {
         case .dynamic:
             // The one character whose response another row on this very section can annihilate.
-            parts.append("Variation rides the accent here, so at Accent 0.00 the contour stays "
-                         + "flat and only the note length still breathes.")
+            parts.append(String(localized: "Variation rides the accent here, so at Accent 0.00 the contour stays ")
+                         + String(localized: "flat and only the note length still breathes."))
         case .driving:
             // The one character that answers ONLY with the shared floor, and it is deliberate:
             // straight, on the grid, machine time is what a player picks Driving for.
-            parts.append("Variation breathes the note length here — Driving keeps its straight "
-                         + "grid whatever you set.")
+            parts.append(String(localized: "Variation breathes the note length here — Driving keeps its straight ")
+                         + String(localized: "grid whatever you set."))
         case .hypnotic, .sparse, .syncopated, .flowing:
-            parts.append("Variation changes which cells sound from bar to bar, and breathes the "
-                         + "note length.")
+            parts.append(String(localized: "Variation changes which cells sound from bar to bar, and breathes the ")
+                         + String(localized: "note length."))
         }
         return parts.joined(separator: " ")
     }

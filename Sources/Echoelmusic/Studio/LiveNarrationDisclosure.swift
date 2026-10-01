@@ -84,8 +84,8 @@ struct LiveNarrationDisclosure: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(caption.driver.voiceOverLabel)
-            .accessibilityHint("Shows or hides the plain-language description of what is "
-                               + "shaping the music")
+            .accessibilityHint(String(localized: "Shows or hides the plain-language description of what is ")
+                               + String(localized: "shaping the music"))
             if isOpen {
                 StudioCaptionView(caption: caption)
                     .frame(maxWidth: .infinity, alignment: .leading)

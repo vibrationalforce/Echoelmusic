@@ -23338,6 +23338,374 @@
           }
         }
       }
+    },
+    "Recording could not be written to disk" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Aufnahme konnte nicht auf den Speicher geschrieben werden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recording could not be written to disk"
+          }
+        }
+      }
+    },
+    "Invalid loop length" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ungültige Loop-Länge"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invalid loop length"
+          }
+        }
+      }
+    },
+    "Capture failed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufnahme fehlgeschlagen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capture failed"
+          }
+        }
+      }
+    },
+    "The capture buffer is empty" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Aufnahmepuffer ist leer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The capture buffer is empty"
+          }
+        }
+      }
+    },
+    "Export failed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export fehlgeschlagen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export failed"
+          }
+        }
+      }
+    },
+    "Opens the nearby-devices sheet: find a device on the same " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet das Blatt der Geräte in der Nähe: finde ein Gerät im selben "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the nearby-devices sheet: find a device on the same "
+          }
+        }
+      }
+    },
+    "Wi-Fi and share your piece with it. The two devices are " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WLAN und teile dein Stück mit ihm. Die beiden Geräte sind "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wi-Fi and share your piece with it. The two devices are "
+          }
+        }
+      }
+    },
+    "not clock-synced." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nicht taktsynchron."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "not clock-synced."
+          }
+        }
+      }
+    },
+    "Sounds the first of every N beats higher and louder — the " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lässt den ersten von je N Schlägen höher und lauter klingen — der "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sounds the first of every N beats higher and louder — the "
+          }
+        }
+      }
+    },
+    "click's own accent, not the piece's meter" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "eigene Akzent des Klicks, nicht die Taktart des Stücks"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "click's own accent, not the piece's meter"
+          }
+        }
+      }
+    },
+    "Pick a pad rhythm above to shape the chord. On Genre the style writes its own " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle oben einen Pad-Rhythmus, um den Akkord zu formen. Bei Genre schreibt der Stil seine eigene "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick a pad rhythm above to shape the chord. On Genre the style writes its own "
+          }
+        }
+      }
+    },
+    "articulation and these three do not run." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artikulation, und diese drei laufen nicht."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "articulation and these three do not run."
+          }
+        }
+      }
+    },
+    "Chord length is scaled by the rhythm — short shapes stay short at 1.00." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Akkordlänge wird vom Rhythmus skaliert — kurze Formen bleiben bei 1,00 kurz."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chord length is scaled by the rhythm — short shapes stay short at 1.00."
+          }
+        }
+      }
+    },
+    "This rhythm accents gently by design, so Accent moves less than on " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Rhythmus akzentuiert absichtlich sanft, deshalb bewegt Akzent weniger als bei "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This rhythm accents gently by design, so Accent moves less than on "
+          }
+        }
+      }
+    },
+    "Driving or Dynamic." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Driving oder Dynamic."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Driving or Dynamic."
+          }
+        }
+      }
+    },
+    "Variation rides the accent here, so at Accent 0.00 the contour stays " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variation reitet hier auf dem Akzent, deshalb bleibt die Kontur bei Akzent 0,00 "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variation rides the accent here, so at Accent 0.00 the contour stays "
+          }
+        }
+      }
+    },
+    "flat and only the note length still breathes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "flach, und nur die Notenlänge atmet noch."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "flat and only the note length still breathes."
+          }
+        }
+      }
+    },
+    "Variation breathes the note length here — Driving keeps its straight " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variation atmet hier die Notenlänge — Driving behält sein gerades "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variation breathes the note length here — Driving keeps its straight "
+          }
+        }
+      }
+    },
+    "grid whatever you set." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raster, egal was du einstellst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "grid whatever you set."
+          }
+        }
+      }
+    },
+    "Variation changes which cells sound from bar to bar, and breathes the " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variation ändert von Takt zu Takt, welche Zellen klingen, und atmet die "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variation changes which cells sound from bar to bar, and breathes the "
+          }
+        }
+      }
+    },
+    "note length." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notenlänge."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "note length."
+          }
+        }
+      }
+    },
+    "Shows or hides the plain-language description of what is " : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt oder verbirgt die Klartext-Beschreibung dessen, was "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows or hides the plain-language description of what is "
+          }
+        }
+      }
+    },
+    "shaping the music" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "die Musik formt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "shaping the music"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

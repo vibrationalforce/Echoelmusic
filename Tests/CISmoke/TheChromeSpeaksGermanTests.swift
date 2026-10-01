@@ -105,7 +105,9 @@
 // character, so the key can match), Live Colabo's words and the onboarding Start (parent: 13 units missing — ONE
 // finding; OK · Studio · WAV FAILED · WAV … stay on `untranslatedPanelWords` on purpose). E4-54 added the three Studio
 // captions built as `+` chains or around a derived clause — the Save hint, the buffer hint, the mood caption with
-// `romanceSeventhClause` (parent: verbatim Strings, 8 units missing — ONE finding). Claim 12
+// `romanceSeventhClause` (parent: verbatim Strings, 8 units missing — ONE finding). E4-55 added the exporter's five
+// failure reasons, the two concatenated Studio hints (Live Colabo door, click accent), the pad-shape caption's eleven
+// segments and the narration-disclosure hint (parent: 23 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1836,6 +1838,66 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "sound and FX character, and the piece — its tracks and parts. ", "Your mixer levels and hand-dialled FX stay with the instrument.",
                           "Smaller buffers respond sooner and cost more CPU. iOS may refuse a tier — ", "hardest on Bluetooth — so the row shows what iOS granted."],
                          "Studio captions")
+
+        // E4-55 — the exporter's failure reasons were verbatim Strings handed to `.failed(_:)`; the Studio seamed its
+        // suffix around them (E4-51) but the reason itself stayed English. The two Studio hints and the narration hint
+        // were `+` chains of literals, and `padShapeCaption` built a `[String]` of them — none is a key. Every segment
+        // is a key now, joined by `+` (≤ 4 operands per step). The Live Colabo hint keeps "not clock-synced." as its
+        // own segment so TheNearbySessionPromisesNoClockTests still reads the refutation it exempts.
+        let exporterReasons = try codeOnly("Sources/Echoelmusic/Audio/LoopExporter.swift")
+        for seam in [".failed(String(localized: \"Recording could not be written to disk\"))",
+                     ".failed(String(localized: \"Invalid loop length\"))",
+                     ".failed(String(localized: \"Capture failed\"))",
+                     ".failed(String(localized: \"The capture buffer is empty\"))",
+                     ".failed(String(localized: \"Export failed\"))"] {
+            XCTAssertTrue(exporterReasons.contains(seam), "LoopExporter lost the E4-55 seam `\(seam)`")
+        }
+        for verbatim in [".failed(\"Recording could not be written to disk\")", ".failed(\"Invalid loop length\")", ".failed(\"Capture failed\")",
+                         ".failed(\"The capture buffer is empty\")", ".failed(\"Export failed\")"] {
+            XCTAssertFalse(exporterReasons.contains(verbatim), "LoopExporter hands a verbatim reason to `.failed` again: `\(verbatim)`")
+        }
+        let studioHints = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for seam in [".accessibilityHint(String(localized: \"Opens the nearby-devices sheet: find a device on the same \")",
+                     "+ String(localized: \"Wi-Fi and share your piece with it. The two devices are \")",
+                     "+ String(localized: \"not clock-synced.\"))",
+                     ".accessibilityHint(String(localized: \"Sounds the first of every N beats higher and louder — the \")",
+                     "+ String(localized: \"click's own accent, not the piece's meter\"))",
+                     "return String(localized: \"Pick a pad rhythm above to shape the chord. On Genre the style writes its own \")",
+                     "+ String(localized: \"articulation and these three do not run.\")",
+                     "var parts = [String(localized: \"Chord length is scaled by the rhythm — short shapes stay short at 1.00.\")]",
+                     "parts.append(String(localized: \"This rhythm accents gently by design, so Accent moves less than on \")",
+                     "+ String(localized: \"Driving or Dynamic.\"))",
+                     "parts.append(String(localized: \"Variation rides the accent here, so at Accent 0.00 the contour stays \")",
+                     "+ String(localized: \"flat and only the note length still breathes.\"))",
+                     "parts.append(String(localized: \"Variation breathes the note length here — Driving keeps its straight \")",
+                     "+ String(localized: \"grid whatever you set.\"))",
+                     "parts.append(String(localized: \"Variation changes which cells sound from bar to bar, and breathes the \")",
+                     "+ String(localized: \"note length.\"))"] {
+            XCTAssertTrue(studioHints.contains(seam), "EchoelStudioView lost the E4-55 seam `\(seam)`")
+        }
+        for verbatim in [".accessibilityHint(\"Opens the nearby-devices sheet", ".accessibilityHint(\"Sounds the first of every N beats",
+                         "return \"Pick a pad rhythm above", "var parts = [\"Chord length", "parts.append(\"This rhythm accents",
+                         "parts.append(\"Variation rides", "parts.append(\"Variation breathes", "parts.append(\"Variation changes"] {
+            XCTAssertFalse(studioHints.contains(verbatim), "EchoelStudioView builds a hint or caption from verbatim Strings again: `\(verbatim)`")
+        }
+        let narrationHint = try codeOnly("Sources/Echoelmusic/Studio/LiveNarrationDisclosure.swift")
+        for seam in [".accessibilityHint(String(localized: \"Shows or hides the plain-language description of what is \")",
+                     "+ String(localized: \"shaping the music\"))"] {
+            XCTAssertTrue(narrationHint.contains(seam), "LiveNarrationDisclosure lost the E4-55 seam `\(seam)`")
+        }
+        XCTAssertFalse(narrationHint.contains(".accessibilityHint(\"Shows or hides the plain-language"),
+                       "LiveNarrationDisclosure builds its hint from verbatim Strings again")
+        try assertGerman(["Recording could not be written to disk", "Invalid loop length", "Capture failed", "The capture buffer is empty", "Export failed",
+                          "Opens the nearby-devices sheet: find a device on the same ", "Wi-Fi and share your piece with it. The two devices are ", "not clock-synced.",
+                          "Sounds the first of every N beats higher and louder — the ", "click's own accent, not the piece's meter",
+                          "Pick a pad rhythm above to shape the chord. On Genre the style writes its own ", "articulation and these three do not run.",
+                          "Chord length is scaled by the rhythm — short shapes stay short at 1.00.",
+                          "This rhythm accents gently by design, so Accent moves less than on ", "Driving or Dynamic.",
+                          "Variation rides the accent here, so at Accent 0.00 the contour stays ", "flat and only the note length still breathes.",
+                          "Variation breathes the note length here — Driving keeps its straight ", "grid whatever you set.",
+                          "Variation changes which cells sound from bar to bar, and breathes the ", "note length.",
+                          "Shows or hides the plain-language description of what is ", "shaping the music"],
+                         "exporter reasons, Studio hints, pad-shape caption, narration hint")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
