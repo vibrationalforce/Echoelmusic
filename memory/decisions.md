@@ -4134,3 +4134,23 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Next E4 producers:** WorkstationView ternaries (On/Off, Warp, Play/Stop, Expanded/Collapsed, hints),
   `MediaLookUndo.applyBlockedReason`, EchoelStudioView sites.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-43: the Workstation's remaining ternaries speak German (1287d9892)
+
+- **Decision:** ten ternaries of bare literals in `WorkstationView` take `String(localized:)` arms: Mute/Solo value,
+  Warp text/value/hint (value as `let mixedValue` + `let warpValue`, typed, no nesting), Pitch-field hint, plate
+  Play/Stop word and label, imported-tempo field label, Compose-guide disclosure value/hint. Catalog 1238 → 1248.
+- **Why:** `EchoelValueField.label`/`hint` are `String`, and a ternary of literals in `Text`/accessibility modifiers
+  is a String — all read verbatim in German. German: „Warp · teils“, „An für einige Teile“, „Zeitleiste abspielen“,
+  „Stück stoppen, um Warp zu ändern“ / „… die Tonhöhe zu ändern“, „Blendet die Schritte aus“ / „Zeigt die Schritte“.
+- **Guards:** claim 11 E4-43 block (12 seams, 10 absence needles in indented verbatim form, 19 units; 209 → 211
+  XCTAssert). Re-anchored 1:1, +1 comment line each: TheWorkstationPlaysTheTimelineTests (Play/Stop label),
+  TheTrackHeaderMutesAndSolosTests (header-switch value). ⚠️ The harness flagged TheWorkstationArmsTheClickTests
+  (it NAMES WorkstationView.swift for another test); its On/Off needle is asserted on `body` = WorkstationClickToggle
+  — verified by reading, excluded with the reason written into the harness. WORK PASS / HEAD FAIL.
+- **Not in this slice (next):** the three sibling On/Off ternaries — PerformSessionView:194 (guard
+  PerformIsASecondViewOfTheSameSessionTests:264), ProjectHeader:198 (TheGuideHasADoorTests:76),
+  WorkstationClickToggle:56 (TheWorkstationArmsTheClickTests:86); `unit: "semitones"` (units stay verbatim app-wide so
+  far — BPM is untranslated); Mute/Solo `name:` (DAW terms, undecided); `MediaLookUndo.applyBlockedReason`;
+  EchoelStudioView sites.
+- **Review:** 2026-10-31.

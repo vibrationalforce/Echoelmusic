@@ -41355,3 +41355,11 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Benotung** `scratchpad/transcribe_e4_42.py` (Log-Datei): HEAD FAIL (18 Nähte fehlen, 15 Verbatim-Stellen vorhanden, 22 Einheiten fehlen — EIN Befund), WORK PASS. Checker: dead-needles OK, count-pins 0 RED, swift-escapes OK, foreign-needles keine kaputte Nadel, dupblocks 0, Klammerbilanz 0/0.
 - **Docs-Nachtrag:** der E4-41-Satz im Founder-Postfach fehlte in 5c0468035 (Heredoc nicht `&&`-verkettet) — hier nachgezogen.
 - **Offen (E4):** WorkstationView-Ternäre (On/Off, Warp, Play/Stop, Expanded/Collapsed, Hinweise), `MediaLookUndo.applyBlockedReason`, EchoelStudioView-Stellen.
+
+## 2026-10-01 — E4-43: die Workstation-Ternäre sprechen Deutsch (1287d9892)
+
+- **Gebaut:** zehn Ternäre nackter Literale in `WorkstationView` → `String(localized:)`-Arme (Mute/Solo-Wert, Warp-Text/-Wert/-Hinweis — Wert als zwei typisierte `let`-Schritte —, Pitch-Hinweis, Play/Stop-Wort + -Label, Tempo-Feld-Label, Compose-Guide-Aufklapp-Wert/-Hinweis). Katalog 1238 → 1248 (+10).
+- **Wächter:** Anspruch 11 E4-43-Block (12 Nähte, 10 Abwesenheits-Nadeln, 19 Einheiten; XCTAssert 209 → 211). Zwei Wächter 1:1 re-verankert (TheWorkstationPlaysTheTimelineTests, TheTrackHeaderMutesAndSolosTests). TheWorkstationArmsTheClickTests war ein Harness-Fehlalarm (nennt die Datei, prüft die Nadel auf WorkstationClickToggle) — gelesen, mit Begründung ausgenommen.
+- **Benotung** `scratchpad/transcribe_e4_43.py` (Log-Datei): HEAD FAIL (12 Nähte fehlen, 10 Verbatim-Stellen vorhanden, 10 Einheiten fehlen — EIN Befund), WORK PASS. Checker: dead-needles OK, count-pins 0 RED, swift-escapes OK, foreign-needles keine kaputte Nadel, dupblocks 0, Klammerbilanz 0/0.
+- **Gates:** d48571327 Compile Check 3115 ✓ → E4-42-Stapel (0713afa5f + dbf84a8ae) gepusht, Monitor bumht72oy. E4-43 lokal — Push nach dem Compile Check auf dbf84a8ae.
+- **Offen (E4):** die drei Geschwister-On/Off-Ternäre (PerformSessionView:194, ProjectHeader:198, WorkstationClickToggle:56 — je ein Wächter pinnt sie), `MediaLookUndo.applyBlockedReason`, EchoelStudioView-Stellen; Einheiten (`semitones`) und Mute/Solo-Namen unentschieden.
