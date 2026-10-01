@@ -41510,3 +41510,11 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-64-Block (8 Naht-Nadeln, 5 Abwesenheits-Nadeln, 15 Einheiten; XCTAssert 297 → 303). Benotung `scratchpad/transcribe_e4_64.py`: HEAD FAIL (8/5/14 — EIN Befund), WORK PASS. Python-Spiegel der Laufzeit-Erwartungen (PolarH10BioPublisherTests, TheGridLabelFitsItsCellTests) grün. Checker alle OK.
 - **Gates:** b92e0c975 (E4-57/58): Auto-Merge 4021 ✓ → main = b92e0c975. 04fd18b95 (E4-59/60): Compile Check 3124 ✓, CI/CD 6588 + Auto-Merge 4022 laufen. Stapel E4-61…63 als 3cef15d08 gepusht (Monitor bklgzyq4i). E4-64 (7675317bc) lokal.
 - **Offen (E4):** LookBlendMap.name · SessionLaunchView-Szenen-Hinweis · EchoelValueField „Default“-Button · SessionSaveOpen/MediaRelink/RecordTakeControls-Konkatenationen.
+
+## 2026-10-01 — E4-65: Aufnahme-Captions, Öffnen-Absage, Relink-Gründe (bc4e1949d)
+
+- **Gebaut:** `RecordTake.caption`/`armSubtitle`/`droppedSentence`, `SessionSaveOpen.refusal`, `MediaRelink.userMessage` aus Katalog-Schlüsseln; zitierte Namen wörtlich, Zahlen genäht, Relink-Dauern behalten `String(format:)`. Katalog 1502 → 1533 (+31). Sources: 3 Dateien + Katalog.
+- **Wächter:** Anspruch 11 E4-65-Block (11 Naht-Nadeln, 7 Abwesenheits-Nadeln, 31 Einheiten; XCTAssert 303 → 309). Benotung `scratchpad/transcribe_e4_65.py`: HEAD FAIL (11/7/31 — EIN Befund), WORK PASS. Nachbar-Wächter-Fragmente („Recording starts at bar 1“, „instead of the parts under it“, „Stop the piece to relink a file.“) sitzen ganz in ihren Schlüsseln; Python-Spiegel grün; Gesamt-Anspruch-Nadeln 19/0. Checker alle OK.
+- **Befund:** `MediaBrowserView.relinkRefusal(songPlaying:)` buchstabiert den songPlaying-Satz ein zweites Mal (#416-Zwilling) — in der MediaBrowserView-Scheibe schlüsseln.
+- **Gates:** 04fd18b95 (E4-59/60): Compile Check 3124 ✓, Auto-Merge 4022 ✓ → main = 04fd18b95. 3cef15d08 (E4-61…63): Quick Test 3853 ✓, Auto-Merge Docs 586 ✓, Compile Check/CI/CD/Auto-Merge laufen (Monitor bklgzyq4i). Lokal: E4-64 (7675317bc), E4-65 (bc4e1949d) + Docs.
+- **Offen (E4):** SessionLaunchView-Szenen-Hinweis (+ Re-Anker TheSceneLaunchIsASwitchTests:429) · LookBlendMap.name · EchoelValueField „Default“-Knopf · MediaBrowserView.relinkRefusal.

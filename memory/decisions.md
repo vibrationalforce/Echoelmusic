@@ -4439,3 +4439,17 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
 - **Guard:** claim 11 E4-64 block (8 seam needles, 5 absence needles, 15 units; 297 → 303 XCTAssert). WORK PASS /
   HEAD FAIL (8/5/14 — ONE finding).
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-65: record-take captions, open refusal, relink reasons (bc4e1949d)
+
+- **Decision:** `RecordTake.caption`/`armSubtitle`/`droppedSentence`, `SessionSaveOpen.refusal` and
+  `MediaRelink.userMessage` build from catalog keys; quoted names stay verbatim, counts are seamed, the two relink
+  durations keep `String(format: "%.1f")`. Catalog 1502 → 1533.
+- **Why:** the rest-scan's three sentence families. Fragments other guards pin sit whole inside their keys; the
+  runtime guards compare the assembled English under the test locale.
+- **Guard:** claim 11 E4-65 block (11 seam needles, 7 absence needles, 31 units; 303 → 309 XCTAssert). WORK PASS /
+  HEAD FAIL (11/7/31 — ONE finding).
+- **Finding (not fixed here):** `MediaBrowserView.relinkRefusal(songPlaying:)` spells "Stop the piece to relink a file."
+  a second time (TheMediaLibraryIsBrowsedAndPlacedTests:620 pins it at runtime) — a #416 twin of
+  `MediaRelink.userMessage(.songPlaying)`; key it in the MediaBrowserView slice.
+- **Review:** 2026-10-31.
