@@ -124,7 +124,8 @@ final class AnalysisViewsSpeakTheirNumbersTests: XCTestCase {
         guard let spectrum = try analysisViews().first(where: { $0.name == "AnalysisSpectrumView.swift" }) else {
             throw XCTSkip("AnalysisSpectrumView.swift is gone — remove this case with it")
         }
-        let spoken = spectrum.lines.filter { $0.contains("spoken = \"") }
+        // E4-47: the spoken form is seams of catalog keys, so the line reads `spoken = tone + …` — a BROADER filter, the same two negatives below.
+        let spoken = spectrum.lines.filter { $0.contains("spoken = ") }
         XCTAssertFalse(spoken.isEmpty, """
             The spectrum readout no longer builds a separate spoken string. The printed form \
             is "220.1 Hz · A2 +5 ct"; VoiceOver renders "·" as "middle dot" and U+2212 as \

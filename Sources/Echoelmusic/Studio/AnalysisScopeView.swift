@@ -165,12 +165,15 @@ private struct ScopePeakLabel: View {
         // #267: no user-visible readout formats its own decimals. A German reader who sets
         // a comma everywhere else must not meet a lone "−8.3" here.
         let value = EchoelDecimalText.string(db, decimals: 1)
-        return Text(silent ? "Silent" : "Peak \(value) dBTP")
+        // E4-47: printed and spoken forms as typed steps around the number; the unit `dBTP` stays verbatim.
+        let peakShown: String = String(localized: "Peak ") + value + " dBTP"
+        let shown: String = silent ? String(localized: "Silent") : peakShown
+        let peakSpoken: String = String(localized: "Peak ") + value + String(localized: " decibels true peak")
+        let spoken: String = silent ? String(localized: "Silent") : peakSpoken
+        return Text(shown)
             .font(EchoelTheme.font(11).monospacedDigit())
             .foregroundStyle(EchoelTheme.dim)
-            .accessibilityLabel(silent
-                                ? "Silent"
-                                : "Peak \(value) decibels true peak")
+            .accessibilityLabel(spoken)
             // S4a — the reader claims what it reads. The true peak is one of the GATED
             // meters, so without a claim this label read a frozen value unless the Master
             // panel happened to be open. It never calls `resetMastering()`: that would wipe

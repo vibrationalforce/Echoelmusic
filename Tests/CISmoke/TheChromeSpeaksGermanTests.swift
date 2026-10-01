@@ -88,7 +88,9 @@
 // into the owner (parent: an interpolated identifier in the spoken sentence, 2 units missing — ONE finding).
 // E4-46 added EchoelStudioView's remaining sites — Explore/New, the variation row's spoken label, the visual-window button,
 // the preset hint, the look chip's value/hint, the favourite labels, „Default sound“ (parent: ternaries and interpolated
-// labels of bare literals, 20 units missing — ONE finding). Claim 12
+// labels of bare literals, 20 units missing — ONE finding). E4-47 added the four analysis readouts — the spectrum's spoken
+// form, the scope's Silent/Peak pair, the wavefront's three sentences, the Poincaré lines (parent: interpolated literals
+// and bare `sharp`/`flat` arms, 22 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1593,6 +1595,64 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Double tap to remove from the slider", "Double tap to add to the slider", "Unfavorite", "Favorite",
                           "Tap again for the default sound", "Default sound"],
                          "Studio sites")
+
+        // E4-47 — the four analysis views' readouts. Spectrum: the spoken form interpolated the number and the note into
+        // one literal with "sharp"/"flat" arms; Scope: the Silent/Peak pair (printed + spoken); Wavefront: three sentences
+        // around the ring count and the centroid; Poincaré: the camera-off, waiting, refusal and SD1/SD2 lines. Each is
+        // now typed steps of catalog keys around the numbers (≤ 4 operands per step); the units `Hz`, `ct`, `dBTP`, `ms`
+        // and the printed `·` separator stay verbatim. AnalysisViewsSpeakTheirNumbersTests was re-anchored in the same
+        // commit from `spoken = "` to `spoken = ` — a broader filter over the same two negatives.
+        let spectrumReadout = try codeOnly("Sources/Echoelmusic/Studio/AnalysisSpectrumView.swift")
+        for seam in ["let quiet = String(localized: \"No dominant tone\")",
+                     "return (\"\\(hz) Hz\", String(localized: \"Loudest tone \") + hz + String(localized: \" hertz\"))",
+                     "let tone: String = String(localized: \"Loudest tone \") + hz + String(localized: \" hertz, \") + \"\\(name)\\(octave)\"",
+                     "spoken = tone + String(localized: \", in tune\")",
+                     "let direction: String = cents > 0 ? String(localized: \" cents sharp\") : String(localized: \" cents flat\")",
+                     "spoken = tone + \", \" + \"\\(abs(cents))\" + direction"] {
+            XCTAssertTrue(spectrumReadout.contains(seam), "AnalysisSpectrumView lost the E4-47 seam `\(seam)`")
+        }
+        for verbatim in ["spoken = \"Loudest tone", "cents > 0 ? \"sharp\" : \"flat\"", "(\"No dominant tone\", \"No dominant tone\")"] {
+            XCTAssertFalse(spectrumReadout.contains(verbatim), "AnalysisSpectrumView speaks an interpolated literal again: `\(verbatim)`")
+        }
+        let scopeReadout = try codeOnly("Sources/Echoelmusic/Studio/AnalysisScopeView.swift")
+        for seam in ["let peakShown: String = String(localized: \"Peak \") + value + \" dBTP\"",
+                     "let shown: String = silent ? String(localized: \"Silent\") : peakShown",
+                     "let peakSpoken: String = String(localized: \"Peak \") + value + String(localized: \" decibels true peak\")",
+                     "let spoken: String = silent ? String(localized: \"Silent\") : peakSpoken",
+                     "return Text(shown)", ".accessibilityLabel(spoken)"] {
+            XCTAssertTrue(scopeReadout.contains(seam), "AnalysisScopeView lost the E4-47 seam `\(seam)`")
+        }
+        for verbatim in ["Text(silent ? \"Silent\" :", "? \"Silent\"", "\"Peak \\(value)"] {
+            XCTAssertFalse(scopeReadout.contains(verbatim), "AnalysisScopeView spells the Silent/Peak pair as bare literals again: `\(verbatim)`")
+        }
+        let wavefrontReadout = try codeOnly("Sources/Echoelmusic/Studio/AnalysisWavefrontView.swift")
+        for seam in ["return String(localized: \"Wavefront field. Silent. Nothing is sounding, so no wave is leaving the centre.\")",
+                     "let several: String = \"\\(rings)\" + String(localized: \" wavefronts are\")",
+                     "let subject: String = rings == 1 ? String(localized: \"One wavefront is\") : several",
+                     "let field: String = String(localized: \"Wavefront field. \") + subject",
+                     "return field + String(localized: \" spreading outward.\")",
+                     "return field + String(localized: \" spreading outward, the newest centred near \") + \"\\(hertz)\" + String(localized: \" hertz.\")"] {
+            XCTAssertTrue(wavefrontReadout.contains(seam), "AnalysisWavefrontView lost the E4-47 seam `\(seam)`")
+        }
+        for verbatim in ["return \"Wavefront field.", "? \"One wavefront is\" :"] {
+            XCTAssertFalse(wavefrontReadout.contains(verbatim), "AnalysisWavefrontView speaks an interpolated literal again: `\(verbatim)`")
+        }
+        let poincareReadout = try codeOnly("Sources/Echoelmusic/Studio/AnalysisPoincareView.swift")
+        for seam in ["return String(localized: \"Camera pulse is off. This plot reads the camera pulse only.\")",
+                     "return String(localized: \"Waiting for beats\")",
+                     "return \"SD1 — · SD2 — · \" + String(localized: \"only \") + \"\\(clean)%\" + String(localized: \" of beats usable\")",
+                     "return \"SD1 \\(sd1) ms · SD2 \\(sd2) ms · \\(d.pairs)\" + String(localized: \" beat pairs\")"] {
+            XCTAssertTrue(poincareReadout.contains(seam), "AnalysisPoincareView lost the E4-47 seam `\(seam)`")
+        }
+        for verbatim in ["return \"Waiting for beats\"", "return \"Camera pulse is off.", "% of beats usable", "\\(d.pairs) beat pairs"] {
+            XCTAssertFalse(poincareReadout.contains(verbatim), "AnalysisPoincareView speaks a bare literal again: `\(verbatim)`")
+        }
+        try assertGerman(["No dominant tone", "Loudest tone ", " hertz", " hertz, ", ", in tune", " cents sharp", " cents flat",
+                          "Silent", "Peak ", " decibels true peak",
+                          "Wavefront field. Silent. Nothing is sounding, so no wave is leaving the centre.", " wavefronts are",
+                          "One wavefront is", "Wavefront field. ", " spreading outward.", " spreading outward, the newest centred near ", " hertz.",
+                          "Camera pulse is off. This plot reads the camera pulse only.", "Waiting for beats", "only ", " of beats usable", " beat pairs"],
+                         "Analysis readouts")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

@@ -193,7 +193,7 @@ private struct PoincareReadoutLabel: View {
     private func readout() -> String {
         // S4b — a stopped camera says so, instead of "Waiting for beats" forever.
         guard cameraRPPG.isRunning else {
-            return "Camera pulse is off. This plot reads the camera pulse only."
+            return String(localized: "Camera pulse is off. This plot reads the camera pulse only.")
         }
         let raw = cameraRPPG.rrWindowMs
         // `nil` means nothing arrived AT ALL — not "what arrived was unusable". Keeping those
@@ -201,20 +201,20 @@ private struct PoincareReadoutLabel: View {
         // a shredded record and a sensor that is off used to print the same sentence, so the
         // refusal line below was unreachable exactly when it was warranted.
         guard let a = PoincareMetrics.analyse(rrMs: raw) else {
-            return "Waiting for beats"
+            return String(localized: "Waiting for beats")
         }
         let clean = Int((a.acceptedFraction * 100).rounded())
         guard a.acceptedFraction >= RRIntervalHygiene.minAcceptedFractionForHRV else {
             // The same "—" convention as `MasterLoudnessGrid.dbText`: an absent measurement
             // is stated as absent, never rounded into a plausible one.
-            return "SD1 — · SD2 — · only \(clean)% of beats usable"
+            return "SD1 — · SD2 — · " + String(localized: "only ") + "\(clean)%" + String(localized: " of beats usable")
         }
         // Clean beats, just not enough of them yet — that is waiting, not refusing.
-        guard let d = a.descriptors else { return "Waiting for beats" }
+        guard let d = a.descriptors else { return String(localized: "Waiting for beats") }
         // #267: no user-visible readout formats its own decimals.
         let sd1 = EchoelDecimalText.string(d.sd1, decimals: 1)
         let sd2 = EchoelDecimalText.string(d.sd2, decimals: 1)
-        return "SD1 \(sd1) ms · SD2 \(sd2) ms · \(d.pairs) beat pairs"
+        return "SD1 \(sd1) ms · SD2 \(sd2) ms · \(d.pairs)" + String(localized: " beat pairs")
     }
 }
 #endif

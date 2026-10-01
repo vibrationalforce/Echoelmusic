@@ -215,13 +215,14 @@ private struct SpectrumPeakLabel: View {
         let (magnitudes, _) = state.fft.forward(state.samples)
         guard let peak = SpectrumReadout.peak(magnitudes, sampleRate: audioEngine.sampleRate) else {
             // The one case where both strings are identical: it is already a sentence.
-            return ("No dominant tone", "No dominant tone")
+            let quiet = String(localized: "No dominant tone")
+            return (quiet, quiet)
         }
         let hz = EchoelDecimalText.string(peak.hz, decimals: 1)
         // The reference pitch is the session's, not 440 — a performer tuned to 432 must not
         // be told every note they play is 32 cents flat.
         guard let note = SpectrumReadout.nearestNote(hz: peak.hz, a4Hz: session.a4Hz) else {
-            return ("\(hz) Hz", "Loudest tone \(hz) hertz")
+            return ("\(hz) Hz", String(localized: "Loudest tone ") + hz + String(localized: " hertz"))
         }
         // Spelled in the reader's own system (#232 E): A/H/C, Do/Re/Mi or Sa/Re/Ga, the
         // same setting the Key picker two panels up obeys. A readout that spelled B where
@@ -234,12 +235,14 @@ private struct SpectrumPeakLabel: View {
         // "sharp"/"flat" rather than "+"/"−", and the word "cents" rather than "ct". Exactly
         // zero cents gets neither word: "A2, in tune" is what a musician says, and "A2 plus
         // zero cents sharp" is what a naive sign test would produce.
+        // E4-47: seams around the numbers, each arm a catalog key — typed steps of ≤ 4 operands.
+        let tone: String = String(localized: "Loudest tone ") + hz + String(localized: " hertz, ") + "\(name)\(octave)"
         let spoken: String
         if cents == 0 {
-            spoken = "Loudest tone \(hz) hertz, \(name)\(octave), in tune"
+            spoken = tone + String(localized: ", in tune")
         } else {
-            let direction = cents > 0 ? "sharp" : "flat"
-            spoken = "Loudest tone \(hz) hertz, \(name)\(octave), \(abs(cents)) cents \(direction)"
+            let direction: String = cents > 0 ? String(localized: " cents sharp") : String(localized: " cents flat")
+            spoken = tone + ", " + "\(abs(cents))" + direction
         }
         return (display, spoken)
     }

@@ -115,17 +115,20 @@ struct AnalysisWavefrontView: View {
         guard rings > 0 else {
             // Plain words, no dashes or symbols: VoiceOver reads punctuation glyphs aloud, which
             // is the lesson `AnalysisSpectrumView`'s spoken form had to learn the hard way.
-            return "Wavefront field. Silent. Nothing is sounding, so no wave is leaving the centre."
+            return String(localized: "Wavefront field. Silent. Nothing is sounding, so no wave is leaving the centre.")
         }
-        let subject = rings == 1 ? "One wavefront is" : "\(rings) wavefronts are"
+        // E4-47: the sentence is seams around the two numbers, each piece a catalog key (≤ 4 operands per step).
+        let several: String = "\(rings)" + String(localized: " wavefronts are")
+        let subject: String = rings == 1 ? String(localized: "One wavefront is") : several
+        let field: String = String(localized: "Wavefront field. ") + subject
         guard let hz = state.lastCentroidHz, hz.isFinite, hz > 0 else {
-            return "Wavefront field. \(subject) spreading outward."
+            return field + String(localized: " spreading outward.")
         }
         // Whole hertz, and an `Int` interpolation on purpose: a formatter would insert the
         // locale's grouping separator into a spoken number (#267's territory), and a decimal
         // place here would change several times a second without telling anyone anything.
         let hertz = Int(hz.rounded())
-        return "Wavefront field. \(subject) spreading outward, the newest centred near \(hertz) hertz."
+        return field + String(localized: " spreading outward, the newest centred near ") + "\(hertz)" + String(localized: " hertz.")
     }
 
     private func draw(_ ctx: GraphicsContext, _ size: CGSize, at date: Date) {
