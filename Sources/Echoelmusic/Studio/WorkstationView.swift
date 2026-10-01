@@ -987,53 +987,76 @@ struct WorkstationView: View {
         // second answer, and the whole point is that there is one (§2).
         // M10: asked through `songCanStart()`, the one call site — the part bar's Play asks it too.
         let startable = songCanStart()
-        // Review of e1036b874 (MED): Play, the position readout and the caption shared one row,
-        // so at accessibility sizes the readout lost its beat and the caption became a narrow
-        // column that re-wrapped whenever the readout came and went. The caption now has its
-        // own line, and Play + readout stack at accessibility sizes. Not `ViewThatFits`, for a
-        // reason INHERITED from `BioStripView` rather than measured here (review of 82ee9350b,
-        // LOW-5): that a `minimumScaleFactor` child makes the row candidate report a fit. The
-        // measured reason for `AnyLayout` stands on its own: it keeps the readout's identity
-        // across the switch — ONE mount, in either arrangement.
+        // ⭐ DESIGN SLICE C (founder 2026-10-01: "Viele Bereiche sind zu groß und füllen den
+        // Bildschirm aus. Vermeide slop."): the bar is ONE row. Until this slice it stacked Play,
+        // a caption, Record and Record's own caption — about 150 pt of a 667-pt phone, pinned
+        // under an arrangement that had about 121 pt left. A sentence now stands under the row
+        // ONLY when it says what no button can: that nothing can start yet, that the INSTRUMENT
+        // is what Stop would end, or what blocks a recording (`RecordTakeNote`). A sentence that
+        // restates a button ("Plays the piece's parts from the top.", "Playing from bar 9 …") is
+        // no longer drawn: the button's word and its VoiceOver hint carry it, and the head shows
+        // the position. ⚠️ So `transportCaption` is reached here ONLY for an unplayable piece;
+        // its other branches stay pure and pinned (D1b) until the founder confirms the cut.
+        // Review of e1036b874 (MED) still holds: at accessibility sizes the controls stack, and
+        // `AnyLayout` (not a whole-row `ViewThatFits`) keeps each control's identity across it.
         let controls = dynamicTypeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
             : AnyLayout(HStackLayout(spacing: 8))
-        return VStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: 4) {
           controls {
             // A3b (workstation redesign): the ONE Play / Stop — the head's own button, which the
             // head drops while this stage is in front (`ProjectPlayStopButton`, ProjectHeader.swift).
             // Same word, same spoken label, same resume of a held instrument, the same Stop for
             // everything, and the space bar with it. `running` and `startable` above still drive
-            // the caption and the Record door below; this view decides nothing about Play.
+            // the note line and the Record door; this view decides nothing about Play.
             ProjectPlayStopButton(source: "workstation")
 
             // Design slice 10 — the click, armed where the song is played. Its own leaf: this
             // view names no voice, and the leaf reads only the cold on/off.
             WorkstationClickToggle()
 
-            // Design D1 — the song position as a number while it plays. Its own self-driving
-            // leaf: this row reads `isPlaying` only, never the position.
-            if playing {
-                SongPositionReadout()
-                // Design slice 13 — the mix level beside the position. Its own leaf: the level
-                // is rewritten at 60 Hz, and this row names no engine.
-                WorkstationMixMeter()
-            }
-          }
-            Text(running && !playing
-                 ? ProjectTransport.instrumentRunningCaption
-                 : WorkstationSummary.transportCaption(playing: playing, startable: startable,
-                                                       fromTick: player.startedFromTick))
-                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityHidden(true)   // the button's own hint already carries this
             // Phase 3 / Recording R1 — the MIDI take, started through THIS row's one start
             // (from the top) and stopped by the same Stop. A leaf in its own file: this view
-            // names neither the recorder nor its controller.
+            // names neither the recorder nor its controller. Slice C: in the row, not under it,
+            // and it draws no caption of its own — its sentence is its hint, its blocker is
+            // `RecordTakeNote` below.
             RecordTakeButton(playing: playing, startable: startable,
                              voiceCapacity: player.laneVoiceCapacity,
                              startSong: { startTimeline(fromTick: 0, launching: []); return player.isPlaying },
                              stopSong: { player.stop() })
+
+            // Design slice 13 — the mix level while the piece plays (its own leaf: the level is
+            // rewritten at 60 Hz, and this row names no engine), and design D1's position beside
+            // it ONLY where the row has room. The head counts the same position on every stage
+            // (`ProjectPositionReadout`), so on a phone in portrait the readout is the one that
+            // yields: `layoutPriority(-1)` lets Play, Click and Record take their width first,
+            // and `ViewThatFits` falls back to the meter alone. ONE construction of each leaf —
+            // `meter` is the same value in both candidates.
+            if playing {
+                let meter = WorkstationMixMeter()
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) {
+                        meter
+                        SongPositionReadout()
+                    }
+                    meter
+                }
+                .layoutPriority(-1)
+            }
+          }
+            if !playing && (running || !startable) {
+                Text(running
+                     ? ProjectTransport.instrumentRunningCaption
+                     : WorkstationSummary.transportCaption(playing: playing, startable: startable,
+                                                           fromTick: player.startedFromTick))
+                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityHidden(true)   // the button's own hint already carries this
+            }
+            // Slice C — what blocks a recording, and a recording the grid had no room for. Draws
+            // nothing when Record is ready, running or recording (its word says it).
+            RecordTakeNote(playing: playing, startable: startable,
+                           voiceCapacity: player.laneVoiceCapacity)
         }
         .padding(.top, 2)
     }

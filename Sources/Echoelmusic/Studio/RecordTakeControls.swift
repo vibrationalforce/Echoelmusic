@@ -29,6 +29,13 @@
 //
 // Performance law: `isRecording`, `droppedTakes` and `Transport.isPlaying` change a few times per
 // take, never per step. No clock or bio read here; the document and clip grid are cold.
+//
+// DESIGN SLICE C (founder 2026-10-01, "Viele Bereiche sind zu groß … Vermeide slop"): the button
+// draws NO caption any more. In the Workstation it stands in the transport row beside Play and
+// Click, and a caption of up to three lines under it was most of the bar's height. Its sentence
+// is its VoiceOver hint (it always was); what BLOCKS a recording is drawn once, under the whole
+// row, by `RecordTakeNote` — and only then (`RecordTake.shownReason`). Both read the state through
+// `RecordTake.current`, so the word and the sentence cannot come from two readings (#416).
 
 import SwiftUI
 
@@ -50,67 +57,96 @@ struct RecordTakeButton: View {
     let startSong: () -> Bool
     /// The Workstation's Stop — it commits the take.
     let stopSong: () -> Void
-    /// DMMW Phase 1 · slice 3 — the persistent project header mounts this SAME door without its
-    /// two caption lines (it has no room for them; VoiceOver still hears the caption as the
-    /// hint). Defaulted to the full form on purpose: the Workstation's mount is the full door
-    /// and must not change, the header's is the one site that writes `compact: true`.
+    /// DMMW Phase 1 · slice 3 — the persistent project header mounts this SAME door as a glyph
+    /// without its word (it has no room; VoiceOver still hears the word as the label and the
+    /// caption as the hint). Defaulted to the worded form on purpose: the Workstation's mount is
+    /// the worded door, the header's is the one site that writes `compact: true`. ⛔ Until slice C
+    /// `compact` also dropped two caption lines; the button draws none on either mount now.
     var compact = false
 
     var body: some View {
         let recording = recorder.isRecording
-        let plan = RecordTake.plan(in: timeline.document, voiceCapacity: voiceCapacity)
-        let freeSlots = clipStore.slots.filter { $0 == nil }.count
-        let state = RecordTake.state(recording: recording,
-                                     running: playing || transport.isPlaying,
-                                     plan: plan, freeSlots: freeSlots, startable: startable)
+        let state = RecordTake.current(recorder: recorder, timeline: timeline, clipStore: clipStore,
+                                       transport: transport, playing: playing, startable: startable,
+                                       voiceCapacity: voiceCapacity)
         let caption = RecordTake.caption(state, gridSize: clipStore.slots.count)
-        VStack(alignment: .leading, spacing: 4) {
-            Button {
-                switch state {
-                case .recording:
-                    stopSong()
-                case .ready:
-                    recorder.arm()
-                    // A refused start (the player's own guard) must not leave an armed recorder
-                    // that the NEXT start from any surface would record into.
-                    if !startSong() { recorder.cancel() }
-                case .stopFirst, .armFirst, .foreignArm, .gridFull, .songCannotPlay:
-                    break
-                }
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: recording ? "stop.circle.fill" : "record.circle")
+        Button {
+            switch state {
+            case .recording:
+                stopSong()
+            case .ready:
+                recorder.arm()
+                // A refused start (the player's own guard) must not leave an armed recorder
+                // that the NEXT start from any surface would record into.
+                if !startSong() { recorder.cancel() }
+            case .stopFirst, .armFirst, .foreignArm, .gridFull, .songCannotPlay:
+                break
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: recording ? "stop.circle.fill" : "record.circle")
+                    .font(EchoelTheme.font(13, .semibold))
+                if !compact {
+                    Text(recording ? String(localized: "Stop recording") : String(localized: "Record"))
                         .font(EchoelTheme.font(13, .semibold))
-                    if !compact {
-                        Text(recording ? String(localized: "Stop recording") : String(localized: "Record"))
-                            .font(EchoelTheme.font(13, .semibold))
-                    }
                 }
-                .foregroundStyle(recording ? EchoelTheme.onPrimary
-                                           : (state == .ready ? EchoelTheme.text : EchoelTheme.dim))
-                .padding(.horizontal, compact ? 0 : 14)
-                .frame(minWidth: 44, minHeight: 44)
-                .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .fill(recording ? EchoelTheme.warning : EchoelTheme.fill))
-                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .strokeBorder(state == .ready ? EchoelTheme.border : Color.clear, lineWidth: 1))
-                .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
-            .disabled(state != .ready && state != .recording)
-            .accessibilityLabel(recording ? String(localized: "Stop recording") : String(localized: "Record"))
-            .accessibilityHint(caption)
+            .foregroundStyle(recording ? EchoelTheme.onPrimary
+                                       : (state == .ready ? EchoelTheme.text : EchoelTheme.dim))
+            .padding(.horizontal, compact ? 0 : 14)
+            .frame(minWidth: 44, minHeight: 44)
+            .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                .fill(recording ? EchoelTheme.warning : EchoelTheme.fill))
+            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                .strokeBorder(state == .ready ? EchoelTheme.border : Color.clear, lineWidth: 1))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(state != .ready && state != .recording)
+        .accessibilityLabel(recording ? String(localized: "Stop recording") : String(localized: "Record"))
+        .accessibilityHint(caption)
+    }
+}
 
-            if !compact {
-            Text(caption)
-                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityHidden(true)   // the button's hint carries it
-            }
-            if !compact, recorder.droppedTakes > 0 {
-                Text(RecordTake.droppedSentence(recorder.droppedTakes, gridSize: clipStore.slots.count))
-                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.warning)
-                    .fixedSize(horizontal: false, vertical: true)
+/// The ONE line under the Workstation's transport row for this door (design slice C). It draws
+/// the caption only when Record is blocked by something the user can change from here (arm a
+/// track, disarm a stale one, free a grid slot — `RecordTake.shownReason`), and the warning when
+/// a recording found no room. Nothing while Record is ready or recording: the button's word says
+/// that, and its hint says the rest. ⚠️ Nothing for "stop first" either, and that is the ONE
+/// disabled state this note leaves unexplained on screen, on purpose: it holds whenever anything
+/// plays, so a line for it would stand under the row for the whole of every playback — the height
+/// slice C gave back. The Stop beside Record is the visible way out; the hint says why Record waits.
+@MainActor
+struct RecordTakeNote: View {
+    @Environment(RecordController.self) private var recorder
+    @Environment(TimelineStore.self) private var timeline
+    @Environment(ClipStore.self) private var clipStore
+    @Environment(Transport.self) private var transport
+
+    /// The same three values the button is handed, so both leaves read one state.
+    let playing: Bool
+    let startable: Bool
+    let voiceCapacity: Int
+
+    var body: some View {
+        let state = RecordTake.current(recorder: recorder, timeline: timeline, clipStore: clipStore,
+                                       transport: transport, playing: playing, startable: startable,
+                                       voiceCapacity: voiceCapacity)
+        let reason = RecordTake.shownReason(state, startable: startable, gridSize: clipStore.slots.count)
+        let dropped = recorder.droppedTakes
+        if reason != nil || dropped > 0 {
+            VStack(alignment: .leading, spacing: 2) {
+                if let reason {
+                    Text(reason)
+                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityHidden(true)   // the Record button's hint carries it
+                }
+                if dropped > 0 {
+                    Text(RecordTake.droppedSentence(dropped, gridSize: clipStore.slots.count))
+                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.warning)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }
@@ -214,6 +250,21 @@ enum RecordTake {
         }
     }
 
+    /// Design slice C — the caption the bar DRAWS under its row, or nil. Only a block the user can
+    /// lift from the Workstation is drawn, and only while the piece can start: an unplayable
+    /// piece is said once, by the bar's own line ("Nothing to play yet."), not twice. `.ready`,
+    /// `.recording` and `.stopFirst` draw nothing — the button's word and the Stop beside it say
+    /// that — and every caption stays the button's VoiceOver hint either way.
+    nonisolated static func shownReason(_ state: State, startable: Bool, gridSize: Int) -> String? {
+        guard startable else { return nil }
+        switch state {
+        case .armFirst, .foreignArm, .gridFull:
+            return caption(state, gridSize: gridSize)
+        case .recording, .ready, .stopFirst, .songCannotPlay:
+            return nil
+        }
+    }
+
     nonisolated static func armSubtitle(armable: Bool) -> String {
         let armed: String = String(localized: "Record plays the piece from bar 1 and records your MIDI keyboard onto this track. ")
             + String(localized: "Every armed track gets the same notes.")
@@ -236,5 +287,23 @@ enum RecordTake {
               case .laneSynth? = TrackMix.role(of: laneID, in: document, voiceCapacity: voiceCapacity)
         else { return false }
         return true
+    }
+}
+
+extension RecordTake {
+    /// The door's state from the live stores, read ONCE for both leaves that show it (the button
+    /// and `RecordTakeNote`, design slice C), so the word on the button and the sentence under the
+    /// row cannot come from two readings (#416). Cold reads only: the recorder's flag, the
+    /// document, the clip grid and the clock's running flag change a few times per take, never
+    /// per step.
+    @MainActor
+    static func current(recorder: RecordController, timeline: TimelineStore, clipStore: ClipStore,
+                        transport: Transport, playing: Bool, startable: Bool,
+                        voiceCapacity: Int) -> State {
+        let takePlan = Self.plan(in: timeline.document, voiceCapacity: voiceCapacity)
+        let freeSlots = clipStore.slots.filter { $0 == nil }.count
+        return Self.state(recording: recorder.isRecording,
+                          running: playing || transport.isPlaying,
+                          plan: takePlan, freeSlots: freeSlots, startable: startable)
     }
 }

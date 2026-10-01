@@ -3,6 +3,10 @@
 // beside the song position while the song plays. The mockup's transport read "position · time ·
 // level"; D1 built the position, this builds the level. Time is deliberately NOT built (a tick
 // clock under a body-following tempo would be a guess).
+// ⭐ Design slice C (2026-10-01): the meter now shares ONE row with Play, Click and Record, and
+// the position beside it is the element that yields when the row is full (a phone in portrait —
+// the head counts the same position on every stage; `TheTransportBarIsOneRowTests` claim 6).
+// Claim 3 below is unchanged: the meter is still mounted once, inside the playing branch.
 //
 // WHAT KIND OF GREEN THIS IS (§1):
 //   · Claim 1 is END-TO-END on shipped pure functions (`MixLevelMeter`). Not Foundation-only: the
@@ -10,8 +14,9 @@
 //   · Claims 2–4 are SOURCE-TEXT SCANS: the leaf is a SwiftUI `View` no test bundle can render.
 //     They prove where the text sits, not that a bar moves.
 //   · DEVICE PROBE, open: that the bars move with the music on glass, and that VoiceOver reads
-//     "Mix level, Left 30 percent, right 28 percent", and that the song position beside it is
-//     not truncated on a 375 pt phone. NEEDS-FOUNDER-VERIFY.
+//     "Mix level, Left 30 percent, right 28 percent", and that in LANDSCAPE the song position
+//     beside it is not truncated (slice C: in portrait the position yields to the head's
+//     counter, so there is nothing beside the meter to truncate). NEEDS-FOUNDER-VERIFY.
 //
 // ⛔ REVIEW OF dfe9525e6 (HIGH): the first version spoke the level in decibels through
 // `TrackMix.decibelText`, and claim 1b PINNED that. The meter is `min(3 · RMS, 1)` with a

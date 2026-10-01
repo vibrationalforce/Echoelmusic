@@ -70,8 +70,10 @@ public final class TimelineRegionPlayer {
     /// and tests observe what is playing.
     public private(set) var loadedRegionID: UUID?
     /// The song-absolute BAR tick the current (or last) take started at — `play`'s floored and
-    /// folded `startTick`, written there and nowhere else. The Workstation's caption names its
-    /// bar. Review of 09d35f56e, MED-5: the caption read a view-local copy, which only the
+    /// folded `startTick`, written there and nowhere else. The Workstation's caption is fed it;
+    /// since design slice C that caption is drawn only while the piece is NOT playing, so its
+    /// "Playing from bar …" branch is off screen and the head's counter shows the bar instead.
+    /// Review of 09d35f56e, MED-5: the caption read a view-local copy, which only the
     /// Workstation's own Play wrote, so after a header start (or any other door into the ONE
     /// start) it named the bar of an older take. One owner, every door. Cold — it changes once
     /// per `play`, never per step.

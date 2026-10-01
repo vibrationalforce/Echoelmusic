@@ -17,9 +17,24 @@
 //    (`startedFromTick`), so every door into the one start names its own bar; the behavioural
 //    half (a header start after a bar-3 start reads "from the top") lives in
 //    `TheProjectHeaderRunsOneTransportTests`, which owns the real-clock fixture.
+//    ⚠️ Design slice C (2026-10-01): the plate no longer DRAWS the playing caption — its one line
+//    now stands only for a piece that cannot start or a running instrument, and the start bar
+//    shows in the head's counter (`ProjectPositionReadout`), which counts from the played tick.
+//    What stays pinned is unchanged and still true: the pure function names the bar, and the
+//    player is its one writer. The `fromTick: player.startedFromTick))` needle now pins only that
+//    the plate's line is FED the player's value (no view-local copy, MED-5) — on screen today it
+//    reaches the not-playing branches alone. Restoring a playing line needs a founder ask.
 // 3. SOURCE: `WorkstationView` mounts it once, only while playing, in the transport row. That the
 //    view itself never names `currentTick` is pinned ONCE, by
 //    `TheWorkstationPlaysTheTimelineTests.testTheControlDoesNotReadThePlayhead` (#416).
+//    ⭐ Design slice C (2026-10-01): the bar became ONE row, and the readout is now the element
+//    that YIELDS when the row has no room (a phone in portrait) — the head counts the same
+//    position on every stage. That yielding is `TheTransportBarIsOneRowTests` claim 6; this file
+//    keeps "once, while playing, inside the group". The caption pin is re-anchored: the caption
+//    now stands behind its own `if` after the group, so the old count "one more `}` than `{`
+//    between the group and the caption" (exact only for a BARE caption) became false on a
+//    correct tree. The law — the caption is outside the switching group — is measured directly
+//    now, by walking the group's braces to its closing one.
 //
 // Grading (§0, no Swift toolchain): `positionText` and `SongPositionReadout` do not exist on the
 // parent (`ce4b422dc`), so this file does not compile there — claims 1-3 were FORWARD guards, one
@@ -31,8 +46,9 @@
 // (caption back in the group, readout after the group's brace, read hoisted above the clock).
 // NOT covered: that the number keeps up with the sound on glass, and how VoiceOver paces an
 // `.updatesFrequently` value — a device probe.
-// NEEDS-FOUNDER-VERIFY: Workstation → Play: "Bar 1 · Beat 1" appears beside Stop and counts with
-// the music; Play from a part at bar 9 starts it at "Bar 9"; Stop removes it.
+// NEEDS-FOUNDER-VERIFY: Workstation in LANDSCAPE (slice C: in portrait the readout yields to the
+// head's counter) → Play: "Bar 1 · Beat 1" appears beside the meter and counts with the music;
+// Play from a part at bar 9 starts it at "Bar 9"; Stop removes it.
 
 import Foundation
 import XCTest
@@ -131,8 +147,25 @@ final class TheSongPositionIsReadAsANumberTests: XCTestCase {
             XCTAssertGreaterThanOrEqual(lead.filter { $0 == "{" }.count - lead.filter { $0 == "}" }.count, 1,
                                         "the readout is inside the switching group, not after its closing brace")
         }
-        let between = transport[group.upperBound..<caption.lowerBound]
-        XCTAssertEqual(between.filter { $0 == "{" }.count + 1, between.filter { $0 == "}" }.count, """
+        // Slice C re-anchor (see the header): find the group's OWN closing brace and require the
+        // caption after it and the readout before it. The old "+1" count assumed a bare caption.
+        var depth = 1
+        var close = transport.endIndex
+        var cursor = group.upperBound
+        while cursor < transport.endIndex {
+            let ch = transport[cursor]
+            if ch == "{" { depth += 1 }
+            if ch == "}" {
+                depth -= 1
+                if depth == 0 { close = cursor; break }
+            }
+            cursor = transport.index(after: cursor)
+        }
+        guard close < transport.endIndex else {
+            return XCTFail("UNBALANCED: the transport row's `controls {` never closes (#454)")
+        }
+        XCTAssertLessThan(mount.lowerBound, close, "the readout is a member of the switching group")
+        XCTAssertLessThan(close, caption.lowerBound, """
             the caption is back inside the Play group — at large sizes it becomes a narrow column \
             that re-wraps whenever the readout comes and goes. It has its own line.
             """)
@@ -170,7 +203,8 @@ final class TheSongPositionIsReadAsANumberTests: XCTestCase {
             - player.components(separatedBy: "var startedFromTick =").count
         XCTAssertEqual(writes, 1, "ONE writer (the declaration aside): `play`")
         let code = try source(Self.workstation)
-        XCTAssertTrue(code.contains("fromTick: player.startedFromTick))"), "the caption is fed the player's recorded start")
+        XCTAssertTrue(code.contains("fromTick: player.startedFromTick))"),
+                      "the plate's line is fed the player's recorded start, never a view-local copy (MED-5) — slice C draws only its not-playing branches")
         XCTAssertFalse(code.contains("playedFromTick"), "no second, view-local copy of the start")
     }
 

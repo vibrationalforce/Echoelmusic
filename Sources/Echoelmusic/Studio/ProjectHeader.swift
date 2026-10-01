@@ -395,7 +395,8 @@ private struct ProjectTempoReadout: View {
 ///
 /// ⚠️ STOPPED IT READS "1.1.1", AND THAT IS A FACT, NOT A PLACEHOLDER: both Plays that start the
 /// whole piece — this header's and the plate's — start from the top (`fromTick: 0`). The part
-/// bar's Play starts at a part and the plate's caption names that bar; the head does not guess it.
+/// bar's Play starts at a part; while that plays, THIS counter is where its bar shows (design
+/// slice C took the plate's "Playing from bar …" line away). Stopped, the head does not guess it.
 /// ⚠️ IT KEEPS ONE WIDTH. It never disappears (a counter that came only while playing would
 /// re-flow the head on every Play), and a hidden three-digit template reserves the width of bar
 /// 100, so reaching bar 10 or bar 100 mid-play cannot widen the summary and make the row's
