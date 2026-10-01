@@ -50,11 +50,13 @@ enum ArrangementStrip {
     /// view and the parts list name them (`SessionGrid.label`, one label rule).
     nonisolated static func spoken(onLane laneID: UUID, in document: TimelineDocument) -> String {
         let parts = TrackParts.parts(onLane: laneID, in: document)
-        guard !parts.isEmpty else { return "No parts" }
+        guard !parts.isEmpty else { return String(localized: "No parts") }
         let shown = parts.prefix(spokenLimit).map { SessionGrid.label(forTick: $0.startTick) }
         let rest = parts.count - shown.count
         let list = shown.joined(separator: ", ")
-        return rest > 0 ? "Parts at \(list), and \(rest) more" : "Parts at \(list)"
+        let head: String = String(localized: "Parts at ") + list
+        let tail: String = String(localized: ", and ") + "\(rest)" + String(localized: " more")
+        return rest > 0 ? head + tail : head
     }
 
     /// Past this many, the sentence summarises instead of reading a whole song aloud.

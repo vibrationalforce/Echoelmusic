@@ -444,11 +444,13 @@ enum ClipNoteEdit {
         let bar = perBar > 0 ? start / perBar + 1 : 1
         let beat = perBar > 0 && perBeat > 0 ? (start % perBar) / perBeat + 1 : 1
         let steps = note.lengthSteps
-        let length = steps == 1 ? "1 sixteenth" : "\(steps) sixteenths"
+        let plural: String = "\(steps) " + String(localized: "sixteenths")
+        let length: String = steps == 1 ? String(localized: "1 sixteenth") : plural
         let name = spoken
             ? naming.spokenName(pitchClass: note.pitch, preferFlats: preferFlats) + " \(octave(of: note.pitch))"
             : rowName(pitch: note.pitch, naming: naming, preferFlats: preferFlats)
-        return "\(name) · bar \(bar), beat \(beat) · \(length)"
+        let place: String = String(localized: " · bar ") + "\(bar)" + String(localized: ", beat ") + "\(beat)"
+        return name + place + " · " + length
     }
 
     /// How many notes the part holds — the SAME windowing the grid draws and the player plays
@@ -463,16 +465,20 @@ enum ClipNoteEdit {
     /// The "Notes" switch: "Notes · 32" once the part's notes are known, plain "Notes" otherwise
     /// (design slice 2 — the mockup's note count, on the control that opens them).
     nonisolated static func notesSwitchTitle(count: Int?) -> String {
-        guard let count else { return "Notes" }
-        return "Notes · \(count)"
+        guard let count else { return String(localized: "Notes") }
+        return String(localized: "Notes · ") + "\(count)"
     }
 
     /// What VoiceOver hears for the grid: the notes it can step through, and — when the octave
     /// window hides some — how many the part holds, so a listener who wraps early knows why.
     nonisolated static func gridLabel(shown: Int, total: Int, picked: Int) -> String {
-        let notes = shown == total ? "\(total) \(total == 1 ? "note" : "notes")"
-                                   : "\(shown) of \(total) \(total == 1 ? "note" : "notes") shown"
-        return "Note grid: \(notes), \(picked) selected"
+        // E4-57: seams of catalog keys (≤ 4 operands per step); the counts are never literals.
+        let noteWord: String = total == 1 ? String(localized: "note") : String(localized: "notes")
+        let counted: String = "\(total) " + noteWord
+        let windowed: String = "\(shown)" + String(localized: " of ") + counted + String(localized: " shown")
+        let notes: String = shown == total ? counted : windowed
+        let picks: String = ", " + "\(picked)" + String(localized: " selected")
+        return String(localized: "Note grid: ") + notes + picks
     }
 
     /// Where the rows centre when a part's grid opens: its median pitch, C4 when empty. The

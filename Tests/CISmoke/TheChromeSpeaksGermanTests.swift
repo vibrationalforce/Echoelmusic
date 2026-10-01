@@ -109,7 +109,9 @@
 // failure reasons, the two concatenated Studio hints (Live Colabo door, click accent), the pad-shape caption's eleven
 // segments and the narration-disclosure hint (parent: 23 units missing — ONE finding). E4-56 added the five import
 // sentences of the Sequencer helpers (MIDIImport added-track / empty-part / success, MediaPlacement, AudioImport):
-// interpolated Strings, now seams around the names and counts (parent: 20 units missing — ONE finding). Claim 12
+// interpolated Strings, now seams around the names and counts (parent: 20 units missing — ONE finding). E4-57 added the
+// note-grid VoiceOver label (ClipNoteEdit.gridLabel) and the arrangement row's spoken line (ArrangementStrip.spoken)
+// plus the picked-note line and the Notes switch title in the same helper file (parent: 10 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1955,6 +1957,41 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Placed “", ", playing the part it already has.", ", as a new part.",
                           "” is already in the library — placed ", ", no second copy."],
                          "import sentences")
+
+        // E4-57 — two more spoken lines built by pure helpers: the note grid's VoiceOver label and the arrangement row's
+        // "Parts at …" — plus, in the same helper file, the picked-note line ("E4 · bar 2, beat 2 · 2 sixteenths") and the
+        // Notes switch title ("Notes · 32"). All four are pinned at runtime with exact English (ThePartNoteGridSpeaksTests,
+        // TheSongIsSeenOnOneScaleTests, TheNoteGridSpeaksTheReadersNoteNamesTests, TheSelectedPartSaysItsEndAndItsNotesTests),
+        // which the seams reproduce under the test locale; " of ", " selected", " more", ", beat ", "note"/"notes" are reused keys.
+        let noteGrid = try codeOnly("Sources/Echoelmusic/Sequencer/ClipNoteEdit.swift")
+        for seam in ["let noteWord: String = total == 1 ? String(localized: \"note\") : String(localized: \"notes\")",
+                     "let windowed: String = \"\\(shown)\" + String(localized: \" of \") + counted + String(localized: \" shown\")",
+                     "let picks: String = \", \" + \"\\(picked)\" + String(localized: \" selected\")",
+                     "return String(localized: \"Note grid: \") + notes + picks",
+                     "let plural: String = \"\\(steps) \" + String(localized: \"sixteenths\")",
+                     "let length: String = steps == 1 ? String(localized: \"1 sixteenth\") : plural",
+                     "let place: String = String(localized: \" · bar \") + \"\\(bar)\" + String(localized: \", beat \") + \"\\(beat)\"",
+                     "return name + place + \" · \" + length",
+                     "guard let count else { return String(localized: \"Notes\") }",
+                     "return String(localized: \"Notes · \") + \"\\(count)\""] {
+            XCTAssertTrue(noteGrid.contains(seam), "ClipNoteEdit lost the E4-57 seam `\(seam)`")
+        }
+        for verbatim in ["return \"Note grid: \\(notes), \\(picked) selected\"", "let length = steps == 1 ? \"1 sixteenth\"",
+                         "return \"\\(name) · bar \\(bar), beat \\(beat) · \\(length)\"", "return \"Notes · \\(count)\""] {
+            XCTAssertFalse(noteGrid.contains(verbatim), "ClipNoteEdit interpolates a spoken line into one English literal again: `\(verbatim)`")
+        }
+        let stripSpoken = try codeOnly("Sources/Echoelmusic/Studio/ArrangementStripView.swift")
+        for seam in ["guard !parts.isEmpty else { return String(localized: \"No parts\") }",
+                     "let head: String = String(localized: \"Parts at \") + list",
+                     "let tail: String = String(localized: \", and \") + \"\\(rest)\" + String(localized: \" more\")"] {
+            XCTAssertTrue(stripSpoken.contains(seam), "ArrangementStripView lost the E4-57 seam `\(seam)`")
+        }
+        for verbatim in ["return \"No parts\"", "? \"Parts at \\(list), and \\(rest) more\""] {
+            XCTAssertFalse(stripSpoken.contains(verbatim), "ArrangementStripView speaks a verbatim English line again: `\(verbatim)`")
+        }
+        try assertGerman(["note", "notes", " of ", " shown", " selected", "Note grid: ", "No parts", "Parts at ", ", and ", " more",
+                          "1 sixteenth", "sixteenths", " · bar ", ", beat ", "Notes", "Notes · "],
+                         "note grid, picked note, Notes switch and arrangement row")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
