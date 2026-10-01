@@ -41412,3 +41412,10 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
 - **Wächter:** Anspruch 11 E4-50-Block (3 Nähte, 3 Abwesenheits-Nadeln, 4 Einheiten; XCTAssert 240 → 244). Benotung `scratchpad/transcribe_e4_50.py`: HEAD FAIL (3/3/3 — EIN Befund), WORK PASS. Checker alle OK.
 - **Gates:** 5fdac5293 Compile Check 3118 + CI/CD 6582 + Auto-Merge 4016 laufen (Monitor b1qz45alh). E4-47…E4-50 lokal — Push nach dem Compile Check.
 - **Offen (E4, erreichbar):** acht interpolierte Sprach-Labels in EchoelStudioView (Export/Import/Not opened/Share/New name/play-surface/visual preset/look); danach türlose Flächen.
+
+## 2026-10-01 — E4-51: acht interpolierte Sprach-Labels in EchoelStudioView sprechen Deutsch (f3c32250e)
+
+- **Gebaut:** Export-Fehlerzeile (Text + Label), Import-/Open-Notiz, Spielflächen-Klang-Chip, Visual-Preset-Kachel, Look-Chip, Teilen, Umbenennen-Feld als Schlüssel-Nähte um den Wert. Katalog 1309 → 1317 (+8). TheExportFailureSpeaksAtTheButtonTests 1:1 re-verankert (drei Nadeln, +1 Kommentarzeile). Zwei Sources-Dateien; heiße Reads im Diff 0.
+- **Wächter:** Anspruch 11 E4-51-Block (9 Nähte, 9 Abwesenheits-Nadeln, 9 Einheiten; XCTAssert 244 → 246). Benotung `scratchpad/transcribe_e4_51.py`: HEAD FAIL (9/9/8 — EIN Befund), WORK PASS. Checker alle OK.
+- **Gates:** d004dfbba (E4-47…E4-50) gepusht, Monitor bnrm4l13h. E4-51 (f3c32250e) lokal — Push nach dem Compile Check.
+- **Offen (E4):** sichtbare `Text("…\\(Wert)…")`-Interpolationen mit Wörtern (nächste Messung), LoopExporter-Gründe, türlose Flächen zuletzt.

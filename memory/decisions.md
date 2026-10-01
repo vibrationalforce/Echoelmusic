@@ -4262,3 +4262,16 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   for …“ (eight interpolated spoken labels, one file). Units/brand/pure-value labels (`"\(bpm) BPM"`, „Echoelmusic …“,
   `"\(name) \(track)"`) stay. Doorless views last.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-51: EchoelStudioView's eight interpolated spoken labels speak German (f3c32250e)
+
+- **Decision:** eight `accessibilityLabel("… \\(value) …")` sites and the rendered export sentence become a catalog key
+  seamed beside the value. Catalog 1309 → 1317.
+- **Why:** the E4 class; a seam keeps the value verbatim and the words translatable. The exporter's six reason
+  sentences stay English for now (they live in `LoopExporter`, a separate owner).
+- **Guard:** claim 11 E4-51 block (9 seams, 9 absence needles, 9 units; 244 → 246 XCTAssert).
+  TheExportFailureSpeaksAtTheButtonTests re-anchored 1:1 — slice anchor + two sentence needles, +1 comment line.
+  WORK PASS / HEAD FAIL (9/9/8 — ONE finding).
+- **Remaining:** visible `Text("…\\(value)…")` interpolations with words around them (next measurement), the
+  exporter reasons, doorless views last.
+- **Review:** 2026-10-31.
