@@ -4726,3 +4726,18 @@ liefert `String(localized:)` den Key, also bleibt jeder englische Pin unverände
   XCTAssert). No other guard pinned these lines. WORK PASS / HEAD FAIL (5/2/6 — ONE finding). Whole-claim-11
   needle check: 144 files, 1055 needles, 0 broken.
 - **Review:** 2026-10-31.
+
+### 2026-10-01 — E4-84: FX Live headings, degraded fallback and note-name schemes (e91cf44ca)
+
+- **Decision:** `LiveModOrigin.heading` (three literals, one `switch`; read by `Text(modulator.liveOrigin.heading)` in
+  the FX sheet and `Text(caption.driver.heading)` in the narration leaf), the degraded row's `?? "…"` fallback and
+  the four `NoteNaming.displayName` labels of the note-name Picker are catalog keys. Catalog 1836 → 1844.
+- **Why these three and not their neighbours:** the engine's own cause sentence (`AudioEngine.lastAudioError`) stays
+  English — a diagnostic string assembled in the engine, not copy; `HRVCoherence.headline`/`lesson` have no Sources
+  reader (only comments mention them) and stay bare, recorded here so nobody keys a dead string.
+- **Guard:** claim 11 E4-84 block (8 seams across three files, 3 verbatim-indented absences, 8 units; 383 → 390
+  XCTAssert). The E4-35 count pin on FXModulation (`return String(localized: "` sites) was re-derived 20 → 23 in the
+  same commit — its message asked for exactly that — and mirrored in Python on the comment-stripped text. The
+  runtime equalities in TheFXHeadersSayWhoseBodyTests hold under en (unit value == key). WORK PASS / HEAD FAIL
+  (8/3/8 — ONE finding). Whole-claim-11 needle check: 147 files, 628 needles, 0 broken.
+- **Review:** 2026-10-31.
