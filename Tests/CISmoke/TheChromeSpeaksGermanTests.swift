@@ -209,7 +209,8 @@
 // status strip's rows — where `AutomationScale` and `SongAutomationEdit` build them (parent: seams absent, 6 units
 // missing — ONE finding). E4-106 looked up the master panel's buffer-tier segments (parent: seam absent, 3 units
 // missing — ONE finding). E4-107 keyed the three engine-failure sentences `AudioDegradedRow` shows (parent: seams
-// absent, 4 units missing — ONE finding). Claim 12
+// absent, 4 units missing — ONE finding). E4-108 looked up the one Live Colabo status line `MultipeerSession` still
+// built verbatim, the join request (parent: seam absent — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3450,6 +3451,17 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         try assertGerman(["Audio stopped (", ") and auto-recovery gave up.", "Audio engine could not start: ",
                           ") and could not restart: "], "engine failure sentences")
+
+        // E4-108 — `LiveColaboView` renders `colab.status` verbatim; every status line was a catalog lookup but
+        // the join request, built by interpolation. It takes the invitation card's key now.
+        let colabStatus = try codeOnly("Sources/Echoelmusic/Sync/MultipeerSession.swift")
+        for seam in ["status = name + String(localized: \" wants to join\")"] {
+            XCTAssertTrue(colabStatus.contains(seam), "the Live Colabo status lost the E4-108 seam: \(seam)")
+        }
+        for verbatim in ["status = \"\\(name) wants to join\""] {
+            XCTAssertFalse(colabStatus.contains(verbatim), "the join status is built verbatim again")
+        }
+        try assertGerman([" wants to join"], "Live Colabo join status")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

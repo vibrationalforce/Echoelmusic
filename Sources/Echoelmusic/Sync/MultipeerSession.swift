@@ -270,7 +270,9 @@ public final class MultipeerSession: NSObject {
     func handleInvitation(from name: String, respond: @escaping (Bool) -> Void) {
         pendingInvitation?.respond(false)
         pendingInvitation = PendingInvitation(peerName: name, respond: respond)
-        status = "\(name) wants to join"
+        // E4-108: `LiveColaboView` draws `status` verbatim; the fixed part is the catalog key the invitation
+        // card already uses, the peer's own name stays an operand.
+        status = name + String(localized: " wants to join")
     }
 
     /// Stream one live bio reading to every connected peer (E5). Unreliable
