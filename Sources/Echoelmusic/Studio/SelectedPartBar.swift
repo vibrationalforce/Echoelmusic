@@ -424,7 +424,7 @@ private struct PartPlayButton: View {
             HStack(spacing: 4) {
                 Image(systemName: playing ? "stop.fill" : "play.fill")
                     .font(EchoelTheme.font(11, .semibold))
-                Text(playing ? "Stop" : "Play from here")
+                Text(playing ? String(localized: "Stop") : String(localized: "Play from here"))
                     .font(EchoelTheme.font(11, .semibold)).lineLimit(1)
                     .fixedSize()   // the title beside it wraps; the action's name never truncates
             }
@@ -438,9 +438,9 @@ private struct PartPlayButton: View {
         }
         .buttonStyle(.plain)
         .disabled(!startable)
-        .accessibilityLabel(playing ? "Stop all playback" : "Play the piece from the selected part")
+        .accessibilityLabel(playing ? String(localized: "Stop all playback") : String(localized: "Play the piece from the selected part"))
         .accessibilityHint(startable && !playing
-            ? "Plays the arrangement from this part's bar on the shared transport."
+            ? String(localized: "Plays the arrangement from this part's bar on the shared transport.")
             : WorkstationSummary.transportHint(playing: playing, startable: startable))
     }
 }

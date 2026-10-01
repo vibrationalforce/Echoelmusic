@@ -385,7 +385,7 @@ struct MediaBrowserView: View {
         return Button {
             if playing { stopPreview() } else { preview(asset) }
         } label: {
-            Text(playing ? "Stop" : "Preview").font(EchoelTheme.font(13, .semibold))
+            Text(playing ? String(localized: "Stop") : String(localized: "Preview")).font(EchoelTheme.font(13, .semibold))
                 .foregroundStyle(EchoelTheme.text)
                 .padding(.horizontal, 12)
                 .frame(minWidth: 64, minHeight: 44)

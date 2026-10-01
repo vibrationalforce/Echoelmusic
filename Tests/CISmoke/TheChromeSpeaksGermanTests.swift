@@ -90,7 +90,9 @@
 // the preset hint, the look chip's value/hint, the favourite labels, „Default sound“ (parent: ternaries and interpolated
 // labels of bare literals, 20 units missing — ONE finding). E4-47 added the four analysis readouts — the spectrum's spoken
 // form, the scope's Silent/Peak pair, the wavefront's three sentences, the Poincaré lines (parent: interpolated literals
-// and bare `sharp`/`flat` arms, 22 units missing — ONE finding). Claim 12
+// and bare `sharp`/`flat` arms, 22 units missing — ONE finding). E4-48 added the part bar's Play/Stop (text, label,
+// hint arm), the media browser's Preview/Stop and the FX preset list's two Unstar/Favorite labels (parent: ternaries of
+// bare literals, 5 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -1653,6 +1655,36 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "One wavefront is", "Wavefront field. ", " spreading outward.", " spreading outward, the newest centred near ", " hertz.",
                           "Camera pulse is off. This plot reads the camera pulse only.", "Waiting for beats", "only ", " of beats usable", " beat pairs"],
                          "Analysis readouts")
+
+        // E4-48 — three more ternaries of bare literals, each arm now a catalog key: the selected part's Play/Stop
+        // button (text + spoken label, and the literal hint arm beside `WorkstationSummary.transportHint`), the media
+        // browser's Preview/Stop button, and the FX preset list's two Unstar/Favorite labels (context menu + swipe).
+        let partPlay = try codeOnly("Sources/Echoelmusic/Studio/SelectedPartBar.swift")
+        for seam in ["Text(playing ? String(localized: \"Stop\") : String(localized: \"Play from here\"))",
+                     ".accessibilityLabel(playing ? String(localized: \"Stop all playback\") : String(localized: \"Play the piece from the selected part\"))",
+                     "? String(localized: \"Plays the arrangement from this part's bar on the shared transport.\")"] {
+            XCTAssertTrue(partPlay.contains(seam), "SelectedPartBar lost the E4-48 seam `\(seam)`")
+        }
+        for verbatim in ["Text(playing ? \"Stop\" : \"Play from here\")", "? \"Stop all playback\" :", "? \"Plays the arrangement from this part's bar"] {
+            XCTAssertFalse(partPlay.contains(verbatim), "SelectedPartBar spells a ternary of bare literals again: `\(verbatim)`")
+        }
+        let previewButton = try codeOnly("Sources/Echoelmusic/Studio/MediaBrowserView.swift")
+        for seam in ["Text(playing ? String(localized: \"Stop\") : String(localized: \"Preview\"))"] {
+            XCTAssertTrue(previewButton.contains(seam), "MediaBrowserView lost the E4-48 seam `\(seam)`")
+        }
+        for verbatim in ["Text(playing ? \"Stop\" : \"Preview\")"] {
+            XCTAssertFalse(previewButton.contains(verbatim), "MediaBrowserView spells a ternary of bare literals again: `\(verbatim)`")
+        }
+        let fxFavourite = try codeOnly("Sources/Echoelmusic/Studio/EchoelFXView.swift")
+        for seam in ["Label(presetStore.isFavorite(id: preset.id) ? String(localized: \"Unstar\") : String(localized: \"Favorite\"),"] {
+            XCTAssertTrue(fxFavourite.contains(seam), "EchoelFXView lost the E4-48 seam `\(seam)`")
+        }
+        for verbatim in ["? \"Unstar\" : \"Favorite\""] {
+            XCTAssertFalse(fxFavourite.contains(verbatim), "EchoelFXView spells the favourite ternary with bare literals again: `\(verbatim)`")
+        }
+        try assertGerman(["Stop", "Play from here", "Stop all playback", "Play the piece from the selected part",
+                          "Plays the arrangement from this part's bar on the shared transport.", "Preview", "Unstar", "Favorite"],
+                         "Part bar, preview and favourite sites")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit

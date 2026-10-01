@@ -881,7 +881,7 @@ struct EchoelFXView: View {
                             Label("Duplicate", systemImage: "plus.square.on.square")
                         }
                         Button { presetStore.toggleFavorite(id: preset.id) } label: {
-                            Label(presetStore.isFavorite(id: preset.id) ? "Unstar" : "Favorite",
+                            Label(presetStore.isFavorite(id: preset.id) ? String(localized: "Unstar") : String(localized: "Favorite"),
                                   systemImage: "star")
                         }
                     }
@@ -889,7 +889,7 @@ struct EchoelFXView: View {
                         Button {
                             presetStore.toggleFavorite(id: preset.id)
                         } label: {
-                            Label(presetStore.isFavorite(id: preset.id) ? "Unstar" : "Favorite",
+                            Label(presetStore.isFavorite(id: preset.id) ? String(localized: "Unstar") : String(localized: "Favorite"),
                                   systemImage: presetStore.isFavorite(id: preset.id) ? "star.slash" : "star")
                         }.tint(EchoelTheme.accent)
                     }
