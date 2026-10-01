@@ -41821,3 +41821,22 @@ Founder: "im Loop alles abarbeiten … usability accessibility … Performance a
   auf `transposeSemitones: lane.transposeSemitones`. Transkribiert gegen beide Bäume; Checker sauber
   (needle-reachability: ein vorbestehender Befund in fremder Datei).
 - Gerät offen: transponierte Spur öffnet in der DAW in der klingenden Lage.
+
+### 2026-10-01 — Orchestrierte Runde 1: A4 b519c6c44 · B3b 5de7b12f4 (Workstation-Neugestaltung)
+- Ablauf je Scheibe: Entwurf + adversariale Kritik durch read-only Agenten (Workflow), Umsetzung
+  seriell durch die Hauptsitzung, Python-Transkription gegen beide Bäume, Prüfskripte, dann Push.
+- **A4** Kopf zählt Takt.Schlag.16tel · BPM · 4/4: `WorkstationSummary.counterText`/`meterText`,
+  Blatt `ProjectPositionReadout` (eigene `TimelineView` 15 fps, pausiert im Stopp, Breiten-Schablone),
+  kein heißer Read im Kopf. Tonart bleibt im Streifen darüber (nicht wiederholt, #416). Wächter
+  `TheHeadCountsThePieceInBarsBeatsAndSixteenthsTests` (6 Ansprüche; Kritik-Korrekturen a–d:
+  Benotungskopf, Geräte-Zeile, Breiten-Schablone als Anspruch, Key-Nadel ohne Binding-Text).
+- **B3b** Mixer-Undo: `.laneMix` über einen getrennten Nutzer-Pfad `editLaneMix`/`commitLaneMix`
+  (der Agent-Pfad `TrackMix.setLevel` bleibt draußen — TheAgentActsThroughTheButtonsPathsTests
+  Anspruch 2). Kritik-Befund D1 (MED) eingebaut: Undo setzt ein Feld nur zurück, wenn es noch das
+  Ergebnis der Geste trägt — ein später anderswo gesetzter Pegel bleibt. Drei Wächter nachgezogen
+  (Fall-Liste + Umbenennung #374, Closure-Nadeln, zwei Katalog-Schlüssel). Python-Modell mit
+  Mutanten: geschützt grün, ungeschützt rot an genau den neuen Ansprüchen.
+- **A2b** in die Inbox als H6 (Stil setzt Tonleiter? — Geschmack, nicht messbar), **A4-Geräte-
+  frage** als H7 (zwei Zähler im selben Format). A1b-✓ im Plan nachgetragen.
+- Runde 2 läuft: A3b · A8-Segmente · B1 · C1 (Entwurf + Kritik).
+- Gerät offen: alles. Nichts davon ist am Telefon gesehen.

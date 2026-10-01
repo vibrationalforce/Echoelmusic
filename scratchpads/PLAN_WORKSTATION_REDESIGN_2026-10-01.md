@@ -41,14 +41,14 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
 ### Phase A — Aussehen und Hierarchie (Telefon zuerst)
 - **A1** Spur-Identität: `EchoelTheme.TrackHue` (gedämpfte Farbe je Instrument/Art), Symbol +
   Farbe in der Canvas-Rinne, getönte Teile, höhere Spuren. Farbe nie allein (Symbol + Name).
-- **A1b** Teile tragen ihren Namen (Clip-Name im Block, 11 pt).
+- **A1b** Teile tragen ihren Namen (Clip-Name im Block, 11 pt). **✓ 9352e9791** — `ArrangeCanvas.partName` (getrimmt, leer = kein Etikett), `ArrangePartBlock.nameTag` über den Noten, unter dem Auswahlring, VoiceOver-Wert; Wächter `ThePartsWearTheirNamesTests`. Gerät offen: Lesbarkeit auf jeder Spurfarbe, Kürzung bei einem Ein-Takt-Teil.
 - **A2** Genre raus aus dem Kopfstreifen → „Stil" am Echoel-Gerät (eine Tür). A2b: Stil-Wahl
   schreibt Tonart/Stimmung nicht mehr (WA2-Bindung). **✓ A2 b006cdbd1** (A2b offen).
 - **A3** Feste Transportleiste unten auf der Stück-Bühne (⏮ ■ ▶ ● Klick · Position · Pegel);
   `transportRow` mitten im Scroll entfällt. EIN Transport (`ProjectTransport`). **✓ dbbe191cf**
   (Scroll in `WorkstationView`, `transportBar` per `safeAreaInset`). A3b offen: Kopf-Play und
   Leisten-Play doppeln sich auf der Stück-Bühne — Kopf-Play bleibt für die Instrument-Bühne.
-- **A4** Kopf-Anzeige: Song-Position TAKT.SCHLAG.16tel · BPM · 4/4 · Tonart.
+- **A4** Kopf-Anzeige: Song-Position TAKT.SCHLAG.16tel · BPM · 4/4 · Tonart. **✓ b519c6c44** — `WorkstationSummary.counterText`/`meterText`, Blatt `ProjectPositionReadout` (eigene `TimelineView`, 15 fps, pausiert im Stopp, Breiten-Schablone „888.4.4“, kein heißer Read im Kopf); Reihenfolge Position · Tempo · Taktart · Ort. Die Tonart wird NICHT wiederholt — sie steht im Streifen eine Zeile darüber. Wächter `TheHeadCountsThePieceInBarsBeatsAndSixteenthsTests`. Offen: Inbox H7 (zwei Zähler im selben Format).
 - **A5** Spur-Köpfe IM Canvas (M/S verschoben, nicht verdoppelt); Kartenliste → nur Inspektor.
   **✓ a63319b72 (Telefon):** Kopf im Canvas WÄHLT; M/S bleibt im Inspektor-Kopf (zwei 44-pt-
   Schalter passen nicht in eine 96-pt-Rinne neben einen Namen). M/S-in-Rinne → A9 Querformat,
@@ -72,7 +72,7 @@ Tablet-Entwurf (Workstation, Querformat, vom Founder heute erneut angehängt).
   Bedienelement pro Tatsache auf dem Schirm). Kanalzug = `TrackMix.controls` (keine zweite Regel),
   Schreiben nur über `TrackMix.*`; stumme Spuren ohne Zug, aber gezählt. Pegel-Hinweis als
   `TrackMix.levelHint` gehoben (#416). Arrange ist jetzt ein Knopf (zwei Ansichten der Platte).
-  **Offen: B3b Mixer-Undo** (eigener `HistoryStep`, nicht in der Teil-Historie) und Meter (= B5).
+  **B3b ✓ 5de7b12f4** — `.laneMix` als fünfte Schritt-Art über einen GETRENNTEN Nutzer-Pfad (`editLaneMix`/`commitLaneMix`), eine Geste = ein Schritt; Undo setzt nur Felder zurück, die die Geste geändert hat UND die noch ihr Ergebnis tragen (Review D1); der Agent-Pfad `TrackMix.setLevel` bleibt draußen. Inspektor, Spurkopf und Perform-Gitter schreiben weiter ohne Undo (B3c). Wächter `TheMixerGestureIsOneUndoStepTests`. Meter = B5.
   ⚠️ B3b gemessen und VERTAGT: `TheAgentActsThroughTheButtonsPathsTests` verlangt, dass der
   Agent-Pfad über `TrackMix.setLevel` KEINEN Song-Undo-Schritt schreibt — ein Undo im geteilten
   Schreiber bräche das; es braucht einen getrennten Nutzer-Schreiber. Eigene Scheibe.
