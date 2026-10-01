@@ -837,6 +837,13 @@ struct EchoelStudioView: View {
     /// the comment above its own door said so while this line and the VoiceOver hint went on
     /// claiming it. See the ⛔ block at the `showAllFX` button in `effectsPanel`.
     @State private var showAllFX = false
+    /// ⭐ ONE MODAL AT A TIME, NOW THAT PANEL SHEETS OPEN HALF HIGH (founder 2026-10-01, "Bereiche
+    /// zu groß"). `echoelSheetPanel()` opens FX, Routing and Live Colabo at `.medium`, where the
+    /// instrument behind stays interactive — so every OTHER sheet/alert door is reachable while one
+    /// of them is up, and driving a second modal true over it is the two-modals hang (an invisible
+    /// tap-blocking layer). Each such door reads this and is DISABLED while it is true: a visible
+    /// state, never a silent no-op (#164/#227). COLD: three `@State` flags flipped by a tap.
+    private var panelSheetUp: Bool { showAllFX || showLiveColabo || showRouting }
     // The sample-browser slot (`sampleBrowserTrack` + its `.sheet(item:)` + `TrackRef`)
     // is GONE with `SampleBrowserView` itself (#167, founder "Drums sollen erstmal gar
     // nicht mehr rein"). The previous session kept it as a "reusable slot" because the
@@ -1300,9 +1307,13 @@ struct EchoelStudioView: View {
                     // the same slots `quickActionRow`/`quickDoorRow` set, no new modal, and the
                     // save still goes through `saveProject()` → `withSession`.
                     case "save":
+                        // Refuses while a half-high panel sheet is up (`panelSheetUp`) — the same
+                        // two-modals rule the "routing" door above keeps.
+                        guard !panelSheetUp else { break }
                         saveName = projects.currentProjectName ?? session.sessionName(bpm: beatPlayer.pattern.tempo)
                         showSaveDialog = true
                     case "open":
+                        guard !panelSheetUp else { break }
                         openNote = nil
                         showOpen = true
                     // Slice 2c: the Piece stage's tuning banner (`PieceTuningStatus`) posts this.
@@ -2435,6 +2446,7 @@ struct EchoelStudioView: View {
                 saveName = projects.currentProjectName ?? session.sessionName(bpm: beatPlayer.pattern.tempo)
                 showSaveDialog = true
             }
+            .disabled(panelSheetUp)
 
         }
     }
@@ -2495,6 +2507,7 @@ struct EchoelStudioView: View {
                 EchoelIconTile(systemImage: "tray.and.arrow.up", title: "Open", expands: true)
             }
             .buttonStyle(.plain)
+            .disabled(panelSheetUp)
             .accessibilityLabel("Open a saved piece")
 
             #if canImport(MultipeerConnectivity)
@@ -2502,6 +2515,7 @@ struct EchoelStudioView: View {
                 EchoelIconTile(systemImage: "dot.radiowaves.left.and.right", title: "Live Colabo", expands: true)
             }
             .buttonStyle(.plain)
+            .disabled(panelSheetUp)
             // An icon-only control must say what it is (#489), and "Live Colabo" alone would
             // not tell a first-time listener that it is about playing WITH someone in the room.
             //
@@ -2536,6 +2550,7 @@ struct EchoelStudioView: View {
                 EchoelIconTile(systemImage: "book", title: "Learn", expands: true)
             }
             .buttonStyle(.plain)
+            .disabled(panelSheetUp)
             .accessibilityLabel("Learn and news")
             .accessibilityHint("Opens the body-science library and release notes")
 
@@ -3592,6 +3607,7 @@ struct EchoelStudioView: View {
                         .strokeBorder(EchoelTheme.border, lineWidth: 1))
             }
             .buttonStyle(.plain)
+            .disabled(panelSheetUp)
             // ⛔ #355(c) — THIS LABEL SAID "Open Routing to connect a BLE heart-rate strap",
             // AND ROUTING CANNOT CONNECT ONE. `PatchbayView` pairs Bluetooth MIDI, opens a
             // network MIDI session, sets the OSC/ADM/Art-Net/sACN targets and holds the light
@@ -5268,6 +5284,7 @@ struct EchoelStudioView: View {
                              hint: "OSC, immersive object, and lighting outputs") {
                 showRouting = true
             }
+            .disabled(panelSheetUp)
         }
     }
 
@@ -7783,6 +7800,7 @@ struct EchoelStudioView: View {
                 Button { moodAsName = moodPresetName + " copy"; showSaveMoodAs = true } label: {
                     Label("Save as new mood…", systemImage: "plus")
                 }
+                .disabled(panelSheetUp)
                 if let id = moodPresetID {
                     let isFav = moodStore.isFavorite(id: id)
                     Button { moodStore.toggleFavorite(id: id) } label: {
@@ -8423,6 +8441,7 @@ struct EchoelStudioView: View {
                     Button { patchSaveName = currentPatch.name + " copy"; showSavePatchAs = true } label: {
                         Label("Save as new sound…", systemImage: "plus")
                     }
+                    .disabled(panelSheetUp)
                     let isFav = patchStore.isFavorite(id: currentPatch.id)
                     Button { patchStore.toggleFavorite(id: currentPatch.id) } label: {
                         Label(isFav ? String(localized: "Unfavorite") : String(localized: "Favorite"), systemImage: isFav ? "star.slash" : "star")
@@ -8750,6 +8769,7 @@ struct EchoelStudioView: View {
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
             }
             .buttonStyle(.plain)
+            .disabled(panelSheetUp)
             // ⛔ The first #480 hint read "Open every effect stage — filter, delay, modulation and
             // dynamics, with every parameter exposed". It traded a false CONTROL-TYPE claim for a
             // false COMPLETENESS one: those four categories covered 8 of the 14 stages THEN

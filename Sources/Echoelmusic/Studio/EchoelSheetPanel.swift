@@ -5,9 +5,13 @@
 //  One consistent NON-MODAL panel presentation for every tool/editor SHEET (Echoel
 //  CI = one treatment everywhere). Instead of a hard full-screen modal that hides the
 //  instrument, a sheet wearing `.echoelSheetPanel()`:
-//    • opens at full height (.large) so editors get their room,
-//    • drags down to .medium, where the instrument behind stays VISIBLE and
+//    • opens at HALF height (.medium), where the instrument behind stays VISIBLE and
 //      INTERACTIVE (pro-media HUD pattern — keep performing while a panel is open),
+//    • drags up to full height (.large) when an editor wants the room.
+//  ⭐ Founder 2026-10-01: "Viele Bereiche sind zu groß und füllen den Bildschirm aus." The
+//  default was `.large` until then. Because the background is now live from the first frame,
+//  the studio disables every other sheet/alert door while one of these is up
+//  (`EchoelStudioView.panelSheetUp`) — the two-modals hang law.
 //    • shows a grab handle so it reads as draggable/dismissable (WCAG 2.2: a visible
 //      affordance, not a hidden gesture),
 //    • backs with a semi-transparent solid (NOT glass/blur — Uncodixfy-compliant).
@@ -23,9 +27,9 @@
 import SwiftUI
 
 struct EchoelSheetPanelModifier: ViewModifier {
-    /// Per-presentation detent; starts full so editors aren't cramped, the user can
-    /// pull it down to reveal and operate the instrument behind.
-    @State private var detent: PresentationDetent = .large
+    /// Per-presentation detent; starts at half height so the work area stays visible and
+    /// playable, and the user pulls it up when an editor needs the room.
+    @State private var detent: PresentationDetent = .medium
 
     func body(content: Content) -> some View {
         content
