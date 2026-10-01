@@ -434,7 +434,7 @@ struct EchoelStudioView: View {
     @State private var moodStore = MoodPresetStore()
     /// Identity of the currently-loaded mood (nil = an unsaved "Custom" edit).
     @State private var moodPresetID: UUID? = nil
-    @State private var moodPresetName = "Custom"
+    @State private var moodPresetName = String(localized: "Custom")   // E4-111: the menu label shows this
     @State private var showSaveMoodAs = false
     @State private var moodAsName = ""
     @State private var showSavePatchAs = false
@@ -2071,7 +2071,7 @@ struct EchoelStudioView: View {
                 // A pad gesture is a custom edit — the loaded preset no longer
                 // describes the sound (same rule as the mood editor).
                 moodPresetID = nil
-                moodPresetName = "Custom"
+                moodPresetName = String(localized: "Custom")
                 recomposeIfRunning()
             }
             VisualMoodPadLeaf()
@@ -5231,7 +5231,8 @@ struct EchoelStudioView: View {
                 labeledRow("Tone") {
                     Picker("Tone", selection: $masterCharacterRaw) {
                         ForEach(AutoMixChain.Preset.allCases) { p in
-                            Text(p.displayName).tag(p.rawValue)
+                            // E4-111: the name is looked up here; `displayName` stays the English source.
+                            Text(LocalizedStringKey(p.displayName)).tag(p.rawValue)
                         }
                     }
                     .pickerStyle(.menu).tint(EchoelTheme.text)
@@ -7865,7 +7866,7 @@ struct EchoelStudioView: View {
                             }
                             moodStore.delete(id: id)
                             moodPresetID = nil
-                            moodPresetName = "Custom"
+                            moodPresetName = String(localized: "Custom")
                         } label: { Label("Delete", systemImage: "trash") }
                     }
                 }

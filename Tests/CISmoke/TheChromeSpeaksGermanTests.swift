@@ -214,7 +214,8 @@
 // scanner's own word-boundary bug had hidden their units (parent: 2 units missing — ONE finding). E4-110 keyed the
 // visual window's two recording-fault badges and took „Poincaré plot“ and „WAV FAILED“ off `untranslatedPanelWords`,
 // where E4-6 had filed them as spelled alike in every language — neither is (parent: seam absent, 2 units missing —
-// ONE finding). Claim 12
+// ONE finding). E4-111 keyed the mood menu's „Custom“ label and looked up the master Tone picker's four names (parent:
+// seams absent, 5 units missing — ONE finding). Claim 12
 // (E4-10) drives four needles on `EchoelValueField` and walks every literal label app-wide: on its
 // parent the needles are absent and the labels' units missing — again ONE finding.
 //
@@ -3492,6 +3493,20 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertFalse(wavBadge.contains(verbatim), "the gap badge is interpolated again")
         }
         try assertGerman(["WAV FAILED", "WAV GAP "], "recording fault badges")
+
+        // E4-111 — two `Text(String)` sites in the instrument: the mood menu shows `moodPresetName`, which starts
+        // and resets to "Custom", and the master Tone picker drew `AutoMixChain.Preset.displayName` verbatim. The
+        // sentinel is a lookup now and the picker looks its names up; the raw values stay persistence tokens.
+        let masterTone = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for seam in ["@State private var moodPresetName = String(localized: \"Custom\")",
+                     "moodPresetName = String(localized: \"Custom\")",
+                     "Text(LocalizedStringKey(p.displayName)).tag(p.rawValue)"] {
+            XCTAssertTrue(masterTone.contains(seam), "the mood menu or Tone picker lost its E4-111 seam: \(seam)")
+        }
+        for verbatim in ["moodPresetName = \"Custom\"", "Text(p.displayName).tag(p.rawValue)"] {
+            XCTAssertFalse(masterTone.contains(verbatim), "a mood or Tone name is drawn verbatim again: \(verbatim)")
+        }
+        try assertGerman(["Custom"] + AutoMixChain.Preset.allCases.map(\.displayName), "mood default and Tone names")
     }
 
     // MARK: - claim 12 (E4-10) — every value-field label has a German unit
