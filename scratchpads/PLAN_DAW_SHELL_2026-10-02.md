@@ -32,7 +32,7 @@ Antworten:
 | S1 | Steuerleiste | EINE Leiste ersetzt topBar + CompositionHeaderStrip + ProjectHeader: ≡ · ⏮ · ▶/■ · ● · Anzeige-Blatt (Position · BPM+Schloss · Tonart) · Puls; Tonart/Stimmung/Tempo-Modus/Tap/Click in ein Blatt „Song" | WorkspaceView, ProjectHeader, neue DAWControlBar |
 | S3 ✅ | Projektmenü | GEBAUT 2026-10-02: ≡ = Open · Save │ Live Colabo · Learn │ Guide; `quickDoorRow`, Save-Kachel und `WorkstationProjectRow` gelöscht. New bleibt im Open-Blatt, Export auf der Projekt-Platte, Routing bei seiner einen Tür (Licht-Kachel) — je Bereich EINE Tür, darum nicht doppelt ins Menü | WorkspaceView, EchoelStudioView, WorkstationView |
 | S4 (a ✅ b ✅) | Arbeitsfläche + Detail | feste Canvas, Detailbereich Track/Part/Notes/Automation/Device, Szenen als Canvas-Schalter | WorkstationView, ArrangeCanvasView |
-| S5 | Mixer | Streifen + Master | PieceMixerView |
+| S5 ✅ | Mixer | Streifen + Master (Master-Streifen gebaut) | WorkstationView, MasterStripView |
 | S6 | Browse | Import · Medienbibliothek · Sounds/Moods · Foto/Video-Saat | WorkstationView, MediaBrowserView |
 | S7 | Instrument entrümpeln | eigene Transport-/Save-Zeilen weg, Chips als Reiter | EchoelStudioView |
 | S8 | Querformat | Umschalter als Segment in der Leiste, Detail als rechte Spalte | StageShell, WorkstationView |
@@ -102,3 +102,18 @@ Gerät: nichts hiervon ist geräteverifiziert, bis der Founder es sieht.
   das Detail folgt der Auswahl schon und klappt mit ihr; ein zweiter Zu-Knopf wäre ein zweiter Zustand.
 - **Gerät offen:** Automationszeile im Querformat (Namensspalte + ~130-pt-Kurve), Segment-Wort „Automation".
 
+
+## S5 — Entscheidungen und Befunde (2026-10-02)
+
+- **Der Master gehört ans Ende des Mixers, nicht ins Instrument.** `MasterStripView` (eigenes Blatt):
+  Lautstärke, Pegel-Balken + EBU-R128-Zahlen (`MasterLoudnessGrid`), „Clear". Verschoben, nicht kopiert —
+  das Master-Panel behält Lautheits-Ziel, Klangcharakter, Latenz/Route/Timing, Panic.
+- **Das ganze Post-Chain-Raster wandert, nicht nur die Balken:** die R128-Zahlen beobachten die
+  Master-Lautstärke per Konstruktion, die Pre-Chain-Balken womöglich nicht — getrennt stünde der Regler
+  neben einem Meter, das ihn ignoriert.
+- **Montiert außerhalb des Leer-Song-Zweigs:** ein leerer Song spielt weiter das Instrument, also bleibt
+  sein Master erreichbar.
+- **Kein heißer Read in `PieceMixerView`/`WorkstationView`:** eigene Datei, weil `ThePieceHasAMixerTests`
+  `masterLevel` dort verbietet und genau 2 `EchoelValueField(` pinnt.
+- `DetailedMeteringOwner.masterPanel` → `.masterReadout` (der Anspruchsteller ist das Raster, wo immer es hängt).
+- **Gerät offen:** Streifen unter den Spuren auf 375–440 pt, Regler hörbar, Zahlen laufen, Clear.

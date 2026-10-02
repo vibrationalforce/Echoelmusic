@@ -41961,3 +41961,10 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - Offen als Gerätefrage: die Automationszeile behält ihre Namensspalte (Kurve ~130 pt im Querformat); „Automation" im Segment eventuell gekürzt.
 - Gates: S4b läuft; 0b05984fb + 9cc6eee61 lokal, Push nach dem Compile Check auf e3ceb554c. Gerät: nichts geprüft.
 
+- **Gates S4b:** Compile Check 3186 ✓, Auto-Merge 4084 ✓ → main = e3ceb554c (⇒ BfT grün). 0b05984fb · 9cc6eee61 · 7bcf13c37 gepusht.
+
+## 2026-10-02 (Abend) — DAW-Hülle S5: der Mixer endet im Master-Streifen
+- **6088a7525** `MasterStripView` (Lautstärke · Pegel + R128 · Clear) hängt im Mixer nach den Spur-Streifen, außerhalb des Leer-Song-Zweigs; das Instrument-Master-Panel behält Ziel, Ton, Audio-System. Eine Tür je Bereich: verschoben, nicht kopiert. Claimant `.masterPanel` → `.masterReadout`; drei Katalog-Schlüssel umbenannt.
+- **Wächter:** neu `TheMixerEndsInTheMasterStripTests` (34/34 auf dem Baum transkribiert; auf dem Elternteil nicht kompilierbar — neues Symbol); umgezogen MasterPanelReflows (+3 Abwesenheiten), TapTargetFloor (Clear in neuer Datei), MasteringMeters (Umbenennung), ChromeSpeaksOneLanguage, WorkstationShowsTheMixLevel (Meldung). Prüfer sauber; moved-needles-Treffer geöffnet.
+- **Lehre:** eine Nadel auf `resetMastering()` trifft auch die DEKLARATION `func resetMastering()` — für „wer ruft" `.resetMastering()` mit Punkt nehmen.
+- Gates: Push nach dem Compile Check auf 7bcf13c37. Gerät: nichts geprüft (Inbox §2 „S5").
