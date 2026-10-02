@@ -1,4 +1,4 @@
-build: v10.79.486 — Eine Tür je Bereich: keine Bereichs-Zeile, eine Reiter-Zeile, Transport in einer Zeile, Werkzeug-Blätter halb hoch
+build: v10.79.487 — Eine Tür je Bereich, zweite Runde: Chip „Workstation" und zwei Routing-Knöpfe weg, Aufnahme in Rot
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -49,6 +49,50 @@ notes: |
   ⚠️ Reparatur wäre workflow-seitig (Bump erkennen statt Pfad) und ist founder-gated:
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
+
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.487) ───────────────────────────────
+
+  ⭐ ZWEITE AUFRÄUM-RUNDE NACH DEINER ANSAGE („Vermeide das es mehrfache Wege zu einem
+  Bereich gibt"). Drei Code-Scheiben seit 10.79.486, jede mit eigenem Wächter. Auf dem
+  Gerät ist NICHTS davon geprüft; dieser Build ist genau dafür da.
+  Gates: Xcode Compile Check + Build for Testing grün auf f6d758c95 (= main).
+
+  ── POSTEN 1: DAS STÜCK HAT EINE TÜR ──
+  · Der Chip „Workstation" in der Chip-Leiste des Instruments ist WEG. Zum Stück kommst du
+    über die Naht ganz oben: „Stück | Instrument". Die Chip-Leiste heißt jetzt Bio, Tempo,
+    Sound, Mix, FX, Master, Mood, Save/Export, Field.
+
+  ── POSTEN 2: ROUTING HAT EINE TÜR ──
+  · Routing öffnest du NUR noch über die Licht-Kachel im Kopf (VoiceOver sagt „Licht und
+    Routing"). Der Knopf „Open Routing" im Bio-Panel und der Knopf „Routing" im
+    Master-Panel sind weg — beide waren zweite Türen zum selben Blatt.
+  · Ist das FX-Blatt (oder Live Colabo) offen, tut ein Tipp auf die Kachel bewusst nichts —
+    zwei Blätter übereinander sind der bekannte Hänger.
+
+  ── POSTEN 3: AUFNAHME IST ROT ──
+  · Der Aufnahme-Knopf in der Transportleiste trägt jetzt das DAW-Rot: roter Punkt, solange
+    er bereit ist, rot gefüllt während der Aufnahme. So steht er nicht mehr wie ein zweites
+    Stopp neben Stopp.
+
+  ── PRÜFLISTE ──
+  T1  Kaltstart: kein Black Screen, öffnet auf dem Stück.
+  T2  Instrument: Chip-Leiste ohne den Chip „Workstation"? Naht „Stück" oben bringt dich zurück?
+  T3  Licht-Kachel im Kopf → Routing öffnet sich, vom Stück UND vom Instrument aus.
+  T4  Bio-Chip → Bio-Panel: kein Routing-Knopf mehr. Master-Chip → Master-Panel: auch
+      keiner. Fehlt er dir?
+  T5  FX-Chip → „All parameters" offen lassen, dann Licht-Kachel tippen: nichts passiert,
+      nichts hängt. Blatt schließen, Kachel tippen: Routing kommt.
+  T6  Stück → Transportleiste: liest sich der rote Punkt sofort als Aufnahme? Aufnahme
+      starten: ist „Aufnahme stoppen" auf dem roten Feld gut lesbar?
+  T7  Hängt oder stockt etwas: Save/Export-Chip → „Diagnostics" (Diagnose) → Teilen.
+
+  Neu prüfbare Bitten (1):
+  Gedruckt: python3 scripts/founder-verify.py --since 4218e00da
+  AUDIO 1 — Licht-Kachel im Kopf → Routing → „Body → parameter" → Route auf Tempo
+  (umformuliert: der alte Weg lief über das Master-Panel).
+
+  Der Vorgänger ist 10.79.486 (Build 2611), davor 10.79.485.
 
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.486) ───────────────────────────────
