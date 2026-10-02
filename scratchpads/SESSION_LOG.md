@@ -41934,3 +41934,4 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - **Deploy 10.79.488** c80cbb672 (TestFlight-Lauf 2613 / 36990713092).
 - Lehre: eine Hinweis-Zeile, die nur an EINER von zwei Türen-Stellen hängt, verschwindet in dem Moment, in dem ihre Tür wandert — ein Prädikat (`WorkstationSummary.isEmpty`) für Türen UND Hinweis.
 - Gerät: nichts geprüft. Offen: Scheiben 6 (Tempo-Schloss im Kopf), 8, 9, 12.
+- **Deploy 10.79.488 GELANDET** — TestFlight-Lauf 2613 (36990713092) auf c80cbb672: Preflight · Compile Check · iOS · Export & Upload · „Verify build landed in App Store Connect" success. Gerät: offen (T1–T7).
