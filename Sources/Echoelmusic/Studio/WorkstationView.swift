@@ -335,8 +335,8 @@ struct WorkstationView: View {
                 // open track's head stand SIDE BY SIDE — canvas, part bar and editors on the left,
                 // the track column on the right — instead of the head scrolling a screen below the
                 // lane it names. Portrait stacks them exactly as before. `AnyLayout` keeps every
-                // child's identity across a rotation, so a switch that was on (Notes, Automation,
-                // the inspector's own state) stays on — the measured reason this file already gives
+                // child's identity across a rotation, so the open track's chosen detail page (Track,
+                // Part, Notes, Automation, Device) stays chosen — the measured reason this file gives
                 // for the transport readout. Only with a drawn canvas: a song with no parts has
                 // nothing to sit beside. ⚠️ Size class is an environment value, not hot state.
                 // (The plan's third column — the visual — is the floating card over the plate.)
@@ -1291,7 +1291,7 @@ struct WorkstationView: View {
     }
 
     /// Phase 3 / M1b — "New MIDI Part": an empty part on the MIDI track, selected at once so the
-    /// part bar and the note editor below the canvas open on it. The stores are handed to
+    /// part bar and the track's Notes page open on it. The stores are handed to
     /// `MIDIImport.addEmptyPart`, never messaged (claim F); selecting reads only `document`.
     ///
     /// ⚠️ NEVER DISABLED, for `importMIDIRow`'s reason: a missing track or a full clip grid is
@@ -1493,7 +1493,7 @@ struct WorkstationView: View {
 
     /// "New MIDI Part" — the row's action and the guide's step 2, one body (#416). The stores
     /// are handed to `MIDIImport.addEmptyPart`, never messaged (claim F); the new part is
-    /// selected so the part bar and the note editor open on it; every outcome says what
+    /// selected so the part bar and the track's Notes page open on it; every outcome says what
     /// happened on the one note line.
     private func newMIDIPart() {
         importNote = nil

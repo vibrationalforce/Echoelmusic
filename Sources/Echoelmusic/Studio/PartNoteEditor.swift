@@ -100,6 +100,9 @@ struct PartNoteEditor: View {
                     .font(EchoelTheme.font(12, .semibold))
                     .foregroundStyle(EchoelTheme.text)
                     .accessibilityAddTraits(.isHeader)
+                    // S4a review (LOW): the visible title already carries the count ("Notes · 3"),
+                    // so the spoken label is the word alone and the value says the count once.
+                    .accessibilityLabel("Notes")
                     .accessibilityValue(spokenCount)
                 if let line = Self.noVoiceLine(TrackMix.role(of: lane.id, in: document,
                                                              voiceCapacity: voiceCapacity)) {

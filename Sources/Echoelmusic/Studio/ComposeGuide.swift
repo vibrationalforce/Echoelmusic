@@ -182,8 +182,8 @@ enum ComposeGuide {
         }
     }
 
-    /// What the card says after "Write notes": where the grid it just opened sits, because on a
-    /// phone it is below the canvas and may be off screen.
+    /// What the card says after "Write notes": where the grid it just opened sits, because the
+    /// detail area is below the canvas in portrait (beside it in landscape) and may be off screen.
     static var notesOpenedNote: String {
         String(localized: "The part's notes are open on the track's Notes page. Tap a cell to write a note.")
     }

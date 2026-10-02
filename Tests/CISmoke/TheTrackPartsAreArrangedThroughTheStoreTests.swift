@@ -244,8 +244,11 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
         }
         XCTAssertTrue(view.contains("selection.selectRegion(part.id, in: document)"),
                       "a part row selects its part — the one part editor acts on the one selection")
-        XCTAssertTrue(view.contains("are under the arrangement above."),
+        XCTAssertTrue(view.contains("are on the Selected part bar under the arrangement."),
                       "a selected part says in words where its actions went — the bar may be scrolled away (review of 6bf183726)")
+        // S4a review: "above" was false in landscape, where this list sits in the detail column
+        // beside the arrangement; the sentence names the bar by its heading instead.
+        XCTAssertFalse(view.contains("under the arrangement above"), "the landscape-false \"above\" is back")
         let bar = try source(Self.partBarPath)
         for edit in ["TrackParts.move(", "TrackParts.duplicate(part, timeline: timeline)",
                      "TrackParts.remove(part, timeline: timeline)"] {

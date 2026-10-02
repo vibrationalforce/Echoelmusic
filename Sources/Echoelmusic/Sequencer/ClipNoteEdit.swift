@@ -518,7 +518,7 @@ enum ClipNoteEdit {
     }
 
     /// How many notes the part holds — the SAME windowing the grid draws and the player plays
-    /// (`visibleNotes`), so the count on the "Notes" switch and the grid's own label agree.
+    /// (`visibleNotes`), so the count on the Notes page's heading and the grid's own label agree.
     /// nil where the grid would not open a clip: no clip, not MIDI, or a legacy seconds offset.
     nonisolated static func noteCount(clip: Clip?, region: TimelineRegion) -> Int? {
         guard let clip, clip.kind == .midi, let offset = windowOffset(of: region) else { return nil }
@@ -526,8 +526,8 @@ enum ClipNoteEdit {
                             lengthTicks: region.lengthTicks).count
     }
 
-    /// The "Notes" switch: "Notes · 32" once the part's notes are known, plain "Notes" otherwise
-    /// (design slice 2 — the mockup's note count, on the control that opens them).
+    /// The Notes page's heading (a switch until DAW shell S4a): "Notes · 32" once the part's notes
+    /// are known, plain "Notes" otherwise (design slice 2 — the mockup's note count).
     nonisolated static func notesSwitchTitle(count: Int?) -> String {
         guard let count else { return String(localized: "Notes") }
         return String(localized: "Notes · ") + "\(count)"

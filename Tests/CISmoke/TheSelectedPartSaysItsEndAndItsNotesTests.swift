@@ -105,6 +105,9 @@ final class TheSelectedPartSaysItsEndAndItsNotesTests: XCTestCase {
         XCTAssertTrue(switchView.contains("return \"\\(n) \" + word"), "the number is said, then its word")
         XCTAssertTrue(switchView.contains("} ?? \"\""), "no part count, no spoken value")
         XCTAssertTrue(switchView.contains(".accessibilityValue(spokenCount)"), "VoiceOver hears the count too")
+        // S4a review (LOW): the visible title carries the count, so the label is the word alone —
+        // otherwise VoiceOver says the count twice ("Notes · 3, heading, 3 notes").
+        XCTAssertTrue(switchView.contains(".accessibilityLabel(\"Notes\")"), "the heading's spoken label is the word, not the count")
         XCTAssertFalse(switchView.contains("setClipNotes"), "the heading counts, it never edits")
         XCTAssertTrue(switchView.contains(".accessibilityAddTraits(.isHeader)"),
                       "DAW shell S4a: no switch any more — the count is the Notes page's heading")

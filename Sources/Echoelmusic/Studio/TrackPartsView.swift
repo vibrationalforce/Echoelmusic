@@ -207,8 +207,10 @@ struct TrackPartsView: View {
                 // Review of 6bf183726 (MEDIUM): with several tracks the part bar can be scrolled
                 // out of view when a part is picked here, and the accent border alone does not
                 // say where its actions went. Said in words, to everyone, not only to VoiceOver.
+                // S4a review: no "above" — in landscape this list stands in the detail column
+                // BESIDE the arrangement; the bar is named by its own heading instead.
                 if let selected, parts.contains(where: { $0.id == selected }) {
-                    Text("Its actions — move, trim, split, copy, remove — are under the arrangement above.")
+                    Text("Its actions — move, trim, split, copy, remove — are on the Selected part bar under the arrangement.")
                         .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -237,6 +239,6 @@ struct TrackPartsView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(String(localized: "Part at ") + title)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityHint("Selects this part. Its actions are under the arrangement above")
+        .accessibilityHint("Selects this part. Its actions are on the Selected part bar under the arrangement")
     }
 }
