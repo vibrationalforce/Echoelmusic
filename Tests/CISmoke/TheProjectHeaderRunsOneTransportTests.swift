@@ -297,7 +297,11 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
         let workspace = try source(Self.workspace)
         XCTAssertEqual(workspace.components(separatedBy: "ProjectHeader()").count - 1, 1,
                        "one project header")
-        guard let strip = workspace.range(of: "CompositionHeaderStrip()\n"),
+        // DAW shell S1a: the composition strip left the chrome group (Project plate); the header
+        // now follows the brand bar directly, still inside the group's one clamp.
+        XCTAssertFalse(workspace.contains("                    CompositionHeaderStrip()\n"),
+                       "the composition strip is mounted in the chrome group again")
+        guard let strip = workspace.range(of: "                    topBar\n"),
               let header = workspace.range(of: "ProjectHeader()", range: strip.upperBound..<workspace.endIndex),
               let clamp = workspace.range(of: ".dynamicTypeSize(...DynamicTypeSize.accessibility1)",
                                           range: header.upperBound..<workspace.endIndex),

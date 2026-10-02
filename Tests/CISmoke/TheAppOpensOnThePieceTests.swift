@@ -165,13 +165,17 @@ final class TheAppOpensOnThePieceTests: XCTestCase {
         }
         let body = workspace[bodyAt...]
         var last = body.startIndex
-        for token in ["topBar", "CompositionHeaderStrip()", "SurfaceHost()",
+        // DAW shell S1a: the composition strip left the head for the Project plate; the head is
+        // the brand bar and the project header now, in that order.
+        XCTAssertFalse(body.contains("CompositionHeaderStrip()"),
+                       "the composition strip is the Project plate's Song section, not a row of the head")
+        for token in ["topBar", "ProjectHeader()", "SurfaceHost()",
                       "FloatingVisualWindow(isPresented: $floatingVisualVisible)"] {
             guard let at = body[last...].range(of: token)?.lowerBound else {
                 XCTFail("""
                     `\(token)` no longer appears in `WorkspaceView.body` after the previous \
                     layer. The front door is "the piece with the picture over it": brand \
-                    header, composition strip and stage first, the visual window layered \
+                    header, project header and stage first, the visual window layered \
                     after them. If the root was restructured, re-anchor this in the same commit.
                     """)
                 return

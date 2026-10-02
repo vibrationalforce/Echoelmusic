@@ -15,8 +15,8 @@
 //    read inside the clock's closure; it shows and speaks the position and does nothing else.
 // 5. SOURCE: the head's summary mounts it ONCE, in the display order position · tempo · metre ·
 //    place, and the metre speaks a label.
-// 6. COUNTERWEIGHT: the KEY of the display is `CompositionHeaderStrip`'s Key picker, one row above in
-//    the same chrome group — the head keeps no second copy of it.
+// 6. COUNTERWEIGHT: the KEY of the display is `CompositionHeaderStrip`'s Key picker — the Project
+//    plate's Song section since DAW shell S1a — and the head keeps no second copy of it.
 //
 // Grading (§3; no Swift toolchain here, §0). Parent c83128651: `counterText`, `meterText` and
 // `ProjectPositionReadout` do not exist there, so this file DOES NOT COMPILE against the parent — no
@@ -158,15 +158,15 @@ final class TheHeadCountsThePieceInBarsBeatsAndSixteenthsTests: XCTestCase {
                       "the metre is spoken with its name, not as a bare fraction")
     }
 
-    // MARK: 6 — the key lives one row above, once
+    // MARK: 6 — the key lives in the composition strip, once
 
-    func testTheKeyStaysInTheStripAboveTheHead() throws {
+    func testTheKeyStaysInTheCompositionStripOnce() throws {
         let workspace = try source(Self.workspace)
         XCTAssertEqual(workspace.components(separatedBy: "Picker(\"Key\",").count - 1, 1, """
-            COUNTERWEIGHT: the KEY half of A4 is served by `CompositionHeaderStrip`'s Key picker, \
-            which sits one row above the head in the same chrome group (its placement is pinned by \
-            `TheProjectHeaderRunsOneTransportTests`). If it moved, the head may now be the right home \
-            for the key — move it there, do not drop it.
+            COUNTERWEIGHT: the KEY half of A4 is served by `CompositionHeaderStrip`'s Key picker — \
+            since DAW shell S1a the Song section of the Project plate (its mount is pinned by \
+            `ChromeDynamicTypeTests`). If it moved again, the head may now be the right home for \
+            the key — move it there, do not drop it.
             """)
         let code = try source(Self.header)
         XCTAssertFalse(code.contains("StudioDefaultKeys.rootIndex"), """

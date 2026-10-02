@@ -123,14 +123,22 @@ final class ChromeDynamicTypeTests: XCTestCase {
     /// reports `failure` on EVERY push while #396 lives, so this red was indistinguishable
     /// from the host death without reading per-test names in the job log. Before deleting a
     /// chrome element, `git grep` it in `Tests/CISmoke` — not only in `Sources/`.
-    private static let chromeBars = [(bar: "topBar", height: 50, mount: "topBar"),
+    ///
+    /// ⚠️ DAW shell S1a (founder 2026-10-02): `CompositionHeaderStrip` left the chrome for the
+    /// Project plate. Its height floor still matters there — the plate hosts its A4 field, the
+    /// greedy control — so the row stays, and its MOUNT is now checked in the file that mounts
+    /// it (`mountFile`). The struct and its frame still live in `WorkspaceView.swift`.
+    private static let chromeBars = [(bar: "topBar", height: 50, mount: "topBar",
+                                      mountFile: ChromeDynamicTypeTests.workspace),
                                      (bar: "CompositionHeaderStrip", height: 40,
-                                      mount: "CompositionHeaderStrip()")]
+                                      mount: "CompositionHeaderStrip()",
+                                      mountFile: "Sources/Echoelmusic/Studio/WorkstationView.swift")]
 
     func testTheChromeBarsCanGrowWithTheirText() throws {
         let lines = try codeLines(Self.workspace)
         for spec in Self.chromeBars {
-            XCTAssertTrue(lines.contains { $0.contains(spec.mount) },
+            let mounts = try codeLines(spec.mountFile)
+            XCTAssertTrue(mounts.contains { $0.contains(spec.mount) },
                           "\(spec.bar) is no longer mounted (`\(spec.mount)` is gone). Every "
                           + "other assertion here would still pass, which is exactly why this "
                           + "one exists.")

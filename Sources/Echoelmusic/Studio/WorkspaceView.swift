@@ -235,12 +235,13 @@ struct WorkspaceView: View {
                     // `EchoelStudioView.startControlRow` on the founder's 2026-08-07 screenshot
                     // arrows. The chrome is two bars now, not three; see the note where the
                     // struct used to be for why they landed on a SECOND line rather than one.)
-                    // Step 2b of the bottom-bar dissolve (founder 2026-07-14: "Unten die
-                    // Leiste sollte längst aufgelöst sein und sich an anderer Stelle
-                    // wieder finden"): the musical identity — Genre · Key · Scale ·
-                    // Tone system · Concert pitch A4 — lives HERE in the chrome, always
-                    // visible, one thin row. A LEAF (low-frequency reads only).
-                    CompositionHeaderStrip()
+                    // ⛔ The composition strip (`CompositionHeaderStrip`) stood here (step 2b of the bottom-bar
+                    // dissolve, 2026-07-14) — the song's identity (Key · Scale · Tone system ·
+                    // Note names · A4 · Tempo mode) as an always-visible row of the chrome. DAW
+                    // shell S1a (founder 2026-10-02, E18 „Ja, so bauen"): the head is ONE control
+                    // bar; the song's settings are the "Song" section of the PROJECT plate
+                    // (`WorkstationView.projectPlate`). Same struct, same keys, same leaf — only
+                    // its address moved, so the chrome lost a whole row and gained nothing.
                     // DMMW Phase 1 · slice 3 — the persistent project header: name, place, tempo,
                     // status and the ONE Play/Stop/Record, above every area. Its own leaf; it
                     // reads nothing hot here (the tempo lives in its own sub-leaf).

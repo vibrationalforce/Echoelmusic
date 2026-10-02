@@ -912,6 +912,13 @@ struct WorkstationView: View {
     /// whole way to get the piece out of the app.
     private var projectPlate: some View {
         VStack(alignment: .leading, spacing: 10) {
+            // DAW shell S1a (founder 2026-10-02, E18): the SONG's settings — Key · Scale · Tone
+            // system · Note names · A4 · Tempo mode — first, as every DAW's project page does.
+            // The row stood in the always-visible chrome until S1a; it is the same leaf (cold
+            // `@AppStorage` reads, its one churny label in `SessionNamePreviewLeaf`), so moving
+            // it adds no hot read here. Not clamped: the plate grows with the user's text size,
+            // and the row scrolls sideways instead of overflowing.
+            CompositionHeaderStrip()
             // WA4 Acceptance Test A inside the workspace: create → import → SAVE → reopen
             // without leaving the plate. The row owns no Studio state; it opens the Studio's
             // existing Save alert and Open sheet through the chrome door (no new modal).
