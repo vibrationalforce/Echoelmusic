@@ -47,6 +47,15 @@ import SwiftUI
 // Instrument's Workstation chip — since 2b-i a plate that only pointed here — is retired, and
 // `TheWorkstationHasADoorTests` claims A and B hold both halves. "New piece" still lands here as
 // the end of a flow it started, not as a door.
+//
+// ⭐ DAW SHELL S8a (2026-10-02, E18 plan row „Querformat"): IN LANDSCAPE THE SWITCHER IS A RAIL.
+// On an iPhone held sideways the screen is ~400 pt tall, and the header, the plate's own bars and
+// a bottom switcher left the arrangement about a quarter of it. So when the vertical size class is
+// compact (the same test the Workstation's side-by-side detail uses), the same five buttons stand
+// in a column on the LEADING edge — leading because the visual card docks bottom-TRAILING — and
+// the stage gets the full height. `ShellLayout` does the placing; the body keeps one shape, the
+// stage first and the switcher second, so nothing branches above the stage. Portrait is unchanged.
+// The size class is an environment value that changes on rotation, never a hot state.
 
 /// The shell under the control bar: the stage area, and the switcher at the bottom. Mounted by
 /// `SurfaceHost` as the whole surface.
@@ -57,6 +66,11 @@ struct StageShell: View {
     /// DAW shell S2 — the plate the piece shows. Cold: a tap on the switcher writes it.
     @AppStorage(StudioDefaultKeys.pieceView.key)
     private var pieceRaw = StudioDefaultKeys.pieceView.value.rawValue
+    /// S8a: compact height = a phone held sideways. Changes on rotation only.
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+
+    /// S8a: the switcher stands as a rail on the leading edge when the height is scarce.
+    private var railMode: Bool { verticalSizeClass == .compact }
 
     private var stage: StudioStage {
         StudioStage(rawValue: stageRaw) ?? StudioDefaultKeys.stage.value
@@ -67,7 +81,7 @@ struct StageShell: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        ShellLayout(rail: railMode) {
             ZStack {
                 // ALWAYS mounted — see the header. Hidden three ways on the Piece stage:
                 // invisible, untouchable, unspoken.
@@ -91,19 +105,31 @@ struct StageShell: View {
     /// `EchoelValueField`. Solid surface with a 1-px top border (Uncodixfy: no blur, no glass).
     /// It replaces the „Piece | Instrument" seam that stood ABOVE the stage, and the Arrange and
     /// Mix tiles of the piece's tab row: one door per area, all in one place.
+    ///
+    /// S8a: in landscape the same buttons stand in a column (`railMode`), the border moves to the
+    /// rail's trailing side and the surface runs under the leading safe area instead of the bottom
+    /// one. The rail's own text cap is tighter, so five entries keep fitting the ~270 pt a phone
+    /// leaves under its header when held sideways.
     private var shellSwitcher: some View {
         let current = ShellTab.current(stage: stage, piece: pieceView)
-        return HStack(spacing: 0) {
+        let rail = railMode
+        let entries = rail ? AnyLayout(VStackLayout(spacing: 0)) : AnyLayout(HStackLayout(spacing: 0))
+        return entries {
             ForEach(ShellTab.allCases) { tab in
                 switcherButton(tab, isActive: tab == current)
             }
         }
         .padding(.horizontal, 4)
         .padding(.top, 2)
-        .background(EchoelTheme.surface.ignoresSafeArea(edges: .bottom))
-        .overlay(alignment: .top) {
-            Rectangle().fill(EchoelTheme.border).frame(height: 1)
+        .background(EchoelTheme.surface.ignoresSafeArea(edges: rail ? .leading : .bottom))
+        .overlay(alignment: rail ? .trailing : .top) {
+            if rail {
+                Rectangle().fill(EchoelTheme.border).frame(width: 1)
+            } else {
+                Rectangle().fill(EchoelTheme.border).frame(height: 1)
+            }
         }
+        .dynamicTypeSize(...(rail ? DynamicTypeSize.xxxLarge : DynamicTypeSize.accessibility5))
         // The chrome's Dynamic Type cap (the head's own): past it five words cannot share a row.
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .accessibilityElement(children: .contain)
@@ -148,6 +174,46 @@ struct StageShell: View {
         case .instrument: return "waveform.path"
         case .browse:     return "folder"
         case .project:    return "doc.text"
+        }
+    }
+}
+
+/// DAW shell S8a — the shell's two children placed by orientation: the stage fills, the switcher
+/// takes its own size. Portrait: the switcher at the bottom, its natural height (what the old
+/// `VStack` did). Landscape (`rail`): the switcher at the LEADING edge, its natural width clamped
+/// to 56…96 pt, the stage beside it at full height. Anything but exactly two children is stacked
+/// over the whole bounds rather than dropped.
+private struct ShellLayout: Layout {
+    var rail: Bool
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        proposal.replacingUnspecifiedDimensions()
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews,
+                       cache: inout ()) {
+        guard subviews.count == 2 else {
+            for child in subviews {
+                child.place(at: bounds.origin, anchor: .topLeading, proposal: ProposedViewSize(bounds.size))
+            }
+            return
+        }
+        let stage = subviews[0]
+        let switcher = subviews[1]
+        if rail {
+            let ideal = switcher.sizeThatFits(ProposedViewSize(width: nil, height: bounds.height)).width
+            let width = min(min(max(ideal, 56), 96), bounds.width)
+            switcher.place(at: bounds.origin, anchor: .topLeading,
+                           proposal: ProposedViewSize(width: width, height: bounds.height))
+            stage.place(at: CGPoint(x: bounds.minX + width, y: bounds.minY), anchor: .topLeading,
+                        proposal: ProposedViewSize(width: bounds.width - width, height: bounds.height))
+        } else {
+            let ideal = switcher.sizeThatFits(ProposedViewSize(width: bounds.width, height: nil)).height
+            let height = min(max(ideal, 0), bounds.height)
+            stage.place(at: bounds.origin, anchor: .topLeading,
+                        proposal: ProposedViewSize(width: bounds.width, height: bounds.height - height))
+            switcher.place(at: CGPoint(x: bounds.minX, y: bounds.maxY - height), anchor: .topLeading,
+                           proposal: ProposedViewSize(width: bounds.width, height: height))
         }
     }
 }

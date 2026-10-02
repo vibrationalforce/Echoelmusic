@@ -30,6 +30,12 @@
 // 3. SOURCE: the switcher is chrome, not a modal host and not a level gate — no presentation
 //    modifier in `StageShell` (black-screen law), no `SkillLevel`, the chrome's Dynamic Type cap,
 //    a solid surface with a 1-px border, no blur or material (Uncodixfy).
+// 4. SOURCE (DAW shell S8a): on a phone held sideways the switcher is a RAIL on the leading edge.
+//    `railMode` is the compact vertical size class (the Workstation's side-by-side test); the body
+//    keeps ONE shape — `ShellLayout(rail:)` around the stage and then the switcher, no branch above
+//    the stage — and the layout puts the switcher at the bottom in portrait and at the leading
+//    origin in landscape, the stage beside it at full height. The rail's border is a 1-px column on
+//    its trailing side, its surface runs under the LEADING safe area, its buttons keep the tap height.
 //
 // GRADING (§0/§3, no Swift toolchain in a web session — claims 2–3 transcribed in Python against
 // both trees): against the parent (7537dcb02) `PieceView`, `ShellTab` and
@@ -40,6 +46,10 @@
 // spelling — are green on both. Claim 1 is a FORWARD guard on types this commit creates.
 // DEVICE PROBE, open: the five words fit one row at 375 pt and at the cap, the active entry reads
 // as active without colour, a tap on Instrument keeps the music playing — readings, not scans.
+// S8a GRADING: claim 4 is a SOURCE-TEXT scan, transcribed against both trees: on the parent
+// (6ba502435) eight of its nine assertions are red, and they are ONE finding — the rail does not
+// exist there (#486); the tap-height assertion and all of claim 3 are counterweights, green on both. DEVICE PROBE, open: rotate a phone — the five entries
+// stand in a column left of the stage, all reachable, and the floating card stays clear of them.
 
 import XCTest
 @testable import Echoelmusic
@@ -181,6 +191,43 @@ final class TheShellSwitchesAtTheBottomTests: XCTestCase {
             XCTFail("ANCHOR MISSING: the stage `ZStack {` or `shellSwitcher` in the shell's body (#454)"); return
         }
         XCTAssertLessThan(stack.lowerBound, bar.lowerBound, "the switcher sits BELOW the stage — at the bottom, under the thumb")
+    }
+
+    // MARK: 4 — in landscape the switcher is a rail on the leading edge (S8a)
+
+    func testInLandscapeTheSwitcherIsARailOnTheLeadingEdge() throws {
+        let shell = SourceText.codeOnly(try source(Self.shell))
+        XCTAssertTrue(shell.contains("@Environment(\\.verticalSizeClass) private var verticalSizeClass"),
+                      "the rail follows the size class — an environment value that changes on rotation, never hot state")
+        XCTAssertTrue(shell.contains("private var railMode: Bool { verticalSizeClass == .compact }"), """
+            A compact vertical size class is a phone held sideways — the same test the Workstation's \
+            side-by-side detail uses, so the shell and the plate turn together.
+            """)
+
+        let body = try member("var body: some View {", in: shell)
+        XCTAssertTrue(body.hasPrefix("\n        ShellLayout(rail: railMode) {"), """
+            The body is ONE shape in both orientations: `ShellLayout(rail:)` wraps the stage and the \
+            switcher. A branch on the orientation above the stage would change the stage's identity \
+            on rotation and unmount the always-mounted instrument (its `.onDisappear` stops the session).
+            """)
+
+        let layout = try member("private struct ShellLayout: Layout {", in: shell)
+        let place = layout
+        XCTAssertTrue(place.contains("let stage = subviews[0]") && place.contains("let switcher = subviews[1]"),
+                      "the layout reads the body's order — the stage first, the switcher second")
+        XCTAssertTrue(place.contains("switcher.place(at: bounds.origin"),
+                      "in landscape the rail stands at the LEADING origin — the visual card docks bottom-trailing")
+        XCTAssertTrue(place.contains("switcher.place(at: CGPoint(x: bounds.minX, y: bounds.maxY - height)"),
+                      "in portrait the switcher stays at the bottom, under the thumb")
+
+        let switcher = try member("private var shellSwitcher: some View {", in: shell)
+        XCTAssertTrue(switcher.contains("Rectangle().fill(EchoelTheme.border).frame(width: 1)"),
+                      "the rail's border is a 1-px column on its trailing side, not a shadow")
+        XCTAssertTrue(switcher.contains("ignoresSafeArea(edges: rail ? .leading : .bottom)"),
+                      "the rail's surface runs under the leading safe area, the bar's under the bottom one")
+        let button = try member("private func switcherButton(_ tab: ShellTab, isActive: Bool) -> some View {", in: shell)
+        XCTAssertTrue(button.contains("minHeight: EchoelTheme.controlTapHeight"),
+                      "each entry keeps the 44-pt tap height in the rail too — the column must not squeeze them")
     }
 
     // MARK: helpers
