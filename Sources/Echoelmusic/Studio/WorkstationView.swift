@@ -59,16 +59,20 @@
 // does NOT read `currentTick` — the player marks that `@ObservationIgnored` precisely so a
 // view cannot subscribe to the ~8 Hz song position, and a playhead readout here would undo
 // that with one line. No audio meters, no buffer-rate state, no bio. That matters more than
-// it looks: this view is reached through
-// `dropdownContent`, which since #479 is evaluated in the ROOT body permanently, so a
-// high-frequency read added here would rebuild the whole Studio at that rate and tear down
-// any open `.menu` Picker. The law is in `.claude/skills/swiftui-render-safety/SKILL.md`;
-// the reason it applies HERE is that this file sits on the always-evaluated path.
+// it looks, and slice F re-states WHY, because the old reason was the chip: since slice 2b
+// this view is mounted by `ArrangeStage` on the Piece stage, not reached through the studio's
+// `dropdownContent`, and it HOSTS menus itself — `TrackInspectorView`, `MediaBrowserView` and
+// `SongAutomationEditor` are constructed only here, and they carry `.menu` pickers and a
+// `Menu` — so a high-frequency read added to this body would rebuild them at that rate and
+// tear down any open one. The law is in `.claude/skills/swiftui-render-safety/SKILL.md`; the
+// reason it applies HERE is that this body is the menu host's ancestor.
 //
-// ⭐ THE DOOR COSTS ZERO PRESENTATION MODIFIERS ON THE ROOT, which is the whole reason this
-// shape was chosen over a `.sheet`. It is a `StudioMenu` case in the existing chip strip — the
-// same idiom `soundPanel`, `mixerPanel` and the rest use — so the ROOT body's aggregate
-// generic type is untouched and the black-screen law (10.76.34) is not approached.
+// ⭐ THE DOOR STILL COSTS ZERO PRESENTATION MODIFIERS ON THE ROOT, and since slice F
+// (2026-10-02) for a different reason: the door is no longer a `StudioMenu` chip but the stage
+// seam in `StageShell` — a stage switch, not a modal — so `EchoelStudioView.body`'s aggregate
+// generic type is untouched and the black-screen law (10.76.34) is not approached. ⛔ Until
+// slice F this said the door was "a `StudioMenu` case in the existing chip strip"; that chip
+// had become a second way to this stage and is retired (founder 2026-10-01: one way per area).
 //
 // ⚠️ AND THE IMPORT'S `.fileImporter` DOES NOT CHANGE THAT, measured rather than assumed. It
 // sits on THIS file's body, and `WorkstationView.body` returns an OPAQUE `some View`: the root
@@ -82,9 +86,10 @@
 //
 // NEEDS-FOUNDER-VERIFY (#1436/#1437): the door AND its transport, on the device. None of
 // this is a thing a gate can answer — a green `Build for Testing` proves the bundle compiles
-// and says nothing about whether a note is heard. (1) The "Workstation" chip is there,
-// between Field and Save/Export, and the strip scrolls far enough to reach it. (2) A tap
-// swaps the plate, and tapping Sound afterwards brings the instrument back — no stuck panel.
+// and says nothing about whether a note is heard. (1) From the Instrument stage, the seam's
+// Piece reaches this surface in one tap, and the chip strip offers no second way here (slice F
+// retired the Workstation chip). (2) The seam's Instrument brings the instrument back on the
+// plate it showed — no stuck panel.
 // (3) On a fresh install the plate shows the empty state — and it stays empty until the
 // user taps something. ⛔ THIS ITEM USED TO END "NOTHING in this build creates a
 // `TimelineLane`", measured and true until 2026-09-23: `TimelineStore.migrate` is reached

@@ -14,10 +14,22 @@
 // instrument's untouched launch plate is Sound, and only Sound — the WA4-P2 memory
 // `reopensWorkstation`, whose default DMMW Phase 1 turned TRUE so a first launch opened the
 // arrangement, is folded into the stage key, which is the app's default AND its own relaunch
-// memory (claim G, the three memory pins inverted into absences). ⚠️ TRANSITIONAL: the CHIP and
-// its label stay (claim A unchanged) because `.deploy/release` sends the founder along
-// "Workstation-Chip" and is founder-gated (`TheDeployNoteNamesRealDoorsTests` claim 2 reads the
-// whole note); slice 2b-ii retires the case with that note.
+// memory (claim G, the three memory pins inverted into absences).
+//
+// ⭐ SLICE F (2026-10-02, founder 2026-10-01 „Vermeide das es mehrfache Wege zu einem Bereich
+// gibt") RETIRED THE CHIP, and claims A and B are rewritten as THAT decision, not dropped. 2b had
+// left the instrument strip a Workstation chip whose plate only pointed at the Piece stage — a
+// second way to a place the stage seam reaches in one tap. Claim A now pins the ABSENCE of every
+// hand that chip had (the strip entry, the case, any `.workstation` in code, the plate builder
+// and its disclosure state), with the strip's neighbours as counterweights so an emptied strip
+// cannot pass it. Claim B pins the door that is left, harder than the plate was ever pinned:
+// the seam builds a button for every stage, that button's action writes the stage key with no
+// branch in front of the write, and the seam sits above both stages with no condition around it
+// and no hiding modifier between it and the stack. "Exactly one door" has THREE halves and each
+// lives in ONE guard (#416): no second door in the studio — claim A here, and
+// `TheArrangeStageIsTheFrontStageTests` claim 6 (one `showStage(.piece)`, inside New piece's
+// flow); one writer of the stage key in the seam — that file's claim 8; and the seam being a
+// real door on BOTH stages — claim B here. No single claim is "the one door", and none is named so.
 //
 // ⛔ CLAIM H USED TO LIVE HERE AND ASSERTED THE OPPOSITE OF TODAY'S TRUTH — "the timeline
 // player still has no production caller". #1437 is the commit its own failure message named,
@@ -34,8 +46,11 @@
 // the orphaned region, bar rounding, the spoken row — is DRIVEN. Claims A–H are SOURCE-TEXT
 // SCANS: `EchoelStudioView` is a 12 000-line `private` SwiftUI view this bundle cannot
 // construct, and `WorkstationView` is `@Environment`-resolving SwiftUI behind
-// `#if canImport(SwiftUI)`. **That the chip renders, that a tap swaps the plate, and that
-// VoiceOver reads the rows in order is a DEVICE PROBE and is OPEN.**
+// `#if canImport(SwiftUI)`. (⛔ Slice F's first draft booked one claim-B assertion as DRIVEN —
+// `StudioStage.allCases` containing `.piece` — but removing a case is a COMPILE error, so it could
+// never fail at runtime for its named reason (#367). It is dropped; claim B is a SCAN throughout.)
+// **That the seam renders, that its Piece tap reaches the arrangement, and that VoiceOver reads
+// the rows in order is a DEVICE PROBE and is OPEN.**
 //
 // ⭐ THE SPLIT IS A DESIGN DECISION IN THE SOURCE, NOT LUCK. The summary was pulled out of
 // the view precisely so these seven claims could be behaviour rather than seven more scans —
@@ -70,15 +85,33 @@
 //     below is the stage-key form of the one that stood here.
 //     NEEDS-FOUNDER-VERIFY: leave the app on the Piece stage, quit, relaunch → Piece; tap
 //     Instrument, quit, relaunch → Instrument, on the Sound plate.
+//   · SLICE F, transcribed (Python port of `SourceText.codeOnly`) against the parent
+//     `3deb54e77` and the slice tree: claim A's five absence assertions are RED on the parent
+//     for their named reason — the chip, the case, `.workstation` in code, the plate and its
+//     state all exist there: ONE finding, reported five times (#486); its two counterweights
+//     (the neighbours in the strip and in the case list) are GREEN on both. Claim B — all of it,
+//     the unconditional-action and no-hiding scans included — is GREEN on BOTH trees: the seam
+//     did not change, and that is the point — B is the counterweight that keeps "the chip is
+//     gone" from meaning "the arrangement is unreachable" (#343). Because a counterweight that
+//     is green everywhere proves nothing until it is seen to fail, three mutations of
+//     `StageShell.swift` were driven through the transcription before shipping: an
+//     `if candidate != .piece { … }` around the action's write, and `.opacity(0)` on the seam,
+//     each turn B red for its named reason; dropping `stageSeam` from the body throws ANCHOR
+//     MISSING. The regression half of "one door" is the studio's, in claim A and in
+//     `TheArrangeStageIsTheFrontStageTests` claim 6.
 //
-// ⚠️ `SourceText.codeOnly` stays in use, but its load-bearing CASE moved with claim H. It
-// used to be: `WorkstationView`'s header named `TimelineRegionPlayer.play(…)` while claim F's
-// negative scanned for that spelling. The header still names it and the file now genuinely
-// calls it, so that particular flip is gone from here — it reappears, sharper, in
-// `TheWorkstationPlaysTheTimelineTests`, where the question is HOW MANY call sites exist and
-// a comment would be counted as one. Measured on this file's needles today — all thirteen of
-// them, not a sample: PROPHYLAKTISCH, 0 of 13 verdicts flip raw vs. stripped. It stays in use
-// because claims D and E are ABSENCE scans over two files whose headers are free to start
+// ⚠️ `SourceText.codeOnly` stays in use, and slice F made it LOAD-BEARING here again. Its
+// earlier load-bearing case moved with claim H: `WorkstationView`'s header named
+// `TimelineRegionPlayer.play(…)` while claim F's negative scanned for that spelling; the header
+// still names it and the file now genuinely calls it, so that flip went to
+// `TheWorkstationPlaysTheTimelineTests`, where the question is HOW MANY call sites exist and a
+// comment would be counted as one. Slice F, measured raw vs. stripped on both trees: claim A is
+// TRAGEND, 1 of 7 verdicts flips — the `\.workstation\b` absence regex, because the tombstone
+// above `studioChips` names `.workstation` in a `///` line on purpose, so a raw scan would be red
+// on a correct tree. Claim B: PROPHYLAKTISCH, 0 of 16 flip. ⛔ "PROPHYLAKTISCH, 0 of 13" stood
+// here from #1437 and was not re-measured when slice F added that tombstone — retracted, not
+// carried forward; claims C–G were not re-measured by slice F and carry no figure here. It also
+// stays because claims D and E are ABSENCE scans over two files whose headers are free to start
 // naming a forbidden spelling at any time.
 
 import Foundation
@@ -274,9 +307,18 @@ final class TheWorkstationHasADoorTests: XCTestCase {
             """)
     }
 
-    // MARK: - A. SCAN — a production door exists
+    // MARK: - A. SCAN — the instrument strip carries NO Workstation chip (slice F)
 
-    func testTheStripCarriesAWorkstationChip() throws {
+    /// Slice F (founder 2026-10-01: one way to each area). ⛔ Until this slice the claim was
+    /// `testTheStripCarriesAWorkstationChip` and REQUIRED the chip, its label and its spoken name,
+    /// because a production path to the arrangement had to exist. One still must — it is the
+    /// stage seam (claim B) — and the chip had become a SECOND way to the same stage. Rewritten as
+    /// the decision: every hand the chip had is absent, and the strip it sat in is otherwise
+    /// intact. ⚠️ The stripper is LOAD-BEARING for ONE needle here, measured: the tombstone above
+    /// `studioChips` names `.workstation` in a `///` line on purpose, so the raw `\.workstation\b`
+    /// scan would be red on a correct tree. (`workstationPanel` survives in no prose at all — the
+    /// plate's tombstone says "THE WORKSTATION PLATE" — so that needle reads the same either way.)
+    func testTheStripCarriesNoWorkstationChip() throws {
         let src = try code(at: Self.studio)
 
         guard src.contains("private static let studioChips: [StudioMenu]") else {
@@ -285,57 +327,117 @@ final class TheWorkstationHasADoorTests: XCTestCase {
                 it. Re-anchor rather than letting the absence read as a pass.
                 """)
         }
-        XCTAssertTrue(Self.chipList(in: src).contains(".workstation"), """
-            The Workstation has no chip in the standing strip (extracted: \
-            \(Self.chipList(in: src))). A `StudioMenu` case that is NOT in this array is not \
-            unreachable — the chrome doors reach filtered cases — but nothing else opens this \
-            one, so filtering it out makes the surface doorless.
+        let list = Self.chipList(in: src)
+        XCTAssertTrue(list.contains(".field") && list.contains(".export"), """
+            The strip lost the chips either side of where the Workstation chip sat (extracted: \
+            \(list)). An absence checked over an emptied strip proves nothing (#343) — re-anchor.
             """)
-        XCTAssertTrue(src.contains("case .workstation: return \"Workstation\""), """
-            The chip must be LABELLED, and with the founder's own word: the phase brief names \
-            the path "Instrument → Workstation → back", and a chip saying anything else makes \
-            that path unfindable by the name it was specified under.
+        XCTAssertFalse(list.contains(".workstation"), """
+            The Workstation chip is back in the standing strip (extracted: \(list)). Slice F \
+            retired it: the stage seam above the studio is the one door to the arrangement, and a \
+            chip that leads there too is the double door the founder asked to remove.
             """)
-        // E4-73: the spoken name is a catalog key now — same sentence, read through String(localized:).
-        XCTAssertTrue(src.contains("case .workstation: return String(localized: \"Workstation — the arrangement: tracks, parts and scenes; it plays, imports, mixes and moves parts, it does not cut them\")"), """
-            The SPOKEN name must say what the plate can and cannot do. It said "read-only" until \
-            #165, which stopped being true once the plate could import, warp and set a file's \
-            tempo and a track's pitch; it said "does not move or cut parts" until WA4.1–WA4.3 \
-            added the mixer, the Session launch grid and part moves. What stays true is that \
-            it never CUTS a part (no split, no trim). A VoiceOver user cannot discover the limit \
-            by feeling around inside it (#482).
+        guard let caseLine = src.components(separatedBy: "\n")
+            .first(where: { $0.contains("case bio, composition,") }) else {
+            throw AnchorMissing(reason: "the `StudioMenu` case list `case bio, composition,` moved — re-anchor (#454)")
+        }
+        XCTAssertTrue(caseLine.contains("field") && caseLine.contains("export"),
+                      "counterweight: the case list still holds the strip's neighbours (read: \(caseLine))")
+        XCTAssertFalse(caseLine.contains("workstation"), """
+            `StudioMenu` has a `workstation` case again (read: \(caseLine)). A case with no chip \
+            and no producer is a plate nobody can open (#164/#227); a case WITH one is the second \
+            door. It comes back with its door and with this claim rewritten, or not at all.
             """)
+        XCTAssertNil(src.range(of: #"\.workstation\b"#, options: .regularExpression), """
+            The studio names `.workstation` in code — a label, a spoken name, a level-filter arm \
+            or a plate route for a menu slice F retired.
+            """)
+        for retired in ["workstationPanel", "showWorkstation"] {
+            XCTAssertFalse(src.contains(retired), """
+                `\(retired)` is back in the studio. It was the Workstation plate (its builder and \
+                its disclosure state) — a door to the Piece stage beside the seam. Slice F retired \
+                it together with the chip.
+                """)
+        }
     }
 
-    // MARK: - B. SCAN — the door reaches the surface
+    // MARK: - B. SCAN — the stage seam is a door on BOTH stages (slice F)
 
-    /// Slice 2b (2026-09-30): the plate is a DOOR to the Piece stage, and the surface is
-    /// constructed ONCE, in `ArrangeStage`. ⛔ Until 2b this claim REQUIRED `WorkstationView()`
-    /// in the panel; with the arrangement on its own stage that construction is the defect — a
-    /// second arrangement hidden beneath the piece, running its listing and analyses for nobody
-    /// (`TheArrangeStageIsTheFrontStageTests`). Inverted, not dropped.
-    func testTheChipLeadsToThePieceStage() throws {
-        let src = try code(at: Self.studio)
-        XCTAssertTrue(src.contains("case .workstation: return AnyView(workstationPanel)"), """
-            `dropdownContent` must route the case to a panel. Without the routing the chip \
-            selects a menu the plate cannot render — the "lying tab" shape.
-            """)
-        let panel = try declarationBody(of: "private var workstationPanel: some View {",
-                                        in: Self.studio)
-        XCTAssertTrue(panel.contains("showStage(.piece)"), """
-            The plate must TAKE the player to the Piece stage. A plate that only says where the \
-            arrangement went is the lying tab with a caption.
-            """)
-        XCTAssertFalse(panel.contains("WorkstationView()"), """
-            The plate constructs a second `WorkstationView` — one arrangement in the tree; the \
-            surface is `ArrangeStage`'s.
-            """)
+    /// Slice F. ⛔ Until this slice the claim was `testTheChipLeadsToThePieceStage`: the plate
+    /// routed `.workstation` to `workstationPanel`, which turned the stage and built no second
+    /// `WorkstationView`. That plate is retired (claim A); what reaches the arrangement now is the
+    /// seam alone, so the claim pins the seam — harder than the plate was ever pinned: a button
+    /// for every stage, a button ACTION that writes the stage key with no branch in front of the
+    /// write, the seam above both stages with no condition around it and none of the modifiers
+    /// that hide the studio sitting between it and the stack, and the surface constructed once.
+    ///
+    /// ⚠️ WHAT THIS CLAIM IS NOT: "the ONE door". It cannot fail if a second door appears — that is
+    /// claim A plus `TheArrangeStageIsTheFrontStageTests` claim 6 (no second door in the studio)
+    /// and claim 8 there (one writer of the stage key in the seam). Its name says what it proves.
+    /// ⛔ Slice F's first draft called it `testTheSeamIsTheOneDoorToThePieceStage` and opened with
+    /// a `StudioStage.allCases.contains(.piece)` booked as DRIVEN behaviour; removing a case is a
+    /// compile error, so that assertion could never fail at runtime (#367). Both are gone.
+    func testTheSeamIsADoorOnBothStages() throws {
         let seam = try code(at: Self.seam)
         XCTAssertEqual(seam.components(separatedBy: "WorkstationView()").count - 1, 1, """
             `StageShell.swift` constructs `WorkstationView()` \
             \(seam.components(separatedBy: "WorkstationView()").count - 1) times; exactly one, \
             on the Piece stage, is the design.
             """)
+        let row = try declarationBody(of: "private var stageSeam: some View {", in: Self.seam)
+        XCTAssertTrue(row.contains("ForEach(StudioStage.allCases)"), """
+            The seam no longer builds a button for EVERY stage — a stage left out of it has no \
+            door, now that the Workstation chip is gone.
+            """)
+        let button = try declarationBody(of: "private func stageButton(_ candidate: StudioStage) -> some View {",
+                                         in: Self.seam)
+        guard let open = button.range(of: "return Button {"),
+              let close = button.range(of: "} label:", range: open.upperBound..<button.endIndex) else {
+            throw AnchorMissing(reason: """
+                `stageButton`'s `return Button { … } label:` shape is gone, so its action cannot be \
+                extracted and the branch scan below would pass VACUOUSLY (#926). Re-anchor.
+                """)
+        }
+        let action = String(button[open.upperBound..<close.lowerBound])
+        XCTAssertTrue(action.contains("stageRaw = candidate.rawValue"), """
+            The seam's button no longer writes the stage key (action reads: \
+            \(action.trimmingCharacters(in: .whitespacesAndNewlines))). The seam would then be a \
+            row of labels and the arrangement would have no door.
+            """)
+        for branch in ["if ", "guard ", "switch ", " ? "] {
+            XCTAssertFalse(action.contains(branch), """
+                The seam's button action contains `\(branch.trimmingCharacters(in: .whitespaces))`, \
+                so the write is CONDITIONAL and some stage does not switch — with the chip gone, \
+                that stage has no door at all (read: \(action.trimmingCharacters(in: .whitespacesAndNewlines))).
+                """)
+        }
+        let shell = try declarationBody(of: "var body: some View {", in: Self.seam)
+        guard let seamUse = shell.range(of: "stageSeam"), let stack = shell.range(of: "ZStack {") else {
+            throw AnchorMissing(reason: """
+                `StageShell.body` no longer places `stageSeam` and the `ZStack` of the two stages \
+                — re-anchor (#454) rather than letting the order check pass on nothing.
+                """)
+        }
+        guard seamUse.upperBound <= stack.lowerBound else {
+            XCTFail("the seam must sit ABOVE the two stages, outside the stack that hides one of them")
+            return
+        }
+        let lead = String(shell[shell.startIndex..<seamUse.lowerBound])
+        let between = String(shell[seamUse.upperBound..<stack.lowerBound])
+        for branch in ["if ", "guard ", "switch ", " ? "] {
+            XCTAssertFalse(lead.contains(branch) || between.contains(branch), """
+                `\(branch.trimmingCharacters(in: .whitespaces))` stands around the seam in \
+                `StageShell.body` (before it: \(lead.trimmingCharacters(in: .whitespacesAndNewlines)) · \
+                after it: \(between.trimmingCharacters(in: .whitespacesAndNewlines))). The seam is the \
+                one way between the two stages, so it is mounted on BOTH, unconditionally.
+                """)
+        }
+        for hide in [".opacity(", ".allowsHitTesting(", ".accessibilityHidden(", ".hidden()"] {
+            XCTAssertFalse(between.contains(hide), """
+                `\(hide)` sits on the seam in `StageShell.body` — one of the modifiers that hide the \
+                studio on the Piece stage. A seam hidden that way is not a door on both stages.
+                """)
+        }
     }
 
     // MARK: - C. SCAN — the surface reads TimelineStore.document
@@ -488,13 +590,14 @@ final class TheWorkstationHasADoorTests: XCTestCase {
             """)
         let list = Self.chipList(in: src)
         XCTAssertTrue(list.contains(".sound") && list.contains(".export"), """
-            The rest of the strip must be untouched (extracted: \(list)). The Workstation is \
-            ONE more chip in the existing selector, not a second shell: the path back to the \
-            instrument is the same tap it always was.
+            The rest of the strip must be untouched (extracted: \(list)). Slice F took the \
+            Workstation chip OUT of the selector; the path back to the instrument is still the \
+            same tap it always was.
             """)
         XCTAssertFalse(src.contains("activeMenu = .workstation"), """
             Nothing may force the plate to the Workstation. That would be a surface opening \
-            itself — the shape #1298/#1300 had to make asymmetric on the bio source.
+            itself — the shape #1298/#1300 had to make asymmetric on the bio source — and since \
+            slice F it would also re-add the menu case claim A forbids.
             """)
 
         // ⭐ #1437 — THE PART AN ARRAY-MEMBERSHIP CHECK CANNOT SEE. Everything above proves
@@ -513,8 +616,8 @@ final class TheWorkstationHasADoorTests: XCTestCase {
         XCTAssertTrue(action.contains("activeMenu = menu"), """
             The chip's tap action no longer assigns `activeMenu = menu` (it reads: \
             \(action.trimmingCharacters(in: .whitespacesAndNewlines))). Selecting a chip is \
-            how every panel in the instrument is reached, the Workstation door included. If the \
-            routing moved, re-anchor this on wherever it moved to — do not delete it.
+            how every panel in the instrument is reached. If the routing moved, re-anchor this \
+            on wherever it moved to — do not delete it.
             """)
         for branch in ["if ", "guard ", "switch ", " ? "] {
             XCTAssertFalse(action.contains(branch), """
@@ -608,13 +711,13 @@ final class TheWorkstationHasADoorTests: XCTestCase {
         throw AnchorMissing(reason: "Unbalanced braces after `\(key)` in \(relativePath).")
     }
 
-    /// Comment-stripped source (#453 — the ONE definition of "code, not prose"). ⛔ This doc
-    /// said the stripper is LOAD-BEARING here because claim F's `.play(` negative would read
-    /// `WorkstationView`'s header sentence as a call site. That negative is retired (#1437),
-    /// so on THIS file the stripper is now PROPHYLAKTISCH — measured, 0 of 10 verdicts flip.
-    /// It is still required: the load-bearing case moved to the caller COUNT in
-    /// `TheWorkstationPlaysTheTimelineTests`, where a comment counted as a call site would
-    /// turn one caller into two and redden a correct tree.
+    /// Comment-stripped source (#453 — the ONE definition of "code, not prose"). Load-bearing on
+    /// this file since slice F, for claim A's `\.workstation\b` regex (1 of 7 claim-A verdicts,
+    /// measured — see the header). ⛔ This doc said PROPHYLAKTISCH, "0 of 10", from #1437 until
+    /// slice F: true then, stale the moment the studio gained a tombstone naming the retired case.
+    /// The earlier load-bearing case — claim F's `.play(` negative — is retired (#1437); its
+    /// successor is the caller COUNT in `TheWorkstationPlaysTheTimelineTests`, where a comment
+    /// counted as a call site would turn one caller into two and redden a correct tree.
     private func code(at relativePath: String) throws -> String {
         let path = try Self.treeRootStatic().appendingPathComponent(relativePath)
         guard FileManager.default.fileExists(atPath: path.path) else {

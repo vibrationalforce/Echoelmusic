@@ -160,7 +160,7 @@ final class DetunedInstrumentSaysSoTests: XCTestCase {
         // Sound — the WA4-P2 plate memory that could make it the Workstation is folded into the
         // stage key. So the banner needs ONE plate here, and it is this one. ⛔ From WA4-P2 to
         // slice 2b this claim pinned TWO plates (`reopensWorkstation ? .workstation : .sound`)
-        // and the banner in `workstationPanel`; that plate is a door now, so the second mount
+        // and the banner in `workstationPanel`; that plate is gone (slice F), so the second mount
         // went with the second default — rewritten as the decision, not dropped.
         let code = try codeLines(Self.studio)
         XCTAssertTrue(code.contains(where: {

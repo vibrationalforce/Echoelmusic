@@ -41,9 +41,8 @@ import XCTest
 /// actions — the two plate doors posted from the piece ("sound", "bio") turn the Instrument
 /// stage, because a plate selected in a hidden studio is a button that does nothing (the first
 /// defect measured on 2a), and "New piece" turns the Piece stage (claims 6 + 8, "the studio only
-/// reads" inverted into "one function, three named calls"). ⚠️ The Workstation CHIP itself is
-/// transitional: `.deploy/release` sends the founder along "Workstation-Chip" and is
-/// founder-gated; slice 2b-ii retires it with that note.
+/// reads" inverted into "one function, three named calls"). The Workstation CHIP that 2b left
+/// transitional is retired by slice F (below).
 ///
 /// ⭐ A7 (2026-10-01) — the piece's tabs (`WorkstationView.pieceTabs`) add three posters from
 /// the Piece stage: "sound" (a second producer of the inspector's door), "effects" and "master"
@@ -64,6 +63,15 @@ import XCTest
 /// count needles red for their named reason (5, not 2); the per-case loop green on both (its two
 /// remaining entries exist on both trees) — the three dropped entries are now `ThePieceHasTabsTests`
 /// claim 2 and `ThePieceHasOneTabRowTests` claim 3, which pin their ABSENCE.
+/// ⭐ SLICE F (2026-10-02, founder 2026-10-01 one door per area) — the instrument's Workstation
+/// chip and its plate went: they were a second way to the Piece stage beside the seam. Claim 6 is
+/// rewritten as that decision, not weakened: the plate's `showStage(.piece)` was ONE of two
+/// counted calls; now the studio carries NO plate builder for it, and exactly ONE call turns the
+/// Piece stage, inside `startNewPiece()` — the end of a flow the player started, not a door. The
+/// seam half of "one door" is `TheWorkstationHasADoorTests` claim B. Against the parent
+/// `3deb54e77`: the plate-absence needle and the studio-wide count (2, not 1) are red for their
+/// named reason — ONE finding (#486); the per-call New-piece count and every other assertion in
+/// claim 6 are green on both.
 final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
 
     private static let seam = "Sources/Echoelmusic/Studio/StageShell.swift"
@@ -231,25 +239,24 @@ final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
     }
 
     // 6 — one arrangement in the tree, and one hand on the stage: the studio constructs NO
-    // `WorkstationView` (its Workstation plate is a door to the Piece stage), and every move of
-    // the stage from the studio goes through `showStage(_:)`, on a user action that names the
-    // other stage's content.
+    // `WorkstationView` and carries NO plate that leads to the Piece stage (slice F — the seam is
+    // the one door), and every move of the stage from the studio goes through `showStage(_:)`, on
+    // a user action that names the other stage's content.
     func testTheStudioMountsNoSecondArrangementAndHasOneHandOnTheStage() throws {
         let studio = try source(Self.studio)
         XCTAssertEqual(count("WorkstationView()", in: studio), 0, """
             The studio constructs `WorkstationView()` \(count("WorkstationView()", in: studio)) \
             times — a second arrangement in the tree, hidden beneath the piece, running the \
             directory listing, the playhead leaf and the analyses for nobody. The arrangement is \
-            `ArrangeStage`'s (claim 5); the studio's plate is a door (slice 2b).
+            `ArrangeStage`'s (claim 5), and since slice F the studio has no plate that leads there.
             """)
-        let panel = braceBody(of: "private var workstationPanel: some View {", in: studio)
-        guard !panel.isEmpty else {
-            XCTFail("`workstationPanel` is gone — slice 2b-ii retires the chip with `.deploy/release`; move this claim with it")
-            return
-        }
-        XCTAssertTrue(panel.contains("showStage(.piece)"), """
-            The Workstation plate no longer leads to the Piece stage — a chip whose plate only \
-            says where the arrangement went is a lying tab with a caption.
+        // ⛔ Until slice F this read the Workstation PLATE's body and required its
+        // `showStage(.piece)`. The plate is retired as the second door to the Piece stage; the
+        // decision is pinned as its absence here and as the ONE remaining call below.
+        XCTAssertFalse(studio.contains("workstationPanel"), """
+            `workstationPanel` is back in the studio. Slice F (founder 2026-10-01, one way to each \
+            area) retired it: its plate only said where the arrangement went and turned the stage \
+            — a second door beside the seam (`TheWorkstationHasADoorTests` claims A and B).
             """)
         XCTAssertTrue(studio.contains("@AppStorage(StudioDefaultKeys.stage.key) private var stageRaw"),
                       "the studio reads the stage through the ONE key (#416)")
@@ -290,10 +297,15 @@ final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
         XCTAssertEqual(count("showStage(.instrument)", in: studio), 2,
                        "no call outside the receiver turns the Instrument stage")
         let newPiece = braceBody(of: "private func startNewPiece() {", in: studio)
-        XCTAssertTrue(newPiece.contains("showStage(.piece)"),
-                      "New piece turns the Piece stage — the empty song and its compose guide are there")
-        XCTAssertEqual(count("showStage(.piece)", in: studio), 2,
-                       "exactly two calls turn the Piece stage: the Workstation plate's door and New piece")
+        XCTAssertFalse(newPiece.isEmpty, "ANCHOR: `startNewPiece()` moved — re-anchor (#454)")
+        XCTAssertEqual(count("showStage(.piece)", in: newPiece), 1,
+                       "New piece turns the Piece stage — the empty song and its compose guide are there")
+        XCTAssertEqual(count("showStage(.piece)", in: studio), 1, """
+            The studio turns the Piece stage \(count("showStage(.piece)", in: studio)) times; \
+            exactly ONE — New piece, the end of a flow the player started. Since slice F the seam \
+            is the one DOOR to the Piece stage; a second call here is a second door (founder \
+            2026-10-01) — remove its twin, or name it here with the reason it is not one.
+            """)
     }
 
     // 7 — Safe Mode: a piece stage that crashed at render is not where "Continue" lands.

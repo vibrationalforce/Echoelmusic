@@ -36,11 +36,11 @@ import SwiftUI
 // Safe Mode, at the instrument, after a crash. `reopensWorkstation` is gone: this key IS the
 // relaunch memory, and the instrument's untouched plate is Sound.
 //
-// ⚠️ TRANSITIONAL, on purpose (slice 2b-i): the Instrument stage still carries a "Workstation"
-// CHIP, whose plate is now only a door to this stage — never a second `WorkstationView`. The chip
-// stays because `.deploy/release` sends the founder along "Workstation-Chip" and is founder-gated
-// (`TheDeployNoteNamesRealDoorsTests` claim 2 reads the whole note); slice 2b-ii retires it
-// together with that note.
+// ⭐ ONE DOOR (slice F, founder 2026-10-01 „Vermeide das es mehrfache Wege zu einem Bereich
+// gibt"): this seam is the only control that takes the player to the Piece stage. The
+// Instrument's Workstation chip — since 2b-i a plate that only pointed here — is retired, and
+// `TheWorkstationHasADoorTests` claims A and B hold both halves. "New piece" still lands here as
+// the end of a flow it started, not as a door.
 
 /// The seam. Mounted by `SurfaceHost` as the whole surface.
 @MainActor

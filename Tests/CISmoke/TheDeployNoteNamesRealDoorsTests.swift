@@ -27,8 +27,33 @@
 // #364 — NOTHING HERE FORBIDS A RENAME. If a chip is relabelled, claim 1 goes red on purpose and
 // names the note as the prose to pull along in the same commit.
 //
+// ⭐ CLAIM 2 READS THE CURRENT BUILD'S NOTE, NOT THE ARCHIVE (slice F, 2026-10-02). `.deploy/release`
+// keeps every earlier build's "── WAS IN DIESEM BUILD NEU IST" section below the newest one, and
+// those sections describe their own builds: 10.79.484–486 sent the founder along "Workstation-Chip"
+// because that chip existed then. Read whole, the note forbids retiring ANY chip without rewriting
+// shipped history — #364, a guard that forbids correct work. The founder follows the section on
+// top, with the phone in hand; that section plus the preamble above it is what claim 2 now reads,
+// and it is ANCHORED: the first section's header must carry the version on line 1, so a note whose
+// newest section is not on top, or whose header lost its version, fails rather than passing on the
+// wrong text. The ≥1-token counterweight stays.
+//
+// ⭐ AND THE ARCHIVE IS NOT LEFT UNREAD, because narrowing claim 2 alone would have WEAKENED the
+// guard ("Keine Tests … abschwächen"). Claim 2b reads the WHOLE note again and admits exactly one
+// set beyond the shipped labels: `retiredLabels`, each entry dated with the slice that retired
+// its chip, required to be DISJOINT from the shipped strip (a label cannot be both) and to OCCUR
+// in the note (an exemption that exempts nothing is a hole — remove it). A typo in an old
+// section, or a chip that never existed, is still red. Claims 3–5 still read the whole note.
+//
 // KIND (§1): **REGRESSION, source-text scans.** Claim 2 driven against the v419 note: it finds
 // `Visual` and fails; against the corrected note it finds four tokens and passes.
+//
+// SLICE F GRADING (§3; transcribed against the parent `3deb54e77` and the slice tree, the note
+// itself unchanged): claim 1 RED on the parent for its named reason — the strip still lists
+// "Workstation" (a FORWARD edit of the expectation, one finding). Claim 2 GREEN on both: the
+// current section names FX · Field · Master · Save/Export, shipped on both trees. Claim 2b: its
+// disjointness assertion RED on the parent for its named reason (Workstation still ships there);
+// its non-empty, every-token and no-dead-exemption assertions GREEN on both — counterweights.
+// Claims 3–5 untouched, GREEN on both.
 
 import XCTest
 
@@ -57,13 +82,19 @@ final class TheDeployNoteNamesRealDoorsTests: XCTestCase {
     /// `scripts/check-infoplist.sh` states for its own list).
     // ⚠️ THE ORDER IS PART OF THE CLAIM — `shippedLabels()` returns the switch in source
     // order and claim 1 compares with `XCTAssertEqual`, so a reordered strip is a finding too.
-    // ⛔ "Workstation" was MISSING here from #1436 (the chip's own slice) until this line.
-    // Claim 1 was therefore RED on a correct tree for the whole Phase-4 run and no gate said so:
-    // the blocking bundle is BUILT by CI/CD `Build for Testing`, never RUN (#396/#807). The
-    // deploy that follows is the first reader — exactly the #1360 shape, found while preparing it.
+    // ⛔ "Workstation" was MISSING here from #1436 (the chip's own slice) until 10.79.48x, and
+    // claim 1 was RED on a correct tree for the whole Phase-4 run without a gate saying so (the
+    // bundle is BUILT by CI/CD `Build for Testing`, never RUN — #396/#807). Slice F (2026-10-02)
+    // retired the chip, so it leaves this list in the SAME commit, as claim 1's message demands.
     private static let expectedLabels = [
-        "Bio", "Tempo", "Sound", "Mix", "FX", "Master", "Mood", "Save/Export", "Field",
-        "Workstation"
+        "Bio", "Tempo", "Sound", "Mix", "FX", "Master", "Mood", "Save/Export", "Field"
+    ]
+
+    /// Chips the note may still name because an EARLIER build's section sent the founder along
+    /// them while they existed. Each entry is dated with the slice that retired it. Hand-written
+    /// for the reason `expectedLabels` is: deriving it from the tree would agree with itself.
+    private static let retiredLabels: Set<String> = [
+        "Workstation"   // slice F, 2026-10-02 — the stage seam is the arrangement's one door
     ]
 
     private func root() -> URL {
@@ -140,13 +171,48 @@ final class TheDeployNoteNamesRealDoorsTests: XCTestCase {
             """)
     }
 
-    // 2 — every door the build note names is a door that exists.
-    func testEveryPathInTheBuildNoteNamesARealChip() throws {
+    /// The first build section's header, as `.deploy/release` writes it.
+    private static let sectionMarker = "── WAS IN DIESEM BUILD NEU IST"
+
+    /// The part of the note the founder follows for THIS build: the preamble plus the newest
+    /// section — everything above the SECOND section marker. Fails, and returns "", when the
+    /// marker is missing or the first section's header does not carry the version line 1 names.
+    private func currentBuildNote() throws -> String {
+        let whole = try text(".deploy/release")
+        let sections = whole.components(separatedBy: Self.sectionMarker)
+        guard sections.count >= 2 else {
+            XCTFail("""
+                ANCHOR MISSING: `\(Self.sectionMarker)` is not in .deploy/release — the note lost its \
+                per-build sections, so claim 2 cannot tell this build from the archive. Re-anchor; \
+                do not let it pass on the whole file or on nothing (#454).
+                """)
+            return ""
+        }
+        let firstLine = String(whole.prefix { $0 != "\n" })
+        let version = firstLine
+            .split(whereSeparator: { !($0.isNumber || $0 == ".") })
+            .map(String.init)
+            .first { $0.split(separator: ".").count == 3 }
+        guard let version else {
+            XCTFail("ANCHOR MISSING: line 1 of .deploy/release names no build version (read: \(firstLine))")
+            return ""
+        }
+        let header = String(sections[1].prefix { $0 != "\n" })
+        XCTAssertTrue(header.contains(version), """
+            The first build section (\(Self.sectionMarker)\(header)) is not this build's \
+            (\(version), line 1). The newest section must sit on top — claim 2 reads it as the \
+            note the founder follows.
+            """)
+        return sections[0] + Self.sectionMarker + sections[1]
+    }
+
+    // 2 — every door the CURRENT build's note names is a door that exists.
+    func testEveryPathInTheCurrentBuildNoteNamesARealChip() throws {
         let labels = try shippedLabels()
-        let note = try text(".deploy/release").replacingOccurrences(of: "*", with: "")
+        let note = try currentBuildNote().replacingOccurrences(of: "*", with: "")
         let tokens = pathTokens(in: note)
         XCTAssertFalse(tokens.isEmpty, """
-            The build note names no `X-Chip`/`X-Panel` path at all. Either the note stopped \
+            This build's note names no `X-Chip`/`X-Panel` path at all. Either the note stopped \
             giving the founder a route, or this scan can no longer match its formatting — the \
             second is how a guard passes forever on a document it never read (#808).
             """)
@@ -155,6 +221,34 @@ final class TheDeployNoteNamesRealDoorsTests: XCTestCase {
                 The build note sends the founder to "\(token)", which is not a chip. The strip \
                 reads \(labels.joined(separator: " · ")). This is the document read with the \
                 phone in hand — a path that cannot be followed costs a device session (#816).
+                """)
+        }
+    }
+
+    // 2b — the WHOLE note, archive included, names only chips that exist or that existed.
+    func testTheArchivedBuildNotesNameOnlyRealOrRetiredChips() throws {
+        let labels = Set(try shippedLabels())
+        XCTAssertTrue(Self.retiredLabels.isDisjoint(with: labels), """
+            A chip is listed as retired AND ships: \(Self.retiredLabels.intersection(labels).sorted()). \
+            Either it came back — remove it from `retiredLabels` — or the retirement never happened.
+            """)
+        let note = try text(".deploy/release").replacingOccurrences(of: "*", with: "")
+        let tokens = pathTokens(in: note)
+        XCTAssertFalse(tokens.isEmpty, """
+            The whole note names no `X-Chip`/`X-Panel` path at all — the scan no longer matches \
+            its formatting, which is how a guard passes forever on a document it never read (#808).
+            """)
+        for token in tokens.sorted() {
+            XCTAssertTrue(labels.contains(token) || Self.retiredLabels.contains(token), """
+                The build note (an earlier section included) names "\(token)", which is neither a \
+                chip nor a retired one. An archived path was still a path the founder was sent \
+                along; a name that never existed is a typo in shipped history, not history.
+                """)
+        }
+        for retired in Self.retiredLabels.sorted() {
+            XCTAssertTrue(tokens.contains(retired), """
+                `retiredLabels` exempts "\(retired)" and the note no longer names it. An exemption \
+                that exempts nothing is a hole someone else walks through later — remove the entry.
                 """)
         }
     }

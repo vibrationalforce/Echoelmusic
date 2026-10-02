@@ -155,7 +155,7 @@ final class ThePieceHasOneTabRowTests: XCTestCase {
             """)
 
         let chips = try member("private static func chips(for level: SkillLevel) -> [StudioMenu] {", in: studio)
-        XCTAssertTrue(chips.contains("case .effects, .mix, .composition, .field, .workstation:"),
+        XCTAssertTrue(chips.contains("case .effects, .mix, .composition, .field:"),
                       "the Field chip is still in the strip — the Field panel's one door")
         XCTAssertTrue(chips.contains("return level.showsSongs"),
                       "the Field chip shows from Producer up — if its level gate moved, say so in FOUNDER_INBOX")

@@ -6031,42 +6031,6 @@
         }
       }
     },
-    "Tracks, parts and scenes live on the Piece stage, above the instrument." : {
-      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tracks, parts and scenes live on the Piece stage, above the instrument."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Spuren, Teile und Szenen liegen auf der Stück-Bühne, über dem Instrument."
-          }
-        }
-      }
-    },
-    "Show the piece" : {
-      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show the piece"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Das Stück zeigen"
-          }
-        }
-      }
-    },
     "Bio source" : {
       "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
       "extractionState" : "manual",
@@ -12381,42 +12345,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Limiter"
-          }
-        }
-      }
-    },
-    "Workstation" : {
-      "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Workstation"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Workstation"
-          }
-        }
-      }
-    },
-    "The arrangement is the Piece stage" : {
-      "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The arrangement is the Piece stage"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Das Arrangement ist die Stück-Bühne"
           }
         }
       }
@@ -27227,18 +27155,18 @@
         }
       }
     },
-    "Adds FX, Mix, Tempo, Field and the Workstation." : {
+    "Adds FX, Mix, Tempo and Field." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ergänzt FX, Mix, Tempo, Feld und die Workstation."
+            "value" : "Ergänzt FX, Mix, Tempo und Feld."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Adds FX, Mix, Tempo, Field and the Workstation."
+            "value" : "Adds FX, Mix, Tempo and Field."
           }
         }
       }
@@ -28167,22 +28095,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Field — the visual surface you play with your fingers"
-          }
-        }
-      }
-    },
-    "Workstation — the arrangement: tracks, parts and scenes; it plays, imports, mixes and moves parts, it does not cut them" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Workstation — das Arrangement: Spuren, Teile und Szenen; sie spielt, importiert, mischt und verschiebt Teile, sie schneidet sie nicht"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Workstation — the arrangement: tracks, parts and scenes; it plays, imports, mixes and moves parts, it does not cut them"
           }
         }
       }

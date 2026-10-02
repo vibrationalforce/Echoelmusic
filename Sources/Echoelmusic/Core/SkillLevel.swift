@@ -21,7 +21,7 @@ public enum SkillLevel: String, CaseIterable, Sendable, Identifiable, Comparable
     /// Essentials only — the three chips the head does not already carry: Sound · Mood ·
     /// Save/Export (the pulse pill and the visual tile sit in the head at every level).
     case beginner
-    /// Adds the shaping and song-building chips — FX · Mix · Tempo · Field · Workstation.
+    /// Adds the shaping and song-building chips — FX · Mix · Tempo · Field.
     case producer
     /// Adds Master — the whole strip, today's default.
     case pro
@@ -53,7 +53,7 @@ public enum SkillLevel: String, CaseIterable, Sendable, Identifiable, Comparable
     public var blurb: String {
         switch self {
         case .beginner: return String(localized: "Just the essentials — Sound, Mood, Save & Export.")
-        case .producer: return String(localized: "Adds FX, Mix, Tempo, Field and the Workstation.")
+        case .producer: return String(localized: "Adds FX, Mix, Tempo and Field.")
         case .pro:      return String(localized: "Adds Master — the whole strip.")
         }
     }
@@ -62,7 +62,8 @@ public enum SkillLevel: String, CaseIterable, Sendable, Identifiable, Comparable
 
     /// From Producer up. The NAME dates from the Songs tab that never shipped; what it gates
     /// today is the shaping and song-building chips of the Instrument strip — FX · Mix ·
-    /// Tempo · Field · Workstation (`EchoelStudioView.chips(for:)`).
+    /// Tempo · Field (`EchoelStudioView.chips(for:)`), and the piece's Mix and Export tabs
+    /// (`WorkstationView.pieceTabs`).
     public var showsSongs: Bool { self >= .producer }
 
     /// Pro only. The NAME dates from the Sessions/Connect tabs that never shipped; what it

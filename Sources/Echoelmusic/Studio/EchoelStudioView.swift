@@ -339,11 +339,6 @@ struct EchoelStudioView: View {
     @State private var showSound = false
     @State private var showEffects = false
     @State private var showMaster = false
-    /// #1436 — the Workstation plate's disclosure state. `true` because the chip already IS
-    /// the door: arriving at a panel that then has to be opened a second time is the
-    /// two-doors-for-one-surface shape, and in the dropdown `menuPanelHost` force-opens it
-    /// anyway (`echoelPanelForceOpen`), so this only decides the standalone-disclosure case.
-    @State private var showWorkstation = true
     /// Video window (DMMW menu, 2026-07-12) — only read by the panel's
     /// disclosure fallback; in the dropdown it renders force-open anyway.
     /// Delivery loudness target (shared key with MasterLoudnessGrid's colour-coding).
@@ -927,12 +922,13 @@ struct EchoelStudioView: View {
         // ⛔ `video` WAS REMOVED (#1304, founder 2026-09-12 "Kein Video Capture"), and the same
         // paragraph above licenses it: the raw value reaches no persisted store and no door
         // string survives it. Its panel was the recorded-clips library; there are no clips.
-        // ⭐ `workstation` ADDED (#1436, founder Phase 3) — the read-only window onto the
-        // arrangement `TimelineStore` already owns. A chip rather than a `.sheet` on purpose:
-        // this idiom costs ZERO presentation modifiers, and the plate's grammar ("this chip
-        // selects what the plate shows") is exactly what a read-only surface wants. See
-        // `WorkstationView`'s header for the whole argument.
-        case bio, composition, sound, mix, effects, master, mood, export, field, workstation
+        // ⛔ `workstation` WAS REMOVED (slice F, founder 2026-10-01 „Vermeide das es mehrfache
+        // Wege zu einem Bereich gibt"), under the license the paragraph above gives `session`
+        // and `video`: the raw value reaches no persisted store and no door string. #1436 added
+        // it as the arrangement's window; slice 2b made its plate a door to the Piece stage; it
+        // was then the SECOND way to that stage beside the seam above the studio (`StageShell`),
+        // which is the one door. Re-adding a case here re-adds the double door.
+        case bio, composition, sound, mix, effects, master, mood, export, field
         var id: String { rawValue }
         /// Short chip label (DAW-style small buttons — Uncodixfy 12 pt chips).
         var label: String {
@@ -964,11 +960,6 @@ struct EchoelStudioView: View {
             // sees this most of the time" would have licensed shortening it back to "Save".
             case .export:      return "Save/Export"
             case .field:       return "Field"
-            // The founder's own word for this surface, kept verbatim rather than shortened to
-            // "Song": the phase brief names the user path "Instrument → Workstation → back",
-            // and a chip that says something else makes that path unfindable by its own name.
-            // It is the same width as "Save/Export", which already rides in this strip.
-            case .workstation: return "Workstation"
             }
         }
         /// Full name for VoiceOver (the chip text is abbreviated).
@@ -1013,10 +1004,6 @@ struct EchoelStudioView: View {
             // from two sides: the field's look, and the field's voice under your fingers.
             // Nobody could guess from the old string that the picture is playable.
             case .field:       return String(localized: "Field — the visual surface you play with your fingers")
-            // Says READ-ONLY out loud, because a door that only looks is the one kind a
-            // listener cannot discover by feeling around inside it (#482's lesson: the spoken
-            // name of a door must list what the panel actually holds).
-            case .workstation: return String(localized: "Workstation — the arrangement: tracks, parts and scenes; it plays, imports, mixes and moves parts, it does not cut them")
             }
         }
     }
@@ -2865,13 +2852,12 @@ struct EchoelStudioView: View {
     ///     entries on the presentation chain's conscience. They stay in the "•••".
     /// `visibleChips` still appends whichever of those is on screen, so the strip never shows
     /// an unselected state while a panel is open.
-    /// ⭐ `.workstation` SITS BETWEEN Field AND Save/Export (#1436), and the position is the
-    /// argument above applied rather than a free slot: the order is the signal chain, then
-    /// context, then what you do when the take is done. The arrangement is what you have MADE
-    /// — you look at it, then you take it away. Placing it after `.export` would put the song
-    /// after the act of exporting it.
+    /// ⛔ `.workstation` sat between Field and Save/Export from #1436 to slice F (founder
+    /// 2026-10-01: one way to each area). Its plate had become a door to the Piece stage — a
+    /// second way to the place the stage seam above the studio reaches in one tap — so the chip
+    /// went and the seam is the one door (`TheWorkstationHasADoorTests`).
     private static let studioChips: [StudioMenu] =
-        [.sound, .effects, .mix, .master, .mood, .composition, .field, .workstation, .export]
+        [.sound, .effects, .mix, .master, .mood, .composition, .field, .export]
 
     /// The strip at a `SkillLevel` — `SkillLevel`'s FIRST consumer (interface audit
     /// 2026-09-30, "Einsteiger = drei Chips"). A FILTER over `studioChips`, never a second
@@ -2894,7 +2880,7 @@ struct EchoelStudioView: View {
             switch menu {
             case .sound, .mood, .export:
                 return true
-            case .effects, .mix, .composition, .field, .workstation:
+            case .effects, .mix, .composition, .field:
                 return level.showsSongs
             case .master:
                 return level.showsProTabs
@@ -2919,7 +2905,7 @@ struct EchoelStudioView: View {
     /// already exists.
     ///
     /// ⚠️ THE APPEND ALONE IS NOT ENOUGH SINCE #290, and saying so here is the point: it adds
-    /// the active menu as the TENTH chip, past the right edge of an already-overflowing strip.
+    /// the active menu as the NINTH chip, past the right edge of an already-overflowing strip.
     /// `menuBar`'s `ScrollViewReader` (#291) is what actually brings it into view — the two are
     /// one mechanism, and removing either leaves a strip that claims to be the selector while
     /// showing no selection. Without this append, `displayedMenu` matches no chip, so all render
@@ -3327,7 +3313,6 @@ struct EchoelStudioView: View {
         case .mood:        return AnyView(moodPanel)
         case .export:      return AnyView(utilityRow)
         case .field:       return AnyView(visualPanel)
-        case .workstation: return AnyView(workstationPanel)
         }
     }
 
@@ -3349,38 +3334,12 @@ struct EchoelStudioView: View {
     /// on Sound, so #325 holds for the plate a launch of this stage shows.
     private var displayedMenu: StudioMenu { activeMenu ?? .sound }
 
-    /// #1436 — the Workstation plate; since slice 2b (2026-09-30) a DOOR, not a window. The
-    /// arrangement lives on the Piece stage (`StageShell` → `ArrangeStage`), and a second
-    /// `WorkstationView` here would run the directory listing, the playhead leaf and the analyses
-    /// twice, hidden beneath the piece — one arrangement in the tree
-    /// (`TheArrangeStageIsTheFrontStageTests`). So the plate says where the piece is and takes
-    /// the player there. Still a wrapper that computes nothing: `dropdownContent` is evaluated
-    /// in the ROOT body permanently since #479.
-    /// ⚠️ TRANSITIONAL, on purpose: the CHIP stays until `.deploy/release` — which sends the
-    /// founder along "Workstation-Chip" and is founder-gated — can be rewritten in the same
-    /// commit (`TheDeployNoteNamesRealDoorsTests` claim 2 reads the whole note). Slice 2b-ii
-    /// retires the case, the label and this builder together.
-    private var workstationPanel: some View {
-        panel("Workstation", "The arrangement is the Piece stage", isExpanded: $showWorkstation) {
-            Text("Tracks, parts and scenes live on the Piece stage, above the instrument.")
-                .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
-                .fixedSize(horizontal: false, vertical: true)
-            Button {
-                showStage(.piece)
-            } label: {
-                Text("Show the piece")
-                    .font(EchoelTheme.font(13, .semibold))
-                    .foregroundStyle(EchoelTheme.onPrimary)
-                    .padding(.horizontal, 14)
-                    .frame(minHeight: EchoelTheme.controlTapHeight)
-                    .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                        .fill(EchoelTheme.text))
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityHint(StudioStage.piece.spokenHint)
-        }
-    }
+    // ⛔ THE WORKSTATION PLATE STOOD HERE (#1436 → slice F, 2026-10-02): first the arrangement's
+    // window, then (slice 2b) a door that said where the arrangement went and turned the stage.
+    // The stage seam above the studio does that in one tap, so the plate was a second way to one
+    // place (founder 2026-10-01: „Vermeide das es mehrfache Wege zu einem Bereich gibt"). The
+    // arrangement has ONE home, `ArrangeStage`, and ONE door, the seam; "New piece" turns the
+    // stage at the end of its own flow (`startNewPiece`), which is not a door.
 
     /// B3: the bio strip's new home. The live numbers (HR/HRV/Br/Coh),
     /// tap-to-learn and the source control render UNCHANGED inside the
@@ -8872,7 +8831,9 @@ struct EchoelStudioView: View {
     /// covered by `.sheet(isPresented: $showAllFX)` — a modal cannot be reached past. Generate,
     /// `open(_:)` and — since EF1 — the Workstation's Echoel Effect row (through
     /// `.echoelCompositionEdited "fxCharacter"` → `adoptEchoelFXFromSong()`) re-stamp too, and all
-    /// three sit behind the same modal (the Workstation plate is part of this view). Dismissing destroys the
+    /// three sit behind the same modal while it is up (⛔ "the Workstation plate is part of this view" stood
+    /// here; since slice 2b that row sits on the Piece stage and since slice F there is no plate — the
+    /// sheet is window-level, which no guard here can observe). Dismissing destroys the
     /// sheet's `@State`, so the next presentation re-seeds from the chain.
     ///
     /// ⛔ THAT GUARANTEE IS ONE UI CHANGE THICK. It breaks the day the FX surface stops being

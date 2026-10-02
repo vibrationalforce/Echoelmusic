@@ -4,7 +4,8 @@
 // blurb, and nothing changed when you switched it. Its first consumer is the Instrument stage's
 // chip strip: `EchoelStudioView.chips(for:)` filters the standing `studioChips` by the level the
 // user picked in Save & Export — Beginner = Sound · Mood · Save/Export, Producer adds FX · Mix ·
-// Tempo · Field · Workstation, Pro adds Master.
+// Tempo · Field, Pro adds Master. (⛔ Producer added a fifth, the Workstation, until slice F
+// retired that chip, 2026-10-02 — one way to each area; the arrangement's door is the stage seam.)
 //
 // ⛔ THE LAW THIS FILE MUST NOT UNDO. #568 thinned the strip to one chip for the first three
 // launches and the founder rejected it on device ("Du hast mega viel gelöscht", #572); the
@@ -18,15 +19,20 @@
 //      Beginner passes neither (the essentials are unconditional in the filter, not gated).
 //   2. SOURCE: the strip reads the persisted level (unknown raw → the default, never thinner),
 //      `chips(for:)` is a FILTER over `studioChips` whose three unconditional cases are exactly
-//      Sound · Mood · Save/Export, whose Producer cases are the five, whose Pro case is Master;
-//      `visibleChips` takes that filtered strip and still appends the displayed menu.
+//      Sound · Mood · Save/Export, whose Producer cases are the four, whose Pro case is Master;
+//      `visibleChips` takes that filtered strip and still appends the displayed menu. Plus, since
+//      slice F and END-TO-END: `SkillLevel.producer.blurb` — the shipped string the level picker
+//      shows — names FX, Mix, Tempo and Field and no longer the retired Workstation.
 //   3. SOURCE: the door — `skillLevelRow` is built once in `utilityRow`, is a segmented
 //      `Picker` over `SkillLevel.allCases` bound to the key, and `.export` (its host) is one of
 //      the three unconditional chips, so the switch can never hide itself.
 //   4. COUNTERWEIGHTS (#343): the standing `studioChips` array is unchanged and `.bio` is still
 //      not in it (#290); the filter takes a LEVEL and reads no launch count or clock (#572).
 //
-// ⚠️ LIMIT. Claims 2–4 are source text; nothing here renders the strip. That Beginner reads as a
+// ⚠️ LIMIT. Claims 2–4 are source text — except claim 2's blurb assertions, which CALL the shipped
+// `blurb` and are therefore end-to-end, read in the test bundle's locale (runtime English, the
+// accepted form here; under a German test locale "Field" reads "Feld" and that half would be red
+// for a reason that is not a defect). Nothing here renders the strip. That Beginner reads as a
 // calm three and not as "lost features" is a founder call on device — the reason the default is
 // not Beginner.
 //
@@ -35,6 +41,11 @@
 // compile (ONE absence, #486); claims 2–3 are the needles born here, red together; claim 4's
 // array and `.bio` pins are counterweights, green on both. Transcribed in Python: WORK all
 // green; parent = one absence + the born needles.
+// SLICE F (transcribed against the parent `3deb54e77` and the slice tree): claim 2's filter-arm
+// needle, its new `.workstation` absence, the blurb's Workstation absence and claim 4's array
+// needle are RED on the parent for ONE reason — the strip there still carries `.workstation`
+// (#486: one finding, four reports). The blurb's four-word presence loop is GREEN on both (the
+// parent's blurb names them too): a counterweight against a blurb emptied to pass the absence.
 
 import Foundation
 import XCTest
@@ -73,9 +84,19 @@ final class TheChipStripFollowsTheSkillLevelTests: XCTestCase {
                       "the level FILTERS the standing strip — never a second list, so the order stays the signal chain")
         XCTAssertTrue(filter.contains("case .sound, .mood, .export:") && filter.contains("return true"),
                       "Beginner's three are unconditional: Sound · Mood · Save/Export")
-        XCTAssertTrue(filter.contains("case .effects, .mix, .composition, .field, .workstation:")
+        XCTAssertTrue(filter.contains("case .effects, .mix, .composition, .field:")
                       && filter.contains("return level.showsSongs"),
-                      "Producer adds the five shaping and song-building chips through the `showsSongs` gate")
+                      "Producer adds the four shaping chips through the `showsSongs` gate")
+        XCTAssertFalse(filter.contains(".workstation"),
+                       "the filter gates a Workstation chip again — slice F retired it; the seam is the arrangement's one door")
+        XCTAssertFalse(SkillLevel.producer.blurb.contains("Workstation"), """
+            Producer's blurb still promises the Workstation, a chip no level shows since slice F. \
+            The blurb is what the level picker says it adds — it must name what the filter adds.
+            """)
+        for word in ["FX", "Mix", "Tempo", "Field"] {
+            XCTAssertTrue(SkillLevel.producer.blurb.contains(word),
+                          "Producer's blurb lost `\(word)` — it must name every chip the `showsSongs` arm adds")
+        }
         XCTAssertTrue(filter.contains("case .master:") && filter.contains("return level.showsProTabs"),
                       "Pro adds Master through the `showsProTabs` gate")
         let visible = try body(from: "private var visibleChips: [StudioMenu] {",
@@ -117,7 +138,7 @@ final class TheChipStripFollowsTheSkillLevelTests: XCTestCase {
 
     func testTheStandingStripAndThePillDoorAreUntouchedAndNoClockThinsTheStrip() throws {
         let code = try source(Self.studio)
-        XCTAssertTrue(code.contains("[.sound, .effects, .mix, .master, .mood, .composition, .field, .workstation, .export]"),
+        XCTAssertTrue(code.contains("[.sound, .effects, .mix, .master, .mood, .composition, .field, .export]"),
                       "the standing `studioChips` array is unchanged — the level filters it, it does not replace it")
         let head = try body(from: "private static let studioChips: [StudioMenu] =",
                             to: "private static func chips(for level: SkillLevel)", in: code)

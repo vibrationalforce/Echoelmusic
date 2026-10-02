@@ -660,7 +660,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                       "effectSection takes a String title again — its thirteen stage names would spell verbatim")
         try assertGerman(["Filter", "Saturation", "Tape / VHS", "Bitcrush", "Reverb", "Stereo Width", "Delay",
                           "Chorus", "Flanger", "Phaser", "Tremolo", "Compressor", "Limiter"], "FX stage titles")
-        // E4-13 — the shared card draws title AND subtitle as keys; the nine panels' words reach the catalog
+        // E4-13 — the shared card draws title AND subtitle as keys; the panels' words (eight since slice F) reach the catalog
         let card = try codeOnly("Sources/Echoelmusic/Studio/EchoelPanel.swift")
         for needle in ["Text(LocalizedStringKey(title))", "Text(LocalizedStringKey(subtitle))",
                        ".accessibilityLabel(LocalizedStringKey(title))"] {
@@ -668,9 +668,11 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         XCTAssertFalse(card.contains("Text(title)") || card.contains("Text(subtitle)"),
                        "a verbatim `Text(String)` is back in EchoelPanel")
-        try assertGerman(["Workstation", "Mix", "Tempo & variations", "Master", "Field", "Mood", "Sound & texture",
+        // Slice F (2026-10-02) retired the Workstation plate: its title "Workstation" and subtitle "The arrangement is
+        // the Piece stage" left this list together with their catalog keys (StringCatalogIsHonestTests' orphan rule).
+        try assertGerman(["Mix", "Tempo & variations", "Master", "Field", "Mood", "Sound & texture",
                           "Effects", "Save & Export",
-                          "The arrangement is the Piece stage", "Level per part", "Tap · metronome · haptic beat · ideas",
+                          "Level per part", "Tap · metronome · haptic beat · ideas",
                           "Master level · EBU R128 loudness", "Character of the composition",
                           "Shape the timbre — exact to 0.0001", "Production character",
                           "Set the loop length the Record tile uses · choose how much of the strip you see · see what can be kept · put your city in the name · the default sound"],
@@ -2547,7 +2549,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Soft-focus wash: low-pass + deep chorus + smeared echo",
                           "Tight, natural room — adds depth without washing out",
                           "Large, lush concert hall — long, bright reverb tail", "Beginner", "Producer", "Pro",
-                          "Just the essentials — Sound, Mood, Save & Export.", "Adds FX, Mix, Tempo, Field and the Workstation.",
+                          "Just the essentials — Sound, Mood, Save & Export.", "Adds FX, Mix, Tempo and Field.",
                           "Adds Master — the whole strip.", "Camera recovering…", "Device cooling down — pulse holds for a moment",
                           "Camera paused by iOS — waiting to resume", "Recovering", "Cooling", "Camera paused"],
                          "FX characters, skill levels and camera recovery words")
@@ -2665,7 +2667,6 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                           "Mood — character, and the weather that colours it",
                           "Save and export settings — loop length, place in the name, default sound, diagnostics",
                           "Field — the visual surface you play with your fingers",
-                          "Workstation — the arrangement: tracks, parts and scenes; it plays, imports, mixes and moves parts, it does not cut them",
                           "In the name: ", " (manual)", "Adds your city to the name — never stored by Echoel. Or type one above.",
                           "Location is off for Echoel in Settings — type a place above instead.", "Looking up your city…",
                           "Flowing already sits a hair behind on every note, and Laid back adds to it — the two together stop at the row's own ceiling, so above about 0.40 the timing no longer changes.",
@@ -3340,15 +3341,28 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         try assertGerman(["sACN · Light", "Art-Net · Light"], "routing light output names")
 
-        // E4-100 — `menuChip` drew `Text(menu.label)`, a String, so the ten chips read English under German help text that
+        // E4-100 — `menuChip` drew `Text(menu.label)`, a String, so the chips (nine since slice F) read English under German help text that
         // already names them in German (E4-69). The `label` switch keeps its bare literals on purpose:
         // TheDeployNoteNamesRealDoorsTests parses them as the shipped English names. The KEY is looked up where it is drawn.
         let chipStrip = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
         XCTAssertTrue(chipStrip.contains("Text(LocalizedStringKey(menu.label))"),
                       "EchoelStudioView lost the E4-100 seam: the chip strip draws its label as a String again")
         XCTAssertFalse(chipStrip.contains("Text(menu.label)"), "EchoelStudioView draws a chip label verbatim again")
-        try assertGerman(["Bio", "Tempo", "Sound", "Mix", "FX", "Master", "Mood", "Save/Export", "Field", "Workstation"],
+        try assertGerman(["Bio", "Tempo", "Sound", "Mix", "FX", "Master", "Mood", "Save/Export", "Field"],
                          "instrument chip labels")
+        // Slice F — the Workstation chip, its plate and its spoken name are retired, and so are their catalog
+        // entries: a German unit nobody looks up is the orphan StringCatalogIsHonestTests forbids, and keeping one
+        // "for later" is how a retired door stays translated while nothing opens it.
+        let retiredStrings = try catalogStrings()
+        for key in ["Workstation", "The arrangement is the Piece stage",
+                    "Tracks, parts and scenes live on the Piece stage, above the instrument.", "Show the piece",
+                    "Adds FX, Mix, Tempo, Field and the Workstation."] {
+            XCTAssertNil(retiredStrings[key], "the catalog still carries `\(key)` — slice F retired the surface that drew it")
+        }
+        XCTAssertNil(retiredStrings.keys.first(where: { $0.hasPrefix("Workstation — the arrangement") }),
+                     "the catalog still carries the retired Workstation chip's spoken name")
+        XCTAssertNotNil(german("Adds FX, Mix, Tempo and Field.", in: retiredStrings),
+                        "counterweight: the Producer blurb that replaced the retired one is in the catalog with its German")
 
         // E4-101 — `fieldMotionLabel` returned bare literals and the Motion picker drew them through `Text(String)`, so a
         // German field read "Rise"/"Pendulum"/"Hold" under a German "Bewegung" heading. The lookup sits in the helper;
