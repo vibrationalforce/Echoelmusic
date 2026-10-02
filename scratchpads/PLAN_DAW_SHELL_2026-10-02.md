@@ -35,8 +35,8 @@ Antworten:
 | S5 ✅ | Mixer | Streifen + Master (Master-Streifen gebaut) | WorkstationView, MasterStripView |
 | S6 (a ✅) | Browse | Sounds (gebaut) · Medienbibliothek · Foto/Video-Saat; Import bleibt im Add-Menü, Moods im Instrument | WorkstationView, SoundBrowserView |
 | S7 (a ✅) | Instrument entrümpeln | eigene Transport-/Save-Zeilen weg, Chips als Reiter | EchoelStudioView |
-| S8 | Querformat | Umschalter als Segment in der Leiste, Detail als rechte Spalte | StageShell, WorkstationView |
-| S9 | Zeit-Zoom + Zugänglichkeit | Pinch → Zeitachse; Schrift in Settings; adjustable actions | ArrangeCanvasView, WorkspaceView |
+| S8 (a ✅) | Querformat | Umschalter als senkrechte Leiste links (statt Segment), Detail als rechte Spalte (b offen) | StageShell, WorkstationView |
+| S9 (a ✅) | Zeit-Zoom + Zugänglichkeit | Pinch → Zeitachse; Schrift in Settings; adjustable actions | ArrangeCanvasView, WorkspaceView |
 | S10 | Modal-Konsolidierung | Instrument-Modals in den Hüllen-Slot | EchoelStudioView |
 
 Deploy nach 3–4 Scheiben (`.deploy/release` + --since im selben Commit).
@@ -149,3 +149,28 @@ Gerät: nichts hiervon ist geräteverifiziert, bis der Founder es sieht.
 - **Offen für S7b:** WAV-Aufnahme, Keep last und MIDI-Export brauchen ein Zuhause (Projekt-Platte /
   Export); das Tempo-Feld soll in die Steuerleiste.
 
+## S8a — Entscheidungen und Befunde (2026-10-02)
+
+- **Leiste statt Segment.** Im Querformat (`verticalSizeClass == .compact`) stehen die fünf Wörter
+  senkrecht links (`ShellLayout`, `AnyLayout` zwischen V- und H-Stapel). Ein Segment in der
+  Steuerleiste hätte bei 667 pt Breite die Transportzeile verdrängt. Gleiche Einträge, gleiche Tür.
+- **Review (MED) repariert in 88058461d:** die Leiste füllt ihre Spalte (`maxHeight: .infinity`),
+  sonst endete Fläche und Rand unter dem letzten Wort. Der Guide sagt „unten (im Querformat links)".
+- **Aufgezeichnet, nicht geändert:** die `.leading`-Safe-Area-Ausdehnung wird von `SurfaceHost`s
+  `.clipped()` abgeschnitten — kosmetisch, die Leiste bleibt erreichbar.
+- **Gerät offen:** iPhone SE quer bei der größten Textgröße (enger Fall), Wechsel hoch/quer.
+
+## S9a — Entscheidungen und Befunde (2026-10-02)
+
+- **Eine Geste, eine Bedeutung.** Der Schrift-Pinch saß auf `SurfaceHost`, dem Vorfahren des
+  Canvas. Er ist weg; die drei Knöpfe in Save & Export sind der einzige Schreiber. `StudioZoom`
+  nimmt `let step: Int` — der Typ verbietet einen zweiten Schreiber.
+- **Zeit-Zoom** (`ArrangeTimeZoom`, eigenes Blatt): 1…8, 1 = ganzes Stück. Pinch als
+  `@GestureState`, `.simultaneousGesture` (Teil-Ziehen und Platten-Scroll bleiben), Zoom ändert
+  sich einmal beim Loslassen. VoiceOver-Zoom-Aktion ×2/½. Nicht gespeichert — eine Ansicht.
+- **Zwei Spalten:** Namen stehen still links; Lineal, Spuren und Abspielkopf teilen EINE gezoomte
+  Breite, also können Zahl und Linie ihren Takt nie verlassen.
+- **Angenommene Kosten:** VoiceOver liest erst alle Namen, dann die Spuren (jede Spur und jedes
+  Teil nennt seine Spur); bei der größten Textgröße kann ein Name die 44-pt-Zeile leicht überragen.
+- **Offen (S9b):** Notenraster-Zoom (`PartNoteEditor`), adjustable actions.
+- **Gerät offen:** Pinch-Gefühl, Ein-Finger-Pan, Teil-Ziehen bei Zoom, Platten-Scroll bei Zoom.

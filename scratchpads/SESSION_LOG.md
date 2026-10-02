@@ -41987,3 +41987,10 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - **7b4883c83** S7a-Review (HIGH-1/2): zwei Wächter wären auf korrektem Baum rot gelaufen — `TheArrangeStageIsTheFrontStageTests` las „Play button" in der ersten Guide-Karte, `TheWorkstationPlaysTheTimelineTests` „minHeight: 44" im Bereich des Kopf-Plays. Beide Nadeln folgen der neuen Form. LOW: Prosa (`transportLine1` = zwei Kinder, Mess-Tabelle in `EchoelTheme`).
 - **Lehre:** `moved-needles.py` schlüsselt auf ganze ENTFERNTE Zeilen; beide Nadeln waren TEILSTRINGE von Zeilen, die S7a nur GEÄNDERT hat. Bei einer Textänderung (Kopie oder Modifier-Argument) zusätzlich das alte TEILSTÜCK über `Tests/CISmoke` greppen, nicht nur die alte Zeile.
 
+
+### 2026-10-02 — DAW shell S8a + S9a
+
+- **1fd73147f + 88058461d** S8a Querformat: die fünf Wörter stehen senkrecht links (`ShellLayout`). Review-MED (Leiste füllte ihre Spalte nicht) repariert; Guide-Karte nennt beide Lagen. Compile Check 3192 ✓ auf 88058461d; CI/CD 6656 lief noch.
+- **4414ad4cd** S9a Zeit-Zoom: Schrift-Pinch von `SurfaceHost` entfernt (`StudioZoom(step:)` als Wert — der Typ verbietet einen zweiten Schreiber); `ArrangeTimeZoom` als eigenes Blatt (zwei Wächter erlauben im Canvas-File genau ein `@GestureState`); Canvas in zwei Spalten. Neuer Wächter `ThePinchZoomsTheArrangementsTimeTests` (Vorwärts-Wächter, sieben Mutanten rot); Anspruch 3 von `TheArrangeCanvasNamesItsBarsTests` strenger neu verankert (sieben Mutanten rot).
+- **Lehre:** wer einen Ein-Spalten-Canvas in zwei Spalten teilt, muss die Zeilenhöhe in BEIDEN Spalten festnageln — vorher hielt die gemeinsame `HStack`-Zeile Name und Spur zusammen; jetzt tun es nur noch gleiche `spacing`, ein geteiltes `rulerHeight` und `rowHeight` auf beiden Seiten. Der Wächter pinnt alle drei.
+- Gates: S9a laufen. Review S9a läuft. Gerät: nichts geprüft (Inbox §2 „S8a", „S9a").
